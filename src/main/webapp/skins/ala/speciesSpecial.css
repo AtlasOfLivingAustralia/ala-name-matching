@@ -1,0 +1,68 @@
+#twopartheader    {
+    /* moved common stuff to speciesGlobal.css */
+    background: transparent url(images/ALA-doc-3-species.gif) no-repeat scroll 0% 65%;
+    min-height: 80px;
+    height: auto;
+    padding-left: 95px;
+    color: #2B2B28;
+}
+/* min-height hack for IE */
+* html #twopartheader {
+    height: 80px;
+}
+#twopartheader h2 { margin: 0; padding: 4px 0 0 5px; font-size: 120%; /* color: #1B619B; */ /* #872f2f; */ }
+#twopartheader h3 { margin: 0; padding: 7px 0 0 5px; font-size: 1.1em; font-weight: normal; }
+
+/** copied from occurrenceSpecial.css 
+#content h1 { margin: 0; padding: 4px 0 0 96px; font-size: 1.1em ; color: #8425a6; }
+#content h4 { margin: 20px 0 5px 0; padding: 0 ; font-size: 1.1em ; color: #8425a6; }
+#content h5 { margin: 10px 0 2px 0; padding: 0 ; color: #8425a6; font-size: 1.0em ; }
+**/
+#content > h1 { margin: 0; padding: 4px 0 0 96px; font-size: 1.1em ; /* color: #0166B9;*//* #872f2f; */ }
+#content > h4 { margin: 20px 0 5px 0; padding: 0 ; font-size: 1.1em ; /* color: #0166B9;*//* #872f2f; */ }
+#content > h5 { /* color: #872f2f; */ }
+
+.lt , a.lt  { color: #BBB }
+
+input#search { margin: 0 0 0 18px; }
+
+/* thead { color: #8425a6; } */
+
+/* table.results th { background-color:#fbe7fa; } */
+
+.prev_next , a.prev_next { color: #A6A6A6 }
+
+.pagelinks strong { color: #494949; background-color: #ffeeee; }
+
+/* Added By Dave 
+#furtherActions { margin-top:10px; background-color: #fbe7fa; }
+#furtherActions h4 { padding:0px; margin-top:5px; margin-left:5px; }
+
+#filterEditorPane #furtherActions { border:1px solid #CCCCCC; background-color:#fbe7fa; margin:0px 0px 0px 0px; }
+#filterEditorPane #furtherActions h4 { margin:5px; }
+*/
+#taxonActions { /* background-color: #fbe7fa;*/ width:780px; }
+#taxonActions h4 { padding:0px; margin-top:5px;margin-left:5px; }
+#classificationTop { margin-top:10px; font-size:12px; }
+.taxonImage { margin-top: 10px; margin-left: 30px; } 
+.taxonImage a { border-bottom: none; }
+div.taxonFurtherActions { width:780px; }
+#warnings ul.classificationCondensed { margin-top:5px; margin-bottom:10px; }
+
+/* End of Added By Dave */
+h5#noGeoreferencedPoints { color:#FFFFFF; margin:0px; padding-top:5px; padding-bottom:5px; text-align:center; valign:center; background-color:#000000; width:100%; font-size: 1.1em ;}
+
+/* Added by Tim */
+.feedback {background: url('../../images/feedbackLink.gif') no-repeat 0px 0px ;padding-left: 40px;}
+
+td.label { padding-left: 10px; }
+
+/* classification browser icons  - overrides the normal species browser */
+.conceptLink { margin: 0; padding-left: 10px; padding-right: 5px; border:none; background: url('../standard/images/plusSignVioletBump.gif') no-repeat 8px 3px; border:none; }
+a.treeNodeLinkTentative .conceptLink { background: url('../standard/images/plusSignVioletSmall.gif') no-repeat 8px 3px; }
+#noMatchesReport { text-align:left; }
+
+/* Searching */
+h4#addSearchFilter, h4#currentSearch  { margin: 0px 0 5px 0px; padding: 0; }
+
+#changeSearch { background: url('images/tip1.jpg') no-repeat; padding: 7px 0 10px 35px; border-bottom: none; }

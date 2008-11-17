@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans SYSTEM "http://www.springframework.org/dtd/spring-beans.dtd">
+<!-- The home of web app config that is shared across dispatchers-->
+<beans>	
+	
+	<!-- Interceptor to change the locale for i18n -->
+	<bean id="localeChangeInterceptor" class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+		<property name="paramName" value="siteLanguage"/>
+	</bean>	
+
+	<!-- Interceptor to check data agreement accepted -->
+	<bean id="dataAgreementInterceptor" class="org.gbif.portal.web.controller.user.CookieAndSessionCheckInterceptor">
+		<property name="ignoreUrlPatterns">
+			<list>
+				<value>/overviewmap.png</value>								
+				<value>/overviewMap.png</value>															
+				<value>/mapWidget</value>											
+				<value>/settings.htm</value>							
+                <value>/version.htm</value>        
+				<value>/tutorial/</value>
+				<value>/search/xmlsearch/</value>				
+			</list>
+		</property>
+		<!-- uppercase -->
+		<property name="robotsAgentsAllowedToBypassCookies">
+			<set>
+			  <!--  cookie bypass for google bot -->
+  			  <value>GOOGLEBOT</value>
+              <value>COMP</value>
+			</set>
+		</property>		
+	</bean>
+
+	<!-- Stores the history within the session -->	
+    <bean id="sessionHistoryInterceptor" class="org.gbif.portal.web.controller.user.SessionHistoryInterceptor">
+		<property name="browsePatterns">
+			<set>
+				<value>datasets/browse</value>
+				<value>countries/browse</value>
+			</set>
+		</property>
+	</bean>					
+
+    <!-- Bad robot interceptor -->
+    <bean id="badRobotInterceptor" class="org.gbif.portal.web.controller.user.RobotRedirectAdapter" abstract="true">
+      <property name="redirectUrl" value="/welcome.htm"/>
+      <property name="userAgents">
+        <list>
+          <value>GOOGLEBOT</value>  
+          <value>YAHOO</value>
+          <value>INDY LIBRARY</value>
+          <value>MSNBOT</value>       
+          <value>ASK JEEVES</value>
+          <value>TWICELER</value>
+        </list>        
+      </property>
+    </bean> 
+		
+	<!-- Reads the properties file to override the parameters for DB etc
+		 Note: the lazy init -->
+	<bean id="propertyOverrideConfigurer"
+		class="org.springframework.beans.factory.config.PropertyOverrideConfigurer"
+		lazy-init="false">
+		<property name="location" value="WEB-INF/classes/portal.properties"/>
+		<property name="ignoreResourceNotFound" value="true"/>
+		<property name="ignoreInvalidKeys" value="true"/>
+	</bean>	
+	
+	<!-- The tiles configurations -->
+	<bean id="tilesConfigurer" class="org.springframework.web.servlet.view.tiles.TilesConfigurer">
+	  <property name="definitions">
+		<list>
+			<value>/WEB-INF/tiles-def.xml</value>
+		</list>
+	  </property>
+	</bean>
+	
+	<!-- URL based view resolver using tiles -->
+	<bean id="tilesViewResolver" class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+		<property name="order" value="2"/>		
+		<property name="viewClass" value="org.springframework.web.servlet.view.tiles.TilesView"/>
+		<property name="contentType" value="text/html; charset=utf-8"/>
+	</bean>
+	
+	<!-- For pulling up pages that are hidden but need no model - e.g. in WEB-INF
+		 The full path is used so that a "/occurrences/search.htm" returns
+		 "occurrences/search" and not just "search" -->
+	<bean id="urlFilenameController" class="org.springframework.web.servlet.mvc.UrlFilenameViewController"/>
+
+	<!-- Resolves the locale for i18n -->
+	<bean id="localeResolver" class="org.springframework.web.servlet.i18n.CookieLocaleResolver">
+		<property name="defaultLocale" value="en"/>
+		<property name="cookieName" value="GbifLang"/>
+		<property name="cookieMaxAge" value ="2147483647"/>
+	</bean>	
+	
+	<!--Resolves the theme-->
+	<bean id="themeResolver" class="org.springframework.web.servlet.theme.CookieThemeResolver">
+		<property name="defaultThemeName" value="standard"/>
+		<property name="cookieName" value="GbifTheme"/>
+		<property name="cookieMaxAge" value ="2147483647"/>
+	</bean>
+	<bean id="themeSource" class="org.springframework.ui.context.support.ResourceBundleThemeSource">
+		<property name="basenamePrefix" value="theme-"/>
+	</bean>
+  
+  <bean id="velocityConfig" class="org.springframework.web.servlet.view.velocity.VelocityConfigurer">
+      <property name="resourceLoaderPath" value="/WEB-INF/classes/"/>
+  </bean>
+		
+  <!-- The message resources-->
+  <bean id="messageSource" class="org.gbif.portal.web.i18n.PropertiesMessageSource">
+	<!--  bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource"-->
+		<property name="basenames" value="messages,countries,continents,basis_of_record,month,identifier_types,regions"/>
+		<property name="resolveFromDefaultIfNull" value="true"/>
+	</bean>	
+</beans>	

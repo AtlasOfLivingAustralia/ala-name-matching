@@ -1,0 +1,58 @@
+/* Styles for the Filter Searches */
+div.filter { margin-top:10px; height:40px; }
+div.filter span.type { float:left; width:160px; height:20px; }
+div.filter span.type select {	margin-top:0px; width:150px; }
+div.filter span.predicate { float:left; width:120px; height:20px; }
+div.filter span.predicate select { margin-top:0px; width:110px; } 
+div.filter span.value { height:20px; float:left; width:350px; margin-right:5px; color:#000000; }
+div.filter span.value input { margin-top:0px; width:275px; padding-left:3px; }
+div.filter span.value select { margin-top:0px; width:280px; }
+div.filter span.submitFilter input { margin-top:0px; margin-left:3px; valign:top; }
+
+p.filterhelp { border:1px solid #cccccc; background-color:#eeeeee; padding:10px; width:97%; margin-top:30px; }
+
+div#filterWizard { float:left; margin-right:10px; }
+a.wizardValue { text-decoration:none; font-size:12px; }
+a.wizardValue:hover { text-decoration:none; border-bottom:none; }
+
+p.emptySearch { font-style:italic; margin:10px 0px 10px 0px; }
+
+h4#currentSearch, h4#addSearchFilter { margin-top:0px; }
+h4#addSearchFilter {  } 
+
+/* new page layout with editor panel */
+#filtersAndEditor { width:100%; margin-top:5px; }
+#filterEditorPane { width:800px; vertical-align:top; }
+#constructedFiltersPane { width:300px; min-width:250px; vertical-align:top; padding-left:10px; border-left:1px solid #CCCCCC; }
+
+div#constructedFilters { width:100%; height:100%; }
+div#constructedFilters ul { padding:5px; margin-top:10px; color:#000000; list-style:none; }
+div#constructedFilters ul a { border-bottom:none; }
+div#constructedFilters ul a:hover { border-bottom:none; }
+div#constructedFilters ul li { text-align:left; }
+div#constructedFilters ul li.alteredFilter { font-weight:bold; }
+#filterSearchSubmit { width:200px; margin-top:15px; }
+#filterSearchForm { padding-bottom:0px; } 
+
+div#actionsAndResults {	width:100%; height:30%; }
+
+
+ul.taxonomy { background-color: #D3E0EA/* #fbe7fa;*/ }
+ul.datasets { background-color: #D3E0EA/* #d4ecf5;*/ }
+ul.geospatial { background-color: #D3E0EA/* #f9e5d8;*/ }
+
+.taxonomyFilterHelp { background-color: #D3E0EA;/*#fbe7fa*/; padding:10px; width:635px; }
+.geospatialFilterHelp { background-color: #D3E0EA;/*#f9e5d8*/; padding:10px; width:635px; }
+.datasetFilterHelp { background-color: #D3E0EA;/*#d4ecf5*/; padding:10px; width:635px; }
+
+/* wizards */
+div.datasetWizard { background-color:#d4ecf5; width:625px; padding:10px; padding-left:20px; }
+div.taxonomyWizard { background-color:#fbe7fa; padding:10px; padding-left:20px; width:625px; }
+#dataResourceWizard { margin-top:20px; padding-top:20px; }
+#dataResourceWizard #dataProviderId { width:580px; margin-bottom:40px; }
+#dataResourceWizard #dataResourceId { width:580px; margin-bottom:20px; }
+
+#newFilterValue {position:relative;width:280px;margin-bottom:1em;}/* set width of widget here*/
+#newFilterValue {z-index:9000} /* for IE z-index of absolute divs inside relative divs issue */
+
+#exampleSearches { margin-top:20px; }

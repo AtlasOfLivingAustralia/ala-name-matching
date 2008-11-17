@@ -1,0 +1,78 @@
+#twopartheader {
+    background: transparent url(images/ALA-doc-3-search.gif) no-repeat scroll 0% 65%;
+    min-height: 80px;
+    height: auto;
+    padding-left: 95px;
+    color: #2B2B28;
+}
+/* hack for IE */
+* html #twopartheader {
+    height: 80px;
+}
+
+/** copied from occurrenceSpecial.css **/
+
+h1 { margin: 0; padding: 4px 0 0 96px; font-size: 1.3em ; /* color: #8425a6 */ }
+h2 { margin: 0; padding: 4px 0 0 96px; font-size: 1.2em ; /* color: #8425a6 */ }
+h4 { margin: 20px 0 5px 0; padding: 0 ; font-size: 1.1em ; /* color: #8425a6 */ }
+
+p , div {	padding: 0; margin: 0; }
+
+table { margin: 0px 0 5px 0; padding: 0; }
+
+/* #twopartheader { margin: 20px 0 10px 0; padding: 0 0 0 95px; min-height:63px; background: url('images/searchResultsIcoBig.gif') no-repeat left top ;  } */
+#twopartheader h2 { color: #2B2B28; padding: 4px 0 0 5px; margin: 0; font-size: 1.1em; font-weight: normal; }
+#twopartheader ul { padding: 9px 0 0 20px ; margin: 0 ; font-size: 1em; font-weight: normal; list-style: bullet; }
+#twopartheader ul li { display: list-item; /* padding-right: 15px;*/ }
+
+h2.scNames {
+	padding: 4px 4px 4px 8px;
+	margin: 20px 0 0 0;
+    border-bottom: 1px solid #CCC; /*#cda2d7;*/
+}
+
+h2.scCountries {
+	padding: 4px 4px 4px 8px;
+	margin: 20px 0 0 0;
+    border-bottom: 1px solid #CCC; /*#ffbd8b ;*/
+	/* color: #f19d5d ; */
+}
+
+h2.scDatasets {
+	padding: 4px 4px 4px 8px;
+	margin: 20px 0 0 0;
+    border-bottom: 1px solid #CCC; /*#a2c5d7;*/
+	/* color: #6abbe3 ; */
+}
+
+ul.scResults li { /* color: #AAA; */ }
+ul.scResults li a {  font-weight: bold; }
+
+/*
+li.scNames a { color: #8425a6; }
+li.scDatasets a { color: #6abbe3;}
+li.scCountries a { color: #f19d5d;}
+*/
+
+td {
+	padding: 4px 6px 6px 6px;
+	margin:0px;
+	border-bottom: 1px solid #EEE;
+}
+
+td.tdColumn1 { width: 10% ; color: #AAA ; }
+td.tdColumn2 { width: 40% ; color: #AAA ;}
+td.tdColumn3 {  color: #AAA; font-size: 0.9em ; }
+
+
+.moreMatches {
+    margin: 0 0 0 6px; font-weight:bold;
+}
+
+.interpretedFrom { color: #000000 }
+
+ul.searchResults { margin-bottom:10px; margin-left:30px; }
+ul.searchResults li { padding-bottom:5px; padding-left:10px; }
+
+.soundex { padding:5px 0px 10px 0px; }
+.didyoumean { color:#FF0000 }

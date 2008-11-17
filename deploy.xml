@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Convienence Ant Script for deploying the webapp -->
+<project name="Web App Deploy" basedir="." default="deploy">
+    <!-- Load the project specific configurations -->
+    <property file="${basedir}/project.properties"/>
+
+	<target name="clean-tomcat">
+		<echo level="info">Cleaning tomcat</echo>       
+		<delete dir="${webserver.home}/webapps/${webapp.name}"/>
+        <delete includeemptydirs="true" failonerror="false">
+        	<fileset dir="${webserver.home}/webapps" >
+        	    <include name="${webapp.name}.war"/>
+            </fileset>
+            <fileset dir="${webserver.home}/work/Catalina">
+            </fileset>   			
+        </delete>
+	</target>
+
+	<target name="deploy-clean" depends="clean-tomcat, deploy">
+	</target>
+
+	<target name="deploy-only">
+		<echo level="info">Deploying</echo>
+		  <copy todir="${webserver.home}/webapps">
+			<fileset dir="target">
+				<include name="${webapp.name}.war"/>	
+			</fileset>	
+		  </copy>
+	</target>
+	
+	<target name="deploy">
+		<echo level="info">Deploying</echo>
+		  <copy todir="${webserver.home}/webapps">
+			<fileset dir="target">
+				<include name="${webapp.name}.war"/>	
+			</fileset>	
+		  </copy>
+	</target>
+
+	<target name="deploy-web-xml" >
+		<echo level="info">Deploying</echo>
+		  <copy todir="${webserver.home}/webapps/${webapp.name}/WEB-INF/">
+			<fileset dir="src/main/webapp/WEB-INF/">
+				<include name="web.xml"/>	
+			</fileset>	
+		  </copy>
+	</target>
+
+	<!-- Deploy reloadable sources - images, css. jsp etc-->
+    <target name="deploy.ui">
+        <echo level="info">Deploying</echo>
+          <copy todir="${webserver.home}/webapps/${webapp.name}/common">
+            <fileset dir="src/main/webapp/common">
+                <include name="**/*.*"/> 
+            </fileset>  
+          </copy>
+		  <copy todir="${webserver.home}/webapps/${webapp.name}/WEB-INF/jsp">
+            <fileset dir="src/main/webapp/WEB-INF/jsp">
+                <include name="**/*.*"/> 
+            </fileset>  
+          </copy>
+          <copy todir="${webserver.home}/webapps/${webapp.name}/layouts">
+            <fileset dir="src/main/webapp/layouts">
+                <include name="*.*"/> 
+            </fileset>  
+          </copy>
+          <copy todir="${webserver.home}/webapps/${webapp.name}/javascript">
+            <fileset dir="src/main/webapp/javascript">
+                <include name="*.*"/> 
+            </fileset>  
+          </copy>
+          <copy todir="${webserver.home}/webapps/${webapp.name}/skins">
+            <fileset dir="src/main/webapp/skins">
+                <include name="**/*.*"/> 
+            </fileset>  
+          </copy>
+<!--          <copy todir="${webserver.home}/webapps/${webapp.name}/stylesheet">-->
+<!--            <fileset dir="src/main/webapp/stylesheet">-->
+<!--                <include name="*.*"/> -->
+<!--            </fileset>  -->
+<!--          </copy>          										-->
+          <copy todir="${webserver.home}/webapps/${webapp.name}/WEB-INF/classes">
+            <fileset dir="src/main/webapp/WEB-INF/classes">
+                <include name="**/*.*"/> 
+            </fileset>  
+          </copy>			
+          <copy todir="${webserver.home}/webapps/${webapp.name}/WEB-INF/tags">
+            <fileset dir="src/main/webapp/WEB-INF/tags">
+                <include name="**/*.*"/> 
+            </fileset>  
+          </copy>				
+          <copy todir="${webserver.home}/webapps/${webapp.name}/WEB-INF/classes">
+            <fileset dir="src/main/webapp/WEB-INF">
+                <include name="*.xml"/> 
+            </fileset>  
+          </copy>			
+    </target>
+
+	<!-- Deletes the images from tomcat and copies the images from the project
+		 This is a convienience for people using windows to get around the 
+		 jar problem easily -->
+    <target name="deploy.images">
+        <echo level="info">Deploying Images</echo>
+		<delete dir="${webserver.home}/webapps/${webapp.name}/images"/>
+          <copy todir="${webserver.home}/webapps/${webapp.name}/images">
+            <fileset dir="src/main/webapp/images">
+                <include name="**/*.*"/> 
+            </fileset>  
+          </copy>										
+	</target>
+	
+	<!-- Setup the DB -->
+    <target name="setupdb">
+        <copy todir="${temp.folder}">
+          <fileset dir="..//portal-index//db//">
+              <include name="**//*.*"/> 
+          </fileset>  
+        </copy>
+        <copy todir="${temp.folder}">
+          <fileset dir="..//portal-index//data//">
+              <include name="**//*.*"/> 
+          </fileset>  
+        </copy>    	
+		  <sql driver="${driver.className}"
+		       url="${db.url}"
+		       userid="${db.user}" password="${db.password}" >
+		    <classpath>
+		      <pathelement path="${driver.path}"/>      
+		    </classpath>
+		    <transaction  src="${temp.folder}//countries//import.sql"/>
+		  </sql>    	
+	</target>	
+</project>

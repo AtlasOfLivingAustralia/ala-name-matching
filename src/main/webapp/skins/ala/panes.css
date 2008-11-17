@@ -1,0 +1,55 @@
+#panes {
+	border: 0; width: 764px; margin-top: 25px;
+}
+#content>#panes { width: 758px; }
+
+#panes a:hover {
+	text-decoration: none;
+	border-bottom: 1px solid #CCC;
+}
+
+
+.panes_div {
+	margin: 0; padding: 0 0 0 10px;
+	height: 28em;
+	width:237px;
+	border: 0;
+}
+
+
+#panes h2 {
+	margin: 10px 0 0 -10px;
+	padding: 55px 20px 11px 39px;
+	font: bold 1.2em Arial, Helvetica, sans-serif;	text-align:left;
+}
+
+#panes h2 a {
+	text-decoration:none;
+	font-size:1.1em;
+	border: 0;
+}
+
+#panes h3 {
+	color:	#333366;
+	font-size: 1em;
+	text-decoration: none;
+	padding-bottom: 0px;
+	margin-bottom: 0px;
+}
+
+#taxonomypane	{ float: left; margin-left: 3px; }
+#taxonomypane h2 { color: #A76CC7; background: url("images/taxonomy_bg.gif") no-repeat ; }
+#taxonomypane h2 a { color: #A76CC7; }
+#taxonomypane h2 a:hover { text-decoration: underline ;}
+
+
+#datasetpane { float: right; }
+#datasetpane h2 { color: #1F8EA8; background: url("images/datasets_bg.gif") no-repeat ; }
+#datasetpane h2 a { color: #1F8EA8;  }
+#datasetpane h2 a:hover { text-decoration: underline ; }
+
+#geographypane	{ float: right; margin-right: 12px; }
+#panes>#geographypane	{ margin-right: 9px; }
+#geographypane h2 {	color: #C76106; background: url("images/geography_bg.gif") no-repeat ; }
+#geographypane h2 a { color: #C76106;  }
+#geographypane h2 a:hover {	text-decoration: underline ; }

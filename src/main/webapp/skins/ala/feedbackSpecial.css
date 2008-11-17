@@ -1,0 +1,4 @@
+#twopartheader { margin: 20px 0 10px 0; padding: 0 0 0 95px; min-height:63px; background: url('../standard/images/feedbackIcoBig.gif') no-repeat left top ;  }
+#twopartheader h1 { color: #5f822c; padding: 5px 0 0 0 ; margin: 0; font-size: 1.1em; font-weight: bold; }
+input.feedback { width:400px; }
+textarea.feedback { width:400px; }

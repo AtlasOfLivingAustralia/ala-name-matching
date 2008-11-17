@@ -1,0 +1,225 @@
+#twopartheader {
+    background: transparent url(images/ALA-doc-3-regions.gif) no-repeat scroll 0% 65%;
+    min-height: 80px;
+    height: auto;
+    padding-left: 95px;
+    color: #2B2B28;
+}
+/* hack for IE */
+* html #twopartheader {
+	height: 80px;
+}
+
+#twopartheader h2 { margin: 0; padding: 4px 0 0 5px; font-size: 120%; color: #1B619B;/* #872f2f; */ }
+#twopartheader h3 { margin: 0; padding: 7px 0 0 5px; font-size: 1.1em; font-weight: normal; }
+
+
+.subject {
+	font-weight: bold;
+}
+
+/* End of Added by Dave */
+#content h1 {
+	margin: 0;
+	padding: 4px 0 0 0px;
+	font-size: 1.1em;
+	color: #9d4c05
+}
+
+#content h4 {
+	margin: 20px 0 5px 0;
+	padding: 0;
+	font-size: 1.1em;
+	color: #9d4c05
+}
+
+#content h5 {
+	margin: 10px 0 2px 0;
+	padding: 0;
+	color: #9d4c05;
+	font-size: 1.0em;
+}
+
+.lt  , a.lt {
+	color: #BBB
+}
+
+#chosen {
+	color: #9d4c05;
+	background-color: #fff6e9;
+	font-weight: bold;
+}
+
+#selectedChar {
+	margin: 15px 0 5px 35px;
+	padding: 0
+}
+
+thead {
+	color: #9d4c05;
+}
+
+table.results th {
+	background-color: #FFF;
+}
+
+table.statistics tr:hover {
+	background-color: #fff6e9;
+	border-bottom: 2px dotted gray;
+	border-left: 1px solid red;
+	font-weight: normal;
+}
+
+table.statistics thead tr:hover {
+	background-color: #FDFDFD;
+}
+
+ul.flatlist {
+	margin: 8px 0 0 68px;
+	padding: 0;
+}
+
+#furtherActions h4 {
+	padding: 0px;
+	margin-top: 5px;
+	margin-left: 5px;
+}
+
+#furtherActions {
+	background-color: #f9e5d8;
+}
+
+#initialActions td {
+	vertical-align: top;
+}
+
+/* repatriation */
+table.repat {
+	border: 1px solid #CCCCCC;
+	border-collapse: collapse;
+	table-layout: fixed;
+	font-family: 'Andale Mono', 'Lucida Console', Verdana, Arial, Helvetica,
+		sans-serif;
+}
+
+table.repat td {
+	padding: 2px;
+	font-size: 10px;
+}
+
+.topLabels td {
+	text-align: center;
+	vertical-align: bottom;
+	padding-top: 2px;
+	border: 1px solid #CCCCCC;
+	cursor: pointer;
+}
+
+.bottomLabels td {
+	text-align: center;
+	vertical-align: top;
+	padding-botom: 2px;
+	border: 1px solid #CCCCCC;
+}
+
+.rightLabel {
+	white-space: nowrap;
+	overflow: hidden;
+	border: 1px solid #CCCCCC;
+}
+
+.leftLabel {
+	white-space: nowrap;
+	overflow: hidden;
+	border: 1px solid #CCCCCC;
+}
+
+.rowEntry td {
+	border: 1px solid #CCCCCC;
+	cursor: pointer;
+}
+
+.rowEntry img {
+	margin: 0 3px 0 3px;
+}
+
+.highlighted {
+	background-color: #fff6e9;
+}
+
+.highlightedCell {
+	background-color: #fcd296;
+}
+
+.selectedCell {
+	background-color: #9d4c05;
+	color: #FFF;
+}
+
+.topLabels td img {
+	clear: both;
+}
+
+.topLabels td p {
+	clear: both;
+	margin: 0;
+	padding: 0;
+}
+
+.bottomLabels td img {
+	clear: both;
+}
+
+.bottomLabels td p {
+	clear: both;
+	margin: 0;
+	padding: 0;
+}
+
+#repatChangeViewForm {
+	margin-bottom: 20px;
+}
+
+h2.printFriendly {
+	color: #9d4c05;
+	padding: 20px 0 20px 0px;
+	margin: 0;
+	font-size: 1.3em;
+	font-weight: normal;
+}
+
+.percent75 {
+	color: #cc0000;
+}
+
+.percent50 {
+	color: #ff3300;
+}
+
+.percent25 {
+	color: #ff6600;
+}
+
+.percent1 {
+	color: #ff9900;
+}
+
+.percent01 {
+	color: #cccccc;
+}
+
+#countryLinks {
+	margin-top: 20px;
+}
+
+h5#noGeoreferencedPoints {
+	color: #FFFFFF;
+	margin: 0px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	text-align: center;
+	valign: center;
+	background-color: #000000;
+	width: 100%;
+	font-size: 1.1em;
+}

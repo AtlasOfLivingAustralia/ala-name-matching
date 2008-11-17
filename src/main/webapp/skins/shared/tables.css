@@ -1,0 +1,144 @@
+/* results class - used for results from filter searchs */
+th.sortableColumn a {
+	text-decoration: none;
+	border: none;
+}
+
+table.results { 
+	border: 1px solid #cccccc; 
+	border-collapse: collapse;
+	width: 100%;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+table.results th {
+	font-weight: bold;
+	vertical-align:center;
+	text-align:left;
+	padding: 5px 5px 5px 5px;
+}
+
+table.results td {
+	padding-left: 5px;
+	vertical-align:center;
+	text-align:left;
+}
+
+table.results td.count {
+	text-align: center;
+}
+
+table.results td.include {
+	width:10px;
+	text-align: center;	
+}
+
+table.results td.lastColumn {
+	padding-right:3px;
+}
+
+table.results tr {
+	border: 1px solid #cccccc; 
+	font-weight: normal;
+}
+
+table.results th.sortable a {
+	font-weight: bold;
+	text-align:left;
+	padding: 5px 5px 5px 5px;
+}
+
+table.results th.sortable a:hover {
+	text-align:left;
+	padding: 5px 5px 5px 5px;
+}
+
+/* statistics class - used for browsers for countries and datasets */
+
+table.statistics {
+	border:0px;
+	width:100%;
+}
+
+table.statistics th {
+	text-align: left;
+}
+
+table.statistics td.name {
+	width:60%;
+}
+
+table.statistics td.count {
+	width:10%;
+	padding-left:5px;
+}
+
+table.statistics td.bigcount {
+	width:20%;
+	padding-left:10px;
+}
+
+table.statistics td.countrycount {
+	width:30%;
+	padding-left:10px;
+}
+
+table.statistics td.singlecount {
+	width:40%;
+	padding-left:10px;
+}
+
+table.statistics tr {
+	border: 0px;  
+	font-weight: normal;
+}
+
+table.smallStatistics {
+	padding-bottom:10px;
+}
+
+table.smallStatistics td.property {
+	padding-right:30px;
+}
+
+/* to be moved to another home */
+fieldset {
+	border:0px;
+}
+
+fieldset label {
+	display: block;
+	float: left;
+	margin-bottom: 5px;
+	margin-right:5px;
+	text-align: left;
+	width: 150px;
+	padding-right: 20px;
+	padding-bottom: 5px;	
+}
+
+fieldset br {
+	clear:left;
+}
+
+form.acceptForm {
+	margin: 10px 0px 10px 0px;
+}
+
+
+table.datasheet { border:1px solid #CCCCCC; border-collapse: collapse; background-color: #fffae4; padding: 5px; text-align:left; }
+table.datasheet thead { padding-top: 3px; border:0;}
+table.datasheet th { border-right: 1px solid gray; border-top:0; color: gray; padding:3px 5px 3px 5px; }
+table.datasheet th.lastColumn { border-right: 0; border-top:0; }
+table.datasheet td { border-right: 1px solid gray; width:100%; border-top: 1px solid gray; text-align:left; padding:3px 5px 3px 5px; vertical-align:center; }
+table.datasheet td.lastColumn { border-right: 0; text-align:left; vertical-align:center; }
+table.datasheet td.bottomLink { border:1px 0 0 0; border-right: 0; padding:3px 0 5px 5px; }
+
+table.datasheetItem { width: 600px; margin: 0 0 20px 30px; text-align:left; } 
+table.datasheetItem td { text-align:left; vertical-align:top; } 
+table.datasheetItem td.chart { width:300px; }
+table.datasheetItem td.datatable { width:300px; padding: 0 0 0 20px; }
+
+.indexingHistory { border-collapse: collapse; text-align:left;}
+.indexingHistory td, .indexingHistory th { border:1px solid #CCCCCC; padding: 5px 10px 5px 10px; }	

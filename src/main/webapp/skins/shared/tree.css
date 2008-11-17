@@ -1,0 +1,55 @@
+/* Pygmy style browser */
+div.smalltree {	width:700px; padding:0 10px 5px 5px; }
+div.smalltree a { border-bottom: none; }
+div.smalltree a:hover { border-bottom: none; }
+div.smalltree a:visited { border-bottom: none; }
+div.smalltree div.ancestor { padding-left:10px; }
+div.smalltree div.list { margin-top:2px; margin-left:12px; margin-bottom:5px;	border-left:1px dashed #CCCCCC;	padding:0px;	padding-left:0px; }
+div.smalltree p {	margin: 0px; padding: 0px; padding-top: 1px; }
+div.smalltree p.selected, div.smalltree p.selectedTentative { font-weight:bold; }
+
+/* Taxonomy Browsing */
+#smtFirstLevel { padding-bottom: 5px; }
+.rank, .taxon { color:#8425a6; }
+.taxon { color: #000000; }
+.generaTaxon { font-style:italic; color: #000000; }
+
+.overviewLink { padding-left: 25px; padding-right: 5px; background: url('../standard/images/arrowOverviewLink.gif') no-repeat 0px 6px; border:none; }
+.selectedConceptLink { margin: 0; padding-left: 10px; padding-right: 10px; border:none; background: url('../standard/images/arrowSelected.gif') no-repeat 8px 3px; }
+
+a.treeNodeLink, a.treeNodeLinkTentative, a.treeNodeLink:hover, a.treeNodeLinkTentative:hover { border:none; text-decoration: none; }
+
+a.treeNodeLinkTentative .rank { color: #c11bd2; border:none; }
+a.treeNodeLinkTentative .taxon { color: #AAAAAA; border:none; }
+a.treeNodeLinkTentative .generaTaxon { color: #AAAAAA; border:none; }
+
+p.selected .rank { color: #8425a6; }
+p.selected .taxon { color: #000000; }
+p.selected .generaTaxon { color: #000000; }
+
+p.selectedTentative .rank { color: #c11bd2; }
+p.selectedTentative .taxon { color: #AAAAAA; }
+p.selectedTentative .generaTaxon { color: #AAAAAA; }
+
+#uncertainPositions { margin-left:5px; color: #000000; }
+#unconfirmedNames { margin-left:5px; color: #AAAAAA; }
+
+.overview { margin-left: 30px; font-weight: normal; border:none; color: #8425a6; }
+
+a.taxonOverviewLink, a.taxonOverviewLinkTentative { font-weight: normal; border:none;}
+a.taxonOverviewLink:hover, a.taxonOverviewLinkTentative:hover { font-weight: normal; border:none; text-decoration: none; }
+
+a.taxonOverviewLink { color:#8425a6; border:none; }
+a.taxonOverviewLink:visited { color:#8425a6; border:none; }
+a.taxonOverviewLink:hover { color:#8425a6; border:none; }
+a.taxonOverviewLinkTentative { color:#c11bd2; border:none; }
+a.taxonOverviewLinkTentative:visited { color:#c11bd2; border:none; }
+a.taxonOverviewLinkTentative:hover { color:#c11bd2; border:none; }
+
+.taxonTenative { color: #AAAAAA; }
+.generaTaxonTenative { font-style:italic; color: #AAAAAA; }
+.tentativeMarker { margin-left:5px; font-size:9px; color: #AAAAAA;  }
+
+/* classification lists */
+.classificationCondensed { margin: 5px 0 0 0px; padding: 0 ;}
+.classificationCondensed li { display: inline; padding: 0 3px 0 13px; background: url('images/0020-00BB-0020.gif') no-repeat 4px 4px ; }

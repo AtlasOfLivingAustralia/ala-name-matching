@@ -1,0 +1,76 @@
+#twopartheader { margin: 20px 0 10px 0; padding: 0 0 0 95px; min-height:63px; background: url('../standard/images/registrationIconBig.gif') no-repeat left top ;  }
+#twopartheader h2 {  color: #5f822c; padding: 5px 0 0 0 ; margin: 0; font-size: 1.1em; font-weight: bold; }
+#twopartheader h3 { padding: 7px 0 0 0 ; margin: 0 ; font-size: 1.1em; font-weight: normal; }
+
+.warningMessage { color:#FF0000; font-weight: bold; }
+.logout { font-size: 0.81em; }
+.loginInput { width:150px; }
+
+#content h4 { margin: 20px 0 5px 0; padding: 0 ; font-size: 1.1em ; color: #5f822c; }
+#content h5 { color: #5f822c; }
+
+fieldset { margin:0 0 20px 0; }
+
+#topHeader { margin-top:0px; padding-top:0px; }
+input { padding-left:2px; }
+textarea { padding:2px; }
+select { padding-left:2px; }
+.providerDetails input { width: 250px; border: 1px solid #CCCCCC; }
+.providerDetails textarea { width: 250px; border: 1px solid #CCCCCC; }
+.providerDetails select { width: 250px; }
+.dateRange input.yearInput { width:80px; }
+.dateRange select.daySelect { width:50px; }
+.dateRange select.monthSelect { width:100px; }
+
+.resourceForm input[type='text'] { width: 300px;  font-size:1.0em;}
+.resourceForm input.smallInput { width: 200px; font-size:1.0em;}
+.resourceForm input.coordinates { width:70px; }
+.resourceForm textarea { width: 300px;  font-size:1.0em;}
+.resourceForm input[readonly] { background: #ffeeee; color: gray; }
+.resourceForm textarea[readonly] { background: #ffeeee; color: gray; }
+.resourceForm select { width: 300px; font-size:1.0em;}
+.resourceForm .smallValue { width:120px; }
+.resourceForm .smalltree { border: 1px solid #CCCCCC; background-color:#F6F6F6; width:460px; padding-top:5px; margin-top:5px; margin-left:5px; }
+.resourceForm .relatedCountries { width:200px; }
+.resourceForm .resourceNotes { border-bottom: 1px solid gray; margin-bottom:10px;padding-bottom:10px; }
+
+.help { margin-top:10px; color: gray; font-size: 0.8em; }
+
+.subFieldset { border-top: 1px solid gray; width:465px; padding-top:5px; }
+.subFieldset span.smallValueText { margin-left:10px; }
+subFieldsetNoHeader { border-top: none; }
+
+#registrationContainer { margin-left:310px; min-height:400px; height: auto; margin-top:20px; }
+* html #registrationContainer { height:400px }
+
+.providerDetails legend { color: #5f822c; font-size: 1.1em; padding:0; margin:0;}
+.providerDetails p { margin-left:10px; }
+
+a.providerLink { color: #5f822c; font-weight: normal; border-bottom:0px; text-decoration:none; } 
+a.providerLink:visited { color: #5f822c; font-weight: normal; border-bottom:0px; text-decoration:none; } 
+a.providerLink:hover { color: #5f822c; font-weight: normal; border-bottom:1px solid #5f822c; } 
+
+#sideMenu { position: absolute; float: left; top:165px; max-width:280px; background-color: #FFFFFF; border:1px solid #5f822c; padding: 5px 5px 5px 10px; }
+#sideMenu ul { margin: 0 0 20px 0; }
+#sideMenu li.noBullet { background:none; padding-left:0px; }
+.selectedCategory { font-weight: bold; padding-left :17px; background: url('../../images/icons/bullet_yellow.gif') no-repeat 0 50%;}
+
+.generalActions { padding:0; }
+.generalActions li { margin: 10px 5px 0 0; list-style: none; padding-left:17px; background: url('../../images/icons/bullet_green.gif') no-repeat 0 50%;}
+
+#sideMenu .providerActions { padding-left:20px; }
+.providerActions li { background: url('../../images/icons/bullet_yellow.gif') no-repeat 0 50%; } 
+
+.resourceLookup p label { margin-right:0; padding:0;}
+.resourceLookup p input { margin-left:0; padding:0;}
+
+.registrationHelp { margin: 0 0 10px 0; padding:10px; background-color: #fffae4; width:465px; border:1px solid #CCCCCC; }
+
+.providerActions { padding :0; }
+.providerActions li { margin: 10px 5px 0 0; list-style: none; padding-left:17px; background: url('../../images/icons/bullet_yellow.gif') no-repeat 0 50%; }
+
+.info { position:relative; float:top; }
+
+#registrationContainer p { clear:left; }
+
+.error { color: #FF0000; }

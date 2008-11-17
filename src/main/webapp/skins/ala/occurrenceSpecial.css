@@ -1,0 +1,134 @@
+#twopartheader    {
+	/* moved to speciesGlobal.css */
+	background: transparent url(images/ALA-doc-3-occurrences.gif) no-repeat scroll 0% 65%;
+	min-height: 80px;
+	height: auto;
+	padding-left: 95px;
+	color: #2B2B28;
+}
+/* hack for IE */
+* html #twopartheader {
+    height: 80px;
+}
+#twopartheader h2 { margin: 0; padding: 4px 0 0 5px; font-size: 120%; /* color: #1B619B; *//* #872f2f; */ }
+#twopartheader h3 { margin: 0; padding: 7px 0 0 5px; font-size: 110%; font-weight: normal; }
+
+#content h1 { margin: 0; padding: 4px 0 0 96px; font-size: 1.1em ; /* color: #0166B9;*//* #872f2f; */ }
+#content h4 { margin: 20px 0 5px 0; padding: 0 ; font-size: 1.1em ; /* color: #0166B9;*//* #872f2f; */ }
+#content h5 { /* color: #872f2f;*/ }
+
+.lt , a.lt  { color: #BBB }
+
+input#search { margin: 0 0 0 18px; }
+
+thead { color: #0166B9;/* #872f2f; */ }
+
+/* table.results th { background-color:#ffeeee; } */
+
+th.sortable a { color: #872f2f; border-bottom: none; }
+
+.occurrenceContainer p {
+	margin-bottom: 4px;
+}
+.prev_next , a.prev_next { color: #A6A6A6; }
+
+.pagelinks strong { color: #494949; background-color: #ffeeee ; }
+
+/* Added by Dave */
+.occurrenceFieldset p { clear: left; }
+#occurrenceActions { border: 0px solid #CCCCCC; background-color:#F8F2E5; padding:5px; margin-right:10px; margin-left:0px; }
+#occurrenceActions h4 { margin:5px; }
+#occurrenceMedia { margin-left: 10px; margin-bottom: 10px; }
+#occurrenceMedia a { border-bottom: none; }
+#occurrenceGeospatial { margin-bottom: 10px; }
+#constructedFilters #warnings { margin-top:10px; float: left; width: 300px; }
+#constructedFilters #warnings ul { margin-top:0px; margin-left:5px;  margin-bottom:5px;}
+
+.generaSubject { font-weight:bold; }
+div#warnings { float: left;
+               display: none;  /* REMOVE!!! testing only */
+               background-color: #F8F2E5;
+               border: 2px solid #D75A20;
+               width: 58%;
+               margin-bottom: 20px;
+}
+.occurrenceContainer #furtherActions { 
+	float: right;
+    width: 39%;
+    margin-right: 10px;
+}
+#furtherActions h4 { margin: 10px; }
+#changeSearch { background: url('images/tip1.jpg') no-repeat; padding: 7px 0 10px 35px; border-bottom: none; }
+
+/* classification wizard */
+.conceptLink { margin: 0; padding-left: 10px; padding-right: 5px; border:none; background: url('../standard/images/plusSignBumpBG1.gif') no-repeat 8px 3px; border:none; }
+a.treeNodeLinkTentative .conceptLink { background: url('../standard/images/plusSignFlatBG1.gif') no-repeat 8px 3px; }
+#smalltree { width:625px; }
+
+/* Downloads */
+h5#datasetFieldsTitle { margin-top:0px; /* color: #6abbe3;*/ }
+h5#taxonomyFieldsTitle { margin-top:10px; /* color: #8425a6;*/ }
+h5#geospatialFieldsTitle { margin-top:10px; /* color: #f19d5d;*/ }
+#citationDownload { font-weight: bold; margin-top:10px; margin-bottom:10px; }
+
+/* End of Added by Dave */
+
+/* Added by Tim */
+.feedback { background: url('../../images/feedbackLink.gif') no-repeat 0px 0px; padding-left:40px; }
+
+/* Searching */
+h4#addSearchFilter, h4#currentSearch  { margin: 0px 0 5px 0px; padding: 0; }
+
+.cellNote { font-size: 0.7em; }
+
+.helpList { margin-top:10px; margin-left:10px; }
+
+fieldset p { clear:left; }
+
+.noHoverDecoration :hover { text-decoration: none; }
+
+.modellingLayers td { vertical-align: top; }
+.hidden { display: none; }
+
+.selectedLayerSet { font-weight: bold; }
+.nonSelectedLayerSet { font-weight: normal; }
+
+.generatedModel { height:360px; width: 720px; border: 1px solid #CCCCCC; } 
+.lastModified { color: gray; font-size: 0.81em;  }
+
+#actionsAndResults .actionsListInline a, #occurrenceActions .actionsListInline a  {
+	display: block;
+	height: 16px;
+}
+.actionsListInline .iconDownload {
+    padding-left: 18px;
+    background: url('images/page_white_put.png') no-repeat 0px 0px
+}
+.actionsListInline .iconEarth {
+    padding-left: 18px;
+    background: url('images/google_earth_icon.gif') no-repeat 0px 0px
+}
+.actionsListInline .iconTable {
+    padding-left: 18px;
+    background: url('images/table_icon.png') no-repeat 0px 0px
+}
+.actionsListInline .iconMap {
+    padding-left: 18px;
+    background: url('images/map_icon.png') no-repeat 0px 0px
+}
+.actionsListInline .iconSearchAdd {
+    padding-left: 18px;
+    background: url('images/icon_magnifier_plus.png') no-repeat 0px 0px
+}
+.actionsListInline .iconModel {
+    padding-left: 18px;
+    background: url('images/icon_wand.png') no-repeat 0px 0px
+}
+
+ul.actionsListInline li {
+	display:block;
+}
+
+.occurrenceContainer #furtherActions ul.actionsListInline li {
+    display: list-item;
+}

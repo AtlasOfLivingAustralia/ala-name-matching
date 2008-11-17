@@ -1,0 +1,1028 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN" "http://struts.apache.org/dtds/tiles-config_1_1.dtd">
+<tiles-definitions>
+	
+	<!-- =======================================================  -->
+	<!-- Master definition  								      -->
+	<!-- =======================================================  -->
+	
+	<!-- Main Layout Definition  -->
+	<definition name="mainLayout" path="/layouts/mainLayout.jsp">
+		<put name="title" value="portal.title"/>
+		<put name="subtitle" value="/WEB-INF/jsp/stats.jsp"/>
+		<put name="keywords" value=""/>		
+		<put name="headcontent" value=""/>
+		<put name="header" value="/WEB-INF/jsp/header.jsp"/>
+		<put name="topmenu" value="/WEB-INF/jsp/menu/topMenu.jsp"/>
+		<put name="content" value=""/>
+		<put name="breadcrumbs" value="/WEB-INF/jsp/user/breadcrumbs.jsp"/>
+		<put name="footer" value="/common/footer.jsp"/>
+	</definition>
+	
+	<!-- Layout for admin pages -->
+	<definition name="adminLayout" path="/layouts/adminLayout.jsp">
+		<put name="title" value="portal.title"/>
+		<put name="subtitle" value="/WEB-INF/jsp/stats.jsp"/>
+		<put name="headcontent" value=""/>
+		<put name="header" value="/WEB-INF/jsp/header.jsp"/>
+		<put name="topmenu" value="/WEB-INF/jsp/menu/topMenu.jsp"/>
+		<put name="sidemenu" value="/WEB-INF/jsp/registration/sidemenu.jsp"/>
+		<put name="content" value=""/>
+		<put name="breadcrumbs" value=""/>
+		<put name="footer" value="/common/footer.jsp"/>
+	</definition>	
+	
+	<!-- Filter Search Layout -->
+	<definition name="wizardSearchLayout" path="/layouts/wizardSearchLayout.jsp">
+		<put name="title" value="portal.title"/>
+		<put name="subtitle" value="/WEB-INF/jsp/filters/filterSubtitle.jsp"/>
+		<put name="headcontent" value=""/>
+		<put name="searchTitle" value=""/>
+		<put name="filterAction" value=""/>
+		<put name="filterhelp" value=""/>
+		<put name="warnings" value="/WEB-INF/jsp/filters/warnings.jsp"/>
+		<put name="actions" value=""/>
+		<put name="results" value=""/>
+		<put name="header" value="/WEB-INF/jsp/header.jsp"/>
+		<put name="topmenu" value="/WEB-INF/jsp/menu/topMenu.jsp"/>
+		<put name="breadcrumbs" value="/WEB-INF/jsp/user/breadcrumbs.jsp"/>
+		<put name="footer" value="/common/footer.jsp"/>
+		<put name="viewName" value=""/>
+	</definition>
+
+    <!-- Main Layout Definition  -->
+    <definition name="printLayout" path="/layouts/printLayout.jsp">
+      <put name="title" value="portal.title"/>
+      <put name="content" value=""/>
+      <put name="footer" value=""/>
+    </definition>
+
+	<!-- A layout for AJAX tiles  -->
+	<definition name="ajaxLayout" path="/layouts/ajaxLayout.jsp">
+		<put name="taglibs" value="/common/taglibs.jsp"/>
+		<put name="content" value=""/>
+	</definition>
+	
+	<!-- A layout for AJAX tiles that return subsections of HTML -->
+	<definition name="ajaxHtmlLayout" path="/layouts/ajaxHtmlLayout.jsp">
+		<put name="taglibs" value="/common/taglibs.jsp"/>
+		<put name="content" value=""/>
+	</definition>
+	
+	<!-- Widget Layout -->
+	<definition name="widgetLayout" path="/layouts/widgetLayout.jsp">
+		<put name="headcontent" value="/common/headcontent.jsp"/>
+		<put name="widget" value=""/>
+		<put name="content" value=""/>
+	</definition>
+	
+	<!-- =======================================================  -->
+	<!-- Main page body definitions  							  -->
+	<!-- =======================================================  -->
+	
+	<!--Welcome Page Tile-->
+	<definition name="welcome" extends="mainLayout">
+		<put name="headcontent" value="/WEB-INF/jsp/headcontent.jsp"/>
+		<put name="topmenu" value="/WEB-INF/jsp/menu/frontPageTopMenu.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/panes.jsp"/>
+		<put name="breadcrumbs" value=""/>				
+	</definition>
+
+    <definition name="version" extends="mainLayout">
+      <put name="subtitle" value="/WEB-INF/jsp/versionSubtitle.jsp"/>
+      <put name="headcontent" value="/WEB-INF/jsp/user/headcontent.jsp"/>
+      <put name="content" value="/WEB-INF/jsp/version.jsp"/>
+      <put name="breadcrumbs" value=""/>            
+    </definition>
+	
+	<!-- Agreement check page -->
+	<definition name="agreement" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/user/dataAgreementSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/user/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/user/dataAgreement.jsp"/>
+		<put name="breadcrumbs" value=""/>						
+	</definition>
+  
+	<definition name="datasharingagreement" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/user/dataAgreementSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/user/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/user/dataSharingAgreement.jsp"/>
+		<put name="breadcrumbs" value=""/>						
+	</definition>
+	
+	<!-- Occurrence Searching -->
+	<definition name="occurrenceSearch" extends="wizardSearchLayout">
+		<put name="headcontent" value="/WEB-INF/jsp/occurrence/headcontent.jsp"/>
+		<put name="searchTitle" value="occurrence.search.searchTitle"/>
+		<put name="searchHelp" value="occurrence.search.filter.pleaseadd"/>						
+		<put name="filterHelp" value="/WEB-INF/jsp/occurrence/filterHelp.jsp"/>		
+		<put name="filterAction" value="/occurrences/search.htm"/>				
+	</definition>	
+	<!-- Occurrence Searching - editor view -->
+	<definition name="occurrenceSearchWithEditorPane" extends="occurrenceSearch">
+		<put name="constructedFilter" value="/WEB-INF/jsp/filters/constructedFilters.jsp"/>
+		<put name="filterEditor" value="/WEB-INF/jsp/filters/filterEditor.jsp"/>
+		<put name="actions" value="/WEB-INF/jsp/occurrence/furtherActions.jsp"/>
+		<put name="results" value="/WEB-INF/jsp/occurrence/sampleResults.jsp"/>
+		<put name="viewName" value="searchEditor"/>		
+	</definition>
+	<!-- Occurrence Searching - paging table view -->	
+	<definition name="occurrenceSearchWithTable" extends="occurrenceSearch">
+		<put name="searchTitle" value="occurrence.search.searchTitle.table.view"/>		
+		<put name="constructedFilter" value="/WEB-INF/jsp/filters/readonlyFilters.jsp"/>
+		<put name="filterEditor" value="/WEB-INF/jsp/occurrence/moreActions.jsp"/>
+		<put name="actions" value=""/>
+		<put name="results" value="/WEB-INF/jsp/occurrence/pagingResults.jsp"/>
+		<put name="viewName" value="resultsTable"/>		
+	</definition>
+	<!-- Occurrence Searching - map view -->		
+	<definition name="occurrenceSearchWithMap" extends="occurrenceSearch">
+		<put name="searchTitle" value="occurrence.search.searchTitle.map.view"/>				
+		<put name="constructedFilter" value="/WEB-INF/jsp/filters/readonlyFilters.jsp"/>
+		<put name="filterEditor" value="/WEB-INF/jsp/occurrence/moreActions.jsp"/>
+		<put name="actions" value=""/>
+		<put name="results" value="/WEB-INF/jsp/filters/filterMap.jsp"/>
+		<put name="viewName" value="resultsMap"/>		
+	</definition>
+	<!-- Occurrence Searching - download spreadsheet -->
+	<definition name="occurrenceDownloadSpreadsheet" extends="occurrenceSearch">
+		<put name="searchTitle" value="occurrence.search.searchTitle.download.spreadsheet"/>						
+		<put name="constructedFilter" value="/WEB-INF/jsp/filters/readonlyFilters.jsp"/>
+		<put name="filterEditor" value="/WEB-INF/jsp/occurrence/moreActions.jsp"/>
+		<put name="actions" value=""/>
+		<put name="results" value="/WEB-INF/jsp/occurrence/downloadSpreadsheet.jsp"/>
+		<put name="viewName" value="resultsDownloadSpreadsheet"/>		
+	</definition>	
+	<!-- Occurrence Searching - download xml/kml -->
+	<definition name="occurrenceDownloadXML" extends="occurrenceSearch">
+		<put name="searchTitle" value="occurrence.search.searchTitle.download.xml"/>								
+		<put name="constructedFilter" value="/WEB-INF/jsp/filters/readonlyFilters.jsp"/>
+		<put name="filterEditor" value="/WEB-INF/jsp/occurrence/moreActions.jsp"/>
+		<put name="actions" value=""/>
+		<put name="results" value="/WEB-INF/jsp/occurrence/downloadXML.jsp"/>
+		<put name="viewName" value="resultsDownloadXML"/>		
+	</definition>	
+	<!-- Occurrence Searching - total count retrieved via ajax -->			
+	<definition name="occurrenceCountView" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/counts/totalCount.jsp"/>
+	</definition>	
+
+	<!-- Occurrence Points AJAX tile for retrieving groups of points via AJAX-->
+	<definition name="occurrencePoints" extends="ajaxLayout">
+		<put name="content" value="/WEB-INF/jsp/occurrence/points.jsp"/>
+	</definition>
+	
+	<!--  Occurrence Search Filter Counts Pages -->
+	<!--  Provider Counts Page -->
+	<definition name="occurrenceFilterProviderCounts" extends="occurrenceSearch">
+		<put name="searchTitle" value="occurrence.search.searchTitle.data.providers"/>										
+		<put name="constructedFilter" value="/WEB-INF/jsp/filters/readonlyFilters.jsp"/>
+		<put name="filterEditor" value="/WEB-INF/jsp/occurrence/moreActions.jsp"/>
+		<put name="actions" value="/WEB-INF/jsp/occurrence/counts/providerCountsComment.jsp"/>
+		<put name="results" value="/WEB-INF/jsp/occurrence/counts/providerCounts.jsp"/>
+		<put name="viewName" value="providerCounts"/>		
+	</definition>		
+	<definition name="occurrenceFilterResourceCounts" extends="occurrenceSearch">
+		<put name="searchTitle" value="occurrence.search.searchTitle.datasets"/>												
+		<put name="constructedFilter" value="/WEB-INF/jsp/filters/readonlyFilters.jsp"/>
+		<put name="filterEditor" value="/WEB-INF/jsp/occurrence/moreActions.jsp"/>
+		<put name="actions" value="/WEB-INF/jsp/occurrence/counts/resourceCountsComment.jsp"/>
+		<put name="results" value="/WEB-INF/jsp/occurrence/counts/resourceCounts.jsp"/>
+		<put name="viewName" value="resourceCounts"/>		
+	</definition>		
+	<!--  Country Counts Page -->
+	<definition name="occurrenceFilterCountryCounts" extends="occurrenceSearch">
+		<put name="searchTitle" value="occurrence.search.searchTitle.countries"/>														
+		<put name="constructedFilter" value="/WEB-INF/jsp/filters/readonlyFilters.jsp"/>
+		<put name="filterEditor" value="/WEB-INF/jsp/occurrence/moreActions.jsp"/>
+		<put name="actions" value="/WEB-INF/jsp/occurrence/counts/countryCountsComment.jsp"/>
+		<put name="results" value="/WEB-INF/jsp/occurrence/counts/countryCounts.jsp"/>
+		<put name="viewName" value="countryCounts"/>		
+	</definition>		
+	<!-- Species Counts Page -->
+	<definition name="occurrenceFilterSpeciesCounts" extends="occurrenceSearch">
+		<put name="constructedFilter" value="/WEB-INF/jsp/filters/readonlyFilters.jsp"/>
+		<put name="filterEditor" value="/WEB-INF/jsp/occurrence/moreActions.jsp"/>
+		<put name="actions" value="/WEB-INF/jsp/occurrence/counts/speciesCountsComment.jsp"/>
+		<put name="results" value="/WEB-INF/jsp/occurrence/counts/speciesCounts.jsp"/>
+		<put name="viewName" value="speciesCounts"/>		
+	</definition>
+  <!-- Niche modelling integration -->	
+  <definition name="occurrenceFilterNicheModelling" extends="occurrenceSearch">
+    <put name="constructedFilter" value="/WEB-INF/jsp/filters/readonlyFilters.jsp"/>
+    <put name="filterEditor" value="/WEB-INF/jsp/occurrence/moreActions.jsp"/>
+    <put name="actions" value=""/>
+    <put name="results" value="/WEB-INF/jsp/modelling/selectModelLayers.jsp"/>
+    <put name="viewName" value="nicheModelling"/>    
+  </definition>
+  <definition name="preparingModel" extends="mainLayout">
+    <put name="subtitle" value="/WEB-INF/jsp/download/preparingSubtitle.jsp"/>
+    <put name="headcontent" value="/WEB-INF/jsp/occurrence/headcontent.jsp"/>
+    <put name="content" value="/WEB-INF/jsp/modelling/preparingModel.jsp"/>
+  </definition>   
+  	
+	<!-- Occurrence Record Drilldown-->
+	<definition name="occurrenceRecord" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/occurrence/drilldown/occurrenceSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/occurrence/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/occurrence/drilldown/view.jsp"/>
+	</definition>
+	<!-- Occurrence Record retrieved from provider -->
+	<definition name="occurrenceRecord.providerMessage" path="/WEB-INF/jsp/occurrence/drilldown/rawMessage.jsp"/>
+	<!-- Occurrence Record - large google map view -->
+	<definition name="occurrenceRecord.largeMap" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/occurrence/drilldown/occurrenceSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/occurrence/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/occurrence/drilldown/largeMap.jsp"/>
+	</definition>		
+	<!-- Occurrence Filter Help -->
+	<definition name="occurrenceFilterHelp" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/occurrence/filterHelp.jsp"/>
+	</definition>
+	
+	<!-- Occurrence download waiting area -->
+	<definition name="downloadPreparing" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/download/preparingSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/occurrence/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/download/preparing.jsp"/>
+	</definition>	
+    <definition name="downloadProgress" extends="mainLayout">
+      <put name="subtitle" value="/WEB-INF/jsp/download/progressSubtitle.jsp"/>
+      <put name="headcontent" value="/WEB-INF/jsp/occurrence/headcontent.jsp"/>
+      <put name="content" value="/WEB-INF/jsp/download/progress.jsp"/>
+    </definition>   	
+	<definition name="downloadReady" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/download/readySubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/occurrence/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/download/ready.jsp"/>
+	</definition>		
+	<definition name="downloadFailed" extends="mainLayout">
+    <put name="subtitle" value="/WEB-INF/jsp/download/failedSubtitle.jsp"/>
+    <put name="headcontent" value="/WEB-INF/jsp/occurrence/headcontent.jsp"/>
+    <put name="content" value="/WEB-INF/jsp/download/failed.jsp"/>
+  </definition>   
+	<definition name="downloadExpired" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/download/expiredSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/occurrence/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/download/expired.jsp"/>
+	</definition>			
+	<definition name="downloadReadyCheck" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/download/ajaxDownloadReady.jsp"/>
+	</definition>
+		
+	<!-- Generic Filter tiles -->
+	<!--Constructed Filters -->
+	<definition name="constructedFilters" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/filters/constructedFilters.jsp"/>
+	</definition>
+		
+	<!-- Taxonomy Tiles -->
+	<definition name="taxonomySearch" extends="wizardSearchLayout">
+		<put name="headcontent" value="/WEB-INF/jsp/taxonomy/headcontent.jsp"/>
+		<put name="filterAction" value="/species/search.htm"/>				
+		<put name="filterHelp" value="/WEB-INF/jsp/taxonomy/filterHelp.jsp"/>		
+		<put name="searchHelp" value=""/>				
+	</definition>
+	
+	<!-- Taxonomy Filter Search Page -->
+	<definition name="taxonomyFilter" extends="taxonomySearch">
+		<put name="headcontent" value="/WEB-INF/jsp/taxonomy/headcontent.jsp"/>
+		<put name="searchTitle" value="taxonomy.search.searchTitle"/>
+		<put name="searchHelp" value="taxonomy.search.filter.pleaseadd"/>		
+		<put name="constructedFilter" value="/WEB-INF/jsp/filters/constructedFilters.jsp"/>
+		<put name="filterEditor" value="/WEB-INF/jsp/filters/filterEditor.jsp"/>
+		<put name="actions" value="/WEB-INF/jsp/taxonomy/actions.jsp"/>
+		<put name="results" value="/WEB-INF/jsp/taxonomy/pagingResults.jsp"/>
+		<put name="filterAction" value="/species/search.htm"/>				
+		<put name="filterHelp" value="/WEB-INF/jsp/taxonomy/filterHelp.jsp"/>		
+	</definition>
+
+	<!-- Taxonomy Filter Help -->
+	<definition name="taxonomyFilterHelp" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/taxonomy/filterHelp.jsp"/>
+	</definition>	
+	
+	<!-- Taxon concept download -->
+	<definition name="taxonomyDownloadSpreadsheet" extends="taxonomySearch">
+		<put name="searchTitle" value="taxonomy.search.searchTitle.download.spreadsheet"/>						
+		<put name="constructedFilter" value="/WEB-INF/jsp/filters/readonlyFilters.jsp"/>
+		<put name="filterEditor" value="/WEB-INF/jsp/taxonomy/actions.jsp"/>
+		<put name="searchHelp" value="taxonomy.search.filter.download.help"/>				
+		<put name="actions" value=""/>
+		<put name="results" value="/WEB-INF/jsp/taxonomy/downloadSpreadsheet.jsp"/>
+		<put name="viewName" value="resultsDownloadSpreadsheet"/>		
+	</definition>	
+			
+	<!-- Taxonomy Browser -->
+	<definition name="taxonomyBrowse" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/taxonomy/browseSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/taxonomy/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/taxonomy/smallBrowse.jsp"/>
+	</definition>
+	<!-- Taxonomy Browser -->
+	<definition name="countryTaxonomyBrowse" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/taxonomy/countryBrowseSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/taxonomy/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/taxonomy/countryBrowse.jsp"/>
+	</definition>
+
+	<!-- Taxonomy Browser - ajax retrieval of tree -->	
+	<definition name="taxonomyBrowse.ajax" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/taxonomy/ajaxBrowse.jsp"/>
+	</definition>
+	
+	<definition name="taxon.id.form" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/taxonomy/mapping/nameMapperSubtitle.jsp"/>		
+		<put name="headcontent" value="/WEB-INF/jsp/taxonomy/headcontent.jsp"/>		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/mapping/nameMapperForm.jsp"/>
+	</definition>
+	<definition name="taxon.id.names" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/taxonomy/mapping/nameMapperSubtitle.jsp"/>				
+		<put name="headcontent" value="/WEB-INF/jsp/taxonomy/headcontent.jsp"/>		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/mapping/nameMapperTable.jsp"/>
+	</definition>
+		
+	<!-- Name Resolution Page-->
+	<definition name="commonNameResolveView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/taxonomy/commonNameResolveSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/taxonomy/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/taxonomy/commonNameResolve.jsp"/>
+	</definition>
+	<definition name="taxonNameResolveView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/taxonomy/taxonNameResolveSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/taxonomy/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/taxonomy/taxonNameResolve.jsp"/>
+	</definition>
+	
+	<!-- Dataset Tiles -->
+	<!-- Dataset Browser -->
+	<definition name="datasetBrowse" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/dataset/browseSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/dataset/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/dataset/browse.jsp"/>
+	</definition>
+	<!-- Data Resource Tiles -->
+	<definition name="resource" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/dataset/drilldown/datasetSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/dataset/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/dataset/drilldown/resource/view.jsp"/>
+	</definition>
+	<!-- Data Provider Tiles -->
+	<definition name="provider" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/dataset/drilldown/datasetSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/dataset/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/dataset/drilldown/provider/view.jsp"/>
+	</definition>
+	<!-- Resource Network Tiles -->
+	<definition name="network" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/dataset/drilldown/datasetSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/dataset/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/dataset/drilldown/network/view.jsp"/>
+	</definition>
+	<!-- Log Event Tiles -->	
+	<definition name="logTable" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/dataset/drilldown/provider/logTableSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/dataset/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/dataset/drilldown/provider/logTable.jsp"/>
+	</definition>
+	<!-- Harvesting Log Event Tiles -->	
+	<definition name="harvestingLogTable" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/dataset/drilldown/provider/dataTrackingSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/dataset/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/dataset/drilldown/provider/logTable.jsp"/>
+	</definition>
+    <!-- JSP for rendering metacat harvest list -->
+    <definition name="harvestList" page="/WEB-INF/jsp/dataset/metacatHarvestList.jsp" />
+	
+	<!-- Indexing History -->
+	<definition name="indexingHistory" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/dataset/drilldown/provider/indexingHistorySubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/dataset/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/dataset/drilldown/provider/indexingHistory.jsp"/>
+	</definition>
+	<definition name="rawOccurrenceTableView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/dataset/drilldown/provider/logTableSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/dataset/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/dataset/drilldown/provider/rawDataView.jsp"/>
+	</definition>
+	<definition name="logGroupStats" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/dataset/drilldown/provider/logTableSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/dataset/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/dataset/drilldown/provider/logGroupStats.jsp"/>
+	</definition>
+	
+	<!-- map link defs -->
+	<definition name="resourceOverviewMap" page="/WEB-INF/jsp/geography/overviewMapWithLinks.jsp">
+		<put name="mapLinks" value="/WEB-INF/jsp/dataset/drilldown/resource/mapLinks.jsp"/>
+		<put name="urlRoot" value="datasets/resource"/>
+	</definition>
+	<definition name="providerOverviewMap" page="/WEB-INF/jsp/geography/overviewMapWithLinks.jsp">
+		<put name="mapLinks" value="/WEB-INF/jsp/dataset/drilldown/provider/mapLinks.jsp"/>
+		<put name="urlRoot" value="datasets/provider"/>		
+	</definition>
+	<definition name="resourceNetworkOverviewMap" page="/WEB-INF/jsp/geography/overviewMapWithLinks.jsp">
+		<put name="mapLinks" value="/WEB-INF/jsp/dataset/drilldown/network/mapLinks.jsp"/>
+		<put name="urlRoot" value="datasets/network"/>				
+	</definition>
+	<definition name="taxonOverviewMap" page="/WEB-INF/jsp/geography/overviewMapWithLinks.jsp">
+		<put name="mapLinks" value="/WEB-INF/jsp/taxonomy/drilldown/mapLinks.jsp" />
+		<put name="urlRoot" value="species"/>						
+	</definition>	
+	
+	<!-- Geography Tiles -->
+	<definition name="geographyBrowse" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/geography/browseSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/geography/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/geography/browse.jsp"/>
+	</definition>
+	<definition name="geographyView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/geography/drilldown/countrySubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/geography/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/geography/drilldown/view.jsp"/>
+		<put name="overviewMap" value="geographyOverviewMap" />						
+	</definition>
+	<definition name="geographyOverviewMap" page="/WEB-INF/jsp/geography/overviewMapWithLinks.jsp">
+		<put name="mapLinks" value="/WEB-INF/jsp/geography/drilldown/mapLinks.jsp" />						
+		<put name="urlRoot" value="countries"/>		
+	</definition>
+	<definition name="gbifWMSMap" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/geography/browseSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/geography/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/geography/gbifWMSMap.jsp"/>
+	</definition>	
+	
+	<!-- Mapping tiles -->
+	<!-- the main map tile -->
+	<definition name="overviewMap" page="/WEB-INF/jsp/geography/gbifMap.jsp"/>		
+	<!-- the smaller overview map tile for zoomed in maps -->	
+	<definition name="smallOverviewMap" page="/WEB-INF/jsp/geography/overviewMap.jsp"/>	
+	<!-- the smaller overview map tile for zoomed in maps -->	
+	<definition name="species.mapWidget" page="/WEB-INF/jsp/taxonomy/drilldown/mapWidget.jsp"/>	
+	<definition name="resource.mapWidget" page="/WEB-INF/jsp/dataset/drilldown/resource/mapWidget.jsp"/>	
+	<definition name="provider.mapWidget" page="/WEB-INF/jsp/dataset/drilldown/provider/mapWidget.jsp"/>	
+	<definition name="network.mapWidget" page="/WEB-INF/jsp/dataset/drilldown/network/mapWidget.jsp"/>	
+	<definition name="geographyView.mapWidget" page="/WEB-INF/jsp/geography/drilldown/mapWidget.jsp"/>		
+			
+	<!-- Settings Tiles -->
+	<definition name="settings" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/user/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/user/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/user/settings.jsp"/>
+		<put name="breadcrumbs" value=""/>		
+	</definition>
+	
+	<!-- Images Tile -->
+	<definition name="thumbnails" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/images/thumbnails.jsp"/>
+	</definition>
+	<definition name="images" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/images/images.jsp"/>
+	</definition>
+	
+	<!-- Registration pages -->
+	<definition name="registrationMain" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/registration/menu.jsp"/>
+	</definition>
+	<definition name="registrationProviderDetail" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/providerDetail.jsp"/>
+	</definition>	
+	<definition name="registrationUpdateProviderDetail" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/updateProviderDetail.jsp"/>
+	</definition>	
+	<definition name="registrationProviderList" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/registration/providerList.jsp"/>
+	</definition>
+	<definition name="registrationAdminProviderList" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/registration/providerList.jsp"/>
+	</definition>					
+	<definition name="registrationUserUpdate" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/userUpdate.jsp"/>
+	</definition>
+	<definition name="registrationSelectUser" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/selectUser.jsp"/>
+	</definition>			
+	<definition name="registrationResourceDetail" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/resourceDetail.jsp"/>
+	</definition>	
+	<definition name="registrationResourceList" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/resourceList.jsp"/>
+	</definition>	
+	<definition name="registrationResourceLookup" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/resourceLookup.jsp"/>
+	</definition>		
+	<definition name="registrationResourceManual" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/manualRegistration.jsp"/>
+	</definition>	
+	<definition name="registrationSingleResource" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/singleResource.jsp"/>
+	</definition>		
+	<definition name="registrationMetadataResourceList" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/registration/metadataResourceList.jsp"/>
+	</definition>	
+	<definition name="registrationLDAPFailure" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/admin/ldapFailure.jsp"/>
+	</definition>	
+	<definition name="registrationUDDIFailure" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/admin/uddiFailure.jsp"/>
+	</definition>
+	<definition name="registrationBadBusinessKey" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/admin/badBusinessKey.jsp"/>
+	</definition>	
+	<definition name="registrationVerificationFailureView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/verificationFailure.jsp"/>
+	</definition>
+	<definition name="registrationVerificationSuccessView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/verificationSuccess.jsp"/>
+	</definition>
+	<definition name="emailDetailsFailureView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/emailDetailsFailure.jsp"/>
+	</definition>
+	<definition name="emailDetailsSuccessView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/emailDetailsSuccess.jsp"/>
+	</definition>	
+	<definition name="resetPassword" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/resetPassword.jsp"/>
+	</definition>		
+	<definition name="passwordReset" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/passwordReset.jsp"/>
+	</definition>			
+	<definition name="requestSentView" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/requestSent.jsp"/>
+	</definition>	
+	<definition name="approveProviderListView" extends="adminLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/registration/approveProviderList.jsp"/>
+	</definition>	
+				
+	<!-- Feedback pages -->
+	<definition name="feedbackInputView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/feedback/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/feedback/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/feedback/input.jsp"/>
+	</definition>	
+	<definition name="feedbackSuccessView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/feedback/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/feedback/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/feedback/success.jsp"/>
+	</definition>	
+	<definition name="verificationSuccessView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/feedback/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/feedback/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/feedback/successfulVerification.jsp"/>
+	</definition>	
+	<definition name="verificationFailureView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/feedback/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/feedback/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/feedback/unsuccessfulVerification.jsp"/>
+	</definition>	
+	
+	<!-- Tutorial pages -->
+	<definition name="tutorialView" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/tutorial/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/tutorial/headcontent.jsp"/>	  
+		<put name="content" value="/WEB-INF/jsp/tutorial/input.jsp"/>
+	</definition>	
+	
+	<!-- The administration pages (including the login pages) -->
+	<definition name="login" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/admin/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/admin/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/admin/login.jsp"/>
+	</definition>
+	<definition name="forgottenPassword" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/admin/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/admin/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/admin/forgottenPassword.jsp"/>
+	</definition>
+	<definition name="newUser" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/admin/subtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/admin/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/admin/newUser.jsp"/>
+	</definition>
+	
+	<!-- XML Query - for legacy support -->
+	<definition name="xmlQuery" extends="ajaxLayout">
+		<put name="content" value="/WEB-INF/jsp/search/xmlQuery.jsp"/>
+	</definition>	
+	<definition name="xmlQueryGIS" extends="ajaxLayout">
+		<put name="content" value="/WEB-INF/jsp/search/xmlQueryGIS.jsp"/>
+	</definition>		
+	
+	<!-- Widget Implementation -->
+	<!-- Blanket Search Page -->
+	<definition name="search" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/search/searchSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/search/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/search/blanketView.jsp"/>
+	</definition>
+	
+	<!-- Individual Search Widgets -->
+	<definition name="search.names" extends="widgetLayout" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="names"/>
+		<put name="content" value="/WEB-INF/jsp/search/names.jsp"/>
+	</definition>
+	<definition name="search.taxa" extends="widgetLayout" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="taxa"/>
+		<put name="content" value="/WEB-INF/jsp/search/taxa.jsp"/>
+	</definition>
+	<definition name="search.commonNames" extends="widgetLayout" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="commonNames"/>
+		<put name="content" value="/WEB-INF/jsp/search/commonNames.jsp"/>
+	</definition>
+	<definition name="search.countries" extends="widgetLayout" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="countries"/>
+		<put name="content" value="/WEB-INF/jsp/search/countries.jsp"/>
+	</definition>
+	<definition name="search.datasets" extends="widgetLayout" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="datasets"/>
+		<put name="content" value="/WEB-INF/jsp/search/datasets.jsp"/>
+	</definition>
+	
+	<!-- Individual Stripped down Widgets tiles for inclusion in main search page i.e. no css, javascript or html tag wrappers -->
+	<definition name="search.names.bare" path="/WEB-INF/jsp/search/names.jsp" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="names"/>
+	</definition>
+	<definition name="search.taxa.bare" path="/WEB-INF/jsp/search/taxa.jsp" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="taxa"/>
+	</definition>
+	<definition name="search.commonNames.bare" path="/WEB-INF/jsp/search/commonNames.jsp" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="commonNames"/>
+	</definition>
+	<definition name="search.countries.bare" path="/WEB-INF/jsp/search/countries.jsp" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="countries"/>
+	</definition>
+	<definition name="search.datasets.bare" path="/WEB-INF/jsp/search/datasets.jsp" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="datasets"/>
+	</definition>
+	
+	<!-- Simple paging for scientific names, common names, countries and datasets -->
+	<definition name="search.full" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/search/searchSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/search/headcontent.jsp"/>
+		<put name="content" value=""/>
+	</definition>
+	<definition name="search.taxa.full" extends="search.full">
+		<put name="content" value="search.taxa.paging"/>
+	</definition>	
+	<definition name="search.commonNames.full" extends="search.full">
+		<put name="content" value="search.commonNames.paging"/>
+	</definition>	
+	<definition name="search.countries.full" extends="search.full">
+		<put name="content" value="search.countries.paging"/>
+	</definition>	
+	<definition name="search.datasets.full" extends="search.full">
+		<put name="content" value="search.datasets.paging"/>
+	</definition>	
+	
+	<!-- initial search paging -->
+	<definition name="search.taxa.paging" path="/WEB-INF/jsp/search/simplePager.jsp">
+		<put name="list" value="/WEB-INF/jsp/search/taxaList.jsp"/>
+		<put name="urlRoot" value="taxa"/>
+		<put name="searchTitle" value="blanket.search.scientific.names.title"/>
+	</definition>
+	<definition name="search.commonNames.paging" path="/WEB-INF/jsp/search/simplePager.jsp">
+		<put name="list" value="/WEB-INF/jsp/search/commonNamesList.jsp"/>
+		<put name="urlRoot" value="commonNames"/>		
+		<put name="searchTitle" value="blanket.search.common.names.title"/>
+	</definition>
+	<definition name="search.countries.paging" path="/WEB-INF/jsp/search/simplePager.jsp">
+		<put name="list" value="/WEB-INF/jsp/search/countriesList.jsp"/>
+		<put name="urlRoot" value="countries"/>				
+		<put name="searchTitle" value="blanket.search.geographical.areas.title"/>
+	</definition>
+	<definition name="search.datasets.paging" path="/WEB-INF/jsp/search/simplePager.jsp">
+		<put name="list" value="/WEB-INF/jsp/search/datasetsList.jsp"/>
+		<put name="urlRoot" value="datasets"/>				
+		<put name="searchTitle" value="blanket.search.data.resources.title"/>
+	</definition>
+	
+	<!-- Blanket View Search AJAX Tiles -->
+	<definition name="search.taxaList" extends="ajaxLayout" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="taxa"/>
+		<put name="content" value="/WEB-INF/jsp/search/taxaList.jsp"/>
+	</definition>
+	<definition name="search.commonNamesList" extends="ajaxLayout" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="commonNames"/>
+		<put name="content" value="/WEB-INF/jsp/search/commonNamesList.jsp"/>
+	</definition>
+	<definition name="search.countriesList" extends="ajaxLayout" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="countries"/>
+		<put name="content" value="/WEB-INF/jsp/search/countriesList.jsp"/>
+	</definition>
+	<definition name="search.datasetsList" extends="ajaxLayout" controllerClass="org.gbif.portal.web.view.search.SearchWidgetController">
+		<put name="widget" value="datasets"/>
+		<put name="content" value="/WEB-INF/jsp/search/datasetsList.jsp"/>
+	</definition>
+	
+	<!-- Whole Species Page -->
+	<definition name="species" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/taxonomy/drilldown/conceptSubtitle.jsp"/>
+		<put name="keywords" value="/WEB-INF/jsp/taxonomy/drilldown/keywords.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/taxonomy/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/taxonomy/drilldown/view.jsp"/>
+	</definition>
+	
+	<!-- Map Layer Layout -->
+	<definition name="mapLayer" path="/WEB-INF/jsp/maplayer/mapLayer.jsp"/>
+	<definition name="mapLayer.kml" path="/WEB-INF/jsp/maplayer/kml.jsp"/>
+	
+	<!-- Occurrence Filter Wizards -->
+	<!-- Scientific Name Wizard (not in use) -->
+	<definition name="occurrence.wizard.scientificname" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/occurrence/wizards/scientificNameSelector.jsp"/>
+	</definition>
+	<definition name="conceptSelector" path="/WEB-INF/jsp/taxonomy/ajaxConceptSelector.jsp"/>
+	<!-- Bounding Box Wizard -->
+	<definition name="occurrence.wizard.boundingbox" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/occurrence/wizards/boundingbox.jsp"/>
+	</definition>
+	<definition name="boundingBoxFull" path="/WEB-INF/jsp/occurrence/wizards/boundingBoxFullScreen.jsp"/>
+	<!-- Classification Wizard -->
+	<definition name="occurrence.wizard.classification" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/occurrence/wizards/classificationSelector.jsp"/>
+	</definition>
+	<!-- Data Resource Wizard -->
+	<definition name="occurrence.wizard.dataresource" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/occurrence/wizards/dataResourceSelector.jsp"/>
+	</definition>
+	<!-- Data Resource Wizard - drop down values -->
+	<definition name="resourceKeyValuePairs" path="/WEB-INF/jsp/dataset/ajaxKeyValues.jsp"/>
+	<!-- Date Range Wizard -->
+	<definition name="occurrence.wizard.daterange" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/occurrence/wizards/dateRange.jsp"/>
+	</definition>
+	<!-- Year Range Wizard -->
+	<definition name="occurrence.wizard.yearrange" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/occurrence/wizards/yearRange.jsp"/>
+	</definition>	
+	<!-- Restrictions Wizard -->
+	<definition name="occurrence.wizard.restrictions" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/occurrence/wizards/restrictions.jsp"/>
+	</definition>
+	
+	<!-- Occurrence Help View Tiles -->
+	<definition name="basisOfRecordHelp" extends="ajaxHtmlLayout">
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/basisOfRecordHelp.jsp"/>
+	</definition>		
+	<definition name="commonNameHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/commonNameHelp.jsp"/>
+	</definition>							
+	<definition name="coordinateIssuesHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/coordinateIssuesHelp.jsp"/>
+	</definition>			
+	<definition name="coordinateStatusHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/coordinateStatusHelp.jsp"/>
+	</definition>				
+	<definition name="countryHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/countryHelp.jsp"/>
+	</definition>
+	<definition name="dataProviderHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/dataProviderHelp.jsp"/>						
+	</definition>
+	<definition name="hostCountryHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/hostCountryHelp.jsp"/>							
+	</definition>	
+	<definition name="latitudeHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/latitudeHelp.jsp"/>								
+	</definition>
+	<definition name="longitudeHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/longitudeHelp.jsp"/>									
+	</definition>
+    <definition name="altitudeHelp" extends="ajaxHtmlLayout">    
+      <put name="content" value="/WEB-INF/jsp/occurrence/help/altitudeHelp.jsp"/>                  
+    </definition>
+    <definition name="depthHelp" extends="ajaxHtmlLayout">    
+      <put name="content" value="/WEB-INF/jsp/occurrence/help/depthHelp.jsp"/>                  
+    </definition>
+	<definition name="regionHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/regionHelp.jsp"/>										
+	</definition>
+    <definition name="geoRegionHelp" extends="ajaxHtmlLayout">         
+        <put name="content" value="/WEB-INF/jsp/occurrence/help/geoRegionHelp.jsp"/>                                       
+    </definition>
+	<definition name="scientificNameHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/scientificNameHelp.jsp"/>
+	</definition>
+	<definition name="typeStatusHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/typeStatusHelp.jsp"/>	
+	</definition>
+	<definition name="yearHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/yearHelp.jsp"/>		
+	</definition>
+	<definition name="monthHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/monthHelp.jsp"/>			
+	</definition>
+	<definition name="institutionCodeHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/institutionCodeHelp.jsp"/>				
+	</definition>
+	<definition name="catalogueNoHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/catalogueNoHelp.jsp"/>				
+	</definition>
+	<definition name="collectionCodeHelp" extends="ajaxHtmlLayout"> 		
+		<put name="content" value="/WEB-INF/jsp/occurrence/help/collectionCodeHelp.jsp"/>					
+	</definition>	
+	<!-- Taxonomy Help View Tiles -->
+	<definition name="conceptNameHelp" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/help/conceptNameHelp.jsp"/>
+	</definition>			
+	<definition name="rankHelp" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/help/rankHelp.jsp"/>
+	</definition>				
+	<definition name="kingdomHelp" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/help/kingdomHelp.jsp"/>
+	</definition>			
+	<definition name="phylumHelp" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/help/phylumHelp.jsp"/>
+	</definition>			
+	<definition name="classHelp" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/help/classHelp.jsp"/>
+	</definition>			
+	<definition name="orderHelp" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/help/orderHelp.jsp"/>
+	</definition>			
+	<definition name="familyHelp" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/help/familyHelp.jsp"/>
+	</definition>			
+	<definition name="genusHelp" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/help/genusHelp.jsp"/>
+	</definition>				
+	<definition name="speciesHelp" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/help/speciesHelp.jsp"/>
+	</definition>					
+	<definition name="dataProviderTaxonHelp" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/help/dataProviderTaxonHelp.jsp"/>
+	</definition>						
+	<definition name="acceptedHelp" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/help/acceptedHelp.jsp"/>
+	</definition>					
+	<definition name="countryTaxonHelp" extends="ajaxHtmlLayout"> 		 		
+		<put name="content" value="/WEB-INF/jsp/taxonomy/help/countryHelp.jsp"/>
+	</definition>
+  	
+	<!-- Simple System Details Page -->
+	<definition name="systemDetails" extends="mainLayout">
+		<put name="subtitle" value="/WEB-INF/jsp/systemDetailsSubtitle.jsp"/>
+		<put name="headcontent" value="/WEB-INF/jsp/occurrence/headcontent.jsp"/>
+		<put name="content" value="/WEB-INF/jsp/systemDetails.jsp"/>
+	</definition>
+
+	<!-- Taxonomy AJAX tiles -->
+	<definition name="ajaxTaxonName" path="/WEB-INF/jsp/taxonomy/ajaxNames.jsp"/>
+	<definition name="ajaxTaxonConceptName" path="/WEB-INF/jsp/taxonomy/ajaxConceptNames.jsp"/>
+	<definition name="ajaxBrowseUrls" extends="ajaxLayout">
+		<put name="content" value="/WEB-INF/jsp/taxonomy/browseUrls.jsp"/>
+	</definition>	
+	<definition name="ajaxMapUrls" extends="ajaxLayout">
+		<put name="content" value="/WEB-INF/jsp/taxonomy/mapUrls.jsp"/>
+	</definition>	
+	<!-- Raw xml view for provider messages -->
+	<definition name="rawXmlStylesheet" path="/WEB-INF/jsp/rawXml.jsp"/>
+	
+	<!-- AJAX Scientific / Common name searches -->
+	<definition name="scientificNames.help" path="/WEB-INF/jsp/taxonomy/ajax/help.jsp"/>		
+	<definition name="scientificNames.name.text" path="/WEB-INF/jsp/taxonomy/ajax/names.jsp"/>	
+	<definition name="scientificNames.nameId.text" path="/WEB-INF/jsp/taxonomy/ajax/nameIds.jsp"/>	
+	<definition name="scientificNames.nameIdMap.text" path="/WEB-INF/jsp/taxonomy/ajax/nameIdMaps.jsp"/>	
+	<definition name="scientificNames.nameIdUrl.text" path="/WEB-INF/jsp/taxonomy/ajax/nameIdUrls.jsp"/>		
+	<definition name="scientificNames.name.json" path="/WEB-INF/jsp/taxonomy/ajax/namesJSON.jsp"/>	
+	<definition name="scientificNames.nameId.json" path="/WEB-INF/jsp/taxonomy/ajax/nameIdsJSON.jsp"/>	
+	<definition name="scientificNames.nameIdMap.json" path="/WEB-INF/jsp/taxonomy/ajax/nameIdMapsJSON.jsp"/>	
+	<definition name="scientificNames.nameIdUrl.json" path="/WEB-INF/jsp/taxonomy/ajax/nameIdUrlsJSON.jsp"/>	
+	<definition name="scientificNames.name.xml" path="/WEB-INF/jsp/taxonomy/ajax/namesXML.jsp"/>	
+	<definition name="scientificNames.nameId.xml" path="/WEB-INF/jsp/taxonomy/ajax/nameIdsXML.jsp"/>	
+	<definition name="scientificNames.nameIdMap.xml" path="/WEB-INF/jsp/taxonomy/ajax/nameIdMapsXML.jsp"/>	
+	<definition name="scientificNames.nameIdUrl.xml" path="/WEB-INF/jsp/taxonomy/ajax/nameIdUrlsXML.jsp"/>		
+	<!--common names -->
+	<definition name="scientificNames.commonName.text" path="/WEB-INF/jsp/taxonomy/ajax/commonNames.jsp"/>				
+	<definition name="scientificNames.commonName.json" path="/WEB-INF/jsp/taxonomy/ajax/commonNamesJSON.jsp"/>					
+	<definition name="scientificNames.commonName.xml" path="/WEB-INF/jsp/taxonomy/ajax/commonNamesXML.jsp"/>			
+	<!--common names -->
+		<definition name="classification.help" path="/WEB-INF/jsp/taxonomy/ajax/classificationHelp.jsp"/>
+	<definition name="classification.full.text" path="/WEB-INF/jsp/taxonomy/ajax/classification.jsp"/>				
+	<definition name="classification.full.json" path="/WEB-INF/jsp/taxonomy/ajax/classificationJSON.jsp"/>					
+	<definition name="classification.full.xml" path="/WEB-INF/jsp/taxonomy/ajax/classificationXML.jsp"/>	
+	<definition name="classification.full.pygmy" path="/WEB-INF/jsp/taxonomy/ajax/classificationPygmyXML.jsp"/>			
+	
+	<!-- AJAX Dataset name searches -->
+	<definition name="datasets.help" path="/WEB-INF/jsp/dataset/ajax/help.jsp"/>		
+	<definition name="datasets.name.text" path="/WEB-INF/jsp/dataset/ajax/names.jsp"/>	
+	<definition name="datasets.nameId.text" path="/WEB-INF/jsp/dataset/ajax/nameIds.jsp"/>	
+	<definition name="datasets.nameIdMap.text" path="/WEB-INF/jsp/dataset/ajax/nameIdMaps.jsp"/>	
+	<definition name="datasets.nameIdUrl.text" path="/WEB-INF/jsp/dataset/ajax/nameIdUrls.jsp"/>		
+	<definition name="datasets.name.json" path="/WEB-INF/jsp/dataset/ajax/namesJSON.jsp"/>	
+	<definition name="datasets.nameId.json" path="/WEB-INF/jsp/dataset/ajax/nameIdsJSON.jsp"/>	
+	<definition name="datasets.nameIdMap.json" path="/WEB-INF/jsp/dataset/ajax/nameIdMapsJSON.jsp"/>	
+	<definition name="datasets.nameIdUrl.json" path="/WEB-INF/jsp/dataset/ajax/nameIdUrlsJSON.jsp"/>	
+	<definition name="datasets.name.xml" path="/WEB-INF/jsp/dataset/ajax/namesXML.jsp"/>	
+	<definition name="datasets.nameId.xml" path="/WEB-INF/jsp/dataset/ajax/nameIdsXML.jsp"/>	
+	<definition name="datasets.nameIdMap.xml" path="/WEB-INF/jsp/dataset/ajax/nameIdMapsXML.jsp"/>	
+	<definition name="datasets.nameIdUrl.xml" path="/WEB-INF/jsp/dataset/ajax/nameIdUrlsXML.jsp"/>			
+    <definition name="datasets.counts.json" path="/WEB-INF/jsp/dataset/ajax/countsJSON.jsp"/>  
+	
+	<!-- AJAX Country name searches -->
+	<definition name="countries.help" path="/WEB-INF/jsp/geography/ajax/help.jsp"/>		
+	<definition name="countries.name.text" path="/WEB-INF/jsp/geography/ajax/names.jsp"/>	
+	<definition name="countries.nameId.text" path="/WEB-INF/jsp/geography/ajax/nameIds.jsp"/>	
+	<definition name="countries.nameIdMap.text" path="/WEB-INF/jsp/geography/ajax/nameIdMaps.jsp"/>	
+	<definition name="countries.nameIdUrl.text" path="/WEB-INF/jsp/geography/ajax/nameIdUrls.jsp"/>		
+	<definition name="countries.name.json" path="/WEB-INF/jsp/geography/ajax/namesJSON.jsp"/>	
+	<definition name="countries.nameId.json" path="/WEB-INF/jsp/geography/ajax/nameIdsJSON.jsp"/>	
+	<definition name="countries.nameIdMap.json" path="/WEB-INF/jsp/geography/ajax/nameIdMapsJSON.jsp"/>	
+	<definition name="countries.nameIdUrl.json" path="/WEB-INF/jsp/geography/ajax/nameIdUrlsJSON.jsp"/>	
+	<definition name="countries.name.xml" path="/WEB-INF/jsp/geography/ajax/namesXML.jsp"/>	
+	<definition name="countries.nameId.xml" path="/WEB-INF/jsp/geography/ajax/nameIdsXML.jsp"/>	
+	<definition name="countries.nameIdMap.xml" path="/WEB-INF/jsp/geography/ajax/nameIdMapsXML.jsp"/>	
+	<definition name="countries.nameIdUrl.xml" path="/WEB-INF/jsp/geography/ajax/nameIdUrlsXML.jsp"/>
+	<definition name="countries.counts.json" path="/WEB-INF/jsp/geography/ajax/countsJSON.jsp"/>
+  
+	<!-- AJAX Occurrences searches -->
+  <definition name="occurrences.help" path="/WEB-INF/jsp/occurrence/ajax/help.jsp"/>   
+  <definition name="occurrences.point.text" path="/WEB-INF/jsp/occurrence/ajax/occurrences.jsp"/> 
+  <definition name="occurrences.point.json" path="/WEB-INF/jsp/occurrence/ajax/occurrencesJSON.jsp"/>
+  
+  <!-- Tools guides --> 
+  <definition name="tools." extends="mainLayout">
+    <put name="subtitle" value="/WEB-INF/jsp/tools/subtitle.jsp"/>
+    <put name="headcontent" value="/WEB-INF/jsp/user/headcontent.jsp"/>
+    <put name="content" value="/WEB-INF/jsp/tools/index.jsp"/>
+  </definition>
+  
+  <definition name="repatTable" extends="mainLayout">
+    <put name="subtitle" value="/WEB-INF/jsp/repatriation/subtitle.jsp"/>
+    <put name="headcontent" value="/WEB-INF/jsp/repatriation/headcontent.jsp"/>
+    <put name="content" value="/WEB-INF/jsp/repatriation/index.jsp"/>
+  </definition>
+
+  <definition name="repatExcelTable" page="/WEB-INF/jsp/repatriation/tab.jsp"/>
+  
+  <definition name="repatTablePrintable" extends="printLayout">
+    <put name="subtitle" value="/WEB-INF/jsp/repatriation/subtitle.jsp"/>
+    <put name="headcontent" value="/WEB-INF/jsp/repatriation/headcontent.jsp"/>
+    <put name="content" value="/WEB-INF/jsp/repatriation/printableTable.jsp"/>
+  </definition>   
+
+  <definition name="repatAjaxCaption" extends="ajaxHtmlLayout">
+    <put name="content" value="/WEB-INF/jsp/repatriation/mapCaption.jsp"/>
+  </definition>
+
+  <definition name="repat.host" extends="printLayout">
+    <put name="subtitle" value="/WEB-INF/jsp/repatriation/subtitle.jsp"/>
+    <put name="headcontent" value="/WEB-INF/jsp/repatriation/headcontent.jsp"/>
+    <put name="content" value="/WEB-INF/jsp/repatriation/drilldown.jsp"/>
+  </definition>
+  <definition name="repat.country" extends="printLayout">
+    <put name="subtitle" value="/WEB-INF/jsp/repatriation/subtitle.jsp"/>
+    <put name="headcontent" value="/WEB-INF/jsp/repatriation/headcontent.jsp"/>
+    <put name="content" value="/WEB-INF/jsp/repatriation/drilldown.jsp"/>
+  </definition>
+  <definition name="repat.host.country" extends="printLayout">
+    <put name="subtitle" value="/WEB-INF/jsp/repatriation/subtitle.jsp"/>
+    <put name="headcontent" value="/WEB-INF/jsp/repatriation/headcontent.jsp"/>
+    <put name="content" value="/WEB-INF/jsp/repatriation/drilldown.jsp"/>
+  </definition>    
+</tiles-definitions>
