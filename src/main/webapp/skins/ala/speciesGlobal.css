@@ -3,6 +3,7 @@ body {
 	background: #FFF; /* url('images/speciesBodyBG.gif') repeat-x top left; */
 	/* background: #FFFFFF url("images/ALA_icon_in_background.gif") no-repeat 0% 14%; */
 	font: 12px Verdana, Arial, Helvetica, sans-serif;
+	line-height: 1.6em;
 	text-align: left;
 	padding: 0;
 	margin: 0;
@@ -364,7 +365,7 @@ img.standalone {
 	clear: both;
 	height: 20px;
 	margin: 0px 10px 10px 16px;
-	padding-bottom: 10px;
+	padding-bottom: 5px;
 	border-top: 1px solid #CCCCCC;
 	/* background: url("images/footerBG.gif") #483B35 repeat-x; */
 }
@@ -625,6 +626,7 @@ div.subcontainer {
 	padding: 0px;
 	border-top: 1px solid #CCCCCC;
 	font-size: 11px;
+	line-height: normal;
 }
 
 #recentlyViewed {
