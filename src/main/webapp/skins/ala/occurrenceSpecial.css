@@ -56,6 +56,7 @@ div#warnings { float: left;
 	float: right;
     width: 39%;
     margin-right: 10px;
+    line-height: 1.2em;
 }
 #furtherActions h4 { margin: 10px; }
 #changeSearch { background: url('images/tip1.jpg') no-repeat; padding: 7px 0 10px 35px; border-bottom: none; }

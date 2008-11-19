@@ -10,29 +10,29 @@ div.smalltree p.selected, div.smalltree p.selectedTentative { font-weight:bold; 
 
 /* Taxonomy Browsing */
 #smtFirstLevel { padding-bottom: 5px; }
-.rank, .taxon { color:#8425a6; }
+/* .rank, .taxon { color:#8425a6; }
 .taxon { color: #000000; }
-.generaTaxon { font-style:italic; color: #000000; }
+.generaTaxon { font-style:italic; color: #000000; } */
 
 .overviewLink { padding-left: 25px; padding-right: 5px; background: url('../standard/images/arrowOverviewLink.gif') no-repeat 0px 6px; border:none; }
 .selectedConceptLink { margin: 0; padding-left: 10px; padding-right: 10px; border:none; background: url('../standard/images/arrowSelected.gif') no-repeat 8px 3px; }
 
 a.treeNodeLink, a.treeNodeLinkTentative, a.treeNodeLink:hover, a.treeNodeLinkTentative:hover { border:none; text-decoration: none; }
 
-a.treeNodeLinkTentative .rank { color: #c11bd2; border:none; }
+/* a.treeNodeLinkTentative .rank { color: #c11bd2; border:none; }
 a.treeNodeLinkTentative .taxon { color: #AAAAAA; border:none; }
-a.treeNodeLinkTentative .generaTaxon { color: #AAAAAA; border:none; }
+a.treeNodeLinkTentative .generaTaxon { color: #AAAAAA; border:none; } */
 
 p.selected .rank { color: #8425a6; }
 p.selected .taxon { color: #000000; }
 p.selected .generaTaxon { color: #000000; }
 
-p.selectedTentative .rank { color: #c11bd2; }
+/* p.selectedTentative .rank { color: #c11bd2; } 
 p.selectedTentative .taxon { color: #AAAAAA; }
 p.selectedTentative .generaTaxon { color: #AAAAAA; }
 
 #uncertainPositions { margin-left:5px; color: #000000; }
-#unconfirmedNames { margin-left:5px; color: #AAAAAA; }
+#unconfirmedNames { margin-left:5px; color: #AAAAAA; } */
 
 .overview { margin-left: 30px; font-weight: normal; border:none; color: #8425a6; }
 
@@ -42,9 +42,9 @@ a.taxonOverviewLink:hover, a.taxonOverviewLinkTentative:hover { font-weight: nor
 a.taxonOverviewLink { color:#8425a6; border:none; }
 a.taxonOverviewLink:visited { color:#8425a6; border:none; }
 a.taxonOverviewLink:hover { color:#8425a6; border:none; }
-a.taxonOverviewLinkTentative { color:#c11bd2; border:none; }
+/* a.taxonOverviewLinkTentative { color:#c11bd2; border:none; }
 a.taxonOverviewLinkTentative:visited { color:#c11bd2; border:none; }
-a.taxonOverviewLinkTentative:hover { color:#c11bd2; border:none; }
+a.taxonOverviewLinkTentative:hover { color:#c11bd2; border:none; } */
 
 .taxonTenative { color: #AAAAAA; }
 .generaTaxonTenative { font-style:italic; color: #AAAAAA; }
