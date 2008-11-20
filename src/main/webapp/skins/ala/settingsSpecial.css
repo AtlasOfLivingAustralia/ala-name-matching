@@ -6,17 +6,11 @@
 #twopartheader    {
     /* moved to speciesGlobal.css */
     background: transparent url(images/ALA-doc-3-settings.gif) no-repeat scroll 0% 65%;
-    min-height: 80px;
-    height: auto;
-    padding-left: 95px;
-    color: black;
 }
 /* hack for IE */
 * html #twopartheader {
     height: 80px;
 }
-#twopartheader h2 { margin: 0; padding: 4px 0 0 5px; font-size: 120%; color: #1B619B; /* #872f2f; */ }
-#twopartheader h3 { margin: 0; padding: 7px 0 0 5px; font-size: 1.1em; font-weight: normal; }
 
 #content h1 { margin: 0; padding: 4px 0 0 96px; font-size: 1.1em; }
 #content h4 { margin: 20px 0 5px 0; padding: 0 ; font-size: 1.1em; }

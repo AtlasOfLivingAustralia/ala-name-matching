@@ -3,17 +3,11 @@ h4 , h5 , h6 { margin: 0 0 0 96px; padding: 20px 0 0 0 ; font-size: 1.0em ; }
 
 #twopartheader    {
     background: transparent url(images/ALA-doc-3-about.gif) no-repeat scroll 0% 65%;
-    min-height: 80px;
-    height: auto;
-    padding-left: 95px;
-    color: #2B2B28;
 }
 /* hack for IE */
 * html #twopartheader {
     height: 80px;
 }
-#twopartheader h2 { margin: 0; padding: 4px 0 0 5px; font-size: 120%; color: #1B619B; /* #872f2f; */ }
-#twopartheader h3 { margin: 0; padding: 7px 0 0 5px; font-size: 1.1em; font-weight: normal; }
 
 #content p { margin: 5px 50px 0 5px;}
 #content ul, ol {

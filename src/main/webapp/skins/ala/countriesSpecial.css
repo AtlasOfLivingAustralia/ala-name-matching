@@ -1,18 +1,15 @@
 #twopartheader {
     background: transparent url(images/ALA-doc-3-regions.gif) no-repeat scroll 0% 65%;
-    min-height: 80px;
-    height: auto;
-    padding-left: 95px;
-    color: #2B2B28;
 }
 /* hack for IE */
 * html #twopartheader {
 	height: 80px;
 }
 
-#twopartheader h2 { margin: 0; padding: 4px 0 0 5px; font-size: 120%; color: #1B619B;/* #872f2f; */ }
+/*
+#twopartheader h2 { margin: 0; padding: 4px 0 0 5px; font-size: 120%; color: #1B619B; }
 #twopartheader h3 { margin: 0; padding: 7px 0 0 5px; font-size: 1.1em; font-weight: normal; }
-
+*/
 
 .subject {
 	font-weight: bold;
@@ -43,7 +40,7 @@
 .lt  , a.lt {
 	color: #BBB
 }
-
+/*
 #chosen {
 	color: #9d4c05;
 	background-color: #fff6e9;
@@ -54,7 +51,7 @@
 	margin: 15px 0 5px 35px;
 	padding: 0
 }
-
+*/
 thead {
 	color: #9d4c05;
 }
@@ -75,7 +72,7 @@ table.statistics thead tr:hover {
 }
 
 ul.flatlist {
-	margin: 8px 0 0 68px;
+	margin: 8px 0 0 10px;
 	padding: 0;
 }
 
