@@ -22,7 +22,8 @@ img.logo { position:absolute; float:right; top:75px; right:13px;}
 /* moved to speciesGlobal.css
 #selectedChar { margin: 15px 0 5px 35px; padding: 0 }
 */
-thead { color: #0166B9;/* #2390aa;*/ } 
+/*
+thead { color: #2390aa; } 
 
 table.results th { background-color:#FFF; }
 
@@ -36,6 +37,7 @@ table.statistics tr:hover {
 }
 
 table.statistics thead tr:hover { background-color: #FDFDFD; }
+*/
 
 ul.flatlist {	margin: 8px 0 0 10px; padding: 0; }
 

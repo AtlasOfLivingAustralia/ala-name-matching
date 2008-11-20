@@ -52,6 +52,7 @@
 	padding: 0
 }
 */
+/*
 thead {
 	color: #9d4c05;
 }
@@ -70,7 +71,7 @@ table.statistics tr:hover {
 table.statistics thead tr:hover {
 	background-color: #FDFDFD;
 }
-
+*/
 ul.flatlist {
 	margin: 8px 0 0 10px;
 	padding: 0;

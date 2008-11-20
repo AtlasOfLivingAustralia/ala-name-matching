@@ -1,4 +1,8 @@
 /* results class - used for results from filter searchs */
+table {
+    line-height: normal;
+}
+
 th.sortableColumn a {
 	text-decoration: none;
 	border: none;
@@ -55,6 +59,10 @@ table.results th.sortable a:hover {
 	padding: 5px 5px 5px 5px;
 }
 
+table.results tr:hover {
+        background-color: #D3E0EA;
+}
+
 /* statistics class - used for browsers for countries and datasets */
 
 table.statistics {
@@ -93,6 +101,10 @@ table.statistics td.singlecount {
 table.statistics tr {
 	border: 0px;  
 	font-weight: normal;
+}
+
+table.statistics tr:hover {
+        background-color: #D3E0EA;
 }
 
 table.smallStatistics {
