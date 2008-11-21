@@ -21,8 +21,13 @@ thead { color: #0166B9;/* #872f2f; */ }
 
 th.sortable a { color: #872f2f; border-bottom: none; }
 
+.occurrenceContainer {
+    margin-top: -10px;
+    line-height: normal;
+}
+
 .occurrenceContainer p {
-	margin-bottom: 4px;
+	margin: 2px 0px;
 }
 .prev_next , a.prev_next { color: #A6A6A6; }
 
@@ -126,4 +131,9 @@ ul.actionsListInline li {
 
 .occurrenceContainer #furtherActions ul.actionsListInline li {
     display: list-item;
+}
+
+table.taxonClassificationComparison {
+    line-height: 1.6em;
+
 }

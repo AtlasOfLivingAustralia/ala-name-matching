@@ -17,10 +17,10 @@
 
 /* End of Added by Dave */
 #content h1 {
-	margin: 0;
-	padding: 4px 0 0 0px;
-	font-size: 1.1em;
-	color: #9d4c05
+    margin: 0;
+    padding: 4px 0 0 0px;
+    font-size: 1.1em;
+    color: #9d4c05
 }
 
 #content h4 {
@@ -116,7 +116,7 @@ table.repat td {
 .bottomLabels td {
 	text-align: center;
 	vertical-align: top;
-	padding-botom: 2px;
+	padding-bottom: 2px;
 	border: 1px solid #CCCCCC;
 }
 

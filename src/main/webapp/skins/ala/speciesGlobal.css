@@ -290,7 +290,7 @@ div#topmenu {
 	margin: -36px 12px 0 0;
 	padding: 0;
 	color: #FFF;
-	font: 14px Verdana, Arial, Helvetica, sans-serif;
+	font: 13px Verdana, Arial, Helvetica, sans-serif;
 	font-weight: bold;
 	/* text-transform: uppercase; */
 	/* background: url(images/menu-bar-2-left.jpg) left top no-repeat; 
@@ -322,11 +322,7 @@ div#topmenu ul li {
 }
 
 div#topmenu ul li.active-menu {
-	/* background: url(images/white_triangle.gif) no-repeat 50% 110%; 
-	background: transparent url(images/transparent-mask2.png) repeat; 
-	background: #434344; */
 	color: #FCCEBB;
-	/* background-color: #F9AE94; */
 	background: url(images/topmenu-active-bg.gif) left top repeat-x;
 }
 
@@ -334,7 +330,7 @@ div#topmenu a {
 	border: 0;
 	color: #FFF;
 	display: block;
-	padding: 5px 0px;
+	padding: 6px 0px;
 }
 
 div#topmenu ul li.active-menu a { /* color: #FCCEBB; */
@@ -348,7 +344,7 @@ div#topmenu a:hover {
 }
 
 #content {
-	margin: 0; /* -15px 14px 0 0; */
+	margin: 0;
 	padding: 10px 10px 16px 16px;
 	border: 0;
 }
@@ -631,6 +627,7 @@ ul.overviewMapLinks li {
 
 div.subcontainer {
 	margin-bottom: 10px;
+    line-height: normal;
 }
 
 /* Dates */

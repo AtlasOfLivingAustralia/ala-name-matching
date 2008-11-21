@@ -22,6 +22,7 @@ table.results th {
 	vertical-align:center;
 	text-align:left;
 	padding: 5px 5px 5px 5px;
+    background-color: #D3E0EA;
 }
 
 table.results td {
@@ -60,7 +61,7 @@ table.results th.sortable a:hover {
 }
 
 table.results tr:hover {
-        background-color: #D3E0EA;
+    background-color: #EEE;
 }
 
 /* statistics class - used for browsers for countries and datasets */
@@ -104,7 +105,7 @@ table.statistics tr {
 }
 
 table.statistics tr:hover {
-        background-color: #D3E0EA;
+        background-color: #EEE; /*#D7E9F5;  #D3E0EA; */
 }
 
 table.smallStatistics {
