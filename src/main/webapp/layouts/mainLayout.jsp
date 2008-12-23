@@ -25,7 +25,7 @@
 				<tiles:insert name="header"/>
 				<tiles:insert name="topmenu"/>
 				<div id="content">
-                <c:if test="${param['debug']==1}"><alatag:debugBeans /></c:if>
+                <c:if test="${param['debug']==1}"></c:if>
 </c:if>
       				
 					<tiles:insert name="content"/>
