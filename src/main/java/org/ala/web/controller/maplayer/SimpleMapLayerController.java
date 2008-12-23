@@ -37,6 +37,7 @@ public class SimpleMapLayerController implements Controller {
 		float unit = ServletRequestUtils.getFloatParameter(request, "unit", 1f);
 		final long id = ServletRequestUtils.getLongParameter(request, "id", 0);
 		final int type = ServletRequestUtils.getIntParameter(request, "type", 0);
+		final boolean ignoreBoundaries = ServletRequestUtils.getBooleanParameter(request, "ignoreBoundaries", false);
 		final boolean gzipped = ServletRequestUtils.getBooleanParameter(request, "gz", false);
 		
 		Float minX = ServletRequestUtils.getFloatParameter(request, "minx");
@@ -75,7 +76,7 @@ public class SimpleMapLayerController implements Controller {
 		}
 		if(unit==0.1f){
 			logger.info("Retrieving centi cells....");
-			if(maxX!=null && maxY!=null && minX!=null && minY!=null){
+			if(!ignoreBoundaries && maxX!=null && maxY!=null && minX!=null && minY!=null){
 				cellDensityDAO.outputCentiCellDensities(id, type, minCellId, maxCellId, routput);
 			} else {
 				cellDensityDAO.outputCentiCellDensities(id, type, routput);
@@ -85,7 +86,7 @@ public class SimpleMapLayerController implements Controller {
 			cellDensityDAO.outputTenMilliCellDensities(id, type, routput);
 		} else {
 			logger.info("Retrieving 1 deg cells....");
-			if(maxX!=null && maxY!=null && minX!=null && minY!=null){			
+			if(!ignoreBoundaries && maxX!=null && maxY!=null && minX!=null && minY!=null){			
 				cellDensityDAO.outputCellDensities(id, type, minCellId, maxCellId, routput);
 			} else {
 				cellDensityDAO.outputCellDensities(id, type, routput);

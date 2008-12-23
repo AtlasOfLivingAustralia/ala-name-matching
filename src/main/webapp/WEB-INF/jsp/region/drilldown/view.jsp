@@ -19,9 +19,9 @@
         function initOpenLayersMap(){
             var map = new OpenLayers.Map('openLayersMap', 
                  {controls: [new OpenLayers.Control.Navigation(), 
-                             new OpenLayers.Control.PanZoomBar()], 
+                             new OpenLayers.Control.PanZoomBar()],
                   numZoomLevels: 10 });
-            
+
             var ibraLayer = new OpenLayers.Layer.WMS( "IBRA",
                 "http://localhost:8080/geoserver/wfs?", 
                 {layers: "ala:ibra61_reg_shape", 
@@ -60,8 +60,8 @@
                 {layers: "ala:tabDensityLayer", 
                 version: "1.0.0", 
                 transparent: "true",
-                format: "image/png", 
-                filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA[http://localhost:8080/ala-web/maplayer/simple/?id=${geoRegion.id}&type=8&unit=0.1]]></Literal></PropertyIsEqualTo></Filter>)"} 
+                format: "image/png",
+                filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA[http://localhost:8080/ala-web/maplayer/simple/?&id=${geoRegion.id}&type=8&unit=0.1]]></Literal></PropertyIsEqualTo></Filter>)"} 
                 );
 
             var allCentiCellLayer = new OpenLayers.Layer.WMS( "All centi cells",
@@ -87,23 +87,24 @@
                 format: "image/png"}
                 );  
 
-            map.addLayer(countriesLayer);
+            //map.addLayer(countriesLayer);
+
+            var blueMarbleLayer = new OpenLayers.Layer.WMS( "Satellite", 
+                    "http://labs.metacarta.com/wms-c/Basic.py?", {layers: 'satellite' } );
+            map.addLayer(blueMarbleLayer);
+
+            
             //useful for debug
             //map.addLayer(cellMarkerLayer);
-
+            //map.addLayer(cellLayer); 
+            map.addLayer(centiCellLayer);
+            
             <c:if test="${geoRegion.regionType <1000}">map.addLayer(statesLayer);</c:if>
             <c:if test="${geoRegion.regionType >=2000 && geoRegion.regionType <3000}">map.addLayer(ibraLayer);</c:if>
             <c:if test="${geoRegion.regionType >=3000 && geoRegion.regionType <4000}">map.addLayer(imcraLayer);</c:if>
             
-            //map.addLayer(cellLayer); 
-            map.addLayer(centiCellLayer);
-
             map.addControl(new OpenLayers.Control.LayerSwitcher());
             map.addControl(new OpenLayers.Control.MousePosition());
-            map.events.register("mousemove", map, function(e) { 
-                var position = this.events.getMousePosition(e);
-                OpenLayers.Util.getElement("coords").innerHTML = position;
-            });
 
             // zoom to the correct bounds for this region
             var bounds = new OpenLayers.Bounds();
@@ -113,7 +114,6 @@
         }
     </script>
    <div id="openLayersMap" class="openlayersMap"></div>
-   <div id="coords" style="visibility:hidden;"></div>
    <script>
         initOpenLayersMap();
    </script>
