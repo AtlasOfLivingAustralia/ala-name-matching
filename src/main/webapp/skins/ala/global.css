@@ -51,7 +51,7 @@ body>#cocoon { width: 768px; }
 
 /* ---- Top Header ---- */
 #header { position: relative; height: 275px; background: url("images/ALA_banner.jpg") no-repeat; }
-#header h1 { margin: 0 ; padding: 0; height: 220px; background: url("images/headerH1BG.jpg") no-repeat; }
+#header h1 { margin: 0 ; padding: 0; height: 220px; /*background: url("images/headerH1BG.jpg") no-repeat;*/ }
 #header h1 a { display: none; }
 /* ---- END Top Header ---- */
 
@@ -60,7 +60,7 @@ body>#cocoon { width: 768px; }
 
 
 /* -- search form -- */
-#quickSearch { position: absolute; top: 210px; left: 0; width: 255px; height: 70px; border: 0px; text-align: left; background-image: url("images/searchBg.jpg"); line-height: 0.8em; }
+#quickSearch { position: absolute; top: 210px; left: 0; width: 255px; height: 70px; border: 0px; text-align: left; /*background-image: url("images/searchBg.jpg");*/ line-height: 0.8em; }
 #quickSearch fieldset { position: relative; top: 7px; left:0px; margin: 0; padding: 0 0 0 12px; border: 0; }
 #quickSearch form { margin: 0; padding: 0; }
 #quickSearch form a { border: 0; }
