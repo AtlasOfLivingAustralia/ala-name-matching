@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<!--  Application context definition for Map Layer DispatcherServlet -->
+<beans>
+    <!--  Define how the dispatcher will select the contollers -->
+    <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+        <property name="mappings">
+            <props>
+                <prop key="/simple/*">simpleMapLayerController</prop>
+                <prop key="/all/**/*">allMapLayerController</prop>
+                <prop key="/taxon/**/*">taxonMapLayerController</prop>
+                <prop key="/country/**/*">countryMapLayerController</prop>
+                <prop key="/homeCountry/**/*">homeCountryMapLayerController</prop>
+                <prop key="/network/**/*">networkMapLayerController</prop>
+                <prop key="/provider/**/*">providerMapLayerController</prop>
+                <prop key="/resource/**/*">resourceMapLayerController</prop>
+                <prop key="/filter/**/*">filterMapLayerController</prop>
+            </props>
+        </property>
+    </bean>
+    
+    <bean id="simpleMapLayerController" class="org.ala.web.controller.maplayer.SimpleMapLayerController">
+        <property name="cellDensityDAO">
+            <bean class="org.ala.dao.geo.jdbc.impl.CellDensityDAOImpl">
+                <property name="dataSource" ref="dataSource"/>
+            </bean>
+        </property>
+    </bean>
+    
+    <bean id="allMapLayerController" parent="entityMapLayerController">
+        <property name="entityType" value="0"/>
+        <property name="urlRoot" value="all"/>
+    </bean> 
+    <bean id="countryMapLayerController" parent="entityMapLayerController">
+        <property name="entityType" value="2"/>
+        <property name="urlRoot" value="country"/>
+    </bean>
+    <bean id="providerMapLayerController" parent="entityMapLayerController">
+        <property name="entityType" value="3"/>
+        <property name="urlRoot" value="provider"/>
+    </bean>
+    <bean id="resourceMapLayerController" parent="entityMapLayerController">
+        <property name="entityType" value="4"/>
+        <property name="urlRoot" value="resource"/>
+    </bean>
+    <bean id="networkMapLayerController" parent="entityMapLayerController">
+        <property name="entityType" value="5"/>
+        <property name="urlRoot" value="network"/>
+    </bean> 
+  <bean id="homeCountryMapLayerController" parent="entityMapLayerController">
+    <property name="entityType" value="6"/>
+    <property name="urlRoot" value="homeCountry"/>
+  </bean>
+
+    <!-- Controller for Map Layers -->
+    <bean id="taxonMapLayerController" class="org.gbif.portal.web.controller.maplayer.TaxonMapLayerController">
+        <property name="viewNamePrefix" value="mapLayer"/>
+        <property name="geospatialManager" ref="geospatialManager"/>
+        <property name="taxonomyManager" ref="taxonomyManager"/>        
+        <property name="entityType" value="1"/>
+        <property name="urlRoot" value="taxon"/>
+        <property name="latitudeForSize">
+            <map>
+                <entry key="tenDeg" value="10"/>
+                <entry key="oneDeg" value="1"/>
+            </map>
+        </property>
+        <property name="longitudeForSize">
+            <map>
+                <entry key="tenDeg" value="20"/>
+                <entry key="oneDeg" value="2"/>
+            </map>
+        </property>
+        <property name="supportedPatterns">
+            <list>
+                <list>
+                    <value>id</value>
+                </list>
+                <list>
+                    <value>id</value>
+                    <value>size</value>
+                </list>
+                <list>
+                    <value>id</value>
+                    <value>size</value>
+                    <value>minLat</value>
+                    <value>minLong</value>
+                </list>
+            </list>
+        </property>
+    </bean> 
+        
+    <!-- Controller for Map Layers -->
+    <bean id="entityMapLayerController" abstract="true" class="org.gbif.portal.web.controller.maplayer.EntityMapLayerController">
+        <property name="viewNamePrefix" value="mapLayer"/>
+        <property name="geospatialManager" ref="geospatialManager"/>
+        <property name="latitudeForSize">
+            <map>
+                <entry key="tenDeg" value="10"/>
+                <entry key="oneDeg" value="1"/>
+            </map>
+        </property>
+        <property name="longitudeForSize">
+            <map>
+                <entry key="tenDeg" value="20"/>
+                <entry key="oneDeg" value="2"/>
+            </map>
+        </property>
+        <property name="supportedPatterns">
+            <list>
+                <list>
+                    <value>id</value>
+                </list>
+                <list>
+                    <value>id</value>
+                    <value>size</value>
+                </list>
+                <list>
+                    <value>id</value>
+                    <value>size</value>
+                    <value>minLat</value>
+                    <value>minLong</value>
+                </list>
+            </list>
+        </property>
+    </bean>
+    
+    <!-- Map Layer Controller that supports filter queries -->
+    <bean id="filterMapLayerController" class="org.gbif.portal.web.controller.maplayer.FilterMapLayerController">
+        <property name="urlRoot" value="filter"/>
+        <property name="mapLayerQueryManager" ref="tripletOccurrenceMapLayerManager"/>
+        <property name="filterContentProvider" ref="filterContentProvider"/>
+        <property name="webappPropertyStore" ref="webappPropertyStore"/>
+        <property name="namespace" value="http://gbif.org/schema/webapp/2006/1.0"/>
+        <property name="queryHelper" ref="occurrenceQueryHelper"/>
+        <property name="viewNamePrefix" value="mapLayer"/>
+        <property name="latitudeForSize">
+            <map>
+                <entry key="tenDeg" value="10"/>
+                <entry key="oneDeg" value="1"/>
+            </map>
+        </property>
+        <property name="longitudeForSize">
+            <map>
+                <entry key="tenDeg" value="20"/>
+                <entry key="oneDeg" value="2"/>
+            </map>
+        </property>
+        <property name="supportedPatterns">
+            <list>
+                <list>
+                    <value>query</value>
+                </list>
+                <list>
+                    <value>query</value>
+                    <value>size</value>
+                </list>
+                <list>
+                    <value>query</value>
+                    <value>size</value>
+                    <value>minLat</value>
+                    <value>minLong</value>
+                </list>
+            </list>
+        </property>
+    </bean>
+</beans>

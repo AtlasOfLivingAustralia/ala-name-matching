@@ -428,6 +428,15 @@
 		<put name="mapLinks" value="/WEB-INF/jsp/taxonomy/drilldown/mapLinks.jsp" />
 		<put name="urlRoot" value="species"/>						
 	</definition>	
+
+
+	
+    <definition name="geoRegionView" extends="mainLayout">
+        <put name="subtitle" value="/WEB-INF/jsp/region/drilldown/regionSubtitle.jsp"/>
+        <put name="headcontent" value="/WEB-INF/jsp/region/headcontent.jsp"/>
+        <put name="content" value="/WEB-INF/jsp/region/drilldown/view.jsp"/>
+    </definition>	
+
 	
 	<!-- Geography Tiles -->
 	<definition name="geographyBrowse" extends="mainLayout">
@@ -478,126 +487,6 @@
 	<definition name="images" extends="ajaxHtmlLayout">
 		<put name="content" value="/WEB-INF/jsp/images/images.jsp"/>
 	</definition>
-	
-	<!-- Registration pages -->
-	<definition name="registrationMain" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>
-		<put name="content" value="/WEB-INF/jsp/registration/menu.jsp"/>
-	</definition>
-	<definition name="registrationProviderDetail" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/providerDetail.jsp"/>
-	</definition>	
-	<definition name="registrationUpdateProviderDetail" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/updateProviderDetail.jsp"/>
-	</definition>	
-	<definition name="registrationProviderList" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>
-		<put name="content" value="/WEB-INF/jsp/registration/providerList.jsp"/>
-	</definition>
-	<definition name="registrationAdminProviderList" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>
-		<put name="content" value="/WEB-INF/jsp/registration/providerList.jsp"/>
-	</definition>					
-	<definition name="registrationUserUpdate" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/userUpdate.jsp"/>
-	</definition>
-	<definition name="registrationSelectUser" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/selectUser.jsp"/>
-	</definition>			
-	<definition name="registrationResourceDetail" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/resourceDetail.jsp"/>
-	</definition>	
-	<definition name="registrationResourceList" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/resourceList.jsp"/>
-	</definition>	
-	<definition name="registrationResourceLookup" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/resourceLookup.jsp"/>
-	</definition>		
-	<definition name="registrationResourceManual" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/manualRegistration.jsp"/>
-	</definition>	
-	<definition name="registrationSingleResource" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/singleResource.jsp"/>
-	</definition>		
-	<definition name="registrationMetadataResourceList" extends="ajaxHtmlLayout">
-		<put name="content" value="/WEB-INF/jsp/registration/metadataResourceList.jsp"/>
-	</definition>	
-	<definition name="registrationLDAPFailure" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/admin/ldapFailure.jsp"/>
-	</definition>	
-	<definition name="registrationUDDIFailure" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/admin/uddiFailure.jsp"/>
-	</definition>
-	<definition name="registrationBadBusinessKey" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/admin/badBusinessKey.jsp"/>
-	</definition>	
-	<definition name="registrationVerificationFailureView" extends="mainLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/verificationFailure.jsp"/>
-	</definition>
-	<definition name="registrationVerificationSuccessView" extends="mainLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/verificationSuccess.jsp"/>
-	</definition>
-	<definition name="emailDetailsFailureView" extends="mainLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/emailDetailsFailure.jsp"/>
-	</definition>
-	<definition name="emailDetailsSuccessView" extends="mainLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/emailDetailsSuccess.jsp"/>
-	</definition>	
-	<definition name="resetPassword" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/resetPassword.jsp"/>
-	</definition>		
-	<definition name="passwordReset" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/passwordReset.jsp"/>
-	</definition>			
-	<definition name="requestSentView" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/requestSent.jsp"/>
-	</definition>	
-	<definition name="approveProviderListView" extends="adminLayout">
-		<put name="subtitle" value="/WEB-INF/jsp/registration/subtitle.jsp"/>
-		<put name="headcontent" value="/WEB-INF/jsp/registration/headcontent.jsp"/>	  
-		<put name="content" value="/WEB-INF/jsp/registration/approveProviderList.jsp"/>
-	</definition>	
 				
 	<!-- Feedback pages -->
 	<definition name="feedbackInputView" extends="mainLayout">
