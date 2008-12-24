@@ -40,10 +40,17 @@ public class SimpleMapLayerController implements Controller {
 		final boolean ignoreBoundaries = ServletRequestUtils.getBooleanParameter(request, "ignoreBoundaries", false);
 		final boolean gzipped = ServletRequestUtils.getBooleanParameter(request, "gz", false);
 		
-		Float minX = ServletRequestUtils.getFloatParameter(request, "minx");
-		Float minY = ServletRequestUtils.getFloatParameter(request, "miny");
-		Float maxX = ServletRequestUtils.getFloatParameter(request, "maxx");
-		Float maxY = ServletRequestUtils.getFloatParameter(request, "maxy");
+		Float minX = null;
+		Float minY = null;
+		Float maxX = null;
+		Float maxY = null;
+
+		if(ignoreBoundaries){
+			minX = ServletRequestUtils.getFloatParameter(request, "minx");
+			minY = ServletRequestUtils.getFloatParameter(request, "miny");
+			maxX = ServletRequestUtils.getFloatParameter(request, "maxx");
+			maxY = ServletRequestUtils.getFloatParameter(request, "maxy");
+		}
 		
 		OutputStream output = response.getOutputStream();
 		if(gzipped){
@@ -61,7 +68,7 @@ public class SimpleMapLayerController implements Controller {
 		Integer maxCellId = null;
 		
 		//sanity checks
-		if(maxX!=null && maxY!=null && minX!=null && minY!=null){
+		if(!ignoreBoundaries && maxX!=null && maxY!=null && minX!=null && minY!=null){
 			minX = minX>=-180 ? minX : -180;
 			minY = minY>-90 ? minY : -90;
 			maxX = maxX<=180 ? maxX : 180;
