@@ -24,14 +24,10 @@ public class RegionController implements Controller {
 	public ModelAndView handleRequest(HttpServletRequest request,
 			HttpServletResponse response) throws Exception {
 
-		
-		long geoRegionId = ServletRequestUtils.getLongParameter(request,"id");
-		
+		Long geoRegionId = ServletRequestUtils.getLongParameter(request,"id", 1);
 		GeoRegion geoRegion = geoRegionDAO.getGeoRegionFor(geoRegionId);
-		
 		ModelAndView mav = new ModelAndView("geoRegionView");
 		mav.addObject("geoRegion", geoRegion);
-		
 		return mav;
 	}
 

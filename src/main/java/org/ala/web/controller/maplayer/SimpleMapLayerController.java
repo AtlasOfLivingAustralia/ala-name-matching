@@ -45,7 +45,7 @@ public class SimpleMapLayerController implements Controller {
 		Float maxX = null;
 		Float maxY = null;
 
-		if(ignoreBoundaries){
+		if(!ignoreBoundaries){
 			minX = ServletRequestUtils.getFloatParameter(request, "minx");
 			minY = ServletRequestUtils.getFloatParameter(request, "miny");
 			maxX = ServletRequestUtils.getFloatParameter(request, "maxx");

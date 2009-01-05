@@ -85,7 +85,7 @@
 		<put name="headcontent" value="/WEB-INF/jsp/headcontent.jsp"/>
 		<put name="topmenu" value="/WEB-INF/jsp/menu/frontPageTopMenu.jsp"/>
 		<put name="content" value="/WEB-INF/jsp/panes.jsp"/>
-		<put name="breadcrumbs" value=""/>				
+		<put name="breadcrumbs" value=""/>
 	</definition>
 
     <definition name="version" extends="mainLayout">
@@ -477,7 +477,7 @@
 		<put name="subtitle" value="/WEB-INF/jsp/user/subtitle.jsp"/>
 		<put name="headcontent" value="/WEB-INF/jsp/user/headcontent.jsp"/>
 		<put name="content" value="/WEB-INF/jsp/user/settings.jsp"/>
-		<put name="breadcrumbs" value=""/>		
+		<put name="breadcrumbs" value=""/>
 	</definition>
 	
 	<!-- Images Tile -->
@@ -914,4 +914,9 @@
     <put name="headcontent" value="/WEB-INF/jsp/repatriation/headcontent.jsp"/>
     <put name="content" value="/WEB-INF/jsp/repatriation/drilldown.jsp"/>
   </definition>    
+  
+    <definition name="sld" extends="ajaxLayout">
+        <put name="content" value="/WEB-INF/jsp/region/sld.jsp"/>
+    </definition>
+  
 </tiles-definitions>

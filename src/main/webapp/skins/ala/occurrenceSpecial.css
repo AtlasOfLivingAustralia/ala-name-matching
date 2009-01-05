@@ -58,7 +58,7 @@ div#warnings { float: left;
     line-height: 1.2em;
 }
 #furtherActions h4 { margin: 10px; }
-#changeSearch { background: url('images/tip1.jpg') no-repeat; padding: 7px 0 10px 35px; border-bottom: none; }
+#changeSearch {/* background: url('images/tip1.jpg') no-repeat; padding: 7px 0 10px 35px; border-bottom: none; */}
 
 /* classification wizard */
 .conceptLink { margin: 0; padding-left: 10px; padding-right: 5px; border:none; background: url('../standard/images/plusSignBumpBG1.gif') no-repeat 8px 3px; border:none; }

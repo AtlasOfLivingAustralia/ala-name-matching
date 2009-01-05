@@ -8,6 +8,7 @@
             <props>
                 <prop key="/*">regionController</prop>
                 <prop key="/**/*">regionController</prop>
+                <prop key="/*.htm">urlFilenameController</prop>
             </props>
         </property>
     </bean>

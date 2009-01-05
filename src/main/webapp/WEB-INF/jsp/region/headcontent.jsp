@@ -11,7 +11,7 @@
  <style>
      #openLayersMap {
          width: 1024px;
-         height: 650px;
+         height: 500px;
          border: 1px solid #cccccc;
          text-align: left;
          margin: 10px 0px 10px 0px;

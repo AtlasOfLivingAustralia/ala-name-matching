@@ -1,0 +1,53 @@
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+
+    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+        <param name="Threshold" value="DEBUG"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%-5p: [%c{1}] - %m%n"/>
+        </layout>
+    </appender>
+
+    <appender name="FILE" class="org.apache.log4j.FileAppender">
+        <param name="Threshold" value="WARN"/>
+        <param name="File" value="${catalina.home}/logs/portal.log"/>
+        <param name="Append" value="true"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <!--param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}]  %m%n"/-->
+            <param name="ConversionPattern" value="%d{dd MMM yyyy HH:mm:ss,SSS} %-5p [%c{1}]  %m%n"/>
+        </layout>
+    </appender>
+    
+    <!-- Alter the logging of known libs -->
+    <category name="org.gbif">
+        <!-- USAGE and FEEDBACK NEEDS INFO!!! -->
+        <priority value="DEBUG"/>
+    </category>
+    <category name="org.ala">
+        <!-- USAGE and FEEDBACK NEEDS INFO!!! -->
+        <priority value="DEBUG"/>
+    </category> 
+    <category name="org">
+        <priority value="ERROR"/>
+    </category>
+    <category name="net">
+        <priority value="ERROR"/>
+    </category>
+    <category name="com">
+        <priority value="ERROR"/>
+    </category>
+    <category name="httpclient">
+        <priority value="ERROR"/>
+    </category>
+    <category name="org.springframework.aop.interceptor.cache">
+        <priority value="ERROR"/>
+    </category>
+    <category name="org.springframework">
+        <priority value="ERROR"/>
+    </category>
+    <root>
+        <!-- For live we use file logging -->
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</log4j:configuration>
