@@ -6,14 +6,20 @@
     <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
         <property name="mappings">
             <props>
+            	<prop key="/browse">regionBrowseController</prop>
+            	<prop key="/browse/*">regionBrowseController</prop>
                 <prop key="/*">regionController</prop>
-                <prop key="/**/*">regionController</prop>
-                <prop key="/*.htm">urlFilenameController</prop>
             </props>
         </property>
     </bean>
     
+    <!-- Simple Controller for rendering a GeoRegion -->
     <bean id="regionController" class="org.ala.web.controller.RegionController">
         <property name="geoRegionDAO" ref="geoRegionDAORO"/>
     </bean>
+    
+    <!--  Simple Controller for browsing Geo Regions -->
+    <bean id="regionBrowseController" class="org.ala.web.controller.RegionBrowseController">
+        <property name="geoRegionDAO" ref="geoRegionDAORO"/>
+    </bean>    
 </beans>    
