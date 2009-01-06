@@ -3,7 +3,7 @@
     <h2>Browse Geographic Regions</h2>
     <ul>
     	<li><a href="#states">States and Territories</a></li>
-    	<li><a href="#ipra">Biogeographic Regions</a></li>
+    	<li><a href="#ibra">Biogeographic Regions</a></li>
     	<li><a href="#imra">Marine and Coastal Regions</a></li>
     </ul>
 </div>
@@ -17,8 +17,8 @@
 		</c:if>
 	</c:forEach>
 </ul>
-<a name="ipra"/>
-<h2>IPRA - Interim Biogeographic Regionalisation of Australia Region</h2>
+<a name="ibra"/>
+<h2>IBRA - Interim Biogeographic Regionalisation of Australia</h2>
 <ul>
 	<c:forEach items="${geoRegions}" var="geoRegion">
 		<c:if test="${geoRegion.regionType >=2000 && geoRegion.regionType <3000}">
@@ -27,7 +27,7 @@
 	</c:forEach>
 </ul>
 <a name="imra"/>
-<h2>IMCRA - Integrated Marine and Coastal Regionalisation of Australia Region</h2>
+<h2>IMCRA - Integrated Marine and Coastal Regionalisation of Australia</h2>
 <ul>
 	<c:forEach items="${geoRegions}" var="geoRegion">
 		<c:if test="${geoRegion.regionType >=3000 && geoRegion.regionType <4000}">
