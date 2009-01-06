@@ -1,6 +1,49 @@
 <%@ include file="/common/taglibs.jsp"%>
-<h1>Regions</h1>
+<div id="twopartheader">
+    <h2>Browse Geographic Regions</h2>
+    <ul>
+    	<li><a href="#states">States and Territories</a></li>
+    	<li><a href="#ipra">Biogeographic Regions</a></li>
+    	<li><a href="#imra">Marine and Coastal Regions</a></li>
+    </ul>
+</div>
+<div class="subcontainer">
+<a name="states"/>
+<h2>States and Territories</h2>
+<ul>
+	<c:forEach items="${geoRegions}" var="geoRegion">
+		<c:if test="${geoRegion.regionType <= 2}">
+			<li><a href="${pageContext.request.contextPath}/regions/view.htm?id=${geoRegion.id}">${geoRegion.name}</a></li>
+		</c:if>
+	</c:forEach>
+</ul>
+<a name="ipra"/>
+<h2>IPRA - Interim Biogeographic Regionalisation of Australia Region</h2>
+<ul>
+	<c:forEach items="${geoRegions}" var="geoRegion">
+		<c:if test="${geoRegion.regionType >=2000 && geoRegion.regionType <3000}">
+			<li><a href="${pageContext.request.contextPath}/regions/view.htm?id=${geoRegion.id}">${geoRegion.name}</a></li>
+		</c:if>
+	</c:forEach>
+</ul>
+<a name="imra"/>
+<h2>IMCRA - Integrated Marine and Coastal Regionalisation of Australia Region</h2>
+<ul>
+	<c:forEach items="${geoRegions}" var="geoRegion">
+		<c:if test="${geoRegion.regionType >=3000 && geoRegion.regionType <4000}">
+			<li><a href="${pageContext.request.contextPath}/regions/view.htm?id=${geoRegion.id}">${geoRegion.name}</a></li>
+		</c:if>
+	</c:forEach>
+</ul>
 
-<c:forEach items="${geoRegions}" var="geoRegion">
-<a href="${pageContext.request.contextPath}/regions/?id=${geoRegion.id}">${geoRegion.name}</a> (${geoRegion.regionType})<br/>
-</c:forEach>
+<% /*
+<h2>River Basins</h2>
+<ul>
+	<c:forEach items="${geoRegions}" var="geoRegion">
+		<c:if test="${geoRegion.regionType >=5000 && geoRegion.regionType <6000}">
+			<li><a href="${pageContext.request.contextPath}/regions/view.htm?id=${geoRegion.id}">${geoRegion.name}</a></li>
+		</c:if>
+	</c:forEach>
+</ul>
+*/ %>
+</div>
