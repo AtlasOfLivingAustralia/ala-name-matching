@@ -1,14 +1,24 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 1.1//EN" "http://struts.apache.org/dtds/tiles-config_1_1.dtd">
 <tiles-definitions>
+
+    <!-- View for a Geographic Region -->
     <definition name="geoRegionView" extends="mainLayout">
         <put name="subtitle" value="/WEB-INF/jsp/region/drilldown/regionSubtitle.jsp"/>
         <put name="headcontent" value="/WEB-INF/jsp/region/headcontent.jsp"/>
         <put name="content" value="/WEB-INF/jsp/region/drilldown/view.jsp"/>
-    </definition>	
+    </definition>
+    
+    <!--  Browse view for Geographic Region -->
     <definition name="geoRegionBrowse" extends="mainLayout">
         <put name="subtitle" value="/WEB-INF/jsp/region/drilldown/regionSubtitle.jsp"/>
         <put name="headcontent" value="/WEB-INF/jsp/region/headcontent.jsp"/>
         <put name="content" value="/WEB-INF/jsp/region/browse.jsp"/>
-    </definition>	    
+    </definition>
+    
+    <!-- View for rendering a SLD -->
+    <definition name="sld" extends="ajaxLayout">
+        <put name="content" value="/WEB-INF/jsp/region/sld.jsp"/>
+    </definition>
+    
 </tiles-definitions>
