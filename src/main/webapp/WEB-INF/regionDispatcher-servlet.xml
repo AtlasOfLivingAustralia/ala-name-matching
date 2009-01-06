@@ -6,9 +6,11 @@
     <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
         <property name="mappings">
             <props>
+                <prop key="/">regionBrowseController</prop>
             	<prop key="/browse">regionBrowseController</prop>
             	<prop key="/browse/*">regionBrowseController</prop>
-                <prop key="/*">regionController</prop>
+                <prop key="/view.htm">regionController</prop>
+                <prop key="/*">urlFilenameController</prop>
             </props>
         </property>
     </bean>
