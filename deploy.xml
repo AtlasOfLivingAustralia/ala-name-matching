@@ -44,6 +44,7 @@
 				<include name="web.xml"/>	
 			</fileset>	
 		  </copy>
+		<touch file="${webserver.home}/webapps/${webapp.name}/WEB-INF/web.xml"/>
 	</target>
 
 	<!-- Deploy reloadable sources - images, css. jsp etc-->
