@@ -180,7 +180,7 @@
           function resizeMap() {
             var centre = map.getCenter();
             var zoom = map.getZoom();
-            var sidebar_width = 20;
+            var sidebar_width = 30;
 
             if (sidebar_width > 0) {
               sidebar_width = sidebar_width + 5
@@ -205,9 +205,6 @@
             });
         }
 
-        window.onload = handleResize;
-        window.onresize = handleResize;
-        
     --></script>
    <div id="openLayersMap" class="openlayersMap"></div>
    <p>
@@ -225,7 +222,9 @@
    </p>
    
    <script>
-        initOpenLayersMap();
+       window.onload = handleResize;
+       window.onresize = handleResize;
+       initOpenLayersMap();
    </script>
    <div>
 		<c:if test="${geoRegion.regionType <1000}">
