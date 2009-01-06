@@ -71,6 +71,7 @@
 	  <property name="definitions">
 		<list>
 			<value>/WEB-INF/tiles-def.xml</value>
+			<value>/WEB-INF/tiles-def-ala.xml</value>			
 		</list>
 	  </property>
 	</bean>

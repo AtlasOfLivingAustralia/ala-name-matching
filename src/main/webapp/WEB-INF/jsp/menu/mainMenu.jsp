@@ -5,7 +5,7 @@ String servletName = ((org.springframework.web.context.support.XmlWebApplication
 request.setAttribute("servletName",servletName);
 %>
 <li<alatag:indicateActiveMenu menuName="taxonomy"/>><a href="${pageContext.request.contextPath}/species/" title="<spring:message code='topmenu.species.title'/>"><spring:message code='topmenu.species'/></a></li>
-<li<alatag:indicateActiveMenu menuName="geography"/>><a href="${pageContext.request.contextPath}/regions/" title="<spring:message code='topmenu.regions.title'/>"><spring:message code='topmenu.regions'/></a></li>
+<li<alatag:indicateActiveMenu menuName="region"/>><a href="${pageContext.request.contextPath}/regions/" title="<spring:message code='topmenu.regions.title'/>"><spring:message code='topmenu.regions'/></a></li>
 <li<alatag:indicateActiveMenu menuName="dataset"/>><a href="${pageContext.request.contextPath}/datasets/" title="<spring:message code='topmenu.datasets.title'/>"><spring:message code='topmenu.datasets'/></a></li>
 <li<alatag:indicateActiveMenu menuName="occurrence"/>><a href="${pageContext.request.contextPath}/occurrences/" title="<spring:message code='topmenu.occurrences.title'/>"><spring:message code='topmenu.occurrences'/></a></li>
 <li<alatag:indicateActiveMenu menuName="main"/>><a href="${pageContext.request.contextPath}/settings.htm" title="<spring:message code='topmenu.settings.title'/>"><spring:message code='topmenu.settings'/></a></li>
