@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans SYSTEM "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+	<!--
+		3 Types of filter
+		1) Plain string search
+		2) Dropdown combo
+		3) Wizard - leading to a read-only value
+		The filters require a unique numeric id (for use in javascript arrays). 
+	-->
+		
+	<!-- Occurrence Filters-->
+	<bean id="occurrenceFilters" class="org.gbif.portal.web.filter.FilterMapWrapper">
+		<property name="filters">
+			<list>
+				<!--taxonomy filters-->
+				<ref bean="scientificNameFilter"/>
+				<ref bean="commonNameFilter"/>
+				<ref bean="classificationFilter"/>
+				<ref bean="isTypeStatusFilter"/>
+				<!-- geospatial filters-->
+                <ref bean="geoRegionFilter"/>
+				<ref bean="countryFilter"/>
+				<ref bean="boundingBoxFilter"/>
+				<ref bean="latitudeFilter"/>
+				<ref bean="longitudeFilter"/>
+                <ref bean="altitudeFilter"/>
+                <ref bean="depthFilter"/>
+				<ref bean="georeferencedFilter"/>
+				<ref bean="geoConsistencyFilter"/>
+				<!-- dataset filters-->
+				<ref bean="dataProviderIdFilter"/>
+				<ref bean="dataResourceIdFilter"/>
+				<ref bean="hostCountryCodeFilter"/>
+				<ref bean="resourceNetworkIdFilter"/>
+				<ref bean="occurrenceDateFilter"/>
+				<ref bean="yearRangeFilter"/>
+				<ref bean="yearFilter"/>
+				<ref bean="monthFilter"/>
+				<ref bean="institutionCodeFilter"/>
+				<ref bean="collectionCodeFilter"/>
+				<ref bean="identifierFilter"/>
+				<ref bean="basisOfRecordFilter"/>
+				<!--ref bean="restrictionsFilter"/-->
+			</list>
+		</property>
+	</bean>
+</beans>

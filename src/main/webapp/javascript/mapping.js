@@ -1,4 +1,3 @@
-
 /**
  * Initialise a map in the standard geoserver projection
  * 
@@ -76,9 +75,66 @@ function createGoogleMap(mapDivId){
             "Yahoo Hybrid",
             {'type': YAHOO_MAP_HYB, 'sphericalMercator': true}
         );    
-    
-    
     map.addLayers([gmap, gsat, veaer, yahoosat, yahooreg, yahoohyb]);
-    
     return map;
+}
+
+function getStyle(el, property) {
+	  var style;
+	  if (el.currentStyle) {
+	    style = el.currentStyle[property];
+	  } else if( window.getComputedStyle ) {
+	    style = document.defaultView.getComputedStyle(el,null).getPropertyValue(property);
+	  } else {
+	    style = el.style[property];
+	  }
+	  return style;
+}
+
+function resizeContent() {
+    var content = document.getElementById('content');
+    var rightMargin = parseInt(getStyle(content, "right"));
+    content.style.width = document.documentElement.clientWidth - content.offsetLeft - rightMargin;
+}
+  
+function resizeMap() {
+    var centre = map.getCenter();
+    var zoom = map.getZoom();
+    var sidebar_width = 30;
+    if (sidebar_width > 0) {
+      sidebar_width = sidebar_width + 5
+    }
+    document.getElementById('openLayersMap').style.left = (sidebar_width) + "px";
+    document.getElementById('openLayersMap').style.width = (document.getElementById('content').offsetWidth - sidebar_width) + "px";
+    map.setCenter(centre, zoom);
+  }
+
+function handleResize() {
+    if (brokenContentSize) {
+      resizeContent();
+    }
+    resizeMap();
+}
+
+/**
+ * Register an event on the click
+ * @return
+ */
+function toggleSelectCentiCell(){
+    map.events.register('click', map, function (e) {
+    	var lonlat = map.getLonLatFromViewPortPx(e.xy);
+        occurrenceSearch(lonlat.lat, lonlat.lon, 10);
+    });
+}
+
+/**
+ * Redirects to occurrence search.
+ */
+function occurrenceSearch(latitude, longitude, roundingFactor) {
+    // 36 pixels represents 0.1 degrees
+    var longMin = (Math.floor(longitude*roundingFactor) )/roundingFactor;
+    var latMin = (Math.floor(latitude*roundingFactor) )/roundingFactor;
+    var longMax = (Math.ceil(longitude*roundingFactor) )/roundingFactor;
+    var latMax = (Math.ceil(latitude*roundingFactor) )/roundingFactor;
+    redirectToCell(longMin, latMin, longMax, latMax);
 }

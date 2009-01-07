@@ -1,34 +1,35 @@
-/**
- * 
- */
 package org.ala.web.controller;
+
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.gbif.portal.dao.geospatial.GeoRegionDAO;
 import org.gbif.portal.model.geospatial.GeoRegion;
-import org.springframework.web.bind.ServletRequestUtils;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.mvc.Controller;
 
 /**
  * Initial stab at a region page.
  *
  * @author "Dave Martin (David.Martin@csiro.au)"
  */
-public class RegionController implements Controller {
+public class RegionController extends RestController {
 
 	protected GeoRegionDAO geoRegionDAO;
 	
-	public ModelAndView handleRequest(HttpServletRequest request,
+	public ModelAndView handleRequest(Map<String, String> properties, HttpServletRequest request,
 			HttpServletResponse response) throws Exception {
-
-		Long geoRegionId = ServletRequestUtils.getLongParameter(request,"id", 1);
-		GeoRegion geoRegion = geoRegionDAO.getGeoRegionFor(geoRegionId);
-		ModelAndView mav = new ModelAndView("geoRegionView");
-		mav.addObject("geoRegion", geoRegion);
-		return mav;
+		String regionKey = properties.get("region");
+		if(StringUtils.isNotBlank(regionKey)){
+			Long regionId = Long.parseLong(regionKey);
+			GeoRegion geoRegion = geoRegionDAO.getGeoRegionFor(regionId);
+			ModelAndView mav = new ModelAndView("geoRegionView");
+			mav.addObject("geoRegion", geoRegion);
+			return mav;
+		}
+		return redirectToDefaultView();
 	}
 
 	/**

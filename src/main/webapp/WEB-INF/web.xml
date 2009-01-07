@@ -17,21 +17,22 @@
 		<param-name>contextConfigLocation</param-name>
 		<param-value>
 			classpath*:org/codehaus/xfire/spring/xfire.xml, 
-			classpath*:/applicationContext-webapp.xml,			
-			classpath*:/applicationContext-i18n-maps.xml,						
-			classpath*:/applicationContext-*-download-fields.xml,						
-			classpath*:/applicationContext-triplet-maps.xml,					
+			classpath*:/applicationContext-webapp.xml,
+			classpath*:/applicationContext-i18n-maps.xml,
+			classpath*:/applicationContext-*-download-fields.xml,
+			classpath*:/applicationContext-triplet-maps.xml,
 			classpath*:/org/gbif/portal/**/applicationContext-*.xml,
-			classpath*:/applicationContext-contentProviders.xml,			
-			classpath*:/applicationContext-filter-predicates.xml,			
-			classpath*:/applicationContext-occurrence-filters.xml,			
-			classpath*:/applicationContext-taxonomy-filters.xml,						
-			classpath*:/applicationContext-taxonomyControllers.xml, 			
+			classpath*:/applicationContext-contentProviders.xml,
+			classpath*:/applicationContext-filter-predicates.xml,
+			classpath*:/applicationContext-occurrence-filters.xml,
+			classpath*:/ala-occurrence-filters.xml,
+			classpath*:/applicationContext-taxonomy-filters.xml,
+			classpath*:/applicationContext-taxonomyControllers.xml,
 			classpath*:/org/gbif/**/mainDispatcher-servlet.xml, 
 			classpath*:/org/gbif/**/*-servlet.xml, 
 			classpath*:/applicationContext-webappPropertyStore.xml,
 			classpath*:/applicationContext-namespaceDefinition.xml,
-			classpath*:/applicationContext-scheduled-tasks.xml,			
+			classpath*:/applicationContext-scheduled-tasks.xml,
 		</param-value>
 	</context-param>
 

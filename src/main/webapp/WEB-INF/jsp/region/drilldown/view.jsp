@@ -90,9 +90,33 @@
                     "http://localhost:8080/geoserver/wfs?", 
                     {layers: "ala:countries",
                     srs: 'EPSG:4326',
-                    bgcolor: "0xAEBEE0",
+                    bgcolor: "0x666699",
                     format: "image/png"}
-                    );                  
+                    );
+
+                var placenamesLayer = new OpenLayers.Layer.WMS( "Place names (medium res)",
+                        "http://localhost:8080/geoserver/wfs?", 
+                        {layers: "geoscience:placenames",
+                        srs: 'EPSG:4326',
+                        transparent: "true",
+                        format: "image/png"}
+                    );
+
+                var placenamesHighLayer = new OpenLayers.Layer.WMS( "Place names (high res)",
+                        "http://localhost:8080/geoserver/wfs?", 
+                        {layers: "geoscience:placenames_low",
+                        srs: 'EPSG:4326',
+                        transparent: "true",
+                        format: "image/png"}
+                    );
+
+                var roadsLayer = new OpenLayers.Layer.WMS( "Roads",
+                        "http://localhost:8080/geoserver/wfs?", 
+                        {layers: "geoscience:roads",
+                        srs: 'EPSG:4326',
+                        transparent: "true",
+                        format: "image/png"}
+                    );
 
                 var cellMarkerLayer = new OpenLayers.Layer.WMS( "Cellmarker",
                     "http://localhost:8080/geoserver/wfs?", 
@@ -102,14 +126,15 @@
                     format: "image/png"}
                     );  
                     
-                    
                 <c:if test="${param['map']!='google'}">
                     var blueMarbleLayer = new OpenLayers.Layer.WMS( "Satellite", 
                             "http://labs.metacarta.com/wms-c/Basic.py?", {layers: 'satellite' } );
                     map.addLayer(countriesLayer);
                     map.addLayer(blueMarbleLayer);
+                    map.addLayer(roadsLayer);
+                    map.addLayer(placenamesLayer);
+                    //map.addLayer(placenamesHighLayer);
                 </c:if>
-                
 
                 //useful for debug
                 //map.addLayer(cellLayer); 
@@ -121,6 +146,7 @@
                 
                 map.addControl(new OpenLayers.Control.LayerSwitcher());
                 map.addControl(new OpenLayers.Control.MousePosition());
+                map.addControl(new OpenLayers.Control.ScaleLine());
 
                 // zoom to the correct bounds for this region
                 var bounds = new OpenLayers.Bounds();
@@ -135,18 +161,6 @@
                 map.zoomToExtent(bounds, true);	
         }
 
-        /**
-         * Redirects to occurrence search.
-         */
-        function occurrenceSearch(latitude, longitude, roundingFactor) {
-            // 36 pixels represents 0.1 degrees
-            var longMin = (Math.floor(longitude*roundingFactor) )/roundingFactor;
-            var latMin = (Math.floor(latitude*roundingFactor) )/roundingFactor;
-            var longMax = (Math.ceil(longitude*roundingFactor) )/roundingFactor;
-            var latMax = (Math.ceil(latitude*roundingFactor) )/roundingFactor;
-            redirectToCell(longMin, latMin, longMax, latMax);
-        }
-
         var extraParams = "c[0].s=36&c[0].p=0&c[0].o=${geoRegion.id}"
         
         //Redirects to filter search with bounding box
@@ -158,53 +172,6 @@
                     +"&maxX="+maxX
                     +"&maxY="+maxY;
         }
-
-        function getStyle(el, property) {
-        	  var style;
-        	  if (el.currentStyle) {
-        	    style = el.currentStyle[property];
-        	  } else if( window.getComputedStyle ) {
-        	    style = document.defaultView.getComputedStyle(el,null).getPropertyValue(property);
-        	  } else {
-        	    style = el.style[property];
-        	  }
-        	  return style;
-        	}
-
-        function resizeContent() {
-            var content = document.getElementById('content');
-            var rightMargin = parseInt(getStyle(content, "right"));
-            content.style.width = document.documentElement.clientWidth - content.offsetLeft - rightMargin;
-          }
-          
-          function resizeMap() {
-            var centre = map.getCenter();
-            var zoom = map.getZoom();
-            var sidebar_width = 30;
-
-            if (sidebar_width > 0) {
-              sidebar_width = sidebar_width + 5
-            }
-            document.getElementById('openLayersMap').style.left = (sidebar_width) + "px";
-            document.getElementById('openLayersMap').style.width = (document.getElementById('content').offsetWidth - sidebar_width) + "px";
-          }
-
-          function handleResize() {
-            if (brokenContentSize) {
-              resizeContent();
-            }
-            resizeMap();
-          }
-          
-
-        var selectRegister = false;
-        function toggleSelectCentiCell(){
-            map.events.register('click', map, function (e) {
-            	var lonlat = map.getLonLatFromViewPortPx(e.xy);
-                occurrenceSearch(lonlat.lat, lonlat.lon, 10);
-            });
-        }
-
     --></script>
    <div id="openLayersMap" class="openlayersMap"></div>
    <p>
@@ -228,13 +195,13 @@
    </script>
    <div>
 		<c:if test="${geoRegion.regionType <1000}">
-		    <img src="http://localhost:8080/geoserver/wms?bgcolor=0xAEBEE0&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:as&width=600&height=545&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DADMIN_NAME%26nl%3Dala%3Aas%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
+		    <img src="http://localhost:8080/geoserver/wms?bgcolor=0x666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:as&width=600&height=545&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DADMIN_NAME%26nl%3Dala%3Aas%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
 		</c:if>
 		<c:if test="${geoRegion.regionType >=2000 && geoRegion.regionType <3000}">
-		    <img src="http://localhost:8080/geoserver/wms?bgcolor=0xAEBEE0&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:ibra&width=600&height=545&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DREG_NAME%26nl%3Dala:ibra%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
+		    <img src="http://localhost:8080/geoserver/wms?bgcolor=0x6666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:ibra&width=600&height=545&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DREG_NAME%26nl%3Dala:ibra%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
 		</c:if>
 		<c:if test="${geoRegion.regionType >=3001 && geoRegion.regionType <4000}">
-		    <img src="http://localhost:8080/geoserver/wms?bgcolor=0xAEBEE0&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:countries,ala:imcra&width=600&height=545&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DPB_NAME%26nl%3Dala:imcra%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
+		    <img src="http://localhost:8080/geoserver/wms?bgcolor=0x666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:countries,ala:imcra&width=600&height=545&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DPB_NAME%26nl%3Dala:imcra%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
 		</c:if>
    </div>
 </div>

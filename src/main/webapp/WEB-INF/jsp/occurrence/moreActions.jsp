@@ -11,7 +11,7 @@
 							<c:if test="${viewName!='resultsTable'}"><a href="${pageContext.request.contextPath}/occurrences/searchWithTable.htm?<gbif:criteria criteria="${criteria}"/>" class="iconTable"></c:if><spring:message code="occurrence.search.filter.action.viewtable"/><c:if test="${viewName!='resultsTable'}"></a></c:if>
 						</li>		
 						<li>
-							<c:if test="${viewName!='resultsMap'}"><a href="${pageContext.request.contextPath}/occurrences/searchWithMap.htm?<gbif:criteria criteria="${criteria}"/>" class="iconTable"></c:if><spring:message code="occurrence.search.filter.action.viewmap"/><c:if test="${viewName!='resultsMap'}"></a></c:if>
+							<c:if test="${viewName!='resultsMap'}"><a href="${pageContext.request.contextPath}/occurrences/searchWithMap.htm?<gbif:criteria criteria="${criteria}"/>" class="iconMap"></c:if><spring:message code="occurrence.search.filter.action.viewmap"/><c:if test="${viewName!='resultsMap'}"></a></c:if>
 						</li>
 					</ul>
 				</td>
