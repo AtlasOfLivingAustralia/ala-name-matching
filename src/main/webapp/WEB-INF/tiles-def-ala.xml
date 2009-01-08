@@ -11,7 +11,7 @@
     
     <!--  Browse view for Geographic Region -->
     <definition name="geoRegionBrowse" extends="mainLayout">
-        <put name="subtitle" value="/WEB-INF/jsp/region/drilldown/regionSubtitle.jsp"/>
+        <put name="subtitle" value="/WEB-INF/jsp/region/browseSubtitle.jsp"/>
         <put name="headcontent" value="/WEB-INF/jsp/region/headcontent.jsp"/>
         <put name="content" value="/WEB-INF/jsp/region/browse.jsp"/>
     </definition>

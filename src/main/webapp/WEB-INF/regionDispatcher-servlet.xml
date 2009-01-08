@@ -28,8 +28,17 @@
 	    </property>
     </bean>
     
-    <!--  Simple Controller for browsing Geo Regions -->
+    <!-- Simple Controller for browsing a list of GeoRegions -->
     <bean id="regionBrowseController" class="org.ala.web.controller.RegionBrowseController">
-        <property name="geoRegionDAO" ref="geoRegionDAORO"/>
+        <property name="urlRoot" value="browse"/>
+        <property name="geoRegionDAO" ref="alaGeoRegionDAORO"/>
+	    <property name="supportedPatterns">
+	      <list>
+	        <list>
+	          <value>regionType</value>
+	        </list>
+	      </list>
+	    </property>
     </bean>
+    
 </beans>

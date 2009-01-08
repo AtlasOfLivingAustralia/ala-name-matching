@@ -1,0 +1,1 @@
+<%@ include file="/common/taglibs.jsp"%><spring:message code="regions.list.${geoRegionType.name}.shorttitle"/> -

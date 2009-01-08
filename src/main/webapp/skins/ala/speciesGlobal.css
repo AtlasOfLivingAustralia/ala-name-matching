@@ -745,7 +745,7 @@ div.subcontainer {
 	color: #0166B9; /* #2390aa */;
 	background-color: inherit; /*#D3E0EA;  #e6fbff;*/
 	font-weight: bold;
-	text-decoration: underline;
+	/* text-decoration: underline; */
 }
 
 #selectedChar {

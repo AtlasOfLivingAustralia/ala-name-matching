@@ -4,7 +4,8 @@
 <script src='http://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.2&mkt=en-us'></script>
 <script src='http://maps.google.com/maps?file=api&amp;v=2&amp;key=${googleKey}'></script>
 <script src="http://api.maps.yahoo.com/ajaxymap?v=3.0&appid=euzuro-openlayers"></script>
-
+<link rel="stylesheet" href="${pageContext.request.contextPath}/<spring:theme code='browse.css'/>"/>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/<spring:theme code='tables.css'/>"/>
 
 <script src="http://localhost:8080/geoserver/openlayers/OpenLayers.js"></script>
 <script src="${pageContext.request.contextPath}/javascript/mapping.js"></script>

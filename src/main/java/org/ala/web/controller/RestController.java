@@ -182,7 +182,8 @@ public class RestController implements Controller {
 				if(viewName!=null && viewName.length()>0)
 					viewName = viewName+"."+subView;
 				else
-					viewName = subView;			}
+					viewName = subView;
+				}
 		}
 		if(logger.isDebugEnabled())
 			logger.debug("constructed view name: "+viewName);
