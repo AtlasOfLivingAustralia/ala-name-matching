@@ -96,7 +96,14 @@ function resizeContent() {
     var rightMargin = parseInt(getStyle(content, "right"));
     content.style.width = document.documentElement.clientWidth - content.offsetLeft - rightMargin;
 }
-  
+
+function resizeMap(centre) {
+    resizeMap();
+    if(centre){
+      map.setCenter(centre, zoom);
+    }
+  }
+
 function resizeMap() {
     var centre = map.getCenter();
     var zoom = map.getZoom();
@@ -106,14 +113,13 @@ function resizeMap() {
     }
     document.getElementById('openLayersMap').style.left = (sidebar_width) + "px";
     document.getElementById('openLayersMap').style.width = (document.getElementById('content').offsetWidth - sidebar_width) + "px";
-    map.setCenter(centre, zoom);
   }
 
 function handleResize() {
     if (brokenContentSize) {
       resizeContent();
     }
-    resizeMap();
+    resizeMap(true);
 }
 
 /**

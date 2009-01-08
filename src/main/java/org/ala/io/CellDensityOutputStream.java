@@ -9,7 +9,6 @@ import java.io.OutputStream;
 import org.gbif.portal.util.geospatial.CellIdUtils;
 import org.gbif.portal.util.geospatial.LatLongBoundingBox;
 
-
 /**
  * 
  *
@@ -38,7 +37,7 @@ public class CellDensityOutputStream {
 		this.outputStream.flush();
 	}	
 	
-	public void writeTenMilli(int cellId, int tenMilliCellId, int count) throws IOException{
+	public void writeTenMilliCell(int cellId, int tenMilliCellId, int count) throws IOException{
 		LatLongBoundingBox llbb = tenMilliToBoundingBox(cellId, tenMilliCellId);
 		writeOutLatLongBoundingBox(llbb, count);
 		this.outputStream.flush();
@@ -55,34 +54,34 @@ public class CellDensityOutputStream {
 		outputStream.write(delimiter);
 		outputStream.write(Integer.toString(count).getBytes());
 		outputStream.write(eol);
-		
+		System.out.println(llbb.toString());
 	}
 	
 	/**
-	 * Returns the box of the given cell and centi cell
-	 * An attempt has been made to avoid rounding errors with floats, but may need revisited
+	 * Returns the box of the given cell and tenmilli cell.
+	 * 
 	 * @param cellId To return the lat long box of
 	 * @param centiCellId within the box
 	 * @param tenMilliCellId within the box
 	 * @return The box
 	 */
 	public static LatLongBoundingBox tenMilliToBoundingBox(int cellId, int tenMilliCellId) {
-		int longitudeX10 = 10*((cellId%360) - 180);
-		int latitudeX10 = -900;
+		int longitudeX100 = 100*((cellId%360) - 180);
+		int latitudeX100 = -900;
 		if (cellId>0) {
-			latitudeX10 = 10*(new Double(Math.floor(cellId/360)).intValue() - 90);
+			latitudeX100 = 100*(new Double(Math.floor(cellId/360)).intValue() - 90);
 		}
 		
-		float longOffset = (tenMilliCellId%10);
+		float longOffset = (tenMilliCellId%100);
 		float latOffset = 0;
 		if (tenMilliCellId>0){
-			latOffset = tenMilliCellId/10;
+			latOffset = tenMilliCellId/100;
 		}
 		
-		float minLatitude = (latitudeX10 + latOffset)/10;
-		float minLongitude = (longitudeX10 + longOffset)/10;
-		float maxLatitude = (latitudeX10 + latOffset + 1)/10;
-		float maxlongitude = (longitudeX10 + longOffset + 1)/10;
+		float minLatitude = ((float)latitudeX100 + latOffset)/100;
+		float minLongitude = ((float)longitudeX100 + longOffset)/100;
+		float maxLatitude = ((float)latitudeX100 + latOffset + 1)/100;
+		float maxlongitude = ((float)longitudeX100 + longOffset + 1)/100;
 		return new LatLongBoundingBox(minLongitude, minLatitude, maxlongitude, maxLatitude);
 	}
 	

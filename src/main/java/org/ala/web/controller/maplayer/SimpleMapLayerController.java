@@ -24,8 +24,6 @@ public class SimpleMapLayerController implements Controller {
 	protected Logger logger = Logger.getLogger(this.getClass());
 	
 	protected CellDensityDAO cellDensityDAO;
-	
-	protected boolean includeHeader = true;
 
 	/**
 	 * @see org.springframework.web.servlet.mvc.Controller#handleRequest(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
@@ -60,10 +58,6 @@ public class SimpleMapLayerController implements Controller {
 		}
 		CellDensityOutputStream routput = new CellDensityOutputStream(output);
 		
-		if(includeHeader){
-			output.write("MINX\tMINY\tMAXX\tMAXY\tDENSITY\n".getBytes());
-		}
-		
 		Integer minCellId = null;
 		Integer maxCellId = null;
 		
@@ -90,7 +84,11 @@ public class SimpleMapLayerController implements Controller {
 			}
 		} else if(unit==0.01f){
 			logger.info("Retrieving ten milli cells....");
-			cellDensityDAO.outputTenMilliCellDensities(id, type, routput);
+			if(!ignoreBoundaries && maxX!=null && maxY!=null && minX!=null && minY!=null){
+				cellDensityDAO.outputTenMilliCellDensities(id, type, minCellId, maxCellId, routput);
+			} else {
+				cellDensityDAO.outputTenMilliCellDensities(id, type, routput);
+			}			
 		} else {
 			logger.info("Retrieving 1 deg cells....");
 			if(!ignoreBoundaries && maxX!=null && maxY!=null && minX!=null && minY!=null){			
