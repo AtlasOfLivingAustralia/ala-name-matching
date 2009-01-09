@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang.StringUtils;
 import org.gbif.portal.dao.geospatial.GeoRegionDAO;
 import org.gbif.portal.model.geospatial.GeoRegion;
+import org.gbif.portal.web.controller.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
