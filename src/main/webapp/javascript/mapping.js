@@ -1,4 +1,23 @@
 /**
+ * Initialise a Open Layers map
+ * 
+ * @param useGoogle whether to use google projection
+ * @return
+ */
+function initMap(mapDivId, useGoogle){
+  	if(useGoogle){
+        map = createGoogleMap(mapDivId);
+  	} else {
+  		map = create4326Map(mapDivId);
+  	}
+   resizeMap(mapDivId, false);
+   //add controls
+   map.addControl(new OpenLayers.Control.LayerSwitcher());
+   map.addControl(new OpenLayers.Control.MousePosition());
+   map.addControl(new OpenLayers.Control.ScaleLine());
+}
+
+/**
  * Initialise a map in the standard geoserver projection
  * 
  * @param the map div
@@ -14,7 +33,7 @@ function create4326Map(mapDivId){
 }
 
 /**
- * Initialise a map int he spherical mercator projection.
+ * Initialise a map in the spherical mercator projection.
  * 
  * @param the map div
  * @return the initialised map
@@ -43,39 +62,6 @@ function createGoogleMap(mapDivId){
     };
     // construct a map with the above options
     map = new OpenLayers.Map(mapDivId, options);
-    
-    var gmap = new OpenLayers.Layer.Google(
-            "Google Streets",
-            {'sphericalMercator': true}
-        ); 
-
-    // create Google layer
-    var gsat = new OpenLayers.Layer.Google(
-        "Google Satellite",
-        {type: G_SATELLITE_MAP, 'sphericalMercator': true}
-    );
-
-    // create Virtual Earth layer
-    var veaer = new OpenLayers.Layer.VirtualEarth(
-        "Virtual Earth Aerial",
-        {'type': VEMapStyle.Aerial, 'sphericalMercator': true}
-    ); 
-
-    // create Yahoo layer
-    var yahoosat = new OpenLayers.Layer.Yahoo(
-        "Yahoo Satellite",
-        {'type': YAHOO_MAP_SAT, 'sphericalMercator': true}
-    );
-    var yahooreg = new OpenLayers.Layer.Yahoo(
-            "Yahoo Regional",
-            {'type': YAHOO_MAP_REG, 'sphericalMercator': true}
-        );    
-    
-    var yahoohyb = new OpenLayers.Layer.Yahoo(
-            "Yahoo Hybrid",
-            {'type': YAHOO_MAP_HYB, 'sphericalMercator': true}
-        );    
-    map.addLayers([gmap, gsat, veaer, yahoosat, yahooreg, yahoohyb]);
     return map;
 }
 
@@ -97,29 +83,32 @@ function resizeContent() {
     content.style.width = document.documentElement.clientWidth - content.offsetLeft - rightMargin;
 }
 
-function resizeMap(centre) {
-    resizeMap();
+function resizeMap(mapDivId, centre) {
+    resizeMap(mapDivId);
     if(centre){
       map.setCenter(centre, zoom);
     }
   }
 
-function resizeMap() {
+function resizeMap(mapDivId) {
     var centre = map.getCenter();
     var zoom = map.getZoom();
     var sidebar_width = 30;
     if (sidebar_width > 0) {
       sidebar_width = sidebar_width + 5
     }
-    document.getElementById('openLayersMap').style.left = (sidebar_width) + "px";
-    document.getElementById('openLayersMap').style.width = (document.getElementById('content').offsetWidth - sidebar_width) + "px";
+    document.getElementById(mapDivId).style.left = (sidebar_width) + "px";
+    document.getElementById(mapDivId).style.width = (document.getElementById('content').offsetWidth - sidebar_width) + "px";
   }
 
+/**
+ * Handle window resizing
+ */
 function handleResize() {
     if (brokenContentSize) {
-      resizeContent();
+      resizeContent(mapDivId);
     }
-    resizeMap(true);
+    resizeMap(mapDivId, true);
 }
 
 /**
@@ -132,6 +121,65 @@ function toggleSelectCentiCell(){
         occurrenceSearch(lonlat.lat, lonlat.lon, 10);
     });
 }
+
+/**
+ * Initialise map layers
+ */
+function initLayers(){
+    if(!useGoogle){
+        map.addLayer(countriesLayer);
+        map.addLayer(blueMarbleLayer);
+        map.addLayer(roadsLayer);
+        map.addLayer(placenamesLayer);
+    } else {
+        var gmap = new OpenLayers.Layer.Google(
+                "Google Streets",
+                {'sphericalMercator': true}
+            ); 
+        // create Google layer
+        var gsat = new OpenLayers.Layer.Google(
+            "Google Satellite",
+            {type: G_SATELLITE_MAP, 'sphericalMercator': true}
+        );
+        // create Yahoo layer
+        var yahoosat = new OpenLayers.Layer.Yahoo(
+            "Yahoo Satellite",
+            {'type': YAHOO_MAP_SAT, 'sphericalMercator': true}
+        );
+        var yahooreg = new OpenLayers.Layer.Yahoo(
+                "Yahoo Regional",
+                {'type': YAHOO_MAP_REG, 'sphericalMercator': true}
+            );    
+        var yahoohyb = new OpenLayers.Layer.Yahoo(
+                "Yahoo Hybrid",
+                {'type': YAHOO_MAP_HYB, 'sphericalMercator': true}
+            );    
+        map.addLayers([gmap, gsat, yahoosat, yahooreg, yahoohyb]);	
+    }
+    
+    //useful for debug
+    //map.addLayer(cellLayer); 
+    map.addLayer(centiCellLayer);
+    map.addLayer(tenmilliCellLayer);
+}
+
+/**
+ * Zoom to the correct bounds, re-projecting if necessary.
+ */
+function zoomToBounds(){
+    // zoom to the correct bounds
+    if(minLongitude!=null){
+        var bounds = new OpenLayers.Bounds();
+        bounds.extend(new OpenLayers.LonLat(minLongitude,minLatitude));
+        bounds.extend(new OpenLayers.LonLat(maxLongitude,maxLatitude));
+        if(useGoogle){
+          //reproject latlong values
+          var proj = new OpenLayers.Projection("EPSG:4326");
+          bounds.transform(proj, map.getProjectionObject());
+        }
+        map.zoomToExtent(bounds, true);
+    }
+ }
 
 /**
  * Redirects to occurrence search.

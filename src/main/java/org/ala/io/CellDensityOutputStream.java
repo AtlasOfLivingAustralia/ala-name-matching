@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.ala.io;
 
 import java.io.IOException;
@@ -10,7 +7,8 @@ import org.gbif.portal.util.geospatial.CellIdUtils;
 import org.gbif.portal.util.geospatial.LatLongBoundingBox;
 
 /**
- * 
+ * An output stream wrapper for outputting cell densities
+ * in minx miny maxx maxy density format.
  *
  * @author "Dave Martin (David.Martin@csiro.au)"
  */
@@ -20,29 +18,63 @@ public class CellDensityOutputStream {
 	
 	protected byte[] delimiter = "\t".getBytes();
 	protected byte[] eol = "\n".getBytes();
-
+	
+	/**
+	 * Initialise this output stream.
+	 * 
+	 * @param outputStream
+	 */
 	public CellDensityOutputStream(OutputStream outputStream){
 		this.outputStream = outputStream;
 	}
 
+	/**
+	 * Output a cell density.
+	 * 
+	 * @param cellId
+	 * @param count
+	 * @throws IOException
+	 */
 	public void writeCell(int cellId, int count) throws IOException{
 		LatLongBoundingBox llbb = CellIdUtils.toBoundingBox(cellId);
 		writeOutLatLongBoundingBox(llbb,count);
 		this.outputStream.flush();
 	}
 
+	/**
+	 * Output a centi cell density.
+	 * 
+	 * @param cellId
+	 * @param centiCellId
+	 * @param count
+	 * @throws IOException
+	 */
 	public void writeCentiCell(int cellId, int centiCellId, int count) throws IOException{
 		LatLongBoundingBox llbb = CellIdUtils.toBoundingBox(cellId, centiCellId);
 		writeOutLatLongBoundingBox(llbb,count);
 		this.outputStream.flush();
-	}	
+	}
 	
+	/**
+	 * Output a tenmilli cell density
+	 * 
+	 * @param cellId
+	 * @param tenMilliCellId
+	 * @param count
+	 * @throws IOException
+	 */
 	public void writeTenMilliCell(int cellId, int tenMilliCellId, int count) throws IOException{
 		LatLongBoundingBox llbb = tenMilliToBoundingBox(cellId, tenMilliCellId);
 		writeOutLatLongBoundingBox(llbb, count);
 		this.outputStream.flush();
-	}		
+	}
 
+	/**
+	 * Write out a LatLongBoundingBox to the stream
+	 * @param llbb
+	 * @param count
+	 * @throws IOException
+	 */
 	private void writeOutLatLongBoundingBox(LatLongBoundingBox llbb, int count) throws IOException {
 		outputStream.write(Float.toString(llbb.getMinLong()).getBytes());
 		outputStream.write(delimiter);
@@ -54,7 +86,6 @@ public class CellDensityOutputStream {
 		outputStream.write(delimiter);
 		outputStream.write(Integer.toString(count).getBytes());
 		outputStream.write(eol);
-		System.out.println(llbb.toString());
 	}
 	
 	/**

@@ -31,7 +31,7 @@ public class SimpleMapLayerController implements Controller {
 	public ModelAndView handleRequest(HttpServletRequest request,
 			HttpServletResponse response) throws Exception {
 
-		logger.info("Retrieving map layer...."+request.getQueryString());
+		logger.debug("Retrieving map layer...."+request.getQueryString());
 		float unit = ServletRequestUtils.getFloatParameter(request, "unit", 1f);
 		final long id = ServletRequestUtils.getLongParameter(request, "id", 0);
 		final int type = ServletRequestUtils.getIntParameter(request, "type", 0);
@@ -52,7 +52,7 @@ public class SimpleMapLayerController implements Controller {
 		
 		OutputStream output = response.getOutputStream();
 		if(gzipped){
-			logger.info("Sending gzipped data....");
+			logger.debug("Sending gzipped data....");
 			response.setContentType("application/gzip");
 			output = new GZIPOutputStream(output);
 		}
@@ -76,21 +76,21 @@ public class SimpleMapLayerController implements Controller {
 			maxCellId = CellIdUtils.toCellId(maxCellIdY, maxCellIdX);
 		}
 		if(unit==0.1f){
-			logger.info("Retrieving centi cells....");
+			logger.debug("Retrieving centi cells....");
 			if(!ignoreBoundaries && maxX!=null && maxY!=null && minX!=null && minY!=null){
 				cellDensityDAO.outputCentiCellDensities(id, type, minCellId, maxCellId, routput);
 			} else {
 				cellDensityDAO.outputCentiCellDensities(id, type, routput);
 			}
 		} else if(unit==0.01f){
-			logger.info("Retrieving ten milli cells....");
+			logger.debug("Retrieving ten milli cells....");
 			if(!ignoreBoundaries && maxX!=null && maxY!=null && minX!=null && minY!=null){
 				cellDensityDAO.outputTenMilliCellDensities(id, type, minCellId, maxCellId, routput);
 			} else {
 				cellDensityDAO.outputTenMilliCellDensities(id, type, routput);
 			}			
 		} else {
-			logger.info("Retrieving 1 deg cells....");
+			logger.debug("Retrieving 1 deg cells....");
 			if(!ignoreBoundaries && maxX!=null && maxY!=null && minX!=null && minY!=null){			
 				cellDensityDAO.outputCellDensities(id, type, minCellId, maxCellId, routput);
 			} else {
