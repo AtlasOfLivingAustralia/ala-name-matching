@@ -1,0 +1,772 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:util="http://www.springframework.org/schema/util"
+  xsi:schemaLocation="
+				http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+				http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd">
+
+  <!--  Define how the dispatcher will select the controllers -->
+  <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+    <property name="interceptors">
+      <list>
+        <ref bean="localeChangeInterceptor" />
+        <ref bean="occurrenceDataAgreementInterceptor" />
+        <ref bean="sessionHistoryInterceptor" />
+        <bean id="occurrenceBadRobotInterceptor" parent="badRobotInterceptor">
+           <property name="patterns">
+              <list>
+                <value>/download</value>
+                <value>/setupModel</value>
+              </list>
+           </property> 
+        </bean>
+      </list>
+    </property>
+    <property name="mappings">
+      <props>
+        <prop key="/">occurrenceFilterController</prop>
+        <prop key="/nameSearch">occurrenceNameSearchController</prop>
+        <prop key="/conceptMapView.htm">occurrenceFilterController</prop>
+        <prop key="/wizards">wizardFilterController</prop>
+        <prop key="/refreshFilters">filterComponentsController</prop>
+        <prop key="/addOrUpdateFilters">filterComponentsController</prop>
+        <prop key="/occurrenceCount">occurrenceFilterController</prop>
+        <prop key="/search*.htm">occurrenceFilterController</prop>
+        <prop key="/*points*.htm">occurrenceFilterController</prop>
+        <prop key="/downloadXML.htm">occurrenceFilterController</prop>
+        <prop key="/downloadSpreadsheet.htm">occurrenceFilterController</prop>
+        <prop key="/downloadResults.htm">occurrenceFilterController</prop>
+        <prop key="/startDownload.htm">occurrenceDownloadController</prop>
+        <prop key="/boundingBox.htm">occurrenceFilterController</prop>
+        <prop key="/autoComplete.htm">occurrenceFilterController</prop>
+        <prop key="/boundingBoxFullScreen.htm">occurrenceFilterController</prop>
+        <prop key="/boundingBoxWithCriteria.htm">occurrenceFilterController</prop>
+        <prop key="/setupModel.htm">nicheModelController</prop>
+        <prop key="/createModel.htm">nicheModelController</prop>
+        <!-- KML controllers -->
+        <prop key="/occurrence-*.kml">occurrenceKmlController</prop>
+        <prop key="/taxon/placemarks/taxon-placemarks-*.kml">taxonKmlController</prop>
+        <prop key="/taxon/celldensity/taxon-celldensity-*.kml">taxonCellDensityKmlController</prop>
+        <prop key="/country/placemarks/country-placemarks-*.kml">countryKmlController</prop>
+        <prop key="/country/celldensity/country-celldensity-*.kml">countryCellDensityKmlController</prop>
+        <prop key="/resource/placemarks/resource-placemarks-*.kml">resourceKmlController</prop>
+        <prop key="/resource/celldensity/resource-celldensity-*.kml">resourceCellDensityKmlController</prop>
+        <prop key="/provider/placemarks/provider-placemarks-*.kml">providerKmlController</prop>
+        <prop key="/provider/celldensity/provider-celldensity-*.kml">providerCellDensityKmlController</prop>
+        <prop key="/network/placemarks/network-placemarks-*.kml">networkKmlController</prop>
+        <prop key="/network/celldensity/network-celldensity-*.kml">networkCellDensityKmlController</prop>
+        <prop key="/datatracking/**/*">harvestingOccurrenceController</prop>
+        <prop key="/datatracking/*">harvestingOccurrenceController</prop>
+        <prop key="/**/*">occurrenceController</prop>
+        <prop key="/*.htm">urlFilenameController</prop>
+      </props>
+    </property>
+  </bean>
+
+  <!-- Filter components controller -->
+  <bean id="filterComponentsController" class="org.gbif.portal.web.controller.filter.FilterComponentsController">
+    <property name="filterMapWrapper" ref="occurrenceFilters" />
+    <property name="filterAction" value="/occurrences/search.htm" />
+    <property name="filterHelpView" value="occurrenceFilterHelp" />
+  </bean>
+
+  <!-- Wizard controller -->
+  <bean id="wizardFilterController"
+    class="org.gbif.portal.web.controller.occurrence.OccurrenceFilterWizardController">
+    <property name="filterMapWrapper" ref="occurrenceFilters" />
+    <property name="dataResourceManager" ref="dataResourceManager" />
+    <property name="taxonomyManager" ref="taxonomyManager" />
+    <property name="taxonConceptUtils" ref="taxonConceptUtils" />
+    <property name="classificationFilter" ref="classificationFilter" />
+    <property name="dataResourceIdFilter" ref="dataResourceIdFilter" />
+    <property name="boundingBoxFilter" ref="boundingBoxFilter" />
+    <property name="occurrenceDateFilter" ref="occurrenceDateFilter" />
+    <property name="yearRangeFilter" ref="yearRangeFilter" />
+    <property name="messageSource" ref="messageSource" />
+  </bean>
+
+  <!--  Occurrence Record Drilldown controller -->
+  <bean id="abstractOccurrenceController" class="org.ala.web.controller.OccurrenceController"
+    abstract="true">
+    <property name="geospatialManager" ref="geospatialManager" />
+    <property name="scientificNameFilter" ref="scientificNameFilter" />
+    <property name="dataProviderServices" ref="dataProviderServices" />
+    <property name="geoRegionDAO" ref="alaGeoRegionDAORO"/>
+    <property name="urlRoot" value="occurrences" />
+    <property name="viewNamePrefix" value="occurrenceRecord" />
+    <property name="defaultView" value="/welcome.htm" />
+    <property name="queryViewUrl" value="/occurrences/search.htm?" />
+    <property name="cellWidth" value="1" />
+    <property name="messageSource" ref="messageSource" />
+    <property name="userUtils" ref="userUtils" />
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>key</value>
+        </list>
+        <list>
+          <value>key</value>
+          <value>view</value>
+        </list>
+        <list>
+          <value>institutionCode</value>
+          <value>collectionCode</value>
+          <value>catalogueNumber</value>
+        </list>
+        <list>
+          <value>institutionCode</value>
+          <value>collectionCode</value>
+          <value>catalogueNumber</value>
+          <value>view</value>
+        </list>
+      </list>
+    </property>
+  </bean>
+
+  <!--  Occurrence Record Drilldown controller -->
+  <bean id="occurrenceController" parent="abstractOccurrenceController">
+    <property name="occurrenceManager" ref="occurrenceManager" />
+    <property name="dataResourceManager" ref="dataResourceManager" />
+    <property name="taxonomyManager" ref="taxonomyManager" />
+  </bean>
+
+  <!--  Occurrence Record Drilldown controller -->
+  <bean id="harvestingOccurrenceController" parent="abstractOccurrenceController">
+    <property name="occurrenceManager" ref="harvestingOccurrenceManager" />
+    <property name="dataResourceManager" ref="harvestingDataResourceManager" />
+    <property name="taxonomyManager" ref="harvestingTaxonomyManager" />
+    <property name="isStagingArea" value="true" />
+    <property name="urlRoot" value="datatracking" />
+  </bean>
+
+  <!-- Controller for a single occurrence kml -->
+  <bean id="occurrenceKmlController" class="org.gbif.portal.web.controller.RedirectToWebServiceController">
+    <property name="removeExtensions" value="true" />
+    <property name="urlPrefix" value="/ws/rest/occurrence/get/" />
+    <property name="urlRoot" value="/occurrences/" />
+    <property name="extraParams">
+      <map>
+        <entry key="format" value="kml" />
+      </map>
+    </property>
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>key</value>
+        </list>
+      </list>
+    </property>
+    <property name="patternPrefix">
+      <map>
+        <entry key="key" value="occurrence-" />
+      </map>
+    </property>
+  </bean>
+
+  <!-- Controller that redirects to the occurrence kml service -->
+  <bean id="abstractOccurrenceKmlController" class="org.gbif.portal.web.controller.RedirectToWebServiceController">
+    <property name="removeExtensions" value="true" />
+    <property name="urlPrefix" value="/ws/rest/occurrence/list/" />
+    <property name="urlRoot" value="/placemarks/" />
+    <property name="extraParams">
+      <map>
+        <entry key="format" value="kml" />
+        <entry key="maxresults" value="10000" />
+      </map>
+    </property>
+  </bean>
+  <bean id="taxonKmlController" parent="abstractOccurrenceKmlController">
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>taxonconceptkey</value>
+        </list>
+      </list>
+    </property>
+    <property name="patternPrefix">
+      <map>
+        <entry key="taxonconceptkey" value="taxon-placemarks-" />
+      </map>
+    </property>
+  </bean>
+  <bean id="resourceKmlController" parent="abstractOccurrenceKmlController">
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>dataresourcekey</value>
+        </list>
+      </list>
+    </property>
+    <property name="patternPrefix">
+      <map>
+        <entry key="dataresourcekey" value="resource-placemarks-" />
+      </map>
+    </property>
+  </bean>
+  <bean id="providerKmlController" parent="abstractOccurrenceKmlController">
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>dataproviderkey</value>
+        </list>
+      </list>
+    </property>
+    <property name="patternPrefix">
+      <map>
+        <entry key="dataproviderkey" value="provider-placemarks-" />
+      </map>
+    </property>
+  </bean>
+  <bean id="networkKmlController" parent="abstractOccurrenceKmlController">
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>resourcenetworkkey</value>
+        </list>
+      </list>
+    </property>
+    <property name="patternPrefix">
+      <map>
+        <entry key="resourcenetworkkey" value="network-placemarks-" />
+      </map>
+    </property>
+  </bean>
+  <bean id="countryKmlController" parent="abstractOccurrenceKmlController">
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>originisocountrycode</value>
+        </list>
+      </list>
+    </property>
+    <property name="patternPrefix">
+      <map>
+        <entry key="originisocountrycode" value="country-placemarks-" />
+      </map>
+    </property>
+  </bean>
+
+  <!-- Controller that redirects to the occurrence cell density kml service -->
+  <bean id="abstractOccurrenceCellDensityKmlController"
+    class="org.gbif.portal.web.controller.RedirectToWebServiceController">
+    <property name="removeExtensions" value="true" />
+    <property name="urlPrefix" value="/ws/rest/density/list/" />
+    <property name="urlRoot" value="/celldensity/" />
+    <property name="extraParams">
+      <map>
+        <entry key="format" value="kml" />
+      </map>
+    </property>
+  </bean>
+  <bean id="taxonCellDensityKmlController" parent="abstractOccurrenceCellDensityKmlController">
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>taxonconceptkey</value>
+        </list>
+      </list>
+    </property>
+    <property name="patternPrefix">
+      <map>
+        <entry key="taxonconceptkey" value="taxon-celldensity-" />
+      </map>
+    </property>
+  </bean>
+  <bean id="resourceCellDensityKmlController" parent="abstractOccurrenceCellDensityKmlController">
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>dataresourcekey</value>
+        </list>
+      </list>
+    </property>
+    <property name="patternPrefix">
+      <map>
+        <entry key="dataresourcekey" value="resource-celldensity-" />
+      </map>
+    </property>
+  </bean>
+  <bean id="providerCellDensityKmlController" parent="abstractOccurrenceCellDensityKmlController">
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>dataproviderkey</value>
+        </list>
+      </list>
+    </property>
+    <property name="patternPrefix">
+      <map>
+        <entry key="dataproviderkey" value="provider-celldensity-" />
+      </map>
+    </property>
+  </bean>
+  <bean id="networkCellDensityKmlController" parent="abstractOccurrenceCellDensityKmlController">
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>resourcenetworkkey</value>
+        </list>
+      </list>
+    </property>
+    <property name="patternPrefix">
+      <map>
+        <entry key="resourcenetworkkey" value="network-celldensity-" />
+      </map>
+    </property>
+  </bean>
+  <bean id="countryCellDensityKmlController" parent="abstractOccurrenceCellDensityKmlController">
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>originisocountrycode</value>
+        </list>
+      </list>
+    </property>
+    <property name="patternPrefix">
+      <map>
+        <entry key="originisocountrycode" value="country-celldensity-" />
+      </map>
+    </property>
+  </bean>
+
+  <!-- The filter query controller for occurrence records -->
+  <bean id="nicheModelController" class="org.gbif.portal.web.controller.openmodeller.OpenModellerController">
+    <!-- property name="tripletQueryManager" ref="tripletOccurrenceTaxonPointsManager"/-->
+    <property name="tripletQueryManager" ref="tripletOccurrencePointsManager" />
+    <property name="queryHelper" ref="occurrenceQueryHelper" />
+    <property name="filterContentProvider" ref="filterContentProvider" />
+    <property name="occurrenceFilters" ref="occurrenceFilters" />
+    <property name="messageSource" ref="messageSource" />
+    <property name="maxPointsForModel" value="1000" />
+    <property name="landLayers">
+      <map>
+        <entry key="bio_1">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_1" />
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_1" />
+          </bean>
+        </entry>
+        <entry key="bio_2">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_2"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_2" />
+          </bean>
+        </entry>
+        <entry key="bio_3">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_3"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_3" />
+          </bean>
+        </entry>
+        <entry key="bio_4">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_4"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_4"/>
+          </bean>
+        </entry>
+        <entry key="bio_5">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_5"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_5"/>
+          </bean>
+        </entry>
+        <entry key="bio_6">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_6"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_6"/>
+          </bean>
+        </entry>
+        <entry key="bio_7">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_7"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_7"/>
+          </bean>
+        </entry>
+        <entry key="bio_8">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_8"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_8"/>
+          </bean>
+        </entry>
+        <entry key="bio_9">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_9"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_9"/>
+          </bean>
+        </entry>
+        <entry key="bio_10">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_10"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_10"/>
+          </bean>
+        </entry>
+        <entry key="bio_11">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_11"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_11"/>
+          </bean>
+        </entry>
+        <entry key="bio_12">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_12"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_12"/>
+          </bean>
+        </entry>
+        <entry key="bio_13">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_13"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_13"/>
+          </bean>
+        </entry>
+        <entry key="bio_14">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_14"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_14"/>
+          </bean>
+        </entry>
+        <entry key="bio_15">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_15"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_15"/>
+          </bean>
+        </entry>
+        <entry key="bio_16">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_16"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_16"/>
+          </bean>
+        </entry>
+        <entry key="bio_17">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_17"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_17"/>
+          </bean>
+        </entry>
+        <entry key="bio_18">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_18"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_18"/>
+          </bean>
+        </entry>
+        <entry key="bio_19">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="bio_19"/>
+            <property name="path"
+              value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_19"/>
+          </bean>
+        </entry>
+      </map>
+    </property>
+    <property name="marineLayers">
+      <map>
+        <entry key="depthmax">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="depthmax"/>
+            <property name="path" value="/system/modelagem/layers/publico/marine/depthmax.tif"/>
+          </bean>
+        </entry>
+        <entry key="depthmin">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="depthmin"/>
+            <property name="path" value="/system/modelagem/layers/publico/marine/depthmin.tif"/>
+          </bean>
+        </entry>
+        <entry key="iceconc">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="iceconc"/>
+            <property name="path" value="/system/modelagem/layers/publico/marine/iceconc.tif"/>
+          </bean>
+        </entry>
+        <entry key="landdist">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="landdist"/>
+            <property name="path" value="/system/modelagem/layers/publico/marine/landdist.tif"/>
+          </bean>
+        </entry>
+        <entry key="priprod">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="priprod"/>
+            <property name="path" value="/system/modelagem/layers/publico/marine/priprod.tif"/>
+          </bean>
+        </entry>
+        <entry key="salbottom">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="salbottom"/>
+            <property name="path" value="/system/modelagem/layers/publico/marine/salbottom.tif"/>
+          </bean>
+        </entry>
+        <entry key="salsurface">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="salsurface"/>
+            <property name="path" value="/system/modelagem/layers/publico/marine/salsurface.tif"/>
+          </bean>
+        </entry>
+        <entry key="tempsurface">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="tempsurface"/>
+            <property name="path" value="/system/modelagem/layers/publico/marine/tempsurface.tif"/>
+          </bean>
+        </entry>
+        <entry key="tempbottom">
+          <bean class="org.gbif.portal.web.controller.openmodeller.Layer">
+            <property name="id" value="tempbottom"/>
+            <property name="path" value="/system/modelagem/layers/publico/marine/tempbottom.tif"/>
+          </bean>
+        </entry>
+      </map>
+    </property>
+    <property name="templates">
+      <map>
+        <entry key="bio_1" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_1"/>
+        <entry key="bio_2" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_2"/>
+        <entry key="bio_3" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_3"/>
+        <entry key="bio_4" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_4"/>
+        <entry key="bio_5" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_5"/>
+        <entry key="bio_6" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_6"/>
+        <entry key="bio_7" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_7"/>
+        <entry key="bio_8" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_8"/>
+        <entry key="bio_9" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_9"/>
+        <entry key="bio_10" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_10"/>
+        <entry key="bio_11" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_11"/>
+        <entry key="bio_12" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_12"/>
+        <entry key="bio_13" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_13"/>
+        <entry key="bio_14" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_14"/>
+        <entry key="bio_15" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_15"/>
+        <entry key="bio_16" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_16"/>
+        <entry key="bio_17" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_17"/>
+        <entry key="bio_18" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_18"/>
+        <entry key="bio_19" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_10min/bio_19"/>
+        <entry key="biod_5_15" value="/system/modelagem/layers/publico/clima/WORLDCLIM/bioclimaticos/bio_5min/bio_15"/>
+      </map>
+    </property>
+    <property name="masks">
+      <map>
+        <entry key="prec_1" value="/system/modelagem/layers/publico/clima/WORLDCLIM/precipitacao/prec_10min/prec_1"/>
+        <entry key="prec_2" value="/system/modelagem/layers/publico/clima/WORLDCLIM/precipitacao/prec_10min/prec_2"/>
+        <entry key="prec_3" value="/system/modelagem/layers/publico/clima/WORLDCLIM/precipitacao/prec_10min/prec_3"/>
+        <entry key="prec_4" value="/system/modelagem/layers/publico/clima/WORLDCLIM/precipitacao/prec_10min/prec_4"/>
+        <entry key="prec_5" value="/system/modelagem/layers/publico/clima/WORLDCLIM/precipitacao/prec_10min/prec_5"/>
+        <entry key="prec_6" value="/system/modelagem/layers/publico/clima/WORLDCLIM/precipitacao/prec_10min/prec_6"/>
+        <entry key="prec_7" value="/system/modelagem/layers/publico/clima/WORLDCLIM/precipitacao/prec_10min/prec_7"/>
+        <entry key="prec_8" value="/system/modelagem/layers/publico/clima/WORLDCLIM/precipitacao/prec_10min/prec_8"/>
+        <entry key="prec_9" value="/system/modelagem/layers/publico/clima/WORLDCLIM/precipitacao/prec_10min/prec_9"/>
+        <entry key="prec_10" value="/system/modelagem/layers/publico/clima/WORLDCLIM/precipitacao/prec_10min/prec_10"/>
+        <entry key="prec_11" value="/system/modelagem/layers/publico/clima/WORLDCLIM/precipitacao/prec_10min/prec_11"/>
+        <entry key="prec_12" value="/system/modelagem/layers/publico/clima/WORLDCLIM/precipitacao/prec_10min/prec_12"/>
+      </map>
+    </property>
+  </bean>
+
+  <!-- The filter query controller for occurrence records -->
+  <bean id="occurrenceFilterController" class="org.gbif.portal.web.controller.occurrence.OccurrenceFilterController">
+    <!-- service layer managers -->
+    <property name="tripletQueryManager" ref="tripletDisplayOccurrenceManager" />
+    <property name="countsQueryManager" ref="tripletOccurrenceCountsManager" />
+    <property name="mapLayerQueryManager" ref="tripletOccurrenceMapLayerManager" />
+    <property name="geospatialManager" ref="geospatialManager" />
+    <property name="dataResourceManager" ref="dataResourceManager" />
+    <property name="taxonomyManager" ref="taxonomyManager" />
+    <property name="pagingTripletQueryProvider" ref="occurrenceFilterProvider" />
+    <property name="webappPropertyStore" ref="webappPropertyStore" />
+    <property name="namespace" value="http://gbif.org/schema/webapp/2006/1.0" />
+    <property name="filterContentProvider" ref="filterContentProvider" />
+    <property name="mapContentProvider" ref="mapContentProvider" />
+    <property name="queryHelper" ref="occurrenceQueryHelper" />
+    <!-- filters -->
+    <property name="occurrenceFilters" ref="occurrenceFilters" />
+    <property name="dataResourceFilter" ref="dataResourceFilter" />
+    <property name="countryFilter" ref="countryFilter" />
+    <property name="scientificNameFilter" ref="scientificNameFilter" />
+    <property name="dataResourceIdFilter" ref="dataResourceIdFilter" />
+    <property name="dataProviderIdFilter" ref="dataProviderIdFilter" />
+    <property name="boundingBoxFilter" ref="boundingBoxFilter" />
+    <property name="classificationFilter" ref="classificationFilter" />
+    <property name="geoConsistencyFilter" ref="geoConsistencyFilter" />
+    <property name="georeferencedFilter" ref="georeferencedFilter" />
+    <property name="regionFilter" ref="regionFilter" />
+    <!--views -->
+    <property name="defaultView" value="occurrenceFilter" />
+    <property name="defaultMapView" value="occurrenceFilterGbifMap" />
+    <property name="messageSource" ref="messageSource" />
+    <property name="rootWizardUrl" value="/occurrences/wizards" />
+    <property name="mandatoryDownloadFields" ref="mandatoryOccurrenceDownloadFields" />
+    <property name="datasetDownloadFields" ref="datasetOccurrenceDownloadFields" />
+    <property name="taxonomyDownloadFields" ref="taxonomyOccurrenceDownloadFields" />
+    <property name="geospatialDownloadFields" ref="geospatialOccurrenceDownloadFields" />
+    <property name="geoFormats">
+      <list>
+        <value>kml</value>
+      </list>
+    </property>
+  </bean>
+
+  <!-- The filter query controller for occurrence records -->
+  <bean id="occurrenceDownloadController" class="org.gbif.portal.web.controller.filter.FilterDownloadController">
+    <!-- service layer managers -->
+    <property name="queryHelper" ref="occurrenceQueryHelper" />
+    <property name="messageSource" ref="messageSource" />
+    <property name="maxResultsDownload" value="250000" />
+    <!-- filters -->
+    <property name="filters" ref="occurrenceFilters" />
+    <property name="downloadFields" ref="occurrenceDownloadFields" />
+    <property name="propertyStore" ref="servicePropertyStore" />
+    <property name="searchUrl" value="/occurrences/search.htm?" />
+    <property name="downloadFileType" value="download.file.type.occurrences" />
+    <property name="format2TripletQueryManager">
+      <map>
+        <entry key="tsv">
+          <ref bean="tripletFullDetailedOccurrenceManager" />
+        </entry>
+        <entry key="csv">
+          <ref bean="tripletFullDetailedOccurrenceManager" />
+        </entry>
+        <entry key="excel">
+          <ref bean="tripletFullDetailedOccurrenceManager" />
+        </entry>
+        <entry key="brief">
+          <ref bean="tripletFullDetailedOccurrenceManager" />
+        </entry>
+        <entry key="kml">
+          <ref bean="tripletDetailedOccurrenceManager" />
+        </entry>
+        <entry key="species">
+          <ref bean="tripletTaxonOccurrenceManager" />
+        </entry>
+      </map>
+    </property>
+    <property name="format2FileWriterFactories">
+      <map>
+        <entry key="tsv">
+          <bean class="org.gbif.portal.web.download.DelimitedFileWriterFactory">
+            <property name="delimiter" value="&#x9;" />
+            <property name="endOfRecord" value="&#xD;&#xA;" />
+            <property name="messageSource" ref="messageSource" />
+            <property name="fileExtension" value=".txt" />
+            <property name="addCitation" value="true" />
+            <property name="downloadUtils" ref="downloadUtils" />
+            <property name="logEventId" value="3008" />
+          </bean>
+        </entry>
+        <entry key="csv">
+          <bean class="org.gbif.portal.web.download.DelimitedFileWriterFactory">
+            <property name="delimiter" value="," />
+            <property name="endOfRecord" value="&#xD;&#xA;" />
+            <property name="messageSource" ref="messageSource" />
+            <property name="fileExtension" value=".csv" />
+            <property name="addCitation" value="true" />
+            <property name="downloadUtils" ref="downloadUtils" />
+            <property name="logEventId" value="3008" />
+          </bean>
+        </entry>
+        <entry key="excel">
+          <bean class="org.gbif.portal.web.download.ExcelFileWriterFactory">
+            <property name="messageSource" ref="messageSource" />
+            <property name="fileExtension" value=".xls" />
+            <property name="addCitation" value="true" />
+            <property name="sheetName" value="taxonomy.search.results" />
+            <property name="downloadUtils" ref="downloadUtils" />
+            <property name="logEventId" value="3008" />
+          </bean>
+        </entry>
+        <entry key="brief">
+          <bean class="org.gbif.portal.web.download.VelocityFileWriterFactory">
+            <property name="fileExtension" value=".xml" />
+            <property name="templatePath" value="org/gbif/portal/io/darwin-core-brief.vm" />
+            <property name="messageSource" ref="messageSource" />
+            <property name="downloadFields" ref="occurrenceDownloadFields" />
+            <property name="headerTemplatePath" value="org/gbif/portal/io/darwin-core-brief-header.vm" />
+            <property name="footerTemplatePath" value="org/gbif/portal/io/darwin-core-brief-footer.vm" />
+            <property name="defaultMaxDownload" value="100000" />
+            <property name="downloadUtils" ref="downloadUtils" />
+            <property name="logEventId" value="3008" />
+          </bean>
+        </entry>
+        <entry key="kml">
+          <bean class="org.gbif.portal.web.download.VelocityFileWriterFactory">
+            <property name="fileExtension" value=".kml" />
+            <property name="templatePath" value="org/gbif/portal/io/kml.vm" />
+            <property name="headerTemplatePath" value="org/gbif/portal/io/kml-header.vm" />
+            <property name="footerTemplatePath" value="org/gbif/portal/io/kml-footer.vm" />
+            <property name="messageSource" ref="messageSource" />
+            <property name="downloadFields" ref="occurrenceDownloadFields" />
+            <property name="defaultMaxDownload" value="250000" />
+            <property name="downloadUtils" ref="downloadUtils" />
+            <property name="logEventId" value="3008" />
+          </bean>
+        </entry>
+        <entry key="species">
+          <bean class="org.gbif.portal.web.download.VelocityFileWriterFactory">
+            <property name="fileExtension" value=".txt" />
+            <property name="templatePath" value="org/gbif/portal/io/species.vm" />
+            <property name="headerTemplatePath" value="org/gbif/portal/io/species-header.vm" />
+            <property name="messageSource" ref="messageSource" />
+            <property name="downloadFields" ref="occurrenceDownloadFields" />
+            <property name="defaultMaxDownload" value="250000" />
+            <property name="addCitation" value="false" />
+            <property name="downloadUtils" ref="downloadUtils" />
+            <property name="logEventId" value="3008" />
+          </bean>
+        </entry>
+      </map>
+    </property>
+  </bean>
+
+  <!-- Controller for simple occurrence searching with JSON/XML responses -->
+  <bean id="occurrenceNameSearchController"
+    class="org.gbif.portal.web.controller.occurrence.OccurrenceNameSearchController">
+    <property name="tripletOccurrenceTaxonPointsManager" ref="tripletOccurrenceTaxonPointsManager" />
+    <property name="geospatialManager" ref="geospatialManager" />
+    <property name="taxonConceptUtils" ref="taxonConceptUtils" />
+    <property name="scientificNameFilterHelper" ref="scientificNameFilterHelper" />
+    <property name="viewNamePrefix" value="occurrences" />
+    <property name="defaultMaxResults" value="1000" />
+    <property name="supportedReturnTypes">
+      <list>
+        <value>point</value>
+      </list>
+    </property>
+    <property name="supportedSubViews">
+      <list>
+        <value>text</value>
+        <value>json</value>
+      </list>
+    </property>
+    <property name="defaultSubView" value="text" />
+    <property name="defaultReturnType" value="point" />
+  </bean>
+
+  <!-- TaxonomyDataAgreementInterceptor - Ignore urls for bypassing security agreement  -->
+  <bean id="occurrenceDataAgreementInterceptor"
+    class="org.gbif.portal.web.controller.user.CookieAndSessionCheckInterceptor">
+    <property name="ignoreUrlPatterns">
+      <list>
+        <value>/nameSearch</value>
+        <value>widget=true</value>
+      </list>
+    </property>
+    <!-- uppercase -->
+    <property name="robotsAgentsAllowedToBypassCookies">
+      <set>
+        <value>GOOGLEBOT</value>
+      </set>
+    </property>
+  </bean>
+</beans>

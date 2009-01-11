@@ -509,7 +509,7 @@ div#topmenu a:hover {
 table.actionsList {
 	vertical-align: top;
 	padding-left: 10px;
-	padding-bottom: 10px;
+	/* padding-bottom: 10px; */
 	width: 99%;
 }
 

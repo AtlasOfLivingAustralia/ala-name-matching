@@ -24,6 +24,12 @@
 	${rawOccurrenceRecord.stateOrProvince}
 </p>	
 <p>
+	<label for="stateOrProvince"><spring:message code="occurrence.record.region"/>:</label> 
+	<c:forEach items="${geoRegions}" var="geoRegion">
+		<a href="${pageContext.request.contextPath}/regions/${geoRegion.id}">${geoRegion.name}</a>; 
+	</c:forEach>
+</p>	
+<p>
 	<label for="locality"><spring:message code="occurrence.record.locality"/>:</label> 
 	${rawOccurrenceRecord.locality}
 </p>	

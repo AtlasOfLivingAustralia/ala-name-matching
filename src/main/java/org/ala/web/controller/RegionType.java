@@ -2,7 +2,7 @@ package org.ala.web.controller;
 
 /**
  * Utility class to generate the range of Ids for a given
- * "class" of geo region types (REST style parameter)
+ * "class" of geo region types 
  * 
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  *

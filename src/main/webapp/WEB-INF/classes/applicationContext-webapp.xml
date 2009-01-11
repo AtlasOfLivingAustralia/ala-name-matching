@@ -112,7 +112,7 @@
   <!-- The message resources-->
   <bean id="messageSource" class="org.gbif.portal.web.i18n.PropertiesMessageSource">
 	<!--  bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource"-->
-		<property name="basenames" value="messages,countries,continents,basis_of_record,month,identifier_types,regions"/>
+		<property name="basenames" value="messages-ala,messages,countries,continents,basis_of_record,month,identifier_types,regions"/>
 		<property name="resolveFromDefaultIfNull" value="true"/>
 	</bean>	
 </beans>	
