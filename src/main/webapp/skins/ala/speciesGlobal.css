@@ -210,6 +210,12 @@ img.standalone {
 }
 
 /* -- search form -- */
+
+* {
+	/* Hack to remove blue border in Safari */
+	outline: none;
+}
+
 #quickSearch {
 	float: right;
 	margin: -68px 4px 0px 0px;
@@ -219,6 +225,11 @@ img.standalone {
 	height: 24px;
 	background: url('images/search_box_bg.gif') left top no-repeat;
 	text-align: left;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0){
+	/* Safari-only Hack */
+	#quickSearch{background: none;}
 }
 
 #container>#quickSearch { /* FF et al., see this but IE doesn't */
@@ -264,6 +275,12 @@ img.standalone {
 #quickSearch>h3 { /* FF et al., see this but IE doesn't */
 	/* margin: 4px 0 0 -48px; */
 	float: left;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0){
+	/* Safari-only Hack */
+	#quickSearch h3{margin: 6px 0px 0 -20px;}
+	#quickSearch #query{width: 396px;}
 }
 
 #quickSearch p {
@@ -331,6 +348,11 @@ div#topmenu a {
 	color: #FFF;
 	display: block;
 	padding: 5px 0px;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0){
+	/* Safari-only Hack */
+	div#topmenu a{padding:6px 0px;}
 }
 
 div#topmenu ul li.active-menu a { /* color: #FCCEBB; */
