@@ -14,7 +14,10 @@
  ***************************************************************************/
 package org.ala.web.controller;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -23,6 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.zip.GZIPInputStream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -101,6 +105,8 @@ public class OccurrenceController extends RestController {
 	protected String providerXmlSubview = "providerMessage";
 	/** Raw XML message view */
 	protected String requestXmlSubview = "providerRequest";
+	/** Raw XML message view from cached record */
+	protected String cachedRecordSubview = "cachedRecord";
 	/** large map view */
 	protected String largeMapSubview = "largeMap";
 	/** Raw XML message view */
@@ -128,6 +134,7 @@ public class OccurrenceController extends RestController {
 	protected boolean doubleEncodeCachedUrls = true;
 	protected int httpTimeOut = 5000;
 	protected String charEnc = "UTF-8";
+	protected boolean cachedRecordIsGzipped =  true;
 	
 	/**
 	 * Resolve an id to an occurrence record and send to view
@@ -170,6 +177,9 @@ public class OccurrenceController extends RestController {
 					}
 					if(view.equals(largeMapSubview)){
 						return showMapView(occurrenceRecordKey, properties, request, response);
+					}
+					if(view.equals(cachedRecordSubview)){
+						return retrieveCachedRecord(occurrenceRecordKey, properties, request, response);
 					}
 				}
 				return view(occurrenceRecordKey, properties, request, response);
@@ -255,7 +265,33 @@ public class OccurrenceController extends RestController {
 		}
 		return null;
 	}	
-
+	
+	/**
+	 * Retrieve and render the original cached record.
+	 * @param occurrenceRecordKey
+	 * @param properties
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	private ModelAndView retrieveCachedRecord(String occurrenceRecordKey,
+			Map<String, String> properties, HttpServletRequest request,
+			HttpServletResponse response) {
+		try {
+			String rawMessage = getCachedRecordMessage(occurrenceRecordKey);
+			
+			if (rawMessage != null && rawMessage != "") {
+				response.setContentType("text/xml");
+				response.getWriter().write(rawMessage);
+			} else {
+				logger.error("");
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+		return null;
+	}
+	
 	/**
 	 * View an Occurrence Record in full.
 	 * 
@@ -513,7 +549,7 @@ public class OccurrenceController extends RestController {
 	}
 	
 	/**
-	 * Checks if a cached raw record is available and generates a link to it.
+	 * Checks if a cached raw record is available and sets a flag for the view.
 	 * Uses simple webservice to indexing server (property portalcache.url)
 	 * 
 	 * @see org.ala.harvest.workflow.activity.MessageCachingActivity
@@ -632,7 +668,70 @@ public class OccurrenceController extends RestController {
 		return cachedRecordLinks;
 	}
 	
-	
+	/**
+	 * 
+	 * @param occurrenceRecordKey
+	 * @return raw cached message as XML string
+	 */
+	private String getCachedRecordMessage(String occurrenceRecordKey) {
+		String rawMessage = null;
+		RawOccurrenceRecordDTO ror;
+		try {
+			ror = occurrenceManager.getRawOccurrenceRecordFor(occurrenceRecordKey);
+		} catch (ServiceException e) {
+			logger.debug(e.getMessage(), e);
+			return null;
+		}
+		List<String> cachedRecordUrls = generateCachedRecordUrls(ror);
+		int cachedRecordsFound = cachedRecordUrls.size();
+		
+		if (cachedRecordsFound > 1) {
+			logger.error("Occurrence record " + keyRequestKey + " has more than 1 cached record (" + 
+					cachedRecordsFound + " records found).");
+		}
+		
+		for (String url : cachedRecordUrls) {
+			//Check that the cached record exists
+			HttpClient client = new HttpClient();
+	        //establish a connection within 5 seconds
+	        client.getHttpConnectionManager().getParams().setConnectionTimeout(httpTimeOut);
+	        GetMethod getMethod = new GetMethod(url);
+	        getMethod.setFollowRedirects(true);
+	        InputStream input = null;
+	        
+	        try {
+	            client.executeMethod(getMethod);
+	            //HttpStatusCode = getMethod.getStatusCode();
+	            input = getMethod.getResponseBodyAsStream();
+				if(cachedRecordIsGzipped){
+					input = new GZIPInputStream(input);
+				}
+	        } catch (HttpException he) {
+	        	logger.error("Http error connecting to '" + url + "'", he);
+				return null;
+	        } catch (IOException ioe){
+	        	logger.error("Unable to connect to '" + url + "'", ioe);
+				return null;
+	        }
+			
+	        InputStreamReader inR = new InputStreamReader(input);
+			BufferedReader buf = new BufferedReader(inR);
+			String line;
+			StringBuffer sb = new StringBuffer();
+			try {
+				while ((line = buf.readLine()) != null) {
+					sb.append(line);
+				}
+				rawMessage = sb.toString();
+			} catch (IOException e) {
+				logger.error("Could not read BufferedReader.", e);
+				return null;
+			}
+		}
+		return rawMessage;
+	}
+
+
 	
 	/**
 	 * @param cellWidth the cellWidth to set
@@ -761,6 +860,13 @@ public class OccurrenceController extends RestController {
 	}
 
 	/**
+	 * @param cachedRecordSubview the cachedRecordSubview to set
+	 */
+	public void setCachedRecordSubview(String cachedRecordSubview) {
+		this.cachedRecordSubview = cachedRecordSubview;
+	}
+
+	/**
 	 * @param isStagingArea the isStagingArea to set
 	 */
 	public void setStagingArea(boolean isStagingArea) {
@@ -814,5 +920,12 @@ public class OccurrenceController extends RestController {
 	 */
 	public void setCharEnc(String charEnc) {
 		this.charEnc = charEnc;
+	}
+
+	/**
+	 * @param cachedRecordIsGzipped the cachedRecordIsGzipped to set
+	 */
+	public void setCachedRecordIsGzipped(boolean cachedRecordIsGzipped) {
+		this.cachedRecordIsGzipped = cachedRecordIsGzipped;
 	}
 }
