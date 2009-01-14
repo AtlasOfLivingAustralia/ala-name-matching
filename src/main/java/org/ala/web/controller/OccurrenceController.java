@@ -14,16 +14,23 @@
  ***************************************************************************/
 package org.ala.web.controller;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.ala.dao.geo.GeoRegionDAO;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.gbif.portal.dto.geospatial.CountryDTO;
@@ -35,6 +42,7 @@ import org.gbif.portal.dto.occurrence.RawOccurrenceRecordDTO;
 import org.gbif.portal.dto.occurrence.TypificationRecordDTO;
 import org.gbif.portal.dto.resources.DataProviderDTO;
 import org.gbif.portal.dto.resources.DataResourceDTO;
+import org.gbif.portal.dto.resources.ResourceAccessPointDTO;
 import org.gbif.portal.dto.taxonomy.BriefTaxonConceptDTO;
 import org.gbif.portal.dto.taxonomy.TaxonConceptDTO;
 import org.gbif.portal.model.geospatial.GeoRegion;
@@ -117,6 +125,9 @@ public class OccurrenceController extends RestController {
 	protected String collectionCodeFilterId = "13";
 	protected String catalogueNumberFilterId = "14";
 	protected String equalsPredicateId = "0";
+	protected boolean doubleEncodeCachedUrls = true;
+	protected int httpTimeOut = 5000;
+	protected String charEnc = "UTF-8";
 	
 	/**
 	 * Resolve an id to an occurrence record and send to view
@@ -295,6 +306,8 @@ public class OccurrenceController extends RestController {
 		Long OccurrenceRecordId = Long.parseLong(occurrenceRecordKey);
 		List<GeoRegion> geoRegions = geoRegionDAO.getGeoRegionsForOccurrenceRecord(OccurrenceRecordId);
 		mav.addObject("geoRegions", geoRegions);
+		// Generate link to raw record XML file
+		addCachedRecordLink(mav, rawOccurrenceRecord);
 		return mav;
 	}
 	
@@ -331,7 +344,11 @@ public class OccurrenceController extends RestController {
 		//add points for map representations - e.g. google maps
 		List<OccurrenceRecordDTO> points = new ArrayList<OccurrenceRecordDTO>();
 		points.add(occurrenceRecord);
-		mav.addObject("points", points);		
+		mav.addObject("points", points);	
+		// Add a list of georegions for the occurrence record id
+		Long OccurrenceRecordId = Long.parseLong(occurrenceRecord.getKey());
+		List<GeoRegion> geoRegions = geoRegionDAO.getGeoRegionsForOccurrenceRecord(OccurrenceRecordId);
+		mav.addObject("geoRegions", geoRegions);
 		return mav;
 	}	
 
@@ -496,6 +513,128 @@ public class OccurrenceController extends RestController {
 	}
 	
 	/**
+	 * Checks if a cached raw record is available and generates a link to it.
+	 * Uses simple webservice to indexing server (property portalcache.url)
+	 * 
+	 * @see org.ala.harvest.workflow.activity.MessageCachingActivity
+	 * for method that generates the webservice directory hierarchy
+	 * 
+	 * @param mav
+	 * @param rawOccurrenceRecord
+	 * @return
+	 * 
+	 * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
+	 */
+	private void addCachedRecordLink(ModelAndView mav,RawOccurrenceRecordDTO rawOccurrenceRecord) {
+		List<String> cachedRecordUrls = generateCachedRecordUrls(rawOccurrenceRecord);
+		boolean cachedRecordExists = false;
+		int cachedRecordsFound = cachedRecordUrls.size();
+		
+		if (cachedRecordsFound > 1) {
+			logger.error("Occurrence record " + keyRequestKey + " has more than 1 cached record (" + 
+					cachedRecordsFound + " records found).");
+		}
+		
+		for (String url : cachedRecordUrls) {
+			//Check that the cached record exists
+			HttpClient client = new HttpClient();
+	        //establish a connection within 5 seconds
+	        client.getHttpConnectionManager().getParams().setConnectionTimeout(httpTimeOut);
+	        GetMethod getMethod = new GetMethod(url);
+	        getMethod.setFollowRedirects(true);
+	        Integer HttpStatusCode = null;
+	        
+	        try {
+	            client.executeMethod(getMethod);
+	            HttpStatusCode = getMethod.getStatusCode();
+	        } catch (HttpException he) {
+	        	logger.error("Http error connecting to '" + url + "'", he);
+				return;
+	        } catch (IOException ioe){
+	        	logger.error("Unable to connect to '" + url + "'", ioe);
+				return;
+	        }
+			
+	        logger.debug("HTTP status code is: "+HttpStatusCode);
+	        
+	        if (HttpStatusCode == 200) {
+	        	// Cached record was found
+	        	cachedRecordExists = true;
+	        	mav.addObject("cachedRecordExists", cachedRecordExists);
+	        } else {
+	        	logger.error("Cached record for occurrence record " + keyRequestKey + 
+	        			"was not found via HTTP get. Server returned HTTP status code: " + 
+	        			HttpStatusCode + "for the URL: " + url);
+	        }
+		}
+	}
+	
+	/**
+	 * Generate URL to retrieve cached record from indexing server via simple HTTP get.
+	 * Note the URLs are not checked.
+	 * 
+	 * @param rawOccurrenceRecord
+	 * @return a list of URLs (String)
+	 * 
+	 * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
+	 */
+	private List<String> generateCachedRecordUrls(RawOccurrenceRecordDTO rawOccurrenceRecord) {
+		List<String> cachedRecordLinks = new ArrayList<String>();
+		ResourceBundle rb = ResourceBundle.getBundle("portal");
+		String baseUrl = rb.getString("portalcache.url");
+		String dataResourceKey = rawOccurrenceRecord.getDataResourceKey();
+		List<ResourceAccessPointDTO> raps;
+		
+		try {
+			raps = dataResourceManager.getResourceAccessPointsForDataResource(dataResourceKey);
+		} catch (ServiceException e1) {
+			logger.error("Unable to retieve resource access point for data resource key.",e1);
+			return cachedRecordLinks;
+		}
+		
+		for (ResourceAccessPointDTO rap : raps) {
+			String url = null; 
+			String rapUrl = rap.getUrl();
+			String remoteId = rap.getRemoteIdAtUrl();
+			// Retrieve occurrence record details to build web service path
+			String instCode = rawOccurrenceRecord.getInstitutionCode();
+			String collCode = rawOccurrenceRecord.getCollectionCode();
+			String catNumber = rawOccurrenceRecord.getCatalogueNumber();
+			Long recordId = Long.parseLong(rawOccurrenceRecord.getKey());
+			String recordIdDir = Long.toString(recordId/1000);
+
+			try {
+				Integer max = (doubleEncodeCachedUrls == true) ? 2 : 1;
+				// URL Encode Strings either once or twice depending on doubleEncodeCachedUrls
+				for (int i=1; i<=max; i++) {
+					// URL encode the strings
+					rapUrl = URLEncoder.encode(rapUrl,charEnc);
+					remoteId = URLEncoder.encode(remoteId,charEnc);
+					instCode = URLEncoder.encode(instCode,charEnc);
+					collCode = URLEncoder.encode(collCode,charEnc);
+					catNumber = URLEncoder.encode(catNumber,charEnc);
+					recordIdDir = URLEncoder.encode(recordIdDir,charEnc);
+					logger.debug("URL encoding strings, pass " + i);
+		        }
+			} catch (UnsupportedEncodingException e) {
+				logger.error("Unable to URL encode string with "+charEnc,e);
+				return cachedRecordLinks;
+			}
+			
+			url = baseUrl + "/" + rapUrl + "/" + remoteId + "/" 
+				  + instCode + "/"  + recordIdDir + "/" + collCode + "/"
+				  + catNumber + ".txt.gz";
+			
+			logger.debug("Cached record URL is "+url);
+			cachedRecordLinks.add(url);
+		}
+		
+		return cachedRecordLinks;
+	}
+	
+	
+	
+	/**
 	 * @param cellWidth the cellWidth to set
 	 */
 	public void setCellWidth(int cellWidth) {
@@ -654,5 +793,26 @@ public class OccurrenceController extends RestController {
 	 */
 	public void setEqualsPredicateId(String equalsPredicateId) {
 		this.equalsPredicateId = equalsPredicateId;
+	}
+
+	/**
+	 * @param doubleEncodeCachedUrls the doubleEncodeCachedUrls to set
+	 */
+	public void setDoubleEncodeCachedUrls(boolean doubleEncodeCachedUrls) {
+		this.doubleEncodeCachedUrls = doubleEncodeCachedUrls;
+	}
+
+	/**
+	 * @param httpTimeOut the httpTimeOut to set
+	 */
+	public void setHttpTimeOut(int httpTimeOut) {
+		this.httpTimeOut = httpTimeOut;
+	}
+
+	/**
+	 * @param charEnc the charEnc to set
+	 */
+	public void setCharEnc(String charEnc) {
+		this.charEnc = charEnc;
 	}
 }
