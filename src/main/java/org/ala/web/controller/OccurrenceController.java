@@ -18,7 +18,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,6 +39,11 @@ import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.XMLWriter;
 import org.gbif.portal.dto.geospatial.CountryDTO;
 import org.gbif.portal.dto.occurrence.IdentifierRecordDTO;
 import org.gbif.portal.dto.occurrence.ImageRecordDTO;
@@ -220,6 +227,7 @@ public class OccurrenceController extends RestController {
 
 	/**
 	 * Retrieve and render the original provider message.
+	 * 
 	 * @param occurrenceRecordKey
 	 * @param request
 	 * @param response
@@ -228,14 +236,7 @@ public class OccurrenceController extends RestController {
 	public ModelAndView retrieveProviderMessage(String occurrenceRecordKey, Map<String, String>properties, HttpServletRequest request, HttpServletResponse response) {
 		try {
 			String rawMessage = dataProviderServices.getOccurrence(occurrenceRecordKey);
-			response.setContentType("text/xml");
-			response.getWriter().write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-			response.getWriter().write("<?xml-stylesheet type=\"text/xsl\" href=\"");
-			response.getWriter().write(request.getContextPath());
-			response.getWriter().write("/");
-			response.getWriter().write(rawXmlStylesheet);
-			response.getWriter().write("\"?>");
-			response.getWriter().write(rawMessage);
+			formatAndOutputMessage(request, response, rawMessage);
 		} catch (Exception e) {
 			logger.debug(e.getMessage(), e);
 		}
@@ -244,6 +245,7 @@ public class OccurrenceController extends RestController {
 	
 	/**
 	 * Retrieve and render the original provider message.
+	 * 
 	 * @param occurrenceRecordKey
 	 * @param request
 	 * @param response
@@ -252,14 +254,7 @@ public class OccurrenceController extends RestController {
 	public ModelAndView retrieveProviderRequest(String occurrenceRecordKey, Map<String, String>properties, HttpServletRequest request, HttpServletResponse response) {
 		try {
 			String rawMessage = dataProviderServices.getOccurrenceRecordRequest(occurrenceRecordKey);
-			response.setContentType("text/xml");
-//			response.getWriter().write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-//			response.getWriter().write("<?xml-stylesheet type=\"text/xsl\" href=\"");
-//			response.getWriter().write(request.getContextPath());
-//			response.getWriter().write("/");
-//			response.getWriter().write(rawXmlStylesheet);
-//			response.getWriter().write("\"?>");
-			response.getWriter().write(rawMessage);
+			formatAndOutputMessage(request, response, rawMessage);
 		} catch (Exception e) {
 			logger.debug(e.getMessage(), e);
 		}
@@ -268,6 +263,7 @@ public class OccurrenceController extends RestController {
 	
 	/**
 	 * Retrieve and render the original cached record.
+	 * 
 	 * @param occurrenceRecordKey
 	 * @param properties
 	 * @param request
@@ -281,15 +277,71 @@ public class OccurrenceController extends RestController {
 			String rawMessage = getCachedRecordMessage(occurrenceRecordKey);
 			
 			if (rawMessage != null && rawMessage != "") {
-				response.setContentType("text/xml");
-				response.getWriter().write(rawMessage);
+				formatAndOutputMessage(request, response, rawMessage);
 			} else {
-				logger.error("");
+				logger.error("rawMessage string was null or empty.");
+			}
+		} catch (IOException ioe) {
+			logger.error(ioe.getMessage(), ioe);
+			try {
+				response.sendError(404, "Connection to remote server timed out. Please try again later.");
+			} catch (IOException e) {
+				logger.error(e.getMessage(), e);
 			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
-		}
+		}	
 		return null;
+	}
+	
+	/**
+	 * Formats a raw XML message by adding style sheet and running through
+	 * dom4j prettyprint.
+	 * 
+	 * @param request
+	 * @param response
+	 * @param rawMessage
+	 * @throws IOException
+	 */
+	private void formatAndOutputMessage(HttpServletRequest request,
+			HttpServletResponse response, String rawMessage)
+			throws IOException {
+		Writer writer = response.getWriter();
+		try {
+			rawMessage = addXmlOutputHeaders(rawMessage, request, response);
+			//response.getWriter().write(rawMessage);
+			Document doc = DocumentHelper.parseText(rawMessage);
+			OutputFormat format = OutputFormat.createPrettyPrint();
+			XMLWriter xmlWriter = new XMLWriter( writer, format );
+			xmlWriter.write( doc );
+			xmlWriter.flush();
+			xmlWriter.close();
+		} catch (DocumentException de) {
+			logger.error("Problem parsing cached message...", de);
+			writer.write(rawMessage);
+		} finally {
+			writer.close();
+		}
+	}
+	
+	/**
+	 * Add XML headers to raw XML message output. Includes link to style sheet.
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws IOException
+	 */
+	private String addXmlOutputHeaders(String rawMessage, HttpServletRequest request, HttpServletResponse response) throws IOException {
+		response.setContentType("text/xml");
+		StringBuffer sb = new StringBuffer();
+		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		sb.append("<?xml-stylesheet type=\"text/xsl\" href=\"");
+		sb.append(request.getContextPath());
+		sb.append("/");
+		sb.append(rawXmlStylesheet);
+		sb.append("\"?>");
+		sb.append(rawMessage);
+		return sb.toString();
 	}
 	
 	/**
@@ -672,8 +724,9 @@ public class OccurrenceController extends RestController {
 	 * 
 	 * @param occurrenceRecordKey
 	 * @return raw cached message as XML string
+	 * @throws IOException 
 	 */
-	private String getCachedRecordMessage(String occurrenceRecordKey) {
+	private String getCachedRecordMessage(String occurrenceRecordKey) throws IOException {
 		String rawMessage = null;
 		RawOccurrenceRecordDTO ror;
 		try {
@@ -693,7 +746,6 @@ public class OccurrenceController extends RestController {
 		for (String url : cachedRecordUrls) {
 			//Check that the cached record exists
 			HttpClient client = new HttpClient();
-	        //establish a connection within 5 seconds
 	        client.getHttpConnectionManager().getParams().setConnectionTimeout(httpTimeOut);
 	        GetMethod getMethod = new GetMethod(url);
 	        getMethod.setFollowRedirects(true);
@@ -701,32 +753,26 @@ public class OccurrenceController extends RestController {
 	        
 	        try {
 	            client.executeMethod(getMethod);
-	            //HttpStatusCode = getMethod.getStatusCode();
 	            input = getMethod.getResponseBodyAsStream();
-				if(cachedRecordIsGzipped){
+				
+	            if(cachedRecordIsGzipped){
 					input = new GZIPInputStream(input);
 				}
-	        } catch (HttpException he) {
-	        	logger.error("Http error connecting to '" + url + "'", he);
-				return null;
-	        } catch (IOException ioe){
-	        	logger.error("Unable to connect to '" + url + "'", ioe);
-				return null;
-	        }
-			
-	        InputStreamReader inR = new InputStreamReader(input);
-			BufferedReader buf = new BufferedReader(inR);
-			String line;
-			StringBuffer sb = new StringBuffer();
-			try {
+				
+				InputStreamReader inR = new InputStreamReader(input);
+				BufferedReader buf = new BufferedReader(inR);
+				String line;
+				StringBuffer sb = new StringBuffer();
+				
 				while ((line = buf.readLine()) != null) {
 					sb.append(line);
 				}
+				
 				rawMessage = sb.toString();
-			} catch (IOException e) {
-				logger.error("Could not read BufferedReader.", e);
+	        } catch (HttpException he) {
+	        	logger.error("Http error connecting to '" + url + "'", he);
 				return null;
-			}
+	        } 
 		}
 		return rawMessage;
 	}
