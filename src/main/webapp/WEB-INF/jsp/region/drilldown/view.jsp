@@ -19,13 +19,13 @@
 	<script type="text/javascript">
 		var entityId = '${geoRegion.id}';
 		var entityType = '8';
-		var filterId = '36';
 		var entityName = '${geoRegion.name}';
 		var minLongitude = ${geoRegion.minLongitude};
 		var minLatitude = ${geoRegion.minLatitude};
 		var maxLongitude = ${geoRegion.maxLongitude};
 		var maxLatitude = ${geoRegion.maxLatitude};
 	</script>
+	<c:set var="extraParams" scope="request"><gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="0"/></c:set>
     <jsp:include page="/WEB-INF/jsp/mapping/openlayer.jsp"/>
 	<!-- Region specific layers -->
 	<script type="text/javascript">

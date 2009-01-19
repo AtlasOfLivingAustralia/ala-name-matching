@@ -6,11 +6,10 @@
 <script type="text/javascript">
     var entityId = '${dataResource.key}';
     var entityType = '4';
-    var filterId = '24';
     var entityName = '${dataResource.name}';
-    var minLongitude = -180;
-    var minLatitude = -90;
-    var maxLongitude = 180;
-    var maxLatitude = 90;
+    var minLongitude = 112;
+    var minLatitude = -46;
+    var maxLongitude = 154;
+    var maxLatitude = -10;
 </script>
 <jsp:include page="/WEB-INF/jsp/mapping/openlayer.jsp"/>

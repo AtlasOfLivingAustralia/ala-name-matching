@@ -9,7 +9,7 @@
     var cellDensityLayerUrl = '${cellDensityLayerUrl}';
     var useGoogle = ${param['map']=='google' ? 'true': 'false'};
     var brokenContentSize = document.getElementById('content').offsetWidth == 0;
-    var extraParams = 'c[0].s='+filterId+'&c[0].p=0&c[0].o='+entityId;
+    var extraParams = '${extraParams}';
     /**
      * Redirects to filter search with bounding box
      */
