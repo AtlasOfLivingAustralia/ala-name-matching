@@ -4,6 +4,15 @@
 <h3>
 <c:if test="${geoRegion.regionType ==1}">Australian State</c:if>
 <c:if test="${geoRegion.regionType ==2}">Australian Territory</c:if> 
+<c:if test="${geoRegion.regionType ==3}">Borough</c:if>
+<c:if test="${geoRegion.regionType ==4}">City</c:if>
+<c:if test="${geoRegion.regionType ==5}">Community gov. council</c:if>
+<c:if test="${geoRegion.regionType ==6}">District council</c:if>
+<c:if test="${geoRegion.regionType ==7}">Municipality</c:if>
+<c:if test="${geoRegion.regionType ==8}">Rural city</c:if>
+<c:if test="${geoRegion.regionType ==9}">Shire</c:if>
+<c:if test="${geoRegion.regionType ==10}">Territory</c:if>
+<c:if test="${geoRegion.regionType ==11}">Town</c:if>
 <c:if test="${geoRegion.regionType >=2000 && geoRegion.regionType <3000}">Interim Biogeographic Regionalisation of Australia Region - Biogeographic region</c:if>
 <c:if test="${geoRegion.regionType ==3001}">Integrated Marine and Coastal Regionalisation of Australia Region - Cold Temperate Waters</c:if>
 <c:if test="${geoRegion.regionType ==3002}">Integrated Marine and Coastal Regionalisation of Australia Region - Subtropical Waters</c:if>
@@ -14,7 +23,6 @@
 <c:if test="${geoRegion.regionType >=5000 && geoRegion.regionType <6000}">River Basin</c:if>
 </h3>
 </div>
-
 <div class="subcontainer">
 	<script type="text/javascript">
 		var entityId = '${geoRegion.id}';
@@ -35,13 +43,13 @@
 	</script>
 	<div>
 	<c:if test="${geoRegion.regionType <1000}">
-		<img src="${geoserverUrl}/wms?bgcolor=0x666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:as&width=600&height=545&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DADMIN_NAME%26nl%3Dala%3Aas%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
+		<img src="${geoserverUrl}wms?bgcolor=0x666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:as&width=600&height=545&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DADMIN_NAME%26nl%3Dala%3Aas%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
 	</c:if> 
 	<c:if test="${geoRegion.regionType >=2000 && geoRegion.regionType <3000}">
-		<img src="${geoserverUrl}/wms?bgcolor=0x6666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:ibra&width=600&height=545&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DREG_NAME%26nl%3Dala:ibra%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
+		<img src="${geoserverUrl}wms?bgcolor=0x6666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:ibra&width=600&height=545&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DREG_NAME%26nl%3Dala:ibra%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
 	</c:if> 
 	<c:if test="${geoRegion.regionType >=3001 && geoRegion.regionType <4000}">
-		<img src="${geoserverUrl}/wms?bgcolor=0x666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:countries,ala:imcra&width=600&height=545&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DPB_NAME%26nl%3Dala:imcra%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
+		<img src="${geoserverUrl}wms?bgcolor=0x666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:countries,ala:imcra&width=600&height=545&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DPB_NAME%26nl%3Dala:imcra%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
 	</c:if>
 	</div>
 </div>

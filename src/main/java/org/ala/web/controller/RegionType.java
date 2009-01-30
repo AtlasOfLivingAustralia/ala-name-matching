@@ -8,13 +8,12 @@ package org.ala.web.controller;
  *
  */
 public class RegionType {
-	private String name;
 
+	private String name;
 	private Long minTypeId;
 	private Long maxTypeId;
 	
 	public RegionType(String regionType) {
-		super();
 		this.name = regionType;
 		this.getIdRanges();
 	}
@@ -28,11 +27,27 @@ public class RegionType {
 			minTypeId = 1L;
 			maxTypeId = 2L;
 		}
+		else if("cities".equals(name)) {
+			minTypeId = 3L;
+			maxTypeId = 4L;
+		}
+		else if("lga".equals(name)) {
+			minTypeId = 5L;
+			maxTypeId = 8L;
+		}
+		else if("shires".equals(name)) {
+			minTypeId = 9L;
+			maxTypeId = 9L;
+		}
+		else if("towns".equals(name)) {
+			minTypeId = 10L;
+			maxTypeId = 11L;
+		}
 		else if("ibra".equals(name)) {
 			minTypeId = 2000L;
 			maxTypeId = 2999L;
 		}
-		else if("imra".equals(name)) {
+		else if("imcra".equals(name)) {
 			minTypeId = 3000L;
 			maxTypeId = 3999L;
 		}

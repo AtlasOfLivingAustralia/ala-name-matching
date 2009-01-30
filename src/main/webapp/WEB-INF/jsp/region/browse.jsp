@@ -10,6 +10,38 @@
 				<li><a href="${pageContext.request.contextPath}/regions/browse/states"><spring:message code="regions.list.states.shorttitle"/></a></li>
 			</c:otherwise>
 		</c:choose>
+        <c:choose>
+            <c:when test="${geoRegionType.name == 'cities'}">
+                <li id="chosen"><spring:message code="regions.list.cities.shorttitle"/></li>
+            </c:when>
+            <c:otherwise>
+                <li><a href="${pageContext.request.contextPath}/regions/browse/cities"><spring:message code="regions.list.cities.shorttitle"/></a></li>
+            </c:otherwise>
+        </c:choose>
+        <c:choose>
+            <c:when test="${geoRegionType.name == 'shires'}">
+                <li id="chosen"><spring:message code="regions.list.shires.shorttitle"/></li>
+            </c:when>
+            <c:otherwise>
+                <li><a href="${pageContext.request.contextPath}/regions/browse/shires"><spring:message code="regions.list.shires.shorttitle"/></a></li>
+            </c:otherwise>
+        </c:choose>
+        <c:choose>
+            <c:when test="${geoRegionType.name == 'towns'}">
+                <li id="chosen"><spring:message code="regions.list.towns.shorttitle"/></li>
+            </c:when>
+            <c:otherwise>
+                <li><a href="${pageContext.request.contextPath}/regions/browse/towns"><spring:message code="regions.list.towns.shorttitle"/></a></li>
+            </c:otherwise>
+        </c:choose>
+        <c:choose>
+            <c:when test="${geoRegionType.name == 'lga'}">
+                <li id="chosen"><spring:message code="regions.list.lga.shorttitle"/></li>
+            </c:when>
+            <c:otherwise>
+                <li><a href="${pageContext.request.contextPath}/regions/browse/lga"><spring:message code="regions.list.lga.shorttitle"/></a></li>
+            </c:otherwise>
+        </c:choose>
     	<c:choose>
 			<c:when test="${geoRegionType.name == 'ibra'}">
 				<li id="chosen"><spring:message code="regions.list.ibra.shorttitle"/></li>
@@ -19,20 +51,32 @@
 			</c:otherwise>
 		</c:choose>
 		<c:choose>
-			<c:when test="${geoRegionType.name == 'imra'}">
-				<li id="chosen"><spring:message code="regions.list.imra.shorttitle"/></li>
+			<c:when test="${geoRegionType.name == 'imcra'}">
+				<li id="chosen"><spring:message code="regions.list.imcra.shorttitle"/></li>
 			</c:when>
 			<c:otherwise>
-				<li><a href="${pageContext.request.contextPath}/regions/browse/imra"><spring:message code="regions.list.imra.shorttitle"/></a></li>
+				<li><a href="${pageContext.request.contextPath}/regions/browse/imcra"><spring:message code="regions.list.imcra.shorttitle"/></a></li>
 			</c:otherwise>
 		</c:choose>
+        <c:choose>
+            <c:when test="${geoRegionType.name == 'rivers'}">
+                <li id="chosen"><spring:message code="regions.list.imra.shorttitle"/></li>
+            </c:when>
+            <c:otherwise>
+                <li><a href="${pageContext.request.contextPath}/regions/browse/rivers"><spring:message code="regions.list.rivers.shorttitle"/></a></li>
+            </c:otherwise>
+        </c:choose>
     </ul>
 </div>
 <div class="subcontainer">
 <h3>
     <c:if test="${geoRegionType.name == 'states'}"><spring:message code="regions.list.states.title"/></c:if>
+    <c:if test="${geoRegionType.name == 'cities'}"><spring:message code="regions.list.cities.title"/></c:if>
+    <c:if test="${geoRegionType.name == 'shires'}"><spring:message code="regions.list.shires.title"/></c:if>
+    <c:if test="${geoRegionType.name == 'towns'}"><spring:message code="regions.list.towns.title"/></c:if>
+    <c:if test="${geoRegionType.name == 'lga'}"><spring:message code="regions.list.lga.title"/></c:if>
     <c:if test="${geoRegionType.name == 'ibra'}"><spring:message code="regions.list.ibra.title"/></c:if>
-    <c:if test="${geoRegionType.name == 'imra'}"><spring:message code="regions.list.imra.title"/></c:if>
+    <c:if test="${geoRegionType.name == 'imcra'}"><spring:message code="regions.list.imcra.title"/></c:if>
     <c:if test="${geoRegionType.name == 'rivers'}"><spring:message code="regions.list.rivers.title"/></c:if>
 </h3>
 

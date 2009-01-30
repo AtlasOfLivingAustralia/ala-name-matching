@@ -38,7 +38,7 @@
       format: "image/png"}
       );
 
-  var cellLayer = new OpenLayers.Layer.WMS( "${geoRegion.name} Occurrence data",
+  var cellLayer = new OpenLayers.Layer.WMS( entityName+" Occurrence data",
       geoserverUrl+"/wfs?", 
       {layers: "ala:tabDensityLayer",
       srs: 'EPSG:4326', 
