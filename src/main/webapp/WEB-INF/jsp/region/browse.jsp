@@ -60,7 +60,7 @@
 		</c:choose>
         <c:choose>
             <c:when test="${geoRegionType.name == 'rivers'}">
-                <li id="chosen"><spring:message code="regions.list.imra.shorttitle"/></li>
+                <li id="chosen"><spring:message code="regions.list.rivers.shorttitle"/></li>
             </c:when>
             <c:otherwise>
                 <li><a href="${pageContext.request.contextPath}/regions/browse/rivers"><spring:message code="regions.list.rivers.shorttitle"/></a></li>
@@ -82,7 +82,7 @@
 
 <display:table name="geoRegions" export="false" class="statistics" id="geoRegion">
 	<display:column titleKey="regions.list.table.title" class="name">
-		<a href="${pageContext.request.contextPath}/regions/${geoRegion.id}">${geoRegion.name}</a>
+			<a href="${pageContext.request.contextPath}/regions/${geoRegion.id}"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></a>
 	</display:column>
 	<display:column titleKey="dataset.list.occurrence.count" class="countrycount">
 	  	<c:if test="${geoRegion.occurrenceCount>0}"><a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="5" predicate="0" value="${geoRegion.isoCountryCode}" index="0"/>"></c:if><fmt:formatNumber value="${geoRegion.occurrenceCount}" pattern="###,###"/><c:if test="${geoRegion.occurrenceCount>0}"></a></c:if>

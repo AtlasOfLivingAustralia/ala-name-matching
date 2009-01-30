@@ -23,7 +23,7 @@
 <table class="taxonClassificationComparison">
     <tr>
         <th style="width:170px;"></th>
-        <th style="min-width:160px;">GBIF Classification</th>
+        <th style="min-width:160px;">Matched Classification</th>
         <th style="min-width:160px;">Recorded Classification</th>
     </tr>
     <!-- Kingdom -->

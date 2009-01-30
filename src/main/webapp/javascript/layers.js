@@ -45,7 +45,8 @@
       version: "1.0.0", 
       transparent: "true",
       format: "image/png", 
-      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?id="+entityId+"&type="+entityType+"&unit=1]]></Literal></PropertyIsEqualTo></Filter>)"} 
+      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?id="+entityId+"&type="+entityType+"&unit=1]]></Literal></PropertyIsEqualTo></Filter>)"},
+      {visibility:false}
       );
     
   var centiCellLayer = new OpenLayers.Layer.WMS( entityName+" centi cells",

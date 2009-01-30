@@ -158,7 +158,7 @@ function initLayers(){
     }
     
     //useful for debug
-    //map.addLayer(cellLayer); 
+    map.addLayer(cellLayer); 
     map.addLayer(centiCellLayer);
     map.addLayer(tenmilliCellLayer);
 }
