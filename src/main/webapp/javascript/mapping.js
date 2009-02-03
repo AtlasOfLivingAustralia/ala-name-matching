@@ -24,7 +24,6 @@ function initMap(mapDivId, useGoogle){
  * @return the initialised map
  */
 function create4326Map(mapDivId){
-	
     var map = new OpenLayers.Map(mapDivId, 
             {controls: [new OpenLayers.Control.Navigation(), 
                         new OpenLayers.Control.PanZoomBar()],
@@ -61,7 +60,10 @@ function createGoogleMap(mapDivId){
                                          20037508, 20037508)
     };
     // construct a map with the above options
-    map = new OpenLayers.Map(mapDivId, options);
+    map = new OpenLayers.Map(mapDivId, options, 
+    		{controls: [new OpenLayers.Control.Navigation(), 
+                   new OpenLayers.Control.PanZoomBar()],
+                    numZoomLevels: 20});
     return map;
 }
 
