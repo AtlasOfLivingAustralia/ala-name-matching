@@ -44,12 +44,17 @@ th.sortable a { color: #872f2f; border-bottom: none; }
 #constructedFilters #warnings ul { margin-top:0px; margin-left:5px;  margin-bottom:5px;}
 
 .generaSubject { font-weight:bold; }
-div#warnings { float: left;
-               display: none;  /* REMOVE!!! testing only */
-               background-color: #F8F2E5;
-               border: 2px solid #D75A20;
-               width: 58%;
-               margin-bottom: 20px;
+div#warnings { 
+	float: left;
+	/* display: none;  /* REMOVE!!! testing only */
+	background-color: #F8F2E5;
+	border: 2px solid #D75A20;
+	width: 58%;
+	margin-bottom: 20px;
+	padding-bottom: 6px;
+	line-height: 1.2em;
+	-webkit-border-radius: 5px; 
+	-moz-border-radius: 5px;
 }
 .occurrenceContainer #furtherActions { 
 	float: right;
@@ -57,7 +62,7 @@ div#warnings { float: left;
     margin-right: 10px;
     line-height: 1.2em;
     -webkit-border-radius: 5px; 
-    -moz-border-radius: 5px
+    -moz-border-radius: 5px;
 }
 #furtherActions h4 { margin: 10px; }
 #changeSearch {/* background: url('images/tip1.jpg') no-repeat; padding: 7px 0 10px 35px; border-bottom: none; */}
