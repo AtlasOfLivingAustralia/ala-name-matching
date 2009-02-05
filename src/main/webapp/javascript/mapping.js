@@ -1,3 +1,4 @@
+OpenLayers.IMAGE_RELOAD_ATTEMPTS = 6;
 /**
  * Initialise a Open Layers map
  * 
@@ -129,10 +130,11 @@ function toggleSelectCentiCell(){
  */
 function initLayers(){
     if(!useGoogle){
-        map.addLayer(countriesLayer);
-        map.addLayer(blueMarbleLayer);
-        map.addLayer(roadsLayer);
-        map.addLayer(placenamesLayer);
+      map.addLayer(countriesLayer);
+      map.addLayer(blueMarbleLayer);
+      map.addLayer(roadsLayer);
+      map.addLayer(placenamesLayer);
+//    map.addLayer(alabaseLayer);
     } else {
         var gmap = new OpenLayers.Layer.Google(
                 "Google Streets",

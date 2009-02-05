@@ -1,9 +1,11 @@
 <%@ include file="/common/taglibs.jsp"%>
+<c:set var="tilecacheUrl" scope="request"><gbif:propertyLoader bundle="portal" property="tilecache.url"/></c:set>
 <c:set var="geoserverUrl" scope="request"><gbif:propertyLoader bundle="portal" property="geoserver.url"/></c:set>
 <c:set var="bluemarbleUrl" scope="request"><gbif:propertyLoader bundle="portal" property="bluemarble.layer.url"/></c:set>
 <c:set var="cellDensityLayerUrl" scope="request"><gbif:propertyLoader bundle="portal" property="celldensity.layer.url"/></c:set>
 <script type="text/javascript">
     var map;
+    var tilecacheUrl = '${tilecacheUrl}';
     var geoserverUrl = '${geoserverUrl}';
     var bluemarbleUrl = '${bluemarbleUrl}';
     var cellDensityLayerUrl = '${cellDensityLayerUrl}';

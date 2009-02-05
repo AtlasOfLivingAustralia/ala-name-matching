@@ -4,14 +4,11 @@
 <c:when test="${not empty configuredGoogleKey}">
 <c:set var="googleKey" value="${configuredGoogleKey}"/>
 </c:when>
-<c:when test="${header.host=='data.gbif.org'}">
-<c:set var="googleKey" value="ABQIAAAA-3PPe-HBV33KJbGlAmg4xhRGb-HsOblzlf1o6f-znloe1Ytn6xRhEgEipX8IRb7F5sqSs2VcGt-4CA"/>
+<c:when test="${header.host=='alatstweb1-syd.nexus.csiro.au'}">
+<c:set var="googleKey" value="ABQIAAAA_2zKI52BmWetar1csiyF-RQvRCjc3TQlw05MpVnVZIVuO5vVARQ_lGtzSKXT-B9U2_I5PczEkG-U6w"/>
 </c:when>
 <c:when test="${header.host=='alatstweb1-syd'}">
 <c:set var="googleKey" value="ABQIAAAA-3PPe-HBV33KJbGlAmg4xhTjgHo_nI0iwt9KgELP_FNBeQTyVBTQGK9ZOxaWkSHcbVzkudlNZwA39A"/>
-</c:when>
-<c:when test="${header.host=='alatstweb1-syd.nexus.csiro.au'}">
-<c:set var="googleKey" value="ABQIAAAA_2zKI52BmWetar1csiyF-RQvRCjc3TQlw05MpVnVZIVuO5vVARQ_lGtzSKXT-B9U2_I5PczEkG-U6w"/>
 </c:when>
 </c:choose>
 <script src="http://maps.google.com/maps?file=api&amp;v=2&amp;key=${googleKey}" type="text/javascript"></script>

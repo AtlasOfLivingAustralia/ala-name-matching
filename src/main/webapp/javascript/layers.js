@@ -3,16 +3,22 @@
       {layers: 'satellite'} 
       );
 
+  var alabaseLayer = new OpenLayers.Layer.WMS("Base Layer",
+		  tilecacheUrl, 
+	      {layers: "alabase",
+	      srs: 'EPSG:4326',
+	      format: "image/png"}
+	      );
+  
   var countriesLayer = new OpenLayers.Layer.WMS("Countries",
-      geoserverUrl+"/wfs?", 
+	  tilecacheUrl, 
       {layers: "ala:countries",
       srs: 'EPSG:4326',
-      bgcolor: "0x666699",
       format: "image/png"}
       );
   
   var ibraLayer = new OpenLayers.Layer.WMS( "IBRA",
-	  geoserverUrl+"/wfs?",
+	  tilecacheUrl,
       {layers: "ala:ibra",
       srs: 'EPSG:4326', 
       version: "1.0.0", 
@@ -20,8 +26,8 @@
       format: "image/png"}
       );
             
-  var imcraLayer = new OpenLayers.Layer.WMS( "IMCRA",
-      geoserverUrl+"/wfs?", 
+  var imcraLayer = new OpenLayers.Layer.WMS( "IMCRA",	
+	  tilecacheUrl, 
       {layers: "ala:imcra",
       srs: 'EPSG:4326', 
       version: "1.0.0", 
@@ -30,7 +36,7 @@
       );
           
   var statesLayer = new OpenLayers.Layer.WMS( "Political States",
-      geoserverUrl+"/wfs?", 
+      tilecacheUrl, 
       {layers: "ala:as",
       srs: 'EPSG:4326', 
       version: "1.0.0", 
@@ -38,7 +44,31 @@
       format: "image/png"}
       );
 
-  var cellLayer = new OpenLayers.Layer.WMS( entityName+" Occurrence data",
+  var placenamesLayer = new OpenLayers.Layer.WMS("Localities",
+	  tilecacheUrl, 
+      {layers: "geoscience:localities",
+      srs: 'EPSG:4326',
+      transparent: "true",
+      format: "image/png"}
+      );
+
+  var placenamesHighLayer = new OpenLayers.Layer.WMS("Localities (detailed)",
+	  tilecacheUrl,  
+      {layers: "geoscience:localities_detailed",
+      srs: 'EPSG:4326',
+      transparent: "true",
+      format: "image/png"}
+      );
+
+  var roadsLayer = new OpenLayers.Layer.WMS("Roads",
+	  tilecacheUrl,  
+      {layers: "geoscience:roads",
+      srs: 'EPSG:4326',
+      transparent: "true",
+      format: "image/png"}
+      );
+  
+  var cellLayer = new OpenLayers.Layer.WMS( entityName+" cells",
       geoserverUrl+"/wfs?", 
       {layers: "ala:tabDensityLayer",
       srs: 'EPSG:4326', 
@@ -68,28 +98,4 @@
       format: "image/png",
       filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?id="+entityId+"&type="+entityType+"&unit=0.01]]></Literal></PropertyIsEqualTo></Filter>)"},
       {visibility:false}
-      );
-
-  var placenamesLayer = new OpenLayers.Layer.WMS("Localities",
-      geoserverUrl+"/wfs?", 
-      {layers: "geoscience:localities",
-      srs: 'EPSG:4326',
-      transparent: "true",
-      format: "image/png"}
-      );
-
-  var placenamesHighLayer = new OpenLayers.Layer.WMS("Localities (detailed)",
-      geoserverUrl+"/wfs?", 
-      {layers: "geoscience:localities_detailed",
-      srs: 'EPSG:4326',
-      transparent: "true",
-      format: "image/png"}
-      );
-
-  var roadsLayer = new OpenLayers.Layer.WMS("Roads",
-      geoserverUrl+"/wfs?", 
-      {layers: "geoscience:roads",
-      srs: 'EPSG:4326',
-      transparent: "true",
-      format: "image/png"}
       );

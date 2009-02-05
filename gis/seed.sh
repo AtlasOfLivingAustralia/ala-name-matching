@@ -1,0 +1,1 @@
+./tilecache_seed.py ala:countries 1 8 ./tilecache_seed.py geoscience:roads 1 8 ./tilecache_seed.py geoscience:localities 1 8./tilecache_seed.py ala:as 1 8 ./tilecache_seed.py ala:ibra 1 8./tilecache_seed.py ala:imcra 1 8./tilecache_seed.py alabase 1 8
