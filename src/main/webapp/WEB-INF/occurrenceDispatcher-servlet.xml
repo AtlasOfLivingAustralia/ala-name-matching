@@ -92,6 +92,7 @@
     <property name="scientificNameFilter" ref="scientificNameFilter" />
     <property name="dataProviderServices" ref="dataProviderServices" />
     <property name="geoRegionDAO" ref="alaGeoRegionDAORO"/>
+    <property name="institutionDAO" ref="institutionDAORO"/>
     <property name="urlRoot" value="occurrences" />
     <property name="viewNamePrefix" value="occurrenceRecord" />
     <property name="defaultView" value="/welcome.htm" />

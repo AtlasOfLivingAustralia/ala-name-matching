@@ -19,12 +19,8 @@
         </property>
     </bean>
     
-    <bean id="simpleMapLayerController" class="org.ala.web.controller.maplayer.SimpleMapLayerController">
-        <property name="cellDensityDAO">
-            <bean class="org.ala.dao.geo.jdbc.impl.CellDensityDAOImpl">
-                <property name="dataSource" ref="dataSource"/>
-            </bean>
-        </property>
+    <bean id="simpleMapLayerController" class="org.ala.web.controller.SimpleMapLayerController">
+        <property name="cellDensityDAO" ref="alaCellDensityDAO"/>
     </bean>
     
     <bean id="allMapLayerController" parent="entityMapLayerController">

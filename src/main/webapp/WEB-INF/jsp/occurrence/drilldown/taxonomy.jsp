@@ -23,17 +23,18 @@
 <table class="taxonClassificationComparison">
     <tr>
         <th style="width:170px;"></th>
-        <th style="min-width:160px;">Matched Classification</th>
-        <th style="min-width:160px;">Recorded Classification</th>
+        <th style="min-width:180px;">
+            Recorded Classification
+        </th>
+        <th style="min-width:180px;">
+            Matched Classification 
+        </th>
     </tr>
     <!-- Kingdom -->
     <alatag:getTaxonFromTaxonList concepts="${concepts}" requestedConcept="kingdom"/>
     <c:if test="${not empty requestedTaxonRank || not empty rawOccurrenceRecord.kingdom}">
 	    <tr> 
 	        <td><spring:message code="taxonrank.kingdom"/>:</td>
-	        <td> <!-- GBIF-based classification -->
-	            <alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" />
-	        </td>
 	        <td> <!-- record-based classification -->
 	            <c:if test="${not empty rawOccurrenceRecord.kingdom}">
 		            <c:choose>
@@ -46,6 +47,9 @@
 		            </c:choose>
 	            </c:if>
 	        </td>
+            <td> <!-- GBIF-based classification -->
+                <alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" />
+            </td>
 	    </tr>
     </c:if>
     <!-- Phylum -->
@@ -53,9 +57,6 @@
     <c:if test="${not empty requestedTaxonRank || not empty rawOccurrenceRecord.phylum}">
 	    <tr> 
 	        <td><spring:message code="taxonrank.phylum"/>:</td>
-	        <td> <!-- GBIF-based classification -->
-	            <alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" />
-	        </td>
 	        <td> <!-- record-based classification -->
 	            <c:if test="${not empty rawOccurrenceRecord.phylum}">
 	                <c:choose>
@@ -68,6 +69,9 @@
 	                </c:choose>
 	            </c:if>
 	        </td>
+            <td> <!-- GBIF-based classification -->
+                <alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" />
+            </td>
 	    </tr>
     </c:if>
     <!-- Class -->
@@ -75,9 +79,6 @@
     <c:if test="${not empty requestedTaxonRank || not empty rawOccurrenceRecord.bioClass}">
 	    <tr> 
 	        <td><spring:message code="taxonrank.class"/>:</td>
-	        <td> <!-- GBIF-based classification -->
-	            <alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" />
-	        </td>
 	        <td> <!-- record-based classification -->
 	            <c:if test="${not empty rawOccurrenceRecord.bioClass}">
 	                <c:choose>
@@ -90,6 +91,9 @@
 	                </c:choose>
 	            </c:if>
 	        </td>
+            <td> <!-- GBIF-based classification -->
+                <alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" />
+            </td>
 	    </tr>
     </c:if>
     <!-- Order -->
@@ -97,9 +101,6 @@
     <c:if test="${not empty requestedTaxonRank || not empty rawOccurrenceRecord.order}">
 	    <tr> 
 	        <td><spring:message code="taxonrank.order"/>:</td>
-	        <td> <!-- GBIF-based classification -->
-	            <alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" />
-	        </td>
 	        <td> <!-- record-based classification -->
 	            <c:if test="${not empty rawOccurrenceRecord.order}">
 	                <c:choose>
@@ -112,6 +113,9 @@
 	                </c:choose>
 	            </c:if>
 	        </td>
+            <td> <!-- GBIF-based classification -->
+                <alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" />
+            </td>
 	    </tr>
     </c:if>
     <!-- Family -->
@@ -119,9 +123,6 @@
     <c:if test="${not empty requestedTaxonRank || not empty rawOccurrenceRecord.family}">
 	    <tr> 
 	        <td><spring:message code="taxonrank.family"/>:</td>
-	        <td> <!-- GBIF-based classification -->
-	            <alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" />
-	        </td>
 	        <td> <!-- record-based classification -->
 	            <c:if test="${not empty rawOccurrenceRecord.family}">
 	                <c:choose>
@@ -134,6 +135,9 @@
 	                </c:choose>
 	            </c:if>
 	        </td>
+            <td> <!-- GBIF-based classification -->
+                <alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" />
+            </td>
 	    </tr>
     </c:if>
     <!-- Genus -->
@@ -141,9 +145,6 @@
     <c:if test="${not empty requestedTaxonRank || not empty rawOccurrenceRecord.genus}">
 	    <tr> 
 	        <td><spring:message code="taxonrank.genus"/>:</td>
-	        <td> <!-- GBIF-based classification -->
-	            <alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" />
-	        </td>
 	        <td> <!-- record-based classification -->
 	            <c:if test="${not empty rawOccurrenceRecord.genus}">
 	                <c:choose>
@@ -156,6 +157,9 @@
 	                </c:choose>
 	            </c:if>
 	        </td>
+            <td> <!-- GBIF-based classification -->
+                <alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" />
+            </td>
 	    </tr>
     </c:if>
     <!-- Species -->
@@ -163,9 +167,6 @@
     <c:if test="${not empty requestedTaxonRank || not empty rawOccurrenceRecord.species}">
 	    <tr> 
 	        <td><spring:message code="taxonrank.species"/>:</td>
-	        <td> <!-- GBIF-based classification -->
-	            <i><alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" /></i>
-	        </td>
 	        <td> <!-- record-based classification -->
 	            <c:if test="${not empty rawOccurrenceRecord.species}">
 	                <c:choose>
@@ -178,6 +179,9 @@
 	                </c:choose>
 	            </c:if>
 	        </td>
+            <td> <!-- GBIF-based classification -->
+                <i><alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" /></i>
+            </td>
 	    </tr>
 	</c:if>
     <!-- Sub-Species -->
@@ -185,9 +189,7 @@
     <c:if test="${not empty requestedTaxonRank || not empty rawOccurrenceRecord.subspecies}">
 	    <tr> 
 	        <td><spring:message code="taxonrank.subspecies"/>:</td>
-	        <td> <!-- GBIF-based classification -->
-	            <i><alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" /></i>
-	        </td>
+
 	        <td> <!-- record-based classification -->
 	            
 	            <c:if test="${not empty rawOccurrenceRecord.subspecies}">
@@ -201,6 +203,9 @@
 	                </c:choose>
 	            </c:if>
 	        </td>
+            <td> <!-- GBIF-based classification -->
+                <i><alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" /></i>
+            </td>	        
 	    </tr>
     </c:if>
     <!-- Variety -->
@@ -208,9 +213,6 @@
     <c:if test="${not empty requestedTaxonRank || not empty rawOccurrenceRecord.subspecies}">
         <tr> 
             <td><spring:message code="taxonrank.variety"/>:</td>
-            <td> <!-- GBIF-based classification -->
-                <i><alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" /></i>
-            </td>
             <td> <!-- record-based classification -->
                 <c:if test="${not empty rawOccurrenceRecord.subspecies}">
                     <c:choose>
@@ -222,6 +224,9 @@
                         </c:otherwise>
                     </c:choose>
                 </c:if>
+            </td>
+            <td> <!-- GBIF-based classification -->
+                <i><alatag:linkGbifTaxonConcept concept="${requestedTaxonRank}" /></i>
             </td>
         </tr>
     </c:if>

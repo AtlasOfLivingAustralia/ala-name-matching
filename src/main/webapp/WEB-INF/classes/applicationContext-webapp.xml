@@ -9,7 +9,7 @@
 	</bean>	
 
 	<!-- Interceptor to check data agreement accepted -->
-	<bean id="dataAgreementInterceptor" class="org.ala.web.controller.user.CookieAndSessionCheckInterceptor">
+	<bean id="dataAgreementInterceptor" class="org.ala.web.interceptor.CookieAndSessionCheckInterceptor">
 		<property name="ignoreUrlPatterns">
 			<list>
 				<value>/overviewmap.png</value>								

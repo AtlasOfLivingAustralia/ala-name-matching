@@ -6,8 +6,18 @@
         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
         http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd">
 
-  <!-- Read only DAO Layer for Service Layer -->
-  <bean id="alaGeoRegionDAORO" class="org.ala.dao.hibernate.impl.GeoRegionDAOImpl">
+  <!-- Institution -->
+  <bean id="institutionDAORO" class="org.ala.dao.jdbc.InstitutionDAOImpl">
+    <property name="dataSource" ref="dataSource"/>
+  </bean>
+  
+  <!-- Cell Density -->
+  <bean id="alaCellDensityDAO" class="org.ala.dao.jdbc.CellDensityDAOImpl">
+      <property name="dataSource" ref="dataSource"/>
+  </bean>
+
+  <!-- Geo Region-->
+  <bean id="alaGeoRegionDAORO" class="org.ala.dao.hibernate.GeoRegionDAOImpl">
 	<property name="sessionFactory" ref="sessionFactory"/>
   </bean>
 </beans>

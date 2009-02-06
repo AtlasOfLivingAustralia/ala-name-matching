@@ -47,6 +47,11 @@
 						</c:set>
 						<li><a href="${pageContext.request.contextPath}/species/${occurrenceRecord.taxonConceptKey}"><spring:message code="occurrence.record.taxonomy.viewconcept" arguments="${a0}"/></a></li>
 						<li><a href="${pageContext.request.contextPath}/species/browse/taxon/${occurrenceRecord.taxonConceptKey}"><spring:message code="occurrence.record.taxatreelink" arguments="${a0},${a1}"/></a></li>
+						
+						<c:if test="${not empty institution && not empty institution.name && not empty institution.lsid}">
+						<li><a href="http://biocol.org/${institution.lsid}">View the BCI page for ${institution.name}</a></li>
+						</c:if>
+						
 					</ul>
 				</td>
 			</tr>
