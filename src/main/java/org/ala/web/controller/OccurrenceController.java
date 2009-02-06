@@ -1,5 +1,5 @@
 /***************************************************************************
- * Copyright (C) 2005 Global Biodiversity Information Facility Secretariat.
+ * Copyright (C) 2009 Atlas of Living Australia
  * All Rights Reserved.
  *
  * The contents of this file are subject to the Mozilla Public
@@ -18,7 +18,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.URLEncoder;
@@ -33,7 +32,9 @@ import java.util.zip.GZIPInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.ala.dao.geo.GeoRegionDAO;
+import org.ala.dao.GeoRegionDAO;
+import org.ala.dao.InstitutionDAO;
+import org.ala.model.Institution;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -101,6 +102,8 @@ public class OccurrenceController extends RestController {
 	protected DataProviderServices dataProviderServices;
 	/** The georegion DAO for retrieving regions associated with an occurrence record */
 	protected GeoRegionDAO geoRegionDAO;
+	/** The Institution DAO for retrieving the institution associated with an occurrence record */
+	protected InstitutionDAO institutionDAO;	
 	
 	/** The id of the scientific name occurrence search filter */
 	protected FilterDTO scientificNameFilter;
@@ -386,14 +389,21 @@ public class OccurrenceController extends RestController {
 		}
 		
 		logUsage(request, occurrenceRecord, rawOccurrenceRecord);		
+		
 		//add points for map representations - e.g. google maps
 		List<OccurrenceRecordDTO> points = new ArrayList<OccurrenceRecordDTO>();
 		points.add(occurrenceRecord);
 		mav.addObject("points", points);
+		
 		// Add a list of georegions for the occurrence record id
 		Long OccurrenceRecordId = Long.parseLong(occurrenceRecordKey);
 		List<GeoRegion> geoRegions = geoRegionDAO.getGeoRegionsForOccurrenceRecord(OccurrenceRecordId);
 		mav.addObject("geoRegions", geoRegions);
+		
+		// Add the institution associated with this occurrence record
+		Institution institution = institutionDAO.getInstitutionForCode(occurrenceRecord.getInstitutionCode());
+		mav.addObject("institution", institution);
+		
 		// Generate link to raw record XML file
 		addCachedRecordLink(mav, rawOccurrenceRecord);
 		return mav;
@@ -456,7 +466,7 @@ public class OccurrenceController extends RestController {
 		//TODO optimise for performance - reduce the number of selects		
 		TaxonConceptDTO taxonConceptDTO = taxonomyManager.getTaxonConceptFor(occurrenceRecord.getTaxonConceptKey());
 		if (taxonConceptDTO != null) {
-			List<BriefTaxonConceptDTO> concepts = taxonomyManager.getClassificationFor(taxonConceptDTO.getKey(), false, null, true);
+			List<BriefTaxonConceptDTO> concepts = taxonomyManager.getClassificationFor(occurrenceRecord.getNubTaxonConceptKey(), false, null, true);
 			mav.addObject("concepts", concepts);
 		}
 		DataResourceDTO dataResource = dataResourceManager.getDataResourceFor(occurrenceRecord.getDataResourceKey());
@@ -522,6 +532,9 @@ public class OccurrenceController extends RestController {
 			logger.debug("Adding partner concept");
 			TaxonConceptDTO partnerConcept = taxonomyManager.getTaxonConceptFor(taxonConceptDTO.getPartnerConceptKey());
 			mav.addObject("partnerConcept", partnerConcept);
+			
+			
+			
 		}
 		
 		//add one degree cell bounding box
@@ -973,5 +986,19 @@ public class OccurrenceController extends RestController {
 	 */
 	public void setCachedRecordIsGzipped(boolean cachedRecordIsGzipped) {
 		this.cachedRecordIsGzipped = cachedRecordIsGzipped;
+	}
+
+	/**
+	 * @param geoRegionDAO the geoRegionDAO to set
+	 */
+	public void setGeoRegionDAO(GeoRegionDAO geoRegionDAO) {
+		this.geoRegionDAO = geoRegionDAO;
+	}
+
+	/**
+	 * @param institutionDAO the institutionDAO to set
+	 */
+	public void setInstitutionDAO(InstitutionDAO institutionDAO) {
+		this.institutionDAO = institutionDAO;
 	}
 }
