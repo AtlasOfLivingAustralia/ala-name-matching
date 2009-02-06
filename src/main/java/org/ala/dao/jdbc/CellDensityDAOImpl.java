@@ -1,4 +1,18 @@
-package org.ala.dao.geo.jdbc.impl;
+/***************************************************************************
+ * Copyright (C) 2009 Atlas of Living Australia
+ * All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public
+ * License Version 1.1 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of
+ * the License at http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS
+ * IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+ * implied. See the License for the specific language governing
+ * rights and limitations under the License.
+ ***************************************************************************/
+package org.ala.dao.jdbc;
 
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -7,7 +21,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-import org.ala.dao.geo.CellDensityDAO;
+import org.ala.dao.CellDensityDAO;
 import org.ala.io.CellDensityOutputStream;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.PreparedStatementSetter;
@@ -22,7 +36,7 @@ import org.springframework.jdbc.core.support.JdbcDaoSupport;
 public class CellDensityDAOImpl extends JdbcDaoSupport implements CellDensityDAO{
 
 	/**
-	 * @see org.ala.dao.geo.CellDensityDAO#outputCellDensities(long, long, org.gbif.portal.io.ResultsOutputStream)
+	 * @see org.ala.dao.CellDensityDAO#outputCellDensities(long, long, org.gbif.portal.io.ResultsOutputStream)
 	 */
 	@SuppressWarnings("unchecked")
 	public void outputCellDensities(long entityId, int type,
@@ -37,7 +51,7 @@ public class CellDensityDAOImpl extends JdbcDaoSupport implements CellDensityDAO
 	}
 
 	/**
-	 * @see org.ala.dao.geo.CellDensityDAO#outputCellDensities(long, int, int, int, org.ala.io.CellDensityOutputStream)
+	 * @see org.ala.dao.CellDensityDAO#outputCellDensities(long, int, int, int, org.ala.io.CellDensityOutputStream)
 	 */
 	public void outputCellDensities(long entityId, int type,
 			int minCellId, int maxCellId, CellDensityOutputStream cdos)
@@ -54,7 +68,7 @@ public class CellDensityDAOImpl extends JdbcDaoSupport implements CellDensityDAO
 	}	
 	
 	/**
-	 * @see org.ala.dao.geo.CellDensityDAO#outputCentiCellDensities(long, long, org.ala.io.ResultsOutputStream)
+	 * @see org.ala.dao.CellDensityDAO#outputCentiCellDensities(long, long, org.ala.io.ResultsOutputStream)
 	 */
 	public void outputCentiCellDensities(final long entityId, final int type,
 			final CellDensityOutputStream cdos) throws IOException {
@@ -86,7 +100,7 @@ public class CellDensityDAOImpl extends JdbcDaoSupport implements CellDensityDAO
 	}
 
 	/**
-	 * @see org.ala.dao.geo.CellDensityDAO#outputCentiCellDensities(long, int, int, int, org.ala.io.CellDensityOutputStream)
+	 * @see org.ala.dao.CellDensityDAO#outputCentiCellDensities(long, int, int, int, org.ala.io.CellDensityOutputStream)
 	 */
 	public void outputCentiCellDensities(final long entityId, final int type,
 			final int minCellId, final int maxCellId, final CellDensityOutputStream cdos)
@@ -126,7 +140,7 @@ public class CellDensityDAOImpl extends JdbcDaoSupport implements CellDensityDAO
 	}
 
 	/**
-	 * @see org.ala.dao.geo.CellDensityDAO#outputTenMilliCellDensities(long, long, org.ala.io.ResultsOutputStream)
+	 * @see org.ala.dao.CellDensityDAO#outputTenMilliCellDensities(long, long, org.ala.io.ResultsOutputStream)
 	 */
 	public void outputTenMilliCellDensities(long entityId, int type,
 			CellDensityOutputStream cdos) throws IOException {
@@ -141,7 +155,7 @@ public class CellDensityDAOImpl extends JdbcDaoSupport implements CellDensityDAO
 	}
 	
 	/**
-	 * @see org.ala.dao.geo.CellDensityDAO#outputTenMilliCellDensities(long, int, int, int, org.ala.io.CellDensityOutputStream)
+	 * @see org.ala.dao.CellDensityDAO#outputTenMilliCellDensities(long, int, int, int, org.ala.io.CellDensityOutputStream)
 	 */
 	public void outputTenMilliCellDensities(final long entityId, final int type,
 			final int minCellId, final int maxCellId, final CellDensityOutputStream cdos)
