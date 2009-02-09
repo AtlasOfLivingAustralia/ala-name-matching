@@ -5,7 +5,7 @@
 <c:set var="extraParams" scope="request"><gbif:criterion subject="25" predicate="0" value="${dataProvider.key}" index="0"/></c:set>
 <script type="text/javascript">
     var entityId = '${dataProvider.key}';
-    var entityType = '5';
+    var entityType = '3';
     var entityName = '${dataProvider.name}';
     var minLongitude = 112;
     var minLatitude = -46;
