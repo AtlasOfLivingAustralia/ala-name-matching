@@ -14,12 +14,24 @@
             <artifactId>portal-service</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>provided</scope>
+            <exclusions>
+            	<exclusion>
+            		<groupId>org.hibernate</groupId>
+            		<artifactId>hibernate</artifactId>
+            	</exclusion>
+            </exclusions>
         </dependency>	
 		<dependency>
 			<groupId>portal</groupId>
 			<artifactId>portal-web</artifactId>
 			<version>1.0-SNAPSHOT</version>
 			<type>war</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate</artifactId>
+                </exclusion>
+            </exclusions>
 		</dependency>
         <dependency>
             <groupId>portal</groupId>
@@ -28,14 +40,101 @@
             <scope>provided</scope>
         </dependency>		
         <dependency>
+            <groupId>c3p0</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+       <dependency>
+         <groupId>commons-dbcp</groupId>
+         <artifactId>commons-dbcp</artifactId>
+         <version>1.2.1</version>
+       </dependency>
+       <dependency>
+         <groupId>commons-collections</groupId>
+         <artifactId>commons-collections</artifactId>
+         <version>3.0</version>
+       </dependency>
+       <!--  Spring -->
+        <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
-            <version>2.5.2</version>
+            <artifactId>spring-core</artifactId>
+            <version>2.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-orm</artifactId>
+            <version>2.5.3</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-aop</artifactId>
-            <version>2.5.2</version>
+            <version>2.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>2.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>2.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>2.5.3</version>
+        </dependency>
+        <!-- Hibernate & Hibernate Search, Annotations -->
+        <dependency>
+           <groupId>org.hibernate</groupId>
+           <artifactId>hibernate-search</artifactId>
+           <version>3.1.0.GA</version>
+        </dependency>
+        <dependency>
+           <groupId>org.hibernate</groupId>
+           <artifactId>hibernate-annotations</artifactId>
+           <version>3.4.0.GA</version>
+        </dependency>
+        <dependency>
+           <groupId>org.hibernate</groupId>
+           <artifactId>hibernate-entitymanager</artifactId>
+           <version>3.4.0.GA</version>
+        </dependency>
+        <dependency>
+           <groupId>org.apache.solr</groupId>
+           <artifactId>solr-common</artifactId>
+           <version>1.3.0</version>
+        </dependency>
+        <dependency>
+           <groupId>org.apache.solr</groupId>
+           <artifactId>solr-core</artifactId>
+           <version>1.3.0</version>
+        </dependency>
+        <dependency>
+           <groupId>org.apache.lucene</groupId>
+           <artifactId>lucene-snowball</artifactId>
+           <version>2.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.struts</groupId>
+            <artifactId>struts2-core</artifactId>
+            <version>2.1.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.struts</groupId>
+            <artifactId>struts2-spring-plugin</artifactId>
+            <version>2.1.6</version>
+        </dependency>
+        <dependency>
+           <groupId>org.slf4j</groupId>
+           <artifactId>slf4j-api</artifactId>
+           <version>1.5.2</version>
+        </dependency>
+        <dependency>
+           <groupId>org.slf4j</groupId>
+           <artifactId>slf4j-log4j12</artifactId>
+           <version>1.4.3</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
@@ -54,6 +153,10 @@
 			<version>3.8.1</version>
 			<scope>test</scope>
 		</dependency>
+        <!--  Struts 2 -->
+        <!-- sl4j -->
+        <!-- Hibernate & Hibernate Search, Annotations -->
+        <!-- sl4j -->
 <!-- 
 		<dependency>
 		    <groupId>org.apache.tiles</groupId>
@@ -128,7 +231,8 @@
                       WEB-INF/lib/spring-webmvc-2.0.jar,
                       WEB-INF/lib/mysql-connector-java-3.1.13.jar,
                       WEB-INF/lib/commons-logging-1.0.4.jar,
-                      WEB-INF/lib/dom4j-core-1.4-dev-8.jar
+                      WEB-INF/lib/dom4j-core-1.4-dev-8.jar,
+                      WEB-INF/lib/hibernate-3.2.0.cr4.jar
 		           </dependentWarExcludes>
 		        </configuration>
 		       </plugin>
