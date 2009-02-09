@@ -12,7 +12,7 @@
  * implied. See the License for the specific language governing
  * rights and limitations under the License.
  ***************************************************************************/
-package org.ala.util;
+package org.ala.search;
 
 import java.io.BufferedReader;
 import java.io.File;
