@@ -85,8 +85,7 @@ public class Indexer {
 				fieldName, 
 			    fullTextSession.getSearchFactory().getAnalyzer(clazz)
 			);
-			org.apache.lucene.search.Query luceneQuery = parser.parse("*:*");
-		
+		org.apache.lucene.search.Query luceneQuery = parser.parse("*:*");
 		Query query = fullTextSession.createFullTextQuery(luceneQuery, clazz);
 		query.setMaxResults(1);
 		List results = query.list();

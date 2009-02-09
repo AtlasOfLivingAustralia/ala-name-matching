@@ -74,7 +74,7 @@ public class InitialSearchController extends RestController {
     	query(fullTextSession, searchString, CommonName.class, "name", "commonNames", "commonNamesTotal", mav);
     	query(fullTextSession, searchString, DataResource.class, new String[]{"name","description"}, "dataResources", "dataResourcesTotal", mav);
     	query(fullTextSession, searchString, DataProvider.class, new String[]{"name","description"}, "dataProviders", "dataProvidersTotal", mav);
-    	query(fullTextSession, searchString, GeoRegion.class, new String[]{"name","acronym"}, "geoRegions", "geoRegionsTotal", mav);
+    	query(fullTextSession, searchString, GeoRegion.class, new String[]{"name","acronym","geoRegionType.name"}, "geoRegions", "geoRegionsTotal", mav);
     	query(fullTextSession, searchString, Locality.class, new String[]{"name","state","postcode"}, "localities", "localitiesTotal", mav);
     	
     	//close the session

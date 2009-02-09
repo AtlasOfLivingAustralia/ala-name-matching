@@ -9,6 +9,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
@@ -34,7 +35,7 @@ public class TaxonConcept {
     @JoinColumn(name="taxon_name_id")
     @IndexedEmbedded(depth=2)
 	protected TaxonName taxonName;
-	
+
 	@Column(name="data_resource_id")
 	protected Long dataResourceId;
 	

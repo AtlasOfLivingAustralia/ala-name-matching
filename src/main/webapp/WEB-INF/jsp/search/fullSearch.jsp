@@ -4,7 +4,7 @@
 </div>
 <table id="results" style="width:100%;">
 <tr>
-<td id="resultsSummary" style="vertical-align: top; width:13%; padding-top:30px; padding-right :3px; border-right: 1px solid #316AC5;">
+<td id="resultsSummary" style="vertical-align: top; width:13%; padding-top:30px; padding-right :3px; border-right: 1px solid #CCCCCC;">
 	<ul>
 	    <li>Scientific names (${taxonConceptsTotal})</li>
 	    <li>Common names (${commonNamesTotal})</li>
