@@ -48,8 +48,8 @@ public class IndexUtils implements InitializingBean{
 				if(!indexer.indexAvailable(CommonName.class, "name")){
 					logger.info("Indexing common names...");
 					indexer.setHqlQuery("from CommonName cn " +
-							"inner join fetch cn.taxonConcept tc" +
-							"inner join fetch tc.taxonName" +
+							"inner join fetch cn.taxonConcept tc " +
+							"inner join fetch tc.taxonName " +
 							"inner join fetch tc.kingdomConcept kc " +
 							"inner join fetch kc.taxonName " +
 							"inner join fetch tc.familyConcept fc " +
