@@ -34,14 +34,14 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
- * 
+ * Class for indexing entities using hibernate search (Lucene).
  *
  * @author "Dave Martin (David.Martin@csiro.au)"
  */
 public class Indexer {
 
 	protected Logger logger = Logger.getLogger(this.getClass());
-	protected int pageSize=1000;
+	protected int pageSize=5000;
 	protected SessionFactory sessionFactory = null;
 	protected String hqlQuery;
 
@@ -59,7 +59,7 @@ public class Indexer {
 	 */
 	public void index() throws Exception{
 		if(hqlQuery==null){
-			System.out.println("No query specified");
+			logger.error("No query specified");
 			return;
 		}
 		Session session = sessionFactory.openSession();
@@ -125,7 +125,7 @@ public class Indexer {
 			noIndexed++;
 			if(noIndexed%1000==0){
 				increFinishTime = System.currentTimeMillis();
-				System.out.println("Page number:"+pageNumber+", time taken to index last 1000 (milliseconds): "+((increFinishTime-increStartTime)));
+				logger.debug("Page number:"+pageNumber+", time taken to index last "+pageSize+" (milliseconds): "+((increFinishTime-increStartTime)));
 				increStartTime = System.currentTimeMillis();
 			}
 		}

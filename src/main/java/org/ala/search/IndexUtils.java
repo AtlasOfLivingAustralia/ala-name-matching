@@ -33,50 +33,61 @@ public class IndexUtils implements InitializingBean{
 	protected Logger logger = Logger.getLogger(this.getClass());
 	protected Indexer indexer;
 	
-	public void generateIndexes() throws Exception{
+	/**
+	 * Runnable for kicking off lucene index generation.
+	 *
+	 * @author "Dave Martin (David.Martin@csiro.au)"
+	 */
+	public class IndexerGenerator implements Runnable {
 		
-		logger.info("Checking search indexes.....");
-		
-		if(!indexer.indexAvailable(CommonName.class, "name")){
-			logger.info("Indexing common names...");
-			indexer.setHqlQuery("from CommonName cn inner join cn.taxonConcept inner join cn.taxonConcept.taxonName");
-			indexer.index();
-			logger.info("Finishing indexing common names.");
+		public void run(){
+			
+			logger.info("Checking search indexes.....");
+			
+			try {
+				if(!indexer.indexAvailable(CommonName.class, "name")){
+					logger.info("Indexing common names...");
+					indexer.setHqlQuery("from CommonName cn inner join cn.taxonConcept inner join cn.taxonConcept.taxonName");
+					indexer.index();
+					logger.info("Finishing indexing common names.");
+				}
+				if(!indexer.indexAvailable(GeoRegion.class, "name")){
+					logger.info("Indexing georegion...");
+					indexer.setHqlQuery("from GeoRegion gr inner join gr.geoRegionType");
+					indexer.index();
+					logger.info("Finishing indexing geo regions.");
+				}
+				if(!indexer.indexAvailable(Locality.class, "name")){
+					logger.info("Indexing localities...");
+					indexer.setHqlQuery("from Locality l inner join l.geoRegion gr inner join gr.geoRegionType");
+					indexer.index();
+					logger.info("Finished indexing localities.");
+				}
+				if(!indexer.indexAvailable(DataResource.class, "name")){
+					logger.info("Indexing data resources...");
+					indexer.setHqlQuery("from DataResource");
+					indexer.index();
+					logger.info("Finished data resources.");
+				}
+				if(!indexer.indexAvailable(DataProvider.class, "name")){
+					logger.info("Indexing data providers...");
+					indexer.setHqlQuery("from DataProvider");
+					indexer.index();
+					logger.info("Finished data providers.");
+				}
+				if(!indexer.indexAvailable(TaxonConcept.class, "taxonName.canonical")){
+					logger.info("Indexing taxon concepts...");
+					indexer.setHqlQuery("from TaxonConcept tc inner join tc.taxonName where tc.dataResourceId=1");
+					indexer.index();
+					logger.info("Finished indexing taxon concepts.");
+				}
+				logger.info("Search indexes generated.");
+			} catch (Exception e) {
+				logger.error("Problem generating lucene indexes......");
+				logger.error(e.getMessage(), e);
+			}
 		}
-		if(!indexer.indexAvailable(GeoRegion.class, "name")){
-			logger.info("Indexing georegion...");
-			indexer.setHqlQuery("from GeoRegion gr inner join gr.geoRegionType");
-			indexer.index();
-			logger.info("Finishing indexing geo regions.");
-		}
-		if(!indexer.indexAvailable(Locality.class, "name")){
-			logger.info("Indexing localities...");
-			indexer.setHqlQuery("from Locality l inner join l.geoRegion gr inner join gr.geoRegionType");
-			indexer.index();
-			logger.info("Finished indexing localities.");
-		}
-		if(!indexer.indexAvailable(DataResource.class, "name")){
-			logger.info("Indexing data resources...");
-			indexer.setHqlQuery("from DataResource");
-			indexer.index();
-			logger.info("Finished data resources.");
-		}
-		if(!indexer.indexAvailable(DataProvider.class, "name")){
-			logger.info("Indexing data providers...");
-			indexer.setHqlQuery("from DataProvider");
-			indexer.index();
-			logger.info("Finished data providers.");
-		}
-		if(!indexer.indexAvailable(TaxonConcept.class, "taxonName.canonical")){
-			logger.info("Indexing taxon concepts...");
-			indexer.setHqlQuery("from TaxonConcept tc inner join tc.taxonName where tc.dataResourceId=1");
-			indexer.index();
-			logger.info("Finished indexing taxon concepts.");
-		}
-		
-		logger.info("Search indexes generated.");
 	}
-
 	/**
 	 * @param indexer the indexer to set
 	 */
@@ -88,6 +99,8 @@ public class IndexUtils implements InitializingBean{
 	 * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
 	 */
 	public void afterPropertiesSet() throws Exception {
-		this.generateIndexes();
+		IndexerGenerator ig = new IndexerGenerator();
+		Thread t = new Thread(ig);
+		t.start();
 	}
 }
