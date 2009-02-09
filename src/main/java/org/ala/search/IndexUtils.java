@@ -77,12 +77,14 @@ public class IndexUtils implements InitializingBean{
 				}
 				if(!indexer.indexAvailable(TaxonConcept.class, "taxonName.canonical")){
 					logger.info("Indexing taxon concepts...");
-					indexer.setHqlQuery("from TaxonConcept tc inner join fetch tc.taxonName " +
+					indexer.setHqlQuery(
+							"from TaxonConcept tc " +
+							"inner join fetch tc.taxonName " +
 							"inner join fetch tc.kingdomConcept kc " +
 							"inner join fetch kc.taxonName " +
 							"inner join fetch tc.familyConcept fc " +
 							"inner join fetch fc.taxonName " +
-							"where tc.dataResourceId=45");
+							"where tc.dataResourceId=1");
 					indexer.index();
 					logger.info("Finished indexing taxon concepts.");
 				}
