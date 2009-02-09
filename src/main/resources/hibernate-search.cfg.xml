@@ -15,7 +15,7 @@
     <property name="hibernate.jdbc.batch_size">50</property>
     <property name="hibernate.use.query.cache">false</property>
     <property name="hibernate.search.default.directory_provider">org.hibernate.search.store.FSDirectoryProvider</property> 
-    <property name="hibernate.search.default.indexBase">lucene/indexes</property>
+    <property name="hibernate.search.default.indexBase">/tmp/lucene/indexes</property>
     <mapping class="org.ala.model.CommonName"/>
     <mapping class="org.ala.model.TaxonName"/>
     <mapping class="org.ala.model.TaxonConcept"/>
