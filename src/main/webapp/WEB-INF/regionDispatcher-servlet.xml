@@ -10,6 +10,7 @@
             	<prop key="/browse">regionBrowseController</prop>
             	<prop key="/browse/*">regionBrowseController</prop>
                 <prop key="/*">regionController</prop>
+                <prop key="/*/locality/*">regionController</prop>
                 <prop key="/*.htm">urlFilenameController</prop>
             </props>
         </property>
@@ -24,6 +25,11 @@
 	        <list>
 	          <value>region</value>
 	        </list>
+            <list>
+              <value>region</value>
+              <value>propertyName1</value>
+              <value>locality</value>
+            </list>
 	      </list>
 	    </property>
     </bean>
@@ -40,5 +46,4 @@
 	      </list>
 	    </property>
     </bean>
-    
 </beans>

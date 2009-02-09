@@ -48,7 +48,7 @@ public class CookieAndSessionCheckInterceptor extends HandlerInterceptorAdapter 
 	/** set of agents allowed to get in cookie free **/
 	protected Set<String> robotsAgentsAllowedToBypassCookies;
 	/** Switch off cookie check */
-	protected boolean switchOffCookieCheck = false;
+	protected boolean switchOffCookieCheck = true;
 	
 	/**
 	 * @see org.springframework.web.servlet.handler.HandlerInterceptorAdapter#preHandle(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, java.lang.Object)

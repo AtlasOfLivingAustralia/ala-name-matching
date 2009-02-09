@@ -27,13 +27,15 @@
 			classpath*:/applicationContext-occurrence-filters.xml,
 			classpath*:/applicationContext-taxonomy-filters.xml,
 			classpath*:/applicationContext-taxonomyControllers.xml,
+            classpath*:/org/ala/dao/applicationContext-dao.xml
 			classpath*:/org/gbif/**/mainDispatcher-servlet.xml, 
 			classpath*:/org/gbif/**/*-servlet.xml, 
 			classpath*:/applicationContext-webappPropertyStore.xml,
 			classpath*:/applicationContext-namespaceDefinition.xml,
 			classpath*:/applicationContext-scheduled-tasks.xml,
 			classpath*:/ala-occurrence-filters.xml,			
-			classpath*:/org/ala/**/applicationContext-*.xml
+			classpath*:/org/ala/**/applicationContext-*.xml,
+			classpath*:/hibernateSearch.xml
 		</param-value>
 	</context-param>
 

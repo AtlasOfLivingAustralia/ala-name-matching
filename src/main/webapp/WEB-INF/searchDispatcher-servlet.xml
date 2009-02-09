@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			 xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+				http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+				http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd">
+<!-- Application context definition for Search Dispatcher Servlet -->
+	
+	<!--  Define how the dispatcher will select the controllers -->
+	<bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+		<property name="interceptors">
+			<list>
+				<ref bean="localeChangeInterceptor"/>
+				<ref bean="dataAgreementInterceptor"/>
+                <ref bean="sessionHistoryInterceptor"/>
+			</list>
+		</property>
+		<property name="mappings">
+			<props>
+				<prop key="blanketSearch.htm">blanketQueryController</prop>
+				<prop key="/*">searchController</prop>
+				<prop key="/">redirectToRootController</prop>
+			</props>
+		</property>
+	</bean>
+
+    <bean id="searchController" class="org.ala.web.controller.InitialSearchController">
+        <property name="sessionFactory" ref="hsSessionFactory"/>
+        <property name="urlRoot" value="/search/"/>
+        <property name="supportedPatterns">
+            <list>
+                <list>
+                    <value>searchString</value>
+                </list>
+                <list>
+                    <value>searchString</value>
+                    <value>view</value>
+                </list>
+                <list>
+                    <value>searchString</value>
+                    <value>view</value>
+                    <value>startIndex</value>
+                </list>
+            </list>
+        </property>
+    </bean>
+
+	<!-- Controller for the initial Blanket Query -->
+	<bean id="blanketQueryController" class="org.gbif.portal.web.controller.RedirectToRestUrlController">
+		<property name="redirectRootUrl" value="/search/"/>
+		<property name="requestParamName" value="keyword"/>
+		<property name="supportWildcardSubstitution" value="true"/>
+		<property name="supportedWildcards" value="%,*"/>
+		<property name="wildcard" value="*"/>
+		<property name="whitespace2Underscores" value="false"/>		
+		<property name="decodeArgument" value="false"/>				
+	</bean>
+
+	<!-- Just redirect to root if no parameters are supplied -->
+	<bean id="redirectToRootController" class="org.gbif.portal.web.controller.RedirectToRestUrlController">
+		<property name="redirectRootUrl" value="/"/>
+		<property name="requestParamName" value="keyword"/>
+		<property name="supportWildcardSubstitution" value="true"/>
+		<property name="supportedWildcards" value="%,*"/>
+		<property name="wildcard" value="*"/>
+	</bean>	
+
+	<!-- Controller for the initial Blanket Query -->
+	<bean id="simpleQueryController" class="org.gbif.portal.web.controller.RestController">
+		<property name="urlRoot" value="search"/>
+		<property name="viewNamePrefix" value="search"/>
+		<property name="supportedSubViews">
+			<list>
+				<value>taxa</value>
+				<value>commonNames</value>
+				<value>countries</value>
+				<value>datasets</value>
+				<value>taxaList</value>
+				<value>commonNamesList</value>
+				<value>countriesList</value>
+				<value>datasetsList</value>
+			</list>
+		</property>
+		<property name="supportedPatterns">
+			<list>
+				<list>
+					<value>searchString</value>
+				</list>
+				<list>
+					<value>searchString</value>
+					<value>view</value>
+				</list>
+				<list>
+					<value>searchString</value>
+					<value>view</value>
+					<value>startIndex</value>
+				</list>
+			</list>
+		</property>
+	</bean>	
+	
+	<!-- Taxa search -->
+	<bean id="taxonSearchController" class="org.gbif.portal.web.controller.search.TaxonSearchController">
+		<property name="urlRoot" value="taxa"/>
+		<property name="viewNamePrefix" value="search.taxa.full"/>
+		<property name="taxonomyManager" ref="taxonomyManager"/>
+		<property name="dataResourceManager" ref="dataResourceManager"/>
+		<property name="supportedPatterns" ref="searchSupportedPatterns"/>		
+	</bean>	
+	<!-- Common name search -->
+	<bean id="commonNamesSearchController" class="org.gbif.portal.web.controller.search.CommonNameSearchController">
+		<property name="urlRoot" value="commonNames"/>
+		<property name="viewNamePrefix" value="search.commonNames.full"/>
+		<property name="taxonomyManager" ref="taxonomyManager"/>
+		<property name="dataResourceManager" ref="dataResourceManager"/>
+		<property name="supportedPatterns" ref="searchSupportedPatterns"/>
+	</bean>	
+	<!-- Countries search -->
+	<bean id="countriesSearchController" class="org.gbif.portal.web.controller.search.CountriesSearchController">
+		<property name="urlRoot" value="countries"/>
+		<property name="viewNamePrefix" value="search.countries.full"/>
+		<property name="geospatialManager" ref="geospatialManager"/>
+		<property name="supportedPatterns" ref="searchSupportedPatterns"/>
+	</bean>	
+	<!-- Dataset search -->
+	<bean id="datasetsSearchController" class="org.gbif.portal.web.controller.search.DatasetSearchController">
+		<property name="urlRoot" value="datasets"/>
+		<property name="viewNamePrefix" value="search.datasets.full"/>
+		<property name="dataResourceManager" ref="dataResourceManager"/>
+		<property name="supportedPatterns" ref="searchSupportedPatterns"/>
+	</bean>	
+	<!-- Supported pattern list for simple search and paging -->
+	<util:list id="searchSupportedPatterns">
+			<list>
+				<value>searchString</value>
+			</list>
+			<list>
+				<value>searchString</value>
+				<value>pageNo</value>
+			</list>
+			<list>
+				<value>searchString</value>
+				<value>pageNo</value>
+				<value>highWaterMark</value>
+			</list>				
+	</util:list>
+</beans>

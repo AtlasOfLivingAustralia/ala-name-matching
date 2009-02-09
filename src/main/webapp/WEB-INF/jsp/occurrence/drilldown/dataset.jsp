@@ -14,7 +14,7 @@
     <label for="institutionCode"><spring:message code="occurrence.record.institutioncode"/>:</label>
     ${rawOccurrenceRecord.institutionCode}
     <c:if test="${not empty institution && not empty institution.name}">
-        <spring:message code="occurrence.record.interpreted.as" arguments="${institution.name} ${institution.lsid}" argumentSeparator="$$$%%$$%"/>
+        (Interpreted as ${institution.name} <a href="http://biocol.org/${institution.lsid}">${institution.lsid}</a>
     </c:if>
     </p>
     

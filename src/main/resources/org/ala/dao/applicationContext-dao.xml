@@ -6,6 +6,12 @@
         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
         http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd">
 
+
+  <!-- Hibernate Search -->
+  <bean id="hsSessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+    <property name="configLocation" value="classpath:hibernate-search.cfg.xml"/>
+  </bean>
+  
   <!-- Institution -->
   <bean id="institutionDAORO" class="org.ala.dao.jdbc.InstitutionDAOImpl">
     <property name="dataSource" ref="dataSource"/>

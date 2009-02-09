@@ -1,4 +1,4 @@
-OpenLayers.IMAGE_RELOAD_ATTEMPTS = 6;
+//OpenLayers.IMAGE_RELOAD_ATTEMPTS = 6;
 /**
  * Initialise a Open Layers map
  * 

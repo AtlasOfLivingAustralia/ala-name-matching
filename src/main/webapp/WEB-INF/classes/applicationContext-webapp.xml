@@ -2,7 +2,6 @@
 <!DOCTYPE beans SYSTEM "http://www.springframework.org/dtd/spring-beans.dtd">
 <!-- The home of web app config that is shared across dispatchers-->
 <beans>	
-	
 	<!-- Interceptor to change the locale for i18n -->
 	<bean id="localeChangeInterceptor" class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
 		<property name="paramName" value="siteLanguage"/>
@@ -12,23 +11,23 @@
 	<bean id="dataAgreementInterceptor" class="org.ala.web.interceptor.CookieAndSessionCheckInterceptor">
 		<property name="ignoreUrlPatterns">
 			<list>
-				<value>/overviewmap.png</value>								
-				<value>/overviewMap.png</value>															
-				<value>/mapWidget</value>											
-				<value>/settings.htm</value>							
-                <value>/version.htm</value>        
+				<value>/overviewmap.png</value>
+				<value>/overviewMap.png</value>
+				<value>/mapWidget</value>
+				<value>/settings.htm</value>
+                <value>/version.htm</value>
 				<value>/tutorial/</value>
-				<value>/search/xmlsearch/</value>				
+				<value>/search/xmlsearch/</value>
 			</list>
 		</property>
 		<!-- uppercase -->
 		<property name="robotsAgentsAllowedToBypassCookies">
 			<set>
-			  <!--  cookie bypass for google bot -->
+			  <!-- cookie bypass for google bot -->
   			  <value>GOOGLEBOT</value>
               <value>COMP</value>
 			</set>
-		</property>		
+		</property>
 	</bean>
 
 	<!-- Stores the history within the session -->	
@@ -39,20 +38,20 @@
 				<value>countries/browse</value>
 			</set>
 		</property>
-	</bean>					
+	</bean>
 
     <!-- Bad robot interceptor -->
     <bean id="badRobotInterceptor" class="org.gbif.portal.web.controller.user.RobotRedirectAdapter" abstract="true">
       <property name="redirectUrl" value="/welcome.htm"/>
       <property name="userAgents">
         <list>
-          <value>GOOGLEBOT</value>  
+          <value>GOOGLEBOT</value>
           <value>YAHOO</value>
           <value>INDY LIBRARY</value>
-          <value>MSNBOT</value>       
+          <value>MSNBOT</value>
           <value>ASK JEEVES</value>
           <value>TWICELER</value>
-        </list>        
+        </list>
       </property>
     </bean> 
 		
