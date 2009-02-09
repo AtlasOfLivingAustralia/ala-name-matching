@@ -39,6 +39,15 @@ public class TaxonConcept {
 	@Column(name="data_resource_id")
 	protected Long dataResourceId;
 	
+	@ManyToOne(fetch=FetchType.EAGER, targetEntity=TaxonConcept.class,optional=true)
+	@JoinColumn(name="kingdom_concept_id")
+	@IndexedEmbedded(depth=2)
+	protected TaxonConcept kingdomConcept;
+	
+	@ManyToOne(fetch=FetchType.EAGER, targetEntity=TaxonConcept.class,optional=true)
+	@JoinColumn(name="family_concept_id")
+	@IndexedEmbedded(depth=2)
+	protected TaxonConcept familyConcept;
 	/**
 	 * @return the id
 	 */
@@ -74,5 +83,29 @@ public class TaxonConcept {
 	 */
 	public void setDataResourceId(Long dataResourceId) {
 		this.dataResourceId = dataResourceId;
+	}
+	/**
+	 * @return the kingdomConcept
+	 */
+	public TaxonConcept getKingdomConcept() {
+		return kingdomConcept;
+	}
+	/**
+	 * @param kingdomConcept the kingdomConcept to set
+	 */
+	public void setKingdomConcept(TaxonConcept kingdomConcept) {
+		this.kingdomConcept = kingdomConcept;
+	}
+	/**
+	 * @return the familyConcept
+	 */
+	public TaxonConcept getFamilyConcept() {
+		return familyConcept;
+	}
+	/**
+	 * @param familyConcept the familyConcept to set
+	 */
+	public void setFamilyConcept(TaxonConcept familyConcept) {
+		this.familyConcept = familyConcept;
 	}
 }
