@@ -8,8 +8,8 @@
     var entityType = '3';
     var entityName = '${dataProvider.name}';
     var minLongitude = 112;
-    var minLatitude = -46;
+    var minLatitude = -43.7;
     var maxLongitude = 154;
-    var maxLatitude = -10;
+    var maxLatitude = -10.3;
 </script>
 <jsp:include page="/WEB-INF/jsp/mapping/openlayer.jsp"/>

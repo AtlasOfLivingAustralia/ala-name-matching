@@ -11,7 +11,7 @@
 	      );
   
   var countriesLayer = new OpenLayers.Layer.WMS("Countries",
-	  tilecacheUrl, 
+	  tilecacheUrl+'bgcolor=0x666699', 
       {layers: "ala:countries",
       srs: 'EPSG:4326',
       format: "image/png"}
@@ -69,7 +69,7 @@
       );
   
   var cellLayer = new OpenLayers.Layer.WMS( entityName+" cells",
-      geoserverUrl+"/wfs?", 
+      geoserverUrl+"/wms?", 
       {layers: "ala:tabDensityLayer",
       srs: 'EPSG:4326', 
       version: "1.0.0", 
@@ -80,7 +80,7 @@
       );
     
   var centiCellLayer = new OpenLayers.Layer.WMS( entityName+" centi cells",
-      geoserverUrl+"/wfs?", 
+      geoserverUrl+"/wms?", 
       {layers: "ala:tabDensityLayer",
       srs: 'EPSG:4326', 
       version: "1.0.0", 
@@ -90,7 +90,7 @@
       );
 
   var tenmilliCellLayer = new OpenLayers.Layer.WMS( entityName+" tenmilli cells",
-      geoserverUrl+"/wfs?", 
+      geoserverUrl+"/wms?", 
       {layers: "ala:tabDensityLayer",
       srs: 'EPSG:4326', 
       version: "1.0.0", 

@@ -52,8 +52,8 @@ public class IndexUtils implements InitializingBean{
 							"inner join fetch tc.taxonName " +
 							"inner join fetch tc.kingdomConcept kc " +
 							"inner join fetch kc.taxonName " +
-							"inner join fetch tc.familyConcept fc " +
-							"inner join fetch fc.taxonName");
+							"left join fetch tc.familyConcept fc " +
+							"left join fetch fc.taxonName");
 					indexer.index();
 					logger.info("Finishing indexing common names.");
 				}

@@ -30,12 +30,12 @@
 			classpath*:/applicationContext-webappPropertyStore.xml,
 			classpath*:/applicationContext-namespaceDefinition.xml,
 			classpath*:/applicationContext-scheduled-tasks.xml,
-			classpath*:/ala-occurrence-filters.xml,			
+			classpath*:/occurrence-filters-ala.xml,
 			classpath*:/org/ala/**/applicationContext-*.xml,
 			classpath*:/org/ala/dao/applicationContext-dao.xml
 			classpath*:/hibernateSearch.xml
             classpath*:/org/gbif/**/mainDispatcher-servlet.xml, 
-            classpath*:/org/gbif/**/*-servlet.xml, 
+            classpath*:/org/gbif/**/*-servlet.xml,
 		</param-value>
 	</context-param>
 

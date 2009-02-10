@@ -88,10 +88,8 @@
 	  	<c:if test="${geoRegion.occurrenceCount>0}"><a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="5" predicate="0" value="${geoRegion.isoCountryCode}" index="0"/>"></c:if><fmt:formatNumber value="${geoRegion.occurrenceCount}" pattern="###,###"/><c:if test="${geoRegion.occurrenceCount>0}"></a></c:if>
 	  	(<c:if test="${geoRegion.occurrenceCoordinateCount>0}"><a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="5" predicate="0" value="${geoRegion.isoCountryCode}" index="0"/>&<gbif:criterion subject="28" predicate="0" value="0" index="1"/>"></c:if><fmt:formatNumber value="${geoRegion.occurrenceCoordinateCount}" pattern="###,###"/><c:if test="${geoRegion.occurrenceCoordinateCount>0}"></a></c:if>)
 	</display:column>	  
-	<display:column titleKey="dataset.speciesCount" class="countrycount">
-	  	<c:if test="${geoRegion.speciesCount>0}"><a href="${pageContext.request.contextPath}/occurrences/searchSpecies.htm?<gbif:criterion subject="5" predicate="0" value="${geoRegion.isoCountryCode}" index="0"/>"></c:if><fmt:formatNumber value="${geoRegion.speciesCount}" pattern="###,###"/><c:if test="${geoRegion.speciesCount>0}"></a></c:if>
-  	    </display:column>
 	<display:setProperty name="basic.msg.empty_list">
+	   No datasets indexed
 	</display:setProperty>
 	<display:setProperty name="basic.empty.showtable">false</display:setProperty>
 </display:table>

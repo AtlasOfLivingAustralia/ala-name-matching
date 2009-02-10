@@ -16,6 +16,9 @@ function initMap(mapDivId, useGoogle){
    map.addControl(new OpenLayers.Control.LayerSwitcher());
    map.addControl(new OpenLayers.Control.MousePosition());
    map.addControl(new OpenLayers.Control.ScaleLine());
+   var nav = new OpenLayers.Control.Navigation();
+   map.addControl(nav);
+
 }
 
 /**
@@ -25,10 +28,7 @@ function initMap(mapDivId, useGoogle){
  * @return the initialised map
  */
 function create4326Map(mapDivId){
-    var map = new OpenLayers.Map(mapDivId, 
-            {controls: [new OpenLayers.Control.Navigation(), 
-                        new OpenLayers.Control.PanZoomBar()],
-             numZoomLevels: 20});
+    var map = new OpenLayers.Map(mapDivId, {numZoomLevels: 20});
     return map;
 }
 
@@ -62,9 +62,7 @@ function createGoogleMap(mapDivId){
     };
     // construct a map with the above options
     map = new OpenLayers.Map(mapDivId, options, 
-    		{controls: [new OpenLayers.Control.Navigation(), 
-                   new OpenLayers.Control.PanZoomBar()],
-                    numZoomLevels: 20});
+    		{numZoomLevels: 20});
     return map;
 }
 
