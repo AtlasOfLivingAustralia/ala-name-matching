@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans SYSTEM "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+    <!-- The Abstract Query Builder that sits on top of the property store -->
+    <bean id="queryBuilder" abstract="true"  class="org.gbif.portal.service.util.PropertyStoreQueryBuilder">
+        <property name="greaterThanPredicate" value="SERVICE.QUERY.PREDICATE.GE"/>
+        <property name="lessThanPredicate" value="SERVICE.QUERY.PREDICATE.LE"/>
+        <property name="propertyStore" ref="servicePropertyStore"/>
+        <property name="namespace" value="http://gbif.org/portal-service/2006/1.0"/>
+        <property name="selectFieldKey" value="SERVICE.QUERY.SUBJECT.SELECTFIELD"/>
+        <property name="whereClauseKey" value="SERVICE.OCCURRENCE.QUERY.PREAMBLE.WHERE"/>
+        <property name="selectKey" value="SERVICE.QUERY.SELECT"/>
+        <property name="groupByKeyword" value="group by"/>
+        <property name="defaultMultipleConditionKeyword" value=" or "/>
+    </bean>
+    <!-- The Occurrence Query Builder that sits on top of the property store -->
+    <bean id="occurrenceQueryBuilder" parent="queryBuilder">
+        <property name="preambleKey" value="SERVICE.OCCURRENCE.QUERY.PREAMBLE"/>
+        <property name="postambleKey" value="SERVICE.OCCURRENCE.QUERY.POSTAMBLE"/>
+        <property name="postambleDescKey" value="SERVICE.OCCURRENCE.QUERY.POSTAMBLEDESC"/>
+        <property name="tripletGroupingsKey" value="SERVICE.OCCURRENCE.QUERY.GROUPINGS"/>
+        <property name="tripletIndexesKey" value="SERVICE.OCCURRENCE.QUERY.INDEXES"/>
+    </bean>
+    <!-- The Occurrence Query Builder that sits on top of the property store -->
+    <bean id="detailedOccurrenceQueryBuilder" parent="occurrenceQueryBuilder">
+        <property name="preambleKey" value="SERVICE.OCCURRENCE.QUERY.DETAILED.PREAMBLE"/>
+    </bean>
+    <!-- The Occurrence Query Builder that sits on top of the property store -->
+    <bean id="fullDetailedOccurrenceQueryBuilder" parent="occurrenceQueryBuilder">
+        <property name="preambleKey" value="SERVICE.OCCURRENCE.QUERY.FULLDETAILED.PREAMBLE"/>
+    </bean>
+    <bean id="occurrencePointsQueryBuilder" parent="occurrenceQueryBuilder">
+        <property name="preambleKey" value="SERVICE.OCCURRENCE.QUERY.POINTS.PREAMBLE"/>
+    </bean>
+    <!-- The Distinct taxon Occurrence Query Builder that sits on top of the property store -->
+    <bean id="distinctTaxonOccurrenceQueryBuilder" parent="occurrenceQueryBuilder">
+        <property name="preambleKey" value="SERVICE.OCCURRENCE.TAXON.QUERY.PREAMBLE"/>
+    </bean>
+    <bean id="distinctCellsOccurrenceQueryBuilder" parent="occurrenceQueryBuilder">
+        <property name="preambleKey" value="SERVICE.OCCURRENCE.DISTINCTCELLS.QUERY.PREAMBLE"/>
+        <property name="postambleKey" value="SERVICE.OCCURRENCE.GEOREF.QUERY.POSTAMBLE"/> 
+    </bean>
+
+    <!-- Selecting taxon id and latlong -->
+    <bean id="occurrenceTaxonPointsQueryBuilder" parent="occurrenceQueryBuilder">
+        <property name="preambleKey" value="SERVICE.OCCURRENCE.TAXONPOINTS.QUERY.PREAMBLE"/>
+        <property name="postambleKey" value="SERVICE.OCCURRENCE.GEOREF.QUERY.POSTAMBLE"/>
+    </bean>
+
+    <!-- The Taxonomy Query Builder that sits on top of the property store -->
+    <bean id="taxonomyQueryBuilder" parent="queryBuilder">
+        <property name="preambleKey" value="SERVICE.TAXONOMY.QUERY.PREAMBLE"/>
+        <property name="postambleKey" value="SERVICE.TAXONOMY.QUERY.POSTAMBLE"/>
+        <property name="postambleDescKey" value="SERVICE.TAXONOMY.QUERY.POSTAMBLEDESC"/>
+    </bean>
+
+    <!-- GBIF Portal Mappings -->
+    <bean id="propertyStore:namespace:GBIF:Portal-Service:1.0" class="org.gbif.portal.util.propertystore.impl.spring.PropertyBag">
+        <!-- The namespace that the PropertyStore will key this bag on -->
+        <property name="namespace" value="http://gbif.org/portal-service/2006/1.0"/>
+        <property name="properties">
+            <map>
+                <!-- generic subjects -->
+                <!-- this subject specifies logic pertaining to fields -->
+                <entry key="SERVICE.QUERY.SUBJECT.SELECTFIELD" value=""/>
+                <entry key="SERVICE.QUERY.SELECT" value="select"/>
+
+                <!-- 
+                      The service layer query building predicates
+                  Note the escaping of special characters (&lt; &gt; etc) 
+                        -->
+                <entry key="SERVICE.QUERY.PREDICATE.EQUAL">
+                   <bean class="org.gbif.portal.dto.Predicate">
+                         <property name="prefix" value="= "/>
+                     </bean>
+                </entry>
+                <entry key="SERVICE.QUERY.PREDICATE.LIKE">
+                   <bean class="org.gbif.portal.dto.Predicate">
+                         <property name="prefix" value=" like "/>
+                     </bean>
+                </entry>
+                <entry key="SERVICE.QUERY.PREDICATE.NEQUAL">
+                   <bean class="org.gbif.portal.dto.Predicate">
+                         <property name="prefix" value=" != "/>
+                     </bean>
+                </entry>
+                <entry key="SERVICE.QUERY.PREDICATE.ISNULL">
+                   <bean class="org.gbif.portal.dto.Predicate">
+                         <property name="prefix" value="IS NULL"/>
+                     </bean>
+                </entry>
+                <entry key="SERVICE.QUERY.PREDICATE.ISNOTNULL">
+                   <bean class="org.gbif.portal.dto.Predicate">
+                         <property name="prefix" value="IS NOT NULL"/>
+                     </bean>
+                </entry>
+                <entry key="SERVICE.QUERY.PREDICATE.IN">
+                   <bean class="org.gbif.portal.dto.Predicate">
+                         <property name="prefix" value="IN ("/>
+                         <property name="postfix" value=") "/>
+                     </bean>
+                </entry>
+                <entry key="SERVICE.QUERY.PREDICATE.LE">
+                   <bean class="org.gbif.portal.dto.Predicate">
+                         <property name="prefix" value="&lt;= "/>
+                         <property name="isEquals" value="false"/>
+                     </bean>
+                </entry>
+                <entry key="SERVICE.QUERY.PREDICATE.GE">
+                   <bean class="org.gbif.portal.dto.Predicate">
+                         <property name="prefix" value="&gt;= "/>
+                         <property name="isEquals" value="false"/>
+                     </bean>
+                </entry>
+                <entry key="SERVICE.QUERY.PREDICATE.L">
+                   <bean class="org.gbif.portal.dto.Predicate">
+                         <property name="prefix" value="&lt; "/>
+                         <property name="isEquals" value="false"/>
+                     </bean>
+                </entry>
+                <entry key="SERVICE.QUERY.PREDICATE.G">
+                   <bean class="org.gbif.portal.dto.Predicate">
+                         <property name="prefix" value="&gt; "/>
+                         <property name="isEquals" value="false"/>
+                     </bean>
+                </entry>
+                <entry key="SERVICE.QUERY.PREDICATE.RETURN">
+                   <bean class="org.gbif.portal.dto.Predicate"/>
+                </entry>
+
+                <!-- The service layer for occurrence records -->
+                <entry key="SERVICE.OCCURRENCE.QUERY.PREAMBLE" value="from OccurrenceRecord as oc left join oc.geoMappings as geoMapping"/>
+                <!-- Retrieve OR and joins in elements common to display -->
+                <entry key="SERVICE.OCCURRENCE.QUERY.DETAILED.PREAMBLE" value="select oc, oc.taxonName.canonical, oc.dataResource.name, oc.dataProvider.name from OccurrenceRecord as oc inner join fetch oc.catalogueNumber inner join fetch oc.collectionCode inner join fetch oc.institutionCode left join oc.geoMappings as geoMapping"/>
+                <!-- Retrieves the ROR and OR -->
+                <entry key="SERVICE.OCCURRENCE.QUERY.FULLDETAILED.PREAMBLE" value="select oc.id, tn.canonical, oc, ror from OccurrenceRecord as oc inner join oc.rawOccurrenceRecord ror inner join oc.taxonName tn left join oc.geoMappings as geoMapping"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.POINTS.PREAMBLE" value="select oc.id, oc.latitude, oc.longitude from OccurrenceRecord oc left join oc.geoMappings as geoMapping"/>
+                <!-- Distinct species in the results -->
+                <entry key="SERVICE.OCCURRENCE.TAXON.QUERY.PREAMBLE" value="select distinct oc.nubTaxonConcept, oc.nubTaxonConcept.taxonName from OccurrenceRecord as oc "/>
+                <!-- id, lat, long -->
+                <entry key="SERVICE.OCCURRENCE.TAXONPOINTS.QUERY.PREAMBLE" value="select oc.id, oc.latitude, oc.longitude from OccurrenceRecord as oc "/>
+                <!-- Distinct cells -->
+                <entry key="SERVICE.OCCURRENCE.DISTINCTCELLS.QUERY.PREAMBLE" value="select distinct(oc.cellId) from OccurrenceRecord as oc left join oc.geoMappings as geoMapping"/>
+                <!-- Georeferenced points only clause  -->
+                <entry key="SERVICE.OCCURRENCE.GEOREF.QUERY.POSTAMBLE" value=" and oc.cellId is not null "/>
+
+                <!--  the where key word -->
+                <entry key="SERVICE.OCCURRENCE.QUERY.PREAMBLE.WHERE" value=" where "/>
+
+                <!--entry key="SERVICE.OCCURRENCE.QUERY.POSTAMBLE" value=" order by oc.id"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.POSTAMBLEDESC" value=" order by oc.id desc"/-->
+                <entry key="SERVICE.OCCURRENCE.QUERY.POSTAMBLE" value=""/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.POSTAMBLEDESC" value=""/>
+
+                <!-- NOTE - when you change these you should create message.properties values
+                     and interceptor entries for the GBIF feedback logging -->
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.SCIENTIFICNAME" value="oc.taxonName.canonical"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TAXONNAMEID" value="oc.taxonNameId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TAXONCONCEPTID" value="oc.taxonConceptId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.NUBCONCEPTID" value="oc.nubTaxonConceptId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.LATITUDE" value="oc.latitude"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.LONGITUDE" value="oc.longitude"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.ALTITUDE" value="oc.altitudeInMetres"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.DEPTH" value="oc.depthInCentimetres"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.CELLID" value="oc.cellId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.CELLID.MOD360" value="oc.mod360CellId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.CENTICELLID" value="oc.centiCellId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.INSTITUTIONCODE" value="oc.institutionCode.code"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.COLLECTIONCODE" value="oc.collectionCode.code"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.CATALOGUENUMBER" value="oc.catalogueNumber.code"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.CONTINENTCODE" value="oc.country.continentCode"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.REGIONCODE" value="oc.country.region"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.ISOCOUNTRYCODE" value="oc.isoCountryCode"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.HOSTCOUNTRYCODE" value="oc.dataProvider.isoCountryCode"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.DATARESOURCEID" value="oc.dataResourceId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.DATAPROVIDERID" value="oc.dataProviderId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.RESOURCENETWORKID" value="oc.dataResource.networkMemberships.resourceNetworkId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.BASISOFRECORD" value="oc.basisOfRecordCode"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.GEOSPATIALISSUES" value="oc.geospatialIssue"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TAXONOMICISSUES" value="oc.taxonomicIssue"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.OTHERISSUES" value="oc.otherIssue"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.OCCURRENCEDATE" value="oc.occurrenceDate"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.YEAR" value="oc.year"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.YEARRANGE" value="oc.year"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.MONTH" value="oc.month"/>
+                <!-- Type status may be checked both for existence (using the count) and it's actual status -->
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TYPESTATUSCOUNT" value="oc.typeStatus.size"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TYPESTATUS" value="oc.typeStatus.typeStatus"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.GEOREGION" value="geoMapping.geoRegionId"/>
+
+                <!-- Groupings for subjects - used for or-ing triplets of the same type 
+                    Note: entries can not be in multiple groupings
+                -->
+                <entry key="SERVICE.OCCURRENCE.QUERY.GROUPINGS">
+                    <map>
+                        <entry key="SERVICE.OCCURRENCE.QUERY.GROUPINGS.CLASSIFICATION">
+                            <list>
+                                <value>SERVICE.OCCURRENCE.QUERY.SUBJECT.NUBCONCEPTID</value>
+                                <value>SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.KINGDOMID</value>
+                                <value>SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.PHYLUMID</value>
+                                <value>SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.CLASSID</value>
+                                <value>SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.ORDERID</value>
+                                <value>SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.FAMILYID</value>
+                                <value>SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.GENUSID</value>
+                                <value>SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.SPECIESID</value>
+                                <value>SERVICE.OCCURRENCE.QUERY.SUBJECT.SCIENTIFICNAME</value>
+                            </list>
+                        </entry>
+                    </map>    
+                </entry>
+                <!--
+                    Query parameter ordering for indexes.
+                    This list will be iterated through until an applicable index is found.
+                    
+                    Note: only one of these indexes will be used to order the query. The
+                    first applicable one found is used.
+                -->
+                <entry key="SERVICE.OCCURRENCE.QUERY.INDEXES">
+                    <list>
+                        <!-- The cell id - nub concept id index -->
+                        <list>
+                            <value>SERVICE.OCCURRENCE.QUERY.SUBJECT.CELLID</value>
+                            <value>SERVICE.OCCURRENCE.QUERY.GROUPINGS.CLASSIFICATION</value>
+                        </list>
+                        <!-- The iso country code - nub concept id index -->
+                        <list>
+                            <value>SERVICE.OCCURRENCE.QUERY.SUBJECT.ISOCOUNTRYCODE</value>
+                            <value>SERVICE.OCCURRENCE.QUERY.GROUPINGS.CLASSIFICATION</value>
+                           </list>
+                    </list>
+                </entry>
+
+                <!-- Filters against the nub concept -these have been superceded by the equivalent ID subjects, left in to support existing functionality -->
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.KINGDOM" value="oc.kingdomConcept.taxonNameLite.canonical"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.PHYLUM" value="oc.phylumConcept.taxonNameLite.canonical"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.CLASS" value="oc.classConcept.taxonNameLite.canonical"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.ORDER" value="oc.orderConcept.taxonNameLite.canonical"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.FAMILY" value="oc.familyConcept.taxonNameLite.canonical"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.GENUS" value="oc.genusConcept.taxonNameLite.canonical"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.SPECIES" value="oc.speciesConcept.taxonNameLite.canonical"/>
+
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.KINGDOMID" value="oc.kingdomConceptId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.PHYLUMID" value="oc.phylumConceptId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.CLASSID" value="oc.classConceptId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.ORDERID" value="oc.orderConceptId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.FAMILYID" value="oc.familyConceptId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.GENUSID" value="oc.genusConceptId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TR.SPECIESID" value="oc.speciesConceptId"/>
+
+                <!--These entries specify return values for triplet queries-->
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.OCCURRENCEPOINTS" value="oc.id,  oc.latitude, oc.longitude"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.OCCURRENCEPOINTS.GROUPBY" value=""/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.DISTINCTDEGREEPOINTS" value="distinct( concat( concat(floor(oc.latitude), ','), floor(oc.longitude)))"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.DISTINCTDEGREEPOINTS.GROUPBY" value=""/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.DISTINCTTENDEGREECELLS" value="distinct( concat( concat(floor(oc.latitude/10) * 10, ','), floor(oc.longitude/10) *10))"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.DISTINCTTENDEGREECELLS.GROUPBY" value=""/>
+
+                <!-- Filter Query Aggregates for counts -->
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.ID" value="oc.id"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.COUNT" value="count(oc.id)"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.COUNT.GROUPBY" value=""/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.ID.GROUPBY" value=""/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.RESOURCECOUNTS" value="distinct oc.dataResource.id, oc.dataResource.name, oc.dataProvider.name, 0"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.RESOURCECOUNTS.GROUPBY" value=""/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.PROVIDERCOUNTS" value="distinct oc.dataProvider.id, oc.dataProvider.name, 0"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.PROVIDERCOUNTS.GROUPBY" value=""/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.COUNTRYCOUNTS" value="distinct oc.isoCountryCode, oc.isoCountryCode, 0"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.COUNTRYCOUNTS.GROUPBY" value=""/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.SPECIESCOUNTS" value="distinct oc.nubTaxonConceptId, oc.taxonName.canonical, 0"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.SPECIESCOUNTS.GROUPBY" value=""/>
+
+                <!-- Filter Query Aggregates for generating the map layers -->
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.MAPLAYERCOUNTS" value="oc.cellId,count(oc.id)"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.MAPLAYERCOUNTS.GROUPBY" value="oc.cellId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.MAPLAYERCENTICELLCOUNTS" value="oc.centiCellId,count(oc.id)"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.RETURNFIELDS.MAPLAYERCENTICELLCOUNTS.GROUPBY" value="oc.centiCellId"/>
+
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.RECORDID.MULTIPLECONDITION" value=" or "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.SCIENTIFICNAME.MULTIPLECONDITION" value=" or "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.LATITUDE.MULTIPLECONDITION" value=" and "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.LONGITUDE.MULTIPLECONDITION" value=" and "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.PUBLICATION.MULTIPLECONDITION" value=" or "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.OCCURRENCEDATE.MULTIPLECONDITION" value=" and "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.COUNTRY.MULTIPLECONDITION" value=" or "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.INSTITUTIONCODE.MULTIPLECONDITION" value=" or "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.COLLECTIONCODE.MULTIPLECONDITION" value=" or "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.IDENTIFIER.MULTIPLECONDITION" value=" or "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.CELLID.MULTIPLECONDITION" value=" and "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.CELLID.MOD360.MULTIPLECONDITION" value=" and "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.YEAR.MULTIPLECONDITION" value=" or "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.YEARRANGE.MULTIPLECONDITION" value=" and "/>
+
+                <!-- The service layer for taxonomic concept records -->
+                <entry key="SERVICE.TAXONOMY.QUERY.PREAMBLE" 
+                    value="from TaxonConcept as tc 
+                        inner join fetch tc.taxonName
+                        left join fetch tc.kingdomConcept left join fetch tc.kingdomConcept.taxonNameLite
+                        left join fetch tc.phylumConcept left join fetch tc.phylumConcept.taxonNameLite
+                        left join fetch tc.orderConcept left join fetch tc.orderConcept.taxonNameLite
+                        left join fetch tc.classConcept left join fetch tc.classConcept.taxonNameLite
+                        left join fetch tc.familyConcept left join fetch tc.familyConcept.taxonNameLite
+                        left join fetch tc.genusConcept left join fetch tc.genusConcept.taxonNameLite    
+                        left join fetch tc.speciesConcept left join fetch tc.speciesConcept.taxonNameLite
+                        inner join fetch tc.dataResource
+                        inner join fetch tc.dataProvider"/>
+                <!--
+                <entry key="SERVICE.TAXONOMY.QUERY.PREAMBLE" 
+                    value="select distinct tc from TaxonConcept as tc 
+                        inner join fetch tc.taxonName
+                        where"/>
+                -->
+                <!--entry key="SERVICE.TAXONOMY.QUERY.POSTAMBLE" value=" order by tc.id"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.POSTAMBLEDESC" value=" order by tc.id desc"/-->
+                <entry key="SERVICE.TAXONOMY.QUERY.POSTAMBLE" value=""/>
+                <entry key="SERVICE.TAXONOMY.QUERY.POSTAMBLEDESC" value=""/>
+
+                <!-- These entries are dependent on the enum type TaxonRank. If they change these values need to change -->
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.CANONICAL" value="tc.taxonName.canonical"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.DATARESOURCE" value="tc.dataResource.name"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.DATARESOURCEID" value="tc.dataResourceId"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.DATAPROVIDER" value="tc.dataResource.dataProvider.name"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.DATAPROVIDERID" value="tc.dataResource.dataProviderId"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.RANK" value="tc.rank"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.ACCEPTED" value="tc.isAccepted"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.ISOCOUNTRYCODE" value="tc.countries.isoCountryCode"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.TR.KINGDOM" value="tc.kingdomConcept.taxonNameLite.canonical"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.TR.PHYLUM" value="tc.phylumConcept.taxonNameLite.canonical"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.TR.CLASS" value="tc.classConcept.taxonNameLite.canonical"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.TR.ORDER" value="tc.orderConcept.taxonNameLite.canonical"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.TR.FAMILY" value="tc.familyConcept.taxonNameLite.canonical"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.TR.GENUS" value="tc.genusConcept.taxonNameLite.canonical"/>
+                <entry key="SERVICE.TAXONOMY.QUERY.SUBJECT.TR.SPECIES" value="tc.speciesConcept.taxonNameLite.canonical"/>
+            </map>
+        </property>
+    </bean>
+</beans>

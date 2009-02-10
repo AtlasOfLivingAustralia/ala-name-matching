@@ -90,6 +90,31 @@
     </c:choose>
     </p>
 
+    <c:if test="${not empty typifications}">
+        <p><c:forEach items="${typifications}" var="typification">
+            <label><spring:message code="specimen.type.status" />:</label> ${typification.typeStatus} <c:if
+                test="${not empty typification.scientificName}">
+                <spring:message code="specimen.type.for"
+                    arguments="${typification.scientificName}" />
+            </c:if>
+            <br />
+        </c:forEach></p>
+    </c:if>
+
+    <c:if
+        test="${rawOccurrenceRecord.identifierName!=null || rawOccurrenceRecord.identificationDate!=null}">
+        <c:if test="${rawOccurrenceRecord.identifierName!=null}">
+            <p><label for="indentifierName"><spring:message
+                code="occurrence.record.identifierName" />:</label>
+            ${rawOccurrenceRecord.identifierName}</p>
+        </c:if>
+        <c:if test="${rawOccurrenceRecord.identificationDate!=null}">
+            <p><label for="indentificationDate"><spring:message
+                code="occurrence.record.dateIdentified" />:</label> <fmt:formatDate
+                value="${rawOccurrenceRecord.identificationDate}" /></p>
+        </c:if>
+    </c:if>
+
     <p>
     <c:forEach items="${identifierRecords}" var="identifierRecord">
     <label><spring:message code="identifier.type.${identifierRecord.identifierType}"/>:</label> ${identifierRecord.identifier}<br/>

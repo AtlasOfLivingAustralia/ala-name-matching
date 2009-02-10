@@ -132,7 +132,6 @@ function initLayers(){
       map.addLayer(blueMarbleLayer);
       map.addLayer(roadsLayer);
       map.addLayer(placenamesLayer);
-//    map.addLayer(alabaseLayer);
     } else {
         var gmap = new OpenLayers.Layer.Google(
                 "Google Streets",
@@ -187,6 +186,17 @@ function zoomToBounds(){
  * Redirects to occurrence search.
  */
 function occurrenceSearch(latitude, longitude, roundingFactor) {
+	
+    if(useGoogle){
+        //reproject lat long values
+    	var sourceProjection = new OpenLayers.Projection("EPSG:900913");
+        var destinationProjection = new OpenLayers.Projection("EPSG:4326");
+        var point = new OpenLayers.Geometry.Point(longitude, latitude);
+        point.transform(sourceProjection,destinationProjection);
+        latitude = point.y;
+        longitude = point.x;
+    }
+	
     // 36 pixels represents 0.1 degrees
     var longMin = (Math.floor(longitude*roundingFactor) )/roundingFactor;
     var latMin = (Math.floor(latitude*roundingFactor) )/roundingFactor;

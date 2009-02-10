@@ -36,6 +36,7 @@
 			classpath*:/hibernateSearch.xml
             classpath*:/org/gbif/**/mainDispatcher-servlet.xml, 
             classpath*:/org/gbif/**/*-servlet.xml,
+            classpath*:/applicationContext-triplets.xml
 		</param-value>
 	</context-param>
 
