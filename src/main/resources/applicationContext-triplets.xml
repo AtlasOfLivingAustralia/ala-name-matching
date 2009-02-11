@@ -2,7 +2,7 @@
 <!DOCTYPE beans SYSTEM "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
     <!-- The Abstract Query Builder that sits on top of the property store -->
-    <bean id="queryBuilder" abstract="true"  class="org.gbif.portal.service.util.PropertyStoreQueryBuilder">
+    <bean id="queryBuilder" abstract="true"  class="org.ala.search.PropertyStoreQueryBuilder">
         <property name="greaterThanPredicate" value="SERVICE.QUERY.PREDICATE.GE"/>
         <property name="lessThanPredicate" value="SERVICE.QUERY.PREDICATE.LE"/>
         <property name="propertyStore" ref="servicePropertyStore"/>
@@ -129,18 +129,18 @@
                 </entry>
 
                 <!-- The service layer for occurrence records -->
-                <entry key="SERVICE.OCCURRENCE.QUERY.PREAMBLE" value="from OccurrenceRecord as oc left join oc.geoMappings as geoMapping"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.PREAMBLE" value="from OccurrenceRecord as oc "/>
                 <!-- Retrieve OR and joins in elements common to display -->
-                <entry key="SERVICE.OCCURRENCE.QUERY.DETAILED.PREAMBLE" value="select oc, oc.taxonName.canonical, oc.dataResource.name, oc.dataProvider.name from OccurrenceRecord as oc inner join fetch oc.catalogueNumber inner join fetch oc.collectionCode inner join fetch oc.institutionCode left join oc.geoMappings as geoMapping"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.DETAILED.PREAMBLE" value="select oc, oc.taxonName.canonical, oc.dataResource.name, oc.dataProvider.name from OccurrenceRecord as oc inner join fetch oc.catalogueNumber inner join fetch oc.collectionCode inner join fetch oc.institutionCode "/>
                 <!-- Retrieves the ROR and OR -->
-                <entry key="SERVICE.OCCURRENCE.QUERY.FULLDETAILED.PREAMBLE" value="select oc.id, tn.canonical, oc, ror from OccurrenceRecord as oc inner join oc.rawOccurrenceRecord ror inner join oc.taxonName tn left join oc.geoMappings as geoMapping"/>
-                <entry key="SERVICE.OCCURRENCE.QUERY.POINTS.PREAMBLE" value="select oc.id, oc.latitude, oc.longitude from OccurrenceRecord oc left join oc.geoMappings as geoMapping"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.FULLDETAILED.PREAMBLE" value="select oc.id, tn.canonical, oc, ror from OccurrenceRecord as oc inner join oc.rawOccurrenceRecord ror inner join oc.taxonName tn "/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.POINTS.PREAMBLE" value="select oc.id, oc.latitude, oc.longitude from OccurrenceRecord oc "/>
                 <!-- Distinct species in the results -->
                 <entry key="SERVICE.OCCURRENCE.TAXON.QUERY.PREAMBLE" value="select distinct oc.nubTaxonConcept, oc.nubTaxonConcept.taxonName from OccurrenceRecord as oc "/>
                 <!-- id, lat, long -->
                 <entry key="SERVICE.OCCURRENCE.TAXONPOINTS.QUERY.PREAMBLE" value="select oc.id, oc.latitude, oc.longitude from OccurrenceRecord as oc "/>
                 <!-- Distinct cells -->
-                <entry key="SERVICE.OCCURRENCE.DISTINCTCELLS.QUERY.PREAMBLE" value="select distinct(oc.cellId) from OccurrenceRecord as oc left join oc.geoMappings as geoMapping"/>
+                <entry key="SERVICE.OCCURRENCE.DISTINCTCELLS.QUERY.PREAMBLE" value="select distinct(oc.cellId) from OccurrenceRecord as oc"/>
                 <!-- Georeferenced points only clause  -->
                 <entry key="SERVICE.OCCURRENCE.GEOREF.QUERY.POSTAMBLE" value=" and oc.cellId is not null "/>
 
@@ -208,6 +208,13 @@
                         </entry>
                     </map>    
                 </entry>
+                
+                <entry key="SERVICE.OCCURRENCE.QUERY.JOINCONDITIONS">
+                    <map>
+                        <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.GEOREGION" value="left join oc.geoMappings as geoMapping"/>
+                    </map>
+                </entry>
+                
                 <!--
                     Query parameter ordering for indexes.
                     This list will be iterated through until an applicable index is found.

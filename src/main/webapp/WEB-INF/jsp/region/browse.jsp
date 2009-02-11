@@ -85,8 +85,8 @@
 			<a href="${pageContext.request.contextPath}/regions/${geoRegion.id}"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></a>
 	</display:column>
 	<display:column titleKey="dataset.list.occurrence.count" class="countrycount">
-	  	<c:if test="${geoRegion.occurrenceCount>0}"><a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="5" predicate="0" value="${geoRegion.isoCountryCode}" index="0"/>"></c:if><fmt:formatNumber value="${geoRegion.occurrenceCount}" pattern="###,###"/><c:if test="${geoRegion.occurrenceCount>0}"></a></c:if>
-	  	(<c:if test="${geoRegion.occurrenceCoordinateCount>0}"><a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="5" predicate="0" value="${geoRegion.isoCountryCode}" index="0"/>&<gbif:criterion subject="28" predicate="0" value="0" index="1"/>"></c:if><fmt:formatNumber value="${geoRegion.occurrenceCoordinateCount}" pattern="###,###"/><c:if test="${geoRegion.occurrenceCoordinateCount>0}"></a></c:if>)
+	  	<c:if test="${geoRegion.occurrenceCount>0}"><a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="0"/>"></c:if><fmt:formatNumber value="${geoRegion.occurrenceCount}" pattern="###,###"/><c:if test="${geoRegion.occurrenceCount>0}"></a></c:if>
+	  	(<c:if test="${geoRegion.occurrenceCoordinateCount>0}"><a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="0"/>&<gbif:criterion subject="28" predicate="0" value="0" index="1"/>"></c:if><fmt:formatNumber value="${geoRegion.occurrenceCoordinateCount}" pattern="###,###"/><c:if test="${geoRegion.occurrenceCoordinateCount>0}"></a></c:if>)
 	</display:column>	  
 	<display:setProperty name="basic.msg.empty_list">
 	   No datasets indexed
