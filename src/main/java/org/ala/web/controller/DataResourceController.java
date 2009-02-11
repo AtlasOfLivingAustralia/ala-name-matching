@@ -446,7 +446,9 @@ public class DataResourceController extends RestController {
         try {
             rsp = server.query( searchQuery );
         } catch (SolrServerException e) {
-            e.printStackTrace();
+        	logger.error("Problem communicating with SOLR server. Unable to generate chart data.");
+            logger.error(e.getMessage(), e);
+            return new HashMap<String, String>();
         }
         
         //Long resultsSize = rsp.getResults().getNumFound();
