@@ -1,6 +1,8 @@
 <%@ include file="/common/taglibs.jsp"%>
 <c:set var="entityName" scope="request"><gbif:taxonPrint concept="${taxonConcept}"/></c:set>
 <c:set var="mapTitle" scope="request">${taxonConcept.taxonName}</c:set>
+<c:set var="entityId" scope="request">${taxonConcept.key}</c:set>
+<c:set var="entityPath" scope="request" value="species"/>
 <c:set var="extraParams" scope="request"><gbif:criteria criteria="${occurrenceCriteria}"/></c:set>
 <script type="text/javascript">
     var entityId = '${taxonConcept.key}';

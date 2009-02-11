@@ -37,12 +37,12 @@
 <p>
 <c:choose>
     <c:when test="${param['map']=='google'}">
-        <a href="${pageContext.request.contextPath}/regions/${geoRegion.id}">
+        <a href="${pageContext.request.contextPath}/${entityPath}/${entityId}">
           Use geoserver base layers
         </a>
     </c:when>
     <c:otherwise>
-        <a href="${pageContext.request.contextPath}/regions/${geoRegion.id}?map=google">
+        <a href="${pageContext.request.contextPath}/${entityPath}/${entityId}?map=google">
           Use google base layers
         </a>
     </c:otherwise>

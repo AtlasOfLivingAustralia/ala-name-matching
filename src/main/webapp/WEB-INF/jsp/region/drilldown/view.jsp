@@ -34,6 +34,8 @@
 		var maxLatitude = ${geoRegion.maxLatitude};
 	</script>
 	<c:set var="extraParams" scope="request"><gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="0"/></c:set>
+    <c:set var="entityId" scope="request">${geoRegion.id}</c:set>
+    <c:set var="entityPath" scope="request" value="regions"/>
     <jsp:include page="/WEB-INF/jsp/mapping/openlayer.jsp"/>
 	<!-- Region specific layers -->
 	<script type="text/javascript">
