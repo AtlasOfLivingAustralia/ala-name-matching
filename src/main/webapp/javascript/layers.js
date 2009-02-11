@@ -86,7 +86,8 @@
       version: "1.0.0", 
       transparent: "true",
       format: "image/png",
-      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?&id="+entityId+"&type="+entityType+"&unit=0.1]]></Literal></PropertyIsEqualTo></Filter>)"} 
+      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?&id="+entityId+"&type="+entityType+"&unit=0.1]]></Literal></PropertyIsEqualTo></Filter>)"},
+      {visibility:false}
       );
 
   var tenmilliCellLayer = new OpenLayers.Layer.WMS( entityName+" tenmilli cells",

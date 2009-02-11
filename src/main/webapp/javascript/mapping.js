@@ -162,6 +162,33 @@ function initLayers(){
     map.addLayer(cellLayer); 
     map.addLayer(centiCellLayer);
     map.addLayer(tenmilliCellLayer);
+    // listener for zoom level to choose best cell layer
+    map.events.register('zoomend', map, function (e) {
+        var zoom = map.zoom;
+        var debug = document.getElementById('debugMap');
+        var msg = "Zoom level = " + zoom;
+        
+        if (zoom >= 0 && zoom < 6) {
+            cellLayer.setVisibility(true);
+            centiCellLayer.setVisibility(false);
+            tenmilliCellLayer.setVisibility(false);
+        } else if (zoom >= 6 && zoom < 10) {
+            cellLayer.setVisibility(false);
+            centiCellLayer.setVisibility(true);
+            tenmilliCellLayer.setVisibility(false);
+        } else if (zoom >= 10) {
+            cellLayer.setVisibility(false);
+            centiCellLayer.setVisibility(false);
+            tenmilliCellLayer.setVisibility(true);
+        }
+        
+        msg = msg + "<br/>cellLayer visibilty = " + cellLayer.visibility;
+        msg = msg + "<br/>centiCellLayer visibilty = " + centiCellLayer.visibility;
+        msg = msg + "<br/>tenmilliCellLayer visibilty = " + tenmilliCellLayer.visibility;
+        
+        if (0 && debug) debug.innerHTML = msg;
+    }
+    );
 }
 
 /**
