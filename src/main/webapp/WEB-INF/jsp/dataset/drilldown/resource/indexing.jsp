@@ -18,27 +18,49 @@
 				<span class="new">New!</span> <a href="${pageContext.request.contextPath}/datasets/resource/${dataResource.key}/indexing/"><spring:message code="view.indexing.history.for" text="View indexing history for"/> ${dataResource.name}</a>
 			</li>
 		</ul>
-		<div id="charts">
-			<script type="text/javascript" src="${pageContext.request.contextPath}/javascript/swfobject.js"></script>
-			<script type="text/javascript">
-				var facet = "taxon_name";
-				function load_chart(facet) {
-					swfobject.embedSWF(
-						"${pageContext.request.contextPath}/open-flash-chart.swf", "chart1", "600", "400", "9.0.0", 
-						"expressInstall.swf",
-						{"data-file":"http://${header['host']}:${header['port']}/ala-portal-search/<string:encodeUrl>solrSearch.json?q=data_resource_id:${dataResource.key}&format=pieChart&per_page=10&facet=</string:encodeUrl>" + facet });							
-				}
-				load_chart(facet);
-			</script>
-			<h4>Data Breakdown Charts</h4>
-			<ul>
-				<li><a href="javascript:load_chart('taxonomic_issue');">taxonomic issues</a></li>
-				<li><a href="javascript:load_chart('geospatial_issue');">geospatial issues</a></li>
-				<li><a href="javascript:load_chart('other_issue');">other issues</a></li>
-				<li><a href="javascript:load_chart('taxon_name');">scientific name</a></li>
-			</ul>
-			<div id="chart1" style="height:400px; width:600px;"></div>
-		</div>
+		<div id="charts" style="">
+            <script type="text/javascript" src="${pageContext.request.contextPath}/javascript/swfobject.js"></script>
+            <script type="text/javascript">            
+                var flashvars1 = {
+            	    path: escape("${pageContext.request.contextPath}/charts/"),
+            	    settings_file: escape("${pageContext.request.contextPath}/charts/year_settings.xml"),
+            	    chart_data: "${chartData.year}",
+            	    preloader_color: "#999999"
+			    };
+			
+                swfobject.embedSWF("${pageContext.request.contextPath}/charts/amxy.swf", "chart1", "80%", "400", "9.0.0", "expressInstall.swf", flashvars1 );
+
+                var flashvars2 = {
+                        path: escape("${pageContext.request.contextPath}/charts/"),
+                        settings_file: escape("${pageContext.request.contextPath}/charts/month_settings.xml"),
+                        chart_data: "${chartData.month}",
+                        preloader_color: "#999999"
+                    };
+                
+                swfobject.embedSWF("${pageContext.request.contextPath}/charts/amcolumn.swf", "chart2", "80%", "400", "9.0.0", "expressInstall.swf", flashvars2 );
+
+                var flashvars3 = {
+                        path: escape("${pageContext.request.contextPath}/charts/"),
+                        settings_file: escape("${pageContext.request.contextPath}/charts/names_settings.xml"),
+                        chart_data: "${chartData.taxon_name_id}",
+                        preloader_color: "#999999"
+                    };
+                
+                swfobject.embedSWF("${pageContext.request.contextPath}/charts/ampie.swf", "chart3", "80%", "400", "9.0.0", "expressInstall.swf", flashvars3 );
+                    
+                  
+                
+            </script>
+            <h4>Data Breakdown Charts</h4>
+            
+            <h5>By Year</h5>
+            <div id="chart1"></div>
+            <h5>By Month</h5>
+            <div id="chart2"></div>
+            <h5>By Taxon Name</h5>
+            <div id="chart3"></div>
+        </div>
+        
 	</c:when>
 	<c:otherwise>
 	

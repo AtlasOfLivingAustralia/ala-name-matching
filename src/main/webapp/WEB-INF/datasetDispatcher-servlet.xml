@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<!--  Application context definition for Dataset DispatcherServlet -->
+<beans>
+
+  <!--  Define how the dispatcher will select the controllers -->
+  <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+    <property name="interceptors">
+      <list>
+        <ref bean="localeChangeInterceptor" />
+        <ref bean="datasetsDataAgreementInterceptor" />
+        <ref bean="sessionHistoryInterceptor" />
+      </list>
+    </property>
+    <property name="mappings">
+      <props>
+        <prop key="/">datasetBrowserController</prop>
+        <prop key="/nameSearch">nameSearchController</prop>
+        <prop key="/nameSearch/**/*">nameSearchController</prop>
+        <prop key="/speciesSearch">speciesDatasetSearchController</prop>
+        <prop key="/speciesSearch/**/*">speciesDatasetSearchController</prop>        
+        <prop key="/browse">datasetBrowserController</prop>
+        <prop key="/browse/*">datasetBrowserController</prop>
+        <prop key="/resource/**/*">dataResourceController</prop>
+        <prop key="/provider/**/*">dataProviderController</prop>
+        <prop key="/network/**/*">resourceNetworkController</prop>
+        <!-- Metacat harvest list -->
+        <prop key="/resource/harvestList.xml">dataResourceBrowseController</prop>
+        <!-- logging -->
+        <prop key="/logs/">logController</prop>
+        <prop key="/logs/**/*">logController</prop>
+        <prop key="/datatracking/logs/">harvestingLogController</prop>
+        <prop key="/datatracking/logs/**/*">harvestingLogController</prop>
+
+        <prop key="/resource/**/logs/">logController</prop>
+        <prop key="/resource/**/logs/**/*">logController</prop>
+        <prop key="/provider/**/logs/">logController</prop>
+        <prop key="/provider/**/logs/**/*">logController</prop>
+
+        <prop key="/datatracking/resource/**/logs/">harvestingLogController</prop>
+        <prop key="/datatracking/resource/**/logs/**/*">harvestingLogController</prop>
+        <prop key="/datatracking/provider/**/logs/">harvestingLogController</prop>
+        <prop key="/datatracking/provider/**/logs/**/*">harvestingLogController</prop>
+
+        <prop key="/provider/*/resource/*">dataResourceController</prop>
+        <prop key="/ajax/**/**">datasetNameController</prop>
+
+        <!-- Indexing history -->
+        <prop key="/provider/**/indexing/">indexingHistoryController</prop>
+        <prop key="/resource/**/indexing/">indexingHistoryController</prop>
+        <prop key="/provider/**/indexing/**">indexingHistoryController</prop>
+        <prop key="/resource/**/indexing/**">indexingHistoryController</prop>
+
+        <!-- Providing views to the raw data -->
+        <prop key="/resource/*/datatracking/">rawOccurrenceDataController</prop>
+        <prop key="/resource/*/rawdata/">rawOccurrenceDataController</prop>
+
+        <prop key="/indexing/">indexingHistoryController</prop>
+        <prop key="/indexing/**">indexingHistoryController</prop>
+
+        <!-- Widgets -->
+        <prop key="/resource/*/overviewMap.png">resourceWidgetResolvingController</prop>
+        <prop key="/resource/*/overviewmap.png">resourceWidgetResolvingController</prop>
+        <prop key="/resource/*/overviewmap.png">resourceWidgetResolvingController</prop>
+        <prop key="/provider/*/overviewMap.png">providerWidgetResolvingController</prop>
+        <prop key="/provider/*/overviewMap.png">providerWidgetResolvingController</prop>
+        <prop key="/provider/*/overviewmap.png">providerWidgetResolvingController</prop>
+        <prop key="/network/*/overviewMap.png">networkWidgetResolvingController</prop>
+        <prop key="/network/*/overviewmap.png">networkWidgetResolvingController</prop>
+        <!--prop key="/**/*">datasetController</prop-->
+      </props>
+    </property>
+  </bean>
+  
+  <!-- Resource list browser -->
+  <bean id="dataResourceBrowseController" class="org.gbif.portal.web.controller.dataset.DataResourceBrowserController">
+    <property name="dataResourceManager" ref="dataResourceManager"/>
+    <property name="urlRoot" value="resource"/>
+    <property name="supportedSubViews">
+      <list>
+        <value>harvestList</value>
+      </list>
+    </property>  
+    <property name="removeExtensions" value="true"/>
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>view</value>
+        </list>
+      </list>    
+    </property>
+  </bean>
+
+  <!-- Indexing history -->
+  <bean id="indexingHistoryController" class="org.gbif.portal.web.controller.dataset.IndexingHistoryController">
+    <property name="logManager" ref="harvestingLogManager" />
+    <property name="harvestingLogManager" ref="harvestingLogManager" />
+    <property name="dataResourceManager" ref="harvestingDataResourceManager" />
+    <property name="urlRoot" value="datasets" />
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>view</value>
+        </list>
+        <list>
+          <value>view</value>
+          <value>logGroup</value>
+        </list>
+        <list>
+          <value>type</value>
+          <value>key</value>
+          <value>view</value>
+        </list>
+        <list>
+          <value>type</value>
+          <value>key</value>
+          <value>view</value>
+          <value>logGroup</value>
+        </list>
+      </list>
+    </property>
+  </bean>
+
+  <!--  Raw Data Controller -->
+  <bean id="rawOccurrenceDataController" class="org.gbif.portal.web.controller.dataset.RawOccurrenceDataController">
+    <property name="occurrenceManager" ref="harvestingOccurrenceManager" />
+    <property name="dataResourceManager" ref="harvestingDataResourceManager" />
+    <property name="urlRoot" value="resource" />
+    <property name="pagingQueryContentProvider">
+      <bean class="org.gbif.portal.web.content.PagingQueryContentProvider">
+        <property name="pageSize" value="100" />
+      </bean>
+    </property>
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>dataResourceKey</value>
+          <value>view</value>
+        </list>
+      </list>
+    </property>
+  </bean>
+
+  <!-- Name search controller -->
+  <bean id="speciesDatasetSearchController" class="org.gbif.portal.web.controller.dataset.DatasetsSpeciesSearchController">
+    <property name="dataResourceManager" ref="dataResourceManager" />
+    <property name="taxonomyManager" ref="taxonomyManager" />
+    <property name="defaultSubView" value="json" />
+    <property name="viewNamePrefix" value="datasets" />
+    <property name="supportedReturnTypes">
+      <list>
+        <value>counts</value>
+      </list>
+    </property>
+    <property name="supportedSubViews">
+      <list>
+        <value>json</value>
+      </list>
+    </property>
+  </bean>
+
+  <!-- Name search controller -->
+  <bean id="nameSearchController" class="org.gbif.portal.web.controller.dataset.DatasetsNameSearchController">
+    <property name="dataResourceManager" ref="dataResourceManager" />
+    <property name="defaultSubView" value="text" />
+    <property name="viewNamePrefix" value="datasets" />
+    <property name="allowEmptyQuery" value="true"/>
+    <property name="supportedReturnTypes">
+      <list>
+        <value>name</value>
+        <value>nameId</value>
+        <value>nameIdMap</value>
+        <value>nameIdUrl</value>
+      </list>
+    </property>
+    <property name="supportedSubViews">
+      <list>
+        <value>text</value>
+        <value>json</value>
+        <value>xml</value>
+      </list>
+    </property>
+  </bean>
+
+  <!-- Controller for DataProvider Views -->
+  <bean id="dataProviderController" class="org.gbif.portal.web.controller.dataset.DataProviderController">
+    <property name="dataResourceManager" ref="dataResourceManager" />
+    <property name="taxonomyManager" ref="taxonomyManager" />
+    <property name="mapContentProvider" ref="mapContentProvider" />
+    <property name="userUtils" ref="userUtils" />
+    <property name="urlRoot" value="provider" />
+    <property name="viewNamePrefix" value="provider" />
+    <property name="defaultView" value="/datasets/" />
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>provider</value>
+        </list>
+        <list>
+          <value>provider</value>
+          <value>view</value>
+        </list>
+      </list>
+    </property>
+    <property name="taxonomyBasisOfRecordValues">
+      <list>
+        <value>nomenclator</value>
+        <value>taxonomy</value>
+        <value>regional_checklist</value>
+        <value>legislative_list</value>
+      </list>
+    </property>
+    <property name="supportedSubViews">
+      <list>
+        <value>mapWidget</value>
+      </list>
+    </property>
+  </bean>
+
+  <!-- Controller for DataProvider Logging Views -->
+  <bean id="abstractLogController" abstract="true"
+    class="org.gbif.portal.web.controller.dataset.DataProviderLogController">
+    <property name="dataResourceManager" ref="dataResourceManager" />
+    <property name="pagingQueryContentProvider">
+      <bean class="org.gbif.portal.web.content.PagingQueryContentProvider">
+        <property name="pageSize" value="100" />
+      </bean>
+    </property>
+    <property name="defaultView" value="/datasets/" />
+    <property name="messageSource" ref="messageSource" />
+    <property name="loggingLevels">
+      <list>
+        <bean class="org.gbif.portal.dto.KeyValueDTO">
+          <property name="key" value="20000" />
+          <property name="value" value="INFO" />
+        </bean>
+        <bean class="org.gbif.portal.dto.KeyValueDTO">
+          <property name="key" value="30000" />
+          <property name="value" value="WARN" />
+        </bean>
+        <bean class="org.gbif.portal.dto.KeyValueDTO">
+          <property name="key" value="40000" />
+          <property name="value" value="ERROR" />
+        </bean>
+        <bean class="org.gbif.portal.dto.KeyValueDTO">
+          <property name="key" value="50000" />
+          <property name="value" value="FATAL" />
+        </bean>
+      </list>
+    </property>
+    <!-- org.gbif.portal.web.download.log -->
+    <property name="format2FileWriterFactories">
+      <map>
+        <entry key="tab">
+          <bean class="org.gbif.portal.web.download.log.LogFileWriterFactory">
+            <property name="fileExtension" value=".txt" />
+            <property name="headerTemplatePath" value="org/gbif/portal/io/logMessageTab-header.vm" />
+            <property name="templatePath" value="org/gbif/portal/io/logMessageTab.vm" />
+            <property name="messageSource" ref="messageSource" />
+            <property name="defaultMaxDownload" value="250000" />
+            <property name="addCitation" value="false" />
+            <property name="downloadUtils" ref="downloadUtils" />
+            <property name="logEventId" value="3010" />
+          </bean>
+        </entry>
+      </map>
+    </property>
+  </bean>
+
+  <!-- Log Controlller pointing at live DB -->
+  <bean id="logController" parent="abstractLogController">
+    <property name="logManager" ref="logManager" />
+    <property name="urlRoot" value="datasets" />
+    <property name="logView" value="logTable" />
+  </bean>
+
+  <!-- Log Controlller pointing at harvesting DB -->
+  <bean id="harvestingLogController" parent="abstractLogController">
+    <property name="logManager" ref="harvestingLogManager" />
+    <property name="urlRoot" value="datatracking" />
+    <property name="logView" value="harvestingLogTable" />
+  </bean>
+
+  <!-- Controller for Data Resource Views -->
+  <bean id="dataResourceController" class="org.ala.web.controller.DataResourceController">
+    <property name="dataResourceManager" ref="dataResourceManager" />
+    <property name="taxonomyManager" ref="taxonomyManager" />
+    <property name="geospatialManager" ref="geospatialManager" />
+    <property name="dataResourceTagDAO" ref="dataResourceTagDAO" />
+    <property name="mapContentProvider" ref="mapContentProvider" />
+    <property name="messageSource" ref="messageSource"/>
+    <property name="userUtils" ref="userUtils" />
+    <!--  <property name="gbifMappingFactory" ref="gbifMappingFactory" /> -->
+    <property name="urlRoot" value="resource" />
+    <property name="defaultView" value="/datasets/" />
+    <property name="viewNamePrefix" value="resource" />
+    <property name="schema2View">    
+      <map>
+        <entry key="rdf">
+          <bean class="org.springframework.web.servlet.view.velocity.VelocityView">
+            <property name="url" value="org/gbif/portal/io/dataResourceRDF.vm"/>
+            <property name="contentType" value="text/xml;charset=UTF-8"/>
+            <property name="dateToolAttribute" value="dateFormatter"/>
+            <property name="requestContextAttribute" value="request"/>
+          </bean>
+        </entry>
+        <entry key="eml">
+          <bean class="org.springframework.web.servlet.view.velocity.VelocityView">
+            <property name="url" value="org/gbif/portal/io/dataResourceEML.vm"/>
+            <property name="contentType" value="text/xml;charset=UTF-8"/>
+            <property name="dateToolAttribute" value="dateFormatter"/>
+            <property name="requestContextAttribute" value="request"/>
+          </bean>
+        </entry>        
+      </map>    
+    </property>   
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>resource</value>
+        </list>
+        <list>
+          <value>resource</value>
+          <value>view</value>
+        </list>
+      </list>
+    </property>
+    <property name="supportedSubViews">
+      <list>
+        <value>mapWidget</value>
+      </list>
+    </property>
+  </bean>
+
+  <!-- Controller for DataProvider Views -->
+  <bean id="resourceNetworkController" class="org.gbif.portal.web.controller.dataset.ResourceNetworkController">
+    <property name="dataResourceManager" ref="dataResourceManager" />
+    <property name="mapContentProvider" ref="mapContentProvider" />
+    <property name="urlRoot" value="network" />
+    <property name="defaultView" value="/datasets/" />
+    <property name="viewNamePrefix" value="network" />
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>network</value>
+        </list>
+        <list>
+          <value>network</value>
+          <value>view</value>
+        </list>
+      </list>
+    </property>
+    <property name="supportedSubViews">
+      <list>
+        <value>mapWidget</value>
+      </list>
+    </property>
+  </bean>
+
+  <!--Browse Controller for Datasets-->
+  <bean id="datasetBrowserController" class="org.gbif.portal.web.controller.dataset.DatasetBrowserController">
+    <property name="dataResourceManager" ref="dataResourceManager" />
+    <property name="urlRoot" value="datasets" />
+    <property name="modelViewName" value="datasetBrowse" />
+    <property name="defaultView" value="/datasets/" />
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>searchMethod</value>
+          <value>searchString</value>
+        </list>
+      </list>
+    </property>
+  </bean>
+
+  <!-- AJAX Controller for Data Provider and Resource lists -->
+  <bean id="datasetNameController" class="org.gbif.portal.web.controller.dataset.DatasetNameController">
+    <property name="dataResourceManager" ref="dataResourceManager" />
+    <property name="urlRoot" value="datasets/ajax/" />
+    <property name="defaultView" value="/datasets/" />
+    <property name="viewNamePrefix" value="resourceKeyValuePairs" />
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>provider</value>
+        </list>
+      </list>
+    </property>
+  </bean>
+
+  <!-- Widget controller for resource widgets -->
+  <bean id="resourceWidgetResolvingController" class="org.gbif.portal.web.controller.RestController">
+    <property name="urlRoot" value="resource" />
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>key</value>
+          <value>view</value>
+        </list>
+      </list>
+    </property>
+    <property name="additionalProperties">
+      <map>
+        <entry key="entityType" value="resource" />
+      </map>
+    </property>
+  </bean>
+  <!-- Widget controller for provider widgets -->
+  <bean id="providerWidgetResolvingController" class="org.gbif.portal.web.controller.RestController">
+    <property name="urlRoot" value="provider" />
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>key</value>
+          <value>view</value>
+        </list>
+      </list>
+    </property>
+    <property name="additionalProperties">
+      <map>
+        <entry key="entityType" value="provider" />
+      </map>
+    </property>
+  </bean>
+  <!-- Widget controller for network widgets -->
+  <bean id="networkWidgetResolvingController" class="org.gbif.portal.web.controller.RestController">
+    <property name="urlRoot" value="network" />
+    <property name="supportedPatterns">
+      <list>
+        <list>
+          <value>key</value>
+          <value>view</value>
+        </list>
+      </list>
+    </property>
+    <property name="additionalProperties">
+      <map>
+        <entry key="entityType" value="network" />
+      </map>
+    </property>
+  </bean>
+
+  <!-- GeographyDataAgreementInterceptor - Ignore urls for bypassing security agreement  -->
+  <bean id="datasetsDataAgreementInterceptor"
+    class="org.gbif.portal.web.controller.user.CookieAndSessionCheckInterceptor">
+    <property name="ignoreUrlPatterns">
+      <list>
+        <value>/ajax</value>
+        <value>/overviewMap.png</value>
+        <value>/overviewmap.png</value>
+        <value>/mapWidget</value>
+        <value>/nameSearch</value>
+        <value>/speciesSearch</value>  
+        <value>/harvestList.xml</value>
+        <value>schema=eml</value>
+        <value>schema=rdf</value>        
+      </list>
+    </property>
+    <!-- uppercase -->
+    <property name="robotsAgentsAllowedToBypassCookies">
+      <set>
+        <value>GOOGLEBOT</value>
+      </set>
+    </property>
+  </bean>
+</beans>
