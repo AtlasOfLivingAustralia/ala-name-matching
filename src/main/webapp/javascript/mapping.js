@@ -16,8 +16,8 @@ function initMap(mapDivId, useGoogle){
    map.addControl(new OpenLayers.Control.LayerSwitcher());
    map.addControl(new OpenLayers.Control.MousePosition());
    map.addControl(new OpenLayers.Control.ScaleLine());
-   var nav = new OpenLayers.Control.Navigation();
-   map.addControl(nav);
+   map.addControl(new OpenLayers.Control.Navigation());
+   map.addControl(new OpenLayers.Control.PanZoomBar());
    // disable the mouse wheel zooming
    var controls = map.getControlsByClass('OpenLayers.Control.Navigation');
    for(var i = 0; i<controls.length; ++i) controls[i].disableZoomWheel();
@@ -30,7 +30,7 @@ function initMap(mapDivId, useGoogle){
  * @return the initialised map
  */
 function create4326Map(mapDivId){
-    var map = new OpenLayers.Map(mapDivId, {numZoomLevels: 20});
+    var map = new OpenLayers.Map(mapDivId, {numZoomLevels: 20,controls: []});
     return map;
 }
 
@@ -54,13 +54,15 @@ function createGoogleMap(mapDivId){
     var options = {
         // the "community" epsg code for spherical mercator
         projection: "EPSG:900913",
+        // Controls are set in initMap (empty here to prevent double controls appearing)
+        controls: [],
         // map horizontal units are meters
         units: "m",
         // this resolution displays the globe in one 256x256 pixel tile
         maxResolution: 156543.0339,
         // these are the bounds of the globe in sperical mercator
         maxExtent: new OpenLayers.Bounds(-20037508, -20037508,
-                                         20037508, 20037508)
+                                          20037508, 20037508)
     };
     // construct a map with the above options
     map = new OpenLayers.Map(mapDivId, options, 
