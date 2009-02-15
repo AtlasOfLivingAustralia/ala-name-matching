@@ -16,11 +16,8 @@ function initMap(mapDivId, useGoogle){
    map.addControl(new OpenLayers.Control.LayerSwitcher());
    map.addControl(new OpenLayers.Control.MousePosition());
    map.addControl(new OpenLayers.Control.ScaleLine());
-   map.addControl(new OpenLayers.Control.Navigation());
+   map.addControl(new OpenLayers.Control.Navigation({zoomWheelEnabled: false}));
    map.addControl(new OpenLayers.Control.PanZoomBar());
-   // disable the mouse wheel zooming
-   var controls = map.getControlsByClass('OpenLayers.Control.Navigation');
-   for(var i = 0; i<controls.length; ++i) controls[i].disableZoomWheel();
 }
 
 /**
