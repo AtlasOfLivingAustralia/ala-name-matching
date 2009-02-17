@@ -217,6 +217,11 @@ function initLayers(){
         }
     }
     );
+
+    cellButton.events.register('deactivate', this, function (e) {
+        toggleSelectCentiCell();
+    });
+
 }
 
 /**
