@@ -6,35 +6,35 @@
  * @return
  */
 function initMap(mapDivId, useGoogle){
+    var baseLayerButtonTitle;
+
     if(useGoogle){
         map = createGoogleMap(mapDivId);
+        baseLayerButtonTitle = 'Base Layer: switch to default map base layer';
     } else {
         map = create4326Map(mapDivId);
+        baseLayerButtonTitle = 'Base Layer: switch to Google map base layer';
     }
     resizeMap(mapDivId, false);
     //add controls
-    var zb = new OpenLayers.Control.ZoomBox(
+    zoomButton = new OpenLayers.Control.ZoomBox(
         {title:"Zoom box: zoom on an area by clicking and dragging."});
-    var md = new OpenLayers.Control.Navigation(
+    mouseDrag = new OpenLayers.Control.Navigation(
         {title:'Drag tool: move the map using the mouse',zoomWheelEnabled:false});
-    button = new OpenLayers.Control.Button({
+    cellButton = new OpenLayers.Control.Button({
         title:'Search on cell square: click to toggle whether clicking cell square performs occurrence search for that cell',
         displayClass: "selectCellsButton", trigger: toggleSelectCentiCell});
-    
-    var panel = new OpenLayers.Control.Panel({defaultControl:md});
-    panel.addControls([md,zb,button]);
-    
-    
+    baseLayerButton = new OpenLayers.Control.Button({
+        title: baseLayerButtonTitle, displayClass: "baseLayerButton", trigger: toggleBaseLayer});
 
+    var panel = new OpenLayers.Control.Panel({defaultControl:mouseDrag});
+    panel.addControls([mouseDrag,zoomButton,cellButton,baseLayerButton]);
     map.addControl(panel);
     map.addControl(new OpenLayers.Control.LayerSwitcher());
     map.addControl(new OpenLayers.Control.MousePosition());
     map.addControl(new OpenLayers.Control.ScaleLine());
     map.addControl(new OpenLayers.Control.Navigation({zoomWheelEnabled: false}));
     map.addControl(new OpenLayers.Control.PanZoomBar({zoomWorldIcon: false}));
-    //var controls = map.getControlsByClass('OpenLayers.Control.Navigation');
-    //for(var i = 0; i<controls.length; ++i) controls[i].disableZoomWheel();
-    //map.addControl(new OpenLayers.Control.OverviewMap());
 }
 
 /**
@@ -114,7 +114,7 @@ function resizeMap(mapDivId) {
     var zoom = map.getZoom();
     var sidebar_width = 30;
     if (sidebar_width > 0) {
-      sidebar_width = sidebar_width + 5
+        sidebar_width = sidebar_width + 5
     }
     document.getElementById(mapDivId).style.left = (sidebar_width) + "px";
     document.getElementById(mapDivId).style.width = (document.getElementById('content').offsetWidth - sidebar_width) + "px";
@@ -137,17 +137,20 @@ function handleResize() {
 var selectCellToggle = false;
 
 function toggleSelectCentiCell(){
+    zoomButton.deactivate();
+    mouseDrag.deactivate();
+    
     if (selectCellToggle) {
         // turn off
         selectCellToggle = false;
-        button.deactivate();
+        cellButton.deactivate();
         map.div.style.cursor =  "default";
         map.events.remove('click');
     }
     else {
         // turn on
         selectCellToggle = true;
-        button.activate();
+        cellButton.activate();
         map.div.style.cursor =  "pointer";
         map.events.register('click', map, function (e) {
             var lonlat = map.getLonLatFromViewPortPx(e.xy);
@@ -257,31 +260,20 @@ function occurrenceSearch(latitude, longitude, roundingFactor) {
     redirectToCell(longMin, latMin, longMax, latMax);
 }
 
-/*
+/**
+ * JS to reload the page with the new baselayer (Geoserver/Google)
+ */
 function toggleBaseLayer() {
-    var baseLayerSpan = document.getElementById('baseLayer');
-
     if (useGoogle) {
-        // switch to google
+        // switch to WMF
         useGoogle = false;
-        baseLayerSpan.innerHTML = "(using GeoServer baselayer)";
+        baseLayerButton.deactivate();
+        window.location.replace( pageUrl );
     }
     else {
-        // switch to WMF
+        // switch to Google
         useGoogle = true;
-        baseLayerSpan.innerHTML = "(using Google baselayer)";
+        baseLayerButton.activate();
+        window.location.replace( pageUrl + '?map=google' );
     }
-
-    if(map) {
-        map.destroy();
-        map = null;
-    }
-    
-    var mapDivId='map';
-    initMap(mapDivId, useGoogle);
-    initLayers();
-    zoomToBounds();
-    window.onload = handleResize;
-    window.onresize = handleResize;
 }
-*/

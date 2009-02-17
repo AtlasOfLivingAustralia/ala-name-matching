@@ -12,7 +12,9 @@
     var useGoogle = ${param['map']=='google' ? 'true': 'false'};
     var brokenContentSize = document.getElementById('content').offsetWidth == 0;
     var extraParams = '${extraParams}';
-    var button;
+    var cellButton;
+    var baseLayerButton;
+    var pageUrl = "${pageContext.request.contextPath}/${entityPath}/${entityId}";
     /**
      * Redirects to filter search with bounding box
      */
@@ -32,7 +34,7 @@
     .olControlPanel div { 
       display:block;
       position: relative;
-      top: 350px;
+      top: 330px;
       left: 10px;
       width:  24px;
       height: 24px;
@@ -64,12 +66,6 @@
       background-image: url("${pageContext.request.contextPath}/images/drag-rectangle-on.png");
     }
 
-    .olControlMousePosition {
-        font-family: Verdana;
-        font-size: 0.6em;
-        color: #DDD;
-    }
-
     .olControlPanel .selectCellsButtonItemActive {
         width:  24px;
         height: 22px;
@@ -83,7 +79,32 @@
         background-color: #000089;
         background-image: url("${pageContext.request.contextPath}/images/view_next_off.png");"
     }
+    
+    .olControlPanel .baseLayerButtonItemActive {
+        width:  24px;
+        height: 22px;
+        background-color: #AAD5E3;
+        background-image: url("${pageContext.request.contextPath}/images/google_icon.png");"
+    }
 
+    .olControlPanel .baseLayerButtonItemInactive {
+        width:  24px;
+        height: 22px;
+        background-color: #000089;
+        background-image: url("${pageContext.request.contextPath}/images/google_icon.png");"
+    }
+
+    .olControlMousePosition {
+        font-family: Verdana;
+        font-size: 0.6em;
+        color: #DDD;
+    }
+
+    .olControlScaleLine {
+        font-family: Verdana;
+        font-size: 0.8em;
+        color: black;
+    }
 </style>
 <script type="text/javascript">
     var mapDivId='map';
@@ -93,23 +114,3 @@
     window.onload = handleResize;
     window.onresize = handleResize;
 </script>
-<p>
-<c:choose>
-    <c:when test="${param['map']=='google'}">
-        <a href="${pageContext.request.contextPath}/${entityPath}/${entityId}">
-          Use geoserver base layers
-        </a>
-    </c:when>
-    <c:otherwise>
-        <a href="${pageContext.request.contextPath}/${entityPath}/${entityId}?map=google">
-          Use google base layers
-        </a>
-    </c:otherwise>
-</c:choose>
-</p>
-<!--<p>
-    <a href="javascript:toggleBaseLayer();">Toggle Base Layer <span id="baseLayer"></span></a>
-</p>-->
-<p>
-    <a href="javascript:toggleSelectCentiCell();">Select centi cell</a>
-</p>
