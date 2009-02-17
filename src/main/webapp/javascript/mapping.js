@@ -16,9 +16,16 @@ function initMap(mapDivId, useGoogle){
     var zb = new OpenLayers.Control.ZoomBox(
         {title:"Zoom box: zoom on an area by clicking and dragging."});
     var md = new OpenLayers.Control.Navigation(
-        {title:'Drag tool: move the map using the mouse',zoomWheelEnabled: false});
+        {title:'Drag tool: move the map using the mouse',zoomWheelEnabled:false});
+    button = new OpenLayers.Control.Button({
+        title:'Search on cell square: click to toggle whether clicking cell square performs occurrence search for that cell',
+        displayClass: "selectCellsButton", trigger: toggleSelectCentiCell});
+    
     var panel = new OpenLayers.Control.Panel({defaultControl:md});
-    panel.addControls([md,zb]);
+    panel.addControls([md,zb,button]);
+    
+    
+
     map.addControl(panel);
     map.addControl(new OpenLayers.Control.LayerSwitcher());
     map.addControl(new OpenLayers.Control.MousePosition());
@@ -127,11 +134,26 @@ function handleResize() {
  * Register an event on the click
  * @return
  */
+var selectCellToggle = false;
+
 function toggleSelectCentiCell(){
-    map.events.register('click', map, function (e) {
-    	var lonlat = map.getLonLatFromViewPortPx(e.xy);
-        occurrenceSearch(lonlat.lat, lonlat.lon, 10);
-    });
+    if (selectCellToggle) {
+        // turn off
+        selectCellToggle = false;
+        button.deactivate();
+        map.div.style.cursor =  "default";
+        map.events.remove('click');
+    }
+    else {
+        // turn on
+        selectCellToggle = true;
+        button.activate();
+        map.div.style.cursor =  "pointer";
+        map.events.register('click', map, function (e) {
+            var lonlat = map.getLonLatFromViewPortPx(e.xy);
+            occurrenceSearch(lonlat.lat, lonlat.lon, 10);
+        });
+    }
 }
 
 /**

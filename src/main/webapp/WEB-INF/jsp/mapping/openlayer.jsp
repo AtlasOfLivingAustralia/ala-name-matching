@@ -12,6 +12,7 @@
     var useGoogle = ${param['map']=='google' ? 'true': 'false'};
     var brokenContentSize = document.getElementById('content').offsetWidth == 0;
     var extraParams = '${extraParams}';
+    var button;
     /**
      * Redirects to filter search with bounding box
      */
@@ -50,18 +51,39 @@
     }
     
     .olControlPanel .olControlZoomBoxItemInactive { 
-      width:  22px;  
+      width:  24px;
       height: 22px;
       background-color: orange;
       background-image: url("${pageContext.request.contextPath}/images/drag-rectangle-off.png");
     }
 
     .olControlPanel .olControlZoomBoxItemActive { 
-      width:  22px;  
+      width:  24px;
       height: 22px;
       background-color: blue;
       background-image: url("${pageContext.request.contextPath}/images/drag-rectangle-on.png");
     }
+
+    .olControlMousePosition {
+        font-family: Verdana;
+        font-size: 0.6em;
+        color: #DDD;
+    }
+
+    .olControlPanel .selectCellsButtonItemActive {
+        width:  24px;
+        height: 22px;
+        background-color: #AAD5E3;
+        background-image: url("${pageContext.request.contextPath}/images/view_next_on.png");"
+    }
+
+    .olControlPanel .selectCellsButtonItemInactive {
+        width:  24px;
+        height: 22px;
+        background-color: #000089;
+        background-image: url("${pageContext.request.contextPath}/images/view_next_off.png");"
+    }
+
 </style>
 <script type="text/javascript">
     var mapDivId='map';

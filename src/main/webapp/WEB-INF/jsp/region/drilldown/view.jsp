@@ -45,9 +45,12 @@
         <c:if test="${geoRegion.regionType >=3000 && geoRegion.regionType <4000}">map.addLayer(imcraLayer);</c:if>
    	</script>
 	<div>
-	<c:if test="${geoRegion.regionType <1000}">
+	<c:if test="${geoRegion.regionType <3}">
 		<img src="${geoserverUrl}/wms?bgcolor=0x666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:as&width=300&height=300&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DADMIN_NAME%26nl%3Dala%3Aas%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
-	</c:if> 
+	</c:if>
+    <c:if test="${geoRegion.regionType >=3 && geoRegion.regionType <12}">
+        <img src="${geoserverUrl}/wms?bgcolor=0x6666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:gadm&width=300&height=300&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DNAME_2%26nl%3Dala:gadm%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
+    </c:if>
 	<c:if test="${geoRegion.regionType >=2000 && geoRegion.regionType <3000}">
 		<img src="${geoserverUrl}/wms?bgcolor=0x6666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:ibra&width=300&height=300&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DREG_NAME%26nl%3Dala:ibra%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
 	</c:if> 
