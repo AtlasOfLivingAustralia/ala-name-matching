@@ -26,6 +26,43 @@
 </script>
 <script src="${pageContext.request.contextPath}/javascript/layers.js" type="text/javascript" language="javascript"></script>
 <div id="map" class="openlayersMap"></div>
+<style type="text/css">
+    /* Styling for custom widget buttons on map */
+    .olControlPanel div { 
+      display:block;
+      position: relative;
+      top: 350px;
+      left: 10px;
+      width:  24px;
+      height: 24px;
+      margin: 5px;
+      background-color:red;
+    }
+
+    .olControlPanel .olControlNavigationItemActive {
+      background-color: blue;
+      background-image: url("${pageContext.request.contextPath}/images/panning-hand-on.png");
+    }
+
+    .olControlPanel .olControlNavigationItemInactive {
+      background-color: orange;
+      background-image: url("${pageContext.request.contextPath}/images/panning-hand-off.png");
+    }
+    
+    .olControlPanel .olControlZoomBoxItemInactive { 
+      width:  22px;  
+      height: 22px;
+      background-color: orange;
+      background-image: url("${pageContext.request.contextPath}/images/drag-rectangle-off.png");
+    }
+
+    .olControlPanel .olControlZoomBoxItemActive { 
+      width:  22px;  
+      height: 22px;
+      background-color: blue;
+      background-image: url("${pageContext.request.contextPath}/images/drag-rectangle-on.png");
+    }
+</style>
 <script type="text/javascript">
     var mapDivId='map';
     initMap(mapDivId, useGoogle);
@@ -48,6 +85,9 @@
     </c:otherwise>
 </c:choose>
 </p>
+<!--<p>
+    <a href="javascript:toggleBaseLayer();">Toggle Base Layer <span id="baseLayer"></span></a>
+</p>-->
 <p>
     <a href="javascript:toggleSelectCentiCell();">Select centi cell</a>
 </p>

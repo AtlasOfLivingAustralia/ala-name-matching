@@ -6,18 +6,28 @@
  * @return
  */
 function initMap(mapDivId, useGoogle){
-  	if(useGoogle){
+    if(useGoogle){
         map = createGoogleMap(mapDivId);
-  	} else {
-  		map = create4326Map(mapDivId);
-  	}
-   resizeMap(mapDivId, false);
-   //add controls
-   map.addControl(new OpenLayers.Control.LayerSwitcher());
-   map.addControl(new OpenLayers.Control.MousePosition());
-   map.addControl(new OpenLayers.Control.ScaleLine());
-   map.addControl(new OpenLayers.Control.Navigation({zoomWheelEnabled: false}));
-   map.addControl(new OpenLayers.Control.PanZoomBar());
+    } else {
+        map = create4326Map(mapDivId);
+    }
+    resizeMap(mapDivId, false);
+    //add controls
+    var zb = new OpenLayers.Control.ZoomBox(
+        {title:"Zoom box: zoom on an area by clicking and dragging."});
+    var md = new OpenLayers.Control.Navigation(
+        {title:'Drag tool: move the map using the mouse',zoomWheelEnabled: false});
+    var panel = new OpenLayers.Control.Panel({defaultControl:md});
+    panel.addControls([md,zb]);
+    map.addControl(panel);
+    map.addControl(new OpenLayers.Control.LayerSwitcher());
+    map.addControl(new OpenLayers.Control.MousePosition());
+    map.addControl(new OpenLayers.Control.ScaleLine());
+    map.addControl(new OpenLayers.Control.Navigation({zoomWheelEnabled: false}));
+    map.addControl(new OpenLayers.Control.PanZoomBar({zoomWorldIcon: false}));
+    //var controls = map.getControlsByClass('OpenLayers.Control.Navigation');
+    //for(var i = 0; i<controls.length; ++i) controls[i].disableZoomWheel();
+    //map.addControl(new OpenLayers.Control.OverviewMap());
 }
 
 /**
@@ -224,3 +234,32 @@ function occurrenceSearch(latitude, longitude, roundingFactor) {
     var latMax = (Math.ceil(latitude*roundingFactor) )/roundingFactor;
     redirectToCell(longMin, latMin, longMax, latMax);
 }
+
+/*
+function toggleBaseLayer() {
+    var baseLayerSpan = document.getElementById('baseLayer');
+
+    if (useGoogle) {
+        // switch to google
+        useGoogle = false;
+        baseLayerSpan.innerHTML = "(using GeoServer baselayer)";
+    }
+    else {
+        // switch to WMF
+        useGoogle = true;
+        baseLayerSpan.innerHTML = "(using Google baselayer)";
+    }
+
+    if(map) {
+        map.destroy();
+        map = null;
+    }
+    
+    var mapDivId='map';
+    initMap(mapDivId, useGoogle);
+    initLayers();
+    zoomToBounds();
+    window.onload = handleResize;
+    window.onresize = handleResize;
+}
+*/

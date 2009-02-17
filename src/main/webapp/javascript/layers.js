@@ -52,8 +52,16 @@
       format: "image/png"}
       );
 
-  var placenamesHighLayer = new OpenLayers.Layer.WMS("Localities (detailed)",
+  var gAdminLayer = new OpenLayers.Layer.WMS("Local Government Areas",
 	  tilecacheUrl,  
+      {layers: "ala:gadm",
+      srs: 'EPSG:4326',
+      transparent: "true",
+      format: "image/png"}
+      );
+
+  var placenamesHighLayer = new OpenLayers.Layer.WMS("Localities (detailed)",
+	  tilecacheUrl,
       {layers: "geoscience:localities_detailed",
       srs: 'EPSG:4326',
       transparent: "true",
