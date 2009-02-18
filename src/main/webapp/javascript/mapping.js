@@ -202,11 +202,11 @@ function initLayers(){
     map.events.register('zoomend', map, function (e) {
         var zoom = map.zoom;
         
-        if (zoom < 5) {
+        if (zoom < 4) {
             cellLayer.setVisibility(true);
             centiCellLayer.setVisibility(false);
             tenmilliCellLayer.setVisibility(false);
-        } else if (zoom >= 5 && zoom < 9) {
+        } else if (zoom >= 4 && zoom < 9) {
             cellLayer.setVisibility(false);
             centiCellLayer.setVisibility(true);
             tenmilliCellLayer.setVisibility(false);
