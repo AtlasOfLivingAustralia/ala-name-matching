@@ -687,4 +687,39 @@ public class DataResourceController extends RestController {
   public void setMessageSource(MessageSource messageSource) {
   	this.messageSource = messageSource;
   }
+
+	/**
+	 * @return the startingYear
+	 */
+	public Integer getStartingYear() {
+		return startingYear;
+	}
+
+	/**
+	 * @param startingYear the startingYear to set
+	 */
+	public void setStartingYear(Integer startingYear) {
+		this.startingYear = startingYear;
+	}
+
+	/**
+	 * @param solrUrl the solrUrl to set
+	 */
+	public void setSolrUrl(String solrUrl) {
+		this.solrUrl = solrUrl;
+	}
+
+	/**
+	 * @param facetFields the facetFields to set
+	 */
+	public void setFacetFields(List<String> facetFields) {
+		this.facetFields = facetFields;
+	}
+
+	/**
+	 * @param monthName the monthName to set
+	 */
+	public void setMonthName(List<String> monthName) {
+		this.monthName = monthName;
+	}
 }
