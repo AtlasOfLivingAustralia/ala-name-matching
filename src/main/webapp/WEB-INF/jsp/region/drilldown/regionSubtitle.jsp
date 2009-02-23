@@ -1,1 +1,1 @@
-<%@ include file="/common/taglibs.jsp"%>${geoRegion.name}
+<%@ include file="/common/taglibs.jsp"%><gbif:capitalizeFirstChar>${geoRegion.name}</gbif:capitalizeFirstChar>

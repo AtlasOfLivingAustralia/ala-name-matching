@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -372,7 +373,9 @@ public class DataResourceController extends RestController {
 		// Add charts showing resource statistics/breakdown using Solr facetted search
 		// TODO Add a check for the Solr server running?
 		Map<String, String> chartData = getChartData(dataResourceKey);
-		mav.addObject("chartData", chartData);
+		if(chartData!=null){
+			mav.addObject("chartData", chartData);
+		}
 		
 		logUsage(request, dataResource);
 		return mav;
@@ -412,6 +415,8 @@ public class DataResourceController extends RestController {
 	/**
 	 * Produce a CSV String for the requested chart type (AMCharts)
 	 * 
+	 * If there is a problem retrieving aggregated data from SOLR Server, return null
+	 * 
 	 * @param data resource key
 	 * @return data to populate the the AM Chart (csv)
 	 * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>" 
@@ -423,105 +428,117 @@ public class DataResourceController extends RestController {
 	 *   &facet.missing=true&facet.field=basisofrecord&facet.field=year&facet=true&facet.sort=false
 	 */
 	protected Map<String, String> getChartData(String dataResourceKey) {
-	    Map<String, String> csvDataMap = new HashMap<String, String>();  // model passed through to JSP
-	    // Setup the Solr query, etc
-	    String queryString = "data_resource_id:" + dataResourceKey;
-	    SolrServer server = initialiseSolrServer();
-        SolrQuery searchQuery = new SolrQuery();  // handle better?   
-        searchQuery.setQuery(queryString);
-        searchQuery.setRows(0); // we don't want any search results only the facet results
-        searchQuery.setFacetLimit(100);  // TODO make -1 (no limit) and cull list after 20 but add to "other" facet
-        searchQuery.setFacetMinCount(1);
-        // temporal charts require special facet parameters
-        searchQuery.setParam("f.year.facet.sort", false);
-        searchQuery.setParam("f.month.facet.sort", false);
-        searchQuery.setParam("f.year.facet.limit", "-1");
-        searchQuery.setFacetMinCount(1);
-        
-        // add each facet field to the query
-        for (String facet : facetFields) searchQuery.addFacetField(facet);
-        
-        // do the Solr search
-        QueryResponse rsp = null;
-        try {
-            rsp = server.query( searchQuery );
-        } catch (SolrServerException e) {
-        	logger.error("Problem communicating with SOLR server. Unable to generate chart data.");
-            logger.error(e.getMessage(), e);
-            return new HashMap<String, String>();
-        }
-        
-        //Long resultsSize = rsp.getResults().getNumFound();
-	    // get the facet results (list)
-        Calendar calendar = Calendar.getInstance();
-        int currentYear = calendar.get(Calendar.YEAR);
-        List<FacetField> facetResults = rsp.getFacetFields();
-	    
-	    for (FacetField facetData : facetResults) {
-	        // Iterate over each of the facet result objects
-	        String facetName = facetData.getName();
-	        StringBuffer csvValues = new StringBuffer(); // CSV format: 'foo;25\nbar;33\ndoh;1\n'
-	        Map<String, Long> issueFacetMap = new HashMap<String, Long>(); // needed to redistribute the issue counts after splitting bit values
+		try{
+		    Map<String, String> csvDataMap = new HashMap<String, String>();  // model passed through to JSP
+		    // Setup the Solr query, etc
+		    String queryString = "data_resource_id:" + dataResourceKey;
+		    SolrServer server = initialiseSolrServer();
+	        SolrQuery searchQuery = new SolrQuery();  // handle better?   
+	        searchQuery.setQuery(queryString);
+	        searchQuery.setRows(0); // we don't want any search results only the facet results
+	        searchQuery.setFacetLimit(100);  // TODO make -1 (no limit) and cull list after 20 but add to "other" facet
+	        searchQuery.setFacetMinCount(1);
+	        // temporal charts require special facet parameters
+	        searchQuery.setParam("f.year.facet.sort", false);
+	        searchQuery.setParam("f.month.facet.sort", false);
+	        searchQuery.setParam("f.year.facet.limit", "-1");
+	        searchQuery.setFacetMinCount(1);
 	        
-	        for (Count count : facetData.getValues()) {
-	            // Iterate over the facet counts 
-	            // TODO evaluate using percentage values for issue types only ?
-	            String label = count.getName();
-	            long facetCount = count.getCount();
-	            
-	            if ("year".equals(facetName)) {
-	                // skip bad year data
-	                Integer numLabel = Integer.parseInt(label);
-	                if (numLabel != null && (numLabel < startingYear  || numLabel > currentYear)) continue;
-	            }
-	            else if ("month".equals(facetName)) {
-	                // convert month int to string values (1 -> January)
-	                int monthInt = Integer.parseInt(label);
-	                label = monthName.get(monthInt-1);
-	            }
-	            
-	            if (facetName.contains("_issue")) {
-	                // Issue types breakdown -> get i18n keys for labels
-	                int issueTypeValue = Integer.parseInt(label);
-	                String issueTypeStr = facetName.replace("_issue", "");  // knock the "_issue" part off the string (other_issue -> other)
-	                
-	                if (issueTypeValue == 0) {
-	                    // special case of "no issue"
-	                    csvValues.append(IndexingIssue.NO_ISSUES.getI18nKey() + ';' + facetCount + "\\n");
-	                }
-	                else {
-	                    List<IndexingIssue> indexingIssues = 
-	                        IndexingIssue.splitIssuesForCompositeIssueValue(issueTypeValue, IndexingIssueTypes.get(issueTypeStr));
-	                
-	                    for (IndexingIssue issue : indexingIssues) {
-	                        // Distribute the issue counts into the issueFacetMap map 
-	                        String issueKey = issue.getI18nKey();
-	                        Long previousCount = (issueFacetMap.get(issueKey) != null) ? issueFacetMap.get(issueKey) : 0;
-	                        Long newCount = previousCount + facetCount;
-	                        issueFacetMap.put(issueKey, newCount);
-	                    }
-	                }   
-	            }
-	            else {
-	                // all "other types" data breakdown
-	                csvValues.append(label + ';' + facetCount + "\\n");
-	            }
+	        // add each facet field to the query
+	        for (String facet : facetFields) searchQuery.addFacetField(facet);
+	        
+	        // do the Solr search
+	        QueryResponse rsp = null;
+	        try {
+	            rsp = server.query( searchQuery );
+	        } catch (SolrServerException e) {
+	        	logger.warn("Problem communicating with SOLR server. Unable to generate chart data.");
+	            logger.debug(e.getMessage(), e);
+	            return null;
 	        }
 	        
-	        // Add each key/value pair from issueFacetMap to csvValues string buffer
-	        Set<String> keys = issueFacetMap.keySet();
-	        Iterator<String> it = keys.iterator();
-	        while (it.hasNext()) {
-	            String key = it.next();
-	            csvValues.append(key + ';' + issueFacetMap.get(key) + "\\n");
-	        }
-	        
-	        // Add each facet CSV data string to the csvDataMap map
-	        csvDataMap.put(facetName, csvValues.toString());
-	        logger.debug("getChartData: " + facetName + "->" + csvValues);
-	    }
-	    
-	    return csvDataMap;
+	        //Long resultsSize = rsp.getResults().getNumFound();
+		    // get the facet results (list)
+	        Calendar calendar = Calendar.getInstance();
+	        int currentYear = calendar.get(Calendar.YEAR);
+	        List<FacetField> facetResults = rsp.getFacetFields();
+		    
+		    for (FacetField facetData : facetResults) {
+		        // Iterate over each of the facet result objects
+		        String facetName = facetData.getName();
+		        StringBuffer csvValues = new StringBuffer(); // CSV format: 'foo;25\nbar;33\ndoh;1\n'
+		        Map<String, Long> issueFacetMap = new HashMap<String, Long>(); // needed to redistribute the issue counts after splitting bit values
+		        
+		        if(facetData==null){
+		        	return null;
+		        }
+		        
+		        for (Count count : facetData.getValues()) {
+		            // Iterate over the facet counts 
+		            // TODO evaluate using percentage values for issue types only ?
+		            String label = count.getName();
+		            long facetCount = count.getCount();
+		            
+		            if ("year".equals(facetName)) {
+		                // skip bad year data
+		                Integer numLabel = Integer.parseInt(label);
+		                if (numLabel != null && (numLabel < startingYear  || numLabel > currentYear)) continue;
+		            }
+		            else if ("month".equals(facetName)) {
+		                // convert month int to string values (1 -> January)
+		                int monthInt = Integer.parseInt(label);
+		                label = monthName.get(monthInt-1);
+		            }
+		            
+		            if (facetName.contains("_issue")) {
+		                // Issue types breakdown -> get i18n keys for labels
+		                int issueTypeValue = Integer.parseInt(label);
+		                String issueTypeStr = facetName.replace("_issue", "");  // knock the "_issue" part off the string (other_issue -> other)
+		                
+		                if (issueTypeValue == 0) {
+		                    // special case of "no issue"
+		                	
+		                	String message = messageSource.getMessage(IndexingIssue.NO_ISSUES.getI18nKey(), null, "No issues", Locale.ENGLISH);
+		                    csvValues.append(message + ';' + facetCount + "\\n");
+		                }
+		                else {
+		                    List<IndexingIssue> indexingIssues = 
+		                        IndexingIssue.splitIssuesForCompositeIssueValue(issueTypeValue, IndexingIssueTypes.get(issueTypeStr));
+		                
+		                    for (IndexingIssue issue : indexingIssues) {
+		                        // Distribute the issue counts into the issueFacetMap map 
+		                        String issueKey = issue.getI18nKey();
+	//	                        String message = messageSource.getMessage(issueKey, null, Locale.ENGLISH);
+		                        Long previousCount = (issueFacetMap.get(issueKey) != null) ? issueFacetMap.get(issueKey) : 0;
+		                        Long newCount = previousCount + facetCount;
+		                        issueFacetMap.put(issue.getDescrption(), newCount);
+		                    }
+		                }   
+		            }
+		            else {
+		                // all "other types" data breakdown
+		                csvValues.append(label + ';' + facetCount + "\\n");
+		            }
+		        }
+		        
+		        // Add each key/value pair from issueFacetMap to csvValues string buffer
+		        Set<String> keys = issueFacetMap.keySet();
+		        Iterator<String> it = keys.iterator();
+		        while (it.hasNext()) {
+		            String key = it.next();
+		            csvValues.append(key + ';' + issueFacetMap.get(key) + "\\n");
+		        }
+		        
+		        // Add each facet CSV data string to the csvDataMap map
+		        csvDataMap.put(facetName, csvValues.toString());
+		        logger.debug("getChartData: " + facetName + "->" + csvValues);
+		    }
+		    return csvDataMap;
+		} catch(Exception e){
+        	logger.warn("Problem generating chart data. Charts will not be rendered");
+            logger.debug(e.getMessage(), e);
+		}
+		return null;
 	}
 	
 	/**

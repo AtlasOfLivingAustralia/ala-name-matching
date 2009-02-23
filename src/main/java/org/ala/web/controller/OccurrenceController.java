@@ -142,7 +142,7 @@ public class OccurrenceController extends RestController {
 	protected String catalogueNumberFilterId = "14";
 	protected String equalsPredicateId = "0";
 	protected boolean doubleEncodeCachedUrls = true;
-	protected int httpTimeOut = 5000;
+	protected int httpTimeOut = 2000;
 	protected String charEnc = "UTF-8";
 	protected boolean cachedRecordIsGzipped =  true;
 	
@@ -396,9 +396,7 @@ public class OccurrenceController extends RestController {
 		mav.addObject("points", points);
 		
 		// Add a list of georegions for the occurrence record id
-		Long OccurrenceRecordId = Long.parseLong(occurrenceRecordKey);
-		List<GeoRegion> geoRegions = geoRegionDAO.getGeoRegionsForOccurrenceRecord(OccurrenceRecordId);
-		mav.addObject("geoRegions", geoRegions);
+		addGeoRegions(occurrenceRecordKey, mav);
 		
 		// Add the institution associated with this occurrence record
 		Institution institution = institutionDAO.getInstitutionForCode(occurrenceRecord.getInstitutionCode());
@@ -407,6 +405,23 @@ public class OccurrenceController extends RestController {
 		// Generate link to raw record XML file
 		addCachedRecordLink(mav, rawOccurrenceRecord);
 		return mav;
+	}
+
+	private void addGeoRegions(String occurrenceRecordKey, ModelAndView mav) {
+		Long OccurrenceRecordId = Long.parseLong(occurrenceRecordKey);
+		List<GeoRegion> geoRegions = geoRegionDAO.getGeoRegionsForOccurrenceRecord(OccurrenceRecordId);
+		mav.addObject("geoRegions", geoRegions);
+
+		//FIX ME!!!
+		for(GeoRegion geoRegion: geoRegions){
+			if(geoRegion.getRegionType()<3) mav.addObject("state", geoRegion);
+			if(geoRegion.getRegionType()>=3 && geoRegion.getRegionType()<5) mav.addObject("city", geoRegion);
+			if(geoRegion.getRegionType()==9) mav.addObject("shire", geoRegion);
+			if(geoRegion.getRegionType()>=10 && geoRegion.getRegionType()<12) mav.addObject("town", geoRegion);
+			if(geoRegion.getRegionType()>=2000 && geoRegion.getRegionType()<3000) mav.addObject("ibra", geoRegion);
+			if(geoRegion.getRegionType()>=3000 && geoRegion.getRegionType()<4000) mav.addObject("imcra", geoRegion);
+			if(geoRegion.getRegionType()>=5000 && geoRegion.getRegionType()<5999) mav.addObject("riverbasin", geoRegion);
+		}
 	}
 	
 	/**
@@ -783,7 +798,8 @@ public class OccurrenceController extends RestController {
 				
 				rawMessage = sb.toString();
 	        } catch (HttpException he) {
-	        	logger.error("Http error connecting to '" + url + "'", he);
+	        	logger.warn("Unable to retrieve cached version of the response. Cache server maybe unavailable.");
+	        	logger.debug("Http error connecting to '" + url + "'", he);
 				return null;
 	        } 
 		}

@@ -42,7 +42,7 @@
                <exclusion>
                     <groupId>commons-lang</groupId>
                     <artifactId>commons-lang</artifactId>
-               </exclusion>      
+               </exclusion>
                <exclusion>
                     <groupId>commons-io</groupId>
                     <artifactId>commons-io</artifactId>
@@ -67,7 +67,7 @@
                <exclusion>
                     <groupId>commons-lang</groupId>
                     <artifactId>commons-lang</artifactId>
-               </exclusion>      
+               </exclusion>
                <exclusion>
                     <groupId>commons-io</groupId>
                     <artifactId>commons-io</artifactId>
@@ -224,13 +224,13 @@
             <version>2.1.0</version>
         </dependency>
 -->
-	<dependency>
+	   <dependency>
            <artifactId>solr-solrj</artifactId>
            <groupId>org.apache.solr</groupId>
            <version>1.3.0</version>
            <type>jar</type>
            <scope>compile</scope>
-    </dependency>
+       </dependency>
 	
 	</dependencies>
 	<inceptionYear>2008</inceptionYear>

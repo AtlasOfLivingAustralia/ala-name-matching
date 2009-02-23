@@ -83,9 +83,9 @@
                 <p class="column2">
                     <span class="speciesName">
                         <a href="${pageContext.request.contextPath}/regions/${geoRegion.id}">
-                            ${geoRegion.name}
+                            <gbif:capitalizeFirstChar>${geoRegion.name}</gbif:capitalizeFirstChar>
                         </a>
-                         - ${geoRegion.geoRegionType.name}
+                         - <gbif:capitalizeFirstChar>${geoRegion.geoRegionType.name}</gbif:capitalizeFirstChar>
                     </span>
                 </p>
             </td>

@@ -59,6 +59,14 @@
       transparent: "true",
       format: "image/png"}
       );
+  
+  var riverBasinsLayer = new OpenLayers.Layer.WMS("River Basins",
+		  tilecacheUrl,  
+	      {layers: "geoscience:riverbasins",
+	      srs: 'EPSG:4326',
+	      transparent: "true",
+	      format: "image/png"}
+	      );
 
   var placenamesHighLayer = new OpenLayers.Layer.WMS("Localities (detailed)",
 	  tilecacheUrl,

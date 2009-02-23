@@ -18,6 +18,8 @@
 				<span class="new">New!</span> <a href="${pageContext.request.contextPath}/datasets/resource/${dataResource.key}/indexing/"><spring:message code="view.indexing.history.for" text="View indexing history for"/> ${dataResource.name}</a>
 			</li>
 		</ul>
+		
+		<c:if test="${not empty chartData}">
 		<div id="charts" style="">
             <script type="text/javascript" src="${pageContext.request.contextPath}/javascript/swfobject.js"></script>
             <script type="text/javascript">            
@@ -48,6 +50,14 @@
                 
                 swfobject.embedSWF("${pageContext.request.contextPath}/charts/ampie.swf", "chart3", "80%", "400", "9.0.0", "expressInstall.swf", flashvars3 );
                     
+                var flashvars4 = {
+                        path: escape("${pageContext.request.contextPath}/charts/"),
+                        settings_file: escape("${pageContext.request.contextPath}/charts/month_settings.xml"),
+                        chart_data: "${chartData.geospatial_issue}",
+                        preloader_color: "#999999"
+                    };
+                
+                swfobject.embedSWF("${pageContext.request.contextPath}/charts/amcolumn.swf", "chart4", "80%", "400", "9.0.0", "expressInstall.swf", flashvars4 );
                   
                 
             </script>
@@ -59,8 +69,10 @@
             <div id="chart2"></div>
             <h5>By Taxon Name</h5>
             <div id="chart3"></div>
+            <h5>By Geospatial Issues</h5>
+            <div id="chart4"></div>
         </div>
-        
+        </c:if>
 	</c:when>
 	<c:otherwise>
 	
