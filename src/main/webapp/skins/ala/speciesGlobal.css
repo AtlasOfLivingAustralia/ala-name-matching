@@ -229,7 +229,7 @@ img.standalone {
 
 @media screen and (-webkit-min-device-pixel-ratio:0){
 	/* Safari-only Hack */
-	#quickSearch{background: none;}
+	#quickSearch {background: none;}
 }
 
 #container>#quickSearch { /* FF et al., see this but IE doesn't */
@@ -501,12 +501,16 @@ div#topmenu a:hover {
 	margin-bottom: 10px;
 }
 */
+
 #furtherActions {
 	background-color: #DDD; /*#F8F2E5;  #F6E3BD; */
 	/* border: 1px solid #ACCBE0; */
 	margin: 0;
 	padding-top: 2px;
-	margin: 0;
+    margin: 0;
+    margin-right: 7px;
+	-moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
 	/* margin-right: 10px;
     float: right;
     width: 39%; */

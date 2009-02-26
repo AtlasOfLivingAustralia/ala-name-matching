@@ -1,6 +1,6 @@
 <%@ include file="/common/taglibs.jsp"%>
 <div id="twopartheader">
-<h2>Geographic Region: <span class="subject"><gbif:capitalizeFirstChar>${geoRegion.name}</gbif:capitalizeFirstChar></span></h2>
+<h2>Geographic Region: <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></h2>
 <h3>
 <c:if test="${geoRegion.regionType ==1}">Australian State</c:if>
 <c:if test="${geoRegion.regionType ==2}">Australian Territory</c:if> 
@@ -23,6 +23,54 @@
 <c:if test="${geoRegion.regionType >=5000 && geoRegion.regionType <6000}">River Basin</c:if>
 </h3>
 </div>
+<c:if test="${geoRegion.occurrenceCount>0}">
+<div id="furtherActions">
+	<h4><spring:message code='actions.for'/> <gbif:capitalize>${geoRegion.name}</gbif:capitalize></h4>
+	<table cellspacing="1" class="actionsList">
+		<tbody>
+			<tr valign="top">
+				<td><b><spring:message code="actions.explore"/></b></td>
+				<td>
+					<ul class="actionsListInline">
+						<li>
+							<a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="0"/>"><spring:message code="explore.occurrences"/></a>
+						</li>
+						<li>
+							<c:set var="a0">
+								<span class='subject'><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span>
+							</c:set>
+							<a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}"><spring:message code="geography.drilldown.view.taxonomy" text="Explore species recorded in "/> <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></a>
+						</li>
+					</ul>
+				</td>
+			</tr>
+			<tr valign="top">
+				<td><b><spring:message code="actions.list"/></b></td>
+				<td>
+					<ul class="actionsListInline">
+						<li>
+							<c:set var="a0">
+								<span class='subject'><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span>
+							</c:set>
+							<a href="${pageContext.request.contextPath}/occurrences/searchResources.htm?<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="0"/>"><spring:message code="geography.drilldown.list.resources" arguments="${a0}"/></a>
+						</li>
+					</ul>
+				</td>
+			</tr>
+			<tr valign="top">
+				<td><b><spring:message code="actions.download"/></b></td>
+				<td>
+					<ul class="actionsListInline">
+						<li>
+							<a href="${pageContext.request.contextPath}/occurrences/region/celldensity/country-celldensity-${geoRegion.id}.kml"><spring:message code="download.google.earth.celldensity"/></a>
+						</li>
+					</ul>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+</c:if>
 <div class="subcontainer">
 	<script type="text/javascript">
 		var entityId = '${geoRegion.id}';
