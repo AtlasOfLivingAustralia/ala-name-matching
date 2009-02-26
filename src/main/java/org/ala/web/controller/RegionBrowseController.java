@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.ala.dao.GeoRegionDAO;
 import org.apache.commons.lang.StringUtils;
-import org.gbif.portal.model.geospatial.GeoRegion;
+import org.ala.model.GeoRegion;
 import org.gbif.portal.web.controller.RestController;
 import org.springframework.web.servlet.ModelAndView;
 

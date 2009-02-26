@@ -12,39 +12,24 @@
  * implied. See the License for the specific language governing
  * rights and limitations under the License.
  ***************************************************************************/
+
 package org.ala.dao;
 
 import java.util.List;
+import org.ala.model.GeoRegionDataResource;
 
-import org.ala.model.GeoRegion;
 /**
- * DAO interface providing access to GeoRegion model objects
- * 
- * @author nick
+ * DAO interface providing access to GeoRegionDataResource model objects
+ *
+ * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
-public interface GeoRegionDAO {
-	/**
-	 * Get the geo region for this id
-	 * 
-	 * @param geoRegionId
-	 * @return
-	 */
-	public GeoRegion getGeoRegionFor(Long geoRegionId);
-
+public interface GeoRegionDataResourceDAO {
     /**
-	 * Get Geo Regions for Occurrence Record
-	 *
-	 * @param occurrenceRecordId
-	 * @return
-	 */
-	public List<GeoRegion> getGeoRegionsForOccurrenceRecord(Long occurrenceRecordId);
-	
-	/**
-	 * Get a list of the geo regions for a range of geo region types
-	 * 
-	 * @param minGeoRegionTypeId
-	 * @param maxGeoRegionTypeId
-	 * @return list of geo regions
-	 */
-	public List<GeoRegion> getGeoRegionsForGeoRegionType(final Long minGeoRegionTypeId, final Long maxGeoRegionTypeId);
+     *
+     * @param geoRegionId
+     * @param startIndex
+     * @param maxResults
+     * @return
+     */
+    public List<GeoRegionDataResource> getDataResourcesForGeoRegion(Long geoRegionId);
 }

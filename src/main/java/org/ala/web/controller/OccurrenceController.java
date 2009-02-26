@@ -35,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.ala.dao.GeoRegionDAO;
 import org.ala.dao.InstitutionDAO;
 import org.ala.model.Institution;
+import org.ala.model.GeoRegion;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -57,7 +58,6 @@ import org.gbif.portal.dto.resources.DataResourceDTO;
 import org.gbif.portal.dto.resources.ResourceAccessPointDTO;
 import org.gbif.portal.dto.taxonomy.BriefTaxonConceptDTO;
 import org.gbif.portal.dto.taxonomy.TaxonConceptDTO;
-import org.gbif.portal.model.geospatial.GeoRegion;
 import org.gbif.portal.service.DataResourceManager;
 import org.gbif.portal.service.GeospatialManager;
 import org.gbif.portal.service.OccurrenceManager;
@@ -414,13 +414,13 @@ public class OccurrenceController extends RestController {
 
 		//FIX ME!!!
 		for(GeoRegion geoRegion: geoRegions){
-			if(geoRegion.getRegionType()<3) mav.addObject("state", geoRegion);
-			if(geoRegion.getRegionType()>=3 && geoRegion.getRegionType()<5) mav.addObject("city", geoRegion);
-			if(geoRegion.getRegionType()==9) mav.addObject("shire", geoRegion);
-			if(geoRegion.getRegionType()>=10 && geoRegion.getRegionType()<12) mav.addObject("town", geoRegion);
-			if(geoRegion.getRegionType()>=2000 && geoRegion.getRegionType()<3000) mav.addObject("ibra", geoRegion);
-			if(geoRegion.getRegionType()>=3000 && geoRegion.getRegionType()<4000) mav.addObject("imcra", geoRegion);
-			if(geoRegion.getRegionType()>=5000 && geoRegion.getRegionType()<5999) mav.addObject("riverbasin", geoRegion);
+			if(geoRegion.getGeoRegionType().getId()<3) mav.addObject("state", geoRegion);
+			if(geoRegion.getGeoRegionType().getId()>=3 && geoRegion.getGeoRegionType().getId()<5) mav.addObject("city", geoRegion);
+			if(geoRegion.getGeoRegionType().getId()==9) mav.addObject("shire", geoRegion);
+			if(geoRegion.getGeoRegionType().getId()>=10 && geoRegion.getGeoRegionType().getId()<12) mav.addObject("town", geoRegion);
+			if(geoRegion.getGeoRegionType().getId()>=2000 && geoRegion.getGeoRegionType().getId()<3000) mav.addObject("ibra", geoRegion);
+			if(geoRegion.getGeoRegionType().getId()>=3000 && geoRegion.getGeoRegionType().getId()<4000) mav.addObject("imcra", geoRegion);
+			if(geoRegion.getGeoRegionType().getId()>=5000 && geoRegion.getGeoRegionType().getId()<5999) mav.addObject("riverbasin", geoRegion);
 		}
 	}
 	
