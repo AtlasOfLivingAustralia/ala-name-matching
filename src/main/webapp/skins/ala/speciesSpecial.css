@@ -1,6 +1,6 @@
 #twopartheader    {
     /* moved common stuff to speciesGlobal.css */
-    background: transparent url(images/ALA-doc-3-species.gif) no-repeat scroll 0% 65%;
+    background: transparent url(images/ALA-doc-3-species.gif) no-repeat scroll 0% 10px;
 }
 /* min-height hack for IE */
 * html #twopartheader {

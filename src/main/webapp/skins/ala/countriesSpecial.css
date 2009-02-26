@@ -1,5 +1,5 @@
 #twopartheader {
-    background: transparent url(images/ALA-doc-3-regions.gif) no-repeat scroll 0% 65%;
+    background: transparent url(images/ALA-doc-3-regions.gif) no-repeat scroll 0% 10px;
 }
 /* hack for IE */
 * html #twopartheader {
