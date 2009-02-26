@@ -19,6 +19,13 @@
     <property name="dataSource" ref="dataSource"/>
   </bean>
   
+  <!-- Geo Region Data Resource -->
+  <bean id="geoRegionDataResourceDAORO" class="org.ala.dao.jdbc.GeoRegionDataResourceDAOImpl">
+      <property name="dataSource" ref="dataSource"/>
+  </bean>
+
+  <!-- ALA overrides... -->
+
   <!-- Cell Density -->
   <bean id="alaCellDensityDAO" class="org.ala.dao.jdbc.CellDensityDAOImpl">
       <property name="dataSource" ref="dataSource"/>
