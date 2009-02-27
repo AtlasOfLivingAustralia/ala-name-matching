@@ -30,7 +30,7 @@ import org.springframework.jdbc.core.support.JdbcDaoSupport;
 /**
  * DAO for selecting details of a Geo region data resource object.
  *
- * @author nick
+ * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
 public class GeoRegionDataResourceDAOImpl extends JdbcDaoSupport implements GeoRegionDataResourceDAO {
 
@@ -52,16 +52,11 @@ public class GeoRegionDataResourceDAOImpl extends JdbcDaoSupport implements GeoR
 	 */
 	protected class GrdrRowMapper implements RowMapper {
 		public GeoRegionDataResource mapRow(ResultSet rs, int rowNumber) throws SQLException {
-            DataResource dr = new DataResource();
-            dr.setId(rs.getLong("data_resource_id"));
-            dr.setName(rs.getString("data_resource_name"));
-            GeoRegion gr = new GeoRegion();
-            gr.setId(rs.getLong("geo_region_id"));
-            gr.setName(rs.getString("geo_region_name"));
-
             GeoRegionDataResource grdr = new GeoRegionDataResource();
-            grdr.setDataResource(dr);
-            grdr.setGeoRegion(gr);
+            grdr.setGeoRegionId(rs.getLong("geo_region_id"));
+            grdr.setGeoRegionName(rs.getString("geo_region_name"));
+            grdr.setDataResourceId(rs.getLong("data_resource_id"));
+            grdr.setDataResourceName(rs.getString("data_resource_name"));
             grdr.setOccurrenceCount(rs.getLong("occurrence_count"));
             grdr.setOccurrenceCoordinateCount(rs.getLong("occurrence_coordinate_count"));
             grdr.setBasisOfRecord(BasisOfRecord.getBasisOfRecord(rs.getInt("basis_of_record")));

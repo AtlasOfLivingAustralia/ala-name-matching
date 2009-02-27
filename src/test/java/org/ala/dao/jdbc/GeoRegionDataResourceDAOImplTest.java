@@ -45,7 +45,7 @@ public class GeoRegionDataResourceDAOImplTest extends AbstractDependencyInjectio
         System.out.println("DataResourcesForGeoRegion list size = " + result.size());
 
         for (GeoRegionDataResource grdr : result) {
-            System.out.println("Data Resource: " + grdr.getDataResource().getName() + " " + grdr.getDataResource().getId());
+            System.out.println("Data Resource: " + grdr.getDataResourceName() + " " + grdr.getDataResourceId());
             System.out.println("Basis of record: " + grdr.getBasisOfRecord().getName());
             System.out.println("Occurrence counts: " + grdr.getOccurrenceCount());
         }

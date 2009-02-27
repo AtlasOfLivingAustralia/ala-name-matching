@@ -29,13 +29,12 @@ import org.gbif.portal.web.controller.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
 /**
- * Initial stab at a region page.
+ * REST-style JSON webservice to provide data to populate a YOU DataTable
+ * in region/breakdown/view.jsp for resources listed for a geo region.
  * 
- * TODO Add data breakdowns etc
- * 
- * @author "Dave Martin (David.Martin@csiro.au)"
+ * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
-public class RegionController extends RestController {
+public class RegionResourceJsonController extends RestController {
 
 	protected GeoRegionDAO geoRegionDAO;
     protected GeoRegionDataResourceDAO geoRegionDataResourceDAO;
@@ -52,7 +51,7 @@ public class RegionController extends RestController {
 			GeoRegion geoRegion = geoRegionDAO.getGeoRegionFor(regionId);
             List<GeoRegionDataResource> geoRegionDataResources = geoRegionDataResourceDAO.getDataResourcesForGeoRegion(regionId);
 			if(geoRegion!=null){
-				ModelAndView mav = new ModelAndView("geoRegionView");
+				ModelAndView mav = new ModelAndView("regionResourceJson");
 				mav.addObject("geoRegion", geoRegion);
                 mav.addObject("geoRegionDataResources", geoRegionDataResources);
 				return mav;

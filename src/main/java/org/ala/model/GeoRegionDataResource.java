@@ -17,41 +17,29 @@ package org.ala.model;
 import org.gbif.portal.model.occurrence.BasisOfRecord;
 
 /**
- * POJO representing a data resource region
+ * (DTO) POJO representing a data resource region
  *
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
 public class GeoRegionDataResource {
 
-    private GeoRegion geoRegion;
+    protected String geoRegionName;
+
+    protected Long geoRegionId;
     
-    private DataResource  dataResource;
+    protected String dataResourceName;
 
-    private Long occurrenceCount;
+    protected Long dataResourceId;
 
-    private Long OccurrenceCoordinateCount;
+    protected Long occurrenceCount;
 
-    private BasisOfRecord basisOfRecord;
+    protected Long OccurrenceCoordinateCount;
+
+    protected BasisOfRecord basisOfRecord;
 
     /*
      * Getter & Setters
      */
-
-    public DataResource  getDataResource() {
-        return dataResource;
-    }
-
-    public void setDataResource(DataResource dataResource) {
-        this.dataResource = dataResource;
-    }
-
-    public GeoRegion getGeoRegion() {
-        return geoRegion;
-    }
-
-    public void setGeoRegion(GeoRegion geoRegion) {
-        this.geoRegion = geoRegion;
-    }
 
     public Long getOccurrenceCoordinateCount() {
         return OccurrenceCoordinateCount;
@@ -67,6 +55,38 @@ public class GeoRegionDataResource {
 
     public void setBasisOfRecord(BasisOfRecord basisOfRecord) {
         this.basisOfRecord = basisOfRecord;
+    }
+
+    public Long getDataResourceId() {
+        return dataResourceId;
+    }
+
+    public void setDataResourceId(Long dataResourceId) {
+        this.dataResourceId = dataResourceId;
+    }
+
+    public String getDataResourceName() {
+        return dataResourceName;
+    }
+
+    public void setDataResourceName(String dataResourceName) {
+        this.dataResourceName = dataResourceName;
+    }
+
+    public Long getGeoRegionId() {
+        return geoRegionId;
+    }
+
+    public void setGeoRegionId(Long geoRegionId) {
+        this.geoRegionId = geoRegionId;
+    }
+
+    public String getGeoRegionName() {
+        return geoRegionName;
+    }
+
+    public void setGeoRegionName(String geoRegionName) {
+        this.geoRegionName = geoRegionName;
     }
 
     public Long getOccurrenceCount() {
