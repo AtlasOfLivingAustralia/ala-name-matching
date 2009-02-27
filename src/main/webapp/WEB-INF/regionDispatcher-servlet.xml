@@ -12,6 +12,7 @@
                 <prop key="/*">regionController</prop>
                 <prop key="/*/locality/*">regionController</prop>
                 <prop key="/*.htm">urlFilenameController</prop>
+                <prop key="/resources/*">regionResourceJsonController</prop>
             </props>
         </property>
     </bean>
@@ -20,6 +21,7 @@
     <bean id="regionController" class="org.ala.web.controller.RegionController">
         <property name="urlRoot" value="regions"/>
         <property name="geoRegionDAO" ref="geoRegionDAORO"/>
+        <property name="geoRegionDataResourceDAO" ref="geoRegionDataResourceDAORO"/>
 	    <property name="supportedPatterns">
 	      <list>
 	        <list>
@@ -42,6 +44,20 @@
 	      <list>
 	        <list>
 	          <value>regionType</value>
+	        </list>
+	      </list>
+	    </property>
+    </bean>
+
+    <!-- Simple Controller for JSON web service for region resource YUI DataTable -->
+    <bean id="regionResourceJsonController" class="org.ala.web.controller.RegionResourceJsonController">
+        <property name="urlRoot" value="resources"/>
+        <property name="geoRegionDAO" ref="geoRegionDAORO"/>
+        <property name="geoRegionDataResourceDAO" ref="geoRegionDataResourceDAORO"/>
+	    <property name="supportedPatterns">
+	      <list>
+	        <list>
+	          <value>region</value>
 	        </list>
 	      </list>
 	    </property>

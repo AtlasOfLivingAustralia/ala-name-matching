@@ -26,5 +26,10 @@
     <definition name="sld" extends="ajaxLayout">
         <put name="content" value="/WEB-INF/jsp/region/sld.jsp"/>
     </definition>
+
+     <!-- View for rendering a JSON web service for region resource -->
+    <definition name="regionResourceJson" path="/WEB-INF/jsp/region/resourcesTable.jsp"/>
+     <definition name="testDataTable" path="/WEB-INF/jsp/region/testDataTable.jsp"/>
+
     
 </tiles-definitions>
