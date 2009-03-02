@@ -41,7 +41,7 @@ public class GeoRegionDataResourceDAOImpl extends JdbcDaoSupport implements GeoR
 				"select grr.geo_region_id, gr.name geo_region_name, grr.data_resource_id, dr.name data_resource_name, grr.occurrence_count, grr.occurrence_coordinate_count, " +
 				"grr.basis_of_record from geo_region_resource grr inner join data_resource dr ON dr.id=grr.data_resource_id " +
                 "inner join geo_region gr ON gr.id=grr.geo_region_id " +
-                "where geo_region_id = ? ",
+                "where geo_region_id = ? order by data_resource_name",
                 new Object[] { geoRegionId },
                 new RowMapperResultSetExtractor(grdrRowMapper));
         return grdrs;

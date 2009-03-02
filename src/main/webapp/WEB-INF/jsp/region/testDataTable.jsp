@@ -72,7 +72,7 @@
                         scope : myDataTable
                     };
 
-                    myDataSource.sendRequest("", callbackObj);
+                    //myDataSource.sendRequest("", callbackObj);
                     
                     //myDataSource.sendRequest("query=chinese&zip=94089&results=10&output=json",
                     //        callbackObj);

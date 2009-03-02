@@ -29,7 +29,7 @@
 
      <!-- View for rendering a JSON web service for region resource -->
     <definition name="regionResourceJson" path="/WEB-INF/jsp/region/resourcesTable.jsp"/>
-     <definition name="testDataTable" path="/WEB-INF/jsp/region/testDataTable.jsp"/>
+    <definition name="testDataTable" path="/WEB-INF/jsp/region/testDataTable.jsp"/>
 
     
 </tiles-definitions>

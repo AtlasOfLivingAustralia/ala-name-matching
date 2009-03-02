@@ -23,7 +23,7 @@
           <json:property name="georeferencedOccurrencesUrl">
               ${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="24" predicate="0" value="${geoRegionDataResource.dataResourceId}" index="0"/>&<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="1"/>&<gbif:criterion subject="28" predicate="0" value="0" index="2"/>
           </json:property>
-          <json:property name="basisOfRecord" value="${geoRegionDataResource.basisOfRecord}"/>
+          <json:property name="basisOfRecord" value="${geoRegionDataResource.basisOfRecord.name}"/>
         </json:object>
       </json:array>
   </json:object>

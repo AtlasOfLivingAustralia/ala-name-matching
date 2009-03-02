@@ -110,82 +110,65 @@
         <img src="${geoserverUrl}/wms?bgcolor=0x666699&bbox=110.6,-57,161.4,-7.8&styles=&Format=image/png&request=GetMap&version=1.1.1&layers=ala:countries,geoscience:riverbasins&width=600&height=600&srs=EPSG:4326&sld=http%3A%2F%2Flocalhost%3A8080%2Fala-web%2Fregions%2Fsld.htm%3Fpn%3DRNAME%26nl%3Dgeoscience:riverbasins%26pv%3D<string:encodeUrl>${geoRegion.name}</string:encodeUrl>"/>
     </c:if>
 	</div>
-    <div id="resources_table">
+    <div id="resources_table" class=" yui-skin-sam">
     <c:if test="${not empty geoRegionDataResources}">
         <h5><spring:message code="geography.drilldown.mapped.resources" text="Resources providing data for Map"/></h5>
-
+        <div id="json"></div>
         <script type="text/javascript">
-            function toggleTables(firstTable, secondTable, visibleClass){
-              var t1 = document.getElementById(firstTable);
-              var t2 = document.getElementById(secondTable);
+            YAHOO.util.Event.addListener(window, "load", function() {
+                YAHOO.example.XHR_JSON = function() {
+                    var formatResourceUrl = function(elCell, oRecord, oColumn, sData) {
+                        elCell.innerHTML = "<a href='" + oRecord.getData("dataResourceUrl") + "'>" + sData + "</a>";
+                    };
+                    var formatOccurrencesUrl = function(elCell, oRecord, oColumn, sData) {
+                        elCell.innerHTML = "<a href='" + oRecord.getData("occurrencesUrl") + "'>" + sData + "</a>";
+                    };
+                    var formatGeoreferencedOccurrencesUrl = function(elCell, oRecord, oColumn, sData) {
+                        elCell.innerHTML = "<a href='" + oRecord.getData("georeferencedOccurrencesUrl") + "'>" + sData + "</a>";
+                    };
 
-              if(t1.className=='hidden'){
-                t1.className = visibleClass;
-                t2.className = 'hidden';
-              } else {
-                t2.className = visibleClass;
-                t1.className = 'hidden';
-              }
-            }
-        </script>
+                    var myColumnDefs = [
+                        {key:"dataResourceName", label:"Dataset", sortable:true, formatter:formatResourceUrl},
+                        {key:"occurrences", label:"Occurrences", formatter:formatOccurrencesUrl, sortable:true},
+                        {key:"georeferencedOccurrences", label:"Georeferenced Occurrences", formatter:formatGeoreferencedOccurrencesUrl, sortable:true},
+                        {key:"basisOfRecord", label:"Basis of Record", sortable:true}
+                    ];
 
-        <c:if test="${fn:length(geoRegionDataResources)>4}">
-        <a href="javascript:toggleTables('sampleTable', 'geoRegionDataResource', 'results');" title="Show all resources"><spring:message code="show"/>/<spring:message code="hide"/></a> full list of resources
-        </c:if>
+                    var myDataSource = new YAHOO.util.DataSource("${pageContext.request.contextPath}/regions/resources/");
+                    myDataSource.responseType = YAHOO.util.DataSource.TYPE_JSON;
+                    myDataSource.connXhrMode = "queueRequests";
+                    myDataSource.responseSchema = {
+                        resultsList: "ResultSet.Result",
+                        fields: ["dataResourceName","dataResourceUrl",{key:"occurrences",parser:"number"},"occurrencesUrl",
+                                 {key:"georeferencedOccurrences",parser:"number"},"georeferencedOccurrencesUrl","basisOfRecord"]
+                    };
 
+                    var myDataTable = new YAHOO.widget.DataTable("json", myColumnDefs,
+                            myDataSource, {initialRequest:"${geoRegion.id}",sortedBy:{key:"dataResourceName", dir:"asc"}});
+                    // scrollable:true,height:"150px",
+                    var mySuccessHandler = function() {
+                        //this.set("sortColumn","dataResourceName");
+                        //this.sortColumn("dataResourceName");
+                        this.onDataReturnAppendRows.apply(this,arguments);
+                    };
+                    var myFailureHandler = function() {
+                        this.showTableMessage(YAHOO.widget.DataTable.MSG_ERROR, YAHOO.widget.DataTable.CLASS_ERROR);
+                        this.onDataReturnAppendRows.apply(this,arguments);
+                    };
+                    var callbackObj = {
+                        success : mySuccessHandler,
+                        failure : myFailureHandler,
+                        scope : myDataTable
+                    };
 
-        <table id="sampleTable" class="results" style="width: 720px;">
-          <thead>
-            <th><spring:message code="dataset"/></th>
-            <th class="lastColumn"><spring:message code="regions.occurrence.georeferenced.count"/></th>
-          </thead>
-          <tbody>
-            <c:forEach items="${geoRegionDataResources}" var="geoRegionDataResource" begin="0" end="3">
-            <tr>
-              <td style="width:650px;">
-                <a href="${pageContext.request.contextPath}/datasets/resource/${geoRegionDataResource.dataResourceId}">${geoRegionDataResource.dataResourceName}</a>
-                <% /* <p class="resultsDetails">
-                ${geoRegionDataResource.dataResource.dataProvider.name}
-                </p> */ %>
-              </td>
-              <td class="lastColumn" style="width:70px;">
-                <a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="24" predicate="0" value="${geoRegionDataResource.dataResourceId}" index="0"/>&<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="1"/>"><fmt:formatNumber value="${geoRegionDataResource.occurrenceCount}" pattern="###,###"/></a>
-                (<a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="24" predicate="0" value="${geoRegionDataResource.dataResourceId}" index="0"/>&<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="1"/>&<gbif:criterion subject="28" predicate="0" value="0" index="2"/>"><fmt:formatNumber value="${geoRegionDataResource.occurrenceCoordinateCount}" pattern="###,###"/></a>)
-              </td>
-            </tr>
-            </c:forEach>
-            <c:if test="${fn:length(geoRegionDataResources)>4}">
-            <tr>
-              <td colspan="2">
-                <p class="showFullTable">
-                  <a href="javascript:toggleTables('sampleTable', 'geoRegionDataResource', 'results');">View ${fn:length(geoRegionDataResources)-4 } more datasets... </a>
-                </p>
-              </td>
-            </tr>
-            </c:if>
-          </tbody>
-        </table>
+                    return {
+                        oDS: myDataSource,
+                        oDT: myDataTable
+                    };
+                }();
+            });
 
-        <c:if test="${fn:length(geoRegionDataResources)>4}">
-        <display-el:table
-          name="geoRegionDataResources"
-          class="hidden"
-          id="fullTable"
-          uid="geoRegionDataResource"
-          style="width: 720px;"
-          requestURI="${pageContext.request.contextPath}/countries/${country.isoCountryCode}/?${pageContext.request.queryString}">
-          <display-el:column titleKey="dataset" style="width:650px;">
-             <a href="${pageContext.request.contextPath}/datasets/resource/${geoRegionDataResource.dataResourceId}">${geoRegionDataResource.dataResourceName}</a>
-             <% /* <p class="resultsDetails">
-                ${geoRegionDataResource.dataResource.dataProvider.name}
-                </p> */ %>
-          </display-el:column>
-          <display-el:column class="lastColumn" titleKey="regions.occurrence.georeferenced.count" style="width:70px;">
-                <a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="24" predicate="0" value="${geoRegionDataResource.dataResourceId}" index="0"/>&<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="1"/>"><fmt:formatNumber value="${geoRegionDataResource.occurrenceCount}" pattern="###,###"/></a>
-                (<a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="24" predicate="0" value="${geoRegionDataResource.dataResourceId}" index="0"/>&<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="1"/>&<gbif:criterion subject="28" predicate="0" value="0" index="2"/>"><fmt:formatNumber value="${geoRegionDataResource.occurrenceCoordinateCount}" pattern="###,###"/></a>)
-          </display-el:column>
-        </display-el:table>
-        </c:if>
+            </script>
     </c:if>
     </div>
 </div>
