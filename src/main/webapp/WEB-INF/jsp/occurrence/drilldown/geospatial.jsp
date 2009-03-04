@@ -1,5 +1,5 @@
 <%@ include file="/common/taglibs.jsp"%>
-<fieldset>
+<fieldset id="occurrenceRecord-${rawOccurrenceRecord.key}-geospatial">
 <p>	
 	<label for="country"><spring:message code="occurrence.record.country"/>:</label> 
 	<c:choose>
@@ -11,7 +11,7 @@
 		</c:if>
 	</c:when>
 	<c:otherwise>
-		${rawOccurrenceRecord.country}
+		<span id="occurrenceRecord-${rawOccurrenceRecord.key}-geospatial-country">${rawOccurrenceRecord.country}</span>
 	</c:otherwise>
 	</c:choose>	
 </p>
@@ -19,13 +19,13 @@
 <c:if test="${not empty rawOccurrenceRecord.county}">
 <p>	
 	<label for="county"><spring:message code="occurrence.record.county"/>:</label> 
-	${rawOccurrenceRecord.county}
+	<span id="occurrenceRecord-${rawOccurrenceRecord.key}-geospatial-county">${rawOccurrenceRecord.county}</span>
 </p>	
 </c:if>
 
 <p>
 	<label for="stateOrProvince"><spring:message code="occurrence.record.state.or.province"/>:</label> 
-	${rawOccurrenceRecord.stateOrProvince}
+	<span id="occurrenceRecord-${rawOccurrenceRecord.key}-geospatial-state">${rawOccurrenceRecord.stateOrProvince}</span>
 	
 	<c:if test="${not empty state}">
 	   (inferred from coordinates as <a href="${pageContext.request.contextPath}/regions/${state.id}">${state.name}</a>)
@@ -33,7 +33,7 @@
 </p>	
 <p>
 	<label for="locality"><spring:message code="occurrence.record.locality"/>:</label> 
-	${rawOccurrenceRecord.locality}
+	<span id="occurrenceRecord-${rawOccurrenceRecord.key}-geospatial-locality">${rawOccurrenceRecord.locality}</span>
 	
 	<c:if test="${not empty town || not empty city}">
        (inferred from coordinates as 
@@ -72,22 +72,22 @@
 
 <p>
 	<label for="latitude"><spring:message code="occurrence.record.geospatial.latitude"/>:</label> 
-	${rawOccurrenceRecord.latitude}
+	<span id="occurrenceRecord-${rawOccurrenceRecord.key}-geospatial-latitude">${rawOccurrenceRecord.latitude}</span>
 </p>	
 <p>
 	<label for="longitude"><spring:message code="occurrence.record.geospatial.longitude"/>:</label> 
-	${rawOccurrenceRecord.longitude}
+	<span id="occurrenceRecord-${rawOccurrenceRecord.key}-geospatial-longitude">${rawOccurrenceRecord.longitude}</span>
 </p>	
 <p>
 	<label for="latLongPrecision"><spring:message code="occurrence.record.geospatial.latLongPrecision"/>:</label> 
-	${rawOccurrenceRecord.latLongPrecision}
+	<span id="occurrenceRecord-${rawOccurrenceRecord.key}-geospatial-latlongPrecision">${rawOccurrenceRecord.latLongPrecision}</span>
 </p>
 
 <c:if test="${not empty rawOccurrenceRecord.minAltitude || not empty rawOccurrenceRecord.maxAltitude}">
 <p>
 	<label for="altitude"><spring:message code="occurrence.record.geospatial.altitude"/>:</label> 
-	<c:if test="${not empty rawOccurrenceRecord.minAltitude}"><spring:message code="minimum"/> ${rawOccurrenceRecord.minAltitude}</c:if><c:if test="${not empty rawOccurrenceRecord.minAltitude && not empty rawOccurrenceRecord.maxAltitude}">,</c:if> 
-	<c:if test="${not empty rawOccurrenceRecord.maxAltitude}"><spring:message code="maximum"/> ${rawOccurrenceRecord.maxAltitude}</c:if>
+	<c:if test="${not empty rawOccurrenceRecord.minAltitude}"><spring:message code="minimum"/> <span id="occurrenceRecord-${rawOccurrenceRecord.key}-geospatial-minAltitude">${rawOccurrenceRecord.minAltitude}</span></c:if><c:if test="${not empty rawOccurrenceRecord.minAltitude && not empty rawOccurrenceRecord.maxAltitude}">,</c:if> 
+	<c:if test="${not empty rawOccurrenceRecord.maxAltitude}"><spring:message code="maximum"/> <span id="occurrenceRecord-${rawOccurrenceRecord.key}-geospatial-maxAltitude">${rawOccurrenceRecord.maxAltitude}</span></c:if>
 	<c:if test="${not empty rawOccurrenceRecord.altitudePrecision}"><spring:message code="occurrence.record.with.precision"/> ${rawOccurrenceRecord.altitudePrecision}</c:if>
 	<c:if test="${not empty occurrenceRecord.altitudeInMetres}">
 		<spring:message code="occurrence.record.interpreted.as" arguments="${occurrenceRecord.altitudeInMetres} metres" argumentSeparator="$$$$$"/>
@@ -98,8 +98,8 @@
 <c:if test="${not empty rawOccurrenceRecord.minDepth || not empty rawOccurrenceRecord.maxDepth}">
 <p>
 	<label for="depth"><spring:message code="occurrence.record.geospatial.depth"/>:</label> 
-	<c:if test="${not empty rawOccurrenceRecord.minDepth}"><spring:message code="minimum"/> ${rawOccurrenceRecord.minDepth}</c:if><c:if test="${not empty rawOccurrenceRecord.minDepth && not empty rawOccurrenceRecord.maxDepth}">,</c:if> 
-	<c:if test="${not empty rawOccurrenceRecord.maxDepth}"><spring:message code="maximum"/> ${rawOccurrenceRecord.maxDepth}</c:if> 
+	<c:if test="${not empty rawOccurrenceRecord.minDepth}"><spring:message code="minimum"/> <span id="occurrenceRecord-${rawOccurrenceRecord.key}-geospatial-minDepth">${rawOccurrenceRecord.minDepth}</span></c:if><c:if test="${not empty rawOccurrenceRecord.minDepth && not empty rawOccurrenceRecord.maxDepth}">,</c:if> 
+	<c:if test="${not empty rawOccurrenceRecord.maxDepth}"><spring:message code="maximum"/> <span id="occurrenceRecord-${rawOccurrenceRecord.key}-geospatial-maxDepth">${rawOccurrenceRecord.maxDepth}</span></c:if> 
 	<c:if test="${not empty rawOccurrenceRecord.depthPrecision}"><spring:message code="occurrence.record.with.precision"/> ${rawOccurrenceRecord.depthPrecision}</c:if>
 	<c:if test="${not empty occurrenceRecord.depthInMetres}">
 		<spring:message code="occurrence.record.interpreted.as" arguments="${occurrenceRecord.depthInMetres} metres" argumentSeparator="$$$$$"/>

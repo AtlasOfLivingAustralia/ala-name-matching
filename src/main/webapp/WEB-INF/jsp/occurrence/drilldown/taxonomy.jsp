@@ -1,16 +1,28 @@
 <%@ include file="/common/taglibs.jsp"%>
-<fieldset>
+<fieldset id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy">
 <p>
 	<c:choose>
 		<c:when test="${empty occurrenceRecord}">
-			<label><spring:message code="occurrence.record.scientificName"/>:</label> ${rawOccurrenceRecord.scientificName} ${rawOccurrenceRecord.author} 
+			<label><spring:message code="occurrence.record.scientificName"/>:</label> 
+			<span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-scientificName">${rawOccurrenceRecord.scientificName}</span> 
+			<span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-author">${rawOccurrenceRecord.author}</span>
 		</c:when>
 		<c:when test="${rawOccurrenceRecord.scientificName==taxonConcept.taxonName && (((empty rawOccurrenceRecord.author) && (empty taxonConcept.author)) || (rawOccurrenceRecord.author==taxonConcept.author))}">
-			<label><spring:message code="occurrence.record.scientificName"/>:</label> <gbiftag:taxonLink concept="${taxonConcept}"/> ${rawOccurrenceRecord.author} 
+			<label><spring:message code="occurrence.record.scientificName"/>:</label> <gbiftag:taxonLink concept="${taxonConcept}"/> 
+			<span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-author">${rawOccurrenceRecord.author}</span> 
 		</c:when>
 		<c:otherwise>
-			<label><spring:message code="occurrence.record.scientificName"/>:</label><span class="genera">${rawOccurrenceRecord.scientificName}</span> ${rawOccurrenceRecord.author} 
-			<c:set var="interpretedSciName"><c:if test="${not empty taxonConcept.partnerConceptKey}"><a href="${pageContext.request.contextPath}/species/${taxonConcept.partnerConceptKey}"></c:if><span class="genera">${taxonConcept.taxonName}</span><c:if test="${not empty taxonConcept.partnerConceptKey}"></a></c:if> ${partnerConcept.author}</c:set>
+			<label><spring:message code="occurrence.record.scientificName"/>:</label>
+			<span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-scientificName" class="genera">${rawOccurrenceRecord.scientificName}</span> 
+			<span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-author">${rawOccurrenceRecord.author}</span> 
+			<c:set var="interpretedSciName">
+			 <c:if test="${not empty taxonConcept.partnerConceptKey}">
+			     <a href="${pageContext.request.contextPath}/species/${taxonConcept.partnerConceptKey}">
+			 </c:if>
+			 <span class="genera">${taxonConcept.taxonName}</span>
+			     <c:if test="${not empty taxonConcept.partnerConceptKey}"></a></c:if> 
+			     ${partnerConcept.author}
+			</c:set>
 			<spring:message code="occurrence.record.interpreted.as" arguments="${interpretedSciName}" argumentSeparator="$$$"/>
 		</c:otherwise>
 	</c:choose>
@@ -18,18 +30,21 @@
 <%
 	/* Nick's attempt at a single table for both GBIF and record-derived classification */
 %>
-</fieldset>
 <c:if test="${!rawOnly && not empty occurrenceRecord}">
+<p>
 <table class="taxonClassificationComparison">
-    <tr>
-        <th style="width:170px;"></th>
-        <th style="min-width:180px;">
-            Recorded Classification
-        </th>
-        <th style="min-width:180px;">
-            Matched Classification 
-        </th>
-    </tr>
+    <thead>
+        <tr>
+            <th style="width:170px;">&nbsp;</th>
+            <th style="min-width:180px;">
+                Recorded Classification
+            </th>
+            <th style="min-width:180px;">
+                Matched Classification 
+            </th>
+        </tr>
+    </thead>
+    <tbody>
     <!-- Kingdom -->
     <alatag:getTaxonFromTaxonList concepts="${concepts}" requestedConcept="kingdom"/>
     <c:if test="${not empty requestedTaxonRank || not empty rawOccurrenceRecord.kingdom}">
@@ -42,7 +57,8 @@
 			                <gbiftag:taxonLink concept="${kingdomConcept}"/>
 			            </c:when>
 			            <c:otherwise>
-			                ${rawOccurrenceRecord.kingdom} <gbiftag:interpretedTaxon concept="${kingdomConcept}"/>
+			                <span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-kingdom">${rawOccurrenceRecord.kingdom}</span>
+			                 <gbiftag:interpretedTaxon concept="${kingdomConcept}"/>
 			            </c:otherwise>
 		            </c:choose>
 	            </c:if>
@@ -64,7 +80,8 @@
 	                        <gbiftag:taxonLink concept="${phylumConcept}"/>
 	                    </c:when>
 	                    <c:otherwise>
-	                        ${rawOccurrenceRecord.phylum} <gbiftag:interpretedTaxon concept="${phylumConcept}"/>
+	                        <span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-phylum">${rawOccurrenceRecord.phylum}</span> 
+	                        <gbiftag:interpretedTaxon concept="${phylumConcept}"/>
 	                    </c:otherwise>
 	                </c:choose>
 	            </c:if>
@@ -86,7 +103,8 @@
 	                        <gbiftag:taxonLink concept="${classConcept}"/>
 	                    </c:when>
 	                    <c:otherwise>
-	                        ${rawOccurrenceRecord.bioClass} <gbiftag:interpretedTaxon concept="${classConcept}"/>
+	                        <span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-class">${rawOccurrenceRecord.bioClass}</span> 
+	                        <gbiftag:interpretedTaxon concept="${classConcept}"/>
 	                    </c:otherwise>
 	                </c:choose>
 	            </c:if>
@@ -105,10 +123,11 @@
 	            <c:if test="${not empty rawOccurrenceRecord.order}">
 	                <c:choose>
 	                    <c:when test="${rawOccurrenceRecord.order==orderConcept.taxonName}">
-	                        <gbiftag:taxonLink concept="${phylumConcept}"/>
+	                        <gbiftag:taxonLink concept="${orderConcept}"/>
 	                    </c:when>
 	                    <c:otherwise>
-	                        ${rawOccurrenceRecord.order} <gbiftag:interpretedTaxon concept="${orderConcept}"/>
+	                        <span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-order">${rawOccurrenceRecord.order}</span> 
+	                        <gbiftag:interpretedTaxon concept="${orderConcept}"/>
 	                    </c:otherwise>
 	                </c:choose>
 	            </c:if>
@@ -130,7 +149,8 @@
 	                        <gbiftag:taxonLink concept="${familyConcept}"/>
 	                    </c:when>
 	                    <c:otherwise>
-	                        ${rawOccurrenceRecord.family} <gbiftag:interpretedTaxon concept="${familyConcept}"/>
+	                        <span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-family">${rawOccurrenceRecord.family}</span> 
+	                        <gbiftag:interpretedTaxon concept="${familyConcept}"/>
 	                    </c:otherwise>
 	                </c:choose>
 	            </c:if>
@@ -152,7 +172,8 @@
 	                        <gbiftag:taxonLink concept="${genusConcept}"/>
 	                    </c:when>
 	                    <c:otherwise>
-	                        ${rawOccurrenceRecord.genus} <gbiftag:interpretedTaxon concept="${genusConcept}"/>
+	                        <span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-genus">${rawOccurrenceRecord.genus}</span>
+	                        <gbiftag:interpretedTaxon concept="${genusConcept}"/>
 	                    </c:otherwise>
 	                </c:choose>
 	            </c:if>
@@ -174,7 +195,8 @@
 	                        <gbiftag:taxonLink concept="${speciesConcept}"/>
 	                    </c:when>
 	                    <c:otherwise>
-	                        ${rawOccurrenceRecord.species} <gbiftag:interpretedTaxon concept="${speciesConcept}"/>
+	                        <span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-species">${rawOccurrenceRecord.species}</span>
+	                        <gbiftag:interpretedTaxon concept="${speciesConcept}"/>
 	                    </c:otherwise>
 	                </c:choose>
 	            </c:if>
@@ -198,7 +220,8 @@
 	                        <gbiftag:taxonLink concept="${subspeciesConcept}"/>
 	                    </c:when>
 	                    <c:otherwise>
-	                        ${rawOccurrenceRecord.subspecies} <gbiftag:interpretedTaxon concept="${subspeciesConcept}"/>
+	                        <span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-subspecies">${rawOccurrenceRecord.subspecies}</span> 
+	                        <gbiftag:interpretedTaxon concept="${subspeciesConcept}"/>
 	                    </c:otherwise>
 	                </c:choose>
 	            </c:if>
@@ -220,7 +243,8 @@
                             <gbiftag:taxonLink concept="${varietyConcept}"/>
                         </c:when>
                         <c:otherwise>
-                            ${rawOccurrenceRecord.subspecies} <gbiftag:interpretedTaxon concept="${varietyConcept}"/>
+                            <span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-variety">${rawOccurrenceRecord.subspecies}</span> 
+                            <gbiftag:interpretedTaxon concept="${varietyConcept}"/>
                         </c:otherwise>
                     </c:choose>
                 </c:if>
@@ -245,17 +269,20 @@
             </td>
             <td> <!-- record-based classification -->
                 <c:forEach items="${typifications}" var="typification">
-			        <label><spring:message code="specimen.type.status"/>:</label> ${typification.typeStatus} <c:if test="${not empty typification.scientificName}"><spring:message code="specimen.type.for" arguments="${typification.scientificName}"/></c:if>
+			        <label><spring:message code="specimen.type.status"/>:</label> 
+			        <span id="occurrenceRecord-${rawOccurrenceRecord.key}-taxonomy-typestatus">${typification.typeStatus}</span>
+			         <c:if test="${not empty typification.scientificName}"><spring:message code="specimen.type.for" arguments="${typification.scientificName}"/></c:if>
 			        <br/>
 			    </c:forEach>
             </td>
         </tr>
     </c:if>
-</table>
+    </tbody>
+</table><!-- taxonomyClassificationComparison -->
+</p>
 </c:if> 
-<fieldset>
 <%
-	/* end Nick's table */
+	/** end Nick's table */
 %>
 <c:if test="null">
 	<c:if test="${!rawOnly && not empty occurrenceRecord}">
@@ -379,4 +406,5 @@
 		</c:choose></p>
 	</c:if>
 </c:if>
-</fieldset>	
+
+</fieldset>
