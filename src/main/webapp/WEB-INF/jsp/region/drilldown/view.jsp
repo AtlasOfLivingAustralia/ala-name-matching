@@ -129,8 +129,12 @@
 
                     var myColumnDefs = [
                         {key:"dataResourceName", label:"Dataset", sortable:true, formatter:formatResourceUrl},
-                        {key:"occurrences", label:"Occurrences", formatter:formatOccurrencesUrl, sortable:true},
-                        {key:"georeferencedOccurrences", label:"Georeferenced Occurrences", formatter:formatGeoreferencedOccurrencesUrl, sortable:true},
+                        {label:"Occurrences",
+	                      children: [
+                            {key:"occurrences", label:"All", formatter:formatOccurrencesUrl, sortable:true},
+                            {key:"georeferencedOccurrences", label:"Georeferenced", formatter:formatGeoreferencedOccurrencesUrl, sortable:true}
+                          ]
+                        },
                         {key:"basisOfRecord", label:"Basis of Record", sortable:true}
                     ];
 
@@ -144,11 +148,8 @@
                     };
 
                     var myDataTable = new YAHOO.widget.DataTable("json", myColumnDefs,
-                            myDataSource, {initialRequest:"${geoRegion.id}",sortedBy:{key:"dataResourceName", dir:"asc"}});
-                    // scrollable:true,height:"150px",
+                            myDataSource, {initialRequest:"${geoRegion.id}",sortedBy:{key:"dataResourceName", dir:"asc"}}); // scrollable:true,height:"150px",
                     var mySuccessHandler = function() {
-                        //this.set("sortColumn","dataResourceName");
-                        //this.sortColumn("dataResourceName");
                         this.onDataReturnAppendRows.apply(this,arguments);
                     };
                     var myFailureHandler = function() {

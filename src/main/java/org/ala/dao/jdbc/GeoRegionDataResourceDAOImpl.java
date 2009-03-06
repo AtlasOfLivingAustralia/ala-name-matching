@@ -38,10 +38,12 @@ public class GeoRegionDataResourceDAOImpl extends JdbcDaoSupport implements GeoR
 
     public List<GeoRegionDataResource> getDataResourcesForGeoRegion(Long geoRegionId) {
         List<GeoRegionDataResource> grdrs = (List<GeoRegionDataResource>) getJdbcTemplate().query(
-				"select grr.geo_region_id, gr.name geo_region_name, grr.data_resource_id, dr.name data_resource_name, grr.occurrence_count, grr.occurrence_coordinate_count, " +
-				"grr.basis_of_record from geo_region_resource grr inner join data_resource dr ON dr.id=grr.data_resource_id " +
-                "inner join geo_region gr ON gr.id=grr.geo_region_id " +
-                "where geo_region_id = ? order by data_resource_name",
+				"SELECT grr.geo_region_id, gr.name geo_region_name, grr.data_resource_id, " +
+                "dr.name data_resource_name, grr.occurrence_count, grr.occurrence_coordinate_count, " +
+				"grr.basis_of_record FROM geo_region_resource grr " +
+                "INNER JOIN data_resource dr ON dr.id=grr.data_resource_id " +
+                "INNER JOIN geo_region gr ON gr.id=grr.geo_region_id " +
+                "WHERE geo_region_id = ? ORDER by data_resource_name",
                 new Object[] { geoRegionId },
                 new RowMapperResultSetExtractor(grdrRowMapper));
         return grdrs;

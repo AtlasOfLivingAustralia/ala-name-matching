@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<!--  Application context definition for Taxonomy DispatcherServlet -->
+<beans>
+	
+	<!--  Defines how the dispatcher will select the contollers -->
+	<bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+		<property name="interceptors">
+			<list>
+				<ref bean="localeChangeInterceptor"/>
+				<ref bean="taxonomyDataAgreementInterceptor"/>
+        <ref bean="sessionHistoryInterceptor"/>				
+			</list>
+		</property>
+		<property name="mappings">
+			<props>
+				<prop key="/search.htm">taxonomyFilterController</prop>
+				<prop key="/downloadSpreadsheet.htm">taxonomyDownloadSelectController</prop>				
+				<prop key="/startDownload.htm">taxonomyDownloadController</prop>								
+				<prop key="/wizards">taxonomyWizardFilterController</prop>				
+				<prop key="/refreshFilters">filterComponentsController</prop>
+				<prop key="/addOrUpdateFilters">filterComponentsController</prop>
+				<prop key="/taxonomyFinder.htm">taxonomyRedirectController</prop>
+				<prop key="/browse/">taxonomyBrowseController</prop>
+				<prop key="/browse/**/*">taxonomyBrowseController</prop>
+				<prop key="/browse/taxon/*">taxonomyBrowseController</prop>				
+				<prop key="/browse/taxon/**/*">taxonomyBrowseController</prop>								
+				<prop key="/browse/resource/**/*">taxonomyBrowseController</prop>
+				<prop key="/browse/provider/**/*">taxonomyBrowseController</prop>				
+				<prop key="/browse/country/**/*">countryTaxonomyBrowseController</prop>
+                <prop key="/browse/region/**/*">taxonomyRegionBrowseController</prop>
+				<prop key="/commonName/*">commonNameResolvingController</prop>
+				<prop key="/taxonName/ajax/**/**">taxonNameSearchController</prop>
+				<prop key="/*/overviewMap.png">taxonWidgetResolvingController</prop>
+				<prop key="/mapNames.htm">taxonIdRetrievalController</prop>								
+				<prop key="/downloadMapping.htm">taxonIdRetrievalController</prop>				
+				<prop key="/name-ids.txt">taxonIdRetrievalController</prop>	
+				<prop key="/nameSearch">nameSearchController</prop>															
+				<prop key="/nameSearch/**/*">nameSearchController</prop>				
+				<prop key="/classificationSearch">classificationSearchController</prop>															
+				<prop key="/classificationSearch/**/*">classificationSearchController</prop>				
+				<prop key="/">taxonomyBrowseController</prop>
+				<prop key="/*.htm">urlFilenameController</prop>						
+				<prop key="/**/*">taxonResolvingController</prop>
+			</props>
+		</property>
+	</bean>
+
+    <!-- regionTaxonomyBrowseController -->
+    <!--
+    <bean id="regionTaxonomyBrowseController" class="org.ala.web.controller.RegionTaxonomyBrowseController">
+		<property name="taxonomyManager" ref="taxonomyManager"/>
+		<property name="geospatialManager" ref="geospatialManager"/>
+        <property name="geoRegionTaxonConceptDAO" ref="geoRegionTaxonConceptDAORO"/>
+		<property name="taxonConceptUtils" ref="taxonConceptUtils"/>
+		<property name="urlRoot" value="browse"/>
+		<property name="viewNamePrefix" value="regionTaxonomyBrowse"/>
+		<property name="defaultView" value="/welcome.htm"/>
+		<property name="messageSource" ref="messageSource"/>
+	</bean>
+    -->
+    <!-- taxonomyRegionBrowseController -->
+    <bean id="taxonomyRegionBrowseController" class="org.ala.web.controller.TaxonomyRegionBrowseController">
+		<property name="geoRegionDAO" ref="geoRegionDAORO"/>
+        <property name="occurrenceFacetDAO" ref="occurrenceFacetDAORO" />
+        <property name="viewNamePrefix" value="taxonomyRegionBrowse"/>
+        <property name="urlRoot" value="region"/>
+		<property name="supportedPatterns">
+	      <list>
+	        <list>
+	          <value>region</value>
+	        </list>
+            <list>
+	          <value>region</value>
+              <value>view</value>
+	        </list>
+            <list>
+	          <value>region</value>
+              <value>taxonKey</value>
+              <value>taxon</value>
+	        </list>
+            <list>
+	          <value>region</value>
+              <value>taxonKey</value>
+              <value>taxon</value>
+              <value>view</value>
+	        </list>
+	      </list>
+	    </property>
+	</bean>
+
+</beans>

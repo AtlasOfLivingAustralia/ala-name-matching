@@ -287,6 +287,7 @@
     <property name="taxonomyManager" ref="taxonomyManager" />
     <property name="geospatialManager" ref="geospatialManager" />
     <property name="dataResourceTagDAO" ref="dataResourceTagDAO" />
+    <property name="occurrenceFacetDAO" ref="occurrenceFacetDAORO" />
     <property name="mapContentProvider" ref="mapContentProvider" />
     <property name="messageSource" ref="messageSource"/>
     <property name="userUtils" ref="userUtils" />

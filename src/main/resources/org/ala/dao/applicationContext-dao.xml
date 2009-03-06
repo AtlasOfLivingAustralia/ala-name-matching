@@ -24,6 +24,17 @@
       <property name="dataSource" ref="dataSource"/>
   </bean>
 
+  <!-- Geo Region Taxon Concept -->
+  <bean id="geoRegionTaxonConceptDAORO" class="org.ala.dao.jdbc.GeoRegionTaxonConceptDAOImpl">
+      <property name="dataSource" ref="dataSource"/>
+  </bean>
+
+  <!-- Occurrence Facet -->
+  <bean id="occurrenceFacetDAORO" class="org.ala.dao.solr.OccurrenceFacetDAOImpl">
+      <property name="messageSource" ref="messageSource"/>
+      <property name="taxonomyManager" ref="taxonomyManager"/>
+  </bean>
+
   <!-- ALA overrides... -->
 
   <!-- Cell Density -->

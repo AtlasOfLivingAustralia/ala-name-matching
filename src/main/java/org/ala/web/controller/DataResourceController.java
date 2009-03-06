@@ -30,6 +30,7 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.ala.dao.OccurrenceFacetDAO;
 import org.ala.util.IndexingIssue;
 import org.ala.util.IndexingIssueTypes;
 import org.apache.commons.lang.StringUtils;
@@ -83,7 +84,9 @@ public class DataResourceController extends RestController {
 	/** The Geospatial Manager */
 	protected GeospatialManager geospatialManager;
 	/** The MapContentProvider */
-	protected MapContentProvider mapContentProvider;	
+	protected MapContentProvider mapContentProvider;
+    /** The OccurrenceFacetDAO */
+    protected OccurrenceFacetDAO occurrenceFacetDAO;
 	/** The MappingFactory */
 	//protected GbifMappingFactory gbifMappingFactory;	
 	/** The data resource request key */ 
@@ -120,19 +123,6 @@ public class DataResourceController extends RestController {
 	protected Map<String, View> schema2View;
 	
 	protected MessageSource messageSource;
-	
-	/** Breakdown of indexing data for display as charts (uses Solr) */
-    protected String solrUrl = "http://localhost:8080/solr";
-    
-    protected SolrServer solrServer = null;
-    
-    protected List<String> facetFields = Arrays.asList(
-            "taxon_name_id", "taxonomic_issue", "geospatial_issue", "other_issue", "month", "year");
-    
-    protected List<String> monthName = Arrays.asList("January", "February", "March", "April", "May", 
-            "June", "July", "August", "September", "October", "November", "December");
-    
-    protected Integer startingYear = 1800;
 	
 	/**
 	 * @see org.gbif.portal.web.controller.RestController#handleRequest(java.util.Map, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
@@ -372,7 +362,7 @@ public class DataResourceController extends RestController {
 		
 		// Add charts showing resource statistics/breakdown using Solr facetted search
 		// TODO Add a check for the Solr server running?
-		Map<String, String> chartData = getChartData(dataResourceKey);
+		Map<String, String> chartData = occurrenceFacetDAO.getChartFacetsForResource(dataResourceKey);
 		if(chartData!=null){
 			mav.addObject("chartData", chartData);
 		}
@@ -412,151 +402,6 @@ public class DataResourceController extends RestController {
 		return parsedKey;
 	}
 
-	/**
-	 * Produce a CSV String for the requested chart type (AMCharts)
-	 * 
-	 * If there is a problem retrieving aggregated data from SOLR Server, return null
-	 * 
-	 * @param data resource key
-	 * @return data to populate the the AM Chart (csv)
-	 * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>" 
-	 * 
-	 * TODO format data as XML instead of CSV so we can add url parameter for links
-	 * 
-	 * Example Solr URL:
-	 * http://localhost:8080/solr/select/?q=data_resource_id:56&facet=true&facet.limit=-1&facet.mincount=0
-	 *   &facet.missing=true&facet.field=basisofrecord&facet.field=year&facet=true&facet.sort=false
-	 */
-	protected Map<String, String> getChartData(String dataResourceKey) {
-		try{
-		    Map<String, String> csvDataMap = new HashMap<String, String>();  // model passed through to JSP
-		    // Setup the Solr query, etc
-		    String queryString = "data_resource_id:" + dataResourceKey;
-		    SolrServer server = initialiseSolrServer();
-	        SolrQuery searchQuery = new SolrQuery();  // handle better?   
-	        searchQuery.setQuery(queryString);
-	        searchQuery.setRows(0); // we don't want any search results only the facet results
-	        searchQuery.setFacetLimit(100);  // TODO make -1 (no limit) and cull list after 20 but add to "other" facet
-	        searchQuery.setFacetMinCount(1);
-	        // temporal charts require special facet parameters
-	        searchQuery.setParam("f.year.facet.sort", false);
-	        searchQuery.setParam("f.month.facet.sort", false);
-	        searchQuery.setParam("f.year.facet.limit", "-1");
-	        searchQuery.setFacetMinCount(1);
-	        
-	        // add each facet field to the query
-	        for (String facet : facetFields) searchQuery.addFacetField(facet);
-	        
-	        // do the Solr search
-	        QueryResponse rsp = null;
-	        try {
-	            rsp = server.query( searchQuery );
-	        } catch (SolrServerException e) {
-	        	logger.warn("Problem communicating with SOLR server. Unable to generate chart data.");
-	            logger.debug(e.getMessage(), e);
-	            return null;
-	        }
-	        
-	        //Long resultsSize = rsp.getResults().getNumFound();
-		    // get the facet results (list)
-	        Calendar calendar = Calendar.getInstance();
-	        int currentYear = calendar.get(Calendar.YEAR);
-	        List<FacetField> facetResults = rsp.getFacetFields();
-		    
-		    for (FacetField facetData : facetResults) {
-		        // Iterate over each of the facet result objects
-		        String facetName = facetData.getName();
-		        StringBuffer csvValues = new StringBuffer(); // CSV format: 'foo;25\nbar;33\ndoh;1\n'
-		        Map<String, Long> issueFacetMap = new HashMap<String, Long>(); // needed to redistribute the issue counts after splitting bit values
-		        
-		        if(facetData==null){
-		        	return null;
-		        }
-		        
-		        for (Count count : facetData.getValues()) {
-		            // Iterate over the facet counts 
-		            // TODO evaluate using percentage values for issue types only ?
-		            String label = count.getName();
-		            long facetCount = count.getCount();
-		            
-		            if ("year".equals(facetName)) {
-		                // skip bad year data
-		                Integer numLabel = Integer.parseInt(label);
-		                if (numLabel != null && (numLabel < startingYear  || numLabel > currentYear)) continue;
-		            }
-		            else if ("month".equals(facetName)) {
-		                // convert month int to string values (1 -> January)
-		                int monthInt = Integer.parseInt(label);
-		                label = monthName.get(monthInt-1);
-		            }
-		            
-		            if (facetName.contains("_issue")) {
-		                // Issue types breakdown -> get i18n keys for labels
-		                int issueTypeValue = Integer.parseInt(label);
-		                String issueTypeStr = facetName.replace("_issue", "");  // knock the "_issue" part off the string (other_issue -> other)
-		                
-		                if (issueTypeValue == 0) {
-		                    // special case of "no issue"
-		                	
-		                	String message = messageSource.getMessage(IndexingIssue.NO_ISSUES.getI18nKey(), null, "No issues", Locale.ENGLISH);
-		                    csvValues.append(message + ';' + facetCount + "\\n");
-		                }
-		                else {
-		                    List<IndexingIssue> indexingIssues = 
-		                        IndexingIssue.splitIssuesForCompositeIssueValue(issueTypeValue, IndexingIssueTypes.get(issueTypeStr));
-		                
-		                    for (IndexingIssue issue : indexingIssues) {
-		                        // Distribute the issue counts into the issueFacetMap map 
-		                        String issueKey = issue.getI18nKey();
-	//	                        String message = messageSource.getMessage(issueKey, null, Locale.ENGLISH);
-		                        Long previousCount = (issueFacetMap.get(issueKey) != null) ? issueFacetMap.get(issueKey) : 0;
-		                        Long newCount = previousCount + facetCount;
-		                        issueFacetMap.put(issue.getDescrption(), newCount);
-		                    }
-		                }   
-		            }
-		            else {
-		                // all "other types" data breakdown
-		                csvValues.append(label + ';' + facetCount + "\\n");
-		            }
-		        }
-		        
-		        // Add each key/value pair from issueFacetMap to csvValues string buffer
-		        Set<String> keys = issueFacetMap.keySet();
-		        Iterator<String> it = keys.iterator();
-		        while (it.hasNext()) {
-		            String key = it.next();
-		            csvValues.append(key + ';' + issueFacetMap.get(key) + "\\n");
-		        }
-		        
-		        // Add each facet CSV data string to the csvDataMap map
-		        csvDataMap.put(facetName, csvValues.toString());
-		        logger.debug("getChartData: " + facetName + "->" + csvValues);
-		    }
-		    return csvDataMap;
-		} catch(Exception e){
-        	logger.warn("Problem generating chart data. Charts will not be rendered");
-            logger.debug(e.getMessage(), e);
-		}
-		return null;
-	}
-	
-	/**
-     * Re-use the Solr server object
-     * @return the server
-     */
-    protected SolrServer initialiseSolrServer() {
-        if (this.solrServer == null & this.solrUrl  != null) {
-            // Solr running in seperate webapp/war
-            try {
-                this.solrServer = new CommonsHttpSolrServer( this.solrUrl );
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-        }
-         
-        return solrServer;
-    }
 	
 	/**
 	 * @param dataResourceManager the dataResourceManager to set
@@ -678,65 +523,39 @@ public class DataResourceController extends RestController {
 	}
 
 	/**
-   * @param schema2View the schema2View to set
-   */
-  public void setSchema2View(Map<String, View> schema2View) {
-  	this.schema2View = schema2View;
-  }
+    * @param schema2View the schema2View to set
+    */
+    public void setSchema2View(Map<String, View> schema2View) {
+        this.schema2View = schema2View;
+    }
 
-	/**
-   * @param simpleTagDAO the simpleTagDAO to set
-   */
-  public void setDataResourceTagDAO(SimpleTagDAO dataResourceTagDAO) {
-  	this.dataResourceTagDAO = dataResourceTagDAO;
-  }
+    /**
+    * @param simpleTagDAO the simpleTagDAO to set
+    */
+    public void setDataResourceTagDAO(SimpleTagDAO dataResourceTagDAO) {
+        this.dataResourceTagDAO = dataResourceTagDAO;
+    }
 
-	/**
-   * @param geospatialManager the geospatialManager to set
-   */
-  public void setGeospatialManager(GeospatialManager geospatialManager) {
-  	this.geospatialManager = geospatialManager;
-  }
+    /**
+    * @param geospatialManager the geospatialManager to set
+    */
+    public void setGeospatialManager(GeospatialManager geospatialManager) {
+        this.geospatialManager = geospatialManager;
+    }
 
-	/**
-   * @param messageSource the messageSource to set
-   */
-  public void setMessageSource(MessageSource messageSource) {
-  	this.messageSource = messageSource;
-  }
+    /**
+    * @param messageSource the messageSource to set
+    */
+    public void setMessageSource(MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
 
-	/**
-	 * @return the startingYear
-	 */
-	public Integer getStartingYear() {
-		return startingYear;
-	}
+    /**
+    * @param occurrenceFacetDAO
+    */
+    public void setOccurrenceFacetDAO(OccurrenceFacetDAO occurrenceFacetDAO) {
+        this.occurrenceFacetDAO = occurrenceFacetDAO;
+    }
 
-	/**
-	 * @param startingYear the startingYear to set
-	 */
-	public void setStartingYear(Integer startingYear) {
-		this.startingYear = startingYear;
-	}
 
-	/**
-	 * @param solrUrl the solrUrl to set
-	 */
-	public void setSolrUrl(String solrUrl) {
-		this.solrUrl = solrUrl;
-	}
-
-	/**
-	 * @param facetFields the facetFields to set
-	 */
-	public void setFacetFields(List<String> facetFields) {
-		this.facetFields = facetFields;
-	}
-
-	/**
-	 * @param monthName the monthName to set
-	 */
-	public void setMonthName(List<String> monthName) {
-		this.monthName = monthName;
-	}
 }

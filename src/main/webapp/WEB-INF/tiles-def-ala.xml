@@ -31,5 +31,12 @@
     <definition name="regionResourceJson" path="/WEB-INF/jsp/region/resourcesTable.jsp"/>
     <definition name="testDataTable" path="/WEB-INF/jsp/region/testDataTable.jsp"/>
 
+    <!-- Browse View for taxonomy browse region  -->
+    <definition name="taxonomyRegionBrowse" extends="mainLayout">
+        <put name="subtitle" value="/WEB-INF/jsp/taxonomy/regionBrowseSubtitle.jsp"/>
+        <put name="headcontent" value="/WEB-INF/jsp/taxonomy/headcontent.jsp"/>
+        <put name="content" value="/WEB-INF/jsp/taxonomy/regionBrowse.jsp"/>
+    </definition>
+    <definition name="taxonomyRegionBrowse.json" path="/WEB-INF/jsp/taxonomy/jsonRegionBrowse.jsp"/>
     
 </tiles-definitions>

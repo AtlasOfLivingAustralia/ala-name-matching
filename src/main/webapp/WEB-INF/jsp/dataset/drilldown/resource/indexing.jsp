@@ -44,7 +44,7 @@
                 var flashvars3 = {
                         path: escape("${pageContext.request.contextPath}/charts/"),
                         settings_file: escape("${pageContext.request.contextPath}/charts/names_settings.xml"),
-                        chart_data: "${chartData.taxon_name_id}",
+                        chart_data: "${chartData.species_concept_id}",
                         preloader_color: "#999999"
                     };
                 
@@ -67,7 +67,7 @@
             <div id="chart1"></div>
             <h5>By Month</h5>
             <div id="chart2"></div>
-            <h5>By Taxon Name</h5>
+            <h5>By Species Name</h5>
             <div id="chart3"></div>
             <h5>By Geospatial Issues</h5>
             <div id="chart4"></div>

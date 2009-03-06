@@ -10,7 +10,11 @@
 %>
 <json:object prettyPrint="true">
   <json:object name="ResultSet">
-    <json:property name="totalResultsAvailable" value="${fn:length(geoRegionDataResources)}"/>
+    <json:property name="totalRecords" value="${fn:length(geoRegionDataResources)}"/>
+    <json:property name="startIndex" value=""/>
+    <json:property name="sort" value=""/>
+    <json:property name="dir" value=""/>
+    <json:property name="pageSize" value=""/>
       <json:array name="Result" var="geoRegionDataResource" items="${geoRegionDataResources}">
         <json:object>
           <json:property name="dataResourceName" value="${geoRegionDataResource.dataResourceName}"/>
