@@ -54,41 +54,27 @@
 					</tbody>
 				</table>
 			</div><!--end further actions-->		
-			<div>
-              
-              <h4>Top 20 &quot;${regionConcepts[0].rankName}&quot; names
-                <c:if test="requestedTaxonConceptDTO != null"> for &quto;${requestedTaxonConceptDTO.taxonName}&quto;</c:if>
-                ordered by Occurrence Count </h4>
-                <ol>
-                  <c:forEach items="${regionConcepts}" var="regionConcept" varStatus="status" end="19">
-                    <li><a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}/taxon/${regionConcept.taxonConceptId}">${regionConcept.taxonConceptName}</a>
-                      (<a href="${pageContext.request.contextPath}/species/${regionConcept.taxonConceptId}">overview</a>) - occurrences: ${regionConcept.occurrenceCount}</li>
-                  </c:forEach>
-                </ol>
-
-            </div>
             <div id="regionConcepts" class=" yui-skin-sam">
             <c:if test="${not empty regionConcepts}">
                 <h5>&quot;${regionConcepts[0].rankName}&quot; names <c:if test="requestedTaxonConceptDTO != null"> for &quto;${requestedTaxonConceptDTO.taxonName}&quto;</c:if></h5>
                 <div id="json"></div>
                 <script type="text/javascript">
-                    YAHOO.util.Event.addListener(window, "load", function() {
-                        YAHOO.example.XHR_JSON = function() {
-                            var formatRegionUrl = function(elCell, oRecord, oColumn, sData) {
-                                elCell.innerHTML = "<a href='" + oRecord.getData("geoRegionNameUrl") + "'>" + sData + "</a>";
+                    //YAHOO.util.Event.addListener(window, "load", function() {
+                    //    YAHOO.example.XHR_JSON = function() {
+                            var formatTaxonConceptUrl = function(elCell, oRecord, oColumn, sData) {
+                                elCell.innerHTML = "<a href='" + oRecord.getData("taxonConceptBrowseHref") + "' onClick='" +
+                                  oRecord.getData("taxonConceptBrowseUrl") + "'>" + sData + "</a> " +
+                                  "(<a href='" + oRecord.getData("taxonConceptNameUrl") + "'>more info</a>)";
                             };
+                            
                             var formatOccurrencesUrl = function(elCell, oRecord, oColumn, sData) {
                                 elCell.innerHTML = "<a href='" + oRecord.getData("occurrencesUrl") + "'>" + sData + "</a>";
                             };
-                            var formatTaxonConceptUrl = function(elCell, oRecord, oColumn, sData) {
-                                elCell.innerHTML = "<a href='" + oRecord.getData("taxonConceptBrowseUrl") + "'>" + sData + "</a> " +
-                                "(<a href='" + oRecord.getData("taxonConceptNameUrl") + "'>more info</a>)";
-                            };
 
                             var myColumnDefs = [
-                                {key:"taxonConceptName", label:"Concept Name", sortable:true, formatter:formatTaxonConceptUrl},
+                                {key:"taxonConceptName", label:"Taxon Concept Name", sortable:true, formatter:formatTaxonConceptUrl},
                                 {key:"commonName", label:"Common Name", sortable:true},
-                                {key:"occurrences", label:"All", formatter:formatOccurrencesUrl, sortable:true}
+                                {key:"occurrences", label:"Occurrences", formatter:formatOccurrencesUrl, sortable:true}
                             ];
 
                             var myDataSource = new YAHOO.util.DataSource("${pageContext.request.contextPath}/species/browse/region/");
@@ -96,38 +82,34 @@
                             myDataSource.connXhrMode = "queueRequests";
                             myDataSource.responseSchema = {
                                 resultsList: "ResultSet.Result",
-                                fields: ["taxonConceptName","taxonConceptNameUrl","commonName",{key:"occurrences",parser:"number"},"occurrencesUrl"]
+                                fields: ["taxonConceptName","taxonConceptNameUrl","taxonConceptBrowseHref","taxonConceptBrowseUrl",
+                                         "commonName",{key:"occurrences",parser:"number"},"occurrencesUrl"]
                             };
 
                             var myDataTable = new YAHOO.widget.DataTable("json", myColumnDefs,
-                                    myDataSource, {initialRequest:"${geoRegion.id}",sortedBy:{key:"taxonConceptName", dir:"asc"}}); // scrollable:true,height:"150px",
-                            var mySuccessHandler = function() {
-                                this.onDataReturnAppendRows.apply(this,arguments);
-                            };
-                            var myFailureHandler = function() {
-                                this.showTableMessage(YAHOO.widget.DataTable.MSG_ERROR, YAHOO.widget.DataTable.CLASS_ERROR);
-                                this.onDataReturnAppendRows.apply(this,arguments);
-                            };
-                            var callbackObj = {
-                                success : mySuccessHandler,
-                                failure : myFailureHandler,
-                                scope : myDataTable
-                            };
+                                    myDataSource, {initialRequest:"${geoRegion.id}/json",sortedBy:{key:"occurrences", dir:"desc"}}); // scrollable:true,height:"150px",
 
-                            return {
-                                oDS: myDataSource,
-                                oDT: myDataTable
-                            };
-                        }();
-                    });
+                     //    }();
+                    //});
+
+                    function reloadJson(newRequest) {
+                        //alert('Debug: reloadJson with arg: ' + newRequest);
+                        //YAHOO.widget.DataTable.prototype.requery = function(newRequest) {
+                        //    this.getDataSource().sendRequest(
+                        //       (newRequest === undefined?this.get('initialRequest'):newRequest),
+                        //        this.onDataReturnInitializeTable,
+                        //        this
+                        //    );
+                        //};
+                        var ds = myDataTable.getDataSource();
+                        ds.sendRequest(newRequest,myDataTable.onDataReturnReplaceRows,myDataTable);
+                        //myDataTable.dataSource.sendRequest(newRequest,myDataTable.onDataReturnReplaceRows, myDataTable );
+
+                    }
 
                     </script>
             </c:if>
             </div>
-            <% /*<div class="smalltree">
-				<gbif:smallbrowser concepts="${concepts}" selectedConcept="${selectedConcept}" rootUrl="/species/browse/regions/${geoRegion.id}" markConceptBelowThreshold="${dataProvider.key==nubProvider.key}" highestRank="kingdom" messageSource="${messageSource}"/>
-			</div><!--end smalltree-->
-             */ %>
 		</c:when>
 		<c:otherwise>		
 			<spring:message code="taxonomy.browser.notree"/> <gbif:capitalize>${geoRegion.name}</gbif:capitalize>
