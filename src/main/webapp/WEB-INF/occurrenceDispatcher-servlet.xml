@@ -10,7 +10,7 @@
     <property name="interceptors">
       <list>
         <ref bean="localeChangeInterceptor" />
-        <ref bean="occurrenceDataAgreementInterceptor" />
+        <!-- ref bean="occurrenceDataAgreementInterceptor" /-->
         <ref bean="sessionHistoryInterceptor" />
         <bean id="occurrenceBadRobotInterceptor" parent="badRobotInterceptor">
            <property name="patterns">

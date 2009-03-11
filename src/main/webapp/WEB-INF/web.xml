@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <web-app xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" version="2.4">
-	
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
+
 	<context-param>
-			<param-name>log4jConfigLocation</param-name>
-			<param-value>/WEB-INF/classes/log4j.xml</param-value>
+		<param-name>log4jConfigLocation</param-name>
+		<param-value>/WEB-INF/classes/log4j.xml</param-value>
 	</context-param>
 
 	<context-param>
-			<param-name>webAppRootKey</param-name>
-			<param-value>ala-web</param-value>
+		<param-name>webAppRootKey</param-name>
+		<param-value>ala-web</param-value>
 	</context-param>
-	
+
 	<!-- For spring context initialisation -->
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
@@ -37,24 +38,28 @@
             classpath*:/org/gbif/**/mainDispatcher-servlet.xml, 
             classpath*:/org/gbif/**/*-servlet.xml,
             classpath*:/applicationContext-triplets.xml
+            classpath*:/agreementInterceptors.xml
 		</param-value>
 	</context-param>
 
-	<!-- Define the basename for a resource bundle for I18N - To be removed, using i18n spring support -->
+	<!--
+		Define the basename for a resource bundle for I18N - To be removed,
+		using i18n spring support
+	-->
 	<context-param>
 		<param-name>javax.servlet.jsp.jstl.fmt.localizationContext</param-name>
 		<param-value>messages</param-value>
 	</context-param>
-	
+
 	<listener>
 		<listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>
 	</listener>
-	 
+
 	<!-- Register the spring context listener -->
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
 	</listener>
-	
+
 	<!-- The front end dispatchers -->
 	<servlet>
 		<servlet-name>mainDispatcher</servlet-name>
@@ -65,7 +70,7 @@
 		<servlet-name>searchDispatcher</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
 		<load-on-startup>2</load-on-startup>
-	</servlet>	
+	</servlet>
 	<servlet>
 		<servlet-name>occurrenceDispatcher</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
@@ -80,7 +85,7 @@
 		<servlet-name>taxonDispatcher</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
 		<load-on-startup>5</load-on-startup>
-	</servlet>	
+	</servlet>
 	<servlet>
 		<servlet-name>geographyDispatcher</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
@@ -105,7 +110,7 @@
 		<servlet-name>userDispatcher</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
 		<load-on-startup>10</load-on-startup>
-	</servlet>	
+	</servlet>
 	<servlet>
 		<servlet-name>imageDispatcher</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
@@ -125,33 +130,41 @@
 		<servlet-name>downloadDispatcher</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
 		<load-on-startup>14</load-on-startup>
-	</servlet>	
-	<!-- This is work in prgress to replace the maplayers with something more WMS compliant -->
+	</servlet>
+	<!--
+		This is work in prgress to replace the maplayers with something more
+		WMS compliant
+	-->
 	<servlet>
 		<servlet-name>densityDispatcher</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
 		<load-on-startup>15</load-on-startup>
-	</servlet>	
+	</servlet>
 	<!-- The Servlet that will dispatch to the webservices -->
 	<servlet>
 		<servlet-name>webServiceDispatcher</servlet-name>
-		<servlet-class> org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
 		<load-on-startup>16</load-on-startup>
 	</servlet>
-  <servlet>
-    <servlet-name>toolsDispatcher</servlet-name>
-    <servlet-class> org.springframework.web.servlet.DispatcherServlet</servlet-class>
-    <load-on-startup>17</load-on-startup>
-  </servlet>
-    <servlet>
-    <servlet-name>regionDispatcher</servlet-name>
-    <servlet-class> org.springframework.web.servlet.DispatcherServlet</servlet-class>
-    <load-on-startup>18</load-on-startup>
-  </servlet>	
+	<servlet>
+		<servlet-name>toolsDispatcher</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<load-on-startup>17</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>regionDispatcher</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<load-on-startup>18</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>registerDispatcher</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<load-on-startup>19</load-on-startup>
+	</servlet>
 	<servlet-mapping>
 		<servlet-name>webServiceDispatcher</servlet-name>
 		<url-pattern>/ws/*</url-pattern>
-	</servlet-mapping>	
+	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>mainDispatcher</servlet-name>
 		<url-pattern>*.htm</url-pattern>
@@ -163,11 +176,11 @@
 	<servlet-mapping>
 		<servlet-name>occurrenceDispatcher</servlet-name>
 		<url-pattern>/occurrences/*</url-pattern>
-	</servlet-mapping>	
+	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>occurrenceDispatcher</servlet-name>
 		<url-pattern>/occurrences/*</url-pattern>
-	</servlet-mapping>	
+	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>taxonomyDispatcher</servlet-name>
 		<url-pattern>/taxonomy/*</url-pattern>
@@ -179,7 +192,7 @@
 	<servlet-mapping>
 		<servlet-name>taxonDispatcher</servlet-name>
 		<url-pattern>/taxon/*</url-pattern>
-	</servlet-mapping>	
+	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>geographyDispatcher</servlet-name>
 		<url-pattern>/geography/*</url-pattern>
@@ -188,14 +201,14 @@
 		<servlet-name>geographyDispatcher</servlet-name>
 		<url-pattern>/countries/*</url-pattern>
 	</servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>regionDispatcher</servlet-name>
-        <url-pattern>/regions/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>regionDispatcher</servlet-name>
-        <url-pattern>/region/*</url-pattern>
-    </servlet-mapping>    
+	<servlet-mapping>
+		<servlet-name>regionDispatcher</servlet-name>
+		<url-pattern>/regions/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>regionDispatcher</servlet-name>
+		<url-pattern>/region/*</url-pattern>
+	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>datasetDispatcher</servlet-name>
 		<url-pattern>/dataset/*</url-pattern>
@@ -211,7 +224,7 @@
 	<servlet-mapping>
 		<servlet-name>tutorialDispatcher</servlet-name>
 		<url-pattern>/tutorial/*</url-pattern>
-	</servlet-mapping>	
+	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>mapLayerDispatcher</servlet-name>
 		<url-pattern>/maplayer/*</url-pattern>
@@ -219,11 +232,11 @@
 	<servlet-mapping>
 		<servlet-name>densityDispatcher</servlet-name>
 		<url-pattern>/density/*</url-pattern>
-	</servlet-mapping>	
+	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>userDispatcher</servlet-name>
 		<url-pattern>/user/*</url-pattern>
-	</servlet-mapping>	
+	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>imageDispatcher</servlet-name>
 		<url-pattern>/image/*</url-pattern>
@@ -235,35 +248,39 @@
 	<servlet-mapping>
 		<servlet-name>downloadDispatcher</servlet-name>
 		<url-pattern>/download/*</url-pattern>
-	</servlet-mapping>	
-  <servlet-mapping>
-    <servlet-name>toolsDispatcher</servlet-name>
-    <url-pattern>/tools/*</url-pattern>
-  </servlet-mapping>  	
-					
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>toolsDispatcher</servlet-name>
+		<url-pattern>/tools/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>registerDispatcher</servlet-name>
+		<url-pattern>/register/*</url-pattern>
+	</servlet-mapping>
+
 	<!-- Single entry point -->
 	<welcome-file-list>
 		<welcome-file>index.jsp</welcome-file>
 	</welcome-file-list>
-  <error-page>
-    <error-code>403</error-code>
-    <location>/403.jsp</location>
-  </error-page> 	
+	<error-page>
+		<error-code>403</error-code>
+		<location>/403.jsp</location>
+	</error-page>
 	<error-page>
 		<error-code>404</error-code>
-	  <location>/error.jsp</location>
-	</error-page>	
-  <error-page>
-    <error-code>500</error-code>
-    <location>/error.jsp</location>
-  </error-page> 
-	
+		<location>/error.jsp</location>
+	</error-page>
+	<error-page>
+		<error-code>500</error-code>
+		<location>/error.jsp</location>
+	</error-page>
+
 	<jsp-config>
 		<taglib>
 			<taglib-uri>http://java.sun.com/jstl/core</taglib-uri>
 			<taglib-location>/tld/c.tld</taglib-location>
 		</taglib>
-        <taglib>
+		<taglib>
 			<taglib-uri>http://java.sun.com/jstl/fmt</taglib-uri>
 			<taglib-location>/tld/fmt.tld</taglib-location>
 		</taglib>
@@ -271,5 +288,5 @@
 			<taglib-uri>http://jakarta.apache.org/struts/tags-tiles</taglib-uri>
 			<taglib-location>/tld/struts-tiles.tld</taglib-location>
 		</taglib>
-	</jsp-config>	
+	</jsp-config>
 </web-app>

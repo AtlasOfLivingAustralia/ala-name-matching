@@ -8,7 +8,7 @@
     <property name="interceptors">
       <list>
         <ref bean="localeChangeInterceptor" />
-        <ref bean="datasetsDataAgreementInterceptor" />
+        <!-- ref bean="datasetsDataAgreementInterceptor" /-->
         <ref bean="sessionHistoryInterceptor" />
       </list>
     </property>

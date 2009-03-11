@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<!--  Application context definition for Dataset DispatcherServlet -->
+<beans>
+
+  <!--  Define how the dispatcher will select the controllers -->
+  <bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+    <property name="mappings">
+      <props>
+        <prop key="/*">registerMeController</prop>
+      </props>
+    </property>
+  </bean>
+  
+  <!-- Register Me Controller -->
+  <bean id="registerMeController" class="org.ala.web.controller.RegisterMeController">
+    <property name="webServiceDAO" ref="webServiceDAO"/>
+  </bean>
+</beans>
