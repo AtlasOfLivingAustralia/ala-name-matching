@@ -42,8 +42,8 @@ public class RegisterMeController extends MultiActionController{
 		ModelAndView mav = new ModelAndView("webservices.list");
 		
 		List<WebService> raps = null;
-		String iso = StringUtils.trimToNull(request.getParameter("iso"));
-		if(iso==null){
+		String iso = request.getParameter("iso");
+		if(StringUtils.isEmpty(iso)){
 			raps = webServiceDAO.getAll();
 		} else {
 			raps = webServiceDAO.getForIsoCountryCode(iso);
