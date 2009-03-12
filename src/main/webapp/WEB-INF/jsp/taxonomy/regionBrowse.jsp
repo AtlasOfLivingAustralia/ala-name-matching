@@ -56,15 +56,35 @@
 			</div><!--end further actions-->		
             <div id="regionConcepts" class=" yui-skin-sam">
             <c:if test="${not empty regionConcepts}">
-                <h5>&quot;${regionConcepts[0].rankName}&quot; names <c:if test="requestedTaxonConceptDTO != null"> for &quto;${requestedTaxonConceptDTO.taxonName}&quto;</c:if></h5>
+                <h5>
+                    <spring:message code="taxonomy.concept.plural.${regionConcepts[0].rankName}" text="${regionConcepts[0].rankName}"/>
+                    found in <gbif:capitalize>${geoRegion.name}</gbif:capitalize>
+                <br/>
+                   <c:if test="${requestedTaxonConceptDTO != null}">
+                       <a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}">All</a>
+                       &gt;
+                       <c:choose>
+                           <c:when test="${requestedTaxonConceptDTO.family != null}"><a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}/taxon/${requestedTaxonConceptDTO.familyConceptKey}">Family: ${requestedTaxonConceptDTO.family}</a></c:when>
+                           <c:otherwise>Family: all</c:otherwise>
+                       </c:choose>
+                   </c:if>
+                   <c:if test="${requestedTaxonConceptDTO.genus != null}">
+                       &gt; Genus: <c:choose><c:when test="${requestedTaxonConceptDTO.genus != null}">${requestedTaxonConceptDTO.genus}</c:when><c:otherwise>all</c:otherwise></c:choose>
+                   </c:if>
+
+                </h5>
                 <div id="json"></div>
                 <script type="text/javascript">
-                    //YAHOO.util.Event.addListener(window, "load", function() {
-                    //    YAHOO.example.XHR_JSON = function() {
+                    YAHOO.util.Event.addListener(window, "load", function() {
+                        YAHOO.example.XHR_JSON = function() {
                             var formatTaxonConceptUrl = function(elCell, oRecord, oColumn, sData) {
-                                elCell.innerHTML = "<a href='" + oRecord.getData("taxonConceptBrowseHref") + "' onClick='" +
-                                  oRecord.getData("taxonConceptBrowseUrl") + "'>" + sData + "</a> " +
-                                  "(<a href='" + oRecord.getData("taxonConceptNameUrl") + "'>more info</a>)";
+                                if (oRecord.getData("taxonConceptBrowseUrl")) {
+                                    elCell.innerHTML = "<a href='" + oRecord.getData("taxonConceptBrowseUrl") + "' title='view list of child concepts'>" + sData + "</a> " +
+                                    "(<a href='" + oRecord.getData("taxonConceptNameUrl") + "' title='go to detailed description for this taxon concept'>more info</a>)";
+                                } else {
+                                    elCell.innerHTML = "<i>" + sData + "</i> (<a href='" + oRecord.getData("taxonConceptNameUrl") +
+                                     "' title='go to detailed description for this taxon concept'>more info</a>)";
+                                }
                             };
                             
                             var formatOccurrencesUrl = function(elCell, oRecord, oColumn, sData) {
@@ -74,6 +94,7 @@
                             var myColumnDefs = [
                                 {key:"taxonConceptName", label:"Taxon Concept Name", sortable:true, formatter:formatTaxonConceptUrl},
                                 {key:"commonName", label:"Common Name", sortable:true},
+                                {key:"taxonRank", label:"Taxon Rank"},
                                 {key:"occurrences", label:"Occurrences", formatter:formatOccurrencesUrl, sortable:true}
                             ];
 
@@ -82,30 +103,34 @@
                             myDataSource.connXhrMode = "queueRequests";
                             myDataSource.responseSchema = {
                                 resultsList: "ResultSet.Result",
-                                fields: ["taxonConceptName","taxonConceptNameUrl","taxonConceptBrowseHref","taxonConceptBrowseUrl",
-                                         "commonName",{key:"occurrences",parser:"number"},"occurrencesUrl"]
+                                fields: ["taxonConceptName","taxonConceptNameUrl","taxonConceptBrowseUrl",
+                                         "commonName","taxonRank",{key:"occurrences",parser:"number"},"occurrencesUrl"]
                             };
 
                             var myDataTable = new YAHOO.widget.DataTable("json", myColumnDefs,
-                                    myDataSource, {initialRequest:"${geoRegion.id}/json",sortedBy:{key:"occurrences", dir:"desc"}}); // scrollable:true,height:"150px",
+                                    myDataSource, {initialRequest:"${dataTableParam}",sortedBy:{key:"occurrences", dir:"desc"}}); // scrollable:true,height:"150px",
 
-                     //    }();
-                    //});
+                            var mySuccessHandler = function() {
+                                this.onDataReturnAppendRows.apply(this,arguments);
+                            };
 
-                    function reloadJson(newRequest) {
-                        //alert('Debug: reloadJson with arg: ' + newRequest);
-                        //YAHOO.widget.DataTable.prototype.requery = function(newRequest) {
-                        //    this.getDataSource().sendRequest(
-                        //       (newRequest === undefined?this.get('initialRequest'):newRequest),
-                        //        this.onDataReturnInitializeTable,
-                        //        this
-                        //    );
-                        //};
-                        var ds = myDataTable.getDataSource();
-                        ds.sendRequest(newRequest,myDataTable.onDataReturnReplaceRows,myDataTable);
-                        //myDataTable.dataSource.sendRequest(newRequest,myDataTable.onDataReturnReplaceRows, myDataTable );
+                            var myFailureHandler = function() {
+                                this.showTableMessage(YAHOO.widget.DataTable.MSG_ERROR, YAHOO.widget.DataTable.CLASS_ERROR);
+                                this.onDataReturnAppendRows.apply(this,arguments);
+                            };
 
-                    }
+                            var callbackObj = {
+                                success : mySuccessHandler,
+                                failure : myFailureHandler,
+                                scope : myDataTable
+                            };
+
+                            return {
+                                oDS: myDataSource,
+                                oDT: myDataTable
+                            };
+                        }();
+                    });
 
                     </script>
             </c:if>

@@ -18,8 +18,11 @@
       <json:array name="Result" var="regionConcept" items="${regionConcepts}">
         <json:object>
           <json:property name="taxonConceptName" value="${regionConcept.taxonConceptName}"/>
-          <json:property name="taxonConceptBrowseHref" value="#/${regionConcept.rankName}/${regionConcept.taxonConceptId}"/>
-          <json:property name="taxonConceptBrowseUrl" value="reloadJson('${geoRegion.id}/taxon/${regionConcept.taxonConceptId}/json');"/>
+          <json:property name="taxonConceptBrowseUrl">
+              <c:if test="${regionConcept.rankName != 'species'}">
+                  ${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}/taxon/${regionConcept.taxonConceptId}
+              </c:if>
+          </json:property>
           <json:property name="taxonConceptNameUrl" value="${pageContext.request.contextPath}/species/${regionConcept.taxonConceptId}"/>
           <json:property name="commonName" value="${regionConcept.commonName}"/>
           <json:property name="taxonRank" value="${regionConcept.rankName}"/>
