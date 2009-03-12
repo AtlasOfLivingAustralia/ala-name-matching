@@ -236,6 +236,7 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 	        searchQuery.setRows(0); // we don't want any search results only the facet results
 	        searchQuery.setFacetLimit(100);  // TODO make -1 (no limit) and cull list after 20 but add to "other" facet
 	        searchQuery.setFacetMinCount(1);
+            // searchQuery.setFacetSort(false); // sorts by XX_concept_id field 
 	        
             searchQuery.addFacetField(rank.getFacetField());
 
@@ -274,6 +275,7 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
                     grtc.setGeoRegionId(regionId);
                     grtc.setTaxonConceptId(taxonConceptId);
                     grtc.setTaxonConceptName(taxonConceptDTO.getTaxonName());
+                    grtc.setCommonName(taxonConceptDTO.getCommonName());
                     grtc.setOccurrenceCount(facetCount);
                     grtc.setRankName(rank.getRank());
                     geoRegionTaxonConcept.add(grtc);

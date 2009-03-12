@@ -25,7 +25,9 @@ import org.ala.model.GeoRegionTaxonConcept;
 import org.ala.web.util.RankFacet;
 import org.apache.commons.lang.StringUtils;
 import org.gbif.portal.dao.geospatial.GeoRegionDAO;
+import org.gbif.portal.dto.taxonomy.TaxonConceptDTO;
 import org.gbif.portal.model.geospatial.GeoRegion;
+import org.gbif.portal.service.TaxonomyManager;
 import org.gbif.portal.web.controller.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -40,6 +42,8 @@ public class TaxonomyRegionBrowseController extends RestController {
 	protected GeoRegionDAO geoRegionDAO;
     /** The OccurrenceFacetDAO */
     protected OccurrenceFacetDAO occurrenceFacetDAO;
+    /** The TaxonomyManager */
+    protected TaxonomyManager taxonomyManager;
 
     /**
 	 * @see org.ala.web.controller.RestController#handleRequest(java.util.Map, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
@@ -60,14 +64,21 @@ public class TaxonomyRegionBrowseController extends RestController {
 		mav.addObject("geoRegion", geoRegion);
         
         List<GeoRegionTaxonConcept> regionConcepts;
+        String dataTableParam = "";
                 
 		if (taxonKey != null) {
             regionConcepts = occurrenceFacetDAO.getTaxonConceptsForGeoRegion(regionId, taxonKey);
+            TaxonConceptDTO requestedTaxonConceptDTO = taxonomyManager.getTaxonConceptFor(taxonKey);
+            //requestedTaxonConceptDTO.getAcceptedConceptKey()
+            dataTableParam = geoRegion.getId() + "/taxon/" + taxonKey + "/json/";
+            mav.addObject("requestedTaxonConceptDTO", requestedTaxonConceptDTO);
         } else {
 			regionConcepts = occurrenceFacetDAO.getTaxonConceptsForGeoRegion(regionId, null);
+            dataTableParam = geoRegion.getId() + "/json";
 		}
 
         mav.addObject("regionConcepts", regionConcepts);
+        mav.addObject("dataTableParam", dataTableParam);
         return mav;
 	}
 
@@ -79,10 +90,17 @@ public class TaxonomyRegionBrowseController extends RestController {
 	}
 
     /**
-     *  @param occurrenceFacetDAO the occurrenceFacetDAO to set
+     * @param occurrenceFacetDAO the occurrenceFacetDAO to set
      */
     public void setOccurrenceFacetDAO(OccurrenceFacetDAO occurrenceFacetDAO) {
         this.occurrenceFacetDAO = occurrenceFacetDAO;
+    }
+
+    /**
+     * @param taxonomyManager the taxonomyManager to set
+     */
+    public void setTaxonomyManager(TaxonomyManager taxonomyManager) {
+        this.taxonomyManager = taxonomyManager;
     }
 
 }
