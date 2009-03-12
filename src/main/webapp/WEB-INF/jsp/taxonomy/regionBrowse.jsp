@@ -63,13 +63,10 @@
                    <c:if test="${requestedTaxonConceptDTO != null}">
                        <a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}">All</a>
                        &gt;
-                       <c:choose>
-                           <c:when test="${requestedTaxonConceptDTO.family != null}"><a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}/taxon/${requestedTaxonConceptDTO.familyConceptKey}">Family: ${requestedTaxonConceptDTO.family}</a></c:when>
-                           <c:otherwise>Family: all</c:otherwise>
-                       </c:choose>
+                       <a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}/taxon/${requestedTaxonConceptDTO.familyConceptKey}">Family: ${requestedTaxonConceptDTO.family}</a>
                    </c:if>
                    <c:if test="${requestedTaxonConceptDTO.genus != null}">
-                       &gt; Genus: <c:choose><c:when test="${requestedTaxonConceptDTO.genus != null}">${requestedTaxonConceptDTO.genus}</c:when><c:otherwise>all</c:otherwise></c:choose>
+                       &gt; <a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}/taxon/${requestedTaxonConceptDTO.genusConceptKey}">Genus: ${requestedTaxonConceptDTO.genus}</a>
                    </c:if>
 
                 </h5>

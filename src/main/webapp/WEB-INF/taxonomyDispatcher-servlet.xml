@@ -63,6 +63,7 @@
     <bean id="taxonomyRegionBrowseController" class="org.ala.web.controller.TaxonomyRegionBrowseController">
 		<property name="geoRegionDAO" ref="geoRegionDAORO"/>
         <property name="occurrenceFacetDAO" ref="occurrenceFacetDAORO" />
+        <property name="taxonomyManager" ref="taxonomyManager"/>
         <property name="viewNamePrefix" value="taxonomyRegionBrowse"/>
         <property name="urlRoot" value="region"/>
 		<property name="supportedPatterns">
