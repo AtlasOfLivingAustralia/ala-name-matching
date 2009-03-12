@@ -21,5 +21,8 @@ cd ../portal-web
 mvn clean install jar:jar source:jar eclipse:eclipse
 mvn install:install-file -Dfile=target/portal.jar -DgroupId=portal -DartifactId=portal-web-jar -Dversion=1.0-SNAPSHOT -Dpackaging=jar 
 
+cd ../ala-portal-index
+mvn clean install eclipse:eclipse
+
 cd ../ala-portal-web
 mvn clean install eclipse:eclipse
