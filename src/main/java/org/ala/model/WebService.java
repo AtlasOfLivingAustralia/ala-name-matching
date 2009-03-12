@@ -43,6 +43,8 @@ public class WebService implements Serializable {
 	protected Date lastExtractStart;
 	@Column(name="supports_date_last_modified")
 	protected boolean supportsDateLastModified;
+	@Column(name="occurrence_count")
+	protected int occurrenceCount;
 	
 	/**
 	 * @return the id
@@ -139,5 +141,17 @@ public class WebService implements Serializable {
 	 */
 	public void setLastExtractStart(Date lastExtractStart) {
 		this.lastExtractStart = lastExtractStart;
+	}
+	/**
+	 * @return the occurrenceCount
+	 */
+	public int getOccurrenceCount() {
+		return occurrenceCount;
+	}
+	/**
+	 * @param occurrenceCount the occurrenceCount to set
+	 */
+	public void setOccurrenceCount(int occurrenceCount) {
+		this.occurrenceCount = occurrenceCount;
 	}
 }

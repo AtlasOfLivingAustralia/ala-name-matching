@@ -26,18 +26,12 @@ import org.springframework.orm.hibernate3.HibernateCallback;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 /**
+ * DAO for Web Services
  * 
- *
  * @author Dave Martin (David.Martin@csiro.au)
  */
 public class WebServiceDAOImpl extends HibernateDaoSupport implements
 		WebServiceDAO {
-
-	/**
-	 * @see org.ala.dao.WebServiceDAO#create(org.ala.model.WebService)
-	 */
-	public void create(WebService webService) {
-	}
 
 	/**
 	 * @see org.ala.dao.WebServiceDAO#getAll()
@@ -46,15 +40,22 @@ public class WebServiceDAOImpl extends HibernateDaoSupport implements
 	public List<WebService> getAll() {
 		return (List<WebService>) getHibernateTemplate().execute(new HibernateCallback() {
 			public Object doInHibernate(Session session) {
-				Query query = session.createQuery("from WebService order by isoCountryCode");
+				Query query = session.createQuery("from WebService order by isoCountryCode, url");
 				return query.list();
 			}
 		});
 	}
 
 	/**
-	 * @see org.ala.dao.WebServiceDAO#update(org.ala.model.WebService)
+	 * @see org.ala.dao.WebServiceDAO#getForIsoCountryCode(java.lang.String)
 	 */
-	public void update(WebService webService) {
+	public List<WebService> getForIsoCountryCode(final String isoCountryCode) {
+		return (List<WebService>) getHibernateTemplate().execute(new HibernateCallback() {
+			public Object doInHibernate(Session session) {
+				Query query = session.createQuery("from WebService where isoCountryCode=? order by url ");
+				query.setString(0, isoCountryCode);
+				return query.list();
+			}
+		});
 	}
 }

@@ -21,13 +21,11 @@ import java.util.List;
 import org.ala.model.WebService;
 
 /**
- * 
+ * Simple DAO for access webservices information.
  *
  * @author Dave Martin (David.Martin@csiro.au)
  */
 public interface WebServiceDAO {
-
 	public List<WebService> getAll();
-	public void update(WebService webService);
-	public void create(WebService webService);
+	public List<WebService> getForIsoCountryCode(String isoCountryCode);
 }

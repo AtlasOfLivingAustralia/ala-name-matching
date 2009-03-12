@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.ala.dao.WebServiceDAO;
 import org.ala.model.WebService;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.multiaction.MultiActionController;
 
@@ -39,7 +40,15 @@ public class RegisterMeController extends MultiActionController{
 	
 	public ModelAndView list(HttpServletRequest request, HttpServletResponse response) throws Exception{
 		ModelAndView mav = new ModelAndView("webservices.list");
-		List<WebService> raps = webServiceDAO.getAll();
+		
+		List<WebService> raps = null;
+		String iso = StringUtils.trimToNull(request.getParameter("iso"));
+		if(iso==null){
+			raps = webServiceDAO.getAll();
+		} else {
+			raps = webServiceDAO.getForIsoCountryCode(iso);
+		}
+		
 		mav.addObject("resourceAccessPoints",raps);
 		return mav;
 	}	
