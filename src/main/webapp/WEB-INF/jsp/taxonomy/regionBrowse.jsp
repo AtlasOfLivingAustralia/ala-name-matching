@@ -15,7 +15,7 @@
 		</c:choose>
 		</h2>
 		<h3>
-			<spring:message code="taxonomy.browser.species.recorded.in" text="Species recorded in"/>:
+			<spring:message code="taxonomy.browser.species.recorded.in" text="Taxa recorded in"/>:
 			<a href="${pageContext.request.contextPath}/regions/${geoRegion.id}"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></a>
 		</h3>
 	</div>
