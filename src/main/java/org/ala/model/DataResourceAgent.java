@@ -18,27 +18,15 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
-import org.hibernate.search.annotations.DocumentId;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Index;
-import org.hibernate.search.annotations.Store;
-
-/**
- * 
- * 
- * @author "Dave Martin (David.Martin@csiro.au)"
- */
 @Entity
-@javax.persistence.Table(name="geo_region_type", schema="portal")
-public class GeoRegionType {
+@javax.persistence.Table(name="data_resource_agent", schema="portal")
+public class DataResourceAgent {
 
 	@Id
 	@GeneratedValue
-	@DocumentId
 	protected long id;
-	
-	@Field(index=Index.TOKENIZED, store=Store.YES)
-	protected String name;
+	protected DataResource dataResource;
+	protected Agent agent;
 	/**
 	 * @return the id
 	 */
@@ -52,15 +40,27 @@ public class GeoRegionType {
 		this.id = id;
 	}
 	/**
-	 * @return the name
+	 * @return the dataResource
 	 */
-	public String getName() {
-		return name;
+	public DataResource getDataResource() {
+		return dataResource;
 	}
 	/**
-	 * @param name the name to set
+	 * @param dataResource the dataResource to set
 	 */
-	public void setName(String name) {
-		this.name = name;
+	public void setDataResource(DataResource dataResource) {
+		this.dataResource = dataResource;
+	}
+	/**
+	 * @return the agent
+	 */
+	public Agent getAgent() {
+		return agent;
+	}
+	/**
+	 * @param agent the agent to set
+	 */
+	public void setAgent(Agent agent) {
+		this.agent = agent;
 	}
 }

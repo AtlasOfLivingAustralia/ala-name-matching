@@ -20,5 +20,6 @@
     <mapping class="org.ala.model.GeoRegion"/>
     <mapping class="org.ala.model.GeoRegionType"/>
     <mapping class="org.ala.model.Locality"/>
+    <mapping class="org.ala.model.WebService"/>
   </session-factory>
 </hibernate-configuration>

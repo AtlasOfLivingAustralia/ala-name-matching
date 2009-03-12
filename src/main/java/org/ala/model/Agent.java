@@ -14,31 +14,23 @@
  ***************************************************************************/
 package org.ala.model;
 
+import java.io.Serializable;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
-import org.hibernate.search.annotations.DocumentId;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Index;
-import org.hibernate.search.annotations.Store;
-
-/**
- * 
- * 
- * @author "Dave Martin (David.Martin@csiro.au)"
- */
 @Entity
-@javax.persistence.Table(name="geo_region_type", schema="portal")
-public class GeoRegionType {
+@javax.persistence.Table(name="agent", schema="portal")
+public class Agent implements Serializable {
 
 	@Id
 	@GeneratedValue
-	@DocumentId
 	protected long id;
-	
-	@Field(index=Index.TOKENIZED, store=Store.YES)
 	protected String name;
+	protected String email;
+	protected String telephone;
+	
 	/**
 	 * @return the id
 	 */
@@ -62,5 +54,29 @@ public class GeoRegionType {
 	 */
 	public void setName(String name) {
 		this.name = name;
+	}
+	/**
+	 * @return the email
+	 */
+	public String getEmail() {
+		return email;
+	}
+	/**
+	 * @param email the email to set
+	 */
+	public void setEmail(String email) {
+		this.email = email;
+	}
+	/**
+	 * @return the telephone
+	 */
+	public String getTelephone() {
+		return telephone;
+	}
+	/**
+	 * @param telephone the telephone to set
+	 */
+	public void setTelephone(String telephone) {
+		this.telephone = telephone;
 	}
 }

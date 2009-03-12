@@ -124,7 +124,7 @@ public class Indexer {
 			noIndexed++;
 			if(noIndexed%1000==0){
 				increFinishTime = System.currentTimeMillis();
-				logger.debug("Page number:"+pageNumber+", time taken to index last "+pageSize+" (milliseconds): "+((increFinishTime-increStartTime)));
+				logger.debug("["+objectToIndex.getClass().getName()+"] Page number:"+pageNumber+", time taken to index last "+pageSize+" (milliseconds): "+((increFinishTime-increStartTime)));
 				increStartTime = System.currentTimeMillis();
 			}
 		}

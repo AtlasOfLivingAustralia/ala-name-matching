@@ -56,8 +56,10 @@ public class CookieAndSessionCheckInterceptor extends HandlerInterceptorAdapter 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 		
-		if(switchOffCookieCheck)
+		if(switchOffCookieCheck){
+			logger.info("Cookie checking is currently disabled.");
 			return true;
+		}
 		
 		//check parameter in the session
 		if(logger.isDebugEnabled()){

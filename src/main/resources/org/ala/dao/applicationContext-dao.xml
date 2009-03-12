@@ -6,7 +6,7 @@
         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
         http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.0.xsd">
 
-  <!-- Hibernate Search -->
+  <!-- Hibernate Search (Lucene) -->
   <bean id="hsSessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
     <!-- use the shared resource data source definition -->
     <property name="dataSource" ref="dataSource"/>
@@ -40,6 +40,11 @@
   <!-- Cell Density -->
   <bean id="alaCellDensityDAO" class="org.ala.dao.jdbc.CellDensityDAOImpl">
       <property name="dataSource" ref="dataSource"/>
+  </bean>
+
+  <!-- Web Service (aka Resource Access Point) -->
+  <bean id="webServiceDAO" class="org.ala.dao.hibernate.WebServiceDAOImpl">
+    <property name="sessionFactory" ref="hsSessionFactory"/>
   </bean>
 
   <!-- Geo Region-->

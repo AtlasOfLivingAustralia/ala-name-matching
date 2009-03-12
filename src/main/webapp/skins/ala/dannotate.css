@@ -1,0 +1,60 @@
+
+*.fonz {
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-weight: normal !important;
+  font-style: normal !important;
+  font-size: 10px;
+  text-decoration: none;
+}
+
+a.dannotation {
+  //border-bottom: 3px double;
+  border-bottom: 0;
+  vertical-align: top;
+  color: black !important;
+  background-color: lightgreen;
+}
+
+div.popup {
+  background-color: lightyellow;
+  visibility: hidden;
+  padding: 6px;
+  width: 400px;
+  position: absolute;
+  border: solid 1px black;
+}
+
+a.reply {
+  background-color: pink;
+}
+
+p.body {
+  text-align: left !important;
+}
+
+h2.pophdr {
+	margin-top: -2px;
+  text-align: center;
+  font-size: 12px;
+}
+
+td.popup {
+	vertical-align: top;
+	padding-right: 6px;
+}
+
+*.cont {
+  text-align: left !important;
+}
+
+*.port {
+  float: left;
+  width: 33%;
+}
+
+*.stbd {
+  float: right;
+}
+
+
+

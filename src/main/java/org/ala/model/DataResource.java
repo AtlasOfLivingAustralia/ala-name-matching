@@ -14,6 +14,8 @@
  ***************************************************************************/
 package org.ala.model;
 
+import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -43,7 +45,7 @@ import org.hibernate.search.annotations.TokenizerDef;
       @Parameter(name = "language", value = "English")
     })
   })
-public class DataResource {
+public class DataResource implements Serializable {
 
 	@Id
 	@GeneratedValue
@@ -53,6 +55,7 @@ public class DataResource {
 	protected String name;
 	@Field(index=Index.TOKENIZED, store=Store.NO)
 	protected String description;
+	protected String address;
 	
 	@Column(name="occurrence_count")
 	protected Integer occurrenceCount;
@@ -119,5 +122,17 @@ public class DataResource {
 	 */
 	public void setOccurrenceCoordinateCount(Integer occurrenceCoordinateCount) {
 		this.occurrenceCoordinateCount = occurrenceCoordinateCount;
+	}
+	/**
+	 * @return the address
+	 */
+	public String getAddress() {
+		return address;
+	}
+	/**
+	 * @param address the address to set
+	 */
+	public void setAddress(String address) {
+		this.address = address;
 	}
 }

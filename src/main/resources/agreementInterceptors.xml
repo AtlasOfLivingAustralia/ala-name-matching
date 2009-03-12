@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+	<bean id="stopAgreementInterceptor" abstract="true" class="org.ala.web.interceptor.CookieAndSessionCheckInterceptor">
+	    <property name="switchOffCookieCheck" value="true"/>
+	</bean>
+	<bean id="occurrenceAgreementInterceptor" parent="stopAgreementInterceptor"/>
+	<bean id="datasetsDataAgreementInterceptor" parent="stopAgreementInterceptor"/>
+	<bean id="taxonomyDataAgreementInterceptor" parent="stopAgreementInterceptor"/>
+	<bean id="geographyDataAgreementInterceptor" parent="stopAgreementInterceptor"/>
+</beans>
