@@ -19,6 +19,7 @@ Note: Web Services are marked as "unavailable" if an endpoint doesnt respond
     <select name="iso">
         <option value="au">Australia</option>
         <option value="us">United States</option>
+        <option value="">View all</option>
     </select>
     <input type="submit" value="submit"/>
 </form>
@@ -49,7 +50,7 @@ Note: Web Services are marked as "unavailable" if an endpoint doesnt respond
 	    </c:choose>
 		<td>${resourceAccessPoint.remoteId}</td>
 		<td><fmt:formatDate value="${resourceAccessPoint.lastHarvestStart}" pattern="MMM-dd-yyyy"/></td>
-        <td>${resourceAccessPoint.lastExtractStart}</td>
+        <td><fmt:formatDate value="${resourceAccessPoint.lastExtractStart}" pattern="MMM-dd-yyyy"/></td>
         <td>${resourceAccessPoint.occurrenceCount}</td>
         <td><spring:message code="country.${fn:toUpperCase(resourceAccessPoint.isoCountryCode)}" text="${resourceAccessPoint.isoCountryCode}"/></td>
     </tr>
