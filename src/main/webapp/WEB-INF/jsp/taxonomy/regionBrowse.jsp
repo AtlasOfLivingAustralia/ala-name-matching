@@ -21,6 +21,7 @@
 	</div>
 	<c:choose>
 		<c:when test="${not empty regionConcepts}">
+            <% /* TODO: Either fix the target pages for links in this section or remove completely. NdR 12/03/09
 			<div id="furtherActions">
 				<h4><spring:message code='actions.for'/> <gbif:capitalize>${geoRegion.name}</gbif:capitalize></h4>
 				<table cellspacing="1" class="actionsList">
@@ -53,7 +54,8 @@
 						</tr>
 					</tbody>
 				</table>
-			</div><!--end further actions-->		
+			</div><!--end further actions-->
+            */ %>		
             <div id="regionConcepts" class=" yui-skin-sam">
             <c:if test="${not empty regionConcepts}">
                 <h5>
@@ -76,7 +78,7 @@
                         YAHOO.example.XHR_JSON = function() {
                             var formatTaxonConceptUrl = function(elCell, oRecord, oColumn, sData) {
                                 if (oRecord.getData("taxonConceptBrowseUrl")) {
-                                    elCell.innerHTML = "<a href='" + oRecord.getData("taxonConceptBrowseUrl") + "' title='view list of child concepts'>" + sData + "</a> " +
+                                    elCell.innerHTML = "<a href='" + oRecord.getData("taxonConceptBrowseUrl") + "' title='view list of child taxon concepts'>" + sData + "</a> " +
                                     "(<a href='" + oRecord.getData("taxonConceptNameUrl") + "' title='go to detailed description for this taxon concept'>more info</a>)";
                                 } else {
                                     elCell.innerHTML = "<i>" + sData + "</i> (<a href='" + oRecord.getData("taxonConceptNameUrl") +
