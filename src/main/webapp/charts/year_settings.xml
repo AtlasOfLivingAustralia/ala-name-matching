@@ -305,7 +305,7 @@
                                                               <!-- if graph settings are defined both here and in data file, the ones from data file are used -->
     <graph gid="0">                                           <!-- if you are using XML data file, graph "gid" must match graph "gid" in data file -->
       <title></title>                                         <!-- [] (graph title) -->
-      <color>#0033CC</color>                                  <!-- [] (hex color code)  -->
+      <color>#0166B9</color>                                  <!-- [] (hex color code)  -->
       <alpha>50</alpha>                                         <!-- [100] (0 - 100) line alpha. Will not affect bullets. Set to 0 if you want the line to be invisible -->
       <width></width>                                         <!-- [0] (Number) line width -->
       <data_labels>
