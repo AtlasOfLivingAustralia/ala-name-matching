@@ -48,7 +48,7 @@
   </bean>
 
   <!-- Geo Region-->
-  <bean id="alaGeoRegionDAORO" class="org.ala.dao.hibernate.GeoRegionDAOImpl">
-	<property name="sessionFactory" ref="sessionFactory"/>
+  <bean id="alaGeoRegionDAORO" class="org.ala.dao.jdbc.GeoRegionDAOImpl">
+	<property name="dataSource" ref="dataSource"/>
   </bean>
 </beans>

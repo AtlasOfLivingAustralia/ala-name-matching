@@ -32,7 +32,7 @@ td,th,tr { border: 1px solid #CCCCCC; padding:0 4px 0 4px; font-size:12px;}
 	    <th>ID</th>
 	    <th>URL</th>
 	    <th>Available</th>
-	    <th>Remote ID</th>
+        <th>Remote ID</th>
 	    <th>Last Harvest Attempt</th>
 	    <th>Last Extract Attempt</th>
         <th>Occurrences (unextracted)</th>

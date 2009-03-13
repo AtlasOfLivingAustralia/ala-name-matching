@@ -55,7 +55,6 @@ public class DataResource implements Serializable {
 	protected String name;
 	@Field(index=Index.TOKENIZED, store=Store.NO)
 	protected String description;
-	protected String address;
 	
 	@Column(name="occurrence_count")
 	protected Integer occurrenceCount;
@@ -122,17 +121,5 @@ public class DataResource implements Serializable {
 	 */
 	public void setOccurrenceCoordinateCount(Integer occurrenceCoordinateCount) {
 		this.occurrenceCoordinateCount = occurrenceCoordinateCount;
-	}
-	/**
-	 * @return the address
-	 */
-	public String getAddress() {
-		return address;
-	}
-	/**
-	 * @param address the address to set
-	 */
-	public void setAddress(String address) {
-		this.address = address;
 	}
 }

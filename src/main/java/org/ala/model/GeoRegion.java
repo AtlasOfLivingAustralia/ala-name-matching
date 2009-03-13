@@ -14,6 +14,9 @@
  ***************************************************************************/
 package org.ala.model;
 
+import java.io.Serializable;
+
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -46,7 +49,9 @@ import org.hibernate.search.annotations.TokenizerDef;
       @Parameter(name = "language", value = "English")
     })
   })
-public class GeoRegion {
+public class GeoRegion implements Serializable {
+
+	private static final long serialVersionUID = 1780062588651878219L;
 
 	@Id
 	@GeneratedValue
@@ -63,6 +68,35 @@ public class GeoRegion {
     @JoinColumn(name="region_type")
     @IndexedEmbedded(depth=2)
 	protected GeoRegionType geoRegionType;
+	
+	@Field(index=Index.NO, store=Store.NO)
+	@Column(name="iso_country_code")
+	protected String isoCountryCode;
+	
+	@Field(index=Index.NO, store=Store.NO)
+	@Column(name="occurrence_count")
+	protected int occurrenceCount; 
+	
+	@Field(index=Index.NO, store=Store.NO)
+	@Column(name="occurrence_coordinate_count")
+	protected int occurrenceCoordinateCount;
+	
+	@Field(index=Index.NO, store=Store.NO)
+	@Column(name="min_latitude")
+	protected int minLatitude; 
+	
+	@Field(index=Index.NO, store=Store.NO)
+	@Column(name="max_latitude")
+	protected int maxLatitude; 
+	
+	@Field(index=Index.NO, store=Store.NO)
+	@Column(name="min_longitude")
+	protected int minLongitude;
+	
+	@Field(index=Index.NO, store=Store.NO)
+	@Column(name="max_longitude")
+	protected int maxLongitude; 
+	
 	/**
 	 * @return the id
 	 */
@@ -117,5 +151,103 @@ public class GeoRegion {
 	 */
 	public void setAcronym(String acronym) {
 		this.acronym = acronym;
+	}
+
+	/**
+	 * @return the isoCountryCode
+	 */
+	public String getIsoCountryCode() {
+		return isoCountryCode;
+	}
+
+	/**
+	 * @param isoCountryCode the isoCountryCode to set
+	 */
+	public void setIsoCountryCode(String isoCountryCode) {
+		this.isoCountryCode = isoCountryCode;
+	}
+
+	/**
+	 * @return the occurrenceCount
+	 */
+	public int getOccurrenceCount() {
+		return occurrenceCount;
+	}
+
+	/**
+	 * @param occurrenceCount the occurrenceCount to set
+	 */
+	public void setOccurrenceCount(int occurrenceCount) {
+		this.occurrenceCount = occurrenceCount;
+	}
+
+	/**
+	 * @return the occurrenceCoordinateCount
+	 */
+	public int getOccurrenceCoordinateCount() {
+		return occurrenceCoordinateCount;
+	}
+
+	/**
+	 * @param occurrenceCoordinateCount the occurrenceCoordinateCount to set
+	 */
+	public void setOccurrenceCoordinateCount(int occurrenceCoordinateCount) {
+		this.occurrenceCoordinateCount = occurrenceCoordinateCount;
+	}
+
+	/**
+	 * @return the minLatitude
+	 */
+	public int getMinLatitude() {
+		return minLatitude;
+	}
+
+	/**
+	 * @param minLatitude the minLatitude to set
+	 */
+	public void setMinLatitude(int minLatitude) {
+		this.minLatitude = minLatitude;
+	}
+
+	/**
+	 * @return the maxLatitude
+	 */
+	public int getMaxLatitude() {
+		return maxLatitude;
+	}
+
+	/**
+	 * @param maxLatitude the maxLatitude to set
+	 */
+	public void setMaxLatitude(int maxLatitude) {
+		this.maxLatitude = maxLatitude;
+	}
+
+	/**
+	 * @return the minLongitude
+	 */
+	public int getMinLongitude() {
+		return minLongitude;
+	}
+
+	/**
+	 * @param minLongitude the minLongitude to set
+	 */
+	public void setMinLongitude(int minLongitude) {
+		this.minLongitude = minLongitude;
+	}
+
+	/**
+	 * @return the maxLongitude
+	 */
+	public int getMaxLongitude() {
+		return maxLongitude;
+	}
+
+	/**
+	 * @param maxLongitude the maxLongitude to set
+	 */
+	public void setMaxLongitude(int maxLongitude) {
+		this.maxLongitude = maxLongitude;
 	}
 }
