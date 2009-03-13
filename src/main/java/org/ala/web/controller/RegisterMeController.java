@@ -38,6 +38,14 @@ public class RegisterMeController extends MultiActionController{
 		return new ModelAndView("webservices.start");
 	}
 	
+	/**
+	 * List the webservices
+	 *  
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
 	public ModelAndView list(HttpServletRequest request, HttpServletResponse response) throws Exception{
 		ModelAndView mav = new ModelAndView("webservices.list");
 		
@@ -49,6 +57,8 @@ public class RegisterMeController extends MultiActionController{
 			raps = webServiceDAO.getForIsoCountryCode(iso);
 		}
 		
+		List<String> isoCodes = webServiceDAO.getAllHostIsoCodes();
+		mav.addObject("isoCodes",isoCodes);
 		mav.addObject("resourceAccessPoints",raps);
 		return mav;
 	}	

@@ -10,19 +10,22 @@ td,th,tr { border: 1px solid #CCCCCC; padding:0 4px 0 4px; font-size:12px;}
 </div>
 <div>
 <p>
-Note: Web Services are marked as "unavailable" if an endpoint doesnt respond
+    Note: Web Services are marked as "unavailable" if an endpoint doesnt respond
     to a metadata request.
 </p>
 
 <form action="${pageContext.request.contextPath}/register/list.htm">
     <label for="iso">Select a country</label>
     <select name="iso">
-        <option value="au">Australia</option>
-        <option value="us">United States</option>
         <option value="">View all</option>
+        <c:forEach items="${isoCodes}" var="isoCode">
+        <c:if test="${not empty isoCode}"><option value="${isoCode}"><spring:message code="country.${fn:toUpperCase(isoCode)}" text=""/></option></c:if>
+        </c:forEach>
     </select>
     <input type="submit" value="submit"/>
 </form>
+
+<p>Currently displaying <b>${fn:length(resourceAccessPoints)}</b> webservices endpoints.</p>
 
 <table>
 	<thead>

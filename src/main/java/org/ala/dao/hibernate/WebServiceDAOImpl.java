@@ -58,4 +58,17 @@ public class WebServiceDAOImpl extends HibernateDaoSupport implements
 			}
 		});
 	}
+
+	/**
+	 * @see org.ala.dao.WebServiceDAO#getAllHostIsoCodes()
+	 */
+	public List<String> getAllHostIsoCodes() {
+		return (List<String>) getHibernateTemplate().execute(new HibernateCallback() {
+			public Object doInHibernate(Session session) {
+				Query query = session.createQuery(
+						"select distinct isoCountryCode from WebService order by isoCountryCode");
+				return query.list();
+			}
+		});
+	}
 }

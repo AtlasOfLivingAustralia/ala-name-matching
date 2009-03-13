@@ -27,5 +27,6 @@ import org.ala.model.WebService;
  */
 public interface WebServiceDAO {
 	public List<WebService> getAll();
+	public List<String> getAllHostIsoCodes();
 	public List<WebService> getForIsoCountryCode(String isoCountryCode);
 }
