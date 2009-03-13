@@ -41,6 +41,7 @@ import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.FacetField.Count;
 import org.gbif.portal.dto.taxonomy.TaxonConceptDTO;
+import org.gbif.portal.model.occurrence.BasisOfRecord;
 import org.gbif.portal.service.TaxonomyManager;
 import org.springframework.context.MessageSource;
 
@@ -61,8 +62,11 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 
     protected SolrServer solrServer = null;
 
-    protected List<String> facetFields = Arrays.asList(
+    protected List<String> resourceFacetFields = Arrays.asList(
             "species_concept_id", "taxonomic_issue", "geospatial_issue", "other_issue", "month", "year");
+
+    protected List<String> speciesFacetFields = Arrays.asList(
+            "basis_of_record", "month", "year");
 
     protected List<String> monthName = Arrays.asList("January", "February", "March", "April", "May",
             "June", "July", "August", "September", "October", "November", "December");
@@ -101,7 +105,7 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 	        searchQuery.setParam("f.year.facet.limit", "-1");
 	        
 	        // add each facet field to the query
-	        for (String facet : facetFields) searchQuery.addFacetField(facet);
+	        for (String facet : resourceFacetFields) searchQuery.addFacetField(facet);
 
 	        // do the Solr search
 	        QueryResponse rsp = null;
@@ -204,6 +208,113 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 	}
 
     /**
+	 * Produce a CSV String for the requested chart type (AMCharts) for Species Page
+	 *
+	 * If there is a problem retrieving aggregated data from SOLR Server, return null
+	 *
+	 * @param species taxon concept key
+	 * @return data Map to populate the the AM Chart (csv)
+	 * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
+	 *
+	 * TODO format data as XML instead of CSV so we can add url parameter for links
+	 *
+	 * Example Solr URL:
+	 * http://localhost:8080/solr/select/?q=species_concept_id:2557787&facet=true&facet.limit=-1&facet.mincount=0
+	 *   &facet.missing=true&facet.field=basisofrecord&facet.field=year&facet.field=month&facet=true&facet.sort=false
+	 */
+	public Map<String, String> getChartFacetsForSpecies(String taxonConceptKey) {
+		try{
+		    Map<String, String> csvDataMap = new HashMap<String, String>();  // model passed through to JSP
+		    // Setup the Solr query, etc
+		    String queryString = "species_concept_id:" + taxonConceptKey;
+		    solrServer = initialiseSolrServer();
+	        SolrQuery searchQuery = new SolrQuery();  // handle better?
+	        searchQuery.setQuery(queryString);
+	        searchQuery.setRows(0); // we don't want any search results only the facet results
+	        searchQuery.setFacetLimit(100);  // TODO make -1 (no limit) and cull list after 20 but add to "other" facet
+	        searchQuery.setFacetMinCount(1);
+	        // temporal charts require special facet parameters
+	        searchQuery.setParam("f.year.facet.sort", false);
+	        searchQuery.setParam("f.month.facet.sort", false);
+	        searchQuery.setParam("f.year.facet.limit", "-1");
+
+	        // add each facet field to the query
+	        for (String facet : speciesFacetFields) searchQuery.addFacetField(facet);
+
+	        // do the Solr search
+	        QueryResponse rsp = null;
+	        try {
+	            rsp = solrServer.query( searchQuery );
+	        } catch (SolrServerException e) {
+	        	logger.warn("Problem communicating with SOLR server. Unable to generate chart data.");
+	            logger.debug(e.getMessage(), e);
+	            return null;
+	        }
+
+	        //Long resultsSize = rsp.getResults().getNumFound();
+		    // getForField the facet results (list)
+	        Calendar calendar = Calendar.getInstance();
+	        int currentYear = calendar.get(Calendar.YEAR);
+	        List<FacetField> facetResults = rsp.getFacetFields();
+
+		    for (FacetField facetData : facetResults) {
+		        // Iterate over each of the facet result objects
+		        String facetName = facetData.getName();
+		        StringBuffer csvValues = new StringBuffer(); // CSV format: 'foo;25\nbar;33\ndoh;1\n'
+		        Map<String, Long> issueFacetMap = new HashMap<String, Long>(); // needed to redistribute the issue counts after splitting bit values
+
+		        if(facetData==null){
+		        	return null;
+		        }
+
+		        for (Count count : facetData.getValues()) {
+		            // Iterate over the facet counts
+		            // TODO evaluate using percentage values for issue types only ?
+		            String label = count.getName();
+		            long facetCount = count.getCount();
+
+		            if ("year".equals(facetName)) {
+		                // skip bad year data
+		                Integer numLabel = Integer.parseInt(label);
+		                if (numLabel != null && (numLabel < startingYear  || numLabel > currentYear)) continue;
+		            }
+		            else if ("month".equals(facetName)) {
+		                // convert month int to string values (1 -> January)
+		                int monthInt = Integer.parseInt(label);
+		                label = monthName.get(monthInt-1);
+		            }
+                    else if ("basis_of_record".equals(facetName)) {
+                        // substitute the BoR string value for int value
+                        int borInt = Integer.parseInt(label);
+                        label = BasisOfRecord.getBasisOfRecord(borInt).getName();
+                    }
+                    
+		            csvValues.append(label + ';' + facetCount + "\\n");
+		            
+		        }
+
+		        // Add each key/value pair from issueFacetMap to csvValues string buffer
+		        Set<String> keys = issueFacetMap.keySet();
+		        Iterator<String> it = keys.iterator();
+		        while (it.hasNext()) {
+		            String key = it.next();
+		            csvValues.append(key + ';' + issueFacetMap.get(key) + "\\n");
+		        }
+
+		        // Add each facet CSV data string to the csvDataMap map
+		        csvDataMap.put(facetName, csvValues.toString());
+		        logger.debug("getChartData: " + facetName + "->" + csvValues);
+		    }
+		    return csvDataMap;
+		} catch(Exception e){
+        	logger.warn("Problem generating chart data. Charts will not be rendered");
+            logger.debug(e.getMessage(), e);
+		}
+        
+		return null;
+	}
+
+    /**
      * Return a list of taxon_concept ids for the given geo region and rank
      * @param regionId
      * @param startingRank
@@ -243,7 +354,7 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
             if (facetQuery != null)
                 searchQuery.setFilterQueries(facetQuery);
 	        // add each facet field to the query
-	        //for (String facet : facetFields) searchQuery.addFacetField(facet);
+	        //for (String facet : resourceFacetFields) searchQuery.addFacetField(facet);
 
 	        // do the Solr search
 	        QueryResponse rsp = null;
@@ -308,8 +419,12 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
         return solrServer;
     }
 
-    public void setFacetFields(List<String> facetFields) {
-        this.facetFields = facetFields;
+    public void setResourceFacetFields(List<String> resourceFacetFields) {
+        this.resourceFacetFields = resourceFacetFields;
+    }
+
+    public void setSpeciesFacetFields(List<String> speciesFacetFields) {
+        this.speciesFacetFields = speciesFacetFields;
     }
 
     public static void setLogger(Log logger) {

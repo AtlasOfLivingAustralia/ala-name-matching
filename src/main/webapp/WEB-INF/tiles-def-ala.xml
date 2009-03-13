@@ -57,7 +57,7 @@
         <put name="content" value="/WEB-INF/jsp/taxonomy/regionBrowse.jsp"/>
     </definition>
     <definition name="taxonomyRegionBrowse.json" path="/WEB-INF/jsp/taxonomy/jsonRegionBrowse.jsp"/>
-    
+
     <!-- Webservices Registration  -->
     <definition name="webservices.start" page="/WEB-INF/jsp/ws/start.jsp"/>
     <definition name="webservices.check" page="/WEB-INF/jsp/ws/check.jsp"/>

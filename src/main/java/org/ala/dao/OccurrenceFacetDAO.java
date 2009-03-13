@@ -28,15 +28,22 @@ public interface OccurrenceFacetDAO {
     /**
      * 
      * @param dataResourceKey
-     * @return
+     * @return Map
      */
     public Map<String, String> getChartFacetsForResource(String dataResourceKey);
+
+    /**
+     *
+     * @param conceptIdentifier
+     * @return Map
+     */
+    public Map<String, String> getChartFacetsForSpecies(String conceptIdentifier);
 
     /**
      * 
      * @param regionId
      * @param startingRank
-     * @return
+     * @return Map
      */
     public List<GeoRegionTaxonConcept> getTaxonConceptsForGeoRegion(Long regionId, String rankFacet);
 

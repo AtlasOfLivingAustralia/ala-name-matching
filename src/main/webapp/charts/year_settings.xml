@@ -305,9 +305,9 @@
                                                               <!-- if graph settings are defined both here and in data file, the ones from data file are used -->
     <graph gid="0">                                           <!-- if you are using XML data file, graph "gid" must match graph "gid" in data file -->
       <title></title>                                         <!-- [] (graph title) -->
-      <color>#CC0000</color>                                  <!-- [] (hex color code)  -->
-      <alpha></alpha>                                         <!-- [100] (0 - 100) line alpha. Will not affect bullets. Set to 0 if you want the line to be invisible -->
-      <width></width>                                         <!-- [0] (Number) line width -->      
+      <color>#0033CC</color>                                  <!-- [] (hex color code)  -->
+      <alpha>50</alpha>                                         <!-- [100] (0 - 100) line alpha. Will not affect bullets. Set to 0 if you want the line to be invisible -->
+      <width></width>                                         <!-- [0] (Number) line width -->
       <data_labels>
         <![CDATA[]]>                                          <!-- [] ({title} {value} {description} {x} {y} {percents}) You can format any data label: {title} will be replaced with real title, {value} - with value and so on. You can add your own text or html code too. -->
       </data_labels>
@@ -317,8 +317,8 @@
 
       <bullet_max_size></bullet_max_size>                     <!-- [50] maximum size of a bullet (balloon) The bullet with the highest value will be equal to this size -->
       <bullet_min_size></bullet_min_size>                     <!-- [0] minimum size of a bullet (balloon) -->
-      <bullet>round_outlined</bullet>                                  <!-- [] (square, round, square_outlined, round_outlined,  bubble, square_outline, round_outline, x. triangle_up, triangle_down, romb filename.swf) can be used predefined bullets or loaded custom bullets. Leave empty if you don't want to have bullets at all. Outlined bullets use plot area color for outline color -->           
-      <bullet_size></bullet_size>                             <!-- [] (Number) bullet size. This param is only used if your values are not set in data file -->
+      <bullet>round</bullet>                                  <!-- [] (square, round, square_outlined, round_outlined,  bubble, square_outline, round_outline, x. triangle_up, triangle_down, romb filename.swf) can be used predefined bullets or loaded custom bullets. Leave empty if you don't want to have bullets at all. Outlined bullets use plot area color for outline color -->
+      <bullet_size>10</bullet_size>                             <!-- [] (Number) bullet size. This param is only used if your values are not set in data file -->
       <bullet_color></bullet_color>                           <!-- [] (hex color code) bullet color. If not defined, graph color is used -->
       <bullet_alpha>100</bullet_alpha>                        <!-- [100] (Number) -->
       <visible_in_legend></visible_in_legend>                 <!-- [true] (true / false) whether to show legend entry for this graph or not -->

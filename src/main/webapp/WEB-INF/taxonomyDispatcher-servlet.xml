@@ -41,7 +41,7 @@
 				<prop key="/classificationSearch/**/*">classificationSearchController</prop>				
 				<prop key="/">taxonomyBrowseController</prop>
 				<prop key="/*.htm">urlFilenameController</prop>						
-				<prop key="/**/*">taxonResolvingController</prop>
+				<prop key="/**/*">alaTaxonResolvingController</prop>
 			</props>
 		</property>
 	</bean>
@@ -88,6 +88,29 @@
 	        </list>
 	      </list>
 	    </property>
+	</bean>
+
+    <!--Taxon Concept Resolving Controller - resolving using Scientific Name -->
+	<bean id="alaTaxonResolvingController" class="org.ala.web.controller.AlaTaxonResolvingController">
+		<property name="taxonomyManager" ref="taxonomyManager"/>
+		<property name="dataResourceManager" ref="dataResourceManager"/>
+		<property name="geospatialManager" ref="geospatialManager"/>
+		<property name="occurrenceManager" ref="occurrenceManager"/>
+        <property name="occurrenceFacetDAO" ref="occurrenceFacetDAORO"/>
+		<property name="messageSource" ref="messageSource"/>
+		<property name="mapContentProvider" ref="mapContentProvider"/>
+		<property name="filterContentProvider" ref="filterContentProvider"/>
+		<property name="taxonConceptUtils" ref="taxonConceptUtils"/>
+		<property name="userUtils" ref="userUtils"/>
+		<property name="urlRoot" value="species"/>
+		<property name="viewNamePrefix" value="species"/>
+		<property name="defaultView" value="/welcome.htm"/>
+		<property name="showCharts" value="true"/>
+		<property name="supportedSubViews">
+			<list>
+				<value>mapWidget</value>
+			</list>
+		</property>
 	</bean>
 
 </beans>
