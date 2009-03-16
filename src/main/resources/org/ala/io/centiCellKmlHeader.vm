@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="http://www.opengis.net/kml/2.2">
+ <name>ALA GIS Layer for $entityName</name>
+ <open>true</open>
+ <description>-
+    This document contains for $entityName harvested by 
+    the Atlas of Living Australia.
+    see http://www.ala.org.au/
+-</description>
+ <Style id="downArrowIcon">
+  <IconStyle>
+   <Icon>
+    <href>http://maps.google.com/mapfiles/kml/pal4/icon28.png</href>
+   </Icon>
+  </IconStyle>
+ </Style>

@@ -1,0 +1,175 @@
+<Document xmlns="http://earth.google.com/kml/2.1">
+  <name>ALA GIS Portal Occurrence Search</name>
+  <open>true</open>
+  <description>-
+
+-</description>
+  <Style id="gbifIcon1">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GE1.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon2">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GE2.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon3">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GE3.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon4">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GE4.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon5">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GE5.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon6">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEcube1.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon7">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEcube2.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon8">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEcube3.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon9">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEcube4.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon10">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEcube5.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon11">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GErc1.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon12">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GErc2.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon13">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GErc3.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon14">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEfl1.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon15">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEcil1.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon16">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEcil2.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon17">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEcil3.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon18">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEcil4.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon19">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEcil5.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon20">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEslp1.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon21">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEslp2.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon22">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEslp3.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon23">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEslp4.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Style id="gbifIcon24">
+    <IconStyle>
+      <Icon>
+        <href>$hostUrl/images/GEslp5.png</href>
+      </Icon>
+    </IconStyle>
+  </Style>
+  <Folder> 

@@ -1,0 +1,38 @@
+<Folder>
+ <name>$density records</name>
+ <Placemark>
+  <name>$entityName - $density records</name>
+  <visibility>0</visibility>
+  <Region>
+    <Lod>
+      <minLodPixels>128</minLodPixels>
+    </Lod>
+    <LatLonAltBox>
+       <north>$llbb.maxLat</north>
+       <south>$llbb.minLat</south>
+       <east>$llbb.maxLong</east>
+       <west>$llbb.minLong</west>
+    </LatLonAltBox>
+  </Region>
+  <description><![CDATA[<p><img src="$hostUrl/skins/ala/images/ALA-web-banner-2.jpg"/></p><p><a href="$hostUrl/maplayer/occurrence/placemarks.kml?id=$entityId&type=$entityType&cellId=$cellId&centiCellId=$centiCellId&format=kml">Download the records in this cell</a></p>]]></description>
+  <styleUrl>#downArrowIcon</styleUrl>
+  <Point>
+   <coordinates>$longitude,$latitude,0</coordinates>
+  </Point>
+ </Placemark>
+ <GroundOverlay id="$entityId-$entityType-$cellId-$centiCellId">
+  <visibility>true</visibility>
+  <color>#if($density<10 ) af00ffff #end
+    #if($density >=10 && $density<100) af00ccff #end
+    #if($density >=100 && $density<1000) af0099ff #end
+    #if($density >=1000 && $density<10000) af0066ff #end
+    #if($density >=10000 && $density<100000) af0033ff #end
+    #if($density >=100000) af0000cc #end</color>
+  <LatLonBox>
+   <north>$llbb.maxLat</north>
+   <south>$llbb.minLat</south>
+   <east>$llbb.maxLong</east>
+   <west>$llbb.minLong</west>
+  </LatLonBox>
+ </GroundOverlay>
+</Folder>

@@ -7,6 +7,7 @@
         <property name="mappings">
             <props>
                 <prop key="/simple/*">simpleMapLayerController</prop>
+                <prop key="/occurrence/*">ocurrenceCellController</prop>
                 <prop key="/all/**/*">allMapLayerController</prop>
                 <prop key="/taxon/**/*">taxonMapLayerController</prop>
                 <prop key="/country/**/*">countryMapLayerController</prop>
@@ -19,8 +20,13 @@
         </property>
     </bean>
     
+    <!--  -->
     <bean id="simpleMapLayerController" class="org.ala.web.controller.SimpleMapLayerController">
         <property name="cellDensityDAO" ref="alaCellDensityDAO"/>
+    </bean>
+    
+    <bean id="ocurrenceCellController" class="org.ala.web.controller.OccurrenceCellController">
+        <property name="occurrenceRecordDAO" ref="alaOccurrenceRecordDAORO"/>
     </bean>
     
     <bean id="allMapLayerController" parent="entityMapLayerController">

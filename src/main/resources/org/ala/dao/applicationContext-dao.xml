@@ -33,6 +33,17 @@
   <bean id="occurrenceFacetDAORO" class="org.ala.dao.solr.OccurrenceFacetDAOImpl">
       <property name="messageSource" ref="messageSource"/>
       <property name="taxonomyManager" ref="taxonomyManager"/>
+      <property name="solrDataHelper" ref="solrDataHelper"/>
+  </bean>
+
+  <!-- ALA Occurrence Record DAO -->
+  <bean id="alaOccurrenceRecordDAORO" class="org.ala.dao.hibernate.OccurrenceRecordDAOImpl">
+      <property name="sessionFactory" ref="sessionFactory"/>
+  </bean>
+
+  <!-- SOLR data Helper -->
+  <bean id="solrDataHelper" class="org.ala.dao.solr.SolrDataHelper">
+    <property name="dataSource" ref="dataSource"/>
   </bean>
 
   <!-- ALA overrides... -->

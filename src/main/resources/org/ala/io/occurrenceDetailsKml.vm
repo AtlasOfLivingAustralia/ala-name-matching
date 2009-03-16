@@ -1,0 +1,47 @@
+#if ($previousTaxonName)
+    #if ($previousTaxonName!=$taxonName)
+        </Folder>
+        <Folder>
+            <name>$taxonName</name>
+        #set( $iconCounter = $iconCounter + 1 )
+        #if ( $iconCounter>24)
+            #set( $iconCounter = 1 )        
+        #end    
+    #end
+#else
+    #set( $iconCounter = 1 )
+    #set( $previousTaxonName=$taxonName )
+#end
+        <Placemark>
+          <name>$taxonName</name>
+          <description><![CDATA[
+            <p>$occurrenceRecord.institutionCode.code $occurrenceRecord.collectionCode.code $occurrenceRecord.catalogueNumber.code</p>  
+            <p><img src="$hostUrl/skins/ala/images/ALA-web-banner-2.jpg"/></p>
+            <p><b>Data retrieved from <a href="$hostUrl">ALA GIS Portal</a></b></p>
+            <table>
+                <tr>
+                    <th>Data Resource</th>
+                    <th>Institution Code</th>
+                    <th>Collection Code</th>
+                    <th>Catalogue Number</th>
+        #if ($occurrenceRecord.occurrenceDate)
+                    <th>Date</th>
+        #end            
+                </tr>
+                    <tr>
+                        <td>$occurrenceRecord.dataResource.name<br/><span style="font-size:smaller;">(provided by $occurrenceRecord.dataProvider.name)</span></td>
+                        <td>$occurrenceRecord.institutionCode.code</td>
+                        <td>$occurrenceRecord.collectionCode.code</td>
+                        <td>$occurrenceRecord.catalogueNumber.code</td>
+        #if ($occurrenceRecord.occurrenceDate)                                              
+                        <td>$!dateFormatter.format('dd-MM-yyyy',$!occurrenceRecord.occurrenceDate)</td>
+        #end                
+                    </tr>
+                </table>
+                <p><b>ALA GIS Portal URL</b>: <a href="$hostUrl/occurrences/$occurrenceRecord.id">$hostUrl/occurrences/$occurrenceRecord.id</a></p>
+            ]]></description>
+          <styleUrl>#gbifIcon$iconCounter</styleUrl>
+          <Point>
+            <coordinates>$occurrenceRecord.longitude,$occurrenceRecord.latitude</coordinates>
+          </Point>
+        </Placemark>
