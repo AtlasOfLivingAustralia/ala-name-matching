@@ -22,6 +22,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.ala.dao.CellDensityDAO;
 import org.ala.io.CellDensityOutputStream;
+import org.ala.io.KmlCellDensityOutputStream;
+import org.ala.web.util.WebUtils;
 import org.apache.log4j.Logger;
 import org.gbif.portal.util.geospatial.CellIdUtils;
 import org.springframework.web.bind.ServletRequestUtils;
@@ -49,6 +51,9 @@ public class SimpleMapLayerController implements Controller {
 		float unit = ServletRequestUtils.getFloatParameter(request, "unit", 1f);
 		final long id = ServletRequestUtils.getLongParameter(request, "id", 0);
 		final int type = ServletRequestUtils.getIntParameter(request, "type", 0);
+		final String entityName = ServletRequestUtils.getStringParameter(request, "entityName", "entityName");
+		final String entityTypeName = ServletRequestUtils.getStringParameter(request, "entityTypeName", "entityTypeName");
+		final String format = ServletRequestUtils.getStringParameter(request, "format", "tab");
 		final boolean ignoreBoundaries = ServletRequestUtils.getBooleanParameter(request, "ignoreBoundaries", false);
 		final boolean gzipped = ServletRequestUtils.getBooleanParameter(request, "gz", false);
 		
@@ -64,13 +69,34 @@ public class SimpleMapLayerController implements Controller {
 			maxY = ServletRequestUtils.getFloatParameter(request, "maxy");
 		}
 		
-		OutputStream output = response.getOutputStream();
-		if(gzipped){
-			logger.debug("Sending gzipped data....");
-			response.setContentType("application/gzip");
-			output = new GZIPOutputStream(output);
+//		OutputStream output = response.getOutputStream();
+//		File tempFile = DownloadUtils.createTempFileOutput("ala-region-", Long.toString(id), ".kml", false);
+//		OutputStream output = new FileOutputStream(tempFile);
+		
+		CellDensityOutputStream routput = null;
+		if(format.equalsIgnoreCase("kmz")){
+			routput = new KmlCellDensityOutputStream(response.getOutputStream(), 
+					Long.toString(id), entityName, Integer.toString(type), entityTypeName, 
+					WebUtils.getHostUrl(request), 
+					"ala-"+System.currentTimeMillis()+".kml", true);
+			response.setContentType("application/vnd.google-earth.kmz");
+		} else if(format.equalsIgnoreCase("kml")){
+			routput = new KmlCellDensityOutputStream(response.getOutputStream(), 
+					Long.toString(id), entityName, Integer.toString(type), entityTypeName, 
+					WebUtils.getHostUrl(request), 
+					"ala-"+System.currentTimeMillis()+".kml", false);
+			response.setContentType("application/vnd.google-earth.kml+xml");
+		} else {
+			OutputStream output = null;
+			if(gzipped){
+				logger.debug("Sending gzipped data....");
+				response.setContentType("application/gzip");
+				output = new GZIPOutputStream(response.getOutputStream());
+			} else {
+				output = response.getOutputStream();
+			}
+			routput = new CellDensityOutputStream(output);
 		}
-		CellDensityOutputStream routput = new CellDensityOutputStream(output);
 		
 		Integer minCellId = null;
 		Integer maxCellId = null;
@@ -105,13 +131,17 @@ public class SimpleMapLayerController implements Controller {
 			}			
 		} else {
 			logger.debug("Retrieving 1 deg cells....");
-			if(!ignoreBoundaries && maxX!=null && maxY!=null && minX!=null && minY!=null){			
+			if(!ignoreBoundaries && maxX!=null && maxY!=null && minX!=null && minY!=null){
 				cellDensityDAO.outputCellDensities(id, type, minCellId, maxCellId, routput);
 			} else {
 				cellDensityDAO.outputCellDensities(id, type, routput);
 			}
 		}
-		output.close();
+		
+		//close the stream
+		routput.close();
+//		String fileName = tempFile.getName();
+//		tempFile.renameTo(new File(tempFile.getParent()+File.separator+fileName.substring(0, fileName.length()-DownloadUtils.temporaryExtensionIndicator.length() )));
 		return null;
 	}
 

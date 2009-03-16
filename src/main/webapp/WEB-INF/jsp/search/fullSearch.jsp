@@ -61,6 +61,8 @@
                             <gbif:capitalize>${commonName.name}</gbif:capitalize>
                         </a>
                         - Scientific name: ${commonName.taxonConcept.taxonName.canonical}
+                        
+                        ${commonName.taxonConcept.kingdomConcept.taxonName.canonical}
                     </span>
                 </p>
             </td>

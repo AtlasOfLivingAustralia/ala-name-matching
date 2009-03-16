@@ -33,6 +33,11 @@ public class CellDensityOutputStream {
 	protected byte[] delimiter = "\t".getBytes();
 	protected byte[] eol = "\n".getBytes();
 	
+	protected String entityId;
+	protected String entityName;
+	protected String entityType;
+	protected String entityTypeName;
+	
 	/**
 	 * Initialise this output stream.
 	 * 
@@ -52,7 +57,6 @@ public class CellDensityOutputStream {
 	public void writeCell(int cellId, int count) throws IOException{
 		LatLongBoundingBox llbb = CellIdUtils.toBoundingBox(cellId);
 		writeOutLatLongBoundingBox(llbb,count);
-		this.outputStream.flush();
 	}
 
 	/**
@@ -66,7 +70,6 @@ public class CellDensityOutputStream {
 	public void writeCentiCell(int cellId, int centiCellId, int count) throws IOException{
 		LatLongBoundingBox llbb = CellIdUtils.toBoundingBox(cellId, centiCellId);
 		writeOutLatLongBoundingBox(llbb,count);
-		this.outputStream.flush();
 	}
 	
 	/**
@@ -80,7 +83,6 @@ public class CellDensityOutputStream {
 	public void writeTenMilliCell(int cellId, int tenMilliCellId, int count) throws IOException{
 		LatLongBoundingBox llbb = tenMilliToBoundingBox(cellId, tenMilliCellId);
 		writeOutLatLongBoundingBox(llbb, count);
-		this.outputStream.flush();
 	}
 
 	/**
@@ -100,6 +102,7 @@ public class CellDensityOutputStream {
 		outputStream.write(delimiter);
 		outputStream.write(Integer.toString(count).getBytes());
 		outputStream.write(eol);
+		this.outputStream.flush();
 	}
 	
 	/**
@@ -131,6 +134,14 @@ public class CellDensityOutputStream {
 	}
 	
 	/**
+	 * Close the wrapped outputstream.
+	 * @throws IOException
+	 */
+	public void close() throws Exception{
+		this.outputStream.close();
+	}
+	
+	/**
 	 * @return the outputStream
 	 */
 	public OutputStream getOutputStream() {
@@ -142,5 +153,61 @@ public class CellDensityOutputStream {
 	 */
 	public void setOutputStream(OutputStream outputStream) {
 		this.outputStream = outputStream;
+	}
+
+	/**
+	 * @return the entityId
+	 */
+	public String getEntityId() {
+		return entityId;
+	}
+
+	/**
+	 * @param entityId the entityId to set
+	 */
+	public void setEntityId(String entityId) {
+		this.entityId = entityId;
+	}
+
+	/**
+	 * @return the entityName
+	 */
+	public String getEntityName() {
+		return entityName;
+	}
+
+	/**
+	 * @param entityName the entityName to set
+	 */
+	public void setEntityName(String entityName) {
+		this.entityName = entityName;
+	}
+
+	/**
+	 * @return the entityType
+	 */
+	public String getEntityType() {
+		return entityType;
+	}
+
+	/**
+	 * @param entityType the entityType to set
+	 */
+	public void setEntityType(String entityType) {
+		this.entityType = entityType;
+	}
+
+	/**
+	 * @return the entityTypeName
+	 */
+	public String getEntityTypeName() {
+		return entityTypeName;
+	}
+
+	/**
+	 * @param entityTypeName the entityTypeName to set
+	 */
+	public void setEntityTypeName(String entityTypeName) {
+		this.entityTypeName = entityTypeName;
 	}
 }

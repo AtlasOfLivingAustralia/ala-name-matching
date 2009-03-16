@@ -56,6 +56,8 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
     protected MessageSource messageSource;
 
     protected TaxonomyManager taxonomyManager;
+    
+    protected SolrDataHelper solrDataHelper;
 
     /** Breakdown of indexing data for display as charts (uses Solr) */
     protected String solrUrl = "http://localhost:8080/solr";
@@ -375,18 +377,32 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 		        if (facetData == null) {
 		        	return geoRegionTaxonConcept; // will be empty list
 		        }
-
+		        
+		        List<Long> conceptIds = new ArrayList<Long>();
 		        for (Count count : facetData.getValues()) {
+		        	String taxonConcept = count.getName();
+                    Long taxonConceptId = Long.parseLong(taxonConcept);
+		        	conceptIds.add(taxonConceptId);
+		        }
+		        
+		        List<Map<String, Object>> conceptNames = solrDataHelper.getScientificNamesForConceptsIds(conceptIds);
+		        List<Count> counts = facetData.getValues();
+		        for (int j=0; j<counts.size(); j++) {
 		            // Iterate over the facet counts
+		        	Count count = counts.get(j);
 		            String taxonConcept = count.getName();
                     Long taxonConceptId = Long.parseLong(taxonConcept);
 		            Long facetCount = count.getCount();
-                    TaxonConceptDTO taxonConceptDTO = taxonomyManager.getTaxonConceptFor(taxonConcept);
+//                    TaxonConceptDTO taxonConceptDTO = taxonomyManager.getTaxonConceptFor(taxonConcept);
                     GeoRegionTaxonConcept grtc = new GeoRegionTaxonConcept();
                     grtc.setGeoRegionId(regionId);
                     grtc.setTaxonConceptId(taxonConceptId);
-                    grtc.setTaxonConceptName(taxonConceptDTO.getTaxonName());
-                    grtc.setCommonName(taxonConceptDTO.getCommonName());
+                    
+                    Map<String, Object> conceptName = conceptNames.get(j);
+                    
+                    grtc.setTaxonConceptName((String) conceptName.get("scientific_name"));
+                    grtc.setCommonName((String) conceptName.get("common_name"));
+                    
                     grtc.setOccurrenceCount(facetCount);
                     grtc.setRankName(rank.getRank());
                     geoRegionTaxonConcept.add(grtc);
@@ -427,10 +443,6 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
         this.speciesFacetFields = speciesFacetFields;
     }
 
-    public static void setLogger(Log logger) {
-        OccurrenceFacetDAOImpl.logger = logger;
-    }
-
     public void setMessageSource(MessageSource messageSource) {
         this.messageSource = messageSource;
     }
@@ -451,4 +463,10 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
         this.taxonomyManager = taxonomyManager;
     }
 
+	/**
+	 * @param solDataHelper the solDataHelper to set
+	 */
+	public void setSolrDataHelper(SolrDataHelper solrDataHelper) {
+		this.solrDataHelper = solrDataHelper;
+	}
 }

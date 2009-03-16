@@ -1,27 +1,26 @@
 <%@ include file="/common/taglibs.jsp"%>
 <div id="twopartheader">
 <h2>Geographic Region: <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></h2>
-<h3>
-<c:if test="${geoRegion.regionType ==1}">Australian State</c:if>
-<c:if test="${geoRegion.regionType ==2}">Australian Territory</c:if> 
-<c:if test="${geoRegion.regionType ==3}">Borough</c:if>
-<c:if test="${geoRegion.regionType ==4}">City</c:if>
-<c:if test="${geoRegion.regionType ==5}">Community gov. council</c:if>
-<c:if test="${geoRegion.regionType ==6}">District council</c:if>
-<c:if test="${geoRegion.regionType ==7}">Municipality</c:if>
-<c:if test="${geoRegion.regionType ==8}">Rural city</c:if>
-<c:if test="${geoRegion.regionType ==9}">Shire</c:if>
-<c:if test="${geoRegion.regionType ==10}">Territory</c:if>
-<c:if test="${geoRegion.regionType ==11}">Town</c:if>
-<c:if test="${geoRegion.regionType >=2000 && geoRegion.regionType <3000}">Interim Biogeographic Regionalisation of Australia Region - Biogeographic region</c:if>
-<c:if test="${geoRegion.regionType ==3001}">Integrated Marine and Coastal Regionalisation of Australia Region - Cold Temperate Waters</c:if>
-<c:if test="${geoRegion.regionType ==3002}">Integrated Marine and Coastal Regionalisation of Australia Region - Subtropical Waters</c:if>
-<c:if test="${geoRegion.regionType ==3003}">Integrated Marine and Coastal Regionalisation of Australia Region - Transitional Waters</c:if>
-<c:if test="${geoRegion.regionType ==3004}">Integrated Marine and Coastal Regionalisation of Australia Region - Tropical Waters</c:if>
-<c:if test="${geoRegion.regionType ==3005}">Integrated Marine and Coastal Regionalisation of Australia Region -  Warm Temperate Waters</c:if>
-<c:if test="${geoRegion.regionType ==3005}">Integrated Marine and Coastal Regionalisation of Australia Region -  Warm Temperate Waters</c:if>
-<c:if test="${geoRegion.regionType >=5000 && geoRegion.regionType <6000}">River Basin</c:if>
-</h3>
+<c:if test="${geoRegion.regionType ==1}"><c:set var="regionType">Australian State</c:set></c:if>
+<c:if test="${geoRegion.regionType ==2}"><c:set var="regionType">Australian Territory</c:set></c:if> 
+<c:if test="${geoRegion.regionType ==3}"><c:set var="regionType">Borough</c:set></c:if>
+<c:if test="${geoRegion.regionType ==4}"><c:set var="regionType">City</c:set></c:if>
+<c:if test="${geoRegion.regionType ==5}"><c:set var="regionType">Community gov. council</c:set></c:if>
+<c:if test="${geoRegion.regionType ==6}"><c:set var="regionType">District council</c:set></c:if>
+<c:if test="${geoRegion.regionType ==7}"><c:set var="regionType">Municipality</c:set></c:if>
+<c:if test="${geoRegion.regionType ==8}"><c:set var="regionType">Rural city</c:set></c:if>
+<c:if test="${geoRegion.regionType ==9}"><c:set var="regionType">Shire</c:set></c:if>
+<c:if test="${geoRegion.regionType ==10}"><c:set var="regionType">Territory</c:set></c:if>
+<c:if test="${geoRegion.regionType ==11}"><c:set var="regionType">Town</c:set></c:if>
+<c:if test="${geoRegion.regionType >=2000 && geoRegion.regionType <3000}"><c:set var="regionType">Interim Biogeographic Regionalisation of Australia Region - Biogeographic region</c:set></c:if>
+<c:if test="${geoRegion.regionType ==3001}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region - Cold Temperate Waters</c:set></c:if>
+<c:if test="${geoRegion.regionType ==3002}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region - Subtropical Waters</c:set></c:if>
+<c:if test="${geoRegion.regionType ==3003}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region - Transitional Waters</c:set></c:if>
+<c:if test="${geoRegion.regionType ==3004}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region - Tropical Waters</c:set></c:if>
+<c:if test="${geoRegion.regionType ==3005}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region -  Warm Temperate Waters</c:set></c:if>
+<c:if test="${geoRegion.regionType ==3005}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region -  Warm Temperate Waters</c:set></c:if>
+<c:if test="${geoRegion.regionType >=5000 && geoRegion.regionType <6000}"><c:set var="regionType">River Basin</c:set></c:if>
+<h3>${regionType}</h3>
 </div>
 <c:if test="${geoRegion.occurrenceCount>0}">
 <div id="furtherActions">
@@ -45,24 +44,11 @@
 				</td>
 			</tr>
 			<tr valign="top">
-				<td><b><spring:message code="actions.list"/></b></td>
-				<td>
-					<ul class="actionsListInline">
-						<li>
-							<c:set var="a0">
-								<span class='subject'><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span>
-							</c:set>
-							<a href="${pageContext.request.contextPath}/occurrences/searchResources.htm?<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="0"/>"><spring:message code="geography.drilldown.list.resources" arguments="${a0}"/></a>
-						</li>
-					</ul>
-				</td>
-			</tr>
-			<tr valign="top">
 				<td><b><spring:message code="actions.download"/></b></td>
 				<td>
 					<ul class="actionsListInline">
 						<li>
-							<a href="${pageContext.request.contextPath}/occurrences/region/celldensity/country-celldensity-${geoRegion.id}.kml"><spring:message code="download.google.earth.celldensity"/></a>
+							<a href="${pageContext.request.contextPath}/maplayer/simple/ala-georegion-${geoRegion.id}.kmz?id=${geoRegion.id}&type=8&format=kmz&unit=0.1&entityType=${regionType}&entityName=${geoRegion.name}"><spring:message code="download.google.earth.celldensity"/></a>
 						</li>
 					</ul>
 				</td>

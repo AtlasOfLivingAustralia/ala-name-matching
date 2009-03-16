@@ -21,7 +21,7 @@
 				<!-- geospatial filters-->
                 <ref bean="geoRegionFilter"/>
 				<ref bean="countryFilter"/>
-				<ref bean="boundingBoxFilter"/>
+<!-- 			<ref bean="boundingBoxFilter"/> -->
 				<ref bean="latitudeFilter"/>
 				<ref bean="longitudeFilter"/>
                 <ref bean="altitudeFilter"/>
@@ -31,8 +31,9 @@
 				<!-- dataset filters-->
 				<ref bean="dataProviderIdFilter"/>
 				<ref bean="dataResourceIdFilter"/>
-				<ref bean="hostCountryCodeFilter"/>
+<!-- 			<ref bean="hostCountryCodeFilter"/>
 				<ref bean="resourceNetworkIdFilter"/>
+-->
 				<ref bean="occurrenceDateFilter"/>
 				<ref bean="yearRangeFilter"/>
 				<ref bean="yearFilter"/>
