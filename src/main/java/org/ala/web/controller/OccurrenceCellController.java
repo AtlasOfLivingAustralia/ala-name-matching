@@ -68,6 +68,7 @@ public class OccurrenceCellController implements Controller {
 	 */
 	private void renderOccurrences(List<OccurrenceRecord> ors, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		
+		response.setContentType("application/vnd.google-earth.kml+xml");
 		Template hdr = Velocity.getTemplate("org/ala/io/occurrenceDetailsKmlHeader.vm");
 		Template bdy = Velocity.getTemplate("org/ala/io/occurrenceDetailsKml.vm");
 		Template ftr = Velocity.getTemplate("org/ala/io/occurrenceDetailsKmlFooter.vm");
