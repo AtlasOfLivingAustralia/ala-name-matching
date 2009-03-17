@@ -4,7 +4,7 @@
   <name>$entityName - $density records</name>
   <Region>
     <Lod>
-      <minLodPixels>256</minLodPixels>
+      <minLodPixels>128</minLodPixels>
     </Lod>
     <LatLonAltBox>
        <north>$llbb.maxLat</north>

@@ -36,17 +36,11 @@ public class OccurrenceRecordDAOImpl extends org.gbif.portal.dao.occurrence.impl
 			final int entityType, final long entityId, final int cellId, final int centiCellId) {
 		
 		if(entityType==org.ala.dao.EntityType.TYPE_GEO_REGION.getId()){
-			return (List<OccurrenceRecord>) getHibernateTemplate().execute(new HibernateCallback() {
+			List<OccurrenceRecord> ocs = (List<OccurrenceRecord>) getHibernateTemplate().execute(new HibernateCallback() {
 				public Object doInHibernate(Session session) {
 					Query query = session.createQuery(
 							"select oc from OccurrenceRecord oc " +
 							"inner join oc.geoMappings gm " +
-							"inner join fetch oc.dataProvider " +
-							"inner join fetch oc.dataResource " +
-							"inner join fetch oc.taxonName " +
-							"inner join fetch oc.institutionCode " +
-							"inner join fetch oc.collectionCode " +
-							"inner join fetch oc.catalogueNumber " +
 							"where oc.cellId=? and oc.centiCellId=? and gm.geoRegionId=? " +
 							"order by oc.taxonName.canonical");
 					query.setInteger(0, cellId);
@@ -55,6 +49,7 @@ public class OccurrenceRecordDAOImpl extends org.gbif.portal.dao.occurrence.impl
 					return query.list();
 				}
 			});	
+			return ocs;
 		}
 		throw new IllegalArgumentException("Unsupported entity type :"+entityType);
 	}

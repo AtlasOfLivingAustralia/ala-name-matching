@@ -23,6 +23,7 @@ import java.util.zip.ZipOutputStream;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
+import org.apache.velocity.tools.generic.MathTool;
 import org.gbif.portal.util.geospatial.CellIdUtils;
 import org.gbif.portal.util.geospatial.LatLongBoundingBox;
 
@@ -45,7 +46,7 @@ public class KmlCellDensityOutputStream extends CellDensityOutputStream{
 	private VelocityContext velocityContext = new VelocityContext();
 	/** The output stream wrapper to write to */
 	private OutputStreamWriter writer = null;
-	/** The Zipped outputstream to use */ 
+	/** The Zipped output stream to use */ 
 	protected ZipOutputStream zout = null;
 
 	/**
@@ -74,6 +75,7 @@ public class KmlCellDensityOutputStream extends CellDensityOutputStream{
 		this.hostUrl= hostUrl;
 		this.writer = new OutputStreamWriter(this.outputStream);
 		init();
+		velocityContext.put("mathTool", new MathTool());
 	}
 	
 	/**
@@ -189,6 +191,4 @@ public class KmlCellDensityOutputStream extends CellDensityOutputStream{
 	public void setHostUrl(String hostUrl) {
 		this.hostUrl = hostUrl;
 	}
-
-
 }

@@ -24,11 +24,17 @@
     <bean id="simpleMapLayerController" class="org.ala.web.controller.SimpleMapLayerController">
         <property name="cellDensityDAO" ref="alaCellDensityDAO"/>
     </bean>
-    
-    <bean id="ocurrenceCellController" class="org.ala.web.controller.OccurrenceCellController">
-        <property name="occurrenceRecordDAO" ref="alaOccurrenceRecordDAORO"/>
-    </bean>
-    
+
+    <!-- This allows the session to stay open... -->
+  <bean id="ocurrenceCellController" class="org.springframework.aop.framework.ProxyFactoryBean">
+    <property name="target">
+	    <bean class="org.ala.web.controller.OccurrenceCellController">
+	        <property name="occurrenceRecordDAO" ref="alaOccurrenceRecordDAORO"/>
+	    </bean>
+    </property>
+    <property name="interceptorNames" value="hibernateInterceptor"/>
+  </bean>
+
     <bean id="allMapLayerController" parent="entityMapLayerController">
         <property name="entityType" value="0"/>
         <property name="urlRoot" value="all"/>
