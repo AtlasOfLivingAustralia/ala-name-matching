@@ -69,31 +69,24 @@ public class GeoRegion implements Serializable {
     @IndexedEmbedded(depth=2)
 	protected GeoRegionType geoRegionType;
 	
-	@Field(index=Index.NO, store=Store.NO)
 	@Column(name="iso_country_code")
 	protected String isoCountryCode;
 	
-	@Field(index=Index.NO, store=Store.NO)
 	@Column(name="occurrence_count")
 	protected int occurrenceCount; 
 	
-	@Field(index=Index.NO, store=Store.NO)
 	@Column(name="occurrence_coordinate_count")
 	protected int occurrenceCoordinateCount;
 	
-	@Field(index=Index.NO, store=Store.NO)
 	@Column(name="min_latitude")
 	protected int minLatitude; 
 	
-	@Field(index=Index.NO, store=Store.NO)
 	@Column(name="max_latitude")
 	protected int maxLatitude; 
 	
-	@Field(index=Index.NO, store=Store.NO)
 	@Column(name="min_longitude")
 	protected int minLongitude;
 	
-	@Field(index=Index.NO, store=Store.NO)
 	@Column(name="max_longitude")
 	protected int maxLongitude; 
 	
