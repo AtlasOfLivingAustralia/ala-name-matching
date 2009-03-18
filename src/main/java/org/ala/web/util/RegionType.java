@@ -12,7 +12,7 @@
  * implied. See the License for the specific language governing
  * rights and limitations under the License.
  ***************************************************************************/
-package org.ala.web.controller;
+package org.ala.web.util;
 
 /**
  * Utility class to generate the range of Ids for a given

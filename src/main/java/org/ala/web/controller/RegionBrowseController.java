@@ -14,6 +14,7 @@
  ***************************************************************************/
 package org.ala.web.controller;
 
+import org.ala.web.util.RegionType;
 import java.util.List;
 import java.util.Map;
 
