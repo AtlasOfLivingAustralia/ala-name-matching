@@ -6,13 +6,13 @@
 <tr>
 <td id="resultsSummary" style="vertical-align: top; width:13%; padding-top:30px; padding-right :3px; border-right: 1px solid #CCCCCC;">
 	<ul>
-	    <li>Scientific names (${taxonConceptsTotal})</li>
-	    <li>Common names (${commonNamesTotal})</li>
-	    <li>Geographic Regions (${geoRegionsTotal})</li>
-	    <li>Localities (${localitiesTotal})</li>
-	    <li>Data Resources (${dataResourcesTotal})</li>
-	    <li>Data Provider (${dataProvidersTotal})</li>
-	    <li>Institutions (0)</li>
+        <li><a href="#taxonConcepts">Scientific names (${taxonConceptsTotal})</a></li>
+	    <li><a href="#commonNames">Common names (${commonNamesTotal})</a></li>
+	    <li><a href="#geoRegions">Geographic Regions (${geoRegionsTotal})</a></li>
+	    <li><a href="#localities">Localities (${localitiesTotal})</a></li>
+	    <li><a href="#dataResources">Data Resources (${dataResourcesTotal})</a></li>
+	    <li><a href="#dataProviders">Data Provider (${dataProvidersTotal})</a></li>
+	    <li><a href="#institutions">Institutions (0)</a></li>
 	</ul>
 </td><!-- resultsSummary -->
 
@@ -20,7 +20,7 @@
 
 <% /** Taxon Names  */%>
 <c:if test="${taxonConceptsTotal>0}">
-<a name="Names2">
+<a name="taxonConcepts">
     <h2 class="scNames"><spring:message code="blanket.search.scientific.names.title" text="Scientific names"/></h2>
 </a>
 <table cellspacing="1" width="100%">
@@ -47,7 +47,7 @@
 
 <% /** Common Names  */%>
 <c:if test="${commonNamesTotal>0}">
-<a name="Names2">
+<a name="commonNames">
     <h2 class="scNames"><spring:message code="blanket.search.common.names.title" text="Common names"/></h2>
 </a>
 <table cellspacing="1" width="100%">
@@ -74,7 +74,7 @@
 
 <% /** Geo Regions  */%>
 <c:if test="${geoRegionsTotal>0}">
-<a name="Names2">
+<a name="geoRegions">
     <h2 class="scNames">Geographic Regions</h2>
 </a>
 <table cellspacing="1" width="100%">
@@ -99,7 +99,7 @@
 
 <% /** Localities  */%>
 <c:if test="${localitiesTotal>0}">
-<a name="Names2">
+<a name="localities">
     <h2 class="scNames">Localities</h2>
 </a>
 <table cellspacing="1" width="100%">
@@ -117,7 +117,7 @@
 
 <% /** Data Resource  */%>
 <c:if test="${dataResourcesTotal>0}">
-<a name="Names2">
+<a name="dataResources">
     <h2 class="scNames">Data Resources</h2>
 </a>
 <table cellspacing="1" width="100%">
@@ -140,7 +140,7 @@
 
 <% /** Data Providers  */%>
 <c:if test="${dataProvidersTotal>0}">
-<a name="Names2">
+<a name="dataProviders">
     <h2 class="scNames">Data Providers</h2>
 </a>
 <table cellspacing="1" width="100%">

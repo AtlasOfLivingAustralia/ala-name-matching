@@ -14,11 +14,21 @@
         <put name="footer" value="/common/footer.jsp"/>
     </definition>
 
+    <!-- View for full text search using Hibernate Search -->
     <definition name="fullSearchView" extends="mainLayout">
         <put name="subtitle" value="/WEB-INF/jsp/search/searchSubtitle.jsp"/>
         <put name="headcontent" value="/WEB-INF/jsp/search/headcontent.jsp"/>
         <put name="content" value="/WEB-INF/jsp/search/fullSearch.jsp"/>
     </definition>
+
+    <!-- View for full text search using Hibernate Search -->
+    <definition name="commonNamesSearchView" extends="mainLayout">
+        <put name="subtitle" value="/WEB-INF/jsp/search/searchSubtitle.jsp"/>
+        <put name="headcontent" value="/WEB-INF/jsp/search/headcontent.jsp"/>
+        <put name="content" value="/WEB-INF/jsp/search/commonNames.jsp"/>
+    </definition>
+    <!-- View for JSON common names search using Hibernate Search -->
+    <definition name="commonNamesJsonView" page="/WEB-INF/jsp/search/commonNamesJson.jsp"/>
     
     <!-- View for a Geographic Region -->
     <definition name="geoRegionView" extends="mainLayout">

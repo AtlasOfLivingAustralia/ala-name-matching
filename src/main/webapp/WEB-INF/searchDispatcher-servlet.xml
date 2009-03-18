@@ -19,6 +19,7 @@
 		<property name="mappings">
 			<props>
 				<prop key="blanketSearch.htm">blanketQueryController</prop>
+        <prop key="/commonNames/**/*">commonNameSearchController</prop>
 				<prop key="/*">searchController</prop>
 				<prop key="/">redirectToRootController</prop>
 			</props>
@@ -43,6 +44,36 @@
                     <value>startIndex</value>
                 </list>
             </list>
+        </property>
+    </bean>
+
+    <bean id="abstractSearchController" abstract="true" class="org.ala.web.controller.PagingSearchController">
+        <property name="sessionFactory" ref="hsSessionFactory"/>
+        <property name="urlRoot" value="search"/>
+        <property name="supportedPatterns">
+            <list>
+                <list>
+                    <value>searchType</value>
+                    <value>searchString</value>
+                </list>
+                <list>
+                    <value>searchType</value>
+                    <value>searchString</value>
+                    <value>view</value>
+                </list>
+            </list>
+        </property>
+    </bean>
+    
+    <bean id="commonNameSearchController" parent="abstractSearchController">
+        <property name="searchType" value="COMMON_NAME"/>
+        <property name="htmlView" value="commonNamesSearchView"/>
+        <property name="jsonView" value="commonNamesJsonView"/>
+        <property name="sortFieldMap">
+            <map>
+                <entry key="scientificName" value="taxonConcept.taxonName.canonical"/>
+                <entry key="commonName" value="name"/>
+            </map>
         </property>
     </bean>
 
