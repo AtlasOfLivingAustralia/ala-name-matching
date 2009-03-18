@@ -65,7 +65,7 @@ public class CommonName {
 
 	@ManyToOne(fetch=FetchType.EAGER)
     @JoinColumn(name="taxon_concept_id")
-    @IndexedEmbedded(depth=2)
+    @IndexedEmbedded(depth=3)
 	protected TaxonConcept taxonConcept;
 	
 	/**
