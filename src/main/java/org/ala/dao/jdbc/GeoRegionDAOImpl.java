@@ -97,7 +97,8 @@ public class GeoRegionDAOImpl extends JdbcDaoSupport implements GeoRegionDAO {
             gr.setMinLatitude(rs.getInt("min_latitude"));
             gr.setMaxLatitude(rs.getInt("max_latitude"));
             gr.setMaxLongitude(rs.getInt("max_longitude"));
-            
+            gr.setOccurrenceCount(rs.getInt("occurrence_count"));
+            gr.setOccurrenceCoordinateCount(rs.getInt("occurrence_coordinate_count"));
         	GeoRegionType grt = new GeoRegionType();
         	grt.setId(rs.getInt("region_type"));
         	grt.setName(rs.getString("region_type_name"));
