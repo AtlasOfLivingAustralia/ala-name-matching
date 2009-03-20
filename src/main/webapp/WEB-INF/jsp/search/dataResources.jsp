@@ -1,31 +1,30 @@
 <%@ include file="/common/taglibs.jsp"%>
 <div id="twopartheader">
-    <h2><spring:message code="blanket.search.commonNames.header" text="Common Names search results for:"/> <strong>${searchString}</strong> </h2>
+    <h2><spring:message code="blanket.search.dataResources.header" text="Data Resources search results for:"/> <strong>${searchString}</strong> </h2>
 </div>
-<c:if test="${not empty commonNames}">
+<c:if test="${not empty dataResources}">
 <div id="YuiSearchResults" class=" yui-skin-sam">
-    <h4><spring:message code="blanket.search.commonNames.header" text="Common Names search results for:"/> ${searchString} (total results ${commonNamesTotal})</h4>
+    <h4><spring:message code="blanket.search.dataResources.header" text="Data Resources search results for:"/> ${searchString} (total results ${dataResourcesTotal})</h4>
     <div id="json"></div>
     <script type="text/javascript">
         //YAHOO.util.Event.addListener(window, "load", function() {
             YAHOO.example.XHR_JSON = function() {
-                var formatCommonNameUrl = function(elCell, oRecord, oColumn, sData) {
-                    elCell.innerHTML = "<a href='" + oRecord.getData("commonNameUrl") +  "' title='go to species page'>" + sData + "</a>";
+                var formatNameUrl = function(elCell, oRecord, oColumn, sData) {
+                    elCell.innerHTML = "<a href='" + oRecord.getData("dataResourceUrl") +  "' title='go to data resource page'>" + sData + "</a>";
                 };
 
                 var myColumnDefs = [
-                    {key:"commonName", label:"Common Name", sortable:true, formatter:formatCommonNameUrl},
-                    {key:"scientificName", label:"Scientific Name"},
-                    {key:"kingdom", label:"Kingdom"},
+                    {key:"dataResource", label:"Data Resource", sortable:true, formatter:formatNameUrl},
+                    {key:"occurrences", label:"Occurrences Count", sortable:true},
                     {key:"score", label:"Score"}
                 ];
 
-                var myDataSource = new YAHOO.util.DataSource("${pageContext.request.contextPath}/search/commonNames/${searchString}/json?");
+                var myDataSource = new YAHOO.util.DataSource("${pageContext.request.contextPath}/search/dataResources/${searchString}/json?");
                 myDataSource.responseType = YAHOO.util.DataSource.TYPE_JSON;
                 //myDataSource.connXhrMode = "queueRequests";
                 myDataSource.responseSchema = {
                     resultsList: "result",
-                    fields: [{key:"score",parser:"number"},"commonName","commonNameUrl","scientificName","kingdom"],
+                    fields: [{key:"score",parser:"number"},"dataResource","dataResourceUrl","occurrences"],
                     metaFields: {totalRecords: "totalRecords"}
                 };
 

@@ -33,16 +33,17 @@
                         <a href="${pageContext.request.contextPath}/species/${taxonConcept.id}">
                             ${taxonConcept.taxonName.canonical} ${taxonConcept.taxonName.author}
                         </a>
+                        - ${taxonConcept.kingdomConcept.taxonName.canonical} ${taxonConcept.familyConcept.taxonName.canonical}
                     </span>
-                </p>
-                <p>
-                    ${taxonConcept.kingdomConcept.taxonName.canonical} ${taxonConcept.familyConcept.taxonName.canonical}
                 </p>
             </td>
         </tr>
       </c:forEach>
     </tbody>
 </table>
+<div class="moreSearchResults">
+    <a href="${pageContext.request.contextPath}/search/scientificNames/${searchString}">View all scientific names matching &quot;${searchString}&quot;</a>
+</div>
 </c:if>
 
 <% /** Common Names  */%>
@@ -52,7 +53,7 @@
 </a>
 <table cellspacing="1" width="100%">
     <tbody>
-     <c:forEach items="${commonNames}" var="commonName" varStatus="status">
+    <c:forEach items="${commonNames}" var="commonName" varStatus="status">
         <tr valign="top">
             <td class="tdColumn2" >
                 <p class="column2">
@@ -67,9 +68,12 @@
                 </p>
             </td>
         </tr>
-      </c:forEach>
+    </c:forEach>
     </tbody>
 </table>
+<div class="moreSearchResults">
+    <a href="${pageContext.request.contextPath}/search/commonNames/${searchString}">View all common names matching &quot;${searchString}&quot;</a>
+</div>
 </c:if>
 
 <% /** Geo Regions  */%>
@@ -95,6 +99,9 @@
       </c:forEach>
     </tbody>
 </table>
+<div class="moreSearchResults">
+    <a href="${pageContext.request.contextPath}/search/geoRegions/${searchString}">View all geographic regions matching &quot;${searchString}&quot;</a>
+</div>
 </c:if>
 
 <% /** Localities  */%>
@@ -113,6 +120,9 @@
       </c:forEach>
     </tbody>
 </table>
+<div class="moreSearchResults">
+    <a href="${pageContext.request.contextPath}/search/localities/${searchString}">View all localities matching &quot;${searchString}&quot;</a>
+</div>
 </c:if>
 
 <% /** Data Resource  */%>
@@ -136,6 +146,9 @@
       </c:forEach>
     </tbody>
 </table>
+<div class="moreSearchResults">
+    <a href="${pageContext.request.contextPath}/search/dataResources/${searchString}">View all data resources matching &quot;${searchString}&quot;</a>
+</div>
 </c:if>
 
 <% /** Data Providers  */%>
@@ -159,6 +172,9 @@
       </c:forEach>
     </tbody>
 </table>
+<div class="moreSearchResults">
+    <a href="${pageContext.request.contextPath}/search/dataProviders/${searchString}">View all data providers matching &quot;${searchString}&quot;</a>
+</div>
 </c:if>
 
 </td><!-- resultsBreakdown -->

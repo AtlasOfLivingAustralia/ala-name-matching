@@ -30,6 +30,7 @@ import org.apache.solr.analysis.StandardTokenizerFactory;
 import org.hibernate.search.annotations.AnalyzerDef;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Fields;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
@@ -58,7 +59,10 @@ public class GeoRegion implements Serializable {
 	@DocumentId
 	protected long id;
 	
-	@Field(index=Index.TOKENIZED, store=Store.YES)
+	@Fields( {
+        @Field(index=Index.TOKENIZED, store=Store.YES),
+        @Field(name = "nameForSort", index=Index.UN_TOKENIZED, store = Store.YES)
+    })
 	protected String name;
 	
 	@Field(index=Index.TOKENIZED, store=Store.YES)

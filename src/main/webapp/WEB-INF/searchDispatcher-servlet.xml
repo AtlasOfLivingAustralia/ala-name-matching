@@ -19,7 +19,13 @@
 		<property name="mappings">
 			<props>
 				<prop key="blanketSearch.htm">blanketQueryController</prop>
-        <prop key="/commonNames/**/*">commonNameSearchController</prop>
+                <prop key="/scientificNames/**/*">scientificNameSearchController</prop>
+                <prop key="/commonNames/**/*">commonNameSearchController</prop>
+                <prop key="/geoRegions/**/*">geoRegionSearchController</prop>
+                <prop key="/localities/**/*">localitySearchController</prop>
+                <prop key="/dataResources/**/*">dataResourceSearchController</prop>
+                <prop key="/dataProviders/**/*">dataProviderSearchController</prop>
+                <prop key="/institutions/**/*">institutionSearchController</prop>
 				<prop key="/*">searchController</prop>
 				<prop key="/">redirectToRootController</prop>
 			</props>
@@ -64,15 +70,92 @@
             </list>
         </property>
     </bean>
+
+    <!-- Controller for scientific name fulltext search results -->
+    <bean id="scientificNameSearchController" parent="abstractSearchController">
+        <property name="searchType" value="SCIENTIFIC_NAMES"/>
+        <property name="htmlView" value="scientificNamesSearchView"/>
+        <property name="jsonView" value="scientificNamesJsonView"/>
+        <property name="sortFieldMap">
+            <map>
+                <entry key="scientificName" value="taxonName.canonicalForSort"/>
+                <entry key="kingdom" value="kingdomConcept.taxonName.canonical"/>
+            </map>
+        </property>
+    </bean>
     
+    <!-- Controller for common name fulltext search results -->
     <bean id="commonNameSearchController" parent="abstractSearchController">
-        <property name="searchType" value="COMMON_NAME"/>
+        <property name="searchType" value="COMMON_NAMES"/>
         <property name="htmlView" value="commonNamesSearchView"/>
         <property name="jsonView" value="commonNamesJsonView"/>
         <property name="sortFieldMap">
             <map>
                 <entry key="scientificName" value="taxonConcept.taxonName.canonical"/>
-                <entry key="commonName" value="name"/>
+                <entry key="commonName" value="nameForSort"/>
+                <entry key="kingdom" value="kingdomConcept.taxonName.canonical"/>
+            </map>
+        </property>
+    </bean>
+
+    <!-- Controller for geo region fulltext search results -->
+    <bean id="geoRegionSearchController" parent="abstractSearchController">
+        <property name="searchType" value="GEOGRAPHIC_REGIONS"/>
+        <property name="htmlView" value="geoRegionsSearchView"/>
+        <property name="jsonView" value="geoRegionsJsonView"/>
+        <property name="sortFieldMap">
+            <map>
+                <entry key="geoRegion" value="nameForSort"/>
+            </map>
+        </property>
+    </bean>
+
+    <!-- Controller for locality fulltext search results -->
+    <bean id="localitySearchController" parent="abstractSearchController">
+        <property name="searchType" value="LOCALITIES"/>
+        <property name="htmlView" value="localitiesSearchView"/>
+        <property name="jsonView" value="localitiesJsonView"/>
+        <property name="sortFieldMap">
+            <map>
+                <entry key="locality" value="nameForSort"/>
+            </map>
+        </property>
+    </bean>
+
+    <!-- Controller for data resource fulltext search results -->
+    <bean id="dataResourceSearchController" parent="abstractSearchController">
+        <property name="searchType" value="DATA_RESOURCES"/>
+        <property name="htmlView" value="dataResourcesSearchView"/>
+        <property name="jsonView" value="dataResourcesJsonView"/>
+        <property name="sortFieldMap">
+            <map>
+                <entry key="dataResource" value="nameForSort"/>
+                <entry key="occurrences" value="occurrenceCount"/>
+            </map>
+        </property>
+    </bean>
+
+    <!-- Controller for data provider fulltext search results -->
+    <bean id="dataProviderSearchController" parent="abstractSearchController">
+        <property name="searchType" value="DATA_PROVIDERS"/>
+        <property name="htmlView" value="dataProvidersSearchView"/>
+        <property name="jsonView" value="dataProvidersJsonView"/>
+        <property name="sortFieldMap">
+            <map>
+                <entry key="dataProvider" value="nameForSort"/>
+                <entry key="occurrences" value="occurrenceCount"/>
+            </map>
+        </property>
+    </bean>
+
+    <!-- Controller for institution fulltext search results -->
+    <bean id="institutionSearchController" parent="abstractSearchController">
+        <property name="searchType" value="INSTITUTIONS"/>
+        <property name="htmlView" value="institutionsSearchView"/>
+        <property name="jsonView" value="institutionsJsonView"/>
+        <property name="sortFieldMap">
+            <map>
+                <entry key="name" value="nameForSort"/>
             </map>
         </property>
     </bean>

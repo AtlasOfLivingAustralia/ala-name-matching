@@ -28,6 +28,7 @@ import org.hibernate.search.annotations.Analyzer;
 import org.hibernate.search.annotations.AnalyzerDef;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Fields;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
@@ -59,7 +60,10 @@ public class CommonName {
 	@DocumentId
 	protected String id;
 	
-	@Field(index=Index.TOKENIZED, store=Store.YES)
+	@Fields( {
+        @Field(index=Index.TOKENIZED, store=Store.YES),
+        @Field(name = "nameForSort", index=Index.UN_TOKENIZED, store = Store.YES)
+    })
 	@Analyzer(definition = "customanalyzer")
 	protected String name;
 

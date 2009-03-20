@@ -1,31 +1,31 @@
 <%@ include file="/common/taglibs.jsp"%>
 <div id="twopartheader">
-    <h2><spring:message code="blanket.search.commonNames.header" text="Common Names search results for:"/> <strong>${searchString}</strong> </h2>
+    <h2><spring:message code="blanket.search.geoRegions.header" text="Geographic Regions search results for:"/> <strong>${searchString}</strong> </h2>
 </div>
-<c:if test="${not empty commonNames}">
+<c:if test="${not empty geoRegions}">
 <div id="YuiSearchResults" class=" yui-skin-sam">
-    <h4><spring:message code="blanket.search.commonNames.header" text="Common Names search results for:"/> ${searchString} (total results ${commonNamesTotal})</h4>
+    <h4><spring:message code="blanket.search.geoRegions.header" text="Geographic Regions search results for:"/> ${searchString} (total results ${geoRegionsTotal})</h4>
     <div id="json"></div>
     <script type="text/javascript">
         //YAHOO.util.Event.addListener(window, "load", function() {
             YAHOO.example.XHR_JSON = function() {
-                var formatCommonNameUrl = function(elCell, oRecord, oColumn, sData) {
-                    elCell.innerHTML = "<a href='" + oRecord.getData("commonNameUrl") +  "' title='go to species page'>" + sData + "</a>";
+                var formatNameUrl = function(elCell, oRecord, oColumn, sData) {
+                    elCell.innerHTML = "<a href='" + oRecord.getData("geoRegionUrl") +  "' title='go to geographic regions page'>" + sData + "</a>";
                 };
 
                 var myColumnDefs = [
-                    {key:"commonName", label:"Common Name", sortable:true, formatter:formatCommonNameUrl},
-                    {key:"scientificName", label:"Scientific Name"},
-                    {key:"kingdom", label:"Kingdom"},
+                    {key:"geoRegion", label:"Geographic Region", sortable:true, formatter:formatNameUrl},
+                    {key:"acronym", label:"Acronym"},
+                    {key:"geoRegionType", label:"Region Type"},
                     {key:"score", label:"Score"}
                 ];
 
-                var myDataSource = new YAHOO.util.DataSource("${pageContext.request.contextPath}/search/commonNames/${searchString}/json?");
+                var myDataSource = new YAHOO.util.DataSource("${pageContext.request.contextPath}/search/geoRegions/${searchString}/json?");
                 myDataSource.responseType = YAHOO.util.DataSource.TYPE_JSON;
                 //myDataSource.connXhrMode = "queueRequests";
                 myDataSource.responseSchema = {
                     resultsList: "result",
-                    fields: [{key:"score",parser:"number"},"commonName","commonNameUrl","scientificName","kingdom"],
+                    fields: [{key:"score",parser:"number"},"geoRegion","geoRegionUrl","acronym","geoRegionType"],
                     metaFields: {totalRecords: "totalRecords"}
                 };
 

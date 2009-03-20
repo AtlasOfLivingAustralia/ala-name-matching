@@ -15,23 +15,21 @@
 
 package org.ala.web.util;
 
-import java.util.Arrays;
-import java.util.List;
 import org.ala.model.*;
 
 /**
  * Enum class for the various search pages, e.g. scientific names, common names,
  * geo regions, localities, etc. Public methods output the type-specific data required
  * for Hibernate search parameters.
- * Used by org.ala.web.controller.PagingSearchController.java.
+ * Used by @see org.ala.web.controller.PagingSearchController
  *
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
 public enum SearchType {
-    SCIENTIFIC_NAME("scientificNames", TaxonConcept.class,
+    SCIENTIFIC_NAMES("scientificNames", TaxonConcept.class,
             new String[]{"taxonName.canonical", "taxonName.author"},
-            new String[]{"taxonName.canonical", "kingdomConcept.taxonName.canonical"}),
-    COMMON_NAME("commonNames", CommonName.class,
+            new String[]{"kingdomConcept.taxonName.canonical"}),
+    COMMON_NAMES("commonNames", CommonName.class,
             new String[]{"name"},
             new String[]{"taxonConcept.taxonName.canonical", "taxonConcept.kingdomConcept.taxonName.canonical"}),
     GEOGRAPHIC_REGIONS("geoRegions", GeoRegion.class,
@@ -39,7 +37,7 @@ public enum SearchType {
             new String[]{"geoRegionType.name"}),
     LOCALITIES("localities", Locality.class,
             new String[]{"name","state","postcode"},
-            new String[]{"geoRegion.name"}),
+            new String[]{"geoRegion.id","geoRegion.name"}),
     DATA_RESOURCES("dataResources", DataResource.class,
             new String[]{"name","description"},
             new String[]{}),
@@ -49,12 +47,24 @@ public enum SearchType {
     INSTITUTIONS("institutions", Institution.class,
             new String[]{"name","code"},
             new String[]{});
-    
+
+    /** Name of the search page type */
     private String name;
+    /** Hibernate Search annotated bean (model) name (class) */
     private Class bean;
+    /** String array list of search fields */
     private String[] searchFields;
+    /** String array list of display fields */
     private String[] displayFields;
-    
+
+    /**
+     * Contructor (private)
+     *
+     * @param name the name to set
+     * @param beanName the beanName to set
+     * @param searchFields the searchField to set
+     * @param displayFields the displayFields to set
+     */
     private SearchType(String name, Class beanName, String[] searchFields, String[] displayFields) {
         this.name = name;
         this.bean = beanName;
@@ -62,26 +72,44 @@ public enum SearchType {
         this.displayFields = displayFields;
     }
 
+    /**
+     * @return String displayType
+     */
     public String[] getDisplayFields() {
         return displayFields;
     }
 
+    /**
+     * @return String name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * @return String searchField
+     */
     public String[] getSearchFields() {
         return searchFields;
     }
 
+    /**
+     * @return String resultsTotalParam (name + "Total")
+     */
     public String getResultTotalParam() {
         return this.name + "Total";
     }
 
+    /**
+     * @return String resultsParam (name)
+     */
     public String getResultsParam() {
         return this.name;
     }
 
+    /**
+     * @return Class bean name (Hiberate Search annotated bean)
+     */
     public Class getBean() {
         return bean;
     }

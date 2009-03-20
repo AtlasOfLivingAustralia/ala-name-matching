@@ -23,7 +23,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.queryParser.MultiFieldQueryParser;
 import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
 import org.gbif.portal.web.controller.RestController;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -42,16 +41,20 @@ import org.springframework.web.bind.ServletRequestUtils;
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
 public class PagingSearchController extends RestController {
-
+    /** SessionFactory  */
     protected SessionFactory sessionFactory;
-    protected String htmlView = "commonNamesSearchView";
-    protected String jsonView = "commonNamesJsonView";
-    //protected String searchType;
+    /** HTML view name (Tile) */
+    protected String htmlView;
+    /** JSON view name (Tile) */
+    protected String jsonView;
+    /** SearchType Enum class */
     SearchType searchType;
+    /** Map of field name in JSON table to qualified bean field name */
     protected Map<String, String> sortFieldMap;
 
-    //protected Map<String, Class> beanNameMap;
     /**
+     * Override the super class method 
+     *
      * @see org.ala.web.controller.RestController#handleRequest(java.util.Map, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
      */
     @Override
@@ -63,12 +66,17 @@ public class PagingSearchController extends RestController {
         Integer startIndex  = ServletRequestUtils.getIntParameter(request, "startIndex", 0);
         String sort         = ServletRequestUtils.getStringParameter(request, "sort", "score");
         String dir          = ServletRequestUtils.getStringParameter(request, "dir", "asc");
-
-        Boolean reverse = ("desc".equals(dir)) ? true : false; // sets the sort order
+        
+        // set the sort field and sort order
+        Boolean reverse = ("desc".equals(dir)) ? true : false; 
         if (!"score".equals(sort) && sortFieldMap.containsKey(sort))
             sort = sortFieldMap.get(sort); // map the YUI table column name to bean field names
 
-        String view = ("json".equals(viewString)) ? jsonView : htmlView;
+        /* View name is determined by the (optional rest param "view" which is either
+         * blank for HTML view or "json" for the json output. The tile names which are used
+         * are set in the dispatcher XML file */
+        String view = ("json".equals(viewString)) ? jsonView : htmlView; 
+        // Create the mav and add some initial elements to it
         ModelAndView mav = new ModelAndView(view);
         mav.addObject("searchString", searchString);
         mav.addObject("pageSize", 10); // sets the number of page "boxes" to display
@@ -77,14 +85,15 @@ public class PagingSearchController extends RestController {
         mav.addObject("sort", sort);
         mav.addObject("dir", dir);
 
+        // Build the Hibernate Search query and search
         Session session = sessionFactory.openSession();
         FullTextSession fullTextSession = Search.getFullTextSession(session);
-        //FullTextQuery fullTextQuery = buildQuery(fullTextSession, "name", CommonName.class, searchString);
         FullTextQuery fullTextQuery = buildQuery(fullTextSession, searchType.getSearchFields(), searchType.getBean(), searchString);
         fullTextQuery.setMaxResults(results);
         fullTextQuery.setFirstResult(startIndex);
         
         if (!"score".equals(sort)) {
+            // Optionally set sort field (if not the default score sort field)
             Sort sortField = new Sort(new SortField(sort, reverse));
             fullTextQuery.setSort(sortField);
         }
@@ -92,26 +101,26 @@ public class PagingSearchController extends RestController {
         // combine two String[] arrays into a 3rd array using System.arraycopy
         String[] defaultFields = {FullTextQuery.SCORE, FullTextQuery.THIS};
         String[] typeFields = searchType.getDisplayFields();
-        String[] projectionArgs = new String[defaultFields.length + typeFields.length];
-        System.arraycopy(defaultFields, 0, projectionArgs, 0, defaultFields.length);
-		System.arraycopy(typeFields, 0, projectionArgs, defaultFields.length, typeFields.length);
-
-        //fullTextQuery.setProjection(FullTextQuery.SCORE, FullTextQuery.THIS,
-                //"taxonConcept.taxonName.canonical", "taxonConcept.kingdomConcept.taxonName.canonical");
-                //searchType.getDisplayFields()[0], searchType.getDisplayFields()[1]);
+        String[] projectionArgs = mergeArrays(defaultFields, typeFields);
+        // use a Hibernate search projection (so we can get the score value back)
         fullTextQuery.setProjection(projectionArgs);
-        //doQuery( "commonNames", "commonNamesTotal", mav, fullTextQuery);
         doQuery(searchType.getResultsParam(), searchType.getResultTotalParam(), mav, fullTextQuery);
-        
         //close the session
         fullTextSession.close();
 
         return mav;
     }
 
+    /**
+     * Run the query and add the results list to the ModelAndView
+     *
+     * @param resultsParam
+     * @param resultTotalParam
+     * @param mav
+     * @param fullTextQuery
+     */
     private void doQuery(String resultsParam, String resultTotalParam,
             ModelAndView mav, FullTextQuery fullTextQuery) {
-
         List results = fullTextQuery.list();
         int resultsSize = fullTextQuery.getResultSize();
         mav.addObject(resultsParam, results);
@@ -136,21 +145,17 @@ public class PagingSearchController extends RestController {
     }
 
     /**
-     * Build a query, using the correct analyzer.
+     * Simple merge of two arrays into a third array (of String[]'s)
      *
-     * @param clazz
-     * @param queryString
-     * @return
-     * @throws ParseException
+     * @param defaultFields
+     * @param typeFields
+     * @return String[]
      */
-    public FullTextQuery buildQuery(FullTextSession fullTextSession, String fieldToSearch, Class modelClass, String queryString) throws ParseException {
-        fullTextSession.getSearchFactory().getAnalyzer(modelClass);
-        org.apache.lucene.queryParser.QueryParser parser = new QueryParser(
-                fieldToSearch,
-                fullTextSession.getSearchFactory().getAnalyzer(modelClass));
-        org.apache.lucene.search.Query luceneQuery = parser.parse(queryString);
-        org.hibernate.search.FullTextQuery fullTextQuery = fullTextSession.createFullTextQuery(luceneQuery, modelClass);
-        return fullTextQuery;
+    private String[] mergeArrays(String[] defaultFields, String[] typeFields) {
+        String[] projectionArgs = new String[defaultFields.length + typeFields.length];
+        System.arraycopy(defaultFields, 0, projectionArgs, 0, defaultFields.length);
+        System.arraycopy(typeFields, 0, projectionArgs, defaultFields.length, typeFields.length);
+        return projectionArgs;
     }
 
     /**
@@ -182,13 +187,12 @@ public class PagingSearchController extends RestController {
     }
 
     /**
-     *
      * @param searchType the searchType to set
      */
     public void setSearchType(SearchType searchType) {
         this.searchType = searchType;
     }
-    
+
 }
 
 

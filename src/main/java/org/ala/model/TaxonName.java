@@ -19,6 +19,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
 import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Fields;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
@@ -40,7 +41,10 @@ public class TaxonName {
 	protected Long id;
 
 	/** The canonical name **/
-	@Field(index=Index.TOKENIZED, store=Store.YES)
+	@Fields( {
+        @Field(index=Index.TOKENIZED, store=Store.YES),
+        @Field(name = "canonicalForSort", index=Index.UN_TOKENIZED, store = Store.YES)
+    })
 	@IndexedEmbedded(prefix="canonical")
 	protected String canonical;
 	

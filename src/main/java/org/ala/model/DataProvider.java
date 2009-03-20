@@ -25,6 +25,7 @@ import org.apache.solr.analysis.StandardTokenizerFactory;
 import org.hibernate.search.annotations.AnalyzerDef;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Fields;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Parameter;
@@ -49,15 +50,22 @@ public class DataProvider {
 	@GeneratedValue
 	@DocumentId
 	protected long id;
-	@Field(index=Index.TOKENIZED, store=Store.YES)
+
+    @Fields( {
+        @Field(index=Index.TOKENIZED, store=Store.YES),
+        @Field(name = "nameForSort", index=Index.UN_TOKENIZED, store = Store.YES)
+    })
 	protected String name;
-	@Field(index=Index.TOKENIZED, store=Store.NO)
+
+    @Field(index=Index.TOKENIZED, store=Store.NO)
 	protected String description;
-	
+
+    @Field(index=Index.UN_TOKENIZED, store=Store.YES)
 	@Column(name="occurrence_count")
 	protected Integer occurrenceCount;
 	
-	@Column(name="occurrence_coordinate_count")
+	@Field(index=Index.UN_TOKENIZED, store=Store.YES)
+    @Column(name="occurrence_coordinate_count")
 	protected Integer occurrenceCoordinateCount;
 
 	@Column(name="data_resource_count")

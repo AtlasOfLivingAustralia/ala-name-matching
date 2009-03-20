@@ -21,7 +21,16 @@
         <put name="content" value="/WEB-INF/jsp/search/fullSearch.jsp"/>
     </definition>
 
-    <!-- View for full text search using Hibernate Search -->
+    <!-- View for scientific names full text search using Hibernate Search -->
+    <definition name="scientificNamesSearchView" extends="mainLayout">
+        <put name="subtitle" value="/WEB-INF/jsp/search/searchSubtitle.jsp"/>
+        <put name="headcontent" value="/WEB-INF/jsp/search/headcontent.jsp"/>
+        <put name="content" value="/WEB-INF/jsp/search/scientificNames.jsp"/>
+    </definition>
+    <!-- View for JSON scientific names search using Hibernate Search -->
+    <definition name="scientificNamesJsonView" page="/WEB-INF/jsp/search/scientificNamesJson.jsp"/>
+
+    <!-- View for common names full text search using Hibernate Search -->
     <definition name="commonNamesSearchView" extends="mainLayout">
         <put name="subtitle" value="/WEB-INF/jsp/search/searchSubtitle.jsp"/>
         <put name="headcontent" value="/WEB-INF/jsp/search/headcontent.jsp"/>
@@ -29,7 +38,52 @@
     </definition>
     <!-- View for JSON common names search using Hibernate Search -->
     <definition name="commonNamesJsonView" page="/WEB-INF/jsp/search/commonNamesJson.jsp"/>
-    
+
+    <!-- View for geoRegions full text search using Hibernate Search -->
+    <definition name="geoRegionsSearchView" extends="mainLayout">
+        <put name="subtitle" value="/WEB-INF/jsp/search/searchSubtitle.jsp"/>
+        <put name="headcontent" value="/WEB-INF/jsp/search/headcontent.jsp"/>
+        <put name="content" value="/WEB-INF/jsp/search/geoRegions.jsp"/>
+    </definition>
+    <!-- View for JSON geoRegions search using Hibernate Search -->
+    <definition name="geoRegionsJsonView" page="/WEB-INF/jsp/search/geoRegionsJson.jsp"/>
+
+    <!-- View for localities full text search using Hibernate Search -->
+    <definition name="localitiesSearchView" extends="mainLayout">
+        <put name="subtitle" value="/WEB-INF/jsp/search/searchSubtitle.jsp"/>
+        <put name="headcontent" value="/WEB-INF/jsp/search/headcontent.jsp"/>
+        <put name="content" value="/WEB-INF/jsp/search/localities.jsp"/>
+    </definition>
+    <!-- View for JSON localities search using Hibernate Search -->
+    <definition name="localitiesJsonView" page="/WEB-INF/jsp/search/localitiesJson.jsp"/>
+
+    <!-- View for dataResources full text search using Hibernate Search -->
+    <definition name="dataResourcesSearchView" extends="mainLayout">
+        <put name="subtitle" value="/WEB-INF/jsp/search/searchSubtitle.jsp"/>
+        <put name="headcontent" value="/WEB-INF/jsp/search/headcontent.jsp"/>
+        <put name="content" value="/WEB-INF/jsp/search/dataResources.jsp"/>
+    </definition>
+    <!-- View for JSON dataResources search using Hibernate Search -->
+    <definition name="dataResourcesJsonView" page="/WEB-INF/jsp/search/dataResourcesJson.jsp"/>
+
+    <!-- View for dataProviders full text search using Hibernate Search -->
+    <definition name="dataProvidersSearchView" extends="mainLayout">
+        <put name="subtitle" value="/WEB-INF/jsp/search/searchSubtitle.jsp"/>
+        <put name="headcontent" value="/WEB-INF/jsp/search/headcontent.jsp"/>
+        <put name="content" value="/WEB-INF/jsp/search/dataProviders.jsp"/>
+    </definition>
+    <!-- View for JSON dataProviders search using Hibernate Search -->
+    <definition name="dataProvidersJsonView" page="/WEB-INF/jsp/search/dataProvidersJson.jsp"/>
+
+    <!-- View for institutions full text search using Hibernate Search -->
+    <definition name="institutionsSearchView" extends="mainLayout">
+        <put name="subtitle" value="/WEB-INF/jsp/search/searchSubtitle.jsp"/>
+        <put name="headcontent" value="/WEB-INF/jsp/search/headcontent.jsp"/>
+        <put name="content" value="/WEB-INF/jsp/search/institutions.jsp"/>
+    </definition>
+    <!-- View for JSON institutions search using Hibernate Search -->
+    <definition name="institutionsJsonView" page="/WEB-INF/jsp/search/institutionsJson.jsp"/>
+
     <!-- View for a Geographic Region -->
     <definition name="geoRegionView" extends="mainLayout">
         <put name="subtitle" value="/WEB-INF/jsp/region/drilldown/regionSubtitle.jsp"/>

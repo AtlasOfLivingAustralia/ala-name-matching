@@ -14,6 +14,7 @@
  ***************************************************************************/
 package org.ala.model;
 
+import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -36,7 +37,9 @@ import org.hibernate.search.annotations.Store;
 @Entity
 @Indexed(index="TaxonConcepts")
 @javax.persistence.Table(name="taxon_concept", schema="portal")
-public class TaxonConcept {
+public class TaxonConcept implements Serializable {
+
+    private static final long serialVersionUID = 7061554650578573816L;
 
 	/** The primary key */
 	@Id
@@ -52,7 +55,11 @@ public class TaxonConcept {
 	@Column(name="data_resource_id")
 	protected Long dataResourceId;
 	
-	@ManyToOne(fetch=FetchType.EAGER, targetEntity=TaxonConcept.class,optional=true)
+	@JoinColumn(name="rank")
+    @Field(index=Index.UN_TOKENIZED, store=Store.YES)
+	protected Integer rank;
+
+    @ManyToOne(fetch=FetchType.EAGER, targetEntity=TaxonConcept.class,optional=true)
 	@JoinColumn(name="kingdom_concept_id")
 	@IndexedEmbedded(depth=2)
 	protected TaxonConcept kingdomConcept;
@@ -121,4 +128,16 @@ public class TaxonConcept {
 	public void setFamilyConcept(TaxonConcept familyConcept) {
 		this.familyConcept = familyConcept;
 	}
+    /**
+     *  @return the rank
+     */
+    public Integer getRank() {
+        return rank;
+    }
+    /**
+     * @param rank the rank to set
+     */
+    public void setRank(Integer rank) {
+        this.rank = rank;
+    }
 }

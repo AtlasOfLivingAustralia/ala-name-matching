@@ -27,6 +27,7 @@ import org.apache.solr.analysis.StandardTokenizerFactory;
 import org.hibernate.search.annotations.AnalyzerDef;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Fields;
 import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
@@ -52,13 +53,20 @@ public class Locality {
 	@GeneratedValue
 	@DocumentId
 	protected int id;
-	@Field(index=Index.TOKENIZED, store=Store.YES)
+
+    @Fields( {
+        @Field(index=Index.TOKENIZED, store=Store.YES),
+        @Field(name = "nameForSort", index=Index.UN_TOKENIZED, store = Store.YES)
+    })
 	protected String name;
-	@Field(index=Index.TOKENIZED, store=Store.YES)
+
+    @Field(index=Index.UN_TOKENIZED, store=Store.YES)
 	protected String state;
-	@Field(index=Index.TOKENIZED, store=Store.YES)
+
+    @Field(index=Index.UN_TOKENIZED, store=Store.YES)
 	protected String postcode;
-	@ManyToOne(fetch=FetchType.EAGER,targetEntity=GeoRegion.class)
+
+    @ManyToOne(fetch=FetchType.EAGER,targetEntity=GeoRegion.class)
     @JoinColumn(name="geo_region_id")
     @IndexedEmbedded(depth=3)
 	protected GeoRegion geoRegion;
