@@ -60,10 +60,10 @@ public class Locality {
     })
 	protected String name;
 
-    @Field(index=Index.UN_TOKENIZED, store=Store.YES)
+    @Field(index=Index.TOKENIZED, store=Store.YES)
 	protected String state;
 
-    @Field(index=Index.UN_TOKENIZED, store=Store.YES)
+    @Field(index=Index.TOKENIZED, store=Store.YES)
 	protected String postcode;
 
     @ManyToOne(fetch=FetchType.EAGER,targetEntity=GeoRegion.class)
