@@ -233,14 +233,13 @@ function zoomToBounds(){
 //    var zoom = getRequestParameter("zoom");
     var bounds;
     var boundsString = getRequestParameter("bounds");
+
     if (boundsString) {
         bounds = new OpenLayers.Bounds.fromString(getRequestParameter("bounds"));
-    } else {
-        if (minLongitude!=null) {
-            bounds = new OpenLayers.Bounds();
-            bounds.extend(new OpenLayers.LonLat(minLongitude,minLatitude));
-            bounds.extend(new OpenLayers.LonLat(maxLongitude,maxLatitude));
-        }
+    } else if (minLongitude!=null) {
+        bounds = new OpenLayers.Bounds();
+        bounds.extend(new OpenLayers.LonLat(minLongitude,minLatitude));
+        bounds.extend(new OpenLayers.LonLat(maxLongitude,maxLatitude));
     } 
     
     if(useGoogle){
@@ -251,20 +250,8 @@ function zoomToBounds(){
         var proj900913 = new OpenLayers.Projection("EPSG:900913");
         bounds.transform(proj900913, map.getProjectionObject());
     }
+
     map.zoomToExtent(bounds, true);
-    
-//    if (centre && zoom) {
-//        lonLatCentre = new OpenLayers.LonLat.fromString(centre);
-//        var proj4326 = new OpenLayers.Projection("EPSG:4326");
-//        var proj900913 = new OpenLayers.Projection("EPSG:900913");
-//        if (useGoogle) {
-//            map.setCenter(lonLatCentre.transform(proj4326, map.getProjectionObject()),zoom);
-//            //alert('2. Now zooming to: '+ (zoom+1));
-//            //map.zoomTo((zoom+1));
-//        } else {
-//            map.setCenter(lonLatCentre.transform(proj900913, map.getProjectionObject()),zoom);
-//        }
-//    }
  }
 
 /**
