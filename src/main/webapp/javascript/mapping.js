@@ -229,17 +229,42 @@ function initLayers(){
  */
 function zoomToBounds(){
     // zoom to the correct bounds
-    if(minLongitude!=null){
-        var bounds = new OpenLayers.Bounds();
-        bounds.extend(new OpenLayers.LonLat(minLongitude,minLatitude));
-        bounds.extend(new OpenLayers.LonLat(maxLongitude,maxLatitude));
-        if(useGoogle){
-          //reproject latlong values
-          var proj = new OpenLayers.Projection("EPSG:4326");
-          bounds.transform(proj, map.getProjectionObject());
+//    var centre = getRequestParameter("centre");
+//    var zoom = getRequestParameter("zoom");
+    var bounds;
+    var boundsString = getRequestParameter("bounds");
+    if (boundsString) {
+        bounds = new OpenLayers.Bounds.fromString(getRequestParameter("bounds"));
+    } else {
+        if (minLongitude!=null) {
+            bounds = new OpenLayers.Bounds();
+            bounds.extend(new OpenLayers.LonLat(minLongitude,minLatitude));
+            bounds.extend(new OpenLayers.LonLat(maxLongitude,maxLatitude));
         }
-        map.zoomToExtent(bounds, true);
+    } 
+    
+    if(useGoogle){
+        //reproject latlong values
+        var proj4326 = new OpenLayers.Projection("EPSG:4326");
+        bounds.transform(proj4326, map.getProjectionObject());
+    } else if (boundsString) {
+        var proj900913 = new OpenLayers.Projection("EPSG:900913");
+        bounds.transform(proj900913, map.getProjectionObject());
     }
+    map.zoomToExtent(bounds, true);
+    
+//    if (centre && zoom) {
+//        lonLatCentre = new OpenLayers.LonLat.fromString(centre);
+//        var proj4326 = new OpenLayers.Projection("EPSG:4326");
+//        var proj900913 = new OpenLayers.Projection("EPSG:900913");
+//        if (useGoogle) {
+//            map.setCenter(lonLatCentre.transform(proj4326, map.getProjectionObject()),zoom);
+//            //alert('2. Now zooming to: '+ (zoom+1));
+//            //map.zoomTo((zoom+1));
+//        } else {
+//            map.setCenter(lonLatCentre.transform(proj900913, map.getProjectionObject()),zoom);
+//        }
+//    }
  }
 
 /**
@@ -269,16 +294,36 @@ function occurrenceSearch(latitude, longitude, roundingFactor) {
  * JS to reload the page with the new baselayer (Geoserver/Google)
  */
 function toggleBaseLayer() {
+    //var centre = map.getCenter().toShortString();
+    //centre = centre.replace(/\s+/,""); // remove space after comma
+    var bounds = map.calculateBounds().toBBOX(); // e.g. Ó5,42,10,45Ó
+    //var zoom = map.getZoom();
+    var params = "";
+    if (bounds) {
+        params = "bounds=" + bounds; // + "&zoom=" + zoom;
+    }
     if (useGoogle) {
         // switch to WMF
         useGoogle = false;
         baseLayerButton.deactivate();
-        window.location.replace( pageUrl );
+        window.location.replace( pageUrl + "?" + params);
     }
     else {
         // switch to Google
         useGoogle = true;
         baseLayerButton.activate();
-        window.location.replace( pageUrl + '?map=google' );
+        window.location.replace( pageUrl + "?" + 'map=google&' + params);
     }
+}
+
+function getRequestParameter( name ) {
+    // returns the request parameter "value" for the given "name""
+    name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+    var regexS = "[\\?&]"+name+"=([^&#]*)";
+    var regex = new RegExp( regexS );
+    var results = regex.exec( window.location.href );
+    if( results == null )
+        return "";
+    else
+        return results[1];
 }
