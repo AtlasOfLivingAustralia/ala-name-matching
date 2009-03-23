@@ -52,7 +52,7 @@
                     
                 var flashvars4 = {
                         path: escape("${pageContext.request.contextPath}/charts/"),
-                        settings_file: escape("${pageContext.request.contextPath}/charts/month_settings.xml"),
+                        settings_file: escape("${pageContext.request.contextPath}/charts/issue_settings.xml"),
                         chart_data: "${chartData.geospatial_issue}",
                         preloader_color: "#999999"
                     };

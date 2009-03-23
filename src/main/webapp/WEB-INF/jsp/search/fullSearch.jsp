@@ -1,4 +1,7 @@
 <%@ include file="/common/taglibs.jsp"%>
+<c:set var="maxClauseCountError">
+    <div class="searchError"><span class="searchWarning">Warning:</span> Wildcard search exceeded limits, try including more characters in search query. </div>
+</c:set>
 <div id="twopartheader">
     <h2><spring:message code="blanket.search.header"/> <strong>${searchString}</strong> </h2>
 </div>
@@ -19,7 +22,7 @@
 <td id="resultsBreakdown" style="vertical-align:top;">
 
 <% /** Taxon Names  */%>
-<c:if test="${taxonConceptsTotal>0}">
+<c:if test="${taxonConceptsTotal>0 || fn:length(taxonConceptsError)>0}">
     <a name="taxonConcepts">
         <h2 class="scNames"><spring:message code="blanket.search.scientific.names.title" text="Scientific names"/></h2>
     </a>
@@ -47,9 +50,10 @@
         </div>
     </c:if>
 </c:if>
+<c:if test="${fn:contains(taxonConceptsError,'maxClauseCount')}">${maxClauseCountError}</c:if>
 
 <% /** Common Names  */%>
-<c:if test="${commonNamesTotal>0}">
+<c:if test="${commonNamesTotal>0 || fn:length(commonNamesError)>0}">
     <a name="commonNames">
         <h2 class="scNames"><spring:message code="blanket.search.common.names.title" text="Common names"/></h2>
     </a>
@@ -79,9 +83,10 @@
         </div>
     </c:if>
 </c:if>
+<c:if test="${fn:contains(commonNamesError,'maxClauseCount')}">${maxClauseCountError}</c:if>
 
 <% /** Geo Regions  */%>
-<c:if test="${geoRegionsTotal>0}">
+<c:if test="${geoRegionsTotal>0 || fn:length(geoRegionsError)>0}">
     <a name="geoRegions">
         <h2 class="scNames">Geographic Regions</h2>
     </a>
@@ -109,9 +114,10 @@
         </div>
     </c:if>
 </c:if>
+<c:if test="${fn:contains(geoRegionsError,'maxClauseCount')}">${maxClauseCountError}</c:if>
 
 <% /** Localities  */%>
-<c:if test="${localitiesTotal>0}">
+<c:if test="${localitiesTotal>0 || fn:length(localitiesError)>0}">
     <a name="localities">
         <h2 class="scNames">Localities</h2>
     </a>
@@ -132,9 +138,10 @@
         </div>
     </c:if>
 </c:if>
+<c:if test="${fn:contains(localitiesError,'maxClauseCount')}">${maxClauseCountError}</c:if>
 
 <% /** Data Resource  */%>
-<c:if test="${dataResourcesTotal>0}">
+<c:if test="${dataResourcesTotal>0 || fn:length(dataResourcesError)>0}">
     <a name="dataResources">
         <h2 class="scNames">Data Resources</h2>
     </a>
@@ -160,9 +167,10 @@
         </div>
     </c:if>
 </c:if>
+<c:if test="${fn:contains(dataResourcesError,'maxClauseCount')}">${maxClauseCountError}</c:if>
 
 <% /** Data Providers */%>
-<c:if test="${dataProvidersTotal>0}">
+<c:if test="${dataProvidersTotal>0 || fn:length(dataProvidersError)>0}">
     <a name="dataProviders">
         <h2 class="scNames">Data Providers</h2>
     </a>
@@ -188,6 +196,7 @@
         </div>
     </c:if>
 </c:if>
+<c:if test="${fn:contains(dataProvidersError,'maxClauseCount')}">${maxClauseCountError}</c:if>
 
 </td><!-- resultsBreakdown -->
 </tr>

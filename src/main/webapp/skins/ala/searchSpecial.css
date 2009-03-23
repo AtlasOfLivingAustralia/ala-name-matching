@@ -74,7 +74,10 @@ ul.searchResults li { padding-bottom:5px; padding-left:10px; }
 .soundex { padding:5px 0px 10px 0px; }
 .didyoumean { color:#FF0000 }
 
-.moreSearchResults {
+.moreSearchResults, .searchError {
     margin-left: 8px;
     font-weight: bold;
+}
+.searchWarning {
+    color: #F26649;
 }

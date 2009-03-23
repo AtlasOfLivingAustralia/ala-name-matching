@@ -122,8 +122,16 @@ public class PagingSearchController extends RestController {
      */
     private void doQuery(String resultsParam, String resultTotalParam,
             ModelAndView mav, FullTextQuery fullTextQuery) {
-        List results = fullTextQuery.list();
-        int resultsSize = fullTextQuery.getResultSize();
+        List results = null;
+        int resultsSize = 0;
+		try {
+            results = fullTextQuery.list();
+            resultsSize = fullTextQuery.getResultSize();
+        }
+        catch (Exception e) {
+            mav.addObject(resultsParam+"Error", e.toString());
+            logger.error("FullTextQuery returned an exception: " + e);
+        }
         mav.addObject(resultsParam, results);
         mav.addObject(resultTotalParam, resultsSize);
     }
