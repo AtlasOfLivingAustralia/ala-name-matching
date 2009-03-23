@@ -1,6 +1,7 @@
 <%@ include file="/common/taglibs.jsp"%>
 <div id="twopartheader">
     <h2><spring:message code="blanket.search.dataResources.header" text="Data Resources search results for:"/> <strong>${searchString}</strong> </h2>
+    <p><a href="${pageContext.request.contextPath}/search/${searchString}"><spring:message code="blanket.search.allResults" text="Back to search results for all pages"/></a></p>
 </div>
 <c:if test="${not empty dataResources}">
 <div id="YuiSearchResults" class=" yui-skin-sam">
@@ -16,7 +17,7 @@
                 var myColumnDefs = [
                     {key:"dataResource", label:"Data Resource", sortable:true, formatter:formatNameUrl},
                     {key:"occurrences", label:"Occurrences Count", sortable:true},
-                    {key:"score", label:"Score"}
+                    {key:"score", label:"Score", formatter:"number", sortable:true}
                 ];
 
                 var myDataSource = new YAHOO.util.DataSource("${pageContext.request.contextPath}/search/dataResources/${searchString}/json?");

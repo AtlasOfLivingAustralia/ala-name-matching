@@ -18,6 +18,7 @@ table { margin: 0px 0 5px 0; padding: 0; }
 
 /* #twopartheader { margin: 20px 0 10px 0; padding: 0 0 0 95px; min-height:63px; background: url('images/searchResultsIcoBig.gif') no-repeat left top ;  } */
 #twopartheader h2 { color: #2B2B28; padding: 4px 0 0 5px; margin: 0; font-size: 1.1em; font-weight: normal; }
+#twopartheader p { padding: 4px 0 0 5px; margin: 0; }
 #twopartheader ul { padding: 9px 0 0 20px ; margin: 0 ; font-size: 1em; font-weight: normal; list-style: bullet; }
 #twopartheader ul li { display: list-item; /* padding-right: 15px;*/ }
 

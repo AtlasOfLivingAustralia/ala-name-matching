@@ -1,6 +1,7 @@
 <%@ include file="/common/taglibs.jsp"%>
 <div id="twopartheader">
     <h2><spring:message code="blanket.search.commonNames.header" text="Common Names search results for:"/> <strong>${searchString}</strong> </h2>
+    <p><a href="${pageContext.request.contextPath}/search/${searchString}"><spring:message code="blanket.search.allResults" text="Back to search results for all pages"/></a></p>
 </div>
 <c:if test="${not empty commonNames}">
 <div id="YuiSearchResults" class=" yui-skin-sam">
@@ -13,11 +14,21 @@
                     elCell.innerHTML = "<a href='" + oRecord.getData("commonNameUrl") +  "' title='go to species page'>" + sData + "</a>";
                 };
 
+                var formatScientificName = function(elCell, oRecord, oColumn, sData) {
+                    if (oRecord.getData("rank")=="species" || oRecord.getData("rank")=="genus") {
+                        elCell.innerHTML = "<i>" + sData + "</i>";
+                    } else {
+                        elCell.innerHTML = sData;
+                    }
+                };
+
+
                 var myColumnDefs = [
                     {key:"commonName", label:"Common Name", sortable:true, formatter:formatCommonNameUrl},
-                    {key:"scientificName", label:"Scientific Name"},
-                    {key:"kingdom", label:"Kingdom"},
-                    {key:"score", label:"Score"}
+                    {key:"scientificName", label:"Scientific Name", formatter:formatScientificName},
+                    {key:"rank", label:"Taxon Rank", sortable:true},
+                    {key:"kingdom", label:"Kingdom", sortable:true},
+                    {key:"score", label:"Score", formatter:"number", sortable:true}
                 ];
 
                 var myDataSource = new YAHOO.util.DataSource("${pageContext.request.contextPath}/search/commonNames/${searchString}/json?");
@@ -25,7 +36,7 @@
                 //myDataSource.connXhrMode = "queueRequests";
                 myDataSource.responseSchema = {
                     resultsList: "result",
-                    fields: [{key:"score",parser:"number"},"commonName","commonNameUrl","scientificName","kingdom"],
+                    fields: [{key:"score",parser:"number"},"commonName","commonNameUrl","scientificName","rank","kingdom"],
                     metaFields: {totalRecords: "totalRecords"}
                 };
 

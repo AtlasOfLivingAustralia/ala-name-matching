@@ -14,6 +14,7 @@
  ***************************************************************************/
 package org.ala.model;
 
+import java.io.Serializable;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -47,7 +48,9 @@ import org.hibernate.search.annotations.TokenizerDef;
       @Parameter(name = "language", value = "English")
     })
   })
-public class Locality {
+public class Locality implements Serializable {
+
+    private static final long serialVersionUID = -8732906531973605045L;
 
 	@Id
 	@GeneratedValue

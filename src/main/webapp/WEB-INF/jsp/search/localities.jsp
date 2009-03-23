@@ -1,6 +1,7 @@
 <%@ include file="/common/taglibs.jsp"%>
 <div id="twopartheader">
     <h2><spring:message code="blanket.search.localities.header" text="Localities search results for:"/> <strong>${searchString}</strong> </h2>
+    <p><a href="${pageContext.request.contextPath}/search/${searchString}"><spring:message code="blanket.search.allResults" text="Back to search results for all pages"/></a></p>
 </div>
 <c:if test="${not empty localities}">
 <div id="YuiSearchResults" class=" yui-skin-sam">
@@ -18,7 +19,7 @@
                     {key:"state", label:"State"},
                     {key:"postcode", label:"Postcode"},
                     {key:"geoRegion", label:"Geographic Region"},
-                    {key:"score", label:"Score"}
+                    {key:"score", label:"Score", formatter:"number", sortable:true}
                 ];
 
                 var myDataSource = new YAHOO.util.DataSource("${pageContext.request.contextPath}/search/localities/${searchString}/json?");

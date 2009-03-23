@@ -93,7 +93,8 @@
             <map>
                 <entry key="scientificName" value="taxonConcept.taxonName.canonical"/>
                 <entry key="commonName" value="nameForSort"/>
-                <entry key="kingdom" value="kingdomConcept.taxonName.canonical"/>
+                <entry key="rank" value="taxonConcept.rank"/>
+                <entry key="kingdom" value="taxonConcept.kingdomConcept.taxonName.canonical"/>
             </map>
         </property>
     </bean>

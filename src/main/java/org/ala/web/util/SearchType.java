@@ -31,7 +31,7 @@ public enum SearchType {
             new String[]{"kingdomConcept.taxonName.canonical"}),
     COMMON_NAMES("commonNames", CommonName.class,
             new String[]{"name"},
-            new String[]{"taxonConcept.taxonName.canonical", "taxonConcept.kingdomConcept.taxonName.canonical"}),
+            new String[]{"taxonConcept.taxonName.canonical","taxonConcept.rank","taxonConcept.kingdomConcept.taxonName.canonical"}),
     GEOGRAPHIC_REGIONS("geoRegions", GeoRegion.class,
             new String[]{"name","acronym","geoRegionType.name"},
             new String[]{"geoRegionType.name"}),
@@ -55,7 +55,7 @@ public enum SearchType {
     /** String array list of search fields */
     private String[] searchFields;
     /** String array list of display fields */
-    private String[] displayFields;
+    private String[] additionalDisplayFields;
 
     /**
      * Contructor (private)
@@ -69,14 +69,14 @@ public enum SearchType {
         this.name = name;
         this.bean = beanName;
         this.searchFields = searchFields;
-        this.displayFields = displayFields;
+        this.additionalDisplayFields = displayFields;
     }
 
     /**
      * @return String displayType
      */
-    public String[] getDisplayFields() {
-        return displayFields;
+    public String[] getAdditionalDisplayFields() {
+        return additionalDisplayFields;
     }
 
     /**

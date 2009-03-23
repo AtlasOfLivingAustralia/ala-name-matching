@@ -49,7 +49,7 @@ public class InitialSearchController extends RestController {
 	protected SessionFactory sessionFactory;
 	protected String view = "fullSearchView";
 	protected String searchStringRequestParam = "searchString";
-	
+
 	/**
 	 * @see org.gbif.portal.web.controller.RestController#handleRequest(java.util.Map, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
 	 */
@@ -147,4 +147,4 @@ public class InitialSearchController extends RestController {
 	public void setSessionFactory(SessionFactory sessionFactory) {
 		this.sessionFactory = sessionFactory;
 	}
-}
+    }

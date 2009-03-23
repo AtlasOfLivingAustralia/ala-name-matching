@@ -24,7 +24,8 @@
             ${pageContext.request.contextPath}/species/${commonName[1].taxonConcept.id}/commonName/${commonName[1].name}
           </json:property>
           <json:property name="scientificName" value="${commonName[2]}"/>
-          <json:property name="kingdom" value="${commonName[3]}"/>
+          <json:property name="rank"><alatag:taxonRankfromInt rankValue="${commonName[3]}"/></json:property>
+          <json:property name="kingdom" value="${commonName[4]}"/>
         </json:object>
       </json:array>
   

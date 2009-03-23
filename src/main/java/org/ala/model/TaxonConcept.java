@@ -55,7 +55,7 @@ public class TaxonConcept implements Serializable {
 	@Column(name="data_resource_id")
 	protected Long dataResourceId;
 	
-	@JoinColumn(name="rank")
+	@Column(name="rank")
     @Field(index=Index.UN_TOKENIZED, store=Store.YES)
 	protected Integer rank;
 

@@ -78,6 +78,7 @@ public class PagingSearchController extends RestController {
         String view = ("json".equals(viewString)) ? jsonView : htmlView; 
         // Create the mav and add some initial elements to it
         ModelAndView mav = new ModelAndView(view);
+        mav.addObject("searchType", searchType.getName());
         mav.addObject("searchString", searchString);
         mav.addObject("pageSize", 10); // sets the number of page "boxes" to display
         mav.addObject("recordsReturned", results);
@@ -100,7 +101,7 @@ public class PagingSearchController extends RestController {
 
         // combine two String[] arrays into a 3rd array using System.arraycopy
         String[] defaultFields = {FullTextQuery.SCORE, FullTextQuery.THIS};
-        String[] typeFields = searchType.getDisplayFields();
+        String[] typeFields = searchType.getAdditionalDisplayFields();
         String[] projectionArgs = mergeArrays(defaultFields, typeFields);
         // use a Hibernate search projection (so we can get the score value back)
         fullTextQuery.setProjection(projectionArgs);

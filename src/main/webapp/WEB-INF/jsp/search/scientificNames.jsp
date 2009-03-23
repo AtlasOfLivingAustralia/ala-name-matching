@@ -1,6 +1,7 @@
 <%@ include file="/common/taglibs.jsp"%>
 <div id="twopartheader">
     <h2><spring:message code="blanket.search.scientificNames.header" text="Scientific Names search results for:"/> <strong>${searchString}</strong> </h2>
+    <p><a href="${pageContext.request.contextPath}/search/${searchString}"><spring:message code="blanket.search.allResults" text="Back to search results for all pages"/></a></p>
 </div>
 <c:if test="${not empty scientificNames}">
 <div id="YuiSearchResults" class=" yui-skin-sam">
@@ -10,7 +11,13 @@
         //YAHOO.util.Event.addListener(window, "load", function() {
             YAHOO.example.XHR_JSON = function() {
                 var formatNameUrl = function(elCell, oRecord, oColumn, sData) {
-                    elCell.innerHTML = "<a href='" + oRecord.getData("scientificNameUrl") +  "' title='go to species page'>" + sData + "</a>";
+                    var thisData;
+                    if (oRecord.getData("rank")=="species" || oRecord.getData("rank")=="genus") {
+                        thisData = "<i>" + sData + "</i>";
+                    } else {
+                        thisData = sData;
+                    }
+                    elCell.innerHTML = "<a href='" + oRecord.getData("scientificNameUrl") +  "' title='go to species page'>" + thisData + "</a>";
                 };
 
                 var myColumnDefs = [
@@ -18,7 +25,7 @@
                     {key:"author", label:"Author"},
                     {key:"rank", label:"Taxon Rank", sortable:true},
                     {key:"kingdom", label:"Kingdom", sortable:true},
-                    {key:"score", label:"Score"}
+                    {key:"score", label:"Score", formatter:"number", sortable:true}
                 ];
 
                 var myDataSource = new YAHOO.util.DataSource("${pageContext.request.contextPath}/search/scientificNames/${searchString}/json?");
