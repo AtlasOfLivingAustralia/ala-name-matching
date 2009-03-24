@@ -535,12 +535,17 @@ div#topmenu a:hover {
 table.actionsList {
 	vertical-align: top;
 	padding-left: 10px;
-	/* padding-bottom: 10px; */
-	width: 99%;
+    padding-top: 10px;
+	/* padding-bottom: 10px; 
+	width: 99%;*/
 }
 
 table.actionsList td {
 	vertical-align: top;
+}
+
+table.actionsList th {
+	padding-left: 2px;
 }
 
 ul.actionsListInline {
@@ -552,7 +557,56 @@ ul.actionsListInline {
 
 ul.actionsListInline li {
 	padding: 0px 15px 4px 0px;
-	display: inline;
+	display: list-item;
+}
+
+ul.actionsListIcon {
+	padding-bottom: 6px;
+	padding-left: 2px;
+	list-style: disc;
+	color: #0166B9;
+}
+
+ul.actionsListIcon li {
+	padding: 0px 15px 4px 0px;
+	display: list-item;
+}
+
+.actionsListIcon a  {
+	display: block;
+	height: 16px;
+}
+.actionsListIcon .iconDownload {
+    padding-left: 18px;
+    background: url('images/page_white_put.png') no-repeat 0px 0px
+}
+.actionsListIcon .iconEarth {
+    padding-left: 18px;
+    background: url('images/google_earth_icon.gif') no-repeat 0px 0px
+}
+.actionsListIcon .iconTable {
+    padding-left: 18px;
+    background: url('images/table_icon.png') no-repeat 0px 0px
+}
+.actionsListIcon .iconMap {
+    padding-left: 18px;
+    background: url('images/map_icon.png') no-repeat 0px 0px
+}
+.actionsListIcon .iconSearchAdd {
+    padding-left: 18px;
+    background: url('images/icon_magnifier_plus.png') no-repeat 0px 0px
+}
+.actionsListIcon .iconModel {
+    padding-left: 18px;
+    background: url('images/icon_wand.png') no-repeat 0px 0px
+}
+
+ul.actionsListIcon li {
+	display:block;
+}
+
+.occurrenceContainer #furtherActions ul.actionsListIcon li {
+    display: list-item;
 }
 
 p.resultsDetails {
@@ -581,7 +635,13 @@ ol {
 div#warnings {
 	border: 1px solid #CCCCCC;
 	background-color: #FFEFDD;
-	width: 100%;
+	/* width: 100%; */
+    margin: 5px 0 0 0;
+	padding-top: 2px;
+    margin: 0;
+    margin-right: 7px;
+	-moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
 }
 
 div#warnings h4 {

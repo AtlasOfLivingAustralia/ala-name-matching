@@ -26,13 +26,15 @@ import java.util.Map;
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
 public enum RankFacet {
-    KINGDOM (1000, "kingdom"),
-    PHYLUM  (2000, "phylum"),
-    CLASS   (3000, "class"),
-    ORDER   (4000, "order"),
-    FAMILY  (5000, "family"),
-    GENUS   (6000, "genus"),
-    SPECIES (7000, "species");
+    UNRANKED   (0,    "unranked"),
+    KINGDOM    (1000, "kingdom"),
+    PHYLUM     (2000, "phylum"),
+    CLASS      (3000, "class"),
+    ORDER      (4000, "order"),
+    FAMILY     (5000, "family"),
+    GENUS      (6000, "genus"),
+    SPECIES    (7000, "species"),
+    SUBSPECIES (8000, "subspecies");
     
     // Allow reverse-lookup (based on http://www.ajaxonomy.com/2007/java/making-the-most-of-java-50-enum-tricks)
     private static final Map<String,RankFacet> fieldLookup
@@ -86,14 +88,14 @@ public enum RankFacet {
      * @return RankFacet the RankFacet
      */
     public static RankFacet getForField(String field) {
-          return fieldLookup.get(field); 
-     }
+        return fieldLookup.get(field); 
+    }
 
     /**
      * @param id
      * @return RankFacet the RankFacet
      */
     public static RankFacet getForId(Integer id) {
-          return idLookup.get(id); 
+        return idLookup.get(id);
      }
 }

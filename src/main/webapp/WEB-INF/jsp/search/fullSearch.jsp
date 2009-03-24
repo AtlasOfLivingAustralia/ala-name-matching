@@ -8,7 +8,7 @@
 </div>
 <table id="results" style="width:100%;">
 <tr>
-<td id="resultsSummary" style="vertical-align: top; width:13%; padding-top:30px; padding-right :3px; border-right: 1px solid #CCCCCC;">
+<td id="resultsSummary" style="vertical-align: top; width:20%; padding-top:25px; padding-right :3px;">
 	<ul>
         <li><a href="#taxonConcepts">Scientific names (${taxonConceptsTotal})</a></li>
 	    <li><a href="#commonNames">Common names (${commonNamesTotal})</a></li>
@@ -20,13 +20,12 @@
 	</ul>
 </td><!-- resultsSummary -->
 
-<td id="resultsBreakdown" style="vertical-align:top;">
+<td id="resultsBreakdown" style="vertical-align:top; padding-top:0px;">
 <div class=" yui-skin-sam">
 <% /** Taxon Names  */%>
 <c:if test="${taxonConceptsTotal>0 || fn:length(taxonConceptsError)>0}">
-    <a name="taxonConcepts">
-        <h2 class="scNames"><spring:message code="blanket.search.scientific.names.title" text="Scientific names"/></h2>
-    </a>
+    <a name="taxonConcepts"></a>
+    <h2 class="scNames"><spring:message code="blanket.search.scientific.names.title" text="Scientific names"/></h2>
     <div id="taxonConcepts"></div>
     <script type="text/javascript">
     YAHOO.example.Data1 =
@@ -46,7 +45,7 @@
         YAHOO.example.Basic = function() {
             var formatNameUrl = function(elCell, oRecord, oColumn, sData) {
                 var thisData;
-                if (oRecord.getData("rank")=="species" || oRecord.getData("rank")=="genus") {
+                if (oRecord.getData("rank")=="species" || oRecord.getData("rank")=="subspecies" || oRecord.getData("rank")=="genus") {
                     thisData = "<i>" + sData + "</i>";
                 } else {
                     thisData = sData;
@@ -86,9 +85,8 @@
 
 <% /** Common Names  */%>
 <c:if test="${commonNamesTotal>0 || fn:length(commonNamesError)>0}">
-    <a name="commonNames">
-        <h2 class="scNames"><spring:message code="blanket.search.common.names.title" text="Common names"/></h2>
-    </a>
+    <a name="commonNames"></a>
+    <h2 class="scNames"><spring:message code="blanket.search.common.names.title" text="Common names"/></h2>
     <div id="commonNames"></div>
     <script type="text/javascript">
     YAHOO.example.Data2 =
@@ -112,7 +110,7 @@
             };
 
             var formatScientificName = function(elCell, oRecord, oColumn, sData) {
-                if (oRecord.getData("rank")=="species" || oRecord.getData("rank")=="genus") {
+                if (oRecord.getData("rank")=="species" || oRecord.getData("rank")=="subspecies" || oRecord.getData("rank")=="genus") {
                     elCell.innerHTML = "<i>" + sData + "</i>";
                 } else {
                     elCell.innerHTML = sData;
@@ -152,9 +150,8 @@
 
 <% /** Geo Regions  */%>
 <c:if test="${geoRegionsTotal>0 || fn:length(geoRegionsError)>0}">
-    <a name="geoRegions">
-        <h2 class="scNames">Geographic Regions</h2>
-    </a>
+    <a name="geoRegions"></a>
+    <h2 class="scNames">Geographic Regions</h2>
     <div id="geoRegions"></div>
     <script type="text/javascript">
     YAHOO.example.Data3 =
@@ -209,9 +206,8 @@
 
 <% /** Localities */%>
 <c:if test="${localitiesTotal>0 || fn:length(localitiesError)>0}">
-    <a name="localities">
-        <h2 class="scNames">Localities</h2>
-    </a>
+    <a name="localities"></a>
+    <h2 class="scNames">Localities</h2>
     <div id="localities"></div>
     <script type="text/javascript">
     YAHOO.example.Data4 =
@@ -268,9 +264,8 @@
 
 <% /** Data Resource  */%>
 <c:if test="${dataResourcesTotal>0 || fn:length(dataResourcesError)>0}">
-    <a name="dataResources">
-        <h2 class="scNames">Data Resources</h2>
-    </a>
+    <a name="dataResources"></a>
+    <h2 class="scNames">Data Resources</h2>
     <div id="dataResources"></div>
     <script type="text/javascript">
     YAHOO.example.Data5 =
@@ -323,9 +318,8 @@
 
 <% /** Data Providers */%>
 <c:if test="${dataProvidersTotal>0 || fn:length(dataProvidersError)>0}">
-    <a name="dataProviders">
-        <h2 class="scNames">Data Providers</h2>
-    </a>
+    <a name="dataProviders"></a>
+    <h2 class="scNames">Data Providers</h2>
     <div id="dataProviders"></div>
     <script type="text/javascript">
     YAHOO.example.Data6 =

@@ -24,31 +24,35 @@
 </div>
 <c:if test="${geoRegion.occurrenceCount>0}">
 <div id="furtherActions">
-	<h4><spring:message code='actions.for'/> <gbif:capitalize>${geoRegion.name}</gbif:capitalize></h4>
 	<table cellspacing="1" class="actionsList">
-		<tbody>
+		<thead>
+            <tr>
+                <th><b><spring:message code="actions.explore"/></b></th>
+                <th><b><spring:message code="actions.download"/></b></th>
+            </tr>
+        </thead>
+        <tbody>
 			<tr valign="top">
-				<td><b><spring:message code="actions.explore"/></b></td>
 				<td>
-					<ul class="actionsListInline">
+					<ul class="actionsListIcon">
 						<li>
-							<a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="0"/>"><spring:message code="explore.occurrences"/></a>
+							<a href="${pageContext.request.contextPath}/occurrences/searchWithTable.htm?<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="0"/>" class="iconTable"><spring:message code="explore.occurrences"/></a>
 						</li>
-						<li>
+                        <li>
 							<c:set var="a0">
 								<span class='subject'><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span>
 							</c:set>
-							<a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}"><spring:message code="geography.drilldown.view.taxonomy" text="Explore species recorded in "/> <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></a>
+							<a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}" class="iconTable"><spring:message code="geography.drilldown.view.taxonomy" text="Explore species recorded in "/> <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></a>
+						</li>
+						<li>
+							<a href="#resources" class="iconTable"><spring:message code="explore.resources" text="Data Sets providing data in"/> <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></a>
 						</li>
 					</ul>
 				</td>
-			</tr>
-			<tr valign="top">
-				<td><b><spring:message code="actions.download"/></b></td>
 				<td>
-					<ul class="actionsListInline">
+					<ul class="actionsListIcon">
 						<li>
-							<a href="${pageContext.request.contextPath}/maplayer/simple/ala-georegion-${geoRegion.id}.kmz?id=${geoRegion.id}&type=8&format=kmz&unit=0.1&entityType=${regionType}&entityName=${geoRegion.name}"><spring:message code="download.google.earth.celldensity"/></a>
+							<a href="${pageContext.request.contextPath}/maplayer/simple/ala-georegion-${geoRegion.id}.kmz?id=${geoRegion.id}&type=8&format=kmz&unit=0.1&entityType=${regionType}&entityName=${geoRegion.name}" class="iconEarth"><spring:message code="download.google.earth.celldensity"/></a>
 						</li>
 					</ul>
 				</td>
@@ -98,7 +102,8 @@
 	</div>
     <div id="resources_table" class=" yui-skin-sam">
     <c:if test="${not empty geoRegionDataResources}">
-        <h5><spring:message code="geography.drilldown.mapped.resources" text="Resources providing data for Map"/></h5>
+        <a name="resources"></a>
+        <h5><spring:message code="geography.drilldown.mapped.resources" text="Data Sets providing data for Map"/></h5>
         <div id="json"></div>
         <script type="text/javascript">
             YAHOO.util.Event.addListener(window, "load", function() {

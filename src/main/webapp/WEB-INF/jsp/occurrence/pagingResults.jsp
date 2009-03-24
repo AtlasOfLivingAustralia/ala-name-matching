@@ -1,4 +1,16 @@
 <%@ include file="/common/taglibs.jsp"%>
+<h4 id="searchResultCount"><spring:message code="occurrence.search.filter.retrievingcount"/></h4>
+<script type="text/javascript">
+	<% //retrieve the count %>
+	var countCallback = {
+		success:function(o){document.getElementById("searchResultCount").innerHTML=o.responseText;},	
+		failure: function(o){}
+	}	
+	YAHOO.util.Connect.asyncRequest('GET',
+		"<string:trim>${pageContext.request.contextPath}/occurrences/occurrenceCount?<gbif:criteria criteria="${criteria}"/><gbiftag:occurrenceFilterOptions/></string:trim>", 
+		countCallback, 
+		null); 	
+</script>
 <h4><spring:message code="occurrence.search.filter.resultstable.title"/></h4>
 <display:table 
 	name="results" 

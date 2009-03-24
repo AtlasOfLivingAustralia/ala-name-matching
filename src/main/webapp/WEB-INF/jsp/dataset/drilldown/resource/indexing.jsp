@@ -20,6 +20,7 @@
 		</ul>
 		
 		<c:if test="${not empty chartData}">
+        <a name="charts"></a>
 		<div id="charts" style="">
             <script type="text/javascript" src="${pageContext.request.contextPath}/javascript/swfobject.js"></script>
             <script type="text/javascript">            

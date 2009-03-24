@@ -16,8 +16,8 @@ p , div {	padding: 0; margin: 0; }
 
 table { margin: 0px 0 5px 0; padding: 0; }
 
-/* #twopartheader { margin: 20px 0 10px 0; padding: 0 0 0 95px; min-height:63px; background: url('images/searchResultsIcoBig.gif') no-repeat left top ;  } */
-#twopartheader h2 { color: #2B2B28; padding: 4px 0 0 5px; margin: 0; font-size: 1.1em; font-weight: normal; }
+/* #twopartheader { margin: 20px 0 10px 0; padding: 0 0 0 95px; min-height:63px; background: url('images/searchResultsIcoBig.gif') no-repeat left top ;  } 
+#twopartheader h2 { color: #2B2B28; padding: 4px 0 0 5px; margin: 0; font-size: 1.1em; font-weight: normal; } */
 #twopartheader p { padding: 4px 0 0 5px; margin: 0; }
 #twopartheader ul { padding: 9px 0 0 20px ; margin: 0 ; font-size: 1em; font-weight: normal; list-style: bullet; }
 #twopartheader ul li { display: list-item; /* padding-right: 15px;*/ }
@@ -25,7 +25,7 @@ table { margin: 0px 0 5px 0; padding: 0; }
 h2.scNames {
 	padding: 4px 4px 4px 8px;
 	margin: 20px 0 0 0;
-    border-bottom: 1px solid #CCC; /*#cda2d7;*/
+    /* border-bottom: 1px solid #CCC;*/ /*#cda2d7;*/
 }
 
 h2.scCountries {
@@ -76,6 +76,7 @@ ul.searchResults li { padding-bottom:5px; padding-left:10px; }
 
 .moreSearchResults, .searchError {
     margin-left: 8px;
+    margin-top: 6px;
     font-weight: bold;
 }
 .searchWarning {

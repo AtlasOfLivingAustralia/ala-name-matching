@@ -132,6 +132,17 @@ public class PagingSearchController extends RestController {
             mav.addObject(resultsParam+"Error", e.toString());
             logger.error("FullTextQuery returned an exception: " + e);
         }
+
+        /* uncomment for debugging output from search
+        for (Object result : results) {
+            Object[] fields = (Object[]) result;
+            logger.debug("result: ");
+            for (Object field : fields) {
+                logger.debug(" " + field);
+            }
+        }
+        */
+        
         mav.addObject(resultsParam, results);
         mav.addObject(resultTotalParam, resultsSize);
     }
