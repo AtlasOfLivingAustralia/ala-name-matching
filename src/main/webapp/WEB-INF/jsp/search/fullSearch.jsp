@@ -16,7 +16,7 @@
 	    <li><a href="#localities">Localities (${localitiesTotal})</a></li>
 	    <li><a href="#dataResources">Data Resources (${dataResourcesTotal})</a></li>
 	    <li><a href="#dataProviders">Data Provider (${dataProvidersTotal})</a></li>
-	    <li><a href="#institutions">Institutions (0)</a></li>
+	    <!-- <li><a href="#institutions">Institutions (0)</a></li> -->
 	</ul>
 </td><!-- resultsSummary -->
 
