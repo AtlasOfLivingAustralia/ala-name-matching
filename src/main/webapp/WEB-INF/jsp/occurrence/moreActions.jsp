@@ -23,12 +23,12 @@
 								<c:otherwise>&raquo; <spring:message code="occurrence.switchto.resources.countview"/> &laquo;</c:otherwise>
 							</c:choose>
 						</li>
-						<li>
+						<!--<li>
 							<c:choose>
 								<c:when test="${viewName!='countryCounts'}"><a href="${pageContext.request.contextPath}/occurrences/searchCountries.htm?<gbif:criteria criteria="${criteria}"/>" class="iconSearchAdd"><spring:message code="occurrence.switchto.country.countview"/></a></c:when>
 								<c:otherwise>&raquo; <spring:message code="occurrence.switchto.country.countview"/> &laquo;</c:otherwise>
 							</c:choose>
-						</li>
+						</li>-->
 					</ul>
                 </td>
                 <td>
