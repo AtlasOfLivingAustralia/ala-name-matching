@@ -21,7 +21,7 @@
 				<!-- geospatial filters-->
                 <ref bean="geoRegionFilter"/>
 				<ref bean="countryFilter"/>
-<!-- 			<ref bean="boundingBoxFilter"/> -->
+     			<ref bean="boundingBoxFilter"/>
 				<ref bean="latitudeFilter"/>
 				<ref bean="longitudeFilter"/>
                 <ref bean="altitudeFilter"/>
