@@ -29,50 +29,53 @@
 
     <c:if test="${taxonConcept!=null}">
         <div id="furtherActions">
-            <h4><spring:message code='actions.for'/> <string:capitalize>${taxonConcept.rank}</string:capitalize>: <gbif:taxonPrint concept="${taxonConcept}"/> ${taxonConcept.author}</h4>
             <table cellspacing="1" class="actionsList">
-                <tbody>
+                <thead>
                     <c:set var="conceptKey" value="${taxonConcept.isNubConcept ? taxonConcept.key : taxonConcept.partnerConceptKey}"/>
-                    <c:if test="${conceptKey!=null}">
-                        <gbif:isMajorRank concept="${taxonConcept}">
-                            <tr valign="top">
-                                <td><b><spring:message code="actions.view"/></b></td>
+                    <tr valign="top">
+                        <c:if test="${conceptKey!=null}">
+                            <gbif:isMajorRank concept="${taxonConcept}">
+                                <th width="30%"><b><spring:message code="actions.view"/></b></th>
+                            </gbif:isMajorRank>
+                        </c:if>
+                        <th width="40%"><b><spring:message code="actions.explore"/></b></th>
+                        <!-- <th width="40%"><b><spring:message code="actions.send"/></b></th> -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <c:if test="${conceptKey!=null}">
+                            <gbif:isMajorRank concept="${taxonConcept}">
                                 <td>    
-                                    <ul class="actionsListInline">
+                                    <ul class="actionsListIcon">
                                         <li>
-                                            <a href="${pageContext.request.contextPath}/species/${taxonConcept.isNubConcept ? taxonConcept.key : taxonConcept.partnerConceptKey}"><spring:message code="taxonomy.browser.overview.of"/> <gbif:taxonPrint concept="${taxonConcept}"/></a>
+                                            <a href="${pageContext.request.contextPath}/species/${taxonConcept.isNubConcept ? taxonConcept.key : taxonConcept.partnerConceptKey}" class="iconInfo"><spring:message code="taxonomy.browser.overview.of"/> <gbif:taxonPrint concept="${taxonConcept}"/></a>
                                         </li>   
                                     </ul>
                                 </td>
-                            </tr>
-                        </gbif:isMajorRank> 
-                    </c:if>
-                    <tr valign="top">
-                        <td><b><spring:message code="actions.explore"/></b></td>
+                            </gbif:isMajorRank> 
+                        </c:if>
                         <td>    
-                            <ul class="actionsListInline">
+                            <ul class="actionsListIcon">
                                 <gbif:isMajorRank concept="${taxonConcept}">
                                     <c:if test="${not empty occurrenceCriteria}">
                                         <li>
-                                            <a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criteria criteria="${occurrenceCriteria}"/>"><spring:message code="occurrences.of"/> <gbif:taxonPrint concept="${taxonConcept}"/></a>
+                                            <a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criteria criteria="${occurrenceCriteria}"/>" class="iconTable"><spring:message code="occurrences.of"/> <gbif:taxonPrint concept="${taxonConcept}"/></a>
                                         </li>                       
                                     </c:if> 
                                 </gbif:isMajorRank> 
                                 <li>
-                                    <a href="${pageContext.request.contextPath}/species/search.htm?<gbif:criteria criteria="${taxonomyCriteria}"/>"><spring:message code="taxonomy.browser.compare.classifications"/> <gbif:taxonPrint concept="${taxonConcept}"/></a>                      
+                                    <a href="${pageContext.request.contextPath}/species/search.htm?<gbif:criteria criteria="${taxonomyCriteria}"/>" class="iconClassification"><spring:message code="taxonomy.browser.compare.classifications"/> <gbif:taxonPrint concept="${taxonConcept}"/></a>
                                 </li>                       
                             </ul>
                         </td>
-                    </tr>
-                    <tr>
-                        <td><b><spring:message code="actions.send"/></b></td>
-                        <td>    
-                            <ul class="actionsListInline">
+                        <!-- <td>
+                            <ul class="actionsListIcon">
                                 <li>
                                     <a class="feedback" href='javascript:feedback("${pageContext.request.contextPath}/feedback/taxon/${taxonConcept.key}")'><spring:message code="feedback.to.provider.on.classification.link"  arguments="${dataProvider.name}" argumentSeparator="|"/> <gbif:taxonPrint concept="${taxonConcept}"/></a>
                                 </li>
                             </ul>
-                        </td>
+                        </td> -->
                     </tr>
                 </tbody>
             </table>

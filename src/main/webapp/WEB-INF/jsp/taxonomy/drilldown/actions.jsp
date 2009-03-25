@@ -20,7 +20,7 @@
                             </li>
                         </gbif:isMajorRank>
                             <li>
-                                <a href="${pageContext.request.contextPath}/species/browse/taxon/${taxonConcept.key}" class="iconTable"><spring:message code="taxonconcept.drilldown.explore.names"/></a>
+                                <a href="${pageContext.request.contextPath}/species/browse/taxon/${taxonConcept.key}" class="iconClassification"><spring:message code="taxonconcept.drilldown.explore.names"/></a>
                             </li>
                     </ul>
                 </td>

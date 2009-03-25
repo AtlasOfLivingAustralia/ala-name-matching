@@ -7,7 +7,7 @@
 				<th width="30%"><b><spring:message code="actions.explore"/></b></th>
                 <!--<th><b><spring:message code="actions.list"/></b></th>-->
                 <th width="40%"><b><spring:message code="actions.download"/></b></th>
-                <th width="40%"><b><spring:message code="actions.send"/></b></th>
+                <!--th width="40%"><b><spring:message code="actions.send"/></b></th-->
             </tr>
         </thead>
         <tbody>
@@ -26,7 +26,7 @@
 						</li>
                         <c:if test="${not empty chartData}">
                             <li>
-								<a href="#charts" class="iconTable">Data Breakdown Charts</a>
+								<a href="#charts" class="iconChart">Data Breakdown Charts</a>
 							</li>
                         </c:if>
 					</ul>
@@ -56,7 +56,7 @@
 					<ul class="actionsListIcon">
 						<c:if test="${dataResource.occurrenceCount>0}">
 						<li>
-							<a href="${pageContext.request.contextPath}/occurrences/downloadResults.htm?format=species&criteria=<gbif:criterion subject="24" predicate="0" value="${dataResource.key}" index="0" urlEncode="true"/>" class="iconTable"><spring:message code="dataset.list.species" arguments="${a0}"/></a>
+							<a href="${pageContext.request.contextPath}/occurrences/downloadResults.htm?format=species&criteria=<gbif:criterion subject="24" predicate="0" value="${dataResource.key}" index="0" urlEncode="true"/>" class="iconDownload"><spring:message code="dataset.list.species" arguments="${a0}"/></a>
 						</li>
 						</c:if>
 						<li>
@@ -64,13 +64,13 @@
 						</li>
 					</ul>
                 </td>
-                <td>
+                <!--<td>
                     <ul class="actionsListIcon">
 						<li>
 							<a class="feedback" href='javascript:feedback("${pageContext.request.contextPath}/feedback/resource/${dataResource.key}")'><spring:message code="feedback.to.provider.link"  arguments="${dataProvider.name}" argumentSeparator="|"/></a>
 						</li>
 					</ul>
-                </td>
+                </td>-->
             </tr>
         </tbody>
     </table>

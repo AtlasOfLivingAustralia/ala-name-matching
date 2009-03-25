@@ -55,7 +55,7 @@
 					</ul>
 				</td>
 			</tr>
-			<tr>
+			<!--tr>
 				<td><b><spring:message code="actions.send"/></b></td>
 				<td>	
 					<ul class="actionsListInline">
@@ -64,7 +64,7 @@
 						</li>
 					</ul>
 				</td>
-			</tr>
+			</tr-->
 		</tbody>
 	</table>
 </div>

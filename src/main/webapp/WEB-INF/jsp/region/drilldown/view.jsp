@@ -42,7 +42,7 @@
 							<c:set var="a0">
 								<span class='subject'><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span>
 							</c:set>
-							<a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}" class="iconTable"><spring:message code="geography.drilldown.view.taxonomy" text="Explore species recorded in "/> <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></a>
+							<a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}" class="iconClassification"><spring:message code="regions.drilldown.view.taxonomy" text="Taxa recorded in "/> <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></a>
 						</li>
 						<li>
 							<a href="#resources" class="iconTable"><spring:message code="explore.resources" text="Data Sets providing data in"/> <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></a>
@@ -103,10 +103,10 @@
     <div id="resources_table" class=" yui-skin-sam">
     <c:if test="${not empty geoRegionDataResources}">
         <a name="resources"></a>
-        <h5><spring:message code="geography.drilldown.mapped.resources" text="Data Sets providing data for Map"/></h5>
+        <h5><spring:message code="geography.drilldown.resources" text="Data Sets providing data for Map"/></h5>
         <div id="json"></div>
         <script type="text/javascript">
-            YAHOO.util.Event.addListener(window, "load", function() {
+            //YAHOO.util.Event.addListener(window, "load", function() {
                 YAHOO.example.XHR_JSON = function() {
                     var formatResourceUrl = function(elCell, oRecord, oColumn, sData) {
                         elCell.innerHTML = "<a href='" + oRecord.getData("dataResourceUrl") + "'>" + sData + "</a>";
@@ -158,7 +158,7 @@
                         oDT: myDataTable
                     };
                 }();
-            });
+            //});
 
             </script>
     </c:if>

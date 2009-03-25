@@ -21,7 +21,7 @@
 						</c:if>
 						<c:if test="${not empty dataResources && dataResources[0].sharedTaxonomy}">
 							<li>
-								<a href="${pageContext.request.contextPath}/species/browse/provider/${dataProvider.key}" class="iconTable"><spring:message code="dataset.taxonomytreelink" arguments="${dataProvider.name}" argumentSeparator="%%%%"/></a>
+								<a href="${pageContext.request.contextPath}/species/browse/provider/${dataProvider.key}" class="iconClassification"><spring:message code="dataset.taxonomytreelink" arguments="${dataProvider.name}" argumentSeparator="%%%%"/></a>
 							</li>
 						</c:if>
 					</ul>

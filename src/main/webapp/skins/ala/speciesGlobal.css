@@ -536,8 +536,8 @@ table.actionsList {
 	vertical-align: top;
 	padding-left: 10px;
     padding-top: 10px;
-	/* padding-bottom: 10px; 
-	width: 99%;*/
+	padding-bottom: 6px;
+	/* width: 99%;*/
 }
 
 table.actionsList td {
@@ -561,7 +561,6 @@ ul.actionsListInline li {
 }
 
 ul.actionsListIcon {
-	padding-bottom: 6px;
 	padding-left: 2px;
 	list-style: disc;
 	color: #0166B9;
@@ -574,7 +573,7 @@ ul.actionsListIcon li {
 
 .actionsListIcon a  {
 	display: block;
-	height: 16px;
+	min-height: 16px;
 }
 .actionsListIcon .iconDownload {
     padding-left: 18px;
@@ -599,6 +598,22 @@ ul.actionsListIcon li {
 .actionsListIcon .iconModel {
     padding-left: 18px;
     background: url('images/icon_wand.png') no-repeat 0px 0px
+}
+.actionsListIcon .iconInfo {
+    padding-left: 18px;
+    background: url('images/info_icon.png') no-repeat 0px 0px
+}
+.actionsListIcon .iconClassification {
+    padding-left: 18px;
+    background: url('images/classification_icon.png') no-repeat 0px 0px
+}
+.actionsListIcon .iconEmail {
+    padding-left: 18px;
+    background: url('images/email_icon.png') no-repeat 0px 0px
+}
+.actionsListIcon .iconChart {
+    padding-left: 18px;
+    background: url('images/piechart_icon.png') no-repeat 0px 0px
 }
 
 ul.actionsListIcon li {
