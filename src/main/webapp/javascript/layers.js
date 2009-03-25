@@ -7,7 +7,7 @@
       tilecacheUrl,
       {layers: "alabase",
       srs: 'EPSG:4326',
-      format: "image/gif"}
+      format: "image/png"}
       );
 
   var countriesLayer = new OpenLayers.Layer.WMS("Countries",
