@@ -92,79 +92,50 @@
       {alpha: true}
       );
 
-    var cellLayer;
-    var centiCellLayer;
-    var tenmilliCellLayer;
-    
+    var imageFormat;
+    var opacity;
     var isIE6 = /msie|MSIE 6/.test(navigator.userAgent); // detects IE6
     
     if (isIE6) {
         //alert('You are using IE6');
-        cellLayer = new OpenLayers.Layer.WMS( entityName+" cells",
-          geoserverUrl+"/wms?",
-          {layers: "ala:tabDensityLayer",
-          srs: 'EPSG:4326',
-          version: "1.0.0",
-          transparent: "true",
-          format: "image/gif",
-          filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?id="+entityId+"&type="+entityType+"&unit=1]]></Literal></PropertyIsEqualTo></Filter>)"},
-          {visibility:false, opacity: 0.6}
-          );
-
-        centiCellLayer = new OpenLayers.Layer.WMS( entityName+" centi cells",
-          geoserverUrl+"/wms?",
-          {layers: "ala:tabDensityLayer",
-          srs: 'EPSG:4326',
-          version: "1.0.0",
-          transparent: "true",
-          format: "image/gif",
-          filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?&id="+entityId+"&type="+entityType+"&unit=0.1]]></Literal></PropertyIsEqualTo></Filter>)"},
-          {visibility:false, opacity: 0.6}
-          );
-
-          tenmilliCellLayer = new OpenLayers.Layer.WMS( entityName+" tenmilli cells",
-          geoserverUrl+"/wms?",
-          {layers: "ala:tabDensityLayer",
-          srs: 'EPSG:4326',
-          version: "1.0.0",
-          transparent: "true",
-          format: "image/gif",
-          filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?id="+entityId+"&type="+entityType+"&unit=0.01]]></Literal></PropertyIsEqualTo></Filter>)"},
-          {visibility:false, opacity: 0.6}
-          );
+        imageFormat = "image/gif";
+        opacity = "0.6";
     } else {
-        //alert('You are not using IE6');
-        cellLayer = new OpenLayers.Layer.WMS( entityName+" cells",
-          geoserverUrl+"/wms?",
-          {layers: "ala:tabDensityLayer",
-          srs: 'EPSG:4326',
-          version: "1.0.0",
-          transparent: "true",
-          format: "image/png",
-          filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?id="+entityId+"&type="+entityType+"&unit=1]]></Literal></PropertyIsEqualTo></Filter>)"},
-          {visibility:false}
-          );
-
-        centiCellLayer = new OpenLayers.Layer.WMS( entityName+" centi cells",
-          geoserverUrl+"/wms?",
-          {layers: "ala:tabDensityLayer",
-          srs: 'EPSG:4326',
-          version: "1.0.0",
-          transparent: "true",
-          format: "image/png",
-          filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?&id="+entityId+"&type="+entityType+"&unit=0.1]]></Literal></PropertyIsEqualTo></Filter>)"},
-          {visibility:false}
-          );
-
-        tenmilliCellLayer = new OpenLayers.Layer.WMS( entityName+" tenmilli cells",
-          geoserverUrl+"/wms?",
-          {layers: "ala:tabDensityLayer",
-          srs: 'EPSG:4326',
-          version: "1.0.0",
-          transparent: "true",
-          format: "image/png",
-          filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?id="+entityId+"&type="+entityType+"&unit=0.01]]></Literal></PropertyIsEqualTo></Filter>)"},
-          {visibility:false}
-          );
+        //alert('You are NOT using IE6');
+        imageFormat = "image/png";
+        opacity = "";
     }
+
+   var cellLayer = new OpenLayers.Layer.WMS( entityName+" cells",
+      geoserverUrl+"/wms?",
+      {layers: "ala:tabDensityLayer",
+      srs: 'EPSG:4326',
+      version: "1.0.0",
+      transparent: "true",
+      format: imageFormat,
+      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?id="+entityId+"&type="+entityType+"&unit=1]]></Literal></PropertyIsEqualTo></Filter>)"},
+      {visibility:false, opacity: opacity}
+      );
+
+   var centiCellLayer = new OpenLayers.Layer.WMS( entityName+" centi cells",
+      geoserverUrl+"/wms?",
+      {layers: "ala:tabDensityLayer",
+      srs: 'EPSG:4326',
+      version: "1.0.0",
+      transparent: "true",
+      format: imageFormat,
+      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?&id="+entityId+"&type="+entityType+"&unit=0.1]]></Literal></PropertyIsEqualTo></Filter>)"},
+      {visibility:false, opacity: opacity}
+      );
+
+   var tenmilliCellLayer = new OpenLayers.Layer.WMS( entityName+" tenmilli cells",
+      geoserverUrl+"/wms?",
+      {layers: "ala:tabDensityLayer",
+      srs: 'EPSG:4326',
+      version: "1.0.0",
+      transparent: "true",
+      format: imageFormat,
+      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?id="+entityId+"&type="+entityType+"&unit=0.01]]></Literal></PropertyIsEqualTo></Filter>)"},
+      {visibility:false, opacity: opacity}
+      );
 
