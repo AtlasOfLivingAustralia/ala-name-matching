@@ -70,28 +70,28 @@
         width:  24px;
         height: 22px;
         background-color: #AAD5E3;
-        background-image: url("${pageContext.request.contextPath}/images/view_next_on.png");"
+        background-image: url("${pageContext.request.contextPath}/images/view_next_on.gif");"
     }
 
     .olControlPanel .selectCellsButtonItemInactive {
         width:  24px;
         height: 22px;
         background-color: #000089;
-        background-image: url("${pageContext.request.contextPath}/images/view_next_off.png");"
+        background-image: url("${pageContext.request.contextPath}/images/view_next_off.gif");"
     }
     
     .olControlPanel .baseLayerButtonItemActive {
         width:  24px;
         height: 22px;
         background-color: #AAD5E3;
-        background-image: url("${pageContext.request.contextPath}/images/google_icon.png");"
+        background-image: url("${pageContext.request.contextPath}/images/google_icon.gif");"
     }
 
     .olControlPanel .baseLayerButtonItemInactive {
         width:  24px;
         height: 22px;
         background-color: #000089;
-        background-image: url("${pageContext.request.contextPath}/images/google_icon.png");"
+        background-image: url("${pageContext.request.contextPath}/images/google_icon.gif");"
     }
 
     .olControlMousePosition {
