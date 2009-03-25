@@ -573,7 +573,7 @@ ul.actionsListIcon li {
 
 .actionsListIcon a  {
 	display: block;
-	min-height: 16px;
+	line-height: 16px;
 }
 .actionsListIcon .iconDownload {
     padding-left: 18px;

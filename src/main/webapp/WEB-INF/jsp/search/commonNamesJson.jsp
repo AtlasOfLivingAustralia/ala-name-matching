@@ -28,5 +28,4 @@
           <json:property name="kingdom" value="${commonName[4]}"/>
         </json:object>
       </json:array>
-  
 </json:object>

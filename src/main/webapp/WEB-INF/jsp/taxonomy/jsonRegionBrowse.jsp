@@ -28,7 +28,7 @@
           <json:property name="taxonRank" value="${regionConcept.rankName}"/>
           <json:property name="occurrences" value="${regionConcept.occurrenceCount}"/>
           <json:property name="occurrencesUrl">
-              ${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject="0" predicate="0" value="${regionConcept.taxonConceptId}" index="0"/>&<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="1"/>
+              ${pageContext.request.contextPath}/occurrences/searchWithTable.htm?<gbif:criterion subject="20" predicate="0" value="${regionConcept.taxonConceptId}" index="0"/>&<gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="1"/>
           </json:property>
         </json:object>
       </json:array>

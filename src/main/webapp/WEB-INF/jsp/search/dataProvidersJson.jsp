@@ -15,15 +15,15 @@
     <json:property name="sort" value="${sort}"/>
     <json:property name="dir" value="${dir}"/>
     <json:property name="pageSize" value="${pageSize}"/>
-      <json:array name="result" var="dataProvider" items="${dataProviders}">
+    <json:array name="result" var="dataProvider" items="${dataProviders}">
         <json:object>
-          <json:property name="score" value="${dataProvider[0]}"/>
-          <json:property name="dataProvider" value="${dataProvider[1].name}"/>
-          <json:property name="dataProviderUrl">
-            ${pageContext.request.contextPath}/datasets/provider/${dataProvider[1].id}
-          </json:property>
-          <json:property name="dataResourceCount" value="${dataProvider[1].dataResourceCount}"/>
-          <json:property name="occurrences" value="${dataProvider[1].occurrenceCount}"/>
+            <json:property name="score" value="${dataProvider[0]}"/>
+            <json:property name="dataProvider" value="${dataProvider[1].name}"/>
+            <json:property name="dataProviderUrl">
+                ${pageContext.request.contextPath}/datasets/provider/${dataProvider[1].id}
+            </json:property>
+            <json:property name="dataResourceCount" value="${dataProvider[1].dataResourceCount}"/>
+            <json:property name="occurrences" value="${dataProvider[1].occurrenceCount}"/>
         </json:object>
-      </json:array>
+    </json:array>
 </json:object>
