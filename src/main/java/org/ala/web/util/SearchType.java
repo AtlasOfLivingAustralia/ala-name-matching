@@ -26,7 +26,7 @@ import org.ala.model.*;
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
 public enum SearchType {
-    SCIENTIFIC_NAMES("scientificNames", TaxonConcept.class,
+    SCIENTIFIC_NAMES("taxonConcepts", TaxonConcept.class,
             new String[]{"taxonName.canonical", "taxonName.author"}),
     COMMON_NAMES("commonNames", CommonName.class,
             new String[]{"name"}),
@@ -37,9 +37,10 @@ public enum SearchType {
     DATA_RESOURCES("dataResources", DataResource.class,
             new String[]{"name","description"}),
     DATA_PROVIDERS("dataProviders", DataProvider.class,
-            new String[]{"name","description"}),
-    INSTITUTIONS("institutions", Institution.class,
-            new String[]{"name","code"});
+            new String[]{"name","description"})
+    //INSTITUTIONS("institutions", Institution.class,
+    //        new String[]{"name","code"})
+            ;
 
     /** Name of the search page type */
     private String name;

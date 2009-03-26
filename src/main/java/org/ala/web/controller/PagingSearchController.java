@@ -31,6 +31,7 @@ import org.hibernate.search.FullTextSession;
 import org.hibernate.search.Search;
 import org.springframework.web.servlet.ModelAndView;
 import org.ala.web.util.SearchType;
+import org.ala.web.util.SearchUtils;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.springframework.web.bind.ServletRequestUtils;
@@ -89,9 +90,8 @@ public class PagingSearchController extends RestController {
         // Build the Hibernate Search query and search
         Session session = sessionFactory.openSession();
         FullTextSession fullTextSession = Search.getFullTextSession(session);
-        FullTextQuery fullTextQuery = buildQuery(fullTextSession, searchType.getSearchFields(), searchType.getBean(), searchString);
-        fullTextQuery.setMaxResults(results);
-        fullTextQuery.setFirstResult(startIndex);
+        SearchUtils searchUtils = new SearchUtils();
+        FullTextQuery fullTextQuery = searchUtils.buildQuery(fullTextSession, searchType.getSearchFields(), searchType.getBean(), searchString);
         
         if (!"score".equals(sort)) {
             // Optionally set sort field (if not the default score sort field)
@@ -103,63 +103,11 @@ public class PagingSearchController extends RestController {
         String[] projectionArgs = {FullTextQuery.SCORE, FullTextQuery.THIS};
         // use a Hibernate search projection (so we can get the score value back)
         fullTextQuery.setProjection(projectionArgs);
-        doQuery(searchType.getResultsParam(), searchType.getResultTotalParam(), mav, fullTextQuery);
+        searchUtils.doQuery(searchType.getResultsParam(), searchType.getResultTotalParam(), mav, fullTextQuery, results, startIndex);
         //close the session
         fullTextSession.close();
 
         return mav;
-    }
-
-    /**
-     * Run the query and add the results list to the ModelAndView
-     *
-     * @param resultsParam
-     * @param resultTotalParam
-     * @param mav
-     * @param fullTextQuery
-     */
-    private void doQuery(String resultsParam, String resultTotalParam,
-            ModelAndView mav, FullTextQuery fullTextQuery) {
-        List results = null;
-        int resultsSize = 0;
-		try {
-            results = fullTextQuery.list();
-            resultsSize = fullTextQuery.getResultSize();
-        }
-        catch (Exception e) {
-            mav.addObject(resultsParam+"Error", e.toString());
-            logger.error("FullTextQuery returned an exception: " + e);
-        }
-
-        /* uncomment for debugging output from search
-        for (Object result : results) {
-            Object[] fields = (Object[]) result;
-            logger.debug("result: ");
-            for (Object field : fields) {
-                logger.debug(" " + field);
-            }
-        }
-        */
-        
-        mav.addObject(resultsParam, results);
-        mav.addObject(resultTotalParam, resultsSize);
-    }
-
-    /**
-     * Build a query, using the correct analyzer.
-     *
-     * @param clazz
-     * @param queryString
-     * @return
-     * @throws ParseException
-     */
-    public FullTextQuery buildQuery(FullTextSession fullTextSession, String[] fieldsToSearch, Class modelClass, String queryString) throws ParseException {
-        fullTextSession.getSearchFactory().getAnalyzer(modelClass);
-        Analyzer analyzer = fullTextSession.getSearchFactory().getAnalyzer(modelClass);
-        MultiFieldQueryParser parser = new MultiFieldQueryParser(fieldsToSearch, analyzer);
-        org.apache.lucene.search.Query luceneQuery = parser.parse(queryString);
-        org.hibernate.search.FullTextQuery fullTextQuery = fullTextSession.createFullTextQuery(luceneQuery, modelClass);
-        return fullTextQuery;
     }
 
     /**
