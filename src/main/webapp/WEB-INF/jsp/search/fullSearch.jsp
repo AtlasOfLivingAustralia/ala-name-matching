@@ -118,7 +118,7 @@
             };
 
             var myColumnDefs = [
-                {key:"commonName", label:"Scientific Name", formatter:formatCommonNameUrl},
+                {key:"commonName", label:"Common Name", formatter:formatCommonNameUrl},
                 {key:"scientificName", label:"Scientific Name", formatter:formatScientificName},
                 {key:"rank", label:"Taxon Rank"},
                 {key:"kingdom", label:"Kingdom"}

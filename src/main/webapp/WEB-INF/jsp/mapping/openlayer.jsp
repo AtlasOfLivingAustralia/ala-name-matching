@@ -53,43 +53,43 @@
     }
     
     .olControlPanel .olControlZoomBoxItemInactive { 
-      width:  24px;
-      height: 22px;
+      /* width:  24px;
+      height: 22px; */
       background-color: orange;
       background-image: url("${pageContext.request.contextPath}/images/drag-rectangle-off.png");
     }
 
     .olControlPanel .olControlZoomBoxItemActive { 
-      width:  24px;
-      height: 22px;
+      /* width:  24px;
+      height: 22px;*/
       background-color: blue;
       background-image: url("${pageContext.request.contextPath}/images/drag-rectangle-on.png");
     }
 
     .olControlPanel .selectCellsButtonItemActive {
-        width:  24px;
-        height: 22px;
+        /* width:  24px;
+        height: 22px; */
         background-color: #AAD5E3;
         background-image: url("${pageContext.request.contextPath}/images/view_next_on.gif");"
     }
 
     .olControlPanel .selectCellsButtonItemInactive {
-        width:  24px;
-        height: 22px;
+        /* width:  24px;
+        height: 22px; */
         background-color: #000089;
         background-image: url("${pageContext.request.contextPath}/images/view_next_off.gif");"
     }
     
     .olControlPanel .baseLayerButtonItemActive {
-        width:  24px;
-        height: 22px;
+        /* width:  24px;
+        height: 22px; */
         background-color: #AAD5E3;
         background-image: url("${pageContext.request.contextPath}/images/google_icon.gif");"
     }
 
     .olControlPanel .baseLayerButtonItemInactive {
-        width:  24px;
-        height: 22px;
+        /* width:  24px;
+        height: 22px; */
         background-color: #000089;
         background-image: url("${pageContext.request.contextPath}/images/google_icon.gif");"
     }
