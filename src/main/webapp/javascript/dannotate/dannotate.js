@@ -39,9 +39,9 @@ var DANNO_USER = 'Guest';
 // This service proxies for Danno (as well as managing create/edit forms)
 // allowing Danno to reside on a different host and not violate the client
 // "same source" rule for JS HTTP connections.
-var DANNO_HOST = 'http://localhost/ala-web';
-var DANNO_PROXY = DANNO_HOST + '/dannotate5.php';
-var DANNO_CB = DANNO_HOST + '/dannotate4a.php';
+var DANNO_HOST = 'http://test.ala.org.au/';
+var DANNO_PROXY = DANNO_HOST + '/dias-b/dannotate5.php';
+var DANNO_CB = DANNO_HOST + '/dias-b/dannotate4a.php';
 
 var POPUP_DIMS = 'width=700,height=500,left=40,top=80';
 
@@ -335,9 +335,10 @@ function callForm (args, action)
 {
   var token = getAjaxRespSync(DANNO_PROXY + '?act=0');
   var form = DANNO_PROXY + args +
+            '&act=' + action +
             '&name=' + DANNO_USER +
             '&token=' + token +
-            '&act=' + action + '&jump=';
+            '&jump=';
   openForm = function() {
     // try to open a popup. If that fails, change current tab location
     if (!window.open(form + 'noClose','Dannotate 0.4',

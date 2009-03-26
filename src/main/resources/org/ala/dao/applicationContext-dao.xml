@@ -47,6 +47,16 @@
   </bean>
 
   <!-- ALA overrides... -->
+  <bean id="dataResourceDAORO" class="org.ala.dao.hibernate.DataResourceDAOImpl" parent="baseDAORO">
+    <property name="resourceNamePrefixes">
+        <list>
+            <value>The</value>
+            <value>University of</value>
+            <value>Univ.</value>
+            <value>Univ. of</value>
+        </list>
+    </property> 
+  </bean>
 
   <!-- Cell Density -->
   <bean id="alaCellDensityDAO" class="org.ala.dao.jdbc.CellDensityDAOImpl">

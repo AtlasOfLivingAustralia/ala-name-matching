@@ -30,7 +30,8 @@
 
 
 // Change the servlet that creates annotation entry forms, etc.
-DANNO_PROXY = DANNO_HOST + '/dannotate5.php';
+DANNO_PROXY = DANNO_HOST + '/dias-b/dannotate5.php';
+DANNO_CB = DANNO_HOST + '/dias-b/dannotate4a.php';
 
 // Make popup window large enough for largest entry form
 POPUP_DIMS = 'width=700,height=770,left=100,top=80';
@@ -121,25 +122,65 @@ findAnchorNode = function (hRange, ano)
   var regex = new RegExp('id\\("(.+?)"\\)');
   var id = regex.exec(ano.context);
   var fieldset = window.document.getElementById(id[1]);
-  // FIXME: this is kruddy. We assume the id is of a field set inside a DIV
-  // and that there will be a H4 element first inside the DIV to which we
-  // will apply the danno popup anchors.
-  // A better way would be to identify the row in the data table where
-  // the user is suggesting a change and append to the last TD node (?)
-  var node = fieldset.parentNode.firstChild;
-  while ((node != null) && (node.tagName != 'H4')) {
-    node = node.nextSibling;
+  var info = getUserInput(ano);
+  if (info == null) {
+    ano.dump();
+    throw 'Unable to obtain annotation details';
   }
-  if (node == null) {
-    node = fieldset.parentNode.firstChild;
-  }
-  var markerNode = createDomNode('span');
+  var node = getBestLocation(fieldset, info['old']);
   // In case we need to locate them, the empty span tags get
   // an ID related to the annotation ID with an 'A-' prefix.
+  var markerNode = createDomNode('span');
   markerNode.id = 'A-' + ano.id;
   node.appendChild(markerNode);
   return markerNode;
+}
 
+function getBestLocation (element, st)
+{
+  // FIXME: this is all kinda kruddy. We should have the node which contains
+  // all the data and label nodes for the data context. First, we'll try to
+  // match text against the passed value which claims to be the "current"
+  // setting. If we can, that will be the best location.
+  var node = null;
+  if ((st != null) && (st != '')) {
+    var cans = element.childNodes;
+    for (var i = 0; i < cans.length; i++) {
+      var tw = document.createTreeWalker(cans[i],
+        XPointerCreator.SHOW_ONLY_TEXT_NODES, null, XPointerCreator.NO_ENTITY_NODE_EXPAND);
+      node = tw.nextNode();
+      while (node) {
+        var tmp = (node.nodeType == 3) ? node.data : node.innerText;
+        tmp = tmp.replace(/^\s*/, '');
+        tmp = tmp.replace(/\s*$/, '');
+        //if (st == 's.n.') {alert('"'+tmp+'"');}
+        if (tmp == st) {
+          node = cans[i].firstChild;
+          while ((node != null) && (node.tagName != 'LABEL')) {
+            node = node.nextSibling;
+          }
+          if (node != null) {
+            return node;
+          }
+          break;
+        }
+        node = tw.nextNode();
+      }
+    }
+  }
+  // If we can't, or the "current" value is empty, we'll get the parent of the
+  // field set which should be a DIV and assume it has a H4 child which will
+  // be next best chouce.  If that fails too, we'll use the passed node.
+  if (node == null) {
+    node = element.parentNode.firstChild;
+    while ((node != null) && (node.tagName != 'H4')) {
+      node = node.nextSibling;
+    }
+    if (node == null) {
+      node = element.parentNode.firstChild;
+    }
+  }
+  return node;
 }
 
 /**

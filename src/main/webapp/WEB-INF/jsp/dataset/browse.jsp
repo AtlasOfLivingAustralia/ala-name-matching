@@ -16,8 +16,8 @@
   	<fmt:formatNumber value="${resourceNetwork.occurrenceCount}" pattern="###,###"/><c:if test="${resourceNetwork.occurrenceCount==null}">0</c:if>
   	(<fmt:formatNumber value="${resourceNetwork.occurrenceCoordinateCount}" pattern="###,###"/><c:if test="${resourceNetwork.occurrenceCoordinateCount==null}">0</c:if>)
 	</display:column>	  
-  <display:setProperty name="basic.msg.empty_list"> </display:setProperty>	  
-  <display:setProperty name="basic.empty.showtable">false</display:setProperty>	  
+  <display:setProperty name="basic.msg.empty_list"> </display:setProperty>
+  <display:setProperty name="basic.empty.showtable">false</display:setProperty>
 </display:table>
 
 <display:table name="dataProviders" export="false" class="statistics" id="dataProvider">
@@ -25,7 +25,7 @@
   	<a href="${pageContext.request.contextPath}/datasets/provider/${dataProvider.key}">${dataProvider.name}</a>
   	<c:if test='${dataProvider.isoCountryCode!=null}'>
   	<p class="resultsDetails">
-			Hosted in <a href="${pageContext.request.contextPath}/countries/${dataProvider.isoCountryCode}"><spring:message code="country.${dataProvider.isoCountryCode}" text=""/></a>,
+			Hosted in <spring:message code="country.${dataProvider.isoCountryCode}" text=""/>,
 			providing ${dataProvider.dataResourceCount} data resources.
 		</p>  				
 		</c:if>

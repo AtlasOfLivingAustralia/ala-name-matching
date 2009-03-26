@@ -71,13 +71,13 @@ public class IndexUtils implements InitializingBean{
 				}
 				if(!indexer.indexAvailable(DataResource.class, "name")){
 					logger.info("Indexing data resources...");
-					indexer.setHqlQuery("from DataResource");
+					indexer.setHqlQuery("from DataResource dr where dr.occurrenceCount>0");
 					indexer.index();
 					logger.info("Finished data resources.");
 				}
 				if(!indexer.indexAvailable(DataProvider.class, "name")){
 					logger.info("Indexing data providers...");
-					indexer.setHqlQuery("from DataProvider");
+					indexer.setHqlQuery("from DataProvider dp where dp.occurrenceCount>0");
 					indexer.index();
 					logger.info("Finished data providers.");
 				}

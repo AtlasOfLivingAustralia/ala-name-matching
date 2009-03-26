@@ -16,8 +16,9 @@
                 <c:choose>
                 <c:when test="${dataProvider!=null && dataProvider.key==nubProvider.key}">
                     The ALA GIS Portal Classification 
-                    (based on <a href="${pageContext.request.contextPath}/datasets/provider/2">Catalogue of Life Annual Checklist 2008</a>, 
-                    with provisional additions from specimen and observation data resources)            
+                    (based on <a href="http://www.catalogueoflife.org/">Catalogue of Life Annual Checklist 2008</a>,
+                    and using the <a href="http://www.cmar.csiro.au/datacentre/irmng/">Interim Register of Marine and Nonmarine Genera</a>
+                    to place additions from specimen and observation data resources)
                 </c:when>
                 <c:otherwise>
                     <a href="${pageContext.request.contextPath}/datasets/provider/${dataProvider.key}">${dataProvider.name}</a><c:if test="${dataResource!=null}">: <a href="${pageContext.request.contextPath}/datasets/resource/${dataResource.key}">${dataResource.name}</a></c:if></h3>

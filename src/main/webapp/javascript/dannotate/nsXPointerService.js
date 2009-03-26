@@ -72,19 +72,18 @@ const XPOINTER_SERVICE_VERSION = '0.2.6.a.2';
 /**
  * nsXPointerService.js
  * 
- * Implements nsIXPointerService XPCOM
- * interface.
+ * Implements nsIXPointerService XPCOM interface.
  */
 
 
-//POSSIBLE SOURCES OF MESSAGES
+// POSSIBLE SOURCES OF LOG MESSAGES
 XPTR_CREATE = "ns.XPointerCreator";
 XPTR_RESOLVER = "ns.XPointerResolver";
 XPTR_LEXER = "ns.XPointerLexer";
 NTS = "ns.NodeToString";
 
 if (typeof Logger == 'object') {
-  Logger.addModule(XPTR_CREATE);
+  Logger.addModule(XPTR_LEXER+XPTR_RESOLVER+XPTR_CREATE);
 }
 else {
   // for production code, create a nop logger
@@ -170,7 +169,7 @@ NodeToString.prototype.get_next_char = function ()
     throw new Error("Somehow a non-text node slipped through to get_next_char's current_node");
   }
  
-  // if there are more chars left in this text node
+
   if (this.next_char_index < this.string_value.length) {
     var ch = this.string_value.charAt(this.next_char_index);
     var cn = this.string_value.charCodeAt(this.next_char_index);
@@ -181,17 +180,15 @@ NodeToString.prototype.get_next_char = function ()
     this.last_char_index = this.next_char_index++;
     return cn;
   }
-  // otherwise, move on to next text node
   else if (this.next_char_index == this.string_value.length) {
     Logger.log(NTS, "making recursive call to get next node.\n");
     // try again, recursively. set current_node to null.
     this.current_node = null;
     return this.get_next_char();
   }
-  else {
-    // otherwise, things are really screwed up
-    throw new Error("NodeToString: next character is beyond the size of the node.");
-  }
+
+  // if we get to here, things are really screwed up
+  throw new Error("NodeToString: next character is beyond the size of the node.");
 }
 
 /**
@@ -246,7 +243,11 @@ XPointerCreator.TAB         = 0xA;
 XPointerCreator.prototype.contentDoc = undefined;
 XPointerCreator.prototype.docIsRawHTML = undefined;
 
-XPointerCreator.xpointer_wrap = function(xptr) { return "xpointer(" + xptr + ")"; }
+XPointerCreator.xpointer_wrap = function(xptr)
+{
+  Logger.log(XPTR_CREATE, "Wrapping: xpointer(" + xptr + ")");
+  return "xpointer(" + xptr + ")"; 
+}
 
 /**
  * Given a DOM Range and the document encompassing it, 
@@ -678,8 +679,8 @@ XPointerCreator.prototype.create_string_range =
 {
   // PRINT OUT _DEBUG INFO
   Logger.log(XPTR_CREATE, "\ncreate_string_range:");
-  Logger.log(XPTR_CREATE, " -- elt above's nodeName: " + element_above.nodeName);
-  Logger.log(XPTR_CREATE, " with " + (element_above.hasAttribute("id") ?
+  Logger.log(XPTR_CREATE, " -- nodeName above: " + element_above.nodeName +
+                          " has " + (element_above.hasAttribute("id") ?
                           "id '" + element_above.getAttribute("id") + "'" : "no id"));
   Logger.log(XPTR_CREATE, " -- begin text node contents: " + begin_text_node.nodeValue);
   Logger.log(XPTR_CREATE, " -- begin text node offset  : " + begin_offset);
@@ -1245,15 +1246,16 @@ XPointerLexer.prototype._getToken = function ()
     return null;
   }    
 
-  switch(charZero) {
+  Logger.log(XPTR_LEXER, "_getToken has '" + charZero + "'");
+  switch (charZero) {
     case "(": return XPointerLexer.LEFT_PAREN;
-      
+
     case ")": return XPointerLexer.RIGHT_PAREN;
-      
+
     case "[": return XPointerLexer.LEFT_BRACK;
-      
+
     case "]": return XPointerLexer.RIGHT_BRACK;
-      
+
     case ".": 
       var charOne = this._getChar();
       if (charOne && (charOne == ".")) {
@@ -1294,7 +1296,7 @@ XPointerLexer.prototype._getToken = function ()
       else {
         return { tag: XPointerLexer.NAMETEST_TAG, value: charZero };
       }
-              
+
     // string literal
     case '"':
       var match = this.xp.match(/^([^"]*?)"/);
@@ -1311,7 +1313,7 @@ XPointerLexer.prototype._getToken = function ()
         throw new Error("XPointer Syntax Error: Unterminated string literal : \"" +
                         this.xp);
       }
-      
+
     case "'":
       var match = this.xp.match(/^([^']*?)'/);
       if (match && match[1]) {
@@ -1322,7 +1324,7 @@ XPointerLexer.prototype._getToken = function ()
         throw new Error("XPointer Syntax Error: Unterminated string literal : \'" +
                         this.xp);
       }
-      
+
     case "/":
       var charOne = this._getChar();
       if (charOne && (charOne == "/") ) {
@@ -1334,7 +1336,7 @@ XPointerLexer.prototype._getToken = function ()
         }
         return XPointerLexer.SLASH;
       }
-      
+
     case "|": return XPointerLexer.OR;
     case "+": return XPointerLexer.PLUS;
     case "-": return XPointerLexer.MINUS;
@@ -1353,7 +1355,7 @@ XPointerLexer.prototype._getToken = function ()
       else {
         throw new Error("XPointer Syntax Error: Unexpected end of string after '!'");
       }
-      
+
     case "<":
       var charOne = this._getChar();
       if (charOne && (charOne == "=") ) {
@@ -1369,7 +1371,7 @@ XPointerLexer.prototype._getToken = function ()
     case ">":
       var charOne = this._getChar();
     if (charOne && (charOne == "=") ) {
-          return XPointerLexer.GREATER_THAN_EQUALS;
+        return XPointerLexer.GREATER_THAN_EQUALS;
       }
       else {
         if (charOne) {
@@ -1377,8 +1379,8 @@ XPointerLexer.prototype._getToken = function ()
         }
         return XPointerLexer.GREATER_THAN;
       }
-      
-      // VARIABLE NAMES
+
+    // VARIABLE NAMES
     case "$":
       throw new Error("XPointerLexer: Variables are not yet implemented");
 
@@ -1402,7 +1404,7 @@ XPointerLexer.prototype._getToken = function ()
     // then a * must be recognized as a MultiplyOperator 
     // and an NCName must be recognized as an OperatorName. */
     if (mustBeAnOperator) {
-      Logger.log(XPTR_LEXER, "mustbeanoperator.");
+      Logger.log(XPTR_LEXER, "must be an operator.");
       // try to find an operator name
       if (ncNameMatch[0].
         match(/^(and|or|mod|div)$/)) {
@@ -1466,12 +1468,14 @@ XPointerLexer.prototype._getToken = function ()
   } // end if ncNameMatch
 
   // NUMBERS
+  Logger.log(XPTR_LEXER, "Must be number");
   var number = this.xp.match(/^(\.\d+)|(\d+(\.\d+?)?)/);
   if (number) {
     this._removeChars(number[0].length);
     return { tag: XPointerLexer.NUMBER_TAG, value: (number[0] - 0) };
-  }                              
-  
+  }
+
+  Logger.log(XPTR_LEXER, "Parse error or garbage input");
   throw new Error("XPointerLexer: unrecognized sequence of input: " + this.xp);
 }
 
@@ -1483,9 +1487,9 @@ XPointerLexer.prototype._getToken = function ()
 XPointerLexer.prototype._getChar = function ()
 {
   if ( this.xp && (this.xp.length > 0)) {
-      var charToReturn = this.xp.charAt(0);
-      this.xp = this.xp.substring(1);
-      return charToReturn;
+    var charToReturn = this.xp.charAt(0);
+    this.xp = this.xp.substring(1);
+    return charToReturn;
   }
   return null;
 }
@@ -1543,10 +1547,10 @@ XPointerLexer.prototype._getPeek = function() { return this.peekBuffer; }
  */
 function XPointerResolver() {}
 
-XPointerResolver.NODE_TYPE = 0;
-XPointerResolver.RANGE_TYPE = 1;
+XPointerResolver.NODE_TYPE    = 0;
+XPointerResolver.RANGE_TYPE   = 1;
 XPointerResolver.LITERAL_TYPE = 2;
-XPointerResolver.NUMBER_TYPE = 3;
+XPointerResolver.NUMBER_TYPE  = 3;
 XPointerResolver.BOOLEAN_TYPE = 4;
 
 // XML whitespace characters
@@ -1651,7 +1655,7 @@ XPointerResolver.prototype.parseXPointers = function ()
       Logger.log(XPTR_RESOLVER, "Nametest case");
       context = this.parseBareNames(token, context);
       break;
-          
+
       // child sequence -- operator must be '/'
     case XPointerLexer.OPERATOR_TAG:
       if (token.value != "/") {
@@ -1660,12 +1664,12 @@ XPointerResolver.prototype.parseXPointers = function ()
       }
       context = this.parseChildSequence(token, context);
       break;
-      
+
       // schemes, we only understand xpointer
     case XPointerLexer.FUNCTIONNAME_TAG:
       context = this.parseFullXPointer(token, context);
       break;
-      
+
     default:
       throw new Error("XPointer Syntax Error: XPointer cannot begin with " +
                       token.value);
@@ -1731,11 +1735,11 @@ XPointerResolver.prototype.parseFullXPointer = function (token, context)
           success = true;
       }
     } // end xpointer
-        
+
     // get the next token with safeGetToken
     token = this.safeGetToken();
   } // end while loop over tokens
-  
+
   // if we succeeded, context is correct
   // otherwise, our context becomes the empty set
   return (success ? context : []);
@@ -1887,8 +1891,8 @@ XPointerResolver.tokenBeginsStep = function (token)
     case XPointerLexer.NODETYPE_TAG:
         // falls through
     case XPointerLexer.NAMETEST_TAG:
-    return true;
-        
+      return true;
+
     case XPointerLexer.FUNCTIONNAME_TAG:
       return (token.value == 'range-to');
     default:
@@ -1906,7 +1910,7 @@ XPointerResolver.prototype.parseAbsoluteLocationPath = function (token, context)
       // AbsoluteLocationPath ::= '/' RelativeLocationPath?
     case "/":
       context = [ this.createContext(XPointerResolver.NODE_TYPE, this.doc) ];
-      
+
       // peek the next token to see if followed by Relative Location Path (de facto--a Step)
       var peek = this.peekToken();
       if (XPointerResolver.tokenBeginsStep(peek)) {
@@ -1919,7 +1923,7 @@ XPointerResolver.prototype.parseAbsoluteLocationPath = function (token, context)
       else {
         return context;
       }
-      
+
       // should not happen
     default:
       throw new Error("XPointer Syntax Error: " + token.value + " does not begin a valid AbsoluteLocationPath");
@@ -1952,7 +1956,7 @@ XPointerResolver.prototype.parseRelativeLocationPath = function (token, context)
       case XPointerLexer.AXISNAME_TAG:
         context = this.parseAxisTypeStep(token, context);
         break;
-        
+
       case XPointerLexer.AT_TAG:
         context = this.parseAxisTypeStep(token, context);
         break;
@@ -1960,11 +1964,11 @@ XPointerResolver.prototype.parseRelativeLocationPath = function (token, context)
       case XPointerLexer.NODETYPE_TAG:
         context = this.parseAxisTypeStep(token, context);
         break;
-        
+
       case XPointerLexer.NAMETEST_TAG:
         context = this.parseAxisTypeStep(token, context);
         break;
-        
+
       case XPointerLexer.FUNCTIONNAME_TAG:
         if (token.value == 'range-to') {
           Logger.log(XPTR_RESOLVER, "about to call parseRangeTo from parseRelativeLocationPath");
@@ -1975,7 +1979,7 @@ XPointerResolver.prototype.parseRelativeLocationPath = function (token, context)
                           "from within an RelativeLocationPath");
         }
         break;
-        
+
       default:
         throw new Error("XPointer Syntax Error: a valid RelativeLocationPath cannot begin with " + token.value);
     } // end switch on token.tag
@@ -2025,7 +2029,7 @@ XPointerResolver.prototype.parseAxisTypeStep = function (token, context)
   switch(token.tag) {
     case XPointerLexer.NODETYPE_TAG:
       throw new Error("Sorry, Nodetype selection with the " + token.value + " operation is not yet implemented.");
-      
+
     case XPointerLexer.NAMETEST_TAG:
       // do this in parsePredicates if we can't do it faster with nthChildTag
       //  context = this.parseNameTest(token, context);
@@ -2157,7 +2161,7 @@ XPointerResolver.prototype.parsePredicates = function (token, context)
           }
           context = newContext;
           break;
-    
+
         default:
           throw new Error("Unconsidered type in parsePredicates: " + predResult[0].type);
       } // end switch
@@ -2250,7 +2254,7 @@ XPointerResolver.prototype.parseNameTest = function (token, context)
       } 
     }
   }
-  
+
   if (newContext.length == 0) {
     Logger.log(XPTR_RESOLVER, "NameTest for nodeName " + token.value + " found 0 nodes.");
   }
@@ -2695,8 +2699,8 @@ XPointerResolver.prototype.parseChildSequence = function (token, context)
         context = [ this.createContext(XPointerResolver.NODE_TYPE, 
                     unmarkedChildren[token.value - 1]) ];
       }
-      // if the child doesn't exist, log it and set the context to empty
       else {
+        // if the child doesn't exist, log it and set the context to empty
         Logger.log(XPTR_RESOLVER, "parseChildSequence: In child sequence, node " + 
                    context[0].location.nodeName + " does not have " + token.value + 
                    " unmarked children.  This yields the empty set.");
@@ -2816,9 +2820,9 @@ XPointerResolver.prototype.safeGetToken = function ()
  */
 XPointerResolver.prototype.createContext = function (aType, aLocation)
 {
-  // I Genuinely gin't understandt this!  "get" is no reserved word, so
-  // what give?!!  The replacement code is portable to the IE version
-  // and still seems to do the samething in Mozilla.
+  // I Genuinely don't understand this!  "get" is not a reserved word,
+  // so what gives?!!  The replacement code is portable to the IE version
+  // and still seems to do the same thing in Mozilla.
   // Really need to ask the original Author.
   return {
            mType: aType,

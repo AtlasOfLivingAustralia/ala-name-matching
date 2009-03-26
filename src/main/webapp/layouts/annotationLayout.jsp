@@ -8,7 +8,7 @@
         <link rel="shortcut icon" href="${pageContext.request.contextPath}/favicon.ico" type="image/x-icon" /> 
 		<c:if test="${not empty points}">
 			<meta name="geo.position" content="<c:forEach items="${points}" var="point">${point.latitude};${point.longitude}</c:forEach>">
-		</c:if> 		
+		</c:if> 
 		
 		<tiles:insert name="keywords" flush="false"/>
 		<title>
@@ -20,9 +20,9 @@
 		 <script src="${pageContext.request.contextPath}/javascript/dannotate/nsXPointerService.js"  type="text/javascript" language="javascript"></script>
          <script src="${pageContext.request.contextPath}/javascript/dannotate/dannotate.js"  type="text/javascript" language="javascript"></script>
          <script src="${pageContext.request.contextPath}/javascript/dannotate/dannoportal.js"  type="text/javascript" language="javascript"></script>
-         <link type="text/css" rel="stylesheet" href="${pageContext.request.contextPath}/skins/ala/dannotate.css" media="screen"/>
+         <link type="text/css" rel="stylesheet" href="http://146081-be.ento.csiro.au/dias-b/dannotate.css" media="screen"/>
 	</head>
-	<body>
+	<body onLoad="getAnnotations(getTargetUrl())">
 	    <div id="cocoon">
 			<div id="container">	
 				<tiles:insert name="header" flush="false"/>
