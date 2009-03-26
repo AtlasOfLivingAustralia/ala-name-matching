@@ -10,14 +10,14 @@
                 <PolygonSymbolizer>
                     <Fill>
                         <CssParameter name="fill">
-                            <ogc:Literal>#003300</ogc:Literal>
+                            <ogc:Literal>#${not empty param['pf'] ? param['pf'] : '003300'}</ogc:Literal>
                         </CssParameter>
                         <CssParameter name="fill-opacity">
                             <ogc:Literal>1.0</ogc:Literal>
                         </CssParameter>
                     </Fill>
                     <Stroke>
-                      <CssParameter name="stroke">#006600</CssParameter>
+                      <CssParameter name="stroke">#${not empty param['ps'] ? param['ps'] : 'FFFFFF'}</CssParameter>
                       <CssParameter name="stroke-width">1</CssParameter>
                     </Stroke>
                 </PolygonSymbolizer>
