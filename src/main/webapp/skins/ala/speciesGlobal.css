@@ -464,22 +464,20 @@ div#topmenu a:hover {
 }
 
 #twopartheader {
-	margin: 14px 10px 0px -20px;
+	margin: 8px 10px 0px -8px;
 	padding: 4px 0px 10px 100px;
-    position: relative;
-    left:-8px;
 	/* background: #6A6A6B; */
 	/* url('images/grey-bg-gradient.gif') repeat-x left bottom ; */
 	/* min-height: 70px; */
 	min-height: 80px;
-    height: auto;
+    min-width: 600px;
+	height: auto;
     color: #2B2B28;
 }
 
 #content>#twopartheader { /* FF et al., see this but IE doesn't */
-	margin: 4px 10px 0 -8px;
+	margin: 4px 10px 8px -8px;
 	padding: 4px 0px 10px 100px;
-    position: inherit;
 }
 
 #twopartheader h2 {
