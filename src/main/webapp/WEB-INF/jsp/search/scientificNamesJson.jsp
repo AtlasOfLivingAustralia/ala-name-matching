@@ -25,7 +25,8 @@
           </json:property>
           <json:property name="author" value="${scientificName[1].taxonName.author}"/>
           <json:property name="rank"><alatag:taxonRankfromInt rankValue="${scientificName[1].rank}"/></json:property>
-          <json:property name="kingdom" value="${scientificName[2]}"/>
+          <json:property name="family" value="${scientificName[1].familyConcept.taxonName.canonical}"/>
+          <json:property name="kingdom" value="${scientificName[1].kingdomConcept.taxonName.canonical}"/>
         </json:object>
       </json:array>
   

@@ -27,11 +27,11 @@
                     }
                 };
 
-
                 var myColumnDefs = [
                     {key:"commonName", label:"Common Name", sortable:true, formatter:formatCommonNameUrl},
                     {key:"scientificName", label:"Scientific Name", formatter:formatScientificName},
                     {key:"rank", label:"Taxon Rank", sortable:true},
+                    {key:"family", label:"Family"},
                     {key:"kingdom", label:"Kingdom", sortable:true},
                     {key:"score", label:"Score", formatter:"number", sortable:true}
                 ];
@@ -41,7 +41,7 @@
                 //myDataSource.connXhrMode = "queueRequests";
                 myDataSource.responseSchema = {
                     resultsList: "result",
-                    fields: [{key:"score",parser:"number"},"commonName","commonNameUrl","scientificName","rank","kingdom"],
+                    fields: [{key:"score",parser:"number"},"commonName","commonNameUrl","scientificName","rank","family","kingdom"],
                     metaFields: {totalRecords: "totalRecords"}
                 };
 

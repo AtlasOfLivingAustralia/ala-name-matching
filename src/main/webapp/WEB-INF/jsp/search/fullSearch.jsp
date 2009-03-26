@@ -35,6 +35,7 @@
             <json:property name="scientificName" value="${taxonConcept.taxonName.canonical}"/>
             <json:property name="scientificNameUrl" value="${pageContext.request.contextPath}/species/${taxonConcept.id}"/>
             <json:property name="rank"><alatag:taxonRankfromInt rankValue="${taxonConcept.rank}"/></json:property>
+            <json:property name="family" value="${taxonConcept.familyConcept.taxonName.canonical}"/>
             <json:property name="kingdom" value="${taxonConcept.kingdomConcept.taxonName.canonical}"/>
           </json:object>
         </json:array>
@@ -56,13 +57,14 @@
             var myColumnDefs = [
                 {key:"scientificName", label:"Scientific Name", formatter:formatNameUrl},
                 {key:"rank", label:"Taxon Rank"},
+                {key:"family", label:"Family"},
                 {key:"kingdom", label:"Kingdom"}
             ];
 
             var myDataSource = new YAHOO.util.DataSource(YAHOO.example.Data1.results);
             myDataSource.responseType = YAHOO.util.DataSource.TYPE_JSARRAY;
             myDataSource.responseSchema = {
-                fields: ["scientificName","scientificNameUrl","rank","kingdom"]
+                fields: ["scientificName","scientificNameUrl","rank","family","kingdom"]
             };
 
             var myDataTable = new YAHOO.widget.DataTable("taxonConcepts", myColumnDefs, myDataSource, {});

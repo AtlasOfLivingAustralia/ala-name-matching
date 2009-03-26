@@ -23,9 +23,10 @@
           <json:property name="commonNameUrl">
             ${pageContext.request.contextPath}/species/${commonName[1].taxonConcept.id}/commonName/${commonName[1].name}
           </json:property>
-          <json:property name="scientificName" value="${commonName[2]}"/>
-          <json:property name="rank"><alatag:taxonRankfromInt rankValue="${commonName[3]}"/></json:property>
-          <json:property name="kingdom" value="${commonName[4]}"/>
+          <json:property name="scientificName" value="${commonName[1].taxonConcept.taxonName.canonical}"/>
+          <json:property name="rank"><alatag:taxonRankfromInt rankValue="${commonName[1].taxonConcept.rank}"/></json:property>
+          <json:property name="family" value="${commonName[1].taxonConcept.familyConcept.taxonName.canonical}"/>
+          <json:property name="kingdom" value="${commonName[1].taxonConcept.kingdomConcept.taxonName.canonical}"/>
         </json:object>
       </json:array>
 </json:object>

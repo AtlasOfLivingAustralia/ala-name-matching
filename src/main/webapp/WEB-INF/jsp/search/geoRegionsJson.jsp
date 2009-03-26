@@ -23,7 +23,7 @@
             ${pageContext.request.contextPath}/regions/${geoRegion[1].id}
           </json:property>
           <json:property name="acronym" value="${geoRegion[1].acronym}"/>
-          <json:property name="geoRegionType" value="${geoRegion[2]}"/>
+          <json:property name="geoRegionType" value="${geoRegion[1].geoRegionType.name}"/>
         </json:object>
       </json:array>
 </json:object>

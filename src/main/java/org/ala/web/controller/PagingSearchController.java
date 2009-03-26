@@ -100,9 +100,7 @@ public class PagingSearchController extends RestController {
         }
 
         // combine two String[] arrays into a 3rd array using System.arraycopy
-        String[] defaultFields = {FullTextQuery.SCORE, FullTextQuery.THIS};
-        String[] typeFields = searchType.getAdditionalDisplayFields();
-        String[] projectionArgs = mergeArrays(defaultFields, typeFields);
+        String[] projectionArgs = {FullTextQuery.SCORE, FullTextQuery.THIS};
         // use a Hibernate search projection (so we can get the score value back)
         fullTextQuery.setProjection(projectionArgs);
         doQuery(searchType.getResultsParam(), searchType.getResultTotalParam(), mav, fullTextQuery);
@@ -162,20 +160,6 @@ public class PagingSearchController extends RestController {
         org.apache.lucene.search.Query luceneQuery = parser.parse(queryString);
         org.hibernate.search.FullTextQuery fullTextQuery = fullTextSession.createFullTextQuery(luceneQuery, modelClass);
         return fullTextQuery;
-    }
-
-    /**
-     * Simple merge of two arrays into a third array (of String[]'s)
-     *
-     * @param defaultFields
-     * @param typeFields
-     * @return String[]
-     */
-    private String[] mergeArrays(String[] defaultFields, String[] typeFields) {
-        String[] projectionArgs = new String[defaultFields.length + typeFields.length];
-        System.arraycopy(defaultFields, 0, projectionArgs, 0, defaultFields.length);
-        System.arraycopy(typeFields, 0, projectionArgs, defaultFields.length, typeFields.length);
-        return projectionArgs;
     }
 
     /**

@@ -29,6 +29,7 @@
                     {key:"scientificName", label:"Scientific Name", sortable:true, formatter:formatNameUrl},
                     {key:"author", label:"Author"},
                     {key:"rank", label:"Taxon Rank", sortable:true},
+                    {key:"family", label:"Family"},
                     {key:"kingdom", label:"Kingdom", sortable:true},
                     {key:"score", label:"Score", formatter:"number", sortable:true}
                 ];
@@ -38,7 +39,7 @@
                 //myDataSource.connXhrMode = "queueRequests";
                 myDataSource.responseSchema = {
                     resultsList: "result",
-                    fields: [{key:"score",parser:"number"},"scientificName","scientificNameUrl","author","rank","kingdom"],
+                    fields: [{key:"score",parser:"number"},"scientificName","scientificNameUrl","author","rank","family","kingdom"],
                     metaFields: {totalRecords: "totalRecords"}
                 };
 

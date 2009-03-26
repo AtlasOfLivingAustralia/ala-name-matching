@@ -27,26 +27,19 @@ import org.ala.model.*;
  */
 public enum SearchType {
     SCIENTIFIC_NAMES("scientificNames", TaxonConcept.class,
-            new String[]{"taxonName.canonical", "taxonName.author"},
-            new String[]{"kingdomConcept.taxonName.canonical"}),
+            new String[]{"taxonName.canonical", "taxonName.author"}),
     COMMON_NAMES("commonNames", CommonName.class,
-            new String[]{"name"},
-            new String[]{"taxonConcept.taxonName.canonical","taxonConcept.rank","taxonConcept.kingdomConcept.taxonName.canonical"}),
+            new String[]{"name"}),
     GEOGRAPHIC_REGIONS("geoRegions", GeoRegion.class,
-            new String[]{"name","acronym","geoRegionType.name"},
-            new String[]{"geoRegionType.name"}),
+            new String[]{"name","acronym","geoRegionType.name"}),
     LOCALITIES("localities", Locality.class,
-            new String[]{"name","state","postcode"},
-            new String[]{"geoRegion.id","geoRegion.name"}),
+            new String[]{"name","state","postcode"}),
     DATA_RESOURCES("dataResources", DataResource.class,
-            new String[]{"name","description"},
-            new String[]{}),
+            new String[]{"name","description"}),
     DATA_PROVIDERS("dataProviders", DataProvider.class,
-            new String[]{"name","description"},
-            new String[]{}),
+            new String[]{"name","description"}),
     INSTITUTIONS("institutions", Institution.class,
-            new String[]{"name","code"},
-            new String[]{});
+            new String[]{"name","code"});
 
     /** Name of the search page type */
     private String name;
@@ -54,8 +47,6 @@ public enum SearchType {
     private Class bean;
     /** String array list of search fields */
     private String[] searchFields;
-    /** String array list of display fields */
-    private String[] additionalDisplayFields;
 
     /**
      * Contructor (private)
@@ -65,18 +56,10 @@ public enum SearchType {
      * @param searchFields the searchField to set
      * @param displayFields the displayFields to set
      */
-    private SearchType(String name, Class beanName, String[] searchFields, String[] displayFields) {
+    private SearchType(String name, Class beanName, String[] searchFields) {
         this.name = name;
         this.bean = beanName;
         this.searchFields = searchFields;
-        this.additionalDisplayFields = displayFields;
-    }
-
-    /**
-     * @return String displayType
-     */
-    public String[] getAdditionalDisplayFields() {
-        return additionalDisplayFields;
     }
 
     /**
