@@ -7,7 +7,7 @@
 	</fieldset>	
 </form>
 <script type="text/javascript">
-	document.getElementById("query").focus();
+	//document.getElementById("searchQuery").focus();
 	
 	function submitQuickSearch(formSubmit){
 		//check for empty value
