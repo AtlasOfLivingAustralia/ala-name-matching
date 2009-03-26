@@ -11,12 +11,12 @@
 <json:object prettyPrint="true">
   
     <json:property name="recordsReturned" value="${recordsReturned}"/>
-    <json:property name="totalRecords" value="${scientificNamesTotal}"/>
+    <json:property name="totalRecords" value="${taxonConceptsTotal}"/>
     <json:property name="startIndex" value="${startIndex}"/>
     <json:property name="sort" value="${sort}"/>
     <json:property name="dir" value="${dir}"/>
     <json:property name="pageSize" value="${pageSize}"/>
-      <json:array name="result" var="scientificName" items="${scientificNames}">
+      <json:array name="result" var="scientificName" items="${taxonConcepts}">
         <json:object>
           <json:property name="score" value="${scientificName[0]}"/>
           <json:property name="scientificName" value="${scientificName[1].taxonName.canonical}"/>

@@ -1,8 +1,4 @@
 <%@ include file="/common/taglibs.jsp"%>
-<c:set var="maxClauseCountError">
-    <div class="searchError"><span class="searchWarning">Warning:</span> Wildcard
-    search exceeded limits, try including more characters in search query. </div>
-</c:set>
 <div id="twopartheader">
     <h2><spring:message code="blanket.search.localities.header" text="Localities search results for:"/> <strong>${searchString}</strong> </h2>
     <p><a href="${pageContext.request.contextPath}/search/${searchString}"><spring:message code="blanket.search.allResults" text="Back to search results for all pages"/></a></p>
@@ -59,5 +55,5 @@
 
     </script>
     </c:if>
-    <c:if test="${fn:contains(localitiesError,'maxClauseCount')}">${maxClauseCountError}</c:if>
+    <c:if test="${fn:contains(localitiesError,'maxClauseCount')}"><div class="searchError"><spring:message code="blanket.search.error.maxClauseCount"/></div></c:if>
 </div>

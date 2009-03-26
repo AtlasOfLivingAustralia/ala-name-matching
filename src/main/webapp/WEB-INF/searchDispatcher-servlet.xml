@@ -25,7 +25,7 @@
                 <prop key="/localities/**/*">localitySearchController</prop>
                 <prop key="/dataResources/**/*">dataResourceSearchController</prop>
                 <prop key="/dataProviders/**/*">dataProviderSearchController</prop>
-                <prop key="/institutions/**/*">institutionSearchController</prop>
+                <!--<prop key="/institutions/**/*">institutionSearchController</prop>-->
 				<prop key="/*">searchController</prop>
 				<prop key="/">redirectToRootController</prop>
 			</props>
@@ -150,7 +150,7 @@
     </bean>
 
     <!-- Controller for institution fulltext search results -->
-    <bean id="institutionSearchController" parent="abstractSearchController">
+    <!-- <bean id="institutionSearchController" parent="abstractSearchController">
         <property name="searchType" value="INSTITUTIONS"/>
         <property name="htmlView" value="institutionsSearchView"/>
         <property name="jsonView" value="institutionsJsonView"/>
@@ -159,7 +159,7 @@
                 <entry key="name" value="nameForSort"/>
             </map>
         </property>
-    </bean>
+    </bean>-->
 
 	<!-- Controller for the initial Blanket Query -->
 	<bean id="blanketQueryController" class="org.gbif.portal.web.controller.RedirectToRestUrlController">

@@ -1,8 +1,4 @@
 <%@ include file="/common/taglibs.jsp"%>
-<c:set var="maxClauseCountError">
-    <div class="searchError"><span class="searchWarning">Warning:</span> Wildcard
-    search exceeded limits, try including more characters in search query. </div>
-</c:set>
 <div id="twopartheader">
     <h2><spring:message code="blanket.search.header"/> <strong>${searchString}</strong> </h2>
 </div>
@@ -82,7 +78,7 @@
         </div>
     </c:if>
 </c:if>
-<c:if test="${fn:contains(taxonConceptsError,'maxClauseCount')}">${maxClauseCountError}</c:if>
+<c:if test="${fn:contains(taxonConceptsError,'maxClauseCount')}"><div class="searchError"><spring:message code="blanket.search.error.maxClauseCount"/></div></c:if>
 
 
 <% /** Common Names  */%>
@@ -147,7 +143,7 @@
         </div>
     </c:if>
 </c:if>
-<c:if test="${fn:contains(commonNamesError,'maxClauseCount')}">${maxClauseCountError}</c:if>
+<c:if test="${fn:contains(commonNamesError,'maxClauseCount')}"><div class="searchError"><spring:message code="blanket.search.error.maxClauseCount"/></div></c:if>
 
 
 <% /** Geo Regions  */%>
@@ -204,7 +200,7 @@
         </div>
     </c:if>
 </c:if>
-<c:if test="${fn:contains(geoRegionsError,'maxClauseCount')}">${maxClauseCountError}</c:if>
+<c:if test="${fn:contains(geoRegionsError,'maxClauseCount')}"><div class="searchError"><spring:message code="blanket.search.error.maxClauseCount"/></div></c:if>
 
 <% /** Localities */%>
 <c:if test="${localitiesTotal>0 || fn:length(localitiesError)>0}">
@@ -262,7 +258,7 @@
         </div>
     </c:if>
 </c:if>
-<c:if test="${fn:contains(localitiesError,'maxClauseCount')}">${maxClauseCountError}</c:if>
+<c:if test="${fn:contains(localitiesError,'maxClauseCount')}"><div class="searchError"><spring:message code="blanket.search.error.maxClauseCount"/></div></c:if>
 
 <% /** Data Resource  */%>
 <c:if test="${dataResourcesTotal>0 || fn:length(dataResourcesError)>0}">
@@ -316,7 +312,7 @@
         </div>
     </c:if>
 </c:if>
-<c:if test="${fn:contains(dataResourcesError,'maxClauseCount')}">${maxClauseCountError}</c:if>
+<c:if test="${fn:contains(dataResourcesError,'maxClauseCount')}"><div class="searchError"><spring:message code="blanket.search.error.maxClauseCount"/></div></c:if>
 
 <% /** Data Providers */%>
 <c:if test="${dataProvidersTotal>0 || fn:length(dataProvidersError)>0}">
@@ -372,7 +368,7 @@
         </div>
     </c:if>
 </c:if>
-<c:if test="${fn:contains(dataProvidersError,'maxClauseCount')}">${maxClauseCountError}</c:if>
+<c:if test="${fn:contains(dataProvidersError,'maxClauseCount')}"><div class="searchError"><spring:message code="blanket.search.error.maxClauseCount"/></div></c:if>
 </div>
 </td><!-- resultsBreakdown -->
 </tr>
