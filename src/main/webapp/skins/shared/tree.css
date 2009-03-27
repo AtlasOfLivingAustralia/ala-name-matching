@@ -22,11 +22,11 @@ a.treeNodeLink, a.treeNodeLinkTentative, a.treeNodeLink:hover, a.treeNodeLinkTen
 /* a.treeNodeLinkTentative .rank { color: #c11bd2; border:none; }
 a.treeNodeLinkTentative .taxon { color: #AAAAAA; border:none; }
 a.treeNodeLinkTentative .generaTaxon { color: #AAAAAA; border:none; } */
-
+/*
 p.selected .rank { color: #8425a6; }
 p.selected .taxon { color: #000000; }
 p.selected .generaTaxon { color: #000000; }
-
+*/
 /* p.selectedTentative .rank { color: #c11bd2; } 
 p.selectedTentative .taxon { color: #AAAAAA; }
 p.selectedTentative .generaTaxon { color: #AAAAAA; }
@@ -34,15 +34,15 @@ p.selectedTentative .generaTaxon { color: #AAAAAA; }
 #uncertainPositions { margin-left:5px; color: #000000; }
 #unconfirmedNames { margin-left:5px; color: #AAAAAA; } */
 
-.overview { margin-left: 30px; font-weight: normal; border:none; color: #8425a6; }
+.overview { margin-left: 30px; font-weight: normal; border:none; /* color: #8425a6; */ }
 
 a.taxonOverviewLink, a.taxonOverviewLinkTentative { font-weight: normal; border:none;}
 a.taxonOverviewLink:hover, a.taxonOverviewLinkTentative:hover { font-weight: normal; border:none; text-decoration: none; }
 
-a.taxonOverviewLink { color:#8425a6; border:none; }
+/* a.taxonOverviewLink { color:#8425a6; border:none; }
 a.taxonOverviewLink:visited { color:#8425a6; border:none; }
 a.taxonOverviewLink:hover { color:#8425a6; border:none; }
-/* a.taxonOverviewLinkTentative { color:#c11bd2; border:none; }
+a.taxonOverviewLinkTentative { color:#c11bd2; border:none; }
 a.taxonOverviewLinkTentative:visited { color:#c11bd2; border:none; }
 a.taxonOverviewLinkTentative:hover { color:#c11bd2; border:none; } */
 
