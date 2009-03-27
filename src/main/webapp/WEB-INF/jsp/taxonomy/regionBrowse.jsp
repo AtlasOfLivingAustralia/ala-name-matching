@@ -1,24 +1,24 @@
 <%@ include file="/common/taglibs.jsp"%>
-<div id="taxonomy" class="taxonomyContainer">
-	<div id="twopartheader">
-		<h2>
-		<c:choose>
-			<c:when test="${selectedConcept!=null}">
-				<spring:message code="taxonomy.browser.classification.of"/> 
-				<span class="subject"><string:capitalize>${selectedConcept.rank}</string:capitalize>: 
-				<gbif:taxonPrint concept="${selectedConcept}"/></span> 
-				${selectedConcept.author}
-			</c:when>
-			<c:otherwise>
-				<spring:message code="taxonomy.browser.classification"/>
-			</c:otherwise>
-		</c:choose>
-		</h2>
-		<h3>
-			<spring:message code="taxonomy.browser.species.recorded.in" text="Taxa recorded in"/>:
-			<a href="${pageContext.request.contextPath}/regions/${geoRegion.id}"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></a>
-		</h3>
-	</div>
+<div id="twopartheader">
+    <h2>
+    <c:choose>
+        <c:when test="${selectedConcept!=null}">
+            <spring:message code="taxonomy.browser.classification.of"/>
+            <span class="subject"><string:capitalize>${selectedConcept.rank}</string:capitalize>:
+            <gbif:taxonPrint concept="${selectedConcept}"/></span>
+            ${selectedConcept.author}
+        </c:when>
+        <c:otherwise>
+            <spring:message code="taxonomy.browser.classification"/>
+        </c:otherwise>
+    </c:choose>
+    </h2>
+    <h3>
+        <spring:message code="taxonomy.browser.species.recorded.in" text="Taxa recorded in"/>:
+        <a href="${pageContext.request.contextPath}/regions/${geoRegion.id}"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></a>
+    </h3>
+</div>
+<div id="taxonomy" class="taxonomyContainer">  
 	<c:choose>
 		<c:when test="${not empty regionConcepts}">
             <% /* TODO: Either fix the target pages for links in this section or remove completely. NdR 12/03/09
