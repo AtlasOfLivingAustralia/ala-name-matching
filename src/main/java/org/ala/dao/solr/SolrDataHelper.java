@@ -32,7 +32,7 @@ public class SolrDataHelper extends JdbcDaoSupport {
 			"inner join taxon_name tn on tn.id=tc.taxon_name_id " +
 			"left outer join " + 
 			"common_name cn on tc.id=cn.taxon_concept_id " +
-			"WHERE tc.id IN (:idList) group by tc.id";
+			"WHERE tc.id IN (:idList) group by tc.id order by tc.id";
 
 	/**
 	 * Returns a list of scientific names an common names for the supplied concept ids.

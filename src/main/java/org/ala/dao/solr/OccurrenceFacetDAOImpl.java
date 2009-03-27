@@ -20,6 +20,8 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -46,7 +48,8 @@ import org.gbif.portal.service.TaxonomyManager;
 import org.springframework.context.MessageSource;
 
 /**
- *
+ * A DAO implementation that uses a SOLR backend.
+ * 
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
 public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
@@ -372,8 +375,6 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 
             for (FacetField facetData : facetResults) {
 		        // Iterate over each of the facet result objects
-		        String facetName = facetData.getName();
-
 		        if (facetData == null) {
 		        	return geoRegionTaxonConcept; // will be empty list
 		        }
@@ -387,6 +388,14 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 		        
 		        List<Map<String, Object>> conceptNames = solrDataHelper.getScientificNamesForConceptsIds(conceptIds);
 		        List<Count> counts = facetData.getValues();
+		        Collections.sort(counts, new Comparator<Count>(){
+					public int compare(Count o1, Count o2) {
+	                    Long o1Id = Long.parseLong(o1.getName());
+	                    Long o2Id = Long.parseLong(o2.getName());
+						return o1Id.compareTo(o2Id);
+					}
+		        });
+		        
 		        for (int j=0; j<counts.size(); j++) {
 		            // Iterate over the facet counts
 		        	Count count = counts.get(j);
