@@ -7,7 +7,8 @@
 	  tilecacheUrl,
       {layers: "ala:alabase",
       srs: 'EPSG:4326',
-      format: "image/png"}
+      format: "image/png"},
+      {wrapDateLine: true}
       );
 
   var countriesLayer = new OpenLayers.Layer.WMS("Countries",
@@ -17,7 +18,7 @@
       format: "image/png"}
       );
 
-  var ibraLayer = new OpenLayers.Layer.WMS( "IBRA",
+  var ibraLayer = new OpenLayers.Layer.WMS("IBRA",
 	  tilecacheUrl,
       {layers: "ala:ibra",
       srs: 'EPSG:4326',
@@ -27,7 +28,7 @@
       {alpha: true}
       );
 
-  var imcraLayer = new OpenLayers.Layer.WMS( "IMCRA",
+  var imcraLayer = new OpenLayers.Layer.WMS("IMCRA",
 	  tilecacheUrl,
       {layers: "ala:imcra",
       srs: 'EPSG:4326',
@@ -37,7 +38,7 @@
       {alpha: true}
       );
 
-  var statesLayer = new OpenLayers.Layer.WMS( "Political States",
+  var statesLayer = new OpenLayers.Layer.WMS("Political States",
       tilecacheUrl,
       {layers: "ala:as",
       srs: 'EPSG:4326',
@@ -138,4 +139,3 @@
       filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?id="+entityId+"&type="+entityType+"&unit=0.01]]></Literal></PropertyIsEqualTo></Filter>)"},
       {visibility:false, opacity: opacity}
       );
-

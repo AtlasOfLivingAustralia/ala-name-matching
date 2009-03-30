@@ -170,15 +170,16 @@ function initLayers(){
       //map.addLayer(roadsLayer);
       //map.addLayer(placenamesLayer);
     } else {
-        var gmap = new OpenLayers.Layer.Google(
-                "Google Streets",
-                {'sphericalMercator': true}
-            ); 
         // create Google layer
         var gsat = new OpenLayers.Layer.Google(
             "Google Satellite",
             {type: G_SATELLITE_MAP, 'sphericalMercator': true}
         );
+
+        var gmap = new OpenLayers.Layer.Google(
+                "Google Streets",
+                {'sphericalMercator': true}
+            ); 
         // create Yahoo layer
         var yahoosat = new OpenLayers.Layer.Yahoo(
             "Yahoo Satellite",
