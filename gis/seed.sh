@@ -1,1 +1,6 @@
-./tilecache_seed.py ala:countries 1 8 ./tilecache_seed.py geoscience:roads 1 8 ./tilecache_seed.py geoscience:localities 1 8./tilecache_seed.py ala:as 1 8 ./tilecache_seed.py ala:ibra 1 8./tilecache_seed.py ala:imcra 1 8./tilecache_seed.py alabase 1 8
+./tilecache_seed.py ala:alabase 4 8 -b "112.0,-43.0,154.0,-10.0" -p 2
+./tilecache_seed.py ala:ibra 4 8 -b "112.0,-43.0,154.0,-10.0" -p 2
+./tilecache_seed.py ala:imcra 4 8 -b "112.0,-43.0,154.0,-10.0" -p 2
+./tilecache_seed.py ala:gadm 4 8 -b "112.0,-43.0,154.0,-10.0" -p 2
+./tilecache_seed.py geoscience:riverbasins 4 8 -b "112.0,-43.0,154.0,-10.0" -p 2
+./tilecache_seed.py ala:as 4 8 -b "112.0,-43.0,154.0,-10.0" -p 2
