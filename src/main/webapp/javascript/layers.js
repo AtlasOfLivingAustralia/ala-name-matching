@@ -4,14 +4,14 @@
       );
 
   var alabaseLayer = new OpenLayers.Layer.WMS("Base Layer",
-      tilecacheUrl,
-      {layers: "alabase",
+	  tilecacheUrl,
+      {layers: "ala:alabase",
       srs: 'EPSG:4326',
       format: "image/png"}
       );
 
   var countriesLayer = new OpenLayers.Layer.WMS("Countries",
-	  tilecacheUrl+'bgcolor=0x666699',
+	  tilecacheUrl,
       {layers: "ala:countries",
       srs: 'EPSG:4326',
       format: "image/png"}

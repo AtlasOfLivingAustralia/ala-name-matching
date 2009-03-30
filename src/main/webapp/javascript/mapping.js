@@ -164,10 +164,11 @@ function toggleSelectCentiCell(){
  */
 function initLayers(){
     if(!useGoogle){
-      map.addLayer(countriesLayer);
+      map.addLayer(alabaseLayer);
+      //map.addLayer(alabaseLayer);
       map.addLayer(blueMarbleLayer);
-      map.addLayer(roadsLayer);
-      map.addLayer(placenamesLayer);
+      //map.addLayer(roadsLayer);
+      //map.addLayer(placenamesLayer);
     } else {
         var gmap = new OpenLayers.Layer.Google(
                 "Google Streets",
