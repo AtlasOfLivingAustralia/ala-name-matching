@@ -213,7 +213,7 @@ function createAnnotation ()
     // FIXME: we should allow users to select nothing and effectively 
     // annotate the entire page but more thinking required about where
     // the decoration should go and what the "text" should be. 
-    alert('Warning! No text selected.');
+    alert('Warning!!! No text selected.');
     return;
   }
   var args = '?url=' + encodeURIComponent(getTargetUrl()) +
@@ -858,7 +858,7 @@ function getAnnotations (key)
   if (raw1 && raw1.getElementsByTagNameNS) {
     var nodeList1 = raw1.getElementsByTagNameNS(RDF_SYNTAX_NS, 'Description');
     if (nodeList1.length == 0) {
-      alert("No annotations found for " + sanitizeUrl(key));
+      //alert("No annotations found for " + sanitizeUrl(key));
     }
     else {
       var annotations = orderByDate(nodeList1);
