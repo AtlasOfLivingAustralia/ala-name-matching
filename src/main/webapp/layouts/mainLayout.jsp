@@ -13,6 +13,7 @@
 		<tiles:insert name="keywords" flush="false"/>
 		<title>
 			<tiles:insert name="subtitle" flush="false"/>
+			-
 			<c:set var="title" scope="page"><tiles:getAsString name="title"/></c:set>
 			<spring:message code="${title}"/> 
 		</title>
