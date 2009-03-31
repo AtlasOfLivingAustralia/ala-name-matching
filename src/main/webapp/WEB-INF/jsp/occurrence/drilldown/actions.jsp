@@ -67,4 +67,20 @@
 			</tr-->
 		</tbody>
 	</table>
+	
+    <h4 id="annotationsHelp" style="border-top:1px solid #FFFFFF; margin-top:5px; padding-top:10px;">Annotate this record</h4>
+    <p>
+        This version of the ALA GIS Portal contains a demonstration of Annotation functionality.
+    </p>
+    <p>At this stage this functionality should be considered for demonstration purposes
+       and so we are unable to guarantee your annotations will be maintained in the long term.
+       Feel free to annotate occurrence records with suggested issues and comments.</p>
+    <p>
+        To Annotate a record, please highlight the text you wish to annotate and click the button below.
+    </p>
+    <p>
+        <a title="Dannotate" href="javascript:(function fn(){
+                if (this.m_xps) {createAnnotation()}
+                else {alert('Annotations unavailable at this time.')}})()">Annotate</a> 
+    </p>    
 </div>

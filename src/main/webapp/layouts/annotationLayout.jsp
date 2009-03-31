@@ -29,7 +29,7 @@
 		<script src="${pageContext.request.contextPath}/javascript/dannotate/nsXPointerService.js"  type="text/javascript" language="javascript"></script>
         <script src="${pageContext.request.contextPath}/javascript/dannotate/dannotate.js"  type="text/javascript" language="javascript"></script>
         <script src="${pageContext.request.contextPath}/javascript/dannotate/dannoportal.js"  type="text/javascript" language="javascript"></script>
-        <link type="text/css" rel="stylesheet" href="${pageContext.request.contextPath}/skins/standard/dannotate.css" media="screen"/>
+        <link type="text/css" rel="stylesheet" href="${pageContext.request.contextPath}/skins/ala/dannotate.css" media="screen"/>
 	</head>
 	<body>
 	    <div id="cocoon">

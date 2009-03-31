@@ -63,6 +63,9 @@ div#warnings {
     -webkit-border-radius: 5px; 
     -moz-border-radius: 5px;
 }
+
+.occurrenceContainer #furtherActions p { padding:5px; }
+
 #furtherActions h4 { margin: 0 0 6px 0; }
 #changeSearch {/* background: url('images/tip1.jpg') no-repeat; padding: 7px 0 10px 35px; border-bottom: none; */}
 
@@ -141,5 +144,4 @@ ul.actionsListInline li {
 
 table.taxonClassificationComparison {
     line-height: 1.6em;
-
 }
