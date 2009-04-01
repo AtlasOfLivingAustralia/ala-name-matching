@@ -1,33 +1,33 @@
 <%@ include file="/common/taglibs.jsp"%>
-<div id="taxonomy" class="taxonomyContainer">
-    <div id="twopartheader">
-        <h2>
-        <c:choose>
-            <c:when test="${taxonConcept!=null}">
-                <spring:message code="taxonomy.browser.classification.of"/> <span class="subject"><string:capitalize>${taxonConcept.rank}</string:capitalize>: <gbif:taxonPrint concept="${taxonConcept}"/></span> ${taxonConcept.author}
+
+<div id="twopartheader">
+    <h2>
+    <c:choose>
+        <c:when test="${taxonConcept!=null}">
+            <spring:message code="taxonomy.browser.classification.of"/> <span class="subject"><string:capitalize>${taxonConcept.rank}</string:capitalize>: <gbif:taxonPrint concept="${taxonConcept}"/></span> ${taxonConcept.author}
+        </c:when>
+        <c:otherwise>
+            <spring:message code="taxonomy.browser.classification"/>
+        </c:otherwise>
+    </c:choose>
+    </h2>
+    <c:if test="${dataProvider!=null}">
+        <h3><spring:message code="taxonomy.browser.title.accordingto"/>:
+            <c:choose>
+            <c:when test="${dataProvider!=null && dataProvider.key==nubProvider.key}">
+                The ALA GIS Portal Classification
+                (based on <a href="http://www.catalogueoflife.org/">Catalogue of Life Annual Checklist 2008</a>,
+                and using the <a href="http://www.cmar.csiro.au/datacentre/irmng/">Interim Register of Marine and Nonmarine Genera</a>
+                to place additions from specimen and observation data resources)
             </c:when>
             <c:otherwise>
-                <spring:message code="taxonomy.browser.classification"/>
+                <a href="${pageContext.request.contextPath}/datasets/provider/${dataProvider.key}">${dataProvider.name}</a><c:if test="${dataResource!=null}">: <a href="${pageContext.request.contextPath}/datasets/resource/${dataResource.key}">${dataResource.name}</a></c:if></h3>
             </c:otherwise>
-        </c:choose>
-        </h2>
-        <c:if test="${dataProvider!=null}">
-            <h3><spring:message code="taxonomy.browser.title.accordingto"/>: 
-                <c:choose>
-                <c:when test="${dataProvider!=null && dataProvider.key==nubProvider.key}">
-                    The ALA GIS Portal Classification 
-                    (based on <a href="http://www.catalogueoflife.org/">Catalogue of Life Annual Checklist 2008</a>,
-                    and using the <a href="http://www.cmar.csiro.au/datacentre/irmng/">Interim Register of Marine and Nonmarine Genera</a>
-                    to place additions from specimen and observation data resources)
-                </c:when>
-                <c:otherwise>
-                    <a href="${pageContext.request.contextPath}/datasets/provider/${dataProvider.key}">${dataProvider.name}</a><c:if test="${dataResource!=null}">: <a href="${pageContext.request.contextPath}/datasets/resource/${dataResource.key}">${dataResource.name}</a></c:if></h3>
-                </c:otherwise>  
-                </c:choose>
-            </h3>   
-        </c:if>
-    </div><!--twopartheader-->
-
+            </c:choose>
+        </h3>
+    </c:if>
+</div><!--twopartheader-->
+<div id="taxonomy" class="taxonomyContainer">
     <c:if test="${taxonConcept!=null}">
         <div id="furtherActions">
             <table cellspacing="1" class="actionsList">
