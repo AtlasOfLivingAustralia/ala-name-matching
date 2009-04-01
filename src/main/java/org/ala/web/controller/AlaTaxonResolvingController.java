@@ -19,8 +19,10 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.ala.dao.OccurrenceFacetDAO;
+import org.gbif.portal.dto.taxonomy.BriefTaxonConceptDTO;
 import org.gbif.portal.web.controller.taxonomy.TaxonResolvingController;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.support.RequestContextUtils;
 
 /**
  * A Controller that extends TaxonResolvingController and adds a new model
@@ -37,9 +39,11 @@ public class AlaTaxonResolvingController extends TaxonResolvingController {
         ModelAndView mav = super.handleRequest(propertiesMap, request, response);
 
         String conceptIdentifier = propertiesMap.get(idRequestKey);
-        
+        BriefTaxonConceptDTO taxonConceptDTO = null;
+
         if (taxonomyManager.isValidTaxonConceptKey(conceptIdentifier)) {
-            Map<String, String> chartData = occurrenceFacetDAO.getChartFacetsForSpecies(conceptIdentifier);
+            taxonConceptDTO = taxonomyManager.getTaxonConceptFor(conceptIdentifier,  RequestContextUtils.getLocale(request).getLanguage());
+            Map<String, String> chartData = occurrenceFacetDAO.getChartFacetsForSpecies(conceptIdentifier, taxonConceptDTO);
 
             if (chartData != null) {
                 mav.addObject("chartData", chartData);

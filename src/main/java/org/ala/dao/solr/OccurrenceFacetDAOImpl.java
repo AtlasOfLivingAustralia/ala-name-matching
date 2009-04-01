@@ -42,6 +42,7 @@ import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.response.FacetField;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.FacetField.Count;
+import org.gbif.portal.dto.taxonomy.BriefTaxonConceptDTO;
 import org.gbif.portal.dto.taxonomy.TaxonConceptDTO;
 import org.gbif.portal.model.occurrence.BasisOfRecord;
 import org.gbif.portal.service.TaxonomyManager;
@@ -227,11 +228,27 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 	 * http://localhost:8080/solr/select/?q=species_concept_id:2557787&facet=true&facet.limit=-1&facet.mincount=0
 	 *   &facet.missing=true&facet.field=basisofrecord&facet.field=year&facet.field=month&facet=true&facet.sort=false
 	 */
-	public Map<String, String> getChartFacetsForSpecies(String taxonConceptKey) {
+	public Map<String, String> getChartFacetsForSpecies(String taxonConceptKey, BriefTaxonConceptDTO taxonConceptDTO) {
 		try{
 		    Map<String, String> csvDataMap = new HashMap<String, String>();  // model passed through to JSP
 		    // Setup the Solr query, etc
-		    String queryString = "species_concept_id:" + taxonConceptKey;
+		    String queryString = "";
+            
+            if (taxonConceptDTO.getRankValue() == 7000) {
+                // species
+                queryString = "species_concept_id:" + taxonConceptKey;
+            } else if (taxonConceptDTO.getRankValue() == 6000) {
+                // genus
+                queryString = "genus_concept_id:" + taxonConceptKey;
+            } else if (taxonConceptDTO.getRankValue() == 5000) {
+                // family
+                queryString = "family_concept_id:" + taxonConceptKey;
+            } else {
+                logger.debug("rank was not searchable: " + taxonConceptDTO.getRankValue());
+                return null;
+            }
+            logger.debug("rank was searchable: " + queryString);
+            //String queryString = "species_concept_id:" + taxonConceptKey;
 		    solrServer = initialiseSolrServer();
 	        SolrQuery searchQuery = new SolrQuery();  // handle better?
 	        searchQuery.setQuery(queryString);
@@ -315,7 +332,7 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
         	logger.warn("Problem generating chart data. Charts will not be rendered");
             logger.debug(e.getMessage(), e);
 		}
-        
+        // should not be read due to try catch
 		return null;
 	}
 

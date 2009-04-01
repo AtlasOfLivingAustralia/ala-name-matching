@@ -18,6 +18,7 @@ package org.ala.dao;
 import java.util.List;
 import java.util.Map;
 import org.ala.model.GeoRegionTaxonConcept;
+import org.gbif.portal.dto.taxonomy.BriefTaxonConceptDTO;
 
 /**
  *
@@ -37,7 +38,7 @@ public interface OccurrenceFacetDAO {
      * @param conceptIdentifier
      * @return Map
      */
-    public Map<String, String> getChartFacetsForSpecies(String conceptIdentifier);
+    public Map<String, String> getChartFacetsForSpecies(String taxonConceptKey, BriefTaxonConceptDTO taxonConceptDTO);
 
     /**
      * 
