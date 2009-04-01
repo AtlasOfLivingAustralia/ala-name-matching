@@ -171,6 +171,11 @@ function initLayers(){
       //map.addLayer(placenamesLayer);
     } else {
         // create Google layer
+        var gter = new OpenLayers.Layer.Google(
+                "Google Terain",
+                {type: G_PHYSICAL_MAP, 'sphericalMercator': true}
+            );
+    	
         var gsat = new OpenLayers.Layer.Google(
             "Google Satellite",
             {type: G_SATELLITE_MAP, 'sphericalMercator': true}
@@ -193,9 +198,10 @@ function initLayers(){
                 "Yahoo Hybrid",
                 {'type': YAHOO_MAP_HYB, 'sphericalMercator': true}
             );    
-        map.addLayers([gmap, gsat, yahoosat, yahooreg, yahoohyb]);	
+        map.addLayers([gsat, gter, gmap, yahoosat, yahooreg, yahoohyb]);	
     }
     
+
     //useful for debug
     map.addLayer(cellLayer); 
     map.addLayer(centiCellLayer);
@@ -204,15 +210,15 @@ function initLayers(){
     map.events.register('zoomend', map, function (e) {
         var zoom = map.zoom;
         
-        if (zoom < 4) {
+        if (zoom < 6) {
             cellLayer.setVisibility(true);
             centiCellLayer.setVisibility(false);
             tenmilliCellLayer.setVisibility(false);
-        } else if (zoom >= 4 && zoom < 9) {
+        } else if (zoom >= 6 && zoom < 10) {
             cellLayer.setVisibility(false);
             centiCellLayer.setVisibility(true);
             tenmilliCellLayer.setVisibility(false);
-        } else if (zoom >= 9) {
+        } else if (zoom >= 10) {
             cellLayer.setVisibility(false);
             centiCellLayer.setVisibility(false);
             tenmilliCellLayer.setVisibility(true);
