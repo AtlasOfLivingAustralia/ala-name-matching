@@ -1,6 +1,7 @@
   var blueMarbleLayer = new OpenLayers.Layer.WMS("Satellite",
       "http://labs.metacarta.com/wms-c/Basic.py?",
-      {layers: 'satellite'}
+      {layers: 'satellite'},
+      {wrapDateLine: true}
       );
 
   var alabaseLayer = new OpenLayers.Layer.WMS("Base Layer",
@@ -15,7 +16,8 @@
 	  tilecacheUrl,
       {layers: "ala:countries",
       srs: 'EPSG:4326',
-      format: "image/png"}
+      format: "image/png"},
+      {wrapDateLine: true}
       );
 
   var ibraLayer = new OpenLayers.Layer.WMS("IBRA",
