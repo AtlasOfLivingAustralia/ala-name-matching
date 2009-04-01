@@ -7,11 +7,14 @@
 <script type="text/javascript">
     var map;
     var tilecacheUrl = '${tilecacheUrl}';
+    var useGoogle = ${param['map']=='google' ? 'true': 'false'};
+    var geoserverUrl = '${geoserverUrl}';    
     var polygonTilecacheUrl = '${polygonTilecacheUrl}';
-    var geoserverUrl = '${geoserverUrl}';
+    if(useGoogle){
+    	polygonTilecacheUrl = geoserverUrl +'/wms?';
+    }
     var bluemarbleUrl = '${bluemarbleUrl}';
     var cellDensityLayerUrl = '${cellDensityLayerUrl}';
-    var useGoogle = ${param['map']=='google' ? 'true': 'false'};
     var brokenContentSize = document.getElementById('content').offsetWidth == 0;
     var extraParams = '${extraParams}';
     var cellButton;

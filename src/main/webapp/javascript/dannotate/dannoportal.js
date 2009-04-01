@@ -105,7 +105,7 @@ getXPathForSelection = function ()
     }
   }
   catch (ex) {
-    alert('XPath create failed\n' + ex.toString());
+    //alert('XPath create failed\n' + ex.toString());
   }
   return xp;
 }

@@ -213,7 +213,7 @@ function createAnnotation ()
     // FIXME: we should allow users to select nothing and effectively 
     // annotate the entire page but more thinking required about where
     // the decoration should go and what the "text" should be. 
-    alert('Warning!!! No text selected.');
+    alert('Warning!!! No text selected. Please select the text you wish to annotate and click "Annotate"');
     return;
   }
   var args = '?url=' + encodeURIComponent(getTargetUrl()) +

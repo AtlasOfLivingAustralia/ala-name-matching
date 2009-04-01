@@ -21,7 +21,7 @@
       );
 
   var ibraLayer = new OpenLayers.Layer.WMS("IBRA",
-	  tilecacheUrl,
+	  polygonTilecacheUrl,
       {layers: "ala:ibra",
       srs: 'EPSG:4326',
       version: "1.0.0",
@@ -31,7 +31,7 @@
       );
 
   var imcraLayer = new OpenLayers.Layer.WMS("IMCRA",
-	  tilecacheUrl,
+	  polygonTilecacheUrl,
       {layers: "ala:imcra",
       srs: 'EPSG:4326',
       version: "1.0.0",
@@ -60,7 +60,7 @@
       );
 
   var gAdminLayer = new OpenLayers.Layer.WMS("Local Government Areas",
-	  tilecacheUrl,
+	  polygonTilecacheUrl,
       {layers: "ala:gadm",
       srs: 'EPSG:4326',
       transparent: "true",
