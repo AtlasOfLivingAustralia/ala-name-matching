@@ -1,26 +1,36 @@
 <%@ include file="/common/taglibs.jsp"%>
 <div id="twopartheader">
-<h2>Geographic Region: <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></h2>
-<c:if test="${geoRegion.regionType ==1}"><c:set var="regionType">Australian State</c:set></c:if>
-<c:if test="${geoRegion.regionType ==2}"><c:set var="regionType">Australian Territory</c:set></c:if> 
-<c:if test="${geoRegion.regionType ==3}"><c:set var="regionType">Borough</c:set></c:if>
-<c:if test="${geoRegion.regionType ==4}"><c:set var="regionType">City</c:set></c:if>
-<c:if test="${geoRegion.regionType ==5}"><c:set var="regionType">Community gov. council</c:set></c:if>
-<c:if test="${geoRegion.regionType ==6}"><c:set var="regionType">District council</c:set></c:if>
-<c:if test="${geoRegion.regionType ==7}"><c:set var="regionType">Municipality</c:set></c:if>
-<c:if test="${geoRegion.regionType ==8}"><c:set var="regionType">Rural city</c:set></c:if>
-<c:if test="${geoRegion.regionType ==9}"><c:set var="regionType">Shire</c:set></c:if>
-<c:if test="${geoRegion.regionType ==10}"><c:set var="regionType">Territory</c:set></c:if>
-<c:if test="${geoRegion.regionType ==11}"><c:set var="regionType">Town</c:set></c:if>
-<c:if test="${geoRegion.regionType >=2000 && geoRegion.regionType <3000}"><c:set var="regionType">Interim Biogeographic Regionalisation of Australia Region - Biogeographic region</c:set></c:if>
-<c:if test="${geoRegion.regionType ==3001}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region - Cold Temperate Waters</c:set></c:if>
-<c:if test="${geoRegion.regionType ==3002}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region - Subtropical Waters</c:set></c:if>
-<c:if test="${geoRegion.regionType ==3003}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region - Transitional Waters</c:set></c:if>
-<c:if test="${geoRegion.regionType ==3004}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region - Tropical Waters</c:set></c:if>
-<c:if test="${geoRegion.regionType ==3005}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region -  Warm Temperate Waters</c:set></c:if>
-<c:if test="${geoRegion.regionType ==3005}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region -  Warm Temperate Waters</c:set></c:if>
-<c:if test="${geoRegion.regionType >=5000 && geoRegion.regionType <6000}"><c:set var="regionType">River Basin</c:set></c:if>
-<h3>${regionType}</h3>
+<c:choose>
+    <c:when test="${not empty locality}">
+        <h2>Locality: <span class="subject"><gbif:capitalize>${locality.name}</gbif:capitalize></span></h2>
+        <h3>Postcode: <span class="subject"><gbif:capitalize>${locality.postcode}</gbif:capitalize></span></h3>
+        <h3>Local Government Region: <span class="subject">${geoRegion.name}</span></h3>
+        <h3>State: <span class="subject">${locality.state}</span></h3>
+    </c:when>
+    <c:otherwise>
+        <h2>Geographic Region: <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></h2>
+        <c:if test="${geoRegion.regionType ==1}"><c:set var="regionType">Australian State</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==2}"><c:set var="regionType">Australian Territory</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==3}"><c:set var="regionType">Borough</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==4}"><c:set var="regionType">City</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==5}"><c:set var="regionType">Community gov. council</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==6}"><c:set var="regionType">District council</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==7}"><c:set var="regionType">Municipality</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==8}"><c:set var="regionType">Rural city</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==9}"><c:set var="regionType">Shire</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==10}"><c:set var="regionType">Territory</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==11}"><c:set var="regionType">Town</c:set></c:if>
+        <c:if test="${geoRegion.regionType >=2000 && geoRegion.regionType <3000}"><c:set var="regionType">Interim Biogeographic Regionalisation of Australia Region - Biogeographic region</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==3001}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region - Cold Temperate Waters</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==3002}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region - Subtropical Waters</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==3003}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region - Transitional Waters</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==3004}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region - Tropical Waters</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==3005}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region -  Warm Temperate Waters</c:set></c:if>
+        <c:if test="${geoRegion.regionType ==3005}"><c:set var="regionType">Integrated Marine and Coastal Regionalisation of Australia Region -  Warm Temperate Waters</c:set></c:if>
+        <c:if test="${geoRegion.regionType >=5000 && geoRegion.regionType <6000}"><c:set var="regionType">River Basin</c:set></c:if>
+        <h3>${regionType}</h3>
+    </c:otherwise>
+</c:choose>
 </div>
 <c:if test="${geoRegion.occurrenceCount>0}">
 <div id="furtherActions">
@@ -42,11 +52,13 @@
 							<c:set var="a0">
 								<span class='subject'><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span>
 							</c:set>
-							<a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}" class="iconClassification"><spring:message code="regions.drilldown.view.taxonomy" text="Taxa recorded in "/> <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></a>
+							<a href="${pageContext.request.contextPath}/species/browse/region/${geoRegion.id}" class="iconClassification"><spring:message code="regions.drilldown.view.taxonomy" text="Taxa recorded in "/> <span class="subject">${geoRegion.name}</span></a>
 						</li>
-						<li>
-							<a href="#resources" class="iconTable"><spring:message code="explore.resources" text="Data Sets providing data in"/> <span class="subject"><gbif:capitalize>${geoRegion.name}</gbif:capitalize></span></a>
+						<c:if test="${not empty geoRegionDataResources}">
+                        <li>
+							<a href="#resources" class="iconTable"><spring:message code="explore.resources" text="Data Sets providing data in"/> <span class="subject">${geoRegion.name}</span></a>
 						</li>
+                        </c:if>
 					</ul>
 				</td>
 				<td>
@@ -62,15 +74,30 @@
 </div>
 </c:if>
 <div class="subcontainer">
-	<script type="text/javascript">
-		var entityId = '${geoRegion.id}';
-		var entityType = '8';
-		var entityName = '${geoRegion.name}';
-		var minLongitude = ${geoRegion.minLongitude};
-		var minLatitude = ${geoRegion.minLatitude};
-		var maxLongitude = ${geoRegion.maxLongitude};
-		var maxLatitude = ${geoRegion.maxLatitude};
-	</script>
+	<c:if test="${locality!=null}">
+    <script type="text/javascript">
+        var entityId = '${geoRegion.id}';
+        var entityType = '8';
+        var entityName = '${geoRegion.name}';
+        var minLongitude = (${locality.minLongitude} / 10000);
+        var minLatitude = (${locality.minLatitude} / 10000);
+        var maxLongitude = (${locality.maxLongitude} / 10000);
+        var maxLatitude = (${locality.maxLatitude} / 10000);
+        // alert("latlon: "+ minLongitude + "|"+ minLatitude)
+    </script>
+    </c:if>
+    <c:if test="${locality==null}">
+    <script type="text/javascript">
+        var entityId = '${geoRegion.id}';
+        var entityType = '8';
+        var entityName = '${geoRegion.name}';
+        var minLongitude = ${geoRegion.minLongitude};
+        var minLatitude = ${geoRegion.minLatitude};
+        var maxLongitude = ${geoRegion.maxLongitude};
+        var maxLatitude = ${geoRegion.maxLatitude};
+    </script>
+    </c:if>
+	
 	<c:set var="extraParams" scope="request"><gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="0"/></c:set>
     <c:set var="entityId" scope="request">${geoRegion.id}</c:set>
     <c:set var="entityPath" scope="request" value="regions"/>

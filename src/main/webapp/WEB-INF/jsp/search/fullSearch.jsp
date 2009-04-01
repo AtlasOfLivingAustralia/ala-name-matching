@@ -17,6 +17,9 @@
 </td><!-- resultsSummary -->
 
 <td id="resultsBreakdown" style="vertical-align:top; padding-top:0px;">
+<c:if test="${taxonConceptsTotal==0 && commonNamesTotal==0 && geoRegionsTotal==0 && localitiesTotal==0 && dataResourcesTotal==0 && dataProvidersTotal==0}">
+    <div class="moreSearchResults">Search for &quot;${searchString}&quot; returned no results</div>
+</c:if>
 <div class=" yui-skin-sam">
 <% /** Taxon Names  */%>
 <c:if test="${taxonConceptsTotal>0 || fn:length(taxonConceptsError)>0}">
@@ -214,7 +217,7 @@
           <json:object>
             <json:property name="locality" value="${locality.name}"/>
             <json:property name="localityUrl">
-              ${pageContext.request.contextPath}/regions/${locality.geoRegion.id}/locality/${locality.id}
+              ${pageContext.request.contextPath}/regions/${locality.geoRegion.id}/locality/${locality.id}?map=google
             </json:property>
             <json:property name="state" value="${locality.state}"/>
             <json:property name="postcode" value="${locality.postcode}"/>

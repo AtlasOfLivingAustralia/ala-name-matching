@@ -45,8 +45,8 @@ public class RegionType {
 			maxTypeId = 4L;
 		}
 		else if("lga".equals(name)) {
-			minTypeId = 5L;
-			maxTypeId = 8L;
+			minTypeId = 3L;
+			maxTypeId = 11L;
 		}
 		else if("shires".equals(name)) {
 			minTypeId = 9L;

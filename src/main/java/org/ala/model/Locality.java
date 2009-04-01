@@ -15,6 +15,7 @@
 package org.ala.model;
 
 import java.io.Serializable;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -26,6 +27,7 @@ import org.apache.solr.analysis.LowerCaseFilterFactory;
 import org.apache.solr.analysis.SnowballPorterFilterFactory;
 import org.apache.solr.analysis.StandardTokenizerFactory;
 import org.hibernate.search.annotations.AnalyzerDef;
+import org.hibernate.search.annotations.Boost;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Fields;
@@ -58,7 +60,7 @@ public class Locality implements Serializable {
 	protected int id;
 
     @Fields( {
-        @Field(index=Index.TOKENIZED, store=Store.YES),
+        @Field(index=Index.TOKENIZED, store=Store.YES, boost=@Boost(2f)),
         @Field(name = "nameForSort", index=Index.UN_TOKENIZED, store = Store.YES)
     })
 	protected String name;
@@ -73,7 +75,22 @@ public class Locality implements Serializable {
     @JoinColumn(name="geo_region_id")
     @IndexedEmbedded(depth=3)
 	protected GeoRegion geoRegion;
-	
+
+    @Column(name="point_id")
+    protected Integer pointId;
+
+    @Column(name="min_longitude")
+    protected Integer minLongitude;
+
+    @Column(name="min_latitude")
+    protected Integer minLatitude;
+
+    @Column(name="max_longitude")
+    protected Integer maxLongitude;
+    
+    @Column(name="max_latitude")
+    protected Integer maxLatitude;
+    
 	/**
 	 * @return the id
 	 */
@@ -134,4 +151,64 @@ public class Locality implements Serializable {
 	public void setGeoRegion(GeoRegion geoRegion) {
 		this.geoRegion = geoRegion;
 	}
+    /**
+     * @return the maxLatitude
+     */
+    public Integer getMaxLatitude() {
+        return maxLatitude;
+    }
+    /**
+     * @param maxLatitude the maxLatitude to set
+     */
+    public void setMaxLatitude(Integer maxLatitude) {
+        this.maxLatitude = maxLatitude;
+    }
+    /**
+     * @return the maxLongitude
+     */
+    public Integer getMaxLongitude() {
+        return maxLongitude;
+    }
+    /**
+     * @param maxLongitude the maxLongitude to set
+     */
+    public void setMaxLongitude(Integer maxLongitude) {
+        this.maxLongitude = maxLongitude;
+    }
+    /**
+     * @return the minLatitude
+     */
+    public Integer getMinLatitude() {
+        return minLatitude;
+    }
+    /**
+     * @param minLatitude the minLatitude to set
+     */
+    public void setMinLatitude(Integer minLatitude) {
+        this.minLatitude = minLatitude;
+    }
+    /**
+     * @return the minLongitude
+     */
+    public Integer getMinLongitude() {
+        return minLongitude;
+    }
+    /**
+     * @param minLongitude the minLongitude to set
+     */
+    public void setMinLongitude(Integer minLongitude) {
+        this.minLongitude = minLongitude;
+    }
+    /**
+     * @return the pointId
+     */
+    public Integer getPointId() {
+        return pointId;
+    }
+    /**
+     * @param pointId the pointId to set
+     */
+    public void setPointId(Integer pointId) {
+        this.pointId = pointId;
+    }
 }

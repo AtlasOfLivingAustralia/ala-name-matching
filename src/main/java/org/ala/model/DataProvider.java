@@ -14,6 +14,7 @@
  ***************************************************************************/
 package org.ala.model;
 
+import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -23,6 +24,7 @@ import org.apache.solr.analysis.LowerCaseFilterFactory;
 import org.apache.solr.analysis.SnowballPorterFilterFactory;
 import org.apache.solr.analysis.StandardTokenizerFactory;
 import org.hibernate.search.annotations.AnalyzerDef;
+import org.hibernate.search.annotations.Boost;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Fields;
@@ -44,7 +46,8 @@ import org.hibernate.search.annotations.TokenizerDef;
       @Parameter(name = "language", value = "English")
     })
   })
-public class DataProvider {
+public class DataProvider implements Serializable {
+    private static final long serialVersionUID = -7989343389996128021L;
 
 	@Id
 	@GeneratedValue
@@ -52,7 +55,7 @@ public class DataProvider {
 	protected long id;
 
     @Fields( {
-        @Field(index=Index.TOKENIZED, store=Store.YES),
+        @Field(index=Index.TOKENIZED, store=Store.YES, boost=@Boost(2f)),
         @Field(name = "nameForSort", index=Index.UN_TOKENIZED, store = Store.YES)
     })
 	protected String name;

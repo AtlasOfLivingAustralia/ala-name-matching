@@ -22,6 +22,7 @@
         <property name="urlRoot" value="regions"/>
         <property name="geoRegionDAO" ref="geoRegionDAORO"/>
         <property name="geoRegionDataResourceDAO" ref="geoRegionDataResourceDAORO"/>
+        <property name="localityDAO" ref="localityDAORO"/>
 	    <property name="supportedPatterns">
 	      <list>
 	        <list>

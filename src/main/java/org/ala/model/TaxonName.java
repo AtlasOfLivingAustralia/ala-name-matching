@@ -14,10 +14,12 @@
  ***************************************************************************/
 package org.ala.model;
 
+import java.io.Serializable;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
+import org.hibernate.search.annotations.Boost;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Fields;
 import org.hibernate.search.annotations.Index;
@@ -33,7 +35,8 @@ import org.hibernate.search.annotations.Store;
 @Entity
 @Indexed(index="TaxonNames")
 @javax.persistence.Table(name="taxon_name", schema="portal")
-public class TaxonName {
+public class TaxonName implements Serializable {
+    private static final long serialVersionUID = -1013006891702905274L;
 
 	/** The primary key */
 	@Id
@@ -42,7 +45,7 @@ public class TaxonName {
 
 	/** The canonical name **/
 	@Fields( {
-        @Field(index=Index.TOKENIZED, store=Store.YES),
+        @Field(index=Index.TOKENIZED, store=Store.YES, boost=@Boost(2f)),
         @Field(name = "canonicalForSort", index=Index.UN_TOKENIZED, store = Store.YES)
     })
 	@IndexedEmbedded(prefix="canonical")

@@ -5,13 +5,14 @@
 </div>
 
 <c:set var="workOffline" scope="request"><gbif:propertyLoader bundle="portal" property="workOffline"/></c:set>
+<c:set var="googleAnalyticsKey" scope="request"><gbif:propertyLoader bundle="portal" property="googleAnalyticsKey"/></c:set>
 <c:if test="${!workOffline}">
 <script type="text/javascript">
 var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
 </script>
 <script type="text/javascript">
-var pageTracker = _gat._getTracker("N/A"); // "UA-4355440-1"
+var pageTracker = _gat._getTracker("${googleAnalyticsKey}"); // "UA-4355440-1" "N/A"
 pageTracker._initData();
 pageTracker._trackPageview();
 </script>

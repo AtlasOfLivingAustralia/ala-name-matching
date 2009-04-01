@@ -21,7 +21,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.ala.dao.GeoRegionDataResourceDAO;
+import org.ala.dao.LocalityDAO;
 import org.ala.model.GeoRegionDataResource;
+import org.ala.model.Locality;
 import org.apache.commons.lang.StringUtils;
 import org.gbif.portal.dao.geospatial.GeoRegionDAO;
 import org.gbif.portal.model.geospatial.GeoRegion;
@@ -39,6 +41,7 @@ public class RegionController extends RestController {
 
 	protected GeoRegionDAO geoRegionDAO;
     protected GeoRegionDataResourceDAO geoRegionDataResourceDAO;
+    protected LocalityDAO localityDAO;
 	
 	/**
 	 * @see org.ala.web.controller.RestController#handleRequest(java.util.Map, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
@@ -47,14 +50,32 @@ public class RegionController extends RestController {
 	public ModelAndView handleRequest(Map<String, String> properties, HttpServletRequest request,
 			HttpServletResponse response) throws Exception {
 		String regionKey = properties.get("region");
+        String localityKey = properties.get("locality");
+        
 		if(StringUtils.isNotBlank(regionKey)){
 			Long regionId = Long.parseLong(regionKey);
 			GeoRegion geoRegion = geoRegionDAO.getGeoRegionFor(regionId);
             List<GeoRegionDataResource> geoRegionDataResources = geoRegionDataResourceDAO.getDataResourcesForGeoRegion(regionId);
-			if(geoRegion!=null){
+			
+            if (geoRegion != null) {
 				ModelAndView mav = new ModelAndView("geoRegionView");
 				mav.addObject("geoRegion", geoRegion);
                 mav.addObject("geoRegionDataResources", geoRegionDataResources);
+
+                if (StringUtils.isNotBlank(localityKey)) {
+                    Long localityId = Long.parseLong(localityKey);
+                    logger.debug("Checking locality id: " + localityId);
+                    //List<Locality> localities = localityDAO.getLocalitiesFor(localityId);
+                    Locality locality = localityDAO.getLocalityFor(localityId);
+                    //if (localities != null) {
+                    if (locality != null && locality.getGeoRegion().getId() != regionId) {
+                        redirectToDefaultView();
+                    }
+                    else if (locality != null) {
+                        //mav.addObject("locality", localities);
+                        mav.addObject("locality", locality);
+                    }
+                }
 				return mav;
 			}
 		}
@@ -69,10 +90,16 @@ public class RegionController extends RestController {
 	}
 
     /**
-     * =@param geoRegionDataResourceDAO the geoRegionDataResourceDAO to set
+     * @param geoRegionDataResourceDAO the geoRegionDataResourceDAO to set
      */
     public void setGeoRegionDataResourceDAO(GeoRegionDataResourceDAO geoRegionDataResourceDAO) {
         this.geoRegionDataResourceDAO = geoRegionDataResourceDAO;
     }
 
+    /**
+     *  @param locaityDAO the locaityDAO to set
+     */
+    public void setLocalityDAO(LocalityDAO localityDAO) {
+        this.localityDAO = localityDAO;
+    }
 }
