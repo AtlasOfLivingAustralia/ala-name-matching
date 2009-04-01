@@ -46,6 +46,11 @@
     <property name="dataSource" ref="dataSource"/>
   </bean>
 
+  <!-- ALA Locality DAO  -->
+  <bean id="localityDAORO" class="org.ala.dao.jdbc.LocalityDAOImpl">
+    <property name="dataSource" ref="dataSource"/>
+  </bean>
+
   <!-- ALA overrides... -->
   <bean id="dataResourceDAORO" class="org.ala.dao.hibernate.DataResourceDAOImpl" parent="baseDAORO">
     <property name="resourceNamePrefixes">
