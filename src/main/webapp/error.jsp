@@ -6,7 +6,7 @@
 
 <html>
   <head>
-    <title>GBIF - Page not found</title>
+    <title>ALA - Page not found</title>
     <style>
       body {
         margin: 0px;

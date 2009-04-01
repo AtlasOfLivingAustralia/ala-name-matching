@@ -5,7 +5,7 @@
 
 <html>
   <head>
-    <title>GBIF - Access Denied</title>
+    <title>ALA - Access Denied</title>
     <style>
       body {
         margin: 0px;
