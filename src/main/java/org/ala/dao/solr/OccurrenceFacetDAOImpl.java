@@ -285,7 +285,7 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 		        StringBuffer csvValues = new StringBuffer(); // CSV format: 'foo;25\nbar;33\ndoh;1\n'
 		        Map<String, Long> issueFacetMap = new HashMap<String, Long>(); // needed to redistribute the issue counts after splitting bit values
 
-		        if(facetData==null){
+		        if(facetData==null || facetData.getValues()==null){
 		        	return null;
 		        }
 
