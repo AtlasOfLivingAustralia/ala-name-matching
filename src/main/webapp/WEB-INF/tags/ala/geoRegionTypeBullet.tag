@@ -1,6 +1,6 @@
 <%@ include file="/common/taglibs.jsp" %>
 <%@ attribute name="geoRegionType" required="true" rtexprvalue="true" type="org.ala.web.util.RegionType" %>
-<%@ attribute name="requestedType" required="true" rtexprvalue="true" type="String" %>
+<%@ attribute name="requestedType" required="true" rtexprvalue="true" type="java.lang.String" %>
 <c:if test="${not empty geoRegionType}">
     <c:choose>
         <c:when test="${geoRegionType.name == requestedType}">
