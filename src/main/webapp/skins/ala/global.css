@@ -65,7 +65,7 @@ body>#cocoon { width: 768px; }
 #quickSearch { position: absolute; top: 210px; left: 0; width: 255px; height: 70px; border: 0px; text-align: left; /*background-image: url("images/searchBg.jpg");*/ line-height: 0.8em; }
 #quickSearch fieldset { position: relative; top: 7px; left:0px; margin: 0; padding: 0 0 0 12px; border: 0; }
 #quickSearch form { margin: 0; padding: 0; }
-#quickSearch form a { color: gray; font-size: 12px; border: 0; }
+#quickSearch form a { color: gray; font-size: 11px; border: 0; }
 #quickSearch #query { width: 160px; border: 1px solid gray; height: 1.3em; padding: 0; }
 #quickSearch h3 { margin: 12px 0 0 12px ; padding: 0; color: white; font : 1.1em Arial, Helvetica, Verdana, sans-serif; font-weight: bold;  }
 #quickSearch h3:first-letter { text-transform: capitalize; }
@@ -74,11 +74,12 @@ body>#cocoon { width: 768px; }
 
 /*-- END Search Form --*/
 
-#topmenu { float: left; position: absolute; top: 247px; left: 261px; color: gray ; font : bold 1.1em Arial, Helvetica, sans-serif; text-transform : uppercase ; }
+#topmenu { float: left; position: absolute; top: 248px; left: 235px; color: #2B2B28; font: bold 15px Arial, Helvetica, sans-serif; text-transform: uppercase; }
+#container>#topmenu { top: 245px; }
 #topmenu ul { margin: 0 ; padding: 0 ;  }
 #topmenu ul li { display: inline; list-style: none; padding-left: 6px;  }
 #topmenu ul #firstTopMenu { padding-left: 5px; }
-#topmenu a { color: gray; border: 0; }
+#topmenu a { color: #2B2B28; border: 0; }
 
 #content { border: 0 ;}
 
