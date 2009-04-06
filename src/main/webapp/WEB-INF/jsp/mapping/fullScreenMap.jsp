@@ -17,6 +17,7 @@
           var maxLatitude = '${param['maxy']}';
           */
         </script>
+        <link rel="shortcut icon" href="${pageContext.request.contextPath}/favicon.ico" type="image/x-icon" /> 
     </head>
     <body>
         <div id="content">

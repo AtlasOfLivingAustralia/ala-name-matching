@@ -153,6 +153,3 @@
         window.onresize = handleResize;
     }
 </script>
-<c:if test="${empty param['fullScreen']}">
-<a href="javascript:fullScreenMap();">Full Screen Map</a>
-</c:if>
