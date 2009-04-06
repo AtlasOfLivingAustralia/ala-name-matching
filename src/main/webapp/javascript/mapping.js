@@ -272,7 +272,7 @@ function zoomToBounds(){
     var bounds = null;
     var boundsString = getRequestParameter("bounds");
     
-    if (boundsString!=null) {
+    if (boundsString) {
         bounds = new OpenLayers.Bounds.fromString(getRequestParameter("bounds"));
     } else if (minLongitude!=null) {
     	//defaults have been set in the intialisation of the map
@@ -282,13 +282,14 @@ function zoomToBounds(){
     }
     
     if(bounds!=null && useGoogle){
-    	//alert('using google projection');
+    	alert('using google projection');
         var proj900913 = new OpenLayers.Projection("EPSG:900913");
         var proj4326 = new OpenLayers.Projection("EPSG:4326");
         //source dest
         bounds = bounds.transform(proj4326, proj900913);
     }
     if(bounds!=null){
+    	alert(bounds);
     	map.zoomToExtent(bounds, true);
     }
  }
