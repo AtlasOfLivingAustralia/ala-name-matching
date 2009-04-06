@@ -15,9 +15,7 @@
 								<c:set var="a0"><span class="genera">${occurrenceRecord.taxonName}</span></c:set>
 								<c:set var="a1">${minX}&deg;${minX>0?'E':'W'}, ${minY}&deg;${minY>0?'N':'S'}, ${maxX}&deg;${minX>0?'E':'W'}, ${maxY}&deg;${minY>0?'N':'S'}</c:set>						
 						<li><a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject='0' predicate='0' value='${occurrenceRecord.taxonName}' index="0"/>&<gbif:criterion subject='19' predicate='0' value='${minX},${minY},${maxX},${maxY}' index="1"/>"><spring:message code="occurrence.record.geospatial.findall.onedeg" arguments="${a0}%%%${a1}" argumentSeparator="%%%"/></a></li>
-						<!-- 
 						  <li><a href="${pageContext.request.contextPath}/occurrences/search.htm?<gbif:criterion subject='1' predicate='0' value='${occurrenceRecord.latitude}' index="0"/>&<gbif:criterion subject='2' predicate='0' value='${occurrenceRecord.longitude}' index="1"/>"><spring:message code="occurrence.record.geospatial.findall.latlong"/>${occurrenceRecord.latitude}, ${occurrenceRecord.longitude}</a></li>
-						-->
 						</c:if>
 					</ul>
 				</td>
