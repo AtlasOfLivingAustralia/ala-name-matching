@@ -288,7 +288,6 @@ function zoomToBounds(){
         bounds = bounds.transform(proj4326, proj900913);
     }
     if(bounds!=null){
-    	alert(bounds);
     	map.zoomToExtent(bounds, true);
     }
  }
