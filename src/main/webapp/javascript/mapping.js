@@ -269,14 +269,14 @@ function loadLayers(){
 function zoomToBounds(){
     
 	// zoom to the correct bounds
-    var bounds;
+    var bounds = null;
     var boundsString = getRequestParameter("bounds");
     
-    if (boundsString) {
+    if (boundsString==null) {
         bounds = new OpenLayers.Bounds.fromString(getRequestParameter("bounds"));
     } 
     
-    if (boundsString==null && minLongitude!=null) {
+    if (bounds==null && minLongitude!=null) {
     	//defaults have been set in the intialisation of the map
         bounds = new OpenLayers.Bounds();
         bounds.extend(new OpenLayers.LonLat(minLongitude,minLatitude));
