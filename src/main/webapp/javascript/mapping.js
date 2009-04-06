@@ -282,7 +282,6 @@ function zoomToBounds(){
     }
     
     if(bounds!=null && useGoogle){
-    	alert('using google projection');
         var proj900913 = new OpenLayers.Projection("EPSG:900913");
         var proj4326 = new OpenLayers.Projection("EPSG:4326");
         //source dest
