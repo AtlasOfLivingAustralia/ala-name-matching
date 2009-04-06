@@ -78,7 +78,7 @@
        and so we are unable to guarantee your annotations will be maintained in the long term.
        Feel free to annotate occurrence records with suggested issues and comments.</p>
     <p>
-        To Annotate a record, please highlight the text you wish to annotate and click the button below.
+        To Annotate a record, please highlight the text you wish to annotate and click the link below.
     </p>
     <p>
         <a title="Dannotate" href="javascript:(function fn(){
