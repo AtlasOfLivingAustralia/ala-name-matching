@@ -390,18 +390,6 @@ public class OccurrenceController extends RestController {
 		
 		logUsage(request, occurrenceRecord, rawOccurrenceRecord);		
 		
-		//add points for map representations - e.g. google maps
-		List<OccurrenceRecordDTO> points = new ArrayList<OccurrenceRecordDTO>();
-		points.add(occurrenceRecord);
-		mav.addObject("points", points);
-		
-		// Add a list of georegions for the occurrence record id
-		addGeoRegions(occurrenceRecordKey, mav);
-		
-		// Add the institution associated with this occurrence record
-		Institution institution = institutionDAO.getInstitutionForCode(occurrenceRecord.getInstitutionCode());
-		mav.addObject("institution", institution);
-		
 		// Generate link to raw record XML file
 		addCachedRecordLink(mav, rawOccurrenceRecord);
 		return mav;
@@ -547,9 +535,6 @@ public class OccurrenceController extends RestController {
 			logger.debug("Adding partner concept");
 			TaxonConceptDTO partnerConcept = taxonomyManager.getTaxonConceptFor(taxonConceptDTO.getPartnerConceptKey());
 			mav.addObject("partnerConcept", partnerConcept);
-			
-			
-			
 		}
 		
 		//add one degree cell bounding box
@@ -585,6 +570,20 @@ public class OccurrenceController extends RestController {
 			mav.addObject("minY", minLat);
 			mav.addObject("maxX", maxLong);
 			mav.addObject("maxY", maxLat);
+		}
+		
+		//add points for map representations - e.g. google maps
+		List<OccurrenceRecordDTO> points = new ArrayList<OccurrenceRecordDTO>();
+		points.add(occurrenceRecord);
+		mav.addObject("points", points);
+		
+		// Add a list of georegions for the occurrence record id
+		addGeoRegions(occurrenceRecord.getKey(), mav);
+		
+		// Add the institution associated with this occurrence record
+		if(occurrenceRecord!=null){
+			Institution institution = institutionDAO.getInstitutionForCode(occurrenceRecord.getInstitutionCode());
+			mav.addObject("institution", institution);
 		}
 	}	
 
