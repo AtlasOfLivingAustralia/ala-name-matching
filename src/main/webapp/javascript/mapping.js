@@ -274,9 +274,7 @@ function zoomToBounds(){
     
     if (boundsString!=null) {
         bounds = new OpenLayers.Bounds.fromString(getRequestParameter("bounds"));
-    } 
-    
-    if (bounds==null && minLongitude!=null) {
+    } else if (minLongitude!=null) {
     	//defaults have been set in the intialisation of the map
         bounds = new OpenLayers.Bounds();
         bounds.extend(new OpenLayers.LonLat(minLongitude,minLatitude));
