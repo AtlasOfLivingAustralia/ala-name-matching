@@ -276,23 +276,22 @@ function zoomToBounds(){
         bounds = new OpenLayers.Bounds.fromString(getRequestParameter("bounds"));
     } 
     
-    if (boundsString){
-	    if(useGoogle){
-	    	//alert('using google projection');
-	        var proj900913 = new OpenLayers.Projection("EPSG:900913");
-	        var proj4326 = new OpenLayers.Projection("EPSG:4326");
-	        //source dest
-	        bounds = bounds.transform(proj4326, proj900913);
-	    }
-	    map.zoomToExtent(bounds, true);
-	    return;
-    } else if (minLongitude!=null) {
+    if (boundsString==null && minLongitude!=null) {
     	//defaults have been set in the intialisation of the map
         bounds = new OpenLayers.Bounds();
         bounds.extend(new OpenLayers.LonLat(minLongitude,minLatitude));
         bounds.extend(new OpenLayers.LonLat(maxLongitude,maxLatitude));
-        map.zoomToExtent(bounds, true);
-        return;
+    }
+    
+    if(bounds!=null && useGoogle){
+    	//alert('using google projection');
+        var proj900913 = new OpenLayers.Projection("EPSG:900913");
+        var proj4326 = new OpenLayers.Projection("EPSG:4326");
+        //source dest
+        bounds = bounds.transform(proj4326, proj900913);
+    }
+    if(bounds!=null){
+    	map.zoomToExtent(bounds, true);
     }
  }
 
