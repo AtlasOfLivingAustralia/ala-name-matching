@@ -272,7 +272,7 @@ function zoomToBounds(){
     var bounds = null;
     var boundsString = getRequestParameter("bounds");
     
-    if (boundsString==null) {
+    if (boundsString!=null) {
         bounds = new OpenLayers.Bounds.fromString(getRequestParameter("bounds"));
     } 
     
