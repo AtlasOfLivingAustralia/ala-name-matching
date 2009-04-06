@@ -76,9 +76,9 @@
 <div class="subcontainer">
 	<c:if test="${locality!=null}">
     <script type="text/javascript">
-        var entityId = '${geoRegion.id}';
-        var entityType = '8';
-        var entityName = '${geoRegion.name}';
+        entityId = '${geoRegion.id}';
+        entityType = '8';
+        entityName = '${geoRegion.name}';
         var minLongitude = (${locality.minLongitude} / 10000);
         var minLatitude = (${locality.minLatitude} / 10000);
         var maxLongitude = (${locality.maxLongitude} / 10000);
@@ -88,16 +88,15 @@
     </c:if>
     <c:if test="${locality==null}">
     <script type="text/javascript">
-        var entityId = '${geoRegion.id}';
-        var entityType = '8';
-        var entityName = '${geoRegion.name}';
+        entityId = '${geoRegion.id}';
+        entityType = '8';
+        entityName = '${geoRegion.name}';
         var minLongitude = ${geoRegion.minLongitude};
         var minLatitude = ${geoRegion.minLatitude};
         var maxLongitude = ${geoRegion.maxLongitude};
         var maxLatitude = ${geoRegion.maxLatitude};
     </script>
     </c:if>
-	
 	<c:set var="extraParams" scope="request"><gbif:criterion subject="36" predicate="0" value="${geoRegion.id}" index="0"/></c:set>
     <c:set var="entityId" scope="request">${geoRegion.id}</c:set>
     <c:set var="entityPath" scope="request" value="regions"/>

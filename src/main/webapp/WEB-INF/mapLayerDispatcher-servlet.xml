@@ -16,6 +16,7 @@
                 <prop key="/provider/**/*">providerMapLayerController</prop>
                 <prop key="/resource/**/*">resourceMapLayerController</prop>
                 <prop key="/filter/**/*">filterMapLayerController</prop>
+                <prop key="/fullScreenMap.htm">urlFilenameController</prop>
             </props>
         </property>
     </bean>

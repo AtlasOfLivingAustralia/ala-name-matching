@@ -1,4 +1,33 @@
-//OpenLayers.IMAGE_RELOAD_ATTEMPTS = 6;
+var map;
+
+//options
+var isFullScreen = false;
+var useGoogle = false;
+
+var brokenContentSize;
+var extraParams;
+var cellButton;
+var baseLayerButton;
+var fullScreenButton;
+var pageUrl;
+var fullScreenMapUrl;
+
+//variables to be set in JSPs
+var entityId = '0';
+var entityType = '0';
+var entityName = '';
+
+/** Constants used to define current selected cell layer size */
+var ONE_DEGREE_CELLS = 0;
+var CENTI_CELLS = 1;
+var TENMILLI_CELLS = 2;
+
+/** variable holding the currently selected density level */
+var selectedCellDensity = ONE_DEGREE_CELLS;
+
+/** Is cell selection enabled */
+var selectCellToggle = false;
+
 /**
  * Initialise a Open Layers map
  * 
@@ -15,7 +44,9 @@ function initMap(mapDivId, useGoogle){
         map = create4326Map(mapDivId);
         baseLayerButtonTitle = 'Base Layer: switch to Google map base layer';
     }
-    resizeMap(mapDivId, false);
+    if(!isFullScreen){
+    	resizeMap(mapDivId, false);
+    }
     //add controls
     zoomButton = new OpenLayers.Control.ZoomBox(
         {title:"Zoom box: zoom on an area by clicking and dragging."});
@@ -26,15 +57,23 @@ function initMap(mapDivId, useGoogle){
         displayClass: "selectCellsButton", trigger: toggleSelectCentiCell});
     baseLayerButton = new OpenLayers.Control.Button({
         title: baseLayerButtonTitle, displayClass: "baseLayerButton", trigger: toggleBaseLayer});
-
+    fullScreenButton = new OpenLayers.Control.Button({
+        title: 'Fullscreen', displayClass: "fullScreenButton", trigger: toggleFullScreenMap});
+    
     var panel = new OpenLayers.Control.Panel({defaultControl:mouseDrag});
-    panel.addControls([mouseDrag,zoomButton,cellButton,baseLayerButton]);
+    panel.addControls([mouseDrag,zoomButton,cellButton,baseLayerButton,fullScreenButton]);
     map.addControl(panel);
     map.addControl(new OpenLayers.Control.LayerSwitcher());
     map.addControl(new OpenLayers.Control.MousePosition());
     map.addControl(new OpenLayers.Control.ScaleLine());
     map.addControl(new OpenLayers.Control.Navigation({zoomWheelEnabled: false}));
     map.addControl(new OpenLayers.Control.PanZoomBar({zoomWorldIcon: false}));
+    
+    if(isFullScreen){
+    	fullScreenButton.deactivate();
+    } else {
+    	fullScreenButton.activate();	
+    }
 }
 
 /**
@@ -44,7 +83,7 @@ function initMap(mapDivId, useGoogle){
  * @return the initialised map
  */
 function create4326Map(mapDivId){
-    var map = new OpenLayers.Map(mapDivId, {numZoomLevels: 20,controls: []});
+    var map = new OpenLayers.Map(mapDivId, {numZoomLevels: 16,controls: []});
     return map;
 }
 
@@ -96,12 +135,20 @@ function getStyle(el, property) {
 	  return style;
 }
 
+/**
+ * Resize the DIV holding the content.
+ * @return
+ */
 function resizeContent() {
     var content = document.getElementById('content');
     var rightMargin = parseInt(getStyle(content, "right"));
     content.style.width = document.documentElement.clientWidth - content.offsetLeft - rightMargin;
 }
 
+/**
+ * Resize the Map with the supplied center.
+ * @return
+ */
 function resizeMap(mapDivId, centre) {
     resizeMap(mapDivId);
     if(centre){
@@ -109,6 +156,10 @@ function resizeMap(mapDivId, centre) {
     }
   }
 
+/**
+ * Resize the Map.
+ * @return
+ */
 function resizeMap(mapDivId) {
     var centre = map.getCenter();
     var zoom = map.getZoom();
@@ -134,8 +185,6 @@ function handleResize() {
  * Register an event on the click
  * @return
  */
-var selectCellToggle = false;
-
 function toggleSelectCentiCell(){
     zoomButton.deactivate();
     mouseDrag.deactivate();
@@ -154,7 +203,16 @@ function toggleSelectCentiCell(){
         map.div.style.cursor =  "pointer";
         map.events.register('click', map, function (e) {
             var lonlat = map.getLonLatFromViewPortPx(e.xy);
-            occurrenceSearch(lonlat.lat, lonlat.lon, 10);
+            var ONE_DEGREE_CELLS = 0;
+            var CENTI_CELLS = 1;
+            var TENMILLI_CELLS = 2;
+            if(selectedCellDensity==ONE_DEGREE_CELLS){
+            	occurrenceSearch(lonlat.lat, lonlat.lon, 1);
+            } else if(selectedCellDensity==CENTI_CELLS){
+            	occurrenceSearch(lonlat.lat, lonlat.lon, 10);
+            } else if(selectedCellDensity==TENMILLI_CELLS){
+            	occurrenceSearch(lonlat.lat, lonlat.lon, 100);
+            }
         });
     }
 }
@@ -162,7 +220,7 @@ function toggleSelectCentiCell(){
 /**
  * Initialise map layers
  */
-function initLayers(){
+function loadLayers(){
     if(!useGoogle){
       map.addLayer(alabaseLayer);
       //map.addLayer(alabaseLayer);
@@ -170,37 +228,8 @@ function initLayers(){
       //map.addLayer(roadsLayer);
       //map.addLayer(placenamesLayer);
     } else {
-        // create Google layer
-        var gter = new OpenLayers.Layer.Google(
-                "Google Terain",
-                {type: G_PHYSICAL_MAP, 'sphericalMercator': true}
-            );
-    	
-        var gsat = new OpenLayers.Layer.Google(
-            "Google Satellite",
-            {type: G_SATELLITE_MAP, 'sphericalMercator': true}
-        );
-
-        var gmap = new OpenLayers.Layer.Google(
-                "Google Streets",
-                {'sphericalMercator': true}
-            ); 
-        // create Yahoo layer
-        var yahoosat = new OpenLayers.Layer.Yahoo(
-            "Yahoo Satellite",
-            {'type': YAHOO_MAP_SAT, 'sphericalMercator': true}
-        );
-        var yahooreg = new OpenLayers.Layer.Yahoo(
-                "Yahoo Regional",
-                {'type': YAHOO_MAP_REG, 'sphericalMercator': true}
-            );    
-        var yahoohyb = new OpenLayers.Layer.Yahoo(
-                "Yahoo Hybrid",
-                {'type': YAHOO_MAP_HYB, 'sphericalMercator': true}
-            );    
-        map.addLayers([gsat, gter, gmap, yahoosat, yahooreg, yahoohyb]);	
+        map.addLayers([gsat, gter, gmap, yahoosat, yahooreg, yahoohyb]);
     }
-    
 
     //useful for debug
     map.addLayer(cellLayer); 
@@ -209,19 +238,21 @@ function initLayers(){
     // listener for zoom level to choose best cell layer
     map.events.register('zoomend', map, function (e) {
         var zoom = map.zoom;
-        
         if (zoom < 6) {
             cellLayer.setVisibility(true);
             centiCellLayer.setVisibility(false);
             tenmilliCellLayer.setVisibility(false);
+            selectedCellDensity=ONE_DEGREE_CELLS;
         } else if (zoom >= 6 && zoom < 10) {
             cellLayer.setVisibility(false);
             centiCellLayer.setVisibility(true);
             tenmilliCellLayer.setVisibility(false);
+            selectedCellDensity=CENTI_CELLS;
         } else if (zoom >= 10) {
             cellLayer.setVisibility(false);
             centiCellLayer.setVisibility(false);
             tenmilliCellLayer.setVisibility(true);
+            selectedCellDensity=TENMILLI_CELLS;
         }
     }
     );
@@ -229,37 +260,40 @@ function initLayers(){
     cellButton.events.register('deactivate', this, function (e) {
         toggleSelectCentiCell();
     });
-
 }
 
 /**
  * Zoom to the correct bounds, re-projecting if necessary.
+ * Uses the request parameter 'bounds'.
  */
 function zoomToBounds(){
-    // zoom to the correct bounds
-//    var centre = getRequestParameter("centre");
-//    var zoom = getRequestParameter("zoom");
+    
+	// zoom to the correct bounds
     var bounds;
     var boundsString = getRequestParameter("bounds");
-
+    
     if (boundsString) {
         bounds = new OpenLayers.Bounds.fromString(getRequestParameter("bounds"));
+    } 
+    
+    if (boundsString){
+	    if(useGoogle){
+	    	//alert('using google projection');
+	        var proj900913 = new OpenLayers.Projection("EPSG:900913");
+	        var proj4326 = new OpenLayers.Projection("EPSG:4326");
+	        //source dest
+	        bounds = bounds.transform(proj4326, proj900913);
+	    }
+	    map.zoomToExtent(bounds, true);
+	    return;
     } else if (minLongitude!=null) {
+    	//defaults have been set in the intialisation of the map
         bounds = new OpenLayers.Bounds();
         bounds.extend(new OpenLayers.LonLat(minLongitude,minLatitude));
         bounds.extend(new OpenLayers.LonLat(maxLongitude,maxLatitude));
-    } 
-    
-    if(useGoogle){
-        //reproject latlong values
-        var proj4326 = new OpenLayers.Projection("EPSG:4326");
-        bounds.transform(proj4326, map.getProjectionObject());
-    } else if (boundsString) {
-        var proj900913 = new OpenLayers.Projection("EPSG:900913");
-        bounds.transform(proj900913, map.getProjectionObject());
+        map.zoomToExtent(bounds, true);
+        return;
     }
-
-    map.zoomToExtent(bounds, true);
  }
 
 /**
@@ -289,10 +323,33 @@ function occurrenceSearch(latitude, longitude, roundingFactor) {
  * JS to reload the page with the new baselayer (Geoserver/Google)
  */
 function toggleBaseLayer() {
+	
+	//this is rather inelegant - needs refactoring
+	if(isFullScreen){
+        var baseUrl = 'fullScreenMap.htm';
+        //var argSeparatorIdx = pageUrl.indexOf('?');
+        //baseUrl = baseUrl.substring(0, argSeparatorIdx+1);
+        //alert('baseUrl: '+baseUrl);
+        baseUrl += '?fullScreen=true';
+        baseUrl += '&id='+entityId;
+        baseUrl += '&type='+entityType;
+        baseUrl += '&name='+entityName;
+        baseUrl += '&pageUrl='+pageUrl;
+        var bounds = getMapBoundsAsCoordinates().toBBOX();
+        baseUrl += '&bounds='+bounds;
+        if(!useGoogle){
+            baseUrl += '&map=google';
+        }
+        document.location = baseUrl;
+        return;
+	}
+	
     //var centre = map.getCenter().toShortString();
     //centre = centre.replace(/\s+/,""); // remove space after comma
-    var bounds = map.calculateBounds().toBBOX(); // e.g. Ó5,42,10,45Ó
+    var bounds = getMapBoundsAsCoordinates().toBBOX(); // e.g. Ó5,42,10,45Ó
     //var zoom = map.getZoom();
+    var argSeparator = pageUrl.indexOf('?')>0 ? '&' : '?';
+    
     var params = "";
     if (bounds) {
         params = "bounds=" + bounds; // + "&zoom=" + zoom;
@@ -301,16 +358,68 @@ function toggleBaseLayer() {
         // switch to WMF
         useGoogle = false;
         baseLayerButton.deactivate();
-        window.location.replace( pageUrl + "?" + params);
+        window.location.replace( pageUrl + argSeparator + params);
     }
     else {
         // switch to Google
         useGoogle = true;
         baseLayerButton.activate();
-        window.location.replace( pageUrl + "?" + 'map=google&' + params);
+        window.location.replace( pageUrl + argSeparator + 'map=google&' + params);
     }
 }
 
+/**
+ * Gets bounds converting to decimal coordinates is necessary.
+ * 
+ * @return
+ */
+function getMapBoundsAsCoordinates(){
+	var bounds = map.calculateBounds();
+    if(useGoogle) {
+    	//alert('using google projection');
+        var proj900913 = new OpenLayers.Projection("EPSG:900913");
+        var proj4326 = new OpenLayers.Projection("EPSG:4326");
+        bounds.transform(proj900913, proj4326);
+    }
+	return bounds;
+}
+
+/**
+ * Switch to full screen
+ * @return
+ */
+function toggleFullScreenMap(){
+	
+	if(!isFullScreen){
+	    var baseUrl = fullScreenMapUrl;
+	    baseUrl += '&id='+entityId;
+	    baseUrl += '&type='+entityType;
+	    baseUrl += '&name='+entityName;
+	    baseUrl += '&pageUrl='+pageUrl;
+	    var bounds = getMapBoundsAsCoordinates().toBBOX();
+	    baseUrl += '&bounds='+bounds;
+	    if(useGoogle){
+	        baseUrl += '&map=google';
+	    }
+	    //alert(baseUrl);
+	    document.location = baseUrl;
+	} else {
+	    var baseUrl = pageUrl;
+	    var bounds = getMapBoundsAsCoordinates().toBBOX();
+	    baseUrl += '?bounds='+bounds;
+	    if(useGoogle){
+	        baseUrl += '&map=google';
+	    }
+	    document.location = baseUrl;
+	}
+}
+
+/**
+ * Retrieve a request parameter.
+ * 
+ * @param name
+ * @return
+ */
 function getRequestParameter( name ) {
     // returns the request parameter "value" for the given "name""
     name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");

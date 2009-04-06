@@ -5,21 +5,38 @@
 <c:set var="bluemarbleUrl" scope="request"><gbif:propertyLoader bundle="portal" property="bluemarble.layer.url"/></c:set>
 <c:set var="cellDensityLayerUrl" scope="request"><gbif:propertyLoader bundle="portal" property="celldensity.layer.url"/></c:set>
 <script type="text/javascript">
-    var map;
-    var tilecacheUrl = '${tilecacheUrl}';
-    var useGoogle = ${param['map']=='google' ? 'true': 'false'};
-    var geoserverUrl = '${geoserverUrl}';    
-    var polygonTilecacheUrl = '${polygonTilecacheUrl}';
-    if(useGoogle){
-    	polygonTilecacheUrl = geoserverUrl +'/wms?';
-    }
-    var bluemarbleUrl = '${bluemarbleUrl}';
-    var cellDensityLayerUrl = '${cellDensityLayerUrl}';
-    var brokenContentSize = document.getElementById('content').offsetWidth == 0;
-    var extraParams = '${extraParams}';
-    var cellButton;
-    var baseLayerButton;
-    var pageUrl = "${pageContext.request.contextPath}/${entityPath}/${entityId}";
+
+    //intialise options
+    isFullScreen = ${not empty param['fullScreen'] ? 'true' : 'false'};
+    useGoogle = ${param['map']=='google' ? 'true': 'false'};
+
+    //intialise layers
+    tilecacheUrl = '${tilecacheUrl}';
+    geoserverUrl = '${geoserverUrl}';    
+    polygonTilecacheUrl = '${polygonTilecacheUrl}';
+    if(useGoogle) polygonTilecacheUrl = geoserverUrl +'/wms?';
+    bluemarbleUrl = '${bluemarbleUrl}';
+    cellDensityLayerUrl = '${cellDensityLayerUrl}';
+
+    //extras
+    fullScreenMapUrl='${pageContext.request.contextPath}/mapping/fullScreenMap.htm?fullScreen=true';
+    
+    //extra parameters
+    brokenContentSize = document.getElementById('content').offsetWidth == 0;
+    extraParams = '${extraParams}';
+    cellButton;
+    baseLayerButton;
+
+    //set the referral page
+    <c:choose>
+    <c:when test="${not empty param['pageUrl']}">
+      pageUrl = '${param['pageUrl']}';
+    </c:when>
+    <c:otherwise>
+      pageUrl = '${pageContext.request.contextPath}/${entityPath}/${entityId}';
+    </c:otherwise>
+    </c:choose>
+    
     /**
      * Redirects to filter search with bounding box
      */
@@ -32,7 +49,6 @@
                 +"&maxY="+maxY;
     }
 </script>
-<script src="${pageContext.request.contextPath}/javascript/layers.js" type="text/javascript" language="javascript"></script>
 <div id="map" class="openlayersMap"></div>
 <style type="text/css">
     /* Styling for custom widget buttons on map */
@@ -46,7 +62,7 @@
       margin: 5px;
       background-color:red;
     }
-
+    
     .olControlPanel .olControlNavigationItemActive {
       background-color: blue;
       background-image: url("${pageContext.request.contextPath}/images/panning-hand-on.png");
@@ -99,6 +115,20 @@
         background-image: url("${pageContext.request.contextPath}/images/google_icon.gif");
     }
 
+    .olControlPanel .fullScreenButtonItemActive {
+        /* width:  24px;
+        height: 22px; */
+        background-color: #FFFFFF;
+        background-image: url("${pageContext.request.contextPath}/images/fullscreen_on.gif");"
+    }
+
+    .olControlPanel .fullScreenButtonItemInactive {
+        /* width:  24px;
+        height: 22px; */
+        background-color: #FFFFFF;
+        background-image: url("${pageContext.request.contextPath}/images/fullscreen_off.gif");"
+    }
+
     .olControlMousePosition {
         font-family: Verdana;
         font-size: 0.6em;
@@ -109,13 +139,20 @@
         font-family: Verdana;
         font-size: 0.8em;
         color: black;
+        margin-left:60px;
     }
 </style>
 <script type="text/javascript">
     var mapDivId='map';
     initMap(mapDivId, useGoogle);
     initLayers();
-    zoomToBounds();
-    window.onload = handleResize;
-    window.onresize = handleResize;
+    loadLayers();
+    if(!isFullScreen){
+        zoomToBounds();
+        window.onload = handleResize;
+        window.onresize = handleResize;
+    }
 </script>
+<c:if test="${empty param['fullScreen']}">
+<a href="javascript:fullScreenMap();">Full Screen Map</a>
+</c:if>

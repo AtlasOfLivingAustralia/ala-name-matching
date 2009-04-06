@@ -127,4 +127,5 @@
     <definition name="webservices.check" page="/WEB-INF/jsp/ws/check.jsp"/>
     <definition name="webservices.list" page="/WEB-INF/jsp/ws/list.jsp"/>
     
+    <definition name="fullScreenMap" page="/WEB-INF/jsp/mapping/fullScreenMap.jsp"/>
 </tiles-definitions>

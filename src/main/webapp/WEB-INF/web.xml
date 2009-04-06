@@ -229,6 +229,10 @@
 		<servlet-name>mapLayerDispatcher</servlet-name>
 		<url-pattern>/maplayer/*</url-pattern>
 	</servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>mapLayerDispatcher</servlet-name>
+        <url-pattern>/mapping/*</url-pattern>
+    </servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>densityDispatcher</servlet-name>
 		<url-pattern>/density/*</url-pattern>

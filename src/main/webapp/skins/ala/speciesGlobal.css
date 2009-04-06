@@ -865,3 +865,24 @@ div.subcontainer {
 	padding: 0px 0px 5px 2px;
 	border-bottom: 1px solid #CCC;
 }
+
+/** Default styling for a map */
+
+#map {
+    width: 1024px;
+    height: 500px;
+    border: 1px solid #cccccc;
+    text-align: left;
+    margin: 10px 0px 10px 0px;
+}
+img.mapImage {
+    width: 1000px;
+    height: 768px;
+    border: 1px solid #cccccc;
+    text-align: left;
+    margin: 10px 0px 10px 0px;
+}
+
+div.openlayersMap {
+    height:500px !important;
+}
