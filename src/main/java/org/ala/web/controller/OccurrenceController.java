@@ -557,10 +557,10 @@ public class OccurrenceController extends RestController {
 			logger.debug("Adding one degree cell bounding box");
 			float latitude = occurrenceRecord.getLatitude();
 			float longitude = occurrenceRecord.getLongitude();
-			float minLong = longitude-(cellWidth/2);
-			float minLat = latitude-(cellWidth/2);
-			float maxLong = longitude+(cellWidth/2);
-			float maxLat = latitude+(cellWidth/2);
+			float minLong = (float) Math.floor((double)longitude);
+			float minLat = (float)Math.floor((double)latitude);
+			float maxLong = (float)Math.ceil((double)longitude);
+			float maxLat = (float)Math.ceil((double)latitude);
 			
 			//sanity checks
 			if(minLat<-90){
