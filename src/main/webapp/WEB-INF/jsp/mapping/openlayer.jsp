@@ -57,6 +57,16 @@
         if (popup != null) popup.destroy();
         var lat = lonlat.lat;
         var lon = lonlat.lon;
+        if(useGoogle){
+            //reproject lat long values
+            var sourceProjection = new OpenLayers.Projection("EPSG:900913");
+            var destinationProjection = new OpenLayers.Projection("EPSG:4326");
+            var point = new OpenLayers.Geometry.Point(lon, lat);
+            point.transform(sourceProjection,destinationProjection);
+            lat = point.y;
+            lon = point.x;
+        }
+        
         var cellInfoUrl = "${pageContext.request.contextPath}/maplayer/cellcounts/";
         var params = {
             unit: cellUnit,
@@ -71,10 +81,7 @@
         var cellInfoDivId = "cellInfoPopup" + lonlat;
         var popupDiv = '<div id="'+cellInfoDivId+'"><img src="" alt="spinning"/></div>';
         popup = new OpenLayers.Popup.AnchoredBubble("cellInfoDivId",lonlat,new OpenLayers.Size(150,180),popupDiv,null,true,closePopup);
-        //popup = new OpenLayers.Popup.AnchoredBubble("cellInfoDivId",lonlat,new OpenLayers.Size(150,180),popupDiv,true);
         map.addPopup(popup);
-        //popup.setBackgroundColor('#FFFFFF');
-        //popup.setOpacity(1);
     }
 </script>
 <div id="map" class="openlayersMap"></div>
