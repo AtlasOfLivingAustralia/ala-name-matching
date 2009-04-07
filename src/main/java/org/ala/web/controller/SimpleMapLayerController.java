@@ -103,17 +103,28 @@ public class SimpleMapLayerController implements Controller {
 		
 		//sanity checks
 		if(!ignoreBoundaries && maxX!=null && maxY!=null && minX!=null && minY!=null){
-			minX = minX>=-180 ? minX : -180;
-			minY = minY>=-90 ? minY : -90;
-			maxX = maxX<=180 ? maxX : 180;
-			maxY = maxY<=90 ? maxY : 90;
+			minX = minX<-180 ? -180: minX;
+			minX = minX>180 ? 180 : minX;
+			
+			minY = minY<-90 ? -90 : minY;
+			minY = minY>90 ? 90 : minY;
+			
+			maxX = maxX<-180 ? -180: maxX;
+			maxX = maxX>180 ? 180 : maxX;
+			
+			maxY = maxY<-90 ? -90 : maxY;
+			maxY = maxY>90 ? 90 : maxY;
 			
 			minCellId = CellIdUtils.toCellId((float) Math.floor(minY), (float) Math.floor(minX));
 			
-			Float maxCellIdX =  (float) (Math.floor(maxX+1) >180f ? 180f : Math.floor(maxX+1));
 			Float maxCellIdY =  (float) (Math.floor(maxY+1) >90f ? 90f : Math.floor(maxY+1));
+			Float maxCellIdX =  (float) (Math.floor(maxX+1) >180f ? 180f : Math.floor(maxX+1));
 			
 			maxCellId = CellIdUtils.toCellId(maxCellIdY, maxCellIdX);
+			if(maxCellId % 360==0){
+				//FIXME 
+				maxCellId = maxCellId-1;
+			}
 		}
 		if(unit==0.1f){
 			logger.debug("Retrieving centi cells....");
