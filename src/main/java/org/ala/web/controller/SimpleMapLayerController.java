@@ -103,15 +103,15 @@ public class SimpleMapLayerController implements Controller {
 		
 		//sanity checks
 		if(!ignoreBoundaries && maxX!=null && maxY!=null && minX!=null && minY!=null){
-			minX = minX>=-180 ? minX : -180;
-			minY = minY>-90 ? minY : -90;
-			maxX = maxX<=180 ? maxX : 180;
-			maxY = maxY<=90 ? maxY : 90;
+			minX = minX<=-180 ? minX : -180;
+			minY = minY<=-90 ? minY : -90;
+			maxX = maxX>=180 ? maxX : 180;
+			maxY = maxY>=90 ? maxY : 90;
 			
 			minCellId = CellIdUtils.toCellId((float) Math.floor(minY), (float) Math.floor(minX));
 			
-			Float maxCellIdY =  (float) (Math.floor(maxY+1) >90f ? 90f : Math.floor(maxY+1));
 			Float maxCellIdX =  (float) (Math.floor(maxX+1) >180f ? 180f : Math.floor(maxX+1));
+			Float maxCellIdY =  (float) (Math.floor(maxY+1) >90f ? 90f : Math.floor(maxY+1));
 			
 			maxCellId = CellIdUtils.toCellId(maxCellIdY, maxCellIdX);
 		}
