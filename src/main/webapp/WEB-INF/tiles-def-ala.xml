@@ -110,6 +110,11 @@
         <put name="content" value="/WEB-INF/jsp/region/sld.jsp"/>
     </definition>
 
+    <!-- View for rendering a cell info popup box -->
+    <definition name="cellInfo" extends="ajaxHtmlLayout">
+        <put name="content" value="/WEB-INF/jsp/mapping/cellInfo.jsp"/>
+    </definition>
+
      <!-- View for rendering a JSON web service for region resource -->
     <definition name="regionResourceJson" path="/WEB-INF/jsp/region/resourcesTable.jsp"/>
     <definition name="testDataTable" path="/WEB-INF/jsp/region/testDataTable.jsp"/>

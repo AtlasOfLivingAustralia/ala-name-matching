@@ -18,6 +18,7 @@ package org.ala.dao;
 import java.util.List;
 import java.util.Map;
 import org.ala.model.GeoRegionTaxonConcept;
+import org.ala.model.OccurrenceSearchCounts;
 import org.gbif.portal.dto.taxonomy.BriefTaxonConceptDTO;
 
 /**
@@ -47,5 +48,14 @@ public interface OccurrenceFacetDAO {
      * @return Map
      */
     public List<GeoRegionTaxonConcept> getTaxonConceptsForGeoRegion(Long regionId, String rankFacet);
+
+    /**
+     *
+     * @param cellId
+     * @param centiCellId
+     * @param tenMilliCellId
+     * @return
+     */
+    public OccurrenceSearchCounts getChartFacetsForMapCell(Integer cellId, Integer centiCellId, Integer tenMilliCellId, String entityPath, String entityId);
 
 }

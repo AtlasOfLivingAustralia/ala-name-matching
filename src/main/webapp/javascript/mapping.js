@@ -11,6 +11,8 @@ var baseLayerButton;
 var fullScreenButton;
 var pageUrl;
 var fullScreenMapUrl;
+var cellUnit;
+var popup;  // TODO use Dave's constant vars instead
 
 //variables to be set in JSPs
 var entityId = '0';
@@ -53,7 +55,7 @@ function initMap(mapDivId, useGoogle){
     mouseDrag = new OpenLayers.Control.Navigation(
         {title:'Drag tool: move the map using the mouse',zoomWheelEnabled:false});
     cellButton = new OpenLayers.Control.Button({
-        title:'Search on cell square: click to toggle whether clicking cell square performs occurrence search for that cell',
+        title:'More Info: click on a cell square to display occurrence counts, etc.',
         displayClass: "selectCellsButton", trigger: toggleSelectCentiCell});
     baseLayerButton = new OpenLayers.Control.Button({
         title: baseLayerButtonTitle, displayClass: "baseLayerButton", trigger: toggleBaseLayer});
@@ -195,6 +197,7 @@ function toggleSelectCentiCell(){
         cellButton.deactivate();
         map.div.style.cursor =  "default";
         map.events.remove('click');
+        removePopup();
     }
     else {
         // turn on
@@ -207,12 +210,13 @@ function toggleSelectCentiCell(){
             var CENTI_CELLS = 1;
             var TENMILLI_CELLS = 2;
             if(selectedCellDensity==ONE_DEGREE_CELLS){
-            	occurrenceSearch(lonlat.lat, lonlat.lon, 1);
+            	//occurrenceSearch(lonlat.lat, lonlat.lon, 1);
             } else if(selectedCellDensity==CENTI_CELLS){
-            	occurrenceSearch(lonlat.lat, lonlat.lon, 10);
+            	//occurrenceSearch(lonlat.lat, lonlat.lon, 10);
             } else if(selectedCellDensity==TENMILLI_CELLS){
-            	occurrenceSearch(lonlat.lat, lonlat.lon, 100);
+            	//occurrenceSearch(lonlat.lat, lonlat.lon, 100);
             }
+            displayCellInfo(lonlat);
         });
     }
 }
@@ -237,18 +241,22 @@ function loadLayers(){
     map.addLayer(tenmilliCellLayer);
     // listener for zoom level to choose best cell layer
     map.events.register('zoomend', map, function (e) {
+        removePopup();
         var zoom = map.zoom;
         if (zoom < 6) {
+            cellUnit = 1.0;
             cellLayer.setVisibility(true);
             centiCellLayer.setVisibility(false);
             tenmilliCellLayer.setVisibility(false);
             selectedCellDensity=ONE_DEGREE_CELLS;
         } else if (zoom >= 6 && zoom < 10) {
+            cellUnit = 0.1;
             cellLayer.setVisibility(false);
             centiCellLayer.setVisibility(true);
             tenmilliCellLayer.setVisibility(false);
             selectedCellDensity=CENTI_CELLS;
         } else if (zoom >= 10) {
+            cellUnit = 0.01;
             cellLayer.setVisibility(false);
             centiCellLayer.setVisibility(false);
             tenmilliCellLayer.setVisibility(true);
@@ -313,6 +321,29 @@ function occurrenceSearch(latitude, longitude, roundingFactor) {
     var longMax = (Math.ceil(longitude*roundingFactor) )/roundingFactor;
     var latMax = (Math.ceil(latitude*roundingFactor) )/roundingFactor;
     redirectToCell(longMin, latMin, longMax, latMax);
+}
+
+function createPopup(response) {
+    //document.getElementById(cellInfoDivId).innerHTML = response.responseText;
+    popup.setContentHTML(response.responseText);
+    popup.setOpacity(0.9);
+    popup.setBackgroundColor('#FFFFFF');
+    popup.closeOnMove = true;
+}
+
+function closePopup(event) {
+    //alert('event is: ' + event)
+    //popup.destroy();
+    //removePopup();
+    //popup.toggle();
+    map.removePopup(popup);
+}
+
+function removePopup() {
+    if (popup != null) {
+        popup.destroy();
+        popup=null;
+    }
 }
 
 /**

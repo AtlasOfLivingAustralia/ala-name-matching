@@ -17,6 +17,7 @@
     if(useGoogle) polygonTilecacheUrl = geoserverUrl +'/wms?';
     bluemarbleUrl = '${bluemarbleUrl}';
     cellDensityLayerUrl = '${cellDensityLayerUrl}';
+    
 
     //extras
     fullScreenMapUrl='${pageContext.request.contextPath}/mapping/fullScreenMap.htm?fullScreen=true';
@@ -47,6 +48,33 @@
                 +"&minY="+minY
                 +"&maxX="+maxX
                 +"&maxY="+maxY;
+    }
+
+    /**
+     * Display a popup on map
+     */
+    function displayCellInfo(lonlat) {
+        if (popup != null) popup.destroy();
+        var lat = lonlat.lat;
+        var lon = lonlat.lon;
+        var cellInfoUrl = "${pageContext.request.contextPath}/maplayer/cellcounts/";
+        var params = {
+            unit: cellUnit,
+            lat: lat,
+            lon: lon,
+            extraParams: extraParams,
+            entityPath: "${entityPath}",
+            entityId: "${entityId}"
+        };
+
+        OpenLayers.loadURL(cellInfoUrl, params, this, createPopup, createPopup);
+        var cellInfoDivId = "cellInfoPopup" + lonlat;
+        var popupDiv = '<div id="'+cellInfoDivId+'"><img src="" alt="spinning"/></div>';
+        popup = new OpenLayers.Popup.AnchoredBubble("cellInfoDivId",lonlat,new OpenLayers.Size(150,180),popupDiv,null,true,closePopup);
+        //popup = new OpenLayers.Popup.AnchoredBubble("cellInfoDivId",lonlat,new OpenLayers.Size(150,180),popupDiv,true);
+        map.addPopup(popup);
+        //popup.setBackgroundColor('#FFFFFF');
+        //popup.setOpacity(1);
     }
 </script>
 <div id="map" class="openlayersMap"></div>
@@ -119,14 +147,14 @@
         /* width:  24px;
         height: 22px; */
         background-color: #FFFFFF;
-        background-image: url("${pageContext.request.contextPath}/images/fullscreen_on.gif");"
+        background-image: url("${pageContext.request.contextPath}/images/fullscreen_on.gif");
     }
 
     .olControlPanel .fullScreenButtonItemInactive {
         /* width:  24px;
         height: 22px; */
         background-color: #FFFFFF;
-        background-image: url("${pageContext.request.contextPath}/images/fullscreen_off.gif");"
+        background-image: url("${pageContext.request.contextPath}/images/fullscreen_off.gif");
     }
 
     .olControlMousePosition {
@@ -140,6 +168,23 @@
         font-size: 0.8em;
         color: black;
         margin-left:60px;
+    }
+
+    .olPopup {
+        /*border:1px solid grey; 
+         background-color:white; 
+        -moz-border-radius-bottomleft:5px;
+        -moz-border-radius-bottomright:5px;
+        -moz-border-radius-topleft:5px;
+        -moz-border-radius-topright:5px;*/
+        font-size: 11px;
+    }
+
+    .olPopupCloseBox {
+        background: url("/geoserver/openlayers/img/cancel.png") no-repeat;
+        cursor: pointer;
+        right: 10px !important;
+        top: 5px !important;
     }
 </style>
 <script type="text/javascript">

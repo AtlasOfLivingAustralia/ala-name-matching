@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.ala.model.GeoRegionTaxonConcept;
+import org.ala.model.OccurrenceSearchCounts;
 import org.ala.util.IndexingIssue;
 import org.ala.util.IndexingIssueTypes;
 import org.ala.web.util.RankFacet;
@@ -73,11 +74,16 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 
     protected List<String> speciesFacetFields = Arrays.asList(
             "basis_of_record", "month", "year");
+    
+    protected List<String> cellFacetFields = Arrays.asList(
+            "basis_of_record", "species_concept_id", "genus_concept_id", "family_concept_id");
 
     protected List<String> monthName = Arrays.asList("January", "February", "March", "April", "May",
             "June", "July", "August", "September", "October", "November", "December");
 
     protected Integer startingYear = 1800;
+
+    protected Map<String, String> entityNameMap;
 
     /**
 	 * Produce a CSV String for the requested chart type (AMCharts)
@@ -234,14 +240,11 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 		    // Setup the Solr query, etc
 		    String queryString = "";
             
-            if (taxonConceptDTO.getRankValue() == 7000) {
-                // species
+            if (taxonConceptDTO.getRankValue() == 7000) {            // species
                 queryString = "species_concept_id:" + taxonConceptKey;
-            } else if (taxonConceptDTO.getRankValue() == 6000) {
-                // genus
+            } else if (taxonConceptDTO.getRankValue() == 6000) {     // genus
                 queryString = "genus_concept_id:" + taxonConceptKey;
-            } else if (taxonConceptDTO.getRankValue() == 5000) {
-                // family
+            } else if (taxonConceptDTO.getRankValue() == 5000) {     // family
                 queryString = "family_concept_id:" + taxonConceptKey;
             } else {
                 logger.debug("rank was not searchable: " + taxonConceptDTO.getRankValue());
@@ -286,7 +289,8 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 		        Map<String, Long> issueFacetMap = new HashMap<String, Long>(); // needed to redistribute the issue counts after splitting bit values
 
 		        if(facetData==null || facetData.getValues()==null){
-		        	return null;
+		        	//return null;
+                    continue;
 		        }
 
 		        for (Count count : facetData.getValues()) {
@@ -393,7 +397,8 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
             for (FacetField facetData : facetResults) {
 		        // Iterate over each of the facet result objects
 		        if (facetData == null) {
-		        	return geoRegionTaxonConcept; // will be empty list
+		        	//return geoRegionTaxonConcept; // will be empty list
+                    continue;
 		        }
 		        
 		        List<Long> conceptIds = new ArrayList<Long>();
@@ -443,7 +448,110 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
         
         return geoRegionTaxonConcept;
     }
+    
+    /**
+	 * Populate a OccurrenceSearchCounts bean with values from a SOLR search
+	 *
+	 * If there is a problem retrieving aggregated data from SOLR Server, return null
+	 *
+	 * @param species taxon concept key
+	 * @return data Map to populate the the AM Chart (csv)
+	 * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
+	 *
+	 * Example Solr URL:
+	 * http://localhost:8080/solr/select/?facet.limit=-1&rows=0&facet=true&facet.field=basis_of_record&
+     *   facet.field=species_concept_id&facet.field=genus_concept_id&facet.field=family_concept_id&
+     *   facet.mincount=1&fq=taxon_concept_id:2780008&q=cell_id:17968&version=2.2
+	 */
+	public OccurrenceSearchCounts getChartFacetsForMapCell(Integer cellId, Integer centiCellId, 
+            Integer tenMilliCellId, String entityPath, String entityId) {
+		OccurrenceSearchCounts ocPopUp = new OccurrenceSearchCounts();
+        try{
+		    // Setup the Solr query, etc
+		    StringBuffer queryString = new StringBuffer();
+            if (cellId != null)
+                    queryString.append("cell_id:" + cellId);
+            if (cellId != null && centiCellId != null)
+                    queryString.append(" AND centi_cell_id:" + centiCellId);
+            if (cellId != null && centiCellId != null && tenMilliCellId != null)
+                    queryString.append(" AND tenmilli_cell_id:" + centiCellId);
+            if (queryString.length() == 0) return null;
 
+            solrServer = initialiseSolrServer();
+	        SolrQuery searchQuery = new SolrQuery();  // handle better?
+	        searchQuery.setQuery(queryString.toString());
+	        searchQuery.setRows(0); // we don't want any search results only the facet results
+	        searchQuery.setFacetLimit(-1);  // TODO make -1 (no limit) and cull list after 20 but add to "other" facet
+	        searchQuery.setFacetMinCount(1);
+            //if (constraint != null) searchQuery.setFilterQueries(constraint);
+            if (entityPath!=null && entityId!=null) {
+                // add search contraint for the originating page type, e.g. region_id:xxx
+                if (entityNameMap.containsKey(entityPath)) {
+                    searchQuery.setFilterQueries(entityNameMap.get(entityPath)+":"+entityId);
+                } else {
+                    searchQuery.setFilterQueries(entityPath+":"+entityId);
+                }
+            }
+	        // add each facet field to the query
+	        for (String facet : cellFacetFields) searchQuery.addFacetField(facet);
+
+	        // do the Solr search
+	        QueryResponse rsp = null;
+	        try {
+	            rsp = solrServer.query( searchQuery );
+	        } catch (SolrServerException e) {
+	        	logger.warn("Problem communicating with SOLR server. Unable to generate chart data.");
+	            logger.debug(e.getMessage(), e);
+	            return null;
+	        }
+
+	        Long resultsSize = rsp.getResults().getNumFound();
+		    // getForField the facet results (list)
+	        List<FacetField> facetResults = rsp.getFacetFields();
+            ocPopUp.setRecordCount(resultsSize);
+
+		    for (FacetField facetData : facetResults) {
+		        // Iterate over each of the facet result objects
+		        String facetName = facetData.getName();
+                Integer totalCount = facetData.getValueCount();
+
+		        if(facetData==null || facetData.getValues()==null){
+		        	continue;
+		        }
+
+                if (facetName.contains("species")) {
+                    ocPopUp.setSpeciesCount(totalCount);
+                } else if (facetName.contains("genus")) {
+                    ocPopUp.setGenusCount(totalCount);
+                } else if (facetName.contains("family")) {
+                    ocPopUp.setFamilyCount(totalCount);
+                } else if (facetName.contains("basis_of_record")) {
+                    Map<String, Long> basisOfRecordCounts = new HashMap<String, Long>();
+                    
+                    for (Count count : facetData.getValues()) {
+                        // Iterate over the facet counts
+                        String label = count.getName();
+                        Integer borId = Integer.parseInt(label);
+                        //logger.debug("Checking basis of record instance: "+ bor);
+                        label = BasisOfRecord.getBasisOfRecord(borId).getName();
+                        Long facetCount = count.getCount();
+                        basisOfRecordCounts.put(label, facetCount);
+                    }
+                    
+                    ocPopUp.setBasisOfRecordCounts(basisOfRecordCounts);
+                }
+
+		        logger.debug("getChartData: " + facetName + "->" + ocPopUp);
+		    }
+            
+		} catch(Exception e){
+        	logger.warn("Problem generating occurrence counts from SOLR search.");
+            logger.debug(e.getMessage(), e);
+		}
+        // should not be read due to try catch
+		return ocPopUp;
+	}
+    
 	/**
      * Re-use the Solr server object
      * @return the server
@@ -495,4 +603,12 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 	public void setSolrDataHelper(SolrDataHelper solrDataHelper) {
 		this.solrDataHelper = solrDataHelper;
 	}
+
+    public void setCellFacetFields(List<String> cellFacetFields) {
+        this.cellFacetFields = cellFacetFields;
+    }
+
+    public void setEntityNameMap(Map<String, String> entityNameMap) {
+        this.entityNameMap = entityNameMap;
+    }
 }
