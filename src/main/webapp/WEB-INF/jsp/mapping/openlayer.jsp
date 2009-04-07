@@ -79,7 +79,7 @@
 
         OpenLayers.loadURL(cellInfoUrl, params, this, createPopup, createPopup);
         var cellInfoDivId = "cellInfoPopup" + lonlat;
-        var popupDiv = '<div id="'+cellInfoDivId+'"><img src="" alt="spinning"/></div>';
+        var popupDiv = '<div id="'+cellInfoDivId+'"><img src="${pageContext.request.contextPath}/images/loading.gif" alt="loading..."/></div>';
         popup = new OpenLayers.Popup.AnchoredBubble("cellInfoDivId",lonlat,new OpenLayers.Size(150,180),popupDiv,null,true,closePopup);
         map.addPopup(popup);
     }
