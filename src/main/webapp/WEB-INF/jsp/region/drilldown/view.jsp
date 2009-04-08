@@ -79,10 +79,10 @@
         entityId = '${geoRegion.id}';
         entityType = '8';
         entityName = '${geoRegion.name}';
-        var minLongitude = (${locality.minLongitude} / 10000);
-        var minLatitude = (${locality.minLatitude} / 10000);
-        var maxLongitude = (${locality.maxLongitude} / 10000);
-        var maxLatitude = (${locality.maxLatitude} / 10000);
+        var minLongitude = (${locality.minLongitude/ 10000} );
+        var minLatitude = (${locality.minLatitude/ 10000} );
+        var maxLongitude = (${locality.maxLongitude / 10000});
+        var maxLatitude = (${locality.maxLatitude/ 10000} );
         // alert("latlon: "+ minLongitude + "|"+ minLatitude)
     </script>
     </c:if>

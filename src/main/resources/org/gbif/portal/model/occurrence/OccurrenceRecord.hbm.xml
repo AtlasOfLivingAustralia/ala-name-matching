@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+  <class name="org.gbif.portal.model.occurrence.OccurrenceRecord" table="occurrence_record">
+    <id unsaved-value="null" name="id" column="id">
+        <generator class="native"/>
+    </id>
+
+    <many-to-one name="rawOccurrenceRecord" column="id" not-null="true" insert="false" update="false"/>    
+
+    <property name="dataProviderId" column="data_provider_id" not-null="true"/>
+    <many-to-one name="dataProvider" column="data_provider_id" not-null="true" insert="false" update="false"/>
+
+    <property name="dataResourceId" column="data_resource_id" not-null="true"/>
+    <many-to-one name="dataResource" column="data_resource_id" not-null="true" insert="false" update="false"/>
+
+    <many-to-one name="institutionCode" entity-name="InstitutionCode" column="institution_code_id" not-null="true" update="false" insert="false"/>
+    <many-to-one name="collectionCode" entity-name="CollectionCode" column="collection_code_id" not-null="true" update="false" insert="false"/>
+    <many-to-one name="catalogueNumber" entity-name="CatalogueNumber" column="catalogue_number_id" not-null="true" update="false" insert="false"/>
+
+    <property name="taxonConceptId" column="taxon_concept_id" not-null="false"/>
+    <many-to-one name="taxonConcept" column="taxon_concept_id" not-null="true" insert="false" update="false"/>
+
+    <property name="taxonNameId" column="taxon_name_id" not-null="false"/>    
+    <many-to-one name="taxonName" column="taxon_name_id" not-null="true" insert="false" update="false"/>    
+
+    <property name="kingdomConceptId" column="kingdom_concept_id" not-null="false" />
+    <many-to-one name="kingdomConcept" column="kingdom_concept_id" not-null="false" insert="false" update="false"/>
+
+    <property name="phylumConceptId" column="phylum_concept_id" not-null="false"/>
+    <many-to-one name="phylumConcept" column="phylum_concept_id" not-null="false" insert="false" update="false"/>
+
+    <property name="classConceptId" column="class_concept_id" not-null="false"/>
+    <many-to-one name="classConcept" column="class_concept_id" not-null="false" insert="false" update="false"/>
+
+    <property name="orderConceptId" column="order_concept_id" not-null="false"/>
+    <many-to-one name="orderConcept" column="order_concept_id" not-null="false" insert="false" update="false"/>
+
+    <property name="familyConceptId" column="family_concept_id" not-null="false"/>
+    <many-to-one name="familyConcept" column="family_concept_id" not-null="false" insert="false" update="false"/>
+
+    <property name="genusConceptId" column="genus_concept_id" not-null="false"/>
+    <many-to-one name="genusConcept" column="genus_concept_id" not-null="false" insert="false" update="false"/>
+
+    <property name="speciesConceptId" column="species_concept_id" not-null="false"/>
+    <many-to-one name="speciesConcept" column="species_concept_id" not-null="false" insert="false" update="false"/>
+
+    <property name="nubTaxonConceptId" column="nub_concept_id" not-null="false"/>
+    <many-to-one column="nub_concept_id" not-null="false" name="nubTaxonConcept" insert="false" update="false"/>
+
+    <property name="isoCountryCode" column="iso_country_code"/>   
+    <many-to-one column="iso_country_code" not-null="true" name="country" update="false" insert="false"/>
+
+    <property name="latitude" column="latitude" not-null="false"/>
+    <property name="longitude" column="longitude" not-null="false"/>
+
+    <property name="altitudeInMetres" column="altitude_metres" not-null="false"/>
+    <property name="depthInCentimetres" column="depth_centimetres" not-null="false"/>
+
+    <property name="cellId" column="cell_id" not-null="false"/>
+    <property name="centiCellId" column="centi_cell_id" not-null="false"/>
+    <property name="tenmilliCellId" column="tenmilli_cell_id" not-null="false"/>
+    <property name="mod360CellId" column="mod360_cell_id" not-null="false"/>
+
+    <property name="year" column="year" not-null="false"/>
+    <property name="month" column="month" not-null="false"/>
+
+    <property name="occurrenceDate" column="occurrence_date" type="timestamp" not-null="false"/>
+
+    <property name="basisOfRecord" column="basis_of_record" not-null="true" type="org.gbif.portal.model.occurrence.BasisOfRecord"/>
+    <property name="basisOfRecordCode" column="basis_of_record" update="false" insert="false"/>
+
+    <property name="taxonomicIssue" column="taxonomic_issue" not-null="true"/>
+    <property name="otherIssue" column="other_issue" not-null="true"/>
+    <property name="geospatialIssue" column="geospatial_issue" not-null="true"/>
+
+    <property name="deleted" column="deleted" type="timestamp" not-null="false"/>
+
+    <set lazy="true" name="typeStatus">
+        <key column="occurrence_id"/>
+        <one-to-many class="org.gbif.portal.model.occurrence.TypeStatus"/>
+    </set>
+    <set lazy="true" name="orImage">
+        <key column="occurrence_id"/>
+        <one-to-many class="org.gbif.portal.model.occurrence.ORImage"/>
+    </set>
+    <set lazy="true" name="identifierRecords">
+        <key column="occurrence_id"/>
+        <one-to-many class="org.gbif.portal.model.occurrence.IdentifierRecord"/>
+    </set>
+    <set lazy="true" name="geoMappings">
+      <key column="occurrence_id"/>
+      <one-to-many class="org.gbif.portal.model.geospatial.GeoMapping"/>
+    </set>
+  </class>
+</hibernate-mapping>

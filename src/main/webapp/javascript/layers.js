@@ -24,11 +24,15 @@ var imageFormat;
   } else {
     //alert('You are NOT using IE6');
     imageFormat = "image/png";
-    opacity = "0.75";
+    opacity = "0.65";
   }
 
   function initLayers(){
-  
+   /*
+	  tileCacheArray = ["http://localhost:8080/geoserver/wms?"];
+	  cellDensityArray = ["http://localhost:8080/geoserver/wms?"];
+   */
+	
 	  tileCacheArray = ["http://www1.ala.org.au/tilecache/tilecache.cgi?",
                   "http://www2.ala.org.au/tilecache/tilecache.cgi?",
                   "http://www3.ala.org.au/tilecache/tilecache.cgi?"];
@@ -131,7 +135,7 @@ var imageFormat;
       version: "1.0.0",
       transparent: "true",
       format: imageFormat,
-      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?id="+entityId+"&type="+entityType+"&unit=1]]></Literal></PropertyIsEqualTo></Filter>)"},
+      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/mapping/simple/?id="+entityId+"&type="+entityType+"&unit=1]]></Literal></PropertyIsEqualTo></Filter>)"},
       {visibility:false, opacity: opacity, wrapDateLine: true}
       );
 
@@ -142,9 +146,8 @@ var imageFormat;
       version: "1.0.0",
       transparent: "true",
       format: imageFormat,
-      tiled: "false",
-      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?&id="+entityId+"&type="+entityType+"&unit=0.1]]></Literal></PropertyIsEqualTo></Filter>)"},
-      {visibility:false, opacity: opacity, wrapDateLine: true, tiled: false}
+      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/mapping/simple/?&id="+entityId+"&type="+entityType+"&unit=0.1]]></Literal></PropertyIsEqualTo></Filter>)"},
+      {visibility:false, opacity: opacity, wrapDateLine: true}
       );
 
    tenmilliCellLayer = new OpenLayers.Layer.WMS.Untiled( entityName+" 0.01 degree cells",
@@ -154,7 +157,7 @@ var imageFormat;
       version: "1.0.0",
       transparent: "true",
       format: imageFormat,
-      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/maplayer/simple/?id="+entityId+"&type="+entityType+"&unit=0.01]]></Literal></PropertyIsEqualTo></Filter>)"},
+      filter: "(<Filter><PropertyIsEqualTo><PropertyName>url</PropertyName><Literal><![CDATA["+cellDensityLayerUrl+"/mapping/simple/?id="+entityId+"&type="+entityType+"&unit=0.01]]></Literal></PropertyIsEqualTo></Filter>)"},
       {visibility:false, opacity: opacity, wrapDateLine: true}
       );
 
