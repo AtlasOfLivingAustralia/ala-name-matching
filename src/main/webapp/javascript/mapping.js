@@ -11,8 +11,9 @@ var baseLayerButton;
 var fullScreenButton;
 var pageUrl;
 var fullScreenMapUrl;
-var cellUnit;
-var popup;  // TODO use Dave's constant vars instead
+var cellUnit; // TODO use Dave's constant vars instead
+var popup;
+var popupLonLat;
 
 //variables to be set in JSPs
 var entityId = '0';
@@ -242,6 +243,8 @@ function loadLayers(){
     // listener for zoom level to choose best cell layer
     map.events.register('zoomend', map, function (e) {
         removePopup();
+        cellButton.deactivate();
+        mouseDrag.activate();
         var zoom = map.zoom;
         if (zoom < 6) {
             cellUnit = 1.0;
@@ -325,24 +328,29 @@ function occurrenceSearch(latitude, longitude, roundingFactor) {
 
 function createPopup(response) {
     //document.getElementById(cellInfoDivId).innerHTML = response.responseText;
-    popup.setContentHTML(response.responseText);
-    popup.setOpacity(0.9);
-    popup.setBackgroundColor('#FFFFFF');
-    popup.closeOnMove = true;
-}
-
-function closePopup(event) {
-    //alert('event is: ' + event)
-    //popup.destroy();
-    //removePopup();
-    //popup.toggle();
-    map.removePopup(popup);
+    if (response.status == 200) {
+        //var popupDiv = '<div id="'+cellInfoDivId+'"><img src="${pageContext.request.contextPath}/images/loading.gif" alt="loading..."/></div>';
+        popup = new OpenLayers.Popup.AnchoredBubble("cellInfoDivId",popupLonLat,new OpenLayers.Size(150,180),response.responseText,null,true,removePopup);
+        map.addPopup(popup);
+        popup.setOpacity(0.9);
+    }
+    else if (response.status == 204) {
+        var msg = "No occurrence records found.";
+        popup = new OpenLayers.Popup.AnchoredBubble("noData",popupLonLat,new OpenLayers.Size(100,40),msg,null,true,removePopup);
+        map.addPopup(popup);
+        popup.setOpacity(0.9);
+    } else {
+        popup = new OpenLayers.Popup.AnchoredBubble("errorMsg",popupLonLat,null,response.responseText,null,true,removePopup);
+        map.addPopup(popup);
+        popup.setOpacity(0.9);
+    }
 }
 
 function removePopup() {
     if (popup != null) {
-        popup.destroy();
-        popup=null;
+        //popup.destroy();
+        //popup=null;
+        map.removePopup(popup);
     }
 }
 

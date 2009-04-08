@@ -54,9 +54,10 @@
      * Display a popup on map
      */
     function displayCellInfo(lonlat) {
-        if (popup != null) popup.destroy();
+        removePopup();
         var lat = lonlat.lat;
         var lon = lonlat.lon;
+        popupLonLat = lonlat
         if(useGoogle){
             //reproject lat long values
             var sourceProjection = new OpenLayers.Projection("EPSG:900913");
@@ -78,10 +79,6 @@
         };
 
         OpenLayers.loadURL(cellInfoUrl, params, this, createPopup, createPopup);
-        var cellInfoDivId = "cellInfoPopup" + lonlat;
-        var popupDiv = '<div id="'+cellInfoDivId+'"><img src="${pageContext.request.contextPath}/images/loading.gif" alt="loading..."/></div>';
-        popup = new OpenLayers.Popup.AnchoredBubble("cellInfoDivId",lonlat,new OpenLayers.Size(150,180),popupDiv,null,true,closePopup);
-        map.addPopup(popup);
     }
 </script>
 <div id="map" class="openlayersMap"></div>

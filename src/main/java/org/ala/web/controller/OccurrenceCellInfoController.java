@@ -76,7 +76,7 @@ public class OccurrenceCellInfoController implements Controller {
             cellId = CellIdUtils.toCellId(latitude, longitude);
             centiCellId = CellIdUtils.toCentiCellId(latitude, longitude);
             tenMilliCellId = GisUtils.toTenMilliCellId(latitude, longitude);
-            bbox = CellIdUtils.toBoundingBox(cellId, centiCellId);  // TODO create method for ten milli cells
+            bbox = GisUtils.toBoundingBox(cellId, tenMilliCellId);  // TODO create method for ten milli cells
         }
         
         String constraint = null;
@@ -85,6 +85,11 @@ public class OccurrenceCellInfoController implements Controller {
         }
         
         OccurrenceSearchCounts occurrenceSearchCounts = occurrenceFacetDAO.getChartFacetsForMapCell(cellId, centiCellId, tenMilliCellId, entityPath, entityId);
+
+        if (occurrenceSearchCounts.getRecordCount() == 0) {
+            // No occurrences found -> return http status code 204 (no content)
+            response.sendError(204, "No occurrence records found");
+        }
 
         ModelAndView mav = new ModelAndView(view);
         mav.addObject("occurrenceSearchCounts", occurrenceSearchCounts);
