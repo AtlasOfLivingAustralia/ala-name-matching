@@ -50,4 +50,5 @@
 	<!-- Override bean definitions in GBIF's applicationContext-occurrence-filters.xml -->
 	<bean id="longitudeFilterHelper" class="org.ala.filter.LongitudeFilterHelper"/>
     <bean id="latitudeFilterHelper" class="org.ala.filter.LatitudeFilterHelper"/>
+    <bean id="boundingBoxFilterHelper" class="org.ala.filter.BoundingBoxFilterHelper"/>
 </beans>

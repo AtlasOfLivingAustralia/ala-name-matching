@@ -299,7 +299,7 @@
       <map>
         <entry key="rdf">
           <bean class="org.springframework.web.servlet.view.velocity.VelocityView">
-            <property name="url" value="org/gbif/portal/io/dataResourceRDF.vm"/>
+            <property name="url" value="org/ala/io/dataResourceRDF.vm"/>
             <property name="contentType" value="text/xml;charset=UTF-8"/>
             <property name="dateToolAttribute" value="dateFormatter"/>
             <property name="requestContextAttribute" value="request"/>
