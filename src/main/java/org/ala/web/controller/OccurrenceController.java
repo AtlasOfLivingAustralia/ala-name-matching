@@ -279,7 +279,7 @@ public class OccurrenceController extends RestController {
 		try {
 			String rawMessage = getCachedRecordMessage(occurrenceRecordKey);
 			
-			if (rawMessage != null && rawMessage != "") {
+			if (StringUtils.isNotEmpty(rawMessage)) {
 				formatAndOutputMessage(request, response, rawMessage);
 			} else {
 				logger.error("rawMessage string was null or empty.");

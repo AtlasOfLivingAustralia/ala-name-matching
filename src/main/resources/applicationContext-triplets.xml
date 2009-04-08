@@ -165,6 +165,7 @@
                 <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.CELLID" value="oc.cellId"/>
                 <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.CELLID.MOD360" value="oc.mod360CellId"/>
                 <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.CENTICELLID" value="oc.centiCellId"/>
+                <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.TENMILLICELLID" value="oc.tenmilliCellId"/>
                 <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.INSTITUTIONCODE" value="oc.institutionCode.code"/>
                 <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.COLLECTIONCODE" value="oc.collectionCode.code"/>
                 <entry key="SERVICE.OCCURRENCE.QUERY.SUBJECT.CATALOGUENUMBER" value="oc.catalogueNumber.code"/>

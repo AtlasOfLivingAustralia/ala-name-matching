@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.ala.dao.OccurrenceFacetDAO;
 import org.ala.util.IndexingIssue;
 import org.ala.util.IndexingIssueTypes;
+import org.ala.web.util.WebUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -367,6 +368,7 @@ public class DataResourceController extends RestController {
 			mav.addObject("chartData", chartData);
 		}
 		
+		mav.addObject("hostUrl", WebUtils.getHostUrl(request));
 		logUsage(request, dataResource);
 		return mav;
 	}

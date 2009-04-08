@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" 
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:dc="http://purl.org/dc/elements/1.1/" 
+    xmlns:dcterms="http://purl.org/dc/terms/"
+    xmlns:base="http://rs.tdwg.org/ontology/Base#"
+    xmlns:tcom="http://rs.tdwg.org/ontology/voc/Common#"
+    xmlns:tn="http://rs.tdwg.org/ontology/voc/TaxonName#"    
+    xmlns:tc="http://rs.tdwg.org/ontology/voc/TaxonConcept#"
+    xmlns:coll="http://rs.tdwg.org/ontology/voc/Collection#"
+    xsi:schemaLocation="http://www.w3.org/1999/02/22-rdf-syntax-ns# CollectionWrapper.xsd">
+    <coll:Collection rdf:about="http://$hostUrl$request.contextPath/datasets/resource/$dataResource.key">
+        <dc:title>$!dataResource.name</dc:title>
+        <coll:citeAs><![CDATA[$!dataResource.citation]]></coll:citeAs>
+        <coll:collectionType>$dataResource.basisOfRecord</coll:collectionType>
+#if ($collectorTags)        
+        <coll:collectorNameCoverage>
+#foreach ($tag in $collectorTags)       
+            <coll:collectorName><![CDATA[$tag.value]]></coll:collectorName>
+#end            
+        </coll:collectorNameCoverage>
+#end 
+#if ($commonNameTags)        
+        <coll:commonNameCoverage>
+#foreach ($tag in $commonNameTags)       
+            <coll:commonName>$tag.value</coll:commonName>
+#end            
+        </coll:commonNameCoverage>
+#end        
+    </coll:Collection>
+#if($polygonTags)
+    <coll:geospatialCoverage>
+#foreach ($tag in $polygonTags)
+      <FootPrintWKT>$tag.value</FootPrintWKT>
+#end                    
+    </coll:geospatialCoverage>
+#end
+#if($kingdomCoverageTags)
+    <coll:kingdomCoverage>
+#foreach ($tag in $kingdomCoverageTags)
+      <kingdom>$tag.toEntityName</kingdom>
+#end                    
+  </coll:kingdomCoverage>
+#end
+#if($familyTags )
+    <coll:taxonCoverage>
+#foreach ($tag in $familyTags)
+      <tc:TaxonConcept rdf:about="http://$hostUrl$request.contextPath/ws/rest/taxon/get/$tag.toEntityId">
+       <tc:hasName>
+        <tn:TaxonName>
+         <tn:nameComplete>$tag.toEntityName</tn:nameComplete>
+         <tn:scientific>true</tn:scientific>
+        </tn:TaxonName>
+       </tc:hasName>
+      </tc:TaxonConcept>
+#end                    
+  </coll:taxonCoverage>
+#end
+  <coll:usageRestrictions><![CDATA[$!dataResource.rights]]></coll:usageRestrictions>  
+</rdf:RDF>
