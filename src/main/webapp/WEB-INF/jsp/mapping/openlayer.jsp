@@ -82,6 +82,29 @@
     }
 </script>
 <div id="map" class="openlayersMap"></div>
+<div style="float:right;font-size:11px;">
+    <p style="margin:4px;">Occurrences per cell</p>
+    <table>
+        <tr style="width: 50px;">
+          <!--<td style="width:auto;">Cell Colour:</td>-->
+          <td style="width:50px;background-color:#ffff00;">&nbsp;</td>
+          <td style="width:50px;background-color:#ffcc00;">&nbsp;</td>
+          <td style="width:50px;background-color:#ff9900;">&nbsp;</td>
+          <td style="width:50px;background-color:#ff6600;">&nbsp;</td>
+          <td style="width:50px;background-color:#ff3300;">&nbsp;</td>
+          <td style="width:50px;background-color:#cc0000;">&nbsp;</td>
+        </tr>
+        <tr style="text-align: center;">
+          <!--<td style="width: auto;">No. Occurrences:</td>-->
+          <td>1&ndash;9</td>
+          <td>10&ndash;49</td>
+          <td>50&ndash;99</td>
+          <td>100&ndash;249</td>
+          <td>250&ndash;499</td>
+          <td>500&ndash;&infin;</td>
+        </tr>
+    </table></p>
+</div>
 <style type="text/css">
     /* Styling for custom widget buttons on map */
     .olControlPanel div { 
