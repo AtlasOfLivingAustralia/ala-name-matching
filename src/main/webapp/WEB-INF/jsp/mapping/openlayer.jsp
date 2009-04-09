@@ -77,11 +77,11 @@
             entityPath: "${entityPath}",
             entityId: "${entityId}"
         };
-
         OpenLayers.loadURL(cellInfoUrl, params, this, createPopup, createPopup);
     }
 </script>
 <div id="map" class="openlayersMap"></div>
+<c:if test="${empty param['fullScreen']}">
 <div style="float:right;font-size:11px;">
     <p style="margin:4px;">Occurrences per cell</p>
     <table>
@@ -105,6 +105,7 @@
         </tr>
     </table></p>
 </div>
+</c:if>
 <style type="text/css">
     /* Styling for custom widget buttons on map */
     .olControlPanel div { 

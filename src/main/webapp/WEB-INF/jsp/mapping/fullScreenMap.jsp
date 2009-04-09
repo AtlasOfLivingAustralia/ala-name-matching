@@ -10,6 +10,21 @@
           var entityId = '${param['id']}';
           var entityType = '${param['type']}';
           var entityName = '${param['name']}';
+          <c:set var="entityId" value="${param['id']}" scope="request"/>
+          <c:choose>
+            <c:when test="${param['type']==8}">
+               <c:set var="entityPath" value="regions" scope="request"/>
+            </c:when>
+            <c:when test="${param['type']==1}">
+              <c:set var="entityPath" value="species" scope="request"/>
+            </c:when>
+            <c:when test="${param['type']==4}">
+              <c:set var="entityPath" value="datasets/resource" scope="request"/>
+            </c:when>
+            <c:when test="${param['type']==5}">
+              <c:set var="entityPath" value="datasets/provider" scope="request"/>
+            </c:when> 
+          </c:choose>
           /*
           var minLongitude = '${param['minx']}';
           var minLatitude = '${param['miny']}';
