@@ -39,7 +39,6 @@
                 <entry key="regions" value="geo_region_id"/>
                 <entry key="datasets/provider" value="data_provider_id"/>
                 <entry key="datasets/resource" value="data_resource_id"/>
-                <entry key="species" value="taxon_concept_id"/>
             </map>
         </property>
   </bean>

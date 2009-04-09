@@ -466,17 +466,23 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 	public OccurrenceSearchCounts getChartFacetsForMapCell(Integer cellId, Integer centiCellId, 
             Integer tenMilliCellId, String entityPath, String entityId) {
 		OccurrenceSearchCounts ocPopUp = new OccurrenceSearchCounts();
-        try{
+        try {
 		    // Setup the Solr query, etc
 		    StringBuffer queryString = new StringBuffer();
-            if (cellId != null)
-                    queryString.append("cell_id:" + cellId);
-            if (cellId != null && centiCellId != null)
-                    queryString.append(" AND centi_cell_id:" + centiCellId);
-            if (cellId != null && centiCellId != null && tenMilliCellId != null)
-                    queryString.append(" AND tenmilli_cell_id:" + centiCellId);
-            if (queryString.length() == 0) return null;
-
+            
+            if (cellId != null && tenMilliCellId != null) {
+                queryString.append("cell_id:" + cellId + " AND tenmilli_cell_id:" + tenMilliCellId);
+            }
+            else if (cellId != null && centiCellId != null) {
+                queryString.append("cell_id:" + cellId + " AND centi_cell_id:" + centiCellId);
+            }
+            else if (cellId != null) {
+                queryString.append("cell_id:" + cellId);
+            }
+            else {
+                return null;
+            }
+            
             solrServer = initialiseSolrServer();
 	        SolrQuery searchQuery = new SolrQuery();  // handle better?
 	        searchQuery.setQuery(queryString.toString());
@@ -488,7 +494,15 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
                 // add search contraint for the originating page type, e.g. region_id:xxx
                 if (entityNameMap.containsKey(entityPath)) {
                     searchQuery.setFilterQueries(entityNameMap.get(entityPath)+":"+entityId);
-                } else {
+                }
+                else if ("species".equals(entityPath)) {
+                    /* Special case for species pages -> get rank in order to perform SOLR search
+                     * E.g. a genus page -> genus_concept_id:123456 */
+                    TaxonConceptDTO taxonConceptDTO = taxonomyManager.getTaxonConceptFor(entityId);
+                    String rank = taxonConceptDTO.getRank();
+                    searchQuery.setFilterQueries(rank+"_concept_id:"+entityId);
+                }
+                else {
                     searchQuery.setFilterQueries(entityPath+":"+entityId);
                 }
             }
@@ -544,7 +558,7 @@ public class OccurrenceFacetDAOImpl implements OccurrenceFacetDAO {
 		        logger.debug("getChartData: " + facetName + "->" + ocPopUp);
 		    }
             
-		} catch(Exception e){
+		} catch(Exception e) {
         	logger.warn("Problem generating occurrence counts from SOLR search.");
             logger.debug(e.getMessage(), e);
 		}
