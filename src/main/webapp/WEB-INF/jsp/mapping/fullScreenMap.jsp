@@ -11,6 +11,7 @@
           var entityType = '${param['type']}';
           var entityName = '${param['name']}';
           <c:set var="entityId" value="${param['id']}" scope="request"/>
+          <c:set var="extraParams" value="${param['extraParams']}" scope="request"/>
           <c:choose>
             <c:when test="${param['type']==8}">
                <c:set var="entityPath" value="regions" scope="request"/>

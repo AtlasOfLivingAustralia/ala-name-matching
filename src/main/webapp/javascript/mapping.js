@@ -375,6 +375,7 @@ function toggleBaseLayer() {
         if(!useGoogle){
             baseUrl += '&map=google';
         }
+        baseUrl += '&extraParams='+extraParams;
         document.location = baseUrl;
         return;
 	}
@@ -436,7 +437,7 @@ function toggleFullScreenMap(){
 	    if(useGoogle){
 	        baseUrl += '&map=google';
 	    }
-	    //alert(baseUrl);
+        baseUrl += '&extraParams='+extraParams;
 	    document.location = baseUrl;
 	} else {
 	    var baseUrl = pageUrl;

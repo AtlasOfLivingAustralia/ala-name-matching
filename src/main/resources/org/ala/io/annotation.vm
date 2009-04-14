@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+ <r:RDF 
+  xmlns:a="http://www.w3.org/2000/10/annotation-ns#" 
+  xmlns:r="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
+  xmlns:dc="http://purl.org/dc/elements/1.0/" 
+  xmlns:h="http://www.w3.org/1999/xx/http#" 
+  xmlns:ala="http://ala.org.au/2009/annotation/0.1/">
+ <r:Description> 
+  <r:type r:resource="http://www.w3.org/2000/10/annotation-ns#Annotation"/> 
+  <r:type r:resource="http://www.w3.org/2000/10/annotationType#$type"/> 
+  <a:annotates r:resource="$url"/> 
+  <dc:creator>$creator</dc:creator> 
+  <a:context>$url#$xpath</a:context> 
+  <dc:title>$title</dc:title> 
+  <dc:language>$lang</dc:language> 
+  <a:body> 
+   <r:Description>
+    <h:ContentType>text/xml</h:ContentType>
+    <h:ContentLength>$contentLength</h:ContentLength>
+    <h:Body r:parseType="Literal">$body</h:Body>
+   </r:Description>
+  </a:body> 
+ </r:Description> 
+</r:RDF>

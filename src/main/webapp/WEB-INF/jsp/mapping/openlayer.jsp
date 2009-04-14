@@ -17,7 +17,6 @@
     if(useGoogle) polygonTilecacheUrl = geoserverUrl +'/wms?';
     bluemarbleUrl = '${bluemarbleUrl}';
     cellDensityLayerUrl = '${cellDensityLayerUrl}';
-    
 
     //extras
     fullScreenMapUrl='${pageContext.request.contextPath}/mapping/fullScreenMap.htm?fullScreen=true';
