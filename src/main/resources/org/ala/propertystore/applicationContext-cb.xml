@@ -15,16 +15,4 @@
         <property name="maxWait" value="30000"/>
         <property name="poolPreparedStatements" value="true"/>
     </bean>
-    <!--ALA Portal datasource -->
-    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
-		<property name="driverClassName" value="com.mysql.jdbc.Driver"/>
-		<property name="url" value="jdbc:mysql://localhost:3307/portal"/>
-		<property name="username" value="root"/>
-		<property name="password" value="summer2009"/>
-		<property name="initialSize" value="1"/>
-		<property name="maxActive" value="25"/>
-		<property name="maxIdle" value="10"/>
-		<property name="maxWait" value="30000"/>
-		<property name="poolPreparedStatements" value="true"/>
-    </bean>
     </beans>
