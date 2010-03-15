@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans SYSTEM "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+    <!-- Checklist Bank datasource -->
+    <bean id="cbDataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="org.postgresql.Driver"/>
+        <!--property name="url" value="jdbc:postgresql://localhost/clb-test"/-->
+        <property name="url" value="jdbc:postgresql://Alaslvdb1-cbr.vm.csiro.au/cb"/>
+        <!--property name="url" value="jdbc:postgresql://localhost/cb"/-->
+        <property name="username" value="postgres"/>
+        <property name="password" value="password"/>
+        <property name="initialSize" value="1"/>
+        <property name="maxActive" value="25"/>
+        <property name="maxIdle" value="10"/>
+        <property name="maxWait" value="30000"/>
+        <property name="poolPreparedStatements" value="true"/>
+    </bean>
+    <!--ALA Portal datasource -->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+		<property name="url" value="jdbc:mysql://localhost:3307/portal"/>
+		<property name="username" value="root"/>
+		<property name="password" value="summer2009"/>
+		<property name="initialSize" value="1"/>
+		<property name="maxActive" value="25"/>
+		<property name="maxIdle" value="10"/>
+		<property name="maxWait" value="30000"/>
+		<property name="poolPreparedStatements" value="true"/>
+    </bean>
+    </beans>
