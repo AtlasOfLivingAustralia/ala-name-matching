@@ -10,6 +10,8 @@
 	<properties>
 		<!-- This project uses UTF8 for Regular Expressions -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<org.apache.lucene.version>2.9.2</org.apache.lucene.version>
+		<org.springframework.version>3.0.0.RELEASE</org.springframework.version>
 	</properties>
     <dependencies>
         
@@ -50,29 +52,29 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>3.0.0.RELEASE</version>
+            <version>${org.springframework.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
-            <version>3.0.0.RELEASE</version>
+            <version>${org.springframework.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>3.0.0.RELEASE</version>
+            <version>${org.springframework.version}</version>
         </dependency>
 
 
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>2.9.2</version>
+            <version>${org.apache.lucene.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers</artifactId>
-            <version>2.9.2</version>
+            <version>${org.apache.lucene.version}</version>
         </dependency>
 
         <dependency>
