@@ -60,6 +60,7 @@ public class CBCreateLuceneIndex {
     private final int POS_G = 19;
     private final int POS_SID = 20;
     private final int POS_S = 21;
+
     //Fields that are being indexed or stored in the lucene index
     public enum IndexField{
         NAME(true, false, "name"),
@@ -90,27 +91,37 @@ public class CBCreateLuceneIndex {
             return name;
         }
     };
-     NameParser parser= new NameParser();
-     Set<String> knownHomonyms = new HashSet<String>();
-    //SQL used to get all the names that are part of the same lexical group
-    //private String namesSQL = "select distinct scientific_name as name from name_in_lexical_group nlg JOIN name_string ns ON nlg.name_fk = ns.id JOIN name_usage nu ON nu.lexical_group_fk = nlg.lexical_group_fk where nu.name_fk =?";
-     private String namesSQL = "select distinct scientific_name as name from name_in_lexical_group nlg JOIN name_string ns ON nlg.name_fk = ns.id where nlg.lexical_group_fk = (select lexical_group_fk from name_usage where id = ?)";
-    private TaxonNameSoundEx tnse;
-    public void init() throws Exception{
-        String[] locations = {
-                     "classpath*:org/ala/**/applicationContext-cb*.xml"
-        };
-        context = new ClassPathXmlApplicationContext(locations);
-        dataSource = (DataSource) context.getBean("cbDataSource");
-        dTemplate = new JdbcTemplate(dataSource);
-        tnse = new TaxonNameSoundEx();
-        //init the known homonyms
-        LineIterator lines = new LineIterator(new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResource("org/ala/propertystore/known_homonyms.txt").openStream(), "ISO-8859-1")));
-        while (lines.hasNext()) {
-            String line = lines.nextLine().trim();
-            knownHomonyms.add(line.toUpperCase());
-        }
-    }
+
+	NameParser parser = new NameParser();
+	Set<String> knownHomonyms = new HashSet<String>();
+	// SQL used to get all the names that are part of the same lexical group
+	// private String namesSQL =
+	// "select distinct scientific_name as name from name_in_lexical_group nlg JOIN name_string ns ON nlg.name_fk = ns.id JOIN name_usage nu ON nu.lexical_group_fk = nlg.lexical_group_fk where nu.name_fk =?";
+	private String namesSQL = 
+		"select distinct scientific_name as name " +
+		"from name_in_lexical_group nlg " +
+		"JOIN name_string ns ON nlg.name_fk = ns.id " +
+		"where nlg.lexical_group_fk = (select lexical_group_fk from name_usage where id = ?)";
+	private TaxonNameSoundEx tnse;
+
+	public void init() throws Exception {
+		String[] locations = { "classpath*:org/ala/**/applicationContext-cb*.xml" };
+		context = new ClassPathXmlApplicationContext(locations);
+		dataSource = (DataSource) context.getBean("cbDataSource");
+		dTemplate = new JdbcTemplate(dataSource);
+		tnse = new TaxonNameSoundEx();
+		// init the known homonyms
+		LineIterator lines = new LineIterator(new BufferedReader(
+				new InputStreamReader(
+						this.getClass().getClassLoader().getResource(
+								"org/ala/propertystore/known_homonyms.txt")
+								.openStream(), "ISO-8859-1")));
+		while (lines.hasNext()) {
+			String line = lines.nextLine().trim();
+			knownHomonyms.add(line.toUpperCase());
+		}
+	}
+
     /**
      * Creates the index from the specified checklist bank names usage export file into
      * the specified index directory.
@@ -160,7 +171,7 @@ public class CBCreateLuceneIndex {
         writer.commit();
         writer.optimize();
         writer.close();
-        log.info("Processed " + records + " in " + (System.currentTimeMillis() - time) + " msecs (Total unprocessed: "+unprocessed+")");
+        log.info("Lucene index created - processed a total of " + records + " records in " + (System.currentTimeMillis() - time) + " msecs (Total unprocessed: "+unprocessed+")");
 
 
     }
