@@ -44,7 +44,7 @@ CREATE OR REPLACE VIEW export_ala_taxon_name AS
 
 --create the view used for the taxon_concepts
 CREATE OR REPLACE VIEW ala_dwc_classification AS
- SELECT u.id AS id,  u.name_fk,COALESCE(n.canonical_name_fk, n.id) as can_id, COALESCE(nc.scientific_name, n.scientific_name) AS name, u.lexical_group_fk, (COALESCE(np.authorship, ''::character varying)::text ||
+ SELECT u.id AS id, u.name_fk,COALESCE(n.canonical_name_fk, n.id) as can_id, COALESCE(nc.scientific_name, n.scientific_name) AS name, u.lexical_group_fk,  u.lft AS lft, u.rgt AS rgt, (COALESCE(np.authorship, ''::character varying)::text ||
         CASE
             WHEN np.year IS NOT NULL THEN ', '::text || np.year::text
             ELSE ''::text
@@ -109,8 +109,8 @@ CREATE INDEX idx_tmp_ids_lg
 --insert the lsid type identifiers into the temporary identifiers table.  2636708 rows affected, 1107075 ms
 --2622695 rows affected, 1129295 ms
 
-Insert into tmp_identifiers(lexical_group_fk, name_fk, identifier,checklist_fk)
-SELECT nu.lexical_group_fk, nu.name_fk , i.identifier, nu.checklist_fk FROM identifier i JOIN  name_usage nu ON i.usage_fk = nu.id where i.type_fk = 2001 ORDER BY CASE nu.checklist_fk WHEN 1001 THEN 1 WHEN 1002 THEN 2 WHEN 1003 THEN 3 END
+INSERT into tmp_identifiers (lexical_group_fk, name_fk, identifier,checklist_fk)
+SELECT nu.lexical_group_fk, nu.name_fk, i.identifier, nu.checklist_fk FROM identifier i JOIN name_usage nu ON i.usage_fk = nu.id where i.type_fk = 2001 ORDER BY CASE nu.checklist_fk WHEN 1001 THEN 1 WHEN 1002 THEN 2 WHEN 1003 THEN 3 END;
 
 --The SQL below identifies potential lexical groups that will have issues when the nub is genertaed
 --The is specific to when 2 different ranks belong to the same lexical group eg Plecoptera is an ORDER and GENUS
