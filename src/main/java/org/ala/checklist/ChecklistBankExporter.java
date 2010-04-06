@@ -48,31 +48,34 @@ public class ChecklistBankExporter {
     private int nameCounter;
     private String nullString ="";//"\\N";
     private HashMap<Integer, Integer> rankMappings;
+	
+    
 	private void init(String fileName) throws Exception {
-		String[] locations = {
-                     "classpath*:org/ala/**/applicationContext-cb*.xml"
-		};
+		String[] locations = { "classpath*:org/ala/**/applicationContext-cb*.xml" };
 		context = new ClassPathXmlApplicationContext(locations);
 		dataSource = (DataSource) context.getBean("cbDataSource");
 		dTemplate = new JdbcTemplate(dataSource);
-                if(fileName != null){
-                    log.info("Exporting to " + fileName);
-                    fileOut = new OutputStreamWriter(new FileOutputStream(fileName), "UTF-8");
+		if (fileName != null) {
+			log.info("Exporting to " + fileName);
+			fileOut = new OutputStreamWriter(new FileOutputStream(fileName),
+					"UTF-8");
 
-                    //idFileOut = new FileOutputStream("C:\\tmp\\cbdata\\cb_identifiers.txt");
-                    nameCounter =0;
-                    //initialise the port mappings
-                    rankMappings = new HashMap<Integer,Integer>();
-                    List<Map<String, Object>> ranks = dTemplate.queryForList(rankMapSql);
-                    for(Map<String, Object> rank: ranks){
-                        Integer rankfk = (Integer)rank.get("term_fk");
-                        Integer portal = (Integer)rank.get("portal_rank");
-                        if(!rankMappings.containsKey(rankfk))
-                            rankMappings.put(rankfk, portal);
-                    }
-                }
-                //System.out.println(rankMappings);
+			// idFileOut = new
+			// FileOutputStream("C:\\tmp\\cbdata\\cb_identifiers.txt");
+			nameCounter = 0;
+			// initialise the port mappings
+			rankMappings = new HashMap<Integer, Integer>();
+			List<Map<String, Object>> ranks = dTemplate.queryForList(rankMapSql);
+			for (Map<String, Object> rank : ranks) {
+				Integer rankfk = (Integer) rank.get("term_fk");
+				Integer portal = (Integer) rank.get("portal_rank");
+				if (!rankMappings.containsKey(rankfk))
+					rankMappings.put(rankfk, portal);
+			}
+		}
+		// System.out.println(rankMappings);
 	}
+
         private String replaceNull(String in){
             return StringUtils.isEmpty(in)?nullString:in;
         }
