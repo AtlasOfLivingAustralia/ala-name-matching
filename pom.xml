@@ -50,29 +50,29 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>2.0</version>
+            <version>3.0.0.RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
-            <version>2.0</version>
+            <version>3.0.0.RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>2.0</version>
+            <version>3.0.0.RELEASE</version>
         </dependency>
 
 
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>3.0.0</version>
+            <version>2.9.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers</artifactId>
-            <version>3.0.0</version>
+            <version>2.9.2</version>
         </dependency>
 
         <dependency>
@@ -111,6 +111,20 @@
                         </manifest>
                     </archive>
                 </configuration>
+            </plugin>
+            <plugin>
+            	<groupId>org.apache.maven.plugins</groupId>
+            	<artifactId>maven-source-plugin</artifactId>
+            	<version>2.1.1</version>
+		        <executions>
+		          <execution>
+		            <id>attach-sources</id>
+		            <phase>verify</phase>
+		            <goals>
+		              <goal>jar-no-fork</goal>
+		            </goals>
+		          </execution>
+		        </executions>
             </plugin>
         </plugins>
     </build>
