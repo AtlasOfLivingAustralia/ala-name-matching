@@ -40,10 +40,20 @@ import org.gbif.portal.util.taxonomy.TaxonNameSoundEx;
  *
  * 5. No match is found
  *
- * When a match is found the existence of homonyms are checked.  When a
- * a homonym exists if the kingdom of the result does not match the supplied kingdom
- * a HomonymException is thrown.
+ * When a match is found the existence of homonyms are checked.  Where a homonym exists, 
+ * if the kingdom of the result does not match the supplied kingdom a HomonymException is thrown.
  *
+ * Rank
+ * In following search methods rank can be any one of the following string values:
+ * kingdom, subkingdom, phylum, subphylum, superclass, class, subclass,
+ * superorder, order, suborder, infraorder, superfamily, family, subfamily,
+ * tribe, subtribe, genus, subgenus, section, subsection, series, subseries,
+ * infragenericname, species, infraspecificname, subspecies, infrasubspeciesname,
+ * variety, subvariety, form, subform, cultivargroup, cultivar,informal,
+ * unranked or supragenericname.
+ *
+ * The rank can also take any of the rank id's from the ala portal rank table.
+ * 
  * @author Natasha
  */
 public class CBIndexSearch {
@@ -52,16 +62,16 @@ public class CBIndexSearch {
     private Searcher searcher;
     protected TaxonNameSoundEx tnse;
     private NameParser parser;
-    public CBIndexSearch(){
 
-    }
-    public void init(String indexDirectory) throws CorruptIndexException, IOException{
-        reader = IndexReader.open(FSDirectory.open(new File(indexDirectory)), true);
-        searcher = new IndexSearcher(reader);
-        tnse = new TaxonNameSoundEx();
-        parser = new NameParser();
-        
-    }
+	public CBIndexSearch() {}
+
+	public CBIndexSearch(String indexDirectory) throws CorruptIndexException, IOException {
+		reader = IndexReader.open(FSDirectory.open(new File(indexDirectory)), true);
+		searcher = new IndexSearcher(reader);
+		tnse = new TaxonNameSoundEx();
+		parser = new NameParser();
+	}
+
     /**
      * Searches the index for the supplied name.  Returns null when there is no result
      * or the LSID for the first result.
@@ -75,16 +85,6 @@ public class CBIndexSearch {
      * Searches the index for the supplied name of the specified rank.  Returns
      * null when there is no result or the LSID for the first result.
      *
-     * Rank can be any one of the following string values:
-     * kingdom, subkingdom, phylum, subphylum, superclass, class, subclass,
-     * superorder, order, suborder, infraorder, superfamily, family, subfamily,
-     * tribe, subtribe, genus, subgenus, section, subsection, series, subseries,
-     * infragenericname, species, infraspecificname, subspecies, infrasubspeciesname,
-     * variety, subvariety, form, subform, cultivargroup, cultivar,informal,
-     * unranked or supragenericname.
-     *
-     * The rank can also take any of the rank id's from the ala portal rank table.
-     *
      * @param name
      * @param rank
      * @return
@@ -94,25 +94,21 @@ public class CBIndexSearch {
 
     }
     public String searchForLSID(String name, String kingdom,  String genus, String rank) throws SearchResultException{
-        NameSearchResult result = searchForRecord(name, kingdom, genus, rank);
-        if(result != null)
-                return result.getLsid();
-        return null;
+		String lsid = null;
+    	NameSearchResult result = searchForRecord(name, kingdom, genus, rank);
+		if (result != null) {
+			if (result.getLsid().isEmpty()) {
+				log.warn("LSID missing for [name=" + result.getCleanName() + ", id=" + result.getId() + "]");
+			} else {
+				lsid = result.getLsid();
+			}
+		}
+		return lsid;
     }
     /**
      * Searches the index for the supplied name of the specified rank.  Returns
      * null when there is no result or the result object for the first result.
      *
-     * Rank can be any one of the following string values:
-     * kingdom, subkingdom, phylum, subphylum, superclass, class, subclass,
-     * superorder, order, suborder, infraorder, superfamily, family, subfamily,
-     * tribe, subtribe, genus, subgenus, section, subsection, series, subseries,
-     * infragenericname, species, infraspecificname, subspecies, infrasubspeciesname,
-     * variety, subvariety, form, subform, cultivargroup, cultivar,informal,
-     * unranked or supragenericname.
-     *
-     * The rank can also take any of the rank id's from the ala portal rank table.
-
      * @param name
      * @param rank
      * @return
@@ -148,16 +144,6 @@ public class CBIndexSearch {
     /**
      * Searches for a name of the specified rank.
      *
-     * Rank can be any one of the following string values:
-     * kingdom, subkingdom, phylum, subphylum, superclass, class, subclass,
-     * superorder, order, suborder, infraorder, superfamily, family, subfamily,
-     * tribe, subtribe, genus, subgenus, section, subsection, series, subseries,
-     * infragenericname, species, infraspecificname, subspecies, infrasubspeciesname,
-     * variety, subvariety, form, subform, cultivargroup, cultivar,informal,
-     * unranked or supragenericname.
-     *
-     * The rank can also take any of the rank id's from the ala portal rank table.
-
      * @param name
      * @param rank
      * @return
@@ -170,16 +156,6 @@ public class CBIndexSearch {
      * Searches for the records that satisfy the given conditions using the algorithm
      * outlined in the class description.
      *
-     * Rank can be any one of the following string values:
-     * kingdom, subkingdom, phylum, subphylum, superclass, class, subclass,
-     * superorder, order, suborder, infraorder, superfamily, family, subfamily,
-     * tribe, subtribe, genus, subgenus, section, subsection, series, subseries,
-     * infragenericname, species, infraspecificname, subspecies, infrasubspeciesname,
-     * variety, subvariety, form, subform, cultivargroup, cultivar,informal,
-     * unranked or supragenericname.
-     *
-     * The rank can also take any of the rank id's from the ala portal rank table.
-
      * @param name
      * @param rank
      * @param kingdom 
@@ -192,34 +168,38 @@ public class CBIndexSearch {
         try{
             String phylum = null;
             //1. Direct Name hit
-            List hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), name, rank, kingdom, phylum, genus, max, NameSearchResult.MatchType.DIRECT, true);
-            if(hits == null)//situation where searcher has not been initialised
-                return null;
-            if(hits.size()>0)
-                return hits;
-            //2. Hit on the alternative names
+            List<NameSearchResult> hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), name, rank, kingdom, phylum, genus, max, NameSearchResult.MatchType.DIRECT, true);
+			if (hits == null) // situation where searcher has not been initialised
+				return null;
+			if (hits.size() > 0)
+				return hits;
+
+			//2. Hit on the alternative names
             hits = performSearch(CBCreateLuceneIndex.IndexField.NAMES.toString(), name, rank, kingdom, phylum, genus, max, NameSearchResult.MatchType.ALTERNATE, true);
             if(hits.size()>0)
                 return hits;
+
             //3. searchable canonical name
             String searchable = tnse.soundEx(name);
             //searchable canonical should not check for homonyms due to the more erratic nature of the result
             hits = performSearch(CBCreateLuceneIndex.IndexField.SEARCHABLE_NAME.toString(), searchable, rank, kingdom, phylum, genus, max, NameSearchResult.MatchType.SEARCHABLE, false);
             if(hits.size()>0)
                 return hits;
+
             //4. clean the name and then search for the new version
-            ParsedName cn = parser.parseIgnoreAuthors(name);
-                    if (cn != null) {
-                        String cleanName = cn.buildCanonicalName();
-                        if (cleanName != null && !name.equals(cleanName)) {
-                            List<NameSearchResult> results =searchForRecords(cleanName, rank, kingdom, genus, max);
-                            if(results != null){
-                                for(NameSearchResult result : results)
-                                    result.setCleanName(cleanName); 
-                            }
-                            return results;
-                        }
-                    }
+            ParsedName<?> cn = parser.parseIgnoreAuthors(name);
+			if (cn != null) {
+				String cleanName = cn.buildCanonicalName();
+				if (cleanName != null && !name.equals(cleanName)) {
+					List<NameSearchResult> results = searchForRecords(
+							cleanName, rank, kingdom, genus, max);
+					if (results != null) {
+						for (NameSearchResult result : results)
+							result.setCleanName(cleanName);
+					}
+					return results;
+				}
+			}
         }
         catch(IOException e){
             log.warn(e.getMessage());
@@ -227,9 +207,6 @@ public class CBIndexSearch {
         }
         return null;
     }
-
-
-
 
     /**
      *
