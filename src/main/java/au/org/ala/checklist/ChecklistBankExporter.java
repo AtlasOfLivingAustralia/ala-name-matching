@@ -66,7 +66,7 @@ public class ChecklistBankExporter {
 	private void init(String fileName) throws Exception {
 		
 		log.info("Initialising DB connections and output files...");
-		String[] locations = {"classpath*:org/ala/**/applicationContext-cb*.xml"};
+		String[] locations = {"classpath*:au/org/ala/**/applicationContext-cb*.xml"};
 		context = new ClassPathXmlApplicationContext(locations);
 		dataSource = (DataSource) context.getBean("cbDataSource");
 		dTemplate = new JdbcTemplate(dataSource);
@@ -114,7 +114,7 @@ public class ChecklistBankExporter {
     public void setUpDatabase() throws Exception{
         //run the checklist_bank_model_additions_ala.sql script
         long start = System.currentTimeMillis();
-        InputStream script = this.getClass().getClassLoader().getResourceAsStream("org/ala/db/checklist_bank_model_additions_ala.sql");
+        InputStream script = this.getClass().getClassLoader().getResourceAsStream("au/org/ala/db/checklist_bank_model_additions_ala.sql");
 
         if(script != null){
             log.info("Creating the necessary items to export checklist.");
