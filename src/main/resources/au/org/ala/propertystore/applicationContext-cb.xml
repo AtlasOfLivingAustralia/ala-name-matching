@@ -5,7 +5,7 @@
     <bean id="cbDataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
         <property name="driverClassName" value="org.postgresql.Driver"/>
         <!--property name="url" value="jdbc:postgresql://localhost/clb-test"/-->
-        <property name="url" value="jdbc:postgresql://Alaslvdb1-cbr.vm.csiro.au/cb"/>
+        <property name="url" value="jdbc:postgresql://alaslvdb1-cbr.vm.csiro.au/cb"/>
         <!--property name="url" value="jdbc:postgresql://localhost/cb"/-->
         <property name="username" value="postgres"/>
         <property name="password" value="password"/>
