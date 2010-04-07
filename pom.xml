@@ -103,7 +103,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>org.ala.checklist.ChecklistBankExporter</mainClass>
+                            <mainClass>au.org.ala.checklist.ChecklistBankExporter</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
