@@ -82,7 +82,7 @@ CREATE OR REPLACE VIEW ala_dwc_classification AS
    WHERE u.checklist_fk = 1;
 
 --may need to materialise the view so that SELECT statements are performant Query returned successfully with no result in 3842271 ms.
-drop table tmp_export_name_usage;
+drop table IF EXISTS tmp_export_name_usage;
 
 create table tmp_export_name_usage AS SELECT * from ala_dwc_classification;
 CREATE INDEX tmp_export_name_id_idx
@@ -92,7 +92,7 @@ CREATE INDEX tmp_export_name_id_idx
   WITH (FILLFACTOR=90);
 
 --create a tmp table with index on lookup columns to improve the performance of the lsid identifier lookup
-drop table tmp_identifiers;
+drop table IF EXISTS tmp_identifiers;
 
 create table tmp_identifiers(
 id serial NOT NULL,
