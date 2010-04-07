@@ -131,4 +131,14 @@
             <url>http://maven.ala.org.au/repository</url>
         </repository>
     </repositories>
+	<distributionManagement>
+	  <downloadUrl>https://maven.ala.org.au/repository</downloadUrl>
+	  <repository>
+	    <uniqueVersion>false</uniqueVersion>
+	    <id>ala-repository</id>
+	    <name>ALA Maven Repository</name>
+	    <url>scp://maven.ala.org.au/data/maven</url>
+	    <layout>default</layout>
+	  </repository>
+	</distributionManagement>
 </project>
