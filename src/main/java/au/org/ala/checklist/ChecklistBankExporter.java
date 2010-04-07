@@ -12,7 +12,7 @@
  * implied. See the License for the specific language governing
  * rights and limitations under the License.
  ***************************************************************************/
-package org.ala.checklist;
+package au.org.ala.checklist;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;

@@ -1,5 +1,5 @@
 
-package org.ala.checklist.lucene;
+package au.org.ala.checklist.lucene;
 
 import java.io.BufferedReader;
 import java.io.File;

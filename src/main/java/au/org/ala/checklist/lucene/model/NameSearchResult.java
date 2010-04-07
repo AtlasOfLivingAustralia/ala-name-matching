@@ -1,8 +1,9 @@
 
-package org.ala.checklist.lucene.model;
+package au.org.ala.checklist.lucene.model;
 
-import org.ala.checklist.lucene.CBCreateLuceneIndex;
 import org.apache.lucene.document.Document;
+
+import au.org.ala.checklist.lucene.CBCreateLuceneIndex;
 
 /**
  * A model to store the required information in a search result

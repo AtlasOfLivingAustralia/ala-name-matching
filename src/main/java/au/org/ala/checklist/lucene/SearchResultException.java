@@ -1,8 +1,9 @@
 
-package org.ala.checklist.lucene;
+package au.org.ala.checklist.lucene;
 
 import java.util.List;
-import org.ala.checklist.lucene.model.NameSearchResult;
+
+import au.org.ala.checklist.lucene.model.NameSearchResult;
 
 /**
  *  @see HomonymException

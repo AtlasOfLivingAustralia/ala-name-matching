@@ -3,13 +3,12 @@
  * and open the template in the editor.
  */
 
-package org.ala.checklist.lucene;
+package au.org.ala.checklist.lucene;
 
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import org.ala.checklist.lucene.model.NameSearchResult;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,6 +21,8 @@ import org.apache.lucene.store.FSDirectory;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
 import org.gbif.portal.util.taxonomy.TaxonNameSoundEx;
+
+import au.org.ala.checklist.lucene.model.NameSearchResult;
 
 /**
  *
