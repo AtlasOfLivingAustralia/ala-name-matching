@@ -252,14 +252,14 @@ public class ChecklistBankExporter {
         	
         	//select AFD and APC first
         	List<Integer> preferredIds = new ArrayList<Integer>();
-        	preferredIds.add(1001);
-        	preferredIds.add(1002);
+        	preferredIds.add(new Integer(1001));
+        	preferredIds.add(new Integer(1002));
         	String preferredLsid = getPreferredGuid(identifiers, preferredIds);
 
     		//allow APNI if we havent found an AFD, or APC GUID
         	if(preferredLsid==null){
         		preferredIds.clear();
-        		preferredIds.add(1003);
+        		preferredIds.add(new Integer(1003));
         		preferredLsid = getPreferredGuid(identifiers, preferredIds);
         	}
         	
@@ -273,7 +273,9 @@ public class ChecklistBankExporter {
         	for(Map<String, Object> identifier : identifiers){
                 //remove the first record and then process the other records into the additional identifiers file
         		String guid = (String) identifier.get("identifier");
-        		if(!StringUtils.isEmpty(guid) && !guid.equals(preferredLsid)){
+        		guid = StringUtils.trimToNull(guid);
+        		
+        		if(guid!=null && preferredLsid!=null && !guid.equals(preferredLsid) ){
         			idFileOut.write((nameFK + "\t" + preferredLsid + "\t" + guid + "\n").getBytes());
         		}
             }
@@ -294,10 +296,13 @@ public class ChecklistBankExporter {
 		if(identifiers.size()>1){
 			//chose the LSID provided by AFD or APC
 			for(Map<String, Object> identifier : identifiers){
-				//FIXME this also needs to cater for APC precedence over APNI
 				Integer checklistId = (Integer) identifier.get("checklist_fk");
 				if(preferredChecklistIds.contains(checklistId)){
-					return (String) identifier.get("identifier");
+					String guid =  (String) identifier.get("identifier");
+					guid = StringUtils.trimToNull(guid);
+					if(guid!=null){
+						return guid;
+					}
 				}
 			}
 		}
