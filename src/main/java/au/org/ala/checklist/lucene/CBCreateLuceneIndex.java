@@ -134,11 +134,11 @@ public class CBCreateLuceneIndex {
         long time = System.currentTimeMillis();
         IndexWriter writer = new IndexWriter(FSDirectory.open(new File(indexDir)), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
         BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(cbExportFile), "UTF-8"));
-        int unprocessed =0, records=0;
-        for(String line =br.readLine(); line != null; line = br.readLine()){
+		int unprocessed = 0, records = 0;
+		for (String line = br.readLine(); line != null; line = br.readLine()) {
             //process each line in the file
             String[] values = line.split("\\t", 23);
-            if(values.length == 22){
+			if (values.length >= 22) {
                 String classification = values[POS_KID] + "|" + values[POS_PID] + "|" + values[POS_CID] + "|" + values[POS_OID] + "|" + values[POS_FID] + "|" + values[POS_GID] + "|" + values[POS_SID];
                 String lsid = values[POS_LSID];
                 Document doc = buildDocument(values[POS_NAME], classification, values[POS_ID], lsid, values[POS_RANK_ID], values[POS_RANK], values[POS_K], values[POS_P], values[POS_G]);
@@ -157,9 +157,8 @@ public class CBCreateLuceneIndex {
                 writer.addDocument(doc);
                 records++;
                 if (records % 10000 == 0) {
-                log.info("Processed " + records + " in " + (System.currentTimeMillis() - time) + " msecs (Total unprocessed: "+unprocessed+")");
-
-            }
+                	log.info("Processed " + records + " in " + (System.currentTimeMillis() - time) + " msecs (Total unprocessed: "+unprocessed+")");
+                }
             }
             else{
                 //can't process line without all values
