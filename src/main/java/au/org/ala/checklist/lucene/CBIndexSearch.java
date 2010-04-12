@@ -99,7 +99,7 @@ public class CBIndexSearch {
     	NameSearchResult result = searchForRecord(name, kingdom, genus, rank);
 		if (result != null) {
 			if (result.getLsid().isEmpty()) {
-				log.warn("LSID missing for [name=" + result.getCleanName() + ", id=" + result.getId() + "]");
+				log.warn("LSID missing for [name=" + name + ", id=" + result.getId() + "]");
 			} else {
 				lsid = result.getLsid();
 			}
