@@ -9,13 +9,25 @@ package au.org.ala.checklist.lucene;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.*;
+import org.apache.lucene.index.IndexWriter.MaxFieldLength;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.Searcher;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.store.FSDirectory;
 import org.gbif.ecat.model.ParsedName;
@@ -67,7 +79,17 @@ public class CBIndexSearch {
 	public CBIndexSearch() {}
 
 	public CBIndexSearch(String indexDirectory) throws CorruptIndexException, IOException {
-		reader = IndexReader.open(FSDirectory.open(new File(indexDirectory)), true);
+		
+		File idxFile = new File(indexDirectory);
+		if(!idxFile.exists()){
+			FileUtils.forceMkdir(idxFile);
+			Analyzer analyzer = new StandardAnalyzer();
+            IndexWriter iw = new IndexWriter(idxFile, analyzer, MaxFieldLength.UNLIMITED);
+            iw.commit();
+            iw.close();
+		}
+		
+		reader = IndexReader.open(FSDirectory.open(idxFile), true);
 		searcher = new IndexSearcher(reader);
 		tnse = new TaxonNameSoundEx();
 		parser = new NameParser();
