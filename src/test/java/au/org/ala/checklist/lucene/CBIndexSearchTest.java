@@ -82,4 +82,16 @@ public class CBIndexSearchTest {
 		NameSearchResult result = searcher.searchForRecordByID("216346");
 		System.out.println(result);
 	}
+	
+	@org.junit.Test
+	public void testSearchForRecord() {
+		NameSearchResult result = null;
+		try {
+			result = searcher.searchForRecord(null, null, "Rhinotia", null);
+		} catch (SearchResultException e) {
+			e.printStackTrace();
+		}
+		System.out.println(result);
+	}
+	
 }
