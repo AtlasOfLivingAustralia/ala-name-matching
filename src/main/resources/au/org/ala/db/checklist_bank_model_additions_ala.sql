@@ -30,7 +30,8 @@ CREATE OR REPLACE VIEW export_ala_taxon_name AS
             ELSE NULL::character varying
         END AS generic, NULL::text AS infrageneric, sci_pn.specific_epithet, sci_pn.infra_specific_epithet AS infraspecific, NULL::text AS infraspecific_marker,
         CASE
-            WHEN sci_pn.is_hybrid_formula = true THEN 1
+            WHEN sci.type = 5 THEN 1
+--WHEN sci_pn.is_hybrid_formula = true THEN 1 (necessary for the old CB repository)
             ELSE 0
         END AS is_hybrid, tr.portal_rank AS rank, sci_pn.authorship AS author, NULL::unknown AS searchable_canonical
    FROM name_usage nu
@@ -43,6 +44,8 @@ CREATE OR REPLACE VIEW export_ala_taxon_name AS
   ORDER BY COALESCE(can.scientific_name, sci.scientific_name), tr.portal_rank, sci_pn.authorship;
 
 --create the view used for the taxon_concepts
+--remove all the parent_fks and kingdom_fks that refer back to the "incertae sedis" record ie id=9.
+
 CREATE OR REPLACE VIEW ala_dwc_classification AS
  SELECT u.id AS id, u.name_fk,COALESCE(n.canonical_name_fk, n.id) as can_id, COALESCE(nc.scientific_name, n.scientific_name) AS name, u.lexical_group_fk,  u.lft AS lft, u.rgt AS rgt, (COALESCE(np.authorship, ''::character varying)::text ||
         CASE
@@ -52,7 +55,7 @@ CREATE OR REPLACE VIEW ala_dwc_classification AS
         CASE
             WHEN np.authorship_basionym IS NOT NULL OR np.year_basionym IS NOT NULL THEN (' ('::text || COALESCE((np.authorship_basionym::text || ', '::text) || np.year_basionym::text, np.authorship_basionym::text, np.year_basionym::text)) || ')'::text
             ELSE ''::text
-        END AS authorship, u.parent_fk, u.rank_fk, r.term as rank, u.kingdom_fk, knc.scientific_name AS kingdom, u.phylum_fk, COALESCE(pnc.scientific_name, pn.scientific_name) AS phylum, u.class_fk, COALESCE(cnc.scientific_name, cn.scientific_name) AS class, u.order_fk, COALESCE(onc.scientific_name, onn.scientific_name) AS "order", u.family_fk, COALESCE(fnc.scientific_name, fn.scientific_name) AS family, u.genus_fk, COALESCE(gnc.scientific_name, gn.scientific_name) AS genus, u.species_fk, COALESCE(snc.scientific_name, sn.scientific_name) AS species
+        END AS authorship, case u.parent_fk when 9 then null else u.parent_fk end, u.is_synonym, u.rank_fk, r.term as rank, case u.kingdom_fk when 9 then null else u.kingdom_fk end, knc.scientific_name AS kingdom, u.phylum_fk, COALESCE(pnc.scientific_name, pn.scientific_name) AS phylum, u.class_fk, COALESCE(cnc.scientific_name, cn.scientific_name) AS class, u.order_fk, COALESCE(onc.scientific_name, onn.scientific_name) AS "order", u.family_fk, COALESCE(fnc.scientific_name, fn.scientific_name) AS family, u.genus_fk, COALESCE(gnc.scientific_name, gn.scientific_name) AS genus, u.species_fk, COALESCE(snc.scientific_name, sn.scientific_name) AS species
    FROM name_usage u
    LEFT JOIN name_string n ON u.name_fk = n.id
    LEFT JOIN name_string nc ON n.canonical_name_fk = nc.id
@@ -110,7 +113,7 @@ CREATE INDEX idx_tmp_ids_lg
 --2622695 rows affected, 1129295 ms
 
 INSERT into tmp_identifiers (lexical_group_fk, name_fk, identifier,checklist_fk)
-SELECT nu.lexical_group_fk, nu.name_fk, i.identifier, nu.checklist_fk FROM identifier i JOIN name_usage nu ON i.usage_fk = nu.id where i.type_fk = 2001 ORDER BY CASE nu.checklist_fk WHEN 1001 THEN 1 WHEN 1002 THEN 2 WHEN 1003 THEN 3 END;
+SELECT nu.lexical_group_fk, nu.name_fk, i.identifier, nu.checklist_fk FROM identifier i JOIN name_usage nu ON i.usage_fk = nu.id where i.type_fk = 2001 ORDER BY CASE nu.checklist_fk WHEN 1001 THEN 1 WHEN 1002 THEN 2 WHEN 1003 THEN 3 ELSE 4 END;
 
 --The SQL below identifies potential lexical groups that will have issues when the nub is genertaed
 --The is specific to when 2 different ranks belong to the same lexical group eg Plecoptera is an ORDER and GENUS

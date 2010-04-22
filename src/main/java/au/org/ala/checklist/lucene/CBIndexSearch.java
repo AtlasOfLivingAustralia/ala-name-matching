@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package au.org.ala.checklist.lucene;
 
@@ -35,6 +31,7 @@ import org.gbif.ecat.parser.NameParser;
 import org.gbif.portal.util.taxonomy.TaxonNameSoundEx;
 
 import au.org.ala.checklist.lucene.model.NameSearchResult;
+import au.org.ala.data.util.RankType;
 
 /**
  *
@@ -44,6 +41,8 @@ import au.org.ala.checklist.lucene.model.NameSearchResult;
  * 1. Search for a direct match for supplied name on the name field(with the optional rank provided).
  *
  * 2. Search for a match on the alternative name field (with optional rank)
+ *
+ * 3. Search without the supplied kingdom/genus to check if we have a synonym (TO DO!!!)
  *
  * 3. Generate a searchable canonical name for the supplied name.  Search for a match on
  * the searchable canonical field using the generated name
@@ -56,16 +55,7 @@ import au.org.ala.checklist.lucene.model.NameSearchResult;
  * When a match is found the existence of homonyms are checked.  Where a homonym exists, 
  * if the kingdom of the result does not match the supplied kingdom a HomonymException is thrown.
  *
- * Rank
- * In following search methods rank can be any one of the following string values:
- * kingdom, subkingdom, phylum, subphylum, superclass, class, subclass,
- * superorder, order, suborder, infraorder, superfamily, family, subfamily,
- * tribe, subtribe, genus, subgenus, section, subsection, series, subseries,
- * infragenericname, species, infraspecificname, subspecies, infrasubspeciesname,
- * variety, subvariety, form, subform, cultivargroup, cultivar,informal,
- * unranked or supragenericname.
- *
- * The rank can also take any of the rank id's from the ala portal rank table.
+ 
  * 
  * @author Natasha
  */
@@ -108,22 +98,37 @@ public class CBIndexSearch {
      * Searches the index for the supplied name of the specified rank.  Returns
      * null when there is no result or the LSID for the first result.
      *
+     * When the result is a synonym the "accepted" taxons's LSID is returned.
+     *
      * @param name
      * @param rank
      * @return
      */
-    public String searchForLSID(String name, String rank)throws SearchResultException{
+    public String searchForLSID(String name, RankType rank)throws SearchResultException{
         return searchForLSID(name, null,  null, rank);
 
     }
-    public String searchForLSID(String name, String kingdom,  String genus, String rank) throws SearchResultException{
+    /**
+     * Search for an LSID based on the supplied name.  When the kingdom and genus
+     * are provided they are used to try and resolve homonyms. If they are not
+     * provided and a homonym is detected in the result a HomonymException is thrown.
+     * 
+     * 
+     * @param name
+     * @param kingdom
+     * @param genus
+     * @param rank
+     * @return
+     * @throws SearchResultException
+     */
+    public String searchForLSID(String name, String kingdom,  String genus, RankType rank) throws SearchResultException{
 		String lsid = null;
     	NameSearchResult result = searchForRecord(name, kingdom, genus, rank);
 		if (result != null) {
-			if (result.getLsid().isEmpty()) {
+			if (result.getSynonymLsid()==null && result.getLsid()==null) {
 				log.warn("LSID missing for [name=" + name + ", id=" + result.getId() + "]");
 			} else {
-				lsid = result.getLsid();
+				lsid = result.getSynonymLsid()!= null ? result.getSynonymLsid() :result.getLsid();
 			}
 		}
 		return lsid;
@@ -136,10 +141,10 @@ public class CBIndexSearch {
      * @param rank
      * @return
      */
-    public NameSearchResult searchForRecord(String name, String rank) throws SearchResultException{
+    public NameSearchResult searchForRecord(String name, RankType rank) throws SearchResultException{
         return searchForRecord(name, null,  null, rank);
     }
-    public NameSearchResult searchForRecord(String name, String kingdom, String genus, String rank)throws SearchResultException{
+    public NameSearchResult searchForRecord(String name, String kingdom, String genus, RankType rank)throws SearchResultException{
         List<NameSearchResult> results = searchForRecords(name, rank, kingdom, genus, 1);
         if(results != null && results.size()>0)
             return results.get(0);
@@ -171,7 +176,7 @@ public class CBIndexSearch {
      * @param rank
      * @return
      */
-    public List<NameSearchResult> searchForRecords(String name, String rank) throws SearchResultException{
+    public List<NameSearchResult> searchForRecords(String name, RankType rank) throws SearchResultException{
         return searchForRecords(name, rank, null, null, 10);
     }
     
@@ -187,7 +192,10 @@ public class CBIndexSearch {
      * @return
      * @throws SearchResultException
      */
-    public List<NameSearchResult> searchForRecords(String name, String rank, String kingdom, String genus, int max) throws SearchResultException{
+    public List<NameSearchResult> searchForRecords(String name, RankType rank, String kingdom, String genus, int max) throws SearchResultException{
+        //The name is not allowed to be null
+        if(name == null)
+            throw new NullPointerException(); //should this be a searchresultexception??
         try{
             String phylum = null;
             //1. Direct Name hit
@@ -247,7 +255,7 @@ public class CBIndexSearch {
      * @throws IOException
      * @throws SearchResultException
      */
-    private List<NameSearchResult> performSearch(String field, String value, String rank, String kingdom, String phylum, String genus, int max, NameSearchResult.MatchType type, boolean checkHomo)throws IOException, SearchResultException{
+    private List<NameSearchResult> performSearch(String field, String value, RankType rank, String kingdom, String phylum, String genus, int max, NameSearchResult.MatchType type, boolean checkHomo)throws IOException, SearchResultException{
         if(searcher != null){
             Term term = new Term(field, value);
             Query query = new TermQuery(term);
@@ -258,7 +266,7 @@ public class CBIndexSearch {
             
             boolQuery.add(query, Occur.MUST);
             if(rank!=null){
-                Query rankQuery =new TermQuery(new Term(CBCreateLuceneIndex.IndexField.RANK.toString(), rank));
+                Query rankQuery =new TermQuery(new Term(CBCreateLuceneIndex.IndexField.RANK.toString(), rank.getRank()));
                 boolQuery.add(rankQuery, Occur.MUST);
             }
             if(kingdom != null){
@@ -297,8 +305,6 @@ public class CBIndexSearch {
             return results;
             
         }
-        else
-            log.error("The Index searcher has not been initialised. Try calling init().");
         return null;
     }
     /**

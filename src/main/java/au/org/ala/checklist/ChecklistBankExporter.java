@@ -13,6 +13,7 @@
  * rights and limitations under the License.
  ***************************************************************************/
 package au.org.ala.checklist;
+import gnu.trove.TIntObjectHashMap;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -54,12 +55,13 @@ public class ChecklistBankExporter {
     //private String rankSQL = "SELECT min(portal_rank) FROM term_gbif_portal_rank WHERE term_fk =? ";
     private String identifierSql = "SELECT identifier, checklist_fk FROM tmp_identifiers WHERE lexical_group_fk =? and name_fk = ? ORDER BY id";
     private String rankMapSql = "SELECT term_fk, portal_rank FROM term_gbif_portal_rank ORDER BY term_fk, portal_rank";
+    private String nameLexicalSql = "SELECT name_fk, lexical_group_fk from name_usage where id = ?";
     private OutputStreamWriter fileOut;
     private FileOutputStream idFileOut;
     private int nameCounter;
     private String nullString = ""; //"\\N";
     private HashMap<Integer, Integer> rankMappings;
-    
+    private TIntObjectHashMap<String> idToLsidMap = new TIntObjectHashMap<String>();
     /**
      * Intialise DB connections and set up mappings.
      */
@@ -86,21 +88,12 @@ public class ChecklistBankExporter {
             	FileUtils.forceDelete(exportIdsFile);
             }
             idFileOut = new FileOutputStream(exportIdsFile);
-            log.info("Exporting identifiers to " + fileName);
+            log.info("Exporting identifiers to " + exportIdsFile);
             
             
             nameCounter = 0;
-            //initialise the port mappings
-            rankMappings = new HashMap<Integer,Integer>();
-            List<Map<String, Object>> ranks = dTemplate.queryForList(rankMapSql);
-            for(Map<String, Object> rank: ranks){
-                Integer rankfk = (Integer)rank.get("term_fk");
-                Integer portal = (Integer)rank.get("portal_rank");
-                if(!rankMappings.containsKey(rankfk))
-                    rankMappings.put(rankfk, portal);
-            }
+          
         }
-        //System.out.println(rankMappings);
         log.info("Initialised.");
 	}
 	
@@ -133,9 +126,18 @@ public class ChecklistBankExporter {
      */
     public long export(int checklistId, boolean denormalise)throws Exception {//, int[] idOrderPreference) throws Exception{
 
+          //initialise the port mappings
+            rankMappings = new HashMap<Integer,Integer>();
+            List<Map<String, Object>> ranks = dTemplate.queryForList(rankMapSql);
+            for(Map<String, Object> rank: ranks){
+                Integer rankfk = (Integer)rank.get("term_fk");
+                Integer portal = (Integer)rank.get("portal_rank");
+                if(!rankMappings.containsKey(rankfk))
+                    rankMappings.put(rankfk, portal);
+            }
+
         //get a list of the id, parent_id, name_fk, scientific names
         long startTime = System.currentTimeMillis();
-
         log.info("Starting export for checklist " + checklistId);
         Connection conn = dataSource.getConnection();
         //String query = denormalise ? denormaliseSql: normaliseSql;
@@ -144,6 +146,8 @@ public class ChecklistBankExporter {
         java.sql.PreparedStatement stmt = conn.prepareStatement(query,ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
         boolean hasMore = true;
         int min = 0;
+        //insert the header line for the file
+        fileOut.write("nub id\tparent nub id\tlsid\tsynonym id\tsynonym lsid\tname id\tcanonical name\tauthor\tportal rank id\trank\tlft\trgt\tkingdom id\tkingdom\tphylum id\tphylum\tclass id\tclass\torder id \torder\tfamily id\tfamily\tgenus id\tgenus\tspecies id\tspecies");
         //perform a paged export of the name_usage table
         while(hasMore){
             int numProcessed =0;
@@ -155,41 +159,67 @@ public class ChecklistBankExporter {
 
             while (rs.next()) {
                 Integer id = rs.getInt("id");
-                min = id;
-                String parentFk = replaceNull(rs.getString("parent_fk"));
-                Integer nameFk = rs.getInt("name_fk");
-                Integer lexicalGroupFk = rs.getInt("lexical_group_fk");
+                //Export all records except for the "incertae sedis" (id = 9)
+                if(id != 9){
+                    min = id;
+                    String parentFk = replaceNull(rs.getString("parent_fk"));
+                    //remove all the parentFKs that refer back to the "incertae sedis" record.
+                   // parentFk = parentFk.equals("9")?nullString:parentFk; this is handled by the view now
+                    Integer nameFk = rs.getInt("name_fk");
+                    Integer lexicalGroupFk = rs.getInt("lexical_group_fk");
 
-                //now get the value for the scientific name
-                //String scientificName = getScientificName(nameFk, useCanonicalName);
-                String canId = rs.getString("can_id");
-                String scientificName = rs.getString("name");
-                //String portalRank = rs.getString("portal_rank");
-                Integer portalId = rs.getInt("rank_fk");
-                String rank = replaceNull(rs.getString("rank"));
-//                    log.debug("Before get Rank " + (System.currentTimeMillis() - startTime) + " ms");
-                
-                String portalRank = portalId == null ? nullString : getRank(portalId);
-                
-//                   log.debug("After get Rank " + (System.currentTimeMillis() - startTime) + " ms");
-                //now lookup the appropriate LSID from the identifier table
-                String lsid = getLSID(nameFk, lexicalGroupFk);
-//                    log.debug("After getLSID " + (System.currentTimeMillis() - startTime) + " ms");
-               
-                String line = id +"\t"+parentFk +"\t"+lsid + "\t"+canId+"\t" + scientificName + "\t" + replaceNull(rs.getString("authorship"))+"\t" + portalRank +"\t" +rank + "\t" + replaceNull(rs.getString("lft")) + "\t" + replaceNull(rs.getString("rgt"));
-                if(denormalise){
-                    line+= "\t" + replaceNull(rs.getString("kingdom_fk")) +"\t" + replaceNull(rs.getString("kingdom"))+
-                            "\t" + replaceNull(rs.getString("phylum_fk")) + "\t" + replaceNull(rs.getString("phylum"))+
-                            "\t"+ replaceNull(rs.getString("class_fk")) +"\t" + replaceNull(rs.getString("class"))+
-                            "\t"+replaceNull(rs.getString("order_fk"))+ "\t" + replaceNull(rs.getString("order"))+
-                            "\t"+ replaceNull(rs.getString("family_fk")) + "\t" + replaceNull(rs.getString("family"))+
-                            "\t" + replaceNull(rs.getString("genus_fk")) + "\t" + replaceNull(rs.getString("genus"))+
-                            "\t" + replaceNull(rs.getString("species_fk")) + "\t" + replaceNull(rs.getString("species"));
+                    //now get the value for the scientific name
+                    //String scientificName = getScientificName(nameFk, useCanonicalName);
+                    String canId = rs.getString("can_id");
+                    String scientificName = rs.getString("name");
+                    //String portalRank = rs.getString("portal_rank");
+                    Integer portalId = rs.getInt("rank_fk");
+                    String rank = replaceNull(rs.getString("rank"));
+                    boolean isSynonym = rs.getBoolean("is_synonym");
+                    
+                    String synonymId = nullString;
+                    String synonymLsid = nullString;
+                   
+   
+
+                    String portalRank = portalId == null ? nullString : getRank(portalId);
+
+   
+                    //now lookup the appropriate LSID from the identifier table
+                    String lsid = getLSID(id,nameFk, lexicalGroupFk);
+                    if(isSynonym && !parentFk.equals(nullString)){
+                        //when the records is a synonym the parent id represents the taxon concept that it is a synonym of.
+                    //when the parentFk is "9" then we can not identify the record as a synonym (this is handled from the view
+                        if(!parentFk.equals(nullString)){
+                            int pid = Integer.parseInt(parentFk);
+                            synonymId = parentFk;
+                            parentFk = nullString;
+                            synonymLsid = getLSID(pid);
+                        }
+                    }
+
+   
+
+                    String line = id +"\t"+parentFk +"\t"+lsid +"\t" + synonymId + "\t" + synonymLsid+ "\t"+canId+"\t" + scientificName + "\t" + replaceNull(rs.getString("authorship"))+"\t" + portalRank +"\t" +rank + "\t" + replaceNull(rs.getString("lft")) + "\t" + replaceNull(rs.getString("rgt"));
+                    if(denormalise){
+                        if(isSynonym){
+                            line+="\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
+                        }
+                        else{
+                        line+= "\t" + replaceNull(rs.getString("kingdom_fk")) +"\t" + replaceNull(rs.getString("kingdom"))+
+                                "\t" + replaceNull(rs.getString("phylum_fk")) + "\t" + replaceNull(rs.getString("phylum"))+
+                                "\t"+ replaceNull(rs.getString("class_fk")) +"\t" + replaceNull(rs.getString("class"))+
+                                "\t"+replaceNull(rs.getString("order_fk"))+ "\t" + replaceNull(rs.getString("order"))+
+                                "\t"+ replaceNull(rs.getString("family_fk")) + "\t" + replaceNull(rs.getString("family"))+
+                                "\t" + replaceNull(rs.getString("genus_fk")) + "\t" + replaceNull(rs.getString("genus"))+
+                                "\t" + replaceNull(rs.getString("species_fk")) + "\t" + replaceNull(rs.getString("species"));
+                        }
+                    }
+                    line+="\n";
+
+                    nameCounter++;
+                    fileOut.write(line);
                 }
-                line+="\n";
-
-                nameCounter++;
-                fileOut.write(line);
                 if (nameCounter % 10000 == 0) {
                     log.info("Exported " + nameCounter + " in " + (System.currentTimeMillis() - startTime) + " ms");
                 }
@@ -206,7 +236,7 @@ public class ChecklistBankExporter {
         idFileOut.close();
         return timeTaken;
     }
-
+   
     /**
      * Retrieve a string value for a rank.
      * 
@@ -221,7 +251,27 @@ public class ChecklistBankExporter {
         return nullString;
         //return dTemplate.queryForInt(rankSQL, new Object[]{id});
     }
+    /**
+     * Returns the LSID for the specified cb id.
+     * @param cbId
+     * @return
+     */
+    private String getLSID(int cbId) throws Exception{
+        //check to see if the LSID already exists
+        if(idToLsidMap.contains(cbId))
+            return idToLsidMap.get(cbId);
+        //else we need to get the nameFK and lexGrpFK for the cbId
+        Map<String,Object> cbusage = dTemplate.queryForMap(nameLexicalSql, new Object[]{cbId});
+        
+        return getLSID((Integer)cbusage.get("name_fk"), (Integer)cbusage.get("lexical_group_fk"));
+    }
 
+    private String getLSID(int cbId, Integer nameFK, Integer lexGrpFK) throws Exception{
+        //check to see if the LSID already exists
+        if(idToLsidMap.contains(cbId))
+            return idToLsidMap.get(cbId);
+        return getLSID(nameFK, lexGrpFK);
+    }
     /**
      * Gets the identifier for the name based on order of preference for the source of the id.
      * 
@@ -245,6 +295,7 @@ public class ChecklistBankExporter {
      * @throws Exception
      */
     private String getLSID(Integer nameFK, Integer lexGrpFK) throws Exception{
+
         //List<String> identifiers = dTemplate.queryForList(identifierSql, new Object[]{lexGrpFK, nameFK, new Integer(lsidType)}, String.class);
         List<Map<String,Object>> identifiers = dTemplate.queryForList(identifierSql, new Object[]{lexGrpFK, nameFK});
         //just take the value of the first one for now (it should be the one that has come from the checklist with the highest priority)
