@@ -29,7 +29,7 @@ public class NameSearchResult {
     private MatchType matchType;
     public NameSearchResult(String id, String lsid, String classification, MatchType type){
         this.id = Long.parseLong(id);
-        this.lsid = StringUtils.trimToNull(lsid);
+        this.lsid = StringUtils.trimToNull(lsid)==null ? id : StringUtils.trimToNull(lsid);
         this.classification = classification;
         matchType = type;
         isHomonym = false;
@@ -39,8 +39,11 @@ public class NameSearchResult {
         isHomonym = doc.get(IndexField.HOMONYM.toString())!=null;
         kingdom = doc.get(IndexField.KINGDOM.toString());
         String syn = doc.get(IndexField.SYNONYM.toString());
-        if(syn != null)
-          synonymLsid = StringUtils.trimToNull(syn.split("\t",2)[1]);
+        if(syn != null){
+            String[] synDetails = syn.split("\t",2);
+            synonymLsid = StringUtils.trimToNull(synDetails[1]) == null?synDetails[0]:synDetails[1];
+
+        }
     }
     public String getKingdom(){
         return kingdom;

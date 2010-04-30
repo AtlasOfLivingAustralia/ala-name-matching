@@ -42,7 +42,6 @@ import au.org.ala.data.util.RankType;
  *
  * 2. Search for a match on the alternative name field (with optional rank)
  *
- * 3. Search without the supplied kingdom/genus to check if we have a synonym (TO DO!!!)
  *
  * 3. Generate a searchable canonical name for the supplied name.  Search for a match on
  * the searchable canonical field using the generated name
@@ -61,16 +60,34 @@ import au.org.ala.data.util.RankType;
  */
 public class CBIndexSearch {
     protected Log log = LogFactory.getLog(CBIndexSearch.class);
-    private IndexReader reader;
-    private Searcher searcher;
+    private IndexReader cbReader,irmngReader;
+    private Searcher cbSearcher, irmngSearcher;
     protected TaxonNameSoundEx tnse;
     private NameParser parser;
 
 	public CBIndexSearch() {}
 
-	public CBIndexSearch(String indexDirectory) throws CorruptIndexException, IOException {
-		
-		File idxFile = new File(indexDirectory);
+	/**
+         * Creates a new name seacher. Using the indexDirectory 
+         * as the source directory 
+         * 
+         * @param indexDirectory The directory that contains the CB and IRMNG index.
+         * @throws CorruptIndexException
+         * @throws IOException
+         */
+        public CBIndexSearch(String indexDirectory) throws CorruptIndexException, IOException {
+		//Initialis CB index searching items
+		cbReader = IndexReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"cb")), true);
+		cbSearcher = new IndexSearcher(cbReader);
+                //Initalise the IRMNG index searching
+                irmngReader = IndexReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"irmng")), true);
+                irmngSearcher = new IndexSearcher(irmngReader);
+		tnse = new TaxonNameSoundEx();
+		parser = new NameParser();
+	}
+        private File createIfNotExist(String indexDirectory) throws IOException{
+           
+            File idxFile = new File(indexDirectory);
 		if(!idxFile.exists()){
 			FileUtils.forceMkdir(idxFile);
 			Analyzer analyzer = new StandardAnalyzer();
@@ -78,16 +95,13 @@ public class CBIndexSearch {
             iw.commit();
             iw.close();
 		}
-		
-		reader = IndexReader.open(FSDirectory.open(idxFile), true);
-		searcher = new IndexSearcher(reader);
-		tnse = new TaxonNameSoundEx();
-		parser = new NameParser();
-	}
+            return idxFile;
+        }
 
     /**
      * Searches the index for the supplied name.  Returns null when there is no result
-     * or the LSID for the first result.
+     * or the LSID for the first result. Where no LSID exist for the record the
+     * CB ID is returned instead
      * @param name
      * @return
      */
@@ -97,6 +111,8 @@ public class CBIndexSearch {
     /**
      * Searches the index for the supplied name of the specified rank.  Returns
      * null when there is no result or the LSID for the first result.
+     * Where no LSID exist for the record the
+     * CB ID is returned instead
      *
      * When the result is a synonym the "accepted" taxons's LSID is returned.
      *
@@ -195,7 +211,7 @@ public class CBIndexSearch {
     public List<NameSearchResult> searchForRecords(String name, RankType rank, String kingdom, String genus, int max) throws SearchResultException{
         //The name is not allowed to be null
         if(name == null)
-            throw new NullPointerException(); //should this be a searchresultexception??
+            throw new SearchResultException("Unable to perform search. Null value supplied for the name."); 
         try{
             String phylum = null;
             //1. Direct Name hit
@@ -209,6 +225,7 @@ public class CBIndexSearch {
             hits = performSearch(CBCreateLuceneIndex.IndexField.NAMES.toString(), name, rank, kingdom, phylum, genus, max, NameSearchResult.MatchType.ALTERNATE, true);
             if(hits.size()>0)
                 return hits;
+
 
             //3. searchable canonical name
             String searchable = tnse.soundEx(name);
@@ -240,6 +257,28 @@ public class CBIndexSearch {
     }
 
     /**
+     * Checks to see if the supplied name is a synonym. A synonym will not have
+     * an associated kingdom and genus in the index.
+     *
+     *
+     * @param name
+     * @param rank
+     * @param kingdom
+     * @param genus
+     * @param max
+     * @throws SearchResultException
+     */
+    private void checkForSynonym(String name, RankType rank, String kingdom, String genus, int max) throws SearchResultException{
+       //search on name field with name and empty kingdom and genus
+       //search on the alternative names field with name and empty kingdom and genus
+       //if we get a match that is a synonym verify match against IRMNG
+    }
+
+    private boolean doesSynonymMatch(String name, RankType rank, String kingdom, String genus){
+        return false;
+    }
+
+    /**
      *
      * Performs an index search based on the supplied field and name
      *
@@ -256,7 +295,7 @@ public class CBIndexSearch {
      * @throws SearchResultException
      */
     private List<NameSearchResult> performSearch(String field, String value, RankType rank, String kingdom, String phylum, String genus, int max, NameSearchResult.MatchType type, boolean checkHomo)throws IOException, SearchResultException{
-        if(searcher != null){
+        if(cbSearcher != null){
             Term term = new Term(field, value);
             Query query = new TermQuery(term);
             
@@ -286,18 +325,18 @@ public class CBIndexSearch {
             }
 //            System.out.println(boolQuery);
             //limit the number of potential matches to max
-            TopDocs hits = searcher.search(boolQuery, max);
+            TopDocs hits = cbSearcher.search(boolQuery, max);
             //now put the hits into the arrayof NameSearchResult
             List<NameSearchResult> results = new java.util.ArrayList<NameSearchResult>();
 
             for(ScoreDoc sdoc : hits.scoreDocs){
-                results.add(new NameSearchResult(reader.document(sdoc.doc), type));
+                results.add(new NameSearchResult(cbReader.document(sdoc.doc), type));
             }
 
             //check to see if the search criteria could represent an unresolved homonym
 
             if(checkHomo && results.size()>0&&results.get(0).isHomonym()){
-                NameSearchResult result= validateHomonyms(results, kingdom);
+                NameSearchResult result= validateHomonyms(results,value, kingdom);
                 results.clear();
                 results.add(result);
             }
@@ -334,7 +373,7 @@ public class CBIndexSearch {
      * @return
      * @throws HomonymException
      */
-    public NameSearchResult validateHomonyms(List<NameSearchResult> results, String k) throws HomonymException{
+    public NameSearchResult validateHomonyms(List<NameSearchResult> results, String name, String k) throws HomonymException{
         //WE are basing our unresolvable homonyms on having a known homonym that does not match at the kingdom level
         //The remaining levels are being ignored in this check
         //if a homonym exists but exact genus/species match exists and some of the higher classification match assume we have a match
@@ -344,13 +383,40 @@ public class CBIndexSearch {
         if(k!= null){
             //check to see if the kingdom for the result matches, or has a close match
             for(NameSearchResult result : results){
-                if(k.equals(result.getKingdom()) || isCloseMatch(k, result.getKingdom(), 3, 3))
+                //check to see if the result is a synonym
+                if(result.isSynonym()){
+                    //get the kingdom for the synonym using the IRMNG search
+                    String kingdom = getValueForSynonym(name);
+                    if(kingdom != null &&(kingdom.equals(k) || isCloseMatch(k, kingdom, 3, 3)))
+                        return result;
+                }
+                else if(k.equals(result.getKingdom()) || isCloseMatch(k, result.getKingdom(), 3, 3))
                     return result;
             }
         }
         throw new HomonymException(results);
         
     }
-
+    private String getValueForSynonym(String name){
+        //get the genus for the name
+        ParsedName<?> pn =  parser.parse(name);
+        if(pn!= null){
+            String genus = pn.getGenusOrAbove();
+            //seach for the genus in irmng
+            return simpleIndexLookup(irmngSearcher, RankType.GENUS.getRank(), genus, RankType.KINGDOM.getRank());
+        }
+        return null;
+    }
+    private String simpleIndexLookup(Searcher is, String key, String value, String retValue){
+        try{
+        TermQuery query = new TermQuery(new Term(key, value));
+        //System.out.println(query.toString());
+        TopDocs results =is.search(query, 1);
+        for(ScoreDoc sdoc:results.scoreDocs)
+            return is.doc(sdoc.doc).get(retValue);
+        }
+        catch(IOException e){}
+        return null;
+    }
 
 }

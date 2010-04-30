@@ -3,6 +3,8 @@ package au.org.ala.data.util;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * An enumeration of the rank types available in ALA.  The rank names come
@@ -49,7 +51,7 @@ public enum RankType {
     CULTIVAR(8050, "cultivar"),
     INFORMAL(-1, "informal"),
     UNRANKED(0, "unranked"),
-    SUPRAGENERICNAME(8200, "supergenericname");
+    SUPRAGENERICNAME(8200, "supragenericname");
     // Allow reverse-lookup (based on http://www.ajaxonomy.com/2007/java/making-the-most-of-java-50-enum-tricks)
     private static final Map<String, RankType> fieldLookup = new HashMap<String, RankType>();
     private static final Map<Integer, RankType> idLookup = new HashMap<Integer, RankType>();
@@ -66,6 +68,14 @@ public enum RankType {
     private RankType(Integer id, String field) {
         this.id = id;
         this.field = field;
+    }
+    public static Set<RankType> getAllRanksBelow(Integer rank){
+        Set<RankType> ranks = new TreeSet<RankType>();
+        for(RankType rt : EnumSet.allOf(RankType.class)){
+            if(rt.getId() >= rank)
+                ranks.add(rt);
+        }
+        return ranks;
     }
 
     /**

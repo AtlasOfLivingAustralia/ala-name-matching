@@ -19,6 +19,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,12 +27,14 @@ import java.util.List;
 import java.util.Map;
 
 import javax.sql.DataSource;
+import org.apache.commons.dbcp.BasicDataSource;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.gbif.checklistbank.utils.SqlUtils;
+import org.postgresql.PGConnection;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -46,7 +49,7 @@ public class ChecklistBankExporter {
     private final int pageSize = 10000;
     protected Log log = LogFactory.getLog(ChecklistBankExporter.class);
     protected ApplicationContext context;
-    protected DataSource dataSource;
+    protected BasicDataSource dataSource;
     protected JdbcTemplate dTemplate;
     //Use view
     //private String denormaliseSql = "SELECT * from ala_dwc_classification where id >? order by id limit ?";
@@ -55,9 +58,10 @@ public class ChecklistBankExporter {
     //private String rankSQL = "SELECT min(portal_rank) FROM term_gbif_portal_rank WHERE term_fk =? ";
     private String identifierSql = "SELECT identifier, checklist_fk FROM tmp_identifiers WHERE lexical_group_fk =? and name_fk = ? ORDER BY id";
     private String rankMapSql = "SELECT term_fk, portal_rank FROM term_gbif_portal_rank ORDER BY term_fk, portal_rank";
-    private String nameLexicalSql = "SELECT name_fk, lexical_group_fk from name_usage where id = ?";
+    private String nameLexicalSql = "SELECT COALESCE(ns.canonical_name_fk, ns.id), lexical_group_fk from name_usage nu JOIN name_string ns ON nu.name_fk = ns.id where nu.id = ?";
+    private String lexGroupSql = "copy ( select nu.id,ns.scientific_name from name_usage nu JOIN name_in_lexical_group nlg ON nu.lexical_group_fk = nlg.lexical_group_fk JOIN name_string ns on nlg.name_fk = ns.id where checklist_fk = 1 order by nu.id ) TO STDOUT WITH NULL '' ";
     private OutputStreamWriter fileOut;
-    private FileOutputStream idFileOut;
+    private FileOutputStream idFileOut, lexOut;
     private int nameCounter;
     private String nullString = ""; //"\\N";
     private HashMap<Integer, Integer> rankMappings;
@@ -70,7 +74,7 @@ public class ChecklistBankExporter {
 		log.info("Initialising DB connections and output files...");
 		String[] locations = {"classpath*:au/org/ala/**/applicationContext-cb*.xml"};
 		context = new ClassPathXmlApplicationContext(locations);
-		dataSource = (DataSource) context.getBean("cbDataSource");
+		dataSource = (BasicDataSource) context.getBean("cbDataSource");
 		dTemplate = new JdbcTemplate(dataSource);
 		
         if(fileName != null){
@@ -89,10 +93,13 @@ public class ChecklistBankExporter {
             }
             idFileOut = new FileOutputStream(exportIdsFile);
             log.info("Exporting identifiers to " + exportIdsFile);
-            
-            
+
+            File lexFile = new File(directory + File.separator +"cb_lex_names.txt");
+            if(lexFile.exists())
+                FileUtils.forceDelete(lexFile);
+            lexOut = FileUtils.openOutputStream(lexFile);
             nameCounter = 0;
-          
+
         }
         log.info("Initialised.");
 	}
@@ -147,7 +154,7 @@ public class ChecklistBankExporter {
         boolean hasMore = true;
         int min = 0;
         //insert the header line for the file
-        fileOut.write("nub id\tparent nub id\tlsid\tsynonym id\tsynonym lsid\tname id\tcanonical name\tauthor\tportal rank id\trank\tlft\trgt\tkingdom id\tkingdom\tphylum id\tphylum\tclass id\tclass\torder id \torder\tfamily id\tfamily\tgenus id\tgenus\tspecies id\tspecies");
+        fileOut.write("nub id\tparent nub id\tlsid\taccepted id\taccepted lsid\tname id\tcanonical name\tauthor\tportal rank id\trank\tlft\trgt\tkingdom id\tkingdom\tphylum id\tphylum\tclass id\tclass\torder id\torder\tfamily id\tfamily\tgenus id\tgenus\tspecies id\tspecies\n");
         //perform a paged export of the name_usage table
         while(hasMore){
             int numProcessed =0;
@@ -186,7 +193,7 @@ public class ChecklistBankExporter {
 
    
                     //now lookup the appropriate LSID from the identifier table
-                    String lsid = getLSID(id,nameFk, lexicalGroupFk);
+                    String lsid = getLSID(id,Integer.parseInt(canId), lexicalGroupFk);
                     if(isSynonym && !parentFk.equals(nullString)){
                         //when the records is a synonym the parent id represents the taxon concept that it is a synonym of.
                     //when the parentFk is "9" then we can not identify the record as a synonym (this is handled from the view
@@ -202,10 +209,7 @@ public class ChecklistBankExporter {
 
                     String line = id +"\t"+parentFk +"\t"+lsid +"\t" + synonymId + "\t" + synonymLsid+ "\t"+canId+"\t" + scientificName + "\t" + replaceNull(rs.getString("authorship"))+"\t" + portalRank +"\t" +rank + "\t" + replaceNull(rs.getString("lft")) + "\t" + replaceNull(rs.getString("rgt"));
                     if(denormalise){
-                        if(isSynonym){
-                            line+="\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
-                        }
-                        else{
+
                         line+= "\t" + replaceNull(rs.getString("kingdom_fk")) +"\t" + replaceNull(rs.getString("kingdom"))+
                                 "\t" + replaceNull(rs.getString("phylum_fk")) + "\t" + replaceNull(rs.getString("phylum"))+
                                 "\t"+ replaceNull(rs.getString("class_fk")) +"\t" + replaceNull(rs.getString("class"))+
@@ -213,7 +217,6 @@ public class ChecklistBankExporter {
                                 "\t"+ replaceNull(rs.getString("family_fk")) + "\t" + replaceNull(rs.getString("family"))+
                                 "\t" + replaceNull(rs.getString("genus_fk")) + "\t" + replaceNull(rs.getString("genus"))+
                                 "\t" + replaceNull(rs.getString("species_fk")) + "\t" + replaceNull(rs.getString("species"));
-                        }
                     }
                     line+="\n";
 
@@ -234,7 +237,25 @@ public class ChecklistBankExporter {
         fileOut.close();
         idFileOut.flush();
         idFileOut.close();
+        exportLexicalNames();
         return timeTaken;
+    }
+    /**
+     * Exports the all the names that belong to the same lexical group for each id.
+     * Uses a bulk export method 
+     *
+     * This export file is used to create the lucene index used in the name matching API
+     * 
+     * @throws Exception
+     */
+    private void exportLexicalNames() throws Exception{
+        long startTime = System.currentTimeMillis();
+        log.info("Exporting the lexical names...");
+        PGConnection con = (PGConnection)DriverManager.getConnection(dataSource.getUrl(), dataSource.getUsername(),dataSource.getPassword());
+        con.getCopyAPI().copyOut(lexGroupSql,lexOut);
+        lexOut.flush();
+        lexOut.close();
+        log.info("Finished exporting the lexical names in " + (System.currentTimeMillis() - startTime) + " ms");
     }
    
     /**

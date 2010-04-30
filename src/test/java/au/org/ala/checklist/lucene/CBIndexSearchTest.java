@@ -18,7 +18,7 @@ public class CBIndexSearchTest {
 	@org.junit.Before
 	public void init() {
 		try {
-			searcher = new CBIndexSearch("/data/lucene/cb/classification");
+			searcher = new CBIndexSearch("/data/lucene/namematching");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -55,14 +55,20 @@ public class CBIndexSearchTest {
 		System.out.println("###################################");
 	}
         @org.junit.Test
-        public void testSynonym(){
+        public void testSynonymWithHomonym(){
             try{
-               NameSearchResult result = searcher.searchForRecord("Macropus rufus", RankType.SPECIES);
-               System.out.println("Macropus rufus: " + result);
-               System.out.println("LSID: " + searcher.searchForLSID("Macropus rufus"));
+//               NameSearchResult result = searcher.searchForRecord("Macropus rufus", RankType.SPECIES);
+//               System.out.println("Macropus rufus: " + result);
+//               System.out.println("LSID: " + searcher.searchForLSID("Macropus rufus"));
+                NameSearchResult result = searcher.searchForRecord("Sira tricincta", "Animalia", "Sira", RankType.SPECIES);
+                System.out.println("synonym: " + result);
+                System.out.println("LSID: " +searcher.searchForLSID("Sira tricincta"));
             }
             catch(Exception e){
-
+                //e.printStackTrace();//
+                if(e instanceof HomonymException){
+                    printAllResults("SYNONYM/HOMONYM: ", ((HomonymException)e).getResults());
+                }
             }
         }
 
@@ -73,7 +79,7 @@ public class CBIndexSearchTest {
 			List<NameSearchResult> results = searcher.searchForRecords(
 					"Simsia", RankType.getForId(6000), "Animalia", "Simsia", 10);
 			printAllResults("hymonyms test 1", results);
-
+                        //test to ensure that kingdoms that almost match are being will not report homonym exceptions
 			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), "Anmalia",
 					"Simsia", 10);
 			printAllResults("hymonyms test (Anmalia)", results);
@@ -103,6 +109,5 @@ public class CBIndexSearchTest {
 			e.printStackTrace();
 		}
 		System.out.println(result);
-	}
-	
+	}	
 }

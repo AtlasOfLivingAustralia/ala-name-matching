@@ -9,7 +9,7 @@ import au.org.ala.checklist.lucene.model.NameSearchResult;
  *  @see HomonymException
  * @author Natasha
  */
-public abstract class SearchResultException extends Exception {
+public class SearchResultException extends Exception {
     protected List<NameSearchResult> results;
     public SearchResultException(String msg){
         super(msg);
