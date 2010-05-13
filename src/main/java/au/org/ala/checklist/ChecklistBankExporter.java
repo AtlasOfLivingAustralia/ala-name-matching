@@ -58,7 +58,7 @@ public class ChecklistBankExporter {
     //private String rankSQL = "SELECT min(portal_rank) FROM term_gbif_portal_rank WHERE term_fk =? ";
     private String identifierSql = "SELECT identifier, checklist_fk FROM tmp_identifiers WHERE lexical_group_fk =? and name_fk = ? ORDER BY id";
     private String rankMapSql = "SELECT term_fk, portal_rank FROM term_gbif_portal_rank ORDER BY term_fk, portal_rank";
-    private String nameLexicalSql = "SELECT COALESCE(ns.canonical_name_fk, ns.id), lexical_group_fk from name_usage nu JOIN name_string ns ON nu.name_fk = ns.id where nu.id = ?";
+    private String nameLexicalSql = "SELECT COALESCE(ns.canonical_name_fk, ns.id) as name_fk, lexical_group_fk from name_usage nu JOIN name_string ns ON nu.name_fk = ns.id where nu.id = ?";
     private String lexGroupSql = "copy ( select nu.id,ns.scientific_name from name_usage nu JOIN name_in_lexical_group nlg ON nu.lexical_group_fk = nlg.lexical_group_fk JOIN name_string ns on nlg.name_fk = ns.id where checklist_fk = 1 order by nu.id ) TO STDOUT WITH NULL '' ";
     private OutputStreamWriter fileOut;
     private FileOutputStream idFileOut, lexOut;

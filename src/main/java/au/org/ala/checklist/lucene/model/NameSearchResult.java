@@ -20,6 +20,7 @@ public class NameSearchResult {
     private String cleanName;
     private boolean isHomonym;
     private String synonymLsid;
+    private long synonymId = -1;
     private String kingdom;
     public enum MatchType{
         DIRECT,
@@ -42,15 +43,25 @@ public class NameSearchResult {
         if(syn != null){
             String[] synDetails = syn.split("\t",2);
             synonymLsid = StringUtils.trimToNull(synDetails[1]) == null?synDetails[0]:synDetails[1];
-
+            try{
+                synonymId = Long.parseLong(synDetails[0]);
+            }
+            catch(NumberFormatException e){
+                synonymId = -1;
+            }
         }
     }
     public String getKingdom(){
         return kingdom;
     }
+    /**
+     * Return the LSID for the result if it is not null otherwise return the id.
+     * @return
+     */
     public String getLsid(){
-
-        return lsid;
+        if(lsid !=null || id <1)
+            return lsid;
+        return Long.toString(id);
     }
     public long getId(){
         return id;
@@ -77,10 +88,20 @@ public class NameSearchResult {
         return isHomonym;
     }
     public boolean isSynonym(){
-        return synonymLsid != null;
+        return synonymLsid != null || synonymId >0;
     }
+    public long getSynonymId(){
+        return synonymId;
+    }
+    /**
+     * When the LSID for the synonym is null return the ID for the synonym
+     * @return
+     */
     public String getSynonymLsid(){
-        return synonymLsid;
+        if(synonymLsid != null || synonymId<1)
+            return synonymLsid;
+        else
+            return Long.toString(synonymId);
     }
     @Override
     public String toString(){

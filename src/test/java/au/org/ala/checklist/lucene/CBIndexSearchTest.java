@@ -109,5 +109,23 @@ public class CBIndexSearchTest {
 			e.printStackTrace();
 		}
 		System.out.println(result);
-	}	
+	}
+        @org.junit.Test
+        public void testCommonNames(){
+            //ANBG source
+            printCommonName("Red Kangaroo");
+            //COL source
+            printCommonName("Yellow-tailed Black-Cockatoo");
+            //not found
+            printCommonName("Scarlet Robin");
+            //CoL source that maps to a ANBG lsid
+            printCommonName("Australian tuna");
+            //ANBG and CoL have slightly different scientific name
+            printCommonName("Pacific Black Duck");
+            //Maps to many different species thus should return no LSID
+            printCommonName("Carp");
+        }
+        private void printCommonName(String name){
+            System.out.println(name + " " + searcher.searchForLSIDCommonName(name));
+        }
 }

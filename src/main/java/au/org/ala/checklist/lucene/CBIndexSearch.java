@@ -60,11 +60,11 @@ import au.org.ala.data.util.RankType;
  */
 public class CBIndexSearch {
     protected Log log = LogFactory.getLog(CBIndexSearch.class);
-    private IndexReader cbReader,irmngReader;
-    private Searcher cbSearcher, irmngSearcher;
+    private IndexReader cbReader,irmngReader, vernReader;
+    private Searcher cbSearcher, irmngSearcher, vernSearcher;
     protected TaxonNameSoundEx tnse;
     private NameParser parser;
-
+   
 	public CBIndexSearch() {}
 
 	/**
@@ -76,12 +76,15 @@ public class CBIndexSearch {
          * @throws IOException
          */
         public CBIndexSearch(String indexDirectory) throws CorruptIndexException, IOException {
-		//Initialis CB index searching items
+                //Initialis CB index searching items
 		cbReader = IndexReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"cb")), true);
 		cbSearcher = new IndexSearcher(cbReader);
-                //Initalise the IRMNG index searching
+                //Initalise the IRMNG index searching items
                 irmngReader = IndexReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"irmng")), true);
                 irmngSearcher = new IndexSearcher(irmngReader);
+                //initalise the Common name index searching items
+                vernReader = IndexReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"vernacular")), true);
+                vernSearcher = new IndexSearcher(vernReader);
 		tnse = new TaxonNameSoundEx();
 		parser = new NameParser();
 	}
@@ -397,26 +400,136 @@ public class CBIndexSearch {
         throw new HomonymException(results);
         
     }
+    /**
+     * Mulitple genus indicate that an unresolved homonym exists for the supplied
+     * search details.
+     * @param k
+     * @param p
+     * @param c
+     * @param o
+     * @param f
+     * @param g
+     */
+    private TopDocs getIRMNGGenus(String k, String p, String c, String o, String f, String g){
+        Term term = new Term(RankType.GENUS.getRank(), g);
+        Query query = new TermQuery(term);
+        BooleanQuery boolQuery = new BooleanQuery();
+        boolQuery.add(query, Occur.MUST);
+        //optionally add the remaining ranks if they were supplied
+        if(k != null)
+            boolQuery.add(new TermQuery(new Term(RankType.KINGDOM.getRank(), k)), Occur.MUST);
+        if(p != null)
+            boolQuery.add(new TermQuery(new Term(RankType.PHYLUM.getRank(), p)), Occur.MUST);
+        if(c != null)
+            boolQuery.add(new TermQuery(new Term(RankType.CLASS.getRank(), c)), Occur.MUST);
+        if(o != null)
+            boolQuery.add(new TermQuery(new Term(RankType.ORDER.getRank(), o)), Occur.MUST);
+        if(f != null)
+            boolQuery.add(new TermQuery(new Term(RankType.FAMILY.getRank(), f)), Occur.MUST);
+        //now perform the search
+        try{
+        return irmngSearcher.search(boolQuery, 10);
+
+        }
+        catch(IOException e){
+            log.warn("Error searching IRMNG index." , e);
+        }
+        return null;
+    }
     private String getValueForSynonym(String name){
         //get the genus for the name
         ParsedName<?> pn =  parser.parse(name);
         if(pn!= null){
             String genus = pn.getGenusOrAbove();
+            TopDocs docs = getIRMNGGenus(null, null, null, null, null, genus);
+            try{
+            if(docs.totalHits>0)
+                return irmngSearcher.doc(docs.scoreDocs[0].doc).get(RankType.KINGDOM.getRank());
+            }
+            catch(IOException e){
+                log.warn("Unable to get value for synonym. " ,e);
+            }
             //seach for the genus in irmng
-            return simpleIndexLookup(irmngSearcher, RankType.GENUS.getRank(), genus, RankType.KINGDOM.getRank());
+            //return simpleIndexLookup(irmngSearcher, RankType.GENUS.getRank(), genus, RankType.KINGDOM.getRank());
         }
         return null;
     }
-    private String simpleIndexLookup(Searcher is, String key, String value, String retValue){
-        try{
-        TermQuery query = new TermQuery(new Term(key, value));
-        //System.out.println(query.toString());
-        TopDocs results =is.search(query, 1);
-        for(ScoreDoc sdoc:results.scoreDocs)
-            return is.doc(sdoc.doc).get(retValue);
-        }
-        catch(IOException e){}
-        return null;
-    }
+    
+    /**
+     * Performs a search on the common name index for the supplied name.
+     * @param commonName
+     * @return
+     */
+    public String searchForLSIDCommonName(String commonName){
 
+        return getLSIDForUniqueCommonName(commonName);
+    }
+    /**
+     * Returns the LSID for the CB name usage for the supplied common name.
+     *
+     * When the common name returns more than 1 hit a result is only returned if all the scientific names match
+     * @param name
+     * @return
+     */
+    private String getLSIDForUniqueCommonName(String name){
+        if(name != null){
+            TermQuery query = new TermQuery(new Term(CBCreateLuceneIndex.IndexField.COMMON_NAME.toString(), name.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", "")));
+            try{
+                TopDocs results = vernSearcher.search(query, 10);
+                //if all the results have the same scientific name result the LSID for the first
+                String firstLsid = null;
+                String firstName = null;
+                System.out.println("Number of matches for " + name + " " + results.totalHits);
+                for(ScoreDoc sdoc: results.scoreDocs){
+                    org.apache.lucene.document.Document doc =vernSearcher.doc(sdoc.doc);
+                    if(firstLsid == null){
+                        firstLsid = doc.get(CBCreateLuceneIndex.IndexField.LSID.toString());
+                        firstName = doc.get(CBCreateLuceneIndex.IndexField.NAME.toString());
+                    }
+                    else{
+                        if(!doSciNamesMatch(firstName, doc.get(CBCreateLuceneIndex.IndexField.NAME.toString())))
+                            return null;
+                    }
+                }
+                return firstLsid;
+            }
+            catch(IOException e){
+
+            }
+        }
+        return null;
+    }
+    /**
+     * Returns true when the parsed names match.
+     * @param n1
+     * @param n2
+     * @return
+     */
+    private boolean doSciNamesMatch(String n1, String n2){
+        ParsedName<?> pn1 =  parser.parse(n1);
+        ParsedName<?> pn2 =  parser.parse(n2);
+        if(pn1 != null && pn2!= null)
+            return pn1.buildCanonicalName().equals(pn2.buildCanonicalName());
+        return false;
+    }
+    /**
+     * Performs a search on the supplied common name returning a NameSearchResult.
+     * Useful if you required CB ID's etc.
+     * @param name
+     * @return
+     */
+    public NameSearchResult searchForCommonName(String name){
+        NameSearchResult result = null;
+        String lsid = getLSIDForUniqueCommonName(name);
+        if(lsid != null){
+            //we need to get the CB ID for the supplied LSID
+            try{
+                List<NameSearchResult> results= performSearch(CBCreateLuceneIndex.IndexField.LSID.toString(), lsid, null, null, null, null, 1, NameSearchResult.MatchType.DIRECT, false);
+                if(results.size()>0)
+                    result = results.get(0);
+            }
+            catch(Exception e){}
+        }
+        return result;
+    }
 }
