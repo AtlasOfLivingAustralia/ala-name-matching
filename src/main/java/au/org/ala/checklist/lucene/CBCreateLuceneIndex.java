@@ -151,8 +151,9 @@ public class CBCreateLuceneIndex {
 
     private void indexCB(IndexWriter iw, String cbExportFile, String lexFile) throws Exception {
         long time = System.currentTimeMillis();
-        CSVReader cbreader = CSVReader.buildReader(new File(cbExportFile), 1);
+        CSVReader cbreader = CSVReader.buildReader(new File(cbExportFile), "UTF-8", '\t', '"', 1);
 
+//        CSVReader lexreader = CSVReader.buildReader(new File(lexFile), "UTF-8", '\t', '"', 0);
         CSVReader lexreader = CSVReader.buildReader(new File(lexFile), 0);
 
         String[] lexName = lexreader.readNext();
