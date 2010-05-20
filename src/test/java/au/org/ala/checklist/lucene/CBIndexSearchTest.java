@@ -7,6 +7,7 @@ import java.util.List;
 
 import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.util.RankType;
+import org.gbif.portal.model.LinnaeanRankClassification;
 
 /**
  *
@@ -60,9 +61,11 @@ public class CBIndexSearchTest {
 //               NameSearchResult result = searcher.searchForRecord("Macropus rufus", RankType.SPECIES);
 //               System.out.println("Macropus rufus: " + result);
 //               System.out.println("LSID: " + searcher.searchForLSID("Macropus rufus"));
-                NameSearchResult result = searcher.searchForRecord("Sira tricincta", "Animalia", "Sira", RankType.SPECIES);
+                LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Atylus");
+                NameSearchResult result = searcher.searchForRecord("Atylus monoculoides", cl, RankType.SPECIES);
                 System.out.println("synonym: " + result);
-                System.out.println("LSID: " +searcher.searchForLSID("Sira tricincta"));
+                System.out.println("LSID: " + searcher.searchForLSID("Atylus monoculoides"));
+                //System.out.println("LSID: " +searcher.searchForLSID("Sira tricincta"));
             }
             catch(Exception e){
                 //e.printStackTrace();//
@@ -76,16 +79,16 @@ public class CBIndexSearchTest {
 	public void testHomonym() {
 		try {
 
+                        LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Simsia");
 			List<NameSearchResult> results = searcher.searchForRecords(
-					"Simsia", RankType.getForId(6000), "Animalia", "Simsia", 10);
+					"Simsia", RankType.getForId(6000), cl, 10);
 			printAllResults("hymonyms test 1", results);
                         //test to ensure that kingdoms that almost match are being will not report homonym exceptions
-			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), "Anmalia",
-					"Simsia", 10);
+			cl.setKingdom("Anmalia");
+                        results = searcher.searchForRecords("Simsia", RankType.getForId(6000), cl, 10);
 			printAllResults("hymonyms test (Anmalia)", results);
-
-			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), null,
-					"Simsia", 10);
+                        cl.setKingdom(null);
+			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), cl, 10);
 			printAllResults("homonyms test 2", results);
 
 		} catch (SearchResultException e) {
@@ -104,7 +107,8 @@ public class CBIndexSearchTest {
 	public void testSearchForRecord() {
 		NameSearchResult result = null;
 		try {
-			result = searcher.searchForRecord(null, null, "Rhinotia", null);
+                        LinnaeanRankClassification cl = new LinnaeanRankClassification(null, "Rhinotia");
+			result = searcher.searchForRecord(null, cl, null);
 		} catch (SearchResultException e) {
 			e.printStackTrace();
 		}
@@ -127,5 +131,28 @@ public class CBIndexSearchTest {
         }
         private void printCommonName(String name){
             System.out.println(name + " " + searcher.searchForLSIDCommonName(name));
+        }
+        @org.junit.Test
+        public void testIRMNGHomonymReconcile(){
+            try{
+                LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Chordata", null, null, "Macropodidae", "Macropus", null);
+                RankType rank = searcher.resolveIRMNGHomonym(cl);
+                System.out.println("IRMNG Homonym resolved at " + rank + " rank");
+                //now cause a homonym exception by removing the family
+                cl.setFamily(null);
+                searcher.resolveIRMNGHomonym(cl);
+            }
+            catch(HomonymException e){
+                System.out.println(e.getMessage());
+            }
+        }
+        @org.junit.Test
+        public void newHomonynmTest(){
+            try{
+                //Abelia grandiflora
+            }
+            catch(Exception e){
+
+            }
         }
 }

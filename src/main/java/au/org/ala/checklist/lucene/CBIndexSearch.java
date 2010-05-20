@@ -32,6 +32,7 @@ import org.gbif.portal.util.taxonomy.TaxonNameSoundEx;
 
 import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.util.RankType;
+import org.gbif.portal.model.LinnaeanRankClassification;
 
 /**
  *
@@ -124,7 +125,7 @@ public class CBIndexSearch {
      * @return
      */
     public String searchForLSID(String name, RankType rank)throws SearchResultException{
-        return searchForLSID(name, null,  null, rank);
+        return searchForLSID(name, null, rank);
 
     }
     /**
@@ -134,15 +135,14 @@ public class CBIndexSearch {
      * 
      * 
      * @param name
-     * @param kingdom
-     * @param genus
+     * @param cl The high taxa that form the classification for the search item
      * @param rank
      * @return
      * @throws SearchResultException
      */
-    public String searchForLSID(String name, String kingdom,  String genus, RankType rank) throws SearchResultException{
+    public String searchForLSID(String name, LinnaeanRankClassification cl, RankType rank) throws SearchResultException{
 		String lsid = null;
-    	NameSearchResult result = searchForRecord(name, kingdom, genus, rank);
+    	NameSearchResult result = searchForRecord(name, cl, rank);
 		if (result != null) {
 			if (result.getSynonymLsid()==null && result.getLsid()==null) {
 				log.warn("LSID missing for [name=" + name + ", id=" + result.getId() + "]");
@@ -161,10 +161,10 @@ public class CBIndexSearch {
      * @return
      */
     public NameSearchResult searchForRecord(String name, RankType rank) throws SearchResultException{
-        return searchForRecord(name, null,  null, rank);
+        return searchForRecord(name, null,  rank);
     }
-    public NameSearchResult searchForRecord(String name, String kingdom, String genus, RankType rank)throws SearchResultException{
-        List<NameSearchResult> results = searchForRecords(name, rank, kingdom, genus, 1);
+    public NameSearchResult searchForRecord(String name, LinnaeanRankClassification cl, RankType rank)throws SearchResultException{
+        List<NameSearchResult> results = searchForRecords(name, rank, cl, 1);
         if(results != null && results.size()>0)
             return results.get(0);
       
@@ -177,7 +177,7 @@ public class CBIndexSearch {
      */
     public NameSearchResult searchForRecordByID(String id){
         try{
-            List<NameSearchResult> results = performSearch(CBCreateLuceneIndex.IndexField.ID.toString(),id, null, null, null, null, 1, null, false);
+            List<NameSearchResult> results = performSearch(CBCreateLuceneIndex.IndexField.ID.toString(),id, null,  null, 1, null, false);
             if(results.size()>0)
                 return results.get(0);
         }
@@ -196,7 +196,7 @@ public class CBIndexSearch {
      * @return
      */
     public List<NameSearchResult> searchForRecords(String name, RankType rank) throws SearchResultException{
-        return searchForRecords(name, rank, null, null, 10);
+        return searchForRecords(name, rank, null, 10);
     }
     
     /**
@@ -211,21 +211,21 @@ public class CBIndexSearch {
      * @return
      * @throws SearchResultException
      */
-    public List<NameSearchResult> searchForRecords(String name, RankType rank, String kingdom, String genus, int max) throws SearchResultException{
+    public List<NameSearchResult> searchForRecords(String name, RankType rank, LinnaeanRankClassification cl, int max) throws SearchResultException{
         //The name is not allowed to be null
         if(name == null)
             throw new SearchResultException("Unable to perform search. Null value supplied for the name."); 
         try{
-            String phylum = null;
+            
             //1. Direct Name hit
-            List<NameSearchResult> hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), name, rank, kingdom, phylum, genus, max, NameSearchResult.MatchType.DIRECT, true);
+            List<NameSearchResult> hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), name, rank, cl, max, NameSearchResult.MatchType.DIRECT, true);
 			if (hits == null) // situation where searcher has not been initialised
 				return null;
 			if (hits.size() > 0)
 				return hits;
 
 			//2. Hit on the alternative names
-            hits = performSearch(CBCreateLuceneIndex.IndexField.NAMES.toString(), name, rank, kingdom, phylum, genus, max, NameSearchResult.MatchType.ALTERNATE, true);
+            hits = performSearch(CBCreateLuceneIndex.IndexField.NAMES.toString(), name, rank, cl, max, NameSearchResult.MatchType.ALTERNATE, true);
             if(hits.size()>0)
                 return hits;
 
@@ -233,7 +233,7 @@ public class CBIndexSearch {
             //3. searchable canonical name
             String searchable = tnse.soundEx(name);
             //searchable canonical should not check for homonyms due to the more erratic nature of the result
-            hits = performSearch(CBCreateLuceneIndex.IndexField.SEARCHABLE_NAME.toString(), searchable, rank, kingdom, phylum, genus, max, NameSearchResult.MatchType.SEARCHABLE, false);
+            hits = performSearch(CBCreateLuceneIndex.IndexField.SEARCHABLE_NAME.toString(), searchable, rank, cl, max, NameSearchResult.MatchType.SEARCHABLE, false);
             if(hits.size()>0)
                 return hits;
 
@@ -243,7 +243,7 @@ public class CBIndexSearch {
 				String cleanName = cn.buildCanonicalName();
 				if (cleanName != null && !name.equals(cleanName)) {
 					List<NameSearchResult> results = searchForRecords(
-							cleanName, rank, kingdom, genus, max);
+							cleanName, rank, cl, max);
 					if (results != null) {
 						for (NameSearchResult result : results)
 							result.setCleanName(cleanName);
@@ -297,7 +297,7 @@ public class CBIndexSearch {
      * @throws IOException
      * @throws SearchResultException
      */
-    private List<NameSearchResult> performSearch(String field, String value, RankType rank, String kingdom, String phylum, String genus, int max, NameSearchResult.MatchType type, boolean checkHomo)throws IOException, SearchResultException{
+    private List<NameSearchResult> performSearch(String field, String value, RankType rank, LinnaeanRankClassification cl, int max, NameSearchResult.MatchType type, boolean checkHomo)throws IOException, SearchResultException{
         if(cbSearcher != null){
             Term term = new Term(field, value);
             Query query = new TermQuery(term);
@@ -311,8 +311,8 @@ public class CBIndexSearch {
                 Query rankQuery =new TermQuery(new Term(CBCreateLuceneIndex.IndexField.RANK.toString(), rank.getRank()));
                 boolQuery.add(rankQuery, Occur.MUST);
             }
-            if(kingdom != null){
-                Query kingQuery = new TermQuery(new Term(CBCreateLuceneIndex.IndexField.KINGDOM.toString(), kingdom));
+            if(cl != null &&cl.getKingdom() != null){
+                Query kingQuery = new TermQuery(new Term(CBCreateLuceneIndex.IndexField.KINGDOM.toString(), cl.getKingdom()));
                 boolQuery.add(kingQuery, Occur.SHOULD);
                 
             }
@@ -321,8 +321,8 @@ public class CBIndexSearch {
 //                boolQuery.add(phylumQuery, Occur.SHOULD);
 //
 //            }
-            if(genus!=null){
-                Query genusQuery = new TermQuery(new Term(CBCreateLuceneIndex.IndexField.GENUS.toString(), genus));
+            if(cl != null &&cl.getGenus()!=null){
+                Query genusQuery = new TermQuery(new Term(CBCreateLuceneIndex.IndexField.GENUS.toString(), cl.getGenus()));
                 boolQuery.add(genusQuery, Occur.SHOULD);
                 
             }
@@ -339,7 +339,7 @@ public class CBIndexSearch {
             //check to see if the search criteria could represent an unresolved homonym
 
             if(checkHomo && results.size()>0&&results.get(0).isHomonym()){
-                NameSearchResult result= validateHomonyms(results,value, kingdom);
+                NameSearchResult result= validateHomonyms(results,value, cl);
                 results.clear();
                 results.add(result);
             }
@@ -376,32 +376,55 @@ public class CBIndexSearch {
      * @return
      * @throws HomonymException
      */
-    public NameSearchResult validateHomonyms(List<NameSearchResult> results, String name, String k) throws HomonymException{
+    public NameSearchResult validateHomonyms(List<NameSearchResult> results, String name, LinnaeanRankClassification cl) throws HomonymException{
         //WE are basing our unresolvable homonyms on having a known homonym that does not match at the kingdom level
         //The remaining levels are being ignored in this check
         //if a homonym exists but exact genus/species match exists and some of the higher classification match assume we have a match
 
-        //the first result should be the one that most closely resembles the required classification
-        
-        if(k!= null){
-            //check to see if the kingdom for the result matches, or has a close match
-            for(NameSearchResult result : results){
-                //check to see if the result is a synonym
-                if(result.isSynonym()){
-                    //get the kingdom for the synonym using the IRMNG search
-                    String kingdom = getValueForSynonym(name);
-                    if(kingdom != null &&(kingdom.equals(k) || isCloseMatch(k, kingdom, 3, 3)))
+        //check to see if the homonym is resolvable given the details provide
+        try{
+            RankType resolveLevel = resolveIRMNGHomonym(cl);
+            //result must match at the kingdom level and resolveLevel of the taxonomy (TODO)
+            log.debug("resolve the homonym at " + resolveLevel +" rank");
+
+            //the first result should be the one that most closely resembles the required classification
+            String k = cl != null ?cl.getKingdom(): null;
+            if(k!= null){
+                //check to see if the kingdom for the result matches, or has a close match
+                for(NameSearchResult result : results){
+                    //check to see if the result is a synonym
+                    if(result.isSynonym()){
+                        //get the kingdom for the synonym using the IRMNG search
+                        String kingdom = getValueForSynonym(name);
+                        if(kingdom != null &&(kingdom.equals(k) || isCloseMatch(k, kingdom, 3, 3)))
+                            return result;
+                    }
+                    else if(k.equals(result.getKingdom()) || isCloseMatch(k, result.getKingdom(), 3, 3))
                         return result;
                 }
-                else if(k.equals(result.getKingdom()) || isCloseMatch(k, result.getKingdom(), 3, 3))
-                    return result;
             }
+            throw new HomonymException(results);
         }
-        throw new HomonymException(results);
+        catch(HomonymException e){
+            e.setResults(results);
+            throw e;
+        }
         
     }
     /**
-     * Mulitple genus indicate that an unresolved homonym exists for the supplied
+     * Uses the IRMNG index to determine whether or not a homonym can be resolved
+     * with the supplied details.
+     * @return
+     */
+    private boolean isHomonymResolvable(LinnaeanRankClassification cl){
+        TopDocs results = getIRMNGGenus(cl);
+        if(results != null)
+            return results.totalHits <=1;
+        return false;
+    }
+
+    /**
+     * Multiple genus indicate that an unresolved homonym exists for the supplied
      * search details.
      * @param k
      * @param p
@@ -410,38 +433,98 @@ public class CBIndexSearch {
      * @param f
      * @param g
      */
-    private TopDocs getIRMNGGenus(String k, String p, String c, String o, String f, String g){
-        Term term = new Term(RankType.GENUS.getRank(), g);
-        Query query = new TermQuery(term);
-        BooleanQuery boolQuery = new BooleanQuery();
-        boolQuery.add(query, Occur.MUST);
-        //optionally add the remaining ranks if they were supplied
-        if(k != null)
-            boolQuery.add(new TermQuery(new Term(RankType.KINGDOM.getRank(), k)), Occur.MUST);
-        if(p != null)
-            boolQuery.add(new TermQuery(new Term(RankType.PHYLUM.getRank(), p)), Occur.MUST);
-        if(c != null)
-            boolQuery.add(new TermQuery(new Term(RankType.CLASS.getRank(), c)), Occur.MUST);
-        if(o != null)
-            boolQuery.add(new TermQuery(new Term(RankType.ORDER.getRank(), o)), Occur.MUST);
-        if(f != null)
-            boolQuery.add(new TermQuery(new Term(RankType.FAMILY.getRank(), f)), Occur.MUST);
-        //now perform the search
-        try{
-        return irmngSearcher.search(boolQuery, 10);
+    private TopDocs getIRMNGGenus(LinnaeanRankClassification cl){
+        if(cl != null && cl.getGenus() != null){
+            Term term = new Term(RankType.GENUS.getRank(), cl.getGenus());
+            Query query = new TermQuery(term);
+            BooleanQuery boolQuery = new BooleanQuery();
+            boolQuery.add(query, Occur.MUST);
+            //optionally add the remaining ranks if they were supplied (performing the search at each level)
+            //result will be returned if count =1
+            if(cl.getKingdom() != null)
+                boolQuery.add(new TermQuery(new Term(RankType.KINGDOM.getRank(), cl.getKingdom())), Occur.MUST);
 
-        }
-        catch(IOException e){
-            log.warn("Error searching IRMNG index." , e);
+            if(cl.getPhylum() != null)
+                boolQuery.add(new TermQuery(new Term(RankType.PHYLUM.getRank(), cl.getPhylum())), Occur.MUST);
+            if(cl.getKlass() != null)
+                boolQuery.add(new TermQuery(new Term(RankType.CLASS.getRank(), cl.getKlass())), Occur.MUST);
+            if(cl.getOrder() != null)
+                boolQuery.add(new TermQuery(new Term(RankType.ORDER.getRank(), cl.getOrder())), Occur.MUST);
+            if(cl.getFamily() != null)
+                boolQuery.add(new TermQuery(new Term(RankType.FAMILY.getRank(), cl.getFamily())), Occur.MUST);
+            //now perform the search
+            try{
+            return irmngSearcher.search(boolQuery, 10);
+
+            }
+            catch(IOException e){
+                log.warn("Error searching IRMNG index." , e);
+            }
         }
         return null;
     }
+
+    /**
+     * Attempt to resolve the homonym using the IRMNG index. 
+     * 
+     * The ability to resolve the homonym is dependent on the quality and quantity 
+     * of the higher taxa provided in the search via cl. 
+     * @param cl
+     * @return
+     * @throws HomonymException
+     */
+    public RankType resolveIRMNGHomonym(LinnaeanRankClassification cl) throws HomonymException{
+        if(cl != null && cl.getKingdom() != null && cl.getGenus() != null){
+            //create a local classification to work with we will only add a taxon when we are ready to try and resolve with it
+            LinnaeanRankClassification newcl = new LinnaeanRankClassification(cl.getKingdom(), cl.getGenus());
+            //Step 1 search for kingdom and genus
+            TopDocs results = getIRMNGGenus(newcl);
+            if(results.totalHits == 1)
+                return RankType.KINGDOM;
+            //Step 2 add the phylum
+            if(cl.getPhylum() != null && results.totalHits>1){
+                    newcl.setPhylum(cl.getPhylum());
+                    results = getIRMNGGenus(newcl);
+                    if(results.totalHits == 1)
+                        return RankType.PHYLUM;
+                    //This may not be a good idea 
+                    else if(results.totalHits ==0)
+                        newcl.setPhylum(null);//just in case the phylum was specified incorrectly
+            }
+            //Step 3 try the class
+            if(cl.getKlass() != null){// && results.totalHits>1){
+                newcl.setKlass(cl.getKlass());
+                results = getIRMNGGenus(newcl);
+                if(results.totalHits == 1)
+                    return RankType.CLASS;
+
+            }
+            //step 4 try order
+            if(cl.getOrder() != null && results.totalHits>1){
+                newcl.setOrder(cl.getOrder());
+                results = getIRMNGGenus(newcl);
+                if(results.totalHits == 1)
+                    return RankType.ORDER;
+            }
+            //step 5 try  the family
+            if(cl.getFamily() != null && results.totalHits>1){
+                newcl.setFamily(cl.getFamily());
+                results = getIRMNGGenus(newcl);
+                if(results.totalHits == 1)
+                    return RankType.FAMILY;
+            }
+        }
+        throw new HomonymException();
+
+    }
+
     private String getValueForSynonym(String name){
         //get the genus for the name
         ParsedName<?> pn =  parser.parse(name);
         if(pn!= null){
             String genus = pn.getGenusOrAbove();
-            TopDocs docs = getIRMNGGenus(null, null, null, null, null, genus);
+            LinnaeanRankClassification cl = new LinnaeanRankClassification(null, genus);
+            TopDocs docs = getIRMNGGenus(cl);
             try{
             if(docs.totalHits>0)
                 return irmngSearcher.doc(docs.scoreDocs[0].doc).get(RankType.KINGDOM.getRank());
@@ -479,7 +562,7 @@ public class CBIndexSearch {
                 //if all the results have the same scientific name result the LSID for the first
                 String firstLsid = null;
                 String firstName = null;
-                System.out.println("Number of matches for " + name + " " + results.totalHits);
+                log.debug("Number of matches for " + name + " " + results.totalHits);
                 for(ScoreDoc sdoc: results.scoreDocs){
                     org.apache.lucene.document.Document doc =vernSearcher.doc(sdoc.doc);
                     if(firstLsid == null){
@@ -494,7 +577,8 @@ public class CBIndexSearch {
                 return firstLsid;
             }
             catch(IOException e){
-
+                //
+                log.debug("Unable to access document for common name." , e);
             }
         }
         return null;
@@ -524,11 +608,14 @@ public class CBIndexSearch {
         if(lsid != null){
             //we need to get the CB ID for the supplied LSID
             try{
-                List<NameSearchResult> results= performSearch(CBCreateLuceneIndex.IndexField.LSID.toString(), lsid, null, null, null, null, 1, NameSearchResult.MatchType.DIRECT, false);
+                List<NameSearchResult> results= performSearch(CBCreateLuceneIndex.IndexField.LSID.toString(), lsid, null, null, 1, NameSearchResult.MatchType.DIRECT, false);
                 if(results.size()>0)
                     result = results.get(0);
             }
-            catch(Exception e){}
+            catch(Exception e){
+                //we are not checking for homonym exceptions so this should never happem
+                log.debug("Unable to search for common name." , e);
+            }
         }
         return result;
     }
