@@ -129,6 +129,19 @@ public class CBIndexSearch {
 
     }
     /**
+     * A wrapper method for the method below. Allows searching to occur without a classification.
+     * @param name
+     * @param kingdom
+     * @param genus
+     * @param rank
+     * @return
+     * @throws SearchResultException
+     */
+    public String searchForLSID(String name, String kingdom, String genus, RankType rank) throws SearchResultException{
+        LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, genus);
+        return searchForLSID(name, cl, rank);
+    }
+    /**
      * Search for an LSID based on the supplied name.  When the kingdom and genus
      * are provided they are used to try and resolve homonyms. If they are not
      * provided and a homonym is detected in the result a HomonymException is thrown.
@@ -163,6 +176,20 @@ public class CBIndexSearch {
     public NameSearchResult searchForRecord(String name, RankType rank) throws SearchResultException{
         return searchForRecord(name, null,  rank);
     }
+    /**
+     * A wrapper method for the method below. Allows searching to occur without a classification.
+     * @param name
+     * @param kingdom
+     * @param genus
+     * @param rank
+     * @return
+     * @throws SearchResultException
+     */
+    public NameSearchResult searchForRecord(String name, String kingdom, String genus, RankType rank)throws SearchResultException{
+        LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, genus);
+        return searchForRecord(name,cl, rank);
+    }
+
     public NameSearchResult searchForRecord(String name, LinnaeanRankClassification cl, RankType rank)throws SearchResultException{
         List<NameSearchResult> results = searchForRecords(name, rank, cl, 1);
         if(results != null && results.size()>0)
