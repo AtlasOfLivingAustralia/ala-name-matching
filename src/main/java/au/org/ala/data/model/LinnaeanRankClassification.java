@@ -12,7 +12,7 @@
  * implied. See the License for the specific language governing
  * rights and limitations under the License.
  ***************************************************************************/
-package org.gbif.portal.model;
+package au.org.ala.data.model;
 
 
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -21,10 +21,9 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 
 /**
  * @author trobertson
- * Copied from the gbif portal index project. Commented out the sections that are
- * not necessary.
+ * Originally copied from the gbif portal index project.
  *
- * Used to specify the
+ * Used to supply the classifications for search purposes.
  */
 public class LinnaeanRankClassification {
 	protected String kingdom;
@@ -52,24 +51,14 @@ public class LinnaeanRankClassification {
 		this.genus = genus;
 		this.scientificName = scientificName;
 	}
+        /**
+         * The constructor was added for convienence.
+         * @param kingdom
+         * @param genus
+         */
 	public LinnaeanRankClassification(String kingdom, String genus){
             this(kingdom, null, null, null, null, genus,null);
         }
-	/**
-	 * @param classification to build from
-	 */
-//	public LinnaeanRankClassification(List<TaxonName> classification) {
-//		for (TaxonName tn : classification) {
-//			if (tn.rank==1000) this.kingdom=tn.getCanonical();
-//			if (tn.rank==2000) this.phylum=tn.getCanonical();
-//			if (tn.rank==3000) this.klass=tn.getCanonical();
-//			if (tn.rank==4000) this.order=tn.getCanonical();
-//			if (tn.rank==5000) this.family=tn.getCanonical();
-//			if (tn.rank==6000) this.genus=tn.getCanonical();
-//			if (tn.rank==7000) this.kingdom=tn.getCanonical();
-//		}
-//	}
-	
 	
 	/**
 	 * @return Returns the family.

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<archive xmlns="http://rs.tdwg.org/dwc/text/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xsi:schemaLocation="http://rs.tdwg.org/dwc/text/ http://rs.tdwg.org/dwc/text/tdwg_dwc_text.xsd">
+  <core rowType="http://rs.tdwg.org/dwc/terms/DarwinCore"
+      encoding="UTF-8" fieldsTerminatedBy="\t" linesTerminatedBy="\n" ignoreHeaderLines="1">
+    <files>
+      <location>cb_name_usages.txt</location>
+    </files>
+	<id index="0"/>
+	<field index="1" term="http://rs.tdwg.org/dwc/terms/HigherTaxonID"/>
+	<field index="2" term="http://rs.tdwg.org/dwc/terms/TaxonID"/>
+	<field index="3" term="http://rs.tdwg.org/dwc/terms/nubID"/>
+	<field index="4" term="http://rs.tdwg.org/dwc/terms/acceptedNameUsageID"/>
+	<field index="5" term="http://rs.tdwg.org/dwc/terms/scientificNameID"/> <!-- id from the name_string table -->
+	<field index="6" term="http://rs.tdwg.org/dwc/terms/ScientificName"/> <!-- this is a canonical name -->
+	<field index="7" term="http://rs.tdwg.org/dwc/terms/ScientificNameAuthorship"/>
+	<field index="8" term="rankID"/>
+	<field index="9" term="http://rs.tdwg.org/dwc/terms/TaxonRank"/>
+	<field index="10" term="left"/>
+	<field index="11" term="right"/>
+	<field index="12" term="kingdomID"/>
+	<field index="13" term="http://rs.tdwg.org/dwc/terms/kingdom"/>
+	<field index="14" term="phylumID"/>
+	<field index="15" term="http://rs.tdwg.org/dwc/terms/phylum"/>
+	<field index="16" term="classID"/>
+	<field index="17" term="http://rs.tdwg.org/dwc/terms/class"/>
+	<field index="18" term="orderID"/>
+	<field index="19" term="http://rs.tdwg.org/dwc/terms/order"/>
+	<field index="20" term="familyID"/>
+	<field index="21" term="http://rs.tdwg.org/dwc/terms/family"/>
+	<field index="22" term="genusID"/>
+	<field index="23" term="http://rs.tdwg.org/dwc/terms/genus"/>
+	<field index="24" term="speciesID"/>
+	<field index="25" term="http://rs.tdwg.org/dwc/terms/species"/>
+   </core>
+	<extension encoding="UTF-8" fieldsTerminatedBy="\t" linesTerminatedBy="\n" ignoreHeaderLines="0" rowType="http://rs.gbif.org/terms/1.0/Identifier">
+		<files>
+			<location>cb_identifiers.txt</location>
+		</files>
+		<coreid index="0" />
+		<field index="1" term="http://rs.tdwg.org/dwc/terms/TaxonID"/>	
+		<field index="2" term="http://rs.tdwg.org/dwc/terms/acceptedNameUsageID"/>
+	</extension>
+</archive>

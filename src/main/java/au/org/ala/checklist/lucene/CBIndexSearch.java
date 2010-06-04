@@ -32,7 +32,7 @@ import org.gbif.portal.util.taxonomy.TaxonNameSoundEx;
 
 import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.util.RankType;
-import org.gbif.portal.model.LinnaeanRankClassification;
+import au.org.ala.data.model.LinnaeanRankClassification;
 
 /**
  *
@@ -137,6 +137,7 @@ public class CBIndexSearch {
      * @return
      * @throws SearchResultException
      */
+    @Deprecated
     public String searchForLSID(String name, String kingdom, String genus, RankType rank) throws SearchResultException{
         LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, genus);
         return searchForLSID(name, cl, rank);
@@ -157,10 +158,10 @@ public class CBIndexSearch {
 		String lsid = null;
     	NameSearchResult result = searchForRecord(name, cl, rank);
 		if (result != null) {
-			if (result.getSynonymLsid()==null && result.getLsid()==null) {
+			if (result.getAcceptedLsid()==null && result.getLsid()==null) {
 				log.warn("LSID missing for [name=" + name + ", id=" + result.getId() + "]");
 			} else {
-				lsid = result.getSynonymLsid()!= null ? result.getSynonymLsid() :result.getLsid();
+				lsid = result.getAcceptedLsid()!= null ? result.getAcceptedLsid() :result.getLsid();
 			}
 		}
 		return lsid;
@@ -178,6 +179,7 @@ public class CBIndexSearch {
     }
     /**
      * A wrapper method for the method below. Allows searching to occur without a classification.
+     *
      * @param name
      * @param kingdom
      * @param genus
@@ -185,6 +187,7 @@ public class CBIndexSearch {
      * @return
      * @throws SearchResultException
      */
+    @Deprecated
     public NameSearchResult searchForRecord(String name, String kingdom, String genus, RankType rank)throws SearchResultException{
         LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, genus);
         return searchForRecord(name,cl, rank);
@@ -634,15 +637,20 @@ public class CBIndexSearch {
         String lsid = getLSIDForUniqueCommonName(name);
         if(lsid != null){
             //we need to get the CB ID for the supplied LSID
-            try{
-                List<NameSearchResult> results= performSearch(CBCreateLuceneIndex.IndexField.LSID.toString(), lsid, null, null, 1, NameSearchResult.MatchType.DIRECT, false);
+            result =searchForRecordByLsid(lsid);
+        }
+        return result;
+    }
+    public NameSearchResult searchForRecordByLsid(String lsid){
+        NameSearchResult result = null;
+        try{
+            List<NameSearchResult> results= performSearch(CBCreateLuceneIndex.IndexField.LSID.toString(), lsid, null, null, 1, NameSearchResult.MatchType.DIRECT, false);
                 if(results.size()>0)
                     result = results.get(0);
-            }
-            catch(Exception e){
-                //we are not checking for homonym exceptions so this should never happem
-                log.debug("Unable to search for common name." , e);
-            }
+        }
+        catch(Exception e){
+            //we are not checking for homonyms so this should never happen
+            log.error("Unable to search for record by LSID");
         }
         return result;
     }

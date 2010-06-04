@@ -19,8 +19,8 @@ public class NameSearchResult {
     private String classification;
     private String cleanName;
     private boolean isHomonym;
-    private String synonymLsid;
-    private long synonymId = -1;
+    private String acceptedLsid;
+    private long acceptedId = -1;
     private String kingdom;
     public enum MatchType{
         DIRECT,
@@ -42,12 +42,12 @@ public class NameSearchResult {
         String syn = doc.get(IndexField.SYNONYM.toString());
         if(syn != null){
             String[] synDetails = syn.split("\t",2);
-            synonymLsid = StringUtils.trimToNull(synDetails[1]) == null?synDetails[0]:synDetails[1];
+            acceptedLsid = StringUtils.trimToNull(synDetails[1]) == null?synDetails[0]:synDetails[1];
             try{
-                synonymId = Long.parseLong(synDetails[0]);
+                acceptedId = Long.parseLong(synDetails[0]);
             }
             catch(NumberFormatException e){
-                synonymId = -1;
+                acceptedId = -1;
             }
         }
     }
@@ -88,23 +88,42 @@ public class NameSearchResult {
         return isHomonym;
     }
     public boolean isSynonym(){
-        return synonymLsid != null || synonymId >0;
+        return acceptedLsid != null || acceptedId >0;
     }
+    /**
+     *
+     * @return
+     * @deprecated Use {@link #getAcceptedId()} instead;
+     */
+    @Deprecated
     public long getSynonymId(){
-        return synonymId;
+        return getAcceptedId();
+    }
+    public long getAcceptedId(){
+        return acceptedId;
     }
     /**
      * When the LSID for the synonym is null return the ID for the synonym
      * @return
+     * @deprecated Use {@link #getAcceptedLsid()} instead
      */
+    @Deprecated
     public String getSynonymLsid(){
-        if(synonymLsid != null || synonymId<1)
-            return synonymLsid;
+        return getAcceptedLsid();
+    }
+    /**
+     *
+     * @return The accepted LSID for this name.  When the
+     * name is not a synonym null is returned
+     */
+    public String getAcceptedLsid(){
+        if(acceptedLsid != null || acceptedId<1)
+            return acceptedLsid;
         else
-            return Long.toString(synonymId);
+            return Long.toString(acceptedId);
     }
     @Override
     public String toString(){
-        return "Match: " + matchType + " id: " + id+ " lsid: "+ lsid+ " classification: " +classification +" synonym: "+ synonymLsid;
+        return "Match: " + matchType + " id: " + id+ " lsid: "+ lsid+ " classification: " +classification +" synonym: "+ acceptedLsid;
     }
 }

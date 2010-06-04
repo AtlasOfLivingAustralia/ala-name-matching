@@ -7,7 +7,7 @@ import java.util.List;
 
 import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.util.RankType;
-import org.gbif.portal.model.LinnaeanRankClassification;
+import au.org.ala.data.model.LinnaeanRankClassification;
 
 /**
  *

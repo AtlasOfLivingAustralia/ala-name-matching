@@ -10,7 +10,9 @@ import java.util.HashSet;
 
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 import javax.sql.DataSource;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -42,13 +44,13 @@ import org.gbif.portal.util.taxonomy.TaxonNameSoundEx;
  */
 public class CBCreateLuceneIndex {
 
-    private String cbExportFile = "cb_name_usages.txt";
-    private String lexFile = "cb_lex_names.txt";
-    private String irmngFile = "irmng_classification.txt";
-    private String colFile = "col_common_names.txt";
-    //this is a concatenation of the AFD-common-names.csv and APNI-common-names.csv files
-    private String anbgFile = "anbg_common_names.txt";
-    private String taxonConeptName = "taxonConcepts.txt";
+    protected String cbExportFile = "cb_name_usages.txt";
+    protected String lexFile = "cb_lex_names.txt";
+    protected String irmngFile = "irmng_classification.txt";
+    protected String colFile = "col_common_names.txt";
+    protected String afdFile = "/data/bie-staging/anbg/AFD-common-names.csv";
+    protected String apniFile = "/data/bie-staging/anbg/APNI-common-names.csv";
+    protected String taxonConeptName = "/data/bie-staging/anbg/taxonConcepts.txt";
     protected Log log = LogFactory.getLog(CBCreateLuceneIndex.class);
     protected ApplicationContext context;
     protected DataSource dataSource;
@@ -142,19 +144,41 @@ public class CBCreateLuceneIndex {
         KeywordAnalyzer analyzer = new KeywordAnalyzer();
         if(generateSciNames){
             //Checklist Bank Main Index
-            IndexWriter iw1 = new IndexWriter(FSDirectory.open(new File(indexDir + File.separator + "cb")), analyzer, true, MaxFieldLength.UNLIMITED);
-            indexCB(iw1, exportsDir + File.separator + cbExportFile, exportsDir + File.separator + lexFile);
+            indexCB(createIndexWriter(new File(indexDir + File.separator + "cb"), analyzer), exportsDir + File.separator + cbExportFile, exportsDir + File.separator + lexFile);
             //IRMNG index to aid in the resolving of homonyms
-            IndexWriter iw2 = new IndexWriter(FSDirectory.open(new File(indexDir + File.separator + "irmng")), analyzer, true, MaxFieldLength.UNLIMITED);
-            indexIRMNG(iw2, exportsDir + File.separator + irmngFile);
+            indexIRMNG(createIndexWriter(new File(indexDir + File.separator + "irmng"), analyzer), exportsDir + File.separator + irmngFile);
         }
         if(generateCommonNames){
             //vernacular index to search for common names
-            IndexWriter iw3 = new IndexWriter(FSDirectory.open(new File(indexDir + File.separator + "vernacular")), analyzer, true, MaxFieldLength.UNLIMITED);
-            indexCommonNames(iw3, exportsDir);
+            indexCommonNames(createIndexWriter(new File(indexDir + File.separator + "vernacular"), analyzer), exportsDir);
         }
     }
+    /**
+     * Creates an index writer in the specified directory.  It will create/recreate
+     * the target directory
+     * 
+     * @param directory
+     * @param analyzer
+     * @return
+     * @throws Exception
+     */
+    private IndexWriter createIndexWriter(File directory, KeywordAnalyzer analyzer) throws Exception{
 
+        if (directory.exists()) {
+            FileUtils.forceDelete(directory);
+        }
+        FileUtils.forceMkdir(directory);
+        IndexWriter iw = new IndexWriter(FSDirectory.open(directory), analyzer, true, MaxFieldLength.UNLIMITED);
+        return iw;
+    }
+
+    /**
+     * Create the CB scientific name index
+     * @param iw
+     * @param cbExportFile
+     * @param lexFile
+     * @throws Exception
+     */
     private void indexCB(IndexWriter iw, String cbExportFile, String lexFile) throws Exception {
         long time = System.currentTimeMillis();
         CSVReader cbreader = CSVReader.buildReader(new File(cbExportFile), "UTF-8", '\t', '"', 1);
@@ -301,14 +325,30 @@ public class CBCreateLuceneIndex {
         }
         else
             log.warn("Unable to index CoL Common Names.  Can't locate " + fileCol.getAbsolutePath());
-        File fileAnbg = new File(exportDir + File.separator + anbgFile);
+        
         //process the ANBG common names and add them to the same index
-        if(fileAnbg.exists()){
-            //create the tmp index for the taxonConcepts used to ensure that a supplied taxon lsid is covered in the export
-            IndexSearcher searcher = createTmpIndex(exportDir+File.separator + taxonConeptName);
+        //create the tmp index for the taxonConcepts used to ensure that a supplied taxon lsid is covered in the export
+        IndexSearcher searcher = createTmpIndex(taxonConeptName);
 
-
-            CSVReader reader = CSVReader.buildReader(fileAnbg,"UTF-8",',', '"' , 0);
+        addAnbgCommonNames(afdFile, iw, searcher);
+        addAnbgCommonNames(apniFile, iw, searcher );
+        
+        iw.commit();
+        iw.optimize();
+        iw.close();
+    }
+    /**
+     * Adds an ANBG CSV file of common names to the common name index.
+     * @param fileName
+     * @param iw
+     * @param searcher
+     * @throws Exception
+     */
+    private void addAnbgCommonNames(String fileName, IndexWriter iw, IndexSearcher searcher) throws Exception{
+        File namesFile = new File(fileName);
+        Pattern p = Pattern.compile(",");
+        if(namesFile.exists()){
+            CSVReader reader = CSVReader.buildReader(namesFile,"UTF-8",',', '"' , 0);
             int count = 0;
             while (reader.hasNext()){
                 String[] values = reader.readNext();
@@ -316,20 +356,27 @@ public class CBCreateLuceneIndex {
                 //all ANBG records should have the highest boost as they are our authoritive source
                     //we only want to add an ANBG record if the taxon concept LSID exists in the taxonConcepts.txt export
                     if(doesTaxonConceptExist(searcher, values[5])){
-                        iw.addDocument(getCommonNameDocument(values[2], values[7],values[5],2.0f));
-                        count++;
+                        //each common name could be a comma separated list
+                        if(!values[2].contains(",") || values[2].toLowerCase().contains(" and ")){
+                            iw.addDocument(getCommonNameDocument(values[2], values[7],values[5],2.0f));
+                            count++;
+                        }
+                        else{
+                            //we need to process each common name in the list
+                           String[] names = p.split(values[2]);
+                           for(String name : names){
+                               iw.addDocument(getCommonNameDocument(name, values[7],values[5],2.0f));
+                               count++;
+                           }
+                        }
                     }
                 }
-                
+
             }
-            log.info("Finished indexing " + count + " ANBG Common Names.");
+            log.info("Finished indexing " + count + " common names from " + fileName);
         }
         else
-            log.warn("Unable to index ANBG Common Names. Can't locate " + fileAnbg.getAbsolutePath());
-        
-        iw.commit();
-        iw.optimize();
-        iw.close();
+            log.warn("Unable to index common names. Unable to locate : "+ fileName);
     }
     /**
      * Creates a temporary index that will provide a lookup up of lsid to "real lsid".
