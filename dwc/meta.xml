@@ -34,6 +34,7 @@
 	<field index="23" term="http://rs.tdwg.org/dwc/terms/genus"/>
 	<field index="24" term="speciesID"/>
 	<field index="25" term="http://rs.tdwg.org/dwc/terms/species"/>
+        <field index="26" term="http://rs.tdwg.org/dwc/terms/datasetID"/> <!-- The source of the record either AFD, APC, APNI, CoL or empty -->
    </core>
 	<extension encoding="UTF-8" fieldsTerminatedBy="\t" linesTerminatedBy="\n" ignoreHeaderLines="0" rowType="http://rs.gbif.org/terms/1.0/Identifier">
 		<files>

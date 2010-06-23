@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.sql.DataSource;
 import org.apache.commons.dbcp.BasicDataSource;
 
 import org.apache.commons.io.FileUtils;
@@ -60,12 +59,14 @@ public class ChecklistBankExporter {
     private String rankMapSql = "SELECT term_fk, portal_rank FROM term_gbif_portal_rank ORDER BY term_fk, portal_rank";
     private String nameLexicalSql = "SELECT COALESCE(ns.canonical_name_fk, ns.id) as name_fk, lexical_group_fk from name_usage nu JOIN name_string ns ON nu.name_fk = ns.id where nu.id = ?";
     private String lexGroupSql = "copy ( select nu.id,ns.scientific_name from name_usage nu JOIN name_in_lexical_group nlg ON nu.lexical_group_fk = nlg.lexical_group_fk JOIN name_string ns on nlg.name_fk = ns.id where checklist_fk = 1 order by nu.id ) TO STDOUT WITH NULL '' ";
+    private String nameSql = "copy (select * from export_ala_taxon_name) TO STDOUT WITH NULL '' ";
     private OutputStreamWriter fileOut;
-    private FileOutputStream idFileOut, lexOut;
+    private FileOutputStream idFileOut, lexOut, nameOut;
     private int nameCounter;
     private String nullString = ""; //"\\N";
     private HashMap<Integer, Integer> rankMappings;
     private TIntObjectHashMap<String> idToLsidMap = new TIntObjectHashMap<String>();
+    private PGConnection pgCon;
     /**
      * Intialise DB connections and set up mappings.
      */
@@ -80,6 +81,7 @@ public class ChecklistBankExporter {
         if(fileName != null){
 
             File exportFile = new File(fileName);
+            exportFile.mkdirs();
             if(exportFile.exists()){
             	FileUtils.forceDelete(exportFile);
             }
@@ -98,6 +100,10 @@ public class ChecklistBankExporter {
             if(lexFile.exists())
                 FileUtils.forceDelete(lexFile);
             lexOut = FileUtils.openOutputStream(lexFile);
+            File nameFile = new File(directory + File.separator + "cb_name_string.txt");
+            if(nameFile.exists())
+                FileUtils.forceDelete(nameFile);
+            nameOut = FileUtils.openOutputStream(nameFile);
             nameCounter = 0;
 
         }
@@ -154,7 +160,7 @@ public class ChecklistBankExporter {
         boolean hasMore = true;
         int min = 0;
         //insert the header line for the file
-        fileOut.write("nub id\tparent nub id\tlsid\taccepted id\taccepted lsid\tname id\tcanonical name\tauthor\tportal rank id\trank\tlft\trgt\tkingdom id\tkingdom\tphylum id\tphylum\tclass id\tclass\torder id\torder\tfamily id\tfamily\tgenus id\tgenus\tspecies id\tspecies\n");
+        fileOut.write("nub id\tparent nub id\tlsid\taccepted id\taccepted lsid\tname id\tcanonical name\tauthor\tportal rank id\trank\tlft\trgt\tkingdom id\tkingdom\tphylum id\tphylum\tclass id\tclass\torder id\torder\tfamily id\tfamily\tgenus id\tgenus\tspecies id\tspecies\tsource\n");
         //perform a paged export of the name_usage table
         while(hasMore){
             int numProcessed =0;
@@ -184,8 +190,8 @@ public class ChecklistBankExporter {
                     String rank = replaceNull(rs.getString("rank"));
                     boolean isSynonym = rs.getBoolean("is_synonym");
                     
-                    String synonymId = nullString;
-                    String synonymLsid = nullString;
+                    String acceptedId = nullString;
+                    String acceptedLsid = nullString;
                    
    
 
@@ -193,21 +199,23 @@ public class ChecklistBankExporter {
 
    
                     //now lookup the appropriate LSID from the identifier table
-                    String lsid = getLSID(id,Integer.parseInt(canId), lexicalGroupFk);
+                    String[] lsidAndClid = getLSID(id,Integer.parseInt(canId), lexicalGroupFk);
+                    String lsid = lsidAndClid[0];
+                    String source = getSource(lsidAndClid[1]);
                     if(isSynonym && !parentFk.equals(nullString)){
                         //when the records is a synonym the parent id represents the taxon concept that it is a synonym of.
                     //when the parentFk is "9" then we can not identify the record as a synonym (this is handled from the view
                         if(!parentFk.equals(nullString)){
                             int pid = Integer.parseInt(parentFk);
-                            synonymId = parentFk;
+                            acceptedId = parentFk;
                             parentFk = nullString;
-                            synonymLsid = getLSID(pid);
+                            acceptedLsid = getLSID(pid);
                         }
                     }
 
    
 
-                    String line = id +"\t"+parentFk +"\t"+lsid +"\t" + synonymId + "\t" + synonymLsid+ "\t"+canId+"\t" + scientificName + "\t" + replaceNull(rs.getString("authorship"))+"\t" + portalRank +"\t" +rank + "\t" + replaceNull(rs.getString("lft")) + "\t" + replaceNull(rs.getString("rgt"));
+                    String line = id +"\t"+parentFk +"\t"+lsid +"\t" + acceptedId + "\t" + acceptedLsid+ "\t"+canId+"\t" + scientificName + "\t" + replaceNull(rs.getString("authorship"))+"\t" + portalRank +"\t" +rank + "\t" + replaceNull(rs.getString("lft")) + "\t" + replaceNull(rs.getString("rgt"));
                     if(denormalise){
 
                         line+= "\t" + replaceNull(rs.getString("kingdom_fk")) +"\t" + replaceNull(rs.getString("kingdom"))+
@@ -218,7 +226,7 @@ public class ChecklistBankExporter {
                                 "\t" + replaceNull(rs.getString("genus_fk")) + "\t" + replaceNull(rs.getString("genus"))+
                                 "\t" + replaceNull(rs.getString("species_fk")) + "\t" + replaceNull(rs.getString("species"));
                     }
-                    line+="\n";
+                    line+="\t" +replaceNull(source)+ "\n";
 
                     nameCounter++;
                     fileOut.write(line);
@@ -238,7 +246,38 @@ public class ChecklistBankExporter {
         idFileOut.flush();
         idFileOut.close();
         exportLexicalNames();
+        exportNames();
         return timeTaken;
+    }
+    /**
+     * Converts the checklist id into a
+     * source string to be used in the export file.
+     *
+     * When the taxon concept was automatically derived
+     * by CB from a binomial/trinomial etc the source will be
+     * empty.
+     *
+     * @param id
+     * @return
+     */
+    private String getSource(String id){
+        try{
+        switch(Integer.parseInt(id)){
+            case 1001:
+                return "AFD";
+            case 1002:
+                return "APC";
+            case 1003:
+                return "APNI";
+            case 1004:
+                return "CoL";
+            default:
+                return nullString;
+        }
+        }
+        catch(NumberFormatException e){
+            return nullString;
+        }
     }
     /**
      * Exports the all the names that belong to the same lexical group for each id.
@@ -251,11 +290,30 @@ public class ChecklistBankExporter {
     private void exportLexicalNames() throws Exception{
         long startTime = System.currentTimeMillis();
         log.info("Exporting the lexical names...");
-        PGConnection con = (PGConnection)DriverManager.getConnection(dataSource.getUrl(), dataSource.getUsername(),dataSource.getPassword());
+        PGConnection con = getPGConnection();
         con.getCopyAPI().copyOut(lexGroupSql,lexOut);
         lexOut.flush();
         lexOut.close();
         log.info("Finished exporting the lexical names in " + (System.currentTimeMillis() - startTime) + " ms");
+    }
+    private PGConnection getPGConnection() throws Exception{
+        if(pgCon == null){
+            pgCon = (PGConnection)DriverManager.getConnection(dataSource.getUrl(), dataSource.getUsername(),dataSource.getPassword());
+        }
+        return pgCon;
+    }
+    /**
+     * Exports the names in the name_string table that are associated with the NUB checklist
+     * @throws Exception
+     */
+    private void exportNames() throws Exception{
+        long startTime = System.currentTimeMillis();
+        log.info("Exporting the name strings ....");
+        PGConnection con = getPGConnection();
+        con.getCopyAPI().copyOut(nameSql, nameOut);
+        nameOut.flush();
+        nameOut.close();
+        log.info("Finished exporting the name strings in " + (System.currentTimeMillis() - startTime) + " ms");
     }
    
     /**
@@ -279,25 +337,27 @@ public class ChecklistBankExporter {
      */
     private String getLSID(int cbId) throws Exception{
         //check to see if the LSID already exists
-        if(idToLsidMap.contains(cbId))
-            return idToLsidMap.get(cbId);
+//        if(idToLsidMap.contains(cbId))
+//            return idToLsidMap.get(cbId);
         //else we need to get the nameFK and lexGrpFK for the cbId
         Map<String,Object> cbusage = dTemplate.queryForMap(nameLexicalSql, new Object[]{cbId});
         
-        return getLSID((Integer)cbusage.get("name_fk"), (Integer)cbusage.get("lexical_group_fk"));
+        return getLSID((Integer)cbusage.get("name_fk"), (Integer)cbusage.get("lexical_group_fk"))[0];
     }
 
-    private String getLSID(int cbId, Integer nameFK, Integer lexGrpFK) throws Exception{
+    private String[] getLSID(int cbId, Integer nameFK, Integer lexGrpFK) throws Exception{
         //check to see if the LSID already exists
-        if(idToLsidMap.contains(cbId))
-            return idToLsidMap.get(cbId);
+//        if(idToLsidMap.contains(cbId))
+//            return idToLsidMap.get(cbId);
         return getLSID(nameFK, lexGrpFK);
     }
     /**
      * Gets the identifier for the name based on order of preference for the source of the id.
      * 
      * DM - AFD, APC and APNI identifiers take precedence over other GUIDs. Where we have an AFD, APC or APNI
-     * identifier, we should return this and then serialise other GUIDs to the secondary identifiers file.
+     * identifier, we should return this and then serialise other GUIDs to the secondary identifiers file. (NC
+     * This is already handled in the view)
+     *
      * 
      * APC identifiers *should* take precedence over APNI identifiers.
      * 
@@ -315,46 +375,66 @@ public class ChecklistBankExporter {
      * @return
      * @throws Exception
      */
-    private String getLSID(Integer nameFK, Integer lexGrpFK) throws Exception{
+    private String[] getLSID(Integer nameFK, Integer lexGrpFK) throws Exception{
 
         //List<String> identifiers = dTemplate.queryForList(identifierSql, new Object[]{lexGrpFK, nameFK, new Integer(lsidType)}, String.class);
         List<Map<String,Object>> identifiers = dTemplate.queryForList(identifierSql, new Object[]{lexGrpFK, nameFK});
         //just take the value of the first one for now (it should be the one that has come from the checklist with the highest priority)
-        if(identifiers!= null && identifiers.size() > 0){
-        	
-        	//select AFD and APC first
-        	List<Integer> preferredIds = new ArrayList<Integer>();
-        	preferredIds.add(new Integer(1001));
-        	preferredIds.add(new Integer(1002));
-        	String preferredLsid = getPreferredGuid(identifiers, preferredIds);
-
-    		//allow APNI if we havent found an AFD, or APC GUID
-        	if(preferredLsid==null){
-        		preferredIds.clear();
-        		preferredIds.add(new Integer(1003));
-        		preferredLsid = getPreferredGuid(identifiers, preferredIds);
-        	}
-        	
-        	//select the first one if still null
-        	if(preferredLsid==null){
-	    		//if this hasnt been set, choose the first one
-	    		Map<String,Object> result = (Map<String,Object>) identifiers.get(0);
-	    		preferredLsid = (String) result.get("identifier");
-        	}
-
-        	for(Map<String, Object> identifier : identifiers){
-                //remove the first record and then process the other records into the additional identifiers file
-        		String guid = (String) identifier.get("identifier");
-        		guid = StringUtils.trimToNull(guid);
-        		
-        		if(guid!=null && preferredLsid!=null && !guid.equals(preferredLsid) ){
-        			idFileOut.write((nameFK + "\t" + preferredLsid + "\t" + guid + "\n").getBytes());
-        		}
+        String[] preferredLsid = null;
+        if (identifiers != null && identifiers.size() > 0) {
+            for (Map<String, Object> identifier : identifiers) {
+                String guid = (String) identifier.get("identifier");
+                guid = StringUtils.trimToNull(guid);
+                if (preferredLsid == null) {
+                    preferredLsid = new String[]{replaceNull(guid), identifier.get("checklist_fk").toString()};
+                } else {
+                    //add it to the identifiers file
+                    if (guid != null) {
+                        idFileOut.write((nameFK + "\t" + preferredLsid[0] + "\t" + guid + "\n").getBytes());
+                    }
+                }
             }
+            /* THE CODE BELOW SHOULD NOT BE NECESSARY because the view is ordering the
+             * LSIDs by AFP, APC,APNI then CoL.
+             * Thus the first LSID should be the correct one.
+             */
+
+//        	//select AFD and APC first
+//        	List<Integer> preferredIds = new ArrayList<Integer>();
+//        	preferredIds.add(new Integer(1001));
+//        	preferredIds.add(new Integer(1002));
+//        	String[] preferredLsid = getPreferredGuid(identifiers, preferredIds);
+//
+//    		//allow APNI if we havent found an AFD, or APC GUID
+//        	if(preferredLsid==null){
+//        		preferredIds.clear();
+//        		preferredIds.add(new Integer(1003));
+//        		preferredLsid = getPreferredGuid(identifiers, preferredIds);
+//        	}
+//
+//        	//select the first one if still null
+//        	if(preferredLsid==null){
+//	    		//if this hasnt been set, choose the first one
+//	    		Map<String,Object> result = (Map<String,Object>) identifiers.get(0);
+//	    		preferredLsid = new String[]{(String) result.get("identifier"), result.get("checklist_fk").toString()};
+//        	}
+
+//        	for(Map<String, Object> identifier : identifiers){
+//                //remove the first record and then process the other records into the additional identifiers file
+//        		String guid = (String) identifier.get("identifier");
+//        		guid = StringUtils.trimToNull(guid);
+//
+//        		if(guid!=null && preferredLsid[0]!=null && !guid.equals(preferredLsid[0]) ){
+//        			idFileOut.write((nameFK + "\t" + preferredLsid[0] + "\t" + guid + "\n").getBytes());
+//        		}
+//            }
             
-            return replaceNull(preferredLsid);
+            return preferredLsid;
         }
-        return nullString;
+//        else{
+//            System.out.println("The following name and lexical group does not have any identifiers: "+ nameFK + " " + lexGrpFK);
+//        }
+        return new String[]{nullString, nullString};
     }
 
     /**
@@ -364,7 +444,7 @@ public class ChecklistBankExporter {
      * @param preferredChecklistIds
      * @return
      */
-	private String getPreferredGuid(List<Map<String, Object>> identifiers, List<Integer> preferredChecklistIds) {
+	private String[] getPreferredGuid(List<Map<String, Object>> identifiers, List<Integer> preferredChecklistIds) {
 		if(identifiers.size()>1){
 			//chose the LSID provided by AFD or APC
 			for(Map<String, Object> identifier : identifiers){
@@ -373,7 +453,7 @@ public class ChecklistBankExporter {
 					String guid =  (String) identifier.get("identifier");
 					guid = StringUtils.trimToNull(guid);
 					if(guid!=null){
-						return guid;
+						return new String[]{replaceNull(guid), checklistId.toString()};
 					}
 				}
 			}
@@ -399,7 +479,8 @@ public class ChecklistBankExporter {
         if(args.length ==0){
             //DEFAULT options assume that the database has already been setup
             System.out.println("Using default options...");
-            cbe.init("/data/exports/cb_name_usages.txt");
+            cbe.init("/data/checklistbank/exported/cb_name_usages.txt");
+            cbe.setUpDatabase();
             cbe.export(1, true);
         }
         else if(args.length >=1){
