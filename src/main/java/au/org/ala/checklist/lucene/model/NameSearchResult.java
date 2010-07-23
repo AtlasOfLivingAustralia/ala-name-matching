@@ -4,6 +4,7 @@ package au.org.ala.checklist.lucene.model;
 import org.apache.lucene.document.Document;
 
 import au.org.ala.checklist.lucene.CBCreateLuceneIndex.IndexField;
+import au.org.ala.data.util.RankType;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -22,6 +23,7 @@ public class NameSearchResult {
     private String acceptedLsid;
     private long acceptedId = -1;
     private String kingdom;
+    private RankType rank;
     public enum MatchType{
         DIRECT,
         ALTERNATE,
@@ -39,6 +41,8 @@ public class NameSearchResult {
         this(doc.get(IndexField.ID.toString()), doc.get(IndexField.LSID.toString()),doc.get(IndexField.CLASS.toString()), type);
         isHomonym = doc.get(IndexField.HOMONYM.toString())!=null;
         kingdom = doc.get(IndexField.KINGDOM.toString());
+        //System.out.println("Rank to use : " +doc.get(IndexField.RANK.toString()));
+        rank = RankType.getForId(Integer.parseInt(doc.get(IndexField.RANK.toString())));
         String syn = doc.get(IndexField.SYNONYM.toString());
         if(syn != null){
             String[] synDetails = syn.split("\t",2);
@@ -125,5 +129,13 @@ public class NameSearchResult {
     @Override
     public String toString(){
         return "Match: " + matchType + " id: " + id+ " lsid: "+ lsid+ " classification: " +classification +" synonym: "+ acceptedLsid;
+    }
+
+    public RankType getRank() {
+        return rank;
+    }
+
+    public void setRank(RankType rank) {
+        this.rank = rank;
     }
 }

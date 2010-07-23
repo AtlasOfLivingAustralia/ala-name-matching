@@ -33,6 +33,9 @@ import org.gbif.portal.util.taxonomy.TaxonNameSoundEx;
 import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.util.RankType;
 import au.org.ala.data.model.LinnaeanRankClassification;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.gbif.ecat.voc.Rank;
 
 /**
  *
@@ -62,9 +65,11 @@ import au.org.ala.data.model.LinnaeanRankClassification;
 public class CBIndexSearch {
     protected Log log = LogFactory.getLog(CBIndexSearch.class);
     private IndexReader cbReader,irmngReader, vernReader;
-    private Searcher cbSearcher, irmngSearcher, vernSearcher;
+    private Searcher cbSearcher, irmngSearcher, vernSearcher, idSearcher;
     protected TaxonNameSoundEx tnse;
     private NameParser parser;
+    private static final String RANK_MARKER_ALL = "("+StringUtils.join(NameParser.ALL_RANKS.keySet(), "|")+")\\.";
+    private static final Pattern RANK_MARKER = Pattern.compile(RANK_MARKER_ALL);
    
 	public CBIndexSearch() {}
 
@@ -86,6 +91,8 @@ public class CBIndexSearch {
                 //initalise the Common name index searching items
                 vernReader = IndexReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"vernacular")), true);
                 vernSearcher = new IndexSearcher(vernReader);
+                //initialise the identifier index
+                idSearcher = new IndexSearcher(FSDirectory.open(createIfNotExist(indexDirectory + File.separator + "id")), true);
 		tnse = new TaxonNameSoundEx();
 		parser = new NameParser();
 	}
@@ -255,6 +262,9 @@ public class CBIndexSearch {
 				return hits;
 
 			//2. Hit on the alternative names
+            //check to see if the name needs a different rank associated with it
+            rank = getUpdatedRank(name, rank);
+
             hits = performSearch(CBCreateLuceneIndex.IndexField.NAMES.toString(), name, rank, cl, max, NameSearchResult.MatchType.ALTERNATE, true);
             if(hits.size()>0)
                 return hits;
@@ -287,6 +297,28 @@ public class CBIndexSearch {
             return null;
         }
         return null;
+    }
+
+    /**
+     * Update the rank for the name based on it containing rank strings.
+     * Provides a bit of a sanity check on the name matching.  If we expect a
+     * species we don't want to match on a genus
+     * 
+     * @param name
+     * @param rank
+     * @return
+     */
+    private RankType getUpdatedRank(String name, RankType rank){
+        Matcher matcher = RANK_MARKER.matcher(name);
+       
+        if(matcher.find()){
+            String value = name.substring(matcher.start(), matcher.end()) ;
+            log.debug("Changing rank to : " + value);
+            if(value.endsWith("."))
+                rank = RankType.getForCBRank(NameParser.ALL_RANKS.get(value.substring(0, value.length()-1)));
+            //System.out.println("Using the new rank " + rank);
+        }
+        return rank;
     }
 
     /**
@@ -368,7 +400,8 @@ public class CBIndexSearch {
 
             //check to see if the search criteria could represent an unresolved homonym
 
-            if(checkHomo && results.size()>0&&results.get(0).isHomonym()){
+            //if(checkHomo && results.size()>0&&results.get(0).isHomonym()){
+            if(checkHomo && results.size() > 0 && results.get(0).getRank() == RankType.GENUS){
                 NameSearchResult result= validateHomonyms(results,value, cl);
                 results.clear();
                 results.add(result);
@@ -400,7 +433,16 @@ public class CBIndexSearch {
     }
     /**
      * Takes a result set that contains a homonym and then either throws a HomonymException
-     * or returns the first result that matches the supplied taxa
+     * or returns the first result that matches the supplied taxa.
+     *
+     * AS OF 22/07/2010:
+     * Homonyms are ONLY being tested if the result was a genus. According to Tony it is
+     * very rare for a species to be a homonym with another species that belongs to a homonym
+     * of the same genus.  Eventually we should get a list of the known cases to
+     * test against.  
+     *
+     * This should provide overall better name matcing.
+     *
      * @param results
      * @param k
      * @return
@@ -640,6 +682,26 @@ public class CBIndexSearch {
             result =searchForRecordByLsid(lsid);
         }
         return result;
+    }
+    /**
+     * Returns the primary LSID for the supplied lsid.
+     * 
+     * This is useful in the situation where multiple LSIDs are associated with
+     * a scientific name and there is a reference to the non-primary LSID.
+     * 
+     * @param lsid
+     * @return
+     */
+    public String getPrimaryLsid(String lsid){
+
+        TermQuery tq = new TermQuery(new Term("lsid", lsid));
+        try{
+        org.apache.lucene.search.TopDocs results = idSearcher.search(tq, 1);
+        if(results.totalHits>0)
+            return idSearcher.doc(results.scoreDocs[0].doc).get("reallsid");
+        }catch(IOException e){}
+
+        return lsid;
     }
     public NameSearchResult searchForRecordByLsid(String lsid){
         NameSearchResult result = null;
