@@ -177,7 +177,7 @@
         </repository>
         <repository>
             <id>gbif</id>
-            <url>http://toos.gbif.org/maven/repository</url>
+            <url>http://tools.gbif.org/maven/repository</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
