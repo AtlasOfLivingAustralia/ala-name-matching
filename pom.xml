@@ -175,13 +175,13 @@
             <name>ala-repository</name>
             <url>http://maven.ala.org.au/repository</url>
         </repository>
-        <repository>
-            <id>gbif</id>
-            <url>http://tools.gbif.org/maven/repository</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
+<!--        <repository>-->
+<!--            <id>gbif</id>-->
+<!--            <url>http://tools.gbif.org/maven/repository</url>-->
+<!--            <snapshots>-->
+<!--                <enabled>false</enabled>-->
+<!--            </snapshots>-->
+<!--        </repository>-->
     </repositories>
 	<distributionManagement>
 	  <downloadUrl>https://maven.ala.org.au/repository</downloadUrl>
