@@ -35,7 +35,7 @@ import au.org.ala.data.util.RankType;
 import au.org.ala.data.model.LinnaeanRankClassification;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.gbif.ecat.voc.Rank;
+
 
 /**
  *
@@ -281,7 +281,7 @@ public class CBIndexSearch {
             ParsedName<?> cn = parser.parseIgnoreAuthors(name);
 			if (cn != null) {
 				String cleanName = cn.buildCanonicalName();
-				if (cleanName != null && !name.equals(cleanName)) {
+				if (StringUtils.trimToNull(cleanName) != null && !name.equals(cleanName)) {
 					List<NameSearchResult> results = searchForRecords(
 							cleanName, rank, cl, max);
 					if (results != null) {
@@ -374,7 +374,7 @@ public class CBIndexSearch {
                 boolQuery.add(rankQuery, Occur.MUST);
             }
             if(cl != null &&cl.getKingdom() != null){
-                Query kingQuery = new TermQuery(new Term(CBCreateLuceneIndex.IndexField.KINGDOM.toString(), cl.getKingdom()));
+                Query kingQuery = new TermQuery(new Term(RankType.KINGDOM.getRank(), cl.getKingdom()));
                 boolQuery.add(kingQuery, Occur.SHOULD);
                 
             }
@@ -384,7 +384,7 @@ public class CBIndexSearch {
 //
 //            }
             if(cl != null &&cl.getGenus()!=null){
-                Query genusQuery = new TermQuery(new Term(CBCreateLuceneIndex.IndexField.GENUS.toString(), cl.getGenus()));
+                Query genusQuery = new TermQuery(new Term(RankType.GENUS.getRank(), cl.getGenus()));
                 boolQuery.add(genusQuery, Occur.SHOULD);
                 
             }
@@ -546,7 +546,7 @@ public class CBIndexSearch {
      * @throws HomonymException
      */
     public RankType resolveIRMNGHomonym(LinnaeanRankClassification cl) throws HomonymException{
-        if(cl != null && cl.getKingdom() != null && cl.getGenus() != null){
+        if(cl != null && cl.getGenus() != null){
             //create a local classification to work with we will only add a taxon when we are ready to try and resolve with it
             LinnaeanRankClassification newcl = new LinnaeanRankClassification(cl.getKingdom(), cl.getGenus());
             //Step 1 search for kingdom and genus

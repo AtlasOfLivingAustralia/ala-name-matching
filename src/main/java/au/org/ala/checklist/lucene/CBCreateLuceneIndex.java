@@ -60,8 +60,8 @@ public class CBCreateLuceneIndex {
     //nub id\tparent nub id\tlsid\tsynonym id\tsynonym lsid\tname id\tcanonical name\tauthor\tportal rank id\trank\tlft\trgt\tkingdom id\tkingdom\tphylum id\tphylum\tclass id\tclass\torder id \torder\tfamily id\tfamily\tgenus id\tgenus\tspecies id\tspecies
     private final int POS_ID = 0;
     private final int POS_LSID = 2;
-    private final int POS_SYN_ID = 3;
-    private final int POS_SYN_LSID = 4;
+    private final int POS_ACC_ID = 3;
+    private final int POS_ACC_LSID = 4;
     private final int POS_NAME_ID = 5;
     private final int POS_NAME = 6;
     private final int POS_RANK_ID = 8;
@@ -86,16 +86,12 @@ public class CBCreateLuceneIndex {
 
         NAME("name"),
         NAMES("names"),
-        CLASS("class"),
         ID("id"),
         RANK("rank"),
         SEARCHABLE_NAME("searchcan"),
         LSID("lsid"),
-        KINGDOM("kingdom"),
         HOMONYM("homonym"),
-        SYNONYM("synonym"),
-        PHYLUM("phylum"),
-        GENUS("genus"),
+        ACCEPTED("synonym"),
         COMMON_NAME("common");
 
         String name;
@@ -142,6 +138,8 @@ public class CBCreateLuceneIndex {
     public void createIndex(String exportsDir, String indexDir, boolean generateSciNames, boolean generateCommonNames) throws Exception {
 
         KeywordAnalyzer analyzer = new KeywordAnalyzer();
+        //generate the extra id index
+        createExtraIdIndex(indexDir + File.separator + "id",new File(exportsDir + File.separator + "cb_identifiers.txt"));
         if(generateSciNames){
             //Checklist Bank Main Index
             indexCB(createIndexWriter(new File(indexDir + File.separator + "cb"), analyzer), exportsDir + File.separator + cbExportFile, exportsDir + File.separator + lexFile);
@@ -183,9 +181,7 @@ public class CBCreateLuceneIndex {
         long time = System.currentTimeMillis();
         CSVReader cbreader = CSVReader.buildReader(new File(cbExportFile), "UTF-8", '\t', '"', 1);
 
-//        CSVReader lexreader = CSVReader.buildReader(new File(lexFile), "UTF-8", '\t', '"', 0);
-        CSVReader lexreader = CSVReader.buildReader(new File(lexFile), 0);
-
+        CSVReader lexreader = CSVReader.buildReader(new File(lexFile), "UTF-8", '\t', '"', 0);
         String[] lexName = lexreader.readNext();
         int unprocessed = 0, records = 0;
         for (String[] values = cbreader.readNext(); values != null; values = cbreader.readNext()) {
@@ -193,11 +189,9 @@ public class CBCreateLuceneIndex {
 
 
             if (values.length >= 26) {
-
-                String classification = values[POS_KID] + "|" + values[POS_PID] + "|" + values[POS_CID] + "|" + values[POS_OID] + "|" + values[POS_FID] + "|" + values[POS_GID] + "|" + values[POS_SID];
                 String lsid = values[POS_LSID];
                 String id = values[POS_ID];
-                String synonymValues = StringUtils.isEmpty(values[POS_SYN_ID]) ? null : values[POS_SYN_ID] + "\t" + values[POS_SYN_LSID];
+                String acceptedValues = StringUtils.isEmpty(values[POS_ACC_ID]) ? null : values[POS_ACC_ID] + "\t" + values[POS_ACC_LSID];
 
                 //determine whether or not the record represents an australian source
                 //for now this will be determined using the lsid prefix in the future we may need to move to a more sophisticated method
@@ -206,7 +200,7 @@ public class CBCreateLuceneIndex {
                     boost = 2.0f;
                 }
 
-                Document doc = buildDocument(values[POS_NAME], classification, id, lsid, values[POS_RANK_ID], values[POS_RANK], values[POS_K], values[POS_P], values[POS_G], boost, synonymValues);//buildDocument(rec.value("http://rs.tdwg.org/dwc/terms/ScientificName"), classification, id, lsid, rec.value("rankID"), rec.value("http://rs.tdwg.org/dwc/terms/TaxonRank"), rec.value("http://rs.tdwg.org/dwc/terms/kingdom"), rec.value("http://rs.tdwg.org/dwc/terms/phylum"), rec.value("http://rs.tdwg.org/dwc/terms/genus"), boost, synonymValues);
+                Document doc = buildDocument(values[POS_NAME], id, lsid, values[POS_RANK_ID], values[POS_RANK], values[POS_K], values[POS_P], values[POS_C], values[POS_O], values[POS_F], values[POS_G], values[POS_S], boost, acceptedValues);//buildDocument(rec.value("http://rs.tdwg.org/dwc/terms/ScientificName"), classification, id, lsid, rec.value("rankID"), rec.value("http://rs.tdwg.org/dwc/terms/TaxonRank"), rec.value("http://rs.tdwg.org/dwc/terms/kingdom"), rec.value("http://rs.tdwg.org/dwc/terms/phylum"), rec.value("http://rs.tdwg.org/dwc/terms/genus"), boost, synonymValues);
 
                 //Add the alternate names (these are the names that belong to the same lexical group)
                 TreeSet<String> altNames = new TreeSet<String>();//store a unique set of all the possible alternative names
@@ -274,7 +268,7 @@ public class CBCreateLuceneIndex {
                     doc.add(new Field(RankType.GENUS.getRank(), values[5], Store.YES, Index.NOT_ANALYZED));
                     doc.add(new Field(IndexField.ID.toString(), values[6], Store.YES, Index.NOT_ANALYZED));//genus id
                     //            doc.add(new Field(, values[7], Store.YES, Index.NOT_ANALYZED));//synonym flag
-                    doc.add(new Field(IndexField.SYNONYM.toString(), values[8], Store.YES, Index.NOT_ANALYZED));//synonym id
+                    doc.add(new Field(IndexField.ACCEPTED.toString(), values[8], Store.YES, Index.NOT_ANALYZED));//synonym id
                     //            doc.add(new Field(,values[9], Store.YES, Index.NOT_ANALYZED)); //synonym name
                     doc.add(new Field(IndexField.HOMONYM.toString(), values[10], Store.YES, Index.NOT_ANALYZED)); //homonym flag
                     iw.addDocument(doc);
@@ -300,7 +294,7 @@ public class CBCreateLuceneIndex {
      */
     private void indexCommonNames(IndexWriter iw,String exportDir)throws Exception{
         log.info("Creating Common Names Index ...");
-        createExtraLsidTmpIndex(new File(exportDir + File.separator + "cb_identifiers.txt"));
+        
 
         File fileCol = new File(exportDir + File.separator + colFile);
         if(fileCol.exists()){    
@@ -387,9 +381,9 @@ public class CBCreateLuceneIndex {
      * @param idFile
      * @throws Exception
      */
-    private void createExtraLsidTmpIndex(File idFile) throws Exception{
+    private void createExtraIdIndex(String idxLocation, File idFile) throws Exception{
         CSVReader reader = CSVReader.buildReader(idFile, "UTF-8", '\t', '"', 0);
-        File indexDir = new File("/tmp/cbidentifiers");
+        File indexDir = new File(idxLocation);
         IndexWriter iw = new IndexWriter(FSDirectory.open(indexDir), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
         while(reader.hasNext()){
             String[] values = reader.readNext();
@@ -487,7 +481,7 @@ public class CBCreateLuceneIndex {
      * @param rankString
      * @return
      */
-    private Document buildDocument(String name, String classification, String id, String lsid, String rank, String rankString, String kingdom, String phylum, String genus, float boost, String synonym) {
+    private Document buildDocument(String name, String id, String lsid, String rank, String rankString, String kingdom, String phylum, String clazz, String order, String family, String genus, String species, float boost, String acceptedConcept) {
 //        System.out.println("creating index " + name + " " + classification + " " + id + " " + lsid + " " + rank + " " + rankString+ " " + kingdom + " " + genus);
         Document doc = new Document();
         Field nameField = new Field(IndexField.NAME.toString(), name, Store.NO, Index.NOT_ANALYZED);
@@ -501,8 +495,8 @@ public class CBCreateLuceneIndex {
 
         //add a search_canonical for the record
         doc.add(new Field(IndexField.SEARCHABLE_NAME.toString(), tnse.soundEx(name), Store.NO, Index.NOT_ANALYZED));
-        if (synonym != null) {
-            doc.add(new Field(IndexField.SYNONYM.toString(), synonym, Store.YES, Index.NO));
+        if (acceptedConcept != null) {
+            doc.add(new Field(IndexField.ACCEPTED.toString(), acceptedConcept, Store.YES, Index.NO));
             //when the rank if genus or below use the Name Parser to get access to the correct Genus name to check for homonyms
             ParsedName pn = parser.parseIgnoreAuthors(name);
             try{
@@ -522,19 +516,24 @@ public class CBCreateLuceneIndex {
             }
 
         } else {
-            doc.add(new Field(IndexField.CLASS.toString(), classification, Store.YES, Index.NO));
             if (StringUtils.trimToNull(kingdom) != null) {
-                doc.add(new Field(IndexField.KINGDOM.toString(), kingdom, Store.YES, Index.NOT_ANALYZED));
+                doc.add(new Field(RankType.KINGDOM.getRank(), kingdom, Store.YES, Index.NOT_ANALYZED));
             }
-            //        if(StringUtils.trimToNull(phylum) != null)
-//            doc.add(new Field(IndexField.PHYLUM.toString(), phylum, Store.YES, Index.NOT_ANALYZED));
+            if(StringUtils.trimToNull(phylum) != null)
+                doc.add(new Field(RankType.PHYLUM.getRank(), phylum, Store.YES, Index.NOT_ANALYZED));
+            if(StringUtils.trimToNull(clazz) != null)
+                doc.add(new Field(RankType.CLASS.getRank(), clazz, Store.YES, Index.NOT_ANALYZED));
+            if(StringUtils.trimToNull(order) != null)
+                doc.add(new Field(RankType.ORDER.getRank(), order, Store.YES, Index.NOT_ANALYZED));
+            if(StringUtils.trimToNull(family) != null)
+                doc.add(new Field(RankType.FAMILY.getRank(), family, Store.YES, Index.NOT_ANALYZED));
             if (StringUtils.trimToNull(genus) != null) {
-                doc.add(new Field(IndexField.GENUS.toString(), genus, Store.NO, Index.NOT_ANALYZED));
+                doc.add(new Field(RankType.GENUS.getRank(), genus, Store.YES, Index.NOT_ANALYZED));
 
             }
-        }
-        if (StringUtils.trimToNull(genus) != null && knownHomonyms.contains(genus.toUpperCase())) {
-            doc.add(new Field(IndexField.HOMONYM.toString(), "T", Store.YES, Index.NOT_ANALYZED));
+            if(StringUtils.trimToNull(species) != null){
+                doc.add(new Field(RankType.SPECIES.getRank(), species, Store.YES, Index.NOT_ANALYZED));
+            }
         }
         return doc;
     }

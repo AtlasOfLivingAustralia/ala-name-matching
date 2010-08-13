@@ -15,9 +15,12 @@
 package au.org.ala.data.model;
 
 
+import au.org.ala.data.util.RankType;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.lucene.document.Document;
 
 /**
  * @author trobertson
@@ -32,6 +35,7 @@ public class LinnaeanRankClassification {
 	protected String order;
 	protected String family;
 	protected String genus;
+        protected String species;
 	protected String scientificName;
 	/**
 	 * @param kingdom
@@ -59,7 +63,7 @@ public class LinnaeanRankClassification {
 	public LinnaeanRankClassification(String kingdom, String genus){
             this(kingdom, null, null, null, null, genus,null);
         }
-	
+
 	/**
 	 * @return Returns the family.
 	 */
@@ -145,6 +149,14 @@ public class LinnaeanRankClassification {
 		this.scientificName = scientificName;
 	}
 
+    public String getSpecies() {
+        return species;
+    }
+
+    public void setSpecies(String species) {
+        this.species = species;
+    }
+
 
 
 	/**
@@ -158,6 +170,7 @@ public class LinnaeanRankClassification {
 				.append("order", this.order)
 				.append("family", this.family)
 				.append("genus", this.genus)
+                                .append("species", this.species)
 				.append("scientificName",this.scientificName)				
 				.toString();
 	}
@@ -179,9 +192,52 @@ public class LinnaeanRankClassification {
 				this.family, rhs.family).append(this.order, rhs.order).append(
 				this.klass, rhs.klass).append(this.genus, rhs.genus).isEquals();
 	}
+        /**
+         * checks to see if the non-null values of this classification are identical to
+         * the supplied classification
+         * @param lrc
+         * @return
+         */
+        public boolean hasIdenticalClassification(LinnaeanRankClassification lrc){
+            if(kingdom != null){
+                if(!kingdom.equalsIgnoreCase(lrc.kingdom))
+                    return false;
+            }
+            if(phylum != null){
+                if(!phylum.equalsIgnoreCase(lrc.phylum))
+                    return false;
+            }
+            if(klass != null){
+                if(!klass.equalsIgnoreCase(lrc.klass))
+                    return false;
+            }
+            if(order != null){
+                if(!order.equalsIgnoreCase(lrc.order))
+                    return false;
+            }
+            if(family != null){
+                if(!family.equalsIgnoreCase(lrc.family))
+                    return false;
+            }
+            if(genus != null){
+                if(!genus.equalsIgnoreCase(lrc.genus))
+                    return false;
+            }
+            if(species != null){
+                if(!species.equalsIgnoreCase(lrc.species))
+                    return false;
+            }
+            return true;
+        }
+        
+//        public int hashCode() {
+//        int hash = 5;
+//        hash = 17 * hash + (this.documentId != null ? this.documentId.hashCode() : 0);
+//        return hash;
+//    }
 	
 	public static void main(String[] args) {
-		LinnaeanRankClassification a = new LinnaeanRankClassification(null, null,null,null,null,null,"Aus bus"); 
+		LinnaeanRankClassification a = new LinnaeanRankClassification(null, null,null,null,null,null,"AuS bus");
 		LinnaeanRankClassification b = new LinnaeanRankClassification(null, null,null,null,null,null,new String("Aus bus"));
 		System.out.println("a=b: " + a.equals(b));
 		System.out.println("a.hc=b.hc: " + (a.hashCode() == b.hashCode()));

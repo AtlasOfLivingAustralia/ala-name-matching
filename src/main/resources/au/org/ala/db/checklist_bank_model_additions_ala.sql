@@ -31,7 +31,7 @@ CREATE OR REPLACE VIEW export_ala_taxon_name AS
             ELSE NULL::character varying
         END AS generic, NULL::text AS infrageneric, sci_pn.specific_epithet, sci_pn.infra_specific_epithet AS infraspecific, NULL::text AS infraspecific_marker,
         CASE
-            WHEN sci_pn.is_hybrid_formula = true THEN 1
+            WHEN sci.type = 5 THEN 1 
             ELSE 0
         END AS is_hybrid, tr.portal_rank AS rank, sci_pn.authorship AS author, NULL::unknown AS searchable_canonical
    FROM name_usage nu
@@ -112,9 +112,9 @@ CREATE INDEX idx_tmp_ids_lg
 --insert the lsid type identifiers into the temporary identifiers table.  2636708 rows affected, 1107075 ms
 --2622695 rows affected, 1129295 ms
 --Query returned successfully: 2560234 rows affected, 1781306 ms execution time.
-
+-- NC: Added a order by identifier so that the consistent LSIDs are reported when multiple LSIDs exist for one taxon
 INSERT into tmp_identifiers (lexical_group_fk, name_fk, identifier,checklist_fk)
-SELECT nu.lexical_group_fk, COALESCE(ns.canonical_name_fk, ns.id), i.identifier, nu.checklist_fk FROM identifier i JOIN name_usage nu ON i.usage_fk = nu.id JOIN name_string ns on nu.name_fk = ns.id where i.type_fk = 2001 ORDER BY CASE nu.checklist_fk WHEN 1001 THEN 1 WHEN 1002 THEN 2 WHEN 1003 THEN 3 ELSE 4 END;
+SELECT nu.lexical_group_fk, COALESCE(ns.canonical_name_fk, ns.id), i.identifier, nu.checklist_fk FROM identifier i JOIN name_usage nu ON i.usage_fk = nu.id JOIN name_string ns on nu.name_fk = ns.id where i.type_fk = 2001 ORDER BY CASE nu.checklist_fk WHEN 1001 THEN 1 WHEN 1002 THEN 2 WHEN 1003 THEN 3 ELSE 4 END, i.identifier;
 
 --The SQL below identifies potential lexical groups that will have issues when the nub is genertaed
 --The is specific to when 2 different ranks belong to the same lexical group eg Plecoptera is an ORDER and GENUS
