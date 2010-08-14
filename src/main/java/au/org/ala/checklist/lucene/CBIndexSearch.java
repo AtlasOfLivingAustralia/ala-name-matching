@@ -586,8 +586,7 @@ public class CBIndexSearch {
                     return RankType.FAMILY;
             }
         }
-        throw new HomonymException();
-
+        throw new HomonymException("Problem resolving the classification: "+cl.toString());
     }
 
     private String getValueForSynonym(String name){
