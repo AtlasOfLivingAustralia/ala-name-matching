@@ -52,7 +52,8 @@ public enum RankType {
     CULTIVAR(8050, "cultivar", Rank.Cultivar),
     INFORMAL(-1, "informal", Rank.Informal),
     UNRANKED(0, "unranked", Rank.Unranked),
-    SUPRAGENERICNAME(8200, "supragenericname", Rank.SupragenericName);
+    SUPRAGENERICNAME(8200, "supragenericname", Rank.SupragenericName),
+    HYBRID(8150, "hybrid",null);
     // Allow reverse-lookup (based on http://www.ajaxonomy.com/2007/java/making-the-most-of-java-50-enum-tricks)
     private static final Map<String, RankType> fieldLookup = new HashMap<String, RankType>();
     private static final Map<Integer, RankType> idLookup = new HashMap<Integer, RankType>();
@@ -62,7 +63,8 @@ public enum RankType {
         for (RankType rt : EnumSet.allOf(RankType.class)) {
             fieldLookup.put(rt.getRank(), rt);
             idLookup.put(rt.getId(), rt);
-            cbRankLookup.put(rt.cbRank,rt);
+            if(rt.cbRank != null)
+                cbRankLookup.put(rt.cbRank,rt);
         }
     }
     private Integer id;
