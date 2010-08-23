@@ -35,6 +35,7 @@ import au.org.ala.data.util.RankType;
 import au.org.ala.data.model.LinnaeanRankClassification;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.gbif.ecat.voc.NameType;
 
 
 /**
@@ -278,8 +279,9 @@ public class CBIndexSearch {
                 return hits;
 
             //4. clean the name and then search for the new version
+            //DON'T search for the clean name if the original name contains a " cf " or " aff " (these are informal names)
             ParsedName<?> cn = parser.parseIgnoreAuthors(name);
-			if (cn != null) {
+			if (cn != null && cn.getType() != NameType.informal) {
 				String cleanName = cn.buildCanonicalName();
 				if (StringUtils.trimToNull(cleanName) != null && !name.equals(cleanName)) {
 					List<NameSearchResult> results = searchForRecords(
@@ -291,7 +293,7 @@ public class CBIndexSearch {
 					return results;
 				}
 			}
-        }
+            }
         catch(IOException e){
             log.warn(e.getMessage());
             return null;
