@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:ctx="http://www.springframework.org/schema/context"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+    <!-- Scan source files for annotations for DI -->
+    <ctx:component-scan base-package="au.org.ala"/>
+    
+	<!-- 
+	<bean id="dataSource" class="org.springbyexample.jdbc.datasource.InitializingDriverManagerDataSource">
+	    <property name="driverClassName" value="org.hsqldb.jdbcDriver"/>
+	    <property name="url" value="jdbc:hsqldb:mem:SensitiveSpecies"/>
+	    <property name="username" value="sa"/>
+	    <property name="password" value=""/>
+	    <property name="sqlScriptProcessor">
+	        <bean class="org.springbyexample.jdbc.core.SqlScriptProcessor">
+                <property name="dataSource" ref="dataSource" />
+                <property name="initOnStartup" value="true" />
+	            <property name="sqlScripts">
+	                <list>
+	                    <value>classpath:/BirdsAustraliaSensitiveSpecies.sql</value>
+	                </list>
+	            </property>
+	        </bean>
+	    </property>
+	</bean>
+	-->
+	 
+	<bean id="lookupDao" class="au.org.ala.sensitiveData.dao.LookupListDaoImpl">
+	</bean>
+	
+	<bean id="searchImpl" class="au.org.ala.sensitiveData.SearchImpl">
+	   <property name="dao" ref="lookupDao" />
+	</bean>
+
+    <bean id="CBIndexSearch" class="au.org.ala.checklist.lucene.CBIndexSearch" lazy-init="true">
+        <constructor-arg value="/data/lucene/namematching"/>
+    </bean>
+
+    <bean id="occurrenceDataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close" lazy-init="true">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://alaslvdb1-cbr.vm.csiro.au/portal"/>
+        <property name="username" value="root"/>
+        <property name="password" value="password"/>
+    </bean>
+</beans>
