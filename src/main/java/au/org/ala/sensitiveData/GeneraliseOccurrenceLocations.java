@@ -1,3 +1,17 @@
+/***************************************************************************
+ * Copyright (C) 2010 Atlas of Living Australia
+ * All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public
+ * License Version 1.1 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of
+ * the License at http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS
+ * IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+ * implied. See the License for the specific language governing
+ * rights and limitations under the License.
+ ***************************************************************************/
 package au.org.ala.sensitiveData;
 
 import java.sql.Connection;
@@ -21,6 +35,10 @@ import au.org.ala.data.util.RankType;
 import au.org.ala.sensitiveData.dao.RawOccurrenceDao;
 import au.org.ala.sensitiveData.model.SensitiveSpecies;
 
+/**
+ *
+ * @author Peter Flemming (peter.flemming@csiro.au)
+ */
 @Component
 public class GeneraliseOccurrenceLocations {
 
@@ -33,19 +51,19 @@ public class GeneraliseOccurrenceLocations {
 	@Inject
 	protected CBIndexSearch CBIdxSearcher;
 	@Inject
-	protected SearchImpl sensitiveSpeciesFinder;
+	protected SensitiveSpeciesFinder sensitiveSpeciesFinder;
 	
 	public static void main(String[] args) throws Exception {
 		ApplicationContext context = new ClassPathXmlApplicationContext("spring-config.xml");
 		GeneraliseOccurrenceLocations app = context.getBean(GeneraliseOccurrenceLocations.class);
-		app.run();
+		app.run(args.length == 1 ? args[0] : null);
 	}
 
-	private void run() throws SQLException, SearchResultException {
+	private void run(String startAt) throws SQLException, SearchResultException {
 		Connection conn = occurrenceDataSource.getConnection();
 		PreparedStatement pst = conn.prepareStatement(
 				"SELECT id, scientific_name, latitude, longitude, lat_long_precision, generalised_metres, raw_latitude, raw_longitude FROM raw_occurrence_record LIMIT ?,?");
-		int offset = 0;
+		int offset = startAt == null ? 0 : Integer.parseInt(startAt);
 		int stride = 10000;
 		int recCount = 0;
 		pst.setInt(2, stride);
