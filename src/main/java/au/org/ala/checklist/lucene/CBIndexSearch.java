@@ -84,6 +84,7 @@ public class CBIndexSearch {
          */
         public CBIndexSearch(String indexDirectory) throws CorruptIndexException, IOException {
                 //Initialis CB index searching items
+            log.debug("Creating the search object for the name matching api...");
 		cbReader = IndexReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"cb")), true);
 		cbSearcher = new IndexSearcher(cbReader);
                 //Initalise the IRMNG index searching items
@@ -115,10 +116,17 @@ public class CBIndexSearch {
      * or the LSID for the first result. Where no LSID exist for the record the
      * CB ID is returned instead
      * @param name
+     * @param fuzzy look for a fuzzy match
      * @return
      */
+    public String searchForLSID(String name, boolean fuzzy) throws SearchResultException{
+        return searchForLSID(name, null, fuzzy);
+    }
+    /*
+     * Searches for the name without using fuzzy matches...
+     */
     public String searchForLSID(String name) throws SearchResultException{
-        return searchForLSID(name, null);
+        return searchForLSID(name, false);
     }
     /**
      * Searches the index for the supplied name of the specified rank.  Returns
@@ -130,11 +138,22 @@ public class CBIndexSearch {
      *
      * @param name
      * @param rank
+     * @param fuzzy look for a fuzzy match
      * @return
      */
-    public String searchForLSID(String name, RankType rank)throws SearchResultException{
-        return searchForLSID(name, null, rank);
+    public String searchForLSID(String name, RankType rank, boolean fuzzy)throws SearchResultException{
+        return searchForLSID(name, null, rank, fuzzy);
 
+    }
+    /**
+     * Searches for an LSID of the supplied name and rank without a fuzzy match
+     * @param name
+     * @param rank
+     * @return
+     * @throws SearchResultException
+     */
+    public String searchForLSID(String name, RankType rank) throws SearchResultException {
+        return searchForLSID(name, null, rank, false);
     }
     /**
      * A wrapper method for the method below. Allows searching to occur without a classification.
@@ -148,7 +167,7 @@ public class CBIndexSearch {
     @Deprecated
     public String searchForLSID(String name, String kingdom, String genus, RankType rank) throws SearchResultException{
         LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, genus);
-        return searchForLSID(name, cl, rank);
+        return searchForLSID(name, cl, rank, false);
     }
     /**
      * Search for an LSID based on the supplied name.  When the kingdom and genus
@@ -159,12 +178,13 @@ public class CBIndexSearch {
      * @param name
      * @param cl The high taxa that form the classification for the search item
      * @param rank
+     * @param fuzzy look for a fuzzy match
      * @return
      * @throws SearchResultException
      */
-    public String searchForLSID(String name, LinnaeanRankClassification cl, RankType rank) throws SearchResultException{
+    public String searchForLSID(String name, LinnaeanRankClassification cl, RankType rank, boolean fuzzy) throws SearchResultException{
 		String lsid = null;
-    	NameSearchResult result = searchForRecord(name, cl, rank);
+    	NameSearchResult result = searchForRecord(name, cl, rank, fuzzy);
 		if (result != null) {
 			if (result.getAcceptedLsid()==null && result.getLsid()==null) {
 				log.warn("LSID missing for [name=" + name + ", id=" + result.getId() + "]");
@@ -175,15 +195,37 @@ public class CBIndexSearch {
 		return lsid;
     }
     /**
+     * Search for an LSID based on suppled name, classification and rank without a fuzzy match...
+     * @param name
+     * @param cl
+     * @param rank
+     * @return
+     * @throws SearchResultException
+     */
+    public String searchForLSID(String name, LinnaeanRankClassification cl, RankType rank) throws SearchResultException{
+        return searchForLSID(name, cl, rank, false);
+    }
+    /**
      * Searches the index for the supplied name of the specified rank.  Returns
      * null when there is no result or the result object for the first result.
      *
      * @param name
      * @param rank
+     * @param fuzzy look for a fuzzy match
      * @return
      */
+    public NameSearchResult searchForRecord(String name, RankType rank, boolean fuzzy) throws SearchResultException{
+        return searchForRecord(name, null,  rank, fuzzy);
+    }
+    /**
+     * Searches index for the supplied name and rank without a fuzzy match.
+     * @param name
+     * @param rank
+     * @return
+     * @throws SearchResultException
+     */
     public NameSearchResult searchForRecord(String name, RankType rank) throws SearchResultException{
-        return searchForRecord(name, null,  rank);
+        return searchForRecord(name, rank, false);
     }
     /**
      * A wrapper method for the method below. Allows searching to occur without a classification.
@@ -198,15 +240,26 @@ public class CBIndexSearch {
     @Deprecated
     public NameSearchResult searchForRecord(String name, String kingdom, String genus, RankType rank)throws SearchResultException{
         LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, genus);
-        return searchForRecord(name,cl, rank);
+        return searchForRecord(name,cl, rank, false);
     }
 
-    public NameSearchResult searchForRecord(String name, LinnaeanRankClassification cl, RankType rank)throws SearchResultException{
-        List<NameSearchResult> results = searchForRecords(name, rank, cl, 1);
+    public NameSearchResult searchForRecord(String name, LinnaeanRankClassification cl, RankType rank, boolean fuzzy)throws SearchResultException{
+        List<NameSearchResult> results = searchForRecords(name, rank, cl, 1, fuzzy);
         if(results != null && results.size()>0)
             return results.get(0);
       
         return null;
+    }
+    /**
+     * Searches for a record based on the supplied name, classification and rank without fuzzy name matching
+     * @param name
+     * @param cl
+     * @param rank
+     * @return
+     * @throws SearchResultException
+     */
+    public NameSearchResult searchForRecord(String name, LinnaeanRankClassification cl, RankType rank) throws SearchResultException{
+        return searchForRecord(name, cl, rank, false);
     }
     /**
      * Returns the name that has the supplied checklist bank id
@@ -231,10 +284,24 @@ public class CBIndexSearch {
      *
      * @param name
      * @param rank
+     * @param fuzzy search for a fuzzy match
      * @return
      */
-    public List<NameSearchResult> searchForRecords(String name, RankType rank) throws SearchResultException{
-        return searchForRecords(name, rank, null, 10);
+    public List<NameSearchResult> searchForRecords(String name, RankType rank, boolean fuzzy) throws SearchResultException{
+        return searchForRecords(name, rank, null, 10, fuzzy);
+    }
+    /**
+     * Searches for a list of results for the supplied name, classification and rank without fuzzy match
+     * 
+     * @param name
+     * @param rank
+     * @param cl
+     * @param max
+     * @return
+     * @throws SearchResultException
+     */
+    public List<NameSearchResult> searchForRecords(String name, RankType rank, LinnaeanRankClassification cl, int max) throws SearchResultException{
+        return searchForRecords(name,rank, cl, max, false);
     }
     
     /**
@@ -246,10 +313,11 @@ public class CBIndexSearch {
      * @param kingdom 
      * @param genus
      * @param max The maximum number of results to return
+     * @param fuzzy search for a fuzzy match
      * @return
      * @throws SearchResultException
      */
-    public List<NameSearchResult> searchForRecords(String name, RankType rank, LinnaeanRankClassification cl, int max) throws SearchResultException{
+    public List<NameSearchResult> searchForRecords(String name, RankType rank, LinnaeanRankClassification cl, int max, boolean fuzzy) throws SearchResultException{
         //The name is not allowed to be null
         if(name == null)
             throw new SearchResultException("Unable to perform search. Null value supplied for the name."); 
@@ -271,13 +339,14 @@ public class CBIndexSearch {
                 return hits;
 
 
-            //3. searchable canonical name
-            String searchable = tnse.soundEx(name);
-            //searchable canonical should not check for homonyms due to the more erratic nature of the result
-            hits = performSearch(CBCreateLuceneIndex.IndexField.SEARCHABLE_NAME.toString(), searchable, rank, cl, max, NameSearchResult.MatchType.SEARCHABLE, false);
-            if(hits.size()>0)
-                return hits;
-
+            //3. searchable canonical name if fuzzy match is enabled
+            if(fuzzy){
+                String searchable = tnse.soundEx(name);
+                //searchable canonical should not check for homonyms due to the more erratic nature of the result
+                hits = performSearch(CBCreateLuceneIndex.IndexField.SEARCHABLE_NAME.toString(), searchable, rank, cl, max, NameSearchResult.MatchType.SEARCHABLE, false);
+                if(hits.size()>0)
+                    return hits;
+            }
             //4. clean the name and then search for the new version
             //DON'T search for the clean name if the original name contains a " cf " or " aff " (these are informal names)
             ParsedName<?> cn = parser.parseIgnoreAuthors(name);
@@ -285,7 +354,7 @@ public class CBIndexSearch {
 				String cleanName = cn.buildCanonicalName();
 				if (StringUtils.trimToNull(cleanName) != null && !name.equals(cleanName)) {
 					List<NameSearchResult> results = searchForRecords(
-							cleanName, rank, cl, max);
+							cleanName, rank, cl, max, fuzzy);
 					if (results != null) {
 						for (NameSearchResult result : results)
 							result.setCleanName(cleanName);
@@ -443,7 +512,7 @@ public class CBIndexSearch {
      * of the same genus.  Eventually we should get a list of the known cases to
      * test against.  
      *
-     * This should provide overall better name matcing.
+     * This should provide overall better name matching.
      *
      * @param results
      * @param k
@@ -457,7 +526,13 @@ public class CBIndexSearch {
 
         //check to see if the homonym is resolvable given the details provide
         try{
+            if(cl == null)
+                cl = new LinnaeanRankClassification(null, name);
             RankType resolveLevel = resolveIRMNGHomonym(cl);
+            if(resolveLevel == null){
+                //there was no need to resolve the homonym
+                return results.get(0);
+            }
             //result must match at the kingdom level and resolveLevel of the taxonomy (TODO)
             log.debug("resolve the homonym at " + resolveLevel +" rank");
 
@@ -548,9 +623,17 @@ public class CBIndexSearch {
      * @throws HomonymException
      */
     public RankType resolveIRMNGHomonym(LinnaeanRankClassification cl) throws HomonymException{
+        //check to see if we need to resolve the homonym
+        LinnaeanRankClassification newcl = new LinnaeanRankClassification(null, cl.getGenus());
         if(cl != null && cl.getGenus() != null){
+            
+            TopDocs results = getIRMNGGenus(cl);
+            if(results.totalHits <= 1)
+                return null;
+        }
+        if(cl != null && cl.getKingdom() != null){
             //create a local classification to work with we will only add a taxon when we are ready to try and resolve with it
-            LinnaeanRankClassification newcl = new LinnaeanRankClassification(cl.getKingdom(), cl.getGenus());
+            
             //Step 1 search for kingdom and genus
             TopDocs results = getIRMNGGenus(newcl);
             if(results.totalHits == 1)
