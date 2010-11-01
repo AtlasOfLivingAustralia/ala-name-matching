@@ -111,7 +111,10 @@ public class ChecklistBankExporter {
 	}
 	
     private String replaceNull(String in){
-        return quoteField(StringUtils.isEmpty(in) ? nullString : in);
+        return StringUtils.isEmpty(in) ? nullString : in;
+    }
+    private String quoteReplaceNull(String in){
+        return quoteField(replaceNull(in));
     }
     /**
      * runs the script to set up the supporting items
@@ -219,18 +222,18 @@ public class ChecklistBankExporter {
 
                     String line = "\""+id +"\"\t"+quoteField(parentFk) +"\t"+quoteField(lsid) +"\t" + quoteField(acceptedId) + "\t" + quoteField(acceptedLsid)
                             +"\t"+ quoteField(sciNameID)+"\t"+quoteField(canId)+"\t"+ quoteField(scientificName) +"\t" + quoteField(canonicalName) + "\t"
-                            + replaceNull(rs.getString("authorship"))+"\t" + quoteField(portalRank) +"\t" +quoteField(rank) + "\t" + replaceNull(rs.getString("lft")) + "\t" + replaceNull(rs.getString("rgt"));
+                            + quoteReplaceNull(rs.getString("authorship"))+"\t" + quoteField(portalRank) +"\t" +quoteField(rank) + "\t" + quoteReplaceNull(rs.getString("lft")) + "\t" + quoteReplaceNull(rs.getString("rgt"));
                     if(denormalise){
 
-                        line+= "\t" + replaceNull(rs.getString("kingdom_fk")) +"\t" + replaceNull(rs.getString("kingdom"))+
-                                "\t" + replaceNull(rs.getString("phylum_fk")) + "\t" + replaceNull(rs.getString("phylum"))+
-                                "\t"+ replaceNull(rs.getString("class_fk")) +"\t" + replaceNull(rs.getString("class"))+
-                                "\t"+replaceNull(rs.getString("order_fk"))+ "\t" + replaceNull(rs.getString("order"))+
-                                "\t"+ replaceNull(rs.getString("family_fk")) + "\t" + replaceNull(rs.getString("family"))+
-                                "\t" + replaceNull(rs.getString("genus_fk")) + "\t" + replaceNull(rs.getString("genus"))+
-                                "\t" + replaceNull(rs.getString("species_fk")) + "\t" + replaceNull(rs.getString("species"));
+                        line+= "\t" + quoteReplaceNull(rs.getString("kingdom_fk")) +"\t" + quoteReplaceNull(rs.getString("kingdom"))+
+                                "\t" + quoteReplaceNull(rs.getString("phylum_fk")) + "\t" + quoteReplaceNull(rs.getString("phylum"))+
+                                "\t"+ quoteReplaceNull(rs.getString("class_fk")) +"\t" + quoteReplaceNull(rs.getString("class"))+
+                                "\t"+quoteReplaceNull(rs.getString("order_fk"))+ "\t" + quoteReplaceNull(rs.getString("order"))+
+                                "\t"+ quoteReplaceNull(rs.getString("family_fk")) + "\t" + quoteReplaceNull(rs.getString("family"))+
+                                "\t" + quoteReplaceNull(rs.getString("genus_fk")) + "\t" + quoteReplaceNull(rs.getString("genus"))+
+                                "\t" + quoteReplaceNull(rs.getString("species_fk")) + "\t" + quoteReplaceNull(rs.getString("species"));
                     }
-                    line+="\t" +replaceNull(source)+ "\n";
+                    line+="\t" +quoteReplaceNull(source)+ "\n";
 
                     nameCounter++;
                     fileOut.write(line);
