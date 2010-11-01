@@ -111,7 +111,7 @@ public class ChecklistBankExporter {
 	}
 	
     private String replaceNull(String in){
-        return StringUtils.isEmpty(in) ? nullString : in;
+        return quoteField(StringUtils.isEmpty(in) ? nullString : in);
     }
     /**
      * runs the script to set up the supporting items
@@ -160,7 +160,7 @@ public class ChecklistBankExporter {
         boolean hasMore = true;
         int min = 0;
         //insert the header line for the file
-        fileOut.write("nub id\tparent nub id\tlsid\taccepted id\taccepted lsid\tname id\tcanonical name\tauthor\tportal rank id\trank\tlft\trgt\tkingdom id\tkingdom\tphylum id\tphylum\tclass id\tclass\torder id\torder\tfamily id\tfamily\tgenus id\tgenus\tspecies id\tspecies\tsource\n");
+        fileOut.write("nub id\tparent nub id\tlsid\taccepted id\taccepted lsid\tsci_name_id\tcanonical_name id\tscientific_name\tcanonical name\tauthor\tportal rank id\trank\tlft\trgt\tkingdom id\tkingdom\tphylum id\tphylum\tclass id\tclass\torder id\torder\tfamily id\tfamily\tgenus id\tgenus\tspecies id\tspecies\tsource\n");
         //perform a paged export of the name_usage table
         while(hasMore){
             int numProcessed =0;
@@ -183,8 +183,10 @@ public class ChecklistBankExporter {
 
                     //now get the value for the scientific name
                     //String scientificName = getScientificName(nameFk, useCanonicalName);
+                    String sciNameID = rs.getString("sci_name_id");
                     String canId = rs.getString("can_id");
-                    String scientificName = rs.getString("name");
+                    String canonicalName = rs.getString("canonical_name");
+                    String scientificName = rs.getString("scientific_name");
                     //String portalRank = rs.getString("portal_rank");
                     Integer portalId = rs.getInt("rank_fk");
                     String rank = replaceNull(rs.getString("rank"));
@@ -215,7 +217,9 @@ public class ChecklistBankExporter {
 
    
 
-                    String line = id +"\t"+parentFk +"\t"+lsid +"\t" + acceptedId + "\t" + acceptedLsid+ "\t"+canId+"\t" + scientificName + "\t" + replaceNull(rs.getString("authorship"))+"\t" + portalRank +"\t" +rank + "\t" + replaceNull(rs.getString("lft")) + "\t" + replaceNull(rs.getString("rgt"));
+                    String line = "\""+id +"\"\t"+quoteField(parentFk) +"\t"+quoteField(lsid) +"\t" + quoteField(acceptedId) + "\t" + quoteField(acceptedLsid)
+                            +"\t"+ quoteField(sciNameID)+"\t"+quoteField(canId)+"\t"+ quoteField(scientificName) +"\t" + quoteField(canonicalName) + "\t"
+                            + replaceNull(rs.getString("authorship"))+"\t" + quoteField(portalRank) +"\t" +quoteField(rank) + "\t" + replaceNull(rs.getString("lft")) + "\t" + replaceNull(rs.getString("rgt"));
                     if(denormalise){
 
                         line+= "\t" + replaceNull(rs.getString("kingdom_fk")) +"\t" + replaceNull(rs.getString("kingdom"))+
@@ -248,6 +252,9 @@ public class ChecklistBankExporter {
         exportLexicalNames();
         exportNames();
         return timeTaken;
+    }
+    private String quoteField(String value){
+        return "\"" + value + "\"";
     }
     /**
      * Converts the checklist id into a

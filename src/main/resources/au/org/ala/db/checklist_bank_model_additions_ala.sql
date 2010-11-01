@@ -47,7 +47,7 @@ CREATE OR REPLACE VIEW export_ala_taxon_name AS
 --remove all the parent_fks and kingdom_fks that refer back to the "incertae sedis" record ie id=9.
 
 CREATE OR REPLACE VIEW ala_dwc_classification AS
- SELECT u.id AS id, u.name_fk,COALESCE(n.canonical_name_fk, n.id) as can_id, COALESCE(nc.scientific_name, n.scientific_name) AS name, u.lexical_group_fk,  u.lft AS lft, u.rgt AS rgt, (COALESCE(np.authorship, ''::character varying)::text ||
+ SELECT u.id AS id, u.name_fk, n.id as sci_name_id,COALESCE(n.canonical_name_fk, n.id) as can_id,n.scientific_name, COALESCE(nc.scientific_name, n.scientific_name) AS canonical_name, u.lexical_group_fk,  u.lft AS lft, u.rgt AS rgt, (COALESCE(np.authorship, ''::character varying)::text ||
         CASE
             WHEN np.year IS NOT NULL THEN ', '::text || np.year::text
             ELSE ''::text
