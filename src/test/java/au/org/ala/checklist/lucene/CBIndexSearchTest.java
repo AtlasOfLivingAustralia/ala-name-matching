@@ -155,4 +155,67 @@ public class CBIndexSearchTest {
 
             }
         }
+        @org.junit.Test
+        public void testCultivars(){
+            try{
+                //species level concept
+                System.out.println("Hypoestes phyllostachya: " +searcher.searchForLSID("Hypoestes phyllostachya"));
+                //cultivar level concept
+                System.out.println("Hypoestes phyllostachya 'Splash': " + searcher.searchForRecord("Hypoestes phyllostachya 'Splash'", null));
+
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+        @org.junit.Test
+        public void testMyrmecia(){
+            try{
+                LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia","Arthropoda", "Insecta", "Hymenoptera", "Formicidae", "Myrmecia",null);
+                System.out.println(searcher.searchForRecord("Myrmecia", cl, null));
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+        @org.junit.Test
+        public void testFuzzyMatches(){
+            try{
+            //Bullia
+            System.out.println("Bullia NOT fuzzy: " + searcher.searchForRecord("Bullia", null));
+            System.out.println("Bullia fuzzy: " +searcher.searchForRecord("Bullia", null, true));
+            //Anochetus
+            LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Arthropoda", "Insecta", "Hymenoptera", "Formicidae","Anochetus", null);
+            System.out.println("Anochetus NOT fuzzy: " + searcher.searchForLSID("Anochetus",cl, null));
+            System.out.println("Anochetus fuzzy: " + searcher.searchForLSID("Anochetus", null, true));
+            LinnaeanRankClassification classification = new LinnaeanRankClassification("Plantae", null, null, null, null, null, "Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929)");
+            System.out.println("Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929) : " + searcher.searchForLSID("Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929)", classification, null));
+
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        public void testWaiIssues(){
+//            System.out.println("#### TEST 1 ####"); synonym
+//            testName("Cyrtanthus elatus");
+//            testName("Cyrtanthus purpureus");
+//            System.out.println("#### TEST 2 ####"); synonym
+//            testName("Lycoris africana");
+//            testName("Lycoris aurea");
+//            System.out.println("#### TEST 3 ####");
+//            testName("Monstera deliciosa");
+//            testName("Monstera deliciosa 'Albo-Variegata'");
+
+        }
+        public void testName(String name){
+            try{
+                System.out.println(name+": " + searcher.searchForRecord(name, null));
+
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
 }
