@@ -624,51 +624,53 @@ public class CBIndexSearch {
      */
     public RankType resolveIRMNGHomonym(LinnaeanRankClassification cl) throws HomonymException{
         //check to see if we need to resolve the homonym
-        LinnaeanRankClassification newcl = new LinnaeanRankClassification(null, cl.getGenus());
-        if(cl != null && cl.getGenus() != null){
-            
-            TopDocs results = getIRMNGGenus(cl);
-            if(results.totalHits <= 1)
-                return null;
-        }
-        if(cl != null && cl.getKingdom() != null){
-            //create a local classification to work with we will only add a taxon when we are ready to try and resolve with it
-            
-            //Step 1 search for kingdom and genus
-            TopDocs results = getIRMNGGenus(newcl);
-            if(results.totalHits == 1)
-                return RankType.KINGDOM;
-            //Step 2 add the phylum
-            if(cl.getPhylum() != null && results.totalHits>1){
-                    newcl.setPhylum(cl.getPhylum());
+        if(cl.getGenus() != null){
+            LinnaeanRankClassification newcl = new LinnaeanRankClassification(null, cl.getGenus());
+            if(cl != null && cl.getGenus() != null){
+
+                TopDocs results = getIRMNGGenus(cl);
+                if(results.totalHits <= 1)
+                    return null;
+            }
+            if(cl != null && cl.getKingdom() != null){
+                //create a local classification to work with we will only add a taxon when we are ready to try and resolve with it
+
+                //Step 1 search for kingdom and genus
+                TopDocs results = getIRMNGGenus(newcl);
+                if(results.totalHits == 1)
+                    return RankType.KINGDOM;
+                //Step 2 add the phylum
+                if(cl.getPhylum() != null && results.totalHits>1){
+                        newcl.setPhylum(cl.getPhylum());
+                        results = getIRMNGGenus(newcl);
+                        if(results.totalHits == 1)
+                            return RankType.PHYLUM;
+                        //This may not be a good idea
+                        else if(results.totalHits ==0)
+                            newcl.setPhylum(null);//just in case the phylum was specified incorrectly
+                }
+                //Step 3 try the class
+                if(cl.getKlass() != null){// && results.totalHits>1){
+                    newcl.setKlass(cl.getKlass());
                     results = getIRMNGGenus(newcl);
                     if(results.totalHits == 1)
-                        return RankType.PHYLUM;
-                    //This may not be a good idea 
-                    else if(results.totalHits ==0)
-                        newcl.setPhylum(null);//just in case the phylum was specified incorrectly
-            }
-            //Step 3 try the class
-            if(cl.getKlass() != null){// && results.totalHits>1){
-                newcl.setKlass(cl.getKlass());
-                results = getIRMNGGenus(newcl);
-                if(results.totalHits == 1)
-                    return RankType.CLASS;
+                        return RankType.CLASS;
 
-            }
-            //step 4 try order
-            if(cl.getOrder() != null && results.totalHits>1){
-                newcl.setOrder(cl.getOrder());
-                results = getIRMNGGenus(newcl);
-                if(results.totalHits == 1)
-                    return RankType.ORDER;
-            }
-            //step 5 try  the family
-            if(cl.getFamily() != null && results.totalHits>1){
-                newcl.setFamily(cl.getFamily());
-                results = getIRMNGGenus(newcl);
-                if(results.totalHits == 1)
-                    return RankType.FAMILY;
+                }
+                //step 4 try order
+                if(cl.getOrder() != null && results.totalHits>1){
+                    newcl.setOrder(cl.getOrder());
+                    results = getIRMNGGenus(newcl);
+                    if(results.totalHits == 1)
+                        return RankType.ORDER;
+                }
+                //step 5 try  the family
+                if(cl.getFamily() != null && results.totalHits>1){
+                    newcl.setFamily(cl.getFamily());
+                    results = getIRMNGGenus(newcl);
+                    if(results.totalHits == 1)
+                        return RankType.FAMILY;
+                }
             }
         }
         throw new HomonymException("Problem resolving the classification: "+cl);
