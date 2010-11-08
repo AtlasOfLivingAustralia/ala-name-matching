@@ -67,23 +67,23 @@ public class CBCreateLuceneIndex {
     private final int POS_NAME_CANONICAL_ID = 6;
     private final int POS_NAME = 7;
     private final int POS_NAME_CANONICAL = 8;
-    private final int POS_RANK_ID = 11;
-    private final int POS_RANK = 12;
-    private final int POS_KID = 15;
-    private final int POS_K = 16;
-    private final int POS_PID = 17;
-    private final int POS_P = 18;
-    private final int POS_CID = 19;
-    private final int POS_C = 20;
-    private final int POS_OID = 21;
-    private final int POS_O = 22;
-    private final int POS_FID = 23;
-    private final int POS_F = 24;
-    private final int POS_GID = 25;
-    private final int POS_G = 26;
-    private final int POS_SID = 27;
-    private final int POS_S = 28;
-
+    private final int POS_RANK_ID = 10;
+    private final int POS_RANK = 11;
+    private final int POS_KID = 14;
+    private final int POS_K = 15;
+    private final int POS_PID = 16;
+    private final int POS_P = 17;
+    private final int POS_CID = 18;
+    private final int POS_C = 19;
+    private final int POS_OID = 20;
+    private final int POS_O = 21;
+    private final int POS_FID = 22;
+    private final int POS_F = 23;
+    private final int POS_GID = 24;
+    private final int POS_G = 25;
+    private final int POS_SID = 26;
+    private final int POS_S = 27;
+    
     //Fields that are being indexed or stored in the lucene index
     public enum IndexField {
 
