@@ -3,6 +3,7 @@ package au.org.ala.checklist.lucene;
 import au.org.ala.data.util.RankType;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 
 import java.io.InputStreamReader;
@@ -182,9 +183,10 @@ public class CBCreateLuceneIndex {
      */
     private void indexCB(IndexWriter iw, String cbExportFile, String lexFile) throws Exception {
         long time = System.currentTimeMillis();
-        CSVReader cbreader = CSVReader.buildReader(new File(cbExportFile), "UTF-8", '\t', '"', 1);
+        //CSVReader cbreader = CSVReader.buildReader(new File(cbExportFile), "UTF-8", '\t', '"', 1);
+        au.com.bytecode.opencsv.CSVReader cbreader = new au.com.bytecode.opencsv.CSVReader(new FileReader(cbExportFile), '\t', '"', '/', 1);
 
-        CSVReader lexreader = CSVReader.buildReader(new File(lexFile), "UTF-8", '\t', '"', 0);
+       CSVReader lexreader =CSVReader.buildReader(new File(lexFile), "UTF-8", '\t', '"', 0);
         String[] lexName = lexreader.readNext();
         int unprocessed = 0, records = 0;
         for (String[] values = cbreader.readNext(); values != null; values = cbreader.readNext()) {
@@ -554,6 +556,7 @@ public class CBCreateLuceneIndex {
     public static void main(String[] args) throws Exception {
         CBCreateLuceneIndex indexer = new CBCreateLuceneIndex();
         indexer.init();
+        
         if (args.length >= 2) {
             boolean sn = true;
             boolean cn = true;
