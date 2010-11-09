@@ -13,6 +13,7 @@
  * rights and limitations under the License.
  ***************************************************************************/
 package au.org.ala.checklist;
+import au.org.ala.data.util.RankType;
 import gnu.trove.TIntObjectHashMap;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -66,17 +67,38 @@ public class ChecklistBankExporter {
     private String nullString = ""; //"\\N";
     private HashMap<Integer, Integer> rankMappings;
     private TIntObjectHashMap<String> idToLsidMap = new TIntObjectHashMap<String>();
+    private List<Integer> exportRanks = new ArrayList<Integer>();
     private PGConnection pgCon;
+    
     /**
      * Intialise DB connections and set up mappings.
      */
 	private void init(String fileName) throws Exception {
-		
+		        exportRanks.add(25);
+        exportRanks.add(75);
+        exportRanks.add(150);
+        exportRanks.add(225);
+        exportRanks.add(325);
+        exportRanks.add(350);
+        exportRanks.add(425);
+        exportRanks.add(450);
+        exportRanks.add(600);
+        exportRanks.add(475);
+        exportRanks.add(650);
+        exportRanks.add(700);
+        exportRanks.add(750);
+        exportRanks.add(625);
+        exportRanks.add(675);
+        exportRanks.add(875);
+        exportRanks.add(825);
+               
 		log.info("Initialising DB connections and output files...");
 		String[] locations = {"classpath*:au/org/ala/**/applicationContext-cb*.xml"};
 		context = new ClassPathXmlApplicationContext(locations);
 		dataSource = (BasicDataSource) context.getBean("cbDataSource");
 		dTemplate = new JdbcTemplate(dataSource);
+
+
 		
         if(fileName != null){
 
@@ -131,6 +153,9 @@ public class ChecklistBankExporter {
             log.info("Finished setup in " + (System.currentTimeMillis() - start) + " ms");
         }
     }
+    private boolean isExportRank(Integer cbRank){
+        return exportRanks.contains(cbRank);
+    }
 
 
     /**
@@ -140,7 +165,7 @@ public class ChecklistBankExporter {
      * @param idOrderPreference
      * @throws Exception
      */
-    public long export(int checklistId, boolean denormalise)throws Exception {//, int[] idOrderPreference) throws Exception{
+    public long export(int checklistId, boolean denormalise, boolean major)throws Exception {//, int[] idOrderPreference) throws Exception{
 
           //initialise the port mappings
             rankMappings = new HashMap<Integer,Integer>();
@@ -175,8 +200,11 @@ public class ChecklistBankExporter {
 
             while (rs.next()) {
                 Integer id = rs.getInt("id");
+                Integer cbNubRankId = rs.getInt("rank_fk");
+                //Integer portalRankId = rankMappings.get(cbNubRankId);
                 //Export all records except for the "incertae sedis" (id = 9)
-                if(id != 9){
+
+                if(id != 9 && (!major || isExportRank(cbNubRankId))){
                     min = id;
                     String parentFk = replaceNull(rs.getString("parent_fk"));
                     //remove all the parentFKs that refer back to the "incertae sedis" record.
@@ -191,7 +219,7 @@ public class ChecklistBankExporter {
                     String canonicalName = rs.getString("canonical_name");
                     String scientificName = rs.getString("scientific_name");
                     //String portalRank = rs.getString("portal_rank");
-                    Integer portalId = rs.getInt("rank_fk");
+                    
                     String rank = replaceNull(rs.getString("rank"));
                     boolean isSynonym = rs.getBoolean("is_synonym");
                     
@@ -200,7 +228,7 @@ public class ChecklistBankExporter {
                    
    
 
-                    String portalRank = portalId == null ? nullString : getRank(portalId);
+                    String portalRank = cbNubRankId == null ? nullString : getRank(cbNubRankId);
 
    
                     //now lookup the appropriate LSID from the identifier table
@@ -257,7 +285,8 @@ public class ChecklistBankExporter {
         return timeTaken;
     }
     private String quoteField(String value){
-        return "\"" + value + "\"";
+        //escape the embedded quote characters with a / character
+        return "\"" + value.replaceAll("\"", "/\"") + "\"";
     }
     /**
      * Converts the checklist id into a
@@ -477,6 +506,7 @@ public class ChecklistBankExporter {
      * <ul>
      * <li> -norm : avoids running denormalisation SQL</li>
      * <li> -noset : avoids running the database setup</li>
+     * <li> -major : only export the major ranks </li>
      * </ul>
      * 
      * @param args
@@ -491,7 +521,7 @@ public class ChecklistBankExporter {
             System.out.println("Using default options...");
             cbe.init("/data/checklistbank/exported/cb_name_usages.txt");
             cbe.setUpDatabase();
-            cbe.export(1, true);
+            cbe.export(1, true, false);
         }
         else if(args.length >=1){
             //filename is the first argument
@@ -500,6 +530,7 @@ public class ChecklistBankExporter {
 
             boolean denormalise = true;
             boolean setup = true;
+            boolean major = false;
             //the remaining arguments indicate whether or not to use canonical and denormalised structure
             for(int i = 1; i<args.length;i++){
                 String arg = args[i];
@@ -508,11 +539,13 @@ public class ChecklistBankExporter {
                     denormalise = false;
                 else if(arg.equals("-noset"))
                     setup = false;
+                else if(arg.equals("-major"))
+                    major = true;
             }
             //set up the database if necessary
             if(setup)
                 cbe.setUpDatabase();
-            cbe.export(1,  denormalise);//, clbPriorities);
+            cbe.export(1,  denormalise, major);//, clbPriorities);
         }
         else {
             //System.out.println("ChecklistBankExporter <filename> <comma separated list of checklist priority> [-norm]");
