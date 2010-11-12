@@ -196,45 +196,54 @@ public class CBCreateLuceneIndex {
             if (values.length >= 26) {
                 String lsid = values[POS_LSID];
                 String id = values[POS_ID];
+                String rank = values[POS_RANK];
                 String acceptedValues = StringUtils.isEmpty(values[POS_ACC_ID]) ? null : values[POS_ACC_ID] + "\t" + values[POS_ACC_LSID];
 
-                //determine whether or not the record represents an australian source
-                //for now this will be determined using the lsid prefix in the future we may need to move to a more sophisticated method
-                float boost = 1.0f;
-                if (lsid.startsWith("urn:lsid:biodiversity.org.au")) {
-                    boost = 2.0f;
-                }
+                //don't allow subgenus to be processed
+                if (!rank.equals("subgenus")) {
 
-                Document doc = buildDocument(values[POS_NAME_CANONICAL], id, lsid, values[POS_RANK_ID], values[POS_RANK], values[POS_K], values[POS_P], values[POS_C], values[POS_O], values[POS_F], values[POS_G], values[POS_S], boost, acceptedValues);//buildDocument(rec.value("http://rs.tdwg.org/dwc/terms/ScientificName"), classification, id, lsid, rec.value("rankID"), rec.value("http://rs.tdwg.org/dwc/terms/TaxonRank"), rec.value("http://rs.tdwg.org/dwc/terms/kingdom"), rec.value("http://rs.tdwg.org/dwc/terms/phylum"), rec.value("http://rs.tdwg.org/dwc/terms/genus"), boost, synonymValues);
+                    //determine whether or not the record represents an australian source
+                    //for now this will be determined using the lsid prefix in the future we may need to move to a more sophisticated method
+                    float boost = 1.0f;
+                    if (lsid.startsWith("urn:lsid:biodiversity.org.au")) {
+                        boost = 2.0f;
+                    }
 
-                //Add the alternate names (these are the names that belong to the same lexical group)
-                TreeSet<String> altNames = new TreeSet<String>();//store a unique set of all the possible alternative names
+                    Document doc = buildDocument(values[POS_NAME_CANONICAL], id, lsid, values[POS_RANK_ID], values[POS_RANK], values[POS_K], values[POS_P], values[POS_C], values[POS_O], values[POS_F], values[POS_G], values[POS_S], boost, acceptedValues);//buildDocument(rec.value("http://rs.tdwg.org/dwc/terms/ScientificName"), classification, id, lsid, rec.value("rankID"), rec.value("http://rs.tdwg.org/dwc/terms/TaxonRank"), rec.value("http://rs.tdwg.org/dwc/terms/kingdom"), rec.value("http://rs.tdwg.org/dwc/terms/phylum"), rec.value("http://rs.tdwg.org/dwc/terms/genus"), boost, synonymValues);
 
-                while (lexName != null && Integer.parseInt(lexName[0]) <= Integer.parseInt(id)) {
-                    if (lexName[0].equals(id)) {
-                        //add the full name
-                        altNames.add(lexName[1]);
-                        ParsedName cn = parser.parseIgnoreAuthors(lexName[1]);
-                        if(cn!=null && !cn.isHybridFormula()){
-                            //add the canonical form
-                            altNames.add(cn.buildCanonicalName());
-                            
+                    //Add the alternate names (these are the names that belong to the same lexical group)
+                    TreeSet<String> altNames = new TreeSet<String>();//store a unique set of all the possible alternative names
+
+                    while (lexName != null && Integer.parseInt(lexName[0]) <= Integer.parseInt(id)) {
+                        if (lexName[0].equals(id)) {
+                            //add the full name
+                            altNames.add(lexName[1]);
+                            ParsedName cn = parser.parseIgnoreAuthors(lexName[1]);
+                            if (cn != null && !cn.isHybridFormula()) {
+                                //add the canonical form
+                                altNames.add(cn.buildCanonicalName());
+
+                            }
+                            //addName(doc, lexName[1]);
                         }
-                        //addName(doc, lexName[1]);
+                        lexName = lexreader.readNext();
                     }
-                    lexName = lexreader.readNext();
-                }
-                if(altNames.size()>0){
-                    //now add the names to the index
-                    for(String name: altNames){
-                        doc.add(new Field(IndexField.NAMES.toString(), name, Store.NO, Index.NOT_ANALYZED));
+                    if (altNames.size() > 0) {
+                        //now add the names to the index
+                        for (String name : altNames) {
+                            doc.add(new Field(IndexField.NAMES.toString(), name, Store.NO, Index.NOT_ANALYZED));
+                        }
+                    }
+
+                    iw.addDocument(doc);
+                    records++;
+                    if (records % 100000 == 0) {
+                        log.info("Processed " + records + " in " + (System.currentTimeMillis() - time) + " msecs (Total unprocessed: " + unprocessed + ")");
                     }
                 }
-               
-                iw.addDocument(doc);
-                records++;
-                if (records % 100000 == 0) {
-                    log.info("Processed " + records + " in " + (System.currentTimeMillis() - time) + " msecs (Total unprocessed: " + unprocessed + ")");
+                else{
+                    log.debug("Not adding subgenus: " + values[POS_NAME_CANONICAL]);
+                    unprocessed++;
                 }
             } else {
                 //can't process line without all values
@@ -405,7 +414,7 @@ public class CBCreateLuceneIndex {
         idSearcher = new IndexSearcher(FSDirectory.open(indexDir), true);
     }
     /**
-     * Creates a temporory index that stores the taxon concept LSIDs that were
+     * Creates a temporary index that stores the taxon concept LSIDs that were
      * included in the last ANBG exports.
      * 
      * @param tcFileName
@@ -556,7 +565,7 @@ public class CBCreateLuceneIndex {
     public static void main(String[] args) throws Exception {
         CBCreateLuceneIndex indexer = new CBCreateLuceneIndex();
         indexer.init();
-     
+      
         if (args.length >= 2) {
             boolean sn = true;
             boolean cn = true;
