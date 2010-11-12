@@ -205,7 +205,7 @@ public class CBCreateLuceneIndex {
                     boost = 2.0f;
                 }
 
-                Document doc = buildDocument(values[POS_NAME], id, lsid, values[POS_RANK_ID], values[POS_RANK], values[POS_K], values[POS_P], values[POS_C], values[POS_O], values[POS_F], values[POS_G], values[POS_S], boost, acceptedValues);//buildDocument(rec.value("http://rs.tdwg.org/dwc/terms/ScientificName"), classification, id, lsid, rec.value("rankID"), rec.value("http://rs.tdwg.org/dwc/terms/TaxonRank"), rec.value("http://rs.tdwg.org/dwc/terms/kingdom"), rec.value("http://rs.tdwg.org/dwc/terms/phylum"), rec.value("http://rs.tdwg.org/dwc/terms/genus"), boost, synonymValues);
+                Document doc = buildDocument(values[POS_NAME_CANONICAL], id, lsid, values[POS_RANK_ID], values[POS_RANK], values[POS_K], values[POS_P], values[POS_C], values[POS_O], values[POS_F], values[POS_G], values[POS_S], boost, acceptedValues);//buildDocument(rec.value("http://rs.tdwg.org/dwc/terms/ScientificName"), classification, id, lsid, rec.value("rankID"), rec.value("http://rs.tdwg.org/dwc/terms/TaxonRank"), rec.value("http://rs.tdwg.org/dwc/terms/kingdom"), rec.value("http://rs.tdwg.org/dwc/terms/phylum"), rec.value("http://rs.tdwg.org/dwc/terms/genus"), boost, synonymValues);
 
                 //Add the alternate names (these are the names that belong to the same lexical group)
                 TreeSet<String> altNames = new TreeSet<String>();//store a unique set of all the possible alternative names
@@ -556,7 +556,7 @@ public class CBCreateLuceneIndex {
     public static void main(String[] args) throws Exception {
         CBCreateLuceneIndex indexer = new CBCreateLuceneIndex();
         indexer.init();
-        
+        args = new String[] {"/data/bie-staging/checklistbank", "/data/lucene/namematching", "-sn"};
         if (args.length >= 2) {
             boolean sn = true;
             boolean cn = true;

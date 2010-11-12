@@ -33,8 +33,11 @@ import org.gbif.portal.util.taxonomy.TaxonNameSoundEx;
 import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.util.RankType;
 import au.org.ala.data.model.LinnaeanRankClassification;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.lucene.document.Document;
 import org.gbif.ecat.voc.NameType;
 
 
@@ -110,7 +113,7 @@ public class CBIndexSearch {
 		}
             return idxFile;
         }
-
+       
     /**
      * Searches the index for the supplied name.  Returns null when there is no result
      * or the LSID for the first result. Where no LSID exist for the record the
@@ -626,7 +629,7 @@ public class CBIndexSearch {
         //check to see if we need to resolve the homonym
         if(cl.getGenus() != null){
             LinnaeanRankClassification newcl = new LinnaeanRankClassification(null, cl.getGenus());
-            if(cl != null && cl.getGenus() != null){
+            if(cl != null && cl.getKingdom()==null&& cl.getGenus() != null){
 
                 TopDocs results = getIRMNGGenus(cl);
                 if(results.totalHits <= 1)
