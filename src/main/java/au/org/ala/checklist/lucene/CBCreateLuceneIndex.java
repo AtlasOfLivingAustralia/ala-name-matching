@@ -556,7 +556,7 @@ public class CBCreateLuceneIndex {
     public static void main(String[] args) throws Exception {
         CBCreateLuceneIndex indexer = new CBCreateLuceneIndex();
         indexer.init();
-        args = new String[] {"/data/bie-staging/checklistbank", "/data/lucene/namematching", "-sn"};
+     
         if (args.length >= 2) {
             boolean sn = true;
             boolean cn = true;
