@@ -113,7 +113,7 @@ public class CBIndexSearch {
 		}
             return idxFile;
         }
-       
+     
     /**
      * Searches the index for the supplied name.  Returns null when there is no result
      * or the LSID for the first result. Where no LSID exist for the record the
@@ -637,7 +637,7 @@ public class CBIndexSearch {
             }
             if(cl != null && cl.getKingdom() != null){
                 //create a local classification to work with we will only add a taxon when we are ready to try and resolve with it
-
+                newcl.setKingdom(cl.getKingdom());
                 //Step 1 search for kingdom and genus
                 TopDocs results = getIRMNGGenus(newcl);
                 if(results.totalHits == 1)
