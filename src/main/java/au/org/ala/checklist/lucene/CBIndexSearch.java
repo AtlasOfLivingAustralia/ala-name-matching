@@ -78,7 +78,7 @@ public class CBIndexSearch {
 	public CBIndexSearch() {}
 
 	/**
-         * Creates a new name seacher. Using the indexDirectory 
+         * Creates a new name searcher. Using the indexDirectory
          * as the source directory 
          * 
          * @param indexDirectory The directory that contains the CB and IRMNG index.
@@ -113,7 +113,45 @@ public class CBIndexSearch {
 		}
             return idxFile;
         }
-     
+        public static void main(String[] args){
+            try{
+                CBIndexSearch searcher = new CBIndexSearch("/data/lucene/namematching");
+                searcher.dumpSpecies();
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+        /**
+         * Dumps a list of the species LSID's that are contained in the index.
+         */
+        public void dumpSpecies(){
+            try{
+                OutputStreamWriter fileOut = new OutputStreamWriter(new FileOutputStream("/data/species.txt"), "UTF-8");
+                Term term = new Term("rank", "species");
+                TopDocs hits = cbSearcher.search(new TermQuery(term), 2000000);
+
+           
+            for(ScoreDoc sdoc : hits.scoreDocs){
+                Document doc = cbReader.document(sdoc.doc);
+                
+                if(doc.getField("synonym") == null){
+                    String lsid = StringUtils.trimToNull(doc.getField("lsid").stringValue());
+                    if(lsid == null)
+                        lsid = doc.getField("id").stringValue();
+                    fileOut.write(lsid + "\n");
+                }
+
+            }
+            fileOut.flush();
+                
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+
+        }
+
     /**
      * Searches the index for the supplied name.  Returns null when there is no result
      * or the LSID for the first result. Where no LSID exist for the record the
