@@ -669,7 +669,7 @@ public class CBIndexSearch {
             LinnaeanRankClassification newcl = new LinnaeanRankClassification(null, cl.getGenus());
             if(cl != null && cl.getKingdom()==null&& cl.getGenus() != null){
 
-                TopDocs results = getIRMNGGenus(cl);
+                TopDocs results = getIRMNGGenus(newcl);
                 if(results.totalHits <= 1)
                     return null;
             }
