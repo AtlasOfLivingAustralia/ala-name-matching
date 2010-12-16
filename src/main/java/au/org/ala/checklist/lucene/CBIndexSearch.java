@@ -38,6 +38,7 @@ import java.io.OutputStreamWriter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.util.Version;
 import org.gbif.ecat.voc.NameType;
 
 
@@ -485,20 +486,37 @@ public class CBIndexSearch {
                 Query rankQuery =new TermQuery(new Term(CBCreateLuceneIndex.IndexField.RANK.toString(), rank.getRank()));
                 boolQuery.add(rankQuery, Occur.MUST);
             }
-            if(cl != null &&cl.getKingdom() != null){
-                Query kingQuery = new TermQuery(new Term(RankType.KINGDOM.getRank(), cl.getKingdom()));
-                boolQuery.add(kingQuery, Occur.SHOULD);
-                
-            }
-//            if(phylum != null){
-//                Query phylumQuery = new TermQuery(new Term(CBCreateLuceneIndex.IndexField.PHYLUM.toString(), phylum));
-//                boolQuery.add(phylumQuery, Occur.SHOULD);
-//
-//            }
-            if(cl != null &&cl.getGenus()!=null){
-                Query genusQuery = new TermQuery(new Term(RankType.GENUS.getRank(), cl.getGenus()));
-                boolQuery.add(genusQuery, Occur.SHOULD);
-                
+            if(cl!= null){
+                if(cl.getKingdom() != null){
+                    Query kingQuery = new TermQuery(new Term(RankType.KINGDOM.getRank(), cl.getKingdom()));
+                    boolQuery.add(kingQuery, Occur.SHOULD);
+
+                }
+                if(cl.getPhylum() != null){
+                    Query phylumQuery = new TermQuery(new Term(RankType.PHYLUM.getRank(), cl.getPhylum()));
+                    boolQuery.add(phylumQuery, Occur.SHOULD);
+
+                }
+                if(cl.getKlass() != null){
+                    Query classQuery = new TermQuery(new Term(RankType.CLASS.getRank(), cl.getKlass()));
+                    boolQuery.add(classQuery, Occur.SHOULD);
+
+                }
+                if(cl.getOrder() != null){
+                    Query orderQuery = new TermQuery(new Term(RankType.ORDER.getRank(), cl.getOrder()));
+                    boolQuery.add(orderQuery, Occur.SHOULD);
+
+                }
+                if(cl.getFamily() != null){
+                    Query famQuery = new TermQuery(new Term(RankType.FAMILY.getRank(), cl.getFamily()));
+                    boolQuery.add(famQuery, Occur.SHOULD);
+
+                }
+                if(cl.getGenus()!=null){
+                    Query genusQuery = new TermQuery(new Term(RankType.GENUS.getRank(), cl.getGenus()));
+                    boolQuery.add(genusQuery, Occur.SHOULD);
+
+                }
             }
 //            System.out.println(boolQuery);
             //limit the number of potential matches to max
@@ -667,19 +685,20 @@ public class CBIndexSearch {
         //check to see if we need to resolve the homonym
         if(cl.getGenus() != null){
             LinnaeanRankClassification newcl = new LinnaeanRankClassification(null, cl.getGenus());
-            if(cl != null && cl.getKingdom()==null&& cl.getGenus() != null){
+            if(cl != null && cl.getGenus() != null){
 
                 TopDocs results = getIRMNGGenus(newcl);
                 if(results.totalHits <= 1)
                     return null;
-            }
+            
             if(cl != null && cl.getKingdom() != null){
                 //create a local classification to work with we will only add a taxon when we are ready to try and resolve with it
                 newcl.setKingdom(cl.getKingdom());
                 //Step 1 search for kingdom and genus
-                TopDocs results = getIRMNGGenus(newcl);
+                results = getIRMNGGenus(newcl);
                 if(results.totalHits == 1)
                     return RankType.KINGDOM;
+            }
                 //Step 2 add the phylum
                 if(cl.getPhylum() != null && results.totalHits>1){
                         newcl.setPhylum(cl.getPhylum());
