@@ -14,18 +14,24 @@
  ***************************************************************************/
 package au.org.ala.sensitiveData;
 
-import java.math.BigDecimal;
+import java.util.List;
 
+import org.apache.log4j.Logger;
+
+import au.org.ala.checklist.lucene.CBIndexSearch;
+import au.org.ala.checklist.lucene.SearchResultException;
+import au.org.ala.checklist.lucene.model.NameSearchResult;
+import au.org.ala.data.util.RankType;
 import au.org.ala.sensitiveData.dao.SensitiveSpeciesDao;
 import au.org.ala.sensitiveData.model.SensitiveSpecies;
-import au.org.ala.sensitiveData.model.SensitivityCategory;
 
 /**
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
-public class SensitiveSpeciesFinder implements Lookup, Generalise {
+public class SensitiveSpeciesFinder implements Lookup {
 	
+	protected static final Logger logger = Logger.getLogger(SensitiveSpeciesFinder.class);
 	private SensitiveSpeciesDao dao;
 	
 	public void setDao(SensitiveSpeciesDao dao ) {
@@ -40,24 +46,18 @@ public class SensitiveSpeciesFinder implements Lookup, Generalise {
 		return dao.findByName(scientificName) != null;
 	}
 
-	public String[] generaliseLocation(SensitiveSpecies sensitiveSpecies, String latitude, String longitude) {
-		if (sensitiveSpecies != null) {
-			return generaliseCoordinates(sensitiveSpecies.getSensitivityCategory(), latitude, longitude);
-		} else {
-			return new String[] { latitude, longitude };
+	public void verifySensitiveSpecies(CBIndexSearch cbIdxSearcher) throws SearchResultException {
+		List<SensitiveSpecies> speciesList = dao.getAll();
+		for (SensitiveSpecies ss : speciesList) {
+			NameSearchResult match = cbIdxSearcher.searchForRecord(ss.getScientificName(), RankType.SPECIES);
+			if (match != null) {
+				String acceptedName = match.getRankClassification().getSpecies();
+				if (!ss.getScientificName().equalsIgnoreCase(acceptedName)) {
+					logger.warn("Sensitive species '" + ss.getScientificName() + "' is not accepted name - '" + acceptedName + "'");
+				}
+			} else {
+				logger.warn("Sensitive species '" + ss.getScientificName() + "' not found in NameMatching index");
+			}
 		}
 	}
-
-	private String[] generaliseCoordinates(SensitivityCategory category, String latitude, String longitude) {
-		return new String[] { round(latitude, category.getGeneralisationDecimalPlaces()), round(longitude, category.getGeneralisationDecimalPlaces()) };
-	}
-
-	private String round(String number, int decimalPlaces) {
-		if (number == null || number.equals("")) {
-			return "";
-		} else {
-			return String.format("%." + decimalPlaces + "f", new BigDecimal(number));
-		}
-	}
-
 }

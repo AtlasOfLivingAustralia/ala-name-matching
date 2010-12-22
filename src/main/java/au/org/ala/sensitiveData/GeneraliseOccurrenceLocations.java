@@ -18,7 +18,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -34,6 +33,7 @@ import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.util.RankType;
 import au.org.ala.sensitiveData.dao.RawOccurrenceDao;
 import au.org.ala.sensitiveData.model.SensitiveSpecies;
+import au.org.ala.sensitiveData.util.GeneralisedLocation;
 
 /**
  *
@@ -49,7 +49,7 @@ public class GeneraliseOccurrenceLocations {
 	@Inject
 	protected DataSource occurrenceDataSource;
 	@Inject
-	protected CBIndexSearch CBIdxSearcher;
+	protected CBIndexSearch cbIdxSearcher;
 	@Inject
 	protected SensitiveSpeciesFinder sensitiveSpeciesFinder;
 	
@@ -60,9 +60,12 @@ public class GeneraliseOccurrenceLocations {
 	}
 
 	private void run(String startAt) throws SQLException, SearchResultException {
+		// Check that sensitive species names are accepted names from name search index
+		sensitiveSpeciesFinder.verifySensitiveSpecies(cbIdxSearcher);
+		
 		Connection conn = occurrenceDataSource.getConnection();
 		PreparedStatement pst = conn.prepareStatement(
-				"SELECT id, scientific_name, latitude, longitude, lat_long_precision, generalised_metres, raw_latitude, raw_longitude FROM raw_occurrence_record LIMIT ?,?");
+				"SELECT id, scientific_name, latitude, longitude, generalised_metres, raw_latitude, raw_longitude FROM raw_occurrence_record LIMIT ?,?");
 		int offset = startAt == null ? 0 : Integer.parseInt(startAt);
 		int stride = 10000;
 		int recCount = 0;
@@ -81,7 +84,6 @@ public class GeneraliseOccurrenceLocations {
 				int id = rs.getInt("id");
 				String latitude = rs.getString("latitude");
 				String longitude = rs.getString("longitude");
-				String lat_long_precision = rs.getString("lat_long_precision");
 				String generalised_metres = rs.getString("generalised_metres");
 				String raw_latitude = rs.getString("raw_latitude");
 				String raw_longitude = rs.getString("raw_longitude");
@@ -95,18 +97,25 @@ public class GeneraliseOccurrenceLocations {
 				// See if it's sensitive
 				SensitiveSpecies ss = sensitiveSpeciesFinder.findSensitiveSpecies(speciesName);
 				if (ss != null) {
+                    GeneralisedLocation genLoc = new GeneralisedLocation(latitude, longitude, ss.getCategory());
 					if (isEmpty(generalised_metres)) {
-						String newLocation[] = sensitiveSpeciesFinder.generaliseLocation(ss, latitude, longitude);
-						logger.debug("Generalising location for " + id + " '" + rawScientificName + "' using Name='" + speciesName + "', Lat=" + newLocation[0] + ", Long=" + newLocation[1]);
-						rawOccurrenceDao.updateLocation(id, latitude, longitude, ss.getSensitivityCategory().getGeneralisationInMetres(), newLocation[0], newLocation[1]);
+						logger.debug("Generalising location for " + id + " '" + rawScientificName + "' using Name='" + speciesName +
+						             "', Lat=" + genLoc.getGeneralisedLatitude() + 
+						             ", Long=" + genLoc.getGeneralisedLongitude());
+						rawOccurrenceDao.updateLocation(id, genLoc.getGeneralisedLatitude(), genLoc.getGeneralisedLongitude(), genLoc.getGeneralisationInMetres(), latitude, longitude);
 					} else {
-						int existingGeneralisation = Integer.parseInt(generalised_metres);
-						int ssGeneralisation = ss.getSensitivityCategory().getGeneralisationInMetres();
-						if (existingGeneralisation != ssGeneralisation) {
-							String newLocation[] = sensitiveSpeciesFinder.generaliseLocation(ss, latitude, longitude);
-							logger.debug("Re-generalising location for " + id + " '" + rawScientificName + "' using Name='" + speciesName + "', Lat=" + newLocation[0] + ", Long=" + newLocation[1]);
-							rawOccurrenceDao.updateLocation(id, newLocation[0], newLocation[1], ss.getSensitivityCategory().getGeneralisationInMetres());
+						if (generalised_metres != genLoc.getGeneralisationInMetres()) {
+							logger.debug("Re-generalising location for " + id + " '" + rawScientificName + "' using Name='" + speciesName + 
+							             "', Lat=" + genLoc.getGeneralisedLatitude() + 
+							             ", Long=" + genLoc.getGeneralisedLongitude());
+							rawOccurrenceDao.updateLocation(id, genLoc.getGeneralisedLatitude(), genLoc.getGeneralisedLongitude(), genLoc.getGeneralisationInMetres());
 						}
+					}
+				} else {
+					// See if was sensitive but not now
+					if (!isEmpty(generalised_metres)) {
+						logger.debug("De-generalising location for " + id + " '" + rawScientificName + "' using Name='" + speciesName + "', Lat=" + raw_latitude + ", Long=" + raw_longitude);
+						rawOccurrenceDao.updateLocation(id, raw_latitude, raw_longitude, null, null, null);
 					}
 				}
 			}
@@ -120,9 +129,9 @@ public class GeneraliseOccurrenceLocations {
 	}
 
 	private String getSpeciesName(String name) throws SearchResultException {
-		List<NameSearchResult> matches = CBIdxSearcher.searchForRecords(name, RankType.SPECIES);
-		if (matches != null) {
-			return matches.get(0).getRankClassification().getSpecies();
+		NameSearchResult match = cbIdxSearcher.searchForRecord(name, RankType.SPECIES);
+		if (match != null) {
+			return match.getRankClassification().getSpecies();
 		} else {
 			return name;
 		}
