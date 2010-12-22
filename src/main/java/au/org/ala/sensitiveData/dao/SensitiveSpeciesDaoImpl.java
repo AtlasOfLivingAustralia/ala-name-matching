@@ -67,9 +67,16 @@ public class SensitiveSpeciesDaoImpl extends JdbcDaoSupport implements Sensitive
 			SensitiveSpecies ss = new SensitiveSpecies(scientificName, null);
 			int match = Collections.binarySearch(species, ss);
 			if (species.get(match).equals(ss)) {
+		        logger.debug("Sensitive Species exact match - " + scientificName);
 				return species.get(match);
 			} else {
-				return null;
+			    String sensitiveSpeciesName = species.get(match).getScientificName();
+			    if (ss.getScientificName().startsWith(sensitiveSpeciesName) && sensitiveSpeciesName.indexOf(" ") == -1) {
+			        logger.debug("Sensitive Species genus match - " + scientificName);
+			        return species.get(match);
+    			} else {
+    				return null;
+    			}
 			}
 		} catch (Exception e) {
 			return null;
