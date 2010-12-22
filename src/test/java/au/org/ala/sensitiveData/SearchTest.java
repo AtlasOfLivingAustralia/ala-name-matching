@@ -14,28 +14,32 @@
  ***************************************************************************/
 package au.org.ala.sensitiveData;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import org.junit.Before;
+import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import au.org.ala.sensitiveData.model.SensitiveSpecies;
 
-import junit.framework.TestCase;
-
 /**
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
-public class SearchTest extends TestCase {
+public class SearchTest {
 
 	ApplicationContext context;
 	SensitiveSpeciesFinder finder;
 	
-	protected void setUp() throws Exception {
-		super.setUp();
+	@Before
+	public void runBeforeEveryTest() throws Exception {
 		context = new ClassPathXmlApplicationContext("spring-config.xml");
 		finder = context.getBean("searchImpl", SensitiveSpeciesFinder.class);
 	}
 
+	@Test
 	public void testLookup() {
 		SensitiveSpecies ss = finder.findSensitiveSpecies("Macropus rufus");
 		assertNull(ss);
