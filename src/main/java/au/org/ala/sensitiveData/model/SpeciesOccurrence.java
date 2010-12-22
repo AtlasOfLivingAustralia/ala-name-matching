@@ -18,14 +18,16 @@ package au.org.ala.sensitiveData.model;
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
-public class RawOccurrenceRecord {
+public class SpeciesOccurrence {
 	private int id;
 	private String scientificName;
+	private String location;
 	private String latitude;
 	private String longitude;
 	private String latLongPrecision;
+	private String basisOfRecord;
 	
-	public RawOccurrenceRecord() {
+    public SpeciesOccurrence() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
@@ -70,5 +72,20 @@ public class RawOccurrenceRecord {
 		this.latLongPrecision = latLongPrecision;
 	}
 	
-	
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getBasisOfRecord() {
+        return basisOfRecord;
+    }
+
+    public void setBasisOfRecord(String basisOfRecord) {
+        this.basisOfRecord = basisOfRecord;
+    }
+
 }
