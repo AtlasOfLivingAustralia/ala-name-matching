@@ -20,20 +20,16 @@ package au.org.ala.sensitiveData.model;
  */
 public enum SensitivityCategory {
 
-	EXTREME("X", -1, Integer.MAX_VALUE),
-	HIGH("H", 1, 10000),
-	MEDIUM("M", 2, 1000),
-	LOW("L", 3, 100),
-	NOT_SENSITIVE("N", 10, 0);
+	CONSERVATION_EXTREME("CX"),
+	CONSERVATION_HIGH("CH"),
+	CONSERVATION_MEDIUM("CM"),
+	CONSERVATION_LOW("CL"),
+	NOT_SENSITIVE("N");
 	
 	private String value;
-	private int generalisationDecimalPlaces;
-	private int generalisationInMetres;
 	
-	private SensitivityCategory(String value, int decimalPlaces, int metres) {
+	private SensitivityCategory(String value) {
 		this.value = value;
-		this.generalisationDecimalPlaces = decimalPlaces;
-		this.generalisationInMetres = metres;
 	}
 	
 	public static SensitivityCategory getCategory(String value) {
@@ -49,11 +45,4 @@ public enum SensitivityCategory {
 		return value;
 	}
 
-	public int getGeneralisationDecimalPlaces() {
-		return generalisationDecimalPlaces;
-	}
-
-	public int getGeneralisationInMetres() {
-		return generalisationInMetres;
-	}
 }
