@@ -26,7 +26,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 import org.springframework.stereotype.Component;
 
-import au.org.ala.sensitiveData.model.RawOccurrenceRecord;
+import au.org.ala.sensitiveData.model.SpeciesOccurrence;
 
 /**
  *
@@ -37,7 +37,7 @@ public class RawOccurrenceDaoImpl extends JdbcDaoSupport implements RawOccurrenc
 	
 	protected static final Logger logger = Logger.getLogger(RawOccurrenceDaoImpl.class);
 	
-	public static final String SELECT_ALL_OCCURRENCES = "SELECT id, scientific_name, latitude, longitude, lat_long_precision FROM raw_occurrence_record";
+	public static final String SELECT_ALL_OCCURRENCES = "SELECT id, scientific_name, latitude, longitude FROM raw_occurrence_record";
 	
 	public static final String UPDATE_OCCURRENCE = "UPDATE raw_occurrence_record " + "" +
 												   "SET latitude=?, longitude=?, generalised_metres=?, raw_latitude=?, raw_longitude=? " +
@@ -54,34 +54,33 @@ public class RawOccurrenceDaoImpl extends JdbcDaoSupport implements RawOccurrenc
 	}
 	
 	@Override
-	public void updateLocation(int id, String rawLat, String rawLong, int generalisedMetres, String generalisedLat, String generalisedLong) {
-		int rows = getJdbcTemplate().update(UPDATE_OCCURRENCE, new Object [] { generalisedLat, generalisedLong, Integer.toString(generalisedMetres), rawLat, rawLong, new Integer(id) });
+	public void updateLocation(int id, String generalisedLat, String generalisedLong, String generalisedMetres, String rawLat, String rawLong ) {
+		int rows = getJdbcTemplate().update(UPDATE_OCCURRENCE, new Object [] { generalisedLat, generalisedLong, generalisedMetres, rawLat, rawLong, new Integer(id) });
 		if (rows == 0) {
 			logger.warn("No rows updated for id=" + id);
 		}
 	}
 
 	@Override
-	public void updateLocation(int id, String generalisedLat, String generalisedLong, int generalisedMetres) {
-		int rows = getJdbcTemplate().update(REUPDATE_OCCURRENCE, new Object [] { generalisedLat, generalisedLong, Integer.toString(generalisedMetres), new Integer(id) });
+	public void updateLocation(int id, String generalisedLat, String generalisedLong, String generalisedMetres) {
+		int rows = getJdbcTemplate().update(REUPDATE_OCCURRENCE, new Object [] { generalisedLat, generalisedLong, generalisedMetres, new Integer(id) });
 		if (rows == 0) {
 			logger.warn("No rows updated for id=" + id);
 		}
 	}
 
 	@Override
-	public List<RawOccurrenceRecord> getOccurrences() {
-		return (List<RawOccurrenceRecord>) getJdbcTemplate().query(
+	public List<SpeciesOccurrence> getOccurrences() {
+		return (List<SpeciesOccurrence>) getJdbcTemplate().query(
 				SELECT_ALL_OCCURRENCES,
 				new Object [] {},
-				new RowMapper<RawOccurrenceRecord>() {
-					public RawOccurrenceRecord mapRow(ResultSet rs, int row) throws SQLException {
-						RawOccurrenceRecord occ = new RawOccurrenceRecord();
+				new RowMapper<SpeciesOccurrence>() {
+					public SpeciesOccurrence mapRow(ResultSet rs, int row) throws SQLException {
+						SpeciesOccurrence occ = new SpeciesOccurrence();
 						occ.setId(rs.getInt("id"));
 						occ.setScientificName(rs.getString("scientific_name"));
 						occ.setLatitude(rs.getString("latitude"));
 						occ.setLongitude(rs.getString("longitude"));
-						occ.setLatLongPrecision(rs.getString("lat_long_precision"));
 						return occ;
 					}
 				});
