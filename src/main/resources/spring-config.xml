@@ -10,7 +10,7 @@
     
 	<bean id="sensitiveSpeciesDao" class="au.org.ala.sensitiveData.dao.SensitiveSpeciesDaoImpl" />
 	
-	<bean id="searchImpl" class="au.org.ala.sensitiveData.SearchImpl">
+	<bean id="searchImpl" class="au.org.ala.sensitiveData.SensitiveSpeciesFinder">
 	   <property name="dao" ref="sensitiveSpeciesDao" />
 	</bean>
 
