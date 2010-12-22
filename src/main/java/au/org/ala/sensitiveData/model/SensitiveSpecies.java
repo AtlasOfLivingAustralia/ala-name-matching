@@ -21,22 +21,41 @@ package au.org.ala.sensitiveData.model;
 public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
 
 	private String scientificName;
-	private SensitivityCategory sensitivityCategory;
+	private SensitivityCategory category;
+	private SensitivityZone[] zones;
 	
-	public SensitiveSpecies(String scientificName, SensitivityCategory sensitivityCategory) {
+    public SensitiveSpecies(String scientificName, SensitivityCategory category) {
 		super();
 		this.scientificName = scientificName;
-		this.sensitivityCategory = sensitivityCategory;
+		this.category = category;
 	}
 
 	public String getScientificName() {
 		return this.scientificName;
 	}
 
-	public SensitivityCategory getSensitivityCategory() {
-		return sensitivityCategory;
+	public SensitivityCategory getCategory() {
+		return category;
 	}
 	
+    public SensitivityZone[] getZones() {
+        return zones;
+    }
+
+    public void setZones(SensitivityZone[] zones) {
+        this.zones = zones;
+    }
+    
+    public boolean isSensitiveForZone(SensitivityZone zone) {
+        for (SensitivityZone sz : this.zones) {
+            if (zone.equals(sz)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -67,6 +86,5 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
 	public int compareTo(SensitiveSpecies ss) {
 		return scientificName.compareTo(ss.getScientificName());
 	}
-
 
 }
