@@ -15,12 +15,9 @@
 package au.org.ala.data.model;
 
 
-import au.org.ala.data.util.RankType;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.lucene.document.Document;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 /**
  * @author trobertson
@@ -34,9 +31,29 @@ public class LinnaeanRankClassification {
 	protected String klass;
 	protected String order;
 	protected String family;
-	protected String genus;
-        protected String species;
+	protected String genus; // Aus
+    protected String species; // Aus bus
+	protected String specificEpithet; // bus
+	protected String subspecies; // Aus bus cus
+	protected String infraspecificEpithet; // cus
 	protected String scientificName;
+	
+	public LinnaeanRankClassification(String kingdom, String phylum,
+			String klass, String order, String family, String genus,
+			String species, String specificEpithet, String subspecies, String infraspecificEpithet, 
+			String scientificName) {
+		this.kingdom = kingdom;
+		this.phylum = phylum;
+		this.klass = klass;
+		this.order = order;
+		this.family = family;
+		this.genus = genus;
+		this.species = species;
+		this.specificEpithet = specificEpithet;
+		this.subspecies  = subspecies;
+		this.infraspecificEpithet = infraspecificEpithet;
+		this.scientificName = scientificName;
+	}
 	/**
 	 * @param kingdom
 	 * @param phylum
@@ -56,12 +73,12 @@ public class LinnaeanRankClassification {
 		this.scientificName = scientificName;
 	}
         /**
-         * The constructor was added for convienence.
+         * The constructor was added for convenience.
          * @param kingdom
          * @param genus
          */
 	public LinnaeanRankClassification(String kingdom, String genus){
-            this(kingdom, null, null, null, null, genus,null);
+            this(kingdom, null, null, null, null, genus, null);
         }
 
 	/**
@@ -157,8 +174,43 @@ public class LinnaeanRankClassification {
         this.species = species;
     }
 
+    /**
+	 * @return the specificEpithet
+	 */
+	public String getSpecificEpithet() {
+		return specificEpithet;
+	}
+	/**
+	 * @param specificEpithet the specificEpithet to set
+	 */
+	public void setSpecificEpithet(String specificEpithet) {
+		this.specificEpithet = specificEpithet;
+	}
 
-
+	/**
+	 * @return the infraspecificEpithet
+	 */
+	public String getInfraspecificEpithet() {
+		return infraspecificEpithet;
+	}
+	/**
+	 * @param infraspecificEpithet the infraspecificEpithet to set
+	 */
+	public void setInfraspecificEpithet(String infraspecificEpithet) {
+		this.infraspecificEpithet = infraspecificEpithet;
+	}
+	/**
+	 * @return the subspecies
+	 */
+	public String getSubspecies() {
+		return subspecies;
+	}
+	/**
+	 * @param subspecies the subspecies to set
+	 */
+	public void setSubspecies(String subspecies) {
+		this.subspecies = subspecies;
+	}
 	/**
 	 * @see java.lang.Object#toString()
 	 */
@@ -170,12 +222,11 @@ public class LinnaeanRankClassification {
 				.append("order", this.order)
 				.append("family", this.family)
 				.append("genus", this.genus)
-                                .append("species", this.species)
+                .append("species", this.species)
+                .append("specificEpithet", this.specificEpithet)
 				.append("scientificName",this.scientificName)				
 				.toString();
 	}
-
-
 
 	/**
 	 * @see java.lang.Object#equals(Object)
@@ -190,7 +241,8 @@ public class LinnaeanRankClassification {
 				this.scientificName, rhs.scientificName).append(this.phylum,
 				rhs.phylum).append(this.kingdom, rhs.kingdom).append(
 				this.family, rhs.family).append(this.order, rhs.order).append(
-				this.klass, rhs.klass).append(this.genus, rhs.genus).isEquals();
+				this.klass, rhs.klass).append(this.genus, rhs.genus).append(this.species, rhs.species)
+				.append(this.specificEpithet, rhs.specificEpithet).isEquals();
 	}
         /**
          * checks to see if the non-null values of this classification are identical to
@@ -227,6 +279,14 @@ public class LinnaeanRankClassification {
                 if(!species.equalsIgnoreCase(lrc.species))
                     return false;
             }
+            if(specificEpithet != null){
+                if(!specificEpithet.equalsIgnoreCase(lrc.specificEpithet))
+                    return false;
+            }
+            if(scientificName != null){
+                if(!scientificName.equalsIgnoreCase(lrc.scientificName))
+                    return false;
+            }
             return true;
         }
         
@@ -243,17 +303,12 @@ public class LinnaeanRankClassification {
 		System.out.println("a.hc=b.hc: " + (a.hashCode() == b.hashCode()));
 	}
 
-
-
 	/**
 	 * @see java.lang.Object#hashCode()
 	 */
 	public int hashCode() {
 		return new HashCodeBuilder(1497136033, 448920019).append(this.scientificName).append(
 				this.phylum).append(this.kingdom).append(this.family).append(
-				this.order).append(this.klass).append(this.genus).toHashCode();
+				this.order).append(this.klass).append(this.species).append(this.specificEpithet).toHashCode();
 	}
-	
-	
-	
 }

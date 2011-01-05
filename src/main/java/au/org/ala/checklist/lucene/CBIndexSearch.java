@@ -1,10 +1,12 @@
-
 package au.org.ala.checklist.lucene;
 
-
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -12,6 +14,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -28,29 +31,20 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.store.FSDirectory;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
+import org.gbif.ecat.voc.NameType;
 import org.gbif.portal.util.taxonomy.TaxonNameSoundEx;
 
 import au.org.ala.checklist.lucene.model.NameSearchResult;
-import au.org.ala.data.util.RankType;
 import au.org.ala.data.model.LinnaeanRankClassification;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.util.Version;
-import org.gbif.ecat.voc.NameType;
-
+import au.org.ala.data.util.RankType;
 
 /**
- *
  * The API used to perform a search on the CB Lucene Index.  It follows the following
  * algorithm when trying to find a match:
  *
- * 1. Search for a direct match for supplied name on the name field(with the optional rank provided).
+ * 1. Search for a direct match for supplied name on the name field (with the optional rank provided).
  *
  * 2. Search for a match on the alternative name field (with optional rank)
- *
  *
  * 3. Generate a searchable canonical name for the supplied name.  Search for a match on
  * the searchable canonical field using the generated name
@@ -63,8 +57,6 @@ import org.gbif.ecat.voc.NameType;
  * When a match is found the existence of homonyms are checked.  Where a homonym exists, 
  * if the kingdom of the result does not match the supplied kingdom a HomonymException is thrown.
  *
- 
- * 
  * @author Natasha
  */
 public class CBIndexSearch {
@@ -164,8 +156,10 @@ public class CBIndexSearch {
     public String searchForLSID(String name, boolean fuzzy) throws SearchResultException{
         return searchForLSID(name, null, fuzzy);
     }
-    /*
+    /**
      * Searches for the name without using fuzzy matches...
+     * 
+     * @param name scientific name for a taxon
      */
     public String searchForLSID(String name) throws SearchResultException{
         return searchForLSID(name, false);
@@ -199,6 +193,9 @@ public class CBIndexSearch {
     }
     /**
      * A wrapper method for the method below. Allows searching to occur without a classification.
+     * 
+     * DM: Why is this deprecated? Need more javadoc in this class....
+     * 
      * @param name
      * @param kingdom
      * @param genus
@@ -207,8 +204,8 @@ public class CBIndexSearch {
      * @throws SearchResultException
      */
     @Deprecated
-    public String searchForLSID(String name, String kingdom, String genus, RankType rank) throws SearchResultException{
-        LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, genus);
+    public String searchForLSID(String name, String kingdom, String scientificName, RankType rank) throws SearchResultException{
+        LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, scientificName);
         return searchForLSID(name, cl, rank, false);
     }
     /**
@@ -236,7 +233,142 @@ public class CBIndexSearch {
 		}
 		return lsid;
     }
+    
     /**
+     * Search for an LSID with the supplied classification without a fuzzy match.
+     * Supplying to classification in this way allows the API to try and ascertain the rank and
+     * the correct scientific name to use.
+     * 
+     * @param cl the classification to work with
+     * @return An LSID for the taxon or null if nothing matched or homonym issues detected
+     * @throws SearchResultException
+     */
+    public String searchForLSID(LinnaeanRankClassification cl, boolean recursiveMatching) throws SearchResultException {
+        NameSearchResult nsr = searchForRecord(cl, recursiveMatching);
+        if(nsr!=null){
+        	return nsr.getLsid();
+        }
+        return null;
+    }
+    
+    /**
+     * Search for an LSID with the supplied classification without a fuzzy match.
+     * Supplying to classification in this way allows the API to try and ascertain the rank and
+     * the correct scientific name to use.
+     * 
+     * @param cl the classification to work with
+     * @param recursiveMatching whether to try matching to a higher taxon when leaf taxa matching fails
+     * @return An LSID for the taxon or null if nothing matched or homonym issues detected
+     * @throws SearchResultException
+     */
+    public NameSearchResult searchForRecord(LinnaeanRankClassification cl, boolean recursiveMatching) throws SearchResultException {
+    	
+    	RankType rank = null;
+    	String name = cl.getScientificName();
+    	NameSearchResult nsr = null;
+    	if(name==null){
+    		//ascertain the rank and construct the scientific name
+            if (StringUtils.isNotEmpty(cl.getInfraspecificEpithet()) && !isInfraSpecificMarker(cl.getSubspecies())) {
+                rank = RankType.SUBSPECIES;
+                //construct the full scientific name from the parts
+                if(StringUtils.isNotEmpty(cl.getGenus()) && StringUtils.isNotEmpty(cl.getSpecificEpithet())){
+                	name = cl.getGenus() + " " + cl.getSpecificEpithet() + " " +cl.getInfraspecificEpithet(); 
+                }
+	        } else if (StringUtils.isNotEmpty(cl.getSubspecies()) && !isInfraSpecificMarker(cl.getSubspecies())) {
+                rank = RankType.SUBSPECIES;
+            	name = cl.getSubspecies();
+	        } else if (StringUtils.isNotEmpty(cl.getSpecificEpithet()) && !isSpecificMarker(cl.getSpecies())) {
+                rank = RankType.SPECIES;
+                //construct the full scientific name from the parts
+                if(StringUtils.isNotEmpty(cl.getGenus())){
+                	name = cl.getGenus() + " " + cl.getSpecificEpithet() ; 
+                }
+	        } else if (StringUtils.isNotEmpty(cl.getSpecies()) && !isSpecificMarker(cl.getSpecies())) {
+                rank = RankType.SPECIES;
+                //construct the full scientific name from the parts
+            	name = cl.getSpecies(); 
+	        } else if (StringUtils.isNotEmpty(cl.getGenus())) {
+                rank = RankType.GENUS;
+                //construct the full scientific name from the parts
+            	name = cl.getGenus(); 
+	        } else if (StringUtils.isNotEmpty(cl.getFamily())) {
+                rank = RankType.FAMILY;
+                //construct the full scientific name from the parts
+            	name = cl.getFamily(); 
+	        } else if (StringUtils.isNotEmpty(cl.getOrder())) {
+                rank = RankType.ORDER;
+                //construct the full scientific name from the parts
+            	name = cl.getOrder(); 
+	        } else if (StringUtils.isNotEmpty(cl.getKlass())) {
+                rank = RankType.CLASS;
+                //construct the full scientific name from the parts
+            	name = cl.getKlass(); 
+	        } else if (StringUtils.isNotEmpty(cl.getPhylum())) {
+                rank = RankType.PHYLUM;
+                //construct the full scientific name from the parts
+            	name = cl.getPhylum(); 
+	        } else if (StringUtils.isNotEmpty(cl.getKingdom())) {
+                rank = RankType.KINGDOM;
+                //construct the full scientific name from the parts
+            	name = cl.getKingdom(); 
+	        }  
+            nsr = searchForRecord(name, cl, rank, false);
+    	} else {
+    		nsr = searchForRecord(name, cl, rank, false);
+    	}
+    	
+    	if(nsr==null && recursiveMatching){
+    		if(nsr == null && cl.getGenus()!=null){
+    			nsr = searchForRecord(cl.getGenus(), cl, RankType.GENUS, false);
+    		}
+    		if(nsr == null && cl.getFamily()!=null){
+    			nsr = searchForRecord(cl.getFamily(), cl, RankType.FAMILY, false);
+    		}
+    		if(nsr == null && cl.getOrder()!=null){
+    			nsr = searchForRecord(cl.getOrder(), cl, RankType.ORDER, false);
+    		}
+    		if(nsr == null && cl.getKlass()!=null){
+    			nsr = searchForRecord(cl.getKlass(), cl, RankType.CLASS, false);
+    		}
+    		if(nsr == null && cl.getPhylum()!=null){
+    			nsr = searchForRecord(cl.getPhylum(), cl, RankType.PHYLUM, false);
+    		}
+    		if(nsr == null && cl.getKingdom()!=null){
+    			nsr = searchForRecord(cl.getKingdom(), cl, RankType.KINGDOM, false);
+    		}
+    	} 
+    	return nsr;
+    }
+    
+    /**
+     * FIXME need to include other types of marker
+     * 
+     * @param subspecies
+     * @return
+     */
+    private boolean isInfraSpecificMarker(String subspecies) {
+    	String epithet = StringUtils.trimToNull(subspecies);
+    	if(epithet!=null){
+    		if("spp".equalsIgnoreCase(epithet) || "spp.".equalsIgnoreCase(epithet)) return true;
+    	}
+		return false;
+	}
+
+    /**
+     * FIXME need to include other types of marker
+     * 
+     * @param species
+     * @return
+     */
+	private boolean isSpecificMarker(String species) {
+    	String epithet = StringUtils.trimToNull(species);
+    	if(epithet!=null){
+    		if("sp".equalsIgnoreCase(epithet) || "sp.".equalsIgnoreCase(epithet)) return true;
+    	}
+		return false;
+	}
+
+	/**
      * Search for an LSID based on suppled name, classification and rank without a fuzzy match...
      * @param name
      * @param cl
