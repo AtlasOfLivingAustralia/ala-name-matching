@@ -17,7 +17,9 @@ import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.KeywordAnalyzer;
+import org.apache.lucene.analysis.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
@@ -70,7 +72,7 @@ public class CBCreateLuceneIndex {
     private final int POS_RANK_ID = 10;
     private final int POS_RANK = 11;
     private final int POS_LFT = 12;
-    private final int POS_RGT = 12;
+    private final int POS_RGT = 13;
     private final int POS_KID = 14;
     private final int POS_K = 15;
     private final int POS_PID = 16;
@@ -149,7 +151,7 @@ public class CBCreateLuceneIndex {
         createExtraIdIndex(indexDir + File.separator + "id",new File(exportsDir + File.separator + "cb_identifiers.txt"));
         if(generateSciNames){
             //Checklist Bank Main Index
-//            indexCB(createIndexWriter(new File(indexDir + File.separator + "cb"), analyzer), exportsDir + File.separator + cbExportFile, exportsDir + File.separator + lexFile);
+            indexCB(createIndexWriter(new File(indexDir + File.separator + "cb"), analyzer), exportsDir + File.separator + cbExportFile, exportsDir + File.separator + lexFile);
             //IRMNG index to aid in the resolving of homonyms
             indexIRMNG(createIndexWriter(new File(indexDir + File.separator + "irmng"), analyzer), exportsDir + File.separator + irmngFile);
         }
@@ -167,7 +169,7 @@ public class CBCreateLuceneIndex {
      * @return
      * @throws Exception
      */
-    private IndexWriter createIndexWriter(File directory, KeywordAnalyzer analyzer) throws Exception{
+    private IndexWriter createIndexWriter(File directory, Analyzer analyzer) throws Exception{
 
         if (directory.exists()) {
             FileUtils.forceDelete(directory);
@@ -381,6 +383,9 @@ public class CBCreateLuceneIndex {
                            }
                         }
                     }
+                    else{
+                        System.out.println("Unable to locate LSID " + values[5] + " in current dump");
+                    }
                 }
 
             }
@@ -498,7 +503,7 @@ public class CBCreateLuceneIndex {
      * @param rankString
      * @return
      */
-    private Document buildDocument(String name, String id, String lsid, String rank, String rankString, 
+    private Document buildDocument(String name, String id, String lsid, String rank, String rankString,
     		String kingdom, String phylum, String clazz, String order, String family, String genus, 
     		String species, String left, String right, float boost, String acceptedConcept) {
 //        System.out.println("creating index " + name + " " + classification + " " + id + " " + lsid + " " + rank + " " + rankString+ " " + kingdom + " " + genus);
@@ -571,7 +576,7 @@ public class CBCreateLuceneIndex {
     public static void main(String[] args) throws Exception {
         CBCreateLuceneIndex indexer = new CBCreateLuceneIndex();
         indexer.init();
-      
+
         if (args.length >= 2) {
             boolean sn = true;
             boolean cn = true;
