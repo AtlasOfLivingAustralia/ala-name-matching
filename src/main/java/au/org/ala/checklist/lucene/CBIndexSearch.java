@@ -32,7 +32,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
 import org.gbif.ecat.voc.NameType;
-import org.gbif.portal.util.taxonomy.TaxonNameSoundEx;
+import au.org.ala.data.util.TaxonNameSoundEx;
 
 import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.model.LinnaeanRankClassification;
@@ -106,6 +106,10 @@ public class CBIndexSearch {
 		}
             return idxFile;
         }
+        /**
+         * Run this class to Dump a list of species level LSID to file.
+         * @param args
+         */
         public static void main(String[] args){
             try{
                 CBIndexSearch searcher = new CBIndexSearch("/data/lucene/namematching");
@@ -146,9 +150,13 @@ public class CBIndexSearch {
         }
 
     /**
-     * Searches the index for the supplied name.  Returns null when there is no result
+     * Searches the index for the supplied name with or without fuzzy name matching.
+     * Returns null when there is no result
      * or the LSID for the first result. Where no LSID exist for the record the
      * CB ID is returned instead
+     *
+     * @throws HomonymException when an unresolved homonym is detected
+     *
      * @param name
      * @param fuzzy look for a fuzzy match
      * @return
@@ -157,7 +165,9 @@ public class CBIndexSearch {
         return searchForLSID(name, null, fuzzy);
     }
     /**
-     * Searches for the name without using fuzzy matches...
+     * Searches for the name without using fuzzy name matching...
+     * 
+     * @see #searchForLSID(java.lang.String, boolean) 
      * 
      * @param name scientific name for a taxon
      */
@@ -165,7 +175,8 @@ public class CBIndexSearch {
         return searchForLSID(name, false);
     }
     /**
-     * Searches the index for the supplied name of the specified rank.  Returns
+     * Searches the index for the supplied name of the specified rank with or without
+     * fuzzy name matching.  Returns
      * null when there is no result or the LSID for the first result.
      * Where no LSID exist for the record the
      * CB ID is returned instead
@@ -175,6 +186,7 @@ public class CBIndexSearch {
      * @param name
      * @param rank
      * @param fuzzy look for a fuzzy match
+     * @throws HomonymException when an unresolved homonym is detected
      * @return
      */
     public String searchForLSID(String name, RankType rank, boolean fuzzy)throws SearchResultException{
@@ -182,7 +194,10 @@ public class CBIndexSearch {
 
     }
     /**
-     * Searches for an LSID of the supplied name and rank without a fuzzy match
+     * Searches for an LSID of the supplied name and rank without a fuzzy match...
+     *
+     * @see #searchForLSID(java.lang.String, au.org.ala.data.util.RankType, boolean)
+     *
      * @param name
      * @param rank
      * @return
@@ -192,14 +207,18 @@ public class CBIndexSearch {
         return searchForLSID(name, null, rank, false);
     }
     /**
-     * A wrapper method for the method below. Allows searching to occur without a classification.
+     * Searches for the LSID of the supplied name and rank. Using the kingdom to
+     * resolve homonym issues.
      * 
-     * DM: Why is this deprecated? Need more javadoc in this class....
+     * 
      * 
      * @param name
      * @param kingdom
      * @param genus
      * @param rank
+     * @deprecated Use {@link #searchForLSID(java.lang.String, au.org.ala.data.model.LinnaeanRankClassification, au.org.ala.data.util.RankType, boolean)} instead.
+     * It is more extensible to supply a classification object then a list of higher classification
+     
      * @return
      * @throws SearchResultException
      */
@@ -209,9 +228,15 @@ public class CBIndexSearch {
         return searchForLSID(name, cl, rank, false);
     }
     /**
-     * Search for an LSID based on the supplied name.  When the kingdom and genus
-     * are provided they are used to try and resolve homonyms. If they are not
-     * provided and a homonym is detected in the result a HomonymException is thrown.
+     * Search for an LSID based on the supplied name, classification and rank with or without fuzzy name matching.
+     *
+     * When a classification is supplied it is used for 2 purposes:
+     * <ol>
+     * <li> To try and resolve potential homonyms</li>
+     * <li> To provide "optional" components to the search.  Thus an incorrect higher
+     * classification will not prevent matches from occurring.</li>
+     * </ol>
+     * If it is not provided and a homonym is detected in the result a HomonymException is thrown.
      * 
      * 
      * @param name
@@ -219,7 +244,7 @@ public class CBIndexSearch {
      * @param rank
      * @param fuzzy look for a fuzzy match
      * @return
-     * @throws SearchResultException
+     * @throws HomonymException  When an unresolved homonym is detected
      */
     public String searchForLSID(String name, LinnaeanRankClassification cl, RankType rank, boolean fuzzy) throws SearchResultException{
 		String lsid = null;
@@ -314,10 +339,67 @@ public class CBIndexSearch {
 	        }  
             nsr = searchForRecord(name, cl, rank, false);
     	} else {
+                //check to see if the rank can be determined by matching the scentific name to one of values
+                if(rank == null && StringUtils.equalsIgnoreCase(name, cl.getSubspecies()))
+                    rank = RankType.SUBSPECIES;
+                else if(rank == null && StringUtils.equalsIgnoreCase(name, cl.getSpecies()))
+                    rank = RankType.SPECIES;
+                else if(rank == null && StringUtils.equalsIgnoreCase(name, cl.getGenus()))
+                    rank = RankType.GENUS;
+                else if(rank == null && StringUtils.equalsIgnoreCase(name, cl.getFamily()))
+                    rank = RankType.FAMILY;
+                else if(rank == null && StringUtils.equalsIgnoreCase(name, cl.getOrder()))
+                    rank = RankType.ORDER;
+                else if(rank == null && StringUtils.equalsIgnoreCase(name,  cl.getKlass()))
+                    rank = RankType.CLASS;
+                else if(rank == null && StringUtils.equalsIgnoreCase(name, cl.getPhylum()))
+                    rank = RankType.PHYLUM;
+                else if(rank == null && StringUtils.equalsIgnoreCase(name, cl.getKingdom()))
+                    rank = RankType.KINGDOM;
+
+                
+                if(rank == null){
+                    //check to see if the rank can be determined from the scientific name
+                    ParsedName<?> cn = parser.parseIgnoreAuthors(name);
+                    if(cn.isBinomial()) {
+                        //set the genus if it is empty
+                            if(StringUtils.isEmpty(cl.getGenus()))
+                                cl.setGenus(cn.genusOrAbove);
+                        if(cn.rankMarker == null && cn.cultivarEpithet == null && !cn.hasProblem()){
+
+
+                            if(cn.getInfraSpecificEpithet() != null){
+                                rank = RankType.SUBSPECIES;
+                                //populate the species if it is empty
+                                if(StringUtils.isEmpty(cl.getSpecies()))
+                                    cl.setSpecies(cn.genusOrAbove + " " + cn.specificEpithet);
+                            }
+                            else
+                                rank = RankType.SPECIES;
+                        }
+                        else if(cn.cultivarEpithet != null){
+                            rank = RankType.CULTIVAR;
+                        }
+                        else if(cn.rankMarker != null){
+                            // It is not necesary to update the rank based on rank markers at this point
+                            // This is because it is done at the lowest level possible just before the search is performed
+
+                        }
+                    }
+                }
+            
     		nsr = searchForRecord(name, cl, rank, false);
     	}
     	
     	if(nsr==null && recursiveMatching){
+                if(nsr == null && rank != RankType.SPECIES
+                        && ((StringUtils.isNotEmpty(cl.getSpecificEpithet()) && !isSpecificMarker(cl.getSpecies())) ||
+                        (StringUtils.isNotEmpty(cl.getSpecies()) && !isSpecificMarker(cl.getSpecies())))){
+                    name = cl.getSpecies();
+                    if(StringUtils.isEmpty(name))
+                        name = cl.getGenus()+ " " + cl.getSpecificEpithet();
+                    nsr = searchForRecord(name, cl, RankType.SPECIES, false);
+                }
     		if(nsr == null && cl.getGenus()!=null){
     			nsr = searchForRecord(cl.getGenus(), cl, RankType.GENUS, false);
     		}
@@ -368,7 +450,7 @@ public class CBIndexSearch {
 		return false;
 	}
 
-	/**
+    /**
      * Search for an LSID based on suppled name, classification and rank without a fuzzy match...
      * @param name
      * @param cl
@@ -402,12 +484,14 @@ public class CBIndexSearch {
         return searchForRecord(name, rank, false);
     }
     /**
-     * A wrapper method for the method below. Allows searching to occur without a classification.
+     * Searches for a record based on the supplied name and rank. It uses the kingdom and genus to resolve homonyms.
      *
      * @param name
      * @param kingdom
      * @param genus
      * @param rank
+     * @deprecated Use {@link #searchForRecord(java.lang.String, au.org.ala.data.model.LinnaeanRankClassification, au.org.ala.data.util.RankType, boolean)} instead.
+     * It is more extensible to supply a classification object then a list of higher classification
      * @return
      * @throws SearchResultException
      */
@@ -416,7 +500,16 @@ public class CBIndexSearch {
         LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, genus);
         return searchForRecord(name,cl, rank, false);
     }
-
+    /**
+     * Searches for a record based on the supplied name, rank and classification
+     * with or without fuzzy name matching.
+     * @param name
+     * @param cl
+     * @param rank
+     * @param fuzzy
+     * @return
+     * @throws SearchResultException
+     */
     public NameSearchResult searchForRecord(String name, LinnaeanRankClassification cl, RankType rank, boolean fuzzy)throws SearchResultException{
         List<NameSearchResult> results = searchForRecords(name, rank, cl, 1, fuzzy);
         if(results != null && results.size()>0)
@@ -436,7 +529,7 @@ public class CBIndexSearch {
         return searchForRecord(name, cl, rank, false);
     }
     /**
-     * Returns the name that has the supplied checklist bank id
+     * Returns the records that has the supplied checklist bank id
      * @param id
      * @return
      */
@@ -454,7 +547,7 @@ public class CBIndexSearch {
         return null;
     }
     /**
-     * Searches for a name of the specified rank.
+     * Searches for records with the specified name and rank with or without fuzzy name matching
      *
      * @param name
      * @param rank
@@ -507,6 +600,7 @@ public class CBIndexSearch {
 			//2. Hit on the alternative names
             //check to see if the name needs a different rank associated with it
             rank = getUpdatedRank(name, rank);
+            System.out.println("New rank : "+ rank);
 
             hits = performSearch(CBCreateLuceneIndex.IndexField.NAMES.toString(), name, rank, cl, max, NameSearchResult.MatchType.ALTERNATE, true);
             if(hits.size()>0)
@@ -551,7 +645,7 @@ public class CBIndexSearch {
      * 
      * @param name
      * @param rank
-     * @return
+     * 
      */
     private RankType getUpdatedRank(String name, RankType rank){
         Matcher matcher = RANK_MARKER.matcher(name);
@@ -561,7 +655,7 @@ public class CBIndexSearch {
             log.debug("Changing rank to : " + value);
             if(value.endsWith("."))
                 rank = RankType.getForCBRank(NameParser.ALL_RANKS.get(value.substring(0, value.length()-1)));
-            //System.out.println("Using the new rank " + rank);
+            System.out.println("Using the new rank " + rank);
         }
         return rank;
     }
@@ -809,7 +903,7 @@ public class CBIndexSearch {
      * 
      * The ability to resolve the homonym is dependent on the quality and quantity 
      * of the higher taxa provided in the search via cl. 
-     * @param cl
+     * @param cl  The classification used to determine the rank at which the homonym is resolvable
      * @return
      * @throws HomonymException
      */

@@ -33,7 +33,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
 import org.gbif.file.CSVReader;
-import org.gbif.portal.util.taxonomy.TaxonNameSoundEx;
+import au.org.ala.data.util.TaxonNameSoundEx;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -191,8 +191,8 @@ public class CBCreateLuceneIndex {
         //CSVReader cbreader = CSVReader.buildReader(new File(cbExportFile), "UTF-8", '\t', '"', 1);
         au.com.bytecode.opencsv.CSVReader cbreader = new au.com.bytecode.opencsv.CSVReader(new FileReader(cbExportFile), '\t', '"', '/', 1);
 
-       CSVReader lexreader =CSVReader.buildReader(new File(lexFile), "UTF-8", '\t', '"', 0);
-        String[] lexName = lexreader.readNext();
+       CSVReader lexreader =CSVReader.build(new File(lexFile), "UTF-8", "\t", '"', 0);
+        String[] lexName = lexreader.next();//readNext();
         int unprocessed = 0, records = 0;
         for (String[] values = cbreader.readNext(); values != null; values = cbreader.readNext()) {
             //process each line in the file
@@ -231,7 +231,7 @@ public class CBCreateLuceneIndex {
                             }
                             //addName(doc, lexName[1]);
                         }
-                        lexName = lexreader.readNext();
+                        lexName = lexreader.next();//readNext();
                     }
                     if (altNames.size() > 0) {
                         //now add the names to the index
@@ -272,11 +272,11 @@ public class CBCreateLuceneIndex {
         log.info("Creating IRMNG index ...");
         File file = new File(irmngExport);
         if (file.exists()) {
-            CSVReader reader = CSVReader.buildReader(file, 0);
+            CSVReader reader = CSVReader.build(file,"UTF-8", "\t", 0);
             int count = 0;
             while (reader.hasNext()) {
 
-                String[] values = reader.readNext();
+                String[] values = reader.next();
                 Document doc = new Document();
                 if (values != null && values.length >= 11) {
                     doc.add(new Field(RankType.KINGDOM.getRank(), values[0], Store.YES, Index.NOT_ANALYZED));
@@ -317,11 +317,11 @@ public class CBCreateLuceneIndex {
 
         File fileCol = new File(exportDir + File.separator + colFile);
         if(fileCol.exists()){    
-            CSVReader reader = CSVReader.buildReader(fileCol, 0);
+            CSVReader reader = CSVReader.build(fileCol,"UTF-8", "\t", '"', 0);
             int count = 0;
             while (reader.hasNext()) {
 
-                String[] values = reader.readNext();
+                String[] values = reader.next();
                 
                 if(values != null && values.length >=4){
                     float boost = 1f;
@@ -361,10 +361,10 @@ public class CBCreateLuceneIndex {
         File namesFile = new File(fileName);
         Pattern p = Pattern.compile(",");
         if(namesFile.exists()){
-            CSVReader reader = CSVReader.buildReader(namesFile,"UTF-8",',', '"' , 0);
+            CSVReader reader = CSVReader.build(namesFile,"UTF-8",",", '"' , 0);
             int count = 0;
             while (reader.hasNext()){
-                String[] values = reader.readNext();
+                String[] values = reader.next();
                 if(values!= null && values.length>= 10){
                 //all ANBG records should have the highest boost as they are our authoritive source
                     //we only want to add an ANBG record if the taxon concept LSID exists in the taxonConcepts.txt export
@@ -404,11 +404,11 @@ public class CBCreateLuceneIndex {
      * @throws Exception
      */
     private void createExtraIdIndex(String idxLocation, File idFile) throws Exception{
-        CSVReader reader = CSVReader.buildReader(idFile, "UTF-8", '\t', '"', 0);
+        CSVReader reader = CSVReader.build(idFile, "UTF-8", "\t", '"', 0);
         File indexDir = new File(idxLocation);
         IndexWriter iw = new IndexWriter(FSDirectory.open(indexDir), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
         while(reader.hasNext()){
-            String[] values = reader.readNext();
+            String[] values = reader.next();
             if(values != null && values.length >=3){
                 Document doc = new Document();
                 doc.add(new Field("lsid", values[2], Store.NO, Index.NOT_ANALYZED));
@@ -431,11 +431,11 @@ public class CBCreateLuceneIndex {
      */
     private IndexSearcher createTmpIndex(String tcFileName)throws Exception{
         //creating the tmp index in the /tmp/taxonConcept directory
-        CSVReader reader = CSVReader.buildReader(new File(tcFileName), "UTF-8", '\t', '"', 0);
+        CSVReader reader = CSVReader.build(new File(tcFileName), "UTF-8", "\t", '"', 0);
         File indexDir = new File("/tmp/taxonConcept");
         IndexWriter iw = new IndexWriter(FSDirectory.open(indexDir), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
         while(reader.hasNext()){
-            String[] values = reader.readNext();
+            String[] values = reader.next();
             if(values!= null && values.length>1){
                 //just add the LSID to the index
                 Document doc = new Document();
@@ -508,7 +508,7 @@ public class CBCreateLuceneIndex {
     		String species, String left, String right, float boost, String acceptedConcept) {
 //        System.out.println("creating index " + name + " " + classification + " " + id + " " + lsid + " " + rank + " " + rankString+ " " + kingdom + " " + genus);
         Document doc = new Document();
-        Field nameField = new Field(IndexField.NAME.toString(), name, Store.NO, Index.NOT_ANALYZED);
+        Field nameField = new Field(IndexField.NAME.toString(), name, Store.YES, Index.NOT_ANALYZED);
         nameField.setBoost(boost); //only want to apply the boost when searching on a name
         doc.add(nameField);
         doc.add(new Field(IndexField.ID.toString(), id, Store.YES, Index.NOT_ANALYZED));

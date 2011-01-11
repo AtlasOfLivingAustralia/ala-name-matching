@@ -48,7 +48,7 @@ public class NameSearchResult {
                                                    doc.get(RankType.ORDER.getRank()),
                                                    doc.get(RankType.FAMILY.getRank()),
                                                    doc.get(RankType.GENUS.getRank()),
-                                                   null);
+                                                   doc.get(IndexField.NAME.toString()));
         rankClass.setSpecies(doc.get(RankType.SPECIES.getRank()));
         String syn = doc.get(IndexField.ACCEPTED.toString());
         if(syn != null){
@@ -122,6 +122,7 @@ public class NameSearchResult {
     public String getSynonymLsid(){
         return getAcceptedLsid();
     }
+    
     /**
      *
      * @return The accepted LSID for this name.  When the

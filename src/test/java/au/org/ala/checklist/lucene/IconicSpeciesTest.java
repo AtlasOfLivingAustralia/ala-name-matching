@@ -86,9 +86,9 @@ public class IconicSpeciesTest {
         try{
             
            
-            CSVReader reader = CSVReader.buildReader(new File(getClass().getResource("iconic_species_list.csv").toURI()), "UTF-8", ',', '"', 0);
+            CSVReader reader = CSVReader.build(new File(getClass().getResource("iconic_species_list.csv").toURI()), "UTF-8", ",", '"', 0);
             //cycle through all the test cases
-            String[] values = reader.readNext();
+            String[] values = reader.next();
             //fail("Testing");
 
             int passed = 0, failed =0;
@@ -105,16 +105,20 @@ public class IconicSpeciesTest {
                     String species = StringUtils.trimToNull(values[9]);
                     String subspecies = StringUtils.trimToNull(values[10]);
 
+
+                   
                     //attempt to locat the genus species binomial or genus specues subspecies trinomial
                     String search = genus + " " + species;
-                    boolean issub = false;
+                    //create the search classification
+                    LinnaeanRankClassification classification = new LinnaeanRankClassification(kingdom, phylum, clazz, order, family, genus, search);
+                    classification.setSpecies(search);
+                   
                     if(StringUtils.trimToNull(subspecies)!=null){
                        search += " " + subspecies;
-                       issub = true;
+                      classification.setScientificName(search);
                     }
-                    LinnaeanRankClassification classification = new LinnaeanRankClassification(kingdom, phylum, clazz, order, family, genus, search);
-                    if(issub)
-                        classification.setSpecies(genus + " " +species);
+                    
+//                   
 
                     try{
                     NameSearchResult result = searcher.searchForRecord(search, classification, null);
@@ -130,6 +134,7 @@ public class IconicSpeciesTest {
                             result = searcher.searchForRecordByLsid(result.getAcceptedLsid());
                         //test to see if the classification matches
                         if(!classification.hasIdenticalClassification(result.getRankClassification())){
+                       
                             failed++;
                             //System.err.println(search + "("+commonName+") classification: "+ classification + " does not match " + result.getRankClassification());
                             System.err.println(search + "("+commonName+") classifications do not match");
@@ -191,7 +196,7 @@ public class IconicSpeciesTest {
             }
             if(c1.getSpecies() != null){
                 if(!c1.getSpecies().equalsIgnoreCase(c2.getSpecies()))
-                    dif+="\tclasses don't match (" + c1.getSpecies() + " " + c2.getSpecies() +")\n";
+                    dif+="\tspecies don't match (" + c1.getSpecies() + " " + c2.getSpecies() +")\n";
             }
         }
             System.err.print(dif);

@@ -13,8 +13,7 @@
  * rights and limitations under the License.
  ***************************************************************************/
 package au.org.ala.checklist;
-import au.org.ala.data.util.RankType;
-import gnu.trove.TIntObjectHashMap;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -66,7 +65,7 @@ public class ChecklistBankExporter {
     private int nameCounter;
     private String nullString = ""; //"\\N";
     private HashMap<Integer, Integer> rankMappings;
-    private TIntObjectHashMap<String> idToLsidMap = new TIntObjectHashMap<String>();
+    //private TIntObjectHashMap<String> idToLsidMap = new TIntObjectHashMap<String>();
     private List<Integer> exportRanks = new ArrayList<Integer>();
     private PGConnection pgCon;
     

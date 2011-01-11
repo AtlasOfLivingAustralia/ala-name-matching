@@ -64,12 +64,12 @@ public class LinnaeanRankClassification {
 	 * @param scientificName
 	 */
 	public LinnaeanRankClassification(String kingdom, String phylum, String klass, String order, String family, String genus, String scientificName) {
-		this.kingdom = kingdom;
-		this.phylum = phylum;
-		this.klass = klass;
-		this.order = order;
-		this.family = family;
-		this.genus = genus;
+		setKingdom(kingdom);
+		setPhylum(phylum);
+		setKlass(klass);
+		setOrder(order);
+		setFamily(family);
+		setGenus(genus);
 		this.scientificName = scientificName;
 	}
         /**
@@ -80,7 +80,7 @@ public class LinnaeanRankClassification {
 	public LinnaeanRankClassification(String kingdom, String genus){
             this(kingdom, null, null, null, null, genus, null);
         }
-
+        
 	/**
 	 * @return Returns the family.
 	 */
@@ -247,6 +247,11 @@ public class LinnaeanRankClassification {
         /**
          * checks to see if the non-null values of this classification are identical to
          * the supplied classification
+         *
+         * This is used to determine whether classification match. Thus we are not using the scientific name.
+         *
+         * Use this method to determine whether or not a search result (lrc) matches the supplied classification.
+         *
          * @param lrc
          * @return
          */
@@ -279,14 +284,19 @@ public class LinnaeanRankClassification {
                 if(!species.equalsIgnoreCase(lrc.species))
                     return false;
             }
+            if(subspecies != null){
+                if(!subspecies.equalsIgnoreCase(lrc.subspecies))
+                    return false;
+            }
             if(specificEpithet != null){
                 if(!specificEpithet.equalsIgnoreCase(lrc.specificEpithet))
                     return false;
             }
-            if(scientificName != null){
-                if(!scientificName.equalsIgnoreCase(lrc.scientificName))
+            if(infraspecificEpithet != null){
+                if(!infraspecificEpithet.equalsIgnoreCase(lrc.infraspecificEpithet))
                     return false;
             }
+
             return true;
         }
         
@@ -311,4 +321,6 @@ public class LinnaeanRankClassification {
 				this.phylum).append(this.kingdom).append(this.family).append(
 				this.order).append(this.klass).append(this.species).append(this.specificEpithet).toHashCode();
 	}
+
+	
 }
