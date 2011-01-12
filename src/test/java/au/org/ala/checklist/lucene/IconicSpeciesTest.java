@@ -19,7 +19,7 @@ public class IconicSpeciesTest {
 
     CBIndexSearch searcher;
 
-    @org.junit.Before
+    @org.junit.BeforeClass
     public void init() {
         try {
             searcher = new CBIndexSearch("/data/lucene/namematching");
