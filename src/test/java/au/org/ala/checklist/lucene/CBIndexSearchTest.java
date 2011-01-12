@@ -14,10 +14,10 @@ import au.org.ala.data.model.LinnaeanRankClassification;
  * @author Natasha
  */
 public class CBIndexSearchTest {
-    CBIndexSearch searcher;
+    private static CBIndexSearch searcher;
 
 	@org.junit.BeforeClass
-	public void init() {
+	public static void init() {
 		try {
 			searcher = new CBIndexSearch("/data/lucene/namematching");
 		} catch (Exception e) {

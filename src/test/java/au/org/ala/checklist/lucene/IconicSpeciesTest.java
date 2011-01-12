@@ -17,10 +17,10 @@ import static org.junit.Assert.*;
  */
 public class IconicSpeciesTest {
 
-    CBIndexSearch searcher;
+    static CBIndexSearch searcher;
 
     @org.junit.BeforeClass
-    public void init() {
+    public static void init() {
         try {
             searcher = new CBIndexSearch("/data/lucene/namematching");
         } catch (Exception e) {
