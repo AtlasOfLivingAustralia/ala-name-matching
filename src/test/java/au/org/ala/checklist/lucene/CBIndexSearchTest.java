@@ -16,7 +16,7 @@ import au.org.ala.data.model.LinnaeanRankClassification;
 public class CBIndexSearchTest {
     CBIndexSearch searcher;
 
-	@org.junit.Before
+	@org.junit.BeforeClass
 	public void init() {
 		try {
 			searcher = new CBIndexSearch("/data/lucene/namematching");
