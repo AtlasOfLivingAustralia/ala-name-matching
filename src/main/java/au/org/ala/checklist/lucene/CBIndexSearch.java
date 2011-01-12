@@ -361,12 +361,11 @@ public class CBIndexSearch {
                 if(rank == null){
                     //check to see if the rank can be determined from the scientific name
                     ParsedName<?> cn = parser.parseIgnoreAuthors(name);
-                    if(cn.isBinomial()) {
+                    if(cn!=null && cn.isBinomial()) {
                         //set the genus if it is empty
                             if(StringUtils.isEmpty(cl.getGenus()))
                                 cl.setGenus(cn.genusOrAbove);
                         if(cn.rankMarker == null && cn.cultivarEpithet == null && !cn.hasProblem()){
-
 
                             if(cn.getInfraSpecificEpithet() != null){
                                 rank = RankType.SUBSPECIES;
