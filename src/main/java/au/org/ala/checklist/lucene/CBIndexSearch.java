@@ -600,7 +600,7 @@ public class CBIndexSearch {
 			//2. Hit on the alternative names
             //check to see if the name needs a different rank associated with it
             rank = getUpdatedRank(name, rank);
-            System.out.println("New rank : "+ rank);
+            
 
             hits = performSearch(CBCreateLuceneIndex.IndexField.NAMES.toString(), name, rank, cl, max, NameSearchResult.MatchType.ALTERNATE, true);
             if(hits.size()>0)
@@ -655,7 +655,7 @@ public class CBIndexSearch {
             log.debug("Changing rank to : " + value);
             if(value.endsWith("."))
                 rank = RankType.getForCBRank(NameParser.ALL_RANKS.get(value.substring(0, value.length()-1)));
-            System.out.println("Using the new rank " + rank);
+           log.debug("Using the new rank " + rank);
         }
         return rank;
     }
