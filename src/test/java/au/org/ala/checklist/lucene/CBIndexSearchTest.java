@@ -2,6 +2,8 @@
 
 package au.org.ala.checklist.lucene;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.List;
 
 
@@ -11,7 +13,7 @@ import au.org.ala.data.model.LinnaeanRankClassification;
 
 /**
  *
- * @author Natasha
+ * @author Natasha, Tommy
  */
 public class CBIndexSearchTest {
 	private static CBIndexSearch searcher;
@@ -31,8 +33,11 @@ public class CBIndexSearchTest {
 		try {
 			String lsid = searcher.searchForLSID("Animalia");
 			System.out.println("testNoRank: " + lsid);
+			
+			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:4647863b-760d-4b59-aaa1-502c8cdf8d3c", lsid);
 			lsid = searcher.searchForLSID("Bacteria");
 			System.out.println("testNoRank: " + lsid);
+			assertEquals("3", lsid);
 		} catch (SearchResultException e) {
 			e.printStackTrace();
 		}
@@ -43,7 +48,7 @@ public class CBIndexSearchTest {
 		try {
 			NameSearchResult nsr = searcher.searchForRecord(
 					"Holconia nigrigularis", RankType.getForId(7000));
-			System.out.println(nsr);
+			System.out.println("testSpecies: " + nsr.toString());
 		} catch (SearchResultException e) {
 			e.printStackTrace();
 		}
