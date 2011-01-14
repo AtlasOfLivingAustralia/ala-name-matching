@@ -3,6 +3,7 @@
 package au.org.ala.checklist.lucene;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.List;
 
@@ -49,8 +50,10 @@ public class CBIndexSearchTest {
 			NameSearchResult nsr = searcher.searchForRecord(
 					"Holconia nigrigularis", RankType.getForId(7000));
 			System.out.println("testSpecies: " + nsr.toString());
+			assertEquals("Match: DIRECT id: 101300 lsid: urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a classification: au.org.ala.data.model.LinnaeanRankClassification@50035003[kingdom=Animalia,phylum=Arthropoda,klass=Arachnida,order=Araneae,family=Sparassidae,genus=Holconia,species=Holconia nigrigularis,specificEpithet=<null>,scientificName=<null>] synonym: null", nsr.toString());
 		} catch (SearchResultException e) {
 			e.printStackTrace();
+			fail("testSpecies failed");
 		}
 	}
 
@@ -69,7 +72,10 @@ public class CBIndexSearchTest {
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Atylus");
 			NameSearchResult result = searcher.searchForRecord("Atylus monoculoides", cl, RankType.SPECIES);
 			System.out.println("synonym: " + result);
-			System.out.println("LSID: " + searcher.searchForLSID("Atylus monoculoides"));
+			assertEquals("Match: DIRECT id: 223782 lsid: urn:lsid:biodiversity.org.au:afd.taxon:5005b407-1e87-4aa3-a2ff-88b89f0a2dc4 classification: au.org.ala.data.model.LinnaeanRankClassification@7aad7aad[kingdom=<null>,phylum=<null>,klass=<null>,order=<null>,family=<null>,genus=<null>,species=<null>,specificEpithet=<null>,scientificName=<null>] synonym: urn:lsid:biodiversity.org.au:afd.taxon:dcd396c3-afd4-498f-ab83-2605926f64f8", result.toString());
+			String lsid = searcher.searchForLSID("Atylus monoculoides");			
+			System.out.println("LSID: " + lsid);
+			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:dcd396c3-afd4-498f-ab83-2605926f64f8", lsid);
 			//System.out.println("LSID: " +searcher.searchForLSID("Sira tricincta"));
 		}
 		catch(Exception e){
@@ -77,6 +83,7 @@ public class CBIndexSearchTest {
 			if(e instanceof HomonymException){
 				printAllResults("SYNONYM/HOMONYM: ", ((HomonymException)e).getResults());
 			}
+			fail("testSynonymWithHomonym failed");
 		}
 	}
 
@@ -99,13 +106,14 @@ public class CBIndexSearchTest {
 		} catch (SearchResultException e) {
 			System.err.println(e.getMessage());
 			printAllResults("HOMONYM EXCEPTION", e.getResults());
+			fail("testHomonym failed");
 		}
 	}
 
 	@org.junit.Test
 	public void testIDLookup() {
 		NameSearchResult result = searcher.searchForRecordByID("216346");
-		System.out.println(result);
+		System.out.println("testIDLookup: " + result);
 	}
 
 	@org.junit.Test
@@ -116,8 +124,9 @@ public class CBIndexSearchTest {
 			result = searcher.searchForRecord(null, cl, null);
 		} catch (SearchResultException e) {
 			e.printStackTrace();
+			fail("testSearchForRecord failed");
 		}
-		System.out.println(result);
+		System.out.println("testSearchForRecord: " + result);
 	}
 	@org.junit.Test
 	public void testCommonNames(){
@@ -143,12 +152,15 @@ public class CBIndexSearchTest {
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Chordata", null, null, "Macropodidae", "Macropus", null);
 			RankType rank = searcher.resolveIRMNGHomonym(cl);
 			System.out.println("IRMNG Homonym resolved at " + rank + " rank");
+			
+			assertEquals("FAMILY", rank.toString());
 			//now cause a homonym exception by removing the family
 			cl.setFamily(null);
 			searcher.resolveIRMNGHomonym(cl);
 		}
 		catch(HomonymException e){
 			System.out.println(e.getMessage());
+			fail("testIRMNGHomonymReconcile failed");
 		}
 	}
 	@org.junit.Test
@@ -171,16 +183,19 @@ public class CBIndexSearchTest {
 		}
 		catch(Exception e){
 			e.printStackTrace();
+			fail("testCultivars failed");
 		}
 	}
 	@org.junit.Test
 	public void testMyrmecia(){
 		try{
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia","Arthropoda", "Insecta", "Hymenoptera", "Formicidae", "Myrmecia",null);
-			System.out.println(searcher.searchForRecord("Myrmecia", cl, null));
+			String output = searcher.searchForRecord("Myrmecia", cl, null).toString();
+			System.out.println(output);
 		}
 		catch(Exception e){
 			e.printStackTrace();
+			fail("testMyrmecia failed");
 		}
 	}
 	@org.junit.Test
@@ -188,28 +203,41 @@ public class CBIndexSearchTest {
 		
 		try{
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia","Arthropoda", "Insecta", "Hymenoptera", "Formicidae", "Myrmecia",null);
-			System.out.println(searcher.searchForRecord("Myrmecia", cl, null));
+			String output = searcher.searchForRecord("Myrmecia", cl, null).toString();
+			System.out.println(output);
 		}
 		catch(Exception e){
 			e.printStackTrace();
+			fail("testSearchForLSID failed");
 		}
 	}
 	@org.junit.Test
 	public void testFuzzyMatches(){
 		try{
 			//Bullia
-			System.out.println("Bullia NOT fuzzy: " + searcher.searchForRecord("Bullia", null));
-			System.out.println("Bullia fuzzy: " +searcher.searchForRecord("Bullia", null, true));
+			String output = searcher.searchForRecord("Bullia", null).toString();			
+			System.out.println("Bullia NOT fuzzy: " + output);
+			output = searcher.searchForRecord("Bullia", null, true).toString();
+			System.out.println("Bullia fuzzy: " + output);
+			assertEquals("Match: SEARCHABLE id: 103077301 lsid: urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010 classification: au.org.ala.data.model.LinnaeanRankClassification@709446e4[kingdom=Animalia,phylum=Arthropoda,klass=Insecta,order=Lepidoptera,family=Noctuidae,genus=Bulia,species=<null>,specificEpithet=<null>,scientificName=Bulia] synonym: null", output);
 			//Anochetus
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Arthropoda", "Insecta", "Hymenoptera", "Formicidae","Anochetus", null);
-			System.out.println("Anochetus NOT fuzzy: " + searcher.searchForLSID("Anochetus",cl, null));
-			System.out.println("Anochetus fuzzy: " + searcher.searchForLSID("Anochetus", null, true));
+			output = searcher.searchForLSID("Anochetus",cl, null);
+			System.out.println("Anochetus NOT fuzzy: " + output);
+			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
+			
+			output = searcher.searchForLSID("Anochetus", null, true);
+			System.out.println("Anochetus fuzzy: " + output);
+			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
+			
 			LinnaeanRankClassification classification = new LinnaeanRankClassification("Plantae", null, null, null, null, null, "Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929)");
-			System.out.println("Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929) : " + searcher.searchForLSID("Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929)", classification, null));
+			output = searcher.searchForLSID("Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929)", classification, null);
+			System.out.println("Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929) : " + output);
 
 		}
 		catch(Exception e){
 			e.printStackTrace();
+			fail("testFuzzyMatches failed");
 		}
 	}
 
@@ -227,11 +255,13 @@ public class CBIndexSearchTest {
 	}
 	public void testName(String name){
 		try{
-			System.out.println(name+": " + searcher.searchForRecord(name, null));
+			String output = searcher.searchForRecord(name, null).toString();
+			System.out.println(name+": " + output);
 
 		}
 		catch(Exception e){
 			e.printStackTrace();
+			fail("testWaiIssues failed");
 		}
 	}
 }
