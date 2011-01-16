@@ -204,7 +204,7 @@ public class CBIndexSearchTest {
 		
 		try{
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia","Arthropoda", "Insecta", "Hymenoptera", "Formicidae", "Myrmecia",null);
-			String output = searcher.searchForLSID("Myrmecia").toString();
+			String output = searcher.searchForLSID("Myrmecia");
 			System.out.println("LSID for Myrmecia: " + output);
 			output = searcher.searchForLSID("Myrmecia", true);
 			System.out.println("LSID for Myrmecia fuzzy: " + output);
