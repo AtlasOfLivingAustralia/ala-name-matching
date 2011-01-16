@@ -41,6 +41,7 @@ public class CBIndexSearchTest {
 			assertEquals("3", lsid);
 		} catch (SearchResultException e) {
 			e.printStackTrace();
+			fail("testNoRank failed");
 		}
 	}
 
@@ -203,8 +204,21 @@ public class CBIndexSearchTest {
 		
 		try{
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia","Arthropoda", "Insecta", "Hymenoptera", "Formicidae", "Myrmecia",null);
-			String output = searcher.searchForRecord("Myrmecia", cl, null).toString();
-			System.out.println(output);
+			String output = searcher.searchForLSID("Myrmecia").toString();
+			System.out.println("LSID for Myrmecia: " + output);
+			output = searcher.searchForLSID("Myrmecia", true);
+			System.out.println("LSID for Myrmecia fuzzy: " + output);
+			output = searcher.searchForLSID("Myrmecia", false);
+			System.out.println("LSID for Myrmecia NOT fuzzy: " + output);
+			output = searcher.searchForLSID("Myrmecia", RankType.SPECIES);
+			System.out.println("LSID for Myrmecia RankType Species: " + output);
+			output = searcher.searchForLSID("Myrmecia", cl, RankType.SPECIES);
+			System.out.println("LSID for Myrmecia with cl and rank: " + output);
+			output = searcher.searchForLSID(cl, true);
+			System.out.println("LSID for cl and recursive matching: " + output);
+			output = searcher.searchForLSID(cl, false);
+			System.out.println("LSID for cl and NOT recursive matching: " + output);
+			
 		}
 		catch(Exception e){
 			e.printStackTrace();
@@ -240,7 +254,7 @@ public class CBIndexSearchTest {
 			fail("testFuzzyMatches failed");
 		}
 	}
-
+	
 	public void testWaiIssues(){
 		//            System.out.println("#### TEST 1 ####"); synonym
 		//            testName("Cyrtanthus elatus");
