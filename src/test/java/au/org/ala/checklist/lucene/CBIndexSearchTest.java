@@ -44,6 +44,28 @@ public class CBIndexSearchTest {
 			fail("testNoRank failed");
 		}
 	}
+	
+	@org.junit.Test
+	public void testGetPrimaryLsid() {
+		try {
+			String primaryLsid = searcher.getPrimaryLsid("urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a");
+			System.out.println("testGetPrimaryLsid: " + primaryLsid);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("testGetPrimaryLsid failed");
+		}
+	}
+	
+	@org.junit.Test
+	public void testSearchForRecordByLsid() {
+		try {
+			NameSearchResult nsr = searcher.searchForRecordByLsid("urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a");
+			System.out.println("testSearchForRecordByLsid: " + nsr == null ? null : nsr.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("testSearchForRecordByLsid failed");
+		}
+	}
 
 	@org.junit.Test
 	public void testSpecies() {
@@ -132,20 +154,40 @@ public class CBIndexSearchTest {
 	@org.junit.Test
 	public void testCommonNames(){
 		//ANBG source
-		printCommonName("Red Kangaroo");
+		String lsid = getCommonNameLSID("Red Kangaroo");
+		String sciName = getCommonName("Red Kangaroo");
+		System.out.println("Red Kangaroo LSID: " + lsid + ", sciName: " + sciName);
 		//COL source
-		printCommonName("Yellow-tailed Black-Cockatoo");
+		lsid = getCommonNameLSID("Yellow-tailed Black-Cockatoo");
+		sciName = getCommonName("Yellow-tailed Black-Cockatoo");
+		System.out.println("Yellow-tailed Black-Cockatoo LSID: " + lsid + ", sciName: " + sciName);
 		//not found
-		printCommonName("Scarlet Robin");
+		lsid = getCommonNameLSID("Scarlet Robin");
+		sciName = getCommonName("Scarlet Robin");
+		System.out.println("Scarlet Robin LSID: " + lsid + ", sciName: " + sciName);
 		//CoL source that maps to a ANBG lsid
-		printCommonName("Australian tuna");
+		lsid = getCommonNameLSID("Australian tuna");
+		sciName = getCommonName("Australian tuna");
+		System.out.println("Australian tuna LSID: " + lsid + ", sciName: " + sciName);
 		//ANBG and CoL have slightly different scientific name
-		printCommonName("Pacific Black Duck");
+		lsid = getCommonNameLSID("Pacific Black Duck");
+		sciName = getCommonName("Pacific Black Duck");
+		System.out.println("Pacific Black Duck LSID: " + lsid + ", sciName: " + sciName);
 		//Maps to many different species thus should return no LSID
-		printCommonName("Carp");
+		lsid = getCommonNameLSID("Carp");
+		sciName = getCommonName("Carp");
+		System.out.println("Carp LSID: " + lsid + ", sciName: " + sciName);
 	}
-	private void printCommonName(String name){
-		System.out.println(name + " " + searcher.searchForLSIDCommonName(name));
+	
+	
+	
+	private String getCommonNameLSID(String name){
+		return searcher.searchForLSIDCommonName(name);
+	}
+	private String getCommonName(String name){
+		NameSearchResult sciName = searcher.searchForCommonName(name);
+		
+		return (sciName == null ? null : sciName.toString());
 	}
 	@org.junit.Test
 	public void testIRMNGHomonymReconcile(){
@@ -210,9 +252,9 @@ public class CBIndexSearchTest {
 			System.out.println("LSID for Myrmecia fuzzy: " + output);
 			output = searcher.searchForLSID("Myrmecia", false);
 			System.out.println("LSID for Myrmecia NOT fuzzy: " + output);
-			output = searcher.searchForLSID("Myrmecia", RankType.SPECIES);
+			output = searcher.searchForLSID("Myrmecia", RankType.GENUS);
 			System.out.println("LSID for Myrmecia RankType Species: " + output);
-			output = searcher.searchForLSID("Myrmecia", cl, RankType.SPECIES);
+			output = searcher.searchForLSID("Myrmecia", cl, RankType.GENUS);
 			System.out.println("LSID for Myrmecia with cl and rank: " + output);
 			output = searcher.searchForLSID(cl, true);
 			System.out.println("LSID for cl and recursive matching: " + output);
