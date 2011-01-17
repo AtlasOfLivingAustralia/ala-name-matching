@@ -203,23 +203,28 @@ public class CBIndexSearchTest {
 		//ANBG source
 		String lsid = getCommonNameLSID("Red Kangaroo");
 		String sciName = getCommonName("Red Kangaroo");
-		System.out.println("Red Kangaroo LSID: " + lsid + ", sciName: " + sciName);
+		System.out.println("Red Kangaroo LSID: " + lsid + ", Common Name: " + sciName);
+		assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537", lsid);
 		//COL source
 		lsid = getCommonNameLSID("Yellow-tailed Black-Cockatoo");
 		sciName = getCommonName("Yellow-tailed Black-Cockatoo");
 		System.out.println("Yellow-tailed Black-Cockatoo LSID: " + lsid + ", sciName: " + sciName);
+		assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:ecdb82f9-d894-4d91-9533-3f2f010c9b14", lsid);
 		//not found
 		lsid = getCommonNameLSID("Scarlet Robin");
 		sciName = getCommonName("Scarlet Robin");
 		System.out.println("Scarlet Robin LSID: " + lsid + ", sciName: " + sciName);
+		assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:0f5fa076-fe30-4598-b90c-31f12121a4fc", lsid);
 		//CoL source that maps to a ANBG lsid
 		lsid = getCommonNameLSID("Australian tuna");
 		sciName = getCommonName("Australian tuna");
 		System.out.println("Australian tuna LSID: " + lsid + ", sciName: " + sciName);
+//		assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:0f5fa076-fe30-4598-b90c-31f12121a4fc", lsid);
 		//ANBG and CoL have slightly different scientific name
 		lsid = getCommonNameLSID("Pacific Black Duck");
 		sciName = getCommonName("Pacific Black Duck");
 		System.out.println("Pacific Black Duck LSID: " + lsid + ", sciName: " + sciName);
+		assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:d09b3807-f8d8-4cfb-a951-70e614e2d546", lsid);
 		//Maps to many different species thus should return no LSID
 		lsid = getCommonNameLSID("Carp");
 		sciName = getCommonName("Carp");
