@@ -165,9 +165,9 @@ public class CBIndexSearchTest {
 					"Simsia", RankType.getForId(6000), cl, 10);
 			printAllResults("hymonyms test 1", results);
 			//test to ensure that kingdoms that almost match are being will not report homonym exceptions
-			cl.setKingdom("Anmalia");
-			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), cl, 10);
-			printAllResults("hymonyms test (Anmalia)", results);
+//			cl.setKingdom("Anmalia");
+//			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), cl, 10);
+//			printAllResults("hymonyms test (Anmalia)", results);
 			cl.setKingdom(null);
 			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), cl, 10);
 			printAllResults("homonyms test 2", results);
@@ -176,7 +176,7 @@ public class CBIndexSearchTest {
 			//			System.err.println(e.getMessage());
 			e.printStackTrace();
 			printAllResults("HOMONYM EXCEPTION", e.getResults());
-//			fail("testHomonym failed");
+			fail("testHomonym failed");
 		}
 	}
 
