@@ -299,17 +299,17 @@ public class CBIndexSearchTest {
 	public void testSearchForLSID(){
 
 		try{
-			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Chordata", null, null, "Macropodidae", "Macropus", null);
-			String output = searcher.searchForLSID("Macropus");
-			System.out.println("LSID for Macropus: " + output);
-			output = searcher.searchForLSID("Macropus", true);
-			System.out.println("LSID for Macropus fuzzy: " + output);
-			output = searcher.searchForLSID("Macropus", false);
-			System.out.println("LSID for Macropus NOT fuzzy: " + output);
-			output = searcher.searchForLSID("Macropus", RankType.GENUS);
-			System.out.println("LSID for Macropus RankType Species: " + output);
-			output = searcher.searchForLSID("Macropus", cl, RankType.GENUS);
-			System.out.println("LSID for Macropus with cl and rank: " + output);
+			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Arthropoda", "Insecta", "Hymenoptera", "Formicidae","Anochetus", null);
+			String output = searcher.searchForLSID("Anochetus");
+			System.out.println("LSID for Anochetus: " + output);
+			output = searcher.searchForLSID("Anochetus", true);
+			System.out.println("LSID for Anochetus fuzzy: " + output);
+			output = searcher.searchForLSID("Anochetus", false);
+			System.out.println("LSID for Anochetus NOT fuzzy: " + output);
+			output = searcher.searchForLSID("Anochetus", RankType.GENUS);
+			System.out.println("LSID for Anochetus RankType Species: " + output);
+			output = searcher.searchForLSID("Anochetus", cl, RankType.GENUS);
+			System.out.println("LSID for Anochetus with cl and rank: " + output);
 			output = searcher.searchForLSID(cl, true);
 			System.out.println("LSID for cl and recursive matching: " + output);
 			output = searcher.searchForLSID(cl, false);
@@ -329,6 +329,8 @@ public class CBIndexSearchTest {
 			System.out.println("Bullia NOT fuzzy: " + output);
 			NameSearchResult nsr = searcher.searchForRecord("Bullia", null, true);
 			System.out.println("Bullia fuzzy: " + nsr);
+			NameSearchResult expectedResult = new NameSearchResult(String.valueOf(103077301), "urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010", MatchType.SEARCHABLE);
+			assertTrue(nameSearchResultEqual(expectedResult, nsr));
 //			assertEquals("Match: SEARCHABLE id: 103077301 lsid: urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010 classification: au.org.ala.data.model.LinnaeanRankClassification@709446e4[kingdom=Animalia,phylum=Arthropoda,klass=Insecta,order=Lepidoptera,family=Noctuidae,genus=Bulia,species=<null>,specificEpithet=<null>,scientificName=Bulia] synonym: null", output);
 			//Anochetus
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Arthropoda", "Insecta", "Hymenoptera", "Formicidae","Anochetus", null);
