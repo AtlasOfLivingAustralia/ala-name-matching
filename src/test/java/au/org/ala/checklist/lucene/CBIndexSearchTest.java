@@ -94,10 +94,10 @@ public class CBIndexSearchTest {
 			//               System.out.println("LSID: " + searcher.searchForLSID("Macropus rufus"));
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Atylus");
 			NameSearchResult result = searcher.searchForRecord("Atylus monoculoides", cl, RankType.SPECIES);
-			System.out.println("synonym: " + result);
+			System.out.println("testSynonymWithHomonym Synonym: " + result);
 			assertEquals("Match: DIRECT id: 223782 lsid: urn:lsid:biodiversity.org.au:afd.taxon:5005b407-1e87-4aa3-a2ff-88b89f0a2dc4 classification: au.org.ala.data.model.LinnaeanRankClassification@7aad7aad[kingdom=<null>,phylum=<null>,klass=<null>,order=<null>,family=<null>,genus=<null>,species=<null>,specificEpithet=<null>,scientificName=<null>] synonym: urn:lsid:biodiversity.org.au:afd.taxon:dcd396c3-afd4-498f-ab83-2605926f64f8", result.toString());
 			String lsid = searcher.searchForLSID("Atylus monoculoides");			
-			System.out.println("LSID: " + lsid);
+			System.out.println("testSynonymWithHomonym LSID: " + lsid);
 			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:dcd396c3-afd4-498f-ab83-2605926f64f8", lsid);
 			//System.out.println("LSID: " +searcher.searchForLSID("Sira tricincta"));
 		}
