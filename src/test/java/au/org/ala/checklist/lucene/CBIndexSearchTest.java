@@ -50,6 +50,7 @@ public class CBIndexSearchTest {
 		try {
 			String primaryLsid = searcher.getPrimaryLsid("urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a");
 			System.out.println("testGetPrimaryLsid: " + primaryLsid);
+			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a", primaryLsid);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("testGetPrimaryLsid failed");
@@ -60,7 +61,7 @@ public class CBIndexSearchTest {
 	public void testSearchForRecordByLsid() {
 		try {
 			NameSearchResult nsr = searcher.searchForRecordByLsid("urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a");
-			System.out.println("testSearchForRecordByLsid: " + nsr == null ? null : nsr.toString());
+			System.out.println("testSearchForRecordByLsid: " + nsr);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("testSearchForRecordByLsid failed");
@@ -127,7 +128,8 @@ public class CBIndexSearchTest {
 			printAllResults("homonyms test 2", results);
 
 		} catch (SearchResultException e) {
-			System.err.println(e.getMessage());
+//			System.err.println(e.getMessage());
+			e.printStackTrace();
 			printAllResults("HOMONYM EXCEPTION", e.getResults());
 			fail("testHomonym failed");
 		}
@@ -236,7 +238,11 @@ public class CBIndexSearchTest {
 	public void testMyrmecia(){
 		try{
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia","Arthropoda", "Insecta", "Hymenoptera", "Formicidae", "Myrmecia",null);
-			String output = searcher.searchForRecord("Myrmecia", cl, RankType.GENUS).toString();
+			String output = null;
+			NameSearchResult nsr = searcher.searchForRecord("Myrmecia", cl, RankType.GENUS);
+			if (nsr != null) {
+				output = nsr.toString();
+			}
 			System.out.println("testMyrmecia: " + output);
 		}
 		catch(Exception e){
@@ -248,17 +254,17 @@ public class CBIndexSearchTest {
 	public void testSearchForLSID(){
 		
 		try{
-			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia","Arthropoda", "Insecta", "Hymenoptera", "Formicidae", "Myrmecia",null);
-			String output = searcher.searchForLSID("Myrmecia");
-			System.out.println("LSID for Myrmecia: " + output);
-			output = searcher.searchForLSID("Myrmecia", true);
-			System.out.println("LSID for Myrmecia fuzzy: " + output);
-			output = searcher.searchForLSID("Myrmecia", false);
-			System.out.println("LSID for Myrmecia NOT fuzzy: " + output);
-			output = searcher.searchForLSID("Myrmecia", RankType.GENUS);
-			System.out.println("LSID for Myrmecia RankType Species: " + output);
-			output = searcher.searchForLSID("Myrmecia", cl, RankType.GENUS);
-			System.out.println("LSID for Myrmecia with cl and rank: " + output);
+			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Chordata", null, null, "Macropodidae", "Macropus", null);
+			String output = searcher.searchForLSID("Macropus");
+			System.out.println("LSID for Macropus: " + output);
+			output = searcher.searchForLSID("Macropus", true);
+			System.out.println("LSID for Macropus fuzzy: " + output);
+			output = searcher.searchForLSID("Macropus", false);
+			System.out.println("LSID for Macropus NOT fuzzy: " + output);
+			output = searcher.searchForLSID("Macropus", RankType.GENUS);
+			System.out.println("LSID for Macropus RankType Species: " + output);
+			output = searcher.searchForLSID("Macropus", cl, RankType.GENUS);
+			System.out.println("LSID for Macropus with cl and rank: " + output);
 			output = searcher.searchForLSID(cl, true);
 			System.out.println("LSID for cl and recursive matching: " + output);
 			output = searcher.searchForLSID(cl, false);
