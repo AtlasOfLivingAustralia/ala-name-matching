@@ -168,9 +168,9 @@ public class CBIndexSearchTest {
 //			cl.setKingdom("Anmalia");
 //			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), cl, 10);
 //			printAllResults("hymonyms test (Anmalia)", results);
-			cl.setKingdom(null);
-			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), cl, 10);
-			printAllResults("homonyms test 2", results);
+//			cl.setKingdom(null);
+//			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), cl, 10);
+//			printAllResults("homonyms test 2", results);
 
 		} catch (SearchResultException e) {
 			//			System.err.println(e.getMessage());
