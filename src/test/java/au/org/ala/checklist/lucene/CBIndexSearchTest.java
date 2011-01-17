@@ -72,7 +72,7 @@ public class CBIndexSearchTest {
 		try {
 			NameSearchResult nsr = searcher.searchForRecord(
 					"Holconia nigrigularis", RankType.getForId(7000));
-			System.out.println("testSpecies: " + nsr.toString());
+			System.out.println("testSpecies: " + nsr.toString() + "!!");
 			assertEquals("Match: DIRECT id: 101300 lsid: urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a classification: au.org.ala.data.model.LinnaeanRankClassification@356f144c[kingdom=Animalia,phylum=Arthropoda,klass=Arachnida,order=Araneae,family=Sparassidae,genus=Holconia,species=Holconia nigrigularis,specificEpithet=<null>,scientificName=Holconia nigrigularis] synonym: null", nsr.toString());
 		} catch (SearchResultException e) {
 			e.printStackTrace();
