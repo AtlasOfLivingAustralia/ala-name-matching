@@ -78,7 +78,7 @@ public class CBIndexSearchTest {
 			System.out.println("testSpecies: " + nsr.toString() + "!!");
 			NameSearchResult expectedResult = new NameSearchResult(String.valueOf(101300), "urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a", MatchType.DIRECT);
 			assertTrue(nameSearchResultEqual(expectedResult, nsr));
-//			assertEquals("Match: DIRECT id: 101300 lsid: urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a classification: au.org.ala.data.model.LinnaeanRankClassification@15e232b5[kingdom=Animalia,phylum=Arthropoda,klass=Arachnida,order=Araneae,family=Sparassidae,genus=Holconia,species=Holconia nigrigularis,specificEpithet=<null>,scientificName=Holconia nigrigularis] synonym: null", nsr.toString());
+			//			assertEquals("Match: DIRECT id: 101300 lsid: urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a classification: au.org.ala.data.model.LinnaeanRankClassification@15e232b5[kingdom=Animalia,phylum=Arthropoda,klass=Arachnida,order=Araneae,family=Sparassidae,genus=Holconia,species=Holconia nigrigularis,specificEpithet=<null>,scientificName=Holconia nigrigularis] synonym: null", nsr.toString());
 		} catch (SearchResultException e) {
 			e.printStackTrace();
 			fail("testSpecies failed");
@@ -87,8 +87,10 @@ public class CBIndexSearchTest {
 
 	private void printAllResults(String prefix, List<NameSearchResult> results) {
 		System.out.println("## " + prefix + " ##");
-		for (NameSearchResult result : results)
-			System.out.println(result);
+		if (results.size() != 0) {
+			for (NameSearchResult result : results)
+				System.out.println(result);
+		}
 		System.out.println("###################################");
 	}
 
@@ -112,17 +114,17 @@ public class CBIndexSearchTest {
 				equals = false;
 			}
 
-//			if (nsr1.getRankClassification() == null && nsr2.getRankClassification() == null) {
-//				equals = true;
-//			} else if (!nsr1.getRankClassification().equals(nsr2.getRankClassification())) {
-//				equals = false;
-//			}
-//
-//			if (nsr1.getAcceptedLsid() == null && nsr2.getAcceptedLsid() == null) {
-//				equals = true;
-//			} else if (!nsr1.getAcceptedLsid().equals(nsr2.getAcceptedLsid())) {
-//				equals = false;
-//			}
+			//			if (nsr1.getRankClassification() == null && nsr2.getRankClassification() == null) {
+			//				equals = true;
+			//			} else if (!nsr1.getRankClassification().equals(nsr2.getRankClassification())) {
+			//				equals = false;
+			//			}
+			//
+			//			if (nsr1.getAcceptedLsid() == null && nsr2.getAcceptedLsid() == null) {
+			//				equals = true;
+			//			} else if (!nsr1.getAcceptedLsid().equals(nsr2.getAcceptedLsid())) {
+			//				equals = false;
+			//			}
 		} catch (NullPointerException npe) {
 			equals = false;
 		}
@@ -141,7 +143,7 @@ public class CBIndexSearchTest {
 			System.out.println("testSynonymWithHomonym Synonym: " + result + "!!");
 			NameSearchResult expectedResult = new NameSearchResult(String.valueOf(223782), "urn:lsid:biodiversity.org.au:afd.taxon:5005b407-1e87-4aa3-a2ff-88b89f0a2dc4", MatchType.DIRECT);
 			assertTrue(nameSearchResultEqual(expectedResult, result));
-//			assertEquals("Match: DIRECT id: 223782 lsid: urn:lsid:biodiversity.org.au:afd.taxon:5005b407-1e87-4aa3-a2ff-88b89f0a2dc4 classification: au.org.ala.data.model.LinnaeanRankClassification@177f409c[kingdom=<null>,phylum=<null>,klass=<null>,order=<null>,family=<null>,genus=<null>,species=<null>,specificEpithet=<null>,scientificName=Atylus monoculoides] synonym: urn:lsid:biodiversity.org.au:afd.taxon:dcd396c3-afd4-498f-ab83-2605926f64f8", result.toString());
+			//			assertEquals("Match: DIRECT id: 223782 lsid: urn:lsid:biodiversity.org.au:afd.taxon:5005b407-1e87-4aa3-a2ff-88b89f0a2dc4 classification: au.org.ala.data.model.LinnaeanRankClassification@177f409c[kingdom=<null>,phylum=<null>,klass=<null>,order=<null>,family=<null>,genus=<null>,species=<null>,specificEpithet=<null>,scientificName=Atylus monoculoides] synonym: urn:lsid:biodiversity.org.au:afd.taxon:dcd396c3-afd4-498f-ab83-2605926f64f8", result.toString());
 			String lsid = searcher.searchForLSID("Atylus monoculoides");			
 			System.out.println("testSynonymWithHomonym LSID: " + lsid);
 			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:dcd396c3-afd4-498f-ab83-2605926f64f8", lsid);
@@ -168,16 +170,16 @@ public class CBIndexSearchTest {
 			cl.setGenus("Aaleniella");
 			results = searcher.searchForRecords("Aaleniella", RankType.getForId(6000), cl, 10);
 			printAllResults("hymonyms test (Aaleniella)", results);
-//			cl.setKingdom(null);
-//			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), cl, 10);
-//			printAllResults("homonyms test 2", results);
+			//			cl.setKingdom(null);
+			//			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), cl, 10);
+			//			printAllResults("homonyms test 2", results);
 
 		} catch (SearchResultException e) {
 			//			System.err.println(e.getMessage());
 			e.printStackTrace();
 			printAllResults("HOMONYM EXCEPTION", e.getResults());
 			fail("testHomonym failed");
-		}
+		} 
 	}
 
 	@org.junit.Test
@@ -219,7 +221,7 @@ public class CBIndexSearchTest {
 		lsid = getCommonNameLSID("Australian tuna");
 		sciName = getCommonName("Australian tuna");
 		System.out.println("Australian tuna LSID: " + lsid + ", sciName: " + sciName);
-//		assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:0f5fa076-fe30-4598-b90c-31f12121a4fc", lsid);
+		//		assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:0f5fa076-fe30-4598-b90c-31f12121a4fc", lsid);
 		//ANBG and CoL have slightly different scientific name
 		lsid = getCommonNameLSID("Pacific Black Duck");
 		sciName = getCommonName("Pacific Black Duck");
@@ -343,7 +345,7 @@ public class CBIndexSearchTest {
 			System.out.println("Bullia fuzzy: " + nsr);
 			NameSearchResult expectedResult = new NameSearchResult(String.valueOf(103077301), "urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010", MatchType.SEARCHABLE);
 			assertTrue(nameSearchResultEqual(expectedResult, nsr));
-//			assertEquals("Match: SEARCHABLE id: 103077301 lsid: urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010 classification: au.org.ala.data.model.LinnaeanRankClassification@709446e4[kingdom=Animalia,phylum=Arthropoda,klass=Insecta,order=Lepidoptera,family=Noctuidae,genus=Bulia,species=<null>,specificEpithet=<null>,scientificName=Bulia] synonym: null", output);
+			//			assertEquals("Match: SEARCHABLE id: 103077301 lsid: urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010 classification: au.org.ala.data.model.LinnaeanRankClassification@709446e4[kingdom=Animalia,phylum=Arthropoda,klass=Insecta,order=Lepidoptera,family=Noctuidae,genus=Bulia,species=<null>,specificEpithet=<null>,scientificName=Bulia] synonym: null", output);
 			//Anochetus
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Arthropoda", "Insecta", "Hymenoptera", "Formicidae","Anochetus", null);
 			output = searcher.searchForLSID("Anochetus",cl, null);
