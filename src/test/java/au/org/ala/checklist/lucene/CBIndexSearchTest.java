@@ -87,7 +87,7 @@ public class CBIndexSearchTest {
 
 	private void printAllResults(String prefix, List<NameSearchResult> results) {
 		System.out.println("## " + prefix + " ##");
-		if (results.size() != 0) {
+		if (results != null && results.size() != 0) {
 			for (NameSearchResult result : results)
 				System.out.println(result);
 		}
@@ -167,9 +167,9 @@ public class CBIndexSearchTest {
 					"Simsia", RankType.getForId(6000), cl, 10);
 			printAllResults("hymonyms test 1", results);
 			//test to ensure that kingdoms that almost match are being will not report homonym exceptions
-			cl.setGenus("Silviella");
-			results = searcher.searchForRecords("Silviella", RankType.getForId(6000), cl, 10);
-			printAllResults("hymonyms test (Silviella)", results);
+			cl.setGenus("Silene");
+			results = searcher.searchForRecords("Silene", RankType.getForId(6000), cl, 10);
+			printAllResults("hymonyms test (Silene)", results);
 			//			cl.setKingdom(null);
 			//			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), cl, 10);
 			//			printAllResults("homonyms test 2", results);
