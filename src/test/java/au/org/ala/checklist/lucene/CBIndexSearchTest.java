@@ -167,9 +167,9 @@ public class CBIndexSearchTest {
 					"Simsia", RankType.getForId(6000), cl, 10);
 			printAllResults("hymonyms test 1", results);
 			//test to ensure that kingdoms that almost match are being will not report homonym exceptions
-			cl.setGenus("Abacella");
-			results = searcher.searchForRecords("Abacella", RankType.getForId(6000), cl, 10);
-			printAllResults("hymonyms test (Abacella)", results);
+			cl.setGenus("Silviella");
+			results = searcher.searchForRecords("Silviella", RankType.getForId(6000), cl, 10);
+			printAllResults("hymonyms test (Silviella)", results);
 			//			cl.setKingdom(null);
 			//			results = searcher.searchForRecords("Simsia", RankType.getForId(6000), cl, 10);
 			//			printAllResults("homonyms test 2", results);
