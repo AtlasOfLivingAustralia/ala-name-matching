@@ -42,22 +42,60 @@ public class GeneraliseTest {
 
 	@Test
 	public void testGeneralisation() {
-		SensitiveSpecies ss = finder.findSensitiveSpecies("Crex crex");
+	    
+		//
+	    // Endangered Birds Australia species in ACT - position generalised
+	    //
+	    SensitiveSpecies ss = finder.findSensitiveSpecies("Crex crex");
 		assertNotNull(ss);
+		String latitude = "-35.276771";   // Epicorp
+		String longitude = "149.112539";
+		GeneralisedLocation gl = new GeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
+		assertEquals("Latitude", "-35.3", gl.getGeneralisedLatitude());
+		assertEquals("Longitude", "149.1", gl.getGeneralisedLongitude());
+		assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
 		
-		String latitude = "-67.2883";
-		String longitude = "71.1993";
-		GeneralisedLocation lg = new GeneralisedLocation(latitude, longitude, ss.getCategory());
-		assertEquals("Latitude", "-67.3", lg.getGeneralisedLatitude());
-		assertEquals("Longitude", "71.2", lg.getGeneralisedLongitude());
-		assertEquals("InMetres", "10000", lg.getGeneralisationInMetres());
-		
+		//
+		// Critically endangered NSW species in ACT - not generalised
+		//
 		ss = finder.findSensitiveSpecies("Wollemia nobilis");
 		assertNotNull(ss);
-		
-        lg = new GeneralisedLocation(latitude, longitude, ss.getCategory());
-		assertEquals("Latitude", "", lg.getGeneralisedLatitude());
-		assertEquals("Longitude", "", lg.getGeneralisedLongitude());
-        assertEquals("InMetres", "", lg.getGeneralisationInMetres());
+        gl = new GeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
+		assertEquals("Latitude", "-35.276771", gl.getGeneralisedLatitude());
+		assertEquals("Longitude", "149.112539", gl.getGeneralisedLongitude());
+        assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+        
+        //
+        // Critically endangered NSW species in NZ - not generalised
+        //
+        latitude = "-41.538137";    // NZ
+        longitude = "173.968817";
+        gl = new GeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
+        assertEquals("Latitude", "-41.538137", gl.getGeneralisedLatitude());
+        assertEquals("Longitude", "173.968817", gl.getGeneralisedLongitude());
+        assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+         
+        //
+        // Critically endangered NSW species in NSW - position not published
+        //
+        latitude = "-33.630629";    // NSW
+        longitude = "150.441284";
+        gl = new GeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
+        assertEquals("Latitude", "", gl.getGeneralisedLatitude());
+        assertEquals("Longitude", "", gl.getGeneralisedLongitude());
+        assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+         
+        //
+        // Endangered TAS species in TAS - generalised
+        //
+        ss = finder.findSensitiveSpecies("Galaxias fontanus");
+        assertNotNull(ss);
+        latitude = "-40.111689";    // TAS
+        longitude = "148.095703";
+        gl = new GeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
+        assertEquals("Latitude", "-40.1", gl.getGeneralisedLatitude());
+        assertEquals("Longitude", "148.1", gl.getGeneralisedLongitude());
+        assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
+        
 	}
 }
