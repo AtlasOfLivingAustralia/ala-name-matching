@@ -16,7 +16,7 @@ package au.org.ala.sensitiveData.dao;
 
 import java.util.List;
 
-import au.org.ala.sensitiveData.model.SpeciesOccurrence;
+import au.org.ala.sensitiveData.dto.SpeciesOccurrenceDto;
 
 /**
  *
@@ -24,7 +24,7 @@ import au.org.ala.sensitiveData.model.SpeciesOccurrence;
  */
 public interface RawOccurrenceDao {
 
-	List<SpeciesOccurrence> getOccurrences();
+	List<SpeciesOccurrenceDto> getOccurrences();
 	
 	void updateLocation(int id, String generalisedLatitude, String generalisedLongitude, String generalisedMetres, String rawLatitude, String rawLongitude);
 	
