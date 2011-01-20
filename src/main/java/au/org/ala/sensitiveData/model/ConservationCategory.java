@@ -18,22 +18,26 @@ package au.org.ala.sensitiveData.model;
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
-public enum SensitivityCategory {
+public enum ConservationCategory {
 
-	CONSERVATION_EXTREME("CX"),
-	CONSERVATION_HIGH("CH"),
-	CONSERVATION_MEDIUM("CM"),
-	CONSERVATION_LOW("CL"),
-	NOT_SENSITIVE("N");
+    NOT_EVALUATED("NE"),
+    DATA_DEFICIENT("DD"),
+	LEAST_CONCERN("LC"),
+	NEAR_THREATENED("NT"),
+	VULNERABLE("VU"),
+	ENDANGERED("EN"),
+	CRITICALLY_ENDANGERED("CR"),
+	EXTINCT_IN_THE_WILD("EW"),
+	EXTINCT("EX");
 	
 	private String value;
 	
-	private SensitivityCategory(String value) {
+	private ConservationCategory(String value) {
 		this.value = value;
 	}
 	
-	public static SensitivityCategory getCategory(String value) {
-		for (SensitivityCategory cat : SensitivityCategory.values()) {
+	public static ConservationCategory getCategory(String value) {
+		for (ConservationCategory cat : ConservationCategory.values()) {
 			if (cat.getValue().equals(value)) {
 				return cat;
 			}
