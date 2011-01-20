@@ -1,6 +1,7 @@
 package au.org.ala.sensitiveData.model;
 
 public enum SensitivityZone {
+    AUS("Australia"),
     ACT("Australian Capital Territory"), 
     NSW("New South Wales"),
     QLD("Queensland"),
