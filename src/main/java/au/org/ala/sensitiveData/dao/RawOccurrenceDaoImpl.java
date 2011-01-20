@@ -26,7 +26,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 import org.springframework.stereotype.Component;
 
-import au.org.ala.sensitiveData.model.SpeciesOccurrence;
+import au.org.ala.sensitiveData.dto.SpeciesOccurrenceDto;
 
 /**
  *
@@ -70,13 +70,13 @@ public class RawOccurrenceDaoImpl extends JdbcDaoSupport implements RawOccurrenc
 	}
 
 	@Override
-	public List<SpeciesOccurrence> getOccurrences() {
-		return (List<SpeciesOccurrence>) getJdbcTemplate().query(
+	public List<SpeciesOccurrenceDto> getOccurrences() {
+		return (List<SpeciesOccurrenceDto>) getJdbcTemplate().query(
 				SELECT_ALL_OCCURRENCES,
 				new Object [] {},
-				new RowMapper<SpeciesOccurrence>() {
-					public SpeciesOccurrence mapRow(ResultSet rs, int row) throws SQLException {
-						SpeciesOccurrence occ = new SpeciesOccurrence();
+				new RowMapper<SpeciesOccurrenceDto>() {
+					public SpeciesOccurrenceDto mapRow(ResultSet rs, int row) throws SQLException {
+						SpeciesOccurrenceDto occ = new SpeciesOccurrenceDto();
 						occ.setId(rs.getInt("id"));
 						occ.setScientificName(rs.getString("scientific_name"));
 						occ.setLatitude(rs.getString("latitude"));
