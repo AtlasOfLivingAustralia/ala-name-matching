@@ -14,6 +14,11 @@
  ***************************************************************************/
 package au.org.ala.sensitiveData.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import au.org.ala.sensitiveData.util.GeoLocationHelper;
+
 /**
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
@@ -21,39 +26,67 @@ package au.org.ala.sensitiveData.model;
 public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
 
 	private String scientificName;
-	private SensitivityCategory category;
-	private SensitivityZone[] zones;
+	private List<SensitivityInstance> instances;
 	
-    public SensitiveSpecies(String scientificName, SensitivityCategory category) {
+    public SensitiveSpecies(String scientificName) {
 		super();
 		this.scientificName = scientificName;
-		this.category = category;
+		this.instances = new ArrayList<SensitivityInstance>();
 	}
 
 	public String getScientificName() {
 		return this.scientificName;
 	}
 
-	public SensitivityCategory getCategory() {
-		return category;
-	}
-	
-    public SensitivityZone[] getZones() {
-        return zones;
+    public List<SensitivityInstance> getInstances() {
+        return instances;
     }
 
-    public void setZones(SensitivityZone[] zones) {
-        this.zones = zones;
-    }
-    
     public boolean isSensitiveForZone(SensitivityZone zone) {
-        for (SensitivityZone sz : this.zones) {
-            if (zone.equals(sz)) {
+        for (SensitivityInstance si : instances) {
+            if (zone.equals(si.getZone())) {
                 return true;
             }
         }
         
         return false;
+    }
+    
+    public ConservationCategory getConservationCategory(String latitude, String longitude) {
+        ConservationCategory category = null;
+        
+        // Avoid spatial gazetteer lookup if possible
+        if (instances.size() == 1 && instances.get(0).getZone() == SensitivityZone.AUS) {
+            category = instances.get(0).getCategory();
+        } else {
+            SensitivityZone state = null;
+
+            try {
+                state = GeoLocationHelper.getStateContainingPoint(latitude, longitude);
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            if (state != null) {
+                ConservationCategory ausCategory = null;
+                for (SensitivityInstance instance : instances) {
+                    if (state == instance.getZone()) {
+                        category = instance.getCategory();
+                    } else {
+                        if (instance.getZone() == SensitivityZone.AUS) {
+                            ausCategory = instance.getCategory();
+                        }
+                    }
+                }
+                
+                if (category == null) {
+                    category = ausCategory;
+                }
+            }
+        }
+        
+        return category;
     }
 
 	@Override
