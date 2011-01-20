@@ -97,7 +97,7 @@ public class GeneraliseOccurrenceLocations {
 				// See if it's sensitive
 				SensitiveSpecies ss = sensitiveSpeciesFinder.findSensitiveSpecies(speciesName);
 				if (ss != null) {
-                    GeneralisedLocation genLoc = new GeneralisedLocation(latitude, longitude, ss.getCategory());
+                    GeneralisedLocation genLoc = new GeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
 					if (isEmpty(generalised_metres)) {
 						logger.debug("Generalising location for " + id + " '" + rawScientificName + "' using Name='" + speciesName +
 						             "', Lat=" + genLoc.getGeneralisedLatitude() + 
