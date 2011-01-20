@@ -8,9 +8,9 @@
     <!-- Scan source files for annotations for DI -->
     <ctx:component-scan base-package="au.org.ala"/>
     
-	<bean id="sensitiveSpeciesDao" class="au.org.ala.sensitiveData.dao.SensitiveSpeciesDaoImpl" />
+	<bean id="sensitiveSpeciesDao" class="au.org.ala.sds.dao.SensitiveSpeciesDaoImpl" />
 	
-	<bean id="searchImpl" class="au.org.ala.sensitiveData.SensitiveSpeciesFinder">
+	<bean id="searchImpl" class="au.org.ala.sds.SensitiveSpeciesFinder">
 	   <property name="dao" ref="sensitiveSpeciesDao" />
 	</bean>
 

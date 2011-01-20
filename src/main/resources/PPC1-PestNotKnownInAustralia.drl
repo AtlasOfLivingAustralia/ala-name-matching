@@ -1,0 +1,46 @@
+package au.org.ala.sensitiveData.validation;
+
+import org.drools.runtime.rule.RuleContext;
+
+global ValidationReport validationReport;
+global ReportFactory reportFactory;
+global BankingInquiryService inquiryService;
+
+import function au.org.ala.sensitiveData.validation.ValidationHelper.error;
+import function au.org.ala.sensitiveData.validation.ValidationHelper.warning;
+
+function void error(RuleContext kcontext, Object... context) {
+	ValidationReport report = (ValidationReport)kcontext.getWorkingMemory().getGlobal("validationReport");
+	ReportFactory reportFactory = (ReportFactory)kcontext.getWorkingMemory().getGlobal("reportFactory");
+	
+	report.addMessage(reportFactory.createMessage(Message.Type.ERROR, kcontext.getRule().getName(), context));
+}
+
+function void warning(RuleContext kcontext, Object... context) {
+	ValidationReport report = (ValidationReport)kcontext.getWorkingMemory().getGlobal("validationReport");
+	ReportFactory reportFactory = (ReportFactory)kcontext.getWorkingMemory().getGlobal("reportFactory");
+	
+	report.addMessage(reportFactory.createMessage(Message.Type.WARNING, kcontext.getRule().getName(), context));
+}
+
+rule "Australia"
+	when
+		Customer( address == null )
+	then
+		warning(kcontext);
+end
+
+rule "External Territory"
+ 	when
+ 		Customer( phoneNumber == null || == "" )
+	then
+		error(kcontext);
+end
+
+rule "Torres Strait Protected Zone"
+	when
+		$account : Account( owner == null )
+	then		
+		error(kcontext, $account);
+end
+
