@@ -16,7 +16,7 @@ package au.org.ala.sensitiveData.util;
 
 import java.math.BigDecimal;
 
-import au.org.ala.sensitiveData.model.SensitivityCategory;
+import au.org.ala.sensitiveData.model.ConservationCategory;
 
 /**
  * @author Peter Flemming (peter.flemming@csiro.au)
@@ -27,9 +27,9 @@ public class GeneralisedLocation {
     private String generalisedLatitude;
     private String generalisedLongitude;
     private String generalisationInMetres;
-    private SensitivityCategory category;
+    private ConservationCategory category;
     
-    public GeneralisedLocation(String latitude, String Longitude, SensitivityCategory category) {
+    public GeneralisedLocation(String latitude, String Longitude, ConservationCategory category) {
         originalLatitude = latitude;
         originalLongitude = Longitude;
         this.category = category;
@@ -56,47 +56,54 @@ public class GeneralisedLocation {
         return generalisationInMetres;
     }
 
-    public SensitivityCategory getCategory() {
+    public ConservationCategory getCategory() {
         return category;
     }
 
-   private void generaliseCoordinates() {
-       int decimalPlaces;
-       switch (this.category) {
-       case CONSERVATION_EXTREME:
-           this.generalisedLatitude = "";
-           this.generalisedLongitude = "";
-           this.generalisationInMetres = "";
-           return;
-       case CONSERVATION_HIGH:
-           decimalPlaces = 1;
-           this.generalisationInMetres = "10000";
-           break;
-       case CONSERVATION_MEDIUM:
-           decimalPlaces = 2;
-           this.generalisationInMetres = "1000";
-           break;
-       case CONSERVATION_LOW:
-           decimalPlaces = 3;
-           this.generalisationInMetres = "100";
-           break;
-       default:
-           this.generalisedLatitude = this.originalLatitude;
-           this.generalisedLongitude = this.originalLongitude;
-           this.generalisationInMetres = "";
-           return;
-       }
-       
-       this.generalisedLatitude = round(this.originalLatitude, decimalPlaces);
-       this.generalisedLongitude = round(this.originalLongitude, decimalPlaces);
-       
-   }
+    private void generaliseCoordinates() {
+        
+        if (this.category == null) {
+            this.generalisedLatitude = this.originalLatitude;
+            this.generalisedLongitude = this.originalLongitude;
+            this.generalisationInMetres = "";
+            return;
+        }
+        
+        int decimalPlaces;
+        switch (this.category) {
+            case CRITICALLY_ENDANGERED:
+                this.generalisedLatitude = "";
+                this.generalisedLongitude = "";
+                this.generalisationInMetres = "";
+                return;
+            case ENDANGERED:
+                decimalPlaces = 1;
+                this.generalisationInMetres = "10000";
+                break;
+            case VULNERABLE:
+                decimalPlaces = 2;
+                this.generalisationInMetres = "1000";
+                break;
+            case NEAR_THREATENED:
+                decimalPlaces = 3;
+                this.generalisationInMetres = "100";
+                break;
+            default:
+                this.generalisedLatitude = this.originalLatitude;
+                this.generalisedLongitude = this.originalLongitude;
+                this.generalisationInMetres = "";
+                return;
+        }
 
-   private String round(String number, int decimalPlaces) {
-       if (number == null || number.equals("")) {
-           return "";
-       } else {
-           return String.format("%." + decimalPlaces + "f", new BigDecimal(number));
-       }
-   }
+        this.generalisedLatitude = round(this.originalLatitude, decimalPlaces);
+        this.generalisedLongitude = round(this.originalLongitude, decimalPlaces);
+    }
+
+    private String round(String number, int decimalPlaces) {
+        if (number == null || number.equals("")) {
+            return "";
+        } else {
+            return String.format("%." + decimalPlaces + "f", new BigDecimal(number));
+        }
+    }
 }
