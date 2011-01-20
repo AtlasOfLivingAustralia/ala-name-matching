@@ -12,20 +12,21 @@
  * implied. See the License for the specific language governing
  * rights and limitations under the License.
  ***************************************************************************/
-package au.org.ala.sensitiveData.dao;
+package au.org.ala.sensitiveData.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
 import au.org.ala.sensitiveData.model.SensitivityZone;
+import au.org.ala.sensitiveData.util.GeoLocationHelper;
 
-public class GeoLocationDaoTest {
-
-    GeoLocationDao dao = new GeoLocationDaoImpl();
+public class GeoLocationTest {
 
     @Test
     public void getStateContainingPointTest() throws Exception {
-        assertEquals(SensitivityZone.NSW, dao.getStateContainingPoint("-35.0", "145.0"));
+        assertEquals(SensitivityZone.NSW, GeoLocationHelper.getStateContainingPoint("-35.0", "145.0"));
+        assertNull(GeoLocationHelper.getStateContainingPoint("-41.538137", "173.968817"));
     }
 }
