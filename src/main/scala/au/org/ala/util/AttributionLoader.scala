@@ -13,10 +13,10 @@ import org.apache.cassandra.thrift.{ Column, ConsistencyLevel, ColumnPath, Slice
  * 
  * This should be replaced with access to a webservice.
  * 
-select ic.code, cc.code, icm.institution_uid, icm.collection_uid, ic.name from inst_coll_mapping icm
-inner join institution_code ic ON ic.id = icm.institution_code_id
-inner join collection_code cc ON cc.id = icm.collection_code_id
-into outfile '/tmp/coll-mapping.txt';
+ * select ic.code, cc.code, icm.institution_uid, icm.collection_uid, ic.name from inst_coll_mapping icm
+ * inner join institution_code ic ON ic.id = icm.institution_code_id
+ * inner join collection_code cc ON cc.id = icm.collection_code_id
+ * into outfile '/tmp/coll-mapping.txt';
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */

@@ -1,5 +1,6 @@
 package au.org.ala.biocache
 import scala.reflect.BeanProperty
+import java.util.UUID
 
 class Occurrence extends Cloneable {
   override def clone : Occurrence = super.clone.asInstanceOf[Occurrence]
@@ -218,10 +219,6 @@ object Versions {
 	val CONSENSUS = Consensus
 }
 
-
-//}
-//, Processed, Consensus = Value
-
 /**
  * Represents a cached profile within system.
  */
@@ -251,10 +248,13 @@ class Attribution extends Cloneable {
 
 /**
  * Encapsulates a complete specimen or occurrence record.
+ * TODO add quality assertions.....
  */
 class FullRecord (@BeanProperty var o:Occurrence, @BeanProperty var c:Classification,
 		@BeanProperty var l:Location,@BeanProperty var e:Event) extends Cloneable {
+  
   def this() = this(null,null,null,null)
+  
   override def clone : FullRecord = new FullRecord(o.clone, c.clone,l.clone,e.clone)
 }
 
@@ -265,18 +265,32 @@ class FullRecord (@BeanProperty var o:Occurrence, @BeanProperty var c:Classifica
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */
-class QualityAssertion {
-	@BeanProperty var uuid:String = _
-	@BeanProperty var assertionCode:Int = _ 
-	@BeanProperty var positive:Boolean = _
-	@BeanProperty var comment:String = _
-	@BeanProperty var userId:String = _
-	@BeanProperty var userDisplayName:String = _
+class QualityAssertion (@BeanProperty var uuid:String,@BeanProperty var assertionCode:Int, 
+	@BeanProperty var positive:Boolean,@BeanProperty var comment:String,
+	@BeanProperty var userId:String,@BeanProperty var userDisplayName:String){
+	
+	def this() = this(null,-1,false,null,null,null)
 	
 	override def equals(that: Any) = that match { 
 	    case other: QualityAssertion => {
 	    	(other.assertionCode == assertionCode) && (other.positive == positive) && (other.userId == userId)
 	    }
 	    case _ => false 
+	}
+}
+
+/**
+ * A companion object for the QualityAssertion class that provides factory
+ * type functionality.
+ * @author Dave Martin (David.Martin@csiro.au)
+ */
+object QualityAssertion {
+	def apply(errorCode:ErrorCode,positive:Boolean,comment:String) = {
+		val uuid = UUID.randomUUID.toString
+		new QualityAssertion(uuid,errorCode.code,positive,comment,null,null)
+	}
+	def apply(assertionCode:Int,positive:Boolean,comment:String) = {
+		val uuid = UUID.randomUUID.toString
+		new QualityAssertion(uuid,assertionCode,positive,comment,null,null)
 	}
 }

@@ -48,6 +48,8 @@ import au.org.ala.biocache.FullRecord
  * 	- support for date ranges
  * 
  * 6. Collectory lookups for attribution chain
+ * 
+ * Tests to conform to: http://bit.ly/eqSiFs
  */
 object ProcessRecords {
 
@@ -119,69 +121,38 @@ object ProcessRecords {
     }
   }
 
+  def validateNumber(number:String, f:(Int=>Boolean) ) : (Int, Boolean) = {
+    try {
+      if(number != null) {
+        val parsedNumber = number.toInt
+        (parsedNumber, f(parsedNumber))
+      } else {
+    	(-1, false)
+      }
+    } catch {
+      case e: NumberFormatException => {
+        (-1, false)
+      }
+    }
+  }
+  
   /**
    * Date parsing - this is pretty much copied from GBIF source code and needs
    * splitting into several methods
    */
   def processEvent(guid:String, raw:FullRecord, processed:FullRecord) {
 
-    var year = -1
-    var month = -1
-    var day = -1
     var date: Option[java.util.Date] = None
 
-    var invalidDate = false;
     val now = new java.util.Date
     val currentYear = DateFormatUtils.format(now, "yyyy").toInt
     var comment = ""
-
-    try {
-      if (raw.e.year != null) {
-        year = raw.e.year.toInt
-        if (year < 0 || year > currentYear) {
-          invalidDate = true
-          year = -1
-        }
-      }
-    } catch {
-      case e: NumberFormatException => {
-        invalidDate = true
-        comment = "Invalid year supplied"
-        year = -1
-      }
-    }
-
-    try {
-      if (raw.e.month != null)
-        month = raw.e.month.toInt
-      if (month < 1 || month > 12) {
-        month = -1
-        invalidDate = true
-      }
-    } catch {
-      case e: NumberFormatException => {
-        invalidDate = true
-        comment = "Invalid month supplied"
-        month = -1
-      }
-    }
-
-    try {
-      if (raw.e.day != null)
-        day = raw.e.day.toInt
-      if (day < 0 || day > 31) {
-        day = -1
-        invalidDate = true
-        comment = "Invalid day supplied"
-      }
-    } catch {
-      case e: NumberFormatException => {
-        invalidDate = true
-        comment = "Invalid day supplied"
-        day = -1
-      }
-    }
-
+ 
+    var (year,invalidYear) = validateNumber(raw.e.year,{year => year < 0 || year > currentYear})
+    var (month,invalidMonth) = validateNumber(raw.e.year,{month => month < 1 || month > 12})
+    var (day,invalidDay) = validateNumber(raw.e.year,{day => day < 0 || day > 31})
+    var invalidDate = invalidYear || invalidDay || invalidMonth
+    
     if (year > 0) {
       if (year < 100) {
     	//parse 89 for 1989
@@ -253,15 +224,10 @@ object ProcessRecords {
     }
 
     if (invalidDate) {
-      var qa = new QualityAssertion
-      qa.assertionCode = AssertionCodes.OTHER_INVALID_DATE.code
-      qa.positive = false
-      qa.comment = comment
-      qa.userId = "system"
+      val qa = QualityAssertion(AssertionCodes.OTHER_INVALID_DATE,false,comment)
       OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.OTHER_INVALID_DATE)
     }
   }
-
 
   /**
    * Process the type status
@@ -272,18 +238,13 @@ object ProcessRecords {
       val term = TypeStatus.matchTerm(raw.o.typeStatus)
       if (term.isEmpty) {
         //add a quality assertion
-        val qa = new QualityAssertion
-        qa.positive = false
-        qa.assertionCode = AssertionCodes.OTHER_UNRECOGNISED_TYPESTATUS.code
-        qa.comment = "Unrecognised type status"
-        qa.userId = "system"
-        OccurrenceDAO.addQualityAssertion(guid, qa,  AssertionCodes.OTHER_UNRECOGNISED_TYPESTATUS)
+        val qa = QualityAssertion(AssertionCodes.OTHER_UNRECOGNISED_TYPESTATUS,false,"Unrecognised type status")
+        OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.OTHER_UNRECOGNISED_TYPESTATUS)
       } else {
         processed.o.basisOfRecord = term.get.canonical
       }
     }
   }
-
 
   /**
    * Process basis of record
@@ -292,23 +253,15 @@ object ProcessRecords {
 
     if (raw.o.basisOfRecord == null || raw.o.basisOfRecord.isEmpty) {
       //add a quality assertion
-      val qa = new QualityAssertion
-      qa.positive = false
-      qa.assertionCode = AssertionCodes.OTHER_MISSING_BASIS_OF_RECORD.code
-      qa.comment = "Missing basis of record"
-      qa.userId = "system"
+      val qa = QualityAssertion(AssertionCodes.OTHER_MISSING_BASIS_OF_RECORD,false,"Missing basis of record")
       OccurrenceDAO.addQualityAssertion(guid, qa,  AssertionCodes.OTHER_UNRECOGNISED_TYPESTATUS)
     } else {
       val term = BasisOfRecord.matchTerm(raw.o.basisOfRecord)
       if (term.isEmpty) {
         //add a quality assertion
         println("[QualityAssertion] " + guid + ", unrecognised BoR: " + guid + ", BoR:" + raw.o.basisOfRecord)
-        val qa = new QualityAssertion
-        qa.positive = false
-        qa.assertionCode = AssertionCodes.OTHER_BADLY_FORMED_BASIS_OF_RECORD.code
-        qa.comment = "Unrecognised basis of record"
-        qa.userId = "system"
-        OccurrenceDAO.addQualityAssertion(guid, qa,  AssertionCodes.OTHER_UNRECOGNISED_TYPESTATUS)
+        val qa = QualityAssertion(AssertionCodes.OTHER_MISSING_BASIS_OF_RECORD,false,"Unrecognised basis of record")
+        OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.OTHER_UNRECOGNISED_TYPESTATUS)
       } else {
         processed.o.basisOfRecord = term.get.canonical
       }
@@ -347,11 +300,8 @@ object ProcessRecords {
           if (!stateTerm.isEmpty && !processed.l.stateProvince.equalsIgnoreCase(stateTerm.get.canonical)) {
             println("[QualityAssertion] " + guid + ", processed:" + processed.l.stateProvince + ", raw:" + raw.l.stateProvince)
             //add a quality assertion
-            val qa = new QualityAssertion
-            qa.positive = false
-            qa.assertionCode = AssertionCodes.GEOSPATIAL_STATE_COORDINATE_MISMATCH.code
-            qa.comment = "Supplied: " + stateTerm.get.canonical + ", calculated: " + processed.l.stateProvince
-            qa.userId = "system"
+            val comment = "Supplied: " + stateTerm.get.canonical + ", calculated: " + processed.l.stateProvince
+            val qa = QualityAssertion(AssertionCodes.GEOSPATIAL_STATE_COORDINATE_MISMATCH,false,comment)
             //store the assertion
             OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.GEOSPATIAL_STATE_COORDINATE_MISMATCH)
           }
@@ -371,18 +321,15 @@ object ProcessRecords {
         		if(!validHabitat.isEmpty){
         			if(!validHabitat.get){
         				println("[QualityAssertion] ******** Habitats incompatible for UUID: " + guid + ", processed:" + processed.l.habitat + ", retrieved:" + habitatsAsString)
-        				var qa = new QualityAssertion
-        				qa.userId = "system"
-        				qa.assertionCode = AssertionCodes.COORDINATE_HABITAT_MISMATCH.code
-        				qa.comment = "Recognised habitats for species: " + habitatsAsString+", Value determined from coordinates: "+habitatFromPoint
-        				qa.positive = false
+        				val comment = "Recognised habitats for species: " + habitatsAsString+", Value determined from coordinates: "+habitatFromPoint
+        				var qa = QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH,false,comment)
         				OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.COORDINATE_HABITAT_MISMATCH)
         			}
         		}
         	}
         }
         
-        //check centre point of the state
+        //TODO check centre point of the state
 
 
       }
