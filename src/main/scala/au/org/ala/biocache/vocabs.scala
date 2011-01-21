@@ -9,7 +9,6 @@ case class Term (canonical:String, variants:Array[String])
 
 case class ErrorCode(name:String, code:Int)
 
-
 trait Vocab {
   val all:Array[Term]
   /**

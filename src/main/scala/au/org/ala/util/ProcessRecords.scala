@@ -1,6 +1,8 @@
 package au.org.ala.util
 
 import au.org.ala.biocache.HabitatMap
+import au.org.ala.biocache.Raw
+import au.org.ala.biocache.Processed
 import au.org.ala.biocache.TaxonProfileDAO
 import au.org.ala.biocache.AttributionDAO
 import org.apache.commons.lang.time.DateUtils
@@ -56,7 +58,7 @@ object ProcessRecords {
     var finishTime = System.currentTimeMillis
 
     //page over all records and process
-    OccurrenceDAO.pageOverAll(Version.Raw, record => {
+    OccurrenceDAO.pageOverAll(Raw, record => {
       counter += 1
       if (!record.isEmpty) {
 
@@ -91,7 +93,7 @@ object ProcessRecords {
         
 
         //store the occurrence
-        OccurrenceDAO.updateOccurrence(guid, processed, Version.Processed)
+        OccurrenceDAO.updateOccurrence(guid, processed, Processed)
         
         //debug counter
         if (counter % 1000 == 0) {
@@ -113,7 +115,7 @@ object ProcessRecords {
   def processAttribution(guid:String, raw:FullRecord, processed:FullRecord) {
     val attribution = AttributionDAO.getByCodes(raw.o.institutionCode, raw.o.collectionCode)
     if (!attribution.isEmpty) {
-      OccurrenceDAO.updateOccurrence(guid, attribution.get, Version.Processed)
+      OccurrenceDAO.updateOccurrence(guid, attribution.get, Processed)
     }
   }
 

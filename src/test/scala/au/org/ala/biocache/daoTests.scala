@@ -20,7 +20,7 @@ object PointDAOTest {
 
 object OccurrenceDAOTest {
 	def main(args : Array[String]) : Unit = {
-		val ot1 = OccurrenceDAO.getByUuid("3480993d-b0b1-4089-9faf-30b4eab050ae", Version.Raw)
+		val ot1 = OccurrenceDAO.getByUuid("3480993d-b0b1-4089-9faf-30b4eab050ae", Raw)
 		if(!ot1.isEmpty){
 			val rawOccurrence = ot1.get.o
 			val rawClassification = ot1.get.c 
@@ -30,7 +30,7 @@ object OccurrenceDAOTest {
 			println("failed")
 		}
 		
-		val ot2 = OccurrenceDAO.getByUuid("3480993d-b0b1-4089-9faf-30b4eab050ae", Version.Processed)
+		val ot2 = OccurrenceDAO.getByUuid("3480993d-b0b1-4089-9faf-30b4eab050ae", Processed)
 		if(!ot2.isEmpty){
 			val o = ot1.get.o
 			val c = ot1.get.c 
@@ -40,7 +40,7 @@ object OccurrenceDAOTest {
 			println("failed")
 		}
 
-		val ot3 = OccurrenceDAO.getByUuid("3480993d-b0b1-4089-9faf-30b4eab050ae", Version.Consensus)
+		val ot3 = OccurrenceDAO.getByUuid("3480993d-b0b1-4089-9faf-30b4eab050ae", Consensus)
 		if(!ot3.isEmpty){
 			val o = ot1.get.o
 			val c = ot1.get.c 

@@ -206,10 +206,11 @@ class Location extends Cloneable {
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */
-object Version extends Enumeration {
-  type Version = Value
-  val Raw, Processed, Consensus = Value
-}
+abstract class Version
+case object Raw extends Version
+case object Processed extends Version
+case object Consensus extends Version
+//, Processed, Consensus = Value
 
 class TaxonProfile (
 	@BeanProperty var guid:String, 

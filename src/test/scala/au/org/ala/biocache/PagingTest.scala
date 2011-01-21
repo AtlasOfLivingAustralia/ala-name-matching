@@ -3,7 +3,7 @@ package au.org.ala.biocache
 object PagingTest {
 	
 	def main(args : Array[String]) : Unit = {
-		OccurrenceDAO.pageOverAll(Version.Raw, fullRecord => { 
+		OccurrenceDAO.pageOverAll(Raw, fullRecord => { 
 				val occurrence = fullRecord.get.o
 				val classification = fullRecord.get.c
 				val location = fullRecord.get.l

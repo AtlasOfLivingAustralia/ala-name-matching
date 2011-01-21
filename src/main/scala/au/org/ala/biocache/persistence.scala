@@ -16,13 +16,13 @@ trait PersistenceManager {
 	 * @param version "Raw, Processed, Consensus"
 	 * @return
 	 */
-	def get(uuid:String, entityType:String, version:Version.Value) : Option[AnyRef]
+	def get(uuid:String, entityType:String, version:Version) : Option[AnyRef]
 	
 	def get(uuid:String, property:String) : Option[String]
 	
 	def getArray(uuid:String, property:String) : Option[Array[String]]
 	
-	def put(uuid:String, entity:String, anObject:AnyRef, version:Version.Value)
+	def put(uuid:String, entity:String, anObject:AnyRef, version:Version)
 	
 	def put(uuid:String, property:String, propertyValue:String)
 	

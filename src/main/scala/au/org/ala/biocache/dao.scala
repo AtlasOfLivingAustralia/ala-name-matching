@@ -48,7 +48,6 @@ trait OccurrenceConsumer {
  */
 object OccurrenceDAO {
 
-  import Version._
   import ReflectBean._
 
   val columnFamily = "occ"
@@ -60,11 +59,11 @@ object OccurrenceDAO {
    * @return
    */
   def getByUuid(uuid:String) : Option[FullRecord] = {
-    getByUuid(uuid, Version.Raw)
+    getByUuid(uuid, Raw)
   }
 
   def getByUuidJ(uuid:String) : FullRecord = {
-    val record = getByUuid(uuid, Version.Raw)
+    val record = getByUuid(uuid, Raw)
     if(record.isEmpty){
     	null
     } else {
@@ -78,13 +77,13 @@ object OccurrenceDAO {
    * @param occurrenceType
    * @return
    */
-  def getByUuid(uuid:String, occurrenceType:Version.Value) : Option[FullRecord] = {
+  def getByUuid(uuid:String, recordVersion:Version) : Option[FullRecord] = {
 
     val selector = Pelops.createSelector(DAO.poolName, DAO.keyspace)
     val slicePredicate = Selector.newColumnsPredicateAll(true, 10000)
     val occurrence = new Occurrence
     val columnList = selector.getColumnsFromRow(uuid, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-    createOccurrence(uuid, columnList, occurrenceType)
+    createOccurrence(uuid, columnList, recordVersion)
   }
 
   /**
@@ -119,7 +118,7 @@ object OccurrenceDAO {
    * @param occurrenceType raw, processed or consensus version of the record
    * @return
    */
-  protected def createOccurrence(uuid:String, columnList:java.util.List[Column], occurrenceType:Version.Value)
+  protected def createOccurrence(uuid:String, columnList:java.util.List[Column], occurrenceType:Version)
     : Option[FullRecord] = {
 
     val occurrence = new Occurrence
@@ -135,10 +134,10 @@ object OccurrenceDAO {
       var fieldName = new String(column.asInstanceOf[Column].name)
       val fieldValue = new String(column.asInstanceOf[Column].value)
 
-      if(fieldName.endsWith(".p") && occurrenceType == Version.Processed){
+      if(fieldName.endsWith(".p") && occurrenceType == Processed){
         fieldName = fieldName.substring(0, fieldName.length - 2)
         setProperty(occurrence, classification, location, event, fieldName, fieldValue)
-      } else if(fieldName.endsWith(".c") && occurrenceType == Version.Consensus){
+      } else if(fieldName.endsWith(".c") && occurrenceType == Consensus){
         fieldName = fieldName.substring(0, fieldName.length - 2)
         setProperty(occurrence, classification, location, event, fieldName, fieldValue)
       } else {
@@ -151,7 +150,7 @@ object OccurrenceDAO {
   /**
    * Iterate over records, passing the records to the supplied consumer.
    */
-  def pageOverAll(occurrenceType:Version.Value, consumer:OccurrenceConsumer) {
+  def pageOverAll(occurrenceType:Version, consumer:OccurrenceConsumer) {
 	  pageOverAll(occurrenceType, fullRecord => consumer.consume(fullRecord.get))
   }
   
@@ -161,7 +160,7 @@ object OccurrenceDAO {
    * @param occurrenceType
    * @param proc
    */
-  def pageOverAll(occurrenceType:Version.Value, proc:((Option[FullRecord])=>Unit) ) {
+  def pageOverAll(occurrenceType:Version, proc:((Option[FullRecord])=>Unit) ) {
 
     val selector = Pelops.createSelector(DAO.poolName, columnFamily);
     val slicePredicate = Selector.newColumnsPredicateAll(true, 10000);
@@ -190,7 +189,7 @@ object OccurrenceDAO {
   /**
    *  
    */
-  def updateOccurrence(guid:String, fullRecord:FullRecord, version:Version.Value) {
+  def updateOccurrence(guid:String, fullRecord:FullRecord, version:Version) {
 	OccurrenceDAO.updateOccurrence(guid, fullRecord.o, version)
 	OccurrenceDAO.updateOccurrence(guid, fullRecord.c, version)
 	OccurrenceDAO.updateOccurrence(guid, fullRecord.l, version)
@@ -204,7 +203,7 @@ object OccurrenceDAO {
    * @param anObject
    * @param occurrenceType
    */
-  def updateOccurrence(uuid:String, anObject:AnyRef, occurrenceType:Version.Value) {
+  def updateOccurrence(uuid:String, anObject:AnyRef, version:Version) {
 
     //select the correct definition file
     val defn = { anObject match {
@@ -222,10 +221,10 @@ object OccurrenceDAO {
       val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
       if(fieldValue!=null && !fieldValue.isEmpty){
         var fieldName = field
-        if(occurrenceType == Version.Processed){
+        if(version == Processed){
           fieldName = fieldName +".p"
         }
-        if(occurrenceType == Version.Consensus){
+        if(version == Consensus){
           fieldName = fieldName +".c"
         }
         mutator.writeColumn(uuid, columnFamily, mutator.newColumn(fieldName, fieldValue))
