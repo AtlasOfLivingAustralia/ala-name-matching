@@ -203,15 +203,28 @@ class Location extends Cloneable {
 
 /**
  * Enumeration of record versions.
+ * sealed = cannot be extended unless declared in this source file.
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */
-abstract class Version
+abstract sealed class Version
 case object Raw extends Version
 case object Processed extends Version
 case object Consensus extends Version
+
+object Versions {
+	val RAW = Raw
+	val PROCESSED = Processed
+	val CONSENSUS = Consensus
+}
+
+
+//}
 //, Processed, Consensus = Value
 
+/**
+ * Represents a cached profile within system.
+ */
 class TaxonProfile (
 	@BeanProperty var guid:String, 
 	@BeanProperty var scientificName:String, 
