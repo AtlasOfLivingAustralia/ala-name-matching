@@ -9,7 +9,10 @@ import org.apache.avro.util.Utf8
 import au.org.ala.bie.rpc.{ ProfileArray, Page, SpeciesProfile }
 
 /**
- * Primes the cache of species profiles.
+ * Primes the cache of species profiles. To run this, you need to have
+ * bie-rpc server running on top of an existing BIE install.
+ * 
+ * See bie-rpc for more details.
  */
 object SpeciesProfileLoader {
 

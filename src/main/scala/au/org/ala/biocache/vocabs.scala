@@ -7,8 +7,18 @@ import scala.collection.mutable.ArrayBuffer
  */
 case class Term (canonical:String, variants:Array[String])
 
+/**
+ * Case class that represents an error code for a occurrence record.
+ * @author Dave Martin (David.Martin@csiro.au)
+ */
 case class ErrorCode(name:String, code:Int)
 
+/**
+ * A trait for a vocabulary. A vocabulary consists of a set
+ * of Terms, each with string variants.
+ * 
+ * @author Dave Martin (David.Martin@csiro.au)
+ */
 trait Vocab {
   val all:Array[Term]
   /**
