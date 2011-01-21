@@ -32,6 +32,16 @@ object DAO {
 }
 
 /**
+ * A trait to implement by java classes to process occurrence records.
+ * 
+ * @author Dave Martin (David.Martin@csiro.au)
+ */
+trait OccurrenceConsumer {
+	def consume(record:FullRecord)
+}
+
+
+/**
  * A DAO for accessing occurrences.
  * 
  * @author Dave Martin (David.Martin@csiro.au)
@@ -53,6 +63,14 @@ object OccurrenceDAO {
     getByUuid(uuid, Version.Raw)
   }
 
+  def getByUuidJ(uuid:String) : FullRecord = {
+    val record = getByUuid(uuid, Version.Raw)
+    if(record.isEmpty){
+    	null
+    } else {
+    	record.get
+    }
+  }  
   /**
    * Get an occurrence, specifying the version of the occurrence.
    *
@@ -78,7 +96,7 @@ object OccurrenceDAO {
    * @param fieldName the field to set
    * @param fieldValue the value to set
    */
-  def setProperty(o:Occurrence, c:Classification, l:Location, e:Event, fieldName:String, fieldValue:String){
+  protected def setProperty(o:Occurrence, c:Classification, l:Location, e:Event, fieldName:String, fieldValue:String){
     if(DAO.occurrenceDefn.contains(fieldName)){
       o.setter(fieldName,fieldValue)
     } else if(DAO.classificationDefn.contains(fieldName)){
@@ -101,7 +119,7 @@ object OccurrenceDAO {
    * @param occurrenceType raw, processed or consensus version of the record
    * @return
    */
-  def createOccurrence(uuid:String, columnList:java.util.List[Column], occurrenceType:Version.Value)
+  protected def createOccurrence(uuid:String, columnList:java.util.List[Column], occurrenceType:Version.Value)
     : Option[FullRecord] = {
 
     val occurrence = new Occurrence
@@ -131,12 +149,19 @@ object OccurrenceDAO {
   }
 
   /**
+   * Iterate over records, passing the records to the supplied consumer.
+   */
+  def pageOverAll(occurrenceType:Version.Value, consumer:OccurrenceConsumer) {
+	  pageOverAll(occurrenceType, fullRecord => consumer.consume(fullRecord.get))
+  }
+  
+  /**
    * Iterate over all occurrences, passing the objects to a function.
    *
    * @param occurrenceType
    * @param proc
    */
-  def pageOverAll(occurrenceType:Version.Value, proc:((Option[FullRecord])=>Unit) ) : Unit = {
+  def pageOverAll(occurrenceType:Version.Value, proc:((Option[FullRecord])=>Unit) ) {
 
     val selector = Pelops.createSelector(DAO.poolName, columnFamily);
     val slicePredicate = Selector.newColumnsPredicateAll(true, 10000);
@@ -162,6 +187,9 @@ object OccurrenceDAO {
     println("Finished paging. Total count: "+counter)
   }
 
+  /**
+   *  
+   */
   def updateOccurrence(guid:String, fullRecord:FullRecord, version:Version.Value) {
 	OccurrenceDAO.updateOccurrence(guid, fullRecord.o, version)
 	OccurrenceDAO.updateOccurrence(guid, fullRecord.c, version)
