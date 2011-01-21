@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+  <!-- Scan source files for annotations for DI -->
+  <context:component-scan base-package="org.ala.biocache"/>
+  <!-- load properties file into the context -->
+  <context:property-placeholder location="classpath:repository.properties"/>
+
+  <!-- data source -->
+  <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close" lazy-init="true">
+    <property name="driverClassName" value="${dataSource.driver}"/>
+    <property name="url" value="${dataSource.url}"/>
+    <property name="username" value="${dataSource.username}"/>
+    <property name="password" value="${dataSource.password}"/>
+    <property name="initialSize" value="1"/>
+    <property name="maxActive" value="25"/>
+    <property name="maxIdle" value="10"/>
+    <property name="maxWait" value="30000"/>
+    <property name="poolPreparedStatements" value="true"/>
+  </bean>
+
+  <bean id="dataResourceDAO" class="org.ala.biocache.dao.DataResourceDAOImpl">
+    <property name="dataSource" ref="dataSource" />
+  </bean>
+  
+  <bean id="dataProviderDAO" class="org.ala.biocache.dao.DataProviderDAOImpl">
+    <property name="dataSource" ref="dataSource" />
+  </bean>
+  
+  <bean id="basisOfRecordDAO" class="org.ala.biocache.dao.BasisOfRecordDAOImpl">
+    <property name="dataSource" ref="dataSource" />
+  </bean>
+  
+  <bean id="rawOccurrenceRecordDAO" class="org.ala.biocache.dao.RawOccurrenceRecordDAOImpl">
+    <property name="dataSource" ref="dataSource" />
+  </bean>
+  
+  <bean id="imageRecordDAO" class="org.ala.biocache.dao.ImageRecordDAOImpl">
+    <property name="dataSource" ref="dataSource" />
+  </bean>
+  
+  <bean id="occurrenceRecordDAO" class="org.ala.biocache.dao.OccurrenceRecordDAOImpl">
+  	<property name="dataSource" ref="dataSource" />
+    <property name="namedParameterTemplate">
+      <bean class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+		<constructor-arg ref="dataSource"/>
+      </bean>
+    </property>
+  </bean>
+  
+  <bean id="taxonConceptDAO" class="org.ala.biocache.dao.TaxonConceptDAOImpl">
+    <property name="dataSource" ref="dataSource" />
+  </bean>
+  
+  <bean id="restfulClient" class="org.ala.client.util.RestfulClient"/>
+</beans>

@@ -1,0 +1,5 @@
+# Portal DB properties
+dataSource.driver=com.mysql.jdbc.Driver
+dataSource.url=jdbc:mysql://ala-biocachedb1.vm.csiro.au/portal
+dataSource.username=biocache
+dataSource.password=04f7QQQyItpDayvgMkss3uT2u
