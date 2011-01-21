@@ -1,0 +1,11 @@
+day
+endDayOfYear
+eventAttributes
+eventDate
+eventID
+eventRemarks
+eventTime
+verbatimEventDate
+year
+month
+startDayOfYear

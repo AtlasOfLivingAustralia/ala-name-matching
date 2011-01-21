@@ -1,0 +1,9 @@
+measurementAccuracy
+measurementDeterminedBy
+measurementDeterminedDate
+measurementID
+measurementMethod
+measurementRemarks
+measurementType
+measurementUnit
+measurementValue

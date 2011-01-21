@@ -1,0 +1,1 @@
+mvn -e exec:java -Dexec.mainClass="au.org.ala.util.DwCLoader" -Dexec.classpathScope=runtime
