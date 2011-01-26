@@ -31,6 +31,10 @@ import java.util.GregorianCalendar
 import scala.collection.mutable.ArrayBuffer
 import au.org.ala.checklist.lucene.SearchResultException
 import au.org.ala.biocache.DateParser
+
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 /**
  * 1. Classification matching
  * 	- include a flag to indicate record hasnt been matched to NSLs
@@ -57,6 +61,8 @@ import au.org.ala.biocache.DateParser
  */
 object ProcessRecords {
 
+  val logger = LoggerFactory.getLogger("ProcessRecords")
+	
   def main(args: Array[String]): Unit = {
 
     var counter = 0
@@ -69,51 +75,56 @@ object ProcessRecords {
       if (!record.isEmpty) {
 
     	val raw = record.get
-    	val guid = raw.o.uuid
-    	
-    	var processed = raw.clone
-    	
-    	var assertions = new ArrayBuffer[QualityAssertion]
-    	
-        //find a classification in NSLs
-        assertions ++ processClassification(guid, raw, processed)
-
-        //perform gazetteer lookups - just using point hash for now
-        assertions ++ processLocation(guid, raw, processed)
-
-        //temporal processing
-        assertions ++ processEvent(guid, raw, processed)
-
-        //basis of record parsing
-        assertions ++ processBasisOfRecord(guid, raw, processed)
-
-        //type status normalisation
-        assertions ++ processTypeStatus(guid, raw, processed)
-
-        //process the attribution - call out to the Collectory...
-        assertions ++ processAttribution(guid, raw, processed)
-
-        //perform SDS lookups - retrieve from BIE for now....
-        
-        // processImages
-        // processLinkRecord
-        // processIdentifierRecords 
-        // 
-        
-        processed.assertions = assertions.toArray
-
-        //store the occurrence
-        OccurrenceDAO.updateOccurrence(guid, processed, Processed)
+    	processRecord(raw)
         
         //debug counter
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
-          println(counter + " >> Last key : " + raw.o.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          logger.debug(counter + " >> Last key : " + raw.o.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
         }
       }
     })
     Pelops.shutdown
+  }
+  
+  /**
+   * Process a record, adding metadata and records quality assertions
+   */
+  def processRecord(raw:FullRecord){
+	val guid = raw.o.uuid
+	var processed = raw.clone
+	var assertions = new ArrayBuffer[QualityAssertion]
+	
+    //find a classification in NSLs
+    assertions ++ processClassification(guid, raw, processed)
+
+    //perform gazetteer lookups - just using point hash for now
+    assertions ++ processLocation(guid, raw, processed)
+
+    //temporal processing
+    assertions ++ processEvent(guid, raw, processed)
+
+    //basis of record parsing
+    assertions ++ processBasisOfRecord(guid, raw, processed)
+
+    //type status normalisation
+    assertions ++ processTypeStatus(guid, raw, processed)
+
+    //process the attribution - call out to the Collectory...
+    assertions ++ processAttribution(guid, raw, processed)
+
+    //perform SDS lookups - retrieve from BIE for now....
+    
+    // processImages
+    // processLinkRecord
+    // processIdentifierRecords 
+    // 
+    
+    processed.assertions = assertions.toArray
+
+    //store the occurrence
+    OccurrenceDAO.updateOccurrence(guid, processed, Processed)
   }
 
   /**
@@ -277,7 +288,7 @@ object ProcessRecords {
       val term = BasisOfRecord.matchTerm(raw.o.basisOfRecord)
       if (term.isEmpty) {
         //add a quality assertion
-        println("[QualityAssertion] " + guid + ", unrecognised BoR: " + guid + ", BoR:" + raw.o.basisOfRecord)
+        logger.debug("[QualityAssertion] " + guid + ", unrecognised BoR: " + guid + ", BoR:" + raw.o.basisOfRecord)
         Array(QualityAssertion(AssertionCodes.OTHER_MISSING_BASIS_OF_RECORD,false,"Unrecognised basis of record"))
 //        Array(QualityAssertion(OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.OTHER_UNRECOGNISED_TYPESTATUS)))
       } else {
@@ -319,7 +330,7 @@ object ProcessRecords {
           val stateTerm = States.matchTerm(raw.l.stateProvince)
 
           if (!stateTerm.isEmpty && !processed.l.stateProvince.equalsIgnoreCase(stateTerm.get.canonical)) {
-            println("[QualityAssertion] " + guid + ", processed:" + processed.l.stateProvince + ", raw:" + raw.l.stateProvince)
+            logger.debug("[QualityAssertion] " + guid + ", processed:" + processed.l.stateProvince + ", raw:" + raw.l.stateProvince)
             //add a quality assertion
             val comment = "Supplied: " + stateTerm.get.canonical + ", calculated: " + processed.l.stateProvince
             assertions + QualityAssertion(AssertionCodes.GEOSPATIAL_STATE_COORDINATE_MISMATCH,false,comment)
@@ -342,7 +353,7 @@ object ProcessRecords {
         		if(!validHabitat.isEmpty){
         			if(!validHabitat.get){
         				if(habitatsAsString != "???"){ //HACK FOR BAD DATA
-	        				println("[QualityAssertion] ******** Habitats incompatible for UUID: " + guid + ", processed:" + processed.l.habitat + ", retrieved:" + habitatsAsString
+	        				logger.debug("[QualityAssertion] ******** Habitats incompatible for UUID: " + guid + ", processed:" + processed.l.habitat + ", retrieved:" + habitatsAsString
 	        						+ ", http://maps.google.com/?ll="+processed.l.decimalLatitude+","+processed.l.decimalLongitude)
 	        				val comment = "Recognised habitats for species: " + habitatsAsString+", Value determined from coordinates: "+habitatFromPoint
 	        				assertions + QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH,false,comment)
@@ -377,7 +388,7 @@ object ProcessRecords {
       raw.c.subspecies,
       raw.c.infraspecificEpithet,
       raw.c.scientificName)
-    //println("Record: "+occ.uuid+", classification for Kingdom: "+occ.kingdom+", Family:"+  occ.family +", Genus:"+  occ.genus +", Species: " +occ.species+", Epithet: " +occ.specificEpithet)
+    //logger.debug("Record: "+occ.uuid+", classification for Kingdom: "+occ.kingdom+", Family:"+  occ.family +", Genus:"+  occ.genus +", Species: " +occ.species+", Epithet: " +occ.specificEpithet)
     try {
       val nsr = DAO.nameIndex.searchForRecord(classification, true)
       //store the matched classification
@@ -396,7 +407,7 @@ object ProcessRecords {
         processed.c.taxonConceptID = nsr.getLsid
         Array()
       } else {
-        println("[QualityAssertion] No match for record, classification for Kingdom: " + raw.c.kingdom + ", Family:" + raw.c.family + ", Genus:" + raw.c.genus + ", Species: " + raw.c.species 
+        logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " + raw.c.kingdom + ", Family:" + raw.c.family + ", Genus:" + raw.c.genus + ", Species: " + raw.c.species 
         		+ ", Epithet: " + raw.c.specificEpithet)
         Array(QualityAssertion(AssertionCodes.TAXONOMIC_NAME_NOTRECOGNISED, false, "Name not recognised"))
       }
