@@ -30,6 +30,7 @@ import au.org.ala.biocache.FullRecord
 import java.util.GregorianCalendar
 import scala.collection.mutable.ArrayBuffer
 import au.org.ala.checklist.lucene.SearchResultException
+import au.org.ala.biocache.DateParser
 /**
  * 1. Classification matching
  * 	- include a flag to indicate record hasnt been matched to NSLs
@@ -211,59 +212,27 @@ object ProcessRecords {
 
     //deal with event date
     if (date.isEmpty && raw.e.eventDate != null && !raw.e.eventDate.isEmpty) {
-      //TODO handle these formats
-    	//	"1963-03-08T14:07-0600" is 8 Mar 1963 2:07pm in the time zone six hours earlier than UTC, 
-    	//	"2009-02-20T08:40Z" is 20 Feb 2009 8:40am UTC, "1809-02-12" is 12 Feb 1809, 
-    	//	"1906-06" is Jun 1906, "1971" is just that year, 
-    	//	"2007-03-01T13:00:00Z/2008-05-11T15:30:00Z" is the interval between 1 Mar 2007 1pm UTC and 
-    	//	11 May 2008 3:30pm UTC, "2007-11-13/15" is the interval between 13 Nov 2007 and 15 Nov 2007
-      try {
-        val eventDateParsed = DateUtils.parseDate(raw.e.eventDate,
-          Array("yyyy-MM-dd", "yyyy-MM-dd'T'hh:mm:ss'Z'", "yyyy-MM-dd'T'hh:mm'Z'"))
-        date = Some(eventDateParsed)
-        processed.e.eventDate = DateFormatUtils.format(eventDateParsed, "yyyy-MM-dd")
-        processed.e.day = DateFormatUtils.format(eventDateParsed, "dd")
-        processed.e.month = DateFormatUtils.format(eventDateParsed, "MM")
-        processed.e.year = DateFormatUtils.format(eventDateParsed, "yyyy")
-      } catch {
-        case e: Exception => {
-          invalidDate = true
-          comment = "Invalid eventDate"
-        }
-      }
-      
-      if (date.isEmpty && raw.e.eventDate != null && !raw.e.eventDate.isEmpty) {
-	      try {
-	        val eventDate = raw.e.eventDate.split("/").first
-	        val eventDateParsed = DateUtils.parseDate(eventDate,
-	          Array("yyyy-MM", "yyyy-MM-"))
-//	        println(raw.e.eventDate)
-	        processed.e.month = DateFormatUtils.format(eventDateParsed, "MM")
-	        processed.e.year = DateFormatUtils.format(eventDateParsed, "yyyy")
-//	        println("year: "+ processed.e.year)
-	      } catch {
-	        case e: Exception => {
-	          comment = "Unable to parse event date"
-	        }
-	      }
-      }
+    	
+    	val parsedDate = DateParser.parseDate(raw.e.eventDate)
+    	if(!parsedDate.isEmpty){
+    		//set processed values
+	        processed.e.eventDate = parsedDate.get.startDate
+	        processed.e.day = parsedDate.get.startDay
+	        processed.e.month = parsedDate.get.startMonth
+	        processed.e.year = parsedDate.get.startYear
+    	}
     }
 
     //deal with verbatim date
     if (date.isEmpty && raw.e.verbatimEventDate != null && !raw.e.verbatimEventDate.isEmpty) {
-      try {
-        val eventDate = raw.e.verbatimEventDate.split("/").first
-        val eventDateParsed = DateUtils.parseDate(eventDate,
-          Array("yyyy-MM-dd", "yyyy-MM-ddThh:mm-ss", "yyyy-MM-ddThh:mmZ"))
-        processed.e.eventDate = DateFormatUtils.format(eventDateParsed, "yyyy-MM-dd")
-        processed.e.day = DateFormatUtils.format(eventDateParsed, "dd")
-        processed.e.month = DateFormatUtils.format(eventDateParsed, "MM")
-        processed.e.year = DateFormatUtils.format(eventDateParsed, "yyyy")
-      } catch {
-        case e: Exception => {
-          comment = "Unable to parse verbatim date"
-        }
-      }
+    	val parsedDate = DateParser.parseDate(raw.e.verbatimEventDate)
+    	if(!parsedDate.isEmpty){
+    		//set processed values
+	        processed.e.eventDate = parsedDate.get.startDate
+	        processed.e.day = parsedDate.get.startDay
+	        processed.e.month = parsedDate.get.startMonth
+	        processed.e.year = parsedDate.get.startYear
+    	}
     }
     
     //if invalid date, add assertion
