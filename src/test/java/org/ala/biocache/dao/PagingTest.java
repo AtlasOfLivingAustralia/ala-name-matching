@@ -20,4 +20,19 @@ public class PagingTest extends TestCase {
 			}
 		});
 	}
+	
+	public void testDownload(){
+		
+		String[] uuids = new String[]{
+				"0000b9e7-65b4-4335-b012-60cdb13a91fb",
+				"0000eb51-ea32-4693-a0ce-f9dbf025d212",
+				"0001b51b-32d7-48a8-9f67-3563cba731f3"};
+		
+		System.out.println("Raw values");
+		OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids,  new String[]{"uuid","scientificName", "eventDate"}, Versions.RAW());
+		
+		System.out.println("Processed values");
+		OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids,  new String[]{"uuid","scientificName", "eventDate"}, Versions.PROCESSED());
+
+	}
 }
