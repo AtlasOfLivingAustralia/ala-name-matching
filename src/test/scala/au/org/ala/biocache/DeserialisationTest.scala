@@ -11,7 +11,7 @@ import org.apache.thrift.transport._
 //import org.codehaus.jackson.map.{ObjectMapper, DeserializationConfig}
 import scala.reflect._
 
-object ArrayTest {
+object DeserialisationTest {
 
 	def main(args : Array[String]) : Unit = {
 		

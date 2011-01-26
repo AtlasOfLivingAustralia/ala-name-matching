@@ -69,6 +69,20 @@ object States extends Vocab {
   val all = retrieveAll
 }
 
+object StateCentrePoints {
+	val map = Map(
+		"ACT" -> (-35.4734679, 149.0123679),
+		"NSW" -> (-31.2532183, 146.921099),
+		"NT" -> (-19.4914108, 132.5509603),
+		"QLD" -> (-20.9175738, 142.7027956),
+		"SA" -> (-30.0002315, 136.2091547),
+		"TAS" -> (-41.3650419, 146.6284905),
+		"VIC" -> (-37.4713077, 144.7851531),
+		"WA" -> (-27.6728168, 121.6283098)
+	)
+}
+
+
 object BasisOfRecord extends Vocab {
   val specimen = new Term("PreservedSpecimen", Array("specimen","s", "spec", "sp"))
   val observation = new Term("HumanObservation", Array("observation","o","obs"))
@@ -84,7 +98,7 @@ object TypeStatus extends Vocab {
   val cotype = new Term("cotype", Array[String]())
   val epitype = new Term("epitype", Array[String]())
   val exepitype = new Term("exepitype", Array[String]())
-  val exholotype = new Term("exholotype", Array[String]())
+  val exholotype = new Term("exholotype", Array("ex holotype"))
   val exisotype = new Term("exisotype", Array[String]())
   val exlectotype = new Term("exlectotype", Array[String]())
   val exneotype = new Term("exneotype", Array[String]())
@@ -92,15 +106,15 @@ object TypeStatus extends Vocab {
   val exsyntype = new Term("exsyntype", Array[String]())
   val extype = new Term("extype", Array[String]())
   val hapantotype = new Term("hapantotype", Array[String]())
-  val holotype = new Term("holotype", Array[String]())
+  val holotype = new Term("holotype", Array("holo type"))
   val iconotype = new Term("iconotype", Array[String]())
   val isolectotype = new Term("isolectotype", Array[String]())
   val isoneotype = new Term("isoneotype", Array[String]())
   val isosyntype = new Term("isosyntype", Array[String]())
-  val isotype = new Term("isotype", Array[String]())
+  val isotype = new Term("isotype", Array[String]("iso type"))
   val lectotype = new Term("lectotype", Array[String]())
-  val neotype = new Term("neotype", Array[String]())
-  val notatype = new Term("notatype", Array[String]())
+  val neotype = new Term("neotype", Array[String]("neo type"))
+  val notatype = new Term("notatype", Array("not a type"))  //should this be removed??
   val paralectotype = new Term("paralectotype", Array[String]())
   val paraneotype = new Term("paraneotype", Array[String]())
   val paratype = new Term("paratype", Array[String]())
@@ -212,10 +226,13 @@ object AssertionCodes {
   val TAXONOMIC_UNKNOWN_KINGDOM = ErrorCode("qaUnknownKingdom",1002)
   val TAXONOMIC_AMBIGUOUS_NAME = ErrorCode("qaAmbiguousName",1003)
   val TAXONOMIC_NAME_NOTRECOGNISED = ErrorCode("qaNameNotRecognised",1004)
+  val TAXONOMIC_HOMONYM_ISSUE = ErrorCode("qaHomonymIssue",1005)
+  
 
   val OTHER_MISSING_BASIS_OF_RECORD = ErrorCode("qaMissingBasisOfRecord",2001)
   val OTHER_BADLY_FORMED_BASIS_OF_RECORD = ErrorCode("qaBadlyFormedBasisOfRecord",2002)
   val OTHER_INVALID_DATE = ErrorCode("qaInvalidDate",2003)
   val OTHER_COUNTRY_INFERRED_FROM_COORDINATES = ErrorCode("qaCountryInferredByCoordinates",2004)
   val OTHER_UNRECOGNISED_TYPESTATUS = ErrorCode("qaUnrecognisedTypeStatus",2006)
-}
+  val OTHER_UNRECOGNISED_COLLECTIONCODE = ErrorCode("qaUnrecognisedCollectionCode",2007)
+} 

@@ -1,7 +1,8 @@
 package au.org.ala.biocache
 /**
  * These classes represent caches of data sourced from other components
- * maintained within the biocache for performance reasons.
+ * maintained within the biocache for performance reasons. These
+ * components
  */
 import au.org.ala.checklist.lucene.CBIndexSearch
 import com.google.gson.reflect.TypeToken
@@ -14,11 +15,19 @@ import java.util.ArrayList
 import org.wyki.cassandra.pelops.Policy
 
 /**
+ * A DAO for accessing taxon profile information by GUID.
+ * 
+ * This should provide an abstraction layer, that (eventually) handles
+ * "timeToLive" style functionality that invalidates values in the cache
+ * and retrieves the latest values.
  */
 object TaxonProfileDAO {
 	
 	val columnFamily = "taxon"
 	
+	/**
+	 * Retrieve the profile by the taxon concept's GUID
+	 */
 	def getByGuid(guid:String) : Option[TaxonProfile] = {
 		
 		if(guid==null || guid.isEmpty) return None
@@ -53,6 +62,9 @@ object TaxonProfileDAO {
         }
 	}
 	
+	/**
+	 * Persist the taxon profile.
+	 */
 	def add(taxonProfile:TaxonProfile) {
 	    val mutator = Pelops.createMutator(DAO.poolName, DAO.keyspace)
 	    mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("guid", taxonProfile.guid))
@@ -75,6 +87,9 @@ object AttributionDAO {
   import ReflectBean._
   val columnFamily = "attr"
 
+  /**
+   * Persist the attribution information.
+   */
   def add(institutionCode:String, collectionCode:String, attribution:Attribution){
     val guid = institutionCode.toUpperCase +"|"+collectionCode.toUpperCase
       val mutator = Pelops.createMutator(DAO.poolName, DAO.keyspace)
@@ -88,6 +103,9 @@ object AttributionDAO {
     mutator.execute(ConsistencyLevel.ONE)
   }
 
+  /**
+   * Retrieve attribution via institution/collection codes.
+   */
   def getByCodes(institutionCode:String, collectionCode:String) : Option[Attribution] = {
     try {
       if(institutionCode!=null && collectionCode!=null){
@@ -121,6 +139,9 @@ object LocationDAO {
 
   val columnFamily = "loc"
 
+  /**
+   * Add a tag to a location
+   */
   def addTagToLocation (latitude:Float, longitude:Float, tagName:String, tagValue:String) {
     val guid = latitude +"|"+longitude
     val mutator = Pelops.createMutator(DAO.poolName, DAO.keyspace)
@@ -130,6 +151,7 @@ object LocationDAO {
     mutator.execute(ConsistencyLevel.ONE)
   }
 
+  
   def addRegionToPoint (latitude:Float, longitude:Float, mapping:Map[String,String]) {
     val guid = latitude +"|"+longitude
     val mutator = Pelops.createMutator(DAO.poolName, DAO.keyspace)

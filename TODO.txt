@@ -1,0 +1,13 @@
+ ======================
+ = biocache-store API =
+======================
+
+TODO
+
+1. Remove the use of scala enumerations (Version)
+
+2. Add QualityAssertions to FullRecord. 
+
+3. Paging by data resource
+
+4. Split out image records into separate objects.

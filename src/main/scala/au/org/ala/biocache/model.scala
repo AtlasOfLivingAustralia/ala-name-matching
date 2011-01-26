@@ -251,11 +251,12 @@ class Attribution extends Cloneable {
  * TODO add quality assertions.....
  */
 class FullRecord (@BeanProperty var o:Occurrence, @BeanProperty var c:Classification,
-		@BeanProperty var l:Location,@BeanProperty var e:Event) extends Cloneable {
+		@BeanProperty var l:Location,@BeanProperty var e:Event, @BeanProperty 
+		var assertions:Array[QualityAssertion]) extends Cloneable {
+
+  def this() = this(new Occurrence,new Classification,new Location,new Event, Array())
   
-  def this() = this(null,null,null,null)
-  
-  override def clone : FullRecord = new FullRecord(o.clone, c.clone,l.clone,e.clone)
+  override def clone : FullRecord = new FullRecord(o.clone,c.clone,l.clone,e.clone,assertions.clone)
 }
 
 /**
@@ -265,12 +266,14 @@ class FullRecord (@BeanProperty var o:Occurrence, @BeanProperty var c:Classifica
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */
-class QualityAssertion (@BeanProperty var uuid:String,@BeanProperty var assertionCode:Int, 
-	@BeanProperty var positive:Boolean,@BeanProperty var comment:String,
-	@BeanProperty var userId:String,@BeanProperty var userDisplayName:String){
+class QualityAssertion (@BeanProperty var uuid:String,@BeanProperty var assertionName:String,
+	@BeanProperty var assertionCode:Int,@BeanProperty var positive:Boolean,
+	@BeanProperty var comment:String,@BeanProperty var userId:String,
+	@BeanProperty var userDisplayName:String) 
+	extends Cloneable{
 	
-	def this() = this(null,-1,false,null,null,null)
-	
+	def this() = this(null,null,-1,false,null,null,null)
+	override def clone : QualityAssertion = super.clone.asInstanceOf[QualityAssertion]
 	override def equals(that: Any) = that match { 
 	    case other: QualityAssertion => {
 	    	(other.assertionCode == assertionCode) && (other.positive == positive) && (other.userId == userId)
@@ -287,10 +290,10 @@ class QualityAssertion (@BeanProperty var uuid:String,@BeanProperty var assertio
 object QualityAssertion {
 	def apply(errorCode:ErrorCode,positive:Boolean,comment:String) = {
 		val uuid = UUID.randomUUID.toString
-		new QualityAssertion(uuid,errorCode.code,positive,comment,null,null)
+		new QualityAssertion(uuid,errorCode.name,errorCode.code,positive,comment,null,null)
 	}
 	def apply(assertionCode:Int,positive:Boolean,comment:String) = {
 		val uuid = UUID.randomUUID.toString
-		new QualityAssertion(uuid,assertionCode,positive,comment,null,null)
+		new QualityAssertion(uuid,null,assertionCode,positive,comment,null,null)
 	}
 }
