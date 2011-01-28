@@ -32,9 +32,9 @@ object DAO {
   val eventDefn = fileToArray("/Event.txt")
   val classificationDefn = fileToArray("/Classification.txt")
   val identificationDefn = fileToArray("/Identification.txt")
-  
+
   def fileToArray(filePath:String) : Array[String] = {
-	  scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map(_.trim).toArray
+    scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map(_.trim).toArray
   }
 }
 
@@ -56,7 +56,7 @@ object OccurrenceDAO {
   import JavaConversions._
 
   val columnFamily = "occ"
-	  
+
   /**
    * Get an occurrence with UUID
    *
@@ -70,9 +70,9 @@ object OccurrenceDAO {
   def getByUuidJ(uuid:String) : FullRecord = {
     val record = getByUuid(uuid, Raw)
     if(record.isEmpty){
-    	null
+      null
     } else {
-    	record.get
+      record.get
     }
   }  
   /**
@@ -149,7 +149,7 @@ object OccurrenceDAO {
         setProperty(occurrence, classification, location, event, fieldName, fieldValue)
       }
     }
-    
+
     //TODO retrieve assertions
     Some(new FullRecord(occurrence, classification, location, event, Array()))
   }
@@ -158,54 +158,54 @@ object OccurrenceDAO {
    * Iterate over records, passing the records to the supplied consumer.
    */
   def pageOverAll(occurrenceType:Version, consumer:OccurrenceConsumer) {
-	  pageOverAll(occurrenceType, fullRecord => consumer.consume(fullRecord.get))
+    pageOverAll(occurrenceType, fullRecord => consumer.consume(fullRecord.get))
   }
-  
+
   /**
    * Write to stream...
    */
   def writeToStream(outputStream:OutputStream,fieldDelimiter:String,recordDelimiter:String,uuids:Array[String],fields:Array[String],version:Version) {
-	  selectRows(uuids,fields,version, { fieldMap =>
-	   
-	   	for(field<-fields){
-	   		
-	   		val fieldValue = fieldMap.get(field)
-	   		if(fieldValue.isEmpty){
-	   			outputStream.write("".getBytes)
-	   		} else {
-	   			outputStream.write(fieldValue.get.getBytes)
-	   		}
-	   		outputStream.write(fieldDelimiter.getBytes)
-	   	}
-	   	outputStream.write(recordDelimiter.getBytes)
-	   })
+    selectRows(uuids,fields,version, { fieldMap =>
+
+      for(field<-fields){
+
+        val fieldValue = fieldMap.get(field)
+        if(fieldValue.isEmpty){
+          outputStream.write("".getBytes)
+        } else {
+          outputStream.write(fieldValue.get.getBytes)
+        }
+        outputStream.write(fieldDelimiter.getBytes)
+      }
+      outputStream.write(recordDelimiter.getBytes)
+     })
   }
 
   /**
    * Select fields from rows...
    */
   def selectRows(uuids:Array[String],fields:Array[String],version:Version, proc:((Map[String,String])=>Unit)) {
-	  val selector = Pelops.createSelector(DAO.poolName, columnFamily)
-	  var slicePredicate = new SlicePredicate
-	  slicePredicate.setColumn_names(fields.toList.map(_.getBytes))
-	  
-	  //retrieve the columns
-	  var columnMap = selector.getColumnsFromRows(uuids.toList, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-	  
-	  //write them out to the output stream
-	  val keys = List(columnMap.keySet.toArray : _*)
-	  
+    val selector = Pelops.createSelector(DAO.poolName, columnFamily)
+    var slicePredicate = new SlicePredicate
+    slicePredicate.setColumn_names(fields.toList.map(_.getBytes))
+
+    //retrieve the columns
+    var columnMap = selector.getColumnsFromRows(uuids.toList, columnFamily, slicePredicate, ConsistencyLevel.ONE)
+
+    //write them out to the output stream
+    val keys = List(columnMap.keySet.toArray : _*)
+
       for(key<-keys){
         val columnsList = columnMap.get(key)
         val fieldValues = columnsList.map(column => (new String(column.name),new String(column.value))).toArray
         val map = scala.collection.mutable.Map.empty[String,String]
         for(fieldValue <-fieldValues){
-        	map(fieldValue._1) = fieldValue._2
+          map(fieldValue._1) = fieldValue._2
         }
         proc(map.toMap)
       }
   }
-  
+
   /**
    * Iterate over all occurrences, passing the objects to a function.
    *
@@ -246,44 +246,44 @@ object OccurrenceDAO {
 //	OccurrenceDAO.updateOccurrence(guid, fullRecord.c, version)
 //	OccurrenceDAO.updateOccurrence(guid, fullRecord.l, version)
 //	OccurrenceDAO.updateOccurrence(guid, fullRecord.e, version)
-	  
+
     //select the correct definition file
 
-    
+
     //additional functionality to support adding Quality Assertions and Field corrections.
     val mutator = Pelops.createMutator(DAO.poolName, columnFamily)
     //for each field in the definition, check if there is a value to write
     for(anObject <- Array(fullRecord.o,fullRecord.c,fullRecord.e,fullRecord.l)){
-	    val defn = { anObject match {
-	    	case l:Location => DAO.locationDefn
-	    	case o:Occurrence => DAO.occurrenceDefn
-	    	case e:Event => DAO.eventDefn
-	    	case c:Classification => DAO.classificationDefn
-	    	case a:Attribution => DAO.attributionDefn
-	      }
-	    }
-	    for(field <- defn){
-	      val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
-	      if(fieldValue!=null && !fieldValue.isEmpty){
-	        var fieldName = field
-	        if(version == Processed){
-	          fieldName = fieldName +".p"
-	        }
-	        if(version == Consensus){
-	          fieldName = fieldName +".c"
-	        }
-	        mutator.writeColumn(guid, columnFamily, mutator.newColumn(fieldName, fieldValue))
-	      }
-	    }
-	}
-    
+      val defn = { anObject match {
+        case l:Location => DAO.locationDefn
+        case o:Occurrence => DAO.occurrenceDefn
+        case e:Event => DAO.eventDefn
+        case c:Classification => DAO.classificationDefn
+        case a:Attribution => DAO.attributionDefn
+        }
+      }
+      for(field <- defn){
+        val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
+        if(fieldValue!=null && !fieldValue.isEmpty){
+          var fieldName = field
+          if(version == Processed){
+            fieldName = fieldName +".p"
+          }
+          if(version == Consensus){
+            fieldName = fieldName +".c"
+          }
+          mutator.writeColumn(guid, columnFamily, mutator.newColumn(fieldName, fieldValue))
+        }
+      }
+  }
+
     for(qa<-fullRecord.assertions){
-    	mutator.writeColumn(guid, columnFamily, mutator.newColumn(qa.assertionName, "true"))
+      mutator.writeColumn(guid, columnFamily, mutator.newColumn(qa.assertionName, "true"))
     }
-    
+
     mutator.execute(ConsistencyLevel.ONE)
   }
-  
+
   /**
    * Update an occurrence
    *
@@ -295,14 +295,14 @@ object OccurrenceDAO {
 
     //select the correct definition file
     val defn = { anObject match {
-    	case l:Location => DAO.locationDefn
-    	case o:Occurrence => DAO.occurrenceDefn
-    	case e:Event => DAO.eventDefn
-    	case c:Classification => DAO.classificationDefn
-    	case a:Attribution => DAO.attributionDefn
+      case l:Location => DAO.locationDefn
+      case o:Occurrence => DAO.occurrenceDefn
+      case e:Event => DAO.eventDefn
+      case c:Classification => DAO.classificationDefn
+      case a:Attribution => DAO.attributionDefn
       }
     }
-    
+
     //additional functionality to support adding Quality Assertions and Field corrections.
     val mutator = Pelops.createMutator(DAO.poolName, columnFamily)
     //for each field in the definition, check if there is a value to write
@@ -319,7 +319,7 @@ object OccurrenceDAO {
         mutator.writeColumn(uuid, columnFamily, mutator.newColumn(fieldName, fieldValue))
       }
     }
-    
+
     mutator.execute(ConsistencyLevel.ONE)
   }
 
@@ -376,7 +376,7 @@ object OccurrenceDAO {
 
   def getQualityAssertions(uuid:String): List[QualityAssertion] = {
 //	new ArrayList[QualityAssertion]
-	  List()
+    List()
   }
 
 

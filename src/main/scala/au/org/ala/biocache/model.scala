@@ -214,23 +214,23 @@ case object Processed extends Version
 case object Consensus extends Version
 
 object Versions {
-	val RAW = Raw
-	val PROCESSED = Processed
-	val CONSENSUS = Consensus
+  val RAW = Raw
+  val PROCESSED = Processed
+  val CONSENSUS = Consensus
 }
 
 /**
  * Represents a cached profile within system.
  */
 class TaxonProfile (
-	@BeanProperty var guid:String, 
-	@BeanProperty var scientificName:String, 
-	@BeanProperty var commonName:String,
-	@BeanProperty var rankString:String,
-	@BeanProperty var habitats:Array[String],
-	@BeanProperty var left:String,
-	@BeanProperty var right:String)
-	extends Cloneable {
+  @BeanProperty var guid:String,
+  @BeanProperty var scientificName:String,
+  @BeanProperty var commonName:String,
+  @BeanProperty var rankString:String,
+  @BeanProperty var habitats:Array[String],
+  @BeanProperty var left:String,
+  @BeanProperty var right:String)
+  extends Cloneable {
   def this() = this(null,null,null,null,null,null,null)
   override def clone : TaxonProfile = super.clone.asInstanceOf[TaxonProfile]
 }
@@ -251,11 +251,11 @@ class Attribution extends Cloneable {
  * TODO add quality assertions.....
  */
 class FullRecord (@BeanProperty var o:Occurrence, @BeanProperty var c:Classification,
-		@BeanProperty var l:Location,@BeanProperty var e:Event, @BeanProperty 
-		var assertions:Array[QualityAssertion]) extends Cloneable {
+    @BeanProperty var l:Location,@BeanProperty var e:Event, @BeanProperty
+    var assertions:Array[QualityAssertion]) extends Cloneable {
 
   def this() = this(new Occurrence,new Classification,new Location,new Event, Array())
-  
+
   override def clone : FullRecord = new FullRecord(o.clone,c.clone,l.clone,e.clone,assertions.clone)
 }
 
@@ -267,19 +267,19 @@ class FullRecord (@BeanProperty var o:Occurrence, @BeanProperty var c:Classifica
  * @author Dave Martin (David.Martin@csiro.au)
  */
 class QualityAssertion (@BeanProperty var uuid:String,@BeanProperty var assertionName:String,
-	@BeanProperty var assertionCode:Int,@BeanProperty var positive:Boolean,
-	@BeanProperty var comment:String,@BeanProperty var userId:String,
-	@BeanProperty var userDisplayName:String) 
-	extends Cloneable{
-	
-	def this() = this(null,null,-1,false,null,null,null)
-	override def clone : QualityAssertion = super.clone.asInstanceOf[QualityAssertion]
-	override def equals(that: Any) = that match { 
-	    case other: QualityAssertion => {
-	    	(other.assertionCode == assertionCode) && (other.positive == positive) && (other.userId == userId)
-	    }
-	    case _ => false 
-	}
+  @BeanProperty var assertionCode:Int,@BeanProperty var positive:Boolean,
+  @BeanProperty var comment:String,@BeanProperty var userId:String,
+  @BeanProperty var userDisplayName:String)
+  extends Cloneable{
+
+  def this() = this(null,null,-1,false,null,null,null)
+  override def clone : QualityAssertion = super.clone.asInstanceOf[QualityAssertion]
+  override def equals(that: Any) = that match {
+      case other: QualityAssertion => {
+        (other.assertionCode == assertionCode) && (other.positive == positive) && (other.userId == userId)
+      }
+      case _ => false
+  }
 }
 
 /**
@@ -288,12 +288,12 @@ class QualityAssertion (@BeanProperty var uuid:String,@BeanProperty var assertio
  * @author Dave Martin (David.Martin@csiro.au)
  */
 object QualityAssertion {
-	def apply(errorCode:ErrorCode,positive:Boolean,comment:String) = {
-		val uuid = UUID.randomUUID.toString
-		new QualityAssertion(uuid,errorCode.name,errorCode.code,positive,comment,null,null)
-	}
-	def apply(assertionCode:Int,positive:Boolean,comment:String) = {
-		val uuid = UUID.randomUUID.toString
-		new QualityAssertion(uuid,null,assertionCode,positive,comment,null,null)
-	}
+  def apply(errorCode:ErrorCode,positive:Boolean,comment:String) = {
+    val uuid = UUID.randomUUID.toString
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,positive,comment,null,null)
+  }
+  def apply(assertionCode:Int,positive:Boolean,comment:String) = {
+    val uuid = UUID.randomUUID.toString
+    new QualityAssertion(uuid,null,assertionCode,positive,comment,null,null)
+  }
 }

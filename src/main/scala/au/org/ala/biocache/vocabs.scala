@@ -70,16 +70,16 @@ object States extends Vocab {
 }
 
 object StateCentrePoints {
-	val map = Map(
-		"ACT" -> (-35.4734679, 149.0123679),
-		"NSW" -> (-31.2532183, 146.921099),
-		"NT" -> (-19.4914108, 132.5509603),
-		"QLD" -> (-20.9175738, 142.7027956),
-		"SA" -> (-30.0002315, 136.2091547),
-		"TAS" -> (-41.3650419, 146.6284905),
-		"VIC" -> (-37.4713077, 144.7851531),
-		"WA" -> (-27.6728168, 121.6283098)
-	)
+  val map = Map(
+    "ACT" -> (-35.4734679, 149.0123679),
+    "NSW" -> (-31.2532183, 146.921099),
+    "NT" -> (-19.4914108, 132.5509603),
+    "QLD" -> (-20.9175738, 142.7027956),
+    "SA" -> (-30.0002315, 136.2091547),
+    "TAS" -> (-41.3650419, 146.6284905),
+    "VIC" -> (-37.4713077, 144.7851531),
+    "WA" -> (-27.6728168, 121.6283098)
+  )
 }
 
 
@@ -134,69 +134,69 @@ object TypeStatus extends Vocab {
 }
 
 trait VocabMaps {
-	val termMap:Map[String, Array[String]]
-	
-	/**
-	 * Compares the supplied term to an array of options
-	 * for compatibility.
-	 * 
-	 * @param term
-	 * @param terms
-	 * @return
-	 */
-	def areTermsCompatible(term:String, terms:Array[String]) : Option[Boolean] = {
-		var weTested:Option[Boolean] = None
-		for(matchingTerm<-terms){
-			val matches = isCompatible(term, matchingTerm)
-			if(!matches.isEmpty){
-				//term is recognised
-				if(matches.get){
-					//it matches
-					return Some(true)
-				} else {
-					weTested = Some(false)
-				}
-			}
-		}
-		weTested
-	}
-	
-	/**
-	 * Returns None if the term wasnt recognised.
-	 * If it was recognised, then we can test it.
-	 * 
-	 * @param term1
-	 * @param term2
-	 * @return
-	 */
-	def isCompatible (term1:String, term2:String) : Option[Boolean] = {
-		if(term1!=null && term2!=null){
-			if(term1.toUpperCase == term2.toUpperCase){
-				//same term, return true
-				Some(true)
-			} else {
-				val mapped = termMap.get(term1.toUpperCase)
-				if(mapped.isEmpty){
-					// if the term isnt mapped, return no decision
-					None
-				} else {
-					//it is mapped, so return if its compatible
-					Some(mapped.get.contains(term2.toUpperCase))
-				}
-			}
-		} else {
-			None
-		}
-	}
+  val termMap:Map[String, Array[String]]
+
+  /**
+   * Compares the supplied term to an array of options
+   * for compatibility.
+   *
+   * @param term
+   * @param terms
+   * @return
+   */
+  def areTermsCompatible(term:String, terms:Array[String]) : Option[Boolean] = {
+    var weTested:Option[Boolean] = None
+    for(matchingTerm<-terms){
+      val matches = isCompatible(term, matchingTerm)
+      if(!matches.isEmpty){
+        //term is recognised
+        if(matches.get){
+          //it matches
+          return Some(true)
+        } else {
+          weTested = Some(false)
+        }
+      }
+    }
+    weTested
+  }
+
+  /**
+   * Returns None if the term wasnt recognised.
+   * If it was recognised, then we can test it.
+   *
+   * @param term1
+   * @param term2
+   * @return
+   */
+  def isCompatible (term1:String, term2:String) : Option[Boolean] = {
+    if(term1!=null && term2!=null){
+      if(term1.toUpperCase == term2.toUpperCase){
+        //same term, return true
+        Some(true)
+      } else {
+        val mapped = termMap.get(term1.toUpperCase)
+        if(mapped.isEmpty){
+          // if the term isnt mapped, return no decision
+          None
+        } else {
+          //it is mapped, so return if its compatible
+          Some(mapped.get.contains(term2.toUpperCase))
+        }
+      }
+    } else {
+      None
+    }
+  }
 }
 
 object HabitatMap extends VocabMaps {
-	val termMap = Map(
-		"MARINE" -> Array("MARINE"),
-		"NON-MARINE" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC"),
-		"TERRESTRIAL" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC"),
-		"LIMNETIC" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC")
-	)
+  val termMap = Map(
+    "MARINE" -> Array("MARINE"),
+    "NON-MARINE" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC"),
+    "TERRESTRIAL" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC"),
+    "LIMNETIC" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC")
+  )
 }
 
 object AssertionCodes {
@@ -227,7 +227,7 @@ object AssertionCodes {
   val TAXONOMIC_AMBIGUOUS_NAME = ErrorCode("qaAmbiguousName",1003)
   val TAXONOMIC_NAME_NOTRECOGNISED = ErrorCode("qaNameNotRecognised",1004)
   val TAXONOMIC_HOMONYM_ISSUE = ErrorCode("qaHomonymIssue",1005)
-  
+
 
   val OTHER_MISSING_BASIS_OF_RECORD = ErrorCode("qaMissingBasisOfRecord",2001)
   val OTHER_BADLY_FORMED_BASIS_OF_RECORD = ErrorCode("qaBadlyFormedBasisOfRecord",2002)

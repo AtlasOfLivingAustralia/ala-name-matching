@@ -22,61 +22,61 @@ import org.wyki.cassandra.pelops.Policy
  * and retrieves the latest values.
  */
 object TaxonProfileDAO {
-	
-	val columnFamily = "taxon"
-	
-	/**
-	 * Retrieve the profile by the taxon concept's GUID
-	 */
-	def getByGuid(guid:String) : Option[TaxonProfile] = {
-		
-		if(guid==null || guid.isEmpty) return None
-		
+
+  val columnFamily = "taxon"
+
+  /**
+   * Retrieve the profile by the taxon concept's GUID
+   */
+  def getByGuid(guid:String) : Option[TaxonProfile] = {
+
+    if(guid==null || guid.isEmpty) return None
+
         val selector = Pelops.createSelector(DAO.poolName, DAO.keyspace)
         val slicePredicate = Selector.newColumnsPredicateAll(true, 10000)
         try {
-	        val columns = selector.getColumnsFromRow(guid, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-	        val columnList = List(columns.toArray : _*)
-	        var taxonProfile = new TaxonProfile
-	        
-	        for(column<-columnList){
-	        	
-	          val field = new String(column.asInstanceOf[Column].name)
-	          val value = new String(column.asInstanceOf[Column].value)
-	           
-	          field match {
-	         	  case "guid" => taxonProfile.guid = value
-	         	  case "scientificName" => taxonProfile.scientificName = value
-	         	  case "commonName" => taxonProfile.commonName = value
-	         	  case "habitats" => {
-	         	 	  if(value!=null && value.size>0){
-	         	 		  taxonProfile.habitats = value.split(",")
-	         	 	   }
-	         	  }
-	         	  case _ =>
-	          }
-	        }
-	        Some(taxonProfile)
+          val columns = selector.getColumnsFromRow(guid, columnFamily, slicePredicate, ConsistencyLevel.ONE)
+          val columnList = List(columns.toArray : _*)
+          var taxonProfile = new TaxonProfile
+
+          for(column<-columnList){
+
+            val field = new String(column.asInstanceOf[Column].name)
+            val value = new String(column.asInstanceOf[Column].value)
+
+            field match {
+              case "guid" => taxonProfile.guid = value
+              case "scientificName" => taxonProfile.scientificName = value
+              case "commonName" => taxonProfile.commonName = value
+              case "habitats" => {
+                if(value!=null && value.size>0){
+                  taxonProfile.habitats = value.split(",")
+                 }
+              }
+              case _ =>
+            }
+          }
+          Some(taxonProfile)
         } catch {
-        	case e:Exception => None
+          case e:Exception => None
         }
-	}
-	
-	/**
-	 * Persist the taxon profile.
-	 */
-	def add(taxonProfile:TaxonProfile) {
-	    val mutator = Pelops.createMutator(DAO.poolName, DAO.keyspace)
-	    mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("guid", taxonProfile.guid))
-	    mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("scientificName", taxonProfile.scientificName))
-	    if(taxonProfile.commonName!=null)
-	    	mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("commonName", taxonProfile.commonName))
-	    if(taxonProfile.habitats!=null && taxonProfile.habitats.size>0){
-	    	val habitatString = taxonProfile.habitats.reduceLeft(_+","+_)
-	    	mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("habitats", habitatString))
-	    }
-	    mutator.execute(ConsistencyLevel.ONE)
-	}
+  }
+
+  /**
+   * Persist the taxon profile.
+   */
+  def add(taxonProfile:TaxonProfile) {
+      val mutator = Pelops.createMutator(DAO.poolName, DAO.keyspace)
+      mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("guid", taxonProfile.guid))
+      mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("scientificName", taxonProfile.scientificName))
+      if(taxonProfile.commonName!=null)
+        mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("commonName", taxonProfile.commonName))
+      if(taxonProfile.habitats!=null && taxonProfile.habitats.size>0){
+        val habitatString = taxonProfile.habitats.reduceLeft(_+","+_)
+        mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("habitats", habitatString))
+      }
+      mutator.execute(ConsistencyLevel.ONE)
+  }
 }
 
 /**
@@ -151,7 +151,7 @@ object LocationDAO {
     mutator.execute(ConsistencyLevel.ONE)
   }
 
-  
+
   def addRegionToPoint (latitude:Float, longitude:Float, mapping:Map[String,String]) {
     val guid = latitude +"|"+longitude
     val mutator = Pelops.createMutator(DAO.poolName, DAO.keyspace)
@@ -164,13 +164,13 @@ object LocationDAO {
   }
 
   def roundCoord(x:String) : String = {
-	try {
-		(((x * 10000).toInt).toFloat / 10000).toString
-	} catch {
-	  case e:NumberFormatException => x
-	}
+  try {
+    (((x * 10000).toInt).toFloat / 10000).toString
+  } catch {
+    case e:NumberFormatException => x
   }
-  
+  }
+
   def getByLatLon(latitude:String, longitude:String) : Option[Location] = {
     try {
       val uuid =  roundCoord(latitude)+"|"+roundCoord(longitude)
