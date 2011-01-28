@@ -7,25 +7,25 @@ package au.org.ala.biocache
  * @author Dave Martin (David.Martin@csiro.au)
  */
 trait PersistenceManager {
-	
-	/**
-	 * Get an object
-	 * 
-	 * @param uuid the uuid of the record
-	 * @param entityType "Occurrence"
-	 * @param version "Raw, Processed, Consensus"
-	 * @return
-	 */
-	def get(uuid:String, entityType:String, version:Version) : Option[AnyRef]
-	
-	def get(uuid:String, property:String) : Option[String]
-	
-	def getArray(uuid:String, property:String) : Option[Array[String]]
-	
-	def put(uuid:String, entity:String, anObject:AnyRef, version:Version)
-	
-	def put(uuid:String, property:String, propertyValue:String)
-	
-	def putArray(uuid:String, property:String, propertyValue: Array[String])
-	
+
+  /**
+   * Get an object
+   *
+   * @param uuid the uuid of the record
+   * @param entityType "Occurrence"
+   * @param version "Raw, Processed, Consensus"
+   * @return
+   */
+  def get(uuid:String, entityType:String, version:Version) : Option[AnyRef]
+
+  def get(uuid:String, property:String) : Option[String]
+
+  def getArray(uuid:String, property:String) : Option[Array[String]]
+
+  def put(uuid:String, entity:String, anObject:AnyRef, version:Version)
+
+  def put(uuid:String, property:String, propertyValue:String)
+
+  def putArray(uuid:String, property:String, propertyValue: Array[String])
+
 }

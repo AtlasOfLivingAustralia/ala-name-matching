@@ -5,8 +5,6 @@ import au.org.ala.biocache.Raw
 import au.org.ala.biocache.Processed
 import au.org.ala.biocache.TaxonProfileDAO
 import au.org.ala.biocache.AttributionDAO
-import org.apache.commons.lang.time.DateUtils
-import java.util.Calendar
 import org.apache.commons.lang.time.DateFormatUtils
 import org.wyki.cassandra.pelops.Pelops
 import au.org.ala.biocache.DAO
@@ -62,7 +60,7 @@ import org.slf4j.LoggerFactory
 object ProcessRecords {
 
   val logger = LoggerFactory.getLogger("ProcessRecords")
-	
+
   def main(args: Array[String]): Unit = {
 
     var counter = 0
@@ -74,9 +72,9 @@ object ProcessRecords {
       counter += 1
       if (!record.isEmpty) {
 
-    	val raw = record.get
-    	processRecord(raw)
-        
+      val raw = record.get
+      processRecord(raw)
+
         //debug counter
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
@@ -87,15 +85,15 @@ object ProcessRecords {
     })
     Pelops.shutdown
   }
-  
+
   /**
    * Process a record, adding metadata and records quality assertions
    */
   def processRecord(raw:FullRecord){
-	val guid = raw.o.uuid
-	var processed = raw.clone
-	var assertions = new ArrayBuffer[QualityAssertion]
-	
+  val guid = raw.o.uuid
+  var processed = raw.clone
+  var assertions = new ArrayBuffer[QualityAssertion]
+
     //find a classification in NSLs
     assertions ++ processClassification(guid, raw, processed)
 
@@ -115,12 +113,12 @@ object ProcessRecords {
     assertions ++ processAttribution(guid, raw, processed)
 
     //perform SDS lookups - retrieve from BIE for now....
-    
+
     // processImages
     // processLinkRecord
     // processIdentifierRecords 
     // 
-    
+
     processed.assertions = assertions.toArray
 
     //store the occurrence
@@ -134,17 +132,17 @@ object ProcessRecords {
    * limit 10;
    */
   def processAttribution(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
-	if(raw.o.institutionCode!=null && raw.o.collectionCode!=null){
-	    val attribution = AttributionDAO.getByCodes(raw.o.institutionCode, raw.o.collectionCode)
-	    if (!attribution.isEmpty) {
-	      OccurrenceDAO.updateOccurrence(guid, attribution.get, Processed)
-	      Array()
-	    } else {
-	      Array(QualityAssertion(AssertionCodes.OTHER_UNRECOGNISED_COLLECTIONCODE, false, "Unrecognised collection code"))
-	    }
-	} else {
-		Array()
-	}
+    if(raw.o.institutionCode!=null && raw.o.collectionCode!=null){
+        val attribution = AttributionDAO.getByCodes(raw.o.institutionCode, raw.o.collectionCode)
+        if (!attribution.isEmpty) {
+          OccurrenceDAO.updateOccurrence(guid, attribution.get, Processed)
+          Array()
+        } else {
+          Array(QualityAssertion(AssertionCodes.OTHER_UNRECOGNISED_COLLECTIONCODE, false, "Unrecognised collection code"))
+        }
+    } else {
+      Array()
+    }
   }
 
   def validateNumber(number:String, f:(Int=>Boolean) ) : (Int, Boolean) = {
@@ -153,7 +151,7 @@ object ProcessRecords {
         val parsedNumber = number.toInt
         (parsedNumber, f(parsedNumber))
       } else {
-    	(-1, false)
+        (-1, false)
       }
     } catch {
       case e: NumberFormatException => {
@@ -161,29 +159,28 @@ object ProcessRecords {
       }
     }
   }
-  
+
   /**
    * Date parsing - this is pretty much copied from GBIF source code and needs
    * splitting into several methods
    */
   def processEvent(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
 
-	var assertions = new ArrayBuffer[QualityAssertion]
-	  
+    var assertions = new ArrayBuffer[QualityAssertion]
     var date: Option[java.util.Date] = None
     val now = new java.util.Date
     val currentYear = DateFormatUtils.format(now, "yyyy").toInt
     var comment = ""
- 
+
     var (year,invalidYear) = validateNumber(raw.e.year,{year => year < 0 || year > currentYear})
     var (month,invalidMonth) = validateNumber(raw.e.month,{month => month < 1 || month > 12})
     var (day,invalidDay) = validateNumber(raw.e.day,{day => day < 0 || day > 31})
     var invalidDate = invalidYear || invalidDay || invalidMonth
-    
+
     //check for sensible year value
     if (year > 0) {
       if (year < 100) {
-    	//parse 89 for 1989
+      //parse 89 for 1989
         if (year > currentYear % 100) {
           // Must be in last century
           year += ((currentYear / 100) - 1) * 100;
@@ -201,12 +198,12 @@ object ProcessRecords {
     //construct
     if (year != -1 && month != -1 && day != -1) {
       try {
-    	 val calendar = new GregorianCalendar(
-    			year.toInt ,
-    			month.toInt - 1,
-    			day.toInt
-    	 );
-    	 date = Some(calendar.getTime)
+       val calendar = new GregorianCalendar(
+          year.toInt ,
+          month.toInt - 1,
+          day.toInt
+       );
+       date = Some(calendar.getTime)
       } catch {
         case e: Exception => {
           invalidDate = true
@@ -223,36 +220,35 @@ object ProcessRecords {
 
     //deal with event date
     if (date.isEmpty && raw.e.eventDate != null && !raw.e.eventDate.isEmpty) {
-    	
-    	val parsedDate = DateParser.parseDate(raw.e.eventDate)
-    	if(!parsedDate.isEmpty){
-    		//set processed values
-	        processed.e.eventDate = parsedDate.get.startDate
-	        processed.e.day = parsedDate.get.startDay
-	        processed.e.month = parsedDate.get.startMonth
-	        processed.e.year = parsedDate.get.startYear
-    	}
+
+      val parsedDate = DateParser.parseDate(raw.e.eventDate)
+      if(!parsedDate.isEmpty){
+        //set processed values
+          processed.e.eventDate = parsedDate.get.startDate
+          processed.e.day = parsedDate.get.startDay
+          processed.e.month = parsedDate.get.startMonth
+          processed.e.year = parsedDate.get.startYear
+      }
     }
 
     //deal with verbatim date
     if (date.isEmpty && raw.e.verbatimEventDate != null && !raw.e.verbatimEventDate.isEmpty) {
-    	val parsedDate = DateParser.parseDate(raw.e.verbatimEventDate)
-    	if(!parsedDate.isEmpty){
-    		//set processed values
-	        processed.e.eventDate = parsedDate.get.startDate
-	        processed.e.day = parsedDate.get.startDay
-	        processed.e.month = parsedDate.get.startMonth
-	        processed.e.year = parsedDate.get.startYear
-    	}
+      val parsedDate = DateParser.parseDate(raw.e.verbatimEventDate)
+      if(!parsedDate.isEmpty){
+        //set processed values
+          processed.e.eventDate = parsedDate.get.startDate
+          processed.e.day = parsedDate.get.startDay
+          processed.e.month = parsedDate.get.startMonth
+          processed.e.year = parsedDate.get.startYear
+      }
     }
-    
+
     //if invalid date, add assertion
     if (invalidDate) {
       assertions + QualityAssertion(AssertionCodes.OTHER_INVALID_DATE,false,comment)
 //      OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.OTHER_INVALID_DATE)
     }
-    
-    
+
     assertions.toArray
   }
 
@@ -272,7 +268,7 @@ object ProcessRecords {
         Array()
       }
     } else {
-    	Array(QualityAssertion(AssertionCodes.OTHER_MISSING_BASIS_OF_RECORD,false,"Missing basis of record"))
+      Array(QualityAssertion(AssertionCodes.OTHER_MISSING_BASIS_OF_RECORD,false,"Missing basis of record"))
     }
   }
 
@@ -303,8 +299,8 @@ object ProcessRecords {
    */
   def processLocation(guid:String,raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
     //retrieve the point
-	var assertions = new ArrayBuffer[QualityAssertion]
-	
+  var assertions = new ArrayBuffer[QualityAssertion]
+
     if (raw.l.decimalLatitude != null && raw.l.decimalLongitude != null) {
 
       //TODO validate decimal degrees
@@ -312,7 +308,7 @@ object ProcessRecords {
       processed.l.decimalLongitude = raw.l.decimalLongitude
 
       //validate coordinate accuracy (coordinateUncertaintyInMeters) and coordinatePrecision (precision - A. Chapman)
-      
+
       //generate coordinate accuracy if not supplied
       val point = LocationDAO.getByLatLon(raw.l.decimalLatitude, raw.l.decimalLongitude);
       if (!point.isEmpty) {
@@ -341,35 +337,35 @@ object ProcessRecords {
 
         //check marine/non-marine
         if(processed.l.habitat!=null){
-        	
-        	//retrieve the species profile
-        	val taxonProfile = TaxonProfileDAO.getByGuid(processed.c.taxonConceptID)
-        	if(!taxonProfile.isEmpty && taxonProfile.get.habitats!=null && taxonProfile.get.habitats.size>0){
-        		val habitatsAsString =  taxonProfile.get.habitats.reduceLeft(_+","+_)
-        		val habitatFromPoint = processed.l.habitat
-        		val habitatsForSpecies = taxonProfile.get.habitats
-        		//is "terrestrial" the same as "non-marine" ??
-        		val validHabitat = HabitatMap.areTermsCompatible(habitatFromPoint, habitatsForSpecies)
-        		if(!validHabitat.isEmpty){
-        			if(!validHabitat.get){
-        				if(habitatsAsString != "???"){ //HACK FOR BAD DATA
-	        				logger.debug("[QualityAssertion] ******** Habitats incompatible for UUID: " + guid + ", processed:" + processed.l.habitat + ", retrieved:" + habitatsAsString
-	        						+ ", http://maps.google.com/?ll="+processed.l.decimalLatitude+","+processed.l.decimalLongitude)
-	        				val comment = "Recognised habitats for species: " + habitatsAsString+", Value determined from coordinates: "+habitatFromPoint
-	        				assertions + QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH,false,comment)
-	        				//OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.COORDINATE_HABITAT_MISMATCH)
-        				}
-        			}
-        		}
-        	}
+
+          //retrieve the species profile
+          val taxonProfile = TaxonProfileDAO.getByGuid(processed.c.taxonConceptID)
+          if(!taxonProfile.isEmpty && taxonProfile.get.habitats!=null && taxonProfile.get.habitats.size>0){
+            val habitatsAsString =  taxonProfile.get.habitats.reduceLeft(_+","+_)
+            val habitatFromPoint = processed.l.habitat
+            val habitatsForSpecies = taxonProfile.get.habitats
+            //is "terrestrial" the same as "non-marine" ??
+            val validHabitat = HabitatMap.areTermsCompatible(habitatFromPoint, habitatsForSpecies)
+            if(!validHabitat.isEmpty){
+              if(!validHabitat.get){
+                if(habitatsAsString != "???"){ //HACK FOR BAD DATA
+                  logger.debug("[QualityAssertion] ******** Habitats incompatible for UUID: " + guid + ", processed:" + processed.l.habitat + ", retrieved:" + habitatsAsString
+                      + ", http://maps.google.com/?ll="+processed.l.decimalLatitude+","+processed.l.decimalLongitude)
+                  val comment = "Recognised habitats for species: " + habitatsAsString+", Value determined from coordinates: "+habitatFromPoint
+                  assertions + QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH,false,comment)
+                  //OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.COORDINATE_HABITAT_MISMATCH)
+                }
+              }
+            }
+          }
         }
-        
+
         //TODO check centre point of the state
 
 
       }
     }
-	assertions.toArray
+  assertions.toArray
   }
 
   /**
@@ -408,7 +404,7 @@ object ProcessRecords {
         Array()
       } else {
         logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " + raw.c.kingdom + ", Family:" + raw.c.family + ", Genus:" + raw.c.genus + ", Species: " + raw.c.species 
-        		+ ", Epithet: " + raw.c.specificEpithet)
+            + ", Epithet: " + raw.c.specificEpithet)
         Array(QualityAssertion(AssertionCodes.TAXONOMIC_NAME_NOTRECOGNISED, false, "Name not recognised"))
       }
     } catch {
