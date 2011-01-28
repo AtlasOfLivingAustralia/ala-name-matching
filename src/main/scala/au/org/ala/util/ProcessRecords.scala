@@ -72,8 +72,8 @@ object ProcessRecords {
       counter += 1
       if (!record.isEmpty) {
 
-      val raw = record.get
-      processRecord(raw)
+        val raw = record.get
+        processRecord(raw)
 
         //debug counter
         if (counter % 1000 == 0) {
@@ -90,9 +90,10 @@ object ProcessRecords {
    * Process a record, adding metadata and records quality assertions
    */
   def processRecord(raw:FullRecord){
-  val guid = raw.o.uuid
-  var processed = raw.clone
-  var assertions = new ArrayBuffer[QualityAssertion]
+
+    val guid = raw.o.uuid
+    var processed = raw.clone
+    var assertions = new ArrayBuffer[QualityAssertion]
 
     //find a classification in NSLs
     assertions ++ processClassification(guid, raw, processed)
@@ -299,7 +300,7 @@ object ProcessRecords {
    */
   def processLocation(guid:String,raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
     //retrieve the point
-  var assertions = new ArrayBuffer[QualityAssertion]
+    var assertions = new ArrayBuffer[QualityAssertion]
 
     if (raw.l.decimalLatitude != null && raw.l.decimalLongitude != null) {
 
@@ -365,7 +366,7 @@ object ProcessRecords {
 
       }
     }
-  assertions.toArray
+    assertions.toArray
   }
 
   /**
