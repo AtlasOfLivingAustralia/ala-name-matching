@@ -1,7 +1,6 @@
 package au.org.ala.util
 
 import scala.actors.Actor
-import scala.actors.Actor._
 import au.org.ala.biocache.FullRecord
 import au.org.ala.biocache.OccurrenceDAO
 import au.org.ala.biocache.Raw

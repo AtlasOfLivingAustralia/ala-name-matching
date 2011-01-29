@@ -4,16 +4,9 @@ package au.org.ala.biocache
  * maintained within the biocache for performance reasons. These
  * components
  */
-import au.org.ala.checklist.lucene.CBIndexSearch
-import com.google.gson.reflect.TypeToken
-import com.google.gson.Gson
 import au.org.ala.util.ReflectBean
-import org.wyki.cassandra.pelops.{Mutator,Pelops,Selector}
-import scala.collection.mutable.{LinkedList,ListBuffer}
-import org.apache.cassandra.thrift.{Column,ConsistencyLevel,ColumnPath,SlicePredicate,SliceRange}
-import java.util.ArrayList
-import org.wyki.cassandra.pelops.Policy
-
+import org.wyki.cassandra.pelops.{Pelops,Selector}
+import org.apache.cassandra.thrift.{Column,ConsistencyLevel}
 /**
  * A DAO for accessing taxon profile information by GUID.
  * 

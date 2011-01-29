@@ -235,14 +235,16 @@ class TaxonProfile (
   override def clone : TaxonProfile = super.clone.asInstanceOf[TaxonProfile]
 }
 
-class Attribution extends Cloneable {
-  @BeanProperty var dataProviderUid:String = _
-  @BeanProperty var dataResourceUid:String = _	
-  @BeanProperty var collectionUid:String = _
-  @BeanProperty var institutionUid:String = _
-  @BeanProperty var dataHubUid:String = _
-  @BeanProperty var institutionName:String = _
-  @BeanProperty var collectionName:String = _
+class Attribution (
+  @BeanProperty var dataProviderUid:String,
+  @BeanProperty var dataResourceUid:String,
+  @BeanProperty var collectionUid:String,
+  @BeanProperty var institutionUid:String,
+  @BeanProperty var dataHubUid:String,
+  @BeanProperty var institutionName:String,
+  @BeanProperty var collectionName:String)
+  extends Cloneable {
+  def this() = this(null,null,null,null,null,null,null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
 }
 
@@ -250,12 +252,14 @@ class Attribution extends Cloneable {
  * Encapsulates a complete specimen or occurrence record.
  * TODO add quality assertions.....
  */
-class FullRecord (@BeanProperty var o:Occurrence, @BeanProperty var c:Classification,
-    @BeanProperty var l:Location,@BeanProperty var e:Event, @BeanProperty
-    var assertions:Array[QualityAssertion]) extends Cloneable {
-
+class FullRecord (
+  @BeanProperty var o:Occurrence,
+  @BeanProperty var c:Classification,
+  @BeanProperty var l:Location,
+  @BeanProperty var e:Event,
+  @BeanProperty var assertions:Array[String])
+  extends Cloneable {
   def this() = this(new Occurrence,new Classification,new Location,new Event, Array())
-
   override def clone : FullRecord = new FullRecord(o.clone,c.clone,l.clone,e.clone,assertions.clone)
 }
 
@@ -266,19 +270,23 @@ class FullRecord (@BeanProperty var o:Occurrence, @BeanProperty var c:Classifica
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */
-class QualityAssertion (@BeanProperty var uuid:String,@BeanProperty var assertionName:String,
-  @BeanProperty var assertionCode:Int,@BeanProperty var positive:Boolean,
-  @BeanProperty var comment:String,@BeanProperty var userId:String,
+class QualityAssertion (
+  @BeanProperty var uuid:String,
+  @BeanProperty var assertionName:String,
+  @BeanProperty var assertionCode:Int,
+  @BeanProperty var positive:Boolean,
+  @BeanProperty var comment:String,
+  @BeanProperty var userId:String,
   @BeanProperty var userDisplayName:String)
   extends Cloneable{
 
   def this() = this(null,null,-1,false,null,null,null)
   override def clone : QualityAssertion = super.clone.asInstanceOf[QualityAssertion]
   override def equals(that: Any) = that match {
-      case other: QualityAssertion => {
-        (other.assertionCode == assertionCode) && (other.positive == positive) && (other.userId == userId)
-      }
-      case _ => false
+    case other: QualityAssertion => {
+      (other.assertionCode == assertionCode) && (other.positive == positive) && (other.userId == userId)
+    }
+    case _ => false
   }
 }
 

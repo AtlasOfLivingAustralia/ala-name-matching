@@ -4,14 +4,14 @@ import org.apache.commons.lang.time.DateFormatUtils
 
 object DateParser {
 
-//      //TODO handle these formats
-//    	//	"1963-03-08T14:07-0600" is 8 Mar 1963 2:07pm in the time zone six hours earlier than UTC, 
-//    	//	"2009-02-20T08:40Z" is 20 Feb 2009 8:40am UTC, "1809-02-12" is 12 Feb 1809, 
-//    	//	"1906-06" is Jun 1906, "1971" is just that year, 
-//    	//	"2007-03-01T13:00:00Z/2008-05-11T15:30:00Z" is the interval between 1 Mar 2007 1pm UTC and 
-//    	//	11 May 2008 3:30pm UTC, "2007-11-13/15" is the interval between 13 Nov 2007 and 15 Nov 2007
-
-
+  /**
+   * Handle these formats:
+   * 1963-03-08T14:07-0600" is 8 Mar 1963 2:07pm in the time zone six hours earlier than UTC,
+   * "2009-02-20T08:40Z" is 20 Feb 2009 8:40am UTC, "1809-02-12" is 12 Feb 1809,
+   * "1906-06" is Jun 1906, "1971" is just that year,
+   * "2007-03-01T13:00:00Z/2008-05-11T15:30:00Z" is the interval between 1 Mar 2007 1pm UTC and
+   * 11 May 2008 3:30pm UTC, "2007-11-13/15" is the interval between 13 Nov 2007 and 15 Nov 2007
+   */
   def parseDate(date:String) : Option[EventDate] = {
     date match {
       case ISODate(date) =>  Some(date)
@@ -28,7 +28,6 @@ object DateParser {
 
 case class EventDate(startDate:String,startDay:String,startMonth:String,startYear:String,
     endDate:String,endDay:String,endMonth:String,endYear:String,singleDate:Boolean)
-
 
 /** yyyy-MM-dd */
 object ISODate /*extends (String=>Option[EventDate]) */{ 
@@ -81,13 +80,14 @@ object ISOMonthDate {
 /** yyyy-MM-dd/yyyy-MM-dd */
 object ISODateRange {
 
+  val formats = Array("yyyy-MM-dd", "yyyy-MM-dd'T'hh:mm-ss", "yyyy-MM-dd'T'hh:mm'Z'")
+
   def unapply(str:String) : Option[EventDate] = {
    try{
+
        val parts = str.split("/")
-       val startDateParsed = DateUtils.parseDate(parts(0),
-          Array("yyyy-MM-dd", "yyyy-MM-ddThh:mm-ss", "yyyy-MM-ddThh:mmZ"))
-       val endDateParsed = DateUtils.parseDate(parts(1),
-          Array("yyyy-MM-dd", "yyyy-MM-ddThh:mm-ss", "yyyy-MM-ddThh:mmZ"))
+       val startDateParsed = DateUtils.parseDate(parts(0),formats)
+       val endDateParsed = DateUtils.parseDate(parts(1),formats)
 
        val startDate = DateFormatUtils.format(startDateParsed, "yyyy-MM-dd")
        val endDate = DateFormatUtils.format(endDateParsed, "yyyy-MM-dd")

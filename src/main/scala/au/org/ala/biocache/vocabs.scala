@@ -1,6 +1,5 @@
 package au.org.ala.biocache
 
-import scala.collection.mutable.ArrayBuffer
 /**
  * Case class that encapsulates a canonical form and variants.
  * @author Dave Martin (David.Martin@csiro.au)

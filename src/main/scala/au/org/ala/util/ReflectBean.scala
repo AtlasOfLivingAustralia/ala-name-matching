@@ -1,12 +1,15 @@
-package au.org.ala.util {
+package au.org.ala.util
 
 class ReflectBean(ref: AnyRef)  {
-  def getter(name: String): Any = ref.getClass.getMethods.find(_.getName == name).get.invoke(ref)
+
+  def fieldNameCheck(fieldName:String) = if(fieldName=="class") "classs" else fieldName
+
+  def getter(name: String): Any = {
+    var fieldName = fieldNameCheck(name)
+    ref.getClass.getMethods.find(_.getName == fieldName).get.invoke(ref)
+  }
   def setter(name: String, value: Any): Unit = {
-    var fieldName = name
-    if(fieldName=="class"){
-     fieldName = "classs"
-    }
+    var fieldName = fieldNameCheck(name)
     val method = ref.getClass.getMethods.find(_.getName == fieldName + "_$eq")
     if(!method.isEmpty){
       method.get.invoke(ref, value.asInstanceOf[AnyRef])
@@ -19,6 +22,4 @@ class ReflectBean(ref: AnyRef)  {
  */
 object ReflectBean{
   implicit def file2helper(ref: AnyRef) = new ReflectBean(ref)
-}
-
 }

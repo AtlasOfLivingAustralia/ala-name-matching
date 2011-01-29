@@ -4,24 +4,23 @@ import au.org.ala.checklist.lucene.CBIndexSearch
 import com.google.gson.reflect.TypeToken
 import com.google.gson.Gson
 import au.org.ala.util.ReflectBean
-import org.wyki.cassandra.pelops.{Mutator,Pelops,Selector}
-import scala.collection.mutable.{LinkedList,ListBuffer}
-import org.apache.cassandra.thrift.{Column,ConsistencyLevel,ColumnPath,SlicePredicate,SliceRange}
-import java.util.ArrayList
+import org.wyki.cassandra.pelops.{Pelops,Selector}
 import org.wyki.cassandra.pelops.Policy
 import java.io.OutputStream
 import scala.collection.JavaConversions
-import org.apache.cassandra.thrift.KeyRange
+import scala.collection.mutable.ArrayBuffer
+import org.apache.cassandra.thrift._
+import java.util.{UUID, ArrayList}
+
 /**
  * DAO configuration. Should be refactored to use a DI framework
  * or make use of Cake pattern.
- * @author Dave Martin (David.Martin@csiro.au)
  */
 object DAO {
 
   val hosts = Array{"localhost"}
   val keyspace = "occ"
-  val poolName = "occ-pool"
+  val poolName = "biocache-store-pool"
   val nameIndex= new CBIndexSearch("/data/lucene/namematching")
 
   Pelops.addPool(poolName, hosts, 9160, false, keyspace, new Policy)
@@ -33,22 +32,17 @@ object DAO {
   val classificationDefn = fileToArray("/Classification.txt")
   val identificationDefn = fileToArray("/Identification.txt")
 
-  def fileToArray(filePath:String) : Array[String] = {
-    scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map(_.trim).toArray
-  }
+  def fileToArray(filePath:String) : List[String] =
+    scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map(_.trim)
 }
 
 /**
  * A trait to implement by java classes to process occurrence records.
- * 
- * @author Dave Martin (David.Martin@csiro.au)
  */
 trait OccurrenceConsumer { def consume(record:FullRecord) }
 
 /**
  * A DAO for accessing occurrences.
- * 
- * @author Dave Martin (David.Martin@csiro.au)
  */
 object OccurrenceDAO {
 
@@ -56,6 +50,7 @@ object OccurrenceDAO {
   import JavaConversions._
 
   val columnFamily = "occ"
+  val qualityAssertionColumn = "qualityAssertion"
 
   /**
    * Get an occurrence with UUID
@@ -67,6 +62,9 @@ object OccurrenceDAO {
     getByUuid(uuid, Raw)
   }
 
+  /**
+   * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
+   */
   def getByUuidJ(uuid:String) : FullRecord = {
     val record = getByUuid(uuid, Raw)
     if(record.isEmpty){
@@ -100,7 +98,8 @@ object OccurrenceDAO {
    * @param fieldName the field to set
    * @param fieldValue the value to set
    */
-  protected def setProperty(o:Occurrence, c:Classification, l:Location, e:Event, fieldName:String, fieldValue:String){
+  protected def setProperty(o:Occurrence, c:Classification, l:Location, e:Event, assertions:ArrayBuffer[String], 
+		  fieldName:String, fieldValue:String){
     if(DAO.occurrenceDefn.contains(fieldName)){
       o.setter(fieldName,fieldValue)
     } else if(DAO.classificationDefn.contains(fieldName)){
@@ -109,6 +108,8 @@ object OccurrenceDAO {
       e.setter(fieldName,fieldValue)
     } else if(DAO.locationDefn.contains(fieldName)){
       l.setter(fieldName,fieldValue)
+    } else if(fieldName startsWith "qa"){
+      assertions.add(fieldName)
     }
   }
 
@@ -123,36 +124,66 @@ object OccurrenceDAO {
    * @param occurrenceType raw, processed or consensus version of the record
    * @return
    */
-  protected def createOccurrence(uuid:String, columnList:java.util.List[Column], occurrenceType:Version)
+  protected def createOccurrence(uuid:String, columnList:java.util.List[Column], version:Version)
+    : Option[FullRecord] = {
+
+    val tuples = {
+      for(column <- columnList)
+        yield (new String(column.name), new String(column.value))
+    }
+    //convert the list
+    val map = Map(tuples map {s => (s._1, s._2)} : _*)
+
+    createOccurrence(uuid, map, version)
+  }
+
+  /**
+   * Create a record from a array of tuple properties
+   */
+  def createOccurrence(uuid:String, fieldTuples:Array[(String,String)], version:Version)
+    : Option[FullRecord] = {
+    val fieldMap = Map(fieldTuples map {s => (s._1, s._2)} : _*)
+    createOccurrence(uuid, fieldMap, version)
+  }
+
+  /**
+   * Creates an FullRecord from the map of properties
+   */
+  def createOccurrence(uuid:String, fields:Map[String,String], version:Version)
     : Option[FullRecord] = {
 
     val occurrence = new Occurrence
     val classification = new Classification
     val location = new Location
     val event = new Event
+    var assertions = new ArrayBuffer[String]
 
     occurrence.uuid = uuid
-    val columns = List(columnList.toArray : _*)
-    for(column<-columns){
+    val columns = fields.keySet
+    for(fieldName<-columns){
 
       //ascertain which term should be associated with which object
-      var fieldName = new String(column.asInstanceOf[Column].name)
-      val fieldValue = new String(column.asInstanceOf[Column].value)
-
-      if(fieldName.endsWith(".p") && occurrenceType == Processed){
-        fieldName = fieldName.substring(0, fieldName.length - 2)
-        setProperty(occurrence, classification, location, event, fieldName, fieldValue)
-      } else if(fieldName.endsWith(".c") && occurrenceType == Consensus){
-        fieldName = fieldName.substring(0, fieldName.length - 2)
-        setProperty(occurrence, classification, location, event, fieldName, fieldValue)
-      } else {
-        setProperty(occurrence, classification, location, event, fieldName, fieldValue)
+      val fieldValue = fields.get(fieldName)
+      if(!fieldValue.isEmpty){
+        if(isProcessedValue(fieldName) && version == Processed){
+          setProperty(occurrence, classification, location, event, assertions, removeSuffix(fieldName), fieldValue.get)
+        } else if(isConsensusValue(fieldName) && version == Consensus){
+          setProperty(occurrence, classification, location, event, assertions, removeSuffix(fieldName), fieldValue.get)
+        } else {
+          setProperty(occurrence, classification, location, event, assertions, removeSuffix(fieldName), fieldValue.get)
+        }
       }
     }
-
     //TODO retrieve assertions
-    Some(new FullRecord(occurrence, classification, location, event, Array()))
+    Some(new FullRecord(occurrence, classification, location, event, assertions.toArray))
+
   }
+
+  private def removeSuffix(name:String) : String = name.substring(0, name.length - 2)
+  private def isProcessedValue(name:String) : Boolean = name endsWith ".p"
+  private def isConsensusValue(name:String) : Boolean = name endsWith ".c"
+  private def markAsProcessed(name:String) : String = name + ".p"
+  private def markAsConsensus(name:String) : String = name + ".c"
 
   /**
    * Iterate over records, passing the records to the supplied consumer.
@@ -162,16 +193,37 @@ object OccurrenceDAO {
   }
 
   /**
+   * Create or retrieve the UUID for this record. The uniqueID should be a
+   * has of properties that provides a unique ID for the record within
+   * the dataset.
+   */
+  def createOrRetrieveUuid(uniqueID: String): String = {
+    try {
+      val selector = Pelops.createSelector(DAO.poolName, columnFamily)
+      val column = selector.getColumnFromRow(uniqueID, "dr", "uuid".getBytes, ConsistencyLevel.ONE)
+      new String(column.value)
+    } catch {
+      //NotFoundException is expected behaviour with thrift
+      case e:NotFoundException =>
+        val newUuid = UUID.randomUUID.toString
+        val mutator = Pelops.createMutator(DAO.poolName, columnFamily)
+        mutator.writeColumn(uniqueID, "dr", mutator.newColumn("uuid".getBytes, newUuid))
+        mutator.execute(ConsistencyLevel.ONE)
+        newUuid
+    }
+  }
+
+  /**
    * Write to stream...
    */
   def writeToStream(outputStream:OutputStream,fieldDelimiter:String,recordDelimiter:String,uuids:Array[String],fields:Array[String],version:Version) {
+
     selectRows(uuids,fields,version, { fieldMap =>
 
       for(field<-fields){
-
         val fieldValue = fieldMap.get(field)
         if(fieldValue.isEmpty){
-          outputStream.write("".getBytes)
+          outputStream.write("".getBytes)  //pad out empty values
         } else {
           outputStream.write(fieldValue.get.getBytes)
         }
@@ -195,15 +247,15 @@ object OccurrenceDAO {
     //write them out to the output stream
     val keys = List(columnMap.keySet.toArray : _*)
 
-      for(key<-keys){
-        val columnsList = columnMap.get(key)
-        val fieldValues = columnsList.map(column => (new String(column.name),new String(column.value))).toArray
-        val map = scala.collection.mutable.Map.empty[String,String]
-        for(fieldValue <-fieldValues){
-          map(fieldValue._1) = fieldValue._2
-        }
-        proc(map.toMap)
+    for(key<-keys){
+      val columnsList = columnMap.get(key)
+      val fieldValues = columnsList.map(column => (new String(column.name),new String(column.value))).toArray
+      val map = scala.collection.mutable.Map.empty[String,String]
+      for(fieldValue <-fieldValues){
+        map(fieldValue._1) = fieldValue._2
       }
+      proc(map.toMap)
+    }
   }
 
   /**
@@ -221,7 +273,7 @@ object OccurrenceDAO {
     var hasMore = true
     var counter = 0
     var columnMap = selector.getColumnsFromRows(keyRange, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-    while (columnMap.size>0) {
+      while (columnMap.size>0) {
       val columnsObj = List(columnMap.keySet.toArray : _*)
       //convert to scala List
       val keys = columnsObj.asInstanceOf[List[String]]
@@ -239,48 +291,61 @@ object OccurrenceDAO {
   }
 
   /**
-   *  
+   * Retrieve a object definition (simple ORM mapping)
+   */
+  def getDefn(anObject:Any) : List[String] = {
+     anObject match {
+      case l:Location => DAO.locationDefn
+      case o:Occurrence => DAO.occurrenceDefn
+      case e:Event => DAO.eventDefn
+      case c:Classification => DAO.classificationDefn
+      case a:Attribution => DAO.attributionDefn
+     }
+  }
+
+  /**
+   * Update the occurrence record.
    */
   def updateOccurrence(guid:String, fullRecord:FullRecord, version:Version) {
-//	OccurrenceDAO.updateOccurrence(guid, fullRecord.o, version)
-//	OccurrenceDAO.updateOccurrence(guid, fullRecord.c, version)
-//	OccurrenceDAO.updateOccurrence(guid, fullRecord.l, version)
-//	OccurrenceDAO.updateOccurrence(guid, fullRecord.e, version)
+    updateOccurrence(guid,fullRecord,Array(),version)
+  }
 
-    //select the correct definition file
+  /**
+   * Update the occurrence with the supplied record, setting the correct version
+   */
+  def updateOccurrence(guid:String, fullRecord:FullRecord, assertions:Array[QualityAssertion], version:Version) {
 
-
-    //additional functionality to support adding Quality Assertions and Field corrections.
     val mutator = Pelops.createMutator(DAO.poolName, columnFamily)
+
     //for each field in the definition, check if there is a value to write
     for(anObject <- Array(fullRecord.o,fullRecord.c,fullRecord.e,fullRecord.l)){
-      val defn = { anObject match {
-        case l:Location => DAO.locationDefn
-        case o:Occurrence => DAO.occurrenceDefn
-        case e:Event => DAO.eventDefn
-        case c:Classification => DAO.classificationDefn
-        case a:Attribution => DAO.attributionDefn
-        }
-      }
+      val defn = getDefn(anObject)
       for(field <- defn){
         val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
         if(fieldValue!=null && !fieldValue.isEmpty){
           var fieldName = field
           if(version == Processed){
-            fieldName = fieldName +".p"
+            fieldName = markAsProcessed(fieldName)
           }
           if(version == Consensus){
-            fieldName = fieldName +".c"
+            fieldName = markAsConsensus(fieldName)
           }
           mutator.writeColumn(guid, columnFamily, mutator.newColumn(fieldName, fieldValue))
         }
       }
-  }
-
-    for(qa<-fullRecord.assertions){
-      mutator.writeColumn(guid, columnFamily, mutator.newColumn(qa.assertionName, "true"))
     }
 
+    //set the quality assertions flags
+    for(qa <- fullRecord.assertions){
+      mutator.writeColumn(guid, columnFamily, mutator.newColumn(qa, "true"))
+    }
+
+    //serialise the assertion list to JSON and DB
+    val gson = new Gson
+    val json = gson.toJson(assertions)
+    mutator.writeColumn(guid, columnFamily, mutator.newColumn(qualityAssertionColumn, json))
+
+    //commit to cassandra
     mutator.execute(ConsistencyLevel.ONE)
   }
 
@@ -294,14 +359,7 @@ object OccurrenceDAO {
   def updateOccurrence(uuid:String, anObject:AnyRef, version:Version) {
 
     //select the correct definition file
-    val defn = { anObject match {
-      case l:Location => DAO.locationDefn
-      case o:Occurrence => DAO.occurrenceDefn
-      case e:Event => DAO.eventDefn
-      case c:Classification => DAO.classificationDefn
-      case a:Attribution => DAO.attributionDefn
-      }
-    }
+    val defn = getDefn(anObject)
 
     //additional functionality to support adding Quality Assertions and Field corrections.
     val mutator = Pelops.createMutator(DAO.poolName, columnFamily)
@@ -309,17 +367,15 @@ object OccurrenceDAO {
     for(field <- defn){
       val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
       if(fieldValue!=null && !fieldValue.isEmpty){
-        var fieldName = field
-        if(version == Processed){
-          fieldName = fieldName +".p"
-        }
-        if(version == Consensus){
-          fieldName = fieldName +".c"
+        val fieldName = {
+          if(version == Processed) markAsProcessed(field)
+          else if(version == Consensus) markAsConsensus(field)
+          else field
         }
         mutator.writeColumn(uuid, columnFamily, mutator.newColumn(fieldName, fieldValue))
       }
     }
-
+    //commit
     mutator.execute(ConsistencyLevel.ONE)
   }
 
@@ -336,7 +392,7 @@ object OccurrenceDAO {
     val mutator = Pelops.createMutator(DAO.poolName, columnFamily);
     val column = {
       try {
-       Some(selector.getColumnFromRow(uuid, columnFamily, "qualityAssertion".getBytes, ConsistencyLevel.ONE))
+       Some(selector.getColumnFromRow(uuid, columnFamily, qualityAssertionColumn.getBytes, ConsistencyLevel.ONE))
       } catch {
         case _ => None //expected behaviour when row doesnt exist
       }
@@ -346,7 +402,7 @@ object OccurrenceDAO {
     if(column.isEmpty){
       //parse it
       val json = gson.toJson(Array(qualityAssertion))
-      mutator.writeColumn(uuid, columnFamily, mutator.newColumn("qualityAssertion", json))
+      mutator.writeColumn(uuid, columnFamily, mutator.newColumn(qualityAssertionColumn, json))
     } else {
       var json = new String(column.get.getValue)
       val listType = new TypeToken[ArrayList[QualityAssertion]]() {}.getType()
@@ -368,21 +424,36 @@ object OccurrenceDAO {
 
       // check equals
       json = gson.toJson(qaList)
-      mutator.writeColumn(uuid, columnFamily, mutator.newColumn("qualityAssertion", json))
+      mutator.writeColumn(uuid, columnFamily, mutator.newColumn(qualityAssertionColumn, json))
       mutator.writeColumn(uuid, columnFamily, mutator.newColumn(errorCode.name, "true"))
     }
     mutator.execute(ConsistencyLevel.ONE)
   }
 
-  def getQualityAssertions(uuid:String): List[QualityAssertion] = {
-//	new ArrayList[QualityAssertion]
-    List()
-  }
+  /**
+   * Retrieve annotations for the supplied UUID.
+   */
+  def getQualityAssertions(uuid:String): Array[QualityAssertion] = {
 
+    val selector = Pelops.createSelector(DAO.poolName, columnFamily);
+    //retrieve and parse JSON in QualityAssertion column
+    val column = {
+      try {
+       Some(selector.getColumnFromRow(uuid, columnFamily, qualityAssertionColumn.getBytes, ConsistencyLevel.ONE))
+      } catch {
+        case _ => None //expected behaviour when row doesnt exist
+      }
+    }
+    val gson = new Gson
 
-  def addAnnotation(){
-
-    //
-
+    if(column.isEmpty){
+      Array()
+    } else {
+      //parse it and return list
+      val json = new String(column.get.value)
+      val listType = new TypeToken[ArrayList[QualityAssertion]]() {}.getType()
+      val list = gson.fromJson(json,listType).asInstanceOf[java.util.List[QualityAssertion]]
+      list.toArray.asInstanceOf[Array[QualityAssertion]]
+    }
   }
 }
