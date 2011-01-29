@@ -13,16 +13,9 @@ import au.org.ala.biocache.BasisOfRecord
 import au.org.ala.biocache.AssertionCodes
 import au.org.ala.biocache.QualityAssertion
 import au.org.ala.biocache.States
-import au.org.ala.biocache.Event
-import au.org.ala.biocache.Classification
-import au.org.ala.biocache.Location
 import au.org.ala.biocache.LocationDAO
-import au.org.ala.biocache.Version
 import au.org.ala.checklist.lucene.HomonymException
-import au.org.ala.data.util.RankType
-import au.org.ala.biocache.Occurrence
 import au.org.ala.data.model.LinnaeanRankClassification
-import au.org.ala.checklist.lucene.CBIndexSearch
 import au.org.ala.biocache.OccurrenceDAO
 import au.org.ala.biocache.FullRecord
 import java.util.GregorianCalendar
@@ -30,7 +23,6 @@ import scala.collection.mutable.ArrayBuffer
 import au.org.ala.checklist.lucene.SearchResultException
 import au.org.ala.biocache.DateParser
 
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
@@ -62,7 +54,16 @@ object ProcessRecords {
   val logger = LoggerFactory.getLogger("ProcessRecords")
 
   def main(args: Array[String]): Unit = {
+    logger.info("Starting processing records....")
+    processAll
+    logger.info("Finished. Shutting down.")
+    Pelops.shutdown
+  }
 
+  /**
+   * Process all records in the store
+   */
+  def processAll {
     var counter = 0
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
@@ -71,19 +72,17 @@ object ProcessRecords {
     OccurrenceDAO.pageOverAll(Raw, record => {
       counter += 1
       if (!record.isEmpty) {
-
         val raw = record.get
         processRecord(raw)
 
         //debug counter
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
-          logger.debug(counter + " >> Last key : " + raw.o.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          logger.info(counter + " >> Last key : " + raw.o.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
         }
       }
     })
-    Pelops.shutdown
   }
 
   /**
@@ -120,10 +119,10 @@ object ProcessRecords {
     // processIdentifierRecords 
     // 
 
-    processed.assertions = assertions.toArray
+    processed.assertions = assertions.toArray.map(_.assertionName)
 
     //store the occurrence
-    OccurrenceDAO.updateOccurrence(guid, processed, Processed)
+    OccurrenceDAO.updateOccurrence(guid, processed, assertions, Processed)
   }
 
   /**
@@ -146,6 +145,9 @@ object ProcessRecords {
     }
   }
 
+  /**
+   * Validate the supplied number using the supplied function.
+   */
   def validateNumber(number:String, f:(Int=>Boolean) ) : (Int, Boolean) = {
     try {
       if(number != null) {
@@ -221,7 +223,6 @@ object ProcessRecords {
 
     //deal with event date
     if (date.isEmpty && raw.e.eventDate != null && !raw.e.eventDate.isEmpty) {
-
       val parsedDate = DateParser.parseDate(raw.e.eventDate)
       if(!parsedDate.isEmpty){
         //set processed values

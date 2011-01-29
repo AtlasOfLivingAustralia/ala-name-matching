@@ -14,16 +14,11 @@
  ***************************************************************************/
 package au.org.ala.util
 
-import scala.collection.mutable.HashSet
-import scala.collection.immutable.ListSet
-import scala.collection.SortedSet
 import java.io.File
-import java.util.UUID
-import org.apache.cassandra.thrift._
 import org.gbif.dwc.terms._
 import org.gbif.dwc.text._
-import org.wyki.cassandra.pelops.{ Pelops, Policy }
-import scala.reflect._
+import org.wyki.cassandra.pelops.Pelops
+import au.org.ala.biocache.{Raw, OccurrenceDAO}
 
 /**
  * Reads a DwC-A and writes the data to the BioCache
@@ -40,22 +35,18 @@ object DwCLoader {
 
   def main(args: Array[String]): Unit = {
 
-    println("Starting DwC loader....")
+    println(">>> Starting DwC loader ....")
     val file = new File("/data/biocache/ozcam/")
     val archive = ArchiveFactory.openArchive(file)
     val iter = archive.iteratorDwc
     val terms = DwcTerm.values
-
-    Pelops.addPool(poolName, hosts, 9160, false, keyspace, new Policy);
-    val drPath = new ColumnPath("dr")
-    val occurrencePath = new ColumnPath(columnFamily)
-
     var count = 0
 
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
 
     while (iter.hasNext) {
+
       count += 1
       //the newly assigned record UUID
       val dwc = iter.next
@@ -66,22 +57,22 @@ object DwCLoader {
       val cn: String = dwc.getProperty(DwcTerm.catalogNumber)
       val uniqueID = resourceUid + "|" + ic + "|" + cc + "|" + cn
 
-      //lookup the column
-      val recordUuid = createOrRetrieveUuid(uniqueID)
-
-      //write all the supplied properties
-      val mutator = Pelops.createMutator(poolName, columnFamily)
-      for (term <- terms) {
-        val property = dwc.getProperty(term)
-        if (property != null && property.trim.length > 0) {
-          //store the property
-          val colName = (term.simpleName).getBytes
-          mutator.writeColumn(recordUuid, columnFamily, mutator.newColumn(term.simpleName, property))
-        }
+      //create a map of properties
+      val fieldTuples:Array[(String,String)] = {
+        (for {
+          term <- terms
+          val property = dwc.getProperty(term)
+          if (property != null && property.trim.length > 0)
+        } yield (term.simpleName -> property))
       }
 
-      //commit the writes
-      mutator.execute(ConsistencyLevel.ONE)
+       //lookup the column
+      val recordUuid = OccurrenceDAO.createOrRetrieveUuid(uniqueID)
+
+      val fullRecord = OccurrenceDAO.createOccurrence(recordUuid, fieldTuples, Raw)
+      if(!fullRecord.isEmpty){
+        OccurrenceDAO.updateOccurrence(recordUuid, fullRecord.get, Raw)
+      }
 
       //debug
       if (count % 1000 == 0 && count > 0) {
@@ -92,24 +83,5 @@ object DwCLoader {
     }
     Pelops.shutdown
     println("Finished DwC loader. Records processed: " + count)
-  }
-
-  /**
-   * 
-   */
-  def createOrRetrieveUuid(uniqueID: String): String = {
-    try {
-      val selector = Pelops.createSelector(poolName, columnFamily)
-      val column = selector.getColumnFromRow(uniqueID, "dr", "uuid".getBytes, ConsistencyLevel.ONE)
-      new String(column.value)
-    } catch {
-      //NotFoundException is expected behaviour with thrift
-      case e:NotFoundException => 
-        val newUuid = UUID.randomUUID.toString
-        val mutator = Pelops.createMutator(poolName, columnFamily)
-        mutator.writeColumn(uniqueID, "dr", mutator.newColumn("uuid".getBytes, newUuid))
-        mutator.execute(ConsistencyLevel.ONE)
-        newUuid
-    }
   }
 }

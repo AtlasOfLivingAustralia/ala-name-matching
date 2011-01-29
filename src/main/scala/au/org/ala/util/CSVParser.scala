@@ -1,11 +1,5 @@
 package au.org.ala.util
-import scala.util.matching.Regex
 import scala.util.parsing.combinator._
-import java.util.regex.Pattern
-import scala.util.matching.Regex
-import scala.util.parsing.input._
-import scala.collection.mutable
-
 object CSVParser extends RegexParsers {
  
   override def skipWhitespace = false

@@ -2,10 +2,7 @@ package au.org.ala.util
 
 import au.org.ala.biocache.LocationDAO
 import java.io.File
-import org.wyki.cassandra.pelops.{ Mutator, Pelops, Policy, Selector }
-import scala.collection.mutable.{ LinkedList, ListBuffer }
-import org.apache.cassandra.thrift.{ Column, ConsistencyLevel, ColumnPath, SlicePredicate, SliceRange }
-
+import org.wyki.cassandra.pelops.Pelops
 /**
  * Loads an export from the old portal database of point lookups.
  * 
