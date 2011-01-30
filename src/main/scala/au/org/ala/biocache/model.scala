@@ -2,6 +2,10 @@ package au.org.ala.biocache
 import scala.reflect.BeanProperty
 import java.util.UUID
 
+/**
+ * Represents an occurrence record. These fields map directly on to
+ * the latest darwin core terms, with a few additional fields.
+ */
 class Occurrence extends Cloneable {
   override def clone : Occurrence = super.clone.asInstanceOf[Occurrence]
   @BeanProperty var uuid:String = _	

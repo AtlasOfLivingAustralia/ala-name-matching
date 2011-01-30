@@ -49,8 +49,8 @@ object OccurrenceDAO {
   import ReflectBean._
   import JavaConversions._
 
-  val columnFamily = "occ"
-  val qualityAssertionColumn = "qualityAssertion"
+  private val columnFamily = "occ"
+  private val qualityAssertionColumn = "qualityAssertion"
 
   /**
    * Get an occurrence with UUID
@@ -170,7 +170,7 @@ object OccurrenceDAO {
         } else if(isConsensusValue(fieldName) && version == Consensus){
           setProperty(occurrence, classification, location, event, assertions, removeSuffix(fieldName), fieldValue.get)
         } else {
-          setProperty(occurrence, classification, location, event, assertions, removeSuffix(fieldName), fieldValue.get)
+          setProperty(occurrence, classification, location, event, assertions, fieldName, fieldValue.get)
         }
       }
     }
@@ -340,10 +340,12 @@ object OccurrenceDAO {
       mutator.writeColumn(guid, columnFamily, mutator.newColumn(qa, "true"))
     }
 
-    //serialise the assertion list to JSON and DB
-    val gson = new Gson
-    val json = gson.toJson(assertions)
-    mutator.writeColumn(guid, columnFamily, mutator.newColumn(qualityAssertionColumn, json))
+    if(!assertions.isEmpty){
+      //serialise the assertion list to JSON and DB
+      val gson = new Gson
+      val json = gson.toJson(assertions)
+      mutator.writeColumn(guid, columnFamily, mutator.newColumn(qualityAssertionColumn, json))
+    }
 
     //commit to cassandra
     mutator.execute(ConsistencyLevel.ONE)

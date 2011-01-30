@@ -16,7 +16,7 @@ import org.apache.cassandra.thrift.{Column,ConsistencyLevel}
  */
 object TaxonProfileDAO {
 
-  val columnFamily = "taxon"
+  private val columnFamily = "taxon"
 
   /**
    * Retrieve the profile by the taxon concept's GUID
@@ -78,7 +78,7 @@ object TaxonProfileDAO {
 object AttributionDAO {
 
   import ReflectBean._
-  val columnFamily = "attr"
+  private val columnFamily = "attr"
 
   /**
    * Persist the attribution information.
@@ -130,7 +130,7 @@ object AttributionDAO {
  */
 object LocationDAO {
 
-  val columnFamily = "loc"
+  private val columnFamily = "loc"
 
   /**
    * Add a tag to a location
@@ -144,7 +144,9 @@ object LocationDAO {
     mutator.execute(ConsistencyLevel.ONE)
   }
 
-
+  /**
+   * Add a region mapping for this point.
+   */
   def addRegionToPoint (latitude:Float, longitude:Float, mapping:Map[String,String]) {
     val guid = latitude +"|"+longitude
     val mutator = Pelops.createMutator(DAO.poolName, DAO.keyspace)
@@ -156,14 +158,17 @@ object LocationDAO {
     mutator.execute(ConsistencyLevel.ONE)
   }
 
-  def roundCoord(x:String) : String = {
-  try {
-    (((x * 10000).toInt).toFloat / 10000).toString
-  } catch {
-    case e:NumberFormatException => x
-  }
+  protected def roundCoord(x:String) : String = {
+    try {
+      (((x * 10000).toInt).toFloat / 10000).toString
+    } catch {
+      case e:NumberFormatException => x
+    }
   }
 
+  /**
+   * Get location information for point.
+   */
   def getByLatLon(latitude:String, longitude:String) : Option[Location] = {
     try {
       val uuid =  roundCoord(latitude)+"|"+roundCoord(longitude)

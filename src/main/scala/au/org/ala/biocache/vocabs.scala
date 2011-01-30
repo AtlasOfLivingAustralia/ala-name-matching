@@ -2,21 +2,17 @@ package au.org.ala.biocache
 
 /**
  * Case class that encapsulates a canonical form and variants.
- * @author Dave Martin (David.Martin@csiro.au)
  */
 case class Term (canonical:String, variants:Array[String])
 
 /**
  * Case class that represents an error code for a occurrence record.
- * @author Dave Martin (David.Martin@csiro.au)
  */
 case class ErrorCode(name:String, code:Int)
 
 /**
  * A trait for a vocabulary. A vocabulary consists of a set
  * of Terms, each with string variants.
- * 
- * @author Dave Martin (David.Martin@csiro.au)
  */
 trait Vocab {
   val all:Array[Term]
@@ -53,8 +49,7 @@ trait Vocab {
 }
 
 /**
- * Quick state string matching.
- * @author Dave Martin (David.Martin@csiro.au)
+ * Quick state string matching implementation.
  */
 object States extends Vocab {
   val act = new Term("Australian Capital Territory", Array("AustCapitalTerritory","AustCapitalTerrit","AusCap","AusCapTerrit","ACT"))
@@ -68,6 +63,10 @@ object States extends Vocab {
   val all = retrieveAll
 }
 
+/**
+ * Matching of coordinates for centre points for states.
+ * This is for detecting auto-generated coordinates at very low accuracy.
+ */
 object StateCentrePoints {
   val map = Map(
     States.act -> (-35.4734679f, 149.0123679f),
@@ -80,6 +79,10 @@ object StateCentrePoints {
     States.wa -> (-27.6728168f, 121.6283098f)
   )
 
+  /**
+   * Returns true if the supplied coordinates are the centre point for the supplied
+   * state or territory
+   */
   def coordinatesMatchCentre(state:String, decimalLatitude:String, decimalLongitude:String) : Boolean = {
     val matchedState = States.matchTerm(state)
     if(!matchedState.isEmpty){
@@ -114,6 +117,9 @@ object StateCentrePoints {
     }
   }
 
+  /**
+   * Round to the supplied no of decimal places.
+   */
   def round(number:Float, decimalPlaces:Int) : Float = {
     if(decimalPlaces>0){
       var x = 1
@@ -135,7 +141,9 @@ object StateCentrePoints {
   }
 }
 
-
+/**
+ * Vocabulary matcher for basis of record values.
+ */
 object BasisOfRecord extends Vocab {
   val specimen = new Term("PreservedSpecimen", Array("specimen","s", "spec", "sp"))
   val observation = new Term("HumanObservation", Array("observation","o","obs"))
@@ -144,6 +152,9 @@ object BasisOfRecord extends Vocab {
   val all = retrieveAll
 }
 
+/**
+ * Vocabulary matcher for type status values.
+ */
 object TypeStatus extends Vocab {
   val allolectotype = new Term("allolectotype", Array[String]())
   val alloneotype = new Term("alloneotype", Array[String]())
@@ -187,6 +198,8 @@ object TypeStatus extends Vocab {
 }
 
 trait VocabMaps {
+
+  /** The map of terms to query against */
   val termMap:Map[String, Array[String]]
 
   /**
@@ -215,8 +228,7 @@ trait VocabMaps {
   }
 
   /**
-   * Returns None if the term wasnt recognised.
-   * If it was recognised, then we can test it.
+   * Returns None if the term wasnt recognised. If it was recognised, then we can test it.
    *
    * @param term1
    * @param term2
