@@ -1,29 +1,14 @@
 package au.org.ala.util
 
-import au.org.ala.biocache.HabitatMap
-import au.org.ala.biocache.Raw
-import au.org.ala.biocache.Processed
-import au.org.ala.biocache.TaxonProfileDAO
-import au.org.ala.biocache.AttributionDAO
 import org.apache.commons.lang.time.DateFormatUtils
 import org.wyki.cassandra.pelops.Pelops
-import au.org.ala.biocache.DAO
-import au.org.ala.biocache.TypeStatus
-import au.org.ala.biocache.BasisOfRecord
-import au.org.ala.biocache.AssertionCodes
-import au.org.ala.biocache.QualityAssertion
-import au.org.ala.biocache.States
-import au.org.ala.biocache.LocationDAO
 import au.org.ala.checklist.lucene.HomonymException
 import au.org.ala.data.model.LinnaeanRankClassification
-import au.org.ala.biocache.OccurrenceDAO
-import au.org.ala.biocache.FullRecord
 import java.util.GregorianCalendar
 import scala.collection.mutable.ArrayBuffer
 import au.org.ala.checklist.lucene.SearchResultException
-import au.org.ala.biocache.DateParser
-
 import org.slf4j.LoggerFactory
+import au.org.ala.biocache._
 
 /**
  * 1. Classification matching
@@ -357,8 +342,9 @@ object ProcessRecords {
         }
 
         //TODO check centre point of the state
-
-
+        if(StateCentrePoints.coordinatesMatchCentre(point.get.stateProvince, raw.l.decimalLatitude, raw.l.decimalLongitude)){
+          assertions + QualityAssertion(AssertionCodes.STATE_CENTRE_COORDINATES,false,"Coordinates are centre point of "+point.get.stateProvince)
+        }
       }
     }
     assertions.toArray
