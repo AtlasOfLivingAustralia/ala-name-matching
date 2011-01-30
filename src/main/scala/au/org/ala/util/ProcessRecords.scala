@@ -347,6 +347,14 @@ object ProcessRecords {
         }
       }
     }
+
+    if(processed.l.stateProvince ==null){
+      //process the supplied state
+      val stateTerm = States.matchTerm(raw.l.stateProvince)
+      if(!stateTerm.isEmpty){
+        processed.l.stateProvince = stateTerm.get.canonical
+      }
+    }
     assertions.toArray
   }
 
