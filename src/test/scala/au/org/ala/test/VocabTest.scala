@@ -1,14 +1,15 @@
 package au.org.ala.test
 
-import scala.actors.Actor
-import scala.actors.Actor._
 import au.org.ala.biocache.HabitatMap
-import junit.framework.TestCase
+import org.scalatest.FunSuite
 
-class VocabTest extends TestCase {
+class VocabTest extends FunSuite {
   
-  def testVocabs {
-	println(HabitatMap.isCompatible("non-marine", "terrestrial"))
+  test("Expect non marine to match terrestrial"){
+	  expect(true){HabitatMap.isCompatible("non-marine", "terrestrial").get}
   }
-  
+
+  test("Expect  marine to not match terrestrial"){
+	  expect(false){HabitatMap.isCompatible("marine", "terrestrial").get}
+  }
 }

@@ -113,7 +113,6 @@ object ProcessRecords {
     assertions ++ processAttribution(guid, raw, processed)
 
     //perform SDS lookups - retrieve from BIE for now....
-
     // processImages
     // processLinkRecord
     // processIdentifierRecords 
@@ -122,7 +121,7 @@ object ProcessRecords {
     processed.assertions = assertions.toArray.map(_.assertionName)
 
     //store the occurrence
-    OccurrenceDAO.updateOccurrence(guid, processed, assertions, Processed)
+    OccurrenceDAO.updateOccurrence(guid, processed, assertions.toArray, Processed)
   }
 
   /**
@@ -248,7 +247,6 @@ object ProcessRecords {
     //if invalid date, add assertion
     if (invalidDate) {
       assertions + QualityAssertion(AssertionCodes.OTHER_INVALID_DATE,false,comment)
-//      OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.OTHER_INVALID_DATE)
     }
 
     assertions.toArray
@@ -264,7 +262,6 @@ object ProcessRecords {
       if (term.isEmpty) {
         //add a quality assertion
         Array(QualityAssertion(AssertionCodes.OTHER_UNRECOGNISED_TYPESTATUS,false,"Unrecognised type status"))
-//        OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.OTHER_UNRECOGNISED_TYPESTATUS)
       } else {
         processed.o.basisOfRecord = term.get.canonical
         Array()
@@ -288,7 +285,6 @@ object ProcessRecords {
         //add a quality assertion
         logger.debug("[QualityAssertion] " + guid + ", unrecognised BoR: " + guid + ", BoR:" + raw.o.basisOfRecord)
         Array(QualityAssertion(AssertionCodes.OTHER_MISSING_BASIS_OF_RECORD,false,"Unrecognised basis of record"))
-//        Array(QualityAssertion(OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.OTHER_UNRECOGNISED_TYPESTATUS)))
       } else {
         processed.o.basisOfRecord = term.get.canonical
         Array[QualityAssertion]()
@@ -333,7 +329,6 @@ object ProcessRecords {
             val comment = "Supplied: " + stateTerm.get.canonical + ", calculated: " + processed.l.stateProvince
             assertions + QualityAssertion(AssertionCodes.GEOSPATIAL_STATE_COORDINATE_MISMATCH,false,comment)
             //store the assertion
-//            OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.GEOSPATIAL_STATE_COORDINATE_MISMATCH)
           }
         }
 
@@ -355,7 +350,6 @@ object ProcessRecords {
                       + ", http://maps.google.com/?ll="+processed.l.decimalLatitude+","+processed.l.decimalLongitude)
                   val comment = "Recognised habitats for species: " + habitatsAsString+", Value determined from coordinates: "+habitatFromPoint
                   assertions + QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH,false,comment)
-                  //OccurrenceDAO.addQualityAssertion(guid, qa, AssertionCodes.COORDINATE_HABITAT_MISMATCH)
                 }
               }
             }
