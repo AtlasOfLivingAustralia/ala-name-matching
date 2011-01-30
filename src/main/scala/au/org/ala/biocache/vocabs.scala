@@ -70,15 +70,69 @@ object States extends Vocab {
 
 object StateCentrePoints {
   val map = Map(
-    "ACT" -> (-35.4734679, 149.0123679),
-    "NSW" -> (-31.2532183, 146.921099),
-    "NT" -> (-19.4914108, 132.5509603),
-    "QLD" -> (-20.9175738, 142.7027956),
-    "SA" -> (-30.0002315, 136.2091547),
-    "TAS" -> (-41.3650419, 146.6284905),
-    "VIC" -> (-37.4713077, 144.7851531),
-    "WA" -> (-27.6728168, 121.6283098)
+    States.act -> (-35.4734679f, 149.0123679f),
+    States.nsw -> (-31.2532183f, 146.921099f),
+    States.nt -> (-19.4914108f, 132.5509603f),
+    States.qld -> (-20.9175738f, 142.7027956f),
+    States.sa -> (-30.0002315f, 136.2091547f),
+    States.tas -> (-41.3650419f, 146.6284905f),
+    States.vic -> (-37.4713077f, 144.7851531f),
+    States.wa -> (-27.6728168f, 121.6283098f)
   )
+
+  def coordinatesMatchCentre(state:String, decimalLatitude:String, decimalLongitude:String) : Boolean = {
+    val matchedState = States.matchTerm(state)
+    if(!matchedState.isEmpty){
+
+      val coordinates = map.get(matchedState.get)
+
+      //how many decimal places are the supplied coordinates
+      try {
+          val latitude = decimalLatitude.toFloat
+          val longitude = decimalLongitude.toFloat
+
+          val latDecPlaces = noOfDecimalPlace(latitude)
+          val longDecPlaces = noOfDecimalPlace(longitude)
+
+          //println("Decimal places: "+latDecPlaces +", "+longDecPlaces)
+          //approximate the centre points appropriately
+          val approximatedLat = round(coordinates.get._1,latDecPlaces)
+          val approximatedLong = round(coordinates.get._2,longDecPlaces)
+
+          //println("Rounded values: "+approximatedLat +", "+approximatedLong)
+
+          if(approximatedLat == latitude && approximatedLong == longitude){
+            true
+          } else {
+            false
+          }
+      } catch {
+        case e:NumberFormatException => false
+      }
+    } else {
+      false
+    }
+  }
+
+  def round(number:Float, decimalPlaces:Int) : Float = {
+    if(decimalPlaces>0){
+      var x = 1
+      for (i <- 0 until decimalPlaces) x = x * 10
+      (((number * x).toInt).toFloat) / x
+    } else {
+      number.round
+    }
+  }
+
+  def noOfDecimalPlace(number:Float) : Int = {
+    val numberString = number.toString
+    val decimalPointLoc = numberString.indexOf(".")
+    if(decimalPointLoc<0) {
+      0
+    } else {
+       numberString.substring(decimalPointLoc+1).length
+    }
+  }
 }
 
 
@@ -220,6 +274,7 @@ object AssertionCodes {
   val GEOSPATIAL_COUNTRY_COORDINATE_MISMATCH = ErrorCode("qaCountryCoordinateMismatch",6)
   val GEOSPATIAL_STATE_COORDINATE_MISMATCH = ErrorCode("qaStateCoordinateMismatch",17)
   val COORDINATE_HABITAT_MISMATCH = ErrorCode("qaHabitatMismatch",18)
+  val STATE_CENTRE_COORDINATES = ErrorCode("qaStateCentreCoordinates",19)
 
   val TAXONOMIC_INVALID_SCIENTIFIC_NAME = ErrorCode("qaInvalidScientificName",1001)
   val TAXONOMIC_UNKNOWN_KINGDOM = ErrorCode("qaUnknownKingdom",1002)
