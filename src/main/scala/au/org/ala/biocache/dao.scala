@@ -22,6 +22,7 @@ object DAO {
   val keyspace = "occ"
   val poolName = "biocache-store-pool"
   val nameIndex= new CBIndexSearch("/data/lucene/namematching")
+  val maxColumnLimit = 10000
 
   Pelops.addPool(poolName, hosts, 9160, false, keyspace, new Policy)
   //read in the ORM mappings
@@ -63,6 +64,30 @@ object OccurrenceDAO {
   }
 
   /**
+   * Get all versions of the occurrence with UUID
+   *
+   * @param uuid
+   * @return
+   */
+  def getAllVersionsByUuid(uuid:String) : Option[Array[FullRecord]] = {
+
+    val selector = Pelops.createSelector(DAO.poolName, DAO.keyspace)
+    val slicePredicate = Selector.newColumnsPredicateAll(true, DAO.maxColumnLimit)
+    try {
+      val columnList = selector.getColumnsFromRow(uuid, columnFamily, slicePredicate, ConsistencyLevel.ONE)
+      val map = columnList2Map(columnList)
+      //create the versions of the record
+      val raw = createOccurrence(uuid, map, Raw)
+      val processed = createOccurrence(uuid, map, Processed)
+      val consensus = createOccurrence(uuid, map, Consensus)
+      //pass all version to the procedure, wrapped in the Option
+      Some(Array(raw, processed, consensus))
+    } catch {
+      case e:NotFoundException => None
+    }
+  }
+
+  /**
    * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
    */
   def getByUuidJ(uuid:String) : FullRecord = {
@@ -80,13 +105,17 @@ object OccurrenceDAO {
    * @param occurrenceType
    * @return
    */
-  def getByUuid(uuid:String, recordVersion:Version) : Option[FullRecord] = {
+  def getByUuid(uuid:String, version:Version) : Option[FullRecord] = {
 
     val selector = Pelops.createSelector(DAO.poolName, DAO.keyspace)
-    val slicePredicate = Selector.newColumnsPredicateAll(true, 10000)
-    val occurrence = new Occurrence
-    val columnList = selector.getColumnsFromRow(uuid, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-    createOccurrence(uuid, columnList, recordVersion)
+    val slicePredicate = Selector.newColumnsPredicateAll(true, DAO.maxColumnLimit)
+    try {
+      val columnList = selector.getColumnsFromRow(uuid, columnFamily, slicePredicate, ConsistencyLevel.ONE)
+      val map = columnList2Map(columnList)
+      Some(createOccurrence(uuid, map, version))
+    } catch {
+      case e:NotFoundException => None
+    }
   }
 
   /**
@@ -122,26 +151,29 @@ object OccurrenceDAO {
    * @param uuid
    * @param columnList
    * @param occurrenceType raw, processed or consensus version of the record
-   * @return
    */
-  protected def createOccurrence(uuid:String, columnList:java.util.List[Column], version:Version)
-    : Option[FullRecord] = {
+  protected def createOccurrence(uuid:String, columnList:java.util.List[Column], version:Version) : FullRecord = {
+    //convert the list to map
+    val map = columnList2Map(columnList)
+    createOccurrence(uuid, map, version)
+  }
 
+  /**
+   * Convert a set of cassandra columns into a key-value pair map.
+   */
+  protected def columnList2Map(columnList:java.util.List[Column]) : Map[String,String] = {
     val tuples = {
       for(column <- columnList)
         yield (new String(column.name), new String(column.value))
     }
     //convert the list
-    val map = Map(tuples map {s => (s._1, s._2)} : _*)
-
-    createOccurrence(uuid, map, version)
+    Map(tuples map {s => (s._1, s._2)} : _*)
   }
 
   /**
    * Create a record from a array of tuple properties
    */
-  def createOccurrence(uuid:String, fieldTuples:Array[(String,String)], version:Version)
-    : Option[FullRecord] = {
+  def createOccurrence(uuid:String, fieldTuples:Array[(String,String)], version:Version) : FullRecord = {
     val fieldMap = Map(fieldTuples map {s => (s._1, s._2)} : _*)
     createOccurrence(uuid, fieldMap, version)
   }
@@ -149,8 +181,7 @@ object OccurrenceDAO {
   /**
    * Creates an FullRecord from the map of properties
    */
-  def createOccurrence(uuid:String, fields:Map[String,String], version:Version)
-    : Option[FullRecord] = {
+  def createOccurrence(uuid:String, fields:Map[String,String], version:Version) : FullRecord = {
 
     val occurrence = new Occurrence
     val classification = new Classification
@@ -169,18 +200,20 @@ object OccurrenceDAO {
           setProperty(occurrence, classification, location, event, assertions, removeSuffix(fieldName), fieldValue.get)
         } else if(isConsensusValue(fieldName) && version == Consensus){
           setProperty(occurrence, classification, location, event, assertions, removeSuffix(fieldName), fieldValue.get)
-        } else {
+        } else if(version == Raw){
           setProperty(occurrence, classification, location, event, assertions, fieldName, fieldValue.get)
         }
       }
     }
-    //TODO retrieve assertions
-    Some(new FullRecord(occurrence, classification, location, event, assertions.toArray))
-
+    //construct the full record
+    new FullRecord(occurrence, classification, location, event, assertions.toArray)
   }
 
+  /** Remove the suffix indicating the version of the field*/
   private def removeSuffix(name:String) : String = name.substring(0, name.length - 2)
+  /** Is this a "processed" value? */
   private def isProcessedValue(name:String) : Boolean = name endsWith ".p"
+  /** Is this a "consensus" value? */
   private def isConsensusValue(name:String) : Boolean = name endsWith ".c"
   private def markAsProcessed(name:String) : String = name + ".p"
   private def markAsConsensus(name:String) : String = name + ".c"
@@ -234,7 +267,7 @@ object OccurrenceDAO {
   }
 
   /**
-   * Select fields from rows...
+   * Select fields from rows and pass to the supplied function.
    */
   def selectRows(uuids:Array[String],fields:Array[String],version:Version, proc:((Map[String,String])=>Unit)) {
     val selector = Pelops.createSelector(DAO.poolName, columnFamily)
@@ -259,15 +292,33 @@ object OccurrenceDAO {
   }
 
   /**
+   * Iterate over all occurrences, passing all versions of FullRecord
+   * to the supplied function.
+   *
+   * @param occurrenceType
+   * @param proc
+   */
+  def pageOverAllVersions(proc:((Option[Array[FullRecord]])=>Unit) ) {
+     pageOverAll((guid, map) => {
+       //retrieve all versions
+       val raw = createOccurrence(guid, map, Raw)
+       val processed = createOccurrence(guid, map, Processed)
+       val consensus = createOccurrence(guid, map, Consensus)
+       //pass all version to the procedure, wrapped in the Option
+       proc(Some(Array(raw, processed, consensus)))
+     })
+  }
+
+  /**
    * Iterate over all occurrences, passing the objects to a function.
    *
    * @param occurrenceType
    * @param proc
    */
-  def pageOverAll(occurrenceType:Version, proc:((Option[FullRecord])=>Unit) ) {
+  def pageOverAll(proc:((String, Map[String,String])=>Unit) ) {
 
     val selector = Pelops.createSelector(DAO.poolName, columnFamily)
-    val slicePredicate = Selector.newColumnsPredicateAll(true, 10000)
+    val slicePredicate = Selector.newColumnsPredicateAll(true, DAO.maxColumnLimit)
     var startKey = ""
     var keyRange = Selector.newKeyRange(startKey, "", 1001)
     var hasMore = true
@@ -278,9 +329,12 @@ object OccurrenceDAO {
       //convert to scala List
       val keys = columnsObj.asInstanceOf[List[String]]
       startKey = keys.last
-      for(key<-keys){
-        val columnsList = columnMap.get(key)
-        proc(createOccurrence(key, columnsList, occurrenceType))
+      for(uuid<-keys){
+        val columnList = columnMap.get(uuid)
+        //procedure a map of key value pairs
+        val map = columnList2Map(columnList)
+        //pass the record ID and the key value pair map to the proc
+        proc(uuid, map)
       }
       counter += keys.size
       keyRange = Selector.newKeyRange(startKey, "", 1001)
@@ -288,6 +342,22 @@ object OccurrenceDAO {
       columnMap.remove(startKey)
     }
     println("Finished paging. Total count: "+counter)
+  }
+
+  /**
+   * Iterate over all occurrences, passing the objects to a function.
+   *
+   * @param occurrenceType
+   * @param proc
+   */
+  def pageOverAll(version:Version, proc:((Option[FullRecord])=>Unit) ) {
+
+     pageOverAll((guid, map) => {
+       //retrieve all versions
+       val fullRecord = createOccurrence(guid, map, version)
+       //pass all version to the procedure, wrapped in the Option
+       proc(Some(fullRecord))
+     })
   }
 
   /**
@@ -304,16 +374,16 @@ object OccurrenceDAO {
   }
 
   /**
-   * Update the occurrence record.
+   * Update the version of the occurrence record.
    */
-  def updateOccurrence(guid:String, fullRecord:FullRecord, version:Version) {
-    updateOccurrence(guid,fullRecord,Array(),version)
+  def updateOccurrence(uuid:String, fullRecord:FullRecord, version:Version) {
+    updateOccurrence(uuid,fullRecord,Array(),version)
   }
 
   /**
    * Update the occurrence with the supplied record, setting the correct version
    */
-  def updateOccurrence(guid:String, fullRecord:FullRecord, assertions:Array[QualityAssertion], version:Version) {
+  def updateOccurrence(uuid:String, fullRecord:FullRecord, assertions:Array[QualityAssertion], version:Version) {
 
     val mutator = Pelops.createMutator(DAO.poolName, columnFamily)
 
@@ -330,21 +400,21 @@ object OccurrenceDAO {
           if(version == Consensus){
             fieldName = markAsConsensus(fieldName)
           }
-          mutator.writeColumn(guid, columnFamily, mutator.newColumn(fieldName, fieldValue))
+          mutator.writeColumn(uuid, columnFamily, mutator.newColumn(fieldName, fieldValue))
         }
       }
     }
 
     //set the quality assertions flags
     for(qa <- fullRecord.assertions){
-      mutator.writeColumn(guid, columnFamily, mutator.newColumn(qa, "true"))
+      mutator.writeColumn(uuid, columnFamily, mutator.newColumn(qa, "true"))
     }
 
     if(!assertions.isEmpty){
       //serialise the assertion list to JSON and DB
       val gson = new Gson
       val json = gson.toJson(assertions)
-      mutator.writeColumn(guid, columnFamily, mutator.newColumn(qualityAssertionColumn, json))
+      mutator.writeColumn(uuid, columnFamily, mutator.newColumn(qualityAssertionColumn, json))
     }
 
     //commit to cassandra

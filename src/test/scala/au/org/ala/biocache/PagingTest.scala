@@ -1,13 +1,16 @@
 package au.org.ala.biocache
+
+import org.scalatest.FunSuite
+
 /**
  * Demonstrator paging code.
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */
-object PagingTest {
+class PagingTests extends FunSuite {
 
-
-  def main(args : Array[String]) : Unit = {
+  /*
+  test("Paging of first ten records"){
     var count = 0
     OccurrenceDAO.pageOverAll(Raw, fullRecord => {
         val occurrence = fullRecord.get.o
@@ -16,7 +19,25 @@ object PagingTest {
         val event = fullRecord.get.e
         println(occurrence.uuid+"\t"+classification.genus+"\t"+classification.specificEpithet+"\t"+classification.scientificName)
         count +=1
-        if(count>10) System.exit(1)
+        if(count>10) exit(1)
+      }
+    )
+  } */
+
+  test("Paging over all versions"){
+    var count = 0
+    OccurrenceDAO.pageOverAllVersions(recordVersions => {
+        val versions = recordVersions.get
+        expect(3){versions.length}
+        for(fullRecord <- versions){
+          val occurrence = fullRecord.o
+          val classification = fullRecord.c
+          val location = fullRecord.l
+          val event = fullRecord.e
+          println(occurrence.uuid+"\t"+classification.genus+"\t"+classification.specificEpithet+"\t"+classification.scientificName)
+        }
+        count +=1
+        if(count>10) exit(1)
       }
     )
   }
