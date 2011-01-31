@@ -1,6 +1,7 @@
 package au.org.ala.biocache
 
 import org.scalatest.FunSuite
+import org.wyki.cassandra.pelops.Pelops
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,8 +27,10 @@ class VersionTests extends FunSuite {
     consensus.o.uuid = uuid
     consensus.c.scientificName = "Consenus version"
 
+    val assertions = Array(QualityAssertion(AssertionCodes.GEOSPATIAL_COORDINATES_OUT_OF_RANGE, false, "Coordinates bad"))
+
     OccurrenceDAO.updateOccurrence(uuid,raw,Raw)
-    OccurrenceDAO.updateOccurrence(uuid,processed,Processed)
+    OccurrenceDAO.updateOccurrence(uuid,processed,assertions,Processed)
     OccurrenceDAO.updateOccurrence(uuid,consensus,Consensus)
 
     //retrieve and test
@@ -38,5 +41,11 @@ class VersionTests extends FunSuite {
     expect("Raw version"){array(0).c.scientificName}
     expect("Processed version"){array(1).c.scientificName}
     expect("Consenus version"){array(2).c.scientificName}
+
+    expect(1){array(0).assertions.length}
+    expect(1){array(1).assertions.length}
+    expect(1){array(2).assertions.length}
+
+    Pelops.shutdown
   }
 }
