@@ -70,9 +70,7 @@ object DwCLoader {
       val recordUuid = OccurrenceDAO.createOrRetrieveUuid(uniqueID)
 
       val fullRecord = OccurrenceDAO.createOccurrence(recordUuid, fieldTuples, Raw)
-      if(!fullRecord.isEmpty){
-        OccurrenceDAO.updateOccurrence(recordUuid, fullRecord.get, Raw)
-      }
+      OccurrenceDAO.updateOccurrence(recordUuid, fullRecord, Raw)
 
       //debug
       if (count % 1000 == 0 && count > 0) {
