@@ -33,14 +33,25 @@ object DAO {
   val classificationDefn = fileToArray("/Classification.txt")
   val identificationDefn = fileToArray("/Identification.txt")
 
-  def fileToArray(filePath:String) : List[String] =
+  protected def fileToArray(filePath:String) : List[String] =
     scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map(_.trim)
 }
 
 /**
  * A trait to implement by java classes to process occurrence records.
  */
-trait OccurrenceConsumer { def consume(record:FullRecord) }
+trait OccurrenceConsumer {
+  /** Consume the supplied record */
+  def consume(record:FullRecord)
+}
+
+/**
+ * A trait to implement by java classes to process occurrence records.
+ */
+trait OccurrenceVersionConsumer {
+  /** Passes an array of versions. Raw, Process and consensus versions */
+  def consume(record:Array[FullRecord])
+}
 
 /**
  * A DAO for accessing occurrences.
@@ -308,6 +319,21 @@ object OccurrenceDAO {
        proc(Some(Array(raw, processed, consensus)))
      })
   }
+
+  /**
+   * Page over all versions of the record, handing off to the OccurrenceVersionConsumer.
+   */
+  def pageOverAllVersions(consumer:OccurrenceVersionConsumer) {
+     pageOverAll((guid, map) => {
+       //retrieve all versions
+       val raw = createOccurrence(guid, map, Raw)
+       val processed = createOccurrence(guid, map, Processed)
+       val consensus = createOccurrence(guid, map, Consensus)
+       //pass all version to the procedure, wrapped in the Option
+       consumer.consume(Array(raw, processed, consensus))
+     })
+  }
+
 
   /**
    * Iterate over all occurrences, passing the objects to a function.
