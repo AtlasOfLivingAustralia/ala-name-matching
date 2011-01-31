@@ -111,10 +111,6 @@ object OccurrenceDAO {
   }  
   /**
    * Get an occurrence, specifying the version of the occurrence.
-   *
-   * @param uuid
-   * @param occurrenceType
-   * @return
    */
   def getByUuid(uuid:String, version:Version) : Option[FullRecord] = {
 
@@ -131,12 +127,6 @@ object OccurrenceDAO {
 
   /**
    * Set the property on the correct model object
-   * @param o the occurrence
-   * @param c the classification
-   * @param l the location
-   * @param e the event
-   * @param fieldName the field to set
-   * @param fieldValue the value to set
    */
   protected def setProperty(o:Occurrence, c:Classification, l:Location, e:Event, assertions:ArrayBuffer[String], 
 		  fieldName:String, fieldValue:String){
@@ -148,7 +138,7 @@ object OccurrenceDAO {
       e.setter(fieldName,fieldValue)
     } else if(DAO.locationDefn.contains(fieldName)){
       l.setter(fieldName,fieldValue)
-    } else if(fieldName startsWith "qa"){
+    } else if(fieldName endsWith ".qa"){
       assertions.add(fieldName)
     }
   }
@@ -213,6 +203,8 @@ object OccurrenceDAO {
           setProperty(occurrence, classification, location, event, assertions, removeSuffix(fieldName), fieldValue.get)
         } else if(version == Raw){
           setProperty(occurrence, classification, location, event, assertions, fieldName, fieldValue.get)
+        } else if(isQualityAssertion(fieldName)){
+          setProperty(occurrence, classification, location, event, assertions, fieldName, fieldValue.get)
         }
       }
     }
@@ -226,6 +218,11 @@ object OccurrenceDAO {
   private def isProcessedValue(name:String) : Boolean = name endsWith ".p"
   /** Is this a "consensus" value? */
   private def isConsensusValue(name:String) : Boolean = name endsWith ".c"
+  /** Is this a "consensus" value? */
+  private def isQualityAssertion(name:String) : Boolean = name endsWith ".qa"
+
+
+
   private def markAsProcessed(name:String) : String = name + ".p"
   private def markAsConsensus(name:String) : String = name + ".c"
 
@@ -431,9 +428,12 @@ object OccurrenceDAO {
       }
     }
 
+    //set the assertions on the full record
+    fullRecord.assertions = assertions.toArray.map(_.assertionName)
+
     //set the quality assertions flags
-    for(qa <- fullRecord.assertions){
-      mutator.writeColumn(uuid, columnFamily, mutator.newColumn(qa, "true"))
+    for(qa <- assertions){
+      mutator.writeColumn(uuid, columnFamily, mutator.newColumn(qa.assertionName+".qa", qa.positive.toString))
     }
 
     if(!assertions.isEmpty){
