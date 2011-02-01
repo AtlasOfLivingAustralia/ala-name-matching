@@ -60,6 +60,9 @@ class Occurrence extends Cloneable {
   @BeanProperty var typeStatus:String = _
 }
 
+/**
+ * POSO for handling details of a classification associated with an occurrence.
+ */
 class Classification extends Cloneable {
   override def clone : Classification = super.clone.asInstanceOf[Classification]
   @BeanProperty var scientificName:String = _
@@ -112,6 +115,9 @@ class Classification extends Cloneable {
   @BeanProperty var right:String = _
 }
 
+/**
+ * POSO for holding measurement information for an occurrence.
+ */
 class Measurement extends Cloneable {
   override def clone : Measurement = super.clone.asInstanceOf[Measurement]
   @BeanProperty var measurementAccuracy:String = _
@@ -125,6 +131,9 @@ class Measurement extends Cloneable {
   @BeanProperty var measurementValue:String = _
 }
 
+/**
+ * POSO for handling identification information for an occurrence.
+ */
 class Identification extends Cloneable {
   override def clone : Identification = super.clone.asInstanceOf[Identification]
   @BeanProperty var dateIdentified:String = _
@@ -137,6 +146,9 @@ class Identification extends Cloneable {
   @BeanProperty var typeStatus:String = _
 }
 
+/**
+ * POSO for holding event data for an occurrence
+ */
 class Event extends Cloneable {
   override def clone : Event = super.clone.asInstanceOf[Event]
   @BeanProperty var day:String = _
@@ -155,6 +167,9 @@ class Event extends Cloneable {
   @BeanProperty var endYear:String = _
 }
 
+/**
+ * POSO for holding location information for an occurrence.
+ */
 class Location extends Cloneable {
   override def clone : Location = super.clone.asInstanceOf[Location]
   @BeanProperty var uuid:String = _	
@@ -217,6 +232,9 @@ case object Raw extends Version
 case object Processed extends Version
 case object Consensus extends Version
 
+/**
+ * Enum of occurrence record versions
+ */
 object Versions {
   val RAW = Raw
   val PROCESSED = Processed
@@ -239,6 +257,9 @@ class TaxonProfile (
   override def clone : TaxonProfile = super.clone.asInstanceOf[TaxonProfile]
 }
 
+/**
+ * Represents the full attribution for a record.
+ */
 class Attribution (
   @BeanProperty var dataProviderUid:String,
   @BeanProperty var dataResourceUid:String,
@@ -254,7 +275,6 @@ class Attribution (
 
 /**
  * Encapsulates a complete specimen or occurrence record.
- * TODO add quality assertions.....
  */
 class FullRecord (
   @BeanProperty var o:Occurrence,
@@ -271,8 +291,6 @@ class FullRecord (
  * Quality Assertions are made by man or machine.
  * Man - provided through a UI, giving a positive or negative assertion
  * Machine - provided through backend processing
- * 
- * @author Dave Martin (David.Martin@csiro.au)
  */
 class QualityAssertion (
   @BeanProperty var uuid:String,
@@ -297,7 +315,6 @@ class QualityAssertion (
 /**
  * A companion object for the QualityAssertion class that provides factory
  * type functionality.
- * @author Dave Martin (David.Martin@csiro.au)
  */
 object QualityAssertion {
   def apply(errorCode:ErrorCode,positive:Boolean,comment:String) = {
