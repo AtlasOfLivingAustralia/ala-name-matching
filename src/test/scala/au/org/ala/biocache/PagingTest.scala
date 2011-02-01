@@ -3,7 +3,7 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 
 /**
- * Demonstrator paging code.
+ * Demonstrator paging code.  Need to find a way of running this as tests.
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */
@@ -22,7 +22,7 @@ class PagingTests extends FunSuite {
         if(count>10) exit(1)
       }
     )
-  } */
+  }
 
   test("Paging over all versions"){
     var count = 0
@@ -41,4 +41,5 @@ class PagingTests extends FunSuite {
       }
     )
   }
+  */
 }
