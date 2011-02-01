@@ -12,7 +12,7 @@ import org.apache.commons.lang.StringUtils;
  * A model to store the required information in a search result
  *
  * This includes the type of match that was used to get the result
- * 
+ *
  * @author Natasha
  */
 public class NameSearchResult {
@@ -23,6 +23,7 @@ public class NameSearchResult {
     private String acceptedLsid;
     private long acceptedId = -1;
     private String kingdom;
+    private String left,right;
     private LinnaeanRankClassification rankClass;
     private RankType rank;
     public enum MatchType{
@@ -50,6 +51,17 @@ public class NameSearchResult {
                                                    doc.get(RankType.GENUS.getRank()),
                                                    doc.get(IndexField.NAME.toString()));
         rankClass.setSpecies(doc.get(RankType.SPECIES.getRank()));
+        //add the ids
+        rankClass.setKid(doc.get("kid"));
+        rankClass.setPid(doc.get("pid"));
+        rankClass.setCid(doc.get("cid"));
+        rankClass.setOid(doc.get("oid"));
+        rankClass.setFid(doc.get("fid"));
+        rankClass.setGid(doc.get("gid"));
+        rankClass.setSid(doc.get("sid"));
+        //left and right values for the taxon concept
+        left = doc.get("left");
+        right = doc.get("right");
         String syn = doc.get(IndexField.ACCEPTED.toString());
         if(syn != null){
             String[] synDetails = syn.split("\t",2);
@@ -122,7 +134,7 @@ public class NameSearchResult {
     public String getSynonymLsid(){
         return getAcceptedLsid();
     }
-    
+
     /**
      *
      * @return The accepted LSID for this name.  When the
@@ -146,4 +158,22 @@ public class NameSearchResult {
     public void setRank(RankType rank) {
         this.rank = rank;
     }
+
+    public String getLeft() {
+        return left;
+    }
+
+    public void setLeft(String left) {
+        this.left = left;
+    }
+
+    public String getRight() {
+        return right;
+    }
+
+    public void setRight(String right) {
+        this.right = right;
+    }
+
+
 }

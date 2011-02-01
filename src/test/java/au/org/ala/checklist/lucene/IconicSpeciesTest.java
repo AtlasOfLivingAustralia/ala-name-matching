@@ -133,7 +133,7 @@ public class IconicSpeciesTest {
                         if(result.isSynonym())
                             result = searcher.searchForRecordByLsid(result.getAcceptedLsid());
                         //test to see if the classification matches
-                        if(!classification.hasIdenticalClassification(result.getRankClassification())){
+                        if(!classification.hasIdenticalClassification(result.getRankClassification(), RankType.GENUS)){
                        
                             failed++;
                             //System.err.println(search + "("+commonName+") classification: "+ classification + " does not match " + result.getRankClassification());

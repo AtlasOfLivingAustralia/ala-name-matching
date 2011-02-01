@@ -15,6 +15,7 @@
 package au.org.ala.data.model;
 
 
+import au.org.ala.data.util.RankType;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -27,20 +28,27 @@ import org.apache.commons.lang.builder.ToStringBuilder;
  */
 public class LinnaeanRankClassification {
 	protected String kingdom;
+        protected String kid;
 	protected String phylum;
+        protected String pid;
 	protected String klass;
+        protected String cid;
 	protected String order;
+        protected String oid;
 	protected String family;
+        protected String fid;
 	protected String genus; // Aus
+        protected String gid;
     protected String species; // Aus bus
+    protected String sid;
 	protected String specificEpithet; // bus
 	protected String subspecies; // Aus bus cus
 	protected String infraspecificEpithet; // cus
 	protected String scientificName;
-	
+
 	public LinnaeanRankClassification(String kingdom, String phylum,
 			String klass, String order, String family, String genus,
-			String species, String specificEpithet, String subspecies, String infraspecificEpithet, 
+			String species, String specificEpithet, String subspecies, String infraspecificEpithet,
 			String scientificName) {
 		this.kingdom = kingdom;
 		this.phylum = phylum;
@@ -80,7 +88,7 @@ public class LinnaeanRankClassification {
 	public LinnaeanRankClassification(String kingdom, String genus){
             this(kingdom, null, null, null, null, genus, null);
         }
-        
+
 	/**
 	 * @return Returns the family.
 	 */
@@ -211,6 +219,77 @@ public class LinnaeanRankClassification {
 	public void setSubspecies(String subspecies) {
 		this.subspecies = subspecies;
 	}
+
+        /**
+         *
+         * @return the identification for the kingdom, either a CB ID or GUID
+         */
+        public String getKid() {
+            return kid;
+        }
+
+        public void setKid(String kid) {
+            this.kid = kid;
+        }
+        /**
+         *
+         * @return the identification for the phylum, either a CB ID or GUID
+         */
+        public String getPid() {
+            return pid;
+        }
+
+        public void setPid(String pid) {
+            this.pid = pid;
+        }
+        /**
+         *
+         * @return the identification for the class, either a CB ID or GUID
+         */
+        public String getCid() {
+            return cid;
+        }
+
+        public void setCid(String cid) {
+            this.cid = cid;
+        }
+        /**
+         *
+         * @return the identification for the order, either a CB ID or GUID
+         */
+        public String getOid() {
+            return oid;
+        }
+
+        public void setOid(String oid) {
+            this.oid = oid;
+        }
+
+        public String getFid() {
+            return fid;
+        }
+
+        public void setFid(String fid) {
+            this.fid = fid;
+        }
+
+        public String getGid() {
+            return gid;
+        }
+
+        public void setGid(String gid) {
+            this.gid = gid;
+        }
+
+        public String getSid() {
+            return sid;
+        }
+
+        public void setSid(String sid) {
+            this.sid = sid;
+        }
+
+
 	/**
 	 * @see java.lang.Object#toString()
 	 */
@@ -224,7 +303,7 @@ public class LinnaeanRankClassification {
 				.append("genus", this.genus)
                 .append("species", this.species)
                 .append("specificEpithet", this.specificEpithet)
-				.append("scientificName",this.scientificName)				
+				.append("scientificName",this.scientificName)
 				.toString();
 	}
 
@@ -236,7 +315,7 @@ public class LinnaeanRankClassification {
 			return false;
 		}
 		LinnaeanRankClassification rhs = (LinnaeanRankClassification) object;
-		
+
 		return new EqualsBuilder().append(
 				this.scientificName, rhs.scientificName).append(this.phylum,
 				rhs.phylum).append(this.kingdom, rhs.kingdom).append(
@@ -255,57 +334,83 @@ public class LinnaeanRankClassification {
          * @param lrc
          * @return
          */
-        public boolean hasIdenticalClassification(LinnaeanRankClassification lrc){
-            if(kingdom != null){
+        public boolean hasIdenticalClassification(LinnaeanRankClassification lrc, RankType matchLevel){
+            if(kingdom != null && matchLevel.getId()>= RankType.KINGDOM.getId()){
                 if(!kingdom.equalsIgnoreCase(lrc.kingdom))
                     return false;
             }
-            if(phylum != null){
+            if(phylum != null && matchLevel.getId()>= RankType.PHYLUM.getId()){
                 if(!phylum.equalsIgnoreCase(lrc.phylum))
                     return false;
             }
-            if(klass != null){
+            if(klass != null && matchLevel.getId()>= RankType.CLASS.getId()){
                 if(!klass.equalsIgnoreCase(lrc.klass))
                     return false;
             }
-            if(order != null){
+            if(order != null && matchLevel.getId()>= RankType.ORDER.getId()){
                 if(!order.equalsIgnoreCase(lrc.order))
                     return false;
             }
-            if(family != null){
+            if(family != null && matchLevel.getId()>= RankType.FAMILY.getId()){
                 if(!family.equalsIgnoreCase(lrc.family))
                     return false;
             }
-            if(genus != null){
+            if(genus != null && matchLevel.getId()>= RankType.GENUS.getId()){
                 if(!genus.equalsIgnoreCase(lrc.genus))
                     return false;
             }
-            if(species != null){
+            if(species != null && matchLevel.getId()>= RankType.SPECIES.getId()){
                 if(!species.equalsIgnoreCase(lrc.species))
                     return false;
             }
-            if(subspecies != null){
+            if(subspecies != null && matchLevel.getId()>= RankType.SUBSPECIES.getId()){
                 if(!subspecies.equalsIgnoreCase(lrc.subspecies))
                     return false;
             }
-            if(specificEpithet != null){
+            /*if(specificEpithet != null){
                 if(!specificEpithet.equalsIgnoreCase(lrc.specificEpithet))
                     return false;
             }
             if(infraspecificEpithet != null){
                 if(!infraspecificEpithet.equalsIgnoreCase(lrc.infraspecificEpithet))
                     return false;
-            }
+            }*/
 
             return true;
         }
-        
+
+        /**
+         * Returns the additional string that needs to be included in a search
+         * @param optional Indicates whether the the terms should be optional
+         * @return
+         */
+        public String getLuceneSearchString(boolean optional){
+            String prefix = optional ? " " : " +";
+            StringBuilder sb = new StringBuilder();
+            if(kingdom != null)
+                sb.append(prefix).append(RankType.KINGDOM.getRank()).append(":").append(kingdom);
+            if(phylum != null)
+                sb.append(prefix).append(RankType.PHYLUM.getRank()).append(":").append(phylum);
+            if(klass != null)
+                sb.append(prefix).append(RankType.CLASS.getRank()).append(":").append(klass);
+            if(order != null)
+                sb.append(prefix).append(RankType.ORDER.getRank()).append(":").append(order);
+            if(family != null)
+                sb.append(prefix).append(RankType.FAMILY.getRank()).append(":").append(family);
+            if(genus != null)
+                sb.append(prefix).append(RankType.GENUS.getRank()).append(":").append(genus);
+            if(species != null)
+                sb.append(prefix).append(RankType.SPECIES.getRank()).append(":\"").append(species).append("\"");
+            return sb.toString();
+        }
+
+
 //        public int hashCode() {
 //        int hash = 5;
 //        hash = 17 * hash + (this.documentId != null ? this.documentId.hashCode() : 0);
 //        return hash;
 //    }
-	
+
 	public static void main(String[] args) {
 		LinnaeanRankClassification a = new LinnaeanRankClassification(null, null,null,null,null,null,"AuS bus");
 		LinnaeanRankClassification b = new LinnaeanRankClassification(null, null,null,null,null,null,new String("Aus bus"));
@@ -322,5 +427,5 @@ public class LinnaeanRankClassification {
 				this.order).append(this.klass).append(this.species).append(this.specificEpithet).toHashCode();
 	}
 
-	
+
 }

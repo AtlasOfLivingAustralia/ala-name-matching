@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.List;
+import org.junit.Test;
 
 
 import au.org.ala.checklist.lucene.model.NameSearchResult;
@@ -31,7 +32,7 @@ public class CBIndexSearchTest {
 
 	}
 
-	@org.junit.Test
+	@Test
 	public void testNoRank() {
 		try {
 			String lsid = searcher.searchForLSID("Animalia");
@@ -47,7 +48,7 @@ public class CBIndexSearchTest {
 		}
 	}
 
-	@org.junit.Test
+	@Test
 	public void testGetPrimaryLsid() {
 		try {
 			String primaryLsid = searcher.getPrimaryLsid("urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a");
@@ -59,7 +60,7 @@ public class CBIndexSearchTest {
 		}
 	}
 
-	@org.junit.Test
+	@Test
 	public void testSearchForRecordByLsid() {
 		try {
 			NameSearchResult nsr = searcher.searchForRecordByLsid("urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a");
@@ -70,7 +71,7 @@ public class CBIndexSearchTest {
 		}
 	}
 
-	@org.junit.Test
+	@Test
 	public void testSpecies() {
 		try {
 			NameSearchResult nsr = searcher.searchForRecord(
@@ -132,7 +133,7 @@ public class CBIndexSearchTest {
 		return equals;
 	}
 
-	@org.junit.Test
+	@Test
 	public void testSynonymWithHomonym(){
 		try{
 			//               NameSearchResult result = searcher.searchForRecord("Macropus rufus", RankType.SPECIES);
@@ -158,7 +159,7 @@ public class CBIndexSearchTest {
 		}
 	}
 
-	@org.junit.Test
+	@Test
 	public void testHomonym() {
 		try {
 
@@ -193,13 +194,13 @@ public class CBIndexSearchTest {
 		} 
 	}
 
-	@org.junit.Test
+	@Test
 	public void testIDLookup() {
 		NameSearchResult result = searcher.searchForRecordByID("216346");
 		System.out.println("testIDLookup: " + result);
 	}
 
-	@org.junit.Test
+	@Test
 	public void testSearchForRecord() {
 		NameSearchResult result = null;
 		try {
@@ -211,7 +212,7 @@ public class CBIndexSearchTest {
 		}
 		System.out.println("testSearchForRecord: " + result);
 	}
-	@org.junit.Test
+	@Test
 	public void testCommonNames(){
 		//ANBG source
 		String lsid = getCommonNameLSID("Red Kangaroo");
@@ -254,17 +255,17 @@ public class CBIndexSearchTest {
 
 		return (sciName == null ? null : sciName.toString());
 	}
-	@org.junit.Test
+	@Test
 	public void testIRMNGHomonymReconcile(){
 		try{
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Chordata", null, null, "Macropodidae", "Macropus", null);
-			RankType rank = searcher.resolveIRMNGHomonym(cl);
+			RankType rank = searcher.resolveIRMNGHomonym(cl, RankType.GENUS);
 			System.out.println("IRMNG Homonym resolved at " + rank + " rank");
 
 			assertEquals("FAMILY", rank.toString());
 			//now cause a homonym exception by removing the family
 			cl.setFamily(null);
-			searcher.resolveIRMNGHomonym(cl);
+			searcher.resolveIRMNGHomonym(cl, RankType.GENUS);
 		}
 		catch(HomonymException e){
 			System.out.println("Expected HomonymException: " + e.getMessage());
@@ -274,7 +275,7 @@ public class CBIndexSearchTest {
 			fail("testIRMNGHomonymReconcile failed");
 		}
 	}
-	@org.junit.Test
+	@Test
 	public void newHomonynmTest(){
 		try{
 			//Abelia grandiflora
@@ -283,7 +284,7 @@ public class CBIndexSearchTest {
 
 		}
 	}
-	@org.junit.Test
+	@Test
 	public void testCultivars(){
 		try{
 			//species level concept
@@ -297,7 +298,7 @@ public class CBIndexSearchTest {
 			fail("testCultivars failed");
 		}
 	}
-	@org.junit.Test
+	@Test
 	public void testMyrmecia(){
 		try{
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia","Arthropoda", "Insecta", "Hymenoptera", "Formicidae", "Myrmecia",null);
@@ -313,7 +314,7 @@ public class CBIndexSearchTest {
 			fail("testMyrmecia failed");
 		}
 	}
-	@org.junit.Test
+	@Test
 	public void testSearchForLSID(){
 
 		try{
@@ -346,7 +347,7 @@ public class CBIndexSearchTest {
 			fail("testSearchForLSID failed");
 		}
 	}
-	@org.junit.Test
+	@Test
 	public void testFuzzyMatches(){
 		try{
 			//Bullia
@@ -378,27 +379,62 @@ public class CBIndexSearchTest {
 		}
 	}
 
-	public void testWaiIssues(){
-		//            System.out.println("#### TEST 1 ####"); synonym
-		//            testName("Cyrtanthus elatus");
-		//            testName("Cyrtanthus purpureus");
-		//            System.out.println("#### TEST 2 ####"); synonym
-		//            testName("Lycoris africana");
-		//            testName("Lycoris aurea");
-		//            System.out.println("#### TEST 3 ####");
-		//            testName("Monstera deliciosa");
-		//            testName("Monstera deliciosa 'Albo-Variegata'");
+	
 
-	}
-	public void testName(String name){
-		try{
-			String output = searcher.searchForRecord(name, null).toString();
-			System.out.println(name+": " + output);
+         @Test
+    public void testCrossRankHomonyms() {
+        try {
+            //Patellina is an order and genus
+            searcher.searchForLSID("Patellina");
+            fail("Cross Homonym Patellina test 1 failed");
+        } catch (SearchResultException e) {
+            System.out.println(e.getResults());
+            assertEquals("Cross Homonysm Patellina test 1 failed to throw correct exception", e.getClass(), HomonymException.class);
+        }
+    }
 
-		}
-		catch(Exception e){
-			e.printStackTrace();
-			fail("testWaiIssues failed");
-		}
-	}
+    @Test
+    public void testSpeciesHomonyms() {
+        //Lobophora variegata is a species homonym in Animalia and Plantae
+        try {
+            searcher.searchForLSID("Lobophora variegata");
+            fail("Species Homonym Test 1 (Lobophora variegata)");
+        } catch (SearchResultException e) {
+            System.out.println();
+            assertEquals("Species Homonym Test 1 (Lobophora variegata) failed to throw correct exception", e.getClass(), HomonymException.class);
+        }
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Lobophora");
+            cl.setScientificName("Lobophora variegata");
+            String lsid = searcher.searchForLSID(cl, false);
+            assertEquals("urn:lsid:catalogueoflife.org:taxon:de39d510-29c1-102b-9a4a-00304854f820:ac2010", lsid);
+        } catch (SearchResultException e) {
+            fail("Species Homonym Test 2 (Lobophora variegata)");
+        }
+
+    }
+
+    @Test
+    /**
+     * Test that the spp. does not match.
+     */
+    public void testGenusNotAllSpecies() {
+        try {
+            //System.out.println(searcher.searchForLSID("Stackhousia sp. (McIvor River J.R.Clarkson 5201)"));
+            String lsid = searcher.searchForLSID("Opuntia spp.");
+            fail("Genus spp. test failed to throw exception.");
+        } catch (Exception e) {
+            assertEquals("Genus spp. test failed", "Unable to perform search. Can not match to a subset of species within a genus.", e.getMessage());
+        }
+        try{
+            LinnaeanRankClassification cl = new LinnaeanRankClassification(null, "Opuntia");
+            cl.setScientificName("Opuntia spp");
+            searcher.searchForLSID(cl, true);
+            fail("SPP2 failed to throw a homonym exception");
+        }
+        catch(Exception e){
+            assertEquals(e.getClass(), HomonymException.class);
+        }
+    }
+
 }
