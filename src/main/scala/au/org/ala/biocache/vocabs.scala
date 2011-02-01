@@ -6,11 +6,6 @@ package au.org.ala.biocache
 case class Term (canonical:String, variants:Array[String])
 
 /**
- * Case class that represents an error code for a occurrence record.
- */
-case class ErrorCode(name:String, code:Int)
-
-/**
  * A trait for a vocabulary. A vocabulary consists of a set
  * of Terms, each with string variants.
  */
@@ -197,6 +192,9 @@ object TypeStatus extends Vocab {
   val all = retrieveAll
 }
 
+/**
+ * A vacabulary mapping trait. Supports tests for compatible terms.
+ */
 trait VocabMaps {
 
   /** The map of terms to query against */
@@ -255,6 +253,9 @@ trait VocabMaps {
   }
 }
 
+/**
+ * A vocabulary mapping for habitats.
+ */
 object HabitatMap extends VocabMaps {
   val termMap = Map(
     "MARINE" -> Array("MARINE"),
@@ -264,6 +265,15 @@ object HabitatMap extends VocabMaps {
   )
 }
 
+
+/**
+ * Case class that represents an error code for a occurrence record.
+ */
+sealed case class ErrorCode(name:String, code:Int)
+
+/**
+ * Assertion codes for records
+ */
 object AssertionCodes {
 
   val GEOSPATIAL_NEGATED_LATITUDE = ErrorCode("negatedLatitude",1)
@@ -301,4 +311,4 @@ object AssertionCodes {
   val OTHER_COUNTRY_INFERRED_FROM_COORDINATES = ErrorCode("countryInferredByCoordinates",2004)
   val OTHER_UNRECOGNISED_TYPESTATUS = ErrorCode("unrecognisedTypeStatus",2006)
   val OTHER_UNRECOGNISED_COLLECTIONCODE = ErrorCode("unrecognisedCollectionCode",2007)
-} 
+}
