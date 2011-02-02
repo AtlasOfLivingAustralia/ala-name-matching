@@ -361,11 +361,12 @@ class QualityAssertion (
   @BeanProperty var assertionCode:Int,
   @BeanProperty var positive:Boolean,
   @BeanProperty var comment:String,
+  @BeanProperty var value:String,
   @BeanProperty var userId:String,
   @BeanProperty var userDisplayName:String)
-  extends Cloneable{
+  extends Cloneable with Comparable[AnyRef] {
 
-  def this() = this(null,null,-1,false,null,null,null)
+  def this() = this(null,null,-1,false,null,null,null,null)
   override def clone : QualityAssertion = super.clone.asInstanceOf[QualityAssertion]
   override def equals(that: Any) = that match {
     case other: QualityAssertion => {
@@ -373,6 +374,8 @@ class QualityAssertion (
     }
     case _ => false
   }
+
+  def compareTo(qa:AnyRef) = -1
 }
 
 /**
@@ -380,12 +383,20 @@ class QualityAssertion (
  * type functionality.
  */
 object QualityAssertion {
+  def apply(errorCode:ErrorCode) = {
+    val uuid = UUID.randomUUID.toString
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,false,null,null,null,null)
+  }
+  def apply(errorCode:ErrorCode,positive:Boolean) = {
+    val uuid = UUID.randomUUID.toString
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,positive,null,null,null,null)
+  }
   def apply(errorCode:ErrorCode,positive:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,positive,comment,null,null)
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,positive,comment,null,null,null)
   }
   def apply(assertionCode:Int,positive:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,null,assertionCode,positive,comment,null,null)
+    new QualityAssertion(uuid,null,assertionCode,positive,comment,null,null,null)
   }
 }
