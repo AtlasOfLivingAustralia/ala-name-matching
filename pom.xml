@@ -60,9 +60,15 @@
     </dependency>
     <!--  ALA Name matching -->
     <dependency>
-      <groupId>au.org.ala</groupId>
-      <artifactId>ala-name-matching</artifactId>
-      <version>1.0-SNAPSHOT</version>
+        <groupId>au.org.ala</groupId>
+        <artifactId>ala-name-matching</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <exclusion>
+                <groupId>org.gbif</groupId>
+                <artifactId>dwc-archive</artifactId>
+            </exclusion>
+        </exclusions>
     </dependency>
     <!--  BIE Species Profile syncing -->
     <dependency>
@@ -142,6 +148,23 @@
       <groupId>org.apache.thrift</groupId>
       <artifactId>thrift</artifactId>
       <version>0.2.0</version>
+    </dependency>
+    <!-- SOLR -->
+    <dependency>
+        <artifactId>solr-core</artifactId>
+        <groupId>org.apache.solr</groupId>
+        <version>1.4.0</version>
+    </dependency>
+    <dependency>
+        <artifactId>solr-solrj</artifactId>
+        <groupId>org.apache.solr</groupId>
+        <version>1.4.0</version>
+    </dependency>
+    <!-- SPATIAL-SOLR PLUGIN FOR SOLR 1.4 -->
+    <dependency>
+      <groupId>nl.jteam</groupId>
+      <artifactId>spatial-solr</artifactId>
+      <version>1.0</version>
     </dependency>
     <!-- COMMONS -->
     <dependency>
