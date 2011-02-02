@@ -32,6 +32,7 @@ object DAO {
   val eventDefn = fileToArray("/Event.txt")
   val classificationDefn = fileToArray("/Classification.txt")
   val identificationDefn = fileToArray("/Identification.txt")
+  val occurrenceIndexDefn = DAO.fileToArray("/OccurrenceIndex.txt") //PROBABLY NOT THE BEST PLACE FOR THIS
 
   protected def fileToArray(filePath:String) : List[String] =
     scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map(_.trim)

@@ -76,7 +76,8 @@ object ProcessRecords {
   def processRecord(raw:FullRecord){
 
     val guid = raw.o.uuid
-    var processed = raw.clone
+    //NC: Changed so that a processed record only contains values that have been processed.
+    var processed = new FullRecord//raw.clone
     var assertions = new ArrayBuffer[QualityAssertion]
 
     //find a classification in NSLs
@@ -382,15 +383,31 @@ object ProcessRecords {
         val classification = nsr.getRankClassification
         //store ".p" values
         processed.c.kingdom = classification.getKingdom
+        processed.c.kingdomID = classification.getKid
         processed.c.phylum = classification.getPhylum
+        processed.c.phylumID = classification.getPid
         processed.c.classs = classification.getKlass
+        processed.c.classID = classification.getCid
         processed.c.order = classification.getOrder
+        processed.c.orderID = classification.getOid
         processed.c.family = classification.getFamily
+        processed.c.familyID = classification.getFid
         processed.c.genus = classification.getGenus
+        processed.c.genusID = classification.getGid
         processed.c.species = classification.getSpecies
+        processed.c.speciesID = classification.getSid
         processed.c.specificEpithet = classification.getSpecificEpithet
         processed.c.scientificName = classification.getScientificName
         processed.c.taxonConceptID = nsr.getLsid
+        processed.c.left = nsr.getLeft
+        processed.c.right = nsr.getRight
+        processed.c.taxonRank = nsr.getRank.getRank
+        processed.c.taxonRankID = nsr.getRank.getId.toString
+        //try to apply the vernacular name
+        val taxonProfile = TaxonProfileDAO.getByGuid(nsr.getLsid)
+        if(!taxonProfile.isEmpty && taxonProfile.get.commonName!=null){
+          processed.c.vernacularName = taxonProfile.get.commonName
+        }
         Array()
       } else {
         logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " + raw.c.kingdom + ", Family:" + raw.c.family + ", Genus:" + raw.c.genus + ", Species: " + raw.c.species 

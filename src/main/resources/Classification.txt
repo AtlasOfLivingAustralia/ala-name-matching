@@ -43,3 +43,5 @@ genusID
 subgenusID
 speciesID
 subspeciesID
+left
+right
