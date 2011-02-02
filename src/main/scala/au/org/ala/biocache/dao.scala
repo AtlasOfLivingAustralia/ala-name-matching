@@ -43,7 +43,7 @@ object DAO {
  */
 trait OccurrenceConsumer {
   /** Consume the supplied record */
-  def consume(record:FullRecord)
+  def consume(record:FullRecord) : Boolean
 }
 
 /**
@@ -51,7 +51,7 @@ trait OccurrenceConsumer {
  */
 trait OccurrenceVersionConsumer {
   /** Passes an array of versions. Raw, Process and consensus versions */
-  def consume(record:Array[FullRecord])
+  def consume(record:Array[FullRecord]) : Boolean
 }
 
 /**
@@ -256,7 +256,7 @@ object OccurrenceDAO {
   }
 
   /**
-   * Write to stream...
+   * Write to stream in a delimited format (CSV).
    */
   def writeToStream(outputStream:OutputStream,fieldDelimiter:String,recordDelimiter:String,uuids:Array[String],fields:Array[String],version:Version) {
 
@@ -302,11 +302,12 @@ object OccurrenceDAO {
   /**
    * Iterate over all occurrences, passing all versions of FullRecord
    * to the supplied function.
+   * Function returns a boolean indicating if the paging should continue.
    *
    * @param occurrenceType
    * @param proc
    */
-  def pageOverAllVersions(proc:((Option[Array[FullRecord]])=>Unit) ) {
+  def pageOverAllVersions(proc:((Option[Array[FullRecord]])=>Boolean) ) {
      pageOverAll((guid, map) => {
        //retrieve all versions
        val raw = createOccurrence(guid, map, Raw)
@@ -333,11 +334,12 @@ object OccurrenceDAO {
 
   /**
    * Iterate over all occurrences, passing the objects to a function.
+   * Function returns a boolean indicating if the paging should continue.
    *
    * @param occurrenceType
    * @param proc
    */
-  def pageOverAll(proc:((String, Map[String,String])=>Unit) ) {
+  def pageOverAll(proc:((String, Map[String,String])=>Boolean) ) {
 
     val selector = Pelops.createSelector(DAO.poolName, columnFamily)
     val slicePredicate = Selector.newColumnsPredicateAll(true, DAO.maxColumnLimit)
@@ -346,7 +348,8 @@ object OccurrenceDAO {
     var hasMore = true
     var counter = 0
     var columnMap = selector.getColumnsFromRows(keyRange, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-    while (columnMap.size>0) {
+    var continue = true
+    while (columnMap.size>0 && continue) {
       val columnsObj = List(columnMap.keySet.toArray : _*)
       //convert to scala List
       val keys = columnsObj.asInstanceOf[List[String]]
@@ -356,7 +359,7 @@ object OccurrenceDAO {
         //procedure a map of key value pairs
         val map = columnList2Map(columnList)
         //pass the record ID and the key value pair map to the proc
-        proc(uuid, map)
+        continue = proc(uuid, map)
       }
       counter += keys.size
       keyRange = Selector.newKeyRange(startKey, "", 1001)
@@ -368,12 +371,12 @@ object OccurrenceDAO {
 
   /**
    * Iterate over all occurrences, passing the objects to a function.
+   * Function returns a boolean indicating if the paging should continue.
    *
    * @param occurrenceType
    * @param proc
    */
-  def pageOverAll(version:Version, proc:((Option[FullRecord])=>Unit) ) {
-
+  def pageOverAll(version:Version, proc:((Option[FullRecord])=>Boolean) ) {
      pageOverAll((guid, map) => {
        //retrieve all versions
        val fullRecord = createOccurrence(guid, map, version)
@@ -416,12 +419,20 @@ object OccurrenceDAO {
         val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
         if(fieldValue!=null && !fieldValue.isEmpty){
           var fieldName = field
+          version match {
+              case Processed =>  markAsProcessed(fieldName)
+              case Consensus =>  markAsConsensus(fieldName)
+              case _ =>
+          }
+          /*
+
           if(version == Processed){
             fieldName = markAsProcessed(fieldName)
           }
           if(version == Consensus){
             fieldName = markAsConsensus(fieldName)
           }
+          */
           mutator.writeColumn(uuid, columnFamily, mutator.newColumn(fieldName, fieldValue))
         }
       }

@@ -1,6 +1,7 @@
 package au.org.ala.biocache
 
 import org.scalatest.FunSuite
+import org.wyki.cassandra.pelops.Pelops
 
 /**
  * Demonstrator paging code.  Need to find a way of running this as tests.
@@ -9,8 +10,8 @@ import org.scalatest.FunSuite
  */
 class PagingTests extends FunSuite {
 
-  /*
-  test("Paging of first ten records"){
+
+  test("Paging of first ten raw records"){
     var count = 0
     OccurrenceDAO.pageOverAll(Raw, fullRecord => {
         val occurrence = fullRecord.get.o
@@ -19,9 +20,14 @@ class PagingTests extends FunSuite {
         val event = fullRecord.get.e
         println(occurrence.uuid+"\t"+classification.genus+"\t"+classification.specificEpithet+"\t"+classification.scientificName)
         count +=1
-        if(count>10) exit(1)
+        if(count>10) {
+            false
+        } else {
+            true
+        }
       }
     )
+    Pelops.shutdown
   }
 
   test("Paging over all versions"){
@@ -37,9 +43,13 @@ class PagingTests extends FunSuite {
           println(occurrence.uuid+"\t"+classification.genus+"\t"+classification.specificEpithet+"\t"+classification.scientificName)
         }
         count +=1
-        if(count>10) exit(1)
+        if(count>10) {
+            false
+        } else {
+            true
+        }
       }
     )
+    Pelops.shutdown
   }
-  */
 }

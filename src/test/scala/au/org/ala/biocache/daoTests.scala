@@ -55,8 +55,8 @@ object OccurrenceDAOTest {
 		qa.userId = "David.Martin@csiro.au"
 		qa.userDisplayName = "Dave Martin"
 		
-		OccurrenceDAO.addQualityAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa, AssertionCodes.COORDINATE_HABITAT_MISMATCH )
-		OccurrenceDAO.addQualityAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa, AssertionCodes.COORDINATE_HABITAT_MISMATCH )
+		OccurrenceDAO.addQualityAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa)
+		OccurrenceDAO.addQualityAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa)
 
 		val uuid2 = UUID.randomUUID.toString
 		var qa2 = new QualityAssertion
@@ -67,7 +67,7 @@ object OccurrenceDAOTest {
 		qa2.userId = "David.Martin@csiro.au"
 		qa2.userDisplayName = "Dave Martin"
 		
-		OccurrenceDAO.addQualityAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa2,AssertionCodes.COORDINATE_HABITAT_MISMATCH )
+		OccurrenceDAO.addQualityAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa2 )
 		
 //		val om = new ObjectMapper
 //		println(om.writeValueAsString(qa))
