@@ -64,6 +64,7 @@ object OccurrenceDAO {
 
   private val columnFamily = "occ"
   private val qualityAssertionColumn = "qualityAssertion"
+  private val userQualityAssertionColumn = "userQualityAssertion"
 
   /**
    * Get an occurrence with UUID
@@ -139,7 +140,7 @@ object OccurrenceDAO {
       e.setter(fieldName,fieldValue)
     } else if(DAO.locationDefn.contains(fieldName)){
       l.setter(fieldName,fieldValue)
-    } else if(fieldName endsWith ".qa"){
+    } else if(isQualityAssertion(fieldName)){
       assertions.add(fieldName)
     }
   }
@@ -481,75 +482,24 @@ object OccurrenceDAO {
    * @param uuid
    * @param qualityAssertion
    */
-  def addQualityAssertion(uuid:String, qualityAssertion:QualityAssertion, errorCode:ErrorCode){
-
-    //set field qualityAssertion
-    val selector = Pelops.createSelector(DAO.poolName, columnFamily);
-    val mutator = Pelops.createMutator(DAO.poolName, columnFamily);
-    val column = {
-      try {
-       Some(selector.getColumnFromRow(uuid, columnFamily, qualityAssertionColumn.getBytes, ConsistencyLevel.ONE))
-      } catch {
-        case _ => None //expected behaviour when row doesnt exist
-      }
-    }
-    val gson = new Gson
-
-    if(column.isEmpty){
-      //parse it
-      val json = gson.toJson(Array(qualityAssertion))
-      mutator.writeColumn(uuid, columnFamily, mutator.newColumn(qualityAssertionColumn, json))
-    } else {
-      var json = new String(column.get.getValue)
-      val listType = new TypeToken[ArrayList[QualityAssertion]]() {}.getType()
-      var qaList = gson.fromJson(json,listType).asInstanceOf[java.util.List[QualityAssertion]]
-
-      var written = false
-      for(i<- 0 until qaList.size){
-        val qa = qaList.get(i)
-        if(qa equals qualityAssertion){
-          //overwrite
-          written = true
-          qaList.remove(qa)
-          qaList.add(i, qualityAssertion)
-        }
-      }
-      if(!written){
-        qaList.add(qualityAssertion)
-      }
-
-      // check equals
-      json = gson.toJson(qaList)
-      mutator.writeColumn(uuid, columnFamily, mutator.newColumn(qualityAssertionColumn, json))
-      mutator.writeColumn(uuid, columnFamily, mutator.newColumn(errorCode.name, "true"))
-    }
-    mutator.execute(ConsistencyLevel.ONE)
+  def addQualityAssertion(uuid:String, qualityAssertion:QualityAssertion){
+    CassandraPersistenceManager.putArray(uuid,qualityAssertionColumn,Array(qualityAssertion),false)
+    CassandraPersistenceManager.put(uuid,qualityAssertion.assertionName,qualityAssertion.positive.toString)
   }
 
   /**
    * Retrieve annotations for the supplied UUID.
    */
   def getQualityAssertions(uuid:String): Array[QualityAssertion] = {
+    val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[Class[AnyRef]]
+    CassandraPersistenceManager.getArray(uuid,qualityAssertionColumn,theClass).asInstanceOf[Array[QualityAssertion]]
+  }
 
-    val selector = Pelops.createSelector(DAO.poolName, columnFamily);
-    //retrieve and parse JSON in QualityAssertion column
-    val column = {
-      try {
-       Some(selector.getColumnFromRow(uuid, columnFamily, qualityAssertionColumn.getBytes, ConsistencyLevel.ONE))
-      } catch {
-        case _ => None //expected behaviour when row doesnt exist
-      }
-    }
-    val gson = new Gson
-
-    if(column.isEmpty){
-      Array()
-    } else {
-      //parse it and return list
-      val json = new String(column.get.value)
-      val listType = new TypeToken[ArrayList[QualityAssertion]]() {}.getType()
-      val list = gson.fromJson(json,listType).asInstanceOf[java.util.List[QualityAssertion]]
-      list.toArray.asInstanceOf[Array[QualityAssertion]]
-    }
+  /**
+   * Add a user supplied assertion - updating the status on the record.
+   */
+  def addUserQualityAssertion(uuid:String, qualityAssertion:QualityAssertion){
+    CassandraPersistenceManager.putArray(uuid,userQualityAssertionColumn,Array(qualityAssertion),false)
+    CassandraPersistenceManager.put(uuid,qualityAssertion.assertionName,qualityAssertion.positive.toString)
   }
 }
