@@ -164,7 +164,7 @@
     <dependency>
       <groupId>nl.jteam</groupId>
       <artifactId>spatial-solr</artifactId>
-      <version>1.0</version>
+      <version>1.0-RC4</version>
     </dependency>
     <!-- COMMONS -->
     <dependency>
