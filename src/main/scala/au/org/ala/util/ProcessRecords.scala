@@ -104,8 +104,6 @@ object ProcessRecords {
     // processIdentifierRecords 
     // 
 
-    processed.assertions = assertions.toArray.map(_.assertionName)
-
     //store the occurrence
     OccurrenceDAO.updateOccurrence(guid, processed, assertions.toArray, Processed)
   }

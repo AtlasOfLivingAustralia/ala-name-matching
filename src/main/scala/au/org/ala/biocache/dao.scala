@@ -222,10 +222,9 @@ object OccurrenceDAO {
   /** Is this a "consensus" value? */
   private def isQualityAssertion(name:String) : Boolean = name endsWith ".qa"
 
-
-
   private def markAsProcessed(name:String) : String = name + ".p"
   private def markAsConsensus(name:String) : String = name + ".c"
+  private def markAsQualityAssertion(name:String) : String = name + ".qa"
 
   /**
    * Iterate over records, passing the records to the supplied consumer.
@@ -261,7 +260,6 @@ object OccurrenceDAO {
   def writeToStream(outputStream:OutputStream,fieldDelimiter:String,recordDelimiter:String,uuids:Array[String],fields:Array[String],version:Version) {
 
     selectRows(uuids,fields,version, { fieldMap =>
-
       for(field<-fields){
         val fieldValue = fieldMap.get(field)
         if(fieldValue.isEmpty){
@@ -332,7 +330,6 @@ object OccurrenceDAO {
      })
   }
 
-
   /**
    * Iterate over all occurrences, passing the objects to a function.
    *
@@ -348,7 +345,7 @@ object OccurrenceDAO {
     var hasMore = true
     var counter = 0
     var columnMap = selector.getColumnsFromRows(keyRange, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-      while (columnMap.size>0) {
+    while (columnMap.size>0) {
       val columnsObj = List(columnMap.keySet.toArray : _*)
       //convert to scala List
       val keys = columnsObj.asInstanceOf[List[String]]

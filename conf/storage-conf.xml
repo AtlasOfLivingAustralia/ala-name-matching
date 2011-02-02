@@ -20,11 +20,13 @@
       <ColumnFamily Name="taxon"
                     CompareWith="UTF8Type"
                     Comment="The column family for taxon profile information"/>
+    <!-- 
       <ColumnFamily Name="clustering"
                     ColumnType="Super"
                     CompareWith="UTF8Type"
                     CompareSubcolumnsWith="UTF8Type"
                     Comment="The column family for Taxon Concepts"/>
+    -->
      <ReplicaPlacementStrategy>org.apache.cassandra.locator.RackUnawareStrategy</ReplicaPlacementStrategy>
      <ReplicationFactor>1</ReplicationFactor>
      <EndPointSnitch>org.apache.cassandra.locator.EndPointSnitch</EndPointSnitch>

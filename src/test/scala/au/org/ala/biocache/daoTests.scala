@@ -1,10 +1,6 @@
 package au.org.ala.biocache
-import java.io.File
 import java.util.UUID
-import org.apache.cassandra.thrift._
-import org.apache.thrift.transport._
 import org.wyki.cassandra.pelops.{Pelops}
-import scala.reflect._
 
 object PointDAOTest {
 	def main(args : Array[String]) : Unit = {
