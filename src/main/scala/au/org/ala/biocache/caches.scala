@@ -145,14 +145,14 @@ object LocationDAO {
    * Get location information for point.
    */
   def getByLatLon(latitude:String, longitude:String) : Option[Location] = {
-    try {
-      val uuid =  roundCoord(latitude)+"|"+roundCoord(longitude)
-      val map = DAO.persistentManager.get(uuid,"loc")
+    val uuid =  roundCoord(latitude)+"|"+roundCoord(longitude)
+    val map = DAO.persistentManager.get(uuid,"loc")
+    if(!map.isEmpty){
       val location = new Location
-      DAO.mapObjectToProperties(map,location)
+      DAO.mapPropertiesToObject(location,map.get)
       Some(location)
-    } catch {
-      case e:Exception => println(e.printStackTrace); None
+    } else {
+      None
     }
   }
 }

@@ -49,7 +49,7 @@ object DAO {
     /**
    * Set the property on the correct model object
    */
-  protected def mapPropertiesToObject(anObject:AnyRef, map:Map[String,String]){
+  def mapPropertiesToObject(anObject:AnyRef, map:Map[String,String]){
     val defn = getDefn(anObject)
     for(fieldName<-defn){
       val fieldValue = map.get(fieldName)
