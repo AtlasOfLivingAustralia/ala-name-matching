@@ -269,46 +269,60 @@ object HabitatMap extends VocabMaps {
 /**
  * Case class that represents an error code for a occurrence record.
  */
-sealed case class ErrorCode(name:String, code:Int)
+sealed case class ErrorCode(name:String, code:Int, isFatal:Boolean)
 
 /**
- * Assertion codes for records
+ * Assertion codes for records. These codes are a reflection of http://bit.ly/evMJv5
  */
 object AssertionCodes {
 
-  val GEOSPATIAL_NEGATED_LATITUDE = ErrorCode("negatedLatitude",1)
-  val GEOSPATIAL_NEGATED_LONGITUDE = ErrorCode("negatedLongitude",2)
-  val GEOSPATIAL_INVERTED_COORDINATES = ErrorCode("invertedCoordinates",3)
-  val GEOSPATIAL_ZERO_COORDINATES = ErrorCode("zeroCoordinates",4)
-  val GEOSPATIAL_COORDINATES_OUT_OF_RANGE = ErrorCode("coordinatesOutOfRange",5)
+  //geospatial issues
+  val NEGATED_LATITUDE = ErrorCode("negatedLatitude",1,false)
+  val NEGATED_LONGITUDE = ErrorCode("negatedLongitude",2,false)
+  val INVERTED_COORDINATES = ErrorCode("invertedCoordinates",3,false)
+  val ZERO_COORDINATES = ErrorCode("zeroCoordinates",4,false)
+  val COORDINATES_OUT_OF_RANGE = ErrorCode("coordinatesOutOfRange",5,false)
+  val UNKNOWN_COUNTRY_NAME = ErrorCode("unknownCountry",6,false)
+  val ALTITUDE_OUT_OF_RANGE = ErrorCode("altitudeOutOfRange",7,false)
+  val BADLY_FORMED_ALTITUDE = ErrorCode("erroneousAltitude",8,false)
+  val MIN_MAX_ALTITUDE_REVERSED = ErrorCode("minMaxAltitudeReversed",9,false)
+  val DEPTH_IN_FEET = ErrorCode("depthInFeet",10,false)
+  val DEPTH_OUT_OF_RANGE = ErrorCode("depthOutOfRange",11,false)
+  val MIN_MAX_DEPTH_REVERSED = ErrorCode("minMaxDepthReversed",12,false)
+  val ALTITUDE_IN_FEET = ErrorCode("altitudeInFeet",13,false)
+  val ALTITUDE_NON_NUMERIC = ErrorCode("altitudeNonNumeric",14,false)
+  val DEPTH_NON_NUMERIC = ErrorCode("depthNonNumeric",15,false)
+  val COUNTRY_COORDINATE_MISMATCH = ErrorCode("countryCoordinateMismatch",16,false)
+  val STATE_COORDINATE_MISMATCH = ErrorCode("stateCoordinateMismatch",18,false)
+  val COORDINATE_HABITAT_MISMATCH = ErrorCode("habitatMismatch",19,false)
+  val DETECTED_OUTLIER = ErrorCode("detectedOutlier",20,false)
+  val COUNTRY_INFERRED_FROM_COORDINATES = ErrorCode("countryInferredByCoordinates",21,false)
+  val COORDINATES_CENTRE_OF_STATEPROVINCE = ErrorCode("coordinatesCentreOfStateProvince",22,false)
+  val COORDINATE_PRECISION_MISMATCH = ErrorCode("coordinatePrecisionMismatch",23,false)
+  val UNCERTAINTY_RANGE_MISMATCH = ErrorCode("uncertaintyRangeMismatch",24,false)
+  val UNCERTAINTY_IN_PRECISION = ErrorCode("uncertaintyInPrecision",25,false)
 
-  val GEOSPATIAL_UNKNOWN_COUNTRY_NAME = ErrorCode("unknownCountry",7)
-  val GEOSPATIAL_ALTITUDE_OUT_OF_RANGE = ErrorCode("altitudeOutOfRange",8)
-  val GEOSPATIAL_ERRONOUS_ALTITUDE = ErrorCode("erroneousAltitude",9)
-  val GEOSPATIAL_MIN_MAX_ALTITUDE_REVERSED = ErrorCode("minMaxAltitudeReversed",10)
-  val GEOSPATIAL_DEPTH_IN_FEET = ErrorCode("depthInFeet",11)
-  val GEOSPATIAL_DEPTH_OUT_OF_RANGE = ErrorCode("depthOutOfRange",12)
-  val GEOSPATIAL_MIN_MAX_DEPTH_REVERSED = ErrorCode("minMaxDepthReversed",13)
-  val GEOSPATIAL_ALTITUDE_IN_FEET = ErrorCode("altitudeInFeet",14)
-  val GEOSPATIAL_ALTITUDE_NON_NUMERIC = ErrorCode("altitudeNonNumeric",15)
-  val GEOSPATIAL_DEPTH_NON_NUMERIC = ErrorCode("depthNonNumeric",16)
+  //taxonomy issues
+  val INVALID_SCIENTIFIC_NAME = ErrorCode("invalidScientificName",10001,false)
+  val UNKNOWN_KINGDOM = ErrorCode("unknownKingdom",10002,false)
+  val AMBIGUOUS_NAME = ErrorCode("ambiguousName",10003,false)
+  val NAME_NOTRECOGNISED = ErrorCode("nameNotRecognised",10004,false)
+  val NAME_NOT_IN_NATIONAL_CHECKLISTS = ErrorCode("nameNotRecognised",10005,false)
+  val HOMONYM_ISSUE = ErrorCode("homonymIssue",10006,false)
 
-  val GEOSPATIAL_COUNTRY_COORDINATE_MISMATCH = ErrorCode("countryCoordinateMismatch",6)
-  val GEOSPATIAL_STATE_COORDINATE_MISMATCH = ErrorCode("stateCoordinateMismatch",17)
-  val COORDINATE_HABITAT_MISMATCH = ErrorCode("habitatMismatch",18)
-  val STATE_CENTRE_COORDINATES = ErrorCode("stateCentreCoordinates",19)
+  //miscelleanous
+  val MISSING_BASIS_OF_RECORD = ErrorCode("missingBasisOfRecord",20001,false)
+  val BADLY_FORMED_BASIS_OF_RECORD = ErrorCode("badlyFormedBasisOfRecord",20002,false)
+  val UNRECOGNISED_TYPESTATUS = ErrorCode("badlyFormedBasisOfRecord",20002,false)
+  val UNRECOGNISED_COLLECTIONCODE = ErrorCode("badlyFormedBasisOfRecord",20002,false)
+  val UNRECOGNISED_INSTITUTIONCODE = ErrorCode("badlyFormedBasisOfRecord",20002,false)
 
-  val TAXONOMIC_INVALID_SCIENTIFIC_NAME = ErrorCode("invalidScientificName",1001)
-  val TAXONOMIC_UNKNOWN_KINGDOM = ErrorCode("unknownKingdom",1002)
-  val TAXONOMIC_AMBIGUOUS_NAME = ErrorCode("ambiguousName",1003)
-  val TAXONOMIC_NAME_NOTRECOGNISED = ErrorCode("nameNotRecognised",1004)
-  val TAXONOMIC_HOMONYM_ISSUE = ErrorCode("homonymIssue",1005)
-
-
-  val OTHER_MISSING_BASIS_OF_RECORD = ErrorCode("missingBasisOfRecord",2001)
-  val OTHER_BADLY_FORMED_BASIS_OF_RECORD = ErrorCode("badlyFormedBasisOfRecord",2002)
-  val OTHER_INVALID_DATE = ErrorCode("invalidDate",2003)
-  val OTHER_COUNTRY_INFERRED_FROM_COORDINATES = ErrorCode("countryInferredByCoordinates",2004)
-  val OTHER_UNRECOGNISED_TYPESTATUS = ErrorCode("unrecognisedTypeStatus",2006)
-  val OTHER_UNRECOGNISED_COLLECTIONCODE = ErrorCode("unrecognisedCollectionCode",2007)
+  //temporal
+  val ID_PRE_OCCURRENCE = ErrorCode("invalidDate",30001,false)
+  val GEOREFERENCE_POST_OCCURRENCE = ErrorCode("invalidDate",30002,false)
+  val FIRST_OF_MONTH = ErrorCode("invalidDate",30003,false)
+  val FIRST_OF_YEAR = ErrorCode("invalidDate",30004,false)
+  val FIRST_OF_CENTURY = ErrorCode("invalidDate",30005,false)
+  val DATE_PRECISION_MISMATCH = ErrorCode("invalidDate",30006,false)
+  val INVALID_COLLECTION_DATE = ErrorCode("invalidDate",30007,false)
 }

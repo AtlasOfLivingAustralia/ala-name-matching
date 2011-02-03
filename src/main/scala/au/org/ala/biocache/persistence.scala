@@ -34,7 +34,10 @@ trait PersistenceManager {
 
 /**
  * Cassandra based implementation of a persistence manager.
+ * This should maintain most of the cassandra logic
  *
+ * TODO - Implement remaining methods, and remove cassandra logic from DAOs.
+ * Also start using a DI framework.
  */
 object CassandraPersistenceManager extends PersistenceManager {
 

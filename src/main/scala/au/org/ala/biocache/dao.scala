@@ -508,9 +508,37 @@ object OccurrenceDAO {
 
   /**
    * Add a user supplied assertion - updating the status on the record.
+   * This will by default,
+   *
    */
   def addUserQualityAssertion(uuid:String, qualityAssertion:QualityAssertion){
     CassandraPersistenceManager.putArray(uuid,userQualityAssertionColumn,Array(qualityAssertion),false)
     CassandraPersistenceManager.put(uuid,qualityAssertion.assertionName,qualityAssertion.positive.toString)
+  }
+
+
+  /**
+   * Retrieve annotations for the supplied UUID.
+   */
+  def getUserQualityAssertions(uuid:String): Array[QualityAssertion] = {
+    val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[Class[AnyRef]]
+    CassandraPersistenceManager.getArray(uuid,userQualityAssertionColumn,theClass).asInstanceOf[Array[QualityAssertion]]
+  }
+
+    /**
+     * Delete a user supplied assertion
+     */
+  def deleteUserQualityAssertion(uuid:String, assertionUuid:String) {
+    val assertions = getQualityAssertions(uuid)
+
+    //delete the assertion with the supplied UUID
+
+    //put the assertions back - overwriting existing assertions
+    CassandraPersistenceManager.putArray(uuid,userQualityAssertionColumn,assertions.asInstanceOf[Array[Comparable[AnyRef]]],true)
+
+    //update the status flag on the record, using the system quality assertions
+
+    //default to "positive" if there are no system quality assertions for the property
+
   }
 }
