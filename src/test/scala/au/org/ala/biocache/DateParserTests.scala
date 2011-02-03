@@ -1,6 +1,5 @@
 package au.org.ala.biocache
 import org.scalatest.FunSuite
-import au.org.ala.util.ProcessRecords
 
 /**
  * Tests for event date parsing. To run these tests create a new scala application
