@@ -17,8 +17,7 @@ object LocationLoader {
     println("Starting Location Loader....")
     val file = new File("/data/biocache/points.txt")
     var counter = 0
-    file.foreachLine { line =>
-      {
+    file.foreachLine { line => {
         counter += 1
         //add point with details to
         val parts = line.split('\t')
@@ -44,7 +43,7 @@ object LocationLoader {
           LocationDAO.addRegionToPoint(latitude, longitude, regionMapping.get)
         }
 
-        if (counter % 1000 == 0) println(counter)
+        if (counter % 1000 == 0) println(counter +": "+latitude+"|"+longitude+", mapping: "+ regionMapping.getOrElse("None"))
       }
     }
     println(counter)

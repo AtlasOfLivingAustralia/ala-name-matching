@@ -32,6 +32,7 @@ object AttributionLoader {
         attribution.collectionUid = parts(3)
         attribution.institutionName = parts(4)
         AttributionDAO.add(parts(0), parts(1), attribution)
+        if (counter % 1000 == 0) println(counter +": "+parts(0) +"|"+ parts(1))
       }
     }
     println(counter)

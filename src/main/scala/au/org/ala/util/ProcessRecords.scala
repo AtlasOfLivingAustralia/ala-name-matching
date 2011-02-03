@@ -67,6 +67,7 @@ object ProcessRecords {
           startTime = System.currentTimeMillis
         }
       }
+      true
     })
   }
 
@@ -121,7 +122,7 @@ object ProcessRecords {
           OccurrenceDAO.updateOccurrence(guid, attribution.get, Processed)
           Array()
         } else {
-          Array(QualityAssertion(AssertionCodes.OTHER_UNRECOGNISED_COLLECTIONCODE, false, "Unrecognised collection code"))
+          Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, false, "Unrecognised collection code"))
         }
     } else {
       Array()
@@ -230,7 +231,7 @@ object ProcessRecords {
 
     //if invalid date, add assertion
     if (invalidDate) {
-      assertions + QualityAssertion(AssertionCodes.OTHER_INVALID_DATE,false,comment)
+      assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,false,comment)
     }
 
     assertions.toArray
@@ -245,13 +246,13 @@ object ProcessRecords {
       val term = TypeStatus.matchTerm(raw.o.typeStatus)
       if (term.isEmpty) {
         //add a quality assertion
-        Array(QualityAssertion(AssertionCodes.OTHER_UNRECOGNISED_TYPESTATUS,false,"Unrecognised type status"))
+        Array(QualityAssertion(AssertionCodes.UNRECOGNISED_TYPESTATUS,false,"Unrecognised type status"))
       } else {
         processed.o.basisOfRecord = term.get.canonical
         Array()
       }
     } else {
-      Array(QualityAssertion(AssertionCodes.OTHER_MISSING_BASIS_OF_RECORD,false,"Missing basis of record"))
+      Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,false,"Missing basis of record"))
     }
   }
 
@@ -262,13 +263,13 @@ object ProcessRecords {
 
     if (raw.o.basisOfRecord == null || raw.o.basisOfRecord.isEmpty) {
       //add a quality assertion
-      Array(QualityAssertion(AssertionCodes.OTHER_MISSING_BASIS_OF_RECORD,false,"Missing basis of record"))
+      Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,false,"Missing basis of record"))
     } else {
       val term = BasisOfRecord.matchTerm(raw.o.basisOfRecord)
       if (term.isEmpty) {
         //add a quality assertion
         logger.debug("[QualityAssertion] " + guid + ", unrecognised BoR: " + guid + ", BoR:" + raw.o.basisOfRecord)
-        Array(QualityAssertion(AssertionCodes.OTHER_MISSING_BASIS_OF_RECORD,false,"Unrecognised basis of record"))
+        Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,false,"Unrecognised basis of record"))
       } else {
         processed.o.basisOfRecord = term.get.canonical
         Array[QualityAssertion]()
@@ -311,7 +312,7 @@ object ProcessRecords {
             logger.debug("[QualityAssertion] " + guid + ", processed:" + processed.l.stateProvince + ", raw:" + raw.l.stateProvince)
             //add a quality assertion
             val comment = "Supplied: " + stateTerm.get.canonical + ", calculated: " + processed.l.stateProvince
-            assertions + QualityAssertion(AssertionCodes.GEOSPATIAL_STATE_COORDINATE_MISMATCH,false,comment)
+            assertions + QualityAssertion(AssertionCodes.STATE_COORDINATE_MISMATCH,false,comment)
             //store the assertion
           }
         }
@@ -342,7 +343,7 @@ object ProcessRecords {
 
         //TODO check centre point of the state
         if(StateCentrePoints.coordinatesMatchCentre(point.get.stateProvince, raw.l.decimalLatitude, raw.l.decimalLongitude)){
-          assertions + QualityAssertion(AssertionCodes.STATE_CENTRE_COORDINATES,false,"Coordinates are centre point of "+point.get.stateProvince)
+          assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,false,"Coordinates are centre point of "+point.get.stateProvince)
         }
       }
     }
@@ -410,10 +411,10 @@ object ProcessRecords {
       } else {
         logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " + raw.c.kingdom + ", Family:" + raw.c.family + ", Genus:" + raw.c.genus + ", Species: " + raw.c.species 
             + ", Epithet: " + raw.c.specificEpithet)
-        Array(QualityAssertion(AssertionCodes.TAXONOMIC_NAME_NOTRECOGNISED, false, "Name not recognised"))
+        Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, false, "Name not recognised"))
       }
     } catch {
-      case e: HomonymException => Array(QualityAssertion(AssertionCodes.TAXONOMIC_HOMONYM_ISSUE, false, "Homonym issue resolving the classification"))
+      case e: HomonymException => Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, false, "Homonym issue resolving the classification"))
       case e: SearchResultException => Array()
     }
   }
