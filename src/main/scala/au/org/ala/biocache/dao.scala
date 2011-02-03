@@ -17,12 +17,6 @@ object DAO {
 
   import ReflectBean._
   val persistentManager = CassandraPersistenceManager
-  val keyspace = "occ"
-  val hosts = Array{"localhost"}
-  val poolName = "biocache-store-pool"
-  val maxColumnLimit = 10000
-  Pelops.addPool(poolName, hosts, 9160, false, keyspace, new Policy)
-
   val nameIndex = new CBIndexSearch("/data/lucene/namematching")
 
   //read in the ORM mappings

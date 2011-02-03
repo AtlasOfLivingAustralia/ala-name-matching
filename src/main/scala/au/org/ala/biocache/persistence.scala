@@ -72,7 +72,7 @@ object CassandraPersistenceManager extends PersistenceManager {
     val hosts = Array{"localhost"}
     val poolName = "biocache-store-pool"
     val maxColumnLimit = 10000
-    //Pelops.addPool(poolName, hosts, 9160, false, keyspace, new Policy)
+    Pelops.addPool(poolName, hosts, 9160, false, keyspace, new Policy)
 
     /**
      * Retrieve an array of objects, parsing the JSON stored.
