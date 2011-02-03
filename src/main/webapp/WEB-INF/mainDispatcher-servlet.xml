@@ -14,6 +14,9 @@
            
     <!--<context:spring-configured/>-->
     <context:component-scan base-package="org.ala.biocache"/>
+    
+    <!-- Configures the @Controller programming model -->
+    <mvc:annotation-driven />
 
     <mvc:resources mapping="/robots.txt" location="/robots.txt" />
     <mvc:resources mapping="/sitemap*" location="/" />
@@ -84,6 +87,8 @@
         <constructor-arg index="0" value="text" />
         <constructor-arg index="1" value="html" />
     </bean>
+    
+    <bean id="restfulClient" class="org.ala.client.util.RestfulClient"/>
     
     <!-- BoBo Lucene add-on for facet browsing -->
     <!--<bean id="rank" class="com.browseengine.bobo.facets.impl.SimpleFacetHandler">
