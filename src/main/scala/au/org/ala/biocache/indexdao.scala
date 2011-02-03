@@ -61,15 +61,7 @@ trait IndexDao {
               if(DAO.occurrenceIndexDefn.contains(fieldName)){
                 val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
                 if(fieldValue!=null && !fieldValue.isEmpty){
-                    if(fieldName.contains("Date")){
-                      try{
-                      occ.setter(fieldName,DateUtils.parseDate(fieldValue, Array("yyyy-MM-dd")))
-                      }
-                      catch{
-                        case e: java.text.ParseException => println("Unable to parse : " + fieldValue + " for " + record.o.uuid)
-                      }
-                    }
-                    else
+                    
                       occ.setter(fieldName, fieldValue);
                 }
               }
@@ -80,8 +72,8 @@ trait IndexDao {
         if(occ.getDecimalLatitude != null && occ.getDecimalLongitude != null){
           var pat = "#"
           var fieldPre ="point"
-          val lat = new java.math.BigDecimal(occ.getDecimalLatitude)
-          val long = new java.math.BigDecimal(occ.getDecimalLongitude)
+          val lat = occ.getDecimalLatitude
+          val long = occ.getDecimalLongitude
           for{ i <- 0 to 4}{
             val df =new java.text.DecimalFormat(pat)
             occ.setter(fieldPre + "1" ,df.format(lat) + "," + df.format(long))
@@ -89,7 +81,7 @@ trait IndexDao {
             pat = pat +"#"
             fieldPre = fieldPre + "0"
           }
-          occ.setLatLong(occ.getDecimalLatitude +"," + occ.getDecimalLongitude)
+          occ.setLatLong(occ.getDecimalLatitude.toString +"," + occ.getDecimalLongitude)
         }
         //set the id for the occurrence record to the uuid
         occ.uuid = records(0).o.uuid
