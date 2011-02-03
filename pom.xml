@@ -37,6 +37,7 @@
       <url>http://scala-tools.org/repo-releases</url>
     </repository>
   </repositories>
+  <!--
   <pluginRepositories>
     <pluginRepository>
       <id>scala-tools.org</id>
@@ -44,6 +45,7 @@
       <url>http://scala-tools.org/repo-releases</url>
     </pluginRepository>
   </pluginRepositories>
+  -->
   <dependencies>
     <!-- LOG4J -->
     <dependency>
