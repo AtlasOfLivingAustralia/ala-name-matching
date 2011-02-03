@@ -10,7 +10,6 @@ import org.wyki.cassandra.pelops.Pelops
  */
 class PagingTests extends FunSuite {
 
-
   test("Paging of first ten raw records"){
     var count = 0
     OccurrenceDAO.pageOverAll(Raw, fullRecord => {

@@ -13,9 +13,9 @@ object DownloadTest {
         "0001b51b-32d7-48a8-9f67-3563cba731f3")
 
     println("Raw values")
-    OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"), Versions.RAW)
+    OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"))
 
     println("Processed values")
-    OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"), Versions.PROCESSED)
+    OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"))
   }
 }
