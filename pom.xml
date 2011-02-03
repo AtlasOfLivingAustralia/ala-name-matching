@@ -37,15 +37,18 @@
       <url>http://scala-tools.org/repo-releases</url>
     </repository>
   </repositories>
-  <!--
   <pluginRepositories>
+    <pluginRepository>
+      <id>ala-repository</id>
+      <name>ala-repository</name>
+      <url>http://maven.ala.org.au/repository</url>
+    </pluginRepository>
     <pluginRepository>
       <id>scala-tools.org</id>
       <name>Scala-Tools Maven2 Repository</name>
       <url>http://scala-tools.org/repo-releases</url>
     </pluginRepository>
   </pluginRepositories>
-  -->
   <dependencies>
     <!-- LOG4J -->
     <dependency>
