@@ -45,11 +45,10 @@ object IndexRecords {
           finishTime = System.currentTimeMillis
           logger.info(counter + " >> Last key : " + v(0).o.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
-          //TODO delete the following to index complete occ store
-          indexer.finaliseIndex
-          exit(0)
+          
         }
       }
+      true
 
     })
     //index any remaining items before exiting
