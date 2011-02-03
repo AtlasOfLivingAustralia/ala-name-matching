@@ -10,6 +10,7 @@ case class Term (canonical:String, variants:Array[String])
  * of Terms, each with string variants.
  */
 trait Vocab {
+
   val all:Array[Term]
   /**
    * Match a term. Matches canonical form or variants in array
@@ -230,7 +231,7 @@ trait VocabMaps {
    *
    * @param term1
    * @param term2
-   * @return
+   * @return returns None if terms not recognised, and a true if recognised and matched.
    */
   def isCompatible (term1:String, term2:String) : Option[Boolean] = {
     if(term1!=null && term2!=null){
@@ -264,7 +265,6 @@ object HabitatMap extends VocabMaps {
     "LIMNETIC" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC")
   )
 }
-
 
 /**
  * Case class that represents an error code for a occurrence record.
@@ -310,7 +310,7 @@ object AssertionCodes {
   val NAME_NOT_IN_NATIONAL_CHECKLISTS = ErrorCode("nameNotRecognised",10005,false)
   val HOMONYM_ISSUE = ErrorCode("homonymIssue",10006,false)
 
-  //miscelleanous
+  //miscellanous
   val MISSING_BASIS_OF_RECORD = ErrorCode("missingBasisOfRecord",20001,false)
   val BADLY_FORMED_BASIS_OF_RECORD = ErrorCode("badlyFormedBasisOfRecord",20002,false)
   val UNRECOGNISED_TYPESTATUS = ErrorCode("badlyFormedBasisOfRecord",20002,false)

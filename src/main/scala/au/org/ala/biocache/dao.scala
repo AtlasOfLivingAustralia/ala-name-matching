@@ -10,7 +10,7 @@ import java.io.OutputStream
 import scala.collection.JavaConversions
 import scala.collection.mutable.ArrayBuffer
 import org.apache.cassandra.thrift._
-import java.util.{UUID, ArrayList}
+import java.util.{LinkedHashMap, UUID, ArrayList}
 
 /**
  * DAO configuration. Should be refactored to use a DI framework
@@ -62,9 +62,10 @@ object OccurrenceDAO {
   import ReflectBean._
   import JavaConversions._
 
-  private val columnFamily = "occ"
+  private val entityName = "occ"
   private val qualityAssertionColumn = "qualityAssertion"
   private val userQualityAssertionColumn = "userQualityAssertion"
+  private val persistentManager = CassandraPersistenceManager
 
   /**
    * Get an occurrence with UUID
@@ -84,19 +85,16 @@ object OccurrenceDAO {
    */
   def getAllVersionsByUuid(uuid:String) : Option[Array[FullRecord]] = {
 
-    val selector = Pelops.createSelector(DAO.poolName, DAO.keyspace)
-    val slicePredicate = Selector.newColumnsPredicateAll(true, DAO.maxColumnLimit)
-    try {
-      val columnList = selector.getColumnsFromRow(uuid, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-      val map = columnList2Map(columnList)
+    val map = persistentManager.get(uuid, entityName)
+    if(map.isEmpty){
+      None
+    } else {
       //create the versions of the record
-      val raw = createOccurrence(uuid, map, Raw)
-      val processed = createOccurrence(uuid, map, Processed)
-      val consensus = createOccurrence(uuid, map, Consensus)
+      val raw = createOccurrence(uuid, map.get, Raw)
+      val processed = createOccurrence(uuid, map.get, Processed)
+      val consensus = createOccurrence(uuid, map.get, Consensus)
       //pass all version to the procedure, wrapped in the Option
       Some(Array(raw, processed, consensus))
-    } catch {
-      case e:NotFoundException => None
     }
   }
 
@@ -115,15 +113,11 @@ object OccurrenceDAO {
    * Get an occurrence, specifying the version of the occurrence.
    */
   def getByUuid(uuid:String, version:Version) : Option[FullRecord] = {
-
-    val selector = Pelops.createSelector(DAO.poolName, DAO.keyspace)
-    val slicePredicate = Selector.newColumnsPredicateAll(true, DAO.maxColumnLimit)
-    try {
-      val columnList = selector.getColumnsFromRow(uuid, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-      val map = columnList2Map(columnList)
-      Some(createOccurrence(uuid, map, version))
-    } catch {
-      case e:NotFoundException => None
+    val propertyMap = persistentManager.get(uuid, entityName)
+    if(propertyMap.isEmpty){
+      None
+    } else {
+      Some(createOccurrence(uuid, propertyMap.get, version))
     }
   }
 
@@ -145,33 +139,33 @@ object OccurrenceDAO {
     }
   }
 
-  /**
-   * Creates an occurrence from the list of columns.
-   * An occurrence consists of several objects which are returned as a tuple.
-   *
-   * For a java implementation, a DTO containing the objects will need to be returned.
-   *
-   * @param uuid
-   * @param columnList
-   * @param occurrenceType raw, processed or consensus version of the record
-   */
-  protected def createOccurrence(uuid:String, columnList:java.util.List[Column], version:Version) : FullRecord = {
-    //convert the list to map
-    val map = columnList2Map(columnList)
-    createOccurrence(uuid, map, version)
-  }
+//  /**
+//   * Creates an occurrence from the list of columns.
+//   * An occurrence consists of several objects which are returned as a tuple.
+//   *
+//   * For a java implementation, a DTO containing the objects will need to be returned.
+//   *
+//   * @param uuid
+//   * @param columnList
+//   * @param occurrenceType raw, processed or consensus version of the record
+//   */
+//  protected def createOccurrence(uuid:String, columnList:java.util.List[Column], version:Version) : FullRecord = {
+//    //convert the list to map
+//    val map = columnList2Map(columnList)
+//    createOccurrence(uuid, map, version)
+//  }
 
-  /**
-   * Convert a set of cassandra columns into a key-value pair map.
-   */
-  protected def columnList2Map(columnList:java.util.List[Column]) : Map[String,String] = {
-    val tuples = {
-      for(column <- columnList)
-        yield (new String(column.name), new String(column.value))
-    }
-    //convert the list
-    Map(tuples map {s => (s._1, s._2)} : _*)
-  }
+//  /**
+//   * Convert a set of cassandra columns into a key-value pair map.
+//   */
+//  protected def columnList2Map(columnList:java.util.List[Column]) : Map[String,String] = {
+//    val tuples = {
+//      for(column <- columnList)
+//        yield (new String(column.name), new String(column.value))
+//    }
+//    //convert the list
+//    Map(tuples map {s => (s._1, s._2)} : _*)
+//  }
 
   /**
    * Create a record from a array of tuple properties
@@ -223,15 +217,18 @@ object OccurrenceDAO {
   /** Is this a "consensus" value? */
   private def isQualityAssertion(name:String) : Boolean = name endsWith ".qa"
 
+  /** Add a suffix to this field name to indicate version type */
   private def markAsProcessed(name:String) : String = name + ".p"
+  /** Add a suffix to this field name to indicate version type */
   private def markAsConsensus(name:String) : String = name + ".c"
+  /** Add a suffix to this field name to indicate quality assertion field */
   private def markAsQualityAssertion(name:String) : String = name + ".qa"
 
   /**
    * Iterate over records, passing the records to the supplied consumer.
    */
-  def pageOverAll(occurrenceType:Version, consumer:OccurrenceConsumer) {
-    pageOverAll(occurrenceType, fullRecord => consumer.consume(fullRecord.get))
+  def pageOverAll(version:Version, consumer:OccurrenceConsumer) {
+    pageOverAll(version, fullRecord => consumer.consume(fullRecord.get))
   }
 
   /**
@@ -240,27 +237,22 @@ object OccurrenceDAO {
    * the dataset.
    */
   def createOrRetrieveUuid(uniqueID: String): String = {
-    try {
-      val selector = Pelops.createSelector(DAO.poolName, columnFamily)
-      val column = selector.getColumnFromRow(uniqueID, "dr", "uuid".getBytes, ConsistencyLevel.ONE)
-      new String(column.value)
-    } catch {
-      //NotFoundException is expected behaviour with thrift
-      case e:NotFoundException =>
-        val newUuid = UUID.randomUUID.toString
-        val mutator = Pelops.createMutator(DAO.poolName, columnFamily)
-        mutator.writeColumn(uniqueID, "dr", mutator.newColumn("uuid".getBytes, newUuid))
-        mutator.execute(ConsistencyLevel.ONE)
-        newUuid
+
+    val recordUUID = persistentManager.get(uniqueID, "dr", "uuid")
+    if(recordUUID.isEmpty){
+      val newUuid = UUID.randomUUID.toString
+      persistentManager.put(uniqueID, "dr", "uuid", newUuid)
+      newUuid
+    } else {
+      recordUUID.get
     }
   }
 
   /**
    * Write to stream in a delimited format (CSV).
    */
-  def writeToStream(outputStream:OutputStream,fieldDelimiter:String,recordDelimiter:String,uuids:Array[String],fields:Array[String],version:Version) {
-
-    selectRows(uuids,fields,version, { fieldMap =>
+  def writeToStream(outputStream:OutputStream,fieldDelimiter:String,recordDelimiter:String,uuids:Array[String],fields:Array[String]) {
+    persistentManager.selectRows(uuids, entityName, fields, { fieldMap =>
       for(field<-fields){
         val fieldValue = fieldMap.get(field)
         if(fieldValue.isEmpty){
@@ -271,32 +263,7 @@ object OccurrenceDAO {
         outputStream.write(fieldDelimiter.getBytes)
       }
       outputStream.write(recordDelimiter.getBytes)
-     })
-  }
-
-  /**
-   * Select fields from rows and pass to the supplied function.
-   */
-  def selectRows(uuids:Array[String],fields:Array[String],version:Version, proc:((Map[String,String])=>Unit)) {
-    val selector = Pelops.createSelector(DAO.poolName, columnFamily)
-    var slicePredicate = new SlicePredicate
-    slicePredicate.setColumn_names(fields.toList.map(_.getBytes))
-
-    //retrieve the columns
-    var columnMap = selector.getColumnsFromRows(uuids.toList, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-
-    //write them out to the output stream
-    val keys = List(columnMap.keySet.toArray : _*)
-
-    for(key<-keys){
-      val columnsList = columnMap.get(key)
-      val fieldValues = columnsList.map(column => (new String(column.name),new String(column.value))).toArray
-      val map = scala.collection.mutable.Map.empty[String,String]
-      for(fieldValue <-fieldValues){
-        map(fieldValue._1) = fieldValue._2
-      }
-      proc(map.toMap)
-    }
+    })
   }
 
   /**
@@ -308,7 +275,7 @@ object OccurrenceDAO {
    * @param proc
    */
   def pageOverAllVersions(proc:((Option[Array[FullRecord]])=>Boolean) ) {
-     pageOverAll((guid, map) => {
+     persistentManager.pageOverAll(entityName, (guid, map) => {
        //retrieve all versions
        val raw = createOccurrence(guid, map, Raw)
        val processed = createOccurrence(guid, map, Processed)
@@ -322,7 +289,7 @@ object OccurrenceDAO {
    * Page over all versions of the record, handing off to the OccurrenceVersionConsumer.
    */
   def pageOverAllVersions(consumer:OccurrenceVersionConsumer) {
-     pageOverAll((guid, map) => {
+     persistentManager.pageOverAll(entityName, (guid, map) => {
        //retrieve all versions
        val raw = createOccurrence(guid, map, Raw)
        val processed = createOccurrence(guid, map, Processed)
@@ -339,45 +306,8 @@ object OccurrenceDAO {
    * @param occurrenceType
    * @param proc
    */
-  def pageOverAll(proc:((String, Map[String,String])=>Boolean) ) {
-
-    val selector = Pelops.createSelector(DAO.poolName, columnFamily)
-    val slicePredicate = Selector.newColumnsPredicateAll(true, DAO.maxColumnLimit)
-    var startKey = ""
-    var keyRange = Selector.newKeyRange(startKey, "", 1001)
-    var hasMore = true
-    var counter = 0
-    var columnMap = selector.getColumnsFromRows(keyRange, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-    var continue = true
-    while (columnMap.size>0 && continue) {
-      val columnsObj = List(columnMap.keySet.toArray : _*)
-      //convert to scala List
-      val keys = columnsObj.asInstanceOf[List[String]]
-      startKey = keys.last
-      for(uuid<-keys){
-        val columnList = columnMap.get(uuid)
-        //procedure a map of key value pairs
-        val map = columnList2Map(columnList)
-        //pass the record ID and the key value pair map to the proc
-        continue = proc(uuid, map)
-      }
-      counter += keys.size
-      keyRange = Selector.newKeyRange(startKey, "", 1001)
-      columnMap = selector.getColumnsFromRows(keyRange, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-      columnMap.remove(startKey)
-    }
-    println("Finished paging. Total count: "+counter)
-  }
-
-  /**
-   * Iterate over all occurrences, passing the objects to a function.
-   * Function returns a boolean indicating if the paging should continue.
-   *
-   * @param occurrenceType
-   * @param proc
-   */
   def pageOverAll(version:Version, proc:((Option[FullRecord])=>Boolean) ) {
-     pageOverAll((guid, map) => {
+     persistentManager.pageOverAll(entityName, (guid, map) => {
        //retrieve all versions
        val fullRecord = createOccurrence(guid, map, version)
        //pass all version to the procedure, wrapped in the Option
@@ -395,6 +325,7 @@ object OccurrenceDAO {
       case e:Event => DAO.eventDefn
       case c:Classification => DAO.classificationDefn
       case a:Attribution => DAO.attributionDefn
+      case _ => throw new RuntimeException("Unrecognised entity. No definition registered for: "+anObject)
      }
   }
 
@@ -406,59 +337,57 @@ object OccurrenceDAO {
   }
 
   /**
+   * for each field in the definition, check if there is a value to write
+   */
+  protected def mapObjectToProperties(anObject:AnyRef, version:Version): Map[String,String] = {
+    var properties = scala.collection.mutable.Map[String,String]()
+    val defn = getDefn(anObject)
+    for (field <- defn) {
+        val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
+        if (fieldValue != null && !fieldValue.isEmpty) {
+            version match {
+                case Processed => properties.put(markAsProcessed(field), fieldValue)
+                case Consensus => properties.put(markAsConsensus(field), fieldValue)
+                case _ => properties.put(field, fieldValue)
+            }
+        }
+    }
+    properties.toMap
+  }
+
+  /**
    * Update the occurrence with the supplied record, setting the correct version
    */
   def updateOccurrence(uuid:String, fullRecord:FullRecord, assertions:Array[QualityAssertion], version:Version) {
+    //construct a map of properties to write
+    var properties = scala.collection.mutable.Map[String,String]()
 
-    val mutator = Pelops.createMutator(DAO.poolName, columnFamily)
-
-    //for each field in the definition, check if there is a value to write
     for(anObject <- Array(fullRecord.o,fullRecord.c,fullRecord.e,fullRecord.l)){
-      val defn = getDefn(anObject)
-      for(field <- defn){
-        val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
-        if(fieldValue!=null && !fieldValue.isEmpty){
-          var fieldName = field
-          version match {
-              case Processed =>  markAsProcessed(fieldName)
-              case Consensus =>  markAsConsensus(fieldName)
-              case _ =>
-          }
-          /*
-
-          if(version == Processed){
-            fieldName = markAsProcessed(fieldName)
-          }
-          if(version == Consensus){
-            fieldName = markAsConsensus(fieldName)
-          }
-          */
-          mutator.writeColumn(uuid, columnFamily, mutator.newColumn(fieldName, fieldValue))
-        }
-      }
+      val map = mapObjectToProperties(anObject,version)
+      //add all to map
+      properties.putAll(map)
     }
 
     //set the assertions on the full record
     fullRecord.assertions = assertions.toArray.map(_.assertionName)
-
     //set the quality assertions flags
     for(qa <- assertions){
-      mutator.writeColumn(uuid, columnFamily, mutator.newColumn(qa.assertionName+".qa", qa.positive.toString))
+      properties.put(markAsQualityAssertion(qa.assertionName), qa.positive.toString)
     }
 
     if(!assertions.isEmpty){
       //serialise the assertion list to JSON and DB
       val gson = new Gson
       val json = gson.toJson(assertions)
-      mutator.writeColumn(uuid, columnFamily, mutator.newColumn(qualityAssertionColumn, json))
+      properties.put(qualityAssertionColumn, json)
     }
 
     //commit to cassandra
-    mutator.execute(ConsistencyLevel.ONE)
+    persistentManager.put(uuid,entityName,properties.toMap)
   }
 
   /**
-   * Update an occurrence
+   * Update an occurrence entity. E.g. Occurrence, Classification, Taxon
    *
    * @param uuid
    * @param anObject
@@ -466,25 +395,8 @@ object OccurrenceDAO {
    */
   def updateOccurrence(uuid:String, anObject:AnyRef, version:Version) {
 
-    //select the correct definition file
-    val defn = getDefn(anObject)
-
-    //additional functionality to support adding Quality Assertions and Field corrections.
-    val mutator = Pelops.createMutator(DAO.poolName, columnFamily)
-    //for each field in the definition, check if there is a value to write
-    for(field <- defn){
-      val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
-      if(fieldValue!=null && !fieldValue.isEmpty){
-        val fieldName = {
-          if(version == Processed) markAsProcessed(field)
-          else if(version == Consensus) markAsConsensus(field)
-          else field
-        }
-        mutator.writeColumn(uuid, columnFamily, mutator.newColumn(fieldName, fieldValue))
-      }
-    }
-    //commit
-    mutator.execute(ConsistencyLevel.ONE)
+    val map = mapObjectToProperties(anObject,version)
+    persistentManager.put(uuid,entityName,map)
   }
 
   /**
@@ -494,8 +406,8 @@ object OccurrenceDAO {
    * @param qualityAssertion
    */
   def addQualityAssertion(uuid:String, qualityAssertion:QualityAssertion){
-    CassandraPersistenceManager.putArray(uuid,qualityAssertionColumn,Array(qualityAssertion),false)
-    CassandraPersistenceManager.put(uuid,qualityAssertion.assertionName,qualityAssertion.positive.toString)
+    persistentManager.putArray(uuid,entityName, qualityAssertionColumn,Array(qualityAssertion).asInstanceOf[Array[AnyRef]],false)
+    persistentManager.put(uuid, entityName, qualityAssertion.assertionName, qualityAssertion.positive.toString)
   }
 
   /**
@@ -503,7 +415,7 @@ object OccurrenceDAO {
    */
   def getQualityAssertions(uuid:String): Array[QualityAssertion] = {
     val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[Class[AnyRef]]
-    CassandraPersistenceManager.getArray(uuid,qualityAssertionColumn,theClass).asInstanceOf[Array[QualityAssertion]]
+    persistentManager.getArray(uuid,entityName, qualityAssertionColumn,theClass).asInstanceOf[Array[QualityAssertion]]
   }
 
   /**
@@ -512,8 +424,8 @@ object OccurrenceDAO {
    *
    */
   def addUserQualityAssertion(uuid:String, qualityAssertion:QualityAssertion){
-    CassandraPersistenceManager.putArray(uuid,userQualityAssertionColumn,Array(qualityAssertion),false)
-    CassandraPersistenceManager.put(uuid,qualityAssertion.assertionName,qualityAssertion.positive.toString)
+    persistentManager.putArray(uuid,entityName, userQualityAssertionColumn,Array(qualityAssertion).asInstanceOf[Array[AnyRef]],false)
+    persistentManager.put(uuid,entityName, qualityAssertion.assertionName,qualityAssertion.positive.toString)
   }
 
 
@@ -522,23 +434,40 @@ object OccurrenceDAO {
    */
   def getUserQualityAssertions(uuid:String): Array[QualityAssertion] = {
     val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[Class[AnyRef]]
-    CassandraPersistenceManager.getArray(uuid,userQualityAssertionColumn,theClass).asInstanceOf[Array[QualityAssertion]]
+    persistentManager.getArray(uuid,entityName, userQualityAssertionColumn,theClass)
+        .asInstanceOf[Array[QualityAssertion]]
   }
 
-    /**
-     * Delete a user supplied assertion
-     */
+  /**
+  * Delete a user supplied assertion
+  */
   def deleteUserQualityAssertion(uuid:String, assertionUuid:String) {
-    val assertions = getQualityAssertions(uuid)
 
-    //delete the assertion with the supplied UUID
+    val assertions = getUserQualityAssertions(uuid)
 
-    //put the assertions back - overwriting existing assertions
-    CassandraPersistenceManager.putArray(uuid,userQualityAssertionColumn,assertions.asInstanceOf[Array[Comparable[AnyRef]]],true)
+    //get the assertion that is to be deleted
+    val deletedAssertion = assertions.find(qa => {qa.uuid == uuid})
 
-    //update the status flag on the record, using the system quality assertions
+    if(!deletedAssertion.isEmpty){
 
-    //default to "positive" if there are no system quality assertions for the property
+        val assertionName = deletedAssertion.get.assertionName
 
+        //delete the assertion with the supplied UUID
+        val updateAssertions = assertions.filter(qa => {qa.uuid != uuid})
+
+        //put the assertions back - overwriting existing assertions
+        //CassandraPersistenceManager.putArray(uuid,userQualityAssertionColumn,updateAssertions.asInstanceOf[Array[Comparable[AnyRef]]],true)
+        persistentManager.putArray(uuid,entityName,userQualityAssertionColumn,updateAssertions.asInstanceOf[Array[AnyRef]],true)
+
+        //update the status flag on the record, using the system quality assertions
+        val systemAssertions = getQualityAssertions(uuid)
+
+        //find other assertions for this code
+//        updateAssertions.filter()
+
+        //is there another user assertion asserting the property ???
+
+        //default to "positive" if there are no system quality assertions for the property
+    }
   }
 }
