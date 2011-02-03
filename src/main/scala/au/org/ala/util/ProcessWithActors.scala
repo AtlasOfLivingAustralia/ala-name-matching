@@ -51,6 +51,7 @@ object ProcessWithActors {
         println(count + " >> Last key : " + fullRecord.get.o.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
         startTime = System.currentTimeMillis
       }
+      true //indicate to continue
     })
     println("Finished.")
   }

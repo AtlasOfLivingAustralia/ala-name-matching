@@ -25,50 +25,42 @@ object TaxonProfileDAO {
 
     if(guid==null || guid.isEmpty) return None
 
-        val selector = Pelops.createSelector(DAO.poolName, DAO.keyspace)
-        val slicePredicate = Selector.newColumnsPredicateAll(true, 10000)
-        try {
-          val columns = selector.getColumnsFromRow(guid, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-          val columnList = List(columns.toArray : _*)
-          var taxonProfile = new TaxonProfile
-
-          for(column<-columnList){
-
-            val field = new String(column.asInstanceOf[Column].name)
-            val value = new String(column.asInstanceOf[Column].value)
-
-            field match {
-              case "guid" => taxonProfile.guid = value
-              case "scientificName" => taxonProfile.scientificName = value
-              case "commonName" => taxonProfile.commonName = value
+    val map = DAO.persistentManager.get(guid,columnFamily)
+    if(!map.isEmpty){
+        var taxonProfile = new TaxonProfile
+        map.get.foreach ( keyValue => {
+            keyValue._1 match {
+              case "guid" => taxonProfile.guid = keyValue._2
+              case "scientificName" => taxonProfile.scientificName = keyValue._2
+              case "commonName" => taxonProfile.commonName = keyValue._2
               case "habitats" => {
-                if(value!=null && value.size>0){
-                  taxonProfile.habitats = value.split(",")
+                if(keyValue._2!=null && keyValue._2.size>0){
+                  taxonProfile.habitats = keyValue._2.split(",")
                  }
               }
               case _ =>
             }
-          }
-          Some(taxonProfile)
-        } catch {
-          case e:Exception => None
-        }
+        })
+      Some(taxonProfile)
+    } else {
+      None
+    }
   }
 
   /**
    * Persist the taxon profile.
    */
   def add(taxonProfile:TaxonProfile) {
-      val mutator = Pelops.createMutator(DAO.poolName, DAO.keyspace)
-      mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("guid", taxonProfile.guid))
-      mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("scientificName", taxonProfile.scientificName))
-      if(taxonProfile.commonName!=null)
-        mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("commonName", taxonProfile.commonName))
+
+      var properties = scala.collection.mutable.Map[String,String]()
+      properties.put("guid", taxonProfile.guid)
+      properties.put("scientificName", taxonProfile.scientificName)
+      properties.put("commonName", taxonProfile.commonName)
       if(taxonProfile.habitats!=null && taxonProfile.habitats.size>0){
         val habitatString = taxonProfile.habitats.reduceLeft(_+","+_)
-        mutator.writeColumn(taxonProfile.guid, columnFamily, mutator.newColumn("habitats", habitatString))
+        properties.put("habitats", habitatString)
       }
-      mutator.execute(ConsistencyLevel.ONE)
+      DAO.persistentManager.put(taxonProfile.guid, columnFamily, properties.toMap)
   }
 }
 
@@ -85,15 +77,8 @@ object AttributionDAO {
    */
   def add(institutionCode:String, collectionCode:String, attribution:Attribution){
     val guid = institutionCode.toUpperCase +"|"+collectionCode.toUpperCase
-      val mutator = Pelops.createMutator(DAO.poolName, DAO.keyspace)
-      for(field<-DAO.attributionDefn){
-        val fieldValue = attribution.getter(field).asInstanceOf[String]
-        if(fieldValue!=null && !fieldValue.isEmpty){
-          val fieldValue = attribution.getter(field).asInstanceOf[String].getBytes
-          mutator.writeColumn(guid, columnFamily, mutator.newColumn(field, fieldValue))
-        }
-      }
-    mutator.execute(ConsistencyLevel.ONE)
+    val map = DAO.mapObjectToProperties(attribution)
+    DAO.persistentManager.put(guid,"attr",map)
   }
 
   /**
@@ -103,18 +88,9 @@ object AttributionDAO {
     try {
       if(institutionCode!=null && collectionCode!=null){
         val uuid = institutionCode.toUpperCase+"|"+collectionCode.toUpperCase
-        //println(uuid)
-        val selector = Pelops.createSelector(DAO.poolName, DAO.keyspace)
-        val slicePredicate = Selector.newColumnsPredicateAll(true, 10000)
-        val columns = selector.getColumnsFromRow(uuid, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-        val columnList = List(columns.toArray : _*)
+        val map = DAO.persistentManager.get(uuid,"attr")
         val attribution = new Attribution
-        for(column<-columnList){
-          val field = new String(column.asInstanceOf[Column].name)
-          val value = new String(column.asInstanceOf[Column].value)
-          val method = attribution.getClass.getMethods.find(_.getName == field + "_$eq")
-          method.get.invoke(attribution, value.asInstanceOf[AnyRef])
-        }
+        DAO.mapObjectToProperties(map,attribution)
         Some(attribution)
       } else {
         None
@@ -137,11 +113,9 @@ object LocationDAO {
    */
   def addTagToLocation (latitude:Float, longitude:Float, tagName:String, tagValue:String) {
     val guid = latitude +"|"+longitude
-    val mutator = Pelops.createMutator(DAO.poolName, DAO.keyspace)
-    mutator.writeColumn(guid, columnFamily, mutator.newColumn("decimalLatitude", latitude.toString))
-    mutator.writeColumn(guid, columnFamily, mutator.newColumn("decimalLongitude", longitude.toString))
-    mutator.writeColumn(guid, columnFamily, mutator.newColumn(tagName, tagValue))
-    mutator.execute(ConsistencyLevel.ONE)
+    DAO.persistentManager.put(guid, columnFamily, "decimalLatitude",latitude.toString)
+    DAO.persistentManager.put(guid, columnFamily, "decimalLongitude",longitude.toString)
+    DAO.persistentManager.put(guid, columnFamily, tagName,tagValue)
   }
 
   /**
@@ -149,15 +123,16 @@ object LocationDAO {
    */
   def addRegionToPoint (latitude:Float, longitude:Float, mapping:Map[String,String]) {
     val guid = latitude +"|"+longitude
-    val mutator = Pelops.createMutator(DAO.poolName, DAO.keyspace)
-    mutator.writeColumn(guid,columnFamily, mutator.newColumn("decimalLatitude", latitude.toString))
-    mutator.writeColumn(guid,columnFamily, mutator.newColumn("decimalLongitude", longitude.toString))
-    for(map<-mapping){
-      mutator.writeColumn(guid, columnFamily, mutator.newColumn(map._1, map._2))
-    }
-    mutator.execute(ConsistencyLevel.ONE)
+    var properties = scala.collection.mutable.Map[String,String]()
+    properties ++= mapping
+    properties.put("decimalLatitude", latitude.toString)
+    properties.put("decimalLongitude", longitude.toString)
+    DAO.persistentManager.put(guid, columnFamily, properties.toMap)
   }
 
+  /**
+   * Round coordinates to 4 decimal places.
+   */
   protected def roundCoord(x:String) : String = {
     try {
       (((x * 10000).toInt).toFloat / 10000).toString
@@ -172,20 +147,9 @@ object LocationDAO {
   def getByLatLon(latitude:String, longitude:String) : Option[Location] = {
     try {
       val uuid =  roundCoord(latitude)+"|"+roundCoord(longitude)
-      //println(uuid)
-      val selector = Pelops.createSelector(DAO.poolName, DAO.keyspace)
-      val slicePredicate = Selector.newColumnsPredicateAll(true, 10000)
-      val columns = selector.getColumnsFromRow(uuid, columnFamily, slicePredicate, ConsistencyLevel.ONE)
-      val columnList = List(columns.toArray : _*)
+      val map = DAO.persistentManager.get(uuid,"loc")
       val location = new Location
-      for(column<-columnList){
-        val field = new String(column.asInstanceOf[Column].name)
-        val value = new String(column.asInstanceOf[Column].value)
-        //println(new String(column.asInstanceOf[Column].name)+ " " +column.asInstanceOf[Column].value)
-        //println("field name : " + field+", value : "+value)
-        val method = location.getClass.getMethods.find(_.getName == field + "_$eq")
-        method.get.invoke(location, value.asInstanceOf[AnyRef])
-      }
+      DAO.mapObjectToProperties(map,location)
       Some(location)
     } catch {
       case e:Exception => println(e.printStackTrace); None

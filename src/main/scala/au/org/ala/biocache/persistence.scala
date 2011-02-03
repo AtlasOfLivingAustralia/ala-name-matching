@@ -2,9 +2,9 @@ package au.org.ala.biocache
 
 import com.google.gson.Gson
 import collection.mutable.ArrayBuffer
-import org.wyki.cassandra.pelops.{Selector, Pelops}
 import collection.JavaConversions
 import org.apache.cassandra.thrift.{SlicePredicate, Column, ConsistencyLevel}
+import org.wyki.cassandra.pelops.{Policy, Selector, Pelops}
 
 /**
  * This trait should be implemented for Cassandra,
@@ -69,13 +69,17 @@ object CassandraPersistenceManager extends PersistenceManager {
     import JavaConversions._
 
     val keyspace = "occ"
+    val hosts = Array{"localhost"}
+    val poolName = "biocache-store-pool"
+    val maxColumnLimit = 10000
+    //Pelops.addPool(poolName, hosts, 9160, false, keyspace, new Policy)
 
     /**
      * Retrieve an array of objects, parsing the JSON stored.
      */
     def get(uuid:String, entityName:String) = {
-        val selector = Pelops.createSelector(DAO.poolName,keyspace)
-        val slicePredicate = Selector.newColumnsPredicateAll(true, DAO.maxColumnLimit)
+        val selector = Pelops.createSelector(poolName,keyspace)
+        val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
         try {
             val columnList = selector.getColumnsFromRow(uuid, entityName, slicePredicate, ConsistencyLevel.ONE)
             Some(columnList2Map(columnList))
@@ -86,7 +90,7 @@ object CassandraPersistenceManager extends PersistenceManager {
 
     def get(uuid:String, entityName:String, propertyName:String) = {
       try {
-          val selector = Pelops.createSelector(DAO.poolName, keyspace)
+          val selector = Pelops.createSelector(poolName, keyspace)
           val column = selector.getColumnFromRow(uuid, entityName, propertyName.getBytes, ConsistencyLevel.ONE)
           Some(new String(column.value))
       } catch {
@@ -95,7 +99,7 @@ object CassandraPersistenceManager extends PersistenceManager {
     }
 
     def put(uuid:String, entityName:String, keyValuePairs:Map[String, String]) = {
-        val mutator = Pelops.createMutator(DAO.poolName, keyspace)
+        val mutator = Pelops.createMutator(poolName, keyspace)
         keyValuePairs.foreach( keyValue => {
           mutator.writeColumn(uuid, entityName, mutator.newColumn(keyValue._1.getBytes, keyValue._2))
         })
@@ -106,7 +110,7 @@ object CassandraPersistenceManager extends PersistenceManager {
      * Store the supplied property value in the column
      */
     def put(uuid:String, entityName:String, propertyName:String, propertyValue:String) = {
-        val mutator = Pelops.createMutator(DAO.poolName, keyspace)
+        val mutator = Pelops.createMutator(poolName, keyspace)
         mutator.writeColumn(uuid, entityName, mutator.newColumn(propertyName.getBytes, propertyValue))
         mutator.execute(ConsistencyLevel.ONE)
     }
@@ -132,7 +136,7 @@ object CassandraPersistenceManager extends PersistenceManager {
 
         //initialise the serialiser
         val gson = new Gson
-        val mutator = Pelops.createMutator(DAO.poolName, keyspace)
+        val mutator = Pelops.createMutator(poolName, keyspace)
 
         if (overwrite) {
 
@@ -183,8 +187,8 @@ object CassandraPersistenceManager extends PersistenceManager {
      */
     def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean) ) {
 
-      val selector = Pelops.createSelector(DAO.poolName, keyspace)
-      val slicePredicate = Selector.newColumnsPredicateAll(true, DAO.maxColumnLimit)
+      val selector = Pelops.createSelector(poolName, keyspace)
+      val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
       var startKey = ""
       var keyRange = Selector.newKeyRange(startKey, "", 1001)
       var hasMore = true
@@ -215,7 +219,7 @@ object CassandraPersistenceManager extends PersistenceManager {
      * Select fields from rows and pass to the supplied function.
      */
     def selectRows(uuids:Array[String], entityName:String, fields:Array[String], proc:((Map[String,String])=>Unit)) {
-       val selector = Pelops.createSelector(DAO.poolName, keyspace)
+       val selector = Pelops.createSelector(poolName, keyspace)
        var slicePredicate = new SlicePredicate
        slicePredicate.setColumn_names(fields.toList.map(_.getBytes))
 
@@ -253,7 +257,7 @@ object CassandraPersistenceManager extends PersistenceManager {
      */
     protected def getColumn(uuid:String, columnFamily:String, columnName:String): Option[Column] = {
         try {
-            val selector = Pelops.createSelector(DAO.poolName, keyspace)
+            val selector = Pelops.createSelector(poolName, keyspace)
             Some(selector.getColumnFromRow(uuid, columnFamily, columnName.getBytes, ConsistencyLevel.ONE))
         } catch {
             case _ => None //expected behaviour when row doesnt exist
