@@ -1,11 +1,14 @@
 package au.org.ala.biocache
 
+import org.scalatest.FunSuite
+import org.wyki.cassandra.pelops.Pelops
+
 /**
  * @author Dave Martin (David.Martin@csiro.au)
  */
-object DownloadTest {
+class DownloadTest extends FunSuite {
 
-  def main(args : Array[String]) : Unit = {
+  test("Download to CSV") {
 
     val uuids = Array(
         "0000b9e7-65b4-4335-b012-60cdb13a91fb",
@@ -17,5 +20,7 @@ object DownloadTest {
 
     println("Processed values")
     OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"))
+
+    Pelops.shutdown
   }
 }

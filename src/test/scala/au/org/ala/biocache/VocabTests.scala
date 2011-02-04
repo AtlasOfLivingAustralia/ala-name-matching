@@ -1,7 +1,6 @@
 package au.org.ala.biocache
 
 import org.scalatest.FunSuite
-import au.org.ala.biocache.{StateCentrePoints, HabitatMap}
 
 /**
  * Test for vocabulary mapping and lookups.
