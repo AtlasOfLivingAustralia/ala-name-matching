@@ -400,7 +400,7 @@ object OccurrenceDAO {
    * @param qualityAssertion
    */
   def addQualityAssertion(uuid:String, qualityAssertion:QualityAssertion){
-    DAO.persistentManager.putArray(uuid,entityName, qualityAssertionColumn,Array(qualityAssertion).asInstanceOf[Array[AnyRef]],false)
+    DAO.persistentManager.putArray(uuid,entityName, qualityAssertionColumn,Array(qualityAssertion),false)
     DAO.persistentManager.put(uuid, entityName, qualityAssertion.assertionName, qualityAssertion.positive.toString)
   }
 
@@ -408,7 +408,8 @@ object OccurrenceDAO {
    * Retrieve annotations for the supplied UUID.
    */
   def getQualityAssertions(uuid:String): Array[QualityAssertion] = {
-    val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[Class[AnyRef]]
+    //val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[java.lang.Class[Array[AnyRef]]]
+    val theClass = classOf[Array[QualityAssertion]].asInstanceOf[java.lang.Class[Array[AnyRef]]]
     DAO.persistentManager.getArray(uuid,entityName, qualityAssertionColumn,theClass).asInstanceOf[Array[QualityAssertion]]
   }
 
@@ -418,16 +419,22 @@ object OccurrenceDAO {
    *
    */
   def addUserQualityAssertion(uuid:String, qualityAssertion:QualityAssertion){
-    DAO.persistentManager.putArray(uuid,entityName, userQualityAssertionColumn,Array(qualityAssertion).asInstanceOf[Array[AnyRef]],false)
-    DAO.persistentManager.put(uuid,entityName, qualityAssertion.assertionName,qualityAssertion.positive.toString)
-  }
 
+    val userAssertions = getUserQualityAssertions(uuid) ++ Array(qualityAssertion)
+    val systemAssertions = getQualityAssertions(uuid)
+
+    //store the new assertions
+    DAO.persistentManager.putArray(uuid,entityName,userQualityAssertionColumn,userAssertions,true)
+
+    //update the overall status
+    updateAssertionStatus(uuid,qualityAssertion.assertionName,systemAssertions,userAssertions)
+  }
 
   /**
    * Retrieve annotations for the supplied UUID.
    */
   def getUserQualityAssertions(uuid:String): Array[QualityAssertion] = {
-    val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[Class[AnyRef]]
+    val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[java.lang.Class[Array[AnyRef]]]
     DAO.persistentManager.getArray(uuid,entityName, userQualityAssertionColumn,theClass)
         .asInstanceOf[Array[QualityAssertion]]
   }
@@ -437,31 +444,58 @@ object OccurrenceDAO {
   */
   def deleteUserQualityAssertion(uuid:String, assertionUuid:String) {
 
+    //retrieve existing assertions
     val assertions = getUserQualityAssertions(uuid)
 
     //get the assertion that is to be deleted
     val deletedAssertion = assertions.find(qa => {qa.uuid == uuid})
 
+    //if not empty, remove the assertion and write back
     if(!deletedAssertion.isEmpty){
-
-        val assertionName = deletedAssertion.get.assertionName
 
         //delete the assertion with the supplied UUID
         val updateAssertions = assertions.filter(qa => {qa.uuid != uuid})
 
         //put the assertions back - overwriting existing assertions
-        //CassandraPersistenceManager.putArray(uuid,userQualityAssertionColumn,updateAssertions.asInstanceOf[Array[Comparable[AnyRef]]],true)
-        DAO.persistentManager.putArray(uuid,entityName,userQualityAssertionColumn,updateAssertions.asInstanceOf[Array[AnyRef]],true)
+        DAO.persistentManager.putArray(uuid,entityName,userQualityAssertionColumn,updateAssertions,true)
 
-        //update the status flag on the record, using the system quality assertions
+        val assertionName = deletedAssertion.get.assertionName
+        //are there any matching assertions for other users????
         val systemAssertions = getQualityAssertions(uuid)
 
-        //find other assertions for this code
-//        updateAssertions.filter()
-
-        //is there another user assertion asserting the property ???
-
-        //default to "positive" if there are no system quality assertions for the property
+        //update the assertion status
+        updateAssertionStatus(uuid,assertionName,systemAssertions,updateAssertions)
     }
+  }
+
+  /**
+   * Update the assertion status using system and user assertions.
+   */
+  def updateAssertionStatus(uuid:String, assertionName:String, systemAssertions:Array[QualityAssertion], userAssertions:Array[QualityAssertion])  {
+
+    val assertions = userAssertions.filter(qa => {qa.assertionName equals assertionName})
+    //update the status flag on the record, using the system quality assertions
+    if(assertions.size>0) {
+        //if anyone asserts the negative, the answer is negative
+        val positive = userAssertions.foldLeft(true)( (isPositive,qualityAssertion) => { isPositive && qualityAssertion.positive } )
+        DAO.persistentManager.put(uuid,entityName,assertionName,positive.toString)
+    } else if(systemAssertions.size>0){
+        //check system assertions for an answer
+        val matchingAssertion = systemAssertions.find(assertion => {assertion.assertionName equals assertionName})
+        if(!matchingAssertion.isEmpty){
+            val assertion = matchingAssertion.get
+            DAO.persistentManager.put(uuid,entityName,assertion.assertionName,assertion.positive.toString)
+        }
+    } else {
+        DAO.persistentManager.put(uuid,entityName,assertionName,true.toString)
+    }
+  }
+
+  /** Implicit converters */
+  implicit def toAnyRefArray[T](array:Array[QualityAssertion]): Array[AnyRef] = {
+    array.asInstanceOf[Array[AnyRef]]
+  }
+  implicit def toClassAnyRefArray[T](theClass:java.lang.Class[Array[QualityAssertion]]): java.lang.Class[Array[AnyRef]] = {
+    theClass.asInstanceOf[java.lang.Class[Array[AnyRef]]]
   }
 }

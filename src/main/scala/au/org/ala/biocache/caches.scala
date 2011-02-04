@@ -85,18 +85,18 @@ object AttributionDAO {
    * Retrieve attribution via institution/collection codes.
    */
   def getByCodes(institutionCode:String, collectionCode:String) : Option[Attribution] = {
-    try {
-      if(institutionCode!=null && collectionCode!=null){
-        val uuid = institutionCode.toUpperCase+"|"+collectionCode.toUpperCase
-        val map = DAO.persistentManager.get(uuid,"attr")
+    if(institutionCode!=null && collectionCode!=null){
+      val uuid = institutionCode.toUpperCase+"|"+collectionCode.toUpperCase
+      val map = DAO.persistentManager.get(uuid,"attr")
+      if(map.isEmpty){
         val attribution = new Attribution
-        DAO.mapObjectToProperties(map,attribution)
+        DAO.mapPropertiesToObject(attribution,map.get)
         Some(attribution)
       } else {
         None
       }
-    } catch {
-      case e:Exception => println(e.printStackTrace); None
+    } else {
+        None
     }
   }
 }

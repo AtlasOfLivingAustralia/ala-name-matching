@@ -80,6 +80,7 @@ object StateCentrePoints {
    * state or territory
    */
   def coordinatesMatchCentre(state:String, decimalLatitude:String, decimalLongitude:String) : Boolean = {
+
     val matchedState = States.matchTerm(state)
     if(!matchedState.isEmpty){
 
@@ -99,7 +100,6 @@ object StateCentrePoints {
           val approximatedLong = round(coordinates.get._2,longDecPlaces)
 
           //println("Rounded values: "+approximatedLat +", "+approximatedLong)
-
           if(approximatedLat == latitude && approximatedLong == longitude){
             true
           } else {

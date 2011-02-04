@@ -18,32 +18,32 @@ trait PersistenceManager {
     /**
      * Get a single property.
      */
-    def get(uuid: String, entityName:String, propertyName: String): Option[String]
+    def get(uuid:String, entityName:String, propertyName:String) : Option[String]
 
     /**
      * Get a key value pair map for this record.
      */
-    def get(uuid: String, entityName:String): Option[Map[String, String]]
+    def get(uuid:String, entityName:String): Option[Map[String, String]]
 
     /**
      * Put a single property.
      */
-    def put(uuid: String, entityName:String, propertyName: String, propertyValue: String)
+    def put(uuid:String, entityName:String, propertyName:String, propertyValue:String)
 
     /**
      * Put a set of key value pairs.
      */
-    def put(uuid: String, entityName:String, keyValuePairs: Map[String, String])
+    def put(uuid:String, entityName:String, keyValuePairs:Map[String, String])
 
     /**
      * Retrieve an array of objects.
      */
-    def getArray(uuid: String, entityName:String, propertyName: String, theClass: java.lang.Class[AnyRef]): Array[AnyRef]
+    def getArray(uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[Array[AnyRef]]): Array[AnyRef]
 
     /**
      * @overwrite if true, current stored value will be replaced without a read.
      */
-    def putArray(uuid: String, entityName:String, propertyName: String, propertyArray: Array[AnyRef], overwrite: Boolean)
+    def putArray(uuid:String, entityName:String, propertyName:String, propertyArray:Array[AnyRef], overwrite: Boolean)
 
     /**
      * Page over all entities, passing the retrieved UUID and property map to the supplied function.
@@ -124,14 +124,14 @@ object CassandraPersistenceManager extends PersistenceManager {
     /**
      * Retrieve the column value, and parse from JSON to Array
      */
-    def getArray(uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[AnyRef]): Array[AnyRef] = {
+    def getArray(uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[Array[AnyRef]]): Array[AnyRef] = {
         val column = getColumn(uuid, entityName, propertyName)
         if (column.isEmpty) {
             Array()
         } else {
             val gson = new Gson
             val currentJson = new String(column.get.getValue)
-            gson.fromJson(currentJson, theClass).asInstanceOf[Array[AnyRef]]
+            gson.fromJson(currentJson, theClass)
         }
     }
 
@@ -164,7 +164,7 @@ object CassandraPersistenceManager extends PersistenceManager {
                 var objectList = gson.fromJson(currentJson, propertyArray.getClass).asInstanceOf[Array[AnyRef]]
 
                 var written = false
-                var buffer = new ArrayBuffer[AnyRef]
+                var buffer = new ArrayBuffer[Any]
 
                 for (theObject <- objectList) {
                     if (!propertyArray.contains(theObject)) {
