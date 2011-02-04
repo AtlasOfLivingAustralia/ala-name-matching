@@ -14,9 +14,15 @@ public class PagingTest extends TestCase {
 	public void testPaging(){
 		
 		OccurrenceDAO.pageOverAll(Versions.RAW(), new OccurrenceConsumer(){
-			@Override
-			public void consume(FullRecord fullrecord) {
+            int counter = 0;
+
+			public boolean consume(FullRecord fullrecord) {
 				System.out.println("GUID: "+ fullrecord.getO().getUuid());
+                counter++;
+                if(counter>10){
+                    return false;
+                }
+                return true;
 			}
 		});
 	}
@@ -29,10 +35,10 @@ public class PagingTest extends TestCase {
 				"0001b51b-32d7-48a8-9f67-3563cba731f3"};
 		
 		System.out.println("Raw values");
-		OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids,  new String[]{"uuid","scientificName", "eventDate"}, Versions.RAW());
+		OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids,  new String[]{"uuid","scientificName", "eventDate"});
 		
 		System.out.println("Processed values");
-		OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids,  new String[]{"uuid","scientificName", "eventDate"}, Versions.PROCESSED());
+		OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids,  new String[]{"uuid","scientificName", "eventDate"});
 
 	}
 }
