@@ -53,8 +53,8 @@ object DAO {
     val defn = getDefn(anObject)
     for(fieldName<-defn){
       val fieldValue = map.get(fieldName)
-      if(!fieldValue.isEmpty){
-        anObject.setter(fieldName,fieldValue)
+      if(!fieldValue.isEmpty && fieldValue.get.length>0){
+        anObject.setter(fieldName,fieldValue.get)
       }
     }
   }

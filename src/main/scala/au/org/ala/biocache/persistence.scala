@@ -88,6 +88,9 @@ object CassandraPersistenceManager extends PersistenceManager {
         }
     }
 
+    /**
+     * Retreive the column value, handling NotFoundExceptions from cassandra thrift.
+     */
     def get(uuid:String, entityName:String, propertyName:String) = {
       try {
           val selector = Pelops.createSelector(poolName, keyspace)
@@ -98,6 +101,9 @@ object CassandraPersistenceManager extends PersistenceManager {
       }
     }
 
+    /**
+     * Store the supplied map of properties as separate columns in cassandra.
+     */
     def put(uuid:String, entityName:String, keyValuePairs:Map[String, String]) = {
         val mutator = Pelops.createMutator(poolName, keyspace)
         keyValuePairs.foreach( keyValue => {
