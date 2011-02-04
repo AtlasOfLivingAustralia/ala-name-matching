@@ -20,8 +20,7 @@ class ReflectBean(ref: AnyRef)  {
 
      
       typ.getName match{
-        case "java.lang.Integer" =>{ v2 = any2Int(v2)
-          println("Converting to Integer")}
+        case "java.lang.Integer" => v2 = any2Int(v2)
         case "java.lang.Double" => v2 = any2Double(v2)
         case "java.util.Date" => v2 = any2Date(v2)
         case _ => 
