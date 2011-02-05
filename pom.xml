@@ -102,17 +102,28 @@
       <artifactId>dwc-archive</artifactId>
       <version>1.2-SNAPSHOT</version>
     </dependency>
-    <!-- Google JSON library -->
+    <!-- Jackson  (JSON serialisation)-->
     <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
-      <version>1.6</version>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-core-asl</artifactId>
+      <version>1.7.0</version>
     </dependency>
-    <!--  SCALA -->
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
+      <version>1.7.0</version>
+    </dependency>
+    <!-- SCALA -->
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
       <version>2.8.1</version>
+    </dependency>
+    <!-- SCALA -> JAVA COLLECTIONS -->
+    <dependency>
+      <groupId>org.scalaj</groupId>
+      <artifactId>scalaj-collection_2.8.0</artifactId>
+      <version>1.0</version>
     </dependency>
     <!-- SCALATEST -->
     <dependency>
@@ -165,14 +176,14 @@
     </dependency>
     <!-- SOLR -->
     <dependency>
-        <artifactId>solr-core</artifactId>
-        <groupId>org.apache.solr</groupId>
-        <version>1.4.0</version>
+      <artifactId>solr-core</artifactId>
+      <groupId>org.apache.solr</groupId>
+      <version>1.4.0</version>
     </dependency>
     <dependency>
-        <artifactId>solr-solrj</artifactId>
-        <groupId>org.apache.solr</groupId>
-        <version>1.4.0</version>
+      <artifactId>solr-solrj</artifactId>
+      <groupId>org.apache.solr</groupId>
+      <version>1.4.0</version>
     </dependency>
     <!-- SPATIAL-SOLR PLUGIN FOR SOLR 1.4 -->
     <dependency>
@@ -188,28 +199,28 @@
     </dependency>
     <!-- Added for cassandra test -->
     <dependency>
-        <groupId>org.cliffc.high_scale_lib</groupId>
-        <artifactId>high-scale-lib</artifactId>
-        <version>1.0</version>
-        <scope>test</scope>
+      <groupId>org.cliffc.high_scale_lib</groupId>
+      <artifactId>high-scale-lib</artifactId>
+      <version>1.0</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
-        <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
-        <artifactId>concurrentlinkedhashmap-lru</artifactId>
-        <version>1.1</version>
-        <scope>test</scope>
+      <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
+      <artifactId>concurrentlinkedhashmap-lru</artifactId>
+      <version>1.1</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
-        <groupId>com.google.guava</groupId>
-        <artifactId>guava</artifactId>
-        <version>r06</version>
-        <scope>test</scope>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>r06</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
-        <groupId>com.reardencommerce</groupId>
-        <artifactId>clhm-production</artifactId>
-        <version>1.0</version>
-        <scope>test</scope>
+      <groupId>com.reardencommerce</groupId>
+      <artifactId>clhm-production</artifactId>
+      <version>1.0</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <organization>
@@ -340,9 +351,9 @@
       <plugin>
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
-		<configuration>
-		  <vscalaVersion>1.0</vscalaVersion>
-		</configuration>
+        <configuration>
+          <vscalaVersion>1.0</vscalaVersion>
+        </configuration>
       </plugin>
     </plugins>
   </reporting>
