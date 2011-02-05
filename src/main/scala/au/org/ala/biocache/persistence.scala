@@ -1,10 +1,12 @@
 package au.org.ala.biocache
 
-import com.google.gson.Gson
-import collection.mutable.ArrayBuffer
 import collection.JavaConversions
 import org.apache.cassandra.thrift.{SlicePredicate, Column, ConsistencyLevel}
 import org.wyki.cassandra.pelops.{Policy, Selector, Pelops}
+import java.util.ArrayList
+import org.codehaus.jackson.map.`type`.TypeFactory
+import org.codehaus.jackson.map.ObjectMapper
+import collection.mutable.{ListBuffer, ArrayBuffer}
 
 /**
  * This trait should be implemented for Cassandra,
@@ -38,12 +40,12 @@ trait PersistenceManager {
     /**
      * Retrieve an array of objects.
      */
-    def getArray(uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[Array[AnyRef]]): Array[AnyRef]
+    def getList(uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[AnyRef]) : List[AnyRef]
 
     /**
      * @overwrite if true, current stored value will be replaced without a read.
      */
-    def putArray(uuid:String, entityName:String, propertyName:String, propertyArray:Array[AnyRef], overwrite: Boolean)
+    def putList(uuid:String, entityName:String, propertyName:String, objectList:List[AnyRef], overwrite:Boolean)
 
     /**
      * Page over all entities, passing the retrieved UUID and property map to the supplied function.
@@ -67,6 +69,7 @@ trait PersistenceManager {
 object CassandraPersistenceManager extends PersistenceManager {
 
     import JavaConversions._
+    import scalaj.collection.Imports._
 
     val keyspace = "occ"
     val hosts = Array{"localhost"}
@@ -124,31 +127,31 @@ object CassandraPersistenceManager extends PersistenceManager {
     /**
      * Retrieve the column value, and parse from JSON to Array
      */
-    def getArray(uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[Array[AnyRef]]): Array[AnyRef] = {
+    def getList(uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[AnyRef]): List[AnyRef] = {
         val column = getColumn(uuid, entityName, propertyName)
         if (column.isEmpty) {
-            Array()
+            List()
         } else {
-            val gson = new Gson
-            val currentJson = new String(column.get.getValue)
-            gson.fromJson(currentJson, theClass)
+            val json = new String(column.get.getValue)
+            toList(json,theClass)
+//            val gson = new Gson
+//            val currentJson = new String(column.get.getValue)
+//            gson.fromJson(currentJson, theClass)
         }
     }
 
     /**
      * Store arrays in a single column as JSON.
      */
-    def putArray(uuid:String, entityName:String, propertyName:String, propertyArray:Array[AnyRef], overwrite:Boolean) = {
+    def putList(uuid:String, entityName:String, propertyName:String, newList:List[AnyRef], overwrite:Boolean) = {
 
         //initialise the serialiser
-        val gson = new Gson
+//        val gson = new Gson
         val mutator = Pelops.createMutator(poolName, keyspace)
 
         if (overwrite) {
-
-            val json = gson.toJson(propertyArray)
+            val json = toJSON(newList)
             mutator.writeColumn(uuid, entityName, mutator.newColumn(propertyName, json))
-
         } else {
 
             //retrieve existing values
@@ -156,28 +159,28 @@ object CassandraPersistenceManager extends PersistenceManager {
             //if empty, write, if populated resolve
             if (column.isEmpty) {
                 //write new values
-                val json = gson.toJson(propertyArray)
+                val json = toJSON(newList)
                 mutator.writeColumn(uuid, entityName, mutator.newColumn(propertyName, json))
             } else {
                 //retrieve the existing objects
                 val currentJson = new String(column.get.getValue)
-                var objectList = gson.fromJson(currentJson, propertyArray.getClass).asInstanceOf[Array[AnyRef]]
+                var currentList = toList(currentJson, newList(0).getClass.asInstanceOf[java.lang.Class[AnyRef]]) //   gson.fromJson(currentJson, propertyArray.getClass).asInstanceOf[Array[AnyRef]]
 
                 var written = false
-                var buffer = new ArrayBuffer[Any]
+                var buffer = new ListBuffer[AnyRef]
 
-                for (theObject <- objectList) {
-                    if (!propertyArray.contains(theObject)) {
+                for (theObject <- currentList) {
+                    if (!newList.contains(theObject)) {
                         //add to buffer
                         buffer + theObject
                     }
                 }
 
                 //PRESERVE UNIQUENESS
-                buffer ++= propertyArray
+                buffer ++= newList
 
                 // check equals
-                val newJson = gson.toJson(buffer.toArray)
+                val newJson = toJSON(buffer.toList)
                 mutator.writeColumn(uuid, entityName, mutator.newColumn(propertyName, newJson))
             }
         }
@@ -268,5 +271,23 @@ object CassandraPersistenceManager extends PersistenceManager {
         } catch {
             case _ => None //expected behaviour when row doesnt exist
         }
+    }
+
+    /**
+     * Convert the supplied list to JSON
+     */
+    def toJSON(list:List[AnyRef]) : String = {
+        val mapper = new ObjectMapper
+        mapper.writeValueAsString(list.asJava)
+    }
+
+    /**
+     * Convert the supplied list from JSON
+     */
+    def toList(jsonString:String, theClass:java.lang.Class[AnyRef]) : List[AnyRef] = {
+        var mapper = new ObjectMapper
+        val valueType = TypeFactory.collectionType(classOf[ArrayList[AnyRef]], theClass)
+        var listOfObject = mapper.readValue[ArrayList[AnyRef]](jsonString, valueType)
+        listOfObject.asScala[AnyRef].toList
     }
 }
