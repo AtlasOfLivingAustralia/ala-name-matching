@@ -1,30 +1,41 @@
 package au.org.ala.biocache
 
-import org.wyki.cassandra.pelops.Pelops
 import org.scalatest.FunSuite
+import org.apache.cassandra.thrift.ConsistencyLevel
+import org.wyki.cassandra.pelops.{Policy, Mutator, Pelops}
 
 class QualityAssertionTests extends FunSuite {
 
-  test("Store and retrieval of system assertions"){
+  test("Add and delete user assertions"){
 
-    val qa1 = Array(QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH),QualityAssertion(AssertionCodes.ALTITUDE_IN_FEET))
+    val uuid = "test-uuid-qa-delete1"
+    try {
+        Pelops.addPool("test", Array("localhost"), 9160, false, "occ", new Policy)
+        val mutator = Pelops.createMutator("test","occ")
+        mutator.deleteColumns(uuid, "occ", "userQualityAssertion","qualityAssertion")
+        mutator.execute(ConsistencyLevel.ONE)
+    } catch {
+        case e: Exception => e.printStackTrace
+    }
 
-    CassandraPersistenceManager.putArray("uuid-cassandra-pm-test","occ","qualityTest", qa1.asInstanceOf[Array[AnyRef]], true)
+    val qa1 = QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH, false)
+    OccurrenceDAO.addUserQualityAssertion(uuid, qa1)
 
-    val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[Class[AnyRef]]
+    val qa2 = QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH, true)
+    OccurrenceDAO.addUserQualityAssertion(uuid, qa2)
 
-    val assertions = CassandraPersistenceManager.getArray("uuid-cassandra-pm-test","occ","qualityTest", theClass)
+    expect(2){
+        val userAssertions = OccurrenceDAO.getUserQualityAssertions(uuid)
+        userAssertions.size
+    }
 
-    expect(2){assertions.size}
+    //run the delete
+    OccurrenceDAO.deleteUserQualityAssertion(uuid, qa2.uuid)
 
-    val qa2 = Array(QualityAssertion(AssertionCodes.DEPTH_NON_NUMERIC),QualityAssertion(AssertionCodes.BADLY_FORMED_ALTITUDE))
-
-    //add more
-    CassandraPersistenceManager.putArray("uuid-cassandra-pm-test","occ","qualityTest", qa2.asInstanceOf[Array[AnyRef]], false)
-
-    val assertions2 = CassandraPersistenceManager.getArray("uuid-cassandra-pm-test","occ","qualityTest", theClass)
-
-    expect(4){assertions2.size}
+    expect(1){
+        val userAssertions = OccurrenceDAO.getUserQualityAssertions(uuid)
+        userAssertions.size
+    }
 
     Pelops.shutdown
   }

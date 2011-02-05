@@ -13,6 +13,7 @@ class DAOLayerTests extends FunSuite {
         } else {
             println("No matching point")
         }
+        Pelops.shutdown
     }
 
     test("Get by UUID") {
@@ -60,9 +61,6 @@ class DAOLayerTests extends FunSuite {
         qa2.userDisplayName = "Dave Martin"
 
         OccurrenceDAO.addQualityAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa2 )
-
-//		val om = new ObjectMapper
-//		println(om.writeValueAsString(qa))
 
         Pelops.shutdown
     }
