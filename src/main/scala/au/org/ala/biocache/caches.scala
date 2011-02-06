@@ -88,7 +88,7 @@ object AttributionDAO {
     if(institutionCode!=null && collectionCode!=null){
       val uuid = institutionCode.toUpperCase+"|"+collectionCode.toUpperCase
       val map = DAO.persistentManager.get(uuid,"attr")
-      if(map.isEmpty){
+      if(!map.isEmpty){
         val attribution = new Attribution
         DAO.mapPropertiesToObject(attribution,map.get)
         Some(attribution)
