@@ -27,6 +27,9 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import au.org.ala.biocache.FullRecord;
+import au.org.ala.biocache.OccurrenceDAO;
+import org.ala.biocache.*;
 import org.ala.biocache.dao.SearchDAO;
 import org.ala.biocache.dto.OccurrenceDTO;
 import org.ala.biocache.dto.SearchQuery;
@@ -43,6 +46,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.apache.lucene.document.Field;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.stereotype.Controller;
@@ -52,6 +56,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import au.org.ala.biocache.Store;
 
 /**
  * Occurrences controller for the BIE biocache site
@@ -607,7 +612,7 @@ public class OccurrenceController {
 	 *
 	 * @param id
 	 * @param model
-         * @param log Optional supplied value to specify whether or not the log the statistics.  Statistics are logged by default
+     * @param log Optional supplied value to specify whether or not the log the statistics.  Statistics are logged by default
 	 * @return view name
 	 * @throws Exception
 	 */
@@ -618,7 +623,11 @@ public class OccurrenceController {
         model.addAttribute("id", id);
 		OccurrenceDTO occurrence = searchDAO.getById(id);
 		model.addAttribute("occurrence", occurrence);
-		
+
+        //au.org.ala.biocache.QualityAssertion.apply(au.org.ala.biocache.AssertionCodes.ALTITUDE_IN_FEET());
+
+        FullRecord fullRecord = Store.getByUuid(id);
+
 		if (occurrence != null && occurrence.getCollectionCodeUid() != null) {
 			
 			if(occurrence.getCollectionCodeUid()!=null){
