@@ -86,28 +86,13 @@ object DAO {
 }
 
 /**
- * A trait to implement by java classes to process occurrence records.
- */
-trait OccurrenceConsumer {
-  /** Consume the supplied record */
-  def consume(record:FullRecord) : Boolean
-}
-
-/**
- * A trait to implement by java classes to process occurrence records.
- */
-trait OccurrenceVersionConsumer {
-  /** Passes an array of versions. Raw, Process and consensus versions */
-  def consume(record:Array[FullRecord]) : Boolean
-}
-
-/**
  * A DAO for accessing occurrences.
  */
 object OccurrenceDAO {
 
   import ReflectBean._
   import JavaConversions._
+  import scalaj.collection.Imports._
 
   private val entityName = "occ"
   private val qualityAssertionColumn = "qualityAssertion"
@@ -141,18 +126,6 @@ object OccurrenceDAO {
       val consensus = createOccurrence(uuid, map.get, Consensus)
       //pass all version to the procedure, wrapped in the Option
       Some(Array(raw, processed, consensus))
-    }
-  }
-
-  /**
-   * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
-   */
-  def getByUuidJ(uuid:String) : FullRecord = {
-    val record = getByUuid(uuid, Raw)
-    if(record.isEmpty){
-      null
-    } else {
-      record.get
     }
   }
 
@@ -280,13 +253,6 @@ object OccurrenceDAO {
   }
 
   /**
-   * Iterate over records, passing the records to the supplied consumer.
-   */
-  def pageOverAll(version:Version, consumer:OccurrenceConsumer) {
-    pageOverAll(version, fullRecord => consumer.consume(fullRecord.get))
-  }
-
-  /**
    * Iterate over all occurrences, passing all versions of FullRecord
    * to the supplied function.
    * Function returns a boolean indicating if the paging should continue.
@@ -302,20 +268,6 @@ object OccurrenceDAO {
        val consensus = createOccurrence(guid, map, Consensus)
        //pass all version to the procedure, wrapped in the Option
        proc(Some(Array(raw, processed, consensus)))
-     })
-  }
-
-  /**
-   * Page over all versions of the record, handing off to the OccurrenceVersionConsumer.
-   */
-  def pageOverAllVersions(consumer:OccurrenceVersionConsumer) {
-     DAO.persistentManager.pageOverAll(entityName, (guid, map) => {
-       //retrieve all versions
-       val raw = createOccurrence(guid, map, Raw)
-       val processed = createOccurrence(guid, map, Processed)
-       val consensus = createOccurrence(guid, map, Consensus)
-       //pass all version to the procedure, wrapped in the Option
-       consumer.consume(Array(raw, processed, consensus))
      })
   }
 
@@ -426,6 +378,11 @@ object OccurrenceDAO {
     //val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[java.lang.Class[Array[AnyRef]]]
     val theClass = classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]
     DAO.persistentManager.getList(uuid,entityName, qualityAssertionColumn,theClass).asInstanceOf[List[QualityAssertion]]
+  }
+
+  def getQualityAssertionsJ(uuid:String): java.util.List[QualityAssertion] = {
+
+    getQualityAssertions(uuid).asJava
   }
 
   /**
