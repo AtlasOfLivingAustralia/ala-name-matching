@@ -28,7 +28,7 @@ object DAO {
   val measurementDefn = loadDefn(classOf[Measurement])
 
   //index definitions
-  val occurrenceIndexDefn = fileToSet("/OccurrenceIndex.txt") //PROBABLY NOT THE BEST PLACE FOR THIS
+  val occurrenceIndexDefn = loadDefn(classOf[OccurrenceIndex])//PROBABLY NOT THE BEST PLACE FOR THIS
 
   /** Retrieve the set of fields for the supplied class */
   protected def loadDefn(theClass:java.lang.Class[_]) : Set[String] = {
@@ -71,7 +71,7 @@ object DAO {
    * Retrieve a object definition (simple ORM mapping)
    */
   def getDefn(anObject:Any) : Set[String] = {
-     anObject match {
+    anObject match {
       case l:Location => DAO.locationDefn
       case o:Occurrence => DAO.occurrenceDefn
       case e:Event => DAO.eventDefn

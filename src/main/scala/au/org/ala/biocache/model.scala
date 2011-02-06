@@ -268,8 +268,12 @@ class OccurrenceIndex extends Cloneable {
   @BeanProperty @Field("ibra") var ibra:String = _
   @BeanProperty @Field("imcra") var imcra:String = _
   @BeanProperty @Field("places") var lga:String = _
+  @BeanProperty @Field("data_provider_uid") var dataProviderUid:String =_
+  @BeanProperty @Field("data_provider") var dataProviderName:String =_
+  @BeanProperty @Field("data_resource_uid") var dataResourceUid:String =_
+  @BeanProperty @Field("data_resource") var dataResourceName:String =_
   
-  //raw record fields
+  //extra raw record fields
   @BeanProperty @Field("raw_taxon_name") var raw_scientificName:String =_
   @BeanProperty @Field("raw_basis_of_record") var raw_basisOfRecord:String =_
   @BeanProperty @Field("raw_type_status") var raw_typeStatus:String =_
@@ -282,6 +286,7 @@ class OccurrenceIndex extends Cloneable {
   @BeanProperty @Field("point-0.01") var point001:String =_
   @BeanProperty @Field("point-0.001") var point0001:String =_
   @BeanProperty @Field("point-0.0001") var point00001:String =_
+  @BeanProperty @Field("names_and_lsid") var namesLsid:String =_
 }
 
 /**

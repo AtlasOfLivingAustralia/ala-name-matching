@@ -86,6 +86,7 @@ object SolrOccurrenceDAO extends IndexDao{
   /**
    * returns whether or not the insert was successful
    */
+  import org.apache.commons.lang.StringUtils.defaultString
   def index(items: java.util.List[OccurrenceIndex]):Boolean ={
     try{
     SolrIndexDao.solrServer.addBeans(items)
@@ -113,10 +114,18 @@ object SolrOccurrenceDAO extends IndexDao{
     SolrIndexDao.solrServer.commit
     SolrIndexDao.solrServer.optimize
   }
-
-  private def addToIndex(full: FullRecord){
-
-  }
+   
+   override def getOccIndexModel(records: Array[FullRecord]):Option[OccurrenceIndex]={
+    //set the SOLR specific value
+    val occ = super.getOccIndexModel(records)
+     if(!occ.isEmpty){
+     //set the names lsid
+      val v = List(defaultString(occ.get.scientificName), defaultString(occ.get.taxonConceptID), defaultString(occ.get.vernacularName), defaultString(occ.get.kingdom), defaultString(occ.get.family))
+      occ.get.setNamesLsid(v.mkString("|"))
+     }
+     
+     occ
+   }
 
 }
 
