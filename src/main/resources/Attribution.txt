@@ -1,7 +1,0 @@
-dataProviderUid
-dataResourceUid  
-collectionUid
-institutionUid
-dataHubUid
-institutionName
-collectionName
