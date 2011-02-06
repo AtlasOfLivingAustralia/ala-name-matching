@@ -1,4 +1,0 @@
-guid
-scientificName
-commonName
-habitat

@@ -1,8 +1,0 @@
-dateIdentified
-identificationAttributes
-identificationID
-identificationQualifier
-identificationReferences
-identificationRemarks
-identifiedBy
-typeStatus
