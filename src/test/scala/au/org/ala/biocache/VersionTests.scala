@@ -18,14 +18,14 @@ class VersionTests extends FunSuite {
     val uuid = "version-test-uuid"
 
     var raw = new FullRecord
-    raw.o.uuid = uuid
-    raw.c.scientificName = "Raw version"
+    raw.occurrence.uuid = uuid
+    raw.classification.scientificName = "Raw version"
     var processed = new FullRecord
-    processed.o.uuid = uuid
-    processed.c.scientificName = "Processed version"
+    processed.occurrence.uuid = uuid
+    processed.classification.scientificName = "Processed version"
     var consensus = new FullRecord
-    consensus.o.uuid = uuid
-    consensus.c.scientificName = "Consenus version"
+    consensus.occurrence.uuid = uuid
+    consensus.classification.scientificName = "Consenus version"
 
     val assertions = Array(QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, false, "Coordinates bad"))
 
@@ -38,9 +38,9 @@ class VersionTests extends FunSuite {
     if(r.isEmpty) fail("Empty result")
 
     val array = r.get
-    expect("Raw version"){array(0).c.scientificName}
-    expect("Processed version"){array(1).c.scientificName}
-    expect("Consenus version"){array(2).c.scientificName}
+    expect("Raw version"){array(0).classification.scientificName}
+    expect("Processed version"){array(1).classification.scientificName}
+    expect("Consenus version"){array(2).classification.scientificName}
 
     expect(1){array(0).assertions.length}
     expect(1){array(1).assertions.length}

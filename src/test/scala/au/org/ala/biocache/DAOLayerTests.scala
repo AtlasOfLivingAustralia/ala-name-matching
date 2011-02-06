@@ -19,8 +19,8 @@ class DAOLayerTests extends FunSuite {
     test("Get by UUID") {
         val ot1 = OccurrenceDAO.getByUuid("3480993d-b0b1-4089-9faf-30b4eab050ae", Raw)
         if(!ot1.isEmpty){
-            val rawOccurrence = ot1.get.o
-            val rawClassification = ot1.get.c
+            val rawOccurrence = ot1.get.occurrence
+            val rawClassification = ot1.get.classification
             println(">> The bean set scientific name: " + rawClassification.scientificName)
             println(">> The bean set class name: " + rawClassification.classs)
         } else {
@@ -29,8 +29,8 @@ class DAOLayerTests extends FunSuite {
 
         val ot2 = OccurrenceDAO.getByUuid("3480993d-b0b1-4089-9faf-30b4eab050ae", Processed)
         if(!ot2.isEmpty){
-            val o = ot1.get.o
-            val c = ot1.get.c
+            val o = ot1.get.occurrence
+            val c = ot1.get.classification
             println(">> (processed) The bean set scientific name: " + c.scientificName)
             println(">> (processed) The bean set class name: " + c.classs)
         } else {
@@ -39,8 +39,8 @@ class DAOLayerTests extends FunSuite {
 
         val ot3 = OccurrenceDAO.getByUuid("3480993d-b0b1-4089-9faf-30b4eab050ae", Consensus)
         if(!ot3.isEmpty){
-            val o = ot1.get.o
-            val c = ot1.get.c
+            val o = ot1.get.occurrence
+            val c = ot1.get.classification
             println(">> (consensus) The bean set scientific name: " + c.scientificName)
             println(">> (consensus) The bean set class name: " + c.classs)
         } else {

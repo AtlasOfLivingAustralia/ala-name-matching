@@ -13,10 +13,10 @@ class PagingTests extends FunSuite {
   test("Paging of first ten raw records"){
     var count = 0
     OccurrenceDAO.pageOverAll(Raw, fullRecord => {
-        val occurrence = fullRecord.get.o
-        val classification = fullRecord.get.c
-        val location = fullRecord.get.l
-        val event = fullRecord.get.e
+        val occurrence = fullRecord.get.occurrence
+        val classification = fullRecord.get.classification
+        val location = fullRecord.get.location
+        val event = fullRecord.get.event
         println(occurrence.uuid+"\t"+classification.genus+"\t"+classification.specificEpithet+"\t"+classification.scientificName)
         count +=1
         if(count>10) {
@@ -35,10 +35,10 @@ class PagingTests extends FunSuite {
         val versions = recordVersions.get
         expect(3){versions.length}
         for(fullRecord <- versions){
-          val occurrence = fullRecord.o
-          val classification = fullRecord.c
-          val location = fullRecord.l
-          val event = fullRecord.e
+          val occurrence = fullRecord.occurrence
+          val classification = fullRecord.classification
+          val location = fullRecord.location
+          val event = fullRecord.event
           println(occurrence.uuid+"\t"+classification.genus+"\t"+classification.specificEpithet+"\t"+classification.scientificName)
         }
         count +=1

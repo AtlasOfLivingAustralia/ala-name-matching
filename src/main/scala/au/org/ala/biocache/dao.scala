@@ -173,19 +173,19 @@ object OccurrenceDAO {
    */
   protected def setProperty(fullRecord:FullRecord, fieldName:String, fieldValue:String){
     if(DAO.occurrenceDefn.contains(fieldName)){
-      fullRecord.o.setter(fieldName,fieldValue)
+      fullRecord.occurrence.setter(fieldName,fieldValue)
     } else if(DAO.classificationDefn.contains(fieldName)){
-      fullRecord.c.setter(fieldName,fieldValue)
-    } else if(DAO.eventDefn.contains(fieldName)){
-      fullRecord.e.setter(fieldName,fieldValue)
+      fullRecord.classification.setter(fieldName,fieldValue)
     } else if(DAO.locationDefn.contains(fieldName)){
-      fullRecord.l.setter(fieldName,fieldValue)
+      fullRecord.location.setter(fieldName,fieldValue)
+    } else if(DAO.eventDefn.contains(fieldName)){
+      fullRecord.event.setter(fieldName,fieldValue)
     } else if(DAO.attributionDefn.contains(fieldName)){
-      fullRecord.a.setter(fieldName,fieldValue)
+      fullRecord.attribution.setter(fieldName,fieldValue)
     } else if(DAO.identificationDefn.contains(fieldName)){
-      fullRecord.i.setter(fieldName,fieldValue)
+      fullRecord.identification.setter(fieldName,fieldValue)
     } else if(DAO.measurementDefn.contains(fieldName)){
-      fullRecord.m.setter(fieldName,fieldValue)
+      fullRecord.measurement.setter(fieldName,fieldValue)
     } else if(isQualityAssertion(fieldName)){
       fullRecord.assertions = fullRecord.assertions ++ Array(fieldName)
     }
@@ -205,8 +205,8 @@ object OccurrenceDAO {
   def createOccurrence(uuid:String, fields:Map[String,String], version:Version) : FullRecord = {
 
     var fullRecord = new FullRecord
+    fullRecord.occurrence.uuid = uuid
     var assertions = new ArrayBuffer[String]
-    fullRecord.o.uuid = uuid
     val columns = fields.keySet
     for(fieldName<-columns){
 
@@ -227,7 +227,7 @@ object OccurrenceDAO {
     fullRecord
   }
 
-  /** Remove the suffix indicating the version of the field*/
+  /** Remove the suffix indicating the version of the field */
   private def removeSuffix(name:String) : String = name.substring(0, name.length - 2)
 
    /** Is this a "processed" value? */
@@ -368,7 +368,7 @@ object OccurrenceDAO {
     //construct a map of properties to write
     var properties = scala.collection.mutable.Map[String,String]()
 
-    for(anObject <- Array(fullRecord.o,fullRecord.c,fullRecord.e,fullRecord.l)){
+    for(anObject <- fullRecord.objectArray){
       val map = mapObjectToProperties(anObject,version)
       //add all to map
       properties.putAll(map)

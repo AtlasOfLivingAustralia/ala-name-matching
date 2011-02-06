@@ -14,7 +14,7 @@ import au.org.ala.bie.rpc.{ ProfileArray, Page, SpeciesProfile }
  * 
  * See bie-rpc for more details.
  */
-object SpeciesProfileLoader {
+object TaxonProfileLoader {
 
   def main(args: Array[String]){
 

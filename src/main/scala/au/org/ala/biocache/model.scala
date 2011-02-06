@@ -342,18 +342,23 @@ class Attribution (
  * Encapsulates a complete specimen or occurrence record.
  */
 class FullRecord (
-  @BeanProperty var o:Occurrence,
-  @BeanProperty var c:Classification,
-  @BeanProperty var l:Location,
-  @BeanProperty var e:Event,
-  @BeanProperty var a:Attribution,
-  @BeanProperty var i:Identification,
-  @BeanProperty var m:Measurement,
+  @BeanProperty var occurrence:Occurrence,
+  @BeanProperty var classification:Classification,
+  @BeanProperty var location:Location,
+  @BeanProperty var event:Event,
+  @BeanProperty var attribution:Attribution,
+  @BeanProperty var identification:Identification,
+  @BeanProperty var measurement:Measurement,
   @BeanProperty var assertions:Array[String])
   extends Cloneable {
+
+  val objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement)
+
   def this() = this(new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
       new Measurement, Array())
-  override def clone : FullRecord = new FullRecord(o.clone,c.clone,l.clone,e.clone,a.clone,i.clone,m.clone,assertions.clone)
+  override def clone : FullRecord = new FullRecord(
+      occurrence.clone,classification.clone,location.clone,event.clone,attribution.clone,
+      identification.clone,measurement.clone,assertions.clone)
 }
 
 /**

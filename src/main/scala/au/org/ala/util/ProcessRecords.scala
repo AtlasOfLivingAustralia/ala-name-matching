@@ -63,7 +63,7 @@ object ProcessRecords {
         //debug counter
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
-          logger.info(counter + " >> Last key : " + raw.o.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          logger.info(counter + " >> Last key : " + raw.occurrence.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
         }
       }
@@ -76,7 +76,7 @@ object ProcessRecords {
    */
   def processRecord(raw:FullRecord){
 
-    val guid = raw.o.uuid
+    val guid = raw.occurrence.uuid
     //NC: Changed so that a processed record only contains values that have been processed.
     var processed = new FullRecord//raw.clone
     var assertions = new ArrayBuffer[QualityAssertion]
@@ -116,8 +116,8 @@ object ProcessRecords {
    * limit 10;
    */
   def processAttribution(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
-    if(raw.o.institutionCode!=null && raw.o.collectionCode!=null){
-        val attribution = AttributionDAO.getByCodes(raw.o.institutionCode, raw.o.collectionCode)
+    if(raw.occurrence.institutionCode!=null && raw.occurrence.collectionCode!=null){
+        val attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
         if (!attribution.isEmpty) {
           OccurrenceDAO.updateOccurrence(guid, attribution.get, Processed)
           Array()
@@ -159,9 +159,9 @@ object ProcessRecords {
     val currentYear = DateFormatUtils.format(now, "yyyy").toInt
     var comment = ""
 
-    var (year,invalidYear) = validateNumber(raw.e.year,{year => year < 0 || year > currentYear})
-    var (month,invalidMonth) = validateNumber(raw.e.month,{month => month < 1 || month > 12})
-    var (day,invalidDay) = validateNumber(raw.e.day,{day => day < 0 || day > 31})
+    var (year,invalidYear) = validateNumber(raw.event.year,{year => year < 0 || year > currentYear})
+    var (month,invalidMonth) = validateNumber(raw.event.month,{month => month < 1 || month > 12})
+    var (day,invalidDay) = validateNumber(raw.event.day,{day => day < 0 || day > 31})
     var invalidDate = invalidYear || invalidDay || invalidMonth
 
     //check for sensible year value
@@ -200,32 +200,32 @@ object ProcessRecords {
     }
 
     //set the processed values
-    if (year != -1) processed.e.year = year.toString
-    if (month != -1) processed.e.month = month.toString
-    if (day != -1) processed.e.day = day.toString
-    if (!date.isEmpty) processed.e.eventDate = DateFormatUtils.format(date.get, "yyyy-MM-dd")
+    if (year != -1) processed.event.year = year.toString
+    if (month != -1) processed.event.month = month.toString
+    if (day != -1) processed.event.day = day.toString
+    if (!date.isEmpty) processed.event.eventDate = DateFormatUtils.format(date.get, "yyyy-MM-dd")
 
     //deal with event date
-    if (date.isEmpty && raw.e.eventDate != null && !raw.e.eventDate.isEmpty) {
-      val parsedDate = DateParser.parseDate(raw.e.eventDate)
+    if (date.isEmpty && raw.event.eventDate != null && !raw.event.eventDate.isEmpty) {
+      val parsedDate = DateParser.parseDate(raw.event.eventDate)
       if(!parsedDate.isEmpty){
         //set processed values
-          processed.e.eventDate = parsedDate.get.startDate
-          processed.e.day = parsedDate.get.startDay
-          processed.e.month = parsedDate.get.startMonth
-          processed.e.year = parsedDate.get.startYear
+          processed.event.eventDate = parsedDate.get.startDate
+          processed.event.day = parsedDate.get.startDay
+          processed.event.month = parsedDate.get.startMonth
+          processed.event.year = parsedDate.get.startYear
       }
     }
 
     //deal with verbatim date
-    if (date.isEmpty && raw.e.verbatimEventDate != null && !raw.e.verbatimEventDate.isEmpty) {
-      val parsedDate = DateParser.parseDate(raw.e.verbatimEventDate)
+    if (date.isEmpty && raw.event.verbatimEventDate != null && !raw.event.verbatimEventDate.isEmpty) {
+      val parsedDate = DateParser.parseDate(raw.event.verbatimEventDate)
       if(!parsedDate.isEmpty){
         //set processed values
-          processed.e.eventDate = parsedDate.get.startDate
-          processed.e.day = parsedDate.get.startDay
-          processed.e.month = parsedDate.get.startMonth
-          processed.e.year = parsedDate.get.startYear
+          processed.event.eventDate = parsedDate.get.startDate
+          processed.event.day = parsedDate.get.startDay
+          processed.event.month = parsedDate.get.startMonth
+          processed.event.year = parsedDate.get.startYear
       }
     }
 
@@ -242,13 +242,13 @@ object ProcessRecords {
    */
   def processTypeStatus(guid:String,raw:FullRecord,processed:FullRecord) : Array[QualityAssertion] = {
 
-    if (raw.o.typeStatus != null && raw.o.typeStatus.isEmpty) {
-      val term = TypeStatus.matchTerm(raw.o.typeStatus)
+    if (raw.occurrence.typeStatus != null && raw.occurrence.typeStatus.isEmpty) {
+      val term = TypeStatus.matchTerm(raw.occurrence.typeStatus)
       if (term.isEmpty) {
         //add a quality assertion
         Array(QualityAssertion(AssertionCodes.UNRECOGNISED_TYPESTATUS,false,"Unrecognised type status"))
       } else {
-        processed.o.basisOfRecord = term.get.canonical
+        processed.occurrence.basisOfRecord = term.get.canonical
         Array()
       }
     } else {
@@ -261,17 +261,17 @@ object ProcessRecords {
    */
   def processBasisOfRecord(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
 
-    if (raw.o.basisOfRecord == null || raw.o.basisOfRecord.isEmpty) {
+    if (raw.occurrence.basisOfRecord == null || raw.occurrence.basisOfRecord.isEmpty) {
       //add a quality assertion
       Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,false,"Missing basis of record"))
     } else {
-      val term = BasisOfRecord.matchTerm(raw.o.basisOfRecord)
+      val term = BasisOfRecord.matchTerm(raw.occurrence.basisOfRecord)
       if (term.isEmpty) {
         //add a quality assertion
-        logger.debug("[QualityAssertion] " + guid + ", unrecognised BoR: " + guid + ", BoR:" + raw.o.basisOfRecord)
+        logger.debug("[QualityAssertion] " + guid + ", unrecognised BoR: " + guid + ", BoR:" + raw.occurrence.basisOfRecord)
         Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,false,"Unrecognised basis of record"))
       } else {
-        processed.o.basisOfRecord = term.get.canonical
+        processed.occurrence.basisOfRecord = term.get.canonical
         Array[QualityAssertion]()
       }
     }
@@ -284,56 +284,60 @@ object ProcessRecords {
     //retrieve the point
     var assertions = new ArrayBuffer[QualityAssertion]
 
-    if (raw.l.decimalLatitude != null && raw.l.decimalLongitude != null) {
+    if (raw.location.decimalLatitude != null && raw.location.decimalLongitude != null) {
 
       //TODO validate decimal degrees
-      processed.l.decimalLatitude = raw.l.decimalLatitude
-      processed.l.decimalLongitude = raw.l.decimalLongitude
+      processed.location.decimalLatitude = raw.location.decimalLatitude
+      processed.location.decimalLongitude = raw.location.decimalLongitude
 
       //validate coordinate accuracy (coordinateUncertaintyInMeters) and coordinatePrecision (precision - A. Chapman)
 
       //generate coordinate accuracy if not supplied
-      val point = LocationDAO.getByLatLon(raw.l.decimalLatitude, raw.l.decimalLongitude);
+      val point = LocationDAO.getByLatLon(raw.location.decimalLatitude, raw.location.decimalLongitude);
       if (!point.isEmpty) {
 
         //add state information
-        processed.l.stateProvince = point.get.stateProvince
-        processed.l.ibra = point.get.ibra
-        processed.l.imcra = point.get.imcra
-        processed.l.lga = point.get.lga
-        processed.l.habitat = point.get.habitat
+        processed.location.stateProvince = point.get.stateProvince
+        processed.location.ibra = point.get.ibra
+        processed.location.imcra = point.get.imcra
+        processed.location.lga = point.get.lga
+        processed.location.habitat = point.get.habitat
 
         //check matched stateProvince
-        if (processed.l.stateProvince != null && raw.l.stateProvince != null) {
+        if (processed.location.stateProvince != null && raw.location.stateProvince != null) {
           //quality assertions
-          val stateTerm = States.matchTerm(raw.l.stateProvince)
+          val stateTerm = States.matchTerm(raw.location.stateProvince)
 
-          if (!stateTerm.isEmpty && !processed.l.stateProvince.equalsIgnoreCase(stateTerm.get.canonical)) {
-            logger.debug("[QualityAssertion] " + guid + ", processed:" + processed.l.stateProvince + ", raw:" + raw.l.stateProvince)
+          if (!stateTerm.isEmpty && !processed.location.stateProvince.equalsIgnoreCase(stateTerm.get.canonical)) {
+            logger.debug("[QualityAssertion] " + guid + ", processed:" + processed.location.stateProvince 
+                + ", raw:" + raw.location.stateProvince)
             //add a quality assertion
-            val comment = "Supplied: " + stateTerm.get.canonical + ", calculated: " + processed.l.stateProvince
+            val comment = "Supplied: " + stateTerm.get.canonical + ", calculated: " + processed.location.stateProvince
             assertions + QualityAssertion(AssertionCodes.STATE_COORDINATE_MISMATCH,false,comment)
             //store the assertion
           }
         }
 
         //check marine/non-marine
-        if(processed.l.habitat!=null){
+        if(processed.location.habitat!=null){
 
           //retrieve the species profile
-          val taxonProfile = TaxonProfileDAO.getByGuid(processed.c.taxonConceptID)
+          val taxonProfile = TaxonProfileDAO.getByGuid(processed.classification.taxonConceptID)
           if(!taxonProfile.isEmpty && taxonProfile.get.habitats!=null && taxonProfile.get.habitats.size>0){
             val habitatsAsString =  taxonProfile.get.habitats.reduceLeft(_+","+_)
-            val habitatFromPoint = processed.l.habitat
+            val habitatFromPoint = processed.location.habitat
             val habitatsForSpecies = taxonProfile.get.habitats
             //is "terrestrial" the same as "non-marine" ??
             val validHabitat = HabitatMap.areTermsCompatible(habitatFromPoint, habitatsForSpecies)
             if(!validHabitat.isEmpty){
               if(!validHabitat.get){
                 if(habitatsAsString != "???"){ //HACK FOR BAD DATA
-                  logger.debug("[QualityAssertion] ******** Habitats incompatible for UUID: " + guid + ", processed:" + processed.l.habitat + ", retrieved:" + habitatsAsString
-                      + ", http://maps.google.com/?ll="+processed.l.decimalLatitude+","+processed.l.decimalLongitude)
-                  val comment = "Recognised habitats for species: " + habitatsAsString+", Value determined from coordinates: "+habitatFromPoint
+                  logger.debug("[QualityAssertion] ******** Habitats incompatible for UUID: " + guid + ", processed:" 
+                      + processed.location.habitat + ", retrieved:" + habitatsAsString
+                      + ", http://maps.google.com/?ll="+processed.location.decimalLatitude+","
+                      + processed.location.decimalLongitude)
+                  val comment = "Recognised habitats for species: " + habitatsAsString +
+                       ", Value determined from coordinates: " + habitatFromPoint
                   assertions + QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH,false,comment)
                 }
               }
@@ -342,17 +346,17 @@ object ProcessRecords {
         }
 
         //TODO check centre point of the state
-        if(StateCentrePoints.coordinatesMatchCentre(point.get.stateProvince, raw.l.decimalLatitude, raw.l.decimalLongitude)){
+        if(StateCentrePoints.coordinatesMatchCentre(point.get.stateProvince, raw.location.decimalLatitude, raw.location.decimalLongitude)){
           assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,false,"Coordinates are centre point of "+point.get.stateProvince)
         }
       }
     }
 
-    if(processed.l.stateProvince ==null){
+    if(processed.location.stateProvince ==null){
       //process the supplied state
-      val stateTerm = States.matchTerm(raw.l.stateProvince)
+      val stateTerm = States.matchTerm(raw.location.stateProvince)
       if(!stateTerm.isEmpty){
-        processed.l.stateProvince = stateTerm.get.canonical
+        processed.location.stateProvince = stateTerm.get.canonical
       }
     }
     assertions.toArray
@@ -363,17 +367,17 @@ object ProcessRecords {
    */
   def processClassification(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
     val classification = new LinnaeanRankClassification(
-      raw.c.kingdom,
-      raw.c.phylum,
-      raw.c.classs,
-      raw.c.order,
-      raw.c.family,
-      raw.c.genus,
-      raw.c.species,
-      raw.c.specificEpithet,
-      raw.c.subspecies,
-      raw.c.infraspecificEpithet,
-      raw.c.scientificName)
+      raw.classification.kingdom,
+      raw.classification.phylum,
+      raw.classification.classs,
+      raw.classification.order,
+      raw.classification.family,
+      raw.classification.genus,
+      raw.classification.species,
+      raw.classification.specificEpithet,
+      raw.classification.subspecies,
+      raw.classification.infraspecificEpithet,
+      raw.classification.scientificName)
     //logger.debug("Record: "+occ.uuid+", classification for Kingdom: "+occ.kingdom+", Family:"+  occ.family +", Genus:"+  occ.genus +", Species: " +occ.species+", Epithet: " +occ.specificEpithet)
     try {
       val nsr = DAO.nameIndex.searchForRecord(classification, true)
@@ -381,36 +385,37 @@ object ProcessRecords {
       if (nsr != null) {
         val classification = nsr.getRankClassification
         //store ".p" values
-        processed.c.kingdom = classification.getKingdom
-        processed.c.kingdomID = classification.getKid
-        processed.c.phylum = classification.getPhylum
-        processed.c.phylumID = classification.getPid
-        processed.c.classs = classification.getKlass
-        processed.c.classID = classification.getCid
-        processed.c.order = classification.getOrder
-        processed.c.orderID = classification.getOid
-        processed.c.family = classification.getFamily
-        processed.c.familyID = classification.getFid
-        processed.c.genus = classification.getGenus
-        processed.c.genusID = classification.getGid
-        processed.c.species = classification.getSpecies
-        processed.c.speciesID = classification.getSid
-        processed.c.specificEpithet = classification.getSpecificEpithet
-        processed.c.scientificName = classification.getScientificName
-        processed.c.taxonConceptID = nsr.getLsid
-        processed.c.left = nsr.getLeft
-        processed.c.right = nsr.getRight
-        processed.c.taxonRank = nsr.getRank.getRank
-        processed.c.taxonRankID = nsr.getRank.getId.toString
+        processed.classification.kingdom = classification.getKingdom
+        processed.classification.kingdomID = classification.getKid
+        processed.classification.phylum = classification.getPhylum
+        processed.classification.phylumID = classification.getPid
+        processed.classification.classs = classification.getKlass
+        processed.classification.classID = classification.getCid
+        processed.classification.order = classification.getOrder
+        processed.classification.orderID = classification.getOid
+        processed.classification.family = classification.getFamily
+        processed.classification.familyID = classification.getFid
+        processed.classification.genus = classification.getGenus
+        processed.classification.genusID = classification.getGid
+        processed.classification.species = classification.getSpecies
+        processed.classification.speciesID = classification.getSid
+        processed.classification.specificEpithet = classification.getSpecificEpithet
+        processed.classification.scientificName = classification.getScientificName
+        processed.classification.taxonConceptID = nsr.getLsid
+        processed.classification.left = nsr.getLeft
+        processed.classification.right = nsr.getRight
+        processed.classification.taxonRank = nsr.getRank.getRank
+        processed.classification.taxonRankID = nsr.getRank.getId.toString
         //try to apply the vernacular name
         val taxonProfile = TaxonProfileDAO.getByGuid(nsr.getLsid)
         if(!taxonProfile.isEmpty && taxonProfile.get.commonName!=null){
-          processed.c.vernacularName = taxonProfile.get.commonName
+          processed.classification.vernacularName = taxonProfile.get.commonName
         }
         Array()
       } else {
-        logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " + raw.c.kingdom + ", Family:" + raw.c.family + ", Genus:" + raw.c.genus + ", Species: " + raw.c.species 
-            + ", Epithet: " + raw.c.specificEpithet)
+        logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " +
+            raw.classification.kingdom + ", Family:" + raw.classification.family + ", Genus:" + raw.classification.genus +
+            ", Species: " + raw.classification.species + ", Epithet: " + raw.classification.specificEpithet)
         Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, false, "Name not recognised"))
       }
     } catch {

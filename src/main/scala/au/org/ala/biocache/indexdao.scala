@@ -45,7 +45,7 @@ trait IndexDao {
     val occ = new OccurrenceIndex
     for(i <- 0 to 1){
       val record = records(i)
-      for(anObject <- Array(record.o,record.c,record.e,record.l,record.a)){
+      for(anObject <- record.objectArray){
             val defn = DAO.getDefn(anObject)
             for(field <- defn){
                   //first time through we are processing the raw values
@@ -77,7 +77,7 @@ trait IndexDao {
       occ.setLatLong(occ.getDecimalLatitude.toString +"," + occ.getDecimalLongitude)
     }
     //set the id for the occurrence record to the uuid
-    occ.uuid = records(0).o.uuid
+    occ.uuid = records(0).occurrence.uuid
     Some(occ)
   }
 
