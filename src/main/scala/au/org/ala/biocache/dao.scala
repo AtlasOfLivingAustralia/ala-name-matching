@@ -28,15 +28,15 @@ object DAO {
   val measurementDefn = loadDefn(classOf[Measurement])
 
   //index definitions
-  val occurrenceIndexDefn = fileToList("/OccurrenceIndex.txt") //PROBABLY NOT THE BEST PLACE FOR THIS
+  val occurrenceIndexDefn = fileToSet("/OccurrenceIndex.txt") //PROBABLY NOT THE BEST PLACE FOR THIS
 
   /** Retrieve the set of fields for the supplied class */
   protected def loadDefn(theClass:java.lang.Class[_]) : Set[String] = {
     HashSet() ++ theClass.getDeclaredFields.map(_.getName).toList
   }
 
-  protected def fileToList(filePath:String) : List[String] =
-    scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map(_.trim)
+  protected def fileToSet(filePath:String) : Set[String] =
+    scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map(_.trim).toSet
 
   /**
    * for each field in the definition, check if there is a value to write
