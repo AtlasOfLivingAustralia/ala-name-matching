@@ -263,8 +263,8 @@ class OccurrenceIndex extends Cloneable {
   @BeanProperty @Field("type_status") var typeStatus:String =_
   @BeanProperty @Field("location_remarks") var raw_locationRemarks:String =_
   @BeanProperty @Field("occurrence_remarks") var raw_occurrenceRemarks:String =_
-  @BeanProperty @Field("lft") var left:Integer =_
-  @BeanProperty @Field("rgt") var right:Integer =_
+  @BeanProperty @Field("lft") var left:java.lang.Integer =_
+  @BeanProperty @Field("rgt") var right:java.lang.Integer =_
   @BeanProperty @Field("ibra") var ibra:String = _
   @BeanProperty @Field("imcra") var imcra:String = _
   @BeanProperty @Field("places") var lga:String = _
@@ -325,14 +325,16 @@ class TaxonProfile (
  */
 class Attribution (
   @BeanProperty var dataProviderUid:String,
+  @BeanProperty var dataProviderName:String,
   @BeanProperty var dataResourceUid:String,
+  @BeanProperty var dataResourceName:String,
   @BeanProperty var collectionUid:String,
   @BeanProperty var institutionUid:String,
   @BeanProperty var dataHubUid:String,
   @BeanProperty var institutionName:String,
   @BeanProperty var collectionName:String)
   extends Cloneable {
-  def this() = this(null,null,null,null,null,null,null)
+  def this() = this(null,null,null,null,null,null,null,null,null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
 }
 
@@ -344,10 +346,14 @@ class FullRecord (
   @BeanProperty var c:Classification,
   @BeanProperty var l:Location,
   @BeanProperty var e:Event,
+  @BeanProperty var a:Attribution,
+  @BeanProperty var i:Identification,
+  @BeanProperty var m:Measurement,
   @BeanProperty var assertions:Array[String])
   extends Cloneable {
-  def this() = this(new Occurrence,new Classification,new Location,new Event, Array())
-  override def clone : FullRecord = new FullRecord(o.clone,c.clone,l.clone,e.clone,assertions.clone)
+  def this() = this(new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
+      new Measurement, Array())
+  override def clone : FullRecord = new FullRecord(o.clone,c.clone,l.clone,e.clone,a.clone,i.clone,m.clone,assertions.clone)
 }
 
 /**

@@ -6,6 +6,7 @@ import java.io.OutputStream
 import scala.collection.JavaConversions
 import scala.collection.mutable.ArrayBuffer
 import java.util.UUID
+import collection.immutable.HashSet
 
 /**
  * DAO configuration. Should be refactored to use a DI framework
@@ -17,16 +18,24 @@ object DAO {
   val persistentManager = CassandraPersistenceManager
   val nameIndex = new CBIndexSearch("/data/lucene/namematching")
 
-  //read in the ORM mappings
-  val attributionDefn = fileToArray("/Attribution.txt")
-  val occurrenceDefn = fileToArray("/Occurrence.txt")
-  val locationDefn = fileToArray("/Location.txt")
-  val eventDefn = fileToArray("/Event.txt")
-  val classificationDefn = fileToArray("/Classification.txt")
-  val identificationDefn = fileToArray("/Identification.txt")
-  val occurrenceIndexDefn = DAO.fileToArray("/OccurrenceIndex.txt") //PROBABLY NOT THE BEST PLACE FOR THIS
+  //read in the object mappings using reflection
+  val attributionDefn = loadDefn(classOf[Attribution])
+  val occurrenceDefn = loadDefn(classOf[Occurrence])
+  val classificationDefn = loadDefn(classOf[Classification])
+  val locationDefn = loadDefn(classOf[Location])
+  val eventDefn = loadDefn(classOf[Event])
+  val identificationDefn = loadDefn(classOf[Identification])
+  val measurementDefn = loadDefn(classOf[Measurement])
 
-  protected def fileToArray(filePath:String) : List[String] =
+  //index definitions
+  val occurrenceIndexDefn = fileToList("/OccurrenceIndex.txt") //PROBABLY NOT THE BEST PLACE FOR THIS
+
+  /** Retrieve the set of fields for the supplied class */
+  protected def loadDefn(theClass:java.lang.Class[_]) : Set[String] = {
+    HashSet() ++ theClass.getDeclaredFields.map(_.getName).toList
+  }
+
+  protected def fileToList(filePath:String) : List[String] =
     scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map(_.trim)
 
   /**
@@ -36,7 +45,7 @@ object DAO {
     val defn = getDefn(anObject)
     var properties = scala.collection.mutable.Map[String,String]()
     for (field <- defn) {
-        val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
+        val fieldValue = anObject.getter(field).asInstanceOf[String]
         if (fieldValue != null && !fieldValue.isEmpty) {
              properties.put(field, fieldValue)
         }
@@ -44,10 +53,11 @@ object DAO {
     properties.toMap
   }
 
-    /**
+  /**
    * Set the property on the correct model object
    */
   def mapPropertiesToObject(anObject:AnyRef, map:Map[String,String]){
+    //TODO supplied properties will be less that properties in object this could be an optimisation
     val defn = getDefn(anObject)
     for(fieldName<-defn){
       val fieldValue = map.get(fieldName)
@@ -60,13 +70,16 @@ object DAO {
   /**
    * Retrieve a object definition (simple ORM mapping)
    */
-  def getDefn(anObject:Any) : List[String] = {
+  def getDefn(anObject:Any) : Set[String] = {
      anObject match {
       case l:Location => DAO.locationDefn
       case o:Occurrence => DAO.occurrenceDefn
       case e:Event => DAO.eventDefn
       case c:Classification => DAO.classificationDefn
       case a:Attribution => DAO.attributionDefn
+      case i:Identification => DAO.identificationDefn
+      case m:Measurement => DAO.measurementDefn
+      case oi:OccurrenceIndex => DAO.occurrenceIndexDefn
       case _ => throw new RuntimeException("Unrecognised entity. No definition registered for: "+anObject)
      }
   }
@@ -141,7 +154,8 @@ object OccurrenceDAO {
     } else {
       record.get
     }
-  }  
+  }
+
   /**
    * Get an occurrence, specifying the version of the occurrence.
    */
@@ -157,18 +171,23 @@ object OccurrenceDAO {
   /**
    * Set the property on the correct model object
    */
-  protected def setProperty(o:Occurrence, c:Classification, l:Location, e:Event, assertions:ArrayBuffer[String], 
-		  fieldName:String, fieldValue:String){
+  protected def setProperty(fullRecord:FullRecord, fieldName:String, fieldValue:String){
     if(DAO.occurrenceDefn.contains(fieldName)){
-      o.setter(fieldName,fieldValue)
+      fullRecord.o.setter(fieldName,fieldValue)
     } else if(DAO.classificationDefn.contains(fieldName)){
-      c.setter(fieldName,fieldValue)
+      fullRecord.c.setter(fieldName,fieldValue)
     } else if(DAO.eventDefn.contains(fieldName)){
-      e.setter(fieldName,fieldValue)
+      fullRecord.e.setter(fieldName,fieldValue)
     } else if(DAO.locationDefn.contains(fieldName)){
-      l.setter(fieldName,fieldValue)
+      fullRecord.l.setter(fieldName,fieldValue)
+    } else if(DAO.attributionDefn.contains(fieldName)){
+      fullRecord.a.setter(fieldName,fieldValue)
+    } else if(DAO.identificationDefn.contains(fieldName)){
+      fullRecord.i.setter(fieldName,fieldValue)
+    } else if(DAO.measurementDefn.contains(fieldName)){
+      fullRecord.m.setter(fieldName,fieldValue)
     } else if(isQualityAssertion(fieldName)){
-      assertions.add(fieldName)
+      fullRecord.assertions = fullRecord.assertions ++ Array(fieldName)
     }
   }
 
@@ -185,13 +204,9 @@ object OccurrenceDAO {
    */
   def createOccurrence(uuid:String, fields:Map[String,String], version:Version) : FullRecord = {
 
-    val occurrence = new Occurrence
-    val classification = new Classification
-    val location = new Location
-    val event = new Event
+    var fullRecord = new FullRecord
     var assertions = new ArrayBuffer[String]
-
-    occurrence.uuid = uuid
+    fullRecord.o.uuid = uuid
     val columns = fields.keySet
     for(fieldName<-columns){
 
@@ -199,18 +214,17 @@ object OccurrenceDAO {
       val fieldValue = fields.get(fieldName)
       if(!fieldValue.isEmpty){
         if(isProcessedValue(fieldName) && version == Processed){
-          setProperty(occurrence, classification, location, event, assertions, removeSuffix(fieldName), fieldValue.get)
+          setProperty(fullRecord, removeSuffix(fieldName), fieldValue.get)
         } else if(isConsensusValue(fieldName) && version == Consensus){
-          setProperty(occurrence, classification, location, event, assertions, removeSuffix(fieldName), fieldValue.get)
+          setProperty(fullRecord, removeSuffix(fieldName), fieldValue.get)
         } else if(version == Raw){
-          setProperty(occurrence, classification, location, event, assertions, fieldName, fieldValue.get)
+          setProperty(fullRecord, fieldName, fieldValue.get)
         } else if(isQualityAssertion(fieldName)){
-          setProperty(occurrence, classification, location, event, assertions, fieldName, fieldValue.get)
+          setProperty(fullRecord, fieldName, fieldValue.get)
         }
       }
     }
-    //construct the full record
-    new FullRecord(occurrence, classification, location, event, assertions.toArray)
+    fullRecord
   }
 
   /** Remove the suffix indicating the version of the field*/
@@ -233,13 +247,6 @@ object OccurrenceDAO {
 
   /** Add a suffix to this field name to indicate quality assertion field */
   private def markAsQualityAssertion(name:String) : String = name + ".qa"
-
-  /**
-   * Iterate over records, passing the records to the supplied consumer.
-   */
-  def pageOverAll(version:Version, consumer:OccurrenceConsumer) {
-    pageOverAll(version, fullRecord => consumer.consume(fullRecord.get))
-  }
 
   /**
    * Create or retrieve the UUID for this record. The uniqueID should be a
@@ -270,6 +277,13 @@ object OccurrenceDAO {
       }
       outputStream.write(recordDelimiter.getBytes)
     })
+  }
+
+  /**
+   * Iterate over records, passing the records to the supplied consumer.
+   */
+  def pageOverAll(version:Version, consumer:OccurrenceConsumer) {
+    pageOverAll(version, fullRecord => consumer.consume(fullRecord.get))
   }
 
   /**
@@ -369,12 +383,7 @@ object OccurrenceDAO {
 
     if(!assertions.isEmpty){
         setSystemAssertions(uuid, assertions.toList)
-//      //serialise the assertion list to JSON and DB
-//      val gson = new Gson
-//      val json = gson.toJson(assertions)
-//      properties.put(qualityAssertionColumn, json)
     }
-
     //commit to cassandra
     DAO.persistentManager.put(uuid,entityName,properties.toMap)
   }
@@ -421,8 +430,6 @@ object OccurrenceDAO {
 
   /**
    * Add a user supplied assertion - updating the status on the record.
-   * This will by default,
-   *
    */
   def addUserQualityAssertion(uuid:String, qualityAssertion:QualityAssertion){
 
@@ -446,9 +453,9 @@ object OccurrenceDAO {
   }
 
   /**
-  * Delete a user supplied assertion
-  */
-  def deleteUserQualityAssertion(uuid:String, assertionUuid:String) {
+   * Delete a user supplied assertion
+   */
+  def deleteUserQualityAssertion(uuid:String, assertionUuid:String) : Boolean = {
 
     //retrieve existing assertions
     val assertions = getUserQualityAssertions(uuid)
@@ -471,8 +478,10 @@ object OccurrenceDAO {
 
         //update the assertion status
         updateAssertionStatus(uuid,assertionName,systemAssertions,updateAssertions)
+        true
     } else {
         println("########## Unable to find assertion with UUID: "+ assertionUuid)
+        false
     }
   }
 
@@ -498,12 +507,4 @@ object OccurrenceDAO {
         DAO.persistentManager.put(uuid,entityName,assertionName,true.toString)
     }
   }
-
-//  /** Implicit converters */
-//  implicit def toAnyRefArray[T](array:Array[QualityAssertion]): Array[AnyRef] = {
-//    array.asInstanceOf[Array[AnyRef]]
-//  }
-//  implicit def toClassAnyRefArray[T](theClass:java.lang.Class[Array[QualityAssertion]]): java.lang.Class[Array[AnyRef]] = {
-//    theClass.asInstanceOf[java.lang.Class[Array[AnyRef]]]
-//  }
 }

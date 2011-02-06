@@ -134,9 +134,6 @@ object CassandraPersistenceManager extends PersistenceManager {
         } else {
             val json = new String(column.get.getValue)
             toList(json,theClass)
-//            val gson = new Gson
-//            val currentJson = new String(column.get.getValue)
-//            gson.fromJson(currentJson, theClass)
         }
     }
 

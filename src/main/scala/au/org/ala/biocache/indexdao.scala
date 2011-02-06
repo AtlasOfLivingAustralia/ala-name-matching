@@ -45,47 +45,40 @@ trait IndexDao {
     val occ = new OccurrenceIndex
     for(i <- 0 to 1){
       val record = records(i)
-    for(anObject <- Array(record.o,record.c,record.e,record.l)){
-	    val defn = { anObject match {
-	    	case l:Location => DAO.locationDefn
-	    	case o:Occurrence => DAO.occurrenceDefn
-	    	case e:Event => DAO.eventDefn
-	    	case c:Classification => DAO.classificationDefn
-	    	case a:Attribution => DAO.attributionDefn
-	      }
-	    }
-	    for(field <- defn){
-              //first time through we are processing the raw values
-              var fieldName = if(i ==0) "raw_" + field else field
-              //we only want to attempt to add the items that should appear in the occurrence
-              if(DAO.occurrenceIndexDefn.contains(fieldName)){
-                val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
-                if(fieldValue!=null && !fieldValue.isEmpty){
-                    
-                      occ.setter(fieldName, fieldValue);
-                }
-              }
-	    }
-	}
+      for(anObject <- Array(record.o,record.c,record.e,record.l,record.a)){
+            val defn = DAO.getDefn(anObject)
+            for(field <- defn){
+                  //first time through we are processing the raw values
+                  var fieldName = if(i ==0) "raw_" + field else field
+                  //we only want to attempt to add the items that should appear in the occurrence
+                  if(DAO.occurrenceIndexDefn.contains(fieldName)){
+                    val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
+                    if(fieldValue!=null && !fieldValue.isEmpty){
+
+                          occ.setter(fieldName, fieldValue);
+                    }
+                  }
+            }
+      }
     }
-        //perform all the point construction
-        if(occ.getDecimalLatitude != null && occ.getDecimalLongitude != null){
-          var pat = "#"
-          var fieldPre ="point"
-          val lat = occ.getDecimalLatitude
-          val long = occ.getDecimalLongitude
-          for{ i <- 0 to 4}{
-            val df =new java.text.DecimalFormat(pat)
-            occ.setter(fieldPre + "1" ,df.format(lat) + "," + df.format(long))
-            if(i == 0) pat = pat +"."
-            pat = pat +"#"
-            fieldPre = fieldPre + "0"
-          }
-          occ.setLatLong(occ.getDecimalLatitude.toString +"," + occ.getDecimalLongitude)
-        }
-        //set the id for the occurrence record to the uuid
-        occ.uuid = records(0).o.uuid
-        Some(occ)
+    //perform all the point construction
+    if(occ.getDecimalLatitude != null && occ.getDecimalLongitude != null){
+      var pat = "#"
+      var fieldPre ="point"
+      val lat = occ.getDecimalLatitude
+      val long = occ.getDecimalLongitude
+      for{ i <- 0 to 4}{
+        val df =new java.text.DecimalFormat(pat)
+        occ.setter(fieldPre + "1" ,df.format(lat) + "," + df.format(long))
+        if(i == 0) pat = pat +"."
+        pat = pat +"#"
+        fieldPre = fieldPre + "0"
+      }
+      occ.setLatLong(occ.getDecimalLatitude.toString +"," + occ.getDecimalLongitude)
+    }
+    //set the id for the occurrence record to the uuid
+    occ.uuid = records(0).o.uuid
+    Some(occ)
   }
 
 }
