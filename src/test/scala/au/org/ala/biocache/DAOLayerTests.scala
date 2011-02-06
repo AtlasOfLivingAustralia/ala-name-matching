@@ -1,5 +1,4 @@
 package au.org.ala.biocache
-import java.util.UUID
 import org.wyki.cassandra.pelops.{Pelops}
 import org.scalatest.FunSuite
 

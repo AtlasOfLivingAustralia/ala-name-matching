@@ -44,22 +44,21 @@ trait IndexDao {
     //cycle through all the items in each record and attempt to add them to the index
     val occ = new OccurrenceIndex
     for(i <- 0 to 1){
-      val record = records(i)
-      for(anObject <- record.objectArray){
+        val record = records(i)
+        for(anObject <- record.objectArray){
             val defn = DAO.getDefn(anObject)
             for(field <- defn){
-                  //first time through we are processing the raw values
-                  var fieldName = if(i ==0) "raw_" + field else field
-                  //we only want to attempt to add the items that should appear in the occurrence
-                  if(DAO.occurrenceIndexDefn.contains(fieldName)){
+                //first time through we are processing the raw values
+                var fieldName = if(i ==0) "raw_" + field else field
+                //we only want to attempt to add the items that should appear in the occurrence
+                if(DAO.occurrenceIndexDefn.contains(fieldName)){
                     val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
                     if(fieldValue!=null && !fieldValue.isEmpty){
-
-                          occ.setter(fieldName, fieldValue);
+                        occ.setter(fieldName, fieldValue);
                     }
-                  }
+                }
             }
-      }
+        }
     }
     //perform all the point construction
     if(occ.getDecimalLatitude != null && occ.getDecimalLongitude != null){
