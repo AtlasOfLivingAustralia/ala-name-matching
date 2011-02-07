@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipOutputStream;
@@ -31,9 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.ala.biocache.dao.SearchDAO;
 import org.ala.biocache.dto.OccurrenceDTO;
 import org.ala.biocache.dto.SearchQuery;
-import org.ala.biocache.dto.SearchRequestParams;
 import org.ala.biocache.dto.SearchResultDTO;
-import org.ala.biocache.dto.UselessBean;
 import org.ala.biocache.util.SearchUtils;
 import org.ala.client.appender.RestLevel;
 import org.ala.client.model.LogEventType;
@@ -43,7 +40,6 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonNode;
@@ -55,7 +51,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.ModelAndView;
 
 /**
  * Occurrences controller for the BIE biocache site
@@ -119,7 +114,7 @@ public class SearchController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = "/search*", method = RequestMethod.GET)
+	@RequestMapping(value = "/search", method = RequestMethod.GET)
 	public @ResponseBody SearchResultDTO occurrenceSearch(
             @RequestParam(value = "q", required = false) String query,
             @RequestParam(value = "fq", required = false) String[] filterQuery,
@@ -154,27 +149,13 @@ public class SearchController {
         searchUtils.updateQueryDetails(searchQuery);
 
         searchResult = searchDAO.findByFulltextQuery(searchQuery.getQuery(), searchQuery.getFilterQuery(), startIndex, pageSize, sortField, sortDirection);
-        model.addAttribute("searchResult", searchResult);
+        model.addAttribute("searchResult", searchResult); // redundant with @ResponseBody ??
         logger.debug("query = " + query);
         
         return searchResult;
 	}
     
-    @RequestMapping(value = "/test3", method = RequestMethod.GET)
-	public @ResponseBody SearchRequestParams test3(@RequestParam(value="q", required=false, defaultValue ="foo") String query, Model model) {
-        SearchRequestParams srp = new SearchRequestParams();
-        List<UselessBean> beans = new ArrayList<UselessBean>();
-        beans.add(new UselessBean("Nick", 41));
-        beans.add(new UselessBean("Rogi", 15));
-        beans.add(new UselessBean("Frank", 6));
-        srp.setBeans(beans);
-        srp.setQuery(query);
-        model.addAttribute("bean", srp);
-        logger.debug("test3: " + srp.getQuery());
-        return srp;
-    }
-
-	/**
+    /**
 	 * Occurrence search page uses SOLR JSON to display results
 	 * 
 	 * @param query
