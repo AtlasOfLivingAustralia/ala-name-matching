@@ -103,6 +103,12 @@
       <groupId>org.gbif</groupId>
       <artifactId>dwc-archive</artifactId>
       <version>1.2-SNAPSHOT</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.code.google-collections</groupId>
+          <artifactId>google-collect</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <!-- Jackson  (JSON serialisation)-->
     <dependency>
