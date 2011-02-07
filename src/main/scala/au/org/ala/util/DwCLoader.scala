@@ -20,6 +20,8 @@ import org.gbif.dwc.text._
 import org.wyki.cassandra.pelops.Pelops
 import au.org.ala.biocache.{Raw, OccurrenceDAO}
 import collection.mutable.ArrayBuffer
+import scala.actors._
+import scala.actors.Actor
 
 /**
  * Reads a DwC-A and writes the data to the BioCache
@@ -36,6 +38,7 @@ object DwCLoader {
 
   def main(args: Array[String]): Unit = {
 
+    import scala.actors.Actor._
     println(">>> Starting DwC loader ....")
     val file = new File("/data/biocache/ozcam/")
     val archive = ArchiveFactory.openArchive(file)
@@ -75,14 +78,12 @@ object DwCLoader {
       currentBatch += fullRecord
 
       //debug
-      if (count % 2000 == 0 && count > 0) {
-        //commit the batch
+      if (count % 1000 == 0 && count > 0) {
+
         OccurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)
-
         finishTime = System.currentTimeMillis
-        println(count + ", >> last key : " + uniqueID + ", UUID: " + recordUuid + ", records per sec: " + 2000 / (((finishTime - startTime).toFloat) / 1000f))
+        println(count + ", >> last key : " + uniqueID + ", UUID: " + recordUuid + ", records per sec: " + 1000 / (((finishTime - startTime).toFloat) / 1000f))
         startTime = System.currentTimeMillis
-
         //clear the buffer
         currentBatch.clear
       }
