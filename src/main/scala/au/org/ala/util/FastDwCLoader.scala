@@ -88,8 +88,8 @@ object FastDwCLoader {
         val terms = DwcTerm.values
 
         var counter = 0
-       // while (iter.hasNext) {
-        for (i <- 1 to 1000) {
+        while (iter.hasNext) {
+        //for (i <- 1 to 1000) {
           counter+=1
           val dwc = iter.next
           //create a map of properties
