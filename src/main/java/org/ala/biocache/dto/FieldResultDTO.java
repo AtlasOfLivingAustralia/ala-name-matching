@@ -5,33 +5,43 @@
 
 package org.ala.biocache.dto;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 /**
- * A generic DTO for results
+ * A DTO bean that represents a single (facet) field result (SOLR)
  *
- * @author 
+ * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
 public class FieldResultDTO {
     String label;
-    String prefix;
-    long count;
+    Long count;
 
+    /**
+     * Constructor
+     * 
+     * @param fieldValue
+     * @param count 
+     */
     public FieldResultDTO(String fieldValue, long count) {
-        setFieldValue(fieldValue) ;
+        this.label = fieldValue;
         this.count = count;
     }
-    public void setFieldValue(String fieldValue)
-    {
-        //Currently not using the prefix
-        //TODO: NC: Do we need the prefix for anything?
+    
+    /**
+     * Default constructor
+     */
+    public FieldResultDTO() {}
+    
+    @JsonIgnore
+    public void setFieldValue(String fieldValue) {
         this.label = fieldValue;
     }
+    
+    @JsonIgnore
     public String getFieldValue() {
-    	if(prefix!=null){
-    		return prefix+label;
-    	}else {
-    		return label;
-    	}
+    	return label;
     }
+    
     public long getCount() {
         return count;
     }
@@ -48,19 +58,11 @@ public class FieldResultDTO {
         this.label = label;
     }
 
-    public String getPrefix() {
-        return prefix;
-    }
-
-    public void setPrefix(String prefix) {
-        this.prefix = prefix;
-    }
-	/**
+    /**
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		return "FieldResultDTO [count=" + count + ", label=" + label
-				+ ", prefix=" + prefix + "]";
+		return "FieldResultDTO [count=" + count + ", label=" + label + "]";
 	}
 }

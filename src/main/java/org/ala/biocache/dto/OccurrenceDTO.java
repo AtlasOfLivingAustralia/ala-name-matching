@@ -155,6 +155,7 @@ public class OccurrenceDTO implements Serializable {
         return biogeographicRegions;
     }
 
+    @JsonIgnore
     public String getBiogeographicRegion() {
         return StringUtils.join(biogeographicRegions, "; ");
     }
@@ -490,6 +491,7 @@ public class OccurrenceDTO implements Serializable {
         return places;
     }
 
+    @JsonIgnore
     public String getPlace() {
         return StringUtils.join(places, "; ");
     }
@@ -550,6 +552,7 @@ public class OccurrenceDTO implements Serializable {
         return states;
     }
 
+    @JsonIgnore
     public String getState() {
         return StringUtils.join(states, "; ");
     }
@@ -680,7 +683,8 @@ public class OccurrenceDTO implements Serializable {
 	/**
 	 * @return the userId
 	 */
-	@JsonIgnore
+
+    @JsonIgnore
     public String getUserId() {
 		return userId;
 	}

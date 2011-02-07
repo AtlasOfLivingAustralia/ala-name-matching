@@ -26,7 +26,7 @@ public class FacetResultDTO {
     /** Name of the field being treated as a facet */
     private String fieldName;
     /** Set of facet field results */
-    private List<FieldResultDTO> fieldResult;
+    private List<FieldResultDTO> fieldResult; 
 
 
     /**
