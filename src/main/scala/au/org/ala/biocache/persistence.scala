@@ -37,6 +37,8 @@ trait PersistenceManager {
      */
     def put(uuid:String, entityName:String, keyValuePairs:Map[String, String])
 
+    def putBatch(entityName:String, batch:Map[String, Map[String,String]])
+
     /**
      * Retrieve an array of objects.
      */
@@ -102,6 +104,21 @@ object CassandraPersistenceManager extends PersistenceManager {
       } catch {
           case e:Exception => None
       }
+    }
+
+    /**
+     * Store the supplied batch of maps of properties as separate columns in cassandra.
+     */
+    def putBatch(entityName: String, batch: Map[String, Map[String, String]]) = {
+        val mutator = Pelops.createMutator(poolName, keyspace)
+        batch.foreach(uuidMap => {
+            val uuid = uuidMap._1
+            val keyValuePairs = uuidMap._2
+            keyValuePairs.foreach( keyValue => {
+              mutator.writeColumn(uuid, entityName, mutator.newColumn(keyValue._1.getBytes, keyValue._2))
+            })
+        })
+        mutator.execute(ConsistencyLevel.ONE)
     }
 
     /**

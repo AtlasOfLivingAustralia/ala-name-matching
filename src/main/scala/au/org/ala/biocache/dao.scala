@@ -295,6 +295,28 @@ object OccurrenceDAO {
   }
 
   /**
+   * Update the version of the occurrence record.
+   */
+  def addRawOccurrenceBatch(fullRecords:Array[FullRecord]) {
+
+    var batch = scala.collection.mutable.Map[String,Map[String,String]]()
+    for(fullRecord<-fullRecords){
+        var properties = scala.collection.mutable.Map[String,String]()
+        for(anObject <- fullRecord.objectArray){
+          val map = mapObjectToProperties(anObject,Versions.RAW)
+          //add all to map
+          properties.putAll(map)
+        }
+        //add to the batch update
+        batch.put(fullRecord.occurrence.uuid, properties.toMap)
+    }
+
+    //commit to cassandra
+    DAO.persistentManager.putBatch(entityName,batch.toMap)
+  }
+
+
+  /**
    * for each field in the definition, check if there is a value to write
    */
   protected def mapObjectToProperties(anObject:AnyRef, version:Version): Map[String,String] = {
