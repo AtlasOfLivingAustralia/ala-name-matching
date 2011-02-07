@@ -272,6 +272,7 @@ class OccurrenceIndex extends Cloneable {
   @BeanProperty @Field("data_provider") var dataProviderName:String =_
   @BeanProperty @Field("data_resource_uid") var dataResourceUid:String =_
   @BeanProperty @Field("data_resource") var dataResourceName:String =_
+  @BeanProperty @Field("assertions") var assertions:Array[String] =_
   
   //extra raw record fields
   @BeanProperty @Field("raw_taxon_name") var raw_scientificName:String =_

@@ -252,7 +252,10 @@ object ProcessRecords {
         Array()
       }
     } else {
-      Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,false,"Missing basis of record"))
+      //NC I don't think that a missing type status needs to be reported in a QA
+      // It should only be reported if we know for sure that an occurrence record is a typification record with a missing type
+      //Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,false,"Missing type status"))
+      Array()
     }
   }
 

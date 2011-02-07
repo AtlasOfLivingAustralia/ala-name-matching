@@ -580,7 +580,7 @@
    <!-- TODO work out the extra search fields that are required for the issues -->
    <field name="taxonomic_issue" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="geospatial_issue" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="other_issue" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
+   <field name="assertions" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false" />
    <!-- Not displayed in search results -->   
    <!-- field name="created_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="modified_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->

@@ -313,9 +313,9 @@ object AssertionCodes {
   //miscellanous
   val MISSING_BASIS_OF_RECORD = ErrorCode("missingBasisOfRecord",20001,false)
   val BADLY_FORMED_BASIS_OF_RECORD = ErrorCode("badlyFormedBasisOfRecord",20002,false)
-  val UNRECOGNISED_TYPESTATUS = ErrorCode("badlyFormedBasisOfRecord",20002,false)
-  val UNRECOGNISED_COLLECTIONCODE = ErrorCode("badlyFormedBasisOfRecord",20002,false)
-  val UNRECOGNISED_INSTITUTIONCODE = ErrorCode("badlyFormedBasisOfRecord",20002,false)
+  val UNRECOGNISED_TYPESTATUS = ErrorCode("unrecognisedTypeStatus",20004,false)
+  val UNRECOGNISED_COLLECTIONCODE = ErrorCode("unrecognisedCollectionCode",20005,false)
+  val UNRECOGNISED_INSTITUTIONCODE = ErrorCode("unrecognisedInstitutionCode",20006,false)
 
   //temporal
   val ID_PRE_OCCURRENCE = ErrorCode("invalidDate",30001,false)
