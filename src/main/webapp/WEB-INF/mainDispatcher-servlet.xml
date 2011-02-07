@@ -18,6 +18,8 @@
     <!-- Configures the @Controller programming model -->
     <mvc:annotation-driven />
 
+    <!-- Where to load static resources (css, js, images) -->
+    <mvc:resources mapping="/static/**" location="/" />
     <mvc:resources mapping="/robots.txt" location="/robots.txt" />
     <mvc:resources mapping="/sitemap*" location="/" />
 

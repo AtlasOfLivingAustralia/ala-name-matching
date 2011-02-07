@@ -349,7 +349,7 @@
         <configuration>
           <scanIntervalSeconds>10</scanIntervalSeconds>
           <stopKey>foo</stopKey>
-          <stopPort>9999</stopPort>
+          <stopPort>9099</stopPort>
         </configuration>
       </plugin>
       <plugin>
