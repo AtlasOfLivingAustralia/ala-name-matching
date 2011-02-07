@@ -82,22 +82,22 @@ object ProcessRecords {
     var assertions = new ArrayBuffer[QualityAssertion]
 
     //find a classification in NSLs
-    assertions ++ processClassification(guid, raw, processed)
+    assertions ++= processClassification(guid, raw, processed)
 
     //perform gazetteer lookups - just using point hash for now
-    assertions ++ processLocation(guid, raw, processed)
+    assertions ++= processLocation(guid, raw, processed)
 
     //temporal processing
-    assertions ++ processEvent(guid, raw, processed)
+    assertions ++= processEvent(guid, raw, processed)
 
     //basis of record parsing
-    assertions ++ processBasisOfRecord(guid, raw, processed)
+    assertions ++= processBasisOfRecord(guid, raw, processed)
 
     //type status normalisation
-    assertions ++ processTypeStatus(guid, raw, processed)
+    assertions ++= processTypeStatus(guid, raw, processed)
 
     //process the attribution - call out to the Collectory...
-    assertions ++ processAttribution(guid, raw, processed)
+    assertions ++= processAttribution(guid, raw, processed)
 
     //perform SDS lookups - retrieve from BIE for now....
     // processImages
