@@ -150,7 +150,8 @@ public class SearchResultDTO {
     public QueryResponse getQr() {
         return qr;
     }
-
+    
+    @JsonIgnore
     public void setQr(QueryResponse qr) {
         this.qr = qr;
     }
