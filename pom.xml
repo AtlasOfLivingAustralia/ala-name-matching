@@ -204,13 +204,13 @@
       <groupId>org.cliffc.high_scale_lib</groupId>
       <artifactId>high-scale-lib</artifactId>
       <version>1.0</version>
-      <scope>test</scope>
+      <!--<scope>test</scope>-->
     </dependency>
     <dependency>
       <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
       <artifactId>concurrentlinkedhashmap-lru</artifactId>
       <version>1.1</version>
-      <scope>test</scope>
+      <!--<scope>test</scope>-->
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -222,7 +222,7 @@
       <groupId>com.reardencommerce</groupId>
       <artifactId>clhm-production</artifactId>
       <version>1.0</version>
-      <scope>test</scope>
+      <!--<scope>test</scope>-->
     </dependency>
   </dependencies>
   <organization>
