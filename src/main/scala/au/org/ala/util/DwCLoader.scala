@@ -19,6 +19,7 @@ import org.gbif.dwc.terms._
 import org.gbif.dwc.text._
 import org.wyki.cassandra.pelops.Pelops
 import au.org.ala.biocache.{Raw, OccurrenceDAO}
+import collection.mutable.ArrayBuffer
 
 /**
  * Reads a DwC-A and writes the data to the BioCache
@@ -44,6 +45,7 @@ object DwCLoader {
 
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
+    var currentBatch = new ArrayBuffer[au.org.ala.biocache.FullRecord]
 
     while (iter.hasNext) {
 
@@ -68,17 +70,26 @@ object DwCLoader {
 
        //lookup the column
       val recordUuid = OccurrenceDAO.createOrRetrieveUuid(uniqueID)
-
       val fullRecord = OccurrenceDAO.createOccurrence(recordUuid, fieldTuples, Raw)
-      OccurrenceDAO.updateOccurrence(recordUuid, fullRecord, Raw)
+
+      currentBatch += fullRecord
 
       //debug
-      if (count % 1000 == 0 && count > 0) {
+      if (count % 2000 == 0 && count > 0) {
+        //commit the batch
+        OccurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)
+
         finishTime = System.currentTimeMillis
-        println(count + ", >> last key : " + uniqueID + ", UUID: " + recordUuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+        println(count + ", >> last key : " + uniqueID + ", UUID: " + recordUuid + ", records per sec: " + 2000 / (((finishTime - startTime).toFloat) / 1000f))
         startTime = System.currentTimeMillis
+
+        //clear the buffer
+        currentBatch.clear
       }
     }
+    //commit the batch
+    OccurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)
+
     Pelops.shutdown
     println("Finished DwC loader. Records processed: " + count)
   }
