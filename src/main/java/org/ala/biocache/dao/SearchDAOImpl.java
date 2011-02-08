@@ -52,6 +52,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.core.CoreContainer;
 import org.springframework.stereotype.Component;
+import au.org.ala.biocache.OccurrenceIndex;
 
 import au.com.bytecode.opencsv.CSVWriter;
 
@@ -69,7 +70,7 @@ public class SearchDAOImpl implements SearchDAO {
     /** log4 j logger */
     private static final Logger logger = Logger.getLogger(SearchDAOImpl.class);
     /** SOLR home directory - injected by Spring from properties file */
-    protected String solrHome = "/data/solr/biocache";
+    protected String solrHome = "/data/solr/bio-proto";
     /** SOLR server instance */
     protected EmbeddedSolrServer server;
     /** Limit search results - for performance reasons */
@@ -100,62 +101,65 @@ public class SearchDAOImpl implements SearchDAO {
     
     /**
      * @see org.ala.biocache.dao.SearchDAO#addOccurrence(org.ala.biocache.model.RawOccurrenceRecord, org.ala.biocache.model.OccurrenceRecord)
+     * IS THIS BEIGN USED
      */
 	public boolean addOccurrence(OccurrenceDTO oc) throws Exception {
-		
-		SolrInputDocument doc = new SolrInputDocument();
-		doc.addField("id", oc.getId());
-		doc.addField("taxon_concept_lsid", oc.getTaxonConceptLsid());
-		doc.addField("taxon_name", oc.getRawTaxonName());
-		doc.addField("common_name", oc.getCommonName());
-		if(oc.getBasisOfRecord()!=null) doc.addField("basis_of_record", oc.getBasisOfRecord());
-		if(oc.getLatitude()!=null) doc.addField("latitude", oc.getLatitude());
-		if(oc.getLongitude()!=null) doc.addField("longitude", oc.getLongitude());
-		if(oc.getPoint1()!=null) doc.addField("point-1", oc.getPoint1());
-		if(oc.getPoint01()!=null) doc.addField("point-0.1", oc.getPoint01());
-		if(oc.getPoint001()!=null) doc.addField("point-0.01", oc.getPoint001());
-		if(oc.getPoint0001()!=null) doc.addField("point-0.001", oc.getPoint0001());
-		if(oc.getPoint00001()!=null) doc.addField("point-0.0001", oc.getPoint00001());
-		if(oc.getDataProviderUid()!=null) doc.addField("data_provider_uid", oc.getDataProviderUid());
-		if(oc.getDataProviderUid()!=null) doc.addField("data_resource_uid", oc.getDataResourceUid());
-		if(oc.getDataProviderUid()!=null) doc.addField("data_provider", oc.getDataProvider());
-		if(oc.getDataProviderUid()!=null) doc.addField("data_resource", oc.getDataResource());
-		if(oc.getOccurrenceDate()!=null) doc.addField("occurrence_date", oc.getOccurrenceDate());
-		if(oc.getYear()!=null) doc.addField("year", oc.getYear());
-		if(oc.getMonth()!=null) doc.addField("month", oc.getMonth());
-		if(oc.getCoordinatePrecision()!=null) doc.addField("lat_long_precision", oc.getCoordinatePrecision());
-		if(oc.getState()!=null) doc.addField("state", oc.getState());
-		if(oc.getRank()!=null) doc.addField("rank", oc.getRank());
-		if(oc.getRankId()!=null) doc.addField("rank_id", oc.getRankId());
-		if(oc.getNamesLsid()!=null) doc.addField("names_and_lsid", oc.getNamesLsid());
-		if(oc.getLeft()!=null) doc.addField("lft", oc.getLeft());
-		if(oc.getRight()!=null) doc.addField("rgt", oc.getRight());
-		
-		if(oc.getKingdom()!=null) doc.addField("kingdom", oc.getKingdom());
-		if(oc.getPhylum()!=null) doc.addField("phylum", oc.getPhylum());
-		if(oc.getClass()!=null) doc.addField("class", oc.getClazz());
-		if(oc.getOrder()!=null) doc.addField("order", oc.getOrder());
-		if(oc.getFamily()!=null) doc.addField("family", oc.getFamily());
-		if(oc.getGenus()!=null) doc.addField("genus", oc.getGenus());
-		
-		if(oc.getUserId()!=null) doc.addField("user_id", oc.getUserId());
-		if(oc.getCollector()!=null) doc.addField("collector", oc.getCollector());
-		doc.addField("confidence", oc.getConfidence());
-		
-		//FIXME we need to lookup the states, ibra regions
-		server.add(doc);
-		server.commit();
+//		//TODO Do we need to add a
+//		SolrInputDocument doc = new SolrInputDocument();
+//		doc.addField("id", oc.getId());
+//		doc.addField("taxon_concept_lsid", oc.getTaxonConceptLsid());
+//		doc.addField("taxon_name", oc.getRawTaxonName());
+//		doc.addField("common_name", oc.getCommonName());
+//		if(oc.getBasisOfRecord()!=null) doc.addField("basis_of_record", oc.getBasisOfRecord());
+//		if(oc.getLatitude()!=null) doc.addField("latitude", oc.getLatitude());
+//		if(oc.getLongitude()!=null) doc.addField("longitude", oc.getLongitude());
+//		if(oc.getPoint1()!=null) doc.addField("point-1", oc.getPoint1());
+//		if(oc.getPoint01()!=null) doc.addField("point-0.1", oc.getPoint01());
+//		if(oc.getPoint001()!=null) doc.addField("point-0.01", oc.getPoint001());
+//		if(oc.getPoint0001()!=null) doc.addField("point-0.001", oc.getPoint0001());
+//		if(oc.getPoint00001()!=null) doc.addField("point-0.0001", oc.getPoint00001());
+//		if(oc.getDataProviderUid()!=null) doc.addField("data_provider_uid", oc.getDataProviderUid());
+//		if(oc.getDataProviderUid()!=null) doc.addField("data_resource_uid", oc.getDataResourceUid());
+//		if(oc.getDataProviderUid()!=null) doc.addField("data_provider", oc.getDataProvider());
+//		if(oc.getDataProviderUid()!=null) doc.addField("data_resource", oc.getDataResource());
+//		if(oc.getOccurrenceDate()!=null) doc.addField("occurrence_date", oc.getOccurrenceDate());
+//		if(oc.getYear()!=null) doc.addField("year", oc.getYear());
+//		if(oc.getMonth()!=null) doc.addField("month", oc.getMonth());
+//		if(oc.getCoordinatePrecision()!=null) doc.addField("lat_long_precision", oc.getCoordinatePrecision());
+//		if(oc.getState()!=null) doc.addField("state", oc.getState());
+//		if(oc.getRank()!=null) doc.addField("rank", oc.getRank());
+//		if(oc.getRankId()!=null) doc.addField("rank_id", oc.getRankId());
+//		if(oc.getNamesLsid()!=null) doc.addField("names_and_lsid", oc.getNamesLsid());
+//		if(oc.getLeft()!=null) doc.addField("lft", oc.getLeft());
+//		if(oc.getRight()!=null) doc.addField("rgt", oc.getRight());
+//
+//		if(oc.getKingdom()!=null) doc.addField("kingdom", oc.getKingdom());
+//		if(oc.getPhylum()!=null) doc.addField("phylum", oc.getPhylum());
+//		if(oc.getClass()!=null) doc.addField("class", oc.getClazz());
+//		if(oc.getOrder()!=null) doc.addField("order", oc.getOrder());
+//		if(oc.getFamily()!=null) doc.addField("family", oc.getFamily());
+//		if(oc.getGenus()!=null) doc.addField("genus", oc.getGenus());
+//
+//		if(oc.getUserId()!=null) doc.addField("user_id", oc.getUserId());
+//		if(oc.getCollector()!=null) doc.addField("collector", oc.getCollector());
+//		doc.addField("confidence", oc.getConfidence());
+//
+//		//FIXME we need to lookup the states, ibra regions
+//		server.add(doc);
+//		server.commit();
 		return true;
 	}
 
     /**
      * @see org.ala.biocache.dao.SearchDAO#deleteOccurrence(String)
+     * //Probably don't want to delete from here because we need to handle updates to cassandra
+     * IS THIS BEING USED
      */
     @Override
 	public boolean deleteOccurrence(String occurrenceId) throws Exception {
         // will throw exception if it fails...
-        server.deleteById(occurrenceId);
-        server.commit();
+//        server.deleteById(occurrenceId);
+//        server.commit();
         return true;
     }
     
@@ -255,6 +259,8 @@ public class SearchDAOImpl implements SearchDAO {
 
     /**
      * @see org.ala.biocache.dao.SearchDAO#writeResultsToStream(java.lang.String, java.lang.String[], java.io.OutputStream, int)
+     *
+     * TODO Handle differently get a list of UUID's to be sent to the biocache-store
      */
     public Map<String,Integer> writeResultsToStream(String query, String[] filterQuery, OutputStream out, int i) throws Exception {
 
@@ -272,102 +278,112 @@ public class SearchDAOImpl implements SearchDAO {
             int pageSize = 1000;
             
             QueryResponse qr = runSolrQuery(solrQuery, filterQuery, pageSize, startIndex, "score", "asc");
-            CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(out), ',', '"');
-            
-            //should these be darwin core terms??
-            csvWriter.writeNext(new String[]{
-            		"Record ID",
-            		"Taxon ID",
-            		"Original taxon name",
-                    "Supplied common name",
-            		"Recognised taxon name",
-            		"Taxon rank",
-                    "Common name",
-            		"Family",
-            		"Latitude",
-            		"Longitude",
-            		"Coordinate Precision (metres)",
-            		"Locality",
-            		"Bio region",
-            		"Basis of record",
-            		"State/Territory",
-            		"Event date",
-            		"Event time",
-            		"Collection code",
-            		"Institution code",
-            		"Collector/observer",
-            		"Catalogue number",
-            		"Data provider",
-            		"Data resource",
-            		"Identifier name",
-            		"Citation",
-            });
+//            CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(out), ',', '"');
+//
+//            //should these be darwin core terms??
+//            csvWriter.writeNext(new String[]{
+//            		"Record ID",
+//            		"Taxon ID",
+//            		"Original taxon name",
+//                    "Supplied common name",
+//            		"Recognised taxon name",
+//            		"Taxon rank",
+//                    "Common name",
+//            		"Family",
+//            		"Latitude",
+//            		"Longitude",
+//            		"Coordinate Precision (metres)",
+//            		"Locality",
+//            		"Bio region",
+//            		"Basis of record",
+//            		"State/Territory",
+//            		"Event date",
+//            		"Event time",
+//            		"Collection code",
+//            		"Institution code",
+//            		"Collector/observer",
+//            		"Catalogue number",
+//            		"Data provider",
+//            		"Data resource",
+//            		"Identifier name",
+//            		"Citation",
+//            });
             
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-            
+            List<String> uuids = new ArrayList<String>();
             while(qr.getResults().size()>0 && resultsCount<MAX_DOWNLOAD_SIZE){
             	logger.debug("Start index: "+startIndex);
-	            List<OccurrenceDTO> results = qr.getBeans(OccurrenceDTO.class);
-	            for(OccurrenceDTO result : results){
+	            List<OccurrenceIndex> results = qr.getBeans(OccurrenceIndex.class);
+	            for(OccurrenceIndex result : results){
 	            	resultsCount++;
+                        uuids.add(result.getUuid());
+                        //au.org.ala.biocache.FullRecord[] fullResult = au.org.ala.biocache.Store.getAllVersionsByUuid(result.getUuid());
+                        //Get the record from the biocache-store
 	            	
-	            	String latitude = null, longitude = null;
+//	            	String latitude = null, longitude = null;
+//
+//	            	if(result.getLatitude()!=null){
+//	            		latitude = result.getLatitude().toString();
+//	            	}
+//	            	if(result.getLatitude()!=null){
+//	            		longitude = result.getLongitude().toString();
+//	            	}
+//
+//	            	String eventDate = "";
+//	            	String eventTime = "";
+//	            	if(result.getOccurrenceDate()!=null){
+//	            		eventDate = dateFormat.format(result.getOccurrenceDate());
+//	            		eventTime = timeFormat.format(result.getOccurrenceDate());
+//	            		if("00:00".equals(eventTime)){
+//	            			eventTime = "";
+//	            		}
+//	            	}
 	            	
-	            	if(result.getLatitude()!=null){
-	            		latitude = result.getLatitude().toString();
-	            	}
-	            	if(result.getLatitude()!=null){
-	            		longitude = result.getLongitude().toString();
-	            	}
-	            	
-	            	String eventDate = "";
-	            	String eventTime = "";
-	            	if(result.getOccurrenceDate()!=null){
-	            		eventDate = dateFormat.format(result.getOccurrenceDate());
-	            		eventTime = timeFormat.format(result.getOccurrenceDate());
-	            		if("00:00".equals(eventTime)){
-	            			eventTime = "";
-	            		}
-	            	}
-	            	
-	            	String[] record = new String[]{
-            			result.getId(),
-            			result.getTaxonConceptLsid(),
-            			result.getRawTaxonName(),
-                        result.getRawCommonName(),
-            			result.getTaxonName(),
-            			result.getRank(),
-            			result.getCommonName(),
-            			result.getFamily(),
-            			latitude,
-            			longitude,
-            			result.getCoordinatePrecision(),
-            			result.getPlace(),
-            			result.getBiogeographicRegion(),
-            			result.getBasisOfRecord(),
-            			result.getState(),
-            			eventDate,
-            			eventTime,
-            			result.getCollectionCode(),
-            			result.getInstitutionCode(),
-            			result.getCollector(),
-            			result.getCatalogueNumber(),
-            			result.getDataProvider(),
-            			result.getDataResource(),
-            			result.getIdentifierName(),
-            			result.getCitation(),
-	            	};
+//	            	String[] record = new String[]{
+//            			result.getUuid(),
+//            			result.getTaxonConceptLsid(),
+//            			result.getRawTaxonName(),
+//                        result.getRawCommonName(),
+//            			result.getTaxonName(),
+//            			result.getRank(),
+//            			result.getCommonName(),
+//            			result.getFamily(),
+//            			latitude,
+//            			longitude,
+//            			result.getCoordinatePrecision(),
+//            			result.getPlace(),
+//            			result.getBiogeographicRegion(),
+//            			result.getBasisOfRecord(),
+//            			result.getState(),
+//            			eventDate,
+//            			eventTime,
+//            			result.getCollectionCode(),
+//            			result.getInstitutionCode(),
+//            			result.getCollector(),
+//            			result.getCatalogueNumber(),
+//            			result.getDataProvider(),
+//            			result.getDataResource(),
+//            			result.getIdentifierName(),
+//            			result.getCitation(),
+//	            	};
 	            	
                      //increment the counters....
-                    incrementCount(uidStats, result.getInstitutionCodeUid());
-                    incrementCount(uidStats, result.getCollectionCodeUid());
+                    incrementCount(uidStats, result.getInstitutionUid());
+                    incrementCount(uidStats, result.getCollectionUid());
                     incrementCount(uidStats, result.getDataProviderUid());
                     incrementCount(uidStats, result.getDataResourceUid());
                         
-	            	csvWriter.writeNext(record);
-	            	csvWriter.flush();
+	            	//csvWriter.writeNext(record);
+	            	//csvWriter.flush();
 	            }
+                    au.org.ala.biocache.Store.writeToStream(out, "\t", "\n", uuids.toArray(new String[]{}),
+                                            new String[]{"uuid",
+                                                         "taxonConceptID.p",
+                                                         "scientificName",
+                                                         "vernacularName",
+                                                         "scientificName.p" ,
+                                                         "taxonRank.p", "vernacularName.p", "family.p", "latitude.p", "longitude.p", "coordinatePrecision" });
 	            startIndex += pageSize;
 	            if(resultsCount<MAX_DOWNLOAD_SIZE){
 	            	qr = runSolrQuery(solrQuery, filterQuery, pageSize, startIndex, "score", "asc");
@@ -400,24 +416,26 @@ public class SearchDAOImpl implements SearchDAO {
     }
     
     /**
-     * @see org.ala.biocache.dao.SearchDAO#getById(java.lang.String) 
+     * @see org.ala.biocache.dao.SearchDAO#getById(java.lang.String)
+     * REMOVE THIS METHOD All references to this should be replaced byStore.getByUUID
      */
     @Override
     public OccurrenceDTO getById(String id) throws Exception {
         OccurrenceDTO oc = null;
-        String query = "id:"+ClientUtils.escapeQueryChars(id);
-        SolrQuery solrQuery = new SolrQuery();
-        solrQuery.setQueryType("standard");
-        solrQuery.setQuery(query);
-        QueryResponse qr = runSolrQuery(solrQuery, null, 1, 0, "score", "asc");
-        SearchResultDTO searchResults = processSolrResponse(qr, solrQuery);
-        List<OccurrenceDTO> ocs = searchResults.getOccurrences();
         
-        if (!ocs.isEmpty() && ocs.size() == 1) {
-            oc = ocs.get(0);
-        } else if (!ocs.isEmpty()) {
-            logger.warn("Get by id returned more than ONE result: "+ocs.size()+" for id: "+id);
-        }
+//        String query = "id:"+ClientUtils.escapeQueryChars(id);
+//        SolrQuery solrQuery = new SolrQuery();
+//        solrQuery.setQueryType("standard");
+//        solrQuery.setQuery(query);
+//        QueryResponse qr = runSolrQuery(solrQuery, null, 1, 0, "score", "asc");
+//        SearchResultDTO searchResults = processSolrResponse(qr, solrQuery);
+//        List<OccurrenceIndex> ocs = searchResults.getOccurrences();
+//
+//        if (!ocs.isEmpty() && ocs.size() == 1) {
+//            oc = ocs.get(0);
+//        } else if (!ocs.isEmpty()) {
+//            logger.warn("Get by id returned more than ONE result: "+ocs.size()+" for id: "+id);
+//        }
 
         return oc;
     }
@@ -506,6 +524,7 @@ public class SearchDAOImpl implements SearchDAO {
      * 
 	 * @see org.ala.biocache.dao.SearchDAO#getDataProviderCounts()
 	 */
+    //IS THIS BEING USED BY ANYTHING??
 	@Override
 	public List<DataProviderCountDTO> getDataProviderCounts() throws Exception {
         
@@ -614,6 +633,8 @@ public class SearchDAOImpl implements SearchDAO {
     }
 
     @Override
+    //TODO: Not storing/indexing a user id
+    //IS this being used
     public List<TaxaCountDTO> findTaxaByUserId(String userId) throws Exception {
         
         String queryString = "user_id:"+ClientUtils.escapeQueryChars(userId);
@@ -625,7 +646,9 @@ public class SearchDAOImpl implements SearchDAO {
     }
     
     @Override
-    public List<OccurrenceDTO> findPointsForUserId(String userId) throws Exception {
+    //TODO Not storing/indexing a user
+    //IS this being used
+    public List<OccurrenceIndex> findPointsForUserId(String userId) throws Exception {
         String query = "user_id:"+ClientUtils.escapeQueryChars(userId);
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.setQueryType("standard");
@@ -640,6 +663,7 @@ public class SearchDAOImpl implements SearchDAO {
     /**
      * @see org.ala.biocache.dao.SearchDAO#findAllSpeciesByCircleAreaAndHigherTaxa(Float, Float,
      *     Integer, String, String, String, Integer, Integer, String, String)
+     * IS THIS BEING USED??
      */
     @Override
     public List<TaxaCountDTO> findAllSpeciesByCircleAreaAndHigherTaxon(Float latitude, Float longitude,
@@ -649,8 +673,7 @@ public class SearchDAOImpl implements SearchDAO {
         String queryString = buildSpatialQueryString("*:*", latitude, longitude, radius);
         List<String> filterQueries = Arrays.asList(rank + ":" + higherTaxon);
         List<String> facetFields = new ArrayList<String>();
-        //facetFields.add(SPECIES);
-        //facetFields.add(SPECIES_LSID);
+        
         facetFields.add(NAMES_AND_LSID);
         List<TaxaCountDTO> speciesWithCounts = getSpeciesCounts(queryString, filterQueries, facetFields, pageSize, startIndex, sortField, sortDirection);
 
@@ -675,30 +698,12 @@ public class SearchDAOImpl implements SearchDAO {
         String queryString = buildSpatialQueryString("*:*", latitude, longitude, radius);
         List<String> facetFields = new ArrayList<String>();
         facetFields.add(NAMES_AND_LSID);
-        //facetFields.add(SPECIES);
-        //facetFields.add(SPECIES_LSID);
-        //facetFields.add(COMMON_NAME);
         List<TaxaCountDTO> speciesWithCounts = getSpeciesCounts(queryString, filterQueries, facetFields, pageSize, startIndex, sortField, sortDirection);
 
         return speciesWithCounts;
     }
 
-    /**
-     * @see org.ala.biocache.dao.SearchDAO#findAllKingdomsByCircleArea(Float, Float, Integer, String,
-     *       Integer, Integer, String, String)
-     */
-    public List<TaxaCountDTO> findAllKingdomsByCircleArea(Float latitude, Float longitude,
-            Float radius, String filterQuery, Integer startIndex,
-            Integer pageSize, String sortField, String sortDirection) throws Exception {
 
-        String queryString =  buildSpatialQueryString("*:*", latitude, longitude, radius);
-        List<String> facetFields = new ArrayList<String>();
-        facetFields.add(KINGDOM);
-        facetFields.add(KINGDOM_LSID);
-        List<TaxaCountDTO> speciesWithCounts = getSpeciesCounts(queryString, new ArrayList<String>(), facetFields, pageSize, startIndex, sortField, sortDirection);
-
-        return speciesWithCounts;
-    }
     
     /**
      * @see org.ala.biocache.dao.SearchDAO#findRecordByDecadeFor(java.lang.String)
@@ -913,7 +918,7 @@ public class SearchDAOImpl implements SearchDAO {
             facets.addAll(facetDates);
         }        
         //Map<String, Map<String, List<String>>> highlights = qr.getHighlighting();
-        List<OccurrenceDTO> results = qr.getBeans(OccurrenceDTO.class);
+        List<OccurrenceIndex> results = qr.getBeans(OccurrenceIndex.class);
         List<FacetResultDTO> facetResults = new ArrayList<FacetResultDTO>();
         searchResult.setTotalRecords(sdl.getNumFound());
         searchResult.setStartIndex(sdl.getStart());
@@ -946,22 +951,23 @@ public class SearchDAOImpl implements SearchDAO {
         }
 
         //handle the confidence facets in the facetQueries
-       List<FieldResultDTO> fqr = new ArrayList<FieldResultDTO>();
-        if(facetQueries != null){
-            for(String range: facetQueries.keySet()){
-                //get the OccurrenceSource
-                OccurrenceSource os = OccurrenceSource.getForRange(range.substring(range.indexOf(":")+1));
-                if(os != null && facetQueries.get(range)>0){
-                    fqr.add(new FieldResultDTO(os.getDisplayName(), facetQueries.get(range)));
-                }
-
-            }
-        }
-        //Only add the confidence facetResult if there is more than 1 facet
-        if(fqr.size()>1){
-                FacetResultDTO fr = new FacetResultDTO(OccurrenceSource.FACET_NAME, fqr);
-                facetResults.add(fr);
-            }
+        //TODO Work out whether or not we need the confidence facets ie the confidence ratign indexed???
+//       List<FieldResultDTO> fqr = new ArrayList<FieldResultDTO>();
+//        if(facetQueries != null){
+//            for(String range: facetQueries.keySet()){
+//                //get the OccurrenceSource
+//                OccurrenceSource os = OccurrenceSource.getForRange(range.substring(range.indexOf(":")+1));
+//                if(os != null && facetQueries.get(range)>0){
+//                    fqr.add(new FieldResultDTO(os.getDisplayName(), facetQueries.get(range)));
+//                }
+//
+//            }
+//        }
+//        //Only add the confidence facetResult if there is more than 1 facet
+//        if(fqr.size()>1){
+//                FacetResultDTO fr = new FacetResultDTO(OccurrenceSource.FACET_NAME, fqr);
+//                facetResults.add(fr);
+//            }
 
         searchResult.setFacetResults(facetResults);
         // The query result is stored in its original format so that all the information
@@ -1028,6 +1034,7 @@ public class SearchDAOImpl implements SearchDAO {
         solrQuery.addFacetField("rank");
         solrQuery.addFacetField("kingdom");
         solrQuery.addFacetField("family");
+        solrQuery.addFacetField("assertions");
         //solrQuery.addFacetField("data_provider");
         solrQuery.addFacetField("month");
         solrQuery.add("f.month.facet.sort","index"); // sort by Jan-Dec
@@ -1040,9 +1047,10 @@ public class SearchDAOImpl implements SearchDAO {
         solrQuery.add("facet.date.other", "before"); // include counts before the facet start date ("before" label)
         solrQuery.add("facet.date.include", "lower"); // counts will be included for dates on the starting date but not ending date
         //Manually add the integer ranges for the facet query required on the confidence field
-        for(OccurrenceSource os : OccurrenceSource.values()){
-            solrQuery.add("facet.query", "confidence:" + os.getRange());
-        }
+        //TODO DO we need confidence/ Indivdual Sightings etc
+//        for(OccurrenceSource os : OccurrenceSource.values()){
+//            solrQuery.add("facet.query", "confidence:" + os.getRange());
+//        }
         
         //solrQuery.add("facet.date.other", "after");
 
@@ -1119,7 +1127,8 @@ public class SearchDAOImpl implements SearchDAO {
                             //speciesCounts.add(i, tcDTO);
                             speciesCounts.add(tcDTO);
                         }
-                        else if (fcount.getFacetField().getName().equals(TAXON_CONCEPT_LSID)) {
+                        //I think that the code below is obsolete.
+                       /* else if (fcount.getFacetField().getName().equals(TAXON_CONCEPT_LSID)) {
                             tcDTO = new TaxaCountDTO();
                             tcDTO.setGuid(StringUtils.trimToNull(fcount.getName()));
                             tcDTO.setCount(fcount.getCount());
@@ -1137,7 +1146,7 @@ public class SearchDAOImpl implements SearchDAO {
                                 //speciesCounts.add(i, tcDTO);
                                 speciesCounts.add(tcDTO);
                             }
-                        }
+                        }*/
                     }
                 }
             }

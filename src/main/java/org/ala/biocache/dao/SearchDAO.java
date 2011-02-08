@@ -22,6 +22,7 @@ import javax.servlet.ServletOutputStream;
 
 import org.ala.biocache.dto.DataProviderCountDTO;
 import org.ala.biocache.dto.FieldResultDTO;
+import au.org.ala.biocache.OccurrenceIndex;
 import org.ala.biocache.dto.OccurrenceDTO;
 import org.ala.biocache.dto.OccurrencePoint;
 import org.ala.biocache.dto.PointType;
@@ -198,22 +199,7 @@ public interface SearchDAO {
     List<TaxaCountDTO> findAllSpeciesByCircleAreaAndHigherTaxa(Float latitude, Float longitude, Float radius, String rank, List<String> higherTaxa,
     		String filterQuery, Integer startIndex, Integer pageSize, String sortField, String sortDirection) throws Exception;
 
-    /**
-     * Find all species (and counts) for a given location search (lat/long and radius) and higher taxa (with rank)
-     *
-     * @param latitude
-     * @param longitude
-     * @param radius
-     * @param filterQuery
-     * @param startIndex
-     * @param pageSize
-     * @param sortField
-     * @param sortDirection
-     * @return
-     * @throws Exception
-     */
-    List<TaxaCountDTO> findAllKingdomsByCircleArea(Float latitude, Float longitude, Float radius, String filterQuery,
-             Integer startIndex, Integer pageSize, String sortField, String sortDirection) throws Exception;
+    
 
     /**
      * Find all the data providers with records.
@@ -228,7 +214,7 @@ public interface SearchDAO {
 
     List<TaxaCountDTO> findTaxaByUserId(String userId) throws Exception;
 
-    List<OccurrenceDTO> findPointsForUserId(String userId) throws Exception;
+    List<OccurrenceIndex> findPointsForUserId(String userId) throws Exception;
     /**
      * Find all the sources for the supplied query
      *

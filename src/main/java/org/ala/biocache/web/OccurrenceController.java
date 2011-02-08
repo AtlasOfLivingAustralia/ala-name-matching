@@ -57,6 +57,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import au.org.ala.biocache.Store;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * Occurrences controller for the BIE biocache site
@@ -317,6 +318,8 @@ public class OccurrenceController {
     /**
      * Spatial search for either a taxon name or full text text search
      *
+     * Tested with: /occurrences/searchByArea.json?q=taxon_name:Lasioglossum|-31.2|138.4|800
+     *
      * @param query
      * @param filterQuery
      * @param startIndex
@@ -442,14 +445,16 @@ public class OccurrenceController {
 
 	/**
 	 * Occurrence search page uses SOLR JSON to display results
-	 * 
+	 *
+         * Tested with :/occurrences/search.json?q=Victoria
+         *
 	 * @param query
 	 * @param model
 	 * @return
 	 * @throws Exception
 	 */
 	@RequestMapping(value = "/occurrences/search*", method = RequestMethod.GET)
-	public String occurrenceSearch(
+	public @ResponseBody SearchResultDTO occurrenceSearch(
 			@RequestParam(value="q", required=false) String query,
 			@RequestParam(value="fq", required=false) String[] filterQuery,
 			@RequestParam(value="start", required=false, defaultValue="0") Integer startIndex,
@@ -461,9 +466,9 @@ public class OccurrenceController {
 			@RequestParam(value="lon", required=false, defaultValue="149.11288f") Float longitude,
 			Model model)
 	throws Exception {
-
+            SearchResultDTO searchResult = new SearchResultDTO();
 		if (query == null || query.isEmpty()) {
-			return LIST;
+			return searchResult;
 		}
 		// if params are set but empty (e.g. foo=&bar=) then provide sensible defaults
 		if (filterQuery != null && filterQuery.length == 0) {
@@ -482,11 +487,12 @@ public class OccurrenceController {
 			sortDirection = "asc";
 		}
 
-		SearchResultDTO searchResult = new SearchResultDTO();
+		
         String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
-        model.addAttribute("query", query);
-        model.addAttribute("queryJsEscaped", queryJsEscaped);
-        model.addAttribute("facetQuery", filterQuery);
+        //TODO work out which of these attributes are necessary for the hubs web app
+       // model.addAttribute("query", query);
+        //model.addAttribute("queryJsEscaped", queryJsEscaped);
+       // model.addAttribute("facetQuery", filterQuery);
 
         SearchQuery searchQuery = new SearchQuery(query, "normal", filterQuery);
         searchUtils.updateQueryDetails(searchQuery);
@@ -494,14 +500,15 @@ public class OccurrenceController {
         searchResult = searchDAO.findByFulltextQuery(searchQuery.getQuery(), searchQuery.getFilterQuery(), startIndex, pageSize, sortField, sortDirection);
         model.addAttribute("searchResult", searchResult);
         logger.debug("query = " + query);
-        Long totalRecords = searchResult.getTotalRecords();
-        model.addAttribute("totalRecords", totalRecords);
-        model.addAttribute("facetMap", addFacetMap(filterQuery));
+       // Long totalRecords = searchResult.getTotalRecords();
+        //model.addAttribute("totalRecords", totalRecords);
+       // model.addAttribute("facetMap", addFacetMap(filterQuery));
         //type of serach
-        model.addAttribute("type", "normal");
-        model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
+        //model.addAttribute("type", "normal");
+        searchResult.setQueryType("normal");
+       // model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
                 
-		return LIST;
+		return searchResult;
 	}
 
 	/**
@@ -621,17 +628,17 @@ public class OccurrenceController {
         HttpServletRequest request, Model model) throws Exception {
 		logger.debug("Retrieving occurrence record with guid: "+id+".");
         model.addAttribute("id", id);
-		OccurrenceDTO occurrence = searchDAO.getById(id);
-		model.addAttribute("occurrence", occurrence);
-
+		
         //au.org.ala.biocache.QualityAssertion.apply(au.org.ala.biocache.AssertionCodes.ALTITUDE_IN_FEET());
 
-        FullRecord fullRecord = Store.getByUuid(id);
-
-		if (occurrence != null && occurrence.getCollectionCodeUid() != null) {
-			
-			if(occurrence.getCollectionCodeUid()!=null){
-	            Object[] resp = restfulClient.restGet(summaryServiceUrl + "/" + occurrence.getCollectionCodeUid());
+        FullRecord[] fullRecord = Store.getAllVersionsByUuid(id);
+       
+		if (fullRecord != null && fullRecord.length>2  && fullRecord[1].getAttribution().getCollectionUid() != null) {
+			model.addAttribute("raw", fullRecord[0]);
+                        model.addAttribute("processed", fullRecord[1]);
+                        model.addAttribute("consensus" , fullRecord[2]);
+                        //TODO replace all the stuff below with extra information in biocache-store
+	            Object[] resp = restfulClient.restGet(summaryServiceUrl + "/" + fullRecord[1].getAttribution().getCollectionUid());
 	            if ((Integer) resp[0] == HttpStatus.SC_OK) {
 	                String json = (String) resp[1];
 	                ObjectMapper mapper = new ObjectMapper();
@@ -639,6 +646,7 @@ public class OccurrenceController {
 	
 	                try {
 	                    rootNode = mapper.readValue(json, JsonNode.class);
+                            //TODO Include this information in cassandra
 	                    String name = rootNode.path("name").getTextValue();
 	                    String logo = rootNode.path("institutionLogoUrl").getTextValue();
 	                    String institution = rootNode.path("institution").getTextValue();
@@ -649,42 +657,35 @@ public class OccurrenceController {
 	                    logger.error(e.toString());
 	                }
 	            }
-			}
-		}
-            
-        if (id != null) {
-            Long occurrenceId = new Long(id);
 
-            //
-            
-//            RawOccurrenceRecord rawOccurrence = rawOccurrenceRecordDAO.getById(occurrenceId);
-//            model.addAttribute("rawOccurrence", rawOccurrence);
-//
-//            List<ImageRecord> images = imageRecordDAO.findByOccurrenceId(occurrenceId);
-//            model.addAttribute("images", images);
-
-        }
-        model.addAttribute("hostUrl", hostUrl);
-
-        //log the usage statistics to the ala logger if necessary
+                    //log the usage statistics to the ala logger if necessary
         //We only want to log the stats if a non-json request was made.
         if (request.getRequestURL() != null && !request.getRequestURL().toString().endsWith("json")) {
             String email = null;
             String reason = "Viewing Occurrence Record " + id;
             String ip = request.getLocalAddr();
             Map<String, Integer> uidStats = new HashMap<String, Integer>();
-            if (occurrence.getCollectionCodeUid() != null) {
-                uidStats.put(occurrence.getCollectionCodeUid(), 1);
+            if (fullRecord[1].getAttribution().getCollectionUid() != null) {
+                uidStats.put(fullRecord[1].getAttribution().getCollectionUid(), 1);
             }
-            if (occurrence.getInstitutionCodeUid() != null) {
-                uidStats.put(occurrence.getInstitutionCodeUid(), 1);
+            if (fullRecord[1].getAttribution().getInstitutionUid() != null) {
+                uidStats.put(fullRecord[1].getAttribution().getInstitutionUid(), 1);
             }
-            //all occurrence records must have a dpuid and druid
-            uidStats.put(occurrence.getDataProviderUid(), 1);
-            uidStats.put(occurrence.getDataResourceUid(), 1);
+            if(fullRecord[1].getAttribution().getDataProviderUid() != null)
+                uidStats.put(fullRecord[1].getAttribution().getDataProviderUid(), 1);
+            if(fullRecord[1].getAttribution().getDataResourceUid() != null)
+            uidStats.put(fullRecord[1].getAttribution().getDataResourceUid(), 1);
             LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED, email, reason, ip, uidStats);
             logger.log(RestLevel.REMOTE, vo);
         }
+
+			
+		}
+            
+
+        model.addAttribute("hostUrl", hostUrl);
+
+        
         
 		return SHOW;
 	}

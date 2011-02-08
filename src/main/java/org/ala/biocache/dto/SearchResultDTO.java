@@ -14,6 +14,7 @@
  ***************************************************************************/
 package org.ala.biocache.dto;
 
+import au.org.ala.biocache.OccurrenceIndex;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,6 +24,8 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
  * DTO to represents the results from a Lucene search
+ *
+ * NC: Changed the result type to OccurrenceIndex
  *
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
@@ -41,7 +44,7 @@ public class SearchResultDTO {
     /** Status code to be set by Controller (e.g. OK) */
     private String status;
     /** List of results from search */
-    private List<OccurrenceDTO> occurrences;
+    private List<OccurrenceIndex> occurrences;
     /** List of facet results from search */
     private List<FacetResultDTO> facetResults;
     /** SOLR query response following search */
@@ -49,18 +52,24 @@ public class SearchResultDTO {
     private String query;
 
     /**
+     * The type of query that was executed. This is necessary to provide
+     * the pre-processing of the query.
+     */
+    private String queryType;
+
+    /**
      * Constructor with 2 args
      *
      * @param searchResults
      * @param facetResults
      */
-    public SearchResultDTO(List<OccurrenceDTO> searchResults) {
+    public SearchResultDTO(List<OccurrenceIndex> searchResults) {
         this.occurrences = searchResults;
         //this.facetResults = facetResults;
     }
 
     /**
-     * Contructor with no args
+     * Constructor with no args
      */
     public SearchResultDTO() {}
 
@@ -121,11 +130,11 @@ public class SearchResultDTO {
         this.status = status;
     }
 
-    public List<OccurrenceDTO> getOccurrences() {
+    public List<OccurrenceIndex> getOccurrences() {
         return occurrences;
     }
 
-    public void setOccurrences(List<OccurrenceDTO> values) {
+    public void setOccurrences(List<OccurrenceIndex> values) {
         this.occurrences = values;
     }
 
@@ -154,5 +163,13 @@ public class SearchResultDTO {
     @JsonIgnore
     public void setQr(QueryResponse qr) {
         this.qr = qr;
+    }
+
+    public String getQueryType() {
+        return queryType;
+    }
+
+    public void setQueryType(String queryType) {
+        this.queryType = queryType;
     }
 }
