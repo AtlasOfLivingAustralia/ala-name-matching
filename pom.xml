@@ -100,16 +100,12 @@
       <groupId>org.gbif</groupId>
       <artifactId>dwca-reader</artifactId>
       <version>1.7.3-SNAPSHOT</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.code.google-collections</groupId>
-          <artifactId>google-collect</artifactId>
-        </exclusion>
-            <exclusion>
-                <groupId>jaxen</groupId>
-                <artifactId>jaxen</artifactId>
-            </exclusion>
-      </exclusions>
+    </dependency>
+    <!-- Google Commons -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>r07</version>
     </dependency>
     <!-- Jackson  (JSON serialisation)-->
     <dependency>
