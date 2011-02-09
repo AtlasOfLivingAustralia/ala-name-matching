@@ -78,7 +78,9 @@
                         </bean>
                     </property>
                 </bean>
-                <bean class="org.springframework.web.servlet.view.json.MappingJacksonJsonView" />
+                <bean class="org.springframework.web.servlet.view.json.MappingJacksonJsonView">
+                    <property name="objectMapper" ref="JacksonObjectMapper" />
+                </bean>
             </list>
         </property>
         <property name="defaultContentType" ref="htmlMediaType" />
@@ -91,6 +93,34 @@
     </bean>
     
     <bean id="restfulClient" class="org.ala.client.util.RestfulClient"/>
+
+        <bean
+        class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+        <property name="messageConverters">
+            <list>
+                <bean
+                    class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
+                    <property name="objectMapper" ref="JacksonObjectMapper" />
+                </bean>
+            </list>
+        </property>
+    </bean>
+
+
+    <bean id="JacksonObjectMapper" class="org.codehaus.jackson.map.ObjectMapper" />
+    <bean id="JacksonSerializationConfig" class="org.codehaus.jackson.map.SerializationConfig"
+        factory-bean="JacksonObjectMapper" factory-method="getSerializationConfig" />
+    <bean
+        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetObject" ref="JacksonSerializationConfig" />
+        <property name="targetMethod" value="setSerializationInclusion" />
+        <property name="arguments">
+            <list>
+                <value type="org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion">NON_NULL</value>
+            </list>
+        </property>
+
+    </bean>
     
     <!-- BoBo Lucene add-on for facet browsing -->
     <!--<bean id="rank" class="com.browseengine.bobo.facets.impl.SimpleFacetHandler">
