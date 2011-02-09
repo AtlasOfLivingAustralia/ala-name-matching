@@ -27,14 +27,14 @@
       <url>http://maven.ala.org.au/repository</url>
     </repository>
     <repository>
-      <id>google-gson</id>
-      <name>google-gson</name>
-      <url>http://google-gson.googlecode.com/svn/mavenrepo</url>
-    </repository>
-    <repository>
       <id>scala-tools.org</id>
       <name>Scala-Tools Maven2 Repository</name>
       <url>http://scala-tools.org/repo-releases</url>
+    </repository>
+    <repository>
+      <id>repo2</id>
+      <name>Maven Repo2</name>
+      <url>http://repo2.maven.org/maven2/</url>
     </repository>
   </repositories>
   <pluginRepositories>
