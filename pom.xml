@@ -103,9 +103,9 @@
     </dependency>
     <!-- Google Commons -->
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>r07</version>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>r07</version>
     </dependency>
     <!-- Jackson  (JSON serialisation)-->
     <dependency>
