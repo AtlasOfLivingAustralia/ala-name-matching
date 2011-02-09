@@ -22,6 +22,11 @@
   <description>Prototype scala implementation of biocache backend.</description>
   <repositories>
     <repository>
+      <id>repo2</id>
+      <name>Maven Repo2</name>
+      <url>http://repo1.maven.org/maven2</url>
+    </repository>
+    <repository>
       <id>ala-repository</id>
       <name>ala-repository</name>
       <url>http://maven.ala.org.au/repository</url>
@@ -30,11 +35,6 @@
       <id>scala-tools.org</id>
       <name>Scala-Tools Maven2 Repository</name>
       <url>http://scala-tools.org/repo-releases</url>
-    </repository>
-    <repository>
-      <id>repo2</id>
-      <name>Maven Repo2</name>
-      <url>http://repo1.maven.org/maven2</url>
     </repository>
   </repositories>
   <pluginRepositories>
@@ -105,7 +105,7 @@
     <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>r08</version>
+        <version>r07</version>
     </dependency>
     <!-- Jackson  (JSON serialisation)-->
     <dependency>
@@ -214,12 +214,6 @@
       <artifactId>concurrentlinkedhashmap-lru</artifactId>
       <version>1.1</version>
       <!--<scope>test</scope>-->
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>r06</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.reardencommerce</groupId>
