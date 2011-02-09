@@ -10,21 +10,28 @@ import java.io.File
 import java.util.{UUID, Arrays}
 import org.wyki.cassandra.pelops.Pelops
 import au.org.ala.biocache._
+import collection.JavaConversions
 ;
 
 /**
- * Created by IntelliJ IDEA.
- * User: davejmartin2
- * Date: 07/02/2011
- * Time: 19:02
- * To change this template use File | Settings | File Templates.
+ * A dwc loader that uses native APIs. This requires that cassandra is stopped.
+ * This need to be ran in two separate phases.
+ * 1) Initial loading
+ * 2) Population of dr column family with GUID
+ *
+ * This can only be ran once for each dataset that needs to be loaded.
+ *
  */
-
 object FastDwCLoader {
+
+    import JavaConversions._
+    import scalaj.collection.Imports._
+    import ReflectBean._
 
     def main(args:Array[String]){
         
         if(args.length==2){
+            println("Starting loading with native API....")
             init(args(0))     //   /Users/davejmartin2/dev/biocache-store/conf
             loadWithNativeAPIs(args(1))       //"/data/biocache/ozcam/"
             shutdown
@@ -34,7 +41,7 @@ object FastDwCLoader {
         
         if(args.length==1){
             println("loading the UUID mapping")
-            retrofitUUIDMapping
+            retrofitUUIDMapping(args(0))
             Pelops.shutdown
             println("DONE")
             exit(1)
@@ -58,12 +65,12 @@ object FastDwCLoader {
     }
 
 
-    def retrofitUUIDMapping {
+    def retrofitUUIDMapping(dataResourceUID:String) {
 
         var counter = 0
         
         OccurrenceDAO.pageOverAll(Versions.RAW, record => {
-            val uniqueID = record.get.occurrence.institutionCode+"|"+record.get.occurrence.collectionCode +"|"+record.get.occurrence.catalogNumber
+            val uniqueID = dataResourceUID+"|"+record.get.occurrence.institutionCode+"|"+record.get.occurrence.collectionCode +"|"+record.get.occurrence.catalogNumber
             DAO.persistentManager.put(uniqueID, "dr", "uuid", record.get.occurrence.uuid)
             counter+=1
             if(counter % 1000 == 0){
@@ -96,9 +103,9 @@ object FastDwCLoader {
           val fieldTuples:Array[(String,String)] = {
             (for {
               term <- terms
-              val property = dwc.getProperty(term)
-              if (property != null && property.trim.length > 0)
-            } yield (term.simpleName -> property))
+              val property = dwc.getterWithOption(term.simpleName)
+              if (!property.isEmpty && property.get.toString.trim.length>0)
+            } yield (term.simpleName -> property.get.toString))
           }
 
           val newUuid = UUID.randomUUID.toString

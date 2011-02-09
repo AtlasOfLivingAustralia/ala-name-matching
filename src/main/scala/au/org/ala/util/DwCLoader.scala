@@ -22,6 +22,7 @@ import au.org.ala.biocache.{Raw, OccurrenceDAO}
 import collection.mutable.ArrayBuffer
 import scala.actors._
 import scala.actors.Actor
+import collection.JavaConversions
 
 /**
  * Reads a DwC-A and writes the data to the BioCache
@@ -39,6 +40,9 @@ object DwCLoader {
   def main(args: Array[String]): Unit = {
 
     import scala.actors.Actor._
+    import JavaConversions._
+  import scalaj.collection.Imports._
+    import ReflectBean._
     println(">>> Starting DwC loader ....")
     val file = new File("/data/biocache/ozcam/")
     val archive = ArchiveFactory.openArchive(file)
@@ -66,9 +70,9 @@ object DwCLoader {
       val fieldTuples:Array[(String,String)] = {
         (for {
           term <- terms
-          val property = dwc.getProperty(term)
-          if (property != null && property.trim.length > 0)
-        } yield (term.simpleName -> property))
+          val property = dwc.getterWithOption(term.simpleName)
+          if (!property.isEmpty && property.get.toString.trim.length>0)
+        } yield (term.simpleName -> property.get.toString))
       }
 
        //lookup the column
