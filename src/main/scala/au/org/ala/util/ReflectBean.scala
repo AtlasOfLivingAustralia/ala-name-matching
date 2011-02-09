@@ -14,13 +14,38 @@ class ReflectBean(ref: AnyRef)  {
     ref.getClass.getMethods.find(_.getName == fieldName).get.invoke(ref)
   }
 
+  /**
+   * Returns the result wrapped in an option.
+   */
+  def getterWithOption(name: String): Option[Any] = {
+    var fieldName = fieldNameCheck(name)
+    try {
+        val getter = {
+          if(fieldName.startsWith("get")){
+             fieldName
+          } else {
+             "get" + fieldName
+          }
+        }
+        val result = ref.getClass.getMethods.find(_.getName equalsIgnoreCase getter).get.invoke(ref)
+        if(result!=null){
+            Some(result)
+        } else {
+            None
+        }
+    } catch {
+        case e:Exception => None
+    }
+  }
+
+
   def setField(name:String, value:Any): Unit = {
    ref.getClass.getField(name).set(this,value)
   }
 
   def setter(name: String, value:Any): Unit = {
     var fieldName = fieldNameCheck(name)
-    val method = ref.getClass.getMethods.find(_.getName == fieldName + "_$eq")
+    val method = ref.getClass.getMethods.find(_.getName equalsIgnoreCase fieldName + "_$eq")
 
     if(!method.isEmpty){
       val typ = method.get.getParameterTypes()(0)

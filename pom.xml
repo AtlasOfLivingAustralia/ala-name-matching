@@ -98,8 +98,8 @@
     <!--  DWC-A -->
     <dependency>
       <groupId>org.gbif</groupId>
-      <artifactId>dwc-archive</artifactId>
-      <version>1.2-SNAPSHOT</version>
+      <artifactId>dwca-reader</artifactId>
+      <version>1.7.3-SNAPSHOT</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.code.google-collections</groupId>

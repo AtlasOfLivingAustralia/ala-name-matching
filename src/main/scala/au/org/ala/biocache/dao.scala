@@ -88,7 +88,7 @@ object DAO {
 /**
  * A DAO for accessing occurrences.
  */
-object OccurrenceDAO {
+object  OccurrenceDAO {
 
   import ReflectBean._
   import JavaConversions._
@@ -168,7 +168,7 @@ object OccurrenceDAO {
    * Create a record from a array of tuple properties
    */
   def createOccurrence(uuid:String, fieldTuples:Array[(String,String)], version:Version) : FullRecord = {
-    val fieldMap = Map(fieldTuples map {s => (s._1, s._2)} : _*)
+    val fieldMap = Map(fieldTuples map { s => (s._1, s._2) } : _*)
     createOccurrence(uuid, fieldMap, version)
   }
 
@@ -440,7 +440,7 @@ object OccurrenceDAO {
     val assertions = getUserQualityAssertions(uuid)
 
     //get the assertion that is to be deleted
-    val deletedAssertion = assertions.find(assertion => {println("ASSERTION UUID: "+assertion.uuid);assertion.uuid equals assertionUuid})
+    val deletedAssertion = assertions.find(assertion => { assertion.uuid equals assertionUuid})
 
     //if not empty, remove the assertion and write back
     if(!deletedAssertion.isEmpty){
