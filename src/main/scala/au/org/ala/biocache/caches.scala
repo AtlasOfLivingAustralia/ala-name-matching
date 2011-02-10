@@ -38,6 +38,8 @@ object TaxonProfileDAO {
                   taxonProfile.habitats = keyValue._2.split(",")
                  }
               }
+              case "left" => taxonProfile.left = keyValue._2
+              case "right" => taxonProfile.right = keyValue._2
               case _ =>
             }
         })
@@ -60,6 +62,8 @@ object TaxonProfileDAO {
         val habitatString = taxonProfile.habitats.reduceLeft(_+","+_)
         properties.put("habitats", habitatString)
       }
+      properties.put("left", taxonProfile.left)
+      properties.put("right", taxonProfile.right)
       DAO.persistentManager.put(taxonProfile.guid, columnFamily, properties.toMap)
   }
 }

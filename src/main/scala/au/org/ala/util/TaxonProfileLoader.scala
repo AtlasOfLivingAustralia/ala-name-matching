@@ -46,6 +46,14 @@ object TaxonProfileLoader {
 	    	  val habitats = for(habitat<-profile.habitat) yield habitat.toString
 	    	  taxonProfile.habitats = habitats.toArray
 	      }
+              if(profile.left != null){
+                taxonProfile.left = profile.left.toString
+              }
+              if(profile.right != null){
+                taxonProfile.right = profile.right.toString
+              }
+              //TODO work out whatto store from the conservatoin status
+              
 	      TaxonProfileDAO.add(taxonProfile)
 	      lastKey = profile.guid
 	    }

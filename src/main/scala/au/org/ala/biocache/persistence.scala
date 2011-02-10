@@ -127,7 +127,9 @@ object CassandraPersistenceManager extends PersistenceManager {
     def put(uuid:String, entityName:String, keyValuePairs:Map[String, String]) = {
         val mutator = Pelops.createMutator(poolName, keyspace)
         keyValuePairs.foreach( keyValue => {
-          mutator.writeColumn(uuid, entityName, mutator.newColumn(keyValue._1.getBytes, keyValue._2))
+          //NC: only add the column if the value is not null
+          if(keyValue._2!=null)
+            mutator.writeColumn(uuid, entityName, mutator.newColumn(keyValue._1.getBytes, keyValue._2))
         })
         mutator.execute(ConsistencyLevel.ONE)
     }
