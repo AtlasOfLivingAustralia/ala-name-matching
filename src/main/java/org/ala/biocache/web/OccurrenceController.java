@@ -31,7 +31,7 @@ import au.org.ala.biocache.FullRecord;
 import au.org.ala.biocache.OccurrenceDAO;
 import org.ala.biocache.*;
 import org.ala.biocache.dao.SearchDAO;
-import org.ala.biocache.dto.OccurrenceDTO;
+import org.ala.biocache.dto.store.OccurrenceDTO;
 import org.ala.biocache.dto.SearchQuery;
 import org.ala.biocache.dto.SearchResultDTO;
 import org.ala.biocache.util.SearchUtils;
@@ -57,6 +57,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import au.org.ala.biocache.Store;
+import org.ala.biocache.dto.SearchRequestParams;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
@@ -134,76 +135,62 @@ public class OccurrenceController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = "/occurrences/searchByTaxon*", method = RequestMethod.GET)
-	public String occurrenceSearchByTaxon(
-			@RequestParam(value="q", required=false) String query,
-			@RequestParam(value="fq", required=false) String[] filterQuery,
-			@RequestParam(value="start", required=false, defaultValue="0") Integer startIndex,
-			@RequestParam(value="pageSize", required=false, defaultValue ="20") Integer pageSize,
-			@RequestParam(value="sort", required=false, defaultValue="score") String sortField,
-			@RequestParam(value="dir", required=false, defaultValue ="asc") String sortDirection,
-			@RequestParam(value="rad", required=false, defaultValue="10") Float radius,
-			@RequestParam(value="lat", required=false, defaultValue="-35.27412f") Float latitude,
-			@RequestParam(value="lon", required=false, defaultValue="149.11288f") Float longitude,
+	@RequestMapping(value = "/occurrences/taxon/{guid:.+}*", method = RequestMethod.GET)
+	public @ResponseBody SearchResultDTO occurrenceSearchByTaxon(
+			SearchRequestParams requestParams,
+                        @PathVariable("guid") String guid,
 			Model model) throws Exception {
 
-		if (query == null || query.isEmpty()) {
-			return LIST;
-		}
+            SearchResultDTO searchResult = new SearchResultDTO();
+//		if (StringUtils.isEmpty(requestParams.getQ())) {
+//                    logger.info("The values :" + requestParams);
+//                    return searchResult;
+//		}
 
-		SearchQuery searchQuery = new SearchQuery(query, "taxon", filterQuery);
-		//boolean taxonFound = searchUtils.updateTaxonConceptSearchString(searchQuery);
+		//temporarily set the guid as the q
+                requestParams.setQ(guid);
+           // String guid = requestParams.getQ();
+                
+                logger.info("requestParams: " + requestParams);
                 //Change the method call so that the filter query can be updated
-                boolean taxonFound = searchUtils.updateQueryDetails(searchQuery);
+                boolean taxonFound = searchUtils.updateTaxonConceptSearchString(requestParams);
 
 		if(taxonFound){
-		
-			if (startIndex == null) {
-				startIndex = 0;
-			}
-			if (pageSize == null) {
-				pageSize = 20;
-			}
-			if (sortField.isEmpty()) {
-				sortField = "score";
-			}
-			if (sortDirection.isEmpty()) {
-				sortDirection = "asc";
-			}
-	
-			SearchResultDTO searchResult = new SearchResultDTO();
-			String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
-			model.addAttribute("entityQuery", searchQuery.getEntityQuery());
-			model.addAttribute("query", query);
-			model.addAttribute("queryJsEscaped", queryJsEscaped);
-			model.addAttribute("facetQuery", filterQuery);
-	        
-	        searchResult = searchDAO.findByFulltextQuery("*:*", searchQuery.getFilterQuery(), startIndex, pageSize, sortField, sortDirection);
-	        
+
+			
+			
+//			String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
+//			model.addAttribute("entityQuery", searchQuery.getEntityQuery());
+//			model.addAttribute("query", query);
+//			model.addAttribute("queryJsEscaped", queryJsEscaped);
+//			model.addAttribute("facetQuery", filterQuery);
+
+	        searchResult = searchDAO.findByFulltextQuery(requestParams);
+                
+
 			model.addAttribute("searchResult", searchResult);
-			logger.debug("query = "+query);
+			logger.debug("query = "+requestParams);
 			Long totalRecords = searchResult.getTotalRecords();
-			model.addAttribute("totalRecords", totalRecords);
+			//model.addAttribute("totalRecords", totalRecords);
 			//type of search
-			model.addAttribute("type", "taxon");
-            model.addAttribute("facetMap", addFacetMap(filterQuery));
-	
+			//model.addAttribute("type", "taxon");
+        //    model.addAttribute("facetMap", addFacetMap(filterQuery));
+
 			if(logger.isDebugEnabled()){
 				logger.debug("Returning results set with: "+totalRecords);
 			}
-            
-            model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
-		} else {
-			model.addAttribute("totalRecords", 0);
-			model.addAttribute("searchResult", new SearchResultDTO());
+
+           // model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
 		}
-		return LIST;
+                logger.info("Taxon not found...." +guid);
+
+		return searchResult;
 	}
         /**
          * Obtains a list of the sources for the supplied guid.
          *
          * It also handle's the logging for the BIE.
-         * 
+         * //TODO Work out what to do with this
          * @param query
          * @param request
          * @param model
@@ -246,79 +233,59 @@ public class OccurrenceController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = {"/occurrences/searchForCollection*", "/occurrences/searchForUID*"}, method = RequestMethod.GET)
-	public String occurrenceSearchForCollection(
-			//@RequestParam(value="coll", required=false) String[] collectionCode,
-			//@RequestParam(value="inst", required=false) String[] institutionCode,
-			@RequestParam(value="q", required=false) String query,
-			@RequestParam(value="fq", required=false) String[] filterQuery,
-			@RequestParam(value="start", required=false, defaultValue="0") Integer startIndex,
-			@RequestParam(value="pageSize", required=false, defaultValue ="20") Integer pageSize,
-			@RequestParam(value="sort", required=false, defaultValue="score") String sortField,
-			@RequestParam(value="dir", required=false, defaultValue ="asc") String sortDirection,
+	@RequestMapping(value = {"/occurrences/collection/{uid}", "/occurrences/institution/{uid}", "/occurrences/data-resource/{uid}", "/occurrences/data-provider/{uid}"}, method = RequestMethod.GET)
+	public @ResponseBody SearchResultDTO occurrenceSearchForCollection(
+			SearchRequestParams requestParams,
+                        @PathVariable("uid") String uid,
 			Model model)
 	throws Exception {
-
+                SearchResultDTO searchResult = new SearchResultDTO();
 		// no query so exit method
-		if (query == null || query.isEmpty()) {
-			return LIST;
+		if (StringUtils.isEmpty(uid)) {
+			return searchResult;
 		}
 
 		// one of collectionCode or institutionCode must be set
 		//		if ((query == null || query.isEmpty()) && (collectionCode==null || collectionCode.length==0) && (institutionCode==null || institutionCode.length==0)) {
-		//			return LIST;
-		//		}
+//			return LIST;
+//		}
 
-		// if params are set but empty (e.g. foo=&bar=) then provide sensible defaults
-		if (filterQuery != null && filterQuery.length == 0) {
-			filterQuery = null;
-		}
-		if (startIndex == null) {
-			startIndex = 0;
-		}
-		if (pageSize == null) {
-			pageSize = 20;
-		}
-		if (sortField.isEmpty()) {
-			sortField = "score";
-		}
-		if (sortDirection.isEmpty()) {
-			sortDirection = "asc";
-		}
+		
+                requestParams.setQ(uid);
+		//SearchQuery searchQuery = new SearchQuery(query, "collection", filterQuery);
+		searchUtils.updateCollectionSearchString(requestParams);//changed to this method so that the filter query has the correct updates applied
+               
 
+		logger.info("solr query: " + requestParams);
+                //TODO work out which extra attributes are required by the hubs web app
+//		String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
+//		model.addAttribute("entityQuery", searchQuery.getDisplayString());
+//
+//		model.addAttribute("query", query);
+//		model.addAttribute("queryJsEscaped", queryJsEscaped);
+//		model.addAttribute("facetQuery", filterQuery);
 
-		SearchQuery searchQuery = new SearchQuery(query, "collection", filterQuery);
-		searchUtils.updateQueryDetails(searchQuery);//changed to this method so that the filter query has the correct updates applied
-                //searchUtils.updateCollectionSearchString(searchQuery);
-
-		logger.info("solr query: " + searchQuery.getQuery());
-		SearchResultDTO searchResult = new SearchResultDTO();
-		String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
-		model.addAttribute("entityQuery", searchQuery.getDisplayString());
-
-		model.addAttribute("query", query);
-		model.addAttribute("queryJsEscaped", queryJsEscaped);
-		model.addAttribute("facetQuery", filterQuery);
-
-		searchResult = searchDAO.findByFulltextQuery(searchQuery.getQuery(), searchQuery.getFilterQuery(), startIndex, pageSize, sortField, sortDirection);
+		searchResult = searchDAO.findByFulltextQuery(requestParams);
+                
 
 		model.addAttribute("searchResult", searchResult);
-		logger.debug("query = " + query);
-		Long totalRecords = searchResult.getTotalRecords();
-		model.addAttribute("totalRecords", totalRecords);
-        model.addAttribute("facetMap", addFacetMap(filterQuery));
+		
+//		Long totalRecords = searchResult.getTotalRecords();
+//		model.addAttribute("totalRecords", totalRecords);
+//        model.addAttribute("facetMap", addFacetMap(filterQuery));
 		//type of serach
-		model.addAttribute("type", "collection");
-		model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
+//		model.addAttribute("type", "collection");
+//		model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
 
-		return LIST;
+		return searchResult;
 
 	}
 
     /**
      * Spatial search for either a taxon name or full text text search
      *
-     * Tested with: /occurrences/searchByArea.json?q=taxon_name:Lasioglossum|-31.2|138.4|800
+     * OLD URI Tested with: /occurrences/searchByArea.json?q=taxon_name:Lasioglossum|-31.2|138.4|800
+     * NEW URI Tested with: /occurrences/area/-31.2/138.4/800?q=Lasioglossum
      *
      * @param query
      * @param filterQuery
@@ -333,96 +300,84 @@ public class OccurrenceController {
      * @return
      * @throws Exception
      */
-    @RequestMapping(value = "/occurrences/searchByArea*", method = RequestMethod.GET)
-	public String occurrenceSearchByArea(
-			@RequestParam(value="q", required=true) String query,
-			@RequestParam(value="fq", required=false) String[] filterQuery,
-			@RequestParam(value="start", required=false, defaultValue="0") Integer startIndex,
-			@RequestParam(value="pageSize", required=false, defaultValue ="20") Integer pageSize,
-			@RequestParam(value="sort", required=false, defaultValue="score") String sortField,
-			@RequestParam(value="dir", required=false, defaultValue ="asc") String sortDirection,
-			@RequestParam(value="rad", required=false) Float radius,
-			@RequestParam(value="lat", required=false) Float latitude,
-			@RequestParam(value="lon", required=false) Float longitude,
+    @RequestMapping(value = "/occurrences/area/{lat}/{lon}/{rad}*", method = RequestMethod.GET)
+	public @ResponseBody SearchResultDTO occurrenceSearchByArea(
+			SearchRequestParams requestParams,
+                        @PathVariable("lat") Float latitude,
+                        @PathVariable("lon") Float longitude,
+                        @PathVariable("rad") Float radius,
+                        
 			Model model)
 	throws Exception {
-
-		if (query == null || query.isEmpty()) {
-			return LIST;
+            SearchResultDTO searchResult = new SearchResultDTO();
+		if (StringUtils.isEmpty(requestParams.getQ())) {
+			return searchResult;
 		}
 
-		SearchQuery searchQuery = new SearchQuery(query, "spatial", filterQuery);
-                searchUtils.updateQueryDetails(searchQuery);
+               
+                requestParams.setLat(latitude);
+                requestParams.setLon(longitude);
+                requestParams.setRadius(radius);
+
+		//SearchQuery searchQuery = new SearchQuery(query, "spatial", filterQuery);
+                searchUtils.updateSpatial(requestParams);
 		//searchUtils.updateTaxonConceptSearchString(searchQuery);
 
-		if (startIndex == null) {
-			startIndex = 0;
-		}
-		if (pageSize == null) {
-			pageSize = 20;
-		}
-		if (sortField.isEmpty()) {
-			sortField = "score";
-		}
-		if (sortDirection.isEmpty()) {
-			sortDirection = "asc";
-		}
+                //TODO work out if we need to support something similar to below
 
-        if (latitude == null && longitude ==  null && radius == null && query.contains("|")) {
-            // check for lat/long/rad encoded in q param, delimited by |
-            // order is query, latitude, longitude, radius
-            String[] queryParts = StringUtils.split(query, "|", 4);
-            query = queryParts[0];
-            logger.info("(spatial) query: "+query);
+//        if (latitude == null && longitude ==  null && radius == null && query.contains("|")) {
+//            // check for lat/long/rad encoded in q param, delimited by |
+//            // order is query, latitude, longitude, radius
+//            String[] queryParts = StringUtils.split(query, "|", 4);
+//            query = queryParts[0];
+//            logger.info("(spatial) query: "+query);
+//
+//            if (query.contains("%%")) {
+//                // mulitple parts (%% separated) need to be OR'ed (yes a hack for now)
+//                String prefix = StringUtils.substringBefore(query, ":");
+//                String suffix = StringUtils.substringAfter(query, ":");
+//                String[] chunks = StringUtils.split(suffix, "%%");
+//                ArrayList<String> formatted = new ArrayList<String>();
+//
+//                for (String s : chunks) {
+//                    formatted.add(prefix+":"+s);
+//                }
+//
+//                query = StringUtils.join(formatted, " OR ");
+//                logger.info("new query: "+query);
+//            }
+//
+//            latitude = Float.parseFloat(queryParts[1]);
+//            longitude = Float.parseFloat(queryParts[2]);
+//            radius = Float.parseFloat(queryParts[3]);
+//        }
 
-            if (query.contains("%%")) {
-                // mulitple parts (%% separated) need to be OR'ed (yes a hack for now)
-                String prefix = StringUtils.substringBefore(query, ":");
-                String suffix = StringUtils.substringAfter(query, ":");
-                String[] chunks = StringUtils.split(suffix, "%%");
-                ArrayList<String> formatted = new ArrayList<String>();
+		
+//	String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
+//		model.addAttribute("entityQuery", displayQuery.toString());
+//		model.addAttribute("query", query);
+//		model.addAttribute("queryJsEscaped", queryJsEscaped);
+//		model.addAttribute("facetQuery", filterQuery);
+//        model.addAttribute("facetMap", addFacetMap(filterQuery));
+//        model.addAttribute("latitude", latitude);
+//        model.addAttribute("longitude", longitude);
+//        model.addAttribute("radius", radius);
 
-                for (String s : chunks) {
-                    formatted.add(prefix+":"+s);
-                }
-
-                query = StringUtils.join(formatted, " OR ");
-                logger.info("new query: "+query);
-            }
-
-            latitude = Float.parseFloat(queryParts[1]);
-            longitude = Float.parseFloat(queryParts[2]);
-            radius = Float.parseFloat(queryParts[3]);
-        }
-
-		SearchResultDTO searchResult = new SearchResultDTO();
-		String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
-        StringBuilder displayQuery = new StringBuilder(StringUtils.substringAfter(query, ":").replace("*", "(all taxa)"));
-        displayQuery.append(" - within "+radius+" km of point ("+latitude+", "+longitude+")");
-		model.addAttribute("entityQuery", displayQuery.toString());
-		model.addAttribute("query", query);
-		model.addAttribute("queryJsEscaped", queryJsEscaped);
-		model.addAttribute("facetQuery", filterQuery);
-        model.addAttribute("facetMap", addFacetMap(filterQuery));
-        model.addAttribute("latitude", latitude);
-        model.addAttribute("longitude", longitude);
-        model.addAttribute("radius", radius);
-
-        searchResult = searchDAO.findByFulltextSpatialQuery(query, searchQuery.getFilterQuery(), latitude, longitude, radius, startIndex, pageSize, sortField, sortDirection);
+        searchResult = searchDAO.findByFulltextSpatialQuery(requestParams);
         
 		model.addAttribute("searchResult", searchResult);
-		Long totalRecords = searchResult.getTotalRecords();
-		model.addAttribute("totalRecords", totalRecords);
-		//type of search
-		model.addAttribute("type", "spatial");
+//		Long totalRecords = searchResult.getTotalRecords();
+//		model.addAttribute("totalRecords", totalRecords);
+//		//type of search
+//		model.addAttribute("type", "spatial");
 
 		if(logger.isDebugEnabled()){
-			logger.debug("Returning results set with: "+totalRecords);
+			logger.debug("Returning results set with: "+searchResult.getTotalRecords());
 		}
 
-		model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
+//		model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
 
-		return LIST;
+		return searchResult;
 	}
 
 	/**
@@ -454,60 +409,30 @@ public class OccurrenceController {
 	 * @throws Exception
 	 */
 	@RequestMapping(value = "/occurrences/search*", method = RequestMethod.GET)
-	public @ResponseBody SearchResultDTO occurrenceSearch(
-			@RequestParam(value="q", required=false) String query,
-			@RequestParam(value="fq", required=false) String[] filterQuery,
-			@RequestParam(value="start", required=false, defaultValue="0") Integer startIndex,
-			@RequestParam(value="pageSize", required=false, defaultValue ="20") Integer pageSize,
-			@RequestParam(value="sort", required=false, defaultValue="score") String sortField,
-			@RequestParam(value="dir", required=false, defaultValue ="asc") String sortDirection,
-			@RequestParam(value="rad", required=false, defaultValue="10") Integer radius,
-			@RequestParam(value="lat", required=false, defaultValue="-35.27412f") Float latitude,
-			@RequestParam(value="lon", required=false, defaultValue="149.11288f") Float longitude,
-			Model model)
-	throws Exception {
+	public @ResponseBody SearchResultDTO occurrenceSearch(SearchRequestParams requestParams,
+            Model model) throws Exception {
             SearchResultDTO searchResult = new SearchResultDTO();
-		if (query == null || query.isEmpty()) {
-			return searchResult;
-		}
-		// if params are set but empty (e.g. foo=&bar=) then provide sensible defaults
-		if (filterQuery != null && filterQuery.length == 0) {
-			filterQuery = null;
-		}
-		if (startIndex == null) {
-			startIndex = 0;
-		}
-		if (pageSize == null) {
-			pageSize = 20;
-		}
-		if (sortField.isEmpty()) {
-			sortField = "score";
-		}
-		if (sortDirection.isEmpty()) {
-			sortDirection = "asc";
-		}
-
-		
-        String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
+        
         //TODO work out which of these attributes are necessary for the hubs web app
+       //String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
        // model.addAttribute("query", query);
         //model.addAttribute("queryJsEscaped", queryJsEscaped);
        // model.addAttribute("facetQuery", filterQuery);
 
-        SearchQuery searchQuery = new SearchQuery(query, "normal", filterQuery);
-        searchUtils.updateQueryDetails(searchQuery);
+        
+        searchUtils.updateNormal(requestParams);
 
-        searchResult = searchDAO.findByFulltextQuery(searchQuery.getQuery(), searchQuery.getFilterQuery(), startIndex, pageSize, sortField, sortDirection);
+        searchResult = searchDAO.findByFulltextQuery(requestParams);
         model.addAttribute("searchResult", searchResult);
-        logger.debug("query = " + query);
+        logger.debug("query = " + requestParams.getQ());
        // Long totalRecords = searchResult.getTotalRecords();
         //model.addAttribute("totalRecords", totalRecords);
        // model.addAttribute("facetMap", addFacetMap(filterQuery));
         //type of serach
         //model.addAttribute("type", "normal");
-        searchResult.setQueryType("normal");
+        
        // model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
-                
+
 		return searchResult;
 	}
 
@@ -562,7 +487,7 @@ public class OccurrenceController {
 
         //Use a zip output stream to include the data and citation together in the download
         ZipOutputStream zop = new ZipOutputStream(out);
-        zop.putNextEntry(new java.util.zip.ZipEntry(filename + ".csv"));
+        zop.putNextEntry(new java.util.zip.ZipEntry(filename.substring(0, filename.length()-4) + ".csv"));
         Map<String, Integer> uidStats = null;
         
         if (checkValidSpatialParams(latitude, longitude, radius)) {
@@ -617,6 +542,8 @@ public class OccurrenceController {
 	/**
 	 * Occurrence record page
 	 *
+         * TODO Log viewing stats for all uids associated with this record.
+         *
 	 * @param id
 	 * @param model
      * @param log Optional supplied value to specify whether or not the log the statistics.  Statistics are logged by default
@@ -624,70 +551,75 @@ public class OccurrenceController {
 	 * @throws Exception
 	 */
 	@RequestMapping(value = {"/occurrences/{id}", "/occurrences/{id}.json"}, method = RequestMethod.GET)
-	public String showOccurrence(@PathVariable("id") String id,
+	public @ResponseBody OccurrenceDTO showOccurrence(@PathVariable("id") String id,
         HttpServletRequest request, Model model) throws Exception {
 		logger.debug("Retrieving occurrence record with guid: "+id+".");
-        model.addAttribute("id", id);
+        //model.addAttribute("id", id);
 		
         //au.org.ala.biocache.QualityAssertion.apply(au.org.ala.biocache.AssertionCodes.ALTITUDE_IN_FEET());
 
         FullRecord[] fullRecord = Store.getAllVersionsByUuid(id);
+        
+        OccurrenceDTO occ = new OccurrenceDTO(fullRecord);
+        occ.setSystemAssertions(Store.getSystemAssertions(id));
+        occ.setUserAssertions(Store.getUserAssertions(id));
        
-		if (fullRecord != null && fullRecord.length>2  && fullRecord[1].getAttribution().getCollectionUid() != null) {
-			model.addAttribute("raw", fullRecord[0]);
-                        model.addAttribute("processed", fullRecord[1]);
-                        model.addAttribute("consensus" , fullRecord[2]);
-                        //TODO replace all the stuff below with extra information in biocache-store
-	            Object[] resp = restfulClient.restGet(summaryServiceUrl + "/" + fullRecord[1].getAttribution().getCollectionUid());
-	            if ((Integer) resp[0] == HttpStatus.SC_OK) {
-	                String json = (String) resp[1];
-	                ObjectMapper mapper = new ObjectMapper();
-	                JsonNode rootNode;
-	
-	                try {
-	                    rootNode = mapper.readValue(json, JsonNode.class);
-                            //TODO Include this information in cassandra
-	                    String name = rootNode.path("name").getTextValue();
-	                    String logo = rootNode.path("institutionLogoUrl").getTextValue();
-	                    String institution = rootNode.path("institution").getTextValue();
-	                    model.addAttribute("collectionName", name);
-	                    model.addAttribute("collectionLogo", logo);
-	                    model.addAttribute("collectionInstitution", institution);
-	                } catch (Exception e) {
-	                    logger.error(e.toString());
-	                }
-	            }
-
-                    //log the usage statistics to the ala logger if necessary
-        //We only want to log the stats if a non-json request was made.
-        if (request.getRequestURL() != null && !request.getRequestURL().toString().endsWith("json")) {
-            String email = null;
-            String reason = "Viewing Occurrence Record " + id;
-            String ip = request.getLocalAddr();
-            Map<String, Integer> uidStats = new HashMap<String, Integer>();
-            if (fullRecord[1].getAttribution().getCollectionUid() != null) {
-                uidStats.put(fullRecord[1].getAttribution().getCollectionUid(), 1);
-            }
-            if (fullRecord[1].getAttribution().getInstitutionUid() != null) {
-                uidStats.put(fullRecord[1].getAttribution().getInstitutionUid(), 1);
-            }
-            if(fullRecord[1].getAttribution().getDataProviderUid() != null)
-                uidStats.put(fullRecord[1].getAttribution().getDataProviderUid(), 1);
-            if(fullRecord[1].getAttribution().getDataResourceUid() != null)
-            uidStats.put(fullRecord[1].getAttribution().getDataResourceUid(), 1);
-            LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED, email, reason, ip, uidStats);
-            logger.log(RestLevel.REMOTE, vo);
-        }
-
-			
-		}
-            
-
-        model.addAttribute("hostUrl", hostUrl);
-
-        
-        
-		return SHOW;
+//		if (fullRecord != null && fullRecord.length>2  && fullRecord[1].getAttribution().getCollectionUid() != null) {
+//			model.addAttribute("raw", fullRecord[0]);
+//                        model.addAttribute("processed", fullRecord[1]);
+//                        model.addAttribute("consensus" , fullRecord[2]);
+//                        //TODO replace all the stuff below with extra information in biocache-store
+//	            Object[] resp = restfulClient.restGet(summaryServiceUrl + "/" + fullRecord[1].getAttribution().getCollectionUid());
+//	            if ((Integer) resp[0] == HttpStatus.SC_OK) {
+//	                String json = (String) resp[1];
+//	                ObjectMapper mapper = new ObjectMapper();
+//	                JsonNode rootNode;
+//
+//	                try {
+//	                    rootNode = mapper.readValue(json, JsonNode.class);
+//                            //TODO Include this information in cassandra
+//	                    String name = rootNode.path("name").getTextValue();
+//	                    String logo = rootNode.path("institutionLogoUrl").getTextValue();
+//	                    String institution = rootNode.path("institution").getTextValue();
+//	                    model.addAttribute("collectionName", name);
+//	                    model.addAttribute("collectionLogo", logo);
+//	                    model.addAttribute("collectionInstitution", institution);
+//	                } catch (Exception e) {
+//	                    logger.error(e.toString());
+//	                }
+//	            }
+//
+//                    //log the usage statistics to the ala logger if necessary
+//        //We only want to log the stats if a non-json request was made.
+//        if (request.getRequestURL() != null && !request.getRequestURL().toString().endsWith("json")) {
+//            String email = null;
+//            String reason = "Viewing Occurrence Record " + id;
+//            String ip = request.getLocalAddr();
+//            Map<String, Integer> uidStats = new HashMap<String, Integer>();
+//            if (fullRecord[1].getAttribution().getCollectionUid() != null) {
+//                uidStats.put(fullRecord[1].getAttribution().getCollectionUid(), 1);
+//            }
+//            if (fullRecord[1].getAttribution().getInstitutionUid() != null) {
+//                uidStats.put(fullRecord[1].getAttribution().getInstitutionUid(), 1);
+//            }
+//            if(fullRecord[1].getAttribution().getDataProviderUid() != null)
+//                uidStats.put(fullRecord[1].getAttribution().getDataProviderUid(), 1);
+//            if(fullRecord[1].getAttribution().getDataResourceUid() != null)
+//            uidStats.put(fullRecord[1].getAttribution().getDataResourceUid(), 1);
+//            LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED, email, reason, ip, uidStats);
+//            logger.log(RestLevel.REMOTE, vo);
+//        }
+//
+//
+//		}
+//
+//
+//        model.addAttribute("hostUrl", hostUrl);
+//
+//
+//
+//		return SHOW;
+        return occ;
 	}
 
     /**

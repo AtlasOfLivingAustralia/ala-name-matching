@@ -50,12 +50,12 @@ public class SearchResultDTO {
     /** SOLR query response following search */
     private QueryResponse qr;
     private String query;
-
     /**
-     * The type of query that was executed. This is necessary to provide
-     * the pre-processing of the query.
+     * Stores the URL parameter that should be provided to Download and View Map
      */
-    private String queryType;
+    private String urlParameters;
+
+    
 
     /**
      * Constructor with 2 args
@@ -165,11 +165,12 @@ public class SearchResultDTO {
         this.qr = qr;
     }
 
-    public String getQueryType() {
-        return queryType;
+    public String getUrlParameters() {
+        return urlParameters;
     }
 
-    public void setQueryType(String queryType) {
-        this.queryType = queryType;
+    public void setUrlParameters(String urlParameters) {
+        this.urlParameters = urlParameters;
     }
+    
 }

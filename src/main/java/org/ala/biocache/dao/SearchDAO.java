@@ -26,6 +26,7 @@ import au.org.ala.biocache.OccurrenceIndex;
 import org.ala.biocache.dto.OccurrenceDTO;
 import org.ala.biocache.dto.OccurrencePoint;
 import org.ala.biocache.dto.PointType;
+import org.ala.biocache.dto.SearchRequestParams;
 import org.ala.biocache.dto.SearchResultDTO;
 import org.ala.biocache.dto.TaxaCountDTO;
 import org.ala.biocache.dto.TaxaRankCountDTO;
@@ -67,8 +68,7 @@ public interface SearchDAO {
      * @return
      * @throws Exception
      */
-    SearchResultDTO findByFulltextQuery(String query, String[] filterQuery, Integer startIndex,
-            Integer pageSize, String sortField, String sortDirection) throws Exception;
+    SearchResultDTO findByFulltextQuery(SearchRequestParams requestParams) throws Exception;
 
     /**
      * Find all occurrences for a given (full text) query, latitude, longitude & radius (km). I.e.
@@ -86,8 +86,7 @@ public interface SearchDAO {
      * @return
      * @throws Exception
      */
-    SearchResultDTO findByFulltextSpatialQuery(String query, String[] filterQuery, Float lat, Float lon,
-            Float radius, Integer startIndex, Integer pageSize, String sortField, String sortDirection) throws Exception;
+    SearchResultDTO findByFulltextSpatialQuery(SearchRequestParams requestParams) throws Exception;
 
     /**
      * Retrieve an OccurrenceDTO for a given occurrence id

@@ -57,6 +57,7 @@ import au.org.ala.biocache.OccurrenceIndex;
 import au.com.bytecode.opencsv.CSVWriter;
 
 import com.ibm.icu.text.SimpleDateFormat;
+import org.ala.biocache.dto.SearchRequestParams;
 
 /**
  * SOLR implementation of SearchDao. Uses embedded SOLR server (can be a memory hog).
@@ -168,15 +169,14 @@ public class SearchDAOImpl implements SearchDAO {
      *         java.lang.Integer, java.lang.Integer, java.lang.String, java.lang.String)
      */
     @Override
-    public SearchResultDTO findByFulltextQuery(String query, String[] filterQuery, Integer startIndex,
-            Integer pageSize, String sortField, String sortDirection) throws Exception {
+    public SearchResultDTO findByFulltextQuery(SearchRequestParams requestParams) throws Exception {
         SearchResultDTO searchResults = new SearchResultDTO();
 
         try {
-            String queryString = formatSearchQuery(query);
+            String queryString = formatSearchQuery(requestParams.getQ());
             SolrQuery solrQuery = initSolrQuery(); // general search settings
             solrQuery.setQuery(queryString);
-            QueryResponse qr = runSolrQuery(solrQuery, filterQuery, pageSize, startIndex, sortField, sortDirection);
+            QueryResponse qr = runSolrQuery(solrQuery, requestParams);
             searchResults = processSolrResponse(qr, solrQuery);
 
             logger.info("search query: "+queryString);
@@ -187,6 +187,10 @@ public class SearchDAOImpl implements SearchDAO {
 
         return searchResults;
     }
+    public SearchResultDTO findByFulltextSpatialQuery(String query, String[] filterQuery, Float lat, Float lon,
+            Float radius, Integer startIndex, Integer pageSize, String sortField, String sortDirection) throws Exception {
+        return null;
+    }
 
     /**
      * @see org.ala.biocache.dao.SearchDAO#findByFulltextSpatialQuery(java.lang.String, java.lang.String,
@@ -194,18 +198,17 @@ public class SearchDAOImpl implements SearchDAO {
      *         java.lang.Integer, java.lang.String, java.lang.String)
      */
     @Override
-    public SearchResultDTO findByFulltextSpatialQuery(String query, String[] filterQuery, Float lat, Float lon,
-            Float radius, Integer startIndex, Integer pageSize, String sortField, String sortDirection) throws Exception {
+    public SearchResultDTO findByFulltextSpatialQuery(SearchRequestParams searchParams) throws Exception {
         SearchResultDTO searchResults = new SearchResultDTO();
 
         try {
             //String queryString = formatSearchQuery(query);
-            String queryString = buildSpatialQueryString(formatSearchQuery(query), lat, lon, radius);
+            String queryString = buildSpatialQueryString(formatSearchQuery(searchParams.getQ()), searchParams.getLat(), searchParams.getLon(), searchParams.getRadius());
 
             SolrQuery solrQuery = initSolrQuery(); // general search settings
             solrQuery.setQuery(queryString);
 
-            QueryResponse qr = runSolrQuery(solrQuery, filterQuery, pageSize, startIndex, sortField, sortDirection);
+            QueryResponse qr = runSolrQuery(solrQuery, searchParams);
             searchResults = processSolrResponse(qr, solrQuery);
 
             logger.info("spatial search query: "+queryString);
@@ -383,7 +386,25 @@ public class SearchDAOImpl implements SearchDAO {
                                                          "scientificName",
                                                          "vernacularName",
                                                          "scientificName.p" ,
-                                                         "taxonRank.p", "vernacularName.p", "family.p", "latitude.p", "longitude.p", "coordinatePrecision" });
+                                                         "taxonRank.p", 
+                                                         "vernacularName.p",
+                                                         "family.p",
+                                                         "latitude.p",
+                                                         "longitude.p",
+                                                         "coordinatePrecision",
+                                                         "lga.p",
+                                                         "ibra.p",
+                                                         "imcra.p",
+                                                         "basisOfRecord",
+                                                         "stateProvince.p",
+                                                         "eventDate.p",
+                                                         "eventTime.p", 
+                                                         "collectionCode" ,
+                                                         "institutionCode",
+                                                         "catalogNumber",
+                                                         "dataProviderName.p",
+                                                         "dataResourceName.p",
+                                                         "identifier" });
 	            startIndex += pageSize;
 	            if(resultsCount<MAX_DOWNLOAD_SIZE){
 	            	qr = runSolrQuery(solrQuery, filterQuery, pageSize, startIndex, "score", "asc");
@@ -853,6 +874,21 @@ public class SearchDAOImpl implements SearchDAO {
         return trDTO;
     }
 
+    //TODO delete me just temporary until all methods are modified to use SearchRequestParams requestParams
+     private QueryResponse runSolrQuery(SolrQuery solrQuery, String filterQuery[], Integer pageSize,
+            Integer startIndex, String sortField, String sortDirection) throws SolrServerException {
+
+         SearchRequestParams requestParams = new SearchRequestParams();
+         requestParams.setFq(filterQuery);
+         requestParams.setPageSize(pageSize);
+         requestParams.setStart(startIndex);
+         requestParams.setSort(sortField);
+         requestParams.setDir(sortDirection);
+         return runSolrQuery(solrQuery, requestParams);
+
+     }
+
+
     /**
      * Perform SOLR query - takes a SolrQuery and search params
      *
@@ -865,11 +901,10 @@ public class SearchDAOImpl implements SearchDAO {
      * @return
      * @throws SolrServerException
      */
-    private QueryResponse runSolrQuery(SolrQuery solrQuery, String filterQuery[], Integer pageSize,
-            Integer startIndex, String sortField, String sortDirection) throws SolrServerException {
+    private QueryResponse runSolrQuery(SolrQuery solrQuery, SearchRequestParams requestParams) throws SolrServerException {
 
-        if (filterQuery != null) {
-            for (String fq : filterQuery) {
+        if (requestParams.getFq() != null) {
+            for (String fq : requestParams.getFq()) {
                 // pull apart fq. E.g. Rank:species and then sanitize the string parts
                 // so that special characters are escaped apporpriately
                 if (fq.isEmpty()) continue;
@@ -891,9 +926,9 @@ public class SearchDAOImpl implements SearchDAO {
             }
         }
 
-        solrQuery.setRows(pageSize);
-        solrQuery.setStart(startIndex);
-        solrQuery.setSortField(sortField, ORDER.valueOf(sortDirection));
+        solrQuery.setRows(requestParams.getPageSize());
+        solrQuery.setStart(requestParams.getStart());
+        solrQuery.setSortField(requestParams.getSort(), ORDER.valueOf(requestParams.getDir()));
         logger.info("runSolrQuery: "+solrQuery.toString());
         return server.query(solrQuery); // can throw exception
     }
@@ -973,11 +1008,20 @@ public class SearchDAOImpl implements SearchDAO {
         // The query result is stored in its original format so that all the information
         // returned is available later on if needed
         searchResult.setQr(qr);
+
+        //add the URL information necessary for the maps and downloads
+        String params = "?q=" + solrQuery.getQuery();
+        if(solrQuery.getFilterQueries() != null && solrQuery.getFacetFields().length > 0)
+            params +="&fq="+StringUtils.join(solrQuery.getFilterQueries(), "&fq=");
+        logger.info("The download params: " + params);
+        searchResult.setUrlParameters(params);
         return searchResult;
     }
 
     /**
      * Build the query string for a spatial query (using Spatial-Solr plugin syntax)
+     *
+     * TODO change param type to SearchRequestParams
      *
      * @param fullTextQuery
      * @param latitude
@@ -1028,7 +1072,8 @@ public class SearchDAOImpl implements SearchDAO {
         solrQuery.setFacet(true);
         solrQuery.addFacetField("basis_of_record");
         solrQuery.addFacetField("type_status");
-        solrQuery.addFacetField("data_resource");
+        solrQuery.addFacetField("institution_code_name");
+        //solrQuery.addFacetField("data_resource");
         solrQuery.addFacetField("state");
         solrQuery.addFacetField("biogeographic_region");
         solrQuery.addFacetField("rank");

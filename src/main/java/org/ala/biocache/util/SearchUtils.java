@@ -16,6 +16,10 @@ import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import atg.taglib.json.util.JSONObject;
+import au.org.ala.biocache.TaxonProfileDAO;
+import org.ala.biocache.dto.SearchRequestParams;
+import org.apache.commons.lang.StringUtils;
+import scala.Option;
 
 /**
  * A class to provide utility methods used to populate search details.
@@ -111,6 +115,40 @@ public class SearchUtils {
 
 	}
 
+        public boolean updateCollectionSearchString(SearchRequestParams searchParams) {
+		try {
+			String query = searchParams.getQ();
+
+			// query the collectory for the institute and collection codes
+			// needed to perform the search
+                        //TODO should this be changed to access the cassandra cache??
+			String jsonObject = OccurrenceController
+					.getUrlContentAsString(collectoryBaseUrl
+							+ "/lookup/summary/" + query);
+			JSONObject j = new JSONObject(jsonObject);
+			String collectionName = j.getString("name");
+			// JSONArray institutionCode = j.getJSONArray("derivedInstCodes");
+			// JSONArray collectionCode = j.getJSONArray("derivedCollCodes");
+			StringBuilder displayString = new StringBuilder(getUidTitle(query)
+					+ ": ");
+			displayString.append(collectionName);
+
+			searchParams.setQ(getUidSearchField(query) + ":" + query);
+			searchParams.setDisplayString(displayString.toString());
+                        updateCommon(searchParams);
+			return true;
+
+		} catch (Exception e) {
+			logger.error("Problem contacting the collectory: " + e.getMessage(), e);
+			return false;
+			// TODO work out what we want to do to the search if an exception
+			// occurs while
+			// contacting the collectory etc
+		}
+
+	}
+
+
 	/**
 	 * Returns the filter query string required to perform a taxon concept
 	 * search
@@ -121,16 +159,14 @@ public class SearchUtils {
 	public boolean updateTaxonConceptSearchString(SearchQuery searchQuery) {
 
 		String guid = searchQuery.getQuery();
-//		TaxonConcept tc = taxonConceptDAO.getByGuid(guid);
+
+		Option<TaxonProfile> opt = TaxonProfileDAO.getByGuid(guid);
 		
+		//replace with webservice call or use biocache taxon profile cache - is this enough
 		
-		//TODO use the cache interface to retrieve this
-		TaxonProfile tc = null;
-		
-		//replace with webservice call or use biocache taxon profile cache
-		
-		if (tc != null) {
-			StringBuffer entityQuerySb = new StringBuffer(tc.getRankString()
+		if (!opt.isEmpty()) {
+                    TaxonProfile tc = opt.get();
+                    StringBuffer entityQuerySb = new StringBuffer(tc.getRankString()
 					+ ": " + tc.getScientificName());
 			if (tc.getCommonName() != null) {
 				entityQuerySb.append(" : ");
@@ -150,6 +186,74 @@ public class SearchUtils {
 		}
 		return false;
 	}
+
+
+        public boolean updateTaxonConceptSearchString(SearchRequestParams searchParams) {
+
+		String guid = searchParams.getQ();
+
+		Option<TaxonProfile> opt = TaxonProfileDAO.getByGuid(guid);
+
+		//replace with webservice call or use biocache taxon profile cache - is this enough
+
+		if (!opt.isEmpty()) {
+                    TaxonProfile tc = opt.get();
+                    StringBuffer entityQuerySb = new StringBuffer(tc.getRankString()
+					+ ": " + tc.getScientificName());
+			if (tc.getCommonName() != null) {
+				entityQuerySb.append(" : ");
+				entityQuerySb.append(tc.getCommonName());
+			}
+                        List<String> fq = new ArrayList<String>(java.util.Arrays.asList(searchParams.getFq()));
+
+			fq.add("lft:[" + tc.getLeft() + " TO "
+					+ tc.getRight() + "]");
+                        searchParams.setFq(fq.toArray(new String[]{}));
+
+			if (logger.isDebugEnabled()) {
+				for (String filter : searchParams.getFq()) {
+					logger.debug("Filter: " + filter);
+				}
+			}
+			searchParams.setQ("*:*");
+			searchParams.setDisplayString(entityQuerySb.toString());
+                        updateCommon(searchParams);
+			return true;
+		}
+		return false;
+	}
+
+        public boolean updateSpatial(SearchRequestParams searchParams){
+            String query = searchParams.getQ();
+
+            StringBuilder displayQuery = new StringBuilder(StringUtils.substringAfter(query, ":").replace("*", "(all taxa)"));
+            displayQuery.append(" - within ").append(searchParams.getRadius()).append(" km of point (").append(searchParams.getLat()).append(", ").append(searchParams.getLon()).append(")");
+            searchParams.setDisplayString(displayQuery.toString());
+            updateCommon(searchParams);
+            return true;
+        }
+        public boolean updateNormal(SearchRequestParams searchParams){
+            updateCommon(searchParams);
+            return true;
+        }
+        private void updateCommon(SearchRequestParams searchParams){
+            // upate the filterQuery if it contains an "OccurrenceSource" so that it
+		// has the correct filter query specified
+//		String[] queries = searchParams.getFq();
+//		if (queries != null) {
+//			for (String q : queries) {
+//				if (q.startsWith(OccurrenceSource.FACET_NAME + ":")) {
+//					searchQuery.removeFromFilterQuery(q);
+//					OccurrenceSource oc = OccurrenceSource.getForDisplayName(q
+//							.substring(q.indexOf(":") + 1));
+//					if (oc != null) {
+//						searchQuery.addToFilterQuery("confidence:"
+//								+ oc.getRange());
+//					}
+//				}
+//			}
+//		}
+        }
 
 	/**
 	 * Returns the query to be used when searching for data providers.
@@ -171,6 +275,26 @@ public class SearchUtils {
 	public String getDataResourceSearchString(String query) {
 		return "data_resource_id:" + query;
 	}
+//        public boolean updateQueryDetails(SearchRequestParams searchParams){
+//
+//
+//            boolean success = true;
+//		if (searchParams.getType().equals("collection")) {
+//			success = updateCollectionSearchString(searchParams);
+//		} else if (searchParams.getType().equals("provider")) {
+//			searchParams.setQ(getDataProviderSearchString(searchParams
+//					.getQ()));
+//		} else if (searchParams.getType().equals("resource")) {
+//			searchParams.setQ(getDataResourceSearchString(searchParams
+//					.getQ()));
+//		} else if (searchParams.getType().equals("taxon")) {
+//			success = updateTaxonConceptSearchString(searchParams);
+//		} else if (searchParams.getType().equals("spatial")){
+//                    success = updateSpatial(searchParams);
+//                }
+//
+//            return success;
+//        }
 
 	/**
 	 * Returns the query string based on the type of search that needs to be

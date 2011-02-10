@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.ala.biocache.dao.SearchDAO;
 import org.ala.biocache.dto.OccurrenceDTO;
 import org.ala.biocache.dto.SearchQuery;
+import org.ala.biocache.dto.SearchRequestParams;
 import org.ala.biocache.dto.SearchResultDTO;
 import org.ala.biocache.util.SearchUtils;
 import org.ala.client.appender.RestLevel;
@@ -65,6 +66,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  * 
  */
 @Controller
+//@RequestMapping("/occurrences")
 public class SearchController {
 
 	/** Logger initialisation */
@@ -114,44 +116,19 @@ public class SearchController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = "/search", method = RequestMethod.GET)
-	public @ResponseBody SearchResultDTO occurrenceSearch(
-            @RequestParam(value = "q", required = false) String query,
-            @RequestParam(value = "fq", required = false) String[] filterQuery,
-            @RequestParam(value = "start", required = false, defaultValue = "0") Integer startIndex,
-            @RequestParam(value = "pageSize", required = false, defaultValue = "20") Integer pageSize,
-            @RequestParam(value = "sort", required = false, defaultValue = "score") String sortField,
-            @RequestParam(value = "dir", required = false, defaultValue = "asc") String sortDirection,
+	@RequestMapping(value = "/search/{type}", method = RequestMethod.GET)
+	public @ResponseBody SearchResultDTO occurrenceSearch(SearchRequestParams requestParams,
             Model model) throws Exception {
 
-		if (query == null || query.isEmpty()) {
-			//return LIST;
-		}
-		// if params are set but empty (e.g. foo=&bar=) then provide sensible defaults
-		if (filterQuery != null && filterQuery.length == 0) {
-			filterQuery = null;
-		}
-		if (startIndex == null) {
-			startIndex = 0;
-		}
-		if (pageSize == null) {
-			pageSize = 20;
-		}
-		if (sortField.isEmpty()) {
-			sortField = "score";
-		}
-		if (sortDirection.isEmpty()) {
-			sortDirection = "asc";
-		}
+            logger.info("Attempting to search: "+ requestParams);
+		
 
 		SearchResultDTO searchResult = new SearchResultDTO();
-        SearchQuery searchQuery = new SearchQuery(query, "normal", filterQuery);
-        searchUtils.updateQueryDetails(searchQuery);
-
-        searchResult = searchDAO.findByFulltextQuery(searchQuery.getQuery(), searchQuery.getFilterQuery(), startIndex, pageSize, sortField, sortDirection);
-        model.addAttribute("searchResult", searchResult); // redundant with @ResponseBody ??
-        logger.debug("query = " + query);
         
+        searchResult = searchDAO.findByFulltextQuery(requestParams);
+        model.addAttribute("searchResult", searchResult); // redundant with @ResponseBody ??
+        logger.debug("query = " + requestParams.getQ());
+       
         return searchResult;
 	}
     
@@ -163,7 +140,7 @@ public class SearchController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = "/searchByTaxon*", method = RequestMethod.GET)
+	@RequestMapping(value = "/searchByTaxon/{guid}*", method = RequestMethod.GET)
 	public void occurrenceSearchByTaxon(
 			@RequestParam(value="q", required=false) String query,
 			@RequestParam(value="fq", required=false) String[] filterQuery,
@@ -171,13 +148,14 @@ public class SearchController {
 			@RequestParam(value="pageSize", required=false, defaultValue ="20") Integer pageSize,
 			@RequestParam(value="sort", required=false, defaultValue="score") String sortField,
 			@RequestParam(value="dir", required=false, defaultValue ="asc") String sortDirection,
+                        @PathVariable("guid") String guid,
 			Model model) throws Exception {
 
 		if (query == null || query.isEmpty()) {
             //return LIST;
-        }
-
-        SearchQuery searchQuery = new SearchQuery(query, "taxon", filterQuery);
+            }
+                logger.info("Thue guid: " + guid);
+        SearchQuery searchQuery = new SearchQuery(guid, "taxon", filterQuery);
         //boolean taxonFound = searchUtils.updateTaxonConceptSearchString(searchQuery);
         //Change the method call so that the filter query can be updated
         boolean taxonFound = searchUtils.updateQueryDetails(searchQuery);
@@ -198,15 +176,23 @@ public class SearchController {
             }
 
             SearchResultDTO searchResult = new SearchResultDTO();
-            
-            searchResult = searchDAO.findByFulltextQuery("*:*", searchQuery.getFilterQuery(), startIndex, pageSize, sortField, sortDirection);
+
+            SearchRequestParams srp = new SearchRequestParams();
+            srp.setQ("*:*");
+            srp.setFq(searchQuery.getFilterQuery());
+            srp.setStart(startIndex);
+            srp.setPageSize(pageSize);
+            srp.setSort(sortField);
+            srp.setDir(sortDirection);
+
+            searchResult = searchDAO.findByFulltextQuery(srp);
 
             model.addAttribute("searchResult", searchResult);
-            
+
         } else {
             model.addAttribute("searchResult", new SearchResultDTO());
         }
-        
+
 	}
         /**
          * Obtains a list of the sources for the supplied guid.
@@ -255,58 +241,58 @@ public class SearchController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = {"/searchForCollection*", "/searchForUID*"}, method = RequestMethod.GET)
-	   public void occurrenceSearchForCollection(
-            //@RequestParam(value="coll", required=false) String[] collectionCode,
-            //@RequestParam(value="inst", required=false) String[] institutionCode,
-            @RequestParam(value = "q", required = false) String query,
-            @RequestParam(value = "fq", required = false) String[] filterQuery,
-            @RequestParam(value = "start", required = false, defaultValue = "0") Integer startIndex,
-            @RequestParam(value = "pageSize", required = false, defaultValue = "20") Integer pageSize,
-            @RequestParam(value = "sort", required = false, defaultValue = "score") String sortField,
-            @RequestParam(value = "dir", required = false, defaultValue = "asc") String sortDirection,
-            Model model)
-            throws Exception {
-
-        // no query so exit method
-        if (query == null || query.isEmpty()) {
-            //return LIST;
-        }
-
-        // one of collectionCode or institutionCode must be set
-        //		if ((query == null || query.isEmpty()) && (collectionCode==null || collectionCode.length==0) && (institutionCode==null || institutionCode.length==0)) {
-        //			return LIST;
-        //		}
-
-        // if params are set but empty (e.g. foo=&bar=) then provide sensible defaults
-        if (filterQuery != null && filterQuery.length == 0) {
-            filterQuery = null;
-        }
-        if (startIndex == null) {
-            startIndex = 0;
-        }
-        if (pageSize == null) {
-            pageSize = 20;
-        }
-        if (sortField.isEmpty()) {
-            sortField = "score";
-        }
-        if (sortDirection.isEmpty()) {
-            sortDirection = "asc";
-        }
-
-
-        SearchQuery searchQuery = new SearchQuery(query, "collection", filterQuery);
-        searchUtils.updateQueryDetails(searchQuery);//changed to this method so that the filter query has the correct updates applied
-        //searchUtils.updateCollectionSearchString(searchQuery);
-
-        SearchResultDTO searchResult = new SearchResultDTO();
-
-        searchResult = searchDAO.findByFulltextQuery(searchQuery.getQuery(), searchQuery.getFilterQuery(), startIndex, pageSize, sortField, sortDirection);
-
-        model.addAttribute("searchResult", searchResult);
-
-    }
+//	@RequestMapping(value = {"/searchForCollection*", "/searchForUID*"}, method = RequestMethod.GET)
+//	   public void occurrenceSearchForCollection(
+//            //@RequestParam(value="coll", required=false) String[] collectionCode,
+//            //@RequestParam(value="inst", required=false) String[] institutionCode,
+//            @RequestParam(value = "q", required = false) String query,
+//            @RequestParam(value = "fq", required = false) String[] filterQuery,
+//            @RequestParam(value = "start", required = false, defaultValue = "0") Integer startIndex,
+//            @RequestParam(value = "pageSize", required = false, defaultValue = "20") Integer pageSize,
+//            @RequestParam(value = "sort", required = false, defaultValue = "score") String sortField,
+//            @RequestParam(value = "dir", required = false, defaultValue = "asc") String sortDirection,
+//            Model model)
+//            throws Exception {
+//
+//        // no query so exit method
+//        if (query == null || query.isEmpty()) {
+//            //return LIST;
+//        }
+//
+//        // one of collectionCode or institutionCode must be set
+//        //		if ((query == null || query.isEmpty()) && (collectionCode==null || collectionCode.length==0) && (institutionCode==null || institutionCode.length==0)) {
+//        //			return LIST;
+//        //		}
+//
+//        // if params are set but empty (e.g. foo=&bar=) then provide sensible defaults
+//        if (filterQuery != null && filterQuery.length == 0) {
+//            filterQuery = null;
+//        }
+//        if (startIndex == null) {
+//            startIndex = 0;
+//        }
+//        if (pageSize == null) {
+//            pageSize = 20;
+//        }
+//        if (sortField.isEmpty()) {
+//            sortField = "score";
+//        }
+//        if (sortDirection.isEmpty()) {
+//            sortDirection = "asc";
+//        }
+//
+//
+//        SearchQuery searchQuery = new SearchQuery(query, "collection", filterQuery);
+//        searchUtils.updateQueryDetails(searchQuery);//changed to this method so that the filter query has the correct updates applied
+//        //searchUtils.updateCollectionSearchString(searchQuery);
+//
+//        SearchResultDTO searchResult = new SearchResultDTO();
+//
+//        searchResult = searchDAO.findByFulltextQuery(searchQuery.getQuery(), searchQuery.getFilterQuery(), startIndex, pageSize, sortField, sortDirection);
+//
+//        model.addAttribute("searchResult", searchResult);
+//
+//    }
 
     /**
      * Spatial search for either a taxon name or full text text search
@@ -324,75 +310,75 @@ public class SearchController {
      * @return
      * @throws Exception
      */
-    @RequestMapping(value = "/searchByArea*", method = RequestMethod.GET)
-	public void occurrenceSearchByArea(
-			@RequestParam(value="q", required=true) String query,
-			@RequestParam(value="fq", required=false) String[] filterQuery,
-			@RequestParam(value="start", required=false, defaultValue="0") Integer startIndex,
-			@RequestParam(value="pageSize", required=false, defaultValue ="20") Integer pageSize,
-			@RequestParam(value="sort", required=false, defaultValue="score") String sortField,
-			@RequestParam(value="dir", required=false, defaultValue ="asc") String sortDirection,
-			@RequestParam(value="rad", required=false) Float radius,
-			@RequestParam(value="lat", required=false) Float latitude,
-			@RequestParam(value="lon", required=false) Float longitude,
-			Model model)
-	throws Exception {
-
-        if (query == null || query.isEmpty()) {
-            //return LIST;
-        }
-
-        SearchQuery searchQuery = new SearchQuery(query, "spatial", filterQuery);
-        searchUtils.updateQueryDetails(searchQuery);
-        //searchUtils.updateTaxonConceptSearchString(searchQuery);
-
-        if (startIndex == null) {
-            startIndex = 0;
-        }
-        if (pageSize == null) {
-            pageSize = 20;
-        }
-        if (sortField.isEmpty()) {
-            sortField = "score";
-        }
-        if (sortDirection.isEmpty()) {
-            sortDirection = "asc";
-        }
-
-        if (latitude == null && longitude == null && radius == null && query.contains("|")) {
-            // check for lat/long/rad encoded in q param, delimited by |
-            // order is query, latitude, longitude, radius
-            String[] queryParts = StringUtils.split(query, "|", 4);
-            query = queryParts[0];
-            logger.info("(spatial) query: " + query);
-
-            if (query.contains("%%")) {
-                // mulitple parts (%% separated) need to be OR'ed (yes a hack for now)
-                String prefix = StringUtils.substringBefore(query, ":");
-                String suffix = StringUtils.substringAfter(query, ":");
-                String[] chunks = StringUtils.split(suffix, "%%");
-                ArrayList<String> formatted = new ArrayList<String>();
-
-                for (String s : chunks) {
-                    formatted.add(prefix + ":" + s);
-                }
-
-                query = StringUtils.join(formatted, " OR ");
-                logger.info("new query: " + query);
-            }
-
-            latitude = Float.parseFloat(queryParts[1]);
-            longitude = Float.parseFloat(queryParts[2]);
-            radius = Float.parseFloat(queryParts[3]);
-        }
-
-        SearchResultDTO searchResult = new SearchResultDTO();
-
-        searchResult = searchDAO.findByFulltextSpatialQuery(query, searchQuery.getFilterQuery(), latitude, longitude, radius, startIndex, pageSize, sortField, sortDirection);
-
-        model.addAttribute("searchResult", searchResult);
-
-    }
+//    @RequestMapping(value = "/searchByArea*", method = RequestMethod.GET)
+//	public void occurrenceSearchByArea(
+//			@RequestParam(value="q", required=true) String query,
+//			@RequestParam(value="fq", required=false) String[] filterQuery,
+//			@RequestParam(value="start", required=false, defaultValue="0") Integer startIndex,
+//			@RequestParam(value="pageSize", required=false, defaultValue ="20") Integer pageSize,
+//			@RequestParam(value="sort", required=false, defaultValue="score") String sortField,
+//			@RequestParam(value="dir", required=false, defaultValue ="asc") String sortDirection,
+//			@RequestParam(value="rad", required=false) Float radius,
+//			@RequestParam(value="lat", required=false) Float latitude,
+//			@RequestParam(value="lon", required=false) Float longitude,
+//			Model model)
+//	throws Exception {
+//
+//        if (query == null || query.isEmpty()) {
+//            //return LIST;
+//        }
+//
+//        SearchQuery searchQuery = new SearchQuery(query, "spatial", filterQuery);
+//        searchUtils.updateQueryDetails(searchQuery);
+//        //searchUtils.updateTaxonConceptSearchString(searchQuery);
+//
+//        if (startIndex == null) {
+//            startIndex = 0;
+//        }
+//        if (pageSize == null) {
+//            pageSize = 20;
+//        }
+//        if (sortField.isEmpty()) {
+//            sortField = "score";
+//        }
+//        if (sortDirection.isEmpty()) {
+//            sortDirection = "asc";
+//        }
+//
+//        if (latitude == null && longitude == null && radius == null && query.contains("|")) {
+//            // check for lat/long/rad encoded in q param, delimited by |
+//            // order is query, latitude, longitude, radius
+//            String[] queryParts = StringUtils.split(query, "|", 4);
+//            query = queryParts[0];
+//            logger.info("(spatial) query: " + query);
+//
+//            if (query.contains("%%")) {
+//                // mulitple parts (%% separated) need to be OR'ed (yes a hack for now)
+//                String prefix = StringUtils.substringBefore(query, ":");
+//                String suffix = StringUtils.substringAfter(query, ":");
+//                String[] chunks = StringUtils.split(suffix, "%%");
+//                ArrayList<String> formatted = new ArrayList<String>();
+//
+//                for (String s : chunks) {
+//                    formatted.add(prefix + ":" + s);
+//                }
+//
+//                query = StringUtils.join(formatted, " OR ");
+//                logger.info("new query: " + query);
+//            }
+//
+//            latitude = Float.parseFloat(queryParts[1]);
+//            longitude = Float.parseFloat(queryParts[2]);
+//            radius = Float.parseFloat(queryParts[3]);
+//        }
+//
+//        SearchResultDTO searchResult = new SearchResultDTO();
+//
+//        searchResult = searchDAO.findByFulltextSpatialQuery(query, searchQuery.getFilterQuery(), latitude, longitude, radius, startIndex, pageSize, sortField, sortDirection);
+//
+//        model.addAttribute("searchResult", searchResult);
+//
+//    }
 
 	/**
 	 * Retrieve content as String.

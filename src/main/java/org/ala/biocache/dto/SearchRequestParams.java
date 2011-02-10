@@ -31,6 +31,10 @@ public class SearchRequestParams {
     protected Integer pageSize = 10;
     protected String sort = "score";
     protected String dir = "asc";
+    protected Float radius =Float.NaN;
+    protected Float lat = Float.NaN;
+    protected Float lon = Float.NaN;
+    private String displayString;
     
     /**
      * Custom toString method to produce a String to be used as the request parameters
@@ -158,4 +162,38 @@ public class SearchRequestParams {
     public void setDir(String sortDirection) {
         this.dir = sortDirection;
     }
+
+    public Float getLat() {
+        return lat;
+    }
+
+    public void setLat(Float lat) {
+        this.lat = lat;
+    }
+
+    public Float getLon() {
+        return lon;
+    }
+
+    public void setLon(Float lon) {
+        this.lon = lon;
+    }
+
+    public Float getRadius() {
+        return radius;
+    }
+
+    public void setRadius(Float radius) {
+        this.radius = radius;
+    }
+
+    public String getDisplayString() {
+        return displayString;
+    }
+
+    public void setDisplayString(String displayString) {
+        this.displayString = displayString;
+    }
+    
+
 }
