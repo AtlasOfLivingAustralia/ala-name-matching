@@ -456,8 +456,7 @@ public class OccurrenceController {
 			@RequestParam(value="lat", required=false) Float latitude,
 			@RequestParam(value="lon", required=false) Float longitude,
 			HttpServletResponse response,
-            HttpServletRequest request)
-	throws Exception {
+            HttpServletRequest request) throws Exception {
        
         String ip = request.getLocalAddr();
         if (query == null || query.isEmpty()) {
@@ -536,61 +535,31 @@ public class OccurrenceController {
         Object[] citations = restfulClient.restPost(citationServiceUrl, "text/plain", keys);
         if((Integer)citations[0] == HttpStatus.SC_OK){
         	out.write(((String)citations[1]).getBytes());
-    	}		
+    	}
 	}
 	
 	/**
 	 * Occurrence record page
 	 *
-         * TODO Log viewing stats for all uids associated with this record.
-         *
-	 * @param id
+     * TODO Log viewing stats for all uids associated with this record.
+     *
+	 * @param uuid
 	 * @param model
-     * @param log Optional supplied value to specify whether or not the log the statistics.  Statistics are logged by default
-	 * @return view name
 	 * @throws Exception
 	 */
-	@RequestMapping(value = {"/occurrences/{id}", "/occurrences/{id}.json"}, method = RequestMethod.GET)
-	public @ResponseBody OccurrenceDTO showOccurrence(@PathVariable("id") String id,
+	@RequestMapping(value = {"/occurrences/{uuid}", "/occurrences/{uuid}.json"}, method = RequestMethod.GET)
+	public @ResponseBody OccurrenceDTO showOccurrence(@PathVariable("uuid") String uuid,
         HttpServletRequest request, Model model) throws Exception {
-		logger.debug("Retrieving occurrence record with guid: "+id+".");
-        //model.addAttribute("id", id);
-		
-        //au.org.ala.biocache.QualityAssertion.apply(au.org.ala.biocache.AssertionCodes.ALTITUDE_IN_FEET());
 
-        FullRecord[] fullRecord = Store.getAllVersionsByUuid(id);
-        
+		logger.debug("Retrieving occurrence record with guid: '"+uuid+"'");
+
+        FullRecord[] fullRecord = Store.getAllVersionsByUuid(uuid);
+
         OccurrenceDTO occ = new OccurrenceDTO(fullRecord);
-        occ.setSystemAssertions(Store.getSystemAssertions(id));
-        occ.setUserAssertions(Store.getUserAssertions(id));
-       
-//		if (fullRecord != null && fullRecord.length>2  && fullRecord[1].getAttribution().getCollectionUid() != null) {
-//			model.addAttribute("raw", fullRecord[0]);
-//                        model.addAttribute("processed", fullRecord[1]);
-//                        model.addAttribute("consensus" , fullRecord[2]);
-//                        //TODO replace all the stuff below with extra information in biocache-store
-//	            Object[] resp = restfulClient.restGet(summaryServiceUrl + "/" + fullRecord[1].getAttribution().getCollectionUid());
-//	            if ((Integer) resp[0] == HttpStatus.SC_OK) {
-//	                String json = (String) resp[1];
-//	                ObjectMapper mapper = new ObjectMapper();
-//	                JsonNode rootNode;
-//
-//	                try {
-//	                    rootNode = mapper.readValue(json, JsonNode.class);
-//                            //TODO Include this information in cassandra
-//	                    String name = rootNode.path("name").getTextValue();
-//	                    String logo = rootNode.path("institutionLogoUrl").getTextValue();
-//	                    String institution = rootNode.path("institution").getTextValue();
-//	                    model.addAttribute("collectionName", name);
-//	                    model.addAttribute("collectionLogo", logo);
-//	                    model.addAttribute("collectionInstitution", institution);
-//	                } catch (Exception e) {
-//	                    logger.error(e.toString());
-//	                }
-//	            }
-//
-//                    //log the usage statistics to the ala logger if necessary
-//        //We only want to log the stats if a non-json request was made.
+        occ.setSystemAssertions(Store.getSystemAssertions(uuid));
+        occ.setUserAssertions(Store.getUserAssertions(uuid));
+
+//        //We only want to log the stats if a non-json request was made <- NO LONGER TRUE!!
 //        if (request.getRequestURL() != null && !request.getRequestURL().toString().endsWith("json")) {
 //            String email = null;
 //            String reason = "Viewing Occurrence Record " + id;
@@ -609,16 +578,6 @@ public class OccurrenceController {
 //            LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED, email, reason, ip, uidStats);
 //            logger.log(RestLevel.REMOTE, vo);
 //        }
-//
-//
-//		}
-//
-//
-//        model.addAttribute("hostUrl", hostUrl);
-//
-//
-//
-//		return SHOW;
         return occ;
 	}
 
@@ -661,6 +620,22 @@ public class OccurrenceController {
         return lastPage;
     }
 
+    /**
+     * Simple check for valid latitude, longitude & radius values
+     *
+     * @param latitude
+     * @param longitude
+     * @param radius
+     * @return
+     */
+    private boolean checkValidSpatialParams(Float latitude, Float longitude, Integer radius) {
+        if (latitude != null && !latitude.isNaN() && longitude != null && !longitude.isNaN() && radius != null && radius > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 	/**
 	 * @param hostUrl the hostUrl to set
 	 */
@@ -696,7 +671,7 @@ public class OccurrenceController {
 		this.searchUtils = searchUtils;
 	}
 
-	
+
     public String getCitationServiceUrl() {
 		return citationServiceUrl;
 	}
@@ -704,20 +679,4 @@ public class OccurrenceController {
 	public void setCitationServiceUrl(String citationServiceUrl) {
 		this.citationServiceUrl = citationServiceUrl;
 	}
-
-    /**
-     * Simple check for valid latitude, longitude & radius values
-     *
-     * @param latitude
-     * @param longitude
-     * @param radius
-     * @return
-     */
-    private boolean checkValidSpatialParams(Float latitude, Float longitude, Integer radius) {
-        if (latitude != null && !latitude.isNaN() && longitude != null && !longitude.isNaN() && radius != null && radius > 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
 }
