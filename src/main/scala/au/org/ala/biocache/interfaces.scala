@@ -93,6 +93,12 @@ object Store {
   def writeToStream(outputStream:OutputStream,fieldDelimiter:String,recordDelimiter:String,uuids:Array[String],fields:Array[String]) {
     OccurrenceDAO.writeToStream(outputStream,fieldDelimiter,recordDelimiter,uuids,fields)
   }
+
+  def retrieveAssertionCodes : Array[ErrorCode] = AssertionCodes.all.toArray
+
+  def retrieveGeospatialCodes : Array[ErrorCode] = AssertionCodes.geospatialCodes.toArray
+
+  def retrieveTaxonomicCodes : Array[ErrorCode] = AssertionCodes.taxonomicCodes.toArray
 }
 
 /**

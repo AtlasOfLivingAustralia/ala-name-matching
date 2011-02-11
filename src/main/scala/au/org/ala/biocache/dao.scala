@@ -97,6 +97,8 @@ object  OccurrenceDAO {
   private val entityName = "occ"
   private val qualityAssertionColumn = "qualityAssertion"
   private val userQualityAssertionColumn = "userQualityAssertion"
+  private val geospatialDecisionColumn = "geospatiallyKosher"
+  private val taxonomicDecisionColumn = "taxonomicallyKosher"
 
   /**
    * Get an occurrence with UUID
@@ -349,15 +351,25 @@ object  OccurrenceDAO {
     }
 
     //set the assertions on the full record
-    fullRecord.assertions = assertions.toArray.map(_.assertionName)
+    fullRecord.assertions = assertions.toArray.map(_.name)
     //set the quality assertions flags
     for(qa <- assertions){
-      properties.put(markAsQualityAssertion(qa.assertionName), qa.positive.toString)
+      properties.put(markAsQualityAssertion(qa.name), qa.positive.toString)
     }
 
     if(!assertions.isEmpty){
         setSystemAssertions(uuid, assertions.toList)
     }
+
+    //set the overall decision
+    assertions.filter(ass => {ass.code >=0}).size == 0
+
+    val geospatiallyKosher = AssertionCodes.isGeospatiallyKosher(assertions)
+    val taxonomicallyKosher = AssertionCodes.isTaxonomicallyKosher(assertions)
+
+    properties.put(geospatialDecisionColumn, geospatiallyKosher.toString)
+    properties.put(taxonomicDecisionColumn, taxonomicallyKosher.toString)
+
     //commit to cassandra
     DAO.persistentManager.put(uuid,entityName,properties.toMap)
   }
@@ -383,7 +395,7 @@ object  OccurrenceDAO {
    */
   def addQualityAssertion(uuid:String, qualityAssertion:QualityAssertion){
     DAO.persistentManager.putList(uuid,entityName, qualityAssertionColumn,List(qualityAssertion),false)
-    DAO.persistentManager.put(uuid, entityName, qualityAssertion.assertionName, qualityAssertion.positive.toString)
+    DAO.persistentManager.put(uuid, entityName, qualityAssertion.name, qualityAssertion.positive.toString)
   }
 
   /**
@@ -402,11 +414,6 @@ object  OccurrenceDAO {
     DAO.persistentManager.getList(uuid,entityName, qualityAssertionColumn,theClass).asInstanceOf[List[QualityAssertion]]
   }
 
-  def getQualityAssertionsJ(uuid:String): java.util.List[QualityAssertion] = {
-
-    getQualityAssertions(uuid).asJava
-  }
-
   /**
    * Add a user supplied assertion - updating the status on the record.
    */
@@ -419,7 +426,7 @@ object  OccurrenceDAO {
     DAO.persistentManager.putList(uuid,entityName,userQualityAssertionColumn,userAssertions,true)
 
     //update the overall status
-    updateAssertionStatus(uuid,qualityAssertion.assertionName,systemAssertions,userAssertions)
+    updateAssertionStatus(uuid,qualityAssertion.name,systemAssertions,userAssertions)
   }
 
   /**
@@ -451,7 +458,7 @@ object  OccurrenceDAO {
         //put the assertions back - overwriting existing assertions
         DAO.persistentManager.putList(uuid,entityName,userQualityAssertionColumn,updateAssertions,true)
 
-        val assertionName = deletedAssertion.get.assertionName
+        val assertionName = deletedAssertion.get.name
         //are there any matching assertions for other users????
         val systemAssertions = getQualityAssertions(uuid)
 
@@ -469,7 +476,7 @@ object  OccurrenceDAO {
    */
   def updateAssertionStatus(uuid:String, assertionName:String, systemAssertions:List[QualityAssertion], userAssertions:List[QualityAssertion])  {
 
-    val assertions = userAssertions.filter(qa => {qa.assertionName equals assertionName})
+    val assertions = userAssertions.filter(qa => {qa.name equals assertionName})
     //update the status flag on the record, using the system quality assertions
     if(assertions.size>0) {
         //if anyone asserts the negative, the answer is negative
@@ -477,10 +484,10 @@ object  OccurrenceDAO {
         DAO.persistentManager.put(uuid,entityName,assertionName,positive.toString)
     } else if(systemAssertions.size>0){
         //check system assertions for an answer
-        val matchingAssertion = systemAssertions.find(assertion => {assertion.assertionName equals assertionName})
+        val matchingAssertion = systemAssertions.find(assertion => {assertion.name equals assertionName})
         if(!matchingAssertion.isEmpty){
             val assertion = matchingAssertion.get
-            DAO.persistentManager.put(uuid,entityName,assertion.assertionName,assertion.positive.toString)
+            DAO.persistentManager.put(uuid,entityName,assertion.name,assertion.positive.toString)
         }
     } else {
         DAO.persistentManager.put(uuid,entityName,assertionName,true.toString)

@@ -242,13 +242,13 @@ object ProcessRecords {
    */
   def processTypeStatus(guid:String,raw:FullRecord,processed:FullRecord) : Array[QualityAssertion] = {
 
-    if (raw.occurrence.typeStatus != null && raw.occurrence.typeStatus.isEmpty) {
+    if (raw.occurrence.typeStatus != null && !raw.occurrence.typeStatus.isEmpty) {
       val term = TypeStatus.matchTerm(raw.occurrence.typeStatus)
       if (term.isEmpty) {
         //add a quality assertion
         Array(QualityAssertion(AssertionCodes.UNRECOGNISED_TYPESTATUS,false,"Unrecognised type status"))
       } else {
-        processed.occurrence.basisOfRecord = term.get.canonical
+        processed.occurrence.typeStatus = term.get.canonical
         Array()
       }
     } else {

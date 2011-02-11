@@ -11,16 +11,14 @@ import java.util.{UUID, Arrays}
 import org.wyki.cassandra.pelops.Pelops
 import au.org.ala.biocache._
 import collection.JavaConversions
-;
 
 /**
  * A dwc loader that uses native APIs. This requires that cassandra is stopped.
- * This need to be ran in two separate phases.
+ * This needs to be ran in two separate consecutive phases/processes.
  * 1) Initial loading
  * 2) Population of dr column family with GUID
  *
- * This can only be ran once for each dataset that needs to be loaded.
- *
+ * This can only be ran on the first load of a dataset.
  */
 object FastDwCLoader {
 
@@ -63,7 +61,6 @@ object FastDwCLoader {
         System.out.println("Done writing.");
         StorageService.instance.stopClient();
     }
-
 
     def retrofitUUIDMapping(dataResourceUID:String) {
 

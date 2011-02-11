@@ -355,7 +355,9 @@ class FullRecord (
   @BeanProperty var attribution:Attribution,
   @BeanProperty var identification:Identification,
   @BeanProperty var measurement:Measurement,
-  @BeanProperty var assertions:Array[String])
+  @BeanProperty var assertions:Array[String],
+  @BeanProperty var geospatiallyKosher:Boolean = true,
+  @BeanProperty var taxonomicallyKosher:Boolean = true)
   extends Cloneable {
 
   val objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement)
@@ -374,8 +376,8 @@ class FullRecord (
  */
 class QualityAssertion (
   @BeanProperty var uuid:String,
-  @BeanProperty var assertionName:String,
-  @BeanProperty var assertionCode:Int,
+  @BeanProperty var name:String,
+  @BeanProperty var code:Int,
   @BeanProperty var positive:Boolean,
   @BeanProperty var comment:String,
   @BeanProperty var value:String,
@@ -387,7 +389,7 @@ class QualityAssertion (
   override def clone : QualityAssertion = super.clone.asInstanceOf[QualityAssertion]
   override def equals(that: Any) = that match {
     case other: QualityAssertion => {
-      (other.assertionCode == assertionCode) && (other.positive == positive) && (other.userId == userId)
+      (other.code == code) && (other.positive == positive) && (other.userId == userId)
     }
     case _ => false
   }

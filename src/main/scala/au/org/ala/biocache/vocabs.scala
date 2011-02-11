@@ -1,9 +1,11 @@
 package au.org.ala.biocache
 
+import reflect.BeanProperty
+
 /**
  * Case class that encapsulates a canonical form and variants.
  */
-case class Term (canonical:String, variants:Array[String])
+case class Term (@BeanProperty canonical:String, @BeanProperty variants:Array[String])
 
 /**
  * A trait for a vocabulary. A vocabulary consists of a set
@@ -11,7 +13,7 @@ case class Term (canonical:String, variants:Array[String])
  */
 trait Vocab {
 
-  val all:Array[Term]
+  val all:Set[Term]
   /**
    * Match a term. Matches canonical form or variants in array
    * @param string2Match
@@ -35,12 +37,12 @@ trait Vocab {
    * Retrieve all the terms defined in this vocab.
    * @return
    */
-  def retrieveAll : Array[Term] = {
+  def retrieveAll : Set[Term] = {
     val methods = this.getClass.getMethods
-    for{
+    (for{
       method<-methods
       if(method.getReturnType.getName == "au.org.ala.biocache.Term")
-    } yield (method.invoke(this).asInstanceOf[Term])
+    } yield (method.invoke(this).asInstanceOf[Term])).toSet[Term]
   }
 }
 
@@ -269,7 +271,7 @@ object HabitatMap extends VocabMaps {
 /**
  * Case class that represents an error code for a occurrence record.
  */
-sealed case class ErrorCode(name:String, code:Int, isFatal:Boolean)
+sealed case class ErrorCode(@BeanProperty name:String, @BeanProperty code:Int, @BeanProperty isFatal:Boolean)
 
 /**
  * Assertion codes for records. These codes are a reflection of http://bit.ly/evMJv5
@@ -277,6 +279,7 @@ sealed case class ErrorCode(name:String, code:Int, isFatal:Boolean)
 object AssertionCodes {
 
   //geospatial issues
+  val GEOSPATIAL_ISSUE = ErrorCode("geospatialIssue",0,true)  // general purpose option
   val NEGATED_LATITUDE = ErrorCode("negatedLatitude",1,false)
   val NEGATED_LONGITUDE = ErrorCode("negatedLongitude",2,false)
   val INVERTED_COORDINATES = ErrorCode("invertedCoordinates",3,false)
@@ -303,6 +306,7 @@ object AssertionCodes {
   val UNCERTAINTY_IN_PRECISION = ErrorCode("uncertaintyInPrecision",25,false)
 
   //taxonomy issues
+  val TAXONOMIC_ISSUE = ErrorCode("geospatialIssue",10000,false)  // general purpose option
   val INVALID_SCIENTIFIC_NAME = ErrorCode("invalidScientificName",10001,false)
   val UNKNOWN_KINGDOM = ErrorCode("unknownKingdom",10002,false)
   val AMBIGUOUS_NAME = ErrorCode("ambiguousName",10003,false)
@@ -318,11 +322,63 @@ object AssertionCodes {
   val UNRECOGNISED_INSTITUTIONCODE = ErrorCode("unrecognisedInstitutionCode",20006,false)
 
   //temporal
-  val ID_PRE_OCCURRENCE = ErrorCode("invalidDate",30001,false)
-  val GEOREFERENCE_POST_OCCURRENCE = ErrorCode("invalidDate",30002,false)
-  val FIRST_OF_MONTH = ErrorCode("invalidDate",30003,false)
-  val FIRST_OF_YEAR = ErrorCode("invalidDate",30004,false)
-  val FIRST_OF_CENTURY = ErrorCode("invalidDate",30005,false)
-  val DATE_PRECISION_MISMATCH = ErrorCode("invalidDate",30006,false)
-  val INVALID_COLLECTION_DATE = ErrorCode("invalidDate",30007,false)
+  val ID_PRE_OCCURRENCE = ErrorCode("idPreOccurrence",30001,false)
+  val GEOREFERENCE_POST_OCCURRENCE = ErrorCode("georefPostDate",30002,false)
+  val FIRST_OF_MONTH = ErrorCode("firstOfMonth",30003,false)
+  val FIRST_OF_YEAR = ErrorCode("firstOfYear",30004,false)
+  val FIRST_OF_CENTURY = ErrorCode("firstOfCentury",30005,false)
+  val DATE_PRECISION_MISMATCH = ErrorCode("datePrecisionMismatch",30006,false)
+  val INVALID_COLLECTION_DATE = ErrorCode("invalidCollectionDate",30007,false)
+
+  //all the codes
+  val all = retrieveAll
+
+  val geospatialBounds = (0, 10000)
+  val taxonomicBounds = (0, 10000)
+  val geospatialCodes = all.filter(errorCode => {errorCode.code>=0 && errorCode.code<10000})
+  val taxonomicCodes = all.filter(errorCode => {errorCode.code>=10000 && errorCode.code<20000})
+
+  /**
+   * Retrieve all the terms defined in this vocab.
+   * @return
+   */
+  def retrieveAll : Set[ErrorCode] = {
+    val methods = this.getClass.getMethods
+    (for{
+      method<-methods
+      if(method.getReturnType.getName == "au.org.ala.biocache.ErrorCode")
+    } yield (method.invoke(this).asInstanceOf[ErrorCode])).toSet[ErrorCode]
+  }
+
+  /**
+   * Is it geospatially kosher
+   */
+  def isGeospatiallyKosher (assertions:Array[QualityAssertion]) : Boolean = {
+    assertions.filter(ass => {
+       val errorCode = AssertionCodes.all.find(errorCode => errorCode.code == ass.code )
+       if(!errorCode.isEmpty){
+         ass.code >= AssertionCodes.geospatialBounds._1 &&
+                ass.code < AssertionCodes.geospatialBounds._2 &&
+                errorCode.get.isFatal
+       } else {
+          false
+       }
+    }).size == 0
+  }
+
+  /**
+   * is it taxonomically kosher
+   */
+  def isTaxonomicallyKosher (assertions:Array[QualityAssertion]) : Boolean = {
+    assertions.filter(ass => {
+       val errorCode = AssertionCodes.all.find(errorCode => errorCode.code == ass.code )
+       if(!errorCode.isEmpty){
+         ass.code >= AssertionCodes.taxonomicBounds._1 &&
+                ass.code < AssertionCodes.taxonomicBounds._2 &&
+                errorCode.get.isFatal
+       } else {
+         false //we cant find the code, so ignore
+       }
+    }).size == 0
+  }
 }

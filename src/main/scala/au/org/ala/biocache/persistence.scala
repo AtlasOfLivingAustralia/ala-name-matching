@@ -5,8 +5,9 @@ import org.apache.cassandra.thrift.{SlicePredicate, Column, ConsistencyLevel}
 import org.wyki.cassandra.pelops.{Policy, Selector, Pelops}
 import java.util.ArrayList
 import org.codehaus.jackson.map.`type`.TypeFactory
-import org.codehaus.jackson.map.ObjectMapper
 import collection.mutable.{ListBuffer, ArrayBuffer}
+import org.codehaus.jackson.map.{DeserializationConfig, ObjectMapper}
+import org.codehaus.jackson.map.annotate.JsonSerialize
 
 /**
  * This trait should be implemented for Cassandra,
@@ -294,6 +295,7 @@ object CassandraPersistenceManager extends PersistenceManager {
      */
     def toJSON(list:List[AnyRef]) : String = {
         val mapper = new ObjectMapper
+        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
         mapper.writeValueAsString(list.asJava)
     }
 
@@ -302,6 +304,7 @@ object CassandraPersistenceManager extends PersistenceManager {
      */
     def toList(jsonString:String, theClass:java.lang.Class[AnyRef]) : List[AnyRef] = {
         var mapper = new ObjectMapper
+        mapper.getDeserializationConfig().set(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         val valueType = TypeFactory.collectionType(classOf[ArrayList[AnyRef]], theClass)
         var listOfObject = mapper.readValue[ArrayList[AnyRef]](jsonString, valueType)
         listOfObject.asScala[AnyRef].toList
