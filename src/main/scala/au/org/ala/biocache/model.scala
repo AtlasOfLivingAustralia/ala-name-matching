@@ -382,10 +382,11 @@ class QualityAssertion (
   @BeanProperty var comment:String,
   @BeanProperty var value:String,
   @BeanProperty var userId:String,
-  @BeanProperty var userDisplayName:String)
+  @BeanProperty var userDisplayName:String,
+  @BeanProperty var created:String)
   extends Cloneable with Comparable[AnyRef] {
 
-  def this() = this(null,null,-1,false,null,null,null,null)
+  def this() = this(null,null,-1,false,null,null,null,null,null)
   override def clone : QualityAssertion = super.clone.asInstanceOf[QualityAssertion]
   override def equals(that: Any) = that match {
     case other: QualityAssertion => {
@@ -402,20 +403,30 @@ class QualityAssertion (
  * type functionality.
  */
 object QualityAssertion {
+
+  def apply(code:Int) = {
+    val uuid = UUID.randomUUID.toString
+    val errorCode = AssertionCodes.getByCode(code)
+    if(errorCode.isEmpty){
+        throw new Exception("Unrecognised code: "+ code)
+    }
+    new QualityAssertion(uuid,errorCode.get.name,errorCode.get.code,false,null,null,null,null,null)
+  }
+
   def apply(errorCode:ErrorCode) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,false,null,null,null,null)
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,false,null,null,null,null,null)
   }
   def apply(errorCode:ErrorCode,positive:Boolean) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,positive,null,null,null,null)
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,positive,null,null,null,null,null)
   }
   def apply(errorCode:ErrorCode,positive:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,positive,comment,null,null,null)
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,positive,comment,null,null,null,null)
   }
   def apply(assertionCode:Int,positive:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,null,assertionCode,positive,comment,null,null,null)
+    new QualityAssertion(uuid,null,assertionCode,positive,comment,null,null,null,null)
   }
 }

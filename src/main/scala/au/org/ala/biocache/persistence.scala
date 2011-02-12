@@ -54,7 +54,7 @@ trait PersistenceManager {
      * Page over all entities, passing the retrieved UUID and property map to the supplied function.
      * Function should return false to exit paging.
      */
-    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean))
+    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int = 1000)
 
     /**
      * Select the properties for the supplied record UUIDs
@@ -211,12 +211,12 @@ object CassandraPersistenceManager extends PersistenceManager {
      * @param occurrenceType
      * @param proc
      */
-    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean) ) {
+    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int = 1000) {
 
       val selector = Pelops.createSelector(poolName, keyspace)
       val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
       var startKey = ""
-      var keyRange = Selector.newKeyRange(startKey, "", 1001)
+      var keyRange = Selector.newKeyRange(startKey, "", pageSize+1)
       var hasMore = true
       var counter = 0
       var columnMap = selector.getColumnsFromRows(keyRange, entityName, slicePredicate, ConsistencyLevel.ONE)
@@ -234,7 +234,7 @@ object CassandraPersistenceManager extends PersistenceManager {
           continue = proc(uuid, map)
         }
         counter += keys.size
-        keyRange = Selector.newKeyRange(startKey, "", 1001)
+        keyRange = Selector.newKeyRange(startKey, "", pageSize+1)
         columnMap = selector.getColumnsFromRows(keyRange, entityName, slicePredicate, ConsistencyLevel.ONE)
         columnMap.remove(startKey)
       }

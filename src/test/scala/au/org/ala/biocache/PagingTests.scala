@@ -24,7 +24,7 @@ class PagingTests extends FunSuite {
         } else {
             true
         }
-      }
+      }, 10
     )
     Pelops.shutdown
   }
@@ -47,7 +47,7 @@ class PagingTests extends FunSuite {
         } else {
             true
         }
-      }
+      }, 10
     )
     Pelops.shutdown
   }

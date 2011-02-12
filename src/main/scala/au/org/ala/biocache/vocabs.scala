@@ -350,6 +350,8 @@ object AssertionCodes {
     } yield (method.invoke(this).asInstanceOf[ErrorCode])).toSet[ErrorCode]
   }
 
+  def getByCode(code:Int) : Option[ErrorCode] = all.find(errorCode => errorCode.code == code)
+
   /**
    * Is it geospatially kosher
    */

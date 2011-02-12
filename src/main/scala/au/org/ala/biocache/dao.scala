@@ -162,7 +162,9 @@ object  OccurrenceDAO {
     } else if(DAO.measurementDefn.contains(fieldName)){
       fullRecord.measurement.setter(fieldName,fieldValue)
     } else if(isQualityAssertion(fieldName)){
-      fullRecord.assertions = fullRecord.assertions ++ Array(fieldName)
+      if(fieldValue equals "false"){
+        fullRecord.assertions = fullRecord.assertions ++ Array(removeQualityAssertionMarker(fieldName))
+      }
     }
   }
 
@@ -223,6 +225,8 @@ object  OccurrenceDAO {
   /** Add a suffix to this field name to indicate quality assertion field */
   private def markAsQualityAssertion(name:String) : String = name + ".qa"
 
+  private def removeQualityAssertionMarker(name:String) : String = name.dropRight(3)
+
   /**
    * Create or retrieve the UUID for this record. The uniqueID should be a
    * has of properties that provides a unique ID for the record within
@@ -262,7 +266,7 @@ object  OccurrenceDAO {
    * @param occurrenceType
    * @param proc, the function to execute.
    */
-  def pageOverAllVersions(proc:((Option[Array[FullRecord]])=>Boolean) ) {
+  def pageOverAllVersions(proc:((Option[Array[FullRecord]])=>Boolean), pageSize:Int = 1000) {
      DAO.persistentManager.pageOverAll(entityName, (guid, map) => {
        //retrieve all versions
        val raw = createOccurrence(guid, map, Raw)
@@ -270,7 +274,7 @@ object  OccurrenceDAO {
        val consensus = createOccurrence(guid, map, Consensus)
        //pass all version to the procedure, wrapped in the Option
        proc(Some(Array(raw, processed, consensus)))
-     })
+     }, pageSize)
   }
 
   /**
@@ -280,13 +284,13 @@ object  OccurrenceDAO {
    * @param occurrenceType
    * @param proc, the function to execute.
    */
-  def pageOverAll(version:Version, proc:((Option[FullRecord])=>Boolean) ) {
+  def pageOverAll(version:Version, proc:((Option[FullRecord])=>Boolean),pageSize:Int = 1000) {
      DAO.persistentManager.pageOverAll(entityName, (guid, map) => {
        //retrieve all versions
        val fullRecord = createOccurrence(guid, map, version)
        //pass all version to the procedure, wrapped in the Option
        proc(Some(fullRecord))
-     })
+     },pageSize)
   }
 
   /**
@@ -352,14 +356,19 @@ object  OccurrenceDAO {
 
     //set the assertions on the full record
     fullRecord.assertions = assertions.toArray.map(_.name)
-    //set the quality assertions flags
+
+    //set the quality assertions flags for all error codes - following the principle writes are fast
     for(qa <- assertions){
       properties.put(markAsQualityAssertion(qa.name), qa.positive.toString)
     }
 
-    if(!assertions.isEmpty){
-        setSystemAssertions(uuid, assertions.toList)
+    val cateredForCodes = assertions.toArray.map(_.code).toSet
+    val uncateredForCodes = AssertionCodes.all.filter(errorCode => {!cateredForCodes.contains(errorCode.code)})
+    for(errorCode <- uncateredForCodes){
+        properties.put(markAsQualityAssertion(errorCode.name), "true".toString)
     }
+
+    setSystemAssertions(uuid, assertions.toList)
 
     //set the overall decision
     assertions.filter(ass => {ass.code >=0}).size == 0
