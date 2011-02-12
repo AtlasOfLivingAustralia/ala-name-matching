@@ -16,10 +16,7 @@ package org.ala.biocache.web;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.ZipOutputStream;
 
 import javax.inject.Inject;
@@ -27,8 +24,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import au.org.ala.biocache.FullRecord;
-import au.org.ala.biocache.OccurrenceDAO;
+import au.org.ala.biocache.*;
 import org.ala.biocache.*;
 import org.ala.biocache.dao.SearchDAO;
 import org.ala.biocache.dto.store.OccurrenceDTO;
@@ -39,6 +35,7 @@ import org.ala.client.appender.RestLevel;
 import org.ala.client.model.LogEventType;
 import org.ala.client.model.LogEventVO;
 import org.ala.client.util.RestfulClient;
+import org.apache.commons.collections.iterators.ArrayListIterator;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpStatus;
@@ -56,7 +53,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
-import au.org.ala.biocache.Store;
 import org.ala.biocache.dto.SearchRequestParams;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -490,7 +486,7 @@ public class OccurrenceController {
         Map<String, Integer> uidStats = null;
         
         if (checkValidSpatialParams(latitude, longitude, radius)) {
-            // spatial search
+            //TODO should be using the Store.writeResultsToStream method
             uidStats = searchDAO.writeResultsToStream(searchQuery.getQuery(), searchQuery.getFilterQuery(), zop, 100, latitude, longitude, radius);
         } else {
             uidStats = searchDAO.writeResultsToStream(searchQuery.getQuery(), searchQuery.getFilterQuery(), zop, 100);
@@ -537,6 +533,27 @@ public class OccurrenceController {
         	out.write(((String)citations[1]).getBytes());
     	}
 	}
+
+
+	/**
+	 * Utility method for retrieving a list of occurrences. Mainly added to help debug
+     * webservices for that a developer can retrieve example UUIDs.
+     *
+	 * @throws Exception
+	 */
+	@RequestMapping(value = {"/occurrences/page"}, method = RequestMethod.GET)
+	public @ResponseBody List<FullRecord> pageOccurrences(
+            @RequestParam(value="pageSize", required=false, defaultValue="10") int pageSize) throws Exception {
+        final List<FullRecord> records = new ArrayList<FullRecord>();
+        Store.pageOverAll(Versions.RAW(), new OccurrenceConsumer(){
+            public boolean consume(FullRecord record) {
+                records.add(record);
+                return false;
+            }
+        }, pageSize);
+        return records;
+	}
+
 	
 	/**
 	 * Occurrence record page
