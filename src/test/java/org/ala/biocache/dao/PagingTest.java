@@ -24,7 +24,7 @@ public class PagingTest extends TestCase {
                 }
                 return true;
 			}
-		});
+		}, 10);
 	}
 	
 	public void testDownload(){
