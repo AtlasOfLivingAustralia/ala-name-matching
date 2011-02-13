@@ -115,6 +115,7 @@ class Classification extends Cloneable {
   @BeanProperty var subspeciesID:String = _
   @BeanProperty var left:String = _
   @BeanProperty var right:String = _
+  @BeanProperty var speciesGroups:Array[String] =_
 }
 
 /**
@@ -246,6 +247,7 @@ class OccurrenceIndex extends Cloneable {
   @BeanProperty @Field("taxon_name") var scientificName:String =_
   @BeanProperty @Field("common_name") var vernacularName:String =_
   @BeanProperty @Field("rank") var taxonRank:String =_
+  @BeanProperty @Field("rank_id") var taxonRankID:String =_
   @BeanProperty @Field("country_code") var raw_countryCode:String =_
   @BeanProperty @Field("kingdom") var kingdom:String =_
   @BeanProperty @Field("phylum") var phylum:String =_
@@ -273,6 +275,8 @@ class OccurrenceIndex extends Cloneable {
   @BeanProperty @Field("data_resource_uid") var dataResourceUid:String =_
   @BeanProperty @Field("data_resource") var dataResourceName:String =_
   @BeanProperty @Field("systemAssertions") var assertions:Array[String] =_
+  @BeanProperty @Field("species_group") var speciesGroups:Array[String] =_
+  @BeanProperty @Field("image_url") var raw_associatedMedia:String = _
   
   //extra raw record fields
   @BeanProperty @Field("raw_taxon_name") var raw_scientificName:String =_

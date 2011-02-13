@@ -298,6 +298,20 @@ object CassandraPersistenceManager extends PersistenceManager {
         mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
         mapper.writeValueAsString(list.asJava)
     }
+    /**
+     * Convert Array to JSON
+     */
+    def toJSON(arr:Array[AnyRef]) : String ={
+      val mapper = new ObjectMapper
+      mapper.writeValueAsString(arr)
+    }
+
+    def toArray(jsonString:String, theClass:java.lang.Class[AnyRef]) :Array[AnyRef] ={
+      val mapper = new ObjectMapper
+      val valueType = TypeFactory.arrayType(theClass)
+      mapper.readValue[Array[AnyRef]](jsonString, valueType)
+      
+    }
 
     /**
      * Convert the supplied list from JSON

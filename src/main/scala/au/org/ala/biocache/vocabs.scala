@@ -267,6 +267,41 @@ object HabitatMap extends VocabMaps {
     "LIMNETIC" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC")
   )
 }
+/**
+ * Case class that stores the information required to map a species to its
+ * associated groups
+ */
+  case class SpeciesGroup(name:String, rank:String, values:Array[String])
+
+  /**
+   * The species groups to test classifications against
+   */
+  object SpeciesGroups{
+    import au.org.ala.util.ReflectBean._
+    val groups = List(
+     SpeciesGroup("Animals", "kingdom", Array("Animalia")),
+     SpeciesGroup("Plants", "kingdom", Array("Plantae")),
+     SpeciesGroup("Fungi", "kingdom", Array("Fungi")),
+     SpeciesGroup("Chromista","kingdom", Array("Chromista")),
+     SpeciesGroup("Protozoa", "kingdom", Array("Protozoa")),
+     SpeciesGroup("Bacteria", "kingdom", Array("Bacteria")),
+     SpeciesGroup("Mammals", "classs", Array("Mammalia")),
+     SpeciesGroup("Birds", "classs", Array("Aves")),
+     SpeciesGroup("Reptiles", "classs", Array("Reptilia")),
+     SpeciesGroup("Amphibians", "classs", Array("Amphibia")),
+     SpeciesGroup("Fish", "classs", Array("Agnatha", "Chondrichthyes", "Osteichthyes", "Actinopterygii", "Sarcopterygii")),
+     SpeciesGroup("Insects",  "classs", Array("Insecta")),
+     SpeciesGroup("Crustaceans", "classs" , Array("Branchiopoda", "Remipedia", "Maxillopoda", "Ostracoda", "Malacostraca")),
+     SpeciesGroup("Molluscs", "phylum", Array("Mollusca"))
+    )
+    /**
+     * Returns all the species groups to which supplied classificatoin belongs
+     */
+    def getSpeciesGroups(cl:Classification):Option[List[String]]={
+      val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(cl.getter(sg.rank)) => sg.name}
+      Some(matchedGroups)
+    }
+  }
 
 /**
  * Case class that represents an error code for a occurrence record.

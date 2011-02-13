@@ -1,5 +1,6 @@
 package au.org.ala.util
 
+import au.org.ala.biocache.CassandraPersistenceManager
 import org.apache.commons.lang.time.DateUtils
 
 /**
@@ -55,6 +56,13 @@ class ReflectBean(ref: AnyRef)  {
         case "java.lang.Integer" => v2 = any2Int(v2)
         case "java.lang.Double" => v2 = any2Double(v2)
         case "java.util.Date" => v2 = any2Date(v2)
+        case "[Ljava.lang.String;"  => {
+            //NC This feels like a hack. 
+            v2.getClass().getName match{
+              case "java.lang.String" =>v2 = CassandraPersistenceManager.toArray(v2.asInstanceOf[String], new String().getClass().asInstanceOf[java.lang.Class[AnyRef] ])
+              case _=>
+            }
+          }
         case _ => 
       }
       method.get.invoke(ref, v2 )

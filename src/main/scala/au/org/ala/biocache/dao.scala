@@ -334,7 +334,19 @@ object OccurrenceDAO {
     var properties = scala.collection.mutable.Map[String,String]()
     val defn = DAO.getDefn(anObject)
     for (field <- defn) {
-        val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
+      //perform some logic based on the type
+      var fieldValue:String = null
+      val method = anObject.getClass.getMethods.find(_.getName == field).get
+      val typ = method.getReturnType
+
+      //Get a string representation of the value based on the type.
+      //JSON strings should be used for non-flat values
+      typ.getName  match{
+        case "[Ljava.lang.String;"  => fieldValue = DAO.persistentManager.toJSON(method.invoke(anObject).asInstanceOf[Array[AnyRef]])
+        case _ => fieldValue = method.invoke(anObject).asInstanceOf[String]
+      }
+      
+//         fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
         if (fieldValue != null && !fieldValue.isEmpty) {
             version match {
                 case Processed => properties.put(markAsProcessed(field), fieldValue)

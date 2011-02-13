@@ -52,8 +52,8 @@ trait IndexDao {
                 var fieldName = if(i ==0) "raw_" + field else field
                 //we only want to attempt to add the items that should appear in the occurrence
                 if(DAO.occurrenceIndexDefn.contains(fieldName)){
-                    val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
-                    if(fieldValue!=null && !fieldValue.isEmpty){
+                    val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[Any]
+                    if(fieldValue!=null){
                         occ.setter(fieldName, fieldValue);
                     }
                 }
