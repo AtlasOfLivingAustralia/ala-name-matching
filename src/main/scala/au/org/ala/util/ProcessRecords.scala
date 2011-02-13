@@ -72,7 +72,7 @@ object ProcessRecords {
   }
 
   /**
-   * Process a record, adding metadata and records quality assertions
+   * Process a record, adding metadata and records quality systemAssertions
    */
   def processRecord(raw:FullRecord){
 
@@ -289,11 +289,17 @@ object ProcessRecords {
 
     if (raw.location.decimalLatitude != null && raw.location.decimalLongitude != null) {
 
-      //TODO validate decimal degrees
+      //TODO validate decimal degrees and parse degrees, minutes, seconds format
       processed.location.decimalLatitude = raw.location.decimalLatitude
       processed.location.decimalLongitude = raw.location.decimalLongitude
 
       //validate coordinate accuracy (coordinateUncertaintyInMeters) and coordinatePrecision (precision - A. Chapman)
+      if(raw.location.coordinateUncertaintyInMeters!=null && raw.location.coordinateUncertaintyInMeters.length>0){
+          //parse it into a numeric number in metres
+          val parsedValue = DistanceRangeParser.parse(raw.location.coordinateUncertaintyInMeters)
+          if(!parsedValue.isEmpty)
+            processed.location.coordinateUncertaintyInMeters = parsedValue.get.toString
+      }
 
       //generate coordinate accuracy if not supplied
       val point = LocationDAO.getByLatLon(raw.location.decimalLatitude, raw.location.decimalLongitude);
@@ -308,7 +314,7 @@ object ProcessRecords {
 
         //check matched stateProvince
         if (processed.location.stateProvince != null && raw.location.stateProvince != null) {
-          //quality assertions
+          //quality systemAssertions
           val stateTerm = States.matchTerm(raw.location.stateProvince)
 
           if (!stateTerm.isEmpty && !processed.location.stateProvince.equalsIgnoreCase(stateTerm.get.canonical)) {
@@ -422,8 +428,8 @@ object ProcessRecords {
         Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, false, "Name not recognised"))
       }
     } catch {
-      case e: HomonymException => Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, false, "Homonym issue resolving the classification"))
-      case e: SearchResultException => Array()
+      case he: HomonymException => logger.debug(he.getMessage,he); Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, false, "Homonym issue resolving the classification"))
+      case se: SearchResultException => logger.debug(se.getMessage,se); Array()
     }
   }
 }
