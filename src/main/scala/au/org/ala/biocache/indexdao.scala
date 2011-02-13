@@ -77,8 +77,8 @@ trait IndexDao {
     }
     //set the id for the occurrence record to the uuid
     occ.uuid = records(0).occurrence.uuid
-    //set the systemAssertions but remove the .qa from the end of the value
-    occ.assertions = records(1).assertions.map(s=> s.substring(0, s.length - 3))
+    //set the systemAssertions 
+    occ.assertions = records(1).assertions
     Some(occ)
   }
 
