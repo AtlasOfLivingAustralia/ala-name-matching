@@ -7,6 +7,7 @@ import scala.collection.JavaConversions
 import scala.collection.mutable.ArrayBuffer
 import java.util.UUID
 import collection.immutable.HashSet
+import org.slf4j.LoggerFactory
 
 /**
  * DAO configuration. Should be refactored to use a DI framework
@@ -88,12 +89,12 @@ object DAO {
 /**
  * A DAO for accessing occurrences.
  */
-object  OccurrenceDAO {
+object OccurrenceDAO {
 
   import ReflectBean._
   import JavaConversions._
   import scalaj.collection.Imports._
-
+  protected val logger = LoggerFactory.getLogger("OccurrenceDAO")
   private val entityName = "occ"
   private val qualityAssertionColumn = "qualityAssertion"
   private val userQualityAssertionColumn = "userQualityAssertion"
@@ -190,13 +191,17 @@ object  OccurrenceDAO {
       //ascertain which term should be associated with which object
       val fieldValue = fields.get(fieldName)
       if(!fieldValue.isEmpty){
-        if(isProcessedValue(fieldName) && version == Processed){
+        if(isQualityAssertion(fieldName)){
+          setProperty(fullRecord, fieldName, fieldValue.get)
+        } else if(taxonomicDecisionColumn.equals(fieldName)){
+          fullRecord.taxonomicallyKosher = "true".equals(fieldValue.get)
+        } else if(geospatialDecisionColumn.equals(fieldName)){
+          fullRecord.geospatiallyKosher = "true".equals(fieldValue.get)
+        } else if(isProcessedValue(fieldName) && version == Processed){
           setProperty(fullRecord, removeSuffix(fieldName), fieldValue.get)
         } else if(isConsensusValue(fieldName) && version == Consensus){
           setProperty(fullRecord, removeSuffix(fieldName), fieldValue.get)
         } else if(version == Raw){
-          setProperty(fullRecord, fieldName, fieldValue.get)
-        } else if(isQualityAssertion(fieldName)){
           setProperty(fullRecord, fieldName, fieldValue.get)
         }
       }
@@ -344,7 +349,7 @@ object  OccurrenceDAO {
   /**
    * Update the occurrence with the supplied record, setting the correct version
    */
-  def updateOccurrence(uuid:String, fullRecord:FullRecord, assertions:Array[QualityAssertion], version:Version) {
+  def updateOccurrence(uuid:String, fullRecord:FullRecord, systemAssertions:Array[QualityAssertion], version:Version) {
     //construct a map of properties to write
     var properties = scala.collection.mutable.Map[String,String]()
 
@@ -354,27 +359,25 @@ object  OccurrenceDAO {
       properties.putAll(map)
     }
 
-    //set the assertions on the full record
-    fullRecord.assertions = assertions.toArray.map(_.name)
+    //set the systemAssertions on the full record
+    fullRecord.assertions = systemAssertions.toArray.map(_.name)
 
-    //set the quality assertions flags for all error codes - following the principle writes are fast
-    for(qa <- assertions){
+    //set the quality systemAssertions flags for all error codes - following the principle writes are fast
+    for(qa <- systemAssertions){
       properties.put(markAsQualityAssertion(qa.name), qa.positive.toString)
     }
 
-    val cateredForCodes = assertions.toArray.map(_.code).toSet
+    val cateredForCodes = systemAssertions.toArray.map(_.code).toSet
     val uncateredForCodes = AssertionCodes.all.filter(errorCode => {!cateredForCodes.contains(errorCode.code)})
     for(errorCode <- uncateredForCodes){
         properties.put(markAsQualityAssertion(errorCode.name), "true".toString)
     }
 
-    setSystemAssertions(uuid, assertions.toList)
+    setSystemAssertions(uuid, systemAssertions.toList)
 
     //set the overall decision
-    assertions.filter(ass => {ass.code >=0}).size == 0
-
-    val geospatiallyKosher = AssertionCodes.isGeospatiallyKosher(assertions)
-    val taxonomicallyKosher = AssertionCodes.isTaxonomicallyKosher(assertions)
+    val geospatiallyKosher = AssertionCodes.isGeospatiallyKosher(systemAssertions)
+    val taxonomicallyKosher = AssertionCodes.isTaxonomicallyKosher(systemAssertions)
 
     properties.put(geospatialDecisionColumn, geospatiallyKosher.toString)
     properties.put(taxonomicDecisionColumn, taxonomicallyKosher.toString)
@@ -402,13 +405,13 @@ object  OccurrenceDAO {
    * @param uuid
    * @param qualityAssertion
    */
-  def addQualityAssertion(uuid:String, qualityAssertion:QualityAssertion){
+  def addSystemAssertion(uuid:String, qualityAssertion:QualityAssertion){
     DAO.persistentManager.putList(uuid,entityName, qualityAssertionColumn,List(qualityAssertion),false)
     DAO.persistentManager.put(uuid, entityName, qualityAssertion.name, qualityAssertion.positive.toString)
   }
 
   /**
-   * Set the system assertions for a record, overwriting existing assertions
+   * Set the system systemAssertions for a record, overwriting existing systemAssertions
    */
   def setSystemAssertions(uuid:String, qualityAssertions:List[QualityAssertion]){
     DAO.persistentManager.putList(uuid,entityName, qualityAssertionColumn,qualityAssertions,true)
@@ -417,7 +420,7 @@ object  OccurrenceDAO {
   /**
    * Retrieve annotations for the supplied UUID.
    */
-  def getQualityAssertions(uuid:String): List[QualityAssertion] = {
+  def getSystemAssertions(uuid:String): List[QualityAssertion] = {
     //val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[java.lang.Class[Array[AnyRef]]]
     val theClass = classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]
     DAO.persistentManager.getList(uuid,entityName, qualityAssertionColumn,theClass).asInstanceOf[List[QualityAssertion]]
@@ -426,12 +429,12 @@ object  OccurrenceDAO {
   /**
    * Add a user supplied assertion - updating the status on the record.
    */
-  def addUserQualityAssertion(uuid:String, qualityAssertion:QualityAssertion){
+  def addUserAssertion(uuid:String, qualityAssertion:QualityAssertion){
 
-    val userAssertions = getUserQualityAssertions(uuid) ++ List(qualityAssertion)
-    val systemAssertions = getQualityAssertions(uuid)
+    val userAssertions = getUserAssertions(uuid) :+ qualityAssertion
+    val systemAssertions = getSystemAssertions(uuid)
 
-    //store the new assertions
+    //store the new systemAssertions
     DAO.persistentManager.putList(uuid,entityName,userQualityAssertionColumn,userAssertions,true)
 
     //update the overall status
@@ -441,7 +444,7 @@ object  OccurrenceDAO {
   /**
    * Retrieve annotations for the supplied UUID.
    */
-  def getUserQualityAssertions(uuid:String): List[QualityAssertion] = {
+  def getUserAssertions(uuid:String): List[QualityAssertion] = {
     val theClass = classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]
     DAO.persistentManager.getList(uuid,entityName, userQualityAssertionColumn,theClass)
         .asInstanceOf[List[QualityAssertion]]
@@ -450,10 +453,12 @@ object  OccurrenceDAO {
   /**
    * Delete a user supplied assertion
    */
-  def deleteUserQualityAssertion(uuid:String, assertionUuid:String) : Boolean = {
+  def deleteUserAssertion(uuid:String, assertionUuid:String) : Boolean = {
 
-    //retrieve existing assertions
-    val assertions = getUserQualityAssertions(uuid)
+    logger.debug("Deleting assertion for : "+uuid + " with assertion uuid : " + uuid)
+
+    //retrieve existing systemAssertions
+    val assertions = getUserAssertions(uuid)
 
     //get the assertion that is to be deleted
     val deletedAssertion = assertions.find(assertion => { assertion.uuid equals assertionUuid})
@@ -464,35 +469,37 @@ object  OccurrenceDAO {
         //delete the assertion with the supplied UUID
         val updateAssertions = assertions.filter(qa => {!(qa.uuid equals assertionUuid)})
 
-        //put the assertions back - overwriting existing assertions
+        //put the systemAssertions back - overwriting existing systemAssertions
         DAO.persistentManager.putList(uuid,entityName,userQualityAssertionColumn,updateAssertions,true)
 
         val assertionName = deletedAssertion.get.name
-        //are there any matching assertions for other users????
-        val systemAssertions = getQualityAssertions(uuid)
+        //are there any matching systemAssertions for other users????
+        val systemAssertions = getSystemAssertions(uuid)
 
         //update the assertion status
         updateAssertionStatus(uuid,assertionName,systemAssertions,updateAssertions)
         true
     } else {
-        println("########## Unable to find assertion with UUID: "+ assertionUuid)
+        logger.warn("Unable to find assertion with UUID: " + assertionUuid)
         false
     }
   }
 
   /**
-   * Update the assertion status using system and user assertions.
+   * Update the assertion status using system and user systemAssertions.
    */
   def updateAssertionStatus(uuid:String, assertionName:String, systemAssertions:List[QualityAssertion], userAssertions:List[QualityAssertion])  {
 
+    println("Updating the assertion status for : " + uuid)
+
     val assertions = userAssertions.filter(qa => {qa.name equals assertionName})
-    //update the status flag on the record, using the system quality assertions
+    //update the status flag on the record, using the system quality systemAssertions
     if(assertions.size>0) {
         //if anyone asserts the negative, the answer is negative
         val positive = userAssertions.foldLeft(true)( (isPositive,qualityAssertion) => { isPositive && qualityAssertion.positive } )
         DAO.persistentManager.put(uuid,entityName,assertionName,positive.toString)
-    } else if(systemAssertions.size>0){
-        //check system assertions for an answer
+    } else if(systemAssertions.size>0) {
+        //check system systemAssertions for an answer
         val matchingAssertion = systemAssertions.find(assertion => {assertion.name equals assertionName})
         if(!matchingAssertion.isEmpty){
             val assertion = matchingAssertion.get
@@ -501,5 +508,18 @@ object  OccurrenceDAO {
     } else {
         DAO.persistentManager.put(uuid,entityName,assertionName,true.toString)
     }
+
+    //set the overall decision
+    var properties = scala.collection.mutable.Map[String,String]()
+    val geospatiallyKosher = AssertionCodes.isGeospatiallyKosher((userAssertions ++ systemAssertions).toArray)
+    val taxonomicallyKosher = AssertionCodes.isTaxonomicallyKosher((userAssertions ++ systemAssertions).toArray)
+    properties.put(geospatialDecisionColumn, geospatiallyKosher.toString)
+    properties.put(taxonomicDecisionColumn, taxonomicallyKosher.toString)
+
+    println("Updating the assertion status for : " + uuid
+        + ", geospatiallyKosher:"+geospatiallyKosher
+        + ", taxonomicallyKosher:"+taxonomicallyKosher)
+
+    DAO.persistentManager.put(uuid,entityName,properties.toMap)
   }
 }

@@ -306,7 +306,7 @@ object AssertionCodes {
   val UNCERTAINTY_IN_PRECISION = ErrorCode("uncertaintyInPrecision",25,false)
 
   //taxonomy issues
-  val TAXONOMIC_ISSUE = ErrorCode("geospatialIssue",10000,false)  // general purpose option
+  val TAXONOMIC_ISSUE = ErrorCode("taxonomicIssue",10000,false)  // general purpose option
   val INVALID_SCIENTIFIC_NAME = ErrorCode("invalidScientificName",10001,false)
   val UNKNOWN_KINGDOM = ErrorCode("unknownKingdom",10002,false)
   val AMBIGUOUS_NAME = ErrorCode("ambiguousName",10003,false)
@@ -334,7 +334,7 @@ object AssertionCodes {
   val all = retrieveAll
 
   val geospatialBounds = (0, 10000)
-  val taxonomicBounds = (0, 10000)
+  val taxonomicBounds = (10000, 20000)
   val geospatialCodes = all.filter(errorCode => {errorCode.code>=0 && errorCode.code<10000})
   val taxonomicCodes = all.filter(errorCode => {errorCode.code>=10000 && errorCode.code<20000})
 

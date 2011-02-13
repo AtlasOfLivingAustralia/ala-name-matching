@@ -9,7 +9,7 @@ import java.io.OutputStream
  *
  * 1) Retrieve single record, three versions
  * 2) Page over records
- * 3) Add user supplied or system assertions for records
+ * 3) Add user supplied or system systemAssertions for records
  * 4) Add user supplied corrections to records
  * 5) Record downloads
  */
@@ -60,38 +60,38 @@ object Store {
   }
 
   /**
-   * Retrieve the system supplied assertions.
+   * Retrieve the system supplied systemAssertions.
    */
   def getSystemAssertions(uuid:java.lang.String) : java.util.List[QualityAssertion] = {
-    OccurrenceDAO.getQualityAssertions(uuid).asJava[QualityAssertion]
+    OccurrenceDAO.getSystemAssertions(uuid).asJava[QualityAssertion]
   }
 
   /**
-   * Retrieve the user supplied assertions.
+   * Retrieve the user supplied systemAssertions.
    */
   def getUserAssertion(uuid:java.lang.String, assertionUuid:java.lang.String) : QualityAssertion = {
-    OccurrenceDAO.getUserQualityAssertions(uuid).find(ass => {ass.uuid == assertionUuid}).getOrElse(null)
+    OccurrenceDAO.getUserAssertions(uuid).find(ass => {ass.uuid == assertionUuid}).getOrElse(null)
   }
 
   /**
-   * Retrieve the user supplied assertions.
+   * Retrieve the user supplied systemAssertions.
    */
   def getUserAssertions(uuid:java.lang.String) : java.util.List[QualityAssertion] = {
-    OccurrenceDAO.getUserQualityAssertions(uuid).asJava[QualityAssertion]
+    OccurrenceDAO.getUserAssertions(uuid).asJava[QualityAssertion]
   }
 
   /**
    * Add a user assertion
    */
   def addUserAssertion(uuid:java.lang.String, qualityAssertion:QualityAssertion){
-    OccurrenceDAO.addUserQualityAssertion(uuid, qualityAssertion)
+    OccurrenceDAO.addUserAssertion(uuid, qualityAssertion)
   }
 
   /**
    * Delete an assertion.
    */
   def deleteUserAssertion(uuid:java.lang.String, assertionUuid:java.lang.String){
-    OccurrenceDAO.deleteUserQualityAssertion(uuid,assertionUuid)
+    OccurrenceDAO.deleteUserAssertion(uuid,assertionUuid)
   }
 
   /**

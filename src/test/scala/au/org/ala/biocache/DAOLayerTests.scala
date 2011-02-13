@@ -51,15 +51,15 @@ class DAOLayerTests extends FunSuite {
         qa.userId = "David.Martin@csiro.au"
         qa.userDisplayName = "Dave Martin"
 
-        OccurrenceDAO.addQualityAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa)
-        OccurrenceDAO.addQualityAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa)
+        OccurrenceDAO.addSystemAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa)
+        OccurrenceDAO.addSystemAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa)
 
         var qa2 = QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE)
         qa2.comment = "My comment"
         qa2.userId = "David.Martin@csiro.au"
         qa2.userDisplayName = "Dave Martin"
 
-        OccurrenceDAO.addQualityAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa2 )
+        OccurrenceDAO.addSystemAssertion("3480993d-b0b1-4089-9faf-30b4eab050ae",qa2 )
 
         Pelops.shutdown
     }

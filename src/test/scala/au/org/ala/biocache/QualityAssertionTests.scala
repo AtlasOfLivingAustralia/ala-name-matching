@@ -6,7 +6,7 @@ import org.wyki.cassandra.pelops.{Policy, Mutator, Pelops}
 
 class QualityAssertionTests extends FunSuite {
 
-  test("Add and delete user assertions"){
+  test("Add and delete user systemAssertions"){
 
     val uuid = "test-uuid-qa-delete1"
     try {
@@ -19,21 +19,21 @@ class QualityAssertionTests extends FunSuite {
     }
 
     val qa1 = QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH, false)
-    OccurrenceDAO.addUserQualityAssertion(uuid, qa1)
+    OccurrenceDAO.addUserAssertion(uuid, qa1)
 
     val qa2 = QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH, true)
-    OccurrenceDAO.addUserQualityAssertion(uuid, qa2)
+    OccurrenceDAO.addUserAssertion(uuid, qa2)
 
     expect(2){
-        val userAssertions = OccurrenceDAO.getUserQualityAssertions(uuid)
+        val userAssertions = OccurrenceDAO.getUserAssertions(uuid)
         userAssertions.size
     }
 
     //run the delete
-    OccurrenceDAO.deleteUserQualityAssertion(uuid, qa2.uuid)
+    OccurrenceDAO.deleteUserAssertion(uuid, qa2.uuid)
 
     expect(1){
-        val userAssertions = OccurrenceDAO.getUserQualityAssertions(uuid)
+        val userAssertions = OccurrenceDAO.getUserAssertions(uuid)
         userAssertions.size
     }
 
