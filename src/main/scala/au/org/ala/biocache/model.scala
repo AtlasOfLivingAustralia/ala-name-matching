@@ -237,7 +237,7 @@ class OccurrenceIndex extends Cloneable {
   @BeanProperty @Field("hub_uid") var dataHubUid:String =_
   @BeanProperty @Field("institution_code_uid") var institutionUid:String =_
   @BeanProperty @Field("institution_code") var raw_institutionCode:String =_
-  @BeanProperty @Field("institution_code_name") var institutionName:String =_
+  @BeanProperty @Field("institution_name") var institutionName:String =_
   @BeanProperty @Field("collection_code_uid") var collectionUid:String =_
   @BeanProperty @Field("collection_code") var raw_collectionCode:String =_
   @BeanProperty @Field("collection_name") var collectionName:String =_
