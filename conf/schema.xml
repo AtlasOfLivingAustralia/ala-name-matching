@@ -487,12 +487,12 @@
    <field name="data_resource" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="institution_code_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="institution_code" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
-   <field name="institution_code_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="institution_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <!-- Not displayed in search results -->
    <!-- field name="institution_code_lsid" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" /-->
    <field name="collection_code_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="collection_code" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
-   <field name="collection_name" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
+   <field name="collection_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <!-- Not displayed in search results -->
    <!-- field name="catalogue_number_id" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
    <field name="catalogue_number" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
@@ -508,9 +508,14 @@
    <field name="names_and_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true"/>
    <field name="rank" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <!-- Not displayed in search results -->
-   <!-- field name="rank_id" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
+   <field name="rank_id" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="raw_taxon_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="raw_common_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+
+   <field name="multimedia" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false"/>
+   <field name="image_url" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false"/>
+   <field name="species_group" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false"/>
+
    <!-- Not displayed in search resutls -->
    <!-- field name="raw_author" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
    <field name="country_code" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
