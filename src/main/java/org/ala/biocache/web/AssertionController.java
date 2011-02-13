@@ -37,7 +37,7 @@ public class AssertionController {
         QualityAssertion qa = au.org.ala.biocache.QualityAssertion.apply(code);
         Store.addUserAssertion(recordUuid, qa);
         String server = request.getSession().getServletContext().getInitParameter("serverName");
-        response.setHeader("location", server + "/occurrence/" + recordUuid + "/assertions/" + qa.getUuid());
+        response.setHeader("Location", server + "/occurrences/" + recordUuid + "/assertions/" + qa.getUuid());
         response.setStatus(HttpServletResponse.SC_CREATED);
     }
 
@@ -62,11 +62,16 @@ public class AssertionController {
         @PathVariable(value="assertionUuid") String assertionUuid,
         HttpServletResponse response) throws Exception {
         QualityAssertion qa = Store.getUserAssertion(recordUuid, assertionUuid);
-        return qa;
+        if(qa!=null){
+            return qa;
+        } else {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return null;
+        }
     }
 
     /**
-     * Get assertions
+     * Get systemAssertions
      */
     @RequestMapping(value = {"/occurrences/{recordUuid}/assertions/"}, method = RequestMethod.GET)
 	public @ResponseBody List<QualityAssertion> getAssertions(
