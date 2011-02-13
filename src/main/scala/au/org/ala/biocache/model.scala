@@ -247,7 +247,7 @@ class OccurrenceIndex extends Cloneable {
   @BeanProperty @Field("taxon_name") var scientificName:String =_
   @BeanProperty @Field("common_name") var vernacularName:String =_
   @BeanProperty @Field("rank") var taxonRank:String =_
-  @BeanProperty @Field("rank_id") var taxonRankID:String =_
+  @BeanProperty @Field("rank_id") var taxonRankID:java.lang.Integer =_
   @BeanProperty @Field("country_code") var raw_countryCode:String =_
   @BeanProperty @Field("kingdom") var kingdom:String =_
   @BeanProperty @Field("phylum") var phylum:String =_
