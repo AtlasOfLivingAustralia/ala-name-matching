@@ -312,6 +312,12 @@ object ProcessRecords {
         processed.location.lga = point.get.lga
         processed.location.habitat = point.get.habitat
 
+        //TODO - replace with country association with points via the gazetteer
+        if(processed.location.imcra!=null && !processed.location.imcra.isEmpty
+            || processed.location.ibra!=null && !processed.location.ibra.isEmpty){
+            processed.location.country = "Australia"
+        }
+
         //check matched stateProvince
         if (processed.location.stateProvince != null && raw.location.stateProvince != null) {
           //quality systemAssertions
