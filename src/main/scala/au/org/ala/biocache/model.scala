@@ -415,23 +415,23 @@ object QualityAssertion {
     if(errorCode.isEmpty){
         throw new Exception("Unrecognised code: "+ code)
     }
-    new QualityAssertion(uuid,errorCode.get.name,errorCode.get.code,false,null,null,null,null,null)
+    new QualityAssertion(uuid,errorCode.get.name,errorCode.get.code,true,null,null,null,null,null)
   }
 
   def apply(errorCode:ErrorCode) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,false,null,null,null,null,null)
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,true,null,null,null,null,null)
   }
-  def apply(errorCode:ErrorCode,positive:Boolean) = {
+  def apply(errorCode:ErrorCode,problemAsserted:Boolean) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,positive,null,null,null,null,null)
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,problemAsserted,null,null,null,null,null)
   }
-  def apply(errorCode:ErrorCode,positive:Boolean,comment:String) = {
+  def apply(errorCode:ErrorCode,problemAsserted:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,positive,comment,null,null,null,null)
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,problemAsserted,comment,null,null,null,null)
   }
-  def apply(assertionCode:Int,positive:Boolean,comment:String) = {
+  def apply(assertionCode:Int,problemAsserted:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,null,assertionCode,positive,comment,null,null,null,null)
+    new QualityAssertion(uuid,null,assertionCode,problemAsserted,comment,null,null,null,null)
   }
 }

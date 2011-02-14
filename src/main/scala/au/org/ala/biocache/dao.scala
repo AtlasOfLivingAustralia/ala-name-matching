@@ -163,8 +163,8 @@ object OccurrenceDAO {
     } else if(DAO.measurementDefn.contains(fieldName)){
       fullRecord.measurement.setter(fieldName,fieldValue)
     } else if(isQualityAssertion(fieldName)){
-      if(fieldValue equals "false"){
-        fullRecord.assertions = fullRecord.assertions ++ Array(removeQualityAssertionMarker(fieldName))
+      if(fieldValue equals "true"){
+        fullRecord.assertions = fullRecord.assertions :+ removeQualityAssertionMarker(fieldName)
       }
     }
   }
@@ -301,13 +301,6 @@ object OccurrenceDAO {
   /**
    * Update the version of the occurrence record.
    */
-  def updateOccurrence(uuid:String, fullRecord:FullRecord, version:Version) {
-    updateOccurrence(uuid,fullRecord,Array(),version)
-  }
-
-  /**
-   * Update the version of the occurrence record.
-   */
   def addRawOccurrenceBatch(fullRecords:Array[FullRecord]) {
 
     var batch = scala.collection.mutable.Map[String,Map[String,String]]()
@@ -325,7 +318,6 @@ object OccurrenceDAO {
     //commit to cassandra
     DAO.persistentManager.putBatch(entityName,batch.toMap)
   }
-
 
   /**
    * for each field in the definition, check if there is a value to write
@@ -359,9 +351,16 @@ object OccurrenceDAO {
   }
 
   /**
+   * Update the version of the occurrence record.
+   */
+  def updateOccurrence(uuid:String, fullRecord:FullRecord, version:Version) {
+    updateOccurrence(uuid,fullRecord,None,version)
+  }
+  
+  /**
    * Update the occurrence with the supplied record, setting the correct version
    */
-  def updateOccurrence(uuid:String, fullRecord:FullRecord, systemAssertions:Array[QualityAssertion], version:Version) {
+  def updateOccurrence(uuid:String, fullRecord:FullRecord, assertions:Option[Array[QualityAssertion]], version:Version) {
     //construct a map of properties to write
     var properties = scala.collection.mutable.Map[String,String]()
 
@@ -370,30 +369,35 @@ object OccurrenceDAO {
       //add all to map
       properties.putAll(map)
     }
-
-    //set the systemAssertions on the full record
-    fullRecord.assertions = systemAssertions.toArray.map(_.name)
-
-    //set the quality systemAssertions flags for all error codes - following the principle writes are fast
-    for(qa <- systemAssertions){
-      properties.put(markAsQualityAssertion(qa.name), qa.problemAsserted.toString)
+    
+    //if supplied, update the assertions
+    if(!assertions.isEmpty){
+	    val systemAssertions = assertions.get
+	    
+	    //set the systemAssertions on the full record
+	    fullRecord.assertions = systemAssertions.toArray.map(_.name)
+	
+	    //set the quality systemAssertions flags for all error codes - following the principle writes are fast
+	    for(qa <- systemAssertions){
+	      properties.put(markAsQualityAssertion(qa.name), qa.problemAsserted.toString)
+	    }
+	
+	    //for the
+	    val cateredForCodes = systemAssertions.toArray.map(_.code).toSet
+	    val uncateredForCodes = AssertionCodes.all.filter(errorCode => {!cateredForCodes.contains(errorCode.code)})
+	    for(errorCode <- uncateredForCodes){
+	        properties.put(markAsQualityAssertion(errorCode.name), "false".toString)
+	    }
+	
+	    setSystemAssertions(uuid, systemAssertions.toList)
+	
+	    //set the overall decision
+	    val geospatiallyKosher = AssertionCodes.isGeospatiallyKosher(systemAssertions)
+	    val taxonomicallyKosher = AssertionCodes.isTaxonomicallyKosher(systemAssertions)
+	
+	    properties.put(geospatialDecisionColumn, geospatiallyKosher.toString)
+	    properties.put(taxonomicDecisionColumn, taxonomicallyKosher.toString)
     }
-
-    //for the
-    val cateredForCodes = systemAssertions.toArray.map(_.code).toSet
-    val uncateredForCodes = AssertionCodes.all.filter(errorCode => {!cateredForCodes.contains(errorCode.code)})
-    for(errorCode <- uncateredForCodes){
-        properties.put(markAsQualityAssertion(errorCode.name), "false".toString)
-    }
-
-    setSystemAssertions(uuid, systemAssertions.toList)
-
-    //set the overall decision
-    val geospatiallyKosher = AssertionCodes.isGeospatiallyKosher(systemAssertions)
-    val taxonomicallyKosher = AssertionCodes.isTaxonomicallyKosher(systemAssertions)
-
-    properties.put(geospatialDecisionColumn, geospatiallyKosher.toString)
-    properties.put(taxonomicDecisionColumn, taxonomicallyKosher.toString)
 
     //commit to cassandra
     DAO.persistentManager.put(uuid,entityName,properties.toMap)
@@ -427,7 +431,7 @@ object OccurrenceDAO {
    * Set the system systemAssertions for a record, overwriting existing systemAssertions
    */
   def setSystemAssertions(uuid:String, qualityAssertions:List[QualityAssertion]){
-    DAO.persistentManager.putList(uuid,entityName, qualityAssertionColumn,qualityAssertions,true)
+    DAO.persistentManager.putList(uuid,entityName,qualityAssertionColumn,qualityAssertions,true)
   }
 
   /**

@@ -27,10 +27,10 @@ class VersionTests extends FunSuite {
     consensus.occurrence.uuid = uuid
     consensus.classification.scientificName = "Consenus version"
 
-    val assertions = Array(QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, false, "Coordinates bad"))
+    val assertions = Array(QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, true, "Coordinates bad"))
 
     OccurrenceDAO.updateOccurrence(uuid,raw,Raw)
-    OccurrenceDAO.updateOccurrence(uuid,processed,assertions,Processed)
+    OccurrenceDAO.updateOccurrence(uuid,processed,Some(assertions),Processed)
     OccurrenceDAO.updateOccurrence(uuid,consensus,Consensus)
 
     //retrieve and test

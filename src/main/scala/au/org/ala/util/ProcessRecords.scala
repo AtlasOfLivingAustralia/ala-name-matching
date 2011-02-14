@@ -105,8 +105,10 @@ object ProcessRecords {
     // processIdentifierRecords 
     // 
 
+    val systemAssertions = Some(assertions.toArray)
+    
     //store the occurrence
-    OccurrenceDAO.updateOccurrence(guid, processed, assertions.toArray, Processed)
+    OccurrenceDAO.updateOccurrence(guid, processed, systemAssertions, Processed)
   }
 
   /**
