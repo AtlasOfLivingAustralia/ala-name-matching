@@ -5,9 +5,14 @@ import au.org.ala.util.ReflectBean
 import java.io.OutputStream
 import scala.collection.JavaConversions
 import scala.collection.mutable.ArrayBuffer
+import java.util.Properties
 import java.util.UUID
 import collection.immutable.HashSet
 import org.slf4j.LoggerFactory
+import com.google.inject.Guice
+import com.google.inject.Module
+import com.google.inject.Binder
+import com.google.inject.name.Names
 
 /**
  * DAO configuration. Should be refactored to use a DI framework
@@ -16,7 +21,8 @@ import org.slf4j.LoggerFactory
 object DAO {
 
   import ReflectBean._
-  val persistentManager = CassandraPersistenceManager
+  
+  val persistentManager = new CassandraPersistenceManager
   val nameIndex = new CBIndexSearch("/data/lucene/namematching")
 
   //read in the object mappings using reflection
@@ -334,7 +340,7 @@ object OccurrenceDAO {
       //Get a string representation of the value based on the type.
       //JSON strings should be used for non-flat values
       typ.getName  match{
-        case "[Ljava.lang.String;"  => fieldValue = DAO.persistentManager.toJSON(method.invoke(anObject).asInstanceOf[Array[AnyRef]])
+        case "[Ljava.lang.String;"  => fieldValue = Json.toJSON(method.invoke(anObject).asInstanceOf[Array[AnyRef]])
         case _ => fieldValue = method.invoke(anObject).asInstanceOf[String]
       }
       

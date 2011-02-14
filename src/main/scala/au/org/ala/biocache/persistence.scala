@@ -4,10 +4,13 @@ import collection.JavaConversions
 import org.apache.cassandra.thrift.{SlicePredicate, Column, ConsistencyLevel}
 import org.wyki.cassandra.pelops.{Policy, Selector, Pelops}
 import java.util.ArrayList
-import org.codehaus.jackson.map.`type`.TypeFactory
 import collection.mutable.{ListBuffer, ArrayBuffer}
-import org.codehaus.jackson.map.{DeserializationConfig, ObjectMapper}
-import org.codehaus.jackson.map.annotate.JsonSerialize
+import com.google.inject.Guice
+import com.google.inject.Module
+import com.google.inject.Binder
+import com.google.inject.name.Names
+import com.google.inject.Inject
+import com.google.inject.name.Named
 
 /**
  * This trait should be implemented for Cassandra,
@@ -38,6 +41,9 @@ trait PersistenceManager {
      */
     def put(uuid:String, entityName:String, keyValuePairs:Map[String, String])
 
+    /**
+     * Add a batch of properties.
+     */
     def putBatch(entityName:String, batch:Map[String, Map[String,String]])
 
     /**
@@ -63,22 +69,20 @@ trait PersistenceManager {
 }
 
 /**
- *   Cassandra based implementation of a persistence manager.
+ * Cassandra based implementation of a persistence manager.
  * This should maintain most of the cassandra logic
- *
- * TODO - Implement remaining methods, and remove cassandra logic from DAOs.
- * Also start using a DI framework.
  */
-object CassandraPersistenceManager extends PersistenceManager {
+@Inject
+class CassandraPersistenceManager (
+    @Named("cassandraKeyspace") var keyspace:String = "occ", 
+    @Named("cassandraHosts") var hosts:Array[String] = Array("localhost"),
+    @Named("cassandraPort") var port:Int = 9160,
+    @Named("cassandraPoolName") var poolName:String = "biocache-store-pool",
+    @Named("cassandraColumnLimit") var maxColumnLimit:Int = 10000) extends PersistenceManager {
 
     import JavaConversions._
     import scalaj.collection.Imports._
-
-    val keyspace = "occ"
-    val hosts = Array{"localhost"}
-    val poolName = "biocache-store-pool"
-    val maxColumnLimit = 10000
-    Pelops.addPool(poolName, hosts, 9160, false, keyspace, new Policy)
+    Pelops.addPool(poolName, hosts, port, false, keyspace, new Policy)
 
     /**
      * Retrieve an array of objects, parsing the JSON stored.
@@ -153,7 +157,7 @@ object CassandraPersistenceManager extends PersistenceManager {
             List()
         } else {
             val json = new String(column.get.getValue)
-            toList(json,theClass)
+            Json.toList(json,theClass)
         }
     }
 
@@ -167,7 +171,7 @@ object CassandraPersistenceManager extends PersistenceManager {
         val mutator = Pelops.createMutator(poolName, keyspace)
 
         if (overwrite) {
-            val json = toJSON(newList)
+            val json = Json.toJSON(newList)
             mutator.writeColumn(uuid, entityName, mutator.newColumn(propertyName, json))
         } else {
 
@@ -176,12 +180,12 @@ object CassandraPersistenceManager extends PersistenceManager {
             //if empty, write, if populated resolve
             if (column.isEmpty) {
                 //write new values
-                val json = toJSON(newList)
+                val json = Json.toJSON(newList)
                 mutator.writeColumn(uuid, entityName, mutator.newColumn(propertyName, json))
             } else {
                 //retrieve the existing objects
                 val currentJson = new String(column.get.getValue)
-                var currentList = toList(currentJson, newList(0).getClass.asInstanceOf[java.lang.Class[AnyRef]]) //   gson.fromJson(currentJson, propertyArray.getClass).asInstanceOf[Array[AnyRef]]
+                var currentList = Json.toList(currentJson, newList(0).getClass.asInstanceOf[java.lang.Class[AnyRef]]) //   gson.fromJson(currentJson, propertyArray.getClass).asInstanceOf[Array[AnyRef]]
 
                 var written = false
                 var buffer = new ListBuffer[AnyRef]
@@ -197,7 +201,7 @@ object CassandraPersistenceManager extends PersistenceManager {
                 buffer ++= newList
 
                 // check equals
-                val newJson = toJSON(buffer.toList)
+                val newJson = Json.toJSON(buffer.toList)
                 mutator.writeColumn(uuid, entityName, mutator.newColumn(propertyName, newJson))
             }
         }
@@ -288,39 +292,5 @@ object CassandraPersistenceManager extends PersistenceManager {
         } catch {
             case _ => None //expected behaviour when row doesnt exist
         }
-    }
-
-    /**
-     * Convert the supplied list to JSON
-     */
-    def toJSON(list:List[AnyRef]) : String = {
-        val mapper = new ObjectMapper
-        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
-        mapper.writeValueAsString(list.asJava)
-    }
-    /**
-     * Convert Array to JSON
-     */
-    def toJSON(arr:Array[AnyRef]) : String ={
-      val mapper = new ObjectMapper
-      mapper.writeValueAsString(arr)
-    }
-
-    def toArray(jsonString:String, theClass:java.lang.Class[AnyRef]) :Array[AnyRef] ={
-      val mapper = new ObjectMapper
-      val valueType = TypeFactory.arrayType(theClass)
-      mapper.readValue[Array[AnyRef]](jsonString, valueType)
-      
-    }
-
-    /**
-     * Convert the supplied list from JSON
-     */
-    def toList(jsonString:String, theClass:java.lang.Class[AnyRef]) : List[AnyRef] = {
-        var mapper = new ObjectMapper
-        mapper.getDeserializationConfig().set(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        val valueType = TypeFactory.collectionType(classOf[ArrayList[AnyRef]], theClass)
-        var listOfObject = mapper.readValue[ArrayList[AnyRef]](jsonString, valueType)
-        listOfObject.asScala[AnyRef].toList
     }
 }

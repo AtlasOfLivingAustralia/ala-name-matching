@@ -431,7 +431,7 @@ object ProcessRecords {
 
         //Add the species group information - I think that it is better to store this value than calculate it at index time
         val speciesGroups = SpeciesGroups.getSpeciesGroups(processed.classification)
-        println("Species Groups: " + speciesGroups)
+        logger.debug("Species Groups: " + speciesGroups)
         if(!speciesGroups.isEmpty && speciesGroups.get.length>0){
           processed.classification.speciesGroups = speciesGroups.get.toArray[String]
         }
