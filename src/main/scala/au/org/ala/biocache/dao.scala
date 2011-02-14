@@ -376,13 +376,14 @@ object OccurrenceDAO {
 
     //set the quality systemAssertions flags for all error codes - following the principle writes are fast
     for(qa <- systemAssertions){
-      properties.put(markAsQualityAssertion(qa.name), qa.positive.toString)
+      properties.put(markAsQualityAssertion(qa.name), qa.problemAsserted.toString)
     }
 
+    //for the
     val cateredForCodes = systemAssertions.toArray.map(_.code).toSet
     val uncateredForCodes = AssertionCodes.all.filter(errorCode => {!cateredForCodes.contains(errorCode.code)})
     for(errorCode <- uncateredForCodes){
-        properties.put(markAsQualityAssertion(errorCode.name), "true".toString)
+        properties.put(markAsQualityAssertion(errorCode.name), "false".toString)
     }
 
     setSystemAssertions(uuid, systemAssertions.toList)
@@ -419,7 +420,7 @@ object OccurrenceDAO {
    */
   def addSystemAssertion(uuid:String, qualityAssertion:QualityAssertion){
     DAO.persistentManager.putList(uuid,entityName, qualityAssertionColumn,List(qualityAssertion),false)
-    DAO.persistentManager.put(uuid, entityName, qualityAssertion.name, qualityAssertion.positive.toString)
+    DAO.persistentManager.put(uuid, entityName, qualityAssertion.name, qualityAssertion.problemAsserted.toString)
   }
 
   /**
@@ -507,15 +508,25 @@ object OccurrenceDAO {
     val assertions = userAssertions.filter(qa => {qa.name equals assertionName})
     //update the status flag on the record, using the system quality systemAssertions
     if(assertions.size>0) {
+
         //if anyone asserts the negative, the answer is negative
-        val positive = userAssertions.foldLeft(true)( (isPositive,qualityAssertion) => { isPositive && qualityAssertion.positive } )
-        DAO.persistentManager.put(uuid,entityName,assertionName,positive.toString)
+        val negativeAssertion = userAssertions.find(qa => qa.problemAsserted)
+
+//            foldLeft(true)( (isProblemAsserted,qualityAssertion) => {
+//            isProblemAsserted && qualityAssertion.problemAsserted
+//        })
+
+        if(!negativeAssertion.isEmpty){
+            val qualityAssertion = negativeAssertion.get
+            DAO.persistentManager.put(uuid,entityName,
+                markAsQualityAssertion(qualityAssertion.name),qualityAssertion.problemAsserted.toString)
+        }
     } else if(systemAssertions.size>0) {
         //check system systemAssertions for an answer
         val matchingAssertion = systemAssertions.find(assertion => {assertion.name equals assertionName})
         if(!matchingAssertion.isEmpty){
             val assertion = matchingAssertion.get
-            DAO.persistentManager.put(uuid,entityName,assertion.name,assertion.positive.toString)
+            DAO.persistentManager.put(uuid,entityName,assertion.name,assertion.problemAsserted.toString)
         }
     } else {
         DAO.persistentManager.put(uuid,entityName,assertionName,true.toString)

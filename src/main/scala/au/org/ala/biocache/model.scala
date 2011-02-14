@@ -383,7 +383,7 @@ class QualityAssertion (
   @BeanProperty var uuid:String,
   @BeanProperty var name:String,
   @BeanProperty var code:Int,
-  @BeanProperty var positive:Boolean,
+  @BeanProperty var problemAsserted:Boolean,
   @BeanProperty var comment:String,
   @BeanProperty var value:String,
   @BeanProperty var userId:String,
@@ -395,7 +395,7 @@ class QualityAssertion (
   override def clone : QualityAssertion = super.clone.asInstanceOf[QualityAssertion]
   override def equals(that: Any) = that match {
     case other: QualityAssertion => {
-      (other.code == code) && (other.positive == positive) && (other.userId == userId)
+      (other.code == code) && (other.problemAsserted == problemAsserted) && (other.userId == userId)
     }
     case _ => false
   }
