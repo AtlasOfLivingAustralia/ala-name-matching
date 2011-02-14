@@ -292,6 +292,7 @@ class OccurrenceIndex extends Cloneable {
   @BeanProperty @Field("point-0.001") var point0001:String =_
   @BeanProperty @Field("point-0.0001") var point00001:String =_
   @BeanProperty @Field("names_and_lsid") var namesLsid:String =_
+  @BeanProperty @Field("multimedia") var multimedia:String =_
 }
 
 /**

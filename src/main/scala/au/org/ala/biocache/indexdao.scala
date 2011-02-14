@@ -124,6 +124,7 @@ object SolrOccurrenceDAO extends IndexDao{
      //set the names lsid
       val v = List(defaultString(occ.get.scientificName), defaultString(occ.get.taxonConceptID), defaultString(occ.get.vernacularName), defaultString(occ.get.kingdom), defaultString(occ.get.family))
       occ.get.setNamesLsid(v.mkString("|"))
+      occ.get.setMultimedia(if(occ.get.getRaw_associatedMedia() != null) "Multimedia" else "None")
      }
      
      occ
