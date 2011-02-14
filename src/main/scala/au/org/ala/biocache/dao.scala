@@ -68,7 +68,7 @@ object DAO {
     val defn = getDefn(anObject)
     for(fieldName<-defn){
       val fieldValue = map.get(fieldName)
-      if(!fieldValue.isEmpty && fieldValue.get.length>0){
+      if(!fieldValue.isEmpty && !fieldValue.get.trim.isEmpty){
         anObject.setter(fieldName,fieldValue.get)
       }
     }
@@ -517,7 +517,7 @@ object OccurrenceDAO {
 
     val assertions = userAssertions.filter(qa => {qa.name equals assertionName})
     //update the status flag on the record, using the system quality systemAssertions
-    if(assertions.size>0) {
+    if(!assertions.isEmpty) {
 
         //if anyone asserts the negative, the answer is negative
         val negativeAssertion = userAssertions.find(qa => qa.problemAsserted)
@@ -531,7 +531,7 @@ object OccurrenceDAO {
             DAO.persistentManager.put(uuid,entityName,
                 markAsQualityAssertion(qualityAssertion.name),qualityAssertion.problemAsserted.toString)
         }
-    } else if(systemAssertions.size>0) {
+    } else if(!systemAssertions.isEmpty) {
         //check system systemAssertions for an answer
         val matchingAssertion = systemAssertions.find(assertion => {assertion.name equals assertionName})
         if(!matchingAssertion.isEmpty){
