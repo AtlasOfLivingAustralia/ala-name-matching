@@ -13,22 +13,22 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
 
         <h3>Occurrences</h3>
         <ul>
-            <li>/occurrence/{uuid}</li>
-            <li>/occurrence/page - just shows the first 10 occurrences (for debug only)</li>
-            <li>/occurrences/taxon/{guid}</li>
-            <li>/occurrences/collection/{uid}</li>
-            <li>/occurrences/institution/{uid}</li>
-            <li>/occurrences/data-resource/{uid}</li>
-            <li>/occurrences/data-provider/{uid}</li>
-            <li>/occurrences/download</li>
+            <li><strong>Occurrence view:</strong> /occurrence/{uuid}</li>
+            <li><strong>Occurrence listing:</strong> /occurrence/page - just shows the first 10 occurrences (for debug only)</li>
+            <li><strong>Occurrence for taxon:</strong> /occurrences/taxon/{guid}</li>
+            <li><strong>Occurrence for collection:</strong> /occurrences/collection/{uid}</li>
+            <li><strong>Occurrence for institution:</strong> /occurrences/institution/{uid}</li>
+            <li><strong>Occurrence for data resource:</strong> /occurrences/data-resource/{uid}</li>
+            <li><strong>Occurrence for data provider:</strong> /occurrences/data-provider/{uid}</li>
+            <li><strong>Occurrence download:</strong> /occurrences/download - needs request param definition</li>
         </ul>
 
         <h3>Assertions</h3>
         <ul>
-            <li>/occurrence/{uuid}/assertions/codes</li>
-            <li>/occurrence/{uuid}/assertions/add</li>
-            <li>/occurrence/{uuid}/assertions/{assertionUuid}/delete</li>
-            <li>/occurrence/{uuid}/assertions/</li>
+            <li><strong>List assertion codes:</strong> /occurrences/{uuid}/assertions/codes</li>
+            <li><strong>Add an assertion:</strong> /occurrences/{uuid}/assertions/add</li>
+            <li><strong>Delete an assertion:</strong> /occurrences/{uuid}/assertions/{assertionUuid}/delete</li>
+            <li><strong>List assertions for occurrence:</strong> /occurrences/{uuid}/assertions/</li>
         </ul>
 
         <h2>Free text search of occurrence records (will return JSON)</h2>
