@@ -27,14 +27,30 @@ public class SearchRequestParams {
 
     protected String q = "";
     protected String[] fq = {""}; // must not be null
+    /**
+     * The facets to be included by the search
+     * Initialised with the default facets to use
+     */
+    protected String[] facets = {"basis_of_record",
+                                "type_status",
+                                "state",
+                                "biogeographic_region",
+                                "rank",
+                                "kingdom",
+                                "family",
+                                "assertions",
+                                "month",
+                                "institution_name",
+                                "collection_name",
+                                "date",
+                                "species_group",
+                                "multimedia"};
     protected Integer start = 0;
     protected Integer pageSize = 10;
     protected String sort = "score";
     protected String dir = "asc";
-    protected Float radius =Float.NaN;
-    protected Float lat = Float.NaN;
-    protected Float lon = Float.NaN;
     private String displayString;
+   
     
     /**
      * Custom toString method to produce a String to be used as the request parameters
@@ -51,7 +67,6 @@ public class SearchRequestParams {
         req.append("&pageSize=").append(pageSize);
         req.append("&sort=").append(sort);
         req.append("&dir=").append(dir);
-        
         return req.toString();
     }
 
@@ -163,30 +178,6 @@ public class SearchRequestParams {
         this.dir = sortDirection;
     }
 
-    public Float getLat() {
-        return lat;
-    }
-
-    public void setLat(Float lat) {
-        this.lat = lat;
-    }
-
-    public Float getLon() {
-        return lon;
-    }
-
-    public void setLon(Float lon) {
-        this.lon = lon;
-    }
-
-    public Float getRadius() {
-        return radius;
-    }
-
-    public void setRadius(Float radius) {
-        this.radius = radius;
-    }
-
     public String getDisplayString() {
         return displayString;
     }
@@ -194,6 +185,15 @@ public class SearchRequestParams {
     public void setDisplayString(String displayString) {
         this.displayString = displayString;
     }
-    
+
+    public String[] getFacets() {
+        return facets;
+    }
+
+    public void setFacets(String[] facets) {
+        this.facets = facets;
+    }
+
+ 
 
 }

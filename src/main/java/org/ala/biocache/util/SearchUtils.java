@@ -18,7 +18,9 @@ import org.springframework.stereotype.Component;
 import atg.taglib.json.util.JSONObject;
 import au.org.ala.biocache.TaxonProfileDAO;
 import org.ala.biocache.dto.SearchRequestParams;
+import org.ala.biocache.dto.SpatialSearchRequestParams;
 import org.apache.commons.lang.StringUtils;
+import org.apache.solr.client.solrj.util.ClientUtils;
 import scala.Option;
 
 /**
@@ -115,25 +117,26 @@ public class SearchUtils {
 
 	}
 
-        public boolean updateCollectionSearchString(SearchRequestParams searchParams) {
+        public boolean updateCollectionSearchString(SearchRequestParams searchParams, String uid) {
 		try {
-			String query = searchParams.getQ();
+			
 
 			// query the collectory for the institute and collection codes
 			// needed to perform the search
-                        //TODO should this be changed to access the cassandra cache??
+                        String[] uids = uid.split(",");
+
 			String jsonObject = OccurrenceController
 					.getUrlContentAsString(collectoryBaseUrl
-							+ "/lookup/summary/" + query);
+							+ "/lookup/summary/" + uids[0]);
 			JSONObject j = new JSONObject(jsonObject);
 			String collectionName = j.getString("name");
 			// JSONArray institutionCode = j.getJSONArray("derivedInstCodes");
 			// JSONArray collectionCode = j.getJSONArray("derivedCollCodes");
-			StringBuilder displayString = new StringBuilder(getUidTitle(query)
+			StringBuilder displayString = new StringBuilder(getUidTitle(uids[0])
 					+ ": ");
 			displayString.append(collectionName);
 
-			searchParams.setQ(getUidSearchField(query) + ":" + query);
+			searchParams.setQ(getUIDSearchString(uids));
 			searchParams.setDisplayString(displayString.toString());
                         updateCommon(searchParams);
 			return true;
@@ -147,6 +150,18 @@ public class SearchUtils {
 		}
 
 	}
+
+        public  String getUIDSearchString(String[] uids){
+        StringBuilder sb = new StringBuilder();
+        for(String uid : uids){
+            if(sb.length()>0)
+                sb.append(" OR ");
+            sb.append(getUidSearchField(uid));
+            sb.append(":");
+            sb.append(uid);
+        }
+        return sb.toString();
+    }
 
 
 	/**
@@ -187,14 +202,15 @@ public class SearchUtils {
 		return false;
 	}
 
-
-        public boolean updateTaxonConceptSearchString(SearchRequestParams searchParams) {
-
-		String guid = searchParams.getQ();
-
+        /**
+         * Updates the searchParams for a query by taxon concept
+         * @param searchParams
+         * @param guid
+         * @return
+         */
+        public boolean updateTaxonConceptSearchString(SearchRequestParams searchParams, String guid) {
+                // Get the taxon profile from the biocache cache - this could be replaced with a webservice call if necessary
 		Option<TaxonProfile> opt = TaxonProfileDAO.getByGuid(guid);
-
-		//replace with webservice call or use biocache taxon profile cache - is this enough
 
 		if (!opt.isEmpty()) {
                     TaxonProfile tc = opt.get();
@@ -222,13 +238,21 @@ public class SearchUtils {
 		}
 		return false;
 	}
-
-        public boolean updateSpatial(SearchRequestParams searchParams){
+        /**
+         * updates the query ready for a spatial search
+         * @param searchParams
+         * @return
+         */
+        public boolean updateSpatial(SpatialSearchRequestParams searchParams){
             String query = searchParams.getQ();
 
             StringBuilder displayQuery = new StringBuilder(StringUtils.substringAfter(query, ":").replace("*", "(all taxa)"));
             displayQuery.append(" - within ").append(searchParams.getRadius()).append(" km of point (").append(searchParams.getLat()).append(", ").append(searchParams.getLon()).append(")");
             searchParams.setDisplayString(displayQuery.toString());
+            query = formatSearchQuery(query);
+             query  = "{!spatial lat=" + searchParams.getLat().toString() + " long=" + searchParams.getLon().toString() +
+                " radius=" + searchParams.getRadius().toString() + " unit=km calc=arc threadCount=2}" + query; // calc=arc|plane
+             searchParams.setQ(query);
             updateCommon(searchParams);
             return true;
         }
@@ -236,6 +260,29 @@ public class SearchUtils {
             updateCommon(searchParams);
             return true;
         }
+        /**
+         * Formats the query string before
+         * @param query
+         * @return
+         */
+        protected String formatSearchQuery(String query) {
+        // set the query
+        StringBuilder queryString = new StringBuilder();
+        if (query.equals("*:*") || query.contains(" AND ") || query.contains(" OR ") || query.startsWith("(")
+                || query.endsWith("*") || query.startsWith("{")) {
+            queryString.append(query);
+        } else if (query.contains(":") && !query.startsWith("urn")) {
+            // search with a field name specified (other than an LSID guid)
+            String[] bits = StringUtils.split(query, ":", 2);
+            queryString.append(ClientUtils.escapeQueryChars(bits[0]));
+            queryString.append(":");
+            queryString.append(ClientUtils.escapeQueryChars(bits[1]));
+        } else {
+            // regular search
+            queryString.append(ClientUtils.escapeQueryChars(query));
+        }
+        return queryString.toString();
+    }
         private void updateCommon(SearchRequestParams searchParams){
             // upate the filterQuery if it contains an "OccurrenceSource" so that it
 		// has the correct filter query specified

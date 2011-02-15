@@ -174,7 +174,7 @@ public class SearchDAOImpl implements SearchDAO {
 
         try {
             String queryString = formatSearchQuery(requestParams.getQ());
-            SolrQuery solrQuery = initSolrQuery(); // general search settings
+            SolrQuery solrQuery = initSolrQuery(requestParams); // general search settings
             solrQuery.setQuery(queryString);
             QueryResponse qr = runSolrQuery(solrQuery, requestParams);
             searchResults = processSolrResponse(qr, solrQuery);
@@ -205,7 +205,7 @@ public class SearchDAOImpl implements SearchDAO {
             //String queryString = formatSearchQuery(query);
             String queryString = buildSpatialQueryString(formatSearchQuery(searchParams.getQ()), searchParams.getLat(), searchParams.getLon(), searchParams.getRadius());
 
-            SolrQuery solrQuery = initSolrQuery(); // general search settings
+            SolrQuery solrQuery = initSolrQuery(searchParams); // general search settings
             solrQuery.setQuery(queryString);
 
             QueryResponse qr = runSolrQuery(solrQuery, searchParams);
@@ -263,7 +263,7 @@ public class SearchDAOImpl implements SearchDAO {
     /**
      * @see org.ala.biocache.dao.SearchDAO#writeResultsToStream(java.lang.String, java.lang.String[], java.io.OutputStream, int)
      *
-     * TODO Handle differently get a list of UUID's to be sent to the biocache-store
+     * TODO Make more dynamic and fix up header
      */
     public Map<String,Integer> writeResultsToStream(String query, String[] filterQuery, OutputStream out, int i) throws Exception {
 
@@ -281,39 +281,32 @@ public class SearchDAOImpl implements SearchDAO {
             int pageSize = 1000;
             
             QueryResponse qr = runSolrQuery(solrQuery, filterQuery, pageSize, startIndex, "score", "asc");
-//            CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(out), ',', '"');
-//
-//            //should these be darwin core terms??
-//            csvWriter.writeNext(new String[]{
-//            		"Record ID",
-//            		"Taxon ID",
-//            		"Original taxon name",
-//                    "Supplied common name",
-//            		"Recognised taxon name",
-//            		"Taxon rank",
-//                    "Common name",
-//            		"Family",
-//            		"Latitude",
-//            		"Longitude",
-//            		"Coordinate Precision (metres)",
-//            		"Locality",
-//            		"Bio region",
-//            		"Basis of record",
-//            		"State/Territory",
-//            		"Event date",
-//            		"Event time",
-//            		"Collection code",
-//            		"Institution code",
-//            		"Collector/observer",
-//            		"Catalogue number",
-//            		"Data provider",
-//            		"Data resource",
-//            		"Identifier name",
-//            		"Citation",
-//            });
-            
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+             String[] titles = new String[]{"uuid",
+                                                         "catalogNumber",
+                                                         "taxonConceptID.p",
+                                                         "scientificName",
+                                                         "vernacularName",
+                                                         "scientificName.p" ,
+                                                         "taxonRank.p",
+                                                         "vernacularName.p","kingdom.p","phylum.p", "classs.p", "order.p",
+                                                         "family.p","genus.p", "species.p", "subspecies.p",
+                                                         "institutionCode",
+                                                         "collectionCode" ,
+                                                         "dataProviderName.p",
+                                                         "dataResourceName.p",
+                                                         "latitude.p",
+                                                         "longitude.p",
+                                                         "coordinatePrecision","country.p",
+                                                         "ibra.p",
+                                                         "imcra.p","stateProvince.p","lga.p",
+                                                         "minimumElevationInMeters","maximumElevationInMeters",
+                                                         "minimumDepthInMeters", "maximumDepthInMeters",
+                                                         "year.p", "month.p", "day.p",
+                                                         "eventDate.p",
+                                                         "eventTime.p","basisOfRecord",
+                                                         "sex", "preparations" };
+                    out.write((StringUtils.join(titles, "\t") + "\n").getBytes());
+
             List<String> uuids = new ArrayList<String>();
             while(qr.getResults().size()>0 && resultsCount<MAX_DOWNLOAD_SIZE){
             	logger.debug("Start index: "+startIndex);
@@ -321,90 +314,40 @@ public class SearchDAOImpl implements SearchDAO {
 	            for(OccurrenceIndex result : results){
 	            	resultsCount++;
                         uuids.add(result.getUuid());
-                        //au.org.ala.biocache.FullRecord[] fullResult = au.org.ala.biocache.Store.getAllVersionsByUuid(result.getUuid());
-                        //Get the record from the biocache-store
-	            	
-//	            	String latitude = null, longitude = null;
-//
-//	            	if(result.getLatitude()!=null){
-//	            		latitude = result.getLatitude().toString();
-//	            	}
-//	            	if(result.getLatitude()!=null){
-//	            		longitude = result.getLongitude().toString();
-//	            	}
-//
-//	            	String eventDate = "";
-//	            	String eventTime = "";
-//	            	if(result.getOccurrenceDate()!=null){
-//	            		eventDate = dateFormat.format(result.getOccurrenceDate());
-//	            		eventTime = timeFormat.format(result.getOccurrenceDate());
-//	            		if("00:00".equals(eventTime)){
-//	            			eventTime = "";
-//	            		}
-//	            	}
-	            	
-//	            	String[] record = new String[]{
-//            			result.getUuid(),
-//            			result.getTaxonConceptLsid(),
-//            			result.getRawTaxonName(),
-//                        result.getRawCommonName(),
-//            			result.getTaxonName(),
-//            			result.getRank(),
-//            			result.getCommonName(),
-//            			result.getFamily(),
-//            			latitude,
-//            			longitude,
-//            			result.getCoordinatePrecision(),
-//            			result.getPlace(),
-//            			result.getBiogeographicRegion(),
-//            			result.getBasisOfRecord(),
-//            			result.getState(),
-//            			eventDate,
-//            			eventTime,
-//            			result.getCollectionCode(),
-//            			result.getInstitutionCode(),
-//            			result.getCollector(),
-//            			result.getCatalogueNumber(),
-//            			result.getDataProvider(),
-//            			result.getDataResource(),
-//            			result.getIdentifierName(),
-//            			result.getCitation(),
-//	            	};
-	            	
+                        
                      //increment the counters....
                     incrementCount(uidStats, result.getInstitutionUid());
                     incrementCount(uidStats, result.getCollectionUid());
                     incrementCount(uidStats, result.getDataProviderUid());
                     incrementCount(uidStats, result.getDataResourceUid());
-                        
-	            	//csvWriter.writeNext(record);
-	            	//csvWriter.flush();
+
 	            }
+                   
                     au.org.ala.biocache.Store.writeToStream(out, "\t", "\n", uuids.toArray(new String[]{}),
                                             new String[]{"uuid",
+                                                         "catalogNumber",
                                                          "taxonConceptID.p",
                                                          "scientificName",
                                                          "vernacularName",
                                                          "scientificName.p" ,
                                                          "taxonRank.p", 
-                                                         "vernacularName.p",
-                                                         "family.p",
-                                                         "latitude.p",
-                                                         "longitude.p",
-                                                         "coordinatePrecision",
-                                                         "lga.p",
-                                                         "ibra.p",
-                                                         "imcra.p",
-                                                         "basisOfRecord",
-                                                         "stateProvince.p",
-                                                         "eventDate.p",
-                                                         "eventTime.p", 
-                                                         "collectionCode" ,
+                                                         "vernacularName.p","kingdom.p","phylum.p", "classs.p", "order.p",
+                                                         "family.p","genus.p", "species.p", "subspecies.p",
                                                          "institutionCode",
-                                                         "catalogNumber",
+                                                         "collectionCode" ,                                                         
                                                          "dataProviderName.p",
                                                          "dataResourceName.p",
-                                                         "identifier" });
+                                                         "latitude.p",
+                                                         "longitude.p",
+                                                         "coordinatePrecision","country.p",                                                         
+                                                         "ibra.p",
+                                                         "imcra.p","stateProvince.p","lga.p",
+                                                         "minimumElevationInMeters","maximumElevationInMeters",
+                                                         "minimumDepthInMeters", "maximumDepthInMeters",
+                                                         "year.p", "month.p", "day.p",
+                                                         "eventDate.p",
+                                                         "eventTime.p","basisOfRecord",
+                                                         "sex", "preparations" });
 	            startIndex += pageSize;
 	            if(resultsCount<MAX_DOWNLOAD_SIZE){
 	            	qr = runSolrQuery(solrQuery, filterQuery, pageSize, startIndex, "score", "asc");
@@ -1065,32 +1008,49 @@ public class SearchDAOImpl implements SearchDAO {
      *
      * @return solrQuery the SolrQuery
      */
-    protected SolrQuery initSolrQuery() {
+    protected SolrQuery initSolrQuery(SearchRequestParams searchParams) {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.setQueryType("standard");
         // Facets
         solrQuery.setFacet(true);
-        solrQuery.addFacetField("basis_of_record");
-        solrQuery.addFacetField("type_status");
-        solrQuery.addFacetField("institution_code_name");
-        //solrQuery.addFacetField("data_resource");
-        solrQuery.addFacetField("state");
-        solrQuery.addFacetField("biogeographic_region");
-        solrQuery.addFacetField("rank");
-        solrQuery.addFacetField("kingdom");
-        solrQuery.addFacetField("family");
-        solrQuery.addFacetField("assertions");
-        //solrQuery.addFacetField("data_provider");
-        solrQuery.addFacetField("month");
-        solrQuery.add("f.month.facet.sort","index"); // sort by Jan-Dec
-        // Date Facet Params
-        // facet.date=occurrence_date&facet.date.start=1900-01-01T12:00:00Z&facet.date.end=2010-01-01T12:00:00Z&facet.date.gap=%2B1YEAR
-        solrQuery.add("facet.date","occurrence_date");
-        solrQuery.add("facet.date.start", "1850-01-01T12:00:00Z"); // facet date range starts from 1850
-        solrQuery.add("facet.date.end", "NOW/DAY"); // facet date range ends for current date (gap period)
-        solrQuery.add("facet.date.gap", "+10YEAR"); // gap interval of 10 years
-        solrQuery.add("facet.date.other", "before"); // include counts before the facet start date ("before" label)
-        solrQuery.add("facet.date.include", "lower"); // counts will be included for dates on the starting date but not ending date
+        for(String facet: searchParams.getFacets()){
+            if(facet.equals("month")){
+                  solrQuery.addFacetField("month");
+                  solrQuery.add("f.month.facet.sort","index"); // sort by Jan-Dec
+            }
+            else if(facet.equals("date")){
+                 solrQuery.add("facet.date","occurrence_date");
+                 solrQuery.add("facet.date.start", "1850-01-01T12:00:00Z"); // facet date range starts from 1850
+                 solrQuery.add("facet.date.end", "NOW/DAY"); // facet date range ends for current date (gap period)
+                 solrQuery.add("facet.date.gap", "+10YEAR"); // gap interval of 10 years
+                 solrQuery.add("facet.date.other", "before"); // include counts before the facet start date ("before" label)
+                 solrQuery.add("facet.date.include", "lower"); // counts will be included for dates on the starting date but not ending date
+            }
+            else{
+                solrQuery.addFacetField(facet);
+            }
+        }
+//        solrQuery.addFacetField("basis_of_record");
+//        solrQuery.addFacetField("type_status");
+//        solrQuery.addFacetField("institution_code_name");
+//        //solrQuery.addFacetField("data_resource");
+//        solrQuery.addFacetField("state");
+//        solrQuery.addFacetField("biogeographic_region");
+//        solrQuery.addFacetField("rank");
+//        solrQuery.addFacetField("kingdom");
+//        solrQuery.addFacetField("family");
+//        solrQuery.addFacetField("assertions");
+//        //solrQuery.addFacetField("data_provider");
+//        solrQuery.addFacetField("month");
+//        solrQuery.add("f.month.facet.sort","index"); // sort by Jan-Dec
+//        // Date Facet Params
+//        // facet.date=occurrence_date&facet.date.start=1900-01-01T12:00:00Z&facet.date.end=2010-01-01T12:00:00Z&facet.date.gap=%2B1YEAR
+//        solrQuery.add("facet.date","occurrence_date");
+//        solrQuery.add("facet.date.start", "1850-01-01T12:00:00Z"); // facet date range starts from 1850
+//        solrQuery.add("facet.date.end", "NOW/DAY"); // facet date range ends for current date (gap period)
+//        solrQuery.add("facet.date.gap", "+10YEAR"); // gap interval of 10 years
+//        solrQuery.add("facet.date.other", "before"); // include counts before the facet start date ("before" label)
+//        solrQuery.add("facet.date.include", "lower"); // counts will be included for dates on the starting date but not ending date
         //Manually add the integer ranges for the facet query required on the confidence field
         //TODO DO we need confidence/ Indivdual Sightings etc
 //        for(OccurrenceSource os : OccurrenceSource.values()){

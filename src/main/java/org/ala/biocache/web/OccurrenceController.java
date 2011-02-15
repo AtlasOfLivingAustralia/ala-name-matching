@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import au.org.ala.biocache.*;
 import org.ala.biocache.*;
 import org.ala.biocache.dao.SearchDAO;
+import org.ala.biocache.dto.DownloadRequestParams;
 import org.ala.biocache.dto.store.OccurrenceDTO;
 import org.ala.biocache.dto.SearchQuery;
 import org.ala.biocache.dto.SearchResultDTO;
@@ -54,12 +55,14 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import org.ala.biocache.dto.SearchRequestParams;
+import org.ala.biocache.dto.SpatialSearchRequestParams;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
- * Occurrences controller for the BIE biocache site
+ * Occurrences controller for the BIE biocache site.
  *
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
+ * @author "Natasha Carter <Natasha.Carter@csiro.au>" 
  * 
  * History:
  * 1 Sept 10 (MOK011): added restfulClient to retrieve citation information into citation.txt
@@ -143,17 +146,13 @@ public class OccurrenceController {
 //                    return searchResult;
 //		}
 
-		//temporarily set the guid as the q
-                requestParams.setQ(guid);
-           // String guid = requestParams.getQ();
                 
-                logger.info("requestParams: " + requestParams);
+                logger.debug("requestParams: " + requestParams);
                 //Change the method call so that the filter query can be updated
-                boolean taxonFound = searchUtils.updateTaxonConceptSearchString(requestParams);
+                boolean taxonFound = searchUtils.updateTaxonConceptSearchString(requestParams, guid);
 
 		if(taxonFound){
 
-			
 			
 //			String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
 //			model.addAttribute("entityQuery", searchQuery.getEntityQuery());
@@ -185,6 +184,10 @@ public class OccurrenceController {
         /**
          * Obtains a list of the sources for the supplied guid.
          *
+         * I don't think that this should be necessary. We should be able to
+         * configure the requestParams facets to contain the collectino_uid, institution_uid
+         * data_resource_uid and data_provider_uid
+         *
          * It also handle's the logging for the BIE.
          * //TODO Work out what to do with this
          * @param query
@@ -215,16 +218,10 @@ public class OccurrenceController {
         }
 
 	/**
-	 * Occurrence search for a given collection. Takes zero or more collectionCode and institutionCode
-	 * parameters (but at least one must be set).
+	 * Occurrence search for a given collection, institution, data_resource or data_provider.
 	 *
-	 * @param query  This should be the institute's collectory database id, LSID or acronym. By making use of the query
-	 * parameter we didn't need try and keep track of another variable in the URL
-	 * @param filterQuery
-	 * @param startIndex
-	 * @param pageSize
-	 * @param sortField
-	 * @param sortDirection
+	 * @param requestParams The search parameters
+         * @param  uid The uid for collection, institution, data_resource or data_provider
 	 * @param model
 	 * @return
 	 * @throws Exception
@@ -241,18 +238,11 @@ public class OccurrenceController {
 			return searchResult;
 		}
 
-		// one of collectionCode or institutionCode must be set
-		//		if ((query == null || query.isEmpty()) && (collectionCode==null || collectionCode.length==0) && (institutionCode==null || institutionCode.length==0)) {
-//			return LIST;
-//		}
-
-		
-                requestParams.setQ(uid);
-		//SearchQuery searchQuery = new SearchQuery(query, "collection", filterQuery);
-		searchUtils.updateCollectionSearchString(requestParams);//changed to this method so that the filter query has the correct updates applied
+		//update the request params so the search caters for the supplied uid
+		searchUtils.updateCollectionSearchString(requestParams, uid);
                
 
-		logger.info("solr query: " + requestParams);
+		logger.debug("solr query: " + requestParams);
                 //TODO work out which extra attributes are required by the hubs web app
 //		String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
 //		model.addAttribute("entityQuery", searchQuery.getDisplayString());
@@ -296,13 +286,9 @@ public class OccurrenceController {
      * @return
      * @throws Exception
      */
-    @RequestMapping(value = "/occurrences/area/{lat}/{lon}/{rad}*", method = RequestMethod.GET)
+    @RequestMapping(value =  "/occurrences/searchByArea*", method = RequestMethod.GET)
 	public @ResponseBody SearchResultDTO occurrenceSearchByArea(
-			SearchRequestParams requestParams,
-                        @PathVariable("lat") Float latitude,
-                        @PathVariable("lon") Float longitude,
-                        @PathVariable("rad") Float radius,
-                        
+			SpatialSearchRequestParams requestParams,
 			Model model)
 	throws Exception {
             SearchResultDTO searchResult = new SearchResultDTO();
@@ -311,43 +297,12 @@ public class OccurrenceController {
 		}
 
                
-                requestParams.setLat(latitude);
-                requestParams.setLon(longitude);
-                requestParams.setRadius(radius);
-
+                
 		//SearchQuery searchQuery = new SearchQuery(query, "spatial", filterQuery);
                 searchUtils.updateSpatial(requestParams);
 		//searchUtils.updateTaxonConceptSearchString(searchQuery);
 
-                //TODO work out if we need to support something similar to below
-
-//        if (latitude == null && longitude ==  null && radius == null && query.contains("|")) {
-//            // check for lat/long/rad encoded in q param, delimited by |
-//            // order is query, latitude, longitude, radius
-//            String[] queryParts = StringUtils.split(query, "|", 4);
-//            query = queryParts[0];
-//            logger.info("(spatial) query: "+query);
-//
-//            if (query.contains("%%")) {
-//                // mulitple parts (%% separated) need to be OR'ed (yes a hack for now)
-//                String prefix = StringUtils.substringBefore(query, ":");
-//                String suffix = StringUtils.substringAfter(query, ":");
-//                String[] chunks = StringUtils.split(suffix, "%%");
-//                ArrayList<String> formatted = new ArrayList<String>();
-//
-//                for (String s : chunks) {
-//                    formatted.add(prefix+":"+s);
-//                }
-//
-//                query = StringUtils.join(formatted, " OR ");
-//                logger.info("new query: "+query);
-//            }
-//
-//            latitude = Float.parseFloat(queryParts[1]);
-//            longitude = Float.parseFloat(queryParts[2]);
-//            radius = Float.parseFloat(queryParts[3]);
-//        }
-
+                
 		
 //	String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
 //		model.addAttribute("entityQuery", displayQuery.toString());
@@ -359,7 +314,7 @@ public class OccurrenceController {
 //        model.addAttribute("longitude", longitude);
 //        model.addAttribute("radius", radius);
 
-        searchResult = searchDAO.findByFulltextSpatialQuery(requestParams);
+        searchResult = searchDAO.findByFulltextQuery(requestParams);
         
 		model.addAttribute("searchResult", searchResult);
 //		Long totalRecords = searchResult.getTotalRecords();
@@ -434,6 +389,9 @@ public class OccurrenceController {
 
 	/**
 	 * Occurrence search page uses SOLR JSON to display results
+         *
+         * Please NOTE that the q and fq provided to this URL should be obtained
+         * from SearchResultDTO.urlParameters
 	 * 
 	 * @param query
 	 * @param model
@@ -442,55 +400,30 @@ public class OccurrenceController {
 	 */
 	@RequestMapping(value = "/occurrences/download*", method = RequestMethod.GET)
 	public String occurrenceDownload(
-			@RequestParam(value="q", required=false) String query,
-			@RequestParam(value="fq", required=false) String[] filterQuery,
-			@RequestParam(value="type", required=false, defaultValue="normal") String type,
-            @RequestParam(value="email", required=false) String email,
-            @RequestParam(value="reason", required=false) String reason,
-            @RequestParam(value="file", required=false, defaultValue="data") String filename,
-			@RequestParam(value="rad", required=false) Integer radius,
-			@RequestParam(value="lat", required=false) Float latitude,
-			@RequestParam(value="lon", required=false) Float longitude,
+			DownloadRequestParams requestParams,
 			HttpServletResponse response,
             HttpServletRequest request) throws Exception {
        
         String ip = request.getLocalAddr();
-        if (query == null || query.isEmpty()) {
+        if (requestParams.getQ().isEmpty()) {
             return LIST;
         }
-        if (StringUtils.trimToNull(filename) == null) {
-            filename = "data";
-        }
-        // if params are set but empty (e.g. foo=&bar=) then provide sensible defaults
-        if (filterQuery != null && filterQuery.length == 0) {
-            filterQuery = null;
-        }
 
-        if (filename != null && !filename.toLowerCase().endsWith(".zip")) {
-            filename = filename + ".zip";
-        }
-
+        String filename = requestParams.getFile();
+        
         response.setHeader("Cache-Control", "must-revalidate");
         response.setHeader("Pragma", "must-revalidate");
-        response.setHeader("Content-Disposition", "attachment;filename=" + filename);
+        response.setHeader("Content-Disposition", "attachment;filename=" + filename +".zip");
         response.setContentType("application/zip");
 
         ServletOutputStream out = response.getOutputStream();
-        //get the new query details
-        SearchQuery searchQuery = new SearchQuery(query, type, filterQuery);
-        searchUtils.updateQueryDetails(searchQuery);
-
+        
         //Use a zip output stream to include the data and citation together in the download
         ZipOutputStream zop = new ZipOutputStream(out);
-        zop.putNextEntry(new java.util.zip.ZipEntry(filename.substring(0, filename.length()-4) + ".csv"));
+        zop.putNextEntry(new java.util.zip.ZipEntry(filename + ".csv"));
         Map<String, Integer> uidStats = null;
         
-        if (checkValidSpatialParams(latitude, longitude, radius)) {
-            //TODO should be using the Store.writeResultsToStream method
-            uidStats = searchDAO.writeResultsToStream(searchQuery.getQuery(), searchQuery.getFilterQuery(), zop, 100, latitude, longitude, radius);
-        } else {
-            uidStats = searchDAO.writeResultsToStream(searchQuery.getQuery(), searchQuery.getFilterQuery(), zop, 100);
-        }
+        uidStats = searchDAO.writeResultsToStream(requestParams.getQ(), requestParams.getFq(), zop, 100);
         zop.closeEntry();
 
         if (!uidStats.isEmpty()) {
@@ -498,7 +431,6 @@ public class OccurrenceController {
             zop.putNextEntry(new java.util.zip.ZipEntry("citation.csv"));
             try {
                 getCitations(uidStats.keySet(), zop);
-//                    citationUtils.addCitation(uidStats.keySet(), zop);
             } catch (Exception e) {
                 logger.error(e);
             }
@@ -510,7 +442,7 @@ public class OccurrenceController {
         //logger.debug("UID stats : " + uidStats);
         //log the stats to ala logger
 
-        LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_DOWNLOADED, email, reason, ip, uidStats);
+        LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_DOWNLOADED, requestParams.getEmail(), requestParams.getReason(), ip, uidStats);
         logger.log(RestLevel.REMOTE, vo);
         return null;
 	}
@@ -564,7 +496,7 @@ public class OccurrenceController {
 	 * @param model
 	 * @throws Exception
 	 */
-	@RequestMapping(value = {"/occurrences/{uuid}", "/occurrences/{uuid}.json"}, method = RequestMethod.GET)
+	@RequestMapping(value = {"/occurrence/{uuid}", "/occurrence/{uuid}.json"}, method = RequestMethod.GET)
 	public @ResponseBody OccurrenceDTO showOccurrence(@PathVariable("uuid") String uuid,
         HttpServletRequest request, Model model) throws Exception {
 
@@ -576,25 +508,26 @@ public class OccurrenceController {
         occ.setSystemAssertions(Store.getSystemAssertions(uuid));
         occ.setUserAssertions(Store.getUserAssertions(uuid));
 
-//        //We only want to log the stats if a non-json request was made <- NO LONGER TRUE!!
-//        if (request.getRequestURL() != null && !request.getRequestURL().toString().endsWith("json")) {
-//            String email = null;
-//            String reason = "Viewing Occurrence Record " + id;
-//            String ip = request.getLocalAddr();
-//            Map<String, Integer> uidStats = new HashMap<String, Integer>();
-//            if (fullRecord[1].getAttribution().getCollectionUid() != null) {
-//                uidStats.put(fullRecord[1].getAttribution().getCollectionUid(), 1);
-//            }
-//            if (fullRecord[1].getAttribution().getInstitutionUid() != null) {
-//                uidStats.put(fullRecord[1].getAttribution().getInstitutionUid(), 1);
-//            }
-//            if(fullRecord[1].getAttribution().getDataProviderUid() != null)
-//                uidStats.put(fullRecord[1].getAttribution().getDataProviderUid(), 1);
-//            if(fullRecord[1].getAttribution().getDataResourceUid() != null)
-//            uidStats.put(fullRecord[1].getAttribution().getDataResourceUid(), 1);
-//            LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED, email, reason, ip, uidStats);
-//            logger.log(RestLevel.REMOTE, vo);
-//        }
+        //log the statistics for viewing the record
+            String email = null;
+            String reason = "Viewing Occurrence Record " + uuid;
+            String ip = request.getLocalAddr();
+            Map<String, Integer> uidStats = new HashMap<String, Integer>();
+            if (occ.getProcessed().getAttribution().getCollectionUid() != null) {
+                uidStats.put(occ.getProcessed().getAttribution().getCollectionUid(), 1);
+            }
+            if (occ.getProcessed().getAttribution().getInstitutionUid() != null) {
+                uidStats.put(occ.getProcessed().getAttribution().getInstitutionUid(), 1);
+            }
+            if(occ.getProcessed().getAttribution().getDataProviderUid() != null)
+                uidStats.put(occ.getProcessed().getAttribution().getDataProviderUid(), 1);
+            if(occ.getProcessed().getAttribution().getDataResourceUid() != null)
+                uidStats.put(occ.getProcessed().getAttribution().getDataResourceUid(), 1);
+
+            
+            LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED, email, reason, ip, uidStats);
+            logger.log(RestLevel.REMOTE, vo);
+
         return occ;
 	}
 
