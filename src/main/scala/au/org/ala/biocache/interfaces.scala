@@ -82,16 +82,22 @@ object Store {
 
   /**
    * Add a user assertion
+   *
+   * Requires a re-index
    */
   def addUserAssertion(uuid:java.lang.String, qualityAssertion:QualityAssertion){
     OccurrenceDAO.addUserAssertion(uuid, qualityAssertion)
+    OccurrenceDAO.reIndex(uuid)
   }
 
   /**
-   * Delete an assertion.
+   * Delete an assertion
+   *
+   * Requires a re-index
    */
   def deleteUserAssertion(uuid:java.lang.String, assertionUuid:java.lang.String){
     OccurrenceDAO.deleteUserAssertion(uuid,assertionUuid)
+    OccurrenceDAO.reIndex(uuid)
   }
 
   /**
@@ -102,10 +108,19 @@ object Store {
     OccurrenceDAO.writeToStream(outputStream,fieldDelimiter,recordDelimiter,uuids,fields)
   }
 
+  /**
+   * Retrieve the assertion codes
+   */
   def retrieveAssertionCodes : Array[ErrorCode] = AssertionCodes.all.toArray
 
+  /**
+   * Retrieve the geospatial codes.
+   */
   def retrieveGeospatialCodes : Array[ErrorCode] = AssertionCodes.geospatialCodes.toArray
 
+  /**
+   * Retrieve the taxonomic codes.
+   */
   def retrieveTaxonomicCodes : Array[ErrorCode] = AssertionCodes.taxonomicCodes.toArray
 }
 

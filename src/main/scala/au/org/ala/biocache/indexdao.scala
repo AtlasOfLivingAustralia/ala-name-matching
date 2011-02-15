@@ -8,21 +8,20 @@ package au.org.ala.biocache
 import org.apache.commons.lang.time.DateUtils
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer
 import org.apache.solr.core.CoreContainer
+import org.slf4j.LoggerFactory
 
-object SolrIndexDao {
+object SolrIndexDAO {
   val solrHome = "/data/solr/bio-proto"
   //set the solr home
   System.setProperty("solr.solr.home", solrHome)
 
   val cc = new CoreContainer.Initializer().initialize
   val solrServer = new EmbeddedSolrServer(cc, "")
-   
-
 }
 /**
  * All Index implementations need to extend this trait.
  */
-trait IndexDao {
+trait IndexDAO {
   import au.org.ala.util.ReflectBean._
   /**
    * Index a list of Occurrence Index Model objects
@@ -32,11 +31,14 @@ trait IndexDao {
    * Index a single Occurrence Index Model
    */
   def index(item:OccurrenceIndex):Boolean
-  def emptyIndex()
+  /**
+   * Truncate the current index
+   */
+  def emptyIndex
   /**
    * Perform
    */
-  def finaliseIndex()
+  def finaliseIndex
   /**
    * Generate an index model from the supplied FullRecords
    */
@@ -76,48 +78,54 @@ trait IndexDao {
       occ.setLatLong(occ.getDecimalLatitude.toString +"," + occ.getDecimalLongitude)
     }
     //set the id for the occurrence record to the uuid
-    occ.uuid = records(0).occurrence.uuid
+    occ.uuid = records(0).uuid
     //set the systemAssertions 
     occ.assertions = records(1).assertions
     Some(occ)
   }
-
 }
 
-object SolrOccurrenceDAO extends IndexDao{
+object SolrOccurrenceDAO extends IndexDAO {
+
+  import org.apache.commons.lang.StringUtils.defaultString
+  val logger = LoggerFactory.getLogger("SolrOccurrenceDAO")
+
   /**
    * returns whether or not the insert was successful
    */
-  import org.apache.commons.lang.StringUtils.defaultString
   def index(items: java.util.List[OccurrenceIndex]):Boolean ={
     try{
-    SolrIndexDao.solrServer.addBeans(items)
-    SolrIndexDao.solrServer.commit
-
+        SolrIndexDAO.solrServer.addBeans(items)
+        SolrIndexDAO.solrServer.commit
+        true
     }
     catch{
       case e:Exception => false
     }
-    true
+
   }
+
   def index(item:OccurrenceIndex):Boolean ={
     try{
-      SolrIndexDao.solrServer.addBean(item)
+      SolrIndexDAO.solrServer.addBean(item)
+      SolrIndexDAO.solrServer.commit
     }
     catch{
-      case e:Exception => false
+      case e:Exception => logger.error(e.getMessage, e); false
     }
     true
   }
+
   def emptyIndex(){
-    SolrIndexDao.solrServer.deleteByQuery("*:*")
+    SolrIndexDAO.solrServer.deleteByQuery("*:*")
   }
+
   def finaliseIndex(){
-    SolrIndexDao.solrServer.commit
-    SolrIndexDao.solrServer.optimize
+    SolrIndexDAO.solrServer.commit
+    SolrIndexDAO.solrServer.optimize
   }
    
-   override def getOccIndexModel(records: Array[FullRecord]):Option[OccurrenceIndex]={
+  override def getOccIndexModel(records: Array[FullRecord]):Option[OccurrenceIndex]={
     //set the SOLR specific value
     val occ = super.getOccIndexModel(records)
      if(!occ.isEmpty){
@@ -126,10 +134,8 @@ object SolrOccurrenceDAO extends IndexDao{
       occ.get.setNamesLsid(v.mkString("|"))
       occ.get.setMultimedia(if(occ.get.getRaw_associatedMedia() != null) "Multimedia" else "None")
      }
-     
      occ
-   }
-
+  }
 }
 
 

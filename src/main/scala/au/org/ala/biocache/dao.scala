@@ -21,8 +21,10 @@ import com.google.inject.name.Names
 object DAO {
 
   import ReflectBean._
-  
+
   val persistentManager = new CassandraPersistenceManager
+  val indexer = SolrOccurrenceDAO
+
   val nameIndex = new CBIndexSearch("/data/lucene/namematching")
 
   //read in the object mappings using reflection
@@ -130,9 +132,9 @@ object OccurrenceDAO {
       None
     } else {
       //create the versions of the record
-      val raw = createOccurrence(uuid, map.get, Raw)
-      val processed = createOccurrence(uuid, map.get, Processed)
-      val consensus = createOccurrence(uuid, map.get, Consensus)
+      val raw = createFullRecord(uuid, map.get, Raw)
+      val processed = createFullRecord(uuid, map.get, Processed)
+      val consensus = createFullRecord(uuid, map.get, Consensus)
       //pass all version to the procedure, wrapped in the Option
       Some(Array(raw, processed, consensus))
     }
@@ -146,7 +148,7 @@ object OccurrenceDAO {
     if(propertyMap.isEmpty){
       None
     } else {
-      Some(createOccurrence(uuid, propertyMap.get, version))
+      Some(createFullRecord(uuid, propertyMap.get, version))
     }
   }
 
@@ -178,18 +180,18 @@ object OccurrenceDAO {
   /**
    * Create a record from a array of tuple properties
    */
-  def createOccurrence(uuid:String, fieldTuples:Array[(String,String)], version:Version) : FullRecord = {
+  def createFullRecord(uuid:String, fieldTuples:Array[(String,String)], version:Version) : FullRecord = {
     val fieldMap = Map(fieldTuples map { s => (s._1, s._2) } : _*)
-    createOccurrence(uuid, fieldMap, version)
+    createFullRecord(uuid, fieldMap, version)
   }
 
   /**
    * Creates an FullRecord from the map of properties
    */
-  def createOccurrence(uuid:String, fields:Map[String,String], version:Version) : FullRecord = {
+  def createFullRecord(uuid:String, fields:Map[String,String], version:Version) : FullRecord = {
 
     var fullRecord = new FullRecord
-    fullRecord.occurrence.uuid = uuid
+    fullRecord.uuid = uuid
     var assertions = new ArrayBuffer[String]
     val columns = fields.keySet
     for(fieldName<-columns){
@@ -236,6 +238,7 @@ object OccurrenceDAO {
   /** Add a suffix to this field name to indicate quality assertion field */
   private def markAsQualityAssertion(name:String) : String = name + ".qa"
 
+  /** Remove the quality assertion marker */
   private def removeQualityAssertionMarker(name:String) : String = name.dropRight(3)
 
   /**
@@ -280,9 +283,9 @@ object OccurrenceDAO {
   def pageOverAllVersions(proc:((Option[Array[FullRecord]])=>Boolean), pageSize:Int = 1000) {
      DAO.persistentManager.pageOverAll(entityName, (guid, map) => {
        //retrieve all versions
-       val raw = createOccurrence(guid, map, Raw)
-       val processed = createOccurrence(guid, map, Processed)
-       val consensus = createOccurrence(guid, map, Consensus)
+       val raw = createFullRecord(guid, map, Raw)
+       val processed = createFullRecord(guid, map, Processed)
+       val consensus = createFullRecord(guid, map, Consensus)
        //pass all version to the procedure, wrapped in the Option
        proc(Some(Array(raw, processed, consensus)))
      }, pageSize)
@@ -298,7 +301,7 @@ object OccurrenceDAO {
   def pageOverAll(version:Version, proc:((Option[FullRecord])=>Boolean),pageSize:Int = 1000) {
      DAO.persistentManager.pageOverAll(entityName, (guid, map) => {
        //retrieve all versions
-       val fullRecord = createOccurrence(guid, map, version)
+       val fullRecord = createFullRecord(guid, map, version)
        //pass all version to the procedure, wrapped in the Option
        proc(Some(fullRecord))
      },pageSize)
@@ -311,16 +314,9 @@ object OccurrenceDAO {
 
     var batch = scala.collection.mutable.Map[String,Map[String,String]]()
     for(fullRecord<-fullRecords){
-        var properties = scala.collection.mutable.Map[String,String]()
-        for(anObject <- fullRecord.objectArray){
-          val map = mapObjectToProperties(anObject,Versions.RAW)
-          //add all to map
-          properties.putAll(map)
-        }
-        //add to the batch update
-        batch.put(fullRecord.occurrence.uuid, properties.toMap)
+        var properties = fullRecord2Map(fullRecord, Versions.RAW)
+        batch.put(fullRecord.uuid, properties.toMap)
     }
-
     //commit to cassandra
     DAO.persistentManager.putBatch(entityName,batch.toMap)
   }
@@ -344,14 +340,13 @@ object OccurrenceDAO {
         case _ => fieldValue = method.invoke(anObject).asInstanceOf[String]
       }
       
-//         fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[String]
-        if (fieldValue != null && !fieldValue.isEmpty) {
-            version match {
-                case Processed => properties.put(markAsProcessed(field), fieldValue)
-                case Consensus => properties.put(markAsConsensus(field), fieldValue)
-                case _ => properties.put(field, fieldValue)
-            }
-        }
+      if (fieldValue != null && !fieldValue.isEmpty) {
+          version match {
+              case Processed => properties.put(markAsProcessed(field), fieldValue)
+              case Consensus => properties.put(markAsConsensus(field), fieldValue)
+              case _ => properties.put(field, fieldValue)
+          }
+      }
     }
     properties.toMap
   }
@@ -362,19 +357,28 @@ object OccurrenceDAO {
   def updateOccurrence(uuid:String, fullRecord:FullRecord, version:Version) {
     updateOccurrence(uuid,fullRecord,None,version)
   }
-  
+
+  /**
+   * Convert a full record to a map of properties
+   */
+  def fullRecord2Map(fullRecord:FullRecord, version:Version) : scala.collection.mutable.Map[String,String] = {
+    var properties = scala.collection.mutable.Map[String,String]()
+    for (anObject <- fullRecord.objectArray) {
+        val map = mapObjectToProperties(anObject, version)
+        //add all to map
+        properties.put("uuid", fullRecord.uuid)
+        properties.putAll(map)
+    }
+    properties
+  }
+
   /**
    * Update the occurrence with the supplied record, setting the correct version
    */
   def updateOccurrence(uuid:String, fullRecord:FullRecord, assertions:Option[Array[QualityAssertion]], version:Version) {
-    //construct a map of properties to write
-    var properties = scala.collection.mutable.Map[String,String]()
 
-    for(anObject <- fullRecord.objectArray){
-      val map = mapObjectToProperties(anObject,version)
-      //add all to map
-      properties.putAll(map)
-    }
+    //construct a map of properties to write
+    val properties = fullRecord2Map(fullRecord,version)
     
     //if supplied, update the assertions
     if(!assertions.isEmpty){
@@ -395,7 +399,7 @@ object OccurrenceDAO {
 	        properties.put(markAsQualityAssertion(errorCode.name), "false".toString)
 	    }
 	
-	    setSystemAssertions(uuid, systemAssertions.toList)
+	    updateSystemAssertions(uuid, systemAssertions.toList)
 	
 	    //set the overall decision
 	    val geospatiallyKosher = AssertionCodes.isGeospatiallyKosher(systemAssertions)
@@ -436,7 +440,7 @@ object OccurrenceDAO {
   /**
    * Set the system systemAssertions for a record, overwriting existing systemAssertions
    */
-  def setSystemAssertions(uuid:String, qualityAssertions:List[QualityAssertion]){
+  def updateSystemAssertions(uuid:String, qualityAssertions:List[QualityAssertion]){
     DAO.persistentManager.putList(uuid,entityName,qualityAssertionColumn,qualityAssertions,true)
   }
 
@@ -521,11 +525,6 @@ object OccurrenceDAO {
 
         //if anyone asserts the negative, the answer is negative
         val negativeAssertion = userAssertions.find(qa => qa.problemAsserted)
-
-//            foldLeft(true)( (isProblemAsserted,qualityAssertion) => {
-//            isProblemAsserted && qualityAssertion.problemAsserted
-//        })
-
         if(!negativeAssertion.isEmpty){
             val qualityAssertion = negativeAssertion.get
             DAO.persistentManager.put(uuid,entityName,
@@ -554,5 +553,22 @@ object OccurrenceDAO {
         + ", taxonomicallyKosher:"+taxonomicallyKosher)
 
     DAO.persistentManager.put(uuid,entityName,properties.toMap)
+  }
+
+  /**
+   * Should be possible to factor this out
+   */
+  def reIndex(uuid:String){
+    println("Reindexing UUID: " + uuid)
+    val recordVersions = getAllVersionsByUuid(uuid)
+    if(recordVersions.isEmpty){
+        println("Unable to reindex UUID: " + uuid)
+    } else {
+        val occurrenceIndex = DAO.indexer.getOccIndexModel(recordVersions.get)
+        if(!occurrenceIndex.isEmpty){
+            DAO.indexer.index(occurrenceIndex.get)
+            println("Reindexed UUID: " + uuid)
+        }
+    }
   }
 }

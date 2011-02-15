@@ -17,14 +17,11 @@ class VersionTests extends FunSuite {
 
     val uuid = "version-test-uuid"
 
-    var raw = new FullRecord
-    raw.occurrence.uuid = uuid
+    var raw = new FullRecord(uuid)
     raw.classification.scientificName = "Raw version"
-    var processed = new FullRecord
-    processed.occurrence.uuid = uuid
+    var processed = new FullRecord(uuid)
     processed.classification.scientificName = "Processed version"
-    var consensus = new FullRecord
-    consensus.occurrence.uuid = uuid
+    var consensus = new FullRecord(uuid)
     consensus.classification.scientificName = "Consenus version"
 
     val assertions = Array(QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, true, "Coordinates bad"))

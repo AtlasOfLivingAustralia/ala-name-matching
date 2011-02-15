@@ -43,7 +43,7 @@ object IndexSearchTest {
         solrQuery.setStart(0);
         solrQuery.setQuery("Victoria");
 
-    val response = SolrIndexDao.solrServer.query(solrQuery)
+    val response = SolrIndexDAO.solrServer.query(solrQuery)
     processSolrResponse(response)
     System.out.println("response: " + response.getResults.size)
     

@@ -10,7 +10,6 @@ import java.util.Date
  */
 class Occurrence extends Cloneable {
   override def clone : Occurrence = super.clone.asInstanceOf[Occurrence]
-  @BeanProperty var uuid:String = _	
   @BeanProperty var occurrenceID:String = _
   @BeanProperty var accessrights:String = _
   @BeanProperty var associatedMedia:String = _
@@ -353,6 +352,7 @@ class Attribution (
  * Encapsulates a complete specimen or occurrence record.
  */
 class FullRecord (
+  @BeanProperty var uuid:String,
   @BeanProperty var occurrence:Occurrence,
   @BeanProperty var classification:Classification,
   @BeanProperty var location:Location,
@@ -366,10 +366,11 @@ class FullRecord (
   extends Cloneable {
 
   val objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement)
-
-  def this() = this(new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
+  def this(uuid:String) = this(uuid,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
       new Measurement, Array())
-  override def clone : FullRecord = new FullRecord(
+  def this() = this(null,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
+      new Measurement, Array())
+  override def clone : FullRecord = new FullRecord(this.uuid,
       occurrence.clone,classification.clone,location.clone,event.clone,attribution.clone,
       identification.clone,measurement.clone,assertions.clone)
 }

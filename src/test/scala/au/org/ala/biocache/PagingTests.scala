@@ -17,7 +17,7 @@ class PagingTests extends FunSuite {
         val classification = fullRecord.get.classification
         val location = fullRecord.get.location
         val event = fullRecord.get.event
-        println(occurrence.uuid+"\t"+classification.genus+"\t"+classification.specificEpithet+"\t"+classification.scientificName)
+        println(fullRecord.get.uuid+"\t"+classification.genus+"\t"+classification.specificEpithet+"\t"+classification.scientificName)
         count +=1
         if(count>10) {
             false
@@ -39,7 +39,7 @@ class PagingTests extends FunSuite {
           val classification = fullRecord.classification
           val location = fullRecord.location
           val event = fullRecord.event
-          println(occurrence.uuid+"\t"+classification.genus+"\t"+classification.specificEpithet+"\t"+classification.scientificName)
+          println(fullRecord.uuid+"\t"+classification.genus+"\t"+classification.specificEpithet+"\t"+classification.scientificName)
         }
         count +=1
         if(count>10) {

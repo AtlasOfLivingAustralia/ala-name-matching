@@ -92,7 +92,11 @@ class CassandraPersistenceManager (
         val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
         try {
             val columnList = selector.getColumnsFromRow(uuid, entityName, slicePredicate, ConsistencyLevel.ONE)
-            Some(columnList2Map(columnList))
+            if(columnList.isEmpty){
+                Some(columnList2Map(columnList))
+            } else {
+                None
+            }
         } catch {
             case e:Exception => None
         }
