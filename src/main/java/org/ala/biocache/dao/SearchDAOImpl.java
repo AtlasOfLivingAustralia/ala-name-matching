@@ -58,6 +58,7 @@ import au.com.bytecode.opencsv.CSVWriter;
 
 import com.ibm.icu.text.SimpleDateFormat;
 import org.ala.biocache.dto.SearchRequestParams;
+import org.ala.biocache.dto.SpatialSearchRequestParams;
 
 /**
  * SOLR implementation of SearchDao. Uses embedded SOLR server (can be a memory hog).
@@ -198,7 +199,7 @@ public class SearchDAOImpl implements SearchDAO {
      *         java.lang.Integer, java.lang.String, java.lang.String)
      */
     @Override
-    public SearchResultDTO findByFulltextSpatialQuery(SearchRequestParams searchParams) throws Exception {
+    public SearchResultDTO findByFulltextSpatialQuery(SpatialSearchRequestParams searchParams) throws Exception {
         SearchResultDTO searchResults = new SearchResultDTO();
 
         try {
