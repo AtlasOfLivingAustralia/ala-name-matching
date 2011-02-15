@@ -30,8 +30,10 @@ object Json {
       mapper.writeValueAsString(arr)
     }
 
-    
-    def toArray(jsonString:String, theClass:java.lang.Class[AnyRef]) :Array[AnyRef] ={
+    /**
+     * Converts a string to the supplied array type
+     */
+    def toArray(jsonString:String, theClass:java.lang.Class[AnyRef]) : Array[AnyRef] ={
       val mapper = new ObjectMapper
       val valueType = TypeFactory.arrayType(theClass)
       mapper.readValue[Array[AnyRef]](jsonString, valueType)
