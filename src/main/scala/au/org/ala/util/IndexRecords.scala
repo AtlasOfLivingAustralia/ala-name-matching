@@ -43,7 +43,7 @@ object IndexRecords {
           indexer.index(items);
           items.removeAll(items);
           finishTime = System.currentTimeMillis
-          logger.info(counter + " >> Last key : " + v(0).occurrence.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          logger.info(counter + " >> Last key : " + v(0).uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
           
         }

@@ -68,10 +68,10 @@ object FastDwCLoader {
         
         OccurrenceDAO.pageOverAll(Versions.RAW, record => {
             val uniqueID = dataResourceUID+"|"+record.get.occurrence.institutionCode+"|"+record.get.occurrence.collectionCode +"|"+record.get.occurrence.catalogNumber
-            DAO.persistentManager.put(uniqueID, "dr", "uuid", record.get.occurrence.uuid)
+            DAO.persistentManager.put(uniqueID, "dr", "uuid", record.get.uuid)
             counter+=1
             if(counter % 1000 == 0){
-              System.out.println(counter + " >> update mapping for: " + record.get.occurrence.uuid+", uniqueID: "+uniqueID);
+              System.out.println(counter + " >> update mapping for: " + record.get.uuid+", uniqueID: "+uniqueID);
             }
             true
         })

@@ -48,7 +48,7 @@ object ProcessWithActors {
       //debug counter
       if (count % 1000 == 0) {
         finishTime = System.currentTimeMillis
-        println(count + " >> Last key : " + fullRecord.get.occurrence.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+        println(count + " >> Last key : " + fullRecord.get.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
         startTime = System.currentTimeMillis
       }
       true //indicate to continue

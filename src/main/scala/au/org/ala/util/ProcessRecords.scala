@@ -63,7 +63,7 @@ object ProcessRecords {
         //debug counter
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
-          logger.info(counter + " >> Last key : " + raw.occurrence.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          logger.info(counter + " >> Last key : " + raw.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
         }
       }
@@ -76,7 +76,7 @@ object ProcessRecords {
    */
   def processRecord(raw:FullRecord){
 
-    val guid = raw.occurrence.uuid
+    val guid = raw.uuid
     //NC: Changed so that a processed record only contains values that have been processed.
     var processed = new FullRecord//raw.clone
     var assertions = new ArrayBuffer[QualityAssertion]
@@ -124,7 +124,7 @@ object ProcessRecords {
           OccurrenceDAO.updateOccurrence(guid, attribution.get, Processed)
           Array()
         } else {
-          Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, false, "Unrecognised collection code"))
+          Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, true, "Unrecognised collection code"))
         }
     } else {
       Array()
@@ -233,7 +233,7 @@ object ProcessRecords {
 
     //if invalid date, add assertion
     if (invalidDate) {
-      assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,false,comment)
+      assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,true,comment)
     }
 
     assertions.toArray
@@ -248,7 +248,7 @@ object ProcessRecords {
       val term = TypeStatus.matchTerm(raw.occurrence.typeStatus)
       if (term.isEmpty) {
         //add a quality assertion
-        Array(QualityAssertion(AssertionCodes.UNRECOGNISED_TYPESTATUS,false,"Unrecognised type status"))
+        Array(QualityAssertion(AssertionCodes.UNRECOGNISED_TYPESTATUS,true,"Unrecognised type status"))
       } else {
         processed.occurrence.typeStatus = term.get.canonical
         Array()
@@ -268,13 +268,13 @@ object ProcessRecords {
 
     if (raw.occurrence.basisOfRecord == null || raw.occurrence.basisOfRecord.isEmpty) {
       //add a quality assertion
-      Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,false,"Missing basis of record"))
+      Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,true,"Missing basis of record"))
     } else {
       val term = BasisOfRecord.matchTerm(raw.occurrence.basisOfRecord)
       if (term.isEmpty) {
         //add a quality assertion
         logger.debug("[QualityAssertion] " + guid + ", unrecognised BoR: " + guid + ", BoR:" + raw.occurrence.basisOfRecord)
-        Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,false,"Unrecognised basis of record"))
+        Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,true,"Unrecognised basis of record"))
       } else {
         processed.occurrence.basisOfRecord = term.get.canonical
         Array[QualityAssertion]()
@@ -330,7 +330,7 @@ object ProcessRecords {
                 + ", raw:" + raw.location.stateProvince)
             //add a quality assertion
             val comment = "Supplied: " + stateTerm.get.canonical + ", calculated: " + processed.location.stateProvince
-            assertions + QualityAssertion(AssertionCodes.STATE_COORDINATE_MISMATCH,false,comment)
+            assertions + QualityAssertion(AssertionCodes.STATE_COORDINATE_MISMATCH,true,comment)
             //store the assertion
           }
         }
@@ -355,7 +355,7 @@ object ProcessRecords {
                       + processed.location.decimalLongitude)
                   val comment = "Recognised habitats for species: " + habitatsAsString +
                        ", Value determined from coordinates: " + habitatFromPoint
-                  assertions + QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH,false,comment)
+                  assertions + QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH,true,comment)
                 }
               }
             }
@@ -364,7 +364,7 @@ object ProcessRecords {
 
         //TODO check centre point of the state
         if(StateCentrePoints.coordinatesMatchCentre(point.get.stateProvince, raw.location.decimalLatitude, raw.location.decimalLongitude)){
-          assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,false,"Coordinates are centre point of "+point.get.stateProvince)
+          assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,true,"Coordinates are centre point of "+point.get.stateProvince)
         }
       }
     }
@@ -441,10 +441,10 @@ object ProcessRecords {
         logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " +
             raw.classification.kingdom + ", Family:" + raw.classification.family + ", Genus:" + raw.classification.genus +
             ", Species: " + raw.classification.species + ", Epithet: " + raw.classification.specificEpithet)
-        Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, false, "Name not recognised"))
+        Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, true, "Name not recognised"))
       }
     } catch {
-      case he: HomonymException => logger.debug(he.getMessage,he); Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, false, "Homonym issue resolving the classification"))
+      case he: HomonymException => logger.debug(he.getMessage,he); Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, true, "Homonym issue resolving the classification"))
       case se: SearchResultException => logger.debug(se.getMessage,se); Array()
     }
   }
