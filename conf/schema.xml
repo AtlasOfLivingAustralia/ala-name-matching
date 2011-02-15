@@ -603,6 +603,7 @@
    <!-- Not displayed in search results -->
    <!-- field name="raw_common_name" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
    <field name="confidence" type="int" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="systemAssertions" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false" />
 
    <!-- end of Biocache Lucene Fields -->
 
