@@ -272,16 +272,6 @@ public class OccurrenceController {
      *
      * OLD URI Tested with: /occurrences/searchByArea.json?q=taxon_name:Lasioglossum|-31.2|138.4|800
      * NEW URI Tested with: /occurrences/area/-31.2/138.4/800?q=Lasioglossum
-     *
-     * @param query
-     * @param filterQuery
-     * @param startIndex
-     * @param pageSize
-     * @param sortField
-     * @param sortDirection
-     * @param radius
-     * @param latitude
-     * @param longitude
      * @param model
      * @return
      * @throws Exception
@@ -496,7 +486,7 @@ public class OccurrenceController {
 	 * @param model
 	 * @throws Exception
 	 */
-	@RequestMapping(value = {"/occurrence/{uuid}", "/occurrence/{uuid}.json"}, method = RequestMethod.GET)
+	@RequestMapping(value = {"/occurrence/{uuid}","/occurrences/{uuid}", "/occurrence/{uuid}.json", "/occurrences/{uuid}.json"}, method = RequestMethod.GET)
 	public @ResponseBody OccurrenceDTO showOccurrence(@PathVariable("uuid") String uuid,
         HttpServletRequest request, Model model) throws Exception {
 
