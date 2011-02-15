@@ -9,12 +9,29 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
     </head>
     <body>
     	<div class="section">
-    	<h1>BioCache</h1>
-        <p>Welcome to the Atlas of Living Australia <strong>BioCache</strong>.</p>
-        <p>
-          This is an early release of this functionality for <strong>release 5 (October 29th 2010)</strong>.
-        </p>
-        <h2>Free text search of occurrence records</h2>
+        <h1> Web Services </h1>
+
+        <h3>Occurrences</h3>
+        <ul>
+            <li>/occurrence/{uuid}</li>
+            <li>/occurrence/page - just shows the first 10 occurrences (for debug only)</li>
+            <li>/occurrences/taxon/{guid}</li>
+            <li>/occurrences/collection/{uid}</li>
+            <li>/occurrences/institution/{uid}</li>
+            <li>/occurrences/data-resource/{uid}</li>
+            <li>/occurrences/data-provider/{uid}</li>
+            <li>/occurrences/download</li>
+        </ul>
+
+        <h3>Assertions</h3>
+        <ul>
+            <li>/occurrence/{uuid}/assertions/codes</li>
+            <li>/occurrence/{uuid}/assertions/add</li>
+            <li>/occurrence/{uuid}/assertions/{assertionUuid}/delete</li>
+            <li>/occurrence/{uuid}/assertions/</li>
+        </ul>
+
+        <h2>Free text search of occurrence records (will return JSON)</h2>
 		<div id="inpage_search">
 			<form id="search-inpage" action="occurrences/search" method="get" name="search-form">
 			<label for="search">Search</label>
@@ -22,6 +39,5 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
 			<span class="search-button-wrapper"><input type="submit" class="search-button" alt="Search" value="Search"></span>
 			</form>
 		</div>
-        </div>
     </body>
 </html>
