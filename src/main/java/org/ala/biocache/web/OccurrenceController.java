@@ -146,7 +146,7 @@ public class OccurrenceController {
 //                    return searchResult;
 //		}
 
-                
+                SearchUtils.setDefaultParams(requestParams);
                 logger.debug("requestParams: " + requestParams);
                 //Change the method call so that the filter query can be updated
                 boolean taxonFound = searchUtils.updateTaxonConceptSearchString(requestParams, guid);

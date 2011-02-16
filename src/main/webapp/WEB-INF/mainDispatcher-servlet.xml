@@ -49,11 +49,17 @@
      -->
     <bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
         <property name="exceptionAttribute" value="error"/>
+        <property name="defaultStatusCode" value="500"/>
         <property name="exceptionMappings">
             <props>
                 <prop key="org.springframework.web.servlet.PageNotFound">error/pageNotFound</prop>
                 <prop key="org.springframework.dao.DataAccessException">error/dataAccessFailure</prop>
                 <prop key="org.springframework.transaction.TransactionException">error/dataAccessFailure</prop>
+            </props>
+        </property>
+        <property name="statusCodes">
+            <props>
+                <prop key="error/pageNotFound">404</prop>
             </props>
         </property>
         <property name="defaultErrorView" value="error/general" />
@@ -93,9 +99,7 @@
     </bean>
     
     <bean id="restfulClient" class="org.ala.client.util.RestfulClient"/>
-
-        <bean
-        class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter" p:order="0">
+        <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter" p:order="0">
         <property name="messageConverters">
             <list>
                 <bean
@@ -110,8 +114,7 @@
     <bean id="jacksonObjectMapper" class="org.codehaus.jackson.map.ObjectMapper" />
     <bean id="jacksonSerializationConfig" class="org.codehaus.jackson.map.SerializationConfig"
         factory-bean="jacksonObjectMapper" factory-method="getSerializationConfig" />
-    <bean
-        class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
         <property name="targetObject" ref="jacksonSerializationConfig" />
         <property name="targetMethod" value="setSerializationInclusion" />
         <property name="arguments">
@@ -119,7 +122,6 @@
                 <value type="org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion">NON_NULL</value>
             </list>
         </property>
-
     </bean>
     
     <!-- BoBo Lucene add-on for facet browsing -->

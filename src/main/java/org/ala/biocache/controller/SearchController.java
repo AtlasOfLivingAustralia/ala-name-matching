@@ -122,7 +122,7 @@ public class SearchController {
 
             logger.info("Attempting to search: "+ requestParams);
 		
-
+        SearchUtils.setDefaultParams(requestParams); // handle empty param values, e.g. &sort=&dir=
 		SearchResultDTO searchResult = new SearchResultDTO();
         
         searchResult = searchDAO.findByFulltextQuery(requestParams);
@@ -194,23 +194,24 @@ public class SearchController {
         }
 
 	}
-        /**
-         * Obtains a list of the sources for the supplied guid.
-         *
-         * It also handle's the logging for the BIE.
-         * 
-         * @param query
-         * @param request
-         * @param model
-         * @throws Exception
-         */
-        @RequestMapping(value = "/sourceByTaxon/{guid}.json*", method = RequestMethod.GET)
-        public void sourceByTaxon(
-            @PathVariable(value = "guid") String query,
-            @RequestParam(value = "fq", required = false) String[] filterQuery,
-            HttpServletRequest request,
-            Model model)
-            throws Exception {
+    
+    /**
+     * Obtains a list of the sources for the supplied guid.
+     *
+     * It also handle's the logging for the BIE.
+     *
+     * @param query
+     * @param request
+     * @param model
+     * @throws Exception
+     */
+    @RequestMapping(value = "/sourceByTaxon/{guid}.json*", method = RequestMethod.GET)
+    public void sourceByTaxon(
+        @PathVariable(value = "guid") String query,
+        @RequestParam(value = "fq", required = false) String[] filterQuery,
+        HttpServletRequest request,
+        Model model)
+        throws Exception {
                 
         String email = null;
         String reason = "Viewing BIE species map";
