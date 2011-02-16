@@ -25,7 +25,7 @@ import scala.Option;
 
 /**
  * A class to provide utility methods used to populate search details.
- * 
+ *
  * @author Natasha
  */
 @Component("searchUtils")
@@ -37,7 +37,7 @@ public class SearchUtils {
 	protected String collectoryBaseUrl = "http://collections.ala.org.au";
 
 	protected String bieBaseUrl = "http://bie.ala.org.au";
-	
+
 	private static final List<String> ranks = (List<String>) org.springframework.util.CollectionUtils
 			.arrayToList(new String[] { "kingdom", "phylum", "class", "order",
 					"family", "genus", "species" });
@@ -45,7 +45,7 @@ public class SearchUtils {
 	/**
 	 * Returns an array that contains the search string to use for a collection
 	 * search and display name for the results.
-	 * 
+	 *
 	 * @param query
 	 * @return true when UID could be located and query updated correctly
 	 */
@@ -68,7 +68,7 @@ public class SearchUtils {
 			// // Build Lucene query for institutions
 			// StringBuilder solrQuery = new StringBuilder();
 			// if (institutionCode != null && institutionCode.size() > 0) {
-			//	
+			//
 			// List<String> institutions = new ArrayList<String>();
 			// for (int i = 0; i < institutionCode.size(); i++) {
 			// institutions.add("institution_code:" +
@@ -77,14 +77,14 @@ public class SearchUtils {
 			// solrQuery.append("(");
 			// solrQuery.append(StringUtils.join(institutions, " OR "));
 			// solrQuery.append(")");
-			//	
+			//
 			// }
-			//	
+			//
 			// // Build Lucene query for collections
 			// if (collectionCode != null && collectionCode.size() > 0) {
 			// if (solrQuery.length() > 0) {
 			// solrQuery.append(" AND ");
-			//	
+			//
 			// }
 			// //StringBuilder displayString = new
 			// StringBuilder("Institution: ");
@@ -99,7 +99,7 @@ public class SearchUtils {
 			// solrQuery.append("(");
 			// solrQuery.append(StringUtils.join(collections, " OR "));
 			// solrQuery.append(")");
-			//	
+			//
 			// }
 			// searchQuery.setQuery("collection_code_uid:"+query);
 			searchQuery.setQuery(getUidSearchField(query) + ":" + query);
@@ -119,7 +119,7 @@ public class SearchUtils {
 
         public boolean updateCollectionSearchString(SearchRequestParams searchParams, String uid) {
 		try {
-			
+
 
 			// query the collectory for the institute and collection codes
 			// needed to perform the search
@@ -167,7 +167,7 @@ public class SearchUtils {
 	/**
 	 * Returns the filter query string required to perform a taxon concept
 	 * search
-	 * 
+	 *
 	 * @param query
 	 * @return
 	 */
@@ -176,9 +176,9 @@ public class SearchUtils {
 		String guid = searchQuery.getQuery();
 
 		Option<TaxonProfile> opt = TaxonProfileDAO.getByGuid(guid);
-		
+
 		//replace with webservice call or use biocache taxon profile cache - is this enough
-		
+
 		if (!opt.isEmpty()) {
                     TaxonProfile tc = opt.get();
                     StringBuffer entityQuerySb = new StringBuffer(tc.getRankString()
@@ -304,7 +304,7 @@ public class SearchUtils {
 
 	/**
 	 * Returns the query to be used when searching for data providers.
-	 * 
+	 *
 	 * @param query
 	 * @return
 	 */
@@ -315,7 +315,7 @@ public class SearchUtils {
 
 	/**
 	 * Returns the query to be used when searching for data resources.
-	 * 
+	 *
 	 * @param query
 	 * @return
 	 */
@@ -346,7 +346,7 @@ public class SearchUtils {
 	/**
 	 * Returns the query string based on the type of search that needs to be
 	 * performed.
-	 * 
+	 *
 	 * @param query
 	 * @param type
 	 * @return true when the query updated correctly, false otherwise
@@ -411,7 +411,7 @@ public class SearchUtils {
 
 	/**
 	 * returns the solr field that should be used to search for a particular uid
-	 * 
+	 *
 	 * @param uid
 	 * @return
 	 */
@@ -429,7 +429,7 @@ public class SearchUtils {
 
 	/**
 	 * returns the title that should be used to search for a particular uid
-	 * 
+	 *
 	 * @param uid
 	 * @return
 	 */
@@ -447,7 +447,7 @@ public class SearchUtils {
 
 	/**
 	 * Returns the rank name based on an integer position
-	 * 
+	 *
 	 * @param position
 	 * @return
 	 */
@@ -474,7 +474,7 @@ public class SearchUtils {
 
 	/**
 	 * Returns an ordered list of the next ranks after the supplied rank.
-	 * 
+	 *
 	 * @param rank
 	 * @return
 	 */
@@ -489,9 +489,9 @@ public class SearchUtils {
 
 	/**
 	 * Returns the information for the supplied source keys
-	 * 
+	 *
 	 * TODO: There may be a better location for this method.
-	 * 
+	 *
 	 * @param keys
 	 * @return
 	 */
@@ -533,6 +533,32 @@ public class SearchUtils {
 	}
 
 	/**
+     * Provide default values for parameters if they have any null or "empty" values
+     *
+     * @param requestParams
+     */
+    public static void setDefaultParams(SearchRequestParams requestParams) {
+        SearchRequestParams blankRequestParams = new SearchRequestParams(); // use for default values
+        logger.debug("requestParams = " + requestParams);
+
+        if (requestParams.getStart() == null) {
+            requestParams.setStart(blankRequestParams.getStart());
+        }
+
+        if (requestParams.getPageSize() == null) {
+            requestParams.setPageSize(blankRequestParams.getPageSize());
+        }
+
+        if (requestParams.getSort() == null || requestParams.getSort().isEmpty()) {
+            requestParams.setSort(blankRequestParams.getSort());
+        }
+
+        if (requestParams.getDir() == null || requestParams.getDir().isEmpty()) {
+            requestParams.setDir(blankRequestParams.getDir());
+        }
+    }
+
+    /**
 	 * @param collectoryBaseUrl
 	 *            the collectoryBaseUrl to set
 	 */
