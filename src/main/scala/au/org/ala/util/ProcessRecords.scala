@@ -37,12 +37,15 @@ import au.org.ala.biocache._
 object ProcessRecords {
 
   val logger = LoggerFactory.getLogger("ProcessRecords")
+  //Regular expression used to parse an image URL - adapted from http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
+  lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#?]+)+\.(?:jpg|gif|png))$""".r
 
   def main(args: Array[String]): Unit = {
+
     logger.info("Starting processing records....")
     processAll
     logger.info("Finished. Shutting down.")
-    Pelops.shutdown
+    Pelops.shutdown 
   }
 
   /**
@@ -99,6 +102,9 @@ object ProcessRecords {
     //process the attribution - call out to the Collectory...
     assertions ++= processAttribution(guid, raw, processed)
 
+    //process the images
+    assertions ++= processImages(guid, raw, processed)
+
     //perform SDS lookups - retrieve from BIE for now....
     // processImages
     // processLinkRecord
@@ -110,6 +116,24 @@ object ProcessRecords {
     //store the occurrence
     OccurrenceDAO.updateOccurrence(guid, processed, systemAssertions, Processed)
   }
+  /**
+   * validates that the associated media is a valid image url
+   */
+  def processImages(guid:String, raw:FullRecord, processed:FullRecord) :Array[QualityAssertion] ={
+    val urls = raw.getOccurrence.getAssociatedMedia
+    // val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(cl.getter(sg.rank)) => sg.name}
+    if(urls != null){
+      val aurls = urls.split(";")
+      processed.occurrence.setImages(aurls.filter(isValidImageURL(_)))
+      if(aurls.length != processed.occurrence.getImages().length)
+          return Array(QualityAssertion(AssertionCodes.INVALID_IMAGE_URL, false, "URL can not be an image"))
+    }
+    Array()
+  }
+  private def isValidImageURL(url:String) : Boolean = {
+    imageParser.unapplySeq(url.trim).isEmpty == false
+  }
+
 
   /**
    * select icm.institution_uid, icm.collection_uid,  ic.code, ic.name, ic.lsid, cc.code from inst_coll_mapping icm
@@ -203,7 +227,7 @@ object ProcessRecords {
 
     //set the processed values
     if (year != -1) processed.event.year = year.toString
-    if (month != -1) processed.event.month = month.toString
+    if (month != -1) processed.event.month = String.format("%02d",int2Integer(month)) //NC ensure that a month is 2 characters long
     if (day != -1) processed.event.day = day.toString
     if (!date.isEmpty) processed.event.eventDate = DateFormatUtils.format(date.get, "yyyy-MM-dd")
 

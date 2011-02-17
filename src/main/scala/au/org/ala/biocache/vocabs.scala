@@ -355,6 +355,7 @@ object AssertionCodes {
   val UNRECOGNISED_TYPESTATUS = ErrorCode("unrecognisedTypeStatus",20004,false)
   val UNRECOGNISED_COLLECTIONCODE = ErrorCode("unrecognisedCollectionCode",20005,false)
   val UNRECOGNISED_INSTITUTIONCODE = ErrorCode("unrecognisedInstitutionCode",20006,false)
+  val INVALID_IMAGE_URL = ErrorCode("invalidImageUrl", 20007, false)
 
   //temporal
   val ID_PRE_OCCURRENCE = ErrorCode("idPreOccurrence",30001,false)

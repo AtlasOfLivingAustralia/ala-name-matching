@@ -59,6 +59,8 @@ class Occurrence extends Cloneable {
   @BeanProperty var source:String = _
   //type status perhaps should be in identification
   @BeanProperty var typeStatus:String = _
+  //custom fields
+  @BeanProperty var images:Array[String] = _
 }
 
 /**
@@ -231,7 +233,7 @@ class Location extends Cloneable {
 class OccurrenceIndex extends Cloneable {
   override def clone : OccurrenceIndex = super.clone.asInstanceOf[OccurrenceIndex]
   @BeanProperty @Field("id") var uuid:String =_
-  @BeanProperty var occurrenceID:String =_
+  @BeanProperty @Field("occurrence_id") var occurrenceID:String =_
   //processed values
   @BeanProperty @Field("hub_uid") var dataHubUid:String =_
   @BeanProperty @Field("institution_code_uid") var institutionUid:String =_
@@ -273,9 +275,12 @@ class OccurrenceIndex extends Cloneable {
   @BeanProperty @Field("data_provider") var dataProviderName:String =_
   @BeanProperty @Field("data_resource_uid") var dataResourceUid:String =_
   @BeanProperty @Field("data_resource") var dataResourceName:String =_
-  @BeanProperty @Field("systemAssertions") var assertions:Array[String] =_
+  @BeanProperty @Field("assertions") var assertions:Array[String] =_
+  @BeanProperty @Field("user_assertions") var hasUserAssertions:String =_
   @BeanProperty @Field("species_group") var speciesGroups:Array[String] =_
-  @BeanProperty @Field("image_url") var raw_associatedMedia:String = _
+  @BeanProperty @Field("image_url") var image:String = _
+  @BeanProperty @Field("geospatial_kosher") var geospatialKosher:String =_
+  @BeanProperty @Field("taxonomic_kosher") var taxonomicKosher:String =_
   
   //extra raw record fields
   @BeanProperty @Field("raw_taxon_name") var raw_scientificName:String =_

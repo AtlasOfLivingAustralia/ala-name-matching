@@ -105,9 +105,9 @@ object OccurrenceDAO {
   protected val logger = LoggerFactory.getLogger("OccurrenceDAO")
   private val entityName = "occ"
   private val qualityAssertionColumn = "qualityAssertion"
-  private val userQualityAssertionColumn = "userQualityAssertion"
-  private val geospatialDecisionColumn = "geospatiallyKosher"
-  private val taxonomicDecisionColumn = "taxonomicallyKosher"
+  val userQualityAssertionColumn = "userQualityAssertion"
+  val geospatialDecisionColumn = "geospatiallyKosher"
+  val taxonomicDecisionColumn = "taxonomicallyKosher"
 
   /**
    * Get an occurrence with UUID
@@ -227,7 +227,7 @@ object OccurrenceDAO {
   private def isConsensusValue(name:String) : Boolean = name endsWith ".c"
 
   /** Is this a "consensus" value? */
-  private def isQualityAssertion(name:String) : Boolean = name endsWith ".qa"
+  def isQualityAssertion(name:String) : Boolean = name endsWith ".qa"
 
   /** Add a suffix to this field name to indicate version type */
   private def markAsProcessed(name:String) : String = name + ".p"
@@ -239,7 +239,7 @@ object OccurrenceDAO {
   private def markAsQualityAssertion(name:String) : String = name + ".qa"
 
   /** Remove the quality assertion marker */
-  private def removeQualityAssertionMarker(name:String) : String = name.dropRight(3)
+  def removeQualityAssertionMarker(name:String) : String = name.dropRight(3)
 
   /**
    * Create or retrieve the UUID for this record. The uniqueID should be a
@@ -336,7 +336,10 @@ object OccurrenceDAO {
       //Get a string representation of the value based on the type.
       //JSON strings should be used for non-flat values
       typ.getName  match{
-        case "[Ljava.lang.String;"  => fieldValue = Json.toJSON(method.invoke(anObject).asInstanceOf[Array[AnyRef]])
+        case "[Ljava.lang.String;"  => {
+            val array =method.invoke(anObject).asInstanceOf[Array[AnyRef]]
+            if(array!= null)
+              fieldValue = Json.toJSON(array)}
         case _ => fieldValue = method.invoke(anObject).asInstanceOf[String]
       }
       
