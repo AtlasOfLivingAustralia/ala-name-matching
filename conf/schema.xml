@@ -477,6 +477,7 @@
    -->
    <!-- start of BIE Biocache Fields -->
    <field name="id" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="occurrence_id" type="string" stored="true" multiValued="false" omitNorms="false" />
    <field name="hub_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false"/>
    
     <field name="data_provider_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
@@ -583,9 +584,10 @@
    <field name="collector" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
    
    <!-- TODO work out the extra search fields that are required for the issues -->
-   <field name="taxonomic_issue" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="geospatial_issue" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="taxonomic_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="geospatial_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="assertions" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false" />
+   <field name="user_assertions" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <!-- Not displayed in search results -->   
    <!-- field name="created_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="modified_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
@@ -600,9 +602,9 @@
    <field name="location_remarks" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="occurrence_remarks" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="citation" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
-   <!-- Not displayed in search results -->
-   <!-- field name="raw_common_name" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
-   <field name="confidence" type="int" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   
+   <!-- I don't think that we need this field - we can always add it later. -->
+   <!--field name="confidence" type="int" indexed="true" stored="true" multiValued="false" omitNorms="false" /-->
    <field name="systemAssertions" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false" />
 
    <!-- end of Biocache Lucene Fields -->
