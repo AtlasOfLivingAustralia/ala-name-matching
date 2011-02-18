@@ -25,18 +25,18 @@ import au.org.ala.sds.util.GeoLocationHelper;
  */
 public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
 
-	private String scientificName;
-	private List<SensitivityInstance> instances;
-	
+    private String scientificName;
+    private List<SensitivityInstance> instances;
+    
     public SensitiveSpecies(String scientificName) {
-		super();
-		this.scientificName = scientificName;
-		this.instances = new ArrayList<SensitivityInstance>();
-	}
+        super();
+        this.scientificName = scientificName;
+        this.instances = new ArrayList<SensitivityInstance>();
+    }
 
-	public String getScientificName() {
-		return this.scientificName;
-	}
+    public String getScientificName() {
+        return this.scientificName;
+    }
 
     public List<SensitivityInstance> getInstances() {
         return instances;
@@ -52,8 +52,8 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
         return false;
     }
     
-    public ConservationCategory getConservationCategory(String latitude, String longitude) {
-        ConservationCategory category = null;
+    public SensitivityCategory getConservationCategory(String latitude, String longitude) {
+        SensitivityCategory category = null;
         
         // Avoid spatial gazetteer lookup if possible
         if (instances.size() == 1 && instances.get(0).getZone() == SensitivityZone.AUS) {
@@ -69,7 +69,7 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
             }
 
             if (state != null) {
-                ConservationCategory ausCategory = null;
+                SensitivityCategory ausCategory = null;
                 for (SensitivityInstance instance : instances) {
                     if (state == instance.getZone()) {
                         category = instance.getCategory();
@@ -89,35 +89,35 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
         return category;
     }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((scientificName == null) ? 0 : scientificName.hashCode());
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((scientificName == null) ? 0 : scientificName.hashCode());
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SensitiveSpecies other = (SensitiveSpecies) obj;
-		if (scientificName == null) {
-			if (other.scientificName != null)
-				return false;
-		} else if (!scientificName.equals(other.scientificName))
-			return false;
-		return true;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SensitiveSpecies other = (SensitiveSpecies) obj;
+        if (scientificName == null) {
+            if (other.scientificName != null)
+                return false;
+        } else if (!scientificName.equals(other.scientificName))
+            return false;
+        return true;
+    }
 
-	@Override
-	public int compareTo(SensitiveSpecies ss) {
-		return scientificName.compareTo(ss.getScientificName());
-	}
+    @Override
+    public int compareTo(SensitiveSpecies ss) {
+        return scientificName.compareTo(ss.getScientificName());
+    }
 
 }
