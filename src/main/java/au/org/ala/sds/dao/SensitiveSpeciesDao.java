@@ -24,8 +24,8 @@ import au.org.ala.sds.model.SensitiveSpecies;
  */
 public interface SensitiveSpeciesDao {
 
-	List<SensitiveSpecies> getAll();
-	
-	SensitiveSpecies findByName(String scientificName);
-	
+    List<SensitiveSpecies> getAll();
+    
+    SensitiveSpecies findByName(String scientificName);
+    
 }

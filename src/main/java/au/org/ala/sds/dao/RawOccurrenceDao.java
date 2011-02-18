@@ -24,9 +24,9 @@ import au.org.ala.sds.dto.SpeciesOccurrenceDto;
  */
 public interface RawOccurrenceDao {
 
-	List<SpeciesOccurrenceDto> getOccurrences();
-	
-	void updateLocation(int id, String generalisedLatitude, String generalisedLongitude, String generalisedMetres, String rawLatitude, String rawLongitude);
-	
-	void updateLocation(int id, String generalisedLatitude, String generalisedLongitude, String generalisedMetres);
+    List<SpeciesOccurrenceDto> getOccurrences();
+    
+    void updateLocation(int id, String generalisedLatitude, String generalisedLongitude, String generalisedMetres, String rawLatitude, String rawLongitude);
+    
+    void updateLocation(int id, String generalisedLatitude, String generalisedLongitude, String generalisedMetres);
 }
