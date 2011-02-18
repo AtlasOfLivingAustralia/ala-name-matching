@@ -22,7 +22,7 @@ import au.org.ala.sds.model.SensitiveSpecies;
  */
 public interface Lookup {
 
-	SensitiveSpecies findSensitiveSpecies(String scientificName);
-	
-	boolean isSensitive(String scientificName);
+    SensitiveSpecies findSensitiveSpecies(String scientificName);
+    
+    boolean isSensitive(String scientificName);
 }
