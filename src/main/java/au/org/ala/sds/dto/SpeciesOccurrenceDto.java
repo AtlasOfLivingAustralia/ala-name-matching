@@ -19,59 +19,59 @@ package au.org.ala.sds.dto;
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
 public class SpeciesOccurrenceDto {
-	private int id;
-	private String scientificName;
-	private String location;
-	private String latitude;
-	private String longitude;
-	private String latLongPrecision;
-	private String basisOfRecord;
-	
+    private int id;
+    private String scientificName;
+    private String location;
+    private String latitude;
+    private String longitude;
+    private String latLongPrecision;
+    private String basisOfRecord;
+    
     public SpeciesOccurrenceDto() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
+        super();
+        // TODO Auto-generated constructor stub
+    }
 
-	public int getId() {
-		return id;
-	}
+    public int getId() {
+        return id;
+    }
 
-	public void setId(int id) {
-		this.id = id;
-	}
+    public void setId(int id) {
+        this.id = id;
+    }
 
-	public String getScientificName() {
-		return scientificName;
-	}
+    public String getScientificName() {
+        return scientificName;
+    }
 
-	public void setScientificName(String scientificName) {
-		this.scientificName = scientificName;
-	}
+    public void setScientificName(String scientificName) {
+        this.scientificName = scientificName;
+    }
 
-	public String getLatitude() {
-		return latitude;
-	}
+    public String getLatitude() {
+        return latitude;
+    }
 
-	public void setLatitude(String latitude) {
-		this.latitude = latitude;
-	}
+    public void setLatitude(String latitude) {
+        this.latitude = latitude;
+    }
 
-	public String getLongitude() {
-		return longitude;
-	}
+    public String getLongitude() {
+        return longitude;
+    }
 
-	public void setLongitude(String longitude) {
-		this.longitude = longitude;
-	}
+    public void setLongitude(String longitude) {
+        this.longitude = longitude;
+    }
 
-	public String getLatLongPrecision() {
-		return latLongPrecision;
-	}
+    public String getLatLongPrecision() {
+        return latLongPrecision;
+    }
 
-	public void setLatLongPrecision(String latLongPrecision) {
-		this.latLongPrecision = latLongPrecision;
-	}
-	
+    public void setLatLongPrecision(String latLongPrecision) {
+        this.latLongPrecision = latLongPrecision;
+    }
+    
     public String getLocation() {
         return location;
     }
