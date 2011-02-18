@@ -3,13 +3,13 @@ use portal;
 DROP TABLE IF EXISTS sensitive_species;
 
 CREATE TABLE sensitive_species (
-	id INTEGER(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-	common_name VARCHAR(50) NOT NULL,
-	scientific_name VARCHAR(50) NOT NULL,
-	family VARCHAR(50) NOT NULL,
-	data_provider VARCHAR(255) NOT NULL,
-	sensitivity_category CHAR(1) NOT NULL);
-	
+    id INTEGER(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    common_name VARCHAR(50) NOT NULL,
+    scientific_name VARCHAR(50) NOT NULL,
+    family VARCHAR(50) NOT NULL,
+    data_provider VARCHAR(255) NOT NULL,
+    sensitivity_category CHAR(1) NOT NULL);
+    
 INSERT INTO sensitive_species VALUES ('Abbott\'s Booby','Papasula abbotti','Sulidae','Birds Australia','H');
 INSERT INTO sensitive_species VALUES ('Albert\'s Lyrebird','Menura alberti','Menuridae','Birds Australia','H');
 INSERT INTO sensitive_species VALUES ('Australasian Bittern','Botaurus poiciloptilus','Ardeidae','Birds Australia','H');
