@@ -1,17 +1,17 @@
 package au.org.ala.sds.validation;
 
-import java.util.Set;
+import java.util.List;
 
 import au.org.ala.sds.model.Message;
 
 public interface ValidationReport {
 
-    Set<Message> getMessages();
+    List<Message> getMessages();
 
     /**
      * @return all messages of specified type in this report
      */
-    Set<Message> getMessagesByType(Message.Type type);
+    List<Message> getMessagesByType(Message.Type type);
 
     /**
      * @return true if this report contains message with 
