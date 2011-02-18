@@ -16,7 +16,7 @@ package au.org.ala.sds.util;
 
 import java.math.BigDecimal;
 
-import au.org.ala.sds.model.ConservationCategory;
+import au.org.ala.sds.model.SensitivityCategory;
 
 /**
  * @author Peter Flemming (peter.flemming@csiro.au)
@@ -27,9 +27,10 @@ public class GeneralisedLocation {
     private String generalisedLatitude;
     private String generalisedLongitude;
     private String generalisationInMetres;
-    private ConservationCategory category;
+    private SensitivityCategory category;
+    private String description;
     
-    public GeneralisedLocation(String latitude, String Longitude, ConservationCategory category) {
+    public GeneralisedLocation(String latitude, String Longitude, SensitivityCategory category) {
         originalLatitude = latitude;
         originalLongitude = Longitude;
         this.category = category;
@@ -56,47 +57,57 @@ public class GeneralisedLocation {
         return generalisationInMetres;
     }
 
-    public ConservationCategory getCategory() {
+    public SensitivityCategory getCategory() {
         return category;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     private void generaliseCoordinates() {
         
-        if (this.category == null) {
-            this.generalisedLatitude = this.originalLatitude;
-            this.generalisedLongitude = this.originalLongitude;
-            this.generalisationInMetres = "";
+        if (category == null) {
+            generalisedLatitude = originalLatitude;
+            generalisedLongitude = originalLongitude;
+            generalisationInMetres = "";
+            description = "Location not generalised because it is not deemed sensitive in that area.";
             return;
         }
         
         int decimalPlaces;
-        switch (this.category) {
+        switch (category) {
             case CRITICALLY_ENDANGERED:
-                this.generalisedLatitude = "";
-                this.generalisedLongitude = "";
-                this.generalisationInMetres = "";
+                generalisedLatitude = "";
+                generalisedLongitude = "";
+                generalisationInMetres = "";
+                description = "Location withheld because species is " + category.getValue() + ".";
                 return;
             case ENDANGERED:
                 decimalPlaces = 1;
-                this.generalisationInMetres = "10000";
+                generalisationInMetres = "10000";
+                description = "Location generalised to one decimal place because species is " + category.getValue() + ".";
                 break;
             case VULNERABLE:
                 decimalPlaces = 2;
-                this.generalisationInMetres = "1000";
+                generalisationInMetres = "1000";
+                description = "Location generalised to two decimal places because species is " + category.getValue() + ".";
                 break;
             case NEAR_THREATENED:
                 decimalPlaces = 3;
-                this.generalisationInMetres = "100";
+                generalisationInMetres = "100";
+                description = "Location generalised to three decimal places because species is " + category.getValue() + ".";
                 break;
             default:
-                this.generalisedLatitude = this.originalLatitude;
-                this.generalisedLongitude = this.originalLongitude;
-                this.generalisationInMetres = "";
+                generalisedLatitude = originalLatitude;
+                generalisedLongitude = originalLongitude;
+                generalisationInMetres = "";
+                description = "Location not generalised because species conservation status is " + category.getValue() + ".";
                 return;
         }
 
-        this.generalisedLatitude = round(this.originalLatitude, decimalPlaces);
-        this.generalisedLongitude = round(this.originalLongitude, decimalPlaces);
+        generalisedLatitude = round(originalLatitude, decimalPlaces);
+        generalisedLongitude = round(originalLongitude, decimalPlaces);
     }
 
     private String round(String number, int decimalPlaces) {
