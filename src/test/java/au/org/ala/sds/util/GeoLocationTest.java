@@ -20,7 +20,6 @@ import static org.junit.Assert.assertNull;
 import org.junit.Test;
 
 import au.org.ala.sds.model.SensitivityZone;
-import au.org.ala.sds.util.GeoLocationHelper;
 
 public class GeoLocationTest {
 
