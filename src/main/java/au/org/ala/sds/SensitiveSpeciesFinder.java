@@ -30,34 +30,34 @@ import au.org.ala.sds.model.SensitiveSpecies;
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
 public class SensitiveSpeciesFinder implements Lookup {
-	
-	protected static final Logger logger = Logger.getLogger(SensitiveSpeciesFinder.class);
-	private SensitiveSpeciesDao dao;
-	
-	public void setDao(SensitiveSpeciesDao dao ) {
-		this.dao = dao;
-	}
-	
-	public SensitiveSpecies findSensitiveSpecies(String scientificName) {
-		return dao.findByName(scientificName);
-	}
+    
+    protected static final Logger logger = Logger.getLogger(SensitiveSpeciesFinder.class);
+    private SensitiveSpeciesDao dao;
+    
+    public void setDao(SensitiveSpeciesDao dao ) {
+        this.dao = dao;
+    }
+    
+    public SensitiveSpecies findSensitiveSpecies(String scientificName) {
+        return dao.findByName(scientificName);
+    }
 
-	public boolean isSensitive(String scientificName) {
-		return dao.findByName(scientificName) != null;
-	}
+    public boolean isSensitive(String scientificName) {
+        return dao.findByName(scientificName) != null;
+    }
 
-	public void verifySensitiveSpecies(CBIndexSearch cbIdxSearcher) throws SearchResultException {
-		List<SensitiveSpecies> speciesList = dao.getAll();
-		for (SensitiveSpecies ss : speciesList) {
-			NameSearchResult match = cbIdxSearcher.searchForRecord(ss.getScientificName(), RankType.SPECIES);
-			if (match != null) {
-				String acceptedName = match.getRankClassification().getSpecies();
-				if (!ss.getScientificName().equalsIgnoreCase(acceptedName)) {
-					logger.warn("Sensitive species '" + ss.getScientificName() + "' is not accepted name - '" + acceptedName + "'");
-				}
-			} else {
-				logger.warn("Sensitive species '" + ss.getScientificName() + "' not found in NameMatching index");
-			}
-		}
-	}
+    public void verifySensitiveSpecies(CBIndexSearch cbIdxSearcher) throws SearchResultException {
+        List<SensitiveSpecies> speciesList = dao.getAll();
+        for (SensitiveSpecies ss : speciesList) {
+            NameSearchResult match = cbIdxSearcher.searchForRecord(ss.getScientificName(), RankType.SPECIES);
+            if (match != null) {
+                String acceptedName = match.getRankClassification().getSpecies();
+                if (!ss.getScientificName().equalsIgnoreCase(acceptedName)) {
+                    logger.warn("Sensitive species '" + ss.getScientificName() + "' is not accepted name - '" + acceptedName + "'");
+                }
+            } else {
+                logger.warn("Sensitive species '" + ss.getScientificName() + "' not found in NameMatching index");
+            }
+        }
+    }
 }
