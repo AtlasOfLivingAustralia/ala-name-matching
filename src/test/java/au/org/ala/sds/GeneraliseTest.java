@@ -32,38 +32,38 @@ import au.org.ala.sds.util.GeneralisedLocation;
  */
 public class GeneraliseTest {
 
-	ApplicationContext context;
-	SensitiveSpeciesFinder finder;
-	
-	@Before
-	public void setUp() throws Exception {
-		context = new ClassPathXmlApplicationContext("spring-config.xml");
-		finder = context.getBean("searchImpl", SensitiveSpeciesFinder.class);
-	}
+    ApplicationContext context;
+    SensitiveSpeciesFinder finder;
+    
+    @Before
+    public void setUp() throws Exception {
+        context = new ClassPathXmlApplicationContext("spring-config.xml");
+        finder = context.getBean("searchImpl", SensitiveSpeciesFinder.class);
+    }
 
-	@Test
-	public void testGeneralisation() {
-	    
-		//
-	    // Endangered Birds Australia species in ACT - position generalised
-	    //
-	    SensitiveSpecies ss = finder.findSensitiveSpecies("Crex crex");
-		assertNotNull(ss);
-		String latitude = "-35.276771";   // Epicorp
-		String longitude = "149.112539";
-		GeneralisedLocation gl = new GeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
-		assertEquals("Latitude", "-35.3", gl.getGeneralisedLatitude());
-		assertEquals("Longitude", "149.1", gl.getGeneralisedLongitude());
-		assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
-		
-		//
-		// Critically endangered NSW species in ACT - not generalised
-		//
-		ss = finder.findSensitiveSpecies("Wollemia nobilis");
-		assertNotNull(ss);
+    @Test
+    public void testGeneralisation() {
+        
+        //
+        // Endangered Birds Australia species in ACT - position generalised
+        //
+        SensitiveSpecies ss = finder.findSensitiveSpecies("Crex crex");
+        assertNotNull(ss);
+        String latitude = "-35.276771";   // Epicorp
+        String longitude = "149.112539";
+        GeneralisedLocation gl = new GeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
+        assertEquals("Latitude", "-35.3", gl.getGeneralisedLatitude());
+        assertEquals("Longitude", "149.1", gl.getGeneralisedLongitude());
+        assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
+        
+        //
+        // Critically endangered NSW species in ACT - not generalised
+        //
+        ss = finder.findSensitiveSpecies("Wollemia nobilis");
+        assertNotNull(ss);
         gl = new GeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
-		assertEquals("Latitude", "-35.276771", gl.getGeneralisedLatitude());
-		assertEquals("Longitude", "149.112539", gl.getGeneralisedLongitude());
+        assertEquals("Latitude", "-35.276771", gl.getGeneralisedLatitude());
+        assertEquals("Longitude", "149.112539", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
         
         //
@@ -98,5 +98,5 @@ public class GeneraliseTest {
         assertEquals("Longitude", "148.1", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
         
-	}
+    }
 }
