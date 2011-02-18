@@ -12,7 +12,7 @@
     <!-- This project uses UTF8 for Regular Expressions -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <openrdf.sesame.version>2.2</openrdf.sesame.version>
-    <spring.version>3.0.5.RELEASE</spring.version>
+    <spring.version>3.0.4.RELEASE</spring.version>
     <netbeans.hint.deploy.server>Tomcat60</netbeans.hint.deploy.server>
   </properties>
   <dependencies>
@@ -52,12 +52,12 @@
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-core-asl</artifactId>
-      <version>1.6.3</version>
+      <version>1.7.0</version>
     </dependency>
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
-      <version>1.6.3</version>
+      <version>1.7.0</version>
     </dependency>
     <!-- LOG4J -->
     <dependency>
