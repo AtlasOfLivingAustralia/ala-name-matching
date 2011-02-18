@@ -19,32 +19,35 @@ package au.org.ala.sds.dto;
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
 public class SensitiveSpeciesDto {
-	private int id;
-	private String scientificName;
-	private String sensitivityZone;
-	private String dataProvider;
-	private String sensitivityCategory;
-	
+    private int id;
+    private String scientificName;
+    private String sensitivityZone;
+    private String authority;
+    private String fromDate;
+    private String toDate;
+
+    private String sensitivityCategory;
+    
     public SensitiveSpeciesDto() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
+        super();
+        // TODO Auto-generated constructor stub
+    }
 
-	public int getId() {
-		return id;
-	}
+    public int getId() {
+        return id;
+    }
 
-	public void setId(int id) {
-		this.id = id;
-	}
+    public void setId(int id) {
+        this.id = id;
+    }
 
-	public String getScientificName() {
-		return scientificName;
-	}
+    public String getScientificName() {
+        return scientificName;
+    }
 
-	public void setScientificName(String scientificName) {
-		this.scientificName = scientificName;
-	}
+    public void setScientificName(String scientificName) {
+        this.scientificName = scientificName;
+    }
 
     public String getSensitivityZone() {
         return sensitivityZone;
@@ -54,12 +57,28 @@ public class SensitiveSpeciesDto {
         this.sensitivityZone = sensitivityZone;
     }
 
-    public String getDataProvider() {
-        return dataProvider;
+    public String getAuthority() {
+        return authority;
     }
 
-    public void setDataProvider(String dataProvider) {
-        this.dataProvider = dataProvider;
+    public void setAuthority(String authority) {
+        this.authority = authority;
+    }
+
+    public String getFromDate() {
+        return fromDate;
+    }
+
+    public void setFromDate(String fromDate) {
+        this.fromDate = fromDate;
+    }
+
+    public String getToDate() {
+        return toDate;
+    }
+
+    public void setToDate(String toDate) {
+        this.toDate = toDate;
     }
 
     public String getSensitivityCategory() {
@@ -69,6 +88,5 @@ public class SensitiveSpeciesDto {
     public void setSensitivityCategory(String sensitivityCategory) {
         this.sensitivityCategory = sensitivityCategory;
     }
-
 
 }
