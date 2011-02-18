@@ -31,7 +31,7 @@ public class SdsMessage implements Message, Serializable {
         return type;
     }
 
-    public List<Object> getContextOrdered() {
+    public List<Object> getContextList() {
         return context;
     }
 
