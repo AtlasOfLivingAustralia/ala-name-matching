@@ -31,21 +31,21 @@ import au.org.ala.sds.model.SensitiveSpecies;
  */
 public class SearchTest {
 
-	ApplicationContext context;
-	SensitiveSpeciesFinder finder;
-	
-	@Before
-	public void runBeforeEveryTest() throws Exception {
-		context = new ClassPathXmlApplicationContext("spring-config.xml");
-		finder = context.getBean("searchImpl", SensitiveSpeciesFinder.class);
-	}
+    ApplicationContext context;
+    SensitiveSpeciesFinder finder;
+    
+    @Before
+    public void runBeforeEveryTest() throws Exception {
+        context = new ClassPathXmlApplicationContext("spring-config.xml");
+        finder = context.getBean("searchImpl", SensitiveSpeciesFinder.class);
+    }
 
-	@Test
-	public void testLookup() {
-		SensitiveSpecies ss = finder.findSensitiveSpecies("Macropus rufus");
-		assertNull(ss);
+    @Test
+    public void testLookup() {
+        SensitiveSpecies ss = finder.findSensitiveSpecies("Macropus rufus");
+        assertNull(ss);
 
-		ss = finder.findSensitiveSpecies("Crex crex");
-		assertNotNull(ss);
-	}
+        ss = finder.findSensitiveSpecies("Crex crex");
+        assertNotNull(ss);
+    }
 }
