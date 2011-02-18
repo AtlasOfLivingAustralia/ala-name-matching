@@ -2,10 +2,10 @@ package au.org.ala.sensitiveData.validation;
 
 import org.drools.runtime.rule.RuleContext;
 
-rule "Extreme"
-	when
-		Category( address == null )
-	then
-		warning(kcontext);
+rule "ConservationSensitive"
+    when
+        Category( address == null )
+    then
+        warning(kcontext);
 end
 
