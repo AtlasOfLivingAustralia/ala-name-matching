@@ -301,8 +301,10 @@ public class LinnaeanRankClassification {
 				.append("order", this.order)
 				.append("family", this.family)
 				.append("genus", this.genus)
-                .append("species", this.species)
-                .append("specificEpithet", this.specificEpithet)
+                                .append("species", this.species)
+                                .append("specificEpithet", this.specificEpithet)
+                                .append("subspecies", this.subspecies)
+                                .append("infraspecificEpithet", this.infraspecificEpithet)
 				.append("scientificName",this.scientificName)
 				.toString();
 	}
@@ -321,7 +323,8 @@ public class LinnaeanRankClassification {
 				rhs.phylum).append(this.kingdom, rhs.kingdom).append(
 				this.family, rhs.family).append(this.order, rhs.order).append(
 				this.klass, rhs.klass).append(this.genus, rhs.genus).append(this.species, rhs.species)
-				.append(this.specificEpithet, rhs.specificEpithet).isEquals();
+				.append(this.specificEpithet, rhs.specificEpithet).append(this.subspecies, rhs.subspecies)
+                                .append(this.infraspecificEpithet, rhs.infraspecificEpithet).isEquals();
 	}
         /**
          * checks to see if the non-null values of this classification are identical to
@@ -424,7 +427,8 @@ public class LinnaeanRankClassification {
 	public int hashCode() {
 		return new HashCodeBuilder(1497136033, 448920019).append(this.scientificName).append(
 				this.phylum).append(this.kingdom).append(this.family).append(
-				this.order).append(this.klass).append(this.species).append(this.specificEpithet).toHashCode();
+				this.order).append(this.klass).append(this.genus).append(this.species).
+                                append(this.specificEpithet).append(this.subspecies).append(this.infraspecificEpithet).toHashCode();
 	}
 
 
