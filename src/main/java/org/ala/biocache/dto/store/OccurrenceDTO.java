@@ -37,7 +37,7 @@ public class OccurrenceDTO implements Serializable{
     public OccurrenceDTO() {
     }
     public OccurrenceDTO(FullRecord[] record){
-        if(record.length==3){
+        if(record != null && record.length==3){
             raw = record[0];
             processed = record[1];
             consensus = record[2];
