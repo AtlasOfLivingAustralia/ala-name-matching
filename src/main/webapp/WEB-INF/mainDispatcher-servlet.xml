@@ -20,8 +20,6 @@
 
     <!-- Where to load static resources (css, js, images) -->
     <mvc:resources mapping="/static/**" location="/" />
-    <mvc:resources mapping="/robots.txt" location="/robots.txt" />
-    <mvc:resources mapping="/sitemap*" location="/" />
 
     <bean id="jspViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver" p:order="10">
         <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
@@ -123,9 +121,4 @@
             </list>
         </property>
     </bean>
-    
-    <!-- BoBo Lucene add-on for facet browsing -->
-    <!--<bean id="rank" class="com.browseengine.bobo.facets.impl.SimpleFacetHandler">
-        <constructor-arg value="rankId" />
-    </bean>-->
 </beans>
