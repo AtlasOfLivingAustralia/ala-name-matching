@@ -11,6 +11,8 @@ import com.google.inject.Binder
 import com.google.inject.name.Names
 import com.google.inject.Inject
 import com.google.inject.name.Named
+import org.slf4j.LoggerFactory
+//import au.org.ala.biocache.Json
 
 /**
  * This trait should be implemented for Cassandra,
@@ -74,16 +76,16 @@ trait PersistenceManager {
  */
 @Inject
 class CassandraPersistenceManager (
-    @Named("cassandraKeyspace") var keyspace:String = "occ", 
-    @Named("cassandraHosts") var hosts:Array[String] = Array("localhost"),
-    @Named("cassandraPort") var port:Int = 9160,
-    @Named("cassandraPoolName") var poolName:String = "biocache-store-pool",
-    @Named("cassandraColumnLimit") var maxColumnLimit:Int = 10000) extends PersistenceManager {
+    var hosts:Array[String] = Array("localhost"),
+    var port:Int = 9160,
+    var poolName:String = "biocache-store-pool",
+    var maxColumnLimit:Int = 10000,
+    var keyspace:String = "occ") extends PersistenceManager {
 
     import JavaConversions._
     import scalaj.collection.Imports._
     Pelops.addPool(poolName, hosts, port, false, keyspace, new Policy)
-
+    protected val logger = LoggerFactory.getLogger("CassandraPersistenceManager")
     /**
      * Retrieve an array of objects, parsing the JSON stored.
      */
@@ -93,12 +95,12 @@ class CassandraPersistenceManager (
         try {
             val columnList = selector.getColumnsFromRow(uuid, entityName, slicePredicate, ConsistencyLevel.ONE)
             if(columnList.isEmpty){
-                Some(columnList2Map(columnList))
-            } else {
                 None
+            } else {
+                Some(columnList2Map(columnList))
             }
         } catch {
-            case e:Exception => None
+            case e:Exception => logger.debug(e.getMessage, e); None
         }
     }
 
@@ -111,7 +113,7 @@ class CassandraPersistenceManager (
           val column = selector.getColumnFromRow(uuid, entityName, propertyName.getBytes, ConsistencyLevel.ONE)
           Some(new String(column.value))
       } catch {
-          case e:Exception => None
+          case e:Exception => logger.debug(e.getMessage, e); None
       }
     }
 
@@ -294,7 +296,7 @@ class CassandraPersistenceManager (
             val selector = Pelops.createSelector(poolName, keyspace)
             Some(selector.getColumnFromRow(uuid, columnFamily, columnName.getBytes, ConsistencyLevel.ONE))
         } catch {
-            case _ => None //expected behaviour when row doesnt exist
+            case e:Exception => logger.debug(e.getMessage, e); None //expected behaviour when row doesnt exist
         }
     }
 }

@@ -21,8 +21,24 @@ import com.google.inject.name.Names
 object DAO {
 
   import ReflectBean._
+  protected val logger = LoggerFactory.getLogger("DAO")
 
-  val persistentManager = new CassandraPersistenceManager
+  val persistentManager = {
+      try {
+          val properties = new Properties()
+          properties.load(DAO.getClass.getResourceAsStream("/biocache.properties"))
+          if(properties!=null){
+             val hostArray = properties.getProperty("cassandraHosts").split(",")
+             val port = properties.getProperty("cassandraPort").toInt
+             new CassandraPersistenceManager(hostArray, port)
+          } else {
+              new CassandraPersistenceManager
+          }
+      } catch {
+          case e:Exception => logger.warn("Did not detect a biocache.properties on classpath",e)
+      }
+      new CassandraPersistenceManager
+  }
   val indexer = SolrOccurrenceDAO
 
   val nameIndex = new CBIndexSearch("/data/lucene/namematching")

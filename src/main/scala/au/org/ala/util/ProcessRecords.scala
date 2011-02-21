@@ -38,7 +38,7 @@ object ProcessRecords {
 
   val logger = LoggerFactory.getLogger("ProcessRecords")
   //Regular expression used to parse an image URL - adapted from http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
-  lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#?]+)+\.(?:jpg|gif|png))$""".r
+  lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#?]+)+\.(?:jpg|gif|png|jpeg))$""".r
 
   def main(args: Array[String]): Unit = {
 
