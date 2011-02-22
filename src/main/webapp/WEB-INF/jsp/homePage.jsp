@@ -21,6 +21,8 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             <li><strong>Occurrence for data resource:</strong> /occurrences/data-resource/{uid}</li>
             <li><strong>Occurrence for data provider:</strong> /occurrences/data-provider/{uid}</li>
             <li><strong>Occurrence download:</strong> /occurrences/download - needs request param definition</li>
+            <li><strong>Occurrence wms:</strong> /occurrences/wms - requires WMS parameters along with 'q' and 'fq' populated, if available</li>
+            <li><strong>Occurrence static:</strong> /occurrences/static - generates an image of AU with points on, filtering on 'q' and 'fq', if available</li>
         </ul>
 
         <h3>Assertions</h3>
