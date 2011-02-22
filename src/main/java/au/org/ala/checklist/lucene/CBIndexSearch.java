@@ -323,6 +323,9 @@ public class CBIndexSearch {
         if(cl.getSid() != null)
             cl.setSid(searchForLsidById(cl.getSid()));
     }
+    public NameSearchResult searchForRecord(LinnaeanRankClassification cl, boolean recursiveMatching)throws SearchResultException{
+        return searchForRecord(cl, recursiveMatching, false);
+    }
 
     /**
      * Search for an LSID with the supplied classification without a fuzzy match.
@@ -334,7 +337,7 @@ public class CBIndexSearch {
      * @return An LSID for the taxon or null if nothing matched or homonym issues detected
      * @throws SearchResultException
      */
-    public NameSearchResult searchForRecord(LinnaeanRankClassification cl, boolean recursiveMatching) throws SearchResultException {
+    public NameSearchResult searchForRecord(LinnaeanRankClassification cl, boolean recursiveMatching, boolean addGuids) throws SearchResultException {
 
     	RankType rank = null;
     	String name = cl.getScientificName();
@@ -476,7 +479,7 @@ public class CBIndexSearch {
     		}
     	}
         //Obtain and store the GUIDs for the classification identifiers
-        if(nsr!= null)
+        if(nsr!= null && addGuids)
             updateClassificationWithGUID(nsr.getRankClassification());
     	return nsr;
     }
