@@ -14,7 +14,9 @@
  ***************************************************************************/
 package au.org.ala.sds;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -30,16 +32,24 @@ import au.org.ala.sds.model.SensitiveSpecies;
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
 public class SensitiveSpeciesFinder implements Lookup {
-    
+
     protected static final Logger logger = Logger.getLogger(SensitiveSpeciesFinder.class);
     private SensitiveSpeciesDao dao;
-    
+
+    public SensitiveSpeciesFinder(SensitiveSpeciesDao dao) {
+        this.dao = dao;
+    }
+
     public void setDao(SensitiveSpeciesDao dao ) {
         this.dao = dao;
     }
-    
+
     public SensitiveSpecies findSensitiveSpecies(String scientificName) {
         return dao.findByName(scientificName);
+    }
+
+    public SensitiveSpecies findSensitiveSpeciesByLsid(String lsid) {
+        return dao.findByLsid(lsid);
     }
 
     public boolean isSensitive(String scientificName) {
@@ -48,12 +58,19 @@ public class SensitiveSpeciesFinder implements Lookup {
 
     public void verifySensitiveSpecies(CBIndexSearch cbIdxSearcher) throws SearchResultException {
         List<SensitiveSpecies> speciesList = dao.getAll();
-        for (SensitiveSpecies ss : speciesList) {
+        Map<String, Integer> lsidMap = new HashMap<String, Integer>();
+        for (int index = 0; index < speciesList.size(); index++) {
+            SensitiveSpecies ss = speciesList.get(index);
             NameSearchResult match = cbIdxSearcher.searchForRecord(ss.getScientificName(), RankType.SPECIES);
             if (match != null) {
                 String acceptedName = match.getRankClassification().getSpecies();
+                String lsid = match.getLsid();
                 if (!ss.getScientificName().equalsIgnoreCase(acceptedName)) {
                     logger.warn("Sensitive species '" + ss.getScientificName() + "' is not accepted name - '" + acceptedName + "'");
+                } else {
+                    logger.debug("'" + acceptedName + "'\t'" + lsid + "'");
+                    ss.setLsid(lsid);
+                    lsidMap.put(lsid, index);
                 }
             } else {
                 logger.warn("Sensitive species '" + ss.getScientificName() + "' not found in NameMatching index");
