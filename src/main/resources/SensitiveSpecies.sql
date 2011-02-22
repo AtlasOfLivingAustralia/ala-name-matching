@@ -336,6 +336,11 @@ INSERT INTO sensitive_species (scientific_name,family,common_name) VALUES ('Zost
 INSERT INTO sensitive_species (scientific_name,family,common_name) VALUES ('Zosterops natalis','Zosteropidae','Christmas Island White-eye');
 INSERT INTO sensitive_species (scientific_name,family,common_name) VALUES ('Zosterops tenuirostris','Zosteropidae','Slender-billed White-eye');
 
+INSERT INTO sensitive_species (scientific_name,family,common_name) VALUES ('Achatina fulica','Achatinidae','Giant African snail');
+INSERT INTO sensitive_species (scientific_name,family,common_name) VALUES ('Lymantria dispar','Lymantriidae','Asian gypsy moth');
+INSERT INTO sensitive_species (scientific_name,family,common_name) VALUES ('Xanthomonas axonopodis pv. citri','Lymantriidae','Citrus canker');
+
+
 CREATE INDEX scientific_name_idx ON sensitive_species (scientific_name);
 
 DROP TABLE IF EXISTS sensitive_species_zones;
@@ -348,6 +353,12 @@ CREATE TABLE sensitive_species_zones (
     from_date DATE,
     to_date DATE,
     sensitivity_category VARCHAR(50) NOT NULL);
+
+-- Exotic plant pests
+INSERT INTO sensitive_species_zones (scientific_name,sensitivity_zone,authority,from_date,to_date,sensitivity_category) VALUES ('Achatina fulica','AUS','AQIS',NULL,NULL,'PBC1');
+INSERT INTO sensitive_species_zones (scientific_name,sensitivity_zone,authority,from_date,to_date,sensitivity_category) VALUES ('Lymantria dispar','AUS','AQIS',NULL,NULL,'PBC1');
+INSERT INTO sensitive_species_zones (scientific_name,sensitivity_zone,authority,from_date,to_date,sensitivity_category) VALUES ('Xanthomonas axonopodis pv. citri','PQAQLD2004','AQIS','2004-06-30','2009-01-22','PBC2');
+
 
 -- Birds Australia
 INSERT INTO sensitive_species_zones (scientific_name,sensitivity_zone,authority,from_date,to_date,sensitivity_category) VALUES ('Amytornis barbatus','AUS','Birds Australia',NULL,NULL,'EN');
