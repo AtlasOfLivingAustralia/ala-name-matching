@@ -18,7 +18,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -27,9 +29,13 @@ import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 
+import au.org.ala.checklist.lucene.CBIndexSearch;
+import au.org.ala.checklist.lucene.SearchResultException;
+import au.org.ala.checklist.lucene.model.NameSearchResult;
+import au.org.ala.data.util.RankType;
 import au.org.ala.sds.dto.SensitiveSpeciesDto;
-import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.model.SensitivityInstance;
 import au.org.ala.sds.model.SensitivityZone;
 
@@ -40,20 +46,50 @@ import au.org.ala.sds.model.SensitivityZone;
 public class SensitiveSpeciesDaoImpl extends JdbcDaoSupport implements SensitiveSpeciesDao {
 
     protected static final Logger logger = Logger.getLogger(SensitiveSpeciesDaoImpl.class);
-    
+
     private List<SensitiveSpecies> species;
+
+    private Map<String, Integer> lsidMap;
+
+    @Inject
+    protected CBIndexSearch cbIdxSearcher;
 
     public static final String SELECT_ALL = "SELECT * FROM sensitive_species_zones ORDER BY scientific_name, sensitivity_zone";
 
     @Inject
-    public SensitiveSpeciesDaoImpl(DataSource dataSource) {
+    public SensitiveSpeciesDaoImpl(DataSource dataSource, CBIndexSearch cbIdxSearcher) throws Exception {
         this.setDataSource(dataSource);
         logger.debug("Sensitive Species data source set - " + dataSource.toString());
+        this.cbIdxSearcher = cbIdxSearcher;
+        this.initDao();
     }
-    
+
+    @Override
     protected void initDao() throws Exception {
         super.initDao();
         this.species = getAll();
+        verifyAndInitialiseSpeciesList();
+    }
+
+    private void verifyAndInitialiseSpeciesList() throws SearchResultException {
+        this.lsidMap = new HashMap<String, Integer>();
+        for (int index = 0; index < species.size(); index++) {
+            SensitiveSpecies ss = species.get(index);
+            NameSearchResult match = cbIdxSearcher.searchForRecord(ss.getScientificName(), RankType.SPECIES);
+            if (match != null) {
+                String acceptedName = match.getRankClassification().getSpecies();
+                String lsid = match.getLsid();
+                if (!ss.getScientificName().equalsIgnoreCase(acceptedName)) {
+                    logger.warn("Sensitive species '" + ss.getScientificName() + "' is not accepted name - '" + acceptedName + "'");
+                } else {
+                    logger.debug("'" + acceptedName + "'\t'" + lsid + "'");
+                    ss.setLsid(lsid);
+                    lsidMap.put(lsid, index);
+                }
+            } else {
+                logger.warn("Sensitive species '" + ss.getScientificName() + "' not found in NameMatching index");
+            }
+        }
     }
 
     public List<SensitiveSpecies> getAll() {
@@ -72,7 +108,7 @@ public class SensitiveSpeciesDaoImpl extends JdbcDaoSupport implements Sensitive
                         return dto;
                     }
                 });
-        
+
         List<SensitiveSpecies> speciesList = new ArrayList<SensitiveSpecies>();
         SensitiveSpecies ss = null;
         String currentName = "";
@@ -81,15 +117,16 @@ public class SensitiveSpeciesDaoImpl extends JdbcDaoSupport implements Sensitive
             if (!dto.getScientificName().equals(currentName)) {
                 ss = new SensitiveSpecies(dto.getScientificName());
                 speciesList.add(ss);
+                currentName = dto.getScientificName();
             }
             ss.getInstances().add(new SensitivityInstance(
-                    SensitivityCategory.getCategory(dto.getSensitivityCategory()), 
+                    SensitivityCategory.getCategory(dto.getSensitivityCategory()),
                     dto.getAuthority(),
                     dto.getFromDate(),
                     dto.getToDate(),
                     SensitivityZone.valueOf(dto.getSensitivityZone())));
         }
-        
+
         return speciesList;
     }
 
@@ -110,6 +147,15 @@ public class SensitiveSpeciesDaoImpl extends JdbcDaoSupport implements Sensitive
                 }
             }
         } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public SensitiveSpecies findByLsid(String lsid) {
+        Integer index = lsidMap.get(lsid);
+        if (index != null) {
+            return species.get(index);
+        } else {
             return null;
         }
     }
