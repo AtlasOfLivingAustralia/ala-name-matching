@@ -74,18 +74,19 @@ trait PersistenceManager {
  * Cassandra based implementation of a persistence manager.
  * This should maintain most of the cassandra logic
  */
-@Inject
 class CassandraPersistenceManager (
-    var hosts:Array[String] = Array("localhost"),
-    var port:Int = 9160,
-    var poolName:String = "biocache-store-pool",
-    var maxColumnLimit:Int = 10000,
-    var keyspace:String = "occ") extends PersistenceManager {
+    hosts:Array[String] = Array("localhost"),
+    port:Int = 9160,
+    poolName:String = "biocache-store-pool",
+    maxColumnLimit:Int = 10000,
+    keyspace:String = "occ") extends PersistenceManager {
 
     import JavaConversions._
-    import scalaj.collection.Imports._
-    Pelops.addPool(poolName, hosts, port, false, keyspace, new Policy)
     protected val logger = LoggerFactory.getLogger("CassandraPersistenceManager")
+    logger.warn("Initialising cassandra connection pool with poo name: " + poolName)
+    logger.warn("Initialising cassandra connection pool with hosts: " + hosts(0))
+    Pelops.addPool(poolName, hosts, port, false, keyspace, new Policy)
+
     /**
      * Retrieve an array of objects, parsing the JSON stored.
      */
