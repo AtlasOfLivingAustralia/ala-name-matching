@@ -1,7 +1,7 @@
 package au.org.ala.util
 
 import au.org.ala.biocache.TaxonProfileDAO
-import au.org.ala.biocache.TaxonProfile
+import au.org.ala.biocache.{TaxonProfile,SensitiveSpecies, States}
 import java.net.InetSocketAddress
 import org.apache.avro.ipc.SocketTransceiver
 import org.apache.avro.specific.SpecificRequestor
@@ -52,7 +52,16 @@ object TaxonProfileLoader {
               if(profile.right != null){
                 taxonProfile.right = profile.right.toString
               }
-              //TODO work out whatto store from the conservatoin status
+              //TODO work out whatto store from the conservation status
+
+              //store the sensitive species information
+              //TODO fix up this so that the zone is obtained from the vocabulary?
+              if(profile.sensitiveStatus != null){
+                val sss = for(ss <- profile.sensitiveStatus) 
+                  yield new SensitiveSpecies(ss.sensitivityZone.toString, ss.sensitivityCategory.toString)              
+                  
+                taxonProfile.sensitive = sss.toArray
+              }
               
 	      TaxonProfileDAO.add(taxonProfile)
 	      lastKey = profile.guid

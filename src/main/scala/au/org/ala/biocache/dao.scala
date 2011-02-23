@@ -344,36 +344,24 @@ object OccurrenceDAO {
   }
 
   /**
-   * for each field in the definition, check if there is a value to write
+   * if the objects is Mappable return the map of the properties otherwise returns an empty map
    */
   protected def mapObjectToProperties(anObject:AnyRef, version:Version): Map[String,String] = {
     var properties = scala.collection.mutable.Map[String,String]()
-    val defn = DAO.getDefn(anObject)
-    for (field <- defn) {
-      //perform some logic based on the type
-      var fieldValue:String = null
-      val method = anObject.getClass.getMethods.find(_.getName == field).get
-      val typ = method.getReturnType
+    if(anObject.isInstanceOf[Mappable]){
+      val map = anObject.asInstanceOf[Mappable].getMap
 
-      //Get a string representation of the value based on the type.
-      //JSON strings should be used for non-flat values
-      typ.getName  match{
-        case "[Ljava.lang.String;"  => {
-            val array =method.invoke(anObject).asInstanceOf[Array[AnyRef]]
-            if(array!= null)
-              fieldValue = Json.toJSON(array)}
-        case _ => fieldValue = method.invoke(anObject).asInstanceOf[String]
-      }
-      
-      if (fieldValue != null && !fieldValue.isEmpty) {
-          version match {
-              case Processed => properties.put(markAsProcessed(field), fieldValue)
-              case Consensus => properties.put(markAsConsensus(field), fieldValue)
-              case _ => properties.put(field, fieldValue)
-          }
-      }
+
+      map foreach {case (key, value)=> {
+            version match{
+              case Processed => properties.put(markAsProcessed(key), value)
+              case Consensus => properties.put(markAsConsensus(key), value)
+              case Raw => properties.put(key, value)
+            }
+          }}
     }
     properties.toMap
+
   }
 
   /**
@@ -404,7 +392,7 @@ object OccurrenceDAO {
 
     //construct a map of properties to write
     val properties = fullRecord2Map(fullRecord,version)
-    
+
     //if supplied, update the assertions
     if(!assertions.isEmpty){
 	    val systemAssertions = assertions.get

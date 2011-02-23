@@ -112,7 +112,7 @@ object ProcessRecords {
     // 
 
     val systemAssertions = Some(assertions.toArray)
-    
+  
     //store the occurrence
     OccurrenceDAO.updateOccurrence(guid, processed, systemAssertions, Processed)
   }
@@ -314,6 +314,8 @@ object ProcessRecords {
     var assertions = new ArrayBuffer[QualityAssertion]
 
     if (raw.location.decimalLatitude != null && raw.location.decimalLongitude != null) {
+      //retrieve the species profile
+          val taxonProfile = TaxonProfileDAO.getByGuid(processed.classification.taxonConceptID)
 
       //TODO validate decimal degrees and parse degrees, minutes, seconds format
       processed.location.decimalLatitude = raw.location.decimalLatitude
@@ -359,11 +361,15 @@ object ProcessRecords {
           }
         }
 
+        //check to see if the points need to generalised
+        if(!taxonProfile.isEmpty && taxonProfile.get.sensitive!= null && taxonProfile.get.sensitive.size >0 && processed.location.country == "Australia"){          
+          //Call SDS code to get the revised coordinates
+        }
+
         //check marine/non-marine
         if(processed.location.habitat!=null){
 
-          //retrieve the species profile
-          val taxonProfile = TaxonProfileDAO.getByGuid(processed.classification.taxonConceptID)
+          
           if(!taxonProfile.isEmpty && taxonProfile.get.habitats!=null && taxonProfile.get.habitats.size>0){
             val habitatsAsString =  taxonProfile.get.habitats.reduceLeft(_+","+_)
             val habitatFromPoint = processed.location.habitat
@@ -419,12 +425,19 @@ object ProcessRecords {
       raw.classification.subspecies,
       raw.classification.infraspecificEpithet,
       raw.classification.scientificName)
+    //attempt to get the classificatino from the cache
+//    ClassificationDAO.getByHashUsingMap(classification, processed.classification)
+
+    
+
     //logger.debug("Record: "+occ.uuid+", classification for Kingdom: "+occ.kingdom+", Family:"+  occ.family +", Genus:"+  occ.genus +", Species: " +occ.species+", Epithet: " +occ.specificEpithet)
     try {
       val nsr = DAO.nameIndex.searchForRecord(classification, true)
       //store the matched classification
       if (nsr != null) {
         val classification = nsr.getRankClassification
+        //Chcek to see if the classification fits in with the supplied taxonomic hints
+        
         //store ".p" values
         processed.classification.kingdom = classification.getKingdom
         processed.classification.kingdomID = classification.getKid

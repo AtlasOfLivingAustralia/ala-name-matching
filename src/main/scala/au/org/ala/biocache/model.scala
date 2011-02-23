@@ -8,7 +8,7 @@ import java.util.Date
  * Represents an occurrence record. These fields map directly on to
  * the latest darwin core terms, with a few additional fields.
  */
-class Occurrence extends Cloneable {
+class Occurrence extends Cloneable with Mappable {
   override def clone : Occurrence = super.clone.asInstanceOf[Occurrence]
   @BeanProperty var occurrenceID:String = _
   @BeanProperty var accessrights:String = _
@@ -61,12 +61,40 @@ class Occurrence extends Cloneable {
   @BeanProperty var typeStatus:String = _
   //custom fields
   @BeanProperty var images:Array[String] = _
-}
 
+  def getMap():Map[String,String]={
+    val map =Map[String,String]("occurrenceID"->occurrenceID, "accessrights"->accessrights, "associatedMedia"->associatedMedia,
+                                "associatedOccurrences"->associatedOccurrences, "associatedReferences"->associatedReferences,
+                                "associatedSequences"->associatedSequences, "associatedTaxa"->associatedTaxa, "basisOfRecord"->basisOfRecord,
+                                "behavior"->behavior, "catalogNumber"->catalogNumber, "collectionCode" -> collectionCode,
+                                "collectionID"->collectionID, "dataGeneralizations"->dataGeneralizations, "datasetID"->datasetID,
+                                "disposition"->disposition, "establishmentMeans"->establishmentMeans, "fieldNotes"->fieldNotes,
+                                "fieldNumber"->fieldNumber, "identifier"->identifier, "individualCount"->individualCount,
+                                "individualID"->individualID, "informationWithheld"->informationWithheld, "institutionCode"->institutionCode,
+                                "language"->language, "lifeStage"->lifeStage, "modified"->modified, "occurrenceAttributes"->occurrenceAttributes,
+                                "occurrenceDetails"->occurrenceDetails, "occurrenceRemarks"->occurrenceRemarks, "otherCatalogNumbers"->otherCatalogNumbers,
+                                "preparations"->preparations, "previousIdentifications"->previousIdentifications, "recordedBy"->recordedBy,
+                                "recordNumber"->recordNumber, "relatedResourceID"->relatedResourceID, "relationshipAccordingTo"->relationshipAccordingTo,
+                                "relationshipEstablishedDate"->relationshipEstablishedDate, "relationshipOfResource"->relationshipOfResource,
+                                "relationshipRemarks"->relationshipRemarks, "reproductiveCondition"->reproductiveCondition, "resourceID"->resourceID,
+                                "resourceRelationshipID"->resourceRelationshipID, "rights"->rights ,"rightsholder"->rightsholder,
+                                "samplingProtocol"->samplingProtocol, "sex"->sex, "source"->source, "typeStatus"->typeStatus, "images"-> Json.toJSON(images.asInstanceOf[Array[AnyRef]]))
+
+    map.filter(i => i._2!= null)
+  }
+
+}
+/**
+ *  Classes that need to have their fields put into a map should use this trait
+ */
+trait Mappable{
+  def getMap():Map[String,String]
+ 
+}
 /**
  * POSO for handling details of a classification associated with an occurrence.
  */
-class Classification extends Cloneable {
+class Classification extends Cloneable with Mappable {
   override def clone : Classification = super.clone.asInstanceOf[Classification]
   @BeanProperty var scientificName:String = _
   @BeanProperty var scientificNameAuthorship:String = _
@@ -117,12 +145,31 @@ class Classification extends Cloneable {
   @BeanProperty var left:String = _
   @BeanProperty var right:String = _
   @BeanProperty var speciesGroups:Array[String] =_
+
+  def getMap():Map[String,String]={
+    val map =Map[String,String]("scientificName"-> scientificName, "scientificNameAuthorship"->scientificNameAuthorship,
+                       "scientificNameID"->scientificNameID, "taxonConceptID"->taxonConceptID, "taxonID"->taxonID,
+                       "kingdom"->kingdom,"phylum"->phylum,"classs"->classs,"order"->order,"family"->family,
+                       "genus"->genus,"subgenus"->subgenus,"species"->species,"specificEpithet"->specificEpithet,
+                       "subspecies"->subspecies, "infraspecificEpithet"->infraspecificEpithet, "infraspecificMarker"->infraspecificMarker,
+                       "higherClassification"->higherClassification, "parentNameUsage"->parentNameUsage, "parentNameUsageID"->parentNameUsageID,
+                       "acceptedNameUsage"->acceptedNameUsage, "acceptedNameUsageID"->acceptedNameUsageID, "originalNameUsage"->originalNameUsage, 
+                       "originalNameUsageID"->originalNameUsageID, "taxonRank"->taxonRank, "taxonomicStatus"->taxonomicStatus, 
+                       "taxonRemarks"->taxonRemarks, "verbatimTaxonRank"->verbatimTaxonRank, "vernacularName" ->vernacularName, 
+                       "nameAccordingTo"->nameAccordingTo, "nameAccordingToID"->nameAccordingToID,"namePublishedIn"->namePublishedIn, 
+                       "namePublishedInID"->namePublishedInID,"nomenclaturalCode"->nomenclaturalCode,"nomenclaturalStatus"->nomenclaturalStatus, 
+                       "taxonRankID"->taxonRankID, "kingdomID"->kingdomID, "phylumID"->phylumID, "classID"->classID, "orderID"->orderID, 
+                       "familyID"->familyID, "genusID"->genusID, "subgenusID"->subgenusID, "speciesID"->speciesID, "subspeciesID"->subspeciesID,
+                       "left"-> left, "right"->right, "speciesGroups" -> Json.toJSON(speciesGroups.asInstanceOf[Array[AnyRef]]))
+
+    map.filter(i => i._2!= null)
+  }
 }
 
 /**
  * POSO for holding measurement information for an occurrence.
  */
-class Measurement extends Cloneable {
+class Measurement extends Cloneable with Mappable {
   override def clone : Measurement = super.clone.asInstanceOf[Measurement]
   @BeanProperty var measurementAccuracy:String = _
   @BeanProperty var measurementDeterminedBy:String = _
@@ -133,12 +180,21 @@ class Measurement extends Cloneable {
   @BeanProperty var measurementType:String = _
   @BeanProperty var measurementUnit:String = _
   @BeanProperty var measurementValue:String = _
+
+  def getMap():Map[String,String]={
+    val map =Map[String,String]("measurementAccuracy"->measurementAccuracy, "measurementDeterminedBy"->measurementDeterminedBy,
+                                "measurementDeterminedDate"->measurementDeterminedDate, "measurementID"->measurementID,
+                                "measurementMethod"->measurementMethod, "measurementRemarks"->measurementRemarks,
+                                "measurementType"->measurementType, "measurementUnit"->measurementUnit, "measurementValue"->measurementValue)
+
+    map.filter(i => i._2!= null)
+  }
 }
 
 /**
  * POSO for handling identification information for an occurrence.
  */
-class Identification extends Cloneable {
+class Identification extends Cloneable with Mappable {
   override def clone : Identification = super.clone.asInstanceOf[Identification]
   @BeanProperty var dateIdentified:String = _
   @BeanProperty var identificationAttributes:String = _
@@ -148,12 +204,20 @@ class Identification extends Cloneable {
   @BeanProperty var identificationRemarks:String = _
   @BeanProperty var identifiedBy:String = _
   @BeanProperty var typeStatus:String = _
+  def getMap():Map[String,String]={
+    val map =Map[String,String]("dateIdentified"->dateIdentified, "identificationAttributes"->identificationAttributes,
+                                "identificationID"->identificationID, "identificationQualifier"->identificationQualifier,
+                                "identificationReferences"->identificationReferences, "identificationRemarks"->identificationRemarks,
+                                "identifiedBy"->identifiedBy, "typeStatus"->typeStatus)
+
+    map.filter(i => i._2!= null)
+  }
 }
 
 /**
  * POSO for holding event data for an occurrence
  */
-class Event extends Cloneable {
+class Event extends Cloneable with Mappable{
   override def clone : Event = super.clone.asInstanceOf[Event]
   @BeanProperty var day:String = _
   @BeanProperty var endDayOfYear:String = _
@@ -169,12 +233,20 @@ class Event extends Cloneable {
   //custom date range fields
   @BeanProperty var startYear:String = _
   @BeanProperty var endYear:String = _
+  def getMap():Map[String,String]={
+    val map =Map[String,String]("day"->day,"endDayOfYear"->endDayOfYear,"eventAttributes"->eventAttributes,
+                                "eventDate"->eventDate,"eventID"->eventID,"eventRemarks"->eventRemarks,"eventTime"->eventTime,
+                                "verbatimEventDate"->verbatimEventDate,"year"->year,"month"->month,"startDayOfYear"->startDayOfYear,
+                                "startYear"->startYear,"endYear"->endYear)
+
+    map.filter(i => i._2!= null)
+  }
 }
 
 /**
  * POSO for holding location information for an occurrence.
  */
-class Location extends Cloneable {
+class Location extends Cloneable with Mappable{
   override def clone : Location = super.clone.asInstanceOf[Location]
   @BeanProperty var uuid:String = _	
   //dwc terms
@@ -223,6 +295,27 @@ class Location extends Cloneable {
   @BeanProperty var ibra:String = _
   @BeanProperty var imcra:String = _
   @BeanProperty var lga:String = _
+
+  def getMap():Map[String,String]={
+    val map =Map[String,String]("uuid "->uuid, "continent"->continent, "coordinatePrecision"->coordinatePrecision,
+                                "coordinateUncertaintyInMeters"->coordinateUncertaintyInMeters, "country"->country, "countryCode"->countryCode,
+                                "county"->county, "decimalLatitude"->decimalLatitude, "decimalLongitude"->decimalLongitude,
+                                "footprintSpatialFit"->footprintSpatialFit, "footprintWKT"->footprintWKT, "geodeticDatum"->geodeticDatum,
+                                "georeferencedBy"->georeferencedBy, "georeferenceProtocol"->georeferenceProtocol, "georeferenceRemarks"->georeferenceRemarks,
+                                "georeferenceSources"->georeferenceSources, "georeferenceVerificationStatus"->georeferenceVerificationStatus,
+                                "habitat"->habitat, "higherGeography"->higherGeography, "higherGeographyID"->higherGeographyID, "island"->island,
+                                "islandGroup"->islandGroup, "locality"->locality, "locationAttributes"->locationAttributes, "locationID"->locationID,
+                                "locationRemarks"->locationRemarks, "maximumDepthInMeters"->maximumDepthInMeters,
+                                "maximumDistanceAboveSurfaceInMeters"->maximumDistanceAboveSurfaceInMeters, "maximumElevationInMeters"->maximumElevationInMeters,
+                                "minimumDepthInMeters"->minimumDepthInMeters, "minimumDistanceAboveSurfaceInMeters"->minimumDistanceAboveSurfaceInMeters,
+                                "minimumElevationInMeters"->minimumElevationInMeters, "pointRadiusSpatialFit"->pointRadiusSpatialFit,
+                                "stateProvince"->stateProvince, "verbatimCoordinates"->verbatimCoordinates, "verbatimCoordinateSystem"->verbatimCoordinateSystem,
+                                "verbatimDepth"->verbatimDepth, "verbatimElevation"->verbatimElevation, "verbatimLatitude"->verbatimLatitude,
+                                "verbatimLocality"->verbatimLocality, "verbatimLongitude"->verbatimLongitude, "waterBody"->waterBody, "ibra"->ibra, "imcra"->imcra, "lga"->lga)
+
+    map.filter(i => i._2!= null)
+  }
+
 }
 /**
  * An Occurrence Model that can be used to create an Index entry
@@ -329,16 +422,17 @@ class TaxonProfile (
   @BeanProperty var rankString:String,
   @BeanProperty var habitats:Array[String],
   @BeanProperty var left:String,
-  @BeanProperty var right:String)
+  @BeanProperty var right:String,
+  @BeanProperty var sensitive:Array[SensitiveSpecies])
   extends Cloneable {
-  def this() = this(null,null,null,null,null,null,null)
+  def this() = this(null,null,null,null,null,null,null, null)
   override def clone : TaxonProfile = super.clone.asInstanceOf[TaxonProfile]
 }
 
 /**
  * Represents the full attribution for a record.
  */
-class Attribution (
+class Attribution  (
   @BeanProperty var dataProviderUid:String,
   @BeanProperty var dataProviderName:String,
   @BeanProperty var dataResourceUid:String,
@@ -348,9 +442,17 @@ class Attribution (
   @BeanProperty var dataHubUid:String,
   @BeanProperty var institutionName:String,
   @BeanProperty var collectionName:String)
-  extends Cloneable {
+  extends Cloneable with Mappable {
   def this() = this(null,null,null,null,null,null,null,null,null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
+  def getMap():Map[String,String]={
+    val map =Map[String,String]("dataProviderUid"->dataProviderUid, "dataProviderName"->dataProviderName,
+                                "dataResourceUid"->dataResourceUid, "dataResourceName"->dataResourceName,
+                                "collectionUid"->collectionUid, "institutionUid"->institutionUid, "dataHubUid"->dataHubUid,
+                                "institutionName"->institutionName , "collectionName"->collectionName)
+
+    map.filter(i => i._2!= null)
+  }
 }
 
 /**
@@ -369,7 +471,7 @@ class FullRecord (
   @BeanProperty var geospatiallyKosher:Boolean = true,
   @BeanProperty var taxonomicallyKosher:Boolean = true)
   extends Cloneable {
-
+    //NC: The array below is static - thus is a one of the variables change it will be out of sync
   val objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement)
   def this(uuid:String) = this(uuid,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
       new Measurement, Array())
@@ -378,6 +480,20 @@ class FullRecord (
   override def clone : FullRecord = new FullRecord(this.uuid,
       occurrence.clone,classification.clone,location.clone,event.clone,attribution.clone,
       identification.clone,measurement.clone,assertions.clone)
+}
+/**
+ * Stores the information about a sensitive species
+ * 
+ */
+class SensitiveSpecies(
+  @BeanProperty var zone:String,
+  @BeanProperty var category:String
+){
+  def this() =this(null, null)
+  override def toString():String={
+    "zone:"+zone+" category:" + category
+  }
+  
 }
 
 /**

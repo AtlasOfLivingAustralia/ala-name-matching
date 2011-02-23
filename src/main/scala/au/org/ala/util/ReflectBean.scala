@@ -60,7 +60,7 @@ class ReflectBean(ref: AnyRef)  {
         case "[Ljava.lang.String;"  => {
             //NC This feels like a hack. 
             v2.getClass().getName match{
-              case "java.lang.String" =>v2 = Json.toArray(v2.asInstanceOf[String], new String().getClass().asInstanceOf[java.lang.Class[AnyRef] ])
+              case "java.lang.String" =>v2 = Json.toArray(v2.asInstanceOf[String], classOf[String].asInstanceOf[java.lang.Class[AnyRef] ])
               case _=>
             }
           }
