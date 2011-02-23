@@ -361,7 +361,8 @@ public class OccurrenceController {
        // model.addAttribute("facetQuery", filterQuery);
 
         
-        searchUtils.updateNormal(requestParams);
+        //searchUtils.updateNormal(requestParams);
+        SearchUtils.setDefaultParams(requestParams); // handle empty param values, e.g. &sort=&dir=
 
         searchResult = searchDAO.findByFulltextQuery(requestParams);
         model.addAttribute("searchResult", searchResult);
