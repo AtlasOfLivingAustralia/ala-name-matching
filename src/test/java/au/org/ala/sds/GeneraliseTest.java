@@ -113,6 +113,7 @@ public class GeneraliseTest {
         latitude = "-33.630629";    // NSW
         longitude = "150.441284";
         ss = finder.findSensitiveSpeciesByLsid("urn:lsid:biodiversity.org.au:afd.taxon:fb2de285-c58c-4c63-9268-9beef7c61c16");
+        assertNotNull(ss);
         gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss, "NSW");
         assertEquals("Latitude", "-33.6", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "150.4", gl.getGeneralisedLongitude());
