@@ -9,13 +9,17 @@
 %><%@ page contentType="application/json; charset=UTF-8" %>
 <c:if test="${not empty param['callback']}">${param['callback']}(</c:if>
 <json:object prettyPrint="false">
-    <json:array name="features" var="point" items="${points}">
+    <json:property name="count" value="${count}"/>
+    <json:array name="occurrences" var="point" items="${points}">
+        <json:property name="ouid" value="${point.occurrenceUid}"/>
+            <%--
         <json:object>
             <json:property name="ouid" value="${point.occurrenceUid}"/>
             <json:array name="coordinates" var="coord" items="${point.coordinates}">
                 <json:property value="${coord}"/>
             </json:array>
         </json:object>
+            --%>
     </json:array>
 </json:object>
 <c:if test="${not empty param['callback']}">)</c:if>

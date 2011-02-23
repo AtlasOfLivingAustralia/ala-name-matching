@@ -34,6 +34,7 @@ import org.ala.biocache.dao.SearchDAO;
 import org.ala.biocache.dto.OccurrencePoint;
 import org.ala.biocache.dto.PointType;
 import org.ala.biocache.dto.SearchQuery;
+import org.ala.biocache.dto.SpatialSearchRequestParams;
 import org.ala.biocache.util.SearchUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -61,22 +62,23 @@ public class WMSController {
     protected SearchUtils searchUtils;
 
     @RequestMapping(value = "/occurrences/wms", method = RequestMethod.GET)
-    public void pointsWmsImage(
-            @RequestParam(value = "q", required = false) String query,
-            @RequestParam(value = "fq", required = false) String[] filterQuery,
+    public void pointsWmsImage(SpatialSearchRequestParams requestParams,
+            @RequestParam(value = "colourby", required = false) String colourby,
             @RequestParam(value = "width", required = false, defaultValue = "256") Integer widthObj,
             @RequestParam(value = "height", required = false, defaultValue = "256") Integer heightObj,
             @RequestParam(value = "zoom", required = false, defaultValue = "0") Integer zoomLevel,
             @RequestParam(value = "bbox", required = false, defaultValue = "110,-45,157,-9") String bboxString,
             @RequestParam(value = "type", required = false, defaultValue = "normal") String type,
-            //Model model,
             HttpServletResponse response)
             throws Exception {
-
 
         int width = widthObj.intValue();
         int height = heightObj.intValue();
 
+        requestParams.setStart(0);
+        requestParams.setPageSize(Integer.MAX_VALUE);
+        String query = requestParams.getQ();
+        String[] filterQuery = requestParams.getFq();
 
         if (StringUtils.isBlank(query)) {
             displayBlankImage(width, height, false, response);
@@ -114,32 +116,22 @@ public class WMSController {
 
 
         String bboxString2 = bbox[0] + "," + bbox[1] + "," + bbox[2] + "," + bbox[3];
-        System.out.println("bboxS1: " + bboxString + "\nbboxS2:" + bboxString2);
         bboxToQuery(bboxString2, fqList);
 
         PointType pointType = PointType.POINT_RAW;
         //pointType = getPointTypeForZoomLevel(zoomLevel);
 
         String[] newFilterQuery = (String[]) fqList.toArray(new String[fqList.size()]); // convert back to array
-        //get the new query details
-        System.out.println("getting query details");
-        SearchQuery searchQuery = new SearchQuery(query, type, newFilterQuery);
-        System.out.println("updating query details");
-        searchUtils.updateQueryDetails(searchQuery);
-        System.out.println("searching index");
-        List<OccurrencePoint> points = searchDAO.getFacetPoints(searchQuery.getQuery(), searchQuery.getFilterQuery(), pointType);
-        //logger.debug("Points search for " + pointType.getLabel() + " - found: " + points.size());
-        System.out.println("Points search for " + pointType.getLabel() + " - found: " + points.size());
+        //List<OccurrencePoint> points = searchDAO.getFacetPoints(searchQuery.getQuery(), searchQuery.getFilterQuery(), pointType);
+        //List<OccurrencePoint> points = searchDAO.getFacetPoints(requestParams.getQ(), requestParams.getFq(), pointType);
+        List<OccurrencePoint> points = searchDAO.getOccurrences(requestParams, pointType, colourby, 0);
+        logger.debug("Points search for " + pointType.getLabel() + " - found: " + points.size());
         //model.addAttribute("points", points);
 
         if (points.size() == 0) {
             displayBlankImage(width, height, false, response);
             return;
         }
-
-        //BufferedImage baseImage = ImageIO.read(new File("/data/tmp/mapaus1_white.png"));
-        //width = baseImage.getWidth();
-        //height = baseImage.getHeight();
 
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = (Graphics2D) img.getGraphics();
@@ -157,13 +149,10 @@ public class WMSController {
         bbox[3] -= pixelHeight / 2;
 
         double[] pbbox = new double[4]; //pixel bounding box
-        System.out.println("converting meters to pixels");
         pbbox[0] = convertLngToPixel(bbox[0]);
         pbbox[1] = convertLatToPixel(bbox[1]);
         pbbox[2] = convertLngToPixel(bbox[2]);
         pbbox[3] = convertLatToPixel(bbox[3]);
-
-        System.out.println("pbbox: " + pbbox);
 
         int x, y;
         int pointWidth = size * 2;
@@ -181,14 +170,27 @@ public class WMSController {
             x = (int) ((convertLngToPixel(lng) - pbbox[0]) * width_mult);
             y = (int) ((convertLatToPixel(lat) - pbbox[3]) * height_mult);
 
-            System.out.println("Writing " + lng + "," + lat + " to " + x + "," + y);
+            //logger.debug("generating colour for: " + pt.getOccurrenceUid() + " <-" + colourby);
+            if (StringUtils.isNotBlank(pt.getOccurrenceUid())) {
+                //logger.debug("\twith hashcode: " + pt.getOccurrenceUid().hashCode());
+                int colour = 0xFF000000 | pt.getOccurrenceUid().hashCode();
+                //logger.debug("name: " + pt.getOccurrenceUid() + " => colour: " + colour);
+
+                Color c = new Color(colour);
+                //logger.debug("setting filter colour");
+                g.setPaint(c);
+
+            } else {
+                g.setPaint(Color.blue);
+            }
 
 
-            Shape circle = new Ellipse2D.Float(x - (radius / 2), y - (radius / 2), radius, radius);
-            g.setPaint(Color.blue);
-            g.draw(circle);
-            g.fill(circle);
-            g.setPaint(Color.RED);
+
+            //Shape circle = new Ellipse2D.Float(x - (radius / 2), y - (radius / 2), radius, radius);
+            //g.setPaint(Color.blue);
+            //g.draw(circle);
+            //g.fill(circle);
+            //g.setPaint(Color.RED);
             g.fillOval(x - (size / 2), y - (size / 2), pointWidth, pointWidth);
         }
 
@@ -210,65 +212,17 @@ public class WMSController {
     }
 
     @RequestMapping(value = "/occurrences/static", method = RequestMethod.GET)
-    public void pointsStaticImage(
-            @RequestParam(value = "q", required = false) String query,
-            @RequestParam(value = "fq", required = false) String[] filterQuery,
+    public void pointsStaticImage(SpatialSearchRequestParams requestParams,
+            @RequestParam(value = "colourby", required = false, defaultValue = "") String colourby,
             @RequestParam(value = "width", required = false, defaultValue = "256") Integer widthObj,
             @RequestParam(value = "height", required = false, defaultValue = "256") Integer heightObj,
             @RequestParam(value = "type", required = false, defaultValue = "normal") String type,
-            //Model model,
             HttpServletResponse response)
             throws Exception {
 
         int width = widthObj.intValue();
         int height = heightObj.intValue();
-
-        if (StringUtils.isBlank(query)) {
-            displayBlankImage(width, height, true, response);
-            return;
-        }
-
-        // let's force it to PNG's for now
-        response.setContentType("image/png");
-
-
-
-        // Convert array to list so we append more values onto it
-        ArrayList<String> fqList = null;
-        if (filterQuery != null) {
-            fqList = new ArrayList<String>(Arrays.asList(filterQuery));
-        } else {
-            fqList = new ArrayList<String>();
-        }
-
-        PointType pointType = PointType.POINT_RAW;
-
-        String[] newFilterQuery = (String[]) fqList.toArray(new String[fqList.size()]); // convert back to array
-        //get the new query details
-        SearchQuery searchQuery = new SearchQuery(query, type, newFilterQuery);
-        searchUtils.updateQueryDetails(searchQuery);
-        List<OccurrencePoint> points = searchDAO.getFacetPoints(searchQuery.getQuery(), searchQuery.getFilterQuery(), pointType);
-        logger.debug("Points search for " + pointType.getLabel() + " - found: " + points.size());
-        //model.addAttribute("points", points);
-
-        if (points.size() == 0) {
-            displayBlankImage(width, height, true, response);
-            return;
-        }
-
-
-        BufferedImage baseImage = ImageIO.read(new File("/data/tmp/mapaus1_white.png"));
-        width = baseImage.getWidth();
-        height = baseImage.getHeight();
-
-        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = (Graphics2D) img.getGraphics();
-        g.drawImage(baseImage, 0, 0, null);
-        g.setColor(Color.RED);
-
-        // size of the circles
-        int size = 4;
-
+        
         // the bounding box
         String bboxString = "110,-45,157,-9";
         double[] bbox = new double[4];
@@ -282,6 +236,64 @@ public class WMSController {
                 e.printStackTrace();
             }
         }
+
+
+        requestParams.setStart(0);
+        requestParams.setPageSize(Integer.MAX_VALUE);
+        String query = requestParams.getQ();
+        String[] filterQuery = requestParams.getFq();
+
+        if (StringUtils.isBlank(query)) {
+            displayBlankImage(width, height, true, response);
+            return;
+        }
+
+        // let's force it to PNG's for now
+        response.setContentType("image/png");
+
+        // Convert array to list so we append more values onto it
+        ArrayList<String> fqList = null;
+        if (filterQuery != null) {
+            fqList = new ArrayList<String>(Arrays.asList(filterQuery));
+        } else {
+            fqList = new ArrayList<String>();
+        }
+
+        // add the default bounding box 
+        bboxToQuery(bboxString, fqList);
+
+        PointType pointType = PointType.POINT_RAW;
+
+        String[] newFilterQuery = (String[]) fqList.toArray(new String[fqList.size()]); // convert back to array
+        //get the new query details
+        //SearchQuery searchQuery = new SearchQuery(query, type, newFilterQuery);
+        //searchUtils.updateQueryDetails(searchQuery);
+
+        // add the details back into the requestParam object
+        //requestParams.setQ(searchQuery.getQuery());
+        requestParams.setFq(newFilterQuery);
+
+
+        //List<OccurrencePoint> points = searchDAO.getFacetPoints(requestParams.getQ(), requestParams.getFq(), pointType);
+        List<OccurrencePoint> points = searchDAO.getOccurrences(requestParams, pointType, colourby, 0);
+        logger.debug("Points search for " + pointType.getLabel() + " - found: " + points.size());
+
+        if (points.size() == 0) {
+            displayBlankImage(width, height, true, response);
+            return;
+        }
+
+        BufferedImage baseImage = ImageIO.read(new File("/data/tmp/mapaus1_white.png"));
+        width = baseImage.getWidth();
+        height = baseImage.getHeight();
+
+        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = (Graphics2D) img.getGraphics();
+        g.drawImage(baseImage, 0, 0, null);
+        g.setPaint(Color.blue);
+
+        // size of the circles
+        int size = 4;
 
         double pixelWidth = (bbox[2] - bbox[0]) / width;
         double pixelHeight = (bbox[3] - bbox[1]) / height;
@@ -312,12 +324,24 @@ public class WMSController {
             x = (int) ((convertLngToPixel(lng) - pbbox[0]) * width_mult);
             y = (int) ((convertLatToPixel(lat) - pbbox[3]) * height_mult);
 
+            //logger.debug("generating colour for: " + pt.getOccurrenceUid() + " <-" + colourby);
+            if (StringUtils.isNotBlank(pt.getOccurrenceUid())) {
+                //logger.debug("\twith hashcode: " + pt.getOccurrenceUid().hashCode());
+                int colour = 0xFF000000 | pt.getOccurrenceUid().hashCode();
+                //logger.debug("name: " + pt.getOccurrenceUid() + " => colour: " + colour);
 
-            Shape circle = new Ellipse2D.Float(x - (radius / 2), y - (radius / 2), radius, radius);
-            g.setPaint(Color.blue);
-            g.draw(circle);
-            g.fill(circle);
-            g.setPaint(Color.RED);
+                Color c = new Color(colour);
+                //logger.debug("setting filter colour");
+                g.setPaint(c);
+
+            } else {
+                g.setPaint(Color.blue);
+            }
+
+            //Shape circle = new Ellipse2D.Float(x - (radius / 2), y - (radius / 2), radius, radius);
+            //g.draw(circle);
+            //g.fill(circle);
+            //g.setPaint(Color.RED);
             g.fillOval(x - (size / 2), y - (size / 2), pointWidth, pointWidth);
         }
 
@@ -339,36 +363,20 @@ public class WMSController {
     }
 
     @RequestMapping(value = "/occurrences/info", method = RequestMethod.GET)
-    public String getOccurrencesInformation(
-            @RequestParam(value = "q", required = false) String query,
-            @RequestParam(value = "fq", required = false) String[] filterQuery,
-            @RequestParam(value="callback", required=false) String callback,
-            @RequestParam(value = "lat", required = true) Float latitude,
-            @RequestParam(value = "lng", required = true) Float longitude,
-            @RequestParam(value="radius", required=false, defaultValue = "0.1") Float radius,
-            @RequestParam(value = "zoom", required = false, defaultValue = "0") Integer zoomLevel,
-            @RequestParam(value="taxa", required=false, defaultValue="*") String taxa,
-            @RequestParam(value="rank", required=false, defaultValue="*") String rank,
+    public String getOccurrencesInformation(SpatialSearchRequestParams requestParams,
+            @RequestParam(value = "callback", required = false) String callback,
             Model model,
             HttpServletRequest request,
             HttpServletResponse response)
             throws Exception {
 
-        System.out.println("Got request.getQueryString: " + request.getQueryString());
+        String query = requestParams.getQ();
+        String[] filterQuery = requestParams.getFq();
 
         if (callback != null && !callback.isEmpty()) {
             response.setContentType("text/javascript");
         } else {
             response.setContentType("application/json");
-        }
-
-        // Convert array to list so we append more values onto it
-        String[] taxaArray = StringUtils.split(taxa, "|");
-        ArrayList<String> taxaList = null;
-        if (taxaArray != null) {
-            taxaList = new ArrayList<String>(Arrays.asList(taxaArray));
-        } else {
-            taxaList = new ArrayList<String>();
         }
 
         // Convert array to list so we append more values onto it
@@ -379,19 +387,24 @@ public class WMSController {
             fqList = new ArrayList<String>();
         }
 
-        PointType pointType = PointType.POINT_00001; // default value for when zoom is null
-        pointType = getPointTypeForZoomLevel(zoomLevel);
-        logger.info("PointType for zoomLevel ("+zoomLevel+") = "+pointType.getLabel());
+        PointType pointType = PointType.POINT_RAW; // default value for when zoom is null
+        //PointType pointType = PointType.POINT_00001; // default value for when zoom is null
+        //pointType = getPointTypeForZoomLevel(zoomLevel);
+        //logger.info("PointType for zoomLevel ("+zoomLevel+") = "+pointType.getLabel());
 
-        String[] newFilterQuery = (String[]) fqList.toArray (new String[fqList.size()]); // convert back to array
+        String[] newFilterQuery = (String[]) fqList.toArray(new String[fqList.size()]); // convert back to array
         //get the new query details
         SearchQuery searchQuery = new SearchQuery(query, "normal", newFilterQuery);
         searchUtils.updateQueryDetails(searchQuery);
-        System.out.println("searchQuery: " + searchQuery.getDisplayString()); 
-        //List<OccurrencePoint> points = searchDAO.findRecordsForLocation(taxaList, rank, latitude, longitude, radius, pointType);
-        List<OccurrencePoint> points = searchDAO.getFacetPoints(searchQuery.getQuery(), searchQuery.getFilterQuery(), pointType);
-        logger.info("Click Points search for "+pointType.getLabel()+" - found: "+points.size());
+
+        // add the details back into the requestParam object
+        requestParams.setQ(searchQuery.getQuery());
+        requestParams.setFacets(searchQuery.getFilterQuery());
+
+        List<OccurrencePoint> points = searchDAO.getOccurrences(requestParams, pointType, "", 1);
+        logger.info("Points search for " + pointType.getLabel() + " - found: " + points.size());
         model.addAttribute("points", points);
+        model.addAttribute("count", points.size());
 
         return "json/infoPointGeojson"; //POINTS_GEOJSON;
     }
@@ -464,59 +477,6 @@ public class WMSController {
                 logger.warn("BBOX does not contain the expected number of coords (4). Found: " + bounds.length);
             }
         }
-    }
-    protected void radiusToQuery(Float latitude, Float longitude, Float radius, ArrayList<String> fqList) {
-        // e.g. bbox=122.013671875,-53.015625,172.990234375,-10.828125
-        //if (bbox != null && !bbox.isEmpty()) {
-                String fq1 = "longitude:" + longitude.doubleValue();
-                fqList.add(fq1);
-                String fq2 = "latitude:" + latitude.doubleValue();
-                fqList.add(fq2);
-                String fq3 = "radius:" + radius.doubleValue();
-                fqList.add(fq3);
-        //}
-    }
-
-    /**
-     * Format the search input query for a full-text search
-     *
-     * @param query
-     * @return
-     */
-    protected String formatSearchQuery(String query) {
-        // set the query
-        StringBuilder queryString = new StringBuilder();
-        if (query.equals("*:*") || query.contains(" AND ") || query.contains(" OR ") || query.startsWith("(")
-                || query.endsWith("*") || query.startsWith("{")) {
-            queryString.append(query);
-        } else if (query.contains(":") && !query.startsWith("urn")) {
-            // search with a field name specified (other than an LSID guid)
-            String[] bits = StringUtils.split(query, ":", 2);
-            queryString.append(ClientUtils.escapeQueryChars(bits[0]));
-            queryString.append(":");
-            queryString.append(ClientUtils.escapeQueryChars(bits[1]));
-        } else {
-            // regular search
-            queryString.append(ClientUtils.escapeQueryChars(query));
-        }
-        return queryString.toString();
-    }
-
-    /**
-     * Build the query string for a spatial query (using Spatial-Solr plugin syntax)
-     *
-     * TODO change param type to SearchRequestParams
-     *
-     * @param fullTextQuery
-     * @param latitude
-     * @param longitude
-     * @param radius
-     * @return
-     */
-    protected String buildSpatialQueryString(String fullTextQuery, Float latitude, Float longitude, Float radius) {
-        String queryString = "{!spatial lat=" + latitude.toString() + " long=" + longitude.toString() +
-                " radius=" + radius.toString() + " unit=km calc=arc threadCount=2}" + fullTextQuery; // calc=arc|plane
-        return queryString;
     }
 
     /**
