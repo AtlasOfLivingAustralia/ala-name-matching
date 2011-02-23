@@ -25,9 +25,10 @@ import au.org.ala.sds.util.GeoLocationHelper;
  */
 public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
 
-    private String scientificName;
-    private List<SensitivityInstance> instances;
-    
+    private final String scientificName;
+    private String lsid;
+    private final List<SensitivityInstance> instances;
+
     public SensitiveSpecies(String scientificName) {
         super();
         this.scientificName = scientificName;
@@ -42,19 +43,27 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
         return instances;
     }
 
+    public String getLsid() {
+        return lsid;
+    }
+
+    public void setLsid(String lsid) {
+        this.lsid = lsid;
+    }
+
     public boolean isSensitiveForZone(SensitivityZone zone) {
         for (SensitivityInstance si : instances) {
             if (zone.equals(si.getZone())) {
                 return true;
             }
         }
-        
+
         return false;
     }
-    
+
     public SensitivityCategory getConservationCategory(String latitude, String longitude) {
         SensitivityCategory category = null;
-        
+
         // Avoid spatial gazetteer lookup if possible
         if (instances.size() == 1 && instances.get(0).getZone() == SensitivityZone.AUS) {
             category = instances.get(0).getCategory();
@@ -69,23 +78,33 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
             }
 
             if (state != null) {
-                SensitivityCategory ausCategory = null;
-                for (SensitivityInstance instance : instances) {
-                    if (state == instance.getZone()) {
-                        category = instance.getCategory();
-                    } else {
-                        if (instance.getZone() == SensitivityZone.AUS) {
-                            ausCategory = instance.getCategory();
-                        }
-                    }
-                }
-                
-                if (category == null) {
-                    category = ausCategory;
+                category = getCategoryForState(state);
+            }
+        }
+
+        return category;
+    }
+
+    public SensitivityCategory getConservationCategory(String state) {
+        return getCategoryForState(SensitivityZone.valueOf(state));
+    }
+
+    private SensitivityCategory getCategoryForState(SensitivityZone state) {
+        SensitivityCategory category = null;
+        SensitivityCategory ausCategory = null;
+        for (SensitivityInstance instance : instances) {
+            if (state == instance.getZone()) {
+                category = instance.getCategory();
+            } else {
+                if (instance.getZone() == SensitivityZone.AUS) {
+                    ausCategory = instance.getCategory();
                 }
             }
         }
-        
+
+        if (category == null) {
+            category = ausCategory;
+        }
         return category;
     }
 
