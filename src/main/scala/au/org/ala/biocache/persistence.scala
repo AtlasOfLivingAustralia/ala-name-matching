@@ -83,8 +83,8 @@ class CassandraPersistenceManager (
 
     import JavaConversions._
     protected val logger = LoggerFactory.getLogger("CassandraPersistenceManager")
-    logger.warn("Initialising cassandra connection pool with poo name: " + poolName)
-    logger.warn("Initialising cassandra connection pool with hosts: " + hosts(0))
+    logger.info("Initialising cassandra connection pool with pool name: " + poolName)
+    logger.info("Initialising cassandra connection pool with hosts: " + hosts(0))
     Pelops.addPool(poolName, hosts, port, false, keyspace, new Policy)
 
     /**

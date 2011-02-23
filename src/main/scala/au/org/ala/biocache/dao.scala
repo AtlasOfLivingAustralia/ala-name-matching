@@ -27,12 +27,12 @@ object DAO {
       try {
           val properties = new Properties()
           properties.load(DAO.getClass.getResourceAsStream("/biocache.properties"))
-          logger.warn("Properties loaded from biocache.properties on classpath")
+          logger.info("Properties loaded from biocache.properties on classpath")
           if(properties!=null){
              val hostArray = properties.getProperty("cassandraHosts").split(",")
              val port = properties.getProperty("cassandraPort").toInt
-             logger.warn("Properties loaded from biocache.properties on classpath. hostArray: "+hostArray(0))
-             logger.warn("Properties loaded from biocache.properties on classpath. port: "+port)
+             logger.info("Properties loaded from biocache.properties on classpath. hostArray: "+hostArray(0))
+             logger.info("Properties loaded from biocache.properties on classpath. port: "+port)
              new CassandraPersistenceManager(hostArray.toArray[String], port)
           } else {
              logger.warn("Unable to load configuration parameters from biocache.properties. Using default settings.");
