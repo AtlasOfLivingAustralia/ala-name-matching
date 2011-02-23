@@ -1,8 +1,10 @@
 package au.org.ala.biocache
 import scala.reflect.BeanProperty
 import java.util.UUID
+import org.apache.commons.lang.time.DateFormatUtils
 import org.apache.solr.client.solrj.beans.Field
 import java.util.Date
+import org.codehaus.jackson.annotate.JsonIgnore
 
 /**
  * Represents an occurrence record. These fields map directly on to
@@ -62,6 +64,7 @@ class Occurrence extends Cloneable with Mappable {
   //custom fields
   @BeanProperty var images:Array[String] = _
 
+  @JsonIgnore
   def getMap():Map[String,String]={
     val map =Map[String,String]("occurrenceID"->occurrenceID, "accessrights"->accessrights, "associatedMedia"->associatedMedia,
                                 "associatedOccurrences"->associatedOccurrences, "associatedReferences"->associatedReferences,
@@ -146,6 +149,7 @@ class Classification extends Cloneable with Mappable {
   @BeanProperty var right:String = _
   @BeanProperty var speciesGroups:Array[String] =_
 
+  @JsonIgnore
   def getMap():Map[String,String]={
     val map =Map[String,String]("scientificName"-> scientificName, "scientificNameAuthorship"->scientificNameAuthorship,
                        "scientificNameID"->scientificNameID, "taxonConceptID"->taxonConceptID, "taxonID"->taxonID,
@@ -181,6 +185,7 @@ class Measurement extends Cloneable with Mappable {
   @BeanProperty var measurementUnit:String = _
   @BeanProperty var measurementValue:String = _
 
+  @JsonIgnore
   def getMap():Map[String,String]={
     val map =Map[String,String]("measurementAccuracy"->measurementAccuracy, "measurementDeterminedBy"->measurementDeterminedBy,
                                 "measurementDeterminedDate"->measurementDeterminedDate, "measurementID"->measurementID,
@@ -204,6 +209,8 @@ class Identification extends Cloneable with Mappable {
   @BeanProperty var identificationRemarks:String = _
   @BeanProperty var identifiedBy:String = _
   @BeanProperty var typeStatus:String = _
+
+  @JsonIgnore
   def getMap():Map[String,String]={
     val map =Map[String,String]("dateIdentified"->dateIdentified, "identificationAttributes"->identificationAttributes,
                                 "identificationID"->identificationID, "identificationQualifier"->identificationQualifier,
@@ -233,6 +240,8 @@ class Event extends Cloneable with Mappable{
   //custom date range fields
   @BeanProperty var startYear:String = _
   @BeanProperty var endYear:String = _
+
+  @JsonIgnore
   def getMap():Map[String,String]={
     val map =Map[String,String]("day"->day,"endDayOfYear"->endDayOfYear,"eventAttributes"->eventAttributes,
                                 "eventDate"->eventDate,"eventID"->eventID,"eventRemarks"->eventRemarks,"eventTime"->eventTime,
@@ -296,6 +305,7 @@ class Location extends Cloneable with Mappable{
   @BeanProperty var imcra:String = _
   @BeanProperty var lga:String = _
 
+  @JsonIgnore
   def getMap():Map[String,String]={
     val map =Map[String,String]("uuid "->uuid, "continent"->continent, "coordinatePrecision"->coordinatePrecision,
                                 "coordinateUncertaintyInMeters"->coordinateUncertaintyInMeters, "country"->country, "countryCode"->countryCode,
@@ -323,7 +333,7 @@ class Location extends Cloneable with Mappable{
  * But I am assuming that the will not get in the way if we decide to use a 
  * different indexing process.
  */
-class OccurrenceIndex extends Cloneable {
+class OccurrenceIndex extends Cloneable with Mappable {
   override def clone : OccurrenceIndex = super.clone.asInstanceOf[OccurrenceIndex]
   @BeanProperty @Field("id") var uuid:String =_
   @BeanProperty @Field("occurrence_id") var occurrenceID:String =_
@@ -390,6 +400,35 @@ class OccurrenceIndex extends Cloneable {
   @BeanProperty @Field("point-0.0001") var point00001:String =_
   @BeanProperty @Field("names_and_lsid") var namesLsid:String =_
   @BeanProperty @Field("multimedia") var multimedia:String =_
+
+  @JsonIgnore
+  def getMap():Map[String,String]={
+    
+    val sdate = if(eventDate == null) null else DateFormatUtils.format(eventDate, "yyyy-MM-dd")
+
+    val map =Map[String,String]("id"-> uuid, "occurrence_id"-> occurrenceID, "hub_uid"-> dataHubUid,
+                                "institution_code_uid"-> institutionUid, "institution_code"-> raw_institutionCode,
+                                "institution_name"-> institutionName, "collection_code_uid"-> collectionUid,
+                                "collection_code"-> raw_collectionCode, "collection_name"-> collectionName,
+                                "catalogue_number"-> raw_catalogNumber, "taxon_concept_lsid"-> taxonConceptID,
+                                "occurrence_date"-> sdate, "taxon_name"-> scientificName, "common_name"-> vernacularName,
+                                "rank"-> taxonRank, "rank_id"-> taxonRankID.toString, "country_code"-> raw_countryCode,
+                                "kingdom"-> kingdom, "phylum"-> phylum, "class"-> classs, "order"-> order, "family"-> family,
+                                "genus"-> genus, "species"-> species, "state"-> stateProvince, "latitude"-> decimalLatitude.toString,
+                                "longitude"-> decimalLongitude.toString, "year"-> year, "month"-> month, "basis_of_record"-> basisOfRecord,
+                                "type_status"-> typeStatus, "location_remarks"-> raw_locationRemarks, "occurrence_remarks"-> raw_occurrenceRemarks,
+                                "lft"-> left.toString, "rgt"-> right.toString, "ibra"-> ibra, "imcra"-> imcra,
+                                "places"-> lga, "data_provider_uid"-> dataProviderUid, "data_provider"-> dataProviderName,
+                                "data_resource_uid"-> dataResourceUid, "data_resource"-> dataResourceName, "assertions"-> Json.toJSON(assertions.asInstanceOf[Array[AnyRef]]),
+                                "user_assertions"-> hasUserAssertions, "species_group"-> Json.toJSON(speciesGroups.asInstanceOf[Array[AnyRef]]),
+                                "image_url"-> image, "geospatial_kosher"-> geospatialKosher, "taxonomic_kosher"-> taxonomicKosher,
+                                "raw_taxon_name"-> raw_scientificName, "raw_basis_of_record"-> raw_basisOfRecord,
+                                "raw_type_status"-> raw_typeStatus, "raw_common_name"-> raw_vernacularName, "lat_long"-> latLong,
+                                "point-1"-> point1, "point-0.1"-> point01, "point-0.01"-> point001, "point-0.001"-> point0001,
+                                "point-0.0001"-> point00001, "names_and_lsid"-> namesLsid, "multimedia"-> multimedia)
+
+    map.filter(i => i._2!= null)
+  }
 }
 
 /**
@@ -445,6 +484,8 @@ class Attribution  (
   extends Cloneable with Mappable {
   def this() = this(null,null,null,null,null,null,null,null,null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
+  
+  @JsonIgnore
   def getMap():Map[String,String]={
     val map =Map[String,String]("dataProviderUid"->dataProviderUid, "dataProviderName"->dataProviderName,
                                 "dataResourceUid"->dataResourceUid, "dataResourceName"->dataResourceName,
