@@ -13,8 +13,10 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
 
         <h3>Occurrences</h3>
         <ul>
+            <li><strong>Occurrence listing:</strong>
+                <a href="${pageContext.request.contextPath}/occurrences/page">/occurrences/page</a>
+                - just shows the first 10 occurrences (for debug only)</li>
             <li><strong>Occurrence view:</strong> /occurrence/{uuid}</li>
-            <li><strong>Occurrence listing:</strong> /occurrence/page - just shows the first 10 occurrences (for debug only)</li>
             <li><strong>Occurrence for taxon:</strong> /occurrences/taxon/{guid}</li>
             <li><strong>Occurrence for collection:</strong> /occurrences/collection/{uid}</li>
             <li><strong>Occurrence for institution:</strong> /occurrences/institution/{uid}</li>
