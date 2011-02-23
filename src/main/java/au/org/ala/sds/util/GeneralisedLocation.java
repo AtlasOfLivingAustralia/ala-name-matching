@@ -16,28 +16,33 @@ package au.org.ala.sds.util;
 
 import java.math.BigDecimal;
 
+import au.org.ala.sds.model.SensitiveSpecies;
 import au.org.ala.sds.model.SensitivityCategory;
 
 /**
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
 public class GeneralisedLocation {
-    private String originalLatitude;
-    private String originalLongitude;
+    private final String originalLatitude;
+    private final String originalLongitude;
     private String generalisedLatitude;
     private String generalisedLongitude;
     private String generalisationInMetres;
-    private SensitivityCategory category;
+    private final SensitivityCategory category;
     private String description;
-    
-    public GeneralisedLocation(String latitude, String Longitude, SensitivityCategory category) {
+
+    public GeneralisedLocation(String latitude, String longitude, SensitivityCategory category) {
         originalLatitude = latitude;
-        originalLongitude = Longitude;
+        originalLongitude = longitude;
         this.category = category;
         generaliseCoordinates();
     }
 
-   public String getOriginalLatitude() {
+    public GeneralisedLocation(String latitude, String longitude, SensitiveSpecies ss, String state) {
+        this(latitude, longitude, ss.getConservationCategory(state));
+    }
+
+    public String getOriginalLatitude() {
         return originalLatitude;
     }
 
@@ -66,7 +71,7 @@ public class GeneralisedLocation {
     }
 
     private void generaliseCoordinates() {
-        
+
         if (category == null) {
             generalisedLatitude = originalLatitude;
             generalisedLongitude = originalLongitude;
@@ -74,7 +79,7 @@ public class GeneralisedLocation {
             description = "Location not generalised because it is not deemed sensitive in that area.";
             return;
         }
-        
+
         int decimalPlaces;
         switch (category) {
             case CRITICALLY_ENDANGERED:
