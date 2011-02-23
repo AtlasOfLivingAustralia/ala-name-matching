@@ -357,7 +357,7 @@ CREATE TABLE sensitive_species_zones (
 -- Exotic plant pests
 INSERT INTO sensitive_species_zones (scientific_name,sensitivity_zone,authority,from_date,to_date,sensitivity_category) VALUES ('Achatina fulica','AUS','AQIS',NULL,NULL,'PBC1');
 INSERT INTO sensitive_species_zones (scientific_name,sensitivity_zone,authority,from_date,to_date,sensitivity_category) VALUES ('Lymantria dispar','AUS','AQIS',NULL,NULL,'PBC1');
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_zone,authority,from_date,to_date,sensitivity_category) VALUES ('Xanthomonas axonopodis pv. citri','PQAQLD2004','AQIS','2004-06-30','2009-01-22','PBC2');
+--INSERT INTO sensitive_species_zones (scientific_name,sensitivity_zone,authority,from_date,to_date,sensitivity_category) VALUES ('Xanthomonas axonopodis pv. citri','PQAQLD2004','AQIS','2004-06-30','2009-01-22','PBC2');
 
 
 -- Birds Australia
