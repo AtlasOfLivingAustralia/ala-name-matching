@@ -39,6 +39,7 @@ object ProcessRecords {
   val logger = LoggerFactory.getLogger("ProcessRecords")
   //Regular expression used to parse an image URL - adapted from http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
   lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#?]+)+\.(?:jpg|gif|png|jpeg))$""".r
+  val afdApniIdentifier = """([:afd.|:apni.])""".r
 
   def main(args: Array[String]): Unit = {
 
@@ -472,7 +473,13 @@ object ProcessRecords {
           processed.classification.speciesGroups = speciesGroups.get.toArray[String]
         }
 
-        Array()
+        //is the name in the NSLs ???
+        if(afdApniIdentifier.findFirstMatchIn(nsr.getLsid).isEmpty){
+           Array(QualityAssertion(AssertionCodes.NAME_NOT_IN_NATIONAL_CHECKLISTS, true, "Record not attached to concept in national species lists"))
+        } else {
+           Array()
+        }
+
       } else {
         logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " +
             raw.classification.kingdom + ", Family:" + raw.classification.family + ", Genus:" + raw.classification.genus +
