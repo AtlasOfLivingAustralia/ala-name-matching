@@ -123,17 +123,17 @@ object ProcessRecords {
     val urls = raw.getOccurrence.getAssociatedMedia
     // val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(cl.getter(sg.rank)) => sg.name}
     if(urls != null){
-      val aurls = urls.split(";")
+      val aurls = urls.split(";").map(url=> url.trim)
       processed.occurrence.setImages(aurls.filter(isValidImageURL(_)))
       if(aurls.length != processed.occurrence.getImages().length)
           return Array(QualityAssertion(AssertionCodes.INVALID_IMAGE_URL, false, "URL can not be an image"))
     }
     Array()
   }
+
   private def isValidImageURL(url:String) : Boolean = {
     imageParser.unapplySeq(url.trim).isEmpty == false
   }
-
 
   /**
    * select icm.institution_uid, icm.collection_uid,  ic.code, ic.name, ic.lsid, cc.code from inst_coll_mapping icm
@@ -369,7 +369,6 @@ object ProcessRecords {
         //check marine/non-marine
         if(processed.location.habitat!=null){
 
-          
           if(!taxonProfile.isEmpty && taxonProfile.get.habitats!=null && taxonProfile.get.habitats.size>0){
             val habitatsAsString =  taxonProfile.get.habitats.reduceLeft(_+","+_)
             val habitatFromPoint = processed.location.habitat
