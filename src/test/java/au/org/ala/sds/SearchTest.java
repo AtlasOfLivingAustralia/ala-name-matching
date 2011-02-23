@@ -14,15 +14,17 @@
  ***************************************************************************/
 package au.org.ala.sds;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+import javax.sql.DataSource;
 
-import au.org.ala.sds.SensitiveSpeciesFinder;
+import org.apache.commons.dbcp.BasicDataSource;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.model.SensitiveSpecies;
 
 /**
@@ -31,13 +33,20 @@ import au.org.ala.sds.model.SensitiveSpecies;
  */
 public class SearchTest {
 
-    ApplicationContext context;
-    SensitiveSpeciesFinder finder;
-    
-    @Before
-    public void runBeforeEveryTest() throws Exception {
-        context = new ClassPathXmlApplicationContext("spring-config.xml");
-        finder = context.getBean("searchImpl", SensitiveSpeciesFinder.class);
+    static DataSource dataSource;
+    static CBIndexSearch cbIndexSearch;
+    static SensitiveSpeciesFinder finder;
+
+    @BeforeClass
+    public static void runOnce() throws Exception {
+        dataSource = new BasicDataSource();
+        ((BasicDataSource) dataSource).setDriverClassName("com.mysql.jdbc.Driver");
+        ((BasicDataSource) dataSource).setUrl("jdbc:mysql://localhost/portal");
+        ((BasicDataSource) dataSource).setUsername("root");
+        ((BasicDataSource) dataSource).setPassword("password");
+
+        cbIndexSearch = new CBIndexSearch("/data/lucene/namematching");
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(dataSource, cbIndexSearch);
     }
 
     @Test
@@ -47,5 +56,9 @@ public class SearchTest {
 
         ss = finder.findSensitiveSpecies("Crex crex");
         assertNotNull(ss);
+
+        ss = finder.findSensitiveSpeciesByLsid("urn:lsid:biodiversity.org.au:afd.taxon:fb2de285-c58c-4c63-9268-9beef7c61c16");
+        assertNotNull(ss);
+        assertEquals(ss.getScientificName(), "Lophochroa leadbeateri");
     }
 }
