@@ -6,7 +6,15 @@ import org.scalatest.FunSuite
  * Test for vocabulary mapping and lookups.
  */
 class VocabTests extends FunSuite {
-  
+
+  test("Basis of record matching"){
+      expect("isotype"){ TypeStatus.matchTerm("isotype").get.canonical}
+  }
+
+  test("Basis of record matching with junk characters"){
+	  expect("syntype"){ TypeStatus.matchTerm("Syntype ?").get.canonical}
+  }
+
   test("Expect non marine to match terrestrial"){
 	  expect(true){HabitatMap.isCompatible("non-marine", "terrestrial").get}
   }

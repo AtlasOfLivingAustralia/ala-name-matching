@@ -22,7 +22,7 @@ trait Vocab {
   def matchTerm(string2Match:String) : Option[Term] = {
     if(string2Match!=null){
       //strip whitespace & strip quotes and fullstops & uppercase
-      val stringToUse = string2Match.replaceAll("([.,-]*)?([\\s]*)?", "").toLowerCase
+      val stringToUse = string2Match.replaceAll("([.,-\\?]*)?([\\s]*)?", "").toLowerCase
       for(term<-all){
         if(term.canonical.equalsIgnoreCase(stringToUse))
           return Some(term)
