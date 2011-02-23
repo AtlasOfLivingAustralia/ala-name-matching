@@ -81,6 +81,6 @@
   <ConcurrentWrites>32</ConcurrentWrites>
   <CommitLogSync>periodic</CommitLogSync>
   <CommitLogSyncPeriodInMS>1000</CommitLogSyncPeriodInMS>
-  <GCGraceSeconds>2</GCGraceSeconds>
+  <GCGraceSeconds>2000</GCGraceSeconds>
   <DoConsistencyChecksBoolean>true</DoConsistencyChecksBoolean>
 </Storage>
