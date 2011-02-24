@@ -298,7 +298,7 @@ object SolrOccurrenceDAO extends IndexDAO {
         doc.addField(header(i), values(i))
     }
     solrDocList.add(doc)
-    if(solrDocList.size ==1000){
+    if(solrDocList.size ==10000){
       try{
         SolrIndexDAO.solrServer.add(solrDocList)
         SolrIndexDAO.solrServer.commit

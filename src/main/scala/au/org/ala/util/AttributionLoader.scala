@@ -28,20 +28,25 @@ object AttributionLoader {
   def main(args: Array[String]): Unit = {
     import FileHelper._
     println("Starting Collection Loader....")
-    val file = new File("/data/biocache/coll-mapping.txt")
+    val file = new File("/data/biocache/collinst-mapping.txt")
     var counter = 0
     file.foreachLine { line => {
         counter+=1
         //add point with details to
         val parts = line.split("\t")
         var attribution = new Attribution
-        attribution.institutionUid = parts(2)
-        attribution.collectionUid = parts(3)
-        attribution.institutionName = parts(4)
-        attribution.dataProviderUid = parts(5)
-        attribution.dataProviderName = parts(6)
-        attribution.dataResourceUid = parts(7)
-        attribution.dataResourceName = parts(8)
+        attribution.institutionUid = parts(4)
+        attribution.collectionUid = parts(2)
+        attribution.collectionName = parts(3)
+        attribution.institutionName = parts(5)
+        if(parts.length>6){
+          attribution.taxonomicHints = parts(6).split(";")
+        }
+        //There are some clashes where a collection can belong to 2 data resources
+//        attribution.dataProviderUid = parts(5)
+//        attribution.dataProviderName = parts(6)
+//        attribution.dataResourceUid = parts(7)
+//        attribution.dataResourceName = parts(8)
         AttributionDAO.add(parts(0), parts(1), attribution)
         if (counter % 1000 == 0) println(counter +": "+parts(0) +"|"+ parts(1))
       }

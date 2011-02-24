@@ -71,15 +71,26 @@ object DAO {
 
   /**
    * for each field in the definition, check if there is a value to write
+   * Change to use the toMap method of a Mappable
    */
   def mapObjectToProperties(anObject:AnyRef): Map[String,String] = {
-    val defn = getDefn(anObject)
     var properties = scala.collection.mutable.Map[String,String]()
-    for (field <- defn) {
-        val fieldValue = anObject.getter(field).asInstanceOf[String]
-        if (fieldValue != null && !fieldValue.isEmpty) {
-             properties.put(field, fieldValue)
-        }
+    if(anObject.isInstanceOf[Mappable]){
+
+      val map = anObject.asInstanceOf[Mappable].getMap
+      map foreach {case (key, value)=> {
+               properties.put(key, value)
+          }}
+
+    }
+    else{
+      val defn = getDefn(anObject)
+      for (field <- defn) {
+          val fieldValue = anObject.getter(field).asInstanceOf[String]
+          if (fieldValue != null && !fieldValue.isEmpty) {
+               properties.put(field, fieldValue)
+          }
+      }
     }
     properties.toMap
   }

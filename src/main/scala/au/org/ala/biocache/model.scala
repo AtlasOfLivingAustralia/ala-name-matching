@@ -81,7 +81,7 @@ class Occurrence extends Cloneable with Mappable {
                                 "relationshipEstablishedDate"->relationshipEstablishedDate, "relationshipOfResource"->relationshipOfResource,
                                 "relationshipRemarks"->relationshipRemarks, "reproductiveCondition"->reproductiveCondition, "resourceID"->resourceID,
                                 "resourceRelationshipID"->resourceRelationshipID, "rights"->rights ,"rightsholder"->rightsholder,
-                                "samplingProtocol"->samplingProtocol, "sex"->sex, "source"->source, "typeStatus"->typeStatus, "images"-> Json.toJSON(images.asInstanceOf[Array[AnyRef]]))
+                                "samplingProtocol"->samplingProtocol, "sex"->sex, "source"->source, "typeStatus"->typeStatus, "images"-> images)
 
     map.filter(i => i._2!= null)
   }
@@ -92,6 +92,13 @@ class Occurrence extends Cloneable with Mappable {
  */
 trait Mappable{
   def getMap():Map[String,String]
+  implicit def arrToString(in:Array[String]):String={
+    if(in == null)
+      null
+    else{
+      Json.toJSON(in.asInstanceOf[Array[AnyRef]])
+    }
+  }
  
 }
 /**
@@ -164,7 +171,7 @@ class Classification extends Cloneable with Mappable {
                        "namePublishedInID"->namePublishedInID,"nomenclaturalCode"->nomenclaturalCode,"nomenclaturalStatus"->nomenclaturalStatus, 
                        "taxonRankID"->taxonRankID, "kingdomID"->kingdomID, "phylumID"->phylumID, "classID"->classID, "orderID"->orderID, 
                        "familyID"->familyID, "genusID"->genusID, "subgenusID"->subgenusID, "speciesID"->speciesID, "subspeciesID"->subspeciesID,
-                       "left"-> left, "right"->right, "speciesGroups" -> Json.toJSON(speciesGroups.asInstanceOf[Array[AnyRef]]))
+                       "left"-> left, "right"->right, "speciesGroups" -> speciesGroups)
 
     map.filter(i => i._2!= null)
   }
@@ -419,8 +426,8 @@ class OccurrenceIndex extends Cloneable with Mappable {
                                 "type_status"-> typeStatus, "location_remarks"-> raw_locationRemarks, "occurrence_remarks"-> raw_occurrenceRemarks,
                                 "lft"-> left, "rgt"-> right, "ibra"-> ibra, "imcra"-> imcra,
                                 "places"-> lga, "data_provider_uid"-> dataProviderUid, "data_provider"-> dataProviderName,
-                                "data_resource_uid"-> dataResourceUid, "data_resource"-> dataResourceName, "assertions"-> Json.toJSON(assertions.asInstanceOf[Array[AnyRef]]),
-                                "user_assertions"-> hasUserAssertions, "species_group"-> Json.toJSON(speciesGroups.asInstanceOf[Array[AnyRef]]),
+                                "data_resource_uid"-> dataResourceUid, "data_resource"-> dataResourceName, "assertions"-> assertions,
+                                "user_assertions"-> hasUserAssertions, "species_group"-> speciesGroups,
                                 "image_url"-> image, "geospatial_kosher"-> geospatialKosher, "taxonomic_kosher"-> taxonomicKosher,
                                 "raw_taxon_name"-> raw_scientificName, "raw_basis_of_record"-> raw_basisOfRecord,
                                 "raw_type_status"-> raw_typeStatus, "raw_common_name"-> raw_vernacularName, "lat_long"-> latLong,
@@ -486,9 +493,10 @@ class Attribution  (
   @BeanProperty var institutionUid:String,
   @BeanProperty var dataHubUid:String,
   @BeanProperty var institutionName:String,
-  @BeanProperty var collectionName:String)
+  @BeanProperty var collectionName:String,
+  @BeanProperty var taxonomicHints: Array[String])
   extends Cloneable with Mappable {
-  def this() = this(null,null,null,null,null,null,null,null,null)
+  def this() = this(null,null,null,null,null,null,null,null,null, null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
   
   @JsonIgnore
@@ -496,7 +504,7 @@ class Attribution  (
     val map =Map[String,String]("dataProviderUid"->dataProviderUid, "dataProviderName"->dataProviderName,
                                 "dataResourceUid"->dataResourceUid, "dataResourceName"->dataResourceName,
                                 "collectionUid"->collectionUid, "institutionUid"->institutionUid, "dataHubUid"->dataHubUid,
-                                "institutionName"->institutionName , "collectionName"->collectionName)
+                                "institutionName"->institutionName , "collectionName"->collectionName, "taxonomicHints"->taxonomicHints)
 
     map.filter(i => i._2!= null)
   }
