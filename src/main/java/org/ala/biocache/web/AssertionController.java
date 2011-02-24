@@ -24,6 +24,26 @@ public class AssertionController {
         return Store.retrieveAssertionCodes();
     }
 
+    @RequestMapping(value = {"/assertions/geospatial/codes"}, method = RequestMethod.GET)
+	public @ResponseBody ErrorCode[] showGeospatialCodes() throws Exception {
+        return Store.retrieveGeospatialCodes();
+    }
+
+    @RequestMapping(value = {"/assertions/taxonomic/codes"}, method = RequestMethod.GET)
+	public @ResponseBody ErrorCode[] showTaxonomicCodes() throws Exception {
+        return Store.retrieveTaxonomicCodes();
+    }
+
+    @RequestMapping(value = {"/assertions/temporal/codes"}, method = RequestMethod.GET)
+	public @ResponseBody ErrorCode[] showTemporalCodes() throws Exception {
+        return Store.retrieveTemporalCodes();
+    }
+
+    @RequestMapping(value = {"/assertions/miscellaneous/codes"}, method = RequestMethod.GET)
+	public @ResponseBody ErrorCode[] showMiscellaneousCodes() throws Exception {
+        return Store.retrieveMiscellaneousCodes();
+    }
+
     /**
      * add an assertion
      */
