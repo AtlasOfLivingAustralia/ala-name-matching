@@ -412,12 +412,12 @@ class OccurrenceIndex extends Cloneable with Mappable {
                                 "collection_code"-> raw_collectionCode, "collection_name"-> collectionName,
                                 "catalogue_number"-> raw_catalogNumber, "taxon_concept_lsid"-> taxonConceptID,
                                 "occurrence_date"-> sdate, "taxon_name"-> scientificName, "common_name"-> vernacularName,
-                                "rank"-> taxonRank, "rank_id"-> taxonRankID.toString, "country_code"-> raw_countryCode,
+                                "rank"-> taxonRank, "rank_id"-> taxonRankID, "country_code"-> raw_countryCode,
                                 "kingdom"-> kingdom, "phylum"-> phylum, "class"-> classs, "order"-> order, "family"-> family,
-                                "genus"-> genus, "species"-> species, "state"-> stateProvince, "latitude"-> decimalLatitude.toString,
-                                "longitude"-> decimalLongitude.toString, "year"-> year, "month"-> month, "basis_of_record"-> basisOfRecord,
+                                "genus"-> genus, "species"-> species, "state"-> stateProvince, "latitude"-> decimalLatitude,
+                                "longitude"-> decimalLongitude, "year"-> year, "month"-> month, "basis_of_record"-> basisOfRecord,
                                 "type_status"-> typeStatus, "location_remarks"-> raw_locationRemarks, "occurrence_remarks"-> raw_occurrenceRemarks,
-                                "lft"-> left.toString, "rgt"-> right.toString, "ibra"-> ibra, "imcra"-> imcra,
+                                "lft"-> left, "rgt"-> right, "ibra"-> ibra, "imcra"-> imcra,
                                 "places"-> lga, "data_provider_uid"-> dataProviderUid, "data_provider"-> dataProviderName,
                                 "data_resource_uid"-> dataResourceUid, "data_resource"-> dataResourceName, "assertions"-> Json.toJSON(assertions.asInstanceOf[Array[AnyRef]]),
                                 "user_assertions"-> hasUserAssertions, "species_group"-> Json.toJSON(speciesGroups.asInstanceOf[Array[AnyRef]]),
@@ -428,6 +428,12 @@ class OccurrenceIndex extends Cloneable with Mappable {
                                 "point-0.0001"-> point00001, "names_and_lsid"-> namesLsid, "multimedia"-> multimedia)
 
     map.filter(i => i._2!= null)
+  }
+  implicit def int2String(in:java.lang.Integer):String={
+    if(in == null) null else in.toString
+  }
+  implicit def double2String(in:java.lang.Double):String ={
+    if(in == null) null else in.toString
   }
 }
 
