@@ -122,10 +122,20 @@ object Store {
    * Retrieve the taxonomic codes.
    */
   def retrieveTaxonomicCodes : Array[ErrorCode] = AssertionCodes.taxonomicCodes.toArray
+
+  /**
+   * Retrieve temporal codes
+   */
+  def retrieveTemporalCodes : Array[ErrorCode] = AssertionCodes.temporalCodes.toArray
+
+  /**
+   * Retrieve miscellaneous codes
+   */
+  def retrieveMiscellaneousCodes : Array[ErrorCode] = AssertionCodes.miscellaneousCodes.toArray
 }
 
 /**
- *   A trait to implement by java classes to process occurrence records.
+ *    A trait to implement by java classes to process occurrence records.
  */
 trait OccurrenceConsumer {
   /** Consume the supplied record */
