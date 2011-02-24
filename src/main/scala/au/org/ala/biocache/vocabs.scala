@@ -371,8 +371,12 @@ object AssertionCodes {
 
   val geospatialBounds = (0, 10000)
   val taxonomicBounds = (10000, 20000)
+  val temporalBounds = (20000, 30000)
+
   val geospatialCodes = all.filter(errorCode => {errorCode.code>=0 && errorCode.code<10000})
   val taxonomicCodes = all.filter(errorCode => {errorCode.code>=10000 && errorCode.code<20000})
+  val miscellaneousCodes = all.filter(errorCode => {errorCode.code>=20000 && errorCode.code<30000})
+  val temporalCodes = all.filter(errorCode => {errorCode.code>=30000 && errorCode.code<40000})
 
   /**
    * Retrieve all the terms defined in this vocab.
