@@ -509,7 +509,6 @@ public class SearchDAOImpl implements SearchDAO {
                                 if (map != null) {
                                     scala.Option option = map.get(colourBy);
                                     //check to see if it is empty otherwise a NPE is thrown when option.get is called
-                                    //System.out.print(" - ");
                                     if (!option.isEmpty()) {
                                         value = (String) option.get();
                                     }

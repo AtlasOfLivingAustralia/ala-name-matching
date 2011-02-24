@@ -122,6 +122,9 @@ public class WMSController {
         //pointType = getPointTypeForZoomLevel(zoomLevel);
 
         String[] newFilterQuery = (String[]) fqList.toArray(new String[fqList.size()]); // convert back to array
+
+        requestParams.setFq(newFilterQuery);
+
         //List<OccurrencePoint> points = searchDAO.getFacetPoints(searchQuery.getQuery(), searchQuery.getFilterQuery(), pointType);
         //List<OccurrencePoint> points = searchDAO.getFacetPoints(requestParams.getQ(), requestParams.getFq(), pointType);
         List<OccurrencePoint> points = searchDAO.getOccurrences(requestParams, pointType, colourby, 0);
