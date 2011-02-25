@@ -10,18 +10,20 @@ import au.org.ala.sds.util.DateHelper;
 */
 public class SensitivityInstance {
 
-    private SensitivityCategory category;
-    private String authority;
-    private SensitivityZone zone;
-    private Date fromDate;
-    private Date toDate;
-    
-    public SensitivityInstance(SensitivityCategory category, String authority, String fromDate, String toDate, SensitivityZone zone) {
+    private final SensitivityCategory category;
+    private final String authority;
+    private final SensitivityZone zone;
+    private final Date fromDate;
+    private final Date toDate;
+    private final String locationGeneralisation;
+
+    public SensitivityInstance(SensitivityCategory category, String authority, String fromDate, String toDate, SensitivityZone zone, String generalisation) {
         this.category = category;
         this.authority = authority;
         this.fromDate = fromDate == null ? null : DateHelper.parseDate(fromDate);
         this.toDate = toDate == null ? null : DateHelper.parseDate(toDate);
         this.zone = zone;
+        this.locationGeneralisation = generalisation;
     }
 
     public SensitivityCategory getCategory() {
@@ -36,24 +38,16 @@ public class SensitivityInstance {
         return zone;
     }
 
-    public void setZone(SensitivityZone zone) {
-        this.zone = zone;
-    }
-
      public Date getToDate() {
         return toDate;
-    }
-
-    public void setToDate(Date toDate) {
-        this.toDate = toDate;
     }
 
     public Date getFromDate() {
         return fromDate;
     }
 
-    public void setFromDate(Date fromDate) {
-        this.fromDate = fromDate;
+    public String getLocationGeneralisation() {
+        return locationGeneralisation;
     }
 
 }
