@@ -436,8 +436,42 @@ object ProcessRecords {
       //store the matched classification
       if (nsr != null) {
         val classification = nsr.getRankClassification
-        //Chcek to see if the classification fits in with the supplied taxonomic hints
-        
+        //Check to see if the classification fits in with the supplied taxonomic hints
+        //get the Attribution
+        if(raw.occurrence.institutionCode!=null && raw.occurrence.collectionCode!=null){
+          val attributionDao = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
+          if(!attributionDao.isEmpty){
+            println("Checking taxonimic hints")
+            val taxHints = attributionDao.get.taxonomicHints
+            if(taxHints != null && taxHints.length >0){
+              
+              var lastvalue:String = null
+              var matched = false
+              for{hint <- taxHints}{
+                val values =hint.split(":")
+                if(lastvalue != null && lastvalue != values(0)){
+                  //test to see if at least one of the values for the rank matched
+                  if(!matched){
+                    logger.info("Invalid higher classification for the match for : " + guid)
+                    return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, true, "Invalid higher classification")) 
+                  }
+                }
+                lastvalue = values(0)
+                lastvalue match{
+                  case "kingdom" => if(classification.getKingdom() == values(1)) matched = true
+                  case "phylum" => if(classification.getPhylum() == values(1)) matched = true
+                  case "class" => if(classification.getKlass() == values(1)) matched = true
+                  
+                }
+
+              }
+              //we have made it through all the hints check to see if we have a match...
+              if(!matched)
+                logger.info("Invalid higher classification for the match for : " + guid)
+                return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, true, "Invalid higher classification"))
+            }
+          }
+        }
         //store ".p" values
         processed.classification.kingdom = classification.getKingdom
         processed.classification.kingdomID = classification.getKid
