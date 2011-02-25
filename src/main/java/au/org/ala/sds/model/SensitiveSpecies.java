@@ -17,6 +17,8 @@ package au.org.ala.sds.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import au.org.ala.sds.util.GeoLocationHelper;
 
 /**
@@ -25,7 +27,10 @@ import au.org.ala.sds.util.GeoLocationHelper;
  */
 public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
 
+    protected static final Logger logger = Logger.getLogger(SensitiveSpecies.class);
+
     private final String scientificName;
+    private String acceptedName;
     private String lsid;
     private final List<SensitivityInstance> instances;
 
@@ -39,12 +44,20 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
         return this.scientificName;
     }
 
+    public String getAcceptedName() {
+        return this.acceptedName;
+    }
+
+    public void setAcceptedName(String acceptedName) {
+        this.acceptedName = acceptedName;
+    }
+
     public List<SensitivityInstance> getInstances() {
-        return instances;
+        return this.instances;
     }
 
     public String getLsid() {
-        return lsid;
+        return this.lsid;
     }
 
     public void setLsid(String lsid) {
@@ -52,7 +65,7 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
     }
 
     public boolean isSensitiveForZone(SensitivityZone zone) {
-        for (SensitivityInstance si : instances) {
+        for (SensitivityInstance si : this.instances) {
             if (zone.equals(si.getZone())) {
                 return true;
             }
@@ -61,51 +74,44 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
         return false;
     }
 
-    public SensitivityCategory getConservationCategory(String latitude, String longitude) {
-        SensitivityCategory category = null;
+    public SensitivityInstance getSensitivityInstance(String latitude, String longitude) {
+        SensitivityInstance instance = null;
+        SensitivityZone state = null;
 
-        // Avoid spatial gazetteer lookup if possible
-        if (instances.size() == 1 && instances.get(0).getZone() == SensitivityZone.AUS) {
-            category = instances.get(0).getCategory();
-        } else {
-            SensitivityZone state = null;
-
-            try {
-                state = GeoLocationHelper.getStateContainingPoint(latitude, longitude);
-            } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-
-            if (state != null) {
-                category = getCategoryForState(state);
-            }
+        try {
+            state = GeoLocationHelper.getStateContainingPoint(latitude, longitude);
+        } catch (Exception e) {
+            logger.error("Error getting state from location - " + e.getMessage());
         }
 
-        return category;
+        if (state != null) {
+            instance = getInstanceForState(state);
+        }
+
+        return instance;
     }
 
-    public SensitivityCategory getConservationCategory(String state) {
-        return getCategoryForState(SensitivityZone.valueOf(state));
+    public SensitivityInstance getSensitivityInstance(String state) {
+        return getInstanceForState(SensitivityZone.valueOf(state));
     }
 
-    private SensitivityCategory getCategoryForState(SensitivityZone state) {
-        SensitivityCategory category = null;
-        SensitivityCategory ausCategory = null;
-        for (SensitivityInstance instance : instances) {
-            if (state == instance.getZone()) {
-                category = instance.getCategory();
+    private SensitivityInstance getInstanceForState(SensitivityZone state) {
+        SensitivityInstance instance = null;
+        SensitivityInstance ausInstance = null;
+        for (SensitivityInstance si : this.instances) {
+            if (state == si.getZone()) {
+                instance = si;
             } else {
-                if (instance.getZone() == SensitivityZone.AUS) {
-                    ausCategory = instance.getCategory();
+                if (si.getZone() == SensitivityZone.AUS) {
+                    ausInstance = si;
                 }
             }
         }
 
-        if (category == null) {
-            category = ausCategory;
+        if (instance == null) {
+            instance = ausInstance;
         }
-        return category;
+        return instance;
     }
 
     @Override
