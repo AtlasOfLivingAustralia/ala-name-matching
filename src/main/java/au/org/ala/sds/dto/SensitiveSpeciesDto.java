@@ -25,9 +25,9 @@ public class SensitiveSpeciesDto {
     private String authority;
     private String fromDate;
     private String toDate;
-
+    private String locationGeneralisation;
     private String sensitivityCategory;
-    
+
     public SensitiveSpeciesDto() {
         super();
         // TODO Auto-generated constructor stub
@@ -79,6 +79,14 @@ public class SensitiveSpeciesDto {
 
     public void setToDate(String toDate) {
         this.toDate = toDate;
+    }
+
+    public String getLocationGeneralisation() {
+        return locationGeneralisation;
+    }
+
+    public void setLocationGeneralisation(String locationGeneralisation) {
+        this.locationGeneralisation = locationGeneralisation;
     }
 
     public String getSensitivityCategory() {
