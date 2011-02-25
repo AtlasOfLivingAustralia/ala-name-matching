@@ -54,55 +54,55 @@ public class GeneraliseTest {
     public void testGeneralisation() {
 
         //
-        // Endangered Birds Australia species in ACT - position generalised
+        // Birds Australia species in ACT - position generalised
         //
         SensitiveSpecies ss = finder.findSensitiveSpecies("Crex crex");
         assertNotNull(ss);
         String latitude = "-35.276771";   // Epicorp
         String longitude = "149.112539";
-        GeneralisedLocation gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
+        GeneralisedLocation gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss);
         assertEquals("Latitude", "-35.3", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "149.1", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
 
         //
-        // Critically endangered NSW species in ACT - not generalised
+        // NSW species in ACT - not generalised
         //
         ss = finder.findSensitiveSpecies("Wollemia nobilis");
         assertNotNull(ss);
-        gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
+        gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss);
         assertEquals("Latitude", "-35.276771", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "149.112539", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
 
         //
-        // Critically endangered NSW species in NZ - not generalised
+        // NSW species in NZ - not generalised
         //
         latitude = "-41.538137";    // NZ
         longitude = "173.968817";
-        gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
+        gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss);
         assertEquals("Latitude", "-41.538137", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "173.968817", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
 
         //
-        // Critically endangered NSW species in NSW - position not published
+        // NSW Cat 1 species in NSW - position not published
         //
         latitude = "-33.630629";    // NSW
         longitude = "150.441284";
-        gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
+        gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss);
         assertEquals("Latitude", "", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
 
         //
-        // Endangered TAS species in TAS - generalised
+        // TAS species in TAS - generalised
         //
         ss = finder.findSensitiveSpecies("Galaxias fontanus");
         assertNotNull(ss);
         latitude = "-40.111689";    // TAS
         longitude = "148.095703";
-        gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss.getConservationCategory(latitude, longitude));
+        gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss);
         assertEquals("Latitude", "-40.1", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "148.1", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
@@ -115,8 +115,8 @@ public class GeneraliseTest {
         ss = finder.findSensitiveSpeciesByLsid("urn:lsid:biodiversity.org.au:afd.taxon:fb2de285-c58c-4c63-9268-9beef7c61c16");
         assertNotNull(ss);
         gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss, "NSW");
-        assertEquals("Latitude", "-33.6", gl.getGeneralisedLatitude());
-        assertEquals("Longitude", "150.4", gl.getGeneralisedLongitude());
-        assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
+        assertEquals("Latitude", "-33.63", gl.getGeneralisedLatitude());
+        assertEquals("Longitude", "150.44", gl.getGeneralisedLongitude());
+        assertEquals("InMetres", "1000", gl.getGeneralisationInMetres());
     }
 }
