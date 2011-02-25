@@ -17,7 +17,7 @@ package au.org.ala.sds.util;
 import java.math.BigDecimal;
 
 import au.org.ala.sds.model.SensitiveSpecies;
-import au.org.ala.sds.model.SensitivityCategory;
+import au.org.ala.sds.model.SensitivityInstance;
 
 /**
  * @author Peter Flemming (peter.flemming@csiro.au)
@@ -25,21 +25,34 @@ import au.org.ala.sds.model.SensitivityCategory;
 public class GeneralisedLocation {
     private final String originalLatitude;
     private final String originalLongitude;
+    private final String locationGeneralisation;
     private String generalisedLatitude;
     private String generalisedLongitude;
     private String generalisationInMetres;
-    private final SensitivityCategory category;
     private String description;
 
-    public GeneralisedLocation(String latitude, String longitude, SensitivityCategory category) {
-        originalLatitude = latitude;
-        originalLongitude = longitude;
-        this.category = category;
+    public GeneralisedLocation(String latitude, String longitude, SensitiveSpecies ss) {
+        this.originalLatitude = latitude;
+        this.originalLongitude = longitude;
+        SensitivityInstance instance = ss.getSensitivityInstance(latitude, longitude);
+        if (instance != null) {
+            this.locationGeneralisation = instance.getLocationGeneralisation();
+        } else {
+            this.locationGeneralisation = null;
+        }
         generaliseCoordinates();
     }
 
     public GeneralisedLocation(String latitude, String longitude, SensitiveSpecies ss, String state) {
-        this(latitude, longitude, ss.getConservationCategory(state));
+        this.originalLatitude = latitude;
+        this.originalLongitude = longitude;
+        SensitivityInstance instance = ss.getSensitivityInstance(state);
+        if (instance != null) {
+            this.locationGeneralisation = instance.getLocationGeneralisation();
+        } else {
+            this.locationGeneralisation = null;
+        }
+        generaliseCoordinates();
     }
 
     public String getOriginalLatitude() {
@@ -62,53 +75,45 @@ public class GeneralisedLocation {
         return generalisationInMetres;
     }
 
-    public SensitivityCategory getCategory() {
-        return category;
-    }
-
     public String getDescription() {
         return description;
     }
 
     private void generaliseCoordinates() {
 
-        if (category == null) {
+        if (this.locationGeneralisation == null) {
             generalisedLatitude = originalLatitude;
             generalisedLongitude = originalLongitude;
             generalisationInMetres = "";
-            description = "Location not generalised because it is not deemed sensitive in that area.";
+            description = "Location not generalised because it is not sensitive in that area.";
             return;
         }
 
         int decimalPlaces;
-        switch (category) {
-            case CRITICALLY_ENDANGERED:
-                generalisedLatitude = "";
-                generalisedLongitude = "";
-                generalisationInMetres = "";
-                description = "Location withheld because species is " + category.getValue() + ".";
-                return;
-            case ENDANGERED:
-                decimalPlaces = 1;
-                generalisationInMetres = "10000";
-                description = "Location generalised to one decimal place because species is " + category.getValue() + ".";
-                break;
-            case VULNERABLE:
-                decimalPlaces = 2;
-                generalisationInMetres = "1000";
-                description = "Location generalised to two decimal places because species is " + category.getValue() + ".";
-                break;
-            case NEAR_THREATENED:
-                decimalPlaces = 3;
-                generalisationInMetres = "100";
-                description = "Location generalised to three decimal places because species is " + category.getValue() + ".";
-                break;
-            default:
-                generalisedLatitude = originalLatitude;
-                generalisedLongitude = originalLongitude;
-                generalisationInMetres = "";
-                description = "Location not generalised because species conservation status is " + category.getValue() + ".";
-                return;
+        if (this.locationGeneralisation.equalsIgnoreCase("WITHHOLD")) {
+            generalisedLatitude = "";
+            generalisedLongitude = "";
+            generalisationInMetres = "";
+            description = "Location withheld.";
+            return;
+        } else if (this.locationGeneralisation.equalsIgnoreCase("10km")) {
+            decimalPlaces = 1;
+            generalisationInMetres = "10000";
+            description = "Location generalised to one decimal place.";
+        } else if (this.locationGeneralisation.equalsIgnoreCase("1km")) {
+            decimalPlaces = 2;
+            generalisationInMetres = "1000";
+            description = "Location generalised to two decimal places.";
+        } else if (this.locationGeneralisation.equalsIgnoreCase("100m")) {
+            decimalPlaces = 3;
+            generalisationInMetres = "100";
+            description = "Location generalised to three decimal places.";
+        } else {
+            generalisedLatitude = originalLatitude;
+            generalisedLongitude = originalLongitude;
+            generalisationInMetres = "";
+            description = "Location not generalised because it is undefined.";
+            return;
         }
 
         generalisedLatitude = round(originalLatitude, decimalPlaces);
