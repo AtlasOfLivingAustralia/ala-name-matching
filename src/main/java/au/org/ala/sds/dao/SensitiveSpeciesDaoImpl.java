@@ -17,7 +17,6 @@ package au.org.ala.sds.dao;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +29,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
-import au.org.ala.checklist.lucene.SearchResultException;
 import au.org.ala.checklist.lucene.model.NameSearchResult;
-import au.org.ala.data.util.RankType;
 import au.org.ala.sds.dto.SensitiveSpeciesDto;
 import au.org.ala.sds.model.SensitiveSpecies;
 import au.org.ala.sds.model.SensitivityCategory;
@@ -50,6 +47,8 @@ public class SensitiveSpeciesDaoImpl extends JdbcDaoSupport implements Sensitive
     private List<SensitiveSpecies> species;
 
     private Map<String, Integer> lsidMap;
+    private Map<String, Integer> nameMap;
+
 
     @Inject
     protected CBIndexSearch cbIdxSearcher;
@@ -68,24 +67,26 @@ public class SensitiveSpeciesDaoImpl extends JdbcDaoSupport implements Sensitive
     protected void initDao() throws Exception {
         super.initDao();
         this.species = getAll();
+        this.nameMap = new HashMap<String, Integer>();
+        this.lsidMap = new HashMap<String, Integer>();
         verifyAndInitialiseSpeciesList();
     }
 
-    private void verifyAndInitialiseSpeciesList() throws SearchResultException {
-        this.lsidMap = new HashMap<String, Integer>();
+    private void verifyAndInitialiseSpeciesList() {
         for (int index = 0; index < species.size(); index++) {
             SensitiveSpecies ss = species.get(index);
-            NameSearchResult match = cbIdxSearcher.searchForRecord(ss.getScientificName(), RankType.SPECIES);
+            NameSearchResult match = getAcceptedName(ss.getScientificName());
             if (match != null) {
-                String acceptedName = match.getRankClassification().getSpecies();
+                String acceptedName = match.getRankClassification().getScientificName();
                 String lsid = match.getLsid();
                 if (!ss.getScientificName().equalsIgnoreCase(acceptedName)) {
                     logger.warn("Sensitive species '" + ss.getScientificName() + "' is not accepted name - '" + acceptedName + "'");
-                } else {
-                    logger.debug("'" + acceptedName + "'\t'" + lsid + "'");
-                    ss.setLsid(lsid);
-                    lsidMap.put(lsid, index);
+                    ss.setAcceptedName(acceptedName);
                 }
+                logger.debug("'" + ss.getScientificName() + "' ('" + acceptedName + "')\t'" + lsid + "'");
+                nameMap.put(acceptedName, index);
+                ss.setLsid(lsid);
+                lsidMap.put(lsid, index);
             } else {
                 logger.warn("Sensitive species '" + ss.getScientificName() + "' not found in NameMatching index");
             }
@@ -101,10 +102,11 @@ public class SensitiveSpeciesDaoImpl extends JdbcDaoSupport implements Sensitive
                         SensitiveSpeciesDto dto = new SensitiveSpeciesDto();
                         dto.setScientificName(rs.getString("scientific_name"));
                         dto.setSensitivityZone(rs.getString("sensitivity_zone"));
-                        dto.setAuthority(rs.getString("authority"));
+                        dto.setAuthority(rs.getString("authority_name"));
                         dto.setFromDate(rs.getString("from_date"));
                         dto.setToDate(rs.getString("to_date"));
                         dto.setSensitivityCategory(rs.getString("sensitivity_category"));
+                        dto.setLocationGeneralisation(rs.getString("location_generalisation"));
                         return dto;
                     }
                 });
@@ -124,29 +126,24 @@ public class SensitiveSpeciesDaoImpl extends JdbcDaoSupport implements Sensitive
                     dto.getAuthority(),
                     dto.getFromDate(),
                     dto.getToDate(),
-                    SensitivityZone.valueOf(dto.getSensitivityZone())));
+                    SensitivityZone.valueOf(dto.getSensitivityZone()),
+                    dto.getLocationGeneralisation()));
         }
 
         return speciesList;
     }
 
     public SensitiveSpecies findByName(String scientificName) {
-        try {
-            SensitiveSpecies ss = new SensitiveSpecies(scientificName);
-            int match = Collections.binarySearch(species, ss);
-            if (species.get(match).equals(ss)) {
-                logger.debug("Sensitive Species exact match - " + scientificName);
-                return species.get(match);
-            } else {
-                String sensitiveSpeciesName = species.get(match).getScientificName();
-                if (ss.getScientificName().startsWith(sensitiveSpeciesName) && sensitiveSpeciesName.indexOf(" ") == -1) {
-                    logger.debug("Sensitive Species genus match - " + scientificName);
-                    return species.get(match);
-                } else {
-                    return null;
-                }
-            }
-        } catch (Exception e) {
+        String acceptedName = scientificName;
+        NameSearchResult result = getAcceptedName(scientificName);
+        if (result != null) {
+            acceptedName = result.getRankClassification().getScientificName();
+        }
+
+        Integer index = nameMap.get(acceptedName);
+        if (index != null) {
+            return species.get(index);
+        } else {
             return null;
         }
     }
@@ -158,5 +155,21 @@ public class SensitiveSpeciesDaoImpl extends JdbcDaoSupport implements Sensitive
         } else {
             return null;
         }
+    }
+
+    private NameSearchResult getAcceptedName(String name) {
+        NameSearchResult match = null;
+        try {
+            match = cbIdxSearcher.searchForRecord(name, null);
+            if (match != null) {
+                if (match.isSynonym()) {
+                    match = cbIdxSearcher.searchForRecordByID(Long.toString(match.getAcceptedId()));
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("'" + name + "' - " + e.getMessage());
+        }
+
+        return match;
     }
 }
