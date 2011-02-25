@@ -41,14 +41,16 @@ object AttributionLoader {
         attribution.institutionName = parts(5)
         if(parts.length>6){
           attribution.taxonomicHints = parts(6).split(";")
+          //store them sorted
+          scala.util.Sorting.quickSort(attribution.taxonomicHints)
         }
         //There are some clashes where a collection can belong to 2 data resources
 //        attribution.dataProviderUid = parts(5)
 //        attribution.dataProviderName = parts(6)
 //        attribution.dataResourceUid = parts(7)
 //        attribution.dataResourceName = parts(8)
-        AttributionDAO.add(parts(0), parts(1), attribution)
-        if (counter % 1000 == 0) println(counter +": "+parts(0) +"|"+ parts(1))
+        AttributionDAO.add(parts(1), parts(0), attribution)
+        if (counter % 1000 == 0) println(counter +": "+parts(1) +"|"+ parts(0))
       }
     }
     println(counter)
