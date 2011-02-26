@@ -2,11 +2,12 @@
 <web-app xmlns="http://java.sun.com/xml/ns/j2ee"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
-    version="2.4" id="bie-debug">
+    version="2.4" id="biocache-service">
 
-    <display-name>Biocache</display-name>
+    <display-name>Biocache Service</display-name>
 
     <!-- For spring context initialisation -->
+
     <context-param>
             <param-name>contextConfigLocation</param-name>
             <param-value>classpath*:/applicationContext-webapp.xml</param-value>
@@ -58,7 +59,7 @@
         <!-- 
         <param-value>http://biocache.ala.org.au</param-value>
          -->
-        <param-value>http://localhost:9999</param-value>
+        <param-value>http://localhost:8080/biocache-service</param-value>
     </context-param>
 
     <context-param>
@@ -81,10 +82,13 @@
     
     <context-param>
         <param-name>uriFilterPattern</param-name>
+        <!-- -->
         <!--
+        <param-value>/biocache-webapp/occurrence/.*/annotations</param-value>
         <param-value>/, /occurrences/\d+, /occurrences/search, /explore/your-area, /share/.*, /share/sighting/.*</param-value>
-        -->
+                -->
         <param-value>/biocache-webapp/, /biocache-webapp/occurrences/\d+, /biocache-webapp/occurrences/search, /biocache-webapp/explore/your-area, /biocache-webapp/share/.*, /biocache-webapp/share/sighting/.*</param-value>
+
     </context-param>
 
     <!-- CAS Authentication Service filters -->
@@ -151,7 +155,7 @@
         <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
-     
+    -->
     <!-- SiteMesh -->
     <filter>
         <filter-name>sitemesh</filter-name>
