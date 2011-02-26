@@ -132,6 +132,11 @@ object Store {
    * Retrieve miscellaneous codes
    */
   def retrieveMiscellaneousCodes : Array[ErrorCode] = AssertionCodes.miscellaneousCodes.toArray
+
+  def getByCode(codeAsString:String) : ErrorCode = {
+      val code = codeAsString.toInt
+      AssertionCodes.all.find(errorCode => errorCode.code == code).getOrElse(null)
+  }
 }
 
 /**

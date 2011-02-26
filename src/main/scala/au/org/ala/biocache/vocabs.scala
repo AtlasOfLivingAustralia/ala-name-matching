@@ -346,7 +346,7 @@ object AssertionCodes {
   val UNKNOWN_KINGDOM = ErrorCode("unknownKingdom",10002,false)
   val AMBIGUOUS_NAME = ErrorCode("ambiguousName",10003,false)
   val NAME_NOTRECOGNISED = ErrorCode("nameNotRecognised",10004,false)
-  val NAME_NOT_IN_NATIONAL_CHECKLISTS = ErrorCode("nameNotRecognised",10005,false)
+  val NAME_NOT_IN_NATIONAL_CHECKLISTS = ErrorCode("nameNotInNationalChecklists",10005,false)
   val HOMONYM_ISSUE = ErrorCode("homonymIssue",10006,false)
 
   //miscellanous
@@ -371,12 +371,16 @@ object AssertionCodes {
 
   val geospatialBounds = (0, 10000)
   val taxonomicBounds = (10000, 20000)
-  val temporalBounds = (20000, 30000)
+  val miscellanousBounds = (20000, 30000)
+  val temporalBounds = (30000, 40000)
 
   val geospatialCodes = all.filter(errorCode => {errorCode.code>=0 && errorCode.code<10000})
   val taxonomicCodes = all.filter(errorCode => {errorCode.code>=10000 && errorCode.code<20000})
   val miscellaneousCodes = all.filter(errorCode => {errorCode.code>=20000 && errorCode.code<30000})
   val temporalCodes = all.filter(errorCode => {errorCode.code>=30000 && errorCode.code<40000})
+
+  //val userGeospatialCodes = Array(GEOSPATIAL_ISSUE,DETECTED_OUTLIER)
+
 
   /**
    * Retrieve all the terms defined in this vocab.
