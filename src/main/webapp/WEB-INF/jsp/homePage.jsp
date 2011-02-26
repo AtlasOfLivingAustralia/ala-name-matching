@@ -29,7 +29,9 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
 
         <h3>Assertions</h3>
         <ul>
-            <li><strong>List assertion codes:</strong> /occurrences/{uuid}/assertions/codes</li>
+            <li><strong>List assertion codes:</strong>
+                <a href="${pageContext.request.contextPath}/assertions/codes">/assertions/codes</a>
+            </li>
             <li><strong>Add an assertion:</strong> /occurrences/{uuid}/assertions/add</li>
             <li><strong>Delete an assertion:</strong> /occurrences/{uuid}/assertions/{assertionUuid}/delete</li>
             <li><strong>List assertions for occurrence:</strong> /occurrences/{uuid}/assertions/</li>
