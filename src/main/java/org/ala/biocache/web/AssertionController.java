@@ -2,7 +2,9 @@ package org.ala.biocache.web;
 
 import au.org.ala.biocache.ErrorCode;
 import au.org.ala.biocache.Store;
+import au.org.ala.biocache.AssertionCodes;
 import au.org.ala.biocache.QualityAssertion;
+import org.apache.log4j.Logger;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +15,7 @@ import java.util.List;
 @Controller
 public class AssertionController {
 
+    private final static Logger logger = Logger.getLogger(AssertionController.class);
     /**
      * Retrieve an array of the assertion codes in use by the processing system
      *
@@ -49,16 +52,26 @@ public class AssertionController {
      */
     @RequestMapping(value = {"/occurrences/{recordUuid}/assertions/add"}, method = RequestMethod.POST)
 	public void addAssertion(
-        @PathVariable(value="recordUuid") String recordUuid,
-        @RequestParam(value="code", required=true) Integer code,
-        @RequestParam(value="comment", required=false) String comment,
+       @PathVariable(value="recordUuid") String recordUuid,
         HttpServletRequest request,
         HttpServletResponse response) throws Exception {
-        QualityAssertion qa = au.org.ala.biocache.QualityAssertion.apply(code);
-        Store.addUserAssertion(recordUuid, qa);
-        String server = request.getSession().getServletContext().getInitParameter("serverName");
-        response.setHeader("Location", server + "/occurrences/" + recordUuid + "/assertions/" + qa.getUuid());
-        response.setStatus(HttpServletResponse.SC_CREATED);
+        String code = (String) request.getParameter("code");
+        String comment = (String) request.getParameter("comment");
+
+        try {
+            logger.debug("Adding assertion to: "+recordUuid+", code: "+code+", comment: "+comment);
+
+            QualityAssertion qa = au.org.ala.biocache.QualityAssertion.apply(Integer.parseInt(code));
+            qa.setComment(comment);
+            Store.addUserAssertion(recordUuid, qa);
+
+            String server = request.getSession().getServletContext().getInitParameter("serverName");
+            response.setHeader("Location", server + "/occurrences/" + recordUuid + "/assertions/" + qa.getUuid());
+            response.setStatus(HttpServletResponse.SC_CREATED);
+        } catch(Exception e){
+            logger.error(e.getMessage(), e);
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
     }
 
     /**
