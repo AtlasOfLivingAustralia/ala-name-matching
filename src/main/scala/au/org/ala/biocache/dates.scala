@@ -1,9 +1,13 @@
 package au.org.ala.biocache
 import org.apache.commons.lang.time.DateUtils
 import org.apache.commons.lang.time.DateFormatUtils
+import org.slf4j.LoggerFactory
+import org.slf4j.Logger
+import java.text.ParseException
 
 object DateParser {
 
+ final val logger:Logger = LoggerFactory.getLogger("DateParser")
   /**
    * Handle these formats:
    * 1963-03-08T14:07-0600" is 8 Mar 1963 2:07pm in the time zone six hours earlier than UTC,
@@ -15,6 +19,7 @@ object DateParser {
   def parseDate(date:String) : Option[EventDate] = {
     date match {
       case ISODate(date) =>  Some(date)
+      case ISOWithMonthNameDate(date) => Some(date)
       case ISODateRange(date) =>  Some(date)
       case ISODayDateRange(date) =>  Some(date)
       case ISOMonthDate(date) =>  Some(date)
@@ -28,6 +33,31 @@ object DateParser {
 
 case class EventDate(startDate:String,startDay:String,startMonth:String,startYear:String,
     endDate:String,endDay:String,endMonth:String,endYear:String,singleDate:Boolean)
+
+/** yyyy-MM-dd */
+object ISOWithMonthNameDate /*extends (String=>Option[EventDate]) */{
+
+  /**
+   * Extraction method
+   */
+  def unapply(str:String) : Option[EventDate] = {
+   try{
+       val eventDateParsed = DateUtils.parseDate(str,
+          Array("yyyy-MMMMM-dd", "yyyy-MMMMM-dd'T'hh:mm-ss", "yyyy-MMMMM-dd'T'hh:mm'Z'"))
+
+       val startDate, endDate = DateFormatUtils.format(eventDateParsed, "yyyy-MM-dd")
+       val startDay, endDay = DateFormatUtils.format(eventDateParsed, "dd")
+       val startMonth, endMonth = DateFormatUtils.format(eventDateParsed, "MM")
+       val startYear, endYear = DateFormatUtils.format(eventDateParsed, "yyyy")
+
+       Some(EventDate(startDate,startDay,startMonth,startYear,endDate,endDay,
+           endMonth:String,endYear,true))
+     } catch {
+      case e:ParseException => None
+    }
+  }
+}
+
 
 /** yyyy-MM-dd */
 object ISODate /*extends (String=>Option[EventDate]) */{ 
@@ -48,7 +78,7 @@ object ISODate /*extends (String=>Option[EventDate]) */{
        Some(EventDate(startDate,startDay,startMonth,startYear,endDate,endDay,
            endMonth:String,endYear,true))
      } catch {
-      case e:Exception => None
+      case e:ParseException => None
     }
   }
 }
@@ -72,7 +102,7 @@ object ISOMonthDate {
        Some(EventDate(startDate,startDay,startMonth,startYear,endDate,endDay,
            endMonth:String,endYear,true))
      } catch {
-      case e:Exception => None
+      case e:ParseException => None
     }
   }
 }
@@ -101,7 +131,7 @@ object ISODateRange {
        Some(EventDate(startDate,startDay,startMonth,startYear,endDate,endDay,
            endMonth:String,endYear,startDate.equals(endDate)))
      } catch {
-      case e:Exception => None
+      case e:ParseException => None
     }
   }
 }
@@ -129,7 +159,7 @@ object ISOMonthYearDateRange {
        Some(EventDate(startDate,startDay,startMonth,startYear, 
            endDate,endDay,endMonth:String,endYear,singleDate))
      } catch {
-      case e:Exception => None
+      case e:ParseException => None
     }
   }
 }
@@ -154,7 +184,7 @@ object ISOMonthDateRange {
        Some(EventDate(startDate,startDay,startMonth,startYear,
            endDate,endDay,endMonth:String,endYear,startMonth equals endMonth))
      } catch {
-      case e:Exception => None
+      case e:ParseException => None
     }
   }
 }
@@ -180,7 +210,7 @@ object ISODayDateRange {
        Some(EventDate(startDate,startDay,startMonth,startYear,
            endDate,endDay,endMonth:String,endYear,startDate.equals(endDate)))
      } catch {
-      case e:Exception => None
+      case e:ParseException => None
     }
   }
 }
@@ -193,32 +223,36 @@ object ISOYearRange {
        val parts = str.split("/")
        val startDateParsed = DateUtils.parseDate(parts(0),
           Array("yyyy"))
-       val endDateParsed = DateUtils.parseDate(parts(1),
-          Array("yyyy", "yy", "y"))
-
        val startDate, endDate = ""
        val startDay,endDay = ""
        val startMonth, endMonth = ""
        val startYear = DateFormatUtils.format(startDateParsed, "yyyy")
        val endYear = {
-         if(parts(1).length==1){
-           val decade = (startYear.toInt / 10).toString
-           decade + parts(1)
-         } else if(parts(1).length==2) {
-           val century = (startYear.toInt / 100).toString
-           century + parts(1)
-         } else if(parts(1).length==3) {
-           val millen = (startYear.toInt / 1000).toString
-           millen + parts(1)
+         if(parts.length==2){
+             val endDateParsed = DateUtils.parseDate(parts(1),
+                Array("yyyy", "yy", "y"))
+
+             if(parts(1).length==1){
+               val decade = (startYear.toInt / 10).toString
+               decade + parts(1)
+             } else if(parts(1).length==2) {
+               val century = (startYear.toInt / 100).toString
+               century + parts(1)
+             } else if(parts(1).length==3) {
+               val millen = (startYear.toInt / 1000).toString
+               millen + parts(1)
+             } else {
+               parts(1)
+             }
          } else {
-             parts(1)
+             parts(0)
          }
        }
 
        Some(EventDate(startDate,startDay,startMonth,startYear,
            endDate,endDay,endMonth:String,endYear,false))
      } catch {
-      case e:Exception => None
+      case e:ParseException => None
     }
   }
 }

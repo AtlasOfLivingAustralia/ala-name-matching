@@ -133,6 +133,9 @@ object Store {
    */
   def retrieveMiscellaneousCodes : Array[ErrorCode] = AssertionCodes.miscellaneousCodes.toArray
 
+  /**
+   * Retrieve an error code by code.
+   */
   def getByCode(codeAsString:String) : ErrorCode = {
       val code = codeAsString.toInt
       AssertionCodes.all.find(errorCode => errorCode.code == code).getOrElse(null)

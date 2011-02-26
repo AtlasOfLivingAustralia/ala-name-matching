@@ -9,6 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 import au.org.ala.checklist.lucene.SearchResultException
 import org.slf4j.LoggerFactory
 import au.org.ala.biocache._
+import au.org.ala.checklist.lucene.model.NameSearchResult
 
 /**
  * 1. Classification matching
@@ -363,7 +364,7 @@ object ProcessRecords {
         }
 
         //check to see if the points need to generalised
-        if(!taxonProfile.isEmpty && taxonProfile.get.sensitive!= null && taxonProfile.get.sensitive.size >0 && processed.location.country == "Australia"){          
+        if(!taxonProfile.isEmpty && taxonProfile.get.sensitive!= null && !taxonProfile.get.sensitive.isEmpty && processed.location.country == "Australia"){
           //Call SDS code to get the revised coordinates
         }
 
@@ -413,26 +414,28 @@ object ProcessRecords {
    * Match the classification
    */
   def processClassification(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
-    val classification = new LinnaeanRankClassification(
-      raw.classification.kingdom,
-      raw.classification.phylum,
-      raw.classification.classs,
-      raw.classification.order,
-      raw.classification.family,
-      raw.classification.genus,
-      raw.classification.species,
-      raw.classification.specificEpithet,
-      raw.classification.subspecies,
-      raw.classification.infraspecificEpithet,
-      raw.classification.scientificName)
+
     //attempt to get the classificatino from the cache
 //    ClassificationDAO.getByHashUsingMap(classification, processed.classification)
-
+//    val classification = new LinnaeanRankClassification(
+//      raw.classification.kingdom,
+//      raw.classification.phylum,
+//      raw.classification.classs,
+//      raw.classification.order,
+//      raw.classification.family,
+//      raw.classification.genus,
+//      raw.classification.species,
+//      raw.classification.specificEpithet,
+//      raw.classification.subspecies,
+//      raw.classification.infraspecificEpithet,
+//      raw.classification.scientificName)
     
 
     //logger.debug("Record: "+occ.uuid+", classification for Kingdom: "+occ.kingdom+", Family:"+  occ.family +", Genus:"+  occ.genus +", Species: " +occ.species+", Epithet: " +occ.specificEpithet)
     try {
-      val nsr = DAO.nameIndex.searchForRecord(classification, true)
+      //val nsr = DAO.nameIndex.searchForRecord(classification, true)
+      val nsr = ClassificationDAO.getByHashLRU(raw.classification).getOrElse(null)
+
       //store the matched classification
       if (nsr != null) {
         val classification = nsr.getRankClassification
@@ -441,9 +444,9 @@ object ProcessRecords {
         if(raw.occurrence.institutionCode!=null && raw.occurrence.collectionCode!=null){
           val attributionDao = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
           if(!attributionDao.isEmpty){
-            println("Checking taxonimic hints")
+            logger.debug("Checking taxonomic hints")
             val taxHints = attributionDao.get.taxonomicHints
-            if(taxHints != null && taxHints.length >0){
+            if(taxHints != null && !taxHints.isEmpty){
               
               var lastvalue:String = null
               var matched = false
@@ -503,7 +506,7 @@ object ProcessRecords {
         //Add the species group information - I think that it is better to store this value than calculate it at index time
         val speciesGroups = SpeciesGroups.getSpeciesGroups(processed.classification)
         logger.debug("Species Groups: " + speciesGroups)
-        if(!speciesGroups.isEmpty && speciesGroups.get.length>0){
+        if(!speciesGroups.isEmpty && !speciesGroups.get.isEmpty){
           processed.classification.speciesGroups = speciesGroups.get.toArray[String]
         }
 

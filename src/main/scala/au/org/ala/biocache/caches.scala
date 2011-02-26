@@ -9,6 +9,16 @@ import au.org.ala.data.model.LinnaeanRankClassification
 import au.org.ala.util.ReflectBean
 import org.wyki.cassandra.pelops.{Pelops,Selector}
 import org.apache.cassandra.thrift.{Column,ConsistencyLevel}
+import au.org.ala.checklist.lucene.model.NameSearchResult
+
+//class SynchronizedLRUMap[K,E] extends scala.collection.JavaConversions.MapWrapper[K,E] {
+//   def this(maxSize : Int) = {
+//     this(java.util.Collections.synchronizedMap(new
+//           org.apache.commons.collections.map.LRUMap(maxSize)))
+//   }
+//}
+
+
 
 /**
  * A DAO for accessing classification information in the cache. If the
@@ -25,6 +35,54 @@ object ClassificationDAO{
   import ReflectBean._
   private val columnFamily ="namecl"
   private val cachedValues = new java.util.Hashtable[LinnaeanRankClassification, Classification]
+//  private val lru = java.util.Collections.synchronizedMap(new org.apache.commons.collections.map.LRUMap(10000))
+  private val lru = new org.apache.commons.collections.map.LRUMap(10000)
+  //private val lru = new SynchronizedLRUMap[String, Option[NameSearchResult]](10000)
+
+
+  /**
+   * Uses a LRU cache
+   */
+  def getByHashLRU(cl:Classification) : Option[NameSearchResult] = {
+
+    val hash = {
+        Array(cl.kingdom,cl.phylum,cl.phylum,cl.classs,cl.order,cl.family,cl.genus,cl.species,cl.specificEpithet,
+            cl.subspecies,cl.infraspecificEpithet,cl.scientificName).reduceLeft(_+"|"+_)
+    }
+   // val hash = (cl.kingdom+'|'+cl.phylum+'|'+cl.phylum+'|'+cl.classs+'|'+cl.order+'|'+cl.family+'|'+cl.genus+'|'+cl.species+'|'+cl.specificEpithet+'|'+cl.subspecies+'|'+cl.infraspecificEpithet+'|'+cl.scientificName)
+
+    val cachedObject = lru.get(hash)
+    if(cachedObject!=null){
+        //println("Cache hit for: "+hash)
+       cachedObject.asInstanceOf[Option[NameSearchResult]]
+    } else {
+        //use the lucene indexes
+        val lrc = new LinnaeanRankClassification(
+          cl.kingdom,
+          cl.phylum,
+          cl.classs,
+          cl.order,
+          cl.family,
+          cl.genus,
+          cl.species,
+          cl.specificEpithet,
+          cl.subspecies,
+          cl.infraspecificEpithet,
+          cl.scientificName)
+
+        val nsr = DAO.nameIndex.searchForRecord(lrc, true)
+
+        if(nsr!=null){
+            val result = Some(nsr)
+            lru.put(hash, result)
+            result
+        } else {
+            val result = None
+            lru.put(hash, result)
+            result
+        }
+    }
+  }
 
   def getByHash(cl: LinnaeanRankClassification, classification:Classification):Array[QualityAssertion]={
     if(cl== null) return Array()
@@ -282,6 +340,9 @@ object AttributionDAO {
 object LocationDAO {
 
   private val columnFamily = "loc"
+  private val lru = new org.apache.commons.collections.map.LRUMap(10000)
+  //private val lru = java.util.Collections.synchronizedMap(new org.apache.commons.collections.map.LRUMap(10000))
+  //private val lru = new SynchronizedLRUMap[String, Option[Location]](10000)
 
   /**
    * Add a tag to a location
@@ -321,13 +382,21 @@ object LocationDAO {
    */
   def getByLatLon(latitude:String, longitude:String) : Option[Location] = {
     val uuid =  roundCoord(latitude)+"|"+roundCoord(longitude)
-    val map = DAO.persistentManager.get(uuid,"loc")
-    if(!map.isEmpty){
-      val location = new Location
-      DAO.mapPropertiesToObject(location,map.get)
-      Some(location)
+
+    val cachedObject = lru.get(uuid)
+    if(cachedObject!=null){
+        cachedObject.asInstanceOf[Option[Location]]
     } else {
-      None
+        val map = DAO.persistentManager.get(uuid,"loc")
+        if(!map.isEmpty){
+          val location = new Location
+          DAO.mapPropertiesToObject(location,map.get)
+          lru.put(uuid,Some(location))
+          Some(location)
+        } else {
+          lru.put(uuid,None)
+          None
+        }
     }
   }
 }
