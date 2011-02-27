@@ -18,22 +18,11 @@
     </listener>
     
     <servlet>
-        <servlet-name>Resources</servlet-name>
-        <servlet-class>org.springframework.js.resource.ResourceServlet</servlet-class>
-        <load-on-startup>10</load-on-startup>
-    </servlet>
-
-    <servlet>
         <servlet-name>mainDispatcher</servlet-name> 
         <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
         <load-on-startup>20</load-on-startup>
     </servlet>
 
-    <servlet-mapping>
-        <servlet-name>Resources</servlet-name>
-        <url-pattern>/static/*</url-pattern>
-    </servlet-mapping>
- 
     <servlet-mapping>
         <servlet-name>mainDispatcher</servlet-name>
         <url-pattern>/</url-pattern>
@@ -165,6 +154,17 @@
     <filter-mapping>
         <filter-name>sitemesh</filter-name>
         <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- Spring ETag Support -->
+    <filter>
+        <filter-name>etagFilter</filter-name>
+        <filter-class>org.springframework.web.filter.ShallowEtagHeaderFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>etagFilter</filter-name>
+        <servlet-name>mainDispatcher</servlet-name>
     </filter-mapping>
 
     <!-- JSONP callback filter -->
