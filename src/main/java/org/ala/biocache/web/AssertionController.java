@@ -2,7 +2,6 @@ package org.ala.biocache.web;
 
 import au.org.ala.biocache.ErrorCode;
 import au.org.ala.biocache.Store;
-import au.org.ala.biocache.AssertionCodes;
 import au.org.ala.biocache.QualityAssertion;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Controller;
@@ -12,6 +11,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
+/**
+ * This controller provides webservices for assertion creation/deletion.
+ *
+ * TODO Add support for API keys so that only registered applications can
+ * use these functions.
+ */
 @Controller
 public class AssertionController {
 
@@ -47,6 +52,11 @@ public class AssertionController {
         return Store.retrieveMiscellaneousCodes();
     }
 
+    @RequestMapping(value = {"/assertions/user/codes"}, method = RequestMethod.GET)
+	public @ResponseBody ErrorCode[] showUserCodes() throws Exception {
+        return Store.retrieveUserAssertionCodes();
+    }
+
     /**
      * add an assertion
      */
@@ -55,14 +65,21 @@ public class AssertionController {
        @PathVariable(value="recordUuid") String recordUuid,
         HttpServletRequest request,
         HttpServletResponse response) throws Exception {
-        String code = (String) request.getParameter("code");
-        String comment = (String) request.getParameter("comment");
+
+        String code = request.getParameter("code");
+        String comment = request.getParameter("comment");
+        String userId = request.getParameter("userId");
+        String userDisplayName = request.getParameter("userDisplayName");
 
         try {
-            logger.debug("Adding assertion to: "+recordUuid+", code: "+code+", comment: "+comment);
+            logger.debug("Adding assertion to:"+recordUuid+", code:"+code+", comment:"+comment
+                    + ", userId:" +userId + ", userDisplayName:" +userDisplayName);
 
             QualityAssertion qa = au.org.ala.biocache.QualityAssertion.apply(Integer.parseInt(code));
             qa.setComment(comment);
+            qa.setUserId(userId);
+            qa.setUserDisplayName(userDisplayName);
+
             Store.addUserAssertion(recordUuid, qa);
 
             String server = request.getSession().getServletContext().getInitParameter("serverName");

@@ -93,7 +93,7 @@ public class OccurrenceController {
 	/** Name of view for a single taxon */
 	private final String SHOW = "occurrences/show";
 
-	protected String hostUrl = "http://localhost:8888/biocache-webapp";
+	protected String hostUrl = "http://localhost:8888/biocache-service";
 	protected String bieBaseUrl = "http://bie.ala.org.au/";
 	protected String collectoryBaseUrl = "http://collections.ala.org.au";
 	protected String citationServiceUrl = collectoryBaseUrl + "/lookup/citation";
@@ -129,7 +129,6 @@ public class OccurrenceController {
 	/**
 	 * Occurrence search page uses SOLR JSON to display results
 	 * 
-	 * @param query
 	 * @param model
 	 * @return
 	 * @throws Exception
@@ -384,8 +383,6 @@ public class OccurrenceController {
          * Please NOTE that the q and fq provided to this URL should be obtained
          * from SearchResultDTO.urlParameters
 	 * 
-	 * @param query
-	 * @param model
 	 * @return
 	 * @throws Exception
 	 */
