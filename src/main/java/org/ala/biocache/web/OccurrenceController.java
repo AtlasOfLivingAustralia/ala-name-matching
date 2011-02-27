@@ -135,135 +135,95 @@ public class OccurrenceController {
 	 */
 	@RequestMapping(value = "/occurrences/taxon/{guid:.+}*", method = RequestMethod.GET)
 	public @ResponseBody SearchResultDTO occurrenceSearchByTaxon(
-			SearchRequestParams requestParams,
-                        @PathVariable("guid") String guid,
-			Model model) throws Exception {
+            SearchRequestParams requestParams,
+            @PathVariable("guid") String guid,
+            Model model) throws Exception {
 
-            SearchResultDTO searchResult = new SearchResultDTO();
-//		if (StringUtils.isEmpty(requestParams.getQ())) {
-//                    logger.info("The values :" + requestParams);
-//                    return searchResult;
-//		}
+        SearchResultDTO searchResult = new SearchResultDTO();
+        SearchUtils.setDefaultParams(requestParams);
+        logger.debug("requestParams: " + requestParams);
+        //Change the method call so that the filter query can be updated
+        boolean taxonFound = searchUtils.updateTaxonConceptSearchString(requestParams, guid);
 
-                SearchUtils.setDefaultParams(requestParams);
-                logger.debug("requestParams: " + requestParams);
-                //Change the method call so that the filter query can be updated
-                boolean taxonFound = searchUtils.updateTaxonConceptSearchString(requestParams, guid);
-
-		if(taxonFound){
-
-			
-//			String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
-//			model.addAttribute("entityQuery", searchQuery.getEntityQuery());
-//			model.addAttribute("query", query);
-//			model.addAttribute("queryJsEscaped", queryJsEscaped);
-//			model.addAttribute("facetQuery", filterQuery);
-
+		if (taxonFound) {
 	        searchResult = searchDAO.findByFulltextQuery(requestParams);
-                
-
 			model.addAttribute("searchResult", searchResult);
 			logger.debug("query = "+requestParams);
 			Long totalRecords = searchResult.getTotalRecords();
-			//model.addAttribute("totalRecords", totalRecords);
-			//type of search
-			//model.addAttribute("type", "taxon");
-        //    model.addAttribute("facetMap", addFacetMap(filterQuery));
 
-			if(logger.isDebugEnabled()){
+			if (logger.isDebugEnabled()) {
 				logger.debug("Returning results set with: "+totalRecords);
 			}
-
-           // model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
 		}
-                logger.info("Taxon not found...." +guid);
+
+        logger.info("Taxon not found...." +guid);
 
 		return searchResult;
 	}
-        /**
-         * Obtains a list of the sources for the supplied guid.
-         *
-         * I don't think that this should be necessary. We should be able to
-         * configure the requestParams facets to contain the collectino_uid, institution_uid
-         * data_resource_uid and data_provider_uid
-         *
-         * It also handle's the logging for the BIE.
-         * //TODO Work out what to do with this
-         * @param query
-         * @param request
-         * @param model
-         * @throws Exception
-         */
-        @RequestMapping(value = "/occurrences/sourceByTaxon/{guid}.json*", method = RequestMethod.GET)
-        public void sourceByTaxon(
-			@PathVariable(value="guid") String query,
-                        @RequestParam(value="fq", required=false) String[] filterQuery,
-                        HttpServletRequest request,
-                        Model model
-                        )
-        throws Exception{
-            String email = null;
-                String reason = "Viewing BIE species map";
-                String ip = request.getLocalAddr();
-            SearchQuery searchQuery = new SearchQuery(query, "taxon", filterQuery);
-		searchUtils.updateTaxonConceptSearchString(searchQuery);
-                Map<String, Integer> sources =searchDAO.getSourcesForQuery(searchQuery.getQuery(), searchQuery.getFilterQuery());
-                logger.debug("The sources and counts.... " + sources);
-                model.addAttribute("occurrenceSources", searchUtils.getSourceInformation(sources));
-                //log the usages statistic to the logger
-                LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED_ON_MAP, email, reason, ip,sources);
-	    	logger.log(RestLevel.REMOTE, vo);
-            
-        }
 
-	/**
-	 * Occurrence search for a given collection, institution, data_resource or data_provider.
-	 *
-	 * @param requestParams The search parameters
-         * @param  uid The uid for collection, institution, data_resource or data_provider
-	 * @param model
-	 * @return
-	 * @throws Exception
-	 */
-	@RequestMapping(value = {"/occurrences/collection/{uid}", "/occurrences/institution/{uid}", "/occurrences/data-resource/{uid}", "/occurrences/data-provider/{uid}"}, method = RequestMethod.GET)
-	public @ResponseBody SearchResultDTO occurrenceSearchForCollection(
-			SearchRequestParams requestParams,
-                        @PathVariable("uid") String uid,
-			Model model)
-	throws Exception {
-                SearchResultDTO searchResult = new SearchResultDTO();
-		// no query so exit method
-		if (StringUtils.isEmpty(uid)) {
-			return searchResult;
-		}
+    /**
+     * Obtains a list of the sources for the supplied guid.
+     *
+     * I don't think that this should be necessary. We should be able to
+     * configure the requestParams facets to contain the collectino_uid, institution_uid
+     * data_resource_uid and data_provider_uid
+     *
+     * It also handle's the logging for the BIE.
+     * //TODO Work out what to do with this
+     * @param query
+     * @param request
+     * @param model
+     * @throws Exception
+     */
+    @RequestMapping(value = "/occurrences/sourceByTaxon/{guid}.json*", method = RequestMethod.GET)
+    public void sourceByTaxon(
+            @PathVariable(value = "guid") String query,
+            @RequestParam(value = "fq", required = false) String[] filterQuery,
+            HttpServletRequest request,
+            Model model)
+            throws Exception {
+        String email = null;
+        String reason = "Viewing BIE species map";
+        String ip = request.getLocalAddr();
+        SearchQuery searchQuery = new SearchQuery(query, "taxon", filterQuery);
+        searchUtils.updateTaxonConceptSearchString(searchQuery);
+        Map<String, Integer> sources = searchDAO.getSourcesForQuery(searchQuery.getQuery(), searchQuery.getFilterQuery());
+        logger.debug("The sources and counts.... " + sources);
+        model.addAttribute("occurrenceSources", searchUtils.getSourceInformation(sources));
+        //log the usages statistic to the logger
+        LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED_ON_MAP, email, reason, ip, sources);
+        logger.log(RestLevel.REMOTE, vo);
+
+    }
+
+	   /**
+     * Occurrence search for a given collection, institution, data_resource or data_provider.
+     *
+     * @param requestParams The search parameters
+     * @param  uid The uid for collection, institution, data_resource or data_provider
+     * @param model
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping(value = {"/occurrences/collection/{uid}", "/occurrences/institution/{uid}", "/occurrences/data-resource/{uid}", "/occurrences/data-provider/{uid}"}, method = RequestMethod.GET)
+    public @ResponseBody SearchResultDTO occurrenceSearchForCollection(
+            SearchRequestParams requestParams,
+            @PathVariable("uid") String uid,
+            Model model)
+            throws Exception {
+        SearchResultDTO searchResult = new SearchResultDTO();
+        // no query so exit method
+        if (StringUtils.isEmpty(uid)) {
+            return searchResult;
+        }
 
 		//update the request params so the search caters for the supplied uid
 		searchUtils.updateCollectionSearchString(requestParams, uid);
-               
-
 		logger.debug("solr query: " + requestParams);
-                //TODO work out which extra attributes are required by the hubs web app
-//		String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
-//		model.addAttribute("entityQuery", searchQuery.getDisplayString());
-//
-//		model.addAttribute("query", query);
-//		model.addAttribute("queryJsEscaped", queryJsEscaped);
-//		model.addAttribute("facetQuery", filterQuery);
-
 		searchResult = searchDAO.findByFulltextQuery(requestParams);
-                
-
 		model.addAttribute("searchResult", searchResult);
-		
-//		Long totalRecords = searchResult.getTotalRecords();
-//		model.addAttribute("totalRecords", totalRecords);
-//        model.addAttribute("facetMap", addFacetMap(filterQuery));
-		//type of serach
-//		model.addAttribute("type", "collection");
-//		model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
 
 		return searchResult;
-
 	}
 
     /**
@@ -279,43 +239,20 @@ public class OccurrenceController {
 	public @ResponseBody SearchResultDTO occurrenceSearchByArea(
 			SpatialSearchRequestParams requestParams,
 			Model model)
-	throws Exception {
-            SearchResultDTO searchResult = new SearchResultDTO();
-		if (StringUtils.isEmpty(requestParams.getQ())) {
+            throws Exception {
+        SearchResultDTO searchResult = new SearchResultDTO();
+
+        if (StringUtils.isEmpty(requestParams.getQ())) {
 			return searchResult;
 		}
 
-               
-                
-		//SearchQuery searchQuery = new SearchQuery(query, "spatial", filterQuery);
-                searchUtils.updateSpatial(requestParams);
-		//searchUtils.updateTaxonConceptSearchString(searchQuery);
-
-                
-		
-//	String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
-//		model.addAttribute("entityQuery", displayQuery.toString());
-//		model.addAttribute("query", query);
-//		model.addAttribute("queryJsEscaped", queryJsEscaped);
-//		model.addAttribute("facetQuery", filterQuery);
-//        model.addAttribute("facetMap", addFacetMap(filterQuery));
-//        model.addAttribute("latitude", latitude);
-//        model.addAttribute("longitude", longitude);
-//        model.addAttribute("radius", radius);
-
+        searchUtils.updateSpatial(requestParams);
         searchResult = searchDAO.findByFulltextQuery(requestParams);
-        
 		model.addAttribute("searchResult", searchResult);
-//		Long totalRecords = searchResult.getTotalRecords();
-//		model.addAttribute("totalRecords", totalRecords);
-//		//type of search
-//		model.addAttribute("type", "spatial");
 
 		if(logger.isDebugEnabled()){
 			logger.debug("Returning results set with: "+searchResult.getTotalRecords());
 		}
-
-//		model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
 
 		return searchResult;
 	}
@@ -351,28 +288,11 @@ public class OccurrenceController {
 	@RequestMapping(value = "/occurrences/search*", method = RequestMethod.GET)
 	public @ResponseBody SearchResultDTO occurrenceSearch(SearchRequestParams requestParams,
             Model model) throws Exception {
-            SearchResultDTO searchResult = new SearchResultDTO();
-        
-        //TODO work out which of these attributes are necessary for the hubs web app
-       //String queryJsEscaped = StringEscapeUtils.escapeJavaScript(query);
-       // model.addAttribute("query", query);
-        //model.addAttribute("queryJsEscaped", queryJsEscaped);
-       // model.addAttribute("facetQuery", filterQuery);
-
-        
-        //searchUtils.updateNormal(requestParams);
-        SearchUtils.setDefaultParams(requestParams); // handle empty param values, e.g. &sort=&dir=
-
-        searchResult = searchDAO.findByFulltextQuery(requestParams);
+        // handle empty param values, e.g. &sort=&dir=
+        SearchUtils.setDefaultParams(requestParams); 
+        SearchResultDTO searchResult = searchDAO.findByFulltextQuery(requestParams);
         model.addAttribute("searchResult", searchResult);
         logger.debug("query = " + requestParams.getQ());
-       // Long totalRecords = searchResult.getTotalRecords();
-        //model.addAttribute("totalRecords", totalRecords);
-       // model.addAttribute("facetMap", addFacetMap(filterQuery));
-        //type of serach
-        //model.addAttribute("type", "normal");
-        
-       // model.addAttribute("lastPage", calculateLastPage(totalRecords, pageSize));
 
 		return searchResult;
 	}
@@ -454,7 +374,6 @@ public class OccurrenceController {
     	}
 	}
 
-
 	/**
 	 * Utility method for retrieving a list of occurrences. Mainly added to help debug
      * webservices for that a developer can retrieve example UUIDs.
@@ -497,24 +416,24 @@ public class OccurrenceController {
         occ.setUserAssertions(Store.getUserAssertions(uuid));
 
         //log the statistics for viewing the record
-            String email = null;
-            String reason = "Viewing Occurrence Record " + uuid;
-            String ip = request.getLocalAddr();
-            Map<String, Integer> uidStats = new HashMap<String, Integer>();
-            if (occ.getProcessed().getAttribution().getCollectionUid() != null) {
-                uidStats.put(occ.getProcessed().getAttribution().getCollectionUid(), 1);
-            }
-            if (occ.getProcessed().getAttribution().getInstitutionUid() != null) {
-                uidStats.put(occ.getProcessed().getAttribution().getInstitutionUid(), 1);
-            }
-            if(occ.getProcessed().getAttribution().getDataProviderUid() != null)
-                uidStats.put(occ.getProcessed().getAttribution().getDataProviderUid(), 1);
-            if(occ.getProcessed().getAttribution().getDataResourceUid() != null)
-                uidStats.put(occ.getProcessed().getAttribution().getDataResourceUid(), 1);
+        String email = null;
+        String reason = "Viewing Occurrence Record " + uuid;
+        String ip = request.getLocalAddr();
+        Map<String, Integer> uidStats = new HashMap<String, Integer>();
+        if (occ.getProcessed().getAttribution().getCollectionUid() != null) {
+            uidStats.put(occ.getProcessed().getAttribution().getCollectionUid(), 1);
+        }
+        if (occ.getProcessed().getAttribution().getInstitutionUid() != null) {
+            uidStats.put(occ.getProcessed().getAttribution().getInstitutionUid(), 1);
+        }
+        if(occ.getProcessed().getAttribution().getDataProviderUid() != null)
+            uidStats.put(occ.getProcessed().getAttribution().getDataProviderUid(), 1);
+        if(occ.getProcessed().getAttribution().getDataResourceUid() != null)
+            uidStats.put(occ.getProcessed().getAttribution().getDataResourceUid(), 1);
 
-            
-            LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED, email, reason, ip, uidStats);
-            logger.log(RestLevel.REMOTE, vo);
+
+        LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED, email, reason, ip, uidStats);
+        logger.log(RestLevel.REMOTE, vo);
 
         return occ;
 	}
