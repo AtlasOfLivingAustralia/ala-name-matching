@@ -55,6 +55,10 @@ public class GeneralisedLocation {
         generaliseCoordinates();
     }
 
+    public boolean isGeneralised() {
+        return locationGeneralisation != null && !locationGeneralisation.equals("");
+    }
+
     public String getOriginalLatitude() {
         return originalLatitude;
     }
