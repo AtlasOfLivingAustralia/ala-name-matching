@@ -13,6 +13,34 @@ import org.scalatest.FunSuite
  */
 class DateParserTests extends FunSuite {
 
+  test("Single Year"){
+    val result = DateParser.parseDate("1978")
+    expect(false){ result.isEmpty }
+    expect("1978"){ result.get.startYear }
+    expect("1978"){ result.get.endYear }
+    expect(false){ result.get.singleDate }
+  }
+
+  test("Single Year with full month"){
+    val result = DateParser.parseDate("1978-April-01")
+    expect(false){ result.isEmpty }
+    expect("1978"){ result.get.startYear }
+    expect("1978"){ result.get.endYear }
+    expect("04"){ result.get.startMonth }
+    expect("01"){ result.get.startDay }
+    expect(true){ result.get.singleDate }
+  }
+
+  test("Single Year with full month - long name"){
+    val result = DateParser.parseDate("1978-December-01")
+    expect(false){ result.isEmpty }
+    expect("1978"){ result.get.startYear }
+    expect("1978"){ result.get.endYear }
+    expect("12"){ result.get.startMonth }
+    expect("01"){ result.get.startDay }
+    expect(true){ result.get.singleDate }
+  }
+
   test("Single date") {
 
     val result = DateParser.parseDate("1978-01-01")
