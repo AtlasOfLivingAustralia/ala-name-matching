@@ -3,13 +3,11 @@ package au.org.ala.util
 import org.apache.commons.lang.time.DateFormatUtils
 import org.wyki.cassandra.pelops.Pelops
 import au.org.ala.checklist.lucene.HomonymException
-import au.org.ala.data.model.LinnaeanRankClassification
 import java.util.GregorianCalendar
 import scala.collection.mutable.ArrayBuffer
 import au.org.ala.checklist.lucene.SearchResultException
 import org.slf4j.LoggerFactory
 import au.org.ala.biocache._
-import au.org.ala.checklist.lucene.model.NameSearchResult
 
 /**
  * 1. Classification matching
@@ -128,7 +126,7 @@ object ProcessRecords {
       val aurls = urls.split(";").map(url=> url.trim)
       processed.occurrence.setImages(aurls.filter(isValidImageURL(_)))
       if(aurls.length != processed.occurrence.getImages().length)
-          return Array(QualityAssertion(AssertionCodes.INVALID_IMAGE_URL, false, "URL can not be an image"))
+          return Array(QualityAssertion(AssertionCodes.INVALID_IMAGE_URL, "URL can not be an image"))
     }
     Array()
   }
@@ -150,7 +148,7 @@ object ProcessRecords {
           OccurrenceDAO.updateOccurrence(guid, attribution.get, Processed)
           Array()
         } else {
-          Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, true, "Unrecognised collection code"))
+          Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, "Unrecognised collection code"))
         }
     } else {
       Array()
@@ -259,7 +257,7 @@ object ProcessRecords {
 
     //if invalid date, add assertion
     if (invalidDate) {
-      assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,true,comment)
+      assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
     }
 
     assertions.toArray
@@ -274,7 +272,7 @@ object ProcessRecords {
       val term = TypeStatus.matchTerm(raw.occurrence.typeStatus)
       if (term.isEmpty) {
         //add a quality assertion
-        Array(QualityAssertion(AssertionCodes.UNRECOGNISED_TYPESTATUS,true,"Unrecognised type status"))
+        Array(QualityAssertion(AssertionCodes.UNRECOGNISED_TYPESTATUS,"Unrecognised type status"))
       } else {
         processed.occurrence.typeStatus = term.get.canonical
         Array()
@@ -294,13 +292,13 @@ object ProcessRecords {
 
     if (raw.occurrence.basisOfRecord == null || raw.occurrence.basisOfRecord.isEmpty) {
       //add a quality assertion
-      Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,true,"Missing basis of record"))
+      Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,"Missing basis of record"))
     } else {
       val term = BasisOfRecord.matchTerm(raw.occurrence.basisOfRecord)
       if (term.isEmpty) {
         //add a quality assertion
         logger.debug("[QualityAssertion] " + guid + ", unrecognised BoR: " + guid + ", BoR:" + raw.occurrence.basisOfRecord)
-        Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,true,"Unrecognised basis of record"))
+        Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,"Unrecognised basis of record"))
       } else {
         processed.occurrence.basisOfRecord = term.get.canonical
         Array[QualityAssertion]()
@@ -358,7 +356,7 @@ object ProcessRecords {
                 + ", raw:" + raw.location.stateProvince)
             //add a quality assertion
             val comment = "Supplied: " + stateTerm.get.canonical + ", calculated: " + processed.location.stateProvince
-            assertions + QualityAssertion(AssertionCodes.STATE_COORDINATE_MISMATCH,true,comment)
+            assertions + QualityAssertion(AssertionCodes.STATE_COORDINATE_MISMATCH,comment)
             //store the assertion
           }
         }
@@ -371,7 +369,7 @@ object ProcessRecords {
         //check marine/non-marine
         if(processed.location.habitat!=null){
 
-          if(!taxonProfile.isEmpty && taxonProfile.get.habitats!=null && taxonProfile.get.habitats.size>0){
+          if(!taxonProfile.isEmpty && taxonProfile.get.habitats!=null && !taxonProfile.get.habitats.isEmpty){
             val habitatsAsString =  taxonProfile.get.habitats.reduceLeft(_+","+_)
             val habitatFromPoint = processed.location.habitat
             val habitatsForSpecies = taxonProfile.get.habitats
@@ -386,7 +384,7 @@ object ProcessRecords {
                       + processed.location.decimalLongitude)
                   val comment = "Recognised habitats for species: " + habitatsAsString +
                        ", Value determined from coordinates: " + habitatFromPoint
-                  assertions + QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH,true,comment)
+                  assertions + QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH,comment)
                 }
               }
             }
@@ -395,7 +393,7 @@ object ProcessRecords {
 
         //TODO check centre point of the state
         if(StateCentrePoints.coordinatesMatchCentre(point.get.stateProvince, raw.location.decimalLatitude, raw.location.decimalLongitude)){
-          assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,true,"Coordinates are centre point of "+point.get.stateProvince)
+          assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,"Coordinates are centre point of "+point.get.stateProvince)
         }
       }
     }
@@ -456,7 +454,7 @@ object ProcessRecords {
                   //test to see if at least one of the values for the rank matched
                   if(!matched){
                     logger.info("Invalid higher classification for the match for : " + guid)
-                    return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, true, "Invalid higher classification")) 
+                    return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Invalid higher classification"))
                   }
                 }
                 lastvalue = values(0)
@@ -471,7 +469,7 @@ object ProcessRecords {
               //we have made it through all the hints check to see if we have a match...
               if(!matched)
                 logger.info("Invalid higher classification for the match for : " + guid)
-                return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, true, "Invalid higher classification"))
+                return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Invalid higher classification"))
             }
           }
         }
@@ -512,7 +510,7 @@ object ProcessRecords {
 
         //is the name in the NSLs ???
         if(afdApniIdentifier.findFirstMatchIn(nsr.getLsid).isEmpty){
-           Array(QualityAssertion(AssertionCodes.NAME_NOT_IN_NATIONAL_CHECKLISTS, true, "Record not attached to concept in national species lists"))
+           Array(QualityAssertion(AssertionCodes.NAME_NOT_IN_NATIONAL_CHECKLISTS, "Record not attached to concept in national species lists"))
         } else {
            Array()
         }
@@ -521,10 +519,10 @@ object ProcessRecords {
         logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " +
             raw.classification.kingdom + ", Family:" + raw.classification.family + ", Genus:" + raw.classification.genus +
             ", Species: " + raw.classification.species + ", Epithet: " + raw.classification.specificEpithet)
-        Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, true, "Name not recognised"))
+        Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, "Name not recognised"))
       }
     } catch {
-      case he: HomonymException => logger.debug(he.getMessage,he); Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, true, "Homonym issue resolving the classification"))
+      case he: HomonymException => logger.debug(he.getMessage,he); Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, "Homonym issue resolving the classification"))
       case se: SearchResultException => logger.debug(se.getMessage,se); Array()
     }
   }

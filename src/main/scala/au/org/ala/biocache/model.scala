@@ -607,6 +607,10 @@ object QualityAssertion {
     val uuid = UUID.randomUUID.toString
     new QualityAssertion(uuid,errorCode.name,errorCode.code,problemAsserted,comment,null,null,null,null)
   }
+  def apply(errorCode:ErrorCode,comment:String) = {
+    val uuid = UUID.randomUUID.toString
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,true,comment,null,null,null,null)
+  }
   def apply(assertionCode:Int,problemAsserted:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
     new QualityAssertion(uuid,null,assertionCode,problemAsserted,comment,null,null,null,null)

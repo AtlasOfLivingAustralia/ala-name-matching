@@ -292,7 +292,8 @@ object HabitatMap extends VocabMaps {
      SpeciesGroup("Fish", "classs", Array("Agnatha", "Chondrichthyes", "Osteichthyes", "Actinopterygii", "Sarcopterygii")),
      SpeciesGroup("Insects",  "classs", Array("Insecta")),
      SpeciesGroup("Crustaceans", "classs" , Array("Branchiopoda", "Remipedia", "Maxillopoda", "Ostracoda", "Malacostraca")),
-     SpeciesGroup("Molluscs", "phylum", Array("Mollusca"))
+     SpeciesGroup("Molluscs", "phylum", Array("Mollusca")),
+     SpeciesGroup("Arthropods", "phylum", Array("Arthropoda"))
     )
     /**
      * Returns all the species groups to which supplied classificatoin belongs
@@ -306,7 +307,8 @@ object HabitatMap extends VocabMaps {
 /**
  * Case class that represents an error code for a occurrence record.
  */
-sealed case class ErrorCode(@BeanProperty name:String, @BeanProperty code:Int, @BeanProperty isFatal:Boolean)
+sealed case class ErrorCode(@BeanProperty name:String, @BeanProperty code:Int, @BeanProperty isFatal:Boolean,
+                               @BeanProperty description:String)
 
 /**
  * Assertion codes for records. These codes are a reflection of http://bit.ly/evMJv5
@@ -314,57 +316,59 @@ sealed case class ErrorCode(@BeanProperty name:String, @BeanProperty code:Int, @
 object AssertionCodes {
 
   //geospatial issues
-  val GEOSPATIAL_ISSUE = ErrorCode("geospatialIssue",0,true)  // general purpose option
-  val NEGATED_LATITUDE = ErrorCode("negatedLatitude",1,false)
-  val NEGATED_LONGITUDE = ErrorCode("negatedLongitude",2,false)
-  val INVERTED_COORDINATES = ErrorCode("invertedCoordinates",3,false)
-  val ZERO_COORDINATES = ErrorCode("zeroCoordinates",4,true)
-  val COORDINATES_OUT_OF_RANGE = ErrorCode("coordinatesOutOfRange",5,true)
-  val UNKNOWN_COUNTRY_NAME = ErrorCode("unknownCountry",6,false)
-  val ALTITUDE_OUT_OF_RANGE = ErrorCode("altitudeOutOfRange",7,false)
-  val BADLY_FORMED_ALTITUDE = ErrorCode("erroneousAltitude",8,false)
-  val MIN_MAX_ALTITUDE_REVERSED = ErrorCode("minMaxAltitudeReversed",9,false)
-  val DEPTH_IN_FEET = ErrorCode("depthInFeet",10,false)
-  val DEPTH_OUT_OF_RANGE = ErrorCode("depthOutOfRange",11,false)
-  val MIN_MAX_DEPTH_REVERSED = ErrorCode("minMaxDepthReversed",12,false)
-  val ALTITUDE_IN_FEET = ErrorCode("altitudeInFeet",13,false)
-  val ALTITUDE_NON_NUMERIC = ErrorCode("altitudeNonNumeric",14,false)
-  val DEPTH_NON_NUMERIC = ErrorCode("depthNonNumeric",15,false)
-  val COUNTRY_COORDINATE_MISMATCH = ErrorCode("countryCoordinateMismatch",16,false)
-  val STATE_COORDINATE_MISMATCH = ErrorCode("stateCoordinateMismatch",18,false)
-  val COORDINATE_HABITAT_MISMATCH = ErrorCode("habitatMismatch",19,true)
-  val DETECTED_OUTLIER = ErrorCode("detectedOutlier",20,true)
-  val COUNTRY_INFERRED_FROM_COORDINATES = ErrorCode("countryInferredByCoordinates",21,false)
-  val COORDINATES_CENTRE_OF_STATEPROVINCE = ErrorCode("coordinatesCentreOfStateProvince",22,true)
-  val COORDINATE_PRECISION_MISMATCH = ErrorCode("coordinatePrecisionMismatch",23,false)
-  val UNCERTAINTY_RANGE_MISMATCH = ErrorCode("uncertaintyRangeMismatch",24,false)
-  val UNCERTAINTY_IN_PRECISION = ErrorCode("uncertaintyInPrecision",25,false)
+  val GEOSPATIAL_ISSUE = ErrorCode("geospatialIssue",0,true,"Geospatial issue")  // general purpose option
+  val NEGATED_LATITUDE = ErrorCode("negatedLatitude",1,false,"Latitude is negated")
+  val NEGATED_LONGITUDE = ErrorCode("negatedLongitude",2,false,"Longitude is negated")
+  val INVERTED_COORDINATES = ErrorCode("invertedCoordinates",3,false,"Coordinates are transposed")
+  val ZERO_COORDINATES = ErrorCode("zeroCoordinates",4,true,"Supplied coordinates are zero")
+  val COORDINATES_OUT_OF_RANGE = ErrorCode("coordinatesOutOfRange",5,true,"Coordinates are out of range for species")
+  val UNKNOWN_COUNTRY_NAME = ErrorCode("unknownCountry",6,false,"Supplied country not recognised")
+  val ALTITUDE_OUT_OF_RANGE = ErrorCode("altitudeOutOfRange",7,false,"Altitude out of range")
+  val BADLY_FORMED_ALTITUDE = ErrorCode("erroneousAltitude",8,false, "Badly formed altitude")
+  val MIN_MAX_ALTITUDE_REVERSED = ErrorCode("minMaxAltitudeReversed",9,false, "Min and max altitude reversed")
+  val DEPTH_IN_FEET = ErrorCode("depthInFeet",10,false,"Depth value supplied in feet")
+  val DEPTH_OUT_OF_RANGE = ErrorCode("depthOutOfRange",11,false,"Depth out of range")
+  val MIN_MAX_DEPTH_REVERSED = ErrorCode("minMaxDepthReversed",12,false,"Min and max depth reversed")
+  val ALTITUDE_IN_FEET = ErrorCode("altitudeInFeet",13,false,"Altitude value supplied in feet")
+  val ALTITUDE_NON_NUMERIC = ErrorCode("altitudeNonNumeric",14,false,"Altitude value non-numeric")
+  val DEPTH_NON_NUMERIC = ErrorCode("depthNonNumeric",15,false,"Depth value non-numeric")
+  val COUNTRY_COORDINATE_MISMATCH = ErrorCode("countryCoordinateMismatch",16,false,"Coordinates dont match supplied country")
+  val STATE_COORDINATE_MISMATCH = ErrorCode("stateCoordinateMismatch",18,false,"Coordinates dont match supplied state")
+  val COORDINATE_HABITAT_MISMATCH = ErrorCode("habitatMismatch",19,true,"Habitat incorrect for species")
+  val DETECTED_OUTLIER = ErrorCode("detectedOutlier",20,true,"Suspected outlier")
+  val COUNTRY_INFERRED_FROM_COORDINATES = ErrorCode("countryInferredByCoordinates",21,false,"Country inferred from coordinates")
+  val COORDINATES_CENTRE_OF_STATEPROVINCE = ErrorCode("coordinatesCentreOfStateProvince",22,true,"Supplied coordinates centre of state")
+  val COORDINATE_PRECISION_MISMATCH = ErrorCode("coordinatePrecisionMismatch",23,false,"Coordinate precision not valid")
+  val UNCERTAINTY_RANGE_MISMATCH = ErrorCode("uncertaintyRangeMismatch",24,false,"Coordinate accuracy not valid")
+  val UNCERTAINTY_IN_PRECISION = ErrorCode("uncertaintyInPrecision",25,false,"Coordinate precision and accuracy transposed")
 
   //taxonomy issues
-  val TAXONOMIC_ISSUE = ErrorCode("taxonomicIssue",10000,false)  // general purpose option
-  val INVALID_SCIENTIFIC_NAME = ErrorCode("invalidScientificName",10001,false)
-  val UNKNOWN_KINGDOM = ErrorCode("unknownKingdom",10002,false)
-  val AMBIGUOUS_NAME = ErrorCode("ambiguousName",10003,false)
-  val NAME_NOTRECOGNISED = ErrorCode("nameNotRecognised",10004,false)
-  val NAME_NOT_IN_NATIONAL_CHECKLISTS = ErrorCode("nameNotInNationalChecklists",10005,false)
-  val HOMONYM_ISSUE = ErrorCode("homonymIssue",10006,false)
+  val TAXONOMIC_ISSUE = ErrorCode("taxonomicIssue",10000,false,"Taxonomic issue")  // general purpose option
+  val INVALID_SCIENTIFIC_NAME = ErrorCode("invalidScientificName",10001,false,"Invalid scientific name")
+  val UNKNOWN_KINGDOM = ErrorCode("unknownKingdom",10002,false,"Kingdom not recognised")
+  val AMBIGUOUS_NAME = ErrorCode("ambiguousName",10003,false,"Higher taxonomy missing")
+  val NAME_NOTRECOGNISED = ErrorCode("nameNotRecognised",10004,false,"Name not recognised")
+  val NAME_NOT_IN_NATIONAL_CHECKLISTS = ErrorCode("nameNotInNationalChecklists",10005,false,"Name not in national checklists")
+  val HOMONYM_ISSUE = ErrorCode("homonymIssue",10006,false,"Homonym issues with supplied name")
+  val IDENTIFICATION_INCORRECT = ErrorCode("identificationIncorrect",10007,false,"Taxon misidentified")
 
   //miscellanous
-  val MISSING_BASIS_OF_RECORD = ErrorCode("missingBasisOfRecord",20001,true)
-  val BADLY_FORMED_BASIS_OF_RECORD = ErrorCode("badlyFormedBasisOfRecord",20002,true)
-  val UNRECOGNISED_TYPESTATUS = ErrorCode("unrecognisedTypeStatus",20004,false)
-  val UNRECOGNISED_COLLECTIONCODE = ErrorCode("unrecognisedCollectionCode",20005,false)
-  val UNRECOGNISED_INSTITUTIONCODE = ErrorCode("unrecognisedInstitutionCode",20006,false)
-  val INVALID_IMAGE_URL = ErrorCode("invalidImageUrl", 20007, false)
+  val MISSING_BASIS_OF_RECORD = ErrorCode("missingBasisOfRecord",20001,true,"Basis of record not supplied")
+  val BADLY_FORMED_BASIS_OF_RECORD = ErrorCode("badlyFormedBasisOfRecord",20002,true,"Basis of record badly formed")
+  val UNRECOGNISED_TYPESTATUS = ErrorCode("unrecognisedTypeStatus",20004,false,"Type status not recognised")
+  val UNRECOGNISED_COLLECTIONCODE = ErrorCode("unrecognisedCollectionCode",20005,false,"Collection code not recognised")
+  val UNRECOGNISED_INSTITUTIONCODE = ErrorCode("unrecognisedInstitutionCode",20006,false,"Institution code not recognised")
+  val INVALID_IMAGE_URL = ErrorCode("invalidImageUrl", 20007, false,"Image URL invalid")
 
   //temporal
-  val ID_PRE_OCCURRENCE = ErrorCode("idPreOccurrence",30001,false)
-  val GEOREFERENCE_POST_OCCURRENCE = ErrorCode("georefPostDate",30002,false)
-  val FIRST_OF_MONTH = ErrorCode("firstOfMonth",30003,false)
-  val FIRST_OF_YEAR = ErrorCode("firstOfYear",30004,false)
-  val FIRST_OF_CENTURY = ErrorCode("firstOfCentury",30005,false)
-  val DATE_PRECISION_MISMATCH = ErrorCode("datePrecisionMismatch",30006,false)
-  val INVALID_COLLECTION_DATE = ErrorCode("invalidCollectionDate",30007,false)
+  val TEMPORAL_ISSUE = ErrorCode("temporalIssue",30000,false,"Temporal issue")  // general purpose option
+  val ID_PRE_OCCURRENCE = ErrorCode("idPreOccurrence",30001,false,"Identification date before occurrence date")
+  val GEOREFERENCE_POST_OCCURRENCE = ErrorCode("georefPostDate",30002,false,"Georeferenced after occurrence date")
+  val FIRST_OF_MONTH = ErrorCode("firstOfMonth",30003,false,"First of the month")
+  val FIRST_OF_YEAR = ErrorCode("firstOfYear",30004,false,"First of the year")
+  val FIRST_OF_CENTURY = ErrorCode("firstOfCentury",30005,false,"First of the century")
+  val DATE_PRECISION_MISMATCH = ErrorCode("datePrecisionMismatch",30006,false,"Date precision invalid")
+  val INVALID_COLLECTION_DATE = ErrorCode("invalidCollectionDate",30007,false,"Invalid collection date")
 
   //all the codes
   val all = retrieveAll
@@ -379,8 +383,8 @@ object AssertionCodes {
   val miscellaneousCodes = all.filter(errorCode => {errorCode.code>=20000 && errorCode.code<30000})
   val temporalCodes = all.filter(errorCode => {errorCode.code>=30000 && errorCode.code<40000})
 
-  //val userGeospatialCodes = Array(GEOSPATIAL_ISSUE,DETECTED_OUTLIER)
-
+  val userAssertionCodes = Array(GEOSPATIAL_ISSUE,COORDINATE_HABITAT_MISMATCH,DETECTED_OUTLIER,
+      TAXONOMIC_ISSUE,IDENTIFICATION_INCORRECT,TEMPORAL_ISSUE)
 
   /**
    * Retrieve all the terms defined in this vocab.
@@ -409,7 +413,7 @@ object AssertionCodes {
        } else {
           false
        }
-    }).size == 0
+    }).isEmpty
   }
 
   /**
@@ -425,6 +429,6 @@ object AssertionCodes {
        } else {
          false //we cant find the code, so ignore
        }
-    }).size == 0
+    }).isEmpty
   }
 }

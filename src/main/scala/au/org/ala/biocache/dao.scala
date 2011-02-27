@@ -482,14 +482,20 @@ object OccurrenceDAO {
    */
   def addUserAssertion(uuid:String, qualityAssertion:QualityAssertion){
 
-    val userAssertions = getUserAssertions(uuid) :+ qualityAssertion
-    val systemAssertions = getSystemAssertions(uuid)
+    val userAssertions = getUserAssertions(uuid)
 
-    //store the new systemAssertions
-    DAO.persistentManager.putList(uuid,entityName,userQualityAssertionColumn,userAssertions,true)
+    if(!userAssertions.contains(qualityAssertion)){
 
-    //update the overall status
-    updateAssertionStatus(uuid,qualityAssertion.name,systemAssertions,userAssertions)
+        val updatedUserAssertions = userAssertions :+ qualityAssertion
+
+        val systemAssertions = getSystemAssertions(uuid)
+
+        //store the new systemAssertions
+        DAO.persistentManager.putList(uuid,entityName,userQualityAssertionColumn,updatedUserAssertions,true)
+
+        //update the overall status
+        updateAssertionStatus(uuid,qualityAssertion.name,systemAssertions,updatedUserAssertions)
+    }
   }
 
   /**

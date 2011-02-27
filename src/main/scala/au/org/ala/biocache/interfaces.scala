@@ -134,6 +134,11 @@ object Store {
   def retrieveMiscellaneousCodes : Array[ErrorCode] = AssertionCodes.miscellaneousCodes.toArray
 
   /**
+   * A user friendly set of assertion types.
+   */
+  def retrieveUserAssertionCodes : Array[ErrorCode] = AssertionCodes.userAssertionCodes.toArray
+
+  /**
    * Retrieve an error code by code.
    */
   def getByCode(codeAsString:String) : ErrorCode = {
