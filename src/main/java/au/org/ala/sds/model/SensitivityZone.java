@@ -2,7 +2,7 @@ package au.org.ala.sds.model;
 
 public enum SensitivityZone {
     AUS("Australia"),
-    ACT("Australian Capital Territory"), 
+    ACT("Australian Capital Territory"),
     NSW("New South Wales"),
     QLD("Queensland"),
     VIC("Victoria"),
@@ -18,22 +18,24 @@ public enum SensitivityZone {
     HM("Heard and McDonald Islands"),
     AQ("Australian Antartic Territory"),
     TSPZ("Torres Strait Protected Zone");
-    
+
     private String value;
-    
+
     private SensitivityZone(String value) {
         this.value = value;
     }
-    
+
     public static SensitivityZone getZone(String value) {
         for (SensitivityZone zone : SensitivityZone.values()) {
             if (zone.getValue().equals(value)) {
                 return zone;
             }
         }
-        return null;
+
+        // Try abbreviation
+        return SensitivityZone.valueOf(value);
     }
-    
+
     public String getValue() {
         return value;
     }

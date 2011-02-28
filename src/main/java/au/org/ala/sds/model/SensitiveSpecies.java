@@ -92,7 +92,7 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
     }
 
     public SensitivityInstance getSensitivityInstance(String state) {
-        return getInstanceForState(SensitivityZone.valueOf(state));
+        return getInstanceForState(SensitivityZone.getZone(state));
     }
 
     private SensitivityInstance getInstanceForState(SensitivityZone state) {
