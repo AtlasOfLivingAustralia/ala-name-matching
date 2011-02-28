@@ -67,7 +67,8 @@
   <!-- Thrift RPC port (the port clients connect to). -->
   <ThriftPort>9160</ThriftPort>
   <ThriftFramedTransport>false</ThriftFramedTransport>
-  <DiskAccessMode>auto</DiskAccessMode>
+  <!-- DiskAccessMode>auto</DiskAccessMode -->
+<DiskAccessMode>standard</DiskAccessMode>
   <RowWarningThresholdInMB>64</RowWarningThresholdInMB>
   <SlicedBufferSizeInKB>64</SlicedBufferSizeInKB>
   <FlushDataBufferSizeInMB>32</FlushDataBufferSizeInMB>
@@ -79,8 +80,10 @@
   <MemtableFlushAfterMinutes>60</MemtableFlushAfterMinutes>
   <ConcurrentReads>8</ConcurrentReads>
   <ConcurrentWrites>32</ConcurrentWrites>
-  <CommitLogSync>periodic</CommitLogSync>
-  <CommitLogSyncPeriodInMS>1000</CommitLogSyncPeriodInMS>
+  <!-- CommitLogSync>periodic</CommitLogSync-->
+  <CommitLogSync>batch</CommitLogSync>
+<CommitLogSyncBatchWindowInMS>1</CommitLogSyncBatchWindowInMS>
+  <!--CommitLogSyncPeriodInMS>1000</CommitLogSyncPeriodInMS-->
   <GCGraceSeconds>2000</GCGraceSeconds>
   <DoConsistencyChecksBoolean>true</DoConsistencyChecksBoolean>
 </Storage>
