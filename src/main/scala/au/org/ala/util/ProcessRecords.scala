@@ -3,6 +3,7 @@ package au.org.ala.util
 import org.apache.commons.lang.time.DateFormatUtils
 import org.wyki.cassandra.pelops.Pelops
 import au.org.ala.checklist.lucene.HomonymException
+import au.org.ala.sds.util.GeneralisedLocationFactory
 import java.util.GregorianCalendar
 import scala.collection.mutable.ArrayBuffer
 import au.org.ala.checklist.lucene.SearchResultException
@@ -364,6 +365,34 @@ object ProcessRecords {
         //check to see if the points need to generalised
         if(!taxonProfile.isEmpty && taxonProfile.get.sensitive!= null && !taxonProfile.get.sensitive.isEmpty && processed.location.country == "Australia"){
           //Call SDS code to get the revised coordinates
+          val ss =DAO.sensitiveSpeciesFinderFactory.findSensitiveSpeciesByLsid(processed.classification.taxonConceptID)
+          if(ss != null){
+            //get the genralised coordinates
+            val gl = GeneralisedLocationFactory.getGeneralisedLocation(raw.location.decimalLatitude, raw.location.decimalLongitude, ss, processed.location.stateProvince);
+            if(gl != null){
+              //check to see if the coordinates have changed
+              if(gl.isGeneralised){
+                logger.debug("Generalised coordinates for " +guid)
+                println("generlised")
+                //store the generalised values as the raw.location.decimalLatitude/Longitude
+                //store the orginal as a hidden value
+                raw.location.originalDecimalLatitude = raw.location.decimalLatitude
+                raw.location.originalDecimlaLongitude = raw.location.decimalLongitude
+                raw.location.decimalLatitude = gl.getGeneralisedLatitude
+                raw.location.decimalLongitude = gl.getGeneralisedLongitude
+                //update the raw values
+                val umap = Map[String, String]("originalDecimalLatitude"-> raw.location.originalDecimalLatitude,
+                                               "originalDecimalLongitude"-> raw.location.originalDecimlaLongitude,
+                                            "decimalLatitude" -> raw.location.decimalLatitude,
+                                            "decimalLongitude" -> raw.location.decimalLongitude)
+
+                DAO.persistentManager.put(guid,"occ",umap)
+                processed.location.decimalLatitude = gl.getGeneralisedLatitude
+                processed.location.decimalLongitude = gl.getGeneralisedLongitude
+              }
+              
+            }
+          }
         }
 
         //check marine/non-marine
@@ -456,20 +485,22 @@ object ProcessRecords {
                     logger.info("Invalid higher classification for the match for : " + guid)
                     return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Invalid higher classification"))
                   }
+                  matched = false;
                 }
                 lastvalue = values(0)
                 lastvalue match{
-                  case "kingdom" => if(classification.getKingdom() == values(1)) matched = true
-                  case "phylum" => if(classification.getPhylum() == values(1)) matched = true
-                  case "class" => if(classification.getKlass() == values(1)) matched = true
+                  case "kingdom" => if(classification.getKingdom().toLowerCase == values(1)) matched = true
+                  case "phylum" => if(classification.getPhylum().toLowerCase == values(1)) matched = true
+                  case "class" => if(classification.getKlass().toLowerCase == values(1)) matched = true 
                   
                 }
 
               }
               //we have made it through all the hints check to see if we have a match...
-              if(!matched)
-                logger.info("Invalid higher classification for the match for : " + guid)
+              if(!matched){
+                logger.info("Invalid higher classification for the match for  : " + guid)
                 return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Invalid higher classification"))
+              }
             }
           }
         }

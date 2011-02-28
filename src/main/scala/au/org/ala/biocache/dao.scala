@@ -1,6 +1,7 @@
 package au.org.ala.biocache
 
 import au.org.ala.checklist.lucene.CBIndexSearch
+import au.org.ala.sds.SensitiveSpeciesFinderFactory
 import au.org.ala.util.ReflectBean
 import java.io.OutputStream
 import scala.collection.JavaConversions
@@ -8,6 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 import java.util.Properties
 import java.util.UUID
 import collection.immutable.HashSet
+import org.apache.commons.dbcp.BasicDataSource
 import org.slf4j.LoggerFactory
 import com.google.inject.Guice
 import com.google.inject.Module
@@ -49,6 +51,16 @@ object DAO {
 
   val nameIndex = new CBIndexSearch("/data/lucene/namematching")
 
+  //TODO add injection similar to persistentManager
+  val sensitiveSpeciesFinderFactory = {
+    val dataSource = new BasicDataSource();
+    dataSource.setDriverClassName("com.mysql.jdbc.Driver")
+    dataSource.setUrl("jdbc:mysql://localhost/portal")
+    dataSource.setUsername("root")
+    dataSource.setPassword("password")
+    SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(dataSource, nameIndex);
+    
+  }
   //read in the object mappings using reflection
   val attributionDefn = loadDefn(classOf[Attribution])
   val occurrenceDefn = loadDefn(classOf[Occurrence])

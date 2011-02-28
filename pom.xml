@@ -67,6 +67,22 @@
       <artifactId>slf4j-api</artifactId>
       <version>1.5.11</version>
     </dependency>
+    <!-- ALA SDS point generalising -->
+    <dependency>
+        <groupId>au.org.ala</groupId>
+        <artifactId>sds</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <exclusions>
+            <exclusion>
+                <groupId>org.drools</groupId>
+                <artifactId>drools-core</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.drools</groupId>
+                <artifactId>drools-compiler</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
     <!--  ALA Name matching -->
     <dependency>
         <groupId>au.org.ala</groupId>
@@ -96,12 +112,10 @@
       </exclusions>
     </dependency>
     <!--  DWC-A -->
-    <!-- 2011-02-16 The ALA repository has a custom version of the library that
-    contains a bug fix to the reader so that the identifier is included as a field -->
     <dependency>
       <groupId>org.gbif</groupId>
       <artifactId>dwca-reader</artifactId>
-      <version>1.7.5-SNAPSHOT</version>
+      <version>1.7.3-SNAPSHOT</version>
     </dependency>
     <!-- Google Commons -->
     <dependency>

@@ -311,6 +311,9 @@ class Location extends Cloneable with Mappable{
   @BeanProperty var ibra:String = _
   @BeanProperty var imcra:String = _
   @BeanProperty var lga:String = _
+  //fields that need be hidden from all public API
+  @BeanProperty @JsonIgnore var originalDecimalLatitude:String =_
+  @BeanProperty @JsonIgnore var originalDecimlaLongitude:String =_
 
   @JsonIgnore
   def getMap():Map[String,String]={
