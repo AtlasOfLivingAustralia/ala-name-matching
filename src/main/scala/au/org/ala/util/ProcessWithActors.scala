@@ -17,6 +17,7 @@ object ProcessWithActors {
     val threads = 4
     val pool = Array.fill(threads){ val p = new Consumer(Actor.self,ids); ids+=1; p.start }
 
+    val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
 
@@ -48,7 +49,9 @@ object ProcessWithActors {
       //debug counter
       if (count % 1000 == 0) {
         finishTime = System.currentTimeMillis
-        println(count + " >> Last key : " + fullRecord.get.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+        println(count + " >> Last key : " + fullRecord.get.uuid + ", records per sec: "
+            + 1000f / (((finishTime - startTime).toFloat) / 1000f)+", time taken: "
+            + (finishTime - start).toFloat / 60000f )
         startTime = System.currentTimeMillis
       }
       true //indicate to continue
