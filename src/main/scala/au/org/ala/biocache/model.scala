@@ -5,6 +5,7 @@ import org.apache.commons.lang.time.DateFormatUtils
 import org.apache.solr.client.solrj.beans.Field
 import java.util.Date
 import org.codehaus.jackson.annotate.JsonIgnore
+import collection.mutable.HashMap
 
 /**
  * Represents an occurrence record. These fields map directly on to
@@ -497,11 +498,32 @@ class Attribution  (
   @BeanProperty var dataHubUid:String,
   @BeanProperty var institutionName:String,
   @BeanProperty var collectionName:String,
-  @BeanProperty var taxonomicHints: Array[String])
+  @BeanProperty var taxonomicHints:Array[String])
   extends Cloneable with Mappable {
   def this() = this(null,null,null,null,null,null,null,null,null, null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
-  
+
+  lazy val parsedHints = {
+      if(taxonomicHints!=null){
+        parseHints(taxonomicHints.toList)
+      } else {
+        parseHints(List())
+      }
+  }
+
+  /**
+   * Parse the hints into a usable map with rank -> Set.
+   */
+  def parseHints(taxonHints:List[String]) : Map[String,Set[String]] = {
+      val rankSciNames = new HashMap[String,Set[String]]
+      val pairs = taxonHints.map(x=> x.split(":"))
+      for(pair <- pairs){
+          val values = rankSciNames.getOrElse(pair(0),Set())
+          rankSciNames.put(pair(0), values + pair(1).trim.toLowerCase)
+      }
+      rankSciNames.toMap
+  }
+
   @JsonIgnore
   def getMap():Map[String,String]={
     val map =Map[String,String]("dataProviderUid"->dataProviderUid, "dataProviderName"->dataProviderName,

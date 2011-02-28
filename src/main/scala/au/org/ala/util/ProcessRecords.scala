@@ -3,12 +3,14 @@ package au.org.ala.util
 import org.apache.commons.lang.time.DateFormatUtils
 import org.wyki.cassandra.pelops.Pelops
 import au.org.ala.checklist.lucene.HomonymException
-import au.org.ala.sds.util.GeneralisedLocationFactory
+import collection.mutable.{HashSet, HashMap, ArrayBuffer}
+
+//import au.org.ala.sds.util.GeneralisedLocationFactory
 import java.util.GregorianCalendar
-import scala.collection.mutable.ArrayBuffer
 import au.org.ala.checklist.lucene.SearchResultException
 import org.slf4j.LoggerFactory
 import au.org.ala.biocache._
+import au.org.ala.data.model.LinnaeanRankClassification
 
 /**
  * 1. Classification matching
@@ -362,39 +364,39 @@ object ProcessRecords {
           }
         }
 
-        //check to see if the points need to generalised
-        if(!taxonProfile.isEmpty && taxonProfile.get.sensitive!= null && !taxonProfile.get.sensitive.isEmpty && processed.location.country == "Australia"){
-          //Call SDS code to get the revised coordinates
-          val ss =DAO.sensitiveSpeciesFinderFactory.findSensitiveSpeciesByLsid(processed.classification.taxonConceptID)
-          if(ss != null){
-            //get the genralised coordinates
-            val gl = GeneralisedLocationFactory.getGeneralisedLocation(raw.location.decimalLatitude, raw.location.decimalLongitude, ss, processed.location.stateProvince);
-            if(gl != null){
-              //check to see if the coordinates have changed
-              if(gl.isGeneralised){
-                logger.debug("Generalised coordinates for " +guid)
-                
-                //store the generalised values as the raw.location.decimalLatitude/Longitude
-                //store the orginal as a hidden value
-                raw.location.originalDecimalLatitude = raw.location.decimalLatitude
-                raw.location.originalDecimlaLongitude = raw.location.decimalLongitude
-                raw.location.decimalLatitude = gl.getGeneralisedLatitude
-                raw.location.decimalLongitude = gl.getGeneralisedLongitude
-                //update the raw values
-                val umap = Map[String, String]("originalDecimalLatitude"-> raw.location.originalDecimalLatitude,
-                                               "originalDecimalLongitude"-> raw.location.originalDecimlaLongitude,
-                                            "decimalLatitude" -> raw.location.decimalLatitude,
-                                            "decimalLongitude" -> raw.location.decimalLongitude)
-
-                DAO.persistentManager.put(guid,"occ",umap)
-                processed.location.decimalLatitude = gl.getGeneralisedLatitude
-                processed.location.decimalLongitude = gl.getGeneralisedLongitude
-                //TODO may need to fix locality information... change ths so that the generalisation is performed before the point matching to gazetteer...
-              }
-              
-            }
-          }
-        }
+//        //check to see if the points need to generalised
+//        if(!taxonProfile.isEmpty && taxonProfile.get.sensitive!= null && !taxonProfile.get.sensitive.isEmpty && processed.location.country == "Australia"){
+//          //Call SDS code to get the revised coordinates
+//          val ss =DAO.sensitiveSpeciesFinderFactory.findSensitiveSpeciesByLsid(processed.classification.taxonConceptID)
+//          if(ss != null){
+//            //get the genralised coordinates
+//            val gl = GeneralisedLocationFactory.getGeneralisedLocation(raw.location.decimalLatitude, raw.location.decimalLongitude, ss, processed.location.stateProvince);
+//            if(gl != null){
+//              //check to see if the coordinates have changed
+//              if(gl.isGeneralised){
+//                logger.debug("Generalised coordinates for " +guid)
+//
+//                //store the generalised values as the raw.location.decimalLatitude/Longitude
+//                //store the orginal as a hidden value
+//                raw.location.originalDecimalLatitude = raw.location.decimalLatitude
+//                raw.location.originalDecimlaLongitude = raw.location.decimalLongitude
+//                raw.location.decimalLatitude = gl.getGeneralisedLatitude
+//                raw.location.decimalLongitude = gl.getGeneralisedLongitude
+//                //update the raw values
+//                val umap = Map[String, String]("originalDecimalLatitude"-> raw.location.originalDecimalLatitude,
+//                                               "originalDecimalLongitude"-> raw.location.originalDecimlaLongitude,
+//                                            "decimalLatitude" -> raw.location.decimalLatitude,
+//                                            "decimalLongitude" -> raw.location.decimalLongitude)
+//
+//                DAO.persistentManager.put(guid,"occ",umap)
+//                processed.location.decimalLatitude = gl.getGeneralisedLatitude
+//                processed.location.decimalLongitude = gl.getGeneralisedLongitude
+//                //TODO may need to fix locality information... change ths so that the generalisation is performed before the point matching to gazetteer...
+//              }
+//
+//            }
+//          }
+//        }
 
         //check marine/non-marine
         if(processed.location.habitat!=null){
@@ -439,25 +441,46 @@ object ProcessRecords {
   }
 
   /**
+   * Parse the hints into a usable map with rank -> Set.
+   */
+  def parseHints(taxonHints:List[String]) : Map[String,Set[String]] = {
+      //println("Taxonhints: "  + taxonHints)
+      //parse taxon hints into rank : List of
+      val rankSciNames = new HashMap[String,Set[String]]
+      val pairs = taxonHints.map(x=> x.split(":"))
+      for(pair <- pairs){
+          val values = rankSciNames.getOrElse(pair(0),Set())
+          rankSciNames.put(pair(0), values + pair(1).trim.toLowerCase)
+      }
+      rankSciNames.toMap
+  }
+
+  /**
+   * Returns false if the any of the taxonomic hints conflict with the classification
+   */
+  def isMatchValid(classification:LinnaeanRankClassification, hintMap:Map[String,Set[String]]) : (Boolean, String) = {
+      //println("Classification: "  + classification)
+      //are there any conflicts??
+      for(rank <- hintMap.keys){
+          val (conflict, comment) = {
+              rank match {
+                  case "kingdom" => (classification.getKingdom()!=null && !hintMap.get(rank).get.contains(classification.getKingdom().toLowerCase) , "Kingdom:"+classification.getKingdom() )
+                  case "phylum"  => (classification.getPhylum()!=null  && !hintMap.get(rank).get.contains(classification.getPhylum().toLowerCase) , "Phylum:"+classification.getPhylum() )
+                  case "class"   => (classification.getKlass()!=null   && !hintMap.get(rank).get.contains(classification.getKlass().toLowerCase), "Class:"+classification.getKlass() )
+                  case "order"   => (classification.getOrder()!=null   && !hintMap.get(rank).get.contains(classification.getOrder().toLowerCase) , "Order:"+classification.getOrder() )
+                  case "family"  => (classification.getFamily()!=null  && !hintMap.get(rank).get.contains(classification.getFamily().toLowerCase) , "Family:"+classification.getFamily() )
+                  case _ => (false, "")
+              }
+          }
+          if(conflict) return (false, comment)
+      }
+      (true, "")
+  }
+
+  /**
    * Match the classification
    */
   def processClassification(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
-
-    //attempt to get the classificatino from the cache
-//    ClassificationDAO.getByHashUsingMap(classification, processed.classification)
-//    val classification = new LinnaeanRankClassification(
-//      raw.classification.kingdom,
-//      raw.classification.phylum,
-//      raw.classification.classs,
-//      raw.classification.order,
-//      raw.classification.family,
-//      raw.classification.genus,
-//      raw.classification.species,
-//      raw.classification.specificEpithet,
-//      raw.classification.subspecies,
-//      raw.classification.infraspecificEpithet,
-//      raw.classification.scientificName)
-    
 
     //logger.debug("Record: "+occ.uuid+", classification for Kingdom: "+occ.kingdom+", Family:"+  occ.family +", Genus:"+  occ.genus +", Species: " +occ.species+", Epithet: " +occ.specificEpithet)
     try {
@@ -470,37 +493,21 @@ object ProcessRecords {
         //Check to see if the classification fits in with the supplied taxonomic hints
         //get the Attribution
         if(raw.occurrence.institutionCode!=null && raw.occurrence.collectionCode!=null){
-          val attributionDao = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
-          if(!attributionDao.isEmpty){
-            logger.debug("Checking taxonomic hints")
-            val taxHints = attributionDao.get.taxonomicHints
-            if(taxHints != null && !taxHints.isEmpty){
-              
-              var lastvalue:String = null
-              var matched = false
-              for{hint <- taxHints}{
-                val values =hint.split(":")
-                if(lastvalue != null && lastvalue != values(0)){
-                  //test to see if at least one of the values for the rank matched
-                  if(!matched){
-                    logger.info("Invalid higher classification for the match for : " + guid)
-                    return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Invalid higher classification"))
-                  }
-                  matched = false;
-                }
-                lastvalue = values(0)
-                lastvalue match{
-                  case "kingdom" => if(classification.getKingdom().toLowerCase == values(1)) matched = true
-                  case "phylum" => if(classification.getPhylum().toLowerCase == values(1)) matched = true
-                  case "class" => if(classification.getKlass().toLowerCase == values(1)) matched = true 
-                  
-                }
 
-              }
-              //we have made it through all the hints check to see if we have a match...
-              if(!matched){
-                logger.info("Invalid higher classification for the match for  : " + guid)
-                return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Invalid higher classification"))
+          val attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
+
+          if(!attribution.isEmpty){
+            logger.debug("Checking taxonomic hints")
+            val taxonHints = attribution.get.taxonomicHints
+
+            if(taxonHints != null && !taxonHints.isEmpty){
+              //TODO this map should be cacheable
+              //val hintMap = parseHints(taxonHints.toList)
+
+              val (isValid, comment) = isMatchValid(classification, attribution.get.parsedHints)
+              if(!isValid){
+                  logger.info("Conflict in matched classification. Matched: " + guid+ ", Matched: "+comment+", Taxonomic hints in use: " + taxonHints.toList)
+                  return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Conflict in matched classification. Matched: "+ comment))
               }
             }
           }

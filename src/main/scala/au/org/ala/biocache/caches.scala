@@ -304,6 +304,7 @@ object AttributionDAO {
 
   import ReflectBean._
   private val columnFamily = "attr"
+  private val lru = new org.apache.commons.collections.map.LRUMap(10000)
 
   /**
    * Persist the attribution information.
@@ -318,15 +319,26 @@ object AttributionDAO {
    * Retrieve attribution via institution/collection codes.
    */
   def getByCodes(institutionCode:String, collectionCode:String) : Option[Attribution] = {
+
     if(institutionCode!=null && collectionCode!=null){
       val uuid = institutionCode.toUpperCase+"|"+collectionCode.toUpperCase
-      val map = DAO.persistentManager.get(uuid,"attr")
-      if(!map.isEmpty){
-        val attribution = new Attribution
-        DAO.mapPropertiesToObject(attribution,map.get)
-        Some(attribution)
+
+      val cachedObject = lru.get(uuid)
+      if(cachedObject!=null){
+        cachedObject.asInstanceOf[Option[Attribution]]
       } else {
-        None
+          val map = DAO.persistentManager.get(uuid,"attr")
+          val result = {
+              if(!map.isEmpty){
+                val attribution = new Attribution
+                DAO.mapPropertiesToObject(attribution,map.get)
+                Some(attribution)
+              } else {
+                None
+              }
+          }
+          lru.put(uuid,result)
+          result
       }
     } else {
         None

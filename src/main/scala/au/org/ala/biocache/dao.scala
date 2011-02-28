@@ -1,7 +1,7 @@
 package au.org.ala.biocache
 
 import au.org.ala.checklist.lucene.CBIndexSearch
-import au.org.ala.sds.SensitiveSpeciesFinderFactory
+//import au.org.ala.sds.SensitiveSpeciesFinderFactory
 import au.org.ala.util.ReflectBean
 import java.io.OutputStream
 import scala.collection.JavaConversions
@@ -52,33 +52,32 @@ object DAO {
   val nameIndex = new CBIndexSearch("/data/lucene/namematching")
 
   //Only used during record processing - it will take awhile the first time it is accessed
-  lazy val sensitiveSpeciesFinderFactory = {
-    val dataSource = new BasicDataSource();
-    dataSource.setDriverClassName("com.mysql.jdbc.Driver")
-    dataSource.setUrl("jdbc:mysql://localhost/portal")
-    dataSource.setUsername("root")
-    dataSource.setPassword("password")
-    try{
-      val properties = new Properties()
-          properties.load(DAO.getClass.getResourceAsStream("/sds.properties"))
-          logger.info("Properties loaded from sensitive.properties on classpath")
-          if(properties!=null){
-            val driver = properties.getProperty("dataSource.driver")
-            val url = properties.getProperty("dataSource.url")
-            val username = properties.getProperty("dataSource.username")
-            val password = properties.getProperty("dataSource.password")
-            dataSource.setDriverClassName(driver)
-            dataSource.setUrl(url)
-            dataSource.setUsername(username)
-            dataSource.setPassword(password)
-          }
-    }
-    catch{
-      case e :Exception => logger.warn("Unable to load sensitive data service configuration. Using default settings")
-    }
-    SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(dataSource, nameIndex);
-    
-  }
+//  lazy val sensitiveSpeciesFinderFactory = {
+//    val dataSource = new BasicDataSource();
+//    dataSource.setDriverClassName("com.mysql.jdbc.Driver")
+//    dataSource.setUrl("jdbc:mysql://localhost/portal")
+//    dataSource.setUsername("root")
+//    dataSource.setPassword("password")
+//    try{
+//      val properties = new Properties()
+//          properties.load(DAO.getClass.getResourceAsStream("/sds.properties"))
+//          logger.info("Properties loaded from sensitive.properties on classpath")
+//          if(properties!=null){
+//            val driver = properties.getProperty("dataSource.driver")
+//            val url = properties.getProperty("dataSource.url")
+//            val username = properties.getProperty("dataSource.username")
+//            val password = properties.getProperty("dataSource.password")
+//            dataSource.setDriverClassName(driver)
+//            dataSource.setUrl(url)
+//            dataSource.setUsername(username)
+//            dataSource.setPassword(password)
+//          }
+//    }
+//    catch{
+//      case e :Exception => logger.warn("Unable to load sensitive data service configuration. Using default settings")
+//    }
+//    SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(dataSource, nameIndex);
+//  }
   //read in the object mappings using reflection
   val attributionDefn = loadDefn(classOf[Attribution])
   val occurrenceDefn = loadDefn(classOf[Occurrence])
