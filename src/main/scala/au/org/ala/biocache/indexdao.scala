@@ -93,7 +93,7 @@ trait IndexDAO {
    */
   def getHeaderValues() : Array[String] ={
     Array("id","occurrence_id","hub_uid","data_provider_uid","data_provider","data_resource_uid",
-          "data_resource","institution_code_uid", "institution_code","instiution_name",
+          "data_resource","institution_code_uid", "institution_code","institution_name",
           "collection_code_uid","collection_code","collection_name","catalogue_number",
           "taxon_concept_lsid","occurrence_date","taxon_name","common_name","names_and_lsid",
           "rank","rank_id","raw_taxon_name","raw_common_name","multimedia","image_url",
