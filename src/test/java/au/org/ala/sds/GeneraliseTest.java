@@ -118,5 +118,17 @@ public class GeneraliseTest {
         assertEquals("Latitude", "-33.63", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "150.44", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "1000", gl.getGeneralisationInMetres());
+
+        //
+        // Find sensitive species by accepted name (that differs from provided name)
+        //
+        latitude = "-16.167197";    // Qld
+        longitude = "145.374527";
+        ss = finder.findSensitiveSpeciesByAcceptedName("Rhomboda polygonoides");
+        assertNotNull(ss);
+        gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss);
+        assertEquals("Latitude", "-16.2", gl.getGeneralisedLatitude());
+        assertEquals("Longitude", "145.4", gl.getGeneralisedLongitude());
+        assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
     }
 }
