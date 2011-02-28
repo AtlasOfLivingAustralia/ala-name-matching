@@ -80,7 +80,7 @@ public class SensitiveSpeciesDaoImpl extends JdbcDaoSupport implements Sensitive
                 String acceptedName = match.getRankClassification().getScientificName();
                 String lsid = match.getLsid();
                 if (!ss.getScientificName().equalsIgnoreCase(acceptedName)) {
-                    logger.warn("Sensitive species '" + ss.getScientificName() + "' is not accepted name - '" + acceptedName + "'");
+                    logger.info("Sensitive species '" + ss.getScientificName() + "' is not accepted name - using '" + acceptedName + "'");
                     ss.setAcceptedName(acceptedName);
                 }
                 logger.debug("'" + ss.getScientificName() + "' ('" + acceptedName + "')\t'" + lsid + "'");
@@ -140,6 +140,15 @@ public class SensitiveSpeciesDaoImpl extends JdbcDaoSupport implements Sensitive
             acceptedName = result.getRankClassification().getScientificName();
         }
 
+        Integer index = nameMap.get(acceptedName);
+        if (index != null) {
+            return species.get(index);
+        } else {
+            return null;
+        }
+    }
+
+    public SensitiveSpecies findByAcceptedName(String acceptedName) {
         Integer index = nameMap.get(acceptedName);
         if (index != null) {
             return species.get(index);
