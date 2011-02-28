@@ -44,14 +44,22 @@ public class SensitiveSpeciesFinder implements Lookup {
         this.dao = dao;
     }
 
+    @Override
     public SensitiveSpecies findSensitiveSpecies(String scientificName) {
         return dao.findByName(scientificName);
     }
 
+    @Override
+    public SensitiveSpecies findSensitiveSpeciesByAcceptedName(String acceptedName) {
+        return dao.findByAcceptedName(acceptedName);
+    }
+
+    @Override
     public SensitiveSpecies findSensitiveSpeciesByLsid(String lsid) {
         return dao.findByLsid(lsid);
     }
 
+    @Override
     public boolean isSensitive(String scientificName) {
         return dao.findByName(scientificName) != null;
     }
@@ -66,7 +74,7 @@ public class SensitiveSpeciesFinder implements Lookup {
                 String acceptedName = match.getRankClassification().getSpecies();
                 String lsid = match.getLsid();
                 if (!ss.getScientificName().equalsIgnoreCase(acceptedName)) {
-                    logger.warn("Sensitive species '" + ss.getScientificName() + "' is not accepted name - '" + acceptedName + "'");
+                    logger.info("Sensitive species '" + ss.getScientificName() + "' is not accepted name - using '" + acceptedName + "'");
                 } else {
                     logger.debug("'" + acceptedName + "'\t'" + lsid + "'");
                     ss.setLsid(lsid);
@@ -77,4 +85,5 @@ public class SensitiveSpeciesFinder implements Lookup {
             }
         }
     }
+
 }
