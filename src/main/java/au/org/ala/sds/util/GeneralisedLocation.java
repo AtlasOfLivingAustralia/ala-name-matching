@@ -56,7 +56,7 @@ public class GeneralisedLocation {
     }
 
     public boolean isGeneralised() {
-        return locationGeneralisation != null && !locationGeneralisation.equals("");
+        return generalisationInMetres != null && !generalisationInMetres.equals("");
     }
 
     public String getOriginalLatitude() {
