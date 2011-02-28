@@ -67,7 +67,7 @@ trait IndexDAO {
         val value = map.get(fieldName)
         
         if(!value.isEmpty){
-          if(value.get equals "false"){
+          if(value.get equals "true"){
             if(assertions(0) == "")
               assertions = Array(OccurrenceDAO.removeQualityAssertionMarker(fieldName))
             else
@@ -294,8 +294,15 @@ object SolrOccurrenceDAO extends IndexDAO {
     val values = getOccIndexModel(guid, map)
     val doc = new SolrInputDocument()
     for(i <- 0 to values.length-1){
-      if(values(i) != "")
-        doc.addField(header(i), values(i))
+      if(values(i) != ""){
+        if(header(i) == "species_group" || header(i) == "assertions" ){
+          //multiple valus in this field
+          for(value<-values(i).split('|'))
+            doc.addField(header(i), value)
+        }
+        else
+          doc.addField(header(i), values(i))
+      }
     }
     solrDocList.add(doc)
     if(solrDocList.size ==10000){

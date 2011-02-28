@@ -51,8 +51,8 @@ object DAO {
 
   val nameIndex = new CBIndexSearch("/data/lucene/namematching")
 
-  //TODO add injection similar to persistentManager
-  val sensitiveSpeciesFinderFactory = {
+  //Only used during record processing - it will take awhile the first time it is accessed
+  lazy val sensitiveSpeciesFinderFactory = {
     val dataSource = new BasicDataSource();
     dataSource.setDriverClassName("com.mysql.jdbc.Driver")
     dataSource.setUrl("jdbc:mysql://localhost/portal")
