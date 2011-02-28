@@ -33,6 +33,8 @@ public class SearchRequestParams {
      */
     protected String[] facets = {"basis_of_record",
                                 "type_status",
+                                "institution_name",
+                                "collection_name",
                                 "state",
                                 "biogeographic_region",
                                 "rank",
@@ -40,8 +42,6 @@ public class SearchRequestParams {
                                 "family",
                                 "assertions",
                                 "month",
-                                "institution_name",
-                                "collection_name",
                                 "date",
                                 "species_group",
                                 "multimedia"};
