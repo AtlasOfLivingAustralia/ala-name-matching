@@ -27,13 +27,13 @@ public enum SensitivityZone {
 
     public static SensitivityZone getZone(String value) {
         for (SensitivityZone zone : SensitivityZone.values()) {
-            if (zone.getValue().equals(value)) {
+            if (zone.getValue().equalsIgnoreCase(value)) {
                 return zone;
             }
         }
 
         // Try abbreviation
-        return SensitivityZone.valueOf(value);
+        return SensitivityZone.valueOf(value.toUpperCase());
     }
 
     public String getValue() {
