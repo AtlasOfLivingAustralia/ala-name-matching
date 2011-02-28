@@ -114,7 +114,7 @@ public class GeneraliseTest {
         longitude = "150.441284";
         ss = finder.findSensitiveSpeciesByLsid("urn:lsid:biodiversity.org.au:afd.taxon:fb2de285-c58c-4c63-9268-9beef7c61c16");
         assertNotNull(ss);
-        gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss, "NSW");
+        gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss, "New South Wales");
         assertEquals("Latitude", "-33.63", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "150.44", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "1000", gl.getGeneralisationInMetres());
