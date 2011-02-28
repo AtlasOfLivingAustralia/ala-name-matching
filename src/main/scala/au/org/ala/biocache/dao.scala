@@ -58,6 +58,24 @@ object DAO {
     dataSource.setUrl("jdbc:mysql://localhost/portal")
     dataSource.setUsername("root")
     dataSource.setPassword("password")
+    try{
+      val properties = new Properties()
+          properties.load(DAO.getClass.getResourceAsStream("/sds.properties"))
+          logger.info("Properties loaded from sensitive.properties on classpath")
+          if(properties!=null){
+            val driver = properties.getProperty("dataSource.driver")
+            val url = properties.getProperty("dataSource.url")
+            val username = properties.getProperty("dataSource.username")
+            val password = properties.getProperty("dataSource.password")
+            dataSource.setDriverClassName(driver)
+            dataSource.setUrl(url)
+            dataSource.setUsername(username)
+            dataSource.setPassword(password)
+          }
+    }
+    catch{
+      case e :Exception => logger.warn("Unable to load sensitive data service configuration. Using default settings")
+    }
     SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(dataSource, nameIndex);
     
   }

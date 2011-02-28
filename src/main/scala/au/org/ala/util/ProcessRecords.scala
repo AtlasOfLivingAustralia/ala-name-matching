@@ -373,7 +373,7 @@ object ProcessRecords {
               //check to see if the coordinates have changed
               if(gl.isGeneralised){
                 logger.debug("Generalised coordinates for " +guid)
-                println("generlised")
+                
                 //store the generalised values as the raw.location.decimalLatitude/Longitude
                 //store the orginal as a hidden value
                 raw.location.originalDecimalLatitude = raw.location.decimalLatitude
@@ -389,6 +389,7 @@ object ProcessRecords {
                 DAO.persistentManager.put(guid,"occ",umap)
                 processed.location.decimalLatitude = gl.getGeneralisedLatitude
                 processed.location.decimalLongitude = gl.getGeneralisedLongitude
+                //TODO may need to fix locality information... change ths so that the generalisation is performed before the point matching to gazetteer...
               }
               
             }
