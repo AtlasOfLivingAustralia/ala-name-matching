@@ -10,6 +10,7 @@ import au.org.ala.util.ReflectBean
 import org.wyki.cassandra.pelops.{Pelops,Selector}
 import org.apache.cassandra.thrift.{Column,ConsistencyLevel}
 import au.org.ala.checklist.lucene.model.NameSearchResult
+import collection.mutable.HashMap
 
 //class SynchronizedLRUMap[K,E] extends scala.collection.JavaConversions.MapWrapper[K,E] {
 //   def this(maxSize : Int) = {
@@ -38,6 +39,7 @@ object ClassificationDAO{
 //  private val lru = java.util.Collections.synchronizedMap(new org.apache.commons.collections.map.LRUMap(10000))
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
   //private val lru = new SynchronizedLRUMap[String, Option[NameSearchResult]](10000)
+  val lock : AnyRef = new Object()
 
 
   /**
@@ -50,8 +52,11 @@ object ClassificationDAO{
             cl.subspecies,cl.infraspecificEpithet,cl.scientificName).reduceLeft(_+"|"+_)
     }
    // val hash = (cl.kingdom+'|'+cl.phylum+'|'+cl.phylum+'|'+cl.classs+'|'+cl.order+'|'+cl.family+'|'+cl.genus+'|'+cl.species+'|'+cl.specificEpithet+'|'+cl.subspecies+'|'+cl.infraspecificEpithet+'|'+cl.scientificName)
-
-    val cachedObject = lru.get(hash)
+    val cachedObject = {
+        lock.synchronized {
+             lru.get(hash)
+        }
+    }
     if(cachedObject!=null){
         //println("Cache hit for: "+hash)
        cachedObject.asInstanceOf[Option[NameSearchResult]]
@@ -72,16 +77,18 @@ object ClassificationDAO{
 
         val nsr = DAO.nameIndex.searchForRecord(lrc, true)
 
-        if(nsr!=null){
-            val result = Some(nsr)
-            lru.put(hash, result)
-            result
-        } else {
-            val result = None
-            lru.put(hash, result)
-            result
+        lock.synchronized {
+            if(nsr!=null){
+                val result = Some(nsr)
+                lru.put(hash, result)
+                result
+            } else {
+                val result = None
+                lru.put(hash, result)
+                result
+            }
         }
-    }
+      }
   }
 
   def getByHash(cl: LinnaeanRankClassification, classification:Classification):Array[QualityAssertion]={
@@ -128,9 +135,8 @@ object ClassificationDAO{
       Array()
       //cachedValue
     }
-
-    
   }
+
   def getByHashUsingMap(cl: LinnaeanRankClassification, classification:Classification):Array[QualityAssertion]={
     val mapValue = DAO.persistentManager.get(cl.hashCode.toString, columnFamily)
      if(mapValue.isEmpty || mapValue.get.size <1){
@@ -304,7 +310,7 @@ object AttributionDAO {
 
   import ReflectBean._
   private val columnFamily = "attr"
-  private val lru = new org.apache.commons.collections.map.LRUMap(10000)
+  private val lru = new HashMap[String, Option[Attribution]]
 
   /**
    * Persist the attribution information.
@@ -352,6 +358,7 @@ object AttributionDAO {
 object LocationDAO {
 
   private val columnFamily = "loc"
+  val lock : AnyRef = new Object()
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
   //private val lru = java.util.Collections.synchronizedMap(new org.apache.commons.collections.map.LRUMap(10000))
   //private val lru = new SynchronizedLRUMap[String, Option[Location]](10000)
@@ -395,11 +402,16 @@ object LocationDAO {
   def getByLatLon(latitude:String, longitude:String) : Option[Location] = {
     val uuid =  roundCoord(latitude)+"|"+roundCoord(longitude)
 
-    val cachedObject = lru.get(uuid)
+    val cachedObject = {
+        lock.synchronized {
+            lru.get(uuid)
+        }
+    }
     if(cachedObject!=null){
         cachedObject.asInstanceOf[Option[Location]]
     } else {
         val map = DAO.persistentManager.get(uuid,"loc")
+        lock.synchronized {
         if(!map.isEmpty){
           val location = new Location
           DAO.mapPropertiesToObject(location,map.get)
@@ -411,4 +423,5 @@ object LocationDAO {
         }
     }
   }
+}
 }

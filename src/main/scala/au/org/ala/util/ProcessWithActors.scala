@@ -14,7 +14,13 @@ object ProcessWithActors {
 
     println("Starting...")
     var ids = 0
-    val threads = 4
+    val threads = {
+        if(args.length>0){
+             args(0).toInt
+        } else {
+            4
+        }
+    }
     val pool = Array.fill(threads){ val p = new Consumer(Actor.self,ids); ids+=1; p.start }
 
     val start = System.currentTimeMillis
