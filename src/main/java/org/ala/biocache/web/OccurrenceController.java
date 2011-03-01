@@ -114,16 +114,13 @@ public class OccurrenceController {
 	}
 
 	/**
-	 * Default method for Controller
-	 *
-	 * @return mav
+	 * Returns the complete list of Occurrences
 	 */
-	@RequestMapping(value = "/occurrences", method = RequestMethod.GET)
-	public ModelAndView listOccurrences() {
-		ModelAndView mav = new ModelAndView();
-		mav.setViewName(LIST);
-		mav.addObject("message", "Results list for search goes here. (TODO)");
-		return mav;
+	@RequestMapping(value = {"/occurrences", "/occurrences/collection", "/occurrences/institution", "/occurrences/data-resource", "/occurrences/data-provider", "/occurrences/taxon"}, method = RequestMethod.GET)
+	public @ResponseBody SearchResultDTO listOccurrences(Model model) throws Exception {
+            SearchRequestParams srp = new SearchRequestParams();
+            srp.setQ("*:*");
+            return occurrenceSearch(srp, model);
 	}
 
 	/**
@@ -330,8 +327,9 @@ public class OccurrenceController {
         ZipOutputStream zop = new ZipOutputStream(out);
         zop.putNextEntry(new java.util.zip.ZipEntry(filename + ".csv"));
         Map<String, Integer> uidStats = null;
-        
-        uidStats = searchDAO.writeResultsToStream(requestParams.getQ(), requestParams.getFq(), zop, 100);
+        //put the factes
+        requestParams.setFacets(new String[]{"assertions"});
+        uidStats = searchDAO.writeResultsToStream(requestParams, zop, 100);
         zop.closeEntry();
 
         if (!uidStats.isEmpty()) {
@@ -397,41 +395,59 @@ public class OccurrenceController {
 	/**
 	 * Occurrence record page
 	 *
-     * TODO Log viewing stats for all uids associated with this record.
-     *
+         * When user supplies a uuid that is not found search for a unique record
+         * with the supplied occurrenc_id
+         *
+         * Returns a SearchResultDTO when there is more than 1 record with the supplied UUID
+         *
 	 * @param uuid
 	 * @param model
 	 * @throws Exception
 	 */
 	@RequestMapping(value = {"/occurrence/{uuid}","/occurrences/{uuid}", "/occurrence/{uuid}.json", "/occurrences/{uuid}.json"}, method = RequestMethod.GET)
-	public @ResponseBody OccurrenceDTO showOccurrence(@PathVariable("uuid") String uuid,
+	public @ResponseBody Object showOccurrence(@PathVariable("uuid") String uuid,
         HttpServletRequest request, Model model) throws Exception {
 
 		logger.debug("Retrieving occurrence record with guid: '"+uuid+"'");
 
         FullRecord[] fullRecord = Store.getAllVersionsByUuid(uuid);
+        if(fullRecord == null){
+            //check to see if we have an occurrence id
+            SearchRequestParams srp = new SearchRequestParams();
+            srp.setQ("occurrence_id:" + uuid);
+            SearchResultDTO result = occurrenceSearch(srp, model);
+            if(result.getTotalRecords()>1)
+                return result;
+            else if(result.getTotalRecords()==0)
+                return new OccurrenceDTO();
+            else
+                fullRecord = Store.getAllVersionsByUuid(result.getOccurrences().get(0).getUuid());
+
+        }
 
         OccurrenceDTO occ = new OccurrenceDTO(fullRecord);
         occ.setSystemAssertions(Store.getSystemAssertions(uuid));
         occ.setUserAssertions(Store.getUserAssertions(uuid));
 
         //log the statistics for viewing the record
-        String email = null;
-        String reason = "Viewing Occurrence Record " + uuid;
-        String ip = request.getLocalAddr();
-        Map<String, Integer> uidStats = new HashMap<String, Integer>();
-        if (occ.getProcessed().getAttribution().getCollectionUid() != null) {
-            uidStats.put(occ.getProcessed().getAttribution().getCollectionUid(), 1);
-        }
-        if (occ.getProcessed().getAttribution().getInstitutionUid() != null) {
-            uidStats.put(occ.getProcessed().getAttribution().getInstitutionUid(), 1);
-        }
-        if(occ.getProcessed().getAttribution().getDataProviderUid() != null)
-            uidStats.put(occ.getProcessed().getAttribution().getDataProviderUid(), 1);
-        if(occ.getProcessed().getAttribution().getDataResourceUid() != null)
-            uidStats.put(occ.getProcessed().getAttribution().getDataResourceUid(), 1);
+            String email = null;
+            String reason = "Viewing Occurrence Record " + uuid;
+            String ip = request.getLocalAddr();
+            Map<String, Integer> uidStats = new HashMap<String, Integer>();
+            if(occ.getProcessed() != null && occ.getProcessed().getAttribution()!=null){
+                if (occ.getProcessed().getAttribution().getCollectionUid() != null) {
+                    uidStats.put(occ.getProcessed().getAttribution().getCollectionUid(), 1);
+                }
+                if (occ.getProcessed().getAttribution().getInstitutionUid() != null) {
+                    uidStats.put(occ.getProcessed().getAttribution().getInstitutionUid(), 1);
+                }
+                if(occ.getProcessed().getAttribution().getDataProviderUid() != null)
+                    uidStats.put(occ.getProcessed().getAttribution().getDataProviderUid(), 1);
+                if(occ.getProcessed().getAttribution().getDataResourceUid() != null)
+                    uidStats.put(occ.getProcessed().getAttribution().getDataResourceUid(), 1);
+            }
 
-
+            
         LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED, email, reason, ip, uidStats);
         logger.log(RestLevel.REMOTE, vo);
 

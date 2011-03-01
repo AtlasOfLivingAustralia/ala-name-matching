@@ -39,23 +39,7 @@ import org.ala.biocache.dto.TaxaRankCountDTO;
  */
 public interface SearchDAO {
 	
-	/**
-	 * Add an occurrence to the biocache.
-	 * 
-	 * @param oc
-	 * @return
-	 * @throws Exception
-	 */
-	boolean addOccurrence(OccurrenceDTO oc) throws Exception;
 
-    /**
-     * Delete an occurrence from the biocache search index
-     *
-     * @param occurrenceId
-     * @return
-     * @throws Exception
-     */
-    boolean deleteOccurrence(String occurrenceId) throws Exception;
 	
     /**
      * Find all occurrences for a given (full text) query
@@ -89,14 +73,7 @@ public interface SearchDAO {
      */
     SearchResultDTO findByFulltextSpatialQuery(SpatialSearchRequestParams requestParams) throws Exception;
 
-    /**
-     * Retrieve an OccurrenceDTO for a given occurrence id
-     *
-     * @param id
-     * @return
-     * @throws Exception
-     */
-    OccurrenceDTO getById(String id) throws Exception;
+
 
     /**
      * Writes the species count in the specified circle to the output stream.
@@ -123,23 +100,9 @@ public interface SearchDAO {
      * @return A map of uids and counts that needs to be logged to the ala-logger
      * @throws Exception
      */
-	Map<String,Integer> writeResultsToStream(String query, String[] filterQuery, OutputStream out, int maxNoOfRecords) throws Exception;
+	Map<String,Integer> writeResultsToStream(SearchRequestParams searcParams, OutputStream out, int maxNoOfRecords) throws Exception;
 
-    /**
-     * Write out the results of this spatial query to the output stream
-     *
-     * @param query
-     * @param filterQuery
-     * @param out
-     * @param maxNoOfRecords
-     * @param latitiude
-     * @param longitiude
-     * @param radius
-     * @return
-     * @throws Exception
-     */
-    Map<String,Integer> writeResultsToStream(String query, String[] filterQuery, OutputStream out, int maxNoOfRecords, Float latitiude, Float longitiude, Integer radius) throws Exception;
-
+   
     /**
      * Retrieve an OccurrencePoint (distinct list of points - lat-long to 4 decimal places) for a given search
      *

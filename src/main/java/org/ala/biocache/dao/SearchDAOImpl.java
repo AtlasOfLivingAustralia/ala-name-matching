@@ -57,6 +57,7 @@ import au.com.bytecode.opencsv.CSVWriter;
 import com.ibm.icu.text.SimpleDateFormat;
 import org.ala.biocache.dto.SearchRequestParams;
 import org.ala.biocache.dto.SpatialSearchRequestParams;
+import org.ala.biocache.util.DownloadFields;
 
 /**
  * SOLR implementation of SearchDao. Uses embedded SOLR server (can be a memory hog).
@@ -82,6 +83,8 @@ public class SearchDAOImpl implements SearchDAO {
     protected static final String SPECIES_LSID = "species_lsid";
     protected static final String NAMES_AND_LSID = "names_and_lsid";
     protected static final String TAXON_CONCEPT_LSID = "taxon_concept_lsid";
+    /** Download properties */
+    protected DownloadFields downloadFields;
 
     /**
      * Initialise the SOLR server instance
@@ -97,72 +100,11 @@ public class SearchDAOImpl implements SearchDAO {
                 logger.error("Error initialising embedded SOLR server: " + ex.getMessage(), ex);
             }
         }
+        downloadFields = new DownloadFields();
     }
 
-    /**
-     * @see org.ala.biocache.dao.SearchDAO#addOccurrence(org.ala.biocache.model.RawOccurrenceRecord, org.ala.biocache.model.OccurrenceRecord)
-     * IS THIS BEIGN USED
-     */
-    public boolean addOccurrence(OccurrenceDTO oc) throws Exception {
-//		//TODO Do we need to add a
-//		SolrInputDocument doc = new SolrInputDocument();
-//		doc.addField("id", oc.getId());
-//		doc.addField("taxon_concept_lsid", oc.getTaxonConceptLsid());
-//		doc.addField("taxon_name", oc.getRawTaxonName());
-//		doc.addField("common_name", oc.getCommonName());
-//		if(oc.getBasisOfRecord()!=null) doc.addField("basis_of_record", oc.getBasisOfRecord());
-//		if(oc.getLatitude()!=null) doc.addField("latitude", oc.getLatitude());
-//		if(oc.getLongitude()!=null) doc.addField("longitude", oc.getLongitude());
-//		if(oc.getPoint1()!=null) doc.addField("point-1", oc.getPoint1());
-//		if(oc.getPoint01()!=null) doc.addField("point-0.1", oc.getPoint01());
-//		if(oc.getPoint001()!=null) doc.addField("point-0.01", oc.getPoint001());
-//		if(oc.getPoint0001()!=null) doc.addField("point-0.001", oc.getPoint0001());
-//		if(oc.getPoint00001()!=null) doc.addField("point-0.0001", oc.getPoint00001());
-//		if(oc.getDataProviderUid()!=null) doc.addField("data_provider_uid", oc.getDataProviderUid());
-//		if(oc.getDataProviderUid()!=null) doc.addField("data_resource_uid", oc.getDataResourceUid());
-//		if(oc.getDataProviderUid()!=null) doc.addField("data_provider", oc.getDataProvider());
-//		if(oc.getDataProviderUid()!=null) doc.addField("data_resource", oc.getDataResource());
-//		if(oc.getOccurrenceDate()!=null) doc.addField("occurrence_date", oc.getOccurrenceDate());
-//		if(oc.getYear()!=null) doc.addField("year", oc.getYear());
-//		if(oc.getMonth()!=null) doc.addField("month", oc.getMonth());
-//		if(oc.getCoordinatePrecision()!=null) doc.addField("lat_long_precision", oc.getCoordinatePrecision());
-//		if(oc.getState()!=null) doc.addField("state", oc.getState());
-//		if(oc.getRank()!=null) doc.addField("rank", oc.getRank());
-//		if(oc.getRankId()!=null) doc.addField("rank_id", oc.getRankId());
-//		if(oc.getNamesLsid()!=null) doc.addField("names_and_lsid", oc.getNamesLsid());
-//		if(oc.getLeft()!=null) doc.addField("lft", oc.getLeft());
-//		if(oc.getRight()!=null) doc.addField("rgt", oc.getRight());
-//
-//		if(oc.getKingdom()!=null) doc.addField("kingdom", oc.getKingdom());
-//		if(oc.getPhylum()!=null) doc.addField("phylum", oc.getPhylum());
-//		if(oc.getClass()!=null) doc.addField("class", oc.getClazz());
-//		if(oc.getOrder()!=null) doc.addField("order", oc.getOrder());
-//		if(oc.getFamily()!=null) doc.addField("family", oc.getFamily());
-//		if(oc.getGenus()!=null) doc.addField("genus", oc.getGenus());
-//
-//		if(oc.getUserId()!=null) doc.addField("user_id", oc.getUserId());
-//		if(oc.getCollector()!=null) doc.addField("collector", oc.getCollector());
-//		doc.addField("confidence", oc.getConfidence());
-//
-//		//FIXME we need to lookup the states, ibra regions
-//		server.add(doc);
-//		server.commit();
-        return true;
-    }
 
-    /**
-     * @see org.ala.biocache.dao.SearchDAO#deleteOccurrence(String)
-     * //Probably don't want to delete from here because we need to handle updates to cassandra
-     * IS THIS BEING USED
-     */
-    @Override
-    public boolean deleteOccurrence(String occurrenceId) throws Exception {
-        // will throw exception if it fails...
-//        server.deleteById(occurrenceId);
-//        server.commit();
-        return true;
-    }
-
+  
     /**
      * @see org.ala.biocache.dao.SearchDAO#findByFulltextQuery(java.lang.String, java.lang.String,
      *         java.lang.Integer, java.lang.Integer, java.lang.String, java.lang.String)
@@ -222,6 +164,7 @@ public class SearchDAOImpl implements SearchDAO {
 
     /**
      * @see org.ala.biocache.dao.SearchDAO#writeSpeciesCountByCircleToStream(java.lang.Float, java.lang.Float, java.lang.Integer, java.lang.String, java.util.List, javax.servlet.ServletOutputStream)
+     * IS THIS NECESSARY??
      */
     public int writeSpeciesCountByCircleToStream(Float latitude, Float longitude,
             Float radius, String rank, List<String> higherTaxa, ServletOutputStream out) throws Exception {
@@ -260,48 +203,32 @@ public class SearchDAOImpl implements SearchDAO {
     /**
      * @see org.ala.biocache.dao.SearchDAO#writeResultsToStream(java.lang.String, java.lang.String[], java.io.OutputStream, int)
      *
-     * TODO Make more dynamic and fix up header
+     * 
      */
-    public Map<String, Integer> writeResultsToStream(String query, String[] filterQuery, OutputStream out, int i) throws Exception {
+    public Map<String, Integer> writeResultsToStream(SearchRequestParams searchParams, OutputStream out, int i) throws Exception {
 
         int resultsCount = 0;
         Map<String, Integer> uidStats = new HashMap<String, Integer>();
         try {
-            String queryString = formatSearchQuery(query);
-            logger.info("search query: " + queryString);
-            SolrQuery solrQuery = new SolrQuery();
-            solrQuery.setQueryType("standard");
+            logger.info("search query: " + searchParams.getQ());
+            SolrQuery solrQuery = initSolrQuery(searchParams);
             solrQuery.setRows(MAX_DOWNLOAD_SIZE);
-            solrQuery.setQuery(queryString);
+            solrQuery.setQuery(searchParams.getQ());
 
             int startIndex = 0;
             int pageSize = 1000;
-
-            QueryResponse qr = runSolrQuery(solrQuery, filterQuery, pageSize, startIndex, "score", "asc");
-            String[] titles = new String[]{"uuid",
-                "catalogNumber",
-                "taxonConceptID.p",
-                "scientificName",
-                "vernacularName",
-                "scientificName.p",
-                "taxonRank.p",
-                "vernacularName.p", "kingdom.p", "phylum.p", "classs.p", "order.p",
-                "family.p", "genus.p", "species.p", "subspecies.p",
-                "institutionCode",
-                "collectionCode",
-                "dataProviderName.p",
-                "dataResourceName.p",
-                "latitude.p",
-                "longitude.p",
-                "coordinatePrecision", "country.p",
-                "ibra.p",
-                "imcra.p", "stateProvince.p", "lga.p",
-                "minimumElevationInMeters", "maximumElevationInMeters",
-                "minimumDepthInMeters", "maximumDepthInMeters",
-                "year.p", "month.p", "day.p",
-                "eventDate.p",
-                "eventTime.p", "basisOfRecord",
-                "sex", "preparations"};
+            StringBuilder  sb = new StringBuilder(downloadFields.getFields());
+            QueryResponse qr = runSolrQuery(solrQuery, searchParams.getFq(), pageSize, startIndex, "score", "asc");
+            //get the assertion factes to add them to the download fields
+            List<FacetField> facets = qr.getFacetFields();
+            for(FacetField facet : facets){
+               for(FacetField.Count facetEntry : facet.getValues()){
+                   //System.out.println("facet: " + facetEntry.getName());
+                   sb.append(",").append(facetEntry.getName()).append(".qa");
+               }
+            }
+            String[] fields = sb.toString().split(",");
+            String[] titles = downloadFields.getHeader(fields);
             out.write((StringUtils.join(titles, "\t") + "\n").getBytes());
 
             List<String> uuids = new ArrayList<String>();
@@ -321,33 +248,10 @@ public class SearchDAOImpl implements SearchDAO {
                 }
 
                 au.org.ala.biocache.Store.writeToStream(out, "\t", "\n", uuids.toArray(new String[]{}),
-                        new String[]{"uuid",
-                            "catalogNumber",
-                            "taxonConceptID.p",
-                            "scientificName",
-                            "vernacularName",
-                            "scientificName.p",
-                            "taxonRank.p",
-                            "vernacularName.p", "kingdom.p", "phylum.p", "classs.p", "order.p",
-                            "family.p", "genus.p", "species.p", "subspecies.p",
-                            "institutionCode",
-                            "collectionCode",
-                            "dataProviderName.p",
-                            "dataResourceName.p",
-                            "latitude.p",
-                            "longitude.p",
-                            "coordinatePrecision", "country.p",
-                            "ibra.p",
-                            "imcra.p", "stateProvince.p", "lga.p",
-                            "minimumElevationInMeters", "maximumElevationInMeters",
-                            "minimumDepthInMeters", "maximumDepthInMeters",
-                            "year.p", "month.p", "day.p",
-                            "eventDate.p",
-                            "eventTime.p", "basisOfRecord",
-                            "sex", "preparations"});
+                        fields);
                 startIndex += pageSize;
                 if (resultsCount < MAX_DOWNLOAD_SIZE) {
-                    qr = runSolrQuery(solrQuery, filterQuery, pageSize, startIndex, "score", "asc");
+                    qr = runSolrQuery(solrQuery, searchParams.getFq(), pageSize, startIndex, "score", "asc");
                 }
             }
 
@@ -358,16 +262,7 @@ public class SearchDAOImpl implements SearchDAO {
         return uidStats;
     }
 
-    /**
-     * @see org.ala.biocache.dao.SearchDAO#writeResultsToStream(java.lang.String, java.lang.String[], java.io.OutputStream, int, Float, Float, Integer)
-     */
-    @Override
-    public Map<String, Integer> writeResultsToStream(String query, String[] filterQuery, OutputStream out, int i, Float lat, Float lon, Integer rad) throws Exception {
-        Float radius = Float.parseFloat(rad + "f");
-        String queryString = buildSpatialQueryString(formatSearchQuery(query), lat, lon, radius);
-        return writeResultsToStream(queryString, filterQuery, out, i);
-    }
-
+   
     private void incrementCount(Map<String, Integer> values, String uid) {
         if (uid != null) {
             Integer count = values.containsKey(uid) ? values.get(uid) : 0;
@@ -376,30 +271,7 @@ public class SearchDAOImpl implements SearchDAO {
         }
     }
 
-    /**
-     * @see org.ala.biocache.dao.SearchDAO#getById(java.lang.String)
-     * REMOVE THIS METHOD All references to this should be replaced byStore.getByUUID
-     */
-    @Override
-    public OccurrenceDTO getById(String id) throws Exception {
-        OccurrenceDTO oc = null;
-
-//        String query = "id:"+ClientUtils.escapeQueryChars(id);
-//        SolrQuery solrQuery = new SolrQuery();
-//        solrQuery.setQueryType("standard");
-//        solrQuery.setQuery(query);
-//        QueryResponse qr = runSolrQuery(solrQuery, null, 1, 0, "score", "asc");
-//        SearchResultDTO searchResults = processSolrResponse(qr, solrQuery);
-//        List<OccurrenceIndex> ocs = searchResults.getOccurrences();
-//
-//        if (!ocs.isEmpty() && ocs.size() == 1) {
-//            oc = ocs.get(0);
-//        } else if (!ocs.isEmpty()) {
-//            logger.warn("Get by id returned more than ONE result: "+ocs.size()+" for id: "+id);
-//        }
-
-        return oc;
-    }
+    
 
     /**
      * @see org.ala.biocache.dao.SearchDao#getFacetPoints(java.lang.String, java.lang.String[], PointType pointType)
