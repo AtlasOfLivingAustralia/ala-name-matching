@@ -46,14 +46,16 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
- *
+ * WMS and static map controller
+ * 
  * @author "Ajay Ranipeta <Ajay.Ranipeta@csiro.au>"
  */
-@Controller
-public class WMSController {
+@Controller("mapController")
+public class MapController {
 
     /** Logger initialisation */
-    private final static Logger logger = Logger.getLogger(WMSController.class);
+    private final static Logger logger = Logger.getLogger(MapController.class);
+    private String baseMapPath = "/data/tmp/mapaus1_white.png";
     /** Fulltext search DAO */
     @Inject
     protected SearchDAO searchDAO;
@@ -63,7 +65,7 @@ public class WMSController {
 
     @RequestMapping(value = "/occurrences/wms", method = RequestMethod.GET)
     public void pointsWmsImage(SpatialSearchRequestParams requestParams,
-            @RequestParam(value = "colourby", required = false) String colourby,
+            @RequestParam(value = "colourby", required = false, defaultValue = "0") Integer colourby,
             @RequestParam(value = "width", required = false, defaultValue = "256") Integer widthObj,
             @RequestParam(value = "height", required = false, defaultValue = "256") Integer heightObj,
             @RequestParam(value = "zoom", required = false, defaultValue = "0") Integer zoomLevel,
@@ -119,15 +121,22 @@ public class WMSController {
         bboxToQuery(bboxString2, fqList);
 
         PointType pointType = PointType.POINT_RAW;
-        //pointType = getPointTypeForZoomLevel(zoomLevel);
+        pointType = getPointTypeForZoomLevel(zoomLevel);
+
+
+        // add the colourby value if available
+        //if (StringUtils.isNotBlank(colourby)) {
+        //    fqList.add(colourby);
+        //}
+
 
         String[] newFilterQuery = (String[]) fqList.toArray(new String[fqList.size()]); // convert back to array
 
         requestParams.setFq(newFilterQuery);
 
         //List<OccurrencePoint> points = searchDAO.getFacetPoints(searchQuery.getQuery(), searchQuery.getFilterQuery(), pointType);
-        //List<OccurrencePoint> points = searchDAO.getFacetPoints(requestParams.getQ(), requestParams.getFq(), pointType);
-        List<OccurrencePoint> points = searchDAO.getOccurrences(requestParams, pointType, colourby, 0);
+        List<OccurrencePoint> points = searchDAO.getFacetPoints(requestParams.getQ(), requestParams.getFq(), pointType);
+        //List<OccurrencePoint> points = searchDAO.getOccurrences(requestParams, pointType, colourby, 0);
         logger.debug("Points search for " + pointType.getLabel() + " - found: " + points.size());
         //model.addAttribute("points", points);
 
@@ -174,9 +183,22 @@ public class WMSController {
             y = (int) ((convertLatToPixel(lat) - pbbox[3]) * height_mult);
 
             //logger.debug("generating colour for: " + pt.getOccurrenceUid() + " <-" + colourby);
-            if (StringUtils.isNotBlank(pt.getOccurrenceUid())) {
+//            if (StringUtils.isNotBlank(pt.getOccurrenceUid())) {
+//                //logger.debug("\twith hashcode: " + pt.getOccurrenceUid().hashCode());
+//                int colour = 0xFF000000 | pt.getOccurrenceUid().hashCode();
+//                //logger.debug("name: " + pt.getOccurrenceUid() + " => colour: " + colour);
+//
+//                Color c = new Color(colour);
+//                //logger.debug("setting filter colour");
+//                g.setPaint(c);
+//
+//            } else {
+//                g.setPaint(Color.blue);
+//            }
+            if (colourby != null) {
+
                 //logger.debug("\twith hashcode: " + pt.getOccurrenceUid().hashCode());
-                int colour = 0xFF000000 | pt.getOccurrenceUid().hashCode();
+                int colour = 0xFF000000 | colourby.intValue();
                 //logger.debug("name: " + pt.getOccurrenceUid() + " => colour: " + colour);
 
                 Color c = new Color(colour);
@@ -225,7 +247,7 @@ public class WMSController {
 
         int width = widthObj.intValue();
         int height = heightObj.intValue();
-        
+
         // the bounding box
         String bboxString = "110,-45,157,-9";
         double[] bbox = new double[4];
@@ -402,7 +424,7 @@ public class WMSController {
 
         // add the details back into the requestParam object
         requestParams.setQ(searchQuery.getQuery());
-        requestParams.setFacets(searchQuery.getFilterQuery());
+        requestParams.setFq(searchQuery.getFilterQuery());
 
         List<OccurrencePoint> points = searchDAO.getOccurrences(requestParams, pointType, "", 1);
         logger.info("Points search for " + pointType.getLabel() + " - found: " + points.size());
@@ -430,6 +452,48 @@ public class WMSController {
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             ImageIO.write(baseImage, "png", outputStream);
+            ServletOutputStream outStream = response.getOutputStream();
+            outStream.write(outputStream.toByteArray());
+            outStream.flush();
+            outStream.close();
+
+        } catch (Exception e) {
+            System.out.println("Unable to write image: ");
+            e.printStackTrace(System.out);
+        }
+    }
+
+    @RequestMapping(value = "/occurrences/legend", method = RequestMethod.GET)
+    public void pointLegendImage(@RequestParam(value = "colourby", required = false, defaultValue = "0") Integer colourby,
+            @RequestParam(value = "width", required = false, defaultValue = "50") Integer widthObj,
+            @RequestParam(value = "height", required = false, defaultValue = "50") Integer heightObj,
+            HttpServletResponse response) {
+        try {
+            
+            response.setContentType("image/png");
+            
+            int width = widthObj.intValue();
+            int height = heightObj.intValue();
+
+            BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = (Graphics2D) img.getGraphics();
+
+            if (colourby != null) {
+
+                int colour = 0xFF000000 | colourby.intValue();
+                Color c = new Color(colour);
+                g.setPaint(c);
+
+            } else {
+                g.setPaint(Color.blue);
+            }
+
+            g.fillOval(0, 0, width, width);
+
+            g.dispose();
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ImageIO.write(img, "png", outputStream);
             ServletOutputStream outStream = response.getOutputStream();
             outStream.write(outputStream.toByteArray());
             outStream.flush();
