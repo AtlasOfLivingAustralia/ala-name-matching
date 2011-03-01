@@ -117,6 +117,7 @@ trait IndexDAO {
     //get the lat lon values so that we can determine all the point values
     var slat = getValue("decimalLatitude.p", map)
     var slon = getValue("decimalLongitude.p",map)
+    var latlon =""
     val sciName = getValue("scientificName.p",map)
     val taxonConceptId = getValue("taxonConceptID.p", map)
     val vernacularName = getValue("vernacularName.p", map)
@@ -141,6 +142,7 @@ trait IndexDAO {
       try{
       lat = java.lang.Double.parseDouble(slat)
       lon = java.lang.Double.parseDouble(slon)
+      latlon = slat +"," +slon
       }
       catch{
         //If the latitude or longitude can't be parsed into a double we don't want to index the values
@@ -161,7 +163,7 @@ trait IndexDAO {
           getValue("order.p", map), family, getValue("genus.p",map),
           getValue("species.p", map), getValue("stateProvince.p", map), getValue("imcra.p", map),
           getValue("ibra.p", map), getValue("lga.p", map), slat,
-          slon, slat +"," + slon, getLatLongString(lat, lon, "#"), getLatLongString(lat, lon, "#.#"),
+          slon, latlon, getLatLongString(lat, lon, "#"), getLatLongString(lat, lon, "#.#"),
           getLatLongString(lat, lon, "#.##"), getLatLongString(lat, lon, "#.###"),
           getLatLongString(lat, lon, "#.####"), getValue("year.p",map), getValue("month.p", map), getValue("basisOfRecord.p",map),
           getValue("basisOfRecord", map), getValue("typeStatus.p", map), getValue("typeStatus",map),
