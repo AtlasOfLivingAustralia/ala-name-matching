@@ -504,7 +504,7 @@ object ProcessRecords {
               //TODO this map should be cacheable
               //val hintMap = parseHints(taxonHints.toList)
 
-              val (isValid, comment) = isMatchValid(classification, attribution.get.parsedHints)
+              val (isValid, comment) = isMatchValid(classification, attribution.get.retrieveParseHints)
               if(!isValid){
                   logger.info("Conflict in matched classification. Matched: " + guid+ ", Matched: "+comment+", Taxonomic hints in use: " + taxonHints.toList)
                   return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Conflict in matched classification. Matched: "+ comment))

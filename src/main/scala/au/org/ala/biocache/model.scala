@@ -503,25 +503,27 @@ class Attribution  (
   def this() = this(null,null,null,null,null,null,null,null,null, null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
 
-  lazy val parsedHints = {
-      if(taxonomicHints!=null){
-        parseHints(taxonomicHints.toList)
-      } else {
-        parseHints(List())
-      }
-  }
-
+  @JsonIgnore
+  private var parsedHints:Map[String,Set[String]] = null
   /**
    * Parse the hints into a usable map with rank -> Set.
    */
-  def parseHints(taxonHints:List[String]) : Map[String,Set[String]] = {
-      val rankSciNames = new HashMap[String,Set[String]]
-      val pairs = taxonHints.map(x=> x.split(":"))
-      for(pair <- pairs){
-          val values = rankSciNames.getOrElse(pair(0),Set())
-          rankSciNames.put(pair(0), values + pair(1).trim.toLowerCase)
+  @JsonIgnore
+  def retrieveParseHints : Map[String,Set[String]] = {
+      if(parsedHints==null){
+          if(taxonomicHints!=null){
+            val rankSciNames = new HashMap[String,Set[String]]
+            val pairs = taxonomicHints.toList.map(x=> x.split(":"))
+            for(pair <- pairs){
+              val values = rankSciNames.getOrElse(pair(0),Set())
+              rankSciNames.put(pair(0), values + pair(1).trim.toLowerCase)
+            }
+            parsedHints = rankSciNames.toMap
+          } else {
+            parsedHints = Map[String,Set[String]]()
+          }
       }
-      rankSciNames.toMap
+      parsedHints
   }
 
   @JsonIgnore
