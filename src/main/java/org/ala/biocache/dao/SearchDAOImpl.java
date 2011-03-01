@@ -813,6 +813,10 @@ public class SearchDAOImpl implements SearchDAO {
                     suffix = ClientUtils.escapeQueryChars(parts[1]);
                 }
 
+                //FIXME check for blank value and replace with constant
+                if(StringUtils.isEmpty(suffix)){
+                    suffix = "Unknown";
+                }
                 solrQuery.addFilterQuery(prefix + ":" + suffix); // solrQuery.addFacetQuery(facetQuery)
                 logger.info("adding filter query: " + prefix + ":" + suffix);
             }
