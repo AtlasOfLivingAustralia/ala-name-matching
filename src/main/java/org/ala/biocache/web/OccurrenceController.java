@@ -214,6 +214,7 @@ public class OccurrenceController {
             return searchResult;
         }
 
+        SearchUtils.setDefaultParams(requestParams);
 		//update the request params so the search caters for the supplied uid
 		searchUtils.updateCollectionSearchString(requestParams, uid);
 		logger.debug("solr query: " + requestParams);
