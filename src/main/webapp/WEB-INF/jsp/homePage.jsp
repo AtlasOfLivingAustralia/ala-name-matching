@@ -37,6 +37,16 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             <li><strong>List assertions for occurrence:</strong> /occurrences/{uuid}/assertions/</li>
         </ul>
 
+        <h3>Breakdowns</h3>
+        <ul>
+            <li><strong>Breakdown for collection based on limit:</strong> /breakdown/collections/{id}?max={max} - will return all collections if {id} is omitted</li>
+            <li><strong>Breakdown for institution based on limit:</strong> /breakdown/institutions/{id}?max={max} - will return all institutions if {id} is omitted</li>
+            <li><strong>Breakdown for collection at a rank:</strong> /breakdown/collections/{id}/rank/{rank} - will return all collections if {id} is omitted</li>
+            <li><strong>Breakdown for institution at a rank:</strong> /breakdown/institutions/{id}/rank/{rank} - will return all institutions if {id} is omitted</li>
+            <li><strong>Breakdown for collection at the supplied name and rank: </strong> /breakdown/collections/{id}/rank/{rank}/name/{name} - will return all collections if {id} is omitted</li>
+            <li><strong>Breakdown for institution at the supplied name and rank: </strong> /breakdown/institutions/{id}/rank/{rank}/name/{name} - will return all institutions if {id} is omitted</li>
+        </ul>
+
         <h2>Free text search of occurrence records (will return JSON)</h2>
 		<div id="inpage_search">
 			<form id="search-inpage" action="occurrences/search" method="get" name="search-form">

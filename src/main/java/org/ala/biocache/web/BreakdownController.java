@@ -29,13 +29,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * A simple controller for providing breakdowns on top of the biocache.
  * 
- * FIXME Is this in use ?
- * 
+ *  
  * @author Dave Martin (David.Martin@csiro.au)
+ * @author Natasha Carter (Natasha.Carter@csiro.au)
  */
 @Controller
 public class BreakdownController {
@@ -45,133 +46,114 @@ public class BreakdownController {
 
 	protected SearchUtils searchUtils = new SearchUtils();
 
-	protected String SPECIES_JSON = "breakdown/decade/species";
 	
-	protected String COLLECTIONS_JSON = "breakdown/decade/collections";
 
-	/**
-	 * 
-	 * @param guid
-	 * @param model
-	 * @return
-	 * @throws Exception
-	 */
-	@RequestMapping(value = "/breakdown/species/decades/{query}.json", method = RequestMethod.GET)
-	public String speciesDecadeBreakdown(@PathVariable("query") String query,
-			Model model) throws Exception {
-		SearchQuery searchQuery = new SearchQuery(query, "collection");
-		searchUtils.updateTaxonConceptSearchString(searchQuery);
-		List<FieldResultDTO> results = searchDAO.findRecordByDecadeFor(searchQuery.getQuery());
-		model.addAttribute("decades", results);
-		return SPECIES_JSON;
-	}
 
-	/**
-	 * 
-	 * @param guid
-	 * @param model
-	 * @return
-	 * @throws Exception
-	 */
-	@RequestMapping(value = "/breakdown/collection/decades/{query}.json", method = RequestMethod.GET)
-	public String collectionDecadeBreakdown(
-			@PathVariable("query") String query, Model model) throws Exception {
-		SearchQuery searchQuery = new SearchQuery(query, "collection");
-		searchUtils.updateCollectionSearchString(searchQuery);
-		List<FieldResultDTO> results = searchDAO
-				.findRecordByDecadeFor(searchQuery.getQuery());
-		model.addAttribute("decades", results);
-		return COLLECTIONS_JSON;
-	}
+        /**
+         * Returns a breakdown of collection,institution by a specific rank where the breakdown is limited to the
+         * supplied max number. The rank that is returned depends on which rank contains closest to max
+         * distinct values.
+         *
+         * @param uuid
+         * @param max
+         * @param model
+         * @return
+         * @throws Exception
+         */
+        @RequestMapping(value = {"/breakdown/collections/{uuid}*","/breakdown/institutions/{uuid}*"}, method = RequestMethod.GET)
+        public @ResponseBody TaxaRankCountDTO collectionLimitBreakdown(@PathVariable("uuid") String uuid,
+                        @RequestParam(value = "max", required = true) Integer max,
+                        Model model) throws Exception {
 
-	/**
-	 * 
-	 * @param guid
-	 * @param model
-	 * @return
-	 * @throws Exception
-	 */
-	@RequestMapping(value = "/breakdown/species/states/{query}.json", method = RequestMethod.GET)
-	public String speciesStateBreakdown(@PathVariable("query") String query,
-			Model model) throws Exception {
-		SearchQuery searchQuery = new SearchQuery(query, "collection");
-		searchUtils.updateTaxonConceptSearchString(searchQuery);
-		List<FieldResultDTO> results = searchDAO.findRecordByStateFor(searchQuery.getQuery());
-		model.addAttribute("states", results);
-		return SPECIES_JSON;
-	}
+            return searchDAO.findTaxonCountForUid(searchUtils.getUIDSearchString(uuid.split(",")), max);
+        }
+        /**
+         * TODO change to individual services...
+         * Returns a breakdown of institution by a specific rank where the breakdown is limited to the
+         * supplied max number. The rank that is returned depends on which rank contains closest to max
+         * distinct values.
+         *
+         * @param uuid
+         * @param max
+         * @param model
+         * @return
+         * @throws Exception
+         */
+//        @RequestMapping(value = "/breakdown/institutions/{uuid}*", method = RequestMethod.GET)
+//        public TaxaRankCountDTO institutionLimitBreakdown(@PathVariable("uuid") String uuid,
+//                        @RequestParam(value = "max", required = true) Integer max,
+//                        Model model) throws Exception {
+//
+//            return searchDAO.findTaxonCountForUid(searchUtils.getUIDSearchString(uuid.split(","), "institution_code_uid"), max);
+//        }
 
-	/**
-	 * 
-	 * @param guid
-	 * @param model
-	 * @return
-	 * @throws Exception
-	 */
-	@RequestMapping(value = "/breakdown/collection/states/{query}.json", method = RequestMethod.GET)
-	public String collectionStateBreakdown(@PathVariable("query") String query,
-			Model model) throws Exception {
-		SearchQuery searchQuery = new SearchQuery(query, "collection");
-		searchUtils.updateCollectionSearchString(searchQuery);
-		List<FieldResultDTO> results = searchDAO.findRecordByStateFor(searchQuery.getQuery());
-		model.addAttribute("states", results);
-		return COLLECTIONS_JSON;
-	}
+        /**
+         * Performs a breakdown without limiting the collection or institution
+         * @param uuid
+         * @param max
+         * @param model
+         * @return
+         * @throws Exception
+         */
+        @RequestMapping(value = {"/breakdown/institutions*","/breakdown/collections*"}, method = RequestMethod.GET)
+        public @ResponseBody TaxaRankCountDTO limitBreakdown(
+                        @RequestParam(value = "max", required = true) Integer max,
+                        Model model) throws Exception {
+            return searchDAO.findTaxonCountForUid("*:*", max);
+        }
 
-	/**
-	 * 
-	 * @param query
-	 *            The UID to perform the breakdown for
-	 * @param max
-	 *            The maximum number of taxa allowed in the result set
-	 * @param model
-	 * @throws Exception
-	 */
-	@RequestMapping(value = "/breakdown/uid/taxa/{max}/{query}.json", method = RequestMethod.GET)
-	public void uidTaxonBreakdown(@PathVariable("query") String query,
-			@PathVariable("max") Integer max, Model model) throws Exception {
-		String newQuery = SearchUtils.getUidSearchField(query);
-		if (newQuery != null) {
-			newQuery += ":" + query;
-			TaxaRankCountDTO results = searchDAO.findTaxonCountForUid(newQuery,max);
-			model.addAttribute("breakdown", results);
-		}
-	}
 
-	/**
-	 * Provides a breakdown of taxa that are part of the supplied name.
-	 * 
-	 * @param query
-	 *            The UID to perform the breakdown on
-	 * @param scientificName
-	 *            The name of the taxon on which to perform the breakdown
-	 * @param rank
-	 *            The rank of the scientificName (the breakdown will include a
-	 *            rank under this)
-	 * @param model
-	 * @throws Exception
-	 */
-	@RequestMapping(value = "/breakdown/uid/namerank/{query}.json*", method = RequestMethod.GET)
-	public void uidNameRankTaxonBreakdown(
-			@PathVariable("query") String query,
-			@RequestParam(value = "name", required = false) String scientificName,
-			@RequestParam(value = "rank", required = true) String rank,
-			Model model) throws Exception {
 
-		String newQuery = SearchUtils.getUidSearchField(query) + ":" + query;
-		boolean includeSuppliedRank = true;
-		if (newQuery != null && scientificName != null) {
-			// add the scientific name to the search
-			// we want to return the berak down for the next rank after this one
-			newQuery += " AND " + rank + ":" + scientificName;
-			includeSuppliedRank = false;
-		}
+        @RequestMapping(value = {"/breakdown/collections/{uuid}/rank/{rank}/name/{name}", "/breakdown/institutions/{uuid}/rank/{rank}/name/{name}"}, method = RequestMethod.GET)
+        public @ResponseBody TaxaRankCountDTO collectionRankNameBreakdown(
+                        @PathVariable("uuid") String uuid,
+                        @PathVariable("rank") String rank,
+                        @PathVariable("name") String name,
+                        Model model) throws Exception {
 
-		TaxaRankCountDTO results = searchDAO.findTaxonCountForUid(newQuery,
-				rank, includeSuppliedRank);
-		model.addAttribute("breakdown", results);
+             String query = searchUtils.getUIDSearchString(uuid.split(","));
+             query +=" AND " + rank + ":" + name;
 
-	}
+           return searchDAO.findTaxonCountForUid(query,
+				rank, false);
+        }
+
+        @RequestMapping(value = {"/breakdown/collections/rank/{rank}/name/{name}", "/breakdown/institutions/rank/{rank}/name/{name}"}, method = RequestMethod.GET)
+        public @ResponseBody TaxaRankCountDTO rankNameBreakdown(
+                        @PathVariable("rank") String rank,
+                        @PathVariable("name") String name,
+                        Model model) throws Exception {
+
+             String query =  rank + ":" + name;
+
+           return searchDAO.findTaxonCountForUid(query,
+				rank, false);
+        }
+
+        @RequestMapping(value = {"/breakdown/collections/{uuid}/rank/{rank}", "/breakdown/institutions/{uuid}/rank/{rank}"}, method = RequestMethod.GET)
+        public @ResponseBody TaxaRankCountDTO collectionRankBreakdown(
+                        @PathVariable("uuid") String uuid,
+                        @PathVariable("rank") String rank,
+                        Model model) throws Exception {
+
+             String query = searchUtils.getUIDSearchString(uuid.split(","));
+
+
+           return searchDAO.findTaxonCountForUid(query,
+				rank, true);
+        }
+
+        @RequestMapping(value = {"/breakdown/collections/rank/{rank}", "/breakdown/institutions/rank/{rank}"}, method = RequestMethod.GET)
+        public @ResponseBody TaxaRankCountDTO rankBreakdown(
+                        @PathVariable("rank") String rank,
+                        Model model) throws Exception {
+
+             String query = "*:*";
+
+           return searchDAO.findTaxonCountForUid(query,
+				rank, false);
+        }
+
 
 	/**
 	 * @param searchDAO
