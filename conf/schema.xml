@@ -623,6 +623,8 @@
    <dynamicField name="point-*" type="string" indexed="true" stored="true"/>
    <dynamicField name="_tier_*" type="string" indexed="true" stored="true"/>
    <dynamicField name="*_uid" type="string" indexed="true" stored="true"/>
+   <!--  catches all the environment layers that are being indexed -->
+   <dynamicField name="*_env" type="double" indexed="true" stored="true"/>
 
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
         leading wildcard queries. -->

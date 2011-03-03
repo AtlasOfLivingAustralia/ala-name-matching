@@ -102,8 +102,14 @@ trait IndexDAO {
           "lat_long","point-1","point-0.1","point-0.01","point-0.001","point-0.0001",
           "year","month","basis_of_record","raw_basis_of_record","type_status",
           "raw_type_status","taxonomic_kosher","geospatial_kosher","assertions","location_remarks",
-          "occurrence_remarks","citation", "user_assertions")
+          "occurrence_remarks","citation", "user_assertions","mean_temperature_cars2009a_band1_env",
+          "mean_oxygen_cars2006_band1_env", "bioclim_bio34_env", "bioclim_bio12_env", "bioclim_bio11_env")
   }
+  /*
+   * "mean_temperature_cars2009a_band1"->mean_temperature_cars2009a_band1,
+                                "mean_oxygen_cars2006_band1"->mean_oxygen_cars2006_band1, "bioclim_bio34"->bioclim_bio34,
+                                "bioclim_bio12"->bioclim_bio12,"bioclim_bio11"->bioclim_bio11
+   */
   /**
    * Generates an string array version of the occurrence model.
    *
@@ -169,7 +175,9 @@ trait IndexDAO {
           getValue("basisOfRecord", map), getValue("typeStatus.p", map), getValue("typeStatus",map),
           getValue(OccurrenceDAO.taxonomicDecisionColumn, map), getValue(OccurrenceDAO.geospatialDecisionColumn, map),
           getAssertions(map).reduceLeft(_ + "|"+_), getValue("locationRemarks", map),
-          getValue("occurrenceRemarks", map), "",  (getValue(OccurrenceDAO.userQualityAssertionColumn, map) != "").toString )
+          getValue("occurrenceRemarks", map), "",  (getValue(OccurrenceDAO.userQualityAssertionColumn, map) != "").toString,
+          getValue("mean_temperature_cars2009a_band1.p", map), getValue("mean_oxygen_cars2006_band1.p", map),
+          getValue("bioclim_bio34.p", map), getValue("bioclim_bio12.p", map), getValue("bioclim_bio11.p", map) )
     
     }
     catch{

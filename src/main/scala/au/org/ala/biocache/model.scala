@@ -406,6 +406,13 @@ class OccurrenceIndex extends Cloneable with Mappable {
   @BeanProperty @Field("image_url") var image:String = _
   @BeanProperty @Field("geospatial_kosher") var geospatialKosher:String =_
   @BeanProperty @Field("taxonomic_kosher") var taxonomicKosher:String =_
+
+  //environment
+  @BeanProperty @Field("mean_temperature_cars2009a_band1_env") var mean_temperature_cars2009a_band1:java.lang.Double =_
+  @BeanProperty @Field("mean_oxygen_cars2006_band1_env") var mean_oxygen_cars2006_band1:java.lang.Double =_
+  @BeanProperty @Field("bioclim_bio34_env") var bioclim_bio34:java.lang.Double =_
+  @BeanProperty @Field("bioclim_bio12_env") var bioclim_bio12:java.lang.Double =_
+  @BeanProperty @Field("bioclim_bio11_env") var bioclim_bio11:java.lang.Double =_
   
   //extra raw record fields
   @BeanProperty @Field("raw_taxon_name") var raw_scientificName:String =_
@@ -447,7 +454,10 @@ class OccurrenceIndex extends Cloneable with Mappable {
                                 "raw_taxon_name"-> raw_scientificName, "raw_basis_of_record"-> raw_basisOfRecord,
                                 "raw_type_status"-> raw_typeStatus, "raw_common_name"-> raw_vernacularName, "lat_long"-> latLong,
                                 "point-1"-> point1, "point-0.1"-> point01, "point-0.01"-> point001, "point-0.001"-> point0001,
-                                "point-0.0001"-> point00001, "names_and_lsid"-> namesLsid, "multimedia"-> multimedia)
+                                "point-0.0001"-> point00001, "names_and_lsid"-> namesLsid, "multimedia"-> multimedia,
+                                "mean_temperature_cars2009a_band1_env"-> mean_temperature_cars2009a_band1,
+                                "mean_oxygen_cars2006_band1_env"-> mean_oxygen_cars2006_band1, "bioclim_bio34_env"-> bioclim_bio34,
+                                "bioclim_bio12_env"-> bioclim_bio12, "bioclim_bio11_env"->bioclim_bio11 )
 
     map.filter(i => i._2!= null)
   }
