@@ -10,7 +10,7 @@ object EnvironmentLoader {
 
   def main(args: Array[String]): Unit = {
     
-    println("Starting Location Loader....")
+    println("Starting Environment Loader....")
     processFile("/data/biocache/bioclim_bio11_values.csv", "bioclim_bio11")
     processFile("/data/biocache/bioclim_bio12_values.csv", "bioclim_bio12")
     processFile("/data/biocache/bioclim_bio34_values.csv", "bioclim_bio34")
@@ -21,6 +21,7 @@ object EnvironmentLoader {
   }
   def processFile(fileName :String, fieldName:String)={
     import FileHelper._
+    println("Loading Environment file: " + fileName)
     val file = new File(fileName)
     var counter = 0
       file.foreachLine { line => {
