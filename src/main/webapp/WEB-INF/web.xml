@@ -156,17 +156,6 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
-    <!-- Spring ETag Support -->
-    <filter>
-        <filter-name>etagFilter</filter-name>
-        <filter-class>org.springframework.web.filter.ShallowEtagHeaderFilter</filter-class>
-    </filter>
-
-    <filter-mapping>
-        <filter-name>etagFilter</filter-name>
-        <servlet-name>mainDispatcher</servlet-name>
-    </filter-mapping>
-
     <!-- JSONP callback filter -->
     <filter>
         <filter-name>JsonpFilter</filter-name>
