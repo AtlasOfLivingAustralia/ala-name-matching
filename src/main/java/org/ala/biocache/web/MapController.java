@@ -558,23 +558,10 @@ public class MapController {
         if (zoomLevel != null) {
             if (zoomLevel >= 0 && zoomLevel <= 6) {
                 // 0-6 levels
-                //pointType = PointType.POINT_1;
                 pointType = PointType.POINT_01;
             } else if (zoomLevel > 6 && zoomLevel <= 8) {
-                // 6-7 levels
-                //pointType = PointType.POINT_01;
-                pointType = PointType.POINT_001;
-            } else if (zoomLevel > 8 && zoomLevel <= 10) {
-                // 8-9 levels
-                //pointType = PointType.POINT_001;
-                pointType = PointType.POINT_0001;
-            } else if (zoomLevel > 10 && zoomLevel <= 13) {
-                // 10-12 levels
-                //pointType = PointType.POINT_0001;
+                // 6-8 levels
                 pointType = PointType.POINT_00001;
-            //} else if (zoomLevel > 13 && zoomLevel <= 15) {
-            //    // 12-n levels
-            //    pointType = PointType.POINT_00001;
             } else {
                 // raw levels
                 pointType = PointType.POINT_RAW;
