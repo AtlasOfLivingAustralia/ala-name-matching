@@ -312,9 +312,17 @@ class Location extends Cloneable with Mappable{
   @BeanProperty var ibra:String = _
   @BeanProperty var imcra:String = _
   @BeanProperty var lga:String = _
+  //custom additional fields for environment layers
+  //TODO Should we put this in an environment model?
+  @BeanProperty var mean_temperature_cars2009a_band1:String =_
+  @BeanProperty var mean_oxygen_cars2006_band1:String =_
+  @BeanProperty var bioclim_bio34:String =_
+  @BeanProperty var bioclim_bio12:String =_
+  @BeanProperty var bioclim_bio11:String =_
   //fields that need be hidden from all public API
   @BeanProperty @JsonIgnore var originalDecimalLatitude:String =_
   @BeanProperty @JsonIgnore var originalDecimlaLongitude:String =_
+  @BeanProperty @JsonIgnore var originalLocality:String =_
 
   @JsonIgnore
   def getMap():Map[String,String]={
@@ -332,7 +340,10 @@ class Location extends Cloneable with Mappable{
                                 "minimumElevationInMeters"->minimumElevationInMeters, "pointRadiusSpatialFit"->pointRadiusSpatialFit,
                                 "stateProvince"->stateProvince, "verbatimCoordinates"->verbatimCoordinates, "verbatimCoordinateSystem"->verbatimCoordinateSystem,
                                 "verbatimDepth"->verbatimDepth, "verbatimElevation"->verbatimElevation, "verbatimLatitude"->verbatimLatitude,
-                                "verbatimLocality"->verbatimLocality, "verbatimLongitude"->verbatimLongitude, "waterBody"->waterBody, "ibra"->ibra, "imcra"->imcra, "lga"->lga)
+                                "verbatimLocality"->verbatimLocality, "verbatimLongitude"->verbatimLongitude, "waterBody"->waterBody, 
+                                "ibra"->ibra, "imcra"->imcra, "lga"->lga, "mean_temperature_cars2009a_band1"->mean_temperature_cars2009a_band1,
+                                "mean_oxygen_cars2006_band1"->mean_oxygen_cars2006_band1, "bioclim_bio34"->bioclim_bio34,
+                                "bioclim_bio12"->bioclim_bio12,"bioclim_bio11"->bioclim_bio11 )
 
     map.filter(i => i._2!= null)
   }

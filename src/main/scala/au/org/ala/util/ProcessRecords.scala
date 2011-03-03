@@ -342,6 +342,12 @@ object ProcessRecords {
         processed.location.imcra = point.get.imcra
         processed.location.lga = point.get.lga
         processed.location.habitat = point.get.habitat
+        //add the environmental information
+        processed.location.bioclim_bio11 = point.get.bioclim_bio11
+        processed.location.bioclim_bio12 = point.get.bioclim_bio12
+        processed.location.bioclim_bio34 = point.get.bioclim_bio34
+        processed.location.mean_temperature_cars2009a_band1 =point.get.mean_temperature_cars2009a_band1
+        processed.location.mean_oxygen_cars2006_band1 = point.get.mean_temperature_cars2009a_band1
 
         //TODO - replace with country association with points via the gazetteer
         if(processed.location.imcra!=null && !processed.location.imcra.isEmpty
