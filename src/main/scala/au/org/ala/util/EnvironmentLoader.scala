@@ -24,6 +24,8 @@ object EnvironmentLoader {
     println("Loading Environment file: " + fileName)
     val file = new File(fileName)
     var counter = 0
+    var startTime = System.currentTimeMillis
+    var finishTime = System.currentTimeMillis
       file.foreachLine { line => {
         counter += 1
         //add point with details to
@@ -34,7 +36,12 @@ object EnvironmentLoader {
         val latitude = parts(1).substring(1, parts(1).length-1).toFloat
 
           LocationDAO.addTagToLocation(latitude, longitude, fieldName, parts(2).substring(1, parts(2).length-1))
-        if (counter % 1000 == 0) println(counter +": "+latitude+"|"+longitude+", mapping: "+ parts(2))
+        if (counter % 1000 == 0) {
+          finishTime = System.currentTimeMillis
+          println(counter +": "+latitude+"|"+longitude+", mapping: "+ parts(2) + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          startTime = System.currentTimeMillis
+
+        }
         }
         else{
           println("Problem line: "+ counter)
