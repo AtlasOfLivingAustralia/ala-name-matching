@@ -105,11 +105,6 @@ trait IndexDAO {
           "occurrence_remarks","citation", "user_assertions","mean_temperature_cars2009a_band1_env",
           "mean_oxygen_cars2006_band1_env", "bioclim_bio34_env", "bioclim_bio12_env", "bioclim_bio11_env")
   }
-  /*
-   * "mean_temperature_cars2009a_band1"->mean_temperature_cars2009a_band1,
-                                "mean_oxygen_cars2006_band1"->mean_oxygen_cars2006_band1, "bioclim_bio34"->bioclim_bio34,
-                                "bioclim_bio12"->bioclim_bio12,"bioclim_bio11"->bioclim_bio11
-   */
   /**
    * Generates an string array version of the occurrence model.
    *
