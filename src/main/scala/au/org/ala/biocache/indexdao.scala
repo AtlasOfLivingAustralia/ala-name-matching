@@ -126,7 +126,7 @@ trait IndexDAO {
     val family = getValue("family.p", map)
     val simages = getValue("images.p", map)
     val images  = if(simages.length >0) Json.toArray(simages, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]] else Array[String]("")
-    val sspeciesGroup = getValue("speciesGroup.p", map)
+    val sspeciesGroup = getValue("speciesGroups.p", map)
     val speciesGroup = if(sspeciesGroup.length>0) Json.toArray(sspeciesGroup, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]] else Array[String]("")
     var eventDate = getValue("eventDate.p", map)
     //only want to include eventDates that are in the correct format
