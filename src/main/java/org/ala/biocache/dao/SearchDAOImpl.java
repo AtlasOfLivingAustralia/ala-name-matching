@@ -58,6 +58,7 @@ import com.ibm.icu.text.SimpleDateFormat;
 import org.ala.biocache.dto.SearchRequestParams;
 import org.ala.biocache.dto.SpatialSearchRequestParams;
 import org.ala.biocache.util.DownloadFields;
+import org.apache.solr.common.SolrDocument;
 
 /**
  * SOLR implementation of SearchDao. Uses embedded SOLR server (can be a memory hog).
@@ -216,6 +217,7 @@ public class SearchDAOImpl implements SearchDAO {
             SolrQuery solrQuery = initSolrQuery(searchParams);
             solrQuery.setRows(MAX_DOWNLOAD_SIZE);
             solrQuery.setQuery(searchParams.getQ());
+            solrQuery.setFields("id", "institution_code_uid", "collection_code_uid", "data_resource_uid", "data_provider_uid");
 
             int startIndex = 0;
             int pageSize = 1000;
@@ -234,18 +236,19 @@ public class SearchDAOImpl implements SearchDAO {
             out.write((StringUtils.join(titles, "\t") + "\n").getBytes());
 
             List<String> uuids = new ArrayList<String>();
+           
             while (qr.getResults().size() > 0 && resultsCount < MAX_DOWNLOAD_SIZE) {
                 logger.debug("Start index: " + startIndex);
-                List<OccurrenceIndex> results = qr.getBeans(OccurrenceIndex.class);
-                for (OccurrenceIndex result : results) {
+                //cycle through the results adding them to the list that will be sent to cassandra
+                for (SolrDocument sd : qr.getResults()) {
                     resultsCount++;
-                    uuids.add(result.getUuid());
+                    uuids.add(sd.getFieldValue("id").toString());
 
                     //increment the counters....
-                    incrementCount(uidStats, result.getInstitutionUid());
-                    incrementCount(uidStats, result.getCollectionUid());
-                    incrementCount(uidStats, result.getDataProviderUid());
-                    incrementCount(uidStats, result.getDataResourceUid());
+                    incrementCount(uidStats, sd.getFieldValue("institution_code_uid"));
+                    incrementCount(uidStats, sd.getFieldValue("collection_code_uid"));
+                    incrementCount(uidStats, sd.getFieldValue("data_provider_uid"));
+                    incrementCount(uidStats, sd.getFieldValue("data_resource_uid"));
 
                 }
 
@@ -254,6 +257,7 @@ public class SearchDAOImpl implements SearchDAO {
                 startIndex += pageSize;
                 if (resultsCount < MAX_DOWNLOAD_SIZE) {
                     qr = runSolrQuery(solrQuery, searchParams.getFq(), pageSize, startIndex, "score", "asc");
+                   
                 }
             }
 
@@ -265,11 +269,11 @@ public class SearchDAOImpl implements SearchDAO {
     }
 
    
-    private void incrementCount(Map<String, Integer> values, String uid) {
+    private void incrementCount(Map<String, Integer> values, Object uid) {
         if (uid != null) {
             Integer count = values.containsKey(uid) ? values.get(uid) : 0;
             count++;
-            values.put(uid, count);
+            values.put(uid.toString(), count);
         }
     }
 
