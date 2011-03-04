@@ -119,6 +119,8 @@ public class SearchDAOImpl implements SearchDAO {
             solrQuery.setQuery(queryString);
             QueryResponse qr = runSolrQuery(solrQuery, requestParams);
             searchResults = processSolrResponse(qr, solrQuery);
+            //set the title for the results
+            searchResults.setQueryTitle(requestParams.getDisplayString());
 
             logger.info("search query: " + queryString);
         } catch (SolrServerException ex) {

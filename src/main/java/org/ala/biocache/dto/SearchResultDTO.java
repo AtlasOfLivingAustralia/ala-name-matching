@@ -55,6 +55,9 @@ public class SearchResultDTO {
      */
     private String urlParameters;
 
+    /** Stores the title for the query - this is dependent on the type of query that has been executed */
+    private String queryTitle;
+
     
 
     /**
@@ -172,5 +175,14 @@ public class SearchResultDTO {
     public void setUrlParameters(String urlParameters) {
         this.urlParameters = urlParameters;
     }
+
+    public String getQueryTitle() {
+        return queryTitle;
+    }
+
+    public void setQueryTitle(String queryTitle) {
+        this.queryTitle = queryTitle;
+    }
+    
     
 }
