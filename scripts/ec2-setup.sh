@@ -66,4 +66,4 @@ jar xf biocache-store-1.0-SNAPSHOT-assembly.jar lib lib
 # run stuff
 /home/ubuntu/cassandra/bin/cassandra -p /data/cassandra-pidfile
 cd
-java -Xmx4g -Xms4g -classpath .:biocache-store-1.0-SNAPSHOT-assembly.jar au.org.ala.util.ProcessRecords
+java -Xmx4g -Xms4g -classpath .:biocache-store-1.0-SNAPSHOT-assembly.jar au.org.ala.util.ProcessWithActors 64
