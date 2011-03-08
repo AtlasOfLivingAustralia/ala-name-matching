@@ -16,9 +16,18 @@ package org.ala.biocache.web;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.TexturePaint;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -38,7 +47,6 @@ import org.ala.biocache.dto.SpatialSearchRequestParams;
 import org.ala.biocache.util.SearchUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.apache.solr.client.solrj.util.ClientUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -69,11 +77,15 @@ public class MapController {
             @RequestParam(value = "width", required = false, defaultValue = "256") Integer widthObj,
             @RequestParam(value = "height", required = false, defaultValue = "256") Integer heightObj,
             @RequestParam(value = "zoom", required = false, defaultValue = "0") Integer zoomLevel,
+            @RequestParam(value = "symsize", required = false, defaultValue = "4") Integer symsize,
+            @RequestParam(value = "symbol", required = false, defaultValue = "circle") String symbol,
             @RequestParam(value = "bbox", required = false, defaultValue = "110,-45,157,-9") String bboxString,
             @RequestParam(value = "type", required = false, defaultValue = "normal") String type,
             HttpServletResponse response)
             throws Exception {
 
+        // size of the circles
+        int size = symsize.intValue();
         int width = widthObj.intValue();
         int height = heightObj.intValue();
 
@@ -111,34 +123,51 @@ public class MapController {
             }
         }
 
+        double pixelWidth = (bbox[2] - bbox[0]) / width;
+        double pixelHeight = (bbox[3] - bbox[1]) / height;
+        bbox[0] += pixelWidth / 2;
+        bbox[2] -= pixelWidth / 2;
+        bbox[1] += pixelHeight / 2;
+        bbox[3] -= pixelHeight / 2;
+
+        //offset for points bounding box by size
+        double xoffset = (bbox[2] - bbox[0]) / (double) width * (size * 2);
+        double yoffset = (bbox[3] - bbox[1]) / (double) height * (size * 2);
+
+        //adjust offset for pixel height/width
+        xoffset += pixelWidth;
+        yoffset += pixelHeight;
+
+        double[] bbox2 = new double[4];
+        bbox2[0] = convertMetersToLng(bbox[0] - xoffset);
+        bbox2[1] = convertMetersToLat(bbox[1] - yoffset);
+        bbox2[2] = convertMetersToLng(bbox[2] + xoffset);
+        bbox2[3] = convertMetersToLat(bbox[3] + yoffset);
+
         bbox[0] = convertMetersToLng(bbox[0]);
         bbox[1] = convertMetersToLat(bbox[1]);
         bbox[2] = convertMetersToLng(bbox[2]);
         bbox[3] = convertMetersToLat(bbox[3]);
 
+        double[] pbbox = new double[4]; //pixel bounding box
+        pbbox[0] = convertLngToPixel(bbox[0]);
+        pbbox[1] = convertLatToPixel(bbox[1]);
+        pbbox[2] = convertLngToPixel(bbox[2]);
+        pbbox[3] = convertLatToPixel(bbox[3]);
 
-        String bboxString2 = bbox[0] + "," + bbox[1] + "," + bbox[2] + "," + bbox[3];
+
+        String bboxString2 = bbox2[0] + "," + bbox2[1] + "," + bbox2[2] + "," + bbox2[3];
         bboxToQuery(bboxString2, fqList);
 
         PointType pointType = PointType.POINT_RAW;
         pointType = getPointTypeForZoomLevel(zoomLevel);
 
-
-        // add the colourby value if available
-        //if (StringUtils.isNotBlank(colourby)) {
-        //    fqList.add(colourby);
-        //}
-
-
         String[] newFilterQuery = (String[]) fqList.toArray(new String[fqList.size()]); // convert back to array
 
         requestParams.setFq(newFilterQuery);
 
-        //List<OccurrencePoint> points = searchDAO.getFacetPoints(searchQuery.getQuery(), searchQuery.getFilterQuery(), pointType);
         List<OccurrencePoint> points = searchDAO.getFacetPoints(requestParams.getQ(), requestParams.getFq(), pointType);
-        //List<OccurrencePoint> points = searchDAO.getOccurrences(requestParams, pointType, colourby, 0);
         logger.debug("Points search for " + pointType.getLabel() + " - found: " + points.size());
-        //model.addAttribute("points", points);
 
         if (points.size() == 0) {
             displayBlankImage(width, height, false, response);
@@ -147,24 +176,8 @@ public class MapController {
 
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = (Graphics2D) img.getGraphics();
-        //g.drawImage(baseImage, 0, 0, null);
         g.setColor(Color.RED);
 
-        // size of the circles
-        int size = 4;
-
-        double pixelWidth = (bbox[2] - bbox[0]) / width;
-        double pixelHeight = (bbox[3] - bbox[1]) / height;
-        bbox[0] += pixelWidth / 2;
-        bbox[2] -= pixelWidth / 2;
-        bbox[1] += pixelHeight / 2;
-        bbox[3] -= pixelHeight / 2;
-
-        double[] pbbox = new double[4]; //pixel bounding box
-        pbbox[0] = convertLngToPixel(bbox[0]);
-        pbbox[1] = convertLatToPixel(bbox[1]);
-        pbbox[2] = convertLngToPixel(bbox[2]);
-        pbbox[3] = convertLatToPixel(bbox[3]);
 
         int x, y;
         int pointWidth = size * 2;
@@ -182,41 +195,19 @@ public class MapController {
             x = (int) ((convertLngToPixel(lng) - pbbox[0]) * width_mult);
             y = (int) ((convertLatToPixel(lat) - pbbox[3]) * height_mult);
 
-            //logger.debug("generating colour for: " + pt.getOccurrenceUid() + " <-" + colourby);
-//            if (StringUtils.isNotBlank(pt.getOccurrenceUid())) {
-//                //logger.debug("\twith hashcode: " + pt.getOccurrenceUid().hashCode());
-//                int colour = 0xFF000000 | pt.getOccurrenceUid().hashCode();
-//                //logger.debug("name: " + pt.getOccurrenceUid() + " => colour: " + colour);
-//
-//                Color c = new Color(colour);
-//                //logger.debug("setting filter colour");
-//                g.setPaint(c);
-//
-//            } else {
-//                g.setPaint(Color.blue);
-//            }
             if (colourby != null) {
-
-                //logger.debug("\twith hashcode: " + pt.getOccurrenceUid().hashCode());
                 int colour = 0xFF000000 | colourby.intValue();
-                //logger.debug("name: " + pt.getOccurrenceUid() + " => colour: " + colour);
-
                 Color c = new Color(colour);
-                //logger.debug("setting filter colour");
                 g.setPaint(c);
-
             } else {
                 g.setPaint(Color.blue);
             }
 
+            // g.fillOval(x - (size / 2), y - (size / 2), pointWidth, pointWidth);
 
-
-            //Shape circle = new Ellipse2D.Float(x - (radius / 2), y - (radius / 2), radius, radius);
-            //g.setPaint(Color.blue);
-            //g.draw(circle);
-            //g.fill(circle);
-            //g.setPaint(Color.RED);
-            g.fillOval(x - (size / 2), y - (size / 2), pointWidth, pointWidth);
+            Shape shp = getShape(symbol, x - (size / 2), y - (size / 2), pointWidth, pointWidth);
+            g.draw(shp);
+            g.fill(shp);
         }
 
         g.dispose();
@@ -389,6 +380,7 @@ public class MapController {
 
     @RequestMapping(value = "/occurrences/info", method = RequestMethod.GET)
     public String getOccurrencesInformation(SpatialSearchRequestParams requestParams,
+            @RequestParam(value = "zoom", required = false, defaultValue = "0") Integer zoomLevel,
             @RequestParam(value = "callback", required = false) String callback,
             Model model,
             HttpServletRequest request,
@@ -413,9 +405,7 @@ public class MapController {
         }
 
         PointType pointType = PointType.POINT_RAW; // default value for when zoom is null
-        //PointType pointType = PointType.POINT_00001; // default value for when zoom is null
-        //pointType = getPointTypeForZoomLevel(zoomLevel);
-        //logger.info("PointType for zoomLevel ("+zoomLevel+") = "+pointType.getLabel());
+        pointType = getPointTypeForZoomLevel(zoomLevel);
 
         String[] newFilterQuery = (String[]) fqList.toArray(new String[fqList.size()]); // convert back to array
         //get the new query details
@@ -469,9 +459,9 @@ public class MapController {
             @RequestParam(value = "height", required = false, defaultValue = "50") Integer heightObj,
             HttpServletResponse response) {
         try {
-            
+
             response.setContentType("image/png");
-            
+
             int width = widthObj.intValue();
             int height = heightObj.intValue();
 
@@ -503,6 +493,20 @@ public class MapController {
             System.out.println("Unable to write image: ");
             e.printStackTrace(System.out);
         }
+    }
+
+    private Shape getShape(String symbol, int x, int y, int width, int height) {
+        Shape shape = null;
+
+        symbol = symbol.toLowerCase();
+
+        if (symbol.equals("square")) {
+            shape = new Rectangle2D.Float(x, y, width, height);
+        } else {
+            shape = new Ellipse2D.Float(x, y, width, height);
+        }
+
+        return shape;
     }
     private int map_offset = 268435456; // half the Earth's circumference at zoom level 21
     private double map_radius = map_offset / Math.PI;
