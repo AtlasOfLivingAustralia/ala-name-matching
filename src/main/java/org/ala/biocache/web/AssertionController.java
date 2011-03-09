@@ -92,33 +92,12 @@ public class AssertionController {
 
             Store.addUserAssertion(recordUuid, qa);
 
-            //get the processed record so that we can get the collection_uid
-            FullRecord processed = Store.getByUuid(recordUuid, Versions.PROCESSED());
+            
            
-            if (processed.getAttribution().getCollectionUid() != null && qa.getUuid() != null) {
+           if(qa.getUuid() != null) {
                 //send this assertion addition event to the notification service
-
-                final String uri = collectoryBaseUrl + "/ws/notify";
-                HttpClient h = new HttpClient();
-
-                PostMethod m = new PostMethod(uri);
-                try {
-                  
-                    m.setRequestEntity(new StringRequestEntity("{ event: 'user annotation', id: '"+qa.getUuid()+"', uid: '"+processed.getAttribution().getCollectionUid()+"' }", "text/json", "UTF-8"));
-                    
-                    logger.debug("Adding notification: " + code + " " + processed.getAttribution().getCollectionUid());
-                    int status = h.executeMethod(m);
-                    logger.debug("STATUS: " + status);
-                    if (status == 200) {
-                        logger.debug("Successfully posted an event to the notification service");
-                    } else {
-                        logger.info("Failed to post an event to the notification service");
-                    }
-                } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
-                    
-                }
-
+                postNotificationEvent("create", recordUuid, qa.getUuid());
+                
             }
             
 
@@ -140,7 +119,42 @@ public class AssertionController {
         @RequestParam(value="assertionUuid", required=true) String assertionUuid,
         HttpServletResponse response) throws Exception {
         Store.deleteUserAssertion(recordUuid, assertionUuid);
+        postNotificationEvent("delete", recordUuid, assertionUuid);
         response.setStatus(HttpServletResponse.SC_OK);
+    }
+
+    /**
+     * Generic method to post a record assertion notification.
+     * @param type
+     * @param recordUuid
+     * @param id
+     */
+    private void postNotificationEvent(String type, String recordUuid, String id) {
+        //get the processed record so that we can get the collection_uid
+        FullRecord processed = Store.getByUuid(recordUuid, Versions.PROCESSED());
+        String uid = processed.getAttribution().getCollectionUid();
+        if (uid != null) {
+            final String uri = collectoryBaseUrl + "/ws/notify";
+            HttpClient h = new HttpClient();
+
+            PostMethod m = new PostMethod(uri);
+            try {
+
+                m.setRequestEntity(new StringRequestEntity("{ event: 'user annotation', id: '" + id + "', uid: '" + uid + "', type:'" + type + "' }", "text/json", "UTF-8"));
+
+                logger.debug("Adding notification: " + type + ":" + uid + " - " + id);
+                int status = h.executeMethod(m);
+                logger.debug("STATUS: " + status);
+                if (status == 200) {
+                    logger.debug("Successfully posted an event to the notification service");
+                } else {
+                    logger.info("Failed to post an event to the notification service");
+                }
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+
+            }
+        }
     }
 
     /**
