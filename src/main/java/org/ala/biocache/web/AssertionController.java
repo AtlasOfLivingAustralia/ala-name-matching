@@ -1,8 +1,10 @@
 package org.ala.biocache.web;
 
 import au.org.ala.biocache.ErrorCode;
+import au.org.ala.biocache.FullRecord;
 import au.org.ala.biocache.Store;
 import au.org.ala.biocache.QualityAssertion;
+import au.org.ala.biocache.Versions;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +12,11 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 
 /**
  * This controller provides webservices for assertion creation/deletion.
@@ -21,6 +28,9 @@ import java.util.List;
 public class AssertionController {
 
     private final static Logger logger = Logger.getLogger(AssertionController.class);
+
+    //TODO Move this so all classes can refer to the same
+    protected String collectoryBaseUrl = "http://collections.ala.org.au";
     /**
      * Retrieve an array of the assertion codes in use by the processing system
      *
@@ -81,6 +91,36 @@ public class AssertionController {
             qa.setUserDisplayName(userDisplayName);
 
             Store.addUserAssertion(recordUuid, qa);
+
+            //get the processed record so that we can get the collection_uid
+            FullRecord processed = Store.getByUuid(recordUuid, Versions.PROCESSED());
+           
+            if (processed.getAttribution().getCollectionUid() != null && qa.getUuid() != null) {
+                //send this assertion addition event to the notification service
+
+                final String uri = collectoryBaseUrl + "/ws/notify";
+                HttpClient h = new HttpClient();
+
+                PostMethod m = new PostMethod(uri);
+                try {
+                  
+                    m.setRequestEntity(new StringRequestEntity("{ event: 'user annotation', id: '"+qa.getUuid()+"', uid: '"+processed.getAttribution().getCollectionUid()+"' }", "text/json", "UTF-8"));
+                    
+                    logger.debug("Adding notification: " + code + " " + processed.getAttribution().getCollectionUid());
+                    int status = h.executeMethod(m);
+                    logger.debug("STATUS: " + status);
+                    if (status == 200) {
+                        logger.debug("Successfully posted an event to the notification service");
+                    } else {
+                        logger.info("Failed to post an event to the notification service");
+                    }
+                } catch (Exception e) {
+                    logger.error(e.getMessage(), e);
+                    
+                }
+
+            }
+            
 
             String server = request.getSession().getServletContext().getInitParameter("serverName");
             response.setHeader("Location", server + "/occurrences/" + recordUuid + "/assertions/" + qa.getUuid());
