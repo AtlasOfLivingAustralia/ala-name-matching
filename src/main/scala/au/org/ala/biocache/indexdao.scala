@@ -234,7 +234,7 @@ trait IndexDAO {
     else
       occ.setMultimedia("None")
 
-    occ.setHasUserAssertions((OccurrenceDAO.getSystemAssertions(occ.uuid).size>0).toString)
+    occ.setHasUserAssertions((OccurrenceDAO.getUserAssertions(occ.uuid).size>0).toString)
     Some(occ)
   }
 }
