@@ -55,6 +55,8 @@ import au.org.ala.biocache.OccurrenceIndex;
 import au.com.bytecode.opencsv.CSVWriter;
 
 import com.ibm.icu.text.SimpleDateFormat;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.ala.biocache.dto.SearchRequestParams;
 import org.ala.biocache.dto.SpatialSearchRequestParams;
 import org.ala.biocache.util.DownloadFields;
@@ -84,6 +86,12 @@ public class SearchDAOImpl implements SearchDAO {
     protected static final String SPECIES_LSID = "species_lsid";
     protected static final String NAMES_AND_LSID = "names_and_lsid";
     protected static final String TAXON_CONCEPT_LSID = "taxon_concept_lsid";
+
+    //Patterns that are used to prepares a SOLR query for execution
+    protected Pattern lsidPattern= Pattern.compile("lsid:[a-zA-Z0-9\\.:-]*");
+    protected Pattern urnPattern = Pattern.compile("urn:[a-zA-Z0-9\\.:-]*");
+    protected Pattern spacesPattern =Pattern.compile("[^\\s\"()\\[\\]']+|\"[^\"]*\"|'[^']*'");
+
     /** Download properties */
     protected DownloadFields downloadFields;
 
@@ -103,7 +111,7 @@ public class SearchDAOImpl implements SearchDAO {
         }
         downloadFields = new DownloadFields();
     }
-
+  
 
   
     /**
@@ -217,6 +225,7 @@ public class SearchDAOImpl implements SearchDAO {
             SolrQuery solrQuery = initSolrQuery(searchParams);
             solrQuery.setRows(MAX_DOWNLOAD_SIZE);
             solrQuery.setQuery(searchParams.getQ());
+            //Only the fields specified below will be included in the results from the SOLR Query
             solrQuery.setFields("id", "institution_code_uid", "collection_code_uid", "data_resource_uid", "data_provider_uid");
 
             int startIndex = 0;
@@ -946,21 +955,80 @@ public class SearchDAOImpl implements SearchDAO {
      */
     protected String formatSearchQuery(String query) {
         // set the query
-        StringBuilder queryString = new StringBuilder();
-        if (query.equals("*:*") || query.contains(" AND ") || query.contains(" OR ") || query.startsWith("(")
-                || query.endsWith("*") || query.startsWith("{")) {
-            queryString.append(query);
-        } else if (query.contains(":") && !query.startsWith("urn")) {
-            // search with a field name specified (other than an LSID guid)
-            String[] bits = StringUtils.split(query, ":", 2);
-            queryString.append(ClientUtils.escapeQueryChars(bits[0]));
-            queryString.append(":");
-            queryString.append(ClientUtils.escapeQueryChars(bits[1]));
-        } else {
-            // regular search
-            queryString.append(ClientUtils.escapeQueryChars(query));
+        StringBuffer queryString = new StringBuffer();
+        //if the query string contains lsid: we will need to replace it with the corresponding lft range
+
+        if (query.contains("lsid:")) {
+            Matcher matcher = lsidPattern.matcher(query);
+            while (matcher.find()) {
+                String value = matcher.group();
+                logger.debug("preprocessing " + value);
+                matcher.appendReplacement(queryString, SearchUtils.getTaxonSearch(value.substring(5, value.length())));
+            }
+            matcher.appendTail(queryString);
+            query = queryString.toString();
         }
+        if (query.contains("urn")) {
+            //esacape the URN strings before escaping the rest this aviods the issue with attempting to search on a urn field
+            Matcher matcher = urnPattern.matcher(query);
+            queryString.setLength(0);
+            while (matcher.find()) {
+                String value = matcher.group();
+                
+                logger.debug("escaping lsid urns  " + value );
+                matcher.appendReplacement(queryString,prepareSolrStringForReplacement(value));
+            }
+            matcher.appendTail(queryString);
+            query = queryString.toString();
+        }
+        //escape reserved characters unless the colon represnts a field name colon
+        queryString.setLength(0);
+
+        Matcher matcher = spacesPattern.matcher(query);
+        while(matcher.find()){
+            String value = matcher.group();
+           
+            //special cases to ignore from character escaping
+            //if the value is a single - or * it means that we don't want to escape it as it is likely to have occurred in the following situation -(occurrence_date:[* TO *]) or *:*
+            if(!value.equals("-") && !value.equals("*")  && !value.equals("*:*")){
+                
+                //split on the colon
+                String[] bits = StringUtils.split(value, ":", 2);
+                if(bits.length == 2){
+                    if(!bits[0].contains("urn"))
+                        matcher.appendReplacement(queryString, bits[0] +":"+ prepareSolrStringForReplacement(bits[1]));
+
+                }
+                //need to ignore field names where the : is at the end because the pattern matching will return field_name: as a match when it has a double quoted value
+                else if(!value.endsWith(":")){
+                    //default behaviour is to escape all 
+                    matcher.appendReplacement(queryString, prepareSolrStringForReplacement(value));
+                }
+            }
+            
+        }
+        matcher.appendTail(queryString);
+  
         return queryString.toString();
+    }
+    /**
+     * Creates a SOLR escaped string the can be used in a StringBuffer.appendReplacement
+     * The appendReplacement needs an extra delimiting on the backslashes
+     * @param value
+     * @return
+     */
+    private String prepareSolrStringForReplacement(String value){
+        //if starts and ends with quotes just escape the inside
+        boolean quoted = false;
+        StringBuffer sb = new StringBuffer();
+        if(value.startsWith("\"") && value.endsWith("\"")){
+            quoted = true;
+            value = value.substring(1, value.length()-1);
+            sb.append("\"");
+        }
+        sb.append(ClientUtils.escapeQueryChars(value).replaceAll("\\\\", "\\\\\\\\"));
+        if(quoted) sb.append("\"");
+        return sb.toString();
     }
 
     /**

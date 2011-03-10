@@ -130,7 +130,7 @@ public class OccurrenceController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = "/occurrences/taxon/{guid:.+}*", method = RequestMethod.GET)
+	@RequestMapping(value = {"/occurrences/taxon/{guid:.+}*","/occurrences/taxa/{guid:.+}*"}, method = RequestMethod.GET)
 	public @ResponseBody SearchResultDTO occurrenceSearchByTaxon(
             SearchRequestParams requestParams,
             @PathVariable("guid") String guid,
@@ -142,18 +142,18 @@ public class OccurrenceController {
         //Change the method call so that the filter query can be updated
         boolean taxonFound = searchUtils.updateTaxonConceptSearchString(requestParams, guid);
 
-		if (taxonFound) {
-	        searchResult = searchDAO.findByFulltextQuery(requestParams);
-			model.addAttribute("searchResult", searchResult);
-			logger.debug("query = "+requestParams);
-			Long totalRecords = searchResult.getTotalRecords();
+            if (taxonFound) {
+                searchResult = searchDAO.findByFulltextQuery(requestParams);
+                model.addAttribute("searchResult", searchResult);
+                logger.debug("query = " + requestParams);
+                Long totalRecords = searchResult.getTotalRecords();
 
-			if (logger.isDebugEnabled()) {
-				logger.debug("Returning results set with: "+totalRecords);
-			}
-		}
-
-        logger.info("Taxon not found...." +guid);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Returning results set with: " + totalRecords);
+                }
+            } else {
+                logger.info("Taxon not found...." + guid);
+            }
 
 		return searchResult;
 	}
@@ -276,7 +276,7 @@ public class OccurrenceController {
 	/**
 	 * Occurrence search page uses SOLR JSON to display results
 	 *
-         * Tested with :/occurrences/search.json?q=Victoria
+         * 
          *
 	 * @param query
 	 * @param model

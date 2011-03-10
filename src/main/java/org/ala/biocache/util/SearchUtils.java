@@ -33,7 +33,7 @@ public class SearchUtils {
 
 	/** Logger initialisation */
 	private final static Logger logger = Logger.getLogger(SearchUtils.class);
-
+      
 	protected String collectoryBaseUrl = "http://collections.ala.org.au";
 
 	protected String bieBaseUrl = "http://bie.ala.org.au";
@@ -238,6 +238,19 @@ public class SearchUtils {
 		}
 		return false;
 	}
+        public static String getTaxonSearch(String lsid){
+            // Get the taxon profile from the biocache cache - this could be replaced with a webservice call if necessary
+            Option<TaxonProfile> opt = TaxonProfileDAO.getByGuid(lsid);
+         
+            if (!opt.isEmpty()) {
+                TaxonProfile tc = opt.get();
+                StringBuilder sb = new StringBuilder("lft:[");
+                sb.append(tc.getLeft()).append(" TO ").append(tc.getRight()).append("]");
+                return sb.toString();
+            }
+            //If the lsid for the taxon concept can not be found just return the original string
+            return "lsid:" +lsid;
+        }
         /**
          * updates the query ready for a spatial search
          * @param searchParams
