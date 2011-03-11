@@ -260,6 +260,7 @@ object TaxonProfileDAO {
               case "guid" => taxonProfile.guid = keyValue._2
               case "scientificName" => taxonProfile.scientificName = keyValue._2
               case "commonName" => taxonProfile.commonName = keyValue._2
+              case "rankString" => taxonProfile.rankString = keyValue._2
               case "habitats" => {
                 if(keyValue._2!=null && keyValue._2.size>0){
                   taxonProfile.habitats = keyValue._2.split(",")
@@ -290,6 +291,7 @@ object TaxonProfileDAO {
       properties.put("guid", taxonProfile.guid)
       properties.put("scientificName", taxonProfile.scientificName)
       properties.put("commonName", taxonProfile.commonName)
+      properties.put("rankString", taxonProfile.rankString)
       if(taxonProfile.habitats!=null && taxonProfile.habitats.size>0){
         val habitatString = taxonProfile.habitats.reduceLeft(_+","+_)
         properties.put("habitats", habitatString)

@@ -52,6 +52,9 @@ object TaxonProfileLoader {
               if(profile.right != null){
                 taxonProfile.right = profile.right.toString
               }
+              if(profile.rank != null){
+                taxonProfile.rankString = profile.rank.toString
+              }
               //TODO work out whatto store from the conservation status
 
               //store the sensitive species information
