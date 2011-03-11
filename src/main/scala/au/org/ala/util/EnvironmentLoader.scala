@@ -35,7 +35,9 @@ object EnvironmentLoader {
         val longitude = parts(0).substring(1, parts(0).length-1).toFloat
         val latitude = parts(1).substring(1, parts(1).length-1).toFloat
 
-          LocationDAO.addTagToLocation(latitude, longitude, fieldName, parts(2).substring(1, parts(2).length-1))
+          //LocationDAO.addTagToLocation(latitude, longitude, fieldName, parts(2).substring(1, parts(2).length-1))
+
+          LocationDAO.addRegionToPoint(latitude, longitude, Map[String, String](fieldName->parts(2).substring(1, parts(2).length-1)))
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
           println(counter +": "+latitude+"|"+longitude+", mapping: "+ parts(2) + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
