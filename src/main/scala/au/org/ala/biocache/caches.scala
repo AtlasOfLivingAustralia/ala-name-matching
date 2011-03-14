@@ -312,7 +312,8 @@ object AttributionDAO {
 
   import ReflectBean._
   private val columnFamily = "attr"
-  private val lru = new HashMap[String, Option[Attribution]]
+  //can't use a scala hashap because missing keys return None not null...
+  private val lru = new org.apache.commons.collections.map.LRUMap(10000)//new HashMap[String, Option[Attribution]]
 
   /**
    * Persist the attribution information.
@@ -330,12 +331,12 @@ object AttributionDAO {
 
     if(institutionCode!=null && collectionCode!=null){
       val uuid = institutionCode.toUpperCase+"|"+collectionCode.toUpperCase
-
-      val cachedObject = lru.get(uuid)
+      
+      val cachedObject = lru.get(uuid)      
       if(cachedObject!=null){
         cachedObject.asInstanceOf[Option[Attribution]]
       } else {
-          val map = DAO.persistentManager.get(uuid,"attr")
+          val map = DAO.persistentManager.get(uuid,"attr")          
           val result = {
               if(!map.isEmpty){
                 val attribution = new Attribution
