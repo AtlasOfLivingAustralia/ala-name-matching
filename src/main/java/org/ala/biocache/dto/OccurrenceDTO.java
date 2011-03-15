@@ -44,11 +44,11 @@ public class OccurrenceDTO implements Serializable {
 	@Field("data_provider") private String dataProvider;
 	@Field("data_resource_uid") private String dataResourceUid;
 	@Field("data_resource") private String dataResource;
-	@Field("institution_code_uid") private String institutionCodeUid;
+	@Field("institution_uid") private String institutionCodeUid;
 	@Field("institution_code") private String institutionCode;
 	@Field("institution_code_name") private String institutionCodeName;
 	@Field("institution_code_lsid") private String institutionCodeLsid;
-	@Field("collection_code_uid") private String collectionCodeUid;
+	@Field("collection_uid") private String collectionCodeUid;
 	@Field("collection_code") private String collectionCode;
 	@Field("catalogue_number_id") private Integer catalogueNumberId;
 	@Field("catalogue_number") private String catalogueNumber;

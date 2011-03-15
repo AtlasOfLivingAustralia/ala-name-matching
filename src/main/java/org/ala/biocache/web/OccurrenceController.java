@@ -116,7 +116,7 @@ public class OccurrenceController {
 	/**
 	 * Returns the complete list of Occurrences
 	 */
-	@RequestMapping(value = {"/occurrences", "/occurrences/collection", "/occurrences/institution", "/occurrences/data-resource", "/occurrences/data-provider", "/occurrences/taxon"}, method = RequestMethod.GET)
+	@RequestMapping(value = {"/occurrences", "/occurrences/collections", "/occurrences/institutions", "/occurrences/data-resources", "/occurrences/data-providers", "/occurrences/taxa", "/occurrences/data-hubs"}, method = RequestMethod.GET)
 	public @ResponseBody SearchResultDTO listOccurrences(Model model) throws Exception {
             SearchRequestParams srp = new SearchRequestParams();
             srp.setQ("*:*");
@@ -202,7 +202,8 @@ public class OccurrenceController {
      * @return
      * @throws Exception
      */
-    @RequestMapping(value = {"/occurrences/collection/{uid}", "/occurrences/institution/{uid}", "/occurrences/data-resource/{uid}", "/occurrences/data-provider/{uid}"}, method = RequestMethod.GET)
+    @RequestMapping(value = {"/occurrences/collections/{uid}", "/occurrences/institutions/{uid}",
+                             "/occurrences/data-resources/{uid}", "/occurrences/data-providers/{uid}", "/occurrences/data-hubs/{uid}"}, method = RequestMethod.GET)
     public @ResponseBody SearchResultDTO occurrenceSearchForCollection(
             SearchRequestParams requestParams,
             @PathVariable("uid") String uid,

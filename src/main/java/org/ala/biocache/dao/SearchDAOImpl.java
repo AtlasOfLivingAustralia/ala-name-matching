@@ -226,7 +226,7 @@ public class SearchDAOImpl implements SearchDAO {
             solrQuery.setRows(MAX_DOWNLOAD_SIZE);
             solrQuery.setQuery(searchParams.getQ());
             //Only the fields specified below will be included in the results from the SOLR Query
-            solrQuery.setFields("id", "institution_code_uid", "collection_code_uid", "data_resource_uid", "data_provider_uid");
+            solrQuery.setFields("id", "institution_uid", "collection_uid", "data_resource_uid", "data_provider_uid");
 
             int startIndex = 0;
             int pageSize = 1000;
@@ -254,8 +254,8 @@ public class SearchDAOImpl implements SearchDAO {
                     uuids.add(sd.getFieldValue("id").toString());
 
                     //increment the counters....
-                    incrementCount(uidStats, sd.getFieldValue("institution_code_uid"));
-                    incrementCount(uidStats, sd.getFieldValue("collection_code_uid"));
+                    incrementCount(uidStats, sd.getFieldValue("institution_uid"));
+                    incrementCount(uidStats, sd.getFieldValue("collection_uid"));
                     incrementCount(uidStats, sd.getFieldValue("data_provider_uid"));
                     incrementCount(uidStats, sd.getFieldValue("data_resource_uid"));
 
@@ -1207,8 +1207,8 @@ public class SearchDAOImpl implements SearchDAO {
         solrQuery.setFacetMinCount(1);
         solrQuery.addFacetField("data_provider_uid");
         solrQuery.addFacetField("data_resource_uid");
-        solrQuery.addFacetField("collection_code_uid");
-        solrQuery.addFacetField("institution_code_uid");
+        solrQuery.addFacetField("collection_uid");
+        solrQuery.addFacetField("institution_uid");
         QueryResponse qr = runSolrQuery(solrQuery, filterQuery, 1, 0, "score", "asc");
         //now cycle through and get all the facets
         List<FacetField> facets = qr.getFacetFields();

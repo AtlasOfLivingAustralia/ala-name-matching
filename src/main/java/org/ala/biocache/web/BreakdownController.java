@@ -60,7 +60,8 @@ public class BreakdownController {
          * @return
          * @throws Exception
          */
-        @RequestMapping(value = {"/breakdown/collections/{uuid}*","/breakdown/institutions/{uuid}*"}, method = RequestMethod.GET)
+        @RequestMapping(value = {"/breakdown/collections/{uuid}*","/breakdown/institutions/{uuid}*",
+                                "/breakdown/data-resources/{uuid}*", "/breakdown/data-providers/{uuid}*", "/breakdown/data-hubs/{uuid}*"}, method = RequestMethod.GET)
         public @ResponseBody TaxaRankCountDTO collectionLimitBreakdown(@PathVariable("uuid") String uuid,
                         @RequestParam(value = "max", required = true) Integer max,
                         Model model) throws Exception {
@@ -84,7 +85,7 @@ public class BreakdownController {
 //                        @RequestParam(value = "max", required = true) Integer max,
 //                        Model model) throws Exception {
 //
-//            return searchDAO.findTaxonCountForUid(searchUtils.getUIDSearchString(uuid.split(","), "institution_code_uid"), max);
+//            return searchDAO.findTaxonCountForUid(searchUtils.getUIDSearchString(uuid.split(","), "institution_uid"), max);
 //        }
 
         /**
@@ -95,7 +96,7 @@ public class BreakdownController {
          * @return
          * @throws Exception
          */
-        @RequestMapping(value = {"/breakdown/institutions*","/breakdown/collections*"}, method = RequestMethod.GET)
+        @RequestMapping(value = {"/breakdown/institutions*","/breakdown/collections*", "/breakdown/data-resources*","/breakdowns/data-providers*","/breakdowns/data-hubs*"}, method = RequestMethod.GET)
         public @ResponseBody TaxaRankCountDTO limitBreakdown(
                         @RequestParam(value = "max", required = true) Integer max,
                         Model model) throws Exception {
@@ -104,7 +105,9 @@ public class BreakdownController {
 
 
 
-        @RequestMapping(value = {"/breakdown/collections/{uuid}/rank/{rank}/name/{name}", "/breakdown/institutions/{uuid}/rank/{rank}/name/{name}"}, method = RequestMethod.GET)
+        @RequestMapping(value = {"/breakdown/collections/{uuid}/rank/{rank}/name/{name}", "/breakdown/institutions/{uuid}/rank/{rank}/name/{name}",
+                                 "/breakdown/data-resources/{uuid}/rank/{rank}/name/{name}", "/breakdown/data-providers/{uuid}/rank/{rank}/name/{name}",
+                                 "/breakdown/data-hubs/{uuid}/rank/{rank}/name/{name}"}, method = RequestMethod.GET)
         public @ResponseBody TaxaRankCountDTO collectionRankNameBreakdown(
                         @PathVariable("uuid") String uuid,
                         @PathVariable("rank") String rank,
@@ -118,7 +121,9 @@ public class BreakdownController {
 				rank, false);
         }
 
-        @RequestMapping(value = {"/breakdown/collections/rank/{rank}/name/{name}", "/breakdown/institutions/rank/{rank}/name/{name}"}, method = RequestMethod.GET)
+        @RequestMapping(value = {"/breakdown/collections/rank/{rank}/name/{name}", "/breakdown/institutions/rank/{rank}/name/{name}",
+                                 "/breakdown/data-providers/rank/{rank}/name/{name}", "/breakdown/data-resources/rank/{rank}/name/{name}",
+                                 "/breakdown/data-hubs/rank/{rank}/name/{name}"}, method = RequestMethod.GET)
         public @ResponseBody TaxaRankCountDTO rankNameBreakdown(
                         @PathVariable("rank") String rank,
                         @PathVariable("name") String name,
@@ -130,7 +135,9 @@ public class BreakdownController {
 				rank, false);
         }
 
-        @RequestMapping(value = {"/breakdown/collections/{uuid}/rank/{rank}", "/breakdown/institutions/{uuid}/rank/{rank}"}, method = RequestMethod.GET)
+        @RequestMapping(value = {"/breakdown/collections/{uuid}/rank/{rank}", "/breakdown/institutions/{uuid}/rank/{rank}",
+                                 "/breakdown/data-resources/{uuid}/rank/{rank}", "/breakdown/data-providers/{uuid}/rank/{rank}",
+                                 "/breakdown/data-hubs/{uuid}/rank/{rank}"}, method = RequestMethod.GET)
         public @ResponseBody TaxaRankCountDTO collectionRankBreakdown(
                         @PathVariable("uuid") String uuid,
                         @PathVariable("rank") String rank,
@@ -143,7 +150,9 @@ public class BreakdownController {
 				rank, true);
         }
 
-        @RequestMapping(value = {"/breakdown/collections/rank/{rank}", "/breakdown/institutions/rank/{rank}"}, method = RequestMethod.GET)
+        @RequestMapping(value = {"/breakdown/collections/rank/{rank}", "/breakdown/institutions/rank/{rank}",
+                                 "/breakdown/data-providers/rank/{rank}", "/breakdown/data-resources/rank/{rank}",
+                                 "/breakdown/data-hubs/rank/{rank}"}, method = RequestMethod.GET)
         public @ResponseBody TaxaRankCountDTO rankBreakdown(
                         @PathVariable("rank") String rank,
                         Model model) throws Exception {

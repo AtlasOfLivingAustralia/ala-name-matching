@@ -65,43 +65,7 @@ public class SearchUtils {
 			StringBuilder displayString = new StringBuilder(getUidTitle(query)
 					+ ": ");
 			displayString.append(collectionName);
-			// // Build Lucene query for institutions
-			// StringBuilder solrQuery = new StringBuilder();
-			// if (institutionCode != null && institutionCode.size() > 0) {
-			//
-			// List<String> institutions = new ArrayList<String>();
-			// for (int i = 0; i < institutionCode.size(); i++) {
-			// institutions.add("institution_code:" +
-			// institutionCode.getString(i));
-			// }
-			// solrQuery.append("(");
-			// solrQuery.append(StringUtils.join(institutions, " OR "));
-			// solrQuery.append(")");
-			//
-			// }
-			//
-			// // Build Lucene query for collections
-			// if (collectionCode != null && collectionCode.size() > 0) {
-			// if (solrQuery.length() > 0) {
-			// solrQuery.append(" AND ");
-			//
-			// }
-			// //StringBuilder displayString = new
-			// StringBuilder("Institution: ");
-			// List<String> collections = new ArrayList<String>();
-			// for (int i = 0; i < collectionCode.size(); i++) {
-			// //quote the collection code to solve issue with invalid
-			// characters (eg Invertebrates - Marine & Other)
-			// collections.add("collection_code:\"" +
-			// collectionCode.getString(i) +"\"");
-			// // displayString.append(coll).append(" ");
-			// }
-			// solrQuery.append("(");
-			// solrQuery.append(StringUtils.join(collections, " OR "));
-			// solrQuery.append(")");
-			//
-			// }
-			// searchQuery.setQuery("collection_code_uid:"+query);
+
 			searchQuery.setQuery(getUidSearchField(query) + ":" + query);
 			searchQuery.setDisplayString(displayString.toString());
 			return true;
@@ -430,13 +394,15 @@ public class SearchUtils {
 	 */
 	public static String getUidSearchField(String uid) {
 		if (uid.startsWith("co"))
-			return "collection_code_uid";
+			return "collection_uid";
 		if (uid.startsWith("in"))
-			return "institution_code_uid";
+			return "institution_uid";
 		if (uid.startsWith("dr"))
 			return "data_resource_uid";
 		if (uid.startsWith("dp"))
 			return "data_provider_uid";
+                if(uid.startsWith("dh"))
+                    return "data_hub_uid";
 		return null;
 	}
 
@@ -455,6 +421,8 @@ public class SearchUtils {
 			return "Data Resource";
 		if (uid.startsWith("dp"))
 			return "Data Provider";
+                if (uid.startsWith("dh"))
+                        return "Data Hub";
 		return null;
 	}
 
