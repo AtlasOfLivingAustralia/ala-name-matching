@@ -5,6 +5,7 @@ import au.org.ala.biocache.FullRecord
 import au.org.ala.biocache.OccurrenceDAO
 import au.org.ala.biocache.Raw
 import scala.collection.mutable.ArrayBuffer
+import org.wyki.cassandra.pelops.Pelops
 
 /**
  * A simple threaded implementation of the processing.
@@ -36,10 +37,9 @@ object ProcessWithActors {
     OccurrenceDAO.pageOverAll(Raw, fullRecord => {
 
       count += 1
-
-      if(buff.size<50){
-        buff + fullRecord.get
-      } else {
+      //we want to add the record to the buffer whether or not we send them to the actor
+      buff + fullRecord.get
+      if(buff.size>=50){
         val actor = pool(count % threads).asInstanceOf[Consumer]
 
         //find a ready actor...
@@ -63,6 +63,10 @@ object ProcessWithActors {
       true //indicate to continue
     })
     println("Finished.")
+    //kill the actors 
+    pool.foreach(actor => actor ! "exit")
+
+    Pelops.shutdown 
   }
 }
 
@@ -95,6 +99,12 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
           processed += 1
           //println(id+"] Processing " + raw.o.uuid +", Received: "+ received+", Processed: "+processed)
 //					master ! "done"
+        }
+        case s:String => {
+            if(s == "exit"){
+              println("Killing (ACT) thread: "+id)
+              exit()
+            }
         }
       }
     }
