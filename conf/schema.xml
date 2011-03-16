@@ -478,7 +478,8 @@
    <!-- start of BIE Biocache Fields -->
    <field name="id" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="occurrence_id" type="string" stored="true" multiValued="false" omitNorms="false" />
-   <field name="hub_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false"/>
+   <field name="data_hub_uid" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false"/>
+   <field name="data_hub" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false" />
    
     <field name="data_provider_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="data_provider" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
@@ -486,13 +487,13 @@
    
    <field name="data_resource_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="data_resource" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="institution_code_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="institution_code" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
+   <field name="institution_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="institution_code" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="institution_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <!-- Not displayed in search results -->
    <!-- field name="institution_code_lsid" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" /-->
-   <field name="collection_code_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="collection_code" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
+   <field name="collection_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="collection_code" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="collection_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <!-- Not displayed in search results -->
    <!-- field name="catalogue_number_id" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
@@ -577,6 +578,9 @@
    <!-- field name="raw_basis_of_record" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
    <field name="type_status" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="raw_type_status" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+
+   <field name="collector" type="string" indexed="true" stored="false" multiValued="false" omitNorms="false" />
+
 
    <!-- Not displayed in search results -->
    <!-- field name="identifier_name" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
@@ -664,6 +668,7 @@
    <copyField source="taxon_concept_lsid" dest="text"/>
    <copyField source="type_status" dest="text"/>
    <copyField source="raw_type_status" dest="text" />
+   <copyField source="collector" dest="text" />
 
    <copyField source="imcra" dest="biogeographic_region" />
    <copyField source="ibra" dest="biogeographic_region" />
