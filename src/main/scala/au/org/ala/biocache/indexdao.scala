@@ -92,9 +92,9 @@ trait IndexDAO {
    * The header values for the CSV file.
    */
   def getHeaderValues() : Array[String] ={
-    Array("id","occurrence_id","hub_uid","data_provider_uid","data_provider","data_resource_uid",
-          "data_resource","institution_code_uid", "institution_code","institution_name",
-          "collection_code_uid","collection_code","collection_name","catalogue_number",
+    Array("id","occurrence_id","data_hub_uid", "data_hub","data_provider_uid","data_provider","data_resource_uid",
+          "data_resource","institution_uid", "institution_code","institution_name",
+          "collection_uid","collection_code","collection_name","catalogue_number",
           "taxon_concept_lsid","occurrence_date","taxon_name","common_name","names_and_lsid",
           "rank","rank_id","raw_taxon_name","raw_common_name","multimedia","image_url",
           "species_group","country_code","lft","rgt","kingdom","phylum","class","order",
@@ -102,7 +102,7 @@ trait IndexDAO {
           "lat_long","point-1","point-0.1","point-0.01","point-0.001","point-0.0001",
           "year","month","basis_of_record","raw_basis_of_record","type_status",
           "raw_type_status","taxonomic_kosher","geospatial_kosher","assertions","location_remarks",
-          "occurrence_remarks","citation", "user_assertions","mean_temperature_cars2009a_band1_env",
+          "occurrence_remarks","citation", "user_assertions", "collector","mean_temperature_cars2009a_band1_env",
           "mean_oxygen_cars2006_band1_env", "bioclim_bio34_env", "bioclim_bio12_env", "bioclim_bio11_env")
   }
   /**
@@ -151,7 +151,7 @@ trait IndexDAO {
       }
     }
 
-    Array(guid, getValue("occurrenceID",map),getValue("dataHubUid", map), getValue("dataProviderUid.p", map), getValue("dataProviderName.p",map),
+    Array(guid, getValue("occurrenceID",map),getValue("dataHubUid.p", map), getValue("dataHub.p", map), getValue("dataProviderUid.p", map), getValue("dataProviderName.p",map),
           getValue("dataResourceUid.p", map), getValue("dataResourceName.p", map), getValue("institutionUid.p", map),
           getValue("institutionCode",map), getValue("institutionName.p",map),
           getValue("collectionUid.p",map), getValue("collectionCode", map), getValue("collectionName.p",map),
@@ -171,6 +171,7 @@ trait IndexDAO {
           getValue(OccurrenceDAO.taxonomicDecisionColumn, map), getValue(OccurrenceDAO.geospatialDecisionColumn, map),
           getAssertions(map).reduceLeft(_ + "|"+_), getValue("locationRemarks", map),
           getValue("occurrenceRemarks", map), "",  (getValue(OccurrenceDAO.userQualityAssertionColumn, map) != "").toString,
+          getValue("recordedBy", map),
           getValue("mean_temperature_cars2009a_band1.p", map), getValue("mean_oxygen_cars2006_band1.p", map),
           getValue("bioclim_bio34.p", map), getValue("bioclim_bio12.p", map), getValue("bioclim_bio11.p", map) )
     

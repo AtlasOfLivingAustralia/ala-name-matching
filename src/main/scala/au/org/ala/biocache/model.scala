@@ -360,11 +360,12 @@ class OccurrenceIndex extends Cloneable with Mappable {
   @BeanProperty @Field("id") var uuid:String =_
   @BeanProperty @Field("occurrence_id") var occurrenceID:String =_
   //processed values
-  @BeanProperty @Field("hub_uid") var dataHubUid:String =_
-  @BeanProperty @Field("institution_code_uid") var institutionUid:String =_
+  @BeanProperty @Field("data_hub_uid") var dataHubUid:String =_
+  @BeanProperty @Field("data_hub") var dataHub:String =_
+  @BeanProperty @Field("institution_uid") var institutionUid:String =_
   @BeanProperty @Field("institution_code") var raw_institutionCode:String =_
   @BeanProperty @Field("institution_name") var institutionName:String =_
-  @BeanProperty @Field("collection_code_uid") var collectionUid:String =_
+  @BeanProperty @Field("collection_uid") var collectionUid:String =_
   @BeanProperty @Field("collection_code") var raw_collectionCode:String =_
   @BeanProperty @Field("collection_name") var collectionName:String =_
   @BeanProperty @Field("catalogue_number") var raw_catalogNumber:String =_
@@ -406,6 +407,7 @@ class OccurrenceIndex extends Cloneable with Mappable {
   @BeanProperty @Field("image_url") var image:String = _
   @BeanProperty @Field("geospatial_kosher") var geospatialKosher:String =_
   @BeanProperty @Field("taxonomic_kosher") var taxonomicKosher:String =_
+  @BeanProperty @Field("collector") var raw_recordedBy:String = _
 
   //environment
   @BeanProperty @Field("mean_temperature_cars2009a_band1_env") var mean_temperature_cars2009a_band1:java.lang.Double =_
@@ -435,9 +437,9 @@ class OccurrenceIndex extends Cloneable with Mappable {
     
     val sdate = if(eventDate == null) null else DateFormatUtils.format(eventDate, "yyyy-MM-dd")
 
-    val map =Map[String,String]("id"-> uuid, "occurrence_id"-> occurrenceID, "hub_uid"-> dataHubUid,
-                                "institution_code_uid"-> institutionUid, "institution_code"-> raw_institutionCode,
-                                "institution_name"-> institutionName, "collection_code_uid"-> collectionUid,
+    val map =Map[String,String]("id"-> uuid, "occurrence_id"-> occurrenceID, "data_hub_uid"-> dataHubUid, "data_hub" -> dataHub,
+                                "institution_uid"-> institutionUid, "institution_code"-> raw_institutionCode,
+                                "institution_name"-> institutionName, "collection_uid"-> collectionUid,
                                 "collection_code"-> raw_collectionCode, "collection_name"-> collectionName,
                                 "catalogue_number"-> raw_catalogNumber, "taxon_concept_lsid"-> taxonConceptID,
                                 "occurrence_date"-> sdate, "taxon_name"-> scientificName, "common_name"-> vernacularName,
@@ -454,7 +456,7 @@ class OccurrenceIndex extends Cloneable with Mappable {
                                 "raw_taxon_name"-> raw_scientificName, "raw_basis_of_record"-> raw_basisOfRecord,
                                 "raw_type_status"-> raw_typeStatus, "raw_common_name"-> raw_vernacularName, "lat_long"-> latLong,
                                 "point-1"-> point1, "point-0.1"-> point01, "point-0.01"-> point001, "point-0.001"-> point0001,
-                                "point-0.0001"-> point00001, "names_and_lsid"-> namesLsid, "multimedia"-> multimedia,
+                                "point-0.0001"-> point00001, "names_and_lsid"-> namesLsid, "multimedia"-> multimedia, "collector"->raw_recordedBy,
                                 "mean_temperature_cars2009a_band1_env"-> mean_temperature_cars2009a_band1,
                                 "mean_oxygen_cars2006_band1_env"-> mean_oxygen_cars2006_band1, "bioclim_bio34_env"-> bioclim_bio34,
                                 "bioclim_bio12_env"-> bioclim_bio12, "bioclim_bio11_env"->bioclim_bio11 )
