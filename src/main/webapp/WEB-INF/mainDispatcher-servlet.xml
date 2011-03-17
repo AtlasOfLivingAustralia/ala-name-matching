@@ -108,6 +108,15 @@
         </property>
     </bean>
 
+    <!-- beans for RestTemplate  -->
+    <bean id="restTemplate" class="org.springframework.web.client.RestTemplate">
+        <property name="messageConverters">
+            <list>
+                <!-- <bean class="org.springframework.http.converter.xml.SourceHttpMessageConverter"/> -->
+                <bean class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter"/>
+            </list>
+        </property>
+    </bean>
 
     <bean id="jacksonObjectMapper" class="org.codehaus.jackson.map.ObjectMapper" />
     <bean id="jacksonSerializationConfig" class="org.codehaus.jackson.map.SerializationConfig"
