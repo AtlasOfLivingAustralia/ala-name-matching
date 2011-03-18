@@ -38,12 +38,12 @@ public class SearchRequestParams {
                                 "state",
                                 "biogeographic_region",
                                 "rank",
+                                "species_group",
                                 "kingdom",
                                 "family",
                                 "assertions",
                                 "month",
                                 "date",
-                                "species_group",
                                 "multimedia"};
     protected Integer start = 0;
     protected Integer pageSize = 10;
