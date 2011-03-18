@@ -61,6 +61,7 @@ import org.ala.biocache.dto.SearchRequestParams;
 import org.ala.biocache.dto.SpatialSearchRequestParams;
 import org.ala.biocache.util.DownloadFields;
 import org.apache.solr.common.SolrDocument;
+import javax.inject.Inject;
 
 /**
  * SOLR implementation of SearchDao. Uses embedded SOLR server (can be a memory hog).
@@ -91,9 +92,13 @@ public class SearchDAOImpl implements SearchDAO {
     protected Pattern lsidPattern= Pattern.compile("lsid:[a-zA-Z0-9\\.:-]*");
     protected Pattern urnPattern = Pattern.compile("urn:[a-zA-Z0-9\\.:-]*");
     protected Pattern spacesPattern =Pattern.compile("[^\\s\"()\\[\\]']+|\"[^\"]*\"|'[^']*'");
+    protected Pattern uidPattern = Pattern.compile("([a-z_]*_uid:)([a-z0-9]*)");
 
     /** Download properties */
     protected DownloadFields downloadFields;
+
+    @Inject
+    protected SearchUtils searchUtils;
 
     /**
      * Initialise the SOLR server instance
@@ -123,15 +128,15 @@ public class SearchDAOImpl implements SearchDAO {
         SearchResultDTO searchResults = new SearchResultDTO();
 
         try {
-            String queryString = formatSearchQuery(requestParams.getQ());
+            formatSearchQuery(requestParams);
             SolrQuery solrQuery = initSolrQuery(requestParams); // general search settings
-            solrQuery.setQuery(queryString);
+            solrQuery.setQuery(requestParams.getQ());
             QueryResponse qr = runSolrQuery(solrQuery, requestParams);
             searchResults = processSolrResponse(qr, solrQuery);
             //set the title for the results
             searchResults.setQueryTitle(requestParams.getDisplayString());
 
-            logger.info("search query: " + queryString);
+            logger.info("search query: " + requestParams.getQ());
         } catch (SolrServerException ex) {
             logger.error("Problem communicating with SOLR server. " + ex.getMessage(), ex);
             searchResults.setStatus("ERROR"); // TODO also set a message field on this bean with the error message(?)
@@ -140,10 +145,6 @@ public class SearchDAOImpl implements SearchDAO {
         return searchResults;
     }
 
-    public SearchResultDTO findByFulltextSpatialQuery(String query, String[] filterQuery, Float lat, Float lon,
-            Float radius, Integer startIndex, Integer pageSize, String sortField, String sortDirection) throws Exception {
-        return null;
-    }
 
     /**
      * @see org.ala.biocache.dao.SearchDAO#findByFulltextSpatialQuery(java.lang.String, java.lang.String,
@@ -156,7 +157,8 @@ public class SearchDAOImpl implements SearchDAO {
 
         try {
             //String queryString = formatSearchQuery(query);
-            String queryString = buildSpatialQueryString(formatSearchQuery(searchParams.getQ()), searchParams.getLat(), searchParams.getLon(), searchParams.getRadius());
+            formatSearchQuery(searchParams);
+            String queryString = buildSpatialQueryString(searchParams.getQ(), searchParams.getLat(), searchParams.getLon(), searchParams.getRadius());
 
             SolrQuery solrQuery = initSolrQuery(searchParams); // general search settings
             solrQuery.setQuery(queryString);
@@ -292,20 +294,20 @@ public class SearchDAOImpl implements SearchDAO {
      * @see org.ala.biocache.dao.SearchDao#getFacetPoints(java.lang.String, java.lang.String[], PointType pointType)
      */
     @Override
-    public List<OccurrencePoint> getFacetPoints(String query, String[] filterQuery, PointType pointType) throws Exception {
+    public List<OccurrencePoint> getFacetPoints(SpatialSearchRequestParams searchParams, PointType pointType) throws Exception {
         List<OccurrencePoint> points = new ArrayList<OccurrencePoint>(); // new OccurrencePoint(PointType.POINT);
-        String queryString = formatSearchQuery(query);
-        logger.info("search query: " + queryString);
+         formatSearchQuery(searchParams);
+        logger.info("search query: " + searchParams.getQ());
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.setQueryType("standard");
-        solrQuery.setQuery(queryString);
+        solrQuery.setQuery(searchParams.getQ());
         solrQuery.setRows(0);
         solrQuery.setFacet(true);
         solrQuery.addFacetField(pointType.getLabel());
         solrQuery.setFacetMinCount(1);
         solrQuery.setFacetLimit(MAX_DOWNLOAD_SIZE);  // unlimited = -1
 
-        QueryResponse qr = runSolrQuery(solrQuery, filterQuery, 1, 0, "score", "asc");
+        QueryResponse qr = runSolrQuery(solrQuery, searchParams.getFq(), 1, 0, "score", "asc");
         List<FacetField> facets = qr.getFacetFields();
 
         if (facets != null) {
@@ -352,10 +354,11 @@ public class SearchDAOImpl implements SearchDAO {
         List<String> colours = new ArrayList<String>();
 
         String queryString = "";
+        formatSearchQuery(searchParams);
         if (searchType == 0) {
-            queryString = formatSearchQuery(searchParams.getQ());
+            queryString = searchParams.getQ();
         } else if (searchType == 1) {
-            queryString = buildSpatialQueryString(formatSearchQuery(searchParams.getQ()), searchParams.getLat(), searchParams.getLon(), searchParams.getRadius());
+            queryString = buildSpatialQueryString(searchParams.getQ(), searchParams.getLat(), searchParams.getLon(), searchParams.getRadius());
         }
 
         logger.info("search query: " + queryString);
@@ -719,7 +722,7 @@ public class SearchDAOImpl implements SearchDAO {
         solrQuery.setFacetMinCount(1);
         TaxaRankCountDTO trDTO = null;
         for (int i = 5; i > 0 && trDTO == null; i--) {
-            String ffname = SearchUtils.getRankFacetName(i);
+            String ffname = searchUtils.getRankFacetName(i);
             solrQuery.addFacetField(ffname);
             solrQuery.setFacetMinCount(1);
             QueryResponse qr = runSolrQuery(solrQuery, null, 1, 0, ffname, "asc");
@@ -746,7 +749,7 @@ public class SearchDAOImpl implements SearchDAO {
      */
     public TaxaRankCountDTO findTaxonCountForUid(String query, String rank, boolean includeSuppliedRank) throws Exception {
         TaxaRankCountDTO trDTO = null;
-        List<String> ranks = SearchUtils.getNextRanks(rank, includeSuppliedRank);
+        List<String> ranks = searchUtils.getNextRanks(rank, includeSuppliedRank);
         if (ranks != null && ranks.size() > 0) {
             SolrQuery solrQuery = new SolrQuery();
             solrQuery.setQueryType("standard");
@@ -948,25 +951,40 @@ public class SearchDAOImpl implements SearchDAO {
     }
 
     /**
-     * Format the search input query for a full-text search
+     * Format the search input query for a full-text search.
+     *
+     * This includes constructing a user friendly version of the query to
+     * be used for display purposes.
      *
      * @param query
      * @return
      */
-    protected String formatSearchQuery(String query) {
+    protected void formatSearchQuery(SearchRequestParams searchParams) {
         // set the query
+        String query =searchParams.getQ();
         StringBuffer queryString = new StringBuffer();
+        StringBuffer displaySb = new StringBuffer();
+        String displayString = query;
         //if the query string contains lsid: we will need to replace it with the corresponding lft range
-
+        int last =0;
         if (query.contains("lsid:")) {
             Matcher matcher = lsidPattern.matcher(query);
             while (matcher.find()) {
                 String value = matcher.group();
                 logger.debug("preprocessing " + value);
-                matcher.appendReplacement(queryString, SearchUtils.getTaxonSearch(value.substring(5, value.length())));
+                String[] values = searchUtils.getTaxonSearch(value.substring(5, value.length()));
+                matcher.appendReplacement(queryString, values[0]);
+                displaySb.append(query.substring(last, matcher.start()));
+                displaySb.append(values[1]);
+                last = matcher.end();
+                //matcher.appendReplacement(displayString, values[1]);
             }
             matcher.appendTail(queryString);
+            displaySb.append(query.substring(last, query.length()));
+
+            System.out.println("DisplayString: " + displaySb.toString());
             query = queryString.toString();
+            displayString = displaySb.toString();
         }
         if (query.contains("urn")) {
             //esacape the URN strings before escaping the rest this aviods the issue with attempting to search on a urn field
@@ -1008,8 +1026,22 @@ public class SearchDAOImpl implements SearchDAO {
             
         }
         matcher.appendTail(queryString);
-  
-        return queryString.toString();
+
+        //substitute better display strings for collection/inst etc searches
+        if(displayString.contains("_uid")){
+            displaySb.setLength(0);
+            matcher = uidPattern.matcher(displayString);
+            while(matcher.find()){
+                String newVal = searchUtils.getUidDisplayString(matcher.group(2));
+                if(newVal != null)
+                    matcher.appendReplacement(displaySb, newVal);
+            }
+            matcher.appendTail(displaySb);
+            displayString = displaySb.toString();
+        }
+        searchParams.setQ(queryString.toString());
+        searchParams.setDisplayString(displayString);
+        //return queryString.toString();
     }
     /**
      * Creates a SOLR escaped string the can be used in a StringBuffer.appendReplacement
@@ -1190,7 +1222,9 @@ public class SearchDAOImpl implements SearchDAO {
 
     /**
      * Obtains a list and facet count of the source uids for the supplied query.
-     * 
+     *
+     * IS THIS NECESSARY
+     *
      * @param query
      * @param filterQuery
      * @return
@@ -1199,26 +1233,26 @@ public class SearchDAOImpl implements SearchDAO {
     public Map<String, Integer> getSourcesForQuery(String query, String[] filterQuery) throws Exception {
 
         Map<String, Integer> uidStats = new HashMap<String, Integer>();
-        SolrQuery solrQuery = new SolrQuery();
-        solrQuery.setQuery(formatSearchQuery(query));
-        solrQuery.setQueryType("standard");
-        solrQuery.setRows(0);
-        solrQuery.setFacet(true);
-        solrQuery.setFacetMinCount(1);
-        solrQuery.addFacetField("data_provider_uid");
-        solrQuery.addFacetField("data_resource_uid");
-        solrQuery.addFacetField("collection_uid");
-        solrQuery.addFacetField("institution_uid");
-        QueryResponse qr = runSolrQuery(solrQuery, filterQuery, 1, 0, "score", "asc");
-        //now cycle through and get all the facets
-        List<FacetField> facets = qr.getFacetFields();
-        for (FacetField facet : facets) {
-            if (facet.getValues() != null) {
-                for (FacetField.Count ffc : facet.getValues()) {
-                    uidStats.put(ffc.getName(), new Integer((int) ffc.getCount()));
-                }
-            }
-        }
+//        SolrQuery solrQuery = new SolrQuery();
+//        solrQuery.setQuery(formatSearchQuery(query));
+//        solrQuery.setQueryType("standard");
+//        solrQuery.setRows(0);
+//        solrQuery.setFacet(true);
+//        solrQuery.setFacetMinCount(1);
+//        solrQuery.addFacetField("data_provider_uid");
+//        solrQuery.addFacetField("data_resource_uid");
+//        solrQuery.addFacetField("collection_uid");
+//        solrQuery.addFacetField("institution_uid");
+//        QueryResponse qr = runSolrQuery(solrQuery, filterQuery, 1, 0, "score", "asc");
+//        //now cycle through and get all the facets
+//        List<FacetField> facets = qr.getFacetFields();
+//        for (FacetField facet : facets) {
+//            if (facet.getValues() != null) {
+//                for (FacetField.Count ffc : facet.getValues()) {
+//                    uidStats.put(ffc.getName(), new Integer((int) ffc.getCount()));
+//                }
+//            }
+//        }
         return uidStats;
     }
 

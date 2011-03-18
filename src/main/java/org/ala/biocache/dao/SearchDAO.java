@@ -111,7 +111,7 @@ public interface SearchDAO {
      * @return
      * @throws Exception
      */
-    List<OccurrencePoint> getFacetPoints(String query, String[] filterQuery, PointType pointType) throws Exception;
+    List<OccurrencePoint> getFacetPoints(SpatialSearchRequestParams searchParams, PointType pointType) throws Exception;
 
     /**
      * Retrieve a list of occurrence uid's for a given search

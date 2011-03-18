@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import atg.taglib.json.util.JSONObject;
 import au.org.ala.biocache.TaxonProfileDAO;
+import javax.inject.Inject;
 import org.ala.biocache.dto.SearchRequestParams;
 import org.ala.biocache.dto.SpatialSearchRequestParams;
 import org.apache.commons.lang.StringUtils;
@@ -38,7 +39,10 @@ public class SearchUtils {
 
 	protected String bieBaseUrl = "http://bie.ala.org.au";
 
-	private static final List<String> ranks = (List<String>) org.springframework.util.CollectionUtils
+        @Inject
+        private CollectionsCache collectionCache;
+
+	private  final List<String> ranks = (List<String>) org.springframework.util.CollectionUtils
 			.arrayToList(new String[] { "kingdom", "phylum", "class", "order",
 					"family", "genus", "species" });
 
@@ -49,37 +53,6 @@ public class SearchUtils {
 	 * @param query
 	 * @return true when UID could be located and query updated correctly
 	 */
-	public boolean updateCollectionSearchString(SearchQuery searchQuery) {
-		try {
-			String query = searchQuery.getQuery();
-
-			// query the collectory for the institute and collection codes
-			// needed to perform the search
-			String jsonObject = OccurrenceController
-					.getUrlContentAsString(collectoryBaseUrl
-							+ "/lookup/summary/" + query);
-			JSONObject j = new JSONObject(jsonObject);
-			String collectionName = j.getString("name");
-			// JSONArray institutionCode = j.getJSONArray("derivedInstCodes");
-			// JSONArray collectionCode = j.getJSONArray("derivedCollCodes");
-			StringBuilder displayString = new StringBuilder(getUidTitle(query)
-					+ ": ");
-			displayString.append(collectionName);
-
-			searchQuery.setQuery(getUidSearchField(query) + ":" + query);
-			searchQuery.setDisplayString(displayString.toString());
-			return true;
-
-		} catch (Exception e) {
-			logger.error(
-					"Problem contacting the collectory: " + e.getMessage(), e);
-			return false;
-			// TODO work out what we want to do to the search if an exception
-			// occurs while
-			// contacting the collectory etc
-		}
-
-	}
 
         public boolean updateCollectionSearchString(SearchRequestParams searchParams, String uid) {
 		try {
@@ -88,20 +61,7 @@ public class SearchUtils {
 			// query the collectory for the institute and collection codes
 			// needed to perform the search
                         String[] uids = uid.split(",");
-
-			String jsonObject = OccurrenceController
-					.getUrlContentAsString(collectoryBaseUrl
-							+ "/lookup/summary/" + uids[0]);
-			JSONObject j = new JSONObject(jsonObject);
-			String collectionName = j.getString("name");
-			// JSONArray institutionCode = j.getJSONArray("derivedInstCodes");
-			// JSONArray collectionCode = j.getJSONArray("derivedCollCodes");
-			StringBuilder displayString = new StringBuilder(getUidTitle(uids[0])
-					+ ": ");
-			displayString.append(collectionName);
-
 			searchParams.setQ(getUIDSearchString(uids));
-			searchParams.setDisplayString(displayString.toString());
                         updateCommon(searchParams);
 			return true;
 
@@ -126,45 +86,25 @@ public class SearchUtils {
         }
         return sb.toString();
     }
+    /**
+     * Returns the display string for the supplied uid
+     *
+     * TODO support data_resource, data_provider and data_hub
+     *
+     * @param uid
+     * @return
+     */
+    public String getUidDisplayString(String uid) {
+        //get the information from the collections cache
+        if (uid.startsWith("in")) {
+            return "Institution: " + collectionCache.getInstitutions().get(uid);
+        } else if (uid.startsWith("co")) {
+            return "Collection: " + collectionCache.getCollections().get(uid);
+        }
+        return null;
+    }
 
 
-	/**
-	 * Returns the filter query string required to perform a taxon concept
-	 * search
-	 *
-	 * @param query
-	 * @return
-	 */
-	public boolean updateTaxonConceptSearchString(SearchQuery searchQuery) {
-
-		String guid = searchQuery.getQuery();
-
-		Option<TaxonProfile> opt = TaxonProfileDAO.getByGuid(guid);
-
-		//replace with webservice call or use biocache taxon profile cache - is this enough
-
-		if (!opt.isEmpty()) {
-                    TaxonProfile tc = opt.get();
-                    StringBuffer entityQuerySb = new StringBuffer(tc.getRankString()
-					+ ": " + tc.getScientificName());
-			if (tc.getCommonName() != null) {
-				entityQuerySb.append(" : ");
-				entityQuerySb.append(tc.getCommonName());
-			}
-			searchQuery.addToFilterQuery("lft:[" + tc.getLeft() + " TO "
-					+ tc.getRight() + "]");
-
-			if (logger.isDebugEnabled()) {
-				for (String filter : searchQuery.getFilterQuery()) {
-					logger.debug("Filter: " + filter);
-				}
-			}
-			searchQuery.setQuery("*:*");
-			searchQuery.setEntityQuery(entityQuerySb.toString());
-			return true;
-		}
-		return false;
-	}
 
         /**
          * Updates the searchParams for a query by taxon concept
@@ -202,18 +142,30 @@ public class SearchUtils {
 		}
 		return false;
 	}
-        public static String getTaxonSearch(String lsid){
+        /**
+         * Returns an array where the first value is the search string and the
+         * second is a display string.
+         * @param lsid
+         * @return
+         */
+        public String[] getTaxonSearch(String lsid){
             // Get the taxon profile from the biocache cache - this could be replaced with a webservice call if necessary
             Option<TaxonProfile> opt = TaxonProfileDAO.getByGuid(lsid);
          
             if (!opt.isEmpty()) {
                 TaxonProfile tc = opt.get();
+                StringBuffer dispSB = new StringBuffer(tc.getRankString()
+					+ ": " + tc.getScientificName());
+			if (tc.getCommonName() != null) {
+				dispSB.append(" : ");
+				dispSB.append(tc.getCommonName());
+			}
                 StringBuilder sb = new StringBuilder("lft:[");
                 sb.append(tc.getLeft()).append(" TO ").append(tc.getRight()).append("]");
-                return sb.toString();
+                return new String[] {sb.toString(),dispSB.toString()};
             }
             //If the lsid for the taxon concept can not be found just return the original string
-            return "lsid:" +lsid;
+            return new String[]{"lsid:" +lsid, "lsid:" +lsid};
         }
         /**
          * updates the query ready for a spatial search
@@ -279,46 +231,6 @@ public class SearchUtils {
 //		}
         }
 
-	/**
-	 * Returns the query to be used when searching for data providers.
-	 *
-	 * @param query
-	 * @return
-	 */
-
-	public String getDataProviderSearchString(String query) {
-		return "data_provider_id:" + query;
-	}
-
-	/**
-	 * Returns the query to be used when searching for data resources.
-	 *
-	 * @param query
-	 * @return
-	 */
-	public String getDataResourceSearchString(String query) {
-		return "data_resource_id:" + query;
-	}
-//        public boolean updateQueryDetails(SearchRequestParams searchParams){
-//
-//
-//            boolean success = true;
-//		if (searchParams.getType().equals("collection")) {
-//			success = updateCollectionSearchString(searchParams);
-//		} else if (searchParams.getType().equals("provider")) {
-//			searchParams.setQ(getDataProviderSearchString(searchParams
-//					.getQ()));
-//		} else if (searchParams.getType().equals("resource")) {
-//			searchParams.setQ(getDataResourceSearchString(searchParams
-//					.getQ()));
-//		} else if (searchParams.getType().equals("taxon")) {
-//			success = updateTaxonConceptSearchString(searchParams);
-//		} else if (searchParams.getType().equals("spatial")){
-//                    success = updateSpatial(searchParams);
-//                }
-//
-//            return success;
-//        }
 
 	/**
 	 * Returns the query string based on the type of search that needs to be
@@ -332,17 +244,7 @@ public class SearchUtils {
 		logger.debug("Processing " + searchQuery.getQuery() + " using type: "
 				+ searchQuery.getType());
 		boolean success = true;
-		if (searchQuery.getType().equals("collection")) {
-			success = updateCollectionSearchString(searchQuery);
-		} else if (searchQuery.getType().equals("provider")) {
-			searchQuery.setQuery(getDataProviderSearchString(searchQuery
-					.getQuery()));
-		} else if (searchQuery.getType().equals("resource")) {
-			searchQuery.setQuery(getDataResourceSearchString(searchQuery
-					.getQuery()));
-		} else if (searchQuery.getType().equals("taxon")) {
-			success = updateTaxonConceptSearchString(searchQuery);
-		}
+		
 		// otherwise we can leave the query with its default values ("normal"
 		// type)
 
@@ -369,7 +271,7 @@ public class SearchUtils {
 	/**
 	 * Set the initial point values in the index.
 	 */
-	public static void initialPointValues(OccurrenceDTO occurrence) {
+	public void initialPointValues(OccurrenceDTO occurrence) {
 		Double lat = occurrence.getLatitude();
 		Double lon = occurrence.getLongitude();
 		if (lat != null && lon != null) {
@@ -392,7 +294,7 @@ public class SearchUtils {
 	 * @param uid
 	 * @return
 	 */
-	public static String getUidSearchField(String uid) {
+	public String getUidSearchField(String uid) {
 		if (uid.startsWith("co"))
 			return "collection_uid";
 		if (uid.startsWith("in"))
@@ -412,7 +314,7 @@ public class SearchUtils {
 	 * @param uid
 	 * @return
 	 */
-	public static String getUidTitle(String uid) {
+	public String getUidTitle(String uid) {
 		if (uid.startsWith("co"))
 			return "Collection";
 		if (uid.startsWith("in"))
@@ -432,7 +334,7 @@ public class SearchUtils {
 	 * @param position
 	 * @return
 	 */
-	public static String getRankFacetName(int position) {
+	public String getRankFacetName(int position) {
 		switch (position) {
 		case 1:
 			return "kingdom";
@@ -459,7 +361,7 @@ public class SearchUtils {
 	 * @param rank
 	 * @return
 	 */
-	public static List<String> getNextRanks(String rank,
+	public List<String> getNextRanks(String rank,
 			boolean includeSuppliedRank) {
 		int start = includeSuppliedRank ? ranks.indexOf(rank) : ranks
 				.indexOf(rank) + 1;

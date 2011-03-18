@@ -71,7 +71,7 @@ public class MapController {
     @Inject
     protected SearchUtils searchUtils;
 
-    @RequestMapping(value = "/occurrences/wms", method = RequestMethod.GET)
+     @RequestMapping(value = "/occurrences/wms", method = RequestMethod.GET)
     public void pointsWmsImage(SpatialSearchRequestParams requestParams,
             @RequestParam(value = "colourby", required = false, defaultValue = "0") Integer colourby,
             @RequestParam(value = "width", required = false, defaultValue = "256") Integer widthObj,
@@ -166,7 +166,7 @@ public class MapController {
 
         requestParams.setFq(newFilterQuery);
 
-        List<OccurrencePoint> points = searchDAO.getFacetPoints(requestParams.getQ(), requestParams.getFq(), pointType);
+        List<OccurrencePoint> points = searchDAO.getFacetPoints(requestParams, pointType);
         logger.debug("Points search for " + pointType.getLabel() + " - found: " + points.size());
 
         if (points.size() == 0) {
@@ -387,7 +387,7 @@ public class MapController {
             HttpServletResponse response)
             throws Exception {
 
-        String query = requestParams.getQ();
+       
         String[] filterQuery = requestParams.getFq();
 
         if (callback != null && !callback.isEmpty()) {
@@ -396,26 +396,13 @@ public class MapController {
             response.setContentType("application/json");
         }
 
-        // Convert array to list so we append more values onto it
-        ArrayList<String> fqList = null;
-        if (filterQuery != null) {
-            fqList = new ArrayList<String>(Arrays.asList(filterQuery));
-        } else {
-            fqList = new ArrayList<String>();
-        }
+        
 
         PointType pointType = PointType.POINT_RAW; // default value for when zoom is null
         pointType = getPointTypeForZoomLevel(zoomLevel);
 
-        String[] newFilterQuery = (String[]) fqList.toArray(new String[fqList.size()]); // convert back to array
-        //get the new query details
-        SearchQuery searchQuery = new SearchQuery(query, "normal", newFilterQuery);
-        searchUtils.updateQueryDetails(searchQuery);
-
-        // add the details back into the requestParam object
-        requestParams.setQ(searchQuery.getQuery());
-        requestParams.setFq(searchQuery.getFilterQuery());
-
+       
+        
         List<OccurrencePoint> points = searchDAO.getOccurrences(requestParams, pointType, "", 1);
         logger.info("Points search for " + pointType.getLabel() + " - found: " + points.size());
         model.addAttribute("points", points);

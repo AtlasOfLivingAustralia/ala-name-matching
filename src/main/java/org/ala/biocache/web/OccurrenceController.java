@@ -136,26 +136,13 @@ public class OccurrenceController {
             @PathVariable("guid") String guid,
             Model model) throws Exception {
 
-        SearchResultDTO searchResult = new SearchResultDTO();
+      
+         requestParams.setQ("lsid:" + guid);
         SearchUtils.setDefaultParams(requestParams);
-        logger.debug("requestParams: " + requestParams);
-        //Change the method call so that the filter query can be updated
-        boolean taxonFound = searchUtils.updateTaxonConceptSearchString(requestParams, guid);
-
-            if (taxonFound) {
-                searchResult = searchDAO.findByFulltextQuery(requestParams);
+        SearchResultDTO searchResult = searchDAO.findByFulltextQuery(requestParams);
                 model.addAttribute("searchResult", searchResult);
-                logger.debug("query = " + requestParams);
-                Long totalRecords = searchResult.getTotalRecords();
+           return searchResult;
 
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Returning results set with: " + totalRecords);
-                }
-            } else {
-                logger.info("Taxon not found...." + guid);
-            }
-
-		return searchResult;
 	}
 
     /**
@@ -179,7 +166,7 @@ public class OccurrenceController {
             HttpServletRequest request,
             Model model)
             throws Exception {
-        String email = null;
+        /*String email = null;
         String reason = "Viewing BIE species map";
         String ip = request.getLocalAddr();
         SearchQuery searchQuery = new SearchQuery(query, "taxon", filterQuery);
@@ -189,7 +176,7 @@ public class OccurrenceController {
         model.addAttribute("occurrenceSources", searchUtils.getSourceInformation(sources));
         //log the usages statistic to the logger
         LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED_ON_MAP, email, reason, ip, sources);
-        logger.log(RestLevel.REMOTE, vo);
+        logger.log(RestLevel.REMOTE, vo);*/
 
     }
 
@@ -204,7 +191,7 @@ public class OccurrenceController {
      */
     @RequestMapping(value = {"/occurrences/collections/{uid}", "/occurrences/institutions/{uid}",
                              "/occurrences/data-resources/{uid}", "/occurrences/data-providers/{uid}", "/occurrences/data-hubs/{uid}"}, method = RequestMethod.GET)
-    public @ResponseBody SearchResultDTO occurrenceSearchForCollection(
+    public @ResponseBody SearchResultDTO occurrenceSearchForUID(
             SearchRequestParams requestParams,
             @PathVariable("uid") String uid,
             Model model)
@@ -227,6 +214,7 @@ public class OccurrenceController {
 
     /**
      * Spatial search for either a taxon name or full text text search
+     * IS THIS NECESSARY?
      *
      * OLD URI Tested with: /occurrences/searchByArea.json?q=taxon_name:Lasioglossum|-31.2|138.4|800
      * NEW URI Tested with: /occurrences/area/-31.2/138.4/800?q=Lasioglossum
