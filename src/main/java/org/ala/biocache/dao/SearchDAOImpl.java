@@ -975,14 +975,17 @@ public class SearchDAOImpl implements SearchDAO {
                 String[] values = searchUtils.getTaxonSearch(value.substring(5, value.length()));
                 matcher.appendReplacement(queryString, values[0]);
                 displaySb.append(query.substring(last, matcher.start()));
-                displaySb.append(values[1]);
+                if(!values[1].startsWith("lsid:"))
+                    displaySb.append("<span>").append(values[1]).append("</span>");
+                else
+                    displaySb.append(values[1]);
                 last = matcher.end();
                 //matcher.appendReplacement(displayString, values[1]);
             }
             matcher.appendTail(queryString);
             displaySb.append(query.substring(last, query.length()));
 
-            System.out.println("DisplayString: " + displaySb.toString());
+           
             query = queryString.toString();
             displayString = displaySb.toString();
         }
@@ -1032,7 +1035,7 @@ public class SearchDAOImpl implements SearchDAO {
             displaySb.setLength(0);
             matcher = uidPattern.matcher(displayString);
             while(matcher.find()){
-                String newVal = searchUtils.getUidDisplayString(matcher.group(2));
+                String newVal = "<span>"+searchUtils.getUidDisplayString(matcher.group(2)) +"</span>";
                 if(newVal != null)
                     matcher.appendReplacement(displaySb, newVal);
             }
