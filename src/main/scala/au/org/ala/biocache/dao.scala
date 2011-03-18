@@ -327,7 +327,12 @@ object OccurrenceDAO {
     DAO.persistentManager.selectRows(uuids, entityName, fields, { fieldMap =>
       for(field<-fields){
         val fieldValue = fieldMap.get(field)
-        outputStream.write(fieldValue.getOrElse("").getBytes)
+        //Create a MS Excel compliant CSV file thus field with delimiters are quoted and embedded quotes are escaped
+        val svalue = fieldValue.getOrElse("")
+        if(svalue.contains(fieldDelimiter) || svalue.contains(recordDelimiter) || svalue.contains("\""))
+          outputStream.write(("\"" + svalue.replaceAll("\"", "\"\"") +"\"").getBytes)
+        else
+          outputStream.write(svalue.getBytes)
         outputStream.write(fieldDelimiter.getBytes)
       }
       outputStream.write(recordDelimiter.getBytes)
