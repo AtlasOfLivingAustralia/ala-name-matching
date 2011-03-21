@@ -16,10 +16,9 @@ package au.org.ala.sds.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
-
-import au.org.ala.sds.util.GeoLocationHelper;
 
 /**
  *
@@ -74,28 +73,24 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
         return false;
     }
 
-    public SensitivityInstance getSensitivityInstance(String latitude, String longitude) {
-        SensitivityInstance instance = null;
-        SensitivityZone state = null;
-
-        try {
-            state = GeoLocationHelper.getStateContainingPoint(latitude, longitude);
-        } catch (Exception e) {
-            logger.error("Error getting state from location - " + e.getMessage());
+    public List<SensitivityInstance> getInstancesForZones(Set<SensitivityZone> zones) {
+        List<SensitivityInstance> instanceList = new ArrayList<SensitivityInstance>();
+        for (SensitivityInstance si : this.instances) {
+            if (zones.contains(si.getZone())) {
+                instanceList.add(si);
+            } else if (si.getZone().equals(SensitivityZone.AUS) &&
+                       SensitivityZone.isInAustralia(zones)) {
+                instanceList.add(si);
+            }
         }
-
-        if (state != null) {
-            instance = getInstanceForState(state);
-        }
-
-        return instance;
+        return instanceList;
     }
 
     public SensitivityInstance getSensitivityInstance(String state) {
         return getInstanceForState(SensitivityZone.getZone(state));
     }
 
-    private SensitivityInstance getInstanceForState(SensitivityZone state) {
+    public SensitivityInstance getInstanceForState(SensitivityZone state) {
         SensitivityInstance instance = null;
         SensitivityInstance ausInstance = null;
         for (SensitivityInstance si : this.instances) {
