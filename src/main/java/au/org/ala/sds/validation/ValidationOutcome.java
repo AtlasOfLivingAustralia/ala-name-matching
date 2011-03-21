@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package au.org.ala.sds.validation;
 
@@ -9,39 +9,43 @@ package au.org.ala.sds.validation;
  */
 public class ValidationOutcome {
 
-        private ValidationReport report;
-        
-        private boolean loadable;
-        
-        private String annotation;
+    private boolean valid;
+    private ValidationReport report;
+    private String annotation;
 
-        public ValidationOutcome(ValidationReport report, boolean loadable) {
-            super();
-            this.report = report;
-            this.loadable = loadable;
-        }
+    public ValidationOutcome(ValidationReport report) {
+        super();
+        this.report = report;
+        this.valid = true;
+    }
 
-        public ValidationReport getReport() {
-            return report;
-        }
+    public ValidationOutcome(ValidationReport report, boolean valid) {
+        super();
+        this.report = report;
+        this.valid = valid;
+    }
 
-        public void setReport(ValidationReport report) {
-            this.report = report;
-        }
+    public ValidationReport getReport() {
+        return report;
+    }
 
-        public boolean isLoadable() {
-            return loadable;
-        }
+    public void setReport(ValidationReport report) {
+        this.report = report;
+    }
 
-        public void setLoadable(boolean loadable) {
-            this.loadable = loadable;
-        }
+    public String getAnnotation() {
+        return annotation;
+    }
 
-        public String getAnnotation() {
-            return annotation;
-        }
+    public void setAnnotation(String annotation) {
+        this.annotation = annotation;
+    }
 
-        public void setAnnotation(String annotation) {
-            this.annotation = annotation;
-        }
+    public boolean isValid() {
+        return valid;
+    }
+
+    public void setValid(boolean valid) {
+        this.valid = valid;
+    }
 }
