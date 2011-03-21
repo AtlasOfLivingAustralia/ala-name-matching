@@ -14,6 +14,9 @@
  ***************************************************************************/
 package au.org.ala.sds.model;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
@@ -30,20 +33,27 @@ public enum SensitivityCategory {
     CRITICALLY_ENDANGERED("CR"),
     EXTINCT_IN_THE_WILD("EW"),
     EXTINCT("EX"),
-    
+    RARE("R"),
+    WA_PRIORITY_1("P1"),
+    WA_PRIORITY_2("P2"),
+    WA_PRIORITY_3("P3"),
+    WA_PRIORITY_4("P4"),
+    WA_PRIORITY_5("P5"),
+    WA_SPECIALLY_PROTECTED("SP"),
+
     PLANT_PEST_NOT_KNOWN_IN_AUSTRALIA("PBC1"),
     PLANT_PEST_ERADICATED("PBC2"),
     PLANT_PEST_UNDER_ERADICATION("PBC3"),
     PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL("PBC4"),
     PLANT_PEST_IN_QUARANTINE_OR_OTHER_PLANT_HEALTH_ZONE("PBC5"),
     PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION("PBC6");
-    
+
     private String value;
-    
+
     private SensitivityCategory(String value) {
         this.value = value;
     }
-    
+
     public static SensitivityCategory getCategory(String value) {
         for (SensitivityCategory cat : SensitivityCategory.values()) {
             if (cat.getValue().equals(value)) {
@@ -52,9 +62,31 @@ public enum SensitivityCategory {
         }
         return null;
     }
-    
+
     public String getValue() {
         return value;
     }
 
+    public static boolean isConservationSensitive(SensitivityCategory category) {
+        Set<SensitivityCategory> conservationCategories = EnumSet.of(
+                NOT_EVALUATED, DATA_DEFICIENT, LEAST_CONCERN,
+                NEAR_THREATENED, CONSERVATION_DEPENDENT, VULNERABLE,
+                ENDANGERED, CRITICALLY_ENDANGERED, EXTINCT_IN_THE_WILD,
+                EXTINCT, RARE, WA_PRIORITY_1, WA_PRIORITY_2, WA_PRIORITY_3,
+                WA_PRIORITY_4, WA_PRIORITY_5, WA_SPECIALLY_PROTECTED);
+
+        return conservationCategories.contains(category);
+    }
+
+    public static boolean isPlantPest(SensitivityCategory category) {
+        Set<SensitivityCategory> plantPestCategories = EnumSet.of(
+                PLANT_PEST_NOT_KNOWN_IN_AUSTRALIA,
+                PLANT_PEST_ERADICATED,
+                PLANT_PEST_UNDER_ERADICATION,
+                PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL,
+                PLANT_PEST_IN_QUARANTINE_OR_OTHER_PLANT_HEALTH_ZONE,
+                PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION);
+
+        return plantPestCategories.contains(category);
+    }
 }
