@@ -3,7 +3,10 @@
  */
 package au.org.ala.sds.util;
 
+import java.util.Set;
+
 import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitivityZone;
 
 /**
  *
@@ -11,11 +14,8 @@ import au.org.ala.sds.model.SensitiveSpecies;
  */
 public class GeneralisedLocationFactory {
 
-    public static GeneralisedLocation getGeneralisedLocation(String latitude, String longitude, SensitiveSpecies ss) {
-        return new GeneralisedLocation(latitude, longitude, ss);
+    public static GeneralisedLocation getGeneralisedLocation(String latitude, String longitude, SensitiveSpecies ss, Set<SensitivityZone> zones) {
+        return new GeneralisedLocation(latitude, longitude, ss, zones);
     }
 
-    public static GeneralisedLocation getGeneralisedLocation(String latitude, String longitude, SensitiveSpecies ss, String state) {
-        return new GeneralisedLocation(latitude, longitude, ss, state);
-    }
 }
