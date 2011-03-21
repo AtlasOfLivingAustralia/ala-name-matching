@@ -1,5 +1,5 @@
 /***************************************************************************
- * Copyright (C) 2010 Atlas of Living Australia
+ * Copyright (C) 2011 Atlas of Living Australia
  * All Rights Reserved.
  *
  * The contents of this file are subject to the Mozilla Public
@@ -12,20 +12,25 @@
  * implied. See the License for the specific language governing
  * rights and limitations under the License.
  ***************************************************************************/
-package au.org.ala.sds.util;
+package au.org.ala.sds.model;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import au.org.ala.sds.model.SensitivityZone;
-
-public class SensitivityZoneHelperTest {
+public class SensitivityZoneTest {
 
     @Test
-    public void isInAustraliaTest() {
-        assertTrue(SensitivityZoneHelper.isInAustralia(SensitivityZone.NSW));
-        assertFalse(SensitivityZoneHelper.isInAustralia(null));
+    public void getZone() {
+        assertEquals(SensitivityZone.NSW, SensitivityZone.getZone("nsw"));
+        assertEquals(SensitivityZone.ACT, SensitivityZone.getZone("Australian Capital Territory"));
+    }
+
+    @Test
+    public void isInAustralia() {
+        assertTrue(SensitivityZone.isInAustralia(SensitivityZone.NSW));
+        assertFalse(SensitivityZone.isInAustralia(SensitivityZone.NOTAUS));
     }
 }

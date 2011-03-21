@@ -14,8 +14,11 @@
  ***************************************************************************/
 package au.org.ala.sds.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.EnumSet;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -24,8 +27,30 @@ import au.org.ala.sds.model.SensitivityZone;
 public class GeoLocationTest {
 
     @Test
-    public void getStateContainingPointTest() throws Exception {
-        assertEquals(SensitivityZone.NSW, GeoLocationHelper.getStateContainingPoint("-35.0", "145.0"));
-        assertNull(GeoLocationHelper.getStateContainingPoint("-41.538137", "173.968817"));
+    public void zonesContainingPoint() throws Exception {
+        assertTrue(GeoLocationHelper.getZonesContainingPoint("-35.0", "145.0").contains(SensitivityZone.NSW));
+        assertTrue(GeoLocationHelper.getZonesContainingPoint("-41.538137", "173.968817").contains(SensitivityZone.NOTAUS));
+
+        // Cairns
+        Set<SensitivityZone> zones = GeoLocationHelper.getZonesContainingPoint("-16.902785", "145.738106");
+        assertTrue(zones.containsAll(EnumSet.of(SensitivityZone.QLD, SensitivityZone.PFFPQA1995)));
+
+        // Emerald
+        zones = GeoLocationHelper.getZonesContainingPoint("-23.546678", "148.151751");
+        assertTrue(zones.contains(SensitivityZone.ECCPQA2004));
+        assertFalse(zones.contains(SensitivityZone.PFFPQA1995));
+
+        // Rolleston
+        zones = GeoLocationHelper.getZonesContainingPoint("-24.527447", "148.602448");
+        assertTrue(zones.contains(SensitivityZone.ECCPQA2004));
+
+        // Capella
+        zones = GeoLocationHelper.getZonesContainingPoint("-23.087233", "148.025537");
+        assertTrue(zones.contains(SensitivityZone.ECCPQA2004));
+
+        // Blackwater
+        zones = GeoLocationHelper.getZonesContainingPoint("-23.5774", "148.885775");
+        assertFalse(zones.contains(SensitivityZone.ECCPQA2004));
+
     }
 }

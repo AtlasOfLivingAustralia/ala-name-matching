@@ -34,7 +34,7 @@ import au.org.ala.sds.validation.ValidationService;
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
 
-public class PlantPestNotKnownInAustraliaTest {
+public class PlantPestEradicatedTest {
 
 //  static DataSource dataSource;
     static CBIndexSearch cbIndexSearch;
@@ -53,56 +53,18 @@ public class PlantPestNotKnownInAustraliaTest {
     }
 
     @Test
-    public void giantAfricanSnailInAustralia() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Achatina fulica");
+    public void papayaFruitFlyInPQADuringEradication() {
+        SensitiveSpecies ss = finder.findSensitiveSpecies("Bactrocera papayae");
         assertNotNull(ss);
 
-        String latitude = "-35.276771";   // Black Mountain (Epicorp)
-        String longitude = "149.112539";
+        String latitude = "-16.902785";   // Cairns, Qld
+        String longitude = "145.738106";
+        String date = "1996-01-29";
 
         FactCollection facts = new FactCollection();
         facts.add(FactCollection.LATITUDE_KEY, latitude);
         facts.add(FactCollection.LONGITUDE_KEY, longitude);
-
-        ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
-
-        assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof PlantPestOutcome);
-        assertFalse(((PlantPestOutcome) outcome).isLoadable());
-    }
-
-    @Test
-    public void asianGyspyMothInAustralia() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Lymantria dispar");
-        assertNotNull(ss);
-
-        String latitude = "-35.276771";   // Black Mountain (Epicorp)
-        String longitude = "149.112539";
-
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
-
-        ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
-
-        assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof PlantPestOutcome);
-        assertFalse(((PlantPestOutcome) outcome).isLoadable());
-    }
-
-    @Test
-    public void asianGyspyMothInExternalTerritory() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Lymantria dispar");
-        assertNotNull(ss);
-
-        String latitude = "-16.286858";   // Coral Sea Islands
-        String longitude = "149.964066";
-
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -113,16 +75,62 @@ public class PlantPestNotKnownInAustraliaTest {
     }
 
     @Test
-    public void inTSPZ() {
+    public void papayaFruitFlyInPQABeforeEradication() {
+        SensitiveSpecies ss = finder.findSensitiveSpecies("Bactrocera papayae");
+        assertNotNull(ss);
+
+        String latitude = "-16.902785";   // Cairns, Qld
+        String longitude = "145.738106";
+        String date = "1995-01-29";
+
+        FactCollection facts = new FactCollection();
+        facts.add(FactCollection.LATITUDE_KEY, latitude);
+        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DATE_KEY, date);
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(ss, facts);
+
+        assertTrue(outcome.isValid());
+        assertTrue(outcome instanceof PlantPestOutcome);
+        assertTrue(((PlantPestOutcome) outcome).isLoadable());
     }
 
     @Test
-    public void asianGyspyMothNotInAustralia() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Lymantria dispar");
+    public void papayaFruitFlyOutsidePQA() {
+        SensitiveSpecies ss = finder.findSensitiveSpecies("Bactrocera papayae");
         assertNotNull(ss);
 
+        String latitude = "-23.546678";   // Emerald, Qld
+        String longitude = "148.151751";
+        String date = "2004-01-29";
+
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.COUNTRY_KEY, "Indonesia");
+        facts.add(FactCollection.LATITUDE_KEY, latitude);
+        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DATE_KEY, date);
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(ss, facts);
+
+        assertTrue(outcome.isValid());
+        assertTrue(outcome instanceof PlantPestOutcome);
+        assertFalse(((PlantPestOutcome) outcome).isLoadable());
+    }
+
+    @Test
+    public void papayaFruitFlyAfterEradication() {
+        SensitiveSpecies ss = finder.findSensitiveSpecies("Bactrocera papayae");
+        assertNotNull(ss);
+
+        String latitude = "-16.902785";   // Cairns, Qld
+        String longitude = "145.738106";
+        String date = "2000-01-29";
+
+        FactCollection facts = new FactCollection();
+        facts.add(FactCollection.LATITUDE_KEY, latitude);
+        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);

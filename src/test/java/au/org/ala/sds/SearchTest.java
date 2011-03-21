@@ -18,9 +18,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import javax.sql.DataSource;
-
-import org.apache.commons.dbcp.BasicDataSource;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -33,24 +30,25 @@ import au.org.ala.sds.model.SensitiveSpecies;
  */
 public class SearchTest {
 
-    static DataSource dataSource;
+//    static DataSource dataSource;
     static CBIndexSearch cbIndexSearch;
     static SensitiveSpeciesFinder finder;
 
     @BeforeClass
     public static void runOnce() throws Exception {
-        dataSource = new BasicDataSource();
-        ((BasicDataSource) dataSource).setDriverClassName("com.mysql.jdbc.Driver");
-        ((BasicDataSource) dataSource).setUrl("jdbc:mysql://localhost/portal");
-        ((BasicDataSource) dataSource).setUsername("root");
-        ((BasicDataSource) dataSource).setPassword("password");
+//        dataSource = new BasicDataSource();
+//        ((BasicDataSource) dataSource).setDriverClassName("com.mysql.jdbc.Driver");
+//        ((BasicDataSource) dataSource).setUrl("jdbc:mysql://localhost/portal");
+//        ((BasicDataSource) dataSource).setUsername("root");
+//        ((BasicDataSource) dataSource).setPassword("password");
 
         cbIndexSearch = new CBIndexSearch("/data/lucene/namematching");
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(dataSource, cbIndexSearch);
+//        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(dataSource, cbIndexSearch);
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
     }
 
     @Test
-    public void testLookup() {
+    public void lookup() {
         SensitiveSpecies ss = finder.findSensitiveSpecies("Macropus rufus");
         assertNull(ss);
 
