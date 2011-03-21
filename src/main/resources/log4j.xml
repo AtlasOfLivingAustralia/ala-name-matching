@@ -13,7 +13,7 @@
     </appender>
     <appender name="rolling" class="org.apache.log4j.RollingFileAppender">
         <param name="File" value="/tmp/sensitive-species.log"/>
-        <param name="MaxFileSize" value="1024KB"/>
+        <param name="MaxFileSize" value="5120KB"/>
         <param name="MaxBackupIndex" value="5"/>
         <layout class="org.apache.log4j.PatternLayout">
             <param name="ConversionPattern" value="%d %-5p: [%c{5}] %m%n" />
@@ -35,7 +35,7 @@
 
     <!-- Root Logger -->
     <root>
-        <level value="info" />
+        <level value="debug" />
         <appender-ref ref="console" />
         <appender-ref ref="rolling" />
     </root>
