@@ -26,9 +26,4 @@ public interface SensitiveSpeciesDao {
 
     List<SensitiveSpecies> getAll();
 
-    SensitiveSpecies findByName(String scientificName);
-
-    SensitiveSpecies findByAcceptedName(String scientificName);
-
-    SensitiveSpecies findByLsid(String lsid);
 }
