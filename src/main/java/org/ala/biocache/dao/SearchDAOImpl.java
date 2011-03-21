@@ -720,6 +720,8 @@ public class SearchDAOImpl implements SearchDAO {
         solrQuery.setRows(0);
         solrQuery.setFacet(true);
         solrQuery.setFacetMinCount(1);
+        solrQuery.setFacetSort("count");
+        solrQuery.setFacetLimit(-1);
         TaxaRankCountDTO trDTO = null;
         for (int i = 5; i > 0 && trDTO == null; i--) {
             String ffname = searchUtils.getRankFacetName(i);
@@ -757,6 +759,8 @@ public class SearchDAOImpl implements SearchDAO {
             solrQuery.setRows(0);
             solrQuery.setFacet(true);
             solrQuery.setFacetMinCount(1);
+            solrQuery.setFacetSort("count");
+            solrQuery.setFacetLimit(-1); //we want all facets
             for (String r : ranks) {
                 solrQuery.addFacetField(r);
             }
@@ -765,7 +769,7 @@ public class SearchDAOImpl implements SearchDAO {
                 for (String r : ranks) {
                     trDTO = new TaxaRankCountDTO(r);
                     FacetField ff = qr.getFacetField(r);
-                    if (ff != null) {
+                    if (ff != null && ff.getValues() != null) {
                         List<Count> counts = ff.getValues();
                         if (counts.size() > 0) {
                             List<FieldResultDTO> fDTOs = new ArrayList<FieldResultDTO>();
