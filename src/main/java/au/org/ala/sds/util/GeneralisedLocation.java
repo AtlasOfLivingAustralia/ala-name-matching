@@ -15,9 +15,13 @@
 package au.org.ala.sds.util;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Set;
 
+import au.org.ala.sds.model.ConservationInstance;
 import au.org.ala.sds.model.SensitiveSpecies;
 import au.org.ala.sds.model.SensitivityInstance;
+import au.org.ala.sds.model.SensitivityZone;
 
 /**
  * @author Peter Flemming (peter.flemming@csiro.au)
@@ -25,38 +29,34 @@ import au.org.ala.sds.model.SensitivityInstance;
 public class GeneralisedLocation {
     private final String originalLatitude;
     private final String originalLongitude;
-    private final String locationGeneralisation;
+    private final List<SensitivityInstance> instances;
+    private String locationGeneralisation;
     private String generalisedLatitude;
     private String generalisedLongitude;
     private String generalisationInMetres;
     private String description;
 
-    public GeneralisedLocation(String latitude, String longitude, SensitiveSpecies ss) {
+    public GeneralisedLocation(String latitude, String longitude, SensitiveSpecies ss, Set<SensitivityZone> zones) {
         this.originalLatitude = latitude;
         this.originalLongitude = longitude;
-        SensitivityInstance instance = ss.getSensitivityInstance(latitude, longitude);
-        if (instance != null) {
-            this.locationGeneralisation = instance.getLocationGeneralisation();
-        } else {
-            this.locationGeneralisation = null;
-        }
+        this.locationGeneralisation = null;
+        this.instances = ss.getInstancesForZones(zones);
+        this.locationGeneralisation = getLocationGeneralistion();
         generaliseCoordinates();
     }
 
-    public GeneralisedLocation(String latitude, String longitude, SensitiveSpecies ss, String state) {
-        this.originalLatitude = latitude;
-        this.originalLongitude = longitude;
-        SensitivityInstance instance = ss.getSensitivityInstance(state);
-        if (instance != null) {
-            this.locationGeneralisation = instance.getLocationGeneralisation();
-        } else {
-            this.locationGeneralisation = null;
+    private String getLocationGeneralistion() {
+        for (SensitivityInstance si : instances) {
+            if (si instanceof ConservationInstance) {
+                return ((ConservationInstance) si).getLocationGeneralisation();
+                // TODO pick most restrictive generalisation when there are multiple instances
+            }
         }
-        generaliseCoordinates();
+        return null;
     }
 
     public boolean isGeneralised() {
-        return generalisationInMetres != null && !generalisationInMetres.equals("");
+        return !originalLatitude.equals(generalisedLatitude) || !originalLongitude.equals(generalisedLongitude);
     }
 
     public String getOriginalLatitude() {
@@ -93,33 +93,43 @@ public class GeneralisedLocation {
             return;
         }
 
-        int decimalPlaces;
+        generalisationInMetres = "";
         if (this.locationGeneralisation.equalsIgnoreCase("WITHHOLD")) {
             generalisedLatitude = "";
             generalisedLongitude = "";
-            generalisationInMetres = "";
             description = "Location withheld.";
-            return;
         } else if (this.locationGeneralisation.equalsIgnoreCase("10km")) {
-            decimalPlaces = 1;
-            generalisationInMetres = "10000";
-            description = "Location generalised to one decimal place.";
+            generaliseCoordinates(1);
+            if (isGeneralised()) {
+                description = "Location generalised to one decimal place.";
+                generalisationInMetres = "10000";
+            } else {
+                description = "Location already generalised.";
+            }
         } else if (this.locationGeneralisation.equalsIgnoreCase("1km")) {
-            decimalPlaces = 2;
-            generalisationInMetres = "1000";
-            description = "Location generalised to two decimal places.";
+            generaliseCoordinates(2);
+            if (isGeneralised()) {
+                description = "Location generalised to two decimal places.";
+                generalisationInMetres = "1000";
+            } else {
+                description = "Location already generalised.";
+            }
         } else if (this.locationGeneralisation.equalsIgnoreCase("100m")) {
-            decimalPlaces = 3;
-            generalisationInMetres = "100";
-            description = "Location generalised to three decimal places.";
+            generaliseCoordinates(3);
+            if (isGeneralised()) {
+                description = "Location generalised to three decimal places.";
+                generalisationInMetres = "100";
+            } else {
+                description = "Location already generalised.";
+            }
         } else {
             generalisedLatitude = originalLatitude;
             generalisedLongitude = originalLongitude;
-            generalisationInMetres = "";
             description = "Location not generalised because it is undefined.";
-            return;
         }
+    }
 
+    private void generaliseCoordinates(int decimalPlaces) {
         generalisedLatitude = round(originalLatitude, decimalPlaces);
         generalisedLongitude = round(originalLongitude, decimalPlaces);
     }
@@ -128,7 +138,12 @@ public class GeneralisedLocation {
         if (number == null || number.equals("")) {
             return "";
         } else {
-            return String.format("%." + decimalPlaces + "f", new BigDecimal(number));
+            BigDecimal bd = new BigDecimal(number);
+            if (bd.scale() > decimalPlaces) {
+                return String.format("%." + decimalPlaces + "f", bd);
+            } else {
+                return number;
+            }
         }
     }
 }
