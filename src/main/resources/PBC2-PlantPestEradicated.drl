@@ -1,0 +1,65 @@
+package au.org.ala.sds.validation;
+
+import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.util.PlantPestUtils;
+import au.org.ala.sds.validation.RuleState;
+import au.org.ala.sds.validation.ValidationReport;
+import java.util.Date;
+import java.util.Set;
+import org.apache.log4j.Logger;
+import org.drools.runtime.rule.RuleContext;
+
+global ValidationReport validationReport;
+global RuleState state;
+global Logger logger;
+
+import function au.org.ala.sds.validation.ValidationHelper.*;
+
+rule "Inside PQA during quarantine period"
+    when
+        $ss : SensitiveSpecies()
+        $zones : Set()
+        $date : Date()
+        eval(PlantPestUtils.isInZoneDuringPeriod($ss, $zones, $date))
+    then
+        state.setLoadable(true);
+        state.setAnnotation("Historic record from a successful eradication program");
+        logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
+        //warning(kcontext, );
+end
+
+rule "Inside PQA earlier than quarantine period"
+    when
+        $ss : SensitiveSpecies()
+        $zones : Set()
+        $date : Date()
+        eval(PlantPestUtils.isInZoneBeforePeriod($ss, $zones, $date))
+    then
+        state.setLoadable(true);
+        state.setAnnotation("Historic record from the area of a successful eradication program");
+        logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "Outside PQA"
+    when
+        $ss : SensitiveSpecies()
+        $zones : Set()
+        eval(PlantPestUtils.isOutsideZone($ss, $zones))
+    then        
+        state.setDelegateRules("PBC1");
+        state.setComplete(false);
+        logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "After quarantine period"
+    when
+        $ss : SensitiveSpecies()
+        $zones : Set()
+        $date : Date()
+        eval(PlantPestUtils.isInZoneAfterPeriod($ss, $zones, $date))
+    then
+        state.setDelegateRules("PBC1");
+        state.setComplete(false);
+        logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
+end
