@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package au.org.ala.sds.knowledgebase;
 
@@ -22,29 +22,35 @@ import au.org.ala.sds.model.SensitivityCategory;
  */
 public class KnowledgeBaseFactory {
 
-    static private Map<String, String> rules  = new HashMap<String, String>();
+    static private Map<SensitivityCategory, String> rules  = new HashMap<SensitivityCategory, String>();
     static {
-        rules.put(SensitivityCategory.PLANT_PEST_NOT_KNOWN_IN_AUSTRALIA.getValue(), "PBC1-PestNotKnownInAustralia.drl");
-        rules.put(SensitivityCategory.PLANT_PEST_ERADICATED.getValue(), "PBC2-PestEradicated.drl");
-        rules.put(SensitivityCategory.PLANT_PEST_UNDER_ERADICATION.getValue(), "PBC3-PestUnderEradication.drl");
-        rules.put(SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL.getValue(), "PBC4-PestUnderOfficialControl.drl");
-        rules.put(SensitivityCategory.PLANT_PEST_IN_QUARANTINE_OR_OTHER_PLANT_HEALTH_ZONE.getValue(), "PBC5-PestInQuarantineOrOtherPlantHealthZone.drl");
-        rules.put(SensitivityCategory.PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION.getValue(), "PBC6-PestNotifiableUnderStateLegislation.drl");
+        rules.put(SensitivityCategory.PLANT_PEST_NOT_KNOWN_IN_AUSTRALIA, "PBC1-PlantPestNotKnownInAustralia.drl");
+        rules.put(SensitivityCategory.PLANT_PEST_ERADICATED, "PBC2-PlantPestEradicated.drl");
+        rules.put(SensitivityCategory.PLANT_PEST_UNDER_ERADICATION, "PBC3-PlantPestUnderEradication.drl");
+        rules.put(SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, "PBC4-PlantPestUnderOfficialControl.drl");
+        rules.put(SensitivityCategory.PLANT_PEST_IN_QUARANTINE_OR_OTHER_PLANT_HEALTH_ZONE, "PBC5-PlantPestInQuarantineOrOtherPlantHealthZone.drl");
+        rules.put(SensitivityCategory.PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION, "PBC6-PlantPestNotifiableUnderStateLegislation.drl");
     }
-    
-    public static KnowledgeBase getKnowledgeBase(String category) {
-        KnowledgeBuilder builder = KnowledgeBuilderFactory.newKnowledgeBuilder();
-        builder.add(ResourceFactory.newClassPathResource("PBC1-PestNotKnownInAustralia.drl"), ResourceType.DRL);
-        if (builder.hasErrors()) {
-            throw new RuntimeException(builder.getErrors().toString());
+    static private Map<SensitivityCategory, KnowledgeBase> kbs = new HashMap<SensitivityCategory, KnowledgeBase>();
+
+    public static KnowledgeBase getKnowledgeBase(SensitivityCategory category) {
+        KnowledgeBase knowledgeBase;
+
+        if ((knowledgeBase = kbs.get(category)) == null) {
+            KnowledgeBuilder builder = KnowledgeBuilderFactory.newKnowledgeBuilder();
+            builder.add(ResourceFactory.newClassPathResource(rules.get(category)), ResourceType.DRL);
+            if (builder.hasErrors()) {
+                throw new RuntimeException(builder.getErrors().toString());
+            }
+
+            KnowledgeBaseConfiguration configuration = org.drools.KnowledgeBaseFactory.newKnowledgeBaseConfiguration();
+            configuration.setOption(SequentialOption.YES);
+
+            knowledgeBase = org.drools.KnowledgeBaseFactory.newKnowledgeBase(configuration);
+            knowledgeBase.addKnowledgePackages(builder.getKnowledgePackages());
+            kbs.put(category, knowledgeBase);
         }
 
-        KnowledgeBaseConfiguration configuration = org.drools.KnowledgeBaseFactory.newKnowledgeBaseConfiguration();
-        configuration.setOption(SequentialOption.YES);
-
-        KnowledgeBase knowledgeBase = org.drools.KnowledgeBaseFactory.newKnowledgeBase(configuration);
-        knowledgeBase.addKnowledgePackages(builder.getKnowledgePackages());
-        
         return knowledgeBase;
     }
 }
