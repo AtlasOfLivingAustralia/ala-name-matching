@@ -14,76 +14,44 @@
  ***************************************************************************/
 package au.org.ala.sds;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
 
-import au.org.ala.checklist.lucene.CBIndexSearch;
-import au.org.ala.checklist.lucene.SearchResultException;
-import au.org.ala.checklist.lucene.model.NameSearchResult;
-import au.org.ala.data.util.RankType;
-import au.org.ala.sds.dao.SensitiveSpeciesDao;
 import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveSpeciesStore;
 
 /**
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
+@Service
 public class SensitiveSpeciesFinder implements Lookup {
 
     protected static final Logger logger = Logger.getLogger(SensitiveSpeciesFinder.class);
-    private SensitiveSpeciesDao dao;
+    private final SensitiveSpeciesStore store;
 
-    public SensitiveSpeciesFinder(SensitiveSpeciesDao dao) {
-        this.dao = dao;
-    }
-
-    public void setDao(SensitiveSpeciesDao dao ) {
-        this.dao = dao;
+    public SensitiveSpeciesFinder(SensitiveSpeciesStore store) {
+        this.store = store;
     }
 
     @Override
     public SensitiveSpecies findSensitiveSpecies(String scientificName) {
-        return dao.findByName(scientificName);
+        return store.findByName(scientificName);
     }
 
     @Override
     public SensitiveSpecies findSensitiveSpeciesByAcceptedName(String acceptedName) {
-        return dao.findByAcceptedName(acceptedName);
+        return store.findByAcceptedName(acceptedName);
     }
 
     @Override
     public SensitiveSpecies findSensitiveSpeciesByLsid(String lsid) {
-        return dao.findByLsid(lsid);
+        return store.findByLsid(lsid);
     }
 
     @Override
     public boolean isSensitive(String scientificName) {
-        return dao.findByName(scientificName) != null;
-    }
-
-    public void verifySensitiveSpecies(CBIndexSearch cbIdxSearcher) throws SearchResultException {
-        List<SensitiveSpecies> speciesList = dao.getAll();
-        Map<String, Integer> lsidMap = new HashMap<String, Integer>();
-        for (int index = 0; index < speciesList.size(); index++) {
-            SensitiveSpecies ss = speciesList.get(index);
-            NameSearchResult match = cbIdxSearcher.searchForRecord(ss.getScientificName(), RankType.SPECIES);
-            if (match != null) {
-                String acceptedName = match.getRankClassification().getSpecies();
-                String lsid = match.getLsid();
-                if (!ss.getScientificName().equalsIgnoreCase(acceptedName)) {
-                    logger.info("Sensitive species '" + ss.getScientificName() + "' is not accepted name - using '" + acceptedName + "'");
-                } else {
-                    logger.debug("'" + acceptedName + "'\t'" + lsid + "'");
-                    ss.setLsid(lsid);
-                    lsidMap.put(lsid, index);
-                }
-            } else {
-                logger.warn("Sensitive species '" + ss.getScientificName() + "' not found in NameMatching index");
-            }
-        }
+        return store.findByName(scientificName) != null;
     }
 
 }
