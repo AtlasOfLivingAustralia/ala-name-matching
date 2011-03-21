@@ -18,13 +18,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-import javax.inject.Inject;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
-import org.springframework.stereotype.Component;
 
 import au.org.ala.sds.dto.SpeciesOccurrenceDto;
 
@@ -32,13 +30,12 @@ import au.org.ala.sds.dto.SpeciesOccurrenceDto;
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
-@Component
 public class RawOccurrenceDaoImpl extends JdbcDaoSupport implements RawOccurrenceDao {
-    
+
     protected static final Logger logger = Logger.getLogger(RawOccurrenceDaoImpl.class);
-    
+
     public static final String SELECT_ALL_OCCURRENCES = "SELECT id, scientific_name, latitude, longitude FROM raw_occurrence_record";
-    
+
     public static final String UPDATE_OCCURRENCE = "UPDATE raw_occurrence_record " + "" +
                                                    "SET latitude=?, longitude=?, generalised_metres=?, raw_latitude=?, raw_longitude=? " +
                                                    "WHERE id=?";
@@ -47,12 +44,11 @@ public class RawOccurrenceDaoImpl extends JdbcDaoSupport implements RawOccurrenc
                                                         "SET latitude=?, longitude=?, generalised_metres=? " +
                                                         "WHERE id=?";
 
-    @Inject
     public RawOccurrenceDaoImpl(DataSource dataSource) {
         this.setDataSource(dataSource);
         logger.debug("Occurrence data source set - " + dataSource.toString());
     }
-    
+
     @Override
     public void updateLocation(int id, String generalisedLat, String generalisedLong, String generalisedMetres, String rawLat, String rawLong ) {
         int rows = getJdbcTemplate().update(UPDATE_OCCURRENCE, new Object [] { generalisedLat, generalisedLong, generalisedMetres, rawLat, rawLong, new Integer(id) });
@@ -71,7 +67,7 @@ public class RawOccurrenceDaoImpl extends JdbcDaoSupport implements RawOccurrenc
 
     @Override
     public List<SpeciesOccurrenceDto> getOccurrences() {
-        return (List<SpeciesOccurrenceDto>) getJdbcTemplate().query(
+        return getJdbcTemplate().query(
                 SELECT_ALL_OCCURRENCES,
                 new Object [] {},
                 new RowMapper<SpeciesOccurrenceDto>() {
