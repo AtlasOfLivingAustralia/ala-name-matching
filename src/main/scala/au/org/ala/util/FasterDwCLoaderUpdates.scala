@@ -19,7 +19,7 @@ import org.wyki.cassandra.pelops.Pelops
 import java.util.UUID
 import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.biocache.OccurrenceDAO
-import java.io.{FileReader, File}
+import java.io.{FileReader, File, InputStreamReader, FileInputStream}
 
 /**
  * Reads a CSV file with DwC header fields, updates existing but inserts new
@@ -39,7 +39,7 @@ object FasterDwCLoaderUpdates {
     import ReflectBean._
     println(">>> Starting DwC loader ....")
     val fileName = if(args.length == 1) args(0) else "/data/biocache/ozcam/ozcam.csv"
-    val csvReader = new CSVReader(new FileReader(fileName));
+    val csvReader = new CSVReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
 
     var count = 0
 
