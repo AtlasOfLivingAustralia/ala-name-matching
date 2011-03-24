@@ -283,7 +283,7 @@ class CassandraPersistenceManager (
     protected def columnList2Map(columnList:java.util.List[Column]) : Map[String,String] = {
         val tuples = {
             for(column <- columnList)
-                yield (new String(column.name), new String(column.value))
+                yield (new String(column.name, "UTF-8"), new String(column.value, "UTF-8"))
         }
         //convert the list
         Map(tuples map {s => (s._1, s._2)} : _*)
@@ -297,7 +297,7 @@ class CassandraPersistenceManager (
             val selector = Pelops.createSelector(poolName, keyspace)
             Some(selector.getColumnFromRow(uuid, columnFamily, columnName.getBytes, ConsistencyLevel.ONE))
         } catch {
-            case e:Exception => logger.debug(e.getMessage, e); None //expected behaviour when row doesnt exist
+            case e:Exception => logger.debug(e.getMessage + " for " + uuid + " - " + columnFamily + " - " +columnName); None //expected behaviour when row doesnt exist
         }
     }
 }
