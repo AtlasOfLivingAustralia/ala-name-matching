@@ -381,6 +381,16 @@ public class OccurrenceController {
         return records;
 	}
 
+        /**
+         * Dumps the distinct latitudes and longitudes that are used in the
+         * connected index (to 4 decimal places)
+         */
+        @RequestMapping(value="/occurrences/coordinates")
+        public void dumpDistinctLatLongs(HttpServletResponse response) throws Exception{
+             ServletOutputStream out = response.getOutputStream();
+             searchDAO.writeCoordinatesToStream(out);
+        }
+
 	
 	/**
 	 * Occurrence record page

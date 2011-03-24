@@ -212,6 +212,43 @@ public class SearchDAOImpl implements SearchDAO {
         }
         return count;
     }
+    /**
+     * Writes all the distinct latitude and longitude in the index to the supplied
+     * output stream.
+     * 
+     * @param out
+     * @throws Exception
+     */
+    public void writeCoordinatesToStream(OutputStream out) throws Exception{
+        //generate the query to obtain the lat,long as a facet
+        
+        SearchRequestParams srp = new SearchRequestParams();
+        searchUtils.setDefaultParams(srp);
+        srp.setFacets(new String[]{"point-0.0001"});
+        
+        SolrQuery solrQuery = initSolrQuery(srp);
+        //We want all the facets so we candump all the coordinates
+        solrQuery.setFacetLimit(-1);
+        solrQuery.setFacetSort("count");
+        solrQuery.setRows(0);
+        solrQuery.setQuery("*:*");
+
+        QueryResponse qr = runSolrQuery(solrQuery, srp);
+         if (qr.getResults().size() > 0) {
+                FacetField ff = qr.getFacetField("point-0.0001");
+                if(ff != null && ff.getValueCount() >0){
+                    out.write("latitude,longitude\n".getBytes());
+                    //write the facets to file
+                    for(FacetField.Count value : ff.getValues()){
+                        //String[] slatlon = value.getName().split(",");
+                        out.write(value.getName().getBytes());
+                        out.write("\n".getBytes());
+                        
+                    }
+                }
+        }
+    }
+
 
     /**
      * @see org.ala.biocache.dao.SearchDAO#writeResultsToStream(java.lang.String, java.lang.String[], java.io.OutputStream, int)

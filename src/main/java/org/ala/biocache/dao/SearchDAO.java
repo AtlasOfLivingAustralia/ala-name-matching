@@ -102,7 +102,9 @@ public interface SearchDAO {
      */
 	Map<String,Integer> writeResultsToStream(SearchRequestParams searcParams, OutputStream out, int maxNoOfRecords) throws Exception;
 
-   
+
+    void writeCoordinatesToStream(OutputStream out) throws Exception;
+
     /**
      * Retrieve an OccurrencePoint (distinct list of points - lat-long to 4 decimal places) for a given search
      *
