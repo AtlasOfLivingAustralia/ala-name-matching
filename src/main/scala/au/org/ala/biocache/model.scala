@@ -371,6 +371,7 @@ class OccurrenceIndex extends Cloneable with Mappable {
   @BeanProperty @Field("catalogue_number") var raw_catalogNumber:String =_
   @BeanProperty @Field("taxon_concept_lsid") var taxonConceptID:String =_
   @BeanProperty @Field("occurrence_date") var eventDate:java.util.Date =_
+  @BeanProperty @Field("occurrence_year") var occurrenceYear:java.util.Date =_
   @BeanProperty @Field("taxon_name") var scientificName:String =_
   @BeanProperty @Field("common_name") var vernacularName:String =_
   @BeanProperty @Field("rank") var taxonRank:String =_

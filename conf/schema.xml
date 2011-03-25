@@ -500,6 +500,13 @@
    <field name="catalogue_number" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="taxon_concept_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="occurrence_date" type="tdate" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <!-- 
+        The easiest way to facet on years ranges is to have an extra field that stores the year as a date type.  This
+        is so we don't have to perform our own calculations on an integer field
+        Thus the year will be stored/indexed as a date with month 01 and date 01
+   -->
+
+   <field name="occurrence_year" type="tdate" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="taxon_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <!-- Not is use in current biocache -->
    <!-- field name="taxon_name_text" type="text_ws" indexed="true" stored="true" multiValued="false" omitNorms="false" /-->

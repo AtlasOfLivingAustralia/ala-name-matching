@@ -95,7 +95,7 @@ trait IndexDAO {
     Array("id","occurrence_id","data_hub_uid", "data_hub","data_provider_uid","data_provider","data_resource_uid",
           "data_resource","institution_uid", "institution_code","institution_name",
           "collection_uid","collection_code","collection_name","catalogue_number",
-          "taxon_concept_lsid","occurrence_date","taxon_name","common_name","names_and_lsid",
+          "taxon_concept_lsid","occurrence_date", "occurrence_year","taxon_name","common_name","names_and_lsid",
           "rank","rank_id","raw_taxon_name","raw_common_name","multimedia","image_url",
           "species_group","country_code","lft","rgt","kingdom","phylum","class","order",
           "family","genus","species","state","imcra","ibra","places","latitude","longitude",
@@ -129,6 +129,9 @@ trait IndexDAO {
     val sspeciesGroup = getValue("speciesGroups.p", map)
     val speciesGroup = if(sspeciesGroup.length>0) Json.toArray(sspeciesGroup, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]] else Array[String]("")
     var eventDate = getValue("eventDate.p", map)
+    var occurrenceYear = getValue("year.p", map)
+    if(occurrenceYear.length==4)
+      occurrenceYear+="-01-01T00:00:00Z"
     //only want to include eventDates that are in the correct format
     try{
       DateUtils.parseDate(eventDate, Array("yyyy-MM-dd"))
@@ -155,7 +158,7 @@ trait IndexDAO {
           getValue("dataResourceUid.p", map), getValue("dataResourceName.p", map), getValue("institutionUid.p", map),
           getValue("institutionCode",map), getValue("institutionName.p",map),
           getValue("collectionUid.p",map), getValue("collectionCode", map), getValue("collectionName.p",map),
-          getValue("catalogNumber", map), taxonConceptId, if(eventDate != "") eventDate + "T00:00:00Z" else "" ,
+          getValue("catalogNumber", map), taxonConceptId, if(eventDate != "") eventDate + "T00:00:00Z" else "" , occurrenceYear,
           sciName, vernacularName, sciName +"|" + taxonConceptId+"|" + vernacularName +"|" + kingdom +"|" + family,
           getValue("taxonRank.p", map), getValue("taxonRankID.p", map), getValue("scientificName", map),
           getValue("vernacularName",map), if(images !=null && images.size >0 &&images(0) != "") "Multimedia" else "None",if(images!=null && images.size >0)images(0)else "", if(speciesGroup !=  null)speciesGroup.reduceLeft(_+"|"+_) else "", getValue("countryCode", map),
@@ -235,6 +238,11 @@ trait IndexDAO {
     else
       occ.setMultimedia("None")
 
+    //set the occurrence_year
+    val year = records(1).getEvent.getYear
+    if(year.length == 4)
+      occ.setOccurrenceYear( DateUtils.parseDate(year, Array("yyyy")))
+
     occ.setHasUserAssertions((OccurrenceDAO.getUserAssertions(occ.uuid).size>0).toString)
     Some(occ)
   }
@@ -311,7 +319,7 @@ object SolrOccurrenceDAO extends IndexDAO {
       }
     }
     solrDocList.add(doc)
-    if(solrDocList.size ==10000){
+    if(solrDocList.size ==50000){
       try{
         SolrIndexDAO.solrServer.add(solrDocList)
         SolrIndexDAO.solrServer.commit
