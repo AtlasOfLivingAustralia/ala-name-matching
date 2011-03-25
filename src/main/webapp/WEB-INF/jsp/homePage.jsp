@@ -25,6 +25,10 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             <li><strong>Occurrence download:</strong> /occurrences/download - needs request param definition</li>
             <li><strong>Occurrence wms:</strong> /occurrences/wms - requires WMS parameters along with 'q' and 'fq' populated, if available</li>
             <li><strong>Occurrence static:</strong> /occurrences/static - generates an image of AU with points on, filtering on 'q' and 'fq', if available</li>
+            <li><strong>Occurrences coordinates:</strong>
+                <a href="${pageContext.request.contextPath}/occurrences/coordinates">/occurrences/coordinates</a>
+                - Displays a list of unique lat,lon that are used by the occurrences
+                 </li>
         </ul>
 
         <h3>Assertions</h3>
