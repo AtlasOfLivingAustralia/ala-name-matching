@@ -43,7 +43,7 @@ public class SearchRequestParams {
                                 "family",
                                 "assertions",
                                 "month",
-                                "date",
+                                "year",
                                 "multimedia"};
     protected Integer start = 0;
     protected Integer pageSize = 10;

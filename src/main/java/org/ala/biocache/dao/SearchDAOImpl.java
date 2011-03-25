@@ -1121,8 +1121,8 @@ public class SearchDAOImpl implements SearchDAO {
             if (facet.equals("month")) {
                 solrQuery.addFacetField("month");
                 solrQuery.add("f.month.facet.sort", "index"); // sort by Jan-Dec
-            } else if (facet.equals("date")) {
-                solrQuery.add("facet.date", "occurrence_date");
+            } else if (facet.equals("date") || facet.equals("year")) {
+                solrQuery.add("facet.date", "occurrence_" +facet);
                 solrQuery.add("facet.date.start", "1850-01-01T12:00:00Z"); // facet date range starts from 1850
                 solrQuery.add("facet.date.end", "NOW/DAY"); // facet date range ends for current date (gap period)
                 solrQuery.add("facet.date.gap", "+10YEAR"); // gap interval of 10 years
