@@ -311,6 +311,11 @@ object ProcessRecords {
 
   /**
    * Process geospatial details
+   *
+   * TODO: Handle latitude and longitude that is supplied in verbatim format
+   * We will need to parse a variety of formats. Bryn was going to find some regular
+   * expressions/test cases he has used previously...
+   *
    */
   def processLocation(guid:String,raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
     //retrieve the point
@@ -435,8 +440,8 @@ object ProcessRecords {
         }
       }
     }
-
-    if(processed.location.stateProvince ==null){
+    //Only process the raw state value if no latitude and longitude is provided
+    if(processed.location.stateProvince ==null && raw.location.decimalLatitude ==null && raw.location.decimalLongitude ==null){
       //process the supplied state
       val stateTerm = States.matchTerm(raw.location.stateProvince)
       if(!stateTerm.isEmpty){
