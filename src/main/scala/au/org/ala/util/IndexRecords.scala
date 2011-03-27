@@ -32,6 +32,7 @@ object IndexRecords {
   
   def processMap()={
     var counter = 0
+    val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
     var items = new ArrayList[OccurrenceIndex]()
@@ -49,6 +50,9 @@ object IndexRecords {
         
         true
     })
+
+    finishTime = System.currentTimeMillis
+    println("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
   }
 
   def processFullRecords()={
