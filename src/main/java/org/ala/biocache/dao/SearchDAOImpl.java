@@ -390,6 +390,8 @@ public class SearchDAOImpl implements SearchDAO {
         List<OccurrencePoint> points = new ArrayList<OccurrencePoint>();
         List<String> colours = new ArrayList<String>();
 
+        searchParams.setPageSize(100);
+
         String queryString = "";
         formatSearchQuery(searchParams);
         if (searchType == 0) {
