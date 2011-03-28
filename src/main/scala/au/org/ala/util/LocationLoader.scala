@@ -29,13 +29,13 @@ object LocationLoader {
         val lga:Option[String] = optioniseValue(parts(3))
         val ibra:Option[String] = optioniseValue(parts(4))
         val imcra:Option[String] = optioniseValue(parts(5))
-
+        val habitat:String = if(!ibra.isEmpty) "terrestrial" else if(!imcra.isEmpty) "marine" else null
         //only add/update the points that have a gazetteer value
         if(!state.isEmpty || !lga.isEmpty || !ibra.isEmpty || !imcra.isEmpty){
           val values =Map[String, String]("stateProvince"->state.getOrElse(null),
                                           "lga"->lga.getOrElse(null),
                                           "ibra" ->ibra.getOrElse(null),
-                                          "imcra"-> imcra.getOrElse(null))
+                                          "imcra"-> imcra.getOrElse(null), "habitat"-> habitat)
           LocationDAO.addRegionToPoint(latitude, longitude, values)
           if (counter % 1000 == 0) println(counter +": "+latitude+"|"+longitude+", mapping: "+ values)
         }
@@ -49,4 +49,50 @@ object LocationLoader {
   }
   def optioniseValue(value:String):Option[String]= if (value == "null") None else Some(value)
   
+}
+
+/**
+ * Loads the locations from a dump in the portal db. This is the "old" way to
+ * load the location cache
+ */
+object OldLocationLoader {
+
+  def main(args: Array[String]): Unit = {
+    import FileHelper._
+    println("Starting Location Loader....")
+    val file = new File("/data/biocache/points.txt")
+    var counter = 0
+    file.foreachLine { line => {
+        counter += 1
+        //add point with details to
+        val parts = line.split('\t')
+        val latitude = (parts(1).toFloat) / 10000
+        val longitude = (parts(2).toFloat) / 10000
+        val geoRegionName = parts(4)
+        val geoRegionTypeId = parts(5).toInt
+        val geoRegionTypeName = parts(6)
+        val regionMapping: Option[Map[String, String]] = {
+          if (geoRegionTypeId >= 1 && geoRegionTypeId <= 2) {
+            Some(Map("stateProvince" -> geoRegionName))
+          } else if (geoRegionTypeId >= 3 && geoRegionTypeId <= 12) {
+            Some(Map("lga" -> geoRegionName))
+          } else if (geoRegionTypeId == 2000) {
+            Some(Map("ibra" -> geoRegionName, "habitat" -> "terrestrial"))
+          } else if (geoRegionTypeId >= 3000 && geoRegionTypeId < 4000) {
+            Some(Map("imcra" -> geoRegionName, "habitat" -> "marine"))
+          } else {
+            None
+          }
+        }
+        if (!regionMapping.isEmpty) {
+         
+          LocationDAO.addRegionToPoint(latitude, longitude, regionMapping.get)
+        }
+
+        if (counter % 1000 == 0) println(counter +": "+latitude+"|"+longitude+", mapping: "+ regionMapping.getOrElse("None"))
+      }
+    }
+    println(counter)
+    Pelops.shutdown
+  }
 }
