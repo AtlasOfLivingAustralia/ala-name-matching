@@ -576,7 +576,8 @@ class FullRecord (
   @BeanProperty var measurement:Measurement,
   @BeanProperty var assertions:Array[String],
   @BeanProperty var geospatiallyKosher:Boolean = true,
-  @BeanProperty var taxonomicallyKosher:Boolean = true)
+  @BeanProperty var taxonomicallyKosher:Boolean = true,
+  @BeanProperty var deleted:Boolean = false)
   extends Cloneable {
     //NC: The array below is static - thus is a one of the variables change it will be out of sync
   val objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement)

@@ -6,6 +6,7 @@ package au.org.ala.biocache
 
 
 import org.apache.commons.lang.time.DateUtils
+import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer
 import org.apache.solr.common.SolrInputDocument
 import org.apache.solr.core.CoreContainer
@@ -116,67 +117,76 @@ trait IndexDAO {
 
     try{
     //get the lat lon values so that we can determine all the point values
-    var slat = getValue("decimalLatitude.p", map)
-    var slon = getValue("decimalLongitude.p",map)
-    var latlon =""
-    val sciName = getValue("scientificName.p",map)
-    val taxonConceptId = getValue("taxonConceptID.p", map)
-    val vernacularName = getValue("vernacularName.p", map)
-    val kingdom = getValue("kingdom.p", map)
-    val family = getValue("family.p", map)
-    val simages = getValue("images.p", map)
-    val images  = if(simages.length >0) Json.toArray(simages, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]] else Array[String]("")
-    val sspeciesGroup = getValue("speciesGroups.p", map)
-    val speciesGroup = if(sspeciesGroup.length>0) Json.toArray(sspeciesGroup, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]] else Array[String]("")
-    var eventDate = getValue("eventDate.p", map)
-    var occurrenceYear = getValue("year.p", map)
-    if(occurrenceYear.length==4)
-      occurrenceYear+="-01-01T00:00:00Z"
-    //only want to include eventDates that are in the correct format
-    try{
-      DateUtils.parseDate(eventDate, Array("yyyy-MM-dd"))
-    }
-    catch{
-     case e :Exception => eventDate =""
-    }
-    var lat = Double.NaN
-    var lon = Double.NaN
-
-    if(slat != "" && slon!=""){
+    val deleted = getValue(OccurrenceDAO.deletedColumn, map)
+    //only add it to the index is it is not deleted
+    if(!deleted.equals("true")){
+      var slat = getValue("decimalLatitude.p", map)
+      var slon = getValue("decimalLongitude.p",map)
+      var latlon =""
+      val sciName = getValue("scientificName.p",map)
+      val taxonConceptId = getValue("taxonConceptID.p", map)
+      val vernacularName = getValue("vernacularName.p", map)
+      val kingdom = getValue("kingdom.p", map)
+      val family = getValue("family.p", map)
+      val simages = getValue("images.p", map)
+      val images  = if(simages.length >0) Json.toArray(simages, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]] else Array[String]("")
+      val sspeciesGroup = getValue("speciesGroups.p", map)
+      val speciesGroup = if(sspeciesGroup.length>0) Json.toArray(sspeciesGroup, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]] else Array[String]("")
+      var eventDate = getValue("eventDate.p", map)
+      var occurrenceYear = getValue("year.p", map)
+      if(occurrenceYear.length==4)
+        occurrenceYear+="-01-01T00:00:00Z"
+      else
+        occurrenceYear = ""
+      //only want to include eventDates that are in the correct format
       try{
-      lat = java.lang.Double.parseDouble(slat)
-      lon = java.lang.Double.parseDouble(slon)
-      latlon = slat +"," +slon
+        DateUtils.parseDate(eventDate, Array("yyyy-MM-dd"))
       }
       catch{
-        //If the latitude or longitude can't be parsed into a double we don't want to index the values
-        case e:Exception =>slat="";slon=""
+       case e :Exception => eventDate =""
       }
-    }
+      var lat = Double.NaN
+      var lon = Double.NaN
 
-    Array(guid, getValue("occurrenceID",map),getValue("dataHubUid.p", map), getValue("dataHub.p", map), getValue("dataProviderUid.p", map), getValue("dataProviderName.p",map),
-          getValue("dataResourceUid.p", map), getValue("dataResourceName.p", map), getValue("institutionUid.p", map),
-          getValue("institutionCode",map), getValue("institutionName.p",map),
-          getValue("collectionUid.p",map), getValue("collectionCode", map), getValue("collectionName.p",map),
-          getValue("catalogNumber", map), taxonConceptId, if(eventDate != "") eventDate + "T00:00:00Z" else "" , occurrenceYear,
-          sciName, vernacularName, sciName +"|" + taxonConceptId+"|" + vernacularName +"|" + kingdom +"|" + family,
-          getValue("taxonRank.p", map), getValue("taxonRankID.p", map), getValue("scientificName", map),
-          getValue("vernacularName",map), if(images !=null && images.size >0 &&images(0) != "") "Multimedia" else "None",if(images!=null && images.size >0)images(0)else "", if(speciesGroup !=  null)speciesGroup.reduceLeft(_+"|"+_) else "", getValue("countryCode", map),
-          getValue("left.p", map), getValue("right.p",map),
-          kingdom, getValue("phylum.p", map), getValue("classs.p", map),
-          getValue("order.p", map), family, getValue("genus.p",map),
-          getValue("species.p", map), getValue("stateProvince.p", map), getValue("imcra.p", map),
-          getValue("ibra.p", map), getValue("lga.p", map), slat,
-          slon, latlon, getLatLongString(lat, lon, "#"), getLatLongString(lat, lon, "#.#"),
-          getLatLongString(lat, lon, "#.##"), getLatLongString(lat, lon, "#.###"),
-          getLatLongString(lat, lon, "#.####"), getValue("year.p",map), getValue("month.p", map), getValue("basisOfRecord.p",map),
-          getValue("basisOfRecord", map), getValue("typeStatus.p", map), getValue("typeStatus",map),
-          getValue(OccurrenceDAO.taxonomicDecisionColumn, map), getValue(OccurrenceDAO.geospatialDecisionColumn, map),
-          getAssertions(map).reduceLeft(_ + "|"+_), getValue("locationRemarks", map),
-          getValue("occurrenceRemarks", map), "",  (getValue(OccurrenceDAO.userQualityAssertionColumn, map) != "").toString,
-          getValue("recordedBy", map),
-          getValue("mean_temperature_cars2009a_band1.p", map), getValue("mean_oxygen_cars2006_band1.p", map),
-          getValue("bioclim_bio34.p", map), getValue("bioclim_bio12.p", map), getValue("bioclim_bio11.p", map) )
+      if(slat != "" && slon!=""){
+        try{
+        lat = java.lang.Double.parseDouble(slat)
+        lon = java.lang.Double.parseDouble(slon)
+        latlon = slat +"," +slon
+        }
+        catch{
+          //If the latitude or longitude can't be parsed into a double we don't want to index the values
+          case e:Exception =>slat="";slon=""
+        }
+      }
+
+      return Array(guid, getValue("occurrenceID",map),getValue("dataHubUid.p", map), getValue("dataHub.p", map), getValue("dataProviderUid.p", map), getValue("dataProviderName.p",map),
+            getValue("dataResourceUid.p", map), getValue("dataResourceName.p", map), getValue("institutionUid.p", map),
+            getValue("institutionCode",map), getValue("institutionName.p",map),
+            getValue("collectionUid.p",map), getValue("collectionCode", map), getValue("collectionName.p",map),
+            getValue("catalogNumber", map), taxonConceptId, if(eventDate != "") eventDate + "T00:00:00Z" else "" , occurrenceYear,
+            sciName, vernacularName, sciName +"|" + taxonConceptId+"|" + vernacularName +"|" + kingdom +"|" + family,
+            getValue("taxonRank.p", map), getValue("taxonRankID.p", map), getValue("scientificName", map),
+            getValue("vernacularName",map), if(images !=null && images.size >0 &&images(0) != "") "Multimedia" else "None",if(images!=null && images.size >0)images(0)else "", if(speciesGroup !=  null)speciesGroup.reduceLeft(_+"|"+_) else "", getValue("countryCode", map),
+            getValue("left.p", map), getValue("right.p",map),
+            kingdom, getValue("phylum.p", map), getValue("classs.p", map),
+            getValue("order.p", map), family, getValue("genus.p",map),
+            getValue("species.p", map), getValue("stateProvince.p", map), getValue("imcra.p", map),
+            getValue("ibra.p", map), getValue("lga.p", map), slat,
+            slon, latlon, getLatLongString(lat, lon, "#"), getLatLongString(lat, lon, "#.#"),
+            getLatLongString(lat, lon, "#.##"), getLatLongString(lat, lon, "#.###"),
+            getLatLongString(lat, lon, "#.####"), getValue("year.p",map), getValue("month.p", map), getValue("basisOfRecord.p",map),
+            getValue("basisOfRecord", map), getValue("typeStatus.p", map), getValue("typeStatus",map),
+            getValue(OccurrenceDAO.taxonomicDecisionColumn, map), getValue(OccurrenceDAO.geospatialDecisionColumn, map),
+            getAssertions(map).reduceLeft(_ + "|"+_), getValue("locationRemarks", map),
+            getValue("occurrenceRemarks", map), "",  (getValue(OccurrenceDAO.userQualityAssertionColumn, map) != "").toString,
+            getValue("recordedBy", map),
+            getValue("mean_temperature_cars2009a_band1.p", map), getValue("mean_oxygen_cars2006_band1.p", map),
+            getValue("bioclim_bio34.p", map), getValue("bioclim_bio12.p", map), getValue("bioclim_bio11.p", map) )
+    }
+    else{
+      return Array()
+    }
     
     }
     catch{
@@ -284,9 +294,12 @@ object SolrOccurrenceDAO extends IndexDAO {
   }
 
   def finaliseIndex(){
-    if(!solrDocList.isEmpty)
+    if(!solrDocList.isEmpty){
       SolrIndexDAO.solrServer.add(solrDocList)
+     
+    }
     SolrIndexDAO.solrServer.commit
+    printNumDocumentsInIndex
     SolrIndexDAO.solrServer.optimize
   }
    
@@ -306,29 +319,38 @@ object SolrOccurrenceDAO extends IndexDAO {
   override def indexFromMap(guid:String, map:Map[String,String])={
     val header = getHeaderValues()
     val values = getOccIndexModel(guid, map)
-    val doc = new SolrInputDocument()
-    for(i <- 0 to values.length-1){
-      if(values(i) != ""){
-        if(header(i) == "species_group" || header(i) == "assertions" ){
-          //multiple valus in this field
-          for(value<-values(i).split('|'))
-            doc.addField(header(i), value)
+    if(values.length>0){
+      val doc = new SolrInputDocument()
+      for(i <- 0 to values.length-1){
+        if(values(i) != ""){
+          if(header(i) == "species_group" || header(i) == "assertions" ){
+            //multiple valus in this field
+            for(value<-values(i).split('|'))
+              doc.addField(header(i), value)
+          }
+          else
+            doc.addField(header(i), values(i))
         }
-        else
-          doc.addField(header(i), values(i))
       }
-    }
-    solrDocList.add(doc)
-    if(solrDocList.size ==50000){
-      try{
-        SolrIndexDAO.solrServer.add(solrDocList)
-        SolrIndexDAO.solrServer.commit
+      solrDocList.add(doc)
+      if(solrDocList.size ==50000){        
+        try{
+          SolrIndexDAO.solrServer.add(solrDocList)
+          SolrIndexDAO.solrServer.commit
+          //printNumDocumentsInIndex
+        }
+        catch{
+          case e:Exception => logger.error(e.getMessage,e)
+        }
+        solrDocList.clear
       }
-      catch{
-        case e:Exception => logger.error(e.getMessage,e)
-      }
-      solrDocList.clear
-    }
   }
+  }
+  
+  def printNumDocumentsInIndex() ={
+    val rq =SolrIndexDAO.solrServer.query(new SolrQuery("*:*"))
+    println(">>>>>>>>>>>>>Document count of index: " + rq.getResults().getNumFound())
+  }
+ 
 
 }

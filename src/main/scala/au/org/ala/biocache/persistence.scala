@@ -64,6 +64,8 @@ trait PersistenceManager {
      */
     def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int = 1000)
 
+    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int,  columnName:String*)
+
     /**
      * Select the properties for the supplied record UUIDs
      */
@@ -216,16 +218,11 @@ class CassandraPersistenceManager (
     }
 
     /**
-     * Iterate over all occurrences, passing the objects to a function.
-     * Function returns a boolean indicating if the paging should continue.
-     *
-     * @param occurrenceType
-     * @param proc
+     * Generic page over method. Individual pageOver methods should provide a slicePredicate that
+     * is used to determine the columns that aer returned...
      */
-    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int = 1000) {
-
+    def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int, slicePredicate:SlicePredicate)={
       val selector = Pelops.createSelector(poolName, keyspace)
-      val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
       var startKey = ""
       var keyRange = Selector.newKeyRange(startKey, "", pageSize+1)
       var hasMore = true
@@ -252,6 +249,59 @@ class CassandraPersistenceManager (
       println("Finished paging. Total count: "+counter)
     }
 
+
+      /**
+       * Pages over all the records with the selected columns.
+       *
+       * 
+       *
+       * @param columnName The names of the columns that need to be provided for processing by the proc
+       */
+      def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int, columnName:String*)={
+
+      val slicePredicate = Selector.newColumnsPredicate(columnName:_*)
+      pageOver(entityName, proc, pageSize, slicePredicate)
+
+      }
+
+    /**
+     * Iterate over all occurrences, passing the objects to a function.
+     * Function returns a boolean indicating if the paging should continue.
+     *
+     * @param occurrenceType
+     * @param proc
+     */
+    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int = 1000) {
+
+      //val selector = Pelops.createSelector(poolName, keyspace)
+      val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
+      pageOver(entityName, proc, pageSize, slicePredicate)
+//      var startKey = ""
+//      var keyRange = Selector.newKeyRange(startKey, "", pageSize+1)
+//      var hasMore = true
+//      var counter = 0
+//      var columnMap = selector.getColumnsFromRows(keyRange, entityName, slicePredicate, ConsistencyLevel.ONE)
+//      var continue = true
+//      while (columnMap.size>0 && continue) {
+//        val columnsObj = List(columnMap.keySet.toArray : _*)
+//        //convert to scala List
+//        val keys = columnsObj.asInstanceOf[List[String]]
+//        startKey = keys.last
+//        for(uuid<-keys){
+//          val columnList = columnMap.get(uuid)
+//          //procedure a map of key value pairs
+//          val map = columnList2Map(columnList)
+//          //pass the record ID and the key value pair map to the proc
+//          continue = proc(uuid, map)
+//        }
+//        counter += keys.size
+//        keyRange = Selector.newKeyRange(startKey, "", pageSize+1)
+//        columnMap = selector.getColumnsFromRows(keyRange, entityName, slicePredicate, ConsistencyLevel.ONE)
+//        columnMap.remove(startKey)
+//      }
+//      println("Finished paging. Total count: "+counter)
+    }
+
     /**
      * Select fields from rows and pass to the supplied function.
      */
@@ -268,7 +318,7 @@ class CassandraPersistenceManager (
 
        for(key<-keys){
          val columnsList = columnMap.get(key)
-         val fieldValues = columnsList.map(column => (new String(column.name),new String(column.value))).toArray
+         val fieldValues = columnsList.map(column => (new String(column.name, "UTF-8"),new String(column.value, "UTF-8"))).toArray
          val map = scala.collection.mutable.Map.empty[String,String]
          for(fieldValue <-fieldValues){
            map(fieldValue._1) = fieldValue._2

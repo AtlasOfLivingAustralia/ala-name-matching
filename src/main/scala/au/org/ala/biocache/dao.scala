@@ -170,6 +170,12 @@ object OccurrenceDAO {
   val userQualityAssertionColumn = "userQualityAssertion"
   val geospatialDecisionColumn = "geospatiallyKosher"
   val taxonomicDecisionColumn = "taxonomicallyKosher"
+  val deletedColumn = "deleted"
+
+
+  def setUuidDeleted(uuid:String, del:Boolean)={
+    DAO.persistentManager.put(uuid, entityName, deletedColumn, del.toString)
+  }
 
   /**
    * Get an occurrence with UUID
@@ -267,6 +273,8 @@ object OccurrenceDAO {
           fullRecord.taxonomicallyKosher = "true".equals(fieldValue.get)
         } else if(geospatialDecisionColumn.equals(fieldName)){
           fullRecord.geospatiallyKosher = "true".equals(fieldValue.get)
+        } else if(deletedColumn.equals(fieldName)){
+          fullRecord.deleted = "true".equals(fieldValue.get)
         } else if(isProcessedValue(fieldName) && version == Processed){
           setProperty(fullRecord, removeSuffix(fieldName), fieldValue.get)
         } else if(isConsensusValue(fieldName) && version == Consensus){
