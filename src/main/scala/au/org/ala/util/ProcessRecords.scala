@@ -323,7 +323,7 @@ object ProcessRecords {
 
     if (raw.location.decimalLatitude != null && raw.location.decimalLongitude != null) {
       //retrieve the species profile
-          val taxonProfile = TaxonProfileDAO.getByGuid(processed.classification.taxonConceptID)
+      val taxonProfile = TaxonProfileDAO.getByGuid(processed.classification.taxonConceptID)
 
       //TODO validate decimal degrees and parse degrees, minutes, seconds format
       processed.location.decimalLatitude = raw.location.decimalLatitude
@@ -437,6 +437,10 @@ object ProcessRecords {
         //TODO check centre point of the state
         if(StateCentrePoints.coordinatesMatchCentre(point.get.stateProvince, raw.location.decimalLatitude, raw.location.decimalLongitude)){
           assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,"Coordinates are centre point of "+point.get.stateProvince)
+        }
+
+        if(raw.location.decimalLatitude.toDouble == 0.0d && raw.location.decimalLongitude.toDouble == 0.0d ){
+            assertions + QualityAssertion(AssertionCodes.ZERO_COORDINATES,"Coordinates 0,0")
         }
       }
     }
