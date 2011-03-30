@@ -439,10 +439,12 @@ object ProcessRecords {
           assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,"Coordinates are centre point of "+point.get.stateProvince)
         }
 
-        if(raw.location.decimalLatitude.toDouble == 0.0d && raw.location.decimalLongitude.toDouble == 0.0d ){
+        
+      }
+      //point 0,0 does not exist in our cache check all records that have lat longs.
+      if(raw.location.decimalLatitude.toDouble == 0.0d && raw.location.decimalLongitude.toDouble == 0.0d ){
             assertions + QualityAssertion(AssertionCodes.ZERO_COORDINATES,"Coordinates 0,0")
         }
-      }
     }
     //Only process the raw state value if no latitude and longitude is provided
     if(processed.location.stateProvince ==null && raw.location.decimalLatitude ==null && raw.location.decimalLongitude ==null){
