@@ -442,9 +442,13 @@ object ProcessRecords {
         
       }
       //point 0,0 does not exist in our cache check all records that have lat longs.
-      if(raw.location.decimalLatitude.toDouble == 0.0d && raw.location.decimalLongitude.toDouble == 0.0d ){
-            assertions + QualityAssertion(AssertionCodes.ZERO_COORDINATES,"Coordinates 0,0")
-        }
+      try {
+          if(raw.location.decimalLatitude.toDouble == 0.0d && raw.location.decimalLongitude.toDouble == 0.0d ){
+                assertions + QualityAssertion(AssertionCodes.ZERO_COORDINATES,"Coordinates 0,0")
+           }
+      } catch {
+          case e:Exception => None
+      }
     }
     //Only process the raw state value if no latitude and longitude is provided
     if(processed.location.stateProvince ==null && raw.location.decimalLatitude ==null && raw.location.decimalLongitude ==null){
