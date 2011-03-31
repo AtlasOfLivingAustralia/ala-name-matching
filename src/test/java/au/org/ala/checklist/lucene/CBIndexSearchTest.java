@@ -145,7 +145,7 @@ public class CBIndexSearchTest {
 			NameSearchResult expectedResult = new NameSearchResult(String.valueOf(223782), "urn:lsid:biodiversity.org.au:afd.taxon:5005b407-1e87-4aa3-a2ff-88b89f0a2dc4", MatchType.DIRECT);
 			assertTrue(nameSearchResultEqual(expectedResult, result));
 			//			assertEquals("Match: DIRECT id: 223782 lsid: urn:lsid:biodiversity.org.au:afd.taxon:5005b407-1e87-4aa3-a2ff-88b89f0a2dc4 classification: au.org.ala.data.model.LinnaeanRankClassification@177f409c[kingdom=<null>,phylum=<null>,klass=<null>,order=<null>,family=<null>,genus=<null>,species=<null>,specificEpithet=<null>,scientificName=Atylus monoculoides] synonym: urn:lsid:biodiversity.org.au:afd.taxon:dcd396c3-afd4-498f-ab83-2605926f64f8", result.toString());
-			String lsid = searcher.searchForLSID("Atylus monoculoides");			
+			String lsid = searcher.searchForLSID("Atylus monoculoides");
 			System.out.println("testSynonymWithHomonym LSID: " + lsid);
 			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:dcd396c3-afd4-498f-ab83-2605926f64f8", lsid);
 			//System.out.println("LSID: " +searcher.searchForLSID("Sira tricincta"));
@@ -172,12 +172,12 @@ public class CBIndexSearchTest {
 			cl.setKingdom("Plantae");
 			results = searcher.searchForRecords("Silene", RankType.getForId(6000), cl, 10);
 			printAllResults("hymonyms test (Silene)", results);
-			
+
 			cl.setGenus("Serpula");
 			cl.setKingdom("Fungi");
 			results = searcher.searchForRecords("Serpula", RankType.getForId(6000), cl, 10);
 			printAllResults("hymonyms test (Serpula)", results);
-			
+
 			cl.setGenus("Gaillardia");
 			cl.setKingdom("Plantae");
 			results = searcher.searchForRecords("Gaillardia", RankType.getForId(6000), cl, 10);
@@ -191,7 +191,7 @@ public class CBIndexSearchTest {
 			e.printStackTrace();
 			printAllResults("HOMONYM EXCEPTION", e.getResults());
 			fail("testHomonym failed");
-		} 
+		}
 	}
 
 	@Test
@@ -273,16 +273,16 @@ public class CBIndexSearchTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("testIRMNGHomonymReconcile failed");
-		}
-	}
-	@Test
+            }
+    }
+    @Test
 	public void newHomonynmTest(){
-		try{
+        try{
 			//Abelia grandiflora
 		}
 		catch(Exception e){
-
-		}
+            
+        }
 	}
 	@Test
 	public void testCultivars(){
@@ -293,11 +293,11 @@ public class CBIndexSearchTest {
 			System.out.println("Hypoestes phyllostachya 'Splash': " + searcher.searchForRecord("Hypoestes phyllostachya 'Splash'", null));
 
 		}
-		catch(Exception e){
-			e.printStackTrace();
+        catch(Exception e){
+            e.printStackTrace();
 			fail("testCultivars failed");
-		}
-	}
+        }
+    }
 	@Test
 	public void testMyrmecia(){
 		try{
@@ -341,7 +341,7 @@ public class CBIndexSearchTest {
 			System.out.println("LSID for cl and NOT recursive matching: " + output);
 			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
 
-		}
+}
 		catch(Exception e){
 			e.printStackTrace();
 			fail("testSearchForLSID failed");
@@ -351,7 +351,7 @@ public class CBIndexSearchTest {
 	public void testFuzzyMatches(){
 		try{
 			//Bullia
-			String output = searcher.searchForRecord("Bullia", null) == null ? null : searcher.searchForRecord("Bullia", null).toString();			
+			String output = searcher.searchForRecord("Bullia", null) == null ? null : searcher.searchForRecord("Bullia", null).toString();
 			System.out.println("Bullia NOT fuzzy: " + output);
 			NameSearchResult nsr = searcher.searchForRecord("Bullia", null, true);
 			System.out.println("Bullia fuzzy: " + nsr);
@@ -379,7 +379,7 @@ public class CBIndexSearchTest {
 		}
 	}
 
-	
+
 
          @Test
     public void testCrossRankHomonyms() {
@@ -434,6 +434,18 @@ public class CBIndexSearchTest {
         }
         catch(Exception e){
             assertEquals(e.getClass(), HomonymException.class);
+        }
+    }
+
+    @Test
+    public void testSingleLevelClean(){
+        try{
+
+            String name = "Astroloma sp. Cataby (EA Griffin 1022)";
+            assertEquals(searcher.searchForRecord(name, null), null);
+        }
+        catch(Exception e){
+            e.printStackTrace();
         }
     }
 

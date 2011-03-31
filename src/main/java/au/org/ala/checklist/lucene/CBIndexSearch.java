@@ -659,6 +659,20 @@ public class CBIndexSearch {
      * @throws SearchResultException
      */
     public List<NameSearchResult> searchForRecords(String name, RankType rank, LinnaeanRankClassification cl, int max, boolean fuzzy) throws SearchResultException{
+        return searchForRecords(name, rank, cl, max, fuzzy, true);
+    }
+    /**
+     * 
+     * @param name
+     * @param rank
+     * @param cl
+     * @param max
+     * @param fuzzy
+     * @param clean whether or not to clean the name and retest
+     * @return
+     * @throws SearchResultException
+     */
+    private List<NameSearchResult> searchForRecords(String name, RankType rank, LinnaeanRankClassification cl, int max, boolean fuzzy, boolean clean) throws SearchResultException{
         //The name is not allowed to be null
         if(name == null)
             throw new SearchResultException("Unable to perform search. Null value supplied for the name.");
@@ -695,22 +709,26 @@ public class CBIndexSearch {
                 if(hits.size()>0)
                     return hits;
             }
-            //4. clean the name and then search for the new version
+            //4. if clean = true then clean the name and then search for the new version
             //DON'T search for the clean name if the original name contains a " cf " or " aff " (these are informal names)
-            ParsedName<?> cn = parser.parseIgnoreAuthors(name);
-			if (cn != null && cn.getType() != NameType.informal) {
-				String cleanName = cn.buildCanonicalName();
-				if (StringUtils.trimToNull(cleanName) != null && !name.equals(cleanName)) {
-					List<NameSearchResult> results = searchForRecords(
-							cleanName, rank, cl, max, fuzzy);
-					if (results != null) {
-						for (NameSearchResult result : results)
-							result.setCleanName(cleanName);
-					}
-					return results;
-				}
-			}
+            if (clean) {
+                ParsedName<?> cn = parser.parseIgnoreAuthors(name);
+                if (cn != null && cn.getType() != NameType.informal) {
+                    String cleanName = cn.buildCanonicalName();
+                    if (StringUtils.trimToNull(cleanName) != null && !name.equals(cleanName)) {
+                        //we only want to clean the name once.  This should prevent incorrect genus match for Astroloma sp. Cataby (EA Griffin 1022)
+                        List<NameSearchResult> results = searchForRecords(
+                                cleanName, rank, cl, max, fuzzy, false);
+                        if (results != null) {
+                            for (NameSearchResult result : results) {
+                                result.setCleanName(cleanName);
+                            }
+                        }
+                        return results;
+                    }
+                }
             }
+        }
         catch(IOException e){
             log.warn(e.getMessage());
             return null;
