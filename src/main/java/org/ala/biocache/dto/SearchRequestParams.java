@@ -41,6 +41,7 @@ public class SearchRequestParams {
                                 "species_group",
                                 "kingdom",
                                 "family",
+                                "species",
                                 "assertions",
                                 "month",
                                 "year",
