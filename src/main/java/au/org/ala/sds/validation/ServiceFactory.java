@@ -8,7 +8,7 @@ import org.drools.KnowledgeBase;
 import au.org.ala.sds.knowledgebase.KnowledgeBaseFactory;
 import au.org.ala.sds.model.ConservationInstance;
 import au.org.ala.sds.model.PlantPestInstance;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityInstance;
 
 /**
@@ -17,12 +17,12 @@ import au.org.ala.sds.model.SensitivityInstance;
  */
 public class ServiceFactory {
 
-    public static ValidationService createValidationService(SensitiveSpecies species) {
+    public static ValidationService createValidationService(SensitiveTaxon species) {
         ReportFactory reportFactory = new SdsReportFactory();
         ValidationService service = null;
 
         if (species.getInstances().get(0) instanceof ConservationInstance) {
-            service = getConservationService(reportFactory);
+            service = new ConservationService(reportFactory);
         } else if (species.getInstances().get(0) instanceof PlantPestInstance) {
             SensitivityInstance instance = species.getInstances().get(0);
             KnowledgeBase knowledgeBase = KnowledgeBaseFactory.getKnowledgeBase(instance.getCategory());
@@ -32,11 +32,4 @@ public class ServiceFactory {
         return service;
     }
 
-    public static ConservationService getConservationService(ReportFactory reportFactory) {
-        return new ConservationService(reportFactory);
-    }
-
-    public static PlantPestService getPlantPestService(ReportFactory reportFactory) {
-        return null;
-    }
 }
