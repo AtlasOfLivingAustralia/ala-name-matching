@@ -18,29 +18,89 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.builder.CompareToBuilder;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
-public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
+public class SensitiveTaxon implements Comparable<SensitiveTaxon> {
 
-    protected static final Logger logger = Logger.getLogger(SensitiveSpecies.class);
+    protected static final Logger logger = Logger.getLogger(SensitiveTaxon.class);
 
-    private final String scientificName;
+    public enum Rank { SPECIES, GENUS, FAMILY };
+
+    private String species;
+    private String genus;
+    private String family;
+    private String commonName;
+    private final Rank rank;
     private String acceptedName;
     private String lsid;
     private final List<SensitivityInstance> instances;
 
-    public SensitiveSpecies(String scientificName) {
+    public SensitiveTaxon(String taxon, Rank rank) {
         super();
-        this.scientificName = scientificName;
+        switch (rank) {
+        case SPECIES:
+            this.species = taxon;
+            break;
+        case GENUS:
+            this.genus = taxon;
+            break;
+        case FAMILY:
+            this.family = taxon;
+            break;
+        }
+        this.rank = rank;
         this.instances = new ArrayList<SensitivityInstance>();
     }
 
-    public String getScientificName() {
-        return this.scientificName;
+    public String getSpecies() {
+        return this.species;
+    }
+
+    public String getGenus() {
+        return this.genus;
+    }
+
+    public String getFamily() {
+        return this.family == null ? "" : this.family;
+    }
+
+    public void setFamily(String family) {
+        this.family = family;
+    }
+
+    public String getCommonName() {
+        return commonName;
+    }
+
+    public void setCommonName(String commonName) {
+        this.commonName = commonName;
+    }
+
+    public Rank getRank() {
+        return this.rank;
+    }
+
+    public String getTaxonName() {
+        if (StringUtils.isNotBlank(this.acceptedName)) {
+            return this.acceptedName;
+        }
+        switch (this.rank) {
+        case SPECIES:
+            return this.species;
+        case GENUS:
+            return this.genus;
+        case FAMILY:
+            return this.family;
+        }
+        return null;
     }
 
     public String getAcceptedName() {
@@ -67,6 +127,18 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
         for (SensitivityInstance si : this.instances) {
             if (zone.equals(si.getZone())) {
                 return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isDateRequired() {
+        for (SensitivityInstance si : this.instances) {
+            if (si instanceof PlantPestInstance) {
+                if (((PlantPestInstance) si).getFromDate() != null || ((PlantPestInstance) si).getToDate() != null) {
+                    return true;
+                }
             }
         }
 
@@ -111,33 +183,35 @@ public class SensitiveSpecies implements Comparable<SensitiveSpecies> {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result
-                + ((scientificName == null) ? 0 : scientificName.hashCode());
-        return result;
+        return new HashCodeBuilder(17, 37).
+            append(this.species).
+            append(this.genus).
+            append(this.family).
+            append(this.rank).
+            append(this.commonName).
+            toHashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        SensitiveSpecies other = (SensitiveSpecies) obj;
-        if (scientificName == null) {
-            if (other.scientificName != null)
-                return false;
-        } else if (!scientificName.equals(other.scientificName))
-            return false;
-        return true;
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
+        SensitiveTaxon other = (SensitiveTaxon) obj;
+        return new EqualsBuilder()
+            .append(this.species, other.species)
+            .append(this.genus, other.genus)
+            .append(this.rank, other.rank)
+            .isEquals();
     }
 
     @Override
-    public int compareTo(SensitiveSpecies ss) {
-        return scientificName.compareTo(ss.getScientificName());
+    public int compareTo(SensitiveTaxon st) {
+        return new CompareToBuilder()
+            .append(this.species, st.species)
+            .append(this.genus, st.genus)
+            .append(this.rank, st.rank)
+            .toComparison();
     }
 
 }
