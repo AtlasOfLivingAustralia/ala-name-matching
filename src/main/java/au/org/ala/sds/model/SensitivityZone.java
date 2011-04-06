@@ -24,8 +24,23 @@ public enum SensitivityZone {
     HM("Heard and McDonald Islands"),
     AQ("Australian Antartic Territory"),
     TSPZ("Torres Strait Protected Zone"),
+    TSSQZ("Torres Strait Special Quarantine Zone"),
+    FFEZ("Tri-State Fruit Fly Exclusion Zone"),
     PFFPQA1995("Papaya Fruit Fly Pest Quarantine Area 1995"),
     ECCPQA2004("Emerald Citrus Canker Pest Quarantine Area 2004"),
+    RIFARA("Red Imported Fire Ant Restricted Area"),
+    PIZNSWAC("Phylloxera Infested Zone - NSW Albury-Corowa"),
+    PIZNSWSR("Phylloxera Infested Zone - NSW Sydney Region"),
+    PIZVICNE("Phylloxera Infested Zone - Vic North East"),
+    PIZVICMAR("Phylloxera Infested Zone - Vic Maroondah"),
+    PIZVICNAG("Phylloxera Infested Zone - Vic Nagambie"),
+    PIZVICMOR("Phylloxera Infested Zone - Vic Moroopna"),
+    PIZVICUPT("Phylloxera Infested Zone - Vic Upton"),
+    PIZVICWHB("Phylloxera Infested Zone - Vic Whitebridge"),
+    PCNCAVICTHO("Potato Cyst Nematode Control Area - Vic Thorpdale"),
+    PCNCAVICGEM("Potato Cyst Nematode Control Area - Vic Gembrook"),
+    PCNCAVICKWR("Potato Cyst Nematode Control Area - Vic Koo Wee Rup"),
+    PCNCAVICWAN("Potato Cyst Nematode Control Area - Vic Wandin"),
     NOTAUS("Not in Australia");
 
     private String value;
@@ -73,6 +88,16 @@ public enum SensitivityZone {
         Set<SensitivityZone> externalTerritories = EnumSet.of(CX, CC, AC, CS, AQ, HM, NF);
         for (SensitivityZone zone : zones) {
             if (externalTerritories.contains(zone)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isInTorresStrait(Set<SensitivityZone> zones) {
+        Set<SensitivityZone> torresStrait = EnumSet.of(TSPZ, TSSQZ);
+        for (SensitivityZone zone : zones) {
+            if (torresStrait.contains(zone)) {
                 return true;
             }
         }
