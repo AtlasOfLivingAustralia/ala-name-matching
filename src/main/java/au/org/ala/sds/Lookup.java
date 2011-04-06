@@ -14,7 +14,7 @@
  ***************************************************************************/
 package au.org.ala.sds;
 
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 
 /**
  *
@@ -22,11 +22,11 @@ import au.org.ala.sds.model.SensitiveSpecies;
  */
 public interface Lookup {
 
-    SensitiveSpecies findSensitiveSpecies(String scientificName);
+    SensitiveTaxon findSensitiveSpecies(String scientificName);
 
-    SensitiveSpecies findSensitiveSpeciesByAcceptedName(String acceptedName);
+    SensitiveTaxon findSensitiveSpeciesByAcceptedName(String acceptedName);
 
-    SensitiveSpecies findSensitiveSpeciesByLsid(String lsid);
+    SensitiveTaxon findSensitiveSpeciesByLsid(String lsid);
 
     boolean isSensitive(String scientificName);
 }
