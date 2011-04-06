@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.Set;
 
 import au.org.ala.sds.model.PlantPestInstance;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityInstance;
 import au.org.ala.sds.model.SensitivityZone;
 
@@ -17,18 +17,29 @@ import au.org.ala.sds.model.SensitivityZone;
  */
 public class PlantPestUtils {
 
-    public static boolean isInZoneDuringPeriod(SensitiveSpecies ss, Set<SensitivityZone> zones, Date date) {
+    public static boolean isInsideZone(SensitiveTaxon ss, Set<SensitivityZone> zones) {
         for (SensitivityInstance si : ss.getInstances()) {
-            if (zones.contains(si.getZone()) &&
-                date.getTime() >= ((PlantPestInstance) si).getFromDate().getTime() &&
-                date.getTime() <= ((PlantPestInstance) si).getToDate().getTime()) {
+            if (zones.contains(si.getZone())) {
                 return true;
             }
         }
         return false;
     }
 
-    public static boolean isInZoneBeforePeriod(SensitiveSpecies ss, Set<SensitivityZone> zones, Date date) {
+    public static boolean isInZoneDuringPeriod(SensitiveTaxon ss, Set<SensitivityZone> zones, Date date) {
+        for (SensitivityInstance si : ss.getInstances()) {
+            if (zones.contains(si.getZone()) &&
+                date.getTime() >= ((PlantPestInstance) si).getFromDate().getTime()) {
+                if (((PlantPestInstance) si).getToDate() == null ||
+                    date.getTime() <= ((PlantPestInstance) si).getToDate().getTime()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean isInZoneBeforePeriod(SensitiveTaxon ss, Set<SensitivityZone> zones, Date date) {
         for (SensitivityInstance si : ss.getInstances()) {
             if (zones.contains(si.getZone()) &&
                 date.getTime() < ((PlantPestInstance) si).getFromDate().getTime()) {
@@ -38,7 +49,7 @@ public class PlantPestUtils {
         return false;
     }
 
-    public static boolean isInZoneAfterPeriod(SensitiveSpecies ss, Set<SensitivityZone> zones, Date date) {
+    public static boolean isInZoneAfterPeriod(SensitiveTaxon ss, Set<SensitivityZone> zones, Date date) {
         for (SensitivityInstance si : ss.getInstances()) {
             if (zones.contains(si.getZone()) &&
                 date.getTime() > ((PlantPestInstance) si).getToDate().getTime()) {
@@ -48,7 +59,7 @@ public class PlantPestUtils {
         return false;
     }
 
-    public static boolean isOutsideZone(SensitiveSpecies ss, Set<SensitivityZone> zones) {
+    public static boolean isOutsideZone(SensitiveTaxon ss, Set<SensitivityZone> zones) {
         for (SensitivityInstance si : ss.getInstances()) {
             if (zones.contains(si.getZone())) {
                 return false;
