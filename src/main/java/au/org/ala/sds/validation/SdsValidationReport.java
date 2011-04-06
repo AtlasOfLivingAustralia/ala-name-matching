@@ -2,56 +2,50 @@ package au.org.ala.sds.validation;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import au.org.ala.sds.model.Message;
+import au.org.ala.sds.model.SensitiveTaxon;
 
 public class SdsValidationReport implements ValidationReport, Serializable {
 
     private static final long serialVersionUID = 1287347805422093157L;
 
-    protected Map<Message.Type, List<Message>> messagesMap = new HashMap<Message.Type, List<Message>>();
+    private final SensitiveTaxon species;
+
+    private final List<Message> messages;
+
+    public SdsValidationReport(SensitiveTaxon species) {
+        super();
+        this.species = species;
+        this.messages = new ArrayList<Message>();
+    }
+
+    public SensitiveTaxon getSpecies() {
+        return species;
+    }
 
     public List<Message> getMessages() {
-        List<Message> messagesAll = new ArrayList<Message>();
-        for (Collection<Message> messages : messagesMap.values()) {
-            messagesAll.addAll(messages);
-        }
-        return messagesAll;
+        return messages;
     }
 
     public List<Message> getMessagesByType(Message.Type type) {
         if (type == null)
             return Collections.emptyList();
-        List<Message> messages = messagesMap.get(type);
-        if (messages == null)
-            return Collections.emptyList();
-        else
-            return messages;
-    }
-
-    public boolean contains(String messageKey) {
-        for (Message message : getMessages()) {
-            if (messageKey.equals(message.getMessageKey())) {
-                return true;
+        List<Message> msgList = new ArrayList<Message>();
+        for (Message msg : messages) {
+            if (msg.getType().equals(type)) {
+                msgList.add(msg);
             }
         }
-        return false;
+        return msgList;
     }
 
-    public boolean addMessage(Message message) {
-        if (message == null)
-            return false;
-        List<Message> messages = messagesMap.get(message.getType());
-        if (messages == null) {
-            messages = new ArrayList<Message>();
-            messagesMap.put(message.getType(), messages);
+    public void addMessage(Message message) {
+        if (message != null) {
+            messages.add(message);
         }
-        return messages.add(message);
     }
 
 }
