@@ -17,8 +17,8 @@ package au.org.ala.sds;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Service;
 
-import au.org.ala.sds.model.SensitiveSpecies;
-import au.org.ala.sds.model.SensitiveSpeciesStore;
+import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.model.SensitiveTaxonStore;
 
 /**
  *
@@ -28,24 +28,24 @@ import au.org.ala.sds.model.SensitiveSpeciesStore;
 public class SensitiveSpeciesFinder implements Lookup {
 
     protected static final Logger logger = Logger.getLogger(SensitiveSpeciesFinder.class);
-    private final SensitiveSpeciesStore store;
+    private final SensitiveTaxonStore store;
 
-    public SensitiveSpeciesFinder(SensitiveSpeciesStore store) {
+    public SensitiveSpeciesFinder(SensitiveTaxonStore store) {
         this.store = store;
     }
 
     @Override
-    public SensitiveSpecies findSensitiveSpecies(String scientificName) {
+    public SensitiveTaxon findSensitiveSpecies(String scientificName) {
         return store.findByName(scientificName);
     }
 
     @Override
-    public SensitiveSpecies findSensitiveSpeciesByAcceptedName(String acceptedName) {
+    public SensitiveTaxon findSensitiveSpeciesByAcceptedName(String acceptedName) {
         return store.findByAcceptedName(acceptedName);
     }
 
     @Override
-    public SensitiveSpecies findSensitiveSpeciesByLsid(String lsid) {
+    public SensitiveTaxon findSensitiveSpeciesByLsid(String lsid) {
         return store.findByLsid(lsid);
     }
 
