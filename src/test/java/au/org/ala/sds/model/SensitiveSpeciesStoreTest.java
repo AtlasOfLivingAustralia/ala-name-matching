@@ -30,9 +30,9 @@ public class SensitiveSpeciesStoreTest {
         final String SPECIES_3  = "Abutilon uncinatum ms";
         final String SPECIES_3E = "Abutilon uncinatum";
 
-        assertEquals(SPECIES_1E, SensitiveSpeciesStore.stripTaxonTokens(SPECIES_1));
-        assertEquals(SPECIES_2E, SensitiveSpeciesStore.stripTaxonTokens(SPECIES_2));
-        assertEquals(SPECIES_3E, SensitiveSpeciesStore.stripTaxonTokens(SPECIES_3));
+        assertEquals(SPECIES_1E, SensitiveTaxonStore.stripTaxonTokens(SPECIES_1));
+        assertEquals(SPECIES_2E, SensitiveTaxonStore.stripTaxonTokens(SPECIES_2));
+        assertEquals(SPECIES_3E, SensitiveTaxonStore.stripTaxonTokens(SPECIES_3));
     }
 
 }
