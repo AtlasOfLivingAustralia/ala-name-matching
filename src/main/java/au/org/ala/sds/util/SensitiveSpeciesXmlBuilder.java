@@ -20,7 +20,7 @@ import au.org.ala.sds.dao.SensitiveSpeciesDao;
 import au.org.ala.sds.dao.SensitiveSpeciesMySqlDao;
 import au.org.ala.sds.model.ConservationInstance;
 import au.org.ala.sds.model.PlantPestInstance;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityInstance;
 
 /**
@@ -43,19 +43,22 @@ public class SensitiveSpeciesXmlBuilder {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        List<SensitiveSpecies> species = dao.getAll();
+        List<SensitiveTaxon> species = dao.getAll();
 
         String currentName = "";
         Element sensitiveSpecies = null;
-        for (SensitiveSpecies ss : species) {
-            if (!ss.getScientificName().equalsIgnoreCase(currentName)) {
+        for (SensitiveTaxon st : species) {
+            if (!st.getTaxonName().equalsIgnoreCase(currentName)) {
                 sensitiveSpecies = new Element("sensitiveSpecies");
-                sensitiveSpecies.setAttribute("name", ss.getScientificName());
+                sensitiveSpecies.setAttribute("name", st.getTaxonName());
+                sensitiveSpecies.setAttribute("family", st.getFamily());
+                sensitiveSpecies.setAttribute("rank", st.getRank().name());
+                sensitiveSpecies.setAttribute("commonName", st.getCommonName() != null ? st.getCommonName() : "");
                 root.addContent(sensitiveSpecies);
-                currentName = ss.getScientificName();
+                currentName = st.getSpecies();
             }
             Element instances = new Element("instances");
-            List<SensitivityInstance> sis = ss.getInstances();
+            List<SensitivityInstance> sis = st.getInstances();
             for (SensitivityInstance si : sis) {
                 Element instance = null;
                 if (si instanceof ConservationInstance) {
