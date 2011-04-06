@@ -14,14 +14,8 @@ public interface ValidationReport {
     List<Message> getMessagesByType(Message.Type type);
 
     /**
-     * @return true if this report contains message with 
-     *  specified key, false otherwise
-     */
-    boolean contains(String messageKey);
-    
-    /**
      * adds specified message to this report
      */
-    boolean addMessage(Message message);
+    void addMessage(Message message);
 
 }

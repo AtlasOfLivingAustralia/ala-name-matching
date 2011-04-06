@@ -7,31 +7,42 @@ import au.org.ala.sds.model.Message;
 
 public class ValidationHelper {
 
-    public static void alert(RuleContext drools, Object... context) {
-        KnowledgeRuntime knowledgeRuntime = drools.getKnowledgeRuntime();
-        ValidationReport validationReport = (ValidationReport) knowledgeRuntime.getGlobal("validationReport");
-        ReportFactory reportFactory = (ReportFactory) knowledgeRuntime.getGlobal("reportFactory");
-
-        validationReport.addMessage(reportFactory.createMessage(
-                Message.Type.ALERT, drools.getRule().getName(), context));
+    public static void alert(RuleContext drools, String msgKey) {
+        addMessage(drools, Message.Type.ALERT, msgKey, new Object [] {});
     }
 
-    public static void error(RuleContext drools, Object... context) {
-        KnowledgeRuntime knowledgeRuntime = drools.getKnowledgeRuntime();
-        ValidationReport validationReport = (ValidationReport) knowledgeRuntime.getGlobal("validationReport");
-        ReportFactory reportFactory = (ReportFactory) knowledgeRuntime.getGlobal("reportFactory");
-
-        validationReport.addMessage(reportFactory.createMessage(
-                Message.Type.ERROR, drools.getRule().getName(), context));
+    public static void alert(RuleContext drools, String msgKey, Object... context) {
+        addMessage(drools, Message.Type.ALERT, msgKey, context);
     }
 
-    public static void warning(RuleContext drools, Object... context) {
+    public static void error(RuleContext drools, String msgKey) {
+        addMessage(drools, Message.Type.ERROR, msgKey, new Object [] {});
+    }
+
+    public static void error(RuleContext drools, String msgKey, Object... context) {
+        addMessage(drools, Message.Type.ERROR, msgKey, context);
+    }
+
+    public static void warning(RuleContext drools, String msgKey) {
+        addMessage(drools, Message.Type.WARNING, msgKey, new Object [] {});
+    }
+
+    public static void warning(RuleContext drools, String msgKey, Object... context) {
+        addMessage(drools, Message.Type.WARNING, msgKey, context);
+    }
+
+    public static void information(RuleContext drools, String msgKey) {
+        addMessage(drools, Message.Type.INFORMATION, msgKey, new Object [] {});
+    }
+
+    public static void information(RuleContext drools, String msgKey, Object... context) {
+        addMessage(drools, Message.Type.INFORMATION, msgKey, context);
+    }
+
+    public static void addMessage(RuleContext drools, Message.Type type, String msgKey, Object... context) {
         KnowledgeRuntime knowledgeRuntime = drools.getKnowledgeRuntime();
         ValidationReport validationReport = (ValidationReport) knowledgeRuntime.getGlobal("validationReport");
-        ReportFactory reportFactory = (ReportFactory) knowledgeRuntime.getGlobal("reportFactory");
-
-        validationReport.addMessage(reportFactory.createMessage(
-                Message.Type.WARNING, drools.getRule().getName(), context));
+        validationReport.addMessage(MessageFactory.createMessage(type, msgKey, context));
     }
 
 }
