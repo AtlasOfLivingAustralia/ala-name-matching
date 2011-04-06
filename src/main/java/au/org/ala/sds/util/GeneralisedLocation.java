@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 import au.org.ala.sds.model.ConservationInstance;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityInstance;
 import au.org.ala.sds.model.SensitivityZone;
 
@@ -36,7 +36,7 @@ public class GeneralisedLocation {
     private String generalisationInMetres;
     private String description;
 
-    public GeneralisedLocation(String latitude, String longitude, SensitiveSpecies ss, Set<SensitivityZone> zones) {
+    public GeneralisedLocation(String latitude, String longitude, SensitiveTaxon ss, Set<SensitivityZone> zones) {
         this.originalLatitude = latitude;
         this.originalLongitude = longitude;
         this.locationGeneralisation = null;
@@ -81,6 +81,10 @@ public class GeneralisedLocation {
 
     public String getDescription() {
         return description;
+    }
+
+    public List<SensitivityInstance> getSensitivityInstances() {
+        return this.instances;
     }
 
     private void generaliseCoordinates() {
