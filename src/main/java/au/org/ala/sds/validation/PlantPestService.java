@@ -14,7 +14,7 @@ import org.drools.KnowledgeBase;
 import org.drools.runtime.StatelessKnowledgeSession;
 
 import au.org.ala.sds.knowledgebase.KnowledgeBaseFactory;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.model.SensitivityZone;
 
@@ -36,12 +36,12 @@ public class PlantPestService implements ValidationService {
     }
 
     /**
-     * @param ss
+     * @param taxon
      * @param facts
      * @return
      */
-    public ValidationOutcome validate(SensitiveSpecies ss, FactCollection facts) {
-        ValidationReport report = reportFactory.createValidationReport();
+    public ValidationOutcome validate(SensitiveTaxon taxon, FactCollection facts) {
+        ValidationReport report = reportFactory.createValidationReport(taxon);
 
         if (!ValidationUtils.validateFacts(facts, report)) {
             return new ValidationOutcome(report, false);
@@ -58,7 +58,7 @@ public class PlantPestService implements ValidationService {
             session.setGlobal("state", state);
             session.setGlobal("logger", logger);
 
-            session.execute(getFacts(ss, zones, ValidationUtils.parseDate(facts.get(FactCollection.DATE_KEY))));
+            session.execute(getFacts(taxon, zones, ValidationUtils.parseDate(facts.get(FactCollection.DATE_KEY))));
 
             if (!state.isComplete()) {
                 if (StringUtils.isNotBlank(state.getDelegateRules())) {
@@ -88,7 +88,7 @@ public class PlantPestService implements ValidationService {
     /**
      * @return facts that the rules will reason upon
      */
-    private Collection<Object> getFacts(SensitiveSpecies ss, Set<SensitivityZone> zones, Date date) {
+    private Collection<Object> getFacts(SensitiveTaxon ss, Set<SensitivityZone> zones, Date date) {
       ArrayList<Object> facts = new ArrayList<Object>();
       facts.add(ss);
       facts.add(zones);
