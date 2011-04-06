@@ -26,6 +26,7 @@ import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.checklist.lucene.SearchResultException;
 import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.model.LinnaeanRankClassification;
+import au.org.ala.data.util.RankType;
 import au.org.ala.sds.dao.SensitiveSpeciesDao;
 import au.org.ala.sds.model.SensitiveTaxon.Rank;
 
@@ -116,17 +117,11 @@ public class SensitiveTaxonStore {
     private NameSearchResult getAcceptedName(String name) {
         NameSearchResult match = null;
         try {
-            match = cbIndexSearcher.searchForRecord(name, null);
+            match = cbIndexSearcher.searchForRecord(stripTaxonTokens(name), null);
             if (match != null) {
                 if (match.isSynonym()) {
                     match = cbIndexSearcher.searchForRecordByID(Long.toString(match.getAcceptedId()));
                 }
-//                if (match != null) {
-//                    if (match.getRank().equals(RankType.GENUS)) {
-//                        logger.warn("Sensitive species '" + name + "' returns '" + match.getRankClassification().getScientificName() + "' rank " + match.getRank().name());
-//                        match = null;
-//                    }
-//                }
             }
         } catch (SearchResultException e) {
             logger.warn("'" + name + "' - " + e.getMessage());
@@ -141,19 +136,13 @@ public class SensitiveTaxonStore {
         String name = null;
         NameSearchResult match = null;
         try {
-            name = st.getTaxonName();
+            name = stripTaxonTokens(st.getTaxonName());
             LinnaeanRankClassification cl = new LinnaeanRankClassification(null, null, null, null, st.getFamily().equals("") ? null : st.getFamily() , st.getGenus(), name);
-            match = cbIndexSearcher.searchForRecord(name, cl, null);
+            match = cbIndexSearcher.searchForRecord(name, cl, StringUtils.contains(name, ' ') ? null : RankType.GENUS);
             if (match != null) {
                 if (match.isSynonym()) {
                     match = cbIndexSearcher.searchForRecordByID(Long.toString(match.getAcceptedId()));
                 }
-//                if (match != null) {
-//                    if (match.getRank().equals(RankType.GENUS)) {
-//                        logger.warn("Sensitive species '" + name + "' returns '" + match.getRankClassification().getScientificName() + "' rank " + match.getRank().name());
-//                        match = null;
-//                    }
-//                }
             }
         } catch (SearchResultException e) {
             logger.warn("'" + name + "' - " + e.getMessage());
@@ -164,10 +153,10 @@ public class SensitiveTaxonStore {
         return match;
     }
 
-//    protected static String stripTaxonTokens(String name) {
+    protected static String stripTaxonTokens(String name) {
 //        String stripped  = name.replaceAll(" subsp\\. ", " ");
 //        stripped = stripped.replaceAll(" var\\. ", " ");
-//        stripped = stripped.replaceAll(" ms$", "");
-//        return stripped;
-//    }
+        String stripped = name.replaceAll(" ms$", "");
+        return stripped;
+    }
 }
