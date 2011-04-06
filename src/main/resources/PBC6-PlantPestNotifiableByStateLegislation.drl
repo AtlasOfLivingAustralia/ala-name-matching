@@ -1,0 +1,39 @@
+package au.org.ala.sds.validation;
+
+import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.util.PlantPestUtils;
+import au.org.ala.sds.validation.RuleState;
+import au.org.ala.sds.validation.ValidationReport;
+import java.util.Date;
+import java.util.Set;
+import org.apache.log4j.Logger;
+import org.drools.runtime.rule.RuleContext;
+
+global ValidationReport validationReport;
+global RuleState state;
+global Logger logger;
+
+import function au.org.ala.sds.validation.ValidationHelper.*;
+
+rule "Plant pest notifiable in this State"
+    when
+        $st : SensitiveTaxon()
+        $zones : Set()
+        eval(PlantPestUtils.isInZone($st, $zones)
+    then
+        state.setLoadable(false);
+        logger.warn("PBC6 Rule '" + kcontext.getRule().getName() + "'");
+        //warning(kcontext, );
+end
+
+rule "Plant pest not notifiable in this State"
+    when
+        $st : SensitiveTaxon()
+        $zones : Set()
+        eval(PlantPestUtils.isOutsideZone($st, $zones)
+    then
+        state.setLoadable(true);
+        logger.warn("PBC6 Rule '" + kcontext.getRule().getName() + "'");
+        //warning(kcontext, );
+end

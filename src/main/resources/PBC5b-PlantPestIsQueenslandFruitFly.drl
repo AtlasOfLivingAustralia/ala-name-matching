@@ -1,0 +1,64 @@
+package au.org.ala.sds.validation;
+
+import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.util.PlantPestUtils;
+import au.org.ala.sds.validation.RuleState;
+import au.org.ala.sds.validation.ValidationReport;
+import java.util.Date;
+import java.util.Set;
+import org.apache.log4j.Logger;
+import org.drools.runtime.rule.RuleContext;
+
+global ValidationReport validationReport;
+global RuleState state;
+global Logger logger;
+
+import function au.org.ala.sds.validation.ValidationHelper.*;
+
+rule "In South Australia outside FFEZ"
+    when
+        $st : SensitiveTaxon()
+        $zones : Set()
+        eval($zones.contains(SensitivityZone.SA) && PlantPestUtils.isOutsideZone($st, $zones))
+    then
+        state.setDelegateRules("PBC6");
+        state.setComplete(false);
+        logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
+        //warning(kcontext, );
+end
+
+rule "Inside FFEZ since commencement date"
+    when
+        $st : SensitiveTaxon()
+        $zones : Set()
+        $date : Date()
+        eval(PlantPestUtils.isInZoneDuringPeriod($st, $zones, $date))
+    then
+        state.setLoadable(true);
+        state.setAnnotation("Occurrence of QFF from a region where active managment in the form of trapping and suppression activities protects important horticultural areas");
+        logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "Inside FFEZ before commencement date"
+    when
+        $st : SensitiveTaxon()
+        $zones : Set()
+        $date : Date()
+        eval(PlantPestUtils.isInZoneBeforePeriod($st, $zones, $date))
+    then
+        state.setLoadable(true);
+        state.setAnnotation("Historic record that occurred before management practises where implemented to protect important horticultural areas from QFF");
+        logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "Outside FFEZ"
+    when
+        $st : SensitiveTaxon()
+        $zones : Set()
+        eval(PlantPestUtils.isOutsideZone($st, $zones))
+    then        
+        state.setLoadable(true);
+        state.setAnnotation("Occurrence of QFF outside of the FFEZ");
+        logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
+end

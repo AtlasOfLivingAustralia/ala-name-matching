@@ -1,6 +1,7 @@
 package au.org.ala.sds.validation;
 
 import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.validation.MessageFactory;
 import au.org.ala.sds.validation.RuleState;
 import au.org.ala.sds.validation.ValidationReport;
 import java.util.Set;
@@ -19,8 +20,9 @@ rule "In Australia"
         eval(SensitivityZone.isInAustralia($zones))
     then
         state.setLoadable(false);
+        state.setAnnotation("Plant pest not known to occur in Australia (or this area of Australia)");
         logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
-        //warning(kcontext, );
+        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_01);
 end
 
 rule "In External Territory"
@@ -29,16 +31,16 @@ rule "In External Territory"
         eval(SensitivityZone.isExternalTerritory($zones))
     then
         state.setLoadable(true);
-        state.setAnnotation("Plant pest species in external territory annotation");
+        state.setAnnotation("Plant pest species in an external territory controlled by Australia");
         logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
 end
 
-rule "In Torres Strait Protected Zone"
+rule "In Torres Strait Zone"
     when
         $zones : Set()
-        eval($zones.contains(SensitivityZone.TSPZ))
+        eval(SensitivityZone.isInTorresStrait($zones))
     then        
-        state.setDelegateRules("PBC5");
+        state.setDelegateRules("PBC5a");
         state.setComplete(false);
         logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
 end
@@ -49,5 +51,6 @@ rule "Not in Australian"
         eval($zones.contains(SensitivityZone.NOTAUS))
     then
         state.setLoadable(false);
+        state.setAnnotation("Plant pest species occurrence not in Australia");
         logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
 end

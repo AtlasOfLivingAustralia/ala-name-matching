@@ -1,0 +1,48 @@
+package au.org.ala.sds.validation;
+
+import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.util.PlantPestUtils;
+import au.org.ala.sds.validation.RuleState;
+import au.org.ala.sds.validation.ValidationReport;
+import java.util.Date;
+import java.util.Set;
+import org.apache.log4j.Logger;
+import org.drools.runtime.rule.RuleContext;
+
+global ValidationReport validationReport;
+global RuleState state;
+global Logger logger;
+
+import function au.org.ala.sds.validation.ValidationHelper.*;
+
+rule "Within Torres Strait Zone and taxon is in family Tephritidae and before commencement date"
+    when
+        $st : SensitiveTaxon(family == "Tephritidae")
+        $zones : Set()
+        $date : Date()
+        eval(SensitivityZone.isInTorresStrait($zones))
+        eval($date < "01-Jan-1996")
+    then
+    
+end
+
+rule "Within Torres Strait Zone and taxon is in family Tephritidae and after commencement date"
+    when
+        $st : SensitiveTaxon(family == "Tephritidae")
+        $zones : Set()
+        $date : Date()
+        eval(SensitivityZone.isInTorresStrait($zones))
+        eval($date >= "01-Jan-1996")
+    then
+    
+end
+
+rule "Within Torres Strait Zone and taxon not in family Tephritidae"
+    when
+        $st : SensitiveTaxon(family != "Tephritidae")
+        $zones : Set()
+        eval(SensitivityZone.isInTorresStrait($zones))
+    then
+    
+end

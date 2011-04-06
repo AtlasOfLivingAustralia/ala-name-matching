@@ -16,7 +16,7 @@ global Logger logger;
 
 import function au.org.ala.sds.validation.ValidationHelper.*;
 
-rule "Inside PQA during quarantine period"
+rule "Inside PQA during eradication period"
     when
         $st : SensitiveTaxon()
         $zones : Set()
@@ -24,12 +24,12 @@ rule "Inside PQA during quarantine period"
         eval(PlantPestUtils.isInZoneDuringPeriod($st, $zones, $date))
     then
         state.setLoadable(true);
-        state.setAnnotation("Historic record from a successful eradication program");
-        logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
+        state.setAnnotation("Record from a current eradication program");
+        logger.warn("PBC3 Rule '" + kcontext.getRule().getName() + "'");
         //warning(kcontext, );
 end
 
-rule "Inside PQA earlier than quarantine period"
+rule "Inside PQA earlier than eradication period"
     when
         $st : SensitiveTaxon()
         $zones : Set()
@@ -37,8 +37,8 @@ rule "Inside PQA earlier than quarantine period"
         eval(PlantPestUtils.isInZoneBeforePeriod($st, $zones, $date))
     then
         state.setLoadable(true);
-        state.setAnnotation("Historic record from the area of a successful eradication program");
-        logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
+        state.setAnnotation("Historic record from a current eradication program");
+        logger.warn("PBC3 Rule '" + kcontext.getRule().getName() + "'");
 end
 
 rule "Outside PQA"
@@ -49,17 +49,5 @@ rule "Outside PQA"
     then        
         state.setDelegateRules("PBC1");
         state.setComplete(false);
-        logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
-end
-
-rule "After quarantine period"
-    when
-        $st : SensitiveTaxon()
-        $zones : Set()
-        $date : Date()
-        eval(PlantPestUtils.isInZoneAfterPeriod($st, $zones, $date))
-    then
-        state.setDelegateRules("PBC1");
-        state.setComplete(false);
-        logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
+        logger.warn("PBC3 Rule '" + kcontext.getRule().getName() + "'");
 end
