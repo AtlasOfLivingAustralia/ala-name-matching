@@ -16,7 +16,7 @@ package au.org.ala.sds.dao;
 
 import java.util.List;
 
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 
 /**
  *
@@ -24,6 +24,6 @@ import au.org.ala.sds.model.SensitiveSpecies;
  */
 public interface SensitiveSpeciesDao {
 
-    List<SensitiveSpecies> getAll();
+    List<SensitiveTaxon> getAll();
 
 }

@@ -21,15 +21,17 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
 
 import au.org.ala.sds.dto.SensitiveSpeciesDto;
 import au.org.ala.sds.model.ConservationInstance;
 import au.org.ala.sds.model.PlantPestInstance;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.model.SensitiveTaxon.Rank;
 
 /**
  *
@@ -38,7 +40,13 @@ import au.org.ala.sds.model.SensitivityZone;
 
 public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements SensitiveSpeciesDao {
 
-    public static final String SELECT_ALL = "SELECT * FROM sensitive_species_zones ORDER BY scientific_name, sensitivity_zone";
+   // public static final String SELECT_ALL = "SELECT * FROM sensitive_species_zones ORDER BY scientific_name, sensitivity_zone";
+
+    public static final String SELECT_ALL =
+        "SELECT z.scientific_name, common_name, family, sensitivity_category, sensitivity_zone, authority_name, from_date, to_date, location_generalisation " +
+        "FROM sensitive_species_zones z, sensitive_species s " +
+        "WHERE z.scientific_name = s.scientific_name " +
+        "ORDER BY z.scientific_name";
 
     public SensitiveSpeciesMySqlDao(DataSource dataSource) throws Exception {
         this.setDataSource(dataSource);
@@ -49,7 +57,7 @@ public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements Sensitiv
         super.initDao();
     }
 
-    public List<SensitiveSpecies> getAll() {
+    public List<SensitiveTaxon> getAll() {
 
         List<SensitiveSpeciesDto> dtoList = getJdbcTemplate().query(
                 SELECT_ALL,
@@ -57,6 +65,8 @@ public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements Sensitiv
                     public SensitiveSpeciesDto mapRow(ResultSet rs, int row) throws SQLException {
                         SensitiveSpeciesDto dto = new SensitiveSpeciesDto();
                         dto.setScientificName(rs.getString("scientific_name"));
+                        dto.setCommonName(rs.getString("common_name"));
+                        dto.setFamily(rs.getString("family"));
                         dto.setSensitivityZone(rs.getString("sensitivity_zone"));
                         dto.setAuthority(rs.getString("authority_name"));
                         dto.setFromDate(rs.getString("from_date"));
@@ -67,13 +77,23 @@ public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements Sensitiv
                     }
                 });
 
-        List<SensitiveSpecies> speciesList = new ArrayList<SensitiveSpecies>();
-        SensitiveSpecies ss = null;
+        List<SensitiveTaxon> speciesList = new ArrayList<SensitiveTaxon>();
+        SensitiveTaxon ss = null;
         String currentName = "";
 
         for (SensitiveSpeciesDto dto : dtoList) {
             if (!dto.getScientificName().equals(currentName)) {
-                ss = new SensitiveSpecies(dto.getScientificName());
+                if (StringUtils.contains(dto.getScientificName(), ' ')) {
+                    ss = new SensitiveTaxon(dto.getScientificName(), Rank.SPECIES);
+                } else {
+                    ss = new SensitiveTaxon(dto.getScientificName(), Rank.GENUS);
+                }
+                if (StringUtils.isNotBlank(dto.getFamily())) {
+                    ss.setFamily(dto.getFamily());
+                }
+                if (StringUtils.isNotBlank(dto.getCommonName())) {
+                    ss.setCommonName(dto.getCommonName());
+                }
                 speciesList.add(ss);
                 currentName = dto.getScientificName();
             }

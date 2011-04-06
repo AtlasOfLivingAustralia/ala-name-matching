@@ -16,7 +16,7 @@ import org.jdom.input.SAXBuilder;
 
 import au.org.ala.sds.model.ConservationInstance;
 import au.org.ala.sds.model.PlantPestInstance;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.model.SensitivityInstance;
 import au.org.ala.sds.model.SensitivityZone;
@@ -39,8 +39,8 @@ public class SensitiveSpeciesXmlDao implements SensitiveSpeciesDao {
      */
     @SuppressWarnings("unchecked")
     @Override
-    public List<SensitiveSpecies> getAll() {
-        List<SensitiveSpecies> species = new ArrayList<SensitiveSpecies>();
+    public List<SensitiveTaxon> getAll() {
+        List<SensitiveTaxon> species = new ArrayList<SensitiveTaxon>();
         SAXBuilder builder = new SAXBuilder();
         Document doc = null;
 
@@ -58,7 +58,12 @@ public class SensitiveSpeciesXmlDao implements SensitiveSpeciesDao {
         for (Iterator sli = speciesList.iterator(); sli.hasNext(); ) {
             Element sse = (Element) sli.next();
             String name = sse.getAttributeValue("name");
-            SensitiveSpecies ss = new SensitiveSpecies(name);
+            String family = sse.getAttributeValue("family");
+            SensitiveTaxon.Rank rank = SensitiveTaxon.Rank.valueOf(sse.getAttributeValue("rank"));
+            String commonName = sse.getAttributeValue("commonName");
+            SensitiveTaxon ss = new SensitiveTaxon(name, rank);
+            ss.setFamily(family);
+            ss.setCommonName(commonName);
 
             Element instances = sse.getChild("instances");
             List instanceList = instances.getChildren();
