@@ -21,6 +21,8 @@ package au.org.ala.sds.dto;
 public class SensitiveSpeciesDto {
     private int id;
     private String scientificName;
+    private String commonName;
+    private String family;
     private String sensitivityZone;
     private String authority;
     private String fromDate;
@@ -47,6 +49,22 @@ public class SensitiveSpeciesDto {
 
     public void setScientificName(String scientificName) {
         this.scientificName = scientificName;
+    }
+
+    public String getCommonName() {
+        return commonName;
+    }
+
+    public void setCommonName(String commonName) {
+        this.commonName = commonName;
+    }
+
+    public String getFamily() {
+        return family;
+    }
+
+    public void setFamily(String family) {
+        this.family = family;
     }
 
     public String getSensitivityZone() {
