@@ -10,7 +10,7 @@ import java.util.Set;
 import org.junit.Test;
 
 import au.org.ala.sds.model.ConservationInstance;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.model.SensitivityInstance;
 import au.org.ala.sds.model.SensitivityZone;
@@ -23,11 +23,11 @@ public class GeneralisedLocationTest {
     String QLD_LAT = "-18.406655", QLD_LONG = "146.2541";
     String TAS_LAT = "-42.067518", TAS_LONG = "145.278568";
     String ACT_LAT = "-35.29187",  ACT_LONG = "149.100137";
-    static SensitiveSpecies ss;
+    static SensitiveTaxon ss;
     static Set<SensitivityZone> zones;
 
     static {
-        ss = new SensitiveSpecies("Crex crex");
+        ss = new SensitiveTaxon("Crex crex", SensitiveTaxon.Rank.SPECIES);
         List<SensitivityInstance> instances = ss.getInstances();
         instances.add(new ConservationInstance(SensitivityCategory.CRITICALLY_ENDANGERED, "NSW DECCW", SensitivityZone.NSW, "WITHHOLD"));
         instances.add(new ConservationInstance(SensitivityCategory.ENDANGERED, "Vic DSE", SensitivityZone.VIC, "10km"));
