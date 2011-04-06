@@ -31,27 +31,14 @@ public class GeoLocationHelper {
         URLConnection connection = url.openConnection();
         connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
         connection.setRequestProperty("Accept-Encoding", "gzip,deflate");
+        logger.debug("Looking up location using " + url);
         InputStream inStream = connection.getInputStream();
         GZIPInputStream gis = new GZIPInputStream(inStream);
-
-//        String response =
-//                  "<search xmlns:xlink='http://www.w3.org/1999/xlink'>"
-//                + " <results>"
-//                + "     <result xlink:href='/geoserver/rest/gazetteer/aus1/New_South_Wales.json'>"
-//                + "     <id>aus1/New South Wales</id>"
-//                + "     <name>New South Wales</name>"
-//                + "     <layerName>aus1</layerName>"
-//                + "     <idAttribute1>New South Wales</idAttribute1>"
-//                + "     <idAttribute2></idAttribute2>"
-//                + "     <score>1.0</score>"
-//                + "     </result>"
-//                + " </results>"
-//                + "</search>";
-//        InputStream in = new ByteArrayInputStream(response.getBytes());
 
         //
         // Parse XML result
         //
+        logger.debug("Parsing location results");
         SAXBuilder parser = new SAXBuilder();
         Document doc = parser.build(gis);
         Element root = doc.getRootElement();
@@ -65,7 +52,7 @@ public class GeoLocationHelper {
                     zones.add(zone);
                 }
 
-                // PFF PQA
+                // TODO PFF PQA work around - remove when implemented in Gazetteer
                 if (name.equalsIgnoreCase("Queensland") &&
                     layer.equalsIgnoreCase("state") &&
                     NumberUtils.toFloat(latitude) >= -19.0 &&
@@ -74,13 +61,23 @@ public class GeoLocationHelper {
                 }
             }
 
-            // Emerald Citrus Canker PQA
-            if (layer.equalsIgnoreCase("lga") &&
-                    (name.equalsIgnoreCase("Bauhinia (Queensland)") ||
-                     name.equalsIgnoreCase("Emerald (Queensland)") ||
-                     name.equalsIgnoreCase("Peak Downs (Queensland)"))
-               ) {
-                zones.add(SensitivityZone.ECCPQA2004);
+            if (layer.equalsIgnoreCase("lga")) {
+                // TODO Special zones work around - remove when implemented in Gazetteer
+                if (name.equalsIgnoreCase("Bauhinia (Queensland)") ||
+                    name.equalsIgnoreCase("Emerald (Queensland)") ||
+                    name.equalsIgnoreCase("Peak Downs (Queensland)")) {
+                    // Emerald Citrus Canker PQA
+                    zones.add(SensitivityZone.ECCPQA2004);
+                } else if (name.equalsIgnoreCase("Wacol (Queensland)")) {
+                    // Red Imported Fire Ant
+                    zones.add(SensitivityZone.RIFARA);
+                } else if (name.equalsIgnoreCase("Kubin (Queensland)")) {
+                    // Torres Strait Protected Zone
+                    zones.add(SensitivityZone.TSPZ);
+                } else if (name.equalsIgnoreCase("Hammond (Queensland)")) {
+                    // Special Quarantine Zone
+                    zones.add(SensitivityZone.TSSQZ);
+                }
             }
         }
 
