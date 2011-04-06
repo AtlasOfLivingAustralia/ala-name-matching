@@ -26,7 +26,6 @@ import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.checklist.lucene.SearchResultException;
 import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.model.LinnaeanRankClassification;
-import au.org.ala.data.util.RankType;
 import au.org.ala.sds.dao.SensitiveSpeciesDao;
 import au.org.ala.sds.model.SensitiveTaxon.Rank;
 
@@ -117,7 +116,7 @@ public class SensitiveTaxonStore {
     private NameSearchResult getAcceptedName(String name) {
         NameSearchResult match = null;
         try {
-            match = cbIndexSearcher.searchForRecord(name, StringUtils.contains(name, ' ') ? RankType.SPECIES : RankType.GENUS);
+            match = cbIndexSearcher.searchForRecord(name, null);
             if (match != null) {
                 if (match.isSynonym()) {
                     match = cbIndexSearcher.searchForRecordByID(Long.toString(match.getAcceptedId()));
@@ -142,9 +141,9 @@ public class SensitiveTaxonStore {
         String name = null;
         NameSearchResult match = null;
         try {
-            name = stripTaxonTokens(st.getTaxonName());
+            name = st.getTaxonName();
             LinnaeanRankClassification cl = new LinnaeanRankClassification(null, null, null, null, st.getFamily().equals("") ? null : st.getFamily() , st.getGenus(), name);
-            match = cbIndexSearcher.searchForRecord(name, cl, StringUtils.contains(name, ' ') ? RankType.SPECIES : RankType.GENUS);
+            match = cbIndexSearcher.searchForRecord(name, cl, null);
             if (match != null) {
                 if (match.isSynonym()) {
                     match = cbIndexSearcher.searchForRecordByID(Long.toString(match.getAcceptedId()));
@@ -165,10 +164,10 @@ public class SensitiveTaxonStore {
         return match;
     }
 
-    protected static String stripTaxonTokens(String name) {
-        String stripped  = name.replaceAll(" subsp\\. ", " ");
-        stripped = stripped.replaceAll(" var\\. ", " ");
-        stripped = stripped.replaceAll(" ms$", "");
-        return stripped;
-    }
+//    protected static String stripTaxonTokens(String name) {
+//        String stripped  = name.replaceAll(" subsp\\. ", " ");
+//        stripped = stripped.replaceAll(" var\\. ", " ");
+//        stripped = stripped.replaceAll(" ms$", "");
+//        return stripped;
+//    }
 }
