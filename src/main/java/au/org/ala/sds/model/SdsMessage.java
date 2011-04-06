@@ -1,7 +1,7 @@
 package au.org.ala.sds.model;
 
 import java.io.Serializable;
-import java.util.List;
+
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -9,30 +9,24 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 public class SdsMessage implements Message, Serializable {
 
     private static final long serialVersionUID = 7415409339201655333L;
-    private Message.Type type;
-    private String messageKey;
-    private List<Object> context;
+    private final Message.Type type;
+    private final String messageText;
 
-    public SdsMessage(Message.Type type, String messageKey, List<Object> context) {
-        if (type == null || messageKey == null) {
+    public SdsMessage(Message.Type type, String text) {
+        if (type == null || text == null) {
             throw new IllegalArgumentException(
-                    "Type and messageKey cannot be null");
+                    "Type and message text cannot be null");
         }
         this.type = type;
-        this.messageKey = messageKey;
-        this.context = context;
-    }
-
-    public String getMessageKey() {
-        return messageKey;
+        this.messageText = text;
     }
 
     public Message.Type getType() {
         return type;
     }
 
-    public List<Object> getContextList() {
-        return context;
+    public String getMessageText() {
+        return messageText;
     }
 
     @Override
@@ -43,19 +37,18 @@ public class SdsMessage implements Message, Serializable {
             return false;
         SdsMessage castOther = (SdsMessage) other;
         return new EqualsBuilder().append(type, castOther.type).append(
-                messageKey, castOther.messageKey).append(context,
-                castOther.context).isEquals();
+                messageText, castOther.messageText).isEquals();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder(98587969, 810426655).append(type).append(
-                messageKey).append(context).toHashCode();
+                messageText).toHashCode();
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this).append("type", type).append(
-                "messageKey", messageKey).append("context", context).toString();
+                "messageText", messageText).toString();
     }
 }
