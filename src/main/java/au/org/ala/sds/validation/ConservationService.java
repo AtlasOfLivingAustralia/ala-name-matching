@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityZone;
 import au.org.ala.sds.util.GeneralisedLocation;
 import au.org.ala.sds.util.GeneralisedLocationFactory;
@@ -26,12 +26,12 @@ public class ConservationService implements ValidationService {
     }
 
     /**
-     * @param ss
-     * @param zone
+     * @param taxon
+     * @param facts
      * @return
      */
-    public ValidationOutcome validate(SensitiveSpecies ss, FactCollection facts) {
-        ValidationReport report = reportFactory.createValidationReport();
+    public ValidationOutcome validate(SensitiveTaxon taxon, FactCollection facts) {
+        ValidationReport report = reportFactory.createValidationReport(taxon);
 
         if (!ValidationUtils.validateFacts(facts, report)) {
             return new ValidationOutcome(report, false);
@@ -42,11 +42,11 @@ public class ConservationService implements ValidationService {
         Set<SensitivityZone> zones = SensitivityZone.getSetFromString(facts.get(FactCollection.ZONES_KEY));
 
         if (StringUtils.isBlank(latitude) || StringUtils.isBlank(longitude)) {
-            addInfoMessage(report, ss);
+            addInfoMessage(report, taxon);
             return new ConservationOutcome(report);
         }
 
-        GeneralisedLocation gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, ss, zones);
+        GeneralisedLocation gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, taxon, zones);
 
         ValidationOutcome outcome = new ConservationOutcome(report);
         ((ConservationOutcome) outcome).setGeneralisedLocation(gl);
@@ -59,7 +59,7 @@ public class ConservationService implements ValidationService {
         this.reportFactory = reportFactory;
     }
 
-    private void addInfoMessage(ValidationReport report, SensitiveSpecies ss) {
+    private void addInfoMessage(ValidationReport report, SensitiveTaxon ss) {
         // TODO Auto-generated method stub
 
     }
