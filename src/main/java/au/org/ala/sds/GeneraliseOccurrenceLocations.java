@@ -30,7 +30,7 @@ import au.org.ala.checklist.lucene.SearchResultException;
 import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.util.RankType;
 import au.org.ala.sds.dao.RawOccurrenceDao;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.util.GeneralisedLocation;
 import au.org.ala.sds.validation.ConservationOutcome;
 import au.org.ala.sds.validation.FactCollection;
@@ -90,7 +90,7 @@ public class GeneraliseOccurrenceLocations {
                 String speciesName = getSpeciesName(rawScientificName);
 
                 // See if it's sensitive
-                SensitiveSpecies ss = sensitiveSpeciesFinder.findSensitiveSpecies(speciesName);
+                SensitiveTaxon ss = sensitiveSpeciesFinder.findSensitiveSpecies(speciesName);
                 if (ss != null) {
                     FactCollection facts = new FactCollection();
                     facts.add(FactCollection.LATITUDE_KEY, latitude);
