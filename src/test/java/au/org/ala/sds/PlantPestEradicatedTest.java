@@ -22,7 +22,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.validation.FactCollection;
 import au.org.ala.sds.validation.PlantPestOutcome;
 import au.org.ala.sds.validation.ServiceFactory;
@@ -54,7 +54,7 @@ public class PlantPestEradicatedTest {
 
     @Test
     public void papayaFruitFlyInPQADuringEradication() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Bactrocera papayae");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Bactrocera papayae");
         assertNotNull(ss);
 
         String latitude = "-16.902785";   // Cairns, Qld
@@ -75,13 +75,13 @@ public class PlantPestEradicatedTest {
     }
 
     @Test
-    public void papayaFruitFlyInPQABeforeEradication() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Bactrocera papayae");
+    public void citrusCankerInPQABeforeEradication() {
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Xanthomonas axonopodis pv. citri");
         assertNotNull(ss);
 
-        String latitude = "-16.902785";   // Cairns, Qld
-        String longitude = "145.738106";
-        String date = "1995-01-29";
+        String latitude = "-23.546678";   // Emerald
+        String longitude = "148.151751";
+        String date = "2004-01-29";
 
         FactCollection facts = new FactCollection();
         facts.add(FactCollection.LATITUDE_KEY, latitude);
@@ -98,7 +98,7 @@ public class PlantPestEradicatedTest {
 
     @Test
     public void papayaFruitFlyOutsidePQA() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Bactrocera papayae");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Bactrocera papayae");
         assertNotNull(ss);
 
         String latitude = "-23.546678";   // Emerald, Qld
@@ -119,13 +119,13 @@ public class PlantPestEradicatedTest {
     }
 
     @Test
-    public void papayaFruitFlyAfterEradication() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Bactrocera papayae");
+    public void citrusCankerAfterEradication() {
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Xanthomonas axonopodis pv. citri");
         assertNotNull(ss);
 
-        String latitude = "-16.902785";   // Cairns, Qld
-        String longitude = "145.738106";
-        String date = "2000-01-29";
+        String latitude = "-23.546678";   // Emerald
+        String longitude = "148.151751";
+        String date = "2010-01-29";
 
         FactCollection facts = new FactCollection();
         facts.add(FactCollection.LATITUDE_KEY, latitude);

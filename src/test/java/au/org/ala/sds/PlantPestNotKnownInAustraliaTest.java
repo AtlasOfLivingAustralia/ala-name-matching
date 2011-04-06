@@ -22,7 +22,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.validation.FactCollection;
 import au.org.ala.sds.validation.PlantPestOutcome;
 import au.org.ala.sds.validation.ServiceFactory;
@@ -54,7 +54,7 @@ public class PlantPestNotKnownInAustraliaTest {
 
     @Test
     public void giantAfricanSnailInAustralia() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Achatina fulica");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Achatina fulica");
         assertNotNull(ss);
 
         String latitude = "-35.276771";   // Black Mountain (Epicorp)
@@ -70,11 +70,12 @@ public class PlantPestNotKnownInAustraliaTest {
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
         assertFalse(((PlantPestOutcome) outcome).isLoadable());
+        assertTrue(outcome.getAnnotation() != null);
     }
 
     @Test
     public void asianGyspyMothInAustralia() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Lymantria dispar");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Lymantria dispar");
         assertNotNull(ss);
 
         String latitude = "-35.276771";   // Black Mountain (Epicorp)
@@ -94,7 +95,7 @@ public class PlantPestNotKnownInAustraliaTest {
 
     @Test
     public void asianGyspyMothInExternalTerritory() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Lymantria dispar");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Lymantria dispar");
         assertNotNull(ss);
 
         String latitude = "-16.286858";   // Coral Sea Islands
@@ -118,7 +119,7 @@ public class PlantPestNotKnownInAustraliaTest {
 
     @Test
     public void asianGyspyMothNotInAustralia() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Lymantria dispar");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Lymantria dispar");
         assertNotNull(ss);
 
         FactCollection facts = new FactCollection();

@@ -22,7 +22,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 
 /**
  *
@@ -49,7 +49,7 @@ public class SearchTest {
 
     @Test
     public void lookup() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Macropus rufus");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Macropus rufus");
         assertNull(ss);
 
         ss = finder.findSensitiveSpecies("Crex crex");
@@ -57,6 +57,6 @@ public class SearchTest {
 
         ss = finder.findSensitiveSpeciesByLsid("urn:lsid:biodiversity.org.au:afd.taxon:fb2de285-c58c-4c63-9268-9beef7c61c16");
         assertNotNull(ss);
-        assertEquals(ss.getScientificName(), "Lophochroa leadbeateri");
+        assertEquals(ss.getSpecies(), "Lophochroa leadbeateri");
     }
 }

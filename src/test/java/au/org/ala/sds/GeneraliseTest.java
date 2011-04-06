@@ -22,7 +22,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.util.GeneralisedLocation;
 import au.org.ala.sds.validation.ConservationOutcome;
 import au.org.ala.sds.validation.FactCollection;
@@ -57,7 +57,7 @@ public class GeneraliseTest {
      */
     @Test
     public void birdsAustraliaInAct() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Crex crex");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Crex crex");
         assertNotNull(ss);
         String latitude = "-35.276771";   // Epicorp
         String longitude = "149.112539";
@@ -83,7 +83,7 @@ public class GeneraliseTest {
      */
     @Test
     public void nswSpeciesInAct() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Wollemia nobilis");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Wollemia nobilis");
         assertNotNull(ss);
         String latitude = "-35.276771";   // Epicorp
         String longitude = "149.112539";
@@ -109,7 +109,7 @@ public class GeneraliseTest {
      */
     @Test
     public void nswSpeciesInNZ() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Wollemia nobilis");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Wollemia nobilis");
         assertNotNull(ss);
         String latitude = "-41.538137";    // NZ
         String longitude = "173.968817";
@@ -135,7 +135,7 @@ public class GeneraliseTest {
      */
     @Test
     public void nswCat1SpeciesInNSW() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Wollemia nobilis");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Wollemia nobilis");
         assertNotNull(ss);
         String latitude = "-33.630629";    // NSW
         String longitude = "150.441284";
@@ -161,7 +161,7 @@ public class GeneraliseTest {
      */
     @Test
     public void tasSpeciesInTas() {
-        SensitiveSpecies ss = finder.findSensitiveSpecies("Galaxias fontanus");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Galaxias fontanus");
         assertNotNull(ss);
         String latitude = "-40.111689";    // TAS
         String longitude = "148.095703";
@@ -187,7 +187,7 @@ public class GeneraliseTest {
      */
     @Test
     public void findSpeciesByLsid() {
-        SensitiveSpecies ss = finder.findSensitiveSpeciesByLsid("urn:lsid:biodiversity.org.au:afd.taxon:fb2de285-c58c-4c63-9268-9beef7c61c16");
+        SensitiveTaxon ss = finder.findSensitiveSpeciesByLsid("urn:lsid:biodiversity.org.au:afd.taxon:fb2de285-c58c-4c63-9268-9beef7c61c16");
         assertNotNull(ss);
         String latitude = "-33.630629";    // NSW
         String longitude = "150.441284";
@@ -214,7 +214,7 @@ public class GeneraliseTest {
      */
     @Test
     public void findSpeciesByAcceptedName() {
-        SensitiveSpecies ss = finder.findSensitiveSpeciesByAcceptedName("Rhomboda polygonoides");
+        SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Rhomboda polygonoides");
         assertNotNull(ss);
         String latitude = "-16.167197";    // Qld
         String longitude = "145.374527";
@@ -240,7 +240,7 @@ public class GeneraliseTest {
      */
     @Test
     public void generaliseLocationAlreadyGeneralised() {
-        SensitiveSpecies ss = finder.findSensitiveSpeciesByAcceptedName("Lophochroa leadbeateri");
+        SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Lophochroa leadbeateri");
         assertNotNull(ss);
         String latitude = "-32.7";    // NSW
         String longitude = "149.6";
