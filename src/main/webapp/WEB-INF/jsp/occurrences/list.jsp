@@ -69,9 +69,9 @@
 
                 var myStyles = new OpenLayers.StyleMap({
                     "default": new OpenLayers.Style({
-                        fillColor: "${'${color}'}",//"#ffcc66",
+                        fillColor: "\${color}",//"#ffcc66",
                         //fillColor: "#D75A25",
-                        //strokeColor: "${'${color}'}",
+                        //strokeColor: "\${color}",
                         fillOpacity: 0.7,
                         graphicZIndex: 1,
                         strokeWidth: 0
