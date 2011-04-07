@@ -810,7 +810,13 @@ public class CBIndexSearch {
 
             //boolQuery.add(query, Occur.MUST);
             if(rank!=null){
-                query.append(" +"+CBCreateLuceneIndex.IndexField.RANK.toString() + ":" + rank.getRank());
+                //if the rank is below species include infraspecific name too...
+                query.append("+(");
+                if(rank.getId()> RankType.SPECIES.getId()){
+                    query.append(CBCreateLuceneIndex.IndexField.RANK.toString()).append(":").append(RankType.INFRASPECIFICNAME.getRank()).append(" OR ");
+                }
+
+                        query.append(CBCreateLuceneIndex.IndexField.RANK.toString() + ":" + rank.getRank()).append(")");
                // Query rankQuery =new TermQuery(new Term(CBCreateLuceneIndex.IndexField.RANK.toString(), rank.getRank()));
                // boolQuery.add(rankQuery, Occur.MUST);
             }

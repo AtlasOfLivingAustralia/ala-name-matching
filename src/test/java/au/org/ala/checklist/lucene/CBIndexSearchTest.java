@@ -281,7 +281,7 @@ public class CBIndexSearchTest {
 			//Abelia grandiflora
 		}
 		catch(Exception e){
-            
+
         }
 	}
 	@Test
@@ -443,6 +443,22 @@ public class CBIndexSearchTest {
 
             String name = "Astroloma sp. Cataby (EA Griffin 1022)";
             assertEquals(searcher.searchForRecord(name, null), null);
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+    /**
+     * Test that the an infraspecific rank searches for the specified rank and
+     * RankType.INFRASPECIFICNAME
+     */
+    @Test
+    public void testInfraSpecificRank(){
+        try{
+            String name="Acacia acanthoclada subsp. glaucescens";
+           assertEquals(searcher.searchForLSID(name), "urn:lsid:biodiversity.org.au:apni.taxon:295870");
+           assertEquals(searcher.searchForLSID("Macropus rufus", RankType.GENUS), null);
+          
         }
         catch(Exception e){
             e.printStackTrace();
