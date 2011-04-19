@@ -393,7 +393,7 @@ object LocationDAO {
    */
   protected def roundCoord(x:String) : String = {
     try {
-      (((x * 10000).toInt).toFloat / 10000).toString
+      (((x.toFloat * 10000).toInt).toFloat / 10000).toString
     } catch {
       case e:NumberFormatException => x
     }
