@@ -3,16 +3,8 @@ package au.org.ala.biocache
 import collection.JavaConversions
 import org.apache.cassandra.thrift.{SlicePredicate, Column, ConsistencyLevel}
 import org.wyki.cassandra.pelops.{Policy, Selector, Pelops}
-import java.util.ArrayList
-import collection.mutable.{ListBuffer, ArrayBuffer}
-import com.google.inject.Guice
-import com.google.inject.Module
-import com.google.inject.Binder
-import com.google.inject.name.Names
-import com.google.inject.Inject
-import com.google.inject.name.Named
+import collection.mutable.ListBuffer
 import org.slf4j.LoggerFactory
-//import au.org.ala.biocache.Json
 
 /**
  * This trait should be implemented for Cassandra,
@@ -64,7 +56,10 @@ trait PersistenceManager {
      */
     def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int = 1000)
 
-    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int,  columnName:String*)
+    /**
+     * Page over the records, retrieving the supplied columns only.
+     */
+    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int, columnName:String*)
 
     /**
      * Select the properties for the supplied record UUIDs
@@ -249,20 +244,15 @@ class CassandraPersistenceManager (
       println("Finished paging. Total count: "+counter)
     }
 
-
-      /**
-       * Pages over all the records with the selected columns.
-       *
-       * 
-       *
-       * @param columnName The names of the columns that need to be provided for processing by the proc
-       */
-      def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int, columnName:String*)={
+    /**
+     * Pages over all the records with the selected columns.
+     * @param columnName The names of the columns that need to be provided for processing by the proc
+     */
+    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int, columnName:String*)={
 
       val slicePredicate = Selector.newColumnsPredicate(columnName:_*)
       pageOver(entityName, proc, pageSize, slicePredicate)
-
-      }
+    }
 
     /**
      * Iterate over all occurrences, passing the objects to a function.
@@ -272,34 +262,8 @@ class CassandraPersistenceManager (
      * @param proc
      */
     def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int = 1000) {
-
-      //val selector = Pelops.createSelector(poolName, keyspace)
       val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
       pageOver(entityName, proc, pageSize, slicePredicate)
-//      var startKey = ""
-//      var keyRange = Selector.newKeyRange(startKey, "", pageSize+1)
-//      var hasMore = true
-//      var counter = 0
-//      var columnMap = selector.getColumnsFromRows(keyRange, entityName, slicePredicate, ConsistencyLevel.ONE)
-//      var continue = true
-//      while (columnMap.size>0 && continue) {
-//        val columnsObj = List(columnMap.keySet.toArray : _*)
-//        //convert to scala List
-//        val keys = columnsObj.asInstanceOf[List[String]]
-//        startKey = keys.last
-//        for(uuid<-keys){
-//          val columnList = columnMap.get(uuid)
-//          //procedure a map of key value pairs
-//          val map = columnList2Map(columnList)
-//          //pass the record ID and the key value pair map to the proc
-//          continue = proc(uuid, map)
-//        }
-//        counter += keys.size
-//        keyRange = Selector.newKeyRange(startKey, "", pageSize+1)
-//        columnMap = selector.getColumnsFromRows(keyRange, entityName, slicePredicate, ConsistencyLevel.ONE)
-//        columnMap.remove(startKey)
-//      }
-//      println("Finished paging. Total count: "+counter)
     }
 
     /**

@@ -2,7 +2,6 @@ package au.org.ala.util
 import au.org.ala.biocache.OccurrenceDAO
 import java.io.{InputStreamReader, BufferedReader}
 import org.codehaus.jackson.map.ObjectMapper
-import au.org.ala.biocache.Version
 
 object ProcessSingleRecord {
 
@@ -28,7 +27,6 @@ object ProcessSingleRecord {
         println("Exiting...")
         exit(1)
     }
-
 
     def readStdIn = (new BufferedReader(new InputStreamReader(System.in))).readLine.trim
 }

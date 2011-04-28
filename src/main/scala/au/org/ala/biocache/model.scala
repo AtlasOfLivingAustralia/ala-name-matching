@@ -3,7 +3,6 @@ import scala.reflect.BeanProperty
 import java.util.UUID
 import org.apache.commons.lang.time.DateFormatUtils
 import org.apache.solr.client.solrj.beans.Field
-import java.util.Date
 import org.codehaus.jackson.annotate.JsonIgnore
 import collection.mutable.HashMap
 
@@ -553,11 +552,11 @@ class Attribution  (
 
   @JsonIgnore
   def getMap():Map[String,String]={
-    val map =Map[String,String]("dataProviderUid"->dataProviderUid, "dataProviderName"->dataProviderName,
-                                "dataResourceUid"->dataResourceUid, "dataResourceName"->dataResourceName,
-                                "collectionUid"->collectionUid, "institutionUid"->institutionUid, "dataHubUid"->dataHubUid, "dataHubName"->dataHubName,
-                                "institutionName"->institutionName , "collectionName"->collectionName, "taxonomicHints"->taxonomicHints)
-
+    val map = Map[String,String](
+        "dataProviderUid"->dataProviderUid, "dataProviderName"->dataProviderName,
+            "dataResourceUid"->dataResourceUid, "dataResourceName"->dataResourceName,
+            "collectionUid"->collectionUid, "institutionUid"->institutionUid, "dataHubUid"->dataHubUid, "dataHubName"->dataHubName,
+            "institutionName"->institutionName , "collectionName"->collectionName, "taxonomicHints"->taxonomicHints)
     map.filter(i => i._2!= null)
   }
 }
@@ -581,27 +580,31 @@ class FullRecord (
   extends Cloneable {
     //NC: The array below is static - thus is a one of the variables change it will be out of sync
   val objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement)
+
   def this(uuid:String) = this(uuid,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
       new Measurement, Array())
+
   def this() = this(null,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
       new Measurement, Array())
+
   override def clone : FullRecord = new FullRecord(this.uuid,
       occurrence.clone,classification.clone,location.clone,event.clone,attribution.clone,
       identification.clone,measurement.clone,assertions.clone)
 }
+
 /**
  * Stores the information about a sensitive species
  * 
  */
 class SensitiveSpecies(
   @BeanProperty var zone:String,
-  @BeanProperty var category:String
-){
-  def this() =this(null, null)
-  override def toString():String={
+  @BeanProperty var category:String){
+
+  def this() = this(null, null)
+
+  override def toString():String = {
     "zone:"+zone+" category:" + category
   }
-  
 }
 
 /**

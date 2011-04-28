@@ -7,19 +7,8 @@ package au.org.ala.biocache
 import au.org.ala.checklist.lucene.{HomonymException,SearchResultException}
 import au.org.ala.data.model.LinnaeanRankClassification
 import au.org.ala.util.ReflectBean
-import org.wyki.cassandra.pelops.{Pelops,Selector}
-import org.apache.cassandra.thrift.{Column,ConsistencyLevel}
 import au.org.ala.checklist.lucene.model.NameSearchResult
-import collection.mutable.HashMap
-
-//class SynchronizedLRUMap[K,E] extends scala.collection.JavaConversions.MapWrapper[K,E] {
-//   def this(maxSize : Int) = {
-//     this(java.util.Collections.synchronizedMap(new
-//           org.apache.commons.collections.map.LRUMap(maxSize)))
-//   }
-//}
-
-
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 
 /**
  * A DAO for accessing classification information in the cache. If the
@@ -28,19 +17,19 @@ import collection.mutable.HashMap
  * The cache will store a classification object for names that match. If the
  * name causes a homonym exeception or is not found the ErrorCode is stored.
  *
- * NOT BEING USED YET - some perfomance issue with this...
  * @author Natasha Carter
  *
  */
-object ClassificationDAO{
-  import ReflectBean._
+object ClassificationDAO {
+
   private val columnFamily ="namecl"
   private val cachedValues = new java.util.Hashtable[LinnaeanRankClassification, Classification]
-//  private val lru = java.util.Collections.synchronizedMap(new org.apache.commons.collections.map.LRUMap(10000))
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
-  //private val lru = new SynchronizedLRUMap[String, Option[NameSearchResult]](10000)
-  val lock : AnyRef = new Object()
+//  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[NameSearchResult]]()
+//    .maximumWeightedCapacity(10000)
+//    .build();
 
+  private val lock : AnyRef = new Object()
 
   /**
    * Uses a LRU cache
@@ -51,14 +40,9 @@ object ClassificationDAO{
         Array(cl.kingdom,cl.phylum,cl.phylum,cl.classs,cl.order,cl.family,cl.genus,cl.species,cl.specificEpithet,
             cl.subspecies,cl.infraspecificEpithet,cl.scientificName).reduceLeft(_+"|"+_)
     }
-   // val hash = (cl.kingdom+'|'+cl.phylum+'|'+cl.phylum+'|'+cl.classs+'|'+cl.order+'|'+cl.family+'|'+cl.genus+'|'+cl.species+'|'+cl.specificEpithet+'|'+cl.subspecies+'|'+cl.infraspecificEpithet+'|'+cl.scientificName)
-    val cachedObject = {
-        lock.synchronized {
-             lru.get(hash)
-        }
-    }
+    val cachedObject = lock.synchronized { lru.get(hash) }
+
     if(cachedObject!=null){
-        //println("Cache hit for: "+hash)
        cachedObject.asInstanceOf[Option[NameSearchResult]]
     } else {
         //use the lucene indexes
@@ -77,161 +61,17 @@ object ClassificationDAO{
 
         val nsr = DAO.nameIndex.searchForRecord(lrc, true)
 
-        lock.synchronized {
-            if(nsr!=null){
-                val result = Some(nsr)
-                lru.put(hash, result)
-                result
-            } else {
-                val result = None
-                lru.put(hash, result)
-                result
-            }
+        if(nsr!=null){
+            val result = Some(nsr)
+            lock.synchronized { lru.put(hash, result) }
+            result
+        } else {
+            val result = None
+            lock.synchronized { lru.put(hash, result) }
+            result
         }
       }
   }
-
-  def getByHash(cl: LinnaeanRankClassification, classification:Classification):Array[QualityAssertion]={
-    if(cl== null) return Array()
-
-    if(!cachedValues.containsKey(cl)){
-
-      //lookup the name in the name matching index
-      val errors = lookUpName(cl, classification)
-      if(errors.size == 0)
-        cachedValues.put(cl, classification)
-      errors
-
-    }
-    else{
-
-      val scl =cachedValues.get(cl)
-      //update the classification to include the items that are processed. This is necessary because the FullRecord stores the
-      //classification in an objectArray
-      classification.kingdom = scl.kingdom
-      classification.kingdomID = scl.kingdomID
-      classification.phylum = scl.phylum
-      classification.phylumID = scl.phylumID
-      classification.classs = scl.classs
-      classification.classID = scl.classID
-      classification.order = scl.order
-      classification.orderID = scl.orderID
-      classification.family = scl.family
-      classification.familyID = scl.familyID
-      classification.genus = scl.genus
-      classification.genusID = scl.genusID
-      classification.species = scl.species
-      classification.speciesID = scl.speciesID
-      classification.specificEpithet = scl.specificEpithet
-      classification.scientificName = scl.scientificName
-      classification.taxonConceptID = scl.taxonConceptID
-      classification.left = scl.left
-      classification.right = scl.right
-      classification.taxonRank = scl.taxonRank
-      classification.taxonRankID = scl.taxonRankID
-      classification.vernacularName = scl.vernacularName
-      classification.speciesGroups = scl.speciesGroups
-
-      Array()
-      //cachedValue
-    }
-  }
-
-  def getByHashUsingMap(cl: LinnaeanRankClassification, classification:Classification):Array[QualityAssertion]={
-    val mapValue = DAO.persistentManager.get(cl.hashCode.toString, columnFamily)
-     if(mapValue.isEmpty || mapValue.get.size <1){
-       val errors = lookUpName(cl, classification)
-        if(errors.size == 0)
-          DAO.persistentManager.put(cl.hashCode.toString, columnFamily, classification.getMap)
-        errors
-     }
-     else{
-       classification.kingdom = mapValue.get("kingdom")
-        classification.kingdomID = mapValue.get("kingdomID")
-        classification.phylum = mapValue.get("phylum")
-        classification.phylumID = mapValue.get("phylumID")
-        classification.classs = mapValue.get("classs")
-        classification.classID = mapValue.get("classID")
-        classification.order = mapValue.get("order")
-        classification.orderID = mapValue.get("prderID")
-        classification.family = mapValue.get("family")
-        classification.familyID = mapValue.get("familyID")
-        classification.genus = mapValue.get("genus")
-        classification.genusID = mapValue.get("genusID")
-        classification.species = mapValue.get("species")
-        classification.speciesID = mapValue.get("speciesID")
-        classification.specificEpithet = mapValue.get("specificEpithet")
-        classification.scientificName = mapValue.get("scientificName")
-        classification.taxonConceptID = mapValue.get("taxonConceptID")
-        classification.left = mapValue.get("left")
-        classification.right = mapValue.get("right")
-        classification.taxonRank = mapValue.get("taxonRank")
-        classification.taxonRankID = mapValue.get("taxonRankID")
-        classification.vernacularName = mapValue.get("vernacularName")
-        classification.speciesGroups = Json.toArray(mapValue.get("speciesGroup"), classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]]
-        
-      Array()
-     }
-    
-  }
-  def lookUpName(cl:LinnaeanRankClassification, classification:Classification):Array[QualityAssertion]={
-    try {
-
-      val nsr = DAO.nameIndex.searchForRecord(cl, true)
-      //store the matched classification
-      if (nsr != null) {
-        val matchedcl = nsr.getRankClassification
-        //val classification = new Classification
-        //store ".p" values
-        classification.kingdom = matchedcl.getKingdom
-        classification.kingdomID = matchedcl.getKid
-        classification.phylum = matchedcl.getPhylum
-        classification.phylumID = matchedcl.getPid
-        classification.classs = matchedcl.getKlass
-        classification.classID = matchedcl.getCid
-        classification.order = matchedcl.getOrder
-        classification.orderID = matchedcl.getOid
-        classification.family = matchedcl.getFamily
-        classification.familyID = matchedcl.getFid
-        classification.genus = matchedcl.getGenus
-        classification.genusID = matchedcl.getGid
-        classification.species = matchedcl.getSpecies
-        classification.speciesID = matchedcl.getSid
-        classification.specificEpithet = matchedcl.getSpecificEpithet
-        classification.scientificName = matchedcl.getScientificName
-        classification.taxonConceptID = nsr.getLsid
-        classification.left = nsr.getLeft
-        classification.right = nsr.getRight
-        classification.taxonRank = nsr.getRank.getRank
-        classification.taxonRankID = nsr.getRank.getId.toString
-        //try to apply the vernacular name
-        val taxonProfile = TaxonProfileDAO.getByGuid(nsr.getLsid)
-        if(!taxonProfile.isEmpty && taxonProfile.get.commonName!=null){
-          classification.vernacularName = taxonProfile.get.commonName
-        }
-
-        //Add the species group information - I think that it is better to store this value than calculate it at index time
-        val speciesGroups = SpeciesGroups.getSpeciesGroups(classification)
-        //logger.debug("Species Groups: " + speciesGroups)
-        if(!speciesGroups.isEmpty && speciesGroups.get.length>0){
-          classification.speciesGroups = speciesGroups.get.toArray[String]
-        }
-        
-        Array()
-      }
-      else
-        Array()
-      }
-      catch {
-      case he: HomonymException => Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, true, "Homonym issue resolving the classification"))
-      //case he: HomonymException => logger.debug(he.getMessage,he);  Option(Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, true, "Homonym issue resolving the classification")))
-      case se: SearchResultException => Array()
-        //case se: SearchResultException => logger.debug(se.getMessage,se); None)
-    }
-    Array()
-
-  }
-
 }
 
 /**
@@ -244,42 +84,63 @@ object ClassificationDAO{
 object TaxonProfileDAO {
 
   private val columnFamily = "taxon"
+  private val lru = new org.apache.commons.collections.map.LRUMap(10000)
+  private val lock : AnyRef = new Object()
+//  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[TaxonProfile]]()
+//      .maximumWeightedCapacity(10000)
+//      .build();
 
   /**
    * Retrieve the profile by the taxon concept's GUID
    */
-  def getByGuid(guid:String) : Option[TaxonProfile] = {
-
-    if(guid==null || guid.isEmpty) return None
-
-    val map = DAO.persistentManager.get(guid,columnFamily)
-    if(!map.isEmpty){
-        var taxonProfile = new TaxonProfile
-        map.get.foreach ( keyValue => {
-            keyValue._1 match {
+  def createTaxonProfile(map: Option[Map[String, String]]): TaxonProfile = {
+      var taxonProfile = new TaxonProfile
+      map.get.foreach(keyValue => {
+          keyValue._1 match {
               case "guid" => taxonProfile.guid = keyValue._2
               case "scientificName" => taxonProfile.scientificName = keyValue._2
               case "commonName" => taxonProfile.commonName = keyValue._2
               case "rankString" => taxonProfile.rankString = keyValue._2
               case "habitats" => {
-                if(keyValue._2!=null && keyValue._2.size>0){
-                  taxonProfile.habitats = keyValue._2.split(",")
-                 }
+                  if (keyValue._2 != null && keyValue._2.size > 0) {
+                      taxonProfile.habitats = keyValue._2.split(",")
+                  }
               }
               case "left" => taxonProfile.left = keyValue._2
               case "right" => taxonProfile.right = keyValue._2
               case "sensitive" => {
-                  if(keyValue._2 !=null && keyValue._2.size>0){
-                    taxonProfile.sensitive = Json.toArray(keyValue._2, classOf[SensitiveSpecies].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[SensitiveSpecies]]
+                  if (keyValue._2 != null && keyValue._2.size > 0) {
+                      taxonProfile.sensitive = Json.toArray(keyValue._2, classOf[SensitiveSpecies].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[SensitiveSpecies]]
                   }
               }
-              case _ =>
+              case _ => //ignore
+          }
+      })
+      taxonProfile
+  }
+
+  def getByGuid(guid:String) : Option[TaxonProfile] = {
+
+    if(guid==null || guid.isEmpty) return None
+
+    val taxonProfile = {
+
+        val cachedObject = lru.get(guid)
+        if(cachedObject==null){
+            val map = DAO.persistentManager.get(guid,columnFamily)
+            if(!map.isEmpty){
+              val result = Some(createTaxonProfile(map))
+              lock.synchronized { lru.put(guid,result) }
+              result
+            } else {
+              lock.synchronized { lru.put(guid,None) }
+              None
             }
-        })
-      Some(taxonProfile)
-    } else {
-      None
+        } else {
+          cachedObject
+        }
     }
+    taxonProfile.asInstanceOf[Option[TaxonProfile]]
   }
 
   /**
@@ -306,7 +167,7 @@ object TaxonProfileDAO {
 }
 
 /**
- * A DAO for attribution data. The source of this data should be
+ * A DAO for attribution data. The source of this data should be the collectory.
  */
 object AttributionDAO {
 
@@ -314,6 +175,10 @@ object AttributionDAO {
   private val columnFamily = "attr"
   //can't use a scala hashap because missing keys return None not null...
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)//new HashMap[String, Option[Attribution]]
+//  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[Attribution]]()
+//      .maximumWeightedCapacity(1000)
+//      .build();
+  private val lock : AnyRef = new Object()
 
   /**
    * Persist the attribution information.
@@ -346,7 +211,8 @@ object AttributionDAO {
                 None
               }
           }
-          lru.put(uuid,result)
+          lock.synchronized { lru.put(uuid,result) }
+          //lru.put(uuid,result)
           result
       }
     } else {
@@ -361,11 +227,11 @@ object AttributionDAO {
 object LocationDAO {
 
   private val columnFamily = "loc"
-  val lock : AnyRef = new Object()
+  private val lock : AnyRef = new Object()
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
-  //private val lru = java.util.Collections.synchronizedMap(new org.apache.commons.collections.map.LRUMap(10000))
-  //private val lru = new SynchronizedLRUMap[String, Option[Location]](10000)
-
+//  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[Location]]()
+//      .maximumWeightedCapacity(10000)
+//      .build();
   /**
    * Add a tag to a location
    */
@@ -405,26 +271,24 @@ object LocationDAO {
   def getByLatLon(latitude:String, longitude:String) : Option[Location] = {
     val uuid =  roundCoord(latitude)+"|"+roundCoord(longitude)
 
-    val cachedObject = {
-        lock.synchronized {
-            lru.get(uuid)
-        }
-    }
+    //val cachedObject = lock.synchronized { lru.get(uuid) }
+    val cachedObject = lru.get(uuid)
+
     if(cachedObject!=null){
         cachedObject.asInstanceOf[Option[Location]]
     } else {
         val map = DAO.persistentManager.get(uuid,"loc")
-        lock.synchronized {
         if(!map.isEmpty){
           val location = new Location
           DAO.mapPropertiesToObject(location,map.get)
-          lru.put(uuid,Some(location))
+          //lock.synchronized { lru.put(uuid,Some(location)) }
+          lock.synchronized {lru.put(uuid,Some(location))}
           Some(location)
         } else {
-          lru.put(uuid,None)
+          //lock.synchronized { lru.put(uuid,None) }
+          lock.synchronized {lru.put(uuid,None)}
           None
         }
     }
   }
-}
 }

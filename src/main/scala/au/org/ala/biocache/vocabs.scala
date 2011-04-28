@@ -2,10 +2,14 @@ package au.org.ala.biocache
 
 import reflect.BeanProperty
 
-/**
- * Case class that encapsulates a canonical form and variants.
- */
+/** Case class that encapsulates a canonical form and variants. */
 case class Term (@BeanProperty canonical:String, @BeanProperty variants:Array[String])
+
+/** Factory for terms */
+object Term {
+    def apply(canonical: String): Term = new Term(canonical, Array[String]())
+    def apply(canonical: String, variant: String): Term = new Term(canonical, Array(variant))
+}
 
 /**
  * A trait for a vocabulary. A vocabulary consists of a set
@@ -33,6 +37,7 @@ trait Vocab {
     }
     None
   }
+
   /**
    * Retrieve all the terms defined in this vocab.
    * @return
@@ -50,14 +55,14 @@ trait Vocab {
  * Quick state string matching implementation.
  */
 object States extends Vocab {
-  val act = new Term("Australian Capital Territory", Array("AustCapitalTerritory","AustCapitalTerrit","AusCap","AusCapTerrit","ACT"))
-  val nsw = new Term("New South Wales", Array("nswales","nsw"))
-  val nt = new Term("Northern Territory", Array("nterritory","nterrit","nt"))
-  val qld = new Term("Queensland", Array("qland","qld"))
-  val sa = new Term("South Australia", Array("sthaustralia","saustralia","saust","sa"))
-  val tas = new Term("Tasmania", Array("tassie","tas"))
-  val vic = new Term("Victoria", Array("vic","vict"))
-  val wa = new Term("Western Australia", Array("waustralia","westaustralia","westaust","wa"))
+  val act = Term("Australian Capital Territory", Array("AustCapitalTerritory","AustCapitalTerrit","AusCap","AusCapTerrit","ACT"))
+  val nsw = Term("New South Wales", Array("nswales","nsw"))
+  val nt = Term("Northern Territory", Array("nterritory","nterrit","nt"))
+  val qld = Term("Queensland", Array("qland","qld"))
+  val sa = Term("South Australia", Array("sthaustralia","saustralia","saust","sa"))
+  val tas = Term("Tasmania", Array("tassie","tas"))
+  val vic = Term("Victoria", Array("vic","vict"))
+  val wa = Term("Western Australia", Array("waustralia","westaustralia","westaust","wa"))
   val all = retrieveAll
 }
 
@@ -143,10 +148,10 @@ object StateCentrePoints {
  * Vocabulary matcher for basis of record values.
  */
 object BasisOfRecord extends Vocab {
-  val specimen = new Term("PreservedSpecimen", Array("specimen","s", "spec", "sp"))
-  val observation = new Term("HumanObservation", Array("observation","o","obs"))
-  val fossil = new Term("FossilSpecimen", Array("fossil","f", "fos"))
-  val living = new Term("LivingSpecimen", Array("living","l"))
+  val specimen = Term("PreservedSpecimen", Array("specimen","s", "spec", "sp"))
+  val observation = Term("HumanObservation", Array("observation","o","obs"))
+  val fossil = Term("FossilSpecimen", Array("fossil","f", "fos"))
+  val living = Term("LivingSpecimen", Array("living","l"))
   val all = retrieveAll
 }
 
@@ -154,44 +159,44 @@ object BasisOfRecord extends Vocab {
  * Vocabulary matcher for type status values.
  */
 object TypeStatus extends Vocab {
-  val allolectotype = new Term("allolectotype", Array[String]())
-  val alloneotype = new Term("alloneotype", Array[String]())
-  val allotype = new Term("allotype", Array[String]())
-  val cotype = new Term("cotype", Array[String]())
-  val epitype = new Term("epitype", Array[String]())
-  val exepitype = new Term("exepitype", Array[String]())
-  val exholotype = new Term("exholotype", Array("ex holotype"))
-  val exisotype = new Term("exisotype", Array[String]())
-  val exlectotype = new Term("exlectotype", Array[String]())
-  val exneotype = new Term("exneotype", Array[String]())
-  val exparatype = new Term("exparatype", Array[String]())
-  val exsyntype = new Term("exsyntype", Array[String]())
-  val extype = new Term("extype", Array[String]())
-  val hapantotype = new Term("hapantotype", Array[String]())
-  val holotype = new Term("holotype", Array("holo type"))
-  val iconotype = new Term("iconotype", Array[String]())
-  val isolectotype = new Term("isolectotype", Array[String]())
-  val isoneotype = new Term("isoneotype", Array[String]())
-  val isosyntype = new Term("isosyntype", Array[String]())
-  val isotype = new Term("isotype", Array[String]("iso type"))
-  val lectotype = new Term("lectotype", Array[String]())
-  val neotype = new Term("neotype", Array[String]("neo type"))
-  val notatype = new Term("notatype", Array("not a type"))  //should this be removed??
-  val paralectotype = new Term("paralectotype", Array[String]())
-  val paraneotype = new Term("paraneotype", Array[String]())
-  val paratype = new Term("paratype", Array[String]())
-  val plastoholotype = new Term("plastoholotype", Array[String]())
-  val plastoisotype = new Term("plastoisotype", Array[String]())
-  val plastolectotype = new Term("plastolectotype", Array[String]())
-  val plastoneotype = new Term("plastoneotype", Array[String]())
-  val plastoparatype = new Term("plastoparatype", Array[String]())
-  val plastosyntype = new Term("plastosyntype", Array[String]())
-  val plastotype = new Term("plastotype", Array[String]())
-  val secondarytype = new Term("secondarytype", Array[String]())
-  val supplementarytype = new Term("supplementarytype", Array[String]())
-  val syntype = new Term("syntype", Array[String]())
-  val topotype = new Term("topotype", Array[String]())
-  val typee = new Term("type", Array[String]())
+  val allolectotype = Term("allolectotype")
+  val alloneotype = Term("alloneotype")
+  val allotype = Term("allotype")
+  val cotype = Term("cotype")
+  val epitype = Term("epitype")
+  val exepitype = Term("exepitype")
+  val exholotype = Term("exholotype", "ex holotype")
+  val exisotype = Term("exisotype")
+  val exlectotype = Term("exlectotype")
+  val exneotype = Term("exneotype")
+  val exparatype = Term("exparatype")
+  val exsyntype = Term("exsyntype")
+  val extype = Term("extype")
+  val hapantotype = Term("hapantotype")
+  val holotype = Term("holotype", "holo type")
+  val iconotype = Term("iconotype")
+  val isolectotype = Term("isolectotype")
+  val isoneotype = Term("isoneotype")
+  val isosyntype = Term("isosyntype")
+  val isotype = Term("isotype", "iso type")
+  val lectotype = Term("lectotype")
+  val neotype = Term("neotype", "neo type")
+  val notatype = Term("notatype", "not a type")  //should this be removed??
+  val paralectotype = Term("paralectotype")
+  val paraneotype = Term("paraneotype")
+  val paratype = Term("paratype")
+  val plastoholotype = Term("plastoholotype")
+  val plastoisotype = Term("plastoisotype")
+  val plastolectotype = Term("plastolectotype")
+  val plastoneotype = Term("plastoneotype")
+  val plastoparatype = Term("plastoparatype")
+  val plastosyntype = Term("plastosyntype")
+  val plastotype = Term("plastotype")
+  val secondarytype = Term("secondarytype")
+  val supplementarytype = Term("supplementarytype")
+  val syntype = Term("syntype")
+  val topotype = Term("topotype")
+  val typee = Term("type")
   val all = retrieveAll
 }
 
@@ -373,12 +378,13 @@ object AssertionCodes {
   //all the codes
   val all = retrieveAll
 
+  //ranges for error codes
   val geospatialBounds = (0, 10000)
   val taxonomicBounds = (10000, 20000)
   val miscellanousBounds = (20000, 30000)
   val temporalBounds = (30000, 40000)
 
-  val geospatialCodes = all.filter(errorCode => {errorCode.code>=0 && errorCode.code<10000})
+  val geospatialCodes = all.filter(errorCode => {errorCode.code >= geospatialBounds._1 && errorCode.code < geospatialBounds._2})
   val taxonomicCodes = all.filter(errorCode => {errorCode.code>=10000 && errorCode.code<20000})
   val miscellaneousCodes = all.filter(errorCode => {errorCode.code>=20000 && errorCode.code<30000})
   val temporalCodes = all.filter(errorCode => {errorCode.code>=30000 && errorCode.code<40000})
@@ -398,11 +404,10 @@ object AssertionCodes {
     } yield (method.invoke(this).asInstanceOf[ErrorCode])).toSet[ErrorCode]
   }
 
+  /** Retrieve an error code by the numeric code */
   def getByCode(code:Int) : Option[ErrorCode] = all.find(errorCode => errorCode.code == code)
 
-  /**
-   * Is it geospatially kosher
-   */
+  /** Is it geospatially kosher */
   def isGeospatiallyKosher (assertions:Array[QualityAssertion]) : Boolean = {
     assertions.filter(ass => {
        val errorCode = AssertionCodes.all.find(errorCode => errorCode.code == ass.code )
@@ -416,9 +421,7 @@ object AssertionCodes {
     }).isEmpty
   }
 
-  /**
-   * is it taxonomically kosher
-   */
+  /** Is it taxonomically kosher */
   def isTaxonomicallyKosher (assertions:Array[QualityAssertion]) : Boolean = {
     assertions.filter(ass => {
        val errorCode = AssertionCodes.all.find(errorCode => errorCode.code == ass.code )

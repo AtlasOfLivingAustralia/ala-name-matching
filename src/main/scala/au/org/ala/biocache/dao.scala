@@ -9,12 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 import java.util.Properties
 import java.util.UUID
 import collection.immutable.HashSet
-import org.apache.commons.dbcp.BasicDataSource
 import org.slf4j.LoggerFactory
-import com.google.inject.Guice
-import com.google.inject.Module
-import com.google.inject.Binder
-import com.google.inject.name.Names
 
 /**
  * DAO configuration. Should be refactored to use a DI framework
@@ -107,12 +102,9 @@ object DAO {
     if(anObject.isInstanceOf[Mappable]){
 
       val map = anObject.asInstanceOf[Mappable].getMap
-      map foreach {case (key, value)=> {
-               properties.put(key, value)
-          }}
+      map foreach { case (key, value) =>  properties.put(key, value) }
 
-    }
-    else{
+    } else {
       val defn = getDefn(anObject)
       for (field <- defn) {
           val fieldValue = anObject.getter(field).asInstanceOf[String]
@@ -171,7 +163,6 @@ object OccurrenceDAO {
   val geospatialDecisionColumn = "geospatiallyKosher"
   val taxonomicDecisionColumn = "taxonomicallyKosher"
   val deletedColumn = "deleted"
-
 
   def setUuidDeleted(uuid:String, del:Boolean)={
     DAO.persistentManager.put(uuid, entityName, deletedColumn, del.toString)
