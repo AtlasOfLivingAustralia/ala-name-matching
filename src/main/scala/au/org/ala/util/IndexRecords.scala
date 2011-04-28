@@ -1,7 +1,6 @@
 
 package au.org.ala.util
 import java.util.ArrayList
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import au.org.ala.biocache._
 
@@ -9,21 +8,20 @@ import au.org.ala.biocache._
  * Index the Cassandra Records to conform to the fields
  * as defined in the schema.xml file.
  *
- *
- *
- *@author Natasha Carter
- *
+ * @author Natasha Carter
  */
 object IndexRecords {
 
   val logger = LoggerFactory.getLogger("IndexRecords")
-  var indexer = SolrOccurrenceDAO
+  val indexer = Config.getInstance(classOf[IndexDAO]).asInstanceOf[IndexDAO]
+  val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+  val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
   def main(args: Array[String]): Unit = {
     
     //delete the content of the index
     indexer.emptyIndex
-   processMap
+    processMap
     //index any remaining items before exiting
 //    indexer.index(items)
     indexer.finaliseIndex
@@ -36,7 +34,7 @@ object IndexRecords {
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
     var items = new ArrayList[OccurrenceIndex]()
-    DAO.persistentManager.pageOverAll("occ", (guid, map)=> {
+    persistenceManager.pageOverAll("occ", (guid, map)=> {
         counter += 1
 
         indexer.indexFromMap(guid, map)
@@ -55,14 +53,15 @@ object IndexRecords {
     println("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
   }
 
-  def processFullRecords()={
+  def processFullRecords(){
+
     var counter = 0
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
     var items = new ArrayList[OccurrenceIndex]()
 
      //page over all records and process
-    OccurrenceDAO.pageOverAllVersions(versions => {
+    occurrenceDAO.pageOverAllVersions(versions => {
       counter += 1
       if (!versions.isEmpty) {
     	val v = versions.get
@@ -78,10 +77,6 @@ object IndexRecords {
         }
       }
       true
-
     })
   }
-
-  
-
 }

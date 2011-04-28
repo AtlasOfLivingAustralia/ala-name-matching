@@ -5,6 +5,9 @@ import org.apache.cassandra.thrift.{SlicePredicate, Column, ConsistencyLevel}
 import org.wyki.cassandra.pelops.{Policy, Selector, Pelops}
 import collection.mutable.ListBuffer
 import org.slf4j.LoggerFactory
+import com.google.inject.name.Named
+import com.google.inject.Inject
+import java.lang.Class
 
 /**
  * This trait should be implemented for Cassandra,
@@ -65,24 +68,30 @@ trait PersistenceManager {
      * Select the properties for the supplied record UUIDs
      */
     def selectRows(uuids:Array[String],entityName:String,propertyNames:Array[String],proc:((Map[String,String])=>Unit))
+
+    /**
+     * Close db connections etc
+     */
+    def shutdown
 }
 
 /**
  * Cassandra based implementation of a persistence manager.
  * This should maintain most of the cassandra logic
  */
-class CassandraPersistenceManager (
-    hosts:Array[String] = Array("localhost"),
-    port:Int = 9160,
-    poolName:String = "biocache-store-pool",
-    maxColumnLimit:Int = 10000,
-    keyspace:String = "occ") extends PersistenceManager {
+class CassandraPersistenceManager @Inject() (
+    @Named("cassandraHosts") host:String = "localhost",
+    @Named("cassandraPort") port:String = "9160",
+    @Named("cassandraPoolName") poolName:String = "biocache-store-pool",
+    @Named("cassandraKeyspace") keyspace:String = "occ") extends PersistenceManager {
 
+    val maxColumnLimit = 10000
     import JavaConversions._
     protected val logger = LoggerFactory.getLogger("CassandraPersistenceManager")
     logger.info("Initialising cassandra connection pool with pool name: " + poolName)
-    logger.info("Initialising cassandra connection pool with hosts: " + hosts(0))
-    Pelops.addPool(poolName, hosts, port, false, keyspace, new Policy)
+    logger.info("Initialising cassandra connection pool with hosts: " + host)
+    logger.info("Initialising cassandra connection pool with port: " + port)
+    Pelops.addPool(poolName, Array(host), port.toInt, false, keyspace, new Policy)
 
     /**
      * Retrieve an array of objects, parsing the JSON stored.
@@ -189,7 +198,8 @@ class CassandraPersistenceManager (
             } else {
                 //retrieve the existing objects
                 val currentJson = new String(column.get.getValue)
-                var currentList = Json.toList(currentJson, newList(0).getClass.asInstanceOf[java.lang.Class[AnyRef]]) //   gson.fromJson(currentJson, propertyArray.getClass).asInstanceOf[Array[AnyRef]]
+                var currentList = Json.toList(currentJson, newList(0).getClass.asInstanceOf[java.lang.Class[AnyRef]])
+                //   gson.fromJson(currentJson, propertyArray.getClass).asInstanceOf[Array[AnyRef]]
 
                 var written = false
                 var buffer = new ListBuffer[AnyRef]
@@ -314,4 +324,33 @@ class CassandraPersistenceManager (
             case e:Exception => logger.debug(e.getMessage + " for " + uuid + " - " + columnFamily + " - " +columnName); None //expected behaviour when row doesnt exist
         }
     }
+
+    def shutdown = Pelops.shutdown
+}
+
+/**
+ * To be added
+ */
+class MongoDBPersistenceManager extends PersistenceManager {
+    def shutdown = {}
+
+    def selectRows(uuids: Array[String], entityName: String, propertyNames: Array[String], proc: (Map[String, String]) => Unit) = null
+
+    def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int, columnName: String*) = null
+
+    def pageOverAll(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int) = null
+
+    def putList(uuid: String, entityName: String, propertyName: String, objectList: List[AnyRef], overwrite: Boolean) = null
+
+    def getList(uuid: String, entityName: String, propertyName: String, theClass: Class[AnyRef]) = null
+
+    def putBatch(entityName: String, batch: Map[String, Map[String, String]]) = null
+
+    def put(uuid: String, entityName: String, keyValuePairs: Map[String, String]) = null
+
+    def put(uuid: String, entityName: String, propertyName: String, propertyValue: String) = null
+
+    def get(uuid: String, entityName: String) = null
+
+    def get(uuid: String, entityName: String, propertyName: String) = null
 }

@@ -1,7 +1,7 @@
 package au.org.ala.biocache
 
-import collection.JavaConversions
 import java.io.OutputStream
+import collection.JavaConversions
 
 /**
  * This is the interface to use for java applications.
@@ -15,42 +15,43 @@ import java.io.OutputStream
  */
 object Store {
 
+  private val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+
   import JavaConversions._
   import scalaj.collection.Imports._
-
   /**
    * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
    */
   def getByUuid(uuid:java.lang.String, version:Version) : FullRecord = {
-    OccurrenceDAO.getByUuid(uuid, version).getOrElse(null)
+    occurrenceDAO.getByUuid(uuid, version).getOrElse(null)
   }
 
   /**
    * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
    */
   def getByUuid(uuid:java.lang.String) : FullRecord = {
-    OccurrenceDAO.getByUuid(uuid, Raw).getOrElse(null)
+    occurrenceDAO.getByUuid(uuid, Raw).getOrElse(null)
   }
 
   /**
    * Retrieve all versions of the record with the supplied UUID.
    */
   def getAllVersionsByUuid(uuid:java.lang.String) : Array[FullRecord] = {
-    OccurrenceDAO.getAllVersionsByUuid(uuid).getOrElse(null)
+    occurrenceDAO.getAllVersionsByUuid(uuid).getOrElse(null)
   }
 
   /**
    * Iterate over records, passing the records to the supplied consumer.
    */
   def pageOverAll(version:Version, consumer:OccurrenceConsumer, pageSize:Int) {
-    OccurrenceDAO.pageOverAll(version, fullRecord => consumer.consume(fullRecord.get), pageSize)
+    occurrenceDAO.pageOverAll(version, fullRecord => consumer.consume(fullRecord.get), pageSize)
   }
 
   /**
    * Page over all versions of the record, handing off to the OccurrenceVersionConsumer.
    */
   def pageOverAllVersions(consumer:OccurrenceVersionConsumer, pageSize:Int) {
-      OccurrenceDAO.pageOverAllVersions(fullRecordVersion => {
+      occurrenceDAO.pageOverAllVersions(fullRecordVersion => {
           if(!fullRecordVersion.isEmpty){
             consumer.consume(fullRecordVersion.get)
           } else {
@@ -63,21 +64,21 @@ object Store {
    * Retrieve the system supplied systemAssertions.
    */
   def getSystemAssertions(uuid:java.lang.String) : java.util.List[QualityAssertion] = {
-    OccurrenceDAO.getSystemAssertions(uuid).asJava[QualityAssertion]
+    occurrenceDAO.getSystemAssertions(uuid).asJava[QualityAssertion]
   }
 
   /**
    * Retrieve the user supplied systemAssertions.
    */
   def getUserAssertion(uuid:java.lang.String, assertionUuid:java.lang.String) : QualityAssertion = {
-    OccurrenceDAO.getUserAssertions(uuid).find(ass => {ass.uuid == assertionUuid}).getOrElse(null)
+    occurrenceDAO.getUserAssertions(uuid).find(ass => {ass.uuid == assertionUuid}).getOrElse(null)
   }
 
   /**
    * Retrieve the user supplied systemAssertions.
    */
   def getUserAssertions(uuid:java.lang.String) : java.util.List[QualityAssertion] = {
-    OccurrenceDAO.getUserAssertions(uuid).asJava[QualityAssertion]
+    occurrenceDAO.getUserAssertions(uuid).asJava[QualityAssertion]
   }
 
   /**
@@ -86,8 +87,8 @@ object Store {
    * Requires a re-index
    */
   def addUserAssertion(uuid:java.lang.String, qualityAssertion:QualityAssertion){
-    OccurrenceDAO.addUserAssertion(uuid, qualityAssertion)
-    OccurrenceDAO.reIndex(uuid)
+    occurrenceDAO.addUserAssertion(uuid, qualityAssertion)
+    occurrenceDAO.reIndex(uuid)
   }
 
   /**
@@ -96,8 +97,8 @@ object Store {
    * Requires a re-index
    */
   def deleteUserAssertion(uuid:java.lang.String, assertionUuid:java.lang.String){
-    OccurrenceDAO.deleteUserAssertion(uuid,assertionUuid)
-    OccurrenceDAO.reIndex(uuid)
+    occurrenceDAO.deleteUserAssertion(uuid,assertionUuid)
+    occurrenceDAO.reIndex(uuid)
   }
 
   /**
@@ -105,7 +106,7 @@ object Store {
    */
   def writeToStream(outputStream:OutputStream,fieldDelimiter:java.lang.String,
         recordDelimiter:java.lang.String,uuids:Array[String],fields:Array[java.lang.String]) {
-    OccurrenceDAO.writeToStream(outputStream,fieldDelimiter,recordDelimiter,uuids,fields)
+    occurrenceDAO.writeToStream(outputStream,fieldDelimiter,recordDelimiter,uuids,fields)
   }
 
   /**

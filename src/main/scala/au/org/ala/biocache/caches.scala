@@ -4,11 +4,11 @@ package au.org.ala.biocache
  * maintained within the biocache for performance reasons. These
  * components
  */
-import au.org.ala.checklist.lucene.{HomonymException,SearchResultException}
 import au.org.ala.data.model.LinnaeanRankClassification
 import au.org.ala.util.ReflectBean
 import au.org.ala.checklist.lucene.model.NameSearchResult
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
+import au.org.ala.checklist.lucene.{CBIndexSearch, HomonymException, SearchResultException}
 
 /**
  * A DAO for accessing classification information in the cache. If the
@@ -30,6 +30,8 @@ object ClassificationDAO {
 //    .build();
 
   private val lock : AnyRef = new Object()
+
+  private val nameIndex = Config.getInstance(classOf[CBIndexSearch]).asInstanceOf[CBIndexSearch]
 
   /**
    * Uses a LRU cache
@@ -59,7 +61,7 @@ object ClassificationDAO {
           cl.infraspecificEpithet,
           cl.scientificName)
 
-        val nsr = DAO.nameIndex.searchForRecord(lrc, true)
+        val nsr = nameIndex.searchForRecord(lrc, true)
 
         if(nsr!=null){
             val result = Some(nsr)
@@ -86,6 +88,7 @@ object TaxonProfileDAO {
   private val columnFamily = "taxon"
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
   private val lock : AnyRef = new Object()
+  private val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 //  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[TaxonProfile]]()
 //      .maximumWeightedCapacity(10000)
 //      .build();
@@ -127,7 +130,7 @@ object TaxonProfileDAO {
 
         val cachedObject = lru.get(guid)
         if(cachedObject==null){
-            val map = DAO.persistentManager.get(guid,columnFamily)
+            val map = persistenceManager.get(guid,columnFamily)
             if(!map.isEmpty){
               val result = Some(createTaxonProfile(map))
               lock.synchronized { lru.put(guid,result) }
@@ -162,7 +165,7 @@ object TaxonProfileDAO {
       if(taxonProfile.sensitive != null && taxonProfile.sensitive.size >0){
         properties.put("sensitive", Json.toJSON(taxonProfile.sensitive.asInstanceOf[Array[AnyRef]]))
       }
-      DAO.persistentManager.put(taxonProfile.guid, columnFamily, properties.toMap)
+      persistenceManager.put(taxonProfile.guid, columnFamily, properties.toMap)
   }
 }
 
@@ -175,6 +178,7 @@ object AttributionDAO {
   private val columnFamily = "attr"
   //can't use a scala hashap because missing keys return None not null...
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)//new HashMap[String, Option[Attribution]]
+  private val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 //  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[Attribution]]()
 //      .maximumWeightedCapacity(1000)
 //      .build();
@@ -186,7 +190,7 @@ object AttributionDAO {
   def add(institutionCode:String, collectionCode:String, attribution:Attribution){
     val guid = institutionCode.toUpperCase +"|"+collectionCode.toUpperCase
     val map = DAO.mapObjectToProperties(attribution)
-    DAO.persistentManager.put(guid,"attr",map)
+    persistenceManager.put(guid,"attr",map)
   }
 
   /**
@@ -201,7 +205,7 @@ object AttributionDAO {
       if(cachedObject!=null){
         cachedObject.asInstanceOf[Option[Attribution]]
       } else {
-          val map = DAO.persistentManager.get(uuid,"attr")          
+          val map = persistenceManager.get(uuid,"attr")
           val result = {
               if(!map.isEmpty){
                 val attribution = new Attribution
@@ -229,6 +233,7 @@ object LocationDAO {
   private val columnFamily = "loc"
   private val lock : AnyRef = new Object()
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
+  private val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 //  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[Location]]()
 //      .maximumWeightedCapacity(10000)
 //      .build();
@@ -237,9 +242,9 @@ object LocationDAO {
    */
   def addTagToLocation (latitude:Float, longitude:Float, tagName:String, tagValue:String) {
     val guid = latitude +"|"+longitude
-    DAO.persistentManager.put(guid, columnFamily, "decimalLatitude",latitude.toString)
-    DAO.persistentManager.put(guid, columnFamily, "decimalLongitude",longitude.toString)
-    DAO.persistentManager.put(guid, columnFamily, tagName,tagValue)
+    persistenceManager.put(guid, columnFamily, "decimalLatitude",latitude.toString)
+    persistenceManager.put(guid, columnFamily, "decimalLongitude",longitude.toString)
+    persistenceManager.put(guid, columnFamily, tagName,tagValue)
   }
 
   /**
@@ -251,7 +256,7 @@ object LocationDAO {
     properties ++= mapping
     properties.put("decimalLatitude", latitude.toString)
     properties.put("decimalLongitude", longitude.toString)
-    DAO.persistentManager.put(guid, columnFamily, properties.toMap)
+    persistenceManager.put(guid, columnFamily, properties.toMap)
   }
 
   /**
@@ -277,7 +282,7 @@ object LocationDAO {
     if(cachedObject!=null){
         cachedObject.asInstanceOf[Option[Location]]
     } else {
-        val map = DAO.persistentManager.get(uuid,"loc")
+        val map = persistenceManager.get(uuid,"loc")
         if(!map.isEmpty){
           val location = new Location
           DAO.mapPropertiesToObject(location,map.get)

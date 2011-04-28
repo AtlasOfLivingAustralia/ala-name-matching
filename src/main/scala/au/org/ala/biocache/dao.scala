@@ -1,6 +1,8 @@
 package au.org.ala.biocache
 
 import au.org.ala.checklist.lucene.CBIndexSearch
+import com.google.inject.Inject
+
 //import au.org.ala.sds.SensitiveSpeciesFinderFactory
 import au.org.ala.util.ReflectBean
 import java.io.OutputStream
@@ -19,60 +21,7 @@ object DAO {
 
   import ReflectBean._
   protected val logger = LoggerFactory.getLogger("DAO")
-
-  val persistentManager = {
-      try {
-          val properties = new Properties()
-          properties.load(DAO.getClass.getResourceAsStream("/biocache.properties"))
-          logger.info("Properties loaded from biocache.properties on classpath")
-          if(properties!=null){
-             val hostArray = properties.getProperty("cassandraHosts").split(",")
-             val port = properties.getProperty("cassandraPort").toInt
-             logger.info("Properties loaded from biocache.properties on classpath. hostArray: "+hostArray(0))
-             logger.info("Properties loaded from biocache.properties on classpath. port: "+port)
-             new CassandraPersistenceManager(hostArray.toArray[String], port)
-          } else {
-             logger.warn("Unable to load configuration parameters from biocache.properties. Using default settings.");
-             new CassandraPersistenceManager
-          }
-      } catch {
-          case e:Exception => {
-             logger.warn("Unable to load configuration from biocache.properties. Using default settings.");
-             new CassandraPersistenceManager
-          }
-      }
-  }
-  val indexer = SolrOccurrenceDAO
-
-  val nameIndex = new CBIndexSearch("/data/lucene/namematching")
-
-  //Only used during record processing - it will take awhile the first time it is accessed
-//  lazy val sensitiveSpeciesFinderFactory = {
-//    val dataSource = new BasicDataSource();
-//    dataSource.setDriverClassName("com.mysql.jdbc.Driver")
-//    dataSource.setUrl("jdbc:mysql://localhost/portal")
-//    dataSource.setUsername("root")
-//    dataSource.setPassword("password")
-//    try{
-//      val properties = new Properties()
-//          properties.load(DAO.getClass.getResourceAsStream("/sds.properties"))
-//          logger.info("Properties loaded from sensitive.properties on classpath")
-//          if(properties!=null){
-//            val driver = properties.getProperty("dataSource.driver")
-//            val url = properties.getProperty("dataSource.url")
-//            val username = properties.getProperty("dataSource.username")
-//            val password = properties.getProperty("dataSource.password")
-//            dataSource.setDriverClassName(driver)
-//            dataSource.setUrl(url)
-//            dataSource.setUsername(username)
-//            dataSource.setPassword(password)
-//          }
-//    }
-//    catch{
-//      case e :Exception => logger.warn("Unable to load sensitive data service configuration. Using default settings")
-//    }
 //    SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(dataSource, nameIndex);
-//  }
   //read in the object mappings using reflection
   val attributionDefn = loadDefn(classOf[Attribution])
   val occurrenceDefn = loadDefn(classOf[Occurrence])
@@ -148,25 +97,52 @@ object DAO {
   }
 }
 
-/**
- * A DAO for accessing occurrences.
- */
-object OccurrenceDAO {
-
-  import ReflectBean._
-  import JavaConversions._
-  import scalaj.collection.Imports._
-  protected val logger = LoggerFactory.getLogger("OccurrenceDAO")
-  private val entityName = "occ"
-  private val qualityAssertionColumn = "qualityAssertion"
+trait OccurrenceDAO {
+  val entityName = "occ"
+  val qualityAssertionColumn = "qualityAssertion"
   val userQualityAssertionColumn = "userQualityAssertion"
   val geospatialDecisionColumn = "geospatiallyKosher"
   val taxonomicDecisionColumn = "taxonomicallyKosher"
   val deletedColumn = "deleted"
 
-  def setUuidDeleted(uuid:String, del:Boolean)={
-    DAO.persistentManager.put(uuid, entityName, deletedColumn, del.toString)
-  }
+  def setUuidDeleted(uuid:String, del:Boolean) : Unit
+  def getByUuid(uuid:String) : Option[FullRecord]
+  def getAllVersionsByUuid(uuid:String) : Option[Array[FullRecord]]
+  def getByUuid(uuid:String, version:Version) : Option[FullRecord]
+  def createFullRecord(uuid:String, fieldTuples:Array[(String,String)], version:Version) : FullRecord
+  def createFullRecord(uuid:String, fields:Map[String,String], version:Version) : FullRecord
+  def createOrRetrieveUuid(uniqueID: String): String
+  def writeToStream(outputStream:OutputStream,fieldDelimiter:String,recordDelimiter:String,uuids:Array[String],fields:Array[String]) : Unit
+  def pageOverAllVersions(proc:((Option[Array[FullRecord]])=>Boolean), pageSize:Int = 1000) : Unit
+  def pageOverAll(version:Version, proc:((Option[FullRecord])=>Boolean),pageSize:Int = 1000) : Unit
+  def pageOverRawProcessed(proc:(Option[(FullRecord,FullRecord)]=>Boolean), pageSize:Int = 1000) : Unit
+  def addRawOccurrenceBatch(fullRecords:Array[FullRecord]) : Unit
+  def updateOccurrence(uuid:String, fullRecord:FullRecord, version:Version) : Unit
+  def updateOccurrence(uuid:String, fullRecord:FullRecord, assertions:Option[Array[QualityAssertion]], version:Version) : Unit
+  def updateOccurrence(uuid:String, anObject:AnyRef, version:Version) : Unit
+  def addSystemAssertion(uuid:String, qualityAssertion:QualityAssertion) : Unit
+  def updateSystemAssertions(uuid:String, qualityAssertions:List[QualityAssertion]) : Unit
+  def getSystemAssertions(uuid:String): List[QualityAssertion]
+  def addUserAssertion(uuid:String, qualityAssertion:QualityAssertion) : Unit
+  def getUserAssertions(uuid:String): List[QualityAssertion]
+  def deleteUserAssertion(uuid:String, assertionUuid:String) : Boolean
+  def updateAssertionStatus(uuid:String, assertionName:String, systemAssertions:List[QualityAssertion], userAssertions:List[QualityAssertion])
+  def reIndex(uuid:String)
+  def isQualityAssertion(name:String) : Boolean
+  def removeQualityAssertionMarker(name:String) : String
+}
+
+/**
+ * A DAO for accessing occurrences.
+ */
+class OccurrenceDAOImpl extends OccurrenceDAO {
+
+  import ReflectBean._
+  import JavaConversions._
+  protected val logger = LoggerFactory.getLogger("OccurrenceDAO")
+  @Inject
+  var persistenceManager:PersistenceManager = _
+  var indexDAO:IndexDAO =_
 
   /**
    * Get an occurrence with UUID
@@ -186,7 +162,7 @@ object OccurrenceDAO {
    */
   def getAllVersionsByUuid(uuid:String) : Option[Array[FullRecord]] = {
 
-    val map = DAO.persistentManager.get(uuid, entityName)
+    val map = persistenceManager.get(uuid, entityName)
     if(map.isEmpty){
       None
     } else {
@@ -203,7 +179,7 @@ object OccurrenceDAO {
    * Get an occurrence, specifying the version of the occurrence.
    */
   def getByUuid(uuid:String, version:Version) : Option[FullRecord] = {
-    val propertyMap = DAO.persistentManager.get(uuid, entityName)
+    val propertyMap = persistenceManager.get(uuid, entityName)
     if(propertyMap.isEmpty){
       None
     } else {
@@ -309,10 +285,10 @@ object OccurrenceDAO {
    */
   def createOrRetrieveUuid(uniqueID: String): String = {
 
-    val recordUUID = DAO.persistentManager.get(uniqueID, "dr", "uuid")
+    val recordUUID = persistenceManager.get(uniqueID, "dr", "uuid")
     if(recordUUID.isEmpty){
       val newUuid = UUID.randomUUID.toString
-      DAO.persistentManager.put(uniqueID, "dr", "uuid", newUuid)
+      persistenceManager.put(uniqueID, "dr", "uuid", newUuid)
       newUuid
     } else {
       recordUUID.get
@@ -323,7 +299,7 @@ object OccurrenceDAO {
    * Write to stream in a delimited format (CSV).
    */
   def writeToStream(outputStream:OutputStream,fieldDelimiter:String,recordDelimiter:String,uuids:Array[String],fields:Array[String]) {
-    DAO.persistentManager.selectRows(uuids, entityName, fields, { fieldMap =>
+    persistenceManager.selectRows(uuids, entityName, fields, { fieldMap =>
       for(field<-fields){
         val fieldValue = fieldMap.get(field)
         //Create a MS Excel compliant CSV file thus field with delimiters are quoted and embedded quotes are escaped
@@ -347,7 +323,7 @@ object OccurrenceDAO {
    * @param proc, the function to execute.
    */
   def pageOverAllVersions(proc:((Option[Array[FullRecord]])=>Boolean), pageSize:Int = 1000) {
-     DAO.persistentManager.pageOverAll(entityName, (guid, map) => {
+     persistenceManager.pageOverAll(entityName, (guid, map) => {
        //retrieve all versions
        val raw = createFullRecord(guid, map, Raw)
        val processed = createFullRecord(guid, map, Processed)
@@ -365,11 +341,28 @@ object OccurrenceDAO {
    * @param proc, the function to execute.
    */
   def pageOverAll(version:Version, proc:((Option[FullRecord])=>Boolean),pageSize:Int = 1000) {
-     DAO.persistentManager.pageOverAll(entityName, (guid, map) => {
+     persistenceManager.pageOverAll(entityName, (guid, map) => {
        //retrieve all versions
        val fullRecord = createFullRecord(guid, map, version)
        //pass all version to the procedure, wrapped in the Option
        proc(Some(fullRecord))
+     },pageSize)
+  }
+
+  /**
+   * Iterate over all occurrences, passing the objects to a function.
+   * Function returns a boolean indicating if the paging should continue.
+   *
+   * @param occurrenceType
+   * @param proc, the function to execute.
+   */
+  def pageOverRawProcessed(proc:(Option[(FullRecord,FullRecord)]=>Boolean), pageSize:Int = 1000) {
+     persistenceManager.pageOverAll(entityName, (guid, map) => {
+       //retrieve all versions
+       val raw = createFullRecord(guid, map, Versions.RAW)
+       val processed = createFullRecord(guid, map, Versions.PROCESSED)
+       //pass all version to the procedure, wrapped in the Option
+       proc(Some(raw,processed))
      },pageSize)
   }
 
@@ -383,8 +376,8 @@ object OccurrenceDAO {
         var properties = fullRecord2Map(fullRecord, Versions.RAW)
         batch.put(fullRecord.uuid, properties.toMap)
     }
-    //commit to cassandra
-    DAO.persistentManager.putBatch(entityName,batch.toMap)
+    //commit
+    persistenceManager.putBatch(entityName,batch.toMap)
   }
 
   /**
@@ -467,7 +460,7 @@ object OccurrenceDAO {
     }
 
     //commit to cassandra
-    DAO.persistentManager.put(uuid,entityName,properties.toMap)
+    persistenceManager.put(uuid,entityName,properties.toMap)
   }
 
   /**
@@ -480,7 +473,7 @@ object OccurrenceDAO {
   def updateOccurrence(uuid:String, anObject:AnyRef, version:Version) {
 
     val map = mapObjectToProperties(anObject,version)
-    DAO.persistentManager.put(uuid,entityName,map)
+    persistenceManager.put(uuid,entityName,map)
   }
 
   /**
@@ -490,15 +483,15 @@ object OccurrenceDAO {
    * @param qualityAssertion
    */
   def addSystemAssertion(uuid:String, qualityAssertion:QualityAssertion){
-    DAO.persistentManager.putList(uuid,entityName, qualityAssertionColumn,List(qualityAssertion),false)
-    DAO.persistentManager.put(uuid, entityName, qualityAssertion.name, qualityAssertion.problemAsserted.toString)
+    persistenceManager.putList(uuid,entityName, qualityAssertionColumn,List(qualityAssertion),false)
+    persistenceManager.put(uuid, entityName, qualityAssertion.name, qualityAssertion.problemAsserted.toString)
   }
 
   /**
    * Set the system systemAssertions for a record, overwriting existing systemAssertions
    */
   def updateSystemAssertions(uuid:String, qualityAssertions:List[QualityAssertion]){
-    DAO.persistentManager.putList(uuid,entityName,qualityAssertionColumn,qualityAssertions,true)
+    persistenceManager.putList(uuid,entityName,qualityAssertionColumn,qualityAssertions,true)
   }
 
   /**
@@ -507,7 +500,7 @@ object OccurrenceDAO {
   def getSystemAssertions(uuid:String): List[QualityAssertion] = {
     //val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[java.lang.Class[Array[AnyRef]]]
     val theClass = classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]
-    DAO.persistentManager.getList(uuid,entityName, qualityAssertionColumn,theClass).asInstanceOf[List[QualityAssertion]]
+    persistenceManager.getList(uuid,entityName, qualityAssertionColumn,theClass).asInstanceOf[List[QualityAssertion]]
   }
 
   /**
@@ -524,7 +517,7 @@ object OccurrenceDAO {
         val systemAssertions = getSystemAssertions(uuid)
 
         //store the new systemAssertions
-        DAO.persistentManager.putList(uuid,entityName,userQualityAssertionColumn,updatedUserAssertions,true)
+        persistenceManager.putList(uuid,entityName,userQualityAssertionColumn,updatedUserAssertions,true)
 
         //update the overall status
         updateAssertionStatus(uuid,qualityAssertion.name,systemAssertions,updatedUserAssertions)
@@ -536,7 +529,7 @@ object OccurrenceDAO {
    */
   def getUserAssertions(uuid:String): List[QualityAssertion] = {
     val theClass = classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]
-    DAO.persistentManager.getList(uuid,entityName, userQualityAssertionColumn,theClass)
+    persistenceManager.getList(uuid,entityName, userQualityAssertionColumn,theClass)
         .asInstanceOf[List[QualityAssertion]]
   }
 
@@ -560,7 +553,7 @@ object OccurrenceDAO {
         val updateAssertions = assertions.filter(qa => {!(qa.uuid equals assertionUuid)})
 
         //put the systemAssertions back - overwriting existing systemAssertions
-        DAO.persistentManager.putList(uuid,entityName,userQualityAssertionColumn,updateAssertions,true)
+        persistenceManager.putList(uuid,entityName,userQualityAssertionColumn,updateAssertions,true)
 
         val assertionName = deletedAssertion.get.name
         //are there any matching systemAssertions for other users????
@@ -590,7 +583,7 @@ object OccurrenceDAO {
         val negativeAssertion = userAssertions.find(qa => qa.problemAsserted)
         if(!negativeAssertion.isEmpty){
             val qualityAssertion = negativeAssertion.get
-            DAO.persistentManager.put(uuid,entityName,
+            persistenceManager.put(uuid,entityName,
                 markAsQualityAssertion(qualityAssertion.name),qualityAssertion.problemAsserted.toString)
         }
     } else if(!systemAssertions.isEmpty) {
@@ -598,10 +591,10 @@ object OccurrenceDAO {
         val matchingAssertion = systemAssertions.find(assertion => {assertion.name equals assertionName})
         if(!matchingAssertion.isEmpty){
             val assertion = matchingAssertion.get
-            DAO.persistentManager.put(uuid,entityName,assertion.name,assertion.problemAsserted.toString)
+            persistenceManager.put(uuid,entityName,assertion.name,assertion.problemAsserted.toString)
         }
     } else {
-        DAO.persistentManager.put(uuid,entityName,assertionName,true.toString)
+        persistenceManager.put(uuid,entityName,assertionName,true.toString)
     }
 
     //set the overall decision
@@ -615,7 +608,14 @@ object OccurrenceDAO {
         + ", geospatiallyKosher:"+geospatiallyKosher
         + ", taxonomicallyKosher:"+taxonomicallyKosher)
 
-    DAO.persistentManager.put(uuid,entityName,properties.toMap)
+    persistenceManager.put(uuid,entityName,properties.toMap)
+  }
+
+  /**
+   * Set this record to deleted.
+   */
+  def setUuidDeleted(uuid:String, del:Boolean)={
+      persistenceManager.put(uuid, entityName, deletedColumn, del.toString)
   }
 
   /**
@@ -627,9 +627,9 @@ object OccurrenceDAO {
     if(recordVersions.isEmpty){
         println("Unable to reindex UUID: " + uuid)
     } else {
-        val occurrenceIndex = DAO.indexer.getOccIndexModel(recordVersions.get)
+        val occurrenceIndex = indexDAO.getOccIndexModel(recordVersions.get)
         if(!occurrenceIndex.isEmpty){
-            DAO.indexer.index(occurrenceIndex.get)
+            indexDAO.index(occurrenceIndex.get)
             println("Reindexed UUID: " + uuid)
         }
     }

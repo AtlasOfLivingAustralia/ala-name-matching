@@ -1,16 +1,18 @@
 package au.org.ala.util
 
 import scala.actors.Actor
-import au.org.ala.biocache.FullRecord
-import au.org.ala.biocache.OccurrenceDAO
-import au.org.ala.biocache.Raw
 import scala.collection.mutable.ArrayBuffer
 import org.wyki.cassandra.pelops.Pelops
+import au.org.ala.biocache._
 
 /**
  * A simple threaded implementation of the processing.
  */
 object ProcessWithActors {
+
+  val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+  val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
+
   def main(args : Array[String]) : Unit = {
 
     println("Starting...")
@@ -34,7 +36,7 @@ object ProcessWithActors {
 
     var buff = new ArrayBuffer[FullRecord]
 
-    OccurrenceDAO.pageOverAll(Raw, fullRecord => {
+    occurrenceDAO.pageOverAll(Raw, fullRecord => {
 
       count += 1
       //we want to add the record to the buffer whether or not we send them to the actor
@@ -66,7 +68,7 @@ object ProcessWithActors {
     //kill the actors 
     pool.foreach(actor => actor ! "exit")
 
-    Pelops.shutdown 
+    persistenceManager.shutdown
   }
 }
 
@@ -81,7 +83,7 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
   def ready = processed==received
 
   def act {
-    println("In (ACT) thread: "+id)
+    println("In (Actor.act) thread: "+id)
     loop{
       react {
         case raw:FullRecord => {
@@ -102,7 +104,7 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
         }
         case s:String => {
             if(s == "exit"){
-              println("Killing (ACT) thread: "+id)
+              println("Killing (Actor.act) thread: "+id)
               exit()
             }
         }

@@ -14,7 +14,7 @@
  ***************************************************************************/
 package au.org.ala.util
 
-import au.org.ala.biocache.DAO
+import au.org.ala.biocache._
 import org.wyki.cassandra.pelops.Pelops
 import java.util.UUID
 import au.com.bytecode.opencsv.CSVReader
@@ -33,6 +33,8 @@ object FasterDwCLoaderUpdates {
   val columnFamily = "occ"
   val poolName = "occ-pool"
   val resourceUid = "dp20"
+  val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+  val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
   def main(args: Array[String]): Unit = {
 
@@ -71,9 +73,9 @@ object FasterDwCLoaderUpdates {
       val ic = map.get("institutionCode").getOrElse(null)
       val uniqueID = resourceUid + "|" + ic + "|" + cc + "|" + cn
 
-      val recordUuid = OccurrenceDAO.createOrRetrieveUuid(uniqueID)
+      val recordUuid = occurrenceDAO.createOrRetrieveUuid(uniqueID)
 
-      DAO.persistentManager.put(recordUuid, "occ", map)
+      persistenceManager.put(recordUuid, "occ", map)
       //DAO.persistentManager.put(uniqueID, "dr", "uuid", recordUuid)
       if (count % 100 == 0 && count > 0) {
         finishTime = System.currentTimeMillis
@@ -90,7 +92,7 @@ object FasterDwCLoaderUpdates {
       columns = csvReader.readNext
     }
 
-    Pelops.shutdown
+    persistenceManager.shutdown
     println("Finished DwC loader. Records processed: " + count)
   }
 }

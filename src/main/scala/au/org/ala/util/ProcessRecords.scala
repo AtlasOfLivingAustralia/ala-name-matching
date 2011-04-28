@@ -1,6 +1,5 @@
 package au.org.ala.util
 
-import org.wyki.cassandra.pelops.Pelops
 import collection.mutable.ArrayBuffer
 import org.slf4j.LoggerFactory
 import au.org.ala.biocache._
@@ -43,7 +42,7 @@ object ProcessRecords {
     logger.info("Starting processing records....")
     processAll
     logger.info("Finished. Shutting down.")
-    Pelops.shutdown 
+    Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager].shutdown
   }
 
   /**
@@ -54,8 +53,10 @@ object ProcessRecords {
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
 
+    val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+
     //page over all records and process
-    OccurrenceDAO.pageOverAll(Raw, record => {
+    occurrenceDAO.pageOverAll(Raw, record => {
       counter += 1
       if (!record.isEmpty) {
         val raw = record.get
@@ -78,6 +79,7 @@ object ProcessRecords {
   def processRecord(raw:FullRecord){
 
     val guid = raw.uuid
+    val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     //NC: Changed so that a processed record only contains values that have been processed.
     var processed = new FullRecord//raw.clone
     var assertions = new ArrayBuffer[QualityAssertion]
@@ -89,6 +91,6 @@ object ProcessRecords {
     val systemAssertions = Some(assertions.toArray)
   
     //store the occurrence
-    OccurrenceDAO.updateOccurrence(guid, processed, systemAssertions, Processed)
+    occurrenceDAO.updateOccurrence(guid, processed, systemAssertions, Processed)
   }
 }

@@ -6,10 +6,12 @@
 
 package au.org.ala.util
 
-import au.org.ala.biocache.{DAO, OccurrenceDAO}
+import au.org.ala.biocache._
 
 object DeleteRecords {
 
+  val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+  val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
   def main(args: Array[String]): Unit = {
     println("Starting to delete based on the criteria: institutionUid=in4 and catalogNUm doesn't contain ecatalogue")
@@ -23,7 +25,7 @@ object DeleteRecords {
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
 
-    DAO.persistentManager.pageOverSelect("occ", (guid, map)=> {
+    persistenceManager.pageOverSelect("occ", (guid, map)=> {
         counter += 1
 
         //check to see if the criteria in the MAP
@@ -32,14 +34,13 @@ object DeleteRecords {
         if(instUid != null && instUid.equals("in4") && catalogNum != null && !catalogNum.contains("ecatalogue")){
           //println("Need to delete : " + guid)
           delCount+=1
-          OccurrenceDAO.setUuidDeleted(guid, true)
+          occurrenceDAO.setUuidDeleted(guid, true)
         }
 
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
           println(counter + " >> Last key : " + guid + ",("+map+")  delete count: " + delCount +"records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
-
         }
 
         true

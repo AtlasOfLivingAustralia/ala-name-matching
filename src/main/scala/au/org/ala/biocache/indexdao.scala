@@ -1,9 +1,7 @@
 /*
  * The configuration required for the SOLR index
  */
-
 package au.org.ala.biocache
-
 
 import org.apache.commons.lang.time.DateUtils
 import org.apache.solr.client.solrj.SolrQuery
@@ -11,6 +9,7 @@ import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer
 import org.apache.solr.common.SolrInputDocument
 import org.apache.solr.core.CoreContainer
 import org.slf4j.LoggerFactory
+import com.google.inject.Inject
 
 object SolrIndexDAO {
     val solrHome = "/data/solr/bio-proto"
@@ -28,6 +27,8 @@ trait IndexDAO {
 
     import org.apache.commons.lang.StringUtils.defaultString
     import au.org.ala.util.ReflectBean._
+
+    def occurrenceDAO:OccurrenceDAO
 
     /**
      * Index a list of Occurrence Index Model objects
@@ -74,16 +75,16 @@ trait IndexDAO {
         var assertions = Array[String]("")
         for (fieldName <- columns) {
 
-            if (OccurrenceDAO.isQualityAssertion(fieldName)) {
+            if (occurrenceDAO.isQualityAssertion(fieldName)) {
 
                 val value = map.get(fieldName)
 
                 if (!value.isEmpty) {
                     if (value.get equals "true") {
                         if (assertions(0) == "")
-                            assertions = Array(OccurrenceDAO.removeQualityAssertionMarker(fieldName))
+                            assertions = Array(occurrenceDAO.removeQualityAssertionMarker(fieldName))
                         else
-                            assertions = assertions ++ Array(OccurrenceDAO.removeQualityAssertionMarker(fieldName))
+                            assertions = assertions ++ Array(occurrenceDAO.removeQualityAssertionMarker(fieldName))
                     }
                 }
             }
@@ -131,7 +132,7 @@ trait IndexDAO {
 
         try {
             //get the lat lon values so that we can determine all the point values
-            val deleted = getValue(OccurrenceDAO.deletedColumn, map)
+            val deleted = getValue(occurrenceDAO.deletedColumn, map)
             //only add it to the index is it is not deleted
             if (!deleted.equals("true")) {
                 var slat = getValue("decimalLatitude.p", map)
@@ -173,29 +174,71 @@ trait IndexDAO {
                     }
                 }
 
-                return Array(guid, getValue("occurrenceID", map), getValue("dataHubUid.p", map), getValue("dataHub.p", map), getValue("dataProviderUid.p", map), getValue("dataProviderName.p", map),
-                    getValue("dataResourceUid.p", map), getValue("dataResourceName.p", map), getValue("institutionUid.p", map),
-                    getValue("institutionCode", map), getValue("institutionName.p", map),
-                    getValue("collectionUid.p", map), getValue("collectionCode", map), getValue("collectionName.p", map),
-                    getValue("catalogNumber", map), taxonConceptId, if (eventDate != "") eventDate + "T00:00:00Z" else "", occurrenceYear,
-                    sciName, vernacularName, sciName + "|" + taxonConceptId + "|" + vernacularName + "|" + kingdom + "|" + family,
-                    getValue("taxonRank.p", map), getValue("taxonRankID.p", map), getValue("scientificName", map),
-                    getValue("vernacularName", map), if (images != null && images.size > 0 && images(0) != "") "Multimedia" else "None", if (images != null && images.size > 0) images(0) else "", if (speciesGroup != null) speciesGroup.reduceLeft(_ + "|" + _) else "", getValue("countryCode", map),
-                    getValue("left.p", map), getValue("right.p", map),
-                    kingdom, getValue("phylum.p", map), getValue("classs.p", map),
-                    getValue("order.p", map), family, getValue("genus.p", map),
-                    getValue("species.p", map), getValue("stateProvince.p", map), getValue("imcra.p", map),
-                    getValue("ibra.p", map), getValue("lga.p", map), slat,
-                    slon, latlon, getLatLongString(lat, lon, "#"), getLatLongString(lat, lon, "#.#"),
-                    getLatLongString(lat, lon, "#.##"), getLatLongString(lat, lon, "#.###"),
-                    getLatLongString(lat, lon, "#.####"), getValue("year.p", map), getValue("month.p", map), getValue("basisOfRecord.p", map),
-                    getValue("basisOfRecord", map), getValue("typeStatus.p", map), getValue("typeStatus", map),
-                    getValue(OccurrenceDAO.taxonomicDecisionColumn, map), getValue(OccurrenceDAO.geospatialDecisionColumn, map),
-                    getAssertions(map).reduceLeft(_ + "|" + _), getValue("locationRemarks", map),
-                    getValue("occurrenceRemarks", map), "", (getValue(OccurrenceDAO.userQualityAssertionColumn, map) != "").toString,
+                return Array(guid,
+                    getValue("occurrenceID", map),
+                    getValue("dataHubUid.p", map),
+                    getValue("dataHub.p", map),
+                    getValue("dataProviderUid.p", map),
+                    getValue("dataProviderName.p", map),
+                    getValue("dataResourceUid.p", map),
+                    getValue("dataResourceName.p", map),
+                    getValue("institutionUid.p", map),
+                    getValue("institutionCode", map),
+                    getValue("institutionName.p", map),
+                    getValue("collectionUid.p", map),
+                    getValue("collectionCode", map),
+                    getValue("collectionName.p", map),
+                    getValue("catalogNumber", map),
+                    taxonConceptId, if (eventDate != "") eventDate + "T00:00:00Z" else "", occurrenceYear,
+                    sciName,
+                    vernacularName,
+                    sciName + "|" + taxonConceptId + "|" + vernacularName + "|" + kingdom + "|" + family,
+                    getValue("taxonRank.p", map),
+                    getValue("taxonRankID.p", map),
+                    getValue("scientificName", map),
+                    getValue("vernacularName", map),
+                    if (images != null && images.size > 0 && images(0) != "") "Multimedia" else "None",
+                    if (images != null && images.size > 0) images(0) else "",
+                    if (speciesGroup != null) speciesGroup.reduceLeft(_ + "|" + _) else "",
+                    getValue("countryCode", map),
+                    getValue("left.p", map),
+                    getValue("right.p", map),
+                    kingdom, getValue("phylum.p", map),
+                    getValue("classs.p", map),
+                    getValue("order.p", map), family,
+                    getValue("genus.p", map),
+                    getValue("species.p", map),
+                    getValue("stateProvince.p", map),
+                    getValue("imcra.p", map),
+                    getValue("ibra.p", map),
+                    getValue("lga.p", map),
+                    slat,
+                    slon,
+                    latlon,
+                    getLatLongString(lat, lon, "#"),
+                    getLatLongString(lat, lon, "#.#"),
+                    getLatLongString(lat, lon, "#.##"),
+                    getLatLongString(lat, lon, "#.###"),
+                    getLatLongString(lat, lon, "#.####"),
+                    getValue("year.p", map),
+                    getValue("month.p", map),
+                    getValue("basisOfRecord.p", map),
+                    getValue("basisOfRecord", map),
+                    getValue("typeStatus.p", map),
+                    getValue("typeStatus", map),
+                    getValue(occurrenceDAO.taxonomicDecisionColumn, map),
+                    getValue(occurrenceDAO.geospatialDecisionColumn, map),
+                    getAssertions(map).reduceLeft(_ + "|" + _),
+                    getValue("locationRemarks", map),
+                    getValue("occurrenceRemarks", map),
+                    "",
+                    (getValue(occurrenceDAO.userQualityAssertionColumn, map) != "").toString,
                     getValue("recordedBy", map),
-                    getValue("mean_temperature_cars2009a_band1.p", map), getValue("mean_oxygen_cars2006_band1.p", map),
-                    getValue("bioclim_bio34.p", map), getValue("bioclim_bio12.p", map), getValue("bioclim_bio11.p", map))
+                    getValue("mean_temperature_cars2009a_band1.p", map),
+                    getValue("mean_oxygen_cars2006_band1.p", map),
+                    getValue("bioclim_bio34.p", map),
+                    getValue("bioclim_bio12.p", map),
+                    getValue("bioclim_bio11.p", map))
             }
             else {
                 return Array()
@@ -263,14 +306,16 @@ trait IndexDAO {
         if (year.length == 4)
             occ.setOccurrenceYear(DateUtils.parseDate(year, Array("yyyy")))
 
-        occ.setHasUserAssertions((OccurrenceDAO.getUserAssertions(occ.uuid).size > 0).toString)
+        occ.setHasUserAssertions((occurrenceDAO.getUserAssertions(occ.uuid).size > 0).toString)
         Some(occ)
     }
 }
 
-object SolrOccurrenceDAO extends IndexDAO {
+class SolrOccurrenceDAOImpl extends IndexDAO {
 
     import org.apache.commons.lang.StringUtils.defaultString
+    @Inject
+    var occurrenceDAO:OccurrenceDAO = _
 
     val logger = LoggerFactory.getLogger("SolrOccurrenceDAO")
     val solrDocList = new java.util.ArrayList[SolrInputDocument]
@@ -318,7 +363,8 @@ object SolrOccurrenceDAO extends IndexDAO {
         val occ = super.getOccIndexModel(records)
         if (!occ.isEmpty) {
             //set the names lsid
-            val v = List(defaultString(occ.get.scientificName), defaultString(occ.get.taxonConceptID), defaultString(occ.get.vernacularName), defaultString(occ.get.kingdom), defaultString(occ.get.family))
+            val v = List(defaultString(occ.get.scientificName), defaultString(occ.get.taxonConceptID),
+                defaultString(occ.get.vernacularName), defaultString(occ.get.kingdom), defaultString(occ.get.family))
             occ.get.setNamesLsid(v.mkString("|"))
         }
         occ
@@ -362,6 +408,4 @@ object SolrOccurrenceDAO extends IndexDAO {
         val rq = SolrIndexDAO.solrServer.query(new SolrQuery("*:*"))
         println(">>>>>>>>>>>>>Document count of index: " + rq.getResults().getNumFound())
     }
-
-
 }

@@ -26,6 +26,9 @@ object FastDwCLoader {
     import scalaj.collection.Imports._
     import ReflectBean._
 
+    val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+    val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
+
     def main(args:Array[String]){
         
         if(args.length==2){
@@ -66,9 +69,9 @@ object FastDwCLoader {
 
         var counter = 0
         
-        OccurrenceDAO.pageOverAll(Versions.RAW, record => {
+        occurrenceDAO.pageOverAll(Versions.RAW, record => {
             val uniqueID = dataResourceUID+"|"+record.get.occurrence.institutionCode+"|"+record.get.occurrence.collectionCode +"|"+record.get.occurrence.catalogNumber
-            DAO.persistentManager.put(uniqueID, "dr", "uuid", record.get.uuid)
+            persistenceManager.put(uniqueID, "dr", "uuid", record.get.uuid)
             counter+=1
             if(counter % 1000 == 0){
               System.out.println(counter + " >> update mapping for: " + record.get.uuid+", uniqueID: "+uniqueID);

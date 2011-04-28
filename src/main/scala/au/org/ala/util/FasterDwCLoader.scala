@@ -19,6 +19,7 @@ import org.wyki.cassandra.pelops.Pelops
 import java.util.UUID
 import au.com.bytecode.opencsv.CSVReader
 import java.io.{FileReader, File}
+import au.org.ala.biocache._
 
 /**
  * Reads a DwC-A and writes the data to the BioCache
@@ -32,6 +33,7 @@ object FasterDwCLoader {
   val columnFamily = "occ"
   val poolName = "occ-pool"
   val resourceUid = "dp20"
+  val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
   def main(args: Array[String]): Unit = {
 
@@ -69,8 +71,8 @@ object FasterDwCLoader {
       val ic = map.get("institutionCode").getOrElse(null)
       val uniqueID = resourceUid + "|" + ic + "|" + cc + "|" + cn
 
-      DAO.persistentManager.put(recordUuid, "occ", map)
-      DAO.persistentManager.put(uniqueID, "dr", "uuid", recordUuid)
+      persistenceManager.put(recordUuid, "occ", map)
+      persistenceManager.put(uniqueID, "dr", "uuid", recordUuid)
       //debug
       if (count % 100 == 0 && count > 0) {
         finishTime = System.currentTimeMillis
@@ -81,7 +83,7 @@ object FasterDwCLoader {
       columns = csvReader.readNext
     }
 
-    Pelops.shutdown
+    persistenceManager.shutdown
     println("Finished DwC loader. Records processed: " + count)
   }
 }

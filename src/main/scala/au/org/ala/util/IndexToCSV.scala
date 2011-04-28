@@ -2,8 +2,9 @@
 package au.org.ala.util
 
 import au.com.bytecode.opencsv.CSVWriter
-import au.org.ala.biocache.DAO
-import au.org.ala.biocache.SolrOccurrenceDAO
+import au.org.ala.biocache.IndexDAO
+import au.org.ala.biocache.Config
+import au.org.ala.biocache.PersistenceManager
 import java.io.OutputStreamWriter
 import org.slf4j.LoggerFactory
 
@@ -13,8 +14,12 @@ import org.slf4j.LoggerFactory
  */
 object IndexToCSV {
  val logger = LoggerFactory.getLogger("IndexToCSV")
-  var indexer = SolrOccurrenceDAO
+
   def main(args: Array[String]): Unit = {
+
+    val indexer = Config.getInstance(classOf[IndexDAO]).asInstanceOf[IndexDAO]
+    val persistentManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
+
     val filename = if(args.size==1) args(0) else "/data/biocache/occurrence/occurrences.csv"
     var counter = 0
     var startTime = System.currentTimeMillis
@@ -23,7 +28,7 @@ object IndexToCSV {
     val csvWriter = new CSVWriter(new OutputStreamWriter(new java.io.FileOutputStream(filename)), ',', '"')
     //write the header
     csvWriter.writeNext(indexer.getHeaderValues)
-    DAO.persistentManager.pageOverAll("occ", (guid, map)=> {
+    persistentManager.pageOverAll("occ", (guid, map)=> {
         counter += 1
         val item =indexer.getOccIndexModel(guid, map)
          csvWriter.writeNext(item)
