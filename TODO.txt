@@ -4,10 +4,8 @@
 
 TODO
 
-1. Remove the use of scala enumerations (Version)
+1. Finish data quality tests
 
-2. Add QualityAssertions to FullRecord. 
+2. MongoDB port
 
-3. Paging by data resource
-
-4. Split out image records into separate objects.
+3. Split processing into separate runnables
