@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory
 import com.google.inject.name.Named
 import com.google.inject.Inject
 import java.lang.Class
+import com.mongodb.casbah.Imports._
 
 /**
  * This trait should be implemented for Cassandra,
@@ -29,6 +30,11 @@ trait PersistenceManager {
     def get(uuid:String, entityName:String): Option[Map[String, String]]
 
     /**
+     * Retrieve an array of objects from a single column.
+     */
+    def getList(uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[AnyRef]) : List[AnyRef]
+
+    /**
      * Put a single property.
      */
     def put(uuid:String, entityName:String, propertyName:String, propertyValue:String)
@@ -42,11 +48,6 @@ trait PersistenceManager {
      * Add a batch of properties.
      */
     def putBatch(entityName:String, batch:Map[String, Map[String,String]])
-
-    /**
-     * Retrieve an array of objects.
-     */
-    def getList(uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[AnyRef]) : List[AnyRef]
 
     /**
      * @overwrite if true, current stored value will be replaced without a read.
@@ -85,9 +86,10 @@ class CassandraPersistenceManager @Inject() (
     @Named("cassandraPoolName") poolName:String = "biocache-store-pool",
     @Named("cassandraKeyspace") keyspace:String = "occ") extends PersistenceManager {
 
+    protected val logger = LoggerFactory.getLogger("CassandraPersistenceManager")
+
     val maxColumnLimit = 10000
     import JavaConversions._
-    protected val logger = LoggerFactory.getLogger("CassandraPersistenceManager")
     logger.info("Initialising cassandra connection pool with pool name: " + poolName)
     logger.info("Initialising cassandra connection pool with hosts: " + host)
     logger.info("Initialising cassandra connection pool with port: " + port)
@@ -329,28 +331,69 @@ class CassandraPersistenceManager @Inject() (
 }
 
 /**
- * To be added
+ * To be added.....
  */
-class MongoDBPersistenceManager extends PersistenceManager {
-    def shutdown = {}
+class MongoDBPersistenceManager @Inject()(
+    @Named("mongoHosts") host:String = "localhost") extends PersistenceManager {
 
-    def selectRows(uuids: Array[String], entityName: String, propertyNames: Array[String], proc: (Map[String, String]) => Unit) = null
+    import JavaConversions._
+    val uuidColumn = "_id"
+    val db = "occ"
+    val mongoConn = MongoConnection(host)
 
-    def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int, columnName: String*) = null
+    def get(uuid: String, entityName: String) = {
+        val mongoColl = mongoConn(db)(entityName)
+        val q = MongoDBObject(uuidColumn -> uuid)
+        Some(mongoColl.findOne(q).get.toMap.map({ case(key,value) => (key.toString, value.toString) }).toMap)
+    }
 
-    def pageOverAll(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int) = null
+    def get(uuid: String, entityName: String, propertyName: String) = {
+        val mongoColl = mongoConn(db)(entityName)
+        val q = MongoDBObject(uuidColumn -> uuid)
+        val map = mongoColl.findOne(q).get.toMap.map({ case(key,value) => (key.toString, value.toString) }).toMap
+        map.get(propertyName)
+    }
+
+    def put(uuid: String, entityName: String, propertyName: String, propertyValue: String) = {
+        val set = $set( (propertyName,propertyValue) )
+        val mongoColl = mongoConn(db)(entityName)
+        mongoColl.update(Map(uuidColumn -> uuid), set, false, false)
+    }
+
+    def put(uuid: String, entityName: String, keyValuePairs: Map[String, String]) = {
+        val mongoColl = mongoConn(db)(entityName)
+        mongoColl.update(Map(uuidColumn -> uuid), keyValuePairs.asDBObject, false, false)
+    }
+
+    def getList(uuid: String, entityName: String, propertyName: String, theClass: Class[AnyRef]) = {
+
+
+
+
+
+
+        null
+    }
 
     def putList(uuid: String, entityName: String, propertyName: String, objectList: List[AnyRef], overwrite: Boolean) = null
 
-    def getList(uuid: String, entityName: String, propertyName: String, theClass: Class[AnyRef]) = null
-
     def putBatch(entityName: String, batch: Map[String, Map[String, String]]) = null
 
-    def put(uuid: String, entityName: String, keyValuePairs: Map[String, String]) = null
+    def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int, columnName: String*) = null
 
-    def put(uuid: String, entityName: String, propertyName: String, propertyValue: String) = null
+    def pageOverAll(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int) = {
+        //page through all records
+        val mongoColl = mongoConn(db)(entityName)
+        val cursor = mongoColl.find()
+        for(dbObject:DBObject <- cursor){
+            val map = dbObject.toMap.map({ case(key,value) => (key.toString, value.toString) }).toMap
+            proc(map.getOrElse(uuidColumn, ""), map)
+        }
+    }
 
-    def get(uuid: String, entityName: String) = null
+    def selectRows(uuids: Array[String], entityName: String, propertyNames: Array[String], proc: (Map[String, String]) => Unit) = {
 
-    def get(uuid: String, entityName: String, propertyName: String) = null
+    }
+
+    def shutdown = {}
 }

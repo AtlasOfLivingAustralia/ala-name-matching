@@ -57,9 +57,11 @@ trait IndexDAO {
 
     def getValue(field: String, map: Map[String, String]): String = {
         val value = map.get(field)
-        if (!value.isEmpty)
-            return value.get
-        ""
+        if (!value.isEmpty){
+            value.get
+        } else {
+            ""
+        }
     }
 
     /**
@@ -98,9 +100,10 @@ trait IndexDAO {
     def getLatLongString(lat: Double, lon: Double, format: String): String = {
         if (!lat.isNaN && !lon.isNaN) {
             val df = new java.text.DecimalFormat(format)
-            return df.format(lat) + "," + df.format(lon)
+            df.format(lat) + "," + df.format(lon)
+        } else {
+            ""
         }
-        ""
     }
 
     /**
@@ -144,9 +147,19 @@ trait IndexDAO {
                 val kingdom = getValue("kingdom.p", map)
                 val family = getValue("family.p", map)
                 val simages = getValue("images.p", map)
-                val images = if (simages.length > 0) Json.toArray(simages, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]] else Array[String]("")
+                val images = {
+                    if (simages.length > 0)
+                        Json.toArray(simages, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]]
+                    else
+                        Array[String]("")
+                }
                 val sspeciesGroup = getValue("speciesGroups.p", map)
-                val speciesGroup = if (sspeciesGroup.length > 0) Json.toArray(sspeciesGroup, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]] else Array[String]("")
+                val speciesGroup = {
+                    if (sspeciesGroup.length > 0)
+                        Json.toArray(sspeciesGroup, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]]
+                    else
+                        Array[String]("")
+                }
                 var eventDate = getValue("eventDate.p", map)
                 var occurrenceYear = getValue("year.p", map)
                 if (occurrenceYear.length == 4)

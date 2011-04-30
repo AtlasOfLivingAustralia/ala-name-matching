@@ -1,6 +1,5 @@
 package au.org.ala.biocache
 
-import au.org.ala.checklist.lucene.CBIndexSearch
 import com.google.inject.Inject
 
 //import au.org.ala.sds.SensitiveSpeciesFinderFactory
@@ -8,7 +7,6 @@ import au.org.ala.util.ReflectBean
 import java.io.OutputStream
 import scala.collection.JavaConversions
 import scala.collection.mutable.ArrayBuffer
-import java.util.Properties
 import java.util.UUID
 import collection.immutable.HashSet
 import org.slf4j.LoggerFactory
@@ -98,6 +96,7 @@ object DAO {
 }
 
 trait OccurrenceDAO {
+
   val entityName = "occ"
   val qualityAssertionColumn = "qualityAssertion"
   val userQualityAssertionColumn = "userQualityAssertion"
