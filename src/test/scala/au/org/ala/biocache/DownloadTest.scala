@@ -1,12 +1,14 @@
 package au.org.ala.biocache
 
 import org.scalatest.FunSuite
-import org.wyki.cassandra.pelops.Pelops
 
 /**
  * @author Dave Martin (David.Martin@csiro.au)
  */
 class DownloadTest extends FunSuite {
+
+  val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+  val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
   test("Download to CSV") {
 
@@ -16,11 +18,11 @@ class DownloadTest extends FunSuite {
         "0001b51b-32d7-48a8-9f67-3563cba731f3")
 
     println("Raw values")
-    OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"))
+    occurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"))
 
     println("Processed values")
-    OccurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"))
+    occurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"))
 
-    Pelops.shutdown
+    persistenceManager.shutdown
   }
 }

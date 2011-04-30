@@ -1,17 +1,11 @@
 package au.org.ala.biocache
 
 import org.scalatest.FunSuite
-import org.wyki.cassandra.pelops.Pelops
-
-/**
- * Created by IntelliJ IDEA.
- * User: davejmartin2
- * Date: 31/01/2011
- * Time: 14:15
- * To change this template use File | Settings | File Templates.
- */
 
 class VersionTests extends FunSuite {
+
+  val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+  val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
   test("Store and retrieval of all versions"){
 
@@ -26,12 +20,12 @@ class VersionTests extends FunSuite {
 
     val assertions = Array(QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, true, "Coordinates bad"))
 
-    OccurrenceDAO.updateOccurrence(uuid,raw,Raw)
-    OccurrenceDAO.updateOccurrence(uuid,processed,Some(assertions),Processed)
-    OccurrenceDAO.updateOccurrence(uuid,consensus,Consensus)
+    occurrenceDAO.updateOccurrence(uuid,raw,Raw)
+    occurrenceDAO.updateOccurrence(uuid,processed,Some(assertions),Processed)
+    occurrenceDAO.updateOccurrence(uuid,consensus,Consensus)
 
     //retrieve and test
-    val r = OccurrenceDAO.getAllVersionsByUuid(uuid)
+    val r = occurrenceDAO.getAllVersionsByUuid(uuid)
     if(r.isEmpty) fail("Empty result")
 
     val array = r.get
@@ -43,6 +37,6 @@ class VersionTests extends FunSuite {
     expect(1){array(1).assertions.length}
     expect(1){array(2).assertions.length}
 
-    Pelops.shutdown
+    persistenceManager.shutdown
   }
 }

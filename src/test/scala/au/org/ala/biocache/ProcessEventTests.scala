@@ -19,7 +19,7 @@ class ProcessEventTests extends FunSuite {
     var raw = new FullRecord("1234")
     raw.event.eventDate = "1978-12-31"
     var processed = raw.clone
-    ProcessRecords.processEvent("1234", raw, processed)
+    EventProcessor.process("1234", raw, processed)
 
     expect("1978-12-31"){ processed.event.eventDate }
     expect("31"){ processed.event.day }
@@ -32,7 +32,7 @@ class ProcessEventTests extends FunSuite {
     var raw = new FullRecord("1234")
     raw.event.verbatimEventDate = "1978-12-31/1978-12-31"
     var processed = raw.clone
-    ProcessRecords.processEvent("1234", raw, processed)
+    EventProcessor.process("1234", raw, processed)
 
     expect("1978-12-31"){ processed.event.eventDate }
     expect("31"){ processed.event.day }
@@ -47,7 +47,7 @@ class ProcessEventTests extends FunSuite {
     raw.event.month = "12"
     raw.event.day = "31"
     var processed = raw.clone
-    ProcessRecords.processEvent("1234", raw, processed)
+    EventProcessor.process("1234", raw, processed)
 
     expect("1978-12-31"){ processed.event.eventDate }
     expect("31"){ processed.event.day }
@@ -62,7 +62,7 @@ class ProcessEventTests extends FunSuite {
     raw.event.month = "12"
     raw.event.day = "31"
     var processed = raw.clone
-    ProcessRecords.processEvent("1234", raw, processed)
+    EventProcessor.process("1234", raw, processed)
 
     expect("1978-12-31"){ processed.event.eventDate }
     expect("31"){ processed.event.day }

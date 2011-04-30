@@ -10,9 +10,12 @@ import org.wyki.cassandra.pelops.Pelops
  */
 class PagingTests extends FunSuite {
 
+  val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+  val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
+
   test("Paging of first ten raw records"){
     var count = 0
-    OccurrenceDAO.pageOverAll(Raw, fullRecord => {
+    occurrenceDAO.pageOverAll(Raw, fullRecord => {
         val occurrence = fullRecord.get.occurrence
         val classification = fullRecord.get.classification
         val location = fullRecord.get.location
@@ -31,7 +34,7 @@ class PagingTests extends FunSuite {
 
   test("Paging over all versions"){
     var count = 0
-    OccurrenceDAO.pageOverAllVersions(recordVersions => {
+    occurrenceDAO.pageOverAllVersions(recordVersions => {
         val versions = recordVersions.get
         expect(3){versions.length}
         for(fullRecord <- versions){
@@ -49,6 +52,6 @@ class PagingTests extends FunSuite {
         }
       }, 10
     )
-    Pelops.shutdown
+    persistenceManager.shutdown
   }
 }
