@@ -1,5 +1,7 @@
 package au.org.ala.biocache
 import org.scalatest.FunSuite
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
 
 /**
  * Tests for event date parsing. To run these tests create a new scala application
@@ -11,6 +13,7 @@ import org.scalatest.FunSuite
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */
+@RunWith(classOf[JUnitRunner])
 class DateParserTests extends FunSuite {
 
   test("Single Year"){

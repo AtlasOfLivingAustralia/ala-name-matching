@@ -5,8 +5,10 @@ import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.response.FacetField
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.common.SolrDocumentList
+import org.junit.Ignore
 
-object IndexSearchTest {
+@Ignore
+object IndexSearchIT {
   implicit def iteratorToWrapper[T](iter:java.util.Iterator[T]):IteratorWrapper[T] = new IteratorWrapper[T](iter)
    def main(args: Array[String]): Unit = {
      System.out.println("Starting to search for Victoria")

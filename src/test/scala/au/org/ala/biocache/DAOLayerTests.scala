@@ -1,7 +1,8 @@
 package au.org.ala.biocache
-import org.wyki.cassandra.pelops.{Pelops}
 import org.scalatest.FunSuite
+import org.junit.Ignore
 
+@Ignore
 class DAOLayerTests extends FunSuite {
 
     val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]

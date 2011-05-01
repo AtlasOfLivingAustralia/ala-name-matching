@@ -1,9 +1,11 @@
 package au.org.ala.biocache
 
 import org.scalatest.FunSuite
-import au.org.ala.util.ProcessRecords
 import au.org.ala.data.model.LinnaeanRankClassification
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
 
+@RunWith(classOf[JUnitRunner])
 class TaxonomicHintsTest extends FunSuite {
 
     test("parse hints"){
@@ -17,7 +19,7 @@ class TaxonomicHintsTest extends FunSuite {
     test("happy days - no conflicts"){
        val hintMap = ClassificationProcessor.parseHints(List("phylum:A", "kingdom:K", "phylum:B", "kingdom:L", "class:N"))
        val cln = new LinnaeanRankClassification("L", "bus")
-       expect(true){ClassificationProcessor.isMatchValid(cln,hintMap)._2}
+       expect(true){ClassificationProcessor.isMatchValid(cln,hintMap)._1}
     }
 
     test("Phylum mismatch"){
@@ -25,13 +27,13 @@ class TaxonomicHintsTest extends FunSuite {
 
        val hintMap = ClassificationProcessor.parseHints(List("phylum:A", "kingdom:K", "phylum:B", "kingdom:L", "class:N"))
        val cln = new LinnaeanRankClassification("L", "C", null, null, "bus",null,null)
-       expect(false){ClassificationProcessor.isMatchValid(cln,hintMap)._2}
+       expect(false){ClassificationProcessor.isMatchValid(cln,hintMap)._1}
     }
 
     test("CLass mismatch"){
        val hintMap = ClassificationProcessor.parseHints(List("class:B", "phylum:annelida", "phylum:arthropoda"))
        val cln = new LinnaeanRankClassification("L", null, "A", null, "bus",null,null)
-       expect(false){ClassificationProcessor.isMatchValid(cln,hintMap)._2}
+       expect(false){ClassificationProcessor.isMatchValid(cln,hintMap)._1}
     }
 
     test("Arthropoda"){
@@ -39,7 +41,7 @@ class TaxonomicHintsTest extends FunSuite {
   //      Classification: au.org.ala.data.model.LinnaeanRankClassification@61557a77[kingdom=Animalia,phylum=Arthropoda,klass=Insecta,order=Coleoptera,family=Chrysomelidae,genus=Elaphodes,species=Elaphodes signifer,specificEpithet=<null>,subspecies=<null>,infraspecificEpithet=<null>,scientificName=Elaphodes signifer]
        val hintMap = ClassificationProcessor.parseHints(List("phylum:annelida", "phylum:arthropoda"))
        val cln = new LinnaeanRankClassification("Animalia","Arthropoda","Insecta","Coleoptera","Chrysomelidae","Elaphodes","Elaphodes signifer")
-       expect(true){ClassificationProcessor.isMatchValid(cln,hintMap)._2}
+       expect(true){ClassificationProcessor.isMatchValid(cln,hintMap)._1}
     }
 
 }

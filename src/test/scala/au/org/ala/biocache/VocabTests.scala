@@ -1,10 +1,13 @@
 package au.org.ala.biocache
 
 import org.scalatest.FunSuite
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
 
 /**
  * Test for vocabulary mapping and lookups.
  */
+@RunWith(classOf[JUnitRunner])
 class VocabTests extends FunSuite {
 
   test("Basis of record matching"){

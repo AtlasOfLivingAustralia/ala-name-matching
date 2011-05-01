@@ -1,6 +1,7 @@
 package au.org.ala.biocache
 import org.scalatest.FunSuite
-import au.org.ala.util.ProcessRecords
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
 
 /**
  * Tests for event date parsing. To run these tests create a new scala application
@@ -12,6 +13,7 @@ import au.org.ala.util.ProcessRecords
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */
+@RunWith(classOf[JUnitRunner])
 class ProcessEventTests extends FunSuite {
 
   test("yyyy-dd-mm correctly sets year, month, day values in process object") {

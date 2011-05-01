@@ -3,7 +3,9 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.apache.cassandra.thrift.ConsistencyLevel
 import org.wyki.cassandra.pelops.{Policy, Mutator, Pelops}
+import org.junit.Ignore
 
+@Ignore
 class QualityAssertionTests extends FunSuite {
 
   val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]

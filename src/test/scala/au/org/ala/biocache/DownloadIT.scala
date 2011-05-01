@@ -1,11 +1,13 @@
 package au.org.ala.biocache
 
 import org.scalatest.FunSuite
+import org.junit.Ignore
 
 /**
  * @author Dave Martin (David.Martin@csiro.au)
  */
-class DownloadTest extends FunSuite {
+@Ignore
+class DownloadIT extends FunSuite {
 
   val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
   val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]

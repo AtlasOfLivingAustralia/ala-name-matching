@@ -1,13 +1,14 @@
 package au.org.ala.biocache
 
 import org.scalatest.FunSuite
-import org.wyki.cassandra.pelops.Pelops
+import org.junit.Ignore
 
 /**
  * Demonstrator paging code.  Need to find a way of running this as tests.
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */
+@Ignore
 class PagingTests extends FunSuite {
 
   val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
@@ -29,7 +30,7 @@ class PagingTests extends FunSuite {
         }
       }, 10
     )
-    Pelops.shutdown
+    persistenceManager.shutdown
   }
 
   test("Paging over all versions"){

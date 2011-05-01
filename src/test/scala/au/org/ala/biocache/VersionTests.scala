@@ -1,7 +1,9 @@
 package au.org.ala.biocache
 
 import org.scalatest.FunSuite
+import org.junit.Ignore
 
+@Ignore
 class VersionTests extends FunSuite {
 
   val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
