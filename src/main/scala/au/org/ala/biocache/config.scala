@@ -11,6 +11,9 @@ import com.google.inject.{Scopes, Guice, Injector, AbstractModule}
 object Config {
     private val inj:Injector = Guice.createInjector(new ConfigModule())
     def getInstance(classs:Class[_]) = inj.getInstance(classs)
+
+    val occurrenceDAO = getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+    val persistenceManager = getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 }
 
 /**

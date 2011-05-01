@@ -9,6 +9,7 @@ import com.google.inject.name.Named
 import com.google.inject.Inject
 import java.lang.Class
 import com.mongodb.casbah.Imports._
+import java.util.UUID
 
 /**
  * This trait should be implemented for Cassandra,
@@ -37,12 +38,12 @@ trait PersistenceManager {
     /**
      * Put a single property.
      */
-    def put(uuid:String, entityName:String, propertyName:String, propertyValue:String)
+    def put(uuid:String, entityName:String, propertyName:String, propertyValue:String) : String
 
     /**
      * Put a set of key value pairs.
      */
-    def put(uuid:String, entityName:String, keyValuePairs:Map[String, String])
+    def put(uuid:String, entityName:String, keyValuePairs:Map[String, String]) : String
 
     /**
      * Add a batch of properties.
@@ -52,7 +53,7 @@ trait PersistenceManager {
     /**
      * @overwrite if true, current stored value will be replaced without a read.
      */
-    def putList(uuid:String, entityName:String, propertyName:String, objectList:List[AnyRef], overwrite:Boolean)
+    def putList(uuid:String, entityName:String, propertyName:String, objectList:List[AnyRef], overwrite:Boolean = true) : String
 
     /**
      * Page over all entities, passing the retrieved UUID and property map to the supplied function.
@@ -145,22 +146,28 @@ class CassandraPersistenceManager @Inject() (
      * Store the supplied map of properties as separate columns in cassandra.
      */
     def put(uuid:String, entityName:String, keyValuePairs:Map[String, String]) = {
+
+        val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
+
         val mutator = Pelops.createMutator(poolName, keyspace)
         keyValuePairs.foreach( keyValue => {
           //NC: only add the column if the value is not null
           if(keyValue._2!=null)
-            mutator.writeColumn(uuid, entityName, mutator.newColumn(keyValue._1.getBytes, keyValue._2))
+            mutator.writeColumn(recordId, entityName, mutator.newColumn(keyValue._1.getBytes, keyValue._2))
         })
         mutator.execute(ConsistencyLevel.ONE)
+        recordId
     }
 
     /**
      * Store the supplied property value in the column
      */
     def put(uuid:String, entityName:String, propertyName:String, propertyValue:String) = {
+        val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
         val mutator = Pelops.createMutator(poolName, keyspace)
-        mutator.writeColumn(uuid, entityName, mutator.newColumn(propertyName.getBytes, propertyValue))
+        mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName.getBytes, propertyValue))
         mutator.execute(ConsistencyLevel.ONE)
+        recordId
     }
 
     /**
@@ -181,13 +188,14 @@ class CassandraPersistenceManager @Inject() (
      */
     def putList(uuid:String, entityName:String, propertyName:String, newList:List[AnyRef], overwrite:Boolean) = {
 
+        val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
         //initialise the serialiser
 //        val gson = new Gson
         val mutator = Pelops.createMutator(poolName, keyspace)
 
         if (overwrite) {
             val json = Json.toJSON(newList)
-            mutator.writeColumn(uuid, entityName, mutator.newColumn(propertyName, json))
+            mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, json))
         } else {
 
             //retrieve existing values
@@ -196,7 +204,7 @@ class CassandraPersistenceManager @Inject() (
             if (column.isEmpty) {
                 //write new values
                 val json = Json.toJSON(newList)
-                mutator.writeColumn(uuid, entityName, mutator.newColumn(propertyName, json))
+                mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, json))
             } else {
                 //retrieve the existing objects
                 val currentJson = new String(column.get.getValue)
@@ -218,10 +226,11 @@ class CassandraPersistenceManager @Inject() (
 
                 // check equals
                 val newJson = Json.toJSON(buffer.toList)
-                mutator.writeColumn(uuid, entityName, mutator.newColumn(propertyName, newJson))
+                mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, newJson))
             }
         }
         mutator.execute(ConsistencyLevel.ONE)
+        recordId
     }
 
     /**
@@ -334,7 +343,7 @@ class CassandraPersistenceManager @Inject() (
  * To be added.....
  */
 class MongoDBPersistenceManager @Inject()(
-    @Named("mongoHosts") host:String = "localhost") extends PersistenceManager {
+    @Named("mongoHost") host:String = "localhost") extends PersistenceManager {
 
     import JavaConversions._
     val uuidColumn = "_id"
@@ -343,39 +352,114 @@ class MongoDBPersistenceManager @Inject()(
 
     def get(uuid: String, entityName: String) = {
         val mongoColl = mongoConn(db)(entityName)
-        val q = MongoDBObject(uuidColumn -> uuid)
+        val q = MongoDBObject(uuidColumn -> new ObjectId(uuid))
         Some(mongoColl.findOne(q).get.toMap.map({ case(key,value) => (key.toString, value.toString) }).toMap)
     }
 
     def get(uuid: String, entityName: String, propertyName: String) = {
         val mongoColl = mongoConn(db)(entityName)
-        val q = MongoDBObject(uuidColumn -> uuid)
-        val map = mongoColl.findOne(q).get.toMap.map({ case(key,value) => (key.toString, value.toString) }).toMap
-        map.get(propertyName)
+        val query = MongoDBObject(uuidColumn -> new ObjectId(uuid))
+        val fields = MongoDBObject(propertyName -> 1)
+        val map = mongoColl.findOne(query,fields)
+        Some(map.get.toMap.get(propertyName).asInstanceOf[String])
+    }
+
+    def getList(uuid: String, entityName: String, propertyName: String, theClass: Class[AnyRef]) = {
+
+        val mongoColl = mongoConn(db)(entityName)
+        val query = MongoDBObject(uuidColumn -> new ObjectId(uuid))
+        val fields = MongoDBObject(propertyName -> 1)
+        val map = mongoColl.findOne(query,fields)
+        val propertyInJSON = map.get(propertyName).asInstanceOf[String]
+        if(propertyInJSON.isEmpty){
+            List()
+        } else {
+            Json.toList(propertyInJSON,theClass)
+        }
     }
 
     def put(uuid: String, entityName: String, propertyName: String, propertyValue: String) = {
-        val set = $set( (propertyName,propertyValue) )
+
         val mongoColl = mongoConn(db)(entityName)
-        mongoColl.update(Map(uuidColumn -> uuid), set, false, false)
+        if(uuid != null){
+            val set = $set( (propertyName,propertyValue) )
+            mongoColl.update(Map(uuidColumn -> uuid), set, false, false)
+            uuid
+        } else {
+            val newInsert = Map(propertyName -> propertyValue).asDBObject
+            val writeResult = mongoColl.insert(newInsert)
+            if(newInsert._id.isEmpty){
+                throw new RuntimeException("Insert failed.")
+            } else {
+                newInsert._id.get.toString
+            }
+        }
     }
 
     def put(uuid: String, entityName: String, keyValuePairs: Map[String, String]) = {
         val mongoColl = mongoConn(db)(entityName)
         mongoColl.update(Map(uuidColumn -> uuid), keyValuePairs.asDBObject, false, false)
+        uuid
     }
 
-    def getList(uuid: String, entityName: String, propertyName: String, theClass: Class[AnyRef]) = {
+    def putList(uuid: String, entityName: String, propertyName: String, objectList: List[AnyRef], overwrite: Boolean = true) = {
+
+        val mongoColl = mongoConn(db)(entityName)
+        val json = Json.toJSON(objectList)
+
+        if(uuid != null){
+            val set = $set( (propertyName,json) )
+            mongoColl.update(Map(uuidColumn -> uuid), set, false, false)
+            uuid
+        } else {
+            val newInsert = Map(propertyName -> json).asDBObject
+            val writeResult = mongoColl.insert(newInsert)
+            if(newInsert._id.isEmpty){
+                throw new RuntimeException("Insert failed.")
+            } else {
+                newInsert._id.get.toString
+            }
+        }
 
 
+        //if (overwrite) {
+            //val set = $set( (propertyName,json) )
+           // mongoColl.update(Map(uuidColumn -> uuid), set, false, false)
+        //} else {
 
-
-
-
-        null
+//            //retrieve existing values
+//            val currentValue = get(uuid, entityName, propertyName)
+//            //if empty, write, if populated resolve
+//            if (currentValue.isEmpty) {
+//                //write new values
+//                val json = Json.toJSON(newList)
+//                //mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, json))
+//            } else {
+//                //retrieve the existing objects
+//                val currentJson = new String(column.get.getValue)
+//                var currentList = Json.toList(currentJson, newList(0).getClass.asInstanceOf[java.lang.Class[AnyRef]])
+//                //   gson.fromJson(currentJson, propertyArray.getClass).asInstanceOf[Array[AnyRef]]
+//
+//                var written = false
+//                var buffer = new ListBuffer[AnyRef]
+//
+//                for (theObject <- currentList) {
+//                    if (!newList.contains(theObject)) {
+//                        //add to buffer
+//                        buffer + theObject
+//                    }
+//                }
+//
+//                //PRESERVE UNIQUENESS
+//                buffer ++= newList
+//
+//                // check equals
+//                val newJson = Json.toJSON(buffer.toList)
+//                //mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, newJson))
+//            }
+//        }
+        //uuid
     }
-
-    def putList(uuid: String, entityName: String, propertyName: String, objectList: List[AnyRef], overwrite: Boolean) = null
 
     def putBatch(entityName: String, batch: Map[String, Map[String, String]]) = null
 
@@ -395,5 +479,5 @@ class MongoDBPersistenceManager @Inject()(
 
     }
 
-    def shutdown = {}
+    def shutdown = mongoConn.close
 }
