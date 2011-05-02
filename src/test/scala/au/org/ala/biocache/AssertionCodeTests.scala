@@ -1,6 +1,9 @@
 package au.org.ala.biocache
 import org.scalatest.FunSuite
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
 
+@RunWith(classOf[JUnitRunner])
 class AssertionCodeTests extends FunSuite {
 
     test("Test the geospatially kosher test") {

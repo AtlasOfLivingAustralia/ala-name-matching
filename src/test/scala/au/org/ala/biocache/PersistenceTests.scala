@@ -14,12 +14,11 @@ class PersistenceTests extends FunSuite {
 
     test("Simple put list"){
         val list = List(QualityAssertion(1),QualityAssertion(2))
-        val uuid = Config.persistenceManager.putList(null, "test", "mylist", list, true)
+        val uuid = Config.persistenceManager.putList[QualityAssertion](null, "test", "mylist", list, classOf[QualityAssertion], true)
 
         //retrieve the list
         println("UUID: " + uuid)
-        val theClass = classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]
-        val retrievedList = Config.persistenceManager.getList(uuid, "test", "mylist", theClass).asInstanceOf[List[QualityAssertion]]
+        val retrievedList = Config.persistenceManager.getList[QualityAssertion](uuid, "test", "mylist", classOf[QualityAssertion])
         expect(2){retrievedList.size}
         expect(1){retrievedList.head.code}
     }

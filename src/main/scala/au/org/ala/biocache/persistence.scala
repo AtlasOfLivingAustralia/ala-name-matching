@@ -33,7 +33,8 @@ trait PersistenceManager {
     /**
      * Retrieve an array of objects from a single column.
      */
-    def getList(uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[AnyRef]) : List[AnyRef]
+    //def getList[A](uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[AnyRef]) : List[AnyRef]
+    def getList[A](uuid: String, entityName: String, propertyName: String, theClass:java.lang.Class[_]) : List[A]
 
     /**
      * Put a single property.
@@ -53,7 +54,8 @@ trait PersistenceManager {
     /**
      * @overwrite if true, current stored value will be replaced without a read.
      */
-    def putList(uuid:String, entityName:String, propertyName:String, objectList:List[AnyRef], overwrite:Boolean = true) : String
+    //def putList(uuid:String, entityName:String, propertyName:String, objectList:List[AnyRef], overwrite:Boolean = true) : String
+    def putList[A](uuid: String, entityName: String, propertyName: String, objectList:List[A], theClass:java.lang.Class[_], overwrite: Boolean) : String
 
     /**
      * Page over all entities, passing the retrieved UUID and property map to the supplied function.
@@ -173,20 +175,22 @@ class CassandraPersistenceManager @Inject() (
     /**
      * Retrieve the column value, and parse from JSON to Array
      */
-    def getList(uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[AnyRef]): List[AnyRef] = {
+    def getList[A](uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[_]): List[A] = {
         val column = getColumn(uuid, entityName, propertyName)
         if (column.isEmpty) {
             List()
         } else {
             val json = new String(column.get.getValue)
-            Json.toList(json,theClass)
+            //Json.toList(json,theClass)
+            Json.toListWithGeneric(json, theClass)
         }
     }
 
     /**
      * Store arrays in a single column as JSON.
      */
-    def putList(uuid:String, entityName:String, propertyName:String, newList:List[AnyRef], overwrite:Boolean) = {
+    //def putList(uuid:String, entityName:String, propertyName:String, newList:List[AnyRef], overwrite:Boolean) = {
+    def putList[A](uuid: String, entityName: String, propertyName: String, newList: List[A], theClass:java.lang.Class[_], overwrite: Boolean) = {
 
         val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
         //initialise the serialiser
@@ -194,7 +198,8 @@ class CassandraPersistenceManager @Inject() (
         val mutator = Pelops.createMutator(poolName, keyspace)
 
         if (overwrite) {
-            val json = Json.toJSON(newList)
+            //val json = Json.toJSON(newList)
+            val json:String = Json.toJSONWithGeneric(newList)
             mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, json))
         } else {
 
@@ -203,16 +208,15 @@ class CassandraPersistenceManager @Inject() (
             //if empty, write, if populated resolve
             if (column.isEmpty) {
                 //write new values
-                val json = Json.toJSON(newList)
+                val json:String = Json.toJSONWithGeneric(newList)
                 mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, json))
             } else {
                 //retrieve the existing objects
                 val currentJson = new String(column.get.getValue)
-                var currentList = Json.toList(currentJson, newList(0).getClass.asInstanceOf[java.lang.Class[AnyRef]])
-                //   gson.fromJson(currentJson, propertyArray.getClass).asInstanceOf[Array[AnyRef]]
+                var currentList = Json.toListWithGeneric(currentJson, theClass)
 
                 var written = false
-                var buffer = new ListBuffer[AnyRef]
+                var buffer = new ListBuffer[A]
 
                 for (theObject <- currentList) {
                     if (!newList.contains(theObject)) {
@@ -225,7 +229,8 @@ class CassandraPersistenceManager @Inject() (
                 buffer ++= newList
 
                 // check equals
-                val newJson = Json.toJSON(buffer.toList)
+                //val newJson = Json.toJSON(buffer.toList)
+                val newJson:String = Json.toJSONWithGeneric(buffer.toList)
                 mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, newJson))
             }
         }
@@ -332,7 +337,10 @@ class CassandraPersistenceManager @Inject() (
             val selector = Pelops.createSelector(poolName, keyspace)
             Some(selector.getColumnFromRow(uuid, columnFamily, columnName.getBytes, ConsistencyLevel.ONE))
         } catch {
-            case e:Exception => logger.debug(e.getMessage + " for " + uuid + " - " + columnFamily + " - " +columnName); None //expected behaviour when row doesnt exist
+            case e:Exception => {
+                logger.debug(e.getMessage + " for " + uuid + " - " + columnFamily + " - " +columnName)
+                None //expected behaviour when row doesnt exist
+            }
         }
     }
 
@@ -364,7 +372,7 @@ class MongoDBPersistenceManager @Inject()(
         Some(map.get.toMap.get(propertyName).asInstanceOf[String])
     }
 
-    def getList(uuid: String, entityName: String, propertyName: String, theClass: Class[AnyRef]) = {
+    def getList[A](uuid: String, entityName: String, propertyName: String, theClass:java.lang.Class[_]) = {
 
         val mongoColl = mongoConn(db)(entityName)
         val query = MongoDBObject(uuidColumn -> new ObjectId(uuid))
@@ -374,7 +382,7 @@ class MongoDBPersistenceManager @Inject()(
         if(propertyInJSON.isEmpty){
             List()
         } else {
-            Json.toList(propertyInJSON,theClass)
+            Json.toListWithGeneric(propertyInJSON,theClass)
         }
     }
 
@@ -402,16 +410,17 @@ class MongoDBPersistenceManager @Inject()(
         uuid
     }
 
-    def putList(uuid: String, entityName: String, propertyName: String, objectList: List[AnyRef], overwrite: Boolean = true) = {
+    def putList[A](uuid: String, entityName: String, propertyName: String, objectList: List[A], theClass:java.lang.Class[_], overwrite: Boolean) = {
 
+        //TODO support append (overwrite = false)
         val mongoColl = mongoConn(db)(entityName)
-        val json = Json.toJSON(objectList)
-
+        val json = Json.toJSONWithGeneric(objectList)
         if(uuid != null){
             val set = $set( (propertyName,json) )
             mongoColl.update(Map(uuidColumn -> uuid), set, false, false)
             uuid
         } else {
+
             val newInsert = Map(propertyName -> json).asDBObject
             val writeResult = mongoColl.insert(newInsert)
             if(newInsert._id.isEmpty){
@@ -420,55 +429,32 @@ class MongoDBPersistenceManager @Inject()(
                 newInsert._id.get.toString
             }
         }
-
-
-        //if (overwrite) {
-            //val set = $set( (propertyName,json) )
-           // mongoColl.update(Map(uuidColumn -> uuid), set, false, false)
-        //} else {
-
-//            //retrieve existing values
-//            val currentValue = get(uuid, entityName, propertyName)
-//            //if empty, write, if populated resolve
-//            if (currentValue.isEmpty) {
-//                //write new values
-//                val json = Json.toJSON(newList)
-//                //mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, json))
-//            } else {
-//                //retrieve the existing objects
-//                val currentJson = new String(column.get.getValue)
-//                var currentList = Json.toList(currentJson, newList(0).getClass.asInstanceOf[java.lang.Class[AnyRef]])
-//                //   gson.fromJson(currentJson, propertyArray.getClass).asInstanceOf[Array[AnyRef]]
-//
-//                var written = false
-//                var buffer = new ListBuffer[AnyRef]
-//
-//                for (theObject <- currentList) {
-//                    if (!newList.contains(theObject)) {
-//                        //add to buffer
-//                        buffer + theObject
-//                    }
-//                }
-//
-//                //PRESERVE UNIQUENESS
-//                buffer ++= newList
-//
-//                // check equals
-//                val newJson = Json.toJSON(buffer.toList)
-//                //mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, newJson))
-//            }
-//        }
-        //uuid
     }
 
     def putBatch(entityName: String, batch: Map[String, Map[String, String]]) = null
 
-    def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int, columnName: String*) = null
+    def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int, columnName: String*) = {
+
+        //page through all records
+        val mongoColl = mongoConn(db)(entityName)
+
+        var counter = 0
+        val fields = MongoDBObject( List() )
+        //val fields = MongoDBObject( columnName.map(x => { counter += 1; (columnName -> counter) } ).toSeq )
+        val cursor = mongoColl.find(MongoDBObject(),fields,0,pageSize)
+
+        //val cursor = mongoColl.find
+        for(dbObject:DBObject <- cursor){
+            val map = dbObject.toMap.map({ case(key,value) => (key.toString, value.toString) }).toMap
+            proc(map.getOrElse(uuidColumn, ""), map)
+        }
+    }
 
     def pageOverAll(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int) = {
         //page through all records
         val mongoColl = mongoConn(db)(entityName)
-        val cursor = mongoColl.find()
+        //val cursor = mongoColl.find(0,pageSize)
+        val cursor = mongoColl.find
         for(dbObject:DBObject <- cursor){
             val map = dbObject.toMap.map({ case(key,value) => (key.toString, value.toString) }).toMap
             proc(map.getOrElse(uuidColumn, ""), map)

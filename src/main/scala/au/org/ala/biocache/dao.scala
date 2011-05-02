@@ -12,8 +12,7 @@ import collection.immutable.HashSet
 import org.slf4j.LoggerFactory
 
 /**
- * DAO configuration. Should be refactored to use a DI framework
- * or make use of Cake pattern.
+ * DAO configuration.
  */
 object DAO {
 
@@ -482,7 +481,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
    * @param qualityAssertion
    */
   def addSystemAssertion(uuid:String, qualityAssertion:QualityAssertion){
-    persistenceManager.putList(uuid,entityName, qualityAssertionColumn,List(qualityAssertion),false)
+    persistenceManager.putList(uuid,entityName, qualityAssertionColumn,List(qualityAssertion),classOf[QualityAssertion],false)
     persistenceManager.put(uuid, entityName, qualityAssertion.name, qualityAssertion.problemAsserted.toString)
   }
 
@@ -490,7 +489,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
    * Set the system systemAssertions for a record, overwriting existing systemAssertions
    */
   def updateSystemAssertions(uuid:String, qualityAssertions:List[QualityAssertion]){
-    persistenceManager.putList(uuid,entityName,qualityAssertionColumn,qualityAssertions,true)
+    persistenceManager.putList(uuid,entityName,qualityAssertionColumn,qualityAssertions,classOf[QualityAssertion],true)
   }
 
   /**
@@ -498,8 +497,8 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
    */
   def getSystemAssertions(uuid:String): List[QualityAssertion] = {
     //val theClass = (Array(new QualityAssertion())).getClass.asInstanceOf[java.lang.Class[Array[AnyRef]]]
-    val theClass = classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]
-    persistenceManager.getList(uuid,entityName, qualityAssertionColumn,theClass).asInstanceOf[List[QualityAssertion]]
+    //val theClass = classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]
+    persistenceManager.getList(uuid,entityName, qualityAssertionColumn, classOf[QualityAssertion])
   }
 
   /**
@@ -516,7 +515,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         val systemAssertions = getSystemAssertions(uuid)
 
         //store the new systemAssertions
-        persistenceManager.putList(uuid,entityName,userQualityAssertionColumn,updatedUserAssertions,true)
+        persistenceManager.putList(uuid,entityName,userQualityAssertionColumn,updatedUserAssertions,classOf[QualityAssertion], true)
 
         //update the overall status
         updateAssertionStatus(uuid,qualityAssertion.name,systemAssertions,updatedUserAssertions)
@@ -552,7 +551,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         val updateAssertions = assertions.filter(qa => {!(qa.uuid equals assertionUuid)})
 
         //put the systemAssertions back - overwriting existing systemAssertions
-        persistenceManager.putList(uuid,entityName,userQualityAssertionColumn,updateAssertions,true)
+        persistenceManager.putList(uuid,entityName,userQualityAssertionColumn,updateAssertions,classOf[QualityAssertion], true)
 
         val assertionName = deletedAssertion.get.name
         //are there any matching systemAssertions for other users????

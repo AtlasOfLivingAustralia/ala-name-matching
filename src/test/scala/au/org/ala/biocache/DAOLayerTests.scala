@@ -5,8 +5,8 @@ import org.junit.Ignore
 @Ignore
 class DAOLayerTests extends FunSuite {
 
-    val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
-    val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
+    val occurrenceDAO = Config.occurrenceDAO
+    val persistenceManager = Config.persistenceManager
 
     test("Test store and location lookup") {
         val point = LocationDAO.getByLatLon("-33.25", "135.85")

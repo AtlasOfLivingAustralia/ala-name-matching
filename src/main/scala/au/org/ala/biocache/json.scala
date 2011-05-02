@@ -13,6 +13,12 @@ object Json {
     import JavaConversions._
     import scalaj.collection.Imports._
 
+    def toJSONWithGeneric[A](list:List[A]) : String = {
+        val mapper = new ObjectMapper
+        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
+        mapper.writeValueAsString(list.asJava)
+    }
+
     /**
      * Convert the supplied list to JSON
      */
@@ -48,5 +54,16 @@ object Json {
         val valueType = TypeFactory.collectionType(classOf[ArrayList[AnyRef]], theClass)
         var listOfObject = mapper.readValue[ArrayList[AnyRef]](jsonString, valueType)
         listOfObject.asScala[AnyRef].toList
+    }
+
+    /**
+     * Convert the supplied list from JSON
+     */
+    def toListWithGeneric[A](jsonString:String,theClass:java.lang.Class[_]) : List[A] = {
+        var mapper = new ObjectMapper
+        mapper.getDeserializationConfig().set(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        val valueType = TypeFactory.collectionType(classOf[ArrayList[_]], theClass)
+        var listOfObject = mapper.readValue[ArrayList[_]](jsonString, valueType)
+        listOfObject.asScala.toList.asInstanceOf[List[A]]
     }
 }
