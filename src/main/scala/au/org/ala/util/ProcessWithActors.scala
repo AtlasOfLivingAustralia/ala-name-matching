@@ -2,7 +2,6 @@ package au.org.ala.util
 
 import scala.actors.Actor
 import scala.collection.mutable.ArrayBuffer
-import org.wyki.cassandra.pelops.Pelops
 import au.org.ala.biocache._
 
 /**
@@ -57,9 +56,11 @@ object ProcessWithActors {
       //debug counter
       if (count % 1000 == 0) {
         finishTime = System.currentTimeMillis
-        println(count + " >> Last key : " + fullRecord.get.uuid + ", records per sec: "
-            + 1000f / (((finishTime - startTime).toFloat) / 1000f)+", time taken: "
-            + (finishTime - start).toFloat / 60000f )
+        println(count + " >> Last key : " + fullRecord.get.uuid
+            + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f)
+            + ", time taken for "+1000+" records: " + (finishTime - startTime).toFloat / 1000f
+            + ", total time: "+ (finishTime - start).toFloat / 60000f +" minutes"
+        )
         startTime = System.currentTimeMillis
       }
       true //indicate to continue
