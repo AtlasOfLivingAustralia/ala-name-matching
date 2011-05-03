@@ -128,7 +128,7 @@ object TaxonProfileDAO {
 
     val taxonProfile = {
 
-        val cachedObject = lru.get(guid)
+        val cachedObject = lock.synchronized { lru.get(guid) }
         if(cachedObject==null){
             val map = persistenceManager.get(guid,columnFamily)
             if(!map.isEmpty){
