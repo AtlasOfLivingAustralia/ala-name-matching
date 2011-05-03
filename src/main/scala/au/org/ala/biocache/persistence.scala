@@ -404,7 +404,8 @@ class MongoDBPersistenceManager @Inject()(
         val mongoColl = mongoConn(db)(entityName)
         if(uuid!=null){
             val set = $set( (propertyName,propertyValue) )
-            mongoColl.update(Map(uuidColumn -> uuid), set, false, false)
+            //Allow "upserts" so that missing records are inserted...
+            mongoColl.update(Map(uuidColumn -> uuid), set, true, false)
             uuid
         } else {
             val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
@@ -436,7 +437,8 @@ class MongoDBPersistenceManager @Inject()(
         if(uuid!=null){
             val mapToSave = keyValuePairs.filter( { case (key, value) => { value!=null && !value.trim.isEmpty } })
             if(!mapToSave.isEmpty){
-                mongoColl.update(Map(uuidColumn -> uuid), mapToSave.asDBObject, false, false)
+              //Allow "upserts" so that missing records are inserted...
+                mongoColl.update(Map(uuidColumn -> uuid), mapToSave.asDBObject, true, false)
             }
             uuid
         } else {
