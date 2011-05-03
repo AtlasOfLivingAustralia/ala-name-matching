@@ -276,8 +276,8 @@ object LocationDAO {
   def getByLatLon(latitude:String, longitude:String) : Option[Location] = {
     val uuid =  roundCoord(latitude)+"|"+roundCoord(longitude)
 
-    //val cachedObject = lock.synchronized { lru.get(uuid) }
-    val cachedObject = lru.get(uuid)
+    val cachedObject = lock.synchronized { lru.get(uuid) }
+    //val cachedObject = lru.get(uuid)
 
     if(cachedObject!=null){
         cachedObject.asInstanceOf[Option[Location]]

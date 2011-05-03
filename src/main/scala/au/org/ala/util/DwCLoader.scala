@@ -44,7 +44,7 @@ object DwCLoader {
 
     import scala.actors.Actor._
     import JavaConversions._
-  import scalaj.collection.Imports._
+    import scalaj.collection.Imports._
     import ReflectBean._
     println(">>> Starting DwC loader ....")
     val file = new File("/data/biocache/ozcam/")
@@ -97,8 +97,7 @@ object DwCLoader {
     }
     //commit the batch
     occurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)
-
-    Pelops.shutdown
+    persistenceManager.shutdown
     println("Finished DwC loader. Records processed: " + count)
   }
 }

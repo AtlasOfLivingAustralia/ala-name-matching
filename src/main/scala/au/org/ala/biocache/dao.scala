@@ -256,22 +256,22 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
   private def removeSuffix(name:String) : String = name.substring(0, name.length - 2)
 
    /** Is this a "processed" value? */
-  private def isProcessedValue(name:String) : Boolean = name endsWith ".p"
+  private def isProcessedValue(name:String) : Boolean = name endsWith persistenceManager.fieldDelimiter +"p"
 
   /** Is this a "consensus" value? */
-  private def isConsensusValue(name:String) : Boolean = name endsWith ".c"
+  private def isConsensusValue(name:String) : Boolean = name endsWith persistenceManager.fieldDelimiter +"c"
 
   /** Is this a "consensus" value? */
-  def isQualityAssertion(name:String) : Boolean = name endsWith ".qa"
+  def isQualityAssertion(name:String) : Boolean = name endsWith persistenceManager.fieldDelimiter +"qa"
 
   /** Add a suffix to this field name to indicate version type */
-  private def markAsProcessed(name:String) : String = name + ".p"
+  private def markAsProcessed(name:String) : String = name + persistenceManager.fieldDelimiter +"p"
 
   /** Add a suffix to this field name to indicate version type */
-  private def markAsConsensus(name:String) : String = name + ".c"
+  private def markAsConsensus(name:String) : String = name + persistenceManager.fieldDelimiter +"c"
 
   /** Add a suffix to this field name to indicate quality assertion field */
-  private def markAsQualityAssertion(name:String) : String = name + ".qa"
+  private def markAsQualityAssertion(name:String) : String = name + persistenceManager.fieldDelimiter +"qa"
 
   /** Remove the quality assertion marker */
   def removeQualityAssertionMarker(name:String) : String = name.dropRight(3)
@@ -571,7 +571,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
    */
   def updateAssertionStatus(uuid:String, assertionName:String, systemAssertions:List[QualityAssertion], userAssertions:List[QualityAssertion])  {
 
-    println("Updating the assertion status for : " + uuid)
+    logger.info("Updating the assertion status for : " + uuid)
 
     val assertions = userAssertions.filter(qa => {qa.name equals assertionName})
     //update the status flag on the record, using the system quality systemAssertions
@@ -602,7 +602,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     properties.put(geospatialDecisionColumn, geospatiallyKosher.toString)
     properties.put(taxonomicDecisionColumn, taxonomicallyKosher.toString)
 
-    println("Updating the assertion status for : " + uuid
+    logger.info("Updating the assertion status for : " + uuid
         + ", geospatiallyKosher:"+geospatiallyKosher
         + ", taxonomicallyKosher:"+taxonomicallyKosher)
 
@@ -620,15 +620,15 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
    * Should be possible to factor this out
    */
   def reIndex(uuid:String){
-    println("Reindexing UUID: " + uuid)
+    logger.debug("Reindexing UUID: " + uuid)
     val recordVersions = getAllVersionsByUuid(uuid)
     if(recordVersions.isEmpty){
-        println("Unable to reindex UUID: " + uuid)
+        logger.debug("Unable to reindex UUID: " + uuid)
     } else {
         val occurrenceIndex = indexDAO.getOccIndexModel(recordVersions.get)
         if(!occurrenceIndex.isEmpty){
             indexDAO.index(occurrenceIndex.get)
-            println("Reindexed UUID: " + uuid)
+            logger.debug("Reindexed UUID: " + uuid)
         }
     }
   }

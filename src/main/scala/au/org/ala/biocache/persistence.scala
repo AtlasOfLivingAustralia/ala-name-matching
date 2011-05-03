@@ -77,6 +77,9 @@ trait PersistenceManager {
      * Close db connections etc
      */
     def shutdown
+
+
+    def fieldDelimiter = '.'
 }
 
 /**
@@ -351,31 +354,41 @@ class CassandraPersistenceManager @Inject() (
  * To be added.....
  */
 class MongoDBPersistenceManager @Inject()(
-    @Named("mongoHost") host:String = "localhost") extends PersistenceManager {
+    @Named("mongoHost") host:String = "localhost", @Named("mongoDatabase") db:String = "occ") extends PersistenceManager {
 
     import JavaConversions._
     val uuidColumn = "_id"
-    val db = "occ"
     val mongoConn = MongoConnection(host)
+
+    override def fieldDelimiter = '_'
 
     def get(uuid: String, entityName: String) = {
         val mongoColl = mongoConn(db)(entityName)
-        val q = MongoDBObject(uuidColumn -> new ObjectId(uuid))
-        Some(mongoColl.findOne(q).get.toMap.map({ case(key,value) => (key.toString, value.toString) }).toMap)
+        val q = MongoDBObject(uuidColumn -> uuid)
+        val result = mongoColl.findOne(q)
+        if(!result.isEmpty){
+            Some(result.get.toMap.map({ case(key,value) => (key.toString, value.toString) }).toMap)
+        } else {
+            None
+        }
     }
 
     def get(uuid: String, entityName: String, propertyName: String) = {
         val mongoColl = mongoConn(db)(entityName)
-        val query = MongoDBObject(uuidColumn -> new ObjectId(uuid))
+        val query = MongoDBObject(uuidColumn -> uuid)
         val fields = MongoDBObject(propertyName -> 1)
         val map = mongoColl.findOne(query,fields)
-        Some(map.get.toMap.get(propertyName).asInstanceOf[String])
+        if(!map.isEmpty){
+            Some(map.get.toMap.get(propertyName).asInstanceOf[String])
+        } else {
+            None
+        }
     }
 
     def getList[A](uuid: String, entityName: String, propertyName: String, theClass:java.lang.Class[_]) = {
 
         val mongoColl = mongoConn(db)(entityName)
-        val query = MongoDBObject(uuidColumn -> new ObjectId(uuid))
+        val query = MongoDBObject(uuidColumn -> uuid)
         val fields = MongoDBObject(propertyName -> 1)
         val map = mongoColl.findOne(query,fields)
         val propertyInJSON = map.get(propertyName).asInstanceOf[String]
@@ -389,49 +402,101 @@ class MongoDBPersistenceManager @Inject()(
     def put(uuid: String, entityName: String, propertyName: String, propertyValue: String) = {
 
         val mongoColl = mongoConn(db)(entityName)
-        if(uuid != null){
+        if(uuid!=null){
             val set = $set( (propertyName,propertyValue) )
             mongoColl.update(Map(uuidColumn -> uuid), set, false, false)
             uuid
         } else {
-            val newInsert = Map(propertyName -> propertyValue).asDBObject
-            val writeResult = mongoColl.insert(newInsert)
-            if(newInsert._id.isEmpty){
-                throw new RuntimeException("Insert failed.")
-            } else {
-                newInsert._id.get.toString
-            }
+            val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
+            val mongoColl = mongoConn(db)(entityName)
+            mongoColl.save(Map(uuidColumn -> recordId,propertyName -> propertyValue ))
+            recordId
         }
+
+
+//        val mongoColl = mongoConn(db)(entityName)
+//        if(uuid != null){
+//            val set = $set( (propertyName,propertyValue) )
+//            mongoColl.update(Map(uuidColumn -> recordId), set, false, false)
+//            uuid
+//        } else {
+//            val newInsert = Map(propertyName -> propertyValue).asDBObject
+//            val writeResult = mongoColl.insert(newInsert)
+//            if(newInsert._id.isEmpty){
+//                throw new RuntimeException("Insert failed.")
+//            } else {
+//                newInsert._id.get.toString
+//            }
+//        }
     }
 
     def put(uuid: String, entityName: String, keyValuePairs: Map[String, String]) = {
+
         val mongoColl = mongoConn(db)(entityName)
-        mongoColl.update(Map(uuidColumn -> uuid), keyValuePairs.asDBObject, false, false)
-        uuid
+        if(uuid!=null){
+            val mapToSave = keyValuePairs.filter( { case (key, value) => { value!=null && !value.trim.isEmpty } })
+            if(!mapToSave.isEmpty){
+                mongoColl.update(Map(uuidColumn -> uuid), mapToSave.asDBObject, false, false)
+            }
+            uuid
+        } else {
+            val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
+            val mongoColl = mongoConn(db)(entityName)
+            mongoColl.save(Map(uuidColumn -> recordId) ++ keyValuePairs)
+            recordId
+        }
+//        val mongoColl = mongoConn(db)(entityName)
+//        if(uuid != null){
+//            mongoColl.update(Map(uuidColumn -> uuid), keyValuePairs.asDBObject, false, false)
+//            uuid
+//        } else {
+//            val newInsert = keyValuePairs.asDBObject
+//            val writeResult = mongoColl.insert(newInsert)
+//            if(newInsert._id.isEmpty){
+//                throw new RuntimeException("Insert failed.")
+//            } else {
+//                newInsert._id.get.toString
+//            }
+//        }
     }
 
     def putList[A](uuid: String, entityName: String, propertyName: String, objectList: List[A], theClass:java.lang.Class[_], overwrite: Boolean) = {
 
+        if(!overwrite){
+            throw new RuntimeException("Overwrite currently not supported.")
+        }
+
         //TODO support append (overwrite = false)
         val mongoColl = mongoConn(db)(entityName)
         val json = Json.toJSONWithGeneric(objectList)
-        if(uuid != null){
+        if(uuid !=null){
             val set = $set( (propertyName,json) )
             mongoColl.update(Map(uuidColumn -> uuid), set, false, false)
             uuid
         } else {
-
-            val newInsert = Map(propertyName -> json).asDBObject
-            val writeResult = mongoColl.insert(newInsert)
-            if(newInsert._id.isEmpty){
-                throw new RuntimeException("Insert failed.")
-            } else {
-                newInsert._id.get.toString
-            }
+            val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
+            mongoColl.save(Map(uuidColumn -> recordId, propertyName -> json) )
+            recordId
         }
+//        if(uuid != null){
+//            val set = $set( (propertyName,json) )
+//            mongoColl.update(Map(uuidColumn -> uuid), set, false, false)
+//            uuid
+//        } else {
+//
+//            val newInsert = Map(propertyName -> json).asDBObject
+//            val writeResult = mongoColl.insert(newInsert)
+//            if(newInsert._id.isEmpty){
+//                throw new RuntimeException("Insert failed.")
+//            } else {
+//                newInsert._id.get.toString
+//            }
+//        }  .
     }
 
-    def putBatch(entityName: String, batch: Map[String, Map[String, String]]) = null
+    def putBatch(entityName: String, batch: Map[String, Map[String, String]]) = {
+        throw new RuntimeException("currently not implemented")
+    }
 
     def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int, columnName: String*) = {
 
@@ -457,12 +522,13 @@ class MongoDBPersistenceManager @Inject()(
         val cursor = mongoColl.find
         for(dbObject:DBObject <- cursor){
             val map = dbObject.toMap.map({ case(key,value) => (key.toString, value.toString) }).toMap
+            //println("ID: " + map.get("_id").get)
             proc(map.getOrElse(uuidColumn, ""), map)
         }
     }
 
     def selectRows(uuids: Array[String], entityName: String, propertyNames: Array[String], proc: (Map[String, String]) => Unit) = {
-
+       throw new RuntimeException("currently not implemented")
     }
 
     def shutdown = mongoConn.close

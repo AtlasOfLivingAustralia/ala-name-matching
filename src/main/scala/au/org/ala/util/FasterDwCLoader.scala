@@ -47,8 +47,7 @@ object FasterDwCLoader {
     var finishTime = System.currentTimeMillis
 
     val columnsHeaders = csvReader.readNext
-    var columns:Array[String] = null
-    columns = csvReader.readNext
+    var columns:Array[String] = csvReader.readNext
 
     while (columns != null) {
 
@@ -63,23 +62,24 @@ object FasterDwCLoader {
       }
 
        //lookup the column
-      val recordUuid = UUID.randomUUID.toString
+      //val recordUuid = UUID.randomUUID.toString
       val map = Map(fieldTuples map {s => (s._1, s._2)} : _*)
+      if(!map.isEmpty){
+          val cn = map.get("catalogNumber").getOrElse("")
+          val cc = map.get("collectionCode").getOrElse("")
+          val ic = map.get("institutionCode").getOrElse("")
+          val uniqueID = resourceUid + "|" + ic + "|" + cc + "|" + cn
 
-      val cn = map.get("catalogNumber").getOrElse(null)
-      val cc = map.get("collectionCode").getOrElse(null)
-      val ic = map.get("institutionCode").getOrElse(null)
-      val uniqueID = resourceUid + "|" + ic + "|" + cc + "|" + cn
-
-      persistenceManager.put(recordUuid, "occ", map)
-      persistenceManager.put(uniqueID, "dr", "uuid", recordUuid)
-      //debug
-      if (count % 100 == 0 && count > 0) {
-        finishTime = System.currentTimeMillis
-        println(count + ", >>  UUID: " + recordUuid + ", records per sec: " + 100 / (((finishTime - startTime).toFloat) / 1000f))
-        startTime = System.currentTimeMillis
+          //val recordUuid = persistenceManager.put(recordUuid, "occ", map)
+          val recordUuid = persistenceManager.put(null, "occ", map)
+          persistenceManager.put(recordUuid, "dr", "uuid", uniqueID)
+          //debug
+          if (count % 100 == 0 && count > 0) {
+            finishTime = System.currentTimeMillis
+            println(count + ", >>  UUID: " + recordUuid + ", records per sec: " + 100 / (((finishTime - startTime).toFloat) / 1000f))
+            startTime = System.currentTimeMillis
+          }
       }
-
       columns = csvReader.readNext
     }
 
