@@ -16,7 +16,6 @@ package au.org.ala.sds.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.CompareToBuilder;
@@ -145,12 +144,12 @@ public class SensitiveTaxon implements Comparable<SensitiveTaxon> {
         return false;
     }
 
-    public List<SensitivityInstance> getInstancesForZones(Set<SensitivityZone> zones) {
+    public List<SensitivityInstance> getInstancesForZones(List<SensitivityZone> zones) {
         List<SensitivityInstance> instanceList = new ArrayList<SensitivityInstance>();
         for (SensitivityInstance si : this.instances) {
             if (zones.contains(si.getZone())) {
                 instanceList.add(si);
-            } else if (si.getZone().equals(SensitivityZone.AUS) &&
+            } else if (si.getZone().equals(SensitivityZoneFactory.getZone(SensitivityZone.AUS)) &&
                        SensitivityZone.isInAustralia(zones)) {
                 instanceList.add(si);
             }
@@ -159,7 +158,7 @@ public class SensitiveTaxon implements Comparable<SensitiveTaxon> {
     }
 
     public SensitivityInstance getSensitivityInstance(String state) {
-        return getInstanceForState(SensitivityZone.getZone(state));
+        return getInstanceForState(SensitivityZoneFactory.getZone(state));
     }
 
     public SensitivityInstance getInstanceForState(SensitivityZone state) {
@@ -169,7 +168,7 @@ public class SensitiveTaxon implements Comparable<SensitiveTaxon> {
             if (state == si.getZone()) {
                 instance = si;
             } else {
-                if (si.getZone() == SensitivityZone.AUS) {
+                if (si.getZone() == SensitivityZoneFactory.getZone(SensitivityZone.AUS)) {
                     ausInstance = si;
                 }
             }
