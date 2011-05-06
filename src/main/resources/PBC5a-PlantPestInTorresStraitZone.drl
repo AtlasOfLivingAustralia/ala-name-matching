@@ -1,12 +1,13 @@
 package au.org.ala.sds.validation;
 
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.util.DateHelper;
 import au.org.ala.sds.util.PlantPestUtils;
 import au.org.ala.sds.validation.RuleState;
 import au.org.ala.sds.validation.ValidationReport;
 import java.util.Date;
-import java.util.Set;
+import java.util.List;
 import org.apache.log4j.Logger;
 import org.drools.runtime.rule.RuleContext;
 
@@ -16,33 +17,48 @@ global Logger logger;
 
 import function au.org.ala.sds.validation.ValidationHelper.*;
 
+rule "Queensland Fruit Fly"
+    when
+        $st : SensitiveTaxon(taxonName == "Bactrocera tryoni")
+    then
+        state.setDelegateRules("PBC5b");
+        state.setComplete(false);
+        logger.warn("PBC5a Rule '" + kcontext.getRule().getName() + "'");
+end
+
 rule "Within Torres Strait Zone and taxon is in family Tephritidae and before commencement date"
     when
-        $st : SensitiveTaxon(family == "Tephritidae")
-        $zones : Set()
+        $st : SensitiveTaxon(family == "Tephritidae", taxonName != "Bactrocera tryoni")
+        $zones : List()
         $date : Date()
         eval(SensitivityZone.isInTorresStrait($zones))
-        eval($date < "01-Jan-1996")
+        eval(DateHelper.dateBefore($date, "1996-01-01"))
     then
-    
+        state.setLoadable(true);
+        state.setAnnotation("");
+        logger.warn("PBC5a Rule '" + kcontext.getRule().getName() + "'");
 end
 
 rule "Within Torres Strait Zone and taxon is in family Tephritidae and after commencement date"
     when
-        $st : SensitiveTaxon(family == "Tephritidae")
-        $zones : Set()
+        $st : SensitiveTaxon(family == "Tephritidae", taxonName != "Bactrocera tryoni")
+        $zones : List()
         $date : Date()
         eval(SensitivityZone.isInTorresStrait($zones))
-        eval($date >= "01-Jan-1996")
+        eval(DateHelper.dateOnOrAfter($date, "1996-01-01"))
     then
-    
+        state.setLoadable(true);
+        state.setAnnotation("");
+        logger.warn("PBC5a Rule '" + kcontext.getRule().getName() + "'");
 end
 
 rule "Within Torres Strait Zone and taxon not in family Tephritidae"
     when
         $st : SensitiveTaxon(family != "Tephritidae")
-        $zones : Set()
+        $zones : List()
         eval(SensitivityZone.isInTorresStrait($zones))
     then
-    
+        state.setLoadable(true);
+        state.setAnnotation("");
+        logger.warn("PBC5a Rule '" + kcontext.getRule().getName() + "'");
 end
