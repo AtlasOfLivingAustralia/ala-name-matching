@@ -5,6 +5,7 @@ package au.org.ala.sds.validation;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  *
@@ -12,10 +13,16 @@ import java.util.Map;
  */
 public class FactCollection {
 
-    public static final String LATITUDE_KEY = "latitude";
-    public static final String LONGITUDE_KEY = "longitude";
-    public static final String STATE_KEY = "state";
-    public static final String DATE_KEY = "date";
+    public static final String FAMILY_KEY = "family";
+    public static final String GENUS_KEY = "genus";
+    public static final String SPECIFIC_EPITHET_KEY = "specificEpithet";
+    public static final String INTRA_SPECIFIC_EPITHET_KEY = "intraspecificEpithet";
+    public static final String SCIENTIFIC_NAME_KEY = "scientificName";
+    public static final String DECIMAL_LATITUDE_KEY = "decimalLatitude";
+    public static final String DECIMAL_LONGITUDE_KEY = "decimalLongitude";
+    public static final String STATE_PROVINCE_KEY = "stateProvince";
+    public static final String MUNICIPALITY_KEY = "municipality";
+    public static final String EVENT_DATE_KEY = "eventDate";
     public static final String YEAR_KEY = "year";
     public static final String COUNTRY_KEY = "country";
     public static final String ROW_KEY = "row";
@@ -37,6 +44,21 @@ public class FactCollection {
 
     public String remove(String key) {
         return facts.remove(key);
+    }
+
+    public boolean isNotEmpty() {
+        return !facts.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("[FactCollection: ");
+        for (Entry<String, String> entry : facts.entrySet()) {
+            sb.append(entry.getKey()).append("=").append(entry.getValue()).append(", ");
+        }
+        sb.replace(sb.length() - 2, sb.length() - 1, "]");
+
+        return sb.toString();
     }
 
 }
