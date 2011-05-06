@@ -1,12 +1,14 @@
 package au.org.ala.sds.validation;
 
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.model.SensitivityZoneFactory;
 import au.org.ala.sds.util.PlantPestUtils;
 import au.org.ala.sds.validation.RuleState;
 import au.org.ala.sds.validation.ValidationReport;
 import java.util.Date;
-import java.util.Set;
+import java.util.List;
 import org.apache.log4j.Logger;
 import org.drools.runtime.rule.RuleContext;
 
@@ -19,8 +21,8 @@ import function au.org.ala.sds.validation.ValidationHelper.*;
 rule "In South Australia outside FFEZ"
     when
         $st : SensitiveTaxon()
-        $zones : Set()
-        eval($zones.contains(SensitivityZone.SA) && PlantPestUtils.isOutsideZone($st, $zones))
+        $zones : List()
+        eval($zones.contains(SensitivityZoneFactory.getZone(SensitivityZone.SA)) && PlantPestUtils.isOutsideZone($st, SensitivityCategory.PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY, $zones))
     then
         state.setDelegateRules("PBC6");
         state.setComplete(false);
@@ -31,9 +33,9 @@ end
 rule "Inside FFEZ since commencement date"
     when
         $st : SensitiveTaxon()
-        $zones : Set()
+        $zones : List()
         $date : Date()
-        eval(PlantPestUtils.isInZoneDuringPeriod($st, $zones, $date))
+        eval(PlantPestUtils.isInZoneDuringPeriod($st, SensitivityCategory.PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY, $zones, $date))
     then
         state.setLoadable(true);
         state.setAnnotation("Occurrence of QFF from a region where active managment in the form of trapping and suppression activities protects important horticultural areas");
@@ -43,9 +45,9 @@ end
 rule "Inside FFEZ before commencement date"
     when
         $st : SensitiveTaxon()
-        $zones : Set()
+        $zones : List()
         $date : Date()
-        eval(PlantPestUtils.isInZoneBeforePeriod($st, $zones, $date))
+        eval(PlantPestUtils.isInZoneBeforePeriod($st, SensitivityCategory.PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY, $zones, $date))
     then
         state.setLoadable(true);
         state.setAnnotation("Historic record that occurred before management practises where implemented to protect important horticultural areas from QFF");
@@ -55,8 +57,8 @@ end
 rule "Outside FFEZ"
     when
         $st : SensitiveTaxon()
-        $zones : Set()
-        eval(PlantPestUtils.isOutsideZone($st, $zones))
+        $zones : List()
+        eval(PlantPestUtils.isOutsideZone($st, SensitivityCategory.PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY, $zones))
     then        
         state.setLoadable(true);
         state.setAnnotation("Occurrence of QFF outside of the FFEZ");
