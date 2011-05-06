@@ -25,7 +25,7 @@ public class KnowledgeBaseFactory {
 
     protected static final Logger logger = Logger.getLogger(KnowledgeBaseFactory.class);
 
-    static private Map<SensitivityCategory, String> rules  = new HashMap<SensitivityCategory, String>();
+    static private Map<String, String> rules  = new HashMap<String, String>();
     static {
         rules.put(SensitivityCategory.PLANT_PEST_NOT_KNOWN_IN_AUSTRALIA, "PBC1-PlantPestNotKnownInAustralia.drl");
         rules.put(SensitivityCategory.PLANT_PEST_ERADICATED, "PBC2-PlantPestEradicated.drl");
@@ -41,9 +41,9 @@ public class KnowledgeBaseFactory {
         KnowledgeBase knowledgeBase;
 
         if ((knowledgeBase = kbs.get(category)) == null) {
-            logger.debug("Instantiating KnowledgeBase '" + rules.get(category) + "'");
+            logger.debug("Instantiating KnowledgeBase '" + rules.get(category.getId()) + "'");
             KnowledgeBuilder builder = KnowledgeBuilderFactory.newKnowledgeBuilder();
-            builder.add(ResourceFactory.newClassPathResource(rules.get(category)), ResourceType.DRL);
+            builder.add(ResourceFactory.newClassPathResource(rules.get(category.getId())), ResourceType.DRL);
             if (builder.hasErrors()) {
                 throw new RuntimeException(builder.getErrors().toString());
             }
@@ -56,7 +56,7 @@ public class KnowledgeBaseFactory {
             kbs.put(category, knowledgeBase);
         }
 
-        logger.debug("Using KnowledgeBase '" + rules.get(category) + "'");
+        logger.debug("Using KnowledgeBase '" + rules.get(category.getId()) + "'");
 
         return knowledgeBase;
     }
