@@ -14,7 +14,6 @@
  ***************************************************************************/
 package au.org.ala.sds.model;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -23,14 +22,8 @@ import org.junit.Test;
 public class SensitivityZoneTest {
 
     @Test
-    public void getZone() {
-        assertEquals(SensitivityZone.NSW, SensitivityZone.getZone("nsw"));
-        assertEquals(SensitivityZone.ACT, SensitivityZone.getZone("Australian Capital Territory"));
-    }
-
-    @Test
     public void isInAustralia() {
-        assertTrue(SensitivityZone.isInAustralia(SensitivityZone.NSW));
-        assertFalse(SensitivityZone.isInAustralia(SensitivityZone.NOTAUS));
+        assertTrue(SensitivityZone.isInAustralia(SensitivityZoneFactory.getZone(SensitivityZone.NSW)));
+        assertFalse(SensitivityZone.isInAustralia(SensitivityZoneFactory.getZone(SensitivityZone.NOTAUS)));
     }
 }
