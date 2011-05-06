@@ -1,12 +1,13 @@
 package au.org.ala.sds.validation;
 
 import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.model.SensitivityZone;
 import au.org.ala.sds.util.PlantPestUtils;
 import au.org.ala.sds.validation.RuleState;
 import au.org.ala.sds.validation.ValidationReport;
 import java.util.Date;
-import java.util.Set;
+import java.util.List;
 import org.apache.log4j.Logger;
 import org.drools.runtime.rule.RuleContext;
 
@@ -19,21 +20,21 @@ import function au.org.ala.sds.validation.ValidationHelper.*;
 rule "Plant pest notifiable in this State"
     when
         $st : SensitiveTaxon()
-        $zones : Set()
-        eval(PlantPestUtils.isInZone($st, $zones)
+        $zones : List()
+        eval(PlantPestUtils.isInsideZone($st, SensitivityCategory.PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION, $zones))
     then
         state.setLoadable(false);
+        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT6_A1, PlantPestUtils.getSensitivityZone($st, SensitivityCategory.PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION, $zones));
+        alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT6_A2);
         logger.warn("PBC6 Rule '" + kcontext.getRule().getName() + "'");
-        //warning(kcontext, );
 end
 
 rule "Plant pest not notifiable in this State"
     when
         $st : SensitiveTaxon()
-        $zones : Set()
-        eval(PlantPestUtils.isOutsideZone($st, $zones)
+        $zones : List()
+        eval(PlantPestUtils.isOutsideZone($st, SensitivityCategory.PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION, $zones))
     then
         state.setLoadable(true);
         logger.warn("PBC6 Rule '" + kcontext.getRule().getName() + "'");
-        //warning(kcontext, );
 end
