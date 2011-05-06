@@ -3,9 +3,8 @@ package au.org.ala.sds.util;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.lang.math.NumberUtils;
@@ -15,14 +14,15 @@ import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 
 import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.model.SensitivityZoneFactory;
 
 public class GeoLocationHelper {
 
     @SuppressWarnings("unchecked")
-    public static Set<SensitivityZone> getZonesContainingPoint(String latitude, String longitude) throws Exception {
+    public static List<SensitivityZone> getZonesContainingPoint(String latitude, String longitude) throws Exception {
 
         final Logger logger = Logger.getLogger(GeoLocationHelper.class);
-        Set<SensitivityZone> zones = new HashSet<SensitivityZone>();;
+        List<SensitivityZone> zones = new ArrayList<SensitivityZone>();;
 
         //
         // Call geospatial web service
@@ -48,7 +48,7 @@ public class GeoLocationHelper {
             String layer = result.getChildText("layerName");
             if (layer.equalsIgnoreCase("state")) {
                 SensitivityZone zone;
-                if ((zone = SensitivityZone.getZone(name)) != null) {
+                if ((zone = SensitivityZoneFactory.getZoneByName(name)) != null) {
                     zones.add(zone);
                 }
 
@@ -57,7 +57,7 @@ public class GeoLocationHelper {
                     layer.equalsIgnoreCase("state") &&
                     NumberUtils.toFloat(latitude) >= -19.0 &&
                     NumberUtils.toFloat(longitude) >= 144.25) {
-                    zones.add(SensitivityZone.PFFPQA1995);
+                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PFFPQA1995));
                 }
             }
 
@@ -67,25 +67,27 @@ public class GeoLocationHelper {
                     name.equalsIgnoreCase("Emerald (Queensland)") ||
                     name.equalsIgnoreCase("Peak Downs (Queensland)")) {
                     // Emerald Citrus Canker PQA
-                    zones.add(SensitivityZone.ECCPQA2004);
+                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.ECCPQA2004));
                 } else if (name.equalsIgnoreCase("Wacol (Queensland)")) {
                     // Red Imported Fire Ant
-                    zones.add(SensitivityZone.RIFARA);
-                } else if (name.equalsIgnoreCase("Kubin (Queensland)")) {
+                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.RIFARA));
+                } else if (name.equalsIgnoreCase("Kubin (Queensland)") || name.equalsIgnoreCase("Badu (Queensland)")) {
                     // Torres Strait Protected Zone
-                    zones.add(SensitivityZone.TSPZ);
-                } else if (name.equalsIgnoreCase("Hammond (Queensland)")) {
+                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.TSPZ));
+                } else if (name.equalsIgnoreCase("Hammond (Queensland)") || name.equalsIgnoreCase("Torres (Queensland)")) {
                     // Special Quarantine Zone
-                    zones.add(SensitivityZone.TSSQZ);
+                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.TSSQZ));
+                } else if (name.equalsIgnoreCase("Albury (New South Wales)")) {
+                    // Phylloxera Infested Zone
+                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PIZNSWAC));
                 }
             }
         }
 
         if (zones.isEmpty()) {
             logger.warn("Zone could not be determined from location: Lat " + latitude + ", Long " + longitude);
-            zones.add(SensitivityZone.NOTAUS);
+            zones.add(SensitivityZoneFactory.getZone(SensitivityZone.NOTAUS));
         }
-
         return zones;
     }
 
