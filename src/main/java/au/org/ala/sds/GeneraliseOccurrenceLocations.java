@@ -93,8 +93,8 @@ public class GeneraliseOccurrenceLocations {
                 SensitiveTaxon ss = sensitiveSpeciesFinder.findSensitiveSpecies(speciesName);
                 if (ss != null) {
                     FactCollection facts = new FactCollection();
-                    facts.add(FactCollection.LATITUDE_KEY, latitude);
-                    facts.add(FactCollection.LONGITUDE_KEY, longitude);
+                    facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+                    facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
                     ValidationService service = ServiceFactory.createValidationService(ss);
                     ValidationOutcome outcome = service.validate(ss, facts);
