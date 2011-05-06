@@ -4,7 +4,7 @@ import au.org.ala.sds.model.SensitivityZone;
 import au.org.ala.sds.validation.MessageFactory;
 import au.org.ala.sds.validation.RuleState;
 import au.org.ala.sds.validation.ValidationReport;
-import java.util.Set;
+import java.util.List;
 import org.apache.log4j.Logger;
 import org.drools.runtime.rule.RuleContext;
 
@@ -16,28 +16,27 @@ import function au.org.ala.sds.validation.ValidationHelper.*;
 
 rule "In Australia"
     when
-        $zones : Set()
+        $zones : List()
         eval(SensitivityZone.isInAustralia($zones))
     then
         state.setLoadable(false);
-        state.setAnnotation("Plant pest not known to occur in Australia (or this area of Australia)");
+        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_A1);
         logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
-        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_01);
 end
 
 rule "In External Territory"
     when
-        $zones : Set()
+        $zones : List()
         eval(SensitivityZone.isExternalTerritory($zones))
     then
         state.setLoadable(true);
-        state.setAnnotation("Plant pest species in an external territory controlled by Australia");
+        info(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_B1);
         logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
 end
 
 rule "In Torres Strait Zone"
     when
-        $zones : Set()
+        $zones : List()
         eval(SensitivityZone.isInTorresStrait($zones))
     then        
         state.setDelegateRules("PBC5a");
@@ -47,10 +46,10 @@ end
 
 rule "Not in Australian"
     when
-        $zones : Set()
-        eval($zones.contains(SensitivityZone.NOTAUS))
+        $zones : List()
+        eval(SensitivityZone.isNotInAustralia($zones))
     then
-        state.setLoadable(false);
-        state.setAnnotation("Plant pest species occurrence not in Australia");
+        state.setLoadable(true);
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT1_D1));
         logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
 end
