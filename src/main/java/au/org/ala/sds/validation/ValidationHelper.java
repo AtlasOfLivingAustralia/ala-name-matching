@@ -31,12 +31,12 @@ public class ValidationHelper {
         addMessage(drools, Message.Type.WARNING, msgKey, context);
     }
 
-    public static void information(RuleContext drools, String msgKey) {
-        addMessage(drools, Message.Type.INFORMATION, msgKey, new Object [] {});
+    public static void info(RuleContext drools, String msgKey) {
+        addMessage(drools, Message.Type.INFO, msgKey, new Object [] {});
     }
 
-    public static void information(RuleContext drools, String msgKey, Object... context) {
-        addMessage(drools, Message.Type.INFORMATION, msgKey, context);
+    public static void info(RuleContext drools, String msgKey, Object... context) {
+        addMessage(drools, Message.Type.INFO, msgKey, context);
     }
 
     public static void addMessage(RuleContext drools, Message.Type type, String msgKey, Object... context) {
