@@ -30,7 +30,8 @@ import au.org.ala.sds.model.ConservationInstance;
 import au.org.ala.sds.model.PlantPestInstance;
 import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityCategory;
-import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.model.SensitivityCategoryFactory;
+import au.org.ala.sds.model.SensitivityZoneFactory;
 import au.org.ala.sds.model.SensitiveTaxon.Rank;
 
 /**
@@ -98,18 +99,18 @@ public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements Sensitiv
                 currentName = dto.getScientificName();
             }
 
-            SensitivityCategory category = SensitivityCategory.getCategory(dto.getSensitivityCategory());
-            if (SensitivityCategory.isConservationSensitive(category)) {
+            SensitivityCategory category = SensitivityCategoryFactory.getCategory(dto.getSensitivityCategory());
+            if (category.isConservationSensitive()) {
                 ss.getInstances().add(new ConservationInstance(
                         category,
                         dto.getAuthority(),
-                        SensitivityZone.valueOf(dto.getSensitivityZone()),
+                        SensitivityZoneFactory.getZone(dto.getSensitivityZone()),
                         dto.getLocationGeneralisation()));
-            } else if (SensitivityCategory.isPlantPest(category)) {
+            } else if (category.isPlantPest()) {
                 ss.getInstances().add(new PlantPestInstance(
                         category,
                         dto.getAuthority(),
-                        SensitivityZone.valueOf(dto.getSensitivityZone()),
+                        SensitivityZoneFactory.getZone(dto.getSensitivityZone()),
                         dto.getFromDate(),
                         dto.getToDate()));
             }
