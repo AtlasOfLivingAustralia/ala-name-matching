@@ -36,7 +36,7 @@
     <!-- Root Logger -->
     <root>
         <level value="debug" />
-        <appender-ref ref="console" />
+        <!-- appender-ref ref="console" /> -->
         <appender-ref ref="rolling" />
     </root>
     
