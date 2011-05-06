@@ -5,6 +5,8 @@ package au.org.ala.sds.model;
 
 import java.util.Date;
 
+import org.apache.commons.lang.StringUtils;
+
 import au.org.ala.sds.util.DateHelper;
 
 /**
@@ -31,8 +33,8 @@ public class PlantPestInstance extends SensitivityInstance {
             String fromDate,
             String toDate) {
         super(category, authority, zone);
-        this.fromDate = fromDate == null || fromDate.equals("") ? null : DateHelper.parseDate(fromDate);
-        this.toDate = toDate == null || toDate.equals("") ? null : DateHelper.parseDate(toDate);
+        this.fromDate = StringUtils.isNotEmpty(fromDate) ? DateHelper.parseDate(fromDate) : null;
+        this.toDate = StringUtils.isNotEmpty(toDate) ? DateHelper.parseDate(toDate) : null;
     }
 
     public Date getFromDate() {
