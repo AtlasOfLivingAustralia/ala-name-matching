@@ -55,7 +55,7 @@ public class SensitiveSpeciesXmlBuilder {
                 sensitiveSpecies.setAttribute("rank", st.getRank().name());
                 sensitiveSpecies.setAttribute("commonName", st.getCommonName() != null ? st.getCommonName() : "");
                 root.addContent(sensitiveSpecies);
-                currentName = st.getSpecies();
+                currentName = st.getTaxonName();
             }
             Element instances = new Element("instances");
             List<SensitivityInstance> sis = st.getInstances();
@@ -68,7 +68,7 @@ public class SensitiveSpeciesXmlBuilder {
                 }
                 instance.setAttribute("category", si.getCategory().getValue());
                 instance.setAttribute("authority", si.getAuthority());
-                instance.setAttribute("zone", si.getZone().name());
+                instance.setAttribute("zone", si.getZone().getId());
                 if (si instanceof ConservationInstance) {
                     instance.setAttribute("generalisation", ((ConservationInstance) si).getLocationGeneralisation());
                 } else if (si instanceof PlantPestInstance) {
