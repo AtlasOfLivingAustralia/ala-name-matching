@@ -3,14 +3,16 @@
  */
 package au.org.ala.sds.validation;
 
-import java.util.Set;
+import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
-
+import au.org.ala.sds.model.Message;
+import au.org.ala.sds.model.SdsMessage;
 import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.model.SensitivityInstance;
 import au.org.ala.sds.model.SensitivityZone;
 import au.org.ala.sds.util.GeneralisedLocation;
 import au.org.ala.sds.util.GeneralisedLocationFactory;
+import au.org.ala.sds.util.ValidationUtils;
 
 /**
  *
@@ -33,22 +35,33 @@ public class ConservationService implements ValidationService {
     public ValidationOutcome validate(SensitiveTaxon taxon, FactCollection facts) {
         ValidationReport report = reportFactory.createValidationReport(taxon);
 
-        if (!ValidationUtils.validateFacts(facts, report)) {
+        // Add sensitivity information message
+        StringBuilder message = new StringBuilder("Sensitive in ");
+        for (SensitivityInstance si : taxon.getInstances()) {
+            message.append(si.getZone().getName() + " [" + si.getAuthority() + "], ");
+        }
+        message.replace(message.length() - 2, message.length(), "");
+        report.addMessage(new SdsMessage(Message.Type.INFO, message.toString()));
+
+        // Validate location
+        if (!ValidationUtils.validateLocationCoords(facts, report)) {
+            return new ValidationOutcome(report, false);
+        }
+        if (!ValidationUtils.validateLocation(facts, report)) {
             return new ValidationOutcome(report, false);
         }
 
-        String latitude = facts.get(FactCollection.LATITUDE_KEY);
-        String longitude = facts.get(FactCollection.LONGITUDE_KEY);
-        Set<SensitivityZone> zones = SensitivityZone.getSetFromString(facts.get(FactCollection.ZONES_KEY));
-
-        if (StringUtils.isBlank(latitude) || StringUtils.isBlank(longitude)) {
-            addInfoMessage(report, taxon);
-            return new ConservationOutcome(report);
-        }
+        // Generalise location
+        List<SensitivityZone> zones = SensitivityZone.getListFromString(facts.get(FactCollection.ZONES_KEY));
+        String latitude = facts.get(FactCollection.DECIMAL_LATITUDE_KEY);
+        String longitude = facts.get(FactCollection.DECIMAL_LONGITUDE_KEY);
 
         GeneralisedLocation gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, taxon, zones);
 
         ValidationOutcome outcome = new ConservationOutcome(report);
+
+        // Add generalisation message
+        report.addMessage(new SdsMessage(Message.Type.INFO, gl.getDescription() + " [" + gl.getGeneralisedLatitude() + "," + gl.getGeneralisedLongitude() + "]"));
         ((ConservationOutcome) outcome).setGeneralisedLocation(gl);
         outcome.setValid(true);
 
@@ -59,8 +72,4 @@ public class ConservationService implements ValidationService {
         this.reportFactory = reportFactory;
     }
 
-    private void addInfoMessage(ValidationReport report, SensitiveTaxon ss) {
-        // TODO Auto-generated method stub
-
-    }
 }
