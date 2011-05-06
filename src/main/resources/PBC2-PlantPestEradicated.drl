@@ -1,12 +1,13 @@
 package au.org.ala.sds.validation;
 
 import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.model.SensitivityZone;
 import au.org.ala.sds.util.PlantPestUtils;
 import au.org.ala.sds.validation.RuleState;
 import au.org.ala.sds.validation.ValidationReport;
 import java.util.Date;
-import java.util.Set;
+import java.util.List;
 import org.apache.log4j.Logger;
 import org.drools.runtime.rule.RuleContext;
 
@@ -19,46 +20,35 @@ import function au.org.ala.sds.validation.ValidationHelper.*;
 rule "Inside PQA during quarantine period"
     when
         $st : SensitiveTaxon()
-        $zones : Set()
+        $zones : List()
         $date : Date()
-        eval(PlantPestUtils.isInZoneDuringPeriod($st, $zones, $date))
+        eval(PlantPestUtils.isInZoneDuringPeriod($st, SensitivityCategory.PLANT_PEST_ERADICATED, $zones, $date))
     then
         state.setLoadable(true);
-        state.setAnnotation("Historic record from a successful eradication program");
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT2_A1));
         logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
-        //warning(kcontext, );
 end
 
 rule "Inside PQA earlier than quarantine period"
     when
         $st : SensitiveTaxon()
-        $zones : Set()
+        $zones : List()
         $date : Date()
-        eval(PlantPestUtils.isInZoneBeforePeriod($st, $zones, $date))
+        eval(PlantPestUtils.isInZoneBeforePeriod($st, SensitivityCategory.PLANT_PEST_ERADICATED, $zones, $date))
     then
         state.setLoadable(true);
-        state.setAnnotation("Historic record from the area of a successful eradication program");
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT2_B1));
+        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT2_B2);
         logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
 end
 
-rule "Outside PQA"
+rule "Outside PQA or After quarantine period"
     when
         $st : SensitiveTaxon()
-        $zones : Set()
-        eval(PlantPestUtils.isOutsideZone($st, $zones))
-    then        
-        state.setDelegateRules("PBC1");
-        state.setComplete(false);
-        logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
-end
-
-rule "After quarantine period"
-    when
-        $st : SensitiveTaxon()
-        $zones : Set()
+        $zones : List()
         $date : Date()
-        eval(PlantPestUtils.isInZoneAfterPeriod($st, $zones, $date))
-    then
+        eval(PlantPestUtils.isOutsideZone($st, SensitivityCategory.PLANT_PEST_ERADICATED, $zones) || PlantPestUtils.isAfterPeriod($st, SensitivityCategory.PLANT_PEST_ERADICATED, $date))
+    then        
         state.setDelegateRules("PBC1");
         state.setComplete(false);
         logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
