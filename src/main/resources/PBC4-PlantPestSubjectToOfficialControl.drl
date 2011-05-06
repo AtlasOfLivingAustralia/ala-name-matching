@@ -1,12 +1,15 @@
 package au.org.ala.sds.validation;
 
-import au.org.ala.sds.model.SensitiveSpecies;
+import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.util.DateHelper;
 import au.org.ala.sds.util.PlantPestUtils;
+import au.org.ala.sds.validation.MessageFactory;
 import au.org.ala.sds.validation.RuleState;
 import au.org.ala.sds.validation.ValidationReport;
 import java.util.Date;
-import java.util.Set;
+import java.util.List;
 import org.apache.log4j.Logger;
 import org.drools.runtime.rule.RuleContext;
 
@@ -19,33 +22,45 @@ import function au.org.ala.sds.validation.ValidationHelper.*;
 rule "Inside infested zone during infestation period"
     when
         $st : SensitiveTaxon()
-        $zones : Set()
+        $zones : List()
         $date : Date()
-        eval(PlantPestUtils.isInZoneDuringPeriod($st, $zones, $date))
+        eval(PlantPestUtils.isInZoneDuringPeriod($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones, $date))
     then
         state.setLoadable(true);
-        state.setAnnotation("Historic record from {0} infested area established in {1}");
+        state.setAnnotation(
+            MessageFactory.getMessageText(
+                MessageFactory.PLANT_PEST_MSG_CAT4_A1,
+                PlantPestUtils.getSensitivityZone($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones),
+                DateHelper.getYear(PlantPestUtils.getSensitivityZoneStartDate($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones))));
         logger.warn("PBC4 Rule '" + kcontext.getRule().getName() + "'");
-        //warning(kcontext, );
 end
 
 rule "Inside infested zone prior to infestation period"
     when
         $st : SensitiveTaxon()
-        $zones : Set()
+        $zones : List()
         $date : Date()
-        eval(PlantPestUtils.isInZoneBeforePeriod($st, $zones, $date))
+        eval(PlantPestUtils.isInZoneBeforePeriod($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones, $date))
     then
         state.setLoadable(true);
-        state.setAnnotation("Historic record from {0} infested area that predates the first official record {1}");
+        state.setAnnotation(
+            MessageFactory.getMessageText(
+                MessageFactory.PLANT_PEST_MSG_CAT4_B1,
+                PlantPestUtils.getSensitivityZone($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones),
+                DateHelper.formattedNiceDate(PlantPestUtils.getSensitivityZoneStartDate($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones))));
+        warning(kcontext,
+            MessageFactory.PLANT_PEST_MSG_CAT4_B2,
+            PlantPestUtils.getSensitivityZone($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones),
+            DateHelper.formattedNiceDate(PlantPestUtils.getSensitivityZoneStartDate($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones)));
+        alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT4_B3);
         logger.warn("PBC4 Rule '" + kcontext.getRule().getName() + "'");
 end
 
 rule "Outside infested area"
     when
         $st : SensitiveTaxon()
-        $zones : Set()
-        eval(PlantPestUtils.isOutsideZone($st, $zones))
+        $zones : List()
+        eval(PlantPestUtils.isOutsideZone($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones))
     then        
         state.setDelegateRules("PBC6");
         state.setComplete(false);
