@@ -16,6 +16,7 @@ package au.org.ala.sds;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.BeforeClass;
@@ -61,8 +62,8 @@ public class PlantPestNotKnownInAustraliaTest {
         String longitude = "149.112539";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -70,7 +71,7 @@ public class PlantPestNotKnownInAustraliaTest {
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
         assertFalse(((PlantPestOutcome) outcome).isLoadable());
-        assertTrue(outcome.getAnnotation() != null);
+        assertNull(outcome.getAnnotation());
     }
 
     @Test
@@ -82,8 +83,8 @@ public class PlantPestNotKnownInAustraliaTest {
         String longitude = "149.112539";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -91,6 +92,7 @@ public class PlantPestNotKnownInAustraliaTest {
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
         assertFalse(((PlantPestOutcome) outcome).isLoadable());
+        assertNull(outcome.getAnnotation());
     }
 
     @Test
@@ -102,8 +104,8 @@ public class PlantPestNotKnownInAustraliaTest {
         String longitude = "149.964066";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -114,7 +116,24 @@ public class PlantPestNotKnownInAustraliaTest {
     }
 
     @Test
-    public void inTSPZ() {
+    public void bactericeraPeninsularisInTSPZ() {
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Bactrocera peninsularis");
+        assertNotNull(ss);
+
+        String latitude = "-10.11";   // Badu (Queensland)
+        String longitude = "142.11";
+
+        FactCollection facts = new FactCollection();
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.EVENT_DATE_KEY, "1977-06-20");
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(ss, facts);
+
+        assertTrue(outcome.isValid());
+        assertTrue(outcome instanceof PlantPestOutcome);
+        assertTrue(((PlantPestOutcome) outcome).isLoadable());
     }
 
     @Test
@@ -130,7 +149,8 @@ public class PlantPestNotKnownInAustraliaTest {
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
-        assertFalse(((PlantPestOutcome) outcome).isLoadable());
+        assertTrue(((PlantPestOutcome) outcome).isLoadable());
+        assertNotNull(outcome.getAnnotation());
    }
 
 }

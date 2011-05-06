@@ -63,8 +63,8 @@ public class GeneraliseTest {
         String longitude = "149.112539";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -89,8 +89,8 @@ public class GeneraliseTest {
         String longitude = "149.112539";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -115,8 +115,8 @@ public class GeneraliseTest {
         String longitude = "173.968817";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -141,8 +141,8 @@ public class GeneraliseTest {
         String longitude = "150.441284";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -167,8 +167,8 @@ public class GeneraliseTest {
         String longitude = "148.095703";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -193,9 +193,9 @@ public class GeneraliseTest {
         String longitude = "150.441284";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
-        facts.add(FactCollection.STATE_KEY, "New South Wales");
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.STATE_PROVINCE_KEY, "New South Wales");
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -220,8 +220,8 @@ public class GeneraliseTest {
         String longitude = "145.374527";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -246,8 +246,8 @@ public class GeneraliseTest {
         String longitude = "149.6";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);

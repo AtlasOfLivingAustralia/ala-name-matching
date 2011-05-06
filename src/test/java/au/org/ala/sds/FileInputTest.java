@@ -1,88 +1,188 @@
 package au.org.ala.sds;
 
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
+import static org.junit.Assert.assertTrue;
 
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.commons.lang.StringUtils;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import au.com.bytecode.opencsv.CSVReader;
-
+import au.org.ala.checklist.lucene.CBIndexSearch;
+import au.org.ala.sds.dao.DataRowHandler;
+import au.org.ala.sds.dao.DataStreamDao;
+import au.org.ala.sds.dao.DataStreamDaoFactory;
+import au.org.ala.sds.dto.DataColumnMapper;
+import au.org.ala.sds.dto.DataStreamProperties;
+import au.org.ala.sds.model.Message;
+import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.validation.FactCollection;
+import au.org.ala.sds.validation.PlantPestOutcome;
+import au.org.ala.sds.validation.ServiceFactory;
+import au.org.ala.sds.validation.ValidationOutcome;
+import au.org.ala.sds.validation.ValidationReport;
+import au.org.ala.sds.validation.ValidationService;
 
 public class FileInputTest {
 
+    static CBIndexSearch cbIndexSearch;
+    static SensitiveSpeciesFinder finder;
+
+    @BeforeClass
+    public static void runOnce() throws Exception {
+        cbIndexSearch = new CBIndexSearch("/data/lucene/namematching");
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
+    }
+
     @Test
-    public void readExcelWorkbook() throws IOException {
+    public void readExcelXmlWorkbook() throws Exception {
         String inputFileName = "/Users/peterflemming/Documents/workspaces/sds/sensitive-species/src/test/resources/workbook.xlsx";
-        InputStream is = new FileInputStream(inputFileName);
-        Workbook wb = null;
-        if (inputFileName.endsWith(".xls")) {
-            wb = new HSSFWorkbook(is);
-        } else if (inputFileName.endsWith(".xlsx")) {
-            wb = new XSSFWorkbook(is);
-        }
+        DataStreamDao dao = DataStreamDaoFactory.createDao(inputFileName);
+        DataColumnMapper mapper = new DataColumnMapper();
+        mapper.add("family", "E");
+        mapper.add("genus", "F");
+        mapper.add("specificEpithet", "G");
+        mapper.add("intraspecificEpithet", "H");
+        mapper.add("municipality", "Q");
+        mapper.add("stateProvince", "R");
+        mapper.add("country", "S");
+        mapper.add("decimalLatitude", "T");
+        mapper.add("decimalLongitude", "U");
+        mapper.add("eventDate", "W");
+        mapper.add("year", "X");
 
-        Sheet sheet = wb.getSheetAt(1);
-        System.out.println("Read Excel worksheet test");
-        System.out.println("Sheet - " + sheet.getSheetName());
-        int rowCount = 0;
-        for (Row row : sheet) {
+        DataStreamProperties properties = new DataStreamProperties(2, 11, 2);
 
-            if (row.getRowNum() == 0) {
-                System.out.println("Column headings,");
-                for (Cell cell : row) {
-                    System.out.println(cell.getStringCellValue() + " " + cell.getColumnIndex());
-                }
-            }
-            rowCount++;
-        }
-        System.out.println("Total no of rows - " + rowCount);
-
+        dao.processStream(
+                mapper,
+                properties,
+                new DataRowHandler() {
+                    public void handleRow(FactCollection facts) {
+                        processRow(facts);
+                    }
+                });
     }
 
     @Test
-    public void readCsvFile() throws IOException {
-        String inputFileName = "/Users/peterflemming/Documents/workspaces/sds/sensitive-species/src/test/resources/sds-data.csv";
-        CSVReader reader = new CSVReader(new FileReader(inputFileName));
-        String [] row;
-        int i;
-        System.out.println("\nRead CSV data test");
-        for (i = 0; (row = reader.readNext()) != null; i++) {
-            if (i == 0) {
-                System.out.println("Column headings,");
-                for (String cell : row) {
-                    System.out.println(cell);
-                }
-            }
-        }
-        System.out.println("Total no of rows - " + i);
+    public void readExcelWorkbook() throws Exception {
+        String inputFileName = "/Users/peterflemming/Documents/workspaces/sds/sensitive-species/src/test/resources/workbook.xls";
+        DataStreamDao dao = DataStreamDaoFactory.createDao(inputFileName);
+        DataColumnMapper mapper = new DataColumnMapper();
+        mapper.add("family", "E");
+        mapper.add("genus", "F");
+        mapper.add("specificEpithet", "G");
+        mapper.add("intraspecificEpithet", "H");
+        mapper.add("municipality", "Q");
+        mapper.add("stateProvince", "R");
+        mapper.add("country", "S");
+        mapper.add("decimalLatitude", "T");
+        mapper.add("decimalLongitude", "U");
+        mapper.add("eventDate", "W");
+        mapper.add("year", "X");
 
+        DataStreamProperties properties = new DataStreamProperties(2, 0, 3);
+
+        dao.processStream(
+                mapper,
+                properties,
+                new DataRowHandler() {
+                    public void handleRow(FactCollection facts) {
+                        processRow(facts);
+                    }
+                });
     }
 
-    @Test
-    public void readTsvFile() throws IOException {
-        String inputFileName = "/Users/peterflemming/Documents/workspaces/sds/sensitive-species/src/test/resources/workbook.txt";
-        CSVReader reader = new CSVReader(new FileReader(inputFileName), '\t');
-        String [] row;
-        int i;
-        System.out.println("\nRead TSV data test");
-        for (i = 0; (row = reader.readNext()) != null; i++) {
-            if (i == 0) {
-                System.out.println("Column headings,");
-                for (String cell : row) {
-                    System.out.println(cell);
-                }
-            }
-        }
-        System.out.println("Total no of rows - " + i);
+//    @Test
+//    public void readCsvFile() throws Exception {
+//        String inputFileName = "/Users/peterflemming/Documents/workspaces/sds/sensitive-species/src/test/resources/workbook.csv";
+//        DataStreamDao dao = DataStreamDaoFactory.createDao(inputFileName);
+//        DataColumnMapper mapper = new DataColumnMapper();
+//        mapper.add("family", "5");
+//        mapper.add("genus", "6");
+//        mapper.add("specificEpithet", "7");
+//        mapper.add("intraspecificEpithet", "8");
+//        mapper.add("municipality", "17");
+//        mapper.add("stateProvince", "18");
+//        mapper.add("country", "19");
+//        mapper.add("decimalLatitude", "20");
+//        mapper.add("decimalLongitude", "21");
+//        mapper.add("eventDate", "23");
+//        mapper.add("year", "24");
+//
+//        DataStreamProperties properties = new DataStreamProperties(12, 12);
+//
+//        dao.processStream(
+//                mapper,
+//                properties,
+//                new DataRowHandler() {
+//                    public void handleRow(FactCollection facts) {
+//                        processRow(facts);
+//                    }
+//                });
+//    }
 
+//    @Test
+//    public void readTsvFile() throws Exception {
+//        String inputFileName = "/Users/peterflemming/Documents/workspaces/sds/sensitive-species/src/test/resources/workbook.tsv";
+//        DataStreamDao dao = DataStreamDaoFactory.createDao(inputFileName);
+//        DataColumnMapper mapper = new DataColumnMapper();
+//        mapper.add("family", "5");
+//        mapper.add("genus", "6");
+//        mapper.add("specificEpithet", "7");
+//        mapper.add("intraspecificEpithet", "8");
+//        mapper.add("municipality", "17");
+//        mapper.add("stateProvince", "18");
+//        mapper.add("country", "19");
+//        mapper.add("decimalLatitude", "20");
+//        mapper.add("decimalLongitude", "21");
+//        mapper.add("eventDate", "23");
+//        mapper.add("year", "24");
+//
+//        DataStreamProperties properties = new DataStreamProperties(2, 0);
+//
+//        dao.processStream(
+//                mapper,
+//                properties,
+//                new DataRowHandler() {
+//                    public void handleRow(FactCollection facts) {
+//                        processRow(facts);
+//                    }
+//                });
+//    }
+
+    private void processRow(FactCollection facts) {
+        System.out.println("Row data - " + facts);
+        StringBuilder msgOut = new StringBuilder();
+        String name = facts.get(FactCollection.GENUS_KEY) + " " + facts.get(FactCollection.SPECIFIC_EPITHET_KEY);
+        if (StringUtils.isNotBlank(facts.get(FactCollection.INTRA_SPECIFIC_EPITHET_KEY))) {
+            name = name + " " + facts.get(FactCollection.INTRA_SPECIFIC_EPITHET_KEY);
+        }
+
+        SensitiveTaxon st = finder.findSensitiveSpecies(name);
+        if (st != null) {
+            ValidationService service = ServiceFactory.createValidationService(st);
+            ValidationOutcome outcome = service.validate(st, facts);
+
+            msgOut.append(st.getTaxonName());
+            if (st.getAcceptedName() != null && !name.equalsIgnoreCase(st.getAcceptedName())) {
+                msgOut.append("  (Matched on " + st.getAcceptedName() + ")");
+            }
+            if (StringUtils.isNotBlank(st.getCommonName())) {
+                msgOut.append(" [" + st.getCommonName() + "]");
+            }
+            if (StringUtils.isNotBlank(facts.get(FactCollection.ROW_KEY))) {
+                msgOut.append(" (row ").append(facts.get(FactCollection.ROW_KEY)).append(")");
+            }
+            msgOut.append("\n");
+
+            assertTrue(outcome instanceof PlantPestOutcome);
+            ValidationReport report = outcome.getReport();
+            for (Message message : report.getMessages()) {
+                msgOut.append("  ").append(message.getType()).append(" - ").append(message.getMessageText()).append("\n");
+            }
+
+        } else {
+            msgOut.append("Species '" + name + "' (row " + facts.get(FactCollection.ROW_KEY) + ") not found in list of sensitive species.\n");
+        }
+        System.out.print(msgOut.toString());
     }
 
 }

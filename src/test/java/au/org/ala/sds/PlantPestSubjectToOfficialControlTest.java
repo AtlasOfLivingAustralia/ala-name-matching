@@ -34,7 +34,7 @@ import au.org.ala.sds.validation.ValidationService;
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
 
-public class PlantPestUnderEradicationTest {
+public class PlantPestSubjectToOfficialControlTest {
 
 //  static DataSource dataSource;
     static CBIndexSearch cbIndexSearch;
@@ -53,13 +53,13 @@ public class PlantPestUnderEradicationTest {
     }
 
     @Test
-    public void redImportedFireAntInPQADuringEradication() {
-        System.out.println("redImportedFireAntInPQADuringEradication");
-        SensitiveTaxon ss = finder.findSensitiveSpecies("Solenopsis invicta");
+    public void phylloxeraInPIZDuringInfestation() {
+        System.out.println("phylloxeraInPIZDuringInfestation");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Daktulosphaira vitifoliae");
         assertNotNull(ss);
 
-        String latitude = "-27.58333";   // Wacol, Qld
-        String longitude = "152.9167";
+        String latitude = "-35.998337";   // Albury, NSW
+        String longitude = "147.014848";
         String date = "2011-03-21";
 
         FactCollection facts = new FactCollection();
@@ -76,13 +76,13 @@ public class PlantPestUnderEradicationTest {
     }
 
     @Test
-    public void redImportedFireAntInPQABeforeEradication() {
-        System.out.println("redImportedFireAntInPQABeforeEradication");
-        SensitiveTaxon ss = finder.findSensitiveSpecies("Solenopsis invicta");
+    public void phylloxeraInPIZBeforeInfestation() {
+        System.out.println("phylloxeraInPIZBeforeInfestation");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Daktulosphaira vitifoliae");
         assertNotNull(ss);
 
-        String latitude = "-27.58333";   // Wacol, Qld
-        String longitude = "152.9167";
+        String latitude = "-35.998337";   // Albury, NSW
+        String longitude = "147.014848";
         String date = "2001-02-15";
 
         FactCollection facts = new FactCollection();
@@ -99,14 +99,14 @@ public class PlantPestUnderEradicationTest {
     }
 
     @Test
-    public void redImportedFireAntOutsidePQA() {
-        System.out.println("redImportedFireAntOutsidePQA");
-        SensitiveTaxon ss = finder.findSensitiveSpecies("Solenopsis invicta");
+    public void phylloxeraOutsidePIZ() {
+        System.out.println("phylloxeraOutsidePIZ");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Daktulosphaira vitifoliae");
         assertNotNull(ss);
 
-        String latitude = "-27.560406";   // Toowoomba, Qld
-        String longitude = "151.961625";
-        String date = "2004-01-29";
+        String latitude = "-35.974255";   // Wahgunyah, Vic
+        String longitude = "146.427294";
+        String date = "2011-01-29";
 
         FactCollection facts = new FactCollection();
         facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);

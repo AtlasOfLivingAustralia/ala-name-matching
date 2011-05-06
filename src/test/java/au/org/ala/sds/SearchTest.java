@@ -57,6 +57,6 @@ public class SearchTest {
 
         ss = finder.findSensitiveSpeciesByLsid("urn:lsid:biodiversity.org.au:afd.taxon:fb2de285-c58c-4c63-9268-9beef7c61c16");
         assertNotNull(ss);
-        assertEquals(ss.getSpecies(), "Lophochroa leadbeateri");
+        assertEquals(ss.getTaxonName(), "Lophochroa leadbeateri");
     }
 }

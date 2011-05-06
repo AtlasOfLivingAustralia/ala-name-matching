@@ -54,6 +54,7 @@ public class PlantPestEradicatedTest {
 
     @Test
     public void papayaFruitFlyInPQADuringEradication() {
+        System.out.println("papayaFruitFlyInPQADuringEradication");
         SensitiveTaxon ss = finder.findSensitiveSpecies("Bactrocera papayae");
         assertNotNull(ss);
 
@@ -62,9 +63,9 @@ public class PlantPestEradicatedTest {
         String date = "1996-01-29";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
-        facts.add(FactCollection.DATE_KEY, date);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.EVENT_DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -72,11 +73,13 @@ public class PlantPestEradicatedTest {
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
         assertTrue(((PlantPestOutcome) outcome).isLoadable());
+        assertNotNull(outcome.getAnnotation());
     }
 
     @Test
     public void citrusCankerInPQABeforeEradication() {
-        SensitiveTaxon ss = finder.findSensitiveSpecies("Xanthomonas axonopodis pv. citri");
+        System.out.println("citrusCankerInPQABeforeEradication");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Xanthomonas axonopodis citri");
         assertNotNull(ss);
 
         String latitude = "-23.546678";   // Emerald
@@ -84,9 +87,9 @@ public class PlantPestEradicatedTest {
         String date = "2004-01-29";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
-        facts.add(FactCollection.DATE_KEY, date);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.EVENT_DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -98,6 +101,7 @@ public class PlantPestEradicatedTest {
 
     @Test
     public void papayaFruitFlyOutsidePQA() {
+        System.out.println("papayaFruitFlyOutsidePQA");
         SensitiveTaxon ss = finder.findSensitiveSpecies("Bactrocera papayae");
         assertNotNull(ss);
 
@@ -106,9 +110,9 @@ public class PlantPestEradicatedTest {
         String date = "2004-01-29";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
-        facts.add(FactCollection.DATE_KEY, date);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.EVENT_DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -120,7 +124,8 @@ public class PlantPestEradicatedTest {
 
     @Test
     public void citrusCankerAfterEradication() {
-        SensitiveTaxon ss = finder.findSensitiveSpecies("Xanthomonas axonopodis pv. citri");
+        System.out.println("citrusCankerAfterEradication");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Xanthomonas axonopodis citri");
         assertNotNull(ss);
 
         String latitude = "-23.546678";   // Emerald
@@ -128,9 +133,9 @@ public class PlantPestEradicatedTest {
         String date = "2010-01-29";
 
         FactCollection facts = new FactCollection();
-        facts.add(FactCollection.LATITUDE_KEY, latitude);
-        facts.add(FactCollection.LONGITUDE_KEY, longitude);
-        facts.add(FactCollection.DATE_KEY, date);
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.add(FactCollection.EVENT_DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(ss, facts);
@@ -138,6 +143,5 @@ public class PlantPestEradicatedTest {
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
         assertFalse(((PlantPestOutcome) outcome).isLoadable());
-   }
-
+    }
 }
