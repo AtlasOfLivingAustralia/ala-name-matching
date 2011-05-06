@@ -16,7 +16,6 @@ package au.org.ala.sds.util;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Set;
 
 import au.org.ala.sds.model.ConservationInstance;
 import au.org.ala.sds.model.SensitiveTaxon;
@@ -29,6 +28,7 @@ import au.org.ala.sds.model.SensitivityZone;
 public class GeneralisedLocation {
     private final String originalLatitude;
     private final String originalLongitude;
+    private final List<SensitivityZone> zones;
     private final List<SensitivityInstance> instances;
     private String locationGeneralisation;
     private String generalisedLatitude;
@@ -36,11 +36,12 @@ public class GeneralisedLocation {
     private String generalisationInMetres;
     private String description;
 
-    public GeneralisedLocation(String latitude, String longitude, SensitiveTaxon ss, Set<SensitivityZone> zones) {
+    public GeneralisedLocation(String latitude, String longitude, SensitiveTaxon st, List<SensitivityZone> zones) {
         this.originalLatitude = latitude;
         this.originalLongitude = longitude;
         this.locationGeneralisation = null;
-        this.instances = ss.getInstancesForZones(zones);
+        this.zones = zones;
+        this.instances = st.getInstancesForZones(zones);
         this.locationGeneralisation = getLocationGeneralistion();
         generaliseCoordinates();
     }
@@ -87,13 +88,27 @@ public class GeneralisedLocation {
         return this.instances;
     }
 
+    public List<SensitivityZone> getMatchingZones() {
+        return zones;
+    }
+
+    public String getMatchingZone() {
+        for (SensitivityZone zone : this.zones) {
+            if (zone.getType().equals(SensitivityZone.ZoneType.COUNTRY) || zone.getType().equals(SensitivityZone.ZoneType.STATE)) {
+                return zone.getName();
+            }
+        }
+        return "???";
+    }
+
+
     private void generaliseCoordinates() {
 
         if (this.locationGeneralisation == null) {
             generalisedLatitude = originalLatitude;
             generalisedLongitude = originalLongitude;
             generalisationInMetres = "";
-            description = "Location not generalised because it is not sensitive in that area.";
+            description = "Location not generalised because it is not sensitive in " + getMatchingZone() + ".";
             return;
         }
 
@@ -150,4 +165,5 @@ public class GeneralisedLocation {
             }
         }
     }
+
 }
