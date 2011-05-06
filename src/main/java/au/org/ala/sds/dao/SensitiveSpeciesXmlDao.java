@@ -17,9 +17,9 @@ import org.jdom.input.SAXBuilder;
 import au.org.ala.sds.model.ConservationInstance;
 import au.org.ala.sds.model.PlantPestInstance;
 import au.org.ala.sds.model.SensitiveTaxon;
-import au.org.ala.sds.model.SensitivityCategory;
+import au.org.ala.sds.model.SensitivityCategoryFactory;
 import au.org.ala.sds.model.SensitivityInstance;
-import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.model.SensitivityZoneFactory;
 
 /**
  *
@@ -73,15 +73,15 @@ public class SensitiveSpeciesXmlDao implements SensitiveSpeciesDao {
                 SensitivityInstance instance = null;
                 if (ie.getName().equalsIgnoreCase("conservationInstance")) {
                     instance = new ConservationInstance(
-                            SensitivityCategory.getCategory(ie.getAttributeValue("category")),
+                            SensitivityCategoryFactory.getCategory(ie.getAttributeValue("category")),
                             ie.getAttributeValue("authority"),
-                            SensitivityZone.valueOf(ie.getAttributeValue("zone")),
+                            SensitivityZoneFactory.getZone(ie.getAttributeValue("zone")),
                             ie.getAttributeValue("generalisation"));
                 } else if (ie.getName().equalsIgnoreCase("plantPestInstance")) {
                     instance = new PlantPestInstance(
-                            SensitivityCategory.getCategory(ie.getAttributeValue("category")),
+                            SensitivityCategoryFactory.getCategory(ie.getAttributeValue("category")),
                             ie.getAttributeValue("authority"),
-                            SensitivityZone.valueOf(ie.getAttributeValue("zone")),
+                            SensitivityZoneFactory.getZone(ie.getAttributeValue("zone")),
                             ie.getAttributeValue("fromDate"),
                             ie.getAttributeValue("toDate"));
                 }
