@@ -6,7 +6,7 @@ package au.org.ala.sds.validation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -15,8 +15,10 @@ import org.drools.runtime.StatelessKnowledgeSession;
 
 import au.org.ala.sds.knowledgebase.KnowledgeBaseFactory;
 import au.org.ala.sds.model.SensitiveTaxon;
-import au.org.ala.sds.model.SensitivityCategory;
+import au.org.ala.sds.model.SensitivityCategoryFactory;
 import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.util.DateHelper;
+import au.org.ala.sds.util.ValidationUtils;
 
 /**
  *
@@ -43,11 +45,12 @@ public class PlantPestService implements ValidationService {
     public ValidationOutcome validate(SensitiveTaxon taxon, FactCollection facts) {
         ValidationReport report = reportFactory.createValidationReport(taxon);
 
-        if (!ValidationUtils.validateFacts(facts, report)) {
+        if (!ValidationUtils.validateLocation(facts, report)) {
             return new ValidationOutcome(report, false);
         }
 
-        Set<SensitivityZone> zones = SensitivityZone.getSetFromString(facts.get(FactCollection.ZONES_KEY));
+        List<SensitivityZone> zones = SensitivityZone.getListFromString(facts.get(FactCollection.ZONES_KEY));
+        Date date = facts.get(FactCollection.EVENT_DATE_KEY) == null ? null : DateHelper.parseDate(facts.get(FactCollection.EVENT_DATE_KEY));
         RuleState state = new RuleState();
 
         do {
@@ -58,11 +61,11 @@ public class PlantPestService implements ValidationService {
             session.setGlobal("state", state);
             session.setGlobal("logger", logger);
 
-            session.execute(getFacts(taxon, zones, ValidationUtils.parseDate(facts.get(FactCollection.DATE_KEY))));
+            session.execute(getFacts(taxon, zones, date));
 
             if (!state.isComplete()) {
                 if (StringUtils.isNotBlank(state.getDelegateRules())) {
-                    knowledgeBase = KnowledgeBaseFactory.getKnowledgeBase(SensitivityCategory.getCategory(state.getDelegateRules()));
+                    knowledgeBase = KnowledgeBaseFactory.getKnowledgeBase(SensitivityCategoryFactory.getCategory(state.getDelegateRules()));
                     state.setDelegateRules(null);
                 } else {
                     throw new IllegalStateException("Delegate rules not specified.");
@@ -88,9 +91,9 @@ public class PlantPestService implements ValidationService {
     /**
      * @return facts that the rules will reason upon
      */
-    private Collection<Object> getFacts(SensitiveTaxon ss, Set<SensitivityZone> zones, Date date) {
+    private Collection<Object> getFacts(SensitiveTaxon st, List<SensitivityZone> zones, Date date) {
       ArrayList<Object> facts = new ArrayList<Object>();
-      facts.add(ss);
+      facts.add(st);
       facts.add(zones);
       facts.add(date);
       return facts;
