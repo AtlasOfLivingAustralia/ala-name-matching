@@ -1,78 +1,108 @@
 package au.org.ala.sds.model;
 
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 
-public enum SensitivityZone {
-    AUS("Australia"),
-    ACT("Australian Capital Territory"),
-    NSW("New South Wales"),
-    QLD("Queensland"),
-    VIC("Victoria"),
-    TAS("Tasmania"),
-    SA("South Australia"),
-    WA("Western Australia"),
-    NT("Northern Territory"),
-    CC("Cocos (Keeling) Islands"),
-    CX("Christmas Island"),
-    AC("Ashmore and Cartier Islands"),
-    CS("Coral Sea Islands"),
-    NF("Norfolk Island"),
-    HM("Heard and McDonald Islands"),
-    AQ("Australian Antartic Territory"),
-    TSPZ("Torres Strait Protected Zone"),
-    TSSQZ("Torres Strait Special Quarantine Zone"),
-    FFEZ("Tri-State Fruit Fly Exclusion Zone"),
-    PFFPQA1995("Papaya Fruit Fly Pest Quarantine Area 1995"),
-    ECCPQA2004("Emerald Citrus Canker Pest Quarantine Area 2004"),
-    RIFARA("Red Imported Fire Ant Restricted Area"),
-    PIZNSWAC("Phylloxera Infested Zone - NSW Albury-Corowa"),
-    PIZNSWSR("Phylloxera Infested Zone - NSW Sydney Region"),
-    PIZVICNE("Phylloxera Infested Zone - Vic North East"),
-    PIZVICMAR("Phylloxera Infested Zone - Vic Maroondah"),
-    PIZVICNAG("Phylloxera Infested Zone - Vic Nagambie"),
-    PIZVICMOR("Phylloxera Infested Zone - Vic Moroopna"),
-    PIZVICUPT("Phylloxera Infested Zone - Vic Upton"),
-    PIZVICWHB("Phylloxera Infested Zone - Vic Whitebridge"),
-    PCNCAVICTHO("Potato Cyst Nematode Control Area - Vic Thorpdale"),
-    PCNCAVICGEM("Potato Cyst Nematode Control Area - Vic Gembrook"),
-    PCNCAVICKWR("Potato Cyst Nematode Control Area - Vic Koo Wee Rup"),
-    PCNCAVICWAN("Potato Cyst Nematode Control Area - Vic Wandin"),
-    NOTAUS("Not in Australia");
+public class SensitivityZone {
 
-    private String value;
+    public static final String AUS = "AUS";
+    public static final String NOTAUS = "NOTAUS";
+    public static final String ACT = "ACT";
+    public static final String NSW = "NSW";
+    public static final String QLD = "QLD";
+    public static final String VIC = "VIC";
+    public static final String TAS = "TAS";
+    public static final String SA = "SA";
+    public static final String WA = "WA";
+    public static final String NT = "NT";
+    public static final String CC = "CC";
+    public static final String CX = "CX";
+    public static final String AC = "AC";
+    public static final String CS = "CS";
+    public static final String NF = "NF";
+    public static final String HM = "HM";
+    public static final String AQ = "AQ";
+    public static final String TSPZ = "TSPZ";
+    public static final String TSSQZ = "TSSQZ";
+    public static final String FFEZ = "FFEZ";
+    public static final String PFFPQA1995 = "PFFPQA1995";
+    public static final String ECCPQA2004 = "ECCPQA2004";
+    public static final String RIFARA = "RIFARA";
+    public static final String PIZNSWAC = "PIZNSWAC";
+    public static final String PIZNSWSR = "PIZNSWSR";
+    public static final String PIZVICNE = "PIZVICNE";
+    public static final String PIZVICMAR = "PIZVICMAR";
+    public static final String PIZVICNAG = "PIZVICNAG";
+    public static final String PIZVICMOR = "PIZVICMOR";
+    public static final String PIZVICUPT = "PIZVICUPT";
+    public static final String PIZVICWHB = "PIZVICWHB";
+    public static final String PCNCAVICTHO = "PCNCAVICTHO";
+    public static final String PCNCAVICGEM = "PCNCAVICGEM";
+    public static final String PCNCAVICKWR = "PCNCAVICKWR";
+    public static final String PCNCAVICWAN = "PCNCAVICWAN";
 
-    private SensitivityZone(String value) {
-        this.value = value;
+    public enum ZoneType { COUNTRY, STATE, EXTERNAL_TERRITORY, QUARANTINE_ZONE }
+
+    private final String id;
+    private final String name;
+    private final ZoneType type;
+
+    public SensitivityZone(String id, String name, ZoneType type) {
+        this.id = id;
+        this.name = name;
+        this.type = type;
     }
 
-    public static SensitivityZone getZone(String value) {
-        for (SensitivityZone zone : SensitivityZone.values()) {
-            if (zone.getValue().equalsIgnoreCase(value)) {
-                return zone;
-            }
-        }
-
-        // Try abbreviation
-        return SensitivityZone.valueOf(value.toUpperCase());
+    public String getId() {
+        return id;
     }
 
-    public String getValue() {
-        return value;
+    public String getName() {
+        return name;
+    }
+
+    public ZoneType getType() {
+        return type;
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37).
+            append(this.id).
+            append(this.name).
+            append(this.type).
+            toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
+        SensitivityZone other = (SensitivityZone) obj;
+        return new EqualsBuilder()
+            .append(this.id, other.id)
+            .isEquals();
+    }
+
+    @Override
+    public String toString() {
+        return this.id;
     }
 
     public static boolean isInAustralia(SensitivityZone zone) {
-        Set<SensitivityZone> ausZones = EnumSet.of(ACT, NSW, NT, QLD, SA, TAS, VIC, WA);
-        return zone == SensitivityZone.AUS || ausZones.contains(zone) ;
+        return
+            zone == SensitivityZoneFactory.getZone(AUS) ||
+            zone.getType() == ZoneType.STATE;
     }
 
-    public static boolean isInAustralia(Set<SensitivityZone> zones) {
-        Set<SensitivityZone> ausZones = EnumSet.of(ACT, NSW, NT, QLD, SA, TAS, VIC, WA);
+    public static boolean isInAustralia(List<SensitivityZone> zones) {
         for (SensitivityZone zone : zones) {
-            if (zone == SensitivityZone.AUS || ausZones.contains(zone)) {
+            if (zone.equals(SensitivityZoneFactory.getZone(AUS)) || zone.getType() == ZoneType.STATE) {
                 return true;
             }
         }
@@ -80,41 +110,47 @@ public enum SensitivityZone {
     }
 
     public static boolean isExternalTerritory(SensitivityZone zone) {
-        Set<SensitivityZone> externalTerritories = EnumSet.of(CX, CC, AC, CS, AQ, HM, NF);
-        return externalTerritories.contains(zone);
+        return zone.getType() == ZoneType.EXTERNAL_TERRITORY;
     }
 
-    public static boolean isExternalTerritory(Set<SensitivityZone> zones) {
-        Set<SensitivityZone> externalTerritories = EnumSet.of(CX, CC, AC, CS, AQ, HM, NF);
+    public static boolean isExternalTerritory(List<SensitivityZone> zones) {
         for (SensitivityZone zone : zones) {
-            if (externalTerritories.contains(zone)) {
+            if (zone.getType() == ZoneType.EXTERNAL_TERRITORY) {
                 return true;
             }
         }
         return false;
     }
 
-    public static boolean isInTorresStrait(Set<SensitivityZone> zones) {
-        Set<SensitivityZone> torresStrait = EnumSet.of(TSPZ, TSSQZ);
+    public static boolean isInTorresStrait(List<SensitivityZone> zones) {
         for (SensitivityZone zone : zones) {
-            if (torresStrait.contains(zone)) {
+            if (zone.equals(SensitivityZoneFactory.getZone(TSPZ)) || zone.equals(SensitivityZoneFactory.getZone(TSSQZ))) {
                 return true;
             }
         }
         return false;
     }
 
-    public static boolean isNotAustralia(SensitivityZone zone) {
-        return zone == null || zone.equals(NOTAUS);
+    public static boolean isNotInAustralia(SensitivityZone zone) {
+        return zone == null || zone.equals(SensitivityZoneFactory.getZone(NOTAUS));
     }
 
-    public static Set<SensitivityZone> getSetFromString(String string) {
-        Set<SensitivityZone> zoneSet = new HashSet<SensitivityZone>();
+    public static boolean isNotInAustralia(List<SensitivityZone> zones) {
+        for (SensitivityZone zone : zones) {
+            if (zone.equals(SensitivityZoneFactory.getZone(NOTAUS))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static List<SensitivityZone> getListFromString(String string) {
+        List<SensitivityZone> zoneList = new ArrayList<SensitivityZone>();
         String[] zones = StringUtils.split(StringUtils.substringBetween(string, "[", "]"), ',');
         for (String zone : zones) {
-            zoneSet.add(SensitivityZone.valueOf(StringUtils.strip(zone)));
+            zoneList.add(SensitivityZoneFactory.getZone(StringUtils.strip(zone)));
         }
-        return zoneSet;
+        return zoneList;
     }
 
 }

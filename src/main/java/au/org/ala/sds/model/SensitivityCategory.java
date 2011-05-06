@@ -14,81 +14,67 @@
  ***************************************************************************/
 package au.org.ala.sds.model;
 
-import java.util.EnumSet;
-import java.util.Set;
-
 /**
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
-public enum SensitivityCategory {
+public class SensitivityCategory {
 
-    NOT_EVALUATED("NE"),
-    DATA_DEFICIENT("DD"),
-    LEAST_CONCERN("LC"),
-    NEAR_THREATENED("NT"),
-    CONSERVATION_DEPENDENT("CD"),
-    VULNERABLE("VU"),
-    ENDANGERED("EN"),
-    CRITICALLY_ENDANGERED("CR"),
-    EXTINCT_IN_THE_WILD("EW"),
-    EXTINCT("EX"),
-    RARE("R"),
-    WA_PRIORITY_1("P1"),
-    WA_PRIORITY_2("P2"),
-    WA_PRIORITY_3("P3"),
-    WA_PRIORITY_4("P4"),
-    WA_PRIORITY_5("P5"),
-    WA_SPECIALLY_PROTECTED("SP"),
+    public static final String NOT_EVALUATED = "NE";
+    public static final String DATA_DEFICIENT = "DD";
+    public static final String LEAST_CONCERN = "LC";
+    public static final String NEAR_THREATENED = "NT";
+    public static final String CONSERVATION_DEPENDENT = "CD";
+    public static final String VULNERABLE = "VU";
+    public static final String ENDANGERED = "EN";
+    public static final String CRITICALLY_ENDANGERED = "CR";
+    public static final String EXTINCT_IN_THE_WILD = "EW";
+    public static final String EXTINCT = "EX";
+    public static final String RARE = "R";
+    public static final String WA_PRIORITY_1 = "P1";
+    public static final String WA_PRIORITY_2 = "P2";
+    public static final String WA_PRIORITY_3 = "P3";
+    public static final String WA_PRIORITY_4 = "P4";
+    public static final String WA_PRIORITY_5 = "P5";
+    public static final String WA_SPECIALLY_PROTECTED = "SP";
 
-    PLANT_PEST_NOT_KNOWN_IN_AUSTRALIA("PBC1"),
-    PLANT_PEST_ERADICATED("PBC2"),
-    PLANT_PEST_UNDER_ERADICATION("PBC3"),
-    PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL("PBC4"),
-    PLANT_PEST_IN_TORRES_STRAIT_ZONE("PBC5a"),
-    PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY("PBC5b"),
-    PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION("PBC6");
+    public static final String PLANT_PEST_NOT_KNOWN_IN_AUSTRALIA = "PBC1";
+    public static final String PLANT_PEST_ERADICATED = "PBC2";
+    public static final String PLANT_PEST_UNDER_ERADICATION = "PBC3";
+    public static final String PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL = "PBC4";
+    public static final String PLANT_PEST_IN_TORRES_STRAIT_ZONE = "PBC5a";
+    public static final String PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY = "PBC5b";
+    public static final String PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION = "PBC6";
 
-    private String value;
+    public enum CategoryType { CONSERVATION, PLANT_PEST }
 
-    private SensitivityCategory(String value) {
+    private final String id;
+    private final String value;
+    private final CategoryType type;
+
+    public SensitivityCategory(String id, String value, CategoryType type) {
+        this.id = id;
         this.value = value;
+        this.type = type;
     }
 
-    public static SensitivityCategory getCategory(String value) {
-        for (SensitivityCategory cat : SensitivityCategory.values()) {
-            if (cat.getValue().equals(value)) {
-                return cat;
-            }
-        }
-        return null;
+    public String getId() {
+        return id;
     }
 
     public String getValue() {
         return value;
     }
 
-    public static boolean isConservationSensitive(SensitivityCategory category) {
-        Set<SensitivityCategory> conservationCategories = EnumSet.of(
-                NOT_EVALUATED, DATA_DEFICIENT, LEAST_CONCERN,
-                NEAR_THREATENED, CONSERVATION_DEPENDENT, VULNERABLE,
-                ENDANGERED, CRITICALLY_ENDANGERED, EXTINCT_IN_THE_WILD,
-                EXTINCT, RARE, WA_PRIORITY_1, WA_PRIORITY_2, WA_PRIORITY_3,
-                WA_PRIORITY_4, WA_PRIORITY_5, WA_SPECIALLY_PROTECTED);
-
-        return conservationCategories.contains(category);
+    public CategoryType getType() {
+        return type;
     }
 
-    public static boolean isPlantPest(SensitivityCategory category) {
-        Set<SensitivityCategory> plantPestCategories = EnumSet.of(
-                PLANT_PEST_NOT_KNOWN_IN_AUSTRALIA,
-                PLANT_PEST_ERADICATED,
-                PLANT_PEST_UNDER_ERADICATION,
-                PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL,
-                PLANT_PEST_IN_TORRES_STRAIT_ZONE,
-                PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY,
-                PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION);
+    public boolean isConservationSensitive() {
+        return type.equals(CategoryType.CONSERVATION);
+    }
 
-        return plantPestCategories.contains(category);
+    public boolean isPlantPest() {
+        return type.equals(CategoryType.PLANT_PEST);
     }
 }
