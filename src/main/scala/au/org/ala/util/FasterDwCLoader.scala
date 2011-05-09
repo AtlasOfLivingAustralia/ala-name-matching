@@ -14,7 +14,6 @@
  ***************************************************************************/
 package au.org.ala.util
 
-import au.org.ala.biocache.DAO
 import org.wyki.cassandra.pelops.Pelops
 import java.util.UUID
 import au.com.bytecode.opencsv.CSVReader

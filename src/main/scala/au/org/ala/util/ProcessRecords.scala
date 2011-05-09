@@ -30,20 +30,24 @@ import au.org.ala.biocache._
  */
 object ProcessRecords {
 
-  val logger = LoggerFactory.getLogger("ProcessRecords")
-
-  val workflow = Array(ClassificationProcessor,LocationProcessor,EventProcessor,BasisOfRecordProcessor,
-      TypeStatusProcessor,AttributionProcessor,ImageProcessor)
-
   /**
    * Run record processing.
    */
   def main(args: Array[String]): Unit = {
-    logger.info("Starting processing records....")
-    processAll
-    logger.info("Finished. Shutting down.")
+    //logger.info("Starting processing records....")
+    val p = new RecordProcessor
+    p.processAll
+    //logger.info("Finished. Shutting down.")
     Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager].shutdown
   }
+}
+
+class RecordProcessor {
+
+  val logger = LoggerFactory.getLogger(classOf[RecordProcessor])
+
+  val workflow = Array(ClassificationProcessor,LocationProcessor,EventProcessor,BasisOfRecordProcessor,
+        TypeStatusProcessor,AttributionProcessor,ImageProcessor)
 
   /**
    * Process all records in the store
@@ -53,14 +57,13 @@ object ProcessRecords {
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
 
-    val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
-
     //page over all records and process
-    occurrenceDAO.pageOverAll(Raw, record => {
+    //occurrenceDAO.pageOverAll(Raw, record => {
+    Config.occurrenceDAO.pageOverRawProcessed(record => {
       counter += 1
       if (!record.isEmpty) {
-        val raw = record.get
-        processRecord(raw)
+        val (raw,processed) = record.get
+        processRecord(raw, processed)
 
         //debug counter
         if (counter % 1000 == 0) {
@@ -71,6 +74,26 @@ object ProcessRecords {
       }
       true
     })
+  }
+
+  /**
+   * Process a record, adding metadata and records quality systemAssertions.
+   * This version passes the original to optimise updates.
+   */
+  def processRecord(raw:FullRecord, currentProcessed:FullRecord){
+
+    val guid = raw.uuid
+    val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+    //NC: Changed so that a processed record only contains values that have been processed.
+    var processed = new FullRecord
+    var assertions = new ArrayBuffer[QualityAssertion]
+
+    //run each processor in the specified order
+    workflow.foreach(processor => { assertions ++= processor.process(guid, raw, processed) })
+
+    val systemAssertions = Some(assertions.toArray)
+    //store the occurrence
+    occurrenceDAO.updateOccurrence(guid, currentProcessed, processed, systemAssertions, Processed)
   }
 
   /**

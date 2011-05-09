@@ -80,7 +80,7 @@ object DwCLoader {
 
        //lookup the column
       val recordUuid = occurrenceDAO.createOrRetrieveUuid(uniqueID)
-      val fullRecord = occurrenceDAO.createFullRecord(recordUuid, fieldTuples, Raw)
+      val fullRecord = FullRecordMapper.createFullRecord(recordUuid, fieldTuples, Raw)
 
       currentBatch += fullRecord
 

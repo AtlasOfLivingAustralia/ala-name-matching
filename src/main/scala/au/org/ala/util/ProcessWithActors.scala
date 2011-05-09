@@ -9,8 +9,8 @@ import au.org.ala.biocache._
  */
 object ProcessWithActors {
 
-  val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
-  val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
+  val occurrenceDAO = Config.occurrenceDAO
+  val persistenceManager = Config.persistenceManager
 
   def main(args : Array[String]) : Unit = {
 
@@ -18,7 +18,7 @@ object ProcessWithActors {
     var ids = 0
     val threads = {
         if(args.length>0){
-             args(0).toInt
+            args(0).toInt
         } else {
             4
         }
@@ -33,21 +33,19 @@ object ProcessWithActors {
 
     var count = 0
 
-    var buff = new ArrayBuffer[FullRecord]
+    var buff = new ArrayBuffer[(FullRecord,FullRecord)]
 
-    occurrenceDAO.pageOverAll(Raw, fullRecord => {
+    //occurrenceDAO.pageOverAll(Raw, fullRecord => {
+    occurrenceDAO.pageOverRawProcessed(rawAndProcessed => {
 
       count += 1
       //we want to add the record to the buffer whether or not we send them to the actor
-      buff + fullRecord.get
+      buff + rawAndProcessed.get
       if(buff.size>=50){
         val actor = pool(count % threads).asInstanceOf[Consumer]
 
         //find a ready actor...
-        while(!actor.ready){
-          Thread.sleep(50)
-          //println("Backing off with thread: "+actor.id)
-        }
+        while(!actor.ready){ Thread.sleep(50) }
 
         actor ! buff.toArray
         buff.clear
@@ -56,7 +54,8 @@ object ProcessWithActors {
       //debug counter
       if (count % 1000 == 0) {
         finishTime = System.currentTimeMillis
-        println(count + " >> Last key : " + fullRecord.get.uuid
+        println(count
+            + " >> Last key : " + rawAndProcessed.get._1.uuid
             + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f)
             + ", time taken for "+1000+" records: " + (finishTime - startTime).toFloat / 1000f
             + ", total time: "+ (finishTime - start).toFloat / 60000f +" minutes"
@@ -77,31 +76,26 @@ object ProcessWithActors {
 class Consumer (master:Actor,val id:Int)  extends Actor  {
 
   println("Initialising thread: "+id)
+  val processor = new RecordProcessor
 
-  var received = 0
-  var processed = 0
+  var received, processedRecords = 0
 
-  def ready = processed==received
+  def ready = processedRecords == received
 
   def act {
     println("In (Actor.act) thread: "+id)
     loop{
       react {
-        case raw:FullRecord => {
+        case rawAndProcessed :(FullRecord,FullRecord) => {
+          val (raw, processed) = rawAndProcessed
           received += 1
-          //println(id+"] Processing " + raw.o.uuid +", Received: "+ received+", Processed: "+processed)
-          ProcessRecords.processRecord(raw)
-          processed += 1
-          //println(id+"] Processing " + raw.o.uuid +", Received: "+ received+", Processed: "+processed)
-//					master ! "done"
+          processor.processRecord(raw, processed)
+          processedRecords += 1
         }
-        case raws:Array[FullRecord] => {
+        case batch:Array[(FullRecord,FullRecord)] => {
           received += 1
-          //println(id+"] Processing " + raw.o.uuid +", Received: "+ received+", Processed: "+processed)
-          for(raw<-raws) { ProcessRecords.processRecord(raw) }
-          processed += 1
-          //println(id+"] Processing " + raw.o.uuid +", Received: "+ received+", Processed: "+processed)
-//					master ! "done"
+          for((raw,processed) <- batch) { processor.processRecord(raw, processed) }
+          processedRecords += 1
         }
         case s:String => {
             if(s == "exit"){
