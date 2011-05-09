@@ -5,11 +5,15 @@ import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 import java.text.ParseException
 
+/**
+ * Date parser that uses scala extractors to handle the different formats.
+ */
 object DateParser {
 
  final val logger:Logger = LoggerFactory.getLogger("DateParser")
   /**
-   * Handle these formats:
+   * Handles these formats (taken from Darwin Core specification):
+   *
    * 1963-03-08T14:07-0600" is 8 Mar 1963 2:07pm in the time zone six hours earlier than UTC,
    * "2009-02-20T08:40Z" is 20 Feb 2009 8:40am UTC, "1809-02-12" is 12 Feb 1809,
    * "1906-06" is Jun 1906, "1971" is just that year,

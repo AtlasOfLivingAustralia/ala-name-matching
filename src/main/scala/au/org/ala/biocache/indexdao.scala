@@ -77,16 +77,16 @@ trait IndexDAO {
         var assertions = Array[String]("")
         for (fieldName <- columns) {
 
-            if (occurrenceDAO.isQualityAssertion(fieldName)) {
+            if (FullRecordMapper.isQualityAssertion(fieldName)) {
 
                 val value = map.get(fieldName)
 
                 if (!value.isEmpty) {
                     if (value.get equals "true") {
                         if (assertions(0) == "")
-                            assertions = Array(occurrenceDAO.removeQualityAssertionMarker(fieldName))
+                            assertions = Array(FullRecordMapper.removeQualityAssertionMarker(fieldName))
                         else
-                            assertions = assertions ++ Array(occurrenceDAO.removeQualityAssertionMarker(fieldName))
+                            assertions = assertions ++ Array(FullRecordMapper.removeQualityAssertionMarker(fieldName))
                     }
                 }
             }
@@ -135,7 +135,7 @@ trait IndexDAO {
 
         try {
             //get the lat lon values so that we can determine all the point values
-            val deleted = getValue(occurrenceDAO.deletedColumn, map)
+            val deleted = getValue(FullRecordMapper.deletedColumn, map)
             //only add it to the index is it is not deleted
             if (!deleted.equals("true")) {
                 var slat = getValue("decimalLatitude.p", map)
@@ -239,13 +239,13 @@ trait IndexDAO {
                     getValue("basisOfRecord", map),
                     getValue("typeStatus.p", map),
                     getValue("typeStatus", map),
-                    getValue(occurrenceDAO.taxonomicDecisionColumn, map),
-                    getValue(occurrenceDAO.geospatialDecisionColumn, map),
+                    getValue(FullRecordMapper.taxonomicDecisionColumn, map),
+                    getValue(FullRecordMapper.geospatialDecisionColumn, map),
                     getAssertions(map).reduceLeft(_ + "|" + _),
                     getValue("locationRemarks", map),
                     getValue("occurrenceRemarks", map),
                     "",
-                    (getValue(occurrenceDAO.userQualityAssertionColumn, map) != "").toString,
+                    (getValue(FullRecordMapper.userQualityAssertionColumn, map) != "").toString,
                     getValue("recordedBy", map),
                     getValue("mean_temperature_cars2009a_band1.p", map),
                     getValue("mean_oxygen_cars2006_band1.p", map),
@@ -272,12 +272,12 @@ trait IndexDAO {
         for (i <- 0 to 1) {
             val record = records(i)
             for (anObject <- record.objectArray) {
-                val defn = DAO.getDefn(anObject)
+                val defn = FullRecordMapper.getDefn(anObject)
                 for (field <- defn) {
                     //first time through we are processing the raw values
                     var fieldName = if (i == 0) "raw_" + field else field
                     //we only want to attempt to add the items that should appear in the occurrence
-                    if (DAO.occurrenceIndexDefn.contains(fieldName)) {
+                    if (FullRecordMapper.occurrenceIndexDefn.contains(fieldName)) {
                         val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[Any]
                         if (fieldValue != null) {
                             occ.setter(fieldName, fieldValue);

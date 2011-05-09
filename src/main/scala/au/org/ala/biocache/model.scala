@@ -5,6 +5,7 @@ import org.apache.commons.lang.time.DateFormatUtils
 import org.apache.solr.client.solrj.beans.Field
 import org.codehaus.jackson.annotate.JsonIgnore
 import collection.mutable.HashMap
+import org.apache.commons.lang.builder.{ToStringBuilder, EqualsBuilder}
 
 /**
  * Represents an occurrence record. These fields map directly on to
@@ -158,7 +159,7 @@ class Classification extends Cloneable with Mappable {
 
   @JsonIgnore
   def getMap():Map[String,String]={
-    val map =Map[String,String]("scientificName"-> scientificName, "scientificNameAuthorship"->scientificNameAuthorship,
+    val map =Map[String,String]("scientificName"->scientificName, "scientificNameAuthorship"->scientificNameAuthorship,
                        "scientificNameID"->scientificNameID, "taxonConceptID"->taxonConceptID, "taxonID"->taxonID,
                        "kingdom"->kingdom,"phylum"->phylum,"classs"->classs,"order"->order,"family"->family,
                        "genus"->genus,"subgenus"->subgenus,"species"->species,"specificEpithet"->specificEpithet,
@@ -166,12 +167,12 @@ class Classification extends Cloneable with Mappable {
                        "higherClassification"->higherClassification, "parentNameUsage"->parentNameUsage, "parentNameUsageID"->parentNameUsageID,
                        "acceptedNameUsage"->acceptedNameUsage, "acceptedNameUsageID"->acceptedNameUsageID, "originalNameUsage"->originalNameUsage,
                        "originalNameUsageID"->originalNameUsageID, "taxonRank"->taxonRank, "taxonomicStatus"->taxonomicStatus,
-                       "taxonRemarks"->taxonRemarks, "verbatimTaxonRank"->verbatimTaxonRank, "vernacularName" ->vernacularName,
+                       "taxonRemarks"->taxonRemarks, "verbatimTaxonRank"->verbatimTaxonRank, "vernacularName"->vernacularName,
                        "nameAccordingTo"->nameAccordingTo, "nameAccordingToID"->nameAccordingToID,"namePublishedIn"->namePublishedIn,
                        "namePublishedInID"->namePublishedInID,"nomenclaturalCode"->nomenclaturalCode,"nomenclaturalStatus"->nomenclaturalStatus,
                        "taxonRankID"->taxonRankID, "kingdomID"->kingdomID, "phylumID"->phylumID, "classID"->classID, "orderID"->orderID,
                        "familyID"->familyID, "genusID"->genusID, "subgenusID"->subgenusID, "speciesID"->speciesID, "subspeciesID"->subspeciesID,
-                       "left"-> left, "right"->right, "speciesGroups" -> speciesGroups)
+                       "left"->left, "right"->right, "speciesGroups"->speciesGroups)
 
     map.filter(i => i._2!= null)
   }
@@ -322,6 +323,8 @@ class Location extends Cloneable with Mappable{
   @BeanProperty @JsonIgnore var originalDecimalLatitude:String =_
   @BeanProperty @JsonIgnore var originalDecimlaLongitude:String =_
   @BeanProperty @JsonIgnore var originalLocality:String =_
+
+  override def toString = ToStringBuilder.reflectionToString(this)
 
   @JsonIgnore
   def getMap():Map[String,String]={
@@ -526,8 +529,9 @@ class Attribution  (
   extends Cloneable with Mappable {
   def this() = this(null,null,null,null,null,null,null,null,null,null, null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
+  override def toString = ToStringBuilder.reflectionToString(this)
 
-  @JsonIgnore
+    @JsonIgnore
   private var parsedHints:Map[String,Set[String]] = null
   /**
    * Parse the hints into a usable map with rank -> Set.
@@ -590,6 +594,26 @@ class FullRecord (
   override def clone : FullRecord = new FullRecord(this.uuid,
       occurrence.clone,classification.clone,location.clone,event.clone,attribution.clone,
       identification.clone,measurement.clone,assertions.clone)
+
+  /**
+   * Equals implementation that compares the contents of all the contained POSOs
+   */
+  override def equals(that: Any) = that match {
+        case other: FullRecord => {
+            if(this.uuid != other.uuid) false
+            else if(!EqualsBuilder.reflectionEquals(this.occurrence, other.occurrence)) false
+            else if(!EqualsBuilder.reflectionEquals(this.classification, other.classification)) false
+            else if(!EqualsBuilder.reflectionEquals(this.location, other.location)) false
+            else if(!EqualsBuilder.reflectionEquals(this.event, other.event)) false
+            else if(!EqualsBuilder.reflectionEquals(this.attribution, other.attribution, Array("taxonomicHints","parsedHints"))) {
+                false
+            }
+            else if(!EqualsBuilder.reflectionEquals(this.measurement, other.measurement)) false
+            else if(!EqualsBuilder.reflectionEquals(this.identification, other.identification)) false
+            else true
+        }
+        case _ => false
+  }
 }
 
 /**

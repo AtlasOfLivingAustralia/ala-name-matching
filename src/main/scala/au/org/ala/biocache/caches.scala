@@ -23,7 +23,7 @@ import au.org.ala.checklist.lucene.{CBIndexSearch, HomonymException, SearchResul
 object ClassificationDAO {
 
   private val columnFamily ="namecl"
-  private val cachedValues = new java.util.Hashtable[LinnaeanRankClassification, Classification]
+ // private val cachedValues = new java.util.Hashtable[LinnaeanRankClassification, Classification]
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
 //  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[NameSearchResult]]()
 //    .maximumWeightedCapacity(10000)
@@ -189,7 +189,7 @@ object AttributionDAO {
    */
   def add(institutionCode:String, collectionCode:String, attribution:Attribution){
     val guid = institutionCode.toUpperCase +"|"+collectionCode.toUpperCase
-    val map = DAO.mapObjectToProperties(attribution)
+    val map = FullRecordMapper.mapObjectToProperties(attribution)
     persistenceManager.put(guid,"attr",map)
   }
 
@@ -209,7 +209,7 @@ object AttributionDAO {
           val result = {
               if(!map.isEmpty){
                 val attribution = new Attribution
-                DAO.mapPropertiesToObject(attribution,map.get)
+                FullRecordMapper.mapPropertiesToObject(attribution,map.get)
                 Some(attribution)
               } else {
                 None
@@ -285,7 +285,7 @@ object LocationDAO {
         val map = persistenceManager.get(uuid,"loc")
         if(!map.isEmpty){
           val location = new Location
-          DAO.mapPropertiesToObject(location,map.get)
+          FullRecordMapper.mapPropertiesToObject(location,map.get)
           //lock.synchronized { lru.put(uuid,Some(location)) }
           lock.synchronized {lru.put(uuid,Some(location))}
           Some(location)
