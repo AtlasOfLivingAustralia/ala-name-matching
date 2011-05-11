@@ -33,6 +33,9 @@ object ProcessWithActors {
 
     var count = 0
 
+    //use this variable to evenly distribute the actors work load
+    var batches = 0
+
     var buff = new ArrayBuffer[(FullRecord,FullRecord)]
 
     //occurrenceDAO.pageOverAll(Raw, fullRecord => {
@@ -42,8 +45,8 @@ object ProcessWithActors {
       //we want to add the record to the buffer whether or not we send them to the actor
       buff + rawAndProcessed.get
       if(buff.size>=50){
-        val actor = pool(count % threads).asInstanceOf[Consumer]
-
+        val actor = pool(batches % threads).asInstanceOf[Consumer]
+        batches += 1
         //find a ready actor...
         while(!actor.ready){ Thread.sleep(50) }
 
@@ -64,11 +67,29 @@ object ProcessWithActors {
       }
       true //indicate to continue
     })
+    //add the remaining records from the buff
+    if(buff.size>0){
+      pool(0).asInstanceOf[Consumer] ! buff.toArray
+      batches+=1
+    }
     println("Finished.")
     //kill the actors 
     pool.foreach(actor => actor ! "exit")
-
+    
+    //We can't shutdown the persistence manager until all of the Actors have completed their work
+    while(batches > getProcessedTotal(pool)){
+      println(batches + " : " + getProcessedTotal(pool))
+      Thread.sleep(50)
+    }
+    
     persistenceManager.shutdown
+  }
+  def getProcessedTotal(pool:Array[Actor]):Int ={
+    var size =0;
+    for(i<-0 to pool.length-1){
+      size += pool(i).asInstanceOf[Consumer].processedRecords
+    }
+    size
   }
 }
 
