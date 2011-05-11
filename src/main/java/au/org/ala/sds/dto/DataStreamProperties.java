@@ -59,7 +59,7 @@ public class DataStreamProperties {
 
     public static int validateSheetIndex(String index) {
         if (StringUtils.isBlank(index) || !StringUtils.isNumeric(index)) {
-            return 0;
+            return 1;
         } else {
             return Integer.parseInt(index);
         }
