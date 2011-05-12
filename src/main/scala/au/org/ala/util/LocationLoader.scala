@@ -1,8 +1,10 @@
 package au.org.ala.util
 
 import au.org.ala.biocache.LocationDAO
+import au.org.ala.biocache.PersistenceManager
+import au.org.ala.biocache.Config
 import java.io.File
-import org.wyki.cassandra.pelops.Pelops
+
 /**
  * Loads an export from the gazetteer based on point from the old portal database.
  * 
@@ -17,6 +19,7 @@ object LocationLoader {
   def main(args: Array[String]): Unit = {
     import FileHelper._
     println("Starting Location Loader....")
+    val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
     val file = new File("/data/biocache/gaz_points.csv")
     var counter = 0
     file.foreachLine { line => {
@@ -45,7 +48,7 @@ object LocationLoader {
       }
     }
     println(counter)
-    Pelops.shutdown
+    persistenceManager.shutdown
   }
   def optioniseValue(value:String):Option[String]= if (value == "null") None else Some(value)
   
@@ -60,6 +63,7 @@ object OldLocationLoader {
   def main(args: Array[String]): Unit = {
     import FileHelper._
     println("Starting Location Loader....")
+    val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
     val file = new File("/data/biocache/points.txt")
     var counter = 0
     file.foreachLine { line => {
@@ -93,6 +97,6 @@ object OldLocationLoader {
       }
     }
     println(counter)
-    Pelops.shutdown
+    persistenceManager.shutdown
   }
 }

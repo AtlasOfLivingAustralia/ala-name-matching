@@ -17,7 +17,6 @@ package au.org.ala.util
 import java.io.File
 import org.gbif.dwc.terms._
 import org.gbif.dwc.text._
-import org.wyki.cassandra.pelops.Pelops
 import au.org.ala.biocache._
 import collection.mutable.ArrayBuffer
 import scala.actors._

@@ -15,7 +15,6 @@
 package au.org.ala.util
 
 import au.org.ala.biocache._
-import org.wyki.cassandra.pelops.Pelops
 import java.util.UUID
 import au.com.bytecode.opencsv.CSVReader
 import au.org.ala.biocache.OccurrenceDAO

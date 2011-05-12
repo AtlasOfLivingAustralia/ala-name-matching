@@ -2,12 +2,12 @@
 
 package au.org.ala.util
 
-import au.org.ala.biocache.LocationDAO
+import au.org.ala.biocache._
 import java.io.File
-import org.wyki.cassandra.pelops.Pelops
+
 
 object EnvironmentLoader {
-
+private val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
   def main(args: Array[String]): Unit = {
     
     println("Starting Environment Loader....")
@@ -17,7 +17,7 @@ object EnvironmentLoader {
     processFile("/data/biocache/mean-temperature_cars2009a-band1_values.csv", "mean_temperature_cars2009a_band1")
     processFile("/data/biocache/mean-oxygen_cars2006-band1_values.csv", "mean_oxygen_cars2006_band1")
   
-    Pelops.shutdown
+    persistenceManager.shutdown
   }
   def processFile(fileName :String, fieldName:String)={
     import FileHelper._

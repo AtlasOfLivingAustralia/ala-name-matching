@@ -1,9 +1,8 @@
 package au.org.ala.util
 
-import au.org.ala.biocache.AttributionDAO
-import au.org.ala.biocache.Attribution
+import au.org.ala.biocache._
 import java.io.File
-import org.wyki.cassandra.pelops.Pelops
+
 /**
  * Loads an export from the old portal database of point lookups.
  * 
@@ -24,6 +23,8 @@ import org.wyki.cassandra.pelops.Pelops
  * @author Dave Martin (David.Martin@csiro.au)
  */
 object AttributionLoader {
+
+  private val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
   def main(args: Array[String]): Unit = {
     import FileHelper._
@@ -59,6 +60,6 @@ object AttributionLoader {
       }
     }
     println(counter)
-    Pelops.shutdown
+    persistenceManager.shutdown
   }
 }

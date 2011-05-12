@@ -2,7 +2,8 @@ package au.org.ala.biocache
 
 import collection.JavaConversions
 import org.apache.cassandra.thrift.{SlicePredicate, Column, ConsistencyLevel}
-import org.wyki.cassandra.pelops.{Policy, Selector, Pelops}
+//import org.wyki.cassandra.pelops.{Policy, Selector, Pelops}
+import org.scale7.cassandra.pelops.{Cluster,Pelops,Selector, Bytes}
 import collection.mutable.ListBuffer
 import org.slf4j.LoggerFactory
 import com.google.inject.name.Named
@@ -85,10 +86,17 @@ trait PersistenceManager {
 /**
  * Cassandra based implementation of a persistence manager.
  * This should maintain most of the cassandra logic
+ *
+ * This has been modified to support cassandra 0.7.x.  For
+ * cassandra 0.6.x support see:
+ * http://code.google.com/p/ala-portal/source/browse/tags/biocache-store-cass0.6.x
+ *
+ * Major change:  The thrift API now works with ByteBuffer instead of byte[]
+ *
  */
 class CassandraPersistenceManager @Inject() (
     @Named("cassandraHosts") host:String = "localhost",
-    @Named("cassandraPort") port:String = "9160",
+    @Named("cassandraPort") port:Int = 9160,
     @Named("cassandraPoolName") poolName:String = "biocache-store-pool",
     @Named("cassandraKeyspace") keyspace:String = "occ") extends PersistenceManager {
 
@@ -99,16 +107,16 @@ class CassandraPersistenceManager @Inject() (
     logger.info("Initialising cassandra connection pool with pool name: " + poolName)
     logger.info("Initialising cassandra connection pool with hosts: " + host)
     logger.info("Initialising cassandra connection pool with port: " + port)
-    Pelops.addPool(poolName, Array(host), port.toInt, false, keyspace, new Policy)
+    Pelops.addPool(poolName, new Cluster(host,port), keyspace)
 
     /**
      * Retrieve an array of objects, parsing the JSON stored.
      */
     def get(uuid:String, entityName:String) = {
-        val selector = Pelops.createSelector(poolName,keyspace)
+        val selector = Pelops.createSelector(poolName)
         val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
         try {
-            val columnList = selector.getColumnsFromRow(uuid, entityName, slicePredicate, ConsistencyLevel.ONE)
+            val columnList = selector.getColumnsFromRow(entityName,uuid, slicePredicate, ConsistencyLevel.ONE)
             if(columnList.isEmpty){
                 None
             } else {
@@ -124,9 +132,9 @@ class CassandraPersistenceManager @Inject() (
      */
     def get(uuid:String, entityName:String, propertyName:String) = {
       try {
-          val selector = Pelops.createSelector(poolName, keyspace)
-          val column = selector.getColumnFromRow(uuid, entityName, propertyName.getBytes, ConsistencyLevel.ONE)
-          Some(new String(column.value))
+          val selector = Pelops.createSelector(poolName)
+          val column = selector.getColumnFromRow(entityName,uuid, propertyName, ConsistencyLevel.ONE)
+          Some(new String(column.value.array,"UTF-8"))
       } catch {
           case e:Exception => logger.debug(e.getMessage, e); None
       }
@@ -136,12 +144,12 @@ class CassandraPersistenceManager @Inject() (
      * Store the supplied batch of maps of properties as separate columns in cassandra.
      */
     def putBatch(entityName: String, batch: Map[String, Map[String, String]]) = {
-        val mutator = Pelops.createMutator(poolName, keyspace)
+        val mutator = Pelops.createMutator(poolName)
         batch.foreach(uuidMap => {
             val uuid = uuidMap._1
             val keyValuePairs = uuidMap._2
             keyValuePairs.foreach( keyValue => {
-              mutator.writeColumn(uuid, entityName, mutator.newColumn(keyValue._1.getBytes, keyValue._2))
+              mutator.writeColumn(entityName, uuid, mutator.newColumn(keyValue._1, keyValue._2))
             })
         })
         mutator.execute(ConsistencyLevel.ONE)
@@ -154,11 +162,11 @@ class CassandraPersistenceManager @Inject() (
 
         val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
 
-        val mutator = Pelops.createMutator(poolName, keyspace)
+        val mutator = Pelops.createMutator(poolName)
         keyValuePairs.foreach( keyValue => {
           //NC: only add the column if the value is not null
           if(keyValue._2!=null)
-            mutator.writeColumn(recordId, entityName, mutator.newColumn(keyValue._1.getBytes, keyValue._2))
+            mutator.writeColumn(entityName, recordId, mutator.newColumn(keyValue._1, keyValue._2))
         })
         mutator.execute(ConsistencyLevel.ONE)
         recordId
@@ -169,8 +177,8 @@ class CassandraPersistenceManager @Inject() (
      */
     def put(uuid:String, entityName:String, propertyName:String, propertyValue:String) = {
         val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
-        val mutator = Pelops.createMutator(poolName, keyspace)
-        mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName.getBytes, propertyValue))
+        val mutator = Pelops.createMutator(poolName)
+        mutator.writeColumn(entityName, recordId, mutator.newColumn(propertyName, propertyValue))
         mutator.execute(ConsistencyLevel.ONE)
         recordId
     }
@@ -198,12 +206,12 @@ class CassandraPersistenceManager @Inject() (
         val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
         //initialise the serialiser
 //        val gson = new Gson
-        val mutator = Pelops.createMutator(poolName, keyspace)
+        val mutator = Pelops.createMutator(poolName)
 
         if (overwrite) {
             //val json = Json.toJSON(newList)
             val json:String = Json.toJSONWithGeneric(newList)
-            mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, json))
+            mutator.writeColumn(entityName, recordId, mutator.newColumn(propertyName, json))
         } else {
 
             //retrieve existing values
@@ -212,7 +220,7 @@ class CassandraPersistenceManager @Inject() (
             if (column.isEmpty) {
                 //write new values
                 val json:String = Json.toJSONWithGeneric(newList)
-                mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, json))
+                mutator.writeColumn(entityName, recordId, mutator.newColumn(propertyName, json))
             } else {
                 //retrieve the existing objects
                 val currentJson = new String(column.get.getValue)
@@ -234,7 +242,7 @@ class CassandraPersistenceManager @Inject() (
                 // check equals
                 //val newJson = Json.toJSON(buffer.toList)
                 val newJson:String = Json.toJSONWithGeneric(buffer.toList)
-                mutator.writeColumn(recordId, entityName, mutator.newColumn(propertyName, newJson))
+                mutator.writeColumn(entityName, recordId, mutator.newColumn(propertyName, newJson))
             }
         }
         mutator.execute(ConsistencyLevel.ONE)
@@ -246,12 +254,12 @@ class CassandraPersistenceManager @Inject() (
      * is used to determine the columns that aer returned...
      */
     def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int, slicePredicate:SlicePredicate)={
-      val selector = Pelops.createSelector(poolName, keyspace)
+      val selector = Pelops.createSelector(poolName)
       var startKey = ""
       var keyRange = Selector.newKeyRange(startKey, "", pageSize+1)
       var hasMore = true
       var counter = 0
-      var columnMap = selector.getColumnsFromRows(keyRange, entityName, slicePredicate, ConsistencyLevel.ONE)
+      var columnMap = selector.getColumnsFromRowsUtf8Keys(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE)
       var continue = true
       while (columnMap.size>0 && continue) {
         val columnsObj = List(columnMap.keySet.toArray : _*)
@@ -267,7 +275,7 @@ class CassandraPersistenceManager @Inject() (
         }
         counter += keys.size
         keyRange = Selector.newKeyRange(startKey, "", pageSize+1)
-        columnMap = selector.getColumnsFromRows(keyRange, entityName, slicePredicate, ConsistencyLevel.ONE)
+        columnMap = selector.getColumnsFromRowsUtf8Keys(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE)
         columnMap.remove(startKey)
       }
       println("Finished paging. Total count: "+counter)
@@ -299,19 +307,20 @@ class CassandraPersistenceManager @Inject() (
      * Select fields from rows and pass to the supplied function.
      */
     def selectRows(uuids:Array[String], entityName:String, fields:Array[String], proc:((Map[String,String])=>Unit)) {
-       val selector = Pelops.createSelector(poolName, keyspace)
-       var slicePredicate = new SlicePredicate
-       slicePredicate.setColumn_names(fields.toList.map(_.getBytes))
+       val selector = Pelops.createSelector(poolName)
+       val slicePredicate = Selector.newColumnsPredicate(fields:_*)
+       //var slicePredicate = new SlicePredicate
+       //slicePredicate.setColumn_names(fields.toList.map(_.getBytes))
 
        //retrieve the columns
-       var columnMap = selector.getColumnsFromRows(uuids.toList, entityName, slicePredicate, ConsistencyLevel.ONE)
+       var columnMap = selector.getColumnsFromRowsUtf8Keys(entityName, uuids.toList, slicePredicate, ConsistencyLevel.ONE)
 
        //write them out to the output stream
        val keys = List(columnMap.keySet.toArray : _*)
 
        for(key<-keys){
          val columnsList = columnMap.get(key)
-         val fieldValues = columnsList.map(column => (new String(column.name, "UTF-8"),new String(column.value, "UTF-8"))).toArray
+         val fieldValues = columnsList.map(column => (new String(column.getName, "UTF-8"),new String(column.getValue, "UTF-8"))).toArray
          val map = scala.collection.mutable.Map.empty[String,String]
          for(fieldValue <-fieldValues){
            map(fieldValue._1) = fieldValue._2
@@ -326,7 +335,7 @@ class CassandraPersistenceManager @Inject() (
     protected def columnList2Map(columnList:java.util.List[Column]) : Map[String,String] = {
         val tuples = {
             for(column <- columnList)
-                yield (new String(column.name, "UTF-8"), new String(column.value, "UTF-8"))
+              yield (new String(column.getName, "UTF-8"), new String(column.getValue, "UTF-8"))
         }
         //convert the list
         Map(tuples map {s => (s._1, s._2)} : _*)
@@ -337,8 +346,8 @@ class CassandraPersistenceManager @Inject() (
      */
     protected def getColumn(uuid:String, columnFamily:String, columnName:String): Option[Column] = {
         try {
-            val selector = Pelops.createSelector(poolName, keyspace)
-            Some(selector.getColumnFromRow(uuid, columnFamily, columnName.getBytes, ConsistencyLevel.ONE))
+            val selector = Pelops.createSelector(poolName)
+            Some(selector.getColumnFromRow(columnFamily, uuid, columnName, ConsistencyLevel.ONE))
         } catch {
             case e:Exception => {
                 logger.debug(e.getMessage + " for " + uuid + " - " + columnFamily + " - " +columnName)
@@ -350,15 +359,17 @@ class CassandraPersistenceManager @Inject() (
     def shutdown = Pelops.shutdown
 }
 
+
 /**
  * To be added.....
  */
 class MongoDBPersistenceManager @Inject()(
-    @Named("mongoHost") host:String = "localhost", @Named("mongoDatabase") db:String = "occ") extends PersistenceManager {
+    @Named("mongoHost") host:String = "localhost", @Named("mongoDatabase") db:String = "occ", @Named("padOcc") pad:Boolean=false) extends PersistenceManager {
 
     import JavaConversions._
     val uuidColumn = "_id"
     val mongoConn = MongoConnection(host)
+    val largeMap = Map("DUMMY"-> "X" *10000)
 
     override def fieldDelimiter = '_'
 
@@ -430,21 +441,35 @@ class MongoDBPersistenceManager @Inject()(
 //            }
 //        }
     }
-
+    
     def put(uuid: String, entityName: String, keyValuePairs: Map[String, String]) = {
 
         val mongoColl = mongoConn(db)(entityName)
         if(uuid!=null){
             val mapToSave = keyValuePairs.filter( { case (key, value) => { value!=null && !value.trim.isEmpty } })
             if(!mapToSave.isEmpty){
+              //We need to wrap it in a $set to allow the existing values for the document to remain unchanged
+              val setToSave = $set(mapToSave.toList:_*)
+
               //Allow "upserts" so that missing records are inserted...
-                mongoColl.update(Map(uuidColumn -> uuid), mapToSave.asDBObject, true, false)
+              mongoColl.update(Map(uuidColumn -> uuid),setToSave, true, false)
+              
             }
             uuid
         } else {
+                        
             val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
             val mongoColl = mongoConn(db)(entityName)
-            mongoColl.save(Map(uuidColumn -> recordId) ++ keyValuePairs)
+            if(entityName == "occ" && pad){
+              mongoColl.save(Map(uuidColumn -> recordId) ++ keyValuePairs ++ largeMap)
+              //now remove the padding from the record
+              mongoColl.update(Map(uuidColumn->recordId), $unset("DUMMY"))
+            }
+            else{
+              mongoColl.save(Map(uuidColumn -> recordId) ++ keyValuePairs)
+            }
+            
+            
             recordId
         }
 //        val mongoColl = mongoConn(db)(entityName)
@@ -521,7 +546,8 @@ class MongoDBPersistenceManager @Inject()(
         //page through all records
         val mongoColl = mongoConn(db)(entityName)
         //val cursor = mongoColl.find(0,pageSize)
-        val cursor = mongoColl.find
+        //Take a snapshot so that each document is only returned once
+        val cursor = mongoColl.find.snapshot//sort(MongoDBObject("_id"->1))//.snapshot
         for(dbObject:DBObject <- cursor){
             val map = dbObject.toMap.map({ case(key,value) => (key.toString, value.toString) }).toMap
             //println("ID: " + map.get("_id").get)

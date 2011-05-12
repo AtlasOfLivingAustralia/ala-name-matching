@@ -14,7 +14,7 @@
  ***************************************************************************/
 package au.org.ala.util
 
-import org.wyki.cassandra.pelops.Pelops
+
 import java.util.UUID
 import au.com.bytecode.opencsv.CSVReader
 import java.io.{FileReader, File, InputStreamReader, FileInputStream}

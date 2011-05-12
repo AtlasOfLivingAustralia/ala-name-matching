@@ -269,6 +269,14 @@ object LocationDAO {
       case e:NumberFormatException => x
     }
   }
+  /**
+   * Returns the persistence storage primary key for the supplied coordinates
+   */
+  def getLatLongKey(latitude:String, longitude:String) :Option[String]={
+    if(latitude != null && longitude != null)
+      return Some(roundCoord(latitude)+"|"+roundCoord(longitude))
+    None
+  }
 
   /**
    * Get location information for point.

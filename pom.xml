@@ -168,8 +168,11 @@
             <version>4.4</version>
             <scope>test</scope>
         </dependency>
-        <!-- PELOPS - Cassandra Connection Pooling -->
-        <dependency>
+        <!-- PELOPS - Cassandra Connection Pooling
+            This verison is necessary for Cassandra 0.6.x
+        -->
+
+        <!--dependency>
             <groupId>org.wyki</groupId>
             <artifactId>pelops</artifactId>
             <version>0.805-0.6.4</version>
@@ -183,8 +186,15 @@
                     <artifactId>libthrift-r917130</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
+        </dependency-->
+        <!-- New Pelops library for cassandra 0.7.x -->
         <dependency>
+            <groupId>org.scale7</groupId>
+            <artifactId>scale7-pelops</artifactId>
+            <version>1.1-0.7.x-SNAPSHOT</version>
+        </dependency>
+        <!-- Allow the Pelops library to control the versions of cassandra and thrift that should be used... -->
+        <!--dependency>
             <groupId>org.apache.cassandra</groupId>
             <artifactId>apache-cassandra</artifactId>
             <version>0.6.9</version>
@@ -204,7 +214,7 @@
             <groupId>org.apache.thrift</groupId>
             <artifactId>thrift</artifactId>
             <version>0.2.0</version>
-        </dependency>
+        </dependency-->
         <!-- MongoDB -->
         <dependency>
             <groupId>com.mongodb.casbah</groupId>
