@@ -17,7 +17,7 @@ package au.org.ala.util
 import org.wyki.cassandra.pelops.Pelops
 import java.util.UUID
 import au.com.bytecode.opencsv.CSVReader
-import java.io.{FileReader, File}
+import java.io.{FileReader, File, InputStreamReader, FileInputStream}
 import au.org.ala.biocache._
 
 /**
@@ -33,12 +33,13 @@ object FasterDwCLoader {
   val poolName = "occ-pool"
   val resourceUid = "dp20"
   val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
-
+  
   def main(args: Array[String]): Unit = {
 
     import ReflectBean._
     println(">>> Starting DwC loader ....")
-    val csvReader = new CSVReader(new FileReader("/data/biocache/ozcam/ozcam.csv"));
+    val fileName = if(args.length == 1) args(0) else "/data/biocache/ozcam/ozcam.csv"
+    val csvReader = new CSVReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
 
     var count = 0
 
@@ -71,11 +72,11 @@ object FasterDwCLoader {
 
           //val recordUuid = persistenceManager.put(recordUuid, "occ", map)
           val recordUuid = persistenceManager.put(null, "occ", map)
-          persistenceManager.put(recordUuid, "dr", "uuid", uniqueID)
+          persistenceManager.put(uniqueID, "dr", "uuid", recordUuid)
           //debug
-          if (count % 100 == 0 && count > 0) {
+          if (count % 1000 == 0 && count > 0) {
             finishTime = System.currentTimeMillis
-            println(count + ", >>  UUID: " + recordUuid + ", records per sec: " + 100 / (((finishTime - startTime).toFloat) / 1000f))
+            println(count + ", >>  UUID: " + recordUuid + ", records per sec: " + 1000 / (((finishTime - startTime).toFloat) / 1000f))
             startTime = System.currentTimeMillis
           }
       }
