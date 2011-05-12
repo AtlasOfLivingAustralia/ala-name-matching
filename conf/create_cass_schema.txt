@@ -1,0 +1,20 @@
+/* Creates the cassandra 0.7.x schema necessary for biocache-store 
+   Run this file using:
+   ./cassandra-cli --host localhost --batch < create_cass_schema.txt
+*/
+
+/* all keyspaces are created using the ByteOrderPreservingPartitioner see the cassandra.yaml file */
+create keyspace occ;
+
+use occ;
+
+create column family occ with comparator=UTF8Type and default_validation_class=UTF8Type
+and comment='The column family for occurrence records' and gc_grace=2000;
+create column family dr with comparator=UTF8Type and default_validation_class=UTF8Type
+and comment='The column family for dataset tracking' and gc_grace=2000;
+create column family loc with comparator=UTF8Type and default_validation_class=UTF8Type
+and comment ='The column family for locations' and gc_grace=2000;
+create column family attr with comparator=UTF8Type and default_validation_class=UTF8Type
+and comment='The column family for attribution tracking' and gc_grace=2000;
+create column family taxon with comparator=UTF8Type and default_validation_class=UTF8Type
+and comment='The column family for taxon profile information' and gc_grace=2000;
