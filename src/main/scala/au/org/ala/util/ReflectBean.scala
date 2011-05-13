@@ -3,6 +3,8 @@ package au.org.ala.util
 import au.org.ala.biocache.CassandraPersistenceManager
 import org.apache.commons.lang.time.DateUtils
 import au.org.ala.biocache.Json
+import java.lang.reflect.Method
+import org.apache.commons.lang.StringUtils
 
 /**
  * A class that provided java bean style functionality for classes.
@@ -44,11 +46,39 @@ class ReflectBean(ref: AnyRef)  {
   def setField(name:String, value:Any): Unit = {
    ref.getClass.getField(name).set(this,value)
   }
+  /**
+   * Runs the supplied setter method with the supplied value.
+   *
+   * Conversion to the correct data type will be performed.
+   */
+  def setter(method: Method, value:Any): Unit ={
+    if(method != null){
+      val typ = method.getParameterTypes()(0)
+      var v2 = value.asInstanceOf[AnyRef]
+
+      typ.getName  match{
+        case "java.lang.Integer" => v2 = any2Int(v2)
+        case "java.lang.Double" => v2 = any2Double(v2)
+        case "java.util.Date" => v2 = any2Date(v2)
+        case "[Ljava.lang.String;"  => {
+            //NC This feels like a hack.
+            v2.getClass().getName match{
+              case "java.lang.String" =>v2 = Json.toArray(v2.asInstanceOf[String], classOf[String].asInstanceOf[java.lang.Class[AnyRef] ])
+              case _=>
+            }
+          }
+        case _ =>
+      }
+      //field.set(ref, v2)
+      method.invoke(ref, v2 )
+
+    }
+  }
 
   def setter(name: String, value:Any): Unit = {
     var fieldName = fieldNameCheck(name)
     val method = ref.getClass.getMethods.find(_.getName equalsIgnoreCase fieldName + "_$eq")
-
+    
     if(!method.isEmpty){
       val typ = method.get.getParameterTypes()(0)
       var v2 = value.asInstanceOf[AnyRef]

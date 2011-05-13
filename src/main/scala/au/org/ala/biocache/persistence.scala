@@ -168,6 +168,10 @@ class CassandraPersistenceManager @Inject() (
           if(keyValue._2!=null)
             mutator.writeColumn(entityName, recordId, mutator.newColumn(keyValue._1, keyValue._2))
         })
+        //add the recordId to the columns if it has been generated.  This makes uuid value reads faster that ByteBuffer key conversions
+        if(uuid == null){
+          mutator.writeColumn(entityName, recordId, mutator.newColumn("uuid", recordId))
+        }
         mutator.execute(ConsistencyLevel.ONE)
         recordId
     }
@@ -179,6 +183,10 @@ class CassandraPersistenceManager @Inject() (
         val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
         val mutator = Pelops.createMutator(poolName)
         mutator.writeColumn(entityName, recordId, mutator.newColumn(propertyName, propertyValue))
+        //add the recordId to the columns if it has been generated.  This makes uuid value reads faster that ByteBuffer key conversions
+        if(uuid == null){
+          mutator.writeColumn(entityName, recordId, mutator.newColumn("uuid", recordId))
+        }
         mutator.execute(ConsistencyLevel.ONE)
         recordId
     }
@@ -255,27 +263,30 @@ class CassandraPersistenceManager @Inject() (
      */
     def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int, slicePredicate:SlicePredicate)={
       val selector = Pelops.createSelector(poolName)
-      var startKey = ""
-      var keyRange = Selector.newKeyRange(startKey, "", pageSize+1)
+      var startKey = new Bytes("".getBytes)
+      var endKey = new Bytes("".getBytes)
+      var keyRange = Selector.newKeyRange(startKey, endKey, pageSize+1)
       var hasMore = true
       var counter = 0
-      var columnMap = selector.getColumnsFromRowsUtf8Keys(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE)
+      //Please note we are not paging by UTF8 because it is much slower
+      var columnMap = selector.getColumnsFromRows(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE)
       var continue = true
       while (columnMap.size>0 && continue) {
         val columnsObj = List(columnMap.keySet.toArray : _*)
         //convert to scala List
-        val keys = columnsObj.asInstanceOf[List[String]]
+        val keys = columnsObj.asInstanceOf[List[Bytes]]
         startKey = keys.last
-        for(uuid<-keys){
-          val columnList = columnMap.get(uuid)
+        for(buuid<-keys){
+          val columnList = columnMap.get(buuid)
           //procedure a map of key value pairs
           val map = columnList2Map(columnList)
+          val uuid = map.get("uuid").get.toString
           //pass the record ID and the key value pair map to the proc
           continue = proc(uuid, map)
         }
         counter += keys.size
-        keyRange = Selector.newKeyRange(startKey, "", pageSize+1)
-        columnMap = selector.getColumnsFromRowsUtf8Keys(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE)
+        keyRange = Selector.newKeyRange(startKey, endKey, pageSize+1)
+        columnMap = selector.getColumnsFromRows(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE)
         columnMap.remove(startKey)
       }
       println("Finished paging. Total count: "+counter)

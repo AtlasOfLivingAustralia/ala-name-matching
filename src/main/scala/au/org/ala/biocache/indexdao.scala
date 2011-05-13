@@ -3,6 +3,7 @@
  */
 package au.org.ala.biocache
 
+import java.lang.reflect.Method
 import org.apache.commons.lang.time.DateUtils
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer
@@ -273,14 +274,18 @@ trait IndexDAO {
             val record = records(i)
             for (anObject <- record.objectArray) {
                 val defn = FullRecordMapper.getDefn(anObject)
-                for (field <- defn) {
+                for (field <- defn.keySet) {
                     //first time through we are processing the raw values
                     var fieldName = if (i == 0) "raw_" + field else field
                     //we only want to attempt to add the items that should appear in the occurrence
                     if (FullRecordMapper.occurrenceIndexDefn.contains(fieldName)) {
-                        val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[Any]
+                      //used the cached versions of the getter and setter methods
+                        val methods = defn.get(fieldName).get.asInstanceOf[(Method,Method)]
+                        val fieldValue = methods._1.invoke(anObject)
+                        //val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[Any]
                         if (fieldValue != null) {
-                            occ.setter(fieldName, fieldValue);
+                            occ.setter(methods._2, fieldValue)
+//                            occ.setter(fieldName, fieldValue);
                         }
                     }
                 }

@@ -3,6 +3,8 @@ package au.org.ala.biocache
 import collection.immutable.HashSet
 import collection.mutable.ArrayBuffer
 import au.org.ala.util.ReflectBean
+import java.lang.reflect.Method
+import org.apache.commons.lang.StringUtils
 
 object FullRecordMapper {
 
@@ -24,13 +26,29 @@ object FullRecordMapper {
     val identificationDefn = loadDefn(classOf[Identification])
     val measurementDefn = loadDefn(classOf[Measurement])
 
+
     //index definitions
     val occurrenceIndexDefn = loadDefn(classOf[OccurrenceIndex])
     //PROBABLY NOT THE BEST PLACE FOR THIS
 
-    /**Retrieve the set of fields for the supplied class */
-    protected def loadDefn(theClass: java.lang.Class[_]): Set[String] = {
-        HashSet() ++ theClass.getDeclaredFields.map(_.getName).toList
+    /**Retrieve the set of fields and their corresponding getter and setter methods for the supplied class */
+    protected def loadDefn(theClass: java.lang.Class[_]): Map[String, (Method,Method)] = {
+      val defn = scala.collection.mutable.Map[String, (Method,Method)]()
+      //HashSet() ++ theClass.getDeclaredFields.map(_.getName).toList
+      for(field<-theClass.getDeclaredFields){
+        val name = field.getName
+        val typ = field.getType
+        try{
+          val getter = theClass.getDeclaredMethod("get"+StringUtils.capitalize(name))
+          val setter = theClass.getDeclaredMethod("set"+StringUtils.capitalize(name), typ)
+          defn.put(name, (getter->setter))
+        }
+        catch{
+          case e:Exception =>println("Not loading def : "+ name)
+        }
+      }
+      defn.toMap
+
     }
 
     protected def fileToSet(filePath: String): Set[String] =
@@ -51,10 +69,13 @@ object FullRecordMapper {
 
         } else {
             val defn = getDefn(anObject)
-            for (field <- defn) {
-                val fieldValue = anObject.getter(field).asInstanceOf[String]
-                if (fieldValue != null && !fieldValue.isEmpty) {
-                    properties.put(field, fieldValue)
+            for (field <- defn.keySet) {
+                //val fieldValue = anObject.getter(field).asInstanceOf[String]
+                //Use the cached version of the getter method
+                val getter = defn.get(field).get.asInstanceOf[(Method,Method)]._1
+                val fieldValue = getter.invoke(anObject)
+                if (fieldValue != null) {
+                    properties.put(field.toString, fieldValue.toString)
                 }
             }
         }
@@ -67,10 +88,12 @@ object FullRecordMapper {
     def mapPropertiesToObject(anObject: AnyRef, map: Map[String, String]) {
         //TODO supplied properties will be less that properties in object this could be an optimisation
         val defn = getDefn(anObject)
-        for (fieldName <- defn) {
+        for (fieldName <- defn.keySet) {
             val fieldValue = map.get(fieldName)
             if (!fieldValue.isEmpty && !fieldValue.get.trim.isEmpty) {
-                anObject.setter(fieldName, fieldValue.get)
+                //anObject.setter(fieldName, fieldValue.get)
+                //Use the cached version of the setter method 
+                anObject.setter(defn.get(fieldName).get.asInstanceOf[(Method,Method)]._2, fieldValue.get)
             }
         }
     }
@@ -78,7 +101,7 @@ object FullRecordMapper {
     /**
      * Retrieve a object definition (simple ORM mapping)
      */
-    def getDefn(anObject: Any): Set[String] = {
+    def getDefn(anObject: Any): Map[String,(Method,Method)] = {
         anObject match {
             case l: Location => locationDefn
             case o: Occurrence => occurrenceDefn
@@ -97,19 +120,26 @@ object FullRecordMapper {
      */
     protected def setProperty(fullRecord: FullRecord, fieldName: String, fieldValue: String) {
         if (occurrenceDefn.contains(fieldName)) {
-            fullRecord.occurrence.setter(fieldName, fieldValue)
+            //fullRecord.occurrence.setter(fieldName, fieldValue)
+            fullRecord.occurrence.setter(occurrenceDefn.get(fieldName).get.asInstanceOf[(Method,Method)]._2, fieldValue)
         } else if (classificationDefn.contains(fieldName)) {
-            fullRecord.classification.setter(fieldName, fieldValue)
+            //fullRecord.classification.setter(fieldName,fieldValue)
+            fullRecord.classification.setter(classificationDefn.get(fieldName).get.asInstanceOf[(Method,Method)]._2, fieldValue)
         } else if (locationDefn.contains(fieldName)) {
-            fullRecord.location.setter(fieldName, fieldValue)
+            //fullRecord.location.setter(fieldName, fieldValue)
+            fullRecord.location.setter(locationDefn.get(fieldName).get.asInstanceOf[(Method,Method)]._2, fieldValue)
         } else if (eventDefn.contains(fieldName)) {
-            fullRecord.event.setter(fieldName, fieldValue)
+            //fullRecord.event.setter(fieldName, fieldValue)
+            fullRecord.event.setter(eventDefn.get(fieldName).get.asInstanceOf[(Method,Method)]._2, fieldValue)
         } else if (attributionDefn.contains(fieldName)) {
-            fullRecord.attribution.setter(fieldName, fieldValue)
+            //fullRecord.attribution.setter(fieldName, fieldValue)
+            fullRecord.attribution.setter(attributionDefn.get(fieldName).get.asInstanceOf[(Method,Method)]._2, fieldValue)
         } else if (identificationDefn.contains(fieldName)) {
-            fullRecord.identification.setter(fieldName, fieldValue)
+            //fullRecord.identification.setter(fieldName, fieldValue)
+            fullRecord.identification.setter(identificationDefn.get(fieldName).get.asInstanceOf[(Method,Method)]._2, fieldValue)
         } else if (measurementDefn.contains(fieldName)) {
-            fullRecord.measurement.setter(fieldName, fieldValue)
+            //fullRecord.identification.setter(fieldName, fieldValue)
+            fullRecord.measurement.setter(measurementDefn.get(fieldName).get.asInstanceOf[(Method,Method)]._2, fieldValue)
         } else if (isQualityAssertion(fieldName)) {
             if (fieldValue equals "true") {
                 fullRecord.assertions = fullRecord.assertions :+ removeQualityAssertionMarker(fieldName)
