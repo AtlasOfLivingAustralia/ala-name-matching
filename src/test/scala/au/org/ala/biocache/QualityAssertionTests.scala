@@ -2,7 +2,8 @@ package au.org.ala.biocache
 
 import org.scalatest.FunSuite
 import org.apache.cassandra.thrift.ConsistencyLevel
-import org.wyki.cassandra.pelops.{Policy, Mutator, Pelops}
+//import org.wyki.cassandra.pelops.{Policy, Mutator, Pelops}
+import org.scale7.cassandra.pelops.{Pelops,Cluster}
 import org.junit.Ignore
 
 @Ignore
@@ -17,8 +18,8 @@ class QualityAssertionTests extends FunSuite {
     try {
 
         //FIXME to be removed - Cassandra specific!!!
-        Pelops.addPool("test", Array("localhost"), 9160, false, "occ", new Policy)
-        val mutator = Pelops.createMutator("test","occ")
+        Pelops.addPool("test", new Cluster("localhost",9160), "test")
+        val mutator = Pelops.createMutator("test")
         mutator.deleteColumns(uuid, "occ", "userQualityAssertion","qualityAssertion")
         mutator.execute(ConsistencyLevel.ONE)
     } catch {
