@@ -402,10 +402,10 @@ object ClassificationProcessor extends Processor {
           val (conflict, comment) = {
               rank match {
                   case "kingdom" => (hasConflict(rank,cl.getKingdom,hintMap), "Kingdom:"+cl.getKingdom)
-                  case "phylum"  => (hasConflict(rank,cl.getPhylum,hintMap), "Kingdom:"+cl.getPhylum)
-                  case "class"   => (hasConflict(rank,cl.getKlass,hintMap), "Kingdom:"+cl.getKlass)
-                  case "order"   => (hasConflict(rank,cl.getOrder,hintMap), "Kingdom:"+cl.getOrder)
-                  case "family"  => (hasConflict(rank,cl.getFamily,hintMap), "Kingdom:"+cl.getFamily)
+                  case "phylum"  => (hasConflict(rank,cl.getPhylum,hintMap), "Phylum:"+cl.getPhylum)
+                  case "class"   => (hasConflict(rank,cl.getKlass,hintMap), "Class:"+cl.getKlass)
+                  case "order"   => (hasConflict(rank,cl.getOrder,hintMap), "Order:"+cl.getOrder)
+                  case "family"  => (hasConflict(rank,cl.getFamily,hintMap), "Family:"+cl.getFamily)
                   case _ => (false, "")
               }
           }
