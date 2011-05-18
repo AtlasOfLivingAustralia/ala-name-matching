@@ -43,21 +43,21 @@ object Store {
   /**
    * Iterate over records, passing the records to the supplied consumer.
    */
-  def pageOverAll(version:Version, consumer:OccurrenceConsumer, pageSize:Int) {
-    occurrenceDAO.pageOverAll(version, fullRecord => consumer.consume(fullRecord.get), pageSize)
+  def pageOverAll(version:Version, consumer:OccurrenceConsumer, startUuid:String, pageSize:Int) {
+    occurrenceDAO.pageOverAll(version, fullRecord => consumer.consume(fullRecord.get), startUuid, pageSize)
   }
 
   /**
    * Page over all versions of the record, handing off to the OccurrenceVersionConsumer.
    */
-  def pageOverAllVersions(consumer:OccurrenceVersionConsumer, pageSize:Int) {
+  def pageOverAllVersions(consumer:OccurrenceVersionConsumer, startUuid:String, pageSize:Int) {
       occurrenceDAO.pageOverAllVersions(fullRecordVersion => {
           if(!fullRecordVersion.isEmpty){
             consumer.consume(fullRecordVersion.get)
           } else {
             true
           }
-      }, pageSize)
+      }, startUuid, pageSize)
   }
 
   /**

@@ -23,6 +23,10 @@ object ProcessWithActors {
             4
         }
     }
+    val startUuid =if(args.length>1) args(1) else ""
+
+    println("Processing from " +startUuid + " with " + threads + "actors")
+
     val pool = Array.fill(threads){ val p = new Consumer(Actor.self,ids); ids+=1; p.start }
 
     val start = System.currentTimeMillis
@@ -66,7 +70,7 @@ object ProcessWithActors {
         startTime = System.currentTimeMillis
       }
       true //indicate to continue
-    })
+    },startUuid)
     //add the remaining records from the buff
     if(buff.size>0){
       pool(0).asInstanceOf[Consumer] ! buff.toArray

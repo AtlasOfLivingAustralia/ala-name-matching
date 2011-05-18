@@ -62,7 +62,7 @@ trait PersistenceManager {
      * Page over all entities, passing the retrieved UUID and property map to the supplied function.
      * Function should return false to exit paging.
      */
-    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int = 1000)
+    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean),startUuid:String="", pageSize:Int = 1000)
 
     /**
      * Page over the records, retrieving the supplied columns only.
@@ -259,11 +259,13 @@ class CassandraPersistenceManager @Inject() (
 
     /**
      * Generic page over method. Individual pageOver methods should provide a slicePredicate that
-     * is used to determine the columns that aer returned...
+     * is used to determine the columns that are returned...
+     *
+     * @param startUuid, The uuid of the occurrence at which to start the paging
      */
-    def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int, slicePredicate:SlicePredicate)={
+    def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int, slicePredicate:SlicePredicate,startUuid:String="")={
       val selector = Pelops.createSelector(poolName)
-      var startKey = new Bytes("".getBytes)
+      var startKey = new Bytes(startUuid.getBytes)
       var endKey = new Bytes("".getBytes)
       var keyRange = Selector.newKeyRange(startKey, endKey, pageSize+1)
       var hasMore = true
@@ -308,10 +310,11 @@ class CassandraPersistenceManager @Inject() (
      *
      * @param occurrenceType
      * @param proc
+     * @param startUuid, The uuid of the occurrence at which to start the paging
      */
-    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int = 1000) {
+    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean),startUuid:String="", pageSize:Int = 1000) {
       val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
-      pageOver(entityName, proc, pageSize, slicePredicate)
+      pageOver(entityName, proc, pageSize, slicePredicate,startUuid)
     }
 
     /**
@@ -553,7 +556,7 @@ class MongoDBPersistenceManager @Inject()(
         }
     }
 
-    def pageOverAll(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int) = {
+    def pageOverAll(entityName: String, proc: (String, Map[String, String]) => Boolean,startUuid:String="", pageSize: Int) = {
         //page through all records
         val mongoColl = mongoConn(db)(entityName)
         //val cursor = mongoColl.find(0,pageSize)

@@ -26,11 +26,11 @@ trait OccurrenceDAO {
 
     def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String, uuids: Array[String], fields: Array[String]): Unit
 
-    def pageOverAllVersions(proc: ((Option[Array[FullRecord]]) => Boolean), pageSize: Int = 1000): Unit
+    def pageOverAllVersions(proc: ((Option[Array[FullRecord]]) => Boolean),startUuid:String="", pageSize: Int = 1000): Unit
 
-    def pageOverAll(version: Version, proc: ((Option[FullRecord]) => Boolean), pageSize: Int = 1000): Unit
+    def pageOverAll(version: Version, proc: ((Option[FullRecord]) => Boolean),startUuid:String="", pageSize: Int = 1000): Unit
 
-    def pageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean), pageSize: Int = 1000): Unit
+    def pageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),startUuid:String="", pageSize: Int = 1000): Unit
 
     def addRawOccurrenceBatch(fullRecords: Array[FullRecord]): Unit
 
@@ -159,8 +159,9 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      *
      * @param occurrenceType
      * @param proc, the function to execute.
+     * @param startUuid, The uuid of the occurrence at which to start the paging
      */
-    def pageOverAllVersions(proc: ((Option[Array[FullRecord]]) => Boolean), pageSize: Int = 1000) {
+    def pageOverAllVersions(proc: ((Option[Array[FullRecord]]) => Boolean),startUuid:String="", pageSize: Int = 1000) {
         persistenceManager.pageOverAll(entityName, (guid, map) => {
             //retrieve all versions
             val raw = FullRecordMapper.createFullRecord(guid, map, Raw)
@@ -168,7 +169,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             val consensus = FullRecordMapper.createFullRecord(guid, map, Consensus)
             //pass all version to the procedure, wrapped in the Option
             proc(Some(Array(raw, processed, consensus)))
-        }, pageSize)
+        },startUuid, pageSize)
     }
 
     /**
@@ -177,14 +178,15 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      *
      * @param occurrenceType
      * @param proc, the function to execute.
+     * @param startUuid, The uuid of the occurrence at which to start the paging
      */
-    def pageOverAll(version: Version, proc: ((Option[FullRecord]) => Boolean), pageSize: Int = 1000) {
+    def pageOverAll(version: Version, proc: ((Option[FullRecord]) => Boolean),startUuid:String="", pageSize: Int = 1000) {
         persistenceManager.pageOverAll(entityName, (guid, map) => {
             //retrieve all versions
             val fullRecord = FullRecordMapper.createFullRecord(guid, map, version)
             //pass all version to the procedure, wrapped in the Option
             proc(Some(fullRecord))
-        }, pageSize)
+        },startUuid, pageSize)
     }
 
     /**
@@ -193,15 +195,16 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      *
      * @param occurrenceType
      * @param proc, the function to execute.
+     * @param startUuid, The uuid of the occurrence at which to start the paging
      */
-    def pageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean), pageSize: Int = 1000) {
+    def pageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),startUuid:String="", pageSize: Int = 1000) {
         persistenceManager.pageOverAll(entityName, (guid, map) => {
             //retrieve all versions
             val raw = FullRecordMapper.createFullRecord(guid, map, Versions.RAW)
             val processed = FullRecordMapper.createFullRecord(guid, map, Versions.PROCESSED)
             //pass all version to the procedure, wrapped in the Option
             proc(Some(raw, processed))
-        }, pageSize)
+        },startUuid, pageSize)
     }
 
     /**
