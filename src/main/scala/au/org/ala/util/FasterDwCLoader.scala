@@ -31,7 +31,7 @@ object FasterDwCLoader {
   val keyspace = "occ"
   val columnFamily = "occ"
   val poolName = "occ-pool"
-  val resourceUid = "dp20"
+  var resourceUid = "dp20"
   val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
   
   def main(args: Array[String]): Unit = {
@@ -39,6 +39,26 @@ object FasterDwCLoader {
     import ReflectBean._
     println(">>> Starting DwC loader ....")
     val fileName = if(args.length == 1) args(0) else "/data/biocache/ozcam/ozcam.csv"
+    val file = new File(fileName)
+    if(file.isDirectory){
+      for(name <- file.list){
+        try{
+          processFile(fileName + "/"+name)
+        }
+        catch{
+          case e:Exception=> println("WARNING: Unable to load " + name)
+        }
+      }
+    }
+    else
+      processFile(fileName)
+    
+
+    persistenceManager.shutdown
+   
+  }
+  def processFile(fileName:String)={
+    println("Starting to load " + fileName)
     val csvReader = new CSVReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
 
     var count = 0
@@ -48,7 +68,8 @@ object FasterDwCLoader {
 
     val columnsHeaders = csvReader.readNext
     var columns:Array[String] = csvReader.readNext
-
+    //val occMap = new scala.collection.mutable.HashMap[String, Map[String, String]]()
+    //val drMap = new scala.collection.mutable.HashMap[String, Map[String, String]]()
     while (columns != null) {
 
       count += 1
@@ -62,19 +83,29 @@ object FasterDwCLoader {
       }
 
        //lookup the column
-      //val recordUuid = UUID.randomUUID.toString
+     // val recordUuid = UUID.randomUUID.toString
       val map = Map(fieldTuples map {s => (s._1, s._2)} : _*)
       if(!map.isEmpty){
           val cn = map.get("catalogNumber").getOrElse("")
           val cc = map.get("collectionCode").getOrElse("")
           val ic = map.get("institutionCode").getOrElse("")
-          val uniqueID = resourceUid + "|" + ic + "|" + cc + "|" + cn
+          val id = map.get("portalId").getOrElse("")
+          //Use the supplied dataResourceUid for the resourceId
+          if(map.contains("dataProviderUid"))
+            resourceUid = map.get("dataProviderUid").get
+          val uniqueID = if(ic != "") resourceUid + "|" + ic + "|" + cc + "|" + cn else resourceUid + "|" +id
 
           //val recordUuid = persistenceManager.put(recordUuid, "occ", map)
           val recordUuid = persistenceManager.put(null, "occ", map)
           persistenceManager.put(uniqueID, "dr", "uuid", recordUuid)
+//          occMap.put(recordUuid,map)
+//          drMap.put(uniqueID, Map("uuid"->recordUuid))
           //debug
           if (count % 1000 == 0 && count > 0) {
+//            persistenceManager.putBatch("occ", occMap.toMap)
+//            persistenceManager.putBatch("dr", drMap.toMap)
+//            occMap.empty
+//            drMap.empty
             finishTime = System.currentTimeMillis
             println(count + ", >>  UUID: " + recordUuid + ", records per sec: " + 1000 / (((finishTime - startTime).toFloat) / 1000f))
             startTime = System.currentTimeMillis
@@ -82,8 +113,6 @@ object FasterDwCLoader {
       }
       columns = csvReader.readNext
     }
-
-    persistenceManager.shutdown
-    println("Finished DwC loader. Records processed: " + count)
+     println("Finished "+fileName+" loading. Records processed: " + count)
   }
 }
