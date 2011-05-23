@@ -22,11 +22,11 @@ public class ServiceFactory {
         ValidationService service = null;
 
         if (species.getInstances().get(0) instanceof ConservationInstance) {
-            service = new ConservationService(reportFactory);
+            service = new ConservationService(species, reportFactory);
         } else if (species.getInstances().get(0) instanceof PlantPestInstance) {
             SensitivityInstance instance = species.getInstances().get(0);
             KnowledgeBase knowledgeBase = KnowledgeBaseFactory.getKnowledgeBase(instance.getCategory());
-            service = new PlantPestService(knowledgeBase, reportFactory);
+            service = new PlantPestService(species, knowledgeBase, reportFactory);
         }
 
         return service;
