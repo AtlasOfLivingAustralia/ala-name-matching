@@ -30,9 +30,11 @@ public class PlantPestService implements ValidationService {
 
     private KnowledgeBase knowledgeBase;
     private ReportFactory reportFactory;
+    private final SensitiveTaxon taxon;
 
-    public PlantPestService(KnowledgeBase knowledgeBase, ReportFactory reportFactory) {
+    public PlantPestService(SensitiveTaxon taxon, KnowledgeBase knowledgeBase, ReportFactory reportFactory) {
         super();
+        this.taxon = taxon;
         this.knowledgeBase = knowledgeBase;
         this.reportFactory = reportFactory;
     }
@@ -42,7 +44,7 @@ public class PlantPestService implements ValidationService {
      * @param facts
      * @return
      */
-    public ValidationOutcome validate(SensitiveTaxon taxon, FactCollection facts) {
+    public ValidationOutcome validate(FactCollection facts) {
         ValidationReport report = reportFactory.createValidationReport(taxon);
 
         if (!ValidationUtils.validateLocation(facts, report)) {
