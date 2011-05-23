@@ -153,4 +153,13 @@ public class SensitivityZone {
         return zoneList;
     }
 
+    public static String getState(List<SensitivityZone> zones) {
+        for (SensitivityZone sz : zones) {
+            if (sz.getType().equals(ZoneType.STATE)) {
+                return sz.getId();
+            }
+        }
+        return "???";
+    }
+
 }
