@@ -97,7 +97,7 @@ public class GeneraliseOccurrenceLocations {
                     facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
                     ValidationService service = ServiceFactory.createValidationService(ss);
-                    ValidationOutcome outcome = service.validate(ss, facts);
+                    ValidationOutcome outcome = service.validate(facts);
 
                     GeneralisedLocation genLoc = ((ConservationOutcome) outcome).getGeneralisedLocation();
                     if (isEmpty(generalised_metres)) {
