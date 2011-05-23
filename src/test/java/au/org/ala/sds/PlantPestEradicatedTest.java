@@ -68,7 +68,7 @@ public class PlantPestEradicatedTest {
         facts.add(FactCollection.EVENT_DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
@@ -92,7 +92,7 @@ public class PlantPestEradicatedTest {
         facts.add(FactCollection.EVENT_DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
@@ -115,7 +115,7 @@ public class PlantPestEradicatedTest {
         facts.add(FactCollection.EVENT_DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
@@ -138,7 +138,7 @@ public class PlantPestEradicatedTest {
         facts.add(FactCollection.EVENT_DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);

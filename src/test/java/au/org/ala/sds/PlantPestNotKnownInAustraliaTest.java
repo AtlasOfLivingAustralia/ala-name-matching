@@ -66,7 +66,7 @@ public class PlantPestNotKnownInAustraliaTest {
         facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
@@ -87,7 +87,7 @@ public class PlantPestNotKnownInAustraliaTest {
         facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
@@ -108,7 +108,7 @@ public class PlantPestNotKnownInAustraliaTest {
         facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
@@ -129,7 +129,7 @@ public class PlantPestNotKnownInAustraliaTest {
         facts.add(FactCollection.EVENT_DATE_KEY, "1977-06-20");
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);
@@ -145,7 +145,7 @@ public class PlantPestNotKnownInAustraliaTest {
         facts.add(FactCollection.COUNTRY_KEY, "Indonesia");
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof PlantPestOutcome);

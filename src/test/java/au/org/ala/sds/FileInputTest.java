@@ -159,7 +159,7 @@ public class FileInputTest {
         SensitiveTaxon st = finder.findSensitiveSpecies(name);
         if (st != null) {
             ValidationService service = ServiceFactory.createValidationService(st);
-            ValidationOutcome outcome = service.validate(st, facts);
+            ValidationOutcome outcome = service.validate(facts);
 
             msgOut.append(st.getTaxonName());
             if (st.getAcceptedName() != null && !name.equalsIgnoreCase(st.getAcceptedName())) {

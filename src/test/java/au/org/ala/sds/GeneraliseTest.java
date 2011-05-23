@@ -67,7 +67,7 @@ public class GeneraliseTest {
         facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof ConservationOutcome);
@@ -93,7 +93,7 @@ public class GeneraliseTest {
         facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof ConservationOutcome);
@@ -119,7 +119,7 @@ public class GeneraliseTest {
         facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof ConservationOutcome);
@@ -145,7 +145,7 @@ public class GeneraliseTest {
         facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof ConservationOutcome);
@@ -171,7 +171,7 @@ public class GeneraliseTest {
         facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof ConservationOutcome);
@@ -198,7 +198,7 @@ public class GeneraliseTest {
         facts.add(FactCollection.STATE_PROVINCE_KEY, "New South Wales");
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof ConservationOutcome);
@@ -224,7 +224,7 @@ public class GeneraliseTest {
         facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof ConservationOutcome);
@@ -250,7 +250,7 @@ public class GeneraliseTest {
         facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(ss, facts);
+        ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome instanceof ConservationOutcome);
