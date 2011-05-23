@@ -20,6 +20,11 @@ import au.org.ala.sds.model.SdsMessage;
 public class MessageFactory {
 
 	// Message key constants
+    public static final String LOCATION_GENERALISED = "LocGen";
+    public static final String LOCATION_NOT_GENERALISED = "LocNotGen";
+    public static final String LOCATION_ALREADY_GENERALISED = "LocAlredyGen";
+    public static final String LOCATION_WITHHELD = "LocWithheld";
+
     public static final String LOCATION_INVALID = "LatLongInvalid";
     public static final String LOCATION_MISSING = "LatLongMissing";
     public static final String STATE_INVALID = "StateInvalid";
