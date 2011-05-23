@@ -28,6 +28,10 @@ public class FactCollection {
     public static final String ROW_KEY = "row";
     public static final String ZONES_KEY = "zone";
 
+    public static final String[] FACT_NAMES = { SCIENTIFIC_NAME_KEY, FAMILY_KEY, GENUS_KEY, SPECIFIC_EPITHET_KEY, INTRA_SPECIFIC_EPITHET_KEY,
+                                                DECIMAL_LATITUDE_KEY, DECIMAL_LONGITUDE_KEY, MUNICIPALITY_KEY, STATE_PROVINCE_KEY, COUNTRY_KEY,
+                                                EVENT_DATE_KEY, YEAR_KEY };
+
     private final Map<String, String> facts;
 
     public FactCollection() {
