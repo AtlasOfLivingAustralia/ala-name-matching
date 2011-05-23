@@ -5,10 +5,7 @@ package au.org.ala.sds.validation;
 
 import java.util.List;
 
-import au.org.ala.sds.model.Message;
-import au.org.ala.sds.model.SdsMessage;
 import au.org.ala.sds.model.SensitiveTaxon;
-import au.org.ala.sds.model.SensitivityInstance;
 import au.org.ala.sds.model.SensitivityZone;
 import au.org.ala.sds.util.GeneralisedLocation;
 import au.org.ala.sds.util.GeneralisedLocationFactory;
@@ -21,10 +18,12 @@ import au.org.ala.sds.util.ValidationUtils;
 public class ConservationService implements ValidationService {
 
     private ReportFactory reportFactory;
+    private final SensitiveTaxon taxon;
 
-    public ConservationService(ReportFactory reportFactory) {
+    public ConservationService(SensitiveTaxon taxon, ReportFactory reportFactory) {
         super();
         this.reportFactory = reportFactory;
+        this.taxon = taxon;
     }
 
     /**
@@ -32,16 +31,8 @@ public class ConservationService implements ValidationService {
      * @param facts
      * @return
      */
-    public ValidationOutcome validate(SensitiveTaxon taxon, FactCollection facts) {
+    public ValidationOutcome validate(FactCollection facts) {
         ValidationReport report = reportFactory.createValidationReport(taxon);
-
-        // Add sensitivity information message
-        StringBuilder message = new StringBuilder("Sensitive in ");
-        for (SensitivityInstance si : taxon.getInstances()) {
-            message.append(si.getZone().getName() + " [" + si.getAuthority() + "], ");
-        }
-        message.replace(message.length() - 2, message.length(), "");
-        report.addMessage(new SdsMessage(Message.Type.INFO, message.toString()));
 
         // Validate location
         if (!ValidationUtils.validateLocationCoords(facts, report)) {
@@ -59,9 +50,6 @@ public class ConservationService implements ValidationService {
         GeneralisedLocation gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, taxon, zones);
 
         ValidationOutcome outcome = new ConservationOutcome(report);
-
-        // Add generalisation message
-        report.addMessage(new SdsMessage(Message.Type.INFO, gl.getDescription() + " [" + gl.getGeneralisedLatitude() + "," + gl.getGeneralisedLongitude() + "]"));
         ((ConservationOutcome) outcome).setGeneralisedLocation(gl);
         outcome.setValid(true);
 
