@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.sds.dto.DataColumnMapper;
 import au.org.ala.sds.dto.DataStreamProperties;
+import au.org.ala.sds.util.ExcelUtils;
 import au.org.ala.sds.validation.FactCollection;
 
 public class DataStreamCsvDao implements DataStreamDao {
@@ -46,10 +47,10 @@ public class DataStreamCsvDao implements DataStreamDao {
         Map<String, Integer> columnMap = new HashMap<String, Integer>();
         for (String key : mapper.getKeySet()) {
             String value = mapper.get(key);
-            if (StringUtils.isNotBlank(value) && StringUtils.isNumeric(value)) {
+            if (StringUtils.isNumeric(value)) {
                 columnMap.put(key, Integer.parseInt(value) - 1);
             } else {
-                throw new IllegalArgumentException("Invalid column mapping value for key '" + key + "' - '"+ value + "' - must be numeric");
+                columnMap.put(key, ExcelUtils.getOrdinal(value) - 1);
             }
         }
 
