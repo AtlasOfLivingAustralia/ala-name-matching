@@ -85,16 +85,24 @@ public class DataStreamExcelDao implements DataStreamDao {
                     if (cell != null) {
                         switch (cell.getCellType()) {
                             case Cell.CELL_TYPE_STRING:
-                                facts.add(key, cell.getStringCellValue());
+                                facts.add(key, cell.getStringCellValue().trim());
                                 break;
                             case Cell.CELL_TYPE_NUMERIC:
                             case Cell.CELL_TYPE_FORMULA:
                                 double d = cell.getNumericCellValue();
-                                if (HSSFDateUtil.isCellDateFormatted(cell)) {
-                                    facts.add(key, DateHelper.formattedIso8601Date(HSSFDateUtil.getJavaDate(d)));
-                                } else {
-                                    facts.add(key, Double.toString(cell.getNumericCellValue()));
+                                try {
+                                    if (HSSFDateUtil.isCellDateFormatted(cell)) {
+                                        facts.add(key, DateHelper.formattedIso8601Date(HSSFDateUtil.getJavaDate(d)));
+                                    } else {
+                                        facts.add(key, Double.toString(d));
+                                    }
+                                } catch (Exception e) {
+                                    logger.warn("Exception caught trying to check if cell '" + key + "' is a date - " + e.getMessage());
+                                    facts.add(key, Double.toString(d));
                                 }
+                                break;
+                            default:
+                                facts.add(key, "");
                                 break;
                         }
                     }
