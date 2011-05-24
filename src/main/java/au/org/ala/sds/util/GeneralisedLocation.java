@@ -99,7 +99,7 @@ public class GeneralisedLocation {
             generalisedLatitude = originalLatitude;
             generalisedLongitude = originalLongitude;
             generalisationInMetres = "";
-            description = MessageFactory.getMessageText(MessageFactory.LOCATION_NOT_GENERALISED, SensitivityZone.getState(zones), originalLatitude, originalLongitude);
+            description = MessageFactory.getMessageText(MessageFactory.LOCATION_NOT_GENERALISED, SensitivityZone.getState(zones));
             return;
         }
 
@@ -111,7 +111,7 @@ public class GeneralisedLocation {
         } else if (this.locationGeneralisation.equalsIgnoreCase("10km")) {
             generaliseCoordinates(1);
             if (isGeneralised()) {
-                description = MessageFactory.getMessageText(MessageFactory.LOCATION_GENERALISED, SensitivityZone.getState(zones), "one", "", generalisedLatitude, generalisedLongitude);
+                description = MessageFactory.getMessageText(MessageFactory.LOCATION_GENERALISED, SensitivityZone.getState(zones), "one", "");
                 generalisationInMetres = "10000";
             } else {
                 description = MessageFactory.getMessageText(MessageFactory.LOCATION_ALREADY_GENERALISED);
@@ -119,7 +119,7 @@ public class GeneralisedLocation {
         } else if (this.locationGeneralisation.equalsIgnoreCase("1km")) {
             generaliseCoordinates(2);
             if (isGeneralised()) {
-                description = MessageFactory.getMessageText(MessageFactory.LOCATION_GENERALISED, SensitivityZone.getState(zones), "two", "s", generalisedLatitude, generalisedLongitude);
+                description = MessageFactory.getMessageText(MessageFactory.LOCATION_GENERALISED, SensitivityZone.getState(zones), "two", "s");
                 generalisationInMetres = "1000";
             } else {
                 description = MessageFactory.getMessageText(MessageFactory.LOCATION_ALREADY_GENERALISED);
@@ -127,7 +127,7 @@ public class GeneralisedLocation {
         } else if (this.locationGeneralisation.equalsIgnoreCase("100m")) {
             generaliseCoordinates(3);
             if (isGeneralised()) {
-                description = MessageFactory.getMessageText(MessageFactory.LOCATION_GENERALISED, SensitivityZone.getState(zones), "three", "s", generalisedLatitude, generalisedLongitude);
+                description = MessageFactory.getMessageText(MessageFactory.LOCATION_GENERALISED, SensitivityZone.getState(zones), "three", "s");
                 generalisationInMetres = "100";
             } else {
                 description = MessageFactory.getMessageText(MessageFactory.LOCATION_ALREADY_GENERALISED);
