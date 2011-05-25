@@ -44,7 +44,8 @@ object Store {
    * Iterate over records, passing the records to the supplied consumer.
    */
   def pageOverAll(version:Version, consumer:OccurrenceConsumer, startUuid:String, pageSize:Int) {
-    occurrenceDAO.pageOverAll(version, fullRecord => consumer.consume(fullRecord.get), startUuid, pageSize)
+    val suuid = if(startUuid == null) "" else startUuid
+    occurrenceDAO.pageOverAll(version, fullRecord => consumer.consume(fullRecord.get), suuid, pageSize)
   }
 
   /**
