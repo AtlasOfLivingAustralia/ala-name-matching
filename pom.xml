@@ -109,6 +109,14 @@
                     <groupId>jaxen</groupId>
                     <artifactId>jaxen</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.lucene</groupId>
+                    <artifactId>lucene-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.lucene</groupId>
+                    <artifactId>lucene-analyzers</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <!--  BIE Species Profile syncing -->
@@ -248,19 +256,20 @@
         <dependency>
             <artifactId>solr-core</artifactId>
             <groupId>org.apache.solr</groupId>
-            <version>1.4.0</version>
+            <version>3.1.0</version>
         </dependency>
         <dependency>
             <artifactId>solr-solrj</artifactId>
             <groupId>org.apache.solr</groupId>
-            <version>1.4.0</version>
+            <version>3.1.0</version>
         </dependency>
-        <!-- SPATIAL-SOLR PLUGIN FOR SOLR 1.4 -->
+        <!-- Spatial-SORL plugin patched by Adam Collins (ALA Spatial Team) to have wkt support-->
         <dependency>
             <groupId>nl.jteam</groupId>
             <artifactId>spatial-solr</artifactId>
-            <version>1.0-RC4</version>
+            <version>2.0-RC5_ssplex_wkt</version>
         </dependency>
+
         <!-- COMMONS -->
         <dependency>
             <groupId>commons-httpclient</groupId>

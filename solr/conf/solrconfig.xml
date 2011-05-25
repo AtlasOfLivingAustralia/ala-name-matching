@@ -996,17 +996,7 @@
   </updateRequestProcessorChain>
   -->
 
-  <updateRequestProcessorChain>
-      <processor class="nl.jteam.search.solrext.spatial.SpatialTierUpdateProcessorFactory">
-          <str name="latField">latitude</str>
-          <str name="lngField">longitude</str>
-          <int name="startTier">9</int>
-          <int name="endTier">17</int>
-      </processor>
-      <processor class="solr.LogUpdateProcessorFactory"/>
-      <processor class="solr.RunUpdateProcessorFactory"/>
-  </updateRequestProcessorChain>
-
+ 
   <!-- queryResponseWriter plugins... query responses will be written using the
     writer specified by the 'wt' request parameter matching the name of a registered
     writer.
@@ -1037,14 +1027,10 @@
   <queryParser name="lucene" class="org.apache.solr.search.LuceneQParserPlugin"/>
   -->
 
-  <queryParser name="spatial" class="nl.jteam.search.solrext.spatial.SpatialTierQueryParserPlugin" basedOn="dismax">
-      <str name="corePoolSize">1</str>
-      <str name="maxPoolSize">2</str>
-      <str name="keepAlive">60</str>
-      <str name="latField">latitude</str>
-      <str name="lngField">longitude</str>
-      <str name="tierPrefix">_tier_</str>
-  </queryParser>
+ <queryParser name="spatial" class="nl.jteam.search.solrext.spatial.SpatialQParserPlugin">
+    <str name="latField">latitude</str>
+    <str name="lngField">longitude</str>
+ </queryParser>
   <!-- example of registering a custom function parser
   <valueSourceParser name="myfunc" class="com.mycompany.MyValueSourceParser" />
   -->
