@@ -44,7 +44,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.apache.lucene.document.Field;
+
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.stereotype.Controller;
@@ -377,7 +377,7 @@ public class OccurrenceController {
                 records.add(record);
                 return false;
             }
-        }, pageSize);
+        },null, pageSize);
         return records;
 	}
 
