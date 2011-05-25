@@ -24,9 +24,9 @@ public class PagingTest extends TestCase {
                 }
                 return true;
 			}
-		}, 10);
+		},null, 10);
 	}
-	
+
 	public void testDownload(){
 		
 		String[] uuids = new String[]{
