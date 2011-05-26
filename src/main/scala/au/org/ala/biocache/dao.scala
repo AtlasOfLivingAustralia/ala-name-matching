@@ -7,6 +7,7 @@ import com.google.inject.Inject
 import au.org.ala.util.ReflectBean
 import java.io.OutputStream
 import scala.collection.JavaConversions
+import java.lang.reflect.Method
 import java.util.UUID
 import org.slf4j.LoggerFactory
 
@@ -240,6 +241,24 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
                 }
             }
         }
+        else{
+          val defn = FullRecordMapper.getDefn(anObject)
+            for (field <- defn.keySet) {
+                //val fieldValue = anObject.getter(field).asInstanceOf[String]
+                //Use the cached version of the getter method
+                val getter = defn.get(field).get.asInstanceOf[(Method,Method)]._1
+                val fieldValue = getter.invoke(anObject)
+                if (fieldValue != null) {
+                    version match {
+                      case Processed => properties.put(FullRecordMapper.markAsProcessed(field.toString), fieldValue.toString)
+                      case Consensus => properties.put(FullRecordMapper.markAsConsensus(field.toString), fieldValue.toString)
+                      case Raw => properties.put(field.toString, fieldValue.toString)
+
+                    
+                    }
+                }
+            }
+        }
         properties.toMap
 
     }
@@ -292,7 +311,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         val properties = fullRecord2Map(newRecord, version)
 
         //only write changes.........
-        val propertiesToPersist = properties.filter({
+        var propertiesToPersist = properties.filter({
             case (key, value) => {
                 if (oldproperties.contains(key)) {
                     val oldValue = oldproperties.get(key).get
@@ -307,16 +326,19 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         val deletedProperties = oldproperties.filter({
             case (key, value) => !properties.contains(key)
         })
-        properties ++ deletedProperties.map({
+        propertiesToPersist ++= deletedProperties.map({
             case (key, value) => key -> ""
         })
 
-        if (!assertions.isEmpty) {
-            properties ++ convertAssertionsToMap(assertions.get)
+        if (!assertions.isEmpty){//} && !propertiesToPersist.isEmpty) {
+            propertiesToPersist ++= convertAssertionsToMap(assertions.get)
+            updateSystemAssertions(uuid, assertions.get.toList)
         }
+       
 
-        //commit to cassandra
-        persistenceManager.put(uuid, entityName, propertiesToPersist.toMap)
+        //commit to cassandra if changes exist
+        if(!propertiesToPersist.isEmpty)
+          persistenceManager.put(uuid, entityName, propertiesToPersist.toMap)
     }
 
     /**
@@ -324,14 +346,14 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      */
     def convertAssertionsToMap(systemAssertions: Array[QualityAssertion]): Map[String, String] = {
         //if supplied, update the assertions
-        def properties = new collection.mutable.ListMap[String, String]
+        val properties = new collection.mutable.ListMap[String, String]
 
         //    //set the systemAssertions on the full record
         //    fullRecord.assertions = systemAssertions.toArray.map(_.name)
 
         //set the quality systemAssertions flags for all error codes - following the principle writes are fast
         for (qa <- systemAssertions) {
-            properties + (FullRecordMapper.markAsQualityAssertion(qa.name) -> qa.problemAsserted.toString)
+            properties += (FullRecordMapper.markAsQualityAssertion(qa.name) -> qa.problemAsserted.toString)
         }
 
         //for the uncatered codes and false values
@@ -340,16 +362,16 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             !cateredForCodes.contains(errorCode.code)
         })
         for (errorCode <- uncateredForCodes) {
-            properties + (FullRecordMapper.markAsQualityAssertion(errorCode.name) -> "false")
+            properties += (FullRecordMapper.markAsQualityAssertion(errorCode.name) -> "false")
         }
 
         //set the overall decision
         val geospatiallyKosher = AssertionCodes.isGeospatiallyKosher(systemAssertions)
         val taxonomicallyKosher = AssertionCodes.isTaxonomicallyKosher(systemAssertions)
 
-        properties + (FullRecordMapper.geospatialDecisionColumn -> geospatiallyKosher.toString)
-        properties + (FullRecordMapper.taxonomicDecisionColumn -> taxonomicallyKosher.toString)
-
+        properties += (FullRecordMapper.geospatialDecisionColumn -> geospatiallyKosher.toString)
+        properties += (FullRecordMapper.taxonomicDecisionColumn -> taxonomicallyKosher.toString)
+       
         properties.toMap
     }
 
