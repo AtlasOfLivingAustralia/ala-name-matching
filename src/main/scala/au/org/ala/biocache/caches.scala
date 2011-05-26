@@ -171,6 +171,8 @@ object TaxonProfileDAO {
 
 /**
  * A DAO for attribution data. The source of this data should be the collectory.
+ *
+ * There is probably only a couple of hundred
  */
 object AttributionDAO {
 
@@ -193,8 +195,16 @@ object AttributionDAO {
     persistenceManager.put(guid,"attr",map)
   }
 
+ 
+
   /**
    * Retrieve attribution via institution/collection codes.
+   * We need to ensure that the cache is large enough to hold all possible values
+   * <ol>
+   * <li> Check if it is in the local cache</li>
+   * <li> Request update from collectory service (cache it locally and in cassandra)</li>
+   * <li> If service can not be contacted get the value from cassandra (cache it) </li>
+   * </ol>
    */
   def getByCodes(institutionCode:String, collectionCode:String) : Option[Attribution] = {
 
@@ -250,7 +260,7 @@ object LocationDAO {
   /**
    * Add a region mapping for this point.
    */
-  def addRegionToPoint (latitude:Float, longitude:Float, mapping:Map[String,String]) {
+  def addRegionToPoint (latitude:Double, longitude:Double, mapping:Map[String,String]) {
     val guid = latitude +"|"+longitude
     var properties = scala.collection.mutable.Map[String,String]()
     properties ++= mapping
@@ -280,9 +290,10 @@ object LocationDAO {
 
   /**
    * Get location information for point.
+   * For geo spatial requirements we don't want to round the latitude , longitudes 
    */
   def getByLatLon(latitude:String, longitude:String) : Option[Location] = {
-    val uuid =  roundCoord(latitude)+"|"+roundCoord(longitude)
+    val uuid =  latitude+"|"+longitude //roundCoord(latitude)+"|"+roundCoord(longitude)
 
     val cachedObject = lock.synchronized { lru.get(uuid) }
     //val cachedObject = lru.get(uuid)
@@ -294,6 +305,8 @@ object LocationDAO {
         if(!map.isEmpty){
           val location = new Location
           FullRecordMapper.mapPropertiesToObject(location,map.get)
+          FullRecordMapper.mapPropertiesToObject(location.environmentalLayers, map.get)
+          FullRecordMapper.mapPropertiesToObject(location.contextualLayers, map.get)
           //lock.synchronized { lru.put(uuid,Some(location)) }
           lock.synchronized {lru.put(uuid,Some(location))}
           Some(location)

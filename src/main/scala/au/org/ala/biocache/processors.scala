@@ -232,13 +232,26 @@ object LocationProcessor extends Processor {
     //retrieve the point
     var assertions = new ArrayBuffer[QualityAssertion]
 
-    if (raw.location.decimalLatitude != null && raw.location.decimalLongitude != null) {
+    //check to see if we have coordinates specified
+    if(raw.location.decimalLatitude != null && raw.location.decimalLongitude != null){
+      processed.location.decimalLatitude = raw.location.decimalLatitude
+      processed.location.decimalLongitude = raw.location.decimalLongitude
+    }
+    else if(raw.location.verbatimLatitude != null && raw.location.verbatimLongitude != null){
+      //parse the expressions into their decimal equivalents
+      val parsedLat = VerbatimLatLongParser.parse(raw.location.verbatimLatitude)
+      if(!parsedLat.isEmpty)
+        processed.location.decimalLatitude = parsedLat.get.toString
+      val parsedLong = VerbatimLatLongParser.parse(raw.location.verbatimLongitude)
+      if(!parsedLong.isEmpty)
+        processed.location.decimalLongitude = parsedLong.get.toString
+    }
+    //Continue processing location if a processed longitude and latitude exists
+    if (processed.location.decimalLatitude != null && processed.location.decimalLongitude != null) {
       //retrieve the species profile
       val taxonProfile = TaxonProfileDAO.getByGuid(processed.classification.taxonConceptID)
 
-      //TODO validate decimal degrees and parse degrees, minutes, seconds format
-      processed.location.decimalLatitude = raw.location.decimalLatitude
-      processed.location.decimalLongitude = raw.location.decimalLongitude
+
 
       //validate coordinate accuracy (coordinateUncertaintyInMeters) and coordinatePrecision (precision - A. Chapman)
       if(raw.location.coordinateUncertaintyInMeters!=null && raw.location.coordinateUncertaintyInMeters.length>0){
@@ -249,7 +262,7 @@ object LocationProcessor extends Processor {
       }
 
       //generate coordinate accuracy if not supplied
-      val point = LocationDAO.getByLatLon(raw.location.decimalLatitude, raw.location.decimalLongitude);
+      val point = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
       if (!point.isEmpty) {
 
         //add state information
@@ -264,6 +277,11 @@ object LocationProcessor extends Processor {
         processed.location.bioclim_bio34 = point.get.bioclim_bio34
         processed.location.mean_temperature_cars2009a_band1 =point.get.mean_temperature_cars2009a_band1
         processed.location.mean_oxygen_cars2006_band1 = point.get.mean_oxygen_cars2006_band1
+        //add the layers that are associated with the point
+        processed.location.environmentalLayers = point.get.environmentalLayers
+        processed.location.contextualLayers = point.get.contextualLayers
+        //reinitialise the object array so that the new values for environmental and conetxtual layers are included
+        processed.reinitObjectArray
 
         //TODO - replace with country association with points via the gazetteer
         if(processed.location.imcra!=null && !processed.location.imcra.isEmpty

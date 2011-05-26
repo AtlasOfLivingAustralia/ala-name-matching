@@ -25,6 +25,8 @@ object FullRecordMapper {
     val eventDefn = loadDefn(classOf[Event])
     val identificationDefn = loadDefn(classOf[Identification])
     val measurementDefn = loadDefn(classOf[Measurement])
+    val environmentalDefn = loadDefn(classOf[EnvironmentalLayers])
+    val contextualDefn = loadDefn(classOf[ContextualLayers])
 
 
     //index definitions
@@ -111,6 +113,8 @@ object FullRecordMapper {
             case i: Identification => identificationDefn
             case m: Measurement => measurementDefn
             case oi: OccurrenceIndex => occurrenceIndexDefn
+            case el: EnvironmentalLayers =>environmentalDefn
+            case cl: ContextualLayers => contextualDefn
             case _ => throw new RuntimeException("Unrecognised entity. No definition registered for: " + anObject)
         }
     }
@@ -140,6 +144,10 @@ object FullRecordMapper {
         } else if (measurementDefn.contains(fieldName)) {
             //fullRecord.identification.setter(fieldName, fieldValue)
             fullRecord.measurement.setter(measurementDefn.get(fieldName).get.asInstanceOf[(Method,Method)]._2, fieldValue)
+        } else if (environmentalDefn.contains(fieldName)){
+            fullRecord.location.environmentalLayers.setter(environmentalDefn.get(fieldName).get.asInstanceOf[(Method,Method)]._2, fieldValue)
+        } else if (contextualDefn.contains(fieldName)) {
+            fullRecord.location.contextualLayers.setter(contextualDefn.get(fieldName).get.asInstanceOf[(Method,Method)]._2, fieldValue)
         } else if (isQualityAssertion(fieldName)) {
             if (fieldValue equals "true") {
                 fullRecord.assertions = fullRecord.assertions :+ removeQualityAssertionMarker(fieldName)
