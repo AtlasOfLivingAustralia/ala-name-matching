@@ -16,6 +16,8 @@ object FullRecordMapper {
     val geospatialDecisionColumn = "geospatiallyKosher"
     val taxonomicDecisionColumn = "taxonomicallyKosher"
     val deletedColumn = "deleted"
+    val geospatialQa = "loc"
+    val taxonomicalQa = "class"
 
     //read in the object mappings using reflection
     val attributionDefn = loadDefn(classOf[Attribution])
@@ -149,9 +151,16 @@ object FullRecordMapper {
         } else if (contextualDefn.contains(fieldName)) {
             fullRecord.location.contextualLayers.setter(contextualDefn.get(fieldName).get.asInstanceOf[(Method,Method)]._2, fieldValue)
         } else if (isQualityAssertion(fieldName)) {
-            if (fieldValue equals "true") {
-                fullRecord.assertions = fullRecord.assertions :+ removeQualityAssertionMarker(fieldName)
+            //load the QA field names from the array
+            if(fieldValue != "true" && fieldValue != "false"){
+            val arr = Json.toListWithGeneric(fieldValue,classOf[java.lang.Integer])
+            for(i <- 0 to arr.size-1)
+              fullRecord.assertions = fullRecord.assertions :+ AssertionCodes.getByCode(arr(0)).get.getName
+            
             }
+//            if (fieldValue equals "true") {
+//                fullRecord.assertions = fullRecord.assertions :+ removeQualityAssertionMarker(fieldName)
+//            }
         }
     }
 

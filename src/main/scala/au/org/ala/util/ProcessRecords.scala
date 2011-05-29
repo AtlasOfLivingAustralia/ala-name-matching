@@ -86,12 +86,13 @@ class RecordProcessor {
     val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     //NC: Changed so that a processed record only contains values that have been processed.
     var processed = new FullRecord
-    var assertions = new ArrayBuffer[QualityAssertion]
+    //var assertions = new ArrayBuffer[QualityAssertion]
+    var assertions = new scala.collection.mutable.HashMap[String, Array[QualityAssertion]]
 
     //run each processor in the specified order
-    workflow.foreach(processor => { assertions ++= processor.process(guid, raw, processed) })
+    workflow.foreach(processor => { assertions += ( processor.getName -> processor.process(guid, raw, processed)) })
 
-    val systemAssertions = Some(assertions.toArray)
+    val systemAssertions = Some(assertions.toMap)
     //store the occurrence
     occurrenceDAO.updateOccurrence(guid, currentProcessed, processed, systemAssertions, Processed)
   }
@@ -105,13 +106,14 @@ class RecordProcessor {
     val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     //NC: Changed so that a processed record only contains values that have been processed.
     var processed = new FullRecord//raw.clone
-    var assertions = new ArrayBuffer[QualityAssertion]
+    //var assertions = new ArrayBuffer[QualityAssertion]
+    var assertions = new scala.collection.mutable.HashMap[String, Array[QualityAssertion]]
 
     workflow.foreach(processor => {
-        assertions ++= processor.process(guid, raw, processed)
+        assertions += (processor.getName()->processor.process(guid, raw, processed))
     })
 
-    val systemAssertions = Some(assertions.toArray)
+    val systemAssertions = Some(assertions.toMap)
   
     //store the occurrence
     occurrenceDAO.updateOccurrence(guid, processed, systemAssertions, Processed)

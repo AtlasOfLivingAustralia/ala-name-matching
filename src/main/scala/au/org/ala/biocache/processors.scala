@@ -11,6 +11,7 @@ import au.org.ala.data.model.LinnaeanRankClassification
 
 trait Processor {
   def process(uuid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion]
+  def getName():String
 }
 
 object ImageProcessor extends Processor {
@@ -32,6 +33,8 @@ object ImageProcessor extends Processor {
     }
     Array()
   }
+
+  def getName() = "image"
 
   private def isValidImageURL(url:String) : Boolean = {
     imageParser.unapplySeq(url.trim).isEmpty == false
@@ -59,6 +62,8 @@ object AttributionProcessor extends Processor {
       Array()
     }
   }
+
+  def getName() = "attr"
 }
 
 object EventProcessor extends Processor {
@@ -169,6 +174,8 @@ object EventProcessor extends Processor {
 
     assertions.toArray
   }
+
+  def getName() = "event"
 }
 
 object TypeStatusProcessor extends Processor {
@@ -190,6 +197,7 @@ object TypeStatusProcessor extends Processor {
       Array()
     }
   }
+  def getName() = "type"
 }
 
 object BasisOfRecordProcessor extends Processor {
@@ -215,6 +223,7 @@ object BasisOfRecordProcessor extends Processor {
       }
     }
   }
+  def getName() = "bor"
 }
 
 object LocationProcessor extends Processor {
@@ -389,6 +398,7 @@ object LocationProcessor extends Processor {
     }
     assertions.toArray
   }
+  def getName() = FullRecordMapper.geospatialQa
 }
 
 object ClassificationProcessor extends Processor {
@@ -525,4 +535,5 @@ object ClassificationProcessor extends Processor {
       case se: SearchResultException => logger.debug(se.getMessage,se); Array()
     }
   }
+  def getName() = FullRecordMapper.taxonomicalQa
 }

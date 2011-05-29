@@ -10,6 +10,8 @@ import scala.collection.JavaConversions
 import java.lang.reflect.Method
 import java.util.UUID
 import org.slf4j.LoggerFactory
+import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
 
 trait OccurrenceDAO {
 
@@ -37,15 +39,15 @@ trait OccurrenceDAO {
 
     def updateOccurrence(uuid: String, fullRecord: FullRecord, version: Version): Unit
 
-    def updateOccurrence(uuid: String, fullRecord: FullRecord, assertions: Option[Array[QualityAssertion]], version: Version): Unit
+    def updateOccurrence(uuid: String, fullRecord: FullRecord, assertions: Option[Map[String,Array[QualityAssertion]]], version: Version): Unit
 
-    def updateOccurrence(uuid: String, oldRecord: FullRecord, updatedRecord: FullRecord, assertions: Option[Array[QualityAssertion]], version: Version)
+    def updateOccurrence(uuid: String, oldRecord: FullRecord, updatedRecord: FullRecord, assertions: Option[Map[String,Array[QualityAssertion]]], version: Version)
 
     def updateOccurrence(uuid: String, anObject: AnyRef, version: Version): Unit
 
     def addSystemAssertion(uuid: String, qualityAssertion: QualityAssertion): Unit
 
-    def updateSystemAssertions(uuid: String, qualityAssertions: List[QualityAssertion]): Unit
+    def updateSystemAssertions(uuid: String, qualityAssertions: Map[String,Array[QualityAssertion]]): Unit
 
     def getSystemAssertions(uuid: String): List[QualityAssertion]
 
@@ -287,14 +289,14 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Update the occurrence with the supplied record, setting the correct version
      */
-    def updateOccurrence(uuid: String, fullRecord: FullRecord, assertions: Option[Array[QualityAssertion]], version: Version) {
+    def updateOccurrence(uuid: String, fullRecord: FullRecord, assertions: Option[Map[String,Array[QualityAssertion]]], version: Version) {
 
         //construct a map of properties to write
         val properties = fullRecord2Map(fullRecord, version)
 
         if (!assertions.isEmpty) {
             properties ++= convertAssertionsToMap(assertions.get)
-            updateSystemAssertions(uuid, assertions.get.toList)
+            updateSystemAssertions(uuid, assertions.get)
         }
 
         //commit to cassandra
@@ -304,7 +306,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Update the occurrence with the supplied record, setting the correct version
      */
-    def updateOccurrence(uuid: String, oldRecord: FullRecord, newRecord: FullRecord, assertions: Option[Array[QualityAssertion]], version: Version) {
+    def updateOccurrence(uuid: String, oldRecord: FullRecord, newRecord: FullRecord, assertions: Option[Map[String,Array[QualityAssertion]]], version: Version) {
 
         //construct a map of properties to write
         val oldproperties = fullRecord2Map(oldRecord, version)
@@ -332,7 +334,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
 
         if (!assertions.isEmpty){//} && !propertiesToPersist.isEmpty) {
             propertiesToPersist ++= convertAssertionsToMap(assertions.get)
-            updateSystemAssertions(uuid, assertions.get.toList)
+            updateSystemAssertions(uuid, assertions.get)
         }
        
 
@@ -344,11 +346,30 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Convert the assertions to a map
      */
-    def convertAssertionsToMap(systemAssertions: Array[QualityAssertion]): Map[String, String] = {
+    def convertAssertionsToMap(systemAssertions: Map[String,Array[QualityAssertion]]): Map[String, String] = {
         //if supplied, update the assertions
         val properties = new collection.mutable.ListMap[String, String]
 
-        //    //set the systemAssertions on the full record
+
+        //for each qa type get the list of QA's that failed
+        for(name <- systemAssertions.keySet){
+          val assertions = systemAssertions.get(name).get
+          val failedass = new ArrayBuffer[java.lang.Integer]
+          for(qa <- assertions){
+            failedass.add(qa.code)
+          }
+          
+            properties+=(FullRecordMapper.markAsQualityAssertion(name) -> Json.toJSONWithGeneric(failedass.toList))
+            if(name == FullRecordMapper.geospatialQa){
+              properties += (FullRecordMapper.geospatialDecisionColumn -> AssertionCodes.isGeospatiallyKosher(assertions).toString)
+            }
+            else if(name == FullRecordMapper.taxonomicalQa){
+              properties += (FullRecordMapper.taxonomicDecisionColumn -> AssertionCodes.isTaxonomicallyKosher(assertions).toString)
+            }
+          
+        }
+
+       /* //    //set the systemAssertions on the full record
         //    fullRecord.assertions = systemAssertions.toArray.map(_.name)
 
         //set the quality systemAssertions flags for all error codes - following the principle writes are fast
@@ -370,7 +391,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         val taxonomicallyKosher = AssertionCodes.isTaxonomicallyKosher(systemAssertions)
 
         properties += (FullRecordMapper.geospatialDecisionColumn -> geospatiallyKosher.toString)
-        properties += (FullRecordMapper.taxonomicDecisionColumn -> taxonomicallyKosher.toString)
+        properties += (FullRecordMapper.taxonomicDecisionColumn -> taxonomicallyKosher.toString)*/
        
         properties.toMap
     }
@@ -400,9 +421,14 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
 
     /**
      * Set the system systemAssertions for a record, overwriting existing systemAssertions
+     * TODO change this so that it is updating the contents not replacing - will need this functionality when particular processing phases can be run seperately
      */
-    def updateSystemAssertions(uuid: String, qualityAssertions: List[QualityAssertion]) {
-        persistenceManager.putList(uuid, entityName, FullRecordMapper.qualityAssertionColumn, qualityAssertions, classOf[QualityAssertion], true)
+    def updateSystemAssertions(uuid: String, qualityAssertions: Map[String,Array[QualityAssertion]]) {
+        var assertions = new ListBuffer[QualityAssertion]
+        for(qas <- qualityAssertions.values){
+          assertions ++= qas
+        }
+        persistenceManager.putList(uuid, entityName, FullRecordMapper.qualityAssertionColumn,assertions.toList, classOf[QualityAssertion], true)
     }
 
     /**

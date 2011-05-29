@@ -74,6 +74,8 @@ trait PersistenceManager {
      */
     def selectRows(uuids:Array[String],entityName:String,propertyNames:Array[String],proc:((Map[String,String])=>Unit))
 
+    def deleteColumn(uuid:String, entityName:String, columnName:String)
+
     /**
      * Close db connections etc
      */
@@ -282,7 +284,7 @@ class CassandraPersistenceManager @Inject() (
           val columnList = columnMap.get(buuid)
           //procedure a map of key value pairs
           val map = columnList2Map(columnList)
-          val uuid = map.get("uuid").get.toString
+          val uuid = if(map.contains("uuid")) map.get("uuid").get.toString else buuid.toUTF8
           //pass the record ID and the key value pair map to the proc
           continue = proc(uuid, map)
         }
@@ -371,6 +373,13 @@ class CassandraPersistenceManager @Inject() (
     }
 
     def shutdown = Pelops.shutdown
+    def deleteColumn(uuid:String, entityName:String, columnName:String)={
+      if(uuid != null && entityName != null && columnName != null){
+        val mutator = Pelops.createMutator(poolName)
+        mutator.deleteColumn(entityName, uuid, columnName)
+        mutator.execute(ConsistencyLevel.ONE)
+      }
+    }
 }
 
 
@@ -539,6 +548,9 @@ class MongoDBPersistenceManager @Inject()(
         throw new RuntimeException("currently not implemented")
     }
 
+    def deleteColumn(uuid:String, entityName:String, columnName:String)={
+      throw new RuntimeException("currently not implemented")
+    }
     def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int, columnName: String*) = {
 
         //page through all records
