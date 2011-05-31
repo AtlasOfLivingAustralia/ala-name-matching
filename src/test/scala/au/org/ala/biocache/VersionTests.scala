@@ -23,7 +23,7 @@ class VersionTests extends FunSuite {
     val assertions = Array(QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, true, "Coordinates bad"))
 
     occurrenceDAO.updateOccurrence(uuid,raw,Raw)
-    occurrenceDAO.updateOccurrence(uuid,processed,Some(assertions),Processed)
+    occurrenceDAO.updateOccurrence(uuid,processed,Some(Map("loc"->assertions)),Processed)
     occurrenceDAO.updateOccurrence(uuid,consensus,Consensus)
 
     //retrieve and test
