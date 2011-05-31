@@ -4,6 +4,7 @@
 package au.org.ala.biocache
 
 import java.lang.reflect.Method
+import java.util.Collections
 import org.apache.commons.lang.time.DateUtils
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer
@@ -11,15 +12,11 @@ import org.apache.solr.common.SolrInputDocument
 import org.apache.solr.core.CoreContainer
 import org.slf4j.LoggerFactory
 import com.google.inject.Inject
+import com.google.inject.name.Named
+import scala.actors.Actor
+import scala.collection.mutable.ArrayBuffer
 
-object SolrIndexDAO {
-    val solrHome = "/data/solr/bio-proto"
-    //set the solr home
-    System.setProperty("solr.solr.home", solrHome)
 
-    val cc = new CoreContainer.Initializer().initialize
-    val solrServer = new EmbeddedSolrServer(cc, "")
-}
 
 /**
  * All Index implementations need to extend this trait.
@@ -28,6 +25,9 @@ trait IndexDAO {
 
     import org.apache.commons.lang.StringUtils.defaultString
     import au.org.ala.util.ReflectBean._
+
+    val elFields = FullRecordMapper.environmentalDefn.keySet.toList
+    val clFields = FullRecordMapper.contextualDefn.keySet.toList
 
     def occurrenceDAO:OccurrenceDAO
 
@@ -59,10 +59,11 @@ trait IndexDAO {
     def getValue(field: String, map: Map[String, String]): String = {
         val value = map.get(field)
         if (!value.isEmpty){
-            value.get
+            return value.get
         } else {
-            ""
+           return  ""
         }
+
     }
 
     /**
@@ -70,7 +71,7 @@ trait IndexDAO {
      * This duplicates some of the code that is in OccurrenceDAO because
      * we are not interested in processing the other values
      *
-     * TODO we may wish to fix this so that it
+     * TODO we may wish to fix this so that it uses the same code in the mappers
      */
     def getAssertions(map: Map[String, String]): Array[String] = {
 
@@ -80,17 +81,17 @@ trait IndexDAO {
 
             if (FullRecordMapper.isQualityAssertion(fieldName)) {
 
-                val value = map.get(fieldName)
+                val value = map.get(fieldName).get
 
-                if (!value.isEmpty) {
-                    if (value.get equals "true") {
-                        if (assertions(0) == "")
-                            assertions = Array(FullRecordMapper.removeQualityAssertionMarker(fieldName))
-                        else
-                            assertions = assertions ++ Array(FullRecordMapper.removeQualityAssertionMarker(fieldName))
-                    }
+                if(value != "true" && value != "false"){
+                  val arr = Json.toListWithGeneric(value,classOf[java.lang.Integer])
+                  for(i <- 0 to arr.size-1)
+                    assertions = assertions :+ AssertionCodes.getByCode(arr(0)).get.getName
+
                 }
             }
+
+                
         }
         assertions
     }
@@ -110,8 +111,7 @@ trait IndexDAO {
     /**
      * The header values for the CSV file.
      */
-    def getHeaderValues(): Array[String] = {
-        Array("id", "occurrence_id", "data_hub_uid", "data_hub", "data_provider_uid", "data_provider", "data_resource_uid",
+    val header = List("id", "occurrence_id", "data_hub_uid", "data_hub", "data_provider_uid", "data_provider", "data_resource_uid",
             "data_resource", "institution_uid", "institution_code", "institution_name",
             "collection_uid", "collection_code", "collection_name", "catalogue_number",
             "taxon_concept_lsid", "occurrence_date", "occurrence_year", "taxon_name", "common_name", "names_and_lsid",
@@ -121,9 +121,20 @@ trait IndexDAO {
             "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
             "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
             "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
-            "occurrence_remarks", "citation", "user_assertions", "collector", "mean_temperature_cars2009a_band1_env",
-            "mean_oxygen_cars2006_band1_env", "bioclim_bio34_env", "bioclim_bio12_env", "bioclim_bio11_env")
-    }
+            "occurrence_remarks", "citation", "user_assertions", "collector") ++ elFields ++ clFields
+//    def getHeaderValues(): List[String] = {
+//        List("id", "occurrence_id", "data_hub_uid", "data_hub", "data_provider_uid", "data_provider", "data_resource_uid",
+//            "data_resource", "institution_uid", "institution_code", "institution_name",
+//            "collection_uid", "collection_code", "collection_name", "catalogue_number",
+//            "taxon_concept_lsid", "occurrence_date", "occurrence_year", "taxon_name", "common_name", "names_and_lsid",
+//            "rank", "rank_id", "raw_taxon_name", "raw_common_name", "multimedia", "image_url",
+//            "species_group", "country_code", "lft", "rgt", "kingdom", "phylum", "class", "order",
+//            "family", "genus", "species", "state", "imcra", "ibra", "places", "latitude", "longitude",
+//            "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
+//            "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
+//            "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
+//            "occurrence_remarks", "citation", "user_assertions", "collector") ++ FullRecordMapper.environmentalDefn.keySet.toList ++ FullRecordMapper.contextualDefn.keySet.toList
+//    }
 
     /**
      * Generates an string array version of the occurrence model.
@@ -132,7 +143,7 @@ trait IndexDAO {
      * should result in a quicker load time.
      *
      */
-    def getOccIndexModel(guid: String, map: Map[String, String]): Array[String] = {
+    def getOccIndexModel(guid: String, map: Map[String, String]): List[String] = {
 
         try {
             //get the lat lon values so that we can determine all the point values
@@ -174,21 +185,26 @@ trait IndexDAO {
                 catch {
                     case e: Exception => eventDate = ""
                 }
-                var lat = Double.NaN
-                var lon = Double.NaN
+                var lat = java.lang.Double.NaN
+                var lon = java.lang.Double.NaN
 
                 if (slat != "" && slon != "") {
                     try {
                         lat = java.lang.Double.parseDouble(slat)
                         lon = java.lang.Double.parseDouble(slon)
-                        latlon = slat + "," + slon
+                        val test = -90D
+                        val test2 = -180D
+                        //ensure that the lat longs are in the required range before
+                        if( lat<=90  && lat >= test && lon <=180 && lon>=test2 ){
+                          latlon = slat + "," + slon
+                        }
                     } catch {
                         //If the latitude or longitude can't be parsed into a double we don't want to index the values
                         case e: Exception => slat = ""; slon = ""
                     }
                 }
 
-                return Array(guid,
+                return List(guid,
                     getValue("occurrenceID", map),
                     getValue("dataHubUid.p", map),
                     getValue("dataHub.p", map),
@@ -247,15 +263,16 @@ trait IndexDAO {
                     getValue("occurrenceRemarks", map),
                     "",
                     (getValue(FullRecordMapper.userQualityAssertionColumn, map) != "").toString,
-                    getValue("recordedBy", map),
-                    getValue("mean_temperature_cars2009a_band1.p", map),
-                    getValue("mean_oxygen_cars2006_band1.p", map),
-                    getValue("bioclim_bio34.p", map),
-                    getValue("bioclim_bio12.p", map),
-                    getValue("bioclim_bio11.p", map))
+                    getValue("recordedBy", map)
+//                    getValue("mean_temperature_cars2009a_band1.p", map),
+//                    getValue("mean_oxygen_cars2006_band1.p", map),
+//                    getValue("bioclim_bio34.p", map),
+//                    getValue("bioclim_bio12.p", map),
+//                    getValue("bioclim_bio11.p", map)
+                    ) ++ elFields.map(field => getValue(field+".p", map)) ++ clFields.map(field=> getValue(field+".p", map))
             }
             else {
-                return Array()
+                return List()
             }
 
         }
@@ -328,22 +345,36 @@ trait IndexDAO {
         Some(occ)
     }
 }
-
-class SolrOccurrenceDAOImpl extends IndexDAO {
-
+/**
+ * DAO for indexing to SOLR
+ */
+class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDAO{
     import org.apache.commons.lang.StringUtils.defaultString
+    
+    //set the solr home
+    System.setProperty("solr.solr.home", solrHome)
+
+    val cc = new CoreContainer.Initializer().initialize
+    val solrServer = new EmbeddedSolrServer(cc, "")
+
+
+
     @Inject
     var occurrenceDAO:OccurrenceDAO = _
 
     val logger = LoggerFactory.getLogger("SolrOccurrenceDAO")
-    val solrDocList = new java.util.ArrayList[SolrInputDocument]
+    val solrDocList = new java.util.ArrayList[SolrInputDocument](10000)
+   
+    val thread = new SolrIndexActor()
+    thread.start
+
     /**
      * returns whether or not the insert was successful
      */
     def index(items: java.util.List[OccurrenceIndex]): Boolean = {
         try {
-            SolrIndexDAO.solrServer.addBeans(items)
-            SolrIndexDAO.solrServer.commit
+            solrServer.addBeans(items)
+            solrServer.commit
             true
         }
         catch {
@@ -353,8 +384,8 @@ class SolrOccurrenceDAOImpl extends IndexDAO {
 
     def index(item: OccurrenceIndex): Boolean = {
         try {
-            SolrIndexDAO.solrServer.addBean(item)
-            SolrIndexDAO.solrServer.commit
+            solrServer.addBean(item)
+            solrServer.commit
         }
         catch {
             case e: Exception => logger.error(e.getMessage, e); false
@@ -363,17 +394,22 @@ class SolrOccurrenceDAOImpl extends IndexDAO {
     }
 
     def emptyIndex() {
-        SolrIndexDAO.solrServer.deleteByQuery("*:*")
+        solrServer.deleteByQuery("*:*")
     }
 
     def finaliseIndex() {
         if (!solrDocList.isEmpty) {
-            SolrIndexDAO.solrServer.add(solrDocList)
+        
+           //SolrIndexDAO.solrServer.add(solrDocList)
+           while(!thread.ready){ Thread.sleep(50) }
+           thread ! solrDocList
+           thread ! "exit"
 
         }
-        SolrIndexDAO.solrServer.commit
+        while(!thread.ready){ Thread.sleep(50) }
+        solrServer.commit
         printNumDocumentsInIndex
-        SolrIndexDAO.solrServer.optimize
+        solrServer.optimize
     }
 
     override def getOccIndexModel(records: Array[FullRecord]): Option[OccurrenceIndex] = {
@@ -392,8 +428,15 @@ class SolrOccurrenceDAOImpl extends IndexDAO {
      * A SOLR specific implementation of indexing from a map.
      */
     override def indexFromMap(guid: String, map: Map[String, String]) = {
-        val header = getHeaderValues()
+        //val header = getHeaderValues()
         val values = getOccIndexModel(guid, map)
+        if(values.length != header.length){
+          println("values don't matcher header: ")
+          println(header)
+          println(values)
+          //if(solrDocList.size >=10)
+            exit(1)
+        }
         if (values.length > 0) {
             val doc = new SolrInputDocument()
             for (i <- 0 to values.length - 1) {
@@ -407,23 +450,81 @@ class SolrOccurrenceDAOImpl extends IndexDAO {
                         doc.addField(header(i), values(i))
                 }
             }
+
+//      for(i <- 0 to 199){
+//        doc.addField(i +"_env", dummyEnvs(i))
+//      }
+
+      //dummyEnvs.foreach(env => doc.addField(env._1, env._2))
+            
+//            println("Adding guid: " + guid)
+           // SolrIndexDAO.solrServer.add(doc);
             solrDocList.add(doc)
-            if (solrDocList.size == 50000) {
-                try {
-                    SolrIndexDAO.solrServer.add(solrDocList)
-                    SolrIndexDAO.solrServer.commit
+//            if (solrDocList.size == 20000) {
+//                try {
+//                    SolrIndexDAO.solrServer.add(solrDocList)
+//                    SolrIndexDAO.solrServer.commit
+//                    //printNumDocumentsInIndex
+//                }
+//                catch {
+//                    case e: Exception => logger.error(e.getMessage, e)
+//                }
+//                solrDocList.clear
+//            }
+            if (solrDocList.size == 10000) {
+              while(!thread.ready){ Thread.sleep(50) }
+              
+              val tmpDocList = new java.util.ArrayList[SolrInputDocument](solrDocList);
+              
+              thread ! tmpDocList
+              solrDocList.clear
+            }
+      }
+    }
+
+    def printNumDocumentsInIndex() = {
+        val rq = solrServer.query(new SolrQuery("*:*"))
+        println(">>>>>>>>>>>>>Document count of index: " + rq.getResults().getNumFound())
+    }
+
+
+
+  /**
+   * The Actor which allows solr index inserts to be performed on a Thread.
+   * solrServer.add(docs) is not thread safe - we should only ever have one thread adding documents to the solr server
+   */
+class SolrIndexActor extends Actor{
+  var processed = 0
+  var received =0
+
+
+  def ready = processed==received
+  def act {
+    loop{
+      react{
+        case docs:java.util.ArrayList[SolrInputDocument] =>{
+          //send them off to the solr server using a thread...
+          println("Sending docs to SOLR "+ docs.size+"-" + received)
+          received += 1
+          try {
+                    solrServer.add(docs)
+                    solrServer.commit
                     //printNumDocumentsInIndex
                 }
                 catch {
                     case e: Exception => logger.error(e.getMessage, e)
                 }
-                solrDocList.clear
-            }
+          processed +=1
         }
-    }
+        case msg:String =>{
+            if(msg == "finalise"){
 
-    def printNumDocumentsInIndex() = {
-        val rq = SolrIndexDAO.solrServer.query(new SolrQuery("*:*"))
-        println(">>>>>>>>>>>>>Document count of index: " + rq.getResults().getNumFound())
+            }
+            if(msg == "exit")
+              exit()
+        }
+      }
     }
+  }
+}
 }

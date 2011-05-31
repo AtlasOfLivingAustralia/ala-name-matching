@@ -29,7 +29,7 @@ class ConfigModule extends AbstractModule {
 
         //bind concrete implementations
         bind(classOf[OccurrenceDAO]).to(classOf[OccurrenceDAOImpl]).in(Scopes.SINGLETON)
-        bind(classOf[IndexDAO]).to(classOf[SolrOccurrenceDAOImpl]).in(Scopes.SINGLETON)
+        bind(classOf[IndexDAO]).to(classOf[SolrIndexDAO]).in(Scopes.SINGLETON)
 
         val nameIndex = new CBIndexSearch(properties.getProperty("nameIndexLocation"))
         bind(classOf[CBIndexSearch]).toInstance(nameIndex)

@@ -20,15 +20,19 @@ object IndexRecords {
   def main(args: Array[String]): Unit = {
     
     //delete the content of the index
-    indexer.emptyIndex
-    processMap
+    if(args.length==0){
+      indexer.emptyIndex
+    }
+    val startUuid=if(args.length >0) args(0) else ""
+    println("Starting to index " + startUuid)
+    processMap(startUuid)
     //index any remaining items before exiting
 //    indexer.index(items)
     indexer.finaliseIndex
     exit(0)
   }
   
-  def processMap()={
+  def processMap(startUuid:String)={
     var counter = 0
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
@@ -47,7 +51,7 @@ object IndexRecords {
         }
         
         true
-    })
+    }, startUuid)
 
     finishTime = System.currentTimeMillis
     println("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
