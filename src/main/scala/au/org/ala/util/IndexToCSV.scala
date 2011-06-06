@@ -20,18 +20,18 @@ object IndexToCSV {
     val indexer = Config.getInstance(classOf[IndexDAO]).asInstanceOf[IndexDAO]
     val persistentManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
-    val filename = if(args.size==1) args(0) else "/data/biocache/occurrence/occurrences.csv"
+    val filename = if(args.size==1) args(0) else "/data/biocache/occurrence/testocc.csv"
     var counter = 0
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
     var items = List[Array[String]]()
     val csvWriter = new CSVWriter(new OutputStreamWriter(new java.io.FileOutputStream(filename)), ',', '"')
     //write the header
-    csvWriter.writeNext(indexer.getHeaderValues)
+    csvWriter.writeNext(indexer.header.toArray)
     persistentManager.pageOverAll("occ", (guid, map)=> {
         counter += 1
         val item =indexer.getOccIndexModel(guid, map)
-         csvWriter.writeNext(item)
+         csvWriter.writeNext(item.toArray)
          
         if (counter % 1000 == 0) {
           csvWriter.flush          
