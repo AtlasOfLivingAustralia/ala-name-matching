@@ -25,6 +25,7 @@ public class SpatialSearchRequestParams extends SearchRequestParams{
     protected Float radius =5f;
     protected Float lat = -35.27412f;
     protected Float lon = 149.11288f;
+    protected String wkt ="";
 
     /**
      * Custom toString method to produce a String to be used as the request parameters
@@ -38,6 +39,8 @@ public class SpatialSearchRequestParams extends SearchRequestParams{
         req.append("&lat=").append(lat);
         req.append("&lon=").append(lon);
         req.append("&radius=").append(radius);
+        if(wkt.length() >0)
+            req.append("&wkt=").append(wkt);
         return req.toString();
     }
 
@@ -64,4 +67,13 @@ public class SpatialSearchRequestParams extends SearchRequestParams{
     public void setRadius(Float radius) {
         this.radius = radius;
     }
+
+    public String getWkt() {
+        return wkt;
+    }
+
+    public void setWkt(String wkt) {
+        this.wkt = wkt;
+    }
+    
 }
