@@ -66,6 +66,14 @@ trait IndexDAO {
 
     }
 
+  def getValue(field: String, map: Map[String, String], checkparsed:Boolean):String ={
+     var value = getValue(field, map)
+     if(value == "" && checkparsed)
+       value = getValue(field + ".p", map)
+
+    value
+  }
+
     /**
      * Returns an array of all the assertions that are in the Map.
      * This duplicates some of the code that is in OccurrenceDAO because
@@ -117,7 +125,7 @@ trait IndexDAO {
             "taxon_concept_lsid", "occurrence_date", "occurrence_year", "taxon_name", "common_name", "names_and_lsid",
             "rank", "rank_id", "raw_taxon_name", "raw_common_name", "multimedia", "image_url",
             "species_group", "country_code", "lft", "rgt", "kingdom", "phylum", "class", "order",
-            "family", "genus", "species", "state", "imcra", "ibra", "places", "latitude", "longitude",
+            "family", "genus", "species","species_guid", "state", "imcra", "ibra", "places", "latitude", "longitude",
             "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
             "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
             "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
@@ -208,9 +216,9 @@ trait IndexDAO {
                     getValue("occurrenceID", map),
                     getValue("dataHubUid.p", map),
                     getValue("dataHub.p", map),
-                    getValue("dataProviderUid.p", map),
+                    getValue("dataProviderUid", map, true),
                     getValue("dataProviderName.p", map),
-                    getValue("dataResourceUid.p", map),
+                    getValue("dataResourceUid", map, true),
                     getValue("dataResourceName.p", map),
                     getValue("institutionUid.p", map),
                     getValue("institutionCode", map),
@@ -238,6 +246,7 @@ trait IndexDAO {
                     getValue("order.p", map), family,
                     getValue("genus.p", map),
                     getValue("species.p", map),
+                    getValue("speciesID.p",map),
                     getValue("stateProvince.p", map),
                     getValue("imcra.p", map),
                     getValue("ibra.p", map),

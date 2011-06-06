@@ -553,8 +553,8 @@
    <!-- field name="genus_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" / -->
    <field name="genus" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    
-   <!-- Not necessary for searches and not displayed in results -->
-   <!-- field name="species_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" /-->
+   
+   <field name="species_guid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="species" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    
    <!-- Not actually being used in the search -->
