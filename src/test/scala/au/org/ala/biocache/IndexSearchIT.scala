@@ -45,7 +45,7 @@ object IndexSearchIT {
         solrQuery.setStart(0);
         solrQuery.setQuery("Victoria");
 
-    val response = SolrIndexDAO.solrServer.query(solrQuery)
+    val response = Config.getInstance(classOf[IndexDAO]).asInstanceOf[SolrIndexDAO].solrServer.query(solrQuery)
     processSolrResponse(response)
     System.out.println("response: " + response.getResults.size)
     
