@@ -107,6 +107,7 @@ public class SearchDAOImpl implements SearchDAO {
         if (this.server == null & solrHome != null) {
             try {
                 System.setProperty("solr.solr.home", solrHome);
+                logger.info("Initialising SOLR HOME: "+ solrHome);
                 CoreContainer.Initializer initializer = new CoreContainer.Initializer();
                 CoreContainer coreContainer = initializer.initialize();
                 server = new EmbeddedSolrServer(coreContainer, "");
@@ -158,8 +159,8 @@ public class SearchDAOImpl implements SearchDAO {
         try {
             //String queryString = formatSearchQuery(query);
             formatSearchQuery(searchParams);
-            String queryString = buildSpatialQueryString(searchParams.getQ(), searchParams.getLat(), searchParams.getLon(), searchParams.getRadius());
-
+            String queryString = buildSpatialQueryString(searchParams);
+            //logger.debug("The spatial query " + queryString);
             SolrQuery solrQuery = initSolrQuery(searchParams); // general search settings
             solrQuery.setQuery(queryString);
 
@@ -788,9 +789,11 @@ public class SearchDAOImpl implements SearchDAO {
     /**
      * @see org.ala.biocache.dao.SearchDAO#findTaxonCountForUid(java.lang.String, java.lang.String)
      */
-    public TaxaRankCountDTO findTaxonCountForUid(String query, String rank, boolean includeSuppliedRank) throws Exception {
+    public TaxaRankCountDTO findTaxonCountForUid(String query, String rank, String returnRank, boolean includeSuppliedRank) throws Exception {
         TaxaRankCountDTO trDTO = null;
-        List<String> ranks = searchUtils.getNextRanks(rank, includeSuppliedRank);
+        List<String> ranks = returnRank== null?searchUtils.getNextRanks(rank, includeSuppliedRank) : new ArrayList<String>();
+        if(returnRank != null)
+            ranks.add(returnRank);
         if (ranks != null && ranks.size() > 0) {
             SolrQuery solrQuery = new SolrQuery();
             solrQuery.setQueryType("standard");
@@ -981,6 +984,11 @@ public class SearchDAOImpl implements SearchDAO {
      *
      * TODO change param type to SearchRequestParams
      *
+     * New plugin syntax
+     * {!spatial circles=52.347,4.453,10}
+     *
+     * TODO different types of spatial queries...
+     *
      * @param fullTextQuery
      * @param latitude
      * @param longitude
@@ -988,9 +996,28 @@ public class SearchDAOImpl implements SearchDAO {
      * @return
      */
     protected String buildSpatialQueryString(String fullTextQuery, Float latitude, Float longitude, Float radius) {
-        String queryString = "{!spatial lat=" + latitude.toString() + " long=" + longitude.toString()
-                + " radius=" + radius.toString() + " unit=km calc=arc threadCount=2}" + fullTextQuery; // calc=arc|plane
+        String queryString = "{!spatial circles=" + latitude.toString() + "," + longitude.toString()
+                + "," + radius.toString() + "}" +  fullTextQuery;
         return queryString;
+    }
+    
+    protected String buildSpatialQueryString(SpatialSearchRequestParams searchParams){
+        if(searchParams != null){
+            StringBuilder sb = new StringBuilder("{!spatial ");
+            if(StringUtils.isEmpty(searchParams.getWkt())){
+                sb.append("circles=").append(searchParams.getLat().toString()).append(",");
+                sb.append(searchParams.getLon().toString()).append(",");
+                sb.append(searchParams.getRadius().toString()).append("}");
+            }
+            else{
+                //format the wkt
+                sb.append("wkt=").append(searchParams.getWkt().replaceAll(" ", ":")).append("}");
+            }
+
+            sb.append(searchParams.getQ());
+            return sb.toString();
+        }
+        return null;
     }
 
     /**
