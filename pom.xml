@@ -196,16 +196,22 @@
       <scope>provided</scope>
     </dependency>
     <!-- SOLR -->
-    <dependency>
-      <artifactId>solr-core</artifactId>
-      <groupId>org.apache.solr</groupId>
-      <version>1.4.0</version>
-    </dependency>
-    <dependency>
-      <artifactId>solr-solrj</artifactId>
-      <groupId>org.apache.solr</groupId>
-      <version>1.4.0</version>
-    </dependency>
+        <dependency>
+            <artifactId>solr-core</artifactId>
+            <groupId>org.apache.solr</groupId>
+            <version>3.1.0</version>
+        </dependency>
+        <dependency>
+            <artifactId>solr-solrj</artifactId>
+            <groupId>org.apache.solr</groupId>
+            <version>3.1.0</version>
+        </dependency>
+        <!-- Spatial-SORL plugin patched by Adam Collins (ALA Spatial Team) to have wkt support-->
+        <dependency>
+            <groupId>nl.jteam</groupId>
+            <artifactId>spatial-solr</artifactId>
+            <version>2.0-RC5_ssplex_wkt</version>
+        </dependency>
     <!-- DOM4J -->
     <dependency>
       <groupId>dom4j</groupId>
@@ -240,12 +246,7 @@
       <artifactId>twitter4j</artifactId>
       <version>2.1.7-SNAPSHOT</version>
     </dependency>
-    <!-- SPATIAL-SOLR PLUGIN FOR SOLR 1.4 -->
-    <dependency>
-      <groupId>nl.jteam</groupId>
-      <artifactId>spatial-solr</artifactId>
-      <version>1.0-RC4</version>
-    </dependency>
+    
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-jdbc</artifactId>
@@ -386,4 +387,11 @@
       </plugin>
     </plugins>
   </build>
+    <distributionManagement>
+    <downloadUrl>https://maven.ala.org.au/repository</downloadUrl>
+    <repository>
+      <id>ala-repository</id>
+      <url>${ala.repository.url}</url>
+    </repository>
+  </distributionManagement>
 </project>
