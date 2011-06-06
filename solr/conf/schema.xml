@@ -559,10 +559,10 @@
    
    <!-- Not actually being used in the search -->
    <!-- field name="geo_regions" type="text_ws" indexed="true" stored="true" multiValued="true" omitNorms="false" / -->
-   <field name="state" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false" />
+   <field name="state" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="imcra" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="ibra" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="places" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false" />
+   <field name="places" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="latitude" type="double" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="longitude" type="double" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <!-- Not displayed in search results -->
