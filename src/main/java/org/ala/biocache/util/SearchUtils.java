@@ -179,8 +179,9 @@ public class SearchUtils {
             displayQuery.append(" - within ").append(searchParams.getRadius()).append(" km of point (").append(searchParams.getLat()).append(", ").append(searchParams.getLon()).append(")");
             searchParams.setDisplayString(displayQuery.toString());
             query = formatSearchQuery(query);
-             query  = "{!spatial lat=" + searchParams.getLat().toString() + " long=" + searchParams.getLon().toString() +
-                " radius=" + searchParams.getRadius().toString() + " unit=km calc=arc threadCount=2}" + query; // calc=arc|plane
+            
+            query  = "{!spatial circles=" + searchParams.getLat().toString() + "," + searchParams.getLon().toString() +
+                "," + searchParams.getRadius().toString() + "}" + query; 
              searchParams.setQ(query);
             updateCommon(searchParams);
             return true;

@@ -105,20 +105,21 @@ public class BreakdownController {
 
 
 
-        @RequestMapping(value = {"/breakdown/collections/{uuid}/rank/{rank}/name/{name}", "/breakdown/institutions/{uuid}/rank/{rank}/name/{name}",
-                                 "/breakdown/data-resources/{uuid}/rank/{rank}/name/{name}", "/breakdown/data-providers/{uuid}/rank/{rank}/name/{name}",
-                                 "/breakdown/data-hubs/{uuid}/rank/{rank}/name/{name}"}, method = RequestMethod.GET)
+        @RequestMapping(value = {"/breakdown/collections/{uuid}/rank/{rank}/name/{name}*", "/breakdown/institutions/{uuid}/rank/{rank}/name/{name}*",
+                                 "/breakdown/data-resources/{uuid}/rank/{rank}/name/{name}*", "/breakdown/data-providers/{uuid}/rank/{rank}/name/{name}*",
+                                 "/breakdown/data-hubs/{uuid}/rank/{rank}/name/{name}*"}, method = RequestMethod.GET)
         public @ResponseBody TaxaRankCountDTO collectionRankNameBreakdown(
                         @PathVariable("uuid") String uuid,
                         @PathVariable("rank") String rank,
                         @PathVariable("name") String name,
+                        @RequestParam(value="level", required=false) String breakdownLevel,
                         Model model) throws Exception {
 
              String query = searchUtils.getUIDSearchString(uuid.split(","));
              query +=" AND " + rank + ":" + name;
 
            return searchDAO.findTaxonCountForUid(query,
-				rank, false);
+				rank,breakdownLevel, false);
         }
 
         @RequestMapping(value = {"/breakdown/collections/rank/{rank}/name/{name}", "/breakdown/institutions/rank/{rank}/name/{name}",
@@ -132,7 +133,7 @@ public class BreakdownController {
              String query =  rank + ":" + name;
 
            return searchDAO.findTaxonCountForUid(query,
-				rank, false);
+				rank,null, false);
         }
 
         @RequestMapping(value = {"/breakdown/collections/{uuid}/rank/{rank}", "/breakdown/institutions/{uuid}/rank/{rank}",
@@ -147,7 +148,7 @@ public class BreakdownController {
 
 
            return searchDAO.findTaxonCountForUid(query,
-				rank, true);
+				rank,null, true);
         }
 
         @RequestMapping(value = {"/breakdown/collections/rank/{rank}", "/breakdown/institutions/rank/{rank}",
@@ -160,7 +161,7 @@ public class BreakdownController {
              String query = "*:*";
 
            return searchDAO.findTaxonCountForUid(query,
-				rank, false);
+				rank,null, false);
         }
 
 

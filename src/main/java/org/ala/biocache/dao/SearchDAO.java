@@ -210,6 +210,6 @@ public interface SearchDAO {
      * @return
      * @throws Exception
      */
-    TaxaRankCountDTO findTaxonCountForUid(String query, String rank, boolean includeSuppliedRank) throws Exception;
+    TaxaRankCountDTO findTaxonCountForUid(String query, String rank,String returnRank, boolean includeSuppliedRank) throws Exception;
 }
 
