@@ -276,7 +276,7 @@ object HabitatMap extends VocabMaps {
  * Case class that stores the information required to map a species to its
  * associated groups
  */
-  case class SpeciesGroup(name:String, rank:String, values:Array[String])
+  case class SpeciesGroup(name:String, rank:String, values:Array[String], parent:String)
 
   /**
    * The species groups to test classifications against
@@ -284,21 +284,21 @@ object HabitatMap extends VocabMaps {
   object SpeciesGroups{
     import au.org.ala.util.ReflectBean._
     val groups = List(
-     SpeciesGroup("Animals", "kingdom", Array("Animalia")),
-     SpeciesGroup("Plants", "kingdom", Array("Plantae")),
-     SpeciesGroup("Fungi", "kingdom", Array("Fungi")),
-     SpeciesGroup("Chromista","kingdom", Array("Chromista")),
-     SpeciesGroup("Protozoa", "kingdom", Array("Protozoa")),
-     SpeciesGroup("Bacteria", "kingdom", Array("Bacteria")),
-     SpeciesGroup("Mammals", "classs", Array("Mammalia")),
-     SpeciesGroup("Birds", "classs", Array("Aves")),
-     SpeciesGroup("Reptiles", "classs", Array("Reptilia")),
-     SpeciesGroup("Amphibians", "classs", Array("Amphibia")),
-     SpeciesGroup("Fish", "classs", Array("Agnatha", "Chondrichthyes", "Osteichthyes", "Actinopterygii", "Sarcopterygii")),
-     SpeciesGroup("Insects",  "classs", Array("Insecta")),
-     SpeciesGroup("Crustaceans", "classs" , Array("Branchiopoda", "Remipedia", "Maxillopoda", "Ostracoda", "Malacostraca")),
-     SpeciesGroup("Molluscs", "phylum", Array("Mollusca")),
-     SpeciesGroup("Arthropods", "phylum", Array("Arthropoda"))
+     SpeciesGroup("Animals", "kingdom", Array("Animalia"), null),
+     SpeciesGroup("Mammals", "classs", Array("Mammalia"), "Animals"),
+     SpeciesGroup("Birds", "classs", Array("Aves"), "Animals"),
+     SpeciesGroup("Reptiles", "classs", Array("Reptilia"), "Animals"),
+     SpeciesGroup("Amphibians", "classs", Array("Amphibia"),"Animals"),
+     SpeciesGroup("Fish", "classs", Array("Agnatha", "Chondrichthyes", "Osteichthyes", "Actinopterygii", "Sarcopterygii"), "Animals"),
+     SpeciesGroup("Molluscs", "phylum", Array("Mollusca"), "Animals"),
+     SpeciesGroup("Arthropods", "phylum", Array("Arthropoda"), "Animals"),
+     SpeciesGroup("Crustaceans", "classs" , Array("Branchiopoda", "Remipedia", "Maxillopoda", "Ostracoda", "Malacostraca"), "Arthropods"),
+     SpeciesGroup("Insects",  "classs", Array("Insecta"), "Arthropods"),
+     SpeciesGroup("Plants", "kingdom", Array("Plantae"), null),
+     SpeciesGroup("Fungi", "kingdom", Array("Fungi"), null),
+     SpeciesGroup("Chromista","kingdom", Array("Chromista"), null),
+     SpeciesGroup("Protozoa", "kingdom", Array("Protozoa"), null),
+     SpeciesGroup("Bacteria", "kingdom", Array("Bacteria"), null)
     )
     /**
      * Returns all the species groups to which supplied classificatoin belongs
