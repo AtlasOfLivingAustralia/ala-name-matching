@@ -137,7 +137,7 @@ public class SensitiveTaxonStore {
         NameSearchResult match = null;
         try {
             name = stripTaxonTokens(st.getTaxonName());
-            LinnaeanRankClassification cl = new LinnaeanRankClassification(null, null, null, null, st.getFamily().equals("") ? null : st.getFamily() , st.getGenus(), name);
+            LinnaeanRankClassification cl = new LinnaeanRankClassification(null, null, null, null, st.getFamily().equals("") ? null : st.getFamily() , null, name);
             match = cbIndexSearcher.searchForRecord(name, cl, StringUtils.contains(name, ' ') ? null : RankType.GENUS);
             if (match != null) {
                 if (match.isSynonym()) {
