@@ -5,6 +5,7 @@ package au.org.ala.sds.dao;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -89,6 +90,10 @@ public class SensitiveSpeciesXmlDao implements SensitiveSpeciesDao {
             }
             species.add(ss);
         }
+
+        // Sort list since MySQL sort order is not the same as Java's
+        Collections.sort(species);
+        
         return species;
     }
 
