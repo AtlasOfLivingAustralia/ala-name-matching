@@ -17,6 +17,7 @@ package au.org.ala.sds.dao;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -114,7 +115,10 @@ public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements Sensitiv
                         dto.getFromDate(),
                         dto.getToDate()));
             }
-       }
+        }
+
+        // Sort list since MySQL sort order is not the same as Java's
+        Collections.sort(speciesList);
 
         return speciesList;
     }
