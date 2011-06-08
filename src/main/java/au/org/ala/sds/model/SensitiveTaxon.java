@@ -18,8 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.CompareToBuilder;
-import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.log4j.Logger;
 
@@ -33,8 +31,7 @@ public class SensitiveTaxon implements Comparable<SensitiveTaxon> {
 
     public enum Rank { SPECIES, GENUS, FAMILY };
 
-    private String species;
-    private String genus;
+    private final String name;
     private String family;
     private String commonName;
     private final Rank rank;
@@ -44,27 +41,13 @@ public class SensitiveTaxon implements Comparable<SensitiveTaxon> {
 
     public SensitiveTaxon(String taxon, Rank rank) {
         super();
-        switch (rank) {
-        case SPECIES:
-            this.species = taxon;
-            break;
-        case GENUS:
-            this.genus = taxon;
-            break;
-        case FAMILY:
-            this.family = taxon;
-            break;
-        }
+        this.name = taxon;
         this.rank = rank;
         this.instances = new ArrayList<SensitivityInstance>();
     }
 
-    public String getSpecies() {
-        return this.species;
-    }
-
-    public String getGenus() {
-        return this.genus;
+    public String getName() {
+        return this.name;
     }
 
     public String getFamily() {
@@ -88,18 +71,11 @@ public class SensitiveTaxon implements Comparable<SensitiveTaxon> {
     }
 
     public String getTaxonName() {
-        if (StringUtils.isNotBlank(this.acceptedName)) {
-            return this.acceptedName;
+        if (StringUtils.isNotBlank(acceptedName)) {
+            return acceptedName;
+        } else {
+            return name;
         }
-        switch (this.rank) {
-        case SPECIES:
-            return this.species;
-        case GENUS:
-            return this.genus;
-        case FAMILY:
-            return this.family;
-        }
-        return null;
     }
 
     public String getAcceptedName() {
@@ -183,8 +159,7 @@ public class SensitiveTaxon implements Comparable<SensitiveTaxon> {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37).
-            append(this.species).
-            append(this.genus).
+            append(this.name).
             append(this.family).
             append(this.rank).
             append(this.commonName).
@@ -197,20 +172,16 @@ public class SensitiveTaxon implements Comparable<SensitiveTaxon> {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         SensitiveTaxon other = (SensitiveTaxon) obj;
-        return new EqualsBuilder()
-            .append(this.species, other.species)
-            .append(this.genus, other.genus)
-            .append(this.rank, other.rank)
-            .isEquals();
+        return this.name.equals(other.name);
     }
 
     @Override
     public int compareTo(SensitiveTaxon st) {
-        return new CompareToBuilder()
-            .append(this.species, st.species)
-            .append(this.genus, st.genus)
-            .append(this.rank, st.rank)
-            .toComparison();
+        return this.name.compareTo(st.name);
     }
 
+    @Override
+    public String toString() {
+        return getTaxonName() + " (" + this.rank + ")";
+    }
 }
