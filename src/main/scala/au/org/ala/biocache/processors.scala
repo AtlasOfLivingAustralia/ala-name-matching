@@ -54,6 +54,8 @@ object AttributionProcessor extends Processor {
         val attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
         if (!attribution.isEmpty) {
           processed.attribution = attribution.get
+          //need to reinitialise the object array
+          processed.reinitObjectArray
           Array()
         } else {
           Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, "Unrecognised collection code"))
@@ -533,6 +535,7 @@ object ClassificationProcessor extends Processor {
           Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, "Homonym issue resolving the classification"))
       }
       case se: SearchResultException => logger.debug(se.getMessage,se); Array()
+      case e: Exception => logger.error("Exception during classification match.",e);Array()
     }
   }
   def getName() = FullRecordMapper.taxonomicalQa
