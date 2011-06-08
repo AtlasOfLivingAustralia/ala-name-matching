@@ -102,6 +102,31 @@ object FullRecordMapper {
         }
     }
 
+  /**
+   * Sets the properties on the supplied object based on 2 maps
+   * <ol>
+   * <li>Map of source names to values</li>
+   * <li>Map of source names to taget values</li>
+   * </ol>
+   *
+   */
+  def mapmapPropertiesToObject(anObject:AnyRef, valueMap:scala.collection.Map[String,Object], targetMap:scala.collection.Map[String,String]){
+      val defn = getDefn(anObject)
+      for(sourceName <- valueMap.keySet){
+        //get the target name
+        val targetName = targetMap.getOrElse(sourceName,"")
+        if(targetName.length>0){
+          //get the setter method
+          val methods = defn.get(targetName)
+          if(!methods.isEmpty){
+            val setter = methods.get._2
+            anObject.setter(setter, valueMap.get(sourceName).get)
+          }
+        }
+
+      }
+  }
+
     /**
      * Retrieve a object definition (simple ORM mapping)
      */
@@ -187,7 +212,8 @@ object FullRecordMapper {
 
             //ascertain which term should be associated with which object
             val fieldValue = fields.get(fieldName)
-            if (!fieldValue.isEmpty) {
+            //only set the value if it is no null or empty string
+            if (!fieldValue.isEmpty && StringUtils.isNotEmpty(fieldValue.get)) {
                 if (isQualityAssertion(fieldName)) {
                     setProperty(fullRecord, fieldName, fieldValue.get)
                 } else if (taxonomicDecisionColumn.equals(fieldName)) {

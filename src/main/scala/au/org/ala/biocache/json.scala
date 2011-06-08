@@ -66,4 +66,15 @@ object Json {
         var listOfObject = mapper.readValue[ArrayList[_]](jsonString, valueType)
         listOfObject.asScala.toList.asInstanceOf[List[A]]
     }
+
+   def toMap(jsonString:String): scala.collection.Map[String,Object]={
+     try{
+     val mapper = new ObjectMapper
+     mapper.readValue(jsonString,classOf[java.util.Map[String,Object]]).asScala[String,Object];
+     }
+     catch{
+       case e:Exception => Map()
+     }
+
+   }
 }

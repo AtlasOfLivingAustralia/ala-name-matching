@@ -9,6 +9,8 @@ import au.org.ala.util.ReflectBean
 import au.org.ala.checklist.lucene.model.NameSearchResult
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import au.org.ala.checklist.lucene.{CBIndexSearch, HomonymException, SearchResultException}
+import scala.io.Source
+import org.slf4j.LoggerFactory
 
 
 /**
@@ -182,14 +184,19 @@ object TaxonProfileDAO {
 object AttributionDAO {
 
   import ReflectBean._
+  
+  protected var collectoryURL ="http://collections.ala.org.au"
   private val columnFamily = "attr"
   //can't use a scala hashap because missing keys return None not null...
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)//new HashMap[String, Option[Attribution]]
   private val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
+  //A mapping of the ws json properties to attribution properties
+  private val wsPropertyMap = Map("name"->"collectionName", "uid"->"collectionUid", "taxonomyCoverageHints"->"taxonomicHints", "institutionUid"->"institutionUid", "institution"->"institutionName")
 //  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[Attribution]]()
 //      .maximumWeightedCapacity(1000)
 //      .build();
   private val lock : AnyRef = new Object()
+  val logger = LoggerFactory.getLogger("AttributionDAO")
 
   /**
    * Persist the attribution information.
@@ -215,25 +222,43 @@ object AttributionDAO {
 
     if(institutionCode!=null && collectionCode!=null){
       val uuid = institutionCode.toUpperCase+"|"+collectionCode.toUpperCase
-      
+
       val cachedObject = lru.get(uuid)      
       if(cachedObject!=null){
         cachedObject.asInstanceOf[Option[Attribution]]
       } else {
         //lookup the collectory against the WS
-          val map = persistenceManager.get(uuid,"attr")
-          val result = {
-              if(!map.isEmpty){
-                val attribution = new Attribution
-                FullRecordMapper.mapPropertiesToObject(attribution,map.get)
-                Some(attribution)
-              } else {
-                None
-              }
+        logger.info("Looking up collectory web service for " + uuid)
+          val wscontent = WebServiceLoader.getWSStringContent(collectoryURL+"/lookup/inst/"+institutionCode+"/coll/"+collectionCode+".json")
+          val wsmap = Json.toMap(wscontent)
+          if(!wsmap.isEmpty){
+              //attempt to map the attribution proerties from the JSON objects
+              val attribution = new Attribution
+              //update the properties
+              FullRecordMapper.mapmapPropertiesToObject(attribution, wsmap, wsPropertyMap)
+              val result = Some(attribution)
+              //add it to the caches
+              lock.synchronized { lru.put(uuid,result) }
+              persistenceManager.put(uuid, "attr",attribution.getMap)
+              result
           }
-          lock.synchronized { lru.put(uuid,result) }
-          //lru.put(uuid,result)
-          result
+          else{
+              // grab the value from the cache if it exists
+              val map = persistenceManager.get(uuid,"attr")
+              val result = {
+                  if(!map.isEmpty){
+                    val attribution = new Attribution
+                    FullRecordMapper.mapPropertiesToObject(attribution,map.get)
+                    Some(attribution)
+                  } else {
+                    None
+                  }
+              }
+              lock.synchronized { lru.put(uuid,result) }
+          
+              //lru.put(uuid,result)
+              result
+          }
       }
     } else {
         None
@@ -324,3 +349,16 @@ object LocationDAO {
     }
   }
 }
+/**
+ * Provides the tools needed to work with webservices
+ */
+  object WebServiceLoader{
+    def getWSStringContent( url: String ) = {
+       try {
+        Source.fromURL( url ).mkString
+      } catch {
+        case e: Exception => ""
+      }
+
+    }
+  }

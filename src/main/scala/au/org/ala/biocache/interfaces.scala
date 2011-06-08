@@ -147,6 +147,10 @@ object Store {
       val code = codeAsString.toInt
       AssertionCodes.all.find(errorCode => errorCode.code == code).getOrElse(null)
   }
+  /**
+   * Retrieve the list of species groups
+   */
+  def retrieveSpeciesGroups : java.util.List[SpeciesGroup]=SpeciesGroups.groups.asJava[SpeciesGroup]
 }
 
 /**

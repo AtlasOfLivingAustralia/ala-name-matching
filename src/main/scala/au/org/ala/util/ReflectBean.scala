@@ -52,6 +52,7 @@ class ReflectBean(ref: AnyRef)  {
    * Conversion to the correct data type will be performed.
    */
   def setter(method: Method, value:Any): Unit ={
+//    try{
     if(method != null){
       val typ = method.getParameterTypes()(0)
       var v2 = value.asInstanceOf[AnyRef]
@@ -63,7 +64,8 @@ class ReflectBean(ref: AnyRef)  {
         case "[Ljava.lang.String;"  => {
             //NC This feels like a hack.
             v2.getClass().getName match{
-              case "java.lang.String" =>v2 = Json.toArray(v2.asInstanceOf[String], classOf[String].asInstanceOf[java.lang.Class[AnyRef] ])
+              case "java.lang.String" =>v2 = try{Json.toArray(v2.asInstanceOf[String], classOf[String].asInstanceOf[java.lang.Class[AnyRef] ])}
+              case "java.util.ArrayList" => v2 = v2.asInstanceOf[java.util.ArrayList[String]].toArray.map(( o: Object ) => o.toString )
               case _=>
             }
           }
@@ -73,6 +75,10 @@ class ReflectBean(ref: AnyRef)  {
       method.invoke(ref, v2 )
 
     }
+//    }
+//    catch{
+//      case e:Exception=> println("Unable to set value " + value);e.printStackTrace();
+//    }
   }
 
   def setter(name: String, value:Any): Unit = {
@@ -91,12 +97,18 @@ class ReflectBean(ref: AnyRef)  {
             //NC This feels like a hack. 
             v2.getClass().getName match{
               case "java.lang.String" =>v2 = Json.toArray(v2.asInstanceOf[String], classOf[String].asInstanceOf[java.lang.Class[AnyRef] ])
+              case "java.util.ArrayList" => v2 = v2.asInstanceOf[java.util.ArrayList[String]].toArray.map(( o: Object ) => o.toString )
               case _=>
             }
           }
         case _ => 
       }
+      try{
       method.get.invoke(ref, v2 )
+      }
+      catch{
+        case e:Exception => println("Unable to setter " + name + ":"+value+":" + v2.getClass.toString)
+      }
     }
   }
   /**
