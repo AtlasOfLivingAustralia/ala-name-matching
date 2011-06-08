@@ -6,6 +6,7 @@ package au.org.ala.sds.util;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -44,6 +45,7 @@ public class SensitiveSpeciesXmlBuilder {
             e.printStackTrace();
         }
         List<SensitiveTaxon> species = dao.getAll();
+        Collections.sort(species);
 
         String currentName = "";
         Element sensitiveSpecies = null;
@@ -66,7 +68,7 @@ public class SensitiveSpeciesXmlBuilder {
                 } else if (si instanceof PlantPestInstance) {
                     instance = new Element("plantPestInstance");
                 }
-                instance.setAttribute("category", si.getCategory().getValue());
+                instance.setAttribute("category", si.getCategory().getId());
                 instance.setAttribute("authority", si.getAuthority());
                 instance.setAttribute("zone", si.getZone().getId());
                 if (si instanceof ConservationInstance) {
