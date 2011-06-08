@@ -10,6 +10,7 @@ import au.org.ala.checklist.lucene.model.NameSearchResult
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import au.org.ala.checklist.lucene.{CBIndexSearch, HomonymException, SearchResultException}
 
+
 /**
  * A DAO for accessing classification information in the cache. If the
  * value does not exist in the cache the name matching API is called.
@@ -37,18 +38,24 @@ object ClassificationDAO {
    * Uses a LRU cache
    */
   def getByHashLRU(cl:Classification) : Option[NameSearchResult] = {
+    //use the vernacular name to lookup if there if there is no scientifica name, infra/specific epithet or genus
 
-    val hash = {
-        Array(cl.kingdom,cl.phylum,cl.phylum,cl.classs,cl.order,cl.family,cl.genus,cl.species,cl.specificEpithet,
+    val hash = { if(cl.vernacularName==null || cl.scientificName != null || cl.specificEpithet != null || cl.infraspecificEpithet != null || cl.genus!=null)
+        Array(cl.kingdom,cl.phylum,cl.classs,cl.order,cl.family,cl.genus,cl.species,cl.specificEpithet,
             cl.subspecies,cl.infraspecificEpithet,cl.scientificName).reduceLeft(_+"|"+_)
+              else cl.vernacularName
     }
+    
     val cachedObject = lock.synchronized { lru.get(hash) }
 
     if(cachedObject!=null){
        cachedObject.asInstanceOf[Option[NameSearchResult]]
     } else {
         //use the lucene indexes
-        val lrc = new LinnaeanRankClassification(
+
+         
+        //search for a scientific name if values for the classification were provided otherwise search for a common name
+        val nsr = if(hash.contains("|")) nameIndex.searchForRecord(new LinnaeanRankClassification(
           cl.kingdom,
           cl.phylum,
           cl.classs,
@@ -59,9 +66,7 @@ object ClassificationDAO {
           cl.specificEpithet,
           cl.subspecies,
           cl.infraspecificEpithet,
-          cl.scientificName)
-
-        val nsr = nameIndex.searchForRecord(lrc, true)
+          cl.scientificName), true) else nameIndex.searchForCommonName(cl.getVernacularName)
 
         if(nsr!=null){
             val result = Some(nsr)
@@ -215,6 +220,7 @@ object AttributionDAO {
       if(cachedObject!=null){
         cachedObject.asInstanceOf[Option[Attribution]]
       } else {
+        //lookup the collectory against the WS
           val map = persistenceManager.get(uuid,"attr")
           val result = {
               if(!map.isEmpty){
