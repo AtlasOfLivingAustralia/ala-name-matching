@@ -43,7 +43,7 @@ object AttributionLoader {
         attribution.dataProviderUid =parts(6)
         attribution.dataProviderName = parts(7)
         //TODO a collection may belong to mulitple data hubs need to make this multi valued...
-        attribution.dataHubUid = parts(8)
+        attribution.dataHubUid = Array[String](parts(8))
         attribution.dataHubName = parts(9)
         if(parts.length>10){
           attribution.taxonomicHints = parts(10).split(";")

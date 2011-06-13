@@ -638,7 +638,7 @@ class OccurrenceIndex extends Cloneable with Mappable {
   @BeanProperty @Field("id") var uuid:String =_
   @BeanProperty @Field("occurrence_id") var occurrenceID:String =_
   //processed values
-  @BeanProperty @Field("data_hub_uid") var dataHubUid:String =_
+  @BeanProperty @Field("data_hub_uid") var dataHubUid:Array[String] =_
   @BeanProperty @Field("data_hub") var dataHub:String =_
   @BeanProperty @Field("institution_uid") var institutionUid:String =_
   @BeanProperty @Field("institution_code") var raw_institutionCode:String =_
@@ -797,7 +797,7 @@ class Attribution  (
   @BeanProperty var dataResourceName:String,
   @BeanProperty var collectionUid:String,
   @BeanProperty var institutionUid:String,
-  @BeanProperty var dataHubUid:String,
+  @BeanProperty var dataHubUid:Array[String],
   @BeanProperty var dataHubName:String,
   @BeanProperty var institutionName:String,
   @BeanProperty var collectionName:String,

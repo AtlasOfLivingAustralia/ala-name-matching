@@ -231,15 +231,29 @@ object AttributionDAO {
         logger.info("Looking up collectory web service for " + uuid)
           val wscontent = WebServiceLoader.getWSStringContent(collectoryURL+"/lookup/inst/"+institutionCode+"/coll/"+collectionCode+".json")
           val wsmap = Json.toMap(wscontent)
+
           if(!wsmap.isEmpty){
               //attempt to map the attribution proerties from the JSON objects
               val attribution = new Attribution
+              //handle the non standard properties
+              val hints =wsmap.getOrElse("taxonomyCoverageHints",null)
+              if(hints != null){
+                val ahint = hints.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> o.toString().replace("=",":").replace("{","").replace("}",""));
+                attribution.setTaxonomicHints(ahint);
+              }
+              //the hubMembership
+              val hub = wsmap.getOrElse("hubMembership", null)
+              if(hub !=  null){
+                val ahub = hub.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> (o.asInstanceOf[java.util.LinkedHashMap[Object,Object]]).get("uid").toString)
+                attribution.setDataHubUid(ahub)
+                //println("Hub membership: " +ahub)
+              }
               //update the properties
-              FullRecordMapper.mapmapPropertiesToObject(attribution, wsmap, wsPropertyMap)
+              FullRecordMapper.mapmapPropertiesToObject(attribution, wsmap-"taxonomyCoverageHints", wsPropertyMap)
               val result = Some(attribution)
               //add it to the caches
               lock.synchronized { lru.put(uuid,result) }
-              persistenceManager.put(uuid, "attr",attribution.getMap)
+              add(institutionCode, collectionCode, attribution)
               result
           }
           else{

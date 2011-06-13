@@ -180,6 +180,13 @@ trait IndexDAO {
                     else
                         Array[String]("")
                 }
+                val sdatahubs = getValue("dataHubUid.p",map)
+                val dataHubUids = {
+                    if (sdatahubs.length > 0)
+                        Json.toArray(sdatahubs, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]]
+                    else
+                        Array[String]("")
+                }
                 var eventDate = getValue("eventDate.p", map)
                 var occurrenceYear = getValue("year.p", map)
                 if (occurrenceYear.length == 4)
@@ -214,7 +221,7 @@ trait IndexDAO {
 
                 return List(guid,
                     getValue("occurrenceID", map),
-                    getValue("dataHubUid.p", map),
+                    if(dataHubUids != null && dataHubUids.size>0)dataHubUids.reduceLeft(_+"|"+_) else"",
                     getValue("dataHub.p", map),
                     getValue("dataProviderUid", map, true),
                     getValue("dataProviderName.p", map),
@@ -450,7 +457,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
             val doc = new SolrInputDocument()
             for (i <- 0 to values.length - 1) {
                 if (values(i) != "") {
-                    if (header(i) == "species_group" || header(i) == "assertions") {
+                    if (header(i) == "species_group" || header(i) == "assertions" || header(i) =="data_hub_uid") {
                         //multiple valus in this field
                         for (value <- values(i).split('|'))
                             doc.addField(header(i), value)

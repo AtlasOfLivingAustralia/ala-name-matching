@@ -65,7 +65,7 @@ class ReflectBean(ref: AnyRef)  {
             //NC This feels like a hack.
             v2.getClass().getName match{
               case "java.lang.String" =>v2 = try{Json.toArray(v2.asInstanceOf[String], classOf[String].asInstanceOf[java.lang.Class[AnyRef] ])}
-              case "java.util.ArrayList" => v2 = v2.asInstanceOf[java.util.ArrayList[String]].toArray.map(( o: Object ) => o.toString )
+              //case "java.util.ArrayList" => v2 = v2.asInstanceOf[java.util.ArrayList[String]].toArray.map(( o: Object ) => o.toString.replaceAll("=",":") )
               case _=>
             }
           }
@@ -97,7 +97,7 @@ class ReflectBean(ref: AnyRef)  {
             //NC This feels like a hack. 
             v2.getClass().getName match{
               case "java.lang.String" =>v2 = Json.toArray(v2.asInstanceOf[String], classOf[String].asInstanceOf[java.lang.Class[AnyRef] ])
-              case "java.util.ArrayList" => v2 = v2.asInstanceOf[java.util.ArrayList[String]].toArray.map(( o: Object ) => o.toString )
+             // case "java.util.ArrayList" => v2 = v2.asInstanceOf[java.util.ArrayList[String]].toArray.map(( o: Object ) => o.toString.replaceAll("=",":") )
               case _=>
             }
           }
