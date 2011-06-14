@@ -97,10 +97,10 @@ trait PersistenceManager {
  *
  */
 class CassandraPersistenceManager @Inject() (
-    @Named("cassandraHosts") host:String = "localhost",
-    @Named("cassandraPort") port:Int = 9160,
-    @Named("cassandraPoolName") poolName:String = "biocache-store-pool",
-    @Named("cassandraKeyspace") keyspace:String = "occ") extends PersistenceManager {
+    @Named("cassandraHosts") val host:String = "localhost",
+    @Named("cassandraPort") val port:Int = 9160,
+    @Named("cassandraPoolName") val poolName:String = "biocache-store-pool",
+    @Named("cassandraKeyspace") val keyspace:String = "occ") extends PersistenceManager {
 
     protected val logger = LoggerFactory.getLogger("CassandraPersistenceManager")
 
@@ -109,7 +109,8 @@ class CassandraPersistenceManager @Inject() (
     logger.info("Initialising cassandra connection pool with pool name: " + poolName)
     logger.info("Initialising cassandra connection pool with hosts: " + host)
     logger.info("Initialising cassandra connection pool with port: " + port)
-    Pelops.addPool(poolName, new Cluster(host,port), keyspace)
+    val cluster = new Cluster(host,port)
+    Pelops.addPool(poolName, cluster, keyspace)
 
     /**
      * Retrieve an array of objects, parsing the JSON stored.
@@ -300,11 +301,19 @@ class CassandraPersistenceManager @Inject() (
      * Pages over all the records with the selected columns.
      * @param columnName The names of the columns that need to be provided for processing by the proc
      */
-    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int, columnName:String*)={
-
+    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int, columnName:String*){
       val slicePredicate = Selector.newColumnsPredicate(columnName:_*)
       pageOver(entityName, proc, pageSize, slicePredicate)
     }
+//
+//    /**
+//     * Pages over all the records with the selected columns.
+//     * @param columnName The names of the columns that need to be provided for processing by the proc
+//     */
+//    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int, colNames:Array[String]){
+//      val slicePredicate = Selector.newColumnsPredicate(colNames:_*)
+//      pageOver(entityName, proc, pageSize, slicePredicate)
+//    }
 
     /**
      * Iterate over all occurrences, passing the objects to a function.

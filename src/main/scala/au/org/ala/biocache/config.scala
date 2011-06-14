@@ -4,6 +4,7 @@ import java.util.Properties
 import com.google.inject.name.Names
 import au.org.ala.checklist.lucene.CBIndexSearch
 import com.google.inject.{Scopes, Guice, Injector, AbstractModule}
+import org.slf4j.LoggerFactory
 
 /**
  * Simple singleton wrapper for Guice (or spring)
@@ -21,6 +22,8 @@ object Config {
  */
 class ConfigModule extends AbstractModule {
 
+    protected val logger = LoggerFactory.getLogger("ConfigModule")
+
     override def configure() {
 
         val properties = new Properties()
@@ -31,8 +34,12 @@ class ConfigModule extends AbstractModule {
         bind(classOf[OccurrenceDAO]).to(classOf[OccurrenceDAOImpl]).in(Scopes.SINGLETON)
         bind(classOf[IndexDAO]).to(classOf[SolrIndexDAO]).in(Scopes.SINGLETON)
 
-        val nameIndex = new CBIndexSearch(properties.getProperty("nameIndexLocation"))
-        bind(classOf[CBIndexSearch]).toInstance(nameIndex)
+        try {
+            val nameIndex = new CBIndexSearch(properties.getProperty("nameIndexLocation"))
+            bind(classOf[CBIndexSearch]).toInstance(nameIndex)
+        } catch {
+            case e: Exception => logger.error(e.getMessage, e)
+        }
 
         properties.getProperty("db") match {
             case "cassandra" => bind(classOf[PersistenceManager]).to(classOf[CassandraPersistenceManager]).in(Scopes.SINGLETON)
