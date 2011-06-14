@@ -44,7 +44,7 @@ object DeleteRecords {
         }
 
         true
-    }, 1000, "institutionUid.p", "catalogNumber")
+    },"", 1000, "institutionUid.p", "catalogNumber")
 
     finishTime = System.currentTimeMillis
     println("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")

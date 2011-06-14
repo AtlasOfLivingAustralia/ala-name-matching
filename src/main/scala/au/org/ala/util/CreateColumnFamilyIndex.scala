@@ -20,7 +20,7 @@ object CreateTestIndex {
 
 object CreateTaxonIndex {
 
-  def main(args:Array[String]){    
+  def main(args:Array[String]){
     val keyspace = "occ"
     val indexName = "el"
     val keyOn = Array("scientificName")
@@ -84,7 +84,7 @@ class CreateColumnFamilyIndex {
         mutator.execute(ConsistencyLevel.ONE)
         counter = counter +1
         counter<maxRecords
-      },100, fieldsToRequest:_* )
+      },"",100, fieldsToRequest:_* )
 
       //close cassandra connections
       Pelops.shutdown
