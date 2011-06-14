@@ -86,8 +86,7 @@ public interface SearchDAO {
      * @return
      * @throws Exception
      */
-    int writeSpeciesCountByCircleToStream(Float latitude, Float longitude,
-            Float radius, String rank, List<String> higherTaxa, ServletOutputStream out) throws Exception;
+    int writeSpeciesCountByCircleToStream(SpatialSearchRequestParams requestParams, String speciesGroup, ServletOutputStream out) throws Exception;
 
 
     /**
@@ -100,7 +99,7 @@ public interface SearchDAO {
      * @return A map of uids and counts that needs to be logged to the ala-logger
      * @throws Exception
      */
-	Map<String,Integer> writeResultsToStream(SearchRequestParams searcParams, OutputStream out, int maxNoOfRecords) throws Exception;
+	Map<String,Integer> writeResultsToStream(SearchRequestParams searchParams, OutputStream out, int maxNoOfRecords) throws Exception;
 
 
     void writeCoordinatesToStream(OutputStream out) throws Exception;
@@ -137,24 +136,7 @@ public interface SearchDAO {
      */
     List<OccurrencePoint> findRecordsForLocation(List<String> taxa, String rank,Float latitude, Float longitude, Float radius, PointType pointType) throws Exception;
 
-    /**
-     * Location-based search using circular area around a point and for a given radius (in km)
-     *
-     * @param latitude
-     * @param longitude
-     * @param radius
-     * @param rank
-     * @param higherTaxon
-     * @param filterQuery
-     * @param startIndex
-     * @param pageSize
-     * @param sortField
-     * @param sortDirection
-     * @return
-     * @throws Exception
-     */
-    List<TaxaCountDTO> findAllSpeciesByCircleAreaAndHigherTaxon(Float latitude, Float longitude, Float radius, String rank, String higherTaxon,
-    		String filterQuery, Integer startIndex, Integer pageSize, String sortField, String sortDirection) throws Exception;
+    
 
     /**
      * Find all species (and counts) for a given location search (lat/long and radius) and a higher taxon (with rank)
@@ -172,8 +154,7 @@ public interface SearchDAO {
      * @return
      * @throws Exception
      */
-    List<TaxaCountDTO> findAllSpeciesByCircleAreaAndHigherTaxa(Float latitude, Float longitude, Float radius, String rank, List<String> higherTaxa,
-    		String filterQuery, Integer startIndex, Integer pageSize, String sortField, String sortDirection) throws Exception;
+    List<TaxaCountDTO> findAllSpeciesByCircleAreaAndHigherTaxa(SpatialSearchRequestParams requestParams, String speciesGroup) throws Exception;
 
     
 

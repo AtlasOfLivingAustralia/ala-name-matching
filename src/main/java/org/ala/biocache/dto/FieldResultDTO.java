@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 
 package org.ala.biocache.dto;
 
@@ -12,7 +9,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
  *
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
-public class FieldResultDTO {
+public class FieldResultDTO implements Comparable<FieldResultDTO>{
     String label;
     Long count;
 
@@ -65,4 +62,9 @@ public class FieldResultDTO {
 	public String toString() {
 		return "FieldResultDTO [count=" + count + ", label=" + label + "]";
 	}
+
+    @Override
+    public int compareTo(FieldResultDTO t) {
+        return this.getLabel().compareTo(t.getLabel());
+    }
 }

@@ -39,11 +39,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.maxmind.geoip.Location;
 import com.maxmind.geoip.LookupService;
+import org.ala.biocache.dto.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * Controller for the "explore your area" page
  *
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
+ * @author "Natasha Carter <natasha.carter@csiro.au>"
  */
 @Controller("exploreController")
 public class ExploreController {
@@ -75,11 +79,18 @@ public class ExploreController {
         }
 	}
 
-    @RequestMapping(value = "/explore/your-area*", method = RequestMethod.GET)
-	public String yourAreaView(
-            @RequestParam(value="radius", required=false, defaultValue="5f") Float radius,
-            @RequestParam(value="latitude", required=false, defaultValue="-35.27412f") Float latitude,
-            @RequestParam(value="longitude", required=false, defaultValue="149.11288f") Float longitude,
+
+    /**
+     *
+     * Returns a list of species groups and counts that will need to be displayed.
+     *
+     * TODO: MOVE all the IP lat long lookup to the the client webapp.  The purposes
+     * of biocache-service is to provide a service layer over the biocache.
+     *
+     */
+    @RequestMapping(value = "/explore/groups*", method = RequestMethod.GET)
+	public @ResponseBody List<SpeciesGroupDTO> yourAreaView(
+            SpatialSearchRequestParams requestParams,
             @RequestParam(value="address", required=false, defaultValue=DEFAULT_LOCATION) String address,
             @RequestParam(value="location", required=false, defaultValue="") String location,
             HttpServletRequest request,
@@ -87,32 +98,87 @@ public class ExploreController {
         
         // Determine lat/long for client's IP address
         //LookupService lookup = new LookupService(geoIpDatabase, LookupService.GEOIP_INDEX_CACHE );
-        String clientIP = request.getLocalAddr();
-        logger.info("client IP address = "+request.getRemoteAddr());
+//        String clientIP = request.getLocalAddr();
+//        logger.info("client IP address = "+request.getRemoteAddr());
+//
+//        if (lookupService != null && location == null) {
+//            Location loc = lookupService.getLocation(clientIP);
+//            if (loc != null) {
+//                logger.info(clientIP + " has location: " + loc.postalCode + ", " + loc.city + ", " + loc.region + ". Coords: " + loc.latitude + ", " + loc.longitude);
+//                latitude = loc.latitude;
+//                longitude = loc.longitude;
+//                address = ""; // blank out address so Google Maps API can reverse geocode it
+//            }
+//        }
 
-        if (lookupService != null && location == null) {
-            Location loc = lookupService.getLocation(clientIP);
-            if (loc != null) {
-                logger.info(clientIP + " has location: " + loc.postalCode + ", " + loc.city + ", " + loc.region + ". Coords: " + loc.latitude + ", " + loc.longitude);
-                latitude = loc.latitude;
-                longitude = loc.longitude;
-                address = ""; // blank out address so Google Maps API can reverse geocode it
+        //set the query to all
+        requestParams.setQ("*:*");
+        //only want the species groups in the facet
+        requestParams.setFacets(new String[]{"species_group"});
+        //we want all the facets
+        requestParams.setFlimit(-1);
+        requestParams.setPageSize(0);//don't actually want any of the results returned
+        SearchResultDTO results =searchDao.findByFulltextSpatialQuery(requestParams);
+        java.util.Collection<FacetResultDTO> facets =results.getFacetResults();
+        java.util.List<FieldResultDTO> fieldResults = facets.size()>0?facets.iterator().next().getFieldResult():java.util.Collections.EMPTY_LIST;
+        java.util.Collections.sort(fieldResults);
+        //now we want to grab all the facets to get the counts associated with the species groups
+        List<au.org.ala.biocache.SpeciesGroup> sgs =au.org.ala.biocache.Store.retrieveSpeciesGroups();
+        List<SpeciesGroupDTO> speciesGroups = new java.util.ArrayList<SpeciesGroupDTO>();
+        SpeciesGroupDTO all = new SpeciesGroupDTO();
+        all.setName("ALL_SPECIES");
+        all.setLevel(0);
+        all.setCount(results.getTotalRecords());
+        speciesGroups.add(all);
+
+        String oldName = null;
+        String kingdom =null;
+        //set the counts an indent levels for all the species groups
+        for(au.org.ala.biocache.SpeciesGroup sg : sgs){
+            logger.debug("name: " + sg.name() + " pararent: " +sg.parent());
+            int level =3;
+            SpeciesGroupDTO sdto = new SpeciesGroupDTO();
+            sdto.setName(sg.name());
+
+            if(oldName!= null && sg.parent()!= null && sg.parent().equals(kingdom))
+                level = 2;
+            sdto.setCount(getFacetCount(sg.name(), fieldResults));
+            oldName = sg.name();
+            if(sg.parent() == null){
+                level = 1;
+                kingdom = sg.name();
             }
+            sdto.setLevel(level);
+            speciesGroups.add(sdto);
         }
+        return speciesGroups;
+
         
-        model.addAttribute("latitude", latitude);
-        model.addAttribute("longitude", longitude);
-        model.addAttribute("location", location); // TDOD delete if not used in JSP
-        //model.addAttribute("address", address); // TDOD delete if not used in JSP
-        model.addAttribute("radius", radius);
-        model.addAttribute("zoom", radiusToZoomLevelMap.get(radius));
-        model.addAttribute("taxaGroups", TaxaGroup.values()); 
+        //model.addAttribute("results",speciesGroups);
 
-        // TODO: get from properties file or load via Spring
-        model.addAttribute("speciesPageUrl", speciesPageUrl);
+//        model.addAttribute("latitude", latitude);
+//        model.addAttribute("longitude", longitude);
+//        model.addAttribute("location", location); // TDOD delete if not used in JSP
+//        //model.addAttribute("address", address); // TDOD delete if not used in JSP
+//        model.addAttribute("radius", radius);
+//        model.addAttribute("zoom", radiusToZoomLevelMap.get(radius));
+//        model.addAttribute("taxaGroups", TaxaGroup.values());
+//
+//        // TODO: get from properties file or load via Spring
+//        model.addAttribute("speciesPageUrl", speciesPageUrl);
 
-		return YOUR_AREA;
+		//return YOUR_AREA;
 	}
+        private long getFacetCount(String field, List<FieldResultDTO> groups){
+            //TODO more efficient way of locating this
+            for(FieldResultDTO group : groups){
+                if(group.getLabel().equals(field)){
+                    groups.remove(group);
+                    return group.getCount();
+                }
+            }
+            return 0L;
+        }
         /**
 	 * Occurrence search page uses SOLR JSON to display results
 	 *
@@ -121,13 +187,10 @@ public class ExploreController {
      * @return
      * @throws Exception
      */
-	@RequestMapping(value = "/explore/download*", method = RequestMethod.GET)
+	@RequestMapping(value = "/explore/group/{group}/download*", method = RequestMethod.GET)
 	public void yourAreaDownload(
-            @RequestParam(value="radius", required=false, defaultValue="10f") Float radius,
-            @RequestParam(value="latitude", required=false, defaultValue="0f") Float latitude,
-            @RequestParam(value="longitude", required=false, defaultValue="0f") Float longitude,
-            @RequestParam(value="taxa", required=false, defaultValue="") String taxa, // comma separated list
-            @RequestParam(value="rank", required=false, defaultValue="") String rank,
+            SpatialSearchRequestParams requestParams,
+            @PathVariable(value="group") String group,
             HttpServletResponse response)
             throws Exception {
 
@@ -136,15 +199,9 @@ public class ExploreController {
         response.setHeader("Pragma", "must-revalidate");
         response.setHeader("Content-Disposition", "attachment;filename=data");
         response.setContentType("application/vnd.ms-excel");
-        String[] taxaArray = StringUtils.split(taxa, ",");
-        ArrayList<String> taxaList = null;
-        if (taxaArray != null) {
-            taxaList = new ArrayList<String>(Arrays.asList(taxaArray));
-        } else {
-            taxaList = new ArrayList<String>();
-        }
+       
         ServletOutputStream out = response.getOutputStream();
-        int count = searchDao.writeSpeciesCountByCircleToStream(latitude, longitude, radius, rank, taxaList, out);
+        int count = searchDao.writeSpeciesCountByCircleToStream(requestParams,group, out);
         logger.debug("Exported " + count + " species records in the requested area");
         
 	}
@@ -161,35 +218,34 @@ public class ExploreController {
      * @param model
      * @throws Exception
      */
-    @RequestMapping(value = "/explore/species.json", method = RequestMethod.GET)
-	public void listSpeciesForHigherTaxa(
-            @RequestParam(value="radius", required=false, defaultValue="10f") Float radius,
-            @RequestParam(value="latitude", required=false, defaultValue="0f") Float latitude,
-            @RequestParam(value="longitude", required=false, defaultValue="0f") Float longitude,
-            @RequestParam(value="taxa", required=false, defaultValue="") String taxa, // comma separated list
-            @RequestParam(value="rank", required=false, defaultValue="") String rank,
-            @RequestParam(value="start", required=false, defaultValue="0") Integer startIndex,
-			@RequestParam(value="pageSize", required=false, defaultValue ="50") Integer pageSize,
-            @RequestParam(value="sort", required=false, defaultValue ="taxon_name") String sort,
+    @RequestMapping(value = "/explore/group/{group}*", method = RequestMethod.GET)
+	public @ResponseBody List<TaxaCountDTO> listSpeciesForHigherTaxa(
+            SpatialSearchRequestParams requestParams,
+            @PathVariable(value="group") String group,
+                       
             Model model) throws Exception {
 
-        String[] taxaArray = StringUtils.split(taxa, "|");
-        ArrayList<String> taxaList = null;
-        if (taxaArray != null) {
-            taxaList = new ArrayList<String>(Arrays.asList(taxaArray));
-        } else {
-            taxaList = new ArrayList<String>();
-        }
+//        String[] taxaArray = StringUtils.split(taxa, "|");
+//        ArrayList<String> taxaList = null;
+//        if (taxaArray != null) {
+//            taxaList = new ArrayList<String>(Arrays.asList(taxaArray));
+//        } else {
+//            taxaList = new ArrayList<String>();
+//        }
+//
+//        model.addAttribute("taxa", taxa);
+//        model.addAttribute("rank", rank);
+       
 
-        model.addAttribute("taxa", taxa);
-        model.addAttribute("rank", rank);
-        List<TaxaCountDTO> species = searchDao.findAllSpeciesByCircleAreaAndHigherTaxa(latitude, longitude, radius, rank, taxaList, null, startIndex, pageSize, sort, "asc");
-        model.addAttribute("species", species);
-        model.addAttribute("speciesCount", species.size());
+        return searchDao.findAllSpeciesByCircleAreaAndHigherTaxa(requestParams, group);
+        //model.addAttribute("species", species);
+        //model.addAttribute("speciesCount", species.size());
     }
 
     /**
      * AJAX service to return number of species for given taxa group in a given location
+     *
+     * Tested with: /explore/taxaGroupCount?latitude=-31.2&longitude=138.4&group=ANIMALS
      *
      * @param taxaGroupLabel
      * @param radius
@@ -199,29 +255,29 @@ public class ExploreController {
      * @return speciesCount
      * @throws Exception
      */
-    @RequestMapping(value = "/explore/taxaGroupCount", method = RequestMethod.GET)
-	public void listSpeciesForHigherTaxa(
-            @RequestParam(value="group", required=true, defaultValue ="") String taxaGroupLabel,
-            @RequestParam(value="radius", required=true, defaultValue="10f") Float radius,
-            @RequestParam(value="latitude", required=true, defaultValue="0f") Float latitude,
-            @RequestParam(value="longitude", required=true, defaultValue="0f") Float longitude,
-            HttpServletResponse response) throws Exception {
-
-        TaxaGroup group = TaxaGroup.getForLabel(taxaGroupLabel);
-
-        if (group != null) {
-            List<TaxaCountDTO> taxaCounts = searchDao.findAllSpeciesByCircleAreaAndHigherTaxa(latitude,
-                longitude, radius, group.getRank(), new ArrayList<String>(Arrays.asList(group.getTaxa())),
-                null, 0, -1, "species", "asc");
-            //Long speciesCount = calculateSpeciesCount(taxaCounts);
-            Integer speciesCount = taxaCounts.size();
-            logger.info("Species count for "+group.getLabel()+" = "+speciesCount);
-            OutputStreamWriter os = new OutputStreamWriter(response.getOutputStream());
-            response.setContentType("text/plain");
-            os.write(speciesCount.toString());
-            os.close();
-        }
-    }
+//    @RequestMapping(value = "/explore/taxaGroupCount", method = RequestMethod.GET)
+//	public void listSpeciesForHigherTaxa(
+//            @RequestParam(value="group", required=true, defaultValue ="") String taxaGroupLabel,
+//            @RequestParam(value="radius", required=true, defaultValue="10f") Float radius,
+//            @RequestParam(value="latitude", required=true, defaultValue="0f") Float latitude,
+//            @RequestParam(value="longitude", required=true, defaultValue="0f") Float longitude,
+//            HttpServletResponse response) throws Exception {
+//
+//        TaxaGroup group = TaxaGroup.getForLabel(taxaGroupLabel);
+//
+//        if (group != null) {
+//            List<TaxaCountDTO> taxaCounts = searchDao.findAllSpeciesByCircleAreaAndHigherTaxa(latitude,
+//                longitude, radius, group.getRank(), new ArrayList<String>(Arrays.asList(group.getTaxa())),
+//                null, 0, -1, "species", "asc");
+//            //Long speciesCount = calculateSpeciesCount(taxaCounts);
+//            Integer speciesCount = taxaCounts.size();
+//            logger.info("Species count for "+group.getLabel()+" = "+speciesCount);
+//            OutputStreamWriter os = new OutputStreamWriter(response.getOutputStream());
+//            response.setContentType("text/plain");
+//            os.write(speciesCount.toString());
+//            os.close();
+//        }
+//    }
 
     /**
      * Calculate the number of records for a given taxa group
@@ -229,14 +285,14 @@ public class ExploreController {
      * @param taxa
      * @return
      */
-    protected Long calculateSpeciesCount(List<TaxaCountDTO> taxa) {
-        // Get full count of records in area from facet breakdowns
-        Long totalRecords = 0l;
-        for (TaxaCountDTO taxon : taxa) {
-            totalRecords = totalRecords + taxon.getCount();
-        }
-        return totalRecords;
-    }
+//    protected Long calculateSpeciesCount(List<TaxaCountDTO> taxa) {
+//        // Get full count of records in area from facet breakdowns
+//        Long totalRecords = 0l;
+//        for (TaxaCountDTO taxon : taxa) {
+//            totalRecords = totalRecords + taxon.getCount();
+//        }
+//        return totalRecords;
+//    }
 
 	/**
 	 * @param searchDao the searchDao to set

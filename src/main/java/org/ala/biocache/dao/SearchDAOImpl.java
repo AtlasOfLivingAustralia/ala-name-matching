@@ -178,14 +178,14 @@ public class SearchDAOImpl implements SearchDAO {
 
     /**
      * @see org.ala.biocache.dao.SearchDAO#writeSpeciesCountByCircleToStream(java.lang.Float, java.lang.Float, java.lang.Integer, java.lang.String, java.util.List, javax.servlet.ServletOutputStream)
-     * IS THIS NECESSARY??
+     * 
      */
-    public int writeSpeciesCountByCircleToStream(Float latitude, Float longitude,
-            Float radius, String rank, List<String> higherTaxa, ServletOutputStream out) throws Exception {
+    public int writeSpeciesCountByCircleToStream(SpatialSearchRequestParams searchParams, String speciesGroup, ServletOutputStream out) throws Exception {
 
         //get the species counts:
         logger.debug("Writing CSV file for species count by circle");
-        List<TaxaCountDTO> species = findAllSpeciesByCircleAreaAndHigherTaxa(latitude, longitude, radius, rank, higherTaxa, null, 0, -1, "count", "asc");
+        searchParams.setPageSize(-1);
+        List<TaxaCountDTO> species = findAllSpeciesByCircleAreaAndHigherTaxa(searchParams, speciesGroup);
         logger.debug("There are " + species.size() + "records being downloaded");
         CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(out), '\t', '"');
         csvWriter.writeNext(new String[]{
@@ -631,46 +631,21 @@ public class SearchDAOImpl implements SearchDAO {
         return searchResults.getOccurrences();
     }
 
-    /**
-     * @see org.ala.biocache.dao.SearchDAO#findAllSpeciesByCircleAreaAndHigherTaxa(Float, Float,
-     *     Integer, String, String, String, Integer, Integer, String, String)
-     * IS THIS BEING USED??
-     */
-    @Override
-    public List<TaxaCountDTO> findAllSpeciesByCircleAreaAndHigherTaxon(Float latitude, Float longitude,
-            Float radius, String rank, String higherTaxon, String filterQuery, Integer startIndex,
-            Integer pageSize, String sortField, String sortDirection) throws Exception {
 
-        String queryString = buildSpatialQueryString("*:*", latitude, longitude, radius);
-        List<String> filterQueries = Arrays.asList(rank + ":" + higherTaxon);
-        List<String> facetFields = new ArrayList<String>();
-
-        facetFields.add(NAMES_AND_LSID);
-        List<TaxaCountDTO> speciesWithCounts = getSpeciesCounts(queryString, filterQueries, facetFields, pageSize, startIndex, sortField, sortDirection);
-
-        return speciesWithCounts;
-    }
 
     /**
      * @see org.ala.biocache.dao.SearchDAO#findAllSpeciesByCircleAreaAndHigherTaxa(Float, Float,
      *     Integer, String, String, String, Integer, Integer, String, String)
      */
     @Override
-    public List<TaxaCountDTO> findAllSpeciesByCircleAreaAndHigherTaxa(Float latitude, Float longitude,
-            Float radius, String rank, List<String> higherTaxa, String filterQuery, Integer startIndex,
-            Integer pageSize, String sortField, String sortDirection) throws Exception {
-
-        ArrayList<String> filterQueries = new ArrayList<String>();
-
-        for (String higherTaxon : higherTaxa) {
-            filterQueries.add(rank + ":" + higherTaxon);
-        }
-
-        String queryString = buildSpatialQueryString("*:*", latitude, longitude, radius);
+    public List<TaxaCountDTO> findAllSpeciesByCircleAreaAndHigherTaxa(SpatialSearchRequestParams requestParams, String speciesGroup) throws Exception {
+        String q = speciesGroup=="ALL_SPECIES"?"*:*":"species_group:"+speciesGroup;
+        requestParams.setQ(q);
+        String queryString = buildSpatialQueryString(requestParams);
         List<String> facetFields = new ArrayList<String>();
         facetFields.add(NAMES_AND_LSID);
-        //logger.debug("The species count query " + queryString);
-        List<TaxaCountDTO> speciesWithCounts = getSpeciesCounts(queryString, filterQueries, facetFields, pageSize, startIndex, sortField, sortDirection);
+        logger.debug("The species count query " + queryString);
+        List<TaxaCountDTO> speciesWithCounts = getSpeciesCounts(queryString, null, facetFields, requestParams.getPageSize(), requestParams.getStart(), requestParams.getSort(), requestParams.getDir());
 
         return speciesWithCounts;
     }
@@ -1238,7 +1213,7 @@ public class SearchDAOImpl implements SearchDAO {
         }
         solrQuery.setFacetMinCount(1);
         solrQuery.setFacetLimit(-1); // unlimited = -1 | pageSize
-        //logger.debug("getSpeciesCount query :" + solrQuery.getQuery());
+        logger.debug("getSpeciesCount query :" + solrQuery.getQuery());
         QueryResponse qr = runSolrQuery(solrQuery, null, 1, 0, "score", sortDirection);
         logger.info("SOLR query: " + solrQuery.getQuery() + "; total hits: " + qr.getResults().getNumFound());
         List<FacetField> facets = qr.getFacetFields();
