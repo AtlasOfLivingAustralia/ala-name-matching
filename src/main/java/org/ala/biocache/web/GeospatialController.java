@@ -44,14 +44,26 @@ public class GeospatialController {
     @Inject
     protected SearchDAO searchDAO;
 
-    /** Data Resource DAO */
+
+
+    /**
+     * Performs an occurrence search based on wkt. The facet that is returned
+     * is the list of species in the supplied region. 
+     * @param requestParams
+     * @param url
+     * @param model
+     * @return
+     * @throws Exception
+     */
     @RequestMapping(value = {"/occurrences/spatial*"}, method = RequestMethod.GET)
-    public
-    @ResponseBody SearchResultDTO listWktOccurrences(SpatialSearchRequestParams requestParams,
+    public @ResponseBody SearchResultDTO listWktOccurrences(SpatialSearchRequestParams requestParams,
                                     @RequestParam(value = "url", required = false) String url,
                                     Model model) throws Exception {
         
         requestParams.setQ("*:*");
+        requestParams.setFacets(new String[]{"species_guid"});
+        //don't limit the factes
+        requestParams.setFlimit(-1);
         //check to see if a url has been provided
         if(url != null && url.length()>0){
             logger.info("Loading the WKT from " + url);

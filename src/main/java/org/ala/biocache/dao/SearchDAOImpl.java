@@ -669,6 +669,7 @@ public class SearchDAOImpl implements SearchDAO {
         String queryString = buildSpatialQueryString("*:*", latitude, longitude, radius);
         List<String> facetFields = new ArrayList<String>();
         facetFields.add(NAMES_AND_LSID);
+        //logger.debug("The species count query " + queryString);
         List<TaxaCountDTO> speciesWithCounts = getSpeciesCounts(queryString, filterQueries, facetFields, pageSize, startIndex, sortField, sortDirection);
 
         return speciesWithCounts;
@@ -1191,7 +1192,9 @@ public class SearchDAOImpl implements SearchDAO {
         //solrQuery.add("facet.date.other", "after");
 
         solrQuery.setFacetMinCount(1);
-        solrQuery.setFacetLimit(30);
+        solrQuery.setFacetLimit(searchParams.getFlimit());
+        if(searchParams.getFlimit() == -1)
+            solrQuery.setFacetSort("count");
         solrQuery.setRows(10);
         solrQuery.setStart(0);
 
@@ -1235,6 +1238,7 @@ public class SearchDAOImpl implements SearchDAO {
         }
         solrQuery.setFacetMinCount(1);
         solrQuery.setFacetLimit(-1); // unlimited = -1 | pageSize
+        //logger.debug("getSpeciesCount query :" + solrQuery.getQuery());
         QueryResponse qr = runSolrQuery(solrQuery, null, 1, 0, "score", sortDirection);
         logger.info("SOLR query: " + solrQuery.getQuery() + "; total hits: " + qr.getResults().getNumFound());
         List<FacetField> facets = qr.getFacetFields();

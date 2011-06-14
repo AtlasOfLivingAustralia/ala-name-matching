@@ -233,8 +233,8 @@ public class OccurrenceController {
 			return searchResult;
 		}
 
-        searchUtils.updateSpatial(requestParams);
-        searchResult = searchDAO.findByFulltextQuery(requestParams);
+        //searchUtils.updateSpatial(requestParams);
+        searchResult = searchDAO.findByFulltextSpatialQuery(requestParams);
 		model.addAttribute("searchResult", searchResult);
 
 		if(logger.isDebugEnabled()){

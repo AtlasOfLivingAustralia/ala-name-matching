@@ -41,12 +41,16 @@ public class SearchRequestParams {
                                 "species_group",
                                 "kingdom",
                                 "family",
-                                "species",
+                                "species_guid",
                                 "assertions",
                                 "month",
                                 "year",
                                 "multimedia"};
     protected Integer start = 0;
+    /*
+     * The limit for the number of facets to return 
+     */
+    protected Integer flimit=30;
     protected Integer pageSize = 10;
     protected String sort = "score";
     protected String dir = "asc";
@@ -193,6 +197,14 @@ public class SearchRequestParams {
 
     public void setFacets(String[] facets) {
         this.facets = facets;
+    }
+
+    public Integer getFlimit() {
+        return flimit;
+    }
+
+    public void setFlimit(Integer flimit) {
+        this.flimit = flimit;
     }
 
  
