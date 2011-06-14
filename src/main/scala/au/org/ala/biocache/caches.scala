@@ -185,7 +185,7 @@ object AttributionDAO {
 
   import ReflectBean._
   
-  protected var collectoryURL ="http://collections.ala.org.au"
+  var collectoryURL ="http://collections.ala.org.au"
   private val columnFamily = "attr"
   //can't use a scala hashap because missing keys return None not null...
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)//new HashMap[String, Option[Attribution]]
@@ -241,13 +241,13 @@ object AttributionDAO {
                 val ahint = hints.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> o.toString().replace("=",":").replace("{","").replace("}",""));
                 attribution.setTaxonomicHints(ahint);
               }
-              //the hubMembership
-              val hub = wsmap.getOrElse("hubMembership", null)
-              if(hub !=  null){
-                val ahub = hub.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> (o.asInstanceOf[java.util.LinkedHashMap[Object,Object]]).get("uid").toString)
-                attribution.setDataHubUid(ahub)
-                //println("Hub membership: " +ahub)
-              }
+              //the hubMembership no longer in collections obtain from the data resource instead
+//              val hub = wsmap.getOrElse("hubMembership", null)
+//              if(hub !=  null){
+//                val ahub = hub.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> (o.asInstanceOf[java.util.LinkedHashMap[Object,Object]]).get("uid").toString)
+//                attribution.setDataHubUid(ahub)
+//                //println("Hub membership: " +ahub)
+//              }
               //update the properties
               FullRecordMapper.mapmapPropertiesToObject(attribution, wsmap-"taxonomyCoverageHints", wsPropertyMap)
               val result = Some(attribution)
