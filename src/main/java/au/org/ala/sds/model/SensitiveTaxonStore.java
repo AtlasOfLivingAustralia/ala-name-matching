@@ -124,7 +124,7 @@ public class SensitiveTaxonStore {
                 }
             }
         } catch (SearchResultException e) {
-            logger.warn("'" + name + "' - " + e.getMessage());
+            logger.debug("'" + name + "' - " + e.getMessage());
         } catch (RuntimeException e) {
             logger.error("'" + name + "'", e);
         }
@@ -145,7 +145,7 @@ public class SensitiveTaxonStore {
                 }
             }
         } catch (SearchResultException e) {
-            logger.warn("'" + name + "' - " + e.getMessage());
+            logger.debug("'" + name + "' - " + e.getMessage());
         } catch (RuntimeException e) {
             logger.error("'" + name + "'", e);
         }
