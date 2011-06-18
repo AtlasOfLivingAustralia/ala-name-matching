@@ -85,7 +85,7 @@ public class GeoLocationHelper {
         }
 
         if (zones.isEmpty()) {
-            logger.warn("Zone could not be determined from location: Lat " + latitude + ", Long " + longitude);
+            logger.debug("Zone could not be determined from location: Lat " + latitude + ", Long " + longitude);
             zones.add(SensitivityZoneFactory.getZone(SensitivityZone.NOTAUS));
         }
         return zones;
