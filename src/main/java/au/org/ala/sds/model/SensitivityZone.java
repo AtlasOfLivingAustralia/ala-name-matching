@@ -156,7 +156,9 @@ public class SensitivityZone {
     public static String getState(List<SensitivityZone> zones) {
         for (SensitivityZone sz : zones) {
             if (sz.getType().equals(ZoneType.STATE)) {
-                return sz.getId();
+                return "in " + sz.getId();
+            } else if (sz.getId().equals(NOTAUS)) {
+                return sz.getName();
             }
         }
         return "???";
