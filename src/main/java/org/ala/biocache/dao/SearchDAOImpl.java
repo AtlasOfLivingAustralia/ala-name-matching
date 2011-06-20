@@ -62,6 +62,7 @@ import org.ala.biocache.dto.SpatialSearchRequestParams;
 import org.ala.biocache.util.DownloadFields;
 import org.apache.solr.common.SolrDocument;
 import javax.inject.Inject;
+import org.apache.commons.lang.ArrayUtils;
 
 /**
  * SOLR implementation of SearchDao. Uses embedded SOLR server (can be a memory hog).
@@ -130,6 +131,8 @@ public class SearchDAOImpl implements SearchDAO {
 
         try {
             formatSearchQuery(requestParams);
+            //add the context information
+            updateQueryContext(requestParams);
             SolrQuery solrQuery = initSolrQuery(requestParams); // general search settings
             solrQuery.setQuery(requestParams.getQ());
             QueryResponse qr = runSolrQuery(solrQuery, requestParams);
@@ -159,6 +162,8 @@ public class SearchDAOImpl implements SearchDAO {
         try {
             //String queryString = formatSearchQuery(query);
             formatSearchQuery(searchParams);
+            //add context information
+            updateQueryContext(searchParams);
             String queryString = buildSpatialQueryString(searchParams);
             //logger.debug("The spatial query " + queryString);
             SolrQuery solrQuery = initSolrQuery(searchParams); // general search settings
@@ -345,6 +350,9 @@ public class SearchDAOImpl implements SearchDAO {
         solrQuery.setFacetMinCount(1);
         solrQuery.setFacetLimit(MAX_DOWNLOAD_SIZE);  // unlimited = -1
 
+        //add the context information
+        updateQueryContext(searchParams);
+
         QueryResponse qr = runSolrQuery(solrQuery, searchParams.getFq(), 1, 0, "score", "asc");
         List<FacetField> facets = qr.getFacetFields();
 
@@ -410,6 +418,9 @@ public class SearchDAOImpl implements SearchDAO {
         solrQuery.addFacetField(pointType.getLabel());
         solrQuery.setFacetMinCount(1);
         solrQuery.setFacetLimit(MAX_DOWNLOAD_SIZE);  // unlimited = -1
+
+        //add the context information
+        updateQueryContext(searchParams);
 
         QueryResponse qr = runSolrQuery(solrQuery, searchParams);
         SearchResultDTO searchResults = processSolrResponse(qr, solrQuery);
@@ -538,6 +549,7 @@ public class SearchDAOImpl implements SearchDAO {
 
     /**
      * @see org.ala.biocache.dao.SearchDAO#findRecordsForLocation(Float, Float, Integer)
+     * IS THIS BEIGN USED.  IS THIS NEEDED???
      */
     @Override
     public List<OccurrencePoint> findRecordsForLocation(List<String> taxa, String rank, Float latitude, Float longitude, Float radius, PointType pointType) throws Exception {
@@ -639,19 +651,24 @@ public class SearchDAOImpl implements SearchDAO {
      */
     @Override
     public List<TaxaCountDTO> findAllSpeciesByCircleAreaAndHigherTaxa(SpatialSearchRequestParams requestParams, String speciesGroup) throws Exception {
-        String q = speciesGroup=="ALL_SPECIES"?"*:*":"species_group:"+speciesGroup;
+        String q = speciesGroup.equals("ALL_SPECIES")?"*:*":"species_group:"+speciesGroup;
+        //add the context information
+        updateQueryContext(requestParams);
         requestParams.setQ(q);
         String queryString = buildSpatialQueryString(requestParams);
         List<String> facetFields = new ArrayList<String>();
         facetFields.add(NAMES_AND_LSID);
         logger.debug("The species count query " + queryString);
-        List<TaxaCountDTO> speciesWithCounts = getSpeciesCounts(queryString, null, facetFields, requestParams.getPageSize(), requestParams.getStart(), requestParams.getSort(), requestParams.getDir());
+        List<String> fqList = new ArrayList<String>();
+        org.apache.commons.collections.CollectionUtils.addAll(fqList, requestParams.getFq());
+        List<TaxaCountDTO> speciesWithCounts = getSpeciesCounts(queryString, fqList, facetFields, requestParams.getPageSize(), requestParams.getStart(), requestParams.getSort(), requestParams.getDir());
 
         return speciesWithCounts;
     }
 
     /**
      * @see org.ala.biocache.dao.SearchDAO#findRecordByDecadeFor(java.lang.String)
+     * IS THIS BEIGN USED OR NECESSARY?
      */
     @Override
     public List<FieldResultDTO> findRecordByDecadeFor(String query) throws Exception {
@@ -692,6 +709,7 @@ public class SearchDAOImpl implements SearchDAO {
 
     /**
      * @see org.ala.biocache.dao.SearchDAO#findRecordByStateFor(java.lang.String)
+     * IS THIS BEGIN USED OR NECESSARY
      */
     @Override
     public List<FieldResultDTO> findRecordByStateFor(String query)
@@ -728,7 +746,8 @@ public class SearchDAOImpl implements SearchDAO {
      * @return
      * @throws Exception
      */
-    public TaxaRankCountDTO findTaxonCountForUid(String query, int maximumFacets) throws Exception {
+    @Override
+    public TaxaRankCountDTO findTaxonCountForUid(String query, String queryContext, int maximumFacets) throws Exception {
         logger.info("Attempting to find the counts for " + query);
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.setQueryType("standard");
@@ -743,7 +762,7 @@ public class SearchDAOImpl implements SearchDAO {
             String ffname = searchUtils.getRankFacetName(i);
             solrQuery.addFacetField(ffname);
             solrQuery.setFacetMinCount(1);
-            QueryResponse qr = runSolrQuery(solrQuery, null, 1, 0, ffname, "asc");
+            QueryResponse qr = runSolrQuery(solrQuery, getQueryContextAsArray(queryContext), 1, 0, ffname, "asc");
             if (qr.getResults().size() > 0) {
                 FacetField ff = qr.getFacetField(ffname);
                 if (ff.getValues().size() <= maximumFacets) {
@@ -765,7 +784,7 @@ public class SearchDAOImpl implements SearchDAO {
     /**
      * @see org.ala.biocache.dao.SearchDAO#findTaxonCountForUid(java.lang.String, java.lang.String)
      */
-    public TaxaRankCountDTO findTaxonCountForUid(String query, String rank, String returnRank, boolean includeSuppliedRank) throws Exception {
+    public TaxaRankCountDTO findTaxonCountForUid(String query, String rank, String returnRank, String queryContext, boolean includeSuppliedRank) throws Exception {
         TaxaRankCountDTO trDTO = null;
         List<String> ranks = returnRank== null?searchUtils.getNextRanks(rank, includeSuppliedRank) : new ArrayList<String>();
         if(returnRank != null)
@@ -782,7 +801,7 @@ public class SearchDAOImpl implements SearchDAO {
             for (String r : ranks) {
                 solrQuery.addFacetField(r);
             }
-            QueryResponse qr = runSolrQuery(solrQuery, null, 1, 0, rank, "asc");
+            QueryResponse qr = runSolrQuery(solrQuery, getQueryContextAsArray(queryContext), 1, 0, rank, "asc");
             if (qr.getResults().size() > 0) {
                 for (String r : ranks) {
                     trDTO = new TaxaRankCountDTO(r);
@@ -1113,11 +1132,48 @@ public class SearchDAOImpl implements SearchDAO {
     }
 
     /**
+     * Updates the supplied search params to cater for the query context
+     * @param searchParams
+     */
+    protected void updateQueryContext(SearchRequestParams searchParams){
+        //TODO better method of getting the mappings between qc on solr fields names
+        String qc = searchParams.getQc();
+        if(StringUtils.isNotEmpty(qc)){
+//            String[] values = qc.split(",");
+//            for(int i =0; i<values.length;i++){
+//                String field = values[i];
+//                values[i]= field.replace("hub:", "data_hub_uid:");
+//
+//            }
+            
+            //add the query context to the filter query
+            searchParams.setFq((String[])ArrayUtils.addAll(searchParams.getFq(), getQueryContextAsArray(qc)));
+        }
+    }
+
+    protected String[] getQueryContextAsArray(String queryContext){
+        if(StringUtils.isNotEmpty(queryContext)){
+            String[] values = queryContext.split(",");
+            for(int i =0; i<values.length;i++){
+                String field = values[i];
+                values[i]= field.replace("hub:", "data_hub_uid:");
+
+            }
+
+            //add the query context to the filter query
+            return values;
+        }
+        return new String[]{};
+    }
+   
+
+    /**
      * Helper method to create SolrQuery object and add facet settings
      *
      * @return solrQuery the SolrQuery
      */
     protected SolrQuery initSolrQuery(SearchRequestParams searchParams) {
+
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.setQueryType("standard");
         // Facets

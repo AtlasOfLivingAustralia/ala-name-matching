@@ -55,6 +55,8 @@ public class SearchRequestParams {
     protected String sort = "score";
     protected String dir = "asc";
     private String displayString;
+    /**  The query context to be used for the search.  This will be used to generate extra query filters based on the search technology */
+    protected String qc ="";
    
     
     /**
@@ -72,6 +74,10 @@ public class SearchRequestParams {
         req.append("&pageSize=").append(pageSize);
         req.append("&sort=").append(sort);
         req.append("&dir=").append(dir);
+        req.append("&qc=").append(qc);
+        //only join the facets if their are less than 6 otherwise use the default list of facets
+        if(facets.length<6)
+            req.append("&facets=").append(StringUtils.join(facets, "&facets="));
         return req.toString();
     }
 
@@ -207,6 +213,12 @@ public class SearchRequestParams {
         this.flimit = flimit;
     }
 
- 
+    public String getQc() {
+        return qc;
+    }
+
+    public void setQc(String qc) {
+        this.qc = qc;
+    }
 
 }

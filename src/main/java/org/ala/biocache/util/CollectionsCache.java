@@ -55,6 +55,7 @@ public class CollectionsCache {
         return this.institutions;
     }
 
+    
     /**
      * Get the collections
      *
@@ -65,16 +66,30 @@ public class CollectionsCache {
         return this.collections;
     }
 
+    public LinkedHashMap<String, String> getInstitutions(List<String> inguids, List<String> coguids){
+        checkCacheAge(inguids, coguids);
+        return this.institutions;
+    }
+
+    public LinkedHashMap<String, String> getCollections(List<String> inguids, List<String>coguids){
+        checkCacheAge(inguids, coguids);
+        return this.collections;
+    }
+
+    protected void checkCacheAge(){
+        checkCacheAge(null, null);
+    }
+
     /**
      * Check age of cache and retrieve new values from Collections webservices if needed.
      */
-    protected void checkCacheAge() {
+    protected void checkCacheAge(List<String> inguids,List<String> coguids) {
         Date currentDate = new Date();
         Long timeSinceUpdate = currentDate.getTime() - lastUpdated.getTime();
-        logger.debug("timeSinceUpdate = " + timeSinceUpdate);
+        logger.debug("timeSinceUpdate = " + timeSinceUpdate + " collections: " + collections.size() + " institutions: " + institutions.size());
         
         if (timeSinceUpdate > this.timeout || institutions.size() < 1 || collections.size() < 1) {
-            updateCache();
+            updateCache(inguids, coguids);
             lastUpdated = new Date(); // update timestamp
         }
     }
@@ -82,10 +97,10 @@ public class CollectionsCache {
     /**
      * Update the entity types (fields)
      */
-    protected void updateCache() {
+    protected void updateCache(List<String> inguids, List<String> coguids) {
         logger.info("Updating collectory cache...");
-        this.collections = getCodesMap(ResourceType.COLLECTION);
-        this.institutions = getCodesMap(ResourceType.INSTITUTION);
+        this.collections = getCodesMap(ResourceType.COLLECTION, coguids);
+        this.institutions = getCodesMap(ResourceType.INSTITUTION, inguids);
 
     }
 
@@ -95,9 +110,9 @@ public class CollectionsCache {
      * @param type
      * @return
      */
-    protected LinkedHashMap getCodesMap(ResourceType type) {
+    protected LinkedHashMap getCodesMap(ResourceType type, List<String> guids) {
         LinkedHashMap<String, String> entityMap = null;
-
+        logger.info("Updating code map with " + guids);
         try {
             // grab cached values (map) in case WS is not available (uses reflection)
             Field f = CollectionsCache.class.getDeclaredField(type.getType() + "s"); // field is plural form
@@ -109,20 +124,30 @@ public class CollectionsCache {
 
         try {
             entityMap = new LinkedHashMap<String, String>(); // reset now we're inside the try
-            final String jsonUri = collectoryUriPrefix + "dataHub/dh1/" + type.getType() + "s.json";
+            final String jsonUri = collectoryUriPrefix + type.getType() + ".json";
             logger.debug("Requesting: " + jsonUri);
             List<LinkedHashMap<String, String>> entities = restTemplate.getForObject(jsonUri, List.class);
             logger.debug("number of entities = " + entities.size());
 
             for (LinkedHashMap<String, String> je : entities) {
-                entityMap.put(je.get("uid"), je.get("name"));
-                logger.debug("uid = " + je.get("uid") + " & name = " + je.get("name"));
+
+                if(addToCodeMap(je.get("uid"), guids)){
+                    entityMap.put(je.get("uid"), je.get("name"));
+                    logger.debug("uid = " + je.get("uid") + " & name = " + je.get("name"));
+                }
             }
         } catch (Exception ex) {
             logger.error("RestTemplate error: " + ex.getMessage(), ex);
         }
 
         return entityMap;
+    }
+
+    private boolean addToCodeMap(String uid, List<String> guids){
+        if(guids != null){
+            return guids.contains(uid);
+        }
+        return true;
     }
     
     /**

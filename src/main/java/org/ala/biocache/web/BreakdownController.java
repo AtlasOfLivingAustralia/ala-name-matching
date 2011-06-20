@@ -64,9 +64,10 @@ public class BreakdownController {
                                 "/breakdown/data-resources/{uuid}*", "/breakdown/data-providers/{uuid}*", "/breakdown/data-hubs/{uuid}*"}, method = RequestMethod.GET)
         public @ResponseBody TaxaRankCountDTO collectionLimitBreakdown(@PathVariable("uuid") String uuid,
                         @RequestParam(value = "max", required = true) Integer max,
+                        @RequestParam(value = "qc", required=false,defaultValue="") String queryContext,
                         Model model) throws Exception {
 
-            return searchDAO.findTaxonCountForUid(searchUtils.getUIDSearchString(uuid.split(",")), max);
+            return searchDAO.findTaxonCountForUid(searchUtils.getUIDSearchString(uuid.split(",")), queryContext, max);
         }
         /**
          * TODO change to individual services...
@@ -99,8 +100,9 @@ public class BreakdownController {
         @RequestMapping(value = {"/breakdown/institutions*","/breakdown/collections*", "/breakdown/data-resources*","/breakdowns/data-providers*","/breakdowns/data-hubs*"}, method = RequestMethod.GET)
         public @ResponseBody TaxaRankCountDTO limitBreakdown(
                         @RequestParam(value = "max", required = true) Integer max,
+                        @RequestParam(value = "qc", required=false,defaultValue="") String queryContext,
                         Model model) throws Exception {
-            return searchDAO.findTaxonCountForUid("*:*", max);
+            return searchDAO.findTaxonCountForUid("*:*", queryContext, max);
         }
 
 
@@ -113,55 +115,59 @@ public class BreakdownController {
                         @PathVariable("rank") String rank,
                         @PathVariable("name") String name,
                         @RequestParam(value="level", required=false) String breakdownLevel,
+                        @RequestParam(value = "qc", required=false,defaultValue="") String queryContext,
                         Model model) throws Exception {
 
              String query = searchUtils.getUIDSearchString(uuid.split(","));
              query +=" AND " + rank + ":" + name;
 
            return searchDAO.findTaxonCountForUid(query,
-				rank,breakdownLevel, false);
+				rank,breakdownLevel, queryContext, false);
         }
 
-        @RequestMapping(value = {"/breakdown/collections/rank/{rank}/name/{name}", "/breakdown/institutions/rank/{rank}/name/{name}",
-                                 "/breakdown/data-providers/rank/{rank}/name/{name}", "/breakdown/data-resources/rank/{rank}/name/{name}",
-                                 "/breakdown/data-hubs/rank/{rank}/name/{name}"}, method = RequestMethod.GET)
+        @RequestMapping(value = {"/breakdown/collections/rank/{rank}/name/{name}*", "/breakdown/institutions/rank/{rank}/name/{name}*",
+                                 "/breakdown/data-providers/rank/{rank}/name/{name}*", "/breakdown/data-resources/rank/{rank}/name/{name}*",
+                                 "/breakdown/data-hubs/rank/{rank}/name/{name}*"}, method = RequestMethod.GET)
         public @ResponseBody TaxaRankCountDTO rankNameBreakdown(
                         @PathVariable("rank") String rank,
                         @PathVariable("name") String name,
+                        @RequestParam(value = "qc", required=false,defaultValue="") String queryContext,
                         Model model) throws Exception {
 
              String query =  rank + ":" + name;
 
            return searchDAO.findTaxonCountForUid(query,
-				rank,null, false);
+				rank,null, queryContext, false);
         }
 
-        @RequestMapping(value = {"/breakdown/collections/{uuid}/rank/{rank}", "/breakdown/institutions/{uuid}/rank/{rank}",
-                                 "/breakdown/data-resources/{uuid}/rank/{rank}", "/breakdown/data-providers/{uuid}/rank/{rank}",
-                                 "/breakdown/data-hubs/{uuid}/rank/{rank}"}, method = RequestMethod.GET)
+        @RequestMapping(value = {"/breakdown/collections/{uuid}/rank/{rank}*", "/breakdown/institutions/{uuid}/rank/{rank}*",
+                                 "/breakdown/data-resources/{uuid}/rank/{rank}*", "/breakdown/data-providers/{uuid}/rank/{rank}*",
+                                 "/breakdown/data-hubs/{uuid}/rank/{rank}*"}, method = RequestMethod.GET)
         public @ResponseBody TaxaRankCountDTO collectionRankBreakdown(
                         @PathVariable("uuid") String uuid,
                         @PathVariable("rank") String rank,
+                        @RequestParam(value = "qc", required=false,defaultValue="") String queryContext,
                         Model model) throws Exception {
 
              String query = searchUtils.getUIDSearchString(uuid.split(","));
 
 
            return searchDAO.findTaxonCountForUid(query,
-				rank,null, true);
+				rank,null, queryContext, true);
         }
 
-        @RequestMapping(value = {"/breakdown/collections/rank/{rank}", "/breakdown/institutions/rank/{rank}",
-                                 "/breakdown/data-providers/rank/{rank}", "/breakdown/data-resources/rank/{rank}",
-                                 "/breakdown/data-hubs/rank/{rank}"}, method = RequestMethod.GET)
+        @RequestMapping(value = {"/breakdown/collections/rank/{rank}*", "/breakdown/institutions/rank/{rank}*",
+                                 "/breakdown/data-providers/rank/{rank}*", "/breakdown/data-resources/rank/{rank}*",
+                                 "/breakdown/data-hubs/rank/{rank}*"}, method = RequestMethod.GET)
         public @ResponseBody TaxaRankCountDTO rankBreakdown(
                         @PathVariable("rank") String rank,
+                        @RequestParam(value = "qc", required=false,defaultValue="") String queryContext,
                         Model model) throws Exception {
 
              String query = "*:*";
 
            return searchDAO.findTaxonCountForUid(query,
-				rank,null, false);
+				rank,null, queryContext, false);
         }
 
 

@@ -182,7 +182,7 @@ public interface SearchDAO {
     Map<String,Integer> getSourcesForQuery(String query, String[] filterQuery) throws Exception;
 
 
-    TaxaRankCountDTO findTaxonCountForUid(String query, int maximumFacets) throws Exception;
+    TaxaRankCountDTO findTaxonCountForUid(String query, String queryContext, int maximumFacets) throws Exception;
     /**
      * Returns the scientific name and counts for the taxon rank that proceed or include the supplied rank.
      * @param query
@@ -191,6 +191,6 @@ public interface SearchDAO {
      * @return
      * @throws Exception
      */
-    TaxaRankCountDTO findTaxonCountForUid(String query, String rank,String returnRank, boolean includeSuppliedRank) throws Exception;
+    TaxaRankCountDTO findTaxonCountForUid(String query, String rank,String returnRank, String queryContext, boolean includeSuppliedRank) throws Exception;
 }
 
