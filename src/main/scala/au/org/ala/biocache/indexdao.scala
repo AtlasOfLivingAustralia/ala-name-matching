@@ -180,7 +180,7 @@ trait IndexDAO {
                     else
                         Array[String]("")
                 }
-                val sdatahubs = getValue("dataHubUid.p",map)
+                val sdatahubs = getValue("dataHubUid",map, true)
                 val dataHubUids = {
                     if (sdatahubs.length > 0)
                         Json.toArray(sdatahubs, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]]
@@ -224,9 +224,9 @@ trait IndexDAO {
                     if(dataHubUids != null && dataHubUids.size>0)dataHubUids.reduceLeft(_+"|"+_) else"",
                     getValue("dataHub.p", map),
                     getValue("dataProviderUid", map, true),
-                    getValue("dataProviderName.p", map),
+                    getValue("dataProviderName", map, true),
                     getValue("dataResourceUid", map, true),
-                    getValue("dataResourceName.p", map),
+                    getValue("dataResourceName", map, true),
                     getValue("institutionUid.p", map),
                     getValue("institutionCode", map),
                     getValue("institutionName.p", map),
