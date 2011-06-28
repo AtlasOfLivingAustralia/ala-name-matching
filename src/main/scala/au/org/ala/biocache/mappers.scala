@@ -106,9 +106,8 @@ object FullRecordMapper {
    * Sets the properties on the supplied object based on 2 maps
    * <ol>
    * <li>Map of source names to values</li>
-   * <li>Map of source names to taget values</li>
+   * <li>Map of source names to target values</li>
    * </ol>
-   *
    */
   def mapmapPropertiesToObject(anObject:AnyRef, valueMap:scala.collection.Map[String,Object], targetMap:scala.collection.Map[String,String]){
       val defn = getDefn(anObject)
@@ -123,7 +122,6 @@ object FullRecordMapper {
             anObject.setter(setter, valueMap.get(sourceName).get)
           }
         }
-
       }
   }
 

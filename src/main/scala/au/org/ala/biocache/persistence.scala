@@ -34,7 +34,6 @@ trait PersistenceManager {
     /**
      * Retrieve an array of objects from a single column.
      */
-    //def getList[A](uuid:String, entityName:String, propertyName:String, theClass:java.lang.Class[AnyRef]) : List[AnyRef]
     def getList[A](uuid: String, entityName: String, propertyName: String, theClass:java.lang.Class[_]) : List[A]
 
     /**
@@ -55,7 +54,6 @@ trait PersistenceManager {
     /**
      * @overwrite if true, current stored value will be replaced without a read.
      */
-    //def putList(uuid:String, entityName:String, propertyName:String, objectList:List[AnyRef], overwrite:Boolean = true) : String
     def putList[A](uuid: String, entityName: String, propertyName: String, objectList:List[A], theClass:java.lang.Class[_], overwrite: Boolean) : String
 
     /**
@@ -67,13 +65,16 @@ trait PersistenceManager {
     /**
      * Page over the records, retrieving the supplied columns only.
      */
-    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String, pageSize:Int, columnName:String*)
+    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int, columnName:String*)
 
     /**
      * Select the properties for the supplied record UUIDs
      */
     def selectRows(uuids:Array[String],entityName:String,propertyNames:Array[String],proc:((Map[String,String])=>Unit))
 
+    /**
+     * The column to delete.
+     */
     def deleteColumn(uuid:String, entityName:String, columnName:String)
 
     /**
@@ -81,7 +82,9 @@ trait PersistenceManager {
      */
     def shutdown
 
-
+    /**
+     * The field delimiter to use
+     */
     def fieldDelimiter = '.'
 }
 
@@ -276,7 +279,7 @@ class CassandraPersistenceManager @Inject() (
       //Please note we are not paging by UTF8 because it is much slower
       var columnMap = selector.getColumnsFromRows(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE)
       var continue = true
-      while (columnMap.size>0 && continue) {
+      while (!columnMap.isEmpty && continue) {
         val columnsObj = List(columnMap.keySet.toArray : _*)
         //convert to scala List
         val keys = columnsObj.asInstanceOf[List[Bytes]]
@@ -285,7 +288,7 @@ class CassandraPersistenceManager @Inject() (
           val columnList = columnMap.get(buuid)
           //procedure a map of key value pairs
           val map = columnList2Map(columnList)
-          val uuid = if(map.contains("uuid")) map.get("uuid").get.toString else buuid.toUTF8
+          val uuid = map.getOrElse("uuid", buuid.toUTF8)
           //pass the record ID and the key value pair map to the proc
           continue = proc(uuid, map)
         }
@@ -301,9 +304,9 @@ class CassandraPersistenceManager @Inject() (
      * Pages over all the records with the selected columns.
      * @param columnName The names of the columns that need to be provided for processing by the proc
      */
-    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String, pageSize:Int, columnName:String*){
+    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int, columnName:String*){
       val slicePredicate = Selector.newColumnsPredicate(columnName:_*)
-      pageOver(entityName, proc, pageSize, slicePredicate, startUuid)
+      pageOver(entityName, proc, pageSize, slicePredicate)
     }
 //
 //    /**
@@ -382,6 +385,10 @@ class CassandraPersistenceManager @Inject() (
     }
 
     def shutdown = Pelops.shutdown
+    
+    /**
+     * Delete the value for the supplied column 
+     */
     def deleteColumn(uuid:String, entityName:String, columnName:String)={
       if(uuid != null && entityName != null && columnName != null){
         val mutator = Pelops.createMutator(poolName)
@@ -560,7 +567,7 @@ class MongoDBPersistenceManager @Inject()(
     def deleteColumn(uuid:String, entityName:String, columnName:String)={
       throw new RuntimeException("currently not implemented")
     }
-    def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid:String, pageSize: Int, columnName: String*) = {
+    def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, pageSize: Int, columnName: String*) = {
 
         //page through all records
         val mongoColl = mongoConn(db)(entityName)

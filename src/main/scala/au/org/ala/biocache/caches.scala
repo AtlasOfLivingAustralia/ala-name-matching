@@ -12,7 +12,6 @@ import au.org.ala.checklist.lucene.{CBIndexSearch, HomonymException, SearchResul
 import scala.io.Source
 import org.slf4j.LoggerFactory
 
-
 /**
  * A DAO for accessing classification information in the cache. If the
  * value does not exist in the cache the name matching API is called.
@@ -21,7 +20,6 @@ import org.slf4j.LoggerFactory
  * name causes a homonym exeception or is not found the ErrorCode is stored.
  *
  * @author Natasha Carter
- *
  */
 object ClassificationDAO {
 
@@ -314,6 +312,18 @@ object LocationDAO {
     persistenceManager.put(guid, columnFamily, properties.toMap)
   }
 
+  /**
+   * Add a region mapping for this point.
+   */
+  def addRegionToPoint (latitude:String, longitude:String, mapping:Map[String,String]) {
+    val guid = latitude +"|"+longitude
+    var properties = scala.collection.mutable.Map[String,String]()
+    properties ++= mapping
+    properties.put("decimalLatitude", latitude)
+    properties.put("decimalLongitude", longitude)
+    persistenceManager.put(guid, columnFamily, properties.toMap)
+  }  
+  
   /**
    * Round coordinates to 4 decimal places.
    */
