@@ -13,6 +13,11 @@ trait Processor {
   def process(uuid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion]
   def getName():String
 }
+object Processors{
+  val processorMap = Map("IMAGE"->ImageProcessor, "ATTR"->AttributionProcessor,
+                         "CLASS"->ClassificationProcessor, "BOR"->BasisOfRecordProcessor,
+                         "EVENT"->EventProcessor, "LOC"->LocationProcessor, "TS"->TypeStatusProcessor)
+}
 
 object ImageProcessor extends Processor {
 
@@ -58,7 +63,7 @@ object AttributionProcessor extends Processor {
           processed.reinitObjectArray
           Array()
         } else {
-          Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, "Unrecognised collection code"))
+          Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, "Unrecognised collection code institution code combination"))
         }
     } else {
       Array()
@@ -218,7 +223,7 @@ object BasisOfRecordProcessor extends Processor {
       if (term.isEmpty) {
         //add a quality assertion
         logger.debug("[QualityAssertion] " + guid + ", unrecognised BoR: " + guid + ", BoR:" + raw.occurrence.basisOfRecord)
-        Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,"Unrecognised basis of record"))
+        Array(QualityAssertion(AssertionCodes.BADLY_FORMED_BASIS_OF_RECORD,"Unrecognised basis of record"))
       } else {
         processed.occurrence.basisOfRecord = term.get.canonical
         Array[QualityAssertion]()
@@ -282,23 +287,17 @@ object LocationProcessor extends Processor {
         processed.location.imcra = point.get.imcra
         processed.location.lga = point.get.lga
         processed.location.habitat = point.get.habitat
-        //add the environmental information
-        processed.location.bioclim_bio11 = point.get.bioclim_bio11
-        processed.location.bioclim_bio12 = point.get.bioclim_bio12
-        processed.location.bioclim_bio34 = point.get.bioclim_bio34
-        processed.location.mean_temperature_cars2009a_band1 =point.get.mean_temperature_cars2009a_band1
-        processed.location.mean_oxygen_cars2006_band1 = point.get.mean_oxygen_cars2006_band1
+        
+        //add the country information
+        processed.location.country = point.get.country
+
         //add the layers that are associated with the point
         processed.location.environmentalLayers = point.get.environmentalLayers
         processed.location.contextualLayers = point.get.contextualLayers
         //reinitialise the object array so that the new values for environmental and conetxtual layers are included
         processed.reinitObjectArray
 
-        //TODO - replace with country association with points via the gazetteer
-        if(processed.location.imcra!=null && !processed.location.imcra.isEmpty
-            || processed.location.ibra!=null && !processed.location.ibra.isEmpty){
-            processed.location.country = "Australia"
-        }
+        
 
         //check matched stateProvince
         if (processed.location.stateProvince != null && raw.location.stateProvince != null) {

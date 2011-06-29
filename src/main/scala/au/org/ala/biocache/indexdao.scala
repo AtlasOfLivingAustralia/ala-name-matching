@@ -44,7 +44,7 @@ trait IndexDAO {
     /**
      * Index a record with the supplied properties.
      */
-    def indexFromMap(guid: String, map: Map[String, String])
+    def indexFromMap(guid: String, map: Map[String, String], batch:Boolean=true)
 
     /**
      * Truncate the current index
@@ -124,7 +124,7 @@ trait IndexDAO {
             "collection_uid", "collection_code", "collection_name", "catalogue_number",
             "taxon_concept_lsid", "occurrence_date", "occurrence_year", "taxon_name", "common_name", "names_and_lsid",
             "rank", "rank_id", "raw_taxon_name", "raw_common_name", "multimedia", "image_url",
-            "species_group", "country_code", "lft", "rgt", "kingdom", "phylum", "class", "order",
+            "species_group", "country_code", "country", "lft", "rgt", "kingdom", "phylum", "class", "order",
             "family", "genus", "species","species_guid", "state", "imcra", "ibra", "places", "latitude", "longitude",
             "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
             "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
@@ -246,6 +246,7 @@ trait IndexDAO {
                     if (images != null && images.size > 0) images(0) else "",
                     if (speciesGroup != null) speciesGroup.reduceLeft(_ + "|" + _) else "",
                     getValue("countryCode", map),
+                    getValue("country.p", map),
                     getValue("left.p", map),
                     getValue("right.p", map),
                     kingdom, getValue("phylum.p", map),
@@ -443,7 +444,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     /**
      * A SOLR specific implementation of indexing from a map.
      */
-    override def indexFromMap(guid: String, map: Map[String, String]) = {
+    override def indexFromMap(guid: String, map: Map[String, String], batch:Boolean=true) = {
         //val header = getHeaderValues()
         val values = getOccIndexModel(guid, map)
         if(values.length != header.length){
@@ -475,6 +476,13 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
             
 //            println("Adding guid: " + guid)
            // SolrIndexDAO.solrServer.add(doc);
+
+
+           if(!batch){
+             solrServer.add(doc);
+             solrServer.commit
+           }
+           else{
             solrDocList.add(doc)
 //            if (solrDocList.size == 20000) {
 //                try {
@@ -495,6 +503,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
               thread ! tmpDocList
               solrDocList.clear
             }
+           }
       }
     }
 

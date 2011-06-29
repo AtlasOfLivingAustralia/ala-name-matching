@@ -33,6 +33,8 @@ trait OccurrenceDAO {
 
     def pageOverAll(version: Version, proc: ((Option[FullRecord]) => Boolean),startUuid:String="", pageSize: Int = 1000): Unit
 
+    def pageOverSelectAll(version: Version, proc: ((Option[FullRecord]) => Boolean),fields: Array[String],startUuid:String="", pageSize: Int = 1000): Unit
+
     def pageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),startUuid:String="", pageSize: Int = 1000): Unit
 
     def addRawOccurrenceBatch(fullRecords: Array[FullRecord]): Unit
@@ -73,6 +75,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     protected val logger = LoggerFactory.getLogger("OccurrenceDAO")
     @Inject
     var persistenceManager: PersistenceManager = _
+    @Inject
     var indexDAO: IndexDAO = _
 
     /**
@@ -190,6 +193,14 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             //pass all version to the procedure, wrapped in the Option
             proc(Some(fullRecord))
         },startUuid, pageSize)
+    }
+
+    /**
+     * Iterates over the sepcified version of all the occurrence records. The values retrieved
+     * from the persistence manager is limited to the supplied fields
+     */
+    def pageOverSelectAll(version: Version, proc: ((Option[FullRecord]) => Boolean),fields: Array[String],startUuid:String="", pageSize: Int = 1000){
+
     }
 
     /**
@@ -424,7 +435,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * TODO change this so that it is updating the contents not replacing - will need this functionality when particular processing phases can be run seperately
      */
     def updateSystemAssertions(uuid: String, qualityAssertions: Map[String,Array[QualityAssertion]]) {
-        var assertions = new ListBuffer[QualityAssertion]
+        var assertions = new ListBuffer[QualityAssertion] //getSystemAssertions(uuid)
         for(qas <- qualityAssertions.values){
           assertions ++= qas
         }
@@ -564,15 +575,23 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      */
     def reIndex(uuid: String) {
         logger.debug("Reindexing UUID: " + uuid)
-        val recordVersions = getAllVersionsByUuid(uuid)
-        if (recordVersions.isEmpty) {
-            logger.debug("Unable to reindex UUID: " + uuid)
-        } else {
-            val occurrenceIndex = indexDAO.getOccIndexModel(recordVersions.get)
-            if (!occurrenceIndex.isEmpty) {
-                indexDAO.index(occurrenceIndex.get)
-                logger.debug("Reindexed UUID: " + uuid)
-            }
+        val map = persistenceManager.get(uuid, entityName)        
+        //index from the map - this should be more efficient
+        if(map.isEmpty){
+          logger.debug("Unable to reindex UUID: " + uuid)
         }
+        else{
+          indexDAO.indexFromMap(uuid, map.get, false)
+        }
+//        val recordVersions = getAllVersionsByUuid(uuid)
+//        if (recordVersions.isEmpty) {
+//            logger.debug("Unable to reindex UUID: " + uuid)
+//        } else {
+//            val occurrenceIndex = indexDAO.getOccIndexModel(recordVersions.get)
+//            if (!occurrenceIndex.isEmpty) {
+//                indexDAO.index(occurrenceIndex.get)
+//                logger.debug("Reindexed UUID: " + uuid)
+//            }
+//        }
     }
 }
