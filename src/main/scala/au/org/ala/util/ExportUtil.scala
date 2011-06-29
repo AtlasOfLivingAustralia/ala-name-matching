@@ -39,7 +39,7 @@ object ExportUtil {
       }
       counter += 1
       maxRecords > counter
-    }, maxRecords, fieldsToExport:_*)
+    }, "", maxRecords, fieldsToExport:_*)
     //close db connections
     Pelops.shutdown
   }

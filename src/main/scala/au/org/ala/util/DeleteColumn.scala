@@ -26,7 +26,7 @@ object DeleteColumn {
             }
         })
         true
-    }, 1000, args.tail:_*)
+    }, "", 1000, args.tail:_*)
     
     Config.persistenceManager.shutdown
     println("Complete.")

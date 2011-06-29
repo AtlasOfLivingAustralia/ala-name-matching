@@ -1,17 +1,14 @@
-
-
 package au.org.ala.util
 
 /**
  * Reloads the data resource information for the records
  */
-
 import au.org.ala.biocache._
 
 object ReloadDataResources {
 
    val cache = new scala.collection.mutable.HashMap[String, Map[String, String]]
-   val pm = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
+   val pm = Config.persistenceManager
    def main(args: Array[String]): Unit = {
     println("Reloading the data resource values...")
     val start = if(args.length>0)args(0) else ""
