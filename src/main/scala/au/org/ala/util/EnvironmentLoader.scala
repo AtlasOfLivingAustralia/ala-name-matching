@@ -12,7 +12,27 @@ object EnvironmentLoader {
 
     private val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
-    private val fieldMap = Map[String, String]("aus1" -> "stateProvince", "aus2" -> "lga", "ibra_reg_shape" -> "ibra", "imcra4_pb" -> "imcra", "ne_world" -> "country")
+    private val nonDefaultFieldMap = Map[String, String]("aus1" -> "stateProvince", "aus2" -> "lga", "ibra_reg_shape" -> "ibra", "imcra4_pb" -> "imcra", "ne_world" -> "country")
+
+    //TODO Move this name mapping so that the biocache-service can use it to map layers to indexed items
+    private val fieldMap = fileToMap("/layers.txt")
+
+    /**
+     * Maps the layers file to a map of names to ids
+     */
+    protected def fileToMap(file:String) :Map[String, String] = {
+      val lines =scala.io.Source.fromURL(getClass.getResource(file), "utf-8").getLines
+      var fields = new scala.collection.mutable.HashMap[String, String]
+      for(line:String <-lines){
+        val values = line.split(",")
+        val mapping = nonDefaultFieldMap.getOrElse(values(1), getPrefix(values(2))+values(0))
+        fields += values(1).toLowerCase-> mapping
+      }
+      fields.toMap
+    }
+    //The prefix for the layer id
+    def getPrefix(value:String) = if(value == "Environmental") "el" else "cl"
+
 
     def main(args: Array[String]): Unit = {
     	
@@ -29,14 +49,14 @@ object EnvironmentLoader {
             for (name <- file.list) {
                 try {
                     val filepath = fileName + File.separator + name
-                    val fieldName = name.substring(0, name.indexOf(".")).replaceAll("-", "_")
+                    val fieldName = name.toLowerCase.substring(0, name.indexOf("."))//name.substring(0, name.indexOf(".")).replaceAll("-", "_")                    
                     processFile(filepath, getFieldName(fieldName))
                 } catch {
                     case e: Exception => println("WARNING: Unable to load " + name.replaceAll("-", "_"))
                 }
             }
         } else {
-            val fieldName = fileName.substring(fileName.lastIndexOf(File.separator) + 1, fileName.indexOf(".")).replaceAll("-", "_")
+            val fieldName = fileName.substring(fileName.lastIndexOf(File.separator) + 1, fileName.indexOf(".")).replaceAll("-", "_")           
             processFile(fileName, getFieldName(fieldName))
         }
         persistenceManager.shutdown
@@ -56,8 +76,7 @@ object EnvironmentLoader {
         val columnsHeaders = csvReader.readNext //ignore the firs line
         var parts: Array[String] = csvReader.readNext
 
-        //val occMap = new scala.collection.mutable.HashMap[String, Map[String, String]]()
-        //val drMap = new scala.collection.mutable.HashMap[String, Map[String, String]]()
+    
         while (parts != null) {
             counter += 1
             //add point with details to
