@@ -85,6 +85,10 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>jcl-over-slf4j</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <!--  ALA Name matching -->
@@ -161,8 +165,8 @@
         <!-- SCALA -> JAVA COLLECTIONS -->
         <dependency>
             <groupId>org.scalaj</groupId>
-            <artifactId>scalaj-collection_2.8.0</artifactId>
-            <version>1.0</version>
+            <artifactId>scalaj-collection_2.8.1</artifactId>
+            <version>1.1</version>
         </dependency>
         <!-- SCALATEST -->
         <dependency>
@@ -176,84 +180,63 @@
             <version>4.4</version>
             <scope>test</scope>
         </dependency>
-        <!-- PELOPS - Cassandra Connection Pooling
-            This verison is necessary for Cassandra 0.6.x
+        <!--
+            Pelops library for cassandra 0.7.x
+            Note the name has been changed so that this library is pulled
+            from the ALA repo copy
         -->
-
-        <!--dependency>
-            <groupId>org.wyki</groupId>
-            <artifactId>pelops</artifactId>
-            <version>0.805-0.6.4</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.cassandra</groupId>
-                    <artifactId>cassandra</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.cassandra</groupId>
-                    <artifactId>libthrift-r917130</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency-->
-        <!-- New Pelops library for cassandra 0.7.x -->
         <dependency>
             <groupId>org.scale7</groupId>
             <artifactId>scale7-pelops</artifactId>
             <version>1.1-0.7.x-SNAPSHOT</version>
         </dependency>
-        <!-- Allow the Pelops library to control the versions of cassandra and thrift that should be used... -->
-        <!--dependency>
-            <groupId>org.apache.cassandra</groupId>
-            <artifactId>apache-cassandra</artifactId>
-            <version>0.6.9</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cassandra</groupId>
-            <artifactId>libthrift-r917130</artifactId>
-            <version>0.6.9</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.cassandra</groupId>
-                    <artifactId>cassandra</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.thrift</groupId>
-            <artifactId>thrift</artifactId>
-            <version>0.2.0</version>
-        </dependency-->
         <!-- MongoDB -->
         <dependency>
             <groupId>com.mongodb.casbah</groupId>
             <artifactId>casbah-query_2.8.1</artifactId>
             <version>2.1.1</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.mongodb.casbah</groupId>
             <artifactId>casbah-core_2.8.1</artifactId>
             <version>2.1.1</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.mongodb.casbah</groupId>
             <artifactId>casbah-commons_2.8.1</artifactId>
             <version>2.1.1</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.mongodb.casbah</groupId>
             <artifactId>casbah-gridfs_2.8.1</artifactId>
             <version>2.1.1</version>
+            <scope>provided</scope>
         </dependency>
         <!-- SOLR -->
         <dependency>
             <artifactId>solr-core</artifactId>
             <groupId>org.apache.solr</groupId>
             <version>3.1.0</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>org.slf4j</artifactId>
+                    <groupId>slf4j-jdk14</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <artifactId>solr-solrj</artifactId>
             <groupId>org.apache.solr</groupId>
             <version>3.1.0</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>org.slf4j</artifactId>
+                    <groupId>slf4j-jdk14</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- Spatial-SORL plugin patched by Adam Collins (ALA Spatial Team) to have wkt support-->
         <dependency>
