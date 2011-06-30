@@ -12,7 +12,7 @@
  *  implied. See the License for the specific language governing
  *  rights and limitations under the License.
  ***************************************************************************/
-package org.ala.biocache.web;
+package org.ala.biocache.twitter;
 
 import java.net.URLEncoder;
 

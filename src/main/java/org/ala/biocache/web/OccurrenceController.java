@@ -180,7 +180,7 @@ public class OccurrenceController {
 
     }
 
-	   /**
+  /**
      * Occurrence search for a given collection, institution, data_resource or data_provider.
      *
      * @param requestParams The search parameters

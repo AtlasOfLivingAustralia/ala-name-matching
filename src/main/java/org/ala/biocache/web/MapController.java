@@ -16,33 +16,28 @@ package org.ala.biocache.web;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Polygon;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
-import java.awt.TexturePaint;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.ala.biocache.dao.SearchDAO;
 import org.ala.biocache.dto.OccurrencePoint;
 import org.ala.biocache.dto.PointType;
-import org.ala.biocache.dto.SearchQuery;
 import org.ala.biocache.dto.SpatialSearchRequestParams;
 import org.ala.biocache.util.SearchUtils;
 import org.apache.commons.lang.StringUtils;
@@ -52,6 +47,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.context.ServletConfigAware;
 
 /**
  * WMS and static map controller
@@ -59,17 +55,20 @@ import org.springframework.web.bind.annotation.RequestParam;
  * @author "Ajay Ranipeta <Ajay.Ranipeta@csiro.au>"
  */
 @Controller("mapController")
-public class MapController {
+public class MapController implements ServletConfigAware {
 
     /** Logger initialisation */
     private final static Logger logger = Logger.getLogger(MapController.class);
-    private String baseMapPath = "/data/tmp/mapaus1_white.png";
+    
+    private String baseMapPath = "/images/mapaus1_white.png";
     /** Fulltext search DAO */
     @Inject
     protected SearchDAO searchDAO;
     /** Search Utils helper class */
     @Inject
     protected SearchUtils searchUtils;
+    
+    private ServletConfig cfg;
 
      @RequestMapping(value = "/occurrences/wms", method = RequestMethod.GET)
     public void pointsWmsImage(SpatialSearchRequestParams requestParams,
@@ -81,6 +80,7 @@ public class MapController {
             @RequestParam(value = "symbol", required = false, defaultValue = "circle") String symbol,
             @RequestParam(value = "bbox", required = false, defaultValue = "110,-45,157,-9") String bboxString,
             @RequestParam(value = "type", required = false, defaultValue = "normal") String type,
+            HttpServletRequest request,
             HttpServletResponse response)
             throws Exception {
 
@@ -95,7 +95,7 @@ public class MapController {
         String[] filterQuery = requestParams.getFq();
 
         if (StringUtils.isBlank(query)) {
-            displayBlankImage(width, height, false, response);
+            displayBlankImage(width, height, false, request, response);
             return;
         }
 
@@ -119,7 +119,7 @@ public class MapController {
                 bbox[i] = Double.parseDouble(s);
                 i++;
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e.getMessage(), e);
             }
         }
 
@@ -170,7 +170,7 @@ public class MapController {
         logger.debug("Points search for " + pointType.getLabel() + " - found: " + points.size());
 
         if (points.size() == 0) {
-            displayBlankImage(width, height, false, response);
+            displayBlankImage(width, height, false, request, response);
             return;
         }
 
@@ -221,10 +221,8 @@ public class MapController {
             outStream.close();
 
         } catch (Exception e) {
-            System.out.println("Unable to write image: ");
-            e.printStackTrace(System.out);
+            logger.error("Unable to write image",e);
         }
-
     }
 
     @RequestMapping(value = "/occurrences/static", method = RequestMethod.GET)
@@ -233,6 +231,7 @@ public class MapController {
             @RequestParam(value = "width", required = false, defaultValue = "256") Integer widthObj,
             @RequestParam(value = "height", required = false, defaultValue = "256") Integer heightObj,
             @RequestParam(value = "type", required = false, defaultValue = "normal") String type,
+            HttpServletRequest request,
             HttpServletResponse response)
             throws Exception {
 
@@ -249,7 +248,7 @@ public class MapController {
                 bbox[i] = Double.parseDouble(s);
                 i++;
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e.getMessage(),e);
             }
         }
 
@@ -260,7 +259,7 @@ public class MapController {
         String[] filterQuery = requestParams.getFq();
 
         if (StringUtils.isBlank(query)) {
-            displayBlankImage(width, height, true, response);
+            displayBlankImage(width, height, true, request, response);
             return;
         }
 
@@ -295,11 +294,11 @@ public class MapController {
         logger.debug("Points search for " + pointType.getLabel() + " - found: " + points.size());
 
         if (points.size() == 0) {
-            displayBlankImage(width, height, true, response);
+            displayBlankImage(width, height, true, request, response);
             return;
         }
 
-        BufferedImage baseImage = ImageIO.read(new File("/data/tmp/mapaus1_white.png"));
+        BufferedImage baseImage = createBaseMapImage();
         width = baseImage.getWidth();
         height = baseImage.getHeight();
 
@@ -372,10 +371,8 @@ public class MapController {
             outStream.close();
 
         } catch (Exception e) {
-            System.out.println("Unable to write image: ");
-            e.printStackTrace(System.out);
+            logger.error("Unable to write image.",e);
         }
-
     }
 
     @RequestMapping(value = "/occurrences/info", method = RequestMethod.GET)
@@ -411,7 +408,7 @@ public class MapController {
         return "json/infoPointGeojson"; //POINTS_GEOJSON;
     }
 
-    private void displayBlankImage(int width, int height, boolean useBase, HttpServletResponse response) {
+    private void displayBlankImage(int width, int height, boolean useBase, HttpServletRequest request, HttpServletResponse response) {
         try {
             response.setContentType("image/png");
 
@@ -420,7 +417,7 @@ public class MapController {
             //BufferedImage baseImage = ImageIO.read(new File("/data/tmp/mapaus1_white.png"));
             //BufferedImage baseImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             if (useBase) {
-                baseImage = ImageIO.read(new File("/data/tmp/mapaus1_white.png"));
+                baseImage = createBaseMapImage();
             } else {
                 baseImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                 //baseImage.getGraphics().fillRect(0, 0, width, height);
@@ -435,8 +432,7 @@ public class MapController {
             outStream.close();
 
         } catch (Exception e) {
-            System.out.println("Unable to write image: ");
-            e.printStackTrace(System.out);
+            logger.error("Unable to write image", e);
         }
     }
 
@@ -477,8 +473,7 @@ public class MapController {
             outStream.close();
 
         } catch (Exception e) {
-            System.out.println("Unable to write image: ");
-            e.printStackTrace(System.out);
+            logger.error("Unable to write image", e);
         }
     }
 
@@ -561,6 +556,17 @@ public class MapController {
         return pointType;
     }
 
+    /**
+     * Create a buffered image for the static map.
+     * 
+     * @return
+     * @throws IOException
+     */
+	private BufferedImage createBaseMapImage() throws IOException {
+    	InputStream in = this.cfg.getServletContext().getResourceAsStream(baseMapPath);
+        return ImageIO.read(in);
+	}
+    
     public void setSearchDAO(SearchDAO searchDAO) {
         this.searchDAO = searchDAO;
     }
@@ -568,4 +574,9 @@ public class MapController {
     public void setSearchUtils(SearchUtils searchUtils) {
         this.searchUtils = searchUtils;
     }
+
+	@Override
+	public void setServletConfig(ServletConfig cfg) {
+		this.cfg = cfg;
+	}
 }

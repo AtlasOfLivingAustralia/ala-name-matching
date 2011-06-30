@@ -1,4 +1,4 @@
-package org.ala.biocache.web;
+package org.ala.biocache.twitter;
 
 import java.io.BufferedReader;
 import java.io.FileOutputStream;
