@@ -36,6 +36,10 @@
             <name>Scala-Tools Maven2 Repository</name>
             <url>http://scala-tools.org/repo-releases</url>
         </repository>
+        <repository>
+          <id>gbif-all</id>
+          <url>http://repository.gbif.org/content/groups/gbif</url>
+        </repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
@@ -131,13 +135,13 @@
         <dependency>
             <groupId>org.gbif</groupId>
             <artifactId>dwca-reader</artifactId>
-            <version>1.7.3-SNAPSHOT</version>
+            <version>1.7.6</version>
         </dependency>
         <!-- Google Commons -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>r07</version>
+            <version>r09</version>
         </dependency>
         <!-- Google Guice -->
         <dependency>
@@ -244,7 +248,6 @@
             <artifactId>spatial-solr</artifactId>
             <version>2.0-RC5_ssplex_wkt</version>
         </dependency>
-
         <!-- COMMONS -->
         <dependency>
             <groupId>commons-httpclient</groupId>
