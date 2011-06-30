@@ -4,6 +4,8 @@ import au.org.ala.biocache.{Config, CassandraPersistenceManager}
 import org.scale7.cassandra.pelops.{Bytes, Pelops}
 import org.apache.cassandra.thrift.{ConsistencyLevel, InvalidRequestException, CfDef}
 import scala.Array._
+import au.com.bytecode.opencsv.CSVWriter
+import java.io.PrintWriter
 
 /**
  * Utility for exporting data from the biocache.
@@ -16,6 +18,7 @@ object ExportUtil {
     var fieldsRequired = List[String]()
     var entity = ""
     var maxRecords = Integer.MAX_VALUE
+    val writer = new CSVWriter(new PrintWriter(System.out), '\t', '"')
     
 	val parser = new OptionParser("export") {
 	  arg("<entity>", "the entity (column family in cassandra) to export from", {v: String => entity = v})
@@ -25,17 +28,19 @@ object ExportUtil {
 	}
 
     if (parser.parse(args)) {
-        export(entity,fieldsToExport,fieldsRequired,maxRecords)
+      export(writer, entity,fieldsToExport,fieldsRequired,maxRecords)
     }
+    writer.flush
+    writer.close
   }
   
-  def export(entity:String, fieldsToExport:List[String], fieldsRequired: List[String], maxRecords:Int) {
+  def export(writer:CSVWriter, entity:String, fieldsToExport:List[String], fieldsRequired: List[String], maxRecords:Int) {
     val pm = Config.persistenceManager
     var counter = 0
     //page through and create the index
     pm.pageOverSelect(entity, (guid, map) => {
       if(fieldsRequired.forall(field => map.contains(field))){  
-    	  exportRecord(fieldsToExport, guid, map)
+    	  exportRecord(writer, fieldsToExport, guid, map)
       }
       counter += 1
       maxRecords > counter
@@ -44,12 +49,8 @@ object ExportUtil {
     Pelops.shutdown
   }
   
-  def exportRecord(fieldsToExport: List[String], guid: String, map: Map[String,String]) {
-    print(guid)
-    for(field <- fieldsToExport){
-        print('\t')
-        print(map.getOrElse(field, ""))
-    }
-    print('\n')
+  def exportRecord(writer:CSVWriter, fieldsToExport: List[String], guid: String, map: Map[String,String]) {
+    val line = Array(guid) ++ (for(field <- fieldsToExport) yield map.getOrElse(field, ""))
+    writer.writeNext(line)
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Markjs records for deletion.
+ * Mark's records for deletion.
  *
  * TODO Make more generic...
  */
@@ -19,8 +19,8 @@ object DeleteRecords {
     //TO DO generic criteria to delete records...
     //maybe specify list of collection uids, institution, etc
     // a file that contains a lits of record source uids
-     var counter = 0
-     var delCount =0
+    var counter = 0
+    var delCount =0
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
@@ -49,6 +49,4 @@ object DeleteRecords {
     finishTime = System.currentTimeMillis
     println("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
   }
-
-
 }

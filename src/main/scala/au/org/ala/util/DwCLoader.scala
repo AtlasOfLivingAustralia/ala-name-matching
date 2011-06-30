@@ -1,102 +1,179 @@
-/**************************************************************************
- *  Copyright (C) 2010 Atlas of Living Australia
- *  All Rights Reserved.
- * 
- *  The contents of this file are subject to the Mozilla Public
- *  License Version 1.1 (the "License"); you may not use this file
- *  except in compliance with the License. You may obtain a copy of
- *  the License at http://www.mozilla.org/MPL/
- * 
- *  Software distributed under the License is distributed on an "AS
- *  IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- *  implied. See the License for the specific language governing
- *  rights and limitations under the License.
- ***************************************************************************/
 package au.org.ala.util
-
+import scala.io.Source
+import scala.util.parsing.json._
+import org.apache.commons.io.FileUtils
 import java.io.File
-import org.gbif.dwc.terms._
-import org.gbif.dwc.text._
+import java.io.FileInputStream
+import java.io.FileWriter
+import java.io._
+import java.util.jar.JarFile
+import org.gbif.dwc.text.ArchiveFactory
+import org.gbif.dwc.terms.DwcTerm
+import scala.collection.mutable.ArrayBuffer
 import au.org.ala.biocache._
-import collection.mutable.ArrayBuffer
-import scala.actors._
-import scala.actors.Actor
-import collection.JavaConversions
+import org.gbif.dwc.terms.TermFactory
+import org.gbif.dwc.terms.ConceptTerm
+import org.apache.commons.io.FilenameUtils
+import scala.collection.mutable.ListBuffer
+import java.util.UUID
 
 /**
- * Reads a DwC-A and writes the data to the BioCache
+ * Loading utility for pulling in a darwin core archive file.
  * 
- * @author Dave Martin (David.Martin@csiro.au)
+ * This class will retrieve details from the collectory and load in a darwin core archive.
+ * The workflow is the following:
+ * 
+ * <ol>
+ * <li>Retrieve JSON from collectory</li>
+ * <li>Download the zipped archive to the local file system</li>
+ * <li>Extract</li>
+ * <li>Load</li>
+ * </ol>
+ * 
+ * Optimisations - with a significant memory allocation, this loader _could_ retrieve all
+ * uniqueKey to UUID mappings first.
+ * 
+ * This makes this class completely reliant upon configuration in the collectory.
+ * 
+ * @author Dave Martin
  */
 object DwCLoader {
 
-  val hosts = Array { "localhost" }
-  val keyspace = "occ"
-  val columnFamily = "occ"
-  val poolName = "occ-pool"
-  val resourceUid = "dp20"
-
-  val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
-  val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
-
-  def main(args: Array[String]): Unit = {
-
-    import scala.actors.Actor._
-    import JavaConversions._
-    import scalaj.collection.Imports._
+    import FileHelper._
     import ReflectBean._
-    println(">>> Starting DwC loader ....")
-    val file = new File("/data/biocache/ozcam/")
-    val archive = ArchiveFactory.openArchive(file)
-    val iter = archive.iteratorDwc
-    val terms = DwcTerm.values
-    var count = 0
 
-    var startTime = System.currentTimeMillis
-    var finishTime = System.currentTimeMillis
-    var currentBatch = new ArrayBuffer[au.org.ala.biocache.FullRecord]
+    def main(args: Array[String]): Unit = {
 
-    while (iter.hasNext) {
-
-      count += 1
-      //the newly assigned record UUID
-      val dwc = iter.next
-
-      //the details of how to construct the UniqueID belong in the Collectory
-      val cc: String = dwc.getProperty(DwcTerm.collectionCode)
-      val ic: String = dwc.getProperty(DwcTerm.institutionCode)
-      val cn: String = dwc.getProperty(DwcTerm.catalogNumber)
-      val uniqueID = resourceUid + "|" + ic + "|" + cc + "|" + cn
-
-      //create a map of properties
-      val fieldTuples:Array[(String,String)] = {
-        (for {
-          term <- terms
-          val property = dwc.getterWithOption(term.simpleName)
-          if (!property.isEmpty && property.get.toString.trim.length>0)
-        } yield (term.simpleName -> property.get.toString))
-      }
-
-       //lookup the column
-      val recordUuid = occurrenceDAO.createOrRetrieveUuid(uniqueID)
-      val fullRecord = FullRecordMapper.createFullRecord(recordUuid, fieldTuples, Raw)
-
-      currentBatch += fullRecord
-
-      //debug
-      if (count % 1000 == 0 && count > 0) {
-
-        occurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)
-        finishTime = System.currentTimeMillis
-        println(count + ", >> last key : " + uniqueID + ", UUID: " + recordUuid + ", records per sec: " + 1000 / (((finishTime - startTime).toFloat) / 1000f))
-        startTime = System.currentTimeMillis
-        //clear the buffer
-        currentBatch.clear
-      }
+        var resourceUid = ""
+        var localFilePath:Option[String] = None
+        var temporaryFileStore = "/data/biocache-load"
+        
+        val parser = new OptionParser("load darwin core archive") {
+            arg("<data resource UID>", "The UID of the data resource to load", {v: String => resourceUid = v})
+            opt("l", "local", "skip the download and use local file", {v:String => localFilePath = Some(v) } )
+            opt("t", "temp-store", "temporary file store", {v:String => temporaryFileStore = v } )
+        }
+        if(parser.parse(args)){
+            if(localFilePath.isEmpty){
+            	load(resourceUid, temporaryFileStore)
+            } else {
+                loadLocal(resourceUid, localFilePath.get)
+            }
+        }
     }
-    //commit the batch
-    occurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)
-    persistenceManager.shutdown
-    println("Finished DwC loader. Records processed: " + count)
-  }
+    
+    def downloadArchive(url:String, resourceUid:String, temporaryFileStore:String) : String = {
+        val tmpStore = new File(temporaryFileStore)
+        if(!tmpStore.exists){
+        	FileUtils.forceMkdir(tmpStore)
+        }
+
+        print("Downloading zip file.....")
+        val in = (new java.net.URL(url)).openStream
+        val file = new File(temporaryFileStore + resourceUid + ".zip")
+        val out = new FileOutputStream(file)
+        val buffer: Array[Byte] = new Array[Byte](1024)
+        var numRead = 0
+        while ({ numRead = in.read(buffer); numRead != -1 }) {
+            out.write(buffer, 0, numRead)
+            out.flush
+        }
+        printf("Downloaded. File size: %skB\n", file.length / 1024)
+
+        out.flush
+        in.close
+        out.close
+
+        //extract the file
+        file.extractZip
+
+        val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
+        println("Archive extracted to directory: " + fileName)
+        fileName
+    }
+    
+    def load(resourceUid:String, temporaryFileStore:String){
+    	val (url, uniqueTerms) = retrieveConnectionDetails(resourceUid)
+        //download 
+    	val fileName = downloadArchive(url,resourceUid, temporaryFileStore)
+        //load the DWC file
+    	loadArchive(fileName, resourceUid, uniqueTerms)
+    }
+    
+    def loadLocal(resourceUid:String, fileName:String){
+    	val (url, uniqueTerms) = retrieveConnectionDetails(resourceUid)
+        //load the DWC file
+    	loadArchive(fileName, resourceUid, uniqueTerms)
+    }
+    
+    def loadArchive(fileName:String, resourceUid:String, uniqueTerms:List[ConceptTerm]){
+        val archive = ArchiveFactory.openArchive(new File(fileName))
+        val iter = archive.iteratorDwc
+        val terms = DwcTerm.values
+        var count = 0
+
+        var startTime = System.currentTimeMillis
+        var finishTime = System.currentTimeMillis
+        var currentBatch = new ArrayBuffer[au.org.ala.biocache.FullRecord]
+
+        while (iter.hasNext) {
+
+            count += 1
+            //the newly assigned record UUID
+            val dwc = iter.next
+
+            //the details of how to construct the UniqueID belong in the Collectory
+            val uniqueID = {
+                //create the unique ID
+                if (!uniqueTerms.isEmpty) {
+                    val uniqueTermValues = uniqueTerms.map(t => dwc.getProperty(t))
+                    (List(resourceUid) ::: uniqueTermValues).mkString("|")
+                } else {
+                    "dave"
+                }
+            }
+
+            //create a map of properties
+            val fieldTuples = new ListBuffer[(String, String)]() 
+            terms.foreach(term => {
+               val property = dwc.getterWithOption(term.simpleName)
+               if (!property.isEmpty && property.get.toString.trim.length > 0)
+                fieldTuples + (term.simpleName -> property.get.toString)
+            })
+
+            //lookup the column
+            val recordUuid = Config.occurrenceDAO.createOrRetrieveUuid(uniqueID)
+            //val recordUuid = UUID.randomUUID.toString
+            val fullRecord = FullRecordMapper.createFullRecord(recordUuid, fieldTuples.toArray, Raw)
+            //println("record UUID: "  + recordUuid)
+            currentBatch += fullRecord
+
+            //debug
+            if (count % 1000 == 0 && count > 0) {
+                Config.occurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)
+                finishTime = System.currentTimeMillis
+                println(count + ", >> last key : " + uniqueID + ", UUID: " + recordUuid + ", records per sec: " + 1000 / (((finishTime - startTime).toFloat) / 1000f))
+                startTime = System.currentTimeMillis
+                //clear the buffer
+                currentBatch.clear
+            }
+        }
+        //commit the batch
+        Config.occurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)
+        Config.persistenceManager.shutdown
+        println("Finished DwC loader. Records processed: " + count)
+        count
+    }
+    
+    def retrieveConnectionDetails(resourceUid: String): (String, List[org.gbif.dwc.terms.ConceptTerm]) = {
+      
+      val json = Source.fromURL("http://collections.ala.org.au/ws/dataResource/" + resourceUid + ".json").getLines.mkString
+      val map = JSON.parseFull(json).get.asInstanceOf[Map[String, AnyRef]]
+      val connectionParameters = JSON.parseFull(map("connectionParameters").asInstanceOf[String]).get.asInstanceOf[Map[String, AnyRef]]
+      val url = connectionParameters("url").asInstanceOf[String]
+      val termFactory = new TermFactory
+      val uniqueTerms: List[ConceptTerm] = connectionParameters.getOrElse("termsForUniqueKey", List[String]()).asInstanceOf[List[String]].map(term =>
+          termFactory.findTerm(term))
+      (url, uniqueTerms)
+    }
 }

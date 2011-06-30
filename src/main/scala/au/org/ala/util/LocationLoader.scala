@@ -42,9 +42,6 @@ object LocationLoader {
           LocationDAO.addRegionToPoint(latitude, longitude, values)
           if (counter % 1000 == 0) println(counter +": "+latitude+"|"+longitude+", mapping: "+ values)
         }
-
-
-        
       }
     }
     println(counter)
