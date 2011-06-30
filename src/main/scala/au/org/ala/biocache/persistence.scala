@@ -139,10 +139,10 @@ class CassandraPersistenceManager @Inject() (
     def get(uuid:String, entityName:String, propertyName:String) = {
       try {
           val selector = Pelops.createSelector(poolName)
-          val column = selector.getColumnFromRow(entityName,uuid, propertyName, ConsistencyLevel.ONE)
-          Some(new String(column.value.array,"UTF-8"))
+          val column = selector.getColumnFromRow(entityName, uuid, propertyName, ConsistencyLevel.ONE)
+          Some(new String(column.getValue, "UTF-8"))
       } catch {
-          case e:Exception => logger.debug(e.getMessage, e); None
+          case e:Exception => logger.debug(e.getMessage, e); None   //this is only logged as this is expected behaviour with cassandra
       }
     }
 
@@ -308,15 +308,6 @@ class CassandraPersistenceManager @Inject() (
       val slicePredicate = Selector.newColumnsPredicate(columnName:_*)
       pageOver(entityName, proc, pageSize, slicePredicate, startUuid)
     }
-//
-//    /**
-//     * Pages over all the records with the selected columns.
-//     * @param columnName The names of the columns that need to be provided for processing by the proc
-//     */
-//    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), pageSize:Int, colNames:Array[String]){
-//      val slicePredicate = Selector.newColumnsPredicate(colNames:_*)
-//      pageOver(entityName, proc, pageSize, slicePredicate)
-//    }
 
     /**
      * Iterate over all occurrences, passing the objects to a function.

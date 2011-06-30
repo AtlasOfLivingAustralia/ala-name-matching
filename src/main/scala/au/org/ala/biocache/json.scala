@@ -68,13 +68,11 @@ object Json {
     }
 
    def toMap(jsonString:String): scala.collection.Map[String,Object]={
-     try{
-     val mapper = new ObjectMapper
-     mapper.readValue(jsonString,classOf[java.util.Map[String,Object]]).asScala[String,Object];
+     try {
+        val mapper = new ObjectMapper
+        mapper.readValue(jsonString,classOf[java.util.Map[String,Object]]).asScala[String,Object];
+     } catch {
+        case e:Exception => Map()
      }
-     catch{
-       case e:Exception => Map()
-     }
-
    }
 }

@@ -38,7 +38,7 @@ class ConfigModule extends AbstractModule {
             val nameIndex = new CBIndexSearch(properties.getProperty("nameIndexLocation"))
             bind(classOf[CBIndexSearch]).toInstance(nameIndex)
         } catch {
-            case e: Exception => logger.error(e.getMessage, e)
+            case e: Exception => logger.warn("Lucene indexes arent currently available.")
         }
 
         properties.getProperty("db") match {
