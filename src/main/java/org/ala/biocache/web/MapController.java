@@ -252,7 +252,7 @@ public class MapController implements ServletConfigAware {
             }
         }
 
-
+        requestParams.setPageSize(1000);
         requestParams.setStart(0);
         requestParams.setPageSize(Integer.MAX_VALUE);
         String query = requestParams.getQ();
@@ -329,7 +329,7 @@ public class MapController implements ServletConfigAware {
         double height_mult = (height / (pbbox[1] - pbbox[3]));
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        float radius = 10f;
+        //float radius = 10f;
 
         for (i = 0; i < points.size(); i++) {
             OccurrencePoint pt = points.get(i);
@@ -385,21 +385,15 @@ public class MapController implements ServletConfigAware {
             throws Exception {
 
        
-        String[] filterQuery = requestParams.getFq();
-
         if (callback != null && !callback.isEmpty()) {
             response.setContentType("text/javascript");
         } else {
             response.setContentType("application/json");
         }
 
-        
-
         PointType pointType = PointType.POINT_RAW; // default value for when zoom is null
         pointType = getPointTypeForZoomLevel(zoomLevel);
 
-       
-        
         List<OccurrencePoint> points = searchDAO.getOccurrences(requestParams, pointType, "", 1);
         logger.info("Points search for " + pointType.getLabel() + " - found: " + points.size());
         model.addAttribute("points", points);
@@ -422,7 +416,6 @@ public class MapController implements ServletConfigAware {
                 baseImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
                 //baseImage.getGraphics().fillRect(0, 0, width, height);
             }
-
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             ImageIO.write(baseImage, "png", outputStream);
