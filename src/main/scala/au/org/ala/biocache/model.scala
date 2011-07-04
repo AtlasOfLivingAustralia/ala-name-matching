@@ -116,7 +116,9 @@ class Classification extends Cloneable with Mappable {
   @BeanProperty var phylum:String = _
   @BeanProperty var classs:String = _
   @BeanProperty var order:String = _
+  @BeanProperty var superfamily:String = _	//an addition to darwin core
   @BeanProperty var family:String = _
+  @BeanProperty var subfamily:String = _ //an addition to darwin core
   @BeanProperty var genus:String = _  
   @BeanProperty var subgenus:String = _
   @BeanProperty var species:String = _

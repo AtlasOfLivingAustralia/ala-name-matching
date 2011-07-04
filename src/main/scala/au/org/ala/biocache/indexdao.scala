@@ -374,8 +374,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     val cc = new CoreContainer.Initializer().initialize
     val solrServer = new EmbeddedSolrServer(cc, "")
 
-
-
     @Inject
     var occurrenceDAO:OccurrenceDAO = _
 
@@ -411,7 +409,11 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     }
 
     def emptyIndex() {
-        solrServer.deleteByQuery("*:*")
+        try {
+        	solrServer.deleteByQuery("*:*")
+        } catch {
+            case _ => println("Problem clearing index...")
+        }
     }
 
     def finaliseIndex() {
@@ -522,7 +524,6 @@ class SolrIndexActor extends Actor{
   var processed = 0
   var received =0
 
-
   def ready = processed==received
   def act {
     loop{
@@ -532,13 +533,12 @@ class SolrIndexActor extends Actor{
           println("Sending docs to SOLR "+ docs.size+"-" + received)
           received += 1
           try {
-                    solrServer.add(docs)
-                    solrServer.commit
-                    //printNumDocumentsInIndex
-                }
-                catch {
-                    case e: Exception => logger.error(e.getMessage, e)
-                }
+              solrServer.add(docs)
+              solrServer.commit
+              //printNumDocumentsInIndex
+          } catch {
+              case e: Exception => logger.error(e.getMessage, e)
+          }
           processed +=1
         }
         case msg:String =>{
