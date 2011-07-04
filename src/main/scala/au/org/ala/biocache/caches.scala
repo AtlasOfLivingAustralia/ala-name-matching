@@ -11,6 +11,7 @@ import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import au.org.ala.checklist.lucene.{CBIndexSearch, HomonymException, SearchResultException}
 import scala.io.Source
 import org.slf4j.LoggerFactory
+import java.net.URLEncoder
 
 /**
  * A DAO for accessing classification information in the cache. If the
@@ -220,17 +221,17 @@ object AttributionDAO {
 
     if(institutionCode!=null && collectionCode!=null){
       val uuid = institutionCode.toUpperCase+"|"+collectionCode.toUpperCase
-
+      
       val cachedObject = lru.get(uuid)      
       if(cachedObject!=null){
         cachedObject.asInstanceOf[Option[Attribution]]
       } else {
         //lookup the collectory against the WS
         logger.info("Looking up collectory web service for " + uuid)
-          val wscontent = WebServiceLoader.getWSStringContent(collectoryURL+"/lookup/inst/"+institutionCode+"/coll/"+collectionCode+".json")
+          val wscontent = WebServiceLoader.getWSStringContent(collectoryURL+"/lookup/inst/"+URLEncoder.encode(institutionCode)+"/coll/"+URLEncoder.encode(collectionCode)+".json")
           val wsmap = Json.toMap(wscontent)
 
-          if(!wsmap.isEmpty){
+        if(!wsmap.isEmpty && !wsmap.contains("error")){
               //attempt to map the attribution proerties from the JSON objects
               val attribution = new Attribution
               //handle the non standard properties
