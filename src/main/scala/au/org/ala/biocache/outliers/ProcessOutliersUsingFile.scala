@@ -99,7 +99,7 @@ object ProcessOutliersUsingFile {
 
     def main(args:Array[String]){
         
-              try {
+        try {
             var cdef = new CfDef("occ", "outliers")
             cdef.column_type = "Standard"
             cdef.comparator_type = "UTF8Type"
@@ -110,10 +110,10 @@ object ProcessOutliersUsingFile {
         }  
         
         
-      val columnHeaders = FileUtils.readFileToString( new File(args(0)) ).split("\t").toList
-      val filePaths = args.tail
-      for(filePath <- filePaths){
-        processFile(filePath, columnHeaders)
-      }
+        val columnHeaders = FileUtils.readFileToString( new File(args(0)) ).split("\t").toList
+        val filePaths = args.tail
+        for(filePath <- filePaths){
+          processFile(filePath, columnHeaders)
+        }
     }
 }
