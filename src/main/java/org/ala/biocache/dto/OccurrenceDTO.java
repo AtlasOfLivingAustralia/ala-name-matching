@@ -29,6 +29,8 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 /**
  * Occurrence DTO bean to be populated by SOLR query via SOLRJ
  *
+ * TODO I think that this one can be deleted.  
+ *
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>"
  */
 public class OccurrenceDTO implements Serializable {
