@@ -528,6 +528,7 @@
    <!-- Not displayed in search resutls -->
    <!-- field name="raw_author" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
    <field name="country_code" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="country" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="lft" type="int" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="rgt" type="int" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <!-- Not necessary for searches and not displayed in results -->
@@ -637,7 +638,7 @@
    <!--  catches all the environment and contextual layers that are being indexed -->
    <!-- They are being stored just in case they need to be faceted on -->
    <dynamicField name="el*" type="double" indexed="true" stored="true"/>
-   <dynamicField name="cl*" type="string" indexed="true" stored="true"/>
+   <dynamicField name="cl*" type="string" indexed="true" stored="false"/>
 
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
         leading wildcard queries. -->
