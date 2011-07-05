@@ -50,8 +50,8 @@ public class GeospatialController {
 
 
     /**
-     * Performs an occurrence search based on wkt. The facet that is returned
-     * is the list of species in the supplied region. 
+     * Performs an occurrence search based on wkt. Use the &facets parameter to
+     * limit the facets to the ones required. eg &facets=species_guid
      * @param requestParams
      * @param url
      * @param model
@@ -63,8 +63,7 @@ public class GeospatialController {
                                     @RequestParam(value = "url", required = false) String url,
                                     Model model) throws Exception {
         
-        requestParams.setQ("*:*");
-        requestParams.setFacets(new String[]{"species_guid"});
+        requestParams.setQ("*:*");       
         //don't limit the factes
         requestParams.setFlimit(-1);
         //check to see if a url has been provided
