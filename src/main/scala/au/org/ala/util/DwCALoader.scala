@@ -37,7 +37,7 @@ import java.util.UUID
  * 
  * @author Dave Martin
  */
-object DwCLoader {
+object DwCALoader {
 
     import FileHelper._
     import ReflectBean._
@@ -127,9 +127,9 @@ object DwCLoader {
                 //create the unique ID
                 if (!uniqueTerms.isEmpty) {
                     val uniqueTermValues = uniqueTerms.map(t => dwc.getProperty(t))
-                    (List(resourceUid) ::: uniqueTermValues).mkString("|")
+                    Some((List(resourceUid) ::: uniqueTermValues).mkString("|"))
                 } else {
-                    "dave"
+                    None
                 }
             }
 
@@ -142,7 +142,13 @@ object DwCLoader {
             })
 
             //lookup the column
-            val recordUuid = Config.occurrenceDAO.createOrRetrieveUuid(uniqueID)
+            val recordUuid = {
+                uniqueID match {
+                    case Some(value) => Config.occurrenceDAO.createOrRetrieveUuid(value)
+                    case None => Config.occurrenceDAO.createUuid
+                }
+            }
+            
             //val recordUuid = UUID.randomUUID.toString
             val fullRecord = FullRecordMapper.createFullRecord(recordUuid, fieldTuples.toArray, Raw)
             //println("record UUID: "  + recordUuid)
