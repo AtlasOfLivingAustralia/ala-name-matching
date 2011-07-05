@@ -26,6 +26,8 @@ trait OccurrenceDAO {
     def getByUuid(uuid: String, version: Version): Option[FullRecord]
 
     def createOrRetrieveUuid(uniqueID: String): String
+    
+    def createUuid = UUID.randomUUID.toString
 
     def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String, uuids: Array[String], fields: Array[String]): Unit
 
@@ -130,7 +132,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
 
         val recordUUID = persistenceManager.get(uniqueID, "dr", "uuid")
         if (recordUUID.isEmpty) {
-            val newUuid = UUID.randomUUID.toString
+            val newUuid = createUuid
             persistenceManager.put(uniqueID, "dr", "uuid", newUuid)
             newUuid
         } else {
