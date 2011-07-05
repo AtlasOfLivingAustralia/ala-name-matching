@@ -16,7 +16,7 @@
     <inceptionYear>2011</inceptionYear>
     <name>biocache-store</name>
     <properties>
-        <scala.version>2.8.1</scala.version>
+        <scala.version>2.9.0-1</scala.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <description>Scala implementation of biocache backend.</description>
@@ -164,12 +164,12 @@
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
-            <version>2.8.1</version>
+            <version>2.9.0-1</version>
         </dependency>
         <!-- SCALA -> JAVA COLLECTIONS -->
         <dependency>
             <groupId>org.scalaj</groupId>
-            <artifactId>scalaj-collection_2.8.1</artifactId>
+            <artifactId>scalaj-collection_2.9.0-1</artifactId>
             <version>1.1</version>
         </dependency>
         <!-- SCALATEST -->
@@ -197,26 +197,26 @@
         <!-- MongoDB -->
         <dependency>
             <groupId>com.mongodb.casbah</groupId>
-            <artifactId>casbah-query_2.8.1</artifactId>
-            <version>2.1.1</version>
+            <artifactId>casbah-query_2.9.0-1</artifactId>
+            <version>2.1.5-1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.mongodb.casbah</groupId>
-            <artifactId>casbah-core_2.8.1</artifactId>
-            <version>2.1.1</version>
+            <artifactId>casbah-core_2.9.0-1</artifactId>
+            <version>2.1.5-1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.mongodb.casbah</groupId>
-            <artifactId>casbah-commons_2.8.1</artifactId>
-            <version>2.1.1</version>
+            <artifactId>casbah-commons_2.9.0-1</artifactId>
+            <version>2.1.5-1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.mongodb.casbah</groupId>
-            <artifactId>casbah-gridfs_2.8.1</artifactId>
-            <version>2.1.1</version>
+            <artifactId>casbah-gridfs_2.9.0-1</artifactId>
+            <version>2.1.5-1</version>
             <scope>provided</scope>
         </dependency>
         <!-- SOLR -->
