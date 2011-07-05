@@ -134,7 +134,7 @@ public interface SearchDAO {
      * @return
      * @throws Exception
      */
-    List<OccurrencePoint> findRecordsForLocation(List<String> taxa, String rank,Float latitude, Float longitude, Float radius, PointType pointType) throws Exception;
+    List<OccurrencePoint> findRecordsForLocation(SpatialSearchRequestParams requestParams, PointType pointType) throws Exception;
 
     
 

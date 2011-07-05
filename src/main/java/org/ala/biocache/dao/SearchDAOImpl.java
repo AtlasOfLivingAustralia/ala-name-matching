@@ -549,28 +549,19 @@ public class SearchDAOImpl implements SearchDAO {
 
     /**
      * @see org.ala.biocache.dao.SearchDAO#findRecordsForLocation(Float, Float, Integer)
-     * IS THIS BEIGN USED.  IS THIS NEEDED???
+     * This is used by explore your area
      */
     @Override
-    public List<OccurrencePoint> findRecordsForLocation(List<String> taxa, String rank, Float latitude, Float longitude, Float radius, PointType pointType) throws Exception {
+    public List<OccurrencePoint> findRecordsForLocation(SpatialSearchRequestParams requestParams, PointType pointType) throws Exception {
         List<OccurrencePoint> points = new ArrayList<OccurrencePoint>(); // new OccurrencePoint(PointType.POINT);
-        String queryString = buildSpatialQueryString("*:*", latitude, longitude, radius);
+        String queryString = buildSpatialQueryString(requestParams);
         //String queryString = formatSearchQuery(query);
         logger.info("location search query: " + queryString + "; pointType: " + pointType.getLabel());
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.setQueryType("standard");
         solrQuery.setQuery(queryString);
 
-        ArrayList<String> filterQueries = new ArrayList<String>();
-        for (String taxon : taxa) {
-            // Don't escape taxon when it is wildcard (*) value as it breaks
-            String taxonName = ("*".equals(taxon)) ? taxon : ClientUtils.escapeQueryChars(taxon);
-            filterQueries.add(rank + ":" + taxonName);
-        }
-
-        solrQuery.setFilterQueries("(" + StringUtils.join(filterQueries, " OR ") + ")");
-        logger.info("filterQueries: " + solrQuery.getFilterQueries()[0]);
-
+       
         solrQuery.setRows(0);
         solrQuery.setFacet(true);
         solrQuery.addFacetField(pointType.getLabel());
