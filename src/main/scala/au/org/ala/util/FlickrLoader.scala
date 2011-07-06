@@ -7,6 +7,7 @@ import au.org.ala.biocache.FullRecord
 import au.org.ala.biocache.Config
 import au.org.ala.biocache.DataLoader
 import scala.collection.mutable.ListBuffer
+import au.org.ala.biocache._
 
 object FlickrLoader extends DataLoader{
     
@@ -30,7 +31,7 @@ object FlickrLoader extends DataLoader{
     
     def harvest(dataResourceUid:String, suppliedStartDate:Option[Date], suppliedEndDate:Option[Date]){
         
-        val (protocol, url, uniqueTerms, params) = retrieveConnectionParameters("dr360")
+        val (protocol, url, uniqueTerms, params) = retrieveConnectionParameters(dataResourceUid)
         val keywords = params.getOrElse("keywords", "").split(",").map(keyword => keyword.trim.replaceAll(" ","").toLowerCase).toList
         
         val endDate = suppliedEndDate.getOrElse( {
@@ -52,23 +53,25 @@ object FlickrLoader extends DataLoader{
         val df =new SimpleDateFormat("yyyy-MM-dd")
         
         // page through the images month-by-month
-        while(currentStartDate.after(startDate)){
+        while (currentStartDate.after(startDate)){
             
             println("Harvesting time period: "+df.format(currentStartDate)+" to "+df.format(currentEndDate));
             val photoIds = getPhotoIdsForDateRange(params, currentStartDate, currentEndDate);
             photoIds.foreach(photoId => {
                 //persist the occurrence with image metadata
-                val (photoPageUrl, fr, tags) = processPhoto(params, photoId)
+                val (photoPageUrl, imageUrl, fr, tags) = processPhoto(params, photoId)
                 if(isOfInterest(tags, keywords)){
-                    load(dataResourceUid, fr, List(photoPageUrl))
+                    load(dataResourceUid, fr, List(photoPageUrl) )
+                    val filePath = MediaStore.save(fr.uuid, dataResourceUid, imageUrl)
+                    fr.occurrence.associatedMedia = filePath
+                    Config.occurrenceDAO.updateOccurrence(fr.uuid, fr, Versions.RAW)
+                    
                 }
             })
             currentEndDate = currentStartDate
             currentStartDate = DateUtils.addDays(currentEndDate, -1)
         }
     }
-    
-    
     
     def isOfInterest(tags:List[String], keywords:List[String]) : Boolean = {
         //match on keywords
@@ -81,16 +84,14 @@ object FlickrLoader extends DataLoader{
         index >=0
     }
     
-    def processPhoto(connectParams:Map[String,String], photoId:String) : (String,FullRecord,List[String]) = {
+    def processPhoto(connectParams:Map[String,String], photoId:String) : (String,String,FullRecord,List[String]) = {
         
         //create an occurrence record
-        val fr = new FullRecord
-        fr.classification.scientificName = ""
+        val fr = new FullRecord     
+        val infoPage:String = makeGetInfoUrl(connectParams, photoId)
+        //println(url)
         
-        val url = makeGetInfoUrl(connectParams, photoId)
-        println(url)
-        
-        val xml = XML.loadString(scala.io.Source.fromURL(url).mkString)
+        val xml = XML.loadString(scala.io.Source.fromURL(infoPage).mkString)
         val listBuffer = new ListBuffer[String]
         //get the tags
         val tags = (xml \\ "tag").foreach(el => {
@@ -150,11 +151,20 @@ object FlickrLoader extends DataLoader{
             val ownerElem = (xml \\ "owner")(0)
             (ownerElem.attribute("username"), ownerElem.attribute("realname"), ownerElem.attribute("location") )
         }
-        (fr.occurrence.occurrenceID,fr, listBuffer.toList)
+        
+        val photoElem = (xml \\ "photo")(0)
+        val farmId = photoElem.attribute("farm").get
+        val serverId = photoElem.attribute("server").get
+        val photoSecret = photoElem.attribute("secret").get
+        val originalformat = photoElem.attribute("originalformat").getOrElse("jpg")
+        val photoImageUrl = "http://farm" + farmId + ".static.flickr.com/"+ serverId + "/" + photoId + "_" + photoSecret + "." + originalformat
+        println(photoImageUrl)
+        
+        (fr.occurrence.occurrenceID, photoImageUrl, fr,listBuffer.toList)
     }
     
     def parseMachineTag(tag:String): (Option[String], String) = {
-        println(tag)
+        //println(tag)
         if(tag.contains("=")){
             val (name, value) = {
                 val parts = tag.split("=")
@@ -189,7 +199,7 @@ object FlickrLoader extends DataLoader{
          "&per_page=" + connectParams("per_page") +
          "&page=" + pageNumber 
     
-    def makeGetInfoUrl(connectParams:Map[String,String], photoId:String) =  connectParams("base_url") + 
+    def makeGetInfoUrl(connectParams:Map[String,String], photoId:String) : String =  connectParams("base_url") + 
          "?method=flickr.photos.getInfo" +  
          "&api_key=" + connectParams("api_key") +
          "&photo_id=" + photoId
