@@ -37,7 +37,7 @@ import java.util.UUID
  * 
  * @author Dave Martin
  */
-object DwCALoader {
+object DwCALoader extends DataLoader {
 
     import FileHelper._
     import ReflectBean._
@@ -93,17 +93,19 @@ object DwCALoader {
     }
     
     def load(resourceUid:String, temporaryFileStore:String){
-    	val (url, uniqueTerms) = retrieveConnectionDetails(resourceUid)
+    	val (protocol, url, uniqueTerms, params) = retrieveConnectionParameters(resourceUid)
+    	val conceptTerms = mapConceptTerms(uniqueTerms)
         //download 
     	val fileName = downloadArchive(url,resourceUid, temporaryFileStore)
         //load the DWC file
-    	loadArchive(fileName, resourceUid, uniqueTerms)
+    	loadArchive(fileName, resourceUid, conceptTerms)
     }
     
     def loadLocal(resourceUid:String, fileName:String){
-    	val (url, uniqueTerms) = retrieveConnectionDetails(resourceUid)
+    	val (protocol, url, uniqueTerms, params) = retrieveConnectionParameters(resourceUid)
+    	val conceptTerms = mapConceptTerms(uniqueTerms)
         //load the DWC file
-    	loadArchive(fileName, resourceUid, uniqueTerms)
+    	loadArchive(fileName, resourceUid, conceptTerms)
     }
     
     def loadArchive(fileName:String, resourceUid:String, uniqueTerms:List[ConceptTerm]){
@@ -169,17 +171,5 @@ object DwCALoader {
         Config.persistenceManager.shutdown
         println("Finished DwC loader. Records processed: " + count)
         count
-    }
-    
-    def retrieveConnectionDetails(resourceUid: String): (String, List[org.gbif.dwc.terms.ConceptTerm]) = {
-      
-      val json = Source.fromURL("http://collections.ala.org.au/ws/dataResource/" + resourceUid + ".json").getLines.mkString
-      val map = JSON.parseFull(json).get.asInstanceOf[Map[String, AnyRef]]
-      val connectionParameters = JSON.parseFull(map("connectionParameters").asInstanceOf[String]).get.asInstanceOf[Map[String, AnyRef]]
-      val url = connectionParameters("url").asInstanceOf[String]
-      val termFactory = new TermFactory
-      val uniqueTerms: List[ConceptTerm] = connectionParameters.getOrElse("termsForUniqueKey", List[String]()).asInstanceOf[List[String]].map(term =>
-          termFactory.findTerm(term))
-      (url, uniqueTerms)
     }
 }

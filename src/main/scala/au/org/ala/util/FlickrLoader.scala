@@ -4,51 +4,84 @@ import java.util.Date
 import java.text.SimpleDateFormat
 import scala.xml.XML
 import au.org.ala.biocache.FullRecord
+import au.org.ala.biocache.Config
+import au.org.ala.biocache.DataLoader
+import scala.collection.mutable.ListBuffer
 
-object FlickrLoader {
+object FlickrLoader extends DataLoader{
     
     def main(args:Array[String]){
         
-       val connectParams = Map(
-               "base_url" -> "http://api.flickr.com/services/rest/",
-               "group_id" ->"806927@N20",
-               "api_key" -> "08f5318120189e9d12669465c0113351",
-               "start_date" -> "2010-01-01",
-               "content_type" -> "1",
-               "privacy_filter" -> "1",
-               "per_page" -> "50");
-       
-        var totalIndexed = 0;
-        var endDate = new Date
-        val format = Array("yyyy-MM-dd")
-        var finalStartDate = DateUtils.parseDate(connectParams("start_date"), format)
-
-        if(System.getProperty("startDate")!=null){
-            endDate = DateUtils.parseDate(System.getProperty("startDate"), format)
-        }
-        if(System.getProperty("endDate")!=null){
-            finalStartDate = DateUtils.parseDate(System.getProperty("endDate"), format)
-        }
+        var dataResourceUid = ""
+        var startDate:Option[Date] = None
+        var endDate:Option[Date] = None
         
-        var startDate = DateUtils.addDays(endDate, -1);
-        val df = new SimpleDateFormat("yyyy-MM-dd");
+        val parser = new OptionParser("load flickr resource") {
+            arg("<data resource UID>", "The UID of the data resource to load", {v: String => dataResourceUid = v})
+            opt("s", "startDate", "start date to harvest from in yyyy-MM-dd format", {v:String => startDate = Some(DateUtils.parseDate(v, Array("yyyy-MM-dd"))) } )
+            opt("e", "endDate", "end date in yyyy-MM-dd format", {v:String => endDate = Some(DateUtils.parseDate(v, Array("yyyy-MM-dd"))) } )
+        }
+        if(parser.parse(args)){
+        	harvest(dataResourceUid,startDate,endDate)
+        } else {
+            exit(1)
+        }
+    }
+    
+    def harvest(dataResourceUid:String, suppliedStartDate:Option[Date], suppliedEndDate:Option[Date]){
+        
+        val (protocol, url, uniqueTerms, params) = retrieveConnectionParameters("dr360")
+        val keywords = params.getOrElse("keywords", "").split(",").map(keyword => keyword.trim.replaceAll(" ","").toLowerCase).toList
+        
+        val endDate = suppliedEndDate.getOrElse( {
+            params.get("end_date") match {
+                case Some(v) => DateUtils.parseDate(v, Array("yyyy-MM-dd"))
+                case None => new Date()
+            }
+        })
+        val startDate = suppliedStartDate.getOrElse( {
+            params.get("start_date") match {
+                case Some(v) => DateUtils.parseDate(v, Array("yyyy-MM-dd"))
+                case None => DateUtils.parseDate("2004-01-01", Array("yyyy-MM-dd"))
+            }
+        })
+
+        var currentStartDate = DateUtils.addDays(endDate, -1)
+        var currentEndDate = endDate
+        
+        val df =new SimpleDateFormat("yyyy-MM-dd")
         
         // page through the images month-by-month
-        while(startDate.after(finalStartDate)){
-            println("Harvesting time period: "+df.format(startDate)+" to "+df.format(endDate));
-            val photoIds = getPhotoIdsForDataRange(connectParams, startDate, endDate);
+        while(currentStartDate.after(startDate)){
+            
+            println("Harvesting time period: "+df.format(currentStartDate)+" to "+df.format(currentEndDate));
+            val photoIds = getPhotoIdsForDateRange(params, currentStartDate, currentEndDate);
             photoIds.foreach(photoId => {
-                val fr = processPhoto(connectParams, photoId)
                 //persist the occurrence with image metadata
+                val (photoPageUrl, fr, tags) = processPhoto(params, photoId)
+                if(isOfInterest(tags, keywords)){
+                    load(dataResourceUid, fr, List(photoPageUrl))
+                }
             })
-            println("first id: " + photoIds.head+", number harvested: " + photoIds.size)
-            endDate = startDate
-            startDate = DateUtils.addDays(endDate, -1)
+            currentEndDate = currentStartDate
+            currentStartDate = DateUtils.addDays(currentEndDate, -1)
         }
-        println("Total harvested: "+totalIndexed);
     }
-
-    def processPhoto(connectParams:Map[String,String], photoId:String) : FullRecord = {
+    
+    
+    
+    def isOfInterest(tags:List[String], keywords:List[String]) : Boolean = {
+        //match on keywords
+        val index = tags.indexWhere(
+           tag => {
+               val indexOfKeyword = keywords.indexWhere(keyword => tag.equalsIgnoreCase(keyword))
+               indexOfKeyword >=0
+           }
+        )
+        index >=0
+    }
+    
+    def processPhoto(connectParams:Map[String,String], photoId:String) : (String,FullRecord,List[String]) = {
         
         //create an occurrence record
         val fr = new FullRecord
@@ -58,7 +91,7 @@ object FlickrLoader {
         println(url)
         
         val xml = XML.loadString(scala.io.Source.fromURL(url).mkString)
-        
+        val listBuffer = new ListBuffer[String]
         //get the tags
         val tags = (xml \\ "tag").foreach(el => {
             val raw = el.attribute("raw")
@@ -66,7 +99,7 @@ object FlickrLoader {
             if(!raw.isEmpty && raw.get.text.contains("=")){
                 //is it a machine tag - remove namespace
                 val (tagName, tagValue) = parseMachineTag(raw.get.text.trim)
-                
+                listBuffer += tagValue
                 tagName match {
                     case Some("scientificName") => fr.classification.scientificName = tagValue
                     case Some("author") => fr.classification.scientificNameAuthorship = tagValue
@@ -117,16 +150,18 @@ object FlickrLoader {
             val ownerElem = (xml \\ "owner")(0)
             (ownerElem.attribute("username"), ownerElem.attribute("realname"), ownerElem.attribute("location") )
         }
-        
-        fr
+        (fr.occurrence.occurrenceID,fr, listBuffer.toList)
     }
     
     def parseMachineTag(tag:String): (Option[String], String) = {
-        
+        println(tag)
         if(tag.contains("=")){
             val (name, value) = {
                 val parts = tag.split("=")
-                (parts(0).trim, parts(1).trim)
+                parts.length match {
+                    case 2 => (parts(0).trim, parts(1).trim)
+                    case 1 => ("", parts(0))
+                }
             }
             //if the tag has a name-space, remove it
             if(name.contains(":")){
@@ -154,12 +189,12 @@ object FlickrLoader {
          "&per_page=" + connectParams("per_page") +
          "&page=" + pageNumber 
     
-     def makeGetInfoUrl(connectParams:Map[String,String], photoId:String) =  connectParams("base_url") + 
+    def makeGetInfoUrl(connectParams:Map[String,String], photoId:String) =  connectParams("base_url") + 
          "?method=flickr.photos.getInfo" +  
          "&api_key=" + connectParams("api_key") +
          "&photo_id=" + photoId
          
-    def getPhotoIdsForDataRange(connectParams:Map[String,String], startDate:Date, endDate:Date) : List[String] = {
+    def getPhotoIdsForDateRange(connectParams:Map[String,String], startDate:Date, endDate:Date) : List[String] = {
 
         val mysqlDateTime = new SimpleDateFormat("yyyy-MM-dd");
         val minUpdateDate = mysqlDateTime.format(startDate);
