@@ -47,6 +47,7 @@ public class GeospatialController {
     @Inject
     protected SearchDAO searchDAO;
 
+    private final String POINTS_GEOJSON = "json/pointsGeoJson";
 
 
     /**
@@ -139,7 +140,7 @@ public class GeospatialController {
      *
      */
     @RequestMapping(value = "/geojson/radius-points", method = RequestMethod.GET)
-        public @ResponseBody List<OccurrencePoint> radiusPointsGeoJson(SpatialSearchRequestParams requestParams,
+        public String radiusPointsGeoJson(SpatialSearchRequestParams requestParams,
 
 
             @RequestParam(value="zoom", required=false, defaultValue="0") Integer zoomLevel,
@@ -158,7 +159,8 @@ public class GeospatialController {
         logger.info("PointType for zoomLevel ("+zoomLevel+") = "+pointType.getLabel());
         List<OccurrencePoint> points = searchDAO.findRecordsForLocation(requestParams, pointType);
         logger.info("Points search for "+pointType.getLabel()+" - found: "+points.size());
-        return points;
+        model.addAttribute("points", points);
+        return POINTS_GEOJSON;
 
     }
 
