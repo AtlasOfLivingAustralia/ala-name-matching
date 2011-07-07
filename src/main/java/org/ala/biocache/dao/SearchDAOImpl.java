@@ -651,7 +651,9 @@ public class SearchDAOImpl implements SearchDAO {
         facetFields.add(NAMES_AND_LSID);
         logger.debug("The species count query " + queryString);
         List<String> fqList = new ArrayList<String>();
-        org.apache.commons.collections.CollectionUtils.addAll(fqList, requestParams.getFq());
+        //only add the FQ's if they are not the default values
+        if(requestParams.getFq().length>0 && (requestParams.getFq()[0]).length()>0)
+            org.apache.commons.collections.CollectionUtils.addAll(fqList, requestParams.getFq());
         List<TaxaCountDTO> speciesWithCounts = getSpeciesCounts(queryString, fqList, facetFields, requestParams.getPageSize(), requestParams.getStart(), requestParams.getSort(), requestParams.getDir());
 
         return speciesWithCounts;
@@ -1248,7 +1250,8 @@ public class SearchDAOImpl implements SearchDAO {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.setQueryType("standard");
         solrQuery.setQuery(queryString);
-        if (filterQueries != null) {
+        
+        if (filterQueries != null && filterQueries.size()>0) {
             solrQuery.addFilterQuery("(" + StringUtils.join(filterQueries, " OR ") + ")");
         }
         solrQuery.setRows(0);
