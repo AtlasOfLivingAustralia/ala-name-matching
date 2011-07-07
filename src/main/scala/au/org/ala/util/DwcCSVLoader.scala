@@ -15,15 +15,20 @@ object DwcCSVLoader {
     def main(args:Array[String]){
 
         var dataResourceUid = ""
-
+        var localFilePath:Option[String] = None
+            
         val parser = new OptionParser("import darwin core headed CSV") {
             arg("<data-resource-uid>", "the data resource to import", {v: String => dataResourceUid = v})
+            opt("l", "local", "skip the download and use local file", {v:String => localFilePath = Some(v) } )
         }
 
         if(parser.parse(args)){
             val l = new DwcCSVLoader
-            //process each file
-            l.load(dataResourceUid)
+            localFilePath match {
+                case None => l.load(dataResourceUid)
+                case Some(v) => l.loadLocalFile(dataResourceUid, v)
+            }
+            
         }
     }
 }
@@ -33,6 +38,11 @@ class DwcCSVLoader extends DataLoader {
     import JavaConversions._
     import scalaj.collection.Imports._
 
+    def loadLocalFile(dataResourceUid:String, filePath:String){
+        val (protocol, url, uniqueTerms, params) = retrieveConnectionParameters(dataResourceUid)
+        loadFile(new File(filePath),dataResourceUid, uniqueTerms, params) 
+    }
+    
     def load(dataResourceUid:String){
         val (protocol, url, uniqueTerms, params) = retrieveConnectionParameters(dataResourceUid)
         val fileName = downloadArchive(url,dataResourceUid)
@@ -46,15 +56,15 @@ class DwcCSVLoader extends DataLoader {
         val separator = params.getOrElse("separator", ",").head
         val reader =  new CSVReader(new FileReader(file), separator, quotechar)
         
-        val uniqueTermsNormalised = uniqueTerms.map(t => t.toLowerCase.replace(" ", ""))
-        val columnHeaders = reader.readNext.map(t => t.toLowerCase.replace(" ", ""))
+        val columnHeaders = reader.readNext.map(t => t.replace(" ", "")).toList
         
         var currentLine = reader.readNext
         
-        val validConfig = uniqueTermsNormalised.forall(t => columnHeaders.contains(t))
+        println("Unique terms: " + uniqueTerms)
+        println("Column headers: " + columnHeaders)
+        
+        val validConfig = uniqueTerms.forall(t => columnHeaders.contains(t))
         if(!validConfig){
-            println("Unique terms: " + uniqueTermsNormalised)
-            println("Column headers: " + columnHeaders)
             throw new RuntimeException("Bad configuration for file: "+ file.getName + " for resource: " + dataResourceUid)
         }
         
@@ -65,8 +75,8 @@ class DwcCSVLoader extends DataLoader {
                 	case (key,value) => value!=null && value.toString.trim.length>0 
                 })
                 
-                if(uniqueTermsNormalised.forall(t => map.getOrElse(t,"").length>0)){
-	                val uniqueTermsValues = for (t <-uniqueTermsNormalised) yield map.getOrElse(t,"")
+                if(uniqueTerms.forall(t => map.getOrElse(t,"").length>0)){
+	                val uniqueTermsValues = for (t <-uniqueTerms) yield map.getOrElse(t,"")
 	                val fr = FullRecordMapper.createFullRecord("", map, Versions.RAW)
 	                load(dataResourceUid, fr, uniqueTermsValues)
                 } else {

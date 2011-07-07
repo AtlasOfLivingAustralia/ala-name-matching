@@ -806,9 +806,10 @@ class Attribution  (
   @BeanProperty var dataHubName:String,
   @BeanProperty var institutionName:String,
   @BeanProperty var collectionName:String,
+  @BeanProperty var citation:String,
   @BeanProperty var taxonomicHints:Array[String])
   extends Cloneable with Mappable {
-  def this() = this(null,null,null,null,null,null,null,null,null,null, null)
+  def this() = this(null,null,null,null,null,null,null,null,null,null, null, null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
   override def toString = ToStringBuilder.reflectionToString(this)
 
@@ -840,8 +841,10 @@ class Attribution  (
     val map = Map[String,String](
         "dataProviderUid"->dataProviderUid, "dataProviderName"->dataProviderName,
             "dataResourceUid"->dataResourceUid, "dataResourceName"->dataResourceName,
-            "collectionUid"->collectionUid, "institutionUid"->institutionUid, "dataHubUid"->dataHubUid, "dataHubName"->dataHubName,
-            "institutionName"->institutionName , "collectionName"->collectionName, "taxonomicHints"->taxonomicHints)
+            "collectionUid"->collectionUid, "institutionUid"->institutionUid, 
+            "dataHubUid"->dataHubUid, "dataHubName"->dataHubName,
+            "institutionName"->institutionName , "collectionName"->collectionName, 
+            "taxonomicHints"->taxonomicHints, "citation" -> citation)
     map.filter(i => i._2!= null)
   }
 }
