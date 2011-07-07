@@ -62,12 +62,15 @@ class Occurrence extends Cloneable with Mappable {
   @BeanProperty var source:String = _
   //type status perhaps should be in identification
   @BeanProperty var typeStatus:String = _
+  //this property is in use in flickr tagging - currently no equivalent in DwC
+  @BeanProperty var validDistribution:String = _
+  
   //custom fields
   @BeanProperty var images:Array[String] = _
 
   @JsonIgnore
   def getMap():Map[String,String]={
-    val map =Map[String,String]("occurrenceID"->occurrenceID, "accessrights"->accessrights, "associatedMedia"->associatedMedia,
+    val map = Map[String,String]("occurrenceID"->occurrenceID, "accessrights"->accessrights, "associatedMedia"->associatedMedia,
                                 "associatedOccurrences"->associatedOccurrences, "associatedReferences"->associatedReferences,
                                 "associatedSequences"->associatedSequences, "associatedTaxa"->associatedTaxa, "basisOfRecord"->basisOfRecord,
                                 "behavior"->behavior, "catalogNumber"->catalogNumber, "collectionCode" -> collectionCode,
@@ -82,7 +85,7 @@ class Occurrence extends Cloneable with Mappable {
                                 "relationshipEstablishedDate"->relationshipEstablishedDate, "relationshipOfResource"->relationshipOfResource,
                                 "relationshipRemarks"->relationshipRemarks, "reproductiveCondition"->reproductiveCondition, "resourceID"->resourceID,
                                 "resourceRelationshipID"->resourceRelationshipID, "rights"->rights ,"rightsholder"->rightsholder,
-                                "samplingProtocol"->samplingProtocol, "sex"->sex, "source"->source, "typeStatus"->typeStatus, "images"-> images)
+                                "samplingProtocol"->samplingProtocol, "sex"->sex, "source"->source, "typeStatus"->typeStatus, "images"-> images, "validDistribution" -> validDistribution)
 
     map.filter(i => i._2!= null)
   }

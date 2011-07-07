@@ -3,9 +3,17 @@ import scala.io.Source
 import scala.util.parsing.json.JSON
 import org.gbif.dwc.terms.TermFactory
 import org.gbif.dwc.terms.ConceptTerm
+import java.io.File
+import org.apache.commons.io.FileUtils
+import java.io.FileOutputStream
+import au.org.ala.util.FileHelper
+import org.apache.commons.io.FilenameUtils
 
 trait DataLoader {
     
+    import FileHelper._
+    
+    val temporaryFileStore = "/data/biocache-load/"
     val pm = Config.persistenceManager
     
     def retrieveConnectionParameters(resourceUid: String) : (String, String, List[String], Map[String,String]) = {
@@ -56,7 +64,38 @@ trait DataLoader {
         
         //add the full record
         fr.uuid = recordUuid
+        fr.attribution.dataResourceUid = dataResourceUid
         Config.occurrenceDAO.addRawOccurrenceBatch(Array(fr))
         true
+    }
+    
+    def downloadArchive(url:String, resourceUid:String) : String = {
+        val tmpStore = new File(temporaryFileStore)
+        if(!tmpStore.exists){
+        	FileUtils.forceMkdir(tmpStore)
+        }
+
+        print("Downloading zip file.....")
+        val in = (new java.net.URL(url)).openStream
+        val file = new File(temporaryFileStore + resourceUid + ".zip")
+        val out = new FileOutputStream(file)
+        val buffer: Array[Byte] = new Array[Byte](1024)
+        var numRead = 0
+        while ({ numRead = in.read(buffer); numRead != -1 }) {
+            out.write(buffer, 0, numRead)
+            out.flush
+        }
+        printf("Downloaded. File size: %skB\n", file.length / 1024)
+
+        out.flush
+        in.close
+        out.close
+
+        //extract the file
+        file.extractZip
+
+        val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
+        println("Archive extracted to directory: " + fileName)
+        fileName
     }
 }

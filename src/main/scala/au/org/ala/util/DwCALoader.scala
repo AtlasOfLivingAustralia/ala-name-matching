@@ -37,66 +37,38 @@ import java.util.UUID
  * 
  * @author Dave Martin
  */
-object DwCALoader extends DataLoader {
-
-    import FileHelper._
-    import ReflectBean._
+object DwCALoader {
 
     def main(args: Array[String]): Unit = {
 
         var resourceUid = ""
         var localFilePath:Option[String] = None
-        var temporaryFileStore = "/data/biocache-load"
         
         val parser = new OptionParser("load darwin core archive") {
             arg("<data resource UID>", "The UID of the data resource to load", {v: String => resourceUid = v})
             opt("l", "local", "skip the download and use local file", {v:String => localFilePath = Some(v) } )
-            opt("t", "temp-store", "temporary file store", {v:String => temporaryFileStore = v } )
         }
         if(parser.parse(args)){
+            val l = new DwCALoader
             if(localFilePath.isEmpty){
-            	load(resourceUid, temporaryFileStore)
+            	l.load(resourceUid)
             } else {
-                loadLocal(resourceUid, localFilePath.get)
+                l.loadLocal(resourceUid, localFilePath.get)
             }
         }
     }
+} 
     
-    def downloadArchive(url:String, resourceUid:String, temporaryFileStore:String) : String = {
-        val tmpStore = new File(temporaryFileStore)
-        if(!tmpStore.exists){
-        	FileUtils.forceMkdir(tmpStore)
-        }
-
-        print("Downloading zip file.....")
-        val in = (new java.net.URL(url)).openStream
-        val file = new File(temporaryFileStore + resourceUid + ".zip")
-        val out = new FileOutputStream(file)
-        val buffer: Array[Byte] = new Array[Byte](1024)
-        var numRead = 0
-        while ({ numRead = in.read(buffer); numRead != -1 }) {
-            out.write(buffer, 0, numRead)
-            out.flush
-        }
-        printf("Downloaded. File size: %skB\n", file.length / 1024)
-
-        out.flush
-        in.close
-        out.close
-
-        //extract the file
-        file.extractZip
-
-        val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
-        println("Archive extracted to directory: " + fileName)
-        fileName
-    }
+class DwCALoader extends DataLoader {
     
-    def load(resourceUid:String, temporaryFileStore:String){
+    import FileHelper._
+    import ReflectBean._
+    
+    def load(resourceUid:String){
     	val (protocol, url, uniqueTerms, params) = retrieveConnectionParameters(resourceUid)
     	val conceptTerms = mapConceptTerms(uniqueTerms)
         //download 
-    	val fileName = downloadArchive(url,resourceUid, temporaryFileStore)
+    	val fileName = downloadArchive(url,resourceUid)
         //load the DWC file
     	loadArchive(fileName, resourceUid, conceptTerms)
     }
@@ -125,6 +97,8 @@ object DwCALoader extends DataLoader {
             val dwc = iter.next
 
             //the details of how to construct the UniqueID belong in the Collectory
+            val uniqueTermValues = uniqueTerms.map(t => dwc.getProperty(t))
+            
             val uniqueID = {
                 //create the unique ID
                 if (!uniqueTerms.isEmpty) {

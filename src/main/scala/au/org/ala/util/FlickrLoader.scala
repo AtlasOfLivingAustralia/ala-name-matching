@@ -61,11 +61,11 @@ object FlickrLoader extends DataLoader{
                 //persist the occurrence with image metadata
                 val (photoPageUrl, imageUrl, fr, tags) = processPhoto(params, photoId)
                 if(isOfInterest(tags, keywords)){
+                    
                     load(dataResourceUid, fr, List(photoPageUrl) )
                     val filePath = MediaStore.save(fr.uuid, dataResourceUid, imageUrl)
                     fr.occurrence.associatedMedia = filePath
                     Config.occurrenceDAO.updateOccurrence(fr.uuid, fr, Versions.RAW)
-                    
                 }
             })
             currentEndDate = currentStartDate
@@ -78,10 +78,10 @@ object FlickrLoader extends DataLoader{
         val index = tags.indexWhere(
            tag => {
                val indexOfKeyword = keywords.indexWhere(keyword => tag.equalsIgnoreCase(keyword))
-               indexOfKeyword >=0
+               indexOfKeyword >= 0
            }
         )
-        index >=0
+        index >= 0
     }
     
     def processPhoto(connectParams:Map[String,String], photoId:String) : (String,String,FullRecord,List[String]) = {
@@ -108,7 +108,7 @@ object FlickrLoader extends DataLoader{
                     case Some("commonname") => fr.classification.vernacularName = tagValue
                     case Some("trinomial") => fr.classification.subspecies = tagValue; fr.classification.scientificName = tagValue
                     case Some("binomial") => fr.classification.species = tagValue; fr.classification.scientificName = tagValue
-                    case Some("binomial name") => fr.classification.species = tagValue; fr.classification.scientificName = tagValue
+                    case Some("binomialname") => fr.classification.species = tagValue; fr.classification.scientificName = tagValue
                     case Some("species") => fr.classification.species = tagValue
                     case Some("genus") => fr.classification.genus = tagValue
                     case Some("subgenus") => fr.classification.subgenus = tagValue
@@ -121,23 +121,27 @@ object FlickrLoader extends DataLoader{
                     case Some("kingdom") => fr.classification.kingdom = tagValue
                     case Some("country") => fr.location.country = tagValue
                     case Some("region") => fr.location.stateProvince = tagValue
-                    case Some("stateProvince") => fr.location.stateProvince = tagValue
+                    case Some("stateprovince") => fr.location.stateProvince = tagValue
+                    case Some("county") => fr.location.stateProvince = tagValue
                     case Some("state") => fr.location.stateProvince = tagValue
                     case Some("province") => fr.location.stateProvince = tagValue
                     case Some("district") => fr.location.locality = tagValue
                     case Some("locality") => fr.location.locality = tagValue
+                    case Some("habitat") => fr.location.habitat = tagValue
                     case Some("lat") => fr.location.decimalLatitude = tagValue
                     case Some("latitude") => fr.location.decimalLatitude = tagValue
-                    case Some("decimalLatitude") => fr.location.decimalLatitude = tagValue
+                    case Some("decimallatitude") => fr.location.decimalLatitude = tagValue
                     case Some("lon") => fr.location.decimalLongitude = tagValue
                     case Some("long") => fr.location.decimalLongitude = tagValue
                     case Some("longitude") => fr.location.decimalLongitude = tagValue
-                    case Some("decimalLongitude") => fr.location.decimalLongitude = tagValue
+                    case Some("decimallongitude") => fr.location.decimalLongitude = tagValue
                     case Some("alt") => fr.location.maximumElevationInMeters = tagValue
                     case Some("altitude") => fr.location.maximumElevationInMeters = tagValue
                     case Some("accuracy") => fr.location.coordinateUncertaintyInMeters = tagValue
                     case Some("datum") => fr.location.geodeticDatum = tagValue
                     case Some("source") => fr.location.georeferenceSources = tagValue
+                    case Some("method") => fr.location.georeferenceSources = tagValue
+                    case Some("validdistributionflag") => fr.occurrence.validDistribution = tagValue
                     case _ => println("unmatched : " + raw.get.text.trim)
                 }
             }
@@ -169,8 +173,8 @@ object FlickrLoader extends DataLoader{
             val (name, value) = {
                 val parts = tag.split("=")
                 parts.length match {
-                    case 2 => (parts(0).trim, parts(1).trim)
-                    case 1 => ("", parts(0))
+                    case 2 => (parts(0).replaceAll(" ","").trim.toLowerCase, parts(1).trim)
+                    case _ => ("", parts.last)
                 }
             }
             //if the tag has a name-space, remove it
