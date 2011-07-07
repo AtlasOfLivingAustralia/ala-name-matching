@@ -8,27 +8,32 @@ import org.apache.commons.io.FileUtils
 import java.io.FileOutputStream
 import au.org.ala.util.FileHelper
 import org.apache.commons.io.FilenameUtils
+import org.slf4j.LoggerFactory
 
+/**
+ * A trait with utility code for loading data
+ */
 trait DataLoader {
     
     import FileHelper._
     
+    val logger = LoggerFactory.getLogger("DataLoader")
     val temporaryFileStore = "/data/biocache-load/"
+    val registryUrl = "http://collections.ala.org.au/ws/dataResource/"
     val pm = Config.persistenceManager
     
     def retrieveConnectionParameters(resourceUid: String) : (String, String, List[String], Map[String,String]) = {
-      
-      val json = Source.fromURL("http://collections.ala.org.au/ws/dataResource/" + resourceUid + ".json").getLines.mkString
 
       //full document
+      val json = Source.fromURL(registryUrl + resourceUid + ".json").getLines.mkString
       val map = JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
       
       //connection details
       val connectionParameters = JSON.parseFull(map("connectionParameters").asInstanceOf[String]).get.asInstanceOf[Map[String, String]]
-      
       val protocol = connectionParameters("protocol")
       val url = connectionParameters("url")
       val uniqueTerms = connectionParameters.getOrElse("termsForUniqueKey", List[String]()).asInstanceOf[List[String]]
+      
       //optional config params for custom services
       val params = protocol.toLowerCase match {
           case "customwebservice" => JSON.parseFull(connectionParameters.getOrElse("params", "")).getOrElse(Map[String,String]()).asInstanceOf[Map[String, String]]
@@ -45,21 +50,15 @@ trait DataLoader {
     def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String]) : Boolean = {
         
         //the details of how to construct the UniqueID belong in the Collectory
-        val uniqueID = {
-            //create the unique ID
-            if (!identifyingTerms.isEmpty) {
-                Some((List(dataResourceUid) ::: identifyingTerms).mkString("|"))
-            } else {
-                None
-            }
+        val uniqueID = identifyingTerms.isEmpty match {
+        	case true => None
+        	case false => Some((List(dataResourceUid) ::: identifyingTerms).mkString("|"))
         }
 
         //lookup the column
-        val recordUuid = {
-            uniqueID match {
-                case Some(value) => Config.occurrenceDAO.createOrRetrieveUuid(value)
-                case None => Config.occurrenceDAO.createUuid
-            }
+        val recordUuid = uniqueID match {
+            case Some(value) => Config.occurrenceDAO.createOrRetrieveUuid(value)
+            case None => Config.occurrenceDAO.createUuid
         }
         
         //add the full record
