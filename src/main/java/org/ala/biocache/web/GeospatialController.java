@@ -28,6 +28,7 @@ import org.w3c.dom.Document;
 import net.sf.json.JSONObject;
 import org.ala.biocache.dto.OccurrencePoint;
 import org.ala.biocache.dto.PointType;
+import org.apache.commons.lang.StringUtils;
 
 
 /**
@@ -147,13 +148,15 @@ public class GeospatialController {
             @RequestParam(value="bbox", required=false) String bbox,
             @RequestParam(value="group", required=false, defaultValue="ALL_SPECIES") String speciesGroup,
             Model model)
-            throws Exception {
+            throws Exception
+    {
 
-
-        // Convert array to list so we append more values onto it
-        String query = speciesGroup.equals("ALL_SPECIES")?"*:*" : "species_group:"+speciesGroup;
-        requestParams.setQ(query);
-
+        //only interested in applying the group if no value for the query has been provided
+        if(StringUtils.isEmpty(requestParams.getQ())){
+            // Convert array to list so we append more values onto it
+            String query = speciesGroup.equals("ALL_SPECIES")?"*:*" : "species_group:"+speciesGroup;
+            requestParams.setQ(query);
+        }
         PointType pointType = PointType.POINT_00001; // default value for when zoom is null
         pointType = getPointTypeForZoomLevel(zoomLevel);
         logger.info("PointType for zoomLevel ("+zoomLevel+") = "+pointType.getLabel());
