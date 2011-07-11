@@ -175,8 +175,8 @@
         <!-- SCALATEST -->
         <dependency>
             <groupId>org.scalatest</groupId>
-            <artifactId>scalatest</artifactId>
-            <version>1.2</version>
+            <artifactId>scalatest_2.9.0</artifactId>
+            <version>1.6.1</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
