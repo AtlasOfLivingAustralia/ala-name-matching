@@ -11,20 +11,21 @@ class VersionTests extends FunSuite {
 
   test("Store and retrieval of all versions"){
 
+    val rowKey = "version-test-rowKey"
     val uuid = "version-test-uuid"
 
-    var raw = new FullRecord(uuid)
+    var raw = new FullRecord(rowKey,uuid)
     raw.classification.scientificName = "Raw version"
-    var processed = new FullRecord(uuid)
+    var processed = new FullRecord(rowKey,uuid)
     processed.classification.scientificName = "Processed version"
-    var consensus = new FullRecord(uuid)
+    var consensus = new FullRecord(rowKey,uuid)
     consensus.classification.scientificName = "Consenus version"
 
     val assertions = Array(QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, true, "Coordinates bad"))
 
-    occurrenceDAO.updateOccurrence(uuid,raw,Raw)
-    occurrenceDAO.updateOccurrence(uuid,processed,Some(Map("loc"->assertions)),Processed)
-    occurrenceDAO.updateOccurrence(uuid,consensus,Consensus)
+    occurrenceDAO.updateOccurrence(rowKey,raw,Raw)
+    occurrenceDAO.updateOccurrence(rowKey,processed,Some(Map("loc"->assertions)),Processed)
+    occurrenceDAO.updateOccurrence(rowKey,consensus,Consensus)
 
     //retrieve and test
     val r = occurrenceDAO.getAllVersionsByUuid(uuid)

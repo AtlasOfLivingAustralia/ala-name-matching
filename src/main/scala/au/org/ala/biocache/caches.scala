@@ -206,7 +206,76 @@ object AttributionDAO {
     persistenceManager.put(guid,"attr",map)
   }
 
- 
+  /**
+   * Obtain the data resource attribution information from the cache
+   *
+   * TODO: Probably should cache these in persitence manager so that they are available if the WS is down
+   *
+   */
+  def getDataResourceByUid(uid:String) : Option[Attribution] ={
+    
+
+    val cachedObject = lru.get(uid)
+      if(cachedObject!=null){
+        cachedObject.asInstanceOf[Option[Attribution]]
+      } else {
+        
+        val att =getDataResourceFromWS(uid)
+        //cache the data resource info
+        lru.put(uid, att)
+        att
+        
+      }
+  }
+
+   def getDataResourceFromWS(value:String):Option[Attribution]={
+    try{
+    val attribution = new Attribution
+    println("Calling web service for " + value)
+
+    val wscontent = WebServiceLoader.getWSStringContent(AttributionDAO.collectoryURL+"/ws/dataResource/"+value+".json")
+
+    val wsmap = Json.toMap(wscontent)
+
+    val name = wsmap.getOrElse("name","").toString
+
+    val hints =wsmap.getOrElse("taxonomyCoverageHints",null)
+    val ahints ={
+                  if(hints != null){
+                  hints.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> o.toString().replace("=",":").replace("{","").replace("}",""));
+                  
+                  }
+                  else null
+              }
+    //the hubMembership
+     val hub = wsmap.getOrElse("hubMembership", null)
+     val ahub ={
+                if(hub !=  null){
+                  hub.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> (o.asInstanceOf[java.util.LinkedHashMap[Object,Object]]).get("uid").toString)
+                  
+                }
+                else null
+              }
+
+    //data Provider
+    val dp = wsmap.getOrElse("provider", null).asInstanceOf[java.util.Map[String,String]]
+    val dpname = if(dp != null) dp.get("name") else null
+    val dpuid = if(dp != null) dp.get("uid") else null
+
+    
+
+    attribution.setDataResourceName(name)
+    attribution.setDataProviderUid(dpuid)
+    attribution.setDataProviderName(dpname)
+    attribution.setDataHubUid(ahub)
+    attribution.setTaxonomicHints(ahints)
+    Some(attribution)
+    }
+    catch{
+      case e:Exception => None
+    }
+  }
+
 
   /**
    * Retrieve attribution via institution/collection codes.

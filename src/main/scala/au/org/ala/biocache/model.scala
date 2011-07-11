@@ -853,6 +853,7 @@ class Attribution  (
  * Encapsulates a complete specimen or occurrence record.
  */
 class FullRecord (
+  @BeanProperty var rowKey:String,
   @BeanProperty var uuid:String,
   @BeanProperty var occurrence:Occurrence,
   @BeanProperty var classification:Classification,
@@ -873,13 +874,13 @@ class FullRecord (
     objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement, location.environmentalLayers, location.contextualLayers)
   }
 
-  def this(uuid:String) = this(uuid,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
+  def this(rowKey:String ,uuid:String) = this(rowKey,uuid,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
       new Measurement, Array())
 
-  def this() = this(null,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
+  def this() = this(null,null,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
       new Measurement, Array())
 
-  override def clone : FullRecord = new FullRecord(this.uuid,
+  override def clone : FullRecord = new FullRecord(this.rowKey,this.uuid,
       occurrence.clone,classification.clone,location.clone,event.clone,attribution.clone,
       identification.clone,measurement.clone,assertions.clone)
 

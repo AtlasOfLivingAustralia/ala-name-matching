@@ -1,6 +1,49 @@
 package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.junit.Ignore
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
+
+@RunWith(classOf[JUnitRunner])
+class NewDAOLayerTest extends FunSuite{
+  val occurrenceDAO = Config.occurrenceDAO
+  val persistenceManager = Config.persistenceManager
+  val rowKey ="test-rowKey"
+  val uuid = "35b3ff3-test-uuid"
+  test("Write and lookup occ record"){
+     
+     val record = new FullRecord(rowKey, uuid)
+     record.classification.scientificName = "Test species"
+     occurrenceDAO.updateOccurrence(rowKey, record, Versions.RAW)
+     val newrecord = occurrenceDAO.getByUuid(uuid)
+     println(newrecord)
+     expect(rowKey){newrecord.get.getRowKey}
+     expect(uuid){newrecord.get.uuid}
+
+  }
+
+  test("User Assertion addition and deletion"){
+    val qa1 = QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH, true)
+    occurrenceDAO.addUserAssertion(uuid, qa1)
+
+    val qa2 = QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH, false)
+    occurrenceDAO.addUserAssertion(uuid, qa2)
+
+    expect(2){
+        val userAssertions = occurrenceDAO.getUserAssertions(uuid)
+        userAssertions.size
+    }
+
+    occurrenceDAO.deleteUserAssertion(uuid, qa2.uuid)
+    val userAssertions = occurrenceDAO.getUserAssertions(uuid)
+    expect(1){ userAssertions.size }
+  }
+
+  test("get occs"){
+    val allrecords = occurrenceDAO.getAllVersionsByRowKey("dr105|HMAP|Barents & White Seas|239191")
+    println(allrecords)
+  }
+}
 
 @Ignore
 class DAOLayerTests extends FunSuite {

@@ -55,19 +55,39 @@ object AttributionProcessor extends Processor {
    * limit 10;
    */
   def process(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
+    var assertions = new ArrayBuffer[QualityAssertion]
+
+
+
     if(raw.occurrence.institutionCode!=null && raw.occurrence.collectionCode!=null){
         val attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
         if (!attribution.isEmpty) {
           processed.attribution = attribution.get
           //need to reinitialise the object array
           processed.reinitObjectArray
-          Array()
+          
         } else {
-          Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, "Unrecognised collection code institution code combination"))
+          assertions ++=Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, "Unrecognised collection code institution code combination"))
         }
-    } else {
-      Array()
+    } 
+    //now process the data resource information
+    //35b3ff3e-a9b9-4816-a3cf-8f16cf434fc7
+
+    if(raw.attribution.dataResourceUid != null){
+      val attribution = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
+      if(!attribution.isEmpty){
+        //update the details that come from the data resource
+        processed.attribution.dataResourceName = attribution.get.dataResourceName
+        processed.attribution.dataProviderUid = attribution.get.dataProviderUid
+        processed.attribution.dataProviderName = attribution.get.dataProviderName
+        processed.attribution.dataHubUid = attribution.get.dataHubUid
+        if(processed.attribution.taxonomicHints == null){
+          processed.attribution.taxonomicHints = attribution.get.taxonomicHints
+        }
+      }
     }
+
+    assertions.toArray
   }
 
   def getName() = "attr"
@@ -461,8 +481,10 @@ object ClassificationProcessor extends Processor {
         val classification = nsr.getRankClassification
         //Check to see if the classification fits in with the supplied taxonomic hints
         if(raw.occurrence.institutionCode!=null && raw.occurrence.collectionCode!=null){
-
-          val attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
+          //get the taxonomic hints from the collection or data resource
+          var attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
+          if(attribution.isEmpty)
+            attribution = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
 
           if(!attribution.isEmpty){
             logger.debug("Checking taxonomic hints")

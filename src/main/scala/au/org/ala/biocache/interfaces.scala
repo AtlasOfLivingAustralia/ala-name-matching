@@ -43,22 +43,22 @@ object Store {
   /**
    * Iterate over records, passing the records to the supplied consumer.
    */
-  def pageOverAll(version:Version, consumer:OccurrenceConsumer, startUuid:String, pageSize:Int) {
-    val suuid = if(startUuid == null) "" else startUuid
-    occurrenceDAO.pageOverAll(version, fullRecord => consumer.consume(fullRecord.get), suuid, pageSize)
+  def pageOverAll(version:Version, consumer:OccurrenceConsumer, startKey:String,  pageSize:Int) {
+    val skey = if(startKey == null) "" else startKey
+    occurrenceDAO.pageOverAll(version, fullRecord => consumer.consume(fullRecord.get), skey, "", pageSize)
   }
 
   /**
    * Page over all versions of the record, handing off to the OccurrenceVersionConsumer.
    */
-  def pageOverAllVersions(consumer:OccurrenceVersionConsumer, startUuid:String, pageSize:Int) {
+  def pageOverAllVersions(consumer:OccurrenceVersionConsumer, startKey:String, pageSize:Int) {
       occurrenceDAO.pageOverAllVersions(fullRecordVersion => {
           if(!fullRecordVersion.isEmpty){
             consumer.consume(fullRecordVersion.get)
           } else {
             true
           }
-      }, startUuid, pageSize)
+      }, startKey,"", pageSize)
   }
 
   /**
@@ -106,8 +106,8 @@ object Store {
    * Writes the select records to the stream.
    */
   def writeToStream(outputStream:OutputStream,fieldDelimiter:java.lang.String,
-        recordDelimiter:java.lang.String,uuids:Array[String],fields:Array[java.lang.String]) {
-    occurrenceDAO.writeToStream(outputStream,fieldDelimiter,recordDelimiter,uuids,fields)
+        recordDelimiter:java.lang.String,keys:Array[String],fields:Array[java.lang.String]) {
+    occurrenceDAO.writeToStream(outputStream,fieldDelimiter,recordDelimiter,keys,fields)
   }
 
   /**

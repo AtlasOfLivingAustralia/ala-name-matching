@@ -18,7 +18,7 @@ class ProcessEventTests extends FunSuite {
 
   test("yyyy-dd-mm correctly sets year, month, day values in process object") {
 
-    var raw = new FullRecord("1234")
+    var raw = new FullRecord("1234", "1234")
     raw.event.eventDate = "1978-12-31"
     var processed = raw.clone
     EventProcessor.process("1234", raw, processed)
@@ -31,7 +31,7 @@ class ProcessEventTests extends FunSuite {
 
   test("yyyy-dd-mm verbatim date correctly sets year, month, day values in process object") {
 
-    var raw = new FullRecord("1234")
+    var raw = new FullRecord("1234", "1234")
     raw.event.verbatimEventDate = "1978-12-31/1978-12-31"
     var processed = raw.clone
     EventProcessor.process("1234", raw, processed)
@@ -44,7 +44,7 @@ class ProcessEventTests extends FunSuite {
 
   test("if year, day, month supplied, eventDate is correctly set") {
 
-    var raw = new FullRecord("1234")
+    var raw = new FullRecord("1234", "1234")
     raw.event.year = "1978"
     raw.event.month = "12"
     raw.event.day = "31"
@@ -59,7 +59,7 @@ class ProcessEventTests extends FunSuite {
 
   test("if year supplied in 'yy' format, eventDate is correctly set") {
 
-    var raw = new FullRecord("1234")
+    var raw = new FullRecord("1234", "1234")
     raw.event.year = "78"
     raw.event.month = "12"
     raw.event.day = "31"

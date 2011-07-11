@@ -190,20 +190,21 @@ object FullRecordMapper {
     /**
      * Create a record from a array of tuple properties
      */
-    def createFullRecord(uuid: String, fieldTuples: Array[(String, String)], version: Version): FullRecord = {
+    def createFullRecord(rowKey: String, fieldTuples: Array[(String, String)], version: Version): FullRecord = {
         val fieldMap = Map(fieldTuples map {
             s => (s._1, s._2)
         }: _*)
-        createFullRecord(uuid, fieldMap, version)
+        createFullRecord(rowKey, fieldMap, version)
     }
 
     /**
      * Creates an FullRecord from the map of properties
      */
-    def createFullRecord(uuid: String, fields: Map[String, String], version: Version): FullRecord = {
+    def createFullRecord(rowKey: String, fields: Map[String, String], version: Version): FullRecord = {
 
         var fullRecord = new FullRecord
-        fullRecord.uuid = uuid
+        fullRecord.rowKey = rowKey
+        fullRecord.uuid = fields.getOrElse("uuid", "")
         var assertions = new ArrayBuffer[String]
         val columns = fields.keySet
         for (fieldName <- columns) {

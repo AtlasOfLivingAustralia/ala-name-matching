@@ -119,7 +119,7 @@ trait IndexDAO {
     /**
      * The header values for the CSV file.
      */
-    val header = List("id", "occurrence_id", "data_hub_uid", "data_hub", "data_provider_uid", "data_provider", "data_resource_uid",
+    val header = List("id", "row_key", "occurrence_id", "data_hub_uid", "data_hub", "data_provider_uid", "data_provider", "data_resource_uid",
             "data_resource", "institution_uid", "institution_code", "institution_name",
             "collection_uid", "collection_code", "collection_name", "catalogue_number",
             "taxon_concept_lsid", "occurrence_date", "occurrence_year", "taxon_name", "common_name", "names_and_lsid",
@@ -219,7 +219,8 @@ trait IndexDAO {
                     }
                 }
 
-                return List(guid,
+                return List(getValue("uuid", map),
+                    getValue("rowKey", map),
                     getValue("occurrenceID", map),
                     if(dataHubUids != null && dataHubUids.size>0)dataHubUids.reduceLeft(_+"|"+_) else"",
                     getValue("dataHub.p", map),

@@ -1,7 +1,7 @@
 package au.org.ala.biocache
 
 import collection.JavaConversions
-import org.apache.cassandra.thrift.{SlicePredicate, Column, ConsistencyLevel}
+import org.apache.cassandra.thrift.{SlicePredicate, Column, ConsistencyLevel, IndexOperator}
 //import org.wyki.cassandra.pelops.{Policy, Selector, Pelops}
 import org.scale7.cassandra.pelops.{Cluster,Pelops,Selector, Bytes}
 import collection.mutable.ListBuffer
@@ -32,6 +32,16 @@ trait PersistenceManager {
     def get(uuid:String, entityName:String): Option[Map[String, String]]
 
     /**
+     * Gets KVP map for a record based on a value in an index
+     */
+    def getByIndex(uuid:String, entityName:String, idxColumn:String) : Option[Map[String,String]]
+
+    /**
+     * Gets a single property based on an indexed value.  Returns the value of the "first" matched record.
+     */
+    def getByIndex(uuid:String, entityName:String, idxColumn:String, propertyName:String) :Option[String]
+
+    /**
      * Retrieve an array of objects from a single column.
      */
     def getList[A](uuid: String, entityName: String, propertyName: String, theClass:java.lang.Class[_]) : List[A]
@@ -60,7 +70,7 @@ trait PersistenceManager {
      * Page over all entities, passing the retrieved UUID and property map to the supplied function.
      * Function should return false to exit paging.
      */
-    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean),startUuid:String="", pageSize:Int = 1000)
+    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean),startUuid:String="",endUuid:String="", pageSize:Int = 1000)
 
     /**
      * Page over the records, retrieving the supplied columns only.
@@ -116,7 +126,7 @@ class CassandraPersistenceManager @Inject() (
     Pelops.addPool(poolName, cluster, keyspace)
 
     /**
-     * Retrieve an array of objects, parsing the JSON stored.
+     * Retrieve an array of objects, parsing the JSON stored.     
      */
     def get(uuid:String, entityName:String) = {
         val selector = Pelops.createSelector(poolName)
@@ -132,6 +142,74 @@ class CassandraPersistenceManager @Inject() (
             case e:Exception => logger.debug(e.getMessage, e); None
         }
     }
+
+
+    /**
+     * Retrieve an array of objects, parsing the JSON stored.
+     *
+     * We are storing rows keyed against unique id's that we don't wish to expose
+     * to users. We wish to expose a static UUID to the uses. This UUID will be
+     * indexed against thus is queryable.
+     *
+     * The performance of the index is slightly worse that lookup by key. This should
+     * be alright because the index should only be hit when
+     *
+     */
+    def getByIndex(uuid:String, entityName:String, idxColumn:String) : Option[Map[String,String]]={
+        getFirstValuesFromIndex(entityName, idxColumn, uuid, Selector.newColumnsPredicateAll(true, maxColumnLimit))
+        
+    }
+    /**
+     * Retrieves a specific property value using the index as the retrieval method.
+     */
+  def getByIndex(uuid:String, entityName:String, idxColumn:String, propertyName:String)={
+        val map = getFirstValuesFromIndex(entityName, idxColumn, uuid, Selector.newColumnsPredicate(propertyName))
+        if(map.isEmpty)
+          None
+        else
+          Some(map.get.getOrElse(propertyName, ""))
+  }
+
+  /**
+   * Retrieves the first record from the index that matches the value.
+   *
+   * In the use case for the biocache index there will only erve be one record for each value.
+   */
+  def getFirstValuesFromIndex(entityName:String, idxColumn:String, value:String, slicePredicate:SlicePredicate) : Option[Map[String,String]] ={
+    val selector = Pelops.createSelector(poolName)
+    //set up the index clause information
+     val indexClause =Selector.newIndexClause(value, 1000, Selector.newIndexExpression(idxColumn, IndexOperator.EQ, Bytes.fromUTF8(value) ))
+    try{
+
+      val columnMap = selector.getIndexedColumns(entityName, indexClause,slicePredicate, ConsistencyLevel.ONE)
+      if(columnMap != null && !columnMap.isEmpty){
+        val columnList = columnMap.entrySet.iterator.next.getValue.asInstanceOf[java.util.List[Column]]
+
+        val map = columnList2Map(columnList)
+        Some(map)
+      }
+      else
+        None
+    } catch{
+      case e:Exception => logger.warn(e.getMessage, e); None
+    }
+  }
+  /**
+   def lookupByIndex(uuid:String, entityName:String){
+    val selector = Pelops.createSelector(poolName)
+    try{
+      val results = selector.getIndexedColumns(entityName, Selector.newIndexClause(uuid, 1, Selector.newIndexExpression("uuid", IndexOperator.EQ, Bytes.fromUTF8(uuid) )), false, ConsistencyLevel.ONE)
+       val columnsObj = List(results.keySet.toArray : _*)
+        //convert to scala List
+        val keys = columnsObj.asInstanceOf[List[Bytes]]
+        val colList = results.get(keys.last)
+        columnList2Map(colList)
+    }
+    catch{
+      case e:Exception => e.printStackTrace
+    }
+  }
+   */
 
     /**
      * Retreive the column value, handling NotFoundExceptions from cassandra thrift.
@@ -269,10 +347,10 @@ class CassandraPersistenceManager @Inject() (
      *
      * @param startUuid, The uuid of the occurrence at which to start the paging
      */
-    def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int, slicePredicate:SlicePredicate,startUuid:String="")={
+    def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int, slicePredicate:SlicePredicate,startUuid:String="",endUuid:String="")={
       val selector = Pelops.createSelector(poolName)
       var startKey = new Bytes(startUuid.getBytes)
-      var endKey = new Bytes("".getBytes)
+      var endKey = new Bytes(endUuid.getBytes)
       var keyRange = Selector.newKeyRange(startKey, endKey, pageSize+1)
       var hasMore = true
       var counter = 0
@@ -288,7 +366,8 @@ class CassandraPersistenceManager @Inject() (
           val columnList = columnMap.get(buuid)
           //procedure a map of key value pairs
           val map = columnList2Map(columnList)
-          val uuid = map.getOrElse("uuid", buuid.toUTF8)
+          //more efficient to use a stored version of the rowKey then attempt to convert the buuid
+          val uuid = map.getOrElse("rowKey", buuid.toUTF8)
           //pass the record ID and the key value pair map to the proc
           continue = proc(uuid, map)
         }
@@ -317,7 +396,7 @@ class CassandraPersistenceManager @Inject() (
      * @param proc
      * @param startUuid, The uuid of the occurrence at which to start the paging
      */
-    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean),startUuid:String="", pageSize:Int = 1000) {
+    def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean),startUuid:String="", endUuid:String="", pageSize:Int = 1000) {
       val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
       pageOver(entityName, proc, pageSize, slicePredicate,startUuid)
     }
@@ -575,7 +654,7 @@ class MongoDBPersistenceManager @Inject()(
         }
     }
 
-    def pageOverAll(entityName: String, proc: (String, Map[String, String]) => Boolean,startUuid:String="", pageSize: Int) = {
+    def pageOverAll(entityName: String, proc: (String, Map[String, String]) => Boolean,startUuid:String="", endUuid:String="", pageSize: Int) = {
         //page through all records
         val mongoColl = mongoConn(db)(entityName)
         //val cursor = mongoColl.find(0,pageSize)
@@ -589,6 +668,13 @@ class MongoDBPersistenceManager @Inject()(
     }
 
     def selectRows(uuids: Array[String], entityName: String, propertyNames: Array[String], proc: (Map[String, String]) => Unit) = {
+       throw new RuntimeException("currently not implemented")
+    }
+    def getByIndex(uuid:String, entityName:String, idxColumn:String) : Option[Map[String,String]]={
+       throw new RuntimeException("currently not implemented")
+    }
+
+    def getByIndex(uuid:String, entityName:String, idxColumn:String, propertyName:String) ={
        throw new RuntimeException("currently not implemented")
     }
 
