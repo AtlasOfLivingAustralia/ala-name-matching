@@ -19,6 +19,8 @@ trait OccurrenceDAO {
 
     def setUuidDeleted(uuid: String, del: Boolean): Unit
 
+    def getRowKeyFromUuid(uuid:String):Option[String]
+
     def getByUuid(uuid: String): Option[FullRecord]
 
     def getByRowKey(rowKey: String) :Option[FullRecord]
@@ -517,7 +519,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
 
         if (!userAssertions.isEmpty && !userAssertions.get.contains(qualityAssertion)) {
             val updatedUserAssertions = userAssertions.get :+ qualityAssertion
-            val systemAssertions = getSystemAssertions(uuid)
+            val systemAssertions = getSystemAssertions(rowKey.get)
             //store the new systemAssertions
             persistenceManager.putList(rowKey.get, entityName, FullRecordMapper.userQualityAssertionColumn, updatedUserAssertions, classOf[QualityAssertion], true)
             //update the overall status
@@ -584,7 +586,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
 
                 val assertionName = deletedAssertion.get.name
                 //are there any matching systemAssertions for other users????
-                val systemAssertions = getSystemAssertions(uuid)
+                val systemAssertions = getSystemAssertions(rowKey.get)
 
                 //update the assertion status
                 updateAssertionStatus(rowKey.get, assertionName, systemAssertions, updateAssertions)

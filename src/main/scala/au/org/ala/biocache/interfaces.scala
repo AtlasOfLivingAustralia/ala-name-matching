@@ -65,7 +65,12 @@ object Store {
    * Retrieve the system supplied systemAssertions.
    */
   def getSystemAssertions(uuid:java.lang.String) : java.util.List[QualityAssertion] = {
-    occurrenceDAO.getSystemAssertions(uuid).asJava[QualityAssertion]
+    //systemassertions are handled using row keys - this is unlike user assertions.
+    val rowKey = occurrenceDAO.getRowKeyFromUuid(uuid)
+    if(!rowKey.isEmpty)
+      occurrenceDAO.getSystemAssertions(rowKey.get).asJava[QualityAssertion]
+    else
+      List[QualityAssertion]().asJava[QualityAssertion]
   }
 
   /**
