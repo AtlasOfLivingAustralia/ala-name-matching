@@ -9,6 +9,8 @@ import java.io.FileOutputStream
 import au.org.ala.util.FileHelper
 import org.apache.commons.io.FilenameUtils
 import org.slf4j.LoggerFactory
+import scalaj.http.Http
+
 
 /**
  * A trait with utility code for loading data
@@ -16,12 +18,13 @@ import org.slf4j.LoggerFactory
 trait DataLoader {
     
     import FileHelper._
-    
+    val user ="harvest services"
+    val api_key="Venezuela"
     val logger = LoggerFactory.getLogger("DataLoader")
     val temporaryFileStore = "/data/biocache-load/"
     val registryUrl = "http://collections.ala.org.au/ws/dataResource/"
     val pm = Config.persistenceManager
-    val loadTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd HH:mm:ss")
+    val loadTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
     
     def retrieveConnectionParameters(resourceUid: String) : (String, String, List[String], Map[String,String]) = {
 
@@ -30,7 +33,7 @@ trait DataLoader {
       val map = JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
       
       //connection details
-      val connectionParameters = JSON.parseFull(map("connectionParameters").asInstanceOf[String]).get.asInstanceOf[Map[String, String]]
+      val connectionParameters = map("connectionParameters").asInstanceOf[Map[String,String]]//JSON.parseFull(map("connectionParameters")).asInstanceOf[Map[String,String]]//map("connectionParameters").asInstanceOf[String]).get.asInstanceOf[Map[String, String]]
       val protocol = connectionParameters("protocol")
       val url = connectionParameters("url")
       val uniqueTerms = connectionParameters.getOrElse("termsForUniqueKey", List[String]()).asInstanceOf[List[String]]
@@ -101,5 +104,26 @@ trait DataLoader {
         val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
         println("Archive extracted to directory: " + fileName)
         fileName
+    }
+
+    /**
+     * Calls the collectory webservice to update the last loaded time for a data resource
+     */
+    def updateLastChecked(resourceUid:String) :Boolean ={
+        try{
+          //set the last check time for the supplied resourceUid
+          
+          val map = Map("user"->user, "api_key"->api_key, "lastChecked" ->loadTime)
+          //turn the map of values into JSON representation
+          val data = map.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
+          //"http://woodfired.ala.org.au:8080/Collectory/ws/dataResource/"
+          println(Http.postData(registryUrl+resourceUid,data).header("content-type", "application/json").responseCode)
+          
+          true
+          
+        }
+        catch{
+            case e:Exception => e.printStackTrace();false
+        }
     }
 }

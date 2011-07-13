@@ -29,12 +29,17 @@ object DwcCSVLoader {
                     case None => l.load(dataResourceUid)
                     case Some(v) => l.loadLocalFile(dataResourceUid, v)
                 }
+                //initialise the delete
+                //update the collectory information               
+                l.updateLastChecked(dataResourceUid)
             }
             catch{
                 case e:Exception =>e.printStackTrace
             }
             finally{
                 l.pm.shutdown
+                Console.flush()
+                Console.err.flush()
                 exit(0)
             }
         }

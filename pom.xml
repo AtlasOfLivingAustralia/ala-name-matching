@@ -172,6 +172,12 @@
             <artifactId>scalaj-collection_2.9.0-1</artifactId>
             <version>1.1</version>
         </dependency>
+        <!--- SCALA HTTP support -->
+        <dependency>
+            <groupId>org.scalaj</groupId>
+            <artifactId>scalaj-http_2.9.0-1</artifactId>
+            <version>0.2.8</version>
+        </dependency>
         <!-- SCALATEST -->
         <dependency>
             <groupId>org.scalatest</groupId>

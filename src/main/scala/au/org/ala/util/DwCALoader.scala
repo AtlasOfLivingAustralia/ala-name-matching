@@ -55,6 +55,9 @@ object DwCALoader {
             } else {
                 l.loadLocal(resourceUid, localFilePath.get)
             }
+            //initialise the delete
+            //update the collectory information
+            l.updateLastChecked(resourceUid)
         }
     }
 } 
