@@ -24,11 +24,19 @@ object DwcCSVLoader {
 
         if(parser.parse(args)){
             val l = new DwcCSVLoader
-            localFilePath match {
-                case None => l.load(dataResourceUid)
-                case Some(v) => l.loadLocalFile(dataResourceUid, v)
+            try{
+                localFilePath match {
+                    case None => l.load(dataResourceUid)
+                    case Some(v) => l.loadLocalFile(dataResourceUid, v)
+                }
             }
-            
+            catch{
+                case e:Exception =>e.printStackTrace
+            }
+            finally{
+                l.pm.shutdown
+                exit(0)
+            }
         }
     }
 }

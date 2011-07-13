@@ -609,7 +609,7 @@ class Location extends Cloneable with Mappable{
 
   @JsonIgnore
   def getMap():Map[String,String]={
-    val map =Map[String,String]("uuid "->uuid, "continent"->continent, "coordinatePrecision"->coordinatePrecision,
+    val map =Map[String,String]("uuid"->uuid, "continent"->continent, "coordinatePrecision"->coordinatePrecision,
                                 "coordinateUncertaintyInMeters"->coordinateUncertaintyInMeters, "country"->country, "countryCode"->countryCode,
                                 "county"->county, "decimalLatitude"->decimalLatitude, "decimalLongitude"->decimalLongitude,
                                 "footprintSpatialFit"->footprintSpatialFit, "footprintWKT"->footprintWKT, "geodeticDatum"->geodeticDatum,
@@ -865,7 +865,8 @@ class FullRecord (
   @BeanProperty var assertions:Array[String],
   @BeanProperty var geospatiallyKosher:Boolean = true,
   @BeanProperty var taxonomicallyKosher:Boolean = true,
-  @BeanProperty var deleted:Boolean = false)
+  @BeanProperty var deleted:Boolean = false,
+  @BeanProperty var lastLoadTime:String ="")
   extends Cloneable {
     
   var objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement, location.environmentalLayers, location.contextualLayers)

@@ -43,7 +43,7 @@ object DwCALoader {
 
         var resourceUid = ""
         var localFilePath:Option[String] = None
-        
+
         val parser = new OptionParser("load darwin core archive") {
             arg("<data resource UID>", "The UID of the data resource to load", {v: String => resourceUid = v})
             opt("l", "local", "skip the download and use local file", {v:String => localFilePath = Some(v) } )
@@ -124,9 +124,18 @@ class DwCALoader extends DataLoader {
                     case None => Config.occurrenceDAO.createUuid
                 }
             }
-            
+
+            //add the record uuid to the map
+            fieldTuples + ("uuid"->recordUuid)
+            //add the data resouce uid
+            fieldTuples + ("dataResourceUid"-> resourceUid)
+            //add last load time
+            fieldTuples + ("lastLoadTime"-> loadTime)
+
+            val rowKey = if(uniqueID.isEmpty) resourceUid + "|" + recordUuid else uniqueID.get
+           
             //val recordUuid = UUID.randomUUID.toString
-            val fullRecord = FullRecordMapper.createFullRecord(recordUuid, fieldTuples.toArray, Raw)
+            val fullRecord = FullRecordMapper.createFullRecord(rowKey, fieldTuples.toArray, Raw)
             //println("record UUID: "  + recordUuid)
             currentBatch += fullRecord
 

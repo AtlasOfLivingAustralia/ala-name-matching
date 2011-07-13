@@ -65,7 +65,7 @@ object FlickrLoader extends DataLoader{
                     load(dataResourceUid, fr, List(photoPageUrl) )
                     val filePath = MediaStore.save(fr.uuid, dataResourceUid, imageUrl)
                     fr.occurrence.associatedMedia = filePath
-                    Config.occurrenceDAO.updateOccurrence(fr.uuid, fr, Versions.RAW)
+                    Config.occurrenceDAO.updateOccurrence(fr.rowKey, fr, Versions.RAW)
                 }
             })
             currentEndDate = currentStartDate

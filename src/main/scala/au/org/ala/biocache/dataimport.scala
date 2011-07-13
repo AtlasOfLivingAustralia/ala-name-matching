@@ -21,6 +21,7 @@ trait DataLoader {
     val temporaryFileStore = "/data/biocache-load/"
     val registryUrl = "http://collections.ala.org.au/ws/dataResource/"
     val pm = Config.persistenceManager
+    val loadTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd HH:mm:ss")
     
     def retrieveConnectionParameters(resourceUid: String) : (String, String, List[String], Map[String,String]) = {
 
@@ -63,6 +64,10 @@ trait DataLoader {
         
         //add the full record
         fr.uuid = recordUuid
+        //The row key is the uniqueID for the record. This will always start with the dataResourceUid
+        fr.rowKey = if(uniqueID.isEmpty) dataResourceUid +"|"+recordUuid else uniqueID.get
+        //The last load time
+        fr.lastLoadTime = loadTime
         fr.attribution.dataResourceUid = dataResourceUid
         Config.occurrenceDAO.addRawOccurrenceBatch(Array(fr))
         true

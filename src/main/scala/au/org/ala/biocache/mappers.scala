@@ -205,6 +205,7 @@ object FullRecordMapper {
         var fullRecord = new FullRecord
         fullRecord.rowKey = rowKey
         fullRecord.uuid = fields.getOrElse("uuid", "")
+        fullRecord.lastLoadTime = fields.getOrElse("lastLoadTime","")
         var assertions = new ArrayBuffer[String]
         val columns = fields.keySet
         for (fieldName <- columns) {

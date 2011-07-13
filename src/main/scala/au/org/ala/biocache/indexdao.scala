@@ -486,7 +486,10 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
              solrServer.commit
            }
            else{
-            solrDocList.add(doc)
+             if(values(0) == "" || values(0) == null)
+               println("Unable to add doc with missing uuid " + values(1))
+             else
+                solrDocList.add(doc)
 //            if (solrDocList.size == 20000) {
 //                try {
 //                    SolrIndexDAO.solrServer.add(solrDocList)

@@ -348,11 +348,14 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         var properties = scala.collection.mutable.Map[String, String]()
         for (anObject <- fullRecord.objectArray) {
             val map = mapObjectToProperties(anObject, version)
-            //add all to map
-            properties.put("uuid", fullRecord.uuid)
-            properties.put("rowKey", fullRecord.rowKey)
+            //add all to map           
             properties.putAll(map)
         }
+        //add the special cases to the map
+        properties.put("uuid", fullRecord.uuid)
+        properties.put("rowKey", fullRecord.rowKey)
+        if(fullRecord.lastLoadTime != "")
+            properties.put("lastLoadTime", fullRecord.lastLoadTime)
         properties
     }
 
@@ -385,7 +388,10 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         //only write changes.........
         var propertiesToPersist = properties.filter({
             case (key, value) => {
-                if (oldproperties.contains(key)) {
+                if(key == "lastLoadTime"){
+                    false
+                }
+                else if (oldproperties.contains(key)) {
                     val oldValue = oldproperties.get(key).get
                     oldValue != value
                 } else {
