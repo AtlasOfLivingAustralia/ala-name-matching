@@ -385,10 +385,13 @@ public class OccurrenceController {
          * Dumps the distinct latitudes and longitudes that are used in the
          * connected index (to 4 decimal places)
          */
-        @RequestMapping(value="/occurrences/coordinates")
-        public void dumpDistinctLatLongs(HttpServletResponse response) throws Exception{
+        @RequestMapping(value="/occurrences/coordinates*")
+        public void dumpDistinctLatLongs(SearchRequestParams requestParams,HttpServletResponse response) throws Exception{
+             requestParams.setFacets(new String[]{"lat_long"});
+             if(requestParams.getQ().length()<1)
+                 requestParams.setQ("*:*");
              ServletOutputStream out = response.getOutputStream();
-             searchDAO.writeCoordinatesToStream(out);
+             searchDAO.writeCoordinatesToStream(requestParams,out);
         }
 
 	

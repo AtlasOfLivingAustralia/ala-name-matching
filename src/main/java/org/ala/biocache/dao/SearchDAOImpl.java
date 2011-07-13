@@ -225,23 +225,23 @@ public class SearchDAOImpl implements SearchDAO {
      * @param out
      * @throws Exception
      */
-    public void writeCoordinatesToStream(OutputStream out) throws Exception{
+    public void writeCoordinatesToStream(SearchRequestParams searchParams,OutputStream out) throws Exception{
         //generate the query to obtain the lat,long as a facet
         
         SearchRequestParams srp = new SearchRequestParams();
         searchUtils.setDefaultParams(srp);
-        srp.setFacets(new String[]{"point-0.0001"});
+        srp.setFacets(searchParams.getFacets());
         
         SolrQuery solrQuery = initSolrQuery(srp);
         //We want all the facets so we candump all the coordinates
         solrQuery.setFacetLimit(-1);
         solrQuery.setFacetSort("count");
         solrQuery.setRows(0);
-        solrQuery.setQuery("*:*");
+        solrQuery.setQuery(searchParams.getQ());
 
         QueryResponse qr = runSolrQuery(solrQuery, srp);
          if (qr.getResults().size() > 0) {
-                FacetField ff = qr.getFacetField("point-0.0001");
+                FacetField ff = qr.getFacetField(searchParams.getFacets()[0]);
                 if(ff != null && ff.getValueCount() >0){
                     out.write("latitude,longitude\n".getBytes());
                     //write the facets to file
@@ -271,7 +271,7 @@ public class SearchDAOImpl implements SearchDAO {
             solrQuery.setRows(MAX_DOWNLOAD_SIZE);
             solrQuery.setQuery(searchParams.getQ());
             //Only the fields specified below will be included in the results from the SOLR Query
-            solrQuery.setFields("id", "institution_uid", "collection_uid", "data_resource_uid", "data_provider_uid");
+            solrQuery.setFields("row_key", "institution_uid", "collection_uid", "data_resource_uid", "data_provider_uid");
 
             int startIndex = 0;
             int pageSize = 1000;
@@ -296,7 +296,7 @@ public class SearchDAOImpl implements SearchDAO {
                 //cycle through the results adding them to the list that will be sent to cassandra
                 for (SolrDocument sd : qr.getResults()) {
                     resultsCount++;
-                    uuids.add(sd.getFieldValue("id").toString());
+                    uuids.add(sd.getFieldValue("row_key").toString());
 
                     //increment the counters....
                     incrementCount(uidStats, sd.getFieldValue("institution_uid"));
@@ -306,9 +306,12 @@ public class SearchDAOImpl implements SearchDAO {
 
                 }
 
+                logger.debug("Downloading " + uuids.size() + " records");
+
                 au.org.ala.biocache.Store.writeToStream(out, "\t", "\n", uuids.toArray(new String[]{}),
                         fields);
                 startIndex += pageSize;
+                uuids.clear();
                 if (resultsCount < MAX_DOWNLOAD_SIZE) {
                     qr = runSolrQuery(solrQuery, searchParams.getFq(), pageSize, startIndex, "score", "asc");
                    
