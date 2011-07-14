@@ -39,7 +39,7 @@ public class SensitiveTaxonStore {
 
     protected static final Logger logger = Logger.getLogger(SensitiveTaxonStore.class);
 
-    private final List<SensitiveTaxon> taxon;
+    private final List<SensitiveTaxon> taxonList;
 
     private final Map<String, Integer> lsidMap;
     private final Map<String, Integer> nameMap;
@@ -50,13 +50,13 @@ public class SensitiveTaxonStore {
         this.cbIndexSearcher = cbIndexSearcher;
         this.lsidMap = new HashMap<String, Integer>();
         this.nameMap = new HashMap<String, Integer>();
-        this.taxon = dao.getAll();
+        this.taxonList = dao.getAll();
         verifyAndInitialiseSpeciesList();
     }
 
     private void verifyAndInitialiseSpeciesList() {
-        for (int index = 0; index < taxon.size(); index++) {
-            SensitiveTaxon st = taxon.get(index);
+        for (int index = 0; index < taxonList.size(); index++) {
+            SensitiveTaxon st = taxonList.get(index);
             NameSearchResult match = getAcceptedName(st);
             if (match != null) {
                 String acceptedName = match.getRankClassification().getScientificName();
@@ -84,22 +84,17 @@ public class SensitiveTaxonStore {
 
         Integer index = nameMap.get(acceptedName);
         if (index != null) {
-            return taxon.get(index);
+            return taxonList.get(index);
         } else {
             // Try binary search
-            int idx = Collections.binarySearch(taxon, new SensitiveTaxon(name, StringUtils.contains(name, ' ') ? Rank.SPECIES : Rank.GENUS));
-            if (idx >= 0 && taxon.get(idx).getTaxonName().equalsIgnoreCase(name)) {
-                return taxon.get(idx);
-            } else {
-                return null;
-            }
+            return findByExactMatch(name);
         }
     }
 
     public SensitiveTaxon findByAcceptedName(String acceptedName) {
         Integer index = nameMap.get(acceptedName);
         if (index != null) {
-            return taxon.get(index);
+            return taxonList.get(index);
         } else {
             return null;
         }
@@ -108,7 +103,17 @@ public class SensitiveTaxonStore {
     public SensitiveTaxon findByLsid(String lsid) {
         Integer index = lsidMap.get(lsid);
         if (index != null) {
-            return taxon.get(index);
+            return taxonList.get(index);
+        } else {
+            return null;
+        }
+    }
+
+    public SensitiveTaxon findByExactMatch(String name) {
+        // Do binary search
+        int idx = Collections.binarySearch(taxonList, new SensitiveTaxon(name, StringUtils.contains(name, ' ') ? Rank.SPECIES : Rank.GENUS));
+        if (idx >= 0 && taxonList.get(idx).getTaxonName().equalsIgnoreCase(name)) {
+            return taxonList.get(idx);
         } else {
             return null;
         }
