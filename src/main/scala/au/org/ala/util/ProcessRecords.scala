@@ -37,6 +37,7 @@ object ProcessRecords {
     //logger.info("Starting processing records....")
     val p = new RecordProcessor
     p.processAll
+    //p.processSelect("BOR", "ATTR")
     //logger.info("Finished. Shutting down.")
     Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager].shutdown
   }
@@ -46,7 +47,7 @@ class RecordProcessor {
 
   val logger = LoggerFactory.getLogger(classOf[RecordProcessor])
 
-  val workflow = Array(ClassificationProcessor,LocationProcessor,EventProcessor,BasisOfRecordProcessor,
+  var workflow = Array(ClassificationProcessor,LocationProcessor,EventProcessor,BasisOfRecordProcessor,
         TypeStatusProcessor,AttributionProcessor,ImageProcessor)
 
   /**
@@ -76,13 +77,38 @@ class RecordProcessor {
     })
   }
 
+//  def processSelect(workflowNames:String*){
+//    var counter = 0
+//    var startTime = System.currentTimeMillis
+//    var finishTime = System.currentTimeMillis
+//    //Get the processors that perform the processing of the supplied workflow names
+//    workflow = workflowNames.map(( s: String ) => Processors.processorMap.getOrElse(s,null) ).toArray;
+//    println("Processing the workflows: " + workflow)
+//    Config.occurrenceDAO.pageOverAll(Raw,record => {
+//      counter += 1
+//      if (!record.isEmpty) {
+//        val raw = record.get
+//        processRecord(raw)
+//
+//        //debug counter
+//        if (counter % 1000 == 0) {
+//          finishTime = System.currentTimeMillis
+//          logger.info(counter + " >> Last key : " + raw.uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+//          startTime = System.currentTimeMillis
+//        }
+//      }
+//      true
+//    })
+//
+//  }
+
   /**
    * Process a record, adding metadata and records quality systemAssertions.
    * This version passes the original to optimise updates.
    */
   def processRecord(raw:FullRecord, currentProcessed:FullRecord){
 
-    val guid = raw.uuid
+    val guid = raw.rowKey
     val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     //NC: Changed so that a processed record only contains values that have been processed.
     var processed = new FullRecord
@@ -90,7 +116,9 @@ class RecordProcessor {
     var assertions = new scala.collection.mutable.HashMap[String, Array[QualityAssertion]]
 
     //run each processor in the specified order
-    workflow.foreach(processor => { assertions += ( processor.getName -> processor.process(guid, raw, processed)) })
+    workflow.foreach(processor => { 
+        assertions += ( processor.getName -> processor.process(guid, raw, processed))
+      })
 
     val systemAssertions = Some(assertions.toMap)
     //store the occurrence
@@ -102,7 +130,7 @@ class RecordProcessor {
    */
   def processRecord(raw:FullRecord){
 
-    val guid = raw.uuid
+    val guid = raw.rowKey
     val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     //NC: Changed so that a processed record only contains values that have been processed.
     var processed = new FullRecord//raw.clone

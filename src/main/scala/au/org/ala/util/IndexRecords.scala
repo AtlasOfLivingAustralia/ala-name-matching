@@ -19,20 +19,35 @@ object IndexRecords {
 
   def main(args: Array[String]): Unit = {
     
-    //delete the content of the index
-    if(args.length==0){
-      indexer.emptyIndex
-    }
-    val startUuid=if(args.length >0) args(0) else ""
-    println("Starting to index " + startUuid)
-    processMap(startUuid)
-    //index any remaining items before exiting
-//    indexer.index(items)
-    indexer.finaliseIndex
-    exit(0)
+    var startUuid =""
+    
+    var dr:Option[String] = None
+    var empty:Boolean =false
+    val parser = new OptionParser("index records options") {
+            opt("empty", "empty the index first", {empty=true})
+            opt("s", "start","The record to start with", {v:String => startUuid = v})
+            opt("dr", "resource", "The data resource to process", {v:String =>dr = Some(v)})
+        }
+
+    
+     if(parser.parse(args)){
+         //delete the content of the index
+         if(empty){
+            println("Emptying index")
+            indexer.emptyIndex
+         }
+         val endUuid = if(dr.isEmpty)"" else dr.get +"|~"
+        if(startUuid == "" && !dr.isEmpty) startUuid = dr.get +"|"
+          println("Starting to index " + startUuid + " until " + endUuid)
+          processMap(startUuid, endUuid)
+          //index any remaining items before exiting
+      //    indexer.index(items)
+          indexer.finaliseIndex()
+
+     }
   }
   
-  def processMap(startUuid:String)={
+  def processMap(startUuid:String, endUuid:String)={
     var counter = 0
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
@@ -51,7 +66,7 @@ object IndexRecords {
         }
         
         true
-    }, startUuid)
+    }, startUuid, endUuid)
 
     finishTime = System.currentTimeMillis
     println("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")

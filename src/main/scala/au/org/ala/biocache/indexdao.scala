@@ -8,6 +8,7 @@ import java.util.Collections
 import org.apache.commons.lang.time.DateUtils
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer
+import org.apache.solr.client.solrj.SolrServer
 import org.apache.solr.common.SolrInputDocument
 import org.apache.solr.core.CoreContainer
 import org.slf4j.LoggerFactory
@@ -54,7 +55,9 @@ trait IndexDAO {
     /**
      * Perform
      */
-    def finaliseIndex
+    def finaliseIndex(optmise:Boolean=false)
+
+    //def stopThread
 
     def getValue(field: String, map: Map[String, String]): String = {
         val value = map.get(field)
@@ -372,8 +375,9 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     //set the solr home
     System.setProperty("solr.solr.home", solrHome)
 
-    val cc = new CoreContainer.Initializer().initialize
-    val solrServer = new EmbeddedSolrServer(cc, "")
+    //val cc = new CoreContainer.Initializer().initialize
+    var cc:CoreContainer = _
+    var solrServer:SolrServer =_ //new EmbeddedSolrServer(cc, "")
 
     @Inject
     var occurrenceDAO:OccurrenceDAO = _
@@ -382,12 +386,21 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     val solrDocList = new java.util.ArrayList[SolrInputDocument](10000)
    
     val thread = new SolrIndexActor()
-    thread.start
+    
+    
+    def init(){
+      if(solrServer == null){
+        cc = new CoreContainer.Initializer().initialize
+        solrServer = new EmbeddedSolrServer(cc, "")
+        thread.start
+      }
+    }
 
     /**
      * returns whether or not the insert was successful
      */
     def index(items: java.util.List[OccurrenceIndex]): Boolean = {
+        init
         try {
             solrServer.addBeans(items)
             solrServer.commit
@@ -399,6 +412,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     }
 
     def index(item: OccurrenceIndex): Boolean = {
+        init
         try {
             solrServer.addBean(item)
             solrServer.commit
@@ -410,6 +424,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     }
 
     def emptyIndex() {
+        init
         try {
         	solrServer.deleteByQuery("*:*")
         } catch {
@@ -417,19 +432,29 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         }
     }
 
-    def finaliseIndex() {
+//    def stopThread ={
+//      println("Stopping")
+//      thread ! "exit"
+//      //cc.shutdown
+//    }
+
+    def finaliseIndex(optimise:Boolean=false) {
+        
         if (!solrDocList.isEmpty) {
         
            //SolrIndexDAO.solrServer.add(solrDocList)
            while(!thread.ready){ Thread.sleep(50) }
            thread ! solrDocList
            thread ! "exit"
-
+           //wait enough time for the Actor to get the message
+           Thread.sleep(50)
         }
         while(!thread.ready){ Thread.sleep(50) }
         solrServer.commit
         printNumDocumentsInIndex
-        solrServer.optimize
+        if(optimise)
+          solrServer.optimize
+        cc.shutdown
     }
 
     override def getOccIndexModel(records: Array[FullRecord]): Option[OccurrenceIndex] = {
@@ -448,6 +473,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
      * A SOLR specific implementation of indexing from a map.
      */
     override def indexFromMap(guid: String, map: Map[String, String], batch:Boolean=true) = {
+        init
         //val header = getHeaderValues()
         val values = getOccIndexModel(guid, map)
         if(values.length != header.length){

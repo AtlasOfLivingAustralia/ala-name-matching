@@ -398,7 +398,7 @@ class CassandraPersistenceManager @Inject() (
      */
     def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean),startUuid:String="", endUuid:String="", pageSize:Int = 1000) {
       val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
-      pageOver(entityName, proc, pageSize, slicePredicate,startUuid)
+      pageOver(entityName, proc, pageSize, slicePredicate,startUuid, endUuid)
     }
 
     /**
