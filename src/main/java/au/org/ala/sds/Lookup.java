@@ -28,5 +28,7 @@ public interface Lookup {
 
     SensitiveTaxon findSensitiveSpeciesByLsid(String lsid);
 
+    SensitiveTaxon findSensitiveSpeciesByExactMatch(String scientificName);
+
     boolean isSensitive(String scientificName);
 }

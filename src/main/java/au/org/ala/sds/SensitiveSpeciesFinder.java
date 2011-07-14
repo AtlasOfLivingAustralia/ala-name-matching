@@ -50,6 +50,11 @@ public class SensitiveSpeciesFinder implements Lookup {
     }
 
     @Override
+    public SensitiveTaxon findSensitiveSpeciesByExactMatch(String scientificName) {
+        return store.findByExactMatch(scientificName);
+    }
+
+    @Override
     public boolean isSensitive(String scientificName) {
         return store.findByName(scientificName) != null;
     }
