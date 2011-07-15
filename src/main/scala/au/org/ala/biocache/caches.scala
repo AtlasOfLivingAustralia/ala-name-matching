@@ -33,7 +33,7 @@ object ClassificationDAO {
 
   private val lock : AnyRef = new Object()
 
-  private val nameIndex = Config.getInstance(classOf[CBIndexSearch]).asInstanceOf[CBIndexSearch]
+  private val nameIndex = Config.nameIndex
 
   /**
    * Uses a LRU cache
@@ -317,7 +317,7 @@ object AttributionDAO {
 //                //println("Hub membership: " +ahub)
 //              }
               //update the properties
-              FullRecordMapper.mapmapPropertiesToObject(attribution, wsmap-"taxonomyCoverageHints", wsPropertyMap)
+              FullRecordMapper.mapmapPropertiesToObject(attribution, wsmap - "taxonomyCoverageHints", wsPropertyMap)
               val result = Some(attribution)
               //add it to the caches
               lock.synchronized { lru.put(uuid,result) }

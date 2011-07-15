@@ -11,7 +11,7 @@ import org.apache.commons.lang.builder.{ToStringBuilder, EqualsBuilder}
  * Represents an occurrence record. These fields map directly on to
  * the latest darwin core terms, with a few additional fields.
  */
-class Occurrence extends Cloneable with Mappable {
+class Occurrence extends Cloneable with Mappable with POSO {
   override def clone : Occurrence = super.clone.asInstanceOf[Occurrence]
   @BeanProperty var occurrenceID:String = _
   @BeanProperty var accessrights:String = _
@@ -108,7 +108,7 @@ trait Mappable{
 /**
  * POSO for handling details of a classification associated with an occurrence.
  */
-class Classification extends Cloneable with Mappable {
+class Classification extends Cloneable with Mappable with POSO {
   override def clone : Classification = super.clone.asInstanceOf[Classification]
   @BeanProperty var scientificName:String = _
   @BeanProperty var scientificNameAuthorship:String = _
@@ -186,7 +186,7 @@ class Classification extends Cloneable with Mappable {
 /**
  * POSO for holding measurement information for an occurrence.
  */
-class Measurement extends Cloneable with Mappable {
+class Measurement extends Cloneable with Mappable with POSO {
   override def clone : Measurement = super.clone.asInstanceOf[Measurement]
   @BeanProperty var measurementAccuracy:String = _
   @BeanProperty var measurementDeterminedBy:String = _
@@ -212,7 +212,7 @@ class Measurement extends Cloneable with Mappable {
 /**
  * POSO for handling identification information for an occurrence.
  */
-class Identification extends Cloneable with Mappable {
+class Identification extends Cloneable with Mappable with POSO {
   override def clone : Identification = super.clone.asInstanceOf[Identification]
   @BeanProperty var dateIdentified:String = _
   @BeanProperty var identificationAttributes:String = _
@@ -237,7 +237,7 @@ class Identification extends Cloneable with Mappable {
 /**
  * POSO for holding event data for an occurrence
  */
-class Event extends Cloneable with Mappable{
+class Event extends Cloneable with Mappable with POSO {
   override def clone : Event = super.clone.asInstanceOf[Event]
   @BeanProperty var day:String = _
   @BeanProperty var endDayOfYear:String = _
@@ -265,7 +265,7 @@ class Event extends Cloneable with Mappable{
   }
 }
 
-class ContextualLayers extends Cloneable{//} with Mappable{
+class ContextualLayers extends Cloneable with POSO {//} with Mappable{
   override def clone : ContextualLayers = super.clone.asInstanceOf[ContextualLayers]
   //@BeanProperty var ibra_merged:String = _
   //@BeanProperty var imcra4_pb:String = _
@@ -311,7 +311,7 @@ class ContextualLayers extends Cloneable{//} with Mappable{
 /**
  * POSO for the Environmental Layer values
  */
-class EnvironmentalLayers extends Cloneable{//} with Mappable{
+class EnvironmentalLayers extends Cloneable with POSO {//} with Mappable{
   override def clone : EnvironmentalLayers = super.clone.asInstanceOf[EnvironmentalLayers]
   @BeanProperty var el591:String = _
   @BeanProperty var el593:String = _
@@ -542,7 +542,7 @@ class EnvironmentalLayers extends Cloneable{//} with Mappable{
 /**
  * POSO for holding location information for an occurrence.
  */
-class Location extends Cloneable with Mappable{
+class Location extends Cloneable with Mappable with POSO {
   override def clone : Location = super.clone.asInstanceOf[Location]
   @BeanProperty var uuid:String = _	
   //dwc terms
@@ -638,7 +638,7 @@ class Location extends Cloneable with Mappable{
  * But I am assuming that the will not get in the way if we decide to use a 
  * different indexing process.
  */
-class OccurrenceIndex extends Cloneable with Mappable {
+class OccurrenceIndex extends Cloneable with Mappable with POSO {
   override def clone : OccurrenceIndex = super.clone.asInstanceOf[OccurrenceIndex]
   @BeanProperty @Field("id") var uuid:String =_
   @BeanProperty @Field("occurrence_id") var occurrenceID:String =_
@@ -795,7 +795,7 @@ class TaxonProfile (
 /**
  * Represents the full attribution for a record.
  */
-class Attribution  (
+class Attribution (
   @BeanProperty var dataProviderUid:String,
   @BeanProperty var dataProviderName:String,
   @BeanProperty var dataResourceUid:String,
@@ -808,7 +808,7 @@ class Attribution  (
   @BeanProperty var collectionName:String,
   @BeanProperty var citation:String,
   @BeanProperty var taxonomicHints:Array[String])
-  extends Cloneable with Mappable {
+  extends Cloneable with Mappable with POSO {
   def this() = this(null,null,null,null,null,null,null,null,null,null, null, null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
   override def toString = ToStringBuilder.reflectionToString(this)
@@ -840,11 +840,11 @@ class Attribution  (
   def getMap():Map[String,String]={
     val map = Map[String,String](
         "dataProviderUid"->dataProviderUid, "dataProviderName"->dataProviderName,
-            "dataResourceUid"->dataResourceUid, "dataResourceName"->dataResourceName,
-            "collectionUid"->collectionUid, "institutionUid"->institutionUid, 
-            "dataHubUid"->dataHubUid, "dataHubName"->dataHubName,
-            "institutionName"->institutionName , "collectionName"->collectionName, 
-            "taxonomicHints"->taxonomicHints, "citation" -> citation)
+        "dataResourceUid"->dataResourceUid, "dataResourceName"->dataResourceName,
+        "collectionUid"->collectionUid, "institutionUid"->institutionUid, 
+        "dataHubUid"->dataHubUid, "dataHubName"->dataHubName,
+        "institutionName"->institutionName , "collectionName"->collectionName, 
+        "taxonomicHints"->taxonomicHints, "citation" -> citation)
     map.filter(i => i._2!= null)
   }
 }
@@ -867,9 +867,9 @@ class FullRecord (
   @BeanProperty var taxonomicallyKosher:Boolean = true,
   @BeanProperty var deleted:Boolean = false,
   @BeanProperty var lastLoadTime:String ="")
-  extends Cloneable {
+  extends Cloneable with CompositePOSO {
     
-  var objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement, location.environmentalLayers, location.contextualLayers)
+  var objectArray:Array[POSO] = Array(occurrence,classification,location,event,attribution,identification,measurement, location.environmentalLayers, location.contextualLayers)
 
   def reinitObjectArray()={
     objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement, location.environmentalLayers, location.contextualLayers)

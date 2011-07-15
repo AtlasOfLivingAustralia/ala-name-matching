@@ -84,7 +84,11 @@ object IndexRecords {
       counter += 1
       if (!versions.isEmpty) {
     	val v = versions.get
-    	items.add(indexer.getOccIndexModel(v).get);
+    	
+    	val raw = v(0)
+    	val processed = v(1)
+    	
+    	items.add(indexer.getOccIndexModel(raw,processed).get);
         //debug counter
         if (counter % 1000 == 0) {
           //add the items to the configured indexer

@@ -293,46 +293,46 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         persistenceManager.putBatch(entityName, batch.toMap)
     }
 
-    /**
-     * if the objects is Mappable return the map of the properties otherwise returns an empty map
-     */
-    protected def mapObjectToProperties(anObject: AnyRef, version: Version): Map[String, String] = {
-        var properties = scala.collection.mutable.Map[String, String]()
-        if (anObject.isInstanceOf[Mappable]) {
-            val map = anObject.asInstanceOf[Mappable].getMap
-
-
-            map foreach {
-                case (key, value) => {
-                    version match {
-                        case Processed => properties.put(FullRecordMapper.markAsProcessed(key), value)
-                        case Consensus => properties.put(FullRecordMapper.markAsConsensus(key), value)
-                        case Raw => properties.put(key, value)
-                    }
-                }
-            }
-        }
-        else{
-          val defn = FullRecordMapper.getDefn(anObject)
-            for (field <- defn.keySet) {
-                //val fieldValue = anObject.getter(field).asInstanceOf[String]
-                //Use the cached version of the getter method
-                val getter = defn.get(field).get.asInstanceOf[(Method,Method)]._1
-                val fieldValue = getter.invoke(anObject)
-                if (fieldValue != null) {
-                    version match {
-                      case Processed => properties.put(FullRecordMapper.markAsProcessed(field.toString), fieldValue.toString)
-                      case Consensus => properties.put(FullRecordMapper.markAsConsensus(field.toString), fieldValue.toString)
-                      case Raw => properties.put(field.toString, fieldValue.toString)
-
-                    
-                    }
-                }
-            }
-        }
-        properties.toMap
-
-    }
+//    /**
+//     * if the objects is Mappable return the map of the properties otherwise returns an empty map
+//     */
+//    protected def mapObjectToProperties(anObject: AnyRef, version: Version): Map[String, String] = {
+//        var properties = scala.collection.mutable.Map[String, String]()
+//        if (anObject.isInstanceOf[Mappable]) {
+//            val map = anObject.asInstanceOf[Mappable].getMap
+//
+//
+//            map foreach {
+//                case (key, value) => {
+//                    version match {
+//                        case Processed => properties.put(FullRecordMapper.markAsProcessed(key), value)
+//                        case Consensus => properties.put(FullRecordMapper.markAsConsensus(key), value)
+//                        case Raw => properties.put(key, value)
+//                    }
+//                }
+//            }
+//        }
+//        else{
+//          val defn = FullRecordMapper.getDefn(anObject)
+//            for (field <- defn.keySet) {
+//                //val fieldValue = anObject.getter(field).asInstanceOf[String]
+//                //Use the cached version of the getter method
+//                val getter = defn.get(field).get.asInstanceOf[(Method,Method)]._1
+//                val fieldValue = getter.invoke(anObject)
+//                if (fieldValue != null) {
+//                    version match {
+//                      case Processed => properties.put(FullRecordMapper.markAsProcessed(field.toString), fieldValue.toString)
+//                      case Consensus => properties.put(FullRecordMapper.markAsConsensus(field.toString), fieldValue.toString)
+//                      case Raw => properties.put(field.toString, fieldValue.toString)
+//
+//                    
+//                    }
+//                }
+//            }
+//        }
+//        properties.toMap
+//
+//    }
 
     /**
      * Update the version of the occurrence record.
@@ -346,11 +346,12 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      */
     def fullRecord2Map(fullRecord: FullRecord, version: Version): scala.collection.mutable.Map[String, String] = {
         var properties = scala.collection.mutable.Map[String, String]()
-        for (anObject <- fullRecord.objectArray) {
-            val map = mapObjectToProperties(anObject, version)
+        fullRecord.objectArray.foreach(poso => {
+            val map = FullRecordMapper.mapObjectToProperties(poso)
+            //poso.
             //add all to map           
             properties.putAll(map)
-        }
+        })
         //add the special cases to the map
         properties.put("uuid", fullRecord.uuid)
         properties.put("rowKey", fullRecord.rowKey)

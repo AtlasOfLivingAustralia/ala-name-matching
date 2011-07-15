@@ -18,18 +18,21 @@ import scala.actors.Actor
 import scala.collection.mutable.ArrayBuffer
 
 
-
 /**
  * All Index implementations need to extend this trait.
  */
 trait IndexDAO {
 
     import org.apache.commons.lang.StringUtils.defaultString
-    import au.org.ala.util.ReflectBean._
+    //import au.org.ala.util.ReflectBean._
 
-    val elFields = FullRecordMapper.environmentalDefn.keySet.toList
-    val clFields = FullRecordMapper.contextualDefn.keySet.toList
+//    val elFields = Bean()FullRecordMapper.environmentalDefn.keySet.toList
+//    val clFields = FullRecordMapper.contextualDefn.keySet.toList
 
+    val elFields = (new EnvironmentalLayers).propertyNames.toList
+    val clFields = (new ContextualLayers).propertyNames.toList
+
+    
     def occurrenceDAO:OccurrenceDAO
 
     /**
@@ -69,13 +72,12 @@ trait IndexDAO {
 
     }
 
-  def getValue(field: String, map: Map[String, String], checkparsed:Boolean):String ={
-     var value = getValue(field, map)
-     if(value == "" && checkparsed)
-       value = getValue(field + ".p", map)
-
-    value
-  }
+    def getValue(field: String, map: Map[String, String], checkparsed:Boolean):String ={
+       var value = getValue(field, map)
+       if(value == "" && checkparsed)
+         value = getValue(field + ".p", map)
+       value
+    }
 
     /**
      * Returns an array of all the assertions that are in the Map.
@@ -88,7 +90,7 @@ trait IndexDAO {
 
         val columns = map.keySet
         var assertions = Array[String]("")
-        for (fieldName <- columns) {
+        columns.foreach(fieldName => 
 
             if (FullRecordMapper.isQualityAssertion(fieldName)) {
 
@@ -98,12 +100,9 @@ trait IndexDAO {
                   val arr = Json.toListWithGeneric(value,classOf[java.lang.Integer])
                   for(i <- 0 to arr.size-1)
                     assertions = assertions :+ AssertionCodes.getByCode(arr(0)).get.getName
-
                 }
             }
-
-                
-        }
+        )
         assertions
     }
 
@@ -305,30 +304,24 @@ trait IndexDAO {
     /**
      * Generate an index model from the supplied FullRecords
      */
-    def getOccIndexModel(records: Array[FullRecord]): Option[OccurrenceIndex] = {
+    def getOccIndexModel(raw:FullRecord, processed:FullRecord): Option[OccurrenceIndex] = {
+        
         //cycle through all the items in each record and attempt to add them to the index
         val occ = new OccurrenceIndex
-        for (i <- 0 to 1) {
-            val record = records(i)
-            for (anObject <- record.objectArray) {
-                val defn = FullRecordMapper.getDefn(anObject)
-                for (field <- defn.keySet) {
-                    //first time through we are processing the raw values
-                    var fieldName = if (i == 0) "raw_" + field else field
-                    //we only want to attempt to add the items that should appear in the occurrence
-                    if (FullRecordMapper.occurrenceIndexDefn.contains(fieldName)) {
-                      //used the cached versions of the getter and setter methods
-                        val methods = defn.get(fieldName).get.asInstanceOf[(Method,Method)]
-                        val fieldValue = methods._1.invoke(anObject)
-                        //val fieldValue = anObject.getClass.getMethods.find(_.getName == field).get.invoke(anObject).asInstanceOf[Any]
-                        if (fieldValue != null) {
-                            occ.setter(methods._2, fieldValue)
-//                            occ.setter(fieldName, fieldValue);
-                        }
-                    }
-                }
-            }
-        }
+        //val x = Bean(classOf[OccurrenceIndex],null,null,null)
+        val (rawFields, processedFields) = occ.propertyNames.partition(p => p.startsWith("raw_"))
+
+        rawFields.foreach(field => {
+            val value = raw.getNestedProperty(field)
+            occ.setProperty(field, value.getOrElse("")) 
+    	})
+
+        processedFields.foreach(field => {
+            val value = processed.getNestedProperty(field)
+            occ.setProperty(field, value.getOrElse("")) 
+    	})
+        
+
         //perform all the point construction
         if (occ.getDecimalLatitude != null && occ.getDecimalLongitude != null) {
             var pat = "#"
@@ -337,7 +330,8 @@ trait IndexDAO {
             val long = occ.getDecimalLongitude
             for {i <- 0 to 4} {
                 val df = new java.text.DecimalFormat(pat)
-                occ.setter(fieldPre + "1", df.format(lat) + "," + df.format(long))
+                //FIXME
+                occ.setProperty(fieldPre + "1", df.format(lat) + "," + df.format(long))
                 if (i == 0) pat = pat + "."
                 pat = pat + "#"
                 fieldPre = fieldPre + "0"
@@ -345,20 +339,20 @@ trait IndexDAO {
             occ.setLatLong(occ.getDecimalLatitude.toString + "," + occ.getDecimalLongitude)
         }
         //set the id for the occurrence record to the uuid
-        occ.uuid = records(0).uuid
+        occ.uuid = raw.uuid
         //set the systemAssertions
-        occ.assertions = records(1).assertions
-        occ.setGeospatialKosher(records(1).getGeospatiallyKosher().toString)
-        occ.setTaxonomicKosher(records(1).getTaxonomicallyKosher().toString)
-        if (records(1).getOccurrence.getImages != null && records(1).getOccurrence.getImages.size > 0) {
-            occ.setImage(records(1).getOccurrence.getImages()(0))
+        occ.assertions = processed.assertions
+        occ.setGeospatialKosher(processed.getGeospatiallyKosher().toString)
+        occ.setTaxonomicKosher(processed.getTaxonomicallyKosher().toString)
+        if (processed.getOccurrence.getImages != null && !processed.getOccurrence.getImages.isEmpty) {
+            occ.setImage(processed.getOccurrence.getImages()(0))
             occ.setMultimedia("Multimedia")
         }
         else
             occ.setMultimedia("None")
 
         //set the occurrence_year
-        val year = records(1).getEvent.getYear
+        val year = processed.getEvent.getYear
         if (year.length == 4)
             occ.setOccurrenceYear(DateUtils.parseDate(year, Array("yyyy")))
 
@@ -457,13 +451,18 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         cc.shutdown
     }
 
-    override def getOccIndexModel(records: Array[FullRecord]): Option[OccurrenceIndex] = {
+    override def getOccIndexModel(raw: FullRecord, processed: FullRecord): Option[OccurrenceIndex] = {
         //set the SOLR specific value
-        val occ = super.getOccIndexModel(records)
+        val occ = super.getOccIndexModel(raw,processed)
         if (!occ.isEmpty) {
             //set the names lsid
-            val v = List(defaultString(occ.get.scientificName), defaultString(occ.get.taxonConceptID),
-                defaultString(occ.get.vernacularName), defaultString(occ.get.kingdom), defaultString(occ.get.family))
+            val v = List(
+                defaultString(occ.get.scientificName), 
+                defaultString(occ.get.taxonConceptID),
+                defaultString(occ.get.vernacularName), 
+                defaultString(occ.get.kingdom), 
+                defaultString(occ.get.family)
+            )
             occ.get.setNamesLsid(v.mkString("|"))
         }
         occ
@@ -477,7 +476,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         //val header = getHeaderValues()
         val values = getOccIndexModel(guid, map)
         if(values.length != header.length){
-          println("values don't matcher header: ")
+          println("values don't matcher header: " +values.length+":"+header.length+", values:header")
           println(header)
           println(values)
           //if(solrDocList.size >=10)

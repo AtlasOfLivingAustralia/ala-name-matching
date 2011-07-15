@@ -1,0 +1,167 @@
+class
+institutionID
+collectionID
+datasetID
+institutionCode
+collectionCode
+datasetName
+ownerInstitutionCode
+basisOfRecord	recordBasis
+informationWithheld
+dataGeneralizations
+dynamicProperties
+occurrenceID
+catalogNumber	catalogNumberNumeric	catalogueNumber
+occurrenceDetails
+occurrenceRemarks
+recordNumber	collectorNumber
+recordedBy	collector
+individualID
+individualCount
+sex	gender
+lifeStage
+reproductiveCondition
+behavior	behaviour
+establishmentMeans	nativeness
+occurrenceStatus
+preparations
+disposition
+otherCatalogNumbers
+previousIdentifications
+associatedMedia
+associatedReferences
+associatedOccurrences
+associatedSequences
+associatedTaxa
+eventID
+samplingProtocol
+samplingEffort
+eventDate	earliestDateCollected	latestDateCollected
+eventTime	time
+startDayOfYear
+endDayOfYear
+year
+month
+day
+verbatimEventDate
+habitat
+fieldNumber
+fieldNotes
+eventRemarks
+locationID
+higherGeographyID
+higherGeography
+continent
+waterBody
+islandGroup
+island
+country
+countryCode	isoCountryCode
+stateProvince	state	province	territory
+county
+municipality	city
+locality	address
+verbatimLocality
+verbatimElevation	elevation
+minimumElevationInMeters
+maximumElevationInMeters
+verbatimDepth	depth
+minimumDepthInMeters
+maximumDepthInMeters
+minimumDistanceAboveSurfaceInMeters
+maximumDistanceAboveSurfaceInMeters
+locationAccordingTo
+locationRemarks
+verbatimCoordinates
+verbatimLatitude
+verbatimLongitude
+verbatimCoordinateSystem
+verbatimSRS
+decimalLatitude	latitude	lat
+decimalLongitude	longitude	long	lon
+geodeticDatum	datum
+coordinateUncertaintyInMeters
+coordinatePrecision
+pointRadiusSpatialFit
+footprintWKT	wkt
+footprintSRS	srs
+footprintSpatialFit
+georeferencedBy
+georeferenceProtocol
+georeferenceSources
+georeferenceVerificationStatus
+georeferenceRemarks
+geologicalContextID
+earliestEonOrLowestEonothem
+latestEonOrHighestEonothem
+earliestEraOrLowestErathem
+latestEraOrHighestErathem
+earliestPeriodOrLowestSystem
+latestPeriodOrHighestSystem
+earliestEpochOrLowestSeries
+latestEpochOrHighestSeries
+earliestAgeOrLowestStage
+latestAgeOrHighestStage
+lowestBiostratigraphicZone
+highestBiostratigraphicZone
+lithostratigraphicTerms
+group
+formation
+member
+bed
+identificationID
+identifiedBy
+dateIdentified	identificationDate
+identificationReferences
+identificationRemarks
+identificationQualifier
+typeStatus	typification
+taxonID	nameUsageID
+scientificNameID	nameID	sciNameID
+acceptedNameUsageID	acceptedTaxonID
+parentNameUsageID	parentTaxonID	higherTaxonID	higherNameUsageID
+originalNameUsageID	originalNameID	originalTaxonID	basionymID
+nameAccordingToID	taxonAccordingToID
+namePublishedInID
+taxonConceptID
+scientificName	sci name	taxon name	taxonomic name
+acceptedNameUsage	acceptedTaxon
+parentNameUsage	parentTaxon	higherTaxon	higherNameUsage
+originalNameUsage	originalName	originalTaxon	basionym
+nameAccordingTo	taxonAccordingTo
+namePublishedIn
+higherClassification
+kingdom
+phylum
+class
+order	bioorder
+family
+genus
+subgenus
+specificEpithet
+infraspecificEpithet
+taxonRank	rank
+verbatimTaxonRank
+scientificNameAuthorship	author	authorship
+vernacularName	commonName
+nomenclaturalCode
+taxonomicStatus
+nomenclaturalStatus
+taxonRemarks	taxonRemark
+ResourceRelationship
+resourceRelationshipID
+resourceID
+relatedResourceID
+relationshipOfResource
+relationshipAccordingTo
+relationshipEstablishedDate
+relationshipRemarks
+measurementID
+measurementType
+measurementValue
+measurementAccuracy
+measurementUnit
+measurementDeterminedDate
+measurementDeterminedBy
+measurementMethod
+measurementRemarks

@@ -15,6 +15,7 @@ object Config {
 
     val occurrenceDAO = getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     val persistenceManager = getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
+    val nameIndex = getInstance(classOf[CBIndexSearch]).asInstanceOf[CBIndexSearch]
 }
 
 /**

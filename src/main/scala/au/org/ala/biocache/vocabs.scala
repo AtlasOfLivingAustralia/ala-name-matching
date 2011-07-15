@@ -26,17 +26,27 @@ trait Vocab {
   def matchTerm(string2Match:String) : Option[Term] = {
     if(string2Match!=null){
       //strip whitespace & strip quotes and fullstops & uppercase
-      val stringToUse = string2Match.replaceAll("([.,-\\?]*)?([\\s]*)?", "").toLowerCase
-      for(term<-all){
+      val stringToUse = string2Match.replaceAll("""[ \\"\\'\\.\\,\\-\\?]*""", "").toLowerCase
+      //println("string to use: " + stringToUse)
+      all.foreach(term => {
+        //println("matching to term " + term.canonical)
         if(term.canonical.equalsIgnoreCase(stringToUse))
           return Some(term)
         if(term.variants.contains(stringToUse)){
           return Some(term)
         }
-      }
+      })
     }
     None
   }
+  
+  def loadVocabFromFile(filePath:String) : Set[Term] = {
+    scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map({ row =>
+        val values = row.split("\t")
+        new Term(values.head, values.tail)
+    }).toSet
+  }
+  
 
   /**
    * Retrieve all the terms defined in this vocab.
@@ -144,6 +154,28 @@ object StateCentrePoints {
   }
 }
 
+object DwC extends Vocab {
+    val all = loadVocabFromFile("/dwc.txt")
+}
+
+object GeodeticDatum extends Vocab {
+    val EPSG4326 = Term("EPSG:4326", Array("epsg4326", "4326"))
+    val WGS84 = Term("WGS84", Array("world geodetic system"))
+    val WGS72 = Term("WGS72")
+    val WGS66 = Term("WGS66")
+    val WGS60 = Term("WGS60")
+    val GDA94 = Term("GDA94")
+    val NAD27 = Term("NAD27")
+    val CampoInchauspe = Term("Campo Inchauspe")
+    val European1950 = Term("European 1950")
+    val Clarke1866 = Term("Clarke 1866")
+    val all = retrieveAll
+}
+
+object Countries extends Vocab {
+    val all = loadVocabFromFile("/countries.txt")
+}
+
 /**
  * Vocabulary matcher for basis of record values.
  */
@@ -218,7 +250,7 @@ trait VocabMaps {
    */
   def areTermsCompatible(term:String, terms:Array[String]) : Option[Boolean] = {
     var weTested:Option[Boolean] = None
-    for(matchingTerm<-terms){
+    terms.foreach(matchingTerm => {
       val matches = isCompatible(term, matchingTerm)
       if(!matches.isEmpty){
         //term is recognised
@@ -229,7 +261,7 @@ trait VocabMaps {
           weTested = Some(false)
         }
       }
-    }
+   })
     weTested
   }
 

@@ -46,25 +46,24 @@ object TaxonProfileLoader {
 	    	  val habitats = for(habitat<-profile.habitat) yield habitat.toString
 	    	  taxonProfile.habitats = habitats.toArray
 	      }
-              if(profile.left != null){
-                taxonProfile.left = profile.left.toString
-              }
-              if(profile.right != null){
-                taxonProfile.right = profile.right.toString
-              }
-              if(profile.rank != null){
-                taxonProfile.rankString = profile.rank.toString
-              }
-              //TODO work out whatto store from the conservation status
-
-              //store the sensitive species information
-              //TODO fix up this so that the zone is obtained from the vocabulary?
-              if(profile.sensitiveStatus != null){
-                val sss = for(ss <- profile.sensitiveStatus) 
-                  yield new SensitiveSpecies(ss.sensitivityZone.toString, ss.sensitivityCategory.toString)              
-                  
-                taxonProfile.sensitive = sss.toArray
-              }
+          if(profile.left != null){
+            taxonProfile.left = profile.left.toString
+          }
+          if(profile.right != null){
+            taxonProfile.right = profile.right.toString
+          }
+          if(profile.rank != null){
+            taxonProfile.rankString = profile.rank.toString
+          }
+          //TODO work out whatto store from the conservation status
+          //store the sensitive species information
+          //TODO fix up this so that the zone is obtained from the vocabulary?
+          if(profile.sensitiveStatus != null){
+            val sss = for(ss <- profile.sensitiveStatus) 
+              yield new SensitiveSpecies(ss.sensitivityZone.toString, ss.sensitivityCategory.toString)
+              
+            taxonProfile.sensitive = sss.toArray
+          }
               
 	      TaxonProfileDAO.add(taxonProfile)
 	      lastKey = profile.guid

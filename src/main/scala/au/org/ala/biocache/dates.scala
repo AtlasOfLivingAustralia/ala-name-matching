@@ -4,6 +4,12 @@ import org.apache.commons.lang.time.DateFormatUtils
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 import java.text.ParseException
+import java.util.Date
+
+object DateUtil {
+    
+    def getCurrentYear =  DateFormatUtils.format(new Date(), "yyyy").toInt
+}
 
 /**
  * Date parser that uses scala extractors to handle the different formats.
@@ -33,7 +39,36 @@ object DateParser {
       case _ => None
     }
   }
+ 
+  def isValid(eventDate:EventDate) : Boolean = {
+      
+      val today = new Date();
+      val currentYear = DateUtil.getCurrentYear
+      
+      if(eventDate.startYear != null){
+          val year = eventDate.startYear.toInt
+          if(year > currentYear) return false
+      }
+
+      if(eventDate.endYear != null){
+          val year = eventDate.endYear.toInt
+          if(year < 1600) return false
+      }
+
+      if(eventDate.startYear != null && eventDate.endYear != null){
+          val startYear = eventDate.startYear.toInt
+          val endYear = eventDate.endYear.toInt
+          if(startYear> endYear) return false
+      }
+      true
+  }
+  
+  
+  
+  
 }
+
+
 
 case class EventDate(startDate:String,startDay:String,startMonth:String,startYear:String,
     endDate:String,endDay:String,endMonth:String,endYear:String,singleDate:Boolean)
@@ -72,7 +107,8 @@ object ISODate /*extends (String=>Option[EventDate]) */{
   def unapply(str:String) : Option[EventDate] = {
    try{
        val eventDateParsed = DateUtils.parseDate(str,
-          Array("yyyy-MM-dd", "yyyy-MM-dd'T'hh:mm-ss", "yyyy-MM-dd'T'hh:mm'Z'"))
+          Array("yyyy-MM-dd", "yyyy-MM-dd'T'hh:mm-ss", "yyyy-MM-dd'T'hh:mm'Z'",
+            "yyyy/MM/dd", "dd-MM-yyyy", "dd/MM/yyyy"))
 
        val startDate, endDate = DateFormatUtils.format(eventDateParsed, "yyyy-MM-dd")
        val startDay, endDay = DateFormatUtils.format(eventDateParsed, "dd")
@@ -252,7 +288,6 @@ object ISOYearRange {
              parts(0)
          }
        }
-
        Some(EventDate(startDate,startDay,startMonth,startYear,
            endDate,endDay,endMonth:String,endYear,false))
      } catch {
