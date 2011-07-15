@@ -133,7 +133,7 @@ namePublishedIn
 higherClassification
 kingdom
 phylum
-class
+classs	_class	class	klass	clazz
 order	bioorder
 family
 genus

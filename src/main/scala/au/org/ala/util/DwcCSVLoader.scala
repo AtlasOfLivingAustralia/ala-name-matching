@@ -9,6 +9,7 @@ import java.io.File
 import scala.collection.JavaConversions
 import au.org.ala.biocache.Raw
 import au.org.ala.biocache.Versions
+import au.org.ala.biocache.DwC
 
 object DwcCSVLoader {
     
@@ -69,22 +70,34 @@ class DwcCSVLoader extends DataLoader {
         val separator = params.getOrElse("separator", ",").head
         val reader =  new CSVReader(new FileReader(file), separator, quotechar)
         
-        val columnHeaders = reader.readNext.map(t => t.replace(" ", "")).toList
+        //match the column headers to dwc terms
+        val dwcTermHeaders = {
+            val columnHeaders = reader.readNext.map(t => t.replace(" ", "")).toList
+            columnHeaders.map(ch => {
+	            DwC.matchTerm(ch) match {
+	                case Some(term) => term.canonical
+	                case None => ch
+	            }
+	        })
+        }
         
         var currentLine = reader.readNext
         
         println("Unique terms: " + uniqueTerms)
-        println("Column headers: " + columnHeaders)
+        println("Column headers: " + dwcTermHeaders)
         
-        val validConfig = uniqueTerms.forall(t => columnHeaders.contains(t))
+        val validConfig = uniqueTerms.forall(t => dwcTermHeaders.contains(t))
         if(!validConfig){
             throw new RuntimeException("Bad configuration for file: "+ file.getName + " for resource: " + dataResourceUid)
         }
         
+        var counter = 1
+        var noSkipped = 0
         while(currentLine!=null){
+            counter += 1
             val columns = currentLine.toList
-            if (columns.length == columnHeaders.size){
-                val map = (columnHeaders zip columns).toMap[String,String].filter( { 
+            if (columns.length == dwcTermHeaders.size){
+                val map = (dwcTermHeaders zip columns).toMap[String,String].filter( { 
                 	case (key,value) => value!=null && value.toString.trim.length>0 
                 })
                 
@@ -93,11 +106,15 @@ class DwcCSVLoader extends DataLoader {
 	                val fr = FullRecordMapper.createFullRecord("", map, Versions.RAW)
 	                load(dataResourceUid, fr, uniqueTermsValues)
                 } else {
-                    println("Skipping line: " + ", missing unique term value")
+                    noSkipped += 1
+                    print("Skipping line: " + counter + ", missing unique term value. Number skipped: "+ noSkipped)
+                    uniqueTerms.foreach(t => print("," + t +":"+map.getOrElse(t,"")))
+                    println
                 }
             }
             //read next
             currentLine = reader.readNext
         }
+        println("Load finished")
     }
 }
