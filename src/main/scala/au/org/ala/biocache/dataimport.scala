@@ -26,7 +26,7 @@ trait DataLoader {
     val pm = Config.persistenceManager
     val loadTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
     
-    def retrieveConnectionParameters(resourceUid: String) : (String, String, List[String], Map[String,String]) = {
+    def retrieveConnectionParameters(resourceUid: String) : (String, String, List[String], Map[String,String], Map[String,String]) = {
 
       //full document
       val json = Source.fromURL(registryUrl + resourceUid + ".json").getLines.mkString
@@ -39,11 +39,11 @@ trait DataLoader {
       val uniqueTerms = connectionParameters.getOrElse("termsForUniqueKey", List[String]()).asInstanceOf[List[String]]
       
       //optional config params for custom services
-      val params = protocol.toLowerCase match {
+      val customParams = protocol.toLowerCase match {
           case "customwebservice" => JSON.parseFull(connectionParameters.getOrElse("params", "")).getOrElse(Map[String,String]()).asInstanceOf[Map[String, String]]
           case _ => Map[String,String]()
       }
-      (protocol, url, uniqueTerms, params)
+      (protocol, url, uniqueTerms, connectionParameters, customParams)
     }
     
     def mapConceptTerms(terms: List[String]): List[org.gbif.dwc.terms.ConceptTerm] = {

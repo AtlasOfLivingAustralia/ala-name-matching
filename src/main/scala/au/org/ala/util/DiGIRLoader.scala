@@ -4,25 +4,118 @@ import org.apache.commons.httpclient.methods.PostMethod
 import java.net.URLEncoder
 import org.apache.commons.httpclient.methods.GetMethod
 import scala.xml.XML
+import au.org.ala.biocache._
+
+/**
+ * A work in progress... not actually supporting paging ATM
+ */
+object DiGIRLoader  {
+
+    def main(args: Array[String]) {
+        val l = new DiGIRLoader
+        l.load("")
+    }
+}
+
 /**
  * A work in progress...
  */
-object DiGIRLoader {
+class DiGIRLoader extends DataLoader {
 
-    def main(args: Array[String]) {
+    def load(dataResourceUid: String) {
 
-        val digirEndpoint = "http://iobis.marine.rutgers.edu/digir2/DiGIR.php"
+        val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+        
+//        val digirEndpoint = "http://iobis.marine.rutgers.edu/digir2/DiGIR.php"
+//        val resource = "trawl_fibex"
             
         //retrieve the metadata
-        val metadataRequest = createMetadataRequest("1.0", digirEndpoint)
+        //performMetadataRequest(digirEndpoint)
+        
+        //trawl_fibex
+        val scientificNames = performInventoryRequest(url, params("resource"))
+        scientificNames.foreach(name => {
+            
+            //retrieve all records for this name - requires paging
+	        val request = createSearchRequest("1.0", "search", url,  params("resource"), name, name)
+	        println(request.toString)
+	
+	        val http = new HttpClient
+	        val encodedRequest = URLEncoder.encode(request.toString)
+	
+	        val get = new GetMethod(url + "?request=" + encodedRequest)
+	        val status = http.executeMethod(get)
+	        val response = get.getResponseBodyAsString
+	        
+	        println("response:" + get.getResponseBodyAsString)
+	        
+	        val xml = XML.loadString(response)
+	        
+	        val records = xml \\ "record"
+	        
+	        records.foreach(r => {
+	            
+	            //map each element to new dwc terms
+	            val map = r.child.map(el => {
+	                if(!el.text.isEmpty && el.text !=null && el.text.trim!="" ){
+	                    if(!DwC.matchTerm(el.label).isEmpty){
+	                    	Some(DwC.matchTerm(el.label).get.canonical -> el.text)
+		                } else {
+		                    println("cant match term: "+ el.label)
+		                    None
+		                }
+	                } else {
+	                    None
+	                }
+	            }).filter(x => !x.isEmpty).map(y => y.get).toMap[String,String]
+	            
+	            //retrieve the unique terms
+                val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,"")) //for (t <-uniqueTerms) yield map.getOrElse(t,"")
+                val fr = FullRecordMapper.createFullRecord("", map, Versions.RAW)
+                load(dataResourceUid, fr, uniqueTermsValues)
+	        })
+        })
+        
+        
+        //retrieve a list of resource names
+            
+        //check to see if all the names of resources are currently in the collectory
+            
+/*            
+        val request = createSearchRequest("1.0", "search", digirEndpoint, "trawl_fibex", "A%", null)
+        println(request.toString)
+
         val http = new HttpClient
-        val encodedRequest = URLEncoder.encode(metadataRequest.toString)
+        val encodedRequest = URLEncoder.encode(request.toString)
 
         val get = new GetMethod(digirEndpoint + "?request=" + encodedRequest)
         val status = http.executeMethod(get)
+        println("response:" + get.getResponseBodyAsString)
+
+*/
+
+        println("done")
+    }
+
+    def performInventoryRequest(digirEndpoint:String, resourceName:String) : List[String] = {
+        val metadataRequest = createInventoryRequest("1.0", digirEndpoint, resourceName)
+        val http = new HttpClient
+        val encodedRequest = URLEncoder.encode(metadataRequest.toString)
+        val get = new GetMethod(digirEndpoint + "?request=" + encodedRequest)
+        val status = http.executeMethod(get)
         val response = get.getResponseBodyAsString
-       // println("response:" + response)
-        
+        val xml = XML.loadString(response)
+        val scientificNames = xml \\ "ScientificName"
+        scientificNames.map(scientificName => scientificName.text).toList
+    }
+    
+    def performMetadataRequest(digirEndpoint:String){
+        val metadataRequest = createMetadataRequest("1.0", digirEndpoint)
+        val http = new HttpClient
+        val encodedRequest = URLEncoder.encode(metadataRequest.toString)
+        val get = new GetMethod(digirEndpoint + "?request=" + encodedRequest)
+        val status = http.executeMethod(get)
+        val response = get.getResponseBodyAsString
         val xml = XML.loadString(response)
         val resources = xml \\ "resource"
         resources.foreach(resource => {
@@ -34,27 +127,10 @@ object DiGIRLoader {
         	
         	println(code +" : " + name)
         })
-        
-            
-            
-        //retrieve a list of resource names
-            
-        //check to see if all the names of resources are currently in the collectory
-            
-            
-//        val request = createSearchRequest("1.0", "search", digirEndpoint, "trawl_fibex", "A%", null)
-//        println(request.toString)
-//
-//        val http = new HttpClient
-//        val encodedRequest = URLEncoder.encode(request.toString)
-//
-//        val get = new GetMethod(digirEndpoint + "?request=" + encodedRequest)
-//        val status = http.executeMethod(get)
-//        println("response:" + get.getResponseBodyAsString)
-
-        println("done")
     }
-
+    
+    
+    
     def createMetadataRequest(version: String, destination: String) = {
         <request xmlns='http://digir.net/schema/protocol/2003/1.0' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:digir='http://digir.net/schema/protocol/2003/1.0'>
           <header>

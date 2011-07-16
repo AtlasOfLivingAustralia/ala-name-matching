@@ -53,12 +53,12 @@ class DwcCSVLoader extends DataLoader {
     import scalaj.collection.Imports._
 
     def loadLocalFile(dataResourceUid:String, filePath:String){
-        val (protocol, url, uniqueTerms, params) = retrieveConnectionParameters(dataResourceUid)
+        val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
         loadFile(new File(filePath),dataResourceUid, uniqueTerms, params) 
     }
     
     def load(dataResourceUid:String){
-        val (protocol, url, uniqueTerms, params) = retrieveConnectionParameters(dataResourceUid)
+        val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
         val fileName = downloadArchive(url,dataResourceUid)
         val directory = new File(fileName)
         directory.listFiles.foreach(file => loadFile(file,dataResourceUid, uniqueTerms, params))
@@ -93,6 +93,8 @@ class DwcCSVLoader extends DataLoader {
         
         var counter = 1
         var noSkipped = 0
+        var startTime = System.currentTimeMillis
+        var finishTime = System.currentTimeMillis
         while(currentLine!=null){
             counter += 1
             val columns = currentLine.toList
@@ -102,9 +104,14 @@ class DwcCSVLoader extends DataLoader {
                 })
                 
                 if(uniqueTerms.forall(t => map.getOrElse(t,"").length>0)){
-	                val uniqueTermsValues = for (t <-uniqueTerms) yield map.getOrElse(t,"")
+	                val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,"")) //for (t <-uniqueTerms) yield map.getOrElse(t,"")
 	                val fr = FullRecordMapper.createFullRecord("", map, Versions.RAW)
 	                load(dataResourceUid, fr, uniqueTermsValues)
+		            if (counter % 1000 == 0 && counter > 0) {
+		                finishTime = System.currentTimeMillis
+		                println(counter + ", >> last key : " + dataResourceUid + "|"+uniqueTermsValues.mkString("|") + ", records per sec: " + 1000 / (((finishTime - startTime).toFloat) / 1000f))
+		                startTime = System.currentTimeMillis
+		            }
                 } else {
                     noSkipped += 1
                     print("Skipping line: " + counter + ", missing unique term value. Number skipped: "+ noSkipped)

@@ -23,15 +23,23 @@ object FlickrLoader extends DataLoader{
             opt("e", "endDate", "end date in yyyy-MM-dd format", {v:String => endDate = Some(DateUtils.parseDate(v, Array("yyyy-MM-dd"))) } )
         }
         if(parser.parse(args)){
-        	harvest(dataResourceUid,startDate,endDate)
+            val l = new FlickrLoader
+        	l.load(dataResourceUid,startDate,endDate)
         } else {
             exit(1)
         }
     }
+}
+
+class FlickrLoader extends DataLoader {
     
-    def harvest(dataResourceUid:String, suppliedStartDate:Option[Date], suppliedEndDate:Option[Date]){
+    def load(dataResourceUid:String){
+        load(dataResourceUid, None, None)
+    }
+    
+    def load(dataResourceUid:String, suppliedStartDate:Option[Date], suppliedEndDate:Option[Date]){
         
-        val (protocol, url, uniqueTerms, params) = retrieveConnectionParameters(dataResourceUid)
+        val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
         val keywords = params.getOrElse("keywords", "").split(",").map(keyword => keyword.trim.replaceAll(" ","").toLowerCase).toList
         
         val endDate = suppliedEndDate.getOrElse( {
@@ -127,6 +135,7 @@ object FlickrLoader extends DataLoader{
                     case Some("province") => fr.location.stateProvince = tagValue
                     case Some("district") => fr.location.locality = tagValue
                     case Some("locality") => fr.location.locality = tagValue
+                    case Some("town") => fr.location.locality = tagValue
                     case Some("habitat") => fr.location.habitat = tagValue
                     case Some("lat") => fr.location.decimalLatitude = tagValue
                     case Some("latitude") => fr.location.decimalLatitude = tagValue
@@ -192,7 +201,7 @@ object FlickrLoader extends DataLoader{
         }
     }
     
-    def makeSearchUrl(connectParams:Map[String,String], minUpdateDate:String, maxUpdateDate:String, pageNumber:Int) =  connectParams("base_url") + 
+    def makeSearchUrl(connectParams:Map[String,String], minUpdateDate:String, maxUpdateDate:String, pageNumber:Int) =  connectParams("url") + 
          "?method=flickr.photos.search" + 
          "&content_type=" +  connectParams("content_type") + 
          "&group_id=" + connectParams("group_id") +
@@ -203,7 +212,7 @@ object FlickrLoader extends DataLoader{
          "&per_page=" + connectParams("per_page") +
          "&page=" + pageNumber 
     
-    def makeGetInfoUrl(connectParams:Map[String,String], photoId:String) : String =  connectParams("base_url") + 
+    def makeGetInfoUrl(connectParams:Map[String,String], photoId:String) : String =  connectParams("url") + 
          "?method=flickr.photos.getInfo" +  
          "&api_key=" + connectParams("api_key") +
          "&photo_id=" + photoId

@@ -94,9 +94,6 @@ object FullRecordMapper {
             if (fieldValue != "") {
                 fieldName match {
                     case "qualityAssertion" => { }//ignore ?????
-                    //case "dataHubUid" => //ignore ?????
-                    //case "speciesGroups" =>
-                    //case "taxonomicHints" =>
                     case it if isQualityAssertion(it) => {
                     	//load the QA field names from the array
                     	if(fieldValue != "true" && fieldValue != "false"){
