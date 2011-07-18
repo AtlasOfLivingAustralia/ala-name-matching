@@ -63,7 +63,9 @@ import org.ala.biocache.util.DownloadFields;
 import org.apache.solr.common.SolrDocument;
 import javax.inject.Inject;
 import org.apache.commons.lang.ArrayUtils;
-
+import au.org.ala.biocache.IndexDAO;
+import au.org.ala.biocache.SolrIndexDAO;
+import org.apache.solr.client.solrj.SolrServer;
 /**
  * SOLR implementation of SearchDao. Uses embedded SOLR server (can be a memory hog).
  *
@@ -78,7 +80,7 @@ public class SearchDAOImpl implements SearchDAO {
     /** SOLR home directory - injected by Spring from properties file */
     protected String solrHome = "/data/solr/bio-proto";
     /** SOLR server instance */
-    protected EmbeddedSolrServer server;
+    protected SolrServer server;
     /** Limit search results - for performance reasons */
     protected static final Integer MAX_DOWNLOAD_SIZE = 15000;
     protected static final String POINT = "point-0.1";
@@ -94,6 +96,7 @@ public class SearchDAOImpl implements SearchDAO {
     protected Pattern urnPattern = Pattern.compile("urn:[a-zA-Z0-9\\.:-]*");
     protected Pattern spacesPattern =Pattern.compile("[^\\s\"()\\[\\]']+|\"[^\"]*\"|'[^']*'");
     protected Pattern uidPattern = Pattern.compile("([a-z_]*_uid:)([a-z0-9]*)");
+    protected Pattern spatialPattern = Pattern.compile("\\{!spatial[a-z=\\-\\s0-9\\.\\,]*\\}");
 
     /** Download properties */
     protected DownloadFields downloadFields;
@@ -107,11 +110,16 @@ public class SearchDAOImpl implements SearchDAO {
     public SearchDAOImpl() {
         if (this.server == null & solrHome != null) {
             try {
-                System.setProperty("solr.solr.home", solrHome);
-                logger.info("Initialising SOLR HOME: "+ solrHome);
-                CoreContainer.Initializer initializer = new CoreContainer.Initializer();
-                CoreContainer coreContainer = initializer.initialize();
-                server = new EmbeddedSolrServer(coreContainer, "");
+//                System.setProperty("solr.solr.home", solrHome);
+//                logger.info("Initialising SOLR HOME: "+ solrHome);
+//                CoreContainer.Initializer initializer = new CoreContainer.Initializer();
+//                CoreContainer coreContainer = initializer.initialize();
+//                server = new EmbeddedSolrServer(coreContainer, "");
+                
+                //use the solr server that has been in the biocache-store...
+                SolrIndexDAO dao = (SolrIndexDAO)au.org.ala.biocache.Config.getInstance(IndexDAO.class);
+                dao.init();
+                server = dao.solrServer();
             } catch (Exception ex) {
                 logger.error("Error initialising embedded SOLR server: " + ex.getMessage(), ex);
             }
@@ -306,7 +314,7 @@ public class SearchDAOImpl implements SearchDAO {
 
                 }
 
-                logger.debug("Downloading " + uuids.size() + " records");
+                //logger.debug("Downloading " + uuids.size() + " records");
 
                 au.org.ala.biocache.Store.writeToStream(out, "\t", "\n", uuids.toArray(new String[]{}),
                         fields);
@@ -1063,50 +1071,70 @@ public class SearchDAOImpl implements SearchDAO {
             matcher.appendTail(queryString);
             query = queryString.toString();
         }
-        //escape reserved characters unless the colon represnts a field name colon
-        queryString.setLength(0);
-
-        Matcher matcher = spacesPattern.matcher(query);
-        while(matcher.find()){
-            String value = matcher.group();
-           
-            //special cases to ignore from character escaping
-            //if the value is a single - or * it means that we don't want to escape it as it is likely to have occurred in the following situation -(occurrence_date:[* TO *]) or *:*
-            if(!value.equals("-") && !value.equals("*")  && !value.equals("*:*")){
-                
-                //split on the colon
-                String[] bits = StringUtils.split(value, ":", 2);
-                if(bits.length == 2){
-                    if(!bits[0].contains("urn"))
-                        matcher.appendReplacement(queryString, bits[0] +":"+ prepareSolrStringForReplacement(bits[1]));
-
-                }
-                //need to ignore field names where the : is at the end because the pattern matching will return field_name: as a match when it has a double quoted value
-                else if(!value.endsWith(":")){
-                    //default behaviour is to escape all 
-                    matcher.appendReplacement(queryString, prepareSolrStringForReplacement(value));
-                }
+        if(query.contains("{!spatial")){           
+            Matcher matcher = spatialPattern.matcher(query);
+            if(matcher.find()){
+                String spatial = matcher.group();            
+                //format the search query of the remaining text only            
+                searchParams.setQ(query.substring(matcher.regionStart() + spatial.length(), query.length()));
+                //format the remaining query
+                formatSearchQuery(searchParams);
+                //now append Q's together
+                queryString.setLength(0);
+                queryString.append(spatial);
+                queryString.append(searchParams.getQ());
+                searchParams.setQ(queryString.toString());
             }
             
+                
         }
-        matcher.appendTail(queryString);
+        else{
+            //escape reserved characters unless the colon represnts a field name colon
+            queryString.setLength(0);
 
-        //substitute better display strings for collection/inst etc searches
-        if(displayString.contains("_uid")){
-            displaySb.setLength(0);
-            matcher = uidPattern.matcher(displayString);
+            Matcher matcher = spacesPattern.matcher(query);
             while(matcher.find()){
-                String newVal = "<span>"+searchUtils.getUidDisplayString(matcher.group(2)) +"</span>";
-                if(newVal != null)
-                    matcher.appendReplacement(displaySb, newVal);
+                String value = matcher.group();
+
+                //special cases to ignore from character escaping
+                //if the value is a single - or * it means that we don't want to escape it as it is likely to have occurred in the following situation -(occurrence_date:[* TO *]) or *:*
+                if(!value.equals("-") && !value.equals("*")  && !value.equals("*:*")){
+
+                    //split on the colon
+                    String[] bits = StringUtils.split(value, ":", 2);
+                    if(bits.length == 2){
+                        if(!bits[0].contains("urn"))
+                            matcher.appendReplacement(queryString, bits[0] +":"+ prepareSolrStringForReplacement(bits[1]));
+
+                    }
+                    //need to ignore field names where the : is at the end because the pattern matching will return field_name: as a match when it has a double quoted value
+                    else if(!value.endsWith(":")){
+                        //default behaviour is to escape all 
+                        matcher.appendReplacement(queryString, prepareSolrStringForReplacement(value));
+                    }
+                }
+
             }
-            matcher.appendTail(displaySb);
-            displayString = displaySb.toString();
+            matcher.appendTail(queryString);
+
+            //substitute better display strings for collection/inst etc searches
+            if(displayString.contains("_uid")){
+                displaySb.setLength(0);
+                matcher = uidPattern.matcher(displayString);
+                while(matcher.find()){
+                    String newVal = "<span>"+searchUtils.getUidDisplayString(matcher.group(2)) +"</span>";
+                    if(newVal != null)
+                        matcher.appendReplacement(displaySb, newVal);
+                }
+                matcher.appendTail(displaySb);
+                displayString = displaySb.toString();
+            }
+            searchParams.setQ(queryString.toString());
+            searchParams.setDisplayString(displayString);
+            //return queryString.toString();
         }
-        searchParams.setQ(queryString.toString());
-        searchParams.setDisplayString(displayString);
-        //return queryString.toString();
     }
+
     /**
      * Creates a SOLR escaped string the can be used in a StringBuffer.appendReplacement
      * The appendReplacement needs an extra delimiting on the backslashes
