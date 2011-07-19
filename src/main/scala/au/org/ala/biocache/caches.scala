@@ -439,19 +439,6 @@ object LocationDAO {
           lock.synchronized {lru.put(uuid,returnValue)}
           returnValue
         } else {
-          //lock.synchronized { lru.put(uuid,None) }
-            
-          //FIXME need a flag
-            
-          //http://spatial.ala.org.au/gazetteer/search?lon=148.866&lat=-36.170
-           Http("http://spatial.ala.org.au/gazetteer/search").params("lon" -> "148.866", "lat" -> "-36.170").asString
-            
-            
-           
-            
-            
-            
-            
           lock.synchronized {lru.put(uuid,None)}
           None
         }
