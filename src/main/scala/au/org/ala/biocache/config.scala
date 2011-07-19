@@ -1,6 +1,8 @@
 package au.org.ala.biocache
 
 import java.util.Properties
+import au.org.ala.sds.SensitiveSpeciesFinder
+import au.org.ala.sds.SensitiveSpeciesFinderFactory
 import com.google.inject.name.Names
 import au.org.ala.checklist.lucene.CBIndexSearch
 import com.google.inject.{Scopes, Guice, Injector, AbstractModule}
@@ -16,6 +18,7 @@ object Config {
     val occurrenceDAO = getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     val persistenceManager = getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
     val nameIndex = getInstance(classOf[CBIndexSearch]).asInstanceOf[CBIndexSearch]
+    val sdsFinder = getInstance(classOf[SensitiveSpeciesFinder]).asInstanceOf[SensitiveSpeciesFinder]
 }
 
 /**
@@ -38,6 +41,10 @@ class ConfigModule extends AbstractModule {
         try {
             val nameIndex = new CBIndexSearch(properties.getProperty("nameIndexLocation"))
             bind(classOf[CBIndexSearch]).toInstance(nameIndex)
+            //Initialising this here because we may wish to process records form the biocache-service and it is expensive to startup
+            val sdsFinder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml",nameIndex)  //"http://sds.ala.org.au/sensitive-species-data.xml", nameIndex);
+            bind(classOf[SensitiveSpeciesFinder]).toInstance(sdsFinder)
+            
         } catch {
             case e: Exception => logger.warn("Lucene indexes arent currently available.")
         }

@@ -602,7 +602,7 @@ class Location extends Cloneable with Mappable with POSO {
   @BeanProperty var contextualLayers:ContextualLayers = new ContextualLayers
   //fields that need be hidden from all public API
   @BeanProperty @JsonIgnore var originalDecimalLatitude:String =_
-  @BeanProperty @JsonIgnore var originalDecimlaLongitude:String =_
+  @BeanProperty @JsonIgnore var originalDecimalLongitude:String =_
   @BeanProperty @JsonIgnore var originalLocality:String =_
 
   override def toString = ToStringBuilder.reflectionToString(this)

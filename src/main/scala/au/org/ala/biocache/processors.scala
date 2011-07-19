@@ -2,6 +2,11 @@ package au.org.ala.biocache
 
 import org.apache.commons.lang.time.DateFormatUtils
 import au.org.ala.checklist.lucene.HomonymException
+import au.org.ala.sds.SensitiveSpeciesFinderFactory
+import au.org.ala.sds.validation.ConservationOutcome
+import au.org.ala.sds.validation.FactCollection
+import au.org.ala.sds.validation.MessageFactory
+import au.org.ala.sds.validation.ServiceFactory
 import collection.mutable.{HashMap, ArrayBuffer}
 //import au.org.ala.sds.util.GeneralisedLocationFactory
 import java.util.GregorianCalendar
@@ -256,6 +261,8 @@ object BasisOfRecordProcessor extends Processor {
 object LocationProcessor extends Processor {
 
   val logger = LoggerFactory.getLogger("LocationProcessor")
+  //This is being initialised here because it may take some time to load all the XML records...
+  val sdsFinder = Config.sdsFinder
   /**
    * Process geospatial details
    *
@@ -267,9 +274,14 @@ object LocationProcessor extends Processor {
   def process(guid:String,raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
     //retrieve the point
     var assertions = new ArrayBuffer[QualityAssertion]
-
+    //handle the situation where the coordinates have already been sensitised
+    
+    if(raw.location.originalDecimalLatitude != null && raw.location.originalDecimalLongitude != null){
+      processed.location.decimalLatitude = raw.location.originalDecimalLatitude
+      processed.location.decimalLongitude = raw.location.originalDecimalLongitude
+    }
     //check to see if we have coordinates specified
-    if(raw.location.decimalLatitude != null && raw.location.decimalLongitude != null){
+    else if(raw.location.decimalLatitude != null && raw.location.decimalLongitude != null){            
       processed.location.decimalLatitude = raw.location.decimalLatitude
       processed.location.decimalLongitude = raw.location.decimalLongitude
     }
@@ -298,107 +310,148 @@ object LocationProcessor extends Processor {
       }
 
       //generate coordinate accuracy if not supplied
-      val point = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
+      var point = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
       if (!point.isEmpty) {
-
-        //add state information
-        processed.location.stateProvince = point.get.stateProvince
-        processed.location.ibra = point.get.ibra
-        processed.location.imcra = point.get.imcra
-        processed.location.lga = point.get.lga
-        processed.location.habitat = point.get.habitat
         
-        //add the country information
-        processed.location.country = point.get.country
-
-        //add the layers that are associated with the point
-        processed.location.environmentalLayers = point.get.environmentalLayers
-        processed.location.contextualLayers = point.get.contextualLayers
-        //reinitialise the object array so that the new values for environmental and conetxtual layers are included
-        processed.reinitObjectArray
-
-        
-
-        //check matched stateProvince
-        if (processed.location.stateProvince != null && raw.location.stateProvince != null) {
-          //quality systemAssertions
-          val stateTerm = States.matchTerm(raw.location.stateProvince)
-
-          if (!stateTerm.isEmpty && !processed.location.stateProvince.equalsIgnoreCase(stateTerm.get.canonical)) {
-            logger.debug("[QualityAssertion] " + guid + ", processed:" + processed.location.stateProvince
-                + ", raw:" + raw.location.stateProvince)
-            //add a quality assertion
-            val comment = "Supplied: " + stateTerm.get.canonical + ", calculated: " + processed.location.stateProvince
-            assertions + QualityAssertion(AssertionCodes.STATE_COORDINATE_MISMATCH,comment)
-            //store the assertion
-          }
+        //Perform sensitivity actions if the record was located in Australia
+        if(point.get.country == "Australia"){
+            val sensitiveTaxon = {
+              //check to see if the rank of the matched taxon is above a speceies
+              val rankID = au.org.ala.util.ReflectBean.any2Int(processed.classification.taxonRankID)
+              if(rankID != null && (rankID >6000 || !processed.classification.scientificName.contains(" "))){
+                  //match is based on a known LSID
+                  sdsFinder.findSensitiveSpeciesByLsid(processed.classification.taxonConceptID)
+              }
+              else{
+                  // use the "exact match" name
+                  val exact = getExactSciName(raw)
+                  if(exact != null)
+                      sdsFinder.findSensitiveSpeciesByExactMatch(exact)
+                  else
+                      null
+              }
+            }
+           
+            //only proceed if the taxon has been identified as sensitive
+            if(sensitiveTaxon != null){
+                  //populate the Facts that we know
+                  val facts = new FactCollection
+                  facts.add(FactCollection.DECIMAL_LATITUDE_KEY, processed.location.decimalLatitude)
+                  facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, processed.location.decimalLongitude)
+                  facts.add(FactCollection.STATE_PROVINCE_KEY, point.get.stateProvince)
+                  
+                  val service =ServiceFactory.createValidationService(sensitiveTaxon)
+                  //TODO fix for different types of outcomes...
+                  val outcome = service.validate(facts).asInstanceOf[ConservationOutcome]
+                  if(outcome.isValid){
+                     val gl = outcome.getGeneralisedLocation
+                     if(gl.getDescription == MessageFactory.getMessageText(MessageFactory.LOCATION_ALREADY_GENERALISED)){
+                       //already been genaralised by data resource provider non need to do anything.
+                     }
+                     else{
+                        //store the generalised values as the raw.location.decimalLatitude/Longitude
+                        //store the orginal as a hidden value
+                        raw.location.originalDecimalLatitude = processed.location.decimalLatitude
+                        raw.location.originalDecimalLongitude = processed.location.decimalLongitude
+                        raw.location.decimalLatitude = gl.getGeneralisedLatitude
+                        raw.location.decimalLongitude = gl.getGeneralisedLongitude
+                        //update the raw values
+                        //need to genarlise the coordinates for raw record in addition to the processed
+//                        val umap = Map[String, String]("originalDecimalLatitude"-> raw.location.originalDecimalLatitude,
+//                                                       "originalDecimalLongitude"-> raw.location.originalDecimlaLongitude,
+//                                                       "decimalLatitude" -> raw.location.decimalLatitude,
+//                                                       "decimalLongitude" -> raw.location.decimalLongitude)
+//
+//                        DAO.persistentManager.put(guid,OccurrenceDAO.entityName,umap)
+                        processed.location.decimalLatitude = gl.getGeneralisedLatitude
+                        processed.location.decimalLongitude = gl.getGeneralisedLongitude
+                        //update the generalised text
+                        if(gl.getDescription == MessageFactory.getMessageText(MessageFactory.LOCATION_WITHHELD)){
+                            processed.occurrence.informationWithheld = gl.getDescription
+                        }
+                        else{
+                            processed.occurrence.dataGeneralizations = gl.getDescription
+                            processed.location.coordinateUncertaintyInMeters = gl.getGeneralisationInMetres
+                        }
+                       
+                        //TODO may need to fix locality information... change ths so that the generalisation is performed before the point matching to gazetteer...
+                        
+                        //We want to associate the contextual/environmental layers to the sensitised point
+                        point = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
+                    }
+                  }
+            }
         }
+        //need to recheck in case the new "sensitised" point is not available
+        if(!point.isEmpty){
+            //add state information
+            processed.location.stateProvince = point.get.stateProvince
+            processed.location.ibra = point.get.ibra
+            processed.location.imcra = point.get.imcra
+            processed.location.lga = point.get.lga
+            processed.location.habitat = point.get.habitat
 
-//        //check to see if the points need to generalised
-//        if(!taxonProfile.isEmpty && taxonProfile.get.sensitive!= null && !taxonProfile.get.sensitive.isEmpty && processed.location.country == "Australia"){
-//          //Call SDS code to get the revised coordinates
-//          val ss =DAO.sensitiveSpeciesFinderFactory.findSensitiveSpeciesByLsid(processed.classification.taxonConceptID)
-//          if(ss != null){
-//            //get the genralised coordinates
-//            val gl = GeneralisedLocationFactory.getGeneralisedLocation(raw.location.decimalLatitude, raw.location.decimalLongitude, ss, processed.location.stateProvince);
-//            if(gl != null){
-//              //check to see if the coordinates have changed
-//              if(gl.isGeneralised){
-//                logger.debug("Generalised coordinates for " +guid)
-//
-//                //store the generalised values as the raw.location.decimalLatitude/Longitude
-//                //store the orginal as a hidden value
-//                raw.location.originalDecimalLatitude = raw.location.decimalLatitude
-//                raw.location.originalDecimlaLongitude = raw.location.decimalLongitude
-//                raw.location.decimalLatitude = gl.getGeneralisedLatitude
-//                raw.location.decimalLongitude = gl.getGeneralisedLongitude
-//                //update the raw values
-//                val umap = Map[String, String]("originalDecimalLatitude"-> raw.location.originalDecimalLatitude,
-//                                               "originalDecimalLongitude"-> raw.location.originalDecimlaLongitude,
-//                                            "decimalLatitude" -> raw.location.decimalLatitude,
-//                                            "decimalLongitude" -> raw.location.decimalLongitude)
-//
-//                DAO.persistentManager.put(guid,"occ",umap)
-//                processed.location.decimalLatitude = gl.getGeneralisedLatitude
-//                processed.location.decimalLongitude = gl.getGeneralisedLongitude
-//                //TODO may need to fix locality information... change ths so that the generalisation is performed before the point matching to gazetteer...
-//              }
-//
-//            }
-//          }
-//        }
+            //add the country information
+            processed.location.country = point.get.country
 
-        //check marine/non-marine
-        if(processed.location.habitat!=null){
+            //add the layers that are associated with the point
+            processed.location.environmentalLayers = point.get.environmentalLayers
+            processed.location.contextualLayers = point.get.contextualLayers
+            //reinitialise the object array so that the new values for environmental and conetxtual layers are included
+            processed.reinitObjectArray
 
-          if(!taxonProfile.isEmpty && taxonProfile.get.habitats!=null && !taxonProfile.get.habitats.isEmpty){
-            val habitatsAsString =  taxonProfile.get.habitats.reduceLeft(_+","+_)
-            val habitatFromPoint = processed.location.habitat
-            val habitatsForSpecies = taxonProfile.get.habitats
-            //is "terrestrial" the same as "non-marine" ??
-            val validHabitat = HabitatMap.areTermsCompatible(habitatFromPoint, habitatsForSpecies)
-            if(!validHabitat.isEmpty){
-              if(!validHabitat.get){
-                if(habitatsAsString != "???"){ //HACK FOR BAD DATA
-                  logger.debug("[QualityAssertion] ******** Habitats incompatible for UUID: " + guid + ", processed:"
-                      + processed.location.habitat + ", retrieved:" + habitatsAsString
-                      + ", http://maps.google.com/?ll="+processed.location.decimalLatitude+","
-                      + processed.location.decimalLongitude)
-                  val comment = "Recognised habitats for species: " + habitatsAsString +
-                       ", Value determined from coordinates: " + habitatFromPoint
-                  assertions + QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH,comment)
+
+
+            //check matched stateProvince
+            if (processed.location.stateProvince != null && raw.location.stateProvince != null) {
+              //quality systemAssertions
+              val stateTerm = States.matchTerm(raw.location.stateProvince)
+
+              if (!stateTerm.isEmpty && !processed.location.stateProvince.equalsIgnoreCase(stateTerm.get.canonical)) {
+                logger.debug("[QualityAssertion] " + guid + ", processed:" + processed.location.stateProvince
+                    + ", raw:" + raw.location.stateProvince)
+                //add a quality assertion
+                val comment = "Supplied: " + stateTerm.get.canonical + ", calculated: " + processed.location.stateProvince
+                assertions + QualityAssertion(AssertionCodes.STATE_COORDINATE_MISMATCH,comment)
+                //store the assertion
+              }
+            }
+
+
+
+
+
+            //check marine/non-marine
+            if(processed.location.habitat!=null){
+
+              if(!taxonProfile.isEmpty && taxonProfile.get.habitats!=null && !taxonProfile.get.habitats.isEmpty){
+                val habitatsAsString =  taxonProfile.get.habitats.reduceLeft(_+","+_)
+                val habitatFromPoint = processed.location.habitat
+                val habitatsForSpecies = taxonProfile.get.habitats
+                //is "terrestrial" the same as "non-marine" ??
+                val validHabitat = HabitatMap.areTermsCompatible(habitatFromPoint, habitatsForSpecies)
+                if(!validHabitat.isEmpty){
+                  if(!validHabitat.get){
+                    if(habitatsAsString != "???"){ //HACK FOR BAD DATA
+                      logger.debug("[QualityAssertion] ******** Habitats incompatible for UUID: " + guid + ", processed:"
+                          + processed.location.habitat + ", retrieved:" + habitatsAsString
+                          + ", http://maps.google.com/?ll="+processed.location.decimalLatitude+","
+                          + processed.location.decimalLongitude)
+                      val comment = "Recognised habitats for species: " + habitatsAsString +
+                           ", Value determined from coordinates: " + habitatFromPoint
+                      assertions + QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH,comment)
+                    }
+                  }
                 }
               }
             }
-          }
+
+            //TODO check centre point of the state
+            if(StateCentrePoints.coordinatesMatchCentre(point.get.stateProvince, raw.location.decimalLatitude, raw.location.decimalLongitude)){
+              assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,"Coordinates are centre point of "+point.get.stateProvince)
+            }
+
         }
-
-        //TODO check centre point of the state
-        if(StateCentrePoints.coordinatesMatchCentre(point.get.stateProvince, raw.location.decimalLatitude, raw.location.decimalLongitude)){
-          assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,"Coordinates are centre point of "+point.get.stateProvince)
-        }
-
-
       }
       //point 0,0 does not exist in our cache check all records that have lat longs.
       try {
@@ -419,6 +472,26 @@ object LocationProcessor extends Processor {
     }
     assertions.toArray
   }
+  
+  def getExactSciName(raw:FullRecord):String={
+    if(raw.classification.scientificName != null)
+      raw.classification.scientificName
+    else if(raw.classification.genus != null){
+      if(raw.classification.specificEpithet != null){
+        if(raw.classification.infraspecificEpithet != null)
+          raw.classification.genus + " " + raw.classification.specificEpithet + " " + raw.classification.infraspecificEpithet
+        else
+          raw.classification.genus + " " +raw.classification.specificEpithet
+      }
+      else
+        raw.classification.genus
+    }
+    else //return the name default name string which will be null
+      raw.classification.scientificName
+  }
+
+
+  
   def getName() = FullRecordMapper.geospatialQa
 }
 

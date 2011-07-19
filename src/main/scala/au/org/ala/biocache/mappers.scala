@@ -21,22 +21,33 @@ object FullRecordMapper {
      * for each field in the definition, check if there is a value to write
      * Change to use the toMap method of a Mappable
      */
-    def mapObjectToProperties(anObject: AnyRef): Map[String, String] = {
+    def mapObjectToProperties(anObject: AnyRef, version:Version=Raw): Map[String, String] = {
         
         anObject match {
-            case m:Mappable => m.getMap
+            //case m:Mappable => m.getMap
             case p:POSO => {
                 val properties = new HashMap[String,String]()
 	            p.propertyNames.map(name => {
 	                //Use the cached version of the getter method
 	                val fieldValue = p.getProperty(name).getOrElse("")
 	                if (fieldValue != "") {
-	                    properties.put(name, fieldValue.toString)
+	                    properties.put(markNameBasedOnVersion(name,version), fieldValue.toString)
 	                }
 	            })
 	            properties.toMap
             }
             case _ => throw new Exception("Unrecognised object. Object isnt a Mappable or a POSO. Class : " + anObject.getClass.getName)
+        }
+    }
+    /**
+     * changes the name based on the version
+     */
+    def markNameBasedOnVersion(name:String, version:Version)={
+        version match{
+          
+          case Processed => markAsProcessed(name)
+          case Consensus => markAsConsensus(name)
+          case _ => name
         }
     }
 

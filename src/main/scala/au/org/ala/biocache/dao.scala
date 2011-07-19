@@ -347,7 +347,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     def fullRecord2Map(fullRecord: FullRecord, version: Version): scala.collection.mutable.Map[String, String] = {
         var properties = scala.collection.mutable.Map[String, String]()
         fullRecord.objectArray.foreach(poso => {
-            val map = FullRecordMapper.mapObjectToProperties(poso)
+            val map = FullRecordMapper.mapObjectToProperties(poso, version)
             //poso.
             //add all to map           
             properties.putAll(map)

@@ -123,6 +123,10 @@ class RecordProcessor {
     val systemAssertions = Some(assertions.toMap)
     //store the occurrence
     occurrenceDAO.updateOccurrence(guid, currentProcessed, processed, systemAssertions, Processed)
+    //update raw if necessary
+    if(raw.location.originalDecimalLatitude != null){
+        occurrenceDAO.updateOccurrence(guid, raw.location, Versions.RAW)
+    }
   }
 
   /**
@@ -142,7 +146,9 @@ class RecordProcessor {
     })
 
     val systemAssertions = Some(assertions.toMap)
-  
+    if(raw.location.originalDecimalLatitude != null){
+        occurrenceDAO.updateOccurrence(guid, raw.location, Versions.RAW)
+    }
     //store the occurrence
     occurrenceDAO.updateOccurrence(guid, processed, systemAssertions, Processed)
   }
