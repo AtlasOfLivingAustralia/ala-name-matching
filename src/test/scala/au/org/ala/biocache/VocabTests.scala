@@ -32,4 +32,17 @@ class VocabTests extends FunSuite {
     expect(true){StateCentrePoints.coordinatesMatchCentre("QLD","-20.917573","142.702795")}
     expect(true){StateCentrePoints.coordinatesMatchCentre("QLD","-20.917","142.702")}
   }
+
+  test("Paratypes - case insensitive for types"){
+      expect(false){ TypeStatus.matchTerm("Paratype").isEmpty}
+      
+  }  
+  
+  test("Paratypes - plurals for types"){
+      expect(false){ TypeStatus.matchTerm("Paratypes").isEmpty}
+  }
+  
+  test("Observations - plurals for BOR"){
+      expect(false){ BasisOfRecord.matchTerm("Observation").isEmpty}
+  }  
 }

@@ -1,14 +1,19 @@
 package au.org.ala.biocache
 
 import reflect.BeanProperty
+import au.org.ala.util.Stemmer
 
 /** Case class that encapsulates a canonical form and variants. */
-case class Term (@BeanProperty canonical:String, @BeanProperty variants:Array[String])
+class Term (@BeanProperty val canonical:String, @BeanProperty rawVariants:Array[String]){
+    val variants = rawVariants.map(v => v.toLowerCase.trim) ++ rawVariants.map(v => Stemmer.stem(v)) :+ Stemmer.stem(canonical)
+}
 
 /** Factory for terms */
 object Term {
     def apply(canonical: String): Term = new Term(canonical, Array[String]())
     def apply(canonical: String, variant: String): Term = new Term(canonical, Array(variant))
+    def apply(canonical: String, variants: String*): Term = new Term(canonical, Array(variants:_*))
+    def apply(canonical: String, variants: Array[String]): Term = new Term(canonical, variants)
 }
 
 /**
@@ -27,12 +32,15 @@ trait Vocab {
     if(string2Match!=null){
       //strip whitespace & strip quotes and fullstops & uppercase
       val stringToUse = string2Match.replaceAll("""[ \\"\\'\\.\\,\\-\\?]*""", "").toLowerCase
+      
+      val stemmed = Stemmer.stem(stringToUse)
+      
       //println("string to use: " + stringToUse)
       all.foreach(term => {
         //println("matching to term " + term.canonical)
         if(term.canonical.equalsIgnoreCase(stringToUse))
           return Some(term)
-        if(term.variants.contains(stringToUse)){
+        if(term.variants.contains(stringToUse) || term.variants.contains(stemmed)){
           return Some(term)
         }
       })
@@ -208,45 +216,7 @@ object BasisOfRecord extends Vocab {
  * Vocabulary matcher for type status values.
  */
 object TypeStatus extends Vocab {
-  val allolectotype = Term("allolectotype")
-  val alloneotype = Term("alloneotype")
-  val allotype = Term("allotype")
-  val cotype = Term("cotype")
-  val epitype = Term("epitype")
-  val exepitype = Term("exepitype")
-  val exholotype = Term("exholotype", "ex holotype")
-  val exisotype = Term("exisotype")
-  val exlectotype = Term("exlectotype")
-  val exneotype = Term("exneotype")
-  val exparatype = Term("exparatype")
-  val exsyntype = Term("exsyntype")
-  val extype = Term("extype")
-  val hapantotype = Term("hapantotype")
-  val holotype = Term("holotype", "holo type")
-  val iconotype = Term("iconotype")
-  val isolectotype = Term("isolectotype")
-  val isoneotype = Term("isoneotype")
-  val isosyntype = Term("isosyntype")
-  val isotype = Term("isotype", "iso type")
-  val lectotype = Term("lectotype")
-  val neotype = Term("neotype", "neo type")
-  val notatype = Term("notatype", "not a type")  //should this be removed??
-  val paralectotype = Term("paralectotype")
-  val paraneotype = Term("paraneotype")
-  val paratype = Term("paratype")
-  val plastoholotype = Term("plastoholotype")
-  val plastoisotype = Term("plastoisotype")
-  val plastolectotype = Term("plastolectotype")
-  val plastoneotype = Term("plastoneotype")
-  val plastoparatype = Term("plastoparatype")
-  val plastosyntype = Term("plastosyntype")
-  val plastotype = Term("plastotype")
-  val secondarytype = Term("secondarytype")
-  val supplementarytype = Term("supplementarytype")
-  val syntype = Term("syntype")
-  val topotype = Term("topotype")
-  val typee = Term("type")
-  val all = retrieveAll
+  val all = loadVocabFromFile("/typeStatus.txt")
 }
 
 /**

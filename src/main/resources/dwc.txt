@@ -1,10 +1,10 @@
 class
-institutionID
-collectionID
-datasetID
-institutionCode
-collectionCode
-datasetName
+institutionID	institution id
+collectionID	collection id
+datasetID	dataset id
+institutionCode	institution code
+collectionCode	collection code
+datasetName	dataset name
 ownerInstitutionCode
 basisOfRecord	recordBasis
 informationWithheld
@@ -13,7 +13,7 @@ dynamicProperties
 occurrenceID
 catalogNumber	catalogNumberNumeric	catalogueNumber
 occurrenceDetails
-occurrenceRemarks
+occurrenceRemarks	notes
 recordNumber	collectorNumber
 recordedBy	collector
 individualID
@@ -24,12 +24,12 @@ reproductiveCondition
 behavior	behaviour
 establishmentMeans	nativeness
 occurrenceStatus
-preparations
+preparations	PreparationType
 disposition
-otherCatalogNumbers
+otherCatalogNumbers	PreviousCatalogNumber
 previousIdentifications
 associatedMedia
-associatedReferences
+associatedReferences	RelatedCatalogItem
 associatedOccurrences
 associatedSequences
 associatedTaxa
@@ -40,9 +40,9 @@ eventDate	earliestDateCollected	latestDateCollected
 eventTime	time
 startDayOfYear
 endDayOfYear
-year
-month
-day
+year	YearCollected
+month	MonthCollected
+day	DayCollected
 verbatimEventDate
 habitat
 fieldNumber
@@ -51,8 +51,8 @@ eventRemarks
 locationID
 higherGeographyID
 higherGeography
-continent
-waterBody
+continent	
+waterBody	ContinentOcean
 islandGroup
 island
 country
@@ -66,8 +66,8 @@ verbatimElevation	elevation
 minimumElevationInMeters
 maximumElevationInMeters
 verbatimDepth	depth
-minimumDepthInMeters
-maximumDepthInMeters
+minimumDepthInMeters	MinimumDepth
+maximumDepthInMeters	MaximumDepth
 minimumDistanceAboveSurfaceInMeters
 maximumDistanceAboveSurfaceInMeters
 locationAccordingTo
@@ -137,22 +137,22 @@ classs	_class	class	klass	clazz
 order	bioorder
 family
 genus
-subgenus
+species	bionomial	binomial name
+subgenus	sub genus
 specificEpithet
 infraspecificEpithet
 taxonRank	rank
 verbatimTaxonRank
-scientificNameAuthorship	author	authorship
+scientificNameAuthorship	author	authorship	ScientificNameAuthor
 vernacularName	commonName
 nomenclaturalCode
 taxonomicStatus
 nomenclaturalStatus
 taxonRemarks	taxonRemark
-ResourceRelationship
 resourceRelationshipID
 resourceID
 relatedResourceID
-relationshipOfResource
+relationshipOfResource	RelationshipType
 relationshipAccordingTo
 relationshipEstablishedDate
 relationshipRemarks

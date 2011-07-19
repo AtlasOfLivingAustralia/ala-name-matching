@@ -63,8 +63,8 @@
         <!-- SL4J -->
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.5.11</version>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.6.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -187,7 +187,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.4</version>
+            <version>4.8.2</version>
             <scope>test</scope>
         </dependency>
         <!--
@@ -241,6 +241,17 @@
             <artifactId>solr-solrj</artifactId>
             <groupId>org.apache.solr</groupId>
             <version>3.1.0</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>org.slf4j</artifactId>
+                    <groupId>slf4j-jdk14</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <artifactId>velocity-tools</artifactId>
+            <groupId>org.apache.velocity</groupId>
+            <version>2.0</version>
             <exclusions>
                 <exclusion>
                     <artifactId>org.slf4j</artifactId>

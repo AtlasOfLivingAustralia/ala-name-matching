@@ -54,8 +54,9 @@ class DAOLayerTests extends FunSuite {
     test("Test store and location lookup") {
         val point = LocationDAO.getByLatLon("-33.25", "135.85")
         if(!point.isEmpty){
-            println(point.get.ibra)
-            println(point.get.stateProvince)
+            val (loc, el,cl) = point.get
+            println(loc.ibra)
+            println(loc.stateProvince)
         } else {
             println("No matching point")
         }
