@@ -123,33 +123,35 @@ class RecordProcessor {
     val systemAssertions = Some(assertions.toMap)
     //store the occurrence
     occurrenceDAO.updateOccurrence(guid, currentProcessed, processed, systemAssertions, Processed)
-    //update raw if necessary
-    if(raw.location.originalDecimalLatitude != null){
-        occurrenceDAO.updateOccurrence(guid, raw.location, Versions.RAW)
-    }
   }
 
   /**
    * Process a record, adding metadata and records quality systemAssertions
    */
-  def processRecord(raw:FullRecord){
+  def processRecord(raw:FullRecord) : (FullRecord, Map[String, Array[QualityAssertion]]) = {
 
-    val guid = raw.rowKey
-    val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     //NC: Changed so that a processed record only contains values that have been processed.
     var processed = new FullRecord//raw.clone
     //var assertions = new ArrayBuffer[QualityAssertion]
     var assertions = new scala.collection.mutable.HashMap[String, Array[QualityAssertion]]
 
     workflow.foreach(processor => {
-        assertions += (processor.getName()->processor.process(guid, raw, processed))
+        assertions += (processor.getName -> processor.process(raw.rowKey, raw, processed))
     })
-
-    val systemAssertions = Some(assertions.toMap)
-    if(raw.location.originalDecimalLatitude != null){
-        occurrenceDAO.updateOccurrence(guid, raw.location, Versions.RAW)
-    }
+  
     //store the occurrence
-    occurrenceDAO.updateOccurrence(guid, processed, systemAssertions, Processed)
+    (processed, assertions.toMap)
+  }
+  
+  
+  /**
+   * Process a record, adding metadata and records quality systemAssertions
+   */
+  def processRecordAndUpdate(raw:FullRecord){
+
+    val (processed, assertions) = processRecord(raw)
+    val systemAssertions = Some(assertions)
+    //store the occurrence
+    Config.occurrenceDAO.updateOccurrence(raw.rowKey, processed, systemAssertions, Processed)
   }
 }

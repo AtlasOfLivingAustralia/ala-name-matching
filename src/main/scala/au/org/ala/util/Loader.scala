@@ -10,59 +10,59 @@ object Loader {
         val l = new Loader
         
         println("Welcome to the loader.")
-        print("Please supply a resource uid:")
+        print("Please supply a command or hit ENTER to view command list:")
         var input = readLine
         
         while(input != "exit"){
-            input.trim match {
-                case "" => l.printResourceList
-                case it if it startsWith "list" => l.printResourceList
-                case _ => l.load(input.trim.toLowerCase)
+            
+            try {
+	            input.toLowerCase.trim match {
+	            	case it if (it startsWith "describe ") || (it startsWith "d ")  => l.describeResource(it.split(" ").map(x => x.trim).toList.tail)
+	                case it if (it startsWith "list") || (it == "l" )  => l.printResourceList
+	                case it if (it startsWith "load") || (it startsWith "ld" )  => l.load(it.split(" ").map(x => x.trim).toList.last)
+	                case _ => printHelp
+	            }
+            } catch{ 
+            case e:Exception => e.printStackTrace 
             }
-            print("Please supply a resource uid or type 'list':")
+            print("\nPlease supply a command or hit ENTER to view command list:")
             input = readLine
         }
-        println("Goodbye")
+        println("Goodbye\n")
+    }
+    
+    def printHelp = {
+        println("1)  list - print list of resources")
+        println("2)  describe <dr-uid> <dr-uid1> <dr-uid2>... - print list of resources")
+        println("3)  load <dr-uid> - load resource")
+        println("4)  healthcheck <dr-uid>")
+        println("5)  healthcheck all - takes ages....")
+        println("6)  exit")
     }
 }
 
 
 class Loader extends DataLoader {
 
+    def describeResource(drlist:List[String]){
+        
+        drlist.foreach(dr => {
+        	val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dr)
+            println("UID: "+dr)
+        	println("Protocol: "+protocol)
+            println("URL: " + url)
+	        params.foreach({case(k,v) => println(k+": "+v)})
+            customParams.foreach({case(k,v) => println(k +": "+v)})
+            println("---------------------------------------")
+        })
+    }
+    
     def printResourceList :Unit = {
-      val json = Source.fromURL("http://collections.ala.org.au/ws/dataResource").getLines.mkString
+      val json = Source.fromURL("http://collections.ala.org.au/ws/dataResource?resourceType=records").getLines.mkString
       val drs = JSON.parseFull(json).get.asInstanceOf[List[Map[String, String]]]
       
-      
-      val keys = drs(0).keys.toList
-      val valueLengths = keys.map(k => { (k, drs.map(x => x(k).length).max) }).toMap[String, Int]
-      
-      
-      val columns = drs(0).keys.map(k => {
-              if(k.length < valueLengths(k)){
-                  k + (List.fill[String](valueLengths(k) - k.length)(" ").mkString)
-              } else {
-                  k
-          	  }
-      }).mkString(" | ", " | ", " |")
-      
-      val sep = " " + List.fill[String](columns.length-1)("-").mkString
-      println(sep)
-      println(columns)
-      println(" |" + List.fill[String](columns.length-3)("-").mkString+"|")
-      
-      
-      drs.foreach(dr => {
-          println(dr.map(kv => {
-              if(kv._2.length < valueLengths(kv._1)){
-                  kv._2 + (List.fill[String](valueLengths(kv._1) - kv._2.length)(" ").mkString)
-              } else {
-                  kv._2
-          	  }
-          }).mkString(" | ", " | ", " |"))
-      })
-      
-      println(" " + List.fill[String](columns.length-1)("-").mkString)
+      CommandLineTool.printTable(drs)
+
     }
     
     def load(dataResourceUid:String){

@@ -16,9 +16,9 @@
  */
 package au.org.ala.util
 import java.io._
-
 import java.io._
 import java.util.jar.JarFile
+import au.com.bytecode.opencsv.CSVReader
 /**
  * File helper - used as a implicit converter to add additional helper methods to java.io.File
  */
@@ -78,6 +78,20 @@ class FileHelper(file: File) {
         }
     }
 
+    /**
+     * Read this file as a CSV
+     */
+    def readAsCSV(separator:Char, quotechar:Char, procHdr:(List[String] => List[String]), read:((List[String], List[String]) => Unit)){
+        val reader =  new CSVReader(new FileReader(file), separator, quotechar)
+        val rawColumnHdrs = reader.readNext.toList
+        val columnHdrs = procHdr(rawColumnHdrs)
+        var currentLine = reader.readNext
+        while(currentLine != null){
+            read(columnHdrs, currentLine.toList)
+            currentLine = reader.readNext
+        }
+    }
+    
     private def copyStream(istream: InputStream, ostream: OutputStream): Unit = {
         var bytes = new Array[Byte](1024)
         var len = -1

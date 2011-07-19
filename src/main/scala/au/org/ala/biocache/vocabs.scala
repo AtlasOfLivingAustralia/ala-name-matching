@@ -40,13 +40,30 @@ trait Vocab {
     None
   }
   
+  def retrieveCanonicals(terms:List[String]) = {
+    terms.map(ch => {
+        DwC.matchTerm(ch) match {
+            case Some(term) => term.canonical
+            case None => ch
+        }
+    })
+  }
+
+  def retrieveCanonicalsOrNothing(terms:List[String]) = {
+    terms.map(ch => {
+        DwC.matchTerm(ch) match {
+            case Some(term) => term.canonical
+            case None => ""
+        }
+    })
+  }
+  
   def loadVocabFromFile(filePath:String) : Set[Term] = {
     scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map({ row =>
         val values = row.split("\t")
         new Term(values.head, values.tail)
     }).toSet
   }
-  
 
   /**
    * Retrieve all the terms defined in this vocab.

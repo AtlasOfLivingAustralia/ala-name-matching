@@ -73,12 +73,7 @@ class DwcCSVLoader extends DataLoader {
         //match the column headers to dwc terms
         val dwcTermHeaders = {
             val columnHeaders = reader.readNext.map(t => t.replace(" ", "")).toList
-            columnHeaders.map(ch => {
-	            DwC.matchTerm(ch) match {
-	                case Some(term) => term.canonical
-	                case None => ch
-	            }
-	        })
+            DwC.retrieveCanonicals(columnHeaders)
         }
         
         var currentLine = reader.readNext

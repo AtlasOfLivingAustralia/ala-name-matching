@@ -598,8 +598,8 @@ class Location extends Cloneable with Mappable with POSO {
   @BeanProperty var bioclim_bio34:String =_
   @BeanProperty var bioclim_bio12:String =_
   @BeanProperty var bioclim_bio11:String =_
-  @BeanProperty var environmentalLayers:EnvironmentalLayers =new EnvironmentalLayers
-  @BeanProperty var contextualLayers:ContextualLayers = new ContextualLayers
+//  @BeanProperty var environmentalLayers:EnvironmentalLayers =new EnvironmentalLayers
+//  @BeanProperty var contextualLayers:ContextualLayers = new ContextualLayers
   //fields that need be hidden from all public API
   @BeanProperty @JsonIgnore var originalDecimalLatitude:String =_
   @BeanProperty @JsonIgnore var originalDecimalLongitude:String =_
@@ -862,6 +862,8 @@ class FullRecord (
   @BeanProperty var attribution:Attribution,
   @BeanProperty var identification:Identification,
   @BeanProperty var measurement:Measurement,
+  @BeanProperty var environmentalLayers:EnvironmentalLayers,
+  @BeanProperty var contextualLayers:ContextualLayers,
   @BeanProperty var assertions:Array[String],
   @BeanProperty var geospatiallyKosher:Boolean = true,
   @BeanProperty var taxonomicallyKosher:Boolean = true,
@@ -869,21 +871,20 @@ class FullRecord (
   @BeanProperty var lastLoadTime:String ="")
   extends Cloneable with CompositePOSO {
     
-  var objectArray:Array[POSO] = Array(occurrence,classification,location,event,attribution,identification,measurement, location.environmentalLayers, location.contextualLayers)
-
-  def reinitObjectArray()={
-    objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement, location.environmentalLayers, location.contextualLayers)
-  }
+  def objectArray:Array[POSO] = Array(occurrence,classification,location,event,attribution,identification,measurement, environmentalLayers, contextualLayers)
+//  def reinitObjectArray()={
+//    objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement, location.environmentalLayers, location.contextualLayers)
+//  }
 
   def this(rowKey:String ,uuid:String) = this(rowKey,uuid,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
-      new Measurement, Array())
+      new Measurement, new EnvironmentalLayers, new ContextualLayers, Array())
 
   def this() = this(null,null,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
-      new Measurement, Array())
+      new Measurement, new EnvironmentalLayers, new ContextualLayers, Array())
 
   override def clone : FullRecord = new FullRecord(this.rowKey,this.uuid,
       occurrence.clone,classification.clone,location.clone,event.clone,attribution.clone,
-      identification.clone,measurement.clone,assertions.clone)
+      identification.clone,measurement.clone, environmentalLayers.clone, contextualLayers.clone,assertions.clone)
 
   /**
    * Equals implementation that compares the contents of all the contained POSOs

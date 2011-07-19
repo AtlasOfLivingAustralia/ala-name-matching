@@ -12,6 +12,7 @@ import au.org.ala.checklist.lucene.{CBIndexSearch, HomonymException, SearchResul
 import scala.io.Source
 import org.slf4j.LoggerFactory
 import java.net.URLEncoder
+import scalaj.http.Http
 
 /**
  * A DAO for accessing classification information in the cache. If the
@@ -417,26 +418,40 @@ object LocationDAO {
    * Get location information for point.
    * For geo spatial requirements we don't want to round the latitude , longitudes 
    */
-  def getByLatLon(latitude:String, longitude:String) : Option[Location] = {
+  def getByLatLon(latitude:String, longitude:String) : Option[(Location, EnvironmentalLayers, ContextualLayers)] = {
     val uuid =  latitude+"|"+longitude //roundCoord(latitude)+"|"+roundCoord(longitude)
 
     val cachedObject = lock.synchronized { lru.get(uuid) }
     //val cachedObject = lru.get(uuid)
 
     if(cachedObject!=null){
-        cachedObject.asInstanceOf[Option[Location]]
+        cachedObject.asInstanceOf[Option[(Location, EnvironmentalLayers, ContextualLayers)]]
     } else {
         val map = persistenceManager.get(uuid,"loc")
         if(!map.isEmpty){
           val location = new Location
+          val environmentalLayers = new EnvironmentalLayers
+          val contextualLayers = new ContextualLayers
           FullRecordMapper.mapPropertiesToObject(location,map.get)
-          FullRecordMapper.mapPropertiesToObject(location.environmentalLayers, map.get)
-          FullRecordMapper.mapPropertiesToObject(location.contextualLayers, map.get)
-          //lock.synchronized { lru.put(uuid,Some(location)) }
-          lock.synchronized {lru.put(uuid,Some(location))}
-          Some(location)
+          FullRecordMapper.mapPropertiesToObject(environmentalLayers, map.get)
+          FullRecordMapper.mapPropertiesToObject(contextualLayers, map.get)
+          val returnValue = Some((location, environmentalLayers, contextualLayers))
+          lock.synchronized {lru.put(uuid,returnValue)}
+          returnValue
         } else {
           //lock.synchronized { lru.put(uuid,None) }
+            
+          //FIXME need a flag
+            
+          //http://spatial.ala.org.au/gazetteer/search?lon=148.866&lat=-36.170
+           Http("http://spatial.ala.org.au/gazetteer/search").params("lon" -> "148.866", "lat" -> "-36.170").asString
+            
+            
+           
+            
+            
+            
+            
           lock.synchronized {lru.put(uuid,None)}
           None
         }
