@@ -3,11 +3,12 @@ import org.apache.commons.lang.StringUtils
 import java.lang.reflect.Method
 import scala.reflect.BeanProperty
 import scala.collection.mutable.HashMap
+import scala.collection.immutable.Map
 
 /**
  * Holds the details of a property for a bean
  */
-case class ModelProperty(name: String, typeName:String, getter: Method, setter: Method)
+case class ModelProperty(name: String, typeName: String, getter: Method, setter: Method)
 
 /**
  * A singleton that keeps a cache of POSO metadata.
@@ -76,14 +77,14 @@ trait CompositePOSO extends POSO {
 
     override def setProperty(name: String, value: String) = lookup.get(name) match {
         case Some(property) => property.setter.invoke(this, value)
-        case None => setNestedProperty(name, value) 
+        case None => setNestedProperty(name, value)
     }
 
     override def getProperty(name: String): Option[String] = lookup.get(name) match {
         case Some(property) => Some(property.getter.invoke(this).toString)
         case None => getNestedProperty(name)
     }
-    
+
     def getNestedProperty(name: String): Option[String] = {
         val getter = posoGetterLookup.get(name)
         getter match {
@@ -91,7 +92,7 @@ trait CompositePOSO extends POSO {
                 val poso = method.invoke(this).asInstanceOf[POSO]
                 poso.getProperty(name)
             }
-            case None => println("Set nested - Unrecognised property: " + name); None
+            case None => None //println("Set nested - Unrecognised property: " + name); None
         }
     }
 
@@ -102,7 +103,7 @@ trait CompositePOSO extends POSO {
                 val poso = method.invoke(this).asInstanceOf[POSO]
                 poso.setProperty(name, value)
             }
-            case None => println("Set nested - Unrecognised property: " + name); None
+            case None => //println("Set nested - Unrecognised property: " + name); None
         }
     }
 }
@@ -117,28 +118,59 @@ trait POSO {
             property.typeName match {
                 case "java.lang.String" => property.setter.invoke(this, value)
                 case "[Ljava.lang.String;" => {
-                    try { 
-                        val array = Json.toArray(value, classOf[String].asInstanceOf[java.lang.Class[AnyRef] ])
+                    try {
+                        val array = Json.toArray(value, classOf[String].asInstanceOf[java.lang.Class[AnyRef]])
                         property.setter.invoke(this, array)
                     } catch {
-                        case e:Exception => e.printStackTrace
+                        case e: Exception => e.printStackTrace
                     }
                 }
                 case _ =>
             }
         }
-        case None => println("Property not mapped: " +name +", on " + this.getClass.getName)
+        case None => {} //println("Property not mapped: " +name +", on " + this.getClass.getName)
     }
 
     def getProperty(name: String): Option[String] = lookup.get(name) match {
         case Some(property) => {
             val value = property.getter.invoke(this)
-            if(value != null){
-            	Some(value.toString)
+            if (value != null) {
+                Some(value.toString)
             } else {
                 None
             }
         }
-        case None => println("Property not mapped " +name +", on " + this.getClass.getName); None;
+        case None => None //println("Property not mapped " +name +", on " + this.getClass.getName); None;
+    }
+
+    def toMap: Map[String, String] = {
+
+        val map = new HashMap[String, String]
+        lookup.values.foreach(property => {
+
+            val unparsed = property.getter.invoke(this)
+
+            if (unparsed != null) {
+                property.typeName match {
+                    case "java.lang.String" => {
+                        val value = unparsed.asInstanceOf[String]
+                        if(value!=null && value!=""){
+                        	map.put(property.name, value)
+                        }
+                    }
+                    case "[Ljava.lang.String;" => {
+                        try {
+                            val value = unparsed.asInstanceOf[Array[AnyRef]]
+                            val array = Json.toJSON(value)
+                            map.put(property.name, array)
+                        } catch {
+                            case e: Exception => e.printStackTrace
+                        }
+                    }
+                    case _ => throw new UnsupportedOperationException("Unsupported field type")
+                }
+            }
+        })
+        map.toMap
     }
 }

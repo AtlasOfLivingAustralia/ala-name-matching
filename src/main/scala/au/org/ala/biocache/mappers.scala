@@ -25,16 +25,8 @@ object FullRecordMapper {
         
         anObject match {
             //case m:Mappable => m.getMap
-            case p:POSO => {
-                val properties = new HashMap[String,String]()
-	            p.propertyNames.map(name => {
-	                //Use the cached version of the getter method
-	                val fieldValue = p.getProperty(name).getOrElse("")
-	                if (fieldValue != "") {
-	                    properties.put(markNameBasedOnVersion(name,version), fieldValue.toString)
-	                }
-	            })
-	            properties.toMap
+            case p:POSO => { p.toMap.map({case(key, value) => 
+                (markNameBasedOnVersion(key,version) -> value)})
             }
             case _ => throw new Exception("Unrecognised object. Object isnt a Mappable or a POSO. Class : " + anObject.getClass.getName)
         }

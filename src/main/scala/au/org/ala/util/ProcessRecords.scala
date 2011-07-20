@@ -63,7 +63,9 @@ class RecordProcessor {
     Config.occurrenceDAO.pageOverRawProcessed(record => {
       counter += 1
       if (!record.isEmpty) {
+        
         val (raw,processed) = record.get
+        //println(raw.rowKey)
         processRecord(raw, processed)
 
         //debug counter
@@ -142,7 +144,6 @@ class RecordProcessor {
     //store the occurrence
     (processed, assertions.toMap)
   }
-  
   
   /**
    * Process a record, adding metadata and records quality systemAssertions
