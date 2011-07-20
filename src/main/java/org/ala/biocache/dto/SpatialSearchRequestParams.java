@@ -22,9 +22,9 @@ package org.ala.biocache.dto;
  * @author "Natasha Carter <Natasha.Carter@csiro.au>"
  */
 public class SpatialSearchRequestParams extends SearchRequestParams{
-    protected Float radius =5f;
-    protected Float lat = -35.27412f;
-    protected Float lon = 149.11288f;
+    protected Float radius = null;
+    protected Float lat = null;
+    protected Float lon = null;
     protected String wkt ="";
 
     /**
