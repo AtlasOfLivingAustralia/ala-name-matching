@@ -5002,16 +5002,16 @@ INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUE
 INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Macropus eugenii derbianus','Animalia','Macropodidae','Tammar Wallaby');
 
 -- Plant pest species
-INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Achatina fulica','Animalia','Achatinidae','Giant African snail');
-INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Lymantria dispar','Animalia','Lymantriidae','Asian gypsy moth');
-INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Xanthomonas axonopodis citri','Bacteria','Xanthomonadaceae','Citrus canker');
-INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Bactrocera papayae','Animalia','Tephritidae','Papaya fruit fly');
-INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Daktulosphaira vitifoliae','Animalia','Phylloxeridae','Grapevine phylloxera');
-INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Bactrocera tryoni','Animalia','Tephritidae','Queensland fruit fly');
-INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Bactrocera peninsularis','Animalia','Tephritidae','Fruit fly');
-INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Solenopsis invicta','Animalia','Formicidae','Red imported fire ant');
-INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Globodera rostochiensis','Animalia','Heteroderidae','Potato cyst nematode');
-INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Aceria hibisci','Animalia','Eriophyidae','hibiscus erineum mite');
+-- INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Achatina fulica','Animalia','Achatinidae','Giant African snail');
+-- INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Lymantria dispar','Animalia','Lymantriidae','Asian gypsy moth');
+-- INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Xanthomonas axonopodis citri','Bacteria','Xanthomonadaceae','Citrus canker');
+-- INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Bactrocera papayae','Animalia','Tephritidae','Papaya fruit fly');
+-- INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Daktulosphaira vitifoliae','Animalia','Phylloxeridae','Grapevine phylloxera');
+-- INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Bactrocera tryoni','Animalia','Tephritidae','Queensland fruit fly');
+-- INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Bactrocera peninsularis','Animalia','Tephritidae','Fruit fly');
+-- INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Solenopsis invicta','Animalia','Formicidae','Red imported fire ant');
+-- INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Globodera rostochiensis','Animalia','Heteroderidae','Potato cyst nematode');
+-- INSERT INTO sensitive_species (scientific_name,kingdom,family,common_name) VALUES ('Aceria hibisci','Animalia','Eriophyidae','hibiscus erineum mite');
 
 CREATE INDEX scientific_name_idx ON sensitive_species (scientific_name);
 
@@ -5030,43 +5030,43 @@ CREATE TABLE sensitive_species_zones (
     location_generalisation VARCHAR(50));
 
 -- Exotic plant pests
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Achatina fulica','PBC1','AUS','AQIS',NULL,NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Lymantria dispar','PBC1','AUS','AQIS',NULL,NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Bactrocera peninsularis','PBC1','TSPZ','AQIS',NULL,NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Xanthomonas axonopodis citri','PBC2','ECCPQA2004','Qld DPI','2004-06-30','2009-01-22',NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Bactrocera papayae','PBC2','PFFPQA1995','Qld DPI','1995-10-18','1999-04-29',NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Solenopsis invicta','PBC3','RIFARA','Qld DPI','2001-09-01',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Achatina fulica','PBC1','AUS','AQIS',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Lymantria dispar','PBC1','AUS','AQIS',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Bactrocera peninsularis','PBC1','TSPZ','AQIS',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Xanthomonas axonopodis citri','PBC2','ECCPQA2004','Qld DPI','2004-06-30','2009-01-22',NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Bactrocera papayae','PBC2','PFFPQA1995','Qld DPI','1995-10-18','1999-04-29',NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Solenopsis invicta','PBC3','RIFARA','Qld DPI','2001-09-01',NULL,NULL);
 
 -- Queensland fruit fly
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Bactrocera tryoni','PBC5b','FFEZ','Tri-State Fruit Fly Program','1994-01-01',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Bactrocera tryoni','PBC5b','FFEZ','Tri-State Fruit Fly Program','1994-01-01',NULL,NULL);
 
 -- Phylloxera
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZNSWAC','NSW DPII','2006-12-22',NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZNSWSR','NSW DPII','2006-12-22',NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZVICNE', 'Vic DPI','1897-01-01',NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZVICMAR','Vic DPI','2008-11-28',NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZVICNAG','Vic DPI','1897-01-01',NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZVICMOR','Vic DPI','1901-01-01',NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZVICUPT','Vic DPI','2000-09-01',NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZVICWHB','Vic DPI','2008-01-01',NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','NSW','NSW DPII',NULL,NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','ACT','Environment ACT',NULL,NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','NT','NT DRDPIFR',NULL,NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','QLD','QLD DEECI',NULL,NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','SA','SA PIR',NULL,NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','TAS','Tas DPIW',NULL,NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','VIC','Vic DPI',NULL,NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','WA','WA DAF',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZNSWAC','NSW DPII','2006-12-22',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZNSWSR','NSW DPII','2006-12-22',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZVICNE', 'Vic DPI','1897-01-01',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZVICMAR','Vic DPI','2008-11-28',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZVICNAG','Vic DPI','1897-01-01',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZVICMOR','Vic DPI','1901-01-01',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZVICUPT','Vic DPI','2000-09-01',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC4','PIZVICWHB','Vic DPI','2008-01-01',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','NSW','NSW DPII',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','ACT','Environment ACT',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','NT','NT DRDPIFR',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','QLD','QLD DEECI',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','SA','SA PIR',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','TAS','Tas DPIW',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','VIC','Vic DPI',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Daktulosphaira vitifoliae','PBC6','WA','WA DAF',NULL,NULL,NULL);
 
 -- Potato cyst nematode
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Globodera rostochiensis','PBC4','PCNCAVICTHO','Vic DPI','2008-10-16',NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Globodera rostochiensis','PBC4','PCNCAVICGEM','Vic DPI','1992-01-01',NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Globodera rostochiensis','PBC4','PCNCAVICKWR','Vic DPI','2003-12-16',NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Globodera rostochiensis','PBC4','PCNCAVICWAN','Vic DPI','1991-01-01',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Globodera rostochiensis','PBC4','PCNCAVICTHO','Vic DPI','2008-10-16',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Globodera rostochiensis','PBC4','PCNCAVICGEM','Vic DPI','1992-01-01',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Globodera rostochiensis','PBC4','PCNCAVICKWR','Vic DPI','2003-12-16',NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Globodera rostochiensis','PBC4','PCNCAVICWAN','Vic DPI','1991-01-01',NULL,NULL);
 
 -- Notifiable plant pests
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Aceria hibisci','PBC6','WA','WA DAF',NULL,NULL,NULL);
-INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Achatina fulica','PBC6','NT','NT DRDPIFR',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Aceria hibisci','PBC6','WA','WA DAF',NULL,NULL,NULL);
+-- INSERT INTO sensitive_species_zones (scientific_name,sensitivity_category,sensitivity_zone,authority_name,from_date,to_date,location_generalisation) VALUES ('Achatina fulica','PBC6','NT','NT DRDPIFR',NULL,NULL,NULL);
 
 
 -- Birds Australia
