@@ -23,7 +23,13 @@ import au.org.ala.biocache.DateParser
  * String helper - used as a implicit converter to add additional helper methods to java.io.File
  */
 class StringHelper(str: String) {
-
+	
+    def fixWidth(width:Int) : String = {
+        if(str.length> width) str.substring(0,width)
+	    else if (str.length< width) str + List.fill(width - str.length)(" ").mkString
+	    else str
+    }
+    
     def isInt: Boolean = {
         try {
             str.toInt
