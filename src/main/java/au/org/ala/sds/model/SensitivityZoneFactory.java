@@ -35,7 +35,7 @@ public class SensitivityZoneFactory {
     }
 
     private static void initZones() {
-        SensitivityZonesXmlDao dao = new SensitivityZonesXmlDao("file:///data/sds/sensitivity-zones.xml");
+        SensitivityZonesXmlDao dao = new SensitivityZonesXmlDao("http://sds.ala.org.au/sensitivity-zones.xml");
         zones = dao.getMap();
     }
 }
