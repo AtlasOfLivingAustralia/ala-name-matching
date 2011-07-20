@@ -69,7 +69,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.5.11</version>
+            <version>1.6.1</version>
         </dependency>
         <!-- ALA SDS point generalising -->
         <dependency>
@@ -217,6 +217,12 @@
             <groupId>com.mongodb.casbah</groupId>
             <artifactId>casbah-commons_2.9.0-1</artifactId>
             <version>2.1.5-1</version>
+            <exclusions>
+            	<exclusion>
+                    <artifactId>org.slf4j</artifactId>
+                    <groupId>slf4j-api</groupId>
+                </exclusion>
+            </exclusions>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -339,6 +345,9 @@
                     <args>
                         <arg>-target:jvm-1.5</arg>
                     </args>
+                    <jvmArgs>
+                        <jvmArg>-Xmx1024m</jvmArg>            
+                    </jvmArgs>
                 </configuration>
             </plugin>
             <plugin>
