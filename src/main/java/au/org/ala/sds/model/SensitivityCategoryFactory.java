@@ -23,7 +23,7 @@ public class SensitivityCategoryFactory {
     }
 
     private static void initCategories() {
-        SensitivityCategoryXmlDao dao = new SensitivityCategoryXmlDao("file:///data/sds/sensitivity-categories.xml");
+        SensitivityCategoryXmlDao dao = new SensitivityCategoryXmlDao("http://sds.ala.org.au/sensitivity-categories.xml");
         categories = dao.getMap();
     }
 }
