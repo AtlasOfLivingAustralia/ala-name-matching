@@ -61,16 +61,16 @@ public class SensitiveTaxonStore {
             if (match != null) {
                 String acceptedName = match.getRankClassification().getScientificName();
                 String lsid = match.getLsid();
-                if (!st.getTaxonName().equalsIgnoreCase(acceptedName)) {
-                    logger.info("Sensitive species '" + st.getTaxonName() + "' is not accepted name - using '" + acceptedName + "'");
+                if (!st.getName().equalsIgnoreCase(acceptedName)) {
+                    logger.info("Sensitive species '" + st.getName() + "' is not accepted name - using '" + acceptedName + "'");
                     st.setAcceptedName(acceptedName);
                 }
-                logger.debug("'" + st.getTaxonName() + "' ('" + acceptedName + "')\t'" + lsid + "'");
+                logger.debug("'" + st.getName() + (st.getName().equalsIgnoreCase(acceptedName) ? "" : "' ('" + acceptedName + "')") + "\t'" + lsid + "'");
                 nameMap.put(acceptedName, index);
                 st.setLsid(lsid);
                 lsidMap.put(lsid, index);
             } else {
-                logger.warn("Sensitive species '" + st.getTaxonName() + "' not found in NameMatching index");
+                logger.warn("Sensitive species '" + st.getName() + "' not found in NameMatching index");
             }
         }
     }
