@@ -126,8 +126,7 @@ object TaxonProfileDAO {
               case "conservation" => {
                   if(keyValue._2 != null && keyValue._2.size >0){
                       taxonProfile.conservation = Json.toArray(keyValue._2, classOf[ConservationSpecies].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[ConservationSpecies]]
-                      //now intialise the map
-                      
+                     
                   }
               }
               case _ => //ignore
@@ -220,7 +219,7 @@ object AttributionDAO {
   /**
    * Obtain the data resource attribution information from the cache
    *
-   * TODO: Probably should cache these in persitence manager so that they are available if the WS is down
+   * TODO: Probably should cache these in persistence manager so that they are available if the WS is down
    *
    */
   def getDataResourceByUid(uid:String) : Option[Attribution] ={
@@ -272,7 +271,7 @@ object AttributionDAO {
     val dp = wsmap.getOrElse("provider", null).asInstanceOf[java.util.Map[String,String]]
     val dpname = if(dp != null) dp.get("name") else null
     val dpuid = if(dp != null) dp.get("uid") else null
-
+    val hasColl = wsmap.getOrElse("hasMappedCollections", false).asInstanceOf[Boolean]
     
 
     attribution.setDataResourceName(name)
@@ -280,6 +279,7 @@ object AttributionDAO {
     attribution.setDataProviderName(dpname)
     attribution.setDataHubUid(ahub)
     attribution.setTaxonomicHints(ahints)
+    attribution.hasMappedCollections=hasColl
     Some(attribution)
     }
     catch{

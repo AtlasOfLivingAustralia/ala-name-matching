@@ -184,7 +184,7 @@ trait POSO {
                             case e: Exception => e.printStackTrace
                         }
                     }
-                    case _ => throw new UnsupportedOperationException("Unsupported field type")
+                    case _ => throw new UnsupportedOperationException("Unsupported field type " + property.typeName)
                 }
             }
         })

@@ -65,34 +65,37 @@ object AttributionProcessor extends Processor {
    */
   def process(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
     var assertions = new ArrayBuffer[QualityAssertion]
-
-    if(raw.occurrence.institutionCode!=null && raw.occurrence.collectionCode!=null){
-        val attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
-        if (!attribution.isEmpty) {
-          processed.attribution = attribution.get
-          //need to reinitialise the object array - DM switched to def, that
-          //way objectArray created each time its accessed
-          //processed.reinitObjectArray
-        } else {
-          assertions ++=Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, "Unrecognised collection code institution code combination"))
-        }
-    } 
-    //now process the data resource information
-    //35b3ff3e-a9b9-4816-a3cf-8f16cf434fc7
-
+    
+    //get the data resource information to check if it has mapped collections
     if(raw.attribution.dataResourceUid != null){
-      val attribution = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
-      if(!attribution.isEmpty){
-        //update the details that come from the data resource
-        processed.attribution.dataResourceName = attribution.get.dataResourceName
-        processed.attribution.dataProviderUid = attribution.get.dataProviderUid
-        processed.attribution.dataProviderName = attribution.get.dataProviderName
-        processed.attribution.dataHubUid = attribution.get.dataHubUid
-        if(processed.attribution.taxonomicHints == null){
-          processed.attribution.taxonomicHints = attribution.get.taxonomicHints
-        }
-      }
+    	val dataResource = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
+    	if(!dataResource.isEmpty){
+    
+		    if(dataResource.get.hasMappedCollections && raw.occurrence.collectionCode!=null){
+		        val collCode = raw.occurrence.collectionCode
+		        //use the collection code as the institution code when one does not exist
+		        val instCode = if(raw.occurrence.institutionCode != null) raw.occurrence.institutionCode else collCode
+		        val attribution = AttributionDAO.getByCodes(instCode, collCode)
+		        if (!attribution.isEmpty) {
+		          processed.attribution = attribution.get
+		          //need to reinitialise the object array - DM switched to def, that
+		          //way objectArray created each time its accessed
+		          //processed.reinitObjectArray
+		        } else {
+		          assertions ++=Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, "Unrecognised collection code institution code combination"))
+		        }
+		    }
+		    //update the details that come from the data resource
+    		processed.attribution.dataResourceName = dataResource.get.dataResourceName
+    		processed.attribution.dataProviderUid = dataResource.get.dataProviderUid
+    		processed.attribution.dataProviderName = dataResource.get.dataProviderName
+    		processed.attribution.dataHubUid = dataResource.get.dataHubUid
+    		//only add the taxonomic hints if they were not populated by the collection 
+    		if(processed.attribution.taxonomicHints == null)
+    			processed.attribution.taxonomicHints = dataResource.get.taxonomicHints
+	    }	    
     }
+    
 
     assertions.toArray
   }
@@ -302,13 +305,35 @@ object LocationProcessor extends Processor {
       val taxonProfile = TaxonProfileDAO.getByGuid(processed.classification.taxonConceptID)
       //validate coordinate accuracy (coordinateUncertaintyInMeters) and coordinatePrecision (precision - A. Chapman)
       if(raw.location.coordinateUncertaintyInMeters!=null && raw.location.coordinateUncertaintyInMeters.length>0){
-          //parse it into a numeric number in metres
+          //parse it into a numeric number in metres 
+          //TODO should this be a whole number??
           val parsedValue = DistanceRangeParser.parse(raw.location.coordinateUncertaintyInMeters)
           if(!parsedValue.isEmpty)
             processed.location.coordinateUncertaintyInMeters = parsedValue.get.toString
+          else{
+              val comment = "Supplied uncertainty, " + raw.location.coordinateUncertaintyInMeters + ", is not a suppported format" 
+              assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_RANGE_MISMATCH, comment)
+          }
       }else{
           //check to see if the uncertainty has incorrectly been put in the precision
+          if(raw.location.coordinatePrecision != null){
+              //TODO work out what sort of custom parsing is necessary
+              val value:java.lang.Float = {
+                  try{
+                      java.lang.Float.parseFloat(raw.location.coordinatePrecision)
+                  }
+                  catch{
+                      case e:Exception => e.printStackTrace; null
+                  }
+              }
+              if(value != null && value >1){
+                  processed.location.coordinateUncertaintyInMeters = value.toInt.toString
+                  val comment="Supplied precision, " + raw.location.coordinatePrecision + ", is assumed to be uncertainty in metres";
+                  assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_IN_PRECISION, comment)
+              }
+          }
       }
+      
 
       //generate coordinate accuracy if not supplied
       var point = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
@@ -384,6 +409,12 @@ object LocationProcessor extends Processor {
                     }
               }
           }
+      }
+      
+      //if the coordinateUncertainty is still empty populate it with the default value (we don't test until now because the SDS will sometime include coordinate uncertainty)
+      if(processed.location.coordinateUncertaintyInMeters == null){
+          processed.location.coordinateUncertaintyInMeters = "1000"
+          assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, "Uncertainity was not supplied, using default value 1000")    
       }
       
       if (!point.isEmpty) {

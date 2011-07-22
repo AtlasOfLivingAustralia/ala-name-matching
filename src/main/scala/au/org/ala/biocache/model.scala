@@ -806,7 +806,7 @@ class TaxonProfile (
 	      if(conservationMap == null){
 	          val map:scala.collection.mutable.Map[String,String] =new scala.collection.mutable.HashMap[String,String]
 	          for(cs<-conservation){
-	              map += cs.region -> cs.status
+	              map += cs.region -> (cs.status+"," + cs.rawStatus)
 	          }
 	           
 	          conservationMap = map.toMap
@@ -838,7 +838,8 @@ class Attribution (
   def this() = this(null,null,null,null,null,null,null,null,null,null, null, null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
   override def toString = ToStringBuilder.reflectionToString(this)
-
+  // stores whether or not the data resource has collections associated with it
+  var hasMappedCollections:Boolean=false
     @JsonIgnore
   private var parsedHints:Map[String,Set[String]] = null
   /**
