@@ -454,8 +454,8 @@ object LocationProcessor extends Processor {
         if(processed.location.country == "Australia" && !taxonProfile.isEmpty && taxonProfile.get.conservation!= null){
             val aust = taxonProfile.get.retrieveConservationStatus(processed.location.country)
             val state = taxonProfile.get.retrieveConservationStatus(processed.location.stateProvince)            
-            processed.contextualLayers.austConservation = aust.getOrElse(null)
-            processed.contextualLayers.stateConservation = state.getOrElse(null)           
+            processed.occurrence.austConservation = aust.getOrElse(null)
+            processed.occurrence.stateConservation = state.getOrElse(null)           
         }
 
         //check marine/non-marine

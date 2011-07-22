@@ -67,6 +67,10 @@ class Occurrence extends Cloneable with Mappable with POSO {
   
   //custom fields
   @BeanProperty var images:Array[String] = _
+  //Store the conservation status 
+  //TODO not sure if this is the correct place
+  @BeanProperty var austConservation:String = _
+  @BeanProperty var stateConservation:String = _
 
   @JsonIgnore
   def getMap():Map[String,String]={
@@ -308,10 +312,7 @@ class ContextualLayers extends Cloneable with POSO {//} with Mappable{
   @BeanProperty var cl915:String = _
   @BeanProperty var cl916:String = _
   @BeanProperty var cl917:String = _
-  //Store the conservation status as a contexual layer value 
-  //TODO not sure if this is the correct place
-  @BeanProperty var austConservation:String = _
-  @BeanProperty var stateConservation:String = _
+  
 }
 
 /**
