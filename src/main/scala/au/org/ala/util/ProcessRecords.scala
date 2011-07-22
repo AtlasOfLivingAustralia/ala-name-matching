@@ -46,6 +46,8 @@ object ProcessRecords {
 class RecordProcessor {
 
   val logger = LoggerFactory.getLogger(classOf[RecordProcessor])
+  //The time that the processing started - used to populate lastProcessed
+  val processTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
 
   var workflow = Array(ClassificationProcessor,LocationProcessor,EventProcessor,BasisOfRecordProcessor,
         TypeStatusProcessor,AttributionProcessor,ImageProcessor)
@@ -113,7 +115,7 @@ class RecordProcessor {
     val guid = raw.rowKey
     val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     //NC: Changed so that a processed record only contains values that have been processed.
-    var processed = new FullRecord
+    var processed = new FullRecord(raw.rowKey, raw.uuid)
     //var assertions = new ArrayBuffer[QualityAssertion]
     var assertions = new scala.collection.mutable.HashMap[String, Array[QualityAssertion]]
 
@@ -121,10 +123,25 @@ class RecordProcessor {
     workflow.foreach(processor => { 
         assertions += ( processor.getName -> processor.process(guid, raw, processed))
       })
-
+    
     val systemAssertions = Some(assertions.toMap)
+    //mark the processed time
+    processed.lastModifiedTime = processTime
     //store the occurrence
     occurrenceDAO.updateOccurrence(guid, currentProcessed, processed, systemAssertions, Processed)
+    //update raw if necessary
+    updateRawIfSensitised(raw, guid)
+  }
+  def updateRawIfSensitised(raw:FullRecord, guid:String){
+    val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+	  if(raw.location.originalDecimalLatitude != null && raw.location.originalDecimalLongitude != null){
+		  val location = new Location
+		  location.originalDecimalLatitude = raw.location.originalDecimalLatitude
+		  location.originalDecimalLongitude = raw.location.originalDecimalLongitude
+		  location.decimalLatitude = raw.location.decimalLatitude
+		  location.decimalLongitude = raw.location.decimalLongitude
+		  occurrenceDAO.updateOccurrence(guid, location, Versions.RAW)
+	  }
   }
 
   /**
@@ -133,7 +150,7 @@ class RecordProcessor {
   def processRecord(raw:FullRecord) : (FullRecord, Map[String, Array[QualityAssertion]]) = {
 
     //NC: Changed so that a processed record only contains values that have been processed.
-    var processed = new FullRecord//raw.clone
+    var processed = new FullRecord(raw.rowKey, raw.uuid)//raw.clone
     //var assertions = new ArrayBuffer[QualityAssertion]
     var assertions = new scala.collection.mutable.HashMap[String, Array[QualityAssertion]]
 
@@ -152,7 +169,10 @@ class RecordProcessor {
 
     val (processed, assertions) = processRecord(raw)
     val systemAssertions = Some(assertions)
+    //mark the processed time
+    processed.asInstanceOf[FullRecord].lastModifiedTime = processTime
     //store the occurrence
     Config.occurrenceDAO.updateOccurrence(raw.rowKey, processed, systemAssertions, Processed)
+    updateRawIfSensitised(raw, raw.rowKey)
   }
 }

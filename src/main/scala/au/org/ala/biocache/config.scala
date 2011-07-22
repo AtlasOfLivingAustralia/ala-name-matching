@@ -42,7 +42,7 @@ class ConfigModule extends AbstractModule {
             val nameIndex = new CBIndexSearch(properties.getProperty("nameIndexLocation"))
             bind(classOf[CBIndexSearch]).toInstance(nameIndex)
             //Initialising this here because we may wish to process records form the biocache-service and it is expensive to startup
-            val sdsFinder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml",nameIndex)  //"http://sds.ala.org.au/sensitive-species-data.xml", nameIndex);
+            val sdsFinder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("http://sds.ala.org.au/sensitive-species-data.xml", nameIndex);
             bind(classOf[SensitiveSpeciesFinder]).toInstance(sdsFinder)
             
         } catch {

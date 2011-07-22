@@ -254,6 +254,8 @@ class Event extends Cloneable with Mappable with POSO {
   @BeanProperty var startYear:String = _
   @BeanProperty var endYear:String = _
 
+  override def toString = ToStringBuilder.reflectionToString(this)
+  
   @JsonIgnore
   def getMap():Map[String,String]={
     val map =Map[String,String]("day"->day,"endDayOfYear"->endDayOfYear,"eventAttributes"->eventAttributes,
@@ -306,6 +308,10 @@ class ContextualLayers extends Cloneable with POSO {//} with Mappable{
   @BeanProperty var cl915:String = _
   @BeanProperty var cl916:String = _
   @BeanProperty var cl917:String = _
+  //Store the conservation status as a contexual layer value 
+  //TODO not sure if this is the correct place
+  @BeanProperty var austConservation:String = _
+  @BeanProperty var stateConservation:String = _
 }
 
 /**
@@ -694,12 +700,12 @@ class OccurrenceIndex extends Cloneable with Mappable with POSO {
   @BeanProperty @Field("collector") var raw_recordedBy:String = _
 
   //environment
-  @BeanProperty @Field("mean_temperature_cars2009a_band1_env") var mean_temperature_cars2009a_band1:java.lang.Double =_
-  @BeanProperty @Field("mean_oxygen_cars2006_band1_env") var mean_oxygen_cars2006_band1:java.lang.Double =_
-  @BeanProperty @Field("bioclim_bio34_env") var bioclim_bio34:java.lang.Double =_
-  @BeanProperty @Field("bioclim_bio12_env") var bioclim_bio12:java.lang.Double =_
-  @BeanProperty @Field("bioclim_bio11_env") var bioclim_bio11:java.lang.Double =_
-  
+//  @BeanProperty @Field("mean_temperature_cars2009a_band1_env") var mean_temperature_cars2009a_band1:java.lang.Double =_
+//  @BeanProperty @Field("mean_oxygen_cars2006_band1_env") var mean_oxygen_cars2006_band1:java.lang.Double =_
+//  @BeanProperty @Field("bioclim_bio34_env") var bioclim_bio34:java.lang.Double =_
+//  @BeanProperty @Field("bioclim_bio12_env") var bioclim_bio12:java.lang.Double =_
+//  @BeanProperty @Field("bioclim_bio11_env") var bioclim_bio11:java.lang.Double =_
+//  
   //extra raw record fields
   @BeanProperty @Field("raw_taxon_name") var raw_scientificName:String =_
   @BeanProperty @Field("raw_basis_of_record") var raw_basisOfRecord:String =_
@@ -715,6 +721,9 @@ class OccurrenceIndex extends Cloneable with Mappable with POSO {
   @BeanProperty @Field("point-0.0001") var point00001:String =_
   @BeanProperty @Field("names_and_lsid") var namesLsid:String =_
   @BeanProperty @Field("multimedia") var multimedia:String =_
+  //conservation status field
+  @BeanProperty @Field("aust_conservation") var austConservation:String = _
+  @BeanProperty @Field("state_conservation") var stateConservation:String = _
 
   @JsonIgnore
   def getMap():Map[String,String]={
@@ -740,10 +749,10 @@ class OccurrenceIndex extends Cloneable with Mappable with POSO {
                                 "raw_taxon_name"-> raw_scientificName, "raw_basis_of_record"-> raw_basisOfRecord,
                                 "raw_type_status"-> raw_typeStatus, "raw_common_name"-> raw_vernacularName, "lat_long"-> latLong,
                                 "point-1"-> point1, "point-0.1"-> point01, "point-0.01"-> point001, "point-0.001"-> point0001,
-                                "point-0.0001"-> point00001, "names_and_lsid"-> namesLsid, "multimedia"-> multimedia, "collector"->raw_recordedBy,
-                                "mean_temperature_cars2009a_band1_env"-> mean_temperature_cars2009a_band1,
-                                "mean_oxygen_cars2006_band1_env"-> mean_oxygen_cars2006_band1, "bioclim_bio34_env"-> bioclim_bio34,
-                                "bioclim_bio12_env"-> bioclim_bio12, "bioclim_bio11_env"->bioclim_bio11 )
+                                "point-0.0001"-> point00001, "names_and_lsid"-> namesLsid, "multimedia"-> multimedia, "collector"->raw_recordedBy)
+//                                ,"mean_temperature_cars2009a_band1_env"-> mean_temperature_cars2009a_band1,
+//                                "mean_oxygen_cars2006_band1_env"-> mean_oxygen_cars2006_band1, "bioclim_bio34_env"-> bioclim_bio34,
+//                                "bioclim_bio12_env"-> bioclim_bio12, "bioclim_bio11_env"->bioclim_bio11 )
 
     map.filter(i => i._2!= null)
   }
@@ -786,10 +795,27 @@ class TaxonProfile (
   @BeanProperty var habitats:Array[String],
   @BeanProperty var left:String,
   @BeanProperty var right:String,
-  @BeanProperty var sensitive:Array[SensitiveSpecies])
+  @BeanProperty var sensitive:Array[SensitiveSpecies],
+  @BeanProperty var conservation:Array[ConservationSpecies])
   extends Cloneable {
-  def this() = this(null,null,null,null,null,null,null, null)
+  def this() = this(null,null,null,null,null,null,null, null,null)
   override def clone : TaxonProfile = super.clone.asInstanceOf[TaxonProfile]
+  private var conservationMap:Map[String,String]= null
+  def retrieveConservationStatus(loc:String) :Option[String]={
+      if(conservation != null){
+	      if(conservationMap == null){
+	          val map:scala.collection.mutable.Map[String,String] =new scala.collection.mutable.HashMap[String,String]
+	          for(cs<-conservation){
+	              map += cs.region -> cs.status
+	          }
+	           
+	          conservationMap = map.toMap
+	          //println("conservation " + conservationMap)
+	      }
+	      return conservationMap.get(loc) 
+      }
+	  return None
+  }
 }
 
 /**
@@ -868,7 +894,7 @@ class FullRecord (
   @BeanProperty var geospatiallyKosher:Boolean = true,
   @BeanProperty var taxonomicallyKosher:Boolean = true,
   @BeanProperty var deleted:Boolean = false,
-  @BeanProperty var lastLoadTime:String ="")
+  @BeanProperty var lastModifiedTime:String ="")
   extends Cloneable with CompositePOSO {
     
   def objectArray:Array[POSO] = Array(occurrence,classification,location,event,attribution,identification,measurement, environmentalLayers, contextualLayers)
@@ -920,6 +946,16 @@ class SensitiveSpecies(
   override def toString():String = {
     "zone:"+zone+" category:" + category
   }
+}
+
+class ConservationSpecies(
+        @BeanProperty var region:String,
+        @BeanProperty var regionId:String,
+        @BeanProperty var status:String,
+        @BeanProperty var rawStatus:String
+        ){
+    def this() = this(null, null, null,null)
+   
 }
 
 /**

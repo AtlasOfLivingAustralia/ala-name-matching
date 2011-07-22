@@ -70,7 +70,7 @@ trait DataLoader {
         //The row key is the uniqueID for the record. This will always start with the dataResourceUid
         fr.rowKey = if(uniqueID.isEmpty) dataResourceUid +"|"+recordUuid else uniqueID.get
         //The last load time
-        fr.lastLoadTime = loadTime
+        fr.lastModifiedTime = loadTime
         fr.attribution.dataResourceUid = dataResourceUid
         Config.occurrenceDAO.addRawOccurrenceBatch(Array(fr))
         true

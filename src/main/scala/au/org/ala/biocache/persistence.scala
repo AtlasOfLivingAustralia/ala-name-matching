@@ -178,7 +178,7 @@ class CassandraPersistenceManager @Inject() (
   def getFirstValuesFromIndex(entityName:String, idxColumn:String, value:String, slicePredicate:SlicePredicate) : Option[Map[String,String]] ={
     val selector = Pelops.createSelector(poolName)
     //set up the index clause information
-     val indexClause =Selector.newIndexClause(value, 1000, Selector.newIndexExpression(idxColumn, IndexOperator.EQ, Bytes.fromUTF8(value) ))
+     val indexClause =Selector.newIndexClause(value, 1, Selector.newIndexExpression(idxColumn, IndexOperator.EQ, Bytes.fromUTF8(value) ))
     try{
 
       val columnMap = selector.getIndexedColumns(entityName, indexClause,slicePredicate, ConsistencyLevel.ONE)

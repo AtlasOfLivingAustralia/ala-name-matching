@@ -355,8 +355,8 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         //add the special cases to the map
         properties.put("uuid", fullRecord.uuid)
         properties.put("rowKey", fullRecord.rowKey)
-        if(fullRecord.lastLoadTime != "")
-            properties.put("lastLoadTime", fullRecord.lastLoadTime)
+        if(fullRecord.lastModifiedTime != "")
+            properties.put(FullRecordMapper.markNameBasedOnVersion(FullRecordMapper.alaModifiedColumn, version), fullRecord.lastModifiedTime)
         properties
     }
 
@@ -389,10 +389,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         //only write changes.........
         var propertiesToPersist = properties.filter({
             case (key, value) => {
-                if(key == "lastLoadTime"){
-                    false
-                }
-                else if (oldproperties.contains(key)) {
+                if (oldproperties.contains(key)) {
                     val oldValue = oldproperties.get(key).get
                     oldValue != value
                 } else {
@@ -405,19 +402,40 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         val deletedProperties = oldproperties.filter({
             case (key, value) => !properties.contains(key)
         })
+        
         propertiesToPersist ++= deletedProperties.map({
             case (key, value) => key -> ""
         })
 
-        if (!assertions.isEmpty){//} && !propertiesToPersist.isEmpty) {
-            propertiesToPersist ++= convertAssertionsToMap(assertions.get)
-            updateSystemAssertions(rowKey, assertions.get)
+//        if (!assertions.isEmpty){//} && !propertiesToPersist.isEmpty) {
+//            propertiesToPersist ++= convertAssertionsToMap(assertions.get)
+//            updateSystemAssertions(rowKey, assertions.get)
+//        }
+        val timeCol = FullRecordMapper.markNameBasedOnVersion(FullRecordMapper.alaModifiedColumn, version)
+        
+        if(!assertions.isEmpty){
+        	initAssertions(newRecord, assertions.get)
+        	//only add  the assertions if they are different OR the properties to persist contain more than the last modified time stamp
+        	if((oldRecord.assertions.toSet != newRecord.assertions.toSet) || !(propertiesToPersist.size == 1 && propertiesToPersist.getOrElse(timeCol, "") != "")){
+        	    //only add the assertions if they have changed since the last time or the number of records to persist >1
+        	    propertiesToPersist ++= convertAssertionsToMap(assertions.get)
+        	    updateSystemAssertions(rowKey, assertions.get)
+        	}
         }
-       
 
-        //commit to cassandra if changes exist
-        if(!propertiesToPersist.isEmpty)
+        //commit to cassandra if changes exist - changes exist if the properties to persist contain more info than the lastModifedTime
+        
+        if(!propertiesToPersist.isEmpty && !(propertiesToPersist.size == 1 && propertiesToPersist.getOrElse(timeCol, "") != "")){          
           persistenceManager.put(rowKey, entityName, propertiesToPersist.toMap)
+        }
+    }
+    
+    private def initAssertions(processed:FullRecord, assertions:Map[String, Array[QualityAssertion]]){
+        for(array <- assertions.values){
+            for(i <- 0 to array.size-1){
+            	processed.assertions = processed.assertions :+ array(i).getName
+            }
+        }
     }
 
     /**

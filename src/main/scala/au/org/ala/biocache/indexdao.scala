@@ -18,6 +18,7 @@ import scala.actors.Actor
 import scala.collection.mutable.ArrayBuffer
 
 
+
 /**
  * All Index implementations need to extend this trait.
  */
@@ -54,6 +55,11 @@ trait IndexDAO {
      * Truncate the current index
      */
     def emptyIndex
+    def reload
+    /**
+     * Remove all the records with the specified value in the specified field
+     */
+    def removeFromIndex(field:String, values:String)
 
     /**
      * Perform
@@ -417,12 +423,25 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         true
     }
 
+    def reload = thread ! "reload"
+
     def emptyIndex() {
         init
         try {
         	solrServer.deleteByQuery("*:*")
         } catch {
-            case _ => println("Problem clearing index...")
+            case e:Exception =>e.printStackTrace(); println("Problem clearing index...")
+        }
+    }
+
+    def removeFromIndex(field:String, value:String) ={
+        init
+        try{
+          //println("Deleting " + field +":" + value)
+            solrServer.deleteByQuery(field +":" + value)
+        }
+        catch{
+            case e:Exception =>e.printStackTrace
         }
     }
 
@@ -488,8 +507,10 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
                 if (values(i) != "") {
                     if (header(i) == "species_group" || header(i) == "assertions" || header(i) =="data_hub_uid") {
                         //multiple valus in this field
-                        for (value <- values(i).split('|'))
-                            doc.addField(header(i), value)
+                        for (value <- values(i).split('|')){
+                        	if(value != "")
+                        		doc.addField(header(i), value)
+                        }
                     }
                     else
                         doc.addField(header(i), values(i))
@@ -571,8 +592,8 @@ class SolrIndexActor extends Actor{
           processed +=1
         }
         case msg:String =>{
-            if(msg == "finalise"){
-
+            if(msg == "reload"){
+              cc.reload("")
             }
             if(msg == "exit")
               exit()

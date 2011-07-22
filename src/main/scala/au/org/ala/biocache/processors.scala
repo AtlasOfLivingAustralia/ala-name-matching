@@ -133,7 +133,7 @@ object EventProcessor extends Processor {
 
     var (year,invalidYear) = validateNumber(raw.event.year,{year => year < 0 || year > currentYear})
     var (month,invalidMonth) = validateNumber(raw.event.month,{month => month < 1 || month > 12})
-    var (day,invalidDay) = validateNumber(raw.event.day,{day => day < 0 || day > 31})
+    var (day,invalidDay) = validateNumber(raw.event.day,{day => day < 1 || day > 31})
     var invalidDate = invalidYear || invalidDay || invalidMonth
 
     //check for sensible year value
@@ -155,7 +155,7 @@ object EventProcessor extends Processor {
     }
 
     //construct
-    if (year != -1 && month != -1 && day != -1) {
+    if (year > -1 && month > 0 && day > 0) {
       try {
        val calendar = new GregorianCalendar(
           year.toInt ,
@@ -173,8 +173,8 @@ object EventProcessor extends Processor {
 
     //set the processed values
     if (year != -1) processed.event.year = year.toString
-    if (month != -1) processed.event.month = String.format("%02d",int2Integer(month)) //NC ensure that a month is 2 characters long
-    if (day != -1) processed.event.day = day.toString
+    if (month > 0) processed.event.month = String.format("%02d",int2Integer(month)) //NC ensure that a month is 2 characters long
+    if (day >0) processed.event.day = day.toString
     if (!date.isEmpty) processed.event.eventDate = DateFormatUtils.format(date.get, "yyyy-MM-dd")
 
     //deal with event date
@@ -306,6 +306,8 @@ object LocationProcessor extends Processor {
           val parsedValue = DistanceRangeParser.parse(raw.location.coordinateUncertaintyInMeters)
           if(!parsedValue.isEmpty)
             processed.location.coordinateUncertaintyInMeters = parsedValue.get.toString
+      }else{
+          //check to see if the uncertainty has incorrectly been put in the precision
       }
 
       //generate coordinate accuracy if not supplied
@@ -415,6 +417,14 @@ object LocationProcessor extends Processor {
             assertions + QualityAssertion(AssertionCodes.STATE_COORDINATE_MISMATCH,comment)
             //store the assertion
           }
+        }
+        
+        //add the conservation status if necessary
+        if(processed.location.country == "Australia" && !taxonProfile.isEmpty && taxonProfile.get.conservation!= null){
+            val aust = taxonProfile.get.retrieveConservationStatus(processed.location.country)
+            val state = taxonProfile.get.retrieveConservationStatus(processed.location.stateProvince)            
+            processed.contextualLayers.austConservation = aust.getOrElse(null)
+            processed.contextualLayers.stateConservation = state.getOrElse(null)           
         }
 
         //check marine/non-marine
@@ -563,7 +573,8 @@ object ClassificationProcessor extends Processor {
               val (isValid, comment) = isMatchValid(classification, attribution.get.retrieveParseHints)
               if(!isValid){
                   logger.info("Conflict in matched classification. Matched: " + guid+ ", Matched: "+comment+", Taxonomic hints in use: " + taxonHints.toList)
-                  return Array(QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Conflict in matched classification. Matched: "+ comment))
+                  //TODO think about logging this information to a separate column family
+                  return Array()//QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Conflict in matched classification. Matched: "+ comment))
               }
             }
           }

@@ -1,7 +1,7 @@
 package au.org.ala.util
 
 import au.org.ala.biocache.TaxonProfileDAO
-import au.org.ala.biocache.{TaxonProfile,SensitiveSpecies, States}
+import au.org.ala.biocache.{TaxonProfile,SensitiveSpecies, ConservationSpecies, States}
 import java.net.InetSocketAddress
 import org.apache.avro.ipc.SocketTransceiver
 import org.apache.avro.specific.SpecificRequestor
@@ -20,7 +20,7 @@ object TaxonProfileLoader {
 
     println("Starting the load...")
     import scala.collection.JavaConversions._
-
+    
     val host = args(0)
     val port = args(1).toInt
     val client = new SocketTransceiver(new InetSocketAddress(host, port))
@@ -30,12 +30,17 @@ object TaxonProfileLoader {
     page.startKey = lastKey
     page.pageSize = 1000
     var array = proxy.send(page).asInstanceOf[ProfileArray]
+    var count =0
 
     //iterate through all the profiles
     while(array.profiles.size>0){
 	    for (profile <- array.profiles) {
+              count+=1
+              if (count % 1000 == 0 && count > 0) {
+                println(count+">>>" +profile)
+              }
 	      //add to cache
-	      println(profile)
+	      //println(profile)
 	      var taxonProfile = new TaxonProfile
 	      taxonProfile.guid = profile.guid.toString
 	      taxonProfile.scientificName  = profile.scientificName.toString
@@ -56,6 +61,16 @@ object TaxonProfileLoader {
             taxonProfile.rankString = profile.rank.toString
           }
           //TODO work out whatto store from the conservation status
+          if(profile.consStatus != null){
+              val css = for(cs<-profile.consStatus)yield{
+                  val region = if(cs.region != null)cs.region.toString else null
+                  val regionId = if(cs.regionId != null) cs.regionId.toString else null
+                  val status = if(cs.status != null) cs.status.toString else null
+                  val rawStatus = if(cs.rawStatus != null) cs.rawStatus.toString else null
+                  
+               new ConservationSpecies(region,regionId, status, rawStatus)}
+              taxonProfile.conservation = css.toArray
+          }
           //store the sensitive species information
           //TODO fix up this so that the zone is obtained from the vocabulary?
           if(profile.sensitiveStatus != null){
@@ -72,6 +87,7 @@ object TaxonProfileLoader {
 	    array = proxy.send(page).asInstanceOf[ProfileArray]
     }
     client.close
+    println("Finshed loading " + count + " profiles ")
   }
   println("Finished species profile loading.")
 }

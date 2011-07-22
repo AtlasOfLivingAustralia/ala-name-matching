@@ -13,6 +13,7 @@ object FullRecordMapper {
     val userQualityAssertionColumn = "userQualityAssertion"
     val geospatialDecisionColumn = "geospatiallyKosher"
     val taxonomicDecisionColumn = "taxonomicallyKosher"
+    val alaModifiedColumn = "lastModifiedTime"
     val deletedColumn = "deleted"
     val geospatialQa = "loc"
     val taxonomicalQa = "class"
@@ -86,7 +87,7 @@ object FullRecordMapper {
         val fullRecord = new FullRecord
         fullRecord.rowKey = rowKey
         fullRecord.uuid = fields.getOrElse("uuid", "")
-        fullRecord.lastLoadTime = fields.getOrElse("lastLoadTime","")
+        fullRecord.lastModifiedTime = fields.getOrElse(markNameBasedOnVersion("lastModifiedTime",version),"")
         val assertions = new ArrayBuffer[String]
         val columns = fields.keySet
 
@@ -102,7 +103,7 @@ object FullRecordMapper {
                     	if(fieldValue != "true" && fieldValue != "false"){
                     		val arr = Json.toListWithGeneric(fieldValue,classOf[java.lang.Integer])
                     		for(i <- 0 to arr.size-1){
-                    			fullRecord.assertions = fullRecord.assertions :+ AssertionCodes.getByCode(arr(0)).get.getName
+                    			fullRecord.assertions = fullRecord.assertions :+ AssertionCodes.getByCode(arr(i)).get.getName
                     		}
                     	}
                     }

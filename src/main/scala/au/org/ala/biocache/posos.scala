@@ -133,9 +133,26 @@ trait POSO {
 
     def getProperty(name: String): Option[String] = lookup.get(name) match {
         case Some(property) => {
-            val value = property.getter.invoke(this)
-            if (value != null) {
-                Some(value.toString)
+        	
+            val value = {
+              property.typeName match {
+                case "java.lang.String" => property.getter.invoke(this)
+                case "[Ljava.lang.String;" => {
+                	try {
+                		val array = property.getter.invoke(this)
+                		if(array != null)
+                			Json.toJSON(array.asInstanceOf[Array[AnyRef]])
+                		else null
+                        
+                    } catch {
+                        case e:Exception => e.printStackTrace; null
+                    }
+                  }
+                case _=> null
+                }
+            }
+            if(value != null){              
+            	Some(value.toString)
             } else {
                 None
             }

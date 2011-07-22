@@ -133,7 +133,7 @@ class DwCALoader extends DataLoader {
             //add the data resouce uid
             fieldTuples + ("dataResourceUid"-> resourceUid)
             //add last load time
-            fieldTuples + ("lastLoadTime"-> loadTime)
+            fieldTuples + ("lastModifiedTime"-> loadTime)
 
             val rowKey = if(uniqueID.isEmpty) resourceUid + "|" + recordUuid else uniqueID.get
            

@@ -123,6 +123,13 @@ object TaxonProfileDAO {
                       taxonProfile.sensitive = Json.toArray(keyValue._2, classOf[SensitiveSpecies].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[SensitiveSpecies]]
                   }
               }
+              case "conservation" => {
+                  if(keyValue._2 != null && keyValue._2.size >0){
+                      taxonProfile.conservation = Json.toArray(keyValue._2, classOf[ConservationSpecies].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[ConservationSpecies]]
+                      //now intialise the map
+                      
+                  }
+              }
               case _ => //ignore
           }
       })
@@ -171,6 +178,9 @@ object TaxonProfileDAO {
       properties.put("right", taxonProfile.right)
       if(taxonProfile.sensitive != null && taxonProfile.sensitive.size >0){
         properties.put("sensitive", Json.toJSON(taxonProfile.sensitive.asInstanceOf[Array[AnyRef]]))
+      }
+      if(taxonProfile.conservation != null && taxonProfile.conservation.size >0){
+          properties.put("conservation", Json.toJSON(taxonProfile.conservation.asInstanceOf[Array[AnyRef]]))
       }
       persistenceManager.put(taxonProfile.guid, columnFamily, properties.toMap)
   }
