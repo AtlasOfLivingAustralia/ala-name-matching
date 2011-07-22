@@ -62,7 +62,7 @@ county
 municipality	city
 locality	address
 verbatimLocality
-verbatimElevation	elevation
+verbatimElevation	elevation	altitude
 minimumElevationInMeters
 maximumElevationInMeters
 verbatimDepth	depth
@@ -80,7 +80,7 @@ verbatimSRS
 decimalLatitude	latitude	lat
 decimalLongitude	longitude	long	lon
 geodeticDatum	datum
-coordinateUncertaintyInMeters
+coordinateUncertaintyInMeters	accuracy
 coordinatePrecision
 pointRadiusSpatialFit
 footprintWKT	wkt
@@ -124,7 +124,7 @@ originalNameUsageID	originalNameID	originalTaxonID	basionymID
 nameAccordingToID	taxonAccordingToID
 namePublishedInID
 taxonConceptID
-scientificName	sci name	taxon name	taxonomic name
+scientificName	sci name	taxon name	taxonomic name	bionomial	bionomial name
 acceptedNameUsage	acceptedTaxon
 parentNameUsage	parentTaxon	higherTaxon	higherNameUsage
 originalNameUsage	originalName	originalTaxon	basionym
@@ -144,7 +144,7 @@ infraspecificEpithet
 taxonRank	rank
 verbatimTaxonRank
 scientificNameAuthorship	author	authorship	ScientificNameAuthor
-vernacularName	commonName
+vernacularName	commonName	common
 nomenclaturalCode
 taxonomicStatus
 nomenclaturalStatus
