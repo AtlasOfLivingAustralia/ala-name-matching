@@ -64,18 +64,27 @@ class FlickrLoader extends DataLoader {
         while (currentStartDate.after(startDate)){
             
             println("Harvesting time period: "+df.format(currentStartDate)+" to "+df.format(currentEndDate));
-            val photoIds = getPhotoIdsForDateRange(params, currentStartDate, currentEndDate);
-            photoIds.foreach(photoId => {
-                //persist the occurrence with image metadata
-                val (photoPageUrl, imageUrl, fr, tags) = processPhoto(params, photoId)
-                if(isOfInterest(tags, keywords)){
-                    
-                    load(dataResourceUid, fr, List(photoPageUrl) )
-                    val filePath = MediaStore.save(fr.uuid, dataResourceUid, imageUrl)
-                    fr.occurrence.associatedMedia = filePath
-                    Config.occurrenceDAO.updateOccurrence(fr.rowKey, fr, Versions.RAW)
-                }
-            })
+            try{
+	            val photoIds = getPhotoIdsForDateRange(params, currentStartDate, currentEndDate);
+	            photoIds.foreach(photoId => {
+	                
+	                try {
+		                //persist the occurrence with image metadata
+		                val (photoPageUrl, imageUrl, fr, tags) = processPhoto(params, photoId)
+		                if(isOfInterest(tags, keywords)){
+		                    load(dataResourceUid, fr, List(photoPageUrl) )
+		                    val filePath = MediaStore.save(fr.uuid, dataResourceUid, imageUrl)
+		                    fr.occurrence.associatedMedia = filePath
+		                    Config.occurrenceDAO.updateOccurrence(fr.rowKey, fr, Versions.RAW)
+		                    println(fr.rowKey)
+		                }
+	                } catch {
+	                    case e:Exception => e.printStackTrace
+	                }
+	            })
+            } catch {
+            	case e:Exception => e.printStackTrace
+            }
             currentEndDate = currentStartDate
             currentStartDate = DateUtils.addDays(currentEndDate, -1)
         }
@@ -109,49 +118,10 @@ class FlickrLoader extends DataLoader {
                 //is it a machine tag - remove namespace
                 val (tagName, tagValue) = parseMachineTag(raw.get.text.trim)
                 listBuffer += tagValue
+                
                 tagName match {
-                    case Some("scientificName") => fr.classification.scientificName = tagValue
-                    case Some("author") => fr.classification.scientificNameAuthorship = tagValue
-                    case Some("common") => fr.classification.vernacularName = tagValue
-                    case Some("commonname") => fr.classification.vernacularName = tagValue
-                    case Some("trinomial") => fr.classification.subspecies = tagValue; fr.classification.scientificName = tagValue
-                    case Some("binomial") => fr.classification.species = tagValue; fr.classification.scientificName = tagValue
-                    case Some("binomialname") => fr.classification.species = tagValue; fr.classification.scientificName = tagValue
-                    case Some("species") => fr.classification.species = tagValue
-                    case Some("genus") => fr.classification.genus = tagValue
-                    case Some("subgenus") => fr.classification.subgenus = tagValue
-                    case Some("family") => fr.classification.family = tagValue
-                    case Some("subfamily") => fr.classification.subfamily = tagValue
-                    case Some("order") => fr.classification.order = tagValue
-                    case Some("bioorder") => fr.classification.order = tagValue
-                    case Some("class") => fr.classification.classs = tagValue
-                    case Some("phylum") => fr.classification.phylum = tagValue
-                    case Some("kingdom") => fr.classification.kingdom = tagValue
-                    case Some("country") => fr.location.country = tagValue
-                    case Some("region") => fr.location.stateProvince = tagValue
-                    case Some("stateprovince") => fr.location.stateProvince = tagValue
-                    case Some("county") => fr.location.stateProvince = tagValue
-                    case Some("state") => fr.location.stateProvince = tagValue
-                    case Some("province") => fr.location.stateProvince = tagValue
-                    case Some("district") => fr.location.locality = tagValue
-                    case Some("locality") => fr.location.locality = tagValue
-                    case Some("town") => fr.location.locality = tagValue
-                    case Some("habitat") => fr.location.habitat = tagValue
-                    case Some("lat") => fr.location.decimalLatitude = tagValue
-                    case Some("latitude") => fr.location.decimalLatitude = tagValue
-                    case Some("decimallatitude") => fr.location.decimalLatitude = tagValue
-                    case Some("lon") => fr.location.decimalLongitude = tagValue
-                    case Some("long") => fr.location.decimalLongitude = tagValue
-                    case Some("longitude") => fr.location.decimalLongitude = tagValue
-                    case Some("decimallongitude") => fr.location.decimalLongitude = tagValue
-                    case Some("alt") => fr.location.maximumElevationInMeters = tagValue
-                    case Some("altitude") => fr.location.maximumElevationInMeters = tagValue
-                    case Some("accuracy") => fr.location.coordinateUncertaintyInMeters = tagValue
-                    case Some("datum") => fr.location.geodeticDatum = tagValue
-                    case Some("source") => fr.location.georeferenceSources = tagValue
-                    case Some("method") => fr.location.georeferenceSources = tagValue
-                    case Some("validdistributionflag") => fr.occurrence.validDistribution = tagValue
-                    case _ => println("unmatched : " + raw.get.text.trim)
+                    case Some(term) => fr.setNestedProperty(term, tagValue)
+                    case None => println("unmatched : " + raw.get.text.trim)
                 }
             }
         })
@@ -171,8 +141,7 @@ class FlickrLoader extends DataLoader {
         val photoSecret = photoElem.attribute("secret").get
         val originalformat = photoElem.attribute("originalformat").getOrElse("jpg")
         val photoImageUrl = "http://farm" + farmId + ".static.flickr.com/"+ serverId + "/" + photoId + "_" + photoSecret + "." + originalformat
-        println(photoImageUrl)
-        
+        //println(photoImageUrl)
         (fr.occurrence.occurrenceID, photoImageUrl, fr,listBuffer.toList)
     }
     
