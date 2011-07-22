@@ -5,7 +5,7 @@ import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
-class NewDAOLayerTest extends FunSuite{
+class DAOLayerTests extends FunSuite{
   val occurrenceDAO = Config.occurrenceDAO
   val persistenceManager = Config.persistenceManager
   val rowKey ="test-rowKey"
@@ -16,7 +16,7 @@ class NewDAOLayerTest extends FunSuite{
      record.classification.scientificName = "Test species"
      occurrenceDAO.updateOccurrence(rowKey, record, Versions.RAW)
      val newrecord = occurrenceDAO.getByUuid(uuid)
-     println(newrecord)
+     
      expect(rowKey){newrecord.get.getRowKey}
      expect(uuid){newrecord.get.uuid}
 
@@ -41,12 +41,13 @@ class NewDAOLayerTest extends FunSuite{
 
   test("get occs"){
     val allrecords = occurrenceDAO.getAllVersionsByRowKey("dr105|HMAP|Barents & White Seas|239191")
-    println(allrecords)
+    val uuidrecords = occurrenceDAO.getAllVersionsByUuid("3b13f451-ea24-4699-a531-a20a12b252e9")
+    println(uuidrecords)
   }
 }
 
 @Ignore
-class DAOLayerTests extends FunSuite {
+class OldDAOLayerTests extends FunSuite {
 
     val occurrenceDAO = Config.occurrenceDAO
     val persistenceManager = Config.persistenceManager
