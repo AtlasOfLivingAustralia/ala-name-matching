@@ -76,8 +76,8 @@ public class SearchRequestParams {
         req.append("&sort=").append(sort);
         req.append("&dir=").append(dir);
         req.append("&qc=").append(qc);
-        //only join the facets if their are less than 6 otherwise use the default list of facets
-        if(facets.length<6)
+        //
+        if(facets.length > 0)
             req.append("&facets=").append(StringUtils.join(facets, "&facets="));
         return req.toString();
     }
