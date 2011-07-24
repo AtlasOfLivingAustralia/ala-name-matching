@@ -20,14 +20,13 @@ object ProcessWithActors {
     
     var dr:Option[String] = None
     val parser = new OptionParser("process records options") {
-            intOpt("t", "thread", "The number of threads to use", {v:Int => threads = v } )
-            opt("s", "start","The record to start with", {v:String => startUuid = v})
-            opt("dr", "resource", "The data resource to process", {v:String =>dr = Some(v)})
-        }
+        intOpt("t", "thread", "The number of threads to use", {v:Int => threads = v } )
+        opt("s", "start","The record to start with", {v:String => startUuid = v})
+        opt("dr", "resource", "The data resource to process", {v:String =>dr = Some(v)})
+    }
+    
     if(parser.parse(args)){
         var ids = 0
-    
-
         println("Processing "+dr.getOrElse("")+" from " +startUuid + " with " + threads + "actors")
         val endUuid = if(dr.isEmpty)"" else dr.get +"|~"
         if(startUuid == "" && !dr.isEmpty) startUuid = dr.get +"|"
@@ -50,7 +49,7 @@ object ProcessWithActors {
         occurrenceDAO.pageOverRawProcessed(rawAndProcessed => {
         if(guid == "")
           println("First rowKey processed: " + rawAndProcessed.get._1.rowKey)
-        guid = rawAndProcessed.get._1.rowKey
+          guid = rawAndProcessed.get._1.rowKey
           count += 1
           //we want to add the record to the buffer whether or not we send them to the actor
           buff + rawAndProcessed.get

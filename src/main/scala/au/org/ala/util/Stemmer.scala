@@ -322,18 +322,22 @@ object Stemmer
   val stemmer = new Stemmer
     
   def stem(str:String) :String = {
-      stemmer.add( str )
-
-      if ( stemmer.b.length > 2 )
-      {
-        stemmer.step1()
-        stemmer.step2()
-        stemmer.step3()
-        stemmer.step4()
-        stemmer.step5a()
-        stemmer.step5b()
+      try {
+	      stemmer.add( str )
+	
+	      if ( stemmer.b.length > 2 )
+	      {
+	        stemmer.step1()
+	        stemmer.step2()
+	        stemmer.step3()
+	        stemmer.step4()
+	        stemmer.step5a()
+	        stemmer.step5b()
+	      }
+	      stemmer.b
+      } catch {
+      	case e:Exception => str
       }
-      stemmer.b
   }
     
   def main(args: Array[String]) =
