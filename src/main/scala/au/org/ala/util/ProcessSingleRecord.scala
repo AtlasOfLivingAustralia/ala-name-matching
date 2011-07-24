@@ -11,7 +11,7 @@ object ProcessSingleRecord {
 
         print("Supply a UUID or a Row Key for a record: ")
         var uuid = readStdIn
-        while(uuid != "q" || uuid !="exit"){
+        while(uuid != "q" && uuid !="exit"){
             var rawRecord = Config.occurrenceDAO.getByRowKey(uuid, au.org.ala.biocache.Raw)
             if(rawRecord.isEmpty){
             	rawRecord = Config.occurrenceDAO.getByUuid(uuid, au.org.ala.biocache.Raw)
