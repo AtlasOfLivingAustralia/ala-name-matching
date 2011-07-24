@@ -25,6 +25,10 @@ object DateParser {
    * "1906-06" is Jun 1906, "1971" is just that year,
    * "2007-03-01T13:00:00Z/2008-05-11T15:30:00Z" is the interval between 1 Mar 2007 1pm UTC and
    * 11 May 2008 3:30pm UTC, "2007-11-13/15" is the interval between 13 Nov 2007 and 15 Nov 2007
+   * 
+   * 2005-06-12 00:00:00.0/2005-06-12 00:00:00.0 
+   * 
+   * 
    */
   def parseDate(date:String) : Option[EventDate] = {
     date match {
@@ -32,6 +36,7 @@ object DateParser {
       case ISOWithMonthNameDate(date) => Some(date)
       case ISODateRange(date) =>  Some(date)
       case ISODayDateRange(date) =>  Some(date)
+      case ISODateTimeRange(date) =>  Some(date)
       case ISOMonthDate(date) =>  Some(date)
       case ISOMonthDateRange(date) =>  Some(date)
       case ISOMonthYearDateRange(date) =>  Some(date)
@@ -62,13 +67,7 @@ object DateParser {
       }
       true
   }
-  
-  
-  
-  
 }
-
-
 
 case class EventDate(startDate:String,startDay:String,startMonth:String,startYear:String,
     endDate:String,endDay:String,endMonth:String,endYear:String,singleDate:Boolean)
@@ -228,6 +227,35 @@ object ISOMonthDateRange {
     }
   }
 }
+
+/** yyyy-MM-dd/dd */
+object ISODateTimeRange {
+
+  def unapply(str:String) : Option[EventDate] = {
+   try{
+       val parts = str.split("/")
+       val startDateParsed = DateUtils.parseDate(parts(0),
+          Array("yyyy-MM-dd hh:mm:ss.sss"))
+       val endDateParsed = DateUtils.parseDate(parts(1),
+          Array("yyyy-MM-dd hh:mm:ss.sss"))
+
+       val startDate = DateFormatUtils.format(startDateParsed, "yyyy-MM-dd")
+       val endDate = DateFormatUtils.format(endDateParsed, "yyyy-MM-dd")
+       val startDay = DateFormatUtils.format(startDateParsed, "dd")
+       val endDay = DateFormatUtils.format(endDateParsed, "dd")
+       val startMonth = DateFormatUtils.format(startDateParsed, "MM")
+       val endMonth = DateFormatUtils.format(endDateParsed, "MM")
+       val startYear = DateFormatUtils.format(startDateParsed, "yyyy")
+       val endYear = DateFormatUtils.format(endDateParsed, "yyyy")
+
+       Some(EventDate(startDate,startDay,startMonth,startYear,
+           endDate,endDay,endMonth:String,endYear,startDate.equals(endDate)))
+     } catch {
+      case e:ParseException => None
+    }
+  }
+}
+
 
 /** yyyy-MM-dd/dd */
 object ISODayDateRange {
