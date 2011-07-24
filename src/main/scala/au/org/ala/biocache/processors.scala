@@ -32,7 +32,7 @@ object ImageProcessor extends Processor {
 
   //Regular expression used to parse an image URL - adapted from http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
   lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#?]+)+\.(?:jpg|gif|png|jpeg))$""".r
-
+  
   /**
    * validates that the associated media is a valid image url
    */
@@ -51,7 +51,7 @@ object ImageProcessor extends Processor {
   def getName = "image"
 
   private def isValidImageURL(url:String) : Boolean = {
-    imageParser.unapplySeq(url.trim).isEmpty == false
+    !imageParser.unapplySeq(url.trim).isEmpty || url.startsWith(MediaStore.rootDir)
   }
 }
 
