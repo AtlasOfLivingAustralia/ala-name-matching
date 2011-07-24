@@ -9,21 +9,23 @@ object ProcessSingleRecord {
 
         val processor = new RecordProcessor
 
-        print("Supply a UUID for a record: ")
+        print("Supply a UUID or a Row Key for a record: ")
         var uuid = readStdIn
         while(uuid != "q" || uuid !="exit"){
-            val rawRecord = Config.occurrenceDAO.getByUuid(uuid, au.org.ala.biocache.Raw)
+            var rawRecord = Config.occurrenceDAO.getByRowKey(uuid, au.org.ala.biocache.Raw)
             if(rawRecord.isEmpty){
-                println("UUID not recognised : " + uuid)
-            } else {
+            	rawRecord = Config.occurrenceDAO.getByUuid(uuid, au.org.ala.biocache.Raw)
+            }
+            if(!rawRecord.isEmpty) {
                println("Processing record.....")
                processor.processRecord(rawRecord.get)
-               val processedRecord = Config.occurrenceDAO.getByUuid(uuid, au.org.ala.biocache.Processed)
+               val processedRecord = Config.occurrenceDAO.getByUuid(rawRecord.get.uuid, au.org.ala.biocache.Processed)
                val objectMapper = new ObjectMapper
                println(objectMapper.writeValueAsString(processedRecord.get))
+            } else {
+            	println("UUID or row key not stored....")
             }
-            
-            print("\n\nSupply a UUID for a record: ")
+            print("\n\nSupply a Row Key for a record: ")
             uuid = readStdIn
         }
         println("Exiting...")
