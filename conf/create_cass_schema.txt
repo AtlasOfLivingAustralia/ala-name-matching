@@ -19,3 +19,5 @@ and comment='The column family for attribution tracking' and gc_grace=2000;
 create column family taxon with comparator=UTF8Type and default_validation_class=UTF8Type
 and comment='The column family for taxon profile information' and gc_grace=2000;
 
+update column family occ with comparator=UTF8Type
+and column_metadata=[{column_name: uuid, validation_class: UTF8Type, index_type: KEYS}];
