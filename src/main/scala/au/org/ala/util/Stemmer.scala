@@ -320,23 +320,26 @@ class Stemmer
 object Stemmer
 {
   val stemmer = new Stemmer
-    
+  private val lock : AnyRef = new Object()  
   def stem(str:String) :String = {
-      try {
-	      stemmer.add( str )
-	
-	      if ( stemmer.b.length > 2 )
-	      {
-	        stemmer.step1()
-	        stemmer.step2()
-	        stemmer.step3()
-	        stemmer.step4()
-	        stemmer.step5a()
-	        stemmer.step5b()
-	      }
-	      stemmer.b
-      } catch {
-      	case e:Exception => str
+    //NC a temporary solution to make this thread safe.  Will need to adjust at some point
+      lock.synchronized {
+          try {
+                  stemmer.add( str )
+
+                  if ( stemmer.b.length > 2 )
+                  {
+                    stemmer.step1()
+                    stemmer.step2()
+                    stemmer.step3()
+                    stemmer.step4()
+                    stemmer.step5a()
+                    stemmer.step5b()
+                  }
+                  stemmer.b
+          } catch {
+            case e:Exception => str
+          }
       }
   }
     
