@@ -124,7 +124,7 @@ object StateCentrePoints {
   def coordinatesMatchCentre(state:String, decimalLatitude:String, decimalLongitude:String) : Boolean = {
 
     val matchedState = States.matchTerm(state)
-    if(!matchedState.isEmpty){
+    if(!matchedState.isEmpty && decimalLatitude != null && decimalLongitude != null){
 
       val coordinates = map.get(matchedState.get)
 

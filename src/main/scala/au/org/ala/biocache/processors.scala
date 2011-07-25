@@ -341,7 +341,8 @@ object LocationProcessor extends Processor {
       if (!point.isEmpty) {
           val (location, environmentalLayers, contextualLayers) = point.get
           //Perform sensitivity actions if the record was located in Australia
-          if(location.country == "Australia"){
+          //removed the check for Australia because some of the loc cache records have a state without country (-43.08333, 147.66670)
+          if(location.stateProvince != null){//location.country == "Australia"){
               val sensitiveTaxon = {
                 //check to see if the rank of the matched taxon is above a speceies
                 val rankID = au.org.ala.util.ReflectBean.any2Int(processed.classification.taxonRankID)
@@ -369,8 +370,9 @@ object LocationProcessor extends Processor {
                     
                     val service =ServiceFactory.createValidationService(sensitiveTaxon)
                     //TODO fix for different types of outcomes...
-                    val outcome = service.validate(facts).asInstanceOf[ConservationOutcome]
-                    if(outcome.isValid){
+                    val voutcome = service.validate(facts)
+                    if(voutcome.isValid && voutcome.isInstanceOf[ConservationOutcome]){
+                       val outcome =voutcome.asInstanceOf[ConservationOutcome]
                        val gl = outcome.getGeneralisedLocation
                        if(gl.getDescription == MessageFactory.getMessageText(MessageFactory.LOCATION_ALREADY_GENERALISED)){
                          //already been genaralised by data resource provider non need to do anything.
@@ -483,7 +485,7 @@ object LocationProcessor extends Processor {
           }
         }
 
-        //TODO check centre point of the state
+        //TODO check centre point of the state        
         if(StateCentrePoints.coordinatesMatchCentre(location.stateProvince, raw.location.decimalLatitude, raw.location.decimalLongitude)){
           assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,"Coordinates are centre point of "+location.stateProvince)
         }
