@@ -36,9 +36,11 @@ public class SpatialSearchRequestParams extends SearchRequestParams{
     @Override
     public String toString() {
         StringBuilder req = new StringBuilder(super.toString());
-        req.append("&lat=").append(lat);
-        req.append("&lon=").append(lon);
-        req.append("&radius=").append(radius);
+        if (lat != null && lon != null && radius != null) {
+            req.append("&lat=").append(lat);
+            req.append("&lon=").append(lon);
+            req.append("&radius=").append(radius);
+        }
         if(wkt.length() >0)
             req.append("&wkt=").append(wkt);
         return req.toString();
