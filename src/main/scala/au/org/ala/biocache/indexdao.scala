@@ -137,7 +137,7 @@ trait IndexDAO {
             "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
             "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
             "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
-            "occurrence_remarks", "citation", "user_assertions", "collector") ++ elFields ++ clFields
+            "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation","sensitive", "coordinate_uncertainty") ++ elFields ++ clFields
 //    def getHeaderValues(): List[String] = {
 //        List("id", "occurrence_id", "data_hub_uid", "data_hub", "data_provider_uid", "data_provider", "data_resource_uid",
 //            "data_resource", "institution_uid", "institution_code", "institution_name",
@@ -226,6 +226,10 @@ trait IndexDAO {
                         case e: Exception => slat = ""; slon = ""
                     }
                 }
+                val sconservation = getValue("stateConservation.p", map)
+                val stateCons = if(sconservation!="")sconservation.split(",")(0)else ""
+                val rawStateCons = if(sconservation!="")sconservation.split(",")(1)else ""
+                
 
                 return List(getValue("uuid", map),
                     getValue("rowKey", map),
@@ -289,7 +293,15 @@ trait IndexDAO {
                     getValue("occurrenceRemarks", map),
                     "",
                     (getValue(FullRecordMapper.userQualityAssertionColumn, map) != "").toString,
-                    getValue("recordedBy", map)
+                    (getValue(FullRecordMapper.qualityAssertionColumn, map).length > 3).toString,
+                    getValue("recordedBy", map),
+                    //getValue("austConservation.p",map),
+                    stateCons,
+                    rawStateCons,
+                    (getValue("originalDecimalLatitude",map) != "").toString,
+                    getValue("coordinateUncertaintyInMeters.p",map)
+                    
+                    
 //                    getValue("mean_temperature_cars2009a_band1.p", map),
 //                    getValue("mean_oxygen_cars2006_band1.p", map),
 //                    getValue("bioclim_bio34.p", map),

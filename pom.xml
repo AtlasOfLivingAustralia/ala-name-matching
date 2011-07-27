@@ -235,7 +235,7 @@
         <dependency>
             <artifactId>solr-core</artifactId>
             <groupId>org.apache.solr</groupId>
-            <version>3.1.0</version>
+            <version>3.3.0</version>
             <exclusions>
                 <exclusion>
                     <artifactId>org.slf4j</artifactId>
@@ -246,7 +246,7 @@
         <dependency>
             <artifactId>solr-solrj</artifactId>
             <groupId>org.apache.solr</groupId>
-            <version>3.1.0</version>
+            <version>3.3.0</version>
             <exclusions>
                 <exclusion>
                     <artifactId>org.slf4j</artifactId>

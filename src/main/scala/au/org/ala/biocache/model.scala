@@ -677,6 +677,7 @@ class OccurrenceIndex extends Cloneable with Mappable with POSO {
   @BeanProperty @Field("state") var stateProvince:String =_
   @BeanProperty @Field("latitude") var decimalLatitude:java.lang.Double =_
   @BeanProperty @Field("longitude") var decimalLongitude:java.lang.Double =_
+  @BeanProperty @Field("coordinate_uncertainty") var coordinateUncertaintyInMeters:java.lang.Double =_
   @BeanProperty @Field("year") var year:String =_
   @BeanProperty @Field("month") var month:String =_
   @BeanProperty @Field("basis_of_record") var basisOfRecord:String =_
