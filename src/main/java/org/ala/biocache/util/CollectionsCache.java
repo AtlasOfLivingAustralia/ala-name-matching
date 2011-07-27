@@ -204,7 +204,7 @@ public class CollectionsCache {
 	    			}
 	    		}
 	    		//downloadLimits.put("dr344", 5);
-	    		downloadLimits.notifyAll();
+	    		
     		}
     	}
     }
