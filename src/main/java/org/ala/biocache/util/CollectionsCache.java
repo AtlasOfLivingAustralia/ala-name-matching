@@ -203,7 +203,7 @@ public class CollectionsCache {
 	    				e.printStackTrace();
 	    			}
 	    		}
-	    		downloadLimits.put("dr344", 5);
+	    		//downloadLimits.put("dr344", 5);
 	    		downloadLimits.notifyAll();
     		}
     	}
