@@ -318,7 +318,7 @@ public class OccurrenceController {
         zop.putNextEntry(new java.util.zip.ZipEntry(filename + ".csv"));
         Map<String, Integer> uidStats = null;
         //put the factes
-        requestParams.setFacets(new String[]{"assertions"});
+        requestParams.setFacets(new String[]{"assertions", "data_resource_uid"});
         uidStats = searchDAO.writeResultsToStream(requestParams, zop, 100);
         zop.closeEntry();
 

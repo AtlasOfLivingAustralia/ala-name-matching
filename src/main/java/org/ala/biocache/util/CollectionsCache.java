@@ -33,12 +33,13 @@ import org.springframework.web.client.RestOperations;
  */
 @Component("collectionsCache")
 public class CollectionsCache {
+    protected LinkedHashMap<String, String> dataResources = new LinkedHashMap<String, String>();
+    protected LinkedHashMap<String, Integer> downloadLimits = new LinkedHashMap<String, Integer>();
     protected LinkedHashMap<String, String> institutions = new LinkedHashMap<String, String>();
     protected LinkedHashMap<String, String> collections = new LinkedHashMap<String, String>();
     protected Date lastUpdated = new Date();
     protected Long timeout = 3600000L; // in millseconds (1 hour)
-    protected String collectoryUriPrefix = "http://collections.ala.org.au/ws/";
-
+    protected String collectoryUriPrefix = "http://collections.ala.org.au";
     /** Spring injected RestTemplate object */
     @Inject
     private RestOperations restTemplate; // NB MappingJacksonHttpMessageConverter() injected by Spring
@@ -75,6 +76,13 @@ public class CollectionsCache {
         checkCacheAge(inguids, coguids);
         return this.collections;
     }
+    
+    public LinkedHashMap<String, Integer> getDownloadLimits(){
+        checkCacheAge();
+        synchronized(downloadLimits){    		
+            return downloadLimits;
+        }
+    }
 
     protected void checkCacheAge(){
         checkCacheAge(null, null);
@@ -101,7 +109,16 @@ public class CollectionsCache {
         logger.info("Updating collectory cache...");
         this.collections = getCodesMap(ResourceType.COLLECTION, coguids);
         this.institutions = getCodesMap(ResourceType.INSTITUTION, inguids);
+        this.dataResources = getCodesMap(ResourceType.DATA_RESOURCE,null);
+        //update the download limits asynchronously
+        new DownloadLimitThread().start();
 
+    }
+    
+    protected LinkedHashMap getDataResourceDetails(){
+    	LinkedHashMap<String,String> map = null;
+    	
+    	return map;
     }
 
     /**
@@ -124,7 +141,7 @@ public class CollectionsCache {
 
         try {
             entityMap = new LinkedHashMap<String, String>(); // reset now we're inside the try
-            final String jsonUri = collectoryUriPrefix + type.getType() + ".json";
+            final String jsonUri = collectoryUriPrefix +"/ws/"+ type.getType() + ".json";
             logger.debug("Requesting: " + jsonUri);
             List<LinkedHashMap<String, String>> entities = restTemplate.getForObject(jsonUri, List.class);
             logger.debug("number of entities = " + entities.size());
@@ -155,7 +172,8 @@ public class CollectionsCache {
      */
     public enum ResourceType {
         INSTITUTION("institution"),
-        COLLECTION("collection");
+        COLLECTION("collection"),
+        DATA_RESOURCE("dataResource");
 
         private String type;
 
@@ -166,6 +184,29 @@ public class CollectionsCache {
         public String getType() {
             return type;
         }
+    }
+    
+    public class DownloadLimitThread extends Thread{
+    	public void run(){
+    		synchronized(downloadLimits){    		    
+	    		logger.debug("Starting to populate download limits....");
+	    		String jsonUri = collectoryUriPrefix +"/lookup/summary/";
+	    		for(String druid : dataResources.keySet()){
+	    			//lookup the download limit
+	    			java.util.Map<String, Object> properties = restTemplate.getForObject(jsonUri+druid+".json", java.util.Map.class);
+	    			try{
+	    				Integer limit = (Integer)(properties.get("downloadLimit"));
+	    				downloadLimits.put(druid,  limit);
+	    				logger.debug(druid +" & limit " + limit);
+	    			}
+	    			catch(Exception e){
+	    				e.printStackTrace();
+	    			}
+	    		}
+	    		downloadLimits.put("dr344", 5);
+	    		downloadLimits.notifyAll();
+    		}
+    	}
     }
 
     /*

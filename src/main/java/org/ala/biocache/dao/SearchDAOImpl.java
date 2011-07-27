@@ -36,6 +36,8 @@ import org.ala.biocache.dto.PointType;
 import org.ala.biocache.dto.SearchResultDTO;
 import org.ala.biocache.dto.TaxaCountDTO;
 import org.ala.biocache.dto.TaxaRankCountDTO;
+import org.ala.biocache.util.CollectionsCache;
+import org.ala.biocache.util.RangeBasedFacets;
 import org.ala.biocache.util.SearchUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -91,6 +93,7 @@ public class SearchDAOImpl implements SearchDAO {
     protected static final String SPECIES_LSID = "species_lsid";
     protected static final String NAMES_AND_LSID = "names_and_lsid";
     protected static final String TAXON_CONCEPT_LSID = "taxon_concept_lsid";
+    
 
     //Patterns that are used to prepares a SOLR query for execution
     protected Pattern lsidPattern= Pattern.compile("lsid:[a-zA-Z0-9\\.:-]*");
@@ -104,6 +107,9 @@ public class SearchDAOImpl implements SearchDAO {
 
     @Inject
     protected SearchUtils searchUtils;
+    
+    @Inject
+    private CollectionsCache collectionCache;
 
     /**
      * Initialise the SOLR server instance
@@ -274,6 +280,8 @@ public class SearchDAOImpl implements SearchDAO {
 
         int resultsCount = 0;
         Map<String, Integer> uidStats = new HashMap<String, Integer>();
+        //stores the remaining limit for data resources that have a download limit
+        Map<String, Integer> downloadLimit = new HashMap<String,Integer>();
         try {
             logger.info("search query: " + searchParams.getQ());
             SolrQuery solrQuery = initSolrQuery(searchParams);
@@ -286,13 +294,19 @@ public class SearchDAOImpl implements SearchDAO {
             int pageSize = 1000;
             StringBuilder  sb = new StringBuilder(downloadFields.getFields());
             QueryResponse qr = runSolrQuery(solrQuery, searchParams.getFq(), pageSize, startIndex, "score", "asc");
-            //get the assertion factes to add them to the download fields
+            //get the assertion facets to add them to the download fields
             List<FacetField> facets = qr.getFacetFields();
             for(FacetField facet : facets){
-               for(FacetField.Count facetEntry : facet.getValues()){
-                   //System.out.println("facet: " + facetEntry.getName());
-                   sb.append(",").append(facetEntry.getName()).append(".qa");
-               }
+                if(facet.getName().equals("assertions")){
+            		//TODO Work out how we can include the assertions in the new cassandra structure
+//	               for(FacetField.Count facetEntry : facet.getValues()){
+//	                   //System.out.println("facet: " + facetEntry.getName());
+//	                   sb.append(",").append(facetEntry.getName()).append(".qa");
+//	               }
+                }else if(facet.getName().equals("data_resource_uid")){
+                    //populate the download limit
+                    initDownloadLimits(downloadLimit, facet);
+            	}
             }
             String[] fields = sb.toString().split(",");
             String[] titles = downloadFields.getHeader(fields);
@@ -304,14 +318,17 @@ public class SearchDAOImpl implements SearchDAO {
                 logger.debug("Start index: " + startIndex);
                 //cycle through the results adding them to the list that will be sent to cassandra
                 for (SolrDocument sd : qr.getResults()) {
-                    resultsCount++;
-                    uuids.add(sd.getFieldValue("row_key").toString());
-
-                    //increment the counters....
-                    incrementCount(uidStats, sd.getFieldValue("institution_uid"));
-                    incrementCount(uidStats, sd.getFieldValue("collection_uid"));
-                    incrementCount(uidStats, sd.getFieldValue("data_provider_uid"));
-                    incrementCount(uidStats, sd.getFieldValue("data_resource_uid"));
+                        String druid = sd.getFieldValue("data_resource_uid").toString();
+                        if(shouldDownload(druid,downloadLimit)){
+	                    resultsCount++;
+	                    uuids.add(sd.getFieldValue("row_key").toString());
+	
+	                    //increment the counters....
+	                    incrementCount(uidStats, sd.getFieldValue("institution_uid"));
+	                    incrementCount(uidStats, sd.getFieldValue("collection_uid"));
+	                    incrementCount(uidStats, sd.getFieldValue("data_provider_uid"));
+	                    incrementCount(uidStats, druid);
+                        }
 
                 }
 
@@ -332,6 +349,42 @@ public class SearchDAOImpl implements SearchDAO {
             //searchResults.setStatus("ERROR"); // TODO also set a message field on this bean with the error message(?)
         }
         return uidStats;
+    }
+    /**
+     * Indicates whether or not a records from the supplied data resource should be included 
+     * in the download. (based on download limits)
+     * @param druid
+     * @param limits
+     * @return
+     */
+    private boolean shouldDownload(String druid, Map<String, Integer>limits){
+        if(limits.size()>0 && limits.containsKey(druid)){
+            Integer remainingLimit = limits.get(druid);
+            if(remainingLimit==0){
+                return false;
+            }
+            limits.put(druid, remainingLimit-1);
+    	}
+        return true;
+    }
+    /**
+     * Initialises the download limit tracking
+     * @param map
+     * @param facet
+     */
+    private void initDownloadLimits(Map<String,Integer> map,FacetField facet){
+        //get the download limits from the cache
+        Map<String, Integer>limits = collectionCache.getDownloadLimits();
+        for(FacetField.Count facetEntry :facet.getValues()){
+            Integer limit = limits.get(facetEntry.getName());
+            if(limit != null && limit >0){
+                //check to see if the number of records returned from the query execeeds the limit
+                if(limit < facetEntry.getCount())
+                    map.put(facetEntry.getName(), limit);
+            }
+        }
+        if(map.size()>0)
+            logger.debug("Downloading with the following limits: " + map);
     }
 
    
@@ -928,13 +981,13 @@ public class SearchDAOImpl implements SearchDAO {
         // populate SOLR facet results
         if (facets != null) {
             for (FacetField facet : facets) {
-                List<FacetField.Count> facetEntries = facet.getValues();
+                List<FacetField.Count> facetEntries = facet.getValues();                
                 if ((facetEntries != null) && (facetEntries.size() > 0)) {
                     ArrayList<FieldResultDTO> r = new ArrayList<FieldResultDTO>();
                     for (FacetField.Count fcount : facetEntries) {
 //                        String msg = fcount.getName() + ": " + fcount.getCount();                       
-                        //logger.trace(fcount.getName() + ": " + fcount.getCount());
-                        r.add(new FieldResultDTO(fcount.getName(), fcount.getCount()));
+                        //logger.trace(fcount.getName() + ": " + fcount.getCount());        	
+                    		r.add(new FieldResultDTO(fcount.getName(), fcount.getCount()));
                     }
                     // only add facets if there are more than one facet result
                     if (r.size() > 0) {
@@ -944,6 +997,14 @@ public class SearchDAOImpl implements SearchDAO {
                 }
             }
         }
+        //all belong to uncertainty range for now
+        Map<String, String> rangeMap = RangeBasedFacets.getRangeMap("uncertainty");
+        List<FieldResultDTO> fqr = new ArrayList<FieldResultDTO>();
+        for(String value: facetQueries.keySet()){
+            if(facetQueries.get(value)>0)
+                fqr.add(new FieldResultDTO(rangeMap.get(value), facetQueries.get(value)));
+        }
+        facetResults.add(new FacetResultDTO("uncertainty", fqr));
 
         //handle the confidence facets in the facetQueries
         //TODO Work out whether or not we need the confidence facets ie the confidence ratign indexed???
@@ -1134,6 +1195,17 @@ public class SearchDAOImpl implements SearchDAO {
             searchParams.setDisplayString(displayString);
             //return queryString.toString();
         }
+        
+        //format the fq's for facets that need ranges substituted
+        for(int i=0; i<searchParams.getFq().length;i++){
+            String fq = searchParams.getFq()[i];
+            String[] parts = fq.split(":", 2);
+            //check to see if the first part is a range based query and update if necessary
+            Map<String, String> titleMap = RangeBasedFacets.getTitleMap(parts[0]);
+            if(titleMap != null){
+                searchParams.getFq()[i]= titleMap.get(parts[1]);
+            }
+        }
     }
 
     /**
@@ -1214,7 +1286,13 @@ public class SearchDAOImpl implements SearchDAO {
                 solrQuery.add("facet.date.gap", "+10YEAR"); // gap interval of 10 years
                 solrQuery.add("facet.date.other", "before"); // include counts before the facet start date ("before" label)
                 solrQuery.add("facet.date.include", "lower"); // counts will be included for dates on the starting date but not ending date
-            } else {
+            } else if(facet.equals("uncertainty")){
+                Map<String, String> rangeMap = RangeBasedFacets.getRangeMap("uncertainty");
+                for(String range: rangeMap.keySet()){
+                    solrQuery.add("facet.query", range);
+                }
+            }
+            else {
                 solrQuery.addFacetField(facet);
             }
         }
