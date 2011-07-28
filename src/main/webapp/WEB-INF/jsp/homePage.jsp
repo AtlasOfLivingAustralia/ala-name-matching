@@ -14,7 +14,7 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
         <h3>Occurrences</h3>
         <ul>
             <li><strong>Occurrence listing:</strong>
-                <a href="${pageContext.request.contextPath}/occurrences/page">/occurrences/page</a>
+                <a href="/ws/occurrences/page">/occurrences/page</a>
                 - just shows the first 10 occurrences (for debug only)</li>
             <li><strong>Occurrence view:</strong> /occurrence/{uuid}</li>
             <li><strong>Occurrence for taxon:</strong> /occurrences/taxon/{guid}</li>
@@ -26,7 +26,7 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             <li><strong>Occurrence wms:</strong> /occurrences/wms - requires WMS parameters along with 'q' and 'fq' populated, if available</li>
             <li><strong>Occurrence static:</strong> /occurrences/static - generates an image of AU with points on, filtering on 'q' and 'fq', if available</li>
             <li><strong>Occurrences coordinates:</strong>
-                <a href="${pageContext.request.contextPath}/occurrences/coordinates">/occurrences/coordinates</a>
+                <a href="/ws/occurrences/coordinates">/occurrences/coordinates</a>
                 - Displays a list of unique lat,lon that are used by the occurrences
                  </li>
         </ul>
