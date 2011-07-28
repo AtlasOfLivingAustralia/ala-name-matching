@@ -129,6 +129,10 @@
                     <groupId>au.org.ala</groupId>
                     <artifactId>bie-hbase</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <!--  DWC-A -->
@@ -149,7 +153,7 @@
             <artifactId>guice</artifactId>
             <version>2.0</version>
         </dependency>
-        <!-- Jackson  (JSON serialisation)-->
+        <!-- Jackson  (JSON serialisation) -->
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-core-asl</artifactId>
@@ -291,10 +295,14 @@
             <!--<scope>test</scope>-->
         </dependency>
         <dependency>
-            <groupId>com.reardencommerce</groupId>
-            <artifactId>clhm-production</artifactId>
+            <groupId>metadata-extractor</groupId>
+            <artifactId>metadata-extractor</artifactId>
+            <version>2.5.0-RC3</version>
+        </dependency>
+        <dependency>
+            <groupId>xmpcore</groupId>
+            <artifactId>xmpcore</artifactId>
             <version>1.0</version>
-            <!--<scope>test</scope>-->
         </dependency>
     </dependencies>
     <organization>
@@ -346,7 +354,7 @@
                         <arg>-target:jvm-1.5</arg>
                     </args>
                     <jvmArgs>
-                        <jvmArg>-Xmx1024m</jvmArg>            
+                        <jvmArg>-Xmx1024m</jvmArg>
                     </jvmArgs>
                 </configuration>
             </plugin>
