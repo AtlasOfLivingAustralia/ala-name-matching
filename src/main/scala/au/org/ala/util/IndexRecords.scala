@@ -32,7 +32,7 @@ object IndexRecords {
     if(parser.parse(args)){
         //delete the content of the index
         if(empty){
-           println("Emptying index")
+           logger.info("Emptying index")
            indexer.emptyIndex
         }
         
@@ -51,7 +51,7 @@ object IndexRecords {
         }
         
         val endKey = if(dataResource.isEmpty) "" else dataResource.get +"|~"
-        println("Starting to index " + startKey + " until " + endKey)
+        logger.info("Starting to index " + startKey + " until " + endKey)
         indexRange(startKey, endKey)
         //index any remaining items before exiting
         indexer.finaliseIndex(optimise, shutdown)
@@ -67,20 +67,17 @@ object IndexRecords {
     var items = new ArrayList[OccurrenceIndex]()
     persistenceManager.pageOverAll("occ", (guid, map)=> {
         counter += 1
-
         indexer.indexFromMap(guid, map)
-         
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
           logger.info(counter + " >> Last key : " + guid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
         }
-        
         true
     }, startUuid, endUuid)
 
     finishTime = System.currentTimeMillis
-    println("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
+    logger.info("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
   }
 
   def processFullRecords(){

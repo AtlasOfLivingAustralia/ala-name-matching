@@ -29,6 +29,12 @@ object CommandLineTool {
                         	IndexRecords.index(None, Some(dr), false, false)
                         }
                     }
+                    case it if (it startsWith "optimise") => {
+                        val drs = it.split(" ").map(x => x.trim).toList.tail
+                        for(dr <- drs){
+                        	IndexRecords.indexer.finaliseIndex(true,false)
+                        }
+                    }
                     case it if (it startsWith "healthcheck") => l.healthcheck
                     case _ => printHelp
                 }
