@@ -384,6 +384,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass>au.org.ala.util.CommandLineTool</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
