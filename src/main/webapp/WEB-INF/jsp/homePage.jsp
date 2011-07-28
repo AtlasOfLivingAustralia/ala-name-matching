@@ -34,7 +34,7 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
         <h3>Assertions</h3>
         <ul>
             <li><strong>List assertion codes:</strong>
-                <a href="${pageContext.request.contextPath}/assertions/codes">/assertions/codes</a>
+                <a href="/ws/assertions/codes">/assertions/codes</a>
             </li>
             <li><strong>Add an assertion:</strong> /occurrences/{uuid}/assertions/add</li>
             <li><strong>Delete an assertion:</strong> /occurrences/{uuid}/assertions/{assertionUuid}/delete</li>
@@ -53,7 +53,7 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
 
         <h2>Free text search of occurrence records (will return JSON)</h2>
 		<div id="inpage_search">
-			<form id="search-inpage" action="occurrences/search" method="get" name="search-form">
+			<form id="search-inpage" action="/ws/occurrences/search" method="get" name="search-form">
 			<label for="search">Search</label>
 			<input type="text" class="filled ac_input" id="search" name="q" placeholder="Search the Atlas" autocomplete="off">
 			<span class="search-button-wrapper"><input type="submit" class="search-button" alt="Search" value="Search"></span>
