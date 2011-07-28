@@ -601,6 +601,7 @@
    <field name="places" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="latitude" type="double" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="longitude" type="double" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="coordinate_uncertainty" type="double" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <!-- Not displayed in search results -->
    <!-- field name="lat_long_precision" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" /-->
    <!-- <field name="lat_long" type="location" indexed="true" stored="true"/> Requires SOLR 1.5 -->
@@ -631,10 +632,13 @@
    <field name="collector" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
    
    <!-- TODO work out the extra search fields that are required for the issues -->
-   <field name="taxonomic_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="geospatial_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="taxonomic_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="geospatial_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="sensitive" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="assertions" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false" />
    <field name="user_assertions" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="system_assertions" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+  
    <!-- Not displayed in search results -->   
    <!-- field name="created_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="modified_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
@@ -668,12 +672,13 @@
    <dynamicField name="*_id"  type="string" indexed="true" stored="true"/>
    <dynamicField name="*_name"  type="string" indexed="true" stored="true"/>
    <dynamicField name="point-*" type="string" indexed="true" stored="true"/>
+   <dynamicField name="*conservation" type="string" indexed="true" stored="true" />
   
    <dynamicField name="*_uid" type="string" indexed="true" stored="true"/>
    <!--  catches all the environment and contextual layers that are being indexed -->
    <!-- They are being stored just in case they need to be faceted on -->
-   <dynamicField name="el*" type="double" indexed="true" stored="true"/>
-   <dynamicField name="cl*" type="string" indexed="true" stored="false"/>
+   <dynamicField name="el*" type="double" indexed="true" stored="false"/>
+   <dynamicField name="cl*" type="string" indexed="true" stored="true"/>
 
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
         leading wildcard queries. -->
