@@ -645,7 +645,7 @@
    <!--field name="generalised_metres" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" / >
    <field name="geodetic_datum" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="individual_count" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" /-->
-   <!-- used for remarks searcing -->
+   <!-- used for remarks searching -->
    <field name="location_remarks" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="occurrence_remarks" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="citation" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
