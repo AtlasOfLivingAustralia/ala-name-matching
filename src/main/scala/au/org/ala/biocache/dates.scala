@@ -7,7 +7,6 @@ import java.text.ParseException
 import java.util.Date
 
 object DateUtil {
-    
     def getCurrentYear =  DateFormatUtils.format(new Date(), "yyyy").toInt
 }
 
@@ -17,6 +16,27 @@ object DateUtil {
 object DateParser {
 
  final val logger:Logger = LoggerFactory.getLogger("DateParser")
+ 
+ 
+  def parseDate(dateStr:String, maxYear:Option[Int] = None, minYear:Option[Int] = None) : Option[EventDate] = {
+  
+     //assume ISO
+     val eventDateWithOption = parseISODate(dateStr)
+     
+     //if max year set, validate
+     eventDateWithOption match {
+         case Some(eventDate) => {
+             if(!isValid(eventDate)){
+                 parseNonISODate(dateStr)
+             } else {
+                 eventDateWithOption
+             }
+         }
+         case None => None
+     }
+  }
+ 
+ 
   /**
    * Handles these formats (taken from Darwin Core specification):
    *
@@ -27,12 +47,11 @@ object DateParser {
    * 11 May 2008 3:30pm UTC, "2007-11-13/15" is the interval between 13 Nov 2007 and 15 Nov 2007
    * 
    * 2005-06-12 00:00:00.0/2005-06-12 00:00:00.0 
-   * 
-   * 
    */
-  def parseDate(date:String) : Option[EventDate] = {
+  def parseISODate(date:String) : Option[EventDate] = {
+     
     date match {
-      case ISODate(date) =>  Some(date)
+      case ISOSingleDate(date) =>  Some(date)
       case ISOWithMonthNameDate(date) => Some(date)
       case ISODateRange(date) =>  Some(date)
       case ISODayDateRange(date) =>  Some(date)
@@ -44,6 +63,14 @@ object DateParser {
       case _ => None
     }
   }
+ 
+  def parseNonISODate(date:String) : Option[EventDate] = {
+     
+    date match {
+      case NonISOSingleDate(date) =>  Some(date)
+      case _ => None
+    }
+  } 
  
   def isValid(eventDate:EventDate) : Boolean = {
       
@@ -96,24 +123,23 @@ object ISOWithMonthNameDate /*extends (String=>Option[EventDate]) */{
   }
 }
 
-
 /** yyyy-MM-dd */
-object ISODate /*extends (String=>Option[EventDate]) */{ 
+class SingleDate { 
 
-  /**
+  def baseFormat:String = "yyyy-MM-dd"
+
+      /**
    * Extraction method
    */
   def unapply(str:String) : Option[EventDate] = {
    try{
        val eventDateParsed = DateUtils.parseDate(str,
-          Array("yyyy-MM-dd", "yyyy-MM-dd'T'hh:mm-ss", "yyyy-MM-dd'T'hh:mm'Z'",
-            "yyyy/MM/dd", "dd-MM-yyyy", "dd/MM/yyyy"))
+          Array(baseFormat,baseFormat+"'T'hh:mm-ss", baseFormat+"'T'hh:mm'Z'"))
 
+       val startYear, endYear = DateFormatUtils.format(eventDateParsed, "yyyy")
        val startDate, endDate = DateFormatUtils.format(eventDateParsed, "yyyy-MM-dd")
        val startDay, endDay = DateFormatUtils.format(eventDateParsed, "dd")
        val startMonth, endMonth = DateFormatUtils.format(eventDateParsed, "MM")
-       val startYear, endYear = DateFormatUtils.format(eventDateParsed, "yyyy")
-
        Some(EventDate(startDate,startDay,startMonth,startYear,endDate,endDay,
            endMonth:String,endYear,true))
      } catch {
@@ -121,6 +147,13 @@ object ISODate /*extends (String=>Option[EventDate]) */{
     }
   }
 }
+
+trait NonISO extends SingleDate {
+    override def baseFormat:String = "dd-MM-yyyy"
+}
+
+object ISOSingleDate extends SingleDate
+object NonISOSingleDate extends SingleDate with NonISO
 
 /** yyyy-MM-dd */
 object ISOMonthDate { 
