@@ -81,13 +81,13 @@ class FileHelper(file: File) {
     /**
      * Read this file as a CSV
      */
-    def readAsCSV(separator:Char, quotechar:Char, procHdr:(List[String] => List[String]), read:((List[String], List[String]) => Unit)){
+    def readAsCSV(separator:Char, quotechar:Char, procHdr:(Array[String] => Array[String]), read:((Array[String], Array[String]) => Unit)){
         val reader =  new CSVReader(new FileReader(file), separator, quotechar)
-        val rawColumnHdrs = reader.readNext.toList
+        val rawColumnHdrs = reader.readNext
         val columnHdrs = procHdr(rawColumnHdrs)
         var currentLine = reader.readNext
         while(currentLine != null){
-            read(columnHdrs, currentLine.toList)
+            read(columnHdrs, currentLine)
             currentLine = reader.readNext
         }
     }

@@ -454,7 +454,13 @@ class CassandraPersistenceManager @Inject() (
         }
     }
 
-    def shutdown = Pelops.shutdown
+    def shutdown = {
+        try {
+        	Pelops.shutdown
+        } catch {
+            case e:Exception => e.printStackTrace()
+        }
+    }
     
     /**
      * Delete the value for the supplied column 

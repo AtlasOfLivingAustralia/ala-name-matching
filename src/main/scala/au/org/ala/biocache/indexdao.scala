@@ -64,7 +64,7 @@ trait IndexDAO {
     /**
      * Perform
      */
-    def finaliseIndex(optmise:Boolean=false)
+    def finaliseIndex(optimise:Boolean=false, shutdown:Boolean=true)
 
     //def stopThread
 
@@ -463,7 +463,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
 //      //cc.shutdown
 //    }
 
-    def finaliseIndex(optimise:Boolean=false) {
+    def finaliseIndex(optimise:Boolean=false, shutdown:Boolean=true) {
         
         if (!solrDocList.isEmpty) {
         
@@ -479,7 +479,8 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         printNumDocumentsInIndex
         if(optimise)
           solrServer.optimize
-        cc.shutdown
+        if(shutdown)
+        	cc.shutdown
     }
 
     override def getOccIndexModel(raw: FullRecord, processed: FullRecord): Option[OccurrenceIndex] = {

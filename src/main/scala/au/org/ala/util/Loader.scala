@@ -5,46 +5,6 @@ import scala.util.parsing.json.JSON
 import scala.collection.JavaConversions
 import scala.collection.mutable.HashMap
 
-object Loader {
-    
-    def main(args:Array[String]){
-        
-        val l = new Loader
-        
-        println("Welcome to the loader.")
-        print("Please supply a command or hit ENTER to view command list:")
-        var input = readLine
-        
-        while(input != "exit" || input != "q" || input != "quit"){
-            
-            try {
-	            input.toLowerCase.trim match {
-	            	case it if (it startsWith "describe ") || (it startsWith "d ")  => l.describeResource(it.split(" ").map(x => x.trim).toList.tail)
-	                case it if (it startsWith "list") || (it == "l" )  => l.printResourceList
-	                case it if (it startsWith "load") || (it startsWith "ld" )  => l.load(it.split(" ").map(x => x.trim).toList.last)
-	                case it if (it startsWith "healthcheck")  => l.healthcheck
-	                case _ => printHelp
-	            }
-            } catch{ 
-            case e:Exception => e.printStackTrace 
-            }
-            print("\nPlease supply a command or hit ENTER to view command list:")
-            input = readLine
-        }
-        println("Goodbye\n")
-    }
-    
-    def printHelp = {
-        println("1)  list - print list of resources")
-        println("2)  describe <dr-uid> <dr-uid1> <dr-uid2>... - print list of resources")
-        println("3)  load <dr-uid> - load resource")
-        println("4)  healthcheck <dr-uid>")
-        println("5)  healthcheck all - takes ages....")
-        println("6)  exit")
-    }
-}
-
-
 class Loader extends DataLoader {
 
     import scalaj.collection.Imports

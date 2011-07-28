@@ -4,6 +4,8 @@ import java.util.Date
 import java.io.File
 import au.org.ala.util._
 import scala.collection.mutable.ListBuffer
+import java.io.Reader
+import au.com.bytecode.opencsv.CSVReader
 
 object ParsingTest {
   def main(args : Array[String]) : Unit = {
@@ -16,6 +18,21 @@ object ParsingTest {
 }
 
 case class ProcessedValue(name:String, raw:String, processed:String)
+case class ParsedRecord(values:Array[ProcessedValue], assertions:Array[QualityAssertion])
+
+//object HeaderTest {
+//    
+//    def main(args:Array[String]){
+//        
+//        val hdr = """basisOfRecord, occurrenceID, catalogNumber, recordedBy, individualCount, sex, lifeStage, year, month, day, higherGeography, country, countryCode, stateProvince, locality, decimalLatitude, decimalLongitude, scientificName, acceptedNameUsage, higherClassification, kingdom, phylum, _class, order, family, genus, subgenus, specificEpithet, infraspecificEpithet, taxonRank, verbatimTaxonRank, scientificNameAuthorship"""
+//        val hdrs = hdr.split(",").map(x => x.trim)
+//        val output = Parser.guessColumnHeaders(hdrs)
+//        for(s <- output){
+//            println(s)
+//        }
+//    }
+//}
+
 
 object Parser {
     
@@ -30,72 +47,84 @@ object Parser {
         //if its a float, and column 2 is a float, assume lat/long
         processCSV(args(0))
     }
-    
-    def processCSV(filepath:String){
-        
-        def processColumnHeaders(list:List[String]) : List[String] ={
-            //are these darwin core terms?
-            val matchedCount = DwC.retrieveCanonicalsOrNothing(list).count(x => x != "")
-            //if not try and match them
-            if(matchedCount>2){
-                val t = DwC.retrieveCanonicals(list)
-                println("Matched terms: " + t)
-                t
-            } else {
-                val t = guessColumnHeaders(list)
-                println("Guessed terms: " + t)
-                t
-            }
+
+    def processColumnHeaders(list:Array[String]) : Array[String] ={
+        //are these darwin core terms?
+        val matchedCount = DwC.retrieveCanonicalsOrNothing(list.toList).count(x => x != "")
+        //if not try and match them
+        if(matchedCount>2){
+            val t = DwC.retrieveCanonicals(list.toList)
+            println("Matched terms: " + t)
+            t.toArray
+        } else {
+            val t = guessColumnHeaders(list)
+            println("Guessed terms: " + t)
+            t
         }
+    }
+    
+    def processLine(hdrs:Array[String], values:Array[String]) : ParsedRecord = { 
+        val tuples = (hdrs zip values).toMap
+        val raw = FullRecordMapper.createFullRecord("", tuples, Versions.RAW)
+        //println(raw.classification.scientificName)
+        val p  = new RecordProcessor
+        val (processed, assertions) = p.processRecord(raw)
+        //what values are processed???
         
-        def processLine(hdrs:List[String], values:List[String]) = { 
-            val tuples = (hdrs zip values).toMap
-            val raw = FullRecordMapper.createFullRecord("", tuples, Versions.RAW)
-            println(raw.classification.scientificName)
-            val p  = new RecordProcessor
-            val (processed, assertions) = p.processRecord(raw)
-            //what values are processed???
+        val rawAndProcessed = raw.objectArray zip processed.objectArray
+        val listBuff = new ListBuffer[ProcessedValue]
+        for((rawPoso,procPoso) <- rawAndProcessed){
             
-            val rawAndProcessed = raw.objectArray zip processed.objectArray
-            val listBuff = new ListBuffer[Map[String,String]]
-            for((rawPoso,procPoso) <- rawAndProcessed){
-                
+            if(!rawPoso.isInstanceOf[ContextualLayers] && !rawPoso.isInstanceOf[EnvironmentalLayers] ){
                 rawPoso.propertyNames.foreach (name => {
                     val rawValue = rawPoso.getProperty(name)
                     val procValue = procPoso.getProperty(name)
-                    if( !rawValue.isEmpty && !procValue.isEmpty){
-                        //printf(" | %s | %s | %s  |\n", name, rawValue,procValue)
-                        //values(name) = (rawValue.getOrElse(""),procValue.getOrElse(""))
-                        val term = Map("type" -> rawPoso.getClass.getName,"term" -> name, "raw" -> rawValue.getOrElse(""), "processed" -> procValue.getOrElse(""))
+                    if( !rawValue.isEmpty || !procValue.isEmpty){
+                        val term = ProcessedValue(name, rawValue.getOrElse(""), procValue.getOrElse(""))
                         listBuff += term
                     }
                 })
             }
-            
-            if(!values.isEmpty){
-                CommandLineTool.printTable(listBuff.toList)
-            }
-            //output table of values
         }
-        
-        //read CSV
-        (new File(filepath)).readAsCSV(',', '"', processColumnHeaders, processLine)
-        
-        //process each line as DWC record
+        //assertions
+//        assertions.values.foreach(assertionGroup => {
+//            assertionGroup.foreach(assertion => {
+//            	val term = ProcessedValue(assertion.name, "", assertion.comment)
+//            	listBuff += term
+//            })
+//        })
+        ParsedRecord( listBuff.toList.toArray, assertions.values.flatten.toArray)
     }
     
-    
-    def guessColumnHeaders(values:List[String]) : List[String] = {
-        //val values1 = List("32132", "Macropus rufus", "41 05 54.03S", "41 05 54.03N", "Australia", "red kangaroo", "WGS84", "1999-01-01")
-        
-        if(values.size >= 2){
-           parseHead(values(0), values(1))
+    def processCSV(filepath:String){
+        (new File(filepath)).readAsCSV(',', '"', processColumnHeaders, (hdrs, values) =>{
+            val result = processLine(hdrs,values)
+            CommandLineTool.printTable(result.values.map(r => {
+                Map("name"-> r.name, "raw"-> r.raw, "processed"-> r.processed)
+            }).toList
+        )})
+    }
+
+    def processReader(reader:java.io.Reader){
+        val csvReader =  new CSVReader(reader, ',', '"')
+        val rawColumnHdrs = csvReader.readNext
+        val columnHdrs = processColumnHeaders(rawColumnHdrs)
+        var currentLine = csvReader.readNext
+        while(currentLine != null){
+            val result = processLine(columnHdrs, currentLine)
+            currentLine = csvReader.readNext
         }
-        
-        val matchedTerms = parse(values)
-        
-        println(matchedTerms)
-        matchedTerms
+    }
+    
+    def guessColumnHeaders(values:Array[String]) : Array[String] = {
+        //assume we have darwin core terms
+        val matchedDwc = DwC.retrieveCanonicals(values.toList)
+        val nofMatched = matchedDwc.filter(x => x.size > 0).size
+        if(nofMatched < 3){
+	        parse(values)
+        } else {
+            matchedDwc.toArray
+        }
     }
     
     def parseHead(column1:String, column2:String) : Option[(String,String)] = column1 match {
@@ -107,7 +136,7 @@ object Parser {
         case _ => None 
     }
     
-	def parse(values:List[String]) : List[String] = {
+	def parse(values:Array[String]) : Array[String] = {
 	    values.map(value => {
 	        value match {
 	          case BasisOfRecordExtractor(value) => "basisOfRecord"

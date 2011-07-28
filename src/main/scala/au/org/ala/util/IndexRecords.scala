@@ -19,35 +19,47 @@ object IndexRecords {
 
   def main(args: Array[String]): Unit = {
     
-    var startUuid =""
+    var startUuid:Option[String] = None
     
-    var dr:Option[String] = None
+    var dataResource:Option[String] = None
     var empty:Boolean =false
     val parser = new OptionParser("index records options") {
-            opt("empty", "empty the index first", {empty=true})
-            opt("s", "start","The record to start with", {v:String => startUuid = v})
-            opt("dr", "resource", "The data resource to process", {v:String =>dr = Some(v)})
-        }
-
+        opt("empty", "empty the index first", {empty=true})
+        opt("s", "start","The record to start with", {v:String => startUuid = Some(v)})
+        opt("dr", "resource", "The data resource to process", {v:String =>dataResource = Some(v)})
+    }
     
-     if(parser.parse(args)){
-         //delete the content of the index
-         if(empty){
-            println("Emptying index")
-            indexer.emptyIndex
-         }
-         val endUuid = if(dr.isEmpty)"" else dr.get +"|~"
-        if(startUuid == "" && !dr.isEmpty) startUuid = dr.get +"|"
-          println("Starting to index " + startUuid + " until " + endUuid)
-          processMap(startUuid, endUuid)
-          //index any remaining items before exiting
-      //    indexer.index(items)
-          indexer.finaliseIndex()
-
+    if(parser.parse(args)){
+        //delete the content of the index
+        if(empty){
+           println("Emptying index")
+           indexer.emptyIndex
+        }
+        
+        index(startUuid, dataResource, false, false)
      }
   }
   
-  def processMap(startUuid:String, endUuid:String)={
+  def index(startUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false)={
+      
+        val startKey = {
+            if(startUuid.isEmpty && !dataResource.isEmpty) {
+            	dataResource.get +"|"
+            } else {
+                startUuid.get
+            }
+        }
+        
+        val endKey = if(dataResource.isEmpty) "" else dataResource.get +"|~"
+        println("Starting to index " + startKey + " until " + endKey)
+        indexRange(startKey, endKey)
+        //index any remaining items before exiting
+        indexer.finaliseIndex(optimise, shutdown)
+      
+  }
+  
+  
+  def indexRange(startUuid:String, endUuid:String)={
     var counter = 0
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
@@ -62,7 +74,6 @@ object IndexRecords {
           finishTime = System.currentTimeMillis
           logger.info(counter + " >> Last key : " + guid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
-
         }
         
         true
