@@ -96,8 +96,8 @@ public class OccurrenceController {
 	protected String hostUrl = "http://localhost:8888/biocache-service";
 	protected String bieBaseUrl = "http://bie.ala.org.au/";
 	protected String collectoryBaseUrl = "http://collections.ala.org.au";
-	protected String citationServiceUrl = collectoryBaseUrl + "/lookup/citation";
-	protected String summaryServiceUrl  = collectoryBaseUrl + "/lookup/summary";
+	protected String citationServiceUrl = collectoryBaseUrl + "/ws/citations";
+	protected String summaryServiceUrl  = collectoryBaseUrl + "/ws/summary";
 	
 	/**
 	 * Custom handler for the welcome view.
@@ -282,6 +282,30 @@ public class OccurrenceController {
         logger.debug("query = " + requestParams.getQ());
 
 		return searchResult;
+	}
+	/**
+	 * Downloads the complete list of values in the supplied facet 
+	 * 
+	 * ONLY 1 facet should be included in the params.  
+	 * 
+	 * @param requestParams
+	 * @param response
+	 * @param request
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/occurrences/facets/download*", method = RequestMethod.GET)
+	public void downloadFacet(
+            DownloadRequestParams requestParams,
+            HttpServletResponse response,
+            HttpServletRequest request) throws Exception {
+	        if(requestParams.getFacets().length >0){
+    	        String filename = requestParams.getFile() != null ? requestParams.getFile():requestParams.getFacets()[0]; 
+    	        response.setHeader("Cache-Control", "must-revalidate");
+    	        response.setHeader("Pragma", "must-revalidate");
+    	        response.setHeader("Content-Disposition", "attachment;filename=" + filename +".txt");
+    	        response.setContentType("text/plain");
+    	        searchDAO.writeFacetToStream(requestParams, response.getOutputStream());
+	        }
 	}
 
 	/**

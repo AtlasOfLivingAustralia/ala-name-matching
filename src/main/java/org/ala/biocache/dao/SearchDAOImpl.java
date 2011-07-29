@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -53,6 +54,8 @@ import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.core.CoreContainer;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestOperations;
+
 import au.org.ala.biocache.OccurrenceIndex;
 
 import au.com.bytecode.opencsv.CSVWriter;
@@ -101,6 +104,8 @@ public class SearchDAOImpl implements SearchDAO {
     protected Pattern spacesPattern =Pattern.compile("[^\\s\"()\\[\\]']+|\"[^\"]*\"|'[^']*'");
     protected Pattern uidPattern = Pattern.compile("([a-z_]*_uid:)([a-z0-9]*)");
     protected Pattern spatialPattern = Pattern.compile("\\{!spatial[a-z=\\-\\s0-9\\.\\,]*\\}");
+    
+    protected String bieUri ="http://bie.ala.org.au";
 
     /** Download properties */
     protected DownloadFields downloadFields;
@@ -110,6 +115,9 @@ public class SearchDAOImpl implements SearchDAO {
     
     @Inject
     private CollectionsCache collectionCache;
+    
+    @Inject
+    private RestOperations restTemplate;
 
     /**
      * Initialise the SOLR server instance
@@ -234,6 +242,63 @@ public class SearchDAOImpl implements SearchDAO {
         return count;
     }
     /**
+     * Writes the values for the first supplied facet to output stream
+     */
+    public void writeFacetToStream(SearchRequestParams searchParams, OutputStream out) throws Exception{
+        //set to unlimited facets
+        searchParams.setFlimit(-1);
+        formatSearchQuery(searchParams);
+        //add the context information
+        updateQueryContext(searchParams);
+        SolrQuery solrQuery = initSolrQuery(searchParams);
+        solrQuery.setQuery(searchParams.getQ());
+        //don't want any results returned
+        solrQuery.setRows(0);
+        QueryResponse qr = runSolrQuery(solrQuery, searchParams);
+        if (qr.getResults().size() > 0) {
+            FacetField ff = qr.getFacetField(searchParams.getFacets()[0]);
+            
+            if(ff != null && ff.getValueCount() >0){
+              //process the "species_guid_ facet by looking up the list of guids
+                out.write((ff.getName() +",species name\n").getBytes());
+                if(ff.getName().equals("species_guid")){
+                    List<String> guids = new ArrayList<String>();
+                    logger.debug("Downloading " +  ff.getValueCount() + " species guids");
+                    for(FacetField.Count value : ff.getValues()){
+                        guids.add(value.getName());
+                        //Only want to send a sub set of the list so that the URI is not too long for BIE
+                        if(guids.size()==30){
+                          //now get the list of species from the web service TODO may need to move this code
+                            String jsonUri = bieUri + "/species/namesFromGuids.json?guid=" + StringUtils.join(guids, "&guid=");
+                            List<String> entities = restTemplate.getForObject(jsonUri, List.class);
+                            for(int j = 0 ; j<guids.size();j++){
+                                out.write((guids.get(j) + ",").getBytes());
+                                out.write((entities.get(j) +"\n").getBytes());
+                            }
+                            guids.clear();
+                        }
+                    }
+                    //now get the list of species from the web service TODO may need to move this code
+                    String jsonUri = bieUri + "/species/namesFromGuids.json?guid=" + StringUtils.join(guids, "&guid=");
+                    List<String> entities = restTemplate.getForObject(jsonUri, List.class);
+                    for(int i = 0 ; i<guids.size();i++){
+                        out.write((guids.get(i) + ",").getBytes());
+                        out.write((entities.get(i) +"\n").getBytes());
+                    }
+                }
+                else{
+                    //default processing of facets
+                    out.write((ff.getName() +"\n").getBytes());
+                    for(FacetField.Count value : ff.getValues()){
+                        out.write(value.getName().getBytes());
+                        out.write("\n".getBytes());
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
      * Writes all the distinct latitude and longitude in the index to the supplied
      * output stream.
      * 
@@ -293,25 +358,34 @@ public class SearchDAOImpl implements SearchDAO {
             int startIndex = 0;
             int pageSize = 1000;
             StringBuilder  sb = new StringBuilder(downloadFields.getFields());
+            StringBuilder qasb = new StringBuilder();
             QueryResponse qr = runSolrQuery(solrQuery, searchParams.getFq(), pageSize, startIndex, "score", "asc");
             //get the assertion facets to add them to the download fields
             List<FacetField> facets = qr.getFacetFields();
             for(FacetField facet : facets){
                 if(facet.getName().equals("assertions")){
-            		//TODO Work out how we can include the assertions in the new cassandra structure
-//	               for(FacetField.Count facetEntry : facet.getValues()){
-//	                   //System.out.println("facet: " + facetEntry.getName());
-//	                   sb.append(",").append(facetEntry.getName()).append(".qa");
-//	               }
+            		
+	               for(FacetField.Count facetEntry : facet.getValues()){
+	                   //System.out.println("facet: " + facetEntry.getName());
+	                   if(qasb.length()>0)
+	                       qasb.append(",");
+	                   qasb.append(facetEntry.getName());
+	               }
                 }else if(facet.getName().equals("data_resource_uid")){
                     //populate the download limit
                     initDownloadLimits(downloadLimit, facet);
             	}
             }
-            String[] fields = sb.toString().split(",");
+            String qas = qasb.toString();            
+            String[] fields = sb.toString().split(",");            
+            String[]qaFields = qas.split(",");            
             String[] titles = downloadFields.getHeader(fields);
-            out.write((StringUtils.join(titles, "\t") + "\n").getBytes());
-
+            out.write(StringUtils.join(titles, "\t").getBytes());
+            if(qaFields.length >0){
+                out.write("\t".getBytes());
+                out.write(StringUtils.join(qaFields, "\t").getBytes());
+            }
+            out.write("\n".getBytes());
             List<String> uuids = new ArrayList<String>();
            
             while (qr.getResults().size() > 0 && resultsCount < MAX_DOWNLOAD_SIZE) {
@@ -335,7 +409,7 @@ public class SearchDAOImpl implements SearchDAO {
                 //logger.debug("Downloading " + uuids.size() + " records");
 
                 au.org.ala.biocache.Store.writeToStream(out, "\t", "\n", uuids.toArray(new String[]{}),
-                        fields);
+                        fields, qaFields);
                 startIndex += pageSize;
                 uuids.clear();
                 if (resultsCount < MAX_DOWNLOAD_SIZE) {

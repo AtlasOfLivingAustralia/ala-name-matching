@@ -36,11 +36,7 @@ public class DownloadRequestParams extends SearchRequestParams {
      */
     @Override
     public String toString() {
-        StringBuilder req = new StringBuilder();
-        req.append("q=").append(q);
-        req.append("&fq=").append(StringUtils.join(fq, "&fq="));
-        req.append("&sort=").append(sort);
-        req.append("&dir=").append(dir);
+        StringBuilder req = new StringBuilder(super.toString());
         req.append("&email=").append(email);
         req.append("&reason=").append(reason);
         req.append("&file=").append(file);

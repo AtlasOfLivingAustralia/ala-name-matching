@@ -11,7 +11,12 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.ResourceBundle;
+import java.util.Set;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.NameValuePair;
@@ -31,12 +36,28 @@ public class AssertionController {
 
     //TODO Move this so all classes can refer to the same
     protected String collectoryBaseUrl = "http://collections.ala.org.au";
+    
+    protected Set<String> apiKeys;
     /**
      * Retrieve an array of the assertion codes in use by the processing system
      *
      * @return an array of codes
      * @throws Exception
      */
+    
+    public AssertionController(){
+        //Initialise the set of API keys that will allow edits to the biocache store
+        ResourceBundle rb = ResourceBundle.getBundle("biocache"); 
+        apiKeys = new HashSet<String>();
+        try{
+                      
+            String[] keys= rb.getString("apiKeys").split(",");
+            Collections.addAll(apiKeys, keys);
+        }
+        catch(Exception e){
+            
+        }
+    }
     @RequestMapping(value = {"/assertions/codes"}, method = RequestMethod.GET)
 	public @ResponseBody ErrorCode[] showCodes() throws Exception {
         return Store.retrieveAssertionCodes();
@@ -80,33 +101,40 @@ public class AssertionController {
         String comment = request.getParameter("comment");
         String userId = request.getParameter("userId");
         String userDisplayName = request.getParameter("userDisplayName");
-
-        try {
-            logger.debug("Adding assertion to:"+recordUuid+", code:"+code+", comment:"+comment
-                    + ", userId:" +userId + ", userDisplayName:" +userDisplayName);
-
-            QualityAssertion qa = au.org.ala.biocache.QualityAssertion.apply(Integer.parseInt(code));
-            qa.setComment(comment);
-            qa.setUserId(userId);
-            qa.setUserDisplayName(userDisplayName);
-
-            Store.addUserAssertion(recordUuid, qa);
-
-            
-           
-           if(qa.getUuid() != null) {
-                //send this assertion addition event to the notification service
-                postNotificationEvent("create", recordUuid, qa.getUuid());
+        String apiKey = request.getParameter("apiKey");
+        
+        if(apiKey != null && apiKeys.contains(apiKey)){
+            try {
+                logger.debug("Adding assertion to:"+recordUuid+", code:"+code+", comment:"+comment
+                        + ", userId:" +userId + ", userDisplayName:" +userDisplayName);
+    
+                QualityAssertion qa = au.org.ala.biocache.QualityAssertion.apply(Integer.parseInt(code));
+                qa.setComment(comment);
+                qa.setUserId(userId);
+                qa.setUserDisplayName(userDisplayName);
+    
+                Store.addUserAssertion(recordUuid, qa);
+    
                 
+               
+               if(qa.getUuid() != null) {
+                    //send this assertion addition event to the notification service
+                    postNotificationEvent("create", recordUuid, qa.getUuid());
+                    
+                }
+                
+    
+                String server = request.getSession().getServletContext().getInitParameter("serverName");
+                response.setHeader("Location", server + "/occurrences/" + recordUuid + "/assertions/" + qa.getUuid());
+                response.setStatus(HttpServletResponse.SC_CREATED);
+            } catch(Exception e){
+                logger.error(e.getMessage(), e);
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             }
-            
-
-            String server = request.getSession().getServletContext().getInitParameter("serverName");
-            response.setHeader("Location", server + "/occurrences/" + recordUuid + "/assertions/" + qa.getUuid());
-            response.setStatus(HttpServletResponse.SC_CREATED);
-        } catch(Exception e){
-            logger.error(e.getMessage(), e);
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+        else{
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "An invalid API Key was provided for updates.");
         }
     }
 
@@ -117,10 +145,18 @@ public class AssertionController {
 	public void deleteAssertion(
         @PathVariable(value="recordUuid") String recordUuid,
         @RequestParam(value="assertionUuid", required=true) String assertionUuid,
+        HttpServletRequest request,
         HttpServletResponse response) throws Exception {
-        Store.deleteUserAssertion(recordUuid, assertionUuid);
-        postNotificationEvent("delete", recordUuid, assertionUuid);
-        response.setStatus(HttpServletResponse.SC_OK);
+        String apiKey = request.getParameter("apiKey");
+        if(apiKey != null && apiKeys.contains(apiKey)){
+            Store.deleteUserAssertion(recordUuid, assertionUuid);
+            postNotificationEvent("delete", recordUuid, assertionUuid);
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
+        else{
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "An invalid API Key was provided for deletes.");
+        }
     }
 
     /**

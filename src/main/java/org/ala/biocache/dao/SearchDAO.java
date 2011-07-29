@@ -103,6 +103,8 @@ public interface SearchDAO {
 
 
     void writeCoordinatesToStream(SearchRequestParams searchParams,OutputStream out) throws Exception;
+    
+    void writeFacetToStream(SearchRequestParams searchParams, OutputStream out) throws Exception;
 
     /**
      * Retrieve an OccurrencePoint (distinct list of points - lat-long to 4 decimal places) for a given search
