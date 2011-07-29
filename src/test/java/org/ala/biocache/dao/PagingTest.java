@@ -35,10 +35,10 @@ public class PagingTest extends TestCase {
 				"0001b51b-32d7-48a8-9f67-3563cba731f3"};
 		
 		System.out.println("Raw values");
-		Store.writeToStream(System.out, "\t", "\n", uuids,  new String[]{"uuid","scientificName", "eventDate"});
+		Store.writeToStream(System.out, "\t", "\n", uuids,  new String[]{"uuid","scientificName", "eventDate"}, new String[] {});
 		
 		System.out.println("Processed values");
-		Store.writeToStream(System.out, "\t", "\n", uuids,  new String[]{"uuid","scientificName", "eventDate"});
+		Store.writeToStream(System.out, "\t", "\n", uuids,  new String[]{"uuid","scientificName", "eventDate"}, new String[] {});
 
 	}
 }
