@@ -29,7 +29,23 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
                 <a href="/ws/occurrences/coordinates">/occurrences/coordinates</a>
                 - Displays a list of unique lat,lon that are used by the occurrences
                  </li>
+            <li><strong>List of default facets for occurrence search:</strong> <a href="/ws/search/facets">/search/facets</a></li>
+            <li><strong>Facet based download:</strong> /occurrences/facets/download - requires a 'q' and optional 'fq' and one 'facet'. This can be used to download distinct lists of species:
+            <ul>
+            	<li><a href="/ws/occurrences/facets/download?q=collection_uid:co150&facets=species_guids">/search/facets?q=collection_uid:co150&facets=species_guids</a> - downloads a list of species guids and associated scientific names for collection co150</li>
+            	<li><a href="/ws/occurrences/facets/download?q=collection_uid:co150&facets=raw_taxon_name">/search/facets?q=collection_uid:co150&facets=raw_taxon_name</a> - downloads a list of raw scientific names for collection co150</li>
+            </ul>
+            </li>
+            <li><strong>Spatial Occurrence search: </strong>/occurrences/spatial - supports point-radius and wkt based searches.  To search by wkt the wkt string can be supplied directly or via a gazetteer URL. Examples:
+            	<ul>
+            		<li><a href="/ws//occurrences/spatial?lat=-35.27&lon=149.15&radius=10">/occurrences/spatial?lat=-35.27&lon=149.15&radius=10</a></li>
+            		<li><a href="/ws/occurrences/spatial?wkt=POLYGON((140:-37,151:-37,151:-26,140.1310:-26,140:-37))">/occurrences/spatial?wkt=POLYGON((140:-37,151:-37,151:-26,140.1310:-26,140:-37))</a></li>
+            		<li><a href="/ws/occurrences/spatial?url=http://spatial.ala.org.au/gazetteer/lga/Acton_(Australian_Capital_Territory).xml">/occurrences/spatial?url=http://spatial.ala.org.au/gazetteer/lga/Acton_(Australian_Capital_Territory).xml</a></li>
+            	</ul> 
+            </li>            
         </ul>
+        
+        
 
         <h3>Assertions</h3>
         <ul>

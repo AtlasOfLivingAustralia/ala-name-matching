@@ -112,6 +112,15 @@ public class OccurrenceController {
 	public String homePageHandler() {
 		return HOME;
 	}
+	/**
+	 * Rerurns the default facets that are applied to a search
+	 * @return
+	 */
+	@RequestMapping("/search/facets")
+	public @ResponseBody String[] listAllFacets() {
+	    String[] facets = new SearchRequestParams().getFacets();
+	    return facets;
+	}
 
 	/**
 	 * Returns the complete list of Occurrences

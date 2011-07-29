@@ -259,9 +259,9 @@ public class SearchDAOImpl implements SearchDAO {
             FacetField ff = qr.getFacetField(searchParams.getFacets()[0]);
             
             if(ff != null && ff.getValueCount() >0){
-              //process the "species_guid_ facet by looking up the list of guids
-                out.write((ff.getName() +",species name\n").getBytes());
+              //process the "species_guid_ facet by looking up the list of guids                
                 if(ff.getName().equals("species_guid")){
+                    out.write((ff.getName() +",species name\n").getBytes());
                     List<String> guids = new ArrayList<String>();
                     logger.debug("Downloading " +  ff.getValueCount() + " species guids");
                     for(FacetField.Count value : ff.getValues()){
