@@ -32,7 +32,7 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             <li><strong>List of default facets for occurrence search:</strong> <a href="/ws/search/facets">/search/facets</a></li>
             <li><strong>Facet based download:</strong> /occurrences/facets/download - requires a 'q' and optional 'fq' and one 'facet'. This can be used to download distinct lists of species:
             <ul>
-            	<li><a href="/ws/occurrences/facets/download?q=collection_uid:co150&facets=species_guid">/search/facets/download?q=collection_uid:co150&facets=species_guids</a> - downloads a list of species guids and associated scientific names for collection co150</li>
+            	<li><a href="/ws/occurrences/facets/download?q=collection_uid:co150&facets=species_guid">/search/facets/download?q=collection_uid:co150&facets=species_guid</a> - downloads a list of species guids and associated scientific names for collection co150</li>
             	<li><a href="/ws/occurrences/facets/download?q=collection_uid:co150&facets=raw_taxon_name">/search/facets/download?q=collection_uid:co150&facets=raw_taxon_name</a> - downloads a list of raw scientific names for collection co150</li>
             </ul>
             </li>
