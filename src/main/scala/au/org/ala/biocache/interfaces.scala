@@ -16,7 +16,8 @@ import collection.JavaConversions
 object Store {
 
   private val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
-
+  private var readOnly = false;
+ 
   import JavaConversions._
   import scalaj.collection.Imports._
   /**
@@ -93,8 +94,13 @@ object Store {
    * Requires a re-index
    */
   def addUserAssertion(uuid:java.lang.String, qualityAssertion:QualityAssertion){
-    occurrenceDAO.addUserAssertion(uuid, qualityAssertion)
-    occurrenceDAO.reIndex(uuid)
+    if(!readOnly){
+        occurrenceDAO.addUserAssertion(uuid, qualityAssertion)
+        occurrenceDAO.reIndex(uuid)
+    }
+    else{
+        throw new Exception("In read only mode. Please try again later")
+    }
   }
 
   /**
@@ -103,16 +109,30 @@ object Store {
    * Requires a re-index
    */
   def deleteUserAssertion(uuid:java.lang.String, assertionUuid:java.lang.String){
-    occurrenceDAO.deleteUserAssertion(uuid,assertionUuid)
-    occurrenceDAO.reIndex(uuid)
+    if(!readOnly){
+        occurrenceDAO.deleteUserAssertion(uuid,assertionUuid)
+        occurrenceDAO.reIndex(uuid)
+    }
+    else{
+        throw new Exception("In read only mode. Please try again later")
+    }
+  }
+  /**
+   * Puts biocache store into readonly mode.
+   * Useful when we don't want services to update the index.
+   * This is generally when a optimise is occurring
+   */
+  def setReadOnly(ro:Boolean)={
+      readOnly = ro
+
   }
 
   /**
    * Writes the select records to the stream.
    */
   def writeToStream(outputStream:OutputStream,fieldDelimiter:java.lang.String,
-        recordDelimiter:java.lang.String,keys:Array[String],fields:Array[java.lang.String]) {
-    occurrenceDAO.writeToStream(outputStream,fieldDelimiter,recordDelimiter,keys,fields)
+        recordDelimiter:java.lang.String,keys:Array[String],fields:Array[java.lang.String], qaFields:Array[java.lang.String]) {
+    occurrenceDAO.writeToStream(outputStream,fieldDelimiter,recordDelimiter,keys,fields, qaFields)
   }
 
   /**

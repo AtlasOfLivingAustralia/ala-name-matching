@@ -37,7 +37,7 @@ trait OccurrenceDAO {
     
     def createUuid = UUID.randomUUID.toString
 
-    def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String, rowKeys: Array[String], fields: Array[String]): Unit
+    def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String, rowKeys: Array[String], fields: Array[String], qaFields:Array[String]): Unit
 
     def pageOverAllVersions(proc: ((Option[Array[FullRecord]]) => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
 
@@ -194,8 +194,10 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Write to stream in a delimited format (CSV).
      */
-    def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String, rowKeys: Array[String], fields: Array[String]) {
-        persistenceManager.selectRows(rowKeys, entityName, fields, {
+    def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String, rowKeys: Array[String], fields: Array[String], qaFields:Array[String]) {
+        //get the codes for the qa fields that need to be included in the download
+        val codes = qaFields.map(value=>AssertionCodes.getByName(value).get.getCode)
+        persistenceManager.selectRows(rowKeys, entityName, fields ++ FullRecordMapper.qaFields , {
             fieldMap =>
                 for (field <- fields) {
                     val fieldValue = fieldMap.get(field)
@@ -207,8 +209,25 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
                         outputStream.write(svalue.getBytes)
                     outputStream.write(fieldDelimiter.getBytes)
                 }
+                //now handle the QA fields
+                val failedCodes = getErrorCodes(fieldMap);
+                //work way through the codes and add to output
+                for(code <-codes){
+                    outputStream.write((failedCodes.contains(code)).toString.getBytes)
+                    outputStream.write(fieldDelimiter.getBytes)
+                }
                 outputStream.write(recordDelimiter.getBytes)
         })
+    }
+    
+    def getErrorCodes(map:Map[String, String]):Array[Integer]={      
+        
+        val array:Array[List[Integer]] = FullRecordMapper.qaFields.filter(field => map.get(field).getOrElse("[]") != "[]").toArray.map(field => {
+            Json.toListWithGeneric(map.get(field).get,classOf[java.lang.Integer])          
+        }).asInstanceOf[Array[List[Integer]]]
+        if(!array.isEmpty)
+            return array.reduceLeft(_++_).toArray
+        return Array()
     }
 
     /**

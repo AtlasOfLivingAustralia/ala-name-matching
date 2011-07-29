@@ -427,6 +427,8 @@ object AssertionCodes {
 
   /** Retrieve an error code by the numeric code */
   def getByCode(code:Int) : Option[ErrorCode] = all.find(errorCode => errorCode.code == code)
+  
+  def getByName(name:String) :Option[ErrorCode] = all.find(errorCode => errorCode.name == name)
 
   /** Is it geospatially kosher */
   def isGeospatiallyKosher (assertions:Array[QualityAssertion]) : Boolean = {

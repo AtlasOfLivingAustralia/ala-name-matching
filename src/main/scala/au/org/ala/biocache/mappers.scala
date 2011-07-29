@@ -17,6 +17,7 @@ object FullRecordMapper {
     val deletedColumn = "deleted"
     val geospatialQa = "loc"
     val taxonomicalQa = "class"
+    val qaFields = Processors.processorMap.values.map(processor=> markAsQualityAssertion(processor.asInstanceOf[Processor].getName))
         
     /**
      * for each field in the definition, check if there is a value to write
