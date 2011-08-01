@@ -20,10 +20,10 @@ class DownloadIT extends FunSuite {
         "0001b51b-32d7-48a8-9f67-3563cba731f3")
 
     println("Raw values")
-    occurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"))
+    occurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"), Array())
 
     println("Processed values")
-    occurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"))
+    occurrenceDAO.writeToStream(System.out, "\t", "\n", uuids, Array("uuid","scientificName", "eventDate"), Array())
 
     persistenceManager.shutdown
   }
