@@ -132,7 +132,10 @@ class FlickrLoader extends DataLoader {
             }
         })
         
-        fr.occurrence.occurrenceID = (xml \\ "url")(0).text.toString   //val photoPageUrl
+        val htmlPhotoPage = (xml \\ "url")(0).text.toString   //val photoPageUrl
+        fr.occurrence.occurrenceID = htmlPhotoPage
+        //use occurrenceDetails to store URI back to source - http://rs.tdwg.org/dwc/terms/#occurrenceDetails
+        fr.occurrence.occurrenceDetails = htmlPhotoPage
         
         val title = (xml \\ "title")(0).text.toString
         val description = (xml \\ "description")(0).text.toString
@@ -148,8 +151,6 @@ class FlickrLoader extends DataLoader {
         val originalformat = photoElem.attribute("originalformat").getOrElse("jpg")
         val photoImageUrl = "http://farm" + farmId + ".static.flickr.com/"+ serverId + "/" + photoId + "_" + photoSecret + "." + originalformat
 
-        //use occurrenceDetails to store URI back to source - http://rs.tdwg.org/dwc/terms/#occurrenceDetails
-        fr.occurrence.occurrenceDetails = photoImageUrl
         (fr.occurrence.occurrenceID, photoImageUrl, fr,listBuffer.toList)
     }
     
