@@ -1,12 +1,10 @@
-/**
- * 
- */
 package au.org.ala.biocache
 
 import java.io.InputStream
 import java.io.File
 import org.apache.commons.io.FileUtils
 import java.io.FileOutputStream
+import org.slf4j.LoggerFactory
 /**
  * A file store for media files.
  * 
@@ -16,12 +14,14 @@ object MediaStore {
 	
     val rootDir = "/data/biocache-media"
     val limit = 32000
+    val logger = LoggerFactory.getLogger("MediaStore")
     
-    /**
-     * Returns the file path
-     */
-    def save(uuid:String, resourceUID: String, urlToMedia:String) : String = {
-        
+    def exists(uuid:String, resourceUID: String, urlToMedia:String) : (String, Boolean) = {
+        val path = createFilePath(uuid,resourceUID,urlToMedia)
+        (path, (new File(path)).exists)
+    }
+    
+    def createFilePath(uuid:String, resourceUID: String, urlToMedia:String) : String = {
         val subdirectory = (uuid.hashCode % limit ).abs
         
         val absoluteDirectoryPath = rootDir +
@@ -32,8 +32,6 @@ object MediaStore {
         val directory = new File(absoluteDirectoryPath)
         if(!directory.exists) FileUtils.forceMkdir(directory)
         
-        val in = (new java.net.URL(urlToMedia)).openStream
-        
         val fileName = {
             if(urlToMedia.lastIndexOf("/") == urlToMedia.length-1){
             	"raw"
@@ -42,8 +40,17 @@ object MediaStore {
             }
         }
         
-        val fullPath = directory.getAbsolutePath + File.separator + fileName
+        directory.getAbsolutePath + File.separator + fileName
+    }
+    
+    /**
+     * Returns the file path
+     */
+    def save(uuid:String, resourceUID: String, urlToMedia:String) : String = {
+        
+        val fullPath = createFilePath(uuid,resourceUID,urlToMedia)
         val file = new File(fullPath)
+        val in = (new java.net.URL(urlToMedia)).openStream
         val out = new FileOutputStream(file)
         val buffer: Array[Byte] = new Array[Byte](1024)
         var numRead = 0
@@ -52,7 +59,7 @@ object MediaStore {
             out.flush
         }
         out.close
-        
+        logger.info("File saved to: " + fullPath)
         //store the media
         fullPath
     }
