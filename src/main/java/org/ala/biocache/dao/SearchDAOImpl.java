@@ -56,6 +56,7 @@ import org.apache.solr.core.CoreContainer;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestOperations;
 
+
 import au.org.ala.biocache.OccurrenceIndex;
 
 import au.com.bytecode.opencsv.CSVWriter;
@@ -585,12 +586,12 @@ public class SearchDAOImpl implements SearchDAO {
 
                         try {
                             if (oc.getMap() != null) {
-                                scala.collection.immutable.Map map = oc.getMap();
+                                java.util.Map map = oc.getMap();                                
                                 if (map != null) {
-                                    scala.Option option = map.get(colourBy);
+                                    
                                     //check to see if it is empty otherwise a NPE is thrown when option.get is called
-                                    if (!option.isEmpty()) {
-                                        value = (String) option.get();
+                                    if (map.containsKey(colourBy)) {
+                                        value = (String) map.get(colourBy);
                                     }
                                     point.setOccurrenceUid(value);
                                 }
