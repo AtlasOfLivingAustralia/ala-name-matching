@@ -25,8 +25,6 @@ object FlickrLoader extends DataLoader{
         if(parser.parse(args)){
             val l = new FlickrLoader
         	l.load(dataResourceUid,startDate,endDate)
-        } else {
-            exit(1)
         }
     }
 }
@@ -121,7 +119,7 @@ class FlickrLoader extends DataLoader {
                 
                 tagName match {
                     case Some(term) => fr.setNestedProperty(term, tagValue)
-                    case None => println("unmatched : " + raw.get.text.trim)
+                    case None => logger.debug("unmatched : " + raw.get.text.trim)
                 }
             }
         })
@@ -141,7 +139,9 @@ class FlickrLoader extends DataLoader {
         val photoSecret = photoElem.attribute("secret").get
         val originalformat = photoElem.attribute("originalformat").getOrElse("jpg")
         val photoImageUrl = "http://farm" + farmId + ".static.flickr.com/"+ serverId + "/" + photoId + "_" + photoSecret + "." + originalformat
-        //println(photoImageUrl)
+
+        //use occurrenceDetails to store URI back to source - http://rs.tdwg.org/dwc/terms/#occurrenceDetails
+        fr.occurrence.occurrenceDetails = photoImageUrl
         (fr.occurrence.occurrenceID, photoImageUrl, fr,listBuffer.toList)
     }
     
