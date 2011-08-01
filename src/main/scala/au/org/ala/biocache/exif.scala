@@ -3,14 +3,13 @@ import java.io.File
 import scala.collection.JavaConversions
 import java.text.SimpleDateFormat
 import java.util.Date
-import org.junit.Ignore
 import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.Metadata
 import com.drew.metadata.exif.GpsDirectory
 import com.drew.metadata.exif.ExifSubIFDDirectory
 
 /**
- * Simple utility for extracting coordinates and a timstamp from an image
+ * Simple utility for extracting coordinates and a timestamp from an image
  */
 object EXIFUtil {
     
