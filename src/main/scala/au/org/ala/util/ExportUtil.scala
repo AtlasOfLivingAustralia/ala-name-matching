@@ -18,7 +18,7 @@ object ExportUtil {
     var fieldsRequired = List[String]()
     var entity = ""
     var maxRecords = Integer.MAX_VALUE
-    val writer = new CSVWriter(new PrintWriter(System.out), '\t', '"')
+    //var filePath:Option[String] = None
     
 	val parser = new OptionParser("export") {
 	  arg("<entity>", "the entity (column family in cassandra) to export from", {v: String => entity = v})
@@ -28,10 +28,16 @@ object ExportUtil {
 	}
 
     if (parser.parse(args)) {
+        
+      val outWriter = {
+          new PrintWriter(System.out)
+      }
+        
+      val writer = new CSVWriter(outWriter, '\t', '"')
       export(writer, entity,fieldsToExport,fieldsRequired,maxRecords)
+      writer.flush
+      writer.close
     }
-    writer.flush
-    writer.close
   }
   
   def export(writer:CSVWriter, entity:String, fieldsToExport:List[String], fieldsRequired: List[String], maxRecords:Int) {
@@ -44,9 +50,7 @@ object ExportUtil {
       }
       counter += 1
       maxRecords > counter
-    }, "", maxRecords, fieldsToExport:_*)
-    //close db connections
-    Pelops.shutdown
+    }, "", 1000, fieldsToExport:_*)
   }
   
   def exportRecord(writer:CSVWriter, fieldsToExport: List[String], guid: String, map: Map[String,String]) {
