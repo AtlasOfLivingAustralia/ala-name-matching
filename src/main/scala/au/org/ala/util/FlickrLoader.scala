@@ -16,15 +16,17 @@ object FlickrLoader extends DataLoader{
         var dataResourceUid = ""
         var startDate:Option[Date] = None
         var endDate:Option[Date] = None
+        var overwriteImages = false
         
         val parser = new OptionParser("load flickr resource") {
             arg("<data resource UID>", "The UID of the data resource to load", {v: String => dataResourceUid = v})
             opt("s", "startDate", "start date to harvest from in yyyy-MM-dd format", {v:String => startDate = Some(DateUtils.parseDate(v, Array("yyyy-MM-dd"))) } )
             opt("e", "endDate", "end date in yyyy-MM-dd format", {v:String => endDate = Some(DateUtils.parseDate(v, Array("yyyy-MM-dd"))) } )
+            booleanOpt("o", "overwrite", "overwrite images", {v:Boolean => overwriteImages = v } )
         }
         if(parser.parse(args)){
             val l = new FlickrLoader
-        	l.load(dataResourceUid,startDate,endDate)
+        	l.load(dataResourceUid,startDate,endDate,overwriteImages)
         }
     }
 }
@@ -35,7 +37,7 @@ class FlickrLoader extends DataLoader {
         load(dataResourceUid, None, None)
     }
     
-    def load(dataResourceUid:String, suppliedStartDate:Option[Date], suppliedEndDate:Option[Date]){
+    def load(dataResourceUid:String, suppliedStartDate:Option[Date], suppliedEndDate:Option[Date], overwriteImages:Boolean = false){
         
         val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
         val keywords = params.getOrElse("keywords", "").split(",").map(keyword => keyword.trim.replaceAll(" ","").toLowerCase).toList
@@ -71,7 +73,13 @@ class FlickrLoader extends DataLoader {
 		                val (photoPageUrl, imageUrl, fr, tags) = processPhoto(params, photoId)
 		                if(isOfInterest(tags, keywords)){
 		                    load(dataResourceUid, fr, List(photoPageUrl) )
-		                    val filePath = MediaStore.save(fr.uuid, dataResourceUid, imageUrl)
+		                    val (filePath, exists) = MediaStore.exists(fr.uuid, dataResourceUid, imageUrl)
+		                    if(overwriteImages || !exists){
+		                    	MediaStore.save(fr.uuid, dataResourceUid, imageUrl)
+		                    } else {
+		                        logger.info("Image URL: " + imageUrl + " already saved to: " + filePath)
+		                    }
+		                    
 		                    fr.occurrence.associatedMedia = filePath
 		                    Config.occurrenceDAO.updateOccurrence(fr.rowKey, fr, Versions.RAW)
 		                    println(fr.rowKey)
