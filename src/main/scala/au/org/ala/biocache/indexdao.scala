@@ -16,6 +16,7 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import scala.actors.Actor
 import scala.collection.mutable.ArrayBuffer
+import java.util.Date
 
 
 
@@ -33,6 +34,7 @@ trait IndexDAO {
     val elFields = (new EnvironmentalLayers).propertyNames.toList
     val clFields = (new ContextualLayers).propertyNames.toList
 
+    def getRowKeysForQuery(query:String):Option[List[String]]
     
     def occurrenceDAO:OccurrenceDAO
 
@@ -49,7 +51,7 @@ trait IndexDAO {
     /**
      * Index a record with the supplied properties.
      */
-    def indexFromMap(guid: String, map: Map[String, String], batch:Boolean=true)
+    def indexFromMap(guid: String, map: Map[String, String], batch:Boolean=true,startDate:Option[Date]=None)
 
     /**
      * Truncate the current index
@@ -230,6 +232,14 @@ trait IndexDAO {
                 val stateCons = if(sconservation!="")sconservation.split(",")(0)else ""
                 val rawStateCons = if(sconservation!="")sconservation.split(",")(1)else ""
                 
+                val sensitive:String = {
+                    if(getValue("originalDecimalLatitude",map) != "") 
+                        "generalised"
+                    else if(getValue("dataGeneralizations.p",map ) != "")
+                        "alreadyGeneralised"
+                    else
+                        ""
+                }
 
                 return List(getValue("uuid", map),
                     getValue("rowKey", map),
@@ -298,7 +308,7 @@ trait IndexDAO {
                     //getValue("austConservation.p",map),
                     stateCons,
                     rawStateCons,
-                    (getValue("originalDecimalLatitude",map) != "").toString,
+                    sensitive,
                     getValue("coordinateUncertaintyInMeters.p",map)
                     
                     
@@ -383,7 +393,7 @@ trait IndexDAO {
  */
 class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDAO{
     import org.apache.commons.lang.StringUtils.defaultString
-    
+    import scalaj.collection.Imports._
     //set the solr home
     System.setProperty("solr.solr.home", solrHome)
 
@@ -464,7 +474,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
 //    }
 
     def finaliseIndex(optimise:Boolean=false, shutdown:Boolean=true) {
-        
+        init
         if (!solrDocList.isEmpty) {
         
            //SolrIndexDAO.solrServer.add(solrDocList)
@@ -499,77 +509,99 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         }
         occ
     }
+    /**
+     * Decides whether or not the current record should be indexed based on processed times
+     */
+    def shouldIndex(map:Map[String,String], startDate:Option[Date]):Boolean={
+        if(!startDate.isEmpty){            
+            val lastLoaded = DateParser.parseStringToDate(getValue(FullRecordMapper.alaModifiedColumn,map))
+            val lastProcessed = DateParser.parseStringToDate(getValue(FullRecordMapper.alaModifiedColumn+".p",map))
+            return startDate.get.before(lastProcessed.getOrElse(startDate.get)) || startDate.get.before(lastLoaded.getOrElse(startDate.get))
+        }        
+        true
+    }
 
     /**
      * A SOLR specific implementation of indexing from a map.
      */
-    override def indexFromMap(guid: String, map: Map[String, String], batch:Boolean=true) = {
+    override def indexFromMap(guid: String, map: Map[String, String], batch:Boolean=true, startDate:Option[Date]=None) = {
         init
         //val header = getHeaderValues()
-        val values = getOccIndexModel(guid, map)
-        if(values.length != header.length){
-          println("values don't matcher header: " +values.length+":"+header.length+", values:header")
-          println(header)
-          println(values)
-          //if(solrDocList.size >=10)
-            exit(1)
-        }
-        if (values.length > 0) {
-            val doc = new SolrInputDocument()
-            for (i <- 0 to values.length - 1) {
-                if (values(i) != "") {
-                    if (header(i) == "species_group" || header(i) == "assertions" || header(i) =="data_hub_uid") {
-                        //multiple valus in this field
-                        for (value <- values(i).split('|')){
-                        	if(value != "")
-                        		doc.addField(header(i), value)
+        if(shouldIndex(map, startDate)){
+            val values = getOccIndexModel(guid, map)
+            if(values.length != header.length){
+              println("values don't matcher header: " +values.length+":"+header.length+", values:header")
+              println(header)
+              println(values)
+              
+                exit(1)
+            }
+            if (values.length > 0) {
+                val doc = new SolrInputDocument()
+                for (i <- 0 to values.length - 1) {
+                    if (values(i) != "") {
+                        if (header(i) == "species_group" || header(i) == "assertions" || header(i) =="data_hub_uid") {
+                            //multiple valus in this field
+                            for (value <- values(i).split('|')){
+                            	if(value != "")
+                            		doc.addField(header(i), value)
+                            }
                         }
+                        else
+                            doc.addField(header(i), values(i))
                     }
-                    else
-                        doc.addField(header(i), values(i))
                 }
-            }
-
-//      for(i <- 0 to 199){
-//        doc.addField(i +"_env", dummyEnvs(i))
-//      }
-
-      //dummyEnvs.foreach(env => doc.addField(env._1, env._2))
-            
-//            println("Adding guid: " + guid)
-           // SolrIndexDAO.solrServer.add(doc);
-
-
-           if(!batch){
-             solrServer.add(doc);
-             solrServer.commit
-           }
-           else{
-             if(values(0) == "" || values(0) == null)
-               println("Unable to add doc with missing uuid " + values(1))
-             else
-                solrDocList.add(doc)
-//            if (solrDocList.size == 20000) {
-//                try {
-//                    SolrIndexDAO.solrServer.add(solrDocList)
-//                    SolrIndexDAO.solrServer.commit
-//                    //printNumDocumentsInIndex
-//                }
-//                catch {
-//                    case e: Exception => logger.error(e.getMessage, e)
-//                }
-//                solrDocList.clear
-//            }
-            if (solrDocList.size == 10000) {
-              while(!thread.ready){ Thread.sleep(50) }
-              
-              val tmpDocList = new java.util.ArrayList[SolrInputDocument](solrDocList);
-              
-              thread ! tmpDocList
-              solrDocList.clear
-            }
-           }
-      }
+    
+    
+    
+    
+               if(!batch){
+                 solrServer.add(doc);
+                 solrServer.commit
+               }
+               else{
+                 if(values(0) == "" || values(0) == null)
+                   println("Unable to add doc with missing uuid " + values(1))
+                 else
+                    solrDocList.add(doc)
+    
+                if (solrDocList.size == 10000) {
+                  while(!thread.ready){ Thread.sleep(50) }
+                  
+                  val tmpDocList = new java.util.ArrayList[SolrInputDocument](solrDocList);
+                  
+                  thread ! tmpDocList
+                  solrDocList.clear
+                }
+               }
+          }
+        }
+    }
+    /**
+     * Gets the rowKeys for the query that is supplied
+     * Do here so that still works if web service is down
+     */
+    override  def getRowKeysForQuery(query:String):Option[List[String]] ={
+        init
+        val solrQuery = new SolrQuery();
+        solrQuery.setQueryType("standard");
+        // Facets
+        solrQuery.setFacet(true)
+        solrQuery.addFacetField("row_key")
+        solrQuery.setQuery(query)
+        solrQuery.setRows(0)
+        solrQuery.setFacetLimit(-1)
+        solrQuery.setFacetMinCount(1)
+        val response =solrServer.query(solrQuery)
+        println("query " + solrQuery.toString)
+        //now process all the values that are in the row_key facet
+        val rowKeyFacets = response.getFacetField("row_key")
+        val values = rowKeyFacets.getValues().asScala[org.apache.solr.client.solrj.response.FacetField.Count]
+        if(values.size>0){
+            Some(values.map(facet=> facet.getName).asInstanceOf[List[String]]);
+        }
+        else
+            None
     }
 
     def printNumDocumentsInIndex() = {

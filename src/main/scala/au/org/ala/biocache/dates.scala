@@ -35,7 +35,19 @@ object DateParser {
          case None => None
      }
   }
- 
+
+ /**
+  * Parses a ISO Date time string to a Date  
+  */
+ def parseStringToDate(date:String) :Option[Date] ={
+      try{
+      Some(DateUtils.parseDate(date,
+          Array("yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd HH:mm:ss")))
+      }
+      catch{
+          case _ => None
+      }
+  }
  
   /**
    * Handles these formats (taken from Darwin Core specification):

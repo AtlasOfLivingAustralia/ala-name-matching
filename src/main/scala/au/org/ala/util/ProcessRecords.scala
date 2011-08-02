@@ -130,18 +130,26 @@ class RecordProcessor {
     //store the occurrence
     occurrenceDAO.updateOccurrence(guid, currentProcessed, processed, systemAssertions, Processed)
     //update raw if necessary
-    updateRawIfSensitised(raw, guid)
+    updateRawIfSensitised(raw,processed, guid)
   }
-  def updateRawIfSensitised(raw:FullRecord, guid:String){
+  def updateRawIfSensitised(raw:FullRecord, processed:FullRecord, guid:String){
     val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
-	  if(raw.location.originalDecimalLatitude != null && raw.location.originalDecimalLongitude != null){
-		  val location = new Location
-		  location.originalDecimalLatitude = raw.location.originalDecimalLatitude
-		  location.originalDecimalLongitude = raw.location.originalDecimalLongitude
-		  location.decimalLatitude = raw.location.decimalLatitude
-		  location.decimalLongitude = raw.location.decimalLongitude
-		  occurrenceDAO.updateOccurrence(guid, location, Versions.RAW)
-	  }
+        if (raw.location.originalDecimalLatitude != null && processed.occurrence.dataGeneralizations == null && processed.occurrence.informationWithheld == null) {
+            val location = new Location
+            location.decimalLatitude = raw.location.decimalLatitude
+            location.decimalLongitude = raw.location.decimalLongitude
+            occurrenceDAO.updateOccurrence(guid, location, Versions.RAW)
+            //remove the existing originalDecimal coordinates
+            Config.persistenceManager.deleteColumns(guid, "occ", "originalDecimalLatitude", "originalDecimalLongitude");
+        } else if (raw.location.originalDecimalLatitude != null && raw.location.originalDecimalLongitude != null) {
+            val location = new Location
+            location.originalDecimalLatitude = raw.location.originalDecimalLatitude
+            location.originalDecimalLongitude = raw.location.originalDecimalLongitude
+            location.decimalLatitude = raw.location.decimalLatitude
+            location.decimalLongitude = raw.location.decimalLongitude
+            occurrenceDAO.updateOccurrence(guid, location, Versions.RAW)
+        }
+	  
   }
 
   /**
@@ -173,6 +181,6 @@ class RecordProcessor {
     processed.asInstanceOf[FullRecord].lastModifiedTime = processTime
     //store the occurrence
     Config.occurrenceDAO.updateOccurrence(raw.rowKey, processed, systemAssertions, Processed)
-    updateRawIfSensitised(raw, raw.rowKey)
+    updateRawIfSensitised(raw, processed, raw.rowKey)
   }
 }

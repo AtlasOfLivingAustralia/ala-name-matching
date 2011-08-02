@@ -374,8 +374,13 @@ object LocationProcessor extends Processor {
                     if(voutcome.isValid && voutcome.isInstanceOf[ConservationOutcome]){
                        val outcome =voutcome.asInstanceOf[ConservationOutcome]
                        val gl = outcome.getGeneralisedLocation
-                       if(gl.getDescription == MessageFactory.getMessageText(MessageFactory.LOCATION_ALREADY_GENERALISED)){
+                       if(gl.getDescription.startsWith("Location not generalised since")){                           
+                           //don't generalise since it is not part of the Location where it should be generalised
+                           //TODO Talk to Peter about a better method to determine this...
+                       }
+                       else if(gl.getDescription == MessageFactory.getMessageText(MessageFactory.LOCATION_ALREADY_GENERALISED)){
                          //already been genaralised by data resource provider non need to do anything.
+                           processed.occurrence.dataGeneralizations = gl.getDescription
                        }
                        else{
                           //store the generalised values as the raw.location.decimalLatitude/Longitude

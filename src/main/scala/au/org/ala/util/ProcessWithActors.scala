@@ -41,6 +41,73 @@ object ProcessWithActors {
     }
     size
   }
+  /**
+   * Processes the supplied row keys in a Thread
+   */
+  def processRecords(threads: Int, keys:List[String]) : Unit ={
+    var ids = 0
+    val pool = Array.fill(threads){ val p = new Consumer(Actor.self,ids); ids +=1; p.start }
+    println("Starting to process a list of records...");
+    val start = System.currentTimeMillis
+    var startTime = System.currentTimeMillis
+    var finishTime = System.currentTimeMillis
+    var buff = new ArrayBuffer[String]
+    //use this variable to evenly distribute the actors work load
+    var batches = 0
+    var count =0 
+val processor = new RecordProcessor
+    println("Initialised actors...")
+    for(key <- keys){
+        count+=1
+        val rec = occurrenceDAO.getRawProcessedByRowKey(key)
+        val lstart = System.currentTimeMillis
+//        processor.processRecord(rec.get(0), rec.get(1))
+//        println("total time " + count + ": " + (System.currentTimeMillis - lstart))
+        buff + key
+        if(buff.size >= 50){
+            val actor = pool(batches % threads).asInstanceOf[Consumer]
+        batches += 1
+        count+=1
+        //find a ready actor...
+        while(!actor.ready){ Thread.sleep(50) }
+
+        actor ! buff.toArray
+        buff.clear
+        
+        
+      }
+        if (count % 1000 == 0) {
+        finishTime = System.currentTimeMillis
+        println(count
+            + " >> Last key : " + key
+            + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f)
+            + ", time taken for "+1000+" records: " + (finishTime - startTime).toFloat / 1000f
+            + ", total time: "+ (finishTime - start).toFloat / 60000f +" minutes"
+        )
+        }
+    }
+    //add the remaining records from the buff
+    if(buff.size>0){
+      pool(0).asInstanceOf[Consumer] ! buff.toArray
+      batches+=1
+    }
+     println(count
+            
+            + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f)
+            + ", time taken for "+1000+" records: " + (finishTime - startTime).toFloat / 1000f
+            + ", total time: "+ (finishTime - start).toFloat / 60000f +" minutes"
+        )
+    println("Finished.")
+    //kill the actors
+    pool.foreach(actor => actor ! "exit")
+
+    //We can't shutdown the persistence manager until all of the Actors have completed their work
+    while(batches > getProcessedTotal(pool)){
+      println(batches + " : " + getProcessedTotal(pool))
+      Thread.sleep(50)
+    }
+    
+  }
   
   /**
    * Process the records using the supplied number of threads
@@ -130,7 +197,7 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
 
   println("Initialising thread: "+id)
   val processor = new RecordProcessor
-
+  val occurrenceDAO = Config.occurrenceDAO
   var received, processedRecords = 0
 
   def ready = processedRecords == received
@@ -150,11 +217,23 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
           for((raw,processed) <- batch) { processor.processRecord(raw, processed) }
           processedRecords += 1
         }
+        case keys:Array[String]=>{
+            //get the raw and Processed records for the row key
+            received +=1
+            for(key <- keys){
+                val records = occurrenceDAO.getRawProcessedByRowKey(key)
+                if(!records.isEmpty){
+                    processor.processRecord(records.get(0), records.get(1))
+                }
+            }
+            processedRecords+=1
+        }
         case s:String => {
             if(s == "exit"){
               println("Killing (Actor.act) thread: "+id)
               exit()
             }
+            
         }
       }
     }

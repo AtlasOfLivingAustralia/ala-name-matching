@@ -26,6 +26,8 @@ trait OccurrenceDAO {
     def getByRowKey(rowKey: String) :Option[FullRecord]
 
     def getAllVersionsByRowKey(rowKey:String) : Option[Array[FullRecord]]
+    
+    def getRawProcessedByRowKey(rowKey:String) :Option[Array[FullRecord]]
 
     def getAllVersionsByUuid(uuid: String): Option[Array[FullRecord]]
 
@@ -140,6 +142,20 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             val consensus = FullRecordMapper.createFullRecord(rowKey, map.get, Consensus)
             //pass all version to the procedure, wrapped in the Option
             Some(Array(raw, processed, consensus))
+      }
+    }
+    
+    def getRawProcessedByRowKey(rowKey:String) :Option[Array[FullRecord]] ={
+        val map = persistenceManager.get(rowKey, entityName)
+      if(map.isEmpty){
+        None
+      }
+      else{
+        // the versions of the record
+            val raw = FullRecordMapper.createFullRecord(rowKey, map.get, Raw)
+            val processed = FullRecordMapper.createFullRecord(rowKey, map.get, Processed)            
+            
+            Some(Array(raw, processed))
       }
     }
     /**

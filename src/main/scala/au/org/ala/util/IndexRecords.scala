@@ -18,9 +18,9 @@ object IndexRecords {
   val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
   def main(args: Array[String]): Unit = {
-    
+
     var startUuid:Option[String] = None
-    
+
     var dataResource:Option[String] = None
     var empty:Boolean =false
     val parser = new OptionParser("index records options") {
@@ -28,20 +28,20 @@ object IndexRecords {
         opt("s", "start","The record to start with", {v:String => startUuid = Some(v)})
         opt("dr", "resource", "The data resource to process", {v:String =>dataResource = Some(v)})
     }
-    
+
     if(parser.parse(args)){
         //delete the content of the index
         if(empty){
            logger.info("Emptying index")
            indexer.emptyIndex
         }
-        
+
         index(startUuid, dataResource, false, false)
      }
   }
-  
+
   def index(startUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false)={
-      
+
         val startKey = {
             if(startUuid.isEmpty && !dataResource.isEmpty) {
             	dataResource.get +"|"
@@ -49,16 +49,16 @@ object IndexRecords {
                 startUuid.get
             }
         }
-        
+
         val endKey = if(dataResource.isEmpty) "" else dataResource.get +"|~"
         logger.info("Starting to index " + startKey + " until " + endKey)
         indexRange(startKey, endKey)
         //index any remaining items before exiting
         indexer.finaliseIndex(optimise, shutdown)
-      
+
   }
-  
-  
+
+
   def indexRange(startUuid:String, endUuid:String)={
     var counter = 0
     val start = System.currentTimeMillis
@@ -79,6 +79,31 @@ object IndexRecords {
     finishTime = System.currentTimeMillis
     logger.info("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
   }
+  /**
+   * Indexes the supplied list of rowKeys
+   */
+  def indexList(keys:List[String])={
+      var counter = 0
+      val start = System.currentTimeMillis
+      var startTime = System.currentTimeMillis
+      var finishTime = System.currentTimeMillis
+      
+      for(key <- keys){
+          counter+=1
+          val map =persistenceManager.get(key,"occ")
+          if(!map.isEmpty)
+              indexer.indexFromMap(key, map.get)
+              
+           
+          if (counter % 1000 == 0) {
+          finishTime = System.currentTimeMillis
+          logger.info(counter + " >> Last key : " + key + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          startTime = System.currentTimeMillis
+        }
+      }
+      indexer.finaliseIndex(false, true)
+  }
+  
 
   def processFullRecords(){
 
@@ -92,10 +117,10 @@ object IndexRecords {
       counter += 1
       if (!versions.isEmpty) {
     	val v = versions.get
-    	
+
     	val raw = v(0)
     	val processed = v(1)
-    	
+
     	items.add(indexer.getOccIndexModel(raw,processed).get);
         //debug counter
         if (counter % 1000 == 0) {
