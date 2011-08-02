@@ -16,6 +16,12 @@ object MediaStore {
     val limit = 32000
     val logger = LoggerFactory.getLogger("MediaStore")
     
+    def convertPathsToUrls(fullRecord:FullRecord, baseUrlPath:String){
+      if(fullRecord.occurrence.images !=null){
+        fullRecord.occurrence.images = fullRecord.occurrence.images.map(x => x.replaceAll(rootDir, baseUrlPath))
+      }
+    }
+    
     def exists(uuid:String, resourceUID: String, urlToMedia:String) : (String, Boolean) = {
         val path = createFilePath(uuid,resourceUID,urlToMedia)
         (path, (new File(path)).exists)
