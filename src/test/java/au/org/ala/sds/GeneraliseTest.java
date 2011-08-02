@@ -15,6 +15,7 @@
 package au.org.ala.sds;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -76,6 +77,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "-35.3", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "149.1", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
+        assertTrue(gl.isSensitive());
     }
 
     /**
@@ -102,6 +104,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "-35.276771", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "149.112539", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+        assertFalse(gl.isSensitive());
     }
 
     /**
@@ -128,6 +131,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "-41.538137", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "173.968817", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+        assertFalse(gl.isSensitive());
     }
 
     /**
@@ -154,6 +158,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+        assertTrue(gl.isSensitive());
     }
 
     /**
@@ -180,6 +185,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "-40.1", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "148.1", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
+        assertTrue(gl.isSensitive());
     }
 
     /**
@@ -207,6 +213,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "-33.6", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "150.4", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
+        assertTrue(gl.isSensitive());
     }
 
     /**
@@ -259,5 +266,32 @@ public class GeneraliseTest {
         assertEquals("Latitude", "-32.7", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "149.6", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+        assertTrue(gl.isSensitive());
+    }
+
+
+    @Test
+    public void generaliseLocationFromState() {
+        SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Lophochroa leadbeateri");
+        assertNotNull(ss);
+        String latitude = "-32.7";    // NSW
+        String longitude = "149.6";
+
+        FactCollection facts = new FactCollection();
+        facts.add(FactCollection.STATE_PROVINCE_KEY, "NSW");
+        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+
+        assertTrue(outcome.isValid());
+        assertTrue(outcome instanceof ConservationOutcome);
+
+        GeneralisedLocation gl = ((ConservationOutcome) outcome).getGeneralisedLocation();
+        assertEquals("Latitude", "-32.7", gl.getGeneralisedLatitude());
+        assertEquals("Longitude", "149.6", gl.getGeneralisedLongitude());
+        assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+        assertTrue(gl.isSensitive());
     }
 }
