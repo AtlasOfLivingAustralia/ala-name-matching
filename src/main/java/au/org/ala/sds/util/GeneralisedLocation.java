@@ -36,6 +36,7 @@ public class GeneralisedLocation {
     private String generalisedLongitude;
     private String generalisationInMetres;
     private String description;
+    private boolean sensitive;
 
     public GeneralisedLocation(String latitude, String longitude, SensitiveTaxon st, List<SensitivityZone> zones) {
         this.originalLatitude = latitude;
@@ -44,6 +45,7 @@ public class GeneralisedLocation {
         this.zones = zones;
         this.instances = st.getInstancesForZones(zones);
         this.locationGeneralisation = getLocationGeneralistion();
+        this.sensitive = true;
         generaliseCoordinates();
     }
 
@@ -59,6 +61,10 @@ public class GeneralisedLocation {
 
     public boolean isGeneralised() {
         return !originalLatitude.equals(generalisedLatitude) || !originalLongitude.equals(generalisedLongitude);
+    }
+
+    public boolean isSensitive() {
+        return sensitive;
     }
 
     public String getOriginalLatitude() {
@@ -100,6 +106,7 @@ public class GeneralisedLocation {
             generalisedLongitude = originalLongitude;
             generalisationInMetres = "";
             description = MessageFactory.getMessageText(MessageFactory.LOCATION_NOT_GENERALISED, SensitivityZone.getState(zones));
+            sensitive = false;
             return;
         }
 
@@ -136,6 +143,7 @@ public class GeneralisedLocation {
             generalisedLatitude = originalLatitude;
             generalisedLongitude = originalLongitude;
             description = "Location not generalised because it is undefined.";
+            sensitive = false;
         }
     }
 
