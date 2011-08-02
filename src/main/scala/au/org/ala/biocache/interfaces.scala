@@ -61,6 +61,18 @@ object Store {
           }
       }, startKey,"", pageSize)
   }
+  /**
+   * adds or updates a raw full record with values that are in the FullRecord
+   * relies on a rowKey being set
+   */
+  def upsertRecord(record:FullRecord){
+    //rowKey = dr|<cxyzsuid>
+    if(record.rowKey != null){
+        record.uuid = occurrenceDAO.createOrRetrieveUuid(record.rowKey) 
+        occurrenceDAO.addRawOccurrenceBatch(Array(record))
+        occurrenceDAO.reIndex(record.uuid)
+    }
+  }
 
   /**
    * Retrieve the system supplied systemAssertions.
