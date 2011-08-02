@@ -381,10 +381,10 @@ public class SearchDAOImpl implements SearchDAO {
             String[] fields = sb.toString().split(",");            
             String[]qaFields = qas.split(",");            
             String[] titles = downloadFields.getHeader(fields);
-            out.write(StringUtils.join(titles, "\t").getBytes());
+            out.write(StringUtils.join(titles, ",").getBytes());
             if(qaFields.length >0){
                 out.write("\t".getBytes());
-                out.write(StringUtils.join(qaFields, "\t").getBytes());
+                out.write(StringUtils.join(qaFields, ",").getBytes());
             }
             out.write("\n".getBytes());
             List<String> uuids = new ArrayList<String>();
@@ -393,8 +393,8 @@ public class SearchDAOImpl implements SearchDAO {
                 logger.debug("Start index: " + startIndex);
                 //cycle through the results adding them to the list that will be sent to cassandra
                 for (SolrDocument sd : qr.getResults()) {
-                        String druid = sd.getFieldValue("data_resource_uid").toString();
-                        if(shouldDownload(druid,downloadLimit)){
+                    String druid = sd.getFieldValue("data_resource_uid").toString();
+                    if(shouldDownload(druid,downloadLimit)){
 	                    resultsCount++;
 	                    uuids.add(sd.getFieldValue("row_key").toString());
 	
@@ -403,13 +403,10 @@ public class SearchDAOImpl implements SearchDAO {
 	                    incrementCount(uidStats, sd.getFieldValue("collection_uid"));
 	                    incrementCount(uidStats, sd.getFieldValue("data_provider_uid"));
 	                    incrementCount(uidStats, druid);
-                        }
-
+                    }
                 }
-
                 //logger.debug("Downloading " + uuids.size() + " records");
-
-                au.org.ala.biocache.Store.writeToStream(out, "\t", "\n", uuids.toArray(new String[]{}),
+                au.org.ala.biocache.Store.writeToStream(out, ",", "\n", uuids.toArray(new String[]{}),
                         fields, qaFields);
                 startIndex += pageSize;
                 uuids.clear();
