@@ -19,5 +19,7 @@ class DistanceRangeParserTests extends FunSuite {
         expect(10000f) {DistanceRangeParser.parse("< 10km").get }
         expect(11500f) {DistanceRangeParser.parse(">11.5km").get }
         expect(11500f) {DistanceRangeParser.parse("10.2 - 11.5km").get }
+        expect(1000f) {DistanceRangeParser.parse("1000 meters").get }
+        expect(10000f) {DistanceRangeParser.parse("10 kilometers").get }
     }
 }

@@ -67,6 +67,10 @@ object DistanceRangeParser {
    val metres = """(m|metres|meters)""".r
    val kilometres = """(km|kilometres|kilometers)""".r
 
+   val singleNumberMetres = """([0-9]{1,})(m|metres|meters)""".r
+   val singleNumberKilometres = """([0-9]{1,})(km|kilometres|kilometers)""".r
+   
+   
   /**
    * Handle these formats:
    * 2000
@@ -82,6 +86,8 @@ object DistanceRangeParser {
         //remove trailing chars
         normalised match {
             case singleNumber(number) =>  { Some(number.toFloat) }
+            case singleNumberMetres(number,denom) =>  { Some(number.toFloat) }
+            case singleNumberKilometres(number,denom) =>  { convertToMetres(denom,number) }
             case decimalNumber(number) =>  { Some(number.toFloat) }
             case range(firstNumber, denom1, secondNumber, denom2) =>  { convertToMetres(denom2, secondNumber) }
             case greaterOrLessThan(greaterThan, number, denom) =>  { convertToMetres(denom, number) }
