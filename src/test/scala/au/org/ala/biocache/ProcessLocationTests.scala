@@ -1,5 +1,3 @@
-
-
 package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -37,8 +35,16 @@ class ProcessLocationTests extends FunSuite{
       expect("100"){processed.location.coordinateUncertaintyInMeters}
   }
   
-  test("Conservation Status"){
-      
-  }
+  test("Uncertainty in meter"){
+      val raw = new FullRecord
+      var processed = new FullRecord
+      raw.location.decimalLatitude = "-35.21667"
+      raw.location.decimalLongitude = "144.81060"
+      raw.location.coordinateUncertaintyInMeters ="100 meters";
+      val qas = LocationProcessor.process("test", raw, processed)
+      println(processed.location.coordinateUncertaintyInMeters)
+      expect(true){qas.isEmpty}
+      expect("100"){processed.location.coordinateUncertaintyInMeters}
+  }  
   
 }

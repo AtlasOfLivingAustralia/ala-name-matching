@@ -149,7 +149,7 @@ class FlickrLoader extends DataLoader {
     val photoSecret = photoElem.attribute("secret").get
     val originalformat = photoElem.attribute("originalformat").getOrElse("jpg")
     val photoImageUrl = "http://farm" + farmId + ".static.flickr.com/" + serverId + "/" + photoId + "_" + photoSecret + "." + originalformat
-
+    fr.occurrence.basisOfRecord = "Image"
     (fr.occurrence.occurrenceID, photoImageUrl, fr, listBuffer.toList)
   }
 

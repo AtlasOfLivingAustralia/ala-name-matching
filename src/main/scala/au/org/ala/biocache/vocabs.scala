@@ -184,17 +184,7 @@ object DwC extends Vocab {
 }
 
 object GeodeticDatum extends Vocab {
-    val EPSG4326 = Term("EPSG:4326", Array("epsg4326", "4326"))
-    val WGS84 = Term("WGS84", Array("world geodetic system"))
-    val WGS72 = Term("WGS72")
-    val WGS66 = Term("WGS66")
-    val WGS60 = Term("WGS60")
-    val GDA94 = Term("GDA94")
-    val NAD27 = Term("NAD27")
-    val CampoInchauspe = Term("Campo Inchauspe")
-    val European1950 = Term("European 1950")
-    val Clarke1866 = Term("Clarke 1866")
-    val all = retrieveAll
+    val all = loadVocabFromFile("/datums.txt")
 }
 
 object Countries extends Vocab {
@@ -205,11 +195,7 @@ object Countries extends Vocab {
  * Vocabulary matcher for basis of record values.
  */
 object BasisOfRecord extends Vocab {
-  val specimen = Term("PreservedSpecimen", Array("specimen","s", "spec", "sp"))
-  val observation = Term("HumanObservation", Array("observation","o","obs"))
-  val fossil = Term("FossilSpecimen", Array("fossil","f", "fos"))
-  val living = Term("LivingSpecimen", Array("living","l"))
-  val all = retrieveAll
+  val all = loadVocabFromFile("/basisOfRecord.txt")
 }
 
 /**

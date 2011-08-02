@@ -1,0 +1,10 @@
+PreservedSpecimen	specimen	s	spec	sp
+HumanObservation	observation	o	obs
+FossilSpecimen	fossil	f	fos
+LivingSpecimen	living	l	zoo
+Image	img	i	jpg	png
+Sound	snd	wav
+Video	vid	v	mp4	mpg	mov
+MachineObservation	machine
+RegionalChecklist	checklist
+NomenclaturalChecklist	names checklist
