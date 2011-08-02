@@ -27,6 +27,10 @@ public class DownloadRequestParams extends SearchRequestParams {
     protected String email="";
     protected String reason ="";
     protected String file="data";
+    /** CSV list of fields that should be downloaded.  If el or cl will need to map to appropriate column name */
+    protected String fields="uuid,catalogNumber,taxonConceptID.p,scientificName,vernacularName,scientificName.p,taxonRank.p,vernacularName.p,kingdom.p,phylum.p,classs.p,order.p,family.p,genus.p,species.p,subspecies.p,institutionCode,collectionCode,latitude.p,longitude.p,coordinatePrecision,country.p,ibra.p,imcra.p,stateProvince.p,lga.p,minimumElevationInMeters,maximumElevationInMeters,minimumDepthInMeters,maximumDepthInMeters,year.p,month.p,day.p,eventDate.p,eventTime.p,basisOfRecord,sex,preparations";
+    /** CSV list of extra fields to be added to the download - useful if wish to make use of default list */
+    protected String extra="";
 
     /**
      * Custom toString method to produce a String to be used as the request parameters
@@ -40,6 +44,8 @@ public class DownloadRequestParams extends SearchRequestParams {
         req.append("&email=").append(email);
         req.append("&reason=").append(reason);
         req.append("&file=").append(file);
+        req.append("&fields=").append(fields);
+        req.append("&extra=").append(extra);
 
         return req.toString();
     }
@@ -66,6 +72,34 @@ public class DownloadRequestParams extends SearchRequestParams {
 
     public void setReason(String reason) {
         this.reason = reason;
+    }
+
+    /**
+     * @return the fields
+     */
+    public String getFields() {
+        return fields;
+    }
+
+    /**
+     * @param fields the fields to set
+     */
+    public void setFields(String fields) {
+        this.fields = fields;
+    }
+
+    /**
+     * @return the extra
+     */
+    public String getExtra() {
+        return extra;
+    }
+
+    /**
+     * @param extra the extra to set
+     */
+    public void setExtra(String extra) {
+        this.extra = extra;
     }
     
 

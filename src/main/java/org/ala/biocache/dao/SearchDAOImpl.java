@@ -28,7 +28,9 @@ import java.util.Map;
 
 import javax.servlet.ServletOutputStream;
 
+import org.ala.biocache.dto.BreakdownRequestParams;
 import org.ala.biocache.dto.DataProviderCountDTO;
+import org.ala.biocache.dto.DownloadRequestParams;
 import org.ala.biocache.dto.FacetResultDTO;
 import org.ala.biocache.dto.FieldResultDTO;
 import org.ala.biocache.dto.OccurrenceDTO;
@@ -342,25 +344,27 @@ public class SearchDAOImpl implements SearchDAO {
      *
      * 
      */
-    public Map<String, Integer> writeResultsToStream(SearchRequestParams searchParams, OutputStream out, int i) throws Exception {
+    public Map<String, Integer> writeResultsToStream(DownloadRequestParams downloadParams, OutputStream out, int i) throws Exception {
 
         int resultsCount = 0;
         Map<String, Integer> uidStats = new HashMap<String, Integer>();
         //stores the remaining limit for data resources that have a download limit
         Map<String, Integer> downloadLimit = new HashMap<String,Integer>();
         try {
-            logger.info("search query: " + searchParams.getQ());
-            SolrQuery solrQuery = initSolrQuery(searchParams);
+            logger.info("search query: " + downloadParams.getQ());
+            SolrQuery solrQuery = initSolrQuery(downloadParams);
             solrQuery.setRows(MAX_DOWNLOAD_SIZE);
-            solrQuery.setQuery(searchParams.getQ());
+            solrQuery.setQuery(downloadParams.getQ());
             //Only the fields specified below will be included in the results from the SOLR Query
             solrQuery.setFields("row_key", "institution_uid", "collection_uid", "data_resource_uid", "data_provider_uid");
 
             int startIndex = 0;
             int pageSize = 1000;
-            StringBuilder  sb = new StringBuilder(downloadFields.getFields());
+            StringBuilder  sb = new StringBuilder(downloadParams.getFields());
+            if(downloadParams.getExtra().length()>0)
+                sb.append(",").append(downloadParams.getExtra());
             StringBuilder qasb = new StringBuilder();
-            QueryResponse qr = runSolrQuery(solrQuery, searchParams.getFq(), pageSize, startIndex, "score", "asc");
+            QueryResponse qr = runSolrQuery(solrQuery, downloadParams.getFq(), pageSize, startIndex, "score", "asc");
             //get the assertion facets to add them to the download fields
             List<FacetField> facets = qr.getFacetFields();
             for(FacetField facet : facets){
@@ -411,7 +415,7 @@ public class SearchDAOImpl implements SearchDAO {
                 startIndex += pageSize;
                 uuids.clear();
                 if (resultsCount < MAX_DOWNLOAD_SIZE) {
-                    qr = runSolrQuery(solrQuery, searchParams.getFq(), pageSize, startIndex, "score", "asc");
+                    qr = runSolrQuery(solrQuery, downloadParams.getFq(), pageSize, startIndex, "score", "asc");
                    
                 }
             }
@@ -878,7 +882,7 @@ public class SearchDAOImpl implements SearchDAO {
      */
     @Override
     public TaxaRankCountDTO findTaxonCountForUid(String query, String queryContext, int maximumFacets) throws Exception {
-        logger.info("Attempting to find the counts for " + query);
+        logger.debug("Attempting to find the counts for " + query);
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.setQueryType("standard");
         solrQuery.setQuery(query);
@@ -914,11 +918,11 @@ public class SearchDAOImpl implements SearchDAO {
     /**
      * @see org.ala.biocache.dao.SearchDAO#findTaxonCountForUid(java.lang.String, java.lang.String)
      */
-    public TaxaRankCountDTO findTaxonCountForUid(String query, String rank, String returnRank, String queryContext, boolean includeSuppliedRank) throws Exception {
+    public TaxaRankCountDTO findTaxonCountForUid(BreakdownRequestParams breakdownParams,String query) throws Exception {
         TaxaRankCountDTO trDTO = null;
-        List<String> ranks = returnRank== null?searchUtils.getNextRanks(rank, includeSuppliedRank) : new ArrayList<String>();
-        if(returnRank != null)
-            ranks.add(returnRank);
+        List<String> ranks = breakdownParams.getLevel()== null?searchUtils.getNextRanks(breakdownParams.getRank(), breakdownParams.getName()==null) : new ArrayList<String>();
+        if(breakdownParams.getLevel() != null)
+            ranks.add(breakdownParams.getLevel());
         if (ranks != null && ranks.size() > 0) {
             SolrQuery solrQuery = new SolrQuery();
             solrQuery.setQueryType("standard");
@@ -931,7 +935,7 @@ public class SearchDAOImpl implements SearchDAO {
             for (String r : ranks) {
                 solrQuery.addFacetField(r);
             }
-            QueryResponse qr = runSolrQuery(solrQuery, getQueryContextAsArray(queryContext), 1, 0, rank, "asc");
+            QueryResponse qr = runSolrQuery(solrQuery, getQueryContextAsArray(breakdownParams.getQc()), 1, 0, breakdownParams.getRank(), "asc");
             if (qr.getResults().size() > 0) {
                 for (String r : ranks) {
                     trDTO = new TaxaRankCountDTO(r);

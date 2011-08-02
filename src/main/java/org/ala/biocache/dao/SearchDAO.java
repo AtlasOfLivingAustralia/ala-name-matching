@@ -23,6 +23,9 @@ import javax.servlet.ServletOutputStream;
 import org.ala.biocache.dto.DataProviderCountDTO;
 import org.ala.biocache.dto.FieldResultDTO;
 import au.org.ala.biocache.OccurrenceIndex;
+
+import org.ala.biocache.dto.BreakdownRequestParams;
+import org.ala.biocache.dto.DownloadRequestParams;
 import org.ala.biocache.dto.OccurrenceDTO;
 import org.ala.biocache.dto.OccurrencePoint;
 import org.ala.biocache.dto.PointType;
@@ -99,7 +102,7 @@ public interface SearchDAO {
      * @return A map of uids and counts that needs to be logged to the ala-logger
      * @throws Exception
      */
-	Map<String,Integer> writeResultsToStream(SearchRequestParams searchParams, OutputStream out, int maxNoOfRecords) throws Exception;
+	Map<String,Integer> writeResultsToStream(DownloadRequestParams searchParams, OutputStream out, int maxNoOfRecords) throws Exception;
 
 
     void writeCoordinatesToStream(SearchRequestParams searchParams,OutputStream out) throws Exception;
@@ -193,6 +196,6 @@ public interface SearchDAO {
      * @return
      * @throws Exception
      */
-    TaxaRankCountDTO findTaxonCountForUid(String query, String rank,String returnRank, String queryContext, boolean includeSuppliedRank) throws Exception;
+    TaxaRankCountDTO findTaxonCountForUid(BreakdownRequestParams breakdownParams,String query) throws Exception;
 }
 

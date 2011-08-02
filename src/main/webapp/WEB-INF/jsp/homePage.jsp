@@ -22,7 +22,19 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             <li><strong>Occurrence for institution:</strong> /occurrences/institutions/{uid}</li>
             <li><strong>Occurrence for data resource:</strong> /occurrences/data-resources/{uid}</li>
             <li><strong>Occurrence for data provider:</strong> /occurrences/data-providers/{uid}</li>
-            <li><strong>Occurrence download:</strong> /occurrences/download - needs request param definition</li>
+            <li><strong>Occurrence download:</strong> /occurrences/download - needs request param definition<br>
+            The download will include all records that satisfy the q and fq parameters.  The number of records 
+            for a data resource may be restricted based on a collectory configured download limit.  Params:
+            <ul>
+            	<li>q - the initial query</li>
+            	<li>fq - filters to be applied to the original query</li>
+            	<li>email - the email address of the user requesting the download</li>
+            	<li>reason - the reason for the download</li>
+            	<li>file - the name to use for the file</li>
+            	<li>fields - a CSV list of fields to include in the download (contains a list of default)</li>
+            	<li>extra - a CSV list of fields in include in addition to the "fields"</li>
+            </ul>
+             </li>
             <li><strong>Occurrence wms:</strong> /occurrences/wms - requires WMS parameters along with 'q' and 'fq' populated, if available</li>
             <li><strong>Occurrence static:</strong> /occurrences/static - generates an image of AU with points on, filtering on 'q' and 'fq', if available</li>
             <li><strong>Occurrences coordinates:</strong>
@@ -58,13 +70,26 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
         </ul>
 
         <h3>Breakdowns</h3>
+        This section outlines the breakdown services that are available.  These services are available for each of the different collectory types:
         <ul>
-            <li><strong>Breakdown for collection based on limit:</strong> /breakdown/collections/{id}?max={max} - will return all collections if {id} is omitted</li>
-            <li><strong>Breakdown for institution based on limit:</strong> /breakdown/institutions/{id}?max={max} - will return all institutions if {id} is omitted</li>
-            <li><strong>Breakdown for collection at a rank:</strong> /breakdown/collections/{id}/rank/{rank} - will return all collections if {id} is omitted</li>
-            <li><strong>Breakdown for institution at a rank:</strong> /breakdown/institutions/{id}/rank/{rank} - will return all institutions if {id} is omitted</li>
-            <li><strong>Breakdown for collection at the supplied name and rank: </strong> /breakdown/collections/{id}/rank/{rank}/name/{name} - will return all collections if {id} is omitted</li>
-            <li><strong>Breakdown for institution at the supplied name and rank: </strong> /breakdown/institutions/{id}/rank/{rank}/name/{name} - will return all institutions if {id} is omitted</li>
+        	<li>collections</li>
+        	<li>institutions</li>
+        	<li>dataResources</li>
+        	<li>dataProviders</li>
+        	<li>dataHubs</li>
+        </ul>
+        In the services specified below {collectorytype} must be one of the above values.  
+        <ul>
+            <li><strong>Breakdown based on limit:</strong> /breakdown/{collectorytype}/{uid}?max={max} Example:<br>
+            <a href="/ws/breakdown/collections/co50?max=50">/breakdown/collections/co50?max=50</a> 
+            </li>           
+            <li><strong>Breakdown of a rank:</strong> /breakdown/{collectorytype}/{uid}?rank={rank} Example:<br>
+            <a href="/ws/breakdown/dataResources/dr375?rank=class">/breakdown/dataResources/dr375?rank=class</a>
+            </li>            
+            <li><strong>Breakdown at the supplied name and rank: </strong> /breakdown/{collectorytype}/{uid}?rank={rank}&name={name} Example:<br>
+            <a href="/ws/breakdown/dataHubs/dh1?rank=phylum&name=Chordata">/breakdown/dataHubs/dh1?rank=phylum&name=Chordata</a>
+            </li>
+            
         </ul>
 
         <h2>Free text search of occurrence records (will return JSON)</h2>
