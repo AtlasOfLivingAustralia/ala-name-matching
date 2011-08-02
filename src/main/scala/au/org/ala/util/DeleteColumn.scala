@@ -22,7 +22,7 @@ object DeleteColumn {
     Config.persistenceManager.pageOverSelect(entityName, (guid, map)=> {
         map.keys.foreach( key => {
             if(!map.get(key).isEmpty){
-            	Config.persistenceManager.deleteColumn(guid, entityName, key)
+            	Config.persistenceManager.deleteColumns(guid, entityName, key)
             }
         })
         true

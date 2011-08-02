@@ -28,8 +28,8 @@ object RenameColumns {
         for(key <- values.keySet){
           if(map.contains(key)){
             persistenceManager.put(guid, entity, values.get(key).get, map.get(key).get)
-            persistenceManager.deleteColumn(guid, entity, key)
-          }
+            persistenceManager.deleteColumns(guid, entity, key)
+        }
         }
 
         if (counter % 1000 == 0) {
@@ -39,7 +39,7 @@ object RenameColumns {
 
         }
 
-        true
+        true       
     }, startUuid)
 
     finishTime = System.currentTimeMillis
