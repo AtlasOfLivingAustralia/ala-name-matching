@@ -586,7 +586,7 @@ public class SearchDAOImpl implements SearchDAO {
 
                         try {
                             if (oc.getMap() != null) {
-                                java.util.Map map = oc.getMap();                                
+                                java.util.Map map = oc.getMap();
                                 if (map != null) {
                                     
                                     //check to see if it is empty otherwise a NPE is thrown when option.get is called

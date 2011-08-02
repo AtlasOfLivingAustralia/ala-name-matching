@@ -15,8 +15,9 @@ import org.springframework.stereotype.Component;
 
 public class DownloadFields {
     
-private String defaultFields="uuid,catalogNumber,taxonConceptID.p,scientificName,vernacularName,scientificName.p,taxonRank.p,vernacularName.p,kingdom.p,phylum.p,classs.p,order.p,family.p,genus.p,species.p,subspecies.p,institutionCode,collectionCode,latitude.p,longitude.p,coordinatePrecision,country.p,ibra.p,imcra.p,stateProvince.p,lga.p,minimumElevationInMeters,maximumElevationInMeters,minimumDepthInMeters,maximumDepthInMeters,year.p,month.p,day.p,eventDate.p,eventTime.p,basisOfRecord,sex,preparations";
+private String defaultFields="uuid,catalogNumber,taxonConceptID.p,scientificName,vernacularName,scientificName.p,taxonRank.p,vernacularName.p,kingdom.p,phylum.p,classs.p,order.p,family.p,genus.p,species.p,subspecies.p,institutionCode,collectionCode,latitude.p,longitude.p,coordinatePrecision,country.p,ibra.p,imcra.p,stateProvince.p,lga.p,minimumElevationInMeters,maximumElevationInMeters,minimumDepthInMeters,maximumDepthInMeters,year.p,month.p,day.p,eventDate.p,eventTime.p,basisOfRecord,typeStatus.p,sex,preparations";
 private Properties downloadProperties;
+
 public DownloadFields(){
     //initialise the properties
     try{

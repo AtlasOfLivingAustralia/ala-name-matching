@@ -83,6 +83,4 @@ public class OccurrenceDTO implements Serializable{
     public void setUserAssertions(List<QualityAssertion> userAssertions) {
         this.userAssertions = userAssertions;
     }
-    
-
 }

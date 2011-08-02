@@ -96,6 +96,7 @@ public class OccurrenceController {
 	protected String hostUrl = "http://localhost:8888/biocache-service";
 	protected String bieBaseUrl = "http://bie.ala.org.au/";
 	protected String collectoryBaseUrl = "http://collections.ala.org.au";
+	protected String biocacheMediaBaseUrl = "http://biocache.ala.org.au/biocache-media";
 	protected String citationServiceUrl = collectoryBaseUrl + "/ws/citations";
 	protected String summaryServiceUrl  = collectoryBaseUrl + "/ws/summary";
 	
@@ -458,7 +459,6 @@ public class OccurrenceController {
                 return new OccurrenceDTO();
             else
                 fullRecord = Store.getAllVersionsByUuid(result.getOccurrences().get(0).getUuid());
-
         }
 
         OccurrenceDTO occ = new OccurrenceDTO(fullRecord);
@@ -466,23 +466,26 @@ public class OccurrenceController {
         occ.setUserAssertions(Store.getUserAssertions(uuid));
 
         //log the statistics for viewing the record
-            String email = null;
-            String reason = "Viewing Occurrence Record " + uuid;
-            String ip = request.getLocalAddr();
-            Map<String, Integer> uidStats = new HashMap<String, Integer>();
-            if(occ.getProcessed() != null && occ.getProcessed().getAttribution()!=null){
-                if (occ.getProcessed().getAttribution().getCollectionUid() != null) {
-                    uidStats.put(occ.getProcessed().getAttribution().getCollectionUid(), 1);
-                }
-                if (occ.getProcessed().getAttribution().getInstitutionUid() != null) {
-                    uidStats.put(occ.getProcessed().getAttribution().getInstitutionUid(), 1);
-                }
-                if(occ.getProcessed().getAttribution().getDataProviderUid() != null)
-                    uidStats.put(occ.getProcessed().getAttribution().getDataProviderUid(), 1);
-                if(occ.getProcessed().getAttribution().getDataResourceUid() != null)
-                    uidStats.put(occ.getProcessed().getAttribution().getDataResourceUid(), 1);
+        String email = null;
+        String reason = "Viewing Occurrence Record " + uuid;
+        String ip = request.getLocalAddr();
+        Map<String, Integer> uidStats = new HashMap<String, Integer>();
+        if(occ.getProcessed() != null && occ.getProcessed().getAttribution()!=null){
+            if (occ.getProcessed().getAttribution().getCollectionUid() != null) {
+                uidStats.put(occ.getProcessed().getAttribution().getCollectionUid(), 1);
             }
+            if (occ.getProcessed().getAttribution().getInstitutionUid() != null) {
+                uidStats.put(occ.getProcessed().getAttribution().getInstitutionUid(), 1);
+            }
+            if(occ.getProcessed().getAttribution().getDataProviderUid() != null)
+                uidStats.put(occ.getProcessed().getAttribution().getDataProviderUid(), 1);
+            if(occ.getProcessed().getAttribution().getDataResourceUid() != null)
+                uidStats.put(occ.getProcessed().getAttribution().getDataResourceUid(), 1);
+        }
 
+        //fix media store URLs
+        MediaStore.convertPathsToUrls(occ.getRaw(), biocacheMediaBaseUrl);
+        MediaStore.convertPathsToUrls(occ.getProcessed(), biocacheMediaBaseUrl);
             
         LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED, email, reason, ip, uidStats);
         logger.log(RestLevel.REMOTE, vo);
@@ -490,13 +493,16 @@ public class OccurrenceController {
         return occ;
 	}
 
-    /**
+	public void setBiocacheMediaBaseUrl(String biocacheMediaBaseUrl) {
+		this.biocacheMediaBaseUrl = biocacheMediaBaseUrl;
+	}
+	/**
      * Create a HashMap for the filter queries
      *
      * @param filterQuery
      * @return
      */
-    private HashMap<String, String> addFacetMap(String[] filterQuery) {
+    private Map<String, String> addFacetMap(String[] filterQuery) {
                HashMap<String, String> facetMap = new HashMap<String, String>();
 
         if (filterQuery != null && filterQuery.length > 0) {

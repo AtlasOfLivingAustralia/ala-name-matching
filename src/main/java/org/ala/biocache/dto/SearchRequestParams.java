@@ -35,6 +35,7 @@ public class SearchRequestParams {
                                 "type_status",
                                 "institution_uid",
                                 "collection_uid",
+                                "data_resource",
                                 "country",
                                 "state",
                                 "biogeographic_region",
