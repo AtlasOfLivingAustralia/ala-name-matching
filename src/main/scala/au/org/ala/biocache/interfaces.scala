@@ -2,6 +2,7 @@ package au.org.ala.biocache
 
 import java.io.OutputStream
 import collection.JavaConversions
+import au.org.ala.util.RecordProcessor
 
 /**
  * This is the interface to use for java applications.
@@ -64,14 +65,28 @@ object Store {
   /**
    * adds or updates a raw full record with values that are in the FullRecord
    * relies on a rowKey being set
+   *  
+   * Record is processed and indexed if should index is true
    */
-  def upsertRecord(record:FullRecord){
+  def upsertRecord(record:FullRecord, shouldIndex:Boolean){
     //rowKey = dr|<cxyzsuid>
     if(record.rowKey != null){
         record.uuid = occurrenceDAO.createOrRetrieveUuid(record.rowKey) 
         occurrenceDAO.addRawOccurrenceBatch(Array(record))
-        occurrenceDAO.reIndex(record.uuid)
+        if(shouldIndex){
+            val processor = new RecordProcessor
+            processor.processRecordAndUpdate(record)
+            occurrenceDAO.reIndex(record.uuid)
+        }
     }
+  }
+  /**
+   * Deletes the records for the supplied rowKey from the index and data store
+   */
+  def deleteRecord(rowKey:String){
+      if(rowKey != null){
+          occurrenceDAO.delete(rowKey)
+      }
   }
 
   /**

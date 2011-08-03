@@ -74,6 +74,8 @@ trait OccurrenceDAO {
     def updateAssertionStatus(rowKey: String, assertionName: String, systemAssertions: List[QualityAssertion], userAssertions: List[QualityAssertion])
 
     def reIndex(uuid: String)
+    
+    def delete(rowKey: String)
 }
 
 /**
@@ -744,5 +746,11 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
 //                logger.debug("Reindexed UUID: " + uuid)
 //            }
 //        }
+    }
+    def delete(rowKey: String)={
+        //delete from the data store
+        persistenceManager.delete(rowKey, entityName)
+        //delete from the index
+        indexDAO.removeFromIndex("row_key", rowKey)
     }
 }

@@ -86,6 +86,11 @@ trait PersistenceManager {
      * The column to delete.
      */
     def deleteColumns(uuid:String, entityName:String, columnName:String*)
+    
+    /**
+     * Delete row 
+     */
+    def delete(uuid:String, entityName:String)
 
     /**
      * Close db connections etc
@@ -472,6 +477,14 @@ class CassandraPersistenceManager @Inject() (
         mutator.execute(ConsistencyLevel.ONE)
       }
     }
+    
+    def delete(uuid:String, entityName:String)={
+        if(uuid != null && entityName != null){
+            val deletor =Pelops.createRowDeletor(poolName)
+            deletor.deleteRow(entityName, uuid, ConsistencyLevel.ONE)
+        }
+    }
+    
 }
 
 
@@ -642,6 +655,9 @@ class MongoDBPersistenceManager @Inject()(
 
     def deleteColumns(uuid:String, entityName:String, columnName:String*)={
       throw new RuntimeException("currently not implemented")
+    }
+    def delete(uuid:String, entityName:String)={
+        throw new RuntimeException("currently not implemented")
     }
     def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid:String, pageSize: Int, columnName: String*) = {
 

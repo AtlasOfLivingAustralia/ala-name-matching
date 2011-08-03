@@ -461,6 +461,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         try{
           //println("Deleting " + field +":" + value)
             solrServer.deleteByQuery(field +":" + value)
+            solrServer.commit
         }
         catch{
             case e:Exception =>e.printStackTrace
