@@ -60,7 +60,7 @@ val processor = new RecordProcessor
     println("Initialised actors...")
     file.foreachLine(line=>{
         count+=1
-        val rec = occurrenceDAO.getRawProcessedByRowKey(line)
+        //val rec = occurrenceDAO.getRawProcessedByRowKey(line)
         val lstart = System.currentTimeMillis
 //        processor.processRecord(rec.get(0), rec.get(1))
 //        println("total time " + count + ": " + (System.currentTimeMillis - lstart))
