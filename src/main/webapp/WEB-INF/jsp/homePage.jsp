@@ -17,6 +17,7 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
                 <a href="/ws/occurrences/page">/occurrences/page</a>
                 - just shows the first 10 occurrences (for debug only)</li>
             <li><strong>Occurrence view:</strong> /occurrence/{uuid}</li>
+            <li><strong>Occurrence comparison view:</strong> /occurrence/compare/{uuid}</li>            
             <li><strong>Occurrence for taxon:</strong> /occurrences/taxon/{guid}</li>
             <li><strong>Occurrence for collection:</strong> /occurrences/collections/{uid}</li>
             <li><strong>Occurrence for institution:</strong> /occurrences/institutions/{uid}</li>
@@ -56,8 +57,6 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             	</ul> 
             </li>            
         </ul>
-        
-        
 
         <h3>Assertions</h3>
         <ul>
@@ -89,7 +88,6 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             <li><strong>Breakdown at the supplied name and rank: </strong> /breakdown/{collectorytype}/{uid}?rank={rank}&name={name} Example:<br>
             <a href="/ws/breakdown/dataHubs/dh1?rank=phylum&name=Chordata">/breakdown/dataHubs/dh1?rank=phylum&name=Chordata</a>
             </li>
-            
         </ul>
 
         <h2>Free text search of occurrence records (will return JSON)</h2>
