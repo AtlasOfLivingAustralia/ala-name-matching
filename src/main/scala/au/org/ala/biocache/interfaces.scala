@@ -72,8 +72,8 @@ object Store {
             }
           })
         }
-        
-        map.put(rawPoso.getClass().getName(), listBuff)
+        val name = rawPoso.getClass().getName().substring(rawPoso.getClass().getName().lastIndexOf(".")+1)
+        map.put(name, listBuff)
       }
 
       map
