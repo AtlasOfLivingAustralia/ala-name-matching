@@ -275,8 +275,6 @@ public class OccurrenceController {
 	/**
 	 * Occurrence search page uses SOLR JSON to display results
 	 *
-         * 
-         *
 	 * @param query
 	 * @param model
 	 * @return
@@ -427,16 +425,32 @@ public class OccurrenceController {
              ServletOutputStream out = response.getOutputStream();
              searchDAO.writeCoordinatesToStream(requestParams,out);
         }
-
 	
+    /**
+     * Occurrence record page
+     *
+     * When user supplies a uuid that is not found search for a unique record
+     * with the supplied occurrenc_id
+     *
+     * Returns a SearchResultDTO when there is more than 1 record with the supplied UUID
+     *
+     * @param uuid
+     * @param model
+     * @throws Exception
+     */
+    @RequestMapping(value = {"/occurrence/compare/{uuid}.json"}, method = RequestMethod.GET)
+    public @ResponseBody Object showOccurrence(@PathVariable("uuid") String uuid){
+    	return Store.getComparisonByUuid(uuid);
+    }
+    
 	/**
 	 * Occurrence record page
 	 *
-         * When user supplies a uuid that is not found search for a unique record
-         * with the supplied occurrenc_id
-         *
-         * Returns a SearchResultDTO when there is more than 1 record with the supplied UUID
-         *
+	 * When user supplies a uuid that is not found search for a unique record
+	 * with the supplied occurrenc_id
+	 *
+	 * Returns a SearchResultDTO when there is more than 1 record with the supplied UUID
+	 *
 	 * @param uuid
 	 * @param model
 	 * @throws Exception
@@ -544,11 +558,7 @@ public class OccurrenceController {
      * @return
      */
     private boolean checkValidSpatialParams(Float latitude, Float longitude, Integer radius) {
-        if (latitude != null && !latitude.isNaN() && longitude != null && !longitude.isNaN() && radius != null && radius > 0) {
-            return true;
-        } else {
-            return false;
-        }
+        return (latitude != null && !latitude.isNaN() && longitude != null && !longitude.isNaN() && radius != null && radius > 0);
     }
 
 	/**
