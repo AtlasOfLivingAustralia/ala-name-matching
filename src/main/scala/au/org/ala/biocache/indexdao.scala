@@ -17,6 +17,7 @@ import com.google.inject.name.Named
 import scala.actors.Actor
 import scala.collection.mutable.ArrayBuffer
 import java.util.Date
+import java.io.OutputStream
 
 
 
@@ -34,7 +35,10 @@ trait IndexDAO {
     val elFields = (new EnvironmentalLayers).propertyNames.toList
     val clFields = (new ContextualLayers).propertyNames.toList
 
-    def getRowKeysForQuery(query:String):Option[List[String]]
+    def getRowKeysForQuery(query:String, limit:Int=1000):Option[List[String]]
+    
+    def writeRowKeysToStream(query:String, outputStream: OutputStream)
+       
     
     def occurrenceDAO:OccurrenceDAO
 
@@ -581,8 +585,12 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     /**
      * Gets the rowKeys for the query that is supplied
      * Do here so that still works if web service is down
+     *
+     * This causes OOM exceptions at SOLR for large numbers of row keys
+     * Use writeRowKeysToStream instead
+     *
      */
-    override  def getRowKeysForQuery(query:String):Option[List[String]] ={
+    override  def getRowKeysForQuery(query:String, limit:Int=1000):Option[List[String]] ={
         init
         val solrQuery = new SolrQuery();
         solrQuery.setQueryType("standard");
@@ -604,6 +612,36 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         else
             None
     }
+    /**
+     * Writes the list of row_keys for the results of the sepcified query to the
+     * output stream.
+     */
+    override def writeRowKeysToStream(query:String, outputStream: OutputStream)={
+        init
+        val size =100;
+        var start =0;
+        val solrQuery = new SolrQuery();
+        var continue = true
+        solrQuery.setQueryType("standard");
+        solrQuery.setFacet(false)
+        solrQuery.setFields("row_key")        
+        solrQuery.setQuery(query)
+        solrQuery.setRows(100)
+        while(continue){
+            solrQuery.setStart(start)
+            val response = solrServer.query(solrQuery)
+            
+            val resultsIterator =response.getResults().iterator
+            while(resultsIterator.hasNext){
+                val result = resultsIterator.next()
+                outputStream.write((result.getFieldValue("row_key")+ "\n").getBytes())
+            }
+            
+            start +=size
+            continue = response.getResults.getNumFound > start
+        }
+    }
+    
 
     def printNumDocumentsInIndex() = {
         val rq = solrServer.query(new SolrQuery("*:*"))

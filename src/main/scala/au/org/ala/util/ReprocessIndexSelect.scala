@@ -1,5 +1,7 @@
 package au.org.ala.util
 import au.org.ala.biocache._
+import java.io.{BufferedOutputStream,FileOutputStream}
+import java.io.File
 /**
  * Reprocesses and Reindexes a select set of records.  The records will
  * be obtained through a query to the index.
@@ -25,13 +27,14 @@ object ReprocessIndexSelect {
     def reprocessindex(query: String, threads: Int) {
         //get the list of rowKeys to be processed.
         val indexer = Config.getInstance(classOf[IndexDAO]).asInstanceOf[IndexDAO]
-        val rowKeys = indexer.getRowKeysForQuery(query)
-        
-        println("Number of record to reprocess/index: " + rowKeys.get.size)
 
-        if (!rowKeys.isEmpty) {
-            ProcessWithActors.processRecords(threads, rowKeys.get)
-            IndexRecords.indexList(rowKeys.get)
-        }
+        val file = new File("rowkeys.out")
+        val out = new BufferedOutputStream(new FileOutputStream(file));        
+        indexer.writeRowKeysToStream(query,out)
+        out.flush()
+        out.close()
+        ProcessWithActors.processRecords(threads, file)
+        IndexRecords.indexList(file)
+
     }
 }

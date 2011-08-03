@@ -3,12 +3,13 @@ package au.org.ala.util
 import scala.actors.Actor
 import scala.collection.mutable.ArrayBuffer
 import au.org.ala.biocache._
+import java.io.File
 
 /**
  * A simple threaded implementation of the processing.
  */
 object ProcessWithActors {
-
+  import FileHelper._
   val occurrenceDAO = Config.occurrenceDAO
   val persistenceManager = Config.persistenceManager
 
@@ -44,7 +45,7 @@ object ProcessWithActors {
   /**
    * Processes the supplied row keys in a Thread
    */
-  def processRecords(threads: Int, keys:List[String]) : Unit ={
+  def processRecords(threads: Int, file:File) : Unit ={
     var ids = 0
     val pool = Array.fill(threads){ val p = new Consumer(Actor.self,ids); ids +=1; p.start }
     println("Starting to process a list of records...");
@@ -57,13 +58,13 @@ object ProcessWithActors {
     var count =0 
 val processor = new RecordProcessor
     println("Initialised actors...")
-    for(key <- keys){
+    file.foreachLine(line=>{
         count+=1
-        val rec = occurrenceDAO.getRawProcessedByRowKey(key)
+        val rec = occurrenceDAO.getRawProcessedByRowKey(line)
         val lstart = System.currentTimeMillis
 //        processor.processRecord(rec.get(0), rec.get(1))
 //        println("total time " + count + ": " + (System.currentTimeMillis - lstart))
-        buff + key
+        buff + line
         if(buff.size >= 50){
             val actor = pool(batches % threads).asInstanceOf[Consumer]
         batches += 1
@@ -79,13 +80,13 @@ val processor = new RecordProcessor
         if (count % 1000 == 0) {
         finishTime = System.currentTimeMillis
         println(count
-            + " >> Last key : " + key
+            + " >> Last key : " + line
             + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f)
             + ", time taken for "+1000+" records: " + (finishTime - startTime).toFloat / 1000f
             + ", total time: "+ (finishTime - start).toFloat / 60000f +" minutes"
         )
         }
-    }
+    })
     //add the remaining records from the buff
     if(buff.size>0){
       pool(0).asInstanceOf[Consumer] ! buff.toArray
@@ -220,12 +221,17 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
         case keys:Array[String]=>{
             //get the raw and Processed records for the row key
             received +=1
+            val start = System.currentTimeMillis  
+            var counter:Float=0
             for(key <- keys){
+                counter +=1
                 val records = occurrenceDAO.getRawProcessedByRowKey(key)
                 if(!records.isEmpty){
                     processor.processRecord(records.get(0), records.get(1))
                 }
             }
+            val finished = System.currentTimeMillis
+            println("Actor "+id +">>> Last Key: "+keys.last+", records per sec: " + counter / (((finished - start).toFloat) / 1000f))
             processedRecords+=1
         }
         case s:String => {

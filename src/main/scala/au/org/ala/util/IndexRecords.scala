@@ -3,6 +3,7 @@ package au.org.ala.util
 import java.util.ArrayList
 import org.slf4j.LoggerFactory
 import au.org.ala.biocache._
+import java.io.File
 
 /**
  * Index the Cassandra Records to conform to the fields
@@ -11,7 +12,7 @@ import au.org.ala.biocache._
  * @author Natasha Carter
  */
 object IndexRecords {
-
+import FileHelper._
   val logger = LoggerFactory.getLogger("IndexRecords")
   val indexer = Config.getInstance(classOf[IndexDAO]).asInstanceOf[IndexDAO]
   val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
@@ -82,25 +83,26 @@ object IndexRecords {
   /**
    * Indexes the supplied list of rowKeys
    */
-  def indexList(keys:List[String])={
+  def indexList(file:File)={
       var counter = 0
       val start = System.currentTimeMillis
       var startTime = System.currentTimeMillis
       var finishTime = System.currentTimeMillis
       
-      for(key <- keys){
+      file.foreachLine(line=>{
           counter+=1
-          val map =persistenceManager.get(key,"occ")
+          val map =persistenceManager.get(line,"occ")
           if(!map.isEmpty)
-              indexer.indexFromMap(key, map.get)
+              indexer.indexFromMap(line, map.get)
               
            
           if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
-          logger.info(counter + " >> Last key : " + key + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          logger.info(counter + " >> Last key : " + line + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
         }
-      }
+      })
+  
       indexer.finaliseIndex(false, true)
   }
   
