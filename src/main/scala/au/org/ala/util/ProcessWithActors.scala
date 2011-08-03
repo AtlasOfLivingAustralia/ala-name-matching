@@ -45,7 +45,7 @@ object ProcessWithActors {
   /**
    * Processes the supplied row keys in a Thread
    */
-  def processRecords(threads: Int, file:File) : Unit ={
+  def processRecords(threads: Int, file:File, startUuid:Option[String]) : Unit ={
     var ids = 0
     val pool = Array.fill(threads){ val p = new Consumer(Actor.self,ids); ids +=1; p.start }
     println("Starting to process a list of records...");
@@ -64,7 +64,8 @@ val processor = new RecordProcessor
         val lstart = System.currentTimeMillis
 //        processor.processRecord(rec.get(0), rec.get(1))
 //        println("total time " + count + ": " + (System.currentTimeMillis - lstart))
-        buff + line
+        if(startUuid.isEmpty || startUuid.get == line)
+            buff + line
         if(buff.size >= 50){
             val actor = pool(batches % threads).asInstanceOf[Consumer]
         batches += 1
