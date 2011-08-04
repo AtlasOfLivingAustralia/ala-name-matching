@@ -4,12 +4,12 @@ object CommandLineTool {
 
     def main(args: Array[String]) {
 
-        val l = new Loader
 
         println("Welcome to the biocache management tool.")
         print("Please supply a command or hit ENTER to view command list:")
         var input = readLine
 
+        val l = new Loader
         while (input != "exit" && input != "q" && input != "quit") {
 
             try {
@@ -30,12 +30,17 @@ object CommandLineTool {
                         }
                     }
                     case it if (it startsWith "optimise") => {
-                        val drs = it.split(" ").map(x => x.trim).toList.tail
-                        for(dr <- drs){
-                        	IndexRecords.indexer.finaliseIndex(true,false)
-                        }
+                       	IndexRecords.indexer.finaliseIndex(true,false)
                     }
                     case it if (it startsWith "healthcheck") => l.healthcheck
+                    case it if (it startsWith "export") => {
+                        val args = it.split(" ").map(x => x.trim).toArray.tail
+                        ExportUtil.main(args)
+                    }
+                    case it if (it startsWith "import") => {
+                        val args = it.split(" ").map(x => x.trim).toArray.tail
+                        ImportUtil.main(args)
+                    }
                     case _ => printHelp
                 }
             } catch {
@@ -53,9 +58,11 @@ object CommandLineTool {
         println("3)  load <dr-uid> - load resource")
         println("4)  process <dr-uid> - process resource")
         println("5)  index <dr-uid> - index resource")
-        println("6)  healthcheck <dr-uid>")
-        println("7)  healthcheck all - takes ages....")
-        println("78)  exit")
+        println("6)  healthcheck")
+        println("7)  export")
+        println("8)  import")
+        println("8)  optimise")
+        println("8)  exit")
     }
 
     def printTable(table: List[Map[String, String]]) {
