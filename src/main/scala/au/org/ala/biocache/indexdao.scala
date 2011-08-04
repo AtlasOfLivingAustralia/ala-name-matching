@@ -158,6 +158,28 @@ trait IndexDAO {
 //            "occurrence_remarks", "citation", "user_assertions", "collector") ++ FullRecordMapper.environmentalDefn.keySet.toList ++ FullRecordMapper.contextualDefn.keySet.toList
 //    }
 
+            
+     def getRawScientificName(map:Map[String,String]):String={
+        val scientificName:String ={
+            if(map.contains("scientificName"))
+                map.get("scientificName").get
+            else if(map.contains("genus")){
+                var tmp:String = map.get("genus").get
+                if(map.contains("specificEpithet") || map.contains("species")){
+                    tmp=tmp + " " +map.getOrElse("specificEpithet", map.getOrElse("species",""))
+                    if(map.contains("infraspecificEpithet") || map.contains("subspecies"))
+                        tmp=tmp+ " " + map.getOrElse("infraspecificEpithet",map.getOrElse("subspecies",""))
+                }
+                tmp
+            }
+            else if(map.contains("family"))
+                map.get("family").get
+            else
+                ""
+        }
+        scientificName
+    }
+            
     /**
      * Generates an string array version of the occurrence model.
      *
@@ -267,7 +289,7 @@ trait IndexDAO {
                     sciName + "|" + taxonConceptId + "|" + vernacularName + "|" + kingdom + "|" + family,
                     getValue("taxonRank.p", map),
                     getValue("taxonRankID.p", map),
-                    getValue("scientificName", map),
+                    getRawScientificName(map),
                     getValue("vernacularName", map),
                     if (images != null && images.size > 0 && images(0) != "") "Multimedia" else "None",
                     if (images != null && images.size > 0) images(0) else "",
