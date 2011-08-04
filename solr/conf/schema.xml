@@ -510,98 +510,98 @@
        when adding a document.
    -->
    <!-- start of BIE Biocache Fields -->
-   <field name="id" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="row_key" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="occurrence_id" type="string" stored="true" multiValued="false" omitNorms="false" />
-   <field name="data_hub_uid" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false"/>
-   <field name="data_hub" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false" />
+   <field name="id" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="row_key" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="occurrence_id" type="string" stored="true" multiValued="false"  />
+   <field name="data_hub_uid" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="data_hub" type="string" indexed="true" stored="true" multiValued="true" />
    
-    <field name="data_provider_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="data_provider" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+    <field name="data_provider_uid" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="data_provider" type="string" indexed="true" stored="true" multiValued="false" />
    
    
-   <field name="data_resource_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="data_resource" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="institution_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="institution_code" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="institution_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="data_resource_uid" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="data_resource" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="institution_uid" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="institution_code" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="institution_name" type="string" indexed="true" stored="true" multiValued="false" />
    <!-- Not displayed in search results -->
    <!-- field name="institution_code_lsid" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" /-->
-   <field name="collection_uid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="collection_code" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="collection_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="collection_uid" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="collection_code" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="collection_name" type="string" indexed="true" stored="true" multiValued="false"/>
    <!-- Not displayed in search results -->
    <!-- field name="catalogue_number_id" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
-   <field name="catalogue_number" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="taxon_concept_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
-   <field name="occurrence_date" type="tdate" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="catalogue_number" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="taxon_concept_lsid" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="occurrence_date" type="tdate" indexed="true" stored="true" multiValued="false"/>
    <!-- 
         The easiest way to facet on years ranges is to have an extra field that stores the year as a date type.  This
         is so we don't have to perform our own calculations on an integer field
         Thus the year will be stored/indexed as a date with month 01 and date 01
    -->
 
-   <field name="occurrence_year" type="tdate" indexed="true" stored="true" multiValued="false" omitNorms="true" />
-   <field name="taxon_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="occurrence_year" type="tdate" indexed="true" stored="true" multiValued="false"/>
+   <field name="taxon_name" type="string" indexed="true" stored="true" multiValued="false"/>
    <!-- Not is use in current biocache -->
    <!-- field name="taxon_name_text" type="text_ws" indexed="true" stored="true" multiValued="false" omitNorms="false" /-->
    
    <!-- Not displayed in search results -->
    <!-- field name="author" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
-   <field name="common_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="names_and_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true"/>
-   <field name="rank" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="common_name" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="names_and_lsid" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="rank" type="string" indexed="true" stored="true" multiValued="false" />
    <!-- Not displayed in search results -->
-   <field name="rank_id" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" />
-   <field name="raw_taxon_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="raw_common_name" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="rank_id" type="int" indexed="false" stored="true" multiValued="false"  />
+   <field name="raw_taxon_name" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="raw_common_name" type="string" indexed="true" stored="true" multiValued="false"  />
 
-   <field name="multimedia" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false"/>
-   <field name="image_url" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false"/>
-   <field name="species_group" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false"/>
+   <field name="multimedia" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="image_url" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="species_group" type="string" indexed="true" stored="true" multiValued="true" />
 
    <!-- Not displayed in search resutls -->
    <!-- field name="raw_author" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
-   <field name="country_code" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="country" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="lft" type="int" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="rgt" type="int" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="country_code" type="string" indexed="true" stored="true" multiValued="false"  />
+   <field name="country" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="lft" type="int" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="rgt" type="int" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <!-- Not necessary for searches and not displayed in results -->
    <!-- field name="kingdom_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" / -->
-   <field name="kingdom" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="kingdom" type="string" indexed="true" stored="true" multiValued="false" />
    <!-- Not necessary for searches and not displayed in results -->
    <!-- field name="phylum_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" / -->
-   <field name="phylum" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="phylum" type="string" indexed="true" stored="true" multiValued="false"  />
    
    <!-- Not necessary for searches and not displayed in results -->
    <!-- field name="class_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" / -->
-   <field name="class" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="class" type="string" indexed="true" stored="true" multiValued="false"/>
    
    <!-- Not necessary for searches and not displayed in results -->
    <!-- field name="order_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" / -->
-   <field name="order" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="order" type="string" indexed="true" stored="true" multiValued="false"/>
    
    <!-- Not necessary for searches and not displayed in results -->
    <!-- field name="family_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" /-->
-   <field name="family" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="family" type="string" indexed="true" stored="true" multiValued="false" />
    
    <!-- Not necessary for searches and not displayed in results -->
    <!-- field name="genus_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" / -->
-   <field name="genus" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="genus" type="string" indexed="true" stored="true" multiValued="false" />
    
    
-   <field name="species_guid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="species" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="species_guid" type="string" indexed="true" stored="true" multiValued="false"  />
+   <field name="species" type="string" indexed="true" stored="true" multiValued="false"  />
    
    <!-- Not actually being used in the search -->
    <!-- field name="geo_regions" type="text_ws" indexed="true" stored="true" multiValued="true" omitNorms="false" / -->
-   <field name="state" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="imcra" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="ibra" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="places" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="latitude" type="double" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="longitude" type="double" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="coordinate_uncertainty" type="double" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="state" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="imcra" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="ibra" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="places" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="latitude" type="double" indexed="true" stored="true" multiValued="false" />
+   <field name="longitude" type="double" indexed="true" stored="true" multiValued="false" />
+   <field name="coordinate_uncertainty" type="double" indexed="true" stored="true" multiValued="false" />
    <!-- Not displayed in search results -->
    <!-- field name="lat_long_precision" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" /-->
    <!-- <field name="lat_long" type="location" indexed="true" stored="true"/> Requires SOLR 1.5 -->
@@ -612,18 +612,18 @@
    <field name="centi_cell_id" type="int" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="tenmilli_cell_id" type="int" indexed="true" stored="true" multiValued="false" omitNorms="false" /-->
    
-   <field name="year" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="month" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="year" type="string" indexed="true" stored="true" multiValued="false"  />
+   <field name="month" type="string" indexed="true" stored="true" multiValued="false"  />
    <!-- Not displayed in search results -->
    <!-- field name="basis_of_record_id" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
-   <field name="basis_of_record" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="raw_basis_of_record" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="basis_of_record" type="string" indexed="true" stored="true" multiValued="false"  />
+   <field name="raw_basis_of_record" type="string" indexed="true" stored="true" multiValued="false"  />
    <!-- Not displayed in search results -->
    <!-- field name="raw_basis_of_record" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
-   <field name="type_status" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   <field name="raw_type_status" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="type_status" type="string" indexed="true" stored="true" multiValued="false"  />
+   <field name="raw_type_status" type="string" indexed="true" stored="true" multiValued="false"  />
 
-   <field name="collector" type="string" indexed="true" stored="false" multiValued="false" omitNorms="false" />
+   <field name="collector" type="string" indexed="true" stored="false" multiValued="false"  />
 
 
    <!-- Not displayed in search results -->
@@ -635,23 +635,23 @@
    <field name="taxonomic_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="geospatial_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="sensitive" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
-   <field name="assertions" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false" />
-   <field name="user_assertions" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
-   <field name="system_assertions" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="assertions" type="string" indexed="true" stored="true" multiValued="true"  />
+   <field name="user_assertions" type="string" indexed="true" stored="true" multiValued="false"  />
+   <field name="system_assertions" type="string" indexed="true" stored="true" multiValued="false"  />
   
    <!-- Not displayed in search results -->   
    <!-- field name="created_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="modified_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
    <!-- This is for Citzen Science records only -->
-   <!-- field name="user_id" type="string_lowercase" indexed="true" stored="true" multiValued="false" omitNorms="false" / -->
+   <field name="user_id" type="string_lowercase" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    
    <!-- Not displayed in search results -->
    <!--field name="generalised_metres" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" / >
    <field name="geodetic_datum" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="individual_count" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" /-->
    <!-- used for remarks searching -->
-   <field name="location_remarks" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
-   <field name="occurrence_remarks" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
+   <field name="location_remarks" type="string" indexed="false" stored="false" multiValued="false" omitNorms="false" />
+   <field name="occurrence_remarks" type="string" indexed="false" stored="false" multiValued="false" omitNorms="false" />
    <field name="citation" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    
    <!-- I don't think that we need this field - we can always add it later. -->
@@ -664,9 +664,10 @@
         via copyField further on in this schema  -->
    <field name="text" type="text" indexed="true" stored="false" multiValued="true"/>
    <field name="rem_text" type="text" indexed="true" stored="false" multiValued="true"/>
-   <field name="record_type" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="record_type" type="string" indexed="true" stored="true" multiValued="false"  />
    <field name="lsid" type="string" indexed="true" stored="false" multiValued="false"/>
    <field name="biogeographic_region" type="string" indexed="true" stored="true" multiValued="true" />
+   <field name="raw_name" type="string_lowercase" indexed="true" stored="false" multiValued="true" omitNorms="true" />
 
    <!-- Some ALA dynamic fields -->
    <dynamicField name="*_id"  type="string" indexed="true" stored="true"/>
@@ -677,8 +678,8 @@
    <dynamicField name="*_uid" type="string" indexed="true" stored="true"/>
    <!--  catches all the environment and contextual layers that are being indexed -->
    <!-- They are being stored just in case they need to be faceted on -->
-   <dynamicField name="el*" type="double" indexed="true" stored="false"/>
-   <dynamicField name="cl*" type="string" indexed="true" stored="true"/>
+   <dynamicField name="el*" type="double" indexed="true" stored="false" omitNorms="true" />
+   <dynamicField name="cl*" type="string" indexed="true" stored="true" omitNorms="true" />
 
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
         leading wildcard queries. -->
@@ -711,6 +712,8 @@
    <copyField source="catalogue_number" dest="text"/>
    <copyField source="taxon_name" dest="text"/>
    <copyField source="raw_taxon_name" dest="text" />
+   <copyField source="raw_taxon_name" dest="raw_name" />
+   <copyField source="raw_common_name" dest="raw_name" />
    <!--  This copy field is not in use anywhere -->
    <!--copyField source="taxon_name" dest="taxon_name_text"/-->
    <copyField source="common_name" dest="text"/>
