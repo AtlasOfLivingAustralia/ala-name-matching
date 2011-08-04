@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jms="http://www.springframework.org/schema/jms"
+       xmlns:amq="http://activemq.apache.org/schema/core"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+				           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+				           http://www.springframework.org/schema/context
+				           http://www.springframework.org/schema/context/spring-context-3.0.xsd
+                           http://www.springframework.org/schema/jms 
+                           http://www.springframework.org/schema/jms/spring-jms.xsd
+                           http://activemq.apache.org/schema/core 
+                           http://activemq.apache.org/schema/core/activemq-core.xsd">
+ 
+    <context:component-scan base-package="org.ala.jms" />
+  
+    <!--  ActiveMQ Destination  -->
+    <amq:queue id="destination" physicalName="org.ala.jms.cs" />
+
+	<!-- jms listener -->
+    <bean id="jmsMessageListener" class="org.ala.jms.service.JmsMessageListener" />
+    
+  <bean id="jmsConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+  	<property name="brokerURL" value="tcp://localhost:61616" />    
+    <!-- <property name="brokerURL" value="tcp://ala-biocachedb1.vm.csiro.au:61616" /> -->
+    <!-- <property name="brokerURL" value="tcp://ala-biocache1.vm.csiro.au:61616" /> -->
+    <!-- start up active with security enabled: activemq xbean:activemq-security.xml -->
+    <!-- see C:\tools\apache-activemq-5.4.1\conf\credentials.properties and activemq-security.xml -->
+    <property name="userName" value="system" />
+    <property name="password" value="manager" />
+  </bean>
+
+  <bean id="pooledJmsConnectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory"
+    destroy-method="stop">
+    <property name="connectionFactory" ref="jmsConnectionFactory" />
+  </bean>
+ 	
+    <!-- JMS Producer Configuration -->
+    <!-- 
+    <bean id="jmsProducerTemplate" class="org.springframework.jms.core.JmsTemplate"
+          p:connectionFactory-ref="pooledJmsConnectionFactory"
+          p:defaultDestination-ref="destination" />
+	 -->
+	 
+    <!-- DefaultMessageListenerContainer (DMLC): JMS Consumer Configuration -->        
+    <jms:listener-container container-type="default" 
+                            connection-factory="pooledJmsConnectionFactory"
+                            acknowledge="auto">
+    	<jms:listener destination="org.ala.jms.cs" ref="jmsMessageListener" />
+    </jms:listener-container>    
+    
+</beans>
