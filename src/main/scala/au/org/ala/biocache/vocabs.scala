@@ -2,6 +2,7 @@ package au.org.ala.biocache
 
 import reflect.BeanProperty
 import au.org.ala.util.Stemmer
+import scala.collection.JavaConversions
 
 /** Case class that encapsulates a canonical form and variants. */
 class Term (@BeanProperty val canonical:String, @BeanProperty rawVariants:Array[String]){
@@ -21,8 +22,13 @@ object Term {
  * of Terms, each with string variants.
  */
 trait Vocab {
+  
+  import JavaConversions._
 
   val all:Set[Term]
+  
+  def getStringList : java.util.List[String] = all.map(t => t.canonical).toList.sort((x,y) => x.compare(y) < 0)
+  
   /**
    * Match a term. Matches canonical form or variants in array
    * @param string2Match
@@ -210,9 +216,14 @@ object TypeStatus extends Vocab {
  */
 trait VocabMaps {
 
+  import JavaConversions._
+  
   /** The map of terms to query against */
   val termMap:Map[String, Array[String]]
 
+  /** retrieve a java friendly string list of the canonicals */
+  def getStringList : java.util.List[String] = termMap.keys.toList.sort((x,y) => x.compare(y) < 0)
+  
   /**
    * Compares the supplied term to an array of options
    * for compatibility.
@@ -277,17 +288,20 @@ object HabitatMap extends VocabMaps {
     "LIMNETIC" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC")
   )
 }
-/**
- * Case class that stores the information required to map a species to its
- * associated groups
- */
+ /**
+  * Case class that stores the information required to map a species to its
+  * associated groups
+  */
   case class SpeciesGroup(name:String, rank:String, values:Array[String], parent:String)
 
   /**
    * The species groups to test classifications against
    */
-  object SpeciesGroups{
+  object SpeciesGroups {
     import au.org.ala.util.ReflectBean._
+    
+    import JavaConversions._
+    
     val groups = List(
      SpeciesGroup("Animals", "kingdom", Array("Animalia"), null),
      SpeciesGroup("Mammals", "classs", Array("Mammalia"), "Animals"),
@@ -305,8 +319,11 @@ object HabitatMap extends VocabMaps {
      SpeciesGroup("Protozoa", "kingdom", Array("Protozoa"), null),
      SpeciesGroup("Bacteria", "kingdom", Array("Bacteria"), null)
     )
+    
+    def getStringList : java.util.List[String] = groups.map(g => g.name).toList.sort((x,y) => x.compare(y) < 0)
+    
     /**
-     * Returns all the species groups to which supplied classificatoin belongs
+     * Returns all the species groups to which supplied classification belongs
      */
     def getSpeciesGroups(cl:Classification):Option[List[String]]={
       val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(cl.getter(sg.rank)) => sg.name}
