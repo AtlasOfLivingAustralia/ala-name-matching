@@ -17,6 +17,7 @@ package org.ala.biocache.web;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.zip.ZipOutputStream;
 
 import javax.inject.Inject;
@@ -100,6 +101,12 @@ public class OccurrenceController {
 	protected String citationServiceUrl = collectoryBaseUrl + "/ws/citations";
 	protected String summaryServiceUrl  = collectoryBaseUrl + "/ws/summary";
 	
+	/** The response to be returned for the isAustralian test */
+	private final String NOT_AUSTRALIAN = "Not Australian";
+	private final String AUSTRALIAN_WITH_OCC = "Australian with occurrences";
+	private final String AUSTRALIAN_LSID = "Australian based on LSID";
+	protected Pattern austLsidPattern = Pattern.compile("urn:lsid:biodiversity.org.au[a-zA-Z0-9\\.:-]*");
+	
 	/**
 	 * Custom handler for the welcome view.
 	 * <p>
@@ -121,6 +128,29 @@ public class OccurrenceController {
 	public @ResponseBody String[] listAllFacets() {
 	    String[] facets = new SearchRequestParams().getFacets();
 	    return facets;
+	}
+	/**
+	 * Checks to see if the supplied GUID represents an Australian species.
+	 * @param guid
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/australian/taxon/{guid:.+}*")
+	public @ResponseBody String isAustralian(@PathVariable("guid") String guid) throws Exception {
+	    //check to see if we have any accurrences on Australia  country:Australia or state != empty
+	    SearchRequestParams requestParams = new SearchRequestParams();
+	    requestParams.setPageSize(0);
+	    requestParams.setFacets(new String[]{});
+	    String query = "lsid:" +guid + " AND " + "(country:Australia OR state:[* TO *])";
+	    requestParams.setQ(query);
+	    SearchResultDTO results = searchDAO.findByFulltextQuery(requestParams);
+	    if(results.getTotalRecords() > 0)
+	        return AUSTRALIAN_WITH_OCC;
+	    //now check to see if the LSID comes of the NSL
+	    if(austLsidPattern.matcher(guid).matches())
+	        return AUSTRALIAN_LSID;
+	    
+	    return NOT_AUSTRALIAN;
 	}
 
 	/**
