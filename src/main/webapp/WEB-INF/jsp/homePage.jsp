@@ -89,6 +89,13 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             <a href="/ws/breakdown/dataHubs/dh1?rank=phylum&name=Chordata">/breakdown/dataHubs/dh1?rank=phylum&name=Chordata</a>
             </li>
         </ul>
+        
+        <h3>Miscellaneous</h3>
+        <ul>
+        	<li><strong>Is Australian test:</strong> /australian/taxon/{guid} - tests to see if the supplied GUID; occurs in Australia, has an Australian LSID or is NOT Australian. Example:<br>
+        	<a href="/ws/australian/taxon/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537">/ws/australian/taxon/urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537</a>
+        	</li>
+        </ul>
 
         <h2>Free text search of occurrence records (will return JSON)</h2>
 		<div id="inpage_search">
