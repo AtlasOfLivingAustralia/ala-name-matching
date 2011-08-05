@@ -56,7 +56,7 @@ public class SearchRequestParams {
     /*
      * The limit for the number of facets to return 
      */
-    protected Integer flimit=30;
+    protected Integer flimit = 30;
     protected Integer pageSize = 10;
     protected String sort = "score";
     protected String dir = "asc";
@@ -84,6 +84,8 @@ public class SearchRequestParams {
         //
         if(facets.length > 0)
             req.append("&facets=").append(StringUtils.join(facets, "&facets="));
+        if (flimit != 30) 
+            req.append("&flimit=").append(flimit);
         return req.toString();
     }
 
