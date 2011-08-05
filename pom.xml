@@ -177,5 +177,12 @@
             <url>http://repository.springsource.com/maven/bundles/milestone</url>
         </repository>
     </repositories>
-
+    
+	<distributionManagement>
+	    <downloadUrl>https://maven.ala.org.au/repository</downloadUrl>
+	    <repository>
+	      <id>ala-repository</id>
+	      <url>${ala.repository.url}</url>
+	    </repository>
+	</distributionManagement>
 </project>

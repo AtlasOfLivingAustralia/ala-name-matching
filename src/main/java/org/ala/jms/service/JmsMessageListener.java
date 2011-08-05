@@ -129,6 +129,10 @@ public class JmsMessageListener implements MessageListener {
 	
 	private FullRecord populateFullRecord(CitizenScience sighting){
     	FullRecord fullRecord = new FullRecord();
+    	if(sighting == null){
+    		return fullRecord;
+    	}
+    	
     	//keys
     	fullRecord.setRowKey(CITIZEN_SCIENCE_DRUID + "|" + sighting.getGuid());    	
     	fullRecord.occurrence().setOccurrenceID(sighting.getGuid());
@@ -139,7 +143,16 @@ public class JmsMessageListener implements MessageListener {
     	fullRecord.classification().setVernacularName(sighting.getVernacularName());
     	fullRecord.classification().setTaxonConceptID(sighting.getTaxonConceptGuid());
     	
-    	fullRecord.occurrence().setAssociatedMedia(sighting.getAssociatedMedia()[0]);
+    	if(sighting.getAssociatedMedia() != null){
+    		StringBuffer urls = new StringBuffer();
+    		for(int i = 0; i < sighting.getAssociatedMedia().length; i++){
+    			urls.append(sighting.getAssociatedMedia()[i]);
+    			if(i < (sighting.getAssociatedMedia().length - 1)){
+    				urls.append(", ");
+    			}
+    		}
+    		fullRecord.occurrence().setAssociatedMedia(urls.toString());
+    	}
     	fullRecord.occurrence().setIndividualCount("" + sighting.getIndividualCount());
     	fullRecord.occurrence().setOccurrenceRemarks(sighting.getOccurrenceRemarks());
     	
