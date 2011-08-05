@@ -616,12 +616,25 @@ class Location extends Cloneable with Mappable with POSO {
 //  @BeanProperty var environmentalLayers:EnvironmentalLayers =new EnvironmentalLayers
 //  @BeanProperty var contextualLayers:ContextualLayers = new ContextualLayers
   //fields that need be hidden from all public API
-  @BeanProperty @JsonIgnore var originalDecimalLatitude:String =_
-  @BeanProperty @JsonIgnore var originalDecimalLongitude:String =_
-  @BeanProperty @JsonIgnore var originalLocality:String =_
+  //These fields can NOT be @BeanProperty because we need the getter method to have a @JsonIgnore annotation
+  var originalDecimalLatitude:String =_
+  var originalDecimalLongitude:String =_
+  var originalLocality:String =_
 
   override def toString = ToStringBuilder.reflectionToString(this)
 
+  @JsonIgnore
+  def getOriginalDecimalLatitude():String = originalDecimalLatitude
+  def setOriginalDecimalLatitude(decimalLatitude:String)=this.originalDecimalLatitude = decimalLatitude
+  
+  @JsonIgnore
+  def getOriginalDecimalLongitude():String = originalDecimalLongitude
+  def setOriginalDecimalLongitude(decimalLongitude:String)= this.originalDecimalLongitude = decimalLongitude
+  
+  @JsonIgnore
+  def getOriginalLocality():String = originalLocality
+  def setOrginalLocality(locality:String) = this.originalLocality = locality
+  
   @JsonIgnore
   def getMap():java.util.Map[String,String]={
     val map =Map[String,String]("uuid"->uuid, "continent"->continent, "coordinatePrecision"->coordinatePrecision,

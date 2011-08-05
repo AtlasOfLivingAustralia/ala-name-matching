@@ -3,6 +3,7 @@ package au.org.ala.util
 import collection.mutable.ArrayBuffer
 import org.slf4j.LoggerFactory
 import au.org.ala.biocache._
+import org.apache.commons.lang.StringUtils
 
 /**
  * 1. Classification matching
@@ -148,7 +149,11 @@ class RecordProcessor {
             location.decimalLatitude = raw.location.decimalLatitude
             location.decimalLongitude = raw.location.decimalLongitude
             occurrenceDAO.updateOccurrence(guid, location, Versions.RAW)
-        }
+            //remove the decimal coordinates if there are no processed coordinates (indicates informationWithheld)
+            if(StringUtils.isEmpty(processed.location.decimalLatitude) && StringUtils.isEmpty(processed.location.decimalLongitude)){
+                Config.persistenceManager.deleteColumns(guid, "occ", "decimalLatitude", "decimalLongitude");
+            }
+        } 
 	  
   }
 

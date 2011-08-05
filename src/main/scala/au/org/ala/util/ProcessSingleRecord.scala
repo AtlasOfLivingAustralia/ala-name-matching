@@ -18,7 +18,7 @@ object ProcessSingleRecord {
             }
             if(!rawRecord.isEmpty) {
                println("Processing record.....")
-               processor.processRecord(rawRecord.get)
+               processor.processRecordAndUpdate(rawRecord.get)
                val processedRecord = Config.occurrenceDAO.getByUuid(rawRecord.get.uuid, au.org.ala.biocache.Processed)
                val objectMapper = new ObjectMapper
                println(objectMapper.writeValueAsString(processedRecord.get))
