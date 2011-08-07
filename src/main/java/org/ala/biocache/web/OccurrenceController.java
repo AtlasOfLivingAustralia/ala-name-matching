@@ -30,6 +30,7 @@ import org.ala.biocache.*;
 import org.ala.biocache.dao.SearchDAO;
 import org.ala.biocache.dto.DownloadRequestParams;
 import org.ala.biocache.dto.store.OccurrenceDTO;
+import org.ala.biocache.dto.FieldResultDTO;
 import org.ala.biocache.dto.SearchQuery;
 import org.ala.biocache.dto.SearchResultDTO;
 import org.ala.biocache.util.SearchUtils;
@@ -130,6 +131,31 @@ public class OccurrenceController {
 	    return facets;
 	}
 	/**
+	 * Returns a list of image urls for the supplied taxon guid. 
+	 * An empty list is returned when no images are available.
+	 * 
+	 * @param guid
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/images/taxon/{guid:.+}*")
+	public @ResponseBody List<String> getImages(@PathVariable("guid") String guid) throws Exception {
+	    SearchRequestParams srp = new SearchRequestParams();
+	    srp.setQ("lsid:" + guid);
+	    srp.setPageSize(0);
+	    srp.setFacets(new String[]{"image_url"});
+	    SearchResultDTO results = searchDAO.findByFulltextQuery(srp);
+	    if(results.getFacetResults().size()>0){
+	        List<FieldResultDTO> fieldResults =results.getFacetResults().iterator().next().getFieldResult();
+	        ArrayList<String> images = new ArrayList<String>(fieldResults.size());
+	        for(FieldResultDTO fr : fieldResults)
+	            images.add(fr.getLabel());
+	        return images;
+	    }
+	    return Collections.EMPTY_LIST;
+	}
+	
+	/**
 	 * Checks to see if the supplied GUID represents an Australian species.
 	 * @param guid
 	 * @return
@@ -137,7 +163,7 @@ public class OccurrenceController {
 	 */
 	@RequestMapping(value="/australian/taxon/{guid:.+}*")
 	public @ResponseBody String isAustralian(@PathVariable("guid") String guid) throws Exception {
-	    //check to see if we have any accurrences on Australia  country:Australia or state != empty
+	    //check to see if we have any occurrences on Australia  country:Australia or state != empty
 	    SearchRequestParams requestParams = new SearchRequestParams();
 	    requestParams.setPageSize(0);
 	    requestParams.setFacets(new String[]{});
