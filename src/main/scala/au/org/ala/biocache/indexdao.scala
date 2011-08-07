@@ -143,7 +143,7 @@ trait IndexDAO {
             "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
             "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
             "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
-            "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation","sensitive", "coordinate_uncertainty") ++ elFields ++ clFields
+            "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation","sensitive", "coordinate_uncertainty","user_id") ++ elFields ++ clFields
 //    def getHeaderValues(): List[String] = {
 //        List("id", "occurrence_id", "data_hub_uid", "data_hub", "data_provider_uid", "data_provider", "data_resource_uid",
 //            "data_resource", "institution_uid", "institution_code", "institution_name",
@@ -304,7 +304,8 @@ trait IndexDAO {
                     getValue("genus.p", map),
                     getValue("species.p", map),
                     getValue("speciesID.p",map),
-                    getValue("stateProvince.p", map),
+                    //use the raw state if no processed state exists
+                    map.getOrElse("stateProvince.p", map.getOrElse("stateProvince","")),                    
                     getValue("imcra.p", map),
                     getValue("ibra.p", map),
                     getValue("lga.p", map),
@@ -335,7 +336,8 @@ trait IndexDAO {
                     stateCons,
                     rawStateCons,
                     sensitive,
-                    getValue("coordinateUncertaintyInMeters.p",map)
+                    getValue("coordinateUncertaintyInMeters.p",map),
+                    map.getOrElse("recordedBy", "")
                     
                     
 //                    getValue("mean_temperature_cars2009a_band1.p", map),
