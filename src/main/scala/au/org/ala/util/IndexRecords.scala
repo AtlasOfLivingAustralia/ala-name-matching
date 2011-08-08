@@ -4,6 +4,7 @@ import java.util.ArrayList
 import org.slf4j.LoggerFactory
 import au.org.ala.biocache._
 import java.io.File
+import java.util.Date
 
 /**
  * Index the Cassandra Records to conform to the fields
@@ -24,10 +25,12 @@ import FileHelper._
 
     var dataResource:Option[String] = None
     var empty:Boolean =false
+    var startDate:Option[String]=None
     val parser = new OptionParser("index records options") {
         opt("empty", "empty the index first", {empty=true})
         opt("s", "start","The record to start with", {v:String => startUuid = Some(v)})
         opt("dr", "resource", "The data resource to process", {v:String =>dataResource = Some(v)})
+        opt("date", "date", "The earliest modification date for records to be indexed. Date in the form yyyy-mm-dd",{v:String => startDate = Some(v)})
     }
 
     if(parser.parse(args)){
@@ -35,13 +38,12 @@ import FileHelper._
         if(empty){
            logger.info("Emptying index")
            indexer.emptyIndex
-        }
-
-        index(startUuid, dataResource, false, false)
+        }        
+        index(startUuid, dataResource, false, false, startDate)
      }
   }
 
-  def index(startUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false)={
+  def index(startUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false, startDate:Option[String]=None)={
 
         val startKey = {
             if(startUuid.isEmpty && !dataResource.isEmpty) {
@@ -50,17 +52,25 @@ import FileHelper._
                 startUuid.get
             }
         }
+        
+        
+        var date:Option[Date]=None        
+        if(!startDate.isEmpty){
+            date = DateParser.parseStringToDate(startDate.get +" 00:00:00")
+            if(date.isEmpty)
+                throw new Exception("Date is in incorrect format. Try yyyy-mm-dd")
+        }
 
         val endKey = if(dataResource.isEmpty) "" else dataResource.get +"|~"
         logger.info("Starting to index " + startKey + " until " + endKey)
-        indexRange(startKey, endKey)
+        indexRange(startKey, endKey, date)
         //index any remaining items before exiting
         indexer.finaliseIndex(optimise, shutdown)
 
   }
 
 
-  def indexRange(startUuid:String, endUuid:String)={
+  def indexRange(startUuid:String, endUuid:String, startDate:Option[Date]=None)={
     var counter = 0
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
@@ -68,7 +78,7 @@ import FileHelper._
     var items = new ArrayList[OccurrenceIndex]()
     persistenceManager.pageOverAll("occ", (guid, map)=> {
         counter += 1
-        indexer.indexFromMap(guid, map)
+        indexer.indexFromMap(guid, map,startDate=startDate)
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
           logger.info(counter + " >> Last key : " + guid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
