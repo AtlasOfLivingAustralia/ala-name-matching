@@ -12,7 +12,7 @@ object EnvironmentLoader {
 
     private val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
-    private val nonDefaultFieldMap = Map[String, String]("aus1" -> "stateProvince", "aus2" -> "lga", "ibra_reg_shape" -> "ibra", "imcra4_pb" -> "imcra", "ne_world" -> "country")
+    private val nonDefaultFieldMap = Map[String, String]("aus1" -> "stateProvince", "aus2" -> "lga", "ibra_reg_shape" -> "ibra", "ibra_merged" -> "ibra", "imcra4_pb" -> "imcra", "ne_world" -> "country")
 
     //TODO Move this name mapping so that the biocache-service can use it to map layers to indexed items
     private val fieldMap = fileToMap("/layers.txt")
@@ -62,7 +62,17 @@ object EnvironmentLoader {
         persistenceManager.shutdown
     }
     
-    def getFieldName(name: String) = fieldMap.getOrElse(name, name)
+    def getFieldName(name: String) = {
+      val fn = fieldMap.get(name)
+      if(fn.isEmpty){
+            println("Warning unable to locate a field name for : " + name)
+            name
+      }
+        else{
+            fn.get
+        }
+
+    }
     
     def processFile(fileName: String, fieldName: String) = {
         import FileHelper._
