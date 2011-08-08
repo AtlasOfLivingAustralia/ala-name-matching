@@ -5,7 +5,7 @@ import org.scale7.cassandra.pelops.{ Bytes, Pelops }
 import org.apache.cassandra.thrift.{ ConsistencyLevel, InvalidRequestException, CfDef }
 import scala.Array._
 import au.com.bytecode.opencsv.CSVWriter
-import java.io.PrintWriter
+import java.io.{FileWriter, FileOutputStream, PrintWriter, File}
 
 /**
  * Utility for exporting data from the biocache.
@@ -17,22 +17,20 @@ object ExportUtil {
     var fieldsToExport = List[String]()
     var fieldsRequired = List[String]()
     var entity = ""
+    var filePath = ""
     var maxRecords = Integer.MAX_VALUE
     //var filePath:Option[String] = None
 
     val parser = new OptionParser("export") {
       arg("<entity>", "the entity (column family in cassandra) to export from", { v: String => entity = v })
+      arg("<file-path>", "file to export to", { v: String => filePath = v })
       opt("c", "columns", "<column1 column2 ...>", "space separated list of columns to export", { columns: String => fieldsToExport = columns.split(" ").toList })
       opt("r", "required-columns", "<column1 column2 ...>", "space separated required columns", { columns: String => fieldsRequired = columns.split(" ").toList })
       intOpt("m", "max-records", "number of records to export", { v: Int => maxRecords = v })
     }
 
     if (parser.parse(args)) {
-
-      val outWriter = {
-        new PrintWriter(System.out)
-      }
-
+      val outWriter = new FileWriter(new File(filePath))
       val writer = new CSVWriter(outWriter, '\t', '"')
       export(writer, entity, fieldsToExport, fieldsRequired, maxRecords)
       writer.flush
