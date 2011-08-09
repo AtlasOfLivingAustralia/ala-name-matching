@@ -21,8 +21,9 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             <li><strong>Occurrence for taxon:</strong> /occurrences/taxon/{guid}</li>
             <li><strong>Occurrence for collection:</strong> /occurrences/collections/{uid}</li>
             <li><strong>Occurrence for institution:</strong> /occurrences/institutions/{uid}</li>
-            <li><strong>Occurrence for data resource:</strong> /occurrences/data-resources/{uid}</li>
-            <li><strong>Occurrence for data provider:</strong> /occurrences/data-providers/{uid}</li>
+            <li><strong>Occurrence for data resource:</strong> /occurrences/dataResources/{uid}</li>
+            <li><strong>Occurrence for data provider:</strong> /occurrences/dataProviders/{uid}</li>
+            <li><strong>Occurrence for data hub:</strong> /occurrences/dataHubs/{uid}</li>
             <li><strong>Occurrence download:</strong> /occurrences/download - needs request param definition<br>
             The download will include all records that satisfy the q and fq parameters.  The number of records 
             for a data resource may be restricted based on a collectory configured download limit.  Params:

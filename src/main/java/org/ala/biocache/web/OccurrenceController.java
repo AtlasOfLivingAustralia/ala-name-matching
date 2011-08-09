@@ -182,7 +182,7 @@ public class OccurrenceController {
 	/**
 	 * Returns the complete list of Occurrences
 	 */
-	@RequestMapping(value = {"/occurrences", "/occurrences/collections", "/occurrences/institutions", "/occurrences/data-resources", "/occurrences/data-providers", "/occurrences/taxa", "/occurrences/data-hubs"}, method = RequestMethod.GET)
+	@RequestMapping(value = {"/occurrences", "/occurrences/collections", "/occurrences/institutions", "/occurrences/dataResources", "/occurrences/dataProviders", "/occurrences/taxa", "/occurrences/dataHubs"}, method = RequestMethod.GET)
 	public @ResponseBody SearchResultDTO listOccurrences(Model model) throws Exception {
             SearchRequestParams srp = new SearchRequestParams();
             srp.setQ("*:*");
@@ -256,7 +256,7 @@ public class OccurrenceController {
      * @throws Exception
      */
     @RequestMapping(value = {"/occurrences/collections/{uid}", "/occurrences/institutions/{uid}",
-                             "/occurrences/data-resources/{uid}", "/occurrences/data-providers/{uid}", "/occurrences/data-hubs/{uid}"}, method = RequestMethod.GET)
+                             "/occurrences/dataResources/{uid}", "/occurrences/dataProviders/{uid}", "/occurrences/dataHubs/{uid}"}, method = RequestMethod.GET)
     public @ResponseBody SearchResultDTO occurrenceSearchForUID(
             SearchRequestParams requestParams,
             @PathVariable("uid") String uid,
@@ -518,6 +518,18 @@ public class OccurrenceController {
 		logger.debug("Retrieving occurrence record with guid: '"+uuid+"'");
 
         FullRecord[] fullRecord = Store.getAllVersionsByUuid(uuid);
+        if(fullRecord == null){
+            //get the rowKey for the supplied uuid in the index
+            //This is a workaround.  There seems to be an issue on Cassandra with retrieving uuids that start with e or f
+            SearchRequestParams srp = new SearchRequestParams();
+            srp.setQ("id:"+uuid);
+            srp.setPageSize(1);
+            srp.setFacets(new String[]{});
+            SearchResultDTO results = occurrenceSearch(srp, model);
+            if(results.getTotalRecords()>0)
+                fullRecord = Store.getAllVersionsByRowKey(results.getOccurrences().get(0).getRowKey());
+            
+        }
         if(fullRecord == null){
             //check to see if we have an occurrence id
             SearchRequestParams srp = new SearchRequestParams();
