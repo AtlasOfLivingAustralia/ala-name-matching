@@ -670,6 +670,7 @@ class OccurrenceIndex extends Cloneable with Mappable with POSO {
   import JavaConversions._
   override def clone : OccurrenceIndex = super.clone.asInstanceOf[OccurrenceIndex]
   @BeanProperty @Field("id") var uuid:String =_
+  @BeanProperty @Field("row_key") var rowKey:String =_
   @BeanProperty @Field("occurrence_id") var occurrenceID:String =_
   //processed values
   @BeanProperty @Field("data_hub_uid") var dataHubUid:Array[String] =_
