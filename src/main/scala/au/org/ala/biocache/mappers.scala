@@ -13,6 +13,8 @@ object FullRecordMapper {
     val userQualityAssertionColumn = "userQualityAssertion"
     val geospatialDecisionColumn = "geospatiallyKosher"
     val taxonomicDecisionColumn = "taxonomicallyKosher"
+    val locationDeterminedColumn ="locationDetermined"
+    val defaultValuesColumn = "defaultValuesUsed"    
     val alaModifiedColumn = "lastModifiedTime"
     val deletedColumn = "deleted"
     val geospatialQa = "loc"
@@ -110,6 +112,8 @@ object FullRecordMapper {
                     }
                     case it if taxonomicDecisionColumn.equals(it) => fullRecord.taxonomicallyKosher = "true".equals(fieldValue) 
                     case it if geospatialDecisionColumn.equals(it) => fullRecord.geospatiallyKosher = "true".equals(fieldValue)
+                    case it if defaultValuesColumn.equals(it) => fullRecord.defaultValuesUsed = "true".equals(fieldValue)
+                    case it if locationDeterminedColumn.equals(it) => fullRecord.locationDetermined ="true".equals(fieldValue)
                     case it if deletedColumn.equals(it) => fullRecord.deleted = "true".equals(fieldValue)
                     case it if isProcessedValue(fieldName) && version == Processed => fullRecord.setProperty(removeSuffix(fieldName), fieldValue)
                     case it if version == Raw => fullRecord.setProperty(fieldName, fieldValue)

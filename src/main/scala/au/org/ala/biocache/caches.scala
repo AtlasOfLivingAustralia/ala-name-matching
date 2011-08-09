@@ -13,6 +13,7 @@ import scala.io.Source
 import org.slf4j.LoggerFactory
 import java.net.URLEncoder
 import scalaj.http.Http
+import scala.collection.JavaConversions
 
 /**
  * A DAO for accessing classification information in the cache. If the
@@ -193,7 +194,7 @@ object TaxonProfileDAO {
 object AttributionDAO {
 
   import ReflectBean._
-  
+  import JavaConversions._
   var collectoryURL ="http://collections.ala.org.au"
   private val columnFamily = "attr"
   //can't use a scala hashap because missing keys return None not null...
@@ -272,6 +273,8 @@ object AttributionDAO {
     val dpname = if(dp != null) dp.get("name") else null
     val dpuid = if(dp != null) dp.get("uid") else null
     val hasColl = wsmap.getOrElse("hasMappedCollections", false).asInstanceOf[Boolean]
+    //the default DWC terms 
+    val defaultDwc = wsmap.getOrElse("defaultDarwinCoreValues", null)
     
 
     attribution.setDataResourceName(name)
@@ -280,6 +283,9 @@ object AttributionDAO {
     attribution.setDataHubUid(ahub)
     attribution.setTaxonomicHints(ahints)
     attribution.hasMappedCollections=hasColl
+    if(defaultDwc!= null){
+        attribution.setDefaultDwcValues(defaultDwc.asInstanceOf[java.util.LinkedHashMap[String,String]].toMap)
+    }
     Some(attribution)
     }
     catch{

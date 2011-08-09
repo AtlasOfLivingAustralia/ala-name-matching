@@ -859,10 +859,11 @@ class Attribution (
   @BeanProperty var institutionName:String,
   @BeanProperty var collectionName:String,
   @BeanProperty var citation:String,
-  @BeanProperty var taxonomicHints:Array[String])
+  @BeanProperty var taxonomicHints:Array[String],
+  @BeanProperty var defaultDwcValues:Map[String,String])
   extends Cloneable with Mappable with POSO {
   import JavaConversions._
-  def this() = this(null,null,null,null,null,null,null,null,null,null, null, null)
+  def this() = this(null,null,null,null,null,null,null,null,null,null, null, null, null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
   override def toString = ToStringBuilder.reflectionToString(this)
   // stores whether or not the data resource has collections associated with it
@@ -919,6 +920,8 @@ class FullRecord (
   @BeanProperty var environmentalLayers:EnvironmentalLayers,
   @BeanProperty var contextualLayers:ContextualLayers,
   @BeanProperty var assertions:Array[String],
+  @BeanProperty var locationDetermined:Boolean = false,
+  @BeanProperty var defaultValuesUsed:Boolean = false,
   @BeanProperty var geospatiallyKosher:Boolean = true,
   @BeanProperty var taxonomicallyKosher:Boolean = true,
   @BeanProperty var deleted:Boolean = false,

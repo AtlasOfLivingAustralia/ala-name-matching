@@ -30,4 +30,9 @@ class AttributionTests extends FunSuite{
         expect(0){qas.size}
     }
     
+    test("Default DWC Values in DR Lookup"){
+        val dr = AttributionDAO.getDataResourceFromWS("dr92")
+        expect("MachineObservation"){dr.get.getDefaultDwcValues()("basisOfRecord")}
+    }
+    
 }

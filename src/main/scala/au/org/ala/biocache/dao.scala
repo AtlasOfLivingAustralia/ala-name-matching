@@ -392,6 +392,8 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         //add the special cases to the map
         properties.put("uuid", fullRecord.uuid)
         properties.put("rowKey", fullRecord.rowKey)
+        properties.put(FullRecordMapper.defaultValuesColumn, fullRecord.defaultValuesUsed.toString)
+        properties.put(FullRecordMapper.locationDeterminedColumn, fullRecord.locationDetermined.toString)
         if(fullRecord.lastModifiedTime != "")
             properties.put(FullRecordMapper.markNameBasedOnVersion(FullRecordMapper.alaModifiedColumn, version), fullRecord.lastModifiedTime)
         properties
