@@ -43,6 +43,10 @@ object Store {
   def getAllVersionsByUuid(uuid: java.lang.String): Array[FullRecord] = {
     occurrenceDAO.getAllVersionsByUuid(uuid).getOrElse(null)
   }
+  
+  def getAllVersionsByRowKey(rowKey: java.lang.String) : Array[FullRecord]={
+      occurrenceDAO.getAllVersionsByRowKey(rowKey).getOrElse(null)
+  }
 
   /**
    * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
