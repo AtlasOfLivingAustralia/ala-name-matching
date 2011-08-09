@@ -27,7 +27,10 @@ public class JmsListenerService {
 
 	public static void main(String[] args) throws Exception {
 		long t = System.currentTimeMillis() + 5000;
-		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"activemq-context.xml"});
+		
+		System.out.println("Loading ClassPathXmlApplicationContext....... ");
+		
+		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("activemq-context.xml");
 		
 		System.out.println("ClassPathXmlApplicationContext: " + context);
 		// delay for pelpop client stating up

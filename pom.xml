@@ -135,21 +135,22 @@
 						<descriptor>src/assembly/assembly.xml</descriptor>
 					</descriptors>
 					<archive>
-						<manifest>
-							<mainClass>org.ala.jms.SpringClient</mainClass>
+						<manifest>							
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
+							<mainClass>org.ala.jms.service.JmsListenerService</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
 				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
+                    <execution>
+                    	<!-- goal=assembly; phase=install for generate classpath in manifest file -->
+                        <phase>install</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>								
 			</plugin>   
         </plugins>
     </build>
