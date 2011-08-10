@@ -111,14 +111,14 @@ public class BreakdownController {
 	 * @throws Exception
 	 */
 	private TaxaRankCountDTO performBreakdown(String source, String uid, BreakdownRequestParams requestParams) throws Exception{
-	    StringBuilder sb = new StringBuilder();
+	    StringBuilder sb = new StringBuilder("(");
 	    //support CSV list of uids
 	    for(String u:uid.split(",")){
-	        if(sb.length()>0)
+	        if(sb.length()>1)
 	            sb.append(" OR ");
 	        sb.append(source).append(":").append(u);
 	    }
-	    
+	    sb.append(")");
 	    
 	    if(requestParams.getMax() != null && requestParams.getMax() >0){
 	        /*
