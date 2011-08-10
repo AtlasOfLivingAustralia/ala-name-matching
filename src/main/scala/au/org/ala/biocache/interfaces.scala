@@ -45,8 +45,11 @@ object Store {
   }
   
   def getAllVersionsByRowKey(rowKey: java.lang.String) : Array[FullRecord]={
-      occurrenceDAO.getAllVersionsByRowKey(rowKey).getOrElse(null)
+    occurrenceDAO.getAllVersionsByRowKey(rowKey).getOrElse(null)
   }
+
+  //TODO need a better mechanism for doing this....
+  private val propertiesToHide = Set("originalDecimalLatitude","originalDecimalLongitude")
 
   /**
    * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
@@ -68,11 +71,13 @@ object Store {
         
         if (!rawPoso.isInstanceOf[ContextualLayers] && !rawPoso.isInstanceOf[EnvironmentalLayers]) {
           rawPoso.propertyNames.foreach(name => {
-            val rawValue = rawPoso.getProperty(name)
-            val procValue = procPoso.getProperty(name)
-            if (!rawValue.isEmpty || !procValue.isEmpty) {
-              val term = ProcessedValue(name, rawValue.getOrElse(""), procValue.getOrElse(""))
-              listBuff.add(term)
+            if(!propertiesToHide.contains(name)){
+              val rawValue = rawPoso.getProperty(name)
+              val procValue = procPoso.getProperty(name)
+              if (!rawValue.isEmpty || !procValue.isEmpty) {
+                val term = ProcessedValue(name, rawValue.getOrElse(""), procValue.getOrElse(""))
+                listBuff.add(term)
+              }
             }
           })
         }
