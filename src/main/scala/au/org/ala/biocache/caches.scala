@@ -7,13 +7,20 @@ package au.org.ala.biocache
 import au.org.ala.data.model.LinnaeanRankClassification
 import au.org.ala.util.ReflectBean
 import au.org.ala.checklist.lucene.model.NameSearchResult
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
+//import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import au.org.ala.checklist.lucene.{CBIndexSearch, HomonymException, SearchResultException}
 import scala.io.Source
 import org.slf4j.LoggerFactory
 import java.net.URLEncoder
+//import scalaj.http.Http
+import java.util.zip.GZIPInputStream
+import java.io.BufferedReader
+import scala.xml.XML
+import java.io.InputStreamReader
+import java.net.URL
 import scalaj.http.Http
 import scala.collection.JavaConversions
+
 
 /**
  * A DAO for accessing classification information in the cache. If the
@@ -373,7 +380,7 @@ object LocationDAO {
   private val columnFamily = "loc"
   private val lock : AnyRef = new Object()
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
-  private val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
+  private val persistenceManager = Config.persistenceManager
 //  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[Location]]()
 //      .maximumWeightedCapacity(10000)
 //      .build();
@@ -455,12 +462,83 @@ object LocationDAO {
           lock.synchronized {lru.put(uuid,returnValue)}
           returnValue
         } else {
-          lock.synchronized {lru.put(uuid,None)}
-          None
+          //do a gazetteer lookup???
+          if(Config.allowWebserviceLookup){
+            val map = gazetteerLookup(latitude, longitude)
+            if (!map.isEmpty) {
+              //cache it in cassandra
+              addRegionToPoint(latitude, longitude, map)
+              val location = new Location
+              val environmentalLayers = new EnvironmentalLayers
+              val contextualLayers = new ContextualLayers
+              FullRecordMapper.mapPropertiesToObject(location, map)
+              FullRecordMapper.mapPropertiesToObject(environmentalLayers, map)
+              FullRecordMapper.mapPropertiesToObject(contextualLayers, map)
+              val returnValue = Some((location, environmentalLayers, contextualLayers))
+              lock.synchronized {
+                lru.put(uuid, returnValue)
+              }
+              returnValue
+            } else {
+              lock.synchronized {
+                lru.put(uuid, None)
+              }
+              None
+            }
+          } else {
+            lock.synchronized {
+              lru.put(uuid, None)
+            }
+            None
+          }
         }
     }
   }
+
+  def gazetteerLookup(latitude: String, longitude: String): Map[String, String] = {
+    try {
+      val url = new URL("http://spatial-dev.ala.org.au/gazetteer/latlon/" + latitude + "," + longitude)
+      val connection = url.openConnection();
+      connection.setRequestProperty("Accept", "application/xml");
+      connection.setRequestProperty("Accept-Encoding", "gzip,deflate");
+      connection.setDoInput(true);
+
+      //println("content length: " + connection.getContentLength)
+
+      if(connection.getContentLength > 0){
+        val in = connection.getInputStream();
+        val gis = new GZIPInputStream(in);
+        val responseBuffer = new StringBuffer()
+        val input = new BufferedReader(new InputStreamReader(gis));
+        var line = input.readLine
+        while (line != null) {
+          responseBuffer.append(line)
+          line = input.readLine
+        }
+
+        gis.close
+        val xml = XML.loadString(responseBuffer.toString)
+        val results = xml \\ "result"
+
+        results.map(result => {
+          val layerName = (result \ "layerName").text
+          val name = (result \ "name").text
+
+          DwC.matchTerm(layerName) match {
+            case Some(t) => Map(t.canonical -> name)
+            case _ => Map(layerName -> name)
+          }
+        }).flatten.toMap
+      } else {
+        Map()
+      }
+    } catch {
+      case ex:Exception => ex.printStackTrace(); Map()
+    }
+  }
 }
+
+
 /**
  * Provides the tools needed to work with webservices
  */
@@ -471,6 +549,5 @@ object LocationDAO {
       } catch {
         case e: Exception => ""
       }
-
     }
   }

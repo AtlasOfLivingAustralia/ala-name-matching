@@ -17,7 +17,7 @@ class ProcessLocationTests extends FunSuite{
       processed.classification.setTaxonRankID("7000")
       raw.location.decimalLatitude = "-35.21667"
       raw.location.decimalLongitude = "144.81060"
-      LocationProcessor.process("test", raw, processed)
+      (new LocationProcessor).process("test", raw, processed)
       expect("-35.2"){processed.location.decimalLatitude}
       expect("144.8"){processed.location.decimalLongitude}
       expect(true){processed.occurrence.dataGeneralizations != null && processed.occurrence.dataGeneralizations.length>0}
@@ -32,7 +32,7 @@ class ProcessLocationTests extends FunSuite{
       processed.classification.setTaxonRankID("7000")
       raw.location.decimalLatitude = "-27.56"
       raw.location.decimalLongitude = "152.28"
-      LocationProcessor.process("test", raw, processed)
+      (new LocationProcessor).process("test", raw, processed)
       expect("-27.56"){processed.location.decimalLatitude}
       expect("152.28"){processed.location.decimalLongitude}
       expect(true){processed.occurrence.dataGeneralizations == null}
@@ -46,7 +46,7 @@ class ProcessLocationTests extends FunSuite{
       processed.classification.setTaxonRankID("7000")
       raw.location.decimalLatitude = "-35.2"
       raw.location.decimalLongitude = "144.8"
-      LocationProcessor.process("test", raw, processed)
+      (new LocationProcessor).process("test", raw, processed)
       expect("-35.2"){processed.location.decimalLatitude}
       expect("144.8"){processed.location.decimalLongitude}
       expect("Location is already generalised"){processed.occurrence.dataGeneralizations}
@@ -58,7 +58,7 @@ class ProcessLocationTests extends FunSuite{
       raw.location.decimalLatitude = "-35.21667"
       raw.location.decimalLongitude = "144.81060"
       raw.location.coordinatePrecision ="100.66";
-      val qas = LocationProcessor.process("test", raw, processed)
+      val qas = (new LocationProcessor).process("test", raw, processed)
       println(processed.location.coordinateUncertaintyInMeters)
       println(qas(0))
       expect(25){qas(0).code}
@@ -71,7 +71,7 @@ class ProcessLocationTests extends FunSuite{
       raw.location.decimalLatitude = "-35.21667"
       raw.location.decimalLongitude = "144.81060"
       raw.location.coordinateUncertaintyInMeters ="100 meters";
-      val qas = LocationProcessor.process("test", raw, processed)
+      val qas = (new LocationProcessor).process("test", raw, processed)
       println(processed.location.coordinateUncertaintyInMeters)
       expect(true){qas.isEmpty}
       expect("100"){processed.location.coordinateUncertaintyInMeters}
@@ -84,7 +84,7 @@ class ProcessLocationTests extends FunSuite{
       raw.location.decimalLongitude = "146.2"
       processed.classification.scientificName = "Victaphanta compacta"
       processed.classification.taxonConceptID = "urn:lsid:biodiversity.org.au:afd.taxon:3809b1ca-8b60-4fcb-acf5-ca4f1dc0e263"
-      LocationProcessor.process("test", raw, processed)
+      (new LocationProcessor).process("test", raw, processed)
       println(processed.occurrence.stateConservation)
       expect("Endangered,Endangered"){processed.occurrence.stateConservation}
   }
@@ -94,27 +94,27 @@ class ProcessLocationTests extends FunSuite{
       val processed = new FullRecord
       raw.location.decimalLatitude = "91"
       raw.location.decimalLongitude="121"
-      var qas = LocationProcessor.process("test",raw,processed)      
+      var qas = (new LocationProcessor).process("test",raw,processed)      
       expect(5){qas(0)code}
       
       raw.location.decimalLatitude = "-32"
       raw.location.decimalLongitude = "190"
-      qas = LocationProcessor.process("test",raw,processed)
+      qas = (new LocationProcessor).process("test",raw,processed)
       expect(5){qas(0)code}
       
       raw.location.decimalLatitude = "-32"
       raw.location.decimalLongitude = "120"
-      qas = LocationProcessor.process("test",raw,processed)
+      qas = (new LocationProcessor).process("test",raw,processed)
       expect(true){qas.isEmpty}
       
       raw.location.decimalLatitude = "-120"
       raw.location.decimalLongitude = "120"
-      qas = LocationProcessor.process("test",raw,processed)
+      qas = (new LocationProcessor).process("test",raw,processed)
       expect(5){qas(0)code}
       
       raw.location.decimalLatitude = "-32"
       raw.location.decimalLongitude = "-200"
-      qas = LocationProcessor.process("test",raw,processed)
+      qas = (new LocationProcessor).process("test",raw,processed)
       expect(5){qas(0)code}
       
   }
@@ -124,7 +124,7 @@ class ProcessLocationTests extends FunSuite{
       val processed = new FullRecord
       raw.location.decimalLatitude= "123.123"
       raw.location.decimalLongitude = "-34.29"
-      val qas = LocationProcessor.process("test", raw, processed)
+      val qas = (new LocationProcessor).process("test", raw, processed)
       expect(3){qas(0).code}
       expect("-34.29"){processed.location.decimalLatitude}
       expect("123.123"){processed.location.decimalLongitude}
@@ -138,7 +138,7 @@ class ProcessLocationTests extends FunSuite{
       raw.location.decimalLongitude="149.099"
       raw.location.coordinateUncertaintyInMeters = "100"
       raw.location.country="Australia"
-      val qas =LocationProcessor.process("test", raw, processed)
+      val qas =(new LocationProcessor).process("test", raw, processed)
       expect(1){qas(0).code}
       expect("-35.23"){processed.location.decimalLatitude}
   }
@@ -149,7 +149,7 @@ class ProcessLocationTests extends FunSuite{
       raw.location.decimalLongitude="-149.099"
       raw.location.coordinateUncertaintyInMeters = "100"
       raw.location.country="Australia"
-      val qas =LocationProcessor.process("test", raw, processed)
+      val qas = (new LocationProcessor).process("test", raw, processed)
       expect(2){qas(0).code}
       expect("149.099"){processed.location.decimalLongitude}
   }

@@ -17,7 +17,7 @@ class AttributionTests extends FunSuite{
         var processed = new FullRecord
         raw.attribution.dataResourceUid="dr367"
         raw.occurrence.collectionCode="WINC"
-        AttributionProcessor.process("test", raw, processed)        
+        (new AttributionProcessor).process("test", raw, processed)
         expect("dp33"){processed.attribution.dataProviderUid}
         expect("co74"){processed.attribution.collectionUid}
         
@@ -25,7 +25,7 @@ class AttributionTests extends FunSuite{
         processed = new FullRecord
         raw.attribution.dataResourceUid = "dr360"
         raw.occurrence.collectionCode="TEST"
-        val qas = AttributionProcessor.process("test", raw, processed)
+        val qas = (new AttributionProcessor).process("test", raw, processed)
         expect("dp29"){processed.attribution.dataProviderUid}
         expect(0){qas.size}
     }

@@ -5,20 +5,34 @@ import au.org.ala.sds.SensitiveSpeciesFinder
 import au.org.ala.sds.SensitiveSpeciesFinderFactory
 import com.google.inject.name.Names
 import au.org.ala.checklist.lucene.CBIndexSearch
-import com.google.inject.{Scopes, Guice, Injector, AbstractModule}
 import org.slf4j.LoggerFactory
+import com.google.inject._
 
 /**
  * Simple singleton wrapper for Guice (or spring)
  */
 object Config {
-    private val inj:Injector = Guice.createInjector(new ConfigModule())
+
+    private val configModule = new ConfigModule()
+    private val inj:Injector = Guice.createInjector(configModule)
     def getInstance(classs:Class[_]) = inj.getInstance(classs)
 
     val occurrenceDAO = getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     val persistenceManager = getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
     val nameIndex = getInstance(classOf[CBIndexSearch]).asInstanceOf[CBIndexSearch]
-    val sdsFinder = getInstance(classOf[SensitiveSpeciesFinder]).asInstanceOf[SensitiveSpeciesFinder]
+
+    lazy val sdsFinder = {
+      SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("http://sds.ala.org.au/sensitive-species-data.xml", nameIndex)
+	  }
+
+    val allowWebserviceLookup = {
+      val str = configModule.properties.getProperty("allowWebserviceLookup")
+      if(str != null){
+        str.toBoolean
+      } else {
+        false
+      }
+    }
 }
 
 /**
@@ -27,17 +41,19 @@ object Config {
 class ConfigModule extends AbstractModule {
 
     protected val logger = LoggerFactory.getLogger("ConfigModule")
+    val properties = {
+      val properties = new Properties()
+      properties.load(this.getClass.getResourceAsStream("/biocache.properties"))
+      properties
+    }
 
     override def configure() {
 
-        val properties = new Properties()
-        properties.load(this.getClass.getResourceAsStream("/biocache.properties"))
-        Names.bindProperties(this.binder,properties)
+        Names.bindProperties(this.binder, properties)
 
         //bind concrete implementations
         bind(classOf[OccurrenceDAO]).to(classOf[OccurrenceDAOImpl]).in(Scopes.SINGLETON)
         bind(classOf[IndexDAO]).to(classOf[SolrIndexDAO]).in(Scopes.SINGLETON)
-
         try {
             val nameIndex = new CBIndexSearch(properties.getProperty("nameIndexLocation"))
             bind(classOf[CBIndexSearch]).toInstance(nameIndex)

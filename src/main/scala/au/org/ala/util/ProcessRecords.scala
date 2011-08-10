@@ -50,8 +50,8 @@ class RecordProcessor {
   //The time that the processing started - used to populate lastProcessed
   val processTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
 
-  var workflow = Array(ClassificationProcessor,LocationProcessor,EventProcessor,BasisOfRecordProcessor,
-        TypeStatusProcessor,AttributionProcessor,ImageProcessor)
+  var workflow = Array(new ClassificationProcessor,new LocationProcessor, new EventProcessor, new BasisOfRecordProcessor,
+       new TypeStatusProcessor, new AttributionProcessor, new ImageProcessor)
 
   /**
    * Process all records in the store

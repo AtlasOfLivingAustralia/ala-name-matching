@@ -21,16 +21,21 @@ trait Processor {
   def getName:String
 }
 
-
 object Processors {
-  val processorMap = Map("IMAGE"->ImageProcessor, "ATTR"->AttributionProcessor,
-                         "CLASS"->ClassificationProcessor, "BOR"->BasisOfRecordProcessor,
-                         "EVENT"->EventProcessor, "LOC"->LocationProcessor, "TS"->TypeStatusProcessor)
+  val processorMap = Map(
+      "IMAGE"-> new ImageProcessor,
+      "ATTR" -> new AttributionProcessor,
+      "CLASS"-> new ClassificationProcessor,
+      "BOR" -> new BasisOfRecordProcessor,
+      "EVENT"-> new EventProcessor,
+      "LOC"-> new LocationProcessor,
+      "TS" -> new TypeStatusProcessor)
 }
 
-object ImageProcessor extends Processor {
+class ImageProcessor extends Processor {
 
-  //Regular expression used to parse an image URL - adapted from http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
+  //Regular expression used to parse an image URL - adapted from 
+  //http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
   lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#?]+)+\.(?:jpg|gif|png|jpeg))$""".r
   
   /**
@@ -55,7 +60,7 @@ object ImageProcessor extends Processor {
   }
 }
 
-object AttributionProcessor extends Processor {
+class AttributionProcessor extends Processor {
 
   /**
    * select icm.institution_uid, icm.collection_uid,  ic.code, ic.name, ic.lsid, cc.code from inst_coll_mapping icm
@@ -90,6 +95,7 @@ object AttributionProcessor extends Processor {
     		processed.attribution.dataProviderUid = dataResource.get.dataProviderUid
     		processed.attribution.dataProviderName = dataResource.get.dataProviderName
     		processed.attribution.dataHubUid = dataResource.get.dataHubUid
+        processed.attribution.dataResourceUid = dataResource.get.dataResourceUid
     		//only add the taxonomic hints if they were not populated by the collection 
     		if(processed.attribution.taxonomicHints == null)
     			processed.attribution.taxonomicHints = dataResource.get.taxonomicHints
@@ -103,7 +109,7 @@ object AttributionProcessor extends Processor {
   def getName = "attr"
 }
 
-object EventProcessor extends Processor {
+class EventProcessor extends Processor {
   /**
    * Validate the supplied number using the supplied function.
    */
@@ -215,7 +221,7 @@ object EventProcessor extends Processor {
   def getName = "event"
 }
 
-object TypeStatusProcessor extends Processor {
+class TypeStatusProcessor extends Processor {
   /**
    * Process the type status
    */
@@ -237,7 +243,7 @@ object TypeStatusProcessor extends Processor {
   def getName = "type"
 }
 
-object BasisOfRecordProcessor extends Processor {
+class BasisOfRecordProcessor extends Processor {
 
   val logger = LoggerFactory.getLogger("BasisOfRecordProcessor")
   /**
@@ -273,7 +279,7 @@ object BasisOfRecordProcessor extends Processor {
   def getName() = "bor"
 }
 
-object LocationProcessor extends Processor {
+class LocationProcessor extends Processor {
 
   val logger = LoggerFactory.getLogger("LocationProcessor")
   //This is being initialised here because it may take some time to load all the XML records...
@@ -649,7 +655,6 @@ object LocationProcessor extends Processor {
         point
     }
   
-  
   def getExactSciName(raw:FullRecord):String={
     if(raw.classification.scientificName != null)
       raw.classification.scientificName
@@ -670,7 +675,7 @@ object LocationProcessor extends Processor {
   def getName = FullRecordMapper.geospatialQa
 }
 
-object ClassificationProcessor extends Processor {
+class ClassificationProcessor extends Processor {
 
   val logger = LoggerFactory.getLogger("ClassificationProcessor")
   val afdApniIdentifier = """([:afd.|:apni.])""".r

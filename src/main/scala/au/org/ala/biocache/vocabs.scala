@@ -197,6 +197,10 @@ object Countries extends Vocab {
     val all = loadVocabFromFile("/countries.txt")
 }
 
+object StateProvinces extends Vocab {
+    val all = loadVocabFromFile("/stateProvinces.txt")
+}
+
 /**
  * Vocabulary matcher for basis of record values.
  */

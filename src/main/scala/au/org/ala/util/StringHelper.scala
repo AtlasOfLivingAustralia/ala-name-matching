@@ -1,5 +1,4 @@
 package au.org.ala.util
-
 /**
  * ************************************************************************
  *  Copyright (C) 2010 Atlas of Living Australia
@@ -16,75 +15,76 @@ package au.org.ala.util
  *  rights and limitations under the License.
  * *************************************************************************
  */
-import java.io._
-import java.util.jar.JarFile
 import au.org.ala.biocache.DateParser
+
 /**
  * String helper - used as a implicit converter to add additional helper methods to java.io.File
  */
 class StringHelper(str: String) {
-	
-    def fixWidth(width:Int) : String = {
-        if(str.length> width) str.substring(0,width)
-	    else if (str.length< width) str + List.fill(width - str.length)(" ").mkString
-	    else str
-    }
-    
-    def isInt: Boolean = {
-        try {
-            str.toInt
-            true
-        } catch {
-            case _ => false
-        }
-    }
 
-    def isFloat: Boolean = {
-        try {
-            str.toFloat
-            true
-        } catch {
-            case _ => false
-        }
-    }
+  val decimal = """[0-9]{1,}\.[0-9]{1,}""".r
 
-    def isDate: Boolean = {
-        DateParser.parseDate(str) match {
-            case it if !it.isEmpty && DateParser.isValid(it.get) => true
-            case _ => false
-        }
-    }
+  def fixWidth(width: Int): String = {
+    if (str.length > width) str.substring(0, width)
+    else if (str.length < width) str + List.fill(width - str.length)(" ").mkString
+    else str
+  }
 
-    def isLatitude: Boolean = {
-        try {
-            val latitude = str.toFloat
-            if (latitude <= 90.0 && latitude >= -90.0) {
-                true
-            } else {
-                false
-            }
-        } catch {
-            case _ => false
-        }
+  def isInt: Boolean = {
+    try {
+      str.toInt
+      true
+    } catch {
+      case _ => false
     }
+  }
 
-    def isLongitude: Boolean = {
-        try {
-            val longitude = str.toFloat
-            if (longitude <= 180.0 && longitude >= -180.0) {
-                true
-            } else {
-                false
-            }
-        } catch {
-            case _ => false
-        }
+  def isFloat: Boolean = {
+    try {
+      str.toFloat
+      true
+    } catch {
+      case _ => false
     }
+  }
+
+  def isDecimalNumber = !decimal.findFirstMatchIn(str).isEmpty
+
+  def isDate: Boolean = DateParser.parseDate(str) match {
+    case it if !it.isEmpty && DateParser.isValid(it.get) => true
+    case _ => false
+  }
+
+  def isLatitude: Boolean = {
+    try {
+      val latitude = str.toFloat
+      if (latitude <= 90.0 && latitude >= -90.0) {
+        true
+      } else {
+        false
+      }
+    } catch {
+      case _ => false
+    }
+  }
+
+  def isLongitude: Boolean = {
+    try {
+      val longitude = str.toFloat
+      if (longitude <= 180.0 && longitude >= -180.0) {
+        true
+      } else {
+        false
+      }
+    } catch {
+      case _ => false
+    }
+  }
 }
 
 /**
  * Define a extensions to java.io.File
  */
 object StringHelper {
-    implicit def string2helper(str: String) = new StringHelper(str)
+  implicit def string2helper(str: String) = new StringHelper(str)
 }
