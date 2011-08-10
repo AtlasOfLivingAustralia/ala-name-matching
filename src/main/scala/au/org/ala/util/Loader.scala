@@ -15,9 +15,9 @@ class Loader extends DataLoader {
         
         drlist.foreach(dr => {
         	val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dr)
-            println("UID: "+dr)
-        	println("Protocol: "+protocol)
-            println("URL: " + url)
+          println("UID: "+dr)
+          println("Protocol: "+protocol)
+          println("URL: " + url)
 	        params.foreach({case(k,v) => println(k+": "+v)})
             customParams.foreach({case(k,v) => println(k +": "+v)})
             println("---------------------------------------")
@@ -127,7 +127,6 @@ class Loader extends DataLoader {
           Map("Status" -> "UNAVAILABLE")
       }
     }
-    
     
     def checkDigir(drUid:String, url:String) : Map[String,String] = {
             	  
