@@ -130,6 +130,7 @@ public class ExploreController {
         all.setName("ALL_SPECIES");
         all.setLevel(0);
         all.setCount(results.getTotalRecords());
+        all.setSpeciesCount(getYourAreaCount(requestParams, "ALL_SPECIES")[1]);
         speciesGroups.add(all);
 
         String oldName = null;
