@@ -31,9 +31,9 @@ trait DataLoader {
       //full document
       val json = Source.fromURL(registryUrl + resourceUid + ".json").getLines.mkString
       val map = JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
-      
+
       //connection details
-      val connectionParameters = map("connectionParameters").asInstanceOf[Map[String,String]]//JSON.parseFull(map("connectionParameters")).asInstanceOf[Map[String,String]]//map("connectionParameters").asInstanceOf[String]).get.asInstanceOf[Map[String, String]]
+      val connectionParameters = map("connectionParameters").asInstanceOf[Map[String,String]]
       val protocol = connectionParameters("protocol")
       val url = connectionParameters("url")
       val uniqueTerms = connectionParameters.getOrElse("termsForUniqueKey", List[String]()).asInstanceOf[List[String]]

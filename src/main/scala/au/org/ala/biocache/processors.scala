@@ -227,13 +227,13 @@ class TypeStatusProcessor extends Processor {
    */
   def process(guid:String,raw:FullRecord,processed:FullRecord) : Array[QualityAssertion] = {
 
-    if (raw.occurrence.typeStatus != null && !raw.occurrence.typeStatus.isEmpty) {
-      val term = TypeStatus.matchTerm(raw.occurrence.typeStatus)
+    if (raw.identification.typeStatus != null && !raw.identification.typeStatus.isEmpty) {
+      val term = TypeStatus.matchTerm(raw.identification.typeStatus)
       if (term.isEmpty) {
         //add a quality assertion
         Array(QualityAssertion(AssertionCodes.UNRECOGNISED_TYPESTATUS,"Unrecognised type status"))
       } else {
-        processed.occurrence.typeStatus = term.get.canonical
+        processed.identification.typeStatus = term.get.canonical
         Array()
       }
     } else {

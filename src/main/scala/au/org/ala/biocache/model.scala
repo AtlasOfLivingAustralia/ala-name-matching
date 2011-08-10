@@ -62,11 +62,8 @@ class Occurrence extends Cloneable with Mappable with POSO {
   @BeanProperty var samplingProtocol:String = _
   @BeanProperty var sex:String = _
   @BeanProperty var source:String = _
-  //type status perhaps should be in identification
-  @BeanProperty var typeStatus:String = _
   //this property is in use in flickr tagging - currently no equivalent in DwC
   @BeanProperty var validDistribution:String = _
-  
   //custom fields
   @BeanProperty var images:Array[String] = _
   //Store the conservation status 
@@ -91,7 +88,7 @@ class Occurrence extends Cloneable with Mappable with POSO {
                                 "relationshipEstablishedDate"->relationshipEstablishedDate, "relationshipOfResource"->relationshipOfResource,
                                 "relationshipRemarks"->relationshipRemarks, "reproductiveCondition"->reproductiveCondition, "resourceID"->resourceID,
                                 "resourceRelationshipID"->resourceRelationshipID, "rights"->rights ,"rightsholder"->rightsholder,
-                                "samplingProtocol"->samplingProtocol, "sex"->sex, "source"->source, "typeStatus"->typeStatus, "images"-> images, "validDistribution" -> validDistribution)
+                                "samplingProtocol"->samplingProtocol, "sex"->sex, "source"->source, "images"-> images, "validDistribution" -> validDistribution)
 
    
     map.filter(i => i._2!= null)    
