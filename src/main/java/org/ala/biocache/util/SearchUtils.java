@@ -100,6 +100,8 @@ public class SearchUtils {
             return "Institution: " + collectionCache.getInstitutions().get(uid);
         } else if (uid.startsWith("co")) {
             return "Collection: " + collectionCache.getCollections().get(uid);
+        } else if(uid.startsWith("dr")){
+            return "Data Resource: " + collectionCache.getDataResources().get(uid);
         }
         return null;
     }

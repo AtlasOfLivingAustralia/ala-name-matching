@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.servlet.ServletOutputStream;
@@ -135,23 +136,27 @@ public class ExploreController {
         String kingdom =null;
         //set the counts an indent levels for all the species groups
         for(au.org.ala.biocache.SpeciesGroup sg : sgs){
-            logger.debug("name: " + sg.name() + " pararent: " +sg.parent());
+            logger.debug("name: " + sg.name() + " parent: " +sg.parent());
             int level =3;
             SpeciesGroupDTO sdto = new SpeciesGroupDTO();
             sdto.setName(sg.name());
 
             if(oldName!= null && sg.parent()!= null && sg.parent().equals(kingdom))
                 level = 2;
-            sdto.setCount(getFacetCount(sg.name(), fieldResults));
+            
             oldName = sg.name();
             if(sg.parent() == null){
                 level = 1;
                 kingdom = sg.name();
             }
             sdto.setLevel(level);
+            Integer[] counts = getYourAreaCount(requestParams, sg.name());
+            sdto.setCount(counts[0]);
+            sdto.setSpeciesCount(counts[1]);
             speciesGroups.add(sdto);
         }
         return speciesGroups;
+
 
         
         //model.addAttribute("results",speciesGroups);
@@ -169,16 +174,57 @@ public class ExploreController {
 
 		//return YOUR_AREA;
 	}
-        private long getFacetCount(String field, List<FieldResultDTO> groups){
-            //TODO more efficient way of locating this
-            for(FieldResultDTO group : groups){
-                if(group.getLabel().equals(field)){
-                    groups.remove(group);
-                    return group.getCount();
-                }
-            }
-            return 0L;
+    /**
+     * Returns the number of records and distinct species in a particular species group
+     * 
+     * @param requestParams
+     * @param group
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping(value="/explore/counts/group/{group}*", method = RequestMethod.GET)
+    public @ResponseBody Integer[] getYourAreaCount(SpatialSearchRequestParams requestParams,
+            @PathVariable(value="group") String group) throws Exception{
+        String query = group.equals("ALL_SPECIES")? "*:*" : "species_group:" + group;
+        requestParams.setQ(query);
+        requestParams.setPageSize(0);
+        requestParams.setFacets(new String[]{"taxon_name"});
+        requestParams.setFlimit(-1);
+        SearchResultDTO results = searchDao.findByFulltextSpatialQuery(requestParams);
+        Integer speciesCount =0;
+        if(results.getFacetResults().size() >0){
+            speciesCount = results.getFacetResults().iterator().next().getFieldResult().size();
         }
+        
+        return new Integer[]{(int)results.getTotalRecords() ,speciesCount};
+    }
+    /**
+     * Returns the number of species in all the groups.
+     * @param requestParams
+     * @return
+     * @throws Exception
+     */
+//    @RequestMapping(value="/explore/counts*", method = RequestMethod.GET)
+//    public @ResponseBody Map<String,String> getYourAreaCounts(SpatialSearchRequestParams requestParams) throws Exception{
+//        Map<String,String> values = new HashMap<String, String>();
+//        List<au.org.ala.biocache.SpeciesGroup> sgs =au.org.ala.biocache.Store.retrieveSpeciesGroups();
+//        values.put("ALL_SPECIES", getYourAreaCount(requestParams, "ALL_SPECIES"));
+//        for(au.org.ala.biocache.SpeciesGroup sg : sgs){
+//            values.put(sg.name(), getYourAreaCount(requestParams,sg.name()));
+//        }
+//        return values;
+//    }
+    
+    
+    /**
+     * The first value is the count of the value
+     * The second value is the number of distinct species
+     */
+//    private long[] getCounts(String field){
+//        
+//    }
+    
+
         /**
 	 * Occurrence search page uses SOLR JSON to display results
 	 *

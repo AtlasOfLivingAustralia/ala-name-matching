@@ -8,6 +8,7 @@ package org.ala.biocache.dto;
 public class SpeciesGroupDTO {
     private String name;
     private long count;
+    private long speciesCount;
     private int level;
 
     public long getCount() {
@@ -39,6 +40,21 @@ public class SpeciesGroupDTO {
         return "SpeciesGroupDTO[" + "name=" + name + ", count=" + count + ", level=" + level + ']';
     }
 
+    /**
+     * @return the speciesCount
+     */
+    public long getSpeciesCount() {
+        return speciesCount;
+    }
+
+    /**
+     * @param speciesCount the speciesCount to set
+     */
+    public void setSpeciesCount(long speciesCount) {
+        this.speciesCount = speciesCount;
+    }
+    
+    
 
 
 }

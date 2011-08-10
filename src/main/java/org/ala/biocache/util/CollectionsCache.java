@@ -55,6 +55,11 @@ public class CollectionsCache {
         checkCacheAge();
         return this.institutions;
     }
+    
+    public LinkedHashMap<String, String> getDataResources(){
+        checkCacheAge();
+        return this.dataResources;
+    }
 
     
     /**
@@ -75,6 +80,11 @@ public class CollectionsCache {
     public LinkedHashMap<String, String> getCollections(List<String> inguids, List<String>coguids){
         checkCacheAge(inguids, coguids);
         return this.collections;
+    }
+    
+    public LinkedHashMap<String, String> getDataResources(List<String> inguids, List<String>coguids){
+        checkCacheAge(inguids, coguids);
+        return this.dataResources;
     }
     
     public LinkedHashMap<String, Integer> getDownloadLimits(){
@@ -115,11 +125,6 @@ public class CollectionsCache {
 
     }
     
-    protected LinkedHashMap getDataResourceDetails(){
-    	LinkedHashMap<String,String> map = null;
-    	
-    	return map;
-    }
 
     /**
      * Do the web services call. Uses RestTemplate.
