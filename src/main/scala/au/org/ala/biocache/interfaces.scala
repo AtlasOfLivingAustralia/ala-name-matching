@@ -49,7 +49,7 @@ object Store {
   }
 
   //TODO need a better mechanism for doing this....
-  private val propertiesToHide = Set("originalDecimalLatitude","originalDecimalLongitude")
+  private val propertiesToHide = Set("originalDecimalLatitude","originalDecimalLongitude", "orginalLocationRemarks")
 
   /**
    * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.

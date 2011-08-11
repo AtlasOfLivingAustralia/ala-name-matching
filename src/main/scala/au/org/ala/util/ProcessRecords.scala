@@ -139,6 +139,7 @@ class RecordProcessor {
             val location = new Location
             location.decimalLatitude = raw.location.decimalLatitude
             location.decimalLongitude = raw.location.decimalLongitude
+            location.locationRemarks = raw.location.originalLocationRemarks
             occurrenceDAO.updateOccurrence(guid, location, Versions.RAW)
             //remove the existing originalDecimal coordinates
             Config.persistenceManager.deleteColumns(guid, "occ", "originalDecimalLatitude", "originalDecimalLongitude");
@@ -148,6 +149,7 @@ class RecordProcessor {
             location.originalDecimalLongitude = raw.location.originalDecimalLongitude
             location.decimalLatitude = raw.location.decimalLatitude
             location.decimalLongitude = raw.location.decimalLongitude
+            location.originalLocationRemarks = raw.location.originalLocationRemarks
             occurrenceDAO.updateOccurrence(guid, location, Versions.RAW)
             //remove the decimal coordinates if there are no processed coordinates (indicates informationWithheld)
             if(StringUtils.isEmpty(processed.location.decimalLatitude) && StringUtils.isEmpty(processed.location.decimalLongitude)){
