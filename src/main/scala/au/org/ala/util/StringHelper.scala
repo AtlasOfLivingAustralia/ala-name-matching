@@ -80,6 +80,14 @@ class StringHelper(str: String) {
       case _ => false
     }
   }
+
+  def toDoubleWithOption : Option[java.lang.Double] = {
+    try {
+      Some(java.lang.Double.parseDouble(str))
+    } catch {
+      case e:Exception => None
+    }
+  }
 }
 
 /**
