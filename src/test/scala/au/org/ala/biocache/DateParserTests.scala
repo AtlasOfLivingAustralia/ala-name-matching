@@ -156,9 +156,7 @@ class DateParserTests extends FunSuite {
   }
 
   test("2005-06-12 00:00:00.0/2005-06-12 00:00:00.0") {
-
     val result = DateParser.parseDate("2005-06-12 00:00:00.0/2005-06-12 00:00:00.0")
-
     expect(false){ result.isEmpty }
     expect("2005"){ result.get.startYear }
     expect("2005"){ result.get.endYear }
@@ -171,5 +169,13 @@ class DateParserTests extends FunSuite {
     expect("2005"){ result.get.startYear }
     expect("2005"){ result.get.endYear }
     expect(true){ result.get.singleDate }
+  }
+
+  test("Mon Apr 23 00:00:00 EST 1984/Sun Apr 29 00:00:00 EST 1984") {
+    val result = DateParser.parseDate("Mon Apr 23 00:00:00 EST 1984/Sun Apr 29 00:00:00 EST 1984")
+    expect(false){ result.isEmpty }
+    expect("1984"){ result.get.startYear }
+    expect("1984"){ result.get.endYear }
+    expect(false){ result.get.singleDate }
   }
 }

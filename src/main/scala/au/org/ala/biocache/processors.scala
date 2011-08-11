@@ -439,7 +439,7 @@ class LocationProcessor extends Processor {
         }
         
         //sensitise the coordinates if necessary.  Do this last so that habitat checks etc are performed on originally supplied coordinates
-        processSensitivty(raw, processed, location)        
+        processSensitivity(raw, processed, point)
       }
       
       //point 0,0 does not exist in our cache check all records that have lat longs.
@@ -515,7 +515,7 @@ class LocationProcessor extends Processor {
 /**
  * Performs all the sensitivity processing.  Returns the new point ot be working with
  */
-    def processSensitivty(raw: FullRecord, processed: FullRecord, point: Option[(Location, EnvironmentalLayers, ContextualLayers)]): Option[(Location, EnvironmentalLayers, ContextualLayers)] = {
+    def processSensitivity(raw: FullRecord, processed: FullRecord, point: Option[(Location, EnvironmentalLayers, ContextualLayers)]): Option[(Location, EnvironmentalLayers, ContextualLayers)] = {
         val (location, environmentalLayers, contextualLayers) = point.get
         //Perform sensitivity actions if the record was located in Australia
         //removed the check for Australia because some of the loc cache records have a state without country (-43.08333, 147.66670)

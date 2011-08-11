@@ -17,7 +17,6 @@ object DateParser {
 
  final val logger:Logger = LoggerFactory.getLogger("DateParser")
  
- 
   def parseDate(dateStr:String, maxYear:Option[Int] = None, minYear:Option[Int] = None) : Option[EventDate] = {
   
      //assume ISO
@@ -71,7 +70,8 @@ object DateParser {
       case ISOMonthDate(date) =>  Some(date)
       case ISOMonthDateRange(date) =>  Some(date)
       case ISOMonthYearDateRange(date) =>  Some(date)
-      case ISOYearRange(date) =>  Some(date)
+      case ISOYearRange(date) => Some(date)
+      case ISOVerboseDateTimeRange(date) => Some(date)
       case _ => None
     }
   }
@@ -283,6 +283,34 @@ object ISODateTimeRange {
           Array("yyyy-MM-dd hh:mm:ss.sss"))
        val endDateParsed = DateUtils.parseDate(parts(1),
           Array("yyyy-MM-dd hh:mm:ss.sss"))
+
+       val startDate = DateFormatUtils.format(startDateParsed, "yyyy-MM-dd")
+       val endDate = DateFormatUtils.format(endDateParsed, "yyyy-MM-dd")
+       val startDay = DateFormatUtils.format(startDateParsed, "dd")
+       val endDay = DateFormatUtils.format(endDateParsed, "dd")
+       val startMonth = DateFormatUtils.format(startDateParsed, "MM")
+       val endMonth = DateFormatUtils.format(endDateParsed, "MM")
+       val startYear = DateFormatUtils.format(startDateParsed, "yyyy")
+       val endYear = DateFormatUtils.format(endDateParsed, "yyyy")
+
+       Some(EventDate(startDate,startDay,startMonth,startYear,
+           endDate,endDay,endMonth:String,endYear,startDate.equals(endDate)))
+     } catch {
+      case e:ParseException => None
+    }
+  }
+}
+
+//Mon Apr 23 00:00:00 EST 1984/Sun Apr 29 00:00:00 EST 1984
+object ISOVerboseDateTimeRange {
+
+  def unapply(str:String) : Option[EventDate] = {
+   try{
+       val parts = str.split("/")
+       val startDateParsed = DateUtils.parseDate(parts(0),
+          Array("EEE MMM dd hh:mm:ss zzz yyyy"))
+       val endDateParsed = DateUtils.parseDate(parts(1),
+          Array("EEE MMM dd hh:mm:ss zzz yyyy"))
 
        val startDate = DateFormatUtils.format(startDateParsed, "yyyy-MM-dd")
        val endDate = DateFormatUtils.format(endDateParsed, "yyyy-MM-dd")
