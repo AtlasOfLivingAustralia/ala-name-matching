@@ -52,7 +52,8 @@ public class SearchRequestParams {
                                 "assertions",
                                 "month",
                                 "year",
-                                "multimedia"};
+                                "multimedia",
+                                "geospatial_kosher"};
     protected Integer start = 0;
     /*
      * The limit for the number of facets to return 
