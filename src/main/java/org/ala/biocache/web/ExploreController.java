@@ -97,40 +97,16 @@ public class ExploreController {
             HttpServletRequest request,
             Model model) throws Exception {
         
-        // Determine lat/long for client's IP address
-        //LookupService lookup = new LookupService(geoIpDatabase, LookupService.GEOIP_INDEX_CACHE );
-//        String clientIP = request.getLocalAddr();
-//        logger.info("client IP address = "+request.getRemoteAddr());
-//
-//        if (lookupService != null && location == null) {
-//            Location loc = lookupService.getLocation(clientIP);
-//            if (loc != null) {
-//                logger.info(clientIP + " has location: " + loc.postalCode + ", " + loc.city + ", " + loc.region + ". Coords: " + loc.latitude + ", " + loc.longitude);
-//                latitude = loc.latitude;
-//                longitude = loc.longitude;
-//                address = ""; // blank out address so Google Maps API can reverse geocode it
-//            }
-//        }
 
-        //set the query to all
-        requestParams.setQ("*:*");
-        //only want the species groups in the facet
-        requestParams.setFacets(new String[]{"species_group"});
-        //we want all the facets
-        requestParams.setFlimit(-1);
-        requestParams.setPageSize(0);//don't actually want any of the results returned
-        SearchResultDTO results =searchDao.findByFulltextSpatialQuery(requestParams);
-        java.util.Collection<FacetResultDTO> facets =results.getFacetResults();
-        java.util.List<FieldResultDTO> fieldResults = facets.size()>0?facets.iterator().next().getFieldResult():java.util.Collections.EMPTY_LIST;
-        java.util.Collections.sort(fieldResults);
         //now we want to grab all the facets to get the counts associated with the species groups
         List<au.org.ala.biocache.SpeciesGroup> sgs =au.org.ala.biocache.Store.retrieveSpeciesGroups();
         List<SpeciesGroupDTO> speciesGroups = new java.util.ArrayList<SpeciesGroupDTO>();
         SpeciesGroupDTO all = new SpeciesGroupDTO();
         all.setName("ALL_SPECIES");
         all.setLevel(0);
-        all.setCount(results.getTotalRecords());
-        all.setSpeciesCount(getYourAreaCount(requestParams, "ALL_SPECIES")[1]);
+        Integer[] counts = getYourAreaCount(requestParams, "ALL_SPECIES");
+        all.setCount(counts[0]);
+        all.setSpeciesCount(counts[1]);
         speciesGroups.add(all);
 
         String oldName = null;
@@ -151,29 +127,13 @@ public class ExploreController {
                 kingdom = sg.name();
             }
             sdto.setLevel(level);
-            Integer[] counts = getYourAreaCount(requestParams, sg.name());
+            counts = getYourAreaCount(requestParams, sg.name());
             sdto.setCount(counts[0]);
             sdto.setSpeciesCount(counts[1]);
             speciesGroups.add(sdto);
         }
         return speciesGroups;
 
-
-        
-        //model.addAttribute("results",speciesGroups);
-
-//        model.addAttribute("latitude", latitude);
-//        model.addAttribute("longitude", longitude);
-//        model.addAttribute("location", location); // TDOD delete if not used in JSP
-//        //model.addAttribute("address", address); // TDOD delete if not used in JSP
-//        model.addAttribute("radius", radius);
-//        model.addAttribute("zoom", radiusToZoomLevelMap.get(radius));
-//        model.addAttribute("taxaGroups", TaxaGroup.values());
-//
-//        // TODO: get from properties file or load via Spring
-//        model.addAttribute("speciesPageUrl", speciesPageUrl);
-
-		//return YOUR_AREA;
 	}
     /**
      * Returns the number of records and distinct species in a particular species group
