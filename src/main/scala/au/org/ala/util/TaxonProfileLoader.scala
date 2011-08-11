@@ -1,7 +1,7 @@
 package au.org.ala.util
 
 import au.org.ala.biocache.TaxonProfileDAO
-import au.org.ala.biocache.{TaxonProfile,SensitiveSpecies, ConservationSpecies, States}
+import au.org.ala.biocache.{TaxonProfile,SensitiveSpecies, ConservationSpecies}
 import java.net.InetSocketAddress
 import org.apache.avro.ipc.SocketTransceiver
 import org.apache.avro.specific.SpecificRequestor
