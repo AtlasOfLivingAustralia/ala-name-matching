@@ -439,7 +439,7 @@ class LocationProcessor extends Processor {
         }
         
         //sensitise the coordinates if necessary.  Do this last so that habitat checks etc are performed on originally supplied coordinates
-        processSensitivity(raw, processed, point)
+        processSensitivty(raw, processed, location)        
       }
       
       //point 0,0 does not exist in our cache check all records that have lat longs.
@@ -515,8 +515,8 @@ class LocationProcessor extends Processor {
 /**
  * Performs all the sensitivity processing.  Returns the new point ot be working with
  */
-    def processSensitivity(raw: FullRecord, processed: FullRecord, point: Option[(Location, EnvironmentalLayers, ContextualLayers)]): Option[(Location, EnvironmentalLayers, ContextualLayers)] = {
-        val (location, environmentalLayers, contextualLayers) = point.get
+    def processSensitivty(raw: FullRecord, processed: FullRecord, location:Location) = {
+        
         //Perform sensitivity actions if the record was located in Australia
         //removed the check for Australia because some of the loc cache records have a state without country (-43.08333, 147.66670)
         if (location.stateProvince != null) { //location.country == "Australia"){
@@ -563,6 +563,8 @@ class LocationProcessor extends Processor {
                         raw.location.originalDecimalLongitude = processed.location.decimalLongitude
                         raw.location.decimalLatitude = gl.getGeneralisedLatitude
                         raw.location.decimalLongitude = gl.getGeneralisedLongitude
+                        raw.location.originalLocationRemarks = raw.location.locationRemarks
+                        raw.location.locationRemarks = null
                         
                         processed.location.decimalLatitude = gl.getGeneralisedLatitude
                         processed.location.decimalLongitude = gl.getGeneralisedLongitude
@@ -576,13 +578,23 @@ class LocationProcessor extends Processor {
 
                         //TODO may need to fix locality information... change ths so that the generalisation is performed before the point matching to gazetteer...
 
-                        //We want to associate the contextual/environmental layers to the sensitised point
-                        return LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
+                        //We want to associate the ibra layers to the sensitised point
+                        val newPoint= LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
+                        if(!newPoint.isEmpty){
+                        //update the required locality information
+                            val (location1, environmentalLayers, contextualLayers) = newPoint.get                            
+                            processed.location.lga = location1.lga
+                        }
+                        else{
+                            //unset the lga
+                            processed.location.lga = null
+                        }
+                        
                     }
                 }
             }
         }
-        point
+        
     }
   
   def getExactSciName(raw:FullRecord):String={
