@@ -351,7 +351,6 @@ class LocationProcessor extends Processor {
               }
           }
       }
-      
 
       //generate coordinate accuracy if not supplied
       var point = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
@@ -384,7 +383,7 @@ class LocationProcessor extends Processor {
         //check matched stateProvince
         if (processed.location.stateProvince != null && raw.location.stateProvince != null) {
           //quality systemAssertions
-          val stateTerm = States.matchTerm(raw.location.stateProvince)
+          val stateTerm = StateProvinces.matchTerm(raw.location.stateProvince)
 
           if (!stateTerm.isEmpty && !processed.location.stateProvince.equalsIgnoreCase(stateTerm.get.canonical)) {
             logger.debug("[QualityAssertion] " + guid + ", processed:" + processed.location.stateProvince
@@ -429,19 +428,25 @@ class LocationProcessor extends Processor {
           }
         }
 
-        //TODO check centre point of the state        
-        if(StateCentrePoints.coordinatesMatchCentre(location.stateProvince, raw.location.decimalLatitude, raw.location.decimalLongitude)){
+        //check centre point of the state
+        if(StateProvinceCentrePoints.coordinatesMatchCentre(location.stateProvince, raw.location.decimalLatitude, raw.location.decimalLongitude)){
           assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,"Coordinates are centre point of "+location.stateProvince)
         }
+
+        //check centre point of the country
+        if(CountryCentrePoints.coordinatesMatchCentre(location.country, raw.location.decimalLatitude, raw.location.decimalLongitude)){
+          assertions + QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_COUNTRY,"Coordinates are centre point of "+location.country)
+        }
+        
         //sensitise the coordinates if necessary.  Do this last so that habitat checks etc are performed on originally supplied coordinates
-        processSensitivty(raw, processed, location)
+        processSensitivty(raw, processed, location)        
       }
       
       //point 0,0 does not exist in our cache check all records that have lat longs.
       try {
           if(raw.location.decimalLatitude.toDouble == 0.0d && raw.location.decimalLongitude.toDouble == 0.0d ){
-                assertions + QualityAssertion(AssertionCodes.ZERO_COORDINATES,"Coordinates 0,0")
-           }
+            assertions + QualityAssertion(AssertionCodes.ZERO_COORDINATES,"Coordinates 0,0")
+          }
       } catch {
           case e:Exception => None
       }
@@ -449,7 +454,7 @@ class LocationProcessor extends Processor {
     //Only process the raw state value if no latitude and longitude is provided
     if(processed.location.stateProvince ==null && raw.location.decimalLatitude ==null && raw.location.decimalLongitude ==null){
       //process the supplied state
-      val stateTerm = States.matchTerm(raw.location.stateProvince)
+      val stateTerm = StateProvinces.matchTerm(raw.location.stateProvince)
       if(!stateTerm.isEmpty){
         processed.location.stateProvince = stateTerm.get.canonical
       }
@@ -469,24 +474,28 @@ class LocationProcessor extends Processor {
           if(lat.get < -90 || lat.get > 90 || lon.get < -180 || lon.get > 180){
               //test to see if they have been inverted  (TODO other tests for inversion...)
               if(lon.get >= -90 && lon.get <= 90 && lat.get >= -180 && lat.get <= 180 ){
-                  assertions + QualityAssertion(AssertionCodes.INVERTED_COORDINATES, "Assume that coordinates have been inverted. Original values: " + processed.location.decimalLatitude +"," + processed.location.decimalLongitude)
+                  assertions + QualityAssertion(AssertionCodes.INVERTED_COORDINATES, "Assume that coordinates have been inverted. Original values: " +
+                    processed.location.decimalLatitude +"," + processed.location.decimalLongitude)
                   val tmp = processed.location.decimalLatitude
                   processed.location.decimalLatitude = processed.location.decimalLongitude
                   processed.location.decimalLongitude = tmp
+              } else {
+                  assertions + QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, "Coordinates are out of range: " +
+                    processed.location.decimalLatitude + "," +processed.location.decimalLongitude)
               }
-              else
-                  assertions + QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, "Coordinates are out of range: " + processed.location.decimalLatitude + "," +processed.location.decimalLongitude)
           }
           if(raw.location.country != null){
               val country = Countries.matchTerm(raw.location.country)
               if(!country.isEmpty && country.get.canonical == "AUSTRALIA"){
                   if(lat.get > 0){
                       //latitude is negated
-                      assertions + QualityAssertion(AssertionCodes.NEGATED_LATITUDE, "Latitude seems to be negated.  Original value:" +processed.location.decimalLatitude)
+                      assertions + QualityAssertion(AssertionCodes.NEGATED_LATITUDE,
+                        "Latitude seems to be negated.  Original value:" +processed.location.decimalLatitude)
                       processed.location.decimalLatitude = "-" + processed.location.decimalLatitude
                   }
                   if(lon.get < 0){
-                      assertions + QualityAssertion(AssertionCodes.NEGATED_LONGITUDE, "Longitude seems to be negated. Original value: " + processed.location.decimalLongitude)
+                      assertions + QualityAssertion(AssertionCodes.NEGATED_LONGITUDE,
+                        "Longitude seems to be negated. Original value: " + processed.location.decimalLongitude)
                       processed.location.decimalLongitude = processed.location.decimalLongitude.drop(1)
                   }
               }
@@ -506,8 +515,8 @@ class LocationProcessor extends Processor {
 /**
  * Performs all the sensitivity processing.  Returns the new point ot be working with
  */
-    def processSensitivty(raw: FullRecord, processed: FullRecord, location:Location) = {
-        
+    def processSensitivty(raw: FullRecord, processed: FullRecord, point: Option[(Location, EnvironmentalLayers, ContextualLayers)]): Option[(Location, EnvironmentalLayers, ContextualLayers)] = {
+        val (location, environmentalLayers, contextualLayers) = point.get
         //Perform sensitivity actions if the record was located in Australia
         //removed the check for Australia because some of the loc cache records have a state without country (-43.08333, 147.66670)
         if (location.stateProvince != null) { //location.country == "Australia"){
@@ -554,8 +563,6 @@ class LocationProcessor extends Processor {
                         raw.location.originalDecimalLongitude = processed.location.decimalLongitude
                         raw.location.decimalLatitude = gl.getGeneralisedLatitude
                         raw.location.decimalLongitude = gl.getGeneralisedLongitude
-                        raw.location.originalLocationRemarks = raw.location.locationRemarks
-                        raw.location.locationRemarks = null
                         
                         processed.location.decimalLatitude = gl.getGeneralisedLatitude
                         processed.location.decimalLongitude = gl.getGeneralisedLongitude
@@ -569,23 +576,13 @@ class LocationProcessor extends Processor {
 
                         //TODO may need to fix locality information... change ths so that the generalisation is performed before the point matching to gazetteer...
 
-                        //We want to associate the ibra layers to the sensitised point
-                        val newPoint= LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
-                        if(!newPoint.isEmpty){
-                        //update the required locality information
-                            val (location1, environmentalLayers, contextualLayers) = newPoint.get                            
-                            processed.location.lga = location1.lga
-                        }
-                        else{
-                            //unset the lga
-                            processed.location.lga = null
-                        }
-                        
+                        //We want to associate the contextual/environmental layers to the sensitised point
+                        return LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
                     }
                 }
             }
         }
-        
+        point
     }
   
   def getExactSciName(raw:FullRecord):String={

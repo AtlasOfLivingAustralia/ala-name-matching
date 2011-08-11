@@ -27,16 +27,23 @@ class VocabTests extends FunSuite {
   }
 
   test("Expect coordinates for QLD centre to match"){
-    expect(false){StateCentrePoints.coordinatesMatchCentre("QLD","12","12")}
-    expect(true){StateCentrePoints.coordinatesMatchCentre("QLD","-20.9175738","142.7027956")}
-    expect(true){StateCentrePoints.coordinatesMatchCentre("QLD","-20.917573","142.702795")}
-    expect(true){StateCentrePoints.coordinatesMatchCentre("QLD","-20.917","142.702")}
+    expect(false){StateProvinceCentrePoints.coordinatesMatchCentre("QLD","12","12")}
+    expect(true){StateProvinceCentrePoints.coordinatesMatchCentre("QLD","-20.9175738","142.7027956")}
+    expect(true){StateProvinceCentrePoints.coordinatesMatchCentre("QLD","-20.917573","142.702795")}
+    expect(true){StateProvinceCentrePoints.coordinatesMatchCentre("QLD","-20.917","142.702")}
+  }
+
+  test("Expect coordinates for Australia centre to match"){
+    expect(false){CountryCentrePoints.coordinatesMatchCentre("Australia","12","12")}
+    expect(false){CountryCentrePoints.coordinatesMatchCentre("   ","12","12")}
+    expect(true){CountryCentrePoints.coordinatesMatchCentre("Australia","-29.5328037","145.491477")}
+    expect(true){CountryCentrePoints.coordinatesMatchCentre("Australia","-29.53280","145.4914")}
+    expect(true){CountryCentrePoints.coordinatesMatchCentre("Australia","-29.532","145.491")}
   }
 
   test("Paratypes - case insensitive for types"){
       expect(false){ TypeStatus.matchTerm("Paratype").isEmpty}
-      
-  }  
+  }
   
   test("Paratypes - plurals for types"){
       expect(false){ TypeStatus.matchTerm("Paratypes").isEmpty}

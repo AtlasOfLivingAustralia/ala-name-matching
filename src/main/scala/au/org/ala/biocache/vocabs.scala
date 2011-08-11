@@ -92,69 +92,43 @@ trait Vocab {
   }
 }
 
-/**
- * Quick state string matching implementation.
- */
-object States extends Vocab {
-  val act = Term("Australian Capital Territory", Array("AustCapitalTerritory","AustCapitalTerrit","AusCap","AusCapTerrit","ACT"))
-  val nsw = Term("New South Wales", Array("nswales","nsw"))
-  val nt = Term("Northern Territory", Array("nterritory","nterrit","nt"))
-  val qld = Term("Queensland", Array("qland","qld"))
-  val sa = Term("South Australia", Array("sthaustralia","saustralia","saust","sa"))
-  val tas = Term("Tasmania", Array("tassie","tas"))
-  val vic = Term("Victoria", Array("vic","vict"))
-  val wa = Term("Western Australia", Array("waustralia","westaustralia","westaust","wa"))
-  val all = retrieveAll
-}
+case class LatLng(latitude:Float, longitude:Float)
 
-/**
- * Matching of coordinates for centre points for states.
- * This is for detecting auto-generated coordinates at very low accuracy.
- */
-object StateCentrePoints {
-  val map = Map(
-    States.act -> (-35.4734679f, 149.0123679f),
-    States.nsw -> (-31.2532183f, 146.921099f),
-    States.nt -> (-19.4914108f, 132.5509603f),
-    States.qld -> (-20.9175738f, 142.7027956f),
-    States.sa -> (-30.0002315f, 136.2091547f),
-    States.tas -> (-41.3650419f, 146.6284905f),
-    States.vic -> (-37.4713077f, 144.7851531f),
-    States.wa -> (-27.6728168f, 121.6283098f)
-  )
-
+trait CentrePoints {
+  val map:Map[String, LatLng]
+  val vocab:Vocab
   /**
    * Returns true if the supplied coordinates are the centre point for the supplied
    * state or territory
    */
   def coordinatesMatchCentre(state:String, decimalLatitude:String, decimalLongitude:String) : Boolean = {
 
-    val matchedState = States.matchTerm(state)
+    val matchedState = vocab.matchTerm(state)
     if(!matchedState.isEmpty && decimalLatitude != null && decimalLongitude != null){
 
-      val coordinates = map.get(matchedState.get)
+      val latlng = map.get(matchedState.get.canonical.toLowerCase)
+      if(!latlng.isEmpty){
 
-      //how many decimal places are the supplied coordinates
-      try {
-          val latitude = decimalLatitude.toFloat
-          val longitude = decimalLongitude.toFloat
+        //how many decimal places are the supplied coordinates
+        try {
+            //convert supplied values to float
+            val latitude = decimalLatitude.toFloat
+            val longitude = decimalLongitude.toFloat
 
-          val latDecPlaces = noOfDecimalPlace(latitude)
-          val longDecPlaces = noOfDecimalPlace(longitude)
+            val latDecPlaces = noOfDecimalPlace(latitude)
+            val longDecPlaces = noOfDecimalPlace(longitude)
 
-          //println("Decimal places: "+latDecPlaces +", "+longDecPlaces)
-          //approximate the centre points appropriately
-          val approximatedLat = round(coordinates.get._1,latDecPlaces)
-          val approximatedLong = round(coordinates.get._2,longDecPlaces)
+            //approximate the centre points appropriately
+            val approximatedLat = round(latlng.get.latitude,latDecPlaces)
+            val approximatedLong = round(latlng.get.longitude,longDecPlaces)
 
-          //println("Rounded values: "+approximatedLat +", "+approximatedLong)
-          if(approximatedLat == latitude && approximatedLong == longitude){
-            true
-          } else {
-            false
-          }
-      } catch {
-        case e:NumberFormatException => false
+            //compare approximated centre point with supplied coordinates
+            approximatedLat == latitude && approximatedLong == longitude
+        } catch {
+          case e:NumberFormatException => false
+        }
+      } else {
+        false
       }
     } else {
       false
@@ -183,6 +157,27 @@ object StateCentrePoints {
        numberString.substring(decimalPointLoc+1).length
     }
   }
+
+  def loadFromFile(filePath:String): Map[String, LatLng] = {
+    scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map({ row =>
+        val values = row.split("\t")
+        values(0).toLowerCase -> LatLng(values(1).toFloat, values(2).toFloat)
+    }).toMap
+  }
+}
+
+/**
+ * Matching of coordinates for centre points for states.
+ * This is for detecting auto-generated coordinates at very low accuracy.
+ */
+object StateProvinceCentrePoints extends CentrePoints {
+  val map = loadFromFile("/stateProvinceCentrePoints.txt")
+  val vocab = StateProvinces
+}
+
+object CountryCentrePoints extends CentrePoints {
+  val map = loadFromFile("/countryCentrePoints.txt")
+  val vocab = Countries
 }
 
 object DwC extends Vocab {
@@ -373,6 +368,7 @@ object AssertionCodes {
   val UNCERTAINTY_RANGE_MISMATCH = ErrorCode("uncertaintyRangeMismatch",24,false,"Coordinate accuracy not valid")
   val UNCERTAINTY_IN_PRECISION = ErrorCode("uncertaintyInPrecision",25,false,"Coordinate precision and accuracy transposed")
   val UNCERTAINTY_NOT_SPECIFIED = ErrorCode("uncertaintyNotSpecified", 27, false, "Coordinate uncertainty was not supplied")
+  val COORDINATES_CENTRE_OF_COUNTRY = ErrorCode("coordinatesCentreOfCountry",28,true,"Supplied coordinates centre of country")
 
   //taxonomy issues
   val TAXONOMIC_ISSUE = ErrorCode("taxonomicIssue",10000,false,"Taxonomic issue")  // general purpose option
