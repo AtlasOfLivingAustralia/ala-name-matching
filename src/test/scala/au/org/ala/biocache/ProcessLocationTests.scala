@@ -153,5 +153,21 @@ class ProcessLocationTests extends FunSuite{
       expect(2){qas(0).code}
       expect("149.099"){processed.location.decimalLongitude}
   }
+    
+   test("Habitat Mismatch"){
+       val raw = new FullRecord
+       val processed = new FullRecord
+       val locationProcessor = new LocationProcessor
+       processed.classification.taxonConceptID = "urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537"
+       raw.location.decimalLatitude="-40.857"
+       raw.location.decimalLongitude ="145.52"
+       raw.location.coordinateUncertaintyInMeters = "100"
+       var qas = locationProcessor.process("test", raw, processed)
+       expect(19){qas(0).code}
+       raw.location.decimalLatitude="-23.73750"
+       raw.location.decimalLongitude="133.85720"
+       qas = locationProcessor.process("test", raw, processed)
+       expect(true){qas.isEmpty}
+   }
   
 }

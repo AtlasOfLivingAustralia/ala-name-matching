@@ -11,6 +11,7 @@ import au.org.ala.sds.validation.FactCollection
 import au.org.ala.sds.validation.ServiceFactory
 import au.org.ala.sds.validation.ConservationOutcome
 import au.org.ala.sds.validation.MessageFactory
+import org.apache.commons.lang.StringUtils
 
 /**
  * Trait to be implemented by all processors. 
@@ -369,7 +370,13 @@ class LocationProcessor extends Processor {
         processed.location.ibra = location.ibra
         processed.location.imcra = location.imcra
         processed.location.lga = location.lga
-        processed.location.habitat = location.habitat
+       // TODO find out if the EEZ layer has been include so the value can be obtained for this. 
+        processed.location.habitat = {
+            if(!StringUtils.isEmpty(location.ibra)) "Terrestrial"
+            else if(!StringUtils.isEmpty(location.imcra)) "Marine"
+            else null
+            
+        }//location.habitat
         
         //add the country information
         processed.location.country = location.country
