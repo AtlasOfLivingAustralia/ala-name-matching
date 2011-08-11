@@ -386,7 +386,7 @@ object CountryExtractor {
 }
 
 object StateProvinceExtractor {
-  def unapply(str: String): Option[Term] = States.matchTerm(str)
+  def unapply(str: String): Option[Term] = StateProvinces.matchTerm(str)
 }
 
 object CoordinateUncertaintyExtractor {
