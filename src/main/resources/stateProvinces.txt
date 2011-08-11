@@ -1,0 +1,8 @@
+Australian Capital Territory	AustCapitalTerritory	AustCapitalTerrit	AusCap	AusCapTerrit	ACT
+New South Wales	nswales	nsw
+Northern Territory	nterritory	nterrit	nt
+Queensland	qland	qld
+South Australia	sthaustralia	saustralia	saust	sa
+Tasmania	tassie	tas
+Victoria	vic	vict
+Western Australia	waustralia	westaustralia	westaust	wa
