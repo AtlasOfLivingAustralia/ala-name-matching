@@ -81,9 +81,17 @@ class StringHelper(str: String) {
     }
   }
 
-  def toDoubleWithOption : Option[java.lang.Double] = {
+  def toDoubleWithOption : Option[Double] = {
     try {
-      Some(java.lang.Double.parseDouble(str))
+      Some(str.toDouble)
+    } catch {
+      case e:Exception => None
+    }
+  }
+
+  def toFloatWithOption : Option[Float] = {
+    try {
+      Some(str.toFloat)
     } catch {
       case e:Exception => None
     }
