@@ -1,6 +1,7 @@
 package au.org.ala.util
 
 import scala.util.parsing.json.JSON
+import java.net.URLEncoder
 
 /**
  * A utility for geocoding the centre points of countries
@@ -13,21 +14,26 @@ object GetCountryCentrePoints {
 
     val countries = scala.io.Source.fromURL(getClass.getResource("/countries.txt"), "utf-8").getLines.toList.map({ row =>
         val values = row.split("\t")
-        values(0)
+       (values(0), URLEncoder.encode(values(0), "UTF-8"))
     }).toSet
 
     countries.foreach(c => {
 
       try {
-        val searchUrl = baseUrl + c
+        val searchUrl = baseUrl + c._2
         val json = JSON.parseFull(scala.io.Source.fromURL(searchUrl).mkString).get.asInstanceOf[Map[String,Object]]
         val results  = json.get("results").get.asInstanceOf[List[Map[String,Object]]]
         val elements = results(0).asInstanceOf[Map[String,Object]]
         val geometry = elements("geometry").asInstanceOf[Map[String,Object]]
         val location  = geometry.get("location").get.asInstanceOf[Map[String,Object]]
-        println(c+"\t"+location("lat")+"\t"+location("lng"))
+
+        val bounds  = geometry.get("bounds").get.asInstanceOf[Map[String,Object]]
+
+        val northeast  = bounds.get("northeast").get.asInstanceOf[Map[String,Object]]
+        val southwest  = bounds.get("southwest").get.asInstanceOf[Map[String,Object]]
+        println(c._1+"\t"+location("lat")+"\t"+location("lng")+"\t"+northeast("lat")+"\t"+northeast("lng")+"\t"+southwest("lat")+"\t"+southwest("lng"))
       } catch {
-        case _ =>
+        case e:Exception => //println(e.getMessage)
       }
     })
   }

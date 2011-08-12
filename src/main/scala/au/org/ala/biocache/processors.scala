@@ -22,7 +22,13 @@ trait Processor {
   def getName:String
 }
 
+/**
+ * Singleton that maintains the workflow
+ */
 object Processors {
+
+  def foreach(proc: Processor => Unit) = processorMap.values.foreach(proc)
+
   val processorMap = Map(
       "IMAGE"-> new ImageProcessor,
       "ATTR" -> new AttributionProcessor,
@@ -30,7 +36,8 @@ object Processors {
       "BOR" -> new BasisOfRecordProcessor,
       "EVENT"-> new EventProcessor,
       "LOC"-> new LocationProcessor,
-      "TS" -> new TypeStatusProcessor)
+      "TS" -> new TypeStatusProcessor
+  )
 }
 
 class ImageProcessor extends Processor {
@@ -309,13 +316,6 @@ class LocationProcessor extends Processor {
       //validate coordinate accuracy (coordinateUncertaintyInMeters) and coordinatePrecision (precision - A. Chapman)
       checkCoordinateUncertainty(raw, processed, assertions)
 
-      //if the coordinateUncertainty is still empty populate it with the default
-      // value (we don't test until now because the SDS will sometime include coordinate uncertainty)
-      if (processed.location.coordinateUncertaintyInMeters == null) {
-        processed.location.coordinateUncertaintyInMeters = "1000"
-        assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, "Uncertainity was not supplied, using default value 1000")
-      }
-
       //generate coordinate accuracy if not supplied
       var point = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
 
@@ -389,12 +389,8 @@ class LocationProcessor extends Processor {
 
     } else if (raw.location.verbatimLatitude != null && raw.location.verbatimLongitude != null) {
       //parse the expressions into their decimal equivalents
-      val parsedLat = VerbatimLatLongParser.parse(raw.location.verbatimLatitude)
-      if (!parsedLat.isEmpty)
-        processed.location.decimalLatitude = parsedLat.get.toString
-      val parsedLong = VerbatimLatLongParser.parse(raw.location.verbatimLongitude)
-      if (!parsedLong.isEmpty)
-        processed.location.decimalLongitude = parsedLong.get.toString
+      processed.location.decimalLatitude = VerbatimLatLongParser.parseToStringOrNull(raw.location.verbatimLatitude)
+      processed.location.decimalLongitude = VerbatimLatLongParser.parseToStringOrNull(raw.location.verbatimLongitude)
     }
   }
 
@@ -421,6 +417,12 @@ class LocationProcessor extends Processor {
           assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_IN_PRECISION, comment)
         }
       }
+    }
+    //if the coordinateUncertainty is still empty populate it with the default
+    // value (we don't test until now because the SDS will sometime include coordinate uncertainty)
+    if (processed.location.coordinateUncertaintyInMeters == null) {
+      processed.location.coordinateUncertaintyInMeters = "1000"
+      assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, "Uncertainity was not supplied, using default value 1000")
     }
   }
 
@@ -479,13 +481,18 @@ class LocationProcessor extends Processor {
   def validateCoordinatesValues(raw: FullRecord, processed: FullRecord, assertions: ArrayBuffer[QualityAssertion]) = {
     //when the locality is Australia latitude needs to be negative and longitude needs to be positive
     //TO DO fix this so that it uses the gazetteer to determine whether or not coordinates
-    val lat = processed.location.decimalLatitude.toDoubleWithOption
-    val lon = processed.location.decimalLongitude.toDoubleWithOption
-    if (!lat.isEmpty && !lon.isEmpty) {
+    val latWithOption = processed.location.decimalLatitude.toDoubleWithOption
+    val lonWithOption = processed.location.decimalLongitude.toDoubleWithOption
+
+    if (!latWithOption.isEmpty && !lonWithOption.isEmpty) {
+
+      val lat = latWithOption.get
+      val lon = lonWithOption.get
+
       //Test that coordinates are in range
-      if (lat.get < -90 || lat.get > 90 || lon.get < -180 || lon.get > 180) {
+      if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
         //test to see if they have been inverted  (TODO other tests for inversion...)
-        if (lon.get >= -90 && lon.get <= 90 && lat.get >= -180 && lat.get <= 180) {
+        if (lon >= -90 && lon <= 90 && lat >= -180 && lat <= 180) {
           assertions + QualityAssertion(AssertionCodes.INVERTED_COORDINATES, "Assume that coordinates have been inverted. Original values: " +
             processed.location.decimalLatitude + "," + processed.location.decimalLongitude)
           val tmp = processed.location.decimalLatitude
@@ -495,26 +502,35 @@ class LocationProcessor extends Processor {
           assertions + QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, "Coordinates are out of range: " +
             processed.location.decimalLatitude + "," + processed.location.decimalLongitude)
         }
-
-        if (lat.get == 0.0d && lon.get == 0.0d) {
-          assertions + QualityAssertion(AssertionCodes.ZERO_COORDINATES, "Coordinates 0,0")
-          //processed.location.decimalLatitude = null
-          //processed.location.decimalLongitude = null
-        }
       }
+
+      if (lat == 0.0d && lon == 0.0d) {
+        assertions + QualityAssertion(AssertionCodes.ZERO_COORDINATES, "Coordinates 0,0")
+        //processed.location.decimalLatitude = null
+        //processed.location.decimalLongitude = null
+      }
+
       if (raw.location.country != null) {
         val country = Countries.matchTerm(raw.location.country)
-        if (!country.isEmpty && country.get.canonical == "AUSTRALIA") {
-          if (lat.get > 0) {
-            //latitude is negated
-            assertions + QualityAssertion(AssertionCodes.NEGATED_LATITUDE,
-              "Latitude seems to be negated.  Original value:" + processed.location.decimalLatitude)
-            processed.location.decimalLatitude = "-" + processed.location.decimalLatitude
-          }
-          if (lon.get < 0) {
-            assertions + QualityAssertion(AssertionCodes.NEGATED_LONGITUDE,
-              "Longitude seems to be negated. Original value: " + processed.location.decimalLongitude)
-            processed.location.decimalLongitude = processed.location.decimalLongitude.drop(1)
+        if(!country.isEmpty){
+          //do the coordinates match the supplied country?
+          CountryCentrePoints.getHemispheres(country.get.canonical) match {
+            case Some(hemis) => {
+              val (latHemi,lonHemi) = CountryCentrePoints.getHemispheresForPoint(lat,lon)
+              if(!hemis.contains(latHemi)){
+                //latitude is negated
+                assertions + QualityAssertion(AssertionCodes.NEGATED_LATITUDE,
+                  "Latitude seems to be negated.  Original value:" + processed.location.decimalLatitude)
+                processed.location.decimalLatitude = (lat * -1).toString
+              }
+              if(!hemis.contains(lonHemi)){
+                //point in wrong EW hemisphere - what do we do?
+                assertions + QualityAssertion(AssertionCodes.NEGATED_LONGITUDE,
+                  "Longitude seems to be negated. Original value: " + processed.location.decimalLongitude)
+                processed.location.decimalLongitude = (lon * -1).toString
+              }
+            }
+            case _ => //do nothing
           }
         }
       }

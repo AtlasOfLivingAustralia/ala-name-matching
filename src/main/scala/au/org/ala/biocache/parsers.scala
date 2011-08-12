@@ -19,25 +19,34 @@ object VerbatimLatLongParser {
    * 16° 52' 37" S
    *
    * TODO: Enhance this parser to cater for more formats and dirty data
-   *
    */
-  def parse(stringValue:String) : Option[Float]={
+  def parse(stringValue:String) : Option[Float] = {
     try{
         val normalised = stringValue.toLowerCase.trim
         normalised match{
-            case verbatimPattern(degree, dsign, minute, msign, second, ssign, direction) => {
+           case verbatimPattern(degree, dsign, minute, msign, second, ssign, direction) => {
                 convertToDecimal(degree, minute, second, direction)
-            }
+           }
            case verbatimPatternNoDenom(degree, minute, second, direction) => {
                 convertToDecimal(degree, minute, second, direction)
-            }
-             
-            case _ =>None
+           }
+           case _ => None
         }
-    } catch{
+    } catch {
         case e:Exception =>e.printStackTrace; None;
     }
   }
+
+  /**
+   * Parses to float and converts to string or null
+   */
+  def parseToStringOrNull(stringValue:String) : String = {
+     parse(stringValue) match {
+       case Some(v) => v.toString
+       case None => null
+     }
+  }
+
   def convertToDecimal(degree:String, minute:String, second:String, direction:String) : Option[Float] ={
     var decimalValue = degree.toInt * 10000000
     //println("after degree: " + decimalValue)
@@ -49,7 +58,7 @@ object VerbatimLatLongParser {
     //println("after second: "+ decimalValue + " - " + second + " = " + second.toFloat + " in degrees = " + (second.toFloat/3600))
     }
     try{
-      direction match{
+      direction match {
           case negativePattern(pat) => Some(-decimalValue.toFloat/10000000)
           case _ => Some(decimalValue.toFloat/10000000)
       }
@@ -58,6 +67,7 @@ object VerbatimLatLongParser {
     }
   }
 }
+
 object DistanceRangeParser {
 
    val singleNumber = """([0-9]{1,})""".r

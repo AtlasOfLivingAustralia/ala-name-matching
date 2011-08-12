@@ -75,7 +75,8 @@ trait Vocab {
   def loadVocabFromFile(filePath:String) : Set[Term] = {
     scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map({ row =>
         val values = row.split("\t")
-        new Term(values.head, values.tail)
+        val variants = values.map(x => x.replaceAll("""[ \\"\\'\\.\\,\\-\\?]*""","").toLowerCase)
+        new Term(values.head, variants)
     }).toSet
   }
 
@@ -93,9 +94,16 @@ trait Vocab {
 }
 
 case class LatLng(latitude:Float, longitude:Float)
+case class BBox(north:Float, south:Float, east:Float, west:Float)
 
 trait CentrePoints {
-  val map:Map[String, LatLng]
+
+  val north = 'N'
+  val south = 'S'
+  val east = 'E'
+  val west = 'W'
+
+  val map:Map[String, (LatLng, BBox)]
   val vocab:Vocab
   /**
    * Returns true if the supplied coordinates are the centre point for the supplied
@@ -106,8 +114,10 @@ trait CentrePoints {
     val matchedState = vocab.matchTerm(state)
     if(!matchedState.isEmpty && decimalLatitude != null && decimalLongitude != null){
 
-      val latlng = map.get(matchedState.get.canonical.toLowerCase)
-      if(!latlng.isEmpty){
+      val latlngBBox = map.get(matchedState.get.canonical.toLowerCase)
+      if(!latlngBBox.isEmpty){
+
+        val (latlng, bbox) = latlngBBox.get
 
         //how many decimal places are the supplied coordinates
         try {
@@ -119,8 +129,8 @@ trait CentrePoints {
             val longDecPlaces = noOfDecimalPlace(longitude)
 
             //approximate the centre points appropriately
-            val approximatedLat = round(latlng.get.latitude,latDecPlaces)
-            val approximatedLong = round(latlng.get.longitude,longDecPlaces)
+            val approximatedLat = round(latlng.latitude,latDecPlaces)
+            val approximatedLong = round(latlng.longitude,longDecPlaces)
 
             //compare approximated centre point with supplied coordinates
             approximatedLat == latitude && approximatedLong == longitude
@@ -132,6 +142,26 @@ trait CentrePoints {
       }
     } else {
       false
+    }
+  }
+
+  def getHemispheresForPoint(lat:Double, lng:Double) : (Char,Char) = (
+    if(lat >= 0) north else south,
+    if(lng >= 0) east else west
+  )
+
+  def getHemispheres(region:String) : Option[Set[Char]] = {
+    val matchedRegion = vocab.matchTerm(region)
+    map.get(matchedRegion.get.canonical.toLowerCase) match {
+      case Some((latlng, bbox)) => {
+        Some(Set(
+          if(bbox.north >= 0) north else south,
+          if(bbox.south >  0) north else south,
+          if(bbox.east  >= 0) east else west,
+          if(bbox.west >  0) east else west
+        ))
+      }
+      case _ => None
     }
   }
 
@@ -158,10 +188,15 @@ trait CentrePoints {
     }
   }
 
-  def loadFromFile(filePath:String): Map[String, LatLng] = {
+  def loadFromFile(filePath:String): Map[String, (LatLng,BBox)] = {
     scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map({ row =>
         val values = row.split("\t")
-        values(0).toLowerCase -> LatLng(values(1).toFloat, values(2).toFloat)
+        val name = values.head.toLowerCase
+        val coordinates = values.tail.map(x => x.toFloat)
+        name -> (
+          LatLng(coordinates(0), coordinates(1)),
+          BBox(coordinates(2),coordinates(3),coordinates(4),coordinates(5))
+        )
     }).toMap
   }
 }
