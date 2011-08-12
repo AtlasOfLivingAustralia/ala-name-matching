@@ -51,5 +51,21 @@ class VocabTests extends FunSuite {
   
   test("Observations - plurals for BOR"){
       expect(false){ BasisOfRecord.matchTerm("Observation").isEmpty}
-  }  
+  }
+
+  test("Test Australia hemispheres"){
+    expect(Set('S','E','W')){CountryCentrePoints.getHemispheres("Australia").get}
+  }
+
+  test("Match Mongolia"){
+    expect("mongolia"){Countries.matchTerm("Mongolia").get.canonical.toLowerCase}
+  }
+
+  test("Match UK"){
+    expect("united kingdom"){Countries.matchTerm("United Kingdom").get.canonical.toLowerCase}
+  }
+
+  test("Test UK hemispheres"){
+    expect(Set('E','W', 'N')){CountryCentrePoints.getHemispheres("United Kingdom").get}
+  }
 }
