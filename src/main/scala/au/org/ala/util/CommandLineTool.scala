@@ -30,7 +30,7 @@ object CommandLineTool {
                         }
                     }
                     case it if (it startsWith "optimise") => {
-                       	IndexRecords.indexer.finaliseIndex(true,false)
+                       	IndexRecords.indexer.optimise
                     }
                     case it if (it startsWith "healthcheck") => l.healthcheck
                     case it if (it startsWith "export") => {
@@ -49,6 +49,9 @@ object CommandLineTool {
             print("\nPlease supply a command or hit ENTER to view command list:")
             input = readLine
         }
+        //close down the data store and index so the program can exit normally
+        au.org.ala.biocache.Config.persistenceManager.shutdown
+        IndexRecords.indexer.shutdown
         println("Goodbye\n")
     }
 
@@ -61,8 +64,8 @@ object CommandLineTool {
         println("6)  healthcheck")
         println("7)  export")
         println("8)  import")
-        println("8)  optimise")
-        println("8)  exit")
+        println("9)  optimise")
+        println("10)  exit")
     }
 
     def printTable(table: List[Map[String, String]]) {

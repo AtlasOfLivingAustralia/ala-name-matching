@@ -62,6 +62,8 @@ trait IndexDAO {
      */
     def emptyIndex
     def reload
+    def shutdown
+    def optimise
     /**
      * Remove all the records with the specified value in the specified field
      */
@@ -255,8 +257,9 @@ trait IndexDAO {
                     }
                 }
                 val sconservation = getValue("stateConservation.p", map)
-                val stateCons = if(sconservation!="")sconservation.split(",")(0)else ""
+                var stateCons = if(sconservation!="")sconservation.split(",")(0)else ""
                 val rawStateCons = if(sconservation!="")sconservation.split(",")(1)else ""
+                if(stateCons == "null") stateCons = rawStateCons;
                 
                 val sensitive:String = {
                     if(getValue("originalDecimalLatitude",map) != "") 
@@ -303,9 +306,8 @@ trait IndexDAO {
                     getValue("order.p", map), family,
                     getValue("genus.p", map),
                     getValue("species.p", map),
-                    getValue("speciesID.p",map),
-                    //use the raw state if no processed state exists
-                    map.getOrElse("stateProvince.p", map.getOrElse("stateProvince","")),                    
+                    getValue("speciesID.p",map),                    
+                    map.getOrElse("stateProvince.p", ""),              
                     getValue("imcra.p", map),
                     getValue("ibra.p", map),
                     getValue("lga.p", map),
@@ -338,13 +340,7 @@ trait IndexDAO {
                     sensitive,
                     getValue("coordinateUncertaintyInMeters.p",map),
                     map.getOrElse("recordedBy", "")
-                    
-                    
-//                    getValue("mean_temperature_cars2009a_band1.p", map),
-//                    getValue("mean_oxygen_cars2006_band1.p", map),
-//                    getValue("bioclim_bio34.p", map),
-//                    getValue("bioclim_bio12.p", map),
-//                    getValue("bioclim_bio11.p", map)
+
                     ) ++ elFields.map(field => getValue(field+".p", map)) ++ clFields.map(field=> getValue(field+".p", map))
             }
             else {
@@ -444,6 +440,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         solrServer = new EmbeddedSolrServer(cc, "")
         thread.start
       }
+     
     }
 
     /**
@@ -509,18 +506,29 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
            //SolrIndexDAO.solrServer.add(solrDocList)
            while(!thread.ready){ Thread.sleep(50) }
            thread ! solrDocList
-           thread ! "exit"
+           
            //wait enough time for the Actor to get the message
            Thread.sleep(50)
         }
         while(!thread.ready){ Thread.sleep(50) }
         solrServer.commit
+        solrDocList.clear
         printNumDocumentsInIndex
         if(optimise)
-          solrServer.optimize
-        if(shutdown)
-        	cc.shutdown
+          this.optimise
+        if(shutdown){
+            
+        	this.shutdown
+        }
     }
+    /**
+     * Shutdown the index by stopping the indexing thread and shutting down the index core
+     */
+    def shutdown() ={
+        thread ! "exit"
+        cc.shutdown
+    }
+    def optimise = solrServer.optimize
 
     override def getOccIndexModel(raw: FullRecord, processed: FullRecord): Option[OccurrenceIndex] = {
         //set the SOLR specific value

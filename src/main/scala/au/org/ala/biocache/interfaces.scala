@@ -5,6 +5,7 @@ import collection.JavaConversions
 import au.org.ala.util.ProcessedValue
 import scala.collection.mutable.ListBuffer
 import au.org.ala.util.RecordProcessor
+import au.org.ala.util.IndexRecords
 
 /**
  * This is the interface to use for java applications.
@@ -199,6 +200,15 @@ object Store {
   def setReadOnly(ro: Boolean) = {
     readOnly = ro
 
+  }
+  /**
+   * Indexes a dataResource from a specific date
+   */
+  def reindex(dataResource:java.lang.String, startDate:java.lang.String){
+      if(dataResource != null && startDate != null)
+          IndexRecords.index(None, Some(dataResource), false, false, Some(startDate))
+      else
+          throw new Exception("Must supply data resouce and start date")
   }
 
   /**
