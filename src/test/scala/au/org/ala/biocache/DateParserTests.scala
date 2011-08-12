@@ -9,7 +9,7 @@ import org.junit.runner.RunWith
  * 
  * See http://www.scalatest.org/getting_started_with_fun_suite
  * 
- * scala -cp scalatest-1.0.jar org.scalatest.tools.Runner -p . -o -s ay.org.ala.biocache.ProcessEventTests 
+ * scala -cp scalatest-1.0.jar org.scalatest.tools.Runner -p . -o -s au.org.ala.biocache.ProcessEventTests
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */
@@ -177,5 +177,13 @@ class DateParserTests extends FunSuite {
     expect("1984"){ result.get.startYear }
     expect("1984"){ result.get.endYear }
     expect(false){ result.get.singleDate }
+  }
+  
+  test("Fri Aug 12 15:19:20 EST 2011"){
+      val result = DateParser.parseDate("Fri Aug 12 15:19:20 EST 2011")
+      expect(false){ result.isEmpty }
+      expect("2011"){ result.get.startYear }
+      expect("2011"){ result.get.endYear }
+      expect(true){ result.get.singleDate }
   }
 }

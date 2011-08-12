@@ -71,6 +71,7 @@ object DateParser {
       case ISOMonthDateRange(date) =>  Some(date)
       case ISOMonthYearDateRange(date) =>  Some(date)
       case ISOYearRange(date) => Some(date)
+      case ISOVerboseDateTime(date) => Some(date)
       case ISOVerboseDateTimeRange(date) => Some(date)
       case _ => None
     }
@@ -300,6 +301,30 @@ object ISODateTimeRange {
     }
   }
 }
+//Fri Aug 12 15:19:20 EST 2011
+object ISOVerboseDateTime {
+
+    def unapply(str: String): Option[EventDate] = {
+        try {
+
+            val eventDateParsed = DateUtils.parseDate(str,
+                Array("EEE MMM dd hh:mm:ss zzz yyyy"))
+
+            val startYear, endYear = DateFormatUtils.format(eventDateParsed, "yyyy")
+            val startDate, endDate = DateFormatUtils.format(eventDateParsed, "yyyy-MM-dd")
+            val startDay, endDay = DateFormatUtils.format(eventDateParsed, "dd")
+            val startMonth, endMonth = DateFormatUtils.format(eventDateParsed, "MM")
+
+            Some(EventDate(startDate, startDay, startMonth, startYear,
+                endDate, endDay, endMonth: String, endYear, true))
+
+        } catch {
+            case e: ParseException => None
+        }
+    }
+}
+
+
 
 //Mon Apr 23 00:00:00 EST 1984/Sun Apr 29 00:00:00 EST 1984
 object ISOVerboseDateTimeRange {
@@ -311,7 +336,7 @@ object ISOVerboseDateTimeRange {
           Array("EEE MMM dd hh:mm:ss zzz yyyy"))
        val endDateParsed = DateUtils.parseDate(parts(1),
           Array("EEE MMM dd hh:mm:ss zzz yyyy"))
-
+    
        val startDate = DateFormatUtils.format(startDateParsed, "yyyy-MM-dd")
        val endDate = DateFormatUtils.format(endDateParsed, "yyyy-MM-dd")
        val startDay = DateFormatUtils.format(startDateParsed, "dd")
@@ -320,7 +345,7 @@ object ISOVerboseDateTimeRange {
        val endMonth = DateFormatUtils.format(endDateParsed, "MM")
        val startYear = DateFormatUtils.format(startDateParsed, "yyyy")
        val endYear = DateFormatUtils.format(endDateParsed, "yyyy")
-
+    
        Some(EventDate(startDate,startDay,startMonth,startYear,
            endDate,endDay,endMonth:String,endYear,startDate.equals(endDate)))
      } catch {
