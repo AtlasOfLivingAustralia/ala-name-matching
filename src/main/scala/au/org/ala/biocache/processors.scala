@@ -44,7 +44,7 @@ class ImageProcessor extends Processor {
 
   //Regular expression used to parse an image URL - adapted from 
   //http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
-  lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:jpg|gif|png|jpeg))$""".r
+  lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#?]+)+\.(?:jpg|gif|png|jpeg))$""".r
   
   /**
    * validates that the associated media is a valid image url
@@ -259,7 +259,7 @@ class BasisOfRecordProcessor extends Processor {
       //add a quality assertion
       //check to see if there is a default value for this
       val dr = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
-      if(!dr.isEmpty && dr.get.getDefaultDwcValues != null && dr.get.getDefaultDwcValues().contains("basisOfRecord")){
+      if(!dr.isEmpty && dr.get.getDefaultDwcValues().contains("basisOfRecord")){
         //the default balue will be one of the vocab
         processed.occurrence.basisOfRecord = dr.get.getDefaultDwcValues()("basisOfRecord")
         //TODO set the flag that default values have been used
@@ -510,7 +510,7 @@ class LocationProcessor extends Processor {
         //processed.location.decimalLongitude = null
       }
 
-      if (raw.location.country != null) {
+      if (raw.location.country != null && raw.location.country !="") {
         val country = Countries.matchTerm(raw.location.country)
         if(!country.isEmpty){
           //do the coordinates match the supplied country?
@@ -532,6 +532,8 @@ class LocationProcessor extends Processor {
             }
             case _ => //do nothing
           }
+        } else {
+          assertions + QualityAssertion(AssertionCodes.UNKNOWN_COUNTRY_NAME, "Country name '"+raw.location.country+"' not recognised.")
         }
       }
     }
