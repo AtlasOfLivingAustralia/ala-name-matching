@@ -411,7 +411,7 @@ class LocationProcessor extends Processor {
       if (raw.location.coordinatePrecision != null) {
         //TODO work out what sort of custom parsing is necessary
         val value = raw.location.coordinatePrecision.toFloatWithOption
-        if (value.isEmpty && value.get > 1) {
+        if (!value.isEmpty && value.get > 1) {
           processed.location.coordinateUncertaintyInMeters = value.get.toInt.toString
           val comment = "Supplied precision, " + raw.location.coordinatePrecision + ", is assumed to be uncertainty in metres";
           assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_IN_PRECISION, comment)
