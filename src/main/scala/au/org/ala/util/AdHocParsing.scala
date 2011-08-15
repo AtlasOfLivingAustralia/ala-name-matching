@@ -133,6 +133,12 @@ object AdHocParser {
     reader.close
   }
 
+  def areColumnHeaders(list:Array[String]) : Boolean = {
+    val matchedCount = DwC.retrieveCanonicalsOrNothing(list.toList).count(x => x != "")
+    //if not try and match them
+    matchedCount > (list.size/2)
+  }
+
   def processColumnHeaders(list: Array[String]): Array[String] = {
     //are these darwin core terms?
     val matchedCount = DwC.retrieveCanonicalsOrNothing(list.toList).count(x => x != "")

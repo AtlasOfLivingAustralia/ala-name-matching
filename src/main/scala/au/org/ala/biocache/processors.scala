@@ -129,9 +129,7 @@ class EventProcessor extends Processor {
         (-1, false)
       }
     } catch {
-      case e: NumberFormatException => {
-        (-1, false)
-      }
+      case e: NumberFormatException => (-1, false)
     }
   }
 
@@ -169,10 +167,10 @@ class EventProcessor extends Processor {
       //parse 89 for 1989
         if (year > currentYear % 100) {
           // Must be in last century
-          year += ((currentYear / 100) - 1) * 100;
+          year += ((currentYear / 100) - 1) * 100
         } else {
           // Must be in this century
-          year += (currentYear / 100) * 100;
+          year += (currentYear / 100) * 100
         }
       } else if (year >= 100 && year < 1700) {
         year = -1
@@ -187,7 +185,7 @@ class EventProcessor extends Processor {
     if (validDate) {
       try {
        val calendar = new GregorianCalendar(
-          year.toInt ,
+          year.toInt,
           month.toInt - 1,
           day.toInt
        );
@@ -497,8 +495,8 @@ class LocationProcessor extends Processor {
   def validateCoordinatesValues(raw: FullRecord, processed: FullRecord, assertions: ArrayBuffer[QualityAssertion]) = {
     //when the locality is Australia latitude needs to be negative and longitude needs to be positive
     //TO DO fix this so that it uses the gazetteer to determine whether or not coordinates
-    val latWithOption = processed.location.decimalLatitude.toDoubleWithOption
-    val lonWithOption = processed.location.decimalLongitude.toDoubleWithOption
+    val latWithOption = processed.location.decimalLatitude.toFloatWithOption
+    val lonWithOption = processed.location.decimalLongitude.toFloatWithOption
 
     if (!latWithOption.isEmpty && !lonWithOption.isEmpty) {
 
@@ -520,30 +518,33 @@ class LocationProcessor extends Processor {
         }
       }
 
-      if (lat == 0.0d && lon == 0.0d) {
+      if (lat == 0.0f && lon == 0.0f) {
         assertions + QualityAssertion(AssertionCodes.ZERO_COORDINATES, "Coordinates 0,0")
-        //processed.location.decimalLatitude = null
-        //processed.location.decimalLongitude = null
+        processed.location.decimalLatitude = null
+        processed.location.decimalLongitude = null
       }
 
       if (raw.location.country != null && raw.location.country !="") {
         val country = Countries.matchTerm(raw.location.country)
         if(!country.isEmpty){
-          //do the coordinates match the supplied country?
-          CountryCentrePoints.getHemispheres(country.get.canonical) match {
-            case Some(hemis) => {
-              val (latHemi,lonHemi) = CountryCentrePoints.getHemispheresForPoint(lat,lon)
-              if(!hemis.contains(latHemi)){
-                //latitude is negated
-                assertions + QualityAssertion(AssertionCodes.NEGATED_LATITUDE,
-                  "Latitude seems to be negated.  Original value:" + processed.location.decimalLatitude)
-                processed.location.decimalLatitude = (lat * -1).toString
-              }
-              if(!hemis.contains(lonHemi)){
-                //point in wrong EW hemisphere - what do we do?
-                assertions + QualityAssertion(AssertionCodes.NEGATED_LONGITUDE,
-                  "Longitude seems to be negated. Original value: " + processed.location.decimalLongitude)
-                processed.location.decimalLongitude = (lon * -1).toString
+
+          val latlngBBoxOption = CountryCentrePoints.matchName(country.get.canonical)
+          latlngBBoxOption match {
+            case Some((latlng, bbox)) => {
+
+              if(!bbox.containsPoint(lat,lon)){
+                if(bbox.containsPoint(lat * -1,lon)){
+                  //latitude is negated
+                  assertions + QualityAssertion(AssertionCodes.NEGATED_LATITUDE,
+                    "Latitude seems to be negated.  Original value:" + processed.location.decimalLatitude)
+                  processed.location.decimalLatitude = (lat * -1).toString
+                }
+                if(bbox.containsPoint(lat,lon * -1)){
+                  //point in wrong EW hemisphere - what do we do?
+                  assertions + QualityAssertion(AssertionCodes.NEGATED_LONGITUDE,
+                    "Longitude seems to be negated. Original value: " + processed.location.decimalLongitude)
+                  processed.location.decimalLongitude = (lon * -1).toString
+                }
               }
             }
             case _ => //do nothing
@@ -656,12 +657,12 @@ class ClassificationProcessor extends Processor {
 
   val logger = LoggerFactory.getLogger("ClassificationProcessor")
   val afdApniIdentifier = """([:afd.|:apni.])""".r
+  import au.org.ala.biocache.BiocacheConversions._
 
   /**
    * Parse the hints into a usable map with rank -> Set.
    */
   def parseHints(taxonHints: List[String]): Map[String, Set[String]] = {
-    //println("Taxonhints: "  + taxonHints)
     //parse taxon hints into rank : List of
     val rankSciNames = new HashMap[String, Set[String]]
     val pairs = taxonHints.map(x => x.split(":"))
@@ -721,9 +722,6 @@ class ClassificationProcessor extends Processor {
             val taxonHints = attribution.get.taxonomicHints
 
             if(taxonHints != null && !taxonHints.isEmpty){
-              //TODO this map should be cacheable
-              //val hintMap = parseHints(taxonHints.toList)
-
               val (isValid, comment) = isMatchValid(classification, attribution.get.retrieveParseHints)
               if(!isValid){
                   logger.info("Conflict in matched classification. Matched: " + guid+ ", Matched: "+comment+", Taxonomic hints in use: " + taxonHints.toList)
@@ -734,27 +732,8 @@ class ClassificationProcessor extends Processor {
           }
         }
         //store ".p" values
-        processed.classification.kingdom = classification.getKingdom
-        processed.classification.kingdomID = classification.getKid
-        processed.classification.phylum = classification.getPhylum
-        processed.classification.phylumID = classification.getPid
-        processed.classification.classs = classification.getKlass
-        processed.classification.classID = classification.getCid
-        processed.classification.order = classification.getOrder
-        processed.classification.orderID = classification.getOid
-        processed.classification.family = classification.getFamily
-        processed.classification.familyID = classification.getFid
-        processed.classification.genus = classification.getGenus
-        processed.classification.genusID = classification.getGid
-        processed.classification.species = classification.getSpecies
-        processed.classification.speciesID = classification.getSid
-        processed.classification.specificEpithet = classification.getSpecificEpithet
-        processed.classification.scientificName = classification.getScientificName
-        processed.classification.taxonConceptID = nsr.getLsid
-        processed.classification.left = nsr.getLeft
-        processed.classification.right = nsr.getRight
-        processed.classification.taxonRank = nsr.getRank.getRank
-        processed.classification.taxonRankID = nsr.getRank.getId.toString
+        processed.classification = nsr
+
         //try to apply the vernacular name
         val taxonProfile = TaxonProfileDAO.getByGuid(nsr.getLsid)
         if(!taxonProfile.isEmpty && taxonProfile.get.commonName!=null){
@@ -783,8 +762,8 @@ class ClassificationProcessor extends Processor {
       }
     } catch {
       case he: HomonymException => {
-          logger.debug(he.getMessage,he)
-          Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, "Homonym issue resolving the classification"))
+        logger.debug(he.getMessage,he)
+        Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, "Homonym issue resolving the classification"))
       }
       case se: SearchResultException => logger.debug(se.getMessage,se); Array()
       case e: Exception => logger.error("Exception during classification match.",e);Array()
