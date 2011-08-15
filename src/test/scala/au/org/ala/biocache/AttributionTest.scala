@@ -4,7 +4,7 @@ import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
-class AttributionTests extends FunSuite{
+class AttributionTest extends FunSuite{
 
     test("Test DR lookup in collectory"){
         val dr= AttributionDAO.getDataResourceFromWS("dr367")        

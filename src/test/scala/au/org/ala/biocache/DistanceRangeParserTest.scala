@@ -5,7 +5,7 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class DistanceRangeParserTests extends FunSuite {
+class DistanceRangeParserTest extends FunSuite {
 
     test("Test range parsing"){
         expect(1.2222f) { DistanceRangeParser.parse("1.2222").get }

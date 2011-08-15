@@ -8,7 +8,7 @@ import org.junit.runner.RunWith
  * Test for vocabulary mapping and lookups.
  */
 @RunWith(classOf[JUnitRunner])
-class VocabTests extends FunSuite {
+class VocabTest extends FunSuite {
 
   test("Basis of record matching"){
       expect("isotype"){ TypeStatus.matchTerm("isotype").get.canonical}

@@ -5,7 +5,7 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class PosoTests extends FunSuite {
+class PosoTest extends FunSuite {
     
     test("Attribution toMap with array test"){
         

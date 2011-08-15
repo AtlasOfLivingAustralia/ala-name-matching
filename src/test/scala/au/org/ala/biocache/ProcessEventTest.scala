@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
  * @author Dave Martin (David.Martin@csiro.au)
  */
 @RunWith(classOf[JUnitRunner])
-class ProcessEventTests extends FunSuite {
+class ProcessEventTest extends FunSuite {
 
   test("yyyy-dd-mm correctly sets year, month, day values in process object") {
 
@@ -86,7 +86,7 @@ class ProcessEventTests extends FunSuite {
     expect("06"){ processed.event.month }
     expect("1978"){ processed.event.year }
     expect(1){ assertions.size }
-    expect(30008){ assertions(0).code }
+    expect(30009){ assertions(0).code }
   }
 
   test("invalid month test") {

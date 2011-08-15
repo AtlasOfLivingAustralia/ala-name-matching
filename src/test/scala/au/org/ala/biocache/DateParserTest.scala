@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
  * @author Dave Martin (David.Martin@csiro.au)
  */
 @RunWith(classOf[JUnitRunner])
-class DateParserTests extends FunSuite {
+class DateParserTest extends FunSuite {
 
   test("Single Year"){
     val result = DateParser.parseDate("1978")

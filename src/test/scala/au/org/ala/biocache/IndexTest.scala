@@ -8,7 +8,7 @@ import org.junit.runner.RunWith
  * Performs some Index Processing tests
  */
 @RunWith(classOf[JUnitRunner])
-class IndexTests extends FunSuite {
+class IndexTest extends FunSuite {
     test("Tests Index Date Ranges" ){
         val map=Map("lastModifiedTime"->"2011-07-07T10:00:00Z", "lastModifiedTime.p"->"2011-07-17T10:00:00Z")
         val indexer = new SolrIndexDAO("/data/solr/bio-proto")
