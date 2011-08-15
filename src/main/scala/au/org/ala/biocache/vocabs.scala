@@ -433,6 +433,7 @@ object AssertionCodes {
   val FIRST_OF_CENTURY = ErrorCode("firstOfCentury",30005,false,"First of the century")
   val DATE_PRECISION_MISMATCH = ErrorCode("datePrecisionMismatch",30006,false,"Date precision invalid")
   val INVALID_COLLECTION_DATE = ErrorCode("invalidCollectionDate",30007,false,"Invalid collection date")
+  val DAY_MONTH_TRANSPOSED = ErrorCode("dayMonthTransposed",30008,false,"Day and month transposed")
 
   //all the codes
   val all = retrieveAll

@@ -232,7 +232,6 @@ object AttributionDAO {
    */
   def getDataResourceByUid(uid:String) : Option[Attribution] ={
     
-
     val cachedObject = lru.get(uid)
       if(cachedObject!=null){
         cachedObject.asInstanceOf[Option[Attribution]]
@@ -242,7 +241,6 @@ object AttributionDAO {
         //cache the data resource info
         lru.put(uid, att)
         att
-        
       }
   }
 
@@ -258,22 +256,25 @@ object AttributionDAO {
     val name = wsmap.getOrElse("name","").toString
 
     val hints =wsmap.getOrElse("taxonomyCoverageHints",null)
-    val ahints ={
-                  if(hints != null){
-                  hints.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> o.toString().replace("=",":").replace("{","").replace("}",""));
-                  
-                  }
-                  else null
-              }
+    val ahints = {
+      if(hints != null){
+        hints.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object) => {
+          o.toString().replace("=",":").replace("{","").replace("}","")
+        })
+      }
+      else null
+    }
+
     //the hubMembership
-     val hub = wsmap.getOrElse("hubMembership", null)
-     val ahub ={
-                if(hub !=  null){
-                  hub.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> (o.asInstanceOf[java.util.LinkedHashMap[Object,Object]]).get("uid").toString)
-                  
-                }
-                else null
-              }
+    val hub = wsmap.getOrElse("hubMembership", null)
+    val ahub = {
+      if(hub !=  null){
+        hub.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object) => {
+          (o.asInstanceOf[java.util.LinkedHashMap[Object,Object]]).get("uid").toString
+        })
+      }
+      else null
+    }
 
     //data Provider
     val dp = wsmap.getOrElse("provider", null).asInstanceOf[java.util.Map[String,String]]
@@ -282,8 +283,6 @@ object AttributionDAO {
     val hasColl = wsmap.getOrElse("hasMappedCollections", false).asInstanceOf[Boolean]
     //the default DWC terms 
     val defaultDwc = wsmap.getOrElse("defaultDarwinCoreValues", null)
-    
-
     attribution.setDataResourceName(name)
     attribution.setDataProviderUid(dpuid)
     attribution.setDataProviderName(dpname)
@@ -497,7 +496,7 @@ object LocationDAO {
 
   def gazetteerLookup(latitude: String, longitude: String): Map[String, String] = {
     try {
-      val url = new URL("http://spatial-dev.ala.org.au/gazetteer/latlon/" + latitude + "," + longitude)
+      val url = new URL("http://spatial.ala.org.au/gazetteer/latlon/" + latitude + "," + longitude)
       val connection = url.openConnection();
       connection.setRequestProperty("Accept", "application/xml");
       connection.setRequestProperty("Accept-Encoding", "gzip,deflate");

@@ -114,6 +114,9 @@ class AttributionProcessor extends Processor {
 }
 
 class EventProcessor extends Processor {
+
+  import au.org.ala.util.StringHelper._
+
   /**
    * Validate the supplied number using the supplied function.
    */
@@ -140,14 +143,25 @@ class EventProcessor extends Processor {
 
     var assertions = new ArrayBuffer[QualityAssertion]
     var date: Option[java.util.Date] = None
-    val now = new java.util.Date
-    val currentYear = DateFormatUtils.format(now, "yyyy").toInt
+
+    val currentYear = DateUtil.getCurrentYear
     var comment = ""
 
-    var (year,invalidYear) = validateNumber(raw.event.year,{year => year < 0 || year > currentYear})
-    var (month,invalidMonth) = validateNumber(raw.event.month,{month => month < 1 || month > 12})
-    var (day,invalidDay) = validateNumber(raw.event.day,{day => day < 1 || day > 31})
-    var invalidDate = invalidYear || invalidDay || invalidMonth
+    var (year,validYear) = validateNumber(raw.event.year,{year => year > 0 && year <= currentYear})
+    var (month,validMonth) = validateNumber(raw.event.month,{month => month >= 1 && month <= 12})
+    var (day,validDay) = validateNumber(raw.event.day,{day => day >= 1 && day <= 31})
+
+    if(!validMonth && raw.event.month.isInt && raw.event.day.isInt){
+      //are day and month transposed?
+      val monthValue = raw.event.month.toInt
+      val dayValue = raw.event.day.toInt
+      if(monthValue > 12 && dayValue < 12){
+        month = dayValue
+        day = monthValue
+        assertions + QualityAssertion(AssertionCodes.DAY_MONTH_TRANSPOSED,"Assume day and month transposed.")
+        validMonth = true
+      }
+    }
 
     //check for sensible year value
     if (year > 0) {
@@ -162,13 +176,15 @@ class EventProcessor extends Processor {
         }
       } else if (year >= 100 && year < 1700) {
         year = -1
-        invalidDate = true;
+        validYear = false
         comment = "Year out of range"
       }
     }
 
+    var validDate = validYear && validDay && validMonth
+
     //construct
-    if (year > -1 && month > 0 && day > 0) {
+    if (validDate) {
       try {
        val calendar = new GregorianCalendar(
           year.toInt ,
@@ -178,19 +194,19 @@ class EventProcessor extends Processor {
        date = Some(calendar.getTime)
       } catch {
         case e: Exception => {
-          invalidDate = true
+          validDate = false
           comment = "Invalid year, day, month"
         }
       }
     }
 
     //set the processed values
-    if (year != -1) processed.event.year = year.toString
-    if (month > 0) processed.event.month = String.format("%02d",int2Integer(month)) //NC ensure that a month is 2 characters long
-    if (day >0) processed.event.day = day.toString
+    if (validYear) processed.event.year = year.toString
+    if (validMonth) processed.event.month = String.format("%02d",int2Integer(month)) //NC ensure that a month is 2 characters long
+    if (validDay) processed.event.day = day.toString
     if (!date.isEmpty) processed.event.eventDate = DateFormatUtils.format(date.get, "yyyy-MM-dd")
 
-    //deal with event date
+    //deal with event date if we dont have separate day, month, year fields
     if (date.isEmpty && raw.event.eventDate != null && !raw.event.eventDate.isEmpty) {
       val parsedDate = DateParser.parseDate(raw.event.eventDate)
       if(!parsedDate.isEmpty){
@@ -215,7 +231,7 @@ class EventProcessor extends Processor {
     }
 
     //if invalid date, add assertion
-    if (invalidDate) {
+    if (!validDate) {
       assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
     }
 

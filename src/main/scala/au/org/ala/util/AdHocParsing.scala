@@ -5,7 +5,7 @@ import scala.collection.mutable.ListBuffer
 import scala.reflect.BeanProperty
 import au.org.ala.checklist.lucene.HomonymException
 import au.com.bytecode.opencsv.{CSVWriter, CSVReader}
-import java.io.{StringReader, OutputStreamWriter, OutputStream, File}
+import java.io._
 
 case class ProcessedValue(@BeanProperty name: String, @BeanProperty raw: String, @BeanProperty processed: String)
 
@@ -22,7 +22,7 @@ object ColumnParserTest {
     while(noExit){
       val input = readLine
       val columns = input.split(",")
-      val matchedColumns = Parser.processColumnHeaders(columns)
+      val matchedColumns = AdHocParser.processColumnHeaders(columns)
       (matchedColumns zip columns).foreach(x =>{
         println(x._1 +" : " + x._2)
       })
@@ -35,14 +35,16 @@ object ProcessToStreamTest {
   def main(args:Array[String]){
     val headers = Array("country", "recordNumber","stateProvince", "scientificName", "decimalLatitude","decimalLongitude")
     val data = """Australia,1,TAS,Macropus rufus,12.0,12.3"""
-    Parser.processToStream(headers, data, System.out)
+    val fout = new FileOutputStream("/tmp/testoutput.csv")
+    AdHocParser.processToStream(headers, data, fout)
+    fout.close
   }
 }
 
 /**
  * Parser for CSV style data which attempts to guess the data types in use.
  */
-object Parser {
+object AdHocParser {
 
   import au.org.ala.util.StringHelper._
   import FileHelper._
@@ -57,7 +59,7 @@ object Parser {
 
   def processToStream(headers:Array[String], csvData:String, outputStream:OutputStream){
 
-    val output = new CSVWriter(new OutputStreamWriter(outputStream))
+    val output = new CSVWriter(new OutputStreamWriter(outputStream), ',', '"')
     val reader = new CSVReader(new StringReader(csvData))
     var row = reader.readNext
 
@@ -90,24 +92,45 @@ object Parser {
     //need a list of common to both....
 
     val commonFields = rawFields intersect processedFields
+
+    val commonHdrs = commonFields.map(x => List(x, x + " (processed)")).flatten
+
     println("**Common fields: " + commonFields.mkString(","))
 
     val rawOnly = rawFields diff commonFields
     val processedOnly = processedFields diff commonFields
 
+    //write out headers for CSV
+    println((commonHdrs :::  rawOnly  ::: processedOnly).toArray.mkString(","))
+    output.writeNext((commonHdrs :::  rawOnly  ::: processedOnly).toArray)
+
+    //TODO re-order as per the original headers
+
     //for each row, construct the output
     for (el <- l){
+      //do common fields first - with raw/processed
       val valueMap = el.values.map(p => (p.name -> p)).toMap
 
+      val commonOutput:List[String] = commonFields.map(cf => valueMap.get(cf) match {
+        case Some(processedValue) => List(processedValue.raw,processedValue.processed)
+        case _ => List("","")
+      }).flatten
 
+      val rawOutput:List[String] = rawOnly.map(cf => valueMap.get(cf) match {
+        case Some(processedValue) => processedValue.raw
+        case _ => ""
+      })
 
+      val processedOutput:List[String] = processedOnly.map(cf => valueMap.get(cf) match {
+        case Some(processedValue) => processedValue.processed
+        case _ => ""
+      })
 
-      //output.writeNext()
-
-
+      println((commonOutput ::: rawOutput ::: processedOutput).toArray.asInstanceOf[Array[String]].mkString(","))
+      output.writeNext((commonOutput ::: rawOutput ::: processedOutput).toArray.asInstanceOf[Array[String]])
+      output.flush
     }
-
-    //re-order as per the original headers
+    reader.close
   }
 
   def processColumnHeaders(list: Array[String]): Array[String] = {
