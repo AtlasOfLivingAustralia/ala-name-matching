@@ -503,7 +503,7 @@ public class OccurrenceController {
 	 * @param model
 	 * @throws Exception
 	 */
-	@RequestMapping(value = {"/occurrence/{uuid}","/occurrences/{uuid}", "/occurrence/{uuid}.json", "/occurrences/{uuid}.json"}, method = RequestMethod.GET)
+	@RequestMapping(value = {"/occurrence/{uuid:.+}","/occurrences/{uuid:.+}", "/occurrence/{uuid:.+}.json", "/occurrences/{uuid:.+}.json"}, method = RequestMethod.GET)
 	public @ResponseBody Object showOccurrence(@PathVariable("uuid") String uuid,
         HttpServletRequest request, Model model) throws Exception {
 
