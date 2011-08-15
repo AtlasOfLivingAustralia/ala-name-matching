@@ -1511,36 +1511,39 @@ public class SearchDAOImpl implements SearchDAO {
     /**
      * Obtains a list and facet count of the source uids for the supplied query.
      *
-     * IS THIS NECESSARY
+  
      *
      * @param query
      * @param filterQuery
      * @return
      * @throws Exception
      */
-    public Map<String, Integer> getSourcesForQuery(String query, String[] filterQuery) throws Exception {
+    public Map<String, Integer> getSourcesForQuery(SearchRequestParams searchParams) throws Exception {
 
         Map<String, Integer> uidStats = new HashMap<String, Integer>();
-//        SolrQuery solrQuery = new SolrQuery();
-//        solrQuery.setQuery(formatSearchQuery(query));
-//        solrQuery.setQueryType("standard");
-//        solrQuery.setRows(0);
-//        solrQuery.setFacet(true);
-//        solrQuery.setFacetMinCount(1);
-//        solrQuery.addFacetField("data_provider_uid");
-//        solrQuery.addFacetField("data_resource_uid");
-//        solrQuery.addFacetField("collection_uid");
-//        solrQuery.addFacetField("institution_uid");
-//        QueryResponse qr = runSolrQuery(solrQuery, filterQuery, 1, 0, "score", "asc");
-//        //now cycle through and get all the facets
-//        List<FacetField> facets = qr.getFacetFields();
-//        for (FacetField facet : facets) {
-//            if (facet.getValues() != null) {
-//                for (FacetField.Count ffc : facet.getValues()) {
-//                    uidStats.put(ffc.getName(), new Integer((int) ffc.getCount()));
-//                }
-//            }
-//        }
+        SolrQuery solrQuery = new SolrQuery();
+        
+        formatSearchQuery(searchParams);
+        logger.info("The query : " + searchParams.getQ());
+        solrQuery.setQuery(searchParams.getQ());
+        solrQuery.setQueryType("standard");
+        solrQuery.setRows(0);
+        solrQuery.setFacet(true);
+        solrQuery.setFacetMinCount(1);
+        solrQuery.addFacetField("data_provider_uid");
+        solrQuery.addFacetField("data_resource_uid");
+        solrQuery.addFacetField("collection_uid");
+        solrQuery.addFacetField("institution_uid");
+        QueryResponse qr = runSolrQuery(solrQuery, searchParams.getFq(), 1, 0, "score", "asc");
+        //now cycle through and get all the facets
+        List<FacetField> facets = qr.getFacetFields();
+        for (FacetField facet : facets) {
+            if (facet.getValues() != null) {
+                for (FacetField.Count ffc : facet.getValues()) {
+                    uidStats.put(ffc.getName(), new Integer((int) ffc.getCount()));
+                }
+            }
+        }
         return uidStats;
     }
 

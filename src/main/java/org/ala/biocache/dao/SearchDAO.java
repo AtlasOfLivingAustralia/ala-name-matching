@@ -184,7 +184,7 @@ public interface SearchDAO {
      * @return
      * @throws Exception
      */
-    Map<String,Integer> getSourcesForQuery(String query, String[] filterQuery) throws Exception;
+    Map<String,Integer> getSourcesForQuery(SearchRequestParams searchParams) throws Exception;
 
 
     TaxaRankCountDTO findTaxonCountForUid(String query, String queryContext, int maximumFacets) throws Exception;

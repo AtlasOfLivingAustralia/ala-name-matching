@@ -388,13 +388,21 @@ public class SearchUtils {
 		List<OccurrenceSourceDTO> lsources = new ArrayList<OccurrenceSourceDTO>();
 		try {
 			for (String key : keys) {
+			    String name=key;
+			    if (key.startsWith("co"))
+		            name = collectionCache.getCollections().get(key);
+			    else if (key.startsWith("in"))
+		            name = collectionCache.getInstitutions().get(key);
+		        else if (key.startsWith("dr"))
+		            name = collectionCache.getDataResources().get(key);
+			    lsources.add(new OccurrenceSourceDTO(name, key, sources.get(key)));
 				// get the information for the uid
-				String jsonObject = OccurrenceController
-						.getUrlContentAsString(collectoryBaseUrl
-								+ "/lookup/summary/" + key);
-				JSONObject j = new JSONObject(jsonObject);
-				lsources.add(new OccurrenceSourceDTO(j.getString("name"), key,
-						sources.get(key)));
+//				String jsonObject = OccurrenceController
+//						.getUrlContentAsString(collectoryBaseUrl
+//								+ "/lookup/summary/" + key);
+//				JSONObject j = new JSONObject(jsonObject);
+//				lsources.add(new OccurrenceSourceDTO(j.getString("name"), key,
+//						sources.get(key)));
 			}
 		} catch (Exception e) {
 			logger.error(e.getMessage());
