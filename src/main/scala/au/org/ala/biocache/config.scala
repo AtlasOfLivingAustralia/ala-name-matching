@@ -57,9 +57,7 @@ class ConfigModule extends AbstractModule {
         try {
             val nameIndex = new CBIndexSearch(properties.getProperty("nameIndexLocation"))
             bind(classOf[CBIndexSearch]).toInstance(nameIndex)
-            //Initialising this here because we may wish to process records form the biocache-service and it is expensive to startup
-            val sdsFinder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("http://sds.ala.org.au/sensitive-species-data.xml", nameIndex);
-            bind(classOf[SensitiveSpeciesFinder]).toInstance(sdsFinder)
+           
             
         } catch {
             case e: Exception => logger.warn("Lucene indexes arent currently available.")

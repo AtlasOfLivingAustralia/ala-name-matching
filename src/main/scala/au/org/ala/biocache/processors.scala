@@ -303,7 +303,7 @@ class LocationProcessor extends Processor {
 
   val logger = LoggerFactory.getLogger("LocationProcessor")
   //This is being initialised here because it may take some time to load all the XML records...
-  val sdsFinder = Config.sdsFinder
+  lazy val sdsFinder = Config.sdsFinder
 
   import au.org.ala.util.StringHelper._
 
