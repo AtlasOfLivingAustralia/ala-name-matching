@@ -15,6 +15,8 @@
 
 package org.ala.jms.service;
 
+import java.text.SimpleDateFormat;
+
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
@@ -136,6 +138,7 @@ public class JmsMessageListener implements MessageListener {
     	//keys
     	fullRecord.setRowKey(CITIZEN_SCIENCE_DRUID + "|" + sighting.getGuid());    	
     	fullRecord.occurrence().setOccurrenceID(sighting.getGuid());
+    	fullRecord.occurrence().setRecordedBy(sighting.getUserID());
     	
     	fullRecord.classification().setKingdom(sighting.getKingdom());
     	fullRecord.classification().setFamily(sighting.getFamily());
@@ -156,18 +159,22 @@ public class JmsMessageListener implements MessageListener {
     	fullRecord.occurrence().setIndividualCount("" + sighting.getIndividualCount());
     	fullRecord.occurrence().setOccurrenceRemarks(sighting.getOccurrenceRemarks());
     	
-    	fullRecord.event().setEventDate(sighting.getEventDate().toString());
+     	fullRecord.event().setEventDate(sighting.getEventDate());
     	fullRecord.event().setEventTime(sighting.getEventTime());
     	
     	fullRecord.location().setDecimalLatitude("" + sighting.getDecimalLatitude());
     	fullRecord.location().setDecimalLongitude("" + sighting.getDecimalLongitude());
     	fullRecord.location().setLocality(sighting.getLocality());
+    	//Uncertainity was not supplied, using default value 1000
+    	if(sighting.getCoordinateUncertaintyInMeters() == null){
+    		sighting.setCoordinateUncertaintyInMeters(1000);
+    	}
     	fullRecord.location().setCoordinateUncertaintyInMeters("" + sighting.getCoordinateUncertaintyInMeters());
     	fullRecord.location().setStateProvince(sighting.getStateProvince());
     	fullRecord.location().setCountry(sighting.getCountry());
     	
     	fullRecord.attribution().setDataResourceUid(CITIZEN_SCIENCE_DRUID);
-    	        	
+    	    	        	
     	return fullRecord;
 	}
 	

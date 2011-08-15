@@ -21,7 +21,7 @@ public class Sighting {
     /** the kingdom of the taxon contributed sighting */
     String kingdom;
     /** the date of the observation */
-    java.util.Date eventDate;
+    String eventDate;
     /** the recorded time */
     String eventTime;
     /** the number of individuals */
@@ -78,6 +78,18 @@ public class Sighting {
 		this.userId = userId;
 	}
 	/**
+	 * @return the userId
+	 */
+	public String getUserID() {
+		return userId;
+	}
+	/**
+	 * @param userId the userId to set
+	 */
+	public void setUserID(String userId) {
+		this.userId = userId;
+	}	
+	/**
 	 * @return the taxonConceptGuid
 	 */
 	public String getTaxonConceptGuid() {
@@ -128,13 +140,13 @@ public class Sighting {
 	/**
 	 * @return the eventDate
 	 */
-	public java.util.Date getEventDate() {
+	public String getEventDate() {
 		return eventDate;
 	}
 	/**
 	 * @param eventDate the eventDate to set
 	 */
-	public void setEventDate(java.util.Date eventDate) {
+	public void setEventDate(String eventDate) {
 		this.eventDate = eventDate;
 	}
 	/**
