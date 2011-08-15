@@ -2,8 +2,10 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+import org.junit.Ignore
 
 @RunWith(classOf[JUnitRunner])
+@Ignore
 class AttributionTest extends FunSuite{
 
     test("Test DR lookup in collectory"){
