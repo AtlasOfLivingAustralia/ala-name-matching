@@ -31,6 +31,7 @@ import org.ala.biocache.dao.SearchDAO;
 import org.ala.biocache.dto.DownloadRequestParams;
 import org.ala.biocache.dto.store.OccurrenceDTO;
 import org.ala.biocache.dto.FieldResultDTO;
+import org.ala.biocache.dto.OccurrenceSourceDTO;
 import org.ala.biocache.dto.SearchQuery;
 import org.ala.biocache.dto.SearchResultDTO;
 import org.ala.biocache.util.SearchUtils;
@@ -138,7 +139,7 @@ public class OccurrenceController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value="/images/taxon/{guid:.+}*")
+	@RequestMapping(value={"/images/taxon/{guid:.+}.json*","/images/taxon/{guid:.+}*"})
 	public @ResponseBody List<String> getImages(@PathVariable("guid") String guid) throws Exception {
 	    SearchRequestParams srp = new SearchRequestParams();
 	    srp.setQ("lsid:" + guid);
@@ -161,7 +162,7 @@ public class OccurrenceController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value="/australian/taxon/{guid:.+}*")
+	@RequestMapping(value={"/australian/taxon/{guid:.+}.json*","/australian/taxon/{guid:.+}*" })
 	public @ResponseBody String isAustralian(@PathVariable("guid") String guid) throws Exception {
 	    //check to see if we have any occurrences on Australia  country:Australia or state != empty
 	    SearchRequestParams requestParams = new SearchRequestParams();
@@ -196,7 +197,7 @@ public class OccurrenceController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = {"/occurrences/taxon/{guid:.+}*","/occurrences/taxa/{guid:.+}*"}, method = RequestMethod.GET)
+	@RequestMapping(value = {"/occurrences/taxon/{guid:.+}.json*","/occurrences/taxon/{guid:.+}*","/occurrences/taxa/{guid:.+}*"}, method = RequestMethod.GET)
 	public @ResponseBody SearchResultDTO occurrenceSearchByTaxon(
             SearchRequestParams requestParams,
             @PathVariable("guid") String guid,
@@ -225,24 +226,18 @@ public class OccurrenceController {
      * @param model
      * @throws Exception
      */
-    @RequestMapping(value = "/occurrences/sourceByTaxon/{guid}.json*", method = RequestMethod.GET)
-    public void sourceByTaxon(
-            @PathVariable(value = "guid") String query,
-            @RequestParam(value = "fq", required = false) String[] filterQuery,
-            HttpServletRequest request,
-            Model model)
+    @RequestMapping(value = "/occurrences/taxon/source/{guid:.+}.json*", method = RequestMethod.GET)
+    public @ResponseBody List<OccurrenceSourceDTO> sourceByTaxon(
+            SearchRequestParams requestParams,
+            @PathVariable("guid") String guid,
+            HttpServletRequest request
+            )
             throws Exception {
-        /*String email = null;
-        String reason = "Viewing BIE species map";
-        String ip = request.getLocalAddr();
-        SearchQuery searchQuery = new SearchQuery(query, "taxon", filterQuery);
-        searchUtils.updateTaxonConceptSearchString(searchQuery);
-        Map<String, Integer> sources = searchDAO.getSourcesForQuery(searchQuery.getQuery(), searchQuery.getFilterQuery());
-        logger.debug("The sources and counts.... " + sources);
-        model.addAttribute("occurrenceSources", searchUtils.getSourceInformation(sources));
-        //log the usages statistic to the logger
-        LogEventVO vo = new LogEventVO(LogEventType.OCCURRENCE_RECORDS_VIEWED_ON_MAP, email, reason, ip, sources);
-        logger.log(RestLevel.REMOTE, vo);*/
+        requestParams.setQ("lsid:" + guid) ;       
+        Map<String,Integer> sources = searchDAO.getSourcesForQuery(requestParams);
+        //now turn them to a list of OccurenceSourceDTO
+        return searchUtils.getSourceInformation(sources);        
+
 
     }
 
@@ -280,10 +275,7 @@ public class OccurrenceController {
 
     /**
      * Spatial search for either a taxon name or full text text search
-     * IS THIS NECESSARY?
-     *
-     * OLD URI Tested with: /occurrences/searchByArea.json?q=taxon_name:Lasioglossum|-31.2|138.4|800
-     * NEW URI Tested with: /occurrences/area/-31.2/138.4/800?q=Lasioglossum
+    
      * @param model
      * @return
      * @throws Exception
@@ -336,7 +328,7 @@ public class OccurrenceController {
 	 * @return
 	 * @throws Exception
 	 */
-	@RequestMapping(value = "/occurrences/search*", method = RequestMethod.GET)
+	@RequestMapping(value = {"/occurrences/search.json*","/occurrences/search*"}, method = RequestMethod.GET)
 	public @ResponseBody SearchResultDTO occurrenceSearch(SearchRequestParams requestParams,
             Model model) throws Exception {
         // handle empty param values, e.g. &sort=&dir=
