@@ -656,7 +656,7 @@ class LocationProcessor extends Processor {
 class ClassificationProcessor extends Processor {
 
   val logger = LoggerFactory.getLogger("ClassificationProcessor")
-  val afdApniIdentifier = """([:afd.|:apni.])""".r
+  val afdApniIdentifier = """(:afd.|:apni.)""".r
   import au.org.ala.biocache.BiocacheConversions._
 
   /**
