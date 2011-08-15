@@ -28,7 +28,12 @@ object DateParser {
     eventDateWithOption match {
       case Some(eventDate) => {
         if (!isValid(eventDate)) {
-          parseNonISODate(dateStrNormalised)
+          val secondAttempt = parseNonISODate(dateStrNormalised)
+          if(!secondAttempt.isEmpty && isValid(secondAttempt.get)){
+            secondAttempt
+          } else {
+            None
+          }
         } else {
           eventDateWithOption
         }
@@ -89,7 +94,6 @@ object DateParser {
 
   def isValid(eventDate: EventDate): Boolean = {
 
-    val today = new Date();
     val currentYear = DateUtil.getCurrentYear
 
     if (eventDate.startYear != null) {

@@ -94,7 +94,19 @@ trait Vocab {
 }
 
 case class LatLng(latitude:Float, longitude:Float)
-case class BBox(north:Float, south:Float, east:Float, west:Float)
+
+case class BBox(north:Float, east:Float, south:Float, west:Float){
+
+  def containsPoint(latitude:Float, longitude:Float) = {
+
+    if(east < west) {
+      //ITS CROSSED THE DATE LINE
+      north >= latitude && south <= latitude && ( (longitude >= -180 && longitude <= east)  || ( longitude >= west && longitude <= 180) )
+    } else {
+      north >= latitude && south <= latitude && east >= longitude && west <= longitude
+    }
+  }
+}
 
 trait CentrePoints {
 
@@ -103,8 +115,11 @@ trait CentrePoints {
   val east = 'E'
   val west = 'W'
 
-  val map:Map[String, (LatLng, BBox)]
-  val vocab:Vocab
+  protected val map:Map[String, (LatLng, BBox)]
+  protected val vocab:Vocab
+
+  def matchName(str:String) = map.get(str.toLowerCase)
+
   /**
    * Returns true if the supplied coordinates are the centre point for the supplied
    * state or territory
@@ -195,6 +210,7 @@ trait CentrePoints {
         val coordinates = values.tail.map(x => x.toFloat)
         name -> (
           LatLng(coordinates(0), coordinates(1)),
+          //12.630618	-69.8644638	12.406093	-70.0701141
           BBox(coordinates(2),coordinates(3),coordinates(4),coordinates(5))
         )
     }).toMap
