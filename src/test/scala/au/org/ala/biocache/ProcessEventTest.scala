@@ -106,4 +106,22 @@ class ProcessEventTest extends FunSuite {
 
     expect(1){ assertions.size }
   }
+
+  test("invalid month test > 12") {
+
+    var raw = new FullRecord("1234", "1234")
+    var processed = new FullRecord("1234", "1234")
+    raw.event.year = "1978"
+    raw.event.month = "40"
+    raw.event.day = "16"
+
+    val assertions = (new EventProcessor).process("1234", raw, processed)
+
+    expect(null){ processed.event.eventDate }
+    expect("16"){ processed.event.day }
+    expect(null){ processed.event.month }
+    expect("1978"){ processed.event.year }
+
+    expect(1){ assertions.size }
+  }
 }
