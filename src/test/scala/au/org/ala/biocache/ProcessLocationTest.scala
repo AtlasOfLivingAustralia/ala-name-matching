@@ -7,8 +7,24 @@ import org.junit.runner.RunWith
  * Performs some Location Processing tests
  */
 @RunWith(classOf[JUnitRunner])
-class ProcessLocationTest extends FunSuite{
-
+class ProcessLocationTest extends ConfigFunSuite{    
+   override def prepare(){
+       //WS will automatically grab the location details that are necessary
+       //Add conservation status
+       val taxonProfile = new TaxonProfile
+       taxonProfile.setGuid("urn:lsid:biodiversity.org.au:afd.taxon:3809b1ca-8b60-4fcb-acf5-ca4f1dc0e263")
+       taxonProfile.setScientificName("Victaphanta compacta")
+       taxonProfile.setConservation(Array(new ConservationSpecies("Victoria","aus_states/Victoria", "Endangered", "Endangered")
+       ,new ConservationSpecies("Victoria","aus_states/Victoria", null, "Listed under FFG Act")))
+       TaxonProfileDAO.add(taxonProfile)
+       
+       val tp = new TaxonProfile
+       tp.setGuid("urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537")
+       tp.setScientificName("Macropus rufus")
+       tp.setHabitats(Array("Non-marine"))
+       TaxonProfileDAO.add(tp);
+    }
+    
   test("Sensitive Species Generalise"){
       val raw = new FullRecord
       var processed = new FullRecord
@@ -21,6 +37,7 @@ class ProcessLocationTest extends FunSuite{
       expect("-35.2"){processed.location.decimalLatitude}
       expect("144.8"){processed.location.decimalLongitude}
       expect(true){processed.occurrence.dataGeneralizations != null && processed.occurrence.dataGeneralizations.length>0}
+      
   }
   
   test("Not Sensitive"){
@@ -115,6 +132,7 @@ class ProcessLocationTest extends FunSuite{
       raw.location.decimalLongitude = "-200"
       qas = (new LocationProcessor).process("test",raw,processed)
       expect(5){qas(0)code}
+      
   }
   
   test("Inverted Coordinates"){
@@ -126,6 +144,7 @@ class ProcessLocationTest extends FunSuite{
       expect(3){qas(0).code}
       expect("-34.29"){processed.location.decimalLatitude}
       expect("123.123"){processed.location.decimalLongitude}
+      
   }
   
   test("Latitude Negated"){
@@ -140,7 +159,7 @@ class ProcessLocationTest extends FunSuite{
       expect(true){qas.map(q => q.code).contains(1)}
       expect("-35.23"){processed.location.decimalLatitude}
   }
-    test("Longitude Negated"){
+  test("Longitude Negated"){
       val raw = new FullRecord
       val processed = new FullRecord
       raw.location.decimalLatitude="-35.23"
@@ -167,8 +186,7 @@ class ProcessLocationTest extends FunSuite{
        raw.location.decimalLongitude="133.85720"
        qas = locationProcessor.process("test", raw, processed)
        expect(true){qas.isEmpty}
-   }
-   
+   }   
     test("zero coordinates"){
       val raw = new FullRecord
       var processed = new FullRecord
@@ -232,4 +250,5 @@ class ProcessLocationTest extends FunSuite{
       val qas = (new LocationProcessor).process("test", raw, processed)
       expect(27){qas(0).code}
   }
+
 }

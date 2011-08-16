@@ -14,12 +14,12 @@ import com.google.inject._
 object Config {
 
     private val configModule = new ConfigModule()
-    private val inj:Injector = Guice.createInjector(configModule)
+    var inj:Injector = Guice.createInjector(configModule)
     def getInstance(classs:Class[_]) = inj.getInstance(classs)
 
-    val occurrenceDAO = getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
-    val persistenceManager = getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
-    val nameIndex = getInstance(classOf[CBIndexSearch]).asInstanceOf[CBIndexSearch]
+    def occurrenceDAO = getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+    def persistenceManager = getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
+    def nameIndex = getInstance(classOf[CBIndexSearch]).asInstanceOf[CBIndexSearch]
 
     lazy val sdsFinder = {
       SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("http://sds.ala.org.au/sensitive-species-data.xml", nameIndex)
@@ -65,7 +65,7 @@ class ConfigModule extends AbstractModule {
 
         properties.getProperty("db") match {
             case "cassandra" => bind(classOf[PersistenceManager]).to(classOf[CassandraPersistenceManager]).in(Scopes.SINGLETON)
-            case "mongodb" => bind(classOf[PersistenceManager]).to(classOf[MongoDBPersistenceManager]).in(Scopes.SINGLETON)
+            case "mongodb" => bind(classOf[PersistenceManager]).to(classOf[MongoDBPersistenceManager]).in(Scopes.SINGLETON)            
             case _ => bind(classOf[PersistenceManager]).to(classOf[CassandraPersistenceManager]).in(Scopes.SINGLETON)
         }
     }
