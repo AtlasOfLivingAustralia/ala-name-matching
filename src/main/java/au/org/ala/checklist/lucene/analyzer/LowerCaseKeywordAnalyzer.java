@@ -12,10 +12,10 @@ import org.apache.lucene.analysis.TokenStream;
  *
  * @author Natasha
  */
-public class LowerCaseKeywordAnalyzer extends Analyzer{
+public final class LowerCaseKeywordAnalyzer extends Analyzer{
 
     @Override
-    public TokenStream tokenStream(String fieldName, Reader reader) {
+    public  TokenStream tokenStream(String fieldName, Reader reader) {
          //convert to lowercase
         return new LowerCaseFilter(new KeywordTokenizer(reader));
     }
