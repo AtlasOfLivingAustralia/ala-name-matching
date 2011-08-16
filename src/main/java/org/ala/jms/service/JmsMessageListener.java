@@ -165,14 +165,10 @@ public class JmsMessageListener implements MessageListener {
     	fullRecord.location().setDecimalLatitude("" + sighting.getDecimalLatitude());
     	fullRecord.location().setDecimalLongitude("" + sighting.getDecimalLongitude());
     	fullRecord.location().setLocality(sighting.getLocality());
-    	//Uncertainity was not supplied, using default value 1000
-    	if(sighting.getCoordinateUncertaintyInMeters() == null){
-    		sighting.setCoordinateUncertaintyInMeters(1000);
-    	}
-    	fullRecord.location().setCoordinateUncertaintyInMeters("" + sighting.getCoordinateUncertaintyInMeters());
-    	fullRecord.location().setStateProvince(sighting.getStateProvince());
-    	fullRecord.location().setCountry(sighting.getCountry());
-    	
+    	if(sighting.getCoordinateUncertaintyInMeters() != null){
+    		fullRecord.location().setCoordinateUncertaintyInMeters("" + sighting.getCoordinateUncertaintyInMeters());
+    	}    	
+     	
     	fullRecord.attribution().setDataResourceUid(CITIZEN_SCIENCE_DRUID);
     	    	        	
     	return fullRecord;
