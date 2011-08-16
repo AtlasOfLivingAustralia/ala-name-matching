@@ -47,4 +47,39 @@ class MiscTest extends FunSuite {
         var qas = (new ImageProcessor).process("test", raw, processed)
         expect(20007){qas(0).code}
     }
+    
+    test("invalid collection date"){
+        val raw = new FullRecord
+        var processed = new FullRecord
+        raw.event.year = "2010"
+        raw.event.month = "11"
+        raw.event.day = "22"
+        var qas = (new EventProcessor).process("test", raw, processed)
+        expect(true){qas.isEmpty}
+        
+        raw.event.year = "2012"
+        raw.event.month = "11"
+        raw.event.day = "22"
+        qas = (new EventProcessor).process("test", raw, processed)
+        expect(30007){qas(0).code}
+        
+        raw.event.year = "2011"
+        raw.event.month = "13"
+        raw.event.day = "22"
+        qas = (new EventProcessor).process("test", raw, processed)
+        expect(30007){qas(0).code}
+        
+        raw.event.year = "2011"
+        raw.event.month = "11"
+        raw.event.day = "33"
+        qas = (new EventProcessor).process("test", raw, processed)
+        expect(30007){qas(0).code}
+        
+        raw.event.year = "2011"
+        raw.event.month = "11"
+        raw.event.day = "31"
+        qas = (new EventProcessor).process("test", raw, processed)
+        expect(30007){qas(0).code}
+    }
+    
 }
