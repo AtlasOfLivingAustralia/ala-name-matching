@@ -4,7 +4,7 @@ import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
-class AssertionCodeTest extends FunSuite {
+class AssertionCodeTest extends ConfigFunSuite {
 
     test("Test the geospatially kosher test") {
 
