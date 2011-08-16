@@ -168,4 +168,68 @@ class ProcessLocationTest extends FunSuite{
        qas = locationProcessor.process("test", raw, processed)
        expect(true){qas.isEmpty}
    }
+   
+    test("zero coordinates"){
+      val raw = new FullRecord
+      var processed = new FullRecord
+      raw.location.decimalLatitude = "0.0"
+      raw.location.decimalLongitude = "0.0"
+      raw.location.coordinateUncertaintyInMeters = "100"
+      val qas = (new LocationProcessor).process("test", raw, processed)
+      expect(4){qas(0).code}
+  }
+   
+   test("unknown country name"){
+      val raw = new FullRecord
+      var processed = new FullRecord
+      raw.location.decimalLatitude="-40.857"
+      raw.location.decimalLongitude ="145.52"
+      raw.location.coordinateUncertaintyInMeters = "100"
+      raw.location.country = "dummy"
+      val qas = (new LocationProcessor).process("test", raw, processed)
+      expect(6){qas(0).code}
+  }
+   
+   test("stateProvince coordinate mismatch"){
+      val raw = new FullRecord
+      var processed = new FullRecord
+      raw.location.decimalLatitude="-31.2532183"
+      raw.location.decimalLongitude ="146.921099"
+      raw.location.coordinateUncertaintyInMeters = "100"
+      raw.location.country="Australia"
+      raw.location.stateProvince="Australian Capital Territory"  
+      val qas = (new LocationProcessor).process("test", raw, processed)
+      expect(18){qas(0).code}
+  }
+   
+   test("coordinates center of stateprovince"){
+      val raw = new FullRecord
+      var processed = new FullRecord
+      raw.location.decimalLatitude="-31.2532183"
+      raw.location.decimalLongitude ="146.921099"
+      raw.location.coordinateUncertaintyInMeters = "100"
+      raw.location.country="Australia"
+      raw.location.stateProvince="New South Wales"  
+      val qas = (new LocationProcessor).process("test", raw, processed)
+      expect(22){qas(0).code}
+  }
+   
+   test("uncertainty range mismatch"){
+      val raw = new FullRecord
+      var processed = new FullRecord
+      raw.location.decimalLatitude="-31.2532183"
+      raw.location.decimalLongitude ="146.921099"
+      raw.location.coordinateUncertaintyInMeters = "-1"
+      val qas = (new LocationProcessor).process("test", raw, processed)
+      expect(24){qas(0).code}
+  }
+   
+   test("uncertainty not speccified"){
+      val raw = new FullRecord
+      var processed = new FullRecord
+      raw.location.decimalLatitude="-31.2532183"
+      raw.location.decimalLongitude ="146.921099"
+      val qas = (new LocationProcessor).process("test", raw, processed)
+      expect(27){qas(0).code}
+  }
 }
