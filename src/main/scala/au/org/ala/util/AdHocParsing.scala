@@ -74,35 +74,38 @@ object AdHocParser {
     val l = listBuffer.toList
 
     //from this, derive a list of unique column headers.....
+    val commonFields = {
+      (for (parsedRecord <- l)
+        yield parsedRecord.values.filter(p => p.processed != "" && p.raw != "").map(p => p.name)
+      ).flatten.distinct
+    }
+
     val processedFields = {
       (for (parsedRecord <- l)
-        yield parsedRecord.values.filter(p => p.processed != "").map(p => p.name)
-      ).distinct.flatten
+        yield parsedRecord.values.filter(p => p.processed != "" && p.raw == "").map(p => p.name)
+      ).flatten.distinct
     }
 
     //val rawFields =
     val rawFields = {
       (for (parsedRecord <- l)
-        yield parsedRecord.values.filter(p => p.raw != "").map(p => p.name)
-      ).distinct.flatten
+        yield parsedRecord.values.filter(p => p.raw != "" && p.processed == "").map(p => p.name)
+      ).flatten.distinct
     }
 
     println("**Processed fields: " + processedFields.mkString(","))
     println("**Raw fields: " + rawFields.mkString(","))
     //need a list of common to both....
 
-    val commonFields = rawFields intersect processedFields
 
     val commonHdrs = commonFields.map(x => List(x, x + " (processed)")).flatten
 
     println("**Common fields: " + commonFields.mkString(","))
 
-    val rawOnly = rawFields diff commonFields
-    val processedOnly = processedFields diff commonFields
 
     //write out headers for CSV
-    println((commonHdrs :::  rawOnly  ::: processedOnly).toArray.mkString(","))
-    output.writeNext((commonHdrs :::  rawOnly  ::: processedOnly).toArray)
+    //println((commonHdrs :::  rawOnly  ::: processedOnly).toArray.mkString(","))
+    output.writeNext((commonHdrs :::  rawFields  ::: processedFields).toArray)
 
     //TODO re-order as per the original headers
 
@@ -116,17 +119,17 @@ object AdHocParser {
         case _ => List("","")
       }).flatten
 
-      val rawOutput:List[String] = rawOnly.map(cf => valueMap.get(cf) match {
+      val rawOutput:List[String] = rawFields.map(cf => valueMap.get(cf) match {
         case Some(processedValue) => processedValue.raw
         case _ => ""
       })
 
-      val processedOutput:List[String] = processedOnly.map(cf => valueMap.get(cf) match {
+      val processedOutput:List[String] = processedFields.map(cf => valueMap.get(cf) match {
         case Some(processedValue) => processedValue.processed
         case _ => ""
       })
 
-      println((commonOutput ::: rawOutput ::: processedOutput).toArray.asInstanceOf[Array[String]].mkString(","))
+      //println((commonOutput ::: rawOutput ::: processedOutput).toArray.asInstanceOf[Array[String]].mkString(","))
       output.writeNext((commonOutput ::: rawOutput ::: processedOutput).toArray.asInstanceOf[Array[String]])
       output.flush
     }

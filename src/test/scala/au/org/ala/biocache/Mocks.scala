@@ -72,12 +72,11 @@ class MockPersistenceManager extends PersistenceManager {
 object TestMocks {
 
   def main(args:Array[String]){
-      val m = new MockPersistenceManager
-      m.put("test-uuid", "occ", "dave", "daveValue")
-      m.put("12.12|12.43", "loc", "ibra", "Australian Alps")
-      println(m.get("test-uuid", "occ", "dave"))
-      println(m.get("12.12|12.43", "loc", "dave"))
-
+    val m = new MockPersistenceManager
+    m.put("test-uuid", "occ", "dave", "daveValue")
+    m.put("12.12|12.43", "loc", "ibra", "Australian Alps")
+    println(m.get("test-uuid", "occ", "dave"))
+    println(m.get("12.12|12.43", "loc", "dave"))
     println(m.get("12.12|12.43sss", "loc", "dave"))
   }
 }

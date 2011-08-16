@@ -139,9 +139,16 @@ class EventProcessor extends Processor {
    */
   def process(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
 
+    if( (raw.event.day == null || raw.event.day.isEmpty)
+      && (raw.event.month == null || raw.event.month.isEmpty)
+      && (raw.event.year == null || raw.event.year.isEmpty)
+      && (raw.event.eventDate == null || raw.event.eventDate.isEmpty)
+      && (raw.event.verbatimEventDate == null || raw.event.verbatimEventDate.isEmpty)
+    )
+      return Array(QualityAssertion(AssertionCodes.MISSING_COLLECTION_DATE,"No date information supplied"))
+
     var assertions = new ArrayBuffer[QualityAssertion]
     var date: Option[java.util.Date] = None
-
     val currentYear = DateUtil.getCurrentYear
     var comment = ""
 
@@ -156,7 +163,7 @@ class EventProcessor extends Processor {
       if(monthValue > 12 && dayValue < 12){
         month = dayValue
         day = monthValue
-        assertions + QualityAssertion(AssertionCodes.DAY_MONTH_TRANSPOSED,"Assume day and month transposed.")
+        assertions + QualityAssertion(AssertionCodes.DAY_MONTH_TRANSPOSED,"Assume day and month transposed")
         validMonth = true
       }
     }
@@ -436,7 +443,7 @@ class LocationProcessor extends Processor {
     // value (we don't test until now because the SDS will sometime include coordinate uncertainty)
     if (processed.location.coordinateUncertaintyInMeters == null) {
       processed.location.coordinateUncertaintyInMeters = "1000"
-      assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, "Uncertainity was not supplied, using default value 1000")
+      assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, "Uncertainty was not supplied, using default value 1000")
     }
   }
 
@@ -656,7 +663,7 @@ class LocationProcessor extends Processor {
 class ClassificationProcessor extends Processor {
 
   val logger = LoggerFactory.getLogger("ClassificationProcessor")
-  val afdApniIdentifier = """(:afd.|:apni.)""".r
+  val afdApniIdentifier = """([:afd.|:apni.])""".r
   import au.org.ala.biocache.BiocacheConversions._
 
   /**
