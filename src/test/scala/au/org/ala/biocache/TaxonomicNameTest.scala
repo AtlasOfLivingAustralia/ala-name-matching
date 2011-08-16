@@ -5,7 +5,7 @@ import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
-class TaxonomicNameTest extends FunSuite {
+class TaxonomicNameTest extends ConfigFunSuite {
 
     test("name not recognised"){
         val raw = new FullRecord

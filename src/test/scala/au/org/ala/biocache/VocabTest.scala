@@ -8,7 +8,7 @@ import org.junit.runner.RunWith
  * Test for vocabulary mapping and lookups.
  */
 @RunWith(classOf[JUnitRunner])
-class VocabTest extends FunSuite {
+class VocabTest extends ConfigFunSuite {
 
   test("Basis of record matching"){
       expect("isotype"){ TypeStatus.matchTerm("isotype").get.canonical}
@@ -32,6 +32,10 @@ class VocabTest extends FunSuite {
     expect(true){StateProvinceCentrePoints.coordinatesMatchCentre("QLD","-20.917573","142.702795")}
     expect(true){StateProvinceCentrePoints.coordinatesMatchCentre("QLD","-20.917","142.702")}
   }
+  
+  test("Coordinates unknown state"){
+      StateProvinceCentrePoints.coordinatesMatchCentre("Unknown1","-54.50285462","158.9173835")
+  }
 
   test("Expect coordinates for Australia centre to match"){
     expect(false){CountryCentrePoints.coordinatesMatchCentre("Australia","12","12")}
@@ -51,6 +55,7 @@ class VocabTest extends FunSuite {
   
   test("Observations - plurals for BOR"){
       expect(false){ BasisOfRecord.matchTerm("Observation").isEmpty}
+
   }
 
   test("Test Australia hemispheres"){
@@ -68,4 +73,5 @@ class VocabTest extends FunSuite {
   test("Test UK hemispheres"){
     expect(Set('E','W', 'N')){CountryCentrePoints.getHemispheres("United Kingdom").get}
   }
+
 }

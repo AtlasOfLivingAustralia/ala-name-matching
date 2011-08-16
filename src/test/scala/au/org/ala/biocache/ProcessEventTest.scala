@@ -14,8 +14,18 @@ import org.junit.runner.RunWith
  * @author Dave Martin (David.Martin@csiro.au)
  */
 @RunWith(classOf[JUnitRunner])
-class ProcessEventTest extends FunSuite {
+class ProcessEventTest extends ConfigFunSuite {
 
+  test("00 month test"){
+    var raw = new FullRecord("1234","1234")
+    raw.event.day ="0"
+    raw.event.month = "0"
+    raw.event.year = "0"
+    var processed = raw.clone
+    (new EventProcessor).process("1234", raw, processed)
+    println(processed.event)
+  }
+  
   test("yyyy-dd-mm correctly sets year, month, day values in process object") {
 
     var raw = new FullRecord("1234", "1234")

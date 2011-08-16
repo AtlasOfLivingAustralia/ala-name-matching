@@ -4,7 +4,7 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class VerbatimLatLonTest extends FunSuite {
+class VerbatimLatLonTest extends ConfigFunSuite {
 
     test("30° S"){
        expect(false) { VerbatimLatLongParser.parse("30° 01' S").isEmpty }

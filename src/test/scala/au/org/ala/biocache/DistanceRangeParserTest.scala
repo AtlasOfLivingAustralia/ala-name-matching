@@ -5,7 +5,7 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class DistanceRangeParserTest extends FunSuite {
+class DistanceRangeParserTest extends ConfigFunSuite {
 
     test("Test range parsing"){
         expect(1.2222f) { DistanceRangeParser.parse("1.2222").get }
@@ -14,7 +14,7 @@ class DistanceRangeParserTest extends FunSuite {
         expect(10f) {DistanceRangeParser.parse("1-10m").get }
         expect(10f) {DistanceRangeParser.parse("1m-10m").get }
         expect(10000f) {DistanceRangeParser.parse("1km-10km").get }
-        expect(10500f) {DistanceRangeParser.parse("1km-10.5km").get }
+        expect(10500f) {DistanceRangeParser.parse("1km- 10.5km").get }
         expect(10000f) {DistanceRangeParser.parse("> 10km").get }
         expect(10000f) {DistanceRangeParser.parse("< 10km").get }
         expect(11500f) {DistanceRangeParser.parse(">11.5km").get }

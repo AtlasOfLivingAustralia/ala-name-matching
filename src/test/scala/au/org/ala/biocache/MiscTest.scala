@@ -5,7 +5,7 @@ import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
 @RunWith(classOf[JUnitRunner])
-class MiscTest extends FunSuite {
+class MiscTest extends ConfigFunSuite {
 
     test("missing basis of record"){
         val raw = new FullRecord

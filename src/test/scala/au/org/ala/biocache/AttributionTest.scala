@@ -5,9 +5,8 @@ import org.junit.runner.RunWith
 import org.junit.Ignore
 
 @RunWith(classOf[JUnitRunner])
-@Ignore
-class AttributionTest extends FunSuite{
-
+class AttributionTest extends ConfigFunSuite{
+       
     test("Test DR lookup in collectory"){
         val dr= AttributionDAO.getDataResourceFromWS("dr367")        
         expect(true){dr.get.hasMappedCollections}
@@ -36,5 +35,6 @@ class AttributionTest extends FunSuite{
         val dr = AttributionDAO.getDataResourceFromWS("dr92")
         expect("MachineObservation"){dr.get.getDefaultDwcValues()("basisOfRecord")}
     }
+    
     
 }

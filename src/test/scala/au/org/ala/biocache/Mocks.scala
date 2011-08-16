@@ -1,10 +1,15 @@
 package au.org.ala.biocache
 
 import collection.mutable.HashMap
+import org.junit.Ignore
 
 class MockPersistenceManager extends PersistenceManager {
 
   private val mockStore = new HashMap[String, HashMap[String,HashMap[String,String]]]
+  mockStore.put("loc",new HashMap[String, HashMap[String,String]])
+  mockStore.put("attr",new HashMap[String, HashMap[String,String]])
+  mockStore.put("taxon", new HashMap[String,HashMap[String,String]])
+  //loc.put("50.50|")
 
   def clear = mockStore.clear
 
@@ -68,7 +73,36 @@ class MockPersistenceManager extends PersistenceManager {
   def shutdown = mockStore.clear
 }
 
+@Ignore
+//The mock config module to be used for the tests
+class TestConfigModule extends com.google.inject.AbstractModule{
+    
+    override def configure() {
+val properties = {
+      val properties = new java.util.Properties()
+      properties.load(this.getClass.getResourceAsStream("/biocache.properties"))
+      properties
+    }
+        com.google.inject.name.Names.bindProperties(this.binder, properties)
 
+        //bind concrete implementations
+        bind(classOf[OccurrenceDAO]).to(classOf[OccurrenceDAOImpl]).in(com.google.inject.Scopes.SINGLETON)
+        bind(classOf[IndexDAO]).to(classOf[SolrIndexDAO]).in(com.google.inject.Scopes.SINGLETON)
+        try {
+            val nameIndex = new au.org.ala.checklist.lucene.CBIndexSearch(properties.getProperty("nameIndexLocation"))
+            bind(classOf[au.org.ala.checklist.lucene.CBIndexSearch]).toInstance(nameIndex)
+           
+            
+        } catch {
+            case e: Exception =>e.printStackTrace()
+        }
+        bind(classOf[PersistenceManager]).to(classOf[MockPersistenceManager]).in(com.google.inject.Scopes.SINGLETON)
+        println("Using Test Config")
+    }
+    
+}
+
+@Ignore
 object TestMocks {
 
   def main(args:Array[String]){

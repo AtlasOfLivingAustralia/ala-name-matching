@@ -4,9 +4,10 @@ import org.scalatest.FunSuite
 import au.org.ala.data.model.LinnaeanRankClassification
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+import org.junit.Ignore
 
 @RunWith(classOf[JUnitRunner])
-class TaxonomicHintsTest extends FunSuite {
+class TaxonomicHintsTest extends ConfigFunSuite {
 
     test("parse hints"){
        val hintMap = (new ClassificationProcessor).parseHints(List("phylum:A", "phylum:B", "class:N"))
