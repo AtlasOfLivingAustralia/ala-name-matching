@@ -26,6 +26,7 @@ import au.org.ala.biocache.OccurrenceIndex;
 
 import org.ala.biocache.dto.BreakdownRequestParams;
 import org.ala.biocache.dto.DownloadRequestParams;
+import org.ala.biocache.dto.IndexFieldDTO;
 import org.ala.biocache.dto.OccurrenceDTO;
 import org.ala.biocache.dto.OccurrencePoint;
 import org.ala.biocache.dto.PointType;
@@ -108,6 +109,8 @@ public interface SearchDAO {
     void writeCoordinatesToStream(SearchRequestParams searchParams,OutputStream out) throws Exception;
     
     void writeFacetToStream(SearchRequestParams searchParams, boolean includeCount, boolean lookupName, OutputStream out) throws Exception;
+    
+    List<IndexFieldDTO> getIndexedFields() throws Exception;
 
     /**
      * Retrieve an OccurrencePoint (distinct list of points - lat-long to 4 decimal places) for a given search

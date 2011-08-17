@@ -31,6 +31,7 @@ import org.ala.biocache.dao.SearchDAO;
 import org.ala.biocache.dto.DownloadRequestParams;
 import org.ala.biocache.dto.store.OccurrenceDTO;
 import org.ala.biocache.dto.FieldResultDTO;
+import org.ala.biocache.dto.IndexFieldDTO;
 import org.ala.biocache.dto.OccurrenceSourceDTO;
 import org.ala.biocache.dto.SearchQuery;
 import org.ala.biocache.dto.SearchResultDTO;
@@ -123,7 +124,7 @@ public class OccurrenceController {
 		return HOME;
 	}
 	/**
-	 * Rerurns the default facets that are applied to a search
+	 * Returns the default facets that are applied to a search
 	 * @return
 	 */
 	@RequestMapping("/search/facets")
@@ -131,6 +132,16 @@ public class OccurrenceController {
 	    String[] facets = new SearchRequestParams().getFacets();
 	    return facets;
 	}
+	/**
+	 * Returns a list with the details of the index field
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping("index/fields")
+	public @ResponseBody List<IndexFieldDTO> getIndexedFields() throws Exception{
+	    return searchDAO.getIndexedFields();
+	}
+	
 	/**
 	 * Returns a list of image urls for the supplied taxon guid. 
 	 * An empty list is returned when no images are available.

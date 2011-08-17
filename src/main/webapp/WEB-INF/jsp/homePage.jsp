@@ -44,10 +44,11 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
                 - Displays a list of unique lat,lon that are used by the occurrences
                  </li>
             <li><strong>List of default facets for occurrence search:</strong> <a href="/ws/search/facets">/search/facets</a></li>
+            <li><strong>List of available index fields:</strong> <a href="/ws/index/fields">/index/fields</a> - A field can be used in a search if indexed=true.  A field can be used as a facet if indexed=true and stored=true.</li>
             <li><strong>Facet based download:</strong> /occurrences/facets/download - requires a 'q' and optional 'fq' and one 'facet'. Optional Params:
             <ul>
             	<li>count - set to true if you would like the count included</li>
-            	<li>lookup - set to true if you would like the download include the scientific names for the supplied guids.  Download that include this param will take extra time as a lookup need to be peformed</li>
+            	<li>lookup - set to true if you would like the download include the scientific names for the supplied guids.  Downloads that include this param will take extra time as a lookup need to be performed</li>
             </ul> 
             <br>This can be used to download distinct lists of species:
             <ul>

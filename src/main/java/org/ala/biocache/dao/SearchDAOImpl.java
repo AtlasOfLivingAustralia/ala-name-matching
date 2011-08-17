@@ -33,6 +33,7 @@ import org.ala.biocache.dto.DataProviderCountDTO;
 import org.ala.biocache.dto.DownloadRequestParams;
 import org.ala.biocache.dto.FacetResultDTO;
 import org.ala.biocache.dto.FieldResultDTO;
+import org.ala.biocache.dto.IndexFieldDTO;
 import org.ala.biocache.dto.OccurrenceDTO;
 import org.ala.biocache.dto.OccurrencePoint;
 import org.ala.biocache.dto.PointType;
@@ -70,6 +71,8 @@ import org.ala.biocache.dto.SearchRequestParams;
 import org.ala.biocache.dto.SpatialSearchRequestParams;
 import org.ala.biocache.util.DownloadFields;
 import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.params.ModifiableSolrParams;
+
 import javax.inject.Inject;
 import org.apache.commons.lang.ArrayUtils;
 import au.org.ala.biocache.IndexDAO;
@@ -122,6 +125,8 @@ public class SearchDAOImpl implements SearchDAO {
     
     @Inject
     private RestOperations restTemplate;
+    
+    private List<IndexFieldDTO> indexFields = null;
 
     /**
      * Initialise the SOLR server instance
@@ -1581,4 +1586,75 @@ public class SearchDAOImpl implements SearchDAO {
     public void setSolrHome(String solrHome) {
         this.solrHome = solrHome;
     }
+    /**
+     * Returns details about the fields in the index.
+     */
+    public List<IndexFieldDTO> getIndexedFields() throws Exception{
+        if(indexFields == null){
+            ModifiableSolrParams params = new ModifiableSolrParams();
+            params.set("qt", "/admin/luke");
+            params.set("tr", "luke.xsl");
+            QueryResponse response = server.query(params);            
+            indexFields = parseLukeResponse(response.toString());
+        }
+        return indexFields;        
+    }
+    
+
+    /**
+     * parses the response string from the service that returns details about the indexed fields
+     * @param str
+     * @return
+     */
+    private  List<IndexFieldDTO> parseLukeResponse(String str) {
+        List<IndexFieldDTO> fieldList = new ArrayList<IndexFieldDTO>();
+        
+        Pattern typePattern = Pattern.compile(
+        "(?:type=)([a-z]{1,})");
+
+        Pattern schemaPattern = Pattern.compile(
+        "(?:schema=)([a-zA-Z\\-]{1,})");
+
+        String[] fieldsStr = str.split("fields=\\{");
+
+        for (String fieldStr : fieldsStr) {
+            if (fieldStr != null && !"".equals(fieldStr)) {
+                String[] fields = fieldStr.split("\\}\\},");
+
+                for (String field : fields) {
+                    if (field != null && !"".equals(field)) {
+                        IndexFieldDTO f = new IndexFieldDTO();
+                        
+                        String fieldName = field.split("=")[0];
+                        String type = null;
+                        String schema = null;
+                        Matcher typeMatcher = typePattern.matcher(field);
+                        if (typeMatcher.find(0)) {
+                            type = typeMatcher.group(1);
+                        }
+                        
+                        Matcher schemaMatcher = schemaPattern.matcher(field);
+                        if (schemaMatcher.find(0)) {
+                            schema = schemaMatcher.group(1);
+                        }
+                        if(schema != null){
+                            logger.debug("fieldName:" + fieldName);
+                            logger.debug("type:" + type);
+                            logger.debug("schema:" + schema);
+                            
+                            f.setName(fieldName);
+                            f.setDataType(type);
+                            //interpret the schema information
+                            f.setIndexed(schema.contains("I"));
+                            f.setStored(schema.contains("S"));
+                            
+                            fieldList.add(f);
+                        }
+                    }
+                }
+            }
+        }
+        
+        return fieldList;
+    }   
 }
