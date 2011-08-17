@@ -193,11 +193,14 @@ class EventProcessor extends Processor {
     //construct
     if (validDate) {
       try {
+         
        val calendar = new GregorianCalendar(
           year.toInt,
           month.toInt - 1,
           day.toInt
        );
+       //don't allow the calendar to be lenient we want exceptions with incorrect dates
+       calendar.setLenient(false);
        date = Some(calendar.getTime)
       } catch {
         case e: Exception => {
