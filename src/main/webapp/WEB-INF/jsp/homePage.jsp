@@ -44,10 +44,16 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
                 - Displays a list of unique lat,lon that are used by the occurrences
                  </li>
             <li><strong>List of default facets for occurrence search:</strong> <a href="/ws/search/facets">/search/facets</a></li>
-            <li><strong>Facet based download:</strong> /occurrences/facets/download - requires a 'q' and optional 'fq' and one 'facet'. This can be used to download distinct lists of species:
+            <li><strong>Facet based download:</strong> /occurrences/facets/download - requires a 'q' and optional 'fq' and one 'facet'. Optional Params:
             <ul>
-            	<li><a href="/ws/occurrences/facets/download?q=collection_uid:co150&facets=species_guid">/occurrences/facets/download?q=collection_uid:co150&facets=species_guid</a> - downloads a list of species guids and associated scientific names for collection co150</li>
+            	<li>count - set to true if you would like the count included</li>
+            	<li>lookup - set to true if you would like the download include the scientific names for the supplied guids.  Download that include this param will take extra time as a lookup need to be peformed</li>
+            </ul> 
+            <br>This can be used to download distinct lists of species:
+            <ul>
+            	<li><a href="/ws/occurrences/facets/download?q=collection_uid:co150&facets=species_guid&lookup=true">/occurrences/facets/download?q=collection_uid:co150&facets=species_guid&lookup=true</a> - downloads a list of species guids and associated scientific names for collection co150</li>
             	<li><a href="/ws/occurrences/facets/download?q=collection_uid:co150&facets=raw_taxon_name">/occurrences/facets/download?q=collection_uid:co150&facets=raw_taxon_name</a> - downloads a list of raw scientific names for collection co150</li>
+            	<li><a href="/ws/occurrences/facets/download?q=collection_uid:co150&facets=species_guid&count=true">/occurrences/facets/download?q=collection_uid:co150&facets=species_guid&count=true</a> - downloads a list of species guids and counts for collection co150</li>
             </ul>
             </li>
             <li><strong>Spatial Occurrence search: </strong>/occurrences/spatial - supports point-radius and wkt based searches.  To search by wkt the wkt string can be supplied directly or via a gazetteer URL. Examples:

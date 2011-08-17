@@ -353,6 +353,7 @@ public class OccurrenceController {
 	public void downloadFacet(
             DownloadRequestParams requestParams,
             @RequestParam(value = "count", required = false, defaultValue="false") boolean includeCount,
+            @RequestParam(value="lookup" ,required=false, defaultValue="false") boolean lookupName,
             HttpServletResponse response,
             HttpServletRequest request) throws Exception {
 	        if(requestParams.getFacets().length >0){
@@ -361,7 +362,7 @@ public class OccurrenceController {
     	        response.setHeader("Pragma", "must-revalidate");
     	        response.setHeader("Content-Disposition", "attachment;filename=" + filename +".txt");
     	        response.setContentType("text/plain");
-    	        searchDAO.writeFacetToStream(requestParams,includeCount, response.getOutputStream());
+    	        searchDAO.writeFacetToStream(requestParams,includeCount, lookupName, response.getOutputStream());
 	        }
 	}
 

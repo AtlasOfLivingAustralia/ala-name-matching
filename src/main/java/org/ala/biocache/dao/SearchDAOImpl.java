@@ -248,9 +248,11 @@ public class SearchDAOImpl implements SearchDAO {
     /**
      * Writes the values for the first supplied facet to output stream
      * 
+     * @paramm includeCount true when the count should be included in the download
+     * @param lookupName true when a name lsid should be looked up in the bie
      * 
      */
-    public void writeFacetToStream(SearchRequestParams searchParams, boolean includeCount, OutputStream out) throws Exception{
+    public void writeFacetToStream(SearchRequestParams searchParams, boolean includeCount, boolean lookupName, OutputStream out) throws Exception{
         //set to unlimited facets
         searchParams.setFlimit(-1);
         formatSearchQuery(searchParams);
@@ -263,74 +265,77 @@ public class SearchDAOImpl implements SearchDAO {
         solrQuery.setFacetLimit(FACET_PAGE_SIZE);
         solrQuery.setFacetMinCount(0);
         int offset =0;
+        boolean shouldLookup = lookupName && searchParams.getFacets()[0].contains("_guid");
         
         QueryResponse qr = runSolrQuery(solrQuery, searchParams);
         if (qr.getResults().size() > 0) {
             FacetField ff = qr.getFacetField(searchParams.getFacets()[0]);
             //write the header line
-            out.write(ff.getName().getBytes());
-            if(ff.getName().equals("species_guid")){
-                out.write((",species name").getBytes());
-                
-            }
-            if(includeCount)
-                out.write(",Count".getBytes());
-            out.write("\n".getBytes());
-            //PAGE through the facets until we reach the end.
-            while(ff.getValueCount() >0){
-                if(ff != null && ff.getValueCount() >0){
-                  //process the "species_guid_ facet by looking up the list of guids                
-                    if(ff.getName().equals("species_guid")){
-                        
-                        List<String> guids = new ArrayList<String>();
-                        List<Long> counts = new ArrayList<Long> ();
-                        logger.debug("Downloading " +  ff.getValueCount() + " species guids");
-                        for(FacetField.Count value : ff.getValues()){
-                            guids.add(value.getName());
-                            if(includeCount)
-                                counts.add(value.getCount());
-                            //Only want to send a sub set of the list so that the URI is not too long for BIE
-                            if(guids.size()==30){
-                              //now get the list of species from the web service TODO may need to move this code
-                                String jsonUri = bieUri + "/species/namesFromGuids.json?guid=" + StringUtils.join(guids, "&guid=");
-                                List<String> entities = restTemplate.getForObject(jsonUri, List.class);
-                                for(int j = 0 ; j<guids.size();j++){
-                                    out.write((guids.get(j) + ",").getBytes());
-                                    out.write((entities.get(j) ).getBytes());
-                                    if(includeCount)
-                                        out.write((","+Long.toString(counts.get(j))).getBytes());
-                                    out.write("\n".getBytes());
+            if(ff != null){
+                out.write(ff.getName().getBytes());
+                if(shouldLookup){
+                    out.write((",species name").getBytes());
+                    
+                }
+                if(includeCount)
+                    out.write(",Count".getBytes());
+                out.write("\n".getBytes());
+                //PAGE through the facets until we reach the end.
+                while(ff.getValueCount() >0){
+                    if(ff.getValueCount() >0){
+                      //process the "species_guid_ facet by looking up the list of guids                
+                        if(shouldLookup){
+                            
+                            List<String> guids = new ArrayList<String>();
+                            List<Long> counts = new ArrayList<Long> ();
+                            logger.debug("Downloading " +  ff.getValueCount() + " species guids");
+                            for(FacetField.Count value : ff.getValues()){
+                                guids.add(value.getName());
+                                if(includeCount)
+                                    counts.add(value.getCount());
+                                //Only want to send a sub set of the list so that the URI is not too long for BIE
+                                if(guids.size()==30){
+                                  //now get the list of species from the web service TODO may need to move this code
+                                    String jsonUri = bieUri + "/species/namesFromGuids.json?guid=" + StringUtils.join(guids, "&guid=");
+                                    List<String> entities = restTemplate.getForObject(jsonUri, List.class);
+                                    for(int j = 0 ; j<guids.size();j++){
+                                        out.write((guids.get(j) + ",").getBytes());
+                                        out.write((entities.get(j) ).getBytes());
+                                        if(includeCount)
+                                            out.write((","+Long.toString(counts.get(j))).getBytes());
+                                        out.write("\n".getBytes());
+                                    }
+                                    guids.clear();
                                 }
-                                guids.clear();
+                            }
+                            //now get the list of species from the web service TODO may need to move this code
+                            String jsonUri = bieUri + "/species/namesFromGuids.json?guid=" + StringUtils.join(guids, "&guid=");
+                            List<String> entities = restTemplate.getForObject(jsonUri, List.class);
+                            for(int i = 0 ; i<guids.size();i++){
+                                out.write((guids.get(i) + ",").getBytes());
+                                out.write((entities.get(i) ).getBytes());
+                                if(includeCount)
+                                    out.write((","+Long.toString(counts.get(i))).getBytes());
+                                out.write("\n".getBytes());
                             }
                         }
-                        //now get the list of species from the web service TODO may need to move this code
-                        String jsonUri = bieUri + "/species/namesFromGuids.json?guid=" + StringUtils.join(guids, "&guid=");
-                        List<String> entities = restTemplate.getForObject(jsonUri, List.class);
-                        for(int i = 0 ; i<guids.size();i++){
-                            out.write((guids.get(i) + ",").getBytes());
-                            out.write((entities.get(i) ).getBytes());
-                            if(includeCount)
-                                out.write((","+Long.toString(counts.get(i))).getBytes());
-                            out.write("\n".getBytes());
+                        else{
+                            //default processing of facets
+                            
+                            for(FacetField.Count value : ff.getValues()){
+                                out.write(value.getName().getBytes());
+                                if(includeCount)
+                                    out.write((","+Long.toString(value.getCount())).getBytes());
+                                out.write("\n".getBytes());
+                            }
                         }
+                        offset += FACET_PAGE_SIZE;
+                        //get the next values
+                        solrQuery.remove("facet.offset");
+                        solrQuery.add("facet.offset", Integer.toString(offset));
+                        qr = runSolrQuery(solrQuery, searchParams);
+                        ff = qr.getFacetField(searchParams.getFacets()[0]);
                     }
-                    else{
-                        //default processing of facets
-                        
-                        for(FacetField.Count value : ff.getValues()){
-                            out.write(value.getName().getBytes());
-                            if(includeCount)
-                                out.write((","+Long.toString(value.getCount())).getBytes());
-                            out.write("\n".getBytes());
-                        }
-                    }
-                    offset += FACET_PAGE_SIZE;
-                    //get the next values
-                    solrQuery.remove("facet.offset");
-                    solrQuery.add("facet.offset", Integer.toString(offset));
-                    qr = runSolrQuery(solrQuery, searchParams);
-                    ff = qr.getFacetField(searchParams.getFacets()[0]);
                 }
             }
         }
