@@ -69,6 +69,8 @@ class ImageProcessor extends Processor {
 }
 
 class AttributionProcessor extends Processor {
+  
+  val logger = LoggerFactory.getLogger("AttributionProcessor")
 
   /**
    * Retrieve attribution infromation from collectory and tag the occurrence record.
