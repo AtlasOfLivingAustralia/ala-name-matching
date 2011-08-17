@@ -1179,11 +1179,12 @@ public class SearchDAOImpl implements SearchDAO {
             while (matcher.find()) {
                 String value = matcher.group();
                 logger.debug("preprocessing " + value);
-                String[] values = searchUtils.getTaxonSearch(value.substring(5, value.length()));
+                String lsid = value.substring(5, value.length());
+                String[] values = searchUtils.getTaxonSearch(lsid);
                 matcher.appendReplacement(queryString, values[0]);
                 displaySb.append(query.substring(last, matcher.start()));
                 if(!values[1].startsWith("lsid:"))
-                    displaySb.append("<span>").append(values[1]).append("</span>");
+                    displaySb.append("<span class='lsid' id='").append(lsid).append("'>").append(values[1]).append("</span>");
                 else
                     displaySb.append(values[1]);
                 last = matcher.end();
@@ -1197,7 +1198,7 @@ public class SearchDAOImpl implements SearchDAO {
             displayString = displaySb.toString();
         }
         if (query.contains("urn")) {
-            //esacape the URN strings before escaping the rest this aviods the issue with attempting to search on a urn field
+            //escape the URN strings before escaping the rest this avoids the issue with attempting to search on a urn field
             Matcher matcher = urnPattern.matcher(query);
             queryString.setLength(0);
             while (matcher.find()) {
@@ -1470,12 +1471,16 @@ public class SearchDAOImpl implements SearchDAO {
                         TaxaCountDTO tcDTO = null;
                         if (fcount.getFacetField().getName().equals(NAMES_AND_LSID)) {
                             String[] values = p.split(fcount.getName());
-                            tcDTO = new TaxaCountDTO(values[0], fcount.getCount());
+                            
                             if (values.length >= 5) {
+                                tcDTO = new TaxaCountDTO(values[0], fcount.getCount());
                                 tcDTO.setGuid(StringUtils.trimToNull(values[1]));
                                 tcDTO.setCommonName(values[2]);
                                 tcDTO.setKingdom(values[3]);
                                 tcDTO.setFamily(values[4]);
+                            }
+                            else{
+                                tcDTO = new TaxaCountDTO(fcount.getName(), fcount.getCount());
                             }
                             //speciesCounts.add(i, tcDTO);
                             speciesCounts.add(tcDTO);
