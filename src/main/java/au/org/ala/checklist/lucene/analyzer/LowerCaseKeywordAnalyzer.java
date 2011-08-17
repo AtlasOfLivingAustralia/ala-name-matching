@@ -12,7 +12,7 @@ import org.apache.lucene.analysis.TokenStream;
  *
  * @author Natasha
  */
-public class LowerCaseKeywordAnalyzer extends Analyzer{
+public final class LowerCaseKeywordAnalyzer extends Analyzer{
 
     @Override
     public TokenStream tokenStream(String fieldName, Reader reader) {
