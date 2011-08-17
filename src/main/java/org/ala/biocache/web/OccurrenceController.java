@@ -332,7 +332,7 @@ public class OccurrenceController {
 	public @ResponseBody SearchResultDTO occurrenceSearch(SearchRequestParams requestParams,
             Model model) throws Exception {
         // handle empty param values, e.g. &sort=&dir=
-        SearchUtils.setDefaultParams(requestParams); 
+        SearchUtils.setDefaultParams(requestParams);        
         SearchResultDTO searchResult = searchDAO.findByFulltextQuery(requestParams);
         model.addAttribute("searchResult", searchResult);
         logger.debug("query = " + requestParams.getQ());
@@ -352,6 +352,7 @@ public class OccurrenceController {
 	@RequestMapping(value = "/occurrences/facets/download*", method = RequestMethod.GET)
 	public void downloadFacet(
             DownloadRequestParams requestParams,
+            @RequestParam(value = "count", required = false, defaultValue="false") boolean includeCount,
             HttpServletResponse response,
             HttpServletRequest request) throws Exception {
 	        if(requestParams.getFacets().length >0){
@@ -360,7 +361,7 @@ public class OccurrenceController {
     	        response.setHeader("Pragma", "must-revalidate");
     	        response.setHeader("Content-Disposition", "attachment;filename=" + filename +".txt");
     	        response.setContentType("text/plain");
-    	        searchDAO.writeFacetToStream(requestParams, response.getOutputStream());
+    	        searchDAO.writeFacetToStream(requestParams,includeCount, response.getOutputStream());
 	        }
 	}
 

@@ -99,6 +99,7 @@ public class SearchDAOImpl implements SearchDAO {
     protected static final String SPECIES_LSID = "species_lsid";
     protected static final String NAMES_AND_LSID = "names_and_lsid";
     protected static final String TAXON_CONCEPT_LSID = "taxon_concept_lsid";
+    protected static final Integer FACET_PAGE_SIZE =100;
     
 
     //Patterns that are used to prepares a SOLR query for execution
@@ -246,8 +247,10 @@ public class SearchDAOImpl implements SearchDAO {
     }
     /**
      * Writes the values for the first supplied facet to output stream
+     * 
+     * 
      */
-    public void writeFacetToStream(SearchRequestParams searchParams, OutputStream out) throws Exception{
+    public void writeFacetToStream(SearchRequestParams searchParams, boolean includeCount, OutputStream out) throws Exception{
         //set to unlimited facets
         searchParams.setFlimit(-1);
         formatSearchQuery(searchParams);
@@ -257,45 +260,77 @@ public class SearchDAOImpl implements SearchDAO {
         solrQuery.setQuery(searchParams.getQ());
         //don't want any results returned
         solrQuery.setRows(0);
+        solrQuery.setFacetLimit(FACET_PAGE_SIZE);
+        solrQuery.setFacetMinCount(0);
+        int offset =0;
+        
         QueryResponse qr = runSolrQuery(solrQuery, searchParams);
         if (qr.getResults().size() > 0) {
             FacetField ff = qr.getFacetField(searchParams.getFacets()[0]);
-            
-            if(ff != null && ff.getValueCount() >0){
-              //process the "species_guid_ facet by looking up the list of guids                
-                if(ff.getName().equals("species_guid")){
-                    out.write((ff.getName() +",species name\n").getBytes());
-                    List<String> guids = new ArrayList<String>();
-                    logger.debug("Downloading " +  ff.getValueCount() + " species guids");
-                    for(FacetField.Count value : ff.getValues()){
-                        guids.add(value.getName());
-                        //Only want to send a sub set of the list so that the URI is not too long for BIE
-                        if(guids.size()==30){
-                          //now get the list of species from the web service TODO may need to move this code
-                            String jsonUri = bieUri + "/species/namesFromGuids.json?guid=" + StringUtils.join(guids, "&guid=");
-                            List<String> entities = restTemplate.getForObject(jsonUri, List.class);
-                            for(int j = 0 ; j<guids.size();j++){
-                                out.write((guids.get(j) + ",").getBytes());
-                                out.write((entities.get(j) +"\n").getBytes());
+            //write the header line
+            out.write(ff.getName().getBytes());
+            if(ff.getName().equals("species_guid")){
+                out.write((",species name").getBytes());
+                
+            }
+            if(includeCount)
+                out.write(",Count".getBytes());
+            out.write("\n".getBytes());
+            //PAGE through the facets until we reach the end.
+            while(ff.getValueCount() >0){
+                if(ff != null && ff.getValueCount() >0){
+                  //process the "species_guid_ facet by looking up the list of guids                
+                    if(ff.getName().equals("species_guid")){
+                        
+                        List<String> guids = new ArrayList<String>();
+                        List<Long> counts = new ArrayList<Long> ();
+                        logger.debug("Downloading " +  ff.getValueCount() + " species guids");
+                        for(FacetField.Count value : ff.getValues()){
+                            guids.add(value.getName());
+                            if(includeCount)
+                                counts.add(value.getCount());
+                            //Only want to send a sub set of the list so that the URI is not too long for BIE
+                            if(guids.size()==30){
+                              //now get the list of species from the web service TODO may need to move this code
+                                String jsonUri = bieUri + "/species/namesFromGuids.json?guid=" + StringUtils.join(guids, "&guid=");
+                                List<String> entities = restTemplate.getForObject(jsonUri, List.class);
+                                for(int j = 0 ; j<guids.size();j++){
+                                    out.write((guids.get(j) + ",").getBytes());
+                                    out.write((entities.get(j) ).getBytes());
+                                    if(includeCount)
+                                        out.write((","+Long.toString(counts.get(j))).getBytes());
+                                    out.write("\n".getBytes());
+                                }
+                                guids.clear();
                             }
-                            guids.clear();
+                        }
+                        //now get the list of species from the web service TODO may need to move this code
+                        String jsonUri = bieUri + "/species/namesFromGuids.json?guid=" + StringUtils.join(guids, "&guid=");
+                        List<String> entities = restTemplate.getForObject(jsonUri, List.class);
+                        for(int i = 0 ; i<guids.size();i++){
+                            out.write((guids.get(i) + ",").getBytes());
+                            out.write((entities.get(i) ).getBytes());
+                            if(includeCount)
+                                out.write((","+Long.toString(counts.get(i))).getBytes());
+                            out.write("\n".getBytes());
                         }
                     }
-                    //now get the list of species from the web service TODO may need to move this code
-                    String jsonUri = bieUri + "/species/namesFromGuids.json?guid=" + StringUtils.join(guids, "&guid=");
-                    List<String> entities = restTemplate.getForObject(jsonUri, List.class);
-                    for(int i = 0 ; i<guids.size();i++){
-                        out.write((guids.get(i) + ",").getBytes());
-                        out.write((entities.get(i) +"\n").getBytes());
+                    else{
+                        //default processing of facets
+                        
+                        for(FacetField.Count value : ff.getValues()){
+                            out.write(value.getName().getBytes());
+                            if(includeCount)
+                                out.write((","+Long.toString(value.getCount())).getBytes());
+                            out.write("\n".getBytes());
+                        }
                     }
-                }
-                else{
-                    //default processing of facets
-                    out.write((ff.getName() +"\n").getBytes());
-                    for(FacetField.Count value : ff.getValues()){
-                        out.write(value.getName().getBytes());
-                        out.write("\n".getBytes());
-                    }
+                    offset += FACET_PAGE_SIZE;
+                    //get the next values
+                    solrQuery.remove("facet.offset");
+                    solrQuery.add("facet.offset", Integer.toString(offset));
+                    qr = runSolrQuery(solrQuery, searchParams);
+                    ff = qr.getFacetField(searchParams.getFacets()[0]);
                 }
             }
         }
@@ -1480,31 +1515,13 @@ public class SearchDAOImpl implements SearchDAO {
                                 tcDTO.setFamily(values[4]);
                             }
                             else{
+                                logger.debug("The values length: " + values.length + " :" + fcount.getName());
                                 tcDTO = new TaxaCountDTO(fcount.getName(), fcount.getCount());
                             }
                             //speciesCounts.add(i, tcDTO);
                             speciesCounts.add(tcDTO);
                         }
-                        //I think that the code below is obsolete.
-                       /* else if (fcount.getFacetField().getName().equals(TAXON_CONCEPT_LSID)) {
-                        tcDTO = new TaxaCountDTO();
-                        tcDTO.setGuid(StringUtils.trimToNull(fcount.getName()));
-                        tcDTO.setCount(fcount.getCount());
-                        speciesCounts.add(tcDTO);
-                        }
-                        else{
-                        //leave the original code for findAllKingdomsByCircleArea method
-                        try {
-                        tcDTO = speciesCounts.get(i);
-                        tcDTO.setGuid(StringUtils.trimToNull(fcount.getName()));
-                        //speciesCounts.set(i, tcDTO);
-                        speciesCounts.add(tcDTO);
-                        } catch (Exception e) {
-                        tcDTO = new TaxaCountDTO(fcount.getName(), fcount.getCount());
-                        //speciesCounts.add(i, tcDTO);
-                        speciesCounts.add(tcDTO);
-                        }
-                        }*/
+
                     }
                 }
             }
