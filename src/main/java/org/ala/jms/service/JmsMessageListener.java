@@ -15,8 +15,6 @@
 
 package org.ala.jms.service;
 
-import java.text.SimpleDateFormat;
-
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;

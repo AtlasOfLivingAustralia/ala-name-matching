@@ -182,6 +182,7 @@
 	<distributionManagement>
 	    <downloadUrl>https://maven.ala.org.au/repository</downloadUrl>
 	    <repository>
+	      <uniqueVersion>false</uniqueVersion>
 	      <id>ala-repository</id>
 	      <url>${ala.repository.url}</url>
 	    </repository>
