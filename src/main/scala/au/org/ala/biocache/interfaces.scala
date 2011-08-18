@@ -3,9 +3,9 @@ package au.org.ala.biocache
 import java.io.OutputStream
 import collection.JavaConversions
 import au.org.ala.util.ProcessedValue
-import scala.collection.mutable.ListBuffer
 import au.org.ala.util.RecordProcessor
 import au.org.ala.util.IndexRecords
+import java.util.UUID
 
 /**
  * This is the interface to use for java applications.
@@ -16,6 +16,7 @@ import au.org.ala.util.IndexRecords
  * 3) Add user supplied or system systemAssertions for records
  * 4) Add user supplied corrections to records
  * 5) Record downloads
+ * 6) Add records in a temporary space
  */
 object Store {
 
@@ -50,7 +51,7 @@ object Store {
   }
 
   //TODO need a better mechanism for doing this....
-  private val propertiesToHide = Set("originalDecimalLatitude","originalDecimalLongitude", "orginalLocationRemarks")
+  private val propertiesToHide = Set("originalDecimalLatitude","originalDecimalLongitude", "originalLocationRemarks")
 
   /**
    * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
@@ -112,8 +113,9 @@ object Store {
       }
     }, startKey, "", pageSize)
   }
+
   /**
-   * adds or updates a raw full record with values that are in the FullRecord
+   * Adds or updates a raw full record with values that are in the FullRecord
    * relies on a rowKey being set
    *  
    * Record is processed and indexed if should index is true
@@ -130,6 +132,26 @@ object Store {
         }
     }
   }
+
+  /**
+   * Adds or updates a raw full record with values that are in the FullRecord
+   * relies on a rowKey being set
+   *
+   * Record is processed and indexed if should index is true
+   */
+  def insertRecord(dataResourceIdentifer:String, properties:java.util.Map[String,String], shouldIndex:Boolean){
+    val uuid = UUID.randomUUID().toString
+    val rowKey = dataResourceIdentifer + "|" + uuid
+    val record = FullRecordMapper.createFullRecord(rowKey,properties.toMap[String,String],Versions.RAW)
+    record.rowKey = rowKey
+    record.uuid = uuid
+    if(shouldIndex){
+      val processor = new RecordProcessor
+      processor.processRecordAndUpdate(record)
+      occurrenceDAO.reIndex(record.uuid)
+    }
+  }
+
   /**
    * Deletes the records for the supplied rowKey from the index and data store
    */
@@ -260,20 +282,6 @@ object Store {
    * Retrieve the list of species groups
    */
   def retrieveSpeciesGroups: java.util.List[SpeciesGroup] = SpeciesGroups.groups.asJava[SpeciesGroup]
-  /**
-   * Returns the biocache id for the supplied layername
-   */
-  def getLayerId(name :String ):String={
-      if(name != null) Layers.nameToIdMap.getOrElse(name.toLowerCase, null)          
-      else null
-  }
-  /**
-   * Returns the spatial name for the supplied biocache layer id
-   */
-  def getLayerName(id:String):String={
-      if(id != null)Layers.idToNameMap.getOrElse(id, null)
-      else null
-  }
 }
 
 /**

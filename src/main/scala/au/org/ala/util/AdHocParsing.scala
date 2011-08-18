@@ -51,16 +51,12 @@ object AdHocParser {
   import FileHelper._
 
   def main(args: Array[String]) {
-
     var filePath = ""
     val parser = new OptionParser("Parse a CSV file") {
       arg("<path-to-CSV-file>", "The UID of the data resource to load", { v: String => filePath = v })
     }
-    if (parser.parse(args)) {
-      processCSV(filePath)
-    }
+    if (parser.parse(args)) processCSV(filePath)
   }
-
 
   /**
    * TODO re-order as per the original headers
@@ -146,7 +142,7 @@ object AdHocParser {
 
   def processColumnHeaders(list: Array[String]): Array[String] = {
     //are these darwin core terms?
-    val matchedCount = DwC.retrieveCanonicalsOrNothing(list.toList).count(x => x != "")
+      val matchedCount = DwC.retrieveCanonicalsOrNothing(list.toList).count(x => x != "")
     //if not try and match them
     if (matchedCount > 2) {
       val t = DwC.retrieveCanonicals(list.toList)

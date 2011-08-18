@@ -4,7 +4,6 @@ object CommandLineTool {
 
     def main(args: Array[String]) {
 
-
         println("Welcome to the biocache management tool.")
         print("Please supply a command or hit ENTER to view command list:")
         var input = readLine
