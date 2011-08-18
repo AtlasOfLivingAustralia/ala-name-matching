@@ -43,6 +43,7 @@ object ProcessToStreamTest {
 
 /**
  * Parser for CSV style data which attempts to guess the data types in use.
+ * It will then parse and process the data and output the findings.
  */
 object AdHocParser {
 
@@ -50,13 +51,20 @@ object AdHocParser {
   import FileHelper._
 
   def main(args: Array[String]) {
-    //need a special case for the first column
-    //if its an int, we can assume its a recordID
-    //if its a string, could sci name or common name
-    //if its a float, and column 2 is a float, assume lat/long
-    processCSV(args(0))
+
+    var filePath = ""
+    val parser = new OptionParser("Parse a CSV file") {
+      arg("<path-to-CSV-file>", "The UID of the data resource to load", { v: String => filePath = v })
+    }
+    if (parser.parse(args)) {
+      processCSV(filePath)
+    }
   }
 
+
+  /**
+   * TODO re-order as per the original headers
+   */
   def processToStream(headers:Array[String], csvData:String, outputStream:OutputStream){
 
     val output = new CSVWriter(new OutputStreamWriter(outputStream), ',', '"')
@@ -96,18 +104,12 @@ object AdHocParser {
     println("**Processed fields: " + processedFields.mkString(","))
     println("**Raw fields: " + rawFields.mkString(","))
     //need a list of common to both....
-
-
     val commonHdrs = commonFields.map(x => List(x, x + " (processed)")).flatten
-
     println("**Common fields: " + commonFields.mkString(","))
-
 
     //write out headers for CSV
     //println((commonHdrs :::  rawOnly  ::: processedOnly).toArray.mkString(","))
     output.writeNext((commonHdrs :::  rawFields  ::: processedFields).toArray)
-
-    //TODO re-order as per the original headers
 
     //for each row, construct the output
     for (el <- l){
@@ -207,19 +209,25 @@ object AdHocParser {
     //assume we have darwin core terms
     val matchedDwc = DwC.retrieveCanonicalsOrNothing(values.toList)
     val nofMatched = matchedDwc.filter(x => x.size > 0).size
-    if (nofMatched < 3) {
+
+    if ( (nofMatched.toFloat /values.size.toFloat)  < 0.5) {
 
       val parsedValues = {
         val parsedValues = parse(values)
-        val firstCols = parseHead(values(0), values(1))
-        if (!firstCols.isEmpty) {
-            val (col1, col2) = firstCols.get
-            if (col1 != "" & col2 != "") {
-              parsedValues updated (0, col1) updated (0, col2)
-            } else if (col1 != "") {
-              parsedValues updated (0, col1)
+
+        if (values.size >1) {
+            val firstCols = parseHead(values(0), values(1))
+            if(!firstCols.isEmpty){
+              val (col1, col2) = firstCols.get
+              if (col1 != "" & col2 != "") {
+                parsedValues updated (0, col1) updated (0, col2)
+              } else if (col1 != "") {
+                parsedValues updated (0, col1)
+              } else {
+                parsedValues
+              }
             } else {
-              parsedValues
+               parsedValues
             }
         } else {
             parsedValues
@@ -266,21 +274,21 @@ object AdHocParser {
    * Just returns the best guess for each field.
    */
   def parse(values: Array[String]): Array[String] = values.map(value => value match {
-      case BasisOfRecordExtractor(value) => "basisOfRecord"
-      case DateExtractor(value) => "eventDate"
-      case DecimalLatitudeExtractor(value) => "decimalLatitude"
-      case DecimalLongitudeExtractor(value) => "decimalLongitude"
-      case VerbatimLatitudeExtractor(value) => "verbatimLatitude"
-      case VerbatimLongitudeExtractor(value) => "verbatimLongitude"
-      case GeodeticDatumExtractor(value) => "geodeticDatum"
-      case CountryExtractor(value) => "country"
-      case StateProvinceExtractor(value) => "stateProvince"
-      case OccurrenceIDExtractor(value) => "occurrenceID"
-      case CatalogExtractor(value) => "catalogNumber"
-      case CoordinateUncertaintyExtractor(value) => "coordinateUncertaintyInMeters"
-      case ScientificNameExtractor(value) => value
-      case CommonNameExtractor(value) => "vernacularName"
-      case _ => ""
+    case BasisOfRecordExtractor(value) => "basisOfRecord"
+    case DateExtractor(value) => "eventDate"
+    case DecimalLatitudeExtractor(value) => "decimalLatitude"
+    case DecimalLongitudeExtractor(value) => "decimalLongitude"
+    case VerbatimLatitudeExtractor(value) => "verbatimLatitude"
+    case VerbatimLongitudeExtractor(value) => "verbatimLongitude"
+    case GeodeticDatumExtractor(value) => "geodeticDatum"
+    case CountryExtractor(value) => "country"
+    case StateProvinceExtractor(value) => "stateProvince"
+    case OccurrenceIDExtractor(value) => "occurrenceID"
+    case CatalogExtractor(value) => "catalogNumber"
+    case CoordinateUncertaintyExtractor(value) => "coordinateUncertaintyInMeters"
+    case ScientificNameExtractor(value) => value
+    case CommonNameExtractor(value) => "vernacularName"
+    case _ => ""
   })
 }
 
