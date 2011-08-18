@@ -3,6 +3,8 @@ package au.org.ala.biocache
 import reflect.BeanProperty
 import au.org.ala.util.Stemmer
 import scala.collection.JavaConversions
+import scala.io.Source
+import scala.util.parsing.json.JSON
 
 /** Case class that encapsulates a canonical form and variants. */
 class Term (@BeanProperty val canonical:String, @BeanProperty rawVariants:Array[String]){
@@ -513,4 +515,36 @@ object AssertionCodes {
        }
     }).isEmpty
   }
+}
+
+object Layers{
+    lazy val nameToIdMap:Map[String, String] ={
+        initIdMap
+    }
+    lazy val idToNameMap:Map[String,String] = nameToIdMap.map(_.swap)
+    def initIdMap():Map[String, String]={
+        //get the JSON string for the layers
+        val nonDefaultFieldMap = Map[String, String]("aus1" -> "stateProvince", "aus2" -> "lga", "ibra_reg_shape" -> "ibra", "ibra_merged" -> "ibra", "imcra4_pb" -> "imcra", "ne_world" -> "country")
+        try{
+            val json = Source.fromURL("http://spatial.ala.org.au/layers.json").mkString
+            val map = JSON.parseFull(json).get.asInstanceOf[Map[String, List[Map[String,AnyRef]]]]
+            val layers = map("layerList")
+            var idmap = new scala.collection.mutable.HashMap[String, String]
+            for(layer<-layers){
+                val name = layer.get("name")
+                val layerType = layer.getOrElse("type", "")
+                if(!name.isEmpty){
+                    val sname = name.get.asInstanceOf[String].toLowerCase
+                    val id = nonDefaultFieldMap.getOrElse(sname, getPrefix(layerType.asInstanceOf[String]) + layer.get("id").get.asInstanceOf[Double].toInt)
+                    idmap += sname-> id
+                }
+            }
+            idmap.toMap
+        }
+        catch{
+            case e :Exception =>e.printStackTrace; Map[String,String]()
+        }
+        
+    }
+    def getPrefix(value:String) = if(value == "Environmental") "el" else "cl"
 }

@@ -260,6 +260,20 @@ object Store {
    * Retrieve the list of species groups
    */
   def retrieveSpeciesGroups: java.util.List[SpeciesGroup] = SpeciesGroups.groups.asJava[SpeciesGroup]
+  /**
+   * Returns the biocache id for the supplied layername
+   */
+  def getLayerId(name :String ):String={
+      if(name != null) Layers.nameToIdMap.getOrElse(name.toLowerCase, null)          
+      else null
+  }
+  /**
+   * Returns the spatial name for the supplied biocache layer id
+   */
+  def getLayerName(id:String):String={
+      if(id != null)Layers.idToNameMap.getOrElse(id, null)
+      else null
+  }
 }
 
 /**
