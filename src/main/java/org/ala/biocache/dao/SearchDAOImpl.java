@@ -102,7 +102,7 @@ public class SearchDAOImpl implements SearchDAO {
     protected static final String SPECIES_LSID = "species_lsid";
     protected static final String NAMES_AND_LSID = "names_and_lsid";
     protected static final String TAXON_CONCEPT_LSID = "taxon_concept_lsid";
-    protected static final Integer FACET_PAGE_SIZE =100;
+    protected static final Integer FACET_PAGE_SIZE =500;
     
 
     //Patterns that are used to prepares a SOLR query for execution
@@ -264,11 +264,11 @@ public class SearchDAOImpl implements SearchDAO {
         //add the context information
         updateQueryContext(searchParams);
         SolrQuery solrQuery = initSolrQuery(searchParams);
+        
         solrQuery.setQuery(searchParams.getQ());
         //don't want any results returned
         solrQuery.setRows(0);
-        solrQuery.setFacetLimit(FACET_PAGE_SIZE);
-        solrQuery.setFacetMinCount(0);
+        solrQuery.setFacetLimit(FACET_PAGE_SIZE);        
         int offset =0;
         boolean shouldLookup = lookupName && searchParams.getFacets()[0].contains("_guid");
         
