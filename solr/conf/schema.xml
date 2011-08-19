@@ -566,29 +566,19 @@
    <field name="country" type="string" indexed="true" stored="true" multiValued="false" />
    <field name="lft" type="int" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="rgt" type="int" indexed="true" stored="true" multiValued="false" omitNorms="true" />
-   <!-- Not necessary for searches and not displayed in results -->
-   <!-- field name="kingdom_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" / -->
+   
    <field name="kingdom" type="string" indexed="true" stored="true" multiValued="false" />
-   <!-- Not necessary for searches and not displayed in results -->
-   <!-- field name="phylum_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" / -->
+   
    <field name="phylum" type="string" indexed="true" stored="true" multiValued="false"  />
    
-   <!-- Not necessary for searches and not displayed in results -->
-   <!-- field name="class_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" / -->
    <field name="class" type="string" indexed="true" stored="true" multiValued="false"/>
    
-   <!-- Not necessary for searches and not displayed in results -->
-   <!-- field name="order_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" / -->
    <field name="order" type="string" indexed="true" stored="true" multiValued="false"/>
-   
-   <!-- Not necessary for searches and not displayed in results -->
-   <!-- field name="family_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" /-->
+      
    <field name="family" type="string" indexed="true" stored="true" multiValued="false" />
-   
-   <!-- Not necessary for searches and not displayed in results -->
-   <!-- field name="genus_lsid" type="string" indexed="true" stored="true" multiValued="false" omitNorms="false" / -->
+      
    <field name="genus" type="string" indexed="true" stored="true" multiValued="false" />
-   
+   <field name="genus_guid" type="string" indexed="true" stored="true" multiValued="false" />
    
    <field name="species_guid" type="string" indexed="true" stored="true" multiValued="false"  />
    <field name="species" type="string" indexed="true" stored="true" multiValued="false"  />
@@ -706,28 +696,44 @@
    <copyField source="data_provider" dest="text"/>
    <copyField source="data_resource" dest="text"/>
    <copyField source="institution_code" dest="text"/>
-   <copyField source="institution_code_name" dest="text"/>
+   <copyField source="institution_name" dest="text"/>
    <copyField source="collection_code" dest="text"/>
    <copyField source="collection_name" dest="text"/>
    <copyField source="catalogue_number" dest="text"/>
    <copyField source="taxon_name" dest="text"/>
    <copyField source="raw_taxon_name" dest="text" />
    <copyField source="raw_taxon_name" dest="raw_name" />
+   <copyField source="raw_common_name" dest="text" />
    <copyField source="raw_common_name" dest="raw_name" />
+   <copyField source="kingdom" dest="text"/>
+   <copyField source="phylum" dest="text" />
+   <copyField source="class" dest="text"/>
+   <copyField source="order" dest="text"/>
+   <copyField source="family" dest="text"/>
+   <copyField source="genus" dest="text"/>
+   <copyField source="species" dest="text" />
+   <copyField source="species_group" dest="text" />
+   
+   
    <!--  This copy field is not in use anywhere -->
    <!--copyField source="taxon_name" dest="taxon_name_text"/-->
    <copyField source="common_name" dest="text"/>
    <copyField source="taxon_concept_lsid" dest="lsid"/>
-   <copyField source="taxon_concept_lsid" dest="text"/>
+   <!-- copyField source="taxon_concept_lsid" dest="text"/ -->
    <copyField source="type_status" dest="text"/>
    <copyField source="raw_type_status" dest="text" />
    <copyField source="collector" dest="text" />
+   <copyField source="user_id"  dest="text" />
+   
+   <copyField source=*conservation" dest="text" />
 
    <copyField source="imcra" dest="biogeographic_region" />
    <copyField source="ibra" dest="biogeographic_region" />
 
+   <copyField source="country"  dest="text" />
    <copyField source="state" dest="text"/>
-   <copyField source="biogeographic_region" dest="text"/>
+   <copyField source="imcra" dest="text"/>
+   <copyField source="ibra" dest="text"/>
    <copyField source="places" dest="text"/>
    <!-- Not being used in the search -->
    <!-- copyField source="state" dest="geo_regions"/>
@@ -737,6 +743,8 @@
    <copyField source="basis_of_record" dest="text"/>
    <copyField source="basis_of_record" dest="record_type"/>
    <copyField source="raw_basis_of_record" dest="text" />
+   <copyField source="type_status" dest="text" />
+   <copyField source="raw_type_status"  dest="text"/>
    
    <!-- add the remarks to the text search field -->
    <copyField source="location_remarks" dest="rem_text" />
