@@ -634,7 +634,7 @@ class Location extends Cloneable with Mappable with POSO {
   def setOrginalLocality(locality:String) = this.originalLocality = locality
   @JsonIgnore
   def getOriginalLocationRemarks():String = originalLocationRemarks
-  def setOrginalLocationRemarks(remarks:String) = this.originalLocationRemarks = remarks
+  def setOriginalLocationRemarks(remarks:String) = this.originalLocationRemarks = remarks
   
   @JsonIgnore
   def getMap():java.util.Map[String,String]={

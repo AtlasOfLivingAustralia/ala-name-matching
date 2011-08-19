@@ -124,9 +124,11 @@ class RecordProcessor {
       location.decimalLongitude = raw.location.decimalLongitude
       location.originalLocationRemarks = raw.location.originalLocationRemarks
       occurrenceDAO.updateOccurrence(guid, location, Versions.RAW)
+      //remove the location remarks all the time
+      Config.persistenceManager.deleteColumns(guid,"occ", "locationRemarks")
       //remove the decimal coordinates if there are no processed coordinates (indicates informationWithheld)
       if (StringUtils.isEmpty(processed.location.decimalLatitude) && StringUtils.isEmpty(processed.location.decimalLongitude)) {
-        Config.persistenceManager.deleteColumns(guid, "occ", "decimalLatitude", "decimalLongitude", "locationRemarks");
+        Config.persistenceManager.deleteColumns(guid, "occ", "decimalLatitude", "decimalLongitude")
       }
     }
   }
