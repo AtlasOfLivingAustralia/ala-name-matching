@@ -126,7 +126,7 @@ class RecordProcessor {
       occurrenceDAO.updateOccurrence(guid, location, Versions.RAW)
       //remove the decimal coordinates if there are no processed coordinates (indicates informationWithheld)
       if (StringUtils.isEmpty(processed.location.decimalLatitude) && StringUtils.isEmpty(processed.location.decimalLongitude)) {
-        Config.persistenceManager.deleteColumns(guid, "occ", "decimalLatitude", "decimalLongitude");
+        Config.persistenceManager.deleteColumns(guid, "occ", "decimalLatitude", "decimalLongitude", "locationRemarks");
       }
     }
   }
