@@ -725,7 +725,7 @@
    <copyField source="collector" dest="text" />
    <copyField source="user_id"  dest="text" />
    
-   <copyField source=*conservation" dest="text" />
+   <copyField source="*conservation" dest="text" />
 
    <copyField source="imcra" dest="biogeographic_region" />
    <copyField source="ibra" dest="biogeographic_region" />
