@@ -622,11 +622,16 @@ class LocationProcessor extends Processor {
 
             processed.location.decimalLatitude = gl.getGeneralisedLatitude
             processed.location.decimalLongitude = gl.getGeneralisedLongitude
+            
+            //gather the information about the rules that were applied.
+            val si = gl.getSensitivityInstances().toArray(Array[au.org.ala.sds.model.SensitivityInstance] ()).asInstanceOf[Array[au.org.ala.sds.model.SensitivityInstance]]
+            val extraComment ="\n"+si.map(i=>"Sensitive in " + i.getZone + " [" + i.getCategory.getValue +", " + i.getAuthority +"]" ).reduceLeft(_ + "\t" +_)
+                        
             //update the generalised text
             if (gl.getDescription == MessageFactory.getMessageText(MessageFactory.LOCATION_WITHHELD)) {
-              processed.occurrence.informationWithheld = gl.getDescription
+              processed.occurrence.informationWithheld = gl.getDescription +extraComment
             } else {
-              processed.occurrence.dataGeneralizations = gl.getDescription
+              processed.occurrence.dataGeneralizations = gl.getDescription + extraComment
               processed.location.coordinateUncertaintyInMeters = gl.getGeneralisationInMetres
             }
 
