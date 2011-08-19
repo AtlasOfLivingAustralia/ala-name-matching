@@ -528,7 +528,10 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         thread ! "exit"
         cc.shutdown
     }
-    def optimise = solrServer.optimize
+    def optimise()={
+        init
+        solrServer.optimize
+        }
 
     override def getOccIndexModel(raw: FullRecord, processed: FullRecord): Option[OccurrenceIndex] = {
         //set the SOLR specific value
