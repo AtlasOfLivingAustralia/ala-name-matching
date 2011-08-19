@@ -82,12 +82,12 @@ class MiscTest extends ConfigFunSuite {
         expect(30007){qas(0).code}
     }
     
-    test("Layers Test" ){
+    /*test("Layers Test" ){
         expect("ibra_merged"){Layers.idToNameMap("ibra")}
         expect("el790"){Layers.nameToIdMap("worldclim_bio_3")}
         expect("el790"){Store.getLayerId("WorldClim_bio_3")}
         expect("worldclim_bio_3"){Store.getLayerName("el790")}
     
-    }
+    }*/
     
 }
