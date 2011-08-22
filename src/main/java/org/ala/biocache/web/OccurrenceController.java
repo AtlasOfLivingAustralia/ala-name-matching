@@ -187,6 +187,13 @@ public class OccurrenceController {
 	    SearchResultDTO results = searchDAO.findByFulltextQuery(requestParams);
 	    adto.setHasOccurrenceRecords(results.getTotalRecords() > 0);
 	    adto.setIsNSL(austLsidPattern.matcher(guid).matches());
+	    if(adto.isHasOccurrences()){
+	        //check to see if the records have only been provided by citizen science
+	        //TODO change this to a confidence setting after it has been included in the index	        
+	        requestParams.setQ("lsid:" + guid + " AND -(data_resource_uid:dr364)");
+	        results = searchDAO.findByFulltextQuery(requestParams);
+	        adto.setHasCSOnly(results.getTotalRecords()==0);
+	    }
 	    return adto;
 	}
 

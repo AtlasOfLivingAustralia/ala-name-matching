@@ -11,6 +11,8 @@ public class AustralianDTO {
     private boolean isNSL =false;
     /** Indicates that there are occurrence records for taxonGuid */
     private boolean hasOccurrences=false;
+    /** Indicates that the only occurrence records found were source from CS */
+    private boolean hasCSOnly=false;
     /** The taxonGuid that the information is about */
     private String taxonGuid;
     /**
@@ -49,6 +51,21 @@ public class AustralianDTO {
      */
     public void setTaxonGuid(String taxonGuid) {
         this.taxonGuid = taxonGuid;
+    }
+    
+    
+    
+    /**
+     * @return the hasCSOnly
+     */
+    public boolean isHasCSOnly() {
+        return hasCSOnly;
+    }
+    /**
+     * @param hasCSOnly the hasCSOnly to set
+     */
+    public void setHasCSOnly(boolean hasCSOnly) {
+        this.hasCSOnly = hasCSOnly;
     }
     /**
      * 
