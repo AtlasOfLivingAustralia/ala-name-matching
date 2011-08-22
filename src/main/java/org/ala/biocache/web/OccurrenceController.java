@@ -30,6 +30,7 @@ import org.ala.biocache.*;
 import org.ala.biocache.dao.SearchDAO;
 import org.ala.biocache.dto.DownloadRequestParams;
 import org.ala.biocache.dto.store.OccurrenceDTO;
+import org.ala.biocache.dto.AustralianDTO;
 import org.ala.biocache.dto.FieldResultDTO;
 import org.ala.biocache.dto.IndexFieldDTO;
 import org.ala.biocache.dto.OccurrenceSourceDTO;
@@ -174,21 +175,19 @@ public class OccurrenceController {
 	 * @throws Exception
 	 */
 	@RequestMapping(value={"/australian/taxon/{guid:.+}.json*","/australian/taxon/{guid:.+}*" })
-	public @ResponseBody String isAustralian(@PathVariable("guid") String guid) throws Exception {
+	public @ResponseBody AustralianDTO isAustralian(@PathVariable("guid") String guid) throws Exception {
 	    //check to see if we have any occurrences on Australia  country:Australia or state != empty
 	    SearchRequestParams requestParams = new SearchRequestParams();
 	    requestParams.setPageSize(0);
 	    requestParams.setFacets(new String[]{});
 	    String query = "lsid:" +guid + " AND " + "(country:Australia OR state:[* TO *])";
 	    requestParams.setQ(query);
+	    AustralianDTO adto= new AustralianDTO();
+	    adto.setTaxonGuid(guid);
 	    SearchResultDTO results = searchDAO.findByFulltextQuery(requestParams);
-	    if(results.getTotalRecords() > 0)
-	        return AUSTRALIAN_WITH_OCC;
-	    //now check to see if the LSID comes of the NSL
-	    if(austLsidPattern.matcher(guid).matches())
-	        return AUSTRALIAN_LSID;
-	    
-	    return NOT_AUSTRALIAN;
+	    adto.setHasOccurrenceRecords(results.getTotalRecords() > 0);
+	    adto.setIsNSL(austLsidPattern.matcher(guid).matches());
+	    return adto;
 	}
 
 	/**

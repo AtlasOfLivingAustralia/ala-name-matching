@@ -161,8 +161,8 @@ public class SearchDAOImpl implements SearchDAO {
     public SearchResultDTO findByFulltextQuery(SearchRequestParams requestParams) throws Exception {
         SearchResultDTO searchResults = new SearchResultDTO();
 
-        try {
-            formatSearchQuery(requestParams);
+        try {            
+            formatSearchQuery(requestParams);            
             //add the context information
             updateQueryContext(requestParams);
             SolrQuery solrQuery = initSolrQuery(requestParams); // general search settings
@@ -192,8 +192,8 @@ public class SearchDAOImpl implements SearchDAO {
         SearchResultDTO searchResults = new SearchResultDTO();
 
         try {
-            //String queryString = formatSearchQuery(query);
-            formatSearchQuery(searchParams);
+            //String queryString = formatSearchQuery(query);            
+            formatSearchQuery(searchParams);            
             //add context information
             updateQueryContext(searchParams);
             String queryString = buildSpatialQueryString(searchParams);
@@ -1207,6 +1207,8 @@ public class SearchDAOImpl implements SearchDAO {
      *
      * This includes constructing a user friendly version of the query to
      * be used for display purposes.
+     * 
+     * TODO Fix this to use a state
      *
      * @param query
      * @return
@@ -1287,7 +1289,7 @@ public class SearchDAOImpl implements SearchDAO {
                     //split on the colon
                     String[] bits = StringUtils.split(value, ":", 2);
                     if(bits.length == 2){
-                        if(!bits[0].contains("urn"))
+                        if(!bits[0].contains("urn") && !bits[1].contains("urn\\"))
                             matcher.appendReplacement(queryString, bits[0] +":"+ prepareSolrStringForReplacement(bits[1]));
 
                     }
@@ -1337,7 +1339,7 @@ public class SearchDAOImpl implements SearchDAO {
      * @return
      */
     private String prepareSolrStringForReplacement(String value){
-        //if starts and ends with quotes just escape the inside
+        //if starts and ends with quotes just escape the inside       
         boolean quoted = false;
         StringBuffer sb = new StringBuffer();
         if(value.startsWith("\"") && value.endsWith("\"")){
@@ -1346,7 +1348,7 @@ public class SearchDAOImpl implements SearchDAO {
             sb.append("\"");
         }
         sb.append(ClientUtils.escapeQueryChars(value).replaceAll("\\\\", "\\\\\\\\"));
-        if(quoted) sb.append("\"");
+        if(quoted) sb.append("\"");        
         return sb.toString();
     }
 
