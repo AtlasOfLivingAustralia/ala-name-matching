@@ -407,6 +407,8 @@ class LocationProcessor extends Processor {
     if (raw.location.originalDecimalLatitude != null && raw.location.originalDecimalLongitude != null) {
       processed.location.decimalLatitude = raw.location.originalDecimalLatitude
       processed.location.decimalLongitude = raw.location.originalDecimalLongitude
+      processed.location.verbatimLatitude = raw.location.originalVerbatimLatitude
+      processed.location.verbatimLongitude = raw.location.originalVerbatimLongitude
 
     } else if (raw.location.decimalLatitude != null && raw.location.decimalLongitude != null) {
       //check to see if we have coordinates specified
@@ -618,6 +620,8 @@ class LocationProcessor extends Processor {
             raw.location.decimalLatitude = gl.getGeneralisedLatitude
             raw.location.decimalLongitude = gl.getGeneralisedLongitude
             raw.location.originalLocationRemarks = raw.location.locationRemarks
+            raw.location.originalVerbatimLatitude = raw.location.verbatimLatitude
+            raw.location.originalVerbatimLongitude = raw.location.verbatimLongitude
             raw.location.locationRemarks = null
 
             processed.location.decimalLatitude = gl.getGeneralisedLatitude

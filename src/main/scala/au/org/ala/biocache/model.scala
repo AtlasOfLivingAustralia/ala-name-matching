@@ -618,6 +618,8 @@ class Location extends Cloneable with Mappable with POSO {
   var originalDecimalLongitude:String =_
   var originalLocality:String =_
   var originalLocationRemarks:String=_
+  var originalVerbatimLatitude:String=_
+  var originalVerbatimLongitude:String=_
 
   override def toString = ToStringBuilder.reflectionToString(this)
 
@@ -628,6 +630,14 @@ class Location extends Cloneable with Mappable with POSO {
   @JsonIgnore
   def getOriginalDecimalLongitude():String = originalDecimalLongitude
   def setOriginalDecimalLongitude(decimalLongitude:String)= this.originalDecimalLongitude = decimalLongitude
+  
+  @JsonIgnore
+  def getOriginalVerbatimLatitude():String = originalVerbatimLatitude
+  def setOriginalVerbatimLatitude(latitude:String)=this.originalVerbatimLatitude = latitude
+  
+  @JsonIgnore
+  def getOriginalVerbatimLongitude():String = originalVerbatimLongitude
+  def setOriginalVerbatimLongitude(longitude:String)= this.originalVerbatimLongitude = longitude
   
   @JsonIgnore
   def getOriginalLocality():String = originalLocality

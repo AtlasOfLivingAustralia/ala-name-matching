@@ -11,7 +11,7 @@ object ReloadDataResources {
    val pm = Config.persistenceManager
    def main(args: Array[String]): Unit = {
     println("Reloading the data resource values...")
-    val start = if(args.length>0)args(0) else ""
+    val start = if(args.length>0)args(0) else "dr344"
     reload(start)
 //    println(getDataResourceFromWS("dr376"))
 //    println(getDataResourceFromWS("dr461"))
@@ -26,11 +26,18 @@ object ReloadDataResources {
     pm.pageOverSelect("occ", (guid, map) => {
       counter += 1
       if (!map.isEmpty) {
+        val druid = map.getOrElse("dataResourceUid","")
+        val rowKey = map.getOrElse("rowKey", "")
+        if(druid == ""){
+          pm.put(rowKey, "occ", "dataResourceUid", rowKey.substring(0, rowKey.indexOf("|")))
+//          println("Updated " + rowKey );
+//          exit(0)
+        }
         //println())
         //add the new values to cassandra
-        val newmap = getDataResource(map.get("dataResourceUid").get)
-        if(newmap.size>0)
-          pm.put(guid, "occ", newmap)
+//        val newmap = getDataResource(map.get("dataResourceUid").get)
+//        if(newmap.size>0)
+//          pm.put(guid, "occ", newmap)
       }
         //debug counter
         if (counter % 1000 == 0) {
@@ -39,7 +46,7 @@ object ReloadDataResources {
           startTime = System.currentTimeMillis
         }
       true
-    },startUuid,1000, "dataResourceUid")
+    },startUuid,1000, "dataResourceUid","rowKey")
   }
 
   def getDataResource(value:String):Map[String,String]={
