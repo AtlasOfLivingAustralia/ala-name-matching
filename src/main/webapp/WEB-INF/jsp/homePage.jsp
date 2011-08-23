@@ -99,7 +99,12 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
         </ul>
         
         <h3>Administration</h3>
-        The services in the section only support POST. All services must supply apiKey as a parameter.
+        
+        
+        <ul>
+        	<li><strong>Check for Read Only Mode:</strong><a href="/ws/admin/isReadOnly">/admin/isReadOnly</a></li>
+        </ul>
+        	The remaining services in the section only support POST. All services must supply apiKey as a parameter.
         <ul>
         	<li><strong>Optimise Index: </strong>/admin/index/optimise - This service will place the biocache-service in read only 
         	mode until the optimise has been completed.

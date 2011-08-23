@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.apache.log4j.Logger;
 
 /**
@@ -61,5 +62,13 @@ public class AdminController extends AbstractSecureController {
             response.setStatus(HttpServletResponse.SC_OK);
         }
         
+    }
+    /**
+     * Returns true when in service is in readonly mode.
+     * @return
+     */
+    @RequestMapping(value="/admin/isReadOnly", method=RequestMethod.GET)
+    public @ResponseBody boolean isReadOnly() {
+        return Store.isReadOnly();
     }
 }
