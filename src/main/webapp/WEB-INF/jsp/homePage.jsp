@@ -99,12 +99,22 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
         </ul>
         
         <h3>Administration</h3>
-        The services in the section only support POST.
+        The services in the section only support POST. All services must supply apiKey as a parameter.
         <ul>
-        	<li><strong>Optimise Index: </strong>/admin/index/optimise?apiKey=KEY - This service will place the biocache-service in read only 
-        	mode until the optimise has been completed.</li>
-        	<li><strong>Reindex Data Resource: </strong>/admin/index/reindex?apiKey=KEY&dataResource=DRUID&startDate=yyyy-mm-dd - reindexes occurrences 
-        	modified after startDate for the supplied data resource</li>        	
+        	<li><strong>Optimise Index: </strong>/admin/index/optimise - This service will place the biocache-service in read only 
+        	mode until the optimise has been completed.
+        	<br>Example:<br>
+        	curl --data "apiKey=KEY" http://biocache.ala.org.au/ws/admin/index/optimise
+        	</li>
+        	<li><strong>Reindex Data Resource: </strong>/admin/index/reindex - reindexes occurrences 
+        	modified after startDate for the supplied dataResource<br>Extra Mandatory Parameters: <br>
+        	<ul>
+        		<li>dataResource - The data resource UID to reindex</li>
+        		<li>startDate - The earliest modification date to reindex.</li>
+        	</ul> 
+        	<br>Example:</br>
+        	curl --data "apiKey=KEY&dataResource=dr343&startDate=2011-07-01" http://biocache.ala.org.au/ws/admin/index/reindex       	
+			</li>        	
         </ul>
         
         <h3>Miscellaneous</h3>
