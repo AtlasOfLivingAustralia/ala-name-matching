@@ -30,34 +30,20 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
  * use these functions.
  */
 @Controller
-public class AssertionController {
+public class AssertionController extends AbstractSecureController {
 
     private final static Logger logger = Logger.getLogger(AssertionController.class);
 
     //TODO Move this so all classes can refer to the same
     protected String collectoryBaseUrl = "http://collections.ala.org.au";
     
-    protected Set<String> apiKeys;
+   
     /**
      * Retrieve an array of the assertion codes in use by the processing system
      *
      * @return an array of codes
      * @throws Exception
      */
-    
-    public AssertionController(){
-        //Initialise the set of API keys that will allow edits to the biocache store
-        ResourceBundle rb = ResourceBundle.getBundle("biocache"); 
-        apiKeys = new HashSet<String>();
-        try{
-                      
-            String[] keys= rb.getString("apiKeys").split(",");
-            Collections.addAll(apiKeys, keys);
-        }
-        catch(Exception e){
-            
-        }
-    }
     @RequestMapping(value = {"/assertions/codes"}, method = RequestMethod.GET)
 	public @ResponseBody ErrorCode[] showCodes() throws Exception {
         return Store.retrieveAssertionCodes();
@@ -102,8 +88,8 @@ public class AssertionController {
         String userId = request.getParameter("userId");
         String userDisplayName = request.getParameter("userDisplayName");
         String apiKey = request.getParameter("apiKey");
-        
-        if(apiKey != null && apiKeys.contains(apiKey)){
+
+        if(shouldPerformOperation(apiKey, response)){
             try {
                 logger.debug("Adding assertion to:"+recordUuid+", code:"+code+", comment:"+comment
                         + ", userId:" +userId + ", userDisplayName:" +userDisplayName);
@@ -132,10 +118,7 @@ public class AssertionController {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             }
         }
-        else{
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "An invalid API Key was provided for updates.");
-        }
+
     }
 
     /**
@@ -148,15 +131,13 @@ public class AssertionController {
         HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         String apiKey = request.getParameter("apiKey");
-        if(apiKey != null && apiKeys.contains(apiKey)){
+        
+        if(shouldPerformOperation(apiKey, response)){
             Store.deleteUserAssertion(recordUuid, assertionUuid);
             postNotificationEvent("delete", recordUuid, assertionUuid);
             response.setStatus(HttpServletResponse.SC_OK);
         }
-        else{
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "An invalid API Key was provided for deletes.");
-        }
+        
     }
 
     /**

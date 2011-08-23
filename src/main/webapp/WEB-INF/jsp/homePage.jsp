@@ -98,6 +98,15 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
             </li>
         </ul>
         
+        <h3>Administration</h3>
+        The services in the section only support POST.
+        <ul>
+        	<li><strong>Optimise Index: </strong>/admin/index/optimise?apiKey=KEY - This service will place the biocache-service in read only 
+        	mode until the optimise has been completed.</li>
+        	<li><strong>Reindex Data Resource: </strong>/admin/index/reindex?apiKey=KEY&dataResource=DRUID&startDate=yyyy-mm-dd - reindexes occurrences 
+        	modified after startDate for the supplied data resource</li>        	
+        </ul>
+        
         <h3>Miscellaneous</h3>
         <ul>
         	<li><strong>Is Australian test:</strong> /australian/taxon/{guid} - tests to see if the supplied GUID; occurs in Australia, has an Australian LSID or is NOT Australian. Example:<br>
