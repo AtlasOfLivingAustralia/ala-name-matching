@@ -59,6 +59,7 @@ import FileHelper._
             date = DateParser.parseStringToDate(startDate.get +" 00:00:00")
             if(date.isEmpty)
                 throw new Exception("Date is in incorrect format. Try yyyy-mm-dd")
+            logger.info("Indexing will be restricted to records changed after " + date.get)
         }
 
         val endKey = if(dataResource.isEmpty) "" else dataResource.get +"|~"

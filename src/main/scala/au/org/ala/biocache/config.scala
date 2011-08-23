@@ -20,6 +20,7 @@ object Config {
     def occurrenceDAO = getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     def persistenceManager = getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
     def nameIndex = getInstance(classOf[CBIndexSearch]).asInstanceOf[CBIndexSearch]
+    def indexDAO = getInstance(classOf[IndexDAO]).asInstanceOf[IndexDAO]
 
     lazy val sdsFinder = {
       SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("http://sds.ala.org.au/sensitive-species-data.xml", nameIndex)

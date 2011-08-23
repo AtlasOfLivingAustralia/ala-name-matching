@@ -223,6 +223,17 @@ object Store {
     readOnly = ro
 
   }
+  
+  def isReadOnly = readOnly
+  
+  def optimiseIndex() :String = {
+      val start = System.currentTimeMillis
+      readOnly = true
+      val indexString =Config.indexDAO.optimise
+      val finished = System.currentTimeMillis
+      readOnly = false
+      "Optimised in " + (finished -start).toFloat / 60000f + " minutes.\n" +indexString 
+  }
   /**
    * Indexes a dataResource from a specific date
    */

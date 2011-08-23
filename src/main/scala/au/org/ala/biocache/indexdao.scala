@@ -63,7 +63,7 @@ trait IndexDAO {
     def emptyIndex
     def reload
     def shutdown
-    def optimise
+    def optimise :String
     /**
      * Remove all the records with the specified value in the specified field
      */
@@ -514,7 +514,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         while(!thread.ready){ Thread.sleep(50) }
         solrServer.commit
         solrDocList.clear
-        printNumDocumentsInIndex
+        println(printNumDocumentsInIndex)
         if(optimise)
           this.optimise
         if(shutdown){
@@ -529,9 +529,10 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         thread ! "exit"
         cc.shutdown
     }
-    def optimise()={
+    def optimise():String={
         init
         solrServer.optimize
+        printNumDocumentsInIndex
         }
 
     override def getOccIndexModel(raw: FullRecord, processed: FullRecord): Option[OccurrenceIndex] = {
@@ -679,9 +680,9 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     }
     
 
-    def printNumDocumentsInIndex() = {
+    def printNumDocumentsInIndex():String = {
         val rq = solrServer.query(new SolrQuery("*:*"))
-        println(">>>>>>>>>>>>>Document count of index: " + rq.getResults().getNumFound())
+        ">>>>>>>>>>>>>Document count of index: " + rq.getResults().getNumFound()
     }
 
 
