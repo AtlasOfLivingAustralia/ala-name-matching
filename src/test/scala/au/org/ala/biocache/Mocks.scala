@@ -9,6 +9,7 @@ class MockPersistenceManager extends PersistenceManager {
   mockStore.put("loc",new HashMap[String, HashMap[String,String]])
   mockStore.put("attr",new HashMap[String, HashMap[String,String]])
   mockStore.put("taxon", new HashMap[String,HashMap[String,String]])
+  mockStore.put("qa", new HashMap[String,HashMap[String,String]])
   //loc.put("50.50|")
 
   def clear = mockStore.clear
@@ -58,7 +59,7 @@ class MockPersistenceManager extends PersistenceManager {
   def pageOverAll(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid: String, endUuid: String, pageSize: Int) =
     throw new RuntimeException("not implemented yet")
 
-  def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid: String, pageSize: Int, columnName: String*) =
+  def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid: String, endUuid:String, pageSize: Int, columnName: String*) =
     throw new RuntimeException("not implemented yet")
 
   def selectRows(uuids: Array[String], entityName: String, propertyNames: Array[String], proc: (Map[String, String]) => Unit) =

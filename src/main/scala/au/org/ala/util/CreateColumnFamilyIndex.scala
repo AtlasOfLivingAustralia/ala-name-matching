@@ -100,7 +100,7 @@ class CreateCompositeKeyIndex {
         if (counter % 100 == 0) {println("record: "+counter)}
 
         counter<maxRecords
-      }, "", 100, fieldsToRequest:_* )
+      }, "", "", 100, fieldsToRequest:_* )
 
       //close cassandra connections
       Pelops.shutdown
@@ -146,7 +146,7 @@ class CreateInvertedIndexOnProperty(keyspace:String) {
         if (counter % 100 == 0)   println("Record:"+counter)
         counter < maxRecords
       //},"",10000)
-      }, "", 1000, fieldsToRequest:_* )
+      }, "", "", 1000, fieldsToRequest:_* )
 
       //close cassandra connections
       Pelops.shutdown

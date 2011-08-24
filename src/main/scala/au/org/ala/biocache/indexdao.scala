@@ -68,6 +68,8 @@ trait IndexDAO {
      * Remove all the records with the specified value in the specified field
      */
     def removeFromIndex(field:String, values:String)
+    /** Deletes all the records that satisfy the supplied query*/
+    def removeByQuery(query:String)
 
     /**
      * Perform
@@ -487,6 +489,17 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         try{
           //println("Deleting " + field +":" + value)
             solrServer.deleteByQuery(field +":\"" + value+"\"")
+            solrServer.commit
+        }
+        catch{
+            case e:Exception =>e.printStackTrace
+        }
+    }
+    
+    def removeByQuery(query:String) ={
+        init
+        try{
+            solrServer.deleteByQuery(query)
             solrServer.commit
         }
         catch{

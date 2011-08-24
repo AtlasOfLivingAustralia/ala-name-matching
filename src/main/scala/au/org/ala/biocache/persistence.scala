@@ -75,7 +75,7 @@ trait PersistenceManager {
     /**
      * Page over the records, retrieving the supplied columns only.
      */
-    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String, pageSize:Int, columnName:String*)
+    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String, endUuid:String, pageSize:Int, columnName:String*)
 
     /**
      * Select the properties for the supplied record UUIDs
@@ -388,9 +388,9 @@ class CassandraPersistenceManager @Inject() (
      * Pages over all the records with the selected columns.
      * @param columnName The names of the columns that need to be provided for processing by the proc
      */
-    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String, pageSize:Int, columnName:String*){
+    def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String, endUuid:String, pageSize:Int, columnName:String*){
       val slicePredicate = Selector.newColumnsPredicate(columnName:_*)
-      pageOver(entityName, proc, pageSize, slicePredicate, startUuid)
+      pageOver(entityName, proc, pageSize, slicePredicate, startUuid, endUuid)
     }
 
     /**
@@ -659,7 +659,7 @@ class MongoDBPersistenceManager @Inject()(
     def delete(uuid:String, entityName:String)={
         throw new RuntimeException("currently not implemented")
     }
-    def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid:String, pageSize: Int, columnName: String*) = {
+    def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid:String, endUuid:String, pageSize: Int, columnName: String*) = {
 
         //page through all records
         val mongoColl = mongoConn(db)(entityName)

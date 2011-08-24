@@ -48,7 +48,7 @@ object ExportUtil {
       }
       counter += 1
       maxRecords > counter
-    }, "", 1000, fieldsToExport: _*)
+    }, "","", 1000, fieldsToExport: _*)
   }
 
   def exportRecord(writer: CSVWriter, fieldsToExport: List[String], guid: String, map: Map[String, String]) {

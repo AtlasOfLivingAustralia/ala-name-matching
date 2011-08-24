@@ -1,12 +1,13 @@
 /*
- * Mark's records for deletion.
- *
- * TODO Make more generic...
+ * Deletes records from cassandra and the index.
  */
 
 package au.org.ala.util
 
 import au.org.ala.biocache._
+import java.io.File
+import java.io.BufferedOutputStream
+import java.io.FileOutputStream
 
 object DeleteRecords {
 
@@ -14,39 +15,83 @@ object DeleteRecords {
   val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
   def main(args: Array[String]): Unit = {
-    println("Starting to delete based on the criteria: institutionUid=in4 and catalogNUm doesn't contain ecatalogue")
-
-    //TO DO generic criteria to delete records...
-    //maybe specify list of collection uids, institution, etc
-    // a file that contains a lits of record source uids
-    var counter = 0
-    var delCount =0
-    val start = System.currentTimeMillis
-    var startTime = System.currentTimeMillis
-    var finishTime = System.currentTimeMillis
-
-    persistenceManager.pageOverSelect("occ", (guid, map)=> {
-        counter += 1
-
-        //check to see if the criteria in the MAP
-        val instUid = map.get("institutionUid.p").getOrElse(null)
-        val catalogNum = map.get("catalogNumber").getOrElse(null)
-        if(instUid != null && instUid.equals("in4") && catalogNum != null && !catalogNum.contains("ecatalogue")){
-          //println("Need to delete : " + guid)
-          delCount+=1
-          occurrenceDAO.setUuidDeleted(guid, true)
+      
+      var query:Option[String]=None
+      var dr:Option[String]=None
+      val parser = new OptionParser("delete records options") {
+            opt("q", "query", "The query to run to obtain the records for deletion e.g. 'year:[2001 TO *]' or 'taxon_name:Macropus'", { v:String => query = Some(v) })
+            opt("dr", "resource", "The data resource to process", {v:String =>dr = Some(v)})
         }
+      if(parser.parse(args)){
+          val deletor:Option[RecordDeletor] = {
+              if(!query.isEmpty) Some(new QueryDelete(query.get))
+              else if(!dr.isEmpty) Some(new DataResourceDelete(dr.get))
+              else None
+          }
+          println("Starting delete " + query + " " + dr)
+          if(!deletor.isEmpty){
+              deletor.get.deleteFromPersistent
+              deletor.get.deleteFromIndex
+              deletor.get.close
+          }
+      }
 
-        if (counter % 1000 == 0) {
-          finishTime = System.currentTimeMillis
-          println(counter + " >> Last key : " + guid + ",("+map+")  delete count: " + delCount +"records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
-          startTime = System.currentTimeMillis
-        }
-
-        true
-    },"", 1000, "institutionUid.p", "catalogNumber")
-
-    finishTime = System.currentTimeMillis
-    println("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
   }
+
+}
+
+
+trait RecordDeletor{
+    val pm = Config.persistenceManager
+    val indexer = Config.indexDAO
+    def deleteFromPersistent
+    def deleteFromIndex
+    def close ={
+        pm.shutdown
+        indexer.shutdown
+    }
+}
+
+class DataResourceDelete(dataResource:String) extends RecordDeletor{   
+   
+    override def deleteFromPersistent()={
+        //page over all the records for the data resource deleting them
+        var count = 0
+        val start = System.currentTimeMillis
+        val startUuid = dataResource +"|"
+        val endUuid = startUuid + "~"
+        
+        pm.pageOverSelect("occ", (guid,map)=>{
+            pm.delete(guid, "occ")
+            count= count +1
+            true
+        }, startUuid, endUuid, 1000, "rowKey", "uuid")
+        val finished = System.currentTimeMillis
+      
+      println("Deleted " + count + " records in "  + (finished -start).toFloat / 60000f + " minutes.") 
+    }
+    override def deleteFromIndex() ={
+        indexer.removeByQuery("data_resource_uid:" +dataResource)        
+    }
+}
+
+class QueryDelete(query :String) extends RecordDeletor{
+    import FileHelper._
+     override def deleteFromPersistent() ={
+        val file = new File("delrowkeys.out")
+        var count =0
+        val start = System.currentTimeMillis
+        val out = new BufferedOutputStream(new FileOutputStream(file))        
+        indexer.writeRowKeysToStream(query,out)
+        out.flush
+        out.close
+        file.foreachLine(line=>{
+            pm.delete(line, "occ")
+            count = count+1
+        }) 
+        val finished = System.currentTimeMillis
+      
+      println("Deleted " + count + " records in "  + (finished -start).toFloat / 60000f + " minutes.") 
+     }
+     override def deleteFromIndex = indexer.removeByQuery(query)
 }

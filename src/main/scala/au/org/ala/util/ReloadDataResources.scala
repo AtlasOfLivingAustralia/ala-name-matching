@@ -46,7 +46,7 @@ object ReloadDataResources {
           startTime = System.currentTimeMillis
         }
       true
-    },startUuid,1000, "dataResourceUid","rowKey")
+    },startUuid, "",1000, "dataResourceUid","rowKey")
   }
 
   def getDataResource(value:String):Map[String,String]={
