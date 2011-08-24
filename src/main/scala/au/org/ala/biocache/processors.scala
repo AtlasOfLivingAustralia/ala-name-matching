@@ -38,6 +38,21 @@ object Processors {
       "LOC"-> new LocationProcessor,
       "TS" -> new TypeStatusProcessor
   )
+  //TODO A better way to do this. Maybe need to group QA failures by issue type instead of phase. 
+  //Can't change until we are able to reprocess the complete set records.
+  def getProcessorForError(code:Int):String={
+	  code match{
+	    case c if c >= AssertionCodes.geospatialBounds._1 && c<AssertionCodes.geospatialBounds._2 => "loc"
+	    case c if c >= AssertionCodes.taxonomicBounds._1 && c< AssertionCodes.taxonomicBounds._2 => "class"
+	    case c if c == AssertionCodes.MISSING_BASIS_OF_RECORD.code || c ==AssertionCodes.BADLY_FORMED_BASIS_OF_RECORD.code => "bor"
+	    case c if c == AssertionCodes.UNRECOGNISED_TYPESTATUS.code =>"type"
+	    case c if c == AssertionCodes.UNRECOGNISED_COLLECTIONCODE.code ||c== AssertionCodes.UNRECOGNISED_INSTITUTIONCODE.code => "attr"	    
+	    case c if c == AssertionCodes.INVALID_IMAGE_URL.code => "image"	    
+	    case c if c >= AssertionCodes.temporalBounds._1 && c<AssertionCodes.temporalBounds._2 =>"event"
+	    case _ => ""
+	  }
+	 
+  }
 }
 
 class ImageProcessor extends Processor {
@@ -52,7 +67,7 @@ class ImageProcessor extends Processor {
   def process(guid:String, raw:FullRecord, processed:FullRecord) :Array[QualityAssertion] ={
     val urls = raw.occurrence.associatedMedia
     // val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(cl.getter(sg.rank)) => sg.name}
-    if(urls != null){
+    if(urls != null){      
       val aurls = urls.split(";").map(url=> url.trim)
       processed.occurrence.images = aurls.filter(isValidImageURL(_))
       if(aurls.length != processed.occurrence.images.length)
@@ -791,4 +806,21 @@ class ClassificationProcessor extends Processor {
     }
   }
   def getName = FullRecordMapper.taxonomicalQa
+}
+
+object DAOLayerTests2 {
+  val occurrenceDAO = Config.occurrenceDAO
+  val persistenceManager = Config.persistenceManager
+  val rowKey ="test-rowKey"
+  val uuid = "35b3ff3-test-uuid"
+    def main(args: Array[String]): Unit = {
+	  var key = "dr344|QM|Fishes|I14740"
+	  val qa = QualityAssertion(AssertionCodes.GEOSPATIAL_ISSUE)
+	      qa.comment = "My comment"
+    qa.userId = "Natasha.Carter@csiro.au"
+    qa.userDisplayName = "Natasha Carter"
+    occurrenceDAO.addUserAssertion("db827bc0-4053-4965-9900-f56651a8ebb7", qa)
+     occurrenceDAO.deleteUserAssertion("db827bc0-4053-4965-9900-f56651a8ebb7", qa.uuid)
+    
+  }
 }

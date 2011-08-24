@@ -71,7 +71,7 @@ trait OccurrenceDAO {
 
     def deleteUserAssertion(uuid: String, assertionUuid: String): Boolean
 
-    def updateAssertionStatus(rowKey: String, assertionName: String, systemAssertions: List[QualityAssertion], userAssertions: List[QualityAssertion])
+    def updateAssertionStatus(rowKey: String, assertion: QualityAssertion, systemAssertions: List[QualityAssertion], userAssertions: List[QualityAssertion])
 
     def reIndex(uuid: String)
     
@@ -587,7 +587,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             //store the new systemAssertions
             persistenceManager.putList(rowKey.get, entityName, FullRecordMapper.userQualityAssertionColumn, updatedUserAssertions, classOf[QualityAssertion], true)
             //update the overall status
-            updateAssertionStatus(rowKey.get, qualityAssertion.name, systemAssertions, updatedUserAssertions)
+            updateAssertionStatus(rowKey.get, qualityAssertion, systemAssertions, updatedUserAssertions)
         }
     }
 
@@ -653,7 +653,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
                 val systemAssertions = getSystemAssertions(rowKey.get)
 
                 //update the assertion status
-                updateAssertionStatus(rowKey.get, assertionName, systemAssertions, updateAssertions)
+                updateAssertionStatus(rowKey.get, deletedAssertion.get, systemAssertions, updateAssertions)
                 true
             } else {
                 logger.warn("Unable to find assertion with UUID: " + assertionUuid)
@@ -661,41 +661,67 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             }
         }
     }
+    
+    private def getListOfCodes(rowKey:String,phase:String):List[Int]={
+      //persistenceManager.getList(rowKey, entityName, FullRecordMapper.qualityAssertionColumn, classOf[QualityAssertion])
+      persistenceManager.getList(rowKey, entityName, FullRecordMapper.markAsQualityAssertion(phase), classOf[Int])
+    }
 
     /**
      * Update the assertion status using system and user systemAssertions.
      */
-    def updateAssertionStatus(rowKey: String, assertionName: String, systemAssertions: List[QualityAssertion], userAssertions: List[QualityAssertion]) {
+    def updateAssertionStatus(rowKey: String, assertion:QualityAssertion, systemAssertions: List[QualityAssertion], userAssertions: List[QualityAssertion]) {
 
-        logger.info("Updating the assertion status for : " + rowKey)
-
+        logger.info("Updating the assertion status for : " + rowKey)        
+        //get the phase based on the error type
+         val phase =Processors.getProcessorForError(assertion.code)
+         logger.debug("Phase " + phase)
+        //get existing values for the phase
+        var listErrorCodes: Set[Int] = getListOfCodes(rowKey, phase).toSet
+        logger.debug("Original: " + listErrorCodes)
+        val assertionName = assertion.name
         val assertions = userAssertions.filter(qa => {
             qa.name equals assertionName
         })
-            //update the status flag on the record, using the system quality systemAssertions
-            if (!assertions.isEmpty) {
-
-                //if anyone asserts the negative, the answer is negative
-                val negativeAssertion = userAssertions.find(qa => qa.problemAsserted)
+        
+        //if the a user assertion has been set for the supplied QA we will set the status bases on user assertions
+        if (!assertions.isEmpty) {
+        	//if a single user has decided that there is NO QA issue this takes precidence
+        	val negativeAssertion = userAssertions.find(qa => !qa.problemAsserted)
                 if (!negativeAssertion.isEmpty) {
-                    val qualityAssertion = negativeAssertion.get
-                    persistenceManager.put(rowKey,
-                        entityName,
-                        FullRecordMapper.markAsQualityAssertion(qualityAssertion.name),
-                        qualityAssertion.problemAsserted.toString)
+                	//need to remove this assertion from the error codes if it exists
+                	listErrorCodes = listErrorCodes - assertion.code
                 }
-            } else if (!systemAssertions.isEmpty) {
-                //check system systemAssertions for an answer
-                val matchingAssertion = systemAssertions.find(assertion => {
+                else {
+                	//at least one user has flagged this assertion so we need to add it
+                	listErrorCodes =listErrorCodes + assertion.code
+                }
+        }
+        //check to see if a system assertion exists
+        else if (!systemAssertions.isEmpty) {
+        	val matchingAssertion = systemAssertions.find(assertion => {
                     assertion.name equals assertionName
                 })
                 if (!matchingAssertion.isEmpty) {
-                    val assertion = matchingAssertion.get
-                    persistenceManager.put(rowKey, entityName, assertion.name, assertion.problemAsserted.toString)
+                	//this assertion has been set by the system
+                	val sysassertion = matchingAssertion.get
+                    listErrorCodes =listErrorCodes + sysassertion.code
                 }
-            } else {
-                persistenceManager.put(rowKey, entityName, assertionName, true.toString)
-            }
+                else{
+                	//code needs to be removed
+                	listErrorCodes =listErrorCodes - assertion.code
+                }
+        }
+        else{
+        	//there are no matching assertions in user or system thus remove this error code
+        	listErrorCodes =listErrorCodes - assertion.code
+        }
+        
+
+        logger.debug("Final " + listErrorCodes)
+        //update the list
+        //persistenceManager.putList(rowKey, entityName, FullRecordMapper.qualityAssertionColumn,assertions.toList, classOf[QualityAssertion], true)
+        persistenceManager.putList(rowKey, entityName, FullRecordMapper.markAsQualityAssertion(phase), listErrorCodes.toList, classOf[Int], true)
 
             //set the overall decision
             var properties = scala.collection.mutable.Map[String, String]()
