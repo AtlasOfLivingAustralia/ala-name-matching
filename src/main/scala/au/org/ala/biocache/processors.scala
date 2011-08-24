@@ -806,21 +806,5 @@ class ClassificationProcessor extends Processor {
     }
   }
   def getName = FullRecordMapper.taxonomicalQa
-}
 
-object DAOLayerTests2 {
-  val occurrenceDAO = Config.occurrenceDAO
-  val persistenceManager = Config.persistenceManager
-  val rowKey ="test-rowKey"
-  val uuid = "35b3ff3-test-uuid"
-    def main(args: Array[String]): Unit = {
-	  var key = "dr344|QM|Fishes|I14740"
-	  val qa = QualityAssertion(AssertionCodes.GEOSPATIAL_ISSUE)
-	      qa.comment = "My comment"
-    qa.userId = "Natasha.Carter@csiro.au"
-    qa.userDisplayName = "Natasha Carter"
-    occurrenceDAO.addUserAssertion("db827bc0-4053-4965-9900-f56651a8ebb7", qa)
-     occurrenceDAO.deleteUserAssertion("db827bc0-4053-4965-9900-f56651a8ebb7", qa.uuid)
-    
-  }
 }
