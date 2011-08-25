@@ -93,6 +93,17 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     var indexDAO: IndexDAO = _
 
     /**
+     * Gets the map for a record based on searching the index for new and old ids
+     */
+    def getMapFromIndex(value:String):Option[Map[String,String]]={
+        val map = persistenceManager.getByIndex(value, entityName, "uuid")
+        if(map.isEmpty)
+            persistenceManager.getByIndex(value, entityName, "portalId")
+        else
+             map
+    }
+    
+    /**
      * Get an occurrence with UUID
      *
      * @param uuid
@@ -116,7 +127,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      */
     def getAllVersionsByUuid(uuid: String): Option[Array[FullRecord]] = {
 
-        val map = persistenceManager.getByIndex(uuid, entityName, "uuid")
+        val map = getMapFromIndex(uuid)//persistenceManager.getByIndex(uuid, entityName, "uuid")
         if (map.isEmpty) {
             None
         } else {
@@ -176,7 +187,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * Get an occurrence, specifying the version of the occurrence.
      */
     def getByUuid(uuid: String, version: Version): Option[FullRecord] = {
-        val propertyMap = persistenceManager.getByIndex(uuid, entityName, "uuid")
+        val propertyMap = getMapFromIndex(uuid)//persistenceManager.getByIndex(uuid, entityName, "uuid")
         if (propertyMap.isEmpty) {
             None
         } else {
