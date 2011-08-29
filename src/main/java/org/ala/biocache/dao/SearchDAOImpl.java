@@ -450,7 +450,7 @@ public class SearchDAOImpl implements SearchDAO {
                 for(String dr : downloadLimit.keySet()){
                     //add another fq to the search for data_resource_uid                    
                      downloadParams.setFq((String[])ArrayUtils.add(originalFq, "data_resource_uid:" + dr));
-                     resultsCount =downloadRecords(downloadParams, out, downloadLimit, uidStats, fields, qaFields, resultsCount);
+                     resultsCount =downloadRecords(downloadParams, out, downloadLimit, uidStats, fields, qaFields, resultsCount, dr);
                      if(fqBuilder.length()>2)
                          fqBuilder.append(" OR ");
                      fqBuilder.append("data_resource_uid:").append(dr);
@@ -459,11 +459,11 @@ public class SearchDAOImpl implements SearchDAO {
                 //now include the rest of the data resources
                 //add extra fq for the remaining records
                 downloadParams.setFq((String[])ArrayUtils.add(originalFq, fqBuilder.toString()));
-                resultsCount =downloadRecords(downloadParams, out, downloadLimit, uidStats, fields, qaFields, resultsCount);
+                resultsCount =downloadRecords(downloadParams, out, downloadLimit, uidStats, fields, qaFields, resultsCount, null);
             }
             else{
                 //download all at once
-                downloadRecords(downloadParams, out, downloadLimit, uidStats, fields, qaFields, resultsCount);
+                downloadRecords(downloadParams, out, downloadLimit, uidStats, fields, qaFields, resultsCount, null);
             }
 
         } catch (SolrServerException ex) {
@@ -473,8 +473,8 @@ public class SearchDAOImpl implements SearchDAO {
         return uidStats;
     }
     /**
-     * downloads the records for the supplied query. Used to break up the downalod into components
-     * 1) 1 call for each data resource that has a download limit
+     * downloads the records for the supplied query. Used to break up the download into components
+     * 1) 1 call for each data resource that has a download limit (supply the data resource uid as the argument dataResource)
      * 2) 1 call for the remaining records
      * @param downloadParams
      * @param out
@@ -483,12 +483,13 @@ public class SearchDAOImpl implements SearchDAO {
      * @param fields
      * @param qaFields
      * @param resultsCount
+     * @param dataResource The dataResource being download.  This should be null if multiple data resource are being downloaded.
      * @return
      * @throws Exception
      */
     private int downloadRecords(DownloadRequestParams downloadParams, OutputStream out, 
                 Map<String, Integer> downloadLimit,  Map<String, Integer> uidStats,
-                String[] fields, String[] qaFields,int resultsCount) throws Exception {
+                String[] fields, String[] qaFields,int resultsCount, String dataResource) throws Exception {
         logger.info("download query: " + downloadParams.getQ());
         SolrQuery solrQuery = initSolrQuery(downloadParams);
         solrQuery.setRows(MAX_DOWNLOAD_SIZE);
@@ -505,7 +506,7 @@ public class SearchDAOImpl implements SearchDAO {
         QueryResponse qr = runSolrQuery(solrQuery, downloadParams.getFq(), pageSize, startIndex, "score", "asc");
         List<String> uuids = new ArrayList<String>();
         
-        while (qr.getResults().size() > 0 && resultsCount < MAX_DOWNLOAD_SIZE) {
+        while (qr.getResults().size() > 0 && resultsCount < MAX_DOWNLOAD_SIZE && shouldDownload(dataResource, downloadLimit)) {
             logger.debug("Start index: " + startIndex);
             //cycle through the results adding them to the list that will be sent to cassandra
             for (SolrDocument sd : qr.getResults()) {
