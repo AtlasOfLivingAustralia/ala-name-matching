@@ -45,7 +45,7 @@ public class CollectionsCache {
     private RestOperations restTemplate; // NB MappingJacksonHttpMessageConverter() injected by Spring
     /** Log4J logger */
     private final static Logger logger = Logger.getLogger(CollectionsCache.class);
-
+    
     /**
      * Get the institutions
      *
@@ -88,7 +88,11 @@ public class CollectionsCache {
     }
     
     public LinkedHashMap<String, Integer> getDownloadLimits(){
-        checkCacheAge();
+        checkCacheAge();        
+        try{
+            Thread.currentThread().sleep(50);
+        }
+        catch(Exception e){}
         synchronized(downloadLimits){    		
             return downloadLimits;
         }
@@ -122,7 +126,7 @@ public class CollectionsCache {
         this.dataResources = getCodesMap(ResourceType.DATA_RESOURCE,null);
         //update the download limits asynchronously
         new DownloadLimitThread().start();
-
+        
     }
     
 
@@ -208,7 +212,7 @@ public class CollectionsCache {
 	    				e.printStackTrace();
 	    			}
 	    		}
-	    		//downloadLimits.put("dr344", 5);
+	    		//downloadLimits.put("dr344", 1000);
 	    		
     		}
     	}

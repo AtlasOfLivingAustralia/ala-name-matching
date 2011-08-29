@@ -144,6 +144,7 @@ public class SearchDAOImpl implements SearchDAO {
                 SolrIndexDAO dao = (SolrIndexDAO)au.org.ala.biocache.Config.getInstance(IndexDAO.class);
                 dao.init();
                 server = dao.solrServer();
+                
             } catch (Exception ex) {
                 logger.error("Error initialising embedded SOLR server: " + ex.getMessage(), ex);
             }
@@ -393,16 +394,17 @@ public class SearchDAOImpl implements SearchDAO {
         Map<String, Integer> uidStats = new HashMap<String, Integer>();
         //stores the remaining limit for data resources that have a download limit
         Map<String, Integer> downloadLimit = new HashMap<String,Integer>();
+        
         try {
             logger.info("search query: " + downloadParams.getQ());
-            SolrQuery solrQuery = initSolrQuery(downloadParams);
-            solrQuery.setRows(MAX_DOWNLOAD_SIZE);
+            SolrQuery solrQuery = initSolrQuery(downloadParams);            
             solrQuery.setQuery(downloadParams.getQ());
             //Only the fields specified below will be included in the results from the SOLR Query
             solrQuery.setFields("row_key", "institution_uid", "collection_uid", "data_resource_uid", "data_provider_uid");
+            
 
             int startIndex = 0;
-            int pageSize = 1000;
+            int pageSize = downloadParams.getPageSize();
             StringBuilder  sb = new StringBuilder(downloadParams.getFields());
             if(downloadParams.getExtra().length()>0)
                 sb.append(",").append(downloadParams.getExtra());
@@ -424,6 +426,8 @@ public class SearchDAOImpl implements SearchDAO {
                     initDownloadLimits(downloadLimit, facet);
             	}
             }
+            
+            //Write the header line
             String qas = qasb.toString();   
             
             String[] fields = sb.toString().split(",");            
@@ -437,35 +441,29 @@ public class SearchDAOImpl implements SearchDAO {
                 out.write(StringUtils.join(qaTitles,",").getBytes());
             }
             out.write("\n".getBytes());
-            List<String> uuids = new ArrayList<String>();
+            //List<String> uuids = new ArrayList<String>();
            
-            while (qr.getResults().size() > 0 && resultsCount < MAX_DOWNLOAD_SIZE) {
-                logger.debug("Start index: " + startIndex);
-                //cycle through the results adding them to the list that will be sent to cassandra
-                for (SolrDocument sd : qr.getResults()) {
-                    if(sd.getFieldValue("data_resource_uid") != null){
-                    String druid = sd.getFieldValue("data_resource_uid").toString();
-                    if(shouldDownload(druid,downloadLimit)){
-	                    resultsCount++;
-	                    uuids.add(sd.getFieldValue("row_key").toString());
-	
-	                    //increment the counters....
-	                    incrementCount(uidStats, sd.getFieldValue("institution_uid"));
-	                    incrementCount(uidStats, sd.getFieldValue("collection_uid"));
-	                    incrementCount(uidStats, sd.getFieldValue("data_provider_uid"));
-	                    incrementCount(uidStats, druid);
-                    }}
+            //download the records that have limits first...
+            if(downloadLimit.size() > 0){
+                String[] originalFq = downloadParams.getFq();
+                StringBuilder fqBuilder = new StringBuilder("-(");
+                for(String dr : downloadLimit.keySet()){
+                    //add another fq to the search for data_resource_uid                    
+                     downloadParams.setFq((String[])ArrayUtils.add(originalFq, "data_resource_uid:" + dr));
+                     resultsCount =downloadRecords(downloadParams, out, downloadLimit, uidStats, fields, qaFields, resultsCount);
+                     if(fqBuilder.length()>2)
+                         fqBuilder.append(" OR ");
+                     fqBuilder.append("data_resource_uid:").append(dr);
                 }
-                //logger.debug("Downloading " + uuids.size() + " records");
-                au.org.ala.biocache.Store.writeToStream(out, ",", "\n", uuids.toArray(new String[]{}),
-                        fields, qaFields);
-                startIndex += pageSize;
-                uuids.clear();
-                if (resultsCount < MAX_DOWNLOAD_SIZE) {
-                    //we have already set the Filter query the first time the query was constructed rerun with he same params but different startIndex
-                    qr = runSolrQuery(solrQuery, null, pageSize, startIndex, "score", "asc");
-                   
-                }
+                fqBuilder.append(")");
+                //now include the rest of the data resources
+                //add extra fq for the remaining records
+                downloadParams.setFq((String[])ArrayUtils.add(originalFq, fqBuilder.toString()));
+                resultsCount =downloadRecords(downloadParams, out, downloadLimit, uidStats, fields, qaFields, resultsCount);
+            }
+            else{
+                //download all at once
+                downloadRecords(downloadParams, out, downloadLimit, uidStats, fields, qaFields, resultsCount);
             }
 
         } catch (SolrServerException ex) {
@@ -473,6 +471,71 @@ public class SearchDAOImpl implements SearchDAO {
             //searchResults.setStatus("ERROR"); // TODO also set a message field on this bean with the error message(?)
         }
         return uidStats;
+    }
+    /**
+     * downloads the records for the supplied query. Used to break up the downalod into components
+     * 1) 1 call for each data resource that has a download limit
+     * 2) 1 call for the remaining records
+     * @param downloadParams
+     * @param out
+     * @param downloadLimit
+     * @param uidStats
+     * @param fields
+     * @param qaFields
+     * @param resultsCount
+     * @return
+     * @throws Exception
+     */
+    private int downloadRecords(DownloadRequestParams downloadParams, OutputStream out, 
+                Map<String, Integer> downloadLimit,  Map<String, Integer> uidStats,
+                String[] fields, String[] qaFields,int resultsCount) throws Exception {
+        logger.info("download query: " + downloadParams.getQ());
+        SolrQuery solrQuery = initSolrQuery(downloadParams);
+        solrQuery.setRows(MAX_DOWNLOAD_SIZE);
+        solrQuery.setQuery(downloadParams.getQ());
+        //Only the fields specified below will be included in the results from the SOLR Query
+        solrQuery.setFields("row_key", "institution_uid", "collection_uid", "data_resource_uid", "data_provider_uid");
+        
+        int startIndex = 0;
+        int pageSize = 1000;
+        StringBuilder  sb = new StringBuilder(downloadParams.getFields());
+        if(downloadParams.getExtra().length()>0)
+            sb.append(",").append(downloadParams.getExtra());
+        StringBuilder qasb = new StringBuilder();
+        QueryResponse qr = runSolrQuery(solrQuery, downloadParams.getFq(), pageSize, startIndex, "score", "asc");
+        List<String> uuids = new ArrayList<String>();
+        
+        while (qr.getResults().size() > 0 && resultsCount < MAX_DOWNLOAD_SIZE) {
+            logger.debug("Start index: " + startIndex);
+            //cycle through the results adding them to the list that will be sent to cassandra
+            for (SolrDocument sd : qr.getResults()) {
+                if(sd.getFieldValue("data_resource_uid") != null){
+                String druid = sd.getFieldValue("data_resource_uid").toString();
+                if(shouldDownload(druid,downloadLimit) && resultsCount < MAX_DOWNLOAD_SIZE){
+                    resultsCount++;
+                    uuids.add(sd.getFieldValue("row_key").toString());
+
+                    //increment the counters....
+                    incrementCount(uidStats, sd.getFieldValue("institution_uid"));
+                    incrementCount(uidStats, sd.getFieldValue("collection_uid"));
+                    incrementCount(uidStats, sd.getFieldValue("data_provider_uid"));
+                    incrementCount(uidStats, druid);
+                }}
+            }
+            //logger.debug("Downloading " + uuids.size() + " records");
+            au.org.ala.biocache.Store.writeToStream(out, ",", "\n", uuids.toArray(new String[]{}),
+                    fields, qaFields);
+            startIndex += pageSize;
+            uuids.clear();
+            if (resultsCount < MAX_DOWNLOAD_SIZE) {
+                //we have already set the Filter query the first time the query was constructed rerun with he same params but different startIndex
+                qr = runSolrQuery(solrQuery, null, pageSize, startIndex, "score", "asc");
+               
+            }
+        }
+        
+        
+        return resultsCount;
     }
     /**
      * Indicates whether or not a records from the supplied data resource should be included 
@@ -1046,7 +1109,7 @@ public class SearchDAOImpl implements SearchDAO {
                 String prefix = null;
                 String suffix = null;
                 // don't escape range queries
-                if (parts[1].contains(" TO ")) {
+                if (parts[1].contains(" TO ") || parts[0].contains("-(")) {
                     prefix = parts[0];
                     suffix = parts[1];
                 } else {
