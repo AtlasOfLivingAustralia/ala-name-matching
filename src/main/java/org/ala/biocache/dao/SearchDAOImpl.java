@@ -455,7 +455,6 @@ public class SearchDAOImpl implements SearchDAO {
 	                    incrementCount(uidStats, sd.getFieldValue("data_provider_uid"));
 	                    incrementCount(uidStats, druid);
                     }}
-                    
                 }
                 //logger.debug("Downloading " + uuids.size() + " records");
                 au.org.ala.biocache.Store.writeToStream(out, ",", "\n", uuids.toArray(new String[]{}),
@@ -463,7 +462,8 @@ public class SearchDAOImpl implements SearchDAO {
                 startIndex += pageSize;
                 uuids.clear();
                 if (resultsCount < MAX_DOWNLOAD_SIZE) {
-                    qr = runSolrQuery(solrQuery, downloadParams.getFq(), pageSize, startIndex, "score", "asc");
+                    //we have already set the Filter query the first time the query was constructed rerun with he same params but different startIndex
+                    qr = runSolrQuery(solrQuery, null, pageSize, startIndex, "score", "asc");
                    
                 }
             }
