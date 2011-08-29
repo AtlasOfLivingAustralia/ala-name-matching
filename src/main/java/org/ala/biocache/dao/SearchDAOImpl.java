@@ -506,13 +506,13 @@ public class SearchDAOImpl implements SearchDAO {
         QueryResponse qr = runSolrQuery(solrQuery, downloadParams.getFq(), pageSize, startIndex, "score", "asc");
         List<String> uuids = new ArrayList<String>();
         
-        while (qr.getResults().size() > 0 && resultsCount < MAX_DOWNLOAD_SIZE && shouldDownload(dataResource, downloadLimit)) {
+        while (qr.getResults().size() > 0 && resultsCount < MAX_DOWNLOAD_SIZE && shouldDownload(dataResource, downloadLimit, false)) {
             logger.debug("Start index: " + startIndex);
             //cycle through the results adding them to the list that will be sent to cassandra
             for (SolrDocument sd : qr.getResults()) {
                 if(sd.getFieldValue("data_resource_uid") != null){
                 String druid = sd.getFieldValue("data_resource_uid").toString();
-                if(shouldDownload(druid,downloadLimit) && resultsCount < MAX_DOWNLOAD_SIZE){
+                if(shouldDownload(druid,downloadLimit, true) && resultsCount < MAX_DOWNLOAD_SIZE){
                     resultsCount++;
                     uuids.add(sd.getFieldValue("row_key").toString());
 
@@ -538,20 +538,23 @@ public class SearchDAOImpl implements SearchDAO {
         
         return resultsCount;
     }
+    
     /**
      * Indicates whether or not a records from the supplied data resource should be included 
      * in the download. (based on download limits)
      * @param druid
      * @param limits
+     * @param decrease whether or not to decrease the download limit available
      * @return
      */
-    private boolean shouldDownload(String druid, Map<String, Integer>limits){
+    private boolean shouldDownload(String druid, Map<String, Integer>limits, boolean decrease){
         if(limits.size()>0 && limits.containsKey(druid)){
             Integer remainingLimit = limits.get(druid);
             if(remainingLimit==0){
                 return false;
             }
-            limits.put(druid, remainingLimit-1);
+            if(decrease)
+                limits.put(druid, remainingLimit-1);
     	}
         return true;
     }
