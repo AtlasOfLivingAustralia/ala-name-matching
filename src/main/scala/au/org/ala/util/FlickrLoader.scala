@@ -1,6 +1,5 @@
 package au.org.ala.util
 import org.apache.commons.lang.time.DateUtils
-import java.util.Date
 import java.text.SimpleDateFormat
 import scala.xml.XML
 import au.org.ala.biocache.FullRecord
@@ -8,6 +7,8 @@ import au.org.ala.biocache.Config
 import au.org.ala.biocache.DataLoader
 import scala.collection.mutable.ListBuffer
 import au.org.ala.biocache._
+import au.org.ala.util.OptionParser._
+import java.util.{Calendar, Date}
 
 object FlickrLoader extends DataLoader {
 
@@ -17,16 +18,24 @@ object FlickrLoader extends DataLoader {
     var startDate: Option[Date] = None
     var endDate: Option[Date] = None
     var overwriteImages = false
+    var lastMonth = false
 
     val parser = new OptionParser("load flickr resource") {
       arg("<data resource UID>", "The UID of the data resource to load", { v: String => dataResourceUid = v })
       opt("s", "startDate", "start date to harvest from in yyyy-MM-dd format", { v: String => startDate = Some(DateUtils.parseDate(v, Array("yyyy-MM-dd"))) })
       opt("e", "endDate", "end date in yyyy-MM-dd format", { v: String => endDate = Some(DateUtils.parseDate(v, Array("yyyy-MM-dd"))) })
+      booleanOpt("lm", "harvestLastMonth", "Harvest the last month of records", { v: Boolean => lastMonth = v })
       booleanOpt("o", "overwrite", "overwrite images", { v: Boolean => overwriteImages = v })
     }
     if (parser.parse(args)) {
       val l = new FlickrLoader
-      l.load(dataResourceUid, startDate, endDate, overwriteImages)
+      if(lastMonth){
+        val today = new Date
+        val monthAgo = DateUtils.addMonths(today, -1)
+        l.load(dataResourceUid, Some(monthAgo), Some(today), overwriteImages)
+      } else {
+        l.load(dataResourceUid, startDate, endDate, overwriteImages)
+      }
     }
   }
 }
