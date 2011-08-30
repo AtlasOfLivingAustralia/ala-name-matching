@@ -377,7 +377,7 @@ public class OccurrenceController {
     	        String filename = requestParams.getFile() != null ? requestParams.getFile():requestParams.getFacets()[0]; 
     	        response.setHeader("Cache-Control", "must-revalidate");
     	        response.setHeader("Pragma", "must-revalidate");
-    	        response.setHeader("Content-Disposition", "attachment;filename=" + filename +".txt");
+    	        response.setHeader("Content-Disposition", "attachment;filename=" + filename +".csv");
     	        response.setContentType("text/plain");
     	        searchDAO.writeFacetToStream(requestParams,includeCount, lookupName, response.getOutputStream());
 	        }
