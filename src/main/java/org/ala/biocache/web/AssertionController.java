@@ -149,7 +149,11 @@ public class AssertionController extends AbstractSecureController {
     private void postNotificationEvent(String type, String recordUuid, String id) {
         //get the processed record so that we can get the collection_uid
         FullRecord processed = Store.getByUuid(recordUuid, Versions.PROCESSED());
-        String uid = processed.getAttribution().getCollectionUid();
+        if(processed == null)
+        	processed = Store.getByRowKey(recordUuid, Versions.PROCESSED());
+        
+        String uid = processed==null?null:processed.getAttribution().getCollectionUid();
+        
         if (uid != null) {
             final String uri = collectoryBaseUrl + "/ws/notify";
             HttpClient h = new HttpClient();

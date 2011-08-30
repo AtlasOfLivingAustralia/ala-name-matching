@@ -507,7 +507,10 @@ public class OccurrenceController {
      */
     @RequestMapping(value = {"/occurrence/compare/{uuid}.json"}, method = RequestMethod.GET)
     public @ResponseBody Object showOccurrence(@PathVariable("uuid") String uuid){
-    	return Store.getComparisonByUuid(uuid);
+        Map values =Store.getComparisonByUuid(uuid);
+        if(values.isEmpty())
+            values = Store.getComparisonByRowKey(uuid);
+        return values;
     }
     
 	/**
@@ -555,8 +558,10 @@ public class OccurrenceController {
         }
 
         OccurrenceDTO occ = new OccurrenceDTO(fullRecord);
-        occ.setSystemAssertions(Store.getSystemAssertions(uuid));
-        occ.setUserAssertions(Store.getUserAssertions(uuid));
+        String rowKey = occ.getProcessed().getRowKey();
+        //assertions are based on the row key not uuid
+        occ.setSystemAssertions(Store.getSystemAssertions(rowKey));
+        occ.setUserAssertions(Store.getUserAssertions(rowKey));
 
         //log the statistics for viewing the record
         String email = null;
