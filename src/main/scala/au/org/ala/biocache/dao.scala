@@ -63,13 +63,13 @@ trait OccurrenceDAO {
 
     def updateSystemAssertions(rowKey: String, qualityAssertions: Map[String,Array[QualityAssertion]]): Unit
 
-    def getSystemAssertions(uuid: String): List[QualityAssertion]
+    def getSystemAssertions(rowKey: String): List[QualityAssertion]
 
-    def addUserAssertion(uuid: String, qualityAssertion: QualityAssertion): Unit
+    def addUserAssertion(rowKey: String, qualityAssertion: QualityAssertion): Unit
 
-    def getUserAssertions(uuid: String): List[QualityAssertion]
+    def getUserAssertions(rowKey: String): List[QualityAssertion]
 
-    def deleteUserAssertion(uuid: String, assertionUuid: String): Boolean
+    def deleteUserAssertion(rowKey: String, assertionUuid: String): Boolean
 
     def updateAssertionStatus(rowKey: String, assertion: QualityAssertion, systemAssertions: List[QualityAssertion], userAssertions: List[QualityAssertion])
 
@@ -588,17 +588,18 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Add a user supplied assertion - updating the status on the record.
      */
-    def addUserAssertion(uuid: String, qualityAssertion: QualityAssertion) {
+    def addUserAssertion(rowKey: String, qualityAssertion: QualityAssertion) {
 
-        val (rowKey,userAssertions) = getUserAssertionsRK(uuid)
-
-        if (!userAssertions.isEmpty && !userAssertions.get.contains(qualityAssertion)) {
-            val updatedUserAssertions = userAssertions.get :+ qualityAssertion
-            val systemAssertions = getSystemAssertions(rowKey.get)
+        //val (rowKey,userAssertions) = getUserAssertionsRK(uuid)
+    	val userAssertions = getUserAssertions(rowKey)    	
+        //if (!userAssertions.isEmpty && !userAssertions.contains(qualityAssertion)) {
+    	if (!userAssertions.contains(qualityAssertion)) {
+            val updatedUserAssertions = userAssertions :+ qualityAssertion
+            val systemAssertions = getSystemAssertions(rowKey)
             //store the new systemAssertions
-            persistenceManager.putList(rowKey.get, entityName, FullRecordMapper.userQualityAssertionColumn, updatedUserAssertions, classOf[QualityAssertion], true)
+            persistenceManager.putList(rowKey, entityName, FullRecordMapper.userQualityAssertionColumn, updatedUserAssertions, classOf[QualityAssertion], true)
             //update the overall status
-            updateAssertionStatus(rowKey.get, qualityAssertion, systemAssertions, updatedUserAssertions)
+            updateAssertionStatus(rowKey, qualityAssertion, systemAssertions, updatedUserAssertions)
         }
     }
 
@@ -621,30 +622,34 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Retrieve annotations for the supplied UUID.
      */
-    def getUserAssertions(uuid:String): List[QualityAssertion] ={
-        val (rowKey, assertions) = getUserAssertionsRK(uuid)
-        if(!assertions.isEmpty)
-          assertions.get
-        else
-          List()
+    def getUserAssertions(rowKey:String): List[QualityAssertion] ={
+      val theClass = classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]
+      persistenceManager.getList(rowKey, entityName, FullRecordMapper.userQualityAssertionColumn, theClass)
+              .asInstanceOf[List[QualityAssertion]]
+//        val (rowKey, assertions) = getUserAssertionsRK(uuid)
+//        if(!assertions.isEmpty)
+//          assertions.get
+//        else
+//          List()
     }
 
     /**
      * Delete a user supplied assertion
      */
-    def deleteUserAssertion(uuid: String, assertionUuid: String): Boolean = {
+    def deleteUserAssertion(rowKey: String, assertionUuid: String): Boolean = {
 
-        logger.debug("Deleting assertion for : " + uuid + " with assertion uuid : " + uuid)
+        logger.debug("Deleting assertion for : " + rowKey + " with assertion uuid : " + assertionUuid)
 
         //retrieve existing systemAssertions
-        val (rowKey,assertions) = getUserAssertionsRK(uuid)
+        //val (rowKey,assertions) = getUserAssertionsRK(uuid)
+        val assertions = getUserAssertions(rowKey)
         if(assertions.isEmpty){
-          logger.warn("Unable to locate in index uuid: " + uuid)
+          //logger.warn("Unable to locate in index uuid: " + uuid)
           false
         }
         else{
             //get the assertion that is to be deleted
-            val deletedAssertion = assertions.get.find(assertion => {
+            val deletedAssertion = assertions.find(assertion => {
                 assertion.uuid equals assertionUuid
             })
 
@@ -652,19 +657,19 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             if (!deletedAssertion.isEmpty) {
 
                 //delete the assertion with the supplied UUID
-                val updateAssertions = assertions.get.filter(qa => {
+                val updateAssertions = assertions.filter(qa => {
                     !(qa.uuid equals assertionUuid)
                 })
 
                 //put the systemAssertions back - overwriting existing systemAssertions
-                persistenceManager.putList(rowKey.get, entityName, FullRecordMapper.userQualityAssertionColumn, updateAssertions, classOf[QualityAssertion], true)
+                persistenceManager.putList(rowKey, entityName, FullRecordMapper.userQualityAssertionColumn, updateAssertions, classOf[QualityAssertion], true)
 
                 val assertionName = deletedAssertion.get.name
                 //are there any matching systemAssertions for other users????
-                val systemAssertions = getSystemAssertions(rowKey.get)
+                val systemAssertions = getSystemAssertions(rowKey)
 
                 //update the assertion status
-                updateAssertionStatus(rowKey.get, deletedAssertion.get, systemAssertions, updateAssertions)
+                updateAssertionStatus(rowKey, deletedAssertion.get, systemAssertions, updateAssertions)
                 true
             } else {
                 logger.warn("Unable to find assertion with UUID: " + assertionUuid)
@@ -765,26 +770,18 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Should be possible to factor this out
      */
-    def reIndex(uuid: String) {
-        logger.debug("Reindexing UUID: " + uuid)
-        val map = persistenceManager.getByIndex(uuid, entityName, "uuid")
+    def reIndex(rowKey: String) {
+        logger.debug("Reindexing rowKey: " + rowKey)
+        //val map = persistenceManager.getByIndex(uuid, entityName, "uuid")
+        val map = persistenceManager.get(rowKey, entityName)
         //index from the map - this should be more efficient
         if(map.isEmpty){
-          logger.debug("Unable to reindex UUID: " + uuid)
+          logger.debug("Unable to reindex : " + rowKey)
         }
         else{
-          indexDAO.indexFromMap(map.get.getOrElse("rowKey", ""), map.get, false)
+          indexDAO.indexFromMap(rowKey, map.get, false)
         }
-//        val recordVersions = getAllVersionsByUuid(uuid)
-//        if (recordVersions.isEmpty) {
-//            logger.debug("Unable to reindex UUID: " + uuid)
-//        } else {
-//            val occurrenceIndex = indexDAO.getOccIndexModel(recordVersions.get)
-//            if (!occurrenceIndex.isEmpty) {
-//                indexDAO.index(occurrenceIndex.get)
-//                logger.debug("Reindexed UUID: " + uuid)
-//            }
-//        }
+
     }
     def delete(rowKey: String)={
         //delete from the data store

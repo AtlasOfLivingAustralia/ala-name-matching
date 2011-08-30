@@ -334,7 +334,7 @@ trait IndexDAO {
                     getValue("locationRemarks", map),
                     getValue("occurrenceRemarks", map),
                     "",
-                    (getValue(FullRecordMapper.userQualityAssertionColumn, map) != "").toString,
+                    (getValue(FullRecordMapper.userQualityAssertionColumn, map).length>3).toString,
                     (getValue(FullRecordMapper.qualityAssertionColumn, map).length > 3).toString,
                     getValue("recordedBy", map),
                     //getValue("austConservation.p",map),
