@@ -588,8 +588,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
               println("values don't matcher header: " +values.length+":"+header.length+", values:header")
               println(header)
               println(values)
-              
-                exit(1)
+              exit(1)
             }
             if (values.length > 0) {
                 val doc = new SolrInputDocument()
@@ -606,10 +605,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
                             doc.addField(header(i), values(i))
                     }
                 }
-    
-    
-    
-    
+
                if(!batch){
                  solrServer.add(doc);
                  solrServer.commit

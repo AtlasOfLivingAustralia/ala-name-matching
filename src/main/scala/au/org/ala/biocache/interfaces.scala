@@ -148,16 +148,8 @@ object Store {
    * Record is processed and indexed if should index is true
    */
   def insertRecord(dataResourceIdentifer:String, properties:java.util.Map[String,String], shouldIndex:Boolean){
-    val uuid = UUID.randomUUID().toString
-    val rowKey = dataResourceIdentifer + "|" + uuid
-    val record = FullRecordMapper.createFullRecord(rowKey,properties.toMap[String,String],Versions.RAW)
-    record.rowKey = rowKey
-    record.uuid = uuid
-    if(shouldIndex){
-      val processor = new RecordProcessor
-      processor.processRecordAndUpdate(record)
-      occurrenceDAO.reIndex(record.uuid)
-    }
+    val processor = new RecordProcessor
+    processor.addRecordAndProcess(dataResourceIdentifer, properties.toMap[String,String])
   }
 
   /**
@@ -231,11 +223,8 @@ object Store {
    * Useful when we don't want services to update the index.
    * This is generally when a optimise is occurring
    */
-  def setReadOnly(ro: Boolean) = {
-    readOnly = ro
+  def setReadOnly(ro: Boolean) : Unit = readOnly = ro
 
-  }
-  
   def isReadOnly = readOnly
   
   def optimiseIndex() :String = {
@@ -246,6 +235,7 @@ object Store {
       readOnly = false
       "Optimised in " + (finished -start).toFloat / 60000f + " minutes.\n" +indexString 
   }
+
   /**
    * Indexes a dataResource from a specific date
    */
@@ -253,8 +243,13 @@ object Store {
       if(dataResource != null && startDate != null)
           IndexRecords.index(None, Some(dataResource), false, false, Some(startDate))
       else
-          throw new Exception("Must supply data resouce and start date")
+          throw new Exception("Must supply data resource and start date")
   }
+
+  /**
+   * Indexes a dataResource from a specific date
+   */
+  def index(dataResource:java.lang.String) = IndexRecords.index(None, Some(dataResource), false, false, None)
 
   /**
    * Writes the select records to the stream.

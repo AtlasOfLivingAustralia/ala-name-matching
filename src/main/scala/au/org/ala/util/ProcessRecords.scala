@@ -3,6 +3,7 @@ package au.org.ala.util
 import org.slf4j.LoggerFactory
 import au.org.ala.biocache._
 import org.apache.commons.lang.StringUtils
+import java.util.UUID
 
 /**
  * 1. Classification matching
@@ -167,5 +168,17 @@ class RecordProcessor {
     //store the occurrence
     Config.occurrenceDAO.updateOccurrence(raw.rowKey, processed, systemAssertions, Processed)
     updateRawIfSensitised(raw, processed, raw.rowKey)
+  }
+
+  def addRecordAndProcess(dataResourceUid:String, properties:Map[String,String]) : String = {
+    val uuid = properties.getOrElse("uuid", UUID.randomUUID().toString)
+    val rowKey = dataResourceUid + "|" + uuid
+    val raw = FullRecordMapper.createFullRecord(rowKey, properties,Versions.RAW)
+    raw.uuid = uuid
+    raw.attribution.dataResourceUid = dataResourceUid
+    au.org.ala.biocache.Config.occurrenceDAO.updateOccurrence(raw.rowKey, raw, Versions.RAW)
+    val processor = new RecordProcessor
+    processor.processRecordAndUpdate(raw)
+    uuid
   }
 }
