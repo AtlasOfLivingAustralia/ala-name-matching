@@ -2,15 +2,13 @@ package au.org.ala.biocache
 
 import collection.mutable.HashMap
 import org.junit.Ignore
+import java.util.UUID
+import scala.collection.mutable.ListBuffer
 
 class MockPersistenceManager extends PersistenceManager {
 
   private val mockStore = new HashMap[String, HashMap[String,HashMap[String,String]]]
-  mockStore.put("loc",new HashMap[String, HashMap[String,String]])
-  mockStore.put("attr",new HashMap[String, HashMap[String,String]])
-  mockStore.put("taxon", new HashMap[String,HashMap[String,String]])
-  mockStore.put("qa", new HashMap[String,HashMap[String,String]])
-  //loc.put("50.50|")
+  
 
   def clear = mockStore.clear
 
@@ -35,8 +33,19 @@ class MockPersistenceManager extends PersistenceManager {
   def getByIndex(uuid: String, entityName: String, idxColumn: String, propertyName: String) =
     throw new RuntimeException("not implemented yet")
 
-  def getList[A](uuid: String, entityName: String, propertyName: String, theClass: Class[_]) =
-    throw new RuntimeException("not implemented yet")
+  def getList[A](uuid: String, entityName: String, propertyName: String, theClass: Class[_]) : List[A] = {
+      mockStore.get(entityName).get.get(uuid) match {
+          case Some(x) => {
+              val list = x.get(propertyName)
+              if(list.isEmpty)
+                  List()
+              else
+                  Json.toListWithGeneric(list.get, theClass)
+              }
+          case None => List()
+      }
+    //throw new RuntimeException("not implemented yet")
+  }
 
   def put(uuid: String, entityName: String, propertyName: String, propertyValue: String) = {
     val entityMap = mockStore.getOrElseUpdate(entityName, HashMap(uuid -> HashMap[String,String]()))
@@ -46,15 +55,44 @@ class MockPersistenceManager extends PersistenceManager {
   }
 
   def put(uuid: String, entityName: String, keyValuePairs: Map[String, String]) = {
-    mockStore.get(entityName).get.put(uuid, (HashMap() ++ keyValuePairs).asInstanceOf[HashMap[String,String]])
+    val entityMap = mockStore.getOrElseUpdate(entityName,HashMap(uuid -> HashMap[String,String]()))
+    val recordMap = entityMap.getOrElse(uuid, HashMap[String,String]())
+    entityMap.put(uuid,(recordMap ++ keyValuePairs).asInstanceOf[HashMap[String,String]])    
     uuid
   }
 
   def putBatch(entityName: String, batch: Map[String, Map[String, String]]) =
    throw new RuntimeException("not implemented yet")
 
-  def putList[A](uuid: String, entityName: String, propertyName: String, objectList: List[A], theClass: Class[_], overwrite: Boolean) =
-    throw new RuntimeException("not implemented yet")
+  def putList[A](uuid: String, entityName: String, propertyName: String, newList: List[A], theClass: Class[_], overwrite: Boolean) ={
+      val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
+      val entityMap = mockStore.getOrElseUpdate(entityName, HashMap(uuid -> HashMap[String,String]()))
+      val recordMap = entityMap.getOrElse(uuid, HashMap[String,String]())
+      if(overwrite){
+          val json:String = Json.toJSONWithGeneric(newList)
+          recordMap.put(propertyName,json);
+      }else{
+          val currentList = getList(uuid, entityName, propertyName, theClass);
+          var buffer = new ListBuffer[A]
+
+                for (theObject <- currentList) {
+                    if (!newList.contains(theObject)) {
+                        //add to buffer
+                        buffer + theObject
+                    }
+                }
+
+                //PRESERVE UNIQUENESS
+                buffer ++= newList
+
+                // check equals
+                //val newJson = Json.toJSON(buffer.toList)
+                val newJson:String = Json.toJSONWithGeneric(buffer.toList)
+                recordMap.put(propertyName, newJson)
+      }
+      recordId
+      
+  }
 
   def pageOverAll(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid: String, endUuid: String, pageSize: Int) =
     throw new RuntimeException("not implemented yet")
