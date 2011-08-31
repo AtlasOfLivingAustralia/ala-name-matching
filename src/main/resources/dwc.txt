@@ -11,13 +11,13 @@ informationWithheld
 dataGeneralizations
 dynamicProperties
 occurrenceID
-catalogNumber	catalogNumberNumeric	catalogueNumber
+catalogNumber	catalogNumberNumeric	catalogueNumber	ID	
 occurrenceDetails
-occurrenceRemarks	notes
+occurrenceRemarks	notes	remarks
 recordNumber	collectorNumber
 recordedBy	collector
 individualID
-individualCount
+individualCount	Number of Individuals
 sex	gender
 lifeStage
 reproductiveCondition
