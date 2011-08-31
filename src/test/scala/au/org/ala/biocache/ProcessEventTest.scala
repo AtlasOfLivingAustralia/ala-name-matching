@@ -146,9 +146,9 @@ class ProcessEventTest extends ConfigFunSuite {
     val assertions = (new EventProcessor).process("1234", raw, processed)
 
     expect(null){ processed.event.eventDate }
-    expect("16"){ processed.event.day }
-    expect(null){ processed.event.month }
-    expect("1978"){ processed.event.year }
+    expect("01"){ processed.event.day }
+    expect("02"){ processed.event.month }
+    expect("2011"){ processed.event.year }
 
     expect(1){ assertions.size }
   }
