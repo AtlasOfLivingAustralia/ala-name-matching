@@ -122,7 +122,7 @@ val processor = new RecordProcessor
 	    if(firstKey.isEmpty && !dr.isEmpty) {
 	        dr.get +"|"
 	    } else {
-	       firstKey.get
+	       firstKey.getOrElse("")
 	    }
     }
     var ids = 0
