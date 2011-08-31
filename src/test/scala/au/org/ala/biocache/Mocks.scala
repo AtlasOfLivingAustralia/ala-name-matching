@@ -21,7 +21,8 @@ class MockPersistenceManager extends PersistenceManager {
   }
 
   def get(uuid: String, entityName: String) = {
-    mockStore.get(entityName).get.get(uuid) match {
+    val entityMap = mockStore.getOrElseUpdate(entityName,  HashMap[String,HashMap[String,String]]() )
+    entityMap.get(uuid) match {
       case Some(x) => Some(x.toMap)
       case None => None
     }
