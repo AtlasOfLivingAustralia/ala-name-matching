@@ -64,7 +64,7 @@ class DwCACreator {
                         <location>raw_occurrence_record.csv</location>
                   </files>
                         <id index="0"/>
-                        {defaultFields.map(f =>   <field index={defaultFields.indexOf(f).toString} term={"http://rs.tdwg.org/dwc/terms/"+f}/>)}
+                        {defaultFields.tail.map(f =>   <field index={defaultFields.indexOf(f).toString} term={"http://rs.tdwg.org/dwc/terms/"+f}/>)}
                   </core>
                   </archive>
         //add the XML
