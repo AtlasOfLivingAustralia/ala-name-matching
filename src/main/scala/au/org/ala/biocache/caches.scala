@@ -79,7 +79,8 @@ object ClassificationDAO {
           cl.scientificName), true) else nameIndex.searchForCommonName(cl.getVernacularName)
 
         if(nsr!=null){
-            val result = Some(nsr)
+            //handle the case where the species is a synonym this is a temporary fix should probably go in ala-name-matching
+            val result = if(nsr.isSynonym) Some(nameIndex.searchForRecordByLsid(nsr.getAcceptedLsid))  else Some(nsr)
             lock.synchronized { lru.put(hash, result) }
             result
         } else {
