@@ -28,6 +28,10 @@ object CommandLineTool {
                         	IndexRecords.index(None, Some(dr), false, false)
                         }
                     }
+                    case it if (it startsWith "createdwc")=> {
+                        val args = it.split(" ").map(x => x.trim).toArray.tail
+                        DwCACreator.main(args)
+                    }
                     case it if (it startsWith "optimise") => {
                        	IndexRecords.indexer.optimise
                     }
@@ -60,11 +64,12 @@ object CommandLineTool {
         println("3)  load <dr-uid> - load resource")
         println("4)  process <dr-uid> - process resource")
         println("5)  index <dr-uid> - index resource")
-        println("6)  healthcheck")
-        println("7)  export")
-        println("8)  import")
-        println("9)  optimise")
-        println("10)  exit")
+        println("6)  createdwc <dr-uid> <export directory>")
+        println("7)  healthcheck")
+        println("8)  export")
+        println("9)  import")
+        println("10)  optimise")
+        println("11)  exit")
     }
 
     def printTable(table: List[Map[String, String]]) {
