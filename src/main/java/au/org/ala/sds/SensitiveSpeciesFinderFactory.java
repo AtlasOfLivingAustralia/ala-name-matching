@@ -3,8 +3,6 @@
  */
 package au.org.ala.sds;
 
-import java.io.IOException;
-
 import javax.sql.DataSource;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
@@ -34,16 +32,18 @@ public class SensitiveSpeciesFinderFactory {
 
         try {
             dao = new SensitiveSpeciesXmlDao(url);
-            store = new SensitiveTaxonStore(dao, cbIndexSearcher);
         } catch (Exception e) {
-            if (e instanceof IOException) {
-                try {
-
-                } catch (Exception e1) {
-
-                }
+            System.err.println("Exception occurred getting sensitivity-species.xml from webapp - trying to read file in /data/sds");
+            try {
+                dao = new SensitiveSpeciesXmlDao("file:///data/sds/sensitivity-species.xml");
+            } catch (Exception e1) {
+                System.err.println("Exception occurred getting sensitivity-species.xml from /data/sds");
+                e1.printStackTrace();
             }
         }
+
+        store = new SensitiveTaxonStore(dao, cbIndexSearcher);
+
         return new SensitiveSpeciesFinder(store);
 
     }
