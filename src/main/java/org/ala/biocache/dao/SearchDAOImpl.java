@@ -1587,7 +1587,7 @@ public class SearchDAOImpl implements SearchDAO {
                         //speciesCounts.add(i, new TaxaCountDTO(fcount.getName(), fcount.getCount()));
                         TaxaCountDTO tcDTO = null;
                         if (fcount.getFacetField().getName().equals(NAMES_AND_LSID)) {
-                            String[] values = p.split(fcount.getName());
+                            String[] values = p.split(fcount.getName(),5);
                             
                             if (values.length >= 5) {
                                 tcDTO = new TaxaCountDTO(values[0], fcount.getCount());
