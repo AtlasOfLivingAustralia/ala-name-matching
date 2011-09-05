@@ -230,5 +230,4 @@ public class SearchRequestParams {
     public void setQc(String qc) {
         this.qc = qc;
     }
-
 }

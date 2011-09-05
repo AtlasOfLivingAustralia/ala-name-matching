@@ -219,14 +219,11 @@ public class OccurrenceController {
             SearchRequestParams requestParams,
             @PathVariable("guid") String guid,
             Model model) throws Exception {
-
-      
-         requestParams.setQ("lsid:" + guid);
+        requestParams.setQ("lsid:" + guid);
         SearchUtils.setDefaultParams(requestParams);
         SearchResultDTO searchResult = searchDAO.findByFulltextQuery(requestParams);
-                model.addAttribute("searchResult", searchResult);
-           return searchResult;
-
+        model.addAttribute("searchResult", searchResult);
+        return searchResult;
 	}
 
     /**
@@ -238,9 +235,7 @@ public class OccurrenceController {
      *
      * It also handle's the logging for the BIE.
      * //TODO Work out what to do with this
-     * @param query
      * @param request
-     * @param model
      * @throws Exception
      */
     @RequestMapping(value = "/occurrences/taxon/source/{guid:.+}.json*", method = RequestMethod.GET)
@@ -254,8 +249,6 @@ public class OccurrenceController {
         Map<String,Integer> sources = searchDAO.getSourcesForQuery(requestParams);
         //now turn them to a list of OccurenceSourceDTO
         return searchUtils.getSourceInformation(sources);        
-
-
     }
 
   /**
@@ -281,14 +274,13 @@ public class OccurrenceController {
         }
 
         SearchUtils.setDefaultParams(requestParams);
-		//update the request params so the search caters for the supplied uid
-		searchUtils.updateCollectionSearchString(requestParams, uid);
-		logger.debug("solr query: " + requestParams);
-		searchResult = searchDAO.findByFulltextQuery(requestParams);
-		model.addAttribute("searchResult", searchResult);
-
-		return searchResult;
-	}
+        //update the request params so the search caters for the supplied uid
+        searchUtils.updateCollectionSearchString(requestParams, uid);
+        logger.debug("solr query: " + requestParams);
+        searchResult = searchDAO.findByFulltextQuery(requestParams);
+        model.addAttribute("searchResult", searchResult);
+        return searchResult;
+    }
 
     /**
      * Spatial search for either a taxon name or full text text search
@@ -320,27 +312,8 @@ public class OccurrenceController {
 	}
 
 	/**
-	 * Retrieve content as String.
-	 * 
-	 * @param url
-	 * @return
-	 * @throws Exception
-	 */
-	public static String getUrlContentAsString(String url) throws Exception {
-		HttpClient httpClient = new HttpClient();
-		GetMethod gm = new GetMethod(url);
-		gm.setFollowRedirects(true);
-		httpClient.executeMethod(gm);
-		// String requestCharset = gm.getRequestCharSet();
-		String content = gm.getResponseBodyAsString();
-		// content = new String(content.getBytes(requestCharset), "UTF-8");
-		return content;
-	}
-
-	/**
 	 * Occurrence search page uses SOLR JSON to display results
 	 *
-	 * @param query
 	 * @param model
 	 * @return
 	 * @throws Exception
@@ -378,7 +351,7 @@ public class OccurrenceController {
     	        response.setHeader("Cache-Control", "must-revalidate");
     	        response.setHeader("Pragma", "must-revalidate");
     	        response.setHeader("Content-Disposition", "attachment;filename=" + filename +".csv");
-    	        response.setContentType("text/plain");
+    	        response.setContentType("text/csv");
     	        searchDAO.writeFacetToStream(requestParams,includeCount, lookupName, response.getOutputStream());
 	        }
 	}

@@ -1,7 +1,3 @@
-/*
- *
- */
-
 package org.ala.biocache.dto;
 
 import java.util.ArrayList;
