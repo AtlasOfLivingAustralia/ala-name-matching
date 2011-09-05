@@ -118,7 +118,7 @@ public class GeneralisedLocation {
         } else if (this.locationGeneralisation.equalsIgnoreCase("10km")) {
             generaliseCoordinates(1);
             if (isGeneralised()) {
-                description = MessageFactory.getMessageText(MessageFactory.LOCATION_GENERALISED, SensitivityZone.getState(zones), "one", "");
+                description = MessageFactory.getMessageText(MessageFactory.LOCATION_GENERALISED, SensitivityZone.getState(zones), "0.1");
                 generalisationInMetres = "10000";
             } else {
                 description = MessageFactory.getMessageText(MessageFactory.LOCATION_ALREADY_GENERALISED);
@@ -126,7 +126,7 @@ public class GeneralisedLocation {
         } else if (this.locationGeneralisation.equalsIgnoreCase("1km")) {
             generaliseCoordinates(2);
             if (isGeneralised()) {
-                description = MessageFactory.getMessageText(MessageFactory.LOCATION_GENERALISED, SensitivityZone.getState(zones), "two", "s");
+                description = MessageFactory.getMessageText(MessageFactory.LOCATION_GENERALISED, SensitivityZone.getState(zones), "0.01");
                 generalisationInMetres = "1000";
             } else {
                 description = MessageFactory.getMessageText(MessageFactory.LOCATION_ALREADY_GENERALISED);
@@ -134,7 +134,7 @@ public class GeneralisedLocation {
         } else if (this.locationGeneralisation.equalsIgnoreCase("100m")) {
             generaliseCoordinates(3);
             if (isGeneralised()) {
-                description = MessageFactory.getMessageText(MessageFactory.LOCATION_GENERALISED, SensitivityZone.getState(zones), "three", "s");
+                description = MessageFactory.getMessageText(MessageFactory.LOCATION_GENERALISED, SensitivityZone.getState(zones), "0.001");
                 generalisationInMetres = "100";
             } else {
                 description = MessageFactory.getMessageText(MessageFactory.LOCATION_ALREADY_GENERALISED);
