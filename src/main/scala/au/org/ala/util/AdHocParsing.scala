@@ -9,7 +9,7 @@ import java.io._
 
 case class ProcessedValue(@BeanProperty name: String, @BeanProperty raw: String, @BeanProperty processed: String)
 
-case class ParsedRecord(values: Array[ProcessedValue], assertions: Array[QualityAssertion])
+case class ParsedRecord(@BeanProperty values: Array[ProcessedValue], @BeanProperty assertions: Array[QualityAssertion])
 
 /**
  * Runnable for testing column parsing functionality.

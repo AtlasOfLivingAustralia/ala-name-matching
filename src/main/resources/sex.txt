@@ -1,0 +1,2 @@
+Male	M
+Female	F
