@@ -50,7 +50,7 @@ public class GeneraliseTest {
 //        ((BasicDataSource) dataSource).setPassword("password");
 
         cbIndexSearch = new CBIndexSearch("/data/lucene/namematching");
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(cbIndexSearch);
     }
 
     /**
@@ -77,6 +77,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "-35.3", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "149.1", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
+        assertEquals("Location in ACT generalised to 0.1 degrees", gl.getDescription());
         assertTrue(gl.isSensitive());
     }
 
@@ -104,6 +105,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "-35.276771", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "149.112539", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+        assertEquals("Location not generalised since it is not sensitive in ACT", gl.getDescription());
         assertFalse(gl.isSensitive());
     }
 
@@ -182,9 +184,9 @@ public class GeneraliseTest {
         assertTrue(outcome instanceof ConservationOutcome);
 
         GeneralisedLocation gl = ((ConservationOutcome) outcome).getGeneralisedLocation();
-        assertEquals("Latitude", "-40.1", gl.getGeneralisedLatitude());
-        assertEquals("Longitude", "148.1", gl.getGeneralisedLongitude());
-        assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
+        assertEquals("Latitude", "", gl.getGeneralisedLatitude());
+        assertEquals("Longitude", "", gl.getGeneralisedLongitude());
+        assertEquals("InMetres", "", gl.getGeneralisationInMetres());
         assertTrue(gl.isSensitive());
     }
 
@@ -213,6 +215,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "-33.6", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "150.4", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
+        assertEquals("Location in NSW generalised to 0.1 degrees", gl.getDescription());
         assertTrue(gl.isSensitive());
     }
 
