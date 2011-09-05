@@ -24,6 +24,6 @@ import au.org.ala.sds.model.SensitiveTaxon;
  */
 public interface SensitiveSpeciesDao {
 
-    List<SensitiveTaxon> getAll();
+    List<SensitiveTaxon> getAll() throws Exception;
 
 }
