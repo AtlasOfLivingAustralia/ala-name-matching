@@ -36,22 +36,18 @@ public class SensitiveSpeciesXmlDao implements SensitiveSpeciesDao {
         this.url = url;
     }
     /**
+     * @throws IOException
+     * @throws JDOMException
      * @see au.org.ala.sds.dao.SensitiveSpeciesDao#getAll()
      */
     @SuppressWarnings("unchecked")
     @Override
-    public List<SensitiveTaxon> getAll() {
+    public List<SensitiveTaxon> getAll() throws Exception {
         List<SensitiveTaxon> species = new ArrayList<SensitiveTaxon>();
         SAXBuilder builder = new SAXBuilder();
         Document doc = null;
 
-        try {
-            doc = builder.build(this.url);
-        } catch (JDOMException e) {
-            logger.error("Error parsing species list xml", e);
-        } catch (IOException e) {
-            logger.error("Error reading species list xml", e);
-        }
+        doc = builder.build(this.url);
 
         Element root = doc.getRootElement();
         List speciesList = root.getChildren();
@@ -93,7 +89,7 @@ public class SensitiveSpeciesXmlDao implements SensitiveSpeciesDao {
 
         // Sort list since MySQL sort order is not the same as Java's
         Collections.sort(species);
-        
+
         return species;
     }
 

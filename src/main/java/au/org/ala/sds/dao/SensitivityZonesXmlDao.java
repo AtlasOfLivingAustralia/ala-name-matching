@@ -12,7 +12,6 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 
 import au.org.ala.sds.model.SensitivityZone;
@@ -31,21 +30,17 @@ public class SensitivityZonesXmlDao {
         this.url = url;
     }
     /**
+     * @throws IOException
+     * @throws Exception
      * @see au.org.ala.sds.dao.SensitiveSpeciesDao#getAll()
      */
     @SuppressWarnings("unchecked")
-    public Map<String, SensitivityZone> getMap() {
+    public Map<String, SensitivityZone> getMap() throws Exception {
         Map<String, SensitivityZone> zones = new HashMap<String, SensitivityZone>();
         SAXBuilder builder = new SAXBuilder();
         Document doc = null;
 
-        try {
-            doc = builder.build(this.url);
-        } catch (JDOMException e) {
-            logger.error("Error parsing species list xml", e);
-        } catch (IOException e) {
-            logger.error("Error reading species list xml", e);
-        }
+        doc = builder.build(this.url);
 
         Element root = doc.getRootElement();
         List zonesList = root.getChildren();

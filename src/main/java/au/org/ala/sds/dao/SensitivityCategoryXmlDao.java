@@ -30,22 +30,19 @@ public class SensitivityCategoryXmlDao {
     public SensitivityCategoryXmlDao(String url) {
         this.url = url;
     }
+
     /**
+     * @throws IOException
+     * @throws JDOMException
      * @see au.org.ala.sds.dao.SensitiveSpeciesDao#getAll()
      */
     @SuppressWarnings("unchecked")
-    public Map<String, SensitivityCategory> getMap() {
+    public Map<String, SensitivityCategory> getMap() throws Exception {
         Map<String, SensitivityCategory> zones = new HashMap<String, SensitivityCategory>();
         SAXBuilder builder = new SAXBuilder();
         Document doc = null;
 
-        try {
-            doc = builder.build(this.url);
-        } catch (JDOMException e) {
-            logger.error("Error parsing species list xml", e);
-        } catch (IOException e) {
-            logger.error("Error reading species list xml", e);
-        }
+        doc = builder.build(this.url);
 
         Element root = doc.getRootElement();
         List zonesList = root.getChildren();
