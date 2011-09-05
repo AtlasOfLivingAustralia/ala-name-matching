@@ -32,8 +32,9 @@ public class SensitiveSpeciesXmlBuilder {
 
     /**
      * @param args
+     * @throws Exception
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Document doc = new Document();
         Element root = new Element("sensitiveSpeciesList");
         doc.setRootElement(root);
