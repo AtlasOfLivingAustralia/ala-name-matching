@@ -6,6 +6,9 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="pageName" content="home"/>
         <title>BioCache | Atlas of Living Australia</title>
+        <style type="text/css">
+            .code { font-family: courier new;}
+        </style>
     </head>
     <body>
     	<div class="section">
@@ -129,6 +132,42 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
         	</li>
         	<li><strong>Images: </strong>/images/taxon/{guid} - obtains a list of occurrence images for the supplied species taxon GUID. Example:<br>
         	<a href="/ws/images/taxon/urn:lsid:biodiversity.org.au:afd.taxon:dbc44b63-9611-44a8-af58-a29caea777b6">/images/taxon/urn:lsid:biodiversity.org.au:afd.taxon:dbc44b63-9611-44a8-af58-a29caea777b6</a></li>
+        </ul>
+
+        <h3>Parsing Webservices</h3>
+        <ul>
+            <li>Match darwin core terms: /parse/matchTerms - accepts a POST JSON body. Examples:
+                <ul>
+                <li><span class="code">["scientific name", "latitude"] </span>
+                    <br/><strong>will return</strong><br/>
+                    <span  class="code">["scientificName", "decimalLatitude"]</span>
+                </li>
+                <li><span class="code"> ["Macropus rufus", "12.2", "149.0"] </span>
+                    <br/><strong>will return</strong><br/>
+                    <span class="code">["species", "decimalLatitude","decimalLongitude"] </span>
+                </li>
+                </ul>
+            </li>
+            <li>Are darwin core terms: /parse/areDwcTerms - accepts a POST JSON body. Examples:
+                <ul>
+                <li><span class="code">["scientific name", "latitude"]</span>
+                    <br/><strong>will return</strong><br/>
+                    <span class="code">true</span></li>
+                <li><span class="code">["Macropus rufus", "12.2", "149.0"]</span>
+                    <br/><strong>will return</strong><br/>
+                    <span class="code">false</span></li>
+                </ul>
+            </li>
+            <li>Ad hoc processing: /process/adhoc - accepts a POST JSON body. Examples:
+                <ul>
+                <li><span class="code">{ "scientificName": "Macropus rufus" }</span>
+                    <br/><strong>will return</strong><br/>
+                    <span class="code">
+{"assertions":[{"comment":"Missing basis of record","problemAsserted":true,"code":20001,"name":"missingBasisOfRecord","uuid":"bf9dc7a0-9918-4ae1-ac2c-2cd9729a1dc0"},{"comment":"No date information supplied","problemAsserted":true,"code":30008,"name":"missingCollectionDate","uuid":"fe473a55-89ca-4803-b8b3-c050b930d287"}],"values":[{"processed":"Macropus rufus","raw":"","name":"species"},{"processed":"urn:lsid:biodiversity.org.au:afd.taxon:065f1da4-53cd-40b8-a396-80fa5c74dedd","raw":"","name":"phylumID"},{"processed":"urn:lsid:biodiversity.org.au:afd.taxon:e9e7db31-04df-41fb-bd8d-e0b0f3c332d6","raw":"","name":"classID"},{"processed":"urn:lsid:biodiversity.org.au:afd.taxon:6d8079f1-edc9-4aab-aabd-232a32b42471","raw":"","name":"orderID"},{"processed":"Mammalia","raw":"","name":"classs"},{"processed":"urn:lsid:biodiversity.org.au:afd.taxon:72a1c39f-2435-4c28-a680-714b69ded6f9","raw":"","name":"familyID"},{"processed":"2161700","raw":"","name":"left"},{"processed":"Chordata","raw":"","name":"phylum"},{"processed":"species","raw":"","name":"taxonRank"},{"processed":"Animalia","raw":"","name":"kingdom"},{"processed":"Macropus rufus","raw":"Macropus rufus","name":"scientificName"},{"processed":"Macropus","raw":"","name":"genus"},{"processed":"7000","raw":"","name":"taxonRankID"},{"processed":"Diprotodontia","raw":"","name":"order"},{"processed":"urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537","raw":"","name":"taxonConceptID"},{"processed":"[\"Animals\",\"Mammals\"]","raw":"","name":"speciesGroups"},{"processed":"Macropodidae","raw":"","name":"family"},{"processed":"urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537","raw":"","name":"speciesID"},{"processed":"urn:lsid:biodiversity.org.au:afd.taxon:558a729a-789b-4b00-a685-8843dc447319","raw":"","name":"genusID"},{"processed":"2161701","raw":"","name":"right"},{"processed":"urn:lsid:biodiversity.org.au:afd.taxon:4647863b-760d-4b59-aaa1-502c8cdf8d3c","raw":"","name":"kingdomID"},{"processed":"Red Kangaroo","raw":"","name":"vernacularName"}]}
+                    </span>
+                </li>
+                </ul>
+            </li>
         </ul>
 
         <h2>Free text search of occurrence records (will return JSON)</h2>
