@@ -402,7 +402,11 @@ class LocationProcessor extends Processor {
         }
 
         //sensitise the coordinates if necessary.  Do this last so that habitat checks etc are performed on originally supplied coordinates
-        processSensitivity(raw, processed, location)
+        try {
+          processSensitivity(raw, processed, location)
+        } catch {
+          case e:Exception => println("Problem processing using the SDS....")
+        }
       }
     }
 

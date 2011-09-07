@@ -133,10 +133,10 @@ object Store {
     if(record.rowKey != null){
         record.uuid = occurrenceDAO.createOrRetrieveUuid(record.rowKey) 
         occurrenceDAO.addRawOccurrenceBatch(Array(record))
+        val processor = new RecordProcessor
+        processor.processRecordAndUpdate(record)
         if(shouldIndex){
-            val processor = new RecordProcessor
-            processor.processRecordAndUpdate(record)
-            occurrenceDAO.reIndex(record.rowKey)
+            occurrenceDAO.reIndex(record.uuid)
         }
     }
   }

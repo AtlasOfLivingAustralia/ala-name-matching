@@ -260,7 +260,7 @@ object StateProvinces extends Vocab {
 }
 
 object LifeStage extends Vocab {
-    val all = loadVocabFromFile("/lifeStages.txt")
+    val all = loadVocabFromFile("/lifeStage.txt")
 }
 
 object Sex extends Vocab {
