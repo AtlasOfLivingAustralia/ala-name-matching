@@ -4,7 +4,6 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.biocache.*;
 import au.org.ala.util.ParsedRecord;
 import au.org.ala.util.AdHocParser;
-import org.ala.biocache.dto.DataUploadParams;
 import org.ala.biocache.dto.SearchRequestParams;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
