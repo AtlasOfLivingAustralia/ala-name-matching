@@ -136,7 +136,7 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
 
         <h3>Parsing Webservices</h3>
         <ul>
-            <li>Match darwin core terms: /parse/matchTerms - accepts a POST JSON body. Examples:
+            <li><strong>Match darwin core terms</strong>: /parse/matchTerms - accepts a POST JSON body. Examples:
                 <ul>
                 <li><span class="code">["scientific name", "latitude"] </span>
                     <br/><strong>will return</strong><br/>
@@ -148,7 +148,7 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
                 </li>
                 </ul>
             </li>
-            <li>Are darwin core terms: /parse/areDwcTerms - accepts a POST JSON body. Examples:
+            <li><strong>Are darwin core terms? </strong>: /parse/areDwcTerms - accepts a POST JSON body. Examples:
                 <ul>
                 <li><span class="code">["scientific name", "latitude"]</span>
                     <br/><strong>will return</strong><br/>
@@ -158,7 +158,7 @@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"
                     <span class="code">false</span></li>
                 </ul>
             </li>
-            <li>Ad hoc processing: /process/adhoc - accepts a POST JSON body. Examples:
+            <li><strong>Ad hoc processing</strong>: /process/adhoc - accepts a POST JSON body. Examples:
                 <ul>
                 <li><span class="code">{ "scientificName": "Macropus rufus" }</span>
                     <br/><strong>will return</strong><br/>
