@@ -1,4 +1,4 @@
-class
+class   classs  klass
 institutionID	institution id
 collectionID	collection id
 datasetID	dataset id
@@ -10,7 +10,7 @@ basisOfRecord	recordBasis
 informationWithheld
 dataGeneralizations
 dynamicProperties
-occurrenceID
+occurrenceID	ID	Record ID
 catalogNumber	catalogNumberNumeric	catalogueNumber	ID	
 occurrenceDetails
 occurrenceRemarks	notes	remarks
@@ -63,8 +63,8 @@ municipality	city
 locality	address
 verbatimLocality
 verbatimElevation	elevation	altitude
-minimumElevationInMeters
-maximumElevationInMeters
+minimumElevationInMeters	minimum elevation in metres	min elevation in metres
+maximumElevationInMeters	maximum elevation in metres	max elevation in metres
 verbatimDepth	depth
 minimumDepthInMeters	MinimumDepth
 maximumDepthInMeters	MaximumDepth
@@ -117,13 +117,13 @@ identificationRemarks
 identificationQualifier
 typeStatus	typification
 taxonID	nameUsageID
-scientificNameID	nameID	sciNameID
+scientificNameID	nameID	sciNameID	Taxon Rank - matched
 acceptedNameUsageID	acceptedTaxonID
-parentNameUsageID	parentTaxonID	higherTaxonID	higherNameUsageID
+vparentNameUsageID	parentTaxonID	higherTaxonID	higherNameUsageID
 originalNameUsageID	originalNameID	originalTaxonID	basionymID
 nameAccordingToID	taxonAccordingToID
 namePublishedInID
-taxonConceptID
+taxonConceptID	Match Taxon Concept GUID
 scientificName	sci name	taxon name	taxonomic name	bionomial	bionomial name
 acceptedNameUsage	acceptedTaxon
 parentNameUsage	parentTaxon	higherTaxon	higherNameUsage
@@ -135,9 +135,10 @@ kingdom
 phylum
 classs	_class	class	klass	clazz
 order	bioorder
-family
-genus
-species	bionomial	binomial name
+family	fam
+genus	gen
+species	bionomial	binomial name	sp
+subspecies	trinomial	trinomial name	spp
 subgenus	sub genus
 specificEpithet
 infraspecificEpithet
@@ -165,3 +166,6 @@ measurementDeterminedDate
 measurementDeterminedBy
 measurementMethod
 measurementRemarks
+ibra	bioregion	ibra region
+imcra	imcra region
+lga	Local Gov	Local Government Area
