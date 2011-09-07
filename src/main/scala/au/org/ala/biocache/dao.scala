@@ -75,7 +75,7 @@ trait OccurrenceDAO {
 
     def updateAssertionStatus(rowKey: String, assertion: QualityAssertion, systemAssertions: List[QualityAssertion], userAssertions: List[QualityAssertion])
 
-    def reIndex(uuid: String)
+    def reIndex(rowKey: String)
     
     def delete(rowKey: String)
 }
