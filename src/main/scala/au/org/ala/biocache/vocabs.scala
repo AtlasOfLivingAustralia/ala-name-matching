@@ -28,6 +28,8 @@ trait Vocab {
   import JavaConversions._
 
   val all:Set[Term]
+
+  val regexNorm = """[ \\"\\'\\.\\,\\-\\?]*"""
   
   def getStringList : java.util.List[String] = all.map(t => t.canonical).toList.sort((x,y) => x.compare(y) < 0)
   
@@ -39,7 +41,7 @@ trait Vocab {
   def matchTerm(string2Match:String) : Option[Term] = {
     if(string2Match!=null){
       //strip whitespace & strip quotes and fullstops & uppercase
-      val stringToUse = string2Match.replaceAll("""[ \\"\\'\\.\\,\\-\\?]*""", "").toLowerCase
+      val stringToUse = string2Match.replaceAll(regexNorm, "").toLowerCase
       
       val stemmed = Stemmer.stem(stringToUse)
       
@@ -74,6 +76,22 @@ trait Vocab {
     })
   }
   
+  def loadVocabFromVerticalFile(filePath:String) : Set[Term] = {
+    val map = scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map({ row =>
+        val values = row.split("\t")
+        val variant = values.head.replaceAll(regexNorm,"").toLowerCase
+        val canonical = values.last
+        (variant, canonical)
+    }).toMap
+
+    val grouped = map.groupBy({ case(k,v) => v })
+
+    grouped.map({ case(canonical, valueMap) => {
+       val variants = valueMap.keys
+       new Term(canonical, variants.toArray)
+    }}).toSet
+  }
+
   def loadVocabFromFile(filePath:String) : Set[Term] = {
     scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map({ row =>
         val values = row.split("\t")
@@ -248,30 +266,30 @@ object DwC extends Vocab {
 }
 
 object GeodeticDatum extends Vocab {
-    val all = loadVocabFromFile("/datums.txt")
+  val all = loadVocabFromFile("/datums.txt")
 }
 
 object Countries extends Vocab {
-    val all = loadVocabFromFile("/countries.txt")
+  val all = loadVocabFromFile("/countries.txt")
 }
 
 object StateProvinces extends Vocab {
-    val all = loadVocabFromFile("/stateProvinces.txt")
+  val all = loadVocabFromFile("/stateProvinces.txt")
 }
 
 object LifeStage extends Vocab {
-    val all = loadVocabFromFile("/lifeStage.txt")
+  val all = loadVocabFromFile("/lifeStage.txt")
 }
 
 object Sex extends Vocab {
-    val all = loadVocabFromFile("/sex.txt")
+  val all = loadVocabFromFile("/sex.txt")
 }
 
 /**
  * Vocabulary matcher for basis of record values.
  */
 object BasisOfRecord extends Vocab {
-  val all = loadVocabFromFile("/basisOfRecord.txt")
+  val all = loadVocabFromVerticalFile("/basisOfRecord.txt")
 }
 
 /**

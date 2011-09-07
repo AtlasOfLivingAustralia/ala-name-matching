@@ -12,7 +12,12 @@ import org.scalatest.Assertions.expect
 class VocabTest extends ConfigFunSuite {
 
   test("Basis of record matching"){
-      expect("isotype"){ TypeStatus.matchTerm("isotype").get.canonical}
+    expect("PreservedSpecimen"){ BasisOfRecord.matchTerm("speci").get.canonical}
+    expect("PreservedSpecimen"){ BasisOfRecord.matchTerm("S").get.canonical}
+  }
+
+  test("Type status matching"){
+    expect("isotype"){ TypeStatus.matchTerm("isotype").get.canonical}
   }
 
   test("Basis of record matching with junk characters"){
@@ -88,7 +93,8 @@ class VocabTest extends ConfigFunSuite {
      downloadFieldNames.foreach(name => {
        expect(false) {
          println(name)
-        DwC.matchTerm(name).isEmpty }
-      })
+         DwC.matchTerm(name).isEmpty
+       }
+     })
   }
 }
