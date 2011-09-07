@@ -424,7 +424,7 @@ object SexExtractor {
 }
 
 object LifeStageExtractor {
-  def unapply(str: String): Option[Term] = LifeStageExtractor.matchTerm(str)
+  def unapply(str: String): Option[Term] = LifeStage.matchTerm(str)
 }
 
 object CountryExtractor {
