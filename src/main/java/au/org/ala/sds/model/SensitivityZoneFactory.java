@@ -5,6 +5,8 @@ package au.org.ala.sds.model;
 
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import au.org.ala.sds.dao.SensitivityZonesXmlDao;
 
 /**
@@ -12,6 +14,8 @@ import au.org.ala.sds.dao.SensitivityZonesXmlDao;
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
 public class SensitivityZoneFactory {
+
+    protected static final Logger logger = Logger.getLogger(SensitivityZoneFactory.class);
 
     private static Map<String, SensitivityZone> zones;
 
@@ -39,13 +43,12 @@ public class SensitivityZoneFactory {
         try {
             zones = dao.getMap();
         } catch (Exception e) {
-            System.err.println("Exception occurred getting sensitivity-categories.xml from webapp - trying to read file in /data/sds");
+            logger.warn("Exception occurred getting sensitivity-categories.xml from webapp - trying to read file in /data/sds", e);
             dao = new SensitivityZonesXmlDao("file:///data/sds/sensitivity-zones.xml");
             try {
                 zones = dao.getMap();
             } catch (Exception e1) {
-                System.err.println("Exception occurred getting sensitivity-zones.xml from /data/sds");
-                e1.printStackTrace();
+                logger.warn("Exception occurred getting sensitivity-zones.xml from /data/sds", e1);
             }
         }
     }
