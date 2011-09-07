@@ -4,7 +4,7 @@
  *
  *  The contents of this file are subject to the Mozilla Public
  *  License Version 1.1 (the "License"); you may not use this file
- *  except in compliance with the License. You may obtain a copy of
+ *  except in compliance with the Lirecense. You may obtain a copy of
  *  the License at http://www.mozilla.org/MPL/
  *
  *  Software distributed under the License is distributed on an "AS
@@ -329,6 +329,22 @@ public class OccurrenceController {
 
 		return searchResult;
 	}
+
+	/**
+	 * Occurrence search page uses SOLR JSON to display results
+	 *
+	 * @param model
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = {"/cache/refresh"}, method = RequestMethod.GET)
+	public @ResponseBody String refreshCache() throws Exception {
+        searchDAO.refreshCaches();
+		return null;
+	}
+
+
+
 	/**
 	 * Downloads the complete list of values in the supplied facet 
 	 * 

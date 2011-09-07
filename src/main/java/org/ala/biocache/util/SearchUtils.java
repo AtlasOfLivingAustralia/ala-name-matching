@@ -102,11 +102,11 @@ public class SearchUtils {
             return "Collection: " + collectionCache.getCollections().get(uid);
         } else if(uid.startsWith("dr")){
             return "Data Resource: " + collectionCache.getDataResources().get(uid);
+        } else if(uid.startsWith("drt")){
+            return "Temporary Data Resource: " + collectionCache.getDataResources().get(uid);
         }
         return null;
     }
-
-
 
         /**
          * Updates the searchParams for a query by taxon concept

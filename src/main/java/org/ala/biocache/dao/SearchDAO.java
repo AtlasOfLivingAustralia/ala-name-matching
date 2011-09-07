@@ -42,9 +42,7 @@ import org.ala.biocache.dto.TaxaRankCountDTO;
  * @author "Nick dos Remedios <Nick.dosRemedios@csiro.au>" .
  */
 public interface SearchDAO {
-	
 
-	
     /**
      * Find all occurrences for a given (full text) query
      *
@@ -144,7 +142,10 @@ public interface SearchDAO {
      */
     List<OccurrencePoint> findRecordsForLocation(SpatialSearchRequestParams requestParams, PointType pointType) throws Exception;
 
-    
+    /**
+     * Refresh any caches in use to populate queries.
+     */
+    void refreshCaches();
 
     /**
      * Find all species (and counts) for a given location search (lat/long and radius) and a higher taxon (with rank)

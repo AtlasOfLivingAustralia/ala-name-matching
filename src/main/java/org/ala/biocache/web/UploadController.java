@@ -4,31 +4,30 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.biocache.*;
 import au.org.ala.util.ParsedRecord;
 import au.org.ala.util.AdHocParser;
-import org.ala.biocache.dto.SearchRequestParams;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import sun.misc.Request;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Controller
 public class UploadController {
+
+    private final static Logger logger = Logger.getLogger(UploadController.class);
 
     /**
      * Upload a dataset using a POST, returning a UID for this data
@@ -56,6 +55,7 @@ public class UploadController {
             String[] termArray = terms.toArray(new String[]{});
             return AdHocParser.areColumnHeaders(termArray);
         } catch(Exception e) {
+            logger.error(e.getMessage(),e);
             response.sendError(HttpURLConnection.HTTP_BAD_REQUEST);
             return false;
         }
@@ -71,6 +71,7 @@ public class UploadController {
             String[] termArray = terms.toArray(new String[]{});
             return AdHocParser.guessColumnHeaders(termArray);
         } catch(Exception e) {
+            logger.error(e.getMessage(),e);
             response.sendError(HttpURLConnection.HTTP_BAD_REQUEST);
             return null;
         }
@@ -83,8 +84,10 @@ public class UploadController {
             InputStream input = request.getInputStream();
             Map<String,String> record = om.readValue(input, new TypeReference<Map<String,String>>() {});
             input.close();
-            return AdHocParser.processLine(record.keySet().toArray(new String[]{}), record.values().toArray(new String[]{}));
+            String[] headers = AdHocParser.guessColumnHeaders(record.keySet().toArray(new String[]{}));
+            return AdHocParser.processLine(headers, record.values().toArray(new String[]{}));
         } catch(Exception e) {
+            logger.error(e.getMessage(),e);
             response.sendError(HttpURLConnection.HTTP_BAD_REQUEST);
             return null;
         }
@@ -101,13 +104,30 @@ public class UploadController {
         //check the request
         String headers = request.getParameter("headers");
         String csvData = request.getParameter("csvData");
+
+        //get a record count
+        int lineCount = 0;
+        BufferedReader reader = new BufferedReader(new StringReader(csvData));
+        while(reader.readLine() != null){
+            lineCount++;
+        }
+
         String datasetName = request.getParameter("datasetName");
+        String separator = request.getParameter("separator");
+        char separatorChar = ',';
+        if(separator != null && "TAB".equalsIgnoreCase(separator)){
+           separatorChar =  '\t';
+        }
+
+        logger.debug("######### Retrieved - separator (original): '" + separator + "'");
+        logger.debug("######### Retrieved - separatorChar: '" + separatorChar + "'");
 
         //PostMethod post = new PostMethod("http://woodfired.ala.org.au:8080/Collectory/ws/tempDataResource");
         PostMethod post = new PostMethod("http://collections.ala.org.au/ws/tempDataResource");
         ObjectMapper mapper = new ObjectMapper();
 
         UserUpload uu = new UserUpload();
+        uu.setNumberOfRecords(lineCount);
         uu.setName(datasetName);
 
         String json = mapper.writeValueAsString(uu);
@@ -116,13 +136,13 @@ public class UploadController {
         post.setRequestBody(json);
         HttpClient httpClient = new HttpClient();
         httpClient.executeMethod(post);
-        System.out.println("######### Retrieved: " + post.getResponseBodyAsString());
-        System.out.println("######### Retrieved: " + post.getResponseHeader("location").getValue());
-        System.out.println("######### Data uploaded....");
-        String collectoryUrl= post.getResponseHeader("location").getValue();
+        logger.debug("######### Retrieved: " + post.getResponseBodyAsString());
+        logger.debug("######### Retrieved: " + post.getResponseHeader("location").getValue());
+        logger.debug("######### Data uploaded....");
+        String collectoryUrl = post.getResponseHeader("location").getValue();
 
         String tempUid = collectoryUrl.substring(collectoryUrl.lastIndexOf('/') + 1);
-        CSVReader csvReader = new CSVReader(new StringReader(csvData));
+        CSVReader csvReader = new CSVReader(new StringReader(csvData), separatorChar);
 
         try {
             String[] currentLine = csvReader.readNext();
@@ -133,7 +153,11 @@ public class UploadController {
             if(headers == null){
                 headerArray = AdHocParser.guessColumnHeaders(currentLine);
             } else {
-                headerArray = headers.split(",");
+                String[] unnormalised = headers.split(",");
+                headerArray = new String[unnormalised.length];
+                for(int i=0; i<headerArray.length; i++){
+                    headerArray[i] = unnormalised[i].trim();
+                }
             }
 
             if(!firstListAreHeaders){
@@ -150,7 +174,8 @@ public class UploadController {
         } finally {
             csvReader.close();
         }
-        System.out.println("######### Temporary UID being returned...." + tempUid);
+        au.org.ala.biocache.Store.index(tempUid);
+        logger.debug("######### Temporary UID being returned...." + tempUid);
         Map<String,String> details = new HashMap<String,String>();
         details.put("uid", tempUid);
         return details;
@@ -159,9 +184,8 @@ public class UploadController {
     private void addRecord(String tempUid, String[] currentLine, String[] headers) {
         Map<String,String> map = new HashMap<String, String>();
         for(int i=0; i< headers.length && i< currentLine.length; i++){
-            map.put(headers[i], currentLine[i]);
+            map.put(headers[i], currentLine[i].trim());
         }
-        au.org.ala.biocache.Store.insertRecord(tempUid, map, true);
-        au.org.ala.biocache.Store.index(tempUid);
+        au.org.ala.biocache.Store.insertRecord(tempUid, map, false);
     }
 }

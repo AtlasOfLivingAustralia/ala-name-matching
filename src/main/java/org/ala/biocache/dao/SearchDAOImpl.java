@@ -152,10 +152,10 @@ public class SearchDAOImpl implements SearchDAO {
         downloadFields = new DownloadFields();
     }
 
-    /**
-     * @see org.ala.biocache.dao.SearchDAO#findByFulltextQuery(java.lang.String, java.lang.String,
-     *         java.lang.Integer, java.lang.Integer, java.lang.String, java.lang.String)
-     */
+    public void refreshCaches(){
+        collectionCache.updateCache();
+    }
+
     @Override
     public SearchResultDTO findByFulltextQuery(SearchRequestParams requestParams) throws Exception {
         SearchResultDTO searchResults = new SearchResultDTO();

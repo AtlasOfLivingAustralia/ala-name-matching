@@ -34,6 +34,7 @@ import org.springframework.web.client.RestOperations;
 @Component("collectionsCache")
 public class CollectionsCache {
     protected LinkedHashMap<String, String> dataResources = new LinkedHashMap<String, String>();
+    protected LinkedHashMap<String, String> tempDataResources = new LinkedHashMap<String, String>();
     protected LinkedHashMap<String, Integer> downloadLimits = new LinkedHashMap<String, Integer>();
     protected LinkedHashMap<String, String> institutions = new LinkedHashMap<String, String>();
     protected LinkedHashMap<String, String> collections = new LinkedHashMap<String, String>();
@@ -61,12 +62,11 @@ public class CollectionsCache {
         return this.dataResources;
     }
 
-    
-    /**
-     * Get the collections
-     *
-     * @return
-     */
+    public LinkedHashMap<String, String> getTempDataResources(){
+        checkCacheAge();
+        return this.tempDataResources;
+    }
+
     public LinkedHashMap<String, String> getCollections() {
         checkCacheAge();
         return this.collections;
@@ -116,6 +116,10 @@ public class CollectionsCache {
         }
     }
 
+    public void updateCache() {
+        updateCache(null,null);
+    }
+
     /**
      * Update the entity types (fields)
      */
@@ -124,12 +128,12 @@ public class CollectionsCache {
         this.collections = getCodesMap(ResourceType.COLLECTION, coguids);
         this.institutions = getCodesMap(ResourceType.INSTITUTION, inguids);
         this.dataResources = getCodesMap(ResourceType.DATA_RESOURCE,null);
+        this.tempDataResources = getCodesMap(ResourceType.TEMP_DATA_RESOURCE,null);
+        this.dataResources.putAll(tempDataResources);
         //update the download limits asynchronously
         new DownloadLimitThread().start();
-        
     }
     
-
     /**
      * Do the web services call. Uses RestTemplate.
      *
@@ -182,7 +186,8 @@ public class CollectionsCache {
     public enum ResourceType {
         INSTITUTION("institution"),
         COLLECTION("collection"),
-        DATA_RESOURCE("dataResource");
+        DATA_RESOURCE("dataResource"),
+        TEMP_DATA_RESOURCE("tempDataResource");
 
         private String type;
 
@@ -236,5 +241,4 @@ public class CollectionsCache {
     public void setTimeout(Long timeout) {
         this.timeout = timeout;
     }
-
 }
