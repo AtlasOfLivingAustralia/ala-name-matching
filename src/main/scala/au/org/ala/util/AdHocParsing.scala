@@ -97,11 +97,11 @@ object AdHocParser {
       ).flatten.distinct
     }
 
-    println("**Processed fields: " + processedFields.mkString(","))
-    println("**Raw fields: " + rawFields.mkString(","))
+    //println("**Processed fields: " + processedFields.mkString(","))
+    //println("**Raw fields: " + rawFields.mkString(","))
     //need a list of common to both....
     val commonHdrs = commonFields.map(x => List(x, x + " (processed)")).flatten
-    println("**Common fields: " + commonFields.mkString(","))
+    //println("**Common fields: " + commonFields.mkString(","))
 
     //write out headers for CSV
     //println((commonHdrs :::  rawOnly  ::: processedOnly).toArray.mkString(","))
@@ -281,6 +281,8 @@ object AdHocParser {
     case StateProvinceExtractor(value) => "stateProvince"
     case OccurrenceIDExtractor(value) => "occurrenceID"
     case CatalogExtractor(value) => "catalogNumber"
+    case LifeStageExtractor(value) => "lifeStage"
+    case SexExtractor(value) => "sex"
     case CoordinateUncertaintyExtractor(value) => "coordinateUncertaintyInMeters"
     case ScientificNameExtractor(value) => value
     case CommonNameExtractor(value) => "vernacularName"
@@ -415,6 +417,14 @@ object BasisOfRecordExtractor {
 
 object GeodeticDatumExtractor {
   def unapply(str: String): Option[Term] = GeodeticDatum.matchTerm(str)
+}
+
+object SexExtractor {
+  def unapply(str: String): Option[Term] = Sex.matchTerm(str)
+}
+
+object LifeStageExtractor {
+  def unapply(str: String): Option[Term] = LifeStageExtractor.matchTerm(str)
 }
 
 object CountryExtractor {

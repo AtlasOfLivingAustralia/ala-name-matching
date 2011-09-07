@@ -3,6 +3,7 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+import org.scalatest.Assertions.expect
 
 /**
  * Test for vocabulary mapping and lookups.
@@ -74,4 +75,20 @@ class VocabTest extends ConfigFunSuite {
     expect(Set('E','W', 'N')){CountryCentrePoints.getHemispheres("United Kingdom").get}
   }
 
+  test("Our dog food"){
+      val downloadFieldNames = List("Catalog Number","Match Taxon Concept GUID","Scientific Name","Vernacular Name",
+        "Matched Scientific Name","Taxon Rank - matched","Vernacular Name - matched","Kingdom - matched",
+        "Phylum - matched","Class - matched","Order - matched","Family - matched","Genus - matched","Species - matched",
+        "Subspecies - matched","Institution Code","Collection Code","Latitude - processed","Longitude - processed",
+        "Coordinate Precision","Country - parsed","IBRA Region - parsed","IMCRA Region - parsed","State - parsed",
+        "Local Government Area - parsed","Minimum Elevation In Metres","Maximum Elevation In Metres",
+        "Minimum Depth In Meters","Maximum Depth In Meters","Year - parsed","Month - parsed","Day - parsed",
+        "Event Date - parsed","Event Time - parsed","Basis Of Record","Sex","Preparations")
+
+     downloadFieldNames.foreach(name => {
+       expect(false) {
+         println(name)
+        DwC.matchTerm(name).isEmpty }
+      })
+  }
 }

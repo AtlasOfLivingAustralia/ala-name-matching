@@ -410,12 +410,14 @@ object LocationDAO {
    * Add a region mapping for this point.
    */
   def addRegionToPoint (latitude:String, longitude:String, mapping:Map[String,String]) {
-    val guid = latitude +"|"+longitude
-    var properties = scala.collection.mutable.Map[String,String]()
-    properties ++= mapping
-    properties.put("decimalLatitude", latitude)
-    properties.put("decimalLongitude", longitude)
-    persistenceManager.put(guid, columnFamily, properties.toMap)
+    if (latitude!=null && latitude.trim.length>0 && longitude!=null && longitude.trim.length>0){
+      val guid = latitude.trim() +"|"+longitude.trim()
+      var properties = scala.collection.mutable.Map[String,String]()
+      properties ++= mapping
+      properties.put("decimalLatitude", latitude)
+      properties.put("decimalLongitude", longitude)
+      persistenceManager.put(guid, columnFamily, properties.toMap)
+    }
   }  
   
   /**
@@ -442,7 +444,12 @@ object LocationDAO {
    * For geo spatial requirements we don't want to round the latitude , longitudes 
    */
   def getByLatLon(latitude:String, longitude:String) : Option[(Location, EnvironmentalLayers, ContextualLayers)] = {
-    val uuid =  latitude+"|"+longitude //roundCoord(latitude)+"|"+roundCoord(longitude)
+
+    if (latitude==null && latitude.trim.length==0 && longitude==null && longitude.trim.length==0){
+      return None
+    }
+
+    val uuid = latitude.trim + "|" + longitude.trim //roundCoord(latitude)+"|"+roundCoord(longitude)
 
     val cachedObject = lock.synchronized { lru.get(uuid) }
     //val cachedObject = lru.get(uuid)
