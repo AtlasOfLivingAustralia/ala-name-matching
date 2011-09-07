@@ -341,7 +341,7 @@ object ScientificNameExtractor {
 
 object CommonNameExtractor {
   def unapply(str: String): Option[String] = {
-    if (str != "") {
+    if (str!=null && str.trim != "") {
       try {
         val nsr = Config.nameIndex.searchForCommonName(str)
         if (nsr != null && nsr.getLsid != null) {
