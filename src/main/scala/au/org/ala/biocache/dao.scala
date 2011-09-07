@@ -16,6 +16,8 @@ import scala.collection.mutable.ListBuffer
 trait OccurrenceDAO {
 
     val entityName = "occ"
+     
+    val qaEntityName ="qa"
 
     def setUuidDeleted(uuid: String, del: Boolean): Unit
 
@@ -598,6 +600,10 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             val systemAssertions = getSystemAssertions(rowKey)
             //store the new systemAssertions
             persistenceManager.putList(rowKey, entityName, FullRecordMapper.userQualityAssertionColumn, updatedUserAssertions, classOf[QualityAssertion], true)
+            //also add it to the QA column family eventually we will not add it as a List to the occ column family
+            val qaRowKey =  rowKey+ "|" +qualityAssertion.getUserId + "|" + qualityAssertion.getCode
+            //no need to check if the user assertion is there because adding the same user assertion will override it.
+            persistenceManager.put(qaRowKey, qaEntityName, FullRecordMapper.mapObjectToProperties(qualityAssertion))
             //update the overall status
             updateAssertionStatus(rowKey, qualityAssertion, systemAssertions, updatedUserAssertions)
         }
@@ -667,7 +673,9 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
                 val assertionName = deletedAssertion.get.name
                 //are there any matching systemAssertions for other users????
                 val systemAssertions = getSystemAssertions(rowKey)
-
+                //also delete it from the QA column family eventually we will not add it as a List to the occ column family
+                val qaRowKey = rowKey + "|" + deletedAssertion.get.getUserId +"|" + deletedAssertion.get.getCode
+                persistenceManager.delete(qaRowKey, qaEntityName)
                 //update the assertion status
                 updateAssertionStatus(rowKey, deletedAssertion.get, systemAssertions, updateAssertions)
                 true

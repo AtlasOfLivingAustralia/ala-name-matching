@@ -125,6 +125,8 @@ trait POSO {
                         case e: Exception => e.printStackTrace
                     }
                 }
+                case "int" => property.setter.invoke(this, Integer.parseInt(value).asInstanceOf[AnyRef])
+                case "boolean" => property.setter.invoke(this, java.lang.Boolean.parseBoolean(value).asInstanceOf[AnyRef])
                 case _ =>
             }
         }
@@ -183,6 +185,14 @@ trait POSO {
                         } catch {
                             case e: Exception => e.printStackTrace
                         }
+                    }
+                    case "int" =>{
+                        val value = unparsed.asInstanceOf[Int]
+                        map.put(property.name, value.toString)
+                    }
+                    case "boolean" =>{
+                        val value = unparsed.asInstanceOf[Boolean]
+                        map.put(property.name, value.toString)
                     }
                     case _ => throw new UnsupportedOperationException("Unsupported field type " + property.typeName)
                 }

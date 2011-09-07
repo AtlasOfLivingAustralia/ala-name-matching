@@ -19,5 +19,11 @@ and comment='The column family for attribution tracking' and gc_grace=2000;
 create column family taxon with comparator=UTF8Type and default_validation_class=UTF8Type
 and comment='The column family for taxon profile information' and gc_grace=2000;
 
-update column family occ with comparator=UTF8Type
-and column_metadata=[{column_name: uuid, validation_class: UTF8Type, index_type: KEYS}];
+update column family occ with comparator=UTF8Type and
+column_metadata=[{column_name: portalId, validation_class: UTF8Type, index_type: KEYS},
+{column_name: uuid, validation_class: UTF8Type, index_type: KEYS}];
+
+create column family qa with comparator=UTF8Type and default_validation_class=UTF8Type
+and comment='The column family for quality assertions' and gc_grace=2000 and
+column_metadata=[{column_name: userId, validation_class: UTF8Type,  index_type: KEYS},
+{column_name:code, validation_class: UTF8Type, index_type: KEYS}];

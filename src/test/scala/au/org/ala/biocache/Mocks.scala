@@ -107,8 +107,10 @@ class MockPersistenceManager extends PersistenceManager {
   def deleteColumns(uuid: String, entityName: String, columnName: String*) =
     throw new RuntimeException("not implemented yet")
 
-  def delete(uuid: String, entityName: String) =
-    throw new RuntimeException("not implemented yet")
+  def delete(uuid: String, entityName: String) = {
+      val entityMap = mockStore.getOrElseUpdate(entityName,HashMap(uuid -> HashMap[String,String]()))
+      entityMap.remove(uuid)
+  }
 
   def shutdown = mockStore.clear
 }

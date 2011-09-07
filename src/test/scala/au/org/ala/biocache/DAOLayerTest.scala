@@ -32,6 +32,11 @@ class DAOLayerTest extends ConfigFunSuite{
           val userAssertions = occurrenceDAO.getUserAssertions(rowKey)
           userAssertions.size
       }
+      val qaRowKey = rowKey + "|" + qa.getUserId + "|" + qa.getCode
+      val qatest = persistenceManager.get(qaRowKey, "qa")
+      println(qatest)
+      
+      expect(true){!qatest.isEmpty}
       val qa2 = QualityAssertion(AssertionCodes.GEOSPATIAL_ISSUE, false)
       qa2.comment = "My comment"
       qa2.userId = "Natasha.Carter@csiro.au"

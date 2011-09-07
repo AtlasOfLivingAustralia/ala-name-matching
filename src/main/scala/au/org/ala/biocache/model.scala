@@ -1016,7 +1016,7 @@ class QualityAssertion (
   @BeanProperty var userId:String,
   @BeanProperty var userDisplayName:String,
   @BeanProperty var created:String)
-  extends Cloneable with Comparable[AnyRef] {
+  extends Cloneable with Comparable[AnyRef] with POSO {
 
   def this() = this(null,null,-1,false,null,null,null,null,null)
   override def clone : QualityAssertion = super.clone.asInstanceOf[QualityAssertion]
