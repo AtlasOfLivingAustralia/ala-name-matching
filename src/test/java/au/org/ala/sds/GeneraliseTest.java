@@ -161,6 +161,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+        assertEquals("Location withheld", gl.getDescription());
         assertTrue(gl.isSensitive());
     }
 
@@ -188,6 +189,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+        assertEquals("Location withheld", gl.getDescription());
         assertTrue(gl.isSensitive());
     }
 
@@ -270,6 +272,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "-32.7", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "149.6", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+        assertEquals("Location is already generalised", gl.getDescription());
         assertTrue(gl.isSensitive());
     }
 
