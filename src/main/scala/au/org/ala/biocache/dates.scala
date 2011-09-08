@@ -70,6 +70,7 @@ object DateParser {
 
     date match {
       case ISOSingleDate(date) => Some(date)
+      case ISOSingleYear(date) => Some(date)
       case ISOWithMonthNameDate(date) => Some(date)
       case ISODateRange(date) => Some(date)
       case ISODayDateRange(date) => Some(date)
@@ -143,18 +144,41 @@ object ISOWithMonthNameDate /*extends (String=>Option[EventDate]) */ {
 }
 
 /**yyyy-MM-dd */
-class SingleDate {
+object ISOSingleYear {
 
-  def baseFormat: String = "yyyy-MM-dd"
+  def formats = Array("yyyy")
 
   /**
    * Extraction method
    */
   def unapply(str: String): Option[EventDate] = {
     try {
-      val eventDateParsed = DateUtils.parseDate(str,
-        Array(baseFormat, baseFormat + "'T'hh:mm-ss", baseFormat + "'T'hh:mm'Z'"))
+      val eventDateParsed = DateUtils.parseDate(str,formats)
+      val startYear, endYear = DateFormatUtils.format(eventDateParsed, "yyyy")
+      val startDate, endDate = ""
+      val startDay, endDay = ""
+      val startMonth, endMonth = ""
+      Some(EventDate(startDate, startDay, startMonth, startYear, endDate, endDay,
+        endMonth: String, endYear, false))
+    } catch {
+      case e: ParseException => None
+    }
+  }
+}
 
+/**yyyy-MM-dd */
+class SingleDate {
+
+  def baseFormats = Array("yyyy-MM-dd","yyyy/MM/dd")
+
+  def formats = baseFormats.map(f => Array(f, f + "'T'hh:mm'Z'")).flatten
+
+  /**
+   * Extraction method
+   */
+  def unapply(str: String): Option[EventDate] = {
+    try {
+      val eventDateParsed = DateUtils.parseDate(str,formats)
       val startYear, endYear = DateFormatUtils.format(eventDateParsed, "yyyy")
       val startDate, endDate = DateFormatUtils.format(eventDateParsed, "yyyy-MM-dd")
       val startDay, endDay = DateFormatUtils.format(eventDateParsed, "dd")
@@ -168,7 +192,7 @@ class SingleDate {
 }
 
 trait NonISO extends SingleDate {
-  override def baseFormat: String = "dd-MM-yyyy"
+  override def baseFormats = Array("dd-MM-yyyy","dd/MM/yyyy")
 }
 
 object ISOSingleDate extends SingleDate
@@ -208,6 +232,7 @@ object ISODateRange {
     try {
 
       val parts = str.split("/")
+      if (parts.length != 2) return None
       val startDateParsed = DateUtils.parseDate(parts(0), formats)
       val endDateParsed = DateUtils.parseDate(parts(1), formats)
 
@@ -234,6 +259,7 @@ object ISOMonthYearDateRange {
   def unapply(str: String): Option[EventDate] = {
     try {
       val parts = str.split("/")
+      if (parts.length != 2) return None
       val startDateParsed = DateUtils.parseDate(parts(0),
         Array("yyyy-MM", "yyyy-MM-"))
       val endDateParsed = DateUtils.parseDate(parts(1),
@@ -262,6 +288,7 @@ object ISOMonthDateRange {
   def unapply(str: String): Option[EventDate] = {
     try {
       val parts = str.split("/")
+      if (parts.length != 2) return None
       val startDateParsed = DateUtils.parseDate(parts(0),
         Array("yyyy-MM", "yyyy-MM-"))
       val endDateParsed = DateUtils.parseDate(parts(1),
@@ -287,6 +314,7 @@ object ISODateTimeRange {
   def unapply(str: String): Option[EventDate] = {
     try {
       val parts = str.split("/")
+      if (parts.length != 2) return None
       val startDateParsed = DateUtils.parseDate(parts(0),
         Array("yyyy-MM-dd hh:mm:ss.sss"))
       val endDateParsed = DateUtils.parseDate(parts(1),
@@ -332,13 +360,13 @@ object ISOVerboseDateTime {
   }
 }
 
-
 //Mon Apr 23 00:00:00 EST 1984/Sun Apr 29 00:00:00 EST 1984
 object ISOVerboseDateTimeRange {
 
   def unapply(str: String): Option[EventDate] = {
     try {
       val parts = str.split("/")
+      if (parts.length != 2) return None
       val startDateParsed = DateUtils.parseDate(parts(0),
         Array("EEE MMM dd hh:mm:ss zzz yyyy"))
       val endDateParsed = DateUtils.parseDate(parts(1),
@@ -368,6 +396,7 @@ object ISODayDateRange {
   def unapply(str: String): Option[EventDate] = {
     try {
       val parts = str.split("/")
+      if (parts.length != 2) return None
       val startDateParsed = DateUtils.parseDate(parts(0),
         Array("yyyy-MM-dd"))
       val endDateParsed = DateUtils.parseDate(parts(1),
@@ -394,6 +423,7 @@ object ISOYearRange {
   def unapply(str: String): Option[EventDate] = {
     try {
       val parts = str.split("/")
+      if (parts.length != 2) return None
       val startDateParsed = DateUtils.parseDate(parts(0),
         Array("yyyy"))
       val startDate, endDate = ""
