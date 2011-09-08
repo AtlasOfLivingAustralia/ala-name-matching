@@ -11,7 +11,7 @@ informationWithheld
 dataGeneralizations
 dynamicProperties
 occurrenceID	ID	Record ID
-catalogNumber	catalogNumberNumeric	catalogueNumber	ID	
+catalogNumber	catalogNumberNumeric	catalogueNumber	ID	strainNumber
 occurrenceDetails
 occurrenceRemarks	notes	remarks	comment	comments
 recordNumber	collectorNumber
@@ -36,7 +36,7 @@ associatedTaxa
 eventID
 samplingProtocol
 samplingEffort
-eventDate	earliestDateCollected	latestDateCollected
+eventDate	earliestDateCollected	latestDateCollected	sampleDate
 eventTime	time
 startDayOfYear
 endDayOfYear
@@ -55,7 +55,7 @@ continent
 waterBody	ContinentOcean
 islandGroup
 island
-country
+country	
 countryCode	isoCountryCode
 stateProvince	state	province	territory
 county
@@ -162,8 +162,8 @@ measurementType
 measurementValue
 measurementAccuracy
 measurementUnit
-measurementDeterminedDate
-measurementDeterminedBy
+measurementDeterminedDate	sampleDate
+measurementDeterminedBy	sampledBy
 measurementMethod
 measurementRemarks
 ibra	bioregion	ibra region
