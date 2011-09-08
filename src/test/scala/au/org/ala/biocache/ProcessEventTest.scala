@@ -152,4 +152,20 @@ class ProcessEventTest extends ConfigFunSuite {
 
     expect(0){ assertions.size }
   }
+
+  test("1973-10-14") {
+
+    var raw = new FullRecord("1234", "1234")
+    var processed = new FullRecord("1234", "1234")
+    raw.event.eventDate = "1973-10-14"
+
+    val assertions = (new EventProcessor).process("1234", raw, processed)
+
+    expect("1973-10-14"){ processed.event.eventDate }
+    expect("14"){ processed.event.day }
+    expect("10"){ processed.event.month }
+    expect("1973"){ processed.event.year }
+
+    expect(0){ assertions.size }
+  }
 }

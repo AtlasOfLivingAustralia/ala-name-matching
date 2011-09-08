@@ -203,10 +203,10 @@ class EventProcessor extends Processor {
       }
     }
 
-    var validDate = validYear && validDay && validMonth
+    var validDayMonthYear = validYear && validDay && validMonth
 
     //construct
-    if (validDate) {
+    if (validDayMonthYear) {
       try {
          
        val calendar = new GregorianCalendar(
@@ -219,7 +219,7 @@ class EventProcessor extends Processor {
        date = Some(calendar.getTime)
       } catch {
         case e: Exception => {
-          validDate = false
+          validDayMonthYear = false
           comment = "Invalid year, day, month"
         }
       }
@@ -256,7 +256,7 @@ class EventProcessor extends Processor {
     }
 
     //if invalid date, add assertion
-    if (!validDate) {
+    if (!validDayMonthYear && (processed.event.eventDate ==null || processed.event.eventDate == "")) {
       assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
     }
 
