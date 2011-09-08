@@ -3,8 +3,8 @@
  */
 package au.org.ala.sds.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -28,7 +28,7 @@ public class ValidationUtils {
         String decimalLatitude = facts.get(FactCollection.DECIMAL_LATITUDE_KEY);
         String decimalLongitude = facts.get(FactCollection.DECIMAL_LONGITUDE_KEY);
 
-        List<SensitivityZone> zones = new ArrayList<SensitivityZone>();
+        Set<SensitivityZone> zones = new HashSet<SensitivityZone>();
 
         if (state == null) {
             if (StringUtils.isNotBlank(decimalLatitude) && StringUtils.isNotBlank(decimalLongitude)) {

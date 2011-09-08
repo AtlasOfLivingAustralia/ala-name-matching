@@ -17,8 +17,8 @@ package au.org.ala.sds.util;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -30,13 +30,14 @@ public class GeoLocationTest {
     @Test
     public void zonesContainingPoint() throws Exception {
         assertTrue(GeoLocationHelper.getZonesContainingPoint("-35.0", "145.0").contains(SensitivityZoneFactory.getZone(SensitivityZone.NSW)));
+        assertTrue(GeoLocationHelper.getZonesContainingPoint("-11.268428", "132.14653").contains(SensitivityZoneFactory.getZone(SensitivityZone.NT)));
         assertTrue(GeoLocationHelper.getZonesContainingPoint("-41.538137", "173.968817").contains(SensitivityZoneFactory.getZone(SensitivityZone.NOTAUS)));
 
         // Cairns
-        List<SensitivityZone> ref = new ArrayList<SensitivityZone>();
+        Set<SensitivityZone> ref = new HashSet<SensitivityZone>();
         ref.add(SensitivityZoneFactory.getZone(SensitivityZone.QLD));
         ref.add(SensitivityZoneFactory.getZone(SensitivityZone.PFFPQA1995));
-        List<SensitivityZone> zones = GeoLocationHelper.getZonesContainingPoint("-16.902785", "145.738106");
+        Set<SensitivityZone> zones = GeoLocationHelper.getZonesContainingPoint("-16.902785", "145.738106");
 
         assertTrue(zones.containsAll(ref));
 

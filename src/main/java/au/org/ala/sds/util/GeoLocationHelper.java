@@ -3,8 +3,9 @@ package au.org.ala.sds.util;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.lang.math.NumberUtils;
@@ -19,10 +20,10 @@ import au.org.ala.sds.model.SensitivityZoneFactory;
 public class GeoLocationHelper {
 
     @SuppressWarnings("unchecked")
-    public static List<SensitivityZone> getZonesContainingPoint(String latitude, String longitude) throws Exception {
+    public static Set<SensitivityZone> getZonesContainingPoint(String latitude, String longitude) throws Exception {
 
         final Logger logger = Logger.getLogger(GeoLocationHelper.class);
-        List<SensitivityZone> zones = new ArrayList<SensitivityZone>();;
+        Set<SensitivityZone> zones = new HashSet<SensitivityZone>();;
 
         //
         // Call geospatial web service
@@ -58,6 +59,13 @@ public class GeoLocationHelper {
                     NumberUtils.toFloat(latitude) >= -19.0 &&
                     NumberUtils.toFloat(longitude) >= 144.25) {
                     zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PFFPQA1995));
+                }
+            }
+
+            if (layer.equalsIgnoreCase("cw")) {
+                SensitivityZone zone;
+                if ((zone = SensitivityZoneFactory.getZoneByName(name.replace(" (including Coastal Waters)", ""))) != null) {
+                    zones.add(zone);
                 }
             }
 
