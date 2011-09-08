@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -72,6 +73,28 @@ public class UploadController {
             input.close();
             String[] termArray = terms.toArray(new String[]{});
             return AdHocParser.guessColumnHeaders(termArray);
+        } catch(Exception e) {
+            logger.error(e.getMessage(),e);
+            response.sendError(HttpURLConnection.HTTP_BAD_REQUEST);
+            return null;
+        }
+    }
+
+    @RequestMapping(value="/parser/mapTerms", method = RequestMethod.POST)
+    public @ResponseBody Map<String,String> guessFieldTypesWithOriginal(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        ObjectMapper om = new ObjectMapper();
+        try {
+            InputStream input = request.getInputStream();
+            List<String> terms = om.readValue(input, new TypeReference<List<String>>() {});
+            input.close();
+            String[] termArray = terms.toArray(new String[]{});
+            String[] matchedTerms = AdHocParser.guessColumnHeaders(termArray);
+            //create a map and return this
+            Map<String,String> map = new LinkedHashMap<String,String>();
+            for(int i=0; i<termArray.length; i++){
+              map.put(termArray[i], matchedTerms[i]);
+            }
+            return map;
         } catch(Exception e) {
             logger.error(e.getMessage(),e);
             response.sendError(HttpURLConnection.HTTP_BAD_REQUEST);
@@ -188,8 +211,12 @@ public class UploadController {
     private void addRecord(String tempUid, String[] currentLine, String[] headers) {
         Map<String,String> map = new HashMap<String, String>();
         for(int i=0; i< headers.length && i< currentLine.length; i++){
-            map.put(headers[i], currentLine[i].trim());
+            if(currentLine[i] !=null && currentLine[i].trim().length() >0 ){
+                map.put(headers[i], currentLine[i].trim());
+            }
         }
-        au.org.ala.biocache.Store.insertRecord(tempUid, map, false);
+        if(!map.isEmpty()){
+            au.org.ala.biocache.Store.insertRecord(tempUid, map, false);
+        }
     }
 }
