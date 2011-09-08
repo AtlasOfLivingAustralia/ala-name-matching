@@ -7,10 +7,12 @@ import au.org.ala.util.AdHocParser;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.ServletRequestUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -82,7 +84,9 @@ public class UploadController {
         ObjectMapper om = new ObjectMapper();
         try {
             InputStream input = request.getInputStream();
-            Map<String,String> record = om.readValue(input, new TypeReference<Map<String,String>>() {});
+            String json = IOUtils.toString(input);
+            String utf8String = new String(json.getBytes(), "UTF-8");
+            Map<String,String> record = om.readValue(utf8String, new TypeReference<Map<String,String>>() {});
             input.close();
             String[] headers = AdHocParser.guessColumnHeaders(record.keySet().toArray(new String[]{}));
             return AdHocParser.processLine(headers, record.values().toArray(new String[]{}));
