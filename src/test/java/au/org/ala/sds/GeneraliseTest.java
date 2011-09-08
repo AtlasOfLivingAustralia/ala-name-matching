@@ -133,6 +133,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "-41.538137", gl.getGeneralisedLatitude());
         assertEquals("Longitude", "173.968817", gl.getGeneralisedLongitude());
         assertEquals("InMetres", "", gl.getGeneralisationInMetres());
+        assertEquals("Location not generalised since it is not sensitive Outside Australia", gl.getDescription());
         assertFalse(gl.isSensitive());
     }
 

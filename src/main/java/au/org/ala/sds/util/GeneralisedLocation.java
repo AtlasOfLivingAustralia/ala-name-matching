@@ -105,7 +105,8 @@ public class GeneralisedLocation {
             generalisedLatitude = originalLatitude;
             generalisedLongitude = originalLongitude;
             generalisationInMetres = "";
-            description = MessageFactory.getMessageText(MessageFactory.LOCATION_NOT_GENERALISED, SensitivityZone.getState(zones));
+            String state = SensitivityZone.getState(zones);
+            description = MessageFactory.getMessageText(MessageFactory.LOCATION_NOT_GENERALISED, state.equalsIgnoreCase("Outside Australia") ? state : "in " + state);
             sensitive = false;
             return;
         }
