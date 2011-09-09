@@ -1,0 +1,6 @@
+present pres
+absent  abs
+common
+irregular
+rare
+doubtful
