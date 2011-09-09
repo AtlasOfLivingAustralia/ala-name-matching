@@ -28,10 +28,8 @@ trait Processor {
 object Processors {
 
   def foreach(proc: Processor => Unit) = processorMap.values.foreach(proc)
-//need to preserve the ordering of the Processors so that the default values are populated first
-  //also classification must be executed before location
-  val processorMap = scala.collection.mutable.LinkedHashMap(
-      "DEFAULT"-> new DefaultValuesProcessor,
+
+  val processorMap = Map(
       "IMAGE"-> new ImageProcessor,
       "ATTR" -> new AttributionProcessor,
       "CLASS"-> new ClassificationProcessor,
@@ -55,30 +53,6 @@ object Processors {
 	  }
 	 
   }
-}
-/**
- * Maps the default values to the processed record when no raw value exists
- * This processor should be run before the others so that the default values are populated before reporting missing values
- */
-class DefaultValuesProcessor extends Processor {
-    def process(guid:String, raw:FullRecord, processed:FullRecord): Array[QualityAssertion]={
-        //add the default dwc fields if their is no raw value for them.
-        val dr = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
-        if(!dr.isEmpty){
-            if(dr.get.defaultDwcValues != null){             
-                dr.get.defaultDwcValues.foreach({case(key,value)=>{                    
-                    if(raw.getProperty(key).isEmpty){
-                        //set the processed value to the default value
-                        processed.setProperty(key, value)
-                        if(!processed.getDefaultValuesUsed && !processed.getProperty(key).isEmpty)
-                            processed.setDefaultValuesUsed(true)
-                    }
-                }})
-            }
-        }
-        Array()
-    }
-    def getName = "default"
 }
 
 class ImageProcessor extends Processor {
@@ -282,7 +256,7 @@ class EventProcessor extends Processor {
     }
 
     //if invalid date, add assertion
-    if (!validDayMonthYear && (processed.event.eventDate ==null || processed.event.eventDate == "")) {
+    if (!validYear && (processed.event.eventDate ==null || processed.event.eventDate == "")) {
       assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
     }
 
@@ -323,11 +297,17 @@ class BasisOfRecordProcessor extends Processor {
   def process(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
 
     if (raw.occurrence.basisOfRecord == null || raw.occurrence.basisOfRecord.isEmpty) {
-     
+      //add a quality assertion
       //check to see if there is a default value for this
-      if(processed.occurrence.basisOfRecord != null && !processed.occurrence.basisOfRecord.isEmpty)
-            Array[QualityAssertion]()
-      else  //add a quality assertion
+      val dr = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
+      if(!dr.isEmpty && dr.get.getDefaultDwcValues != null && dr.get.getDefaultDwcValues().contains("basisOfRecord")){
+        //the default balue will be one of the vocab
+        processed.occurrence.basisOfRecord = dr.get.getDefaultDwcValues()("basisOfRecord")
+        //TODO set the flag that default values have been used
+        processed.setDefaultValuesUsed(true)
+        Array[QualityAssertion]()
+      }
+      else
           Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,"Missing basis of record"))
     } else {
       val term = BasisOfRecord.matchTerm(raw.occurrence.basisOfRecord)
@@ -485,7 +465,6 @@ class LocationProcessor extends Processor {
         }
       }
     }
-    //This step will pick up on default values because processed.location.coordinateUncertaintyInMeters will already be populated if a default value exists
     //if the coordinateUncertainty is still empty populate it with the default
     // value (we don't test until now because the SDS will sometime include coordinate uncertainty)
     if (processed.location.coordinateUncertaintyInMeters == null) {

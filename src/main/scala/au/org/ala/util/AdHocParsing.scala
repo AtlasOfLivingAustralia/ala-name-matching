@@ -269,25 +269,39 @@ object AdHocParser {
   /**
    * Just returns the best guess for each field.
    */
-  def parse(values: Array[String]): Array[String] = values.map(value => value match {
-    case BasisOfRecordExtractor(value) => "basisOfRecord"
-    case DateExtractor(value) => "eventDate"
-    case DecimalLatitudeExtractor(value) => "decimalLatitude"
-    case DecimalLongitudeExtractor(value) => "decimalLongitude"
-    case VerbatimLatitudeExtractor(value) => "verbatimLatitude"
-    case VerbatimLongitudeExtractor(value) => "verbatimLongitude"
-    case GeodeticDatumExtractor(value) => "geodeticDatum"
-    case CountryExtractor(value) => "country"
-    case StateProvinceExtractor(value) => "stateProvince"
-    case OccurrenceIDExtractor(value) => "occurrenceID"
-    case CatalogExtractor(value) => "catalogNumber"
-    case LifeStageExtractor(value) => "lifeStage"
-    case SexExtractor(value) => "sex"
-    case CoordinateUncertaintyExtractor(value) => "coordinateUncertaintyInMeters"
-    case ScientificNameExtractor(value) => value
-    case CommonNameExtractor(value) => "vernacularName"
-    case _ => ""
-  })
+  def parse(values: Array[String]): Array[String] = values.map(value => parse(value))
+
+  /**
+   * Just return the best guess for field value.
+   */
+  def parse(value:String): String = {
+    if (value == null) return ""
+    value.trim match {
+      case GeodeticDatumExtractor(value) => "geodeticDatum"
+      case BasisOfRecordExtractor(value) => "basisOfRecord"
+      case TypeStatusExtractor(value) => "typeStatus"
+      case DateExtractor(value) => "eventDate"
+      case DecimalLatitudeExtractor(value) => "decimalLatitude"
+      case DecimalLongitudeExtractor(value) => "decimalLongitude"
+      case VerbatimLatitudeExtractor(value) => "verbatimLatitude"
+      case VerbatimLongitudeExtractor(value) => "verbatimLongitude"
+      case CountryExtractor(value) => "country"
+      case StateProvinceExtractor(value) => "stateProvince"
+      case OccurrenceIDExtractor(value) => "occurrenceID"
+      case CatalogExtractor(value) => "catalogNumber"
+      case LifeStageExtractor(value) => "lifeStage"
+      case SexExtractor(value) => "sex"
+      case CoordinateUncertaintyExtractor(value) => "coordinateUncertaintyInMeters"
+      case ScientificNameExtractor(value) => value
+      case CommonNameExtractor(value) => "vernacularName"
+      case OccurrenceStatusExtractor(value) => "occurrenceStatus"
+      case _ => ""
+    }
+  }
+}
+
+object TypeStatusExtractor {
+  def unapply(str: String): Option[Term] = TypeStatus.matchTerm(str)
 }
 
 object CatalogExtractor {
@@ -437,4 +451,8 @@ object StateProvinceExtractor {
 
 object CoordinateUncertaintyExtractor {
   def unapply(str: String): Option[Float] = DistanceRangeParser.parse(str)
+}
+
+object OccurrenceStatusExtractor {
+  def unapply(str: String): Option[Term] = OccurrenceStatus.matchTerm(str)
 }

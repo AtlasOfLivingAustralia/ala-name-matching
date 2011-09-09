@@ -265,6 +265,10 @@ object DwC extends Vocab {
   val all = loadVocabFromFile("/dwc.txt")
 }
 
+object OccurrenceStatus extends Vocab {
+  val all = loadVocabFromFile("/occurrenceStatus.txt")
+}
+
 object GeodeticDatum extends Vocab {
   val all = loadVocabFromFile("/datums.txt")
 }
