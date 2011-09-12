@@ -80,6 +80,14 @@ class VocabTest extends ConfigFunSuite {
     expect(Set('E','W', 'N')){CountryCentrePoints.getHemispheres("United Kingdom").get}
   }
 
+  test("S for specimen"){
+    expect("PreservedSpecimen"){BasisOfRecord.matchTerm("S").get.canonical}
+  }
+
+  test("DigitisedTrack"){
+    expect("Sound"){BasisOfRecord.matchTerm("DigitisedTrack").get.canonical}
+  }
+
   test("Our dog food"){
       val downloadFieldNames = List("Catalog Number","Match Taxon Concept GUID","Scientific Name","Vernacular Name",
         "Matched Scientific Name","Taxon Rank - matched","Vernacular Name - matched","Kingdom - matched",
