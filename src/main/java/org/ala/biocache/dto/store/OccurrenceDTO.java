@@ -12,16 +12,17 @@
  *  implied. See the License for the specific language governing
  *  rights and limitations under the License.
  */
-
 package org.ala.biocache.dto.store;
 
 import au.org.ala.biocache.FullRecord;
 import au.org.ala.biocache.QualityAssertion;
+import org.ala.biocache.dto.MediaDTO;
+
 import java.io.Serializable;
 import java.util.List;
 
 /**
- * Stores the Occurrence information about a specific occurrence
+ * Holds the Occurrence information about a specific occurrence
  * from the biocache store
  *
  * @author "Natasha Carter <natasha.carter@csiro.au>"
@@ -33,9 +34,11 @@ public class OccurrenceDTO implements Serializable{
     private FullRecord consensus;
     private List<QualityAssertion> systemAssertions;
     private List<QualityAssertion> userAssertions;
+    private List<MediaDTO> sounds;
+    private List<MediaDTO> video;
 
-    public OccurrenceDTO() {
-    }
+    public OccurrenceDTO() {}
+
     public OccurrenceDTO(FullRecord[] record){
         if(record != null && record.length==3){
             raw = record[0];
@@ -82,5 +85,21 @@ public class OccurrenceDTO implements Serializable{
 
     public void setUserAssertions(List<QualityAssertion> userAssertions) {
         this.userAssertions = userAssertions;
+    }
+
+    public List<MediaDTO> getSounds() {
+        return sounds;
+    }
+
+    public void setSounds(List<MediaDTO> sounds) {
+        this.sounds = sounds;
+    }
+
+    public List<MediaDTO> getVideo() {
+        return video;
+    }
+
+    public void setVideo(List<MediaDTO> video) {
+        this.video = video;
     }
 }

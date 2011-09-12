@@ -28,14 +28,9 @@ import javax.servlet.http.HttpServletResponse;
 import au.org.ala.biocache.*;
 import org.ala.biocache.*;
 import org.ala.biocache.dao.SearchDAO;
-import org.ala.biocache.dto.DownloadRequestParams;
+import org.ala.biocache.dto.*;
 import org.ala.biocache.dto.store.OccurrenceDTO;
-import org.ala.biocache.dto.AustralianDTO;
-import org.ala.biocache.dto.FieldResultDTO;
-import org.ala.biocache.dto.IndexFieldDTO;
-import org.ala.biocache.dto.OccurrenceSourceDTO;
-import org.ala.biocache.dto.SearchQuery;
-import org.ala.biocache.dto.SearchResultDTO;
+import org.ala.biocache.util.MimeType;
 import org.ala.biocache.util.SearchUtils;
 import org.ala.client.appender.RestLevel;
 import org.ala.client.model.LogEventType;
@@ -59,8 +54,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
-import org.ala.biocache.dto.SearchRequestParams;
-import org.ala.biocache.dto.SpatialSearchRequestParams;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
@@ -343,8 +336,6 @@ public class OccurrenceController {
 		return null;
 	}
 
-
-
 	/**
 	 * Downloads the complete list of values in the supplied facet 
 	 * 
@@ -469,18 +460,18 @@ public class OccurrenceController {
         return records;
 	}
 
-        /**
-         * Dumps the distinct latitudes and longitudes that are used in the
-         * connected index (to 4 decimal places)
-         */
-        @RequestMapping(value="/occurrences/coordinates*")
-        public void dumpDistinctLatLongs(SearchRequestParams requestParams,HttpServletResponse response) throws Exception{
-             requestParams.setFacets(new String[]{"lat_long"});
-             if(requestParams.getQ().length()<1)
-                 requestParams.setQ("*:*");
-             ServletOutputStream out = response.getOutputStream();
-             searchDAO.writeCoordinatesToStream(requestParams,out);
-        }
+    /**
+     * Dumps the distinct latitudes and longitudes that are used in the
+     * connected index (to 4 decimal places)
+     */
+    @RequestMapping(value="/occurrences/coordinates*")
+    public void dumpDistinctLatLongs(SearchRequestParams requestParams,HttpServletResponse response) throws Exception{
+         requestParams.setFacets(new String[]{"lat_long"});
+         if(requestParams.getQ().length()<1)
+             requestParams.setQ("*:*");
+         ServletOutputStream out = response.getOutputStream();
+         searchDAO.writeCoordinatesToStream(requestParams,out);
+    }
 	
     /**
      * Occurrence record page
@@ -551,6 +542,27 @@ public class OccurrenceController {
         //assertions are based on the row key not uuid
         occ.setSystemAssertions(Store.getSystemAssertions(rowKey));
         occ.setUserAssertions(Store.getUserAssertions(rowKey));
+
+        //TODO retrieve details of the media files
+        String[] sounds = occ.getProcessed().getOccurrence().getSounds();
+        if(sounds != null && sounds.length > 0){
+            List<MediaDTO> soundDtos = new ArrayList<MediaDTO>();
+            for(String sound: sounds){
+                MediaDTO m = new MediaDTO();
+                m.setContentType(MimeType.getForFileExtension(sound).getMimeType());
+                m.setFilePath(MediaStore.convertPathToUrl(sound,biocacheMediaBaseUrl));
+
+                String[] files = Store.getAlternativeFormats(sound);
+                for(String fileName: files){
+                    String contentType = MimeType.getForFileExtension(fileName).getMimeType();
+                    String filePath = MediaStore.convertPathToUrl(fileName,biocacheMediaBaseUrl);
+                    //System.out.println("#########Adding media path: " + m.getFilePath());
+                    m.getAlternativeFormats().put(contentType,filePath);
+                }
+                soundDtos.add(m);
+            }
+            occ.setSounds(soundDtos);
+        }
 
         //log the statistics for viewing the record
         String email = null;
