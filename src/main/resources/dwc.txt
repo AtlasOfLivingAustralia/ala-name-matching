@@ -142,7 +142,7 @@ subspecies	trinomial	trinomial name	spp
 subgenus	sub genus
 specificEpithet
 infraspecificEpithet
-taxonRank	rank
+taxonRank	rank    taxonomic rank
 verbatimTaxonRank
 scientificNameAuthorship	author	authorship	ScientificNameAuthor
 vernacularName	commonName	common

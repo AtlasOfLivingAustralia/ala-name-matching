@@ -42,7 +42,6 @@ trait Vocab {
     if(string2Match!=null){
       //strip whitespace & strip quotes and fullstops & uppercase
       val stringToUse = string2Match.replaceAll(regexNorm, "").toLowerCase
-      
       val stemmed = Stemmer.stem(stringToUse)
       
       //println("string to use: " + stringToUse)
@@ -252,7 +251,7 @@ object CountryCentrePoints extends CentrePoints {
 }
 
 object DwC extends Vocab {
-  val junk = List("matched", "parsed", "processed", "-", "\\.")
+  val junk = List("matched", "parsed", "processed", "-", "\\.","_")
   override def matchTerm(string2Match: String) = {
     val str = {
       var strx = string2Match.toLowerCase

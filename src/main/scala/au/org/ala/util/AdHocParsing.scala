@@ -278,6 +278,7 @@ object AdHocParser {
     if (value == null) return ""
     value.trim match {
       case GeodeticDatumExtractor(value) => "geodeticDatum"
+      case AssociatedMediaExtractor(value) => "associatedMedia"
       case BasisOfRecordExtractor(value) => "basisOfRecord"
       case TypeStatusExtractor(value) => "typeStatus"
       case DateExtractor(value) => "eventDate"
@@ -298,6 +299,11 @@ object AdHocParser {
       case _ => ""
     }
   }
+}
+
+object AssociatedMediaExtractor {
+  val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:jpg|gif|png|jpeg))$""".r
+  def unapply(str: String): Option[String] = if(!imageParser.unapplySeq(str.trim).isEmpty) Some("image") else None
 }
 
 object TypeStatusExtractor {

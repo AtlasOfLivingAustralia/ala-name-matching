@@ -88,7 +88,12 @@ class ImageProcessor extends Processor {
   //Regular expression used to parse an image URL - adapted from 
   //http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
   lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:jpg|gif|png|jpeg))$""".r
-  
+  lazy val soundParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:wav|mp3|ogg|flac))$""".r
+  lazy val videoParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:wmv|mp4|mpg|avi|mov))$""".r
+
+  val imageExtension = Array(".jpg",".gif",".png",".jpeg")
+  val soundExtension = Array(".wav",".mp3",".ogg",".flac")
+  val videoExtension = Array(".wmv",".mp4",".mpg",".avi",".mov")
   /**
    * validates that the associated media is a valid image url
    */
@@ -98,7 +103,10 @@ class ImageProcessor extends Processor {
     if(urls != null){      
       val aurls = urls.split(";").map(url=> url.trim)
       processed.occurrence.images = aurls.filter(isValidImageURL(_))
-      if(aurls.length != processed.occurrence.images.length)
+      processed.occurrence.sounds = aurls.filter(isValidSoundURL(_))
+      processed.occurrence.videos = aurls.filter(isValidVideoURL(_))
+
+      if(aurls.length != (processed.occurrence.images.length + processed.occurrence.sounds.length + processed.occurrence.videos.length))
           return Array(QualityAssertion(AssertionCodes.INVALID_IMAGE_URL, "URL can not be an image"))
     }
     Array()
@@ -106,8 +114,25 @@ class ImageProcessor extends Processor {
 
   def getName = "image"
 
+
   private def isValidImageURL(url:String) : Boolean = {
-    !imageParser.unapplySeq(url.trim).isEmpty || url.startsWith(MediaStore.rootDir)
+    !imageParser.unapplySeq(url.trim).isEmpty || isStoredMedia(imageExtension,url)
+  }
+
+  private def isValidSoundURL(url:String) : Boolean = {
+    !soundParser.unapplySeq(url.trim).isEmpty || isStoredMedia(soundExtension,url)
+  }
+
+  private def isValidVideoURL(url:String) : Boolean = {
+    !videoParser.unapplySeq(url.trim).isEmpty || isStoredMedia(videoExtension,url)
+  }
+
+  private def isStoredMedia(acceptedExtensions:Array[String], url:String) : Boolean = {
+     url.startsWith(MediaStore.rootDir) && endsWithOneOf(acceptedExtensions,url.toLowerCase)
+  }
+
+  private def endsWithOneOf(acceptedExtensions:Array[String], url:String) : Boolean = {
+    !(acceptedExtensions collectFirst { case x if url.endsWith(x) => x } isEmpty)
   }
 }
 

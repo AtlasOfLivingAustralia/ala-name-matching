@@ -1,15 +1,15 @@
 package au.org.ala.util
 import au.org.ala.biocache.DataLoader
-import org.apache.commons.io.FileUtils
 import au.com.bytecode.opencsv.CSVReader
 import au.com.bytecode.opencsv.CSVReader
-import java.io.FileReader
 import au.org.ala.biocache.FullRecordMapper
-import java.io.File
 import scala.collection.JavaConversions
 import au.org.ala.biocache.Raw
 import au.org.ala.biocache.Versions
 import au.org.ala.biocache.DwC
+import au.org.ala.biocache.MediaStore
+import java.io.{FilenameFilter, FileReader, File}
+import org.apache.commons.io.{FilenameUtils, FileUtils}
 
 object DwcCSVLoader {
     
@@ -102,6 +102,25 @@ class DwcCSVLoader extends DataLoader {
 	                val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,"")) //for (t <-uniqueTerms) yield map.getOrElse(t,"")
 	                val fr = FullRecordMapper.createFullRecord("", map, Versions.RAW)
 	                load(dataResourceUid, fr, uniqueTermsValues)
+                  //is there any associatedMedia
+                  if (fr.occurrence.associatedMedia != null){
+                    //load it and store it
+                    val directory = file.getParentFile
+                    val filesToImport = fr.occurrence.associatedMedia.split(";")
+                    val filePathsInStore = filesToImport.map(fileName =>{
+                      val filePath = MediaStore.save(fr.uuid, dataResourceUid, "file:///"+file.getParent+File.separator+fileName)
+                      //do multiple formats exist? check for files of the same name, different extension
+                      val differentFormats = directory.listFiles(new au.org.ala.biocache.SameNameDifferentExtensionFilter(fileName))
+                      differentFormats.foreach ( file => {
+                        MediaStore.save(fr.uuid, dataResourceUid, "file:///"+file.getParent+File.separator+file.getName)
+                      })
+                      filePath
+                    })
+
+                    fr.occurrence.associatedMedia = filePathsInStore.mkString(";")
+                    load(dataResourceUid, fr, uniqueTermsValues)
+                  }
+
 		            if (counter % 1000 == 0 && counter > 0) {
 		                finishTime = System.currentTimeMillis
 		                println(counter + ", >> last key : " + dataResourceUid + "|"+uniqueTermsValues.mkString("|") + ", records per sec: " + 1000 / (((finishTime - startTime).toFloat) / 1000f))
@@ -120,3 +139,9 @@ class DwcCSVLoader extends DataLoader {
         println("Load finished")
     }
 }
+//
+//class SameNameDifferentExtensionFilter(name:String) extends FilenameFilter {
+//  val nameToMatch = FilenameUtils.removeExtension(name)
+//  def accept(dir: File, name: String) = FilenameUtils.removeExtension(name) == nameToMatch
+//}
+//

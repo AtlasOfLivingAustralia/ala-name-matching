@@ -66,7 +66,11 @@ class Occurrence extends Cloneable with Mappable with POSO {
   @BeanProperty var validDistribution:String = _
   //custom fields
   @BeanProperty var images:Array[String] = _
-  //Store the conservation status 
+  //custom fields
+  @BeanProperty var sounds:Array[String] = _
+  //custom fields
+  @BeanProperty var videos:Array[String] = _
+  //Store the conservation status
   //TODO not sure if this is the correct place
   @BeanProperty var austConservation:String = _
   @BeanProperty var stateConservation:String = _
@@ -88,10 +92,9 @@ class Occurrence extends Cloneable with Mappable with POSO {
                                 "relationshipEstablishedDate"->relationshipEstablishedDate, "relationshipOfResource"->relationshipOfResource,
                                 "relationshipRemarks"->relationshipRemarks, "reproductiveCondition"->reproductiveCondition, "resourceID"->resourceID,
                                 "resourceRelationshipID"->resourceRelationshipID, "rights"->rights ,"rightsholder"->rightsholder,
-                                "samplingProtocol"->samplingProtocol, "sex"->sex, "source"->source, "images"-> images, "validDistribution" -> validDistribution)
-
-   
-    map.filter(i => i._2!= null)    
+                                "samplingProtocol"->samplingProtocol, "sex"->sex, "source"->source, "images"-> images, "sounds"-> sounds,
+                                "videos"-> videos,"validDistribution" -> validDistribution)
+    map.filter(i => i._2!= null)
   }
 
 }
