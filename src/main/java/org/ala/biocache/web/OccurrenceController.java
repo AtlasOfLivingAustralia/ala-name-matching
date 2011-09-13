@@ -91,7 +91,7 @@ public class OccurrenceController {
 	/** Name of view for a single taxon */
 	private final String SHOW = "occurrences/show";
 
-	protected String hostUrl = "http://localhost:8888/biocache-service";
+	protected String hostUrl = "http://localhost:8080/biocache-service";
 	protected String bieBaseUrl = "http://bie.ala.org.au/";
 	protected String collectoryBaseUrl = "http://collections.ala.org.au";
 	protected String biocacheMediaBaseUrl = "http://biocache.ala.org.au/biocache-media";
@@ -592,9 +592,6 @@ public class OccurrenceController {
         return occ;
 	}
 
-	public void setBiocacheMediaBaseUrl(String biocacheMediaBaseUrl) {
-		this.biocacheMediaBaseUrl = biocacheMediaBaseUrl;
-	}
 	/**
      * Create a HashMap for the filter queries
      *
@@ -681,12 +678,11 @@ public class OccurrenceController {
 		this.searchUtils = searchUtils;
 	}
 
-
-    public String getCitationServiceUrl() {
-		return citationServiceUrl;
-	}
-
 	public void setCitationServiceUrl(String citationServiceUrl) {
 		this.citationServiceUrl = citationServiceUrl;
+	}
+
+	public void setBiocacheMediaBaseUrl(String biocacheMediaBaseUrl) {
+		this.biocacheMediaBaseUrl = biocacheMediaBaseUrl;
 	}
 }
