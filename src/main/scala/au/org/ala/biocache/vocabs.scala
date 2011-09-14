@@ -236,6 +236,23 @@ trait CentrePoints {
   }
 }
 
+trait ValueMap {
+
+  var map:Map[String,String] = _
+
+  def loadFromFile(filePath:String): Map[String, String] = {
+    scala.io.Source.fromURL(getClass.getResource(filePath), "utf-8").getLines.toList.map({ row =>
+      val values = row.split("\t")
+      values(0) -> values(1)
+    }).toMap
+  }
+}
+
+
+object StateProvinceToCountry extends ValueMap {
+  map = loadFromFile("/stateProvince2Countries.txt")
+}
+
 /**
  * Matching of coordinates for centre points for states.
  * This is for detecting auto-generated coordinates at very low accuracy.
