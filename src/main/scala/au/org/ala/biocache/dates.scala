@@ -171,7 +171,7 @@ class SingleDate {
 
   def baseFormats = Array("yyyy-MM-dd","yyyy/MM/dd")
 
-  def formats = baseFormats.map(f => Array(f, f + "'T'hh:mm'Z'")).flatten
+  def formats = baseFormats.map(f => Array(f, f + "'T'hh:mm'Z'", f + " hh:mm:ss")).flatten
 
   /**
    * Extraction method
