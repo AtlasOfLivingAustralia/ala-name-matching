@@ -45,7 +45,7 @@ object FlickrLoader extends DataLoader {
         l.load(dataResourceUid, Some(yesterday), Some(today), overwriteImages)
       } else if(lastWeek){
         val today = new Date
-        val sevenDaysAgo = DateUtils.addDays(today, -1)
+        val sevenDaysAgo = DateUtils.addDays(today, -7)
         l.load(dataResourceUid, Some(sevenDaysAgo), Some(today), overwriteImages)
       } else {
         l.load(dataResourceUid, startDate, endDate, overwriteImages)
@@ -194,8 +194,12 @@ class FlickrLoader extends DataLoader {
     val originalformat = photoElem.attribute("originalformat").getOrElse("jpg")
     val photoImageUrl = "http://farm" + farmId + ".static.flickr.com/" + serverId + "/" + photoId + "_" + photoSecret + "." + originalformat
 
-    //get the licence and rights fields
+    val datesElem = (xml \\ "dates")(0)
+    fr.event.eventDate = datesElem.attribute("taken").get.text
+    fr.occurrence.occurrenceRemarks = description
+    fr.occurrence.recordedBy = realname.head.text
 
+    //get the licence and rights fields
     val licence = licences.get(licenseID).get
     fr.occurrence.rights = licence.name
 
