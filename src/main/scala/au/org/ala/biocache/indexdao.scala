@@ -148,19 +148,7 @@ trait IndexDAO {
             "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
             "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
             "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation","sensitive", "coordinate_uncertainty","user_id") ++ elFields ++ clFields
-//    def getHeaderValues(): List[String] = {
-//        List("id", "occurrence_id", "data_hub_uid", "data_hub", "data_provider_uid", "data_provider", "data_resource_uid",
-//            "data_resource", "institution_uid", "institution_code", "institution_name",
-//            "collection_uid", "collection_code", "collection_name", "catalogue_number",
-//            "taxon_concept_lsid", "occurrence_date", "occurrence_year", "taxon_name", "common_name", "names_and_lsid",
-//            "rank", "rank_id", "raw_taxon_name", "raw_common_name", "multimedia", "image_url",
-//            "species_group", "country_code", "lft", "rgt", "kingdom", "phylum", "class", "order",
-//            "family", "genus", "species", "state", "imcra", "ibra", "places", "latitude", "longitude",
-//            "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
-//            "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
-//            "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
-//            "occurrence_remarks", "citation", "user_assertions", "collector") ++ FullRecordMapper.environmentalDefn.keySet.toList ++ FullRecordMapper.contextualDefn.keySet.toList
-//    }
+
 
             
      def getRawScientificName(map:Map[String,String]):String={
@@ -271,6 +259,9 @@ trait IndexDAO {
                     else
                         ""
                 }
+                
+                //set the geospatially kosher field false if there is not lat_long temporary hack until we fix up the storage for the kosher value
+                val geoKosher = if(latlon == "") "false" else map.getOrElse(FullRecordMapper.geospatialDecisionColumn, "")
 
                 return List(getValue("uuid", map),
                     getValue("rowKey", map),
@@ -329,7 +320,7 @@ trait IndexDAO {
                     getValue("typeStatus.p", map),
                     getValue("typeStatus", map),
                     getValue(FullRecordMapper.taxonomicDecisionColumn, map),
-                    getValue(FullRecordMapper.geospatialDecisionColumn, map),
+                    geoKosher,
                     getAssertions(map).reduceLeft(_ + "|" + _),
                     getValue("locationRemarks", map),
                     getValue("occurrenceRemarks", map),

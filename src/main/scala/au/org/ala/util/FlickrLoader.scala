@@ -19,12 +19,16 @@ object FlickrLoader extends DataLoader {
     var endDate: Option[Date] = None
     var overwriteImages = false
     var lastMonth = false
+    var lastDay = false
+    var lastWeek = false
 
     val parser = new OptionParser("load flickr resource") {
       arg("<data resource UID>", "The UID of the data resource to load", { v: String => dataResourceUid = v })
       opt("s", "startDate", "start date to harvest from in yyyy-MM-dd format", { v: String => startDate = Some(DateUtils.parseDate(v, Array("yyyy-MM-dd"))) })
       opt("e", "endDate", "end date in yyyy-MM-dd format", { v: String => endDate = Some(DateUtils.parseDate(v, Array("yyyy-MM-dd"))) })
       booleanOpt("lm", "harvestLastMonth", "Harvest the last month of records", { v: Boolean => lastMonth = v })
+      booleanOpt("ld", "harvestLastDay", "Harvest the last day of records", { v: Boolean => lastDay = v })
+      booleanOpt("lw", "harvestLastWeek", "Harvest the last week of records", { v: Boolean => lastWeek = v })
       booleanOpt("o", "overwrite", "overwrite images", { v: Boolean => overwriteImages = v })
     }
     if (parser.parse(args)) {
@@ -33,6 +37,14 @@ object FlickrLoader extends DataLoader {
         val today = new Date
         val monthAgo = DateUtils.addMonths(today, -1)
         l.load(dataResourceUid, Some(monthAgo), Some(today), overwriteImages)
+      } else if(lastDay){
+        val today = new Date
+        val monthAgo = DateUtils.addDays(today, -1)
+        l.load(dataResourceUid, Some(monthAgo), Some(today), overwriteImages)
+      } else if(lastWeek){
+        val today = new Date
+        val monthAgo = DateUtils.addDays(today, -1)
+        l.load(dataResourceUid, Some(monthAgo), Some(today), overwriteImages)
       } else {
         l.load(dataResourceUid, startDate, endDate, overwriteImages)
       }
@@ -40,15 +52,30 @@ object FlickrLoader extends DataLoader {
   }
 }
 
+
+case class FlickrLicence(id:String,name:String,url:String)
+
 class FlickrLoader extends DataLoader {
 
-  def load(dataResourceUid: String) {
-    load(dataResourceUid, None, None)
+  def load(dataResourceUid: String):Unit = load(dataResourceUid, None, None)
+
+  def retrieveLicenceMap(connectParams:Map[String,String]) : Map[String,FlickrLicence] = {
+    val infoPage = makeGetLicencesUrl(connectParams)
+    val xml = XML.loadString(scala.io.Source.fromURL(infoPage).mkString)
+    (xml \\ "license").map(el => {
+      val id = el.attribute("id").get.text
+      val name = el.attribute("name").get.text
+      val url = el.attribute("url").get.text
+      id -> FlickrLicence(id,name,url)
+    }).toMap
   }
 
-  def load(dataResourceUid: String, suppliedStartDate: Option[Date], suppliedEndDate: Option[Date], overwriteImages: Boolean = false) {
+  def load(dataResourceUid: String, suppliedStartDate: Option[Date], suppliedEndDate: Option[Date], overwriteImages: Boolean = false) :Unit ={
 
     val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+
+    val licences = retrieveLicenceMap(params)
+
     val keywords = params.getOrElse("keywords", "").split(",").map(keyword => keyword.trim.replaceAll(" ", "").toLowerCase).toList
 
     val endDate = suppliedEndDate.getOrElse({
@@ -79,7 +106,7 @@ class FlickrLoader extends DataLoader {
 
           try {
             //persist the occurrence with image metadata
-            val (photoPageUrl, imageUrl, fr, tags) = processPhoto(params, photoId)
+            val (photoPageUrl, imageUrl, fr, tags) = processPhoto(params, licences, photoId)
             if (isOfInterest(tags, keywords)) {
               load(dataResourceUid, fr, List(photoPageUrl))
               val (filePath, exists) = MediaStore.exists(fr.uuid, dataResourceUid, imageUrl)
@@ -115,12 +142,13 @@ class FlickrLoader extends DataLoader {
     index >= 0
   }
 
-  def processPhoto(connectParams: Map[String, String], photoId: String): (String, String, FullRecord, List[String]) = {
+  def processPhoto(connectParams: Map[String, String], licences: Map[String,FlickrLicence], photoId: String): (String, String, FullRecord, List[String]) = {
 
     //create an occurrence record
     val fr = new FullRecord
     val infoPage: String = makeGetInfoUrl(connectParams, photoId)
-    //println(url)
+
+    println(infoPage)
 
     val xml = XML.loadString(scala.io.Source.fromURL(infoPage).mkString)
     val listBuffer = new ListBuffer[String]
@@ -145,6 +173,7 @@ class FlickrLoader extends DataLoader {
     //use occurrenceDetails to store URI back to source - http://rs.tdwg.org/dwc/terms/#occurrenceDetails
     fr.occurrence.occurrenceDetails = htmlPhotoPage
 
+    val licenseID = (xml \\ "photo")(0).attribute("license").get.text.toString
     val title = (xml \\ "title")(0).text.toString
     val description = (xml \\ "description")(0).text.toString
     val (username, realname, location) = {
@@ -158,6 +187,12 @@ class FlickrLoader extends DataLoader {
     val photoSecret = photoElem.attribute("secret").get
     val originalformat = photoElem.attribute("originalformat").getOrElse("jpg")
     val photoImageUrl = "http://farm" + farmId + ".static.flickr.com/" + serverId + "/" + photoId + "_" + photoSecret + "." + originalformat
+
+    //get the licence and rights fields
+
+    val licence = licences.get(licenseID).get
+    fr.occurrence.rights = licence.name
+
     fr.occurrence.basisOfRecord = "Image"
     (fr.occurrence.occurrenceID, photoImageUrl, fr, listBuffer.toList)
   }
@@ -202,6 +237,10 @@ class FlickrLoader extends DataLoader {
     "?method=flickr.photos.getInfo" +
     "&api_key=" + connectParams("api_key") +
     "&photo_id=" + photoId
+
+  def makeGetLicencesUrl(connectParams: Map[String, String]): String = connectParams("url") +
+    "?method=flickr.photos.licenses.getInfo" +
+    "&api_key=" + connectParams("api_key")
 
   def getPhotoIdsForDateRange(connectParams: Map[String, String], startDate: Date, endDate: Date): List[String] = {
 

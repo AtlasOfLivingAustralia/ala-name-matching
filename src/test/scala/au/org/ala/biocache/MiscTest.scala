@@ -82,6 +82,18 @@ class MiscTest extends ConfigFunSuite {
         expect(30007){qas(0).code}
     }
     
+    test("Default DwC Values"){
+        val raw = new FullRecord
+        val processed = new FullRecord
+        raw.attribution.dataResourceUid = "dr354"
+        val qas = (new BasisOfRecordProcessor).process("test", raw,processed)
+        expect(20001){qas(0).code}
+        (new DefaultValuesProcessor).process("test", raw, processed)
+        expect("HumanObservation"){processed.occurrence.basisOfRecord}
+        val qas2 = (new BasisOfRecordProcessor).process("test", raw,processed)
+        expect(0){qas2.size}         
+    }
+    
     /*test("Layers Test" ){
         expect("ibra_merged"){Layers.idToNameMap("ibra")}
         expect("el790"){Layers.nameToIdMap("worldclim_bio_3")}

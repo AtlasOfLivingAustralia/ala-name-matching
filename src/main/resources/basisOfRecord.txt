@@ -249,6 +249,9 @@ checklist	RegionalChecklist
 RegionalChecklist	RegionalChecklist
 snd	Sound
 Sound	Sound
+DigitisedTrack	Sound
+DigitizedTrack	Sound
+Track	Sound
 wav	Sound
 mov	Video
 mp4	Video
@@ -256,4 +259,4 @@ mpg	Video
 avi	Video
 v	Video
 vid	Video
-Video	Video		
+Video	Video

@@ -29,7 +29,10 @@ object Processors {
 
   def foreach(proc: Processor => Unit) = processorMap.values.foreach(proc)
 
-  val processorMap = Map(
+//need to preserve the ordering of the Processors so that the default values are populated first  
+//also classification must be executed before location   
+ val processorMap = scala.collection.mutable.LinkedHashMap(        
+      "DEFAULT"-> new DefaultValuesProcessor,
       "IMAGE"-> new ImageProcessor,
       "ATTR" -> new AttributionProcessor,
       "CLASS"-> new ClassificationProcessor,
@@ -55,12 +58,42 @@ object Processors {
   }
 }
 
+/**     
+ * Maps the default values to the processed record when no raw value exists     
+ * This processor should be run before the others so that the default values are populated before reporting missing values      
+ */     
+class DefaultValuesProcessor extends Processor {        
+    def process(guid:String, raw:FullRecord, processed:FullRecord): Array[QualityAssertion]={       
+        //add the default dwc fields if their is no raw value for them.     
+        val dr = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)       
+        if(!dr.isEmpty){        
+            if(dr.get.defaultDwcValues != null){        
+                dr.get.defaultDwcValues.foreach({case(key,value)=>{     
+                    if(raw.getProperty(key).isEmpty){       
+                        //set the processed value to the default value      
+                        processed.setProperty(key, value)       
+                        if(!processed.getDefaultValuesUsed && !processed.getProperty(key).isEmpty)      
+                            processed.setDefaultValuesUsed(true)        
+                    }       
+                }})     
+            }       
+        }       
+        Array()     
+    }       
+    def getName = "default"     
+}
+
 class ImageProcessor extends Processor {
 
   //Regular expression used to parse an image URL - adapted from 
   //http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
   lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:jpg|gif|png|jpeg))$""".r
-  
+  lazy val soundParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:wav|mp3|ogg|flac))$""".r
+  lazy val videoParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:wmv|mp4|mpg|avi|mov))$""".r
+
+  val imageExtension = Array(".jpg",".gif",".png",".jpeg")
+  val soundExtension = Array(".wav",".mp3",".ogg",".flac")
+  val videoExtension = Array(".wmv",".mp4",".mpg",".avi",".mov")
   /**
    * validates that the associated media is a valid image url
    */
@@ -70,7 +103,10 @@ class ImageProcessor extends Processor {
     if(urls != null){      
       val aurls = urls.split(";").map(url=> url.trim)
       processed.occurrence.images = aurls.filter(isValidImageURL(_))
-      if(aurls.length != processed.occurrence.images.length)
+      processed.occurrence.sounds = aurls.filter(isValidSoundURL(_))
+      processed.occurrence.videos = aurls.filter(isValidVideoURL(_))
+
+      if(aurls.length != (processed.occurrence.images.length + processed.occurrence.sounds.length + processed.occurrence.videos.length))
           return Array(QualityAssertion(AssertionCodes.INVALID_IMAGE_URL, "URL can not be an image"))
     }
     Array()
@@ -78,8 +114,25 @@ class ImageProcessor extends Processor {
 
   def getName = "image"
 
+
   private def isValidImageURL(url:String) : Boolean = {
-    !imageParser.unapplySeq(url.trim).isEmpty || url.startsWith(MediaStore.rootDir)
+    !imageParser.unapplySeq(url.trim).isEmpty || isStoredMedia(imageExtension,url)
+  }
+
+  private def isValidSoundURL(url:String) : Boolean = {
+    !soundParser.unapplySeq(url.trim).isEmpty || isStoredMedia(soundExtension,url)
+  }
+
+  private def isValidVideoURL(url:String) : Boolean = {
+    !videoParser.unapplySeq(url.trim).isEmpty || isStoredMedia(videoExtension,url)
+  }
+
+  private def isStoredMedia(acceptedExtensions:Array[String], url:String) : Boolean = {
+     url.startsWith(MediaStore.rootDir) && endsWithOneOf(acceptedExtensions,url.toLowerCase)
+  }
+
+  private def endsWithOneOf(acceptedExtensions:Array[String], url:String) : Boolean = {
+    !(acceptedExtensions collectFirst { case x if url.endsWith(x) => x } isEmpty)
   }
 }
 
@@ -256,7 +309,7 @@ class EventProcessor extends Processor {
     }
 
     //if invalid date, add assertion
-    if (!validDayMonthYear && (processed.event.eventDate ==null || processed.event.eventDate == "")) {
+    if (!validYear && (processed.event.eventDate ==null || processed.event.eventDate == "")) {
       assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
     }
 
@@ -297,17 +350,9 @@ class BasisOfRecordProcessor extends Processor {
   def process(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
 
     if (raw.occurrence.basisOfRecord == null || raw.occurrence.basisOfRecord.isEmpty) {
-      //add a quality assertion
-      //check to see if there is a default value for this
-      val dr = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
-      if(!dr.isEmpty && dr.get.getDefaultDwcValues != null && dr.get.getDefaultDwcValues().contains("basisOfRecord")){
-        //the default balue will be one of the vocab
-        processed.occurrence.basisOfRecord = dr.get.getDefaultDwcValues()("basisOfRecord")
-        //TODO set the flag that default values have been used
-        processed.setDefaultValuesUsed(true)
-        Array[QualityAssertion]()
-      }
-      else
+      if(processed.occurrence.basisOfRecord != null && !processed.occurrence.basisOfRecord.isEmpty) 
+          Array[QualityAssertion]() 
+      else  //add a quality assertion
           Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,"Missing basis of record"))
     } else {
       val term = BasisOfRecord.matchTerm(raw.occurrence.basisOfRecord)
@@ -467,6 +512,7 @@ class LocationProcessor extends Processor {
     }
     //if the coordinateUncertainty is still empty populate it with the default
     // value (we don't test until now because the SDS will sometime include coordinate uncertainty)
+     //This step will pick up on default values because processed.location.coordinateUncertaintyInMeters will already be populated if a default value exists
     if (processed.location.coordinateUncertaintyInMeters == null) {
       processed.location.coordinateUncertaintyInMeters = "1000"
       assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, "Uncertainty was not supplied, using default value 1000")

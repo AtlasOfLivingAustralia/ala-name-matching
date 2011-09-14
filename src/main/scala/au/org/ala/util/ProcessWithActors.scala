@@ -94,7 +94,6 @@ val processor = new RecordProcessor
       batches+=1
     }
      println(count
-            
             + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f)
             + ", time taken for "+1000+" records: " + (finishTime - startTime).toFloat / 1000f
             + ", total time: "+ (finishTime - start).toFloat / 60000f +" minutes"
@@ -108,7 +107,6 @@ val processor = new RecordProcessor
       println(batches + " : " + getProcessedTotal(pool))
       Thread.sleep(50)
     }
-    
   }
   
   /**
@@ -186,7 +184,7 @@ val processor = new RecordProcessor
 
     //We can't shutdown the persistence manager until all of the Actors have completed their work
     while(batches > getProcessedTotal(pool)){
-      println(batches + " : " + getProcessedTotal(pool))
+      //println(batches + " : " + getProcessedTotal(pool))
       Thread.sleep(50)
     }
   }
@@ -216,7 +214,8 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
         }
         case batch:Array[(FullRecord,FullRecord)] => {
           received += 1
-          for((raw,processed) <- batch) { processor.processRecord(raw, processed) }
+          //for((raw,processed) <- batch) { processor.processRecord(raw, processed) }
+          batch.foreach({case (raw, processed) => processor.processRecord(raw, processed)})
           processedRecords += 1
         }
         case keys:Array[String]=>{
@@ -240,7 +239,6 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
               println("Killing (Actor.act) thread: "+id)
               exit()
             }
-            
         }
       }
     }

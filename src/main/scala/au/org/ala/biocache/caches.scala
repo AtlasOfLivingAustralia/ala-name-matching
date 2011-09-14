@@ -445,7 +445,7 @@ object LocationDAO {
    */
   def getByLatLon(latitude:String, longitude:String) : Option[(Location, EnvironmentalLayers, ContextualLayers)] = {
 
-    if (latitude==null && latitude.trim.length==0 && longitude==null && longitude.trim.length==0){
+    if (latitude == null || latitude.trim.length == 0 || longitude == null || longitude.trim.length == 0){
       return None
     }
 
