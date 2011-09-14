@@ -21,6 +21,7 @@ object FlickrLoader extends DataLoader {
     var lastMonth = false
     var lastDay = false
     var lastWeek = false
+    var updateCollectory = false
 
     val parser = new OptionParser("load flickr resource") {
       arg("<data resource UID>", "The UID of the data resource to load", { v: String => dataResourceUid = v })
@@ -30,6 +31,7 @@ object FlickrLoader extends DataLoader {
       booleanOpt("ld", "harvestLastDay", "Harvest the last day of records", { v: Boolean => lastDay = v })
       booleanOpt("lw", "harvestLastWeek", "Harvest the last week of records", { v: Boolean => lastWeek = v })
       booleanOpt("o", "overwrite", "overwrite images", { v: Boolean => overwriteImages = v })
+      booleanOpt("u", "updateCollectory", "Update the harvesting information in the collectory", { v: Boolean => updateCollectory = v })
     }
     if (parser.parse(args)) {
       val l = new FlickrLoader
@@ -39,20 +41,24 @@ object FlickrLoader extends DataLoader {
         l.load(dataResourceUid, Some(monthAgo), Some(today), overwriteImages)
       } else if(lastDay){
         val today = new Date
-        val monthAgo = DateUtils.addDays(today, -1)
-        l.load(dataResourceUid, Some(monthAgo), Some(today), overwriteImages)
+        val yesterday = DateUtils.addDays(today, -1)
+        l.load(dataResourceUid, Some(yesterday), Some(today), overwriteImages)
       } else if(lastWeek){
         val today = new Date
-        val monthAgo = DateUtils.addDays(today, -1)
-        l.load(dataResourceUid, Some(monthAgo), Some(today), overwriteImages)
+        val sevenDaysAgo = DateUtils.addDays(today, -1)
+        l.load(dataResourceUid, Some(sevenDaysAgo), Some(today), overwriteImages)
       } else {
         l.load(dataResourceUid, startDate, endDate, overwriteImages)
+      }
+
+      if (updateCollectory){
+        l.updateLastChecked(dataResourceUid)
       }
     }
   }
 }
 
-
+/** Class for holding details of the licences in Flickr */
 case class FlickrLicence(id:String,name:String,url:String)
 
 class FlickrLoader extends DataLoader {

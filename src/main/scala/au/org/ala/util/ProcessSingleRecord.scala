@@ -19,9 +19,12 @@ object ProcessSingleRecord {
             if(!rawRecord.isEmpty) {
                println("Processing record.....")
                processor.processRecordAndUpdate(rawRecord.get)
-               val processedRecord = Config.occurrenceDAO.getByUuid(rawRecord.get.uuid, au.org.ala.biocache.Processed)
+               val processedRecord = Config.occurrenceDAO.getByRowKey(rawRecord.get.rowKey, au.org.ala.biocache.Processed)
                val objectMapper = new ObjectMapper
-               println(objectMapper.writeValueAsString(processedRecord.get))
+               if(!processedRecord.isEmpty)
+                  println(objectMapper.writeValueAsString(processedRecord.get))
+               else
+                  println("Record not found")
             } else {
             	println("UUID or row key not stored....")
             }
