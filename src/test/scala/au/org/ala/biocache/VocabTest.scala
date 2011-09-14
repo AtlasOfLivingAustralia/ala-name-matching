@@ -11,6 +11,18 @@ import org.scalatest.Assertions.expect
 @RunWith(classOf[JUnitRunner])
 class VocabTest extends ConfigFunSuite {
 
+  test("State province mapping") {
+    expect("Australia") {
+      try {
+        println("############State provvince mapping = " + StateProvinceToCountry.map.getOrElse("New South Wales", ""))
+      } catch {
+        case e:Exception => e.printStackTrace()
+      }
+
+      StateProvinceToCountry.map.getOrElse("New South Wales", "")
+    }
+  }
+
   test("Basis of record matching"){
     expect("PreservedSpecimen"){ BasisOfRecord.matchTerm("speci").get.canonical}
     expect("PreservedSpecimen"){ BasisOfRecord.matchTerm("S").get.canonical}

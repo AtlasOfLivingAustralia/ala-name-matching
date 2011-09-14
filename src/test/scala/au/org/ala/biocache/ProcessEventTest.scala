@@ -2,6 +2,9 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+import java.text.SimpleDateFormat
+import java.util.Date
+import org.apache.commons.lang.time.DateUtils
 
 /**
  * Tests for event date parsing. To run these tests create a new scala application
@@ -114,7 +117,7 @@ class ProcessEventTest extends ConfigFunSuite {
     expect(null){ processed.event.month }
     expect("1978"){ processed.event.year }
 
-    expect(1){ assertions.size }
+    expect(0){ assertions.size }
   }
 
   test("invalid month test > 12") {
@@ -132,7 +135,7 @@ class ProcessEventTest extends ConfigFunSuite {
     expect(null){ processed.event.month }
     expect("1978"){ processed.event.year }
 
-    expect(1){ assertions.size }
+    expect(0){ assertions.size }
   }
 
   test("year = 11, month = 02, day = 01") {
@@ -167,5 +170,25 @@ class ProcessEventTest extends ConfigFunSuite {
     expect("1973"){ processed.event.year }
 
     expect(0){ assertions.size }
+  }
+
+  test("today"){
+    var raw = new FullRecord("1234", "1234")
+    var processed = new FullRecord("1234", "1234")
+    val sf = new SimpleDateFormat("yyyy-MM-dd")
+    raw.event.eventDate = sf.format(new Date())
+    val assertions = (new EventProcessor).process("1234", raw, processed)
+    expect(DateUtil.getCurrentYear.toString){ processed.event.year }
+    expect(0){ assertions.size }
+  }
+
+  test("tomorrow"){
+    var raw = new FullRecord("1234", "1234")
+    var processed = new FullRecord("1234", "1234")
+    val sf = new SimpleDateFormat("yyyy-MM-dd")
+    raw.event.eventDate = sf.format(DateUtils.addDays(new Date(),1))
+    val assertions = (new EventProcessor).process("1234", raw, processed)
+    expect(DateUtil.getCurrentYear.toString){ processed.event.year }
+    expect(true){ assertions.size > 0 }
   }
 }
