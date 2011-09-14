@@ -194,4 +194,13 @@ class DateParserTest extends FunSuite {
       expect("03"){ result.get.startMonth }
       expect(true){ result.get.singleDate }
   }
+
+  test("2011-09-13 09:29:08"){
+      val result = DateParser.parseDate("2011-09-13 09:29:08")
+      expect(false){ result.isEmpty }
+      expect("2011"){ result.get.startYear }
+      expect("09"){ result.get.startMonth }
+      expect("13"){ result.get.startDay }
+      expect(true){ result.get.singleDate }
+  }
 }
