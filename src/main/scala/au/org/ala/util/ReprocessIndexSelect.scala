@@ -22,7 +22,9 @@ object ReprocessIndexSelect {
 
         if (parser.parse(args)) {
             if(!query.isEmpty){
-                reprocessindex(query.get, threads, exist, startUuid)
+              reprocessindex(query.get, threads, exist, startUuid)
+            } else {
+              parser.showUsage
             }
         }
     }
