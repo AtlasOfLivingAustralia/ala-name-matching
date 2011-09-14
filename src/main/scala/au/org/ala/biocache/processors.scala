@@ -461,8 +461,19 @@ class LocationProcessor extends Processor {
       val stateTerm = StateProvinces.matchTerm(raw.location.stateProvince)
       if (!stateTerm.isEmpty) {
         processed.location.stateProvince = stateTerm.get.canonical
+        processed.location.country = StateProvinceToCountry.map.getOrElse(processed.location.stateProvince, "")
       }
     }
+
+    //Only process the raw country value if no latitude and longitude is provided
+    if (processed.location.country == null && raw.location.decimalLatitude == null && raw.location.decimalLongitude == null) {
+      //process the supplied state
+      val countryTerm = Countries.matchTerm(raw.location.country)
+      if (!countryTerm.isEmpty) {
+        processed.location.country = countryTerm.get.canonical
+      }
+    }
+
     assertions.toArray
   }
 
