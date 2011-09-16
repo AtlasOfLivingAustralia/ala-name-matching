@@ -260,8 +260,8 @@ trait IndexDAO {
                         ""
                 }
                 
-                //set the geospatially kosher field false if there is not lat_long temporary hack until we fix up the storage for the kosher value
-                val geoKosher = if(latlon == "") "false" else map.getOrElse(FullRecordMapper.geospatialDecisionColumn, "")
+                //Only set the geospatially kosher field if there are coordinates supplied
+                val geoKosher = if(slat=="" &&slon == "") "" else map.getOrElse(FullRecordMapper.geospatialDecisionColumn, "")
 
                 return List(getValue("uuid", map),
                     getValue("rowKey", map),
