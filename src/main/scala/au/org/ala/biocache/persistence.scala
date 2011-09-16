@@ -421,6 +421,9 @@ class CassandraPersistenceManager @Inject() (
        //write them out to the output stream
        val keys = List(columnMap.keySet.toArray : _*)
 
+       //identify el* cl* fields
+       val locFields = fields.filter( a => a.startsWith("el") || a.startsWith("cl") )
+
        for(key<-keys){
          val columnsList = columnMap.get(key)
          val fieldValues = columnsList.map(column => (new String(column.getName, "UTF-8"),new String(column.getValue, "UTF-8"))).toArray
@@ -428,6 +431,16 @@ class CassandraPersistenceManager @Inject() (
          for(fieldValue <-fieldValues){
            map(fieldValue._1) = fieldValue._2
          }
+
+         //add el* cl* fields
+         if(!locFields.isEmpty) {
+             val locSome = get(map.getOrElse("decimalLatitude.p","") + "|" + map.getOrElse("decimalLongitude.p",""),"loc")
+             if (locSome != None) {
+                val locMap = locSome.get
+                locFields.foreach(lf => if(locMap.contains(lf)) map += (lf -> locMap(lf)))
+             }
+         }
+
          proc(map.toMap)
        }
      }
