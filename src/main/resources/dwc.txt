@@ -1,171 +1,171 @@
-class   classs  klass
-institutionID	institution id
-collectionID	collection id
-datasetID	dataset id
-institutionCode	institution code
-collectionCode	collection code
-datasetName	dataset name
-ownerInstitutionCode
-basisOfRecord	recordBasis
-informationWithheld
-dataGeneralizations
-dynamicProperties
-occurrenceID	ID	Record ID
-catalogNumber	catalogNumberNumeric	catalogueNumber	ID	strainNumber
-occurrenceDetails
-occurrenceRemarks	notes	remarks	comment	comments
-recordNumber	collectorNumber
-recordedBy	collector
-individualID
-individualCount	Number of Individuals
-sex	gender
-lifeStage
-reproductiveCondition
-behavior	behaviour
-establishmentMeans	nativeness
-occurrenceStatus
-preparations	PreparationType
-disposition
-otherCatalogNumbers	PreviousCatalogNumber
-previousIdentifications
+acceptedNameUsage	acceptedTaxon
+acceptedNameUsageID	acceptedTaxonID
 associatedMedia
-associatedReferences	RelatedCatalogItem
 associatedOccurrences
+associatedReferences	RelatedCatalogItem
 associatedSequences
 associatedTaxa
-eventID
-samplingProtocol
-samplingEffort
-eventDate	earliestDateCollected	latestDateCollected	sampleDate
-eventTime	time
-startDayOfYear
-endDayOfYear
-year	YearCollected
-month	MonthCollected
-day	DayCollected
-verbatimEventDate
-habitat
-fieldNumber
-fieldNotes
-eventRemarks
-locationID
-higherGeographyID
-higherGeography
+basisOfRecord	recordBasis
+bed
+behavior	behaviour
+catalogNumber	catalogNumberNumeric	catalogueNumber	ID	strainNumber
+class   classs  klass
+classs	_class	class	klass	clazz
+collectionCode	collection code
+collectionID	collection id
 continent	
-waterBody	ContinentOcean
-islandGroup
-island
+coordinatePrecision
+coordinateUncertaintyInMeters	accuracy
 country	
 countryCode	isoCountryCode
-stateProvince	state	province	territory
 county
-municipality	city
-locality	address
-verbatimLocality
-verbatimElevation	elevation	altitude
-minimumElevationInMeters	minimum elevation in metres	min elevation in metres
-maximumElevationInMeters	maximum elevation in metres	max elevation in metres
-verbatimDepth	depth
-minimumDepthInMeters	MinimumDepth
-maximumDepthInMeters	MaximumDepth
-minimumDistanceAboveSurfaceInMeters
-maximumDistanceAboveSurfaceInMeters
-locationAccordingTo
-locationRemarks
-verbatimCoordinates
-verbatimLatitude
-verbatimLongitude
-verbatimCoordinateSystem
-verbatimSRS
+dataGeneralizations
+datasetID	dataset id
+datasetName	dataset name
+dateIdentified	identificationDate
+day	DayCollected
 decimalLatitude	latitude	lat
 decimalLongitude	longitude	long	lon
-geodeticDatum	datum
-coordinateUncertaintyInMeters	accuracy
-coordinatePrecision
-pointRadiusSpatialFit
-footprintWKT	wkt
+disposition
+dynamicProperties
+earliestAgeOrLowestStage
+earliestEonOrLowestEonothem
+earliestEpochOrLowestSeries
+earliestEraOrLowestErathem
+earliestPeriodOrLowestSystem
+endDayOfYear
+establishmentMeans	nativeness
+eventDate	earliestDateCollected	latestDateCollected	sampleDate
+eventID
+eventRemarks
+eventTime	time
+family	fam
+fieldNotes
+fieldNumber
 footprintSRS	srs
 footprintSpatialFit
-georeferencedBy
+footprintWKT	wkt
+formation
+genus	gen
+geodeticDatum	datum
+geologicalContextID
 georeferenceProtocol
+georeferenceRemarks
 georeferenceSources
 georeferenceVerificationStatus
-georeferenceRemarks
-geologicalContextID
-earliestEonOrLowestEonothem
-latestEonOrHighestEonothem
-earliestEraOrLowestErathem
-latestEraOrHighestErathem
-earliestPeriodOrLowestSystem
-latestPeriodOrHighestSystem
-earliestEpochOrLowestSeries
-latestEpochOrHighestSeries
-earliestAgeOrLowestStage
-latestAgeOrHighestStage
-lowestBiostratigraphicZone
-highestBiostratigraphicZone
-lithostratigraphicTerms
+georeferencedBy
 group
-formation
-member
-bed
+habitat
+higherClassification
+higherGeography
+higherGeographyID
+highestBiostratigraphicZone
+ibra	bioregion	ibra region
 identificationID
-identifiedBy
-dateIdentified	identificationDate
+identificationQualifier
 identificationReferences
 identificationRemarks
-identificationQualifier
-typeStatus	typification
-taxonID	nameUsageID
-scientificNameID	nameID	sciNameID	Taxon Rank - matched
-acceptedNameUsageID	acceptedTaxonID
-vparentNameUsageID	parentTaxonID	higherTaxonID	higherNameUsageID
-originalNameUsageID	originalNameID	originalTaxonID	basionymID
-nameAccordingToID	taxonAccordingToID
-namePublishedInID
-taxonConceptID	Match Taxon Concept GUID
-scientificName	sci name	taxon name	taxonomic name	bionomial	bionomial name
-acceptedNameUsage	acceptedTaxon
-parentNameUsage	parentTaxon	higherTaxon	higherNameUsage
-originalNameUsage	originalName	originalTaxon	basionym
-nameAccordingTo	taxonAccordingTo
-namePublishedIn
-higherClassification
-kingdom
-phylum
-classs	_class	class	klass	clazz
-order	bioorder
-family	fam
-genus	gen
-species	bionomial	binomial name	sp	species name
-subspecies	trinomial	trinomial name	spp
-subgenus	sub genus
-specificEpithet
+identifiedBy
+imcra	imcra region
+individualCount	Number of Individuals
+individualID
+informationWithheld
 infraspecificEpithet
-taxonRank	rank    taxonomic rank
-verbatimTaxonRank
-scientificNameAuthorship	author	authorship	ScientificNameAuthor
-vernacularName	commonName	common
-nomenclaturalCode
-taxonomicStatus
-nomenclaturalStatus
-taxonRemarks	taxonRemark
-resourceRelationshipID
-resourceID
-relatedResourceID
-relationshipOfResource	RelationshipType
-relationshipAccordingTo
-relationshipEstablishedDate
-relationshipRemarks
-measurementID
-measurementType
-measurementValue
+institutionCode	institution code
+institutionID	institution id
+island
+islandGroup
+kingdom
+latestAgeOrHighestStage
+latestEonOrHighestEonothem
+latestEpochOrHighestSeries
+latestEraOrHighestErathem
+latestPeriodOrHighestSystem
+lga	Local Gov	Local Government Area
+lifeStage
+lithostratigraphicTerms
+locality	address
+locationAccordingTo
+locationID
+locationRemarks
+lowestBiostratigraphicZone
+maximumDepthInMeters	MaximumDepth
+maximumDistanceAboveSurfaceInMeters
+maximumElevationInMeters	maximum elevation in metres	max elevation in metres
 measurementAccuracy
-measurementUnit
-measurementDeterminedDate	sampleDate
 measurementDeterminedBy	sampledBy
+measurementDeterminedDate	sampleDate
+measurementID
 measurementMethod
 measurementRemarks
-ibra	bioregion	ibra region
-imcra	imcra region
-lga	Local Gov	Local Government Area
+measurementType
+measurementUnit
+measurementValue
+member
+minimumDepthInMeters	MinimumDepth
+minimumDistanceAboveSurfaceInMeters
+minimumElevationInMeters	minimum elevation in metres	min elevation in metres
+month	MonthCollected
+municipality	city
+nameAccordingTo	taxonAccordingTo
+nameAccordingToID	taxonAccordingToID
+namePublishedIn
+namePublishedInID
+nomenclaturalCode
+nomenclaturalStatus
+occurrenceDetails
+occurrenceID	ID	Record ID
+occurrenceRemarks	notes	remarks	comment	comments
+occurrenceStatus
+order	bioorder
+originalNameUsage	originalName	originalTaxon	basionym
+originalNameUsageID	originalNameID	originalTaxonID	basionymID
+otherCatalogNumbers	PreviousCatalogNumber
+ownerInstitutionCode
+parentNameUsage	parentTaxon	higherTaxon	higherNameUsage
+phylum
+pointRadiusSpatialFit
+preparations	PreparationType
+previousIdentifications
+recordNumber	collectorNumber
+recordedBy	collector
+relatedResourceID
+relationshipAccordingTo
+relationshipEstablishedDate
+relationshipOfResource	RelationshipType
+relationshipRemarks
+reproductiveCondition
+resourceID
+resourceRelationshipID
+samplingEffort
+samplingProtocol
+scientificName	sci name	taxon name	taxonomic name	bionomial	bionomial name	binomial	binomial name
+scientificNameAuthorship	author	authorship	ScientificNameAuthor
+scientificNameID	nameID	sciNameID	Taxon Rank - matched
+sex	gender
+species	bionomial	binomial name	sp	species name
+specificEpithet
+startDayOfYear
+stateProvince	state	province	territory
+subgenus	sub genus
+subspecies	trinomial	trinomial name	spp
+taxonConceptID	Match Taxon Concept GUID
+taxonID	nameUsageID
+taxonRank	rank    taxonomic rank
+taxonRemarks	taxonRemark
+taxonomicStatus
+typeStatus	typification
+verbatimCoordinateSystem
+verbatimCoordinates
+verbatimDepth	depth
+verbatimElevation	elevation	altitude
+verbatimEventDate
+verbatimLatitude
+verbatimLocality
+verbatimLongitude
+verbatimSRS
+verbatimTaxonRank
+vernacularName	commonName	common
+vparentNameUsageID	parentTaxonID	higherTaxonID	higherNameUsageID
+waterBody	ContinentOcean
+year	YearCollected
