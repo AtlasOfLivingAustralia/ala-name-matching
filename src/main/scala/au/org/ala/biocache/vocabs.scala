@@ -267,6 +267,10 @@ object CountryCentrePoints extends CentrePoints {
   val vocab = Countries
 }
 
+object TagsToDwc extends ValueMap {
+  map = loadFromFile("/tagsToDwc.txt")
+}
+
 object DwC extends Vocab {
   val junk = List("matched", "parsed", "processed", "-", "\\.","_")
   override def matchTerm(string2Match: String) = {
