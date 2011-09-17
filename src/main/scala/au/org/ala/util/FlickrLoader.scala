@@ -148,6 +148,7 @@ class FlickrLoader extends DataLoader {
     index >= 0
   }
 
+
   def processPhoto(connectParams: Map[String, String], licences: Map[String,FlickrLicence], photoId: String): (String, String, FullRecord, List[String]) = {
 
     //create an occurrence record
@@ -156,20 +157,24 @@ class FlickrLoader extends DataLoader {
 
     println(infoPage)
 
-    val xml = XML.loadString(scala.io.Source.fromURL(infoPage).mkString)
     val listBuffer = new ListBuffer[String]
+    val xml = XML.loadString(scala.io.Source.fromURL(infoPage).mkString)
+    //val listBuffer = new ListBuffer[String]
     //get the tags
     val tags = (xml \\ "tag").foreach(el => {
       val raw = el.attribute("raw")
       //println(raw.get.text)
       if (!raw.isEmpty && raw.get.text.contains("=")) {
-        //is it a machine tag - remove namespace
-        val (tagName, tagValue) = parseMachineTag(raw.get.text.trim)
+        //parse machine tage
+        val (namespace, tagName, tagValue) = parseMachineTag(raw.get.text.trim)
         listBuffer += tagValue
-
-        tagName match {
-          case Some(term) => fr.setNestedProperty(term, tagValue)
-          case None => logger.debug("unmatched : " + raw.get.text.trim)
+        //match to darwin core terms
+        if (!tagName.isEmpty){
+          val dwcTerm = matchDwcTerm(namespace, tagName.get)
+          dwcTerm match {
+            case Some(term) => fr.setNestedProperty(term, tagValue)
+            case None => logger.debug("unmatched : " + raw.get.text.trim)
+          }
         }
       }
     })
@@ -207,7 +212,16 @@ class FlickrLoader extends DataLoader {
     (fr.occurrence.occurrenceID, photoImageUrl, fr, listBuffer.toList)
   }
 
-  def parseMachineTag(tag: String): (Option[String], String) = {
+  def matchDwcTerm(namespace:Option[String], tagName:String) : Option[String] = DwC.matchTerm(tagName) match {
+    case Some(term) => Some(term.canonical)
+    case None => TagsToDwc.map.get(namespace.getOrElse("") +":" + tagName)
+  }
+
+  /**
+   * Splits the tags into namespace, name and value
+   *
+   */
+  def parseMachineTag(tag: String): (Option[String], Option[String], String) = {
     //println(tag)
     if (tag.contains("=")) {
       val (name, value) = {
@@ -221,14 +235,14 @@ class FlickrLoader extends DataLoader {
       if (name.contains(":")) {
         val split = name.split(':')
         split.length match {
-          case 2 => (Some(split(1).toLowerCase.trim), value)
-          case _ => (None, value)
+          case 2 => (Some(split(0).toLowerCase.trim), Some(split(1).toLowerCase.trim), value)
+          case _ => (None, None, value)
         }
       } else {
-        (Some(name), value)
+        (None, Some(name), value)
       }
     } else {
-      (None, tag)
+      (None, None, tag)
     }
   }
 

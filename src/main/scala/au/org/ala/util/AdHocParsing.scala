@@ -206,7 +206,7 @@ object AdHocParser {
     val matchedDwc = DwC.retrieveCanonicalsOrNothing(values.toList)
     val nofMatched = matchedDwc.filter(x => x.size > 0).size
 
-    if ( (nofMatched.toFloat /values.size.toFloat)  < 0.5) {
+    if (nofMatched > 4 || (nofMatched.toFloat /values.size.toFloat)  < 0.25) {
 
       val parsedValues = {
         val parsedValues = parse(values)
