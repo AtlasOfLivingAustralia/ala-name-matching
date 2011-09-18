@@ -12,15 +12,7 @@ import org.scalatest.Assertions.expect
 class VocabTest extends ConfigFunSuite {
 
   test("State province mapping") {
-    expect("Australia") {
-      try {
-        println("############State provvince mapping = " + StateProvinceToCountry.map.getOrElse("New South Wales", ""))
-      } catch {
-        case e:Exception => e.printStackTrace()
-      }
-
-      StateProvinceToCountry.map.getOrElse("New South Wales", "")
-    }
+    expect("Australia") { StateProvinceToCountry.map.getOrElse("New South Wales", "")}
   }
 
   test("Basis of record matching"){
@@ -116,5 +108,9 @@ class VocabTest extends ConfigFunSuite {
          DwC.matchTerm(name).isEmpty
        }
      })
+  }
+
+  test("id maps to catalogNumber"){
+    expect("occurrenceID"){DwC.matchTerm("id").get.canonical}
   }
 }

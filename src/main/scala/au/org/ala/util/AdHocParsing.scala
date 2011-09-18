@@ -137,7 +137,7 @@ object AdHocParser {
   def areColumnHeaders(list:Array[String]) : Boolean = {
     val matchedCount = DwC.retrieveCanonicalsOrNothing(list.toList).count(x => x != "")
     //if not try and match them
-    matchedCount > (list.size/2)
+    matchedCount > (list.size/3)
   }
 
   def processColumnHeaders(list: Array[String]): Array[String] = {
@@ -154,6 +154,8 @@ object AdHocParser {
       t
     }
   }
+
+  def mapColumnHeaders(list: Array[String]): Array[String] = DwC.retrieveCanonicalsOrNothing(list.toList).toArray
 
   def processLine(hdrs: Array[String], values: Array[String]): ParsedRecord = {
     val tuples = (hdrs zip values).toMap
