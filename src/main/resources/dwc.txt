@@ -158,7 +158,7 @@ typeStatus	typification
 verbatimCoordinateSystem
 verbatimCoordinates
 verbatimDepth	depth
-verbatimElevation	elevation	altitude
+verbatimElevation	elevation	altitude	alt
 verbatimEventDate
 verbatimLatitude
 verbatimLocality
