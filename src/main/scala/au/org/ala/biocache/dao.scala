@@ -19,7 +19,7 @@ trait OccurrenceDAO {
      
     val qaEntityName ="qa"
 
-    def setUuidDeleted(uuid: String, del: Boolean): Unit
+    def setDeleted(rowKey: String, del: Boolean): Unit
 
     def getRowKeyFromUuid(uuid:String):Option[String]
 
@@ -50,6 +50,8 @@ trait OccurrenceDAO {
     def pageOverSelectAll(version: Version, proc: ((Option[FullRecord]) => Boolean),fields: Array[String],startKey:String="", pageSize: Int = 1000): Unit
 
     def pageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
+    
+    def pageOverUndeletedRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
 
     def addRawOccurrenceBatch(fullRecords: Array[FullRecord]): Unit
 
@@ -325,6 +327,25 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             //pass all version to the procedure, wrapped in the Option
             proc(Some(raw, processed))
         },startKey,endKey, pageSize)
+    }
+    /**
+     * Iterate over the undeleted occurrences. Prevents overhead of processing records that are deleted. Also it is quicker to get a smaller 
+     * number of columns.  Thus only get all the columns for record that need to be processed.
+     */
+    def pageOverUndeletedRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000){
+        persistenceManager.pageOverSelect(entityName, (guid, map)=>{
+            val deleted = map.getOrElse(FullRecordMapper.deletedColumn,"false")            
+            if(deleted.equals("false")){
+                val recordmap = persistenceManager.get(map.get("rowKey").get,entityName)                
+                if(!recordmap.isEmpty){
+                    val raw = FullRecordMapper.createFullRecord(guid, recordmap.get, Versions.RAW)
+                    val processed = FullRecordMapper.createFullRecord(guid, recordmap.get, Versions.PROCESSED)
+                    //pass all version to the procedure, wrapped in the Option
+                    proc(Some(raw, processed))
+                }
+            }
+            true
+        }, startKey, endKey,pageSize, "uuid", "rowKey", FullRecordMapper.deletedColumn)
     }
 
     /**
@@ -765,8 +786,8 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Set this record to deleted.
      */
-    def setUuidDeleted(uuid: String, del: Boolean) = {
-        persistenceManager.put(uuid, entityName, FullRecordMapper.deletedColumn, del.toString)
+    def setDeleted(rowKey: String, del: Boolean) = {
+        persistenceManager.put(rowKey, entityName, FullRecordMapper.deletedColumn, del.toString)
     }
     /**
      * Returns the rowKey based on the supplied uuid

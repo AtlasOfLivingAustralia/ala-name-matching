@@ -18,6 +18,7 @@ import scala.actors.Actor
 import scala.collection.mutable.ArrayBuffer
 import java.util.Date
 import java.io.OutputStream
+import org.apache.commons.lang.StringUtils
 
 
 
@@ -69,14 +70,12 @@ trait IndexDAO {
      */
     def removeFromIndex(field:String, values:String)
     /** Deletes all the records that satisfy the supplied query*/
-    def removeByQuery(query:String)
+    def removeByQuery(query:String, commit:Boolean=true)
 
     /**
      * Perform
      */
     def finaliseIndex(optimise:Boolean=false, shutdown:Boolean=true)
-
-    //def stopThread
 
     def getValue(field: String, map: Map[String, String]): String = {
         val value = map.get(field)
@@ -185,7 +184,7 @@ trait IndexDAO {
             //get the lat lon values so that we can determine all the point values
             val deleted = getValue(FullRecordMapper.deletedColumn, map)
             //only add it to the index is it is not deleted
-            if (!deleted.equals("true")) {
+            if (!deleted.equals("true") && map.size>1) {
                 var slat = getValue("decimalLatitude.p", map)
                 var slon = getValue("decimalLongitude.p", map)
                 var latlon = ""
@@ -464,7 +463,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         true
     }
 
-    def reload = thread ! "reload"
+    def reload = cc.reload("")
 
     def emptyIndex() {
         init
@@ -487,11 +486,12 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         }
     }
     
-    def removeByQuery(query:String) ={
+    def removeByQuery(query:String, commit:Boolean = true) ={
         init
         try{
             solrServer.deleteByQuery(query)
-            solrServer.commit
+            if(commit)
+                solrServer.commit
         }
         catch{
             case e:Exception =>e.printStackTrace
@@ -575,7 +575,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         //val header = getHeaderValues()
         if(shouldIndex(map, startDate)){
             val values = getOccIndexModel(guid, map)
-            if(values.length != header.length){
+            if(values.length >0 &&values.length != header.length){
               println("values don't matcher header: " +values.length+":"+header.length+", values:header")
               println(header)
               println(values)
@@ -602,9 +602,10 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
                  solrServer.commit
                }
                else{
-                 if(values(0) == "" || values(0) == null)
-                   println("Unable to add doc with missing uuid " + values(1))
-                 else
+//                 if(values(0) == "" || values(0) == null)
+//                   println("Unable to add doc with missing uuid " + values(1))
+//                 else
+                 if(!StringUtils.isEmpty(values(0)))
                     solrDocList.add(doc)
     
                 if (solrDocList.size == 10000) {

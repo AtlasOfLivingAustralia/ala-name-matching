@@ -109,10 +109,23 @@ val processor = new RecordProcessor
     }
   }
   
+
+  def performPaging(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000, checkDeleted:Boolean=false){
+      if(checkDeleted){
+          occurrenceDAO.pageOverUndeletedRawProcessed(rawAndProcessed => {
+              proc(rawAndProcessed)
+          },startKey,endKey)
+      }
+      else{
+          occurrenceDAO.pageOverRawProcessed(rawAndProcessed => {
+              proc(rawAndProcessed)
+          },startKey,endKey)
+      }
+  }
   /**
    * Process the records using the supplied number of threads
    */
-  def processRecords(threads: Int, firstKey:Option[String], dr: Option[String]): Unit = {
+  def processRecords(threads: Int, firstKey:Option[String], dr: Option[String], checkDeleted:Boolean=false): Unit = {
     
     val endUuid = if(dr.isEmpty) "" else dr.get +"|~"
     
@@ -141,7 +154,8 @@ val processor = new RecordProcessor
     var buff = new ArrayBuffer[(FullRecord,FullRecord)]
 
     //occurrenceDAO.pageOverAll(Raw, fullRecord => {
-    occurrenceDAO.pageOverRawProcessed(rawAndProcessed => {
+    //occurrenceDAO.pageOverRawProcessed(rawAndProcessed => {
+    performPaging(rawAndProcessed=>{
     if(guid == "")
       println("First rowKey processed: " + rawAndProcessed.get._1.rowKey)
       guid = rawAndProcessed.get._1.rowKey
@@ -170,7 +184,7 @@ val processor = new RecordProcessor
         startTime = System.currentTimeMillis
       }
       true //indicate to continue
-    }, startUuid, endUuid)
+    }, startUuid, endUuid, checkDeleted=checkDeleted)
     
     println("Last row key processed: " + guid)
     //add the remaining records from the buff

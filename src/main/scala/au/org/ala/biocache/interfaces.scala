@@ -230,10 +230,19 @@ object Store {
   def optimiseIndex() :String = {
       val start = System.currentTimeMillis
       readOnly = true
-      val indexString =Config.indexDAO.optimise
-      val finished = System.currentTimeMillis
-      readOnly = false
-      "Optimised in " + (finished -start).toFloat / 60000f + " minutes.\n" +indexString 
+      try{
+          val indexString =Config.indexDAO.optimise
+          val finished = System.currentTimeMillis
+          readOnly = false
+          "Optimised in " + (finished -start).toFloat / 60000f + " minutes.\n" +indexString
+         }
+      catch{
+          case e:Exception => {
+              //report error message and take out of readOnly
+              readOnly = false
+              e.getMessage
+              }
+      }
   }
 
   /**
@@ -244,6 +253,10 @@ object Store {
           IndexRecords.index(None, Some(dataResource), false, false, Some(startDate))
       else
           throw new Exception("Must supply data resource and start date")
+  }
+  
+  def reopenIndex(){
+      Config.indexDAO.reload
   }
 
   /**
