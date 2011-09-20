@@ -13,6 +13,7 @@ object FullRecordMapper {
     val userQualityAssertionColumn = "userQualityAssertion"
     val geospatialDecisionColumn = "geospatiallyKosher"
     val taxonomicDecisionColumn = "taxonomicallyKosher"
+    val userVerifiedColumn ="userVerified"
     val locationDeterminedColumn ="locationDetermined"
     val defaultValuesColumn = "defaultValuesUsed"    
     val alaModifiedColumn = "lastModifiedTime"
@@ -110,6 +111,7 @@ object FullRecordMapper {
                     		}
                     	}
                     }
+                    case it if userVerifiedColumn.equals(it) => fullRecord.userVerified = "true".equals(fieldValue)
                     case it if taxonomicDecisionColumn.equals(it) => fullRecord.taxonomicallyKosher = "true".equals(fieldValue) 
                     case it if geospatialDecisionColumn.equals(it) => fullRecord.geospatiallyKosher = "true".equals(fieldValue)
                     case it if defaultValuesColumn.equals(it) => fullRecord.defaultValuesUsed = "true".equals(fieldValue)

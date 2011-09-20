@@ -453,7 +453,7 @@ sealed case class ErrorCode(@BeanProperty name:String, @BeanProperty code:Int, @
  * Assertion codes for records. These codes are a reflection of http://bit.ly/evMJv5
  */
 object AssertionCodes {
-
+  
   //geospatial issues
   val GEOSPATIAL_ISSUE = ErrorCode("geospatialIssue",0,true,"Geospatial issue")  // general purpose option
   val NEGATED_LATITUDE = ErrorCode("negatedLatitude",1,false,"Latitude is negated")
@@ -514,6 +514,10 @@ object AssertionCodes {
   val MISSING_COLLECTION_DATE = ErrorCode("missingCollectionDate",30008,false,"Missing collection date")
   val DAY_MONTH_TRANSPOSED = ErrorCode("dayMonthTransposed",30009,false,"Day and month transposed")
 
+  //verified type - this is a special code 
+  val VERIFIED = ErrorCode("userVerified", 50000, true, "Record Verified by collection manager")
+  
+  
   //all the codes
   val all = retrieveAll
 
@@ -548,6 +552,8 @@ object AssertionCodes {
   
   def getByName(name:String) :Option[ErrorCode] = all.find(errorCode => errorCode.name == name)
 
+  def isVerified(assertion:QualityAssertion) :Boolean = assertion.code == VERIFIED.code
+  
   /** Is it geospatially kosher */
   def isGeospatiallyKosher (assertions:Array[QualityAssertion]) : Boolean = {
     assertions.filter(ass => {
@@ -560,6 +566,14 @@ object AssertionCodes {
           false
        }
     }).isEmpty
+  }
+   /** Is it geospatially kosher based on a list of codes that have been asserted */
+  def isGeospatiallyKosher(assertions:Array[Int]):Boolean ={
+      //a list of codes that were asserted is provided.
+      assertions.filter(qa=> {
+          val code = AssertionCodes.geospatialCodes.find(c => c.code == qa)          
+          !code.isEmpty && code.get.isFatal
+      }).isEmpty
   }
 
   /** Is it taxonomically kosher */
@@ -575,6 +589,16 @@ object AssertionCodes {
        }
     }).isEmpty
   }
+  
+  /** Is it taxonomically kosher based on a list of codes that have been asserted */
+  def isTaxonomicallyKosher(assertions:Array[Int]):Boolean ={
+      //a list of codes that were asserted is provided.
+      assertions.filter(qa=> {
+          val code = AssertionCodes.taxonomicCodes.find(c => c.code == qa)
+          !code.isEmpty && code.get.isFatal
+      }).isEmpty
+  }
+  
 }
 
 object Layers{

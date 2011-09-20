@@ -940,6 +940,7 @@ class FullRecord (
   @BeanProperty var geospatiallyKosher:Boolean = true,
   @BeanProperty var taxonomicallyKosher:Boolean = true,
   @BeanProperty var deleted:Boolean = false,
+  @BeanProperty var userVerified:Boolean = false,
   @BeanProperty var lastModifiedTime:String ="")
   extends Cloneable with CompositePOSO {
     
@@ -953,6 +954,15 @@ class FullRecord (
 
   def this() = this(null,null,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
       new Measurement, new EnvironmentalLayers, new ContextualLayers, Array())
+  /**
+   * CReates an empty new Full record based on this one to be used in Processing.
+   * Initialises the userVerified and ids for use in processing
+   */
+  def createNewProcessedRecord : FullRecord = {
+      val record = new FullRecord(this.rowKey, this.uuid)
+      record.userVerified = this.userVerified
+      record
+   }
 
   override def clone : FullRecord = new FullRecord(this.rowKey,this.uuid,
       occurrence.clone,classification.clone,location.clone,event.clone,attribution.clone,

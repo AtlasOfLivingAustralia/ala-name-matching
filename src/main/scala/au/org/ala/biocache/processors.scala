@@ -52,6 +52,7 @@ object Processors {
 	    case c if c == AssertionCodes.UNRECOGNISED_COLLECTIONCODE.code ||c== AssertionCodes.UNRECOGNISED_INSTITUTIONCODE.code => "attr"	    
 	    case c if c == AssertionCodes.INVALID_IMAGE_URL.code => "image"	    
 	    case c if c >= AssertionCodes.temporalBounds._1 && c<AssertionCodes.temporalBounds._2 =>"event"
+	    case c if c == AssertionCodes.VERIFIED.code => "verify"
 	    case _ => ""
 	  }
 	 

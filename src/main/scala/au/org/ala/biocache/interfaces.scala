@@ -204,6 +204,7 @@ object Store {
     }
   }
 
+
   /**
    * Delete an assertion
    *
@@ -244,6 +245,12 @@ object Store {
               }
       }
   }
+  /**
+   * Reopens the current index to account for external index changes
+   */
+  def reopenIndex(){
+      Config.indexDAO.reload
+  }
 
   /**
    * Indexes a dataResource from a specific date
@@ -253,10 +260,6 @@ object Store {
           IndexRecords.index(None, Some(dataResource), false, false, Some(startDate))
       else
           throw new Exception("Must supply data resource and start date")
-  }
-  
-  def reopenIndex(){
-      Config.indexDAO.reload
   }
 
   /**

@@ -261,6 +261,11 @@ trait IndexDAO {
                 
                 //Only set the geospatially kosher field if there are coordinates supplied
                 val geoKosher = if(slat=="" &&slon == "") "" else map.getOrElse(FullRecordMapper.geospatialDecisionColumn, "")
+                val hasUserAss = map.getOrElse(FullRecordMapper.userQualityAssertionColumn, "") match{
+                    case "true" => "true"
+                    case "false"=>"false"
+                    case value:String => (value.length >3).toString
+                }
 
                 return List(getValue("uuid", map),
                     getValue("rowKey", map),
@@ -324,7 +329,7 @@ trait IndexDAO {
                     getValue("locationRemarks", map),
                     getValue("occurrenceRemarks", map),
                     "",
-                    (getValue(FullRecordMapper.userQualityAssertionColumn, map).length>3).toString,
+                    hasUserAss,
                     (getValue(FullRecordMapper.qualityAssertionColumn, map).length > 3).toString,
                     getValue("recordedBy", map),
                     //getValue("austConservation.p",map),

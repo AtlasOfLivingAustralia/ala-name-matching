@@ -88,7 +88,7 @@ class RecordProcessor {
     val guid = raw.rowKey
     val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     //NC: Changed so that a processed record only contains values that have been processed.
-    var processed = new FullRecord(raw.rowKey, raw.uuid)
+    var processed = raw.createNewProcessedRecord
     //var assertions = new ArrayBuffer[QualityAssertion]
     var assertions = new scala.collection.mutable.HashMap[String, Array[QualityAssertion]]
 
@@ -145,7 +145,7 @@ class RecordProcessor {
   def processRecord(raw:FullRecord) : (FullRecord, Map[String, Array[QualityAssertion]]) = {
 
     //NC: Changed so that a processed record only contains values that have been processed.
-    var processed = new FullRecord(raw.rowKey, raw.uuid)//raw.clone
+    var processed = raw.createNewProcessedRecord
     var assertions = new scala.collection.mutable.HashMap[String, Array[QualityAssertion]]
 
     Processors.foreach(processor => {
