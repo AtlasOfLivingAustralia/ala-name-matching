@@ -11,7 +11,7 @@ public class CitizenScience extends Sighting {
  * temperory remove/comment out the code that retrieves the "associatedMedia" from the message in the JMS queue.		
  */
 //		return this.associatedMedia;
-		return  new String[]{};
+		return  null;
 	}
 
 	public void setAssociatedMedia(String[] associatedMedia) {
