@@ -381,7 +381,8 @@ class CassandraPersistenceManager @Inject() (
         columnMap = selector.getColumnsFromRows(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE)
         columnMap.remove(startKey)
       }
-      println("Finished paging. Total count: "+counter)
+      if(counter > 0)
+          println("Finished paging. Total count: "+counter)
     }
 
     /**
