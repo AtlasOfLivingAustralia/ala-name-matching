@@ -112,9 +112,9 @@ val processor = new RecordProcessor
 
   def performPaging(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000, checkDeleted:Boolean=false){
       if(checkDeleted){
-          occurrenceDAO.pageOverUndeletedRawProcessed(rawAndProcessed => {
+          occurrenceDAO.conditionalPageOverRawProcessed(rawAndProcessed => {
               proc(rawAndProcessed)
-          },startKey,endKey)
+          },{values => "false".equals(values.getOrElse(FullRecordMapper.deletedColumn, "false"))}, Array(FullRecordMapper.deletedColumn),startKey,endKey)
       }
       else{
           occurrenceDAO.pageOverRawProcessed(rawAndProcessed => {

@@ -43,7 +43,7 @@ import FileHelper._
      }
   }
 
-  def index(startUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false, startDate:Option[String]=None)={
+  def index(startUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false, startDate:Option[String]=None, checkDeleted:Boolean=false)={
 
         val startKey = {
             if(startUuid.isEmpty && !dataResource.isEmpty) {
@@ -64,20 +64,21 @@ import FileHelper._
 
         val endKey = if(dataResource.isEmpty) "" else dataResource.get +"|~"
         logger.info("Starting to index " + startKey + " until " + endKey)
-        indexRange(startKey, endKey, date)
+        indexRange(startKey, endKey, date, checkDeleted)
         //index any remaining items before exiting
         indexer.finaliseIndex(optimise, shutdown)
+       
 
   }
 
 
-  def indexRange(startUuid:String, endUuid:String, startDate:Option[Date]=None)={
+  def indexRange(startUuid:String, endUuid:String, startDate:Option[Date]=None, checkDeleted:Boolean=false)={
     var counter = 0
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
     var items = new ArrayList[OccurrenceIndex]()
-    persistenceManager.pageOverAll("occ", (guid, map)=> {
+    performPaging( (guid, map)=> {
         counter += 1
         indexer.indexFromMap(guid, map,startDate=startDate)
         if (counter % 1000 == 0) {
@@ -86,11 +87,32 @@ import FileHelper._
           startTime = System.currentTimeMillis
         }
         true
-    }, startUuid, endUuid)
+    }, startUuid, endUuid, checkDeleted= checkDeleted)
 
     finishTime = System.currentTimeMillis
     logger.info("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
   }
+  
+  def performPaging(proc:((String, Map[String,String])=>Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000, checkDeleted:Boolean=false){
+      if(checkDeleted){
+          persistenceManager.pageOverSelect("occ",(guid, map)=>{
+              if(map.getOrElse(FullRecordMapper.deletedColumn, "false").equals("false")){
+                  val map = persistenceManager.get(guid, "occ")
+                  if(!map.isEmpty){
+                      proc(guid, map.get)
+                  }
+              }
+              true
+              },startKey,endKey,pageSize,"uuid", "rowKey",FullRecordMapper.deletedColumn)
+      }
+      else{
+          persistenceManager.pageOverAll("occ", (guid, map)=> {
+              proc(guid, map)
+          },startKey,endKey)
+      }
+  }
+  
+  
   /**
    * Indexes the supplied list of rowKeys
    */

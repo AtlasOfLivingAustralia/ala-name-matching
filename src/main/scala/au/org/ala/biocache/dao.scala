@@ -51,7 +51,7 @@ trait OccurrenceDAO {
 
     def pageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
     
-    def pageOverUndeletedRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
+    def conditionalPageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean), condition:(Map[String,String]=>Boolean),columnsToRetrieve:Array[String],startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
 
     def addRawOccurrenceBatch(fullRecords: Array[FullRecord]): Unit
 
@@ -332,11 +332,16 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Iterate over the undeleted occurrences. Prevents overhead of processing records that are deleted. Also it is quicker to get a smaller 
      * number of columns.  Thus only get all the columns for record that need to be processed.
+     * 
+     * The shouldProcess function should take the map and determine bnased on conditions whether or not to retrieve the complete record
+     * 
      */
-    def pageOverUndeletedRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000){
+    def conditionalPageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean), condition:(Map[String,String]=>Boolean),columnsToRetrieve:Array[String],startKey:String="", endKey:String="", pageSize: Int = 1000){
+        val columns = columnsToRetrieve ++ Array("uuid","rowKey")
         persistenceManager.pageOverSelect(entityName, (guid, map)=>{
-            val deleted = map.getOrElse(FullRecordMapper.deletedColumn,"false")            
-            if(deleted.equals("false")){
+            //val deleted = map.getOrElse(FullRecordMapper.deletedColumn,"false")            
+            //if(deleted.equals("false")){
+            if(condition(map)){
                 val recordmap = persistenceManager.get(map.get("rowKey").get,entityName)                
                 if(!recordmap.isEmpty){
                     val raw = FullRecordMapper.createFullRecord(guid, recordmap.get, Versions.RAW)
@@ -346,7 +351,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
                 }
             }
             true
-        }, startKey, endKey,pageSize, "uuid", "rowKey", FullRecordMapper.deletedColumn)
+        }, startKey, endKey,pageSize, columns: _*)
     }
 
     /**

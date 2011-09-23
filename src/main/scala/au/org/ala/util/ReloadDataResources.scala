@@ -59,7 +59,7 @@ object ReloadDataResources {
             //Step4: Remove current records from the index
             deletor.deleteFromIndex        
             //Step 5: Reindex dataResource
-            IndexRecords.index(None, Some(dataResourceUid), false, false)
+            IndexRecords.index(None, Some(dataResourceUid), false, false,checkDeleted=true)
         }
         if(remove){
             //Step 6: Remove "deleted" records from persistence.
