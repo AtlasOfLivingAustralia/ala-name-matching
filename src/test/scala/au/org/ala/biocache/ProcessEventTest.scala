@@ -2,9 +2,9 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
-import java.text.SimpleDateFormat
-import java.util.Date
 import org.apache.commons.lang.time.DateUtils
+import java.util.Date
+import java.text.SimpleDateFormat
 
 /**
  * Tests for event date parsing. To run these tests create a new scala application
@@ -190,5 +190,24 @@ class ProcessEventTest extends ConfigFunSuite {
     val assertions = (new EventProcessor).process("1234", raw, processed)
     expect(DateUtil.getCurrentYear.toString){ processed.event.year }
     expect(true){ assertions.size > 0 }
+  }
+
+
+  test("a digit year which gives a future date") {
+    var raw = new FullRecord("1234", "1234")
+    var processed = new FullRecord("1234", "1234")
+    val futureDate = DateUtils.addDays(new Date(),2)
+
+    val twoDigitYear =(new SimpleDateFormat("yy")).format(futureDate)
+
+    raw.event.year = (new SimpleDateFormat("yy")).format(futureDate)
+    raw.event.month = (new SimpleDateFormat("MM")).format(futureDate)
+    raw.event.day = (new SimpleDateFormat("dd")).format(futureDate)
+
+    val assertions = (new EventProcessor).process("1234", raw, processed)
+
+    expect("19"+twoDigitYear){ processed.event.year }
+
+    expect(0){ assertions.size }
   }
 }

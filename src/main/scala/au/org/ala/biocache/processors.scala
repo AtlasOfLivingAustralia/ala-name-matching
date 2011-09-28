@@ -1,9 +1,7 @@
 package au.org.ala.biocache
 
-import org.apache.commons.lang.time.DateFormatUtils
 import au.org.ala.checklist.lucene.HomonymException
 import collection.mutable.{HashMap, ArrayBuffer}
-import java.util.GregorianCalendar
 import au.org.ala.checklist.lucene.SearchResultException
 import org.slf4j.LoggerFactory
 import au.org.ala.data.model.LinnaeanRankClassification
@@ -12,6 +10,8 @@ import au.org.ala.sds.validation.ServiceFactory
 import au.org.ala.sds.validation.ConservationOutcome
 import au.org.ala.sds.validation.MessageFactory
 import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang.time.{DateUtils, DateFormatUtils}
+import java.util.{Date, GregorianCalendar}
 
 /**
  * Trait to be implemented by all processors. 
@@ -52,7 +52,6 @@ object Processors {
 	    case c if c == AssertionCodes.UNRECOGNISED_COLLECTIONCODE.code ||c== AssertionCodes.UNRECOGNISED_INSTITUTIONCODE.code => "attr"	    
 	    case c if c == AssertionCodes.INVALID_IMAGE_URL.code => "image"	    
 	    case c if c >= AssertionCodes.temporalBounds._1 && c<AssertionCodes.temporalBounds._2 =>"event"
-	    case c if c == AssertionCodes.VERIFIED.code => "verify"
 	    case _ => ""
 	  }
 	 
@@ -242,13 +241,21 @@ class EventProcessor extends Processor {
     //check for sensible year value
     if (year > 0) {
       if (year < 100) {
-      //parse 89 for 1989
+        //parse 89 for 1989
         if (year > currentYear % 100) {
           // Must be in last century
           year += ((currentYear / 100) - 1) * 100
         } else {
           // Must be in this century
           year += (currentYear / 100) * 100
+
+          //although check that combined year-month-day isnt in the future
+          if (day != null && month != null){
+            val date = DateUtils.parseDate(year.toString+String.format("%02d",int2Integer(month))+day.toString, Array("yyyyMMdd"))
+            if (date.after(new Date())){
+              year -= 100
+            }
+          }
         }
       } else if (year >= 100 && year < 1700) {
         year = -1
@@ -294,6 +301,9 @@ class EventProcessor extends Processor {
           processed.event.day = parsedDate.get.startDay
           processed.event.month = parsedDate.get.startMonth
           processed.event.year = parsedDate.get.startYear
+          if(DateUtil.isFutureDate(processed.event.eventDate)){
+            assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,"Future date supplied")
+          }
       }
     }
 
@@ -306,12 +316,20 @@ class EventProcessor extends Processor {
           processed.event.day = parsedDate.get.startDay
           processed.event.month = parsedDate.get.startMonth
           processed.event.year = parsedDate.get.startYear
+          if(DateUtil.isFutureDate(processed.event.eventDate)){
+            assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,"Future date supplied")
+          }
       }
     }
 
     //if invalid date, add assertion
     if (!validYear && (processed.event.eventDate ==null || processed.event.eventDate == "")) {
       assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
+    }
+
+    //chec for future date
+    if (!date.isEmpty && date.get.after(new Date())){
+      assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,"Future date supplied")
     }
 
     assertions.toArray
@@ -526,8 +544,8 @@ class LocationProcessor extends Processor {
     // value (we don't test until now because the SDS will sometime include coordinate uncertainty)
      //This step will pick up on default values because processed.location.coordinateUncertaintyInMeters will already be populated if a default value exists
     if (processed.location.coordinateUncertaintyInMeters == null) {
-      
-      assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, "Uncertainty was not supplied")
+      processed.location.coordinateUncertaintyInMeters = "1000"
+      assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, "Uncertainty was not supplied, using default value 1000")
     }
   }
 
