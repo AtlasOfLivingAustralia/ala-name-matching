@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 import com.google.inject.name.Named
 import com.google.inject.Inject
 import java.lang.Class
-import com.mongodb.casbah.Imports._
+//import com.mongodb.casbah.Imports._
 import java.util.UUID
 
 /**

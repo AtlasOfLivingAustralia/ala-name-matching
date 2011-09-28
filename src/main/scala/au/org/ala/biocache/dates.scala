@@ -4,11 +4,20 @@ import org.apache.commons.lang.time.DateUtils
 import org.apache.commons.lang.time.DateFormatUtils
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
-import java.text.ParseException
 import java.util.Date
+import java.text.{SimpleDateFormat, ParseException}
 
 object DateUtil {
   def getCurrentYear = DateFormatUtils.format(new Date(), "yyyy").toInt
+  def isFutureDate(str:String) = {
+    //chec for future date
+    val date = DateUtils.parseDate(str, Array("yyyy-MM-dd"))
+    if (date!=null && date.after(new Date())){
+      true
+    } else {
+      false
+    }
+  }
 }
 
 /**
