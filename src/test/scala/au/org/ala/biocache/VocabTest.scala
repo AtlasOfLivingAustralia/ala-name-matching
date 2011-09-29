@@ -65,7 +65,6 @@ class VocabTest extends ConfigFunSuite {
   
   test("Observations - plurals for BOR"){
       expect(false){ BasisOfRecord.matchTerm("Observation").isEmpty}
-
   }
 
   test("Test Australia hemispheres"){
@@ -108,9 +107,5 @@ class VocabTest extends ConfigFunSuite {
          DwC.matchTerm(name).isEmpty
        }
      })
-  }
-
-  test("id maps to catalogNumber"){
-    expect("occurrenceID"){DwC.matchTerm("id").get.canonical}
   }
 }

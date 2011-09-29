@@ -9,6 +9,9 @@
       <unpack>false</unpack>
       <scope>runtime</scope>
       <outputDirectory>/lib</outputDirectory>
+      <excludes>
+        <exclude>org.slf4j:slf4j-jdk14</exclude>
+      </excludes>
     </dependencySet>
   </dependencySets>
   <fileSets>

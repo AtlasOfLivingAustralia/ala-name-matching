@@ -61,6 +61,7 @@ class MiscTest extends ConfigFunSuite {
         raw.event.month = "11"
         raw.event.day = "22"
         qas = (new EventProcessor).process("test", raw, processed)
+        expect(false){qas.isEmpty}
         expect(30007){qas(0).code}
         
         raw.event.year = "2011"

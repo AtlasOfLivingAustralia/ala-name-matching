@@ -117,7 +117,7 @@ class ProcessEventTest extends ConfigFunSuite {
     expect(null){ processed.event.month }
     expect("1978"){ processed.event.year }
 
-    expect(0){ assertions.size }
+    expect(1){ assertions.size }
   }
 
   test("invalid month test > 12") {
@@ -135,7 +135,7 @@ class ProcessEventTest extends ConfigFunSuite {
     expect(null){ processed.event.month }
     expect("1978"){ processed.event.year }
 
-    expect(0){ assertions.size }
+    expect(1){ assertions.size }
   }
 
   test("year = 11, month = 02, day = 01") {

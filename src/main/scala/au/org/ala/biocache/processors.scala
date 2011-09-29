@@ -225,7 +225,7 @@ class EventProcessor extends Processor {
     var (year,validYear) = validateNumber(raw.event.year,{year => year > 0 && year <= currentYear})
     var (month,validMonth) = validateNumber(raw.event.month,{month => month >= 1 && month <= 12})
     var (day,validDay) = validateNumber(raw.event.day,{day => day >= 1 && day <= 31})
-
+    //check month and day not transposed
     if(!validMonth && raw.event.month.isInt && raw.event.day.isInt){
       //are day and month transposed?
       val monthValue = raw.event.month.toInt
@@ -235,7 +235,16 @@ class EventProcessor extends Processor {
         day = monthValue
         assertions + QualityAssertion(AssertionCodes.DAY_MONTH_TRANSPOSED,"Assume day and month transposed")
         validMonth = true
+      } else {
+        assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,"Invalid month supplied")
       }
+    }
+
+    //TODO need to check for other months
+    if (day!=null &&
+      (day > 31)
+    ){
+      assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,"Invalid day supplied")
     }
 
     //check for sensible year value
@@ -261,6 +270,11 @@ class EventProcessor extends Processor {
         year = -1
         validYear = false
         comment = "Year out of range"
+      } else if (year > DateUtil.getCurrentYear) {
+        year = -1
+        validYear = false
+        comment = "Future year supplied"
+        assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
       }
     }
 
@@ -282,6 +296,7 @@ class EventProcessor extends Processor {
         case e: Exception => {
           validDayMonthYear = false
           comment = "Invalid year, day, month"
+          assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
         }
       }
     }

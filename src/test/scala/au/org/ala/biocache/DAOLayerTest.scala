@@ -4,7 +4,7 @@ import org.junit.Ignore
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 
-@RunWith(classOf[JUnitRunner])
+@Ignore
 class DAOLayerTest extends ConfigFunSuite{ 
   val occurrenceDAO = Config.occurrenceDAO
   val persistenceManager = Config.persistenceManager
