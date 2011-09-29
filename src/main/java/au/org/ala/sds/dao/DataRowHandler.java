@@ -3,7 +3,7 @@
  */
 package au.org.ala.sds.dao;
 
-import au.org.ala.sds.validation.FactCollection;
+import java.util.Map;
 
 /**
  *
@@ -11,5 +11,5 @@ import au.org.ala.sds.validation.FactCollection;
  */
 public interface DataRowHandler {
 
-        void handleRow(FactCollection facts);
+        void handleRow(Map<String, String> facts);
 }
