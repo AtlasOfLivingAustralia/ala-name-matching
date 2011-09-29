@@ -11,7 +11,7 @@
     </issueManagement>
     <ciManagement>
         <system>Hudson</system>
-        <url>http://hudson.ala.org.au:8080</url>
+        <url>http://hudson.ala.org.au:8081/job/biocache-store/</url>
     </ciManagement>
     <inceptionYear>2011</inceptionYear>
     <name>biocache-store</name>
