@@ -219,6 +219,7 @@
             </exclusions>
         </dependency>
         <!-- MongoDB -->
+        <!--
         <dependency>
             <groupId>com.mongodb.casbah</groupId>
             <artifactId>casbah-query_2.9.0-1</artifactId>
@@ -249,6 +250,7 @@
             <version>2.1.5-1</version>
             <scope>provided</scope>
         </dependency>
+        -->
         <!-- SOLR -->
         <dependency>
             <artifactId>solr-core</artifactId>
