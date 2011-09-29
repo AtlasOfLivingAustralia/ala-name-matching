@@ -19,13 +19,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.model.SensitiveTaxon;
-import au.org.ala.sds.util.GeneralisedLocation;
-import au.org.ala.sds.validation.ConservationOutcome;
 import au.org.ala.sds.validation.FactCollection;
 import au.org.ala.sds.validation.ServiceFactory;
 import au.org.ala.sds.validation.ValidationOutcome;
@@ -63,22 +64,45 @@ public class GeneraliseTest {
         String latitude = "-35.276771";   // Epicorp
         String longitude = "149.112539";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put("dataResourceUid", "dr359");
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.put("minimumElevationInMeters", "Do nothing");
+        facts.put("eventID", "1234");
+        facts.put("stateProvince", "Australian Capital Territory");
+        facts.put("scientificName", "Crex crex");
+        facts.put("taxonConceptID", "urn:lsid:biodiversity.org.au:afd.taxon:2ef4ac9c-7dfb-4447-8431-e337355ac1ca");
+        facts.put("locationRemarks", "remarks");
+        facts.put("day", "10");
+        facts.put("month", "10");
+        facts.put("year", "2010");
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof ConservationOutcome);
+        assertTrue(outcome.isSensitive());
+        Map<String, Object> result = outcome.getResult();
+        assertNotNull(result);
 
-        GeneralisedLocation gl = ((ConservationOutcome) outcome).getGeneralisedLocation();
-        assertEquals("Latitude", "-35.3", gl.getGeneralisedLatitude());
-        assertEquals("Longitude", "149.1", gl.getGeneralisedLongitude());
-        assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
-        assertEquals("Location in ACT generalised to 0.1 degrees", gl.getDescription());
-        assertTrue(gl.isSensitive());
+        assertEquals("Latitude", "-35.3", result.get("decimalLatitude"));
+        assertEquals("Longitude", "149.1", result.get("decimalLongitude"));
+        assertEquals("InMetres", "10000", result.get("generalisationInMetres"));
+        assertEquals("eventID", "", result.get("eventID"));
+        assertEquals("locationRemarks", "", result.get("locationRemarks"));
+        assertEquals("day", "", result.get("day"));
+        assertEquals("informationWithheld", "The eventID and day information has been withheld in accordance with Birds Australia data policy", result.get("informationWithheld"));
+        assertEquals("dataGeneralizations", "Location in ACT generalised to 0.1 degrees", result.get("dataGeneralizations"));
+
+        Map<String, String> originalSenstiveValues = (Map<String, String>) outcome.getResult().get("originalSensitiveValues");
+        assertNotNull(originalSenstiveValues);
+
+        assertEquals("Original latitude", "-35.276771", originalSenstiveValues.get("decimalLatitude"));
+        assertEquals("Original longitude", "149.112539", originalSenstiveValues.get("decimalLongitude"));
+        assertEquals("Original eventID", "1234", originalSenstiveValues.get("eventID"));
+        assertEquals("Original locationRemarks", "remarks", originalSenstiveValues.get("locationRemarks"));
+        assertEquals("Original day", "10", originalSenstiveValues.get("day"));
     }
 
     /**
@@ -91,22 +115,17 @@ public class GeneraliseTest {
         String latitude = "-35.276771";   // Epicorp
         String longitude = "149.112539";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof ConservationOutcome);
+        assertNotNull(outcome.getResult());
 
-        GeneralisedLocation gl = ((ConservationOutcome) outcome).getGeneralisedLocation();
-        assertEquals("Latitude", "-35.276771", gl.getGeneralisedLatitude());
-        assertEquals("Longitude", "149.112539", gl.getGeneralisedLongitude());
-        assertEquals("InMetres", "", gl.getGeneralisationInMetres());
-        assertEquals("Location not generalised since it is not sensitive in ACT", gl.getDescription());
-        assertFalse(gl.isSensitive());
+        assertFalse(outcome.isSensitive());
     }
 
     /**
@@ -119,22 +138,17 @@ public class GeneraliseTest {
         String latitude = "-41.538137";    // NZ
         String longitude = "173.968817";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof ConservationOutcome);
+        assertNotNull(outcome.getResult());
 
-        GeneralisedLocation gl = ((ConservationOutcome) outcome).getGeneralisedLocation();
-        assertEquals("Latitude", "-41.538137", gl.getGeneralisedLatitude());
-        assertEquals("Longitude", "173.968817", gl.getGeneralisedLongitude());
-        assertEquals("InMetres", "", gl.getGeneralisationInMetres());
-        assertEquals("Location not generalised since it is not sensitive Outside Australia", gl.getDescription());
-        assertFalse(gl.isSensitive());
+        assertFalse(outcome.isSensitive());
     }
 
     /**
@@ -147,22 +161,21 @@ public class GeneraliseTest {
         String latitude = "-33.630629";    // NSW
         String longitude = "150.441284";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof ConservationOutcome);
+        assertNotNull(outcome.getResult());
 
-        GeneralisedLocation gl = ((ConservationOutcome) outcome).getGeneralisedLocation();
-        assertEquals("Latitude", "", gl.getGeneralisedLatitude());
-        assertEquals("Longitude", "", gl.getGeneralisedLongitude());
-        assertEquals("InMetres", "", gl.getGeneralisationInMetres());
-        assertEquals("Location withheld", gl.getDescription());
-        assertTrue(gl.isSensitive());
+        assertEquals("Latitude", "", outcome.getResult().get("decimalLatitude"));
+        assertEquals("Longitude", "", outcome.getResult().get("decimalLongitude"));
+        assertEquals("InMetres", "", outcome.getResult().get("generalisationInMetres"));
+        assertEquals("Location withheld", outcome.getResult().get("dataGeneralizations"));
+        assertTrue(outcome.isSensitive());
     }
 
     /**
@@ -175,22 +188,21 @@ public class GeneraliseTest {
         String latitude = "-40.111689";    // TAS
         String longitude = "148.095703";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof ConservationOutcome);
+        assertNotNull(outcome.getResult());
 
-        GeneralisedLocation gl = ((ConservationOutcome) outcome).getGeneralisedLocation();
-        assertEquals("Latitude", "", gl.getGeneralisedLatitude());
-        assertEquals("Longitude", "", gl.getGeneralisedLongitude());
-        assertEquals("InMetres", "", gl.getGeneralisationInMetres());
-        assertEquals("Location withheld", gl.getDescription());
-        assertTrue(gl.isSensitive());
+        assertEquals("Latitude", "", outcome.getResult().get("decimalLatitude"));
+        assertEquals("Longitude", "", outcome.getResult().get("decimalLongitude"));
+        assertEquals("InMetres", "", outcome.getResult().get("generalisationInMetres"));
+        assertEquals("Location withheld", outcome.getResult().get("dataGeneralizations"));
+        assertTrue(outcome.isSensitive());
     }
 
     /**
@@ -203,23 +215,22 @@ public class GeneraliseTest {
         String latitude = "-33.630629";    // NSW
         String longitude = "150.441284";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
-        facts.add(FactCollection.STATE_PROVINCE_KEY, "New South Wales");
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.put(FactCollection.STATE_PROVINCE_KEY, "New South Wales");
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof ConservationOutcome);
+        assertNotNull(outcome.getResult());
 
-        GeneralisedLocation gl = ((ConservationOutcome) outcome).getGeneralisedLocation();
-        assertEquals("Latitude", "-33.6", gl.getGeneralisedLatitude());
-        assertEquals("Longitude", "150.4", gl.getGeneralisedLongitude());
-        assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
-        assertEquals("Location in NSW generalised to 0.1 degrees", gl.getDescription());
-        assertTrue(gl.isSensitive());
+        assertEquals("Latitude", "-33.6", outcome.getResult().get("decimalLatitude"));
+        assertEquals("Longitude", "150.4", outcome.getResult().get("decimalLongitude"));
+        assertEquals("InMetres", "10000", outcome.getResult().get("generalisationInMetres"));
+        assertEquals("Location in NSW generalised to 0.1 degrees", outcome.getResult().get("dataGeneralizations"));
+        assertTrue(outcome.isSensitive());
     }
 
     /**
@@ -232,20 +243,19 @@ public class GeneraliseTest {
         String latitude = "-16.167197";    // Qld
         String longitude = "145.374527";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof ConservationOutcome);
+        assertNotNull(outcome.getResult());
 
-        GeneralisedLocation gl = ((ConservationOutcome) outcome).getGeneralisedLocation();
-        assertEquals("Latitude", "-16.2", gl.getGeneralisedLatitude());
-        assertEquals("Longitude", "145.4", gl.getGeneralisedLongitude());
-        assertEquals("InMetres", "10000", gl.getGeneralisationInMetres());
+        assertEquals("Latitude", "-16.2", outcome.getResult().get("decimalLatitude"));
+        assertEquals("Longitude", "145.4", outcome.getResult().get("decimalLongitude"));
+        assertEquals("InMetres", "10000", outcome.getResult().get("generalisationInMetres"));
     }
 
     /**
@@ -258,22 +268,21 @@ public class GeneraliseTest {
         String latitude = "-32.7";    // NSW
         String longitude = "149.6";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof ConservationOutcome);
+        assertNotNull(outcome.getResult());
 
-        GeneralisedLocation gl = ((ConservationOutcome) outcome).getGeneralisedLocation();
-        assertEquals("Latitude", "-32.7", gl.getGeneralisedLatitude());
-        assertEquals("Longitude", "149.6", gl.getGeneralisedLongitude());
-        assertEquals("InMetres", "", gl.getGeneralisationInMetres());
-        assertEquals("Location is already generalised", gl.getDescription());
-        assertTrue(gl.isSensitive());
+        assertEquals("Latitude", "-32.7", outcome.getResult().get("decimalLatitude"));
+        assertEquals("Longitude", "149.6", outcome.getResult().get("decimalLongitude"));
+        assertEquals("InMetres", "", outcome.getResult().get("generalisationInMetres"));
+        assertEquals("Location in NSW is already generalised to 0.1 degrees", outcome.getResult().get("dataGeneralizations"));
+        assertTrue(outcome.isSensitive());
     }
 
 
@@ -284,21 +293,20 @@ public class GeneraliseTest {
         String latitude = "-32.7";    // NSW
         String longitude = "149.6";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.STATE_PROVINCE_KEY, "NSW");
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.STATE_PROVINCE_KEY, "NSW");
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof ConservationOutcome);
+        assertNotNull(outcome.getResult());
 
-        GeneralisedLocation gl = ((ConservationOutcome) outcome).getGeneralisedLocation();
-        assertEquals("Latitude", "-32.7", gl.getGeneralisedLatitude());
-        assertEquals("Longitude", "149.6", gl.getGeneralisedLongitude());
-        assertEquals("InMetres", "", gl.getGeneralisationInMetres());
-        assertTrue(gl.isSensitive());
+        assertEquals("Latitude", "-32.7", outcome.getResult().get("decimalLatitude"));
+        assertEquals("Longitude", "149.6", outcome.getResult().get("decimalLongitude"));
+        assertEquals("InMetres", "", outcome.getResult().get("generalisationInMetres"));
+        assertTrue(outcome.isSensitive());
     }
 }

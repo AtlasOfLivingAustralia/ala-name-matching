@@ -18,13 +18,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.validation.FactCollection;
-import au.org.ala.sds.validation.PlantPestOutcome;
 import au.org.ala.sds.validation.ServiceFactory;
 import au.org.ala.sds.validation.ValidationOutcome;
 import au.org.ala.sds.validation.ValidationService;
@@ -62,17 +64,16 @@ public class PlantPestUnderEradicationTest {
         String longitude = "152.9167";
         String date = "2011-03-21";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
-        facts.add(FactCollection.EVENT_DATE_KEY, date);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.put(FactCollection.EVENT_DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof PlantPestOutcome);
-        assertTrue(((PlantPestOutcome) outcome).isLoadable());
+        assertTrue(outcome.isLoadable());
     }
 
     @Test
@@ -85,17 +86,16 @@ public class PlantPestUnderEradicationTest {
         String longitude = "152.9167";
         String date = "2001-02-15";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
-        facts.add(FactCollection.EVENT_DATE_KEY, date);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.put(FactCollection.EVENT_DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof PlantPestOutcome);
-        assertTrue(((PlantPestOutcome) outcome).isLoadable());
+        assertTrue(outcome.isLoadable());
     }
 
     @Test
@@ -108,17 +108,16 @@ public class PlantPestUnderEradicationTest {
         String longitude = "151.961625";
         String date = "2004-01-29";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
-        facts.add(FactCollection.EVENT_DATE_KEY, date);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.put(FactCollection.EVENT_DATE_KEY, date);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof PlantPestOutcome);
-        assertFalse(((PlantPestOutcome) outcome).isLoadable());
+        assertFalse(outcome.isLoadable());
     }
 
 }

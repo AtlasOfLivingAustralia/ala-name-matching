@@ -1,6 +1,6 @@
 package au.org.ala.sds;
 
-import static org.junit.Assert.assertTrue;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.junit.BeforeClass;
@@ -15,7 +15,6 @@ import au.org.ala.sds.dto.DataStreamProperties;
 import au.org.ala.sds.model.Message;
 import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.validation.FactCollection;
-import au.org.ala.sds.validation.PlantPestOutcome;
 import au.org.ala.sds.validation.ServiceFactory;
 import au.org.ala.sds.validation.ValidationOutcome;
 import au.org.ala.sds.validation.ValidationReport;
@@ -55,7 +54,7 @@ public class FileInputTest {
                 mapper,
                 properties,
                 new DataRowHandler() {
-                    public void handleRow(FactCollection facts) {
+                    public void handleRow(Map<String, String> facts) {
                         processRow(facts);
                     }
                 });
@@ -84,7 +83,7 @@ public class FileInputTest {
                 mapper,
                 properties,
                 new DataRowHandler() {
-                    public void handleRow(FactCollection facts) {
+                    public void handleRow(Map<String, String> facts) {
                         processRow(facts);
                     }
                 });
@@ -148,7 +147,7 @@ public class FileInputTest {
 //                });
 //    }
 
-    private void processRow(FactCollection facts) {
+    private void processRow(Map<String, String> facts) {
         System.out.println("Row data - " + facts);
         StringBuilder msgOut = new StringBuilder();
         String name = facts.get(FactCollection.GENUS_KEY) + " " + facts.get(FactCollection.SPECIFIC_EPITHET_KEY);
@@ -173,7 +172,6 @@ public class FileInputTest {
             }
             msgOut.append("\n");
 
-            assertTrue(outcome instanceof PlantPestOutcome);
             ValidationReport report = outcome.getReport();
             for (Message message : report.getMessages()) {
                 msgOut.append("  ").append(message.getType()).append(" - ").append(message.getMessageText()).append("\n");

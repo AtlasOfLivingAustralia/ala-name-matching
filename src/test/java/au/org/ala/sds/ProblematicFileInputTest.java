@@ -1,5 +1,7 @@
 package au.org.ala.sds;
 
+import java.util.Map;
+
 import org.apache.commons.lang.StringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -44,13 +46,13 @@ public class ProblematicFileInputTest {
                 mapper,
                 properties,
                 new DataRowHandler() {
-                    public void handleRow(FactCollection facts) {
+                    public void handleRow(Map<String, String> facts) {
                         processRow(facts);
                     }
                 });
     }
 
-    private void processRow(FactCollection facts) {
+    private void processRow(Map<String, String> facts) {
         System.out.println("Row data - " + facts);
         StringBuilder msgOut = new StringBuilder();
         String name = facts.get(FactCollection.SCIENTIFIC_NAME_KEY);

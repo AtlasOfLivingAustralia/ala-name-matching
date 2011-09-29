@@ -16,8 +16,10 @@ package au.org.ala.sds;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -25,7 +27,6 @@ import org.junit.Test;
 import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.validation.FactCollection;
-import au.org.ala.sds.validation.PlantPestOutcome;
 import au.org.ala.sds.validation.ServiceFactory;
 import au.org.ala.sds.validation.ValidationOutcome;
 import au.org.ala.sds.validation.ValidationService;
@@ -61,17 +62,16 @@ public class PlantPestNotKnownInAustraliaTest {
         String latitude = "-35.276771";   // Black Mountain (Epicorp)
         String longitude = "149.112539";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof PlantPestOutcome);
-        assertFalse(((PlantPestOutcome) outcome).isLoadable());
-        assertNull(outcome.getAnnotation());
+        assertFalse(outcome.isLoadable());
+        //assertNull(outcome.getAnnotation());
     }
 
     @Test
@@ -82,17 +82,16 @@ public class PlantPestNotKnownInAustraliaTest {
         String latitude = "-35.276771";   // Black Mountain (Epicorp)
         String longitude = "149.112539";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof PlantPestOutcome);
-        assertFalse(((PlantPestOutcome) outcome).isLoadable());
-        assertNull(outcome.getAnnotation());
+        assertFalse(outcome.isLoadable());
+        //assertNull(outcome.getAnnotation());
     }
 
     @Test
@@ -103,16 +102,15 @@ public class PlantPestNotKnownInAustraliaTest {
         String latitude = "-16.286858";   // Coral Sea Islands
         String longitude = "149.964066";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof PlantPestOutcome);
-        assertTrue(((PlantPestOutcome) outcome).isLoadable());
+        assertTrue(outcome.isLoadable());
     }
 
     @Test
@@ -123,17 +121,16 @@ public class PlantPestNotKnownInAustraliaTest {
         String latitude = "-10.11";   // Badu (Queensland)
         String longitude = "142.11";
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
-        facts.add(FactCollection.EVENT_DATE_KEY, "1977-06-20");
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.put(FactCollection.EVENT_DATE_KEY, "1977-06-20");
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof PlantPestOutcome);
-        assertTrue(((PlantPestOutcome) outcome).isLoadable());
+        assertTrue(outcome.isLoadable());
     }
 
     @Test
@@ -141,16 +138,15 @@ public class PlantPestNotKnownInAustraliaTest {
         SensitiveTaxon ss = finder.findSensitiveSpecies("Lymantria dispar");
         assertNotNull(ss);
 
-        FactCollection facts = new FactCollection();
-        facts.add(FactCollection.COUNTRY_KEY, "Indonesia");
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.COUNTRY_KEY, "Indonesia");
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
-        assertTrue(outcome instanceof PlantPestOutcome);
-        assertTrue(((PlantPestOutcome) outcome).isLoadable());
-        assertNotNull(outcome.getAnnotation());
+        assertTrue(outcome.isLoadable());
+        //assertNotNull(outcome.getAnnotation());
    }
 
 }
