@@ -79,36 +79,36 @@ public class DataStreamExcelDao implements DataStreamDao {
         for (int i = start; i <= end; i++) {
             Row row = sheet.getRow(i);
             if (row != null) {
-                FactCollection facts = new FactCollection();
+                Map<String, String> facts = new HashMap<String, String>();
                 for (String key : columnMap.keySet()) {
                     Cell cell = row.getCell(columnMap.get(key));
                     if (cell != null) {
                         switch (cell.getCellType()) {
                             case Cell.CELL_TYPE_STRING:
-                                facts.add(key, cell.getStringCellValue().trim());
+                                facts.put(key, cell.getStringCellValue().trim());
                                 break;
                             case Cell.CELL_TYPE_NUMERIC:
                             case Cell.CELL_TYPE_FORMULA:
                                 double d = cell.getNumericCellValue();
                                 try {
                                     if (HSSFDateUtil.isCellDateFormatted(cell)) {
-                                        facts.add(key, DateHelper.formattedIso8601Date(HSSFDateUtil.getJavaDate(d)));
+                                        facts.put(key, DateHelper.formattedIso8601Date(HSSFDateUtil.getJavaDate(d)));
                                     } else {
-                                        facts.add(key, Double.toString(d));
+                                        facts.put(key, Double.toString(d));
                                     }
                                 } catch (Exception e) {
                                     logger.warn("Exception caught trying to check if cell '" + key + "' is a date - " + e.getMessage());
-                                    facts.add(key, Double.toString(d));
+                                    facts.put(key, Double.toString(d));
                                 }
                                 break;
                             default:
-                                facts.add(key, "");
+                                facts.put(key, "");
                                 break;
                         }
                     }
                 }
-                if (facts.isNotEmpty()) {
-                    facts.add(FactCollection.ROW_KEY, Integer.toString(i + 1));
+                if (!facts.isEmpty()) {
+                    facts.put(FactCollection.ROW_KEY, Integer.toString(i + 1));
                     rowCount++;
                     rowHandler.handleRow(facts);
                 }

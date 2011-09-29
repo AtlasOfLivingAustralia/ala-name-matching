@@ -76,19 +76,19 @@ public class DataStreamCsvDao implements DataStreamDao {
             if ((row = reader.readNext()) == null) {
                 eof = true;
             } else {
-                FactCollection facts = new FactCollection();
+                Map<String, String> facts = new HashMap<String, String>();
                 for (String key : columnMap.keySet()) {
                     Integer idx = columnMap.get(key);
                     if (idx < row.length) {
                         String value = row[idx].trim();
                         if (StringUtils.isNotBlank(value)) {
-                            facts.add(key, value);
+                            facts.put(key, value);
                         }
                     }
                 }
 
-                if (facts.isNotEmpty()) {
-                    facts.add(FactCollection.ROW_KEY, Integer.toString(i));
+                if (!facts.isEmpty()) {
+                    facts.put(FactCollection.ROW_KEY, Integer.toString(i));
                     rowCount++;
                     rowHandler.handleRow(facts);
                 }
