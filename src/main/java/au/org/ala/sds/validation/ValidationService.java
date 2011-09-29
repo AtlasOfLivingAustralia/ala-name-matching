@@ -1,8 +1,10 @@
 package au.org.ala.sds.validation;
 
+import java.util.Map;
+
 
 public interface ValidationService {
 
-    ValidationOutcome validate(FactCollection facts);
+    ValidationOutcome validate(Map<String, String> biocacheData);
 
 }

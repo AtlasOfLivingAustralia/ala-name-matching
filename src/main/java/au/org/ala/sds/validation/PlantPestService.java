@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -44,7 +45,8 @@ public class PlantPestService implements ValidationService {
      * @param facts
      * @return
      */
-    public ValidationOutcome validate(FactCollection facts) {
+    public ValidationOutcome validate(Map<String, String> biocacheData) {
+        FactCollection facts = new FactCollection(biocacheData);
         ValidationReport report = reportFactory.createValidationReport(taxon);
 
         if (!ValidationUtils.validateLocation(facts, report)) {
@@ -75,9 +77,9 @@ public class PlantPestService implements ValidationService {
             }
         } while (!state.isComplete());
 
-        ValidationOutcome outcome = new PlantPestOutcome(report);
-        outcome.setAnnotation(state.getAnnotation());
-        ((PlantPestOutcome) outcome).setLoadable(state.isLoadable());
+        ValidationOutcome outcome = new ValidationOutcome(report);
+        //outcome.setAnnotation(state.getAnnotation());
+        //outcome.setLoadable(state.isLoadable());
 
         return outcome;
     }

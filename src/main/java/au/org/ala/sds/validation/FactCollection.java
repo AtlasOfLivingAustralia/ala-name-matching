@@ -48,6 +48,10 @@ public class FactCollection {
         this.facts = new HashMap<String, String>();
     }
 
+    public FactCollection(Map<String, String> map) {
+        this.facts = new HashMap<String, String>(map);
+    }
+
     public void add(String key, String value) {
         facts.put(key, value);
     }

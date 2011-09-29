@@ -3,6 +3,8 @@
  */
 package au.org.ala.sds.validation;
 
+import java.util.Map;
+
 /**
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
@@ -10,8 +12,10 @@ package au.org.ala.sds.validation;
 public class ValidationOutcome {
 
     private boolean valid;
+    private boolean sensitive = false;
+    private boolean loadable = false;
     private ValidationReport report;
-    private String annotation;
+    private Map<String, Object> result;
 
     public ValidationOutcome(ValidationReport report) {
         super();
@@ -33,19 +37,35 @@ public class ValidationOutcome {
         this.report = report;
     }
 
-    public String getAnnotation() {
-        return annotation;
-    }
-
-    public void setAnnotation(String annotation) {
-        this.annotation = annotation;
-    }
-
     public boolean isValid() {
         return valid;
     }
 
     public void setValid(boolean valid) {
         this.valid = valid;
+    }
+
+    public boolean isSensitive() {
+        return sensitive;
+    }
+
+    public void setSensitive(boolean sensitive) {
+        this.sensitive = sensitive;
+    }
+
+    public boolean isLoadable() {
+        return loadable;
+    }
+
+    public void setLoadable(boolean loadable) {
+        this.loadable = loadable;
+    }
+
+    public Map<String, Object> getResult() {
+        return result;
+    }
+
+    public void setResult(Map<String, Object> result) {
+        this.result = result;
     }
 }
