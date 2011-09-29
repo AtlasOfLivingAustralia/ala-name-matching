@@ -4,6 +4,7 @@
 package au.org.ala.sds.util;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
@@ -80,7 +81,7 @@ public class ValidationUtils {
         return isValidNumber(decimalLatitude) && isValidNumber(decimalLongitude);
     }
 
-    public static String validateName(FactCollection facts) {
+    public static String validateName(Map<String, String> facts) {
         String scientificName = facts.get(FactCollection.SCIENTIFIC_NAME_KEY);
         if (StringUtils.isNotBlank(scientificName) && !scientificName.equalsIgnoreCase("\\N")) {
             return scientificName;
