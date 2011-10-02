@@ -35,7 +35,7 @@ earliestEraOrLowestErathem
 earliestPeriodOrLowestSystem
 endDayOfYear
 establishmentMeans	nativeness
-eventDate	earliestDateCollected	latestDateCollected	sampleDate
+eventDate	earliestDateCollected	latestDateCollected	sampleDate	date	occurrence date
 eventID
 eventRemarks
 eventTime	time
