@@ -19,6 +19,7 @@ import scala.collection.mutable.ArrayBuffer
 import java.util.Date
 import java.io.OutputStream
 import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang.time.DateFormatUtils
 
 
 
@@ -114,7 +115,7 @@ trait IndexDAO {
                 if(value != "true" && value != "false"){
                   val arr = Json.toListWithGeneric(value,classOf[java.lang.Integer])
                   for(i <- 0 to arr.size-1)
-                    assertions = assertions :+ AssertionCodes.getByCode(arr(0)).get.getName
+                    assertions = assertions :+ AssertionCodes.getByCode(arr(i)).get.getName
                 }
             }
         )
@@ -146,7 +147,8 @@ trait IndexDAO {
             "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
             "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
             "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
-            "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation","sensitive", "coordinate_uncertainty","user_id") ++ elFields ++ clFields
+            "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation","sensitive", "coordinate_uncertainty",
+            "user_id","provenance","subspecies_guid", "subspecies_name", "interaction","last_assertion_date","last_load_date","last_processed_date") ++ elFields ++ clFields
 
 
             
@@ -207,6 +209,13 @@ trait IndexDAO {
                     else
                         Array[String]("")
                 }
+                val interactions = {
+                    if(map.contains("interactions.p")){
+                        Json.toArray(map.get("interactions.p").get, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]]
+                    }
+                    else
+                        Array[String]("")
+                }
                 val sdatahubs = getValue("dataHubUid",map, true)
                 val dataHubUids = {
                     if (sdatahubs.length > 0)
@@ -251,7 +260,7 @@ trait IndexDAO {
                 if(stateCons == "null") stateCons = rawStateCons;
                 
                 val sensitive:String = {
-                    if(getValue("originalDecimalLatitude",map) != "") 
+                    if(getValue("originalSensitiveValues",map) != "" || getValue("originalDecimalLatitude",map) != "") 
                         "generalised"
                     else if(getValue("dataGeneralizations.p",map ) != "")
                         "alreadyGeneralised"
@@ -266,6 +275,25 @@ trait IndexDAO {
                     case "false"=>"false"
                     case value:String => (value.length >3).toString
                 }
+                val (subspeciesGuid, subspeciesName):(String,String) = {
+                    if(map.contains("taxonRankID.p")){
+                        try{
+                         if(java.lang.Integer.parseInt(map.getOrElse("taxonRankID.p","")) > 7000)
+                             (taxonConceptId, sciName)
+                         else ("","")
+                        }
+                        catch{
+                            case _=>("","")
+                        }
+                    }
+                    else ("","")
+                }
+                
+                val lastLoaded = DateParser.parseStringToDate(getValue(FullRecordMapper.alaModifiedColumn,map))
+                
+                val lastProcessed = DateParser.parseStringToDate(getValue(FullRecordMapper.alaModifiedColumn+".p",map))
+                
+                val lastUserAssertion = DateParser.parseStringToDate(map.getOrElse(FullRecordMapper.lastUserAssertionDateColumn, ""))
 
                 return List(getValue("uuid", map),
                     getValue("rowKey", map),
@@ -337,8 +365,11 @@ trait IndexDAO {
                     rawStateCons,
                     sensitive,
                     getValue("coordinateUncertaintyInMeters.p",map),
-                    map.getOrElse("recordedBy", "")
-
+                    map.getOrElse("recordedBy", ""), map.getOrElse("provenance",""), subspeciesGuid, subspeciesName,
+                    interactions.reduceLeft(_ + "|" + _),
+                    if(lastUserAssertion.isEmpty)"" else DateFormatUtils.format(lastProcessed.get,"yyyy-MM-dd'T'HH:mm:ss'Z'"), 
+                    if(lastLoaded.isEmpty)"2010-11-1T00:00:00Z" else DateFormatUtils.format(lastLoaded.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+                    if(lastProcessed.isEmpty)"" else DateFormatUtils.format(lastProcessed.get,"yyyy-MM-dd'T'HH:mm:ss'Z'")
                     ) ++ elFields.map(field => getValue(field+".p", map)) ++ clFields.map(field=> getValue(field+".p", map))
             }
             else {
@@ -590,7 +621,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
                 val doc = new SolrInputDocument()
                 for (i <- 0 to values.length - 1) {
                     if (values(i) != "") {
-                        if (header(i) == "species_group" || header(i) == "assertions" || header(i) =="data_hub_uid") {
+                        if (header(i) == "species_group" || header(i) == "assertions" || header(i) =="data_hub_uid" || header(i) == "interactions") {
                             //multiple valus in this field
                             for (value <- values(i).split('|')){
                             	if(value != "")

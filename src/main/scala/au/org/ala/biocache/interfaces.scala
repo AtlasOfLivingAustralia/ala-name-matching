@@ -53,7 +53,7 @@ object Store {
   }
 
   //TODO need a better mechanism for doing this....
-  private val propertiesToHide = Set("originalDecimalLatitude","originalDecimalLongitude", "orginalLocationRemarks", "originalVerbatimLatitude", "originalVerbatimLongitude")
+  private val propertiesToHide = Set("originalSensitiveValues","originalDecimalLatitude","originalDecimalLongitude", "orginalLocationRemarks", "originalVerbatimLatitude", "originalVerbatimLongitude")
 
   /**
    * Get the raw processed comparison based on the uuid for the occurrence.

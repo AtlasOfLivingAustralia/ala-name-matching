@@ -44,7 +44,7 @@ class MiscTest extends ConfigFunSuite {
         val raw = new FullRecord
         var processed = new FullRecord
         raw.occurrence.associatedMedia = "invalidimageurl.ppp"
-        var qas = (new ImageProcessor).process("test", raw, processed)
+        var qas = (new MiscellaneousProcessor).process("test", raw, processed)
         expect(20007){qas(0).code}
     }
     
@@ -95,6 +95,13 @@ class MiscTest extends ConfigFunSuite {
         expect(0){qas2.size}         
     }
     
+    test("interactions"){
+        val raw = new FullRecord
+        var processed = new FullRecord
+        raw.occurrence.associatedTaxa = "infects:Test Species"
+        (new MiscellaneousProcessor).process("test", raw, processed)
+        expect ("Infects"){processed.occurrence.interactions(0)}
+    }
     /*test("Layers Test" ){
         expect("ibra_merged"){Layers.idToNameMap("ibra")}
         expect("el790"){Layers.nameToIdMap("worldclim_bio_3")}

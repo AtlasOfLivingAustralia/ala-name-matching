@@ -6,7 +6,9 @@ import java.util.UUID
 import scala.collection.mutable.ListBuffer
 
 class MockPersistenceManager extends PersistenceManager {
-
+    
+  override def toString = mockStore.toString   
+    
   private val mockStore = new HashMap[String, HashMap[String,HashMap[String,String]]]
   
 
@@ -50,7 +52,7 @@ class MockPersistenceManager extends PersistenceManager {
 
   def put(uuid: String, entityName: String, propertyName: String, propertyValue: String) = {
     val entityMap = mockStore.getOrElseUpdate(entityName, HashMap(uuid -> HashMap[String,String]()))
-    val recordMap = entityMap.get(uuid).get
+    val recordMap = entityMap.getOrElseUpdate(uuid, HashMap[String,String]())
     recordMap.put(propertyName, propertyValue)
     uuid
   }
@@ -95,8 +97,15 @@ class MockPersistenceManager extends PersistenceManager {
       
   }
 
-  def pageOverAll(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid: String, endUuid: String, pageSize: Int) =
-    throw new RuntimeException("not implemented yet")
+  def pageOverAll(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid: String, endUuid: String, pageSize: Int) ={
+     val entityMap = mockStore.getOrElseUpdate(entityName,  HashMap[String,HashMap[String,String]]() ) 
+     entityMap.keySet.foreach(key =>{
+         if(key.startsWith(startUuid) && !key.startsWith(endUuid)){
+             proc(key, entityMap.getOrElse(key, HashMap[String,String]()).toMap)
+         }
+     }) 
+    //throw new RuntimeException("not implemented yet")
+  }
 
   def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid: String, endUuid:String, pageSize: Int, columnName: String*) =
     throw new RuntimeException("not implemented yet")

@@ -255,6 +255,8 @@ object AttributionDAO {
     val wsmap = Json.toMap(wscontent)
 
     val name = wsmap.getOrElse("name","").toString
+    
+    val provenance = wsmap.getOrElse("provenance","").toString
 
     val hints =wsmap.getOrElse("taxonomyCoverageHints",null)
     val ahints = {
@@ -290,6 +292,7 @@ object AttributionDAO {
     attribution.setDataHubUid(ahub)
     attribution.setTaxonomicHints(ahints)
     attribution.hasMappedCollections=hasColl
+    attribution.setProvenance(provenance)
     if(defaultDwc!= null){
         attribution.setDefaultDwcValues(defaultDwc.asInstanceOf[java.util.LinkedHashMap[String,String]].toMap)
     }

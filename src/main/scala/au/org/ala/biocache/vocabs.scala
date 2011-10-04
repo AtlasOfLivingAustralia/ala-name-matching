@@ -323,6 +323,10 @@ object TypeStatus extends Vocab {
   val all = loadVocabFromFile("/typeStatus.txt")
 }
 
+object Interactions extends Vocab {
+  val all = loadVocabFromFile("/interactions.txt")
+}
+
 /**
  * A vacabulary mapping trait. Supports tests for compatible terms.
  */

@@ -121,6 +121,10 @@
                     <groupId>org.apache.lucene</groupId>
                     <artifactId>lucene-analyzers</artifactId>
                 </exclusion>
+                 <exclusion>
+                    <artifactId>org.slf4j</artifactId>
+                    <groupId>slf4j-api</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
         <!--  BIE Species Profile syncing -->
@@ -255,8 +259,12 @@
         <dependency>
             <artifactId>solr-core</artifactId>
             <groupId>org.apache.solr</groupId>
-            <version>3.3.0</version>
+            <version>3.4.0</version>
             <exclusions>
+                <exclusion>
+                    <artifactId>org.slf4j</artifactId>
+                    <groupId>slf4j-api</groupId>
+                </exclusion>
                 <exclusion>
                     <artifactId>org.slf4j</artifactId>
                     <groupId>slf4j-jdk14</groupId>
@@ -266,7 +274,7 @@
         <dependency>
             <artifactId>solr-solrj</artifactId>
             <groupId>org.apache.solr</groupId>
-            <version>3.3.0</version>
+            <version>3.4.0</version>
             <exclusions>
                 <exclusion>
                     <artifactId>org.slf4j</artifactId>

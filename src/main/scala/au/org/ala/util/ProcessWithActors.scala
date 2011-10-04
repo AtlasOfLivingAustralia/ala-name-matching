@@ -18,9 +18,10 @@ object ProcessWithActors {
     println("Starting...")
     var threads:Int = 4
     var startUuid:Option[String] = None
-    
+    var check =false
     var dr:Option[String] = None
     val parser = new OptionParser("process records options") {
+        opt("check","check to see if the record is deleted before processing",{check=true})
         intOpt("t", "thread", "The number of threads to use", {v:Int => threads = v } )
         opt("s", "start","The record to start with", {v:String => startUuid = Some(v)})
         opt("dr", "resource", "The data resource to process", {v:String =>dr = Some(v)})
@@ -28,7 +29,7 @@ object ProcessWithActors {
     
     if(parser.parse(args)){
       println("Processing "+dr.getOrElse("")+" from " +startUuid + " with " + threads + "actors")
-      processRecords(threads, startUuid, dr)
+      processRecords(threads, startUuid, dr,check)
     }
     
     //shutdown the persistence

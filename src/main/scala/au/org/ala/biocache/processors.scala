@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import au.org.ala.data.model.LinnaeanRankClassification
 import au.org.ala.sds.validation.FactCollection
 import au.org.ala.sds.validation.ServiceFactory
-import au.org.ala.sds.validation.ConservationOutcome
+import collection.JavaConversions
 import au.org.ala.sds.validation.MessageFactory
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang.time.{DateUtils, DateFormatUtils}
@@ -33,7 +33,7 @@ object Processors {
 //also classification must be executed before location   
  val processorMap = scala.collection.mutable.LinkedHashMap(        
       "DEFAULT"-> new DefaultValuesProcessor,
-      "IMAGE"-> new ImageProcessor,
+      "IMAGE"-> new MiscellaneousProcessor,
       "ATTR" -> new AttributionProcessor,
       "CLASS"-> new ClassificationProcessor,
       "BOR" -> new BasisOfRecordProcessor,
@@ -60,7 +60,12 @@ object Processors {
 
 /**     
  * Maps the default values to the processed record when no raw value exists     
- * This processor should be run before the others so that the default values are populated before reporting missing values      
+ * This processor should be run before the others so that the default values are populated before reporting missing values    
+ * 
+ * This processor also restore the default values.  IMPLICATION is the LocationProcessor needs to be run to allow sensitive species to 
+ * 
+ * TODO CHANGE this if we move to a phase based processing mechanism
+ *   
  */     
 class DefaultValuesProcessor extends Processor {        
     def process(guid:String, raw:FullRecord, processed:FullRecord): Array[QualityAssertion]={       
@@ -77,13 +82,21 @@ class DefaultValuesProcessor extends Processor {
                     }       
                 }})     
             }       
-        }       
+        }
+        
+        //reset the original sensitive values for use in subsequent processing.
+        //covers all values that could have been change - thus allowing event dates to be processed correctly...
+        if(raw.occurrence.originalSensitiveValues != null){
+            //TODO: Only apply the originalSensitiveValues if the last processed date occurs after the last load date 
+            FullRecordMapper.mapPropertiesToObject(raw, raw.occurrence.originalSensitiveValues)
+        }
+        
         Array()     
     }       
     def getName = "default"     
 }
 
-class ImageProcessor extends Processor {
+class MiscellaneousProcessor extends Processor {
 
   //Regular expression used to parse an image URL - adapted from 
   //http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
@@ -94,10 +107,42 @@ class ImageProcessor extends Processor {
   val imageExtension = Array(".jpg",".gif",".png",".jpeg")
   val soundExtension = Array(".wav",".mp3",".ogg",".flac")
   val videoExtension = Array(".wmv",".mp4",".mpg",".avi",".mov")
+  
+  def process(guid:String, raw:FullRecord, processed:FullRecord) :Array[QualityAssertion] ={
+      var qas:Array[QualityAssertion] = processImages(guid, raw, processed)
+      processInteractions(guid, raw, processed)
+      qas
+  }
+  
+  def processInteractions(guid:String, raw:FullRecord, processed:FullRecord)={
+      //interactions are supplied as part of the assciatedTaxa string
+      
+      //TODO more sophisticated parsing of the string. ATM we are only supporting the structure for dr642
+      // TODO support multiple interactions
+      if(raw.occurrence.associatedTaxa != null && !raw.occurrence.associatedTaxa.isEmpty){
+          val interaction = parseInteraction(raw.occurrence.associatedTaxa)          
+          if(!interaction.isEmpty){
+              val term = Interactions.matchTerm(interaction.get)              
+              if(!term.isEmpty){
+                  processed.occurrence.interactions = Array(term.get.getCanonical)
+              }
+          }
+      }
+  }
+  
+  val interactionPattern = """([A-Za-z]*):([\x00-\x7F\s]*)""".r
+  def parseInteraction(raw:String):Option[String]={
+      raw match{
+          case interactionPattern(interaction, taxa)=>Some(interaction)
+          case _=> None
+      }
+      
+  }
+  
   /**
    * validates that the associated media is a valid image url
    */
-  def process(guid:String, raw:FullRecord, processed:FullRecord) :Array[QualityAssertion] ={
+  def processImages(guid:String, raw:FullRecord, processed:FullRecord) :Array[QualityAssertion] ={
     val urls = raw.occurrence.associatedMedia
     // val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(cl.getter(sg.rank)) => sg.name}
     if(urls != null){      
@@ -171,6 +216,7 @@ class AttributionProcessor extends Processor {
         processed.attribution.dataProviderName = dataResource.get.dataProviderName
         processed.attribution.dataHubUid = dataResource.get.dataHubUid
         processed.attribution.dataResourceUid = dataResource.get.dataResourceUid
+        processed.attribution.provenance = dataResource.get.provenance
         //only add the taxonomic hints if they were not populated by the collection
         if (processed.attribution.taxonomicHints == null)
           processed.attribution.taxonomicHints = dataResource.get.taxonomicHints
@@ -316,7 +362,8 @@ class EventProcessor extends Processor {
           processed.event.day = parsedDate.get.startDay
           processed.event.month = parsedDate.get.startMonth
           processed.event.year = parsedDate.get.startYear
-          if(DateUtil.isFutureDate(processed.event.eventDate)){
+          
+          if(DateUtil.isFutureDate(parsedDate.get)){
             assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,"Future date supplied")
           }
       }
@@ -331,7 +378,7 @@ class EventProcessor extends Processor {
           processed.event.day = parsedDate.get.startDay
           processed.event.month = parsedDate.get.startMonth
           processed.event.year = parsedDate.get.startYear
-          if(DateUtil.isFutureDate(processed.event.eventDate)){
+          if(DateUtil.isFutureDate(parsedDate.get)){
             assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,"Future date supplied")
           }
       }
@@ -410,6 +457,7 @@ class LocationProcessor extends Processor {
   lazy val sdsFinder = Config.sdsFinder
 
   import au.org.ala.util.StringHelper._
+  import JavaConversions._
 
   /**
    * Process geospatial details
@@ -484,7 +532,7 @@ class LocationProcessor extends Processor {
         try {
           processSensitivity(raw, processed, location)
         } catch {
-          case e:Exception => println("Problem processing using the SDS....")
+          case e:Exception => println("Problem processing using the SDS...."); e.printStackTrace
         }
       }
     }
@@ -512,14 +560,26 @@ class LocationProcessor extends Processor {
   }
 
   def setProcessedCoordinates(raw: FullRecord, processed: FullRecord) {
-    //handle the situation where the coordinates have already been sensitised
+    //handle the situation where the coordinates have already been sensitised (LEGACY format - as of 2011-10-01 there we are storing original values in a map...)
     if (raw.location.originalDecimalLatitude != null && raw.location.originalDecimalLongitude != null) {
       processed.location.decimalLatitude = raw.location.originalDecimalLatitude
       processed.location.decimalLongitude = raw.location.originalDecimalLongitude
       processed.location.verbatimLatitude = raw.location.originalVerbatimLatitude
       processed.location.verbatimLongitude = raw.location.originalVerbatimLongitude
+      //set the raw values too
+      raw.location.decimalLatitude = raw.location.originalDecimalLatitude
+      raw.location.decimalLongitude = raw.location.originalDecimalLongitude
 
-    } else if (raw.location.decimalLatitude != null && raw.location.decimalLongitude != null) {
+//    }else if(raw.occurrence.originalSensitiveValues != null && !raw.occurrence.originalSensitiveValues.isEmpty){
+//        //set the original values again
+//        val decimalLongitude = raw.occurrence.originalSensitiveValues.getOrElse("decimalLongitude", "")
+//        val decimalLatitude = raw.occurrence.originalSensitiveValues.getOrElse("decimalLatitude","")
+//        raw.location.decimalLatitude = decimalLatitude
+//        raw.location.decimalLongitude =decimalLongitude
+//        processed.location.decimalLatitude = decimalLatitude
+//        processed.location.decimalLongitude =decimalLongitude
+//    }
+    }else if (raw.location.decimalLatitude != null && raw.location.decimalLongitude != null) {
       //check to see if we have coordinates specified
       processed.location.decimalLatitude = raw.location.decimalLatitude
       processed.location.decimalLongitude = raw.location.decimalLongitude
@@ -705,50 +765,62 @@ class LocationProcessor extends Processor {
 
       //only proceed if the taxon has been identified as sensitive
       if (sensitiveTaxon != null) {
-        //populate the Facts that we know
-        val facts = new FactCollection
-        facts.add(FactCollection.DECIMAL_LATITUDE_KEY, processed.location.decimalLatitude)
-        facts.add(FactCollection.DECIMAL_LONGITUDE_KEY, processed.location.decimalLongitude)
-        facts.add(FactCollection.STATE_PROVINCE_KEY, location.stateProvince)
+          
+        //get a map respresentation of the raw record...
+          var rawMap = scala.collection.mutable.Map[String, String]()
+        raw.objectArray.foreach(poso => {
+            val map = FullRecordMapper.mapObjectToProperties(poso, Versions.RAW)
+            //poso.
+            //add all to map           
+            rawMap.putAll(map)
+        })
+        //put the state information that we have from the point
+        rawMap.put("stateProvince",location.stateProvince)
+        
+                 
+        
 
         val service = ServiceFactory.createValidationService(sensitiveTaxon)
         //TODO fix for different types of outcomes...
-        val voutcome = service.validate(facts)
-        if (voutcome.isValid && voutcome.isInstanceOf[ConservationOutcome]) {
-          val outcome = voutcome.asInstanceOf[ConservationOutcome]
-          val gl = outcome.getGeneralisedLocation
-          if (!gl.isSensitive) {
-            //don't generalise since it is not part of the Location where it should be generalised
-          } else if (!gl.isGeneralised) {
-            //already been genaralised by data resource provider non need to do anything.
-            processed.occurrence.dataGeneralizations = gl.getDescription
-          } else {
-            //store the generalised values as the raw.location.decimalLatitude/Longitude
-            //store the orginal as a hidden value
-            raw.location.originalDecimalLatitude = processed.location.decimalLatitude
-            raw.location.originalDecimalLongitude = processed.location.decimalLongitude
-            raw.location.decimalLatitude = gl.getGeneralisedLatitude
-            raw.location.decimalLongitude = gl.getGeneralisedLongitude
-            raw.location.originalLocationRemarks = raw.location.locationRemarks
-            raw.location.originalVerbatimLatitude = raw.location.verbatimLatitude
-            raw.location.originalVerbatimLongitude = raw.location.verbatimLongitude
-            raw.location.locationRemarks = null
-
-            processed.location.decimalLatitude = gl.getGeneralisedLatitude
-            processed.location.decimalLongitude = gl.getGeneralisedLongitude
+        val voutcome = service.validate(rawMap)
+        if (voutcome.isValid && voutcome.isSensitive) {
             
-            //gather the information about the rules that were applied.
-            val si = gl.getSensitivityInstances().toArray(Array[au.org.ala.sds.model.SensitivityInstance] ()).asInstanceOf[Array[au.org.ala.sds.model.SensitivityInstance]]
-            val extraComment ="\n"+si.map(i=>"Sensitive in " + i.getZone + " [" + i.getCategory.getValue +", " + i.getAuthority +"]" ).reduceLeft(_ + "\t" +_)
-                        
-            //update the generalised text
-            if (gl.getDescription == MessageFactory.getMessageText(MessageFactory.LOCATION_WITHHELD)) {
-              processed.occurrence.informationWithheld = gl.getDescription +extraComment
-            } else {
-              processed.occurrence.dataGeneralizations = gl.getDescription + extraComment
-              processed.location.coordinateUncertaintyInMeters = gl.getGeneralisationInMetres
+            //the map that is returned needs to be used to update the raw record
+            val map:scala.collection.mutable.Map[java.lang.String,Object] = voutcome.getResult
+            //convert it to a string string map
+            val stringMap = map.map({case(k, v) => if(k=="originalSensitiveValues"){
+                val osv = v.asInstanceOf[java.util.HashMap[String,String]]
+                val newv =osv.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
+                (k->newv)
+            } else (k->v.toString)
+                
+            })           
+            
+            //take away the values that need to be added to the processed record NOT the raw record
+            val uncertainty = map.get("generalisationInMetres")
+            if(!uncertainty.isEmpty){
+                //we know that we have sensitised
+                processed.location.coordinateUncertaintyInMeters = uncertainty.get.toString
+                processed.location.decimalLatitude = stringMap.getOrElse("decimalLatitude","")
+                processed.location.decimalLongitude = stringMap.getOrElse("decimalLongitude","")
+                stringMap -= "generalisationInMetres"
             }
-
+            processed.occurrence.informationWithheld = stringMap.getOrElse("informationWithheld","")
+            processed.occurrence.dataGeneralizations = stringMap.getOrElse("dataGeneralizations","")
+            stringMap -= "informationWithheld"
+            stringMap -="dataGeneralizations"
+            
+            if(stringMap.contains("day") || stringMap.contains("eventDate")){
+                //remove the day from the values
+                raw.event.day = ""
+                processed.event.day =""
+                processed.event.eventDate=""
+                
+            }
+            
+            //update the raw record with whatever is left in the stringMap
+            Config.persistenceManager.put(raw.rowKey, "occ", stringMap.toMap)
+            
             //TODO may need to fix locality information... change ths so that the generalisation
             // is performed before the point matching to gazetteer..
             //We want to associate the ibra layers to the sensitised point
@@ -758,8 +830,15 @@ class LocationProcessor extends Processor {
               case Some((loc, el, cl)) => processed.location.lga = loc.lga
               case _ => processed.location.lga = null //unset the lga
             }
-          }
+          //}
         }
+      }
+      else{
+          //Species is NOT sensitive 
+          //if the raw record has originalSensitive values we need to reinitilise the value
+          if(raw.occurrence.originalSensitiveValues != null && !raw.occurrence.originalSensitiveValues.isEmpty){              
+              Config.persistenceManager.put(raw.rowKey, "occ", raw.occurrence.originalSensitiveValues + ("originalSensitiveValues"->""))               
+          }
       }
     }
   }

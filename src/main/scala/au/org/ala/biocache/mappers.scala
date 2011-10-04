@@ -17,6 +17,7 @@ object FullRecordMapper {
     val locationDeterminedColumn ="locationDetermined"
     val defaultValuesColumn = "defaultValuesUsed"    
     val alaModifiedColumn = "lastModifiedTime"
+    val lastUserAssertionDateColumn ="lastUserAssertionDate"
     val deletedColumn = "deleted"
     val geospatialQa = "loc"
     val taxonomicalQa = "class"
@@ -118,6 +119,7 @@ object FullRecordMapper {
                     case it if locationDeterminedColumn.equals(it) => fullRecord.locationDetermined ="true".equals(fieldValue)
                     case it if deletedColumn.equals(it) => fullRecord.deleted = "true".equals(fieldValue)
                     case it if isProcessedValue(fieldName) && version == Processed => fullRecord.setProperty(removeSuffix(fieldName), fieldValue)
+                    case it if lastUserAssertionDateColumn.equals(fieldName) => fullRecord.setLastUserAssertionDate(fieldValue)
                     case it if version == Raw => fullRecord.setProperty(fieldName, fieldValue)
                     case _ => //throw new Exception("Unmapped property : " + fieldName)
                 }

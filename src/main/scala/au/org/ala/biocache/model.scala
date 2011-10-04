@@ -7,6 +7,7 @@ import org.codehaus.jackson.annotate.JsonIgnore
 import collection.mutable.HashMap
 import collection.JavaConversions
 import org.apache.commons.lang.builder.{ToStringBuilder, EqualsBuilder}
+import java.util.Date
 
 /**
  * Represents an occurrence record. These fields map directly on to
@@ -70,11 +71,18 @@ class Occurrence extends Cloneable with Mappable with POSO {
   @BeanProperty var sounds:Array[String] = _
   //custom fields
   @BeanProperty var videos:Array[String] = _
+  @BeanProperty var interactions:Array[String] = _
   //Store the conservation status
   //TODO not sure if this is the correct place
   @BeanProperty var austConservation:String = _
   @BeanProperty var stateConservation:String = _
+  //Store the original values before the SDS changes
+  var originalSensitiveValues:Map[String,String] =_
 
+   @JsonIgnore
+  def getOriginalSensitiveValues():Map[String,String] = originalSensitiveValues
+  def setOriginalSensitiveValues(originalSensitiveValues:Map[String,String])=this.originalSensitiveValues = originalSensitiveValues
+  
   @JsonIgnore
   def getMap():java.util.Map[String,String]={
     val map = Map[String,String]("occurrenceID"->occurrenceID, "accessrights"->accessrights, "associatedMedia"->associatedMedia,
@@ -874,11 +882,12 @@ class Attribution (
   @BeanProperty var institutionName:String,
   @BeanProperty var collectionName:String,
   @BeanProperty var citation:String,
+  @BeanProperty var provenance:String,
   @BeanProperty var taxonomicHints:Array[String],
   @BeanProperty var defaultDwcValues:Map[String,String])
   extends Cloneable with Mappable with POSO {
   import JavaConversions._
-  def this() = this(null,null,null,null,null,null,null,null,null,null, null, null, null)
+  def this() = this(null,null,null,null,null,null,null,null,null,null,null, null, null, null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
   override def toString = ToStringBuilder.reflectionToString(this)
   // stores whether or not the data resource has collections associated with it
@@ -941,7 +950,8 @@ class FullRecord (
   @BeanProperty var taxonomicallyKosher:Boolean = true,
   @BeanProperty var deleted:Boolean = false,
   @BeanProperty var userVerified:Boolean = false,
-  @BeanProperty var lastModifiedTime:String ="")
+  @BeanProperty var lastModifiedTime:String ="",
+  @BeanProperty var lastUserAssertionDate:String="")
   extends Cloneable with CompositePOSO {
     
   def objectArray:Array[POSO] = Array(occurrence,classification,location,event,attribution,identification,measurement, environmentalLayers, contextualLayers)
@@ -1018,6 +1028,8 @@ class ConservationSpecies(
  * Quality Assertions are made by man or machine.
  * Man - provided through a UI, giving a positive or negative assertion
  * Machine - provided through backend processing
+ * 
+ * 
  */
 class QualityAssertion (
   @BeanProperty var uuid:String,
@@ -1048,34 +1060,34 @@ class QualityAssertion (
  * type functionality.
  */
 object QualityAssertion {
-
+    implicit def dateToString(date:Date):String= DateFormatUtils.format(date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
   def apply(code:Int) = {
     val uuid = UUID.randomUUID.toString
     val errorCode = AssertionCodes.getByCode(code)
     if(errorCode.isEmpty){
         throw new Exception("Unrecognised code: "+ code)
     }
-    new QualityAssertion(uuid,errorCode.get.name,errorCode.get.code,true,null,null,null,null,null)
+    new QualityAssertion(uuid,errorCode.get.name,errorCode.get.code,true,null,null,null,null,new Date())
   }
 
   def apply(errorCode:ErrorCode) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,true,null,null,null,null,null)
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,true,null,null,null,null,new Date())
   }
   def apply(errorCode:ErrorCode,problemAsserted:Boolean) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,problemAsserted,null,null,null,null,null)
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,problemAsserted,null,null,null,null,new Date())
   }
   def apply(errorCode:ErrorCode,problemAsserted:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,problemAsserted,comment,null,null,null,null)
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,problemAsserted,comment,null,null,null,new Date())
   }
   def apply(errorCode:ErrorCode,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,true,comment,null,null,null,null)
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,true,comment,null,null,null,new Date())
   }
   def apply(assertionCode:Int,problemAsserted:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,null,assertionCode,problemAsserted,comment,null,null,null,null)
+    new QualityAssertion(uuid,null,assertionCode,problemAsserted,comment,null,null,null,new Date())
   }
 }

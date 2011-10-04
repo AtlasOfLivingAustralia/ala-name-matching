@@ -672,9 +672,12 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         val systemAssertions = getSystemAssertions(rowKey)
         val userAssertions = getUserAssertions(rowKey)
         updateAssertionStatus(rowKey, qualityAssertion, systemAssertions, userAssertions)
+        //set the last user assertion date
+        persistenceManager.put(rowKey, entityName, FullRecordMapper.lastUserAssertionDateColumn, qualityAssertion.created)
         //when the user assertion is verified need to add extra value
-        if(AssertionCodes.isVerified(qualityAssertion))
+        if(AssertionCodes.isVerified(qualityAssertion)){
             persistenceManager.put(rowKey, entityName, FullRecordMapper.userVerifiedColumn,"true")
+        }
     }
 
     /**
@@ -837,7 +840,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         //set the overall decision if necessary
         var properties = scala.collection.mutable.Map[String, String]()
         //need to update the user assertion flag in the occurrence record 
-        properties += (FullRecordMapper.userQualityAssertionColumn-> (userAssertions.size>0).toString)
+        properties += (FullRecordMapper.userQualityAssertionColumn-> (userAssertions.size>0).toString)        
         if(userVerified){
             properties += (FullRecordMapper.geospatialDecisionColumn -> "true")
             properties += (FullRecordMapper.taxonomicDecisionColumn -> "true")

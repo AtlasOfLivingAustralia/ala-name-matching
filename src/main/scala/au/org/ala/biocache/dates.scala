@@ -9,14 +9,33 @@ import java.text.{SimpleDateFormat, ParseException}
 
 object DateUtil {
   def getCurrentYear = DateFormatUtils.format(new Date(), "yyyy").toInt
-  def isFutureDate(str:String) = {
-    //chec for future date
-    val date = DateUtils.parseDate(str, Array("yyyy-MM-dd"))
-    if (date!=null && date.after(new Date())){
-      true
-    } else {
-      false
-    }
+  def isFutureDate(date:EventDate) = {
+      val (str, format):(String, Array[String]) ={
+          date match{
+              case dt if dt.startDate != "" => (dt.startDate, Array("yyyy-MM-dd"))
+              case dt if dt.startYear!= "" && dt.startMonth != "" => (dt.startYear +"-" + dt.startMonth, Array("yyyy-MM"))
+              case dt if dt.startYear != "" => (dt.startYear, Array("yyyy"))
+              case _ => (null, Array())
+          }
+      }
+    //check for future date
+      if(str != null){
+          val date = DateUtils.parseDate(str, format)
+          if(date != null && date.after(new Date())){
+              true
+          }else{
+              false
+          }         
+      }
+      else{
+          false
+      }
+//    val date = DateUtils.parseDate(str, Array("yyyy-MM-dd"))
+//    if (date!=null && date.after(new Date())){
+//      true
+//    } else {
+//      false
+//    }
   }
 }
 

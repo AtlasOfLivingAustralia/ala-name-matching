@@ -522,6 +522,7 @@
    
    <field name="data_resource_uid" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="data_resource" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="provenance" type="string" indexed="true" stored="true" multiValued="false" />
    <field name="institution_uid" type="string" indexed="true" stored="true" multiValued="false" />
    <field name="institution_code" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="institution_name" type="string" indexed="true" stored="true" multiValued="false" />
@@ -559,6 +560,7 @@
    <field name="multimedia" type="string" indexed="true" stored="true" multiValued="false" />
    <field name="image_url" type="string" indexed="true" stored="true" multiValued="false" />
    <field name="species_group" type="string" indexed="true" stored="true" multiValued="true" />
+   <field name="interaction" type="string" indexed="true" stored="true" multiValued="true" />
 
    <!-- Not displayed in search resutls -->
    <!-- field name="raw_author" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
@@ -583,6 +585,8 @@
    <field name="species_guid" type="string" indexed="true" stored="true" multiValued="false"  />
    <field name="species" type="string" indexed="true" stored="true" multiValued="false"  />
    
+   <field name="subspecies_guid" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="subspecies_name" type="string" indexed="true" stored="true" multiValued="false" />
    <!-- Not actually being used in the search -->
    <!-- field name="geo_regions" type="text_ws" indexed="true" stored="true" multiValued="true" omitNorms="false" / -->
    <field name="state" type="string" indexed="true" stored="true" multiValued="false" />
@@ -640,13 +644,17 @@
    <field name="geodetic_datum" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="individual_count" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" /-->
    <!-- used for remarks searching -->
-   <field name="location_remarks" type="string" indexed="false" stored="false" multiValued="false" omitNorms="false" />
-   <field name="occurrence_remarks" type="string" indexed="false" stored="false" multiValued="false" omitNorms="false" />
-   <field name="citation" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
+   <field name="location_remarks" type="string" indexed="false" stored="false" multiValued="false" />
+   <field name="occurrence_remarks" type="string" indexed="false" stored="false" multiValued="false" />
+   <field name="citation" type="string" indexed="false" stored="true" multiValued="false"  />
    
    <!-- I don't think that we need this field - we can always add it later. -->
    <!--field name="confidence" type="int" indexed="true" stored="true" multiValued="false" omitNorms="false" /-->
    <field name="systemAssertions" type="string" indexed="true" stored="true" multiValued="true" omitNorms="false" />
+   
+   <field name="last_assertion_date" type="tdate" indexed="true" stored="false" multiValued="false" />
+   <field name="last_load_date" type="tdate" indexed="true" stored="false" multiValued="false" />
+   <field name="last_processed_date" type="tdate" indexed="true" stored="false" multiValued="false" />
 
    <!-- end of Biocache Lucene Fields -->
 
@@ -657,7 +665,8 @@
    <field name="record_type" type="string" indexed="true" stored="true" multiValued="false"  />
    <field name="lsid" type="string" indexed="true" stored="false" multiValued="false"/>
    <field name="biogeographic_region" type="string" indexed="true" stored="true" multiValued="true" />
-   <field name="raw_name" type="string_lowercase" indexed="true" stored="false" multiValued="true" omitNorms="true" />
+   <field name="raw_name" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
+   <field name="matched_name" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
 
    <!-- Some ALA dynamic fields -->
    <dynamicField name="*_id"  type="string" indexed="true" stored="true"/>
@@ -668,7 +677,7 @@
    <dynamicField name="*_uid" type="string" indexed="true" stored="true"/>
    <!--  catches all the environment and contextual layers that are being indexed -->
    <!-- They are being stored just in case they need to be faceted on -->
-   <dynamicField name="el*" type="double" indexed="true" stored="false" omitNorms="true" />
+   <dynamicField name="el*" type="double" indexed="true" stored="true" omitNorms="true" />
    <dynamicField name="cl*" type="string" indexed="true" stored="true" omitNorms="true" />
 
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
@@ -701,6 +710,7 @@
    <copyField source="collection_name" dest="text"/>
    <copyField source="catalogue_number" dest="text"/>
    <copyField source="taxon_name" dest="text"/>
+   <copyField source="taxon_name" dest="matched_name"/>
    <copyField source="raw_taxon_name" dest="text" />
    <copyField source="raw_taxon_name" dest="raw_name" />
    <copyField source="raw_common_name" dest="text" />
@@ -718,6 +728,7 @@
    <!--  This copy field is not in use anywhere -->
    <!--copyField source="taxon_name" dest="taxon_name_text"/-->
    <copyField source="common_name" dest="text"/>
+   <copyField source="common_name" dest="matched_name"/>
    <copyField source="taxon_concept_lsid" dest="lsid"/>
    <!-- copyField source="taxon_concept_lsid" dest="text"/ -->
    <copyField source="type_status" dest="text"/>

@@ -25,9 +25,11 @@ import FileHelper._
 
     var dataResource:Option[String] = None
     var empty:Boolean =false
+    var check:Boolean=false
     var startDate:Option[String]=None
     val parser = new OptionParser("index records options") {
         opt("empty", "empty the index first", {empty=true})
+        opt("check","check to see if the record is deleted before indexing",{check=true})
         opt("s", "start","The record to start with", {v:String => startUuid = Some(v)})
         opt("dr", "resource", "The data resource to process", {v:String =>dataResource = Some(v)})
         opt("date", "date", "The earliest modification date for records to be indexed. Date in the form yyyy-mm-dd",{v:String => startDate = Some(v)})
@@ -39,7 +41,7 @@ import FileHelper._
            logger.info("Emptying index")
            indexer.emptyIndex
         }        
-        index(startUuid, dataResource, false, false, startDate)
+        index(startUuid, dataResource, false, false, startDate, check)
      }
   }
 

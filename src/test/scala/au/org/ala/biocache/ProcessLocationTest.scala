@@ -3,6 +3,7 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+//import org.junit.Ignore
 
 /**
  * Performs some Location Processing tests
@@ -24,26 +25,45 @@ class ProcessLocationTest extends ConfigFunSuite {
     tp.setScientificName("Macropus rufus")
     tp.setHabitats(Array("Non-marine"))
     TaxonProfileDAO.add(tp);
+    pm.put("-35.21667|144.81060", "loc", "stateProvince","New South Wales")
+    pm.put("-35.2|144.8", "loc", "stateProvince","New South Wales")
   }
 
-  test("Sensitive Species Generalise") {
-    val raw = new FullRecord
-    var processed = new FullRecord
-    processed.classification.setScientificName("Crex crex")
-    processed.classification.setTaxonConceptID("urn:lsid:biodiversity.org.au:afd.taxon:2ef4ac9c-7dfb-4447-8431-e337355ac1ca")
-    processed.classification.setTaxonRankID("7000")
-    raw.location.decimalLatitude = "-35.21667"
-    raw.location.decimalLongitude = "144.81060"
-    (new LocationProcessor).process("test", raw, processed)
-    expect("-35.2") {
-      processed.location.decimalLatitude
-    }
-    expect("144.8") {
-      processed.location.decimalLongitude
-    }
-    expect(true) {
-      processed.occurrence.dataGeneralizations != null && processed.occurrence.dataGeneralizations.length > 0
-    }
+    
+  test("Sensitive Species Generalise"){
+      val raw = new FullRecord
+      var processed = new FullRecord
+      processed.classification.setScientificName("Crex crex")
+      processed.classification.setTaxonConceptID("urn:lsid:biodiversity.org.au:afd.taxon:2ef4ac9c-7dfb-4447-8431-e337355ac1ca")
+      processed.classification.setTaxonRankID("7000")
+      raw.location.decimalLatitude = "-35.21667"
+      raw.location.decimalLongitude = "144.81060"
+      raw.location.locationRemarks="test remarks"
+      raw.attribution.dataResourceUid = "dr359"
+      raw.rowKey ="test"
+      raw.event.day="21"
+      raw.event.month="12"
+      raw.event.year="2000"
+      (new EventProcessor).process("test", raw, processed)
+      (new LocationProcessor).process("test", raw, processed)
+      expect("-35.2"){processed.location.decimalLatitude}
+      expect("144.8"){processed.location.decimalLongitude}
+      expect(true){processed.occurrence.dataGeneralizations != null && processed.occurrence.dataGeneralizations.length>0}
+      expect(true){processed.event.day.isEmpty}
+      expect("12"){processed.event.month}
+      expect("2000"){processed.event.year}
+      
+      val stringValues = pm.get("test","occ","originalSensitiveValues");
+      expect(true){!stringValues.isEmpty}
+      
+//      println(processed.occurrence.dataGeneralizations)
+//      raw.location.decimalLatitude = "-35.21667"
+//      raw.location.decimalLongitude = "144.81060"
+//      processed.classification.scientificName="Calyptorhynchus banksii"
+//      processed.classification.taxonConceptID = "urn:lsid:biodiversity.org.au:afd.taxon:638f5293-5842-4850-8dad-9f10c0e4dcbc"
+//      (new LocationProcessor).process("test", raw, processed)
+//      
+
   }
 
   test("Not Sensitive") {
@@ -81,8 +101,8 @@ class ProcessLocationTest extends ConfigFunSuite {
     expect("144.8") {
       processed.location.decimalLongitude
     }
-    expect("Location is already generalised") {
-      processed.occurrence.dataGeneralizations
+    expect(true) {
+      processed.occurrence.dataGeneralizations.startsWith("Location in NSW is already generalised")
     }
   }
 

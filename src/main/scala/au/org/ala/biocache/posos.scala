@@ -4,6 +4,7 @@ import java.lang.reflect.Method
 import scala.reflect.BeanProperty
 import scala.collection.mutable.HashMap
 import scala.collection.immutable.Map
+import scala.util.parsing.json.JSON
 
 /**
  * Holds the details of a property for a bean
@@ -127,7 +128,8 @@ trait POSO {
                 }
                 case "int" => property.setter.invoke(this, Integer.parseInt(value).asInstanceOf[AnyRef])
                 case "boolean" => property.setter.invoke(this, java.lang.Boolean.parseBoolean(value).asInstanceOf[AnyRef])
-                case _ =>
+                case "scala.collection.immutable.Map"=>property.setter.invoke(this, JSON.parseFull(value).get.asInstanceOf[Map[String,String]])
+                case _ => println("Unhandled data type: " + property.typeName)
             }
         }
         case None => {} //println("Property not mapped: " +name +", on " + this.getClass.getName)
@@ -193,6 +195,11 @@ trait POSO {
                     case "boolean" =>{
                         val value = unparsed.asInstanceOf[Boolean]
                         map.put(property.name, value.toString)
+                    }
+                    case "scala.collection.immutable.Map" =>{
+                        val value = unparsed.asInstanceOf[Map[String,String]]
+                        val stringValue = value.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
+                        map.put(property.name, stringValue)
                     }
                     case _ => throw new UnsupportedOperationException("Unsupported field type " + property.typeName)
                 }
