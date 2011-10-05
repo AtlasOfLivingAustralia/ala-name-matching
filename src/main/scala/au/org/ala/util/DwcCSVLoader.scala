@@ -66,10 +66,12 @@ class DwcCSVLoader extends DataLoader {
     
     def loadFile(file:File, dataResourceUid:String, uniqueTerms:List[String], params:Map[String,String]){
         
-        val quotechar = params.getOrElse("quotechar", "\"").head
-        val separator = params.getOrElse("separator", ",").head
-        val reader =  new CSVReader(new FileReader(file), separator, quotechar)
+        val quotechar = params.getOrElse("csv_text_enclosure", "\"").head
+        val separator = params.getOrElse("csv_delimiter", ",").head
+        val escape = params.getOrElse("csv_escape_char","\\").head
+        val reader =  new CSVReader(new FileReader(file), separator, quotechar,escape)
         
+        println("Using CSV reader with the following settings quotes: " + quotechar + " separator: " + separator + " escape: " + escape)
         //match the column headers to dwc terms
         val dwcTermHeaders = {
             val columnHeaders = reader.readNext.map(t => t.replace(" ", "")).toList
@@ -92,6 +94,7 @@ class DwcCSVLoader extends DataLoader {
         var finishTime = System.currentTimeMillis
         while(currentLine!=null){
             counter += 1
+            
             val columns = currentLine.toList
             if (columns.length == dwcTermHeaders.size){
                 val map = (dwcTermHeaders zip columns).toMap[String,String].filter( { 
@@ -132,6 +135,9 @@ class DwcCSVLoader extends DataLoader {
                     uniqueTerms.foreach(t => print("," + t +":"+map.getOrElse(t,"")))
                     println
                 }
+            }
+            else{
+                println("Skipping line: " +counter + " incorrect number of columns("+columns.length+")...")                
             }
             //read next
             currentLine = reader.readNext
