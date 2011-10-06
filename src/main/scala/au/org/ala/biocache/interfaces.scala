@@ -136,7 +136,7 @@ object Store {
         val processor = new RecordProcessor
         processor.processRecordAndUpdate(record)
         if(shouldIndex){
-            occurrenceDAO.reIndex(record.uuid)
+            occurrenceDAO.reIndex(record.rowKey)
         }
     }
   }
