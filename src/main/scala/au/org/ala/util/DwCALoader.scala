@@ -68,12 +68,14 @@ class DwCALoader extends DataLoader {
     import ReflectBean._
     
     def load(resourceUid:String){
-    	val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(resourceUid)
+    	val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(resourceUid)
     	val conceptTerms = mapConceptTerms(uniqueTerms)
-        //download 
-    	val fileName = downloadArchive(url,resourceUid)
-        //load the DWC file
-    	loadArchive(fileName, resourceUid, conceptTerms)
+      urls.foreach(url => {
+          //download
+        val fileName = downloadArchive(url,resourceUid)
+          //load the DWC file
+        loadArchive(fileName, resourceUid, conceptTerms)
+      })
     }
     
     def loadLocal(resourceUid:String, fileName:String){

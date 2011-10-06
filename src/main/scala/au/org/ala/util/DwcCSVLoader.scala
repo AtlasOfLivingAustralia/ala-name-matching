@@ -53,15 +53,17 @@ class DwcCSVLoader extends DataLoader {
     import scalaj.collection.Imports._
 
     def loadLocalFile(dataResourceUid:String, filePath:String){
-        val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+        val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
         loadFile(new File(filePath),dataResourceUid, uniqueTerms, params) 
     }
     
     def load(dataResourceUid:String){
-        val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
-        val fileName = downloadArchive(url,dataResourceUid)
-        val directory = new File(fileName)
-        directory.listFiles.foreach(file => loadFile(file,dataResourceUid, uniqueTerms, params))
+        val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+        urls.foreach(url => {
+          val fileName = downloadArchive(url,dataResourceUid)
+          val directory = new File(fileName)
+          directory.listFiles.foreach(file => loadFile(file,dataResourceUid, uniqueTerms, params))
+        })
     }
     
     def loadFile(file:File, dataResourceUid:String, uniqueTerms:List[String], params:Map[String,String]){
