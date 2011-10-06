@@ -111,15 +111,21 @@ class DwcCSVLoader extends DataLoader {
                   if (fr.occurrence.associatedMedia != null){
                     //load it and store it
                     val directory = file.getParentFile
+                    println("Associated media: " + fr.occurrence.associatedMedia)
                     val filesToImport = fr.occurrence.associatedMedia.split(";")
                     val filePathsInStore = filesToImport.map(fileName =>{
-                      val filePath = MediaStore.save(fr.uuid, dataResourceUid, "file:///"+file.getParent+File.separator+fileName)
-                      //do multiple formats exist? check for files of the same name, different extension
-                      val differentFormats = directory.listFiles(new au.org.ala.biocache.SameNameDifferentExtensionFilter(fileName))
-                      differentFormats.foreach ( file => {
-                        MediaStore.save(fr.uuid, dataResourceUid, "file:///"+file.getParent+File.separator+file.getName)
-                      })
-                      filePath
+                      println(fileName)
+                      if(fileName.startsWith("http://")){
+                        MediaStore.save(fr.uuid, dataResourceUid,fileName)
+                      } else {
+                        val filePath = MediaStore.save(fr.uuid, dataResourceUid, "file:///"+file.getParent+File.separator+fileName)
+                        //do multiple formats exist? check for files of the same name, different extension
+                        val differentFormats = directory.listFiles(new au.org.ala.biocache.SameNameDifferentExtensionFilter(fileName))
+                        differentFormats.foreach ( file => {
+                          MediaStore.save(fr.uuid, dataResourceUid, "file:///"+file.getParent+File.separator+file.getName)
+                        })
+                        filePath
+                      }
                     })
 
                     fr.occurrence.associatedMedia = filePathsInStore.mkString(";")
