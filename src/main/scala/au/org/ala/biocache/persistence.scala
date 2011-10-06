@@ -124,9 +124,9 @@ class CassandraPersistenceManager @Inject() (
 
     val maxColumnLimit = 10000
     import JavaConversions._
-    logger.info("Initialising cassandra connection pool with pool name: " + poolName)
-    logger.info("Initialising cassandra connection pool with hosts: " + host)
-    logger.info("Initialising cassandra connection pool with port: " + port)
+    logger.debug("Initialising cassandra connection pool with pool name: " + poolName)
+    logger.debug("Initialising cassandra connection pool with hosts: " + host)
+    logger.debug("Initialising cassandra connection pool with port: " + port)
     val cluster = new Cluster(host,port)
     Pelops.addPool(poolName, cluster, keyspace)
 

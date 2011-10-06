@@ -159,7 +159,6 @@ class MiscellaneousProcessor extends Processor {
 
   def getName = "image"
 
-
   private def isValidImageURL(url:String) : Boolean = {
     !imageParser.unapplySeq(url.trim).isEmpty || isStoredMedia(imageExtension,url)
   }

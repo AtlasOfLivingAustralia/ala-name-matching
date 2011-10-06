@@ -26,24 +26,38 @@ trait DataLoader {
     val pm = Config.persistenceManager
     val loadTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
     
-    def retrieveConnectionParameters(resourceUid: String) : (String, String, List[String], Map[String,String], Map[String,String]) = {
+    def retrieveConnectionParameters(resourceUid: String) : (String, List[String], List[String], Map[String,String], Map[String,String]) = {
 
       //full document
       val json = Source.fromURL(registryUrl + resourceUid + ".json").getLines.mkString
       val map = JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
 
       //connection details
-      val connectionParameters = map("connectionParameters").asInstanceOf[Map[String,String]]
-      val protocol = connectionParameters("protocol")
-      val url = connectionParameters("url")
+      val connectionParameters = map("connectionParameters").asInstanceOf[Map[String,AnyRef]]
+      val protocol = connectionParameters("protocol").asInstanceOf[String]
+
+      val urlsObject = connectionParameters("url")
+
+      val urls = {
+        if(urlsObject.isInstanceOf[List[String]]){
+          connectionParameters("url").asInstanceOf[List[String]]
+        } else {
+          val singleValue = connectionParameters("url").asInstanceOf[String]
+          List(singleValue)
+        }
+      }
+
       val uniqueTerms = connectionParameters.getOrElse("termsForUniqueKey", List[String]()).asInstanceOf[List[String]]
       
       //optional config params for custom services
-      val customParams = protocol.toLowerCase match {
-          case "customwebservice" => JSON.parseFull(connectionParameters.getOrElse("params", "")).getOrElse(Map[String,String]()).asInstanceOf[Map[String, String]]
+      val customParams = protocol.asInstanceOf[String].toLowerCase match {
+          case "customwebservice" => {
+            val params = connectionParameters.getOrElse("params", "").asInstanceOf[String]
+            JSON.parseFull(params).getOrElse(Map[String,String]()).asInstanceOf[Map[String, String]]
+          }
           case _ => Map[String,String]()
       }
-      (protocol, url, uniqueTerms, connectionParameters, customParams)
+      (protocol, urls, uniqueTerms, map("connectionParameters").asInstanceOf[Map[String,String]], customParams)
     }
     
     def mapConceptTerms(terms: List[String]): List[org.gbif.dwc.terms.ConceptTerm] = {
@@ -82,7 +96,7 @@ trait DataLoader {
         	FileUtils.forceMkdir(tmpStore)
         }
 
-        print("Downloading zip file.....")
+        print("Downloading zip file from "+ url)
         val in = (new java.net.URL(url)).openStream
         val file = new File(temporaryFileStore + resourceUid + ".zip")
         val out = new FileOutputStream(file)
