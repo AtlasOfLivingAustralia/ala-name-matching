@@ -98,26 +98,35 @@ trait DataLoader {
 
         print("Downloading zip file from "+ url)
         val in = (new java.net.URL(url)).openStream
-        val file = new File(temporaryFileStore + resourceUid + ".zip")
+        val (file, isZipped) = {
+          if (url.endsWith(".zip")){
+            (new File(temporaryFileStore + resourceUid + ".zip"), true)
+          } else {
+            (new File(temporaryFileStore + resourceUid + File.separator + resourceUid +".csv"), false)
+          }
+        }
         val out = new FileOutputStream(file)
         val buffer: Array[Byte] = new Array[Byte](1024)
         var numRead = 0
         while ({ numRead = in.read(buffer); numRead != -1 }) {
-            out.write(buffer, 0, numRead)
-            out.flush
+          out.write(buffer, 0, numRead)
+          out.flush
         }
-        printf("Downloaded. File size: %skB\n", file.length / 1024)
+        printf("\nDownloaded. File size: %skB\n", file.length / 1024 +", " + file.getAbsolutePath +", is zipped: " + isZipped)
 
         out.flush
         in.close
         out.close
 
         //extract the file
-        file.extractZip
-
-        val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
-        println("Archive extracted to directory: " + fileName)
-        fileName
+        if (isZipped){
+          file.extractZip
+          val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
+          println("Archive extracted to directory: " + fileName)
+          fileName
+        } else {
+          file.getParentFile.getAbsolutePath
+        }
     }
 
     /**
@@ -126,15 +135,12 @@ trait DataLoader {
     def updateLastChecked(resourceUid:String) :Boolean ={
         try{
           //set the last check time for the supplied resourceUid
-          
           val map = Map("user"->user, "api_key"->api_key, "lastChecked" ->loadTime)
           //turn the map of values into JSON representation
           val data = map.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
           //"http://woodfired.ala.org.au:8080/Collectory/ws/dataResource/"
           println(Http.postData(registryUrl+resourceUid,data).header("content-type", "application/json").responseCode)
-          
           true
-          
         }
         catch{
             case e:Exception => e.printStackTrace();false
