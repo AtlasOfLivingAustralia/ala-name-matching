@@ -131,12 +131,12 @@ class DwcCSVLoader extends DataLoader {
 		                println(counter + ", >> last key : " + dataResourceUid + "|"+uniqueTermsValues.mkString("|") + ", records per sec: " + 1000 / (((finishTime - startTime).toFloat) / 1000f))
 		                startTime = System.currentTimeMillis
 		            }
-                } else {
-                    noSkipped += 1
-                    print("Skipping line: " + counter + ", missing unique term value. Number skipped: "+ noSkipped)
-                    uniqueTerms.foreach(t => print("," + t +":"+map.getOrElse(t,"")))
-                    println
-                }
+              } else {
+                  noSkipped += 1
+                  print("Skipping line: " + counter + ", missing unique term value. Number skipped: "+ noSkipped)
+                  uniqueTerms.foreach(t => print("," + t +":"+map.getOrElse(t,"")))
+                  println
+              }
             }
             else{
                 println("Skipping line: " +counter + " incorrect number of columns("+columns.length+")...")                
