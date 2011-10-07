@@ -342,12 +342,16 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             //val deleted = map.getOrElse(FullRecordMapper.deletedColumn,"false")            
             //if(deleted.equals("false")){
             if(condition(map)){
-                val recordmap = persistenceManager.get(map.get("rowKey").get,entityName)                
-                if(!recordmap.isEmpty){
-                    val raw = FullRecordMapper.createFullRecord(guid, recordmap.get, Versions.RAW)
-                    val processed = FullRecordMapper.createFullRecord(guid, recordmap.get, Versions.PROCESSED)
-                    //pass all version to the procedure, wrapped in the Option
-                    proc(Some(raw, processed))
+                if(map.contains("rowKey")){
+                    val recordmap = persistenceManager.get(map.get("rowKey").get,entityName)                
+                    if(!recordmap.isEmpty){
+                        val raw = FullRecordMapper.createFullRecord(guid, recordmap.get, Versions.RAW)
+                        val processed = FullRecordMapper.createFullRecord(guid, recordmap.get, Versions.PROCESSED)
+                        //pass all version to the procedure, wrapped in the Option
+                        proc(Some(raw, processed))
+                    }
+                 }else {
+                    logger.info("Unable to page over records : " +guid)
                 }
             }
             true
