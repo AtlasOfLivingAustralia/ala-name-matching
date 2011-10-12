@@ -365,9 +365,9 @@ trait IndexDAO {
                     rawStateCons,
                     sensitive,
                     getValue("coordinateUncertaintyInMeters.p",map),
-                    map.getOrElse("recordedBy", ""), map.getOrElse("provenance",""), subspeciesGuid, subspeciesName,
+                    map.getOrElse("recordedBy", ""), map.getOrElse("provenance.p",""), subspeciesGuid, subspeciesName,
                     interactions.reduceLeft(_ + "|" + _),
-                    if(lastUserAssertion.isEmpty)"" else DateFormatUtils.format(lastProcessed.get,"yyyy-MM-dd'T'HH:mm:ss'Z'"), 
+                    if(lastUserAssertion.isEmpty)"" else DateFormatUtils.format(lastUserAssertion.get,"yyyy-MM-dd'T'HH:mm:ss'Z'"), 
                     if(lastLoaded.isEmpty)"2010-11-1T00:00:00Z" else DateFormatUtils.format(lastLoaded.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
                     if(lastProcessed.isEmpty)"" else DateFormatUtils.format(lastProcessed.get,"yyyy-MM-dd'T'HH:mm:ss'Z'")
                     ) ++ elFields.map(field => getValue(field+".p", map)) ++ clFields.map(field=> getValue(field+".p", map))
@@ -465,6 +465,9 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     
     def init(){
       if(solrServer == null){
+//        System.setProperty("actors.minPoolSize" , "4")
+//        System.setProperty("actors.maxPoolSize" , "8")
+//        System.setProperty("actors.corePoolSize", "4")  
         cc = new CoreContainer.Initializer().initialize
         solrServer = new EmbeddedSolrServer(cc, "")
         thread.start
