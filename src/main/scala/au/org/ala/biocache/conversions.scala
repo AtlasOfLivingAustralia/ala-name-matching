@@ -1,6 +1,8 @@
 package au.org.ala.biocache
 
 import au.org.ala.checklist.lucene.model.NameSearchResult
+import java.util.Date
+import org.apache.commons.lang.time.DateFormatUtils
 
 object BiocacheConversions {
 
@@ -30,5 +32,7 @@ object BiocacheConversions {
     cl.taxonRankID = nsr.getRank.getId.toString
     cl
   }
+  
+  implicit def dateToString(date:Date):String= DateFormatUtils.format(date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
 
 }

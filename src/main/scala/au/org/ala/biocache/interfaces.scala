@@ -6,6 +6,7 @@ import au.org.ala.util.ProcessedValue
 import au.org.ala.util.RecordProcessor
 import au.org.ala.util.IndexRecords
 import java.util.UUID
+import java.util.Date
 
 /**
  * This is the interface to use for java applications.
@@ -25,6 +26,7 @@ object Store {
 
   import JavaConversions._
   import scalaj.collection.Imports._
+  import BiocacheConversions._
   /**
    * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
    */
@@ -132,6 +134,8 @@ object Store {
     //rowKey = dr|<cxyzsuid>
     if(record.rowKey != null){
         record.uuid = occurrenceDAO.createOrRetrieveUuid(record.rowKey) 
+        //add the last load time
+        record.lastModifiedTime =new Date()
         occurrenceDAO.addRawOccurrenceBatch(Array(record))
         val processor = new RecordProcessor
         processor.processRecordAndUpdate(record)

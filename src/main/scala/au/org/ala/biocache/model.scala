@@ -1060,7 +1060,7 @@ class QualityAssertion (
  * type functionality.
  */
 object QualityAssertion {
-    implicit def dateToString(date:Date):String= DateFormatUtils.format(date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
+  import BiocacheConversions._  
   def apply(code:Int) = {
     val uuid = UUID.randomUUID.toString
     val errorCode = AssertionCodes.getByCode(code)
