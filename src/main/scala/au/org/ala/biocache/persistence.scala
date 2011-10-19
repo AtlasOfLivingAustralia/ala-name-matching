@@ -350,9 +350,12 @@ class CassandraPersistenceManager @Inject() (
      * Generic page over method. Individual pageOver methods should provide a slicePredicate that
      * is used to determine the columns that are returned...
      *
+     *  We need to ignore empty rows if the SlicePredicate id for ALL columns.  This is configuration in Cassandra 0.8.8:
+     *  https://issues.apache.org/jira/browse/CASSANDRA-2855
+     *
      * @param startUuid, The uuid of the occurrence at which to start the paging
      */
-    def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int, slicePredicate:SlicePredicate,startUuid:String="",endUuid:String="")={
+    def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int, slicePredicate:SlicePredicate, checkEmpty:Boolean=false,startUuid:String="",endUuid:String="")={
       val selector = Pelops.createSelector(poolName)
       var startKey = new Bytes(startUuid.getBytes)
       var endKey = new Bytes(endUuid.getBytes)
@@ -369,12 +372,14 @@ class CassandraPersistenceManager @Inject() (
         startKey = keys.last
         for(buuid<-keys){
           val columnList = columnMap.get(buuid)
-          //procedure a map of key value pairs
-          val map = columnList2Map(columnList)
-          //more efficient to use a stored version of the rowKey then attempt to convert the buuid
-          val uuid = map.getOrElse("rowKey", buuid.toUTF8)
-          //pass the record ID and the key value pair map to the proc
-          continue = proc(uuid, map)
+          if(!checkEmpty || !columnList.isEmpty){
+              //procedure a map of key value pairs
+              val map = columnList2Map(columnList)
+              //more efficient to use a stored version of the rowKey then attempt to convert the buuid
+              val uuid = map.getOrElse("rowKey", buuid.toUTF8)
+              //pass the record ID and the key value pair map to the proc
+              continue = proc(uuid, map)
+          }
         }
         counter += keys.size
         keyRange = Selector.newKeyRange(startKey, endKey, pageSize+1)
@@ -391,7 +396,7 @@ class CassandraPersistenceManager @Inject() (
      */
     def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String, endUuid:String, pageSize:Int, columnName:String*){
       val slicePredicate = Selector.newColumnsPredicate(columnName:_*)
-      pageOver(entityName, proc, pageSize, slicePredicate, startUuid, endUuid)
+      pageOver(entityName, proc, pageSize, slicePredicate, startUuid=startUuid, endUuid=endUuid)
     }
 
     /**
@@ -404,7 +409,7 @@ class CassandraPersistenceManager @Inject() (
      */
     def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean),startUuid:String="", endUuid:String="", pageSize:Int = 1000) {
       val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
-      pageOver(entityName, proc, pageSize, slicePredicate,startUuid, endUuid)
+      pageOver(entityName, proc, pageSize, slicePredicate,true,startUuid, endUuid)
     }
 
     /**
