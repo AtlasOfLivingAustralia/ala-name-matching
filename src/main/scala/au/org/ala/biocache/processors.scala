@@ -617,9 +617,8 @@ class LocationProcessor extends Processor {
     //if the coordinateUncertainty is still empty populate it with the default
     // value (we don't test until now because the SDS will sometime include coordinate uncertainty)
      //This step will pick up on default values because processed.location.coordinateUncertaintyInMeters will already be populated if a default value exists
-    if (processed.location.coordinateUncertaintyInMeters == null) {
-      processed.location.coordinateUncertaintyInMeters = "1000"
-      assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, "Uncertainty was not supplied, using default value 1000")
+    if (processed.location.coordinateUncertaintyInMeters == null) {      
+      assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, "Uncertainty was not supplied")
     }
   }
 
