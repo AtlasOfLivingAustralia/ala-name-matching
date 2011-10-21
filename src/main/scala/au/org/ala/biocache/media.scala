@@ -52,24 +52,29 @@ object MediaStore {
   /**
    * Returns the file path
    */
-  def save(uuid: String, resourceUID: String, urlToMedia: String): String = {
-
-    val fullPath = createFilePath(uuid, resourceUID, urlToMedia)
-    val file = new File(fullPath)
-    val in = (new java.net.URL(urlToMedia)).openStream
-    val out = new FileOutputStream(file)
-    val buffer: Array[Byte] = new Array[Byte](1024)
-    var numRead = 0
-    while ( {
-      numRead = in.read(buffer); numRead != -1
-    }) {
-      out.write(buffer, 0, numRead)
-      out.flush
+  def save(uuid: String, resourceUID: String, urlToMedia: String): Option[String] = {
+      //handle the situation where the urlToMedia does not exits - 
+    try{  
+        val fullPath = createFilePath(uuid, resourceUID, urlToMedia)
+        val file = new File(fullPath)
+        val in = (new java.net.URL(urlToMedia)).openStream
+        val out = new FileOutputStream(file)
+        val buffer: Array[Byte] = new Array[Byte](1024)
+        var numRead = 0
+        while ( {
+          numRead = in.read(buffer); numRead != -1
+        }) {
+          out.write(buffer, 0, numRead)
+          out.flush
+        }
+        out.close
+        logger.info("File saved to: " + fullPath)
+        //store the media
+        Some(fullPath)
     }
-    out.close
-    logger.info("File saved to: " + fullPath)
-    //store the media
-    fullPath
+    catch{
+        case e:Exception => logger.warn("Unable to load media " + urlToMedia + ". " + e.getMessage);None
+    }
   }
 
   def alternativeFormats(filePath:String) : Array[String] = {

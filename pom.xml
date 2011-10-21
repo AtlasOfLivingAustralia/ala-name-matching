@@ -305,6 +305,12 @@
             <artifactId>commons-httpclient</artifactId>
             <version>3.1</version>
         </dependency>
+        <dependency>
+    		<groupId>org.apache.commons</groupId>
+    		<artifactId>commons-compress</artifactId>
+    		<version>1.2</version>
+		</dependency>
+        
         <!-- Added for cassandra test -->
         <dependency>
             <groupId>org.cliffc.high_scale_lib</groupId>

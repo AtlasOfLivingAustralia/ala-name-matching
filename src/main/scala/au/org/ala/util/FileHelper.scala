@@ -18,6 +18,7 @@ package au.org.ala.util
 import java.io._
 import java.io._
 import java.util.jar.JarFile
+import java.util.zip.GZIPInputStream
 import au.com.bytecode.opencsv.CSVReader
 /**
  * File helper - used as a implicit converter to add additional helper methods to java.io.File
@@ -50,7 +51,36 @@ class FileHelper(file: File) {
         }
         deleteFile(file)
     }
-
+    
+    def extractGzip: File ={
+        val maxBuffer=8000
+        val basename = file.getName.substring(0, file.getName.lastIndexOf("."))       
+        val todir = new File(file.getParentFile, basename)
+        //todir.mkdirs()
+        val in = new GZIPInputStream(new FileInputStream(file), maxBuffer);
+        val out = new FileOutputStream(todir);
+        try
+        {
+            val buffer = new Array[Byte](maxBuffer)
+            def read()
+            {
+                val byteCount = in.read(buffer)
+                if(byteCount >= 0)
+                {
+                    out.write(buffer, 0, byteCount)
+                    read()
+                }
+            }
+            read()
+        }
+        finally { 
+            in.close
+            out.flush
+            out.close
+            }
+        todir
+    }
+    
     def extractZip: Unit = {
         val basename = file.getName.substring(0, file.getName.lastIndexOf("."))
         val todir = new File(file.getParentFile, basename)

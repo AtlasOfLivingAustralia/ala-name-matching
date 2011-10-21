@@ -11,6 +11,7 @@ import au.org.ala.biocache.MediaStore
 import java.io.{FilenameFilter, FileReader, File}
 import org.apache.commons.io.{FilenameUtils, FileUtils}
 
+
 object DwcCSVLoader {
     
     def main(args:Array[String]){
@@ -71,7 +72,7 @@ class DwcCSVLoader extends DataLoader {
         val quotechar = params.getOrElse("csv_text_enclosure", "\"").head
         val separator = params.getOrElse("csv_delimiter", ",").head
         val escape = params.getOrElse("csv_escape_char","\\").head
-        val reader =  new CSVReader(new FileReader(file), separator, quotechar,escape)
+        val reader =  new CSVReader(new FileReader(file), separator, quotechar,escape)        
         
         println("Using CSV reader with the following settings quotes: " + quotechar + " separator: " + separator + " escape: " + escape)
         //match the column headers to dwc terms
@@ -104,6 +105,7 @@ class DwcCSVLoader extends DataLoader {
                 })
                 
                 if(uniqueTerms.forall(t => map.getOrElse(t,"").length>0)){
+                    
 	                val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,"")) //for (t <-uniqueTerms) yield map.getOrElse(t,"")
 	                val fr = FullRecordMapper.createFullRecord("", map, Versions.RAW)
 	                load(dataResourceUid, fr, uniqueTermsValues)
@@ -124,7 +126,10 @@ class DwcCSVLoader extends DataLoader {
                         differentFormats.foreach ( file => {
                           MediaStore.save(fr.uuid, dataResourceUid, "file:///"+file.getParent+File.separator+file.getName)
                         })
-                        filePath
+                        if(filePath.isEmpty)
+                            fileName
+                        else
+                            filePath.get
                       }
                     })
 
@@ -150,6 +155,7 @@ class DwcCSVLoader extends DataLoader {
             //read next
             currentLine = reader.readNext
         }
+        
         println("Load finished")
     }
 }

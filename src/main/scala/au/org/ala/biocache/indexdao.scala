@@ -260,10 +260,15 @@ trait IndexDAO {
                 if(stateCons == "null") stateCons = rawStateCons;
                 
                 val sensitive:String = {
-                    if(getValue("originalSensitiveValues",map) != "" || getValue("originalDecimalLatitude",map) != "") 
-                        "generalised"
-                    else if(getValue("dataGeneralizations.p",map ) != "")
-                        "alreadyGeneralised"
+                    if(getValue("originalSensitiveValues",map) != "" || getValue("originalDecimalLatitude",map) != "") {
+                        val dataGen = map.getOrElse("dataGeneralizations.p", "")
+                        if(dataGen.contains("already generalised"))
+                            "alreadyGeneralised"
+                        else if(dataGen != "")
+                            "generalised"
+                        else
+                            ""
+                    }
                     else
                         ""
                 }
