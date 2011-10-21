@@ -106,7 +106,8 @@ class AutoDwcCSVLoader extends DataLoader{
         //TODO use the id files to find out which records need to be deleted
         // File contains a complete list of the current ids will need to mark records and ten delete all records that have not been marked???
         
-        
+        //update the last time this data resource was loaded in the collectory
+        updateLastChecked(dataResourceUid)
     }
     def extractTarFile(io:InputStream,baseDir:String, filename:String):File={
         //construct the file
