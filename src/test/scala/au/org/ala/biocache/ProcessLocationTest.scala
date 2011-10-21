@@ -144,7 +144,9 @@ class ProcessLocationTest extends ConfigFunSuite {
     val processed = new FullRecord
     raw.location.decimalLatitude = "91"
     raw.location.decimalLongitude = "121"
+    raw.location.coordinateUncertaintyInMeters ="1000"
     var qas = (new LocationProcessor).process("test", raw, processed)
+    
     expect(5) {
       qas(0) code
     }
