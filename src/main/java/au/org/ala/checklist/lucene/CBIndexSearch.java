@@ -126,8 +126,8 @@ public class CBIndexSearch {
             File idxFile = new File(indexDirectory);
 		if(!idxFile.exists()){
 			FileUtils.forceMkdir(idxFile);
-			Analyzer analyzer = new StandardAnalyzer();
-            IndexWriter iw = new IndexWriter(idxFile, analyzer, MaxFieldLength.UNLIMITED);
+			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_29);
+            IndexWriter iw = new IndexWriter(FSDirectory.open(idxFile), analyzer, MaxFieldLength.UNLIMITED);
             iw.commit();
             iw.close();
 		}
