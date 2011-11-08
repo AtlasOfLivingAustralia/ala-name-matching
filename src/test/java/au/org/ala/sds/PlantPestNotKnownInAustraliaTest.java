@@ -114,7 +114,7 @@ public class PlantPestNotKnownInAustraliaTest {
     }
 
     @Test
-    public void bactericeraPeninsularisInTSPZ() {
+    public void bactroceraPeninsularisInTSPZ() {
         SensitiveTaxon ss = finder.findSensitiveSpecies("Bactrocera peninsularis");
         assertNotNull(ss);
 
