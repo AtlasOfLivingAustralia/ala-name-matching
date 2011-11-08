@@ -14,6 +14,7 @@
  ***************************************************************************/
 package au.org.ala.sds.model;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +36,9 @@ import au.org.ala.sds.model.SensitiveTaxon.Rank;
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
 
-public class SensitiveTaxonStore {
+public class SensitiveTaxonStore implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     protected static final Logger logger = Logger.getLogger(SensitiveTaxonStore.class);
 
@@ -44,7 +47,7 @@ public class SensitiveTaxonStore {
     private final Map<String, Integer> lsidMap;
     private final Map<String, Integer> nameMap;
 
-    private final CBIndexSearch cbIndexSearcher;
+    private transient final CBIndexSearch cbIndexSearcher;
 
     public SensitiveTaxonStore(SensitiveSpeciesDao dao, CBIndexSearch cbIndexSearcher) throws Exception {
         this.cbIndexSearcher = cbIndexSearcher;
@@ -121,17 +124,19 @@ public class SensitiveTaxonStore {
 
     private NameSearchResult getAcceptedName(String name) {
         NameSearchResult match = null;
-        try {
-            match = cbIndexSearcher.searchForRecord(stripTaxonTokens(name), null);
-            if (match != null) {
-                if (match.isSynonym()) {
-                    match = cbIndexSearcher.searchForRecordByID(Long.toString(match.getAcceptedId()));
+        if (cbIndexSearcher != null) {
+            try {
+                match = cbIndexSearcher.searchForRecord(stripTaxonTokens(name), null);
+                if (match != null) {
+                    if (match.isSynonym()) {
+                        match = cbIndexSearcher.searchForRecordByID(Long.toString(match.getAcceptedId()));
+                    }
                 }
+            } catch (SearchResultException e) {
+                logger.debug("'" + name + "' - " + e.getMessage());
+            } catch (RuntimeException e) {
+                logger.error("'" + name + "'", e);
             }
-        } catch (SearchResultException e) {
-            logger.debug("'" + name + "' - " + e.getMessage());
-        } catch (RuntimeException e) {
-            logger.error("'" + name + "'", e);
         }
 
         return match;
@@ -140,19 +145,21 @@ public class SensitiveTaxonStore {
     private NameSearchResult getAcceptedName(SensitiveTaxon st) {
         String name = null;
         NameSearchResult match = null;
-        try {
-            name = stripTaxonTokens(st.getTaxonName());
-            LinnaeanRankClassification cl = new LinnaeanRankClassification(null, null, null, null, st.getFamily().equals("") ? null : st.getFamily() , null, name);
-            match = cbIndexSearcher.searchForRecord(name, cl, StringUtils.contains(name, ' ') ? null : RankType.GENUS);
-            if (match != null) {
-                if (match.isSynonym()) {
-                    match = cbIndexSearcher.searchForRecordByID(Long.toString(match.getAcceptedId()));
+        if (cbIndexSearcher != null) {
+            try {
+                name = stripTaxonTokens(st.getTaxonName());
+                LinnaeanRankClassification cl = new LinnaeanRankClassification(null, null, null, null, st.getFamily().equals("") ? null : st.getFamily() , null, name);
+                match = cbIndexSearcher.searchForRecord(name, cl, StringUtils.contains(name, ' ') ? null : RankType.GENUS);
+                if (match != null) {
+                    if (match.isSynonym()) {
+                        match = cbIndexSearcher.searchForRecordByID(Long.toString(match.getAcceptedId()));
+                    }
                 }
+            } catch (SearchResultException e) {
+                logger.debug("'" + name + "' - " + e.getMessage());
+            } catch (RuntimeException e) {
+                logger.error("'" + name + "'", e);
             }
-        } catch (SearchResultException e) {
-            logger.debug("'" + name + "' - " + e.getMessage());
-        } catch (RuntimeException e) {
-            logger.error("'" + name + "'", e);
         }
 
         return match;
