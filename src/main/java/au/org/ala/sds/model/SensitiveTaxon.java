@@ -14,6 +14,7 @@
  ***************************************************************************/
 package au.org.ala.sds.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +26,9 @@ import org.apache.log4j.Logger;
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
-public class SensitiveTaxon implements Comparable<SensitiveTaxon> {
+public class SensitiveTaxon implements Serializable, Comparable<SensitiveTaxon> {
+
+    private static final long serialVersionUID = 1L;
 
     protected static final Logger logger = Logger.getLogger(SensitiveTaxon.class);
 
