@@ -74,32 +74,30 @@ public class ConservationService implements ValidationService {
             outcome.setSensitive(true);
             results.put(FactCollection.DECIMAL_LATITUDE_KEY, gl.getGeneralisedLatitude());
             results.put(FactCollection.DECIMAL_LONGITUDE_KEY, gl.getGeneralisedLongitude());
+            originalSensitiveValues.put(FactCollection.DECIMAL_LATITUDE_KEY, gl.getOriginalLatitude());
+            originalSensitiveValues.put(FactCollection.DECIMAL_LONGITUDE_KEY, gl.getOriginalLongitude());
             results.put("generalisationInMetres", gl.getGeneralisationInMetres());
-            results.put("dataGeneralizations", gl.getDescription() + extraDesc);
+            results.put("dataGeneralizations", gl.getDescription() + ". " + extraDesc);
+
             emptyValueIfNecessary("locationRemarks", biocacheData, originalSensitiveValues, results);
             emptyValueIfNecessary("verbatimLatitude", biocacheData, originalSensitiveValues, results);
             emptyValueIfNecessary("verbatimLongitude", biocacheData, originalSensitiveValues, results);
+            emptyValueIfNecessary("locality", biocacheData, originalSensitiveValues, results);
+            emptyValueIfNecessary("verbatimLocality", biocacheData, originalSensitiveValues, results);
+
             if (gl.getGeneralisationInMetres().equals("") && gl.getGeneralisedLatitude().equals("")) {
                 results.put("informationWithheld", "The location has been withheld in accordance with " + facts.get(FactCollection.STATE_PROVINCE_KEY) + " sensitive species policy");
             }
-            originalSensitiveValues.put(FactCollection.DECIMAL_LATITUDE_KEY, gl.getOriginalLatitude());
-            originalSensitiveValues.put(FactCollection.DECIMAL_LONGITUDE_KEY, gl.getOriginalLongitude());
         } else {
             outcome.setSensitive(false);
         }
 
         // Handle Birds Australia occurrences
         if (facts.get("dataResourceUid") != null && facts.get("dataResourceUid").equalsIgnoreCase("dr359")) {
-//            results.put("eventID", "");
-//            results.put("locationRemarks", "");
-//            results.put("day", "");
             emptyValueIfNecessary("eventID", biocacheData, originalSensitiveValues, results);
             emptyValueIfNecessary("day", biocacheData, originalSensitiveValues, results);
             emptyValueIfNecessary("eventDate",biocacheData, originalSensitiveValues, results);
             results.put("informationWithheld", "The eventID and day information has been withheld in accordance with Birds Australia data policy");
-//            originalSensitiveValues.put("eventID", facts.get("eventID"));
-//            originalSensitiveValues.put("locationRemarks", facts.get("locationRemarks"));
-//            originalSensitiveValues.put("day", facts.get("day"));
         }
 
         results.put("originalSensitiveValues", originalSensitiveValues);
@@ -108,6 +106,7 @@ public class ConservationService implements ValidationService {
 
         return outcome;
     }
+
     private void emptyValueIfNecessary(String field, Map<String,String> facts, Map<String,String> originalSensitiveValues, Map<String,Object> results){
         if(facts.containsKey(field)){
             results.put(field, "");
