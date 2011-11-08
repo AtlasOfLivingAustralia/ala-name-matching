@@ -64,7 +64,8 @@ public class GeoLocationHelper {
 
             if (layer.equalsIgnoreCase("cw")) {
                 SensitivityZone zone;
-                if ((zone = SensitivityZoneFactory.getZoneByName(name.replace(" (including Coastal Waters)", ""))) != null) {
+                String state = name.replace(" (including Coastal Waters)", "");
+                if ((zone = SensitivityZoneFactory.getZoneByName(state)) != null) {
                     zones.add(zone);
                 }
             }
