@@ -4,6 +4,7 @@
 package au.org.ala.sds.dao;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -30,10 +31,10 @@ public class SensitiveSpeciesXmlDao implements SensitiveSpeciesDao {
 
     protected static final Logger logger = Logger.getLogger(SensitiveSpeciesXmlDao.class);
 
-    private final String url;
+    private final InputStream stream;
 
-    public SensitiveSpeciesXmlDao(String url) throws Exception {
-        this.url = url;
+    public SensitiveSpeciesXmlDao(InputStream stream) throws Exception {
+        this.stream = stream;
     }
     /**
      * @throws IOException
@@ -47,7 +48,7 @@ public class SensitiveSpeciesXmlDao implements SensitiveSpeciesDao {
         SAXBuilder builder = new SAXBuilder();
         Document doc = null;
 
-        doc = builder.build(this.url);
+        doc = builder.build(this.stream);
 
         Element root = doc.getRootElement();
         List speciesList = root.getChildren();
