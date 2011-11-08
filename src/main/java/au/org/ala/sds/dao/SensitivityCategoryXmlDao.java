@@ -4,6 +4,7 @@
 package au.org.ala.sds.dao;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -25,10 +26,10 @@ public class SensitivityCategoryXmlDao {
 
     protected static final Logger logger = Logger.getLogger(SensitivityCategoryXmlDao.class);
 
-    private final String url;
+    private final InputStream stream;
 
-    public SensitivityCategoryXmlDao(String url) {
-        this.url = url;
+    public SensitivityCategoryXmlDao(InputStream inputStream) {
+        this.stream = inputStream;
     }
 
     /**
@@ -42,7 +43,7 @@ public class SensitivityCategoryXmlDao {
         SAXBuilder builder = new SAXBuilder();
         Document doc = null;
 
-        doc = builder.build(this.url);
+        doc = builder.build(this.stream);
 
         Element root = doc.getRootElement();
         List zonesList = root.getChildren();
