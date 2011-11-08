@@ -1,10 +1,14 @@
     package au.org.ala.sds.model;
 
+import java.io.Serializable;
+
 /**
 *
 * @author Peter Flemming (peter.flemming@csiro.au)
 */
-public class SensitivityInstance {
+public class SensitivityInstance implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final SensitivityCategory category;
     private final String authority;
