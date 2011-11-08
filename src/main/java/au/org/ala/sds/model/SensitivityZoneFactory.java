@@ -3,11 +3,14 @@
  */
 package au.org.ala.sds.model;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import au.org.ala.sds.dao.SensitivityZonesXmlDao;
+import au.org.ala.sds.util.Configuration;
 
 /**
  *
@@ -16,6 +19,8 @@ import au.org.ala.sds.dao.SensitivityZonesXmlDao;
 public class SensitivityZoneFactory {
 
     protected static final Logger logger = Logger.getLogger(SensitivityZoneFactory.class);
+
+    private static final String ZONES_RESOURCE = "sensitivity-zones.xml";
 
     private static Map<String, SensitivityZone> zones;
 
@@ -39,17 +44,28 @@ public class SensitivityZoneFactory {
     }
 
     private static void initZones() {
-        SensitivityZonesXmlDao dao = new SensitivityZonesXmlDao("http://sds.ala.org.au/sensitivity-zones.xml");
+
+        URL url = null;
+        InputStream is = null;
+
+        try {
+            url = new URL(Configuration.getInstance().getZoneUrl());
+            is = url.openStream();
+        } catch (Exception e) {
+            logger.warn("Exception occurred getting zones list from " + url, e);
+            is = SensitivityZoneFactory.class.getClassLoader().getResourceAsStream(ZONES_RESOURCE);
+            if (is == null) {
+                logger.error("Unable to read " + ZONES_RESOURCE + " from jar file");
+            } else {
+                logger.info("Reading bundled resource " + ZONES_RESOURCE + " from jar file");
+            }
+        }
+
+        SensitivityZonesXmlDao dao = new SensitivityZonesXmlDao(is);
         try {
             zones = dao.getMap();
         } catch (Exception e) {
-            logger.warn("Exception occurred getting sensitivity-categories.xml from webapp - trying to read file in /data/sds", e);
-            dao = new SensitivityZonesXmlDao("file:///data/sds/sensitivity-zones.xml");
-            try {
-                zones = dao.getMap();
-            } catch (Exception e1) {
-                logger.warn("Exception occurred getting sensitivity-zones.xml from /data/sds", e1);
-            }
+            logger.error("Exception occurred parsing zones list from " + is, e);
         }
     }
 }
