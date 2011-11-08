@@ -3,6 +3,7 @@
  */
 package au.org.ala.sds.model;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
@@ -13,7 +14,9 @@ import au.org.ala.sds.util.DateHelper;
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
-public class PlantPestInstance extends SensitivityInstance {
+public class PlantPestInstance extends SensitivityInstance implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final Date fromDate;
     private final Date toDate;
