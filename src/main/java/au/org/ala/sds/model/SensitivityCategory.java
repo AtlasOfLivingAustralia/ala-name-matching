@@ -14,11 +14,15 @@
  ***************************************************************************/
 package au.org.ala.sds.model;
 
+import java.io.Serializable;
+
 /**
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
  */
-public class SensitivityCategory {
+public class SensitivityCategory implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     public static final String NOT_EVALUATED = "NE";
     public static final String DATA_DEFICIENT = "DD";
