@@ -1,5 +1,6 @@
 package au.org.ala.sds.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,7 +8,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
-public class SensitivityZone {
+public class SensitivityZone implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     public static final String AUS = "AUS";
     public static final String NOTAUS = "NOTAUS";
