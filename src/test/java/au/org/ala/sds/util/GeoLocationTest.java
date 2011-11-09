@@ -30,6 +30,8 @@ public class GeoLocationTest {
     @Test
     public void zonesContainingPoint() throws Exception {
         assertTrue(GeoLocationHelper.getZonesContainingPoint("-35.0", "145.0").contains(SensitivityZoneFactory.getZone(SensitivityZone.NSW)));
+        assertTrue(GeoLocationHelper.getZonesContainingPoint("-35.276771", "149.112539").contains(SensitivityZoneFactory.getZone(SensitivityZone.ACT)));
+        assertTrue(GeoLocationHelper.getZonesContainingPoint("-35.140266", "150.698433").contains(SensitivityZoneFactory.getZone(SensitivityZone.ACT)));
         assertTrue(GeoLocationHelper.getZonesContainingPoint("-11.268428", "132.14653").contains(SensitivityZoneFactory.getZone(SensitivityZone.NT)));
         assertTrue(GeoLocationHelper.getZonesContainingPoint("-41.538137", "173.968817").contains(SensitivityZoneFactory.getZone(SensitivityZone.NOTAUS)));
 
