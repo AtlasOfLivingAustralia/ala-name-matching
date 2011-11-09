@@ -148,17 +148,6 @@
         </repository>
     </repositories>
 
-    <distributionManagement>
-	    <repository>
-	        <uniqueVersion>false</uniqueVersion>
-	        <id>ala-repository</id>
-	    </repository>
-	    <snapshotRepository>
-	        <uniqueVersion>false</uniqueVersion>
-	        <id>ala-repository</id>
-	    </snapshotRepository>
-    </distributionManagement>
-
     <build>
         <plugins>
             <plugin>
