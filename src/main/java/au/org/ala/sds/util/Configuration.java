@@ -42,4 +42,8 @@ public class Configuration {
     public String getCacheUrl() {
         return config.getProperty("cache-data", "/data/sds/species-cache.ser");
     }
+
+    public String getSpatialUrl( ) {
+        return config.getProperty("spatial-layer-ws", "http://spatial.ala.org.au/layers-service/intersect/cl23,cl927/");
+    }
 }
