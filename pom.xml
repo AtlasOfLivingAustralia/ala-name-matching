@@ -125,6 +125,13 @@
         	<type>jar</type>
         	<scope>compile</scope>
         </dependency>
+        <dependency>
+        	<groupId>org.codehaus.jackson</groupId>
+        	<artifactId>jackson-mapper-asl</artifactId>
+        	<version>1.9.1</version>
+        	<type>jar</type>
+        	<scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -140,6 +147,17 @@
             <url>https://repository.jboss.org/nexus/content/groups/public</url>
         </repository>
     </repositories>
+
+    <distributionManagement>
+	    <repository>
+	        <uniqueVersion>false</uniqueVersion>
+	        <id>ala-repository</id>
+	    </repository>
+	    <snapshotRepository>
+	        <uniqueVersion>false</uniqueVersion>
+	        <id>ala-repository</id>
+	    </snapshotRepository>
+    </distributionManagement>
 
     <build>
         <plugins>
