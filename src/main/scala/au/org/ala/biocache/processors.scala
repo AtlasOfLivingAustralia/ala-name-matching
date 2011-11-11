@@ -286,9 +286,7 @@ class EventProcessor extends Processor {
     }
 
     //TODO need to check for other months
-    if (day!=null &&
-      (day > 31)
-    ){
+    if (day == 0 || day > 31){
       assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,"Invalid day supplied")
     }
 
@@ -304,7 +302,7 @@ class EventProcessor extends Processor {
           year += (currentYear / 100) * 100
 
           //although check that combined year-month-day isnt in the future
-          if (day != null && month != null){
+          if (day != 0 && month != 0){
             val date = DateUtils.parseDate(year.toString+String.format("%02d",int2Integer(month))+day.toString, Array("yyyyMMdd"))
             if (date.after(new Date())){
               year -= 100
