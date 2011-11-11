@@ -114,7 +114,7 @@ namePublishedInID
 nomenclaturalCode
 nomenclaturalStatus
 occurrenceDetails
-occurrenceID	ID	Record ID
+occurrenceID	ID	Record ID	Ident	Identifier
 occurrenceRemarks	notes	remarks	comment	comments
 occurrenceStatus
 order	bioorder
