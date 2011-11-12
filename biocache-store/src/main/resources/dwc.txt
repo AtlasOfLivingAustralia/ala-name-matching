@@ -1,0 +1,171 @@
+acceptedNameUsage	acceptedTaxon
+acceptedNameUsageID	acceptedTaxonID
+associatedMedia
+associatedOccurrences
+associatedReferences	RelatedCatalogItem
+associatedSequences
+associatedTaxa
+basisOfRecord	recordBasis
+bed
+behavior	behaviour
+catalogNumber	catalogNumberNumeric	catalogueNumber	ID	strainNumber
+class   classs  klass
+classs	_class	class	klass	clazz
+collectionCode	collection code
+collectionID	collection id
+continent	
+coordinatePrecision
+coordinateUncertaintyInMeters	accuracy
+country	
+countryCode	isoCountryCode
+county
+dataGeneralizations
+datasetID	dataset id
+datasetName	dataset name
+dateIdentified	identificationDate
+day	DayCollected
+decimalLatitude	latitude	lat
+decimalLongitude	longitude	long	lon
+disposition
+dynamicProperties
+earliestAgeOrLowestStage
+earliestEonOrLowestEonothem
+earliestEpochOrLowestSeries
+earliestEraOrLowestErathem
+earliestPeriodOrLowestSystem
+endDayOfYear
+establishmentMeans	nativeness
+eventDate	earliestDateCollected	latestDateCollected	sampleDate	date	occurrence date
+eventID
+eventRemarks
+eventTime	time
+family	fam
+fieldNotes
+fieldNumber
+footprintSRS	srs
+footprintSpatialFit
+footprintWKT	wkt
+formation
+genus	gen
+geodeticDatum	datum
+geologicalContextID
+georeferenceProtocol
+georeferenceRemarks
+georeferenceSources
+georeferenceVerificationStatus
+georeferencedBy
+group
+habitat
+higherClassification
+higherGeography
+higherGeographyID
+highestBiostratigraphicZone
+ibra	bioregion	ibra region
+identificationID
+identificationQualifier
+identificationReferences
+identificationRemarks
+identifiedBy
+imcra	imcra region
+individualCount	Number of Individuals
+individualID
+informationWithheld
+infraspecificEpithet
+institutionCode	institution code
+institutionID	institution id
+island
+islandGroup
+kingdom
+latestAgeOrHighestStage
+latestEonOrHighestEonothem
+latestEpochOrHighestSeries
+latestEraOrHighestErathem
+latestPeriodOrHighestSystem
+lga	Local Gov	Local Government Area
+lifeStage
+lithostratigraphicTerms
+locality	address
+locationAccordingTo
+locationID
+locationRemarks
+lowestBiostratigraphicZone
+maximumDepthInMeters	MaximumDepth
+maximumDistanceAboveSurfaceInMeters
+maximumElevationInMeters	maximum elevation in metres	max elevation in metres
+measurementAccuracy
+measurementDeterminedBy	sampledBy
+measurementDeterminedDate	sampleDate
+measurementID
+measurementMethod
+measurementRemarks
+measurementType
+measurementUnit
+measurementValue
+member
+minimumDepthInMeters	MinimumDepth
+minimumDistanceAboveSurfaceInMeters
+minimumElevationInMeters	minimum elevation in metres	min elevation in metres
+month	MonthCollected
+municipality	city
+nameAccordingTo	taxonAccordingTo
+nameAccordingToID	taxonAccordingToID
+namePublishedIn
+namePublishedInID
+nomenclaturalCode
+nomenclaturalStatus
+occurrenceDetails
+occurrenceID	ID	Record ID	Ident	Identifier
+occurrenceRemarks	notes	remarks	comment	comments
+occurrenceStatus
+order	bioorder
+originalNameUsage	originalName	originalTaxon	basionym
+originalNameUsageID	originalNameID	originalTaxonID	basionymID
+otherCatalogNumbers	PreviousCatalogNumber
+ownerInstitutionCode
+parentNameUsage	parentTaxon	higherTaxon	higherNameUsage
+phylum
+pointRadiusSpatialFit
+preparations	PreparationType
+previousIdentifications
+recordNumber	collectorNumber
+recordedBy	collector
+relatedResourceID
+relationshipAccordingTo
+relationshipEstablishedDate
+relationshipOfResource	RelationshipType
+relationshipRemarks
+reproductiveCondition
+resourceID
+resourceRelationshipID
+samplingEffort
+samplingProtocol
+scientificName	sci name	taxon name	taxonomic name	bionomial	bionomial name	binomial	binomial name
+scientificNameAuthorship	author	authorship	ScientificNameAuthor
+scientificNameID	nameID	sciNameID	Taxon Rank - matched
+sex	gender
+species	bionomial	binomial name	sp	species name
+specificEpithet
+startDayOfYear
+stateProvince	state	province	territory
+subgenus	sub genus
+subspecies	trinomial	trinomial name	spp
+taxonConceptID	Match Taxon Concept GUID
+taxonID	nameUsageID
+taxonRank	rank    taxonomic rank
+taxonRemarks	taxonRemark
+taxonomicStatus
+typeStatus	typification
+verbatimCoordinateSystem
+verbatimCoordinates
+verbatimDepth	depth
+verbatimElevation	elevation	altitude	alt
+verbatimEventDate
+verbatimLatitude
+verbatimLocality
+verbatimLongitude
+verbatimSRS
+verbatimTaxonRank
+vernacularName	commonName	common
+vparentNameUsageID	parentTaxonID	higherTaxonID	higherNameUsageID
+waterBody	ContinentOcean
+year	YearCollected

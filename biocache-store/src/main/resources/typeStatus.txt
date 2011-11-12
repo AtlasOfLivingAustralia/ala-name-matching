@@ -1,0 +1,38 @@
+allolectotype
+alloneotype
+allotype
+cotype
+epitype
+exepitype
+exholotype	ex holotype
+exisotype
+exlectotype
+exneotype
+exparatype
+exsyntype
+extype
+hapantotype
+holotype	holo type
+iconotype
+isolectotype
+isoneotype
+isosyntype
+isotype	iso type
+lectotype
+neotype	neo type
+notatype	not a type
+paralectotype
+paraneotype
+paratypes
+plastoholotype
+plastoisotype
+plastolectotype
+plastoneotype
+plastoparatype
+plastosyntype
+plastotype
+secondarytype
+supplementarytype
+syntype
+topotype
+type
