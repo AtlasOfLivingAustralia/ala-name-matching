@@ -950,29 +950,28 @@ class FullRecord (
   @BeanProperty var taxonomicallyKosher:Boolean = true,
   @BeanProperty var deleted:Boolean = false,
   @BeanProperty var userVerified:Boolean = false,
-  @BeanProperty var lastModifiedTime:String ="",
-  @BeanProperty var lastUserAssertionDate:String="")
+  @BeanProperty var lastModifiedTime:String = "",
+  @BeanProperty var lastUserAssertionDate:String = "",
+  @BeanProperty var miscProperties:java.util.Map[String,String] = new java.util.HashMap[String,String]())
   extends Cloneable with CompositePOSO {
     
-  def objectArray:Array[POSO] = Array(occurrence,classification,location,event,attribution,identification,measurement, environmentalLayers, contextualLayers)
-//  def reinitObjectArray()={
-//    objectArray = Array(occurrence,classification,location,event,attribution,identification,measurement, location.environmentalLayers, location.contextualLayers)
-//  }
+  def objectArray:Array[POSO] = Array(occurrence,classification,location,event,attribution,identification,measurement,environmentalLayers,contextualLayers)
 
   def this(rowKey:String ,uuid:String) = this(rowKey,uuid,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
       new Measurement, new EnvironmentalLayers, new ContextualLayers, Array())
 
   def this() = this(null,null,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
       new Measurement, new EnvironmentalLayers, new ContextualLayers, Array())
+
   /**
-   * CReates an empty new Full record based on this one to be used in Processing.
+   * Creates an empty new Full record based on this one to be used in Processing.
    * Initialises the userVerified and ids for use in processing
    */
   def createNewProcessedRecord : FullRecord = {
       val record = new FullRecord(this.rowKey, this.uuid)
       record.userVerified = this.userVerified
       record
-   }
+  }
 
   override def clone : FullRecord = new FullRecord(this.rowKey,this.uuid,
       occurrence.clone,classification.clone,location.clone,event.clone,attribution.clone,
@@ -1021,7 +1020,6 @@ class ConservationSpecies(
         @BeanProperty var rawStatus:String
         ){
     def this() = this(null, null, null,null)
-   
 }
 
 /**

@@ -1,13 +1,12 @@
 package au.org.ala.biocache
 
-import collection.immutable.HashSet
-import collection.mutable.ArrayBuffer
-import java.lang.reflect.Method
-import org.apache.commons.lang.StringUtils
 import scala.collection.mutable.HashMap
+import scala.collection.JavaConversions
 
 object FullRecordMapper {
-
+	
+	  import JavaConversions._
+	
     val entityName = "occ"
     val qualityAssertionColumn = "qualityAssertion"
     val userQualityAssertionColumn = "userQualityAssertion"
@@ -22,31 +21,51 @@ object FullRecordMapper {
     val geospatialQa = "loc"
     val taxonomicalQa = "class"
     val qaFields = Processors.processorMap.values.map(processor=> markAsQualityAssertion(processor.asInstanceOf[Processor].getName))
-        
+
+    /**
+     * Convert a full record to a map of properties
+     */
+    def fullRecord2Map(fullRecord: FullRecord, version: Version): scala.collection.mutable.Map[String, String] = {
+        val properties = scala.collection.mutable.Map[String, String]()
+        fullRecord.objectArray.foreach(poso => {
+            val map = FullRecordMapper.mapObjectToProperties(poso, version)
+            //add all to map
+            properties ++= map
+        })
+
+        //add the special cases to the map
+        if(fullRecord.miscProperties!=null && !fullRecord.miscProperties.isEmpty && version == Raw){
+          //properties ++= fullRecord.miscProperties      //store them separately
+          properties.put("miscProperties", Json.toJSON(fullRecord.miscProperties))        //store them as JSON array
+        }
+        properties.put("uuid", fullRecord.uuid)
+        properties.put("rowKey", fullRecord.rowKey)
+        properties.put(FullRecordMapper.defaultValuesColumn, fullRecord.defaultValuesUsed.toString)
+        properties.put(FullRecordMapper.locationDeterminedColumn, fullRecord.locationDetermined.toString)
+        if(fullRecord.lastModifiedTime != ""){
+            properties.put(FullRecordMapper.markNameBasedOnVersion(FullRecordMapper.alaModifiedColumn, version), fullRecord.lastModifiedTime)
+        }
+        properties
+    }
+
     /**
      * for each field in the definition, check if there is a value to write
      * Change to use the toMap method of a Mappable
      */
-    def mapObjectToProperties(anObject: AnyRef, version:Version=Raw): Map[String, String] = {
-        
+    def mapObjectToProperties(anObject: AnyRef, version:Version = Raw): Map[String, String] = {
         anObject match {
             //case m:Mappable => m.getMap
-            case p:POSO => { p.toMap.map({case(key, value) => 
-                (markNameBasedOnVersion(key,version) -> value)})
-            }
+            case p:POSO => { p.toMap.map({case(key, value) => (markNameBasedOnVersion(key,version) -> value)}) }
             case _ => throw new Exception("Unrecognised object. Object isnt a Mappable or a POSO. Class : " + anObject.getClass.getName)
         }
     }
     /**
      * changes the name based on the version
      */
-    def markNameBasedOnVersion(name:String, version:Version)={
-        version match{
-          
-          case Processed => markAsProcessed(name)
-          case Consensus => markAsConsensus(name)
-          case _ => name
-        }
+    def markNameBasedOnVersion(name:String, version:Version) = version match {
+        case Processed => markAsProcessed(name)
+        case Consensus => markAsConsensus(name)
+        case _ => name
     }
 
     /**
@@ -93,24 +112,29 @@ object FullRecordMapper {
         fullRecord.rowKey = rowKey
         fullRecord.uuid = fields.getOrElse("uuid", "")
         fullRecord.lastModifiedTime = fields.getOrElse(markNameBasedOnVersion("lastModifiedTime",version),"")
-        val assertions = new ArrayBuffer[String]
-        val columns = fields.keySet
+        val miscProperties = new HashMap[String,String]()
 
         fields.keySet.foreach( fieldName => {
             //ascertain which term should be associated with which object
+            //println("field name: " + fieldName)
             val fieldValue = fields.getOrElse(fieldName, "")
             //only set the value if it is no null or empty string
             if (fieldValue != "") {
                 fieldName match {
-                    case "qualityAssertion" => { }//ignore ?????
+                    case "qualityAssertion" => {} //ignore ?????
                     case it if isQualityAssertion(it) => {
-                    	//load the QA field names from the array
-                    	if(fieldValue != "true" && fieldValue != "false"){
-                    		val arr = Json.toListWithGeneric(fieldValue,classOf[java.lang.Integer])
-                    		for(i <- 0 to arr.size-1){
-                    			fullRecord.assertions = fullRecord.assertions :+ AssertionCodes.getByCode(arr(i)).get.getName
-                    		}
-                    	}
+                      //load the QA field names from the array
+                      if (fieldValue != "true" && fieldValue != "false") {
+                        val arr = Json.toListWithGeneric(fieldValue, classOf[java.lang.Integer])
+                        for (i <- 0 to arr.size - 1) {
+                          fullRecord.assertions = fullRecord.assertions :+ AssertionCodes.getByCode(arr(i)).get.getName
+                        }
+                      }
+                    }
+                    case "miscProperties" => {
+                        if(version == Raw){
+                          fullRecord.miscProperties = Json.toJavaMap(fieldValue).asInstanceOf[java.util.Map[String,String]]
+                        }
                     }
                     case it if userVerifiedColumn.equals(it) => fullRecord.userVerified = "true".equals(fieldValue)
                     case it if taxonomicDecisionColumn.equals(it) => fullRecord.taxonomicallyKosher = "true".equals(fieldValue) 
@@ -120,11 +144,16 @@ object FullRecordMapper {
                     case it if deletedColumn.equals(it) => fullRecord.deleted = "true".equals(fieldValue)
                     case it if isProcessedValue(fieldName) && version == Processed => fullRecord.setProperty(removeSuffix(fieldName), fieldValue)
                     case it if lastUserAssertionDateColumn.equals(fieldName) => fullRecord.setLastUserAssertionDate(fieldValue)
-                    case it if version == Raw => fullRecord.setProperty(fieldName, fieldValue)
-                    case _ => //throw new Exception("Unmapped property : " + fieldName)
+                    case it if version == Raw &&  fullRecord.hasProperty(fieldName) => fullRecord.setProperty(fieldName, fieldValue)
+                    case _ => {
+                      //any property that is not recognised is lumped into miscProperties
+                      miscProperties.put(fieldName, fieldValue)
+                    }
                 }
             }
         })
+
+        fullRecord.miscProperties = miscProperties
         fullRecord
     }
 

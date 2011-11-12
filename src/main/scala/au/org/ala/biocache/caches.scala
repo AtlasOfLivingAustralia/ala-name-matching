@@ -27,7 +27,7 @@ import scala.collection.JavaConversions
  * value does not exist in the cache the name matching API is called.
  *
  * The cache will store a classification object for names that match. If the
- * name causes a homonym exeception or is not found the ErrorCode is stored.
+ * name causes a homonym execption or is not found the ErrorCode is stored.
  *
  * @author Natasha Carter
  */
@@ -61,9 +61,6 @@ object ClassificationDAO {
     if(cachedObject!=null){
        cachedObject.asInstanceOf[Option[NameSearchResult]]
     } else {
-        //use the lucene indexes
-
-         
         //search for a scientific name if values for the classification were provided otherwise search for a common name
         val nsr = if(hash.contains("|")) nameIndex.searchForRecord(new LinnaeanRankClassification(
           cl.kingdom,

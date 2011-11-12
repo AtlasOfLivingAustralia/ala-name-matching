@@ -18,27 +18,34 @@ object DwcCSVLoader {
 
         var dataResourceUid = ""
         var localFilePath:Option[String] = None
+        var updateLastChecked = false
+        var bypassConnParamLookup = false
             
         val parser = new OptionParser("import darwin core headed CSV") {
             arg("<data-resource-uid>", "the data resource to import", {v: String => dataResourceUid = v})
             opt("l", "local", "skip the download and use local file", {v:String => localFilePath = Some(v) } )
+            booleanOpt("u", "updateLastChecked", "update registry with last loaded date", {v:Boolean => updateLastChecked = v } )
+            booleanOpt("b", "bypassConnParamLookup", "bypass connection param lookup", {v:Boolean => bypassConnParamLookup = v } )
         }
 
         if(parser.parse(args)){
             val l = new DwcCSVLoader
-            try{
-                localFilePath match {
-                    case None => l.load(dataResourceUid)
-                    case Some(v) => l.loadLocalFile(dataResourceUid, v)
+            try {
+                if (bypassConnParamLookup && !localFilePath.isEmpty){
+                  l.loadFile(new File(localFilePath.get),dataResourceUid, List(), Map())
+                } else {
+                  localFilePath match {
+                      case None => l.load(dataResourceUid)
+                      case Some(v) => l.loadLocalFile(dataResourceUid, v)
+                  }
+                  //initialise the delete/update the collectory information
+                  if (updateLastChecked){
+                    l.updateLastChecked(dataResourceUid)
+                  }
                 }
-                //initialise the delete
-                //update the collectory information               
-                l.updateLastChecked(dataResourceUid)
-            }
-            catch{
-                case e:Exception =>e.printStackTrace
-            }
-            finally{
+            } catch {
+                case e:Exception => e.printStackTrace
+            } finally {
                 l.pm.shutdown
                 Console.flush()
                 Console.err.flush()
@@ -100,15 +107,16 @@ class DwcCSVLoader extends DataLoader {
             
             val columns = currentLine.toList
             if (columns.length == dwcTermHeaders.size){
+
                 val map = (dwcTermHeaders zip columns).toMap[String,String].filter( { 
                 	case (key,value) => value!=null && value.toString.trim.length>0 
                 })
                 
                 if(uniqueTerms.forall(t => map.getOrElse(t,"").length>0)){
-                    
 	                val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,"")) //for (t <-uniqueTerms) yield map.getOrElse(t,"")
 	                val fr = FullRecordMapper.createFullRecord("", map, Versions.RAW)
 	                load(dataResourceUid, fr, uniqueTermsValues)
+
                   //is there any associatedMedia
                   if (fr.occurrence.associatedMedia != null){
                     //load it and store it
@@ -127,27 +135,28 @@ class DwcCSVLoader extends DataLoader {
                           MediaStore.save(fr.uuid, dataResourceUid, "file:///"+file.getParent+File.separator+file.getName)
                         })
                         if(filePath.isEmpty)
-                            fileName
+                          fileName
                         else
-                            filePath.get
+                          filePath.get
                       }
                     })
-
                     fr.occurrence.associatedMedia = filePathsInStore.mkString(";")
                     load(dataResourceUid, fr, uniqueTermsValues)
                   }
 
-		            if (counter % 1000 == 0 && counter > 0) {
-		                finishTime = System.currentTimeMillis
-		                println(counter + ", >> last key : " + dataResourceUid + "|"+uniqueTermsValues.mkString("|") + ", records per sec: " + 1000 / (((finishTime - startTime).toFloat) / 1000f))
-		                startTime = System.currentTimeMillis
-		            }
-              } else {
-                  noSkipped += 1
-                  print("Skipping line: " + counter + ", missing unique term value. Number skipped: "+ noSkipped)
-                  uniqueTerms.foreach(t => print("," + t +":"+map.getOrElse(t,"")))
-                  println
-              }
+                  if (counter % 1000 == 0 && counter > 0) {
+                      finishTime = System.currentTimeMillis
+                      println(counter + ", >> last key : " + dataResourceUid + "|" +
+                        uniqueTermsValues.mkString("|") + ", records per sec: " +
+                        1000 / (((finishTime - startTime).toFloat) / 1000f))
+                      startTime = System.currentTimeMillis
+                  }
+                } else {
+                    noSkipped += 1
+                    print("Skipping line: " + counter + ", missing unique term value. Number skipped: "+ noSkipped)
+                    uniqueTerms.foreach(t => print("," + t +":"+map.getOrElse(t,"")))
+                    println
+                }
             }
             else{
                 println("Skipping line: " +counter + " incorrect number of columns("+columns.length+")...")                
@@ -159,9 +168,3 @@ class DwcCSVLoader extends DataLoader {
         println("Load finished")
     }
 }
-//
-//class SameNameDifferentExtensionFilter(name:String) extends FilenameFilter {
-//  val nameToMatch = FilenameUtils.removeExtension(name)
-//  def accept(dir: File, name: String) = FilenameUtils.removeExtension(name) == nameToMatch
-//}
-//

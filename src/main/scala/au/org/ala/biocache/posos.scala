@@ -12,7 +12,7 @@ import scala.util.parsing.json.JSON
 case class ModelProperty(name: String, typeName: String, getter: Method, setter: Method)
 
 /**
- * A singleton that keeps a cache of POSO metadata.
+ * A singleton that keeps a cache of POSO reflection metadata.
  */
 object ReflectionCache {
 
@@ -26,8 +26,7 @@ object ReflectionCache {
         if (result.isEmpty) {
             val map = new HashMap[String, Method]()
             cposo.getClass.getDeclaredFields.map(field => {
-                val name = field.getName;
-                val typ = field.getType;
+                val name = field.getName
                 try {
                     val getter = cposo.getClass.getDeclaredMethod("get" + StringUtils.capitalize(name));
                     val isAPoso = !(getter.getReturnType.getInterfaces.forall(i => i == classOf[POSO]))
@@ -76,8 +75,38 @@ trait CompositePOSO extends POSO {
     val posoGetterLookup = ReflectionCache.getCompositeLookup(this)
     val nestedProperties = posoGetterLookup.keys
 
+    override def hasProperty(name:String) = (!lookup.get(name).isEmpty || !posoGetterLookup.get(name).isEmpty )
+
     override def setProperty(name: String, value: String) = lookup.get(name) match {
-        case Some(property) => property.setter.invoke(this, value)
+
+        case Some(property) => {
+          //println(name+":  " + property.typeName + ": " +  value)
+          if(property.typeName == "scala.collection.immutable.Map"){
+            val jsonOption = JSON.parseFull(value)
+            if (!jsonOption.isEmpty){
+              try {
+                property.setter.invoke(this, jsonOption.get.asInstanceOf[Map[String, String]])
+              } catch {
+                case e:Exception => e.printStackTrace()
+              }
+            }
+          } else if(property.typeName == "[Ljava.lang.String;" ){
+            val jsonOption = JSON.parseFull(value)
+            if (!jsonOption.isEmpty && jsonOption.get.isInstanceOf[Array[String]]){
+              try {
+                val stringArray = jsonOption.get.asInstanceOf[Array[String]]
+                if (!stringArray.isEmpty){
+                  property.setter.invoke(this, jsonOption.get.asInstanceOf[Array[String]])
+                }
+              } catch {
+                case e:Exception => e.printStackTrace()
+              }
+            }
+          } else {
+             //println(property.name + ": "+property.typeName)
+             property.setter.invoke(this, value)
+          }
+        }
         case None => setNestedProperty(name, value)
     }
 
@@ -111,8 +140,12 @@ trait CompositePOSO extends POSO {
 
 trait POSO {
 
+    import scala.collection.JavaConversions._
+
     protected val lookup = ReflectionCache.getPosoLookup(this)
     val propertyNames = lookup.keys
+
+    def hasProperty(name:String) = !lookup.get(name).isEmpty
 
     def setProperty(name: String, value: String) = lookup.get(name) match {
         case Some(property) => {
@@ -128,7 +161,7 @@ trait POSO {
                 }
                 case "int" => property.setter.invoke(this, Integer.parseInt(value).asInstanceOf[AnyRef])
                 case "boolean" => property.setter.invoke(this, java.lang.Boolean.parseBoolean(value).asInstanceOf[AnyRef])
-                case "scala.collection.immutable.Map"=>property.setter.invoke(this, JSON.parseFull(value).get.asInstanceOf[Map[String,String]])
+                case "scala.collection.immutable.Map" => property.setter.invoke(this, JSON.parseFull(value).get.asInstanceOf[Map[String,String]])
                 case _ => println("Unhandled data type: " + property.typeName)
             }
         }
@@ -136,8 +169,8 @@ trait POSO {
     }
 
     def getProperty(name: String): Option[String] = lookup.get(name) match {
+
         case Some(property) => {
-        	
             val value = {
               property.typeName match {
                 case "java.lang.String" => property.getter.invoke(this)
@@ -146,10 +179,10 @@ trait POSO {
                 		val array = property.getter.invoke(this)
                 		if(array != null)
                 			Json.toJSON(array.asInstanceOf[Array[AnyRef]])
-                		else null
-                        
+                		else
+                      null
                     } catch {
-                        case e:Exception => e.printStackTrace; null
+                      case e:Exception => e.printStackTrace; null
                     }
                   }
                 case _=> null
@@ -158,7 +191,7 @@ trait POSO {
             if(value != null){              
             	Some(value.toString)
             } else {
-                None
+              None
             }
         }
         case None => None //println("Property not mapped " +name +", on " + this.getClass.getName); None;
@@ -196,12 +229,23 @@ trait POSO {
                         val value = unparsed.asInstanceOf[Boolean]
                         map.put(property.name, value.toString)
                     }
-                    case "scala.collection.immutable.Map" =>{
+                    case "scala.collection.immutable.Map" => {
                         val value = unparsed.asInstanceOf[Map[String,String]]
-                        val stringValue = value.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
+                        val stringValue = Json.toJSON(value)
                         map.put(property.name, stringValue)
                     }
-                    case _ => throw new UnsupportedOperationException("Unsupported field type " + property.typeName)
+                    case "java.util.Map" => {
+                        //val value = unparsed.asInstanceOf[Map[String,String]]
+                        val stringValue = Json.toJSON(unparsed)
+                        map.put(property.name, stringValue)
+                    }
+                    case _ => {
+                      if (unparsed.isInstanceOf[POSO]){
+                        map ++ unparsed.asInstanceOf[POSO].toMap
+                      } else {
+                        throw new UnsupportedOperationException("Unsupported field type " + property.typeName)
+                      }
+                    }
                 }
             }
         })

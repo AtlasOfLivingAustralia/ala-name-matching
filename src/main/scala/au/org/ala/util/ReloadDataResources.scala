@@ -24,8 +24,6 @@ object ReloadDataResources {
         opt("remove", "remove the occurences from the data store", {remove=true})
         opt("process", "reproces the records for the data resoure", {process=true})
         opt("index", "reindex the records for the data resoure", {index=true})
-        
-        
     }
 
     if(parser.parse(args)){

@@ -45,7 +45,7 @@ object FlickrLoader extends DataLoader {
         l.load(dataResourceUid, Some(yesterday), Some(today), overwriteImages)
       } else if(lastWeek){
         val today = new Date
-        val sevenDaysAgo = DateUtils.addDays(today, -7)
+        val sevenDaysAgo = DateUtils.addWeeks(today, -1)
         l.load(dataResourceUid, Some(sevenDaysAgo), Some(today), overwriteImages)
       } else {
         l.load(dataResourceUid, startDate, endDate, overwriteImages)
@@ -102,8 +102,10 @@ class FlickrLoader extends DataLoader {
 
     val df = new SimpleDateFormat("yyyy-MM-dd")
 
+    println("Starting with range: " + df.format(currentStartDate) + " to " + df.format(currentEndDate));
+
     // page through the images month-by-month
-    while (currentStartDate.after(startDate)) {
+    while (currentStartDate.after(startDate) || currentStartDate.equals(startDate)) {
 
       println("Harvesting time period: " + df.format(currentStartDate) + " to " + df.format(currentEndDate));
       try {
@@ -113,7 +115,13 @@ class FlickrLoader extends DataLoader {
           try {
             //persist the occurrence with image metadata
             val (photoPageUrl, imageUrl, fr, tags) = processPhoto(params, licences, photoId)
-            if (isOfInterest(tags, keywords)) {
+
+            //have we already loaded this record?
+            val alreadyLoaded = exists(dataResourceUid, List(photoPageUrl))
+            //println(photoPageUrl + " - Already loaded: " + alreadyLoaded)
+
+            //load it if its of interest and we havent loaded it
+            if (isOfInterest(tags, keywords) && (!alreadyLoaded || overwriteImages)) {
               load(dataResourceUid, fr, List(photoPageUrl))
               val (filePath, exists) = MediaStore.exists(fr.uuid, dataResourceUid, imageUrl)
               if (overwriteImages || !exists) {

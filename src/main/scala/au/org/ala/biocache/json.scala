@@ -29,6 +29,15 @@ object Json {
     }
     
     /**
+     * Convert the supplied list to JSON
+     */
+    def toJSON(a:AnyRef) : String = {
+        val mapper = new ObjectMapper
+        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
+        mapper.writeValueAsString(a)
+    }    
+    
+    /**
      * Convert Array to JSON
      */
     def toJSON(arr:Array[AnyRef]) : String ={
@@ -73,6 +82,15 @@ object Json {
         mapper.readValue(jsonString,classOf[java.util.Map[String,Object]]).asScala[String,Object];
      } catch {
         case e:Exception => Map()
+     }
+   }
+
+   def toJavaMap(jsonString:String): java.util.Map[String,Object] = {
+     try {
+        val mapper = new ObjectMapper
+        mapper.readValue(jsonString,classOf[java.util.Map[String,Object]])
+     } catch {
+        case e:Exception => new java.util.HashMap()
      }
    }
 }

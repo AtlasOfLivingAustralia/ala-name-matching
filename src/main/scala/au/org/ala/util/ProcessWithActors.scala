@@ -57,9 +57,9 @@ object ProcessWithActors {
     //use this variable to evenly distribute the actors work load
     var batches = 0
     var count =0 
-val processor = new RecordProcessor
+    //val processor = new RecordProcessor
     println("Initialised actors...")
-    file.foreachLine(line=>{
+    file.foreachLine(line => {
         count+=1
         //val rec = occurrenceDAO.getRawProcessedByRowKey(line)
         val lstart = System.currentTimeMillis
@@ -156,9 +156,8 @@ val processor = new RecordProcessor
 
     //occurrenceDAO.pageOverAll(Raw, fullRecord => {
     //occurrenceDAO.pageOverRawProcessed(rawAndProcessed => {
-    performPaging(rawAndProcessed=>{
-    if(guid == "")
-      println("First rowKey processed: " + rawAndProcessed.get._1.rowKey)
+    performPaging(rawAndProcessed => {
+      if(guid == "") println("First rowKey processed: " + rawAndProcessed.get._1.rowKey)
       guid = rawAndProcessed.get._1.rowKey
       count += 1
       //we want to add the record to the buffer whether or not we send them to the actor

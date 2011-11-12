@@ -64,13 +64,21 @@ trait DataLoader {
       val termFactory = new TermFactory  
       terms.map(term => termFactory.findTerm(term))
     }
-    
+
+    def exists(dataResourceUid:String, identifyingTerms:List[String]) : Boolean = {
+      !Config.occurrenceDAO.getUUIDForUniqueID(createUniqueID(dataResourceUid, identifyingTerms)).isEmpty
+    }
+
+    private def createUniqueID(dataResourceUid:String,identifyingTerms:List[String]) : String = {
+      (List(dataResourceUid) ::: identifyingTerms).mkString("|")
+    }
+
     def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String]) : Boolean = {
         
         //the details of how to construct the UniqueID belong in the Collectory
         val uniqueID = identifyingTerms.isEmpty match {
         	case true => None
-        	case false => Some((List(dataResourceUid) ::: identifyingTerms).mkString("|"))
+        	case false => Some(createUniqueID(dataResourceUid,identifyingTerms))
         }
 
         //lookup the column
@@ -86,6 +94,7 @@ trait DataLoader {
         //The last load time
         fr.lastModifiedTime = loadTime
         fr.attribution.dataResourceUid = dataResourceUid
+
         Config.occurrenceDAO.addRawOccurrenceBatch(Array(fr))
         true
     }
@@ -100,9 +109,15 @@ trait DataLoader {
         val in = (new java.net.URL(url)).openStream
         val (file, isZipped) = {
           if (url.endsWith(".zip")){
-            (new File(temporaryFileStore + resourceUid + ".zip"), true)
+            val f = new File(temporaryFileStore + resourceUid + ".zip")
+            f.createNewFile()
+            (f, true)
           } else {
-            (new File(temporaryFileStore + resourceUid + File.separator + resourceUid +".csv"), false)
+            val f = new File(temporaryFileStore + resourceUid + File.separator + resourceUid +".csv")
+            println("creating file: " + f.getAbsolutePath)
+            FileUtils.forceMkdir(f.getParentFile())
+            f.createNewFile()
+            (f, false)
           }
         }
         val out = new FileOutputStream(file)
@@ -112,7 +127,7 @@ trait DataLoader {
           out.write(buffer, 0, numRead)
           out.flush
         }
-        printf("\nDownloaded. File size: %skB\n", file.length / 1024 +", " + file.getAbsolutePath +", is zipped: " + isZipped)
+        printf("\nDownloaded. File size: ", file.length / 1024 +"kB, " + file.getAbsolutePath +", is zipped: " + isZipped+"\n")
 
         out.flush
         in.close
@@ -133,17 +148,16 @@ trait DataLoader {
      * Calls the collectory webservice to update the last loaded time for a data resource
      */
     def updateLastChecked(resourceUid:String) :Boolean ={
-        try{
+        try {
           //set the last check time for the supplied resourceUid
-          val map = Map("user"->user, "api_key"->api_key, "lastChecked" ->loadTime)
+          val map = Map("user"-> user, "api_key"-> api_key, "lastChecked" ->loadTime)
           //turn the map of values into JSON representation
           val data = map.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
           //"http://woodfired.ala.org.au:8080/Collectory/ws/dataResource/"
           println(Http.postData(registryUrl+resourceUid,data).header("content-type", "application/json").responseCode)
           true
-        }
-        catch{
-            case e:Exception => e.printStackTrace();false
+        } catch {
+          case e:Exception => e.printStackTrace();false
         }
     }
 }

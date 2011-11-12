@@ -174,7 +174,6 @@ object Store {
     //systemassertions are handled using row keys - this is unlike user assertions.
     val rowKey = occurrenceDAO.getRowKeyFromUuid(uuid).getOrElse(uuid);
     occurrenceDAO.getSystemAssertions(rowKey).asJava[QualityAssertion]
-    
   }
 
   /**

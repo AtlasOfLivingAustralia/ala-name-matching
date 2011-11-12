@@ -520,7 +520,9 @@ object AssertionCodes {
 
   //verified type - this is a special code 
   val VERIFIED = ErrorCode("userVerified", 50000, true, "Record Verified by collection manager")
-  
+
+  //this is a code user can use to flag a issue with processing
+  val PROCESSING_ERROR = ErrorCode("processingError", 60000, true, "The system has incorrectly processed a record")
   
   //all the codes
   val all = retrieveAll
@@ -536,8 +538,7 @@ object AssertionCodes {
   val miscellaneousCodes = all.filter(errorCode => {errorCode.code>=20000 && errorCode.code<30000})
   val temporalCodes = all.filter(errorCode => {errorCode.code>=30000 && errorCode.code<40000})
 
-  val userAssertionCodes = Array(GEOSPATIAL_ISSUE,COORDINATE_HABITAT_MISMATCH,DETECTED_OUTLIER,
-      TAXONOMIC_ISSUE,IDENTIFICATION_INCORRECT,TEMPORAL_ISSUE)
+  val userAssertionCodes = Array(GEOSPATIAL_ISSUE,COORDINATE_HABITAT_MISMATCH,DETECTED_OUTLIER, TAXONOMIC_ISSUE,IDENTIFICATION_INCORRECT,TEMPORAL_ISSUE)
 
   /**
    * Retrieve all the terms defined in this vocab.

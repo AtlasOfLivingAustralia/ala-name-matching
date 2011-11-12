@@ -37,6 +37,8 @@ trait OccurrenceDAO {
 
     def getByRowKey(rowKey: String, version:Version): Option[FullRecord]
 
+    def getUUIDForUniqueID(uniqueID: String) : Option[String]
+
     def createOrRetrieveUuid(uniqueID: String): String
     
     def createUuid = UUID.randomUUID.toString
@@ -47,7 +49,7 @@ trait OccurrenceDAO {
 
     def pageOverAll(version: Version, proc: ((Option[FullRecord]) => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
 
-    def pageOverSelectAll(version: Version, proc: ((Option[FullRecord]) => Boolean),fields: Array[String],startKey:String="", pageSize: Int = 1000): Unit
+    //def pageOverSelectAll(version: Version, proc: ((Option[FullRecord]) => Boolean),fields: Array[String],startKey:String="", pageSize: Int = 1000): Unit
 
     def pageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
     
@@ -100,11 +102,10 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * Gets the map for a record based on searching the index for new and old ids
      */
     def getMapFromIndex(value:String):Option[Map[String,String]]={
-        val map = persistenceManager.getByIndex(value, entityName, "uuid")
-        if(map.isEmpty)
-            persistenceManager.getByIndex(value, entityName, "portalId")
-        else
-             map
+      persistenceManager.getByIndex(value, entityName, "uuid") match {
+       case None => persistenceManager.getByIndex(value, entityName, "portalId")
+       case Some(map) => Some(map)
+      }
     }
     
     /**
@@ -122,8 +123,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     def getByRowKey(rowKey:String): Option[FullRecord] ={
       getByRowKey(rowKey, Raw)
     }
-    
-    
 
     /**
      * Get all versions of the occurrence with UUID
@@ -145,6 +144,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             Some(Array(raw, processed, consensus))
         }
     }
+
    /**
     * Get all the versions based on a row key
     */
@@ -210,11 +210,8 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      *
      */
     def createOrRetrieveUuid(uniqueID: String): String = {
-
         //look up by index
-        
-
-        val recordUUID = persistenceManager.get(uniqueID, "occ", "uuid")
+        val recordUUID = getUUIDForUniqueID(uniqueID)
         if (recordUUID.isEmpty) {
             val newUuid = createUuid
             //The uuid will be added when the record is inserted
@@ -224,6 +221,8 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             recordUUID.get
         }
     }
+
+    def getUUIDForUniqueID(uniqueID: String) = persistenceManager.get(uniqueID, "occ", "uuid")
 
     /**
      * Write to stream in a delimited format (CSV).
@@ -303,13 +302,13 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         },startKey, endKey, pageSize)
     }
 
-    /**
-     * Iterates over the sepcified version of all the occurrence records. The values retrieved
-     * from the persistence manager is limited to the supplied fields
-     */
-    def pageOverSelectAll(version: Version, proc: ((Option[FullRecord]) => Boolean),fields: Array[String],startKey:String="", pageSize: Int = 1000){
-
-    }
+//    /**
+//     * Iterates over the sepcified version of all the occurrence records. The values retrieved
+//     * from the persistence manager is limited to the supplied fields
+//     */
+//    def pageOverSelectAll(version: Version, proc: ((Option[FullRecord]) => Boolean),fields: Array[String],startKey:String="", pageSize: Int = 1000){
+//
+//    }
 
     /**
      * Iterate over all occurrences, passing the objects to a function.
@@ -336,7 +335,9 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * The shouldProcess function should take the map and determine bnased on conditions whether or not to retrieve the complete record
      * 
      */
-    def conditionalPageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean), condition:(Map[String,String]=>Boolean),columnsToRetrieve:Array[String],startKey:String="", endKey:String="", pageSize: Int = 1000){
+    def conditionalPageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),
+                                        condition:(Map[String,String]=>Boolean),columnsToRetrieve:Array[String],
+                                        startKey:String="", endKey:String="", pageSize: Int = 1000){
         val columns = columnsToRetrieve ++ Array("uuid","rowKey")
         persistenceManager.pageOverSelect(entityName, (guid, map)=>{
             //val deleted = map.getOrElse(FullRecordMapper.deletedColumn,"false")            
@@ -366,10 +367,10 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     def addRawOccurrenceBatch(fullRecords: Array[FullRecord]) {
 
         var batch = scala.collection.mutable.Map[String, Map[String, String]]()
-        for (fullRecord <- fullRecords) {
-            var properties = fullRecord2Map(fullRecord, Versions.RAW)
+        fullRecords.foreach(fullRecord  => {
+            var properties = FullRecordMapper.fullRecord2Map(fullRecord, Versions.RAW)
             batch.put(fullRecord.rowKey, properties.toMap)
-        }
+        })
         //commit
         persistenceManager.putBatch(entityName, batch.toMap)
     }
@@ -423,33 +424,12 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     }
 
     /**
-     * Convert a full record to a map of properties
-     */
-    def fullRecord2Map(fullRecord: FullRecord, version: Version): scala.collection.mutable.Map[String, String] = {
-        var properties = scala.collection.mutable.Map[String, String]()
-        fullRecord.objectArray.foreach(poso => {
-            val map = FullRecordMapper.mapObjectToProperties(poso, version)
-            //poso.
-            //add all to map           
-            properties.putAll(map)
-        })
-        //add the special cases to the map
-        properties.put("uuid", fullRecord.uuid)
-        properties.put("rowKey", fullRecord.rowKey)
-        properties.put(FullRecordMapper.defaultValuesColumn, fullRecord.defaultValuesUsed.toString)
-        properties.put(FullRecordMapper.locationDeterminedColumn, fullRecord.locationDetermined.toString)
-        if(fullRecord.lastModifiedTime != "")
-            properties.put(FullRecordMapper.markNameBasedOnVersion(FullRecordMapper.alaModifiedColumn, version), fullRecord.lastModifiedTime)
-        properties
-    }
-
-    /**
      * Update the occurrence with the supplied record, setting the correct version
      */
     def updateOccurrence(rowKey: String, fullRecord: FullRecord, assertions: Option[Map[String,Array[QualityAssertion]]], version: Version) {
 
         //construct a map of properties to write
-        val properties = fullRecord2Map(fullRecord, version)
+        val properties = FullRecordMapper.fullRecord2Map(fullRecord, version)
 
         if (!assertions.isEmpty) {
             properties ++= convertAssertionsToMap(rowKey,assertions.get, fullRecord.userVerified)
@@ -463,11 +443,12 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Update the occurrence with the supplied record, setting the correct version
      */
-    def updateOccurrence(rowKey: String, oldRecord: FullRecord, newRecord: FullRecord, assertions: Option[Map[String,Array[QualityAssertion]]], version: Version) {
+    def updateOccurrence(rowKey: String, oldRecord: FullRecord, newRecord: FullRecord,
+                         assertions: Option[Map[String,Array[QualityAssertion]]], version: Version) {
 
         //construct a map of properties to write
-        val oldproperties = fullRecord2Map(oldRecord, version)
-        val properties = fullRecord2Map(newRecord, version)
+        val oldproperties = FullRecordMapper.fullRecord2Map(oldRecord, version)
+        val properties = FullRecordMapper.fullRecord2Map(newRecord, version)
 
         //only write changes.........
         var propertiesToPersist = properties.filter({
@@ -481,7 +462,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             }
         })
 
-        //TODO check for deleted properties
+        //check for deleted properties
         val deletedProperties = oldproperties.filter({
             case (key, value) => !properties.contains(key)
         })
@@ -489,7 +470,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         propertiesToPersist ++= deletedProperties.map({
             case (key, value) => key -> ""
         })
-
 
         val timeCol = FullRecordMapper.markNameBasedOnVersion(FullRecordMapper.alaModifiedColumn, version)
         
@@ -504,8 +484,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         }
 
         //commit to cassandra if changes exist - changes exist if the properties to persist contain more info than the lastModifedTime
-        
-        if(!propertiesToPersist.isEmpty && !(propertiesToPersist.size == 1 && propertiesToPersist.getOrElse(timeCol, "") != "")){          
+        if(!propertiesToPersist.isEmpty && !(propertiesToPersist.size == 1 && propertiesToPersist.getOrElse(timeCol, "") != "")){
           persistenceManager.put(rowKey, entityName, propertiesToPersist.toMap)
         }
     }
@@ -533,54 +512,51 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             properties += (FullRecordMapper.taxonomicDecisionColumn -> "true")
         }
         
-            val userAssertions = getUserAssertions(rowKey)
-            val falseUserAssertions = userAssertions.filter(a => !a.problemAsserted)
-            //true user assertions are assertions that have not been proven false by another user
-            val trueUserAssertions = userAssertions.filter(a => a.problemAsserted && !doesListContainCode(falseUserAssertions,a.code))
-    
-            //for each qa type get the list of QA's that failed
-            val assertionsDeleted = ListBuffer[QualityAssertion]() // stores the assertions that should not be considered for the kosher fields
-            for(name <- systemAssertions.keySet){
-              val assertions = systemAssertions.get(name).get
-              val failedass = new ArrayBuffer[Int]
-              for(qa <- assertions){
-                  //check to see if a user assertion counteracts this code
-                  if(!doesListContainCode(falseUserAssertions,qa.code))
-                      failedass.add(qa.code)
-                  else
-                      assertionsDeleted += qa
-              }
-              //add the "true" user assertions to the arrays
-              //filter the list based on the name of the phase
-              //TODO fix the phase based range stuff
-              val ua2Add =trueUserAssertions.filter(a=> 
-                  name match{
-                      case "loc"=> a.code >=AssertionCodes.geospatialBounds._1 && a.code < AssertionCodes.geospatialBounds._2
-                      case "class" => a.code >= AssertionCodes.taxonomicBounds._1 && a.code < AssertionCodes.taxonomicBounds._2
-                      case "event" => a.code >= AssertionCodes.temporalBounds._1 && a.code < AssertionCodes.temporalBounds._2
-                      case _ => false
-                      
-              })
-              val extraAssertions = ListBuffer[QualityAssertion]()
-              ua2Add.foreach(qa =>if(!failedass.contains(qa.code)){
-                  failedass.add(qa.code)
-                  extraAssertions += qa
-              })
-              
-              
-                properties+=(FullRecordMapper.markAsQualityAssertion(name) -> Json.toJSONWithGeneric(failedass.toList))
-                if(!verified){
-                    if(name == FullRecordMapper.geospatialQa){
-                      properties += (FullRecordMapper.geospatialDecisionColumn -> AssertionCodes.isGeospatiallyKosher(failedass.toArray).toString)
-                    }
-                    else if(name == FullRecordMapper.taxonomicalQa){
-                      properties += (FullRecordMapper.taxonomicDecisionColumn -> AssertionCodes.isTaxonomicallyKosher(failedass.toArray).toString)
-                    }
-                 }
-              
-            }
-        
+        val userAssertions = getUserAssertions(rowKey)
+        val falseUserAssertions = userAssertions.filter(a => !a.problemAsserted)
+        //true user assertions are assertions that have not been proven false by another user
+        val trueUserAssertions = userAssertions.filter(a => a.problemAsserted && !doesListContainCode(falseUserAssertions,a.code))
 
+        //for each qa type get the list of QA's that failed
+        val assertionsDeleted = ListBuffer[QualityAssertion]() // stores the assertions that should not be considered for the kosher fields
+        for(name <- systemAssertions.keySet){
+          val assertions = systemAssertions.get(name).get
+          val failedass = new ArrayBuffer[Int]
+          for(qa <- assertions){
+              //check to see if a user assertion counteracts this code
+              if(!doesListContainCode(falseUserAssertions,qa.code))
+                  failedass.add(qa.code)
+              else
+                  assertionsDeleted += qa
+          }
+          //add the "true" user assertions to the arrays
+          //filter the list based on the name of the phase
+          //TODO fix the phase based range stuff
+          val ua2Add =trueUserAssertions.filter(a=>
+              name match{
+                  case "loc"=> a.code >=AssertionCodes.geospatialBounds._1 && a.code < AssertionCodes.geospatialBounds._2
+                  case "class" => a.code >= AssertionCodes.taxonomicBounds._1 && a.code < AssertionCodes.taxonomicBounds._2
+                  case "event" => a.code >= AssertionCodes.temporalBounds._1 && a.code < AssertionCodes.temporalBounds._2
+                  case _ => false
+
+          })
+          val extraAssertions = ListBuffer[QualityAssertion]()
+          ua2Add.foreach(qa =>if(!failedass.contains(qa.code)){
+              failedass.add(qa.code)
+              extraAssertions += qa
+          })
+
+
+          properties+=(FullRecordMapper.markAsQualityAssertion(name) -> Json.toJSONWithGeneric(failedass.toList))
+          if(!verified){
+              if(name == FullRecordMapper.geospatialQa){
+                properties += (FullRecordMapper.geospatialDecisionColumn -> AssertionCodes.isGeospatiallyKosher(failedass.toArray).toString)
+              }
+              else if(name == FullRecordMapper.taxonomicalQa){
+                properties += (FullRecordMapper.taxonomicDecisionColumn -> AssertionCodes.isTaxonomicallyKosher(failedass.toArray).toString)
+              }
+           }
+        }
         properties.toMap
     }
 
@@ -632,8 +608,8 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      */
     def getSystemAssertions(rowKey: String): List[QualityAssertion] = {
         persistenceManager.getList(rowKey, entityName, FullRecordMapper.qualityAssertionColumn, classOf[QualityAssertion])
-        
     }
+
     /**
      * Retrieves the system and user assertions for the supplied occ rowKey
      * returns (systemAssertions,userAssertions)
@@ -672,15 +648,24 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      */
     def addUserAssertion(rowKey: String, qualityAssertion: QualityAssertion) {
         val qaRowKey = rowKey+ "|" +qualityAssertion.getUserId + "|" + qualityAssertion.getCode
-        persistenceManager.put(qaRowKey, qaEntityName, FullRecordMapper.mapObjectToProperties(qualityAssertion))
-        val systemAssertions = getSystemAssertions(rowKey)
-        val userAssertions = getUserAssertions(rowKey)
-        updateAssertionStatus(rowKey, qualityAssertion, systemAssertions, userAssertions)
-        //set the last user assertion date
-        persistenceManager.put(rowKey, entityName, FullRecordMapper.lastUserAssertionDateColumn, qualityAssertion.created)
-        //when the user assertion is verified need to add extra value
-        if(AssertionCodes.isVerified(qualityAssertion)){
-            persistenceManager.put(rowKey, entityName, FullRecordMapper.userVerifiedColumn,"true")
+
+        //TODO add the serialised record to the quality assertion for later stage processing
+        val qualityAssertionProperties = FullRecordMapper.mapObjectToProperties(qualityAssertion)
+        val record = this.getRawProcessedByRowKey(rowKey)
+
+        if(!record.isEmpty){
+          //preserve the raw record
+          val qaMap = qualityAssertionProperties ++ Map("snapshot" -> Json.toJSON(record.get))
+          persistenceManager.put(qaRowKey, qaEntityName, qaMap)
+          val systemAssertions = getSystemAssertions(rowKey)
+          val userAssertions = getUserAssertions(rowKey)
+          updateAssertionStatus(rowKey, qualityAssertion, systemAssertions, userAssertions)
+          //set the last user assertion date
+          persistenceManager.put(rowKey, entityName, FullRecordMapper.lastUserAssertionDateColumn, qualityAssertion.created)
+          //when the user assertion is verified need to add extra value
+          if(AssertionCodes.isVerified(qualityAssertion)){
+              persistenceManager.put(rowKey, entityName, FullRecordMapper.userVerifiedColumn,"true")
+          }
         }
     }
 
@@ -705,27 +690,24 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
 ////              .asInstanceOf[List[QualityAssertion]]))
 //        }
 //    }
+
     /**
      * Retrieve annotations for the supplied UUID.
      */
     def getUserAssertions(rowKey:String): List[QualityAssertion] ={
-        
-        
-        
-    val startKey = rowKey + "|"
-        val endKey = startKey +"~"
-        val system = new ArrayBuffer[QualityAssertion]
-        val userAssertions = new ArrayBuffer[QualityAssertion]
-        //page over all the qa's that are for this record
-        persistenceManager.pageOverAll(qaEntityName,(guid, map)=>{            
-            val qa = new QualityAssertion() 
-            FullRecordMapper.mapPropertiesToObject(qa, map)
-                userAssertions + qa
-            true
-        },startKey, endKey, 1000)
-        
-        userAssertions.toList
+      val startKey = rowKey + "|"
+      val endKey = startKey +"~"
+      val system = new ArrayBuffer[QualityAssertion]
+      val userAssertions = new ArrayBuffer[QualityAssertion]
+      //page over all the qa's that are for this record
+      persistenceManager.pageOverAll(qaEntityName,(guid, map)=>{
+          val qa = new QualityAssertion()
+          FullRecordMapper.mapPropertiesToObject(qa, map)
+          userAssertions + qa
+          true
+      },startKey, endKey, 1000)
 
+      userAssertions.toList
     }
 
     /**
@@ -734,7 +716,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     def deleteUserAssertion(rowKey: String, assertionUuid: String): Boolean = {
 
         logger.debug("Deleting assertion for : " + rowKey + " with assertion uuid : " + assertionUuid)
-        
 
         val assertions = getUserAssertions(rowKey)
         if(assertions.isEmpty){
@@ -744,10 +725,8 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         else{
             //get the assertion that is to be deleted
             val deletedAssertion = assertions.find(assertion => {
-
                 assertion.uuid equals assertionUuid
             })
-
 
             if (!deletedAssertion.isEmpty) {
 
@@ -774,7 +753,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             }
         }
         false
-          
     }
     
     private def getListOfCodes(rowKey:String,phase:String):List[Int]={
@@ -789,8 +767,8 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
 
         logger.info("Updating the assertion status for : " + rowKey)        
         //get the phase based on the error type
-         val phase =Processors.getProcessorForError(assertion.code)
-         logger.debug("Phase " + phase)
+        val phase =Processors.getProcessorForError(assertion.code)
+        logger.debug("Phase " + phase)
         //get existing values for the phase
         var listErrorCodes: Set[Int] = getListOfCodes(rowKey, phase).toSet
         logger.debug("Original: " + listErrorCodes)
@@ -799,7 +777,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             qa.name equals assertionName
         })
         
-        val userVerified = userAssertions.filter( qa => qa.code == AssertionCodes.VERIFIED.code).size()>0
+        val userVerified = userAssertions.filter( qa => qa.code == AssertionCodes.VERIFIED.code).size > 0
         
         //if the a user assertion has been set for the supplied QA we will set the status bases on user assertions
         if (!assertions.isEmpty) {
@@ -833,14 +811,12 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         	//there are no matching assertions in user or system thus remove this error code
         	listErrorCodes =listErrorCodes - assertion.code
         }
-        
 
         logger.debug("Final " + listErrorCodes)
         //update the list
         //persistenceManager.putList(rowKey, entityName, FullRecordMapper.qualityAssertionColumn,assertions.toList, classOf[QualityAssertion], true)
         persistenceManager.putList(rowKey, entityName, FullRecordMapper.markAsQualityAssertion(phase), listErrorCodes.toList, classOf[Int], true)
-        
-        
+
         //set the overall decision if necessary
         var properties = scala.collection.mutable.Map[String, String]()
         //need to update the user assertion flag in the occurrence record 
@@ -860,8 +836,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
                 + properties)
                  persistenceManager.put(rowKey, entityName, properties.toMap)
             }
-        
-  
     }
 
     /**
@@ -891,8 +865,8 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         else{
           indexDAO.indexFromMap(rowKey, map.get, false)
         }
-
     }
+
     def delete(rowKey: String)={
         //delete from the data store
         persistenceManager.delete(rowKey, entityName)
