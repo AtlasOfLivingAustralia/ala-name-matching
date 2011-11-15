@@ -25,6 +25,7 @@ public class GeneralisedLocationTest {
     String TAS_LAT = "-42.067518", TAS_LONG = "145.278568";
     String ACT_LAT = "-35.29187",  ACT_LONG = "149.100137";
     static SensitiveTaxon st;
+    static List<SensitivityInstance> instances;
     static SensitivityZone ACT;
     static SensitivityZone NSW;
     static SensitivityZone VIC;
@@ -38,7 +39,7 @@ public class GeneralisedLocationTest {
 
     static {
         st = new SensitiveTaxon("Crex crex", SensitiveTaxon.Rank.SPECIES);
-        List<SensitivityInstance> instances = st.getInstances();
+        instances = st.getInstances();
         ACT = SensitivityZoneFactory.getZone(SensitivityZone.ACT);
         NSW = SensitivityZoneFactory.getZone(SensitivityZone.NSW);
         VIC = SensitivityZoneFactory.getZone(SensitivityZone.VIC);
@@ -57,31 +58,31 @@ public class GeneralisedLocationTest {
     @Test
     public void locationGeneralisation() {
         zones = new ArrayList<SensitivityZone>(Collections.singleton(NSW));
-        GeneralisedLocation extremeGeneralisation = GeneralisedLocationFactory.getGeneralisedLocation(NSW_LAT, NSW_LONG, st, zones);
+        GeneralisedLocation extremeGeneralisation = GeneralisedLocationFactory.getGeneralisedLocation(NSW_LAT, NSW_LONG, instances, zones);
         assertEquals("", extremeGeneralisation.getGeneralisedLatitude());
         assertEquals("", extremeGeneralisation.getGeneralisedLongitude());
         assertEquals("", extremeGeneralisation.getGeneralisationInMetres());
 
         zones = new ArrayList<SensitivityZone>(Collections.singleton(VIC));
-        GeneralisedLocation highGeneralisation = GeneralisedLocationFactory.getGeneralisedLocation(VIC_LAT, VIC_LONG, st, zones);
+        GeneralisedLocation highGeneralisation = GeneralisedLocationFactory.getGeneralisedLocation(VIC_LAT, VIC_LONG, instances, zones);
         assertEquals("-37.0", highGeneralisation.getGeneralisedLatitude());
         assertEquals("146.2", highGeneralisation.getGeneralisedLongitude());
         assertEquals("10000", highGeneralisation.getGeneralisationInMetres());
 
         zones = new ArrayList<SensitivityZone>(Collections.singleton(QLD));
-        GeneralisedLocation mediumGeneralisation = GeneralisedLocationFactory.getGeneralisedLocation(QLD_LAT, QLD_LONG, st, zones);
+        GeneralisedLocation mediumGeneralisation = GeneralisedLocationFactory.getGeneralisedLocation(QLD_LAT, QLD_LONG, instances, zones);
         assertEquals("-18.41", mediumGeneralisation.getGeneralisedLatitude());
         assertEquals("146.25", mediumGeneralisation.getGeneralisedLongitude());
         assertEquals("1000", mediumGeneralisation.getGeneralisationInMetres());
 
         zones = new ArrayList<SensitivityZone>(Collections.singleton(TAS));
-        GeneralisedLocation lowGeneralisation = GeneralisedLocationFactory.getGeneralisedLocation(TAS_LAT, TAS_LONG, st, zones);
+        GeneralisedLocation lowGeneralisation = GeneralisedLocationFactory.getGeneralisedLocation(TAS_LAT, TAS_LONG, instances, zones);
         assertEquals("-42.068", lowGeneralisation.getGeneralisedLatitude());
         assertEquals("145.279", lowGeneralisation.getGeneralisedLongitude());
         assertEquals("100", lowGeneralisation.getGeneralisationInMetres());
 
         zones = new ArrayList<SensitivityZone>(Collections.singleton(ACT));
-        GeneralisedLocation defaultGeneralisation = GeneralisedLocationFactory.getGeneralisedLocation(ACT_LAT, ACT_LONG, st, zones);
+        GeneralisedLocation defaultGeneralisation = GeneralisedLocationFactory.getGeneralisedLocation(ACT_LAT, ACT_LONG, instances, zones);
         assertEquals(ACT_LAT, defaultGeneralisation.getGeneralisedLatitude());
         assertEquals(ACT_LONG, defaultGeneralisation.getGeneralisedLongitude());
         assertEquals("", defaultGeneralisation.getGeneralisationInMetres());
