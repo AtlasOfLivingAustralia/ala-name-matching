@@ -57,6 +57,7 @@ public class GeneraliseTest {
     /**
      * Birds Australia species in ACT - position generalised
      */
+    @SuppressWarnings("unchecked")
     @Test
     public void birdsAustraliaInAct() {
         SensitiveTaxon ss = finder.findSensitiveSpecies("Crex crex");
@@ -206,7 +207,7 @@ public class GeneraliseTest {
     }
 
     /**
-     * Find sensitive species by LSID
+     * Find sensitive species (Lophochroa leadbeateri | Major Mitchell's Cockatoo) by LSID
      */
     @Test
     public void findSpeciesByLsid() {
@@ -226,11 +227,7 @@ public class GeneraliseTest {
         assertTrue(outcome.isValid());
         assertNotNull(outcome.getResult());
 
-        assertEquals("Latitude", "-33.6", outcome.getResult().get("decimalLatitude"));
-        assertEquals("Longitude", "150.4", outcome.getResult().get("decimalLongitude"));
-        assertEquals("InMetres", "10000", outcome.getResult().get("generalisationInMetres"));
-        assertEquals("Location in NSW generalised to 0.1 degrees. \nSensitive in AUS [Endangered, Birds Australia]", outcome.getResult().get("dataGeneralizations"));
-        assertTrue(outcome.isSensitive());
+        assertFalse(outcome.isSensitive()); // Only sensitive for Birds Australia and Victoria
     }
 
     /**
@@ -265,8 +262,8 @@ public class GeneraliseTest {
     public void generaliseLocationAlreadyGeneralised() {
         SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Lophochroa leadbeateri");
         assertNotNull(ss);
-        String latitude = "-32.7";    // NSW
-        String longitude = "149.6";
+        String latitude = "-37.9";    // Vic
+        String longitude = "145.4";
 
         Map<String, String> facts = new HashMap<String, String>();
         facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
@@ -278,10 +275,10 @@ public class GeneraliseTest {
         assertTrue(outcome.isValid());
         assertNotNull(outcome.getResult());
 
-        assertEquals("Latitude", "-32.7", outcome.getResult().get("decimalLatitude"));
-        assertEquals("Longitude", "149.6", outcome.getResult().get("decimalLongitude"));
+        assertEquals("Latitude", "-37.9", outcome.getResult().get("decimalLatitude"));
+        assertEquals("Longitude", "145.4", outcome.getResult().get("decimalLongitude"));
         assertEquals("InMetres", "", outcome.getResult().get("generalisationInMetres"));
-        assertEquals("Location in NSW is already generalised to 0.1 degrees. \nSensitive in AUS [Endangered, Birds Australia]", outcome.getResult().get("dataGeneralizations"));
+        assertEquals("Location in VIC is already generalised to 0.1 degrees. \nSensitive in VIC [Endangered, Vic DSE]", outcome.getResult().get("dataGeneralizations"));
         assertTrue(outcome.isSensitive());
     }
 
@@ -290,11 +287,11 @@ public class GeneraliseTest {
     public void generaliseLocationFromState() {
         SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Lophochroa leadbeateri");
         assertNotNull(ss);
-        String latitude = "-32.7";    // NSW
-        String longitude = "149.6";
+        String latitude = "-37.9";    // Vic
+        String longitude = "145.4";
 
         Map<String, String> facts = new HashMap<String, String>();
-        facts.put(FactCollection.STATE_PROVINCE_KEY, "NSW");
+        facts.put(FactCollection.STATE_PROVINCE_KEY, "VIC");
         facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
         facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
 
@@ -304,8 +301,8 @@ public class GeneraliseTest {
         assertTrue(outcome.isValid());
         assertNotNull(outcome.getResult());
 
-        assertEquals("Latitude", "-32.7", outcome.getResult().get("decimalLatitude"));
-        assertEquals("Longitude", "149.6", outcome.getResult().get("decimalLongitude"));
+        assertEquals("Latitude", "-37.9", outcome.getResult().get("decimalLatitude"));
+        assertEquals("Longitude", "145.4", outcome.getResult().get("decimalLongitude"));
         assertEquals("InMetres", "", outcome.getResult().get("generalisationInMetres"));
         assertTrue(outcome.isSensitive());
     }
