@@ -20,6 +20,8 @@ import au.org.ala.sds.util.ValidationUtils;
  */
 public class ConservationService implements ValidationService {
 
+    private static final String BIRDS_AUSTRALIA = "dr359";
+
     private ReportFactory reportFactory;
     private final SensitiveTaxon taxon;
 
@@ -46,12 +48,21 @@ public class ConservationService implements ValidationService {
             return new ValidationOutcome(report, false);
         }
 
-        // Generalise location
-        List<SensitivityZone> zones = SensitivityZone.getListFromString(facts.get(FactCollection.ZONES_KEY));
+        // Assemble parameters for location generalisation
         String latitude = facts.get(FactCollection.DECIMAL_LATITUDE_KEY);
         String longitude = facts.get(FactCollection.DECIMAL_LONGITUDE_KEY);
+        List<SensitivityZone> zones = SensitivityZone.getListFromString(facts.get(FactCollection.ZONES_KEY));
+        List<SensitivityInstance> instances = taxon.getInstancesForZones(zones);
 
-        GeneralisedLocation gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, taxon, zones);
+        // Check data provider (Birds Australia generalisation only happens for BA occurrences)
+        if (facts.get("dataResourceUid") != null && facts.get("dataResourceUid").equalsIgnoreCase(BIRDS_AUSTRALIA)) {
+            SensitivityInstance.removeAllButInstance(instances, SensitivityInstance.BIRDS_AUSTRALIA_INSTANCE);
+        } else {
+            SensitivityInstance.removeInstance(instances, SensitivityInstance.BIRDS_AUSTRALIA_INSTANCE);
+        }
+
+        // Generalise location
+        GeneralisedLocation gl = GeneralisedLocationFactory.getGeneralisedLocation(latitude, longitude, instances, zones);
         ValidationOutcome outcome = new ValidationOutcome(report);
 
         // Assemble result map
@@ -86,14 +97,14 @@ public class ConservationService implements ValidationService {
             emptyValueIfNecessary("verbatimLocality", biocacheData, originalSensitiveValues, results);
 
             if (gl.getGeneralisationInMetres().equals("") && gl.getGeneralisedLatitude().equals("")) {
-                results.put("informationWithheld", "The location has been withheld in accordance with " + facts.get(FactCollection.STATE_PROVINCE_KEY) + " sensitive species policy");
+                results.put("informationWithheld", "Location co-ordinates have been withheld in accordance with " + facts.get(FactCollection.STATE_PROVINCE_KEY) + " sensitive species policy");
             }
         } else {
             outcome.setSensitive(false);
         }
 
         // Handle Birds Australia occurrences
-        if (facts.get("dataResourceUid") != null && facts.get("dataResourceUid").equalsIgnoreCase("dr359")) {
+        if (facts.get("dataResourceUid") != null && facts.get("dataResourceUid").equalsIgnoreCase(BIRDS_AUSTRALIA)) {
             emptyValueIfNecessary("eventID", biocacheData, originalSensitiveValues, results);
             emptyValueIfNecessary("day", biocacheData, originalSensitiveValues, results);
             emptyValueIfNecessary("eventDate",biocacheData, originalSensitiveValues, results);
@@ -103,7 +114,7 @@ public class ConservationService implements ValidationService {
         results.put("originalSensitiveValues", originalSensitiveValues);
         outcome.setResult(results);
         outcome.setValid(true);
-
+        outcome.setLoadable(true);
         return outcome;
     }
 
