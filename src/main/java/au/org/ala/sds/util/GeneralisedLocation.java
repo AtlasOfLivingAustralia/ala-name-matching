@@ -18,7 +18,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import au.org.ala.sds.model.ConservationInstance;
-import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityInstance;
 import au.org.ala.sds.model.SensitivityZone;
 import au.org.ala.sds.validation.MessageFactory;
@@ -38,12 +37,12 @@ public class GeneralisedLocation {
     private String description;
     private boolean sensitive;
 
-    public GeneralisedLocation(String latitude, String longitude, SensitiveTaxon st, List<SensitivityZone> zones) {
+    public GeneralisedLocation(String latitude, String longitude, List<SensitivityInstance> instances, List<SensitivityZone> zones) {
         this.originalLatitude = latitude;
         this.originalLongitude = longitude;
         this.locationGeneralisation = null;
         this.zones = zones;
-        this.instances = st.getInstancesForZones(zones);
+        this.instances = instances;
         this.locationGeneralisation = getLocationGeneralistion();
         this.sensitive = true;
         generaliseCoordinates();
