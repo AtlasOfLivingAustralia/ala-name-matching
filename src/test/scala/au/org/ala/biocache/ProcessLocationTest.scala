@@ -74,6 +74,7 @@ class ProcessLocationTest extends ConfigFunSuite {
     processed.classification.setTaxonRankID("7000")
     raw.location.decimalLatitude = "-27.56"
     raw.location.decimalLongitude = "152.28"
+    raw.attribution.dataResourceUid = "dr359"
     (new LocationProcessor).process("test", raw, processed)
     expect("-27.56") {
       processed.location.decimalLatitude
@@ -94,6 +95,7 @@ class ProcessLocationTest extends ConfigFunSuite {
     processed.classification.setTaxonRankID("7000")
     raw.location.decimalLatitude = "-35.2"
     raw.location.decimalLongitude = "144.8"
+    raw.attribution.dataResourceUid = "dr359"
     (new LocationProcessor).process("test", raw, processed)
     expect("-35.2") {
       processed.location.decimalLatitude
