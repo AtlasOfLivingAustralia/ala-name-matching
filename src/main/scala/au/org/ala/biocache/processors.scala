@@ -828,6 +828,13 @@ class LocationProcessor extends Processor {
             }
           //}
         }
+        else{
+            //In this situation the species is no longer sensitive for the  supplied data resource or location 
+            //will need to revert the old sensitive values if they exist 
+            if(raw.occurrence.originalSensitiveValues != null && !raw.occurrence.originalSensitiveValues.isEmpty){              
+              Config.persistenceManager.put(raw.rowKey, "occ", raw.occurrence.originalSensitiveValues + ("originalSensitiveValues"->""))               
+          }
+        }
       }
       else{
           //Species is NOT sensitive 
