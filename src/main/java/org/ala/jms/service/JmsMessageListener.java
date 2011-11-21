@@ -45,6 +45,8 @@ public class JmsMessageListener implements MessageListener {
 	public static final String CITIZEN_SCIENCE_DRUID = "dr364";
 	public static final String CITIZEN_SCIENCE_DPUID = "dp31";
 	
+	private boolean hasAssociatedMedia = true;
+	
 	public enum Method {
 		CREATE, UPDATE, DELETE
 	}
@@ -54,6 +56,14 @@ public class JmsMessageListener implements MessageListener {
 		mapper.getDeserializationConfig().set(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES,	false);
 	}
 
+	public boolean isHasAssociatedMedia() {
+		return hasAssociatedMedia;
+	}
+
+	public void setHasAssociatedMedia(boolean hasAssociatedMedia) {
+		this.hasAssociatedMedia = hasAssociatedMedia;
+	}
+	
 	/**
 	 * Implementation of <code>MessageListener</code>.
 	 * 
@@ -144,7 +154,7 @@ public class JmsMessageListener implements MessageListener {
     	fullRecord.classification().setVernacularName(sighting.getVernacularName());
     	fullRecord.classification().setTaxonConceptID(sighting.getTaxonConceptGuid());
     	
-    	if(sighting.getAssociatedMedia() != null){
+    	if(isHasAssociatedMedia() && sighting.getAssociatedMedia() != null){
     		StringBuffer urls = new StringBuffer();
     		for(int i = 0; i < sighting.getAssociatedMedia().length; i++){
     			urls.append(sighting.getAssociatedMedia()[i]);
