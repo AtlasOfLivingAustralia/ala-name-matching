@@ -162,9 +162,14 @@ trait POSO {
                 case "int" => property.setter.invoke(this, Integer.parseInt(value).asInstanceOf[AnyRef])
                 case "boolean" => property.setter.invoke(this, java.lang.Boolean.parseBoolean(value).asInstanceOf[AnyRef])
                 case "scala.collection.immutable.Map" => {
-                    val fromJson = JSON.parseFull(value)
-                    if(fromJson.isDefined)
-                        property.setter.invoke(this, fromJson.get.asInstanceOf[Map[String,String]])
+                    try{
+                        val fromJson = JSON.parseFull(value)
+                        if(fromJson.isDefined)
+                            property.setter.invoke(this, fromJson.get.asInstanceOf[Map[String,String]])
+                        }
+                    catch{
+                        case e:Exception => println("Unable to set POSO map property. " + e.getMessage)
+                    }
                     }
                 case _ => println("Unhandled data type: " + property.typeName)
             }
