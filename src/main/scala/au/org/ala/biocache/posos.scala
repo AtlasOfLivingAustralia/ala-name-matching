@@ -161,7 +161,11 @@ trait POSO {
                 }
                 case "int" => property.setter.invoke(this, Integer.parseInt(value).asInstanceOf[AnyRef])
                 case "boolean" => property.setter.invoke(this, java.lang.Boolean.parseBoolean(value).asInstanceOf[AnyRef])
-                case "scala.collection.immutable.Map" => property.setter.invoke(this, JSON.parseFull(value).get.asInstanceOf[Map[String,String]])
+                case "scala.collection.immutable.Map" => {
+                    val fromJson = JSON.parseFull(value)
+                    if(fromJson.isDefined)
+                        property.setter.invoke(this, fromJson.get.asInstanceOf[Map[String,String]])
+                    }
                 case _ => println("Unhandled data type: " + property.typeName)
             }
         }
