@@ -8,7 +8,7 @@ HasInquiline	HasInquiline
 HasKleptoparasite	HasKleptoparasite
 HasSaprotroph	HasSaprotroph
 InfectedBy	InfectedBy
-Infects	Infects
+Infects	Infects	Host
 InhabitedBy	InhabitedBy
 Inhabits	Inhabits
 Inquiline	Inquiline

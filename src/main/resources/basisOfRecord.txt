@@ -260,3 +260,5 @@ avi	Video
 v	Video
 vid	Video
 Video	Video
+Video	Video
+genomic DNA	GenomicDNA
