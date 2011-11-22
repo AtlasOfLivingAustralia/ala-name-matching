@@ -236,7 +236,7 @@ object ISOMonthDate {
   def unapply(str: String): Option[EventDate] = {
     try {
       val eventDateParsed = DateUtils.parseDate(str,
-        Array("yyyy-MM", "yyyy-MM-"))
+        Array("yyyy-MM", "yyyy-MM-", "MM yyyy", "MMM-yyyy"))
 
       val startDate, endDate = ""
       val startDay, endDay = ""
