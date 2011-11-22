@@ -220,7 +220,7 @@ class SingleDate {
 }
 
 trait NonISO extends SingleDate {
-  override def baseFormats = Array("dd-MM-yyyy","dd/MM/yyyy")
+  override def baseFormats = Array("dd-MM-yyyy","dd/MM/yyyy","dd-MMM-yyyy","dd/MMM/yyyy","dd MMM yyyy")
 }
 
 object ISOSingleDate extends SingleDate
