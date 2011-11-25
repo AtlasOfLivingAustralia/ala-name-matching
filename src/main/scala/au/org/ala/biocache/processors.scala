@@ -108,6 +108,8 @@ class MiscellaneousProcessor extends Processor {
   val soundExtension = Array(".wav",".mp3",".ogg",".flac")
   val videoExtension = Array(".wmv",".mp4",".mpg",".avi",".mov")
   
+  val interactionPattern = """([A-Za-z]*):([\x00-\x7F\s]*)""".r
+  
   def process(guid:String, raw:FullRecord, processed:FullRecord) :Array[QualityAssertion] ={
       var qas:Array[QualityAssertion] = processImages(guid, raw, processed)
       processInteractions(guid, raw, processed)
@@ -120,9 +122,9 @@ class MiscellaneousProcessor extends Processor {
       //TODO more sophisticated parsing of the string. ATM we are only supporting the structure for dr642
       // TODO support multiple interactions
       if(raw.occurrence.associatedTaxa != null && !raw.occurrence.associatedTaxa.isEmpty){
-          val interaction = parseInteraction(raw.occurrence.associatedTaxa)          
+          val interaction = parseInteraction(raw.occurrence.associatedTaxa)
           if(!interaction.isEmpty){
-              val term = Interactions.matchTerm(interaction.get)              
+              val term = Interactions.matchTerm(interaction.get)
               if(!term.isEmpty){
                   processed.occurrence.interactions = Array(term.get.getCanonical)
               }
@@ -130,13 +132,9 @@ class MiscellaneousProcessor extends Processor {
       }
   }
   
-  val interactionPattern = """([A-Za-z]*):([\x00-\x7F\s]*)""".r
-  def parseInteraction(raw:String):Option[String]={
-      raw match{
-          case interactionPattern(interaction, taxa)=>Some(interaction)
-          case _=> None
-      }
-      
+  def parseInteraction(raw:String):Option[String] = raw match{
+    case interactionPattern(interaction, taxa)=>Some(interaction)
+    case _=> None
   }
   
   /**
@@ -160,15 +158,15 @@ class MiscellaneousProcessor extends Processor {
   def getName = "image"
 
   private def isValidImageURL(url:String) : Boolean = {
-    !imageParser.unapplySeq(url.trim).isEmpty || isStoredMedia(imageExtension,url)
+    !imageParser.unapplySeq(url.trim.toLowerCase).isEmpty || isStoredMedia(imageExtension,url)
   }
 
   private def isValidSoundURL(url:String) : Boolean = {
-    !soundParser.unapplySeq(url.trim).isEmpty || isStoredMedia(soundExtension,url)
+    !soundParser.unapplySeq(url.trim.toLowerCase).isEmpty || isStoredMedia(soundExtension,url)
   }
 
   private def isValidVideoURL(url:String) : Boolean = {
-    !videoParser.unapplySeq(url.trim).isEmpty || isStoredMedia(videoExtension,url)
+    !videoParser.unapplySeq(url.trim.toLowerCase).isEmpty || isStoredMedia(videoExtension,url)
   }
 
   private def isStoredMedia(acceptedExtensions:Array[String], url:String) : Boolean = {
@@ -557,6 +555,7 @@ class LocationProcessor extends Processor {
   }
 
   def setProcessedCoordinates(raw: FullRecord, processed: FullRecord) {
+    
     //handle the situation where the coordinates have already been sensitised (LEGACY format - as of 2011-10-01 there we are storing original values in a map...)
     if (raw.location.originalDecimalLatitude != null && raw.location.originalDecimalLongitude != null) {
       processed.location.decimalLatitude = raw.location.originalDecimalLatitude
@@ -567,26 +566,34 @@ class LocationProcessor extends Processor {
       raw.location.decimalLatitude = raw.location.originalDecimalLatitude
       raw.location.decimalLongitude = raw.location.originalDecimalLongitude
 
-//    }else if(raw.occurrence.originalSensitiveValues != null && !raw.occurrence.originalSensitiveValues.isEmpty){
-//        //set the original values again
-//        val decimalLongitude = raw.occurrence.originalSensitiveValues.getOrElse("decimalLongitude", "")
-//        val decimalLatitude = raw.occurrence.originalSensitiveValues.getOrElse("decimalLatitude","")
-//        raw.location.decimalLatitude = decimalLatitude
-//        raw.location.decimalLongitude =decimalLongitude
-//        processed.location.decimalLatitude = decimalLatitude
-//        processed.location.decimalLongitude =decimalLongitude
-//    }
-    }else if (raw.location.decimalLatitude != null && raw.location.decimalLongitude != null) {
-      //check to see if we have coordinates specified
-      processed.location.decimalLatitude = raw.location.decimalLatitude
-      processed.location.decimalLongitude = raw.location.decimalLongitude
-
-    } else if (raw.location.verbatimLatitude != null && raw.location.verbatimLongitude != null) {
-      //parse the expressions into their decimal equivalents
-      processed.location.decimalLatitude = VerbatimLatLongParser.parseToStringOrNull(raw.location.verbatimLatitude)
-      processed.location.decimalLongitude = VerbatimLatLongParser.parseToStringOrNull(raw.location.verbatimLongitude)
+    } else {
+      //use raw values
+      val (y,x) = processLatLong(raw.location.decimalLatitude,
+          raw.location.decimalLongitude, raw.location.verbatimLatitude, raw.location.verbatimLongitude).getOrElse((null,null))
+          
+      processed.location.decimalLatitude = y
+      processed.location.decimalLongitude = x
     }
   }
+  
+  def processLatLong(rawLatitude:String, rawLongitude:String, verbatimLatitude:String, verbatimLongitude:String) : Option[(String,String)] = {
+    
+    if (rawLatitude != null && rawLongitude != null && !rawLatitude.toFloatWithOption.isEmpty && !rawLongitude.toFloatWithOption.isEmpty) {
+      //check to see if we have coordinates specified
+      Some((rawLatitude, rawLongitude))
+    } else if (verbatimLatitude != null && verbatimLongitude != null) {
+      //parse the expressions into their decimal equivalents
+      val parseLat = VerbatimLatLongParser.parse(verbatimLatitude)
+      val parseLong = VerbatimLatLongParser.parse(verbatimLongitude)
+      if(!parseLat.isEmpty && !parseLong.isEmpty){
+    	  Some((parseLat.get.toString, parseLong.get.toString))
+      } else {
+        None
+      }
+    } else {
+      None
+    }
+  }  
 
   def checkCoordinateUncertainty(raw: FullRecord, processed: FullRecord, assertions: ArrayBuffer[QualityAssertion]) {
     //validate coordinate accuracy (coordinateUncertaintyInMeters) and coordinatePrecision (precision - A. Chapman)
@@ -827,13 +834,6 @@ class LocationProcessor extends Processor {
               case _ => processed.location.lga = null //unset the lga
             }
           //}
-        }
-        else{
-            //In this situation the species is no longer sensitive for the  supplied data resource or location 
-            //will need to revert the old sensitive values if they exist 
-            if(raw.occurrence.originalSensitiveValues != null && !raw.occurrence.originalSensitiveValues.isEmpty){              
-              Config.persistenceManager.put(raw.rowKey, "occ", raw.occurrence.originalSensitiveValues + ("originalSensitiveValues"->""))               
-          }
         }
       }
       else{
