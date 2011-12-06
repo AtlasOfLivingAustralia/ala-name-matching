@@ -121,8 +121,11 @@ class FlickrLoader extends DataLoader {
             //println(photoPageUrl + " - Already loaded: " + alreadyLoaded)
 
             //load it if its of interest and we havent loaded it
+            if (isOfInterest(tags, keywords)) {
+              load(dataResourceUid, fr, List(photoPageUrl), !alreadyLoaded) //if already loaded, dont update lastModified
+            }
+
             if (isOfInterest(tags, keywords) && (!alreadyLoaded || overwriteImages)) {
-              load(dataResourceUid, fr, List(photoPageUrl))
               val (filePath, exists) = MediaStore.exists(fr.uuid, dataResourceUid, imageUrl)
               if (overwriteImages || !exists) {
                 MediaStore.save(fr.uuid, dataResourceUid, imageUrl)
