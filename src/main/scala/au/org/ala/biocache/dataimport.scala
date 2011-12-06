@@ -74,6 +74,10 @@ trait DataLoader {
     }
 
     def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String]) : Boolean = {
+       load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], true)
+    }
+
+    def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], updateLastModified:Boolean) : Boolean = {
         
         //the details of how to construct the UniqueID belong in the Collectory
         val uniqueID = identifyingTerms.isEmpty match {
@@ -92,7 +96,9 @@ trait DataLoader {
         //The row key is the uniqueID for the record. This will always start with the dataResourceUid
         fr.rowKey = if(uniqueID.isEmpty) dataResourceUid +"|"+recordUuid else uniqueID.get
         //The last load time
-        fr.lastModifiedTime = loadTime
+        if(updateLastModified){
+          fr.lastModifiedTime = loadTime
+        }
         fr.attribution.dataResourceUid = dataResourceUid
 
         Config.occurrenceDAO.addRawOccurrenceBatch(Array(fr))

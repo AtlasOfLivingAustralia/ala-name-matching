@@ -118,7 +118,6 @@ class FlickrLoader extends DataLoader {
 
             //have we already loaded this record?
             val alreadyLoaded = exists(dataResourceUid, List(photoPageUrl))
-            //println(photoPageUrl + " - Already loaded: " + alreadyLoaded)
 
             //load it if its of interest and we havent loaded it
             if (isOfInterest(tags, keywords)) {
@@ -135,7 +134,7 @@ class FlickrLoader extends DataLoader {
 
               fr.occurrence.associatedMedia = filePath
               Config.occurrenceDAO.updateOccurrence(fr.rowKey, fr, Versions.RAW)
-              println(fr.rowKey)
+              //println(fr.rowKey)
             }
           } catch {
             case e: Exception => e.printStackTrace
