@@ -216,6 +216,15 @@ class FlickrLoader extends DataLoader {
     val licence = licences.get(licenseID).get
     fr.occurrence.rights = licence.name
 
+    //check the location elem
+    if(!(photoElem \\ "location").isEmpty){
+      val locationElem =  (photoElem \\ "location")(0)
+      fr.location.decimalLatitude = locationElem.attribute("latitude").get.text
+      fr.location.decimalLongitude = locationElem.attribute("longitude").get.text
+      fr.location.coordinateUncertaintyInMeters = locationElem.attribute("accuracy").get.text
+      //println("Found lat, long: " + fr.location.decimalLatitude +", " +fr.location.decimalLongitude)
+    }
+
     fr.occurrence.basisOfRecord = "Image"
     (fr.occurrence.occurrenceID, photoImageUrl, fr, listBuffer.toList)
   }
