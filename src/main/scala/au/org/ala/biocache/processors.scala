@@ -480,7 +480,7 @@ class LocationProcessor extends Processor {
       checkCoordinateUncertainty(raw, processed, assertions)
 
       //generate coordinate accuracy if not supplied
-      var point = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
+      var point = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude)
 
       if (!point.isEmpty) {
         val (location, environmentalLayers, contextualLayers) = point.get
@@ -491,9 +491,12 @@ class LocationProcessor extends Processor {
         processed.location.imcra = location.imcra
         processed.location.lga = location.lga
         processed.location.country = location.country
+        processed.el = environmentalLayers
+        processed.cl = contextualLayers
+
         //add the layers that are associated with the point
-        processed.environmentalLayers = environmentalLayers
-        processed.contextualLayers = contextualLayers
+        //processed.environmentalLayers = environmentalLayers
+        //processed.contextualLayers = contextualLayers
         // TODO find out if the EEZ layer has been include so the value can be obtained for this.
         processed.location.habitat = {
           if (!StringUtils.isEmpty(location.ibra)) "Terrestrial"
@@ -770,19 +773,14 @@ class LocationProcessor extends Processor {
       if (sensitiveTaxon != null) {
           
         //get a map respresentation of the raw record...
-          var rawMap = scala.collection.mutable.Map[String, String]()
+        var rawMap = scala.collection.mutable.Map[String, String]()
         raw.objectArray.foreach(poso => {
             val map = FullRecordMapper.mapObjectToProperties(poso, Versions.RAW)
-            //poso.
-            //add all to map           
             rawMap.putAll(map)
         })
         //put the state information that we have from the point
         rawMap.put("stateProvince",location.stateProvince)
         
-                 
-        
-
         val service = ServiceFactory.createValidationService(sensitiveTaxon)
         //TODO fix for different types of outcomes...
         val voutcome = service.validate(rawMap)
@@ -793,7 +791,7 @@ class LocationProcessor extends Processor {
             //convert it to a string string map
             val stringMap = map.map({case(k, v) => if(k=="originalSensitiveValues"){
                 val osv = v.asInstanceOf[java.util.HashMap[String,String]]
-                val newv =osv.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
+                val newv = osv.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
                 (k->newv)
             } else (k->v.toString)
                 
@@ -818,7 +816,6 @@ class LocationProcessor extends Processor {
                 raw.event.day = ""
                 processed.event.day =""
                 processed.event.eventDate=""
-                
             }
             
             //update the raw record with whatever is left in the stringMap
@@ -833,12 +830,11 @@ class LocationProcessor extends Processor {
               case Some((loc, el, cl)) => processed.location.lga = loc.lga
               case _ => processed.location.lga = null //unset the lga
             }
-          //}
         }
       }
       else{
           //Species is NOT sensitive 
-          //if the raw record has originalSensitive values we need to reinitilise the value
+          //if the raw record has originalSensitive values we need to re-initialise the value
           if(raw.occurrence.originalSensitiveValues != null && !raw.occurrence.originalSensitiveValues.isEmpty){              
               Config.persistenceManager.put(raw.rowKey, "occ", raw.occurrence.originalSensitiveValues + ("originalSensitiveValues"->""))               
           }

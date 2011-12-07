@@ -82,32 +82,32 @@ class Occurrence extends Cloneable with Mappable with POSO {
    @JsonIgnore
   def getOriginalSensitiveValues():Map[String,String] = originalSensitiveValues
   def setOriginalSensitiveValues(originalSensitiveValues:Map[String,String])=this.originalSensitiveValues = originalSensitiveValues
-  
+
   @JsonIgnore
-  def getMap():java.util.Map[String,String]={
-    val map = Map[String,String]("occurrenceID"->occurrenceID, "accessrights"->accessrights, "associatedMedia"->associatedMedia,
-                                "associatedOccurrences"->associatedOccurrences, "associatedReferences"->associatedReferences,
-                                "associatedSequences"->associatedSequences, "associatedTaxa"->associatedTaxa, "basisOfRecord"->basisOfRecord,
-                                "behavior"->behavior, "catalogNumber"->catalogNumber, "collectionCode" -> collectionCode,
-                                "collectionID"->collectionID, "dataGeneralizations"->dataGeneralizations, "datasetID"->datasetID,
-                                "disposition"->disposition, "establishmentMeans"->establishmentMeans, "fieldNotes"->fieldNotes,
-                                "fieldNumber"->fieldNumber, "identifier"->identifier, "individualCount"->individualCount,
-                                "individualID"->individualID, "informationWithheld"->informationWithheld, "institutionCode"->institutionCode,
-                                "language"->language, "lifeStage"->lifeStage, "modified"->modified, "occurrenceAttributes"->occurrenceAttributes,
-                                "occurrenceDetails"->occurrenceDetails, "occurrenceRemarks"->occurrenceRemarks, "otherCatalogNumbers"->otherCatalogNumbers,
-                                "preparations"->preparations, "previousIdentifications"->previousIdentifications, "recordedBy"->recordedBy,
-                                "recordNumber"->recordNumber, "relatedResourceID"->relatedResourceID, "relationshipAccordingTo"->relationshipAccordingTo,
-                                "relationshipEstablishedDate"->relationshipEstablishedDate, "relationshipOfResource"->relationshipOfResource,
-                                "relationshipRemarks"->relationshipRemarks, "reproductiveCondition"->reproductiveCondition, "resourceID"->resourceID,
-                                "resourceRelationshipID"->resourceRelationshipID, "rights"->rights ,"rightsholder"->rightsholder,
-                                "samplingProtocol"->samplingProtocol, "sex"->sex, "source"->source, "images"-> images, "sounds"-> sounds,
-                                "videos"-> videos,"validDistribution" -> validDistribution)
-    map.filter(i => i._2!= null)
+  def getMap(): java.util.Map[String, String] = {
+    val map = Map[String, String]("occurrenceID" -> occurrenceID, "accessrights" -> accessrights, "associatedMedia" -> associatedMedia,
+      "associatedOccurrences" -> associatedOccurrences, "associatedReferences" -> associatedReferences,
+      "associatedSequences" -> associatedSequences, "associatedTaxa" -> associatedTaxa, "basisOfRecord" -> basisOfRecord,
+      "behavior" -> behavior, "catalogNumber" -> catalogNumber, "collectionCode" -> collectionCode,
+      "collectionID" -> collectionID, "dataGeneralizations" -> dataGeneralizations, "datasetID" -> datasetID,
+      "disposition" -> disposition, "establishmentMeans" -> establishmentMeans, "fieldNotes" -> fieldNotes,
+      "fieldNumber" -> fieldNumber, "identifier" -> identifier, "individualCount" -> individualCount,
+      "individualID" -> individualID, "informationWithheld" -> informationWithheld, "institutionCode" -> institutionCode,
+      "language" -> language, "lifeStage" -> lifeStage, "modified" -> modified, "occurrenceAttributes" -> occurrenceAttributes,
+      "occurrenceDetails" -> occurrenceDetails, "occurrenceRemarks" -> occurrenceRemarks, "otherCatalogNumbers" -> otherCatalogNumbers,
+      "preparations" -> preparations, "previousIdentifications" -> previousIdentifications, "recordedBy" -> recordedBy,
+      "recordNumber" -> recordNumber, "relatedResourceID" -> relatedResourceID, "relationshipAccordingTo" -> relationshipAccordingTo,
+      "relationshipEstablishedDate" -> relationshipEstablishedDate, "relationshipOfResource" -> relationshipOfResource,
+      "relationshipRemarks" -> relationshipRemarks, "reproductiveCondition" -> reproductiveCondition, "resourceID" -> resourceID,
+      "resourceRelationshipID" -> resourceRelationshipID, "rights" -> rights, "rightsholder" -> rightsholder,
+      "samplingProtocol" -> samplingProtocol, "sex" -> sex, "source" -> source, "images" -> images, "sounds" -> sounds,
+      "videos" -> videos, "validDistribution" -> validDistribution)
+    map.filter(i => i._2 != null)
   }
 
 }
 /**
- *  Classes that need to have their fields put into a map should use this trait
+ * Classes that need to have their fields put into a map should use this trait
  */
 trait Mappable{
   def getMap():java.util.Map[String,String]
@@ -118,7 +118,6 @@ trait Mappable{
       Json.toJSON(in.asInstanceOf[Array[AnyRef]])
     }
   }
- 
 }
 /**
  * POSO for handling details of a classification associated with an occurrence.
@@ -179,23 +178,22 @@ class Classification extends Cloneable with Mappable with POSO {
   @BeanProperty var speciesGroups:Array[String] =_
 
   @JsonIgnore
-  def getMap():java.util.Map[String,String]={
-    val map =Map[String,String]("scientificName"->scientificName, "scientificNameAuthorship"->scientificNameAuthorship,
-                       "scientificNameID"->scientificNameID, "taxonConceptID"->taxonConceptID, "taxonID"->taxonID,
-                       "kingdom"->kingdom,"phylum"->phylum,"classs"->classs,"order"->order,"family"->family,
-                       "genus"->genus,"subgenus"->subgenus,"species"->species,"specificEpithet"->specificEpithet,
-                       "subspecies"->subspecies, "infraspecificEpithet"->infraspecificEpithet, "infraspecificMarker"->infraspecificMarker,
-                       "higherClassification"->higherClassification, "parentNameUsage"->parentNameUsage, "parentNameUsageID"->parentNameUsageID,
-                       "acceptedNameUsage"->acceptedNameUsage, "acceptedNameUsageID"->acceptedNameUsageID, "originalNameUsage"->originalNameUsage,
-                       "originalNameUsageID"->originalNameUsageID, "taxonRank"->taxonRank, "taxonomicStatus"->taxonomicStatus,
-                       "taxonRemarks"->taxonRemarks, "verbatimTaxonRank"->verbatimTaxonRank, "vernacularName"->vernacularName,
-                       "nameAccordingTo"->nameAccordingTo, "nameAccordingToID"->nameAccordingToID,"namePublishedIn"->namePublishedIn,
-                       "namePublishedInID"->namePublishedInID,"nomenclaturalCode"->nomenclaturalCode,"nomenclaturalStatus"->nomenclaturalStatus,
-                       "taxonRankID"->taxonRankID, "kingdomID"->kingdomID, "phylumID"->phylumID, "classID"->classID, "orderID"->orderID,
-                       "familyID"->familyID, "genusID"->genusID, "subgenusID"->subgenusID, "speciesID"->speciesID, "subspeciesID"->subspeciesID,
-                       "left"->left, "right"->right, "speciesGroups"->speciesGroups)
-
-    map.filter(i => i._2!= null)
+  def getMap(): java.util.Map[String, String] = {
+    val map = Map[String, String]("scientificName" -> scientificName, "scientificNameAuthorship" -> scientificNameAuthorship,
+      "scientificNameID" -> scientificNameID, "taxonConceptID" -> taxonConceptID, "taxonID" -> taxonID,
+      "kingdom" -> kingdom, "phylum" -> phylum, "classs" -> classs, "order" -> order, "family" -> family,
+      "genus" -> genus, "subgenus" -> subgenus, "species" -> species, "specificEpithet" -> specificEpithet,
+      "subspecies" -> subspecies, "infraspecificEpithet" -> infraspecificEpithet, "infraspecificMarker" -> infraspecificMarker,
+      "higherClassification" -> higherClassification, "parentNameUsage" -> parentNameUsage, "parentNameUsageID" -> parentNameUsageID,
+      "acceptedNameUsage" -> acceptedNameUsage, "acceptedNameUsageID" -> acceptedNameUsageID, "originalNameUsage" -> originalNameUsage,
+      "originalNameUsageID" -> originalNameUsageID, "taxonRank" -> taxonRank, "taxonomicStatus" -> taxonomicStatus,
+      "taxonRemarks" -> taxonRemarks, "verbatimTaxonRank" -> verbatimTaxonRank, "vernacularName" -> vernacularName,
+      "nameAccordingTo" -> nameAccordingTo, "nameAccordingToID" -> nameAccordingToID, "namePublishedIn" -> namePublishedIn,
+      "namePublishedInID" -> namePublishedInID, "nomenclaturalCode" -> nomenclaturalCode, "nomenclaturalStatus" -> nomenclaturalStatus,
+      "taxonRankID" -> taxonRankID, "kingdomID" -> kingdomID, "phylumID" -> phylumID, "classID" -> classID, "orderID" -> orderID,
+      "familyID" -> familyID, "genusID" -> genusID, "subgenusID" -> subgenusID, "speciesID" -> speciesID, "subspeciesID" -> subspeciesID,
+      "left" -> left, "right" -> right, "speciesGroups" -> speciesGroups)
+    map.filter(i => i._2 != null)
   }
 }
 
@@ -216,13 +214,12 @@ class Measurement extends Cloneable with Mappable with POSO {
   @BeanProperty var measurementValue:String = _
 
   @JsonIgnore
-  def getMap():java.util.Map[String,String]={
-    val map =Map[String,String]("measurementAccuracy"->measurementAccuracy, "measurementDeterminedBy"->measurementDeterminedBy,
-                                "measurementDeterminedDate"->measurementDeterminedDate, "measurementID"->measurementID,
-                                "measurementMethod"->measurementMethod, "measurementRemarks"->measurementRemarks,
-                                "measurementType"->measurementType, "measurementUnit"->measurementUnit, "measurementValue"->measurementValue)
-
-    map.filter(i => i._2!= null)
+  def getMap(): java.util.Map[String, String] = {
+    val map = Map[String, String]("measurementAccuracy" -> measurementAccuracy, "measurementDeterminedBy" -> measurementDeterminedBy,
+      "measurementDeterminedDate" -> measurementDeterminedDate, "measurementID" -> measurementID,
+      "measurementMethod" -> measurementMethod, "measurementRemarks" -> measurementRemarks,
+      "measurementType" -> measurementType, "measurementUnit" -> measurementUnit, "measurementValue" -> measurementValue)
+    map.filter(i => i._2 != null)
   }
 }
 
@@ -242,13 +239,12 @@ class Identification extends Cloneable with Mappable with POSO {
   @BeanProperty var typeStatus:String = _
 
   @JsonIgnore
-  def getMap():java.util.Map[String,String]={
-    val map =Map[String,String]("dateIdentified"->dateIdentified, "identificationAttributes"->identificationAttributes,
-                                "identificationID"->identificationID, "identificationQualifier"->identificationQualifier,
-                                "identificationReferences"->identificationReferences, "identificationRemarks"->identificationRemarks,
-                                "identifiedBy"->identifiedBy, "typeStatus"->typeStatus)
-
-    map.filter(i => i._2!= null)
+  def getMap(): java.util.Map[String, String] = {
+    val map = Map[String, String]("dateIdentified" -> dateIdentified, "identificationAttributes" -> identificationAttributes,
+      "identificationID" -> identificationID, "identificationQualifier" -> identificationQualifier,
+      "identificationReferences" -> identificationReferences, "identificationRemarks" -> identificationRemarks,
+      "identifiedBy" -> identifiedBy, "typeStatus" -> typeStatus)
+    map.filter(i => i._2 != null)
   }
 }
 
@@ -274,292 +270,291 @@ class Event extends Cloneable with Mappable with POSO {
   @BeanProperty var endYear:String = _
 
   override def toString = ToStringBuilder.reflectionToString(this)
-  
-  @JsonIgnore
-  def getMap():java.util.Map[String,String]={
-    val map =Map[String,String]("day"->day,"endDayOfYear"->endDayOfYear,"eventAttributes"->eventAttributes,
-                                "eventDate"->eventDate,"eventID"->eventID,"eventRemarks"->eventRemarks,"eventTime"->eventTime,
-                                "verbatimEventDate"->verbatimEventDate,"year"->year,"month"->month,"startDayOfYear"->startDayOfYear,
-                                "startYear"->startYear,"endYear"->endYear)
 
-    map.filter(i => i._2!= null)
+  @JsonIgnore
+  def getMap(): java.util.Map[String, String] = {
+    val map = Map[String, String]("day" -> day, "endDayOfYear" -> endDayOfYear, "eventAttributes" -> eventAttributes,
+      "eventDate" -> eventDate, "eventID" -> eventID, "eventRemarks" -> eventRemarks, "eventTime" -> eventTime,
+      "verbatimEventDate" -> verbatimEventDate, "year" -> year, "month" -> month, "startDayOfYear" -> startDayOfYear,
+      "startYear" -> startYear, "endYear" -> endYear)
+    map.filter(i => i._2 != null)
   }
 }
+//
+//class ContextualLayers extends Cloneable with POSO {//} with Mappable{
+//  override def clone : ContextualLayers = super.clone.asInstanceOf[ContextualLayers]
+//  //@BeanProperty var ibra_merged:String = _
+//  //@BeanProperty var imcra4_pb:String = _
+//  //@BeanProperty var aus1:String = _
+//  //@BeanProperty var aus2:String = _
+//  @BeanProperty var cl20:String = _
+//  @BeanProperty var cl21:String = _
+//  @BeanProperty var cl22:String = _
+//  @BeanProperty var cl23:String = _
+//  @BeanProperty var cl604:String = _
+//  @BeanProperty var cl605:String = _
+//  @BeanProperty var cl606:String = _
+//  @BeanProperty var cl611:String = _
+//  @BeanProperty var cl612:String = _
+//  @BeanProperty var cl613:String = _
+//  @BeanProperty var cl614:String = _
+//  @BeanProperty var cl617:String = _
+//  @BeanProperty var cl618:String = _
+//  @BeanProperty var cl619:String = _
+//  @BeanProperty var cl620:String = _
+//  @BeanProperty var cl664:String = _
+//  @BeanProperty var cl678:String = _
+//  @BeanProperty var cl896:String = _
+//  @BeanProperty var cl901:String = _
+//  @BeanProperty var cl902:String = _
+//  @BeanProperty var cl903:String = _
+//  @BeanProperty var cl904:String = _
+//  @BeanProperty var cl905:String = _
+//  @BeanProperty var cl906:String = _
+//  @BeanProperty var cl907:String = _
+//  @BeanProperty var cl908:String = _
+//  @BeanProperty var cl909:String = _
+//  @BeanProperty var cl910:String = _
+//  @BeanProperty var cl911:String = _
+//  @BeanProperty var cl912:String = _
+//  @BeanProperty var cl913:String = _
+//  @BeanProperty var cl914:String = _
+//  @BeanProperty var cl915:String = _
+//  @BeanProperty var cl916:String = _
+//  @BeanProperty var cl917:String = _
+//  
+//}
 
-class ContextualLayers extends Cloneable with POSO {//} with Mappable{
-  override def clone : ContextualLayers = super.clone.asInstanceOf[ContextualLayers]
-  //@BeanProperty var ibra_merged:String = _
-  //@BeanProperty var imcra4_pb:String = _
-  //@BeanProperty var aus1:String = _
-  //@BeanProperty var aus2:String = _
-  @BeanProperty var cl20:String = _
-  @BeanProperty var cl21:String = _
-  @BeanProperty var cl22:String = _
-  @BeanProperty var cl23:String = _
-  @BeanProperty var cl604:String = _
-  @BeanProperty var cl605:String = _
-  @BeanProperty var cl606:String = _
-  @BeanProperty var cl611:String = _
-  @BeanProperty var cl612:String = _
-  @BeanProperty var cl613:String = _
-  @BeanProperty var cl614:String = _
-  @BeanProperty var cl617:String = _
-  @BeanProperty var cl618:String = _
-  @BeanProperty var cl619:String = _
-  @BeanProperty var cl620:String = _
-  @BeanProperty var cl664:String = _
-  @BeanProperty var cl678:String = _
-  @BeanProperty var cl896:String = _
-  @BeanProperty var cl901:String = _
-  @BeanProperty var cl902:String = _
-  @BeanProperty var cl903:String = _
-  @BeanProperty var cl904:String = _
-  @BeanProperty var cl905:String = _
-  @BeanProperty var cl906:String = _
-  @BeanProperty var cl907:String = _
-  @BeanProperty var cl908:String = _
-  @BeanProperty var cl909:String = _
-  @BeanProperty var cl910:String = _
-  @BeanProperty var cl911:String = _
-  @BeanProperty var cl912:String = _
-  @BeanProperty var cl913:String = _
-  @BeanProperty var cl914:String = _
-  @BeanProperty var cl915:String = _
-  @BeanProperty var cl916:String = _
-  @BeanProperty var cl917:String = _
-  
-}
-
-/**
- * POSO for the Environmental Layer values
- */
-class EnvironmentalLayers extends Cloneable with POSO {//} with Mappable{
-  override def clone : EnvironmentalLayers = super.clone.asInstanceOf[EnvironmentalLayers]
-  @BeanProperty var el591:String = _
-  @BeanProperty var el593:String = _
-  @BeanProperty var el594:String = _
-  @BeanProperty var el595:String = _
-  @BeanProperty var el596:String = _
-  @BeanProperty var el597:String = _
-  @BeanProperty var el598:String = _
-  @BeanProperty var el599:String = _
-  @BeanProperty var el600:String = _
-  @BeanProperty var el601:String = _
-  @BeanProperty var el602:String = _
-  @BeanProperty var el647:String = _
-  @BeanProperty var el658:String = _
-  @BeanProperty var el659:String = _
-  @BeanProperty var el660:String = _
-  @BeanProperty var el661:String = _
-  @BeanProperty var el662:String = _
-  @BeanProperty var el666:String = _
-  @BeanProperty var el667:String = _
-  @BeanProperty var el668:String = _
-  @BeanProperty var el669:String = _
-  @BeanProperty var el670:String = _
-  @BeanProperty var el671:String = _
-  @BeanProperty var el672:String = _
-  @BeanProperty var el673:String = _
-  @BeanProperty var el674:String = _
-  @BeanProperty var el675:String = _
-  @BeanProperty var el676:String = _
-  @BeanProperty var el680:String = _
-  @BeanProperty var el681:String = _
-  @BeanProperty var el682:String = _
-  @BeanProperty var el706:String = _
-  @BeanProperty var el707:String = _
-  @BeanProperty var el708:String = _
-  @BeanProperty var el709:String = _
-  @BeanProperty var el710:String = _
-  @BeanProperty var el711:String = _
-  @BeanProperty var el712:String = _
-  @BeanProperty var el713:String = _
-  @BeanProperty var el714:String = _
-  @BeanProperty var el715:String = _
-  @BeanProperty var el716:String = _
-  @BeanProperty var el717:String = _
-  @BeanProperty var el718:String = _
-  @BeanProperty var el719:String = _
-  @BeanProperty var el720:String = _
-  @BeanProperty var el721:String = _
-  @BeanProperty var el722:String = _
-  @BeanProperty var el723:String = _
-  @BeanProperty var el724:String = _
-  @BeanProperty var el725:String = _
-  @BeanProperty var el726:String = _
-  @BeanProperty var el727:String = _
-  @BeanProperty var el728:String = _
-  @BeanProperty var el729:String = _
-  @BeanProperty var el730:String = _
-  @BeanProperty var el731:String = _
-  @BeanProperty var el732:String = _
-  @BeanProperty var el733:String = _
-  @BeanProperty var el734:String = _
-  @BeanProperty var el735:String = _
-  @BeanProperty var el736:String = _
-  @BeanProperty var el737:String = _
-  @BeanProperty var el738:String = _
-  @BeanProperty var el739:String = _
-  @BeanProperty var el740:String = _
-  @BeanProperty var el741:String = _
-  @BeanProperty var el742:String = _
-  @BeanProperty var el743:String = _
-  @BeanProperty var el744:String = _
-  @BeanProperty var el745:String = _
-  @BeanProperty var el746:String = _
-  @BeanProperty var el747:String = _
-  @BeanProperty var el748:String = _
-  @BeanProperty var el749:String = _
-  @BeanProperty var el750:String = _
-  @BeanProperty var el751:String = _
-  @BeanProperty var el752:String = _
-  @BeanProperty var el753:String = _
-  @BeanProperty var el754:String = _
-  @BeanProperty var el755:String = _
-  @BeanProperty var el756:String = _
-  @BeanProperty var el757:String = _
-  @BeanProperty var el758:String = _
-  @BeanProperty var el759:String = _
-  @BeanProperty var el760:String = _
-  @BeanProperty var el761:String = _
-  @BeanProperty var el762:String = _
-  @BeanProperty var el763:String = _
-  @BeanProperty var el764:String = _
-  @BeanProperty var el765:String = _
-  @BeanProperty var el766:String = _
-  @BeanProperty var el767:String = _
-  @BeanProperty var el768:String = _
-  @BeanProperty var el769:String = _
-  @BeanProperty var el770:String = _
-  @BeanProperty var el771:String = _
-  @BeanProperty var el772:String = _
-  @BeanProperty var el773:String = _
-  @BeanProperty var el774:String = _
-  @BeanProperty var el775:String = _
-  @BeanProperty var el776:String = _
-  @BeanProperty var el777:String = _
-  @BeanProperty var el778:String = _
-  @BeanProperty var el779:String = _
-  @BeanProperty var el781:String = _
-  @BeanProperty var el782:String = _
-  @BeanProperty var el783:String = _
-  @BeanProperty var el784:String = _
-  @BeanProperty var el785:String = _
-  @BeanProperty var el786:String = _
-  @BeanProperty var el787:String = _
-  @BeanProperty var el788:String = _
-  @BeanProperty var el789:String = _
-  @BeanProperty var el790:String = _
-  @BeanProperty var el791:String = _
-  @BeanProperty var el792:String = _
-  @BeanProperty var el793:String = _
-  @BeanProperty var el794:String = _
-  @BeanProperty var el795:String = _
-  @BeanProperty var el796:String = _
-  @BeanProperty var el797:String = _
-  @BeanProperty var el798:String = _
-  @BeanProperty var el799:String = _
-  @BeanProperty var el800:String = _
-  @BeanProperty var el801:String = _
-  @BeanProperty var el802:String = _
-  @BeanProperty var el803:String = _
-  @BeanProperty var el804:String = _
-  @BeanProperty var el805:String = _
-  @BeanProperty var el806:String = _
-  @BeanProperty var el807:String = _
-  @BeanProperty var el808:String = _
-  @BeanProperty var el809:String = _
-  @BeanProperty var el810:String = _
-  @BeanProperty var el811:String = _
-  @BeanProperty var el812:String = _
-  @BeanProperty var el813:String = _
-  @BeanProperty var el814:String = _
-  @BeanProperty var el815:String = _
-  @BeanProperty var el816:String = _
-  @BeanProperty var el817:String = _
-  @BeanProperty var el818:String = _
-  @BeanProperty var el819:String = _
-  @BeanProperty var el820:String = _
-  @BeanProperty var el821:String = _
-  @BeanProperty var el822:String = _
-  @BeanProperty var el823:String = _
-  @BeanProperty var el825:String = _
-  @BeanProperty var el826:String = _
-  @BeanProperty var el827:String = _
-  @BeanProperty var el828:String = _
-  @BeanProperty var el829:String = _
-  @BeanProperty var el830:String = _
-  @BeanProperty var el831:String = _
-  @BeanProperty var el832:String = _
-  @BeanProperty var el833:String = _
-  @BeanProperty var el834:String = _
-  @BeanProperty var el835:String = _
-  @BeanProperty var el836:String = _
-  @BeanProperty var el837:String = _
-  @BeanProperty var el838:String = _
-  @BeanProperty var el839:String = _
-  @BeanProperty var el840:String = _
-  @BeanProperty var el841:String = _
-  @BeanProperty var el842:String = _
-  @BeanProperty var el843:String = _
-  @BeanProperty var el844:String = _
-  @BeanProperty var el845:String = _
-  @BeanProperty var el848:String = _
-  @BeanProperty var el849:String = _
-  @BeanProperty var el850:String = _
-  @BeanProperty var el851:String = _
-  @BeanProperty var el852:String = _
-  @BeanProperty var el853:String = _
-  @BeanProperty var el854:String = _
-  @BeanProperty var el855:String = _
-  @BeanProperty var el856:String = _
-  @BeanProperty var el857:String = _
-  @BeanProperty var el858:String = _
-  @BeanProperty var el859:String = _
-  @BeanProperty var el860:String = _
-  @BeanProperty var el861:String = _
-  @BeanProperty var el862:String = _
-  @BeanProperty var el863:String = _
-  @BeanProperty var el864:String = _
-  @BeanProperty var el865:String = _
-  @BeanProperty var el866:String = _
-  @BeanProperty var el867:String = _
-  @BeanProperty var el868:String = _
-  @BeanProperty var el869:String = _
-  @BeanProperty var el870:String = _
-  @BeanProperty var el871:String = _
-  @BeanProperty var el872:String = _
-  @BeanProperty var el873:String = _
-  @BeanProperty var el874:String = _
-  @BeanProperty var el875:String = _
-  @BeanProperty var el876:String = _
-  @BeanProperty var el877:String = _
-  @BeanProperty var el878:String = _
-  @BeanProperty var el879:String = _
-  @BeanProperty var el880:String = _
-  @BeanProperty var el881:String = _
-  @BeanProperty var el882:String = _
-  @BeanProperty var el883:String = _
-  @BeanProperty var el884:String = _
-  @BeanProperty var el885:String = _
-  @BeanProperty var el886:String = _
-  @BeanProperty var el887:String = _
-  @BeanProperty var el888:String = _
-  @BeanProperty var el889:String = _
-  @BeanProperty var el890:String = _
-  @BeanProperty var el891:String = _
-  @BeanProperty var el892:String = _
-  @BeanProperty var el893:String = _
-  @BeanProperty var el894:String = _
-  @BeanProperty var el895:String = _
-  @BeanProperty var el898:String = _
-  @BeanProperty var el899:String = _
-  @BeanProperty var el900:String = _
-//@BeanProperty var _DLCMv1_Class:String = _
-//@BeanProperty var _trend_evi_min:String = _
-//@BeanProperty var _trend_evi_mean:String = _
-//@BeanProperty var _trend_evi_max:String = _
-}
+///**
+// * POSO for the Environmental Layer values
+// */
+//class EnvironmentalLayers extends Cloneable with POSO {//} with Mappable{
+//  override def clone : EnvironmentalLayers = super.clone.asInstanceOf[EnvironmentalLayers]
+//  @BeanProperty var el591:String = _
+//  @BeanProperty var el593:String = _
+//  @BeanProperty var el594:String = _
+//  @BeanProperty var el595:String = _
+//  @BeanProperty var el596:String = _
+//  @BeanProperty var el597:String = _
+//  @BeanProperty var el598:String = _
+//  @BeanProperty var el599:String = _
+//  @BeanProperty var el600:String = _
+//  @BeanProperty var el601:String = _
+//  @BeanProperty var el602:String = _
+//  @BeanProperty var el647:String = _
+//  @BeanProperty var el658:String = _
+//  @BeanProperty var el659:String = _
+//  @BeanProperty var el660:String = _
+//  @BeanProperty var el661:String = _
+//  @BeanProperty var el662:String = _
+//  @BeanProperty var el666:String = _
+//  @BeanProperty var el667:String = _
+//  @BeanProperty var el668:String = _
+//  @BeanProperty var el669:String = _
+//  @BeanProperty var el670:String = _
+//  @BeanProperty var el671:String = _
+//  @BeanProperty var el672:String = _
+//  @BeanProperty var el673:String = _
+//  @BeanProperty var el674:String = _
+//  @BeanProperty var el675:String = _
+//  @BeanProperty var el676:String = _
+//  @BeanProperty var el680:String = _
+//  @BeanProperty var el681:String = _
+//  @BeanProperty var el682:String = _
+//  @BeanProperty var el706:String = _
+//  @BeanProperty var el707:String = _
+//  @BeanProperty var el708:String = _
+//  @BeanProperty var el709:String = _
+//  @BeanProperty var el710:String = _
+//  @BeanProperty var el711:String = _
+//  @BeanProperty var el712:String = _
+//  @BeanProperty var el713:String = _
+//  @BeanProperty var el714:String = _
+//  @BeanProperty var el715:String = _
+//  @BeanProperty var el716:String = _
+//  @BeanProperty var el717:String = _
+//  @BeanProperty var el718:String = _
+//  @BeanProperty var el719:String = _
+//  @BeanProperty var el720:String = _
+//  @BeanProperty var el721:String = _
+//  @BeanProperty var el722:String = _
+//  @BeanProperty var el723:String = _
+//  @BeanProperty var el724:String = _
+//  @BeanProperty var el725:String = _
+//  @BeanProperty var el726:String = _
+//  @BeanProperty var el727:String = _
+//  @BeanProperty var el728:String = _
+//  @BeanProperty var el729:String = _
+//  @BeanProperty var el730:String = _
+//  @BeanProperty var el731:String = _
+//  @BeanProperty var el732:String = _
+//  @BeanProperty var el733:String = _
+//  @BeanProperty var el734:String = _
+//  @BeanProperty var el735:String = _
+//  @BeanProperty var el736:String = _
+//  @BeanProperty var el737:String = _
+//  @BeanProperty var el738:String = _
+//  @BeanProperty var el739:String = _
+//  @BeanProperty var el740:String = _
+//  @BeanProperty var el741:String = _
+//  @BeanProperty var el742:String = _
+//  @BeanProperty var el743:String = _
+//  @BeanProperty var el744:String = _
+//  @BeanProperty var el745:String = _
+//  @BeanProperty var el746:String = _
+//  @BeanProperty var el747:String = _
+//  @BeanProperty var el748:String = _
+//  @BeanProperty var el749:String = _
+//  @BeanProperty var el750:String = _
+//  @BeanProperty var el751:String = _
+//  @BeanProperty var el752:String = _
+//  @BeanProperty var el753:String = _
+//  @BeanProperty var el754:String = _
+//  @BeanProperty var el755:String = _
+//  @BeanProperty var el756:String = _
+//  @BeanProperty var el757:String = _
+//  @BeanProperty var el758:String = _
+//  @BeanProperty var el759:String = _
+//  @BeanProperty var el760:String = _
+//  @BeanProperty var el761:String = _
+//  @BeanProperty var el762:String = _
+//  @BeanProperty var el763:String = _
+//  @BeanProperty var el764:String = _
+//  @BeanProperty var el765:String = _
+//  @BeanProperty var el766:String = _
+//  @BeanProperty var el767:String = _
+//  @BeanProperty var el768:String = _
+//  @BeanProperty var el769:String = _
+//  @BeanProperty var el770:String = _
+//  @BeanProperty var el771:String = _
+//  @BeanProperty var el772:String = _
+//  @BeanProperty var el773:String = _
+//  @BeanProperty var el774:String = _
+//  @BeanProperty var el775:String = _
+//  @BeanProperty var el776:String = _
+//  @BeanProperty var el777:String = _
+//  @BeanProperty var el778:String = _
+//  @BeanProperty var el779:String = _
+//  @BeanProperty var el781:String = _
+//  @BeanProperty var el782:String = _
+//  @BeanProperty var el783:String = _
+//  @BeanProperty var el784:String = _
+//  @BeanProperty var el785:String = _
+//  @BeanProperty var el786:String = _
+//  @BeanProperty var el787:String = _
+//  @BeanProperty var el788:String = _
+//  @BeanProperty var el789:String = _
+//  @BeanProperty var el790:String = _
+//  @BeanProperty var el791:String = _
+//  @BeanProperty var el792:String = _
+//  @BeanProperty var el793:String = _
+//  @BeanProperty var el794:String = _
+//  @BeanProperty var el795:String = _
+//  @BeanProperty var el796:String = _
+//  @BeanProperty var el797:String = _
+//  @BeanProperty var el798:String = _
+//  @BeanProperty var el799:String = _
+//  @BeanProperty var el800:String = _
+//  @BeanProperty var el801:String = _
+//  @BeanProperty var el802:String = _
+//  @BeanProperty var el803:String = _
+//  @BeanProperty var el804:String = _
+//  @BeanProperty var el805:String = _
+//  @BeanProperty var el806:String = _
+//  @BeanProperty var el807:String = _
+//  @BeanProperty var el808:String = _
+//  @BeanProperty var el809:String = _
+//  @BeanProperty var el810:String = _
+//  @BeanProperty var el811:String = _
+//  @BeanProperty var el812:String = _
+//  @BeanProperty var el813:String = _
+//  @BeanProperty var el814:String = _
+//  @BeanProperty var el815:String = _
+//  @BeanProperty var el816:String = _
+//  @BeanProperty var el817:String = _
+//  @BeanProperty var el818:String = _
+//  @BeanProperty var el819:String = _
+//  @BeanProperty var el820:String = _
+//  @BeanProperty var el821:String = _
+//  @BeanProperty var el822:String = _
+//  @BeanProperty var el823:String = _
+//  @BeanProperty var el825:String = _
+//  @BeanProperty var el826:String = _
+//  @BeanProperty var el827:String = _
+//  @BeanProperty var el828:String = _
+//  @BeanProperty var el829:String = _
+//  @BeanProperty var el830:String = _
+//  @BeanProperty var el831:String = _
+//  @BeanProperty var el832:String = _
+//  @BeanProperty var el833:String = _
+//  @BeanProperty var el834:String = _
+//  @BeanProperty var el835:String = _
+//  @BeanProperty var el836:String = _
+//  @BeanProperty var el837:String = _
+//  @BeanProperty var el838:String = _
+//  @BeanProperty var el839:String = _
+//  @BeanProperty var el840:String = _
+//  @BeanProperty var el841:String = _
+//  @BeanProperty var el842:String = _
+//  @BeanProperty var el843:String = _
+//  @BeanProperty var el844:String = _
+//  @BeanProperty var el845:String = _
+//  @BeanProperty var el848:String = _
+//  @BeanProperty var el849:String = _
+//  @BeanProperty var el850:String = _
+//  @BeanProperty var el851:String = _
+//  @BeanProperty var el852:String = _
+//  @BeanProperty var el853:String = _
+//  @BeanProperty var el854:String = _
+//  @BeanProperty var el855:String = _
+//  @BeanProperty var el856:String = _
+//  @BeanProperty var el857:String = _
+//  @BeanProperty var el858:String = _
+//  @BeanProperty var el859:String = _
+//  @BeanProperty var el860:String = _
+//  @BeanProperty var el861:String = _
+//  @BeanProperty var el862:String = _
+//  @BeanProperty var el863:String = _
+//  @BeanProperty var el864:String = _
+//  @BeanProperty var el865:String = _
+//  @BeanProperty var el866:String = _
+//  @BeanProperty var el867:String = _
+//  @BeanProperty var el868:String = _
+//  @BeanProperty var el869:String = _
+//  @BeanProperty var el870:String = _
+//  @BeanProperty var el871:String = _
+//  @BeanProperty var el872:String = _
+//  @BeanProperty var el873:String = _
+//  @BeanProperty var el874:String = _
+//  @BeanProperty var el875:String = _
+//  @BeanProperty var el876:String = _
+//  @BeanProperty var el877:String = _
+//  @BeanProperty var el878:String = _
+//  @BeanProperty var el879:String = _
+//  @BeanProperty var el880:String = _
+//  @BeanProperty var el881:String = _
+//  @BeanProperty var el882:String = _
+//  @BeanProperty var el883:String = _
+//  @BeanProperty var el884:String = _
+//  @BeanProperty var el885:String = _
+//  @BeanProperty var el886:String = _
+//  @BeanProperty var el887:String = _
+//  @BeanProperty var el888:String = _
+//  @BeanProperty var el889:String = _
+//  @BeanProperty var el890:String = _
+//  @BeanProperty var el891:String = _
+//  @BeanProperty var el892:String = _
+//  @BeanProperty var el893:String = _
+//  @BeanProperty var el894:String = _
+//  @BeanProperty var el895:String = _
+//  @BeanProperty var el898:String = _
+//  @BeanProperty var el899:String = _
+//  @BeanProperty var el900:String = _
+////@BeanProperty var _DLCMv1_Class:String = _
+////@BeanProperty var _trend_evi_min:String = _
+////@BeanProperty var _trend_evi_mean:String = _
+////@BeanProperty var _trend_evi_max:String = _
+//}
 
 /**
  * POSO for holding location information for an occurrence.
@@ -614,13 +609,13 @@ class Location extends Cloneable with Mappable with POSO {
   @BeanProperty var ibra:String = _
   @BeanProperty var imcra:String = _
   @BeanProperty var lga:String = _
-  //custom additional fields for environment layers
-  //TODO Should we put this in an environment model?
-  @BeanProperty var mean_temperature_cars2009a_band1:String =_
-  @BeanProperty var mean_oxygen_cars2006_band1:String =_
-  @BeanProperty var bioclim_bio34:String =_
-  @BeanProperty var bioclim_bio12:String =_
-  @BeanProperty var bioclim_bio11:String =_
+//  //custom additional fields for environment layers
+//  //TODO Should we put this in an environment model?
+//  @BeanProperty var mean_temperature_cars2009a_band1:String =_
+//  @BeanProperty var mean_oxygen_cars2006_band1:String =_
+//  @BeanProperty var bioclim_bio34:String =_
+//  @BeanProperty var bioclim_bio12:String =_
+//  @BeanProperty var bioclim_bio11:String =_
 //  @BeanProperty var environmentalLayers:EnvironmentalLayers =new EnvironmentalLayers
 //  @BeanProperty var contextualLayers:ContextualLayers = new ContextualLayers
   //fields that need be hidden from all public API
@@ -656,31 +651,30 @@ class Location extends Cloneable with Mappable with POSO {
   @JsonIgnore
   def getOriginalLocationRemarks():String = originalLocationRemarks
   def setOriginalLocationRemarks(remarks:String) = this.originalLocationRemarks = remarks
-  
+
   @JsonIgnore
-  def getMap():java.util.Map[String,String]={
-    val map =Map[String,String]("uuid"->uuid, "continent"->continent, "coordinatePrecision"->coordinatePrecision,
-                                "coordinateUncertaintyInMeters"->coordinateUncertaintyInMeters, "country"->country, "countryCode"->countryCode,
-                                "county"->county, "decimalLatitude"->decimalLatitude, "decimalLongitude"->decimalLongitude,
-                                "footprintSpatialFit"->footprintSpatialFit, "footprintWKT"->footprintWKT, "geodeticDatum"->geodeticDatum,
-                                "georeferencedBy"->georeferencedBy, "georeferenceProtocol"->georeferenceProtocol, "georeferenceRemarks"->georeferenceRemarks,
-                                "georeferenceSources"->georeferenceSources, "georeferenceVerificationStatus"->georeferenceVerificationStatus,
-                                "habitat"->habitat, "higherGeography"->higherGeography, "higherGeographyID"->higherGeographyID, "island"->island,
-                                "islandGroup"->islandGroup, "locality"->locality, "locationAttributes"->locationAttributes, "locationID"->locationID,
-                                "locationRemarks"->locationRemarks, "maximumDepthInMeters"->maximumDepthInMeters,
-                                "maximumDistanceAboveSurfaceInMeters"->maximumDistanceAboveSurfaceInMeters, "maximumElevationInMeters"->maximumElevationInMeters,
-                                "minimumDepthInMeters"->minimumDepthInMeters, "minimumDistanceAboveSurfaceInMeters"->minimumDistanceAboveSurfaceInMeters,
-                                "minimumElevationInMeters"->minimumElevationInMeters, "pointRadiusSpatialFit"->pointRadiusSpatialFit,
-                                "stateProvince"->stateProvince, "verbatimCoordinates"->verbatimCoordinates, "verbatimCoordinateSystem"->verbatimCoordinateSystem,
-                                "verbatimDepth"->verbatimDepth, "verbatimElevation"->verbatimElevation, "verbatimLatitude"->verbatimLatitude,
-                                "verbatimLocality"->verbatimLocality, "verbatimLongitude"->verbatimLongitude, "waterBody"->waterBody, 
-                                "ibra"->ibra, "imcra"->imcra, "lga"->lga, "mean_temperature_cars2009a_band1"->mean_temperature_cars2009a_band1,
+  def getMap(): java.util.Map[String, String] = {
+    val map = Map[String, String]("uuid" -> uuid, "continent" -> continent, "coordinatePrecision" -> coordinatePrecision,
+      "coordinateUncertaintyInMeters" -> coordinateUncertaintyInMeters, "country" -> country, "countryCode" -> countryCode,
+      "county" -> county, "decimalLatitude" -> decimalLatitude, "decimalLongitude" -> decimalLongitude,
+      "footprintSpatialFit" -> footprintSpatialFit, "footprintWKT" -> footprintWKT, "geodeticDatum" -> geodeticDatum,
+      "georeferencedBy" -> georeferencedBy, "georeferenceProtocol" -> georeferenceProtocol, "georeferenceRemarks" -> georeferenceRemarks,
+      "georeferenceSources" -> georeferenceSources, "georeferenceVerificationStatus" -> georeferenceVerificationStatus,
+      "habitat" -> habitat, "higherGeography" -> higherGeography, "higherGeographyID" -> higherGeographyID, "island" -> island,
+      "islandGroup" -> islandGroup, "locality" -> locality, "locationAttributes" -> locationAttributes, "locationID" -> locationID,
+      "locationRemarks" -> locationRemarks, "maximumDepthInMeters" -> maximumDepthInMeters,
+      "maximumDistanceAboveSurfaceInMeters" -> maximumDistanceAboveSurfaceInMeters, "maximumElevationInMeters" -> maximumElevationInMeters,
+      "minimumDepthInMeters" -> minimumDepthInMeters, "minimumDistanceAboveSurfaceInMeters" -> minimumDistanceAboveSurfaceInMeters,
+      "minimumElevationInMeters" -> minimumElevationInMeters, "pointRadiusSpatialFit" -> pointRadiusSpatialFit,
+      "stateProvince" -> stateProvince, "verbatimCoordinates" -> verbatimCoordinates, "verbatimCoordinateSystem" -> verbatimCoordinateSystem,
+      "verbatimDepth" -> verbatimDepth, "verbatimElevation" -> verbatimElevation, "verbatimLatitude" -> verbatimLatitude,
+      "verbatimLocality" -> verbatimLocality, "verbatimLongitude" -> verbatimLongitude, "waterBody" -> waterBody,
+      "ibra" -> ibra, "imcra" -> imcra, "lga" -> lga /*"mean_temperature_cars2009a_band1"->mean_temperature_cars2009a_band1,
                                 "mean_oxygen_cars2006_band1"->mean_oxygen_cars2006_band1, "bioclim_bio34"->bioclim_bio34,
-                                "bioclim_bio12"->bioclim_bio12,"bioclim_bio11"->bioclim_bio11 )
+                                "bioclim_bio12"->bioclim_bio12,"bioclim_bio11"->bioclim_bio11 */ )
 
-    map.filter(i => i._2!= null)
+    map.filter(i => i._2 != null)
   }
-
 }
 /**
  * An Occurrence Model that can be used to create an Index entry
@@ -773,36 +767,34 @@ class OccurrenceIndex extends Cloneable with Mappable with POSO {
   @BeanProperty @Field("state_conservation") var stateConservation:String = _
 
   @JsonIgnore
-  def getMap():java.util.Map[String,String]={
-    
-    val sdate = if(eventDate == null) null else DateFormatUtils.format(eventDate, "yyyy-MM-dd")
-
-    val map =Map[String,String]("id"-> uuid, "occurrence_id"-> occurrenceID, "data_hub_uid"-> dataHubUid, "data_hub" -> dataHub,
-                                "institution_uid"-> institutionUid, "institution_code"-> raw_institutionCode,
-                                "institution_name"-> institutionName, "collection_uid"-> collectionUid,
-                                "collection_code"-> raw_collectionCode, "collection_name"-> collectionName,
-                                "catalogue_number"-> raw_catalogNumber, "taxon_concept_lsid"-> taxonConceptID,
-                                "occurrence_date"-> sdate, "taxon_name"-> scientificName, "common_name"-> vernacularName,
-                                "rank"-> taxonRank, "rank_id"-> taxonRankID, "country_code"-> raw_countryCode,
-                                "kingdom"-> kingdom, "phylum"-> phylum, "class"-> classs, "order"-> order, "family"-> family,
-                                "genus"-> genus, "species"-> species, "state"-> stateProvince, "latitude"-> decimalLatitude,
-                                "longitude"-> decimalLongitude, "year"-> year, "month"-> month, "basis_of_record"-> basisOfRecord,
-                                "type_status"-> typeStatus, "location_remarks"-> raw_locationRemarks, "occurrence_remarks"-> raw_occurrenceRemarks,
-                                "lft"-> left, "rgt"-> right, "ibra"-> ibra, "imcra"-> imcra,
-                                "places"-> lga, "data_provider_uid"-> dataProviderUid, "data_provider"-> dataProviderName,
-                                "data_resource_uid"-> dataResourceUid, "data_resource"-> dataResourceName, "assertions"-> assertions,
-                                "user_assertions"-> hasUserAssertions, "species_group"-> speciesGroups,
-                                "image_url"-> image, "geospatial_kosher"-> geospatialKosher, "taxonomic_kosher"-> taxonomicKosher,
-                                "raw_taxon_name"-> raw_scientificName, "raw_basis_of_record"-> raw_basisOfRecord,
-                                "raw_type_status"-> raw_typeStatus, "raw_common_name"-> raw_vernacularName, "lat_long"-> latLong,
-                                "point-1"-> point1, "point-0.1"-> point01, "point-0.01"-> point001, "point-0.001"-> point0001,
-                                "point-0.0001"-> point00001, "names_and_lsid"-> namesLsid, "multimedia"-> multimedia, "collector"->raw_recordedBy)
-//                                ,"mean_temperature_cars2009a_band1_env"-> mean_temperature_cars2009a_band1,
-//                                "mean_oxygen_cars2006_band1_env"-> mean_oxygen_cars2006_band1, "bioclim_bio34_env"-> bioclim_bio34,
-//                                "bioclim_bio12_env"-> bioclim_bio12, "bioclim_bio11_env"->bioclim_bio11 )
-
-    map.filter(i => i._2!= null)
+  def getMap(): java.util.Map[String, String] = {
+    val sdate = if (eventDate == null) null else DateFormatUtils.format(eventDate, "yyyy-MM-dd")
+    val map = Map[String, String]("id" -> uuid, "occurrence_id" -> occurrenceID, "data_hub_uid" -> dataHubUid, "data_hub" -> dataHub,
+      "institution_uid" -> institutionUid, "institution_code" -> raw_institutionCode,
+      "institution_name" -> institutionName, "collection_uid" -> collectionUid,
+      "collection_code" -> raw_collectionCode, "collection_name" -> collectionName,
+      "catalogue_number" -> raw_catalogNumber, "taxon_concept_lsid" -> taxonConceptID,
+      "occurrence_date" -> sdate, "taxon_name" -> scientificName, "common_name" -> vernacularName,
+      "rank" -> taxonRank, "rank_id" -> taxonRankID, "country_code" -> raw_countryCode,
+      "kingdom" -> kingdom, "phylum" -> phylum, "class" -> classs, "order" -> order, "family" -> family,
+      "genus" -> genus, "species" -> species, "state" -> stateProvince, "latitude" -> decimalLatitude,
+      "longitude" -> decimalLongitude, "year" -> year, "month" -> month, "basis_of_record" -> basisOfRecord,
+      "type_status" -> typeStatus, "location_remarks" -> raw_locationRemarks, "occurrence_remarks" -> raw_occurrenceRemarks,
+      "lft" -> left, "rgt" -> right, "ibra" -> ibra, "imcra" -> imcra,
+      "places" -> lga, "data_provider_uid" -> dataProviderUid, "data_provider" -> dataProviderName,
+      "data_resource_uid" -> dataResourceUid, "data_resource" -> dataResourceName, "assertions" -> assertions,
+      "user_assertions" -> hasUserAssertions, "species_group" -> speciesGroups,
+      "image_url" -> image, "geospatial_kosher" -> geospatialKosher, "taxonomic_kosher" -> taxonomicKosher,
+      "raw_taxon_name" -> raw_scientificName, "raw_basis_of_record" -> raw_basisOfRecord,
+      "raw_type_status" -> raw_typeStatus, "raw_common_name" -> raw_vernacularName, "lat_long" -> latLong,
+      "point-1" -> point1, "point-0.1" -> point01, "point-0.01" -> point001, "point-0.001" -> point0001,
+      "point-0.0001" -> point00001, "names_and_lsid" -> namesLsid, "multimedia" -> multimedia, "collector" -> raw_recordedBy)
+    //                                ,"mean_temperature_cars2009a_band1_env"-> mean_temperature_cars2009a_band1,
+    //                                "mean_oxygen_cars2006_band1_env"-> mean_oxygen_cars2006_band1, "bioclim_bio34_env"-> bioclim_bio34,
+    //                                "bioclim_bio12_env"-> bioclim_bio12, "bioclim_bio11_env"->bioclim_bio11 )
+    map.filter(i => i._2 != null)
   }
+  
   implicit def int2String(in:java.lang.Integer):String={
     if(in == null) null else in.toString
   }
@@ -848,22 +840,22 @@ class TaxonProfile (
   def this() = this(null,null,null,null,null,null,null, null,null)
   override def clone : TaxonProfile = super.clone.asInstanceOf[TaxonProfile]
   private var conservationMap:Map[String,String]= null
-  def retrieveConservationStatus(loc:String) :Option[String]={
-      if(conservation != null){
-	      if(conservationMap == null){
-	          val map:scala.collection.mutable.Map[String,String] =new scala.collection.mutable.HashMap[String,String]
-	          for(cs<-conservation){
-	               //Only add the state if it is missing or replaces "null" state information
-	               if(map.getOrElse(cs.region, "null").contains("null"))
-	                       map += cs.region -> (cs.status+"," + cs.rawStatus)
-	          }
-	           
-	          conservationMap = map.toMap
-	          //println("conservation " + conservationMap)
-	      }
-	      return conservationMap.get(loc) 
+  def retrieveConservationStatus(loc: String): Option[String] = {
+    if (conservation != null) {
+      if (conservationMap == null) {
+        val map: scala.collection.mutable.Map[String, String] = new scala.collection.mutable.HashMap[String, String]
+        for (cs <- conservation) {
+          //Only add the state if it is missing or replaces "null" state information
+          if (map.getOrElse(cs.region, "null").contains("null"))
+            map += cs.region -> (cs.status + "," + cs.rawStatus)
+        }
+
+        conservationMap = map.toMap
+        //println("conservation " + conservationMap)
       }
-	  return None
+      return conservationMap.get(loc)
+    }
+    return None
   }
 }
 
@@ -941,9 +933,10 @@ class FullRecord (
   @BeanProperty var attribution:Attribution,
   @BeanProperty var identification:Identification,
   @BeanProperty var measurement:Measurement,
-  @BeanProperty var environmentalLayers:EnvironmentalLayers,
-  @BeanProperty var contextualLayers:ContextualLayers,
-  @BeanProperty var assertions:Array[String],
+  @BeanProperty var assertions:Array[String] = Array(),
+  @BeanProperty var el:java.util.Map[String,String] = new java.util.HashMap[String,String](),        //environmental layers
+  @BeanProperty var cl:java.util.Map[String,String] = new java.util.HashMap[String,String](),        //contextual layers
+  @BeanProperty var miscProperties:java.util.Map[String,String] = new java.util.HashMap[String,String](),
   @BeanProperty var locationDetermined:Boolean = false,
   @BeanProperty var defaultValuesUsed:Boolean = false,
   @BeanProperty var geospatiallyKosher:Boolean = true,
@@ -951,17 +944,16 @@ class FullRecord (
   @BeanProperty var deleted:Boolean = false,
   @BeanProperty var userVerified:Boolean = false,
   @BeanProperty var lastModifiedTime:String = "",
-  @BeanProperty var lastUserAssertionDate:String = "",
-  @BeanProperty var miscProperties:java.util.Map[String,String] = new java.util.HashMap[String,String]())
+  @BeanProperty var lastUserAssertionDate:String = "")
   extends Cloneable with CompositePOSO {
     
-  def objectArray:Array[POSO] = Array(occurrence,classification,location,event,attribution,identification,measurement,environmentalLayers,contextualLayers)
+  def objectArray:Array[POSO] = Array(occurrence,classification,location,event,attribution,identification,measurement)
 
   def this(rowKey:String ,uuid:String) = this(rowKey,uuid,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
-      new Measurement, new EnvironmentalLayers, new ContextualLayers, Array())
+      new Measurement)
 
   def this() = this(null,null,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
-      new Measurement, new EnvironmentalLayers, new ContextualLayers, Array())
+      new Measurement)
 
   /**
    * Creates an empty new Full record based on this one to be used in Processing.
@@ -975,7 +967,7 @@ class FullRecord (
 
   override def clone : FullRecord = new FullRecord(this.rowKey,this.uuid,
       occurrence.clone,classification.clone,location.clone,event.clone,attribution.clone,
-      identification.clone,measurement.clone, environmentalLayers.clone, contextualLayers.clone,assertions.clone)
+      identification.clone,measurement.clone, assertions.clone)
 
   /**
    * Equals implementation that compares the contents of all the contained POSOs
@@ -1026,8 +1018,6 @@ class ConservationSpecies(
  * Quality Assertions are made by man or machine.
  * Man - provided through a UI, giving a positive or negative assertion
  * Machine - provided through backend processing
- * 
- * 
  */
 class QualityAssertion (
   @BeanProperty var uuid:String,
@@ -1089,3 +1079,7 @@ object QualityAssertion {
     new QualityAssertion(uuid,null,assertionCode,problemAsserted,comment,null,null,null,new Date())
   }
 }
+
+class OutlierResult (
+  @BeanProperty var testUuid:String,
+  @BeanProperty var outlierForLayersCount:Int)

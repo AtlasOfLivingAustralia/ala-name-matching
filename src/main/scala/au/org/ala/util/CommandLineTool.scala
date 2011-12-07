@@ -24,7 +24,7 @@ object CommandLineTool {
           case it if (it startsWith "describe ") || (it startsWith "d ") => l.describeResource(it.split(" ").map(x => x.trim).toList.tail)
           case it if (it startsWith "list") || (it == "l") => l.printResourceList
           case it if (it startsWith "load") || (it startsWith "ld") => l.load(it.split(" ").map(x => x.trim).toList.last)
-          case it if (it startsWith "process single") => {
+          case it if (it startsWith "process-single") => {
             ProcessSingleRecord.processRecord(it.split(" ").map(x => x.trim).toList.last)
           }
           case it if (it startsWith "process") || (it startsWith "process") => {
@@ -32,6 +32,9 @@ object CommandLineTool {
             for (dr <- drs) {
               ProcessWithActors.processRecords(4, None, Some(dr))
             }
+          }
+          case it if (it startsWith "process-all") => {
+            ProcessWithActors.processRecords(4, None, None)
           }
           case it if (it startsWith "index") || (it startsWith "index") => {
             val drs = it.split(" ").map(x => x.trim).toList.tail
@@ -55,6 +58,15 @@ object CommandLineTool {
             val args = it.split(" ").map(x => x.trim).toArray.tail
             ImportUtil.main(args)
           }
+          case it if (it startsWith "sample-all") => {
+            println("****** Warning - this requires at least 8g of memory allocation -Xmx8g -Xms8g")
+            Sampling.main(Array())
+          }
+          case it if (it startsWith "sample") => {
+            println("****** Warning - this requires at least 8g of memory allocation -Xmx8g -Xms8g")
+            val args = it.split(" ").map(x => x.trim).toArray.tail
+            Sampling.main(Array("-dr") ++ args )
+          }
           case _ => printHelp
         }
       } catch {
@@ -73,15 +85,18 @@ object CommandLineTool {
     println("1)  list - print list of resources")
     println("2)  describe <dr-uid> <dr-uid1> <dr-uid2>... - print list of resources")
     println("3)  load <dr-uid> - load resource")
-    println("4)  process single <uuid> - process single record")
+    println("4)  process-single <uuid> - process single record")
     println("5)  process <dr-uid> - process resource")
-    println("6)  index <dr-uid> - index resource")
-    println("7)  createdwc <dr-uid> <export directory>")
-    println("8)  healthcheck")
-    println("9)  export")
-    println("10)  import")
-    println("11)  optimise")
-    println("12)  exit")
+    println("6)  process-all - process all records (this takes a long time)")
+    println("7)  index <dr-uid> - index resource")
+    println("8)  createdwc <dr-uid> <export directory>")
+    println("9)  healthcheck")
+    println("10)  export")
+    println("11)  import")
+    println("12)  optimise")
+    println("13)  sample-all")
+    println("14)  sample <dr-uid> - sample resource")
+    println("15)  exit")
   }
 
   def printTable(table: List[Map[String, String]]) {

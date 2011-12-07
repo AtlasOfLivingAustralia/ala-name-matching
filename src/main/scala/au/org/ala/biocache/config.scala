@@ -7,6 +7,7 @@ import com.google.inject.name.Names
 import au.org.ala.checklist.lucene.CBIndexSearch
 import org.slf4j.LoggerFactory
 import com.google.inject._
+import org.ala.layers.client.Client
 
 /**
  * Simple singleton wrapper for Guice (or spring)
@@ -26,12 +27,28 @@ object Config {
       SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("http://sds.ala.org.au/sensitive-species-data.xml", nameIndex)
 	  }
 
-    val allowWebserviceLookup = {
-      val str = configModule.properties.getProperty("allowWebserviceLookup")
+    val allowLayerLookup = {
+      val str = configModule.properties.getProperty("allowLayerLookup")
       if(str != null){
         str.toBoolean
       } else {
         false
+      }
+    }
+
+    val fieldsToSample = {
+      val str = configModule.properties.getProperty("fieldsToSample")
+      if (str == null || str.trim == ""){
+        var dbfields = Client.getFieldDao().getFieldsByDB();
+        var fields: Array[String] = Array.ofDim(dbfields.size())
+        for (a <- 0 until dbfields.size()) {
+          fields(a) = dbfields.get(a).getId()
+        }
+        fields    //fields.dropWhile(x => List("el898","cl909","cl900").contains(x))
+      } else {
+        val fields = str.split(",").map(x => x.trim).toArray
+        println("Fields to sample: " + fields.mkString(","))
+        fields
       }
     }
 }

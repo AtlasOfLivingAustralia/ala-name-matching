@@ -80,7 +80,7 @@ trait CompositePOSO extends POSO {
     override def setProperty(name: String, value: String) = lookup.get(name) match {
 
         case Some(property) => {
-          //println(name+":  " + property.typeName + ": " +  value)
+          //println(name + " :  " + property.typeName + " : " +  value)
           if(property.typeName == "scala.collection.immutable.Map"){
             val jsonOption = JSON.parseFull(value)
             if (!jsonOption.isEmpty){
@@ -102,8 +102,17 @@ trait CompositePOSO extends POSO {
                 case e:Exception => e.printStackTrace()
               }
             }
+          } else if(property.typeName == "java.util.Map"){
+            val stringMap = Json.toJavaStringMap(value)
+            if (!stringMap.isEmpty){
+              try {
+                  property.setter.invoke(this,stringMap)
+              } catch {
+                case e:Exception => e.printStackTrace()
+              }
+            }
           } else {
-             //println(property.name + ": "+property.typeName)
+             //println(property.name + " : "+property.typeName)
              property.setter.invoke(this, value)
           }
         }
@@ -149,33 +158,25 @@ trait POSO {
 
     def setProperty(name: String, value: String) = lookup.get(name) match {
         case Some(property) => {
-            property.typeName match {
-                case "java.lang.String" => property.setter.invoke(this, value)
-                case "[Ljava.lang.String;" => {
-                    try {
-                        val array = Json.toArray(value, classOf[String].asInstanceOf[java.lang.Class[AnyRef]])
-                        property.setter.invoke(this, array)
-                    } catch {
-                        case e: Exception => e.printStackTrace
-                    }
-                }
-                case "int" => property.setter.invoke(this, Integer.parseInt(value).asInstanceOf[AnyRef])
-                case "boolean" => property.setter.invoke(this, java.lang.Boolean.parseBoolean(value).asInstanceOf[AnyRef])
-                case "scala.collection.immutable.Map" => {
-                    try{
-                        val fromJson = JSON.parseFull(value)
-                        if(fromJson.isDefined)
-                            property.setter.invoke(this, fromJson.get.asInstanceOf[Map[String,String]])
-                        }
-                    catch{
-                        case e:Exception => println("Unable to set POSO map property. " + e.getMessage)
-                    }
-                    }
-                case _ => println("Unhandled data type: " + property.typeName)
+          property.typeName match {
+            case "java.lang.String" => property.setter.invoke(this, value)
+            case "[Ljava.lang.String;" => {
+              try {
+                val array = Json.toArray(value, classOf[String].asInstanceOf[java.lang.Class[AnyRef]])
+                property.setter.invoke(this, array)
+              } catch {
+                case e: Exception => e.printStackTrace
+              }
             }
+            case "int" => property.setter.invoke(this, Integer.parseInt(value).asInstanceOf[AnyRef])
+            case "boolean" => property.setter.invoke(this, java.lang.Boolean.parseBoolean(value).asInstanceOf[AnyRef])
+            case "scala.collection.immutable.Map" => property.setter.invoke(this, JSON.parseFull(value).get.asInstanceOf[Map[String,String]])
+            case "java.util.Map" => property.setter.invoke(this, Json.toStringMap(value))
+            case _ => println("Unhandled data type: " + property.typeName)
+          }
         }
         case None => {} //println("Property not mapped: " +name +", on " + this.getClass.getName)
-    }
+      }
 
     def getProperty(name: String): Option[String] = lookup.get(name) match {
 

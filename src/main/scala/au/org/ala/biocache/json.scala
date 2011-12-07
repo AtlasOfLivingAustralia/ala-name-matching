@@ -35,14 +35,45 @@ object Json {
         val mapper = new ObjectMapper
         mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
         mapper.writeValueAsString(a)
-    }    
+    }
     
+    /**
+     * Convert the supplied list to JSON
+     */
+    def toJSON(a:Map[String,Any]) : String = {
+        val mapper = new ObjectMapper
+        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
+        mapper.writeValueAsString(a.asJava)
+    }     
+
+//    /**
+//     * Convert the supplied list to JSON
+//     */
+//    def toJSON(a:Map[String,Float]) : String = {
+//        val mapper = new ObjectMapper
+//        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
+//        mapper.writeValueAsString(a.asJava)
+//    }
+
     /**
      * Convert Array to JSON
      */
     def toJSON(arr:Array[AnyRef]) : String ={
       val mapper = new ObjectMapper
       mapper.writeValueAsString(arr)
+    }
+
+    /**
+     * Converts a string to the supplied array type
+     */
+    def toStringArray(jsonString:String) : Array[String] = {
+      if(jsonString != null && jsonString != ""){
+        val mapper = new ObjectMapper
+        val valueType = TypeFactory.arrayType(classOf[java.lang.String])
+        mapper.readValue[Array[String]](jsonString, valueType)
+      } else {
+        Array()
+      }
     }
 
     /**
@@ -85,10 +116,28 @@ object Json {
      }
    }
 
+   def toStringMap(jsonString:String): scala.collection.Map[String,String] = {
+     try {
+        val mapper = new ObjectMapper
+        mapper.readValue(jsonString,classOf[java.util.Map[String,String]]).asScala[String,String];
+     } catch {
+        case e:Exception => Map()
+     }
+   }
+
    def toJavaMap(jsonString:String): java.util.Map[String,Object] = {
      try {
         val mapper = new ObjectMapper
         mapper.readValue(jsonString,classOf[java.util.Map[String,Object]])
+     } catch {
+        case e:Exception => new java.util.HashMap()
+     }
+   }
+
+   def toJavaStringMap(jsonString:String): java.util.Map[String,String] = {
+     try {
+        val mapper = new ObjectMapper
+        mapper.readValue(jsonString,classOf[java.util.Map[String,String]])
      } catch {
         case e:Exception => new java.util.HashMap()
      }

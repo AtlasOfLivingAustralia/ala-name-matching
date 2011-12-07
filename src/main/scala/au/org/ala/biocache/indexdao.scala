@@ -20,7 +20,7 @@ import java.util.Date
 import java.io.OutputStream
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang.time.DateFormatUtils
-
+import org.ala.layers.client.Client
 
 
 /**
@@ -34,8 +34,22 @@ trait IndexDAO {
 //    val elFields = Bean()FullRecordMapper.environmentalDefn.keySet.toList
 //    val clFields = FullRecordMapper.contextualDefn.keySet.toList
 
-    val elFields = (new EnvironmentalLayers).propertyNames.toList
-    val clFields = (new ContextualLayers).propertyNames.toList
+    	
+    //TODO derive these from the supplied map
+//    val elFields = (new EnvironmentalLayers).propertyNames.toList
+//    val clFields = (new ContextualLayers).propertyNames.toList
+
+    val sampledFields = {
+      var dbfields = Client.getFieldDao().getFieldsByDB();
+      var fields: Array[String] = Array.ofDim(dbfields.size())
+      for (a <- 0 until dbfields.size()) {
+        fields(a) = dbfields.get(a).getId()
+      }
+      fields    //fields.dropWhile(x => List("el898","cl909","cl900").contains(x))
+    }
+
+    val elFields = sampledFields.filter(x => x.startsWith("el"))
+    val clFields = sampledFields.filter(x => x.startsWith("cl"))
 
     def getRowKeysForQuery(query:String, limit:Int=1000):Option[List[String]]
     
@@ -78,7 +92,7 @@ trait IndexDAO {
      */
     def finaliseIndex(optimise:Boolean=false, shutdown:Boolean=true)
 
-    def getValue(field: String, map: Map[String, String]): String = {
+    def getValue(field: String, map: Map[String, String]) : String = {
         val value = map.get(field)
         if (!value.isEmpty){
             return value.get
@@ -150,8 +164,12 @@ trait IndexDAO {
             "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation","sensitive", "coordinate_uncertainty",
             "user_id","provenance","subspecies_guid", "subspecies_name", "interaction","last_assertion_date","last_load_date","last_processed_date") ++ elFields ++ clFields
 
-
-            
+    /**
+     * Constructs a scientific name.
+     *
+     * TODO Factor this out of indexing logic, and have a separate field in cassandra that stores this.
+     * TODO Construction of this field can then happen as part of the processing.
+     */
      def getRawScientificName(map:Map[String,String]):String={
         val scientificName:String ={
             if(map.contains("scientificName"))
@@ -161,7 +179,7 @@ trait IndexDAO {
                 if(map.contains("specificEpithet") || map.contains("species")){
                     tmp=tmp + " " +map.getOrElse("specificEpithet", map.getOrElse("species",""))
                     if(map.contains("infraspecificEpithet") || map.contains("subspecies"))
-                        tmp=tmp+ " " + map.getOrElse("infraspecificEpithet",map.getOrElse("subspecies",""))
+                        tmp = tmp+ " " + map.getOrElse("infraspecificEpithet",map.getOrElse("subspecies",""))
                 }
                 tmp
             }
@@ -198,20 +216,20 @@ trait IndexDAO {
                 val simages = getValue("images.p", map)
                 val images = {
                     if (simages.length > 0)
-                        Json.toArray(simages, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]]
+                        Json.toStringArray(simages)
                     else
                         Array[String]("")
                 }
                 val sspeciesGroup = getValue("speciesGroups.p", map)
                 val speciesGroup = {
                     if (sspeciesGroup.length > 0)
-                        Json.toArray(sspeciesGroup, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]]
+                        Json.toStringArray(sspeciesGroup)
                     else
                         Array[String]("")
                 }
                 val interactions = {
                     if(map.contains("interactions.p")){
-                        Json.toArray(map.get("interactions.p").get, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]]
+                        Json.toStringArray(map.get("interactions.p").get)
                     }
                     else
                         Array[String]("")
@@ -219,7 +237,7 @@ trait IndexDAO {
                 val sdatahubs = getValue("dataHubUid",map, true)
                 val dataHubUids = {
                     if (sdatahubs.length > 0)
-                        Json.toArray(sdatahubs, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[String]]
+                        Json.toStringArray(sdatahubs)
                     else
                         Array[String]("")
                 }
@@ -277,7 +295,7 @@ trait IndexDAO {
                 val geoKosher = if(slat=="" &&slon == "") "" else map.getOrElse(FullRecordMapper.geospatialDecisionColumn, "")
                 val hasUserAss = map.getOrElse(FullRecordMapper.userQualityAssertionColumn, "") match{
                     case "true" => "true"
-                    case "false"=>"false"
+                    case "false" =>"false"
                     case value:String => (value.length >3).toString
                 }
                 val (subspeciesGuid, subspeciesName):(String,String) = {
@@ -375,7 +393,7 @@ trait IndexDAO {
                     if(lastUserAssertion.isEmpty)"" else DateFormatUtils.format(lastUserAssertion.get,"yyyy-MM-dd'T'HH:mm:ss'Z'"), 
                     if(lastLoaded.isEmpty)"2010-11-1T00:00:00Z" else DateFormatUtils.format(lastLoaded.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
                     if(lastProcessed.isEmpty)"" else DateFormatUtils.format(lastProcessed.get,"yyyy-MM-dd'T'HH:mm:ss'Z'")
-                    ) ++ elFields.map(field => getValue(field+".p", map)) ++ clFields.map(field=> getValue(field+".p", map))
+                    ) ++ elFields.map(field => getValue(field, map)) ++ clFields.map(field=> getValue(field, map))
             }
             else {
                 return List()

@@ -33,7 +33,7 @@ object VerbatimLatLongParser {
            case _ => None
         }
     } catch {
-        case e:Exception =>e.printStackTrace; None;
+        case e:Exception => None
     }
   }
 

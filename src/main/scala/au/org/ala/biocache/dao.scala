@@ -49,8 +49,6 @@ trait OccurrenceDAO {
 
     def pageOverAll(version: Version, proc: ((Option[FullRecord]) => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
 
-    //def pageOverSelectAll(version: Version, proc: ((Option[FullRecord]) => Boolean),fields: Array[String],startKey:String="", pageSize: Int = 1000): Unit
-
     def pageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
     
     def conditionalPageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean), condition:(Map[String,String]=>Boolean),columnsToRetrieve:Array[String],startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
@@ -79,6 +77,8 @@ trait OccurrenceDAO {
     
     def updateAssertionStatus(rowKey: String, assertion: QualityAssertion, systemAssertions: List[QualityAssertion], userAssertions: List[QualityAssertion])
 
+    //def markAsOutlier(uuid:String, outlierResult:OutlierResult)
+    
     def reIndex(rowKey: String)
     
     def delete(rowKey: String)
@@ -98,6 +98,18 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     @Inject
     var indexDAO: IndexDAO = _
 
+    /**
+     * Mark the supplied records as 
+     */
+    def markAsOutlier(uuid:String, testUuid:String, noOfLayers:Int){
+      getRowKeyFromUuid(uuid) match {
+       case None => throw new IllegalArgumentException("Invalid UUID supplied: " + uuid)
+       case Some(rowKey) => {
+         //persistenceManager.put(rowKey, "occ", )
+       }
+      }
+    }
+    
     /**
      * Gets the map for a record based on searching the index for new and old ids
      */
@@ -302,14 +314,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         },startKey, endKey, pageSize)
     }
 
-//    /**
-//     * Iterates over the sepcified version of all the occurrence records. The values retrieved
-//     * from the persistence manager is limited to the supplied fields
-//     */
-//    def pageOverSelectAll(version: Version, proc: ((Option[FullRecord]) => Boolean),fields: Array[String],startKey:String="", pageSize: Int = 1000){
-//
-//    }
-
     /**
      * Iterate over all occurrences, passing the objects to a function.
      * Function returns a boolean indicating if the paging should continue.
@@ -374,47 +378,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         //commit
         persistenceManager.putBatch(entityName, batch.toMap)
     }
-
-//    /**
-//     * if the objects is Mappable return the map of the properties otherwise returns an empty map
-//     */
-//    protected def mapObjectToProperties(anObject: AnyRef, version: Version): Map[String, String] = {
-//        var properties = scala.collection.mutable.Map[String, String]()
-//        if (anObject.isInstanceOf[Mappable]) {
-//            val map = anObject.asInstanceOf[Mappable].getMap
-//
-//
-//            map foreach {
-//                case (key, value) => {
-//                    version match {
-//                        case Processed => properties.put(FullRecordMapper.markAsProcessed(key), value)
-//                        case Consensus => properties.put(FullRecordMapper.markAsConsensus(key), value)
-//                        case Raw => properties.put(key, value)
-//                    }
-//                }
-//            }
-//        }
-//        else{
-//          val defn = FullRecordMapper.getDefn(anObject)
-//            for (field <- defn.keySet) {
-//                //val fieldValue = anObject.getter(field).asInstanceOf[String]
-//                //Use the cached version of the getter method
-//                val getter = defn.get(field).get.asInstanceOf[(Method,Method)]._1
-//                val fieldValue = getter.invoke(anObject)
-//                if (fieldValue != null) {
-//                    version match {
-//                      case Processed => properties.put(FullRecordMapper.markAsProcessed(field.toString), fieldValue.toString)
-//                      case Consensus => properties.put(FullRecordMapper.markAsConsensus(field.toString), fieldValue.toString)
-//                      case Raw => properties.put(field.toString, fieldValue.toString)
-//
-//                    
-//                    }
-//                }
-//            }
-//        }
-//        properties.toMap
-//
-//    }
 
     /**
      * Update the version of the occurrence record.

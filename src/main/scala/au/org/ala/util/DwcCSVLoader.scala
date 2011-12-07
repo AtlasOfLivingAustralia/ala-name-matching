@@ -79,7 +79,7 @@ class DwcCSVLoader extends DataLoader {
         val quotechar = params.getOrElse("csv_text_enclosure", "\"").head
         val separator = params.getOrElse("csv_delimiter", ",").head
         val escape = params.getOrElse("csv_escape_char","\\").head
-        val reader =  new CSVReader(new FileReader(file), separator, quotechar,escape)        
+        val reader =  new CSVReader(new FileReader(file), separator, quotechar, escape)
         
         println("Using CSV reader with the following settings quotes: " + quotechar + " separator: " + separator + " escape: " + escape)
         //match the column headers to dwc terms
@@ -159,7 +159,9 @@ class DwcCSVLoader extends DataLoader {
                 }
             }
             else{
-                println("Skipping line: " +counter + " incorrect number of columns("+columns.length+")...")                
+                println("Skipping line: " +counter + " incorrect number of columns ("+columns.length+")...headers (" + dwcTermHeaders.length +")")
+                println("First element : "+columns(0) +"...headers :" + dwcTermHeaders(0))
+                println("last element : "+columns.last +"...headers :" + dwcTermHeaders.last)
             }
             //read next
             currentLine = reader.readNext

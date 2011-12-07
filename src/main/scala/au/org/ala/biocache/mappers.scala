@@ -17,6 +17,8 @@ object FullRecordMapper {
     val defaultValuesColumn = "defaultValuesUsed"    
     val alaModifiedColumn = "lastModifiedTime"
     val lastUserAssertionDateColumn ="lastUserAssertionDate"
+    val environmentalLayersColumn = "el.p"
+    val contextualLayersColumn = "el.p"
     val deletedColumn = "deleted"
     val geospatialQa = "loc"
     val taxonomicalQa = "class"
@@ -35,8 +37,13 @@ object FullRecordMapper {
 
         //add the special cases to the map
         if(fullRecord.miscProperties!=null && !fullRecord.miscProperties.isEmpty && version == Raw){
-          //properties ++= fullRecord.miscProperties      //store them separately
           properties.put("miscProperties", Json.toJSON(fullRecord.miscProperties))        //store them as JSON array
+        }
+        if(fullRecord.el!=null && !fullRecord.el.isEmpty && version == Processed){
+          properties.put("el.p", Json.toJSON(fullRecord.el))        //store them as JSON array
+        }
+        if(fullRecord.cl!=null && !fullRecord.cl.isEmpty && version == Processed){
+          properties.put("cl.p", Json.toJSON(fullRecord.cl))        //store them as JSON array
         }
         properties.put("uuid", fullRecord.uuid)
         properties.put("rowKey", fullRecord.rowKey)
@@ -55,7 +62,7 @@ object FullRecordMapper {
     def mapObjectToProperties(anObject: AnyRef, version:Version = Raw): Map[String, String] = {
         anObject match {
             //case m:Mappable => m.getMap
-            case p:POSO => { p.toMap.map({case(key, value) => (markNameBasedOnVersion(key,version) -> value)}) }
+            case p:POSO => { p.toMap.map({ case(key, value) => (markNameBasedOnVersion(key,version) -> value) }) }
             case _ => throw new Exception("Unrecognised object. Object isnt a Mappable or a POSO. Class : " + anObject.getClass.getName)
         }
     }
@@ -142,12 +149,13 @@ object FullRecordMapper {
                     case it if defaultValuesColumn.equals(it) => fullRecord.defaultValuesUsed = "true".equals(fieldValue)
                     case it if locationDeterminedColumn.equals(it) => fullRecord.locationDetermined ="true".equals(fieldValue)
                     case it if deletedColumn.equals(it) => fullRecord.deleted = "true".equals(fieldValue)
-                    case it if isProcessedValue(fieldName) && version == Processed => fullRecord.setProperty(removeSuffix(fieldName), fieldValue)
                     case it if lastUserAssertionDateColumn.equals(fieldName) => fullRecord.setLastUserAssertionDate(fieldValue)
-                    case it if version == Raw &&  fullRecord.hasProperty(fieldName) => fullRecord.setProperty(fieldName, fieldValue)
+                    case it if version == Processed && isProcessedValue(fieldName) => fullRecord.setProperty(removeSuffix(fieldName), fieldValue)
+                    case it if version == Raw && fullRecord.hasProperty(fieldName) => fullRecord.setProperty(fieldName, fieldValue)
                     case _ => {
-                      //any property that is not recognised is lumped into miscProperties
-                      miscProperties.put(fieldName, fieldValue)
+//                      println("*********** field added to miscProperties. " + fieldName+", "+fieldValue)
+//                      //any property that is not recognised is lumped into miscProperties
+//                      miscProperties.put(fieldName, fieldValue)
                     }
                 }
             }

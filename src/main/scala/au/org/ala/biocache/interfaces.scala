@@ -81,7 +81,7 @@ object Store {
         
         val listBuff = new java.util.LinkedList[ProcessedValue]
         
-        if (!rawPoso.isInstanceOf[ContextualLayers] && !rawPoso.isInstanceOf[EnvironmentalLayers]) {
+        //if (!rawPoso.isInstanceOf[ContextualLayers] && !rawPoso.isInstanceOf[EnvironmentalLayers]) {
           rawPoso.propertyNames.foreach(name => {
             if(!propertiesToHide.contains(name)){
               val rawValue = rawPoso.getProperty(name)
@@ -92,7 +92,7 @@ object Store {
               }
             }
           })
-        }
+        //}
         val name = rawPoso.getClass().getName().substring(rawPoso.getClass().getName().lastIndexOf(".")+1)
         map.put(name, listBuff)
       }

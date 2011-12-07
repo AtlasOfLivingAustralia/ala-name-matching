@@ -7,12 +7,10 @@ package au.org.ala.biocache
 import au.org.ala.data.model.LinnaeanRankClassification
 import au.org.ala.util.ReflectBean
 import au.org.ala.checklist.lucene.model.NameSearchResult
-//import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import au.org.ala.checklist.lucene.{CBIndexSearch, HomonymException, SearchResultException}
 import scala.io.Source
 import org.slf4j.LoggerFactory
 import java.net.URLEncoder
-//import scalaj.http.Http
 import java.util.zip.GZIPInputStream
 import java.io.BufferedReader
 import scala.xml.XML
@@ -20,14 +18,15 @@ import java.io.InputStreamReader
 import java.net.URL
 import scalaj.http.Http
 import scala.collection.JavaConversions
-
+import org.ala.layers.client.Client
+import scala.collection.mutable.HashMap
 
 /**
  * A DAO for accessing classification information in the cache. If the
  * value does not exist in the cache the name matching API is called.
  *
  * The cache will store a classification object for names that match. If the
- * name causes a homonym execption or is not found the ErrorCode is stored.
+ * name causes a homonym exception or is not found the ErrorCode is stored.
  *
  * @author Natasha Carter
  */
@@ -381,9 +380,7 @@ object LocationDAO {
   private val lock : AnyRef = new Object()
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
   private val persistenceManager = Config.persistenceManager
-//  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[Location]]()
-//      .maximumWeightedCapacity(10000)
-//      .build();
+
   /**
    * Add a tag to a location
    */
@@ -401,8 +398,8 @@ object LocationDAO {
     val guid = latitude +"|"+longitude
     var properties = scala.collection.mutable.Map[String,String]()
     properties ++= mapping
-    properties.put("decimalLatitude", latitude.toString)
-    properties.put("decimalLongitude", longitude.toString)
+    properties.put("latitude", latitude.toString)
+    properties.put("longitude", longitude.toString)
     persistenceManager.put(guid, columnFamily, properties.toMap)
   }
 
@@ -412,13 +409,26 @@ object LocationDAO {
   def addRegionToPoint (latitude:String, longitude:String, mapping:Map[String,String]) {
     if (latitude!=null && latitude.trim.length>0 && longitude!=null && longitude.trim.length>0){
       val guid = latitude.trim() +"|"+longitude.trim()
-      var properties = scala.collection.mutable.Map[String,String]()
-      properties ++= mapping
-      properties.put("decimalLatitude", latitude)
-      properties.put("decimalLongitude", longitude)
-      persistenceManager.put(guid, columnFamily, properties.toMap)
+      persistenceManager.put(guid, columnFamily, Map("latitude"->latitude, "longitude" ->longitude) ++ mapping)
     }
-  }  
+  }
+
+  /**
+   * Add a region mapping for this point.
+   */
+  def addLayerIntersects (latitude:String, longitude:String, contextual:Map[String,String], environmental:Map[String,Float]) {
+    if (latitude!=null && latitude.trim.length>0 && longitude!=null && longitude.trim.length>0){
+      val guid = latitude.trim() +"|"+longitude.trim()
+
+      val mapBuffer = new HashMap[String, String]
+      mapBuffer += ("latitude" -> latitude)
+      mapBuffer += ("longitude"-> longitude)
+      mapBuffer ++= contextual
+      mapBuffer ++= environmental.map(x => x._1 -> x._2.toString)
+
+      persistenceManager.put(guid, columnFamily, mapBuffer.toMap)
+    }
+  }
   
   /**
    * Round coordinates to 4 decimal places.
@@ -439,11 +449,12 @@ object LocationDAO {
     None
   }
 
+  import JavaConversions._
   /**
    * Get location information for point.
    * For geo spatial requirements we don't want to round the latitude , longitudes 
    */
-  def getByLatLon(latitude:String, longitude:String) : Option[(Location, EnvironmentalLayers, ContextualLayers)] = {
+  def getByLatLon(latitude:String, longitude:String) : Option[(Location, Map[String,String], Map[String,String])] = {
 
     if (latitude == null || latitude.trim.length == 0 || longitude == null || longitude.trim.length == 0){
       return None
@@ -455,96 +466,78 @@ object LocationDAO {
     //val cachedObject = lru.get(uuid)
 
     if(cachedObject!=null){
-        cachedObject.asInstanceOf[Option[(Location, EnvironmentalLayers, ContextualLayers)]]
+        cachedObject.asInstanceOf[Option[(Location, Map[String, String], Map[String, String])]]
     } else {
         val map = persistenceManager.get(uuid,"loc")
-        if(!map.isEmpty){
-          val location = new Location
-          val environmentalLayers = new EnvironmentalLayers
-          val contextualLayers = new ContextualLayers
-          FullRecordMapper.mapPropertiesToObject(location,map.get)
-          FullRecordMapper.mapPropertiesToObject(environmentalLayers, map.get)
-          FullRecordMapper.mapPropertiesToObject(contextualLayers, map.get)
-          val returnValue = Some((location, environmentalLayers, contextualLayers))
-          lock.synchronized {lru.put(uuid,returnValue)}
-          returnValue
-        } else {
-          //do a gazetteer lookup???
-          if(Config.allowWebserviceLookup){
-            val map = gazetteerLookup(latitude, longitude)
-            if (!map.isEmpty) {
-              //cache it in cassandra
-              addRegionToPoint(latitude, longitude, map)
-              val location = new Location
-              val environmentalLayers = new EnvironmentalLayers
-              val contextualLayers = new ContextualLayers
-              FullRecordMapper.mapPropertiesToObject(location, map)
-              FullRecordMapper.mapPropertiesToObject(environmentalLayers, map)
-              FullRecordMapper.mapPropertiesToObject(contextualLayers, map)
-              val returnValue = Some((location, environmentalLayers, contextualLayers))
+        map match {
+          case Some(map) => {
+            val location = new Location
+            location.decimalLatitude = latitude
+            location.decimalLongitude = longitude
+            location.stateProvince = map.getOrElse("cl927", null)
+            location.ibra = map.getOrElse("cl927", null)
+            location.imcra = map.getOrElse("cl21", null)
+            location.country = map.getOrElse("cl922", null)
+
+            val el = map.filter(x => x._1.startsWith("el"))
+            val cl = map.filter(x => x._1.startsWith("cl"))
+
+            val returnValue = Some((location, el, cl))
+
+            lock.synchronized {lru.put(uuid,returnValue)}
+
+            returnValue
+          }
+          case None => {
+            //do a layer lookup???
+            if(Config.allowLayerLookup){
+              val intersection = doLayerIntersectForPoint(latitude, longitude)
               lock.synchronized {
-                lru.put(uuid, returnValue)
+                lru.put(uuid, intersection)
               }
-              returnValue
+              intersection
             } else {
-              lock.synchronized {
-                lru.put(uuid, None)
-              }
               None
             }
-          } else {
-            lock.synchronized {
-              lru.put(uuid, None)
-            }
-            None
           }
         }
     }
   }
 
-  def gazetteerLookup(latitude: String, longitude: String): Map[String, String] = {
-    try {
-      val url = new URL("http://spatial.ala.org.au/gazetteer/latlon/" + latitude + "," + longitude)
-      val connection = url.openConnection();
-      connection.setRequestProperty("Accept", "application/xml");
-      connection.setRequestProperty("Accept-Encoding", "gzip,deflate");
-      connection.setDoInput(true);
+  def doLayerIntersectForPoint(latitude:String, longitude:String) : Option[(Location, Map[String,String], Map[String,String])] = {
 
-      //println("content length: " + connection.getContentLength)
+    //do a layers-store lookup
+    val layerIntersectDAO = Client.getLayerIntersectDao()
+    val points = Array(Array[Double](longitude.toDouble, latitude.toDouble))
+    val samples:java.util.ArrayList[String] = layerIntersectDAO.sampling(Config.fieldsToSample, points)
 
-      if(connection.getContentLength > 0){
-        val in = connection.getInputStream();
-        val gis = new GZIPInputStream(in);
-        val responseBuffer = new StringBuffer()
-        val input = new BufferedReader(new InputStreamReader(gis));
-        var line = input.readLine
-        while (line != null) {
-          responseBuffer.append(line)
-          line = input.readLine
-        }
+    if(!samples.isEmpty){
+      val values:Array[String] = samples.toArray(Array[String]())
+      //create a map to store in loc
+      val mapBuffer = new HashMap[String, String]
+      mapBuffer += ("latitude" -> latitude)
+      mapBuffer += ("longitude"-> longitude)
+      mapBuffer ++= (Config.fieldsToSample zip values).filter(x => x._2.trim.length != 0 && x._2 != "n/a")
+      val propertyMap = mapBuffer.toMap
+      persistenceManager.put(latitude + "|" + longitude, columnFamily, propertyMap)
+      //now map fields to elements of the model object "Location" and return this
+      val location = new Location
+      location.decimalLatitude = latitude
+      location.decimalLongitude = longitude
+      location.stateProvince = propertyMap.getOrElse("cl927", null)
+      location.ibra = propertyMap.getOrElse("cl20", null)
+      location.imcra = propertyMap.getOrElse("cl21", null)
+      location.country = propertyMap.getOrElse("cl922", null)
 
-        gis.close
-        val xml = XML.loadString(responseBuffer.toString)
-        val results = xml \\ "result"
+      val el = propertyMap.filter(x => x._1.startsWith("el"))
+      val cl = propertyMap.filter(x => x._1.startsWith("cl"))
 
-        results.map(result => {
-          val layerName = (result \ "layerName").text
-          val name = (result \ "name").text
-
-          DwC.matchTerm(layerName) match {
-            case Some(t) => Map(t.canonical -> name)
-            case _ => Map(layerName -> name)
-          }
-        }).flatten.toMap
-      } else {
-        Map()
-      }
-    } catch {
-      case ex:Exception => ex.printStackTrace(); Map()
+      Some((location, el, cl))
+    } else {
+      None
     }
   }
 }
-
 
 /**
  * Provides the tools needed to work with webservices

@@ -169,7 +169,7 @@ object AdHocParser {
     val listBuff = new ListBuffer[ProcessedValue]
     for ((rawPoso, procPoso) <- rawAndProcessed) {
 
-      if (!rawPoso.isInstanceOf[ContextualLayers] && !rawPoso.isInstanceOf[EnvironmentalLayers]) {
+//      if (!rawPoso.isInstanceOf[ContextualLayers] && !rawPoso.isInstanceOf[EnvironmentalLayers]) {
         rawPoso.propertyNames.foreach(name => {
           val rawValue = rawPoso.getProperty(name)
           val procValue = procPoso.getProperty(name)
@@ -178,7 +178,7 @@ object AdHocParser {
             listBuff += term
           }
         })
-      }
+//      }
     }
     ParsedRecord(listBuff.toList.toArray, assertions.values.flatten.toArray)
   }

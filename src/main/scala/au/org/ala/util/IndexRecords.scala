@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import au.org.ala.biocache._
 import java.io.File
 import java.util.Date
+import scala.collection.mutable.HashMap
 
 /**
  * Index the Cassandra Records to conform to the fields
@@ -13,7 +14,9 @@ import java.util.Date
  * @author Natasha Carter
  */
 object IndexRecords {
-import FileHelper._
+
+  import FileHelper._
+
   val logger = LoggerFactory.getLogger("IndexRecords")
   val indexer = Config.getInstance(classOf[IndexDAO]).asInstanceOf[IndexDAO]
   val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
@@ -45,32 +48,30 @@ import FileHelper._
      }
   }
 
-  def index(startUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false, startDate:Option[String]=None, checkDeleted:Boolean=false)={
+  def index(startUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false,
+            startDate:Option[String]=None, checkDeleted:Boolean=false) = {
 
-        val startKey = {
-            if(startUuid.isEmpty && !dataResource.isEmpty) {
-            	dataResource.get +"|"
-            } else {
-                startUuid.get
-            }
+    val startKey = {
+        if(startUuid.isEmpty && !dataResource.isEmpty) {
+          dataResource.get +"|"
+        } else {
+            startUuid.get
         }
-        
-        
-        var date:Option[Date]=None        
-        if(!startDate.isEmpty){
-            date = DateParser.parseStringToDate(startDate.get +" 00:00:00")
-            if(date.isEmpty)
-                throw new Exception("Date is in incorrect format. Try yyyy-mm-dd")
-            logger.info("Indexing will be restricted to records changed after " + date.get)
-        }
+    }
 
-        val endKey = if(dataResource.isEmpty) "" else dataResource.get +"|~"
-        logger.info("Starting to index " + startKey + " until " + endKey)
-        indexRange(startKey, endKey, date, checkDeleted)
-        //index any remaining items before exiting
-        indexer.finaliseIndex(optimise, shutdown)
-       
+    var date:Option[Date]=None
+    if(!startDate.isEmpty){
+        date = DateParser.parseStringToDate(startDate.get +" 00:00:00")
+        if(date.isEmpty)
+            throw new Exception("Date is in incorrect format. Try yyyy-mm-dd")
+        logger.info("Indexing will be restricted to records changed after " + date.get)
+    }
 
+    val endKey = if(dataResource.isEmpty) "" else dataResource.get +"|~"
+    logger.info("Starting to index " + startKey + " until " + endKey)
+    indexRange(startKey, endKey, date, checkDeleted)
+    //index any remaining items before exiting
+    indexer.finaliseIndex(optimise, shutdown)
   }
 
 
@@ -79,22 +80,31 @@ import FileHelper._
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
-    var items = new ArrayList[OccurrenceIndex]()
-    performPaging( (guid, map)=> {
+    performPaging( (guid, map) => {
         counter += 1
-        indexer.indexFromMap(guid, map,startDate=startDate)
+        val fullMap = new HashMap[String, String]
+        fullMap ++= map
+        ///convert EL and CL properties at this stage
+        fullMap ++= Json.toStringMap(map.getOrElse("el.p", "{}"))
+        fullMap ++= Json.toStringMap(map.getOrElse("cl.p", "{}"))
+        val mapToIndex = fullMap.toMap
+
+        indexer.indexFromMap(guid, mapToIndex, startDate=startDate)
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
           logger.info(counter + " >> Last key : " + guid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
         }
         true
-    }, startUuid, endUuid, checkDeleted= checkDeleted)
+    }, startUuid, endUuid, checkDeleted = checkDeleted)
 
     finishTime = System.currentTimeMillis
     logger.info("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
   }
-  
+
+  /**
+   * Page over records function
+   */
   def performPaging(proc:((String, Map[String,String])=>Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000, checkDeleted:Boolean=false){
       if(checkDeleted){
           persistenceManager.pageOverSelect("occ",(guid, map)=>{
@@ -106,36 +116,29 @@ import FileHelper._
               }
               true
               },startKey,endKey,pageSize,"uuid", "rowKey",FullRecordMapper.deletedColumn)
-      }
-      else{
-          persistenceManager.pageOverAll("occ", (guid, map)=> {
-              proc(guid, map)
-          },startKey,endKey)
+      } else {
+          persistenceManager.pageOverAll("occ", (guid, map) => { proc(guid, map) },startKey,endKey)
       }
   }
-  
-  
+
   /**
    * Indexes the supplied list of rowKeys
    */
   def indexList(file:File)={
       var counter = 0
-      val start = System.currentTimeMillis
       var startTime = System.currentTimeMillis
       var finishTime = System.currentTimeMillis
       
       file.foreachLine(line=>{
           counter+=1
           val map =persistenceManager.get(line,"occ")
-          if(!map.isEmpty)
-              indexer.indexFromMap(line, map.get)
-              
-           
+          if(!map.isEmpty) indexer.indexFromMap(line, map.get)
+
           if (counter % 1000 == 0) {
-          finishTime = System.currentTimeMillis
-          logger.info(counter + " >> Last key : " + line + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
-          startTime = System.currentTimeMillis
-        }
+            finishTime = System.currentTimeMillis
+            logger.info(counter + " >> Last key : " + line + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+            startTime = System.currentTimeMillis
+          }
       })
   
       indexer.finaliseIndex(false, true)
@@ -153,12 +156,11 @@ import FileHelper._
     occurrenceDAO.pageOverAllVersions(versions => {
       counter += 1
       if (!versions.isEmpty) {
-    	val v = versions.get
+        val v = versions.get
 
-    	val raw = v(0)
-    	val processed = v(1)
+        val (raw,processed) = (v(0),v(1))
 
-    	items.add(indexer.getOccIndexModel(raw,processed).get);
+        items.add(indexer.getOccIndexModel(raw,processed).get)
         //debug counter
         if (counter % 1000 == 0) {
           //add the items to the configured indexer
