@@ -39,11 +39,12 @@ object Config {
     lazy val fieldsToSample = {
       val str = configModule.properties.getProperty("fieldsToSample")
       if (str == null || str.trim == ""){
-        var dbfields = Client.getFieldDao().getFieldsByDB();
+        var dbfields = Client.getFieldDao().getFields();
         var fields: Array[String] = Array.ofDim(dbfields.size())
         for (a <- 0 until dbfields.size()) {
           fields(a) = dbfields.get(a).getId()
         }
+        println("Fields to sample: " + fields.mkString(","))
         fields    //fields.dropWhile(x => List("el898","cl909","cl900").contains(x))
       } else {
         val fields = str.split(",").map(x => x.trim).toArray
