@@ -36,7 +36,7 @@ object Config {
       }
     }
 
-    val fieldsToSample = {
+    lazy val fieldsToSample = {
       val str = configModule.properties.getProperty("fieldsToSample")
       if (str == null || str.trim == ""){
         var dbfields = Client.getFieldDao().getFieldsByDB();

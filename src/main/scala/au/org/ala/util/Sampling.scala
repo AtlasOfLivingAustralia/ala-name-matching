@@ -186,23 +186,18 @@ class Sampling {
       var counter = 0
       var line = csvReader.readNext
 
-      println("header: " + header.length + ", line: " + line.length)
-
       while (line != null) {
         try {
           val map = (header zip line).filter(x => !StringUtils.isEmpty(x._2.trim) && x._1 != "latitude" && x._1 != "longitude").toMap
           val el = map.filter(x => x._1.startsWith("el")).map(y => y._1 -> y._2.toFloat).toMap
           val cl = map.filter(x => x._1.startsWith("cl")).toMap
-
-          if (map.size > 0 && line.length > 2) {
-            LocationDAO.addLayerIntersects(line(1), line(0), cl, el)
-            if (counter % 1000 == 0) {
-              println("writing to loc:" + counter + ": " + line(1) + "|" + line(0) +
-                ", records per sec: " + 1000f / (((System.currentTimeMillis - nextTime).toFloat) / 1000f))
-              nextTime = System.currentTimeMillis
-            }
-            counter += 1
+          LocationDAO.addLayerIntersects(line(1), line(0), cl, el)
+          if (counter % 1000 == 0) {
+            println("writing to loc:" + counter + ": " + line(1) + "|" + line(0) +
+              ", records per sec: " + 1000f / (((System.currentTimeMillis - nextTime).toFloat) / 1000f))
+            nextTime = System.currentTimeMillis
           }
+          counter += 1
         } catch {
           case e: Exception => e.printStackTrace();println("Problem writing line: " + counter + ", line length: " + line.length + ", header length: " + header.length)
         }

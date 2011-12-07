@@ -380,26 +380,28 @@ object LocationDAO {
   private val lock : AnyRef = new Object()
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
   private val persistenceManager = Config.persistenceManager
+  private final val latitudeCol = "lat"
+  private final val longitudeCol = "lon"
 
   /**
    * Add a tag to a location
    */
   def addTagToLocation (latitude:Float, longitude:Float, tagName:String, tagValue:String) {
-    val guid = latitude +"|"+longitude
-    persistenceManager.put(guid, columnFamily, "decimalLatitude",latitude.toString)
-    persistenceManager.put(guid, columnFamily, "decimalLongitude",longitude.toString)
-    persistenceManager.put(guid, columnFamily, tagName,tagValue)
+    val guid = getLatLongKey(latitude, longitude)
+    persistenceManager.put(guid, columnFamily, latitudeCol, latitude.toString)
+    persistenceManager.put(guid, columnFamily, longitudeCol, longitude.toString)
+    persistenceManager.put(guid, columnFamily, tagName, tagValue)
   }
 
   /**
    * Add a region mapping for this point.
    */
   def addRegionToPoint (latitude:Double, longitude:Double, mapping:Map[String,String]) {
-    val guid = latitude +"|"+longitude
+    val guid = getLatLongKey(latitude, longitude)
     var properties = scala.collection.mutable.Map[String,String]()
     properties ++= mapping
-    properties.put("latitude", latitude.toString)
-    properties.put("longitude", longitude.toString)
+    properties.put(latitudeCol, latitude.toString)
+    properties.put(longitudeCol, longitude.toString)
     persistenceManager.put(guid, columnFamily, properties.toMap)
   }
 
@@ -408,8 +410,8 @@ object LocationDAO {
    */
   def addRegionToPoint (latitude:String, longitude:String, mapping:Map[String,String]) {
     if (latitude!=null && latitude.trim.length>0 && longitude!=null && longitude.trim.length>0){
-      val guid = latitude.trim() +"|"+longitude.trim()
-      persistenceManager.put(guid, columnFamily, Map("latitude"->latitude, "longitude" ->longitude) ++ mapping)
+      val guid = getLatLongKey(latitude, longitude)
+      persistenceManager.put(guid, columnFamily, Map(latitudeCol-> latitude, longitudeCol -> longitude) ++ mapping)
     }
   }
 
@@ -418,11 +420,11 @@ object LocationDAO {
    */
   def addLayerIntersects (latitude:String, longitude:String, contextual:Map[String,String], environmental:Map[String,Float]) {
     if (latitude!=null && latitude.trim.length>0 && longitude!=null && longitude.trim.length>0){
-      val guid = latitude.trim() +"|"+longitude.trim()
+      val guid = getLatLongKey(latitude, longitude)
 
       val mapBuffer = new HashMap[String, String]
-      mapBuffer += ("latitude" -> latitude)
-      mapBuffer += ("longitude"-> longitude)
+      mapBuffer += (latitudeCol -> latitude)
+      mapBuffer += (longitudeCol-> longitude)
       mapBuffer ++= contextual
       mapBuffer ++= environmental.map(x => x._1 -> x._2.toString)
 
@@ -430,23 +432,16 @@ object LocationDAO {
     }
   }
   
-  /**
-   * Round coordinates to 4 decimal places.
-   */
-  protected def roundCoord(x:String) : String = {
-    try {
-      (((x.toFloat * 10000).toInt).toFloat / 10000).toString
-    } catch {
-      case e:NumberFormatException => x
-    }
+  private def getLatLongKey(latitude:String, longitude:String) : String = {
+    latitude.toFloat.toString.trim + "|" + longitude.toFloat.toString
   }
-  /**
-   * Returns the persistence storage primary key for the supplied coordinates
-   */
-  def getLatLongKey(latitude:String, longitude:String) :Option[String]={
-    if(latitude != null && longitude != null)
-      return Some(roundCoord(latitude)+"|"+roundCoord(longitude))
-    None
+
+  private def getLatLongKey(latitude:Float, longitude:Float) : String = {
+    latitude.toString.trim + "|" + longitude.toString
+  }
+
+  private def getLatLongKey(latitude:Double, longitude:Double) : String = {
+    latitude.toString.trim + "|" + longitude.toString
   }
 
   import JavaConversions._
@@ -456,26 +451,25 @@ object LocationDAO {
    */
   def getByLatLon(latitude:String, longitude:String) : Option[(Location, Map[String,String], Map[String,String])] = {
 
-    if (latitude == null || latitude.trim.length == 0 || longitude == null || longitude.trim.length == 0){
+    if (latitude == null || longitude == null || latitude.trim.length == 0 || longitude.trim.length == 0){
       return None
     }
 
-    val uuid = latitude.trim + "|" + longitude.trim //roundCoord(latitude)+"|"+roundCoord(longitude)
+    val uuid = getLatLongKey(latitude, longitude)
 
     val cachedObject = lock.synchronized { lru.get(uuid) }
-    //val cachedObject = lru.get(uuid)
 
     if(cachedObject!=null){
         cachedObject.asInstanceOf[Option[(Location, Map[String, String], Map[String, String])]]
     } else {
-        val map = persistenceManager.get(uuid,"loc")
+        val map = persistenceManager.get(uuid,columnFamily)
         map match {
           case Some(map) => {
             val location = new Location
             location.decimalLatitude = latitude
             location.decimalLongitude = longitude
             location.stateProvince = map.getOrElse("cl927", null)
-            location.ibra = map.getOrElse("cl927", null)
+            location.ibra = map.getOrElse("cl20", null)
             location.imcra = map.getOrElse("cl21", null)
             location.country = map.getOrElse("cl922", null)
 
@@ -515,11 +509,12 @@ object LocationDAO {
       val values:Array[String] = samples.toArray(Array[String]())
       //create a map to store in loc
       val mapBuffer = new HashMap[String, String]
-      mapBuffer += ("latitude" -> latitude)
-      mapBuffer += ("longitude"-> longitude)
+      mapBuffer += (latitudeCol -> latitude)
+      mapBuffer += (longitude-> longitude)
       mapBuffer ++= (Config.fieldsToSample zip values).filter(x => x._2.trim.length != 0 && x._2 != "n/a")
       val propertyMap = mapBuffer.toMap
-      persistenceManager.put(latitude + "|" + longitude, columnFamily, propertyMap)
+      val guid = getLatLongKey(latitude, longitude)
+      persistenceManager.put(guid, columnFamily, propertyMap)
       //now map fields to elements of the model object "Location" and return this
       val location = new Location
       location.decimalLatitude = latitude

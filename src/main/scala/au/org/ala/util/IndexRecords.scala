@@ -25,17 +25,18 @@ object IndexRecords {
   def main(args: Array[String]): Unit = {
 
     var startUuid:Option[String] = None
-
     var dataResource:Option[String] = None
     var empty:Boolean =false
     var check:Boolean=false
     var startDate:Option[String]=None
+    var pageSize = 1000
     val parser = new OptionParser("index records options") {
         opt("empty", "empty the index first", {empty=true})
         opt("check","check to see if the record is deleted before indexing",{check=true})
         opt("s", "start","The record to start with", {v:String => startUuid = Some(v)})
-        opt("dr", "resource", "The data resource to process", {v:String =>dataResource = Some(v)})
+        opt("dr", "resource", "The data resource to process", {v:String => dataResource = Some(v)})
         opt("date", "date", "The earliest modification date for records to be indexed. Date in the form yyyy-mm-dd",{v:String => startDate = Some(v)})
+        intOpt("ps", "pageSize", "The page size for indexing", {v:Int => pageSize = v })
     }
 
     if(parser.parse(args)){
@@ -44,12 +45,12 @@ object IndexRecords {
            logger.info("Emptying index")
            indexer.emptyIndex
         }        
-        index(startUuid, dataResource, false, false, startDate, check)
+        index(startUuid, dataResource, false, false, startDate, check, pageSize)
      }
   }
 
   def index(startUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false,
-            startDate:Option[String]=None, checkDeleted:Boolean=false) = {
+            startDate:Option[String]=None, checkDeleted:Boolean=false, pageSize:Int = 1000) = {
 
     val startKey = {
         if(startUuid.isEmpty && !dataResource.isEmpty) {
@@ -74,8 +75,7 @@ object IndexRecords {
     indexer.finaliseIndex(optimise, shutdown)
   }
 
-
-  def indexRange(startUuid:String, endUuid:String, startDate:Option[Date]=None, checkDeleted:Boolean=false)={
+  def indexRange(startUuid:String, endUuid:String, startDate:Option[Date]=None, checkDeleted:Boolean=false, pageSize:Int = 1000)={
     var counter = 0
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
@@ -90,13 +90,13 @@ object IndexRecords {
         val mapToIndex = fullMap.toMap
 
         indexer.indexFromMap(guid, mapToIndex, startDate=startDate)
-        if (counter % 1000 == 0) {
+        if (counter % pageSize == 0) {
           finishTime = System.currentTimeMillis
-          logger.info(counter + " >> Last key : " + guid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          logger.info(counter + " >> Last key : " + guid + ", records per sec: " + pageSize.toFloat / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
         }
         true
-    }, startUuid, endUuid, checkDeleted = checkDeleted)
+    }, startUuid, endUuid, checkDeleted = checkDeleted, pageSize = pageSize)
 
     finishTime = System.currentTimeMillis
     logger.info("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
@@ -105,7 +105,7 @@ object IndexRecords {
   /**
    * Page over records function
    */
-  def performPaging(proc:((String, Map[String,String])=>Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000, checkDeleted:Boolean=false){
+  def performPaging(proc:((String, Map[String,String])=>Boolean),startKey:String="", endKey:String="", pageSize:Int = 1000, checkDeleted:Boolean=false){
       if(checkDeleted){
           persistenceManager.pageOverSelect("occ",(guid, map)=>{
               if(map.getOrElse(FullRecordMapper.deletedColumn, "false").equals("false")){

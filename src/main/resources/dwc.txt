@@ -120,7 +120,7 @@ occurrenceStatus
 order	bioorder
 originalNameUsage	originalName	originalTaxon	basionym
 originalNameUsageID	originalNameID	originalTaxonID	basionymID
-otherCatalogNumbers	PreviousCatalogNumber
+otherCatalogNumbers	PreviousCatalogNumber	otherCatalogueNumbers	otherCatalogueNumber
 ownerInstitutionCode
 parentNameUsage	parentTaxon	higherTaxon	higherNameUsage
 phylum

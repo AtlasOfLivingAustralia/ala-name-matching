@@ -10,8 +10,9 @@ import org.codehaus.jackson.map.ObjectMapper
 object CommandLineTool {
 
   def main(args: Array[String]) {
+
     println("----------------------------")
-    println("- Biocache management tool -")
+    println("| Biocache management tool |")
     println("----------------------------")
     print("\nPlease supply a command or hit ENTER to view command list:")
     var input = readLine
@@ -72,7 +73,7 @@ object CommandLineTool {
       } catch {
         case e: Exception => e.printStackTrace
       }
-      print("\nPlease supply a command or hit ENTER to view command list:")
+      print("\nPlease supply a command or hit ENTER to view command list: ")
       input = readLine
     }
     //close down the data store and index so the program can exit normally
@@ -82,21 +83,21 @@ object CommandLineTool {
   }
 
   def printHelp = {
-    println("1)  list - print list of resources")
-    println("2)  describe <dr-uid> <dr-uid1> <dr-uid2>... - print list of resources")
-    println("3)  load <dr-uid> - load resource")
-    println("4)  process-single <uuid> - process single record")
-    println("5)  process <dr-uid> - process resource")
-    println("6)  process-all - process all records (this takes a long time)")
-    println("7)  index <dr-uid> - index resource")
-    println("8)  createdwc <dr-uid> <export directory>")
-    println("9)  healthcheck")
-    println("10)  export")
-    println("11)  import")
-    println("12)  optimise")
-    println("13)  sample-all")
-    println("14)  sample <dr-uid> - sample resource")
-    println("15)  exit")
+    println(" [1]  list - print list of resources")
+    println(" [2]  describe <dr-uid> <dr-uid1> <dr-uid2>... - print list of resources")
+    println(" [3]  load <dr-uid> - load resource")
+    println(" [4]  process-single <uuid> - process single record")
+    println(" [5]  process <dr-uid> - process resource")
+    println(" [6]  process-all - process all records (this takes a long time)")
+    println(" [7]  index <dr-uid> - index resource (for offline use only)")
+    println(" [8]  createdwc <dr-uid> <export directory>")
+    println(" [9]  healthcheck")
+    println("[10]  export")
+    println("[11]  import")
+    println("[12]  optimise")
+    println("[13]  sample-all")
+    println("[14]  sample <dr-uid> - sample resource")
+    println("[15]  exit")
   }
 
   def printTable(table: List[Map[String, String]]) {
