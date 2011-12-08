@@ -84,11 +84,11 @@
             <artifactId>layers-store</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>com.mockrunner</groupId>
             <artifactId>mockrunner</artifactId>
             <version>0.3.6</version>
-        </dependency>
+        </dependency>-->
         <!--  Spring Framework - required by layers-store -->
         <dependency>
             <groupId>org.springframework</groupId>
