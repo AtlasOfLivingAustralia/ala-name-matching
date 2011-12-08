@@ -117,22 +117,31 @@ object CommandLineTool {
   }
 
   def printHelp = {
-    println(" [1]  list - print list of resources")
-    println(" [2]  describe <dr-uid> <dr-uid1> <dr-uid2>... - print list of resources")
-    println(" [3]  load <dr-uid> - load resource")
-    println(" [4]  process-single <uuid> - process single record")
-    println(" [5]  process <dr-uid> - process resource")
-    println(" [6]  process-all - process all records (this takes a long time)")
-    println(" [7]  index <dr-uid> - index resource (for offline use only)")
-    println(" [8]  index-live <dr-uid> - index resource by calling webservice to index")
-    println(" [9]  createdwc <dr-uid> <export directory>")
-    println(" [10]  healthcheck")
-    println("[11]  export")
-    println("[12]  import")
-    println("[13]  optimise")
-    println("[14]  sample-all")
-    println("[15]  sample <dr-uid> - sample resource")
-    println("[16]  exit")
+    padAndPrint(" [1]  list - print list of resources")
+    padAndPrint(" [2]  describe <dr-uid> <dr-uid1> <dr-uid2> - show the configuration or the resource")
+    padAndPrint(" [3]  load <dr-uid> - load resource into biocache (does not index)")
+    padAndPrint(" [4]  process-single <uuid> - process single record (SDS/namematching)")
+    padAndPrint(" [5]  process <dr-uid> - process resource")
+    padAndPrint(" [6]  process-all - process all records (this takes a long time for full biocache)")
+    padAndPrint(" [7]  index <dr-uid> - index resource (for offline use only)")
+    padAndPrint(" [8]  index-live <dr-uid> - index resource by calling webservice to index")
+    padAndPrint(" [9]  createdwc <dr-uid> <export directory> - create a darwin core archive for a resource")
+    padAndPrint("[10]  healthcheck - Do a healthcheck on the configured resources in the collectory")
+    padAndPrint("[11]  export - CSV export of data")
+    padAndPrint("[12]  import - CSV import of data")
+    padAndPrint("[13]  optimise - Optimisation of SOLR index (this takes some time)")
+    padAndPrint("[14]  sample-all - Run geospatial sampling for all records")
+    padAndPrint("[15]  sample <dr-uid> - Run geospatial sampling for records for a data resource")
+    padAndPrint("[16]  exit")
+  }
+
+  def padAndPrint(str:String) = println(padElementTo60(str))
+
+  def padElementTo60(str:String) = padElement(str, 60)
+
+  def padElement(str:String, width:Int) = {
+    val indexOfHyphen = str.indexOf(" -")
+    str.replace(" - ",  Array.fill(width - indexOfHyphen)(' ').mkString  + " - " )
   }
 
   def printTable(table: List[Map[String, String]]) {

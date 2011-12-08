@@ -105,73 +105,45 @@ object IndexRecords {
   /**
    * Page over records function
    */
-  def performPaging(proc:((String, Map[String,String])=>Boolean),startKey:String="", endKey:String="", pageSize:Int = 1000, checkDeleted:Boolean=false){
-      if(checkDeleted){
-          persistenceManager.pageOverSelect("occ",(guid, map)=>{
-              if(map.getOrElse(FullRecordMapper.deletedColumn, "false").equals("false")){
-                  val map = persistenceManager.get(guid, "occ")
-                  if(!map.isEmpty){
-                      proc(guid, map.get)
-                  }
-              }
-              true
-              },startKey,endKey,pageSize,"uuid", "rowKey",FullRecordMapper.deletedColumn)
-      } else {
-          persistenceManager.pageOverAll("occ", (guid, map) => { proc(guid, map) },startKey,endKey)
-      }
+  def performPaging(proc: ((String, Map[String, String]) => Boolean), startKey: String = "",
+                    endKey: String = "", pageSize: Int = 1000, checkDeleted: Boolean = false) {
+    if (checkDeleted) {
+      persistenceManager.pageOverSelect("occ", (guid, map) => {
+        if (map.getOrElse(FullRecordMapper.deletedColumn, "false").equals("false")) {
+          val map = persistenceManager.get(guid, "occ")
+          if (!map.isEmpty) {
+            proc(guid, map.get)
+          }
+        }
+        true
+      }, startKey, endKey, pageSize, "uuid", "rowKey", FullRecordMapper.deletedColumn)
+    } else {
+      persistenceManager.pageOverAll("occ", (guid, map) => {
+        proc(guid, map)
+      }, startKey, endKey)
+    }
   }
 
   /**
    * Indexes the supplied list of rowKeys
    */
-  def indexList(file:File)={
-      var counter = 0
-      var startTime = System.currentTimeMillis
-      var finishTime = System.currentTimeMillis
-      
-      file.foreachLine(line=>{
-          counter+=1
-          val map =persistenceManager.get(line,"occ")
-          if(!map.isEmpty) indexer.indexFromMap(line, map.get)
-
-          if (counter % 1000 == 0) {
-            finishTime = System.currentTimeMillis
-            logger.info(counter + " >> Last key : " + line + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
-            startTime = System.currentTimeMillis
-          }
-      })
-  
-      indexer.finaliseIndex(false, true)
-  }
-  
-
-  def processFullRecords(){
-
+  def indexList(file: File) = {
     var counter = 0
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
-    var items = new ArrayList[OccurrenceIndex]()
 
-     //page over all records and process
-    occurrenceDAO.pageOverAllVersions(versions => {
+    file.foreachLine(line => {
       counter += 1
-      if (!versions.isEmpty) {
-        val v = versions.get
+      val map = persistenceManager.get(line, "occ")
+      if (!map.isEmpty) indexer.indexFromMap(line, map.get)
 
-        val (raw,processed) = (v(0),v(1))
-
-        items.add(indexer.getOccIndexModel(raw,processed).get)
-        //debug counter
-        if (counter % 1000 == 0) {
-          //add the items to the configured indexer
-          indexer.index(items);
-          items.removeAll(items);
-          finishTime = System.currentTimeMillis
-          logger.info(counter + " >> Last key : " + v(0).uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
-          startTime = System.currentTimeMillis
-        }
+      if (counter % 1000 == 0) {
+        finishTime = System.currentTimeMillis
+        logger.info(counter + " >> Last key : " + line + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+        startTime = System.currentTimeMillis
       }
-      true
     })
+
+    indexer.finaliseIndex(false, true)
   }
 }

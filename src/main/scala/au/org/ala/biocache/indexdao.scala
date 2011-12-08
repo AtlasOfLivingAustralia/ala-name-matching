@@ -20,7 +20,6 @@ import java.util.Date
 import java.io.OutputStream
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang.time.DateFormatUtils
-import org.ala.layers.client.Client
 
 
 /**
@@ -29,44 +28,14 @@ import org.ala.layers.client.Client
 trait IndexDAO {
 
     import org.apache.commons.lang.StringUtils.defaultString
-    //import au.org.ala.util.ReflectBean._
-
-//    val elFields = Bean()FullRecordMapper.environmentalDefn.keySet.toList
-//    val clFields = FullRecordMapper.contextualDefn.keySet.toList
-
-    	
-    //TODO derive these from the supplied map
-//    val elFields = (new EnvironmentalLayers).propertyNames.toList
-//    val clFields = (new ContextualLayers).propertyNames.toList
-
-    val sampledFields = {
-      var dbfields = Client.getFieldDao().getFieldsByDB();
-      var fields: Array[String] = Array.ofDim(dbfields.size())
-      for (a <- 0 until dbfields.size()) {
-        fields(a) = dbfields.get(a).getId()
-      }
-      fields    //fields.dropWhile(x => List("el898","cl909","cl900").contains(x))
-    }
-
-    val elFields = sampledFields.filter(x => x.startsWith("el"))
-    val clFields = sampledFields.filter(x => x.startsWith("cl"))
+    val elFields = Config.fieldsToSample.filter(x => x.startsWith("el"))
+    val clFields = Config.fieldsToSample.filter(x => x.startsWith("cl"))
 
     def getRowKeysForQuery(query:String, limit:Int=1000):Option[List[String]]
     
     def writeRowKeysToStream(query:String, outputStream: OutputStream)
-       
-    
+
     def occurrenceDAO:OccurrenceDAO
-
-    /**
-     * Index a list of Occurrence Index Model objects
-     */
-    def index(items: java.util.List[OccurrenceIndex]): Boolean
-
-    /**
-     * Index a single Occurrence Index Model
-     */
-    def index(item: OccurrenceIndex): Boolean
 
     /**
      * Index a record with the supplied properties.
@@ -99,7 +68,6 @@ trait IndexDAO {
         } else {
            return  ""
         }
-
     }
 
     def getValue(field: String, map: Map[String, String], checkparsed:Boolean):String ={
@@ -161,8 +129,9 @@ trait IndexDAO {
             "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
             "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
             "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
-            "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation","sensitive", "coordinate_uncertainty",
-            "user_id","provenance","subspecies_guid", "subspecies_name", "interaction","last_assertion_date","last_load_date","last_processed_date") ++ elFields ++ clFields
+            "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation",
+            "sensitive", "coordinate_uncertainty", "user_id","provenance","subspecies_guid", "subspecies_name", "interaction","last_assertion_date",
+            "last_load_date","last_processed_date") ++ elFields ++ clFields
 
     /**
      * Constructs a scientific name.
@@ -404,66 +373,8 @@ trait IndexDAO {
             case e: Exception => e.printStackTrace; throw e
         }
     }
-
-    /**
-     * Generate an index model from the supplied FullRecords
-     */
-    def getOccIndexModel(raw:FullRecord, processed:FullRecord): Option[OccurrenceIndex] = {
-        
-        //cycle through all the items in each record and attempt to add them to the index
-        val occ = new OccurrenceIndex
-        //val x = Bean(classOf[OccurrenceIndex],null,null,null)
-        val (rawFields, processedFields) = occ.propertyNames.partition(p => p.startsWith("raw_"))
-
-        rawFields.foreach(field => {
-            val value = raw.getNestedProperty(field)
-            occ.setProperty(field, value.getOrElse("")) 
-    	})
-
-        processedFields.foreach(field => {
-            val value = processed.getNestedProperty(field)
-            occ.setProperty(field, value.getOrElse("")) 
-    	})
-        
-
-        //perform all the point construction
-        if (occ.getDecimalLatitude != null && occ.getDecimalLongitude != null) {
-            var pat = "#"
-            var fieldPre = "point"
-            val lat = occ.getDecimalLatitude
-            val long = occ.getDecimalLongitude
-            for {i <- 0 to 4} {
-                val df = new java.text.DecimalFormat(pat)
-                //FIXME
-                occ.setProperty(fieldPre + "1", df.format(lat) + "," + df.format(long))
-                if (i == 0) pat = pat + "."
-                pat = pat + "#"
-                fieldPre = fieldPre + "0"
-            }
-            occ.setLatLong(occ.getDecimalLatitude.toString + "," + occ.getDecimalLongitude)
-        }
-        //set the id for the occurrence record to the uuid
-        occ.uuid = raw.uuid
-        //set the systemAssertions
-        occ.assertions = processed.assertions
-        occ.setGeospatialKosher(processed.getGeospatiallyKosher().toString)
-        occ.setTaxonomicKosher(processed.getTaxonomicallyKosher().toString)
-        if (processed.getOccurrence.getImages != null && !processed.getOccurrence.getImages.isEmpty) {
-            occ.setImage(processed.getOccurrence.getImages()(0))
-            occ.setMultimedia("Multimedia")
-        }
-        else
-            occ.setMultimedia("None")
-
-        //set the occurrence_year
-        val year = processed.getEvent.getYear
-        if (year.length == 4)
-            occ.setOccurrenceYear(DateUtils.parseDate(year, Array("yyyy")))
-
-        occ.setHasUserAssertions((occurrenceDAO.getUserAssertions(occ.uuid).size > 0).toString)
-        Some(occ)
-    }
 }
+
 /**
  * DAO for indexing to SOLR
  */
@@ -496,33 +407,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         thread.start
       }
      
-    }
-
-    /**
-     * returns whether or not the insert was successful
-     */
-    def index(items: java.util.List[OccurrenceIndex]): Boolean = {
-        init
-        try {
-            solrServer.addBeans(items)
-            solrServer.commit
-            true
-        }
-        catch {
-            case e: Exception => false
-        }
-    }
-
-    def index(item: OccurrenceIndex): Boolean = {
-        init
-        try {
-            solrServer.addBean(item)
-            solrServer.commit
-        }
-        catch {
-            case e: Exception => logger.error(e.getMessage, e); false
-        }
-        true
     }
 
     def reload = cc.reload("")
@@ -591,32 +475,16 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     /**
      * Shutdown the index by stopping the indexing thread and shutting down the index core
      */
-    def shutdown() ={
+    def shutdown() = {
         thread ! "exit"
         cc.shutdown
     }
-    def optimise():String={
+    def optimise():String = {
         init
         solrServer.optimize
         printNumDocumentsInIndex
-        }
-
-    override def getOccIndexModel(raw: FullRecord, processed: FullRecord): Option[OccurrenceIndex] = {
-        //set the SOLR specific value
-        val occ = super.getOccIndexModel(raw,processed)
-        if (!occ.isEmpty) {
-            //set the names lsid
-            val v = List(
-                defaultString(occ.get.scientificName), 
-                defaultString(occ.get.taxonConceptID),
-                defaultString(occ.get.vernacularName), 
-                defaultString(occ.get.kingdom), 
-                defaultString(occ.get.family)
-            )
-            occ.get.setNamesLsid(v.mkString("|"))
-        }
-        occ
     }
+
     /**
      * Decides whether or not the current record should be indexed based on processed times
      */
@@ -748,42 +616,40 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         ">>>>>>>>>>>>>Document count of index: " + rq.getResults().getNumFound()
     }
 
-
-
   /**
    * The Actor which allows solr index inserts to be performed on a Thread.
    * solrServer.add(docs) is not thread safe - we should only ever have one thread adding documents to the solr server
    */
-class SolrIndexActor extends Actor{
-  var processed = 0
-  var received =0
+  class SolrIndexActor extends Actor{
+    var processed = 0
+    var received =0
 
-  def ready = processed==received
-  def act {
-    loop{
-      react{
-        case docs:java.util.ArrayList[SolrInputDocument] =>{
-          //send them off to the solr server using a thread...
-          println("Sending docs to SOLR "+ docs.size+"-" + received)
-          received += 1
-          try {
-              solrServer.add(docs)
-              solrServer.commit
-              //printNumDocumentsInIndex
-          } catch {
-              case e: Exception => logger.error(e.getMessage, e)
-          }
-          processed +=1
-        }
-        case msg:String =>{
-            if(msg == "reload"){
-              cc.reload("")
+    def ready = processed==received
+    def act {
+      loop{
+        react{
+          case docs:java.util.ArrayList[SolrInputDocument] =>{
+            //send them off to the solr server using a thread...
+            println("Sending docs to SOLR "+ docs.size+"-" + received)
+            received += 1
+            try {
+                solrServer.add(docs)
+                solrServer.commit
+                //printNumDocumentsInIndex
+            } catch {
+                case e: Exception => logger.error(e.getMessage, e)
             }
-            if(msg == "exit")
-              exit()
+            processed +=1
+          }
+          case msg:String =>{
+              if(msg == "reload"){
+                cc.reload("")
+              }
+              if(msg == "exit")
+                exit()
+          }
         }
       }
     }
   }
-}
 }

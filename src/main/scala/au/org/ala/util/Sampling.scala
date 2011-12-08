@@ -15,9 +15,13 @@ object Sampling {
   def main(args: Array[String]) {
 
     var dataResourceUid = ""
+    var locFilePath = ""
+    var singleLayerName = ""
 
-    val parser = new OptionParser("import darwin core headed CSV") {
+    val parser = new OptionParser("Sample coordinates against geospatial layers") {
       opt("dr", "data-resource-uid", "the data resource to sample for", { v:String => dataResourceUid = v })
+      opt("cf", "coordinates-file", "the file containing coordinates", { v:String => locFilePath = v })
+      opt("l", "single-layer-sample", "sample a single layer only", { v:String => singleLayerName = v })
     }
 
     if (parser.parse(args)) {
@@ -28,11 +32,14 @@ object Sampling {
           else "all"
         }
 
-        val locFilePath = "/tmp/loc-" + fileSufffix + ".txt"
+        if(locFilePath == ""){
+          locFilePath = "/tmp/loc-" + fileSufffix + ".txt"
+          s.getDistinctCoordinatesForResource(locFilePath, dataResourceUid)
+        }
         val samplingFilePath = "/tmp/sampling-" + fileSufffix + ".txt"
-        s.getDistinctCoordinatesForResource(locFilePath, dataResourceUid)
+
         //generate sampling
-        s.sampling(locFilePath, samplingFilePath)
+        s.sampling(locFilePath, samplingFilePath, singleLayerName)
         //load the loc table
         s.loadSampling(samplingFilePath)
       }
@@ -90,6 +97,8 @@ class Sampling {
         coordinates += (originalDecimalLongitude + "," + originalDecimalLatitude)
       }
 
+      if (counter % 1000 == 0 && counter > 0) println("Distinct coordinates counter: " + coordinates + ", current count:" + coordinates.size)
+      counter += 1
       passed += 1
       Integer.MAX_VALUE > counter
     }, startUuid, endUuid, 1000, "decimalLatitude", "decimalLongitude", "verbatimLatitude", "verbatimLongitude",
@@ -114,18 +123,17 @@ class Sampling {
   /**
    * Run the sampling with a file
    */
-  def sampling(filePath: String, outputFilePath: String) {
+  def sampling(filePath: String, outputFilePath: String, singleLayerName:String) {
 
     println("********* START - TEST BATCH SAMPLING FROM FILE ***************")
-
-    val fieldsToSample = Config.fieldsToSample
-
     //load the CSV of points into memory
     val points = loadPoints(filePath)
-
     //do the sampling
-    processBatch(outputFilePath, points, fieldsToSample)
-
+    if (singleLayerName != ""){
+      processBatch(outputFilePath, points, Array(singleLayerName))
+    } else {
+      processBatch(outputFilePath, points, Config.fieldsToSample)
+    }
     println("********* END - TEST BATCH SAMPLING FROM FILE ***************")
   }
 
@@ -134,6 +142,7 @@ class Sampling {
    */
   private def loadPoints(filePath:String) : Array[Array[Double]] = {
     //load the CSV of points into memory
+    println("Loading points from file: " + filePath)
     val csvReader = new CSVReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"))
     var current: Array[String] = csvReader.readNext
     val points: ArrayBuffer[Array[Double]] = new ArrayBuffer[Array[Double]]
@@ -213,7 +222,6 @@ class Sampling {
       }
       csvReader.close
     }
-
     println("Finished loading: " + inputFileName + " in " + (System.currentTimeMillis - startTime) + "ms");
   }
 }

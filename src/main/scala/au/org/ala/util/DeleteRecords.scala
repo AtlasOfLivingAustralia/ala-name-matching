@@ -73,9 +73,9 @@ class DataResourceVirtualDelete(dataResource:String) extends RecordDeletor{
       
       println("Marked " + count + " records as deleted in "  + (finished -start).toFloat / 60000f + " minutes.") 
     }
-    override def deleteFromIndex() ={
-        indexer.removeByQuery("data_resource_uid:" +dataResource)
-    }
+
+    override def deleteFromIndex() = indexer.removeByQuery("data_resource_uid:" + dataResource)
+
     /**
      * Physically deletes all records where deleted=true in the persistence manager.
      */
@@ -116,7 +116,7 @@ class DataResourceDelete(dataResource:String) extends RecordDeletor{
       
       println("Deleted " + count + " records in "  + (finished -start).toFloat / 60000f + " minutes.") 
     }
-    override def deleteFromIndex() ={
+    override def deleteFromIndex() = {
         indexer.removeByQuery("data_resource_uid:" +dataResource)        
     }
 }

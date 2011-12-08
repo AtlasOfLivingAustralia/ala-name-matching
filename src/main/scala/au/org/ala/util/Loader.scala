@@ -12,12 +12,12 @@ class Loader extends DataLoader {
     import StringHelper
 ._    
     def describeResource(drlist:List[String]){
-        
         drlist.foreach(dr => {
         	val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dr)
-          println("UID: "+dr)
-          println("Protocol: "+protocol)
-          println("URL: " + url)
+          println("UID: " + dr)
+          println("Protocol: "+ protocol)
+          println("URL: " + url.mkString(";"))
+          println("Unique terms: " + uniqueTerms.mkString(","))
 	        params.foreach({case(k,v) => println(k+": "+v)})
             customParams.foreach({case(k,v) => println(k +": "+v)})
             println("---------------------------------------")

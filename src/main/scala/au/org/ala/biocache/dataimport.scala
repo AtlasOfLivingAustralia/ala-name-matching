@@ -35,12 +35,10 @@ trait DataLoader {
       //connection details
       val connectionParameters = map("connectionParameters").asInstanceOf[Map[String,AnyRef]]
       val protocol = connectionParameters("protocol").asInstanceOf[String]
-
-      val urlsObject = connectionParameters("url")
-
+      val urlsObject = connectionParameters.getOrElse("url", List[String]())
       val urls = {
         if(urlsObject.isInstanceOf[List[String]]){
-          connectionParameters("url").asInstanceOf[List[String]]
+          urlsObject
         } else {
           val singleValue = connectionParameters("url").asInstanceOf[String]
           List(singleValue)
@@ -57,7 +55,7 @@ trait DataLoader {
           }
           case _ => Map[String,String]()
       }
-      (protocol, urls, uniqueTerms, map("connectionParameters").asInstanceOf[Map[String,String]], customParams)
+      (protocol, urls.asInstanceOf[List[String]], uniqueTerms, map("connectionParameters").asInstanceOf[Map[String,String]], customParams)
     }
     
     def mapConceptTerms(terms: List[String]): List[org.gbif.dwc.terms.ConceptTerm] = {
