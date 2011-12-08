@@ -104,7 +104,7 @@ class Sampling {
         coordinates += (processedDecimalLongitude + "," + processedDecimalLatitude)
       }
 
-      if (counter % 1000 == 0 && counter > 0) println("Distinct coordinates counter: " + coordinates + ", current count:" + coordinates.size)
+      if (counter % 10000 == 0 && counter > 0) println("Distinct coordinates counter: " + counter + ", current count:" + coordinates.size)
       counter += 1
       passed += 1
       Integer.MAX_VALUE > counter
