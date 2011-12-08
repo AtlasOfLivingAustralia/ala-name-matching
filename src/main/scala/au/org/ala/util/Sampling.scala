@@ -83,9 +83,17 @@ class Sampling {
         }
       }
 
+      //legacy storage of old lat/long original values before SDS processing - superceded by originalSensitiveValues
+      val originalDecimalLatitude = map.getOrElse("originalDecimalLatitude", "")
+      val originalDecimalLongitude = map.getOrElse("originalDecimalLongitude", "")
+      if (originalDecimalLatitude != "" && originalDecimalLongitude != ""){
+        coordinates += (originalDecimalLongitude + "," + originalDecimalLatitude)
+      }
+
       passed += 1
       Integer.MAX_VALUE > counter
-    }, startUuid, endUuid, 1000, "decimalLatitude", "decimalLongitude", "verbatimLatitude", "verbatimLongitude", "originalSensitiveValues")
+    }, startUuid, endUuid, 1000, "decimalLatitude", "decimalLongitude", "verbatimLatitude", "verbatimLongitude",
+      "originalDecimalLatitude", "originalDecimalLongitude","originalSensitiveValues")
 
     try {
       var fw = new FileWriter(locFilePath);

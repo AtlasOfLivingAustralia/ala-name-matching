@@ -152,9 +152,8 @@ object FullRecordMapper {
                     case it if lastUserAssertionDateColumn.equals(fieldName) => fullRecord.setLastUserAssertionDate(fieldValue)
                     case it if version == Processed && isProcessedValue(fieldName) => fullRecord.setProperty(removeSuffix(fieldName), fieldValue)
                     case it if version == Raw && fullRecord.hasProperty(fieldName) => fullRecord.setProperty(fieldName, fieldValue)
-                    case it if version == Raw => {
-//                      println("*********** field added to miscProperties. " + fieldName+", "+fieldValue)
-//                      //any property that is not recognised is lumped into miscProperties
+                    case it if version == Raw &&  !isProcessedValue(fieldName) => {
+                      //any property that is not recognised is lumped into miscProperties
                       fullRecord.miscProperties.put(fieldName, fieldValue)
                     }
                     case _ => {

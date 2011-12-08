@@ -20,6 +20,7 @@ import scalaj.http.Http
 import scala.collection.JavaConversions
 import org.ala.layers.client.Client
 import scala.collection.mutable.HashMap
+import org.apache.zookeeper.ZooKeeper.States
 
 /**
  * A DAO for accessing classification information in the cache. If the
@@ -468,10 +469,22 @@ object LocationDAO {
             val location = new Location
             location.decimalLatitude = latitude
             location.decimalLongitude = longitude
-            location.stateProvince = map.getOrElse("cl927", null)
+
+            //map this to sensible values we are used to
+            val stateProvinceValue = map.getOrElse("cl927", null)
+            if (stateProvinceValue != null & stateProvinceValue != ""){
+              StateProvinces.matchTerm(stateProvinceValue) match {
+                case Some(term) => location.stateProvince = term.canonical
+                case None => {
+                  /*do nothing for now */
+                  println("Unrecognised stateprovince value retrieved from layer cl927: " + stateProvinceValue)
+                }
+              }
+            }
             location.ibra = map.getOrElse("cl20", null)
             location.imcra = map.getOrElse("cl21", null)
             location.country = map.getOrElse("cl922", null)
+            location.lga = map.getOrElse("cl23", null)
 
             val el = map.filter(x => x._1.startsWith("el"))
             val cl = map.filter(x => x._1.startsWith("cl"))

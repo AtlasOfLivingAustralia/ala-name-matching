@@ -39,7 +39,7 @@ object Config {
     lazy val fieldsToSample = {
       val str = configModule.properties.getProperty("fieldsToSample")
       if (str == null || str.trim == ""){
-        var dbfields = Client.getFieldDao().getFields();
+        var dbfields = Client.getLayerIntersectDao.getConfig.getFieldsByDB
         var fields: Array[String] = Array.ofDim(dbfields.size())
         for (a <- 0 until dbfields.size()) {
           fields(a) = dbfields.get(a).getId()
@@ -52,6 +52,9 @@ object Config {
         fields
       }
     }
+
+    lazy val reindexUrl = configModule.properties.getProperty("reindexUrl")
+    lazy val reindexData = configModule.properties.getProperty("reindexData")
 }
 
 /**

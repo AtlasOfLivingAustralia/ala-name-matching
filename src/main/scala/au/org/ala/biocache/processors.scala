@@ -54,7 +54,6 @@ object Processors {
 	    case c if c >= AssertionCodes.temporalBounds._1 && c<AssertionCodes.temporalBounds._2 =>"event"
 	    case _ => ""
 	  }
-	 
   }
 }
 

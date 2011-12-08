@@ -22,6 +22,9 @@
   <category name="org.ala.biocache">
     <priority value="INFO"/>
   </category>
+  <category name="org.ala.layers">
+    <priority value="ERROR"/>
+  </category>
   <category name="au.org.ala.sds">
     <priority value="ERROR"/>
   </category>  
@@ -52,6 +55,9 @@
   <category name="org.springframework.jdbc.core">
     <priority value="ERROR"/>
   </category>
+  <category name="com.mchange.v2.resourcepool">
+     <priority value="ERROR"/>
+   </category>
    <category name="org.scale7.cassandra">
     <priority value="ERROR"/>
   </category>
