@@ -97,11 +97,18 @@ class Sampling {
         coordinates += (originalDecimalLongitude + "," + originalDecimalLatitude)
       }
 
+      //add the processed values
+      val processedDecimalLatitude = map.getOrElse("decimalLatitude.p", "")
+      val processedDecimalLongitude = map.getOrElse("decimalLongitude.p", "")
+      if (processedDecimalLatitude != "" && processedDecimalLongitude != ""){
+        coordinates += (processedDecimalLongitude + "," + processedDecimalLatitude)
+      }
+
       if (counter % 1000 == 0 && counter > 0) println("Distinct coordinates counter: " + coordinates + ", current count:" + coordinates.size)
       counter += 1
       passed += 1
       Integer.MAX_VALUE > counter
-    }, startUuid, endUuid, 1000, "decimalLatitude", "decimalLongitude", "verbatimLatitude", "verbatimLongitude",
+    }, startUuid, endUuid, 1000, "decimalLatitude", "decimalLongitude", "decimalLatitude.p", "decimalLongitude.p", "verbatimLatitude", "verbatimLongitude",
       "originalDecimalLatitude", "originalDecimalLongitude","originalSensitiveValues")
 
     try {
