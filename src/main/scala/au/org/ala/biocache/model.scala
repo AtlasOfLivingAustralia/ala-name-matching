@@ -682,3 +682,132 @@ object QualityAssertion {
 class OutlierResult (
   @BeanProperty var testUuid:String,
   @BeanProperty var outlierForLayersCount:Int)
+
+/**
+ * An Occurrence Model that can be used to create an Index entry
+ * The @Field annotations are used for the SOLR implementation
+ * But I am assuming that the will not get in the way if we decide to use a
+ * different indexing process.
+ */
+class OccurrenceIndex extends Cloneable with Mappable with POSO {
+  import JavaConversions._
+  override def clone : OccurrenceIndex = super.clone.asInstanceOf[OccurrenceIndex]
+  @BeanProperty @Field("id") var uuid:String =_
+  @BeanProperty @Field("row_key") var rowKey:String =_
+  @BeanProperty @Field("occurrence_id") var occurrenceID:String =_
+  //processed values
+  @BeanProperty @Field("data_hub_uid") var dataHubUid:Array[String] =_
+  @BeanProperty @Field("data_hub") var dataHub:String =_
+  @BeanProperty @Field("institution_uid") var institutionUid:String =_
+  @BeanProperty @Field("institution_code") var raw_institutionCode:String =_
+  @BeanProperty @Field("institution_name") var institutionName:String =_
+  @BeanProperty @Field("collection_uid") var collectionUid:String =_
+  @BeanProperty @Field("collection_code") var raw_collectionCode:String =_
+  @BeanProperty @Field("collection_name") var collectionName:String =_
+  @BeanProperty @Field("catalogue_number") var raw_catalogNumber:String =_
+  @BeanProperty @Field("taxon_concept_lsid") var taxonConceptID:String =_
+  @BeanProperty @Field("occurrence_date") var eventDate:java.util.Date =_
+  @BeanProperty @Field("occurrence_year") var occurrenceYear:java.util.Date =_
+  @BeanProperty @Field("taxon_name") var scientificName:String =_
+  @BeanProperty @Field("common_name") var vernacularName:String =_
+  @BeanProperty @Field("rank") var taxonRank:String =_
+  @BeanProperty @Field("rank_id") var taxonRankID:java.lang.Integer =_
+  @BeanProperty @Field("country_code") var raw_countryCode:String =_
+  @BeanProperty @Field("kingdom") var kingdom:String =_
+  @BeanProperty @Field("phylum") var phylum:String =_
+  @BeanProperty @Field("class") var classs:String =_
+  @BeanProperty @Field("order") var order:String =_
+  @BeanProperty @Field("family") var family:String =_
+  @BeanProperty @Field("genus") var genus:String =_
+  @BeanProperty @Field("species") var species:String =_
+  @BeanProperty @Field("state") var stateProvince:String =_
+  @BeanProperty @Field("latitude") var decimalLatitude:java.lang.Double =_
+  @BeanProperty @Field("longitude") var decimalLongitude:java.lang.Double =_
+  @BeanProperty @Field("coordinate_uncertainty") var coordinateUncertaintyInMeters:java.lang.Double =_
+  @BeanProperty @Field("year") var year:String =_
+  @BeanProperty @Field("month") var month:String =_
+  @BeanProperty @Field("basis_of_record") var basisOfRecord:String =_
+  @BeanProperty @Field("type_status") var typeStatus:String =_
+  @BeanProperty @Field("location_remarks") var raw_locationRemarks:String =_
+  @BeanProperty @Field("occurrence_remarks") var raw_occurrenceRemarks:String =_
+  @BeanProperty @Field("lft") var left:java.lang.Integer =_
+  @BeanProperty @Field("rgt") var right:java.lang.Integer =_
+  @BeanProperty @Field("ibra") var ibra:String = _
+  @BeanProperty @Field("imcra") var imcra:String = _
+  @BeanProperty @Field("places") var lga:String = _
+  @BeanProperty @Field("data_provider_uid") var dataProviderUid:String =_
+  @BeanProperty @Field("data_provider") var dataProviderName:String =_
+  @BeanProperty @Field("data_resource_uid") var dataResourceUid:String =_
+  @BeanProperty @Field("data_resource") var dataResourceName:String =_
+  @BeanProperty @Field("assertions") var assertions:Array[String] =_
+  @BeanProperty @Field("user_assertions") var hasUserAssertions:String =_
+  @BeanProperty @Field("species_group") var speciesGroups:Array[String] =_
+  @BeanProperty @Field("image_url") var image:String = _
+  @BeanProperty @Field("geospatial_kosher") var geospatialKosher:String =_
+  @BeanProperty @Field("taxonomic_kosher") var taxonomicKosher:String =_
+  @BeanProperty @Field("collector") var raw_recordedBy:String = _
+
+  //environment
+//  @BeanProperty @Field("mean_temperature_cars2009a_band1_env") var mean_temperature_cars2009a_band1:java.lang.Double =_
+//  @BeanProperty @Field("mean_oxygen_cars2006_band1_env") var mean_oxygen_cars2006_band1:java.lang.Double =_
+//  @BeanProperty @Field("bioclim_bio34_env") var bioclim_bio34:java.lang.Double =_
+//  @BeanProperty @Field("bioclim_bio12_env") var bioclim_bio12:java.lang.Double =_
+//  @BeanProperty @Field("bioclim_bio11_env") var bioclim_bio11:java.lang.Double =_
+//
+  //extra raw record fields
+  @BeanProperty @Field("raw_taxon_name") var raw_scientificName:String =_
+  @BeanProperty @Field("raw_basis_of_record") var raw_basisOfRecord:String =_
+  @BeanProperty @Field("raw_type_status") var raw_typeStatus:String =_
+  @BeanProperty @Field("raw_common_name") var raw_vernacularName:String =_
+
+  //constructed fields
+  @BeanProperty @Field("lat_long") var latLong:String =_
+  @BeanProperty @Field("point-1") var point1:String =_
+  @BeanProperty @Field("point-0.1") var point01:String =_
+  @BeanProperty @Field("point-0.01") var point001:String =_
+  @BeanProperty @Field("point-0.001") var point0001:String =_
+  @BeanProperty @Field("point-0.0001") var point00001:String =_
+  @BeanProperty @Field("names_and_lsid") var namesLsid:String =_
+  @BeanProperty @Field("multimedia") var multimedia:String =_
+  //conservation status field
+  @BeanProperty @Field("aust_conservation") var austConservation:String = _
+  @BeanProperty @Field("state_conservation") var stateConservation:String = _
+
+  @JsonIgnore
+  def getMap():java.util.Map[String,String]={
+
+    val sdate = if(eventDate == null) null else DateFormatUtils.format(eventDate, "yyyy-MM-dd")
+
+    val map = Map[String,String]("id"-> uuid, "occurrence_id"-> occurrenceID, "data_hub_uid"-> dataHubUid, "data_hub" -> dataHub,
+        "institution_uid"-> institutionUid, "institution_code"-> raw_institutionCode,
+        "institution_name"-> institutionName, "collection_uid"-> collectionUid,
+        "collection_code"-> raw_collectionCode, "collection_name"-> collectionName,
+        "catalogue_number"-> raw_catalogNumber, "taxon_concept_lsid"-> taxonConceptID,
+        "occurrence_date"-> sdate, "taxon_name"-> scientificName, "common_name"-> vernacularName,
+        "rank"-> taxonRank, "rank_id"-> taxonRankID, "country_code"-> raw_countryCode,
+        "kingdom"-> kingdom, "phylum"-> phylum, "class"-> classs, "order"-> order, "family"-> family,
+        "genus"-> genus, "species"-> species, "state"-> stateProvince, "latitude"-> decimalLatitude,
+        "longitude"-> decimalLongitude, "year"-> year, "month"-> month, "basis_of_record"-> basisOfRecord,
+        "type_status"-> typeStatus, "location_remarks"-> raw_locationRemarks, "occurrence_remarks"-> raw_occurrenceRemarks,
+        "lft"-> left, "rgt"-> right, "ibra"-> ibra, "imcra"-> imcra,
+        "places"-> lga, "data_provider_uid"-> dataProviderUid, "data_provider"-> dataProviderName,
+        "data_resource_uid"-> dataResourceUid, "data_resource"-> dataResourceName, "assertions"-> assertions,
+        "user_assertions"-> hasUserAssertions, "species_group"-> speciesGroups,
+        "image_url"-> image, "geospatial_kosher"-> geospatialKosher, "taxonomic_kosher"-> taxonomicKosher,
+        "raw_taxon_name"-> raw_scientificName, "raw_basis_of_record"-> raw_basisOfRecord,
+        "raw_type_status"-> raw_typeStatus, "raw_common_name"-> raw_vernacularName, "lat_long"-> latLong,
+        "point-1"-> point1, "point-0.1"-> point01, "point-0.01"-> point001, "point-0.001"-> point0001,
+        "point-0.0001"-> point00001, "names_and_lsid"-> namesLsid, "multimedia"-> multimedia, "collector"->raw_recordedBy)
+//                                ,"mean_temperature_cars2009a_band1_env"-> mean_temperature_cars2009a_band1,
+//                                "mean_oxygen_cars2006_band1_env"-> mean_oxygen_cars2006_band1, "bioclim_bio34_env"-> bioclim_bio34,
+//                                "bioclim_bio12_env"-> bioclim_bio12, "bioclim_bio11_env"->bioclim_bio11 )
+
+    map.filter(i => i._2!= null)
+  }
+  implicit def int2String(in:java.lang.Integer):String={
+    if(in == null) null else in.toString
+  }
+  implicit def double2String(in:java.lang.Double):String ={
+    if(in == null) null else in.toString
+  }
+}
