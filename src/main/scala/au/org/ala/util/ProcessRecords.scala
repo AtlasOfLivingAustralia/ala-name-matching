@@ -4,6 +4,8 @@ import org.slf4j.LoggerFactory
 import au.org.ala.biocache._
 import org.apache.commons.lang.StringUtils
 import java.util.UUID
+import java.io.FileReader
+import au.com.bytecode.opencsv.CSVReader
 
 /**
  * 1. Classification matching
@@ -35,10 +37,20 @@ object ProcessRecords {
 
   /** Run record processing. */
   def main(args: Array[String]): Unit = {
-    logger.info("Starting processing records....")
+
+    var fileName: String = ""
+    val parser = new OptionParser("index records options") {
+      opt("f", "fileName", "The record to start processing with", { v: String => fileName = v })
+    }
+
     val p = new RecordProcessor
-    p.processAll
-    //p.processSelect("BOR", "ATTR")
+    if (parser.parse(args)) {
+      if (fileName != "") {
+        p.processFileOfRowKeys(fileName)
+      } else {
+        p.processAll
+      }
+    }
     logger.info("Finished. Shutting down.")
     Config.persistenceManager.shutdown
   }
@@ -49,6 +61,40 @@ class RecordProcessor {
   val logger = LoggerFactory.getLogger(classOf[RecordProcessor])
   //The time that the processing started - used to populate lastProcessed
   val processTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
+
+  /**
+   * Process all records in the store
+   */
+  def processFileOfRowKeys(fileName:String) {
+    println("Starting processing from file......" + fileName)
+    var counter = 0
+    var startTime = System.currentTimeMillis
+    var finishTime = System.currentTimeMillis
+
+    val csvReader = new CSVReader(new FileReader(fileName))
+    var current = csvReader.readNext()
+
+    //page over all records and process
+    //occurrenceDAO.pageOverAll(Raw, record => {
+    while(current != null){
+      counter += 1
+
+      val rawProcessed = Config.occurrenceDAO.getRawProcessedByRowKey(current(0))
+      if (!rawProcessed.isEmpty){
+        val rp = rawProcessed.get
+        processRecord(rp(0), rp(1))
+
+        //debug counter
+        if (counter % 1000 == 0) {
+          finishTime = System.currentTimeMillis
+          println(counter + " >> Last key : " + rp(0).uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          startTime = System.currentTimeMillis
+        }
+      }
+      current = csvReader.readNext()
+    }
+    println("Finished processing from file.")
+  }
 
   /**
    * Process all records in the store
