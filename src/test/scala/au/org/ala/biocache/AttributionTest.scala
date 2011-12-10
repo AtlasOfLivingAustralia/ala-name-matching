@@ -33,7 +33,7 @@ class AttributionTest extends ConfigFunSuite{
     
     test("Default DWC Values in DR Lookup"){
         val dr = AttributionDAO.getDataResourceFromWS("dr92")
-        expect("MachineObservation"){dr.get.getDefaultDwcValues()("basisOfRecord")}
+        expect("MachineObservation"){dr.get.defaultDwcValues.get("basisOfRecord")}
     }
     
     
