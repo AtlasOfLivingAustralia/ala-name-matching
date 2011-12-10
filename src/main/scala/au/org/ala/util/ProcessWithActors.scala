@@ -229,11 +229,11 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
           //for((raw,processed) <- batch) { processor.processRecord(raw, processed) }
           batch.foreach({case (raw, processed) =>
             var retries = 0
-            var processed = false
-            while(!processed && retries<6){
+            var processedOK = false
+            while(!processedOK && retries<6){
               try {
                 processor.processRecord(raw, processed)
-                processed = true
+                processedOK = true
               } catch {
                 case e:Exception => {
                   e.printStackTrace()
