@@ -377,6 +377,7 @@ object AttributionDAO {
  */
 object LocationDAO {
 
+  val logger = LoggerFactory.getLogger("LocationDAO")
   private val columnFamily = "loc"
   private val lock : AnyRef = new Object()
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
@@ -477,7 +478,7 @@ object LocationDAO {
                 case Some(term) => location.stateProvince = term.canonical
                 case None => {
                   /*do nothing for now */
-                  println("Unrecognised stateprovince value retrieved from layer cl927: " + stateProvinceValue)
+                  logger.warn("Unrecognised stateprovince value retrieved from layer cl927: " + stateProvinceValue)
                 }
               }
             }
@@ -497,6 +498,7 @@ object LocationDAO {
           }
           case None => {
             //do a layer lookup???
+            println("************ Performing a layer lookup for [" + latitude + "," + longitude +"]")
             if(Config.allowLayerLookup){
               val intersection = doLayerIntersectForPoint(latitude, longitude)
               lock.synchronized {

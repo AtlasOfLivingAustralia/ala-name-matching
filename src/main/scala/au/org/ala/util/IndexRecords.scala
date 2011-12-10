@@ -56,7 +56,7 @@ object IndexRecords {
         if(startUuid.isEmpty && !dataResource.isEmpty) {
           dataResource.get +"|"
         } else {
-            startUuid.get
+          startUuid.getOrElse("")
         }
     }
 
@@ -118,9 +118,10 @@ object IndexRecords {
         true
       }, startKey, endKey, pageSize, "uuid", "rowKey", FullRecordMapper.deletedColumn)
     } else {
+      println("****** Performing selective paging with liost of fields.....")
       persistenceManager.pageOverAll("occ", (guid, map) => {
         proc(guid, map)
-      }, startKey, endKey)
+      }, startKey, endKey, pageSize)
     }
   }
 

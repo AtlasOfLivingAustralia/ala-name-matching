@@ -13,18 +13,7 @@
     <tx:annotation-driven transaction-manager="transactionManager"
                           proxy-target-class="true" />
 
-    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
-				destroy-method="close"
-				p:driverClass="org.postgresql.Driver"
-				p:jdbcUrl="jdbc:postgresql://localhost/layersdb:5432"
-				p:user="postgres"
-				p:password="P0stgres"
-				p:acquireIncrement="5"
-				p:idleConnectionTestPeriod="60"
-				p:maxPoolSize="0"
-				p:maxStatements="10"
-				p:minPoolSize="0"
-			    lazy-init="true" />
+    <bean id="dataSource" class="com.mockrunner.mock.jdbc.MockDataSource" lazy-init="true" />
     <!-- Declare a transaction manager -->
 	<!-- See http://static.springsource.org/spring/docs/3.0.x/spring-framework-reference/html/transaction.html -->
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"

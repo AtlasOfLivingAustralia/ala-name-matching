@@ -370,7 +370,7 @@ class CassandraPersistenceManager @Inject() (
         //convert to scala List
         val keys = columnsObj.asInstanceOf[List[Bytes]]
         startKey = keys.last
-        for(buuid<-keys){
+        keys.foreach(buuid =>{
           val columnList = columnMap.get(buuid)
           if(!checkEmpty || !columnList.isEmpty){
               //procedure a map of key value pairs
@@ -380,7 +380,7 @@ class CassandraPersistenceManager @Inject() (
               //pass the record ID and the key value pair map to the proc
               continue = proc(uuid, map)
           }
-        }
+        })
         counter += keys.size
         keyRange = Selector.newKeyRange(startKey, endKey, pageSize+1)
         columnMap = selector.getColumnsFromRows(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE)
@@ -430,7 +430,7 @@ class CassandraPersistenceManager @Inject() (
        //identify el* cl* fields
        val locFields = fields.filter( a => a.startsWith("el") || a.startsWith("cl") )
 
-       for(key<-keys){
+       keys.foreach(key =>{
          val columnsList = columnMap.get(key)
          val fieldValues = columnsList.map(column => (new String(column.getName, "UTF-8"),new String(column.getValue, "UTF-8"))).toArray
          val map = scala.collection.mutable.Map.empty[String,String]
@@ -440,15 +440,14 @@ class CassandraPersistenceManager @Inject() (
 
          //add el* cl* fields
          if(!locFields.isEmpty) {
-             val locSome = get(map.getOrElse("decimalLatitude.p","") + "|" + map.getOrElse("decimalLongitude.p",""),"loc")
-             if (locSome != None) {
-                val locMap = locSome.get
-                locFields.foreach(lf => if(locMap.contains(lf)) map += (lf -> locMap(lf)))
-             }
+           val locSome = get(map.getOrElse("decimalLatitude.p","") + "|" + map.getOrElse("decimalLongitude.p",""),"loc")
+           if (locSome != None) {
+             val locMap = locSome.get
+             locFields.foreach(lf => if(locMap.contains(lf)) map += (lf -> locMap(lf)))
+           }
          }
-
-         proc(map.toMap)
-       }
+         proc(map.toMap) //pass the map to the function for processing
+       })
      }
 
     /**
@@ -463,20 +462,20 @@ class CassandraPersistenceManager @Inject() (
         Map(tuples map {s => (s._1, s._2)} : _*)
     }
 
-    /**
-     * Convienience method for accessing values.
-     */
-    protected def getColumn(uuid:String, columnFamily:String, columnName:String): Option[Column] = {
-        try {
-            val selector = Pelops.createSelector(poolName)
-            Some(selector.getColumnFromRow(columnFamily, uuid, columnName, ConsistencyLevel.ONE))
-        } catch {
-            case e:Exception => {
-                logger.debug(e.getMessage + " for " + uuid + " - " + columnFamily + " - " +columnName)
-                None //expected behaviour when row doesnt exist
-            }
-        }
+  /**
+   * Convienience method for accessing values.
+   */
+  protected def getColumn(uuid: String, columnFamily: String, columnName: String): Option[Column] = {
+    try {
+      val selector = Pelops.createSelector(poolName)
+      Some(selector.getColumnFromRow(columnFamily, uuid, columnName, ConsistencyLevel.ONE))
+    } catch {
+      case e: Exception => {
+        logger.debug(e.getMessage + " for " + uuid + " - " + columnFamily + " - " + columnName)
+        None //expected behaviour when row doesnt exist
+      }
     }
+  }
 
     def shutdown = {
         try {

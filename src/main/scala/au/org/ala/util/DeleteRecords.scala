@@ -35,11 +35,8 @@ object DeleteRecords {
               deletor.get.close
           }
       }
-
   }
-
 }
-
 
 trait RecordDeletor{
     val pm = Config.persistenceManager

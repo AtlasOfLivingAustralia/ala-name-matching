@@ -65,34 +65,37 @@ object Processors {
  * 
  * TODO CHANGE this if we move to a phase based processing mechanism
  *   
- */     
-class DefaultValuesProcessor extends Processor {        
-    def process(guid:String, raw:FullRecord, processed:FullRecord): Array[QualityAssertion]={       
-        //add the default dwc fields if their is no raw value for them.     
-        val dr = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)       
-        if(!dr.isEmpty){        
-            if(dr.get.defaultDwcValues != null){        
-                dr.get.defaultDwcValues.foreach({case(key,value)=>{     
-                    if(raw.getProperty(key).isEmpty){       
-                        //set the processed value to the default value      
-                        processed.setProperty(key, value)       
-                        if(!processed.getDefaultValuesUsed && !processed.getProperty(key).isEmpty)      
-                            processed.setDefaultValuesUsed(true)        
-                    }       
-                }})     
-            }       
-        }
-        
-        //reset the original sensitive values for use in subsequent processing.
-        //covers all values that could have been change - thus allowing event dates to be processed correctly...
-        if(raw.occurrence.originalSensitiveValues != null){
-            //TODO: Only apply the originalSensitiveValues if the last processed date occurs after the last load date 
-            FullRecordMapper.mapPropertiesToObject(raw, raw.occurrence.originalSensitiveValues)
-        }
-        
-        Array()     
-    }       
-    def getName = "default"     
+ */
+class DefaultValuesProcessor extends Processor {
+  def process(guid: String, raw: FullRecord, processed: FullRecord): Array[QualityAssertion] = {
+    //add the default dwc fields if their is no raw value for them.
+    val dr = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
+    if (!dr.isEmpty) {
+      if (dr.get.defaultDwcValues != null) {
+        dr.get.defaultDwcValues.foreach({
+          case (key, value) => {
+            if (raw.getProperty(key).isEmpty) {
+              //set the processed value to the default value
+              processed.setProperty(key, value)
+              if (!processed.getDefaultValuesUsed && !processed.getProperty(key).isEmpty)
+                processed.setDefaultValuesUsed(true)
+            }
+          }
+        })
+      }
+    }
+
+    //reset the original sensitive values for use in subsequent processing.
+    //covers all values that could have been change - thus allowing event dates to be processed correctly...
+    if (raw.occurrence.originalSensitiveValues != null) {
+      //TODO: Only apply the originalSensitiveValues if the last processed date occurs after the last load date
+      FullRecordMapper.mapPropertiesToObject(raw, raw.occurrence.originalSensitiveValues)
+    }
+
+    Array()
+  }
+
+  def getName = "default"
 }
 
 class MiscellaneousProcessor extends Processor {
@@ -558,7 +561,8 @@ class LocationProcessor extends Processor {
 
   def setProcessedCoordinates(raw: FullRecord, processed: FullRecord) {
     
-    //handle the situation where the coordinates have already been sensitised (LEGACY format - as of 2011-10-01 there we are storing original values in a map...)
+    //handle the situation where the coordinates have already been sensitised
+    // (LEGACY format - as of 2011-10-01 there we are storing original values in a map...)
     if (raw.location.originalDecimalLatitude != null && raw.location.originalDecimalLongitude != null) {
       processed.location.decimalLatitude = raw.location.originalDecimalLatitude
       processed.location.decimalLongitude = raw.location.originalDecimalLongitude
@@ -621,9 +625,11 @@ class LocationProcessor extends Processor {
         }
       }
     }
-    //if the coordinateUncertainty is still empty populate it with the default
+
+    // If the coordinateUncertainty is still empty populate it with the default
     // value (we don't test until now because the SDS will sometime include coordinate uncertainty)
-     //This step will pick up on default values because processed.location.coordinateUncertaintyInMeters will already be populated if a default value exists
+    // This step will pick up on default values because processed.location.coordinateUncertaintyInMeters
+    // will already be populated if a default value exists
     if (processed.location.coordinateUncertaintyInMeters == null) {      
       assertions + QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, "Uncertainty was not supplied")
     }
@@ -770,8 +776,7 @@ class LocationProcessor extends Processor {
 
       //only proceed if the taxon has been identified as sensitive
       if (sensitiveTaxon != null) {
-          
-        //get a map respresentation of the raw record...
+        //get a map representation of the raw record...
         var rawMap = scala.collection.mutable.Map[String, String]()
         raw.objectArray.foreach(poso => {
             val map = FullRecordMapper.mapObjectToProperties(poso, Versions.RAW)
@@ -824,6 +829,8 @@ class LocationProcessor extends Processor {
             // is performed before the point matching to gazetteer..
             //We want to associate the ibra layers to the sensitised point
             //update the required locality information
+            println("**************** Performing lookup for new point ['" + raw.rowKey
+              + "',"+processed.location.decimalLongitude + "," + processed.location.decimalLatitude )
             val newPoint = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
             newPoint match {
               case Some((loc, el, cl)) => processed.location.lga = loc.lga

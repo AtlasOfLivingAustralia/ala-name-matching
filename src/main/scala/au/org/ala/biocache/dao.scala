@@ -336,7 +336,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * Iterate over the undeleted occurrences. Prevents overhead of processing records that are deleted. Also it is quicker to get a smaller 
      * number of columns.  Thus only get all the columns for record that need to be processed.
      * 
-     * The shouldProcess function should take the map and determine bnased on conditions whether or not to retrieve the complete record
+     * The shouldProcess function should take the map and determine based on conditions whether or not to retrieve the complete record
      * 
      */
     def conditionalPageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),

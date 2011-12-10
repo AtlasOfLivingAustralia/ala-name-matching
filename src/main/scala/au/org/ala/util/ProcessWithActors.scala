@@ -20,16 +20,17 @@ object ProcessWithActors {
     var startUuid:Option[String] = None
     var check =false
     var dr:Option[String] = None
+    var locationOnly = false
     val parser = new OptionParser("process records options") {
-        opt("check","check to see if the record is deleted before processing",{check=true})
         intOpt("t", "thread", "The number of threads to use", {v:Int => threads = v } )
         opt("s", "start","The record to start with", {v:String => startUuid = Some(v)})
         opt("dr", "resource", "The data resource to process", {v:String =>dr = Some(v)})
+        booleanOpt("lo", "process location only", "The data resource to process", {v:Boolean => locationOnly = v})
     }
     
     if(parser.parse(args)){
-      println("Processing "+dr.getOrElse("")+" from " +startUuid + " with " + threads + "actors")
-      processRecords(threads, startUuid, dr,check)
+      println("Processing " + dr.getOrElse("") + " from " + startUuid + " with " + threads + "actors")
+      processRecords(threads, startUuid, dr, check, locationOnly)
     }
     
     //shutdown the persistence
@@ -37,7 +38,7 @@ object ProcessWithActors {
   }
   
   def getProcessedTotal(pool:Array[Actor]):Int ={
-    var size =0;
+    var size = 0;
     for(i<-0 to pool.length-1){
       size += pool(i).asInstanceOf[Consumer].processedRecords
     }
@@ -61,10 +62,6 @@ object ProcessWithActors {
     println("Initialised actors...")
     file.foreachLine(line => {
         count+=1
-        //val rec = occurrenceDAO.getRawProcessedByRowKey(line)
-        val lstart = System.currentTimeMillis
-//        processor.processRecord(rec.get(0), rec.get(1))
-//        println("total time " + count + ": " + (System.currentTimeMillis - lstart))
         if(startUuid.isEmpty || startUuid.get == line)
             buff + line
         if(buff.size >= 50){
@@ -76,30 +73,32 @@ object ProcessWithActors {
 
         actor ! buff.toArray
         buff.clear
-        
-        
       }
-        if (count % 1000 == 0) {
-        finishTime = System.currentTimeMillis
-        println(count
+
+      if (count % 1000 == 0) {
+      finishTime = System.currentTimeMillis
+      println(count
             + " >> Last key : " + line
             + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f)
             + ", time taken for "+1000+" records: " + (finishTime - startTime).toFloat / 1000f
             + ", total time: "+ (finishTime - start).toFloat / 60000f +" minutes"
         )
-        }
+      }
     })
+
     //add the remaining records from the buff
     if(buff.size>0){
       pool(0).asInstanceOf[Consumer] ! buff.toArray
       batches+=1
     }
-     println(count
+
+    println(count
             + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f)
             + ", time taken for "+1000+" records: " + (finishTime - startTime).toFloat / 1000f
             + ", total time: "+ (finishTime - start).toFloat / 60000f +" minutes"
         )
     println("Finished.")
+
     //kill the actors
     pool.foreach(actor => actor ! "exit")
 
@@ -111,22 +110,16 @@ object ProcessWithActors {
   }
   
 
-  def performPaging(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000, checkDeleted:Boolean=false){
-      if(checkDeleted){
-          occurrenceDAO.conditionalPageOverRawProcessed(rawAndProcessed => {
-              proc(rawAndProcessed)
-          },{values => "false".equals(values.getOrElse(FullRecordMapper.deletedColumn, "false"))}, Array(FullRecordMapper.deletedColumn),startKey,endKey)
-      }
-      else{
-          occurrenceDAO.pageOverRawProcessed(rawAndProcessed => {
-              proc(rawAndProcessed)
-          },startKey,endKey)
-      }
+  def performPaging(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="",
+                    pageSize: Int = 1000){
+      occurrenceDAO.pageOverRawProcessed(rawAndProcessed => {
+          proc(rawAndProcessed)
+      },startKey,endKey)
   }
   /**
    * Process the records using the supplied number of threads
    */
-  def processRecords(threads: Int, firstKey:Option[String], dr: Option[String], checkDeleted:Boolean=false): Unit = {
+  def processRecords(threads: Int, firstKey:Option[String], dr: Option[String], checkDeleted:Boolean=false, locationOnly:Boolean=false): Unit = {
     
     val endUuid = if(dr.isEmpty) "" else dr.get +"|~"
     
@@ -160,8 +153,13 @@ object ProcessWithActors {
       if(guid == "") println("First rowKey processed: " + rawAndProcessed.get._1.rowKey)
       guid = rawAndProcessed.get._1.rowKey
       count += 1
+
       //we want to add the record to the buffer whether or not we send them to the actor
-      buff + rawAndProcessed.get
+      //add it to the buffer isnt a deleted record
+      if (!rawAndProcessed.isEmpty && !rawAndProcessed.get._1.deleted){
+        buff + rawAndProcessed.get
+      }
+
       if(buff.size>=50){
         val actor = pool(batches % threads).asInstanceOf[Consumer]
         batches += 1
@@ -184,7 +182,7 @@ object ProcessWithActors {
         startTime = System.currentTimeMillis
       }
       true //indicate to continue
-    }, startUuid, endUuid, checkDeleted=checkDeleted)
+    }, startUuid, endUuid)
     
     println("Last row key processed: " + guid)
     //add the remaining records from the buff
@@ -229,7 +227,23 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
         case batch:Array[(FullRecord,FullRecord)] => {
           received += 1
           //for((raw,processed) <- batch) { processor.processRecord(raw, processed) }
-          batch.foreach({case (raw, processed) => processor.processRecord(raw, processed)})
+          batch.foreach({case (raw, processed) =>
+            var retries = 0
+            var processed = false
+            while(!processed && retries<6){
+              try {
+                processor.processRecord(raw, processed)
+                processed = true
+              } catch {
+                case e:Exception => {
+                  e.printStackTrace()
+                  println("Error processing record: "+raw.rowKey+",  sleeping for 20 secs before retries")
+                  Thread.sleep(20000)
+                  retries += 1
+                }
+              }
+            }
+          })
           processedRecords += 1
         }
         case keys:Array[String]=>{

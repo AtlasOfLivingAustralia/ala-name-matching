@@ -46,6 +46,31 @@ object Sampling {
     }
 }
 
+//object LocationProcessing {
+//
+//  def main(args: Array[String]) {
+//
+//    val l = new LocationProcessor
+//
+//    Config.occurrenceDAO.pageOverRawProcessed( rawProcessed => {
+//      if (!rawProcessed.isEmpty){
+//        val (raw, processed) = rawProcessed.get
+//        val assertions = l.process(raw.rowKey,raw,processed)
+//        //get the items to persist
+//        val location = processed.location
+//        val el = processed.el
+//        val cl = processed.cl
+//
+//        //create a map for these properties
+//
+//
+//      }
+//      true
+//    })
+//  }
+//}
+
+
 class Sampling {
 
   /**
@@ -108,8 +133,11 @@ class Sampling {
       counter += 1
       passed += 1
       Integer.MAX_VALUE > counter
-    }, startUuid, endUuid, 1000, "decimalLatitude", "decimalLongitude", "decimalLatitude.p", "decimalLongitude.p", "verbatimLatitude", "verbatimLongitude",
-      "originalDecimalLatitude", "originalDecimalLongitude","originalSensitiveValues")
+    }, startUuid, endUuid, 1000, "decimalLatitude", "decimalLongitude",
+      "decimalLatitude.p", "decimalLongitude.p",
+      "verbatimLatitude", "verbatimLongitude",
+      "originalDecimalLatitude", "originalDecimalLongitude",
+      "originalSensitiveValues")
 
     try {
       var fw = new FileWriter(locFilePath);
@@ -130,7 +158,7 @@ class Sampling {
   /**
    * Run the sampling with a file
    */
-  def sampling(filePath: String, outputFilePath: String, singleLayerName:String) {
+  def sampling(filePath: String, outputFilePath: String, singleLayerName:String = "") {
 
     println("********* START - TEST BATCH SAMPLING FROM FILE ***************")
     //load the CSV of points into memory

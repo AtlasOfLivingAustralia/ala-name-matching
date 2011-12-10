@@ -1,7 +1,6 @@
 package au.org.ala.biocache
 import scala.reflect.BeanProperty
 import java.util.UUID
-import org.apache.commons.lang.time.DateFormatUtils
 import org.apache.solr.client.solrj.beans.Field
 import org.codehaus.jackson.annotate.JsonIgnore
 import collection.mutable.HashMap
@@ -13,7 +12,7 @@ import java.util.Date
  * Represents an occurrence record. These fields map directly on to
  * the latest darwin core terms, with a few additional fields.
  */
-class Occurrence extends Cloneable with Mappable with POSO {
+class Occurrence extends Cloneable /*with Mappable*/ with POSO {
   import JavaConversions._  
   override def clone : Occurrence = super.clone.asInstanceOf[Occurrence]
   @BeanProperty var occurrenceID:String = _
@@ -82,47 +81,12 @@ class Occurrence extends Cloneable with Mappable with POSO {
    @JsonIgnore
   def getOriginalSensitiveValues():Map[String,String] = originalSensitiveValues
   def setOriginalSensitiveValues(originalSensitiveValues:Map[String,String])=this.originalSensitiveValues = originalSensitiveValues
-
-  @JsonIgnore
-  def getMap(): java.util.Map[String, String] = {
-    val map = Map[String, String]("occurrenceID" -> occurrenceID, "accessrights" -> accessrights, "associatedMedia" -> associatedMedia,
-      "associatedOccurrences" -> associatedOccurrences, "associatedReferences" -> associatedReferences,
-      "associatedSequences" -> associatedSequences, "associatedTaxa" -> associatedTaxa, "basisOfRecord" -> basisOfRecord,
-      "behavior" -> behavior, "catalogNumber" -> catalogNumber, "collectionCode" -> collectionCode,
-      "collectionID" -> collectionID, "dataGeneralizations" -> dataGeneralizations, "datasetID" -> datasetID,
-      "disposition" -> disposition, "establishmentMeans" -> establishmentMeans, "fieldNotes" -> fieldNotes,
-      "fieldNumber" -> fieldNumber, "identifier" -> identifier, "individualCount" -> individualCount,
-      "individualID" -> individualID, "informationWithheld" -> informationWithheld, "institutionCode" -> institutionCode,
-      "language" -> language, "lifeStage" -> lifeStage, "modified" -> modified, "occurrenceAttributes" -> occurrenceAttributes,
-      "occurrenceDetails" -> occurrenceDetails, "occurrenceRemarks" -> occurrenceRemarks, "otherCatalogNumbers" -> otherCatalogNumbers,
-      "preparations" -> preparations, "previousIdentifications" -> previousIdentifications, "recordedBy" -> recordedBy,
-      "recordNumber" -> recordNumber, "relatedResourceID" -> relatedResourceID, "relationshipAccordingTo" -> relationshipAccordingTo,
-      "relationshipEstablishedDate" -> relationshipEstablishedDate, "relationshipOfResource" -> relationshipOfResource,
-      "relationshipRemarks" -> relationshipRemarks, "reproductiveCondition" -> reproductiveCondition, "resourceID" -> resourceID,
-      "resourceRelationshipID" -> resourceRelationshipID, "rights" -> rights, "rightsholder" -> rightsholder,
-      "samplingProtocol" -> samplingProtocol, "sex" -> sex, "source" -> source, "images" -> images, "sounds" -> sounds,
-      "videos" -> videos, "validDistribution" -> validDistribution)
-    map.filter(i => i._2 != null)
-  }
-
 }
-/**
- * Classes that need to have their fields put into a map should use this trait
- */
-trait Mappable{
-  def getMap():java.util.Map[String,String]
-  implicit def arrToString(in:Array[String]):String={
-    if(in == null)
-      null
-    else{
-      Json.toJSON(in.asInstanceOf[Array[AnyRef]])
-    }
-  }
-}
+
 /**
  * POSO for handling details of a classification associated with an occurrence.
  */
-class Classification extends Cloneable with Mappable with POSO {
+class Classification extends Cloneable /*with Mappable*/ with POSO {
   import JavaConversions._
   override def clone : Classification = super.clone.asInstanceOf[Classification]
   @BeanProperty var scientificName:String = _
@@ -176,31 +140,12 @@ class Classification extends Cloneable with Mappable with POSO {
   @BeanProperty var left:String = _
   @BeanProperty var right:String = _
   @BeanProperty var speciesGroups:Array[String] =_
-
-  @JsonIgnore
-  def getMap(): java.util.Map[String, String] = {
-    val map = Map[String, String]("scientificName" -> scientificName, "scientificNameAuthorship" -> scientificNameAuthorship,
-      "scientificNameID" -> scientificNameID, "taxonConceptID" -> taxonConceptID, "taxonID" -> taxonID,
-      "kingdom" -> kingdom, "phylum" -> phylum, "classs" -> classs, "order" -> order, "family" -> family,
-      "genus" -> genus, "subgenus" -> subgenus, "species" -> species, "specificEpithet" -> specificEpithet,
-      "subspecies" -> subspecies, "infraspecificEpithet" -> infraspecificEpithet, "infraspecificMarker" -> infraspecificMarker,
-      "higherClassification" -> higherClassification, "parentNameUsage" -> parentNameUsage, "parentNameUsageID" -> parentNameUsageID,
-      "acceptedNameUsage" -> acceptedNameUsage, "acceptedNameUsageID" -> acceptedNameUsageID, "originalNameUsage" -> originalNameUsage,
-      "originalNameUsageID" -> originalNameUsageID, "taxonRank" -> taxonRank, "taxonomicStatus" -> taxonomicStatus,
-      "taxonRemarks" -> taxonRemarks, "verbatimTaxonRank" -> verbatimTaxonRank, "vernacularName" -> vernacularName,
-      "nameAccordingTo" -> nameAccordingTo, "nameAccordingToID" -> nameAccordingToID, "namePublishedIn" -> namePublishedIn,
-      "namePublishedInID" -> namePublishedInID, "nomenclaturalCode" -> nomenclaturalCode, "nomenclaturalStatus" -> nomenclaturalStatus,
-      "taxonRankID" -> taxonRankID, "kingdomID" -> kingdomID, "phylumID" -> phylumID, "classID" -> classID, "orderID" -> orderID,
-      "familyID" -> familyID, "genusID" -> genusID, "subgenusID" -> subgenusID, "speciesID" -> speciesID, "subspeciesID" -> subspeciesID,
-      "left" -> left, "right" -> right, "speciesGroups" -> speciesGroups)
-    map.filter(i => i._2 != null)
-  }
 }
 
 /**
  * POSO for holding measurement information for an occurrence.
  */
-class Measurement extends Cloneable with Mappable with POSO {
+class Measurement extends Cloneable /*with Mappable*/ with POSO {
   import JavaConversions._
   override def clone : Measurement = super.clone.asInstanceOf[Measurement]
   @BeanProperty var measurementAccuracy:String = _
@@ -212,21 +157,12 @@ class Measurement extends Cloneable with Mappable with POSO {
   @BeanProperty var measurementType:String = _
   @BeanProperty var measurementUnit:String = _
   @BeanProperty var measurementValue:String = _
-
-  @JsonIgnore
-  def getMap(): java.util.Map[String, String] = {
-    val map = Map[String, String]("measurementAccuracy" -> measurementAccuracy, "measurementDeterminedBy" -> measurementDeterminedBy,
-      "measurementDeterminedDate" -> measurementDeterminedDate, "measurementID" -> measurementID,
-      "measurementMethod" -> measurementMethod, "measurementRemarks" -> measurementRemarks,
-      "measurementType" -> measurementType, "measurementUnit" -> measurementUnit, "measurementValue" -> measurementValue)
-    map.filter(i => i._2 != null)
-  }
 }
 
 /**
  * POSO for handling identification information for an occurrence.
  */
-class Identification extends Cloneable with Mappable with POSO {
+class Identification extends Cloneable /*with Mappable*/ with POSO {
   import JavaConversions._
   override def clone : Identification = super.clone.asInstanceOf[Identification]
   @BeanProperty var dateIdentified:String = _
@@ -237,21 +173,12 @@ class Identification extends Cloneable with Mappable with POSO {
   @BeanProperty var identificationRemarks:String = _
   @BeanProperty var identifiedBy:String = _
   @BeanProperty var typeStatus:String = _
-
-  @JsonIgnore
-  def getMap(): java.util.Map[String, String] = {
-    val map = Map[String, String]("dateIdentified" -> dateIdentified, "identificationAttributes" -> identificationAttributes,
-      "identificationID" -> identificationID, "identificationQualifier" -> identificationQualifier,
-      "identificationReferences" -> identificationReferences, "identificationRemarks" -> identificationRemarks,
-      "identifiedBy" -> identifiedBy, "typeStatus" -> typeStatus)
-    map.filter(i => i._2 != null)
-  }
 }
 
 /**
  * POSO for holding event data for an occurrence
  */
-class Event extends Cloneable with Mappable with POSO {
+class Event extends Cloneable/*with Mappable*/with POSO {
   import JavaConversions._
   override def clone : Event = super.clone.asInstanceOf[Event]
   @BeanProperty var day:String = _
@@ -270,21 +197,12 @@ class Event extends Cloneable with Mappable with POSO {
   @BeanProperty var endYear:String = _
 
   override def toString = ToStringBuilder.reflectionToString(this)
-
-  @JsonIgnore
-  def getMap(): java.util.Map[String, String] = {
-    val map = Map[String, String]("day" -> day, "endDayOfYear" -> endDayOfYear, "eventAttributes" -> eventAttributes,
-      "eventDate" -> eventDate, "eventID" -> eventID, "eventRemarks" -> eventRemarks, "eventTime" -> eventTime,
-      "verbatimEventDate" -> verbatimEventDate, "year" -> year, "month" -> month, "startDayOfYear" -> startDayOfYear,
-      "startYear" -> startYear, "endYear" -> endYear)
-    map.filter(i => i._2 != null)
-  }
 }
 
 /**
  * POSO for holding location information for an occurrence.
  */
-class Location extends Cloneable with Mappable with POSO {
+class Location extends Cloneable /*with Mappable*/ with POSO {
   import JavaConversions._
   override def clone : Location = super.clone.asInstanceOf[Location]
   @BeanProperty var uuid:String = _	
@@ -334,15 +252,6 @@ class Location extends Cloneable with Mappable with POSO {
   @BeanProperty var ibra:String = _
   @BeanProperty var imcra:String = _
   @BeanProperty var lga:String = _
-//  //custom additional fields for environment layers
-//  //TODO Should we put this in an environment model?
-//  @BeanProperty var mean_temperature_cars2009a_band1:String =_
-//  @BeanProperty var mean_oxygen_cars2006_band1:String =_
-//  @BeanProperty var bioclim_bio34:String =_
-//  @BeanProperty var bioclim_bio12:String =_
-//  @BeanProperty var bioclim_bio11:String =_
-//  @BeanProperty var environmentalLayers:EnvironmentalLayers =new EnvironmentalLayers
-//  @BeanProperty var contextualLayers:ContextualLayers = new ContextualLayers
   //fields that need be hidden from all public API
   //These fields can NOT be @BeanProperty because we need the getter method to have a @JsonIgnore annotation
   var originalDecimalLatitude:String =_
@@ -376,30 +285,6 @@ class Location extends Cloneable with Mappable with POSO {
   @JsonIgnore
   def getOriginalLocationRemarks():String = originalLocationRemarks
   def setOriginalLocationRemarks(remarks:String) = this.originalLocationRemarks = remarks
-
-  @JsonIgnore
-  def getMap(): java.util.Map[String, String] = {
-    val map = Map[String, String]("uuid" -> uuid, "continent" -> continent, "coordinatePrecision" -> coordinatePrecision,
-      "coordinateUncertaintyInMeters" -> coordinateUncertaintyInMeters, "country" -> country, "countryCode" -> countryCode,
-      "county" -> county, "decimalLatitude" -> decimalLatitude, "decimalLongitude" -> decimalLongitude,
-      "footprintSpatialFit" -> footprintSpatialFit, "footprintWKT" -> footprintWKT, "geodeticDatum" -> geodeticDatum,
-      "georeferencedBy" -> georeferencedBy, "georeferenceProtocol" -> georeferenceProtocol, "georeferenceRemarks" -> georeferenceRemarks,
-      "georeferenceSources" -> georeferenceSources, "georeferenceVerificationStatus" -> georeferenceVerificationStatus,
-      "habitat" -> habitat, "higherGeography" -> higherGeography, "higherGeographyID" -> higherGeographyID, "island" -> island,
-      "islandGroup" -> islandGroup, "locality" -> locality, "locationAttributes" -> locationAttributes, "locationID" -> locationID,
-      "locationRemarks" -> locationRemarks, "maximumDepthInMeters" -> maximumDepthInMeters,
-      "maximumDistanceAboveSurfaceInMeters" -> maximumDistanceAboveSurfaceInMeters, "maximumElevationInMeters" -> maximumElevationInMeters,
-      "minimumDepthInMeters" -> minimumDepthInMeters, "minimumDistanceAboveSurfaceInMeters" -> minimumDistanceAboveSurfaceInMeters,
-      "minimumElevationInMeters" -> minimumElevationInMeters, "pointRadiusSpatialFit" -> pointRadiusSpatialFit,
-      "stateProvince" -> stateProvince, "verbatimCoordinates" -> verbatimCoordinates, "verbatimCoordinateSystem" -> verbatimCoordinateSystem,
-      "verbatimDepth" -> verbatimDepth, "verbatimElevation" -> verbatimElevation, "verbatimLatitude" -> verbatimLatitude,
-      "verbatimLocality" -> verbatimLocality, "verbatimLongitude" -> verbatimLongitude, "waterBody" -> waterBody,
-      "ibra" -> ibra, "imcra" -> imcra, "lga" -> lga /*"mean_temperature_cars2009a_band1"->mean_temperature_cars2009a_band1,
-                                "mean_oxygen_cars2006_band1"->mean_oxygen_cars2006_band1, "bioclim_bio34"->bioclim_bio34,
-                                "bioclim_bio12"->bioclim_bio12,"bioclim_bio11"->bioclim_bio11 */ )
-
-    map.filter(i => i._2 != null)
-  }
 }
 
 /**
@@ -476,46 +361,34 @@ class Attribution (
   @BeanProperty var provenance:String,
   @BeanProperty var taxonomicHints:Array[String],
   @BeanProperty var defaultDwcValues:Map[String,String])
-  extends Cloneable with Mappable with POSO {
+  extends Cloneable with POSO {
   import JavaConversions._
   def this() = this(null,null,null,null,null,null,null,null,null,null,null, null, null, null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
   override def toString = ToStringBuilder.reflectionToString(this)
   // stores whether or not the data resource has collections associated with it
   var hasMappedCollections:Boolean=false
-    @JsonIgnore
+  @JsonIgnore
   private var parsedHints:Map[String,Set[String]] = null
   /**
    * Parse the hints into a usable map with rank -> Set.
    */
   @JsonIgnore
-  def retrieveParseHints : Map[String,Set[String]] = {
-      if(parsedHints==null){
-          if(taxonomicHints!=null){
-            val rankSciNames = new HashMap[String,Set[String]]
-            val pairs = taxonomicHints.toList.map(x=> x.split(":"))
-            for(pair <- pairs){
-              val values = rankSciNames.getOrElse(pair(0),Set())
-              rankSciNames.put(pair(0), values + pair(1).trim.toLowerCase)
-            }
-            parsedHints = rankSciNames.toMap
-          } else {
-            parsedHints = Map[String,Set[String]]()
-          }
+  def retrieveParseHints: Map[String, Set[String]] = {
+    if (parsedHints == null) {
+      if (taxonomicHints != null) {
+        val rankSciNames = new HashMap[String, Set[String]]
+        val pairs = taxonomicHints.toList.map(x => x.split(":"))
+        pairs.foreach(pair => {
+          val values = rankSciNames.getOrElse(pair(0), Set())
+          rankSciNames.put(pair(0), values + pair(1).trim.toLowerCase)
+        })
+        parsedHints = rankSciNames.toMap
+      } else {
+        parsedHints = Map[String, Set[String]]()
       }
-      parsedHints
-  }
-
-  @JsonIgnore
- def getMap():java.util.Map[String,String]={
-    val map = Map[String,String](
-        "dataProviderUid"->dataProviderUid, "dataProviderName"->dataProviderName,
-        "dataResourceUid"->dataResourceUid, "dataResourceName"->dataResourceName,
-        "collectionUid"->collectionUid, "institutionUid"->institutionUid, 
-        "dataHubUid"->dataHubUid, "dataHubName"->dataHubName,
-        "institutionName"->institutionName , "collectionName"->collectionName, 
-        "taxonomicHints"->taxonomicHints, "citation" -> citation)
-    map.filter(i => i._2!= null)
+    }
+    parsedHints
   }
 }
 
@@ -572,20 +445,20 @@ class FullRecord (
    * Equals implementation that compares the contents of all the contained POSOs
    */
   override def equals(that: Any) = that match {
-        case other: FullRecord => {
-            if(this.uuid != other.uuid) false
-            else if(!EqualsBuilder.reflectionEquals(this.occurrence, other.occurrence)) false
-            else if(!EqualsBuilder.reflectionEquals(this.classification, other.classification)) false
-            else if(!EqualsBuilder.reflectionEquals(this.location, other.location)) false
-            else if(!EqualsBuilder.reflectionEquals(this.event, other.event)) false
-            else if(!EqualsBuilder.reflectionEquals(this.attribution, other.attribution, Array("taxonomicHints","parsedHints"))) {
-                false
-            }
-            else if(!EqualsBuilder.reflectionEquals(this.measurement, other.measurement)) false
-            else if(!EqualsBuilder.reflectionEquals(this.identification, other.identification)) false
-            else true
-        }
-        case _ => false
+    case other: FullRecord => {
+      if (this.uuid != other.uuid) false
+      else if (!EqualsBuilder.reflectionEquals(this.occurrence, other.occurrence)) false
+      else if (!EqualsBuilder.reflectionEquals(this.classification, other.classification)) false
+      else if (!EqualsBuilder.reflectionEquals(this.location, other.location)) false
+      else if (!EqualsBuilder.reflectionEquals(this.event, other.event)) false
+      else if (!EqualsBuilder.reflectionEquals(this.attribution, other.attribution, Array("taxonomicHints", "parsedHints"))) {
+        false
+      }
+      else if (!EqualsBuilder.reflectionEquals(this.measurement, other.measurement)) false
+      else if (!EqualsBuilder.reflectionEquals(this.identification, other.identification)) false
+      else true
+    }
+    case _ => false
   }
 }
 
@@ -689,7 +562,7 @@ class OutlierResult (
  * But I am assuming that the will not get in the way if we decide to use a
  * different indexing process.
  */
-class OccurrenceIndex extends Cloneable with Mappable with POSO {
+class OccurrenceIndex extends Cloneable /*with Mappable*/ with POSO {
   import JavaConversions._
   override def clone : OccurrenceIndex = super.clone.asInstanceOf[OccurrenceIndex]
   @BeanProperty @Field("id") var uuid:String =_
@@ -746,20 +619,11 @@ class OccurrenceIndex extends Cloneable with Mappable with POSO {
   @BeanProperty @Field("geospatial_kosher") var geospatialKosher:String =_
   @BeanProperty @Field("taxonomic_kosher") var taxonomicKosher:String =_
   @BeanProperty @Field("collector") var raw_recordedBy:String = _
-
-  //environment
-//  @BeanProperty @Field("mean_temperature_cars2009a_band1_env") var mean_temperature_cars2009a_band1:java.lang.Double =_
-//  @BeanProperty @Field("mean_oxygen_cars2006_band1_env") var mean_oxygen_cars2006_band1:java.lang.Double =_
-//  @BeanProperty @Field("bioclim_bio34_env") var bioclim_bio34:java.lang.Double =_
-//  @BeanProperty @Field("bioclim_bio12_env") var bioclim_bio12:java.lang.Double =_
-//  @BeanProperty @Field("bioclim_bio11_env") var bioclim_bio11:java.lang.Double =_
-//
   //extra raw record fields
   @BeanProperty @Field("raw_taxon_name") var raw_scientificName:String =_
   @BeanProperty @Field("raw_basis_of_record") var raw_basisOfRecord:String =_
   @BeanProperty @Field("raw_type_status") var raw_typeStatus:String =_
   @BeanProperty @Field("raw_common_name") var raw_vernacularName:String =_
-
   //constructed fields
   @BeanProperty @Field("lat_long") var latLong:String =_
   @BeanProperty @Field("point-1") var point1:String =_
@@ -773,37 +637,6 @@ class OccurrenceIndex extends Cloneable with Mappable with POSO {
   @BeanProperty @Field("aust_conservation") var austConservation:String = _
   @BeanProperty @Field("state_conservation") var stateConservation:String = _
 
-  @JsonIgnore
-  def getMap():java.util.Map[String,String]={
-
-    val sdate = if(eventDate == null) null else DateFormatUtils.format(eventDate, "yyyy-MM-dd")
-
-    val map = Map[String,String]("id"-> uuid, "occurrence_id"-> occurrenceID, "data_hub_uid"-> dataHubUid, "data_hub" -> dataHub,
-        "institution_uid"-> institutionUid, "institution_code"-> raw_institutionCode,
-        "institution_name"-> institutionName, "collection_uid"-> collectionUid,
-        "collection_code"-> raw_collectionCode, "collection_name"-> collectionName,
-        "catalogue_number"-> raw_catalogNumber, "taxon_concept_lsid"-> taxonConceptID,
-        "occurrence_date"-> sdate, "taxon_name"-> scientificName, "common_name"-> vernacularName,
-        "rank"-> taxonRank, "rank_id"-> taxonRankID, "country_code"-> raw_countryCode,
-        "kingdom"-> kingdom, "phylum"-> phylum, "class"-> classs, "order"-> order, "family"-> family,
-        "genus"-> genus, "species"-> species, "state"-> stateProvince, "latitude"-> decimalLatitude,
-        "longitude"-> decimalLongitude, "year"-> year, "month"-> month, "basis_of_record"-> basisOfRecord,
-        "type_status"-> typeStatus, "location_remarks"-> raw_locationRemarks, "occurrence_remarks"-> raw_occurrenceRemarks,
-        "lft"-> left, "rgt"-> right, "ibra"-> ibra, "imcra"-> imcra,
-        "places"-> lga, "data_provider_uid"-> dataProviderUid, "data_provider"-> dataProviderName,
-        "data_resource_uid"-> dataResourceUid, "data_resource"-> dataResourceName, "assertions"-> assertions,
-        "user_assertions"-> hasUserAssertions, "species_group"-> speciesGroups,
-        "image_url"-> image, "geospatial_kosher"-> geospatialKosher, "taxonomic_kosher"-> taxonomicKosher,
-        "raw_taxon_name"-> raw_scientificName, "raw_basis_of_record"-> raw_basisOfRecord,
-        "raw_type_status"-> raw_typeStatus, "raw_common_name"-> raw_vernacularName, "lat_long"-> latLong,
-        "point-1"-> point1, "point-0.1"-> point01, "point-0.01"-> point001, "point-0.001"-> point0001,
-        "point-0.0001"-> point00001, "names_and_lsid"-> namesLsid, "multimedia"-> multimedia, "collector"->raw_recordedBy)
-//                                ,"mean_temperature_cars2009a_band1_env"-> mean_temperature_cars2009a_band1,
-//                                "mean_oxygen_cars2006_band1_env"-> mean_oxygen_cars2006_band1, "bioclim_bio34_env"-> bioclim_bio34,
-//                                "bioclim_bio12_env"-> bioclim_bio12, "bioclim_bio11_env"->bioclim_bio11 )
-
-    map.filter(i => i._2!= null)
-  }
   implicit def int2String(in:java.lang.Integer):String={
     if(in == null) null else in.toString
   }

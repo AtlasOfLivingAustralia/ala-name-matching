@@ -290,7 +290,7 @@ trait IndexDAO {
                 return List(getValue("uuid", map),
                     getValue("rowKey", map),
                     getValue("occurrenceID", map),
-                    if(dataHubUids != null && dataHubUids.size>0)dataHubUids.reduceLeft(_+"|"+_) else"",
+                    if(dataHubUids != null && dataHubUids.size > 0) dataHubUids.reduceLeft(_+"|"+_) else"",
                     getValue("dataHub.p", map),
                     getValue("dataProviderUid", map, true),
                     getValue("dataProviderName", map, true),
