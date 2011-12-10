@@ -7,6 +7,7 @@ import collection.mutable.HashMap
 import collection.JavaConversions
 import org.apache.commons.lang.builder.{ToStringBuilder, EqualsBuilder}
 import java.util.Date
+import org.apache.commons.lang.time.DateFormatUtils
 
 /**
  * Represents an occurrence record. These fields map directly on to
@@ -555,13 +556,17 @@ class OutlierResult (
   @BeanProperty var testUuid:String,
   @BeanProperty var outlierForLayersCount:Int)
 
+
 /**
  * An Occurrence Model that can be used to create an Index entry
  * The @Field annotations are used for the SOLR implementation
  * But I am assuming that the will not get in the way if we decide to use a
  * different indexing process.
+ *
+ * TODO Move this class to biocache-service. It is not in use in biocache-store
+ *
  */
-class OccurrenceIndex extends Cloneable /*with Mappable*/ with POSO {
+class OccurrenceIndex extends Cloneable with POSO {
   import JavaConversions._
   override def clone : OccurrenceIndex = super.clone.asInstanceOf[OccurrenceIndex]
   @BeanProperty @Field("id") var uuid:String =_
@@ -636,10 +641,48 @@ class OccurrenceIndex extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty @Field("aust_conservation") var austConservation:String = _
   @BeanProperty @Field("state_conservation") var stateConservation:String = _
 
+  @JsonIgnore
+  def getMap():java.util.Map[String,String]={
+
+    val sdate = if(eventDate == null) null else DateFormatUtils.format(eventDate, "yyyy-MM-dd")
+
+    val map = Map[String,String]("id"-> uuid, "occurrence_id"-> occurrenceID, "data_hub_uid"-> dataHubUid, "data_hub" -> dataHub,
+                                "institution_uid"-> institutionUid, "institution_code"-> raw_institutionCode,
+                                "institution_name"-> institutionName, "collection_uid"-> collectionUid,
+                                "collection_code"-> raw_collectionCode, "collection_name"-> collectionName,
+                                "catalogue_number"-> raw_catalogNumber, "taxon_concept_lsid"-> taxonConceptID,
+                                "occurrence_date"-> sdate, "taxon_name"-> scientificName, "common_name"-> vernacularName,
+                                "rank"-> taxonRank, "rank_id"-> taxonRankID, "country_code"-> raw_countryCode,
+                                "kingdom"-> kingdom, "phylum"-> phylum, "class"-> classs, "order"-> order, "family"-> family,
+                                "genus"-> genus, "species"-> species, "state"-> stateProvince, "latitude"-> decimalLatitude,
+                                "longitude"-> decimalLongitude, "year"-> year, "month"-> month, "basis_of_record"-> basisOfRecord,
+                                "type_status"-> typeStatus, "location_remarks"-> raw_locationRemarks, "occurrence_remarks"-> raw_occurrenceRemarks,
+                                "lft"-> left, "rgt"-> right, "ibra"-> ibra, "imcra"-> imcra,
+                                "places"-> lga, "data_provider_uid"-> dataProviderUid, "data_provider"-> dataProviderName,
+                                "data_resource_uid"-> dataResourceUid, "data_resource"-> dataResourceName, "assertions"-> assertions,
+                                "user_assertions"-> hasUserAssertions, "species_group"-> speciesGroups,
+                                "image_url"-> image, "geospatial_kosher"-> geospatialKosher, "taxonomic_kosher"-> taxonomicKosher,
+                                "raw_taxon_name"-> raw_scientificName, "raw_basis_of_record"-> raw_basisOfRecord,
+                                "raw_type_status"-> raw_typeStatus, "raw_common_name"-> raw_vernacularName, "lat_long"-> latLong,
+                                "point-1"-> point1, "point-0.1"-> point01, "point-0.01"-> point001, "point-0.001"-> point0001,
+                                "point-0.0001"-> point00001, "names_and_lsid"-> namesLsid, "multimedia"-> multimedia, "collector"->raw_recordedBy)
+//                                ,"mean_temperature_cars2009a_band1_env"-> mean_temperature_cars2009a_band1,
+//                                "mean_oxygen_cars2006_band1_env"-> mean_oxygen_cars2006_band1, "bioclim_bio34_env"-> bioclim_bio34,
+//                                "bioclim_bio12_env"-> bioclim_bio12, "bioclim_bio11_env"->bioclim_bio11 )
+
+    map.filter(i => i._2!= null)
+  }
   implicit def int2String(in:java.lang.Integer):String={
     if(in == null) null else in.toString
   }
   implicit def double2String(in:java.lang.Double):String ={
     if(in == null) null else in.toString
+  }
+  implicit def arrToString(in:Array[String]):String={
+    if(in == null)
+      null
+    else{
+      Json.toJSON(in.asInstanceOf[Array[AnyRef]])
+    }
   }
 }
