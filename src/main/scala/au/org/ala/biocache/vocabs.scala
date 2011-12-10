@@ -523,7 +523,19 @@ object AssertionCodes {
 
   //this is a code user can use to flag a issue with processing
   val PROCESSING_ERROR = ErrorCode("processingError", 60000, true, "The system has incorrectly processed a record")
-  
+
+  /**
+   * Retrieve all the terms defined in this vocab.
+   * @return
+   */
+  val retrieveAll : Set[ErrorCode] = {
+    val methods = this.getClass.getMethods
+    (for{
+      method<-methods
+      if(method.getReturnType.getName == "au.org.ala.biocache.ErrorCode")
+    } yield (method.invoke(this).asInstanceOf[ErrorCode])).toSet[ErrorCode]
+  }
+
   //all the codes
   val all = retrieveAll
 
@@ -540,17 +552,6 @@ object AssertionCodes {
 
   val userAssertionCodes = Array(GEOSPATIAL_ISSUE,COORDINATE_HABITAT_MISMATCH,DETECTED_OUTLIER, TAXONOMIC_ISSUE,IDENTIFICATION_INCORRECT,TEMPORAL_ISSUE)
 
-  /**
-   * Retrieve all the terms defined in this vocab.
-   * @return
-   */
-  def retrieveAll : Set[ErrorCode] = {
-    val methods = this.getClass.getMethods
-    (for{
-      method<-methods
-      if(method.getReturnType.getName == "au.org.ala.biocache.ErrorCode")
-    } yield (method.invoke(this).asInstanceOf[ErrorCode])).toSet[ErrorCode]
-  }
 
   /** Retrieve an error code by the numeric code */
   def getByCode(code:Int) : Option[ErrorCode] = all.find(errorCode => errorCode.code == code)
@@ -603,37 +604,36 @@ object AssertionCodes {
           !code.isEmpty && code.get.isFatal
       }).isEmpty
   }
-  
 }
 
-object Layers{
-    lazy val nameToIdMap:Map[String, String] ={
-        initIdMap
-    }
-    lazy val idToNameMap:Map[String,String] = nameToIdMap.map(_.swap)
-    def initIdMap():Map[String, String]={
-        //get the JSON string for the layers
-        val nonDefaultFieldMap = Map[String, String]("aus1" -> "stateProvince", "aus2" -> "lga", "ibra_reg_shape" -> "ibra", "ibra_merged" -> "ibra", "imcra4_pb" -> "imcra", "ne_world" -> "country")
-        try{
-            val json = Source.fromURL("http://spatial.ala.org.au/layers.json").mkString
-            val map = JSON.parseFull(json).get.asInstanceOf[Map[String, List[Map[String,AnyRef]]]]
-            val layers = map("layerList")
-            var idmap = new scala.collection.mutable.HashMap[String, String]
-            for(layer<-layers){
-                val name = layer.get("name")
-                val layerType = layer.getOrElse("type", "")
-                if(!name.isEmpty){
-                    val sname = name.get.asInstanceOf[String].toLowerCase
-                    val id = nonDefaultFieldMap.getOrElse(sname, getPrefix(layerType.asInstanceOf[String]) + layer.get("id").get.asInstanceOf[Double].toInt)
-                    idmap += sname-> id
-                }
-            }
-            idmap.toMap
+object Layers {
+
+  lazy val nameToIdMap: Map[String, String] = {
+    //get the JSON string for the layers
+    val nonDefaultFieldMap = Map[String, String]("aus1" -> "stateProvince", "aus2" -> "lga", "ibra_reg_shape" -> "ibra",
+      "ibra_merged" -> "ibra", "imcra4_pb" -> "imcra", "ne_world" -> "country")
+    try {
+      val json = Source.fromURL("http://spatial.ala.org.au/layers.json").mkString
+      val map = JSON.parseFull(json).get.asInstanceOf[Map[String, List[Map[String, AnyRef]]]]
+      val layers = map("layerList")
+      var idmap = new scala.collection.mutable.HashMap[String, String]
+      layers.foreach(layer => {
+        val name = layer.get("name")
+        val layerType = layer.getOrElse("type", "")
+        if (!name.isEmpty) {
+          val sname = name.get.asInstanceOf[String].toLowerCase
+          val id = nonDefaultFieldMap.getOrElse(sname, getPrefix(layerType.asInstanceOf[String]) + layer.get("id").get.asInstanceOf[Double].toInt)
+          idmap += sname -> id
         }
-        catch{
-            case e :Exception =>e.printStackTrace; Map[String,String]()
-        }
-        
+      })
+      idmap.toMap
     }
-    def getPrefix(value:String) = if(value == "Environmental") "el" else "cl"
+    catch {
+      case e: Exception => e.printStackTrace; Map[String, String]()
+    }
+  }
+
+  lazy val idToNameMap: Map[String, String] = nameToIdMap.map(_.swap)
+
+  def getPrefix(value: String) = if (value == "Environmental") "el" else "cl"
 }

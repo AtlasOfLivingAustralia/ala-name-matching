@@ -283,15 +283,15 @@ object AttributionDAO {
     val hasColl = wsmap.getOrElse("hasMappedCollections", false).asInstanceOf[Boolean]
     //the default DWC terms 
     val defaultDwc = wsmap.getOrElse("defaultDarwinCoreValues", null)
-    attribution.setDataResourceName(name)
-    attribution.setDataProviderUid(dpuid)
-    attribution.setDataProviderName(dpname)
-    attribution.setDataHubUid(ahub)
-    attribution.setTaxonomicHints(ahints)
-    attribution.hasMappedCollections=hasColl
-    attribution.setProvenance(provenance)
+    attribution.dataResourceName = name
+    attribution.dataProviderUid = dpuid
+    attribution.dataProviderName = dpname
+    attribution.dataHubUid = ahub
+    attribution.taxonomicHints = ahints
+    attribution.hasMappedCollections = hasColl
+    attribution.provenance = provenance
     if(defaultDwc!= null){
-        attribution.setDefaultDwcValues(defaultDwc.asInstanceOf[java.util.LinkedHashMap[String,String]].toMap)
+        attribution.defaultDwcValues = defaultDwc.asInstanceOf[java.util.LinkedHashMap[String,String]].toMap
     }
     Some(attribution)
     }
@@ -331,7 +331,7 @@ object AttributionDAO {
               val hints =wsmap.getOrElse("taxonomyCoverageHints",null)
               if(hints != null){
                 val ahint = hints.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> o.toString().replace("=",":").replace("{","").replace("}",""));
-                attribution.setTaxonomicHints(ahint);
+                attribution.taxonomicHints = ahint
               }
               //the hubMembership no longer in collections obtain from the data resource instead
 //              val hub = wsmap.getOrElse("hubMembership", null)

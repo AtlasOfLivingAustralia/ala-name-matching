@@ -2,6 +2,8 @@ package au.org.ala.biocache
 
 import collection.JavaConversions
 import org.apache.cassandra.thrift.{SlicePredicate, Column, ConsistencyLevel, IndexOperator}
+import scala.collection.mutable.HashMap
+
 //import org.wyki.cassandra.pelops.{Policy, Selector, Pelops}
 import org.scale7.cassandra.pelops.{Cluster,Pelops,Selector, Bytes}
 import collection.mutable.ListBuffer
@@ -454,12 +456,13 @@ class CassandraPersistenceManager @Inject() (
      * Convert a set of cassandra columns into a key-value pair map.
      */
     protected def columnList2Map(columnList:java.util.List[Column]) : Map[String,String] = {
-        val tuples = {
-            for(column <- columnList)
-              yield (new String(column.getName, "UTF-8"), new String(column.getValue, "UTF-8"))
-        }
-        //convert the list
-        Map(tuples map {s => (s._1, s._2)} : _*)
+      val map = new HashMap[String, String]
+      val iter = columnList.iterator()
+      while(iter.hasNext){
+        val c = iter.next()
+        map.put(new String(c.getName, "UTF-8"), new String(c.getValue, "UTF-8"))
+      }
+      map.toMap
     }
 
   /**

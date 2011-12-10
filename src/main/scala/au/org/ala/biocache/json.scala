@@ -7,6 +7,7 @@ import org.codehaus.jackson.map.`type`.TypeFactory
 import org.codehaus.jackson.map.{DeserializationConfig, ObjectMapper}
 import org.codehaus.jackson.map.annotate.JsonSerialize
 import java.util.ArrayList
+import scala.util.parsing.json.JSON
 
 object Json {
 	
@@ -105,6 +106,17 @@ object Json {
         val valueType = TypeFactory.collectionType(classOf[ArrayList[_]], theClass)
         var listOfObject = mapper.readValue[ArrayList[_]](jsonString, valueType)
         listOfObject.asScala.toList.asInstanceOf[List[A]]
+    }
+
+    /**
+     * Convert the supplied list from JSON
+     */
+    def toIntArray(jsonString:String) : Array[Int] = {
+//        val mapper = new ObjectMapper
+//        mapper.readValue(jsonString,classOf[java.util.List[java.lang.Integer]])
+      //jsonString.replace("[")
+      if (jsonString =="" || jsonString =="[]") return Array()
+      jsonString.replace("[","").replace("]","").split(",").map(x => x.toInt).toArray
     }
 
    def toMap(jsonString:String): scala.collection.Map[String,Object]={

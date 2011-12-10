@@ -4,6 +4,7 @@ import scala.actors.Actor
 import scala.collection.mutable.ArrayBuffer
 import au.org.ala.biocache._
 import java.io.File
+import org.scale7.cassandra.pelops.Pelops
 
 /**
  * A simple threaded implementation of the processing.

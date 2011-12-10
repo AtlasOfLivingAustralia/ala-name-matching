@@ -359,17 +359,16 @@ class Attribution (
   @BeanProperty var collectionName:String,
   @BeanProperty var citation:String,
   @BeanProperty var provenance:String,
-  @BeanProperty var taxonomicHints:Array[String],
-  @BeanProperty var defaultDwcValues:Map[String,String])
+  @JsonIgnore var taxonomicHints:Array[String],
+  @JsonIgnore var defaultDwcValues:Map[String,String])
   extends Cloneable with POSO {
   import JavaConversions._
   def this() = this(null,null,null,null,null,null,null,null,null,null,null, null, null, null)
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
   override def toString = ToStringBuilder.reflectionToString(this)
   // stores whether or not the data resource has collections associated with it
-  var hasMappedCollections:Boolean=false
-  @JsonIgnore
-  private var parsedHints:Map[String,Set[String]] = null
+  @JsonIgnore var hasMappedCollections:Boolean=false
+  @JsonIgnore private var parsedHints:Map[String,Set[String]] = null
   /**
    * Parse the hints into a usable map with rank -> Set.
    */

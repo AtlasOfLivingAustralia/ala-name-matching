@@ -132,10 +132,8 @@ object FullRecordMapper {
                     case it if isQualityAssertion(it) => {
                       //load the QA field names from the array
                       if (fieldValue != "true" && fieldValue != "false") {
-                        val arr = Json.toListWithGeneric(fieldValue, classOf[java.lang.Integer])
-                        for (i <- 0 to arr.size - 1) {
-                          fullRecord.assertions = fullRecord.assertions :+ AssertionCodes.getByCode(arr(i)).get.getName
-                        }
+                        //parses an array of integers
+                        fullRecord.assertions = Json.toIntArray(fieldValue).map(code => AssertionCodes.getByCode(code).get.getName).toArray
                       }
                     }
                     case "miscProperties" => {
