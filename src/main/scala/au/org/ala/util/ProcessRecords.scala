@@ -148,43 +148,8 @@ class RecordProcessor {
     processed.lastModifiedTime = processTime
     //store the occurrence
     occurrenceDAO.updateOccurrence(guid, currentProcessed, processed, systemAssertions, Processed)
-    //update raw if necessary
-    //updateRawIfSensitised(raw,processed, guid)
   }
-  //I DON'T THINK THAT THIS IS NECESSARY FOR THE NEW SDS INTEGRATION.
-//  def updateRawIfSensitised(raw: FullRecord, processed: FullRecord, guid: String) {
-//    val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
-//    if (raw.location.originalDecimalLatitude != null && processed.occurrence.dataGeneralizations == null
-//      && processed.occurrence.informationWithheld == null) {
-//      val location = new Location
-//      location.decimalLatitude = raw.location.decimalLatitude
-//      location.decimalLongitude = raw.location.decimalLongitude
-//      location.locationRemarks = raw.location.originalLocationRemarks
-//      location.verbatimLatitude = raw.location.verbatimLatitude
-//      location.verbatimLongitude = raw.location.verbatimLongitude
-//      occurrenceDAO.updateOccurrence(guid, location, Versions.RAW)
-//      //remove the existing originalDecimal coordinates
-//      //TODO better way to obtain list of "originals"
-//      Config.persistenceManager.deleteColumns(guid, "occ", "originalDecimalLatitude", "originalDecimalLongitude", "originalLocationRemarks", "originalVerbatimLongitude", "originalVerbatimLatitude");
-//    } else if (raw.location.originalDecimalLatitude != null && raw.location.originalDecimalLongitude != null) {
-//      val location = new Location
-//      location.originalDecimalLatitude = raw.location.originalDecimalLatitude
-//      location.originalDecimalLongitude = raw.location.originalDecimalLongitude
-//      location.decimalLatitude = raw.location.decimalLatitude
-//      location.decimalLongitude = raw.location.decimalLongitude
-//      location.originalLocationRemarks = raw.location.originalLocationRemarks
-//      location.originalVerbatimLatitude = raw.location.originalVerbatimLatitude
-//      location.originalVerbatimLongitude = raw.location.originalVerbatimLongitude
-//      occurrenceDAO.updateOccurrence(guid, location, Versions.RAW)
-//      //remove the location remarks all the time
-//      Config.persistenceManager.deleteColumns(guid,"occ", "locationRemarks", "verbatimLatitude","verbatimLongitude")
-//      //remove the decimal coordinates if there are no processed coordinates (indicates informationWithheld)
-//      if (StringUtils.isEmpty(processed.location.decimalLatitude) && StringUtils.isEmpty(processed.location.decimalLongitude)) {
-//        Config.persistenceManager.deleteColumns(guid, "occ", "decimalLatitude", "decimalLongitude")
-//      }
-//    }
-//  }
-//
+
   /**
    * Process a record, adding metadata and records quality systemAssertions
    */
