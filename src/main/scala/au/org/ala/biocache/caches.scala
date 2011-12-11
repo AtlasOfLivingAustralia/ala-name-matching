@@ -498,7 +498,7 @@ object LocationDAO {
           }
           case None => {
             //do a layer lookup???
-            println("************ Performing a layer lookup for [" + latitude + "," + longitude +"]")
+            logger.debug("Performing a layer lookup for [" + latitude + "," + longitude +"]")
             if(Config.allowLayerLookup){
               val intersection = doLayerIntersectForPoint(latitude, longitude)
               lock.synchronized {

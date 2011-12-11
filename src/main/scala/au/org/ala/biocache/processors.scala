@@ -829,8 +829,8 @@ class LocationProcessor extends Processor {
             // is performed before the point matching to gazetteer..
             //We want to associate the ibra layers to the sensitised point
             //update the required locality information
-            println("**************** Performing lookup for new point ['" + raw.rowKey
-              + "',"+processed.location.decimalLongitude + "," + processed.location.decimalLatitude )
+            logger.debug("**************** Performing lookup for new point ['" + raw.rowKey
+              + "',"+processed.location.decimalLongitude + "," + processed.location.decimalLatitude +"]" )
             val newPoint = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
             newPoint match {
               case Some((loc, el, cl)) => processed.location.lga = loc.lga
