@@ -1,8 +1,8 @@
 package au.org.ala.biocache
 
 import collection.JavaConversions
-import org.apache.cassandra.thrift.{SlicePredicate, Column, ConsistencyLevel, IndexOperator}
 import scala.collection.mutable.HashMap
+import org.apache.cassandra.thrift._
 
 //import org.wyki.cassandra.pelops.{Policy, Selector, Pelops}
 import org.scale7.cassandra.pelops.{Cluster,Pelops,Selector, Bytes}
@@ -358,15 +358,16 @@ class CassandraPersistenceManager @Inject() (
      * @param startUuid, The uuid of the occurrence at which to start the paging
      */
     def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int, slicePredicate:SlicePredicate, checkEmpty:Boolean=false,startUuid:String="",endUuid:String="")={
-      val selector = Pelops.createSelector(poolName)
+
       var startKey = new Bytes(startUuid.getBytes)
       var endKey = new Bytes(endUuid.getBytes)
       var keyRange = Selector.newKeyRange(startKey, endKey, pageSize+1)
       var hasMore = true
       var counter = 0
       //Please note we are not paging by UTF8 because it is much slower
-      var columnMap = selector.getColumnsFromRows(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE)
       var continue = true
+      var columnMap = getColumnsFromRowsWithRetries(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE, 10)
+
       while (!columnMap.isEmpty && continue) {
         val columnsObj = List(columnMap.keySet.toArray : _*)
         //convert to scala List
@@ -385,11 +386,45 @@ class CassandraPersistenceManager @Inject() (
         })
         counter += keys.size
         keyRange = Selector.newKeyRange(startKey, endKey, pageSize+1)
-        columnMap = selector.getColumnsFromRows(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE)
+        columnMap = getColumnsFromRowsWithRetries(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE, 10)
         columnMap.remove(startKey)
       }
-      if(counter > 0)
-          println("Finished paging. Total count: "+counter)
+
+      println("Finished paging. Records paged over : "+counter)
+    }
+
+   /**
+    * Retrieve a list of records as maps of columns.
+    */
+    private def getColumnsFromRowsWithRetries(entityName:String, keyRange:KeyRange, slicePredicate:SlicePredicate,
+               cl:ConsistencyLevel, permittedRetries:Int) : java.util.Map[Bytes, java.util.List[Column]] = {
+      var success = false
+      var noOfRetries = 0
+      var columnMap:java.util.Map[Bytes, java.util.List[Column]] = null
+      while(!success){
+        try {
+          val selector = Pelops.createSelector(poolName)
+          columnMap = selector.getColumnsFromRows(entityName, keyRange, slicePredicate, cl)
+          success = true
+        } catch {
+          case ir:org.scale7.cassandra.pelops.exceptions.InvalidRequestException => {
+            logger.debug("Invalid key range supplied to cassandra: " + ir.getMessage, ir)
+            success = true
+            columnMap = new HashMap[Bytes, java.util.List[Column]]
+          }
+          case e:Exception => {
+            logger.warn("Problem retrieving data. Number of retries left:" + (permittedRetries - noOfRetries) +
+              "Error: " + e.getMessage)
+            Thread.sleep(20000)
+            if (noOfRetries == permittedRetries){
+              e.printStackTrace()
+              throw new RuntimeException(e)
+            }
+            noOfRetries += 1
+          }
+        }
+      }
+      columnMap
     }
 
     /**
@@ -420,8 +455,6 @@ class CassandraPersistenceManager @Inject() (
     def selectRows(uuids:Array[String], entityName:String, fields:Array[String], proc:((Map[String,String])=>Unit)) {
        val selector = Pelops.createSelector(poolName)
        val slicePredicate = Selector.newColumnsPredicate(fields:_*)
-       //var slicePredicate = new SlicePredicate
-       //slicePredicate.setColumn_names(fields.toList.map(_.getBytes))
 
        //retrieve the columns
        var columnMap = selector.getColumnsFromRowsUtf8Keys(entityName, uuids.toList, slicePredicate, ConsistencyLevel.ONE)
