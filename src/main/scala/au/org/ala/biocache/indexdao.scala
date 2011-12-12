@@ -17,9 +17,9 @@ import com.google.inject.name.Named
 import scala.actors.Actor
 import scala.collection.mutable.ArrayBuffer
 import java.util.Date
-import java.io.OutputStream
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang.time.DateFormatUtils
+import java.io.{File, OutputStream}
 
 
 /**
@@ -87,21 +87,16 @@ trait IndexDAO {
     def getAssertions(map: Map[String, String]): Array[String] = {
 
         val columns = map.keySet
-        var assertions = Array[String]("")
-        columns.foreach(fieldName => 
-
+        val buff = new ArrayBuffer[String]
+        columns.foreach(fieldName =>
             if (FullRecordMapper.isQualityAssertion(fieldName)) {
-
                 val value = map.get(fieldName).get
-
                 if(value != "true" && value != "false"){
-                  val arr = Json.toListWithGeneric(value,classOf[java.lang.Integer])
-                  for(i <- 0 to arr.size-1)
-                    assertions = assertions :+ AssertionCodes.getByCode(arr(i)).get.getName
+                  buff ++= Json.toIntArray(value).map(code => AssertionCodes.getByCode(code).get.getName).toArray[String]
                 }
             }
         )
-        assertions
+        buff.toArray
     }
 
     /**
@@ -120,45 +115,43 @@ trait IndexDAO {
      * The header values for the CSV file.
      */
     val header = List("id", "row_key", "occurrence_id", "data_hub_uid", "data_hub", "data_provider_uid", "data_provider", "data_resource_uid",
-            "data_resource", "institution_uid", "institution_code", "institution_name",
-            "collection_uid", "collection_code", "collection_name", "catalogue_number",
-            "taxon_concept_lsid", "occurrence_date", "occurrence_year", "taxon_name", "common_name", "names_and_lsid",
-            "rank", "rank_id", "raw_taxon_name", "raw_common_name", "multimedia", "image_url",
-            "species_group", "country_code", "country", "lft", "rgt", "kingdom", "phylum", "class", "order",
-            "family", "genus", "genus_guid", "species","species_guid", "state", "imcra", "ibra", "places", "latitude", "longitude",
-            "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
-            "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
-            "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
-            "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation",
-            "sensitive", "coordinate_uncertainty", "user_id","provenance","subspecies_guid", "subspecies_name", "interaction","last_assertion_date",
-            "last_load_date","last_processed_date") ++ elFields ++ clFields
+      "data_resource", "institution_uid", "institution_code", "institution_name",
+      "collection_uid", "collection_code", "collection_name", "catalogue_number",
+      "taxon_concept_lsid", "occurrence_date", "occurrence_year", "taxon_name", "common_name", "names_and_lsid",
+      "rank", "rank_id", "raw_taxon_name", "raw_common_name", "multimedia", "image_url",
+      "species_group", "country_code", "country", "lft", "rgt", "kingdom", "phylum", "class", "order",
+      "family", "genus", "genus_guid", "species","species_guid", "state", "imcra", "ibra", "places", "latitude", "longitude",
+      "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
+      "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
+      "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
+      "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation",
+      "sensitive", "coordinate_uncertainty", "user_id","provenance","subspecies_guid", "subspecies_name", "interaction","last_assertion_date",
+      "last_load_date","last_processed_date") ++ elFields ++ clFields
 
-    /**
-     * Constructs a scientific name.
-     *
-     * TODO Factor this out of indexing logic, and have a separate field in cassandra that stores this.
-     * TODO Construction of this field can then happen as part of the processing.
-     */
-     def getRawScientificName(map:Map[String,String]):String={
-        val scientificName:String ={
-            if(map.contains("scientificName"))
-                map.get("scientificName").get
-            else if(map.contains("genus")){
-                var tmp:String = map.get("genus").get
-                if(map.contains("specificEpithet") || map.contains("species")){
-                    tmp=tmp + " " +map.getOrElse("specificEpithet", map.getOrElse("species",""))
-                    if(map.contains("infraspecificEpithet") || map.contains("subspecies"))
-                        tmp = tmp+ " " + map.getOrElse("infraspecificEpithet",map.getOrElse("subspecies",""))
-                }
-                tmp
-            }
-            else if(map.contains("family"))
-                map.get("family").get
-            else
-                ""
+  /**
+   * Constructs a scientific name.
+   *
+   * TODO Factor this out of indexing logic, and have a separate field in cassandra that stores this.
+   * TODO Construction of this field can then happen as part of the processing.
+   */
+  def getRawScientificName(map: Map[String, String]): String = {
+    val scientificName: String = {
+      if (map.contains("scientificName"))
+        map.get("scientificName").get
+      else if (map.contains("genus")) {
+        var tmp: String = map.get("genus").get
+        if (map.contains("specificEpithet") || map.contains("species")) {
+          tmp = tmp + " " + map.getOrElse("specificEpithet", map.getOrElse("species", ""))
+          if (map.contains("infraspecificEpithet") || map.contains("subspecies"))
+            tmp = tmp + " " + map.getOrElse("infraspecificEpithet", map.getOrElse("subspecies", ""))
         }
-        scientificName
+        tmp
+      }
+      else
+        map.getOrElse("family", "")
     }
+    scientificName
+  }
             
     /**
      * Generates an string array version of the occurrence model.
@@ -182,33 +175,33 @@ trait IndexDAO {
                 val vernacularName = getValue("vernacularName.p", map)
                 val kingdom = getValue("kingdom.p", map)
                 val family = getValue("family.p", map)
-                val simages = getValue("images.p", map)
                 val images = {
+                    val simages = getValue("images.p", map)
                     if (simages.length > 0)
                         Json.toStringArray(simages)
                     else
-                        Array[String]("")
+                        Array[String]()
                 }
-                val sspeciesGroup = getValue("speciesGroups.p", map)
                 val speciesGroup = {
+                    val sspeciesGroup = getValue("speciesGroups.p", map)
                     if (sspeciesGroup.length > 0)
                         Json.toStringArray(sspeciesGroup)
                     else
-                        Array[String]("")
+                        Array[String]()
                 }
                 val interactions = {
                     if(map.contains("interactions.p")){
                         Json.toStringArray(map.get("interactions.p").get)
                     }
                     else
-                        Array[String]("")
+                        Array[String]()
                 }
-                val sdatahubs = getValue("dataHubUid",map, true)
                 val dataHubUids = {
+                    val sdatahubs = getValue("dataHubUid", map, true)
                     if (sdatahubs.length > 0)
                         Json.toStringArray(sdatahubs)
                     else
-                        Array[String]("")
+                        Array[String]()
                 }
                 var eventDate = getValue("eventDate.p", map)
                 var occurrenceYear = getValue("year.p", map)
@@ -242,8 +235,8 @@ trait IndexDAO {
                     }
                 }
                 val sconservation = getValue("stateConservation.p", map)
-                var stateCons = if(sconservation!="")sconservation.split(",")(0)else ""
-                val rawStateCons = if(sconservation!="")sconservation.split(",")(1)else ""
+                var stateCons = if(sconservation!="") sconservation.split(",")(0) else ""
+                val rawStateCons = if(sconservation!="") sconservation.split(",")(1) else ""
                 if(stateCons == "null") stateCons = rawStateCons;
                 
                 val sensitive:String = {
@@ -262,7 +255,7 @@ trait IndexDAO {
                 
                 //Only set the geospatially kosher field if there are coordinates supplied
                 val geoKosher = if(slat=="" &&slon == "") "" else map.getOrElse(FullRecordMapper.geospatialDecisionColumn, "")
-                val hasUserAss = map.getOrElse(FullRecordMapper.userQualityAssertionColumn, "") match{
+                val hasUserAss = map.getOrElse(FullRecordMapper.userQualityAssertionColumn, "") match {
                     case "true" => "true"
                     case "false" =>"false"
                     case value:String => (value.length >3).toString
@@ -271,11 +264,12 @@ trait IndexDAO {
                     if(map.contains("taxonRankID.p")){
                         try{
                          if(java.lang.Integer.parseInt(map.getOrElse("taxonRankID.p","")) > 7000)
-                             (taxonConceptId, sciName)
-                         else ("","")
+                           (taxonConceptId, sciName)
+                         else
+                           ("","")
                         }
-                        catch{
-                            case _=>("","")
+                        catch {
+                            case _ => ("","")
                         }
                     }
                     else ("","")
@@ -290,7 +284,7 @@ trait IndexDAO {
                 return List(getValue("uuid", map),
                     getValue("rowKey", map),
                     getValue("occurrenceID", map),
-                    if(dataHubUids != null && dataHubUids.size > 0) dataHubUids.reduceLeft(_+"|"+_) else"",
+                    dataHubUids.mkString("|"),
                     getValue("dataHub.p", map),
                     getValue("dataProviderUid", map, true),
                     getValue("dataProviderName", map, true),
@@ -311,9 +305,9 @@ trait IndexDAO {
                     getValue("taxonRankID.p", map),
                     getRawScientificName(map),
                     getValue("vernacularName", map),
-                    if (images != null && images.size > 0 && images(0) != "") "Multimedia" else "None",
-                    if (images != null && images.size > 0) images(0) else "",
-                    if (speciesGroup != null) speciesGroup.reduceLeft(_ + "|" + _) else "",
+                    if (!images.isEmpty && images(0) != "") "Multimedia" else "None",
+                    if (!images.isEmpty) images(0) else "",
+                    speciesGroup.mkString("|"),
                     getValue("countryCode", map),
                     getValue("country.p", map),
                     getValue("left.p", map),
@@ -345,7 +339,7 @@ trait IndexDAO {
                     getValue("typeStatus", map),
                     getValue(FullRecordMapper.taxonomicDecisionColumn, map),
                     geoKosher,
-                    getAssertions(map).reduceLeft(_ + "|" + _),
+                    getAssertions(map).mkString("|"),
                     getValue("locationRemarks", map),
                     getValue("occurrenceRemarks", map),
                     "",
@@ -358,7 +352,7 @@ trait IndexDAO {
                     sensitive,
                     getValue("coordinateUncertaintyInMeters.p",map),
                     map.getOrElse("recordedBy", ""), map.getOrElse("provenance.p",""), subspeciesGuid, subspeciesName,
-                    interactions.reduceLeft(_ + "|" + _),
+                    interactions.mkString("|"),
                     if(lastUserAssertion.isEmpty)"" else DateFormatUtils.format(lastUserAssertion.get,"yyyy-MM-dd'T'HH:mm:ss'Z'"), 
                     if(lastLoaded.isEmpty)"2010-11-1T00:00:00Z" else DateFormatUtils.format(lastLoaded.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
                     if(lastProcessed.isEmpty)"" else DateFormatUtils.format(lastProcessed.get,"yyyy-MM-dd'T'HH:mm:ss'Z'")
@@ -367,7 +361,6 @@ trait IndexDAO {
             else {
                 return List()
             }
-
         }
         catch {
             case e: Exception => e.printStackTrace; throw e
@@ -378,11 +371,9 @@ trait IndexDAO {
 /**
  * DAO for indexing to SOLR
  */
-class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDAO{
+class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, solrConfigPath:String="") extends IndexDAO {
     import org.apache.commons.lang.StringUtils.defaultString
     import scalaj.collection.Imports._
-    //set the solr home
-    System.setProperty("solr.solr.home", solrHome)
 
     //val cc = new CoreContainer.Initializer().initialize
     var cc:CoreContainer = _
@@ -392,21 +383,30 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     var occurrenceDAO:OccurrenceDAO = _
 
     val logger = LoggerFactory.getLogger("SolrOccurrenceDAO")
-    val solrDocList = new java.util.ArrayList[SolrInputDocument](10000)
-   
-    val thread = new SolrIndexActor()
+    val solrDocList = new java.util.ArrayList[SolrInputDocument](1000)
     
-    
+    val thread = new SolrIndexActor()    
+
     def init(){
       if(solrServer == null){
-//        System.setProperty("actors.minPoolSize" , "4")
-//        System.setProperty("actors.maxPoolSize" , "8")
-//        System.setProperty("actors.corePoolSize", "4")  
-        cc = new CoreContainer.Initializer().initialize
-        solrServer = new EmbeddedSolrServer(cc, "")
-        thread.start
+        if (solrConfigPath != ""){
+          //System.setProperty("solr.solr.home", solrHome)
+          println("Initialising SOLR with config path: " + solrConfigPath +", and SOLR HOME: " + solrHome)
+          val solrConfigFile = new File(solrConfigPath)
+          val home = solrConfigFile.getParentFile.getParentFile
+          val f = new File(solrConfigFile.getParentFile.getParentFile , "solr.xml" );
+          cc = new CoreContainer();
+          cc.load(home.getAbsolutePath, f );
+          solrServer  = new EmbeddedSolrServer( cc, "biocache" );
+          thread.start
+        } else {
+          System.setProperty("solr.solr.home", solrHome)
+          val initializer = new CoreContainer.Initializer()
+          cc = initializer.initialize
+          solrServer = new EmbeddedSolrServer(cc, "biocache")
+          thread.start
+        }
       }
-     
     }
 
     def reload = cc.reload("")
@@ -444,12 +444,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         }
     }
 
-//    def stopThread ={
-//      println("Stopping")
-//      thread ! "exit"
-//      //cc.shutdown
-//    }
-
     def finaliseIndex(optimise:Boolean=false, shutdown:Boolean=true) {
         init
         if (!solrDocList.isEmpty) {
@@ -468,7 +462,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         if(optimise)
           this.optimise
         if(shutdown){
-            
         	this.shutdown
         }
     }
@@ -500,86 +493,89 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     /**
      * A SOLR specific implementation of indexing from a map.
      */
-    override def indexFromMap(guid: String, map: Map[String, String], batch:Boolean=true, startDate:Option[Date]=None) = {
-        init
-        //val header = getHeaderValues()
-        if(shouldIndex(map, startDate)){
-            val values = getOccIndexModel(guid, map)
-            if(values.length >0 &&values.length != header.length){
-              println("values don't matcher header: " +values.length+":"+header.length+", values:header")
-              println(header)
-              println(values)
-              exit(1)
+  override def indexFromMap(guid: String, map: Map[String, String], batch: Boolean = true, startDate: Option[Date] = None) = {
+    init
+    //val header = getHeaderValues()
+    if (shouldIndex(map, startDate)) {
+      val values = getOccIndexModel(guid, map)
+      if (values.length > 0 && values.length != header.length) {
+        println("values don't matcher header: " + values.length + ":" + header.length + ", values:header")
+        println(header)
+        println(values)
+        exit(1)
+      }
+      if (values.length > 0) {
+        val doc = new SolrInputDocument()
+        for (i <- 0 to values.length - 1) {
+          if (values(i) != "") {
+            if (header(i) == "species_group" || header(i) == "assertions" || header(i) == "data_hub_uid" || header(i) == "interactions") {
+              //multiple valus in this field
+              for (value <- values(i).split('|')) {
+                if (value != "")
+                  doc.addField(header(i), value)
+              }
             }
-            if (values.length > 0) {
-                val doc = new SolrInputDocument()
-                for (i <- 0 to values.length - 1) {
-                    if (values(i) != "") {
-                        if (header(i) == "species_group" || header(i) == "assertions" || header(i) =="data_hub_uid" || header(i) == "interactions") {
-                            //multiple valus in this field
-                            for (value <- values(i).split('|')){
-                            	if(value != "")
-                            		doc.addField(header(i), value)
-                            }
-                        }
-                        else
-                            doc.addField(header(i), values(i))
-                    }
-                }
-
-               if(!batch){
-                 solrServer.add(doc);
-                 solrServer.commit
-               }
-               else{
-//                 if(values(0) == "" || values(0) == null)
-//                   println("Unable to add doc with missing uuid " + values(1))
-//                 else
-                 if(!StringUtils.isEmpty(values(0)))
-                    solrDocList.add(doc)
-    
-                if (solrDocList.size == 10000) {
-                  while(!thread.ready){ Thread.sleep(50) }
-                  
-                  val tmpDocList = new java.util.ArrayList[SolrInputDocument](solrDocList);
-                  
-                  thread ! tmpDocList
-                  solrDocList.clear
-                }
-               }
+            else
+              doc.addField(header(i), values(i))
           }
         }
-    }
-    /**
-     * Gets the rowKeys for the query that is supplied
-     * Do here so that still works if web service is down
-     *
-     * This causes OOM exceptions at SOLR for large numbers of row keys
-     * Use writeRowKeysToStream instead
-     *
-     */
-    override  def getRowKeysForQuery(query:String, limit:Int=1000):Option[List[String]] ={
-        init
-        val solrQuery = new SolrQuery();
-        solrQuery.setQueryType("standard");
-        // Facets
-        solrQuery.setFacet(true)
-        solrQuery.addFacetField("row_key")
-        solrQuery.setQuery(query)
-        solrQuery.setRows(0)
-        solrQuery.setFacetLimit(-1)
-        solrQuery.setFacetMinCount(1)
-        val response =solrServer.query(solrQuery)
-        println("query " + solrQuery.toString)
-        //now process all the values that are in the row_key facet
-        val rowKeyFacets = response.getFacetField("row_key")
-        val values = rowKeyFacets.getValues().asScala[org.apache.solr.client.solrj.response.FacetField.Count]
-        if(values.size>0){
-            Some(values.map(facet=> facet.getName).asInstanceOf[List[String]]);
+
+        if (!batch) {
+          solrServer.add(doc);
+          solrServer.commit
         }
-        else
-            None
+        else {
+          //                 if(values(0) == "" || values(0) == null)
+          //                   println("Unable to add doc with missing uuid " + values(1))
+          //                 else
+          if (!StringUtils.isEmpty(values(0)))
+            solrDocList.add(doc)
+
+          if (solrDocList.size == 10000) {
+            while (!thread.ready) {
+              Thread.sleep(50)
+            }
+
+            val tmpDocList = new java.util.ArrayList[SolrInputDocument](solrDocList);
+
+            thread ! tmpDocList
+            solrDocList.clear
+          }
+       }
+      }
     }
+  }
+
+  /**
+   * Gets the rowKeys for the query that is supplied
+   * Do here so that still works if web service is down
+   *
+   * This causes OOM exceptions at SOLR for large numbers of row keys
+   * Use writeRowKeysToStream instead
+   *
+   */
+  override def getRowKeysForQuery(query: String, limit: Int = 1000): Option[List[String]] = {
+    init
+    val solrQuery = new SolrQuery();
+    solrQuery.setQueryType("standard");
+    // Facets
+    solrQuery.setFacet(true)
+    solrQuery.addFacetField("row_key")
+    solrQuery.setQuery(query)
+    solrQuery.setRows(0)
+    solrQuery.setFacetLimit(-1)
+    solrQuery.setFacetMinCount(1)
+    val response = solrServer.query(solrQuery)
+    println("query " + solrQuery.toString)
+    //now process all the values that are in the row_key facet
+    val rowKeyFacets = response.getFacetField("row_key")
+    val values = rowKeyFacets.getValues().asScala[org.apache.solr.client.solrj.response.FacetField.Count]
+    if (values.size > 0) {
+      Some(values.map(facet => facet.getName).asInstanceOf[List[String]]);
+    }
+    else
+      None
+  }
     /**
      * Writes the list of row_keys for the results of the sepcified query to the
      * output stream.
