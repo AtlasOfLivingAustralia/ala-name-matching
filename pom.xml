@@ -83,6 +83,12 @@
             <groupId>org.ala.layers</groupId>
             <artifactId>layers-store</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>xercesImpl</artifactId>
+                    <groupId>xerces</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.mockrunner</groupId>
