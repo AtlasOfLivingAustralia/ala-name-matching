@@ -49,6 +49,7 @@ object MigrationUtil {
             if(isEL(key)) false
             else if (isCL(key)) false
             else if (obsCols.contains(key)) false
+            else if (value == "[]") false
             else true
           }})
           targetPM.put(guid, keyspace, mapFiltered)
