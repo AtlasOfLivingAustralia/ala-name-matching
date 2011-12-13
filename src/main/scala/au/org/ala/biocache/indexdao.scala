@@ -371,13 +371,14 @@ trait IndexDAO {
 /**
  * DAO for indexing to SOLR
  */
-class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, solrConfigPath:String="") extends IndexDAO {
+class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDAO {
     import org.apache.commons.lang.StringUtils.defaultString
     import scalaj.collection.Imports._
 
     //val cc = new CoreContainer.Initializer().initialize
     var cc:CoreContainer = _
     var solrServer:SolrServer =_ //new EmbeddedSolrServer(cc, "")
+    var solrConfigPath:String = ""
 
     @Inject
     var occurrenceDAO:OccurrenceDAO = _

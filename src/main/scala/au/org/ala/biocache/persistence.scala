@@ -150,7 +150,6 @@ class CassandraPersistenceManager @Inject() (
         }
     }
 
-
     /**
      * Retrieve an array of objects, parsing the JSON stored.
      *
@@ -357,7 +356,8 @@ class CassandraPersistenceManager @Inject() (
      *
      * @param startUuid, The uuid of the occurrence at which to start the paging
      */
-    def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int, slicePredicate:SlicePredicate, checkEmpty:Boolean=false,startUuid:String="",endUuid:String="")={
+    def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int,
+                 slicePredicate:SlicePredicate, checkEmpty:Boolean=false,startUuid:String="",endUuid:String="") = {
 
       var startKey = new Bytes(startUuid.getBytes)
       var endKey = new Bytes(endUuid.getBytes)
@@ -390,7 +390,7 @@ class CassandraPersistenceManager @Inject() (
         columnMap.remove(startKey)
       }
 
-      println("Finished paging. Records paged over : "+counter)
+      if(counter > 0) println("Finished paging. Records paged over : "+counter)
     }
 
    /**

@@ -69,7 +69,11 @@ object IndexRecords {
     }
 
     val endKey = if(dataResource.isEmpty) "" else dataResource.get +"|~"
-    logger.info("Starting to index " + startKey + " until " + endKey)
+    if(startKey == ""){
+       logger.info("Starting full index")
+    } else {
+       logger.info("Starting to index " + startKey + " until " + endKey)
+    }
     indexRange(startKey, endKey, date, checkDeleted)
     //index any remaining items before exiting
     indexer.finaliseIndex(optimise, shutdown)
@@ -82,6 +86,7 @@ object IndexRecords {
     var finishTime = System.currentTimeMillis
     performPaging( (guid, map) => {
         counter += 1
+        println("Indexing doc: " + counter)
         val fullMap = new HashMap[String, String]
         fullMap ++= map
         ///convert EL and CL properties at this stage
@@ -118,7 +123,7 @@ object IndexRecords {
         true
       }, startKey, endKey, pageSize, "uuid", "rowKey", FullRecordMapper.deletedColumn)
     } else {
-      println("****** Performing selective paging with liost of fields.....")
+      println("****** Performing selective paging with list of fields.....")
       persistenceManager.pageOverAll("occ", (guid, map) => {
         proc(guid, map)
       }, startKey, endKey, pageSize)

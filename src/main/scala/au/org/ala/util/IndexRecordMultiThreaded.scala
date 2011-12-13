@@ -116,7 +116,9 @@ class IndexRunner (centralCounter:Counter, threadId:Int, startKey:String, endKey
 
     val pageSize = 1000
     println("Set SOLR Home: " + newIndexDir.getParent)
-    val indexer = new SolrIndexDAO(newIndexDir.getParent, newIndexDir.getAbsolutePath+"/solrconfig.xml")
+    val indexer = new SolrIndexDAO(newIndexDir.getParent)
+    indexer.solrConfigPath = newIndexDir.getAbsolutePath+"/solrconfig.xml"
+
     var counter = 0
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
