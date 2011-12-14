@@ -100,16 +100,6 @@ class DefaultValuesProcessor extends Processor {
 
 class MiscellaneousProcessor extends Processor {
 
-  //Regular expression used to parse an image URL - adapted from 
-  //http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
-  lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:jpg|gif|png|jpeg))$""".r
-  lazy val soundParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:wav|mp3|ogg|flac))$""".r
-  lazy val videoParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:wmv|mp4|mpg|avi|mov))$""".r
-
-  val imageExtension = Array(".jpg",".gif",".png",".jpeg")
-  val soundExtension = Array(".wav",".mp3",".ogg",".flac")
-  val videoExtension = Array(".wmv",".mp4",".mpg",".avi",".mov")
-  
   val interactionPattern = """([A-Za-z]*):([\x00-\x7F\s]*)""".r
   
   def process(guid:String, raw:FullRecord, processed:FullRecord) :Array[QualityAssertion] ={
@@ -120,7 +110,6 @@ class MiscellaneousProcessor extends Processor {
   
   def processInteractions(guid:String, raw:FullRecord, processed:FullRecord)={
       //interactions are supplied as part of the assciatedTaxa string
-      
       //TODO more sophisticated parsing of the string. ATM we are only supporting the structure for dr642
       // TODO support multiple interactions
       if(raw.occurrence.associatedTaxa != null && !raw.occurrence.associatedTaxa.isEmpty){
@@ -147,9 +136,9 @@ class MiscellaneousProcessor extends Processor {
     // val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(cl.getter(sg.rank)) => sg.name}
     if(urls != null){      
       val aurls = urls.split(";").map(url=> url.trim)
-      processed.occurrence.images = aurls.filter(isValidImageURL(_))
-      processed.occurrence.sounds = aurls.filter(isValidSoundURL(_))
-      processed.occurrence.videos = aurls.filter(isValidVideoURL(_))
+      processed.occurrence.images = aurls.filter(MediaStore.isValidImageURL(_))
+      processed.occurrence.sounds = aurls.filter(MediaStore.isValidSoundURL(_))
+      processed.occurrence.videos = aurls.filter(MediaStore.isValidVideoURL(_))
 
       if(aurls.length != (processed.occurrence.images.length + processed.occurrence.sounds.length + processed.occurrence.videos.length))
           return Array(QualityAssertion(AssertionCodes.INVALID_IMAGE_URL, "URL can not be an image"))
@@ -158,26 +147,6 @@ class MiscellaneousProcessor extends Processor {
   }
 
   def getName = "image"
-
-  private def isValidImageURL(url:String) : Boolean = {
-    !imageParser.unapplySeq(url.trim.toLowerCase).isEmpty || isStoredMedia(imageExtension,url)
-  }
-
-  private def isValidSoundURL(url:String) : Boolean = {
-    !soundParser.unapplySeq(url.trim.toLowerCase).isEmpty || isStoredMedia(soundExtension,url)
-  }
-
-  private def isValidVideoURL(url:String) : Boolean = {
-    !videoParser.unapplySeq(url.trim.toLowerCase).isEmpty || isStoredMedia(videoExtension,url)
-  }
-
-  private def isStoredMedia(acceptedExtensions:Array[String], url:String) : Boolean = {
-     url.startsWith(MediaStore.rootDir) && endsWithOneOf(acceptedExtensions,url.toLowerCase)
-  }
-
-  private def endsWithOneOf(acceptedExtensions:Array[String], url:String) : Boolean = {
-    !(acceptedExtensions collectFirst { case x if url.endsWith(x) => x } isEmpty)
-  }
 }
 
 class AttributionProcessor extends Processor {
