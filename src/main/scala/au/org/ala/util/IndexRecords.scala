@@ -86,7 +86,7 @@ object IndexRecords {
     var finishTime = System.currentTimeMillis
     performPaging( (guid, map) => {
         counter += 1
-        println("Indexing doc: " + counter)
+        //println("Indexing doc: " + counter)
         val fullMap = new HashMap[String, String]
         fullMap ++= map
         ///convert EL and CL properties at this stage
