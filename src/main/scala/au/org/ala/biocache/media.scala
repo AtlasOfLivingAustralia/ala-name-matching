@@ -9,11 +9,7 @@ import com.sun.media.jai.codec.FileSeekableStream
 import java.awt.{Graphics2D, Image}
 import java.awt.image.BufferedImage
 import au.org.ala.util.OptionParser
-import org.apache.commons.lang.time.DateUtils
 import au.org.ala.util.OptionParser
-import org.apache.tools.ant.types.selectors.TypeSelector.FileType
-import javax.activation.MimeType
-import com.google.common.base.Predicates
 
 /**
  * A file store for media files.
@@ -86,10 +82,12 @@ object MediaStore {
     if (!directory.exists) FileUtils.forceMkdir(directory)
 
     val fileName = {
-      if (urlToMedia.lastIndexOf("/") == urlToMedia.length - 1) {
+      if(urlToMedia.contains("fileName=")){  //HACK for CS URLs which dont make for nice file names
+        urlToMedia.substring(urlToMedia.indexOf("fileName=") + "fileName=".length).replace(" ", "_")
+      } else if (urlToMedia.lastIndexOf("/") == urlToMedia.length - 1) {
         "raw"
       } else {
-        urlToMedia.substring(urlToMedia.lastIndexOf("/") + 1)
+        urlToMedia.substring(urlToMedia.lastIndexOf("/") + 1).replace(" ", "_")
       }
     }
     directory.getAbsolutePath + File.separator + fileName
@@ -103,7 +101,7 @@ object MediaStore {
     try{  
         val fullPath = createFilePath(uuid, resourceUID, urlToMedia)
         val file = new File(fullPath)
-        val url = new java.net.URL(urlToMedia)
+        val url = new java.net.URL(urlToMedia.replaceAll(" ", "%20"))
         val in = url.openStream
         val out = new FileOutputStream(file)
         val buffer: Array[Byte] = new Array[Byte](1024)
@@ -154,11 +152,16 @@ object THUMB extends ImageSize { def suffix = "__thumb"; def size = 100f; }
 object SMALL extends ImageSize { def suffix = "__small"; def size = 314f; }
 object LARGE extends ImageSize { def suffix = "__large"; def size = 650f; }
 
+/**
+ * A utility for thumbnailing images
+ */
 object Thumbnailer {
   final val logger = LoggerFactory.getLogger("Thumbnailer")
-
   System.setProperty("com.sun.media.jai.disableMediaLib", "true")
 
+  /**
+   * Runnable for generating thumbnails
+   */
   def main(args:Array[String]){
     var directoryPath = ""
     var filePath = ""
@@ -177,6 +180,9 @@ object Thumbnailer {
     }
   }
 
+  /**
+   * Recursively crawl directories and generate thumbnails
+   */
   def recursivelyGenerateThumbnails(directory:File){
     //dont generate thumbnails for thumbnails
     println("Starting with directory: " + directory.getAbsolutePath)
@@ -197,6 +203,9 @@ object Thumbnailer {
     }
   }
 
+  /**
+   * Generate thumbnails of all sizes
+   */
   def generateAllSizes(source:File){
     val fileName = source.getName
     if(!fileName.contains(THUMB.suffix) && !fileName.contains(SMALL.suffix) && !fileName.contains(LARGE.suffix)){
@@ -206,6 +215,9 @@ object Thumbnailer {
     }
   }
 
+  /**
+   * Generate an image of the specified size.
+   */
   def generateThumbnail(source:File, imageSize:ImageSize){
     val extension = FilenameUtils.getExtension(source.getAbsolutePath)
     val targetFilePath = source.getAbsolutePath.replace("." + extension, imageSize.suffix + "." + extension)
@@ -213,12 +225,18 @@ object Thumbnailer {
     generateThumbnail(source, target, imageSize.size)
   }
 
+  /**
+   * Generatea thumbanail to the specified file.
+   */
   def generateThumbnail(source:File, target:File, thumbnailSize:Float){
     val t = new ThumbnailableImage(source)
     t.writeThumbnailToFile(target, thumbnailSize)
   }
 }
 
+/**
+ * An image that can be thumbnailed
+ */
 class ThumbnailableImage(imageFile:File) {
 
   final val logger = LoggerFactory.getLogger("ThumbnailableImage")
