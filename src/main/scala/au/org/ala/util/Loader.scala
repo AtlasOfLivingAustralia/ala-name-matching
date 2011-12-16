@@ -5,12 +5,34 @@ import scala.util.parsing.json.JSON
 import scala.collection.JavaConversions
 import scala.collection.mutable.HashMap
 
+/**
+ * Runnable loader that just takes a resource UID and delegates based on the protocol.
+ */
+object Loader {
+
+  def main(args:Array[String]){
+
+    var dataResourceUid:String = ""
+    val parser = new OptionParser("index records options") {
+        arg("data-resource-uid","The data resource to process", {v:String => dataResourceUid = v})
+    }
+
+    if(parser.parse(args)){
+      println("Starting to load resource: " + dataResourceUid)
+      val l = new Loader
+      l.load(dataResourceUid)
+      println("Completed loading resource: " + dataResourceUid)
+      au.org.ala.biocache.Config.persistenceManager.shutdown
+    }
+  }
+}
+
 class Loader extends DataLoader {
 
     import scalaj.collection.Imports
     import JavaConversions._
-    import StringHelper
-._    
+    import StringHelper._
+
     def describeResource(drlist:List[String]){
         drlist.foreach(dr => {
         	val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dr)
@@ -29,37 +51,37 @@ class Loader extends DataLoader {
       val drs = JSON.parseFull(json).get.asInstanceOf[List[Map[String, String]]]
       CommandLineTool.printTable(drs)
     }
-    
-    def load(dataResourceUid:String){
-        try {
-	        val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
-	        protocol.toLowerCase match {
-	            case "dwc" => {
-	                println("Darwin core headed CSV loading")
-	                val l = new DwcCSVLoader
-	                l.load(dataResourceUid)
-	            }
-	            case "dwca" => {
-	                println("Darwin core archive loading")
-	                val l = new DwCALoader
-	                l.load(dataResourceUid)
-	            }
-	            case "digir" => {
-	                println("digir webservice loading")
-	                val l = new DiGIRLoader
-	                l.load(dataResourceUid)
-	            }
-	            case "flickr" => {
-	                println("flickr webservice loading")
-	                val l = new FlickrLoader
-	                l.load(dataResourceUid)
-	            }
-	            case "custom" => println("custom webservice loading")
-	            case _ => println("Protocol "+ protocol + " currently unsupported.")
-	        }
-        } catch {
-            case e:Exception => e.printStackTrace
+
+    def load(dataResourceUid: String) {
+      try {
+        val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+        protocol.toLowerCase match {
+          case "dwc" => {
+            println("Darwin core headed CSV loading")
+            val l = new DwcCSVLoader
+            l.load(dataResourceUid)
+          }
+          case "dwca" => {
+            println("Darwin core archive loading")
+            val l = new DwCALoader
+            l.load(dataResourceUid)
+          }
+          case "digir" => {
+            println("digir webservice loading")
+            val l = new DiGIRLoader
+            l.load(dataResourceUid)
+          }
+          case "flickr" => {
+            println("flickr webservice loading")
+            val l = new FlickrLoader
+            l.load(dataResourceUid)
+          }
+          case "custom" => println("custom webservice loading")
+          case _ => println("Protocol " + protocol + " currently unsupported.")
         }
+      } catch {
+        case e: Exception => e.printStackTrace
+      }
     }
     
     def healthcheck = {
