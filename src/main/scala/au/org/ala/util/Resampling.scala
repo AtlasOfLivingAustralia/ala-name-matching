@@ -13,8 +13,26 @@ object ResampleSensitiveRecords extends ResampleRecords {
   def sensitiveFilter(map:Map[String, String]) : Boolean = (map.getOrElse("originalSensitiveValues","") != "")
 
   def main(args:Array[String]){
-    val r = new ResampleRecords
-    r.resamplePointsByFilter(sensitiveFilter, Array("originalSensitiveValues"))
+
+    var dataResourceUid:String = ""
+    val parser = new OptionParser("index records options") {
+        opt("dr","data-resource-uid", "The data resource to process", {v:String => dataResourceUid = v})
+    }
+
+    if(parser.parse(args)){
+
+      val startKey = {
+        if (dataResourceUid != "") dataResourceUid +"|"
+        else ""
+      }
+      val endKey = {
+        if (dataResourceUid != "") dataResourceUid +"|~"
+        else ""
+      }
+
+      val r = new ResampleRecords
+      r.resamplePointsByFilter(sensitiveFilter, Array("originalSensitiveValues"),startKey, endKey)
+    }
   }
 }
 
@@ -39,7 +57,7 @@ class ResampleRecords {
   /**
    * Resample and reprocess records matching the filter
    */
-  def resamplePointsByFilter(filter:Map[String, String] => Boolean, fieldsRequired:Array[String]){
+  def resamplePointsByFilter(filter:Map[String, String] => Boolean, fieldsRequired:Array[String], startKey:String="", endKey:String=""){
 
     println("Starting the re-sampling.....")
 
@@ -56,7 +74,7 @@ class ResampleRecords {
         records.writeNext(Array(guid))
       }
       true
-    }, "","", 1000, fields:_*)
+    }, startKey, endKey, 1000, fields:_*)
     records.flush
     records.close
 
