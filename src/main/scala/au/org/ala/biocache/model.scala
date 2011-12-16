@@ -186,6 +186,7 @@ class Identification extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var identificationReferences:String = _
   @BeanProperty var identificationRemarks:String = _
   @BeanProperty var identifiedBy:String = _
+  @BeanProperty var identifierRole:String = _ //HISPID addition
   @BeanProperty var typeStatus:String = _
 }
 
