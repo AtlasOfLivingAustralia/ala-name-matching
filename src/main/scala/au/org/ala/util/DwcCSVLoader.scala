@@ -77,14 +77,18 @@ class DwcCSVLoader extends DataLoader {
     def loadFile(file:File, dataResourceUid:String, uniqueTerms:List[String], params:Map[String,String]){
         
         val quotechar = params.getOrElse("csv_text_enclosure", "\"").head
-        val separator = params.getOrElse("csv_delimiter", ",").head
+        val separator = {
+          val separatorString = params.getOrElse("csv_delimiter", ",")
+          if (separatorString == "\\t") '\t'
+          else separatorString.toCharArray.head
+        }
         val escape = params.getOrElse("csv_escape_char","\\").head
         val reader =  new CSVReader(new FileReader(file), separator, quotechar, escape)
         
         println("Using CSV reader with the following settings quotes: " + quotechar + " separator: " + separator + " escape: " + escape)
         //match the column headers to dwc terms
         val dwcTermHeaders = {
-            val columnHeaders = reader.readNext.map(t => t.replace(" ", "")).toList
+            val columnHeaders = reader.readNext.map(t => t.replace(" ", "").trim).toList
             DwC.retrieveCanonicals(columnHeaders)
         }
         
@@ -108,9 +112,15 @@ class DwcCSVLoader extends DataLoader {
             
             val columns = currentLine.toList
             if (columns.length == dwcTermHeaders.size){
-
-                val map = (dwcTermHeaders zip columns).toMap[String,String].filter( { 
-                	case (key,value) => value!=null && value.toString.trim.length>0 
+                val map = (dwcTermHeaders zip columns).toMap[String,String].filter( {
+                	case (key,value) => {
+                    if(value!=null){
+                      val upperCased = value.trim.toUpperCase
+                      upperCased != "NULL" && upperCased != "N/A" && upperCased != "\\N"
+                    } else {
+                      false
+                    }
+                  }
                 })
                 
                 if(uniqueTerms.forall(t => map.getOrElse(t,"").length>0)){
