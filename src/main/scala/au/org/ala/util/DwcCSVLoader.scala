@@ -95,7 +95,8 @@ class DwcCSVLoader extends DataLoader {
         
         val validConfig = uniqueTerms.forall(t => dwcTermHeaders.contains(t))
         if(!validConfig){
-            throw new RuntimeException("Bad configuration for file: "+ file.getName + " for resource: " + dataResourceUid)
+            throw new RuntimeException("Bad configuration for file: "+ file.getName + " for resource: " +
+              dataResourceUid+". CSV file is missing unique terms.")
         }
         
         var counter = 1

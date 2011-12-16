@@ -52,7 +52,7 @@ class FileHelper(file: File) {
         deleteFile(file)
     }
     
-    def extractGzip: File ={
+    def extractGzip: File = {
         val maxBuffer=8000
         val basename = file.getName.substring(0, file.getName.lastIndexOf("."))       
         val todir = new File(file.getParentFile, basename)

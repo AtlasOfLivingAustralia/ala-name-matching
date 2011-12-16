@@ -111,38 +111,53 @@ trait DataLoader {
 
         print("Downloading zip file from "+ url)
         val in = (new java.net.URL(url)).openStream
-        val (file, isZipped) = {
+        val (file, isZipped, isGzipped) = {
           if (url.endsWith(".zip")){
             val f = new File(temporaryFileStore + resourceUid + ".zip")
             f.createNewFile()
-            (f, true)
-          } else {
-            val f = new File(temporaryFileStore + resourceUid + File.separator + resourceUid +".csv")
-            println("creating file: " + f.getAbsolutePath)
+            (f, true, false)
+          } else if (url.endsWith(".gz")){
+            val f = new File(temporaryFileStore + resourceUid + File.separator + resourceUid +".gz")
+            println("  creating file: " + f.getAbsolutePath)
             FileUtils.forceMkdir(f.getParentFile())
             f.createNewFile()
-            (f, false)
+            (f, false, true)
+          } else {
+            val f = new File(temporaryFileStore + resourceUid + File.separator + resourceUid +".csv")
+            println("  creating file: " + f.getAbsolutePath)
+            FileUtils.forceMkdir(f.getParentFile())
+            f.createNewFile()
+            (f, false, false)
           }
         }
         val out = new FileOutputStream(file)
-        val buffer: Array[Byte] = new Array[Byte](1024)
+        val buffer: Array[Byte] = new Array[Byte](40960)
         var numRead = 0
+        var counter = 0
         while ({ numRead = in.read(buffer); numRead != -1 }) {
+          counter += numRead
           out.write(buffer, 0, numRead)
           out.flush
         }
-        printf("\nDownloaded. File size: ", file.length / 1024 +"kB, " + file.getAbsolutePath +", is zipped: " + isZipped+"\n")
-
         out.flush
         in.close
         out.close
 
+        printf("\nDownloaded. File size: ", counter / 1024 +"kB, " + file.getAbsolutePath +", is zipped: " + isZipped+"\n")
+
         //extract the file
         if (isZipped){
+          println("Extracting ZIP " + file.getAbsolutePath)
           file.extractZip
           val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
           println("Archive extracted to directory: " + fileName)
           fileName
+        } else if (isGzipped){
+          println("Extracting GZIP " + file.getAbsolutePath)
+          file.extractGzip
+          val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
+          println("Archive extracted to directory: " + fileName)
+          (new File(fileName)).getParentFile.getAbsolutePath
         } else {
           file.getParentFile.getAbsolutePath
         }
