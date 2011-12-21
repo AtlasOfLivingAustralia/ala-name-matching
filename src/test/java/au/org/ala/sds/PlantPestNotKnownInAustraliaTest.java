@@ -71,7 +71,6 @@ public class PlantPestNotKnownInAustraliaTest {
 
         assertTrue(outcome.isValid());
         assertFalse(outcome.isLoadable());
-        //assertNull(outcome.getAnnotation());
     }
 
     @Test
@@ -91,7 +90,6 @@ public class PlantPestNotKnownInAustraliaTest {
 
         assertTrue(outcome.isValid());
         assertFalse(outcome.isLoadable());
-        //assertNull(outcome.getAnnotation());
     }
 
     @Test
@@ -114,8 +112,8 @@ public class PlantPestNotKnownInAustraliaTest {
     }
 
     @Test
-    public void bactroceraPeninsularisInTSPZ() {
-        SensitiveTaxon ss = finder.findSensitiveSpecies("Bactrocera peninsularis");
+    public void bactroceraPhilippinensisInTSPZ() {
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Bactrocera philippinensis");
         assertNotNull(ss);
 
         String latitude = "-10.11";   // Badu (Queensland)
@@ -146,7 +144,6 @@ public class PlantPestNotKnownInAustraliaTest {
 
         assertTrue(outcome.isValid());
         assertTrue(outcome.isLoadable());
-        //assertNotNull(outcome.getAnnotation());
    }
 
 }
