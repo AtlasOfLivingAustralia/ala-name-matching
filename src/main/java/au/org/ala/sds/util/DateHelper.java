@@ -5,18 +5,45 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
+
+import au.org.ala.sds.validation.FactCollection;
 
 public class DateHelper {
 
     public static Date parseDate(String date) {
         Date parsedDate = null;
         try {
-            parsedDate = DateUtils.parseDateStrictly(date, new String[] {"yyyy-MM-dd", "dd/mm/yy"});
+            parsedDate = DateUtils.parseDateStrictly(date, new String[] {"yyyy-MM-dd", "yyyy", "yyyy-MM", "dd/mm/yy"});
         } catch (ParseException pe) {
             throw new IllegalArgumentException("Date " + date + " cannot be parsed", pe);
         }
         return parsedDate;
+    }
+
+    public static Date validateDate(FactCollection facts) {
+        String year = facts.get(FactCollection.YEAR_KEY);
+        String month = facts.get(FactCollection.MONTH_KEY);
+        String day = facts.get(FactCollection.DAY_KEY);
+        String eventDate = facts.get(FactCollection.EVENT_DATE_KEY);
+
+        if (StringUtils.isNotBlank(year)) {
+            String date = year;
+            if (StringUtils.isNotBlank(month)) {
+                date = date + "-" + month;
+                if (StringUtils.isNotBlank(day)) {
+                    date = date + "-" + day;
+                }
+            }
+            return parseDate(date);
+        } else {
+            if (StringUtils.isNotBlank(eventDate)) {
+                return parseDate(eventDate);
+            } else {
+                return null;
+            }
+        }
     }
 
     public static String formattedIso8601Date(Date date) {
