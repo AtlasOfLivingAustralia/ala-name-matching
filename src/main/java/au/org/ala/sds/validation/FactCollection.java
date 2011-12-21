@@ -24,6 +24,8 @@ public class FactCollection {
     public static final String MUNICIPALITY_KEY = "municipality";
     public static final String EVENT_DATE_KEY = "eventDate";
     public static final String YEAR_KEY = "year";
+    public static final String MONTH_KEY = "month";
+    public static final String DAY_KEY = "day";
     public static final String COUNTRY_KEY = "country";
     public static final String ROW_KEY = "row";
     public static final String ZONES_KEY = "zone";
