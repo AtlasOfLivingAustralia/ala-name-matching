@@ -101,6 +101,7 @@ public class GeneralisedLocation {
     private void generaliseCoordinates() {
 
         if (this.locationGeneralisation == null) {
+            // Not sensitive at given location
             generalisedLatitude = originalLatitude;
             generalisedLongitude = originalLongitude;
             generalisationInMetres = "";
