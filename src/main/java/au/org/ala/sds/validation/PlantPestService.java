@@ -54,7 +54,7 @@ public class PlantPestService implements ValidationService {
         }
 
         List<SensitivityZone> zones = SensitivityZone.getListFromString(facts.get(FactCollection.ZONES_KEY));
-        Date date = facts.get(FactCollection.EVENT_DATE_KEY) == null ? null : DateHelper.parseDate(facts.get(FactCollection.EVENT_DATE_KEY));
+        Date date = DateHelper.validateDate(facts);
         RuleState state = new RuleState();
 
         do {
@@ -78,8 +78,8 @@ public class PlantPestService implements ValidationService {
         } while (!state.isComplete());
 
         ValidationOutcome outcome = new ValidationOutcome(report);
-        //outcome.setAnnotation(state.getAnnotation());
-        //outcome.setLoadable(state.isLoadable());
+        outcome.setLoadable(state.isLoadable());
+        outcome.setSensitive(!state.isLoadable());
 
         return outcome;
     }
