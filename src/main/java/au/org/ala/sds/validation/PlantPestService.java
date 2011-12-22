@@ -15,6 +15,8 @@ import org.drools.KnowledgeBase;
 import org.drools.runtime.StatelessKnowledgeSession;
 
 import au.org.ala.sds.knowledgebase.KnowledgeBaseFactory;
+import au.org.ala.sds.model.Message;
+import au.org.ala.sds.model.SdsMessage;
 import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityCategoryFactory;
 import au.org.ala.sds.model.SensitivityZone;
@@ -48,13 +50,23 @@ public class PlantPestService implements ValidationService {
     public ValidationOutcome validate(Map<String, String> biocacheData) {
         FactCollection facts = new FactCollection(biocacheData);
         ValidationReport report = reportFactory.createValidationReport(taxon);
+        Date date = null;
 
+        // Validate location
         if (!ValidationUtils.validateLocation(facts, report)) {
             return new ValidationOutcome(report, false);
         }
 
+        // Validate date
+        try {
+            date = DateHelper.validateDate(facts);
+        } catch (Exception e) {
+            report.addMessage(new SdsMessage(Message.Type.ERROR, e.getMessage()));
+            return new ValidationOutcome(report, false);
+        }
+
         List<SensitivityZone> zones = SensitivityZone.getListFromString(facts.get(FactCollection.ZONES_KEY));
-        Date date = DateHelper.validateDate(facts);
+
         RuleState state = new RuleState();
 
         do {
