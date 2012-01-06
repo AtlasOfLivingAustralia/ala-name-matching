@@ -1,11 +1,11 @@
 package au.org.ala.biocache
 
 import com.google.inject.Inject
+import java.io.{File, OutputStream}
 
 //import au.org.ala.sds.SensitiveSpeciesFinderFactory
 
 import au.org.ala.util.ReflectBean
-import java.io.OutputStream
 import scala.collection.JavaConversions
 import java.lang.reflect.Method
 import java.util.UUID
@@ -53,6 +53,8 @@ trait OccurrenceDAO {
     
     def conditionalPageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean), condition:(Map[String,String]=>Boolean),columnsToRetrieve:Array[String],startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
 
+    def addRawOccurrence(fullRecord: FullRecord): Unit
+
     def addRawOccurrenceBatch(fullRecords: Array[FullRecord]): Unit
 
     def updateOccurrence(rowKey: String, fullRecord: FullRecord, version: Version): Unit
@@ -78,7 +80,7 @@ trait OccurrenceDAO {
     def updateAssertionStatus(rowKey: String, assertion: QualityAssertion, systemAssertions: List[QualityAssertion], userAssertions: List[QualityAssertion])
 
     //def markAsOutlier(uuid:String, outlierResult:OutlierResult)
-    
+
     def reIndex(rowKey: String)
     
     def delete(rowKey: String)
@@ -239,7 +241,8 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Write to stream in a delimited format (CSV).
      */
-    def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String, rowKeys: Array[String], fields: Array[String], qaFields:Array[String]) {
+    def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String,
+                      rowKeys: Array[String], fields: Array[String], qaFields:Array[String]) {
         //get the codes for the qa fields that need to be included in the download
         val codes = qaFields.map(value=>AssertionCodes.getByName(value).get.getCode)
         persistenceManager.selectRows(rowKeys, entityName, fields ++ FullRecordMapper.qaFields , {
@@ -280,7 +283,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * to the supplied function.
      * Function returns a boolean indicating if the paging should continue.
      *
-     * @param occurrenceType
      * @param proc, the function to execute.
      * @param startKey, The row key of the occurrence at which to start the paging
      * @param endKey, The row key of the occurrence at which to end the paging
@@ -300,7 +302,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * Iterate over all occurrences, passing the objects to a function.
      * Function returns a boolean indicating if the paging should continue.
      *
-     * @param occurrenceType
      * @param proc, the function to execute.
      * @param startKey, The row key of the occurrence at which to start the paging
      * @param endKey, The row key of the occurrence at which to end the paging
@@ -318,7 +319,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * Iterate over all occurrences, passing the objects to a function.
      * Function returns a boolean indicating if the paging should continue.
      *
-     * @param occurrenceType
      * @param proc, the function to execute.
      * @param startKey, The row key of the occurrence at which to start the paging
      * @param endKey, The row key of the occurrence at which to end the paging
@@ -363,17 +363,36 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         }, startKey, endKey,pageSize, columns: _*)
     }
 
+  /**
+   * Update the version of the occurrence record.
+   */
+  def addRawOccurrence(fr:FullRecord) {
+    //process the record
+    val properties = FullRecordMapper.fullRecord2Map(fr, Versions.RAW)
+    //commit
+    persistenceManager. put(fr.rowKey, entityName, properties.toMap)
+  }
+
     /**
      * Update the version of the occurrence record.
-     *
-     * /TODO: This does not follow the new occ row design
      */
     def addRawOccurrenceBatch(fullRecords: Array[FullRecord]) {
 
         var batch = scala.collection.mutable.Map[String, Map[String, String]]()
-        fullRecords.foreach(fullRecord  => {
-            var properties = FullRecordMapper.fullRecord2Map(fullRecord, Versions.RAW)
-            batch.put(fullRecord.rowKey, properties.toMap)
+        fullRecords.foreach(fr  => {
+          //download the media in associatedMedia?????
+          if (fr.occurrence.associatedMedia != null){
+            val filesToImport = fr.occurrence.associatedMedia.split(";")
+            val associatedMediaBuffer = new ArrayBuffer[String]
+            filesToImport.foreach(fileToStore => {
+              val filePath = MediaStore.save(fr.uuid, fr.attribution.dataResourceUid, fileToStore)
+              if(!filePath.isEmpty) associatedMediaBuffer += filePath.get
+            })
+            fr.occurrence.associatedMedia = associatedMediaBuffer.toArray.mkString(";")
+          }
+          //process the record
+          var properties = FullRecordMapper.fullRecord2Map(fr, Versions.RAW)
+          batch.put(fr.rowKey, properties.toMap)
         })
         //commit
         persistenceManager.putBatch(entityName, batch.toMap)
@@ -528,9 +547,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      *
      *  IS this being used?
      *
-     * @param uuid
      * @param anObject
-     * @param occurrenceType
      */
     def updateOccurrence(rowKey: String, anObject: AnyRef, version: Version) {
         val map = FullRecordMapper.mapObjectToProperties(anObject, version)
@@ -540,9 +557,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Adds a quality assertion to the row with the supplied UUID.
      *
-     *  
-     *
-     * @param uuid
      * @param qualityAssertion
      */
     def addSystemAssertion(rowKey: String, qualityAssertion: QualityAssertion) {
@@ -574,39 +588,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     }
 
     /**
-     * Retrieves the system and user assertions for the supplied occ rowKey
-     * returns (systemAssertions,userAssertions)
-     */
-//    def getAssertions(occRowKey:String):(Option[List[QualityAssertion]], Option[List[QualityAssertion]])={
-//        val startKey = occRowKey + "|"
-//        val endKey = startKey +"~"
-//        val system = new ArrayBuffer[QualityAssertion]
-//        val user = new ArrayBuffer[QualityAssertion]
-//        //page over all the qa's that are for this record
-//        persistenceManager.pageOverAll(qaEntityName,(guid, map)=>{            
-//            val qa = new QualityAssertion() 
-//            FullRecordMapper.mapPropertiesToObject(qa, map)
-//            if(qa.getUserId == null)
-//                system + qa
-//            else
-//                user + qa
-//            true
-//        },startKey, endKey, 1000)
-//        
-//        (Some(system.toList),Some(user.toList))
-//    }
-//    
-//    def getAssertionsRK(occUuid:String):(Option[String],Option[List[QualityAssertion]], Option[List[QualityAssertion]])={
-//        val rowKey = getRowKeyFromUuid(occUuid)
-//        if(rowKey.isEmpty)
-//            (None, None,None)
-//        else{
-//            val(system, user) = getAssertions(rowKey.get)
-//            (rowKey,system, user)
-//        }
-//    }
-//
-    /**
      * Add a user supplied assertion - updating the status on the record.
      */
     def addUserAssertion(rowKey: String, qualityAssertion: QualityAssertion) {
@@ -631,28 +612,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
           }
         }
     }
-
-    /**
-     * Retrieve the row key and annotations for the supplied UUID.
-     */
-//    def getUserAssertionsRK(uuid: String): (Option[String], Option[List[QualityAssertion]]) = {
-//        //val theClass = classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]
-//
-//        //get the rowKey
-//        val rowKey = getRowKeyFromUuid(uuid)
-//        if(rowKey.isEmpty){
-//          (None,None)
-//        }
-//        else{
-//            val (system, user) = getAssertions(rowKey.get)
-//            if(user.isEmpty)
-//                (None,None)
-//            else
-//                (rowKey, user)
-////          (rowKey,Some(persistenceManager.getList(rowKey.get, entityName, FullRecordMapper.userQualityAssertionColumn, theClass)
-////              .asInstanceOf[List[QualityAssertion]]))
-//        }
-//    }
 
     /**
      * Retrieve annotations for the supplied UUID.

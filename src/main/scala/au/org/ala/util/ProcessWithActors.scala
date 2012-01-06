@@ -19,21 +19,20 @@ object ProcessWithActors {
     println("Starting...")
     var threads:Int = 4
     var startUuid:Option[String] = None
-    var check =false
+    var check = false
     var dr:Option[String] = None
-    var locationOnly = false
+//    var fileName = ""
+
     val parser = new OptionParser("process records options") {
         intOpt("t", "thread", "The number of threads to use", {v:Int => threads = v } )
         opt("s", "start","The record to start with", {v:String => startUuid = Some(v)})
         opt("dr", "resource", "The data resource to process", {v:String =>dr = Some(v)})
-        booleanOpt("lo", "process location only", "The data resource to process", {v:Boolean => locationOnly = v})
     }
     
     if(parser.parse(args)){
-      println("Processing " + dr.getOrElse("") + " from " + startUuid + " with " + threads + "actors")
-      processRecords(threads, startUuid, dr, check, locationOnly)
+        println("Processing " + dr.getOrElse("") + " from " + startUuid + " with " + threads + "actors")
+        processRecords(threads, startUuid, dr, check)
     }
-    
     //shutdown the persistence
     persistenceManager.shutdown
   }
@@ -77,8 +76,8 @@ object ProcessWithActors {
       }
 
       if (count % 1000 == 0) {
-      finishTime = System.currentTimeMillis
-      println(count
+        finishTime = System.currentTimeMillis
+        println(count
             + " >> Last key : " + line
             + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f)
             + ", time taken for "+1000+" records: " + (finishTime - startTime).toFloat / 1000f
@@ -120,7 +119,7 @@ object ProcessWithActors {
   /**
    * Process the records using the supplied number of threads
    */
-  def processRecords(threads: Int, firstKey:Option[String], dr: Option[String], checkDeleted:Boolean=false, locationOnly:Boolean=false): Unit = {
+  def processRecords(threads: Int, firstKey:Option[String], dr: Option[String], checkDeleted:Boolean=false): Unit = {
     
     val endUuid = if(dr.isEmpty) "" else dr.get +"|~"
     

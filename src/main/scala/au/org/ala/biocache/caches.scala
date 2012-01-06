@@ -44,6 +44,17 @@ object ClassificationDAO {
 
   private val nameIndex = Config.nameIndex
 
+  def stripStrayQuotes(str:String) : String  = {
+    if (str == null){
+      null
+    } else {
+      var normalised = str
+      if(normalised.startsWith("'") || normalised.startsWith("\"")) normalised = normalised.drop(1)
+      if(normalised.endsWith("'") || normalised.endsWith("\"")) normalised = normalised.dropRight(1)
+      normalised
+    }
+  }
+  
   /**
    * Uses a LRU cache
    */
@@ -63,17 +74,18 @@ object ClassificationDAO {
     } else {
         //search for a scientific name if values for the classification were provided otherwise search for a common name
         val nsr = if(hash.contains("|")) nameIndex.searchForRecord(new LinnaeanRankClassification(
-          cl.kingdom,
-          cl.phylum,
-          cl.classs,
-          cl.order,
-          cl.family,
-          cl.genus,
-          cl.species,
-          cl.specificEpithet,
-          cl.subspecies,
-          cl.infraspecificEpithet,
-          cl.scientificName), true) else nameIndex.searchForCommonName(cl.getVernacularName)
+          stripStrayQuotes(cl.kingdom),
+          stripStrayQuotes(cl.phylum),
+          stripStrayQuotes(cl.classs),
+          stripStrayQuotes(cl.order),
+          stripStrayQuotes(cl.family),
+          stripStrayQuotes(cl.genus),
+          stripStrayQuotes(cl.species),
+          stripStrayQuotes(cl.specificEpithet),
+          stripStrayQuotes(cl.subspecies),
+          stripStrayQuotes(cl.infraspecificEpithet),
+          stripStrayQuotes(cl.scientificName)),
+          true) else nameIndex.searchForCommonName(cl.getVernacularName)
 
         if(nsr!=null){
             //handle the case where the species is a synonym this is a temporary fix should probably go in ala-name-matching
@@ -85,7 +97,7 @@ object ClassificationDAO {
             lock.synchronized { lru.put(hash, result) }
             result
         }
-      }
+    }
   }
 }
 

@@ -65,6 +65,9 @@ class FlickrLoader extends DataLoader {
 
   def load(dataResourceUid: String):Unit = load(dataResourceUid, None, None)
 
+  /**
+   * Retrieve a map of licences
+   */
   def retrieveLicenceMap(connectParams:Map[String,String]) : Map[String,FlickrLicence] = {
     val infoPage = makeGetLicencesUrl(connectParams)
     val xml = XML.loadString(scala.io.Source.fromURL(infoPage).mkString)
@@ -76,6 +79,9 @@ class FlickrLoader extends DataLoader {
     }).toMap
   }
 
+  /**
+   * Load the resource between the supplied dates.
+   */
   def load(dataResourceUid: String, suppliedStartDate: Option[Date], suppliedEndDate: Option[Date], overwriteImages: Boolean = false) :Unit ={
 
     val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
@@ -121,20 +127,7 @@ class FlickrLoader extends DataLoader {
 
             //load it if its of interest and we havent loaded it
             if (isOfInterest(tags, keywords)) {
-              load(dataResourceUid, fr, List(photoPageUrl), !alreadyLoaded) //if already loaded, dont update lastModified
-            }
-
-            if (isOfInterest(tags, keywords) && (!alreadyLoaded || overwriteImages)) {
-              val (filePath, exists) = MediaStore.exists(fr.uuid, dataResourceUid, imageUrl)
-              if (overwriteImages || !exists) {
-                MediaStore.save(fr.uuid, dataResourceUid, imageUrl)
-              } else {
-                logger.info("Image URL: " + imageUrl + " already saved to: " + filePath)
-              }
-
-              fr.occurrence.associatedMedia = filePath
-              Config.occurrenceDAO.updateOccurrence(fr.rowKey, fr, Versions.RAW)
-              //println(fr.rowKey)
+              load(dataResourceUid, fr, List(photoPageUrl), !alreadyLoaded, true)
             }
           } catch {
             case e: Exception => e.printStackTrace
@@ -148,6 +141,9 @@ class FlickrLoader extends DataLoader {
     }
   }
 
+  /**
+   * Is the image of interest
+   */
   def isOfInterest(tags: List[String], keywords: List[String]): Boolean = {
     //match on keywords
     val index = tags.indexWhere(
@@ -208,6 +204,7 @@ class FlickrLoader extends DataLoader {
     val photoSecret = photoElem.attribute("secret").get
     val originalformat = photoElem.attribute("originalformat").getOrElse("jpg")
     val photoImageUrl = "http://farm" + farmId + ".static.flickr.com/" + serverId + "/" + photoId + "_" + photoSecret + "." + originalformat
+    fr.occurrence.associatedMedia = photoImageUrl
 
     val datesElem = (xml \\ "dates")(0)
     fr.event.eventDate = datesElem.attribute("taken").get.text

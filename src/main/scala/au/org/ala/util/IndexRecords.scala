@@ -35,7 +35,8 @@ object IndexRecords {
         opt("check","check to see if the record is deleted before indexing",{check=true})
         opt("s", "start","The record to start with", {v:String => startUuid = Some(v)})
         opt("dr", "resource", "The data resource to process", {v:String => dataResource = Some(v)})
-        opt("date", "date", "The earliest modification date for records to be indexed. Date in the form yyyy-mm-dd",{v:String => startDate = Some(v)})
+        opt("date", "date", "The earliest modification date for records to be indexed. Date in the form yyyy-mm-dd",
+          {v:String => startDate = Some(v)})
         intOpt("ps", "pageSize", "The page size for indexing", {v:Int => pageSize = v })
     }
 
@@ -97,7 +98,8 @@ object IndexRecords {
         indexer.indexFromMap(guid, mapToIndex, startDate=startDate)
         if (counter % pageSize == 0) {
           finishTime = System.currentTimeMillis
-          logger.info(counter + " >> Last key : " + guid + ", records per sec: " + pageSize.toFloat / (((finishTime - startTime).toFloat) / 1000f))
+          logger.info(counter + " >> Last key : " + guid + ", records per sec: " +
+            pageSize.toFloat / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
         }
         true

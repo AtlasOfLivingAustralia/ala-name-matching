@@ -10,6 +10,7 @@ import au.org.ala.biocache.DwC
 import au.org.ala.biocache.MediaStore
 import java.io.{FilenameFilter, FileReader, File}
 import org.apache.commons.io.{FilenameUtils, FileUtils}
+import collection.mutable.ArrayBuffer
 
 
 object DwcCSVLoader {
@@ -128,29 +129,29 @@ class DwcCSVLoader extends DataLoader {
 	                val fr = FullRecordMapper.createFullRecord("", map, Versions.RAW)
 	                load(dataResourceUid, fr, uniqueTermsValues)
 
-                  //is there any associatedMedia
                   if (fr.occurrence.associatedMedia != null){
-                    //load it and store it
-                    val directory = file.getParentFile
-                    println("Associated media: " + fr.occurrence.associatedMedia)
+                    //check for full resolvable http paths
                     val filesToImport = fr.occurrence.associatedMedia.split(";")
-                    val filePathsInStore = filesToImport.map(fileName =>{
-                      println(fileName)
-                      if(fileName.startsWith("http://")){
-                        MediaStore.save(fr.uuid, dataResourceUid,fileName)
-                      } else {
-                        val filePath = MediaStore.save(fr.uuid, dataResourceUid, "file:///"+file.getParent+File.separator+fileName)
+                    val filePathsInStore = filesToImport.map(fileName => {
+                      //if the file name isnt a HTTP URL construct file absolute file paths
+                      if(!fileName.startsWith("http://")){
+                        val filePathBuffer = new ArrayBuffer[String]
+                        filePathBuffer += "file:///"+file.getParent+File.separator+fileName
+
+                        //val filePath = MediaStore.save(fr.uuid, dataResourceUid, "file:///"+file.getParent+File.separator+fileName)
                         //do multiple formats exist? check for files of the same name, different extension
+                        val directory = file.getParentFile
                         val differentFormats = directory.listFiles(new au.org.ala.biocache.SameNameDifferentExtensionFilter(fileName))
-                        differentFormats.foreach ( file => {
-                          MediaStore.save(fr.uuid, dataResourceUid, "file:///"+file.getParent+File.separator+file.getName)
+                        differentFormats.foreach(file => {
+                          filePathBuffer += "file:///" + file.getParent+File.separator + file.getName
                         })
-                        if(filePath.isEmpty)
-                          fileName
-                        else
-                          filePath.get
+
+                        filePathBuffer.toArray[String]
+                      } else {
+                        Array(fileName)
                       }
-                    })
+                    }).flatten
+
                     fr.occurrence.associatedMedia = filePathsInStore.mkString(";")
                     load(dataResourceUid, fr, uniqueTermsValues)
                   }
@@ -170,7 +171,8 @@ class DwcCSVLoader extends DataLoader {
                 }
             }
             else{
-                println("Skipping line: " +counter + " incorrect number of columns ("+columns.length+")...headers (" + dwcTermHeaders.length +")")
+                println("Skipping line: " +counter + " incorrect number of columns (" +
+                  columns.length + ")...headers (" + dwcTermHeaders.length + ")")
                 println("First element : "+columns(0) +"...headers :" + dwcTermHeaders(0))
                 println("last element : "+columns.last +"...headers :" + dwcTermHeaders.last)
             }

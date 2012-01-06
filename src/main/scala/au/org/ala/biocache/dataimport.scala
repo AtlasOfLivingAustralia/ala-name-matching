@@ -10,7 +10,9 @@ import au.org.ala.util.FileHelper
 import org.apache.commons.io.FilenameUtils
 import org.slf4j.LoggerFactory
 import scalaj.http.Http
+import collection.mutable.ArrayBuffer
 
+class SimpleLoader extends DataLoader
 
 /**
  * A trait with utility code for loading data
@@ -72,10 +74,14 @@ trait DataLoader {
     }
 
     def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String]) : Boolean = {
-       load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], true)
+       load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], true, false)
     }
 
     def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], updateLastModified:Boolean) : Boolean = {
+      load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], updateLastModified, false)
+    }
+
+    def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], updateLastModified:Boolean, downloadMedia:Boolean) : Boolean = {
         
         //the details of how to construct the UniqueID belong in the Collectory
         val uniqueID = identifyingTerms.isEmpty match {
@@ -98,8 +104,23 @@ trait DataLoader {
           fr.lastModifiedTime = loadTime
         }
         fr.attribution.dataResourceUid = dataResourceUid
+      
+        //download the media - checking if it exists already
+        if (fr.occurrence.associatedMedia != null){
+          val filesToImport = fr.occurrence.associatedMedia.split(";")
+          val associatedMediaBuffer = new ArrayBuffer[String]
+          filesToImport.foreach(fileToStore => {
+            val (filePath, exists) = MediaStore.exists(fr.uuid, dataResourceUid, fileToStore)
+            if (!exists){
+              MediaStore.save(fr.uuid, fr.attribution.dataResourceUid, fileToStore)
+            }
+            associatedMediaBuffer += filePath
+          })
+          
+          fr.occurrence.associatedMedia = associatedMediaBuffer.toArray.mkString(";")
+        }
 
-        Config.occurrenceDAO.addRawOccurrenceBatch(Array(fr))
+        Config.occurrenceDAO.addRawOccurrence(fr)
         true
     }
     

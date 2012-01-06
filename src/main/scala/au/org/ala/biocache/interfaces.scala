@@ -125,6 +125,18 @@ object Store {
   }
 
   /**
+   * Load the record, download any media associated with the record.
+   */
+  def loadRecord(dataResourceUid:String, fr:FullRecord, identifyingTerms:java.util.List[String], shouldIndex:Boolean = true){
+    val s = new SimpleLoader
+    fr.lastModifiedTime = new Date()
+    s.load(dataResourceUid, fr, identifyingTerms.toList, true, true)
+    if(shouldIndex){
+      occurrenceDAO.reIndex(fr.rowKey)
+    }
+  }
+  
+  /**
    * Adds or updates a raw full record with values that are in the FullRecord
    * relies on a rowKey being set
    *  
@@ -133,10 +145,10 @@ object Store {
   def upsertRecord(record:FullRecord, shouldIndex:Boolean){
     //rowKey = dr|<cxyzsuid>
     if(record.rowKey != null){
-        record.uuid = occurrenceDAO.createOrRetrieveUuid(record.rowKey) 
+        record.uuid = occurrenceDAO.createOrRetrieveUuid(record.rowKey)
         //add the last load time
-        record.lastModifiedTime =new Date()
-        occurrenceDAO.addRawOccurrenceBatch(Array(record))
+        record.lastModifiedTime = new Date()
+        occurrenceDAO.addRawOccurrence(record)
         val processor = new RecordProcessor
         processor.processRecordAndUpdate(record)
         if(shouldIndex){
@@ -207,7 +219,6 @@ object Store {
     }
   }
 
-
   /**
    * Delete an assertion
    *
@@ -234,26 +245,25 @@ object Store {
   def optimiseIndex() :String = {
       val start = System.currentTimeMillis
       readOnly = true
-      try{
+      try {
           val indexString =Config.indexDAO.optimise
           val finished = System.currentTimeMillis
           readOnly = false
           "Optimised in " + (finished -start).toFloat / 60000f + " minutes.\n" +indexString
-         }
+      }
       catch{
           case e:Exception => {
               //report error message and take out of readOnly
               readOnly = false
               e.getMessage
-              }
+          }
       }
   }
+
   /**
    * Reopens the current index to account for external index changes
    */
-  def reopenIndex(){
-      Config.indexDAO.reload
-  }
+  def reopenIndex = Config.indexDAO.reload
 
   /**
    * Indexes a dataResource from a specific date
@@ -315,10 +325,12 @@ object Store {
     val code = codeAsString.toInt
     AssertionCodes.all.find(errorCode => errorCode.code == code).getOrElse(null)
   }
+
   /**
    * Retrieve the list of species groups
    */
   def retrieveSpeciesGroups: java.util.List[SpeciesGroup] = SpeciesGroups.groups.asJava[SpeciesGroup]
+
   /**
    * Returns the biocache id for the supplied layername
    */
@@ -326,6 +338,7 @@ object Store {
     if(name != null) Layers.nameToIdMap.getOrElse(name.toLowerCase, null)
     else null
   }
+
   /**
    * Returns the spatial name for the supplied biocache layer id
    */

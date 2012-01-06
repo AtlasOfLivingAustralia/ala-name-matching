@@ -14,13 +14,13 @@ object DeleteRecords {
   val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
   val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
-  def main(args: Array[String]): Unit = {
+  def main(args: Array[String]){
       
       var query:Option[String]=None
       var dr:Option[String]=None
       val parser = new OptionParser("delete records options") {
             opt("q", "query", "The query to run to obtain the records for deletion e.g. 'year:[2001 TO *]' or 'taxon_name:Macropus'", { v:String => query = Some(v) })
-            opt("dr", "resource", "The data resource to process", {v:String =>dr = Some(v)})
+            opt("dr", "resource", "The data resource to process", {v:String => dr = Some(v)})
         }
       if(parser.parse(args)){
           val deletor:Option[RecordDeletor] = {
@@ -38,24 +38,25 @@ object DeleteRecords {
   }
 }
 
-trait RecordDeletor{
+trait RecordDeletor {
     val pm = Config.persistenceManager
     val indexer = Config.indexDAO
     val occurrenceDAO = Config.occurrenceDAO
     def deleteFromPersistent
     def deleteFromIndex
-    def close ={
-        pm.shutdown
-        indexer.shutdown
+    def close {
+      pm.shutdown
+      indexer.shutdown
     }
 }
+
 /**
  * A deletor that marks occurrence records, for a specific data resource, as deleted before 
  * removing them at a later time.
  *  
  */
 class DataResourceVirtualDelete(dataResource:String) extends RecordDeletor{
-    override def deleteFromPersistent()={
+    override def deleteFromPersistent {
         var count = 0
         val start = System.currentTimeMillis
         val startUuid = dataResource +"|"
@@ -71,12 +72,12 @@ class DataResourceVirtualDelete(dataResource:String) extends RecordDeletor{
       println("Marked " + count + " records as deleted in "  + (finished -start).toFloat / 60000f + " minutes.") 
     }
 
-    override def deleteFromIndex() = indexer.removeByQuery("data_resource_uid:" + dataResource)
+    override def deleteFromIndex = indexer.removeByQuery("data_resource_uid:" + dataResource)
 
     /**
      * Physically deletes all records where deleted=true in the persistence manager.
      */
-    def physicallyDeleteMarkedRecords()={
+    def physicallyDeleteMarkedRecords {
         var count = 0
         val start = System.currentTimeMillis
         val startUuid = dataResource +"|"
@@ -97,7 +98,7 @@ class DataResourceVirtualDelete(dataResource:String) extends RecordDeletor{
 
 class DataResourceDelete(dataResource:String) extends RecordDeletor{   
    
-    override def deleteFromPersistent()={
+    override def deleteFromPersistent {
         //page over all the records for the data resource deleting them
         var count = 0
         val start = System.currentTimeMillis
@@ -113,7 +114,7 @@ class DataResourceDelete(dataResource:String) extends RecordDeletor{
       
       println("Deleted " + count + " records in "  + (finished -start).toFloat / 60000f + " minutes.") 
     }
-    override def deleteFromIndex() = {
+    override def deleteFromIndex {
         indexer.removeByQuery("data_resource_uid:" +dataResource)        
     }
 }
