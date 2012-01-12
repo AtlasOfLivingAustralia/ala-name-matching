@@ -139,6 +139,8 @@ class CassandraPersistenceManager @Inject() (
     
     val policy = new CommonsBackedPool.Policy()
     policy.setMaxTotal(maxConnections)
+    //According to Pelops : As a general rule the pools maxWaitForConnection should be three times larger than the thrift timeout value.
+    policy.setMaxWaitForConnection(3*operationTimeout);
     //operations policy, first arg indicates how many time a failed operation will be retried, the second indicates that null value insert should be treated as a delete 
     val operandPolicy = new OperandPolicy(maxRetries,false)
     Pelops.addPool(poolName, cluster, keyspace, policy, operandPolicy)
