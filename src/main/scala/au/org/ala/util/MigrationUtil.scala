@@ -16,6 +16,7 @@ object MigrationUtil {
     var sourcePort = -1
     var targetHost = ""
     var targetPort = -1
+    var dataResource:Option[String] = None;
     var keyspace = ""
     val obsCols = List("originalDecimalLatitude","originalDecimalLongitude","originalLocality",
       "originalLocationRemarks","originalVerbatimLatitude","originalVerbatimLongitude","lastLoadTime")
@@ -26,6 +27,7 @@ object MigrationUtil {
         arg("target-host", "", {v:String => targetHost = v})
         arg("target-port", "", {v:String => targetPort = v.toInt})
         arg("keyspace", "", {v:String => keyspace = v})
+        opt("dr", "data-resource", "data resource to migrate. All records will be migrated if none specified", {v:String =>dataResource=Some(v)})
     }
 
     var counter = 0
@@ -35,6 +37,9 @@ object MigrationUtil {
       //page through source keyspace, and add record to target
       val sourcePM = new CassandraPersistenceManager(sourceHost, sourcePort, "source", keyspace)
       val targetPM = new CassandraPersistenceManager(targetHost, targetPort, "target", keyspace)
+      
+      val startUuid = if(dataResource.isDefined) dataResource.get +"|" else ""
+      val endUuid = if(dataResource.isDefined) startUuid + "~" else ""      
 
       sourcePM.pageOverAll(keyspace, (guid, map) => {
         counter += 1
@@ -55,7 +60,7 @@ object MigrationUtil {
           targetPM.put(guid, keyspace, mapFiltered)
         }
         true
-      })
+      },startUuid,endUuid)
     }
   }
 }
