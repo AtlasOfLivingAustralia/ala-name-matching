@@ -18,6 +18,7 @@ object MigrationUtil {
     var targetPort = -1
     var dataResource:Option[String] = None;
     var keyspace = ""
+    var columnFamily = ""
     val obsCols = List("originalDecimalLatitude","originalDecimalLongitude","originalLocality",
       "originalLocationRemarks","originalVerbatimLatitude","originalVerbatimLongitude","lastLoadTime")
 
@@ -27,6 +28,7 @@ object MigrationUtil {
         arg("target-host", "", {v:String => targetHost = v})
         arg("target-port", "", {v:String => targetPort = v.toInt})
         arg("keyspace", "", {v:String => keyspace = v})
+        arg("column-family","",{v:String => columnFamily = v})
         opt("dr", "data-resource", "data resource to migrate. All records will be migrated if none specified", {v:String =>dataResource=Some(v)})
     }
 
@@ -41,7 +43,7 @@ object MigrationUtil {
       val startUuid = if(dataResource.isDefined) dataResource.get +"|" else ""
       val endUuid = if(dataResource.isDefined) startUuid + "~" else ""      
 
-      sourcePM.pageOverAll(keyspace, (guid, map) => {
+      sourcePM.pageOverAll(columnFamily, (guid, map) => {
         counter += 1
         if (counter % 1000 == 0){
           finish = System.currentTimeMillis()
@@ -57,7 +59,7 @@ object MigrationUtil {
             else if (value == "[]") false
             else true
           }})
-          targetPM.put(guid, keyspace, mapFiltered)
+          targetPM.put(guid, columnFamily, mapFiltered)
         }
         true
       },startUuid,endUuid)
