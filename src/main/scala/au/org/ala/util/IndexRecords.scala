@@ -1,11 +1,21 @@
-
 package au.org.ala.util
-import java.util.ArrayList
 import org.slf4j.LoggerFactory
 import au.org.ala.biocache._
 import java.io.File
 import java.util.Date
 import scala.collection.mutable.HashMap
+
+/**
+ * Runnable for optimising the index.
+ */
+object OptimiseIndex {
+  def main(args: Array[String]): Unit = {
+    println("Starting optimise....")
+    val indexer = Config.getInstance(classOf[IndexDAO]).asInstanceOf[IndexDAO]
+    indexer.optimise
+    println("Optimise complete.")
+  }
+}
 
 /**
  * Index the Cassandra Records to conform to the fields

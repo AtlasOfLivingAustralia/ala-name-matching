@@ -117,7 +117,7 @@ class DwcCSVLoader extends DataLoader {
                 	case (key,value) => {
                     if(value!=null){
                       val upperCased = value.trim.toUpperCase
-                      upperCased != "NULL" && upperCased != "N/A" && upperCased != "\\N"
+                      upperCased != "NULL" && upperCased != "N/A" && upperCased != "\\N" && upperCased != ""
                     } else {
                       false
                     }
@@ -127,7 +127,7 @@ class DwcCSVLoader extends DataLoader {
                 if(uniqueTerms.forall(t => map.getOrElse(t,"").length>0)){
 	                val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,"")) //for (t <-uniqueTerms) yield map.getOrElse(t,"")
 	                val fr = FullRecordMapper.createFullRecord("", map, Versions.RAW)
-	                load(dataResourceUid, fr, uniqueTermsValues)
+	                //load(dataResourceUid, fr, uniqueTermsValues)
 
                   if (fr.occurrence.associatedMedia != null){
                     //check for full resolvable http paths
@@ -153,8 +153,9 @@ class DwcCSVLoader extends DataLoader {
                     }).flatten
 
                     fr.occurrence.associatedMedia = filePathsInStore.mkString(";")
-                    load(dataResourceUid, fr, uniqueTermsValues)
                   }
+
+                  load(dataResourceUid, fr, uniqueTermsValues)
 
                   if (counter % 1000 == 0 && counter > 0) {
                       finishTime = System.currentTimeMillis
