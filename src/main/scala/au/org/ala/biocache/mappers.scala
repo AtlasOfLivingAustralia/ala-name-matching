@@ -119,12 +119,12 @@ object FullRecordMapper {
         fullRecord.rowKey = rowKey
         fullRecord.uuid = fields.getOrElse("uuid", "")
         fullRecord.lastModifiedTime = fields.getOrElse(markNameBasedOnVersion("lastModifiedTime",version),"")
-        val miscProperties = new HashMap[String,String]()
+        //val miscProperties = new HashMap[String,String]()
 
         fields.keySet.foreach( fieldName => {
             //ascertain which term should be associated with which object
             //println("field name: " + fieldName)
-            val fieldValue = fields.getOrElse(fieldName, "")
+            val fieldValue = fields.getOrElse(fieldName, "").trim
             //only set the value if it is no null or empty string
             if (fieldValue != "") {
                 fieldName match {
