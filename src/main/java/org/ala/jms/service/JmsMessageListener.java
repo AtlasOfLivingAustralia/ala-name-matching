@@ -25,17 +25,16 @@ import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import au.org.ala.biocache.FullRecord;
-import au.org.ala.biocache.Config;
 import au.org.ala.biocache.Store;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * ActiveMq Listerner 
  * 
  * @author mok011
- * 
  */
-
-//@Component
 public class JmsMessageListener implements MessageListener {
 	private static final Logger logger = Logger.getLogger(JmsMessageListener.class);
 	public static final String MESSAGE_METHOD = "messageMethod";
@@ -43,8 +42,7 @@ public class JmsMessageListener implements MessageListener {
 	protected ObjectMapper mapper = new ObjectMapper();
 
 	public static final String CITIZEN_SCIENCE_DRUID = "dr364";
-	public static final String CITIZEN_SCIENCE_DPUID = "dp31";
-	
+
 	private boolean hasAssociatedMedia = true;
 	
 	public enum Method {
@@ -91,7 +89,10 @@ public class JmsMessageListener implements MessageListener {
     	String occId = "";
     	String json = "";
     	Method messageMethod = null;
-    	
+
+        logger.info("Message received from the queue...");
+        logger.debug(message.toString());
+        
         try {
         	if(message.getStringProperty(MESSAGE_METHOD) != null && !"".equals(message.getStringProperty(MESSAGE_METHOD))){
         		messageMethod = Method.valueOf(message.getStringProperty(MESSAGE_METHOD));	
@@ -101,7 +102,7 @@ public class JmsMessageListener implements MessageListener {
 	                TextMessage tm = (TextMessage)message;
 	                json = tm.getText();	                
 	                if(json != null && !"".equals(json)){
-	                	sighting = (CitizenScience)mapper.readValue(json, CitizenScience.class);	
+	                	sighting = (CitizenScience) mapper.readValue(json, CitizenScience.class);
 	                }
 	                else{
 	                	logger.error("Empty Json Message!  Method: " + message.getStringProperty(MESSAGE_METHOD));
@@ -142,24 +143,22 @@ public class JmsMessageListener implements MessageListener {
     	if(sighting == null){
     		return fullRecord;
     	}
-    	
-    	//keys
-    	fullRecord.setRowKey(CITIZEN_SCIENCE_DRUID + "|" + sighting.getGuid());    	
-    	fullRecord.occurrence().setOccurrenceID(sighting.getGuid());
-    	fullRecord.occurrence().setRecordedBy(sighting.getUserID());
-    	
-    	fullRecord.classification().setKingdom(sighting.getKingdom());
-    	fullRecord.classification().setFamily(sighting.getFamily());
-    	fullRecord.classification().setScientificName(sighting.getScientificName());
-    	fullRecord.classification().setVernacularName(sighting.getVernacularName());
-    	fullRecord.classification().setTaxonConceptID(sighting.getTaxonConceptGuid());
+
+    	fullRecord.getOccurrence().setOccurrenceID(sighting.getGuid());
+    	fullRecord.getOccurrence().setRecordedBy(sighting.getUserID());
+    	fullRecord.getClassification().setKingdom(sighting.getKingdom());
+    	fullRecord.getClassification().setFamily(sighting.getFamily());
+    	fullRecord.getClassification().setScientificName(sighting.getScientificName());
+    	fullRecord.getClassification().setVernacularName(sighting.getVernacularName());
+    	fullRecord.getClassification().setTaxonConceptID(sighting.getTaxonConceptGuid());
     	
     	if(isHasAssociatedMedia() && sighting.getAssociatedMedia() != null){
     		StringBuffer urls = new StringBuffer();
-    		for(int i = 0; i < sighting.getAssociatedMedia().length; i++){
+    		for(int i = 0; i < sighting.getAssociatedMedia().length; i++){               
+                //download the media
     			urls.append(sighting.getAssociatedMedia()[i]);
     			if(i < (sighting.getAssociatedMedia().length - 1)){
-    				urls.append(", ");
+    				urls.append("; ");
     			}
     		}
     		fullRecord.occurrence().setAssociatedMedia(urls.toString());
@@ -184,8 +183,9 @@ public class JmsMessageListener implements MessageListener {
 	
 	private void addUpdateOccRecord(CitizenScience sighting) {
 		FullRecord fullRecord = populateFullRecord(sighting);
-		fullRecord.setUuid(Config.occurrenceDAO().createUuid());
-		Store.upsertRecord(fullRecord, true);
+        List<String> identifyingTerms = new ArrayList<String>();
+        identifyingTerms.add(sighting.getGuid());
+		Store.loadRecord(CITIZEN_SCIENCE_DRUID, fullRecord, identifyingTerms, true);
 	}
 		
 	private void deleteOccRecord(String occId) {
