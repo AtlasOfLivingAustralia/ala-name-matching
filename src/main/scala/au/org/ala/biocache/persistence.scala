@@ -3,15 +3,16 @@ package au.org.ala.biocache
 import collection.JavaConversions
 import scala.collection.mutable.HashMap
 import org.apache.cassandra.thrift._
+
+//import org.wyki.cassandra.pelops.{Policy, Selector, Pelops}
 import org.scale7.cassandra.pelops.{Cluster,Pelops,Selector, Bytes}
 import collection.mutable.ListBuffer
 import org.slf4j.LoggerFactory
 import com.google.inject.name.Named
 import com.google.inject.Inject
 import java.lang.Class
+//import com.mongodb.casbah.Imports._
 import java.util.UUID
-import org.scale7.cassandra.pelops.pool.CommonsBackedPool
-import org.scale7.cassandra.pelops.OperandPolicy
 
 /**
  * This trait should be implemented for Cassandra,
@@ -119,10 +120,7 @@ class CassandraPersistenceManager @Inject() (
     @Named("cassandraHosts") val host:String = "localhost",
     @Named("cassandraPort") val port:Int = 9160,
     @Named("cassandraPoolName") val poolName:String = "biocache-store-pool",
-    @Named("cassandraKeyspace") val keyspace:String = "occ",
-    @Named("cassandraMaxConnections")val maxConnections:Int= -1,
-    @Named("cassandraMaxRetries") val maxRetries:Int= 3,
-    @Named("thriftOperationTimeout") val operationTimeout:Int= 4000) extends PersistenceManager {
+    @Named("cassandraKeyspace") val keyspace:String = "occ") extends PersistenceManager {
 
     protected val logger = LoggerFactory.getLogger("CassandraPersistenceManager")
 
@@ -131,19 +129,8 @@ class CassandraPersistenceManager @Inject() (
     logger.debug("Initialising cassandra connection pool with pool name: " + poolName)
     logger.debug("Initialising cassandra connection pool with hosts: " + host)
     logger.debug("Initialising cassandra connection pool with port: " + port)
-    logger.debug("Initialising cassandra connection pool with max connections: " + maxConnections)
-    logger.debug("Initialising cassandra connection pool with max retries: " + maxRetries)
-    logger.debug("Initialising cassandra connection pool with operation timeout: " + operationTimeout)
-    //Cluster wide settings including the thrift operation timeout
-    val cluster = new Cluster(host,port,operationTimeout, false)
-    
-    val policy = new CommonsBackedPool.Policy()
-    policy.setMaxTotal(maxConnections)
-    //According to Pelops : As a general rule the pools maxWaitForConnection should be three times larger than the thrift timeout value.
-    policy.setMaxWaitForConnection(3*operationTimeout);
-    //operations policy, first arg indicates how many time a failed operation will be retried, the second indicates that null value insert should be treated as a delete 
-    val operandPolicy = new OperandPolicy(maxRetries,false)
-    Pelops.addPool(poolName, cluster, keyspace, policy, operandPolicy)
+    val cluster = new Cluster(host,port)
+    Pelops.addPool(poolName, cluster, keyspace)
 
     /**
      * Retrieve an array of objects, parsing the JSON stored.     
@@ -231,7 +218,7 @@ class CassandraPersistenceManager @Inject() (
    */
 
     /**
-     * Retreive the column value, handling NotFoundExceptions from cassandra thrift.
+     * Retrieve the column value, handling NotFoundExceptions from cassandra thrift.
      */
     def get(uuid:String, entityName:String, propertyName:String) = {
       try {
@@ -268,8 +255,9 @@ class CassandraPersistenceManager @Inject() (
         val mutator = Pelops.createMutator(poolName)
         keyValuePairs.foreach( keyValue => {
           //NC: only add the column if the value is not null
-          if(keyValue._2!=null)
+          if(keyValue._2!=null){
             mutator.writeColumn(entityName, recordId, mutator.newColumn(keyValue._1, keyValue._2))
+          }
         })
         //add the recordId to the columns if it has been generated.  This makes uuid value reads faster that ByteBuffer key conversions
         if(uuid == null){
@@ -482,9 +470,7 @@ class CassandraPersistenceManager @Inject() (
          val columnsList = columnMap.get(key)
          val fieldValues = columnsList.map(column => (new String(column.getName, "UTF-8"),new String(column.getValue, "UTF-8"))).toArray
          val map = scala.collection.mutable.Map.empty[String,String]
-         for(fieldValue <-fieldValues){
-           map(fieldValue._1) = fieldValue._2
-         }
+         fieldValues.foreach(fieldValue =>  map(fieldValue._1) = fieldValue._2)
 
          //add el* cl* fields
          if(!locFields.isEmpty) {
