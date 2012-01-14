@@ -131,6 +131,8 @@ object Store {
     val s = new SimpleLoader
     fr.lastModifiedTime = new Date()
     s.load(dataResourceUid, fr, identifyingTerms.toList, true, true)
+    val processor = new RecordProcessor
+    processor.processRecordAndUpdate(fr)
     if(shouldIndex){
       occurrenceDAO.reIndex(fr.rowKey)
     }
