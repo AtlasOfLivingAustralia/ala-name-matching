@@ -16,7 +16,8 @@ object MigrationUtil {
     var sourcePort = -1
     var targetHost = ""
     var targetPort = -1
-    var dataResource:Option[String] = None;
+    var dataResource:Option[String] = None
+    var startRK:Option[String] = None
     var keyspace = ""
     var columnFamily = ""
     val obsCols = List("originalDecimalLatitude","originalDecimalLongitude","originalLocality",
@@ -30,9 +31,11 @@ object MigrationUtil {
         arg("keyspace", "", {v:String => keyspace = v})
         arg("column-family","",{v:String => columnFamily = v})
         opt("dr", "data-resource", "data resource to migrate. All records will be migrated if none specified", {v:String =>dataResource=Some(v)})
+        opt("s","start", "The row key to start the migration." ,{v:String => startRK=Some(v)})
     }
 
     var counter = 0
+    val originalStart = System.currentTimeMillis
     var start = System.currentTimeMillis()
     var finish = System.currentTimeMillis()
     if(parser.parse(args)){
@@ -40,14 +43,16 @@ object MigrationUtil {
       val sourcePM = new CassandraPersistenceManager(sourceHost, sourcePort, "source", keyspace)
       val targetPM = new CassandraPersistenceManager(targetHost, targetPort, "target", keyspace)
       
-      val startUuid = if(dataResource.isDefined) dataResource.get +"|" else ""
+      val startUuid = if(startRK.isDefined) startRK.get else if(dataResource.isDefined) dataResource.get +"|" else ""
       val endUuid = if(dataResource.isDefined) startUuid + "~" else ""      
 
       sourcePM.pageOverAll(columnFamily, (guid, map) => {
         counter += 1
         if (counter % 1000 == 0){
           finish = System.currentTimeMillis()
-          println(">> processing record: " + counter +", time taken for last 1000: " + ((finish.toFloat-start.toFloat) / 1000))
+          println(">> processing record: " + counter +", guid: " + guid + 
+                  ", time taken for last 1000: " + ((finish.toFloat-start.toFloat) / 1000) +
+                  ", total time " + (finish - originalStart).toFloat / 60000f +" minutes")
           start = System.currentTimeMillis()
         }
         val deleted = map.getOrElse("deleted", "false").toBoolean
