@@ -22,7 +22,7 @@ public class IconicSpeciesTest {
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new CBIndexSearch("/data/lucene/namematching");
+            searcher = new CBIndexSearch("/data/lucene/namematchingv1_1");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -121,7 +121,7 @@ public class IconicSpeciesTest {
 //                   
 
                     try{
-                    NameSearchResult result = searcher.searchForRecord(search, classification, null);
+                    NameSearchResult result = searcher.searchForRecord(search, classification, null, true);
                     
                     //assertNotNull(search + " could not be found" ,guid);
                     if(result == null){
@@ -130,6 +130,11 @@ public class IconicSpeciesTest {
 
                     }
                     else{
+
+                        if(result.getLsid().contains("catalogue")){
+                            System.err.println(search + " (" + commonName +") has a CoL LSID");
+                        }
+
                         if(result.isSynonym())
                             result = searcher.searchForRecordByLsid(result.getAcceptedLsid());
                         //test to see if the classification matches

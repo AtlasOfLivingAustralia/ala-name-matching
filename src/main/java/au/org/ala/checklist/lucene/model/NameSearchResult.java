@@ -4,6 +4,7 @@ package au.org.ala.checklist.lucene.model;
 import org.apache.lucene.document.Document;
 
 import au.org.ala.checklist.lucene.CBCreateLuceneIndex.IndexField;
+import au.org.ala.checklist.lucene.NameIndexField;
 import au.org.ala.data.model.LinnaeanRankClassification;
 import au.org.ala.data.util.RankType;
 import org.apache.commons.lang.StringUtils;
@@ -16,40 +17,47 @@ import org.apache.commons.lang.StringUtils;
  * @author Natasha
  */
 public class NameSearchResult {
-    private long id;
+    private String id;
     private String lsid;
     private String cleanName;
     private boolean isHomonym;
     private String acceptedLsid;
-    private long acceptedId = -1;
+    //private long acceptedId = -1;
     private String kingdom;
     private String left,right;
     private LinnaeanRankClassification rankClass;
     private RankType rank;
     public enum MatchType{
         DIRECT,
+        EXACT,
+        CANONICAL,
+        PHRASE,
+        SOUNDEX,
         ALTERNATE,
         SEARCHABLE
     }
     private MatchType matchType;
     public NameSearchResult(String id, String lsid, MatchType type){
-        this.id = Long.parseLong(id);
+        this.id = id;//Long.parseLong(id);
         this.lsid = StringUtils.trimToNull(lsid)==null ? id : StringUtils.trimToNull(lsid);
         matchType = type;
         isHomonym = false;
     }
     public NameSearchResult(Document doc, MatchType type){
-        this(doc.get(IndexField.ID.toString()), doc.get(IndexField.LSID.toString()), type);
+        this(doc.get(NameIndexField.ID.toString()), doc.get(NameIndexField.LSID.toString()), type);
         kingdom = doc.get(RankType.KINGDOM.getRank());
         //System.out.println("Rank to use : " +doc.get(IndexField.RANK.toString()));
-        rank = RankType.getForId(Integer.parseInt(doc.get(IndexField.RANK.toString())));
+        try{
+        rank = RankType.getForId(Integer.parseInt(doc.get(NameIndexField.RANK_ID.toString())));
+        }
+        catch(Exception e){}
         rankClass = new LinnaeanRankClassification(doc.get(RankType.KINGDOM.getRank()),
                                                    doc.get(RankType.PHYLUM.getRank()),
                                                    doc.get(RankType.CLASS.getRank()),
                                                    doc.get(RankType.ORDER.getRank()),
                                                    doc.get(RankType.FAMILY.getRank()),
                                                    doc.get(RankType.GENUS.getRank()),
-                                                   doc.get(IndexField.NAME.toString()));
+                                                   doc.get(NameIndexField.NAME.toString()));
         rankClass.setSpecies(doc.get(RankType.SPECIES.getRank()));
         //add the ids
         rankClass.setKid(doc.get("kid"));
@@ -62,16 +70,16 @@ public class NameSearchResult {
         //left and right values for the taxon concept
         left = doc.get("left");
         right = doc.get("right");
-        String syn = doc.get(IndexField.ACCEPTED.toString());
+        String syn = doc.get(NameIndexField.ACCEPTED.toString());
         if(syn != null){
-            String[] synDetails = syn.split("\t",2);
-            acceptedLsid = StringUtils.trimToNull(synDetails[1]) == null?synDetails[0]:synDetails[1];
-            try{
-                acceptedId = Long.parseLong(synDetails[0]);
-            }
-            catch(NumberFormatException e){
-                acceptedId = -1;
-            }
+            //String[] synDetails = syn.split("\t",2);
+            acceptedLsid =syn;// StringUtils.trimToNull(synDetails[1]) == null?synDetails[0]:synDetails[1];
+//            try{
+//                acceptedId = Long.parseLong(synDetails[0]);
+//            }
+//            catch(NumberFormatException e){
+//                acceptedId = -1;
+//            }
         }
     }
     public LinnaeanRankClassification getRankClassification(){
@@ -85,11 +93,11 @@ public class NameSearchResult {
      * @return
      */
     public String getLsid(){
-        if(lsid !=null || id <1)
+        //if(lsid !=null || id <1)
             return lsid;
-        return Long.toString(id);
+        //return Long.toString(id);
     }
-    public long getId(){
+    public String getId(){
         return id;
     }
     public MatchType getMatchType(){
@@ -111,20 +119,20 @@ public class NameSearchResult {
         return isHomonym;
     }
     public boolean isSynonym(){
-        return acceptedLsid != null || acceptedId >0;
+        return acceptedLsid != null;// || acceptedId >0;
     }
     /**
      *
      * @return
      * @deprecated Use {@link #getAcceptedId()} instead;
      */
-    @Deprecated
-    public long getSynonymId(){
-        return getAcceptedId();
-    }
-    public long getAcceptedId(){
-        return acceptedId;
-    }
+    //@Deprecated
+//    public long getSynonymId(){
+//        return getAcceptedId();
+//    }
+//    public long getAcceptedId(){
+//        return acceptedId;
+//    }
     /**
      * When the LSID for the synonym is null return the ID for the synonym
      * @return
@@ -141,10 +149,10 @@ public class NameSearchResult {
      * name is not a synonym null is returned
      */
     public String getAcceptedLsid(){
-        if(acceptedLsid != null || acceptedId<1)
+        //if(acceptedLsid != null || acceptedId<1)
             return acceptedLsid;
-        else
-            return Long.toString(acceptedId);
+//        else
+//            return Long.toString(acceptedId);
     }
     @Override
     public String toString(){

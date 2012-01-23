@@ -4,13 +4,12 @@
   <groupId>au.org.ala</groupId>
   <artifactId>ala-name-matching</artifactId>
   <packaging>jar</packaging>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.1-SNAPSHOT</version>
   <name>ALA Name Matching</name>
 	<properties>
 		<!-- This project uses UTF8 for Regular Expressions -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.apache.lucene.version>2.9.2</org.apache.lucene.version>
-		<org.springframework.version>3.0.0.RELEASE</org.springframework.version>
 	</properties>
   <dependencies>
     <dependency>
@@ -21,33 +20,13 @@
     <dependency>
         <groupId>org.gbif</groupId>
         <artifactId>ecat-common</artifactId>
-        <version>1.2-SNAPSHOT</version>
+        <version>1.5.1-SNAPSHOT</version>
     </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.4</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>8.4-701.jdbc3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${org.springframework.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-            <version>${org.springframework.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
-            <version>${org.springframework.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -60,33 +39,10 @@
             <version>${org.apache.lucene.version}</version>
         </dependency>
         <dependency>
-            <groupId>commons-dbcp</groupId>
-            <artifactId>commons-dbcp</artifactId>
-            <version>1.2.1</version>
-          <exclusions>
-            <exclusion>
-                <groupId>xerces</groupId>
-                <artifactId>xercesImpl</artifactId>
-            </exclusion>
-        </exclusions>
-        </dependency>
-        <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>2.5</version>
           <exclusions>
-            <exclusion>
-                <groupId>xerces</groupId>
-                <artifactId>xercesImpl</artifactId>
-            </exclusion>
-        </exclusions>
-        </dependency>
-    <dependency>
-        	<groupId>org.gbif</groupId>
-        	<artifactId>dwc-archive</artifactId>
-        	<version>1.4-SNAPSHOT</version>
-        	<scope>compile</scope>
-        	<exclusions>
             <exclusion>
                 <groupId>xerces</groupId>
                 <artifactId>xercesImpl</artifactId>

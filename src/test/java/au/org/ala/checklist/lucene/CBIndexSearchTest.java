@@ -14,6 +14,8 @@ import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.checklist.lucene.model.NameSearchResult.MatchType;
 import au.org.ala.data.util.RankType;
 import au.org.ala.data.model.LinnaeanRankClassification;
+import org.gbif.ecat.model.ParsedName;
+import org.gbif.ecat.parser.NameParser;
 
 /**
  *
@@ -25,12 +27,137 @@ public class CBIndexSearchTest {
 	@org.junit.BeforeClass
 	public static void init() {
 		try {
-			searcher = new CBIndexSearch("/data/lucene/namematching");
+			searcher = new CBIndexSearch("/data/lucene/namematchingv1_1");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 	}
+
+        @Test
+        public void testInfragenricAndSoundEx(){
+            String nameDifferentEnding = "Phylidonyris pyrrhopterus";
+            String nameWithInfraGenric = "Phylidonyris (Phylidonyris) pyrrhoptera (Latham, 1801)";
+            String nameDiffEndInfraGeneric = "Phylidonyris (Phylidonyris) pyrrhopterus";
+            try{
+                NameSearchResult nsr = searcher.searchForRecord(nameDifferentEnding, null, true);
+                assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:f3871d29-1201-49eb-bd23-70f2bbc616fe", nsr.getLsid());
+                assertEquals(nsr.getMatchType(), MatchType.SOUNDEX);
+                nsr = searcher.searchForRecord(nameWithInfraGenric, null, true);
+                assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:f3871d29-1201-49eb-bd23-70f2bbc616fe", nsr.getLsid());
+                assertEquals(nsr.getMatchType(), MatchType.CANONICAL);
+                nsr = searcher.searchForRecord(nameDiffEndInfraGeneric, null, true);
+                assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:f3871d29-1201-49eb-bd23-70f2bbc616fe", nsr.getLsid());
+                assertEquals(nsr.getMatchType(), MatchType.SOUNDEX);
+
+                System.out.println(searcher.searchForRecord("Latrodectus hasseltii", null,true));
+                System.out.println(searcher.searchForRecord("Latrodectus hasselti", null,true));
+                System.out.println(searcher.searchForRecord("Elseya belli", null, true));
+                System.out.println(searcher.searchForRecord("Grevillea brachystylis subsp. Busselton (G.J.Keighery s.n. 28/6/1985)", null));
+                System.out.println(searcher.searchForRecord("Prostanthera sp. Bundjalung Nat. Pk. (B.J.Conn 3471)", null));
+                
+
+//                System.out.println(nameDifferentEnding + " Matches To " + searcher.searchForRecord(nameDifferentEnding, null, true));
+//                System.out.println(nameWithInfraGenric + " Matches To " + searcher.searchForRecord(nameWithInfraGenric, null, true));
+//                System.out.println(nameDiffEndInfraGeneric + " Matches To " + searcher.searchForRecord(nameDiffEndInfraGeneric, null, true));
+            }
+            catch(Exception e){
+                e.printStackTrace();
+                fail("testInfragenericAndSoundEx failed");
+            }
+        }
+
+       // @Test
+        public void testSoundExMatch(){
+            String name = "Argyrotegium nitidulus";
+            try{
+                System.out.println(searcher.searchForRecord(name, null,true));
+            }
+            catch(Exception e){
+
+            }
+        }
+
+        //@Test
+        public void testSubspeciesSynonym(){
+            try{
+            String name = "Turnix castanota magnifica";
+            System.out.println(searcher.searchForRecord(name, null));
+            System.out.println(searcher.searchForRecord("Baeckea sp. Baladjie (PJ Spencer 24)",null));
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+        //@Test
+        public void testVirusName(){
+            try{
+                String name="Cucumovirus cucumber mosaic";
+                 NameParser parser = new NameParser();
+             ParsedName cn = parser.parse(name);
+             System.out.println(cn);
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        //@Test
+        public void testPhraseNames(){
+            //All the names below need to map to the same concept
+            try{
+            String name1 ="Goodenia sp. Bachsten Creek (M.D. Barrett 685) WA Herbarium";
+            String name2 = "Goodenia sp. Bachsten Creek (M.D.Barrett 685) WA Herbarium";
+            String name3 = "Goodenia sp. Bachsten Creek";
+            String name4 = "Goodenia sp. Bachsten Creek (M.D. Barrett 685)";
+            String name5 = "Goodenia sp. Bachsten Creek M.D. Barrett 685";
+            NameParser parser = new NameParser();
+            ParsedName cn = parser.parse(name1);
+            System.out.println(cn + "##" + cn.canonicalName());
+            cn = parser.parse(name1);
+            System.out.println(cn);
+            System.out.println(parser.parse("Macropus sp. rufus"));
+            System.out.println(parser.parse("Macropus rufus subsp. rufus"));
+            System.out.println(parser.parse("Allocasuarina spinosissima subsp. Short spine (D.L.Serventy & A.R.Main s.n., 25 Aug. 1960) WA Herbarium"));
+
+            System.out.println(searcher.searchForRecord(name1, null));
+
+            System.out.println(searcher.searchForRecord("Baeckea sp. Bungalbin Hill (BJ Lepschi, LA Craven 4586)",null));
+
+            System.out.println(searcher.searchForRecord("Baeckea sp. Calingiri (F Hort 1710)",null));
+
+            System.out.println(searcher.searchForRecord("Baeckea sp. Calingiri (F Hort 1710)",null));
+
+            System.out.println(searcher.searchForRecord("Acacia sp. Goodlands (BR Maslin 7761) [aff. resinosa]", null));
+
+            System.out.println(searcher.searchForRecord("Acacia sp. Manmanning (BR Maslin 7711) [aff. multispicata]",null));
+
+            //System.out.println(parser.parseExtended(name1));
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        //@Test
+        public void testBadCommonName(){
+            try{
+                System.out.println("Higher_sulfur_oxides: " +searcher.searchForCommonName("Higher sulfur oxides"));
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+        //@Test
+        public void testSpeciesSynonymOfSubspecies(){
+            LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia","Chordata","Aves","Charadriiformes","Laridae","Larus", "Larus novaehollandiae");
+            try{
+                System.out.println(searcher.searchForRecord(cl, true));
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
 
 	@Test
 	public void testNoRank() {
@@ -41,7 +168,7 @@ public class CBIndexSearchTest {
 			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:4647863b-760d-4b59-aaa1-502c8cdf8d3c", lsid);
 			lsid = searcher.searchForLSID("Bacteria");
 			System.out.println("testNoRank: " + lsid);
-			assertEquals("3", lsid);
+			assertEquals("urn:lsid:catalogueoflife.org:taxon:d755c2e0-29c1-102b-9a4a-00304854f820:col20110201", lsid);
 		} catch (SearchResultException e) {
 			e.printStackTrace();
 			fail("testNoRank failed");
@@ -75,9 +202,9 @@ public class CBIndexSearchTest {
 	public void testSpecies() {
 		try {
 			NameSearchResult nsr = searcher.searchForRecord(
-					"Holconia nigrigularis", RankType.getForId(7000));
+					"Petaurus australis", RankType.getForId(7000));
 			System.out.println("testSpecies: " + nsr.toString() + "!!");
-			NameSearchResult expectedResult = new NameSearchResult(String.valueOf(101300), "urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a", MatchType.DIRECT);
+			NameSearchResult expectedResult = new NameSearchResult(String.valueOf(84985), "urn:lsid:biodiversity.org.au:afd.taxon:ca722c6d-6d53-4de6-b296-310621eeffa8", MatchType.EXACT);
 			assertTrue(nameSearchResultEqual(expectedResult, nsr));
 			//			assertEquals("Match: DIRECT id: 101300 lsid: urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a classification: au.org.ala.data.model.LinnaeanRankClassification@15e232b5[kingdom=Animalia,phylum=Arthropoda,klass=Arachnida,order=Araneae,family=Sparassidae,genus=Holconia,species=Holconia nigrigularis,specificEpithet=<null>,scientificName=Holconia nigrigularis] synonym: null", nsr.toString());
 		} catch (SearchResultException e) {
@@ -105,7 +232,7 @@ public class CBIndexSearchTest {
 				equals = false;
 			}
 
-			if (nsr1.getId() != nsr2.getId()) {
+			if (!nsr1.getId().equals(nsr2.getId())) {
 				equals = false;
 			}
 
@@ -133,31 +260,7 @@ public class CBIndexSearchTest {
 		return equals;
 	}
 
-	@Test
-	public void testSynonymWithHomonym(){
-		try{
-			//               NameSearchResult result = searcher.searchForRecord("Macropus rufus", RankType.SPECIES);
-			//               System.out.println("Macropus rufus: " + result);
-			//               System.out.println("LSID: " + searcher.searchForLSID("Macropus rufus"));
-			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Atylus");
-			NameSearchResult result = searcher.searchForRecord("Atylus monoculoides", cl, RankType.SPECIES);
-			System.out.println("testSynonymWithHomonym Synonym: " + result + "!!");
-			NameSearchResult expectedResult = new NameSearchResult(String.valueOf(223782), "urn:lsid:biodiversity.org.au:afd.taxon:5005b407-1e87-4aa3-a2ff-88b89f0a2dc4", MatchType.DIRECT);
-			assertTrue(nameSearchResultEqual(expectedResult, result));
-			//			assertEquals("Match: DIRECT id: 223782 lsid: urn:lsid:biodiversity.org.au:afd.taxon:5005b407-1e87-4aa3-a2ff-88b89f0a2dc4 classification: au.org.ala.data.model.LinnaeanRankClassification@177f409c[kingdom=<null>,phylum=<null>,klass=<null>,order=<null>,family=<null>,genus=<null>,species=<null>,specificEpithet=<null>,scientificName=Atylus monoculoides] synonym: urn:lsid:biodiversity.org.au:afd.taxon:dcd396c3-afd4-498f-ab83-2605926f64f8", result.toString());
-			String lsid = searcher.searchForLSID("Atylus monoculoides");
-			System.out.println("testSynonymWithHomonym LSID: " + lsid);
-			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:dcd396c3-afd4-498f-ab83-2605926f64f8", lsid);
-			//System.out.println("LSID: " +searcher.searchForLSID("Sira tricincta"));
-		}
-		catch(Exception e){
-			//e.printStackTrace();//
-			if(e instanceof HomonymException){
-				printAllResults("SYNONYM/HOMONYM: ", ((HomonymException)e).getResults());
-			}
-			fail("testSynonymWithHomonym failed");
-		}
-	}
+
 
 	@Test
 	public void testHomonym() {
@@ -174,7 +277,8 @@ public class CBIndexSearchTest {
 			printAllResults("hymonyms test (Silene)", results);
 
 			cl.setGenus("Serpula");
-			cl.setKingdom("Fungi");
+			cl.setKingdom("Animalia");
+                        cl.setPhylum("ANNELIDA");
 			results = searcher.searchForRecords("Serpula", RankType.getForId(6000), cl, 10);
 			printAllResults("hymonyms test (Serpula)", results);
 
@@ -321,25 +425,25 @@ public class CBIndexSearchTest {
 			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Arthropoda", "Insecta", "Hymenoptera", "Formicidae","Anochetus", null);
 			String output = searcher.searchForLSID("Anochetus");
 			System.out.println("LSID for Anochetus: " + output);
-			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
+			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c20caa14-2e67-4919-a9b2-627e55c47833", output);
 			output = searcher.searchForLSID("Anochetus", true);
 			System.out.println("LSID for Anochetus fuzzy: " + output);
-			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
+			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c20caa14-2e67-4919-a9b2-627e55c47833", output);
 			output = searcher.searchForLSID("Anochetus", false);
 			System.out.println("LSID for Anochetus NOT fuzzy: " + output);
-			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
+			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c20caa14-2e67-4919-a9b2-627e55c47833", output);
 			output = searcher.searchForLSID("Anochetus", RankType.GENUS);
 			System.out.println("LSID for Anochetus RankType Species: " + output);
-			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
+			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c20caa14-2e67-4919-a9b2-627e55c47833", output);
 			output = searcher.searchForLSID("Anochetus", cl, RankType.GENUS);
 			System.out.println("LSID for Anochetus with cl and rank: " + output);
-			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
+			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c20caa14-2e67-4919-a9b2-627e55c47833", output);
 			output = searcher.searchForLSID(cl, true);
 			System.out.println("LSID for cl and recursive matching: " + output);
-			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
+			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c20caa14-2e67-4919-a9b2-627e55c47833", output);
 			output = searcher.searchForLSID(cl, false);
 			System.out.println("LSID for cl and NOT recursive matching: " + output);
-			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
+			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c20caa14-2e67-4919-a9b2-627e55c47833", output);
 
 }
 		catch(Exception e){
@@ -350,27 +454,34 @@ public class CBIndexSearchTest {
 	@Test
 	public void testFuzzyMatches(){
 		try{
-			//Bullia
-			String output = searcher.searchForRecord("Bullia", null) == null ? null : searcher.searchForRecord("Bullia", null).toString();
-			System.out.println("Bullia NOT fuzzy: " + output);
-			NameSearchResult nsr = searcher.searchForRecord("Bullia", null, true);
-			System.out.println("Bullia fuzzy: " + nsr);
-			NameSearchResult expectedResult = new NameSearchResult(String.valueOf(103077301), "urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010", MatchType.SEARCHABLE);
-			assertTrue(nameSearchResultEqual(expectedResult, nsr));
-			//			assertEquals("Match: SEARCHABLE id: 103077301 lsid: urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010 classification: au.org.ala.data.model.LinnaeanRankClassification@709446e4[kingdom=Animalia,phylum=Arthropoda,klass=Insecta,order=Lepidoptera,family=Noctuidae,genus=Bulia,species=<null>,specificEpithet=<null>,scientificName=Bulia] synonym: null", output);
-			//Anochetus
-			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Arthropoda", "Insecta", "Hymenoptera", "Formicidae","Anochetus", null);
-			output = searcher.searchForLSID("Anochetus",cl, null);
-			System.out.println("Anochetus NOT fuzzy: " + output);
-			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
+                    //Eolophus roseicapillus - non fuzzy match
+                    assertEquals(searcher.searchForLSID("Eolophus roseicapillus"), "urn:lsid:biodiversity.org.au:afd.taxon:53f876f0-2c4d-40c8-ae6c-f478db8b07af");
+		
+                    //Eolophus roseicapilla - fuzzy match
+                    assertEquals(searcher.searchForLSID("Eolophus roseicapilla", true),"urn:lsid:biodiversity.org.au:afd.taxon:53f876f0-2c4d-40c8-ae6c-f478db8b07af");
 
-			output = searcher.searchForLSID("Anochetus", null, true);
-			System.out.println("Anochetus fuzzy: " + output);
-			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
 
-			LinnaeanRankClassification classification = new LinnaeanRankClassification("Plantae", null, null, null, null, null, "Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929)");
-			output = searcher.searchForLSID("Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929)", classification, null);
-			System.out.println("Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929) : " + output);
+//                    //Bullia
+//			String output = searcher.searchForRecord("Bullia", null) == null ? null : searcher.searchForRecord("Bullia", null).toString();
+//			System.out.println("Bullia NOT fuzzy: " + output);
+//			NameSearchResult nsr = searcher.searchForRecord("Bullia", null, true);
+//			System.out.println("Bullia fuzzy: " + nsr);
+//			NameSearchResult expectedResult = new NameSearchResult(String.valueOf(103077301), "urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010", MatchType.SEARCHABLE);
+//			assertTrue(nameSearchResultEqual(expectedResult, nsr));
+//			//			assertEquals("Match: SEARCHABLE id: 103077301 lsid: urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010 classification: au.org.ala.data.model.LinnaeanRankClassification@709446e4[kingdom=Animalia,phylum=Arthropoda,klass=Insecta,order=Lepidoptera,family=Noctuidae,genus=Bulia,species=<null>,specificEpithet=<null>,scientificName=Bulia] synonym: null", output);
+//			//Anochetus
+//			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Arthropoda", "Insecta", "Hymenoptera", "Formicidae","Anochetus", null);
+//			output = searcher.searchForLSID("Anochetus",cl, null);
+//			System.out.println("Anochetus NOT fuzzy: " + output);
+//			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
+//
+//			output = searcher.searchForLSID("Anochetus", null, true);
+//			System.out.println("Anochetus fuzzy: " + output);
+//			assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:413c014e-cc6c-4c44-b6e1-ad53008d1fd9", output);
+//
+//			LinnaeanRankClassification classification = new LinnaeanRankClassification("Plantae", null, null, null, null, null, "Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929)");
+//			output = searcher.searchForLSID("Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929)", classification, null);
+//			System.out.println("Sauropus sp. A Kimberley Flora (T.E.H. Aplin et al. 929) : " + output);
 
 		}
 		catch(Exception e){
@@ -395,21 +506,22 @@ public class CBIndexSearchTest {
 
     @Test
     public void testSpeciesHomonyms() {
-        //Lobophora variegata is a species homonym in Animalia and Plantae
+        //Lobophora variegata is a species homonym in Animalia and Chromista
         try {
-            searcher.searchForLSID("Lobophora variegata");
-            fail("Species Homonym Test 1 (Lobophora variegata)");
+            searcher.searchForLSID("Agathis montana");
+            fail("Species Homonym Test 1 (Agathis montana)");
         } catch (SearchResultException e) {
             System.out.println();
-            assertEquals("Species Homonym Test 1 (Lobophora variegata) failed to throw correct exception", e.getClass(), HomonymException.class);
+            assertEquals("Species Homonym Test 1 (Agathis montana) failed to throw correct exception", e.getClass(), HomonymException.class);
         }
         try {
-            LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Lobophora");
-            cl.setScientificName("Lobophora variegata");
+            LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Aganthis");
+            cl.setScientificName("Agathis montana");
             String lsid = searcher.searchForLSID(cl, false);
-            assertEquals("urn:lsid:catalogueoflife.org:taxon:de39d510-29c1-102b-9a4a-00304854f820:ac2010", lsid);
+            assertEquals("urn:lsid:catalogueoflife.org:taxon:22dc2df8-60a7-102d-be47-00304854f810:col20110201", lsid);
         } catch (SearchResultException e) {
-            fail("Species Homonym Test 2 (Lobophora variegata)");
+            e.printStackTrace();
+            fail("Species Homonym Test 2 (Agathis montana)");
         }
 
     }
@@ -438,11 +550,11 @@ public class CBIndexSearchTest {
     }
 
     @Test
-    public void testSingleLevelClean(){
+    public void testSinglePhraseName(){
         try{
 
             String name = "Astroloma sp. Cataby (EA Griffin 1022)";
-            assertEquals(searcher.searchForRecord(name, null), null);
+            assertEquals(searcher.searchForLSID(name, null), "urn:lsid:biodiversity.org.au:apni.taxon:273906");
         }
         catch(Exception e){
             e.printStackTrace();
@@ -458,10 +570,22 @@ public class CBIndexSearchTest {
             String name="Acacia acanthoclada subsp. glaucescens";
            assertEquals(searcher.searchForLSID(name), "urn:lsid:biodiversity.org.au:apni.taxon:295870");
            assertEquals(searcher.searchForLSID("Macropus rufus", RankType.GENUS), null);
-          
+
         }
         catch(Exception e){
             e.printStackTrace();
+        }
+    }
+    @Test
+    public void testRankMarker(){
+        try{
+            String lsid = searcher.searchForLSID("Macropus sp. rufus");
+            System.out.println("SP.:"+lsid);
+            lsid = searcher.searchForLSID("Macropus ssp. rufus");
+            System.out.println("ssp: " +lsid);
+        }
+        catch(Exception e){
+            fail("rank marker test failed");
         }
     }
 
