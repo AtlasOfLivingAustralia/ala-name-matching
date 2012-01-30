@@ -99,7 +99,10 @@ trait DataLoader {
         fr.uuid = recordUuid
         //The row key is the uniqueID for the record. This will always start with the dataResourceUid
         fr.rowKey = if(uniqueID.isEmpty) dataResourceUid +"|"+recordUuid else uniqueID.get
-        //The last load time
+//        if(!out.isEmpty){
+//            out.get.write((fr.rowKey+ "\n").getBytes())
+//        }
+//        //The last load time
         if(updateLastModified){
           fr.lastModifiedTime = loadTime
         }
@@ -177,6 +180,8 @@ trait DataLoader {
           println("Extracting GZIP " + file.getAbsolutePath)
           file.extractGzip
           val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
+          //need to remove the gzip file so the loader doesn't attempt to load it.
+          FileUtils.forceDelete(file)
           println("Archive extracted to directory: " + fileName)
           (new File(fileName)).getParentFile.getAbsolutePath
         } else {
