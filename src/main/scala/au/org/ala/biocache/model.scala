@@ -67,12 +67,16 @@ class Occurrence extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var collectorFieldNumber:String = _
   @BeanProperty var cultivated:String = _
   @BeanProperty var duplicates:String = _
+  @BeanProperty var duplicatesOriginalInstitutionID:String = _
+  @BeanProperty var duplicatesOriginalUnitID:String = _
   @BeanProperty var loanIdentifier:String = _
   @BeanProperty var loanSequenceNumber:String = _
   @BeanProperty var loanDestination:String = _
   @BeanProperty var loanForBotanist:String = _
   @BeanProperty var loanDate:String = _
   @BeanProperty var loanReturnDate:String = _
+  @BeanProperty var phenology:String =_
+  @BeanProperty var preferredFlag:String =_
   //this property is in use in flickr tagging - currently no equivalent in DwC
   @BeanProperty var validDistribution:String = _
   //custom fields
@@ -188,6 +192,13 @@ class Identification extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var identifiedBy:String = _
   @BeanProperty var identifierRole:String = _ //HISPID addition
   @BeanProperty var typeStatus:String = _
+  /* AVH addition */
+  @BeanProperty var typeStatusQualifier:String = _
+  @BeanProperty var typifiedName:String = _
+  @BeanProperty var verbatimDateIdentified:String = _
+  @BeanProperty var verifier:String = _
+  @BeanProperty var verificationDate:String =_
+  @BeanProperty var verificationNotes:String = _
 }
 
 /**

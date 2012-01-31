@@ -169,3 +169,6 @@ vernacularName	commonName	common
 vparentNameUsageID	parentTaxonID	higherTaxonID	higherNameUsageID
 waterBody	ContinentOcean
 year	YearCollected
+verificationDate	verification_date_iso
+verificationNotes	verification_notes
+preferredFlag	preferred_flag
