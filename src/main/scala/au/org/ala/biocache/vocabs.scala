@@ -327,6 +327,10 @@ object Interactions extends Vocab {
   val all = loadVocabFromFile("/interactions.txt")
 }
 
+object EstablishmentMeans extends Vocab {
+  val all = loadVocabFromFile("/establishmentMeans.txt") 
+}
+
 /**
  * A vacabulary mapping trait. Supports tests for compatible terms.
  */

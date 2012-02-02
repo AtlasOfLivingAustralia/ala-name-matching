@@ -105,7 +105,27 @@ class MiscellaneousProcessor extends Processor {
   def process(guid:String, raw:FullRecord, processed:FullRecord) :Array[QualityAssertion] ={
       var qas:Array[QualityAssertion] = processImages(guid, raw, processed)
       processInteractions(guid, raw, processed)
+      //now process the "establishmentMeans" values
+      processEstablishmentMeans(raw, processed)
+      //process the "modified" date for the occurrence - we want all modified dates in the same format so that we can index on them...
+      if(raw.occurrence.modified != null){
+          val parsedDate = DateParser.parseDate(raw.occurrence.modified)
+          if(parsedDate.isDefined){
+              processed.occurrence.modified = parsedDate.get.startDate
+          }
+      }
       qas
+  }
+  
+  def processEstablishmentMeans(raw:FullRecord, processed:FullRecord)={
+      //2012-0202: At this time AVH is the only data resource to support this. In the future it may be necessary for the value to be a list...
+      //handle the "cultivated" type
+      if(raw.occurrence.cultivated != null && !raw.occurrence.cultivated.isEmpty){
+          val term = EstablishmentMeans.matchTerm(raw.occurrence.cultivated)
+          if(!term.isEmpty){
+              processed.occurrence.establishmentMeans = term.get.getCanonical
+          }
+      }
   }
   
   def processInteractions(guid:String, raw:FullRecord, processed:FullRecord)={

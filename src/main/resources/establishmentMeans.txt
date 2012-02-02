@@ -1,0 +1,7 @@
+cultivated	cultivated
+not cultivated	not cultivated
+assumed to be cultivated	assumed to be cultivated
+no information	no information
+not applicable	not applicable
+doubtfully cultivated	doubtfully cultivated
+formerly cultivated (extinct)	formerly cultivated (extinct)
