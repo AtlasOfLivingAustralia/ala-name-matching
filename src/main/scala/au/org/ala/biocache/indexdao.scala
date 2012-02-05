@@ -126,7 +126,8 @@ trait IndexDAO {
       "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
       "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation",
       "sensitive", "coordinate_uncertainty", "user_id","provenance","subspecies_guid", "subspecies_name", "interaction","last_assertion_date",
-      "last_load_date","last_processed_date") ++ elFields ++ clFields
+      "last_load_date","last_processed_date", "modified_date", "establishment_means","loan_number","loan_identifier","loan_destination",
+      "loan_botanist","loan_date", "loan_return_date","original_name_usage") ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -280,6 +281,9 @@ trait IndexDAO {
                 val lastProcessed = DateParser.parseStringToDate(getValue(FullRecordMapper.alaModifiedColumn+".p",map))
                 
                 val lastUserAssertion = DateParser.parseStringToDate(map.getOrElse(FullRecordMapper.lastUserAssertionDateColumn, ""))
+                //get the el and cl maps to work with
+                val elmap =map.getOrElse("el.p","").dropRight(1).drop(1).split(",").map(_ split ":") collect {case Array(k,v) => (k.substring(1,k.length-1), v.substring(1,v.length-1))} toMap
+                val clmap = map.getOrElse("cl.p", "").dropRight(1).drop(1).split(",").map(_ split ":") collect {case Array(k,v) => (k.substring(1,k.length-1), v.substring(1,v.length-1))} toMap
 
                 return List(getValue("uuid", map),
                     getValue("rowKey", map),
@@ -355,8 +359,15 @@ trait IndexDAO {
                     interactions.mkString("|"),
                     if(lastUserAssertion.isEmpty)"" else DateFormatUtils.format(lastUserAssertion.get,"yyyy-MM-dd'T'HH:mm:ss'Z'"), 
                     if(lastLoaded.isEmpty)"2010-11-1T00:00:00Z" else DateFormatUtils.format(lastLoaded.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
-                    if(lastProcessed.isEmpty)"" else DateFormatUtils.format(lastProcessed.get,"yyyy-MM-dd'T'HH:mm:ss'Z'")
-                    ) ++ elFields.map(field => getValue(field, map)) ++ clFields.map(field=> getValue(field, map))
+                    if(lastProcessed.isEmpty)"" else DateFormatUtils.format(lastProcessed.get,"yyyy-MM-dd'T'HH:mm:ss'Z'"),
+                    if(map.contains("modified.p")) map.getOrElse("modified.p","") + "T00:00:00Z" else "",
+                    map.getOrElse("establishmentMeans.p","").replaceAll(",","|"),
+                    map.getOrElse("loanSequenceNumber", ""), map.getOrElse("loanIdentifier", ""), map.getOrElse("loanDestination",""),
+                    map.getOrElse("loanForBotanist",""), 
+                    if(map.contains("loanDate")) map.getOrElse("loanDate","") + "T00:00:00Z" else "",
+                    if(map.contains("loanReturnDate")) map.getOrElse("loanReturnDate","") + "T00:00:00Z" else "",
+                    map.getOrElse("originalNameUsage", map.getOrElse("typifiedName",""))
+                    ) ++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,""))
             }
             else {
                 return List()
@@ -509,7 +520,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         val doc = new SolrInputDocument()
         for (i <- 0 to values.length - 1) {
           if (values(i) != "") {
-            if (header(i) == "species_group" || header(i) == "assertions" || header(i) == "data_hub_uid" || header(i) == "interactions") {
+            if (header(1) == "establishment_means" || header(i) == "species_group" || header(i) == "assertions" || header(i) == "data_hub_uid" || header(i) == "interactions") {
               //multiple valus in this field
               for (value <- values(i).split('|')) {
                 if (value != "")

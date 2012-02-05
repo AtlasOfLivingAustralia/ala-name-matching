@@ -619,6 +619,13 @@
 
    <field name="collector" type="string" indexed="true" stored="false" multiValued="false"  />
 
+	<field name="establishment_means" type="string" indexed="true" stored="false" multiValued="false" />	
+	<field name="exchange_number" type="string" indexed="true" stored="false" multiValued="false" />
+	<field name="duplicate_inst" type="string" indexed="true" stored="false" multiValued="true" />
+	<field name="original_name_usage" type="string" indexed="true" stored="false" multiValued="false" />
+	<field name="record_number" type="string" indexed="true" stored="false" multiValued="false" />
+	<field name="loan_date" type="tdate" indexed="true" stored="false" multiValued="false" />
+	<field name="loan_returned_date" type="tdate" indexed="true" stored="false" multiValued="false" />
 
    <!-- Not displayed in search results -->
    <!-- field name="identifier_name" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
@@ -655,6 +662,7 @@
    <field name="last_assertion_date" type="tdate" indexed="true" stored="false" multiValued="false" />
    <field name="last_load_date" type="tdate" indexed="true" stored="false" multiValued="false" />
    <field name="last_processed_date" type="tdate" indexed="true" stored="false" multiValued="false" />
+   <field name="modified_date" type="tdate" indexed="true" stored="false" multiValued="false" />
 
    <!-- end of Biocache Lucene Fields -->
 
@@ -673,6 +681,7 @@
    <dynamicField name="*_name"  type="string" indexed="true" stored="true"/>
    <dynamicField name="point-*" type="string" indexed="true" stored="true"/>
    <dynamicField name="*conservation" type="string" indexed="true" stored="true" />
+   <dynamicField name="loan_*" type="string" indexed="true" stored="false" />
   
    <dynamicField name="*_uid" type="string" indexed="true" stored="true"/>
    <!--  catches all the environment and contextual layers that are being indexed -->
@@ -723,6 +732,7 @@
    <copyField source="genus" dest="text"/>
    <copyField source="species" dest="text" />
    <copyField source="species_group" dest="text" />
+   <copyField source="original_name_usage" dest="text" />
    
    
    <!--  This copy field is not in use anywhere -->
