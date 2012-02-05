@@ -101,6 +101,18 @@ public class SensitiveTaxon implements Serializable, Comparable<SensitiveTaxon> 
         this.lsid = lsid;
     }
 
+    public boolean isConservation() {
+        return getSensitivityCategoryType() == SensitivityCategory.CategoryType.CONSERVATION;
+    }
+
+    public boolean isPlantPest() {
+        return getSensitivityCategoryType() == SensitivityCategory.CategoryType.PLANT_PEST;
+    }
+
+    public SensitivityCategory.CategoryType getSensitivityCategoryType() {
+        return instances.get(0).getCategory().getType();
+    }
+
     public boolean isSensitiveForZone(SensitivityZone zone) {
         for (SensitivityInstance si : this.instances) {
             if (zone.equals(si.getZone())) {
