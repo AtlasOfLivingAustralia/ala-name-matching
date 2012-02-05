@@ -74,7 +74,7 @@ public class ValidationUtils {
         String decimalLongitude = facts.get(FactCollection.DECIMAL_LONGITUDE_KEY);
 
         if (StringUtils.isBlank(decimalLatitude) || StringUtils.isBlank(decimalLongitude)) {
-            report.addMessage(MessageFactory.createInfoMessage(MessageFactory.LOCATION_MISSING));
+            //report.addMessage(MessageFactory.createInfoMessage(MessageFactory.LOCATION_MISSING));
             return false;
         }
 
