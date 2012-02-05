@@ -55,6 +55,21 @@ public class PlantPestNotKnownInAustraliaTest {
     }
 
     @Test
+    public void powderPostBeetle() {
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Heterobostrychus aequalis");
+        assertNotNull(ss);
+
+        // No location
+        Map<String, String> facts = new HashMap<String, String>();
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+
+        assertTrue(outcome.isValid());
+        assertFalse(outcome.isLoadable());
+    }
+
+    @Test
     public void giantAfricanSnailInAustralia() {
         SensitiveTaxon ss = finder.findSensitiveSpecies("Achatina fulica");
         assertNotNull(ss);
