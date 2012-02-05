@@ -38,11 +38,14 @@ object Config {
 
     lazy val fieldsToSample = {
       val str = configModule.properties.getProperty("fieldsToSample")
+      val defaultFields = configModule.properties.getProperty("defaultFieldsToSample")
       if (str == null || str.trim == ""){
         var dbfields = Client.getLayerIntersectDao.getConfig.getFieldsByDB
-        var fields: Array[String] = Array.ofDim(dbfields.size())
-        for (a <- 0 until dbfields.size()) {
-          fields(a) = dbfields.get(a).getId()
+        var fields: Array[String] = if(dbfields.size>0) Array.ofDim(dbfields.size()) else defaultFields.split(",").map(x => x.trim).toArray
+        if(dbfields.size > 0){
+            for (a <- 0 until dbfields.size()) {
+              fields(a) = dbfields.get(a).getId()
+            }
         }
         println("Fields to sample: " + fields.mkString(","))
         fields    //fields.dropWhile(x => List("el898","cl909","cl900").contains(x))
