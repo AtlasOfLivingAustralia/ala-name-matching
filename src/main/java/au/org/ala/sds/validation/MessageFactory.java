@@ -30,6 +30,7 @@ public class MessageFactory {
     public static final String STATE_INVALID = "StateInvalid";
     public static final String NOT_AUSTRALIA = "NotAus";
 
+    public static final String PLANT_PEST_MSG_CAT1_A0 = "PPC1";
     public static final String PLANT_PEST_MSG_CAT1_A1 = "PPC1-A1";
     public static final String PLANT_PEST_MSG_CAT1_A2 = "PPC1-A2";
     public static final String PLANT_PEST_MSG_CAT1_A3 = "PPC1-A3";
