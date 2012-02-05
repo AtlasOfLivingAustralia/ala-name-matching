@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
-
 import au.org.ala.sds.model.Message;
 import au.org.ala.sds.model.SensitiveTaxon;
 
@@ -53,11 +51,11 @@ public class SdsValidationReport implements ValidationReport, Serializable {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(species.getTaxonName());
-        if (StringUtils.isNotBlank(species.getCommonName())) {
-            sb.append(" (").append(species.getCommonName()).append(")");
-        }
-        sb.append("\n");
+//        sb.append(species.getTaxonName());
+//        if (StringUtils.isNotBlank(species.getCommonName())) {
+//            sb.append(" (").append(species.getCommonName()).append(")");
+//        }
+//        sb.append("\n");
         for (Message message : messages) {
             sb.append(message).append("\n");
         }
