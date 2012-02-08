@@ -127,7 +127,7 @@ trait IndexDAO {
       "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation",
       "sensitive", "coordinate_uncertainty", "user_id","provenance","subspecies_guid", "subspecies_name", "interaction","last_assertion_date",
       "last_load_date","last_processed_date", "modified_date", "establishment_means","loan_number","loan_identifier","loan_destination",
-      "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number") ++ elFields ++ clFields
+      "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date") ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -281,6 +281,8 @@ trait IndexDAO {
                 val lastProcessed = DateParser.parseStringToDate(getValue(FullRecordMapper.alaModifiedColumn+".p",map))
                 
                 val lastUserAssertion = DateParser.parseStringToDate(map.getOrElse(FullRecordMapper.lastUserAssertionDateColumn, ""))
+                
+                val firstLoadDate = DateParser.parseStringToDate(getValue("firstLoaded",map))
                 //get the el and cl maps to work with
                 val elmap =map.getOrElse("el.p","").dropRight(1).drop(1).split(",").map(_ split ":") collect {case Array(k,v) => (k.substring(1,k.length-1), v.substring(1,v.length-1))} toMap
                 val clmap = map.getOrElse("cl.p", "").dropRight(1).drop(1).split(",").map(_ split ":") collect {case Array(k,v) => (k.substring(1,k.length-1), v.substring(1,v.length-1))} toMap
@@ -368,7 +370,8 @@ trait IndexDAO {
                     if(map.contains("loanReturnDate")) map.getOrElse("loanReturnDate","") + "T00:00:00Z" else "",
                     map.getOrElse("originalNameUsage", map.getOrElse("typifiedName","")),
                     map.getOrElse("duplicates","").replaceAll(",","|"),
-                    map.getOrElse("recordNumber","")
+                    map.getOrElse("recordNumber",""),
+                    if(firstLoadDate.isEmpty)"" else DateFormatUtils.format(firstLoadDate.get, "yyyy-MM-dd'T'HH:mm:ss'Z'")
                     ) ++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,""))
             }
             else {

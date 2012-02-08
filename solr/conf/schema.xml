@@ -663,6 +663,7 @@
    <field name="last_load_date" type="tdate" indexed="true" stored="false" multiValued="false" />
    <field name="last_processed_date" type="tdate" indexed="true" stored="false" multiValued="false" />
    <field name="modified_date" type="tdate" indexed="true" stored="false" multiValued="false" />
+   <field name="first_loaded_date" type="tdate" indexed="true" stored="false" multiValued="false" />
 
    <!-- end of Biocache Lucene Fields -->
 
