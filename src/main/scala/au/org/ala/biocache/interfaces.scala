@@ -147,9 +147,12 @@ object Store {
   def upsertRecord(record:FullRecord, shouldIndex:Boolean){
     //rowKey = dr|<cxyzsuid>
     if(record.rowKey != null){
-        record.uuid = occurrenceDAO.createOrRetrieveUuid(record.rowKey)
+        val (recordUuid, isNew)= occurrenceDAO.createOrRetrieveUuid(record.rowKey)
+        record.uuid =recordUuid
         //add the last load time
         record.lastModifiedTime = new Date()
+        if(isNew)
+            record.firstLoaded = record.lastModifiedTime
         occurrenceDAO.addRawOccurrence(record)
         val processor = new RecordProcessor
         processor.processRecordAndUpdate(record)

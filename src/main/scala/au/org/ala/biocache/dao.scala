@@ -39,7 +39,7 @@ trait OccurrenceDAO {
 
     def getUUIDForUniqueID(uniqueID: String) : Option[String]
 
-    def createOrRetrieveUuid(uniqueID: String): String
+    def createOrRetrieveUuid(uniqueID: String): (String, Boolean)
     
     def createUuid = UUID.randomUUID.toString
 
@@ -222,17 +222,19 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * This method has been changed so that it queries the existing occ record
      * to see if it exists.  We wish for uuids to be persistent between loads.
      *
+     *  Returns uuid and true when a new uid was created
+     *
      */
-    def createOrRetrieveUuid(uniqueID: String): String = {
+    def createOrRetrieveUuid(uniqueID: String): (String,Boolean) = {
         //look up by index
         val recordUUID = getUUIDForUniqueID(uniqueID)
         if (recordUUID.isEmpty) {
             val newUuid = createUuid
             //The uuid will be added when the record is inserted
             //persistenceManager.put(uniqueID, "dr", "uuid", newUuid)
-            newUuid
+            (newUuid, true)
         } else {
-            recordUUID.get
+            (recordUUID.get,false)
         }
     }
 
@@ -244,6 +246,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String,
                       rowKeys: Array[String], fields: Array[String], qaFields:Array[String]) {
         //get the codes for the qa fields that need to be included in the download
+        //TODO fix thi in case the value can't be found
         val codes = qaFields.map(value=>AssertionCodes.getByName(value).get.getCode)
         persistenceManager.selectRows(rowKeys, entityName, fields ++ FullRecordMapper.qaFields , {
             fieldMap =>

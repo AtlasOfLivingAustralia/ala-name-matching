@@ -90,9 +90,9 @@ trait DataLoader {
         }
 
         //lookup the column
-        val recordUuid = uniqueID match {
+        val (recordUuid, isNew) = uniqueID match {
             case Some(value) => Config.occurrenceDAO.createOrRetrieveUuid(value)
-            case None => Config.occurrenceDAO.createUuid
+            case None => (Config.occurrenceDAO.createUuid, true)
         }
         
         //add the full record
@@ -105,6 +105,9 @@ trait DataLoader {
 //        //The last load time
         if(updateLastModified){
           fr.lastModifiedTime = loadTime
+        }
+        if(isNew){
+            fr.firstLoaded = loadTime
         }
         fr.attribution.dataResourceUid = dataResourceUid
       

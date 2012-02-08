@@ -440,6 +440,7 @@ class FullRecord (
   @BeanProperty var taxonomicallyKosher:Boolean = true,
   @BeanProperty var deleted:Boolean = false,
   @BeanProperty var userVerified:Boolean = false,
+  @BeanProperty var firstLoaded:String="",
   @BeanProperty var lastModifiedTime:String = "",
   @BeanProperty var lastUserAssertionDate:String = "")
   extends Cloneable with CompositePOSO {

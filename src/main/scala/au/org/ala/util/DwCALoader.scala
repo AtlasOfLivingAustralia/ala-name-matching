@@ -123,10 +123,10 @@ class DwCALoader extends DataLoader {
             })
 
             //lookup the column
-            val recordUuid = {
+            val (recordUuid, isNew) = {
                 uniqueID match {
                     case Some(value) => Config.occurrenceDAO.createOrRetrieveUuid(value)
-                    case None => Config.occurrenceDAO.createUuid
+                    case None => (Config.occurrenceDAO.createUuid, true)
                 }
             }
 
@@ -136,6 +136,8 @@ class DwCALoader extends DataLoader {
             fieldTuples + ("dataResourceUid"-> resourceUid)
             //add last load time
             fieldTuples + ("lastModifiedTime"-> loadTime)
+            if(isNew)
+                fieldTuples + ("firstLoaded"-> loadTime)
 
             val rowKey = if(uniqueID.isEmpty) resourceUid + "|" + recordUuid else uniqueID.get
            

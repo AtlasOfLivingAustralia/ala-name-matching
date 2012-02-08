@@ -39,6 +39,9 @@ object FullRecordMapper {
         if(fullRecord.miscProperties!=null && !fullRecord.miscProperties.isEmpty && version == Raw){
           properties.put("miscProperties", Json.toJSON(fullRecord.miscProperties))        //store them as JSON array
         }
+        if(fullRecord.firstLoaded != null && !fullRecord.firstLoaded.isEmpty && version == Raw){
+            properties.put("firstLoaded", fullRecord.firstLoaded)
+        }
         if(fullRecord.el!=null && !fullRecord.el.isEmpty && version == Processed){
           properties.put("el.p", Json.toJSON(fullRecord.el))        //store them as JSON array
         }
@@ -119,6 +122,7 @@ object FullRecordMapper {
         fullRecord.rowKey = rowKey
         fullRecord.uuid = fields.getOrElse("uuid", "")
         fullRecord.lastModifiedTime = fields.getOrElse(markNameBasedOnVersion("lastModifiedTime",version),"")
+        fullRecord.firstLoaded = fields.getOrElse("firstLoaded","")
         //val miscProperties = new HashMap[String,String]()
 
         fields.keySet.foreach( fieldName => {
