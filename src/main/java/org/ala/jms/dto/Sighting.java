@@ -25,7 +25,7 @@ public class Sighting {
     /** the recorded time */
     String eventTime;
     /** the number of individuals */
-    int individualCount;
+    Integer individualCount;
     /** the location as a string */
     String locality;
     /** the location as a string */

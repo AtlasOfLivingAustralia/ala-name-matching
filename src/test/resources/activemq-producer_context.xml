@@ -21,7 +21,7 @@
     <amq:queue id="destination" physicalName="org.ala.jms.cs" />
 
   <bean id="jmsConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
-    <property name="brokerURL" value="tcp://localhost:61616" />
+      <property name="brokerURL" value="tcp://ala-biocache2.vm.csiro.au:61616" />
     <!-- <property name="brokerURL" value="tcp://ala-biocache1.vm.csiro.au:61616" /> -->
     <!-- start up active with security enabled: activemq xbean:activemq-security.xml -->
     <!-- see C:\tools\apache-activemq-5.4.1\conf\credentials.properties and activemq-security.xml -->

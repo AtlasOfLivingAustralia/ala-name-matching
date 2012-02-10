@@ -83,7 +83,7 @@ public class JmsMessageProducer {
     	*/
     	json = new StringBuffer();
     	json.append("{");
-    	json.append("\"guid\" : \"urn:lsid:cs.ala.org.au:Record:52\",");
+    	json.append("\"guid\" : \"urn:lsid:cs.ala.org.au:Record:"+System.currentTimeMillis()+"\",");
     	json.append("\"scientificName\" : \"Trichoglossus haematodus eyrei\",");
     	json.append("\"vernacularName\" : \"Rainbow Lorikeet\",");
     	json.append("\"locality\" : \"Emmet Yaraka Rd, Isisford QLD 4731, Australia\",");
@@ -98,7 +98,7 @@ public class JmsMessageProducer {
     	json.append("\"family\" : \"Psittacidae\",");
     	json.append("\"kingdom\" : \"Animalia\",");
     	json.append("\"associatedMedia\" : [");
-    	json.append("\"http://cs.ala.org.au/bdrs-ala/files/download.htm?className=au.com.gaiaresources.bdrs.model.taxa.AttributeValue&id=63&fileName=Argentina.gif\"");
+    	json.append("\"http://bie.ala.org.au/species/images/1284064.jpg\"");
     	json.append("]");
     	json.append("}");
     	
