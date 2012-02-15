@@ -70,7 +70,7 @@ trait DataLoader {
     }
 
     private def createUniqueID(dataResourceUid:String,identifyingTerms:List[String]) : String = {
-      (List(dataResourceUid) ::: identifyingTerms).mkString("|")
+      (List(dataResourceUid) ::: identifyingTerms).mkString("|").trim
     }
 
     def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String]) : Boolean = {

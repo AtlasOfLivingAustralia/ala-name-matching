@@ -108,7 +108,7 @@ class DwCALoader extends DataLoader {
                 //create the unique ID
                 if (!uniqueTerms.isEmpty) {
                     val uniqueTermValues = uniqueTerms.map(t => dwc.getProperty(t))
-                    Some((List(resourceUid) ::: uniqueTermValues).mkString("|"))
+                    Some((List(resourceUid) ::: uniqueTermValues).mkString("|").trim)
                 } else {
                     None
                 }
