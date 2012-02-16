@@ -25,7 +25,7 @@ public class ProblematicFileInputTest {
 
     @BeforeClass
     public static void runOnce() throws Exception {
-        cbIndexSearch = new CBIndexSearch("/data/lucene/namematching");
+        cbIndexSearch = new CBIndexSearch("/data/namematching");
         finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
     }
 

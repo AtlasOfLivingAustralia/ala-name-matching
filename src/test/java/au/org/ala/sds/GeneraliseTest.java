@@ -50,7 +50,7 @@ public class GeneraliseTest {
 //        ((BasicDataSource) dataSource).setUsername("root");
 //        ((BasicDataSource) dataSource).setPassword("password");
 
-        cbIndexSearch = new CBIndexSearch("/data/lucene/namematching");
+        cbIndexSearch = new CBIndexSearch("/data/namematching");
         finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(cbIndexSearch);
     }
 

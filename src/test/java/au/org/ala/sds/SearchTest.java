@@ -42,7 +42,7 @@ public class SearchTest {
 //        ((BasicDataSource) dataSource).setUsername("root");
 //        ((BasicDataSource) dataSource).setPassword("password");
 
-        cbIndexSearch = new CBIndexSearch("/data/lucene/namematching");
+        cbIndexSearch = new CBIndexSearch("/data/namematching");
 //        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(dataSource, cbIndexSearch);
         finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
     }
