@@ -129,7 +129,7 @@ public class SensitiveTaxonStore implements Serializable {
                 match = cbIndexSearcher.searchForRecord(stripTaxonTokens(name), null);
                 if (match != null) {
                     if (match.isSynonym()) {
-                        match = cbIndexSearcher.searchForRecordByID(Long.toString(match.getAcceptedId()));
+                        match = cbIndexSearcher.searchForRecordByID(match.getAcceptedLsid());
                     }
                 }
             } catch (SearchResultException e) {
@@ -152,7 +152,7 @@ public class SensitiveTaxonStore implements Serializable {
                 match = cbIndexSearcher.searchForRecord(name, cl, StringUtils.contains(name, ' ') ? null : RankType.GENUS);
                 if (match != null) {
                     if (match.isSynonym()) {
-                        match = cbIndexSearcher.searchForRecordByID(Long.toString(match.getAcceptedId()));
+                        match = cbIndexSearcher.searchForRecordByID(match.getAcceptedLsid());
                     }
                 }
             } catch (SearchResultException e) {
