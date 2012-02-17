@@ -915,7 +915,7 @@ class ClassificationProcessor extends Processor {
       if (nsr != null) {
         val classification = nsr.getRankClassification
         //Check to see if the classification fits in with the supplied taxonomic hints
-        if(raw.occurrence.institutionCode!=null && raw.occurrence.collectionCode!=null){
+        //if(raw.occurrence.institutionCode!=null && raw.occurrence.collectionCode!=null){
           //get the taxonomic hints from the collection or data resource
           var attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
           if(attribution.isEmpty)
@@ -934,7 +934,7 @@ class ClassificationProcessor extends Processor {
               }
             }
           }
-        }
+        //}
         //store ".p" values
         processed.classification = nsr
 
