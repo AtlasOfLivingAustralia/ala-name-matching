@@ -27,15 +27,7 @@ public class NameSearchResult {
     private String left,right;
     private LinnaeanRankClassification rankClass;
     private RankType rank;
-    public enum MatchType{
-        DIRECT,
-        EXACT,
-        CANONICAL,
-        PHRASE,
-        SOUNDEX,
-        ALTERNATE,
-        SEARCHABLE
-    }
+
     private MatchType matchType;
     public NameSearchResult(String id, String lsid, MatchType type){
         this.id = id;//Long.parseLong(id);

@@ -46,7 +46,9 @@ public class LinnaeanRankClassification {
 	protected String infraspecificEpithet; // cus
 	protected String scientificName;
 
-	public LinnaeanRankClassification(String kingdom, String phylum,
+        public LinnaeanRankClassification(){
+        }
+        public LinnaeanRankClassification(String kingdom, String phylum,
 			String klass, String order, String family, String genus,
 			String species, String specificEpithet, String subspecies, String infraspecificEpithet,
 			String scientificName) {

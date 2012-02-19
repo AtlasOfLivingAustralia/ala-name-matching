@@ -1,5 +1,6 @@
 package au.org.ala.checklist.lucene;
 
+import au.org.ala.checklist.lucene.model.MatchType;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -341,7 +342,11 @@ public class CBIndexSearch {
             cl.setSid(searchForLsidById(cl.getSid()));
     }
     public NameSearchResult searchForRecord(LinnaeanRankClassification cl, boolean recursiveMatching)throws SearchResultException{
-        return searchForRecord(cl, recursiveMatching, false);
+        return searchForRecord(cl, recursiveMatching, false, false);
+    }
+
+    public NameSearchResult searchForRecord(LinnaeanRankClassification cl, boolean recursiveMatching, boolean fuzzy)throws SearchResultException{
+        return searchForRecord(cl, recursiveMatching, false, fuzzy);
     }
 
     /**
@@ -354,7 +359,7 @@ public class CBIndexSearch {
      * @return An LSID for the taxon or null if nothing matched or homonym issues detected
      * @throws SearchResultException
      */
-    public NameSearchResult searchForRecord(LinnaeanRankClassification cl, boolean recursiveMatching, boolean addGuids) throws SearchResultException {
+    public NameSearchResult searchForRecord(LinnaeanRankClassification cl, boolean recursiveMatching, boolean addGuids, boolean fuzzy) throws SearchResultException {
 
     	RankType rank = null;
     	String name = cl.getScientificName();
@@ -475,7 +480,7 @@ public class CBIndexSearch {
     	}
 
         try{
-            nsr = searchForRecord(name, cl, rank, false);
+            nsr = searchForRecord(name, cl, rank, fuzzy);
         }
         catch(SearchResultException e){
             if(e instanceof SPPException)
@@ -490,26 +495,28 @@ public class CBIndexSearch {
                     name = cl.getSpecies();
                     if(StringUtils.isEmpty(name))
                         name = cl.getGenus()+ " " + cl.getSpecificEpithet();
-                    nsr = searchForRecord(name, cl, RankType.SPECIES, false);
+                    nsr = searchForRecord(name, cl, RankType.SPECIES, fuzzy);
                 }
     		if(nsr == null && cl.getGenus()!=null){
-    			nsr = searchForRecord(cl.getGenus(), cl, RankType.GENUS, false);
+    			nsr = searchForRecord(cl.getGenus(), cl, RankType.GENUS, fuzzy);
     		}
     		if(nsr == null && cl.getFamily()!=null){
-    			nsr = searchForRecord(cl.getFamily(), cl, RankType.FAMILY, false);
+    			nsr = searchForRecord(cl.getFamily(), cl, RankType.FAMILY, fuzzy);
     		}
     		if(nsr == null && cl.getOrder()!=null){
-    			nsr = searchForRecord(cl.getOrder(), cl, RankType.ORDER, false);
+    			nsr = searchForRecord(cl.getOrder(), cl, RankType.ORDER, fuzzy);
     		}
     		if(nsr == null && cl.getKlass()!=null){
-    			nsr = searchForRecord(cl.getKlass(), cl, RankType.CLASS, false);
+    			nsr = searchForRecord(cl.getKlass(), cl, RankType.CLASS, fuzzy);
     		}
     		if(nsr == null && cl.getPhylum()!=null){
-    			nsr = searchForRecord(cl.getPhylum(), cl, RankType.PHYLUM, false);
+    			nsr = searchForRecord(cl.getPhylum(), cl, RankType.PHYLUM, fuzzy);
     		}
     		if(nsr == null && cl.getKingdom()!=null){
-    			nsr = searchForRecord(cl.getKingdom(), cl, RankType.KINGDOM, false);
+    			nsr = searchForRecord(cl.getKingdom(), cl, RankType.KINGDOM, fuzzy);
     		}
+                if(nsr!= null)
+                    nsr.setMatchType(MatchType.RECURSIVE);
     	}
         //Obtain and store the GUIDs for the classification identifiers
         if(nsr!= null && addGuids)
@@ -729,7 +736,7 @@ public class CBIndexSearch {
 
         try{
             //Check for the exact match
-            List<NameSearchResult> hits = performSearch(NameIndexField.NAME.toString(), name, rank, cl, max, NameSearchResult.MatchType.EXACT, true, queryParser.get());
+            List<NameSearchResult> hits = performSearch(NameIndexField.NAME.toString(), name, rank, cl, max, MatchType.EXACT, true, queryParser.get());
                 if (hits == null) // situation where searcher has not been initialised
                     return null;
                 if (hits.size() > 0)
@@ -752,7 +759,7 @@ public class CBIndexSearch {
                     searchFields[1]= new String[]{NameIndexField.PHRASE.toString(), phrase};
                     searchFields[2] = new String[]{NameIndexField.VOUCHER.toString(), voucher};
                     searchFields[3] = new String[]{NameIndexField.SPECIFIC.toString(), specific};
-                    hits = performSearch(searchFields, rank, cl, max, NameSearchResult.MatchType.PHRASE, false, queryParser.get()); //don't want to check for homonyms yet...
+                    hits = performSearch(searchFields, rank, cl, max, MatchType.PHRASE, false, queryParser.get()); //don't want to check for homonyms yet...
                     if(hits.size()>0)
                         return hits;
                 }
@@ -760,7 +767,7 @@ public class CBIndexSearch {
                 {
                     //check the canonical name
                     String canonicalName = pn.canonicalName();
-                    hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), canonicalName, rank, cl, max, NameSearchResult.MatchType.CANONICAL, true, queryParser.get());
+                    hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), canonicalName, rank, cl, max, MatchType.CANONICAL, true, queryParser.get());
                     if(hits.size()>0)
                         return hits;
                 }
@@ -778,9 +785,15 @@ public class CBIndexSearch {
                     else{
                         searchFields[2] = new String[] {NameIndexField.INFRA_EX.toString(), "<null>"};
                     }
-                    hits = performSearch(searchFields, rank, cl, max, NameSearchResult.MatchType.SOUNDEX, false, queryParser.get()); //don't want to check for homonyms yet...
+                    hits = performSearch(searchFields, rank, cl, max, MatchType.SOUNDEX, false, queryParser.get()); //don't want to check for homonyms yet...
                     if(hits.size()>0)
                         return hits;
+//                    else if(hits.size()>1){
+//                        //We can only make a fuzzy match if the number of results == 1
+//                        //Thus we can be more sure that the fuzzy match is correct
+//
+//                        throw new SearchResultException("Fuzzy match is ambiguous", hits);
+//                    }
                 }
             }
             catch(UnparsableException e){
@@ -797,6 +810,18 @@ public class CBIndexSearch {
         }
 
 
+    }
+    /**
+     * Checks to see if the "soundex" matched results are ambiguous.
+     * @param hits
+     * @return
+     */
+    private boolean areMatchesAmbiguous(List<NameSearchResult> hits){
+        if(hits.size()>1){
+            //not ambiguous if all records have the smae accepted_lsid
+
+        }
+        return false;
     }
     /**
      * 
@@ -823,7 +848,7 @@ public class CBIndexSearch {
         try{
 
             //1. Direct Name hit
-            List<NameSearchResult> hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), name, rank, cl, max, NameSearchResult.MatchType.DIRECT, true, queryParser.get());
+            List<NameSearchResult> hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), name, rank, cl, max, MatchType.DIRECT, true, queryParser.get());
 			if (hits == null) // situation where searcher has not been initialised
 				return null;
 			if (hits.size() > 0)
@@ -834,7 +859,7 @@ public class CBIndexSearch {
             rank = getUpdatedRank(name, rank);
 
 
-            hits = performSearch(CBCreateLuceneIndex.IndexField.NAMES.toString(), name, rank, cl, max, NameSearchResult.MatchType.ALTERNATE, true, queryParser.get());
+            hits = performSearch(CBCreateLuceneIndex.IndexField.NAMES.toString(), name, rank, cl, max, MatchType.ALTERNATE, true, queryParser.get());
             if(hits.size()>0)
                 return hits;
 
@@ -843,7 +868,7 @@ public class CBIndexSearch {
             if(fuzzy){
                 String searchable = tnse.soundEx(name);
                 //searchable canonical should not check for homonyms due to the more erratic nature of the result
-                hits = performSearch(CBCreateLuceneIndex.IndexField.SEARCHABLE_NAME.toString(), searchable, rank, cl, max, NameSearchResult.MatchType.SEARCHABLE, false, idParser.get());
+                hits = performSearch(CBCreateLuceneIndex.IndexField.SEARCHABLE_NAME.toString(), searchable, rank, cl, max, MatchType.SEARCHABLE, false, idParser.get());
                 if(hits.size()>0)
                     return hits;
             }
@@ -923,7 +948,7 @@ public class CBIndexSearch {
         return false;
     }
 
-    private List<NameSearchResult> performSearch(String field, String value, RankType rank, LinnaeanRankClassification cl, int max, NameSearchResult.MatchType type, boolean checkHomo, QueryParser parser)throws IOException, SearchResultException{
+    private List<NameSearchResult> performSearch(String field, String value, RankType rank, LinnaeanRankClassification cl, int max, MatchType type, boolean checkHomo, QueryParser parser)throws IOException, SearchResultException{
         String[][] compValues= new String[1][];
         compValues[0] = new String[]{field, value};
         return performSearch(compValues, rank, cl, max, type, checkHomo, parser);
@@ -946,7 +971,7 @@ public class CBIndexSearch {
      * @throws SearchResultException
      */
 
-    private List<NameSearchResult> performSearch(String[][] compulsoryValues, RankType rank, LinnaeanRankClassification cl, int max, NameSearchResult.MatchType type, boolean checkHomo, QueryParser parser)throws IOException, SearchResultException{
+    private List<NameSearchResult> performSearch(String[][] compulsoryValues, RankType rank, LinnaeanRankClassification cl, int max, MatchType type, boolean checkHomo, QueryParser parser)throws IOException, SearchResultException{
         if(cbSearcher != null){
             String scientificName = null;
             StringBuilder query = new StringBuilder();
@@ -1346,6 +1371,8 @@ public class CBIndexSearch {
         if(lsid != null){
             //we need to get the CB ID for the supplied LSID
             result =searchForRecordByLsid(lsid);
+            if(result != null)
+                result.setMatchType(MatchType.VERNACULAR);
         }
         return result;
     }
@@ -1372,7 +1399,7 @@ public class CBIndexSearch {
     public NameSearchResult searchForRecordByLsid(String lsid){
         NameSearchResult result = null;
         try{
-            List<NameSearchResult> results= performSearch(CBCreateLuceneIndex.IndexField.LSID.toString(), lsid, null, null, 1, NameSearchResult.MatchType.DIRECT, false, idParser.get());
+            List<NameSearchResult> results= performSearch(CBCreateLuceneIndex.IndexField.LSID.toString(), lsid, null, null, 1,MatchType.DIRECT, false, idParser.get());
                 if(results.size()>0)
                     result = results.get(0);
         }

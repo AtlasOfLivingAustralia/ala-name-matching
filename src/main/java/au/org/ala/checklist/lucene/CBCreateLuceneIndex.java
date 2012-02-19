@@ -72,7 +72,7 @@ public class CBCreateLuceneIndex {
     private final int POS_ACC_LSID = 4;
     private final int POS_NAME_LSID = 5;
     private final int POS_SCI_NAME =6;
-    private final int POS_GENUS = 7;
+    private final int POS_GENUS_OR_HIGHER = 7;
     private final int POS_SP_EPITHET = 8;
     private final int POS_INFRA_EPITHET=9;
     private final int POS_AUTHOR = 10;
@@ -251,7 +251,7 @@ public class CBCreateLuceneIndex {
                                                 values[POS_RANK], values[POS_K], values[POS_KID], values[POS_P],
                                                 values[POS_PID], values[POS_C], values[POS_CID],
                                                 values[POS_O], values[POS_OID], values[POS_F], values[POS_FID],
-                                                values[POS_GENUS], values[POS_GID], values[POS_S], values[POS_SID],
+                                                values[POS_G], values[POS_GID], values[POS_S], values[POS_SID],
                                                 values[POS_LFT],values[POS_RGT],  acceptedValues,
                                                 values[POS_SP_EPITHET], values[POS_INFRA_EPITHET], values[POS_AUTHOR],boost);
 

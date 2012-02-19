@@ -14,6 +14,10 @@ public class SearchResultException extends Exception {
     public SearchResultException(String msg){
         super(msg);
     }
+    public SearchResultException(String msg,List<NameSearchResult> results){
+        this(msg);
+        this.results = results;
+    }
     public List<NameSearchResult> getResults(){
         return results;
     }
