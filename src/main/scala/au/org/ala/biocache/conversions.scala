@@ -30,6 +30,8 @@ object BiocacheConversions {
     cl.right = nsr.getRight
     cl.taxonRank = nsr.getRank.getRank
     cl.taxonRankID = nsr.getRank.getId.toString
+    //put the match reason
+    cl.nameMatchMetric = nsr.getMatchType.toString
     cl
   }
   

@@ -5,6 +5,7 @@ import au.org.ala.util.Stemmer
 import scala.collection.JavaConversions
 import scala.io.Source
 import scala.util.parsing.json.JSON
+import org.apache.commons.lang.StringUtils
 
 /** Case class that encapsulates a canonical form and variants. */
 class Term (@BeanProperty val canonical:String, @BeanProperty rawVariants:Array[String]){
@@ -446,7 +447,7 @@ object HabitatMap extends VocabMaps {
      * Returns all the species groups to which supplied classification belongs
      */
     def getSpeciesGroups(cl:Classification):Option[List[String]]={
-      val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(cl.getter(sg.rank)) => sg.name}
+      val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(StringUtils.capitalize(StringUtils.lowerCase(cl.getter(sg.rank).asInstanceOf[String]))) => sg.name}
       Some(matchedGroups)
     }
   }

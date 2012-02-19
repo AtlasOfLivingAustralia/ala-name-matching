@@ -7,6 +7,9 @@ import org.apache.avro.ipc.SocketTransceiver
 import org.apache.avro.specific.SpecificRequestor
 import org.apache.avro.util.Utf8
 import au.org.ala.bie.rpc.{ ProfileArray, Page, SpeciesProfile }
+import au.com.bytecode.opencsv.CSVReader
+import java.io.FileReader
+import org.apache.commons.lang.StringUtils
 
 /**
  * Primes the cache of species profiles. To run this, you need to have
@@ -16,7 +19,56 @@ import au.org.ala.bie.rpc.{ ProfileArray, Page, SpeciesProfile }
  */
 object TaxonProfileLoader {
 
-  def main(args: Array[String]){
+  def main(args: Array[String]) {
+      //this version of the load uses a CSV version of the information
+      val file = if(args.size==1) args(0) else "/data/biocache-load/taxon_profile.csv"
+      val reader =  new CSVReader(new FileReader(file), '\t', '"', '~')
+      val header = reader.readNext()
+      println(header.length + " " + header.toList)
+      var currentLine = reader.readNext
+      var count =0
+      
+      val conservationPattern = """rawCode=([A-Za-z0-9 /\*]*), rawStatus=([A-Za-z 0-9\(\)]*), region=([A-Za-z ]*), regionId=([\x00-\x7F\s]*), status=([A-Z/a-z ]*), system=([\x00-\x7F\s]*), regions=([\x00-\x7F\s]*)""".r
+      
+      var conservationPattern(rawCode, rawStatus, region, regionId, status, system, regions) = "rawCode=R, rawStatus=Rare, region=South Australia, regionId=aus_states/South Australia, status=Near Threatened, system=National Parks and Wildlife Act 1972, regions=null"
+          println (rawCode + "  " + rawStatus + " " + region + " " + regionId + " " + status + " "  + system)
+      
+      while(currentLine!=null){
+          count+=1
+          if (count % 1000 == 0 && count > 0) {
+             println(count+">>>" +currentLine.mkString("\t"))
+          }
+          if(currentLine.length == 9){
+              var taxonProfile = new TaxonProfile
+              taxonProfile.guid = currentLine(0)
+              taxonProfile.scientificName  = currentLine(1)
+              taxonProfile.left = StringUtils.stripToNull(currentLine(2))
+              taxonProfile.right = StringUtils.stripToNull(currentLine(3))
+              taxonProfile.rankString = StringUtils.stripToNull(currentLine(4))
+              taxonProfile.commonName = StringUtils.stripToNull(currentLine(5))
+              //habitat is a CSV list of single values
+              if(StringUtils.isNotEmpty(currentLine(6))){
+                  taxonProfile.habitats = currentLine(6).split(",");
+              }
+              //conservation status is a CSV list of ConservationStatus [rawCode=R, rawStatus=Rare, region=South Australia, regionId=aus_states/South Australia, status=Near Threatened, system=National Parks and Wildlife Act 1972, regions=null],ConservationStatus [rawCode=V, rawStatus=Vulnerable, region=New South Wales, regionId=aus_states/New South Wales, status=Endangered, system=Threatened Species Conservation Act 1995, regions=null]
+              if(StringUtils.isNotEmpty(currentLine(7))){
+                  val arrVals = currentLine(7).split(",ConservationStatus")
+                  val cs = for(value <-arrVals) yield{
+                      val modValue = value.replaceAll("ConservationStatus \\[","").replaceAll("\\]","").replaceAll("\\[","").trim
+                      var conservationPattern(rawCode, rawStatus, region, regionId, status, system,regions) = modValue
+                      new ConservationSpecies(region,regionId, status, rawStatus)}
+                  taxonProfile.conservation = cs.toArray
+              }
+              TaxonProfileDAO.add(taxonProfile)
+          }
+          else{
+              println("Issue with " + count + " ("+currentLine.length +") " + currentLine.toList)
+          }
+          currentLine = reader.readNext
+      }
+  }
+    
+    def mainold(args: Array[String]){
 
     println("Starting the load...")
     import scala.collection.JavaConversions._

@@ -85,7 +85,9 @@ object ClassificationDAO {
           stripStrayQuotes(cl.subspecies),
           stripStrayQuotes(cl.infraspecificEpithet),
           stripStrayQuotes(cl.scientificName)),
-          true) else nameIndex.searchForCommonName(cl.getVernacularName)
+          true, 
+          true //fuzzy matching is enabled because we have taxonomic hints to help prevent dodgy matches
+          ) else nameIndex.searchForCommonName(cl.getVernacularName)
 
         if(nsr!=null){
             //handle the case where the species is a synonym this is a temporary fix should probably go in ala-name-matching
@@ -498,6 +500,10 @@ object LocationDAO {
             location.imcra = map.getOrElse("cl21", null)
             location.country = map.getOrElse("cl922", null)
             location.lga = map.getOrElse("cl23", null)
+            
+            //if the country is null but the stateProvince has a value we can assume that it is an Australian point
+            if(location.country == null && location.stateProvince != null)
+                location.country = "Australia"
 
             val el = map.filter(x => x._1.startsWith("el"))
             val cl = map.filter(x => x._1.startsWith("cl"))

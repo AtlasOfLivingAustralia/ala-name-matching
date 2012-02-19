@@ -157,6 +157,7 @@ class Classification extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var left:String = _
   @BeanProperty var right:String = _
   @BeanProperty var speciesGroups:Array[String] =_
+  @BeanProperty var nameMatchMetric:String =_ //stores the type of name match that was performed 
 
 }
 

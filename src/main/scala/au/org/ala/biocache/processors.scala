@@ -521,7 +521,7 @@ class LocationProcessor extends Processor {
         try {
           processSensitivity(raw, processed, location)
         } catch {
-          case e:Exception => println("Problem processing using the SDS...."); e.printStackTrace
+          case e:Exception => println("Problem processing using the SDS for record " + guid); e.printStackTrace
         }
       }
     }
@@ -915,7 +915,6 @@ class ClassificationProcessor extends Processor {
       if (nsr != null) {
         val classification = nsr.getRankClassification
         //Check to see if the classification fits in with the supplied taxonomic hints
-        //if(raw.occurrence.institutionCode!=null && raw.occurrence.collectionCode!=null){
           //get the taxonomic hints from the collection or data resource
           var attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
           if(attribution.isEmpty)
@@ -929,12 +928,13 @@ class ClassificationProcessor extends Processor {
               val (isValid, comment) = isMatchValid(classification, attribution.get.retrieveParseHints)
               if(!isValid){
                   logger.info("Conflict in matched classification. Matched: " + guid+ ", Matched: "+comment+", Taxonomic hints in use: " + taxonHints.toList)
+                  processed.classification.nameMatchMetric="matchFailedHint"
                   //TODO think about logging this information to a separate column family
                   return Array()//QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Conflict in matched classification. Matched: "+ comment))
               }
             }
           }
-        //}
+
         //store ".p" values
         processed.classification = nsr
 
@@ -962,6 +962,7 @@ class ClassificationProcessor extends Processor {
         logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " +
             raw.classification.kingdom + ", Family:" + raw.classification.family + ", Genus:" + raw.classification.genus +
             ", Species: " + raw.classification.species + ", Epithet: " + raw.classification.specificEpithet)
+            processed.classification.nameMatchMetric = "noMatch"
         Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, "Name not recognised"))
       }
     } catch {
