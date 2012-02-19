@@ -2,6 +2,7 @@
 
 package au.org.ala.checklist.lucene;
 
+import au.org.ala.checklist.lucene.model.MatchType;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -11,7 +12,6 @@ import org.junit.Test;
 
 
 import au.org.ala.checklist.lucene.model.NameSearchResult;
-import au.org.ala.checklist.lucene.model.NameSearchResult.MatchType;
 import au.org.ala.data.util.RankType;
 import au.org.ala.data.model.LinnaeanRankClassification;
 import org.gbif.ecat.model.ParsedName;
@@ -35,6 +35,31 @@ public class CBIndexSearchTest {
 	}
 
         @Test
+        public void testRecordSearchWithoutScientificName(){
+            try{
+                LinnaeanRankClassification cl = new LinnaeanRankClassification(null, null, null, "Hemiptera", "Pentatomidae", null, null);
+                System.out.println(searcher.searchForRecord(cl, true));
+                //searcher.searchForLSID("Pulex (Pulex)");
+                
+            }
+            catch(Exception e){
+
+            }
+        }
+
+//        @Test
+//        public void testAmbiguousSoudEx(){
+//            String scientificName = "Marillia fusca";
+//            try{
+//                searcher.searchForLSID(scientificName, true);
+//                fail("Should be ambiguous sound ex");
+//            }
+//            catch(SearchResultException e){
+//                e.printStackTrace();
+//            }
+//        }
+
+        @Test
         public void testInfragenricAndSoundEx(){
             String nameDifferentEnding = "Phylidonyris pyrrhopterus";
             String nameWithInfraGenric = "Phylidonyris (Phylidonyris) pyrrhoptera (Latham, 1801)";
@@ -55,7 +80,7 @@ public class CBIndexSearchTest {
                 System.out.println(searcher.searchForRecord("Elseya belli", null, true));
                 System.out.println(searcher.searchForRecord("Grevillea brachystylis subsp. Busselton (G.J.Keighery s.n. 28/6/1985)", null));
                 System.out.println(searcher.searchForRecord("Prostanthera sp. Bundjalung Nat. Pk. (B.J.Conn 3471)", null));
-                
+
 
 //                System.out.println(nameDifferentEnding + " Matches To " + searcher.searchForRecord(nameDifferentEnding, null, true));
 //                System.out.println(nameWithInfraGenric + " Matches To " + searcher.searchForRecord(nameWithInfraGenric, null, true));
@@ -456,7 +481,7 @@ public class CBIndexSearchTest {
 		try{
                     //Eolophus roseicapillus - non fuzzy match
                     assertEquals(searcher.searchForLSID("Eolophus roseicapillus"), "urn:lsid:biodiversity.org.au:afd.taxon:53f876f0-2c4d-40c8-ae6c-f478db8b07af");
-		
+
                     //Eolophus roseicapilla - fuzzy match
                     assertEquals(searcher.searchForLSID("Eolophus roseicapilla", true),"urn:lsid:biodiversity.org.au:afd.taxon:53f876f0-2c4d-40c8-ae6c-f478db8b07af");
 
