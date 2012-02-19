@@ -28,8 +28,13 @@ object BiocacheConversions {
     cl.taxonConceptID = nsr.getLsid
     cl.left = nsr.getLeft
     cl.right = nsr.getRight
-    cl.taxonRank = nsr.getRank.getRank
-    cl.taxonRankID = nsr.getRank.getId.toString
+    if(nsr.getRank != null){
+    	cl.taxonRank = nsr.getRank.getRank
+    	cl.taxonRankID = nsr.getRank.getId.toString
+    }
+    else
+      println("ERROR : " + nsr.getLsid + " doesn't have a rank " + rankClassification.getScientificName)
+    
     //put the match reason
     cl.nameMatchMetric = nsr.getMatchType.toString
     cl
