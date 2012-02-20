@@ -722,11 +722,19 @@ public class CBIndexSearch {
     private List<NameSearchResult> searchForRecords(String name, RankType rank, LinnaeanRankClassification cl, int max, boolean fuzzy, boolean clean) throws SearchResultException{
                 //The name is not allowed to be null
 
-        //remove all the "stop" words from the scientific name
-        name = virusStopPattern.matcher(name).replaceAll(" ").trim();
-        
+       
+        //Check for null name before attempting to do anything else
         if(name == null)
             throw new SearchResultException("Unable to perform search. Null value supplied for the name.");
+
+        //remove all the "stop" words from the scientific name
+        try{
+            name = virusStopPattern.matcher(name).replaceAll(" ").trim();
+        }
+        catch(Exception e){
+            log.error(e.getMessage(), e);
+        }
+
         //According to http://en.wikipedia.org/wiki/Species spp. is used as follows:
         //The authors use "spp." as a short way of saying that something applies to many species within a genus,
         //but do not wish to say that it applies to all species within that genus.
