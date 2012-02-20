@@ -24,6 +24,7 @@ public enum RankType {
     SUBPHYLUM(2200, "subphylum", Rank.Subphylum,null),
     SUPERCLASS(2800, "superclass", Rank.Superclass,null),
     CLASS(3000, "class", Rank.CLASS, 2f,"http://rs.tdwg.org/ontology/voc/TaxonRank#Class", "Class"),
+    INFRACLASS(3350, "infraclass", null, null),
     SUBCLASS(3200, "subclass", Rank.Subclass,null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subclass"),
     SUPERORDER(3800, "superorder", Rank.Superorder,null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Superorder"),
     ORDER(4000, "order", Rank.ORDER, 2f, "http://rs.tdwg.org/ontology/voc/TaxonRank#Order","Order"),
