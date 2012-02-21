@@ -37,10 +37,11 @@
             <name>Scala-Tools Maven2 Repository</name>
             <url>http://scala-tools.org/repo-releases</url>
         </repository>
-        <repository>
+        <!-- Don't include gbif repository.  Enforce the loading from ala repository.  Prevents the potential loading of corrupt jars -->
+<!--         < repository>
           <id>gbif-all</id>
           <url>http://repository.gbif.org/content/groups/gbif</url>
-        </repository>
+        </repository> -->
     </repositories>
     <pluginRepositories>
         <pluginRepository>
