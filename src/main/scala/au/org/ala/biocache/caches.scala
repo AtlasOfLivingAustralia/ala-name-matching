@@ -59,9 +59,10 @@ object ClassificationDAO {
    * Uses a LRU cache
    */
   def getByHashLRU(cl:Classification) : Option[NameSearchResult] = {
-    //use the vernacular name to lookup if there if there is no scientifica name, infra/specific epithet or genus
-
-    val hash = { if(cl.vernacularName==null || cl.scientificName != null || cl.specificEpithet != null || cl.infraspecificEpithet != null || cl.genus!=null)
+    //use the vernacular name to lookup if there if there is no scientific name or higher level classification
+    //we don't really trust vernacular name matches thus only use as a last resort
+    val hash = { if(cl.vernacularName==null || cl.scientificName != null || cl.specificEpithet != null || cl.infraspecificEpithet != null 
+    				|| cl.kingdom != null || cl.phylum != null || cl.classs != null || cl.order != null || cl.family !=null  || cl.genus!=null)
         Array(cl.kingdom,cl.phylum,cl.classs,cl.order,cl.family,cl.genus,cl.species,cl.specificEpithet,
             cl.subspecies,cl.infraspecificEpithet,cl.scientificName).reduceLeft(_+"|"+_)
               else cl.vernacularName
