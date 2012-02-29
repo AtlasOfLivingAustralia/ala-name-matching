@@ -74,6 +74,8 @@ trait OccurrenceDAO {
     def addUserAssertion(rowKey: String, qualityAssertion: QualityAssertion): Unit
 
     def getUserAssertions(rowKey: String): List[QualityAssertion]
+    
+    def getUserIdsForAssertions(rowKey: String):Set[String]
 
     def deleteUserAssertion(rowKey: String, assertionUuid: String): Boolean
     
@@ -633,6 +635,22 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
       },startKey, endKey, 1000)
 
       userAssertions.toList
+    }
+    
+    /**
+     * Retrieves a distinct list of user ids for the assertions
+     */
+    def getUserIdsForAssertions(rowKey: String):Set[String] ={
+      val startKey = rowKey + "|"
+      val endKey = startKey +"~"
+      val userIds =  new ArrayBuffer[String]
+      persistenceManager.pageOverSelect(qaEntityName, (guid, map) =>{
+        val userId = map.get("userId")
+        if(userId.isDefined)
+          userIds + userId.get
+        true
+      }, startKey, endKey, 1000, "userId")
+      userIds.toSet
     }
 
     /**

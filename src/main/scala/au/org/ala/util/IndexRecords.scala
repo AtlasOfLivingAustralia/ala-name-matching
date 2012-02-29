@@ -32,8 +32,7 @@ object IndexRecords {
   val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
   val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
-  def main(args: Array[String]): Unit = {
-
+  def main(args: Array[String]): Unit = { 
     var startUuid:Option[String] = None
     var dataResource:Option[String] = None
     var empty:Boolean =false
@@ -101,8 +100,8 @@ object IndexRecords {
         val fullMap = new HashMap[String, String]
         fullMap ++= map
         ///convert EL and CL properties at this stage
-        fullMap ++= Json.toStringMap(map.getOrElse("el.p", "{}"))
-        fullMap ++= Json.toStringMap(map.getOrElse("cl.p", "{}"))
+//        fullMap ++= Json.toStringMap(map.getOrElse("el.p", "{}"))
+//        fullMap ++= Json.toStringMap(map.getOrElse("cl.p", "{}"))
         val mapToIndex = fullMap.toMap
 
         indexer.indexFromMap(guid, mapToIndex, startDate=startDate)

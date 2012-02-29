@@ -20,6 +20,7 @@ import java.util.Date
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang.time.DateFormatUtils
 import java.io.{File, OutputStream}
+import java.util.concurrent.ArrayBlockingQueue
 
 
 /**
@@ -117,7 +118,7 @@ trait IndexDAO {
     val header = List("id", "row_key", "occurrence_id", "data_hub_uid", "data_hub", "data_provider_uid", "data_provider", "data_resource_uid",
       "data_resource", "institution_uid", "institution_code", "institution_name",
       "collection_uid", "collection_code", "collection_name", "catalogue_number",
-      "taxon_concept_lsid", "occurrence_date", "occurrence_year", "taxon_name", "common_name", "names_and_lsid",
+      "taxon_concept_lsid", "occurrence_date", "occurrence_year", "taxon_name", "common_name", "names_and_lsid", "common_name_and_lsid",
       "rank", "rank_id", "raw_taxon_name", "raw_common_name", "multimedia", "image_url",
       "species_group", "country_code", "country", "lft", "rgt", "kingdom", "phylum", "class", "order",
       "family", "genus", "genus_guid", "species","species_guid", "state", "imcra", "ibra", "places", "latitude", "longitude",
@@ -127,7 +128,7 @@ trait IndexDAO {
       "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation",
       "sensitive", "coordinate_uncertainty", "user_id","provenance","subspecies_guid", "subspecies_name", "interaction","last_assertion_date",
       "last_load_date","last_processed_date", "modified_date", "establishment_means","loan_number","loan_identifier","loan_destination",
-      "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date") ++ elFields ++ clFields
+      "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric") //++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -284,8 +285,8 @@ trait IndexDAO {
                 
                 val firstLoadDate = DateParser.parseStringToDate(getValue("firstLoaded",map))
                 //get the el and cl maps to work with
-                val elmap =map.getOrElse("el.p","").dropRight(1).drop(1).split(",").map(_ split ":") collect {case Array(k,v) => (k.substring(1,k.length-1), v.substring(1,v.length-1))} toMap
-                val clmap = map.getOrElse("cl.p", "").dropRight(1).drop(1).split(",").map(_ split ":") collect {case Array(k,v) => (k.substring(1,k.length-1), v.substring(1,v.length-1))} toMap
+//                val elmap =map.getOrElse("el.p","").dropRight(1).drop(1).split(",").map(_ split ":") collect {case Array(k,v) => (k.substring(1,k.length-1), v.substring(1,v.length-1))} toMap
+//                val clmap = map.getOrElse("cl.p", "").dropRight(1).drop(1).split(",").map(_ split ":") collect {case Array(k,v) => (k.substring(1,k.length-1), v.substring(1,v.length-1))} toMap
 
                 return List(getValue("uuid", map),
                     getValue("rowKey", map),
@@ -307,6 +308,7 @@ trait IndexDAO {
                     sciName,
                     vernacularName,
                     sciName + "|" + taxonConceptId + "|" + vernacularName + "|" + kingdom + "|" + family,
+                    vernacularName+ "|"+sciName + "|" + taxonConceptId + "|" + vernacularName + "|" + kingdom + "|" + family,
                     getValue("taxonRank.p", map),
                     getValue("taxonRankID.p", map),
                     getRawScientificName(map),
@@ -371,8 +373,9 @@ trait IndexDAO {
                     map.getOrElse("originalNameUsage", map.getOrElse("typifiedName","")),
                     map.getOrElse("duplicates","").replaceAll(",","|"),
                     map.getOrElse("recordNumber",""),
-                    if(firstLoadDate.isEmpty)"" else DateFormatUtils.format(firstLoadDate.get, "yyyy-MM-dd'T'HH:mm:ss'Z'")
-                    ) ++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,""))
+                    if(firstLoadDate.isEmpty)"" else DateFormatUtils.format(firstLoadDate.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+                    map.getOrElse("nameMatchMetric.p", "")
+                    ) //++ elFields.map(field => getValue(field, map)) ++ clFields.map(field=> getValue(field, map))
             }
             else {
                 return List()
@@ -381,6 +384,56 @@ trait IndexDAO {
         catch {
             case e: Exception => e.printStackTrace; throw e
         }
+    }
+}
+/**
+ * An class for handling a generic/common index fields
+ * 
+ * Not in use yet.
+ */
+class IndexField(fieldName:String, dataType:String, sourceField:String, multi:Boolean=false, storeAsArray:Boolean=false, extraField:Option[String]=None){
+    
+    def getValuesForIndex(map: Map[String, String]):(String,Option[Array[String]])={
+        //get the source value. Cater for the situation where we get the parsed value if raw doesn't exist
+        val sourceValue:String = {
+            if(sourceField.contains(",")){
+                //There are multiple fields that supply the source for the field
+                val fields = sourceField.split(",")
+                fields.foldLeft("")((concat,value)=>concat + "|" + map.getOrElse(value, ""))                
+            } 
+            else map.getOrElse(sourceField, if(extraField.isDefined)map.getOrElse(extraField.get,"") else "")
+            
+        }
+        dataType match {
+            case "date" =>{
+                 val date =DateParser.parseStringToDate(sourceValue)
+                 if(date.isDefined)
+                     return (fieldName,Some(Array(DateFormatUtils.format(date.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"))))
+            }
+            case "double" =>{
+                //needs to be a valid double
+                try{
+                    java.lang.Double.parseDouble(sourceValue)
+                    return (fieldName, Some(Array(sourceValue)))
+                }
+                catch{
+                    case _=>(fieldName,None)
+                }
+            }
+            case _ =>{
+                if(sourceValue.length>0){
+                    if(multi && storeAsArray){                                               
+                         val array = Json.toStringArray(sourceValue)
+                         return (fieldName, Some(array))                        
+                    }
+                    if(multi){
+                        return (fieldName, Some(sourceValue.split(",")))
+                    }
+                    
+                }
+             }
+        }
+        (fieldName,None)
     }
 }
 
@@ -402,7 +455,12 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     val logger = LoggerFactory.getLogger("SolrOccurrenceDAO")
     val solrDocList = new java.util.ArrayList[SolrInputDocument](1000)
     
-    val thread = new SolrIndexActor()    
+    //val thread = new SolrIndexActor()
+    val docQueue: ArrayBlockingQueue[java.util.List[SolrInputDocument]] = new ArrayBlockingQueue[java.util.List[SolrInputDocument]](2);
+    var ids =0
+    lazy val threads:Array[AddDocThread] ={
+      Array.fill[AddDocThread](1){ val t = new AddDocThread(docQueue,ids); ids +=1; t.start;t}
+    }
 
     def init(){
       if(solrServer == null){
@@ -415,16 +473,19 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
           cc = new CoreContainer();
           cc.load(home.getAbsolutePath, f );
           solrServer  = new EmbeddedSolrServer( cc, "biocache" );
-          thread.start
+          //thread.start
+          threads
         } else {
           System.setProperty("solr.solr.home", solrHome)
           val initializer = new CoreContainer.Initializer()
           cc = initializer.initialize
           solrServer = new EmbeddedSolrServer(cc, "biocache")
-          thread.start
+          //thread.start
+          threads
         }
       }
     }
+        
 
     def reload = cc.reload("")
 
@@ -460,19 +521,23 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
             case e:Exception =>e.printStackTrace
         }
     }
+    
+    
 
     def finaliseIndex(optimise:Boolean=false, shutdown:Boolean=true) {
         init
         if (!solrDocList.isEmpty) {
         
            //SolrIndexDAO.solrServer.add(solrDocList)
-           while(!thread.ready){ Thread.sleep(50) }
-           thread ! solrDocList
+//           while(!thread.ready){ Thread.sleep(50) }
+//           thread ! solrDocList
+          docQueue.add(solrDocList)
            
            //wait enough time for the Actor to get the message
            Thread.sleep(50)
         }
-        while(!thread.ready){ Thread.sleep(50) }
+        //while(!thread.ready){ Thread.sleep(50) }
+        while(docQueue.size > 0){Thread.sleep(50)}
         solrServer.commit
         solrDocList.clear
         println(printNumDocumentsInIndex)
@@ -486,8 +551,10 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
      * Shutdown the index by stopping the indexing thread and shutting down the index core
      */
     def shutdown() = {
-        thread ! "exit"
-        cc.shutdown
+        //thread ! "exit"
+      threads.foreach(t => t.stopRunning())
+        if(cc != null)
+        	cc.shutdown
     }
     def optimise():String = {
         init
@@ -536,26 +603,38 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
               doc.addField(header(i), values(i))
           }
         }
+        
+        //now index the QA names for the user if userQA = true
+        val hasUserAssertions = map.getOrElse(FullRecordMapper.userQualityAssertionColumn, "false")
+        if("true".equals(hasUserAssertions)){
+        	val assertionUserIds = Config.occurrenceDAO.getUserIdsForAssertions(guid)
+            assertionUserIds.foreach(id => doc.addField("assertion_user_id",id))
+        }
+        
+        //index the available el and cl's - more efficient to use the supplied map than using the old way 
+        val els = Json.toStringMap(map.getOrElse("el.p", "{}"))      
+        els.foreach{case (key,value) => doc.addField(key, value)}
+        val cls =  Json.toStringMap(map.getOrElse("cl.p", "{}"))        
+        cls.foreach{case (key,value) => doc.addField(key, value)}
 
         if (!batch) {
           solrServer.add(doc);
           solrServer.commit
         }
         else {
-          //                 if(values(0) == "" || values(0) == null)
-          //                   println("Unable to add doc with missing uuid " + values(1))
-          //                 else
+
           if (!StringUtils.isEmpty(values(0)))
             solrDocList.add(doc)
 
           if (solrDocList.size == 10000) {
-            while (!thread.ready) {
-              Thread.sleep(50)
-            }
+//            while (!thread.ready) {
+//              Thread.sleep(50)
+//            }
 
             val tmpDocList = new java.util.ArrayList[SolrInputDocument](solrDocList);
-
-            thread ! tmpDocList
+            while(docQueue.size()>1){Thread.sleep(250)}
+            docQueue.add(tmpDocList)
+            //thread ! tmpDocList
             solrDocList.clear
           }
        }
@@ -628,41 +707,84 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         val rq = solrServer.query(new SolrQuery("*:*"))
         ">>>>>>>>>>>>>Document count of index: " + rq.getResults().getNumFound()
     }
+    
+    
+   class AddDocThread(queue: ArrayBlockingQueue[java.util.List[SolrInputDocument]], id:Int) extends Thread{
+        
+        
+        var  shouldRun = true;
+        
+        def stopRunning(){
+            shouldRun = false;
+        }
+        
+        override def run(){
+            while(shouldRun || queue.size() >0){
+                if(queue.size()>0){
+                    
+                    var docs = queue.poll();
+                    //add and commit the docs
+                    if (docs != null && !docs.isEmpty) {
+                        try{
+                        logger.info("Thread " + id + " is adding " + docs.size + " documents to the index.");
+                        solrServer.add(docs);
+                        //only the first thread should commit
+                        if(id == 0)
+                            solrServer.commit;
+                        docs =null;
+                        }
+                        catch{
+                            case _=>//do nothing
+                        }
+                        
+                    }
+                }
+                else{
+                    try{
+                    Thread.sleep(250);
+                    }
+                    catch{
+                        case _ => //do nothing
+                    }
+                }
+            }
+        }
+    }    
 
   /**
    * The Actor which allows solr index inserts to be performed on a Thread.
    * solrServer.add(docs) is not thread safe - we should only ever have one thread adding documents to the solr server
    */
-  class SolrIndexActor extends Actor{
-    var processed = 0
-    var received =0
-
-    def ready = processed==received
-    def act {
-      loop{
-        react{
-          case docs:java.util.ArrayList[SolrInputDocument] =>{
-            //send them off to the solr server using a thread...
-            println("Sending docs to SOLR "+ docs.size+"-" + received)
-            received += 1
-            try {
-                solrServer.add(docs)
-                solrServer.commit
-                //printNumDocumentsInIndex
-            } catch {
-                case e: Exception => logger.error(e.getMessage, e)
-            }
-            processed +=1
-          }
-          case msg:String =>{
-              if(msg == "reload"){
-                cc.reload("")
-              }
-              if(msg == "exit")
-                exit()
-          }
-        }
-      }
-    }
-  }
+//  class SolrIndexActor extends Actor{
+//    var processed = 0
+//    var received =0
+//
+//    def ready = processed==received
+//    def act {
+//      loop{
+//        react{
+//          case docs:java.util.ArrayList[SolrInputDocument] =>{
+//            //send them off to the solr server using a thread...
+//            println("Sending docs to SOLR "+ docs.size+"-" + received)
+//            received += 1
+//            try {
+//                solrServer.add(docs)
+//                solrServer.commit
+//                //printNumDocumentsInIndex
+//            } catch {
+//                case e: Exception => logger.error(e.getMessage, e)
+//            }
+//            processed +=1
+//          }
+//          case msg:String =>{
+//              if(msg == "reload"){
+//                cc.reload("")
+//              }
+//              if(msg == "exit")
+//                exit()
+//          }
+//        }
+//      }
+//    }
+//  }
 }
