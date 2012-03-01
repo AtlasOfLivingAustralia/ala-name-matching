@@ -413,7 +413,19 @@ object HabitatMap extends VocabMaps {
   * Case class that stores the information required to map a species to its
   * associated groups
   */
-  case class SpeciesGroup(name:String, rank:String, values:Array[String], parent:String)
+  case class SpeciesGroup(name:String, rank:String, values:Array[String], excludedValues:Array[String], lftRgtValues:Array[(Int,Int, Boolean)], parent:String){
+    /*
+     * Determines whether the supplied lft value represents a species from this group/
+     * Relies on the excluded values coming first in the lftRgtValues array
+     */
+    def isPartOfGroup(lft:Int):Boolean ={
+      lftRgtValues.foreach{tuple =>
+        val (l,r,include) = tuple
+        if(lft > l && lft < r) return include
+        }
+      false
+    }
+  }
 
   /**
    * The species groups to test classifications against
@@ -424,31 +436,86 @@ object HabitatMap extends VocabMaps {
     import JavaConversions._
     
     val groups = List(
-     SpeciesGroup("Animals", "kingdom", Array("Animalia"), null),
-     SpeciesGroup("Mammals", "classs", Array("Mammalia"), "Animals"),
-     SpeciesGroup("Birds", "classs", Array("Aves"), "Animals"),
-     SpeciesGroup("Reptiles", "classs", Array("Reptilia"), "Animals"),
-     SpeciesGroup("Amphibians", "classs", Array("Amphibia"),"Animals"),
-     SpeciesGroup("Fish", "classs", Array("Agnatha", "Chondrichthyes", "Osteichthyes", "Actinopterygii", "Sarcopterygii"), "Animals"),
-     SpeciesGroup("Molluscs", "phylum", Array("Mollusca"), "Animals"),
-     SpeciesGroup("Arthropods", "phylum", Array("Arthropoda"), "Animals"),
-     SpeciesGroup("Crustaceans", "classs" , Array("Branchiopoda", "Remipedia", "Maxillopoda", "Ostracoda", "Malacostraca"), "Arthropods"),
-     SpeciesGroup("Insects",  "classs", Array("Insecta"), "Arthropods"),
-     SpeciesGroup("Plants", "kingdom", Array("Plantae"), null),
-     SpeciesGroup("Fungi", "kingdom", Array("Fungi"), null),
-     SpeciesGroup("Chromista","kingdom", Array("Chromista"), null),
-     SpeciesGroup("Protozoa", "kingdom", Array("Protozoa"), null),
-     SpeciesGroup("Bacteria", "kingdom", Array("Bacteria"), null)
+     createSpeciesGroup("Animals", "kingdom", Array("Animalia"), Array(), null),
+     createSpeciesGroup("Mammals", "classs", Array("Mammalia"),Array(), "Animals"),
+     createSpeciesGroup("Birds", "classs", Array("Aves"), Array(), "Animals"),
+     createSpeciesGroup("Reptiles", "classs", Array("Reptilia"), Array(), "Animals"),
+     createSpeciesGroup("Amphibians", "classs", Array("Amphibia"), Array(),"Animals"),
+     createSpeciesGroup("Fish", "classs", Array("Agnatha", "Chondrichthyes", "Osteichthyes", "Actinopterygii", "Sarcopterygii"), Array(), "Animals"),
+     createSpeciesGroup("Molluscs", "phylum", Array("Mollusca"), Array(), "Animals"),
+     createSpeciesGroup("Arthropods", "phylum", Array("Arthropoda"), Array(), "Animals"),
+     createSpeciesGroup("Crustaceans", "classs" , Array("Branchiopoda", "Remipedia", "Maxillopoda", "Ostracoda", "Malacostraca"), Array(), "Arthropods"),
+     createSpeciesGroup("Insects",  "classs", Array("Insecta"), Array(), "Arthropods"),
+     createSpeciesGroup("Plants", "kingdom", Array("Plantae"), Array(), null),
+     createSpeciesGroup("Gymnosperms","subclass", Array("Pinidae", "Cycadidae"), Array(), "Plants"), //new group for AVH
+     createSpeciesGroup("FernsAndAllies","subclass", Array("Equisetidae", "Lycopodiidae", "Marattiidae", "Ophioglossidae", "Polypodiidae","Psilotidae"), Array(), "Plants"), //new group for AVH
+     createSpeciesGroup("Angiosperms", "subclass",Array("Magnoliidae"), Array(), "Plants"),//new group for AVH
+     createSpeciesGroup("Monocots", "superorder", Array("Lilianae"), Array(), "Angiosperms"), //new group for AVH
+     createSpeciesGroup("Dicots", "subclass", Array("Magnoliidae"),  Array("Lilianae"), "Angiosperms"), //new group for AVH     
+     createSpeciesGroup("Fungi", "kingdom", Array("Fungi"), Array(), null),
+     createSpeciesGroup("Chromista","kingdom", Array("Chromista"), Array(), null),
+     createSpeciesGroup("Protozoa", "kingdom", Array("Protozoa"), Array(), null),
+     createSpeciesGroup("Bacteria", "kingdom", Array("Bacteria"), Array(), null)
+     
+     
     )
+    //println("The groups " + groups)
+    /*
+     * Creates a species group by first determining the left right ranges for the values and excluded values.
+     */
+    def createSpeciesGroup(title:String, rank:String, values:Array[String], excludedValues:Array[String], parent:String):SpeciesGroup={
+      val lftRgts = values.map((v:String) =>{
+        var snr = Config.nameIndex.searchForRecord(v, null)
+        if(snr != null){
+        if(snr.isSynonym)
+          snr = Config.nameIndex.searchForRecordByLsid(snr.getAcceptedLsid)
+        (Integer.parseInt(snr.getLeft()), Integer.parseInt(snr.getRight()),true)
+      }
+      else{
+        println(v + " has no name " )
+        (-1,-1,false)
+      }
+      })
+      val lftRgtExcluded = excludedValues.map((v:String) =>{
+        var snr = Config.nameIndex.searchForRecord(v, null)
+        if(snr != null){
+        if(snr.isSynonym)
+          snr = Config.nameIndex.searchForRecordByLsid(snr.getAcceptedLsid)
+        (Integer.parseInt(snr.getLeft()), Integer.parseInt(snr.getRight()),false)
+        }
+        else{
+          println(v + " has no name")
+          (-1,-1,false)
+        }
+      })
+      SpeciesGroup(title, rank, values, excludedValues, lftRgtExcluded ++ lftRgts, parent) // Excluded values are first so that we can discount a species group if necessary
+    }
     
     def getStringList : java.util.List[String] = groups.map(g => g.name).toList.sort((x,y) => x.compare(y) < 0)
     
     /**
      * Returns all the species groups to which supplied classification belongs
+     * @deprecated It is better to use the left right values to determine species groups
      */
+    @Deprecated
     def getSpeciesGroups(cl:Classification):Option[List[String]]={
       val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(StringUtils.capitalize(StringUtils.lowerCase(cl.getter(sg.rank).asInstanceOf[String]))) => sg.name}
       Some(matchedGroups)
+    }
+    /**
+     * Returns all the species groups to which the supplied left right values belong
+     */
+    def getSpeciesGroups(lft:String, rgt:String):Option[List[String]]={
+      try{
+        val ilft = Integer.parseInt(lft)
+        //val irgt = Integer.parseInt(rgt)
+        val matchedGroups = groups.collect{case sg:SpeciesGroup if(sg.isPartOfGroup(ilft)) => sg.name}
+        Some(matchedGroups)
+      }
+      catch{
+        case _=> None
+      }
+      
     }
   }
 

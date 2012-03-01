@@ -616,6 +616,18 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         els.foreach{case (key,value) => doc.addField(key, value)}
         val cls =  Json.toStringMap(map.getOrElse("cl.p", "{}"))        
         cls.foreach{case (key,value) => doc.addField(key, value)}
+        
+        //TODO Think about moving species group stuff here.
+        //index the additional species information - ie species groups
+//        val lft = map.get("left.p")
+//        val rgt = map.get("right.p")
+//        if(lft.isDefined && rgt.isDefined){
+//          val sgs = SpeciesGroups.getSpeciesGroups(lft.get, rgt.get)
+//          if(sgs.isDefined){
+//            sgs.get.foreach{v:String => doc.addField("species_group", v)}
+//          }
+//        }
+        
 
         if (!batch) {
           solrServer.add(doc);
