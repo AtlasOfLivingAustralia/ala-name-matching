@@ -32,7 +32,7 @@ object IndexRecords {
   val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
   val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
 
-  def main(args: Array[String]): Unit = { 
+  def main(args: Array[String]): Unit = {
     var startUuid:Option[String] = None
     var dataResource:Option[String] = None
     var empty:Boolean =false
@@ -56,6 +56,9 @@ object IndexRecords {
            indexer.emptyIndex
         }        
         index(startUuid, dataResource, false, false, startDate, check, pageSize)
+        //shut down pelops and index to allow normal exit
+        indexer.shutdown
+        persistenceManager.shutdown
      }
   }
 
@@ -86,7 +89,7 @@ object IndexRecords {
     }
     indexRange(startKey, endKey, date, checkDeleted)
     //index any remaining items before exiting
-    indexer.finaliseIndex(optimise, shutdown)
+    indexer.finaliseIndex(optimise, shutdown)  
   }
 
   def indexRange(startUuid:String, endUuid:String, startDate:Option[Date]=None, checkDeleted:Boolean=false, pageSize:Int = 1000)={

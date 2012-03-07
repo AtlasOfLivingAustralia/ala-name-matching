@@ -531,6 +531,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
            //SolrIndexDAO.solrServer.add(solrDocList)
 //           while(!thread.ready){ Thread.sleep(50) }
 //           thread ! solrDocList
+          while(docQueue.size()>1){Thread.sleep(250)}
           docQueue.add(solrDocList)
            
            //wait enough time for the Actor to get the message

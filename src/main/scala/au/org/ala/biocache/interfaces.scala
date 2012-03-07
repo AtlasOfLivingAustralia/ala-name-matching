@@ -34,7 +34,11 @@ object Store {
     occurrenceDAO.getByUuid(uuid, version).getOrElse(null)
   }
   
+  def getSensitiveByUuid(uuid:java.lang.String, version:Version):FullRecord = occurrenceDAO.getByUuid(uuid, version, true).getOrElse(null)
+  
   def getByRowKey(rowKey: java.lang.String, version: Version): FullRecord = occurrenceDAO.getByRowKey(rowKey, version).getOrElse(null)
+  
+  def getSensitiveByRowKey(rowKey: java.lang.String, version: Version): FullRecord = occurrenceDAO.getByRowKey(rowKey, version, true).getOrElse(null)
 
   /**
    * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
@@ -46,12 +50,12 @@ object Store {
   /**
    * Retrieve all versions of the record with the supplied UUID.
    */
-  def getAllVersionsByUuid(uuid: java.lang.String): Array[FullRecord] = {
-    occurrenceDAO.getAllVersionsByUuid(uuid).getOrElse(null)
+  def getAllVersionsByUuid(uuid: java.lang.String, includeSensitive:java.lang.Boolean): Array[FullRecord] = {
+    occurrenceDAO.getAllVersionsByUuid(uuid, includeSensitive).getOrElse(null)
   }
   
-  def getAllVersionsByRowKey(rowKey: java.lang.String) : Array[FullRecord]={
-    occurrenceDAO.getAllVersionsByRowKey(rowKey).getOrElse(null)
+  def getAllVersionsByRowKey(rowKey: java.lang.String, includeSensitive:java.lang.Boolean) : Array[FullRecord]={
+    occurrenceDAO.getAllVersionsByRowKey(rowKey, includeSensitive).getOrElse(null)
   }
 
   //TODO need a better mechanism for doing this....
@@ -286,11 +290,18 @@ object Store {
   def index(dataResource:java.lang.String) = IndexRecords.index(None, Some(dataResource), false, false, None)
 
   /**
-   * Writes the select records to the stream.
+   * Writes the select records to the stream. Optionally including the sensitive values.
+   */
+  def writeToStream(outputStream: OutputStream, fieldDelimiter: java.lang.String,
+    recordDelimiter: java.lang.String, keys: Array[String], fields: Array[java.lang.String], qaFields: Array[java.lang.String], includeSensitive:Boolean) {
+    occurrenceDAO.writeToStream(outputStream, fieldDelimiter, recordDelimiter, keys, fields, qaFields, includeSensitive)
+  }
+  /**
+   * Writes the select records to the stream. With sensitive values generalised.
    */
   def writeToStream(outputStream: OutputStream, fieldDelimiter: java.lang.String,
     recordDelimiter: java.lang.String, keys: Array[String], fields: Array[java.lang.String], qaFields: Array[java.lang.String]) {
-    occurrenceDAO.writeToStream(outputStream, fieldDelimiter, recordDelimiter, keys, fields, qaFields)
+    writeToStream(outputStream, fieldDelimiter, recordDelimiter, keys, fields, qaFields, false)
   }
 
   /**

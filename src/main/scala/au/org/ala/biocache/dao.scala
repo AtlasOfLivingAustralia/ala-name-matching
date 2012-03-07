@@ -23,19 +23,23 @@ trait OccurrenceDAO {
 
     def getRowKeyFromUuid(uuid:String):Option[String]
 
-    def getByUuid(uuid: String): Option[FullRecord]
+    def getByUuid(uuid: String): Option[FullRecord] = getByUuid(uuid, false)
+    
+    def getByUuid(uuid: String, includeSensitive:Boolean): Option[FullRecord]
 
-    def getByRowKey(rowKey: String) :Option[FullRecord]
+    def getByRowKey(rowKey: String) :Option[FullRecord] = getByRowKey(rowKey, false)
+    
+    def getByRowKey(rowKey: String, includeSensitive:Boolean) :Option[FullRecord]
 
-    def getAllVersionsByRowKey(rowKey:String) : Option[Array[FullRecord]]
+    def getAllVersionsByRowKey(rowKey:String, includeSensitive:Boolean=false) : Option[Array[FullRecord]]
     
     def getRawProcessedByRowKey(rowKey:String) :Option[Array[FullRecord]]
 
-    def getAllVersionsByUuid(uuid: String): Option[Array[FullRecord]]
+    def getAllVersionsByUuid(uuid: String, includeSenstive:Boolean=false): Option[Array[FullRecord]]
 
-    def getByUuid(uuid: String, version: Version): Option[FullRecord]
+    def getByUuid(uuid: String, version: Version, includeSensitive:Boolean=false): Option[FullRecord]
 
-    def getByRowKey(rowKey: String, version:Version): Option[FullRecord]
+    def getByRowKey(rowKey: String, version:Version, includeSensitive:Boolean=false): Option[FullRecord]
 
     def getUUIDForUniqueID(uniqueID: String) : Option[String]
 
@@ -43,7 +47,7 @@ trait OccurrenceDAO {
     
     def createUuid = UUID.randomUUID.toString
 
-    def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String, rowKeys: Array[String], fields: Array[String], qaFields:Array[String]): Unit
+    def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String, rowKeys: Array[String], fields: Array[String], qaFields:Array[String], includeSensitive:Boolean=false): Unit
 
     def pageOverAllVersions(proc: ((Option[Array[FullRecord]]) => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
 
@@ -130,14 +134,14 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * @param uuid
      * @return
      */
-    def getByUuid(uuid: String): Option[FullRecord] = {
-        getByUuid(uuid, Raw)
+    def getByUuid(uuid: String, includeSensitive:Boolean): Option[FullRecord] = {
+        getByUuid(uuid, Raw, includeSensitive)
     }
     /**
      * Get an occurrence with rowKey
      */
-    def getByRowKey(rowKey:String): Option[FullRecord] ={
-      getByRowKey(rowKey, Raw)
+    def getByRowKey(rowKey:String, includeSensitive:Boolean): Option[FullRecord] ={
+      getByRowKey(rowKey, Raw, includeSensitive)
     }
 
     /**
@@ -146,7 +150,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * @param uuid
      * @return
      */
-    def getAllVersionsByUuid(uuid: String): Option[Array[FullRecord]] = {
+    def getAllVersionsByUuid(uuid: String, includeSensitive:Boolean=false): Option[Array[FullRecord]] = {
         val map = getMapFromIndex(uuid)//persistenceManager.getByIndex(uuid, entityName, "uuid")
         if (map.isEmpty) {
             None
@@ -156,6 +160,16 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             val raw = FullRecordMapper.createFullRecord(rowKey, map.get, Raw)
             val processed = FullRecordMapper.createFullRecord(rowKey, map.get, Processed)
             val consensus = FullRecordMapper.createFullRecord(rowKey, map.get, Consensus)
+            if(includeSensitive && raw.occurrence.originalSensitiveValues != null){
+              FullRecordMapper.mapPropertiesToObject(raw, raw.occurrence.originalSensitiveValues)
+              //Only the RAW values are being changed back to sensitive values. The processed values will reflect the values due to processing.
+//              //update lat and lon of processed
+//              processed.location.decimalLatitude = raw.location.decimalLatitude
+//              processed.location.decimalLongitude = raw.location.decimalLongitude
+//              //remove the values in data generalisations and information withheld
+//              processed.occurrence.dataGeneralizations = null
+//              processed.occurrence.informationWithheld = null
+            }
             //pass all version to the procedure, wrapped in the Option
             Some(Array(raw, processed, consensus))
         }
@@ -164,7 +178,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
    /**
     * Get all the versions based on a row key
     */
-    def getAllVersionsByRowKey(rowKey:String): Option[Array[FullRecord]] ={
+    def getAllVersionsByRowKey(rowKey:String, includeSensitive:Boolean=false): Option[Array[FullRecord]] ={
       val map = persistenceManager.get(rowKey, entityName)
       if(map.isEmpty){
         None
@@ -174,6 +188,9 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
             val raw = FullRecordMapper.createFullRecord(rowKey, map.get, Raw)
             val processed = FullRecordMapper.createFullRecord(rowKey, map.get, Processed)
             val consensus = FullRecordMapper.createFullRecord(rowKey, map.get, Consensus)
+            if(includeSensitive && raw.occurrence.originalSensitiveValues != null){
+              FullRecordMapper.mapPropertiesToObject(raw, raw.occurrence.originalSensitiveValues)
+            }
             //pass all version to the procedure, wrapped in the Option
             Some(Array(raw, processed, consensus))
       }
@@ -195,24 +212,30 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     /**
      * Get the supplied version based on a rowKey
      */
-    def getByRowKey(rowKey:String, version:Version) :Option[FullRecord] ={
+    def getByRowKey(rowKey:String, version:Version, includeSensitive:Boolean=false) :Option[FullRecord] ={
       val propertyMap = persistenceManager.get(rowKey, entityName)
           if (propertyMap.isEmpty) {
               None
           } else {
-            Some(FullRecordMapper.createFullRecord(rowKey, propertyMap.get, version))
+            val record = FullRecordMapper.createFullRecord(rowKey, propertyMap.get, version)
+            if(includeSensitive && record.occurrence.originalSensitiveValues != null && version == Versions.RAW)
+              FullRecordMapper.mapPropertiesToObject(record, record.occurrence.originalSensitiveValues)
+            Some(record)
           }
     }
 
     /**
      * Get an occurrence, specifying the version of the occurrence.
      */
-    def getByUuid(uuid: String, version: Version): Option[FullRecord] = {
+    def getByUuid(uuid: String, version: Version, includeSensitive:Boolean=false): Option[FullRecord] = {
         val propertyMap = getMapFromIndex(uuid)//persistenceManager.getByIndex(uuid, entityName, "uuid")
         if (propertyMap.isEmpty) {
             None
         } else {
-          Some(FullRecordMapper.createFullRecord(propertyMap.get.get("rowKey").get, propertyMap.get, version))
+          val record =FullRecordMapper.createFullRecord(propertyMap.get.get("rowKey").get, propertyMap.get, version)
+          if(includeSensitive && record.occurrence.originalSensitiveValues != null && version == Versions.RAW)
+              FullRecordMapper.mapPropertiesToObject(record, record.occurrence.originalSensitiveValues)
+          Some(record)
         }
     }
 
@@ -246,20 +269,22 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * Write to stream in a delimited format (CSV).
      */
     def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String,
-                      rowKeys: Array[String], fields: Array[String], qaFields:Array[String]) {
+                      rowKeys: Array[String], fields: Array[String], qaFields:Array[String], includeSensitive:Boolean=false) {
         //get the codes for the qa fields that need to be included in the download
         //TODO fix thi in case the value can't be found
         val codes = qaFields.map(value=>AssertionCodes.getByName(value).get.getCode)
-        persistenceManager.selectRows(rowKeys, entityName, fields ++ FullRecordMapper.qaFields , {
+        val fieldsToQuery = if(includeSensitive) fields ++ FullRecordMapper.qaFields ++ Array("originalSensitiveValues") else fields ++ FullRecordMapper.qaFields
+        persistenceManager.selectRows(rowKeys, entityName, fieldsToQuery , {
             fieldMap =>
+                val sensitiveMap = Json.toStringMap(fieldMap.getOrElse("originalSensitiveValues", "{}"))
                 for (field <- fields) {
-                    val fieldValue = fieldMap.get(field)
+                    val fieldValue = if(includeSensitive) sensitiveMap.getOrElse(field, fieldMap.getOrElse(field, ""))else fieldMap.getOrElse(field,"")
                     //Create a MS Excel compliant CSV file thus field with delimiters are quoted and embedded quotes are escaped
-                    val svalue = fieldValue.getOrElse("")
-                    if (svalue.contains(fieldDelimiter) || svalue.contains(recordDelimiter) || svalue.contains("\""))
-                        outputStream.write(("\"" + svalue.replaceAll("\"", "\"\"") + "\"").getBytes)
+                    
+                    if (fieldValue.contains(fieldDelimiter) || fieldValue.contains(recordDelimiter) || fieldValue.contains("\""))
+                        outputStream.write(("\"" + fieldValue.replaceAll("\"", "\"\"") + "\"").getBytes)
                     else
-                        outputStream.write(svalue.getBytes)
+                        outputStream.write(fieldValue.getBytes)
                     outputStream.write(fieldDelimiter.getBytes)
                 }
                 //now handle the QA fields
