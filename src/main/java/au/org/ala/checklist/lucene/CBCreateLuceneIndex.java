@@ -645,6 +645,10 @@ public class CBCreateLuceneIndex {
         //handle the synonyms
         if (StringUtils.isNotEmpty(acceptedConcept)) {
             doc.add(new Field(NameIndexField.ACCEPTED.toString(), acceptedConcept, Store.YES, Index.NO));
+            doc.add(new Field(NameIndexField.iS_SYNONYM.toString(), "T", Store.NO, Index.ANALYZED));
+        }
+        else{
+            doc.add(new Field(NameIndexField.iS_SYNONYM.toString(), "F", Store.NO, Index.ANALYZED));
         }
 
         //Add the classification information
@@ -849,7 +853,7 @@ public class CBCreateLuceneIndex {
             }
             indexer.createIndex(args[0], args[1], sn, cn);
         } else {
-            indexer.createIndex("/data/names/Version2011", "namematchingv1_1", true, false);
+            indexer.createIndex("/data/names/Version2011", "/data/lucene/namematchingv1_1", true, false);
             //System.out.println("au.org.ala.checklist.lucene.CBCreateLuceneIndex <directory with export files> <directory in which to create indexes>");
            //indexer.createIndex("/data/exports/cb", "/data/lucene/namematching", false, true);
 

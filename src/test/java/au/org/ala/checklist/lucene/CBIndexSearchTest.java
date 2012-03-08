@@ -35,15 +35,35 @@ public class CBIndexSearchTest {
 	}
 
         @Test
+        public void testSynonymWithoutRank(){
+            try{
+                LinnaeanRankClassification cl = new LinnaeanRankClassification();
+                cl.setKingdom("Animalia");
+                cl.setScientificName("Gymnorhina tibicen");
+                NameSearchResult nsr = searcher.searchForRecord(cl, true, true);
+                assertEquals("Gymnorhina tibicen", nsr.getRankClassification().getScientificName());
+                nsr = searcher.searchForRecord("Cracticus tibicen", RankType.SPECIES);
+                assertEquals("Cracticus tibicen", nsr.getRankClassification().getScientificName());
+                nsr = searcher.searchForRecord("Cracticus tibicen", RankType.GENUS);
+                assertEquals(null, nsr);
+            }
+            catch(Exception e){
+
+            }
+        }
+
+        @Test
         public void testRecordSearchWithoutScientificName(){
             try{
                 LinnaeanRankClassification cl = new LinnaeanRankClassification(null, null, null, "Hemiptera", "Pentatomidae", null, null);
                 System.out.println(searcher.searchForRecord(cl, true));
+                System.out.println("Lilianae::: " +searcher.searchForRecord("Lilianae", null));
+                System.out.println("Leptospermum: " + searcher.searchForRecord("Leptospermum", null));
                 //searcher.searchForLSID("Pulex (Pulex)");
                 
             }
             catch(Exception e){
-
+                e.printStackTrace();
             }
         }
 

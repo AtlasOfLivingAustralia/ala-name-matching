@@ -1005,13 +1005,14 @@ public class CBIndexSearch {
                 //if the rank is below species include all names that are species level and below in case synonyms have changed ranks.
                 query.append("+(");
                 if(rank.getId()>= RankType.SPECIES.getId()){
-                    query.append(NameIndexField.RANK_ID.toString()).append(":[7000 TO 9999])");
+                    query.append(NameIndexField.RANK_ID.toString()).append(":[7000 TO 9999]");
                     //query.append(CBCreateLuceneIndex.IndexField.RANK.toString()).append(":").append(RankType.INFRASPECIFICNAME.getRank()).append(" OR ");
                 }
                 else
-                    query.append(NameIndexField.RANK.toString() + ":" + rank.getRank()).append(")");
-               // Query rankQuery =new TermQuery(new Term(CBCreateLuceneIndex.IndexField.RANK.toString(), rank.getRank()));
-               // boolQuery.add(rankQuery, Occur.MUST);
+                    query.append(NameIndexField.RANK.toString() + ":" + rank.getRank());
+                //cater for the situation where the search term could be a synonym that does not have a rank
+                query.append(" OR ").append(NameIndexField.iS_SYNONYM.toString()).append(":T)");
+               
             }
             if(cl!= null){
                 query.append(cl.getLuceneSearchString(true));
