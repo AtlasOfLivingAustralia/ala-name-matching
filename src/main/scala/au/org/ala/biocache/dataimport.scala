@@ -137,13 +137,18 @@ trait DataLoader {
         }
 
         print("Downloading zip file from "+ url)
-        val in = (new java.net.URL(url)).openStream
+        val urlConnection = new java.net.URL(url).openConnection()
+        //handle the situation where the files name is not supplied in the URL but in the Content-Disposition
+        val contentDisp = urlConnection.getHeaderField("Content-Disposition");
+        if(contentDisp != null)
+            println(" Content-Disposition: " + contentDisp)
+        val in = urlConnection.getInputStream()
         val (file, isZipped, isGzipped) = {
-          if (url.endsWith(".zip")){
+          if (url.endsWith(".zip") || (contentDisp != null && contentDisp.endsWith(""".zip""""))){
             val f = new File(temporaryFileStore + resourceUid + ".zip")
             f.createNewFile()
             (f, true, false)
-          } else if (url.endsWith(".gz")){
+          } else if (url.endsWith(".gz") || (contentDisp != null && contentDisp.endsWith(""".gz""""))){
             val f = new File(temporaryFileStore + resourceUid + File.separator + resourceUid +".gz")
             println("  creating file: " + f.getAbsolutePath)
             FileUtils.forceMkdir(f.getParentFile())
