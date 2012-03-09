@@ -266,9 +266,9 @@ object AttributionDAO {
 
     val wsmap = Json.toMap(wscontent)
 
-    val name = wsmap.getOrElse("name","").toString
+    val name = wsmap.getOrElse("name","").asInstanceOf[String]
     
-    val provenance = wsmap.getOrElse("provenance","").toString
+    val provenance = wsmap.getOrElse("provenance","").asInstanceOf[String]
 
     val hints =wsmap.getOrElse("taxonomyCoverageHints",null)
     val ahints = {
@@ -311,7 +311,7 @@ object AttributionDAO {
     Some(attribution)
     }
     catch{
-      case e:Exception => None
+      case e:Exception => {e.printStackTrace();None;}
     }
   }
 
