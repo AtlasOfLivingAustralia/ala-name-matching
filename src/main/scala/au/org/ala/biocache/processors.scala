@@ -298,7 +298,7 @@ class EventProcessor extends Processor {
             }
           }
         }
-      } else if (year >= 100 && year < 1700) {
+      } else if (year >= 100 && year < 1600) {
         year = -1
         validYear = false
         comment = "Year out of range"
