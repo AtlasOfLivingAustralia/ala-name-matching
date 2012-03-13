@@ -102,6 +102,7 @@ object DateParser {
       case ISOWithMonthNameDate(date) => Some(date)
       case ISODateRange(date) => Some(date)
       case ISODayDateRange(date) => Some(date)
+      case ISODayMonthRange(date)=>Some(date)
       case ISODateTimeRange(date) => Some(date)
       case ISOMonthDate(date) => Some(date)
       case ISOMonthDateRange(date) => Some(date)
@@ -417,6 +418,34 @@ object ISOVerboseDateTimeRange {
   }
 }
 
+
+/**yyyy-MM-dd/MM-dd */
+object ISODayMonthRange {
+
+  def unapply(str: String): Option[EventDate] = {
+    try {
+      val parts = str.split("/")
+      if (parts.length != 2) return None
+      val startDateParsed = DateUtils.parseDate(parts(0),
+        Array("yyyy-MM-dd"))
+      val endDateParsed = DateUtils.parseDate(parts(1),
+        Array("MM-dd"))
+
+      val startDate = DateFormatUtils.format(startDateParsed, "yyyy-MM-dd")
+      val startDay = DateFormatUtils.format(startDateParsed, "dd")
+      val endDay = DateFormatUtils.format(endDateParsed, "dd")
+      val startMonth = DateFormatUtils.format(startDateParsed, "MM")
+      val endMonth = DateFormatUtils.format(endDateParsed, "MM")
+      val startYear, endYear = DateFormatUtils.format(startDateParsed, "yyyy")
+      val endDate = endYear + '-' + endMonth + '-' + endDay
+
+      Some(EventDate(startDate, startDay, startMonth, startYear,
+        endDate, endDay, endMonth: String, endYear, startDate.equals(endDate)))
+    } catch {
+      case e: ParseException => None
+    }
+  }
+}
 
 /**yyyy-MM-dd/dd */
 object ISODayDateRange {
