@@ -461,30 +461,30 @@ public class CBCreateLuceneIndex {
         File namesFile = new File(fileName);
         Pattern p = Pattern.compile(",");
         if(namesFile.exists()){
-            CSVReader reader = CSVReader.build(namesFile,"UTF-8",",", '"' , 0);
+            CSVReader reader = CSVReader.build(namesFile,"UTF-8","\t", '"' , 1);
             int count = 0;
             while (reader.hasNext()){
                 String[] values = reader.next();
-                if(values!= null && values.length>= 10){
+                if(values!= null && values.length>= 4){
                 //all ANBG records should have the highest boost as they are our authoritive source
                     //we only want to add an ANBG record if the taxon concept LSID exists in the taxonConcepts.txt export
-                    if(doesTaxonConceptExist(searcher, values[5])){
+                    if(doesTaxonConceptExist(searcher, values[3])){
                         //each common name could be a comma separated list
                         if(!values[2].contains(",") || values[2].toLowerCase().contains(" and ")){
-                            iw.addDocument(getCommonNameDocument(values[2], values[7],values[5],2.0f));
+                            iw.addDocument(getCommonNameDocument(values[2], null,values[3],2.0f));
                             count++;
                         }
                         else{
                             //we need to process each common name in the list
                            String[] names = p.split(values[2]);
                            for(String name : names){
-                               iw.addDocument(getCommonNameDocument(name, values[7],values[5],2.0f));
+                               iw.addDocument(getCommonNameDocument(name, null,values[3],2.0f));
                                count++;
                            }
                         }
                     }
                     else{
-                        System.out.println("Unable to locate LSID " + values[5] + " in current dump");
+                        System.out.println("Unable to locate LSID " + values[3] + " in current dump");
                     }
                 }
 
@@ -531,7 +531,7 @@ public class CBCreateLuceneIndex {
      */
     private IndexSearcher createTmpIndex(String tcFileName)throws Exception{
         //creating the tmp index in the /tmp/taxonConcept directory
-        CSVReader reader = CSVReader.build(new File(tcFileName), "UTF-8", "\t", '"', 0);
+        CSVReader reader = CSVReader.build(new File(tcFileName), "UTF-8", "\t", '"', 1);
         File indexDir = new File("/tmp/taxonConcept");
         IndexWriter iw = new IndexWriter(FSDirectory.open(indexDir), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
         while(reader.hasNext()){
@@ -588,7 +588,8 @@ public class CBCreateLuceneIndex {
         //we are only interested in keeping all the alphanumerical values of the common name
         //when searching the same operations will need to be peformed on the search string
         doc.add(new Field(IndexField.COMMON_NAME.toString(), cn.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", ""), Store.YES, Index.NOT_ANALYZED));
-        doc.add(new Field(IndexField.NAME.toString(), sn, Store.YES, Index.ANALYZED));
+        if(sn != null)
+            doc.add(new Field(IndexField.NAME.toString(), sn, Store.YES, Index.ANALYZED));
         String newLsid = getAcceptedLSID(lsid);
         doc.add(new Field(IndexField.LSID.toString(), newLsid, Store.YES, Index.NO));
         doc.setBoost(boost);
@@ -853,7 +854,7 @@ public class CBCreateLuceneIndex {
             }
             indexer.createIndex(args[0], args[1], sn, cn);
         } else {
-            indexer.createIndex("/data/names/Version2011", "/data/lucene/namematchingv1_1", true, false);
+            indexer.createIndex("/data/names/Version2011", "/data/lucene/namematchingv1_1", false, true);
             //System.out.println("au.org.ala.checklist.lucene.CBCreateLuceneIndex <directory with export files> <directory in which to create indexes>");
            //indexer.createIndex("/data/exports/cb", "/data/lucene/namematching", false, true);
 
