@@ -551,6 +551,7 @@
    <!-- field name="author" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
    <field name="common_name" type="string" indexed="true" stored="true" multiValued="false" />
    <field name="names_and_lsid" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="common_name_and_lsid" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="rank" type="string" indexed="true" stored="true" multiValued="false" />
    <!-- Not displayed in search results -->
    <field name="rank_id" type="int" indexed="false" stored="true" multiValued="false"  />
@@ -621,11 +622,14 @@
 
 	<field name="establishment_means" type="string" indexed="true" stored="false" multiValued="false" />	
 	<field name="exchange_number" type="string" indexed="true" stored="false" multiValued="false" />
-	<field name="duplicate_inst" type="string" indexed="true" stored="false" multiValued="true" />
+	<field name="duplicate_inst" type="textgen" indexed="true" stored="false" multiValued="true" />
 	<field name="original_name_usage" type="string" indexed="true" stored="false" multiValued="false" />
 	<field name="record_number" type="string" indexed="true" stored="false" multiValued="false" />
 	<field name="loan_date" type="tdate" indexed="true" stored="false" multiValued="false" />
 	<field name="loan_returned_date" type="tdate" indexed="true" stored="false" multiValued="false" />
+	
+	<!--  stores phenology from AVH  -->
+	<field name="life_stage" type="textgen" indexed="true" stored="false" multiValued="false" />
 
    <!-- Not displayed in search results -->
    <!-- field name="identifier_name" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
@@ -639,13 +643,14 @@
    <field name="assertions" type="string" indexed="true" stored="true" multiValued="true"  />
    <field name="user_assertions" type="string" indexed="true" stored="true" multiValued="false"  />
    <field name="system_assertions" type="string" indexed="true" stored="true" multiValued="false"  />
+   <field name="name_match_metric" type="string" indexed="true" stored="false" multiValued="false"  />
   
    <!-- Not displayed in search results -->   
    <!-- field name="created_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" />
    <field name="modified_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
    <!-- This is for Citzen Science records only -->
    <field name="user_id" type="string_lowercase" indexed="true" stored="true" multiValued="false" omitNorms="false" />
-   
+   <field name="assertion_user_id" type="string_lowercase" indexed="true" stored="false" multiValued="true" omitNorms="false" />
    <!-- Not displayed in search results -->
    <!--field name="generalised_metres" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" / >
    <field name="geodetic_datum" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
