@@ -37,6 +37,8 @@ trait IndexDAO {
     def writeRowKeysToStream(query:String, outputStream: OutputStream)
 
     def occurrenceDAO:OccurrenceDAO
+    
+    def getDistinctValues(query:String,field:String,max:Int):Option[List[String]]
 
     /**
      * Index a record with the supplied properties.
@@ -686,6 +688,29 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     else
       None
   }
+  
+  def getDistinctValues(query:String,field:String,max:Int):Option[List[String]]={
+    init
+    val solrQuery = new SolrQuery();
+    solrQuery.setQueryType("standard");
+    // Facets
+    solrQuery.setFacet(true)
+    solrQuery.addFacetField(field)
+    solrQuery.setQuery(query)
+    solrQuery.setRows(0)
+    solrQuery.setFacetLimit(max)
+    solrQuery.setFacetMinCount(1)
+    val response = solrServer.query(solrQuery)
+    val facets = response.getFacetField(field)
+    //TODO page through the facets to make more efficient.
+    val values = facets.getValues().asScala[org.apache.solr.client.solrj.response.FacetField.Count]
+    if (values.size > 0) {
+      Some(values.map(facet => facet.getName).asInstanceOf[List[String]]);
+    }
+    else
+      None
+  }
+  
     /**
      * Writes the list of row_keys for the results of the sepcified query to the
      * output stream.
