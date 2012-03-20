@@ -53,7 +53,7 @@ class GBIFOrgCSVCreator {
       dataResources.foreach(dr=>{
           val map = AttributionDAO.getDataResourceAsMap(dr)
           //TO DO only add it if it has a publicly available DwCA (but waiting for a change to the collectory)
-          val archiveAvail = map("publicArchiveAvailable") //at the moment this still needs to be configured in the collectory
+          //val archiveAvail = map("publicArchiveAvailable") //at the moment this still needs to be configured in the collectory
           val (organisationName:String,organisationDescription:String) ={
             if(map.contains("provider")){
               val provider = map("provider").asInstanceOf[Map[String,AnyRef]]
