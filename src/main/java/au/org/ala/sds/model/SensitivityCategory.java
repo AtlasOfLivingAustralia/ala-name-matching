@@ -16,6 +16,8 @@ package au.org.ala.sds.model;
 
 import java.io.Serializable;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
+
 /**
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
@@ -80,5 +82,18 @@ public class SensitivityCategory implements Serializable {
 
     public boolean isPlantPest() {
         return type.equals(CategoryType.PLANT_PEST);
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this.getClass().getName()).
+                append("id", id).
+                append("value", value).
+                append("type", type.toString()).
+                toString();
+    }
+
+    public String toJson() {
+        return "{\"value\":\"" + value + "\",\"type\":\"" + type.toString() + "\"}";
     }
 }
