@@ -44,6 +44,6 @@ public class Configuration {
     }
 
     public String getSpatialUrl( ) {
-        return config.getProperty("spatial-layer-ws", "http://spatial.ala.org.au/layers-service/intersect/cl23,cl927/");
+        return config.getProperty("spatial-layer-ws", "http://spatial.ala.org.au/layers-service/intersect/");
     }
 }
