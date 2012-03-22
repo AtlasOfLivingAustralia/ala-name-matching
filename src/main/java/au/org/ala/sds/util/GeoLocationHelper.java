@@ -16,19 +16,32 @@ import au.org.ala.sds.model.SensitivityZoneFactory;
 
 public class GeoLocationHelper {
 
+    final static Logger logger = Logger.getLogger(GeoLocationHelper.class);
+
+    final static String COASTAL_WATERS_LAYER = "cl927";
+    final static String LGA_BOUNDARIES_LAYER = "cl23";
+    final static String TSPZ_LAYER = "cl937";
+    final static String TSSQZ_LAYER = "cl941";
+    final static String FFEZ_TRI_STATE_LAYER = "cl938";
+    final static String PCN_VIC_LAYER = "cl939";
+    final static String PIZ_NSW_ALBURY_LAYER = "cl936";
+    final static String PIZ_NSW_SYDNEY_LAYER = "cl940";
+    final static String PIZ_VIC_NORTH_EAST_LAYER = "cl963";
+    final static String PIZ_VIC_MAROONDAH_LAYER = "cl962";
+    final static String PIZ_VIC_NAGAMBIE_LAYER = "cl961";
+    final static String PIZ_VIC_MOOROOPNA_LAYER = "cl960";
+    final static String PIZ_VIC_UPTON_LAYER = "cl964";
+    final static String PIZ_VIC_WHITEBRIDGE_LAYER = "cl965";
+
     public static Set<SensitivityZone> getZonesContainingPoint(String latitude, String longitude) throws Exception {
 
-        final Logger logger = Logger.getLogger(GeoLocationHelper.class);
-
-        final String COASTAL_WATERS_LAYER = "cl927";
-        final String LGA_BOUNDARIES_LAYER = "cl23";
 
         Set<SensitivityZone> zones = new HashSet<SensitivityZone>();;
 
         //
         // Call geospatial web service
         //
-        URL url = new URL(Configuration.getInstance().getSpatialUrl() + latitude + "/" + longitude);
+        URL url = new URL(Configuration.getInstance().getSpatialUrl() + getLayers() + latitude + "/" + longitude);
         URLConnection connection = url.openConnection();
         logger.debug("Looking up location using " + url);
         InputStream inStream = connection.getInputStream();
@@ -66,20 +79,54 @@ public class GeoLocationHelper {
                     value.equalsIgnoreCase("Peak Downs")) {
                     // Emerald Citrus Canker PQA
                     zones.add(SensitivityZoneFactory.getZone(SensitivityZone.ECCPQA2004));
-                } else if (value.equalsIgnoreCase("Wacol")) {
-                    // Red Imported Fire Ant
-                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.RIFARA));
-                } else if (value.equalsIgnoreCase("Kubin") || value.equalsIgnoreCase("Badu")) {
-                    // Torres Strait Protected Zone
-                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.TSPZ));
-                } else if (value.equalsIgnoreCase("Hammond") || value.equalsIgnoreCase("Torres")) {
-                    // Special Quarantine Zone
-                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.TSSQZ));
-                } else if (value.equalsIgnoreCase("Albury")) {
-                    // Phylloxera Infested Zone
-                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PIZNSWAC));
                 }
+
+            } else if (field.equalsIgnoreCase(TSPZ_LAYER) && !value.equalsIgnoreCase("n/a")) {
+                zones.add(SensitivityZoneFactory.getZone(SensitivityZone.TSPZ));
+
+            } else if (field.equalsIgnoreCase(TSSQZ_LAYER) && !value.equalsIgnoreCase("n/a")) {
+                zones.add(SensitivityZoneFactory.getZone(SensitivityZone.TSSQZ));
+
+            } else if (field.equalsIgnoreCase(FFEZ_TRI_STATE_LAYER) && !value.equalsIgnoreCase("n/a")) {
+                zones.add(SensitivityZoneFactory.getZone(SensitivityZone.FFEZ));
+
+            } else if (field.equalsIgnoreCase(PCN_VIC_LAYER)) {
+                // Potato Cyst Nematode Control Area
+                if (value.equalsIgnoreCase("Thorpedale")) {
+                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PCNCAVICTHO));
+                } else if (value.equalsIgnoreCase("Koo Wee Rup")) {
+                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PCNCAVICKWR));
+                } else if (value.equalsIgnoreCase("Gembrook")) {
+                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PCNCAVICGEM));
+                } else if (value.equalsIgnoreCase("Wandin")) {
+                    zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PCNCAVICWAN));
+                }
+
+            } else if (field.equalsIgnoreCase(PIZ_NSW_ALBURY_LAYER) && !value.equalsIgnoreCase("n/a")) {
+                zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PIZNSWAC));
+
+            } else if (field.equalsIgnoreCase(PIZ_NSW_SYDNEY_LAYER) && !value.equalsIgnoreCase("n/a")) {
+                zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PIZNSWSR));
+
+            } else if (field.equalsIgnoreCase(PIZ_VIC_NORTH_EAST_LAYER) && !value.equalsIgnoreCase("n/a")) {
+                zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PIZVICNE));
+
+            } else if (field.equalsIgnoreCase(PIZ_VIC_MAROONDAH_LAYER) && !value.equalsIgnoreCase("n/a")) {
+                zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PIZVICMAR));
+
+            } else if (field.equalsIgnoreCase(PIZ_VIC_NAGAMBIE_LAYER) && !value.equalsIgnoreCase("n/a")) {
+                zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PIZVICNAG));
+
+            } else if (field.equalsIgnoreCase(PIZ_VIC_MOOROOPNA_LAYER) && !value.equalsIgnoreCase("n/a")) {
+                zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PIZVICMOR));
+
+            } else if (field.equalsIgnoreCase(PIZ_VIC_UPTON_LAYER) && !value.equalsIgnoreCase("n/a")) {
+                zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PIZVICUPT));
+
+            } else if (field.equalsIgnoreCase(PIZ_VIC_WHITEBRIDGE_LAYER) && !value.equalsIgnoreCase("n/a")) {
+                zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PIZVICWHB));
             }
+
         }
 
         if (zones.isEmpty()) {
@@ -87,6 +134,27 @@ public class GeoLocationHelper {
             zones.add(SensitivityZoneFactory.getZone(SensitivityZone.NOTAUS));
         }
         return zones;
+    }
+
+    private static String getLayers() {
+        StringBuilder layers = new StringBuilder();
+
+        layers.append(COASTAL_WATERS_LAYER).append(',');
+        layers.append(LGA_BOUNDARIES_LAYER).append(',');
+        layers.append(TSPZ_LAYER).append(',');
+        layers.append(TSSQZ_LAYER).append(',');
+        layers.append(FFEZ_TRI_STATE_LAYER).append(',');
+        layers.append(PCN_VIC_LAYER).append(',');
+        layers.append(PIZ_NSW_ALBURY_LAYER).append(',');
+        layers.append(PIZ_NSW_SYDNEY_LAYER).append(',');
+        layers.append(PIZ_VIC_NORTH_EAST_LAYER).append(',');
+        layers.append(PIZ_VIC_MAROONDAH_LAYER).append(',');
+        layers.append(PIZ_VIC_NAGAMBIE_LAYER).append(',');
+        layers.append(PIZ_VIC_MOOROOPNA_LAYER).append(',');
+        layers.append(PIZ_VIC_UPTON_LAYER).append(',');
+        layers.append(PIZ_VIC_WHITEBRIDGE_LAYER).append('/');
+
+        return layers.toString();
     }
 
 }
