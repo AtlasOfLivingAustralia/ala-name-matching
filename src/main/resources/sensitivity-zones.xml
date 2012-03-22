@@ -28,7 +28,7 @@
     <sensitivity-zone id="PIZVICNE" name="Phylloxera Infested Zone - Vic North East" type="Quarantine_zone"/>
     <sensitivity-zone id="PIZVICMAR" name="Phylloxera Infested Zone - Vic Maroondah" type="Quarantine_zone"/>
     <sensitivity-zone id="PIZVICNAG" name="Phylloxera Infested Zone - Vic Nagambie" type="Quarantine_zone"/>
-    <sensitivity-zone id="PIZVICMOR" name="Phylloxera Infested Zone - Vic Moroopna" type="Quarantine_zone"/>
+    <sensitivity-zone id="PIZVICMOR" name="Phylloxera Infested Zone - Vic Mooroopna" type="Quarantine_zone"/>
     <sensitivity-zone id="PIZVICUPT" name="Phylloxera Infested Zone - Vic Upton" type="Quarantine_zone"/>
     <sensitivity-zone id="PIZVICWHB" name="Phylloxera Infested Zone - Vic Whitebridge" type="Quarantine_zone"/>
     <sensitivity-zone id="PCNCAVICTHO" name="Potato Cyst Nematode Control Area - Vic Thorpdale" type="Quarantine_zone"/>
