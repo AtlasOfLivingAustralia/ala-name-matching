@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
+
 /**
 *
 * @author Peter Flemming (peter.flemming@csiro.au)
@@ -70,4 +72,31 @@ public class SensitivityInstance implements Serializable {
         }
     }
 
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this.getClass().getName()).
+                append("category", category).
+                append("zone", zone).
+                append("authority", authority).
+                append("reason", reason).
+                append("remarks", remarks).
+                toString();
+    }
+
+    public String toJson() {
+        StringBuilder json = new StringBuilder("{");
+        json.append("\"category\":" + category.toJson() + ",");
+        json.append("\"zone\":" + zone.toJson() + ",");
+        json.append("\"authority\":\"" + authority + "\",");
+        if (reason != null) {
+            json.append("\"reason\":\"" + reason + "\",");
+        }
+        if (remarks != null) {
+            json.append("\"remarks\":\"" + remarks + "\",");
+        }
+        json.setLength(json.length() - 1);
+        json.append("}");
+
+        return json.toString();
+    }
 }
