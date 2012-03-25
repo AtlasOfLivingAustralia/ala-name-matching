@@ -51,9 +51,9 @@ object DwCALoader {
         if(parser.parse(args)){
             val l = new DwCALoader
             if(localFilePath.isEmpty){
-            	l.load(resourceUid)
+              l.load(resourceUid)
             } else {
-                l.loadLocal(resourceUid, localFilePath.get)
+              l.loadLocal(resourceUid, localFilePath.get)
             }
             //initialise the delete
             //update the collectory information
@@ -119,7 +119,7 @@ class DwCALoader extends DataLoader {
             terms.foreach(term => {
                val property = dwc.getterWithOption(term.simpleName)
                if (!property.isEmpty && property.get.toString.trim.length > 0)
-                fieldTuples + (term.simpleName -> property.get.toString)
+                 fieldTuples + (term.simpleName -> property.get.toString)
             })
 
             //lookup the column
@@ -131,7 +131,7 @@ class DwCALoader extends DataLoader {
             }
 
             //add the record uuid to the map
-            fieldTuples + ("uuid"->recordUuid)
+            fieldTuples + ("uuid" -> recordUuid)
             //add the data resouce uid
             fieldTuples + ("dataResourceUid"-> resourceUid)
             //add last load time

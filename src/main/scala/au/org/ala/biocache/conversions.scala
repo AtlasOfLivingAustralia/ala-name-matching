@@ -41,5 +41,4 @@ object BiocacheConversions {
   }
   
   implicit def dateToString(date:Date):String= DateFormatUtils.format(date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
-
 }

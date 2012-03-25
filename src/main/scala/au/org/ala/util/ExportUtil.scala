@@ -1,11 +1,9 @@
 package au.org.ala.util
 
-import au.org.ala.biocache.{ Config, CassandraPersistenceManager }
-import org.scale7.cassandra.pelops.{ Bytes, Pelops }
-import org.apache.cassandra.thrift.{ ConsistencyLevel, InvalidRequestException, CfDef }
+import au.org.ala.biocache.{ Config}
 import scala.Array._
 import au.com.bytecode.opencsv.CSVWriter
-import java.io.{FileWriter, FileOutputStream, PrintWriter, File}
+import java.io.{FileWriter,  File}
 
 /**
  * Utility for exporting data from the biocache.
@@ -19,7 +17,6 @@ object ExportUtil {
     var entity = ""
     var filePath = ""
     var maxRecords = Integer.MAX_VALUE
-    //var filePath:Option[String] = None
 
     val parser = new OptionParser("export") {
       arg("<entity>", "the entity (column family in cassandra) to export from", { v: String => entity = v })
@@ -38,7 +35,8 @@ object ExportUtil {
     }
   }
 
-  def export(writer: CSVWriter, entity: String, fieldsToExport: List[String], fieldsRequired: List[String], defaultMappings:Option[Map[String,String]]=None,startUuid:String="", endUuid:String="", maxRecords: Int) {
+  def export(writer: CSVWriter, entity: String, fieldsToExport: List[String], fieldsRequired: List[String],
+             defaultMappings:Option[Map[String,String]]=None,startUuid:String="", endUuid:String="", maxRecords: Int) {
     val pm = Config.persistenceManager
     var counter = 0
     val newFields:List[String] = if(defaultMappings.isEmpty) fieldsToExport else fieldsToExport ++ defaultMappings.get.values

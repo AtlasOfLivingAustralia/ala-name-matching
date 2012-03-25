@@ -25,51 +25,37 @@ object Sampling {
     }
 
     if (parser.parse(args)) {
-        val s = new Sampling
-        //for this data resource
-        val fileSufffix = {
-          if(dataResourceUid != "") dataResourceUid
-          else "all"
-        }
-
-        if(locFilePath == ""){
-          locFilePath = "/tmp/loc-" + fileSufffix + ".txt"
-          s.getDistinctCoordinatesForResource(locFilePath, dataResourceUid)
-        }
-        val samplingFilePath = "/tmp/sampling-" + fileSufffix + ".txt"
-
-        //generate sampling
-        s.sampling(locFilePath, samplingFilePath, singleLayerName)
-        //load the loc table
-        s.loadSampling(samplingFilePath)
+      val s = new Sampling
+      //for this data resource
+      val fileSufffix = {
+        if(dataResourceUid != "") dataResourceUid
+        else "all"
       }
+
+      if(locFilePath == ""){
+        locFilePath = "/tmp/loc-" + fileSufffix + ".txt"
+        s.getDistinctCoordinatesForResource(locFilePath, dataResourceUid)
+      }
+      val samplingFilePath = "/tmp/sampling-" + fileSufffix + ".txt"
+
+      //generate sampling
+      s.sampling(locFilePath, samplingFilePath, singleLayerName)
+      //load the loc table
+      s.loadSampling(samplingFilePath)
     }
+  }
+
+  def sampleDataResource(dataResourceUid:String, singleLayerName:String = ""){
+    val locFilePath = "/tmp/loc-" + dataResourceUid + ".txt"
+    val s = new Sampling
+    s.getDistinctCoordinatesForResource(locFilePath, dataResourceUid)
+    val samplingFilePath = "/tmp/sampling-" + dataResourceUid + ".txt"
+    //generate sampling
+    s.sampling(locFilePath, samplingFilePath, singleLayerName)
+    //load the loc table
+    s.loadSampling(samplingFilePath)
+  }
 }
-
-//object LocationProcessing {
-//
-//  def main(args: Array[String]) {
-//
-//    val l = new LocationProcessor
-//
-//    Config.occurrenceDAO.pageOverRawProcessed( rawProcessed => {
-//      if (!rawProcessed.isEmpty){
-//        val (raw, processed) = rawProcessed.get
-//        val assertions = l.process(raw.rowKey,raw,processed)
-//        //get the items to persist
-//        val location = processed.location
-//        val el = processed.el
-//        val cl = processed.cl
-//
-//        //create a map for these properties
-//
-//
-//      }
-//      true
-//    })
-//  }
-//}
-
 
 class Sampling {
 

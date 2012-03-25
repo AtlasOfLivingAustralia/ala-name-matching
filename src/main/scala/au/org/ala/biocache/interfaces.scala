@@ -7,6 +7,9 @@ import au.org.ala.util.RecordProcessor
 import au.org.ala.util.IndexRecords
 import java.util.UUID
 import java.util.Date
+import au.org.ala.util._
+import au.org.ala.biocache.outliers.{JackKnifeStats,RecordJackKnifeStats}
+
 
 /**
  * This is the interface to use for java applications.
@@ -22,6 +25,8 @@ import java.util.Date
 object Store {
 
   private val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
+  private val outlierStatsDAO = Config.getInstance(classOf[OutlierStatsDAO]).asInstanceOf[OutlierStatsDAO]
+
   private var readOnly = false;
 
   import JavaConversions._
@@ -70,7 +75,7 @@ object Store {
   /**
    * Get the raw processed comparison based on the rowKey for the occurrence
    */
-  def getComparisonByRowKey(rowKey: java.lang.String) :java.util.Map[String,java.util.List[ProcessedValue]] = getComparison(occurrenceDAO.getAllVersionsByRowKey(rowKey).getOrElse(null))
+  def getComparisonByRowKey(rowKey: java.lang.String) : java.util.Map[String,java.util.List[ProcessedValue]] = getComparison(occurrenceDAO.getAllVersionsByRowKey(rowKey).getOrElse(null))
   
   private def getComparison(recordVersions:Array[FullRecord]) ={
     if (recordVersions != null && recordVersions.length > 1) {
@@ -80,26 +85,26 @@ object Store {
       val processed = recordVersions(1)
 
       val rawAndProcessed = raw.objectArray zip processed.objectArray
-      
-      for ((rawPoso, procPoso) <- rawAndProcessed) {
-        
+
+      rawAndProcessed.foreach(rawAndProcessed => {
+
+        val (rawPoso, procPoso) = rawAndProcessed
         val listBuff = new java.util.LinkedList[ProcessedValue]
         
-        //if (!rawPoso.isInstanceOf[ContextualLayers] && !rawPoso.isInstanceOf[EnvironmentalLayers]) {
-          rawPoso.propertyNames.foreach(name => {
-            if(!propertiesToHide.contains(name)){
-              val rawValue = rawPoso.getProperty(name)
-              val procValue = procPoso.getProperty(name)
-              if (!rawValue.isEmpty || !procValue.isEmpty) {
-                val term = ProcessedValue(name, rawValue.getOrElse(""), procValue.getOrElse(""))
-                listBuff.add(term)
-              }
+        rawPoso.propertyNames.foreach(name => {
+          if(!propertiesToHide.contains(name)){
+            val rawValue = rawPoso.getProperty(name)
+            val procValue = procPoso.getProperty(name)
+            if (!rawValue.isEmpty || !procValue.isEmpty) {
+              val term = ProcessedValue(name, rawValue.getOrElse(""), procValue.getOrElse(""))
+              listBuff.add(term)
             }
-          })
-        //}
+          }
+        })
+        
         val name = rawPoso.getClass().getName().substring(rawPoso.getClass().getName().lastIndexOf(".")+1)
         map.put(name, listBuff)
-      }
+      })
 
       map
     } else {
@@ -168,7 +173,7 @@ object Store {
 
   /**
    * Adds or updates a raw full record with values that are in the FullRecord
-   * relies on a rowKey being set
+   * relies on a rowKey being set. It will then process the supplied record.
    *
    * Record is processed and indexed if should index is true
    */
@@ -178,13 +183,20 @@ object Store {
   }
 
   /**
+   * Adds or updates a raw full record with values that are in the FullRecord
+   * relies on a rowKey being set. This method only loads the record.
+   *
+   * Record is processed and indexed if should index is true
+   */
+  def loadRecord(dataResourceIdentifer:String, properties:java.util.Map[String,String], shouldIndex:Boolean){
+    val processor = new RecordProcessor
+    processor.addRecord(dataResourceIdentifer, properties.toMap[String,String])
+  }
+
+  /**
    * Deletes the records for the supplied rowKey from the index and data store
    */
-  def deleteRecord(rowKey:String){
-      if(rowKey != null){
-          occurrenceDAO.delete(rowKey)
-      }
-  }
+  def deleteRecord(rowKey:String) = if(rowKey != null) occurrenceDAO.delete(rowKey)
 
   /**
    * Retrieve the system supplied systemAssertions.
@@ -290,14 +302,31 @@ object Store {
   def index(dataResource:java.lang.String) = IndexRecords.index(None, Some(dataResource), false, false, None)
 
   /**
+   * Run the sampling for this dataset
+   * @param dataResourceUid
+   */
+  def sample(dataResourceUid:java.lang.String) = Sampling.sampleDataResource(dataResourceUid)
+
+  /**
+   * Process records for the supplied resource
+   * @param dataResourceUid
+   * @param threads
+   */
+  def process(dataResourceUid:java.lang.String, threads:Int = 1) = {
+    ProcessWithActors.processRecords(1, None , Some(dataResourceUid))
+  }
+
+
+  /**
    * Writes the select records to the stream. Optionally including the sensitive values.
    */
   def writeToStream(outputStream: OutputStream, fieldDelimiter: java.lang.String,
     recordDelimiter: java.lang.String, keys: Array[String], fields: Array[java.lang.String], qaFields: Array[java.lang.String], includeSensitive:Boolean) {
     occurrenceDAO.writeToStream(outputStream, fieldDelimiter, recordDelimiter, keys, fields, qaFields, includeSensitive)
   }
+
   /**
-   * Writes the select records to the stream. With sensitive values generalised.
+   * Writes the select records to the stream.
    */
   def writeToStream(outputStream: OutputStream, fieldDelimiter: java.lang.String,
     recordDelimiter: java.lang.String, keys: Array[String], fields: Array[java.lang.String], qaFields: Array[java.lang.String]) {
@@ -364,6 +393,12 @@ object Store {
   }
 
   def getAlternativeFormats(filePath:String): Array[String] = MediaStore.alternativeFormats(filePath)
+
+  def getJackKnifeStatsFor(guid:String) : java.util.Map[String, JackKnifeStats] = outlierStatsDAO.getJackKnifeStatsFor(guid)
+
+  def getJackKnifeOutliersFor(guid:String) : java.util.Map[String, Array[String]] = outlierStatsDAO.getJackKnifeOutliersFor(guid)
+
+  def getJackKnifeRecordDetailsFor(uuid:String) : Array[RecordJackKnifeStats] = outlierStatsDAO.getJackKnifeRecordDetailsFor(uuid)
 }
 
 /**

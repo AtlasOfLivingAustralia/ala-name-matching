@@ -40,6 +40,10 @@ trait IndexDAO {
     
     def getDistinctValues(query:String,field:String,max:Int):Option[List[String]]
 
+    def pageOverFacet(proc:(String,Int) => Boolean, facetName:String, query:String)
+
+    def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], query:String)
+
     /**
      * Index a record with the supplied properties.
      */
@@ -130,7 +134,7 @@ trait IndexDAO {
       "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation",
       "sensitive", "coordinate_uncertainty", "user_id","provenance","subspecies_guid", "subspecies_name", "interaction","last_assertion_date",
       "last_load_date","last_processed_date", "modified_date", "establishment_means","loan_number","loan_identifier","loan_destination",
-      "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric","life_stage") //++ elFields ++ clFields
+      "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric","life_stage", "outlier_layer", "outlier_layer_count") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -256,7 +260,13 @@ trait IndexDAO {
                     else
                         ""
                 }
-                
+
+                val outlierForLayers:Array[String] = {
+                  val outlierForLayerStr = getValue("outlierForLayers.p", map)
+                  if(outlierForLayerStr != "") Json.toStringArray(outlierForLayerStr)
+                  else Array()
+                }              
+
                 //Only set the geospatially kosher field if there are coordinates supplied
                 val geoKosher = if(slat=="" &&slon == "") "" else map.getOrElse(FullRecordMapper.geospatialDecisionColumn, "")
                 val hasUserAss = map.getOrElse(FullRecordMapper.userQualityAssertionColumn, "") match {
@@ -375,10 +385,13 @@ trait IndexDAO {
                     map.getOrElse("originalNameUsage", map.getOrElse("typifiedName","")),
                     map.getOrElse("duplicates",""),//.replaceAll(",","|"),
                     map.getOrElse("recordNumber",""),
-                    if(firstLoadDate.isEmpty)"" else DateFormatUtils.format(firstLoadDate.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
-                    map.getOrElse("nameMatchMetric.p", ""), 
-                    map.getOrElse("phenology","")  //TODO make this a controlled vocab that gets mapped during processing...
-                    ) //++ elFields.map(field => getValue(field, map)) ++ clFields.map(field=> getValue(field, map))
+                    if(firstLoadDate.isEmpty) "" else DateFormatUtils.format(firstLoadDate.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
+                    map.getOrElse("nameMatchMetric.p", ""),
+                    map.getOrElse("phenology",""),  //TODO make this a controlled vocab that gets mapped during processing...                    
+                    outlierForLayers.mkString("|"),
+                    outlierForLayers.length.toString
+                    ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
+                //)
             }
             else {
                 return List()
@@ -488,16 +501,52 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         }
       }
     }
-        
 
     def reload = cc.reload("")
+
+  def pageOverFacet(proc:(String,Int) => Boolean, facetName:String, queryString:String = "*:*"){
+    init
+    var query:SolrQuery = new SolrQuery(queryString)
+    query.setFacet(true)
+    query.addFacetField(facetName)
+    query.setRows(0)
+    query.setFacetLimit(200000)
+    query.setStart(0)
+    var response = solrServer.query(query)
+    response.getFacetField(facetName).getValues.foreach(s => proc(s.getName, s.getCount.toInt))
+  }
+
+    def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], queryString:String = "*:*"){
+      init
+
+      var pageSize = 0
+      var startIndex = 0
+      var query:SolrQuery = new SolrQuery(queryString)
+      query.setFacet(false)
+      query.setRows(pageSize)
+      query.setStart(startIndex)
+      fieldToRetrieve.foreach(f => query.addField(f))
+      var response = solrServer.query(query)
+      val fullResults = response.getResults.getNumFound
+      println("Total found for :" + queryString +", " + fullResults)
+      query.setRows(fullResults.toInt)
+      query.setFacet(false)
+      response = solrServer.query(query)
+
+      val solrDocumentList = response.getResults
+      val iter = solrDocumentList.iterator()
+      while(iter.hasNext){
+        val solrDocument = iter.next()
+        proc(solrDocument.getFieldValueMap)
+      }
+    }
 
     def emptyIndex() {
         init
         try {
         	solrServer.deleteByQuery("*:*")
         } catch {
-            case e:Exception =>e.printStackTrace(); println("Problem clearing index...")
+          case e:Exception => e.printStackTrace(); println("Problem clearing index...")
         }
     }
 
@@ -509,7 +558,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
             solrServer.commit
         }
         catch{
-            case e:Exception =>e.printStackTrace
+            case e:Exception => e.printStackTrace
         }
     }
     
@@ -524,8 +573,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
             case e:Exception =>e.printStackTrace
         }
     }
-    
-    
 
     def finaliseIndex(optimise:Boolean=false, shutdown:Boolean=true) {
         init
@@ -538,26 +585,30 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
           docQueue.add(solrDocList)
            
            //wait enough time for the Actor to get the message
-           Thread.sleep(50)
+          Thread.sleep(50)
         }
         //while(!thread.ready){ Thread.sleep(50) }
         while(docQueue.size > 0){Thread.sleep(50)}
         solrServer.commit
         solrDocList.clear
         println(printNumDocumentsInIndex)
-        if(optimise)
+        if(optimise){
+          println("Optimising the indexing...")
           this.optimise
+        }
         if(shutdown){
+          println("Shutting down the indexing...")
         	this.shutdown
         }
+        println("Finalise finished.")
     }
     /**
      * Shutdown the index by stopping the indexing thread and shutting down the index core
      */
     def shutdown() = {
         //thread ! "exit"
-      threads.foreach(t => t.stopRunning())
-        if(cc != null)
+      threads.foreach(t => t.stopRunning)
+      if(cc != null)
         	cc.shutdown
     }
     def optimise():String = {
@@ -596,7 +647,9 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         val doc = new SolrInputDocument()
         for (i <- 0 to values.length - 1) {
           if (values(i) != "") {
-            if (header(i) == "duplicate_inst" || header(i) == "establishment_means" || header(i) == "species_group" || header(i) == "assertions" || header(i) == "data_hub_uid" || header(i) == "interactions") {
+            if (header(i) == "duplicate_inst" || header(i) == "establishment_means" || header(i) == "species_group"
+              || header(i) == "assertions" || header(i) == "data_hub_uid" || header(i) == "interactions"
+              || header(i) == "outlier_layer") {
               //multiple values in this field
               for (value <- values(i).split('|')) {
                 if (value != "")
@@ -664,7 +717,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
    *
    * This causes OOM exceptions at SOLR for large numbers of row keys
    * Use writeRowKeysToStream instead
-   *
    */
   override def getRowKeysForQuery(query: String, limit: Int = 1000): Option[List[String]] = {
     init
@@ -678,7 +730,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     solrQuery.setFacetLimit(-1)
     solrQuery.setFacetMinCount(1)
     val response = solrServer.query(solrQuery)
-    println("query " + solrQuery.toString)
+    logger.debug("query " + solrQuery.toString)
     //now process all the values that are in the row_key facet
     val rowKeyFacets = response.getFacetField("row_key")
     val values = rowKeyFacets.getValues().asScala[org.apache.solr.client.solrj.response.FacetField.Count]
@@ -712,10 +764,10 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
   }
   
     /**
-     * Writes the list of row_keys for the results of the sepcified query to the
+     * Writes the list of row_keys for the results of the specified query to the
      * output stream.
      */
-    override def writeRowKeysToStream(query:String, outputStream: OutputStream)={
+    override def writeRowKeysToStream(query:String, outputStream: OutputStream){
         init
         val size =100;
         var start =0;
@@ -746,47 +798,42 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
         val rq = solrServer.query(new SolrQuery("*:*"))
         ">>>>>>>>>>>>>Document count of index: " + rq.getResults().getNumFound()
     }
-    
-    
-   class AddDocThread(queue: ArrayBlockingQueue[java.util.List[SolrInputDocument]], id:Int) extends Thread{
+
+   class AddDocThread(queue: ArrayBlockingQueue[java.util.List[SolrInputDocument]], id:Int) extends Thread {
+
+        private var shouldRun = true;
         
-        
-        var  shouldRun = true;
-        
-        def stopRunning(){
-            shouldRun = false;
-        }
-        
+        def stopRunning = { shouldRun = false }
+
         override def run(){
-            while(shouldRun || queue.size() >0){
-                if(queue.size()>0){
-                    
-                    var docs = queue.poll();
+            println("Starting AddDocThread thread....")
+            while(shouldRun || queue.size >0){
+                if(queue.size > 0){
+                    var docs = queue.poll()
                     //add and commit the docs
                     if (docs != null && !docs.isEmpty) {
                         try{
-                        logger.info("Thread " + id + " is adding " + docs.size + " documents to the index.");
-                        solrServer.add(docs);
-                        //only the first thread should commit
-                        if(id == 0)
-                            solrServer.commit;
-                        docs =null;
+                          logger.info("Thread " + id + " is adding " + docs.size + " documents to the index.")
+                          solrServer.add(docs)
+                          //only the first thread should commit
+                          if(id == 0) solrServer.commit
+                          docs = null
                         }
-                        catch{
-                            case _=>//do nothing
+                        catch {
+                            case _=> //do nothing
                         }
-                        
                     }
                 }
-                else{
-                    try{
-                    Thread.sleep(250);
+                else {
+                    try {
+                      Thread.sleep(250);
                     }
-                    catch{
+                    catch {
                         case _ => //do nothing
                     }
                 }
             }
+            println("Finishing AddDocThread thread.")
         }
     }    
 

@@ -27,12 +27,26 @@ trait DataLoader {
     val registryUrl = "http://collections.ala.org.au/ws/dataResource/"
     val pm = Config.persistenceManager
     val loadTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
-    
+
+    def getDataResourceDetailsAsMap(resourceUid:String) : Map[String, String] = {
+      val json = Source.fromURL(registryUrl + resourceUid + ".json").getLines.mkString
+      JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
+    }
+
+    def getDataProviderDetailsAsMap(uid:String) : Map[String, String] = {
+      val json = Source.fromURL("http://collections.ala.org.au/ws/dataProvider/" + uid + ".json").getLines.mkString
+      JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
+    }
+
+    def getInstitutionDetailsAsMap(uid:String) : Map[String, String] = {
+      val json = Source.fromURL("http://collections.ala.org.au/ws/institution/" + uid + ".json").getLines.mkString
+      JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
+    }
+
     def retrieveConnectionParameters(resourceUid: String) : (String, List[String], List[String], Map[String,String], Map[String,String]) = {
 
       //full document
-      val json = Source.fromURL(registryUrl + resourceUid + ".json").getLines.mkString
-      val map = JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
+      val map = getDataResourceDetailsAsMap(resourceUid)
 
       //connection details
       val connectionParameters = map("connectionParameters").asInstanceOf[Map[String,AnyRef]]
@@ -90,9 +104,15 @@ trait DataLoader {
         }
 
         //lookup the column
-        val (recordUuid, isNew) = uniqueID match {
-            case Some(value) => Config.occurrenceDAO.createOrRetrieveUuid(value)
-            case None => (Config.occurrenceDAO.createUuid, true)
+        val (recordUuid, isNew) = {
+          if(fr.uuid != null && fr.uuid.trim != ""){
+            (fr.uuid, false)
+          } else {
+            uniqueID match {
+              case Some(value) => Config.occurrenceDAO.createOrRetrieveUuid(value)
+              case None => (Config.occurrenceDAO.createUuid, true)
+            }
+          }
         }
         
         //add the full record

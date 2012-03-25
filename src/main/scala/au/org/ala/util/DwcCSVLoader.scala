@@ -112,7 +112,7 @@ class DwcCSVLoader extends DataLoader {
             counter += 1
             
             val columns = currentLine.toList
-            if (columns.length == dwcTermHeaders.size){
+            if (columns.length >= dwcTermHeaders.size - 1){
                 val map = (dwcTermHeaders zip columns).toMap[String,String].filter( {
                 	case (key,value) => {
                     if(value!=null){

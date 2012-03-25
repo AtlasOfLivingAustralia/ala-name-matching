@@ -19,7 +19,9 @@ object DeleteRecords {
       var query:Option[String]=None
       var dr:Option[String]=None
       val parser = new OptionParser("delete records options") {
-            opt("q", "query", "The query to run to obtain the records for deletion e.g. 'year:[2001 TO *]' or 'taxon_name:Macropus'", { v:String => query = Some(v) })
+            opt("q", "query", "The query to run to obtain the records for deletion e.g. 'year:[2001 TO *]' or 'taxon_name:Macropus'",
+              { v:String => query = Some(v) }
+            )
             opt("dr", "resource", "The data resource to process", {v:String => dr = Some(v)})
         }
       if(parser.parse(args)){

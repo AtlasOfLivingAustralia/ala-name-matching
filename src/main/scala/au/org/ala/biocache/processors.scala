@@ -41,19 +41,18 @@ object Processors {
       "LOC"-> new LocationProcessor,
       "TS" -> new TypeStatusProcessor
   )
+
   //TODO A better way to do this. Maybe need to group QA failures by issue type instead of phase. 
   //Can't change until we are able to reprocess the complete set records.
-  def getProcessorForError(code:Int):String={
-	  code match{
-	    case c if c >= AssertionCodes.geospatialBounds._1 && c<AssertionCodes.geospatialBounds._2 => "loc"
-	    case c if c >= AssertionCodes.taxonomicBounds._1 && c< AssertionCodes.taxonomicBounds._2 => "class"
-	    case c if c == AssertionCodes.MISSING_BASIS_OF_RECORD.code || c ==AssertionCodes.BADLY_FORMED_BASIS_OF_RECORD.code => "bor"
-	    case c if c == AssertionCodes.UNRECOGNISED_TYPESTATUS.code =>"type"
-	    case c if c == AssertionCodes.UNRECOGNISED_COLLECTIONCODE.code ||c== AssertionCodes.UNRECOGNISED_INSTITUTIONCODE.code => "attr"	    
-	    case c if c == AssertionCodes.INVALID_IMAGE_URL.code => "image"	    
-	    case c if c >= AssertionCodes.temporalBounds._1 && c<AssertionCodes.temporalBounds._2 =>"event"
-	    case _ => ""
-	  }
+  def getProcessorForError(code:Int):String = code match {
+    case c if c >= AssertionCodes.geospatialBounds._1 && c<AssertionCodes.geospatialBounds._2 => "loc"
+    case c if c >= AssertionCodes.taxonomicBounds._1 && c< AssertionCodes.taxonomicBounds._2 => "class"
+    case c if c == AssertionCodes.MISSING_BASIS_OF_RECORD.code || c ==AssertionCodes.BADLY_FORMED_BASIS_OF_RECORD.code => "bor"
+    case c if c == AssertionCodes.UNRECOGNISED_TYPESTATUS.code =>"type"
+    case c if c == AssertionCodes.UNRECOGNISED_COLLECTIONCODE.code ||c== AssertionCodes.UNRECOGNISED_INSTITUTIONCODE.code => "attr"
+    case c if c == AssertionCodes.INVALID_IMAGE_URL.code => "image"
+    case c if c >= AssertionCodes.temporalBounds._1 && c<AssertionCodes.temporalBounds._2 =>"event"
+    case _ => ""
   }
 }
 
@@ -915,6 +914,7 @@ class ClassificationProcessor extends Processor {
       if (nsr != null) {
         val classification = nsr.getRankClassification
         //Check to see if the classification fits in with the supplied taxonomic hints
+        if(raw.occurrence.institutionCode!=null && raw.occurrence.collectionCode!=null){
           //get the taxonomic hints from the collection or data resource
           var attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
           if(attribution.isEmpty)
@@ -934,7 +934,7 @@ class ClassificationProcessor extends Processor {
               }
             }
           }
-
+        }
         //store ".p" values
         processed.classification = nsr
 

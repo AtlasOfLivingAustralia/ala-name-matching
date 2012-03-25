@@ -74,8 +74,10 @@ object ClassificationDAO {
     if(cachedObject!=null){
        cachedObject.asInstanceOf[Option[NameSearchResult]]
     } else {
-        //search for a scientific name if values for the classification were provided otherwise search for a common name
-        val nsr = if(hash.contains("|")) nameIndex.searchForRecord(new LinnaeanRankClassification(
+      //search for a scientific name if values for the classification were provided otherwise search for a common name
+      val nsr = {
+        if (cl.taxonConceptID != null) nameIndex.searchForRecordByLsid(cl.taxonConceptID)
+        else if(hash.contains("|")) nameIndex.searchForRecord(new LinnaeanRankClassification(
           stripStrayQuotes(cl.kingdom),
           stripStrayQuotes(cl.phylum),
           stripStrayQuotes(cl.classs),
@@ -87,20 +89,21 @@ object ClassificationDAO {
           stripStrayQuotes(cl.subspecies),
           stripStrayQuotes(cl.infraspecificEpithet),
           stripStrayQuotes(cl.scientificName)),
-          true, 
-          true //fuzzy matching is enabled because we have taxonomic hints to help prevent dodgy matches
-          ) else nameIndex.searchForCommonName(cl.getVernacularName)
+          true,
+          true) //fuzzy matching is enabled because we have taxonomic hints to help prevent dodgy matches
+        else nameIndex.searchForCommonName(cl.getVernacularName)
+      }
 
-        if(nsr!=null){
-            //handle the case where the species is a synonym this is a temporary fix should probably go in ala-name-matching
-            val result = if(nsr.isSynonym) Some(nameIndex.searchForRecordByLsid(nsr.getAcceptedLsid))  else Some(nsr)
-            lock.synchronized { lru.put(hash, result) }
-            result
-        } else {
-            val result = None
-            lock.synchronized { lru.put(hash, result) }
-            result
-        }
+      if(nsr!=null){
+          //handle the case where the species is a synonym this is a temporary fix should probably go in ala-name-matching
+          val result = if(nsr.isSynonym) Some(nameIndex.searchForRecordByLsid(nsr.getAcceptedLsid))  else Some(nsr)
+          lock.synchronized { lru.put(hash, result) }
+          result
+      } else {
+          val result = None
+          lock.synchronized { lru.put(hash, result) }
+          result
+      }
     }
   }
 }
@@ -235,7 +238,7 @@ object AttributionDAO {
   def add(institutionCode:String, collectionCode:String, attribution:Attribution){
     val guid = institutionCode.toUpperCase +"|"+collectionCode.toUpperCase
     val map = FullRecordMapper.mapObjectToProperties(attribution)
-    persistenceManager.put(guid,"attr",map)
+    persistenceManager.put(guid,columnFamily,map)
   }
 
   /**

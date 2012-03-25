@@ -35,9 +35,9 @@ object IndexRecords {
   def main(args: Array[String]): Unit = {
     var startUuid:Option[String] = None
     var dataResource:Option[String] = None
-    var empty:Boolean =false
-    var check:Boolean=false
-    var startDate:Option[String]=None
+    var empty:Boolean = false
+    var check:Boolean = false
+    var startDate:Option[String] = None
     var pageSize = 1000
     val parser = new OptionParser("index records options") {
         opt("empty", "empty the index first", {empty=true})
@@ -147,7 +147,7 @@ object IndexRecords {
   /**
    * Indexes the supplied list of rowKeys
    */
-  def indexList(file: File) = {
+  def indexList(file: File) {
     var counter = 0
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
@@ -165,5 +165,30 @@ object IndexRecords {
     })
 
     indexer.finaliseIndex(false, true)
+  }
+
+  /**
+   * Indexes the supplied list of rowKeys
+   */
+  def indexListOfUUIDs(file: File) {
+    var counter = 0
+    var startTime = System.currentTimeMillis
+    var finishTime = System.currentTimeMillis
+
+    file.foreachLine(line => {
+      counter += 1
+      val map = persistenceManager.getByIndex(line, "occ", "uuid")
+      if (!map.isEmpty) indexer.indexFromMap(line, map.get)
+
+      if (counter % 1000 == 0) {
+        finishTime = System.currentTimeMillis
+        logger.info(counter + " >> Last key : " + line + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+        startTime = System.currentTimeMillis
+      }
+    })
+
+    println("Finalising index.....")
+    indexer.finaliseIndex(false, true)
+    println("Finalised index.")
   }
 }

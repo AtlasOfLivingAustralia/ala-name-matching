@@ -45,9 +45,18 @@ object Json {
         val mapper = new ObjectMapper
         mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
         mapper.writeValueAsString(a.asJava)
-    }     
+    }
 
-//    /**
+    /**
+     * Convert the supplied list to JSON
+     */
+    def toJSONMap(a:Map[String,Any]) : String = {
+      val mapper = new ObjectMapper
+      mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
+      mapper.writeValueAsString(a.asJava)
+    }
+
+  //    /**
 //     * Convert the supplied list to JSON
 //     */
 //    def toJSON(a:Map[String,Float]) : String = {

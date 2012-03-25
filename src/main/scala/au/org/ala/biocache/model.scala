@@ -2,12 +2,12 @@ package au.org.ala.biocache
 import scala.reflect.BeanProperty
 import java.util.UUID
 import org.apache.solr.client.solrj.beans.Field
-import org.codehaus.jackson.annotate.JsonIgnore
 import collection.mutable.HashMap
 import collection.JavaConversions
 import org.apache.commons.lang.builder.{ToStringBuilder, EqualsBuilder}
 import java.util.Date
 import org.apache.commons.lang.time.DateFormatUtils
+import org.codehaus.jackson.annotate.{JsonIgnoreProperties, JsonIgnore}
 
 /**
  * Represents an occurrence record. These fields map directly on to
@@ -92,6 +92,7 @@ class Occurrence extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var stateConservation:String = _
   //Store the original values before the SDS changes
   var originalSensitiveValues:Map[String,String] =_
+  @BeanProperty var outlierForLayers:Array[String] = _
 
    @JsonIgnore
   def getOriginalSensitiveValues():Map[String,String] = originalSensitiveValues
@@ -421,7 +422,7 @@ class Attribution (
 /**
  * Encapsulates a complete specimen or occurrence record.
  */
-class FullRecord (
+@JsonIgnoreProperties class FullRecord (
   @BeanProperty var rowKey:String,
   @BeanProperty var uuid:String,
   @BeanProperty var occurrence:Occurrence,

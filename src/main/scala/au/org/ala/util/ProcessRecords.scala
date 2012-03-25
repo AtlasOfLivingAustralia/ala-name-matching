@@ -192,4 +192,14 @@ class RecordProcessor {
     processor.processRecordAndUpdate(raw)
     uuid
   }
+
+  def addRecord(dataResourceUid:String, properties:Map[String,String]) : String = {
+    val uuid = properties.getOrElse("uuid", UUID.randomUUID().toString)
+    val rowKey = dataResourceUid + "|" + uuid
+    val raw = FullRecordMapper.createFullRecord(rowKey, properties,Versions.RAW)
+    raw.uuid = uuid
+    raw.attribution.dataResourceUid = dataResourceUid
+    au.org.ala.biocache.Config.occurrenceDAO.updateOccurrence(raw.rowKey, raw, Versions.RAW)
+    uuid
+  }
 }

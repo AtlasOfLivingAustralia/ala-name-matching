@@ -171,7 +171,7 @@ class CassandraPersistenceManager @Inject() (
      * indexed against thus is queryable.
      *
      * The performance of the index is slightly worse that lookup by key. This should
-     * be alright because the index should only be hit when
+     * be alright because the index should only be hit for reads via webapp.
      *
      */
     def getByIndex(uuid:String, entityName:String, idxColumn:String) : Option[Map[String,String]]={
@@ -181,7 +181,7 @@ class CassandraPersistenceManager @Inject() (
     /**
      * Retrieves a specific property value using the index as the retrieval method.
      */
-  def getByIndex(uuid:String, entityName:String, idxColumn:String, propertyName:String)={
+  def getByIndex(uuid:String, entityName:String, idxColumn:String, propertyName:String) = {
         val map = getFirstValuesFromIndex(entityName, idxColumn, uuid, Selector.newColumnsPredicate(propertyName))
         if(map.isEmpty)
           None
@@ -197,13 +197,12 @@ class CassandraPersistenceManager @Inject() (
   def getFirstValuesFromIndex(entityName:String, idxColumn:String, value:String, slicePredicate:SlicePredicate) : Option[Map[String,String]] ={
     val selector = Pelops.createSelector(poolName)
     //set up the index clause information
-     val indexClause =Selector.newIndexClause(value, 1, Selector.newIndexExpression(idxColumn, IndexOperator.EQ, Bytes.fromUTF8(value) ))
+    val indexClause =Selector.newIndexClause(value, 1, Selector.newIndexExpression(idxColumn, IndexOperator.EQ, Bytes.fromUTF8(value) ))
     try{
 
       val columnMap = selector.getIndexedColumns(entityName, indexClause,slicePredicate, ConsistencyLevel.ONE)
       if(columnMap != null && !columnMap.isEmpty){
         val columnList = columnMap.entrySet.iterator.next.getValue.asInstanceOf[java.util.List[Column]]
-
         val map = columnList2Map(columnList)
         Some(map)
       }
@@ -239,7 +238,7 @@ class CassandraPersistenceManager @Inject() (
           val column = selector.getColumnFromRow(entityName, uuid, propertyName, ConsistencyLevel.ONE)
           Some(new String(column.getValue, "UTF-8"))
       } catch {
-          case e:Exception => logger.debug(e.getMessage, e); None   //this is only logged as this is expected behaviour with cassandra
+          case e:Exception => None   //this is epected behaviour with cassandra
       }
     }
 
@@ -719,20 +718,20 @@ class CassandraPersistenceManager @Inject() (
 //        throw new RuntimeException("currently not implemented")
 //    }
 //
-//    def deleteColumns(uuid:String, entityName:String, columnName:String*)={
+//    def deleteColumns(uuid:String, entityName:String, variableName:String*)={
 //      throw new RuntimeException("currently not implemented")
 //    }
 //    def delete(uuid:String, entityName:String)={
 //        throw new RuntimeException("currently not implemented")
 //    }
-//    def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid:String, endUuid:String, pageSize: Int, columnName: String*) = {
+//    def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid:String, endUuid:String, pageSize: Int, variableName: String*) = {
 //
 //        //page through all records
 //        val mongoColl = mongoConn(db)(entityName)
 //
 //        var counter = 0
 //        val fields = MongoDBObject( List() )
-//        //val fields = MongoDBObject( columnName.map(x => { counter += 1; (columnName -> counter) } ).toSeq )
+//        //val fields = MongoDBObject( variableName.map(x => { counter += 1; (variableName -> counter) } ).toSeq )
 //        val cursor = mongoColl.find(MongoDBObject(),fields,0,pageSize)
 //
 //        //val cursor = mongoColl.find

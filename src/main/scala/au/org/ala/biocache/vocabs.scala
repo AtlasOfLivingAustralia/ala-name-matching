@@ -622,8 +622,7 @@ object AssertionCodes {
   val miscellaneousCodes = all.filter(errorCode => {errorCode.code>=20000 && errorCode.code<30000})
   val temporalCodes = all.filter(errorCode => {errorCode.code>=30000 && errorCode.code<40000})
 
-  val userAssertionCodes = Array(GEOSPATIAL_ISSUE,COORDINATE_HABITAT_MISMATCH,DETECTED_OUTLIER, TAXONOMIC_ISSUE,IDENTIFICATION_INCORRECT,TEMPORAL_ISSUE)
-
+  val userAssertionCodes = Array(GEOSPATIAL_ISSUE,COORDINATE_HABITAT_MISMATCH,DETECTED_OUTLIER,TAXONOMIC_ISSUE,IDENTIFICATION_INCORRECT,TEMPORAL_ISSUE)
 
   /** Retrieve an error code by the numeric code */
   def getByCode(code:Int) : Option[ErrorCode] = all.find(errorCode => errorCode.code == code)
@@ -633,49 +632,40 @@ object AssertionCodes {
   def isVerified(assertion:QualityAssertion) :Boolean = assertion.code == VERIFIED.code
   
   /** Is it geospatially kosher */
-  def isGeospatiallyKosher (assertions:Array[QualityAssertion]) : Boolean = {
-    assertions.filter(ass => {
-       val errorCode = AssertionCodes.all.find(errorCode => errorCode.code == ass.code )
-       if(!errorCode.isEmpty){
-         ass.code >= AssertionCodes.geospatialBounds._1 &&
-                ass.code < AssertionCodes.geospatialBounds._2 &&
-                errorCode.get.isFatal
-       } else {
-          false
-       }
-    }).isEmpty
-  }
+  def isGeospatiallyKosher (assertions:Array[QualityAssertion]) : Boolean = assertions.filter(ass => {
+     val errorCode = AssertionCodes.all.find(errorCode => errorCode.code == ass.code )
+     if(!errorCode.isEmpty){
+       ass.code >= AssertionCodes.geospatialBounds._1 &&
+              ass.code < AssertionCodes.geospatialBounds._2 &&
+              errorCode.get.isFatal
+     } else {
+        false
+     }
+  }).isEmpty
+
    /** Is it geospatially kosher based on a list of codes that have been asserted */
-  def isGeospatiallyKosher(assertions:Array[Int]):Boolean ={
-      //a list of codes that were asserted is provided.
-      assertions.filter(qa=> {
-          val code = AssertionCodes.geospatialCodes.find(c => c.code == qa)          
-          !code.isEmpty && code.get.isFatal
-      }).isEmpty
-  }
+  def isGeospatiallyKosher(assertions:Array[Int]):Boolean = assertions.filter(qa=> {
+      val code = AssertionCodes.geospatialCodes.find(c => c.code == qa)
+      !code.isEmpty && code.get.isFatal
+  }).isEmpty
 
   /** Is it taxonomically kosher */
-  def isTaxonomicallyKosher (assertions:Array[QualityAssertion]) : Boolean = {
-    assertions.filter(ass => {
-       val errorCode = AssertionCodes.all.find(errorCode => errorCode.code == ass.code )
-       if(!errorCode.isEmpty){
-         ass.code >= AssertionCodes.taxonomicBounds._1 &&
-                ass.code < AssertionCodes.taxonomicBounds._2 &&
-                errorCode.get.isFatal
-       } else {
-         false //we cant find the code, so ignore
-       }
-    }).isEmpty
-  }
-  
+  def isTaxonomicallyKosher (assertions:Array[QualityAssertion]) : Boolean = assertions.filter(ass => {
+    val errorCode = AssertionCodes.all.find(errorCode => errorCode.code == ass.code )
+    if(!errorCode.isEmpty){
+      ass.code >= AssertionCodes.taxonomicBounds._1 &&
+      ass.code < AssertionCodes.taxonomicBounds._2 &&
+      errorCode.get.isFatal
+    } else {
+      false //we cant find the code, so ignore
+    }
+  }).isEmpty
+
   /** Is it taxonomically kosher based on a list of codes that have been asserted */
-  def isTaxonomicallyKosher(assertions:Array[Int]):Boolean ={
-      //a list of codes that were asserted is provided.
-      assertions.filter(qa=> {
-          val code = AssertionCodes.taxonomicCodes.find(c => c.code == qa)
-          !code.isEmpty && code.get.isFatal
-      }).isEmpty
-  }
+  def isTaxonomicallyKosher(assertions:Array[Int]):Boolean = assertions.filter(qa=> {
+    val code = AssertionCodes.taxonomicCodes.find(c => c.code == qa)
+    !code.isEmpty && code.get.isFatal
+  }).isEmpty
 }
 
 object Layers {
