@@ -21,6 +21,7 @@ import scala.collection.JavaConversions
 import org.ala.layers.client.Client
 import scala.collection.mutable.HashMap
 import org.apache.zookeeper.ZooKeeper.States
+import scala.util.parsing.json.JSON
 
 /**
  * A DAO for accessing classification information in the cache. If the
@@ -256,6 +257,16 @@ object AttributionDAO {
         att
       }
   }
+  
+   def getDataProviderAsMap(value:String):Map[String,String]={
+     val json = Source.fromURL(AttributionDAO.collectoryURL+"/ws/dataProvider/" + value + ".json").getLines.mkString
+     JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
+   }
+  
+   def getDataResourceAsMap(value:String):Map[String,String]={
+     val json = Source.fromURL(AttributionDAO.collectoryURL+"/ws/dataResource/" + value + ".json").getLines.mkString
+     JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
+   }
 
    def getDataResourceFromWS(value:String):Option[Attribution]={
     try{
