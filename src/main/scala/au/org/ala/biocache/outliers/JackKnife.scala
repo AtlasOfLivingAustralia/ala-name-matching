@@ -5,7 +5,7 @@ import scala.collection.mutable.{ArrayBuffer}
 import reflect.BeanProperty
 
 /**
- * Code for running jacknife against a set of float values.
+ * Code for running jackKnife against a set of float values.
  */
 class JackKnife {
 
@@ -13,6 +13,7 @@ class JackKnife {
   def jackknife(sampledUnsorted:Seq[Float]) : Option[JackKnifeStats]  = {
 
     if (sampledUnsorted.isEmpty) return None
+    if (sampledUnsorted.size < 20) return None  //if less than 20 samples, dont run jackKnife
 
     val samples = sampledUnsorted.sorted    //sorted floats
     val outliers = Array.fill(samples.size)(false)
