@@ -682,6 +682,11 @@
    <field name="raw_name" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
    <field name="matched_name" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
 
+   <!-- the number of layers this record is an outlier for -->
+   <field name="outlier_layer_count" type="int" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <!-- the layers this record is an outlier for -->
+   <field name="outlier_layer" type="string" indexed="true" stored="true" multiValued="true" omitNorms="true" />
+
    <!-- Some ALA dynamic fields -->
    <dynamicField name="*_id"  type="string" indexed="true" stored="true"/>
    <dynamicField name="*_name"  type="string" indexed="true" stored="true"/>
