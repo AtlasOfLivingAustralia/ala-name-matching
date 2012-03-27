@@ -132,7 +132,7 @@ object SpeciesOutlierTests {
           val variableValue = line(variableIdx - 1)
           val latitude = line(latitudeIdx - 1)
           val longitude = line(longitudeIdx - 1)
-          if (variableValue != "" && variableValue != null){
+          if (variableValue != "" && variableValue != null && latitude != "" && longitude != ""){
             val cellId = getCellId(grid, latitude.toFloat, longitude.toFloat)
             pointBuffer += SampledRecord(line(0), variableValue.toFloat, cellId)
           }

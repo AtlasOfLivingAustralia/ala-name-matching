@@ -40,9 +40,9 @@ trait IndexDAO {
     
     def getDistinctValues(query:String,field:String,max:Int):Option[List[String]]
 
-    def pageOverFacet(proc:(String,Int) => Boolean, facetName:String, query:String)
+    def pageOverFacet(proc:(String,Int) => Boolean, facetName:String, query:String, filterQueries:Array[String])
 
-    def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], query:String)
+    def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], query:String, filterQueries:Array[String])
 
     /**
      * Index a record with the supplied properties.
@@ -504,7 +504,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
 
     def reload = cc.reload("")
 
-  def pageOverFacet(proc:(String,Int) => Boolean, facetName:String, queryString:String = "*:*"){
+  def pageOverFacet(proc:(String,Int) => Boolean, facetName:String, queryString:String = "*:*", filterQueries:Array[String] = Array()){
     init
     var query:SolrQuery = new SolrQuery(queryString)
     query.setFacet(true)
@@ -512,34 +512,85 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     query.setRows(0)
     query.setFacetLimit(200000)
     query.setStart(0)
+    if (!filterQueries.isEmpty) query.setFilterQueries(filterQueries: _ *)
+      
     var response = solrServer.query(query)
     response.getFacetField(facetName).getValues.foreach(s => proc(s.getName, s.getCount.toInt))
   }
 
-    def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], queryString:String = "*:*"){
-      init
 
-      var pageSize = 0
-      var startIndex = 0
-      var query:SolrQuery = new SolrQuery(queryString)
-      query.setFacet(false)
-      query.setRows(pageSize)
-      query.setStart(startIndex)
-      fieldToRetrieve.foreach(f => query.addField(f))
-      var response = solrServer.query(query)
-      val fullResults = response.getResults.getNumFound
-      println("Total found for :" + queryString +", " + fullResults)
-      query.setRows(fullResults.toInt)
-      query.setFacet(false)
-      response = solrServer.query(query)
+  def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], queryString:String = "*:*", filterQueries:Array[String] = Array()){
+    init
 
+
+    var startIndex = 0
+    var query:SolrQuery = new SolrQuery(queryString)
+    query.setFacet(false)
+    query.setRows(0)
+    query.setStart(startIndex)
+    query.setFilterQueries(filterQueries: _ *)
+    query.setFacet(false)
+    fieldToRetrieve.foreach(f => query.addField(f))
+    var response = solrServer.query(query)
+    val fullResults = response.getResults.getNumFound.toInt
+    println("Total found for :" + queryString +", " + fullResults)
+
+    var counter = 0
+    var pageSize = 5000
+    while(counter < fullResults){
+
+      var q:SolrQuery = new SolrQuery(queryString)
+      q.setFacet(false)
+      q.setStart(counter)
+      q.setFilterQueries(filterQueries: _ *)
+      q.setFacet(false)
+
+      if(counter + pageSize > fullResults){
+        pageSize = fullResults - counter
+      }
+
+      //setup the next query
+      q.setRows(pageSize)
+      response = solrServer.query(q)
+      println("Paging through :" + queryString +", " + counter)
       val solrDocumentList = response.getResults
       val iter = solrDocumentList.iterator()
       while(iter.hasNext){
         val solrDocument = iter.next()
         proc(solrDocument.getFieldValueMap)
       }
+      counter += pageSize
     }
+  }
+
+//    def XXXXXpageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], queryString:String = "*:*", filterQueries:Array[String] = Array()){
+//      init
+//
+//      var pageSize = 0
+//      var startIndex = 0
+//      var query:SolrQuery = new SolrQuery(queryString)
+//      query.setFacet(false)
+//      query.setRows(pageSize)
+//      query.setStart(startIndex)
+//      fieldToRetrieve.foreach(f => query.addField(f))
+//      var response = solrServer.query(query)
+//
+//      val fullResults = response.getResults.getNumFound
+//      println("Total found for :" + queryString +", " + fullResults)
+//      query.setRows(fullResults.toInt)
+//      query.setFacet(false)
+//      query.setFilterQueries(filterQueries: _ *)
+//      response = solrServer.query(query)
+//
+//
+//
+//      val solrDocumentList = response.getResults
+//      val iter = solrDocumentList.iterator()
+//      while(iter.hasNext){
+//        val solrDocument = iter.next()
+//        proc(solrDocument.getFieldValueMap)
+//      }
+//    }
 
     def emptyIndex() {
         init

@@ -21,8 +21,12 @@ object ExportUtil {
     val parser = new OptionParser("export") {
       arg("<entity>", "the entity (column family in cassandra) to export from", { v: String => entity = v })
       arg("<file-path>", "file to export to", { v: String => filePath = v })
-      opt("c", "columns", "<column1 column2 ...>", "space separated list of columns to export", { columns: String => fieldsToExport = columns.split(" ").toList })
-      opt("r", "required-columns", "<column1 column2 ...>", "space separated required columns", { columns: String => fieldsRequired = columns.split(" ").toList })
+      opt("c", "columns", "<column1 column2 ...>", "space separated list of columns to export", {
+        columns: String => fieldsToExport = columns.split(" ").toList
+      })
+      opt("r", "required-columns", "<column1 column2 ...>", "space separated required columns", {
+        columns: String => fieldsRequired = columns.split(" ").toList
+      })
       intOpt("m", "max-records", "number of records to export", { v: Int => maxRecords = v })
     }
 
