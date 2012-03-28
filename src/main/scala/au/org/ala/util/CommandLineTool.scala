@@ -118,6 +118,13 @@ object CommandLineTool {
           drvd.deleteFromIndex
           println("Finished delete.")
         }
+        case it if (it startsWith "delete") => {
+          val deletor = new QueryDelete(it.replaceFirst("delete ",""))
+          println("Delete from storage")
+          deletor.deleteFromPersistent()
+          println("Delete from index")
+          deletor.deleteFromIndex
+        }
         case _ => printHelp
       }
     } catch {
