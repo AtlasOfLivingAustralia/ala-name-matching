@@ -98,7 +98,7 @@ public class SensitivityZone implements Serializable {
     }
 
     public String toJson() {
-        return "{\"value\":\"" + name + "\", \"name\":\"" + type.toString() + "\"}";
+        return "{\"name\":\"" + name + "\", \"type\":\"" + type.toString() + "\"}";
     }
 
     public static boolean isInAustralia(SensitivityZone zone) {
