@@ -55,7 +55,7 @@ public class GeneraliseTest {
     }
 
     /**
-     * Birds Australia species in ACT - position generalised
+     * Birds Australia occurrence in ACT - position generalised
      */
     @SuppressWarnings("unchecked")
     @Test
@@ -104,6 +104,29 @@ public class GeneraliseTest {
         assertEquals("Original eventID", "1234", originalSenstiveValues.get("eventID"));
         assertEquals("Original locationRemarks", "remarks", originalSenstiveValues.get("locationRemarks"));
         assertEquals("Original day", "10", originalSenstiveValues.get("day"));
+    }
+
+    /**
+     * Not Birds Australia occurrence in ACT - position not generalised
+     */
+    @Test
+    public void notBirdsAustraliaInAct() {
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Crex crex");
+        assertNotNull(ss);
+        String latitude = "-35.276771";   // Epicorp
+        String longitude = "149.112539";
+
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.put("stateProvince", "Australian Capital Territory");
+        facts.put("scientificName", "Crex crex");
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+
+        assertTrue(outcome.isValid());
+        assertFalse(outcome.isSensitive());
     }
 
     /**
@@ -204,6 +227,32 @@ public class GeneraliseTest {
         assertEquals("InMetres", "", outcome.getResult().get("generalisationInMetres"));
         assertEquals("Location withheld. \nSensitive in TAS [Endangered, Tas DPIPWE]", outcome.getResult().get("dataGeneralizations"));
         assertTrue(outcome.isSensitive());
+    }
+
+    /**
+     * Find sensitive species (Lophochroa leadbeateri | Major Mitchell's Cockatoo)
+     */
+    @Test
+    public void vicSpeciesInVic() {
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Lophochroa leadbeateri");
+        assertNotNull(ss);
+        String latitude = "-36.330615";    // Beechworth, Vic
+        String longitude = "146.719666";
+
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+
+        assertTrue(outcome.isValid());
+        assertNotNull(outcome.getResult());
+        assertTrue(outcome.isSensitive()); // Sensitive in Victoria
+        assertEquals("Latitude", "-36.3", outcome.getResult().get("decimalLatitude"));
+        assertEquals("Longitude", "146.7", outcome.getResult().get("decimalLongitude"));
+        assertEquals("InMetres", "10000", outcome.getResult().get("generalisationInMetres"));
+
     }
 
     /**
