@@ -83,7 +83,7 @@ public class MessageFactory {
      * @return The created message.
      */
     public static Message createMessage(Message.Type type, String messageKey, Object... context) {
-        return new SdsMessage(type, getMessageText(messageKey, context) + ". [" + messageKey + "]");
+        return new SdsMessage(type, getMessageText(messageKey, context) + ". (" + messageKey + ")");
     }
 
     /**
@@ -118,7 +118,7 @@ public class MessageFactory {
      * @return The created message.
      */
     public static Message createMessage(Message.Type type, String messageKey) {
-        return new SdsMessage(type, getMessageText(messageKey, new Object [] {}) + ". [" + messageKey + "]");
+        return new SdsMessage(type, getMessageText(messageKey, new Object [] {}) + ". (" + messageKey + ")");
     }
 
     /**
