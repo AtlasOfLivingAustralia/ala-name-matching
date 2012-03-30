@@ -157,7 +157,7 @@ trait DataLoader {
         }
 
         print("Downloading zip file from "+ url)
-        val urlConnection = new java.net.URL(url).openConnection()
+        val urlConnection = new java.net.URL(url.replaceAll(" " ,"%20")).openConnection()
         //handle the situation where the files name is not supplied in the URL but in the Content-Disposition
         val contentDisp = urlConnection.getHeaderField("Content-Disposition");
         if(contentDisp != null)
