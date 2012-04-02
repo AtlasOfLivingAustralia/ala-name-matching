@@ -320,7 +320,20 @@ object AttributionDAO {
     attribution.hasMappedCollections = hasColl
     attribution.provenance = provenance
     if(defaultDwc!= null){
-        attribution.defaultDwcValues = defaultDwc.asInstanceOf[java.util.LinkedHashMap[String,String]].toMap
+      //retrieve the dwc values for the supplied values      
+        val map = defaultDwc.asInstanceOf[java.util.LinkedHashMap[String,String]]
+        map.keys.foreach{key:String =>{
+          //get the vocab value          
+          val v = DwC.matchTerm(key)          
+          if(v.isDefined && !v.get.canonical.equals(key)){            
+            val value=attribution.defaultDwcValues.get(key)            
+            map.remove(key);            
+            map.put(v.get.canonical, value.get);
+          }
+          }
+        attribution.defaultDwcValues = map.toMap
+        }
+        
     }
     Some(attribution)
     }

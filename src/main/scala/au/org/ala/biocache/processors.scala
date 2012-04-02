@@ -900,6 +900,13 @@ class ClassificationProcessor extends Processor {
   def hasConflict(rank:String,taxon:String,hintMap:Map[String,Set[String]]) : Boolean = {
     taxon != null && !hintMap.get(rank).get.contains(taxon.toLowerCase)
   }
+  
+  def hasMatchToDefault(rank:String, taxon:String, classification:Classification) : Boolean ={
+    def term = DwC.matchTerm(rank);
+    def field = if(term.isDefined)term.get.canonical else rank
+    
+    taxon!=null && taxon.equalsIgnoreCase(classification.getProperty(field).getOrElse(""))
+  }
 
   /**
    * Match the classification
@@ -907,14 +914,22 @@ class ClassificationProcessor extends Processor {
   def process(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
 
     try {
+      //update the raw with the "default" values if necessary
+      if(processed.defaultValuesUsed){
+          if(raw.classification.kingdom == null && processed.classification.kingdom !=null) raw.classification.kingdom = processed.classification.kingdom
+          if(raw.classification.phylum == null && processed.classification.phylum !=null) raw.classification.phylum = processed.classification.phylum
+          if(raw.classification.classs == null && processed.classification.classs !=null) raw.classification.classs = processed.classification.classs
+          if(raw.classification.order == null && processed.classification.order !=null) raw.classification.order = processed.classification.order
+          if(raw.classification.family == null && processed.classification.family !=null) raw.classification.family = processed.classification.family
+      }
+      
       //val nsr = DAO.nameIndex.searchForRecord(classification, true)
       val nsr = ClassificationDAO.getByHashLRU(raw.classification).getOrElse(null)
 
       //store the matched classification
       if (nsr != null) {
         val classification = nsr.getRankClassification
-        //Check to see if the classification fits in with the supplied taxonomic hints
-        if(raw.occurrence.institutionCode!=null && raw.occurrence.collectionCode!=null){
+        //Check to see if the classification fits in with the supplied taxonomic hints        
           //get the taxonomic hints from the collection or data resource
           var attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
           if(attribution.isEmpty)
@@ -934,9 +949,13 @@ class ClassificationProcessor extends Processor {
               }
             }
           }
-        }
+          
+        
         //store ".p" values
         processed.classification = nsr
+        //check to see if the classification has been matched to a default value
+        if(processed.defaultValuesUsed && hasMatchToDefault(nsr.getRank().getRank(), nsr.getRankClassification().getScientificName(),processed.classification))
+          processed.classification.nameMatchMetric ="defaultHigherMatch" //indicates that a default value was used to make the higher level match
 
         //try to apply the vernacular name
         val taxonProfile = TaxonProfileDAO.getByGuid(nsr.getLsid)
