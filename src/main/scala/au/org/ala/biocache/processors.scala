@@ -950,11 +950,12 @@ class ClassificationProcessor extends Processor {
             }
           }
           
-        
+        //check for default match before updating the classification.
+        val hasDefaultMatch = processed.defaultValuesUsed && hasMatchToDefault(nsr.getRank().getRank(), nsr.getRankClassification().getScientificName(),processed.classification)
         //store ".p" values
         processed.classification = nsr
         //check to see if the classification has been matched to a default value
-        if(processed.defaultValuesUsed && hasMatchToDefault(nsr.getRank().getRank(), nsr.getRankClassification().getScientificName(),processed.classification))
+        if(hasDefaultMatch)
           processed.classification.nameMatchMetric ="defaultHigherMatch" //indicates that a default value was used to make the higher level match
 
         //try to apply the vernacular name
