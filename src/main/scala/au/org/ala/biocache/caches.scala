@@ -580,7 +580,17 @@ object LocationDAO {
       val location = new Location
       location.decimalLatitude = latitude
       location.decimalLongitude = longitude
-      location.stateProvince = propertyMap.getOrElse("cl927", null)
+      val stateProvinceValue = propertyMap.getOrElse("cl927", null)
+      //now do the state vocab substitution
+      if (stateProvinceValue != null & stateProvinceValue != ""){
+              StateProvinces.matchTerm(stateProvinceValue) match {
+                case Some(term) => location.stateProvince = term.canonical
+                case None => {
+                  /*do nothing for now */
+                  logger.warn("Unrecognised stateprovince value retrieved from layer cl927: " + stateProvinceValue)
+                }
+              }
+            }
       location.ibra = propertyMap.getOrElse("cl20", null)
       location.imcra = propertyMap.getOrElse("cl21", null)
       location.country = propertyMap.getOrElse("cl922", null)
