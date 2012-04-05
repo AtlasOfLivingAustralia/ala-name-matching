@@ -74,12 +74,16 @@ public class SensitiveSpeciesXmlDao implements SensitiveSpeciesDao {
                             SensitivityCategoryFactory.getCategory(ie.getAttributeValue("category")),
                             ie.getAttributeValue("authority"),
                             SensitivityZoneFactory.getZone(ie.getAttributeValue("zone")),
+                            ie.getAttributeValue("reason"),
+                            ie.getAttributeValue("remarks"),
                             ie.getAttributeValue("generalisation"));
                 } else if (ie.getName().equalsIgnoreCase("plantPestInstance")) {
                     instance = new PlantPestInstance(
                             SensitivityCategoryFactory.getCategory(ie.getAttributeValue("category")),
                             ie.getAttributeValue("authority"),
                             SensitivityZoneFactory.getZone(ie.getAttributeValue("zone")),
+                            ie.getAttributeValue("reason"),
+                            ie.getAttributeValue("remarks"),
                             ie.getAttributeValue("fromDate"),
                             ie.getAttributeValue("toDate"));
                 }

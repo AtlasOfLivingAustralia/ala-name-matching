@@ -19,13 +19,15 @@ public class SensitivityInstance implements Serializable {
     private final SensitivityCategory category;
     private final String authority;
     private final SensitivityZone zone;
-    private final String reason = null;
-    private final String remarks = null;
+    private final String reason;
+    private final String remarks;
 
-    public SensitivityInstance(SensitivityCategory category, String authority, SensitivityZone zone) {
+    public SensitivityInstance(SensitivityCategory category, String authority, SensitivityZone zone, String reason, String remarks) {
         this.category = category;
         this.authority = authority;
         this.zone = zone;
+        this.reason = reason;
+        this.remarks = remarks;
     }
 
     public SensitivityCategory getCategory() {

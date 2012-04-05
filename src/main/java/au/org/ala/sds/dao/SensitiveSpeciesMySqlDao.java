@@ -30,10 +30,10 @@ import au.org.ala.sds.dto.SensitiveSpeciesDto;
 import au.org.ala.sds.model.ConservationInstance;
 import au.org.ala.sds.model.PlantPestInstance;
 import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.model.SensitiveTaxon.Rank;
 import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.model.SensitivityCategoryFactory;
 import au.org.ala.sds.model.SensitivityZoneFactory;
-import au.org.ala.sds.model.SensitiveTaxon.Rank;
 
 /**
  *
@@ -45,7 +45,7 @@ public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements Sensitiv
    // public static final String SELECT_ALL = "SELECT * FROM sensitive_species_zones ORDER BY scientific_name, sensitivity_zone";
 
     public static final String SELECT_ALL =
-        "SELECT z.scientific_name, common_name, family, sensitivity_category, sensitivity_zone, authority_name, from_date, to_date, location_generalisation " +
+        "SELECT z.scientific_name, common_name, family, sensitivity_category, sensitivity_zone, reason, remarks, authority_name, from_date, to_date, location_generalisation " +
         "FROM sensitive_species_zones z, sensitive_species s " +
         "WHERE z.scientific_name = s.scientific_name " +
         "ORDER BY z.scientific_name";
@@ -71,6 +71,8 @@ public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements Sensitiv
                         dto.setFamily(rs.getString("family"));
                         dto.setSensitivityZone(rs.getString("sensitivity_zone"));
                         dto.setAuthority(rs.getString("authority_name"));
+                        dto.setReason(rs.getString("reason"));
+                        dto.setRemarks(rs.getString("remarks"));
                         dto.setFromDate(rs.getString("from_date"));
                         dto.setToDate(rs.getString("to_date"));
                         dto.setSensitivityCategory(rs.getString("sensitivity_category"));
@@ -106,12 +108,16 @@ public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements Sensitiv
                         category,
                         dto.getAuthority(),
                         SensitivityZoneFactory.getZone(dto.getSensitivityZone()),
+                        dto.getReason(),
+                        dto.getRemarks(),
                         dto.getLocationGeneralisation()));
             } else if (category.isPlantPest()) {
                 ss.getInstances().add(new PlantPestInstance(
                         category,
                         dto.getAuthority(),
                         SensitivityZoneFactory.getZone(dto.getSensitivityZone()),
+                        dto.getReason(),
+                        dto.getRemarks(),
                         dto.getFromDate(),
                         dto.getToDate()));
             }
