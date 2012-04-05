@@ -130,6 +130,27 @@ public class GeneraliseTest {
     }
 
     /**
+     * Not Birds Australia occurrence in NSW - position generalised
+     */
+    @Test
+    public void notBirdsAustraliaInNsw() {
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Callocephalon fimbriatum");
+        assertNotNull(ss);
+        String latitude = "-34.023071";   // NSW
+        String longitude = "150.056763";
+
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+
+        assertTrue(outcome.isValid());
+        assertTrue(outcome.isSensitive());
+    }
+
+    /**
      * NSW species in ACT - not generalised
      */
     @Test
@@ -198,7 +219,7 @@ public class GeneraliseTest {
         assertEquals("Latitude", "", outcome.getResult().get("decimalLatitude"));
         assertEquals("Longitude", "", outcome.getResult().get("decimalLongitude"));
         assertEquals("InMetres", "", outcome.getResult().get("generalisationInMetres"));
-        assertEquals("Location withheld. \nSensitive in NSW [Endangered, NSW DECCW]", outcome.getResult().get("dataGeneralizations"));
+        assertEquals("Location withheld. \nSensitive in NSW [Endangered, NSW OEH]", outcome.getResult().get("dataGeneralizations"));
         assertTrue(outcome.isSensitive());
     }
 
@@ -284,7 +305,7 @@ public class GeneraliseTest {
      */
     @Test
     public void findSpeciesByAcceptedName() {
-        SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Rhomboda polygonoides");
+        SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Dendrobium speciosum f. hillii");
         assertNotNull(ss);
         String latitude = "-16.167197";    // Qld
         String longitude = "145.374527";
@@ -309,7 +330,7 @@ public class GeneraliseTest {
      */
     @Test
     public void generaliseLocationAlreadyGeneralised() {
-        SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Lophochroa leadbeateri");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Lophochroa leadbeateri");
         assertNotNull(ss);
         String latitude = "-37.9";    // Vic
         String longitude = "145.4";
@@ -334,7 +355,7 @@ public class GeneraliseTest {
 
     @Test
     public void generaliseLocationFromState() {
-        SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Lophochroa leadbeateri");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Lophochroa leadbeateri");
         assertNotNull(ss);
         String latitude = "-37.9";    // Vic
         String longitude = "145.4";
