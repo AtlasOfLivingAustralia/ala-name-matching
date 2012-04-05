@@ -30,7 +30,7 @@ public class GeneralisedLocation {
     private final String originalLongitude;
     private final List<SensitivityZone> zones;
     private final List<SensitivityInstance> instances;
-    private String locationGeneralisation;
+    private final String locationGeneralisation;
     private String generalisedLatitude;
     private String generalisedLongitude;
     private String generalisationInMetres;
@@ -40,22 +40,11 @@ public class GeneralisedLocation {
     public GeneralisedLocation(String latitude, String longitude, List<SensitivityInstance> instances, List<SensitivityZone> zones) {
         this.originalLatitude = latitude;
         this.originalLongitude = longitude;
-        this.locationGeneralisation = null;
         this.zones = zones;
         this.instances = instances;
         this.locationGeneralisation = getLocationGeneralistion();
         this.sensitive = true;
         generaliseCoordinates();
-    }
-
-    private String getLocationGeneralistion() {
-        for (SensitivityInstance si : instances) {
-            if (si instanceof ConservationInstance) {
-                return ((ConservationInstance) si).getLocationGeneralisation();
-                // TODO pick most restrictive generalisation when there are multiple instances
-            }
-        }
-        return null;
     }
 
     public boolean isGeneralised() {
@@ -163,6 +152,43 @@ public class GeneralisedLocation {
             } else {
                 return number;
             }
+        }
+    }
+
+    private String getLocationGeneralistion() {
+        String generalisation = null;
+        for (SensitivityInstance si : instances) {
+            if (si instanceof ConservationInstance) {
+                generalisation = maxGeneralisation(generalisation, ((ConservationInstance) si).getLocationGeneralisation());
+            }
+        }
+        return generalisation;
+    }
+
+    private String maxGeneralisation(String generalisation1, String generalisation2) {
+        int gen1 = toInt(generalisation1);
+        int gen2 = toInt(generalisation2);
+
+        if (gen1 > gen2) {
+            return generalisation1;
+        } else {
+            return generalisation2;
+        }
+    }
+
+    private int toInt(String generalisation) {
+        if (generalisation == null) {
+            return 0;
+        } else if (generalisation.equalsIgnoreCase("WITHHOLD")) {
+            return Integer.MAX_VALUE;
+        } else if (generalisation.equalsIgnoreCase("10km")) {
+            return 10000;
+        } else if (generalisation.equalsIgnoreCase("1km")) {
+            return 1000;
+        } else if (generalisation.equalsIgnoreCase("100m")) {
+            return 100;
+        } else {
+            return 0;
         }
     }
 
