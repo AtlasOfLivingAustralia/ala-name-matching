@@ -55,9 +55,7 @@ public class ConservationService implements ValidationService {
         List<SensitivityInstance> instances = taxon.getInstancesForZones(zones);
 
         // Check data provider (Birds Australia generalisation only happens for BA occurrences)
-        if (facts.get("dataResourceUid") != null && facts.get("dataResourceUid").equalsIgnoreCase(BIRDS_AUSTRALIA)) {
-            SensitivityInstance.removeAllButInstance(instances, SensitivityInstance.BIRDS_AUSTRALIA_INSTANCE);
-        } else {
+        if (facts.get("dataResourceUid") == null || !facts.get("dataResourceUid").equalsIgnoreCase(BIRDS_AUSTRALIA)) {
             SensitivityInstance.removeInstance(instances, SensitivityInstance.BIRDS_AUSTRALIA_INSTANCE);
         }
 
