@@ -13,14 +13,14 @@ import au.org.ala.checklist.lucene.model.NameSearchResult;
  */
 public class HomonymException extends SearchResultException {
     public HomonymException(String msg, List<NameSearchResult> results){
-        super(msg);
+        this(msg);
         this.results = results;
     }
     public HomonymException(String message){
         super("Warning an unresolved homonym has been detected. "+message);
     }
     public HomonymException(){
-        super("Warning an unresolved homonym has been detected. ");
+        this("Warning an unresolved homonym has been detected. ");
     }
     public HomonymException(List<NameSearchResult> results){
         this();

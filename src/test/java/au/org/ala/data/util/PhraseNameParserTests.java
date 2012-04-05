@@ -17,6 +17,63 @@ import static org.junit.Assert.fail;
  */
 public class PhraseNameParserTests {
     @Test
+    public void testNameWithAuthor(){
+        try{
+            String name ="Trachymene incisa Rudge subsp. incisa";
+            PhraseNameParser parser = new PhraseNameParser();
+//            ParsedName pn = parser.parse(name);
+//            System.out.println(pn);
+//            System.out.println(pn.canonicalName());
+//            System.out.println(pn.canonicalNameWithAuthorship());
+            name ="Pterodroma arminjoniana s. str.";
+            parser.debug = true;
+            ParsedName pn = parser.parse(name);
+            System.out.println(pn);
+            
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void phraseNameTest(){
+        try{
+            String name ="Elaeocarpus sp. Rocky Creek";
+            PhraseNameParser parser = new PhraseNameParser();
+            ParsedName pn = parser.parse(name);
+            System.out.println(pn);
+            System.out.println(pn.canonicalName());
+            System.out.println(pn.canonicalNameWithAuthorship());
+            System.out.println(((ALAParsedName)pn).cleanPhrase);
+
+            //this one should not be a phrase name but it is because GBIF does not recognise it as a well formed scientific name
+            name = "Thelymitra sp. adorata";
+            pn = parser.parse(name);
+            assertTrue(!(pn instanceof ALAParsedName));
+            System.out.println(pn);
+            name = "Asterolasia sp. \"Dungowan Creek\"";
+            pn = parser.parse(name);
+            System.out.println(pn);
+
+            name ="Pultenaea sp. 'Olinda' (Coveny 6616)";
+            pn = parser.parse(name);
+            assertEquals("Olinda",((ALAParsedName)pn).cleanPhrase);
+
+            name ="Thelymitra aff. pauciflora";
+            pn = parser.parse(name);
+            System.out.println(pn);
+
+            name= "Corymbia ?hendersonii K.D.Hill & L.A.S.Johnson";
+            pn = parser.parse(name);
+            System.out.println(pn);
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Test
     public void testVoucherClean(){
         try{
          PhraseNameParser parser = new PhraseNameParser();

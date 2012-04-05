@@ -35,6 +35,90 @@ public class CBIndexSearchTest {
 	}
 
         @Test
+        public void testQuestionSpeciesMatch(){
+            try{
+            String name = "Corymbia ?hendersonii K.D.Hill & L.A.S.Johnson";
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setKingdom("Plantae");
+            cl.setScientificName(name);
+            NameSearchResult nsr =searcher.searchForRecord(cl, true);
+            assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:251854",nsr.getLsid());
+            //assertEquals(ErrorType.QUESTION_SPECIES, nsr.getErrorType());
+            System.out.println(nsr);
+            name ="Cacatua leadbeateri";
+            name = "Acacia bartleana ms";
+            nsr =searcher.searchForRecord(name, null);
+            System.out.println(nsr);
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        @Test
+        public void testSpMarker(){
+            try{
+                String name ="Thelymitra sp. adorata";
+                NameSearchResult nsr = searcher.searchForRecord(name, null);
+                assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:572459", nsr.getLsid());
+                name = "Grevillea brachystylis subsp. Busselton (G.J.Keighery s.n. 28/6/1985)";
+                nsr = searcher.searchForRecord(name, null);
+                System.out.println(nsr);
+                name = "Pterodroma arminjoniana s. str.";
+                nsr = searcher.searchForRecord(name, null,true);
+                System.out.println(nsr);
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        @Test
+        public void testPhraseMatch(){
+            try{
+                String name ="Elaeocarpus sp. Rocky Creek";
+                NameSearchResult nsr = searcher.searchForRecord(name, null);
+                //System.out.println(nsr);
+                assertEquals(nsr.getLsid(), "urn:lsid:biodiversity.org.au:apni.taxon:245132");
+                name = " Pultenaea sp. Olinda";
+                nsr = searcher.searchForRecord(name, null);
+                System.out.println(nsr);
+                name ="Thelymitra sp. adorata";
+                nsr = searcher.searchForRecord(name, null);
+                System.out.println(nsr);
+                name ="Asterolasia sp. \"Dungowan Creek\"";
+                nsr = searcher.searchForRecord(name, null);
+                //System.out.println(nsr);
+                assertEquals(nsr.getLsid(), "urn:lsid:biodiversity.org.au:apni.taxon:270800");
+
+
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+
+//        @Test
+//        public void testBrokenNames(){
+//            try{
+//                String scientificName ="Thorectandra  6713 \n".trim();
+//                String phylum = "Porifera";
+//                String order = "Dictyoceratida";
+//                String genus = "Thorectandra";
+//                String species ="";
+//                LinnaeanRankClassification classification = new LinnaeanRankClassification(
+//					null, phylum, null, order, null, genus,
+//					scientificName);
+//                String lsid = searcher.searchForLSID(scientificName, classification,
+//					RankType.getForName(null), false);
+//                System.out.println(lsid);
+//            }
+//            catch(Exception e){
+//
+//            }
+//        }
+//
+        @Test
         public void testSynonymWithoutRank(){
             try{
                 LinnaeanRankClassification cl = new LinnaeanRankClassification();
@@ -60,7 +144,7 @@ public class CBIndexSearchTest {
                 System.out.println("Lilianae::: " +searcher.searchForRecord("Lilianae", null));
                 System.out.println("Leptospermum: " + searcher.searchForRecord("Leptospermum", null));
                 //searcher.searchForLSID("Pulex (Pulex)");
-                
+
             }
             catch(Exception e){
                 e.printStackTrace();

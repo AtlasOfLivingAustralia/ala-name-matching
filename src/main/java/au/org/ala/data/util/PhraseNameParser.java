@@ -31,6 +31,7 @@ public class PhraseNameParser extends NameParser{
     	   ranks.put("ssp",Rank.SUBSPECIES);
            ranks.put("var",Rank.VARIETY);
            ranks.put("sp", Rank.SPECIES);
+           ranks.put("cv", Rank.SPECIES); // added for the situation where phrase names are mistaken for cultivars
            VALID_PHRASE_RANKS = ranks;
        }
 
@@ -40,6 +41,9 @@ public class PhraseNameParser extends NameParser{
     protected static final String SOURCE_AUTHORITY="(["+all_letters_numbers+"\\[\\]'\" -,\\.]+|\\.)";
     protected static final String PHRASE = "";
     protected static final String  PHRASE_RANKS = "(?:"+StringUtils.join(VALID_PHRASE_RANKS.keySet(), "|")+")\\.? ";
+    protected static final Pattern SPECIES_PATTERN = Pattern.compile("sp\\.?");
+
+    protected static final Pattern POTENTIAL_SPECIES_PATTERN = Pattern.compile("^"+"([\\x00-\\x7F\\s]*)("+SPECIES_PATTERN.pattern()+" )" + "(["+name_letters+"]{3,})(?: *)" + "([\\x00-\\x7F\\s]*)");
 
     protected static final Pattern PHRASE_PATTERN = Pattern.compile("^" +
             //GROUP 1 is normal scientific name - will either represent a Monomial or binomial
@@ -73,10 +77,22 @@ public class PhraseNameParser extends NameParser{
 
     }
     @Override
-    public <T> ParsedName<T> parse(String scientificName) throws UnparsableException {
+    public <T> ParsedName<T> parse(String scientificName) throws UnparsableException {        
         ParsedName pn= super.parse(scientificName);
         //System.out.println(pn.authorsParsed + " " + pn.type + pn.rank);
-        if(pn.getType() != NameType.wellformed && isPhraseRank(pn.rank) && (!pn.authorsParsed|| pn.specificEpithet == null)){
+        if(pn.getType() != NameType.wellformed && isPhraseRank(pn.rank) && (!pn.authorsParsed|| pn.specificEpithet == null || SPECIES_PATTERN.matcher(pn.specificEpithet).matches())){
+            //if the rank marker is sp. and the word after the rank marker is lower case check to see if removing the marker will result is a wellformed name
+            if(SPECIES_PATTERN.matcher(pn.rank).matches()){
+                Matcher m1 = POTENTIAL_SPECIES_PATTERN.matcher(scientificName);
+                //System.out.println(POTENTIAL_SPECIES_PATTERN.pattern());
+                if(m1.find()){
+                    //now reparse without the rankMarker
+                    String newName = m1.group(1) + m1.group(3) + StringUtils.defaultString(m1.group(4), "");
+                    pn = super.parse(newName);
+                    if(pn.getType() == NameType.wellformed)
+                        return pn;
+                }
+            }
             //check to see if the name represents a phrase name
             Matcher m = PHRASE_PATTERN.matcher(scientificName);
             if(m.find()){

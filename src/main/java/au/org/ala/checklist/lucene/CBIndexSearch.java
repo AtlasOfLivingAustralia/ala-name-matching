@@ -1,5 +1,6 @@
 package au.org.ala.checklist.lucene;
 
+import au.org.ala.checklist.lucene.model.ErrorType;
 import au.org.ala.checklist.lucene.model.MatchType;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -140,6 +141,10 @@ public class CBIndexSearch {
             iw.close();
 		}
             return idxFile;
+        }
+        public boolean addAdditionalName(String scientificName){
+
+            return false;
         }
 //        void deleteRecord(int id)throws Exception{
 //            cbReader.deleteDocument(id);
@@ -369,6 +374,7 @@ public class CBIndexSearch {
 //            //Add warning that removed question marks...
 //        }
     	NameSearchResult nsr = null;
+        SearchResultException currentError = null;
     	if(name==null){
     		//ascertain the rank and construct the scientific name
             if (StringUtils.isNotEmpty(cl.getInfraspecificEpithet()) && !isInfraSpecificMarker(cl.getSubspecies())) {
@@ -446,6 +452,14 @@ public class CBIndexSearch {
                     //check to see if the rank can be determined from the scientific name
                     try{
                     ParsedName<?> cn = parser.parse(name);
+                    if(cn != null && cn.type == NameType.doubtful){
+                        //if recursive set the issue
+                        if(recursiveMatching){
+                            name = cn.genusOrAbove;
+//                            currentError = new SearchResultException("Questionable identification of species");
+//                            currentError.setErrorType(au.org.ala.checklist.lucene.model.ErrorType.QUESTION_SPECIES);
+                        }
+                    }
                     if(cn!=null && cn.isBinomial()) {
                         //set the genus if it is empty
                             if(StringUtils.isEmpty(cl.getGenus()))
@@ -478,14 +492,17 @@ public class CBIndexSearch {
 
     		//nsr = searchForRecord(name, cl, rank, false);
     	}
-
+       
         try{
             nsr = searchForRecord(name, cl, rank, fuzzy);
         }
         catch(SearchResultException e){
-            if(e instanceof SPPException)
+            if(e instanceof HomonymException)
+                throw e;
+            else{
+                currentError = e;
                 nsr = null;
-            throw e;
+            }
         }
 
     	if(nsr==null && recursiveMatching){
@@ -515,12 +532,21 @@ public class CBIndexSearch {
     		if(nsr == null && cl.getKingdom()!=null){
     			nsr = searchForRecord(cl.getKingdom(), cl, RankType.KINGDOM, fuzzy);
     		}
-                if(nsr!= null)
-                    nsr.setMatchType(MatchType.RECURSIVE);
+                
     	}
         //Obtain and store the GUIDs for the classification identifiers
-        if(nsr!= null && addGuids)
+        if (nsr != null && addGuids) {
             updateClassificationWithGUID(nsr.getRankClassification());
+        }
+        if (nsr != null) {
+            nsr.setMatchType(MatchType.RECURSIVE);
+            //set the error type so that the user knows that there was an error
+//            if (currentError != null) {
+//                nsr.setErrorType(currentError.getErrorType());
+//            }
+        }
+        if (nsr == null && currentError != null)
+            throw currentError;
     	return nsr;
     }
 
@@ -753,6 +779,10 @@ public class CBIndexSearch {
             //Parse the name and see what type of check to do next
             try{
                 ParsedName<?> pn = parser.parse(name);
+
+                //at this point we don't want to match informal names
+                //if(pn.getType() == NameType.informal)
+                //    throw new InformalNameException();
                 
                 if(pn instanceof ALAParsedName){
                     //check the phrase name
@@ -761,7 +791,7 @@ public class CBIndexSearch {
                     String phrase = alapn.cleanPhrase;//alapn.getLocationPhraseDesciption();
                     String voucher = alapn.cleanVoucher;
                     //String voucher = alapn.phraseVoucher != null ? voucherRemovePattern.matcher(alapn.phraseVoucher).replaceAll("") :null;
-                    String specific = alapn.rank.equals("sp.")?null: alapn.specificEpithet;
+                    String specific = alapn.rank != null && alapn.rank.equals("sp.")?null: alapn.specificEpithet;
                     String[][] searchFields = new String[4][];
                     searchFields[0] = new String[]{RankType.GENUS.getRank(),genus};
                     searchFields[1]= new String[]{NameIndexField.PHRASE.toString(), phrase};
@@ -769,18 +799,33 @@ public class CBIndexSearch {
                     searchFields[3] = new String[]{NameIndexField.SPECIFIC.toString(), specific};
                     hits = performSearch(searchFields, rank, cl, max, MatchType.PHRASE, false, queryParser.get()); //don't want to check for homonyms yet...
                     if(hits.size()>0)
-                        return hits;
+                        return hits;                    
                 }
-                else if(pn.isParsableType() && pn.authorsParsed && pn.getType() != NameType.informal)
+                else if(pn.isParsableType() && pn.authorsParsed && pn.getType() != NameType.informal && pn.getType() != NameType.doubtful)
                 {
                     //check the canonical name
                     String canonicalName = pn.canonicalName();
                     hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), canonicalName, rank, cl, max, MatchType.CANONICAL, true, queryParser.get());
                     if(hits.size()>0)
                         return hits;
+                    //if the parse type was a cultivar and we didn't match it check to see if we can match as a phrase name
+                    if(pn.getType() == NameType.cultivar){
+                        String genus = pn.getGenusOrAbove();
+                        String phrase = pn.getCultivar();
+                        String voucher =null;
+                        String specific = pn.rank != null &&pn.rank.equals("sp.")?null:pn.getSpecificEpithet();
+                        String[][] searchFields = new String[4][];
+                        searchFields[0] = new String[]{RankType.GENUS.getRank(),genus};
+                        searchFields[1]= new String[]{NameIndexField.PHRASE.toString(), phrase};
+                        searchFields[2] = new String[]{NameIndexField.VOUCHER.toString(), voucher};
+                        searchFields[3] = new String[]{NameIndexField.SPECIFIC.toString(), specific};
+                        hits = performSearch(searchFields, rank, cl, max, MatchType.PHRASE, false, queryParser.get());
+                        if(hits.size()>0)
+                            return hits;
+                    }
                 }
-                //now check for a "sounds like" match.
-                if(fuzzy && pn.isBinomial()){
+                //now check for a "sounds like" match if we don't have an informal name
+                if(fuzzy && pn.isBinomial() && pn.getType() != NameType.informal && pn.getType() != NameType.doubtful){
                     String genus = TaxonNameSoundEx.treatWord(pn.genusOrAbove,"genus");
                     String specific = TaxonNameSoundEx.treatWord(pn.specificEpithet, "species");
                     String infra = pn.infraSpecificEpithet == null?null:TaxonNameSoundEx.treatWord(pn.infraSpecificEpithet, "species");
@@ -803,6 +848,7 @@ public class CBIndexSearch {
 //                        throw new SearchResultException("Fuzzy match is ambiguous", hits);
 //                    }
                 }
+
             }
             catch(UnparsableException e){
                 log.warn("Unable to parse " + name + ". " + e.getMessage());

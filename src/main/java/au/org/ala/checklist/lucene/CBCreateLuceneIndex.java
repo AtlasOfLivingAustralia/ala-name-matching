@@ -699,7 +699,9 @@ public class CBCreateLuceneIndex {
         try{
         ParsedName cn = parser.parse(name);
             //if(cn != null && !cn.hasProblem() && !cn.isIndetermined()){
-            if(cn != null && cn.isParsableType()&& !cn.isIndetermined()){
+            if(cn != null && cn.isParsableType()&& !cn.isIndetermined() 
+            && cn.getType()!= NameType.informal)// a scientific name with some informal addition like "cf." or indetermined like Abies spec.
+            {
                doc.add(new Field(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES, Index.ANALYZED));
                if(specificEpithet == null && cn.isBinomial()){
                    //check to see if we need to determine the epithets from the parse
@@ -711,9 +713,9 @@ public class CBCreateLuceneIndex {
             //check to see if the concept represents a phrase name
             if(cn instanceof ALAParsedName){
                 ALAParsedName alapn = (ALAParsedName)cn;
-                if(!alapn.rank.equals("sp.") && alapn.specificEpithet != null)
+                if((!"sp.".equals(alapn.rank)) && alapn.specificEpithet != null)
                     doc.add(new Field(NameIndexField.SPECIFIC.toString(), alapn.getSpecificEpithet(), Store.YES, Index.ANALYZED_NO_NORMS));
-                else if(!alapn.rank.equals("sp.") && alapn.specificEpithet == null){
+                else if((!"sp.".equals(alapn.rank)) && alapn.specificEpithet == null){
                     log.warn( lsid + " " +name + " has an empty specific for non sp. phrase");
                 }
                 if(StringUtils.trimToNull(alapn.getLocationPhraseDesciption()) != null)
@@ -721,6 +723,10 @@ public class CBCreateLuceneIndex {
                     //doc.add(new Field(NameIndexField.PHRASE.toString(), alapn.getLocationPhraseDesciption(), Store.YES, Index.ANALYZED_NO_NORMS));
                 if(alapn.getPhraseVoucher() != null)
                     doc.add(new Field(NameIndexField.VOUCHER.toString(), alapn.cleanVoucher, Store.YES,Index.ANALYZED_NO_NORMS));
+                if(StringUtils.isBlank(genus) && StringUtils.isNotBlank(alapn.getGenusOrAbove())){
+                    //add the genus to the index as it is necessary to match on the phrase name.
+                     doc.add(new Field(RankType.GENUS.getRank(), alapn.getGenusOrAbove(), Store.YES, Index.ANALYZED));
+                }
                     //doc.add(new Field(NameIndexField.VOUCHER.toString(), CBIndexSearch.voucherRemovePattern.matcher(alapn.getPhraseVoucher()).replaceAll(""), Store.YES,Index.ANALYZED_NO_NORMS));
             }
         }
@@ -729,6 +735,10 @@ public class CBCreateLuceneIndex {
             if(e.type == NameType.virus)
                 doc.add(new Field(NameIndexField.NAME.toString(), au.org.ala.checklist.lucene.CBIndexSearch.virusStopPattern.matcher(name).replaceAll(" "), Store.YES, Index.ANALYZED));
 
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            //throw e;
         }
 
         
@@ -854,7 +864,7 @@ public class CBCreateLuceneIndex {
             }
             indexer.createIndex(args[0], args[1], sn, cn);
         } else {
-            indexer.createIndex("/data/names/Version2011", "/data/lucene/namematchingv1_1", false, true);
+            indexer.createIndex("/data/names/Version2011", "/data/lucene/namematchingv1_1", true, false);
             //System.out.println("au.org.ala.checklist.lucene.CBCreateLuceneIndex <directory with export files> <directory in which to create indexes>");
            //indexer.createIndex("/data/exports/cb", "/data/lucene/namematching", false, true);
 
