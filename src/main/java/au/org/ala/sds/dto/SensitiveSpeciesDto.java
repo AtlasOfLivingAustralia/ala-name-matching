@@ -25,6 +25,8 @@ public class SensitiveSpeciesDto {
     private String family;
     private String sensitivityZone;
     private String authority;
+    private String reason;
+    private String remarks;
     private String fromDate;
     private String toDate;
     private String locationGeneralisation;
@@ -81,6 +83,22 @@ public class SensitiveSpeciesDto {
 
     public void setAuthority(String authority) {
         this.authority = authority;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 
     public String getFromDate() {
