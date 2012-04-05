@@ -115,7 +115,7 @@ public class SensitiveTaxonStore implements Serializable {
     public SensitiveTaxon findByExactMatch(String name) {
         // Do binary search
         int idx = Collections.binarySearch(taxonList, new SensitiveTaxon(name, StringUtils.contains(name, ' ') ? Rank.SPECIES : Rank.GENUS));
-        if (idx >= 0 && taxonList.get(idx).getTaxonName().equalsIgnoreCase(name)) {
+        if (idx >= 0 && taxonList.get(idx).getName().equalsIgnoreCase(name)) {
             return taxonList.get(idx);
         } else {
             return null;
