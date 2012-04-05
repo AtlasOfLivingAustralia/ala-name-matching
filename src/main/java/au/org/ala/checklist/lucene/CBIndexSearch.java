@@ -1,6 +1,5 @@
 package au.org.ala.checklist.lucene;
 
-import au.org.ala.checklist.lucene.model.ErrorType;
 import au.org.ala.checklist.lucene.model.MatchType;
 import java.io.File;
 import java.io.FileOutputStream;
