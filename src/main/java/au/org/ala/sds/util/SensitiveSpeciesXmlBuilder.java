@@ -72,6 +72,12 @@ public class SensitiveSpeciesXmlBuilder {
                 instance.setAttribute("category", si.getCategory().getId());
                 instance.setAttribute("authority", si.getAuthority());
                 instance.setAttribute("zone", si.getZone().getId());
+                if (si.getReason() != null) {
+                    instance.setAttribute("reason", si.getReason());
+                }
+                if (si.getRemarks() != null) {
+                    instance.setAttribute("remarks", si.getRemarks());
+                }
                 if (si instanceof ConservationInstance) {
                     instance.setAttribute("generalisation", ((ConservationInstance) si).getLocationGeneralisation());
                 } else if (si instanceof PlantPestInstance) {
