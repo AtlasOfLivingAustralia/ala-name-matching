@@ -556,8 +556,18 @@ object AssertionCodes {
   val COORDINATE_PRECISION_MISMATCH = ErrorCode("coordinatePrecisionMismatch",23,false,"Coordinate precision not valid")
   val UNCERTAINTY_RANGE_MISMATCH = ErrorCode("uncertaintyRangeMismatch",24,false,"Coordinate accuracy not valid")
   val UNCERTAINTY_IN_PRECISION = ErrorCode("uncertaintyInPrecision",25,false,"Coordinate precision and accuracy transposed")
+  
   val UNCERTAINTY_NOT_SPECIFIED = ErrorCode("uncertaintyNotSpecified", 27, false, "Coordinate uncertainty was not supplied")
   val COORDINATES_CENTRE_OF_COUNTRY = ErrorCode("coordinatesCentreOfCountry",28,true,"Supplied coordinates centre of country")
+  val MISSING_COORDINATEPRECISION = ErrorCode("missingCoordinatePrecision", 29, false, "coordinatePrecision not supplied with the record")
+  val MISSING_GEODETICDATUM = ErrorCode("missingGeodeticDatum",30, false, "geodeticDatum not supplied for coordinates")
+  val MISSING_GEOREFERNCEDBY = ErrorCode("missingGeorefencedBy", 31, false, "GeoreferencedBy not supplied with the record")
+  val MISSING_GEOREFERENCEPROTOCOL = ErrorCode("missingGeoreferenceProtocol",32, false, "GeoreferenceProtocol not supplied with the record")
+  val MISSING_GEOREFERENCESOURCES = ErrorCode("missingGeoreferenceSources",33,false,"GeoreferenceSources not supplied with the record")
+  val MISSING_GEOREFERENCEVERIFICATIONSTATUS = ErrorCode("missingGeoreferenceVerificationStatus",34, false,"GeoreferenceVerificationStatus not supplied with the record")
+  val INVALID_GEODETICDATUM = ErrorCode("invalidGeodeticDatum", 35, false,"The geodetic datum is not valid")
+  
+  val MISSING_GEOREFERENCE_DATE = ErrorCode("missingGeoreferenceDate",42,false, "GeoreferenceDate not supplied with the record")
 
   //taxonomy issues
   val TAXONOMIC_ISSUE = ErrorCode("taxonomicIssue",10000,false,"Taxonomic issue")  // general purpose option
@@ -568,6 +578,11 @@ object AssertionCodes {
   val NAME_NOT_IN_NATIONAL_CHECKLISTS = ErrorCode("nameNotInNationalChecklists",10005,false,"Name not in national checklists")
   val HOMONYM_ISSUE = ErrorCode("homonymIssue",10006,false,"Homonym issues with supplied name")
   val IDENTIFICATION_INCORRECT = ErrorCode("identificationIncorrect",10007,false,"Taxon misidentified")
+  val MISSING_TAXONRANK = ErrorCode("missingTaxonRank",10008,false,"taxonRank not supplied with the record")
+  val MISSING_IDENTIFICATIONQUALIFIER = ErrorCode("missingIdentificationQualifier",10009, false,"identificationQualifier not supplied with the record")
+  val MISSING_IDENTIFIEDBY = ErrorCode("missingIdentifiedBy",10010,false,"identifiedBy not supplied with the record")
+  val MISSING_IDENTIFICATIONREFERENCES = ErrorCode("missingIdentificationReferences",10011,false,"identificationReferences not supplied with the record")
+  val MISSING_DATEIDENTIFIED = ErrorCode("missingDateIdentified", 10012,false,"identificationDate not supplied with the record")
 
   //miscellanous
   val MISSING_BASIS_OF_RECORD = ErrorCode("missingBasisOfRecord",20001,true,"Basis of record not supplied")
@@ -616,6 +631,7 @@ object AssertionCodes {
   val taxonomicBounds = (10000, 20000)
   val miscellanousBounds = (20000, 30000)
   val temporalBounds = (30000, 40000)
+  val importantCodes = Array(4,5,18,19,26)
 
   val geospatialCodes = all.filter(errorCode => {errorCode.code >= geospatialBounds._1 && errorCode.code < geospatialBounds._2})
   val taxonomicCodes = all.filter(errorCode => {errorCode.code>=10000 && errorCode.code<20000})

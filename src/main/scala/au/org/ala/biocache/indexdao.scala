@@ -134,7 +134,8 @@ trait IndexDAO {
       "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector","state_conservation","raw_state_conservation",
       "sensitive", "coordinate_uncertainty", "user_id","provenance","subspecies_guid", "subspecies_name", "interaction","last_assertion_date",
       "last_load_date","last_processed_date", "modified_date", "establishment_means","loan_number","loan_identifier","loan_destination",
-      "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric","life_stage", "outlier_layer", "outlier_layer_count") // ++ elFields ++ clFields
+      "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric",
+      "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue","raw_identification_qualifier","species_habitats") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -210,6 +211,10 @@ trait IndexDAO {
                         Json.toStringArray(sdatahubs)
                     else
                         Array[String]()
+                }
+                val habitats = {
+                  val shab = map.getOrElse("speciesHabitats.p","[]")
+                  Json.toStringArray(shab)
                 }
                 var eventDate = getValue("eventDate.p", map)
                 var occurrenceYear = getValue("year.p", map)
@@ -389,7 +394,8 @@ trait IndexDAO {
                     map.getOrElse("nameMatchMetric.p", ""),
                     map.getOrElse("phenology",""),  //TODO make this a controlled vocab that gets mapped during processing...                    
                     outlierForLayers.mkString("|"),
-                    outlierForLayers.length.toString
+                    outlierForLayers.length.toString, map.getOrElse("taxonomicIssue.p",""), map.getOrElse("identificationQualifier",""),
+                    habitats.mkString("|")
                     ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
                 //)
             }
@@ -700,7 +706,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
           if (values(i) != "") {
             if (header(i) == "duplicate_inst" || header(i) == "establishment_means" || header(i) == "species_group"
               || header(i) == "assertions" || header(i) == "data_hub_uid" || header(i) == "interactions"
-              || header(i) == "outlier_layer") {
+              || header(i) == "outlier_layer" || header(i) == "species_habitats") {
               //multiple values in this field
               for (value <- values(i).split('|')) {
                 if (value != "")

@@ -20,7 +20,7 @@ import scalaj.http.Http
 import scala.collection.JavaConversions
 import org.ala.layers.client.Client
 import scala.collection.mutable.HashMap
-import org.apache.zookeeper.ZooKeeper.States
+//import org.apache.zookeeper.ZooKeeper.States
 import scala.util.parsing.json.JSON
 
 /**
@@ -97,6 +97,9 @@ object ClassificationDAO {
       if(nsr!=null){
           //handle the case where the species is a synonym this is a temporary fix should probably go in ala-name-matching
           val result = if(nsr.isSynonym) Some(nameIndex.searchForRecordByLsid(nsr.getAcceptedLsid))  else Some(nsr)
+          //change the name match metric for a synonym 
+          if(nsr.isSynonym())
+            result.get.setMatchType(nsr.getMatchType())
           lock.synchronized { lru.put(hash, result) }
           result
       } else {

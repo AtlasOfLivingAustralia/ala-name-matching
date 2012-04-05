@@ -102,7 +102,8 @@ class MiscellaneousProcessor extends Processor {
   val interactionPattern = """([A-Za-z]*):([\x00-\x7F\s]*)""".r
   
   def process(guid:String, raw:FullRecord, processed:FullRecord) :Array[QualityAssertion] ={
-      var qas:Array[QualityAssertion] = processImages(guid, raw, processed)
+      var assertions = new ArrayBuffer[QualityAssertion]
+      processImages(guid, raw, processed,assertions)
       processInteractions(guid, raw, processed)
       //now process the "establishmentMeans" values
       processEstablishmentMeans(raw, processed)
@@ -113,7 +114,9 @@ class MiscellaneousProcessor extends Processor {
               processed.occurrence.modified = parsedDate.get.startDate
           }
       }
-      qas
+      //TODO reenable identification processing after we have categorised issues better.
+      //processIdentification(raw,processed,assertions)
+      assertions.toArray
   }
   
   def processEstablishmentMeans(raw:FullRecord, processed:FullRecord)={
@@ -125,6 +128,21 @@ class MiscellaneousProcessor extends Processor {
               processed.occurrence.establishmentMeans = term.get.getCanonical
           }
       }
+  }
+  
+  def processIdentification(raw:FullRecord, processed:FullRecord,assertions: ArrayBuffer[QualityAssertion])={
+    //check missing identification qualifier
+    if(raw.identification.identificationQualifier == null)
+      assertions + QualityAssertion(AssertionCodes.MISSING_IDENTIFICATIONQUALIFIER, "Missing identificationQualifier")
+    //check missing identifiedBy
+    if(raw.identification.identifiedBy == null)
+      assertions + QualityAssertion(AssertionCodes.MISSING_IDENTIFIEDBY, "Missing identifiedBy")
+    //check missing identification references
+    if(raw.identification.identificationReferences == null)
+      assertions + QualityAssertion(AssertionCodes.MISSING_IDENTIFICATIONREFERENCES, "Missing identificationReferences")
+    //check missing date identified
+    if(raw.identification.dateIdentified == null)
+      assertions + QualityAssertion(AssertionCodes.MISSING_DATEIDENTIFIED, "Missing dateIdentified")
   }
   
   def processInteractions(guid:String, raw:FullRecord, processed:FullRecord)={
@@ -150,7 +168,7 @@ class MiscellaneousProcessor extends Processor {
   /**
    * validates that the associated media is a valid image url
    */
-  def processImages(guid:String, raw:FullRecord, processed:FullRecord) :Array[QualityAssertion] ={
+  def processImages(guid:String, raw:FullRecord, processed:FullRecord, assertions: ArrayBuffer[QualityAssertion]) ={
     val urls = raw.occurrence.associatedMedia
     // val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(cl.getter(sg.rank)) => sg.name}
     if(urls != null){      
@@ -160,9 +178,9 @@ class MiscellaneousProcessor extends Processor {
       processed.occurrence.videos = aurls.filter(MediaStore.isValidVideoURL(_))
 
       if(aurls.length != (processed.occurrence.images.length + processed.occurrence.sounds.length + processed.occurrence.videos.length))
-          return Array(QualityAssertion(AssertionCodes.INVALID_IMAGE_URL, "URL can not be an image"))
+          assertions + QualityAssertion(AssertionCodes.INVALID_IMAGE_URL, "URL can not be an image")
     }
-    Array()
+    
   }
 
   def getName = "image"
@@ -543,7 +561,11 @@ class LocationProcessor extends Processor {
         processed.location.country = countryTerm.get.canonical
       }
     }
-
+    
+    //validate the gereference values
+    //TODO reenable georeferencing processing after we have categorised issues better.
+    //validateGeoreferenceValues(raw,processed,assertions)
+    
     assertions.toArray
   }
 
@@ -613,6 +635,8 @@ class LocationProcessor extends Processor {
         }
       }
     }
+    if(raw.location.coordinatePrecision == null)
+      assertions + QualityAssertion(AssertionCodes.MISSING_COORDINATEPRECISION, "Missing coordinatePrecision")
 
     // If the coordinateUncertainty is still empty populate it with the default
     // value (we don't test until now because the SDS will sometime include coordinate uncertainty)
@@ -670,6 +694,26 @@ class LocationProcessor extends Processor {
         assertions + QualityAssertion(AssertionCodes.STATE_COORDINATE_MISMATCH, comment)
       }
     }
+  }
+  
+  def validateGeoreferenceValues(raw: FullRecord, processed:FullRecord, assertions:ArrayBuffer[QualityAssertion])={
+    //check for missing geodeticDatum
+    if(raw.location.geodeticDatum == null && processed.location.geodeticDatum == null)
+      assertions + QualityAssertion(AssertionCodes.MISSING_GEODETICDATUM, "Missing geodeticDatum")
+    //check for missing georeferencedBy
+    if(raw.location.georeferencedBy == null && processed.location.georeferencedBy == null)
+      assertions + QualityAssertion(AssertionCodes.MISSING_GEOREFERNCEDBY, "Missing georeferencedBy")
+    //check for missing georeferencedProtocol
+    if(raw.location.georeferenceProtocol == null && processed.location.georeferenceProtocol == null)
+      assertions + QualityAssertion(AssertionCodes.MISSING_GEOREFERENCEPROTOCOL, "Missing georeferenceProtocol")
+    //check for missing georeferenceSources
+    if(raw.location.georeferenceSources == null && processed.location.georeferenceSources == null)
+      assertions + QualityAssertion(AssertionCodes.MISSING_GEOREFERENCESOURCES, "Missing georeferenceSources")
+    //check for missing georeferenceVerificationStatus
+    if(raw.location.georeferenceVerificationStatus == null && processed.location.georeferenceVerificationStatus == null)
+      assertions + QualityAssertion(AssertionCodes.MISSING_GEOREFERENCEVERIFICATIONSTATUS, "Missing georeferenceVerificationStatus")
+    //check for missing georeferenceDate
+    //there is no georeferenceDate in out model ???
   }
 
   /**
@@ -860,6 +904,9 @@ class ClassificationProcessor extends Processor {
 
   val logger = LoggerFactory.getLogger("ClassificationProcessor")
   val afdApniIdentifier = """(:afd.|:apni.)""".r
+  val questionPattern = """([\x00-\x7F\s]*)\?([\x00-\x7F\s]*)""".r
+  val affPattern ="""([\x00-\x7F\s]*) aff[#!?\\.]?([\x00-\x7F\s]*)""".r
+  val cfPattern ="""([\x00-\x7F\s]*) cf[#!?\\.]?([\x00-\x7F\s]*)""".r
   import au.org.ala.biocache.BiocacheConversions._
 
   /**
@@ -911,8 +958,8 @@ class ClassificationProcessor extends Processor {
   /**
    * Match the classification
    */
-  def process(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {
-
+  def process(guid:String, raw:FullRecord, processed:FullRecord) : Array[QualityAssertion] = {   
+    
     try {
       //update the raw with the "default" values if necessary
       if(processed.defaultValuesUsed){
@@ -960,9 +1007,14 @@ class ClassificationProcessor extends Processor {
 
         //try to apply the vernacular name
         val taxonProfile = TaxonProfileDAO.getByGuid(nsr.getLsid)
-        if(!taxonProfile.isEmpty && taxonProfile.get.commonName!=null){
-          processed.classification.vernacularName = taxonProfile.get.commonName
+        if(!taxonProfile.isEmpty){
+          if(taxonProfile.get.commonName!=null)
+              processed.classification.vernacularName = taxonProfile.get.commonName
+          if(taxonProfile.get.habitats != null)
+            processed.classification.speciesHabitats = taxonProfile.get.habitats
         }
+        
+        
 
         //Add the species group information - I think that it is better to store this value than calculate it at index time
         //val speciesGroups = SpeciesGroups.getSpeciesGroups(processed.classification)
@@ -970,6 +1022,19 @@ class ClassificationProcessor extends Processor {
         logger.debug("Species Groups: " + speciesGroups)
         if(!speciesGroups.isEmpty && !speciesGroups.get.isEmpty){
           processed.classification.speciesGroups = speciesGroups.get.toArray[String]
+        }
+        
+        //add the taxonomic rating for the raw name
+        val scientificName = {if(raw.classification.scientificName != null) raw.classification.scientificName 
+        else if(raw.classification.species != null) raw.classification.species 
+        else if(raw.classification.specificEpithet != null && raw.classification.genus != null) raw.classification.genus + " " + raw.classification.specificEpithet
+        else null
+        }
+        processed.classification.taxonomicIssue =scientificName match{
+          case questionPattern(a,b) => "questionSpecies"
+          case affPattern(a,b) => "affinitySpecies"
+          case cfPattern(a,b) => "conferSpecies"
+          case _=> "noIssue"
         }
 
         //is the name in the NSLs ???
