@@ -1,7 +1,7 @@
 package au.org.ala.biocache
 
-import scala.collection.mutable.HashMap
 import scala.collection.JavaConversions
+import collection.mutable.{ArrayBuffer, HashMap}
 
 object FullRecordMapper {
 	
@@ -137,7 +137,15 @@ object FullRecordMapper {
                       //load the QA field names from the array
                       if (fieldValue != "true" && fieldValue != "false") {
                         //parses an array of integers
-                        fullRecord.assertions = Json.toIntArray(fieldValue).map(code => AssertionCodes.getByCode(code).get.getName).toArray
+                        val codeBuff = new ArrayBuffer[String]
+                        Json.toIntArray(fieldValue).foreach(code => {
+                          val retrievedCode = AssertionCodes.getByCode(code)
+                          if(!retrievedCode.isEmpty){
+                            codeBuff += retrievedCode.get.getName
+                          }
+                        })
+
+                        fullRecord.assertions =  codeBuff.toArray
                       }
                     }
                     case "miscProperties" => {
