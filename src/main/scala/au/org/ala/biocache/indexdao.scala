@@ -181,7 +181,7 @@ trait IndexDAO {
                 var latlon = ""
                 val sciName = getValue("scientificName.p", map)
                 val taxonConceptId = getValue("taxonConceptID.p", map)
-                val vernacularName = getValue("vernacularName.p", map)
+                val vernacularName = getValue("vernacularName.p", map).trim
                 val kingdom = getValue("kingdom.p", map)
                 val family = getValue("family.p", map)
                 val images = {
