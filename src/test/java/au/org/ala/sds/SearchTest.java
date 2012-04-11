@@ -61,5 +61,9 @@ public class SearchTest {
 
         ss = finder.findSensitiveSpecies("Anigozanthos humilis subsp. Badgingarra (SD Hopper 7114)");
         assertNotNull(ss);
+
+        ss = finder.findSensitiveSpecies("Cacatua leadbeateri");
+        assertNotNull(ss);
+        assertEquals(ss.getTaxonName(), "Lophochroa leadbeateri");
     }
 }
