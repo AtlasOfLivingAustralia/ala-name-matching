@@ -22,12 +22,16 @@ import au.org.ala.biocache.LatOrLong
 object VerbatimLatLongParser {
 
   import LatOrLong._
-  //    16° 52' 37" S
-  //    37º 10' 48" S
   val verbatimPattern = """(?:[\\-])?([0-9]{1,3})([d|deg|degree|degrees|°|º][ ]*)([0-9]{1,2})?([m|min|minutes|minute|'][ ]*)([0-9]{1,2}.?[0-9]{0,})?(["|']{1,2}[ ]*)?(s|south|n|north|w|west|e|east)""".r
   val verbatimPatternNoDenom = """(?:[\\-])?([0-9]{1,3})(?:[ ]*)?([0-9]{1,2})?(?:[ ]*)?([0-9]{1,2}.?[0-9]{0,})?(?:"[ ]*)?(s|south|n|north|w|west|e|east)""".r
   val negativePattern = "(s|south|w|west)".r
 
+  /**
+   * Parse with a decimal number output and an indication of latitude or longitude
+   *
+   * @param stringValue
+   * @return
+   */
   def parseWithDirection(stringValue:String) : (Option[Float], Option[LatOrLong]) = {
     try{
       val normalised = {
@@ -59,20 +63,20 @@ object VerbatimLatLongParser {
    */
   def parse(stringValue:String) : Option[Float] = {
     try{
-        val normalised = {
-          stringValue.toLowerCase.trim.replaceAll("''", "\"")
-        }
-        normalised match {
-           case verbatimPattern(degree, dsign, minute, msign, second, ssign, direction) => {
-                convertToDecimal(degree, minute, second, direction)
-           }
-           case verbatimPatternNoDenom(degree, minute, second, direction) => {
-                convertToDecimal(degree, minute, second, direction)
-           }
-           case _ => None
-        }
+      val normalised = {
+        stringValue.toLowerCase.trim.replaceAll("''", "\"")
+      }
+      normalised match {
+       case verbatimPattern(degree, dsign, minute, msign, second, ssign, direction) => {
+         convertToDecimal(degree, minute, second, direction)
+       }
+       case verbatimPatternNoDenom(degree, minute, second, direction) => {
+         convertToDecimal(degree, minute, second, direction)
+       }
+       case _ => None
+      }
     } catch {
-        case e:Exception => None
+      case e:Exception => None
     }
   }
 
@@ -109,17 +113,15 @@ object VerbatimLatLongParser {
 
 object DistanceRangeParser {
 
-   val singleNumber = """([0-9]{1,})""".r
-   val decimalNumber = """([0-9]{1,}[.]{1}[0-9]{1,})""".r
-   val range = """([0-9.]{1,})([km|m|metres|meters]{0,})-([0-9.]{1,})([km|m|metres|meters]{0,})""".r
-   val greaterOrLessThan = """(\>|\<)([0-9.]{1,})([km|m|metres|meters]{0,})""".r
-   val metres = """(m|metres|meters)""".r
-   val kilometres = """(km|kilometres|kilometers)""".r
+  val singleNumber = """([0-9]{1,})""".r
+  val decimalNumber = """([0-9]{1,}[.]{1}[0-9]{1,})""".r
+  val range = """([0-9.]{1,})([km|m|metres|meters]{0,})-([0-9.]{1,})([km|m|metres|meters]{0,})""".r
+  val greaterOrLessThan = """(\>|\<)([0-9.]{1,})([km|m|metres|meters]{0,})""".r
+  val metres = """(m|metres|meters)""".r
+  val kilometres = """(km|kilometres|kilometers)""".r
+  val singleNumberMetres = """([0-9]{1,})(m|metres|meters)""".r
+  val singleNumberKilometres = """([0-9]{1,})(km|kilometres|kilometers)""".r
 
-   val singleNumberMetres = """([0-9]{1,})(m|metres|meters)""".r
-   val singleNumberKilometres = """([0-9]{1,})(km|kilometres|kilometers)""".r
-   
-   
   /**
    * Handle these formats:
    * 2000
@@ -131,31 +133,31 @@ object DistanceRangeParser {
    */
   def parse(stringValue:String) : Option[Float] = {
     try {
-        val normalised =  stringValue.replaceAll("[ ,]", "").toLowerCase.trim
-        //remove trailing chars
-        normalised match {
-            case singleNumber(number) =>  { Some(number.toFloat) }
-            case singleNumberMetres(number,denom) =>  { Some(number.toFloat) }
-            case singleNumberKilometres(number,denom) =>  { convertToMetres(denom,number) }
-            case decimalNumber(number) =>  { Some(number.toFloat) }
-            case range(firstNumber, denom1, secondNumber, denom2) =>  { convertToMetres(denom2, secondNumber) }
-            case greaterOrLessThan(greaterThan, number, denom) =>  { convertToMetres(denom, number) }
-            case _ => None
-        }
-    } catch {
+      val normalised =  stringValue.replaceAll("[ ,]", "").toLowerCase.trim
+      //remove trailing chars
+      normalised match {
+        case singleNumber(number) =>  { Some(number.toFloat) }
+        case singleNumberMetres(number,denom) =>  { Some(number.toFloat) }
+        case singleNumberKilometres(number,denom) =>  { convertToMetres(denom,number) }
+        case decimalNumber(number) =>  { Some(number.toFloat) }
+        case range(firstNumber, denom1, secondNumber, denom2) =>  { convertToMetres(denom2, secondNumber) }
+        case greaterOrLessThan(greaterThan, number, denom) =>  { convertToMetres(denom, number) }
         case _ => None
+      }
+    } catch {
+      case _ => None
     }
   }
 
   def convertToMetres(denom:String, value:String) : Option[Float] = {
-      try {
-        denom match {
-            case metres(demon) => { Some(value.toFloat)  }
-            case kilometres(denom) => {Some(value.toFloat * 1000)  }
-            case _ => {  Some(value.toFloat) }
-        }
-      } catch {
-          case _ => None
+    try {
+      denom match {
+        case metres(demon) => { Some(value.toFloat)  }
+        case kilometres(denom) => {Some(value.toFloat * 1000)  }
+        case _ => {  Some(value.toFloat) }
       }
+    } catch {
+        case _ => None
+    }
   }
 }
