@@ -251,6 +251,21 @@ object AdHocParser {
         } else {
           parsedValues
         }
+//      } else if(!duplicateTerms.get("verbatimLatitude").isEmpty){
+//
+//        val duplicateIndexes = duplicateTerms.get("verbatimLatitude").get.map(x => x._2)
+//        val sequentialPairs = (for(i <- 0 to duplicateIndexes.size-2; if(duplicateIndexes(i)==duplicateIndexes(i+1)-1) )
+//         yield (duplicateIndexes(i),duplicateIndexes(i+1))
+//        )
+//
+//        if(!sequentialPairs.isEmpty){
+//          //replace with (decimalLat, decimalLong)
+//          val tuple = sequentialPairs.first
+//          parsedValues updated (tuple._1, "verbatimLatitude") updated (tuple._2, "verbatimLongitude")
+//        } else {
+//          parsedValues
+//        }
+//
       } else {
         parsedValues
       }
@@ -260,8 +275,8 @@ object AdHocParser {
   }
 
   def parseHead(column1: String, column2: String): Option[(String, String)] = column1 match {
-    case it if (column1.isLatitude && column2.isLongitude) => Some("decimalLatitude", "decimalLongitude")
-    case it if (column1.isLatitude && column2.isLongitude) => Some("decimalLongitude", "decimalLatitude")
+    case it if (column1.isLatitude && column2.isLatitude) => Some("decimalLatitude", "decimalLongitude")
+//    case it if (column1.isLatitude && column2.isLongitude) => Some("decimalLongitude", "decimalLatitude")
     case it if it.isInt => Some("recordNumber", "")
     case it if it.startsWith("urn") => Some("occurrenceID", "")
     case it if it.startsWith("http://") => Some("occurrenceID", "")
@@ -298,6 +313,7 @@ object AdHocParser {
       case ScientificNameExtractor(value) => value
       case CommonNameExtractor(value) => "vernacularName"
       case OccurrenceStatusExtractor(value) => "occurrenceStatus"
+      //case TaxonRankExtractor(value) => "taxonRank"
       case _ => ""
     }
   }
@@ -426,12 +442,22 @@ object DecimalLongitudeExtractor {
 }
 
 object VerbatimLatitudeExtractor {
-  def unapply(str: String): Option[Float] = VerbatimLatLongParser.parse(str)
+  def unapply(str: String): Option[Float] = VerbatimLatLongParser.parseWithDirection(str) match {
+    case (Some(latitude),Some(latLong)) =>  if(latLong == LatOrLong.Latitude) Some(latitude) else None
+    case (None, None) => None
+  }
 }
 
 object VerbatimLongitudeExtractor {
-  def unapply(str: String): Option[Float] = VerbatimLatLongParser.parse(str)
+  def unapply(str: String): Option[Float] = VerbatimLatLongParser.parseWithDirection(str) match {
+    case (Some(longitude),Some(latLong)) =>  if(latLong == LatOrLong.Longitude) Some(longitude) else None
+    case (None, None) => None
+  }
 }
+
+//object TaxonRankExtractor {
+//  def unapply(str: String): Option[Term] = TaxonRanks.matchTerm(str)
+//}
 
 object BasisOfRecordExtractor {
   def unapply(str: String): Option[Term] = BasisOfRecord.matchTerm(str)

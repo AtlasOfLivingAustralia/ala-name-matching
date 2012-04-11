@@ -310,6 +310,10 @@ object Sex extends Vocab {
   val all = loadVocabFromFile("/sex.txt")
 }
 
+object TaxonRanks extends Vocab {
+  val all = loadVocabFromFile("/taxonRanks.txt")
+}
+
 /**
  * Vocabulary matcher for basis of record values.
  */
@@ -448,7 +452,8 @@ object HabitatMap extends VocabMaps {
      createSpeciesGroup("Insects",  "classs", Array("Insecta"), Array(), "Arthropods"),
      createSpeciesGroup("Plants", "kingdom", Array("Plantae"), Array(), null),
      createSpeciesGroup("Gymnosperms","subclass", Array("Pinidae", "Cycadidae"), Array(), "Plants"), //new group for AVH
-     createSpeciesGroup("FernsAndAllies","subclass", Array("Equisetidae", "Lycopodiidae", "Marattiidae", "Ophioglossidae", "Polypodiidae","Psilotidae"), Array(), "Plants"), //new group for AVH
+     createSpeciesGroup("FernsAndAllies","subclass", Array("Equisetidae", "Lycopodiidae", "Marattiidae", "Ophioglossidae", "Polypodiidae","Psilotidae"), Array(), "Plants"),
+     //new groups for AVH
      createSpeciesGroup("Angiosperms", "subclass",Array("Magnoliidae"), Array(), "Plants"),//new group for AVH
      createSpeciesGroup("Monocots", "superorder", Array("Lilianae"), Array(), "Angiosperms"), //new group for AVH
      createSpeciesGroup("Dicots", "subclass", Array("Magnoliidae"),  Array("Lilianae"), "Angiosperms"), //new group for AVH     
@@ -456,10 +461,8 @@ object HabitatMap extends VocabMaps {
      createSpeciesGroup("Chromista","kingdom", Array("Chromista"), Array(), null),
      createSpeciesGroup("Protozoa", "kingdom", Array("Protozoa"), Array(), null),
      createSpeciesGroup("Bacteria", "kingdom", Array("Bacteria"), Array(), null)
-     
-     
     )
-    //println("The groups " + groups)
+
     /*
      * Creates a species group by first determining the left right ranges for the values and excluded values.
      */

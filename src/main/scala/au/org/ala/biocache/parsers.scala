@@ -2,14 +2,14 @@ package au.org.ala.biocache
 
 object LatOrLong extends Enumeration {
   type LatOrLong = Value
-  val Latitude,Longitude = Value
-  val longDirString = "s|south|n|north".split("|").toSet
-  val latDirString = "w|west|e|east".split("|").toSet
+  val Latitude, Longitude = Value
+  val latDirString = "s|south|n|north".split("\\|").toSet
+  val longDirString = "w|west|e|east".split("\\|").toSet
 
   def getDirection(raw:String): Option[LatOrLong] = {
     val normalised = raw.toLowerCase.trim
     if(latDirString.contains(normalised)) Some(Latitude)
-    else if (longDirString.contains(normalised)) Some(Latitude)
+    else if (longDirString.contains(normalised)) Some(Longitude)
     else None
   }
 }
@@ -20,7 +20,6 @@ import au.org.ala.biocache.LatOrLong
  * Parser for coordinates in deg, min sec format
  */
 object VerbatimLatLongParser {
-
 
   import LatOrLong._
   //    16° 52' 37" S
