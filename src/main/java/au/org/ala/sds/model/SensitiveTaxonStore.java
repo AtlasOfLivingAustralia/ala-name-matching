@@ -128,9 +128,7 @@ public class SensitiveTaxonStore implements Serializable {
             try {
                 match = cbIndexSearcher.searchForRecord(stripTaxonTokens(name), null);
                 if (match != null) {
-                    if (match.isSynonym()) {
-                        match = cbIndexSearcher.searchForRecordByID(match.getAcceptedLsid());
-                    }
+                    match = checkForSynonym(match);
                 }
             } catch (SearchResultException e) {
                 logger.debug("'" + name + "' - " + e.getMessage());
@@ -148,12 +146,10 @@ public class SensitiveTaxonStore implements Serializable {
         if (cbIndexSearcher != null) {
             try {
                 name = stripTaxonTokens(st.getTaxonName());
-                LinnaeanRankClassification cl = new LinnaeanRankClassification(null, null, null, null, st.getFamily().equals("") ? null : st.getFamily() , null, name);
-                match = cbIndexSearcher.searchForRecord(name, cl, StringUtils.contains(name, ' ') ? null : RankType.GENUS);
+                LinnaeanRankClassification lrc = new LinnaeanRankClassification(null, null, null, null, st.getFamily().equals("") ? null : st.getFamily() , null, name);
+                match = cbIndexSearcher.searchForRecord(name, lrc, StringUtils.contains(name, ' ') ? null : RankType.GENUS);
                 if (match != null) {
-                    if (match.isSynonym()) {
-                        match = cbIndexSearcher.searchForRecordByID(match.getAcceptedLsid());
-                    }
+                    match = checkForSynonym(match);
                 }
             } catch (SearchResultException e) {
                 logger.debug("'" + name + "' - " + e.getMessage());
@@ -165,10 +161,23 @@ public class SensitiveTaxonStore implements Serializable {
         return match;
     }
 
+    private NameSearchResult checkForSynonym(NameSearchResult match) {
+        NameSearchResult accepted;
+        if (match.isSynonym()) {
+            accepted = cbIndexSearcher.searchForRecordByLsid(match.getAcceptedLsid());
+            if (accepted == null) {
+                logger.error("Could not find accepted name for synonym '" + match.getCleanName() + "'");
+            }
+            return accepted;
+        } else {
+            return match;
+        }
+    }
+
     protected static String stripTaxonTokens(String name) {
 //        String stripped  = name.replaceAll(" subsp\\. ", " ");
 //        stripped = stripped.replaceAll(" var\\. ", " ");
-        String stripped = name.replaceAll(" ms$", "");
-        return stripped;
+//        String stripped = name.replaceAll(" ms$", "");
+        return name;
     }
 }

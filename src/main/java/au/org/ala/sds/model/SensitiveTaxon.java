@@ -38,7 +38,7 @@ public class SensitiveTaxon implements Serializable, Comparable<SensitiveTaxon> 
     private String family;
     private String commonName;
     private final Rank rank;
-    private String acceptedName;
+    private String acceptedName;    // Has a value if name is a synonym - otherwise null
     private String lsid;
     private final List<SensitivityInstance> instances;
 
