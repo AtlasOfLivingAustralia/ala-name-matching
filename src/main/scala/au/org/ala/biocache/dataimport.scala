@@ -20,8 +20,8 @@ class SimpleLoader extends DataLoader
 trait DataLoader {
     
     import FileHelper._
-    val user ="harvest services"
-    val api_key="Venezuela"
+    val user = "harvest services"
+    val api_key = "Venezuela"
     val logger = LoggerFactory.getLogger("DataLoader")
     val temporaryFileStore = "/data/biocache-load/"
     val registryUrl = "http://collections.ala.org.au/ws/dataResource/"
@@ -98,10 +98,7 @@ trait DataLoader {
     def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], updateLastModified:Boolean, downloadMedia:Boolean) : Boolean = {
         
         //the details of how to construct the UniqueID belong in the Collectory
-        val uniqueID = identifyingTerms.isEmpty match {
-        	case true => None
-        	case false => Some(createUniqueID(dataResourceUid,identifyingTerms))
-        }
+        val uniqueID = if(identifyingTerms.isEmpty) None else Some(createUniqueID(dataResourceUid,identifyingTerms))
 
         //lookup the column
         val (recordUuid, isNew) = {
@@ -119,10 +116,7 @@ trait DataLoader {
         fr.uuid = recordUuid
         //The row key is the uniqueID for the record. This will always start with the dataResourceUid
         fr.rowKey = if(uniqueID.isEmpty) dataResourceUid +"|"+recordUuid else uniqueID.get
-//        if(!out.isEmpty){
-//            out.get.write((fr.rowKey+ "\n").getBytes())
-//        }
-//        //The last load time
+        //The last load time
         if(updateLastModified){
           fr.lastModifiedTime = loadTime
         }
@@ -207,9 +201,9 @@ trait DataLoader {
         } else if (isGzipped){
           println("Extracting GZIP " + file.getAbsolutePath)
           file.extractGzip
-          val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
           //need to remove the gzip file so the loader doesn't attempt to load it.
           FileUtils.forceDelete(file)
+          val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
           println("Archive extracted to directory: " + fileName)
           (new File(fileName)).getParentFile.getAbsolutePath
         } else {
