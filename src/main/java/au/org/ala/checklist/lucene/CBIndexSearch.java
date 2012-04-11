@@ -531,19 +531,21 @@ public class CBIndexSearch {
     		if(nsr == null && cl.getKingdom()!=null){
     			nsr = searchForRecord(cl.getKingdom(), cl, RankType.KINGDOM, fuzzy);
     		}
+
+            if (nsr != null)
+                nsr.setMatchType(MatchType.RECURSIVE);
                 
     	}
         //Obtain and store the GUIDs for the classification identifiers
         if (nsr != null && addGuids) {
             updateClassificationWithGUID(nsr.getRankClassification());
         }
-        if (nsr != null) {
-            nsr.setMatchType(MatchType.RECURSIVE);
+        
             //set the error type so that the user knows that there was an error
 //            if (currentError != null) {
 //                nsr.setErrorType(currentError.getErrorType());
 //            }
-        }
+        
         if (nsr == null && currentError != null)
             throw currentError;
     	return nsr;
