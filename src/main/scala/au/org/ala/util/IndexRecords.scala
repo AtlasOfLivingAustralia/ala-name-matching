@@ -39,6 +39,8 @@ object IndexRecords {
     var check:Boolean = false
     var startDate:Option[String] = None
     var pageSize = 1000
+    var uuidFile:String = ""
+    var rowKeyFile:String = ""
     val parser = new OptionParser("index records options") {
         opt("empty", "empty the index first", {empty=true})
         opt("check","check to see if the record is deleted before indexing",{check=true})
@@ -47,6 +49,8 @@ object IndexRecords {
         opt("date", "date", "The earliest modification date for records to be indexed. Date in the form yyyy-mm-dd",
           {v:String => startDate = Some(v)})
         intOpt("ps", "pageSize", "The page size for indexing", {v:Int => pageSize = v })
+        opt("if", "file-uuids-to-index","Absolute file path to fle containing UUIDs to index", {v:String => uuidFile = v})
+        opt("rf", "file-rowkeys-to-index","Absolute file path to fle containing rowkeys to index", {v:String => rowKeyFile = v})
     }
 
     if(parser.parse(args)){
@@ -54,8 +58,14 @@ object IndexRecords {
         if(empty){
            logger.info("Emptying index")
            indexer.emptyIndex
-        }        
-        index(startUuid, dataResource, false, false, startDate, check, pageSize)
+        }
+        if (uuidFile != ""){
+          indexListOfUUIDs(new File(uuidFile))
+        } else if (rowKeyFile != ""){
+          indexList(new File(rowKeyFile))
+        } else {
+          index(startUuid, dataResource, false, false, startDate, check, pageSize)
+        }
         //shut down pelops and index to allow normal exit
         indexer.shutdown
         persistenceManager.shutdown

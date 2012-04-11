@@ -99,7 +99,12 @@ trait IndexDAO {
             if (FullRecordMapper.isQualityAssertion(fieldName)) {
                 val value = map.get(fieldName).get
                 if(value != "true" && value != "false"){
-                  buff ++= Json.toIntArray(value).map(code => AssertionCodes.getByCode(code).get.getName).toArray[String]
+                  Json.toIntArray(value).foreach(code =>{
+                    val codeOption = AssertionCodes.getByCode(code)
+                    if(!codeOption.isEmpty){
+                      buff += codeOption.get.getName
+                    }
+                  })
                 }
             }
         )
@@ -273,7 +278,7 @@ trait IndexDAO {
                 }              
 
                 //Only set the geospatially kosher field if there are coordinates supplied
-                val geoKosher = if(slat=="" &&slon == "") "" else map.getOrElse(FullRecordMapper.geospatialDecisionColumn, "")
+                val geoKosher = if(slat == "" && slon == "") "" else map.getOrElse(FullRecordMapper.geospatialDecisionColumn, "")
                 val hasUserAss = map.getOrElse(FullRecordMapper.userQualityAssertionColumn, "") match {
                     case "true" => "true"
                     case "false" =>"false"

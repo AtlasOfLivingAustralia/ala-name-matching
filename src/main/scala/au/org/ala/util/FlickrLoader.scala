@@ -2,13 +2,9 @@ package au.org.ala.util
 import org.apache.commons.lang.time.DateUtils
 import java.text.SimpleDateFormat
 import scala.xml.XML
-import au.org.ala.biocache.FullRecord
-import au.org.ala.biocache.Config
-import au.org.ala.biocache.DataLoader
 import scala.collection.mutable.ListBuffer
 import au.org.ala.biocache._
-import au.org.ala.util.OptionParser._
-import java.util.{Calendar, Date}
+import java.util.Date
 
 object FlickrLoader extends DataLoader {
 
@@ -63,6 +59,9 @@ case class FlickrLicence(id:String,name:String,url:String)
 
 class FlickrLoader extends DataLoader {
 
+  val BHLLinkInText = """([.*]*)?(biodiversitylibrary.org/page/)([0-9]*)([.*]*)?"""".r
+  val BHLLink = """(biodiversitylibrary.org/page/)([0-9]*)"""".r
+
   def load(dataResourceUid: String):Unit = load(dataResourceUid, None, None)
 
   /**
@@ -82,7 +81,7 @@ class FlickrLoader extends DataLoader {
   /**
    * Load the resource between the supplied dates.
    */
-  def load(dataResourceUid: String, suppliedStartDate: Option[Date], suppliedEndDate: Option[Date], overwriteImages: Boolean = false) :Unit ={
+  def load(dataResourceUid: String, suppliedStartDate: Option[Date], suppliedEndDate: Option[Date], overwriteImages: Boolean = false){
 
     val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
 
@@ -209,6 +208,15 @@ class FlickrLoader extends DataLoader {
     val datesElem = (xml \\ "dates")(0)
     fr.event.eventDate = datesElem.attribute("taken").get.text
     fr.occurrence.occurrenceRemarks = description
+
+    if(fr.occurrence.occurrenceDetails == null){
+      //check the description for BHL link
+      checkForBHLUrl(description) match {
+        case Some(url) =>  fr.occurrence.occurrenceDetails = url
+        case None =>
+      }
+    }
+
     fr.occurrence.recordedBy = realname.head.text
 
     //get the licence and rights fields
@@ -254,6 +262,9 @@ class FlickrLoader extends DataLoader {
           case 2 => (Some(split(0).toLowerCase.trim), Some(split(1).toLowerCase.trim), value)
           case _ => (None, None, value)
         }
+      } else if(name == "bhl:page") {
+        //hackish - but no clean way of doing this to link to BHL AU
+        (None,  Some("occurrenceDetails"), "http://bhl.ala.org.au/page/" + value)
       } else {
         (None, Some(name), value)
       }
@@ -306,4 +317,15 @@ class FlickrLoader extends DataLoader {
   }
 
   def retrievePhotoIds(xml: scala.xml.Elem) = (xml \\ "photo").toList.map(photo => photo.attribute("id").get.toString)
+
+  def checkForBHLUrl(description:String):Option[String] = BHLLinkInText.findFirstIn(description) match {
+    case Some(url) => {
+      val BHLLink(domain, pageId) = url
+      Some("http://bhl.ala.org.au/page/" + pageId)
+    }
+    case None => None
+  }
 }
+
+
+
