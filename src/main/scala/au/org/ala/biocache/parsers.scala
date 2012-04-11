@@ -1,15 +1,52 @@
 package au.org.ala.biocache
 
+object LatOrLong extends Enumeration {
+  type LatOrLong = Value
+  val Latitude,Longitude = Value
+  val longDirString = "s|south|n|north".split("|").toSet
+  val latDirString = "w|west|e|east".split("|").toSet
+
+  def getDirection(raw:String): Option[LatOrLong] = {
+    val normalised = raw.toLowerCase.trim
+    if(latDirString.contains(normalised)) Some(Latitude)
+    else if (longDirString.contains(normalised)) Some(Latitude)
+    else None
+  }
+}
+
 import java.util.regex.Pattern
+import au.org.ala.biocache.LatOrLong
 /**
  * Parser for coordinates in deg, min sec format
  */
 object VerbatimLatLongParser {
+
+
+  import LatOrLong._
   //    16° 52' 37" S
   //    37º 10' 48" S
   val verbatimPattern = """(?:[\\-])?([0-9]{1,3})([d|deg|degree|degrees|°|º][ ]*)([0-9]{1,2})?([m|min|minutes|minute|'][ ]*)([0-9]{1,2}.?[0-9]{0,})?(["|']{1,2}[ ]*)?(s|south|n|north|w|west|e|east)""".r
   val verbatimPatternNoDenom = """(?:[\\-])?([0-9]{1,3})(?:[ ]*)?([0-9]{1,2})?(?:[ ]*)?([0-9]{1,2}.?[0-9]{0,})?(?:"[ ]*)?(s|south|n|north|w|west|e|east)""".r
   val negativePattern = "(s|south|w|west)".r
+
+  def parseWithDirection(stringValue:String) : (Option[Float], Option[LatOrLong]) = {
+    try{
+      val normalised = {
+        stringValue.toLowerCase.trim.replaceAll("''", "\"")
+      }
+      normalised match {
+        case verbatimPattern(degree, dsign, minute, msign, second, ssign, direction) => {
+          (convertToDecimal(degree, minute, second, direction), LatOrLong.getDirection(direction))
+        }
+        case verbatimPatternNoDenom(degree, minute, second, direction) => {
+          (convertToDecimal(degree, minute, second, direction), LatOrLong.getDirection(direction))
+        }
+        case _ => (None,None)
+      }
+    } catch {
+      case e:Exception => (None,None)
+    }
+  }
 
   /**
    * Parses the verbatim latitude or longitude
