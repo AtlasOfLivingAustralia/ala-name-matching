@@ -152,9 +152,11 @@ public class JmsMessageListener implements MessageListener {
 	                        
 	                        for(String key: omap.keySet()){
 	                            if("associatedMedia".equals(key)){
-	                                Object value = omap.get(key);
-	                                String newValue = org.apache.commons.lang.StringUtils.join((List)value, ";");
-	                                map.put("associatedMedia", newValue);
+	                                if(hasAssociatedMedia){
+    	                                Object value = omap.get(key);
+    	                                String newValue = org.apache.commons.lang.StringUtils.join((List)value, ";");
+    	                                map.put("associatedMedia", newValue);
+	                                }
 	                            }
 	                            else if("guid".equals(key)){
 	                                map.put("OccurrenceID", omap.get(key).toString());
