@@ -20,15 +20,18 @@ import javax.jms.MessageListener;
 import javax.jms.TextMessage;
 
 import org.ala.jms.dto.CitizenScience;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import antlr.StringUtils;
 import au.org.ala.biocache.FullRecord;
 import au.org.ala.biocache.Store;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * ActiveMq Listerner 
@@ -42,6 +45,12 @@ public class JmsMessageListener implements MessageListener {
 	protected ObjectMapper mapper = new ObjectMapper();
 
 	public static final String CITIZEN_SCIENCE_DRUID = "dr364";
+	public static final List<String> ID_LIST = new ArrayList<String>();
+	public List<Map<String,String>> upsertList;
+	public List<String> deleteList;
+	private long lastMessage=0;
+	private int secondsBeforeBatch =5;
+	private int batchSize=100;
 
 	private boolean hasAssociatedMedia = true;
 	
@@ -52,6 +61,10 @@ public class JmsMessageListener implements MessageListener {
 	public JmsMessageListener() {
 		// initialise the object mapper
 		mapper.getDeserializationConfig().set(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES,	false);
+		ID_LIST.add("OccurrenceID");
+		upsertList = new ArrayList<Map<String,String>>();
+		deleteList = new ArrayList<String>();		
+		new BatchThread().start();
 	}
 
 	public boolean isHasAssociatedMedia() {
@@ -62,7 +75,36 @@ public class JmsMessageListener implements MessageListener {
 		this.hasAssociatedMedia = hasAssociatedMedia;
 	}
 	
+	
 	/**
+     * @return the secondsBeforeBatch
+     */
+    public int getSecondsBeforeBatch() {
+        return secondsBeforeBatch;
+    }
+
+    /**
+     * @param secondsBeforeBatch the secondsBeforeBatch to set
+     */
+    public void setSecondsBeforeBatch(int secondsBeforeBatch) {
+        this.secondsBeforeBatch = secondsBeforeBatch;
+    }
+
+    /**
+     * @return the batchSize
+     */
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    /**
+     * @param batchSize the batchSize to set
+     */
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    /**
 	 * Implementation of <code>MessageListener</code>.
 	 * 
 	 * JSON Message:
@@ -88,21 +130,49 @@ public class JmsMessageListener implements MessageListener {
 	public void onMessage(Message message) {
     	String occId = "";
     	String json = "";
-    	Method messageMethod = null;
-
+    	Method messageMethod = null;    	
         logger.info("Message received from the queue...");
         logger.debug(message.toString());
         
         try {
         	if(message.getStringProperty(MESSAGE_METHOD) != null && !"".equals(message.getStringProperty(MESSAGE_METHOD))){
         		messageMethod = Method.valueOf(message.getStringProperty(MESSAGE_METHOD));	
-        		CitizenScience sighting = null;   	 
+        		//CitizenScience sighting = null;
+        		Map<String,String> map = new java.util.HashMap<String,String>();
+        		Map<String,Object>omap = null;
 	            if (message instanceof TextMessage) {
+	                lastMessage = System.currentTimeMillis();
 	            	// prepare data
 	                TextMessage tm = (TextMessage)message;
 	                json = tm.getText();	                
 	                if(json != null && !"".equals(json)){
-	                	sighting = (CitizenScience) mapper.readValue(json, CitizenScience.class);
+	                    logger.debug("creating map : " + json);
+	                    try{	                        
+	                        omap = mapper.readValue(json, Map.class);
+	                        
+	                        for(String key: omap.keySet()){
+	                            if("associatedMedia".equals(key)){
+	                                Object value = omap.get(key);
+	                                String newValue = org.apache.commons.lang.StringUtils.join((List)value, ";");
+	                                map.put("associatedMedia", newValue);
+	                            }
+	                            else if("guid".equals(key)){
+	                                map.put("OccurrenceID", omap.get(key).toString());
+	                            }
+	                            else{
+	                                map.put(key, omap.get(key).toString());
+	                            }
+	                        }
+	                        
+	                    }
+	                    catch(Exception e){
+	                        e.printStackTrace();
+	                    }
+	                    catch(Error e){
+	                        e.printStackTrace();
+	                    }
+	                    logger.debug("finished creating map " + map);
+	                	//sighting = (CitizenScience) mapper.readValue(json, CitizenScience.class);
 	                }
 	                else{
 	                	logger.error("Empty Json Message!  Method: " + message.getStringProperty(MESSAGE_METHOD));
@@ -113,12 +183,22 @@ public class JmsMessageListener implements MessageListener {
 	                switch(messageMethod){
 	                	case CREATE:
 	                	case UPDATE:
-	                		addUpdateOccRecord(sighting);
+	                		//addUpdateOccRecord(sighting);
+	                	    if(map != null && map.size()>0){	                	        
+	                            synchronized(upsertList){
+	                                upsertList.add(map);
+	                            }
+	                        }
 	                		break;
 	                		
 	                	case DELETE:
-	                		occId = CITIZEN_SCIENCE_DRUID + "|" + sighting.getGuid();
-	                    	deleteOccRecord(occId);
+	                	    if(map != null){
+	                	        occId = CITIZEN_SCIENCE_DRUID + "|" + map.get("OccurrenceID");
+	                	        synchronized(deleteList){
+	                	            deleteList.add(occId);
+	                	        }
+	                    	//deleteOccRecord(occId);
+	                	    }
 	                		break;
 	                		
 	                	default:
@@ -137,7 +217,13 @@ public class JmsMessageListener implements MessageListener {
             logger.error(e.getMessage(), e);
         }
     }
-	
+	/**
+	 * 
+	 * @param sighting
+	 * @return
+	 * @deprecated Batch loading is based on Maps rather than FullRecords.
+	 */
+	@Deprecated
 	private FullRecord populateFullRecord(CitizenScience sighting){
     	FullRecord fullRecord = new FullRecord();
     	if(sighting == null){
@@ -180,15 +266,58 @@ public class JmsMessageListener implements MessageListener {
     	    	        	
     	return fullRecord;
 	}
-	
+	/**
+	 * 
+	 * @param sighting
+	 * @deprecated Batch processing occurs on List of Maps
+	 */
+	@Deprecated
 	private void addUpdateOccRecord(CitizenScience sighting) {
 		FullRecord fullRecord = populateFullRecord(sighting);
         List<String> identifyingTerms = new ArrayList<String>();
         identifyingTerms.add(sighting.getGuid());
 		Store.loadRecord(CITIZEN_SCIENCE_DRUID, fullRecord, identifyingTerms, true);
 	}
-		
+	/**
+	 * 
+	 * @param occId
+	 * @deprecated Batch deleting occurs on a list of 
+	 */
+	@Deprecated	
 	private void deleteOccRecord(String occId) {
 		Store.deleteRecord(occId);
+	}
+	
+	private class BatchThread extends Thread {
+	    public void run(){
+	        while(true){
+    	        long current = System.currentTimeMillis();
+    	        if(lastMessage != 0 && ((current-lastMessage)/1000 >secondsBeforeBatch || upsertList.size() == batchSize || deleteList.size() == batchSize)){
+    	            //send the batch off to the biocache-store
+    	            logger.debug("Sending " + upsertList.size() + " records for update and " + deleteList.size() + " records to be deleted.");
+    	            synchronized(upsertList){
+        	            if(upsertList.size()>0){
+        	                Store.loadRecords(CITIZEN_SCIENCE_DRUID, upsertList, ID_LIST, true);
+        	                upsertList.clear();
+        	            }
+    	            }
+    	            synchronized(deleteList){
+        	            if(deleteList.size()>0){
+        	                //delete the list of records...
+        	                Store.deleteRecords(deleteList);
+        	                deleteList.clear();
+        	            }
+    	            }
+    	            lastMessage=0;
+    	        }
+    	        try{
+//    	            logger.debug("Sleeping to wait for a batch");
+    	        sleep(secondsBeforeBatch*1000);
+    	        }
+    	        catch(Exception e){
+    	            //don't care if we are interrupted.
+    	        }
+	        }
+	    }
 	}
 }
