@@ -148,6 +148,23 @@ object Store {
   }
   
   /**
+   * Loads a batch of records based on being supplied in a list of maps.  
+   * 
+   * It relies on identifyFields supplying a list dwc terms that make up the unique identifier for the data resource
+   */
+  def loadRecords(dataResourceUid:String, recordsProperties:java.util.List[java.util.Map[String,String]], identifyFields:java.util.List[String], shouldIndex:Boolean=true){
+   val loader = new MapDataLoader
+   val rowKeys = loader.load(dataResourceUid, recordsProperties.toList,identifyFields.toList)
+   if(rowKeys.size>0){
+      val processor = new RecordProcessor
+      processor.processRecords(rowKeys)
+      if(shouldIndex)
+        IndexRecords.indexList(rowKeys)
+   }
+   
+  }
+  
+  /**
    * Adds or updates a raw full record with values that are in the FullRecord
    * relies on a rowKey being set
    *  
@@ -197,6 +214,14 @@ object Store {
    * Deletes the records for the supplied rowKey from the index and data store
    */
   def deleteRecord(rowKey:String) = if(rowKey != null) occurrenceDAO.delete(rowKey)
+  /**
+   * Deletes the supplied list of row keys from the index and data store
+   */
+  def deleteRecords(rowKeys:java.util.List[String]){
+    val deletor = new ListDelete(rowKeys.toList)
+    deletor.deleteFromPersistent
+    deletor.deleteFromIndex
+  }
 
   /**
    * Retrieve the system supplied systemAssertions.

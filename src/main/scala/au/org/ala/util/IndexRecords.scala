@@ -52,7 +52,6 @@ object IndexRecords {
         opt("if", "file-uuids-to-index","Absolute file path to fle containing UUIDs to index", {v:String => uuidFile = v})
         opt("rf", "file-rowkeys-to-index","Absolute file path to fle containing rowkeys to index", {v:String => rowKeyFile = v})
     }
-
     if(parser.parse(args)){
         //delete the content of the index
         if(empty){
@@ -153,6 +152,26 @@ object IndexRecords {
       }, startKey, endKey, pageSize)
     }
   }
+  /**
+   * Indexes the supplied list of rowkeys
+   */
+  def indexList(rowKeys:List[String]){
+    var counter = 0
+    var startTime = System.currentTimeMillis
+    var finishTime = System.currentTimeMillis
+    rowKeys.foreach(rowKey=>{
+      counter += 1
+      val map = persistenceManager.get(rowKey, "occ")
+      if (!map.isEmpty) indexer.indexFromMap(rowKey, map.get)
+      if (counter % 100 == 0) {
+        finishTime = System.currentTimeMillis
+        logger.debug(counter + " >> Last key : " + rowKey + ", records per sec: " + 100f / (((finishTime - startTime).toFloat) / 1000f))
+        startTime = System.currentTimeMillis
+      }
+
+    })
+    indexer.finaliseIndex(false, false)//commit but don't optimise or shutdown
+  }
 
   /**
    * Indexes the supplied list of rowKeys
@@ -174,7 +193,7 @@ object IndexRecords {
       }
     })
 
-    indexer.finaliseIndex(false, true)
+    indexer.finaliseIndex(false, true) 
   }
 
   /**

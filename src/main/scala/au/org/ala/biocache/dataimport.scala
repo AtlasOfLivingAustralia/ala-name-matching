@@ -11,8 +11,24 @@ import org.apache.commons.io.FilenameUtils
 import org.slf4j.LoggerFactory
 import scalaj.http.Http
 import collection.mutable.ArrayBuffer
+import collection.JavaConversions
 
 class SimpleLoader extends DataLoader
+
+class MapDataLoader extends DataLoader{
+  import JavaConversions._
+  def load(dataResourceUid:String, values:List[java.util.Map[String,String]], uniqueTerms:List[String]):List[String]={
+    val rowKeys = new ArrayBuffer[String]
+    values.foreach(jmap =>{
+        val map = jmap.toMap[String,String]
+        val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,""))
+        val fr = FullRecordMapper.createFullRecord("", map, Versions.RAW)
+        load(dataResourceUid, fr, uniqueTermsValues)
+        rowKeys + fr.rowKey
+    })
+    rowKeys.toList
+  }
+}
 
 /**
  * A trait with utility code for loading data

@@ -121,6 +121,18 @@ class DataResourceDelete(dataResource:String) extends RecordDeletor{
     }
 }
 
+class ListDelete(rowKeys:List[String]) extends RecordDeletor{
+  override def deleteFromPersistent() ={
+    rowKeys.foreach(rowKey=>{
+      pm.delete(rowKey, "occ")      
+    })
+  }
+  override def deleteFromIndex {
+   val query = "row_key:\"" + rowKeys.mkString("\" OR row_key:\"") +"\""
+   indexer.removeByQuery(query)
+  }
+}
+
 class QueryDelete(query :String) extends RecordDeletor{
     import FileHelper._
      override def deleteFromPersistent() ={
