@@ -15,6 +15,7 @@
 package au.org.ala.sds.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -58,22 +59,63 @@ public class SensitiveTaxonStore implements Serializable {
     }
 
     private void verifyAndInitialiseSpeciesList() {
-        for (int index = 0; index < taxonList.size(); index++) {
-            SensitiveTaxon st = taxonList.get(index);
-            NameSearchResult match = getAcceptedName(st);
+        List<SensitiveTaxon> additionalAcceptedTaxons = new ArrayList<SensitiveTaxon>();
+
+        for (SensitiveTaxon st : taxonList) {
+            NameSearchResult match = lookupName(st);
             if (match != null) {
-                String acceptedName = match.getRankClassification().getScientificName();
-                String lsid = match.getLsid();
-                if (!st.getName().equalsIgnoreCase(acceptedName)) {
-                    logger.info("Sensitive species '" + st.getName() + "' is not accepted name - using '" + acceptedName + "'");
-                    st.setAcceptedName(acceptedName);
+                st.setLsid(match.getLsid());
+                if (match.isSynonym()) {
+                    NameSearchResult accepted = getAcceptedNameFromSynonym(match);
+                    if (accepted != null) {
+                        String acceptedName = accepted.getRankClassification().getScientificName();
+                        logger.info("Sensitive species '" + st.getName() + "' is not accepted name - using '" + acceptedName + "'");
+                        SensitiveTaxon acceptedTaxon = findByExactMatch(acceptedName);
+                        if (acceptedTaxon == null) {
+                            acceptedTaxon = new SensitiveTaxon(acceptedName, StringUtils.contains(acceptedName, ' ') ? Rank.SPECIES : Rank.GENUS);
+                            acceptedTaxon.setLsid(acceptedTaxon.getLsid());
+                            if (!additionalAcceptedTaxons.contains(acceptedTaxon)) {
+                                additionalAcceptedTaxons.add(acceptedTaxon);
+                                logger.info("Accepted name '" + acceptedName + "' added to sensitive taxon list");
+                            }
+                        }
+                        st.setAcceptedName(acceptedName);
+                    }
                 }
-                logger.debug("'" + st.getName() + (st.getName().equalsIgnoreCase(acceptedName) ? "" : "' ('" + acceptedName + "')") + "\t'" + lsid + "'");
-                nameMap.put(acceptedName, index);
-                st.setLsid(lsid);
-                lsidMap.put(lsid, index);
+                logger.debug("'" + st.getName() + (st.getAcceptedName() == null ? "" : "' ('" + st.getAcceptedName() + "')") + "\t'" + st.getLsid() + "'");
             } else {
                 logger.warn("Sensitive species '" + st.getName() + "' not found in NameMatching index");
+            }
+        }
+
+        // Add additional accepted sensitive taxons
+        taxonList.addAll(additionalAcceptedTaxons);
+        Collections.sort(taxonList);
+
+        // Construct lookup maps and deal with synonym sensitivity instances
+        for (int i = 0; i < this.taxonList.size(); i++) {
+            SensitiveTaxon st = taxonList.get(i);
+            String lsid = st.getLsid();
+            if (StringUtils.isNotBlank(lsid)) {
+                lsidMap.put(st.getLsid(), i);
+            }
+            if (st.getAcceptedName() != null) {
+                SensitiveTaxon acceptedTaxon = findByExactMatch(st.getAcceptedName());
+                if (acceptedTaxon != null) {
+                    for (SensitivityInstance si : st.getInstances()) {
+                        if (!acceptedTaxon.getInstances().contains(si)) {
+                            acceptedTaxon.getInstances().add(si);
+                        }
+                    }
+                    st.setAcceptedTaxon(acceptedTaxon);
+                } else {
+                    logger.error("Accepted taxon '" + st.getAcceptedName() + "' not found in taxon list");
+                }
+            } else {
+                if (StringUtils.isNotBlank(lsid)) {
+                    nameMap.put(st.getName(), i);
+                    logger.debug("Added '" + st.getName() + "' to nameMap");
+                }
             }
         }
     }
@@ -126,9 +168,9 @@ public class SensitiveTaxonStore implements Serializable {
         NameSearchResult match = null;
         if (cbIndexSearcher != null) {
             try {
-                match = cbIndexSearcher.searchForRecord(stripTaxonTokens(name), null);
-                if (match != null) {
-                    match = checkForSynonym(match);
+                match = cbIndexSearcher.searchForRecord(name, null);
+                if (match != null && match.isSynonym()) {
+                    match = getAcceptedNameFromSynonym(match);
                 }
             } catch (SearchResultException e) {
                 logger.debug("'" + name + "' - " + e.getMessage());
@@ -140,17 +182,14 @@ public class SensitiveTaxonStore implements Serializable {
         return match;
     }
 
-    private NameSearchResult getAcceptedName(SensitiveTaxon st) {
+    private NameSearchResult lookupName(SensitiveTaxon st) {
         String name = null;
         NameSearchResult match = null;
         if (cbIndexSearcher != null) {
             try {
-                name = stripTaxonTokens(st.getTaxonName());
+                name = st.getTaxonName();
                 LinnaeanRankClassification lrc = new LinnaeanRankClassification(null, null, null, null, st.getFamily().equals("") ? null : st.getFamily() , null, name);
                 match = cbIndexSearcher.searchForRecord(name, lrc, StringUtils.contains(name, ' ') ? null : RankType.GENUS);
-                if (match != null) {
-                    match = checkForSynonym(match);
-                }
             } catch (SearchResultException e) {
                 logger.debug("'" + name + "' - " + e.getMessage());
             } catch (RuntimeException e) {
@@ -161,7 +200,7 @@ public class SensitiveTaxonStore implements Serializable {
         return match;
     }
 
-    private NameSearchResult checkForSynonym(NameSearchResult match) {
+    private NameSearchResult getAcceptedNameFromSynonym(NameSearchResult match) {
         NameSearchResult accepted;
         if (match.isSynonym()) {
             accepted = cbIndexSearcher.searchForRecordByLsid(match.getAcceptedLsid());
@@ -174,10 +213,4 @@ public class SensitiveTaxonStore implements Serializable {
         }
     }
 
-    protected static String stripTaxonTokens(String name) {
-//        String stripped  = name.replaceAll(" subsp\\. ", " ");
-//        stripped = stripped.replaceAll(" var\\. ", " ");
-//        String stripped = name.replaceAll(" ms$", "");
-        return name;
-    }
 }

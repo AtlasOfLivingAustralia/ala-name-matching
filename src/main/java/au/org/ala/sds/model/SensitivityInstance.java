@@ -75,6 +75,17 @@ public class SensitivityInstance implements Serializable {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
+        SensitivityInstance other = (SensitivityInstance) obj;
+        return this.category.equals(other.category) &&
+               this.authority.equalsIgnoreCase(other.authority) &&
+               this.zone.equals(other.zone);
+    }
+
+    @Override
     public String toString() {
         return new ToStringBuilder(this.getClass().getName()).
                 append("category", category).

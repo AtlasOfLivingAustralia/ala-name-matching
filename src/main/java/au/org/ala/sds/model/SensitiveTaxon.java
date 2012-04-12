@@ -38,7 +38,8 @@ public class SensitiveTaxon implements Serializable, Comparable<SensitiveTaxon> 
     private String family;
     private String commonName;
     private final Rank rank;
-    private String acceptedName;    // Has a value if name is a synonym - otherwise null
+    private String acceptedName;            // Has a value if name is a synonym - otherwise null
+    private SensitiveTaxon acceptedTaxon;   //
     private String lsid;
     private final List<SensitivityInstance> instances;
 
@@ -89,8 +90,20 @@ public class SensitiveTaxon implements Serializable, Comparable<SensitiveTaxon> 
         this.acceptedName = acceptedName;
     }
 
+    public SensitiveTaxon getAcceptedTaxon() {
+        return this.acceptedTaxon;
+    }
+
+    public void setAcceptedTaxon(SensitiveTaxon acceptedTaxon) {
+        this.acceptedTaxon = acceptedTaxon;
+    }
+
     public List<SensitivityInstance> getInstances() {
-        return this.instances;
+        if (this.acceptedTaxon == null) {
+            return this.instances;
+        } else {
+            return this.acceptedTaxon.getInstances();
+        }
     }
 
     public String getLsid() {
@@ -114,7 +127,7 @@ public class SensitiveTaxon implements Serializable, Comparable<SensitiveTaxon> 
     }
 
     public boolean isSensitiveForZone(SensitivityZone zone) {
-        for (SensitivityInstance si : this.instances) {
+        for (SensitivityInstance si : getInstances()) {
             if (zone.equals(si.getZone())) {
                 return true;
             }
@@ -124,7 +137,7 @@ public class SensitiveTaxon implements Serializable, Comparable<SensitiveTaxon> 
     }
 
     public boolean isDateRequired() {
-        for (SensitivityInstance si : this.instances) {
+        for (SensitivityInstance si : getInstances()) {
             if (si instanceof PlantPestInstance) {
                 if (((PlantPestInstance) si).getFromDate() != null || ((PlantPestInstance) si).getToDate() != null) {
                     return true;
@@ -137,7 +150,7 @@ public class SensitiveTaxon implements Serializable, Comparable<SensitiveTaxon> 
 
     public List<SensitivityInstance> getInstancesForZones(List<SensitivityZone> zones) {
         List<SensitivityInstance> instanceList = new ArrayList<SensitivityInstance>();
-        for (SensitivityInstance si : this.instances) {
+        for (SensitivityInstance si : getInstances()) {
             if (zones.contains(si.getZone())) {
                 instanceList.add(si);
             } else if (si.getZone().equals(SensitivityZoneFactory.getZone(SensitivityZone.AUS)) &&
@@ -155,7 +168,7 @@ public class SensitiveTaxon implements Serializable, Comparable<SensitiveTaxon> 
     public SensitivityInstance getInstanceForState(SensitivityZone state) {
         SensitivityInstance instance = null;
         SensitivityInstance ausInstance = null;
-        for (SensitivityInstance si : this.instances) {
+        for (SensitivityInstance si : getInstances()) {
             if (state == si.getZone()) {
                 instance = si;
             } else {
