@@ -65,5 +65,11 @@ public class SearchTest {
         ss = finder.findSensitiveSpecies("Cacatua leadbeateri");
         assertNotNull(ss);
         assertEquals(ss.getTaxonName(), "Lophochroa leadbeateri");
+
+        ss = finder.findSensitiveSpecies("Dendrobium speciosum subsp. hillii");
+        assertNotNull(ss);
+
+        ss = finder.findSensitiveSpecies("Thelymitra nuda");
+        assertNotNull(ss);
     }
 }
