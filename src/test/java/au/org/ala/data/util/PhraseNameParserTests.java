@@ -1,5 +1,6 @@
 package au.org.ala.data.util;
 
+import org.gbif.ecat.voc.NameType;
 import java.io.FileReader;
 import au.org.ala.data.model.ALAParsedName;
 import org.gbif.ecat.model.ParsedName;
@@ -29,6 +30,10 @@ public class PhraseNameParserTests {
             parser.debug = true;
             ParsedName pn = parser.parse(name);
             System.out.println(pn);
+            name = "Serpula (hydroides) multispinosa";
+            pn = parser.parse(name);
+            assertEquals(pn.type, NameType.wellformed);
+            //System.out.println(pn);
             
         }
         catch(Exception e){

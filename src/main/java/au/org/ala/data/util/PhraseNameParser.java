@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
 import org.gbif.ecat.parser.UnparsableException;
@@ -58,6 +59,10 @@ public class PhraseNameParser extends NameParser{
             + SOURCE_AUTHORITY +"?$"
             );
 
+    protected static final Pattern WRONG_CASE_INFRAGENERIC = Pattern.compile("(?:" + "\\( ?([" + name_letters + "-]+) ?\\)"
+      + "|" + "(" + StringUtils.join(Rank.RANK_MARKER_MAP_INFRAGENERIC.keySet(), "|") + ")\\.? ?([" + NAME_LETTERS
+      + "][" + name_letters + "-]+)" + ")");
+
     public void testParse(String scientificName){
         //extract the complete name into components
         // (valid scientific name part)(rank marker)(phrase name part)
@@ -104,6 +109,15 @@ public class PhraseNameParser extends NameParser{
             }
 
         }
+        else{
+            //check for the situation where the subgenus was supplied without Title case.
+            Matcher m = WRONG_CASE_INFRAGENERIC.matcher(scientificName);
+            if(m.find()){
+                scientificName = WordUtils.capitalize(scientificName, '(');
+                pn = super.parse(scientificName);
+            }
+        }
+
         return pn;
     }
 
@@ -115,6 +129,13 @@ public class PhraseNameParser extends NameParser{
     }
 
     public static void main(String[] args){
+//        String test = "One (two) three";
+//        Matcher m = WRONG_CASE_INFRAGENERIC.matcher(test);
+//        if(m.find()){
+//            String name = m.group();
+//            System.out.println(WordUtils.capitalize(test, '('));
+//            System.out.println(WordUtils.capitalize(name, '('));
+//        }
          String name1 ="Goodenia sp. Bachsten Creek (M.D. Barrett 685) WA Herbarium";
          PhraseNameParser parser = new PhraseNameParser();
          System.out.println(PHRASE_PATTERN.pattern());

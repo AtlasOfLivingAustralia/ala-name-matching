@@ -46,9 +46,22 @@ public class CBIndexSearchTest {
             //assertEquals(ErrorType.QUESTION_SPECIES, nsr.getErrorType());
             System.out.println(nsr);
             name ="Cacatua leadbeateri";
-            name = "Acacia bartleana ms";
-            nsr =searcher.searchForRecord(name, null);
-            System.out.println(nsr);
+            //name = "Acacia bartleana ms";
+            nsr =searcher.searchForRecord("Cacatua leadbeateri", null);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:fb2de285-c58c-4c63-9268-9beef7c61c16", nsr.getAcceptedLsid());
+            name = "Dendrobium speciosum subsp. hillii";
+            try{
+                searcher.searchForLSID(name);
+                fail("Homonym should be detected.");
+            }
+            catch(HomonymException he){
+
+            }
+            //Cycas media subsp. banksii - C.media subsp. media
+            //Boronia crenulata subsp. crenulata var. angustifolia
+            //Dendrobium kingianum subsp. kingianum
+            //Dendrobium speciosum subsp. capricornicum
+            //Dendrobium speciosum subsp. grandiflorum
             }
             catch(Exception e){
                 e.printStackTrace();

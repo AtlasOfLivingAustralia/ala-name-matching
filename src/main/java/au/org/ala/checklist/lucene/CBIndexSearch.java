@@ -1079,6 +1079,8 @@ public class CBIndexSearch {
 
                 //HOMONYM CHECKS
                 if(checkHomo){
+                    //check result level homonyms
+                    checkResultLevelHomonym(results);
                     //check to see if we have a cross rank homonym
                     //cross rank homonyms are resolvable if a rank has been supplied
                     if(rank == null){
@@ -1104,6 +1106,30 @@ public class CBIndexSearch {
 
         }
         return null;
+    }
+
+    private void checkResultLevelHomonym(List<NameSearchResult> results)throws HomonymException{
+        //They are result level homonyms if multiple records and they don't all point to the same accepted concept...
+        //They are not homonyms if they have different Kingdoms...
+        if(results.size()>1){
+            String lastAcceptedLsid ="";
+            String lastKingdom ="";
+            boolean lastWasSyn = false;
+            for(NameSearchResult result : results){
+                if(result.isSynonym() ||result.getRank().getId()>=7000){
+                    String accepted = result.isSynonym()? result.getAcceptedLsid() : result.getLsid();
+                    String kingdom = result.getRankClassification().getKingdom() == null ? "" : result.getRankClassification().getKingdom();
+                    if(lastAcceptedLsid.length()>0){
+                        if(!lastAcceptedLsid.equals(accepted) && (lastKingdom.equals(kingdom) || lastWasSyn || result.isSynonym())){
+                            throw new HomonymException(accepted, results);
+                        }
+                    }
+                    lastAcceptedLsid = accepted;
+                    lastWasSyn = result.isSynonym();
+                }
+            }
+        }
+
     }
     /**
      * Uses the distance between 2 strings to determine whether or not the
