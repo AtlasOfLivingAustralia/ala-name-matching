@@ -130,7 +130,7 @@ trait IndexDAO {
       "data_resource", "institution_uid", "institution_code", "institution_name",
       "collection_uid", "collection_code", "collection_name", "catalogue_number",
       "taxon_concept_lsid", "occurrence_date", "occurrence_year", "taxon_name", "common_name", "names_and_lsid", "common_name_and_lsid",
-      "rank", "rank_id", "raw_taxon_name", "raw_common_name", "multimedia", "image_url",
+      "rank", "rank_id", "raw_taxon_name", "raw_common_name", "multimedia", "image_url", "all_image_url",
       "species_group", "country_code", "country", "lft", "rgt", "kingdom", "phylum", "class", "order",
       "family", "genus", "genus_guid", "species","species_guid", "state", "imcra", "ibra", "places", "latitude", "longitude",
       "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
@@ -140,7 +140,8 @@ trait IndexDAO {
       "sensitive", "coordinate_uncertainty", "user_id","provenance","subspecies_guid", "subspecies_name", "interaction","last_assertion_date",
       "last_load_date","last_processed_date", "modified_date", "establishment_means","loan_number","loan_identifier","loan_destination",
       "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric",
-      "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue","raw_identification_qualifier","species_habitats") // ++ elFields ++ clFields
+      "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue","raw_identification_qualifier","species_habitats",
+      "identified_by","identified_date") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -196,6 +197,21 @@ trait IndexDAO {
                     else
                         Array[String]()
                 }
+                //determine the type of multimedia that is available.
+                val multimedia:Array[String] ={
+                  val i = map.getOrElse("images.p","[]")
+                  val s = map.getOrElse("sounds.p","[]")
+                  val v = map.getOrElse("videos.p","[]")
+                  val ab = new ArrayBuffer[String]
+                  if(i.length()>3) ab + "Image"
+                  if(s.length()>3) ab + "Sound"
+                  if(v.length()>3) ab + "Video"
+                  if(ab.size>0)
+                    ab.toArray
+                  else
+                    Array("None")
+                    
+                }
                 val speciesGroup = {
                     val sspeciesGroup = getValue("speciesGroups.p", map)
                     if (sspeciesGroup.length > 0)
@@ -221,6 +237,7 @@ trait IndexDAO {
                   val shab = map.getOrElse("speciesHabitats.p","[]")
                   Json.toStringArray(shab)
                 }
+                
                 var eventDate = getValue("eventDate.p", map)
                 var occurrenceYear = getValue("year.p", map)
                 if (occurrenceYear.length == 4)
@@ -335,8 +352,10 @@ trait IndexDAO {
                     getValue("taxonRankID.p", map),
                     getRawScientificName(map),
                     getValue("vernacularName", map),
-                    if (!images.isEmpty && images(0) != "") "Multimedia" else "None",
+                    //if (!images.isEmpty && images(0) != "") "Multimedia" else "None",
+                    multimedia.mkString("|"),
                     if (!images.isEmpty) images(0) else "",
+                    images.mkString("|"),
                     speciesGroup.mkString("|"),
                     getValue("countryCode", map),
                     getValue("country.p", map),
@@ -400,7 +419,8 @@ trait IndexDAO {
                     map.getOrElse("phenology",""),  //TODO make this a controlled vocab that gets mapped during processing...                    
                     outlierForLayers.mkString("|"),
                     outlierForLayers.length.toString, map.getOrElse("taxonomicIssue.p",""), map.getOrElse("identificationQualifier",""),
-                    habitats.mkString("|")
+                    habitats.mkString("|"), map.getOrElse("identifiedBy",""), 
+                    if(map.contains("dateIdentified.p")) map.getOrElse("dateIdentified.p","") + "T00:00:00Z" else ""
                     ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
                 //)
             }
@@ -611,6 +631,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
           case e:Exception => e.printStackTrace(); println("Problem clearing index...")
         }
     }
+    
 
     def removeFromIndex(field:String, value:String) ={
         init
@@ -626,6 +647,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     
     def removeByQuery(query:String, commit:Boolean = true) ={
         init
+        logger.debug("Deleting by query: " + query)
         try{
             solrServer.deleteByQuery(query)
             if(commit)
@@ -711,7 +733,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
           if (values(i) != "") {
             if (header(i) == "duplicate_inst" || header(i) == "establishment_means" || header(i) == "species_group"
               || header(i) == "assertions" || header(i) == "data_hub_uid" || header(i) == "interactions"
-              || header(i) == "outlier_layer" || header(i) == "species_habitats") {
+              || header(i) == "outlier_layer" || header(i) == "species_habitats" || header(i) == "multimedia" || header(i) == "all_image_url") {
               //multiple values in this field
               for (value <- values(i).split('|')) {
                 if (value != "")

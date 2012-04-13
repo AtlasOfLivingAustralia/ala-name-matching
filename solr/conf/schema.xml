@@ -552,14 +552,14 @@
    <field name="common_name" type="string" indexed="true" stored="true" multiValued="false" />
    <field name="names_and_lsid" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="common_name_and_lsid" type="string" indexed="true" stored="true" multiValued="false"/>
-   <field name="rank" type="string" indexed="true" stored="true" multiValued="false" />
-   <!-- Not displayed in search results -->
-   <field name="rank_id" type="int" indexed="false" stored="true" multiValued="false"  />
+   <field name="rank" type="string" indexed="true" stored="true" multiValued="false" />   
+   <field name="rank_id" type="int" indexed="true" stored="true" multiValued="false"  />
    <field name="raw_taxon_name" type="string" indexed="true" stored="true" multiValued="false" />
    <field name="raw_common_name" type="string" indexed="true" stored="true" multiValued="false"  />
 
-   <field name="multimedia" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="multimedia" type="string" indexed="true" stored="true" multiValued="true" />
    <field name="image_url" type="string" indexed="true" stored="true" multiValued="false" />
+   <field name="all_image_url" type="string" indexed="true" stored="true" multiValued="true" />
    <field name="species_group" type="string" indexed="true" stored="true" multiValued="true" />
    <field name="interaction" type="string" indexed="true" stored="true" multiValued="true" />
 
@@ -631,10 +631,10 @@
 	<!--  stores phenology from AVH  -->
 	<field name="life_stage" type="textgen" indexed="true" stored="false" multiValued="false" />
 
-   <!-- Not displayed in search results -->
-   <!-- field name="identifier_name" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" />
-   <field name="identifier_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" />
-   <field name="collector" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
+   
+   <field name="identified_by" type="string" indexed="true" stored="false" multiValued="false" omitNorms="false" />
+   <field name="identified_date" type="tdate" indexed="true" stored="false" multiValued="false" omitNorms="false" />
+   
    
    <!-- TODO work out the extra search fields that are required for the issues -->
    <field name="taxonomic_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
@@ -684,6 +684,8 @@
    <field name="biogeographic_region" type="string" indexed="true" stored="true" multiValued="true" />
    <field name="raw_name" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
    <field name="matched_name" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
+   <field name="collector_text" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
+   <field name="identified_by_text" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
 
    <!-- the number of layers this record is an outlier for -->
    <field name="outlier_layer_count" type="int" indexed="true" stored="true" multiValued="false" omitNorms="true" />
@@ -747,6 +749,8 @@
    <copyField source="species" dest="text" />
    <copyField source="species_group" dest="text" />
    <copyField source="original_name_usage" dest="text" />
+   <copyField source="collector" dest="collector_text"/>
+   <copyField source="identified_by" dest="identified_by_text"/>
    
    
    <!--  This copy field is not in use anywhere -->

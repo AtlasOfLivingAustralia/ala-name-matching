@@ -107,16 +107,26 @@ class MiscellaneousProcessor extends Processor {
       processInteractions(guid, raw, processed)
       //now process the "establishmentMeans" values
       processEstablishmentMeans(raw, processed)
-      //process the "modified" date for the occurrence - we want all modified dates in the same format so that we can index on them...
+      //process the dates
+      processDates(raw,processed)
+      //TODO reenable identification processing after we have categorised issues better.
+      //processIdentification(raw,processed,assertions)
+      assertions.toArray
+  }
+  
+  def processDates(raw:FullRecord, processed:FullRecord)={
+    //process the "modified" date for the occurrence - we want all modified dates in the same format so that we can index on them...
       if(raw.occurrence.modified != null){
           val parsedDate = DateParser.parseDate(raw.occurrence.modified)
           if(parsedDate.isDefined){
               processed.occurrence.modified = parsedDate.get.startDate
           }
       }
-      //TODO reenable identification processing after we have categorised issues better.
-      //processIdentification(raw,processed,assertions)
-      assertions.toArray
+      if(raw.identification.dateIdentified != null){
+        val parsedDate =DateParser.parseDate(raw.identification.dateIdentified)
+        if(parsedDate.isDefined)
+          processed.identification.dateIdentified = parsedDate.get.startDate
+      }
   }
   
   def processEstablishmentMeans(raw:FullRecord, processed:FullRecord)={
