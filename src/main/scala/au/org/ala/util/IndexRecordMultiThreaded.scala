@@ -106,11 +106,12 @@ object IndexRecordMultiThreaded extends Counter {
 
         println("Retrieved rowkey: "  + rowKey)
 
-        if (i >= 0){
-          buff(i) = (lastKey, rowKey)
+        if (i > 0){
+          buff(i-1) = (lastKey, rowKey)
         }
-
-        lastKey = rowKey
+        //we want the first key to be ""
+        if(i != 0)
+            lastKey = rowKey
       }
 
       buff(buff.length - 1) = (lastKey, "")

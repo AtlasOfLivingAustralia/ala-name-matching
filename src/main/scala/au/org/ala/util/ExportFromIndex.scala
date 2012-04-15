@@ -49,6 +49,7 @@ object ExportFacet {
   var lastDay = false
   var lastWeek = false
   var lastMonth = false
+  var includeCounts = false
   var indexDateField = "first_loaded_date"
 
   var fieldsToExport = Array[String]()
@@ -60,6 +61,7 @@ object ExportFacet {
     booleanOpt("ld","lastDay", "Only export those that have had new records in the last day", { v: Boolean => lastDay = v })
     booleanOpt("ld","lastWeek", "Only export those that have had new records in the last week", { v: Boolean => lastWeek = v })
     booleanOpt("ld","lastMonth", "Only export those that have had new records in the last month", { v: Boolean => lastMonth = v })
+    booleanOpt("c","incCounts", "Include the counts of the facet", { v: Boolean => includeCounts = v })
     opt("df","date field to use", "The indexed date field to use e.g. first_loaded_Date", { v: String => indexDateField = v })
   }
 
@@ -76,6 +78,8 @@ object ExportFacet {
       val facetWriter = new FileWriter(new File(facetOutputFile))
       Config.indexDAO.pageOverFacet( (label, count) => {
         facetWriter.write(label)
+        if(includeCounts)
+          facetWriter.write("\t" + count)
         facetWriter.write("\n")
         facetWriter.flush
         true
