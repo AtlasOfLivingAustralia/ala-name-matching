@@ -395,6 +395,16 @@ public class CBIndexSearch {
                 rank = RankType.SPECIES;
                 //construct the full scientific name from the parts
             	name = cl.getSpecies();
+                //check to see of the name is a binomial
+                    if(!name.trim().contains(" ")){
+                        //construct the bionomial
+                        if(StringUtils.isNotEmpty(cl.getGenus())){
+                            name = cl.getGenus() + " " + cl.getSpecificEpithet() ;
+                        }
+                        else{
+                            name =null;
+                        }
+                    }
 	        } else if (StringUtils.isNotEmpty(cl.getGenus())) {
                 rank = RankType.GENUS;
                 //construct the full scientific name from the parts
@@ -1080,7 +1090,9 @@ public class CBIndexSearch {
                 //HOMONYM CHECKS
                 if(checkHomo){
                     //check result level homonyms
-                    checkResultLevelHomonym(results);
+                    //TODO 2012-04-17: Work out edge case issues for canonical matches...
+                    //checkResultLevelHomonym(results);
+
                     //check to see if we have a cross rank homonym
                     //cross rank homonyms are resolvable if a rank has been supplied
                     if(rank == null){
