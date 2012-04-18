@@ -73,10 +73,10 @@ public class SensitiveTaxonStore implements Serializable {
                         SensitiveTaxon acceptedTaxon = findByExactMatch(acceptedName);
                         if (acceptedTaxon == null) {
                             acceptedTaxon = new SensitiveTaxon(acceptedName, StringUtils.contains(acceptedName, ' ') ? Rank.SPECIES : Rank.GENUS);
-                            acceptedTaxon.setLsid(acceptedTaxon.getLsid());
+                            acceptedTaxon.setLsid(accepted.getLsid());
                             if (!additionalAcceptedTaxons.contains(acceptedTaxon)) {
                                 additionalAcceptedTaxons.add(acceptedTaxon);
-                                logger.info("Accepted name '" + acceptedName + "' added to sensitive taxon list");
+                                logger.info("Accepted name '" + acceptedName + "' (" + acceptedTaxon.getLsid() + ") added to sensitive taxon list");
                             }
                         }
                         st.setAcceptedName(acceptedName);
