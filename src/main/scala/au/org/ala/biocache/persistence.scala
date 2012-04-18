@@ -476,7 +476,7 @@ class CassandraPersistenceManager @Inject() (
        val keys = List(columnMap.keySet.toArray : _*)
 
        //identify el* cl* fields
-       val locFields = fields.filter( a => a.startsWith("el") || a.startsWith("cl") )
+       //val locFields = fields.filter( a => a.startsWith("el") || a.startsWith("cl") )
 
        keys.foreach(key =>{
          val columnsList = columnMap.get(key)
@@ -484,14 +484,15 @@ class CassandraPersistenceManager @Inject() (
          val map = scala.collection.mutable.Map.empty[String,String]
          fieldValues.foreach(fieldValue =>  map(fieldValue._1) = fieldValue._2)
 
-         //add el* cl* fields
-         if(!locFields.isEmpty) {
-           val locSome = get(map.getOrElse("decimalLatitude.p","") + "|" + map.getOrElse("decimalLongitude.p",""),"loc")
-           if (locSome != None) {
-             val locMap = locSome.get
-             locFields.foreach(lf => if(locMap.contains(lf)) map += (lf -> locMap(lf)))
-           }
-         }
+         //add el* cl* fields - this is handled at the higher level.  NB environment and contexual layers are included in the occ columnFamily
+         //so there is no need to look them up in the loc columnFamily.
+//         if(!locFields.isEmpty) {
+//           val locSome = get(map.getOrElse("decimalLatitude.p","") + "|" + map.getOrElse("decimalLongitude.p",""),"loc")
+//           if (locSome != None) {
+//             val locMap = locSome.get
+//             locFields.foreach(lf => if(locMap.contains(lf)) map += (lf -> locMap(lf)))
+//           }
+//         }
          proc(map.toMap) //pass the map to the function for processing
        })
      }

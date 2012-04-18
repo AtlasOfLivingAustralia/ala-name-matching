@@ -1064,6 +1064,12 @@ class ClassificationProcessor extends Processor {
     } catch {
       case he: HomonymException => {
         logger.debug(he.getMessage,he)
+        //need to remove any default values from the processed classification
+        processed.classification.kingdom = null
+        processed.classification.phylum = null
+        processed.classification.classs = null
+        processed.classification.order = null
+        processed.classification.family = null
         Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, "Homonym issue resolving the classification"))
       }
       case se: SearchResultException => logger.debug(se.getMessage,se); Array()
