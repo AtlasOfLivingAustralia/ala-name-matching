@@ -13,6 +13,7 @@ import au.org.ala.sds.dao.DataStreamDaoFactory;
 import au.org.ala.sds.dto.DataColumnMapper;
 import au.org.ala.sds.dto.DataStreamProperties;
 import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.util.Configuration;
 import au.org.ala.sds.validation.FactCollection;
 import au.org.ala.sds.validation.ServiceFactory;
 import au.org.ala.sds.validation.ValidationOutcome;
@@ -25,7 +26,7 @@ public class ProblematicFileInputTest {
 
     @BeforeClass
     public static void runOnce() throws Exception {
-        cbIndexSearch = new CBIndexSearch("/data/namematching");
+        cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
         finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
     }
 

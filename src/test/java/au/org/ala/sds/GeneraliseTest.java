@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.util.Configuration;
 import au.org.ala.sds.validation.FactCollection;
 import au.org.ala.sds.validation.ServiceFactory;
 import au.org.ala.sds.validation.ValidationOutcome;
@@ -50,7 +51,7 @@ public class GeneraliseTest {
 //        ((BasicDataSource) dataSource).setUsername("root");
 //        ((BasicDataSource) dataSource).setPassword("password");
 
-        cbIndexSearch = new CBIndexSearch("/data/namematching");
+        cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
         finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(cbIndexSearch);
     }
 
@@ -297,7 +298,7 @@ public class GeneraliseTest {
         assertTrue(outcome.isValid());
         assertNotNull(outcome.getResult());
 
-        assertFalse(outcome.isSensitive()); // Only sensitive for Birds Australia and Victoria
+        assertTrue(outcome.isSensitive()); // Sensitive for Birds Australia, NSW, Victoria and WA
     }
 
     /**
@@ -305,10 +306,10 @@ public class GeneraliseTest {
      */
     @Test
     public void findSpeciesByAcceptedName() {
-        SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Dendrobium speciosum f. hillii");
+        SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Diplodium elegans");
         assertNotNull(ss);
-        String latitude = "-16.167197";    // Qld
-        String longitude = "145.374527";
+        String latitude = "-33.630629";    // NSW
+        String longitude = "150.441284";
 
         Map<String, String> facts = new HashMap<String, String>();
         facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
@@ -320,8 +321,8 @@ public class GeneraliseTest {
         assertTrue(outcome.isValid());
         assertNotNull(outcome.getResult());
 
-        assertEquals("Latitude", "-16.2", outcome.getResult().get("decimalLatitude"));
-        assertEquals("Longitude", "145.4", outcome.getResult().get("decimalLongitude"));
+        assertEquals("Latitude", "-33.6", outcome.getResult().get("decimalLatitude"));
+        assertEquals("Longitude", "150.4", outcome.getResult().get("decimalLongitude"));
         assertEquals("InMetres", "10000", outcome.getResult().get("generalisationInMetres"));
     }
 

@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.util.Configuration;
 import au.org.ala.sds.validation.FactCollection;
 import au.org.ala.sds.validation.ServiceFactory;
 import au.org.ala.sds.validation.ValidationOutcome;
@@ -50,7 +51,7 @@ public class PlantPestSubjectToOfficialControlTest {
 //        ((BasicDataSource) dataSource).setUsername("root");
 //        ((BasicDataSource) dataSource).setPassword("password");
 
-        cbIndexSearch = new CBIndexSearch("/data/namematching");
+        cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
         finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
     }
 
