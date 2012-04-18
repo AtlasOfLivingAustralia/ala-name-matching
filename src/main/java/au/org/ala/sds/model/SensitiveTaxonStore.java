@@ -82,7 +82,7 @@ public class SensitiveTaxonStore implements Serializable {
                         st.setAcceptedName(acceptedName);
                     }
                 }
-                logger.debug("'" + st.getName() + (st.getAcceptedName() == null ? "" : "' ('" + st.getAcceptedName() + "')") + "\t'" + st.getLsid() + "'");
+                logger.debug(st.getName() + (st.getAcceptedName() == null ? "" : " (" + st.getAcceptedName() + ")") + "\t" + st.getLsid());
             } else {
                 logger.warn("Sensitive species '" + st.getName() + "' not found in NameMatching index");
             }
