@@ -159,7 +159,9 @@ public class GeneralisedLocation {
         String generalisation = null;
         for (SensitivityInstance si : instances) {
             if (si instanceof ConservationInstance) {
-                generalisation = maxGeneralisation(generalisation, ((ConservationInstance) si).getLocationGeneralisation());
+                if (zones.contains(si.getZone()) || si.getZone().getId().equals(SensitivityZone.AUS) && SensitivityZone.isInAustralia(zones)) {
+                    generalisation = maxGeneralisation(generalisation, ((ConservationInstance) si).getLocationGeneralisation());
+                }
             }
         }
         return generalisation;
