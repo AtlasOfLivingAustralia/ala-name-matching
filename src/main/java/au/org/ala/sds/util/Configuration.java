@@ -43,7 +43,11 @@ public class Configuration {
         return config.getProperty("cache-data", "/data/sds/species-cache.ser");
     }
 
-    public String getSpatialUrl( ) {
+    public String getSpatialUrl() {
         return config.getProperty("spatial-layer-ws", "http://spatial.ala.org.au/layers-service/intersect/");
+    }
+
+    public String getNameMatchingIndex() {
+        return config.getProperty("namematching-index", "/data/lucene/namematchingv1_1");
     }
 }
