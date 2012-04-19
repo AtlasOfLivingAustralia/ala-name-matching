@@ -357,7 +357,15 @@ object Store {
     recordDelimiter: java.lang.String, keys: Array[String], fields: Array[java.lang.String], qaFields: Array[java.lang.String]) {
     writeToStream(outputStream, fieldDelimiter, recordDelimiter, keys, fields, qaFields, false)
   }
+  
+  def writeToWriter(writer:RecordWriter,keys: Array[String], fields: Array[java.lang.String], qaFields: Array[java.lang.String], includeSensitive:Boolean){
+      occurrenceDAO.writeToRecordWriter(writer, keys, fields, qaFields, includeSensitive)      
+  }
 
+  def writeToWriter(writer:RecordWriter,keys: Array[String], fields: Array[java.lang.String], qaFields: Array[java.lang.String]){
+      writeToWriter(writer, keys, fields, qaFields, false)
+  }
+  
   /**
    * Retrieve the assertion codes
    */
@@ -440,4 +448,13 @@ trait OccurrenceConsumer {
 trait OccurrenceVersionConsumer {
   /** Passes an array of versions. Raw, Process and consensus versions */
   def consume(record: Array[FullRecord]): Boolean
+}
+/**
+ * A trait to be implemented by java classes to write records.
+ */
+trait RecordWriter{
+  /** Writes the supplied record.*/
+  def write(record:Array[String])
+  /** Performs all the finishing tasks in writing the download file. */
+  def finalise
 }

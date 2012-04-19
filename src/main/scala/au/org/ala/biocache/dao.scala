@@ -52,6 +52,8 @@ trait OccurrenceDAO {
     def createUuid = UUID.randomUUID.toString
 
     def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String, rowKeys: Array[String], fields: Array[String], qaFields:Array[String], includeSensitive:Boolean=false): Unit
+    
+    def writeToRecordWriter(writer:RecordWriter, rowKeys: Array[String], fields: Array[String], qaFields:Array[String], includeSensitive:Boolean=false): Unit
 
     def pageOverAllVersions(proc: ((Option[Array[FullRecord]]) => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
 
@@ -257,6 +259,59 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     def getUUIDForUniqueID(uniqueID: String) = persistenceManager.get(uniqueID, "occ", "uuid")
     val elpattern = """el[0-9]+""".r
     val clpattern = """cl[0-9]+""".r
+    
+    /**
+     * Writes the supplied field values to the writer.  The Writer specifies the format in which the record is 
+     * written.
+     */
+    def writeToRecordWriter(writer:RecordWriter, rowKeys: Array[String], fields: Array[String], qaFields:Array[String], includeSensitive:Boolean=false){
+      //get the codes for the qa fields that need to be included in the download
+        //TODO fix thi in case the value can't be found
+        val mfields = scala.collection.mutable.ArrayBuffer[String]()
+        mfields ++= fields
+        val codes = qaFields.map(value=>AssertionCodes.getByName(value).get.getCode)
+        val firstEL = fields.find(value => {elpattern.findFirstIn(value).nonEmpty})
+        val firstCL = fields.find(value => {clpattern.findFirstIn(value).nonEmpty})        
+        if(firstEL.isDefined)
+          mfields + "el.p"
+        if(firstCL.isDefined)
+          mfields + "cl.p"
+        if(includeSensitive)
+          mfields + "originalSensitiveValues"
+        mfields ++=  FullRecordMapper.qaFields
+        
+        
+        
+        persistenceManager.selectRows(rowKeys, entityName, mfields.toArray , {          
+            fieldMap =>
+                val array = scala.collection.mutable.ArrayBuffer[String]()
+                val sensitiveMap:scala.collection.Map[String,String] = if(includeSensitive) Json.toStringMap(fieldMap.getOrElse("originalSensitiveValues", "{}")) else Map()
+                val elMap = if(firstEL.isDefined) Json.toStringMap(fieldMap.getOrElse("el.p", "{}")) else Map[String,String]()
+                val clMap = if(firstCL.isDefined)Json.toStringMap(fieldMap.getOrElse("cl.p", "{}")) else Map[String,String]()
+                for (field <- fields) {
+                    val fieldValue = field match{
+                      case a if elpattern.findFirstIn(a).nonEmpty => elMap.getOrElse(a, "")
+                      case a if clpattern.findFirstIn(a).nonEmpty => clMap.getOrElse(a, "")
+                      case _ => if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap))else getHackValue(field,fieldMap)
+                    }
+                     // if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap))else getHackValue(field,fieldMap)
+                    //Create a MS Excel compliant CSV file thus field with delimiters are quoted and embedded quotes are escaped
+                    
+                   array + fieldValue
+                }
+                //now handle the QA fields
+                val failedCodes = getErrorCodes(fieldMap);
+                //work way through the codes and add to output
+                for(code <-codes){
+                    array + (failedCodes.contains(code)).toString
+                    
+                }
+                writer.write(array.toArray)
+        })
+        
+        
+    }
+    
     /**
      * Write to stream in a delimited format (CSV).
      */
