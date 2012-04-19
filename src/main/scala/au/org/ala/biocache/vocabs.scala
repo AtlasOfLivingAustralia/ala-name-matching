@@ -392,7 +392,7 @@ trait VocabMaps {
           // if the term isnt mapped, return no decision
           None
         } else {
-          //it is mapped, so return if its compatible
+          //it is mapped, so return if its compatible          
           Some(mapped.get.contains(term2.toUpperCase))
         }
       }
@@ -406,11 +406,12 @@ trait VocabMaps {
  * A vocabulary mapping for habitats.
  */
 object HabitatMap extends VocabMaps {
+  //Assume that all habitats fit into a "MARINE AND NON-MARINE" environment.
   val termMap = Map(
-    "MARINE" -> Array("MARINE"),
-    "NON-MARINE" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC"),
-    "TERRESTRIAL" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC"),
-    "LIMNETIC" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC")
+    "MARINE" -> Array("MARINE","MARINE AND NON-MARINE"),
+    "NON-MARINE" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC","MARINE AND NON-MARINE"),
+    "TERRESTRIAL" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC","MARINE AND NON-MARINE"),
+    "LIMNETIC" -> Array("NON-MARINE", "TERRESTRIAL", "LIMNETIC","MARINE AND NON-MARINE")
   )
 }
  /**

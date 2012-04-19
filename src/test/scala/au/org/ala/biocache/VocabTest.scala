@@ -35,6 +35,13 @@ class VocabTest extends ConfigFunSuite {
   test("Expect  marine to not match terrestrial"){
 	  expect(false){HabitatMap.isCompatible("marine", "terrestrial").get}
   }
+  
+  test("Expect marine and non-marine to match all"){
+    expect(true){HabitatMap.isCompatible("marine","marine and non-marine").get}
+    expect(true){HabitatMap.isCompatible("non-marine","marine and non-marine").get}
+    expect(true){HabitatMap.isCompatible("terrestrial","marine and non-marine").get}
+    expect(true){HabitatMap.isCompatible("limnetic","marine and non-marine").get}
+  }
 
   test("Expect coordinates for QLD centre to match"){
     expect(false){StateProvinceCentrePoints.coordinatesMatchCentre("QLD","12","12")}
@@ -107,5 +114,10 @@ class VocabTest extends ConfigFunSuite {
          DwC.matchTerm(name).isEmpty
        }
      })
+  }
+  
+  test("establishmentMeans"){
+      expect("formerly cultivated (extinct)"){EstablishmentMeans.matchTerm("formerly cultivated (extinct)").get.canonical}
+      
   }
 }
