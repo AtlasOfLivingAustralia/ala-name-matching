@@ -21,6 +21,7 @@ import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang.time.DateFormatUtils
 import java.io.{File, OutputStream}
 import java.util.concurrent.ArrayBlockingQueue
+import scala.util.parsing.json.JSON
 
 
 /**
@@ -29,8 +30,8 @@ import java.util.concurrent.ArrayBlockingQueue
 trait IndexDAO {
 
     import org.apache.commons.lang.StringUtils.defaultString
-    val elFields = Config.fieldsToSample.filter(x => x.startsWith("el"))
-    val clFields = Config.fieldsToSample.filter(x => x.startsWith("cl"))
+//    val elFields = Config.fieldsToSample.filter(x => x.startsWith("el"))
+//    val clFields = Config.fieldsToSample.filter(x => x.startsWith("cl"))
 
     def getRowKeysForQuery(query:String, limit:Int=1000):Option[List[String]]
     
@@ -141,7 +142,7 @@ trait IndexDAO {
       "last_load_date","last_processed_date", "modified_date", "establishment_means","loan_number","loan_identifier","loan_destination",
       "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric",
       "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue","raw_identification_qualifier","species_habitats",
-      "identified_by","identified_date") // ++ elFields ++ clFields
+      "identified_by","identified_date","sensitive_latitude","sensitive_longitude") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -269,13 +270,24 @@ trait IndexDAO {
                         case e: Exception => slat = ""; slon = ""
                     }
                 }
+                //get sensitive values map
+                val sensitiveMap = {
+                  if(map.contains("originalSensitiveValues")){
+                    val osv =map.getOrElse("originalSensitiveValues","{}")                    
+                    val parsed = JSON.parseFull(osv)
+                    parsed.get.asInstanceOf[Map[String,String]]
+                    //JSON.parseFull(map.getOrElse("originalSensitiveValues","{}")).get.asInstanceOf[Map[String,String]]
+                  }
+                  else
+                    Map[String,String]()
+                }
                 val sconservation = getValue("stateConservation.p", map)
                 var stateCons = if(sconservation!="") sconservation.split(",")(0) else ""
                 val rawStateCons = if(sconservation!="") sconservation.split(",")(1) else ""
                 if(stateCons == "null") stateCons = rawStateCons;
                 
                 val sensitive:String = {
-                    if(getValue("originalSensitiveValues",map) != "" || getValue("originalDecimalLatitude",map) != "") {
+                    if(sensitiveMap.size>0) {
                         val dataGen = map.getOrElse("dataGeneralizations.p", "")
                         if(dataGen.contains("already generalised"))
                             "alreadyGeneralised"
@@ -420,7 +432,8 @@ trait IndexDAO {
                     outlierForLayers.mkString("|"),
                     outlierForLayers.length.toString, map.getOrElse("taxonomicIssue.p",""), map.getOrElse("identificationQualifier",""),
                     habitats.mkString("|"), map.getOrElse("identifiedBy",""), 
-                    if(map.contains("dateIdentified.p")) map.getOrElse("dateIdentified.p","") + "T00:00:00Z" else ""
+                    if(map.contains("dateIdentified.p")) map.getOrElse("dateIdentified.p","") + "T00:00:00Z" else "",
+                    sensitiveMap.getOrElse("decimalLongitude",""), sensitiveMap.getOrElse("decimalLatitude","")
                     ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
                 //)
             }
@@ -438,7 +451,7 @@ trait IndexDAO {
  * 
  * Not in use yet.
  */
-class IndexField(fieldName:String, dataType:String, sourceField:String, multi:Boolean=false, storeAsArray:Boolean=false, extraField:Option[String]=None){
+case class IndexField(fieldName:String, dataType:String, sourceField:String, multi:Boolean=false, storeAsArray:Boolean=false, extraField:Option[String]=None){
     
     def getValuesForIndex(map: Map[String, String]):(String,Option[Array[String]])={
         //get the source value. Cater for the situation where we get the parsed value if raw doesn't exist
@@ -482,6 +495,21 @@ class IndexField(fieldName:String, dataType:String, sourceField:String, multi:Bo
         }
         (fieldName,None)
     }
+}
+
+object IndexFields{
+  
+  val fieldList = loadFromFile
+  
+  val indexFieldMap = fieldList.map(indexField =>{(indexField.fieldName -> indexField.sourceField)}).toMap
+  
+  val storeFieldMap = fieldList.map(indexField => {(indexField.sourceField -> indexField.fieldName)}).toMap
+  
+  def loadFromFile()={
+    scala.io.Source.fromURL(getClass.getResource("/indexFields.txt"), "utf-8").getLines.toList.collect{ case row if !row.startsWith("#") =>{
+      val values = row.split("\t")    
+      new IndexField(values(0),values(1),values(2))}
+  }}
 }
 
 /**

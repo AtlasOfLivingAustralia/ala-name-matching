@@ -1,0 +1,106 @@
+field	dataType	sourceField	multi	storedAsArray	extraFields
+id	string	uuid	F	F	
+row_key	string	rowKey	F	F	
+occurrence_id	string	occurrenceID	F	F	
+data_hub_uid	string	dataHubUid	T	T	T
+data_hub	string	dataHub.p	F	F	F
+data_provider_uid	string	dataProviderUid.p	F	F	dataProviderUid
+data_provider	string	dataProviderName.p	F	F	dataProviderName
+data_resource_uid	string	dataResourceUid	F	F	dataResourceUid.p
+data_resource	string	dataResourceName.p	F	F	dataResourceName
+institution_uid	string	institutionUid.p	F	F	
+institution_code	string	institutionCode	F	F	
+institution_name	string	institutionName.p	F	F	
+collection_uid	string	collectionUid.p	F	F	
+collection_code	string	collectionCode	F	F	
+collection_name	string	collectionName.p	F	F	
+catalogue_number	string	catalogNumber	F	F	
+taxon_concept_lsid	string	taxonConceptID.p	F	F	
+occurrence_date	date	eventDate.p	F	F	
+# occurrence_year - need to ensure length of 4 and append "-01-01T00:00:00Z"
+taxon_name	string	scientificName.p	F	F	
+common_name	string	vernacularName.p	F	F	
+names_and_lsid	string	scientificName.p,taxonConceptID.p,vernacularName.p,kingdom.p,family.p	F	F	
+common_name_and_lsid	string	vernacularName.p,scientificName.p,taxonConceptID.p,kingdom.p,family.p	F	F	
+rank	string	taxonRank.p	F	F	
+rank_id	int	taxonRankID.p	F	F	
+# raw_taxon_name - need to construct a raw scientific name if the scientific name does not exist
+raw_common_name	string	vernacularName	F	F	
+# multimedia - if length of images.p > 3 then Multimedia else None
+image_url	string	images.p	T	T	
+species_group	string	speciesGroups.p	T	T	
+country_code	string	countryCode	F	F	
+country	string country.p	F	F	
+lft	int	left.p	F	F	
+rgt	int	right.p	F	F	
+kingdom	string	kingdom.p	F	F	
+phylum	string	phylum.p	F	F	
+class	string	classs.p	F	F	
+order	string	order.p	F	F	
+family	string	family.p	F	F	
+genus	string	genus.p	F	F	
+genus_guid	string	genusID.p	F	F	
+species	string	species.p	F	F	
+species_guid	string	speciesID.p	F	F	
+state	string	stateProvince.p	F	F	
+imcra	string	imcra.p	F	F	
+ibra	string	ibra.p	F	F	
+places	string	lga.p	F	F	
+latitude	double	decimalLatitude.p	F	F	
+longitude	double	decimalLongitude.p	F	F	
+# lat_long - comma concat of decimalLatitude.p,decimalLongitude.p
+# point-1 - coordinates rounded to the supplied precision
+# point-0.1
+# point-0.01
+# point-0.001
+# point-0.0001
+year	string	year.p	F	F	
+month	string	month.p	F	F	
+basis_of_record	string	basisOfRecord.p	F	F	
+raw_basis_of_record	string	basisOfRecord	F	F	
+type_status	string	typeStatus.p	F	F	
+raw_type_status	string	typeStatus	F	F	
+taxonomic_kosher	string	taxonomicallyKosher	F	F	
+# geospatial_kosher - only test for value if the lat/long are supplied 
+# assertions - need to obtain a list of assertions that have failed
+location_remarks	string	locationRemarks	F	F	
+occurrence_remarks	string	occurrenceRemarks	F	F	
+# citation - not being used at the moment
+user_assertions	string	userQualityAssertion	F	F	
+# system_assertions - if length of qualityAssertion > 3 true else false
+collector	string	recordedBy	F	F	
+# state_conservation - first value of CSV stateConservation.p
+# raw_state_conservation - second value of stateConservation.p
+# sensitive - when dataGeneralizations.p contains "already generalised" then alreadyGeneralised when originalSensitiveValues.length >3 then generalised
+coordinate_uncertainty	double	coordinateUncertaintyInMeters.p	F	F	
+user_id	string	recordedBy	F	F	
+provenance	string	provenance.p	F	F	
+# subspecies_guid - if rankid > 7000 taxonConceptID.p
+# subspecies_name - if rank_id > 7 then scientificName.p
+interaction	string	interactions.p	T	T	
+last_assertion_date	date	lastUserAssertionDate	F	F	
+last_load_date	date	lastModifiedTime	F	F	
+last_processed_date	date	lastModifiedTime.p	F	F	
+modified_date	date	modified.p	F	F	
+establishment_means	string	establishmentMeans.p	T	F	
+loan_number	string	loanSequenceNumber	F	F	
+loan_identifier	string loanIdentifier	F	F	
+loan_destination	string	loanDestination	F	F	
+loan_botanist	string	loanForBotanist	F	F	
+loan_date	date	loanDate	F	F	
+loan_return_date	date	loanReturnDate	F	F	
+original_name_usage	string	originalNameUsage	F	F	typifiedName
+duplicate_inst	string	duplicates	T	F	
+record_number	string	recordNumber	F	F	
+first_loaded_date	date	firstLoaded	F	F	
+name_match_metric	string	nameMatchMetric.p	F	F	
+life_stage	string	phenology	F	F	
+outlier_layer	string	outlierForLayers.p	T	T	
+# outlier_layer_count - based on the count in outlier_layer
+taxonomic_issue	string	taxonomicIssue.p	F	F
+raw_identification_qualifier	string	identificationQualifier	F	F	
+species_habitats	string	speciesHabitats.p	T	T	
+identified_by	string	identifiedBy	F	F	
+identified_date	date	dateIdentified.p	F	F	
+# sensitive_latitude - extracted from original values
+# sensitive_longitude -extracted from original values
