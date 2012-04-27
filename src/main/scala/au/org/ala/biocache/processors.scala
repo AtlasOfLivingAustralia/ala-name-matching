@@ -837,7 +837,7 @@ class LocationProcessor extends Processor {
             //convert it to a string string map
             val stringMap = map.map({case(k, v) => if(k=="originalSensitiveValues"){
                 val osv = v.asInstanceOf[java.util.HashMap[String,String]]
-                val newv = osv.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
+                val newv = Json.toJSON(osv)
                 (k->newv)
             } else (k->v.toString)
                 
