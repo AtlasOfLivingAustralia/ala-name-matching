@@ -76,6 +76,8 @@ class DwCALoader extends DataLoader {
           //load the DWC file
         loadArchive(fileName, resourceUid, conceptTerms)
       })
+      //shut down the persistence manager after all the files have been loaded.
+      Config.persistenceManager.shutdown
     }
     
     def loadLocal(resourceUid:String, fileName:String){
@@ -83,6 +85,8 @@ class DwCALoader extends DataLoader {
     	val conceptTerms = mapConceptTerms(uniqueTerms)
         //load the DWC file
     	loadArchive(fileName, resourceUid, conceptTerms)
+    	//shut down the persistence manager after all the files have been loaded.
+    	Config.persistenceManager.shutdown
     }
     
     def loadArchive(fileName:String, resourceUid:String, uniqueTerms:List[ConceptTerm]){
@@ -157,8 +161,7 @@ class DwCALoader extends DataLoader {
             }
         }
         //commit the batch
-        Config.occurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)
-        Config.persistenceManager.shutdown
+        Config.occurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)        
         println("Finished DwC loader. Records processed: " + count)
         count
     }
