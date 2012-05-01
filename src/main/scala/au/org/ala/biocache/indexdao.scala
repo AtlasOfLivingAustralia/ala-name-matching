@@ -273,9 +273,16 @@ trait IndexDAO {
                 //get sensitive values map
                 val sensitiveMap = {
                   if(map.contains("originalSensitiveValues")){
+                    try{
                     val osv =map.getOrElse("originalSensitiveValues","{}")                    
                     val parsed = JSON.parseFull(osv)
                     parsed.get.asInstanceOf[Map[String,String]]
+                    }
+                    catch{
+                      case _=>{println("Unable to get sensitive map for : " + guid)
+                        Map[String,String]()                      
+                      }
+                    }
                     //JSON.parseFull(map.getOrElse("originalSensitiveValues","{}")).get.asInstanceOf[Map[String,String]]
                   }
                   else
