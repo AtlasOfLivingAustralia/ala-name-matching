@@ -170,6 +170,9 @@ class RecordProcessor {
     val systemAssertions = Some(assertions.toMap)
     //mark the processed time
     processed.lastModifiedTime = processTime
+    //put the properties that are not updated during processing
+    processed.occurrence.outlierForLayers = currentProcessed.occurrence.outlierForLayers
+    
     //store the occurrence
     occurrenceDAO.updateOccurrence(guid, currentProcessed, processed, systemAssertions, Processed)
   }
