@@ -158,8 +158,11 @@ public class JmsMessageListener implements MessageListener {
     	                                map.put("associatedMedia", newValue);
 	                                }
 	                            }
+	                            else if("userID".equals(key)){
+	                                map.put("recordedBy", omap.get(key).toString());
+	                            }
 	                            else if("guid".equals(key)){
-	                                map.put("OccurrenceID", omap.get(key).toString());
+	                                map.put("occurrenceID", omap.get(key).toString());
 	                            }
 	                            else{
 	                                map.put(key, omap.get(key).toString());
