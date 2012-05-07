@@ -426,7 +426,7 @@ object HabitatMap extends VocabMaps {
     def isPartOfGroup(lft:Int):Boolean ={
       lftRgtValues.foreach{tuple =>
         val (l,r,include) = tuple
-        if(lft > l && lft < r) return include
+        if(lft >= l && lft < r) return include
         }
       false
     }
@@ -462,7 +462,9 @@ object HabitatMap extends VocabMaps {
      createSpeciesGroup("Fungi", "kingdom", Array("Fungi"), Array(), null),
      createSpeciesGroup("Chromista","kingdom", Array("Chromista"), Array(), null),
      createSpeciesGroup("Protozoa", "kingdom", Array("Protozoa"), Array(), null),
-     createSpeciesGroup("Bacteria", "kingdom", Array("Bacteria"), Array(), null)
+     createSpeciesGroup("Bacteria", "kingdom", Array("Bacteria"), Array(), null),
+     createSpeciesGroup("Algae","phylum", Array("Bacillariophyta","Chlorophyta","Cyanidiophyta","Prasinophyta","Rhodophyta",
+                                                 "Cryptophyta","Ochrophyta","Sagenista","Cercozoa","Euglenozoa","Cyanobacteria"),Array(),null)
     )
 
     /*
