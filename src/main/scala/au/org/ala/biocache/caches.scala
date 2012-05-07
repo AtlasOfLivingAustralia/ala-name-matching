@@ -101,8 +101,9 @@ object ClassificationDAO {
           if(nsr.isSynonym())
             result.get.setMatchType(nsr.getMatchType())
           //update the subspecies or below value if necessary
-          if(nsr.getRank != null && nsr.getRank.getId() >7000 && nsr.getRank.getId <9999){
-            nsr.getRankClassification.setSubspecies(nsr.getRankClassification.getScientificName())            
+          val rank = result.get.getRank  
+          if(rank != null && rank.getId() >7000 && rank.getId <9999){
+            result.get.getRankClassification.setSubspecies(result.get.getRankClassification.getScientificName())            
           }
           lock.synchronized { lru.put(hash, result) }
           result
