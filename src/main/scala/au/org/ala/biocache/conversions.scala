@@ -25,6 +25,9 @@ object BiocacheConversions {
     cl.speciesID = rankClassification.getSid
     cl.specificEpithet = rankClassification.getSpecificEpithet
     cl.scientificName = rankClassification.getScientificName
+    cl.subspecies = rankClassification.getSubspecies
+    if(cl.subspecies != null && cl.subspecies.size > 0)
+      cl.subspeciesID = nsr.getLsid()
     cl.taxonConceptID = nsr.getLsid
     cl.left = nsr.getLeft
     cl.right = nsr.getRight

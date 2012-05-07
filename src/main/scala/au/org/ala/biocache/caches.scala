@@ -100,6 +100,10 @@ object ClassificationDAO {
           //change the name match metric for a synonym 
           if(nsr.isSynonym())
             result.get.setMatchType(nsr.getMatchType())
+          //update the subspecies or below value if necessary
+          if(nsr.getRank.getId() >7000 && nsr.getRank.getId <9999){
+            nsr.getRankClassification.setSubspecies(nsr.getRankClassification.getScientificName())            
+          }
           lock.synchronized { lru.put(hash, result) }
           result
       } else {
