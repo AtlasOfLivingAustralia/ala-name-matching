@@ -11,6 +11,8 @@ import java.io.{FileReader, FileWriter}
 object ResampleSensitiveRecords extends ResampleRecords {
 
   def sensitiveFilter(map:Map[String, String]) : Boolean = (map.getOrElse("originalSensitiveValues","") != "")
+  
+  
 
   def main(args:Array[String]){
 
@@ -31,7 +33,42 @@ object ResampleSensitiveRecords extends ResampleRecords {
       }
 
       val r = new ResampleRecords
-      r.resamplePointsByFilter(sensitiveFilter, Array("originalSensitiveValues"),startKey, endKey)
+      r.resamplePointsByFilter(sensitiveFilter, Array("originalSensitiveValues"),startKey, endKey)      
+    }
+  }
+}
+/**
+ * A resampler for records that have had their coordinates changed during processing.
+ */
+object ResampleChangedCoordinates {
+  def changeCoordinatesFilter(map:Map[String,String]) : Boolean ={
+    val rawLat = map.getOrElse("decimalLatitude","")
+    val rawLon = map.getOrElse("decimalLongitude","")
+    val proLat = map.getOrElse("decimalLatitude.p","")
+    val proLon = map.getOrElse("decimalLongitude.p","")
+    if(rawLat!="" && rawLon != "" && proLat != "" && proLon != "")
+      rawLat != proLat || rawLon != proLon
+    false
+  }
+  def main(args:Array[String]){
+    var dataResourceUid:String = ""
+    val parser = new OptionParser("index records options") {
+        opt("dr","data-resource-uid", "The data resource to process", {v:String => dataResourceUid = v})
+    }
+
+    if(parser.parse(args)){
+
+      val startKey = {
+        if (dataResourceUid != "") dataResourceUid +"|"
+        else ""
+      }
+      val endKey = {
+        if (dataResourceUid != "") dataResourceUid +"|~"
+        else ""
+      }
+
+      val r = new ResampleRecords
+      r.resamplePointsByFilter(changeCoordinatesFilter, Array("decimalLatitude","decimalLongitude"),startKey, endKey)
     }
   }
 }
