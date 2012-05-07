@@ -48,7 +48,8 @@ object ResampleChangedCoordinates {
     val proLon = map.getOrElse("decimalLongitude.p","")
     if(rawLat!="" && rawLon != "" && proLat != "" && proLon != "")
       rawLat != proLat || rawLon != proLon
-    false
+    else
+      false
   }
   def main(args:Array[String]){
     var dataResourceUid:String = ""
@@ -101,8 +102,7 @@ class ResampleRecords {
     val records = new CSVWriter(new FileWriter(recordsSampledFilePath))
     val distinctPoints = new HashSet[(String, String)]
 
-    val fields = Array("decimalLatitude.p", "decimalLongitude.p") ++ fieldsRequired
-
+    val fields = Array("decimalLatitude.p", "decimalLongitude.p") ++ fieldsRequired    
     //iterate through records
     //produce two CSV files: 1) Rowkeys and  2) distinct decimalLatitude.p, decimalLongitude.p
     Config.persistenceManager.pageOverSelect("occ", (guid,map) => {
