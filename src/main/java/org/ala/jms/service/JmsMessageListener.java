@@ -151,21 +151,24 @@ public class JmsMessageListener implements MessageListener {
 	                        omap = mapper.readValue(json, Map.class);
 	                        
 	                        for(String key: omap.keySet()){
+	                            Object value = omap.get(key);
 	                            if("associatedMedia".equals(key)){
-	                                if(hasAssociatedMedia){
-    	                                Object value = omap.get(key);
+	                                if(hasAssociatedMedia && value != null){    	                                
     	                                String newValue = org.apache.commons.lang.StringUtils.join((List)value, ";");
     	                                map.put("associatedMedia", newValue);
 	                                }
 	                            }
 	                            else if("userID".equals(key)){
-	                                map.put("recordedBy", omap.get(key).toString());
+	                                if(value != null)
+	                                    map.put("recordedBy", value.toString());
 	                            }
 	                            else if("guid".equals(key)){
-	                                map.put("occurrenceID", omap.get(key).toString());
+	                                if(value != null)
+	                                    map.put("occurrenceID", value.toString());
 	                            }
 	                            else{
-	                                map.put(key, omap.get(key).toString());
+	                                if(value != null)
+	                                    map.put(key, omap.get(key).toString());
 	                            }
 	                        }
 	                        
