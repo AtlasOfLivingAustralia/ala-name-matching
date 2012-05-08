@@ -61,7 +61,7 @@ public class JmsMessageListener implements MessageListener {
 	public JmsMessageListener() {
 		// initialise the object mapper
 		mapper.getDeserializationConfig().set(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES,	false);
-		ID_LIST.add("OccurrenceID");
+		ID_LIST.add("occurrenceID");
 		upsertList = new ArrayList<Map<String,String>>();
 		deleteList = new ArrayList<String>();		
 		new BatchThread().start();
@@ -198,7 +198,7 @@ public class JmsMessageListener implements MessageListener {
 	                		
 	                	case DELETE:
 	                	    if(map != null){
-	                	        occId = CITIZEN_SCIENCE_DRUID + "|" + map.get("OccurrenceID");
+	                	        occId = CITIZEN_SCIENCE_DRUID + "|" + map.get("occurrenceID");
 	                	        synchronized(deleteList){
 	                	            deleteList.add(occId);
 	                	        }
