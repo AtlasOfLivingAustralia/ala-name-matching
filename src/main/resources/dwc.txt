@@ -1,6 +1,6 @@
 acceptedNameUsage	acceptedTaxon
 acceptedNameUsageID	acceptedTaxonID
-associatedMedia
+associatedMedia	imageUrl
 associatedOccurrences
 associatedReferences	RelatedCatalogItem
 associatedSequences
@@ -8,7 +8,7 @@ associatedTaxa
 basisOfRecord	recordBasis
 bed
 behavior	behaviour
-catalogNumber	catalogNumberNumeric	catalogueNumber	ID	strainNumber
+catalogNumber	catalogID	catalogNumberNumeric	catalogueNumber	ID	strainNumber
 class   classs  klass
 classs	_class	class	klass	clazz
 collectionCode	collection code
