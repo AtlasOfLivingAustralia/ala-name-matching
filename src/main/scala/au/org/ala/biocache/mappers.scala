@@ -16,6 +16,7 @@ object FullRecordMapper {
     val locationDeterminedColumn ="locationDetermined"
     val defaultValuesColumn = "defaultValuesUsed"    
     val alaModifiedColumn = "lastModifiedTime"
+    val dateDeletedColumn ="dateDeleted"
     val lastUserAssertionDateColumn ="lastUserAssertionDate"
     val environmentalLayersColumn = "el.p"
     val contextualLayersColumn = "el.p"
@@ -41,6 +42,9 @@ object FullRecordMapper {
         }
         if(fullRecord.firstLoaded != null && !fullRecord.firstLoaded.isEmpty && version == Raw){
             properties.put("firstLoaded", fullRecord.firstLoaded)
+        }
+        if(fullRecord.dateDeleted != null && !fullRecord.dateDeleted.isEmpty && version == Raw){
+            properties.put("dateDeleted", fullRecord.firstLoaded)
         }
         if(fullRecord.el!=null && !fullRecord.el.isEmpty && version == Processed){
           properties.put("el.p", Json.toJSON(fullRecord.el))        //store them as JSON array
@@ -159,6 +163,7 @@ object FullRecordMapper {
                     case it if defaultValuesColumn.equals(it) => fullRecord.defaultValuesUsed = "true".equals(fieldValue)
                     case it if locationDeterminedColumn.equals(it) => fullRecord.locationDetermined ="true".equals(fieldValue)
                     case it if deletedColumn.equals(it) => fullRecord.deleted = "true".equals(fieldValue)
+                    case it if dateDeletedColumn.equals(it) => fullRecord.dateDeleted 
                     case it if lastUserAssertionDateColumn.equals(fieldName) => fullRecord.setLastUserAssertionDate(fieldValue)
                     case it if version == Processed && isProcessedValue(fieldName) => fullRecord.setProperty(removeSuffix(fieldName), fieldValue)
                     case it if version == Raw && fullRecord.hasProperty(fieldName) => fullRecord.setProperty(fieldName, fieldValue)

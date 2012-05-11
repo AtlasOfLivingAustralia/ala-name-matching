@@ -26,6 +26,7 @@ object Store {
 
   private val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
   private val outlierStatsDAO = Config.getInstance(classOf[OutlierStatsDAO]).asInstanceOf[OutlierStatsDAO]
+  private val deletedRecordDAO = Config.deletedRecordDAO
 
   private var readOnly = false;
 
@@ -408,6 +409,12 @@ object Store {
    * Retrieve the list of species groups
    */
   def retrieveSpeciesGroups: java.util.List[SpeciesGroup] = SpeciesGroups.groups.asJava[SpeciesGroup]
+  /**
+   * Retrieves a map of index fields to storage fields
+   */
+  def getIndexFieldMap:java.util.Map[String,String] = IndexFields.indexFieldMap
+  
+  def getStorageFieldMap:java.util.Map[String,String] = IndexFields.storeFieldMap
 
   /**
    * Returns the biocache id for the supplied layername
@@ -432,6 +439,10 @@ object Store {
   def getJackKnifeOutliersFor(guid:String) : java.util.Map[String, Array[String]] = outlierStatsDAO.getJackKnifeOutliersFor(guid)
 
   def getJackKnifeRecordDetailsFor(uuid:String) : Array[RecordJackKnifeStats] = outlierStatsDAO.getJackKnifeRecordDetailsFor(uuid)
+  /**
+   * Returns a list of record uuids that have been deleted since the supplied date inclusive
+   */
+  def getDeletedRecords(date:java.util.Date):Array[String] = deletedRecordDAO.getUuidsForDeletedRecords(org.apache.commons.lang.time.DateFormatUtils.format(date, "yyyy-MM-dd")) 
 }
 
 /**

@@ -87,7 +87,9 @@ class DataResourceVirtualDelete(dataResource:String) extends RecordDeletor{
         pm.pageOverSelect("occ", (guid,map)=>{
             val delete = map.getOrElse(FullRecordMapper.deletedColumn, "false")
             if("true".equals(delete)){
-                pm.delete(guid, "occ")
+                //pm.delete(guid, "occ")
+                //use the occ DAO to delete so that the record is added to the dellog cf
+                occurrenceDAO.delete(guid,false,true)
                 count= count +1
             }
             true
@@ -108,7 +110,9 @@ class DataResourceDelete(dataResource:String) extends RecordDeletor{
         val endUuid = startUuid + "~"
         
         pm.pageOverSelect("occ", (guid,map)=>{
-            pm.delete(guid, "occ")
+//            pm.delete(guid, "occ")
+            //use the occ DAO to delete so that the record is added to the dellog cf
+            occurrenceDAO.delete(guid,false,true)
             count= count +1
             true
         }, startUuid, endUuid, 1000, "rowKey", "uuid")
@@ -124,7 +128,9 @@ class DataResourceDelete(dataResource:String) extends RecordDeletor{
 class ListDelete(rowKeys:List[String]) extends RecordDeletor{
   override def deleteFromPersistent() ={
     rowKeys.foreach(rowKey=>{
-      pm.delete(rowKey, "occ")      
+      //pm.delete(rowKey, "occ")
+      //use the occ DAO to delete so that the record is added to the dellog cf
+      occurrenceDAO.delete(rowKey,false,true)
     })
   }
   override def deleteFromIndex {
@@ -144,7 +150,9 @@ class QueryDelete(query :String) extends RecordDeletor{
         out.flush
         out.close
         file.foreachLine(line=>{
-            pm.delete(line, "occ")
+            //pm.delete(line, "occ")
+            //use the occ DAO to delete so that the record is added to the dellog cf
+            occurrenceDAO.delete(line,false,true)
             count = count+1
         }) 
         val finished = System.currentTimeMillis

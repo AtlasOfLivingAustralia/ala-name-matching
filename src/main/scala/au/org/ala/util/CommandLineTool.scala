@@ -125,6 +125,11 @@ object CommandLineTool {
           println("Delete from index")
           deletor.deleteFromIndex
         }
+        case it if(it startsWith "index-delete")=> {
+          val deletor = new QueryDelete(it.replaceFirst("delete ",""))
+          println("Delete from index")
+          deletor.deleteFromIndex
+        }
         case _ => printHelp
       }
     } catch {
@@ -151,7 +156,8 @@ object CommandLineTool {
     padAndPrint("[15]  sample <dr-uid> - Run geospatial sampling for records for a data resource")
     padAndPrint("[16]  delete <solr-query> - Delete records matching a query")
     padAndPrint("[17]  delete-resource <data-resource-uid> - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
-    padAndPrint("[18]  exit")
+    padAndPrint("[18]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
+    padAndPrint("[19]  exit")
   }
 
   def padAndPrint(str:String) = println(padElementTo60(str))

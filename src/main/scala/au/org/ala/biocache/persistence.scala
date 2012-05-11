@@ -33,6 +33,11 @@ trait PersistenceManager {
     def get(uuid:String, entityName:String): Option[Map[String, String]]
 
     /**
+     * Get a key value pair map for this column timestamps of this record.
+     */
+    def getColumnsWithTimestamps(uuid:String, entityName:String): Option[Map[String, Long]]
+    
+    /**
      * Gets KVP map for a record based on a value in an index
      */
     def getByIndex(uuid:String, entityName:String, idxColumn:String) : Option[Map[String,String]]
@@ -78,6 +83,11 @@ trait PersistenceManager {
      */
     def pageOverSelect(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String, endUuid:String, pageSize:Int, columnName:String*)
 
+    /**
+     * Page over the records, retrieving the supplied columns range.
+     */
+    def pageOverColumnRange(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String="", endUuid:String="", pageSize:Int=1000, startColumn:String="", endColumn:String="")
+    
     /**
      * Select the properties for the supplied record UUIDs
      */
@@ -157,6 +167,39 @@ class CassandraPersistenceManager @Inject() (
                 None
             } else {
                 Some(columnList2Map(columnList))
+            }
+        } catch {
+            case e:Exception => logger.debug(e.getMessage, e); None
+        }
+    }
+    /**
+     * Retrieves a range of columns for the supplied uuid from the specified entity
+     */
+    def get(uuid:String, entityName:String, startProperty:String, endProperty:String):Option[java.util.List[Column]]={
+      val selector = Pelops.createSelector(poolName)
+      val slicePredicate = Selector.newColumnsPredicate(startProperty,endProperty,false,maxColumnLimit)
+      try{
+        Some(selector.getColumnsFromRow(entityName, uuid, slicePredicate, ConsistencyLevel.ONE))
+        
+      }
+      catch{
+        case e:Exception => None
+      }
+    }
+    /**
+     * Retrieves a list of columns and the last time in ms that they were modified.
+     * 
+     * This will support removing columns that were not updated during a reload
+     */
+    def getColumnsWithTimestamps(uuid:String, entityName:String): Option[Map[String, Long]]={
+        val selector = Pelops.createSelector(poolName)
+        val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
+        try {
+            val columnList = selector.getColumnsFromRow(entityName,uuid, slicePredicate, ConsistencyLevel.ONE)
+            if(columnList.isEmpty){
+                None
+            } else {
+                Some(columnList2TimeMap(columnList))
             }
         } catch {
             case e:Exception => logger.debug(e.getMessage, e); None
@@ -255,6 +298,13 @@ class CassandraPersistenceManager @Inject() (
             })
         })
         mutator.execute(ConsistencyLevel.ONE)
+    }
+    /**
+     * Stores the supplied map of values
+     */
+    def put(uuid:(String,String),entityName:String, keyValuePairs:Map[String,String]){
+      val mutator = Pelops.createMutator(poolName)
+      
     }
 
     /**
@@ -366,6 +416,7 @@ class CassandraPersistenceManager @Inject() (
      *
      *  We need to ignore empty rows if the SlicePredicate id for ALL columns.  This is configuration in Cassandra 0.8.8:
      *  https://issues.apache.org/jira/browse/CASSANDRA-2855
+     *  
      *
      * @param startUuid, The uuid of the occurrence at which to start the paging
      */
@@ -448,6 +499,63 @@ class CassandraPersistenceManager @Inject() (
       val slicePredicate = Selector.newColumnsPredicate(columnName:_*)
       pageOver(entityName, proc, pageSize, slicePredicate, startUuid=startUuid, endUuid=endUuid)
     }
+    /**
+     * Pages over the records returns the columns that fit within the startColumn and endColumn range
+     */
+    def pageOverColumnRange(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String="", endUuid:String="", pageSize:Int=1000, startColumn:String="", endColumn:String=""){
+      val slicePredicate = Selector.newColumnsPredicate(startColumn, endColumn, false, maxColumnLimit)
+      //can't use this because we want to page of the column range too just in case the number of columns > than maxColumnLimit 
+      //pageOver(entityName, proc, pageSize, slicePredicate,true,startUuid=startUuid, endUuid=endUuid)
+      var startKey = new Bytes(startUuid.getBytes)
+      var endKey = new Bytes(endUuid.getBytes)
+      var keyRange = Selector.newKeyRange(startKey, endKey, pageSize+1)
+      var hasMore = true
+      var counter = 0
+      //Please note we are not paging by UTF8 because it is much slower
+      var continue = true
+      var columnMap = getColumnsFromRowsWithRetries(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE, 10)
+
+      while (!columnMap.isEmpty && continue) {
+        val columnsObj = List(columnMap.keySet.toArray : _*)
+        //convert to scala List
+        val keys = columnsObj.asInstanceOf[List[Bytes]]
+        startKey = keys.last
+        keys.foreach(buuid =>{
+          val columnList = columnMap.get(buuid)
+          
+          //now get the remaining columns for the record
+              var moreCols = true
+              val uuid = buuid.toUTF8()
+              var startCol = new String(columnList.get(columnList.size-1).getName(),"UTF-8")
+              while(moreCols){
+                var nextCols = get(uuid, entityName,startCol,endColumn)
+                if(nextCols.isDefined){
+                    nextCols.get.remove(0) //remove the repeated item from the last set of columns
+                    if(nextCols.get.size >0){
+                      columnList.addAll(nextCols.get)
+                      startCol = new String(columnList.get(columnList.size-1).getName(),"UTF-8")
+                    }
+                    else
+                      moreCols = false;
+                }
+              }
+          
+          if(!columnList.isEmpty){
+              //procedure a map of key value pairs
+              var map = columnList2Map(columnList)              
+                           
+              //pass the record ID and the key value pair map to the proc
+              continue = proc(uuid, map)
+          }
+        })
+        counter += keys.size
+        keyRange = Selector.newKeyRange(startKey, endKey, pageSize+1)
+        columnMap = getColumnsFromRowsWithRetries(entityName, keyRange, slicePredicate, ConsistencyLevel.ONE, 10)
+        columnMap.remove(startKey)
+      }
+
+      if(counter > 0) println("Finished paging. Records paged over : "+counter)
+    }
 
     /**
      * Iterate over all occurrences, passing the objects to a function.
@@ -459,7 +567,7 @@ class CassandraPersistenceManager @Inject() (
      */
     def pageOverAll(entityName:String, proc:((String, Map[String,String])=>Boolean),startUuid:String="", endUuid:String="", pageSize:Int = 1000) {
       val slicePredicate = Selector.newColumnsPredicateAll(true, maxColumnLimit)
-      pageOver(entityName, proc, pageSize, slicePredicate,true,startUuid, endUuid)
+      pageOver(entityName, proc, pageSize, slicePredicate,true,startUuid=startUuid, endUuid=endUuid)
     }
 
     /**
@@ -509,6 +617,23 @@ class CassandraPersistenceManager @Inject() (
       }
       map.toMap
     }
+    /**
+     * Converts a set of cassandra columns to a column name to last modified map.
+     * 
+     *  This will support the removal of columns that were not updated during a new load
+     *  
+     *  NB Pelops provides timestamps in microseconds thus values will be /1000 and returned in milliseconds
+     *  
+     */
+    protected def columnList2TimeMap(columnList:java.util.List[Column]) :Map[String,Long]={
+      val map = new HashMap[String, Long]
+      val iter = columnList.iterator()
+      while(iter.hasNext){
+        val c = iter.next()
+        map.put(new String(c.getName, "UTF-8"), c.getTimestamp()/1000)
+      }
+      map.toMap
+    }
 
   /**
    * Convienience method for accessing values.
@@ -543,7 +668,9 @@ class CassandraPersistenceManager @Inject() (
         mutator.execute(ConsistencyLevel.ONE)
       }
     }
-    
+    /**
+     * Removes the record for the supplied uuid from entityName.
+     */
     def delete(uuid:String, entityName:String)={
         if(uuid != null && entityName != null){
             val deletor =Pelops.createRowDeletor(poolName)

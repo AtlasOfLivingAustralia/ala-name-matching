@@ -23,7 +23,7 @@ trait OccurrenceDAO {
      
     val qaEntityName ="qa"
 
-    def setDeleted(rowKey: String, del: Boolean): Unit
+    def setDeleted(rowKey: String, del: Boolean, dateTime:Option[String]=None): Unit
 
     def getRowKeyFromUuid(uuid:String):Option[String]
 
@@ -95,7 +95,7 @@ trait OccurrenceDAO {
 
     def reIndex(rowKey: String)
     
-    def delete(rowKey: String)
+    def delete(rowKey: String, removeFromIndex:Boolean=true,logDeleted:Boolean=false)
 }
 
 /**
@@ -903,8 +903,16 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
   /**
    * Set this record to deleted.
    */
-  def setDeleted(rowKey: String, del: Boolean) = {
-      persistenceManager.put(rowKey, entityName, FullRecordMapper.deletedColumn, del.toString)
+  def setDeleted(rowKey: String, del: Boolean,dateTime:Option[String]=None) = {
+      if(dateTime.isDefined){
+        val values = Map(FullRecordMapper.deletedColumn->del.toString, FullRecordMapper.dateDeletedColumn -> dateTime.get)
+        persistenceManager.put(rowKey, entityName, values)
+      }
+      else
+        persistenceManager.put(rowKey, entityName, FullRecordMapper.deletedColumn, del.toString)
+      //remove the datedeleted column if the records becomes undeleted...
+      if(!del)
+        persistenceManager.deleteColumns(rowKey,entityName, FullRecordMapper.dateDeletedColumn)
   }
 
   /**
@@ -927,12 +935,51 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         indexDAO.indexFromMap(rowKey, map.get, false)
       }
   }
-
-  def delete(rowKey: String)={
+  /**
+   * Deletes a record from the data store optionally removing from the index and logging it.
+   * 
+   * @param rowKey The id of the record to be deleted
+   * @param removeFromIndex true when the recored should be removed from the index
+   * @param logDeleted true when the record should be inserted into the dellog table before removal.
+   */
+  def delete(rowKey: String, removeFromIndex:Boolean=true, logDeleted:Boolean=false)={
+      if(logDeleted){
+        //log the deleted record to history
+        //get the map version of the record
+        val map = persistenceManager.get(rowKey, entityName)
+        if(map.isDefined){
+          val stringValue = Json.toJSON(map.get)
+          val uuid = map.get.getOrElse("uuid","")
+          val values = Map(rowKey->uuid,"value|"+rowKey->stringValue)
+          val deletedKey = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd")
+          persistenceManager.put(deletedKey,"dellog",values)
+        }
+      }
       //delete from the data store
       persistenceManager.delete(rowKey, entityName)
       //delete from the index
-      indexDAO.removeFromIndex("row_key", rowKey)
+      if(removeFromIndex)
+          indexDAO.removeFromIndex("row_key", rowKey)
+  }
+}
+
+trait DeletedRecordDAO {
+  //startDate must be in the form yyyy-MM-dd
+  def getUuidsForDeletedRecords(startDate:String) : Array[String]
+}
+
+class DeletedRecordDAOImpl extends DeletedRecordDAO{
+  /**
+   * returns all the uuids that have been deleted since startDate inclusive.
+   */
+  override def getUuidsForDeletedRecords(startDate:String) : Array[String] ={
+    val recordBuffer = new ArrayBuffer[String]
+    Config.persistenceManager.pageOverColumnRange("dellog",(rowKey,map)=>{
+      recordBuffer ++= map.values
+      true
+    },startDate,"",1000,"dr","dr~")
+
+    recordBuffer.toArray
   }
 }
 

@@ -180,7 +180,7 @@ trait IndexDAO {
 
         try {
             //get the lat lon values so that we can determine all the point values
-            val deleted = getValue(FullRecordMapper.deletedColumn, map)
+            val deleted = map.getOrElse(FullRecordMapper.deletedColumn,"false")
             //only add it to the index is it is not deleted
             if (!deleted.equals("true") && map.size>1) {
                 var slat = getValue("decimalLatitude.p", map)
@@ -340,7 +340,7 @@ trait IndexDAO {
                 val lastProcessed = DateParser.parseStringToDate(getValue(FullRecordMapper.alaModifiedColumn+".p",map))
                 
                 val lastUserAssertion = DateParser.parseStringToDate(map.getOrElse(FullRecordMapper.lastUserAssertionDateColumn, ""))
-                
+                                               
                 val firstLoadDate = DateParser.parseStringToDate(getValue("firstLoaded",map))
                 //get the el and cl maps to work with
 //                val elmap =map.getOrElse("el.p","").dropRight(1).drop(1).split(",").map(_ split ":") collect {case Array(k,v) => (k.substring(1,k.length-1), v.substring(1,v.length-1))} toMap
@@ -440,7 +440,7 @@ trait IndexDAO {
                     outlierForLayers.length.toString, map.getOrElse("taxonomicIssue.p",""), map.getOrElse("identificationQualifier",""),
                     habitats.mkString("|"), map.getOrElse("identifiedBy",""), 
                     if(map.contains("dateIdentified.p")) map.getOrElse("dateIdentified.p","") + "T00:00:00Z" else "",
-                    sensitiveMap.getOrElse("decimalLongitude",""), sensitiveMap.getOrElse("decimalLatitude","")
+                    sensitiveMap.getOrElse("decimalLongitude",""), sensitiveMap.getOrElse("decimalLatitude","")                    
                     ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
                 //)
             }

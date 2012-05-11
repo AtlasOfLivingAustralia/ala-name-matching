@@ -76,6 +76,10 @@ trait CompositePOSO extends POSO {
     val nestedProperties = posoGetterLookup.keys
 
     override def hasProperty(name:String) = (!lookup.get(name).isEmpty || !posoGetterLookup.get(name).isEmpty )
+    
+    def hasNestedProperty(name:String) = !posoGetterLookup.get(name).isEmpty
+    
+    override def getPropertyNames :List[String] = nestedProperties.toList
 
     override def setProperty(name: String, value: String) = lookup.get(name) match {
 
@@ -215,6 +219,7 @@ trait POSO {
         }
         case None => None //println("Property not mapped " +name +", on " + this.getClass.getName); None;
     }
+    def getPropertyNames :List[String] = lookup.values.map(v => v.name).toList
 
     def toMap: Map[String, String] = {
 
