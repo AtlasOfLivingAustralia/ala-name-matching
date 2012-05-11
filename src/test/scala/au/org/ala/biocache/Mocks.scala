@@ -29,6 +29,12 @@ class MockPersistenceManager extends PersistenceManager {
       case None => None
     }
   }
+  
+  def pageOverColumnRange(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String="", endUuid:String="", pageSize:Int=1000, startColumn:String="", endColumn:String="")=
+    throw new RuntimeException("not implemented yet")
+  
+  def getColumnsWithTimestamps(uuid:String, entityName:String): Option[Map[String, Long]] = 
+    throw new RuntimeException("not implemented yet")
 
   def getByIndex(uuid: String, entityName: String, idxColumn: String) =
     throw new RuntimeException("not implemented yet")
