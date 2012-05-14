@@ -5,6 +5,7 @@ import scala.reflect.BeanProperty
 import scala.collection.mutable.HashMap
 import scala.collection.immutable.Map
 import scala.util.parsing.json.JSON
+import org.codehaus.jackson.annotate.JsonIgnore
 
 /**
  * Holds the details of a property for a bean
@@ -219,6 +220,7 @@ trait POSO {
         }
         case None => None //println("Property not mapped " +name +", on " + this.getClass.getName); None;
     }
+    @JsonIgnore
     def getPropertyNames :List[String] = lookup.values.map(v => v.name).toList
 
     def toMap: Map[String, String] = {
