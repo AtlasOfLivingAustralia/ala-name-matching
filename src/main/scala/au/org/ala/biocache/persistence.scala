@@ -240,7 +240,7 @@ class CassandraPersistenceManager @Inject() (
   def getFirstValuesFromIndex(entityName:String, idxColumn:String, value:String, slicePredicate:SlicePredicate) : Option[Map[String,String]] ={
     val selector = Pelops.createSelector(poolName)
     //set up the index clause information
-    val indexClause =Selector.newIndexClause(value, 1, Selector.newIndexExpression(idxColumn, IndexOperator.EQ, Bytes.fromUTF8(value) ))
+    val indexClause = Selector.newIndexClause(value, 1, Selector.newIndexExpression(idxColumn, IndexOperator.EQ, Bytes.fromUTF8(value) ))
     try{
 
       val columnMap = selector.getIndexedColumns(entityName, indexClause,slicePredicate, ConsistencyLevel.ONE)
@@ -299,12 +299,13 @@ class CassandraPersistenceManager @Inject() (
         })
         mutator.execute(ConsistencyLevel.ONE)
     }
+
     /**
      * Stores the supplied map of values
      */
     def put(uuid:(String,String),entityName:String, keyValuePairs:Map[String,String]){
       val mutator = Pelops.createMutator(poolName)
-      
+      throw new RuntimeException("Method NOT implemented..")
     }
 
     /**
@@ -561,7 +562,6 @@ class CassandraPersistenceManager @Inject() (
      * Iterate over all occurrences, passing the objects to a function.
      * Function returns a boolean indicating if the paging should continue.
      *
-     * @param occurrenceType
      * @param proc
      * @param startUuid, The uuid of the occurrence at which to start the paging
      */
@@ -573,12 +573,12 @@ class CassandraPersistenceManager @Inject() (
     /**
      * Select fields from rows and pass to the supplied function.
      */
-    def selectRows(uuids:Array[String], entityName:String, fields:Array[String], proc:((Map[String,String])=>Unit)) {
+    def selectRows(rowkeys:Array[String], entityName:String, fields:Array[String], proc:((Map[String,String])=>Unit)) {
        val selector = Pelops.createSelector(poolName)
        val slicePredicate = Selector.newColumnsPredicate(fields:_*)
 
        //retrieve the columns
-       var columnMap = selector.getColumnsFromRowsUtf8Keys(entityName, uuids.toList, slicePredicate, ConsistencyLevel.ONE)
+       var columnMap = selector.getColumnsFromRowsUtf8Keys(entityName, rowkeys.toList, slicePredicate, ConsistencyLevel.ONE)
 
        //write them out to the output stream
        val keys = List(columnMap.keySet.toArray : _*)

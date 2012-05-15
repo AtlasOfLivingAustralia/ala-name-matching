@@ -177,38 +177,42 @@ object IndexRecords {
    * Indexes the supplied list of rowKeys
    */
   def indexList(file: File) {
+    println("Starting the reindex by row key....")
     var counter = 0
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
 
     file.foreachLine(line => {
       counter += 1
-      val map = persistenceManager.get(line, "occ")
-      if (!map.isEmpty) indexer.indexFromMap(line, map.get)
-
+      val rowKey = if (line.head == '"' && line.last == '"') line.substring(1,line.length-1) else line
+      val map = persistenceManager.get(rowKey, "occ")
+      if (!map.isEmpty) indexer.indexFromMap(rowKey, map.get)
       if (counter % 1000 == 0) {
         finishTime = System.currentTimeMillis
         logger.info(counter + " >> Last key : " + line + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
         startTime = System.currentTimeMillis
       }
     })
-
-    indexer.finaliseIndex(false, true) 
+    indexer.finaliseIndex(false, true)
   }
 
   /**
    * Indexes the supplied list of rowKeys
    */
   def indexListOfUUIDs(file: File) {
+    println("Starting the reindex by UUIDs....")
     var counter = 0
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
 
     file.foreachLine(line => {
+      val uuid = line.replaceAll("\"","")
       counter += 1
-      val map = persistenceManager.getByIndex(line, "occ", "uuid")
-      if (!map.isEmpty) indexer.indexFromMap(line, map.get)
 
+      val map = persistenceManager.getByIndex(uuid, "occ", "uuid")
+
+
+      if (!map.isEmpty) indexer.indexFromMap(uuid, map.get)
       if (counter % 1000 == 0) {
         finishTime = System.currentTimeMillis
         logger.info(counter + " >> Last key : " + line + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))

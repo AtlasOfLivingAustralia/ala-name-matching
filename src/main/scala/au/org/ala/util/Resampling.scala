@@ -5,14 +5,90 @@ import au.com.bytecode.opencsv.{CSVWriter,CSVReader}
 import scala.collection.mutable.HashSet
 import java.io.{FileReader, FileWriter}
 
+
+/**
+ * A re-sampler for sensitive records.
+ */
+object ResampleRecordsByQuery {
+
+  def main(args:Array[String]){
+
+    var query:String = ""
+    val parser = new OptionParser("index records options") {
+      arg("q", "The SOLR query to process", {v:String => query = v})
+    }
+
+    if(parser.parse(args)){
+      val r = new ResampleRecordsByQuery
+      r.resamplePointsByQuery(query)
+    }
+  }
+}
+
+class ResampleRecordsByQuery {
+
+  import scala.collection.JavaConversions._
+
+  val recordsSampledFilePath = "/tmp/records-resampled.txt"
+  val pointsSampledFilePath = "/tmp/points-resampled.txt"
+  val pointsResampledFilePath = "/tmp/points-resampled-sampled.txt"
+
+  /**
+   * Resample and reprocess records matching the filter
+   */
+  def resamplePointsByQuery(query:String){
+
+    println("Starting the re-sampling by query - with rowkeys.....")
+
+    val records = new CSVWriter(new FileWriter(recordsSampledFilePath))
+    val distinctPoints = new HashSet[(AnyRef, AnyRef)]
+
+    Config.indexDAO.pageOverIndex(map => {
+      distinctPoints += ((map.getOrElse("longitude",""), map.getOrElse("latitude","")))
+      records.writeNext(Array(map.getOrElse("row_key","").asInstanceOf[String]))
+      true
+    }, Array("row_key", "latitude", "longitude"), query, Array())
+
+    records.flush
+    records.close
+
+    //produce a distinct list of coordinates from first CSV
+    val distinctPointsFile = new CSVWriter(new FileWriter(pointsSampledFilePath))
+    distinctPoints.foreach(c => distinctPointsFile.writeNext(Array(c._1.toString,c._2.toString)))
+    distinctPointsFile.flush
+    distinctPointsFile.close
+
+    //sample with the supplied points
+    val sampling = new Sampling
+    sampling.sampling(pointsSampledFilePath, pointsResampledFilePath)
+    sampling.loadSampling(pointsResampledFilePath)
+
+    //reprocess the records listed in first CSV
+    val pointsReader = new CSVReader(new FileReader(recordsSampledFilePath))
+    val rp = new RecordProcessor
+    var current = pointsReader.readNext
+    while (current != null){
+      if(current.length == 1){
+        Config.occurrenceDAO.getRawProcessedByRowKey(current(0)) match {
+          case Some(rawProcessed) => rp.processRecord(rawProcessed(0), rawProcessed(1))
+          case None => {println("Unable to find record with row_key: " + current(0))}
+        }
+      }
+      current = pointsReader.readNext
+    }
+    pointsReader.close
+    Config.persistenceManager.shutdown //close DB connections
+    Config.indexDAO.shutdown
+    println("Finished the re-sampling.")
+  }
+}
+
 /**
  * A re-sampler for sensitive records.
  */
 object ResampleSensitiveRecords extends ResampleRecords {
 
   def sensitiveFilter(map:Map[String, String]) : Boolean = (map.getOrElse("originalSensitiveValues","") != "")
-  
-  
 
   def main(args:Array[String]){
 
@@ -37,6 +113,8 @@ object ResampleSensitiveRecords extends ResampleRecords {
     }
   }
 }
+
+
 /**
  * A resampler for records that have had their coordinates changed during processing.
  */

@@ -98,39 +98,47 @@ class Loader extends DataLoader {
           
           if(connParams != null){
 	          val protocol = connParams.getOrElse("protocol", "").asInstanceOf[String].toLowerCase
-	          val url = connParams.getOrElse("url", "").asInstanceOf[String]
-	          
-	          val status = protocol match {
-	              case "dwc" => checkArchive(drUid, url)
-	              case "dwca" => checkArchive(drUid, url)
-	              case "digir" => {
-	                   if(url == null || url ==""){
-	                	   Map("Status" -> "NOT CONFIGURED")
-	                   } else if(!digirCache.get(url).isEmpty){
-	                       digirCache.get(url).get 
-	                   } else {
-	                       val result = checkDigir(drUid, url)
-	                       digirCache.put(url,result)
-	                       result
-	                   }
-	              }
-	              case _ => Map("Status" -> "IGNORED")
-	          }
-	           
-	        if(status.getOrElse("Status", "NO STATUS") != "IGNORED"){
-	            
-	            val fileSize = status.getOrElse("Content-Length", "N/A")
-	            val displaySize = {
-		            if(fileSize!= "N/A"){
-		                (fileSize.toInt / 1024).toString +"kB"
-		            } else {
-		                fileSize
-		            }
-	            }
-	        	println(drUid.fixWidth(5)+ "\t"+protocol.fixWidth(8)+"\t" + 
-	        	        status.getOrElse("Status", "NO STATUS").fixWidth(15) +"\t" + drName.fixWidth(65) + "\t" + url.fixWidth(85) + "\t" + 
-	        	        displaySize) 
-	        }
+
+            val urlsObject = connParams.getOrElse("url", List[String]())
+            val urls:Seq[String] = {
+              if(urlsObject.isInstanceOf[Seq[String]]) urlsObject.asInstanceOf[Seq[String]]
+              else List(connParams("url").asInstanceOf[String])
+            }
+
+            urls.foreach(url => {
+              val status = protocol match {
+                  case "dwc" => checkArchive(drUid, url)
+                  case "dwca" => checkArchive(drUid, url)
+                  case "digir" => {
+                       if(url == null || url ==""){
+                         Map("Status" -> "NOT CONFIGURED")
+                       } else if(!digirCache.get(url).isEmpty){
+                           digirCache.get(url).get
+                       } else {
+                           val result = checkDigir(drUid, url)
+                           digirCache.put(url,result)
+                           result
+                       }
+                  }
+                  case _ => Map("Status" -> "IGNORED")
+              }
+
+              if(status.getOrElse("Status", "NO STATUS") != "IGNORED"){
+
+                  val fileSize = status.getOrElse("Content-Length", "N/A")
+                  val displaySize = {
+                    if(fileSize!= "N/A"){
+                        (fileSize.toInt / 1024).toString +"kB"
+                    } else {
+                        fileSize
+                    }
+                  }
+                println(drUid.fixWidth(5)+ "\t"+protocol.fixWidth(8)+"\t" +
+                        status.getOrElse("Status", "NO STATUS").fixWidth(15) +"\t" + drName.fixWidth(65) + "\t" + url.fixWidth(85) + "\t" +
+                        displaySize)
+              }
+
+            })
           }
       })
     }
