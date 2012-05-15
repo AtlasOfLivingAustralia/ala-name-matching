@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 import java.util.Date
 import java.text.{SimpleDateFormat, ParseException}
+import scala.Predef._
 
 object DateUtil {
   def getCurrentYear = DateFormatUtils.format(new Date(), "yyyy").toInt
@@ -76,7 +77,7 @@ object DateParser {
   def parseStringToDate(date: String): Option[Date] = {
     try {
       Some(DateUtils.parseDate(date,
-        Array("yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd HH:mm:ss")))
+        Array("yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss")))
     }
     catch {
       case _ => None
@@ -200,7 +201,7 @@ class SingleDate {
 
   def baseFormats = Array("yyyy-MM-dd","yyyy/MM/dd")
 
-  def formats = baseFormats.map(f => Array(f, f + "'T'hh:mm'Z'", f + " hh:mm:ss")).flatten
+  def formats = baseFormats.map(f => Array(f, f + "'T'hh:mm'Z'", f + "'T'hh:mm:ss",f + " hh:mm:ss")).flatten
 
   /**
    * Extraction method

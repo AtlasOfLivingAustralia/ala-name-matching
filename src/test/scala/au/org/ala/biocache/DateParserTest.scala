@@ -2,6 +2,7 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+import org.scalatest.Assertions._
 
 /**
  * Tests for event date parsing. To run these tests create a new scala application
@@ -230,4 +231,27 @@ class DateParserTest extends FunSuite {
     expect("30"){result.get.startDay}
     expect("07"){result.get.endDay}
   }
+
+  test("2011-10-31T18:50:00"){
+    val result = DateParser.parseDate("2011-10-31T18:50:00")
+    expect(false){ result.isEmpty}
+    expect("2011"){result.get.startYear}
+    expect("10"){result.get.startMonth}
+    expect("10"){result.get.endMonth}
+    expect("31"){result.get.startDay}
+    expect("31"){result.get.endDay}
+    expect(true){result.get.singleDate}
+  }
+
+
+
+  //03/041957
+//  test("03/041957"){
+//    val result = DateParser.parseDate("03/041957")
+//    expect(false){ result.isEmpty}
+//    expect("1957"){result.get.startYear}
+//    expect("04"){result.get.startMonth}
+//    expect("03"){result.get.startDay}
+//    expect(true){ result.get.singleDate }
+//  }
 }
