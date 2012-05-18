@@ -138,22 +138,28 @@ class CassandraPersistenceManager @Inject() (
 
     val maxColumnLimit = 10000
     import JavaConversions._
-    logger.debug("Initialising cassandra connection pool with pool name: " + poolName)
-    logger.debug("Initialising cassandra connection pool with hosts: " + host)
-    logger.debug("Initialising cassandra connection pool with port: " + port)
-    logger.debug("Initialising cassandra connection pool with max connections: " + maxConnections)
-    logger.debug("Initialising cassandra connection pool with max retries: " + maxRetries)
-    logger.debug("Initialising cassandra connection pool with operation timeout: " + operationTimeout)
-    //Cluster wide settings including the thrift operation timeout
+
     val cluster = new Cluster(host,port,operationTimeout, false)
-    
     val policy = new CommonsBackedPool.Policy()
     policy.setMaxTotal(maxConnections)
     //According to Pelops : As a general rule the pools maxWaitForConnection should be three times larger than the thrift timeout value.
-    policy.setMaxWaitForConnection(3*operationTimeout);
-    //operations policy, first arg indicates how many time a failed operation will be retried, the second indicates that null value insert should be treated as a delete 
+    policy.setMaxWaitForConnection(3 * operationTimeout);
+    //operations policy, first arg indicates how many time a failed operation will be retried, the second indicates that null value insert should be treated as a delete
     val operandPolicy = new OperandPolicy(maxRetries,false)
-    Pelops.addPool(poolName, cluster, keyspace, policy, operandPolicy)
+
+    initialise     //setup DB connections
+
+    def initialise {
+      logger.debug("Initialising cassandra connection pool with pool name: " + poolName)
+      logger.debug("Initialising cassandra connection pool with hosts: " + host)
+      logger.debug("Initialising cassandra connection pool with port: " + port)
+      logger.debug("Initialising cassandra connection pool with max connections: " + maxConnections)
+      logger.debug("Initialising cassandra connection pool with max retries: " + maxRetries)
+      logger.debug("Initialising cassandra connection pool with operation timeout: " + operationTimeout)
+
+      //Cluster wide settings including the thrift operation timeout
+      Pelops.addPool(poolName, cluster, keyspace, policy, operandPolicy)
+    }
 
     /**
      * Retrieve an array of objects, parsing the JSON stored.     
@@ -178,11 +184,10 @@ class CassandraPersistenceManager @Inject() (
     def get(uuid:String, entityName:String, startProperty:String, endProperty:String):Option[java.util.List[Column]]={
       val selector = Pelops.createSelector(poolName)
       val slicePredicate = Selector.newColumnsPredicate(startProperty,endProperty,false,maxColumnLimit)
-      try{
+      try {
         Some(selector.getColumnsFromRow(entityName, uuid, slicePredicate, ConsistencyLevel.ONE))
-        
       }
-      catch{
+      catch {
         case e:Exception => None
       }
     }
@@ -478,10 +483,13 @@ class CassandraPersistenceManager @Inject() (
             columnMap = new HashMap[Bytes, java.util.List[Column]]
           }
           case e:Exception => {
-            logger.warn("Problem retrieving data. Number of retries left:" + (permittedRetries - noOfRetries) +
-              "Error: " + e.getMessage)
+            logger.debug("Problem retrieving data. Number of retries left:" + (permittedRetries - noOfRetries) +
+              ", Error: " + e.getMessage)
             Thread.sleep(20000)
+            Pelops.removePool(poolName)
+            initialise //re-initialise
             if (noOfRetries == permittedRetries){
+              logger.error("Problem retrieving data. Number of DB connection retries exceeeded. Error: " + e.getMessage)
               e.printStackTrace()
               throw new RuntimeException(e)
             }
