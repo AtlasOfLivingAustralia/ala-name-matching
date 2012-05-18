@@ -1,17 +1,11 @@
 #!/bin/bash
 # Make sure only tomcat can run our script
-if [ $(whoami) != "root" ]
+if [ $(whoami) != "tomcat" ]
 then
-   echo "This script must be run as the root user."
+   echo "This script must be run as the tomcat user."
    exit 1
 fi
 
 BIOCACHE_INSTALL=/usr/local/biocache
-
-cd $BIOCACHE_INSTALL
-rm -Rf lib
-rm biocache.jar
-wget http://maven.ala.org.au/repository/au/org/ala/biocache-store/1.0-SNAPSHOT/biocache-store-1.0-SNAPSHOT-assembly.jar
-mv biocache-store-1.0-SNAPSHOT-assembly.jar biocache.jar
-jar xf biocache.jar lib lib
-echo 'Upgrade complete.'
+CLASSPATH=$BIOCACHE_INSTALL:$BIOCACHE_INSTALL/biocache.jar
+java -Xmx16g -Xmx16g -cp $CLASSPATH -Dactors.corePoolSize=8 -Dactors.maxPoolSize=16 -Dactors.minPoolSize=8 au.org.ala.util.CommandLineTool
