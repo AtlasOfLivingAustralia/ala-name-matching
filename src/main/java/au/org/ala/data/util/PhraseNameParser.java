@@ -63,6 +63,8 @@ public class PhraseNameParser extends NameParser{
       + "|" + "(" + StringUtils.join(Rank.RANK_MARKER_MAP_INFRAGENERIC.keySet(), "|") + ")\\.? ?([" + NAME_LETTERS
       + "][" + name_letters + "-]+)" + ")");
 
+    protected static final Pattern IGNORE_MARKERS = Pattern.compile("s[\\.| ]+str[\\. ]+");
+
     public void testParse(String scientificName){
         //extract the complete name into components
         // (valid scientific name part)(rank marker)(phrase name part)
@@ -148,7 +150,7 @@ public class PhraseNameParser extends NameParser{
           org.apache.lucene.analysis.Analyzer analyzer = new au.org.ala.checklist.lucene.analyzer.LowerCaseKeywordAnalyzer();
           String virus = "Cucumovirus cucumber mosaic virus";
           org.apache.lucene.analysis.TokenStream ts = analyzer.tokenStream("name", new java.io.StringReader("Cucumovirus cucumber mosaic virus"));
-          System.out.println(new String(ts.next().termBuffer()));
+          //System.out.println(new String(ts.next().termBuffer()));
           System.out.println(au.org.ala.checklist.lucene.CBIndexSearch.virusStopPattern.matcher(virus).replaceAll(" "));
           ParsedName pn = parser.parse("Acacia sp. Manmanning (BR Maslin 7711) [aff. multispicata]");
           System.out.println(pn);

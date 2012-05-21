@@ -1,7 +1,9 @@
 package au.org.ala.checklist.lucene;
 
+import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.checklist.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.data.model.ALAParsedName;
+import au.org.ala.data.model.LinnaeanRankClassification;
 import au.org.ala.data.util.PhraseNameParser;
 import java.io.BufferedReader;
 import java.io.File;
@@ -35,13 +37,14 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
-import org.gbif.file.CSVReader;
 import au.org.ala.data.util.TaxonNameSoundEx;
 //import org.springframework.context.ApplicationContext;
 //import org.springframework.context.support.ClassPathXmlApplicationContext;
 //import org.springframework.jdbc.core.JdbcTemplate;
 
 import au.org.ala.data.util.RankType;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.util.Version;
 import org.gbif.ecat.voc.NameType;
 
 /**
@@ -95,6 +98,9 @@ public class CBCreateLuceneIndex {
     private final int POS_G = 27;
     private final int POS_SID = 28;
     private final int POS_S = 29;
+
+    private String indexDirectory;
+    private IndexWriter cbIndexWriter;
 
     //Fields that are being indexed or stored in the lucene index
     public enum IndexField {
@@ -157,11 +163,10 @@ public class CBCreateLuceneIndex {
         Analyzer analyzer = new LowerCaseKeywordAnalyzer();
         //generate the extra id index
         createExtraIdIndex(indexDir + File.separator + "id",new File(exportsDir + File.separator + "identifiers.txt"));
-        if(generateSciNames){
-            //Checklist Bank Main Index
-            indexALA(createIndexWriter(new File(indexDir + File.separator + "cb"), analyzer), exportsDir + File.separator + "ala_concepts_dump.txt");//, exportsDir + File.separator + lexFile);
+        if(generateSciNames){            
+            indexALA(createIndexWriter(new File(indexDir + File.separator + "cb"), analyzer,true), exportsDir + File.separator + "ala_concepts_dump.txt");//, exportsDir + File.separator + lexFile);
             //IRMNG index to aid in the resolving of homonyms
-            IndexWriter irmngWriter = createIndexWriter(new File(indexDir + File.separator + "irmng"), analyzer);
+            IndexWriter irmngWriter = createIndexWriter(new File(indexDir + File.separator + "irmng"), analyzer,true);
             indexIRMNG(irmngWriter, exportsDir + File.separator + irmngFile, RankType.GENUS);
             indexIRMNG(irmngWriter, "/data/bie-staging/irmng/irmng_species_homonyms.txt", RankType.SPECIES);
             irmngWriter.optimize();
@@ -169,7 +174,7 @@ public class CBCreateLuceneIndex {
         }
         if(generateCommonNames){
             //vernacular index to search for common names
-            indexCommonNames(createIndexWriter(new File(indexDir + File.separator + "vernacular"), analyzer), exportsDir);
+            indexCommonNames(createIndexWriter(new File(indexDir + File.separator + "vernacular"), analyzer,true), exportsDir);
         }
     }
     /**
@@ -178,7 +183,7 @@ public class CBCreateLuceneIndex {
      */
     private IndexSearcher createTmpGuidIndex(String cbExportFile) throws Exception{
         System.out.println("Starting to create the tmp guid index...");
-        IndexWriter iw = createIndexWriter(new File("/data/tmp/guid"), new KeywordAnalyzer());
+        IndexWriter iw = createIndexWriter(new File("/data/tmp/guid"), new KeywordAnalyzer(),true);
         au.com.bytecode.opencsv.CSVReader cbreader = new au.com.bytecode.opencsv.CSVReader(new FileReader(cbExportFile), '\t', '"', '/', 1);
         for (String[] values = cbreader.readNext(); values != null; values = cbreader.readNext()) {
             Document doc = new Document();
@@ -205,13 +210,19 @@ public class CBCreateLuceneIndex {
      * @return
      * @throws Exception
      */
-    private IndexWriter createIndexWriter(File directory, Analyzer analyzer) throws Exception{
+    private IndexWriter createIndexWriter(File directory, Analyzer analyzer,boolean replace) throws Exception{
+        IndexWriterConfig conf = new IndexWriterConfig(Version.LUCENE_34,analyzer);
+        if(replace)
+            conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+        else
+            conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
-        if (directory.exists()) {
+        if (directory.exists() && replace) {
             FileUtils.forceDelete(directory);
         }
         FileUtils.forceMkdir(directory);
-        IndexWriter iw = new IndexWriter(FSDirectory.open(directory), analyzer, true, MaxFieldLength.UNLIMITED);
+        IndexWriter iw = new IndexWriter(FSDirectory.open(directory),conf);
+        //IndexWriter iw = new IndexWriter(FSDirectory.open(directory), analyzer, replace, MaxFieldLength.UNLIMITED);
         return iw;
     }
     private String getValueFromIndex(IndexSearcher is, String searchField,String value, String retField){
@@ -269,93 +280,21 @@ public class CBCreateLuceneIndex {
         log.info("Lucene index created - processed a total of " + records + " records in " + (System.currentTimeMillis() - time) + " msecs ");
     }
 
-    /**
-     * Create the CB scientific name index
-     * @param iw
-     * @param cbExportFile
-     * @param lexFile
-     * @throws Exception
-     */
-//    private void indexCB(IndexWriter iw, String cbExportFile, String lexFile) throws Exception {
-//        long time = System.currentTimeMillis();
-//        //CSVReader cbreader = CSVReader.buildReader(new File(cbExportFile), "UTF-8", '\t', '"', 1);
-//        au.com.bytecode.opencsv.CSVReader cbreader = new au.com.bytecode.opencsv.CSVReader(new FileReader(cbExportFile), '\t', '"', '/', 1);
-//        IndexSearcher gs = createTmpGuidIndex(cbExportFile);
-//       CSVReader lexreader =CSVReader.build(new File(lexFile), "UTF-8", "\t", '"', 0);
-//        String[] lexName = lexreader.next();//readNext();
-//        int unprocessed = 0, records = 0;
-//        for (String[] values = cbreader.readNext(); values != null; values = cbreader.readNext()) {
-//            //process each line in the file
-//
-//
-//            if (values.length >= 26) {
-//                String lsid = values[POS_LSID];
-//                String id = values[POS_ID];
-//                String rank = values[POS_RANK];
-//                String acceptedValues = StringUtils.isEmpty(values[POS_ACC_ID]) ? null : values[POS_ACC_ID] + "\t" + values[POS_ACC_LSID];
-//
-//                //don't allow subgenus to be processed
-//                if (!rank.equals("subgenus")) {
-//
-//                    //determine whether or not the record represents an australian source
-//                    //for now this will be determined using the lsid prefix in the future we may need to move to a more sophisticated method
-//                    float boost = 1.0f;
-//                    if (lsid.startsWith("urn:lsid:biodiversity.org.au")) {
-//                        boost = 2.0f;
-//                    }
-//
-//                    Document doc = buildDocument(values[POS_NAME_CANONICAL], id, lsid, values[POS_RANK_ID],
-//                                                values[POS_RANK], values[POS_K], getValueFromIndex(gs,"id",values[POS_KID],"guid"), values[POS_P],
-//                                                getValueFromIndex(gs,"id",values[POS_PID],"guid"), values[POS_C], getValueFromIndex(gs,"id",values[POS_CID],"guid"),
-//                                                values[POS_O], getValueFromIndex(gs,"id",values[POS_OID],"guid"), values[POS_F], getValueFromIndex(gs,"id",values[POS_FID],"guid"),
-//                                                values[POS_G], getValueFromIndex(gs,"id",values[POS_GID],"guid"), values[POS_S], getValueFromIndex(gs,"id",values[POS_SID],"guid"),
-//                                                values[POS_LFT],values[POS_RGT], boost, acceptedValues);
-//
-//                    //Add the alternate names (these are the names that belong to the same lexical group)
-//                    TreeSet<String> altNames = new TreeSet<String>();//store a unique set of all the possible alternative names
-//
-//                    while (lexName != null && Integer.parseInt(lexName[0]) <= Integer.parseInt(id)) {
-//                        if (lexName[0].equals(id)) {
-//                            //add the full name
-//                            altNames.add(lexName[1]);
-//                            ParsedName cn = parser.parseIgnoreAuthors(lexName[1]);
-//                            if (cn != null && !cn.isHybridFormula()) {
-//                                //add the canonical form
-//                                altNames.add(cn.buildCanonicalName());
-//
-//                            }
-//                            //addName(doc, lexName[1]);
-//                        }
-//                        lexName = lexreader.next();//readNext();
-//                    }
-//                    if (altNames.size() > 0) {
-//                        //now add the names to the index
-//                        for (String name : altNames) {
-//                            doc.add(new Field(IndexField.NAMES.toString(), name, Store.NO, Index.ANALYZED));
-//                        }
-//                    }
-//
-//                    iw.addDocument(doc);
-//                    records++;
-//                    if (records % 100000 == 0) {
-//                        log.info("Processed " + records + " in " + (System.currentTimeMillis() - time) + " msecs (Total unprocessed: " + unprocessed + ")");
-//                    }
-//                }
-//                else{
-//                    log.debug("Not adding subgenus: " + values[POS_NAME_CANONICAL]);
-//                    unprocessed++;
-//                }
-//            } else {
-//                //can't process line without all values
-//
-//                unprocessed++;
-//            }
-//        }
-//        iw.commit();
-//        iw.optimize();
-//        iw.close();
-//        log.info("Lucene index created - processed a total of " + records + " records in " + (System.currentTimeMillis() - time) + " msecs (Total unprocessed: " + unprocessed + ")");
-//    }
+    public void addAdditionalName(String lsid,String scientificName,String author, LinnaeanRankClassification cl) throws Exception{
+        //String lsid = "ALA_"+scientificName.replaceAll(" ", "_");
+        //String id ="-1";
+        if(cbIndexWriter == null)
+            cbIndexWriter = createIndexWriter(new File(indexDirectory+ File.separator + "cb"), new LowerCaseKeywordAnalyzer(), false);
+        Document doc = createALAIndexDocument(scientificName, "-1", lsid, author,cl);
+        cbIndexWriter.addDocument(doc);
+            
+    }
+     public void commit() throws Exception{
+         if(cbIndexWriter !=  null)
+             cbIndexWriter.commit();
+     }
+
+
     /**
      * Indexes an IRMNG export for use in homonym resolution.
      *
@@ -367,11 +306,10 @@ public class CBCreateLuceneIndex {
         log.info("Creating IRMNG index ...");
         File file = new File(irmngExport);
         if (file.exists()) {
-            CSVReader reader = CSVReader.build(file,"UTF-8", "\t", 0);
+            CSVReader reader =new CSVReader(new FileReader(file), '\t','"', '~');// CSVReader.build(file,"UTF-8", "\t", 0);
             int count = 0;
-            while (reader.hasNext()) {
-
-                String[] values = reader.next();
+            String[] values = null;
+            while ((values=reader.readNext()) != null) {
                 Document doc = new Document();
                 if (values != null && values.length >= 7) {
                     doc.add(new Field(RankType.KINGDOM.getRank(), values[0], Store.YES, Index.ANALYZED));
@@ -415,29 +353,27 @@ public class CBCreateLuceneIndex {
         log.info("Creating Common Names Index ...");
 
 
-        File fileCol = new File(exportDir + File.separator + colFile);
-        if(fileCol.exists()){
-            CSVReader reader = CSVReader.build(fileCol,"UTF-8", "\t", '"', 0);
-            int count = 0;
-            while (reader.hasNext()) {
-
-                String[] values = reader.next();
-
-                if(values != null && values.length >=4){
-                    float boost = 1f;
-
-
-                    //give a boost to the Australian Common Names in CoL a smaller boost than that of the anbg records
-                    if(values[3].equals("T"))
-                        boost = 1.5f;
-                    iw.addDocument(getCommonNameDocument(values[0],values[1], values[2], boost));
-                }
-                count++;
-            }
-            log.info("Finished indexing " + count + " COL Common Names.");
-        }
-        else
-            log.warn("Unable to index CoL Common Names.  Can't locate " + fileCol.getAbsolutePath());
+//        File fileCol = new File(exportDir + File.separator + colFile);
+//        if(fileCol.exists()){
+//            CSVReader reader = new CSVReader(new FileReader(fileCol), '\t','"', '~');//CSVReader.build(fileCol,"UTF-8", "\t", '"', 0);
+//            int count = 0;
+//            String[] values = null;
+//            while ((values = reader.readNext()) != null) {
+//                if(values != null && values.length >=4){
+//                    float boost = 1f;
+//
+//
+//                    //give a boost to the Australian Common Names in CoL a smaller boost than that of the anbg records
+//                    if(values[3].equals("T"))
+//                        boost = 1.5f;
+//                    iw.addDocument(getCommonNameDocument(values[0],values[1], values[2], boost));
+//                }
+//                count++;
+//            }
+//            log.info("Finished indexing " + count + " COL Common Names.");
+//        }
+//        else
+//            log.warn("Unable to index CoL Common Names.  Can't locate " + fileCol.getAbsolutePath());
 
         //process the ANBG common names and add them to the same index
         //create the tmp index for the taxonConcepts used to ensure that a supplied taxon lsid is covered in the export
@@ -461,10 +397,10 @@ public class CBCreateLuceneIndex {
         File namesFile = new File(fileName);
         Pattern p = Pattern.compile(",");
         if(namesFile.exists()){
-            CSVReader reader = CSVReader.build(namesFile,"UTF-8","\t", '"' , 1);
+            CSVReader reader = new CSVReader(new FileReader(namesFile), '\t','"', '~');//CSVReader.build(namesFile,"UTF-8","\t", '"' , 1);
             int count = 0;
-            while (reader.hasNext()){
-                String[] values = reader.next();
+            String[] values = reader.readNext();
+            while ((values = reader.readNext()) != null){
                 if(values!= null && values.length>= 4){
                 //all ANBG records should have the highest boost as they are our authoritive source
                     //we only want to add an ANBG record if the taxon concept LSID exists in the taxonConcepts.txt export
@@ -504,11 +440,12 @@ public class CBCreateLuceneIndex {
      * @throws Exception
      */
     private void createExtraIdIndex(String idxLocation, File idFile) throws Exception{
-        CSVReader reader = CSVReader.build(idFile, "UTF-8", "\t", '"', 0);
+        CSVReader reader = new CSVReader(new FileReader(idFile), '\t','"', '~');//CSVReader.build(idFile, "UTF-8", "\t", '"', 0);
         File indexDir = new File(idxLocation);
-        IndexWriter iw = new IndexWriter(FSDirectory.open(indexDir), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
-        while(reader.hasNext()){
-            String[] values = reader.next();
+        IndexWriter iw = createIndexWriter(indexDir, new KeywordAnalyzer(), true);//new IndexWriter(FSDirectory.open(indexDir), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
+        String[] values = null;
+        while((values = reader.readNext()) != null){
+            
             if(values != null && values.length >=3){
                 Document doc = new Document();
                 doc.add(new Field("lsid", values[2], Store.NO, Index.NOT_ANALYZED));
@@ -531,11 +468,11 @@ public class CBCreateLuceneIndex {
      */
     private IndexSearcher createTmpIndex(String tcFileName)throws Exception{
         //creating the tmp index in the /tmp/taxonConcept directory
-        CSVReader reader = CSVReader.build(new File(tcFileName), "UTF-8", "\t", '"', 1);
+        CSVReader reader = new CSVReader(new FileReader(new File(tcFileName)), '\t','"', '~');//CSVReader.build(new File(tcFileName), "UTF-8", "\t", '"', 1);
         File indexDir = new File("/tmp/taxonConcept");
-        IndexWriter iw = new IndexWriter(FSDirectory.open(indexDir), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
-        while(reader.hasNext()){
-            String[] values = reader.next();
+        IndexWriter iw = createIndexWriter(indexDir, new KeywordAnalyzer(), true);// new IndexWriter(FSDirectory.open(indexDir), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
+        String[] values = null;
+        while((values=reader.readNext()) != null){
             if(values!= null && values.length>1){
                 //just add the LSID to the index
                 Document doc = new Document();
@@ -596,6 +533,12 @@ public class CBCreateLuceneIndex {
         return doc;
     }
 
+    public Document createALAIndexDocument(String name, String id, String lsid, String author, LinnaeanRankClassification cl){
+        if(cl == null)
+            cl = new LinnaeanRankClassification();
+        return createALAIndexDocument(name, id, lsid, null, null, cl.getKingdom(), null, cl.getPhylum(), null, cl.getKlass(), null, cl.getOrder(), null, cl.getFamily(), null, cl.getGenus(), null, null, null, null, null, null, null, null, author, 1.0f);
+    }
+
     private Document createALAIndexDocument(String name, String id, String lsid, String rank, String rankString,
     		String kingdom, String kid, String phylum, String pid, String clazz, String cid, String order,
                 String oid, String family, String fid, String genus, String gid,
@@ -610,38 +553,20 @@ public class CBCreateLuceneIndex {
         doc.add(new Field(NameIndexField.ID.toString(), id, Store.YES, Index.NOT_ANALYZED));
         doc.add(new Field(NameIndexField.LSID.toString(), lsid, Store.YES, Index.NOT_ANALYZED));//need to be able to search by LSID with a result from common names
 
+        if(lsid.startsWith("ALA"))
+            doc.add(new Field(NameIndexField.ALA.toString(), "T", Store.NO, Index.ANALYZED));
 
         //Add the scientific name information
         doc.add(new Field(NameIndexField.NAME.toString(), name, Store.YES, Index.ANALYZED));
         
 
         //rank information
-        doc.add(new Field(NameIndexField.RANK_ID.toString(), rank, Store.YES, Index.NOT_ANALYZED));
-        doc.add(new Field(NameIndexField.RANK.toString(), rankString, Store.YES, Index.ANALYZED));
+        if(StringUtils.isNotEmpty(rank))
+            doc.add(new Field(NameIndexField.RANK_ID.toString(), rank, Store.YES, Index.NOT_ANALYZED));
+        if(StringUtils.isNotEmpty(rankString))
+            doc.add(new Field(NameIndexField.RANK.toString(), rankString, Store.YES, Index.ANALYZED));
 
-        //add the sound expressions for the name if required
-        try{
-        if(StringUtils.isNotBlank(genus)){
-            doc.add(new Field(NameIndexField.GENUS_EX.toString(), TaxonNameSoundEx.treatWord(genus, "genus"), Store.YES, Index.ANALYZED));
-        }
-        if(StringUtils.isNotBlank(specificEpithet)){
-            doc.add(new Field(NameIndexField.SPECIES_EX.toString(), TaxonNameSoundEx.treatWord(specificEpithet, "species"), Store.YES, Index.ANALYZED));
-        }
-        else if(StringUtils.isNotBlank(genus)){
-            doc.add(new Field(NameIndexField.SPECIES_EX.toString(), "<null>", Store.YES, Index.ANALYZED));
-        }
-        if(StringUtils.isNotBlank(infraspecificEpithet)){
-            doc.add(new Field(NameIndexField.INFRA_EX.toString(), TaxonNameSoundEx.treatWord(infraspecificEpithet, "species"), Store.YES, Index.ANALYZED));
-        }
-        else if(StringUtils.isNotBlank(specificEpithet)){
-            //make searching for an empty infraspecific soudex easier
-            doc.add(new Field(NameIndexField.INFRA_EX.toString(), "<null>", Store.YES, Index.ANALYZED));
-        }
-        }
-        catch(Exception e){
-           // System.out.println(e.getMessage() + " " + name);
-            log.warn(lsid + " " +name + " has issues creating a soundex: " + e.getMessage());
-        }
+        
 
         //handle the synonyms
         if (StringUtils.isNotEmpty(acceptedConcept)) {
@@ -655,31 +580,38 @@ public class CBCreateLuceneIndex {
         //Add the classification information
         if (StringUtils.trimToNull(kingdom) != null) {
                 doc.add(new Field(RankType.KINGDOM.getRank(), kingdom, Store.YES, Index.ANALYZED));
-                doc.add(new Field("kid", kid, Store.YES, Index.NO));
+                if(StringUtils.isNotBlank(kid))
+                    doc.add(new Field("kid", kid, Store.YES, Index.NO));
             }
             if(StringUtils.trimToNull(phylum) != null){
                 doc.add(new Field(RankType.PHYLUM.getRank(), phylum, Store.YES, Index.ANALYZED));
-                doc.add(new Field("pid", pid, Store.YES, Index.NO));
+                if(StringUtils.isNotBlank(pid))
+                    doc.add(new Field("pid", pid, Store.YES, Index.NO));
             }
             if(StringUtils.trimToNull(clazz) != null){
                 doc.add(new Field(RankType.CLASS.getRank(), clazz, Store.YES, Index.ANALYZED));
-                doc.add(new Field("cid", cid, Store.YES, Index.NO));
+                if(StringUtils.isNotBlank(cid))
+                    doc.add(new Field("cid", cid, Store.YES, Index.NO));
             }
             if(StringUtils.trimToNull(order) != null){
                 doc.add(new Field(RankType.ORDER.getRank(), order, Store.YES, Index.ANALYZED));
-                doc.add(new Field("oid", oid, Store.YES, Index.NO));
+                if(StringUtils.isNotBlank(oid))
+                    doc.add(new Field("oid", oid, Store.YES, Index.NO));
             }
             if(StringUtils.trimToNull(family) != null){
                 doc.add(new Field(RankType.FAMILY.getRank(), family, Store.YES, Index.ANALYZED));
-                doc.add(new Field("fid",fid, Store.YES, Index.NO));
+                if(StringUtils.isNotBlank(fid))
+                    doc.add(new Field("fid",fid, Store.YES, Index.NO));
             }
             if (StringUtils.trimToNull(genus) != null){
                 doc.add(new Field(RankType.GENUS.getRank(), genus, Store.YES, Index.ANALYZED));
-                doc.add(new Field("gid", gid, Store.YES, Index.NO));
+                if(StringUtils.isNotBlank(gid))
+                    doc.add(new Field("gid", gid, Store.YES, Index.NO));
             }
             if(StringUtils.trimToNull(species) != null){
                 doc.add(new Field(RankType.SPECIES.getRank(), species, Store.YES, Index.ANALYZED));
-                doc.add(new Field("sid", sid, Store.YES, Index.NO));
+                if(StringUtils.isNotBlank(sid))
+                    doc.add(new Field("sid", sid, Store.YES, Index.NO));
             }
             if(StringUtils.trimToNull(left) != null)
                 doc.add(new Field("left", left, Store.YES, Index.NOT_ANALYZED));
@@ -741,6 +673,32 @@ public class CBCreateLuceneIndex {
             //throw e;
         }
 
+
+
+        //add the sound expressions for the name if required
+        try{
+        if(StringUtils.isNotBlank(genus)){
+            doc.add(new Field(NameIndexField.GENUS_EX.toString(), TaxonNameSoundEx.treatWord(genus, "genus"), Store.YES, Index.ANALYZED));
+        }
+        if(StringUtils.isNotBlank(specificEpithet)){
+            doc.add(new Field(NameIndexField.SPECIES_EX.toString(), TaxonNameSoundEx.treatWord(specificEpithet, "species"), Store.YES, Index.ANALYZED));
+        }
+        else if(StringUtils.isNotBlank(genus)){
+            doc.add(new Field(NameIndexField.SPECIES_EX.toString(), "<null>", Store.YES, Index.ANALYZED));
+        }
+        if(StringUtils.isNotBlank(infraspecificEpithet)){
+            doc.add(new Field(NameIndexField.INFRA_EX.toString(), TaxonNameSoundEx.treatWord(infraspecificEpithet, "species"), Store.YES, Index.ANALYZED));
+        }
+        else if(StringUtils.isNotBlank(specificEpithet)){
+            //make searching for an empty infraspecific soudex easier
+            doc.add(new Field(NameIndexField.INFRA_EX.toString(), "<null>", Store.YES, Index.ANALYZED));
+        }
+        }
+        catch(Exception e){
+           // System.out.println(e.getMessage() + " " + name);
+            log.warn(lsid + " " +name + " has issues creating a soundex: " + e.getMessage());
+        }
+
         
 
         return doc;
@@ -752,94 +710,16 @@ public class CBCreateLuceneIndex {
         return null;
     }
 
+    public String getIndexDirectory() {
+        return indexDirectory;
+    }
 
-    /**
-     * Builds and returns the initial document
-     * @param key
-     * @param value
-     * @param id
-     * @param rank
-     * @param rankString
-     * @return
-     */
-//    private Document buildDocument(String name, String id, String lsid, String rank, String rankString,
-//    		String kingdom, String kid, String phylum, String pid, String clazz, String cid, String order,
-//                String oid, String family, String fid, String genus, String gid,
-//    		String species, String sid, String left, String right, float boost, String acceptedConcept) {
-////        System.out.println("creating index " + name + " " + classification + " " + id + " " + lsid + " " + rank + " " + rankString+ " " + kingdom + " " + genus);
-//        Document doc = new Document();
-//        Field nameField = new Field(IndexField.NAME.toString(), name, Store.YES, Index.ANALYZED);
-//        nameField.setBoost(boost); //only want to apply the boost when searching on a name
-//        doc.add(nameField);
-//        doc.add(new Field(IndexField.ID.toString(), id, Store.YES, Index.NOT_ANALYZED));
-//        doc.add(new Field(IndexField.RANK.toString(), rank, Store.YES, Index.NOT_ANALYZED));
-//        doc.add(new Field(IndexField.RANK.toString(), rankString, Store.YES, Index.ANALYZED));
-//
-//        doc.add(new Field(IndexField.LSID.toString(), lsid, Store.YES, Index.NOT_ANALYZED));//need to be able to search by LSID with a result from common names
-//
-//        //add a search_canonical for the record
-//        doc.add(new Field(IndexField.SEARCHABLE_NAME.toString(), tnse.soundEx(name), Store.NO, Index.NOT_ANALYZED));
-//        if (StringUtils.isNotEmpty(acceptedConcept)) {
-//            doc.add(new Field(IndexField.ACCEPTED.toString(), acceptedConcept, Store.YES, Index.NO));
-//            //when the rank if genus or below use the Name Parser to get access to the correct Genus name to check for homonyms
-//            try{
-//            ParsedName pn = parser.parse(name);
-//            try{
-//            if (rankString !=null &&RankType.getAllRanksBelow(RankType.GENUS.getId()).contains(RankType.getForName(rankString)) ) {
-//                if(pn != null)
-//                    genus = pn.getGenusOrAbove();
-//                else{
-//                    genus = null;
-//                    //System.out.println("Name: " + name + " pn: "+ pn + " rank: "+rankString);
-//                }
-//            } else {
-//                genus = null;
-//            }
-//            }
-//            catch(NullPointerException npe){
-//                //System.out.println("Unknown rank : " + rankString);
-//            }
-//            }
-//            catch(org.gbif.ecat.parser.UnparsableException e){
-//
-//            }
-//
-//        } else {
-//            if (StringUtils.trimToNull(kingdom) != null) {
-//                doc.add(new Field(RankType.KINGDOM.getRank(), kingdom, Store.YES, Index.ANALYZED));
-//                doc.add(new Field("kid", kid, Store.YES, Index.NO));
-//            }
-//            if(StringUtils.trimToNull(phylum) != null){
-//                doc.add(new Field(RankType.PHYLUM.getRank(), phylum, Store.YES, Index.ANALYZED));
-//                doc.add(new Field("pid", pid, Store.YES, Index.NO));
-//            }
-//            if(StringUtils.trimToNull(clazz) != null){
-//                doc.add(new Field(RankType.CLASS.getRank(), clazz, Store.YES, Index.ANALYZED));
-//                doc.add(new Field("cid", cid, Store.YES, Index.NO));
-//            }
-//            if(StringUtils.trimToNull(order) != null){
-//                doc.add(new Field(RankType.ORDER.getRank(), order, Store.YES, Index.ANALYZED));
-//                doc.add(new Field("oid", oid, Store.YES, Index.NO));
-//            }
-//            if(StringUtils.trimToNull(family) != null){
-//                doc.add(new Field(RankType.FAMILY.getRank(), family, Store.YES, Index.ANALYZED));
-//                doc.add(new Field("fid",fid, Store.YES, Index.NO));
-//            }
-//            if (StringUtils.trimToNull(genus) != null){
-//                doc.add(new Field(RankType.GENUS.getRank(), genus, Store.YES, Index.ANALYZED));
-//                doc.add(new Field("gid", gid, Store.YES, Index.NO));
-//            }
-//            if(StringUtils.trimToNull(species) != null){
-//                doc.add(new Field(RankType.SPECIES.getRank(), species, Store.YES, Index.ANALYZED));
-//                doc.add(new Field("sid", sid, Store.YES, Index.NO));
-//            }
-//            if(StringUtils.trimToNull(left) != null)
-//                doc.add(new Field("left", left, Store.YES, Index.NOT_ANALYZED));
-//            if(StringUtils.trimToNull(right) != null)
-//                doc.add(new Field("right", right, Store.YES, Index.NOT_ANALYZED));
-//        }
-//        return doc;
-//    }
+    public void setIndexDirectory(String indexDirectory) {
+        this.indexDirectory = indexDirectory;
+    }
+
+
+ 
 
     /**
      * Generates the Lucene index required for the name matching API.
@@ -864,7 +744,7 @@ public class CBCreateLuceneIndex {
             }
             indexer.createIndex(args[0], args[1], sn, cn);
         } else {
-            indexer.createIndex("/data/names/Version2011", "/data/lucene/namematchingv1_1", true, false);
+            indexer.createIndex("/data/names/Version2011", "/data/lucene/namematchingv1_1", false, true);
             //System.out.println("au.org.ala.checklist.lucene.CBCreateLuceneIndex <directory with export files> <directory in which to create indexes>");
            //indexer.createIndex("/data/exports/cb", "/data/lucene/namematching", false, true);
 

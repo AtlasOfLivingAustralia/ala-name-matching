@@ -20,7 +20,8 @@ public enum NameIndexField {
     RANK("rank"),
     AUTHOR("author"),
     PHRASE("phrase"),//stores the values of a "phrase" name.  Some more intelligence will be needed when matching these
-    VOUCHER("voucher"); //stores a voucher value minus the spaces and fullstops.
+    VOUCHER("voucher"), //stores a voucher value minus the spaces and fullstops.
+    ALA("ala"); //stores whether or not it is an ALA generated name
     String name;
 
     NameIndexField(String name) {

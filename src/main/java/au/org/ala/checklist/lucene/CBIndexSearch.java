@@ -80,7 +80,7 @@ public class CBIndexSearch {
     private static final Pattern RANK_MARKER = Pattern.compile(RANK_MARKER_ALL);
     //public static final Set<String> stopWords = new java.util.HashSet<String>(java.util.Arrays.asList(new String[]{"virus", "ictv", "ICTV"}));
     public static final Pattern virusStopPattern = Pattern.compile(" virus| ictv| ICTV");
-    public static final Pattern voucherRemovePattern = Pattern.compile(" |,|&|\\.");
+    public static final Pattern voucherRemovePattern = Pattern.compile(" |,|&|\\.");    
     /**
      * A set of names that are cross rank homonyms.
      */
@@ -103,13 +103,13 @@ public class CBIndexSearch {
             queryParser = new ThreadLocal<QueryParser>(){
                @Override
                protected QueryParser initialValue() {
-                   return new QueryParser(Version.LUCENE_29, "genus", new au.org.ala.checklist.lucene.analyzer.LowerCaseKeywordAnalyzer());
+                   return new QueryParser(Version.LUCENE_34, "genus", new au.org.ala.checklist.lucene.analyzer.LowerCaseKeywordAnalyzer());
                }
             };
             idParser = new ThreadLocal<QueryParser>(){
                 @Override
                 protected QueryParser initialValue() {
-                    return new QueryParser(Version.LUCENE_29, "lsid", new org.apache.lucene.analysis.KeywordAnalyzer());
+                    return new QueryParser(Version.LUCENE_34, "lsid", new org.apache.lucene.analysis.KeywordAnalyzer());
                 }
             };
 
@@ -141,10 +141,24 @@ public class CBIndexSearch {
 		}
             return idxFile;
         }
-        public boolean addAdditionalName(String scientificName){
 
-            return false;
+        public void reopenReaders(){
+            //this should only need to reopen the cbSearcher because the others should NOT be changing
+            try{
+            IndexReader tmpReader = cbReader.reopen();
+            if(tmpReader!=cbReader){
+                cbReader.close();
+                cbReader = tmpReader;
+                //now reinit the searcher
+                cbSearcher= new IndexSearcher(cbReader);
+            }
+            }
+            catch(Exception e){
+
+            }
+
         }
+
 //        void deleteRecord(int id)throws Exception{
 //            cbReader.deleteDocument(id);
 //
