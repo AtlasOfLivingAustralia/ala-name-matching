@@ -9,7 +9,7 @@
 	<properties>
 		<!-- This project uses UTF8 for Regular Expressions -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<org.apache.lucene.version>2.9.2</org.apache.lucene.version>
+		<org.apache.lucene.version>3.4.0</org.apache.lucene.version>
 	</properties>
   <dependencies>
     <dependency>
