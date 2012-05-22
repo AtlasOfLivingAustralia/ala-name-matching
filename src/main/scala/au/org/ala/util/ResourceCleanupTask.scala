@@ -25,6 +25,8 @@ object ResourceCleanupTask {
     var removeColumns =false
     var removeDeleted = false
     var test=false
+    var start:Option[String] =None
+    var end:Option[String]= None
 
     val parser = new OptionParser("cleanup") {
       arg("<data resource>", "The data resource on which to perform the clean up.", { v: String => druid = v })
@@ -38,27 +40,33 @@ object ResourceCleanupTask {
       opt("d", "date", "<date last loaded yyyy-MM-dd format>", "The date of the last load.  Any records that have not been updated since this date will be marked as deleted.", {
         value:String => lastLoadDate = value + "T00:00:00Z"
       })
+      opt("s", "start", "<starting rowkey>", "The row key to start looking for deleted records", {
+        value:String => start = Some(value)
+      })
+      opt("e", "end", "<ending rowkey>", "The row key to stop looking for deleted records", {
+        value:String => end = Some(value)
+      })
       opt("test","Simulates the cleanup without removing anything.  Useful to run to determine whether or not you are happy with the load.",{test=true})
     }
     
 
     if (parser.parse(args)) {
       val checkDate = DateParser.parseStringToDate(lastLoadDate)
-      println("Attempting to cleanup " + druid +" based on a last load date of " + checkDate + " rows: " + removeRows + " columns: " + removeColumns)
+      println("Attempting to cleanup " + druid +" based on a last load date of " + checkDate + " rows: " + removeRows + " columns: " + removeColumns + " start: "+ start + " end: " + end)
       if(checkDate.isDefined){
         if(removeRows)
-          modifyRecord(druid, checkDate.get, test)
+          modifyRecord(druid, checkDate.get,start,end, test)
         if(removeColumns)
-          removeObsoleteColumns(druid, checkDate.get.getTime(),test)
+          removeObsoleteColumns(druid, checkDate.get.getTime(), start, end,test)
         if(removeDeleted && !test)
-          removeDeletedRecords(druid)
+          removeDeletedRecords(druid,start,end)
       }
     }
   }
   
-  def removeObsoleteColumns(dr:String, editTime:Long, test:Boolean =false){
-    val startUuid = dr +"|"
-    val endUuid = startUuid + "~"
+  def removeObsoleteColumns(dr:String, editTime:Long, start:Option[String], end:Option[String], test:Boolean =false){
+    val startUuid = start.getOrElse(dr +"|")
+    val endUuid = end.getOrElse(startUuid + "~")
     val fullRecord = new FullRecord
     val valueSet = new scala.collection.mutable.HashSet[String]
     var totalRecords=0
@@ -108,9 +116,9 @@ object ResourceCleanupTask {
   }
 
   
-  def modifyRecord(dr:String, lastDate:java.util.Date, test:Boolean=false){
-    val startUuid = dr +"|"
-    val endUuid = startUuid + "~"
+  def modifyRecord(dr:String, lastDate:java.util.Date, start:Option[String], end:Option[String], test:Boolean=false){
+    val startUuid = start.getOrElse(dr +"|")
+    val endUuid = end.getOrElse(startUuid + "~")
     val deleteTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
     var totalRecords=0
     var deleted=0
@@ -148,12 +156,12 @@ object ResourceCleanupTask {
   /**
    * removes the deleted record from the occ column family and places it in the dellog column family
    */
-  def removeDeletedRecords(dr:String){
+  def removeDeletedRecords(dr:String, start:Option[String], end:Option[String]){
     val occDao = Config.occurrenceDAO
     var count =0
     var totalRecords =0
-    val startUuid = dr + "|"
-    val endUuid = startUuid + "~"
+    val startUuid = start.getOrElse(dr +"|")
+    val endUuid = end.getOrElse(startUuid + "~")
     Config.persistenceManager.pageOverSelect("occ", (guid,map)=>{
       totalRecords += 1
       val delete = map.getOrElse(FullRecordMapper.deletedColumn, "false")
