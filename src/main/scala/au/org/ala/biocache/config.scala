@@ -37,7 +37,10 @@ object Config {
         false
       }
     }
-
+    
+    lazy val excludeSensitiveValuesFor= configModule.properties.getProperty("excludeSensitiveValuesFor","")
+    
+    
     lazy val fieldsToSample = {
       val str = configModule.properties.getProperty("fieldsToSample")
       val defaultFields = configModule.properties.getProperty("defaultFieldsToSample")

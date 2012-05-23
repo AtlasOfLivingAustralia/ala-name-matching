@@ -44,6 +44,8 @@ trait IndexDAO {
     def pageOverFacet(proc:(String,Int) => Boolean, facetName:String, query:String, filterQueries:Array[String])
 
     def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], query:String, filterQueries:Array[String])
+    
+    def shouldIncludeSensitiveValue(dr:String):Boolean
 
     /**
      * Index a record with the supplied properties.
@@ -272,7 +274,7 @@ trait IndexDAO {
                 }
                 //get sensitive values map
                 val sensitiveMap = {
-                  if(map.contains("originalSensitiveValues")){
+                  if(shouldIncludeSensitiveValue(map.getOrElse("dataResourceUid","")) && map.contains("originalSensitiveValues")){
                     try{
                     val osv =map.getOrElse("originalSensitiveValues","{}")                    
                     val parsed = JSON.parseFull(osv)
@@ -294,7 +296,7 @@ trait IndexDAO {
                 if(stateCons == "null") stateCons = rawStateCons;
                 
                 val sensitive:String = {
-                    if(sensitiveMap.size>0) {
+                    //if(sensitiveMap.size>0) {
                         val dataGen = map.getOrElse("dataGeneralizations.p", "")
                         if(dataGen.contains("already generalised"))
                             "alreadyGeneralised"
@@ -302,9 +304,9 @@ trait IndexDAO {
                             "generalised"
                         else
                             ""
-                    }
-                    else
-                        ""
+                    //}
+//                    else
+//                        ""
                 }
 
                 val outlierForLayers:Array[String] = {
@@ -522,7 +524,7 @@ object IndexFields{
 /**
  * DAO for indexing to SOLR
  */
-class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDAO {
+class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("excludeSensitiveValuesFor") excludeSensitiveValuesFor:String) extends IndexDAO {
     import org.apache.commons.lang.StringUtils.defaultString
     import scalaj.collection.Imports._
 
@@ -543,6 +545,8 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
     lazy val threads:Array[AddDocThread] ={
       Array.fill[AddDocThread](1){ val t = new AddDocThread(docQueue,ids); ids +=1; t.start;t}
     }
+    
+    lazy val drToExcludeSensitive = excludeSensitiveValuesFor.split(",")
 
     def init(){
       if(solrServer == null){
@@ -570,6 +574,11 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String) extends IndexDA
 
     def reload = cc.reload("")
 
+    
+  override def shouldIncludeSensitiveValue(dr:String):Boolean ={
+      !drToExcludeSensitive.contains(dr)
+    }
+    
   def pageOverFacet(proc:(String,Int) => Boolean, facetName:String, queryString:String = "*:*", filterQueries:Array[String] = Array()){
     init
     var query:SolrQuery = new SolrQuery(queryString)
