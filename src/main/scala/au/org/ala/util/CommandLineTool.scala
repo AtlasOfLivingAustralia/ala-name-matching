@@ -58,6 +58,11 @@ object CommandLineTool {
         case it if (it startsWith "process-all") => {
           ProcessWithActors.processRecords(4, None, None)
         }
+        case it if(it startsWith "index-delete")=> {
+          val deletor = new QueryDelete(it.replaceFirst("delete ",""))
+          println("Delete from index")
+          deletor.deleteFromIndex
+        }
         case it if (it.startsWith("index-live ") && input.split(" ").length == 2) => {
           val dr = it.split(" ").map(x => x.trim).toList.last
           println("Indexing live with URL: " + Config.reindexUrl +", and params: " + Config.reindexData + "&dataResource=" + dr)
@@ -129,12 +134,7 @@ object CommandLineTool {
           deletor.deleteFromPersistent()
           println("Delete from index")
           deletor.deleteFromIndex
-        }
-        case it if(it startsWith "index-delete")=> {
-          val deletor = new QueryDelete(it.replaceFirst("delete ",""))
-          println("Delete from index")
-          deletor.deleteFromIndex
-        }
+        }        
         case _ => printHelp
       }
     } catch {
