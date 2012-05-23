@@ -59,8 +59,9 @@ object CommandLineTool {
           ProcessWithActors.processRecords(4, None, None)
         }
         case it if(it startsWith "index-delete")=> {
-          val deletor = new QueryDelete(it.replaceFirst("delete ",""))
-          println("Delete from index")
+          val query = it.replaceFirst("index-delete ","")
+          val deletor = new QueryDelete(query)
+          println("Delete from index using query : " + query)
           deletor.deleteFromIndex
         }
         case it if (it.startsWith("index-live ") && input.split(" ").length == 2) => {
