@@ -144,7 +144,7 @@ trait IndexDAO {
       "last_load_date","last_processed_date", "modified_date", "establishment_means","loan_number","loan_identifier","loan_destination",
       "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric",
       "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue","raw_identification_qualifier","species_habitats",
-      "identified_by","identified_date","sensitive_latitude","sensitive_longitude") // ++ elFields ++ clFields
+      "identified_by","identified_date","sensitive_longitude","sensitive_latitude") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
