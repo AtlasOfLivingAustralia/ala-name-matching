@@ -18,6 +18,7 @@ isolectotype
 isoneotype
 isosyntype
 isotype	iso type
+isoparatype
 lectotype
 neotype	neo type
 notatype	not a type
