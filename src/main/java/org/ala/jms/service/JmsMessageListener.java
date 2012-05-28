@@ -305,15 +305,27 @@ public class JmsMessageListener implements MessageListener {
     	            logger.debug("Sending " + upsertList.size() + " records for update and " + deleteList.size() + " records to be deleted.");
     	            synchronized(upsertList){
         	            if(upsertList.size()>0){
+        	                try{
         	                Store.loadRecords(CITIZEN_SCIENCE_DRUID, upsertList, ID_LIST, true);
         	                upsertList.clear();
+        	                }
+        	                catch(Exception e){
+        	                    //leave the upsert list identical 
+        	                    logger.error("Error loading CS recsords",e);
+        	                }
         	            }
     	            }
     	            synchronized(deleteList){
         	            if(deleteList.size()>0){
         	                //delete the list of records...
+        	                try{
         	                Store.deleteRecords(deleteList);
         	                deleteList.clear();
+        	                }
+        	                catch(Exception e){
+        	                    //leave the delete list identical
+        	                    logger.error("Error deleting CS records,", e);
+        	                }
         	            }
     	            }
     	            lastMessage=0;
