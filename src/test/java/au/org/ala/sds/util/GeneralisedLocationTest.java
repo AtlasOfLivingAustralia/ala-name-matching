@@ -49,10 +49,10 @@ public class GeneralisedLocationTest {
         ENDANGERED = SensitivityCategoryFactory.getCategory(SensitivityCategory.ENDANGERED);
         VULNERABLE = SensitivityCategoryFactory.getCategory(SensitivityCategory.VULNERABLE);
         NEAR_THREATENED = SensitivityCategoryFactory.getCategory(SensitivityCategory.NEAR_THREATENED);
-        instances.add(new ConservationInstance(CRITICALLY_ENDANGERED, "NSW DECCW", NSW, null, null, "WITHHOLD"));
-        instances.add(new ConservationInstance(ENDANGERED, "Vic DSE", VIC, null, null, "10km"));
-        instances.add(new ConservationInstance(VULNERABLE, "QLD DERM", QLD, null, null, "1km"));
-        instances.add(new ConservationInstance(NEAR_THREATENED, "Tas DPIPWE", TAS, null, null, "100m"));
+        instances.add(new ConservationInstance(CRITICALLY_ENDANGERED, "NSW OEH", "dr487", NSW, null, null, "WITHHOLD"));
+        instances.add(new ConservationInstance(ENDANGERED, "Vic DSE", "dr490", VIC, null, null, "10km"));
+        instances.add(new ConservationInstance(VULNERABLE, "QLD DEHP", "dr493", QLD, null, null, "1km"));
+        instances.add(new ConservationInstance(NEAR_THREATENED, "Tas DPIPWE", "dr491", TAS, null, null, "100m"));
     }
 
     @Test
