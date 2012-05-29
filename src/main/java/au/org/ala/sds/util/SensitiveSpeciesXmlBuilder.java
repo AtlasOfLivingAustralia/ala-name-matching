@@ -71,6 +71,7 @@ public class SensitiveSpeciesXmlBuilder {
                 }
                 instance.setAttribute("category", si.getCategory().getId());
                 instance.setAttribute("authority", si.getAuthority());
+                instance.setAttribute("dataResourceId", si.getDataResourceId());
                 instance.setAttribute("zone", si.getZone().getId());
                 if (si.getReason() != null) {
                     instance.setAttribute("reason", si.getReason());
