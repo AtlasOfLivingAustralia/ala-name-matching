@@ -32,12 +32,13 @@ public class PlantPestInstance extends SensitivityInstance implements Serializab
     public PlantPestInstance(
             SensitivityCategory category,
             String authority,
+            String dataResourceId,
             SensitivityZone zone,
             String reason,
             String remarks,
             String fromDate,
             String toDate) {
-        super(category, authority, zone, reason, remarks);
+        super(category, authority, dataResourceId, zone, reason, remarks);
         this.fromDate = StringUtils.isNotEmpty(fromDate) ? DateHelper.parseDate(fromDate) : null;
         this.toDate = StringUtils.isNotEmpty(toDate) ? DateHelper.parseDate(toDate) : null;
     }

@@ -26,11 +26,12 @@ public class ConservationInstance extends SensitivityInstance implements Seriali
     public ConservationInstance(
             SensitivityCategory category,
             String authority,
+            String dataResourceId,
             SensitivityZone zone,
             String reason,
             String remarks,
             String generalisation) {
-        super(category, authority, zone, reason, remarks);
+        super(category, authority, dataResourceId, zone, reason, remarks);
         this.locationGeneralisation = generalisation;
     }
 

@@ -18,13 +18,15 @@ public class SensitivityInstance implements Serializable {
 
     private final SensitivityCategory category;
     private final String authority;
+    private final String dataResourceId;
     private final SensitivityZone zone;
     private final String reason;
     private final String remarks;
 
-    public SensitivityInstance(SensitivityCategory category, String authority, SensitivityZone zone, String reason, String remarks) {
+    public SensitivityInstance(SensitivityCategory category, String authority, String dataResourceId, SensitivityZone zone, String reason, String remarks) {
         this.category = category;
         this.authority = authority;
+        this.dataResourceId = dataResourceId;
         this.zone = zone;
         this.reason = reason;
         this.remarks = remarks;
@@ -36,6 +38,10 @@ public class SensitivityInstance implements Serializable {
 
     public String getAuthority() {
         return authority;
+    }
+
+    public String getDataResourceId() {
+        return dataResourceId;
     }
 
     public SensitivityZone getZone() {
@@ -82,6 +88,7 @@ public class SensitivityInstance implements Serializable {
         SensitivityInstance other = (SensitivityInstance) obj;
         return this.category.equals(other.category) &&
                this.authority.equalsIgnoreCase(other.authority) &&
+               this.dataResourceId.equalsIgnoreCase(other.dataResourceId) &&
                this.zone.equals(other.zone);
     }
 
@@ -91,6 +98,7 @@ public class SensitivityInstance implements Serializable {
                 append("category", category).
                 append("zone", zone).
                 append("authority", authority).
+                append("dataResourceId", dataResourceId).
                 append("reason", reason).
                 append("remarks", remarks).
                 toString();
@@ -101,6 +109,7 @@ public class SensitivityInstance implements Serializable {
         json.append("\"category\":" + category.toJson() + ",");
         json.append("\"zone\":" + zone.toJson() + ",");
         json.append("\"authority\":\"" + authority + "\",");
+        json.append("\"dataResourceId\":\"" + dataResourceId + "\",");
         if (reason != null) {
             json.append("\"reason\":\"" + reason + "\",");
         }
