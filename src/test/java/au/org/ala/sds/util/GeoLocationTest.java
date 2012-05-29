@@ -17,6 +17,7 @@ package au.org.ala.sds.util;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -143,5 +144,24 @@ public class GeoLocationTest {
         assertTrue(zones.contains(SensitivityZoneFactory.getZone(SensitivityZone.PIZVICUPT)));
         assertTrue(zones.contains(SensitivityZoneFactory.getZone(SensitivityZone.VIC)));
 
+    }
+
+    @Test
+    public void layersList() {
+        assertTrue(GeoLocationHelper.getGeospatialLayers().containsAll(Arrays.asList(
+                GeoLocationHelper.COASTAL_WATERS_LAYER,
+                GeoLocationHelper.LGA_BOUNDARIES_LAYER,
+                GeoLocationHelper.TSPZ_LAYER,
+                GeoLocationHelper.TSSQZ_LAYER,
+                GeoLocationHelper.FFEZ_TRI_STATE_LAYER,
+                GeoLocationHelper.PCN_VIC_LAYER,
+                GeoLocationHelper.PIZ_NSW_ALBURY_LAYER,
+                GeoLocationHelper.PIZ_NSW_SYDNEY_LAYER,
+                GeoLocationHelper.PIZ_VIC_NORTH_EAST_LAYER,
+                GeoLocationHelper.PIZ_VIC_MAROONDAH_LAYER,
+                GeoLocationHelper.PIZ_VIC_NAGAMBIE_LAYER,
+                GeoLocationHelper.PIZ_VIC_MOOROOPNA_LAYER,
+                GeoLocationHelper.PIZ_VIC_UPTON_LAYER,
+                GeoLocationHelper.PIZ_VIC_WHITEBRIDGE_LAYER)));
     }
 }
