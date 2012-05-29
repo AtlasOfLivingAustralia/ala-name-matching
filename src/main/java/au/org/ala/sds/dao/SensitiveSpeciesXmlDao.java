@@ -73,6 +73,7 @@ public class SensitiveSpeciesXmlDao implements SensitiveSpeciesDao {
                     instance = new ConservationInstance(
                             SensitivityCategoryFactory.getCategory(ie.getAttributeValue("category")),
                             ie.getAttributeValue("authority"),
+                            ie.getAttributeValue("dataResourceId"),
                             SensitivityZoneFactory.getZone(ie.getAttributeValue("zone")),
                             ie.getAttributeValue("reason"),
                             ie.getAttributeValue("remarks"),
@@ -81,6 +82,7 @@ public class SensitiveSpeciesXmlDao implements SensitiveSpeciesDao {
                     instance = new PlantPestInstance(
                             SensitivityCategoryFactory.getCategory(ie.getAttributeValue("category")),
                             ie.getAttributeValue("authority"),
+                            ie.getAttributeValue("dataResourceId"),
                             SensitivityZoneFactory.getZone(ie.getAttributeValue("zone")),
                             ie.getAttributeValue("reason"),
                             ie.getAttributeValue("remarks"),

@@ -45,7 +45,7 @@ public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements Sensitiv
    // public static final String SELECT_ALL = "SELECT * FROM sensitive_species_zones ORDER BY scientific_name, sensitivity_zone";
 
     public static final String SELECT_ALL =
-        "SELECT z.scientific_name, common_name, family, sensitivity_category, sensitivity_zone, reason, remarks, authority_name, from_date, to_date, location_generalisation " +
+        "SELECT z.scientific_name, common_name, family, sensitivity_category, sensitivity_zone, reason, remarks, authority_name, data_resource_id, from_date, to_date, location_generalisation " +
         "FROM sensitive_species_zones z, sensitive_species s " +
         "WHERE z.scientific_name = s.scientific_name " +
         "ORDER BY z.scientific_name";
@@ -71,6 +71,7 @@ public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements Sensitiv
                         dto.setFamily(rs.getString("family"));
                         dto.setSensitivityZone(rs.getString("sensitivity_zone"));
                         dto.setAuthority(rs.getString("authority_name"));
+                        dto.setDataResourceId(rs.getString("data_resource_id"));
                         dto.setReason(rs.getString("reason"));
                         dto.setRemarks(rs.getString("remarks"));
                         dto.setFromDate(rs.getString("from_date"));
@@ -107,6 +108,7 @@ public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements Sensitiv
                 ss.getInstances().add(new ConservationInstance(
                         category,
                         dto.getAuthority(),
+                        dto.getDataResourceId(),
                         SensitivityZoneFactory.getZone(dto.getSensitivityZone()),
                         dto.getReason(),
                         dto.getRemarks(),
@@ -115,6 +117,7 @@ public class SensitiveSpeciesMySqlDao extends JdbcDaoSupport implements Sensitiv
                 ss.getInstances().add(new PlantPestInstance(
                         category,
                         dto.getAuthority(),
+                        dto.getDataResourceId(),
                         SensitivityZoneFactory.getZone(dto.getSensitivityZone()),
                         dto.getReason(),
                         dto.getRemarks(),
