@@ -3,7 +3,9 @@ package au.org.ala.sds.util;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang.math.NumberUtils;
@@ -33,15 +35,30 @@ public class GeoLocationHelper {
     final static String PIZ_VIC_UPTON_LAYER = "cl964";
     final static String PIZ_VIC_WHITEBRIDGE_LAYER = "cl965";
 
+    final static List<String> SDS_GEOSPATIAL_LAYERS = Arrays.asList(
+            COASTAL_WATERS_LAYER,
+            LGA_BOUNDARIES_LAYER,
+            TSPZ_LAYER,
+            TSSQZ_LAYER,
+            FFEZ_TRI_STATE_LAYER,
+            PCN_VIC_LAYER,
+            PIZ_NSW_ALBURY_LAYER,
+            PIZ_NSW_SYDNEY_LAYER,
+            PIZ_VIC_NORTH_EAST_LAYER,
+            PIZ_VIC_MAROONDAH_LAYER,
+            PIZ_VIC_NAGAMBIE_LAYER,
+            PIZ_VIC_MOOROOPNA_LAYER,
+            PIZ_VIC_UPTON_LAYER,
+            PIZ_VIC_WHITEBRIDGE_LAYER);
+
     public static Set<SensitivityZone> getZonesContainingPoint(String latitude, String longitude) throws Exception {
 
-
-        Set<SensitivityZone> zones = new HashSet<SensitivityZone>();;
+        Set<SensitivityZone> zones = new HashSet<SensitivityZone>();
 
         //
         // Call geospatial web service
         //
-        URL url = new URL(Configuration.getInstance().getSpatialUrl() + getLayers() + latitude + "/" + longitude);
+        URL url = new URL(Configuration.getInstance().getSpatialUrl() + getLayersForUri() + "/" + latitude + "/" + longitude);
         URLConnection connection = url.openConnection();
         logger.debug("Looking up location using " + url);
         InputStream inStream = connection.getInputStream();
@@ -136,24 +153,16 @@ public class GeoLocationHelper {
         return zones;
     }
 
-    private static String getLayers() {
+    public static List<String> getGeospatialLayers() {
+        return SDS_GEOSPATIAL_LAYERS;
+    }
+
+    private static String getLayersForUri() {
         StringBuilder layers = new StringBuilder();
-
-        layers.append(COASTAL_WATERS_LAYER).append(',');
-        layers.append(LGA_BOUNDARIES_LAYER).append(',');
-        layers.append(TSPZ_LAYER).append(',');
-        layers.append(TSSQZ_LAYER).append(',');
-        layers.append(FFEZ_TRI_STATE_LAYER).append(',');
-        layers.append(PCN_VIC_LAYER).append(',');
-        layers.append(PIZ_NSW_ALBURY_LAYER).append(',');
-        layers.append(PIZ_NSW_SYDNEY_LAYER).append(',');
-        layers.append(PIZ_VIC_NORTH_EAST_LAYER).append(',');
-        layers.append(PIZ_VIC_MAROONDAH_LAYER).append(',');
-        layers.append(PIZ_VIC_NAGAMBIE_LAYER).append(',');
-        layers.append(PIZ_VIC_MOOROOPNA_LAYER).append(',');
-        layers.append(PIZ_VIC_UPTON_LAYER).append(',');
-        layers.append(PIZ_VIC_WHITEBRIDGE_LAYER).append('/');
-
+        for (String layer : SDS_GEOSPATIAL_LAYERS) {
+            layers.append(layer).append(',');
+        }
+        layers.setLength(layers.length() - 1);
         return layers.toString();
     }
 
