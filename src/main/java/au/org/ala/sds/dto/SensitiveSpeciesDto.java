@@ -25,6 +25,7 @@ public class SensitiveSpeciesDto {
     private String family;
     private String sensitivityZone;
     private String authority;
+    private String dataResourceId;
     private String reason;
     private String remarks;
     private String fromDate;
@@ -83,6 +84,14 @@ public class SensitiveSpeciesDto {
 
     public void setAuthority(String authority) {
         this.authority = authority;
+    }
+
+    public String getDataResourceId() {
+        return dataResourceId;
+    }
+
+    public void setDataResourceId(String dataResourceId) {
+        this.dataResourceId = dataResourceId;
     }
 
     public String getReason() {
