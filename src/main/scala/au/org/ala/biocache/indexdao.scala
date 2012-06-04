@@ -144,7 +144,7 @@ trait IndexDAO {
       "last_load_date","last_processed_date", "modified_date", "establishment_means","loan_number","loan_identifier","loan_destination",
       "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric",
       "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue","raw_identification_qualifier","species_habitats",
-      "identified_by","identified_date","sensitive_longitude","sensitive_latitude") // ++ elFields ++ clFields
+      "identified_by","identified_date","sensitive_longitude","sensitive_latitude","pest_TMP_name") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -344,6 +344,9 @@ trait IndexDAO {
                 val lastUserAssertion = DateParser.parseStringToDate(map.getOrElse(FullRecordMapper.lastUserAssertionDateColumn, ""))
                                                
                 val firstLoadDate = DateParser.parseStringToDate(getValue("firstLoaded",map))
+                
+                val pest_tmp = if(map.getOrElse("informationWithheld.p","").startsWith("PEST")) "PEST" else ""
+                
                 //get the el and cl maps to work with
 //                val elmap =map.getOrElse("el.p","").dropRight(1).drop(1).split(",").map(_ split ":") collect {case Array(k,v) => (k.substring(1,k.length-1), v.substring(1,v.length-1))} toMap
 //                val clmap = map.getOrElse("cl.p", "").dropRight(1).drop(1).split(",").map(_ split ":") collect {case Array(k,v) => (k.substring(1,k.length-1), v.substring(1,v.length-1))} toMap
@@ -442,7 +445,7 @@ trait IndexDAO {
                     outlierForLayers.length.toString, map.getOrElse("taxonomicIssue.p",""), map.getOrElse("identificationQualifier",""),
                     habitats.mkString("|"), map.getOrElse("identifiedBy",""), 
                     if(map.contains("dateIdentified.p")) map.getOrElse("dateIdentified.p","") + "T00:00:00Z" else "",
-                    sensitiveMap.getOrElse("decimalLongitude",""), sensitiveMap.getOrElse("decimalLatitude","")                    
+                    sensitiveMap.getOrElse("decimalLongitude",""), sensitiveMap.getOrElse("decimalLatitude",""),pest_tmp                    
                     ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
                 //)
             }

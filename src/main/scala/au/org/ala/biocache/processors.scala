@@ -113,6 +113,12 @@ class MiscellaneousProcessor extends Processor {
       //processIdentification(raw,processed,assertions)
       assertions.toArray
   }
+  /**
+   * parse the collector string to place in a consistent format
+   */
+  def processCollectors(raw:FullRecord, processed:FullRecord)={
+    
+  }
   
   def processDates(raw:FullRecord, processed:FullRecord)={
     //process the "modified" date for the occurrence - we want all modified dates in the same format so that we can index on them...
@@ -333,8 +339,14 @@ class EventProcessor extends Processor {
         year = -1
         validYear = false
         comment = "Future year supplied"
-        assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
+        //assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
+      } else if (year == 1788 && month == 1 && day == 26){
+        //First fleet arrival date indicative of a null date.
+        validYear=false
+        comment ="First Fleet arrival implies a null date"
       }
+      if(StringUtils.isNotEmpty(comment))
+        assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
     }
 
     var validDayMonthYear = validYear && validDay && validMonth
@@ -546,7 +558,7 @@ class LocationProcessor extends Processor {
 
         //sensitise the coordinates if necessary.  Do this last so that habitat checks etc are performed on originally supplied coordinates
         try {
-          processSensitivity(raw, processed, location)
+          processSensitivity(raw, processed, location, contextualLayers)
         } catch {
           case e:Exception => println("Problem processing using the SDS for record " + guid); e.printStackTrace
         }
@@ -794,7 +806,7 @@ class LocationProcessor extends Processor {
   }
 
   /**Performs all the sensitivity processing.  Returns the new point ot be working with */
-  def processSensitivity(raw: FullRecord, processed: FullRecord, location: Location) = {
+  def processSensitivity(raw: FullRecord, processed: FullRecord, location: Location, contextualLayers:Map[String,String]) = {
 
     //Perform sensitivity actions if the record was located in Australia
     //removed the check for Australia because some of the loc cache records have a state without country (-43.08333, 147.66670)
@@ -802,18 +814,19 @@ class LocationProcessor extends Processor {
       //location.country == "Australia"){
       val sensitiveTaxon = {
         //check to see if the rank of the matched taxon is above a speceies
-        val rankID = au.org.ala.util.ReflectBean.any2Int(processed.classification.taxonRankID)
-        if (rankID != null && (rankID > 6000 || !processed.classification.scientificName.contains(" "))) {
-          //match is based on a known LSID
-          sdsFinder.findSensitiveSpeciesByLsid(processed.classification.taxonConceptID)
-        } else {
-          // use the "exact match" name
-          val exact = getExactSciName(raw)
-          if (exact != null)
-            sdsFinder.findSensitiveSpeciesByExactMatch(exact)
-          else
-            null
+        val exact = getExactSciName(raw)
+        if(processed.classification.taxonConceptID != null && exact != null){
+            val lsidVersion = sdsFinder.findSensitiveSpeciesByLsid(processed.classification.taxonConceptID)
+            if(lsidVersion != null)
+              lsidVersion
+            else
+              sdsFinder.findSensitiveSpeciesByExactMatch(exact)  
         }
+        else if(exact != null)
+          sdsFinder.findSensitiveSpeciesByExactMatch(exact)  
+        else 
+          null
+
       }
 
       //only proceed if the taxon has been identified as sensitive
@@ -827,57 +840,71 @@ class LocationProcessor extends Processor {
         //put the state information that we have from the point
         rawMap.put("stateProvince",location.stateProvince)
         
+        //put the required contexual layers in the map
+        au.org.ala.sds.util.GeoLocationHelper.getGeospatialLayers.foreach(key =>{
+          rawMap.put(key, contextualLayers.getOrElse(key,null))
+        })
+        
+        
         val service = ServiceFactory.createValidationService(sensitiveTaxon)
         //TODO fix for different types of outcomes...
         val voutcome = service.validate(rawMap)
         if (voutcome.isValid && voutcome.isSensitive) {
             
-            //the map that is returned needs to be used to update the raw record
-            val map:scala.collection.mutable.Map[java.lang.String,Object] = voutcome.getResult
-            //convert it to a string string map
-            val stringMap = map.map({case(k, v) => if(k=="originalSensitiveValues"){
-                val osv = v.asInstanceOf[java.util.HashMap[String,String]]
-                val newv = Json.toJSON(osv)
-                (k->newv)
-            } else (k->v.toString)
+          if(voutcome.getResult != null){
+              //conservation sensitive species will have a map of new values in the result
+                //the map that is returned needs to be used to update the raw record
+                val map:scala.collection.mutable.Map[java.lang.String,Object] = voutcome.getResult
+                //convert it to a string string map
+                val stringMap = map.map({case(k, v) => if(k=="originalSensitiveValues"){
+                    val osv = v.asInstanceOf[java.util.HashMap[String,String]]
+                    val newv = Json.toJSON(osv)
+                    (k->newv)
+                } else (k->v.toString)
+                    
+                })           
                 
-            })           
-            
-            //take away the values that need to be added to the processed record NOT the raw record
-            val uncertainty = map.get("generalisationInMetres")
-            if(!uncertainty.isEmpty){
-                //we know that we have sensitised
-                processed.location.coordinateUncertaintyInMeters = uncertainty.get.toString
-                processed.location.decimalLatitude = stringMap.getOrElse("decimalLatitude","")
-                processed.location.decimalLongitude = stringMap.getOrElse("decimalLongitude","")
-                stringMap -= "generalisationInMetres"
-            }
-            processed.occurrence.informationWithheld = stringMap.getOrElse("informationWithheld","")
-            processed.occurrence.dataGeneralizations = stringMap.getOrElse("dataGeneralizations","")
-            stringMap -= "informationWithheld"
-            stringMap -="dataGeneralizations"
-            
-            if(stringMap.contains("day") || stringMap.contains("eventDate")){
-                //remove the day from the values
-                raw.event.day = ""
-                processed.event.day =""
-                processed.event.eventDate=""
-            }
-            
-            //update the raw record with whatever is left in the stringMap
-            Config.persistenceManager.put(raw.rowKey, "occ", stringMap.toMap)
-            
-            //TODO may need to fix locality information... change ths so that the generalisation
-            // is performed before the point matching to gazetteer..
-            //We want to associate the ibra layers to the sensitised point
-            //update the required locality information
-            logger.debug("**************** Performing lookup for new point ['" + raw.rowKey
-              + "',"+processed.location.decimalLongitude + "," + processed.location.decimalLatitude +"]" )
-            val newPoint = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
-            newPoint match {
-              case Some((loc, el, cl)) => processed.location.lga = loc.lga
-              case _ => processed.location.lga = null //unset the lga
-            }
+                //take away the values that need to be added to the processed record NOT the raw record
+                val uncertainty = map.get("generalisationInMetres")
+                if(!uncertainty.isEmpty){
+                    //we know that we have sensitised
+                    processed.location.coordinateUncertaintyInMeters = uncertainty.get.toString
+                    processed.location.decimalLatitude = stringMap.getOrElse("decimalLatitude","")
+                    processed.location.decimalLongitude = stringMap.getOrElse("decimalLongitude","")
+                    stringMap -= "generalisationInMetres"
+                }
+                processed.occurrence.informationWithheld = stringMap.getOrElse("informationWithheld","")
+                processed.occurrence.dataGeneralizations = stringMap.getOrElse("dataGeneralizations","")
+                stringMap -= "informationWithheld"
+                stringMap -="dataGeneralizations"
+                
+                if(stringMap.contains("day") || stringMap.contains("eventDate")){
+                    //remove the day from the values
+                    raw.event.day = ""
+                    processed.event.day =""
+                    processed.event.eventDate=""
+                }
+                
+                //update the raw record with whatever is left in the stringMap
+                Config.persistenceManager.put(raw.rowKey, "occ", stringMap.toMap)
+                
+                //TODO may need to fix locality information... change ths so that the generalisation
+                // is performed before the point matching to gazetteer..
+                //We want to associate the ibra layers to the sensitised point
+                //update the required locality information
+                logger.debug("**************** Performing lookup for new point ['" + raw.rowKey
+                  + "',"+processed.location.decimalLongitude + "," + processed.location.decimalLatitude +"]" )
+                val newPoint = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
+                newPoint match {
+                  case Some((loc, el, cl)) => processed.location.lga = loc.lga
+                  case _ => processed.location.lga = null //unset the lga
+                }
+          }
+          else{
+            //TO do something with the PEST
+            if(voutcome.getReport() != null)
+                processed.occurrence.informationWithheld = "PEST: " + voutcome.getReport().toString()
+          }
         }
       }
       else{
