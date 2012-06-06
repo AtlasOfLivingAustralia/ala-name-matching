@@ -84,7 +84,7 @@ latestPeriodOrHighestSystem
 lga	Local Gov	Local Government Area
 lifeStage
 lithostratigraphicTerms
-locality	address
+locality	address	location
 locationAccordingTo
 locationID
 locationRemarks
