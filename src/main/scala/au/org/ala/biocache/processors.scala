@@ -111,13 +111,22 @@ class MiscellaneousProcessor extends Processor {
       processDates(raw,processed)
       //TODO reenable identification processing after we have categorised issues better.
       //processIdentification(raw,processed,assertions)
+      processCollectors(raw,processed)
       assertions.toArray
   }
   /**
    * parse the collector string to place in a consistent format
    */
   def processCollectors(raw:FullRecord, processed:FullRecord)={
-    
+//    if(StringUtils.isNotBlank(raw.occurrence.recordedBy)){
+//      val parsedCollectors = CollectorNameParser.parseForList(raw.occurrence.recordedBy)
+//      if(parsedCollectors.isDefined){
+//        processed.occurrence.recordedBy = parsedCollectors.get.mkString("|")
+//      }
+//      else{
+//        println("Unable to parse: " + raw.occurrence.recordedBy)
+//      }
+//    }
   }
   
   def processDates(raw:FullRecord, processed:FullRecord)={
@@ -189,12 +198,12 @@ class MiscellaneousProcessor extends Processor {
     // val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(cl.getter(sg.rank)) => sg.name}
     if(urls != null){      
       val aurls = urls.split(";").map(url=> url.trim)
-      processed.occurrence.images = aurls.filter(MediaStore.isValidImageURL(_))
-      processed.occurrence.sounds = aurls.filter(MediaStore.isValidSoundURL(_))
-      processed.occurrence.videos = aurls.filter(MediaStore.isValidVideoURL(_))
+      processed.occurrence.images = aurls.filter(url =>MediaStore.isValidImageURL(url) && MediaStore.doesFileExist(url))
+      processed.occurrence.sounds = aurls.filter(url =>MediaStore.isValidSoundURL(url) && MediaStore.doesFileExist(url))
+      processed.occurrence.videos = aurls.filter(url =>MediaStore.isValidVideoURL(url) && MediaStore.doesFileExist(url))
 
       if(aurls.length != (processed.occurrence.images.length + processed.occurrence.sounds.length + processed.occurrence.videos.length))
-          assertions + QualityAssertion(AssertionCodes.INVALID_IMAGE_URL, "URL can not be an image")
+          assertions + QualityAssertion(AssertionCodes.INVALID_IMAGE_URL, "URL refers to an invalid file.")
     }
     
   }

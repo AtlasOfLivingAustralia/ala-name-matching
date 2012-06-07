@@ -33,6 +33,17 @@ object MediaStore {
   val rootDir = "/data/biocache-media"
   val limit = 32000
 
+  def doesFileExist(urlString:String) :Boolean ={
+    val urlToTest = if(urlString.startsWith(rootDir)) "file://"+urlString else urlString
+      try{
+        val url = new java.net.URL(urlToTest.replaceAll(" ", "%20"))
+        val in = url.openStream
+        true
+      }
+      catch{
+        case _ => false
+      }
+  }
 
   def isValidImageURL(url:String) : Boolean = {
     !imageParser.unapplySeq(url.trim.toLowerCase).isEmpty || isStoredMedia(imageExtension,url)
