@@ -111,22 +111,23 @@ class MiscellaneousProcessor extends Processor {
       processDates(raw,processed)
       //TODO reenable identification processing after we have categorised issues better.
       //processIdentification(raw,processed,assertions)
-      processCollectors(raw,processed)
+      processCollectors(raw,processed,assertions)
       assertions.toArray
   }
   /**
    * parse the collector string to place in a consistent format
    */
-  def processCollectors(raw:FullRecord, processed:FullRecord)={
-//    if(StringUtils.isNotBlank(raw.occurrence.recordedBy)){
-//      val parsedCollectors = CollectorNameParser.parseForList(raw.occurrence.recordedBy)
-//      if(parsedCollectors.isDefined){
-//        processed.occurrence.recordedBy = parsedCollectors.get.mkString("|")
-//      }
-//      else{
-//        println("Unable to parse: " + raw.occurrence.recordedBy)
-//      }
-//    }
+  def processCollectors(raw:FullRecord, processed:FullRecord,assertions: ArrayBuffer[QualityAssertion])={
+    if(StringUtils.isNotBlank(raw.occurrence.recordedBy)){
+      val parsedCollectors = CollectorNameParser.parseForList(raw.occurrence.recordedBy)
+      if(parsedCollectors.isDefined){
+        processed.occurrence.recordedBy = parsedCollectors.get.mkString("|")
+      }
+      else{
+        //println("Unable to parse: " + raw.occurrence.recordedBy)
+        assertions + QualityAssertion(AssertionCodes.RECORDED_BY_UNPARSABLE, "Can not parse recordedBy")
+      }
+    }
   }
   
   def processDates(raw:FullRecord, processed:FullRecord)={

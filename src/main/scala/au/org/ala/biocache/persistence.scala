@@ -160,6 +160,8 @@ class CassandraPersistenceManager @Inject() (
       //Cluster wide settings including the thrift operation timeout
       Pelops.addPool(poolName, cluster, keyspace, policy, operandPolicy)
     }
+    
+
 
     /**
      * Retrieve an array of objects, parsing the JSON stored.     
@@ -486,7 +488,8 @@ class CassandraPersistenceManager @Inject() (
             logger.debug("Problem retrieving data. Number of retries left:" + (permittedRetries - noOfRetries) +
               ", Error: " + e.getMessage)
             Thread.sleep(20000)
-            Pelops.removePool(poolName)
+            //Don't remove the pool because all requests while the reinit happens will result in NPE.
+            //Pelops.removePool(poolName)
             initialise //re-initialise
             if (noOfRetries == permittedRetries){
               logger.error("Problem retrieving data. Number of DB connection retries exceeeded. Error: " + e.getMessage)

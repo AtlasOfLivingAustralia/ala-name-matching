@@ -144,7 +144,7 @@ trait IndexDAO {
       "last_load_date","last_processed_date", "modified_date", "establishment_means","loan_number","loan_identifier","loan_destination",
       "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric",
       "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue","raw_identification_qualifier","species_habitats",
-      "identified_by","identified_date","sensitive_longitude","sensitive_latitude","pest_TMP_name") // ++ elFields ++ clFields
+      "identified_by","identified_date","sensitive_longitude","sensitive_latitude","pest_flag_s","collectors") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -445,7 +445,8 @@ trait IndexDAO {
                     outlierForLayers.length.toString, map.getOrElse("taxonomicIssue.p",""), map.getOrElse("identificationQualifier",""),
                     habitats.mkString("|"), map.getOrElse("identifiedBy",""), 
                     if(map.contains("dateIdentified.p")) map.getOrElse("dateIdentified.p","") + "T00:00:00Z" else "",
-                    sensitiveMap.getOrElse("decimalLongitude",""), sensitiveMap.getOrElse("decimalLatitude",""),pest_tmp                    
+                    sensitiveMap.getOrElse("decimalLongitude",""), sensitiveMap.getOrElse("decimalLatitude",""),pest_tmp,
+                    map.getOrElse("recordedBy.p","")
                     ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
                 //)
             }
@@ -607,7 +608,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
     query.setRows(0)
     query.setStart(startIndex)
     query.setFilterQueries(filterQueries: _ *)
-    query.setFacet(false)
+    query.setFacet(false)    
     fieldToRetrieve.foreach(f => query.addField(f))
     var response = solrServer.query(query)
     val fullResults = response.getResults.getNumFound.toInt
@@ -759,6 +760,9 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
         }        
         true
     }
+    
+  val multifields = Array("duplicate_inst","establishment_means","species_group","assertions","data_hub_uid","interactions","outlier_layer",
+                          "species_habitats","multimedia","all_image_url", "collectors")  
 
     /**
      * A SOLR specific implementation of indexing from a map.
@@ -778,9 +782,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
         val doc = new SolrInputDocument()
         for (i <- 0 to values.length - 1) {
           if (values(i) != "") {
-            if (header(i) == "duplicate_inst" || header(i) == "establishment_means" || header(i) == "species_group"
-              || header(i) == "assertions" || header(i) == "data_hub_uid" || header(i) == "interactions"
-              || header(i) == "outlier_layer" || header(i) == "species_habitats" || header(i) == "multimedia" || header(i) == "all_image_url") {
+            if (multifields.contains(header(i))) {
               //multiple values in this field
               for (value <- values(i).split('|')) {
                 if (value != "")

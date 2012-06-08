@@ -543,7 +543,7 @@ object AssertionCodes {
   val NEGATED_LONGITUDE = ErrorCode("negatedLongitude",2,false,"Longitude is negated")
   val INVERTED_COORDINATES = ErrorCode("invertedCoordinates",3,false,"Coordinates are transposed")
   val ZERO_COORDINATES = ErrorCode("zeroCoordinates",4,true,"Supplied coordinates are zero")
-  val COORDINATES_OUT_OF_RANGE = ErrorCode("coordinatesOutOfRange",5,true,"Coordinates are out of range for species")
+  val COORDINATES_OUT_OF_RANGE = ErrorCode("coordinatesOutOfRange",5,true,"Coordinates are out of range")
   val UNKNOWN_COUNTRY_NAME = ErrorCode("unknownCountry",6,false,"Supplied country not recognised")
   val ALTITUDE_OUT_OF_RANGE = ErrorCode("altitudeOutOfRange",7,false,"Altitude out of range")
   val BADLY_FORMED_ALTITUDE = ErrorCode("erroneousAltitude",8,false, "Badly formed altitude")
@@ -599,6 +599,7 @@ object AssertionCodes {
   val UNRECOGNISED_INSTITUTIONCODE = ErrorCode("unrecognisedInstitutionCode",20006,false,"Institution code not recognised")
   val INVALID_IMAGE_URL = ErrorCode("invalidImageUrl", 20007, false,"Image URL invalid")
   val RESOURCE_TAXONOMIC_SCOPE_MISMATCH = ErrorCode("resourceTaxonomicScopeMismatch", 20008, false, "")
+  val RECORDED_BY_UNPARSABLE = ErrorCode("recordedByUnparsable", 20016, false,"")
 
   //temporal
   val TEMPORAL_ISSUE = ErrorCode("temporalIssue",30000,false,"Temporal issue")  // general purpose option

@@ -620,13 +620,14 @@
    <field name="type_status" type="string" indexed="true" stored="true" multiValued="false"  />
    <field name="raw_type_status" type="string" indexed="true" stored="true" multiValued="false"  />
 
-   <field name="collector" type="string" indexed="true" stored="false" multiValued="false"  />
+   <field name="collector" type="string" indexed="true" stored="true" multiValued="false"  />
+   <field name="collectors" type="string" indexed="true" stored="true" multiValued="true"  />
 
 	<field name="establishment_means" type="string" indexed="true" stored="false" multiValued="false" />	
 	<field name="exchange_number" type="string" indexed="true" stored="false" multiValued="false" />
 	<field name="duplicate_inst" type="textgen" indexed="true" stored="false" multiValued="true" />
 	<field name="original_name_usage" type="string" indexed="true" stored="false" multiValued="false" />
-	<field name="record_number" type="string" indexed="true" stored="false" multiValued="false" />
+	<field name="record_number" type="string" indexed="true" stored="true" multiValued="false" />
 	<field name="loan_date" type="tdate" indexed="true" stored="false" multiValued="false" />
 	<field name="loan_returned_date" type="tdate" indexed="true" stored="false" multiValued="false" />
 	
@@ -686,7 +687,7 @@
    <field name="biogeographic_region" type="string" indexed="true" stored="true" multiValued="true" />
    <field name="raw_name" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
    <field name="matched_name" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
-   <field name="collector_text" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
+   <field name="collector_text" type="textgen" indexed="true" stored="true" multiValued="true" omitNorms="true" />
    <field name="identified_by_text" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
 
    <!-- the number of layers this record is an outlier for -->
@@ -706,6 +707,7 @@
    <!-- They are being stored just in case they need to be faceted on -->
    <dynamicField name="el*" type="double" indexed="true" stored="true" omitNorms="true" />
    <dynamicField name="cl*" type="string" indexed="true" stored="true" omitNorms="true" />
+   <dynamicField name="*_s" type="string" indexed="true" stored="false" omitNorms="true" />
 
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
         leading wildcard queries. -->
