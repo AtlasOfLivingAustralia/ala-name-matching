@@ -71,7 +71,7 @@ import org.gbif.ecat.voc.Rank;
 public class CBIndexSearch {
     protected Log log = LogFactory.getLog(CBIndexSearch.class);
     private IndexReader cbReader,irmngReader, vernReader;
-    private Searcher cbSearcher, irmngSearcher, vernSearcher, idSearcher;
+    private IndexSearcher cbSearcher, irmngSearcher, vernSearcher, idSearcher;
     private ThreadLocal<QueryParser> queryParser;
     private ThreadLocal<QueryParser>idParser;
     protected TaxonNameSoundEx tnse;
@@ -1082,7 +1082,8 @@ public class CBIndexSearch {
                 else
                     query.append(NameIndexField.RANK.toString() + ":" + rank.getRank());
                 //cater for the situation where the search term could be a synonym that does not have a rank
-                query.append(" OR ").append(NameIndexField.iS_SYNONYM.toString()).append(":T)");
+                // also ALA added concepts do NOT have ranks.
+                query.append(" OR ").append(NameIndexField.iS_SYNONYM.toString()).append(":T OR ").append(NameIndexField.ALA).append(":T)");
                
             }
             if(cl!= null){
