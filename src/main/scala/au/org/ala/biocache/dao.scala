@@ -932,7 +932,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         logger.debug("Unable to reindex : " + rowKey)
       }
       else{
-        indexDAO.indexFromMap(rowKey, map.get, false)
+        indexDAO.indexFromMap(rowKey, map.get, batch=false)
       }
   }
   /**

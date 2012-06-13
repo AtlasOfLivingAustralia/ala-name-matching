@@ -50,7 +50,7 @@ trait IndexDAO {
     /**
      * Index a record with the supplied properties.
      */
-    def indexFromMap(guid: String, map: Map[String, String], batch:Boolean=true,startDate:Option[Date]=None)
+    def indexFromMap(guid: String, map: Map[String, String], batch:Boolean=true,startDate:Option[Date]=None,commit:Boolean = false)
 
     /**
      * Truncate the current index
@@ -59,6 +59,7 @@ trait IndexDAO {
     def reload
     def shutdown
     def optimise :String
+    def commit
     /**
      * Remove all the records with the specified value in the specified field
      */
@@ -521,7 +522,7 @@ object IndexFields{
   def loadFromFile()={
     scala.io.Source.fromURL(getClass.getResource("/indexFields.txt"), "utf-8").getLines.toList.collect{ case row if !row.startsWith("#") =>{
       val values = row.split("\t")    
-      new IndexField(values(0),values(1),values(2))}
+      new IndexField(values(0),values(1),values(2),false,false,None)}
   }}
 }
 
@@ -544,11 +545,11 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
     val solrDocList = new java.util.ArrayList[SolrInputDocument](1000)
     
     //val thread = new SolrIndexActor()
-    val docQueue: ArrayBlockingQueue[java.util.List[SolrInputDocument]] = new ArrayBlockingQueue[java.util.List[SolrInputDocument]](2);
+    //val docQueue: ArrayBlockingQueue[java.util.List[SolrInputDocument]] = new ArrayBlockingQueue[java.util.List[SolrInputDocument]](2);
     var ids =0
-    lazy val threads:Array[AddDocThread] ={
-      Array.fill[AddDocThread](1){ val t = new AddDocThread(docQueue,ids); ids +=1; t.start;t}
-    }
+//    lazy val threads:Array[AddDocThread] ={
+//      Array.fill[AddDocThread](1){ val t = new AddDocThread(docQueue,ids); ids +=1; t.start;t}
+//    }
     
     lazy val drToExcludeSensitive = excludeSensitiveValuesFor.split(",")
 
@@ -563,15 +564,15 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
           cc = new CoreContainer();
           cc.load(home.getAbsolutePath, f );
           solrServer  = new EmbeddedSolrServer( cc, "biocache" );
-          //thread.start
-          threads
+  
+//          threads
         } else {
           System.setProperty("solr.solr.home", solrHome)
           val initializer = new CoreContainer.Initializer()
           cc = initializer.initialize
           solrServer = new EmbeddedSolrServer(cc, "biocache")
-          //thread.start
-          threads
+  
+//          threads
         }
       }
     }
@@ -709,18 +710,17 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
     def finaliseIndex(optimise:Boolean=false, shutdown:Boolean=true) {
         init
         if (!solrDocList.isEmpty) {
-        
+             solrServer.add(solrDocList)
            //SolrIndexDAO.solrServer.add(solrDocList)
-//           while(!thread.ready){ Thread.sleep(50) }
-//           thread ! solrDocList
-          while(docQueue.size()>1){Thread.sleep(250)}
-          docQueue.add(solrDocList)
-           
+
+//          while(docQueue.size()>1){Thread.sleep(250)}
+//          docQueue.add(solrDocList)
+//           
            //wait enough time for the Actor to get the message
           Thread.sleep(50)
         }
-        //while(!thread.ready){ Thread.sleep(50) }
-        while(docQueue.size > 0){Thread.sleep(50)}
+
+//        while(docQueue.size > 0){Thread.sleep(50)}
         solrServer.commit
         solrDocList.clear
         println(printNumDocumentsInIndex)
@@ -738,8 +738,8 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
      * Shutdown the index by stopping the indexing thread and shutting down the index core
      */
     def shutdown() = {
-        //thread ! "exit"
-      threads.foreach(t => t.stopRunning)
+        
+      //threads.foreach(t => t.stopRunning)
       if(cc != null)
         	cc.shutdown
     }
@@ -747,6 +747,10 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
         init
         solrServer.optimize
         printNumDocumentsInIndex
+    }
+    override def commit(){
+      init
+      solrServer.commit
     }
 
     /**
@@ -767,7 +771,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
     /**
      * A SOLR specific implementation of indexing from a map.
      */
-  override def indexFromMap(guid: String, map: Map[String, String], batch: Boolean = true, startDate: Option[Date] = None) = {
+  override def indexFromMap(guid: String, map: Map[String, String], batch: Boolean = true, startDate: Option[Date] = None, commit:Boolean = false) = {
     init
     //val header = getHeaderValues()
     if (shouldIndex(map, startDate)) {
@@ -828,14 +832,17 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
           if (!StringUtils.isEmpty(values(0)))
             solrDocList.add(doc)
 
-          if (solrDocList.size == 10000) {
+          if (solrDocList.size == 1000 || commit) {
 //            while (!thread.ready) {
 //              Thread.sleep(50)
 //            }
-
-            val tmpDocList = new java.util.ArrayList[SolrInputDocument](solrDocList);
-            while(docQueue.size()>1){Thread.sleep(250)}
-            docQueue.add(tmpDocList)
+              
+            solrServer.add(solrDocList)
+            if(commit)
+              solrServer.commit
+//            val tmpDocList = new java.util.ArrayList[SolrInputDocument](solrDocList);
+//            while(docQueue.size()>1){Thread.sleep(250)}
+//            docQueue.add(tmpDocList)
             //thread ! tmpDocList
             solrDocList.clear
           }

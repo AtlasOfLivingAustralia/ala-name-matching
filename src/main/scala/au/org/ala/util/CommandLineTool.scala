@@ -86,7 +86,7 @@ object CommandLineTool {
         case it if (it startsWith "index ") || (it startsWith "index") => {
           val drs = it.split(" ").map(x => x.trim).toList.tail
           for (dr <- drs) {
-            IndexRecords.index(None, Some(dr), false, false)
+            IndexRecords.index(None, None, Some(dr), false, false)
           }
         }
         case it if (it startsWith "createdwc") => {

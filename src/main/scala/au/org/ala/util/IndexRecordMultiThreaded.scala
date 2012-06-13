@@ -9,6 +9,8 @@ import java.net.URL
 import scala.util.parsing.json.JSON
 import java.lang.Thread
 import scala.collection.mutable.ArrayBuffer
+import scala.actors.Actor
+import au.org.ala.biocache.FullRecord
 
 object CreateIndexesAndMerge extends Counter {
 
@@ -41,46 +43,9 @@ trait Counter {
     startTime = System.currentTimeMillis
   }
 }
-
-object IndexRecordMultiThreaded extends Counter {
-
-  def main(args:Array[String]){
-    
-    var wsBase = "http://biocache.ala.org.au/ws"
-    var numThreads = 5
-    var ranges:Array[(String,String)] = Array()
-    var dirPrefix = "/data"
-      
-    val parser = new OptionParser("multithread index"){
-       intOpt("t","threads", "The number of threads to perform the indexing on",{v: Int => numThreads =v})
-       opt("ws","wsBase","The base URL for the biocache ws to query for the ranges",{v: String => wsBase = v})
-       opt("p","prefix","The prefix to apply to the solr dirctories",{v: String => dirPrefix =v})       
-    }
-    if(parser.parse(args)){
-    
-        ranges = calculateRanges(wsBase, numThreads)
-        var counter = 0
-        val threads = new ArrayBuffer[Thread]
-        val solrDirs = new ArrayBuffer[String]
-        solrDirs + (dirPrefix +"/solr/bio-proto-merged/data/index")
-        ranges.foreach(r => {
-          println("start: " + r._1 +", end key: " + r._2)
-    
-          val ir = new IndexRunner(this, counter,  r._1,  r._2, dirPrefix+"/solr-template/bio-proto/conf", dirPrefix+"/solr-create/bio-proto-thread-"+counter+"/conf")
-          val t = new Thread(ir)
-          t.start
-          threads + t
-          solrDirs + (dirPrefix+"/solr-create/bio-proto-thread-"+counter +"/data/index")
-          counter += 1
-        })
-        //wait for threads to complete and merge all indexes
-        threads.foreach(thread =>
-          thread.join
-          )
-          IndexMergeTool.main(solrDirs.toArray)
-     }
-  }
-
+//A trait that will calculate the ranges to use for a mulit threads 
+trait RangeCalculator{
+  
   /**
    * For a give webservice URL, calculate a partitioning per thread
    */
@@ -89,6 +54,7 @@ object IndexRecordMultiThreaded extends Counter {
     //http://biocache.ala.org.au/ws/occurrences/search?q=*:*&facet=off&sort=row_key&dir=asc
 
     val firstRequest = baseUrl + "/occurrences/search?q=*:*&pageSize=1&facet=off&sort=row_key&dir=asc"
+    println(baseUrl)
     val json  = JSON.parseFull(Source.fromURL(new URL(firstRequest)).mkString)
     if (!json.isEmpty){
       val totalRecords = json.get.asInstanceOf[Map[String, Object]].getOrElse("totalRecords", 0).asInstanceOf[Double].toInt
@@ -120,6 +86,126 @@ object IndexRecordMultiThreaded extends Counter {
     } else {
       Array()
     }
+  }
+  
+  def generateRanges(keys:Array[String]) :Array[(String,String)] = {
+    val buff = new ArrayBuffer[(String,String)]
+    var i =0
+    while(i<keys.size){
+      if(i==0)
+        buff + (("",keys(i)))
+      else if (i==keys.size-1)
+        buff + ((keys(i-1),""))
+      else
+        buff + ((keys(i-1), keys(i)))
+      i+=1
+    }
+    buff.toArray[(String,String)]
+  }
+  
+}
+
+object IndexRecordMultiThreaded extends Counter with RangeCalculator {
+
+  def main(args:Array[String]){
+    
+    var wsBase = "http://biocache.ala.org.au/ws"
+    var numThreads = 5
+    var ranges:Array[(String,String)] = Array()
+    var dirPrefix = "/data"
+    var keys:Option[Array[String]]=None
+      
+    val parser = new OptionParser("multithread index"){
+       intOpt("t","threads", "The number of threads to perform the indexing on",{v: Int => numThreads =v})
+       opt("ws","wsBase","The base URL for the biocache ws to query for the ranges",{v: String => wsBase = v})
+       opt("p","prefix","The prefix to apply to the solr dirctories",{v: String => dirPrefix =v})
+       opt("k","keys","A comma separated list of keys on which to perform the range threads. Prevents the need to query SOLR for the ranges.",{v:String =>keys = Some(v.split(","))})
+    }
+    if(parser.parse(args)){
+    
+        ranges = if(keys.isEmpty) calculateRanges(wsBase, numThreads) else generateRanges(keys.get)
+        var counter = 0
+        val threads = new ArrayBuffer[Thread]
+        val solrDirs = new ArrayBuffer[String]
+        solrDirs + (dirPrefix +"/solr/bio-proto-merged/data/index")
+        ranges.foreach(r => {
+          println("start: " + r._1 +", end key: " + r._2)
+//          val runner = new ProcessRecordsRunner(this, counter, r._1, r._2)
+//          val t = new Thread(runner)
+//          t.start()
+//          threads + t
+    
+          val ir = new IndexRunner(this, counter,  r._1,  r._2, dirPrefix+"/solr-template/bio-proto/conf", dirPrefix+"/solr-create/bio-proto-thread-"+counter+"/conf")
+          val t = new Thread(ir)
+          t.start
+          threads + t
+          solrDirs + (dirPrefix+"/solr-create/bio-proto-thread-"+counter +"/data/index")
+          counter += 1
+        })
+        //wait for threads to complete and merge all indexes
+        threads.foreach(thread =>
+          thread.join
+          )
+          IndexMergeTool.main(solrDirs.toArray)
+     }
+  }
+
+  
+}
+
+class ProcessRecordsRunner(centralCounter:Counter, threadId:Int, startKey:String, endKey:String) extends Runnable {
+  val processor = new RecordProcessor
+  var ids = 0
+  val threads = 2
+  var batches=0
+  //val actors:Array[Consumer] = Array.fill(threads){ val p = new Consumer(Actor.self,ids); ids +=1; p.start; p }
+  def run{
+     val pageSize = 1000
+     var counter=0
+     val start = System.currentTimeMillis
+     var startTime = System.currentTimeMillis
+     var finishTime = System.currentTimeMillis
+     //var buff = new ArrayBuffer[(FullRecord,FullRecord)]
+     println("Starting thread " + threadId + " from " + startKey + " to " + endKey)
+     Config.occurrenceDAO.pageOverRawProcessed(rawAndProcessed => {
+       counter +=1
+//       if(rawAndProcessed.isDefined)
+//           buff + rawAndProcessed.get
+//       if(buff.size>=50){
+//        val actor = actors(batches % threads).asInstanceOf[Consumer]
+//        batches += 1
+//        //find a ready actor...
+//        while(!actor.ready){ Thread.sleep(50) }
+//
+//        actor ! buff.toArray
+//        buff.clear
+//      }
+//           processor.processRecord(rawAndProcessed.get._1, rawAndProcessed.get._2)
+       if (counter % pageSize == 0 && counter> 0) {
+          centralCounter.addToCounter(pageSize)
+          finishTime = System.currentTimeMillis
+          centralCounter.printOutStatus(threadId, rawAndProcessed.get._1.rowKey)
+          startTime = System.currentTimeMillis
+        }
+       true;
+     },startKey, endKey, 1000)
+     val fin = System.currentTimeMillis
+     //
+     println("[Indexer Thread "+threadId+"] " +counter + " took " + ((fin-start).toFloat) / 1000f + " seconds" )
+     
+     //add the remaining records from the buff
+//    if(buff.size>0){
+//      actors(0).asInstanceOf[Consumer] ! buff.toArray
+//      batches+=1
+//    }
+    println("Finished.")
+    //kill the actors
+//    actors.foreach(actor => actor ! "exit")
+
+    //We can't shutdown the persistence manager until all of the Actors have completed their work
+//    while(batches > actors.foldLeft(0)(_ + _.processedRecords)){      
+//      Thread.sleep(50)
+//    }
   }
 }
 
@@ -157,14 +243,15 @@ class IndexRunner (centralCounter:Counter, threadId:Int, startKey:String, endKey
 //        fullMap ++= Json.toStringMap(map.getOrElse("el.p", "{}"))
 //        fullMap ++= Json.toStringMap(map.getOrElse("cl.p", "{}"))
        // val mapToIndex = fullMap.toMap
-
-        indexer.indexFromMap(guid, map)
+        val commit = counter % 200000 == 0        
+        indexer.indexFromMap(guid, map, commit=commit)
         if (counter % pageSize == 0 && counter> 0) {
           centralCounter.addToCounter(pageSize)
           finishTime = System.currentTimeMillis
           centralCounter.printOutStatus(threadId, guid)
           startTime = System.currentTimeMillis
         }
+        
         true
     }, startKey, endKey, pageSize = pageSize)
 

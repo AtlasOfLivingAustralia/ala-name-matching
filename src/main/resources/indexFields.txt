@@ -18,7 +18,8 @@ catalogue_number	string	catalogNumber	F	F
 taxon_concept_lsid	string	taxonConceptID.p	F	F	
 occurrence_date	date	eventDate.p	F	F	
 # occurrence_year - need to ensure length of 4 and append "-01-01T00:00:00Z"
-taxon_name	string	scientificName.p	F	F	
+taxon_name	string	scientificName.p	F	F
+raw_taxon_name	string	scientificName	F	F		
 common_name	string	vernacularName.p	F	F	
 names_and_lsid	string	scientificName.p,taxonConceptID.p,vernacularName.p,kingdom.p,family.p	F	F	
 common_name_and_lsid	string	vernacularName.p,scientificName.p,taxonConceptID.p,kingdom.p,family.p	F	F	
@@ -41,7 +42,8 @@ family	string	family.p	F	F
 genus	string	genus.p	F	F	
 genus_guid	string	genusID.p	F	F	
 species	string	species.p	F	F	
-species_guid	string	speciesID.p	F	F	
+species_guid	string	speciesID.p	F	F
+subspecies	string	subspecies.p	F	F		
 state	string	stateProvince.p	F	F	
 imcra	string	imcra.p	F	F	
 ibra	string	ibra.p	F	F	

@@ -13,7 +13,7 @@ object OptimiseIndex {
     println("Starting optimise....")
     val indexer = Config.getInstance(classOf[IndexDAO]).asInstanceOf[IndexDAO]
     indexer.optimise
-    println("Optimise complete.")
+    println("Optimise complete.")    
   }
 }
 
@@ -34,6 +34,7 @@ object IndexRecords {
 
   def main(args: Array[String]): Unit = {
     var startUuid:Option[String] = None
+    var endUuid:Option[String] = None
     var dataResource:Option[String] = None
     var empty:Boolean = false
     var check:Boolean = false
@@ -41,10 +42,12 @@ object IndexRecords {
     var pageSize = 1000
     var uuidFile:String = ""
     var rowKeyFile:String = ""
+
     val parser = new OptionParser("index records options") {
         opt("empty", "empty the index first", {empty=true})
         opt("check","check to see if the record is deleted before indexing",{check=true})
         opt("s", "start","The record to start with", {v:String => startUuid = Some(v)})
+        opt("e","end", "The record to end with",{v:String =>endUuid = Some(v)})
         opt("dr", "resource", "The data resource to process", {v:String => dataResource = Some(v)})
         opt("date", "date", "The earliest modification date for records to be indexed. Date in the form yyyy-mm-dd",
           {v:String => startDate = Some(v)})
@@ -63,7 +66,7 @@ object IndexRecords {
         } else if (rowKeyFile != ""){
           indexList(new File(rowKeyFile))
         } else {
-          index(startUuid, dataResource, false, false, startDate, check, pageSize)
+          index(startUuid, endUuid, dataResource, false, false, startDate, check, pageSize)
         }
         //shut down pelops and index to allow normal exit
         indexer.shutdown
@@ -71,7 +74,7 @@ object IndexRecords {
      }
   }
 
-  def index(startUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false,
+  def index(startUuid:Option[String], endUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false,
             startDate:Option[String]=None, checkDeleted:Boolean=false, pageSize:Int = 1000) = {
 
     val startKey = {
@@ -90,7 +93,7 @@ object IndexRecords {
         logger.info("Indexing will be restricted to records changed after " + date.get)
     }
 
-    val endKey = if(dataResource.isEmpty) "" else dataResource.get +"|~"
+    val endKey = if(dataResource.isEmpty || endUuid.isDefined) endUuid.getOrElse("") else dataResource.get +"|~"
     if(startKey == ""){
        logger.info("Starting full index")
     } else {
@@ -115,8 +118,9 @@ object IndexRecords {
 //        fullMap ++= Json.toStringMap(map.getOrElse("el.p", "{}"))
 //        fullMap ++= Json.toStringMap(map.getOrElse("cl.p", "{}"))
         val mapToIndex = fullMap.toMap
+        val shouldcommit = counter % 100000 == 0
 
-        indexer.indexFromMap(guid, mapToIndex, startDate=startDate)
+        indexer.indexFromMap(guid, mapToIndex, startDate=startDate, commit=shouldcommit)
         if (counter % pageSize == 0) {
           finishTime = System.currentTimeMillis
           logger.info(counter + " >> Last key : " + guid + ", records per sec: " +
@@ -162,7 +166,8 @@ object IndexRecords {
     rowKeys.foreach(rowKey=>{
       counter += 1
       val map = persistenceManager.get(rowKey, "occ")
-      if (!map.isEmpty) indexer.indexFromMap(rowKey, map.get)
+      val shouldcommit = counter % 10000 == 0
+      if (!map.isEmpty) indexer.indexFromMap(rowKey, map.get, commit=shouldcommit)
       if (counter % 100 == 0) {
         finishTime = System.currentTimeMillis
         logger.debug(counter + " >> Last key : " + rowKey + ", records per sec: " + 100f / (((finishTime - startTime).toFloat) / 1000f))
@@ -182,11 +187,12 @@ object IndexRecords {
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
 
-    file.foreachLine(line => {
+    file.foreachLine(line => {      
       counter += 1
       val rowKey = if (line.head == '"' && line.last == '"') line.substring(1,line.length-1) else line
       val map = persistenceManager.get(rowKey, "occ")
-      if (!map.isEmpty) indexer.indexFromMap(rowKey, map.get)
+      val shouldcommit = counter % 10000 == 0
+      if (!map.isEmpty) indexer.indexFromMap(rowKey, map.get, commit=shouldcommit)
       if (counter % 1000 == 0) {
         finishTime = System.currentTimeMillis
         logger.info(counter + " >> Last key : " + line + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
@@ -210,9 +216,9 @@ object IndexRecords {
       counter += 1
 
       val map = persistenceManager.getByIndex(uuid, "occ", "uuid")
+      val shouldcommit = counter % 10000 == 0
 
-
-      if (!map.isEmpty) indexer.indexFromMap(uuid, map.get)
+      if (!map.isEmpty) indexer.indexFromMap(uuid, map.get, commit=shouldcommit)
       if (counter % 1000 == 0) {
         finishTime = System.currentTimeMillis
         logger.info(counter + " >> Last key : " + line + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))

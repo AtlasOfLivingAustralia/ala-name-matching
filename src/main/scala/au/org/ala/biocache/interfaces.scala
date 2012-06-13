@@ -317,7 +317,7 @@ object Store {
    */
   def reindex(dataResource:java.lang.String, startDate:java.lang.String){
       if(dataResource != null && startDate != null)
-          IndexRecords.index(None, Some(dataResource), false, false, Some(startDate))
+          IndexRecords.index(None, None, Some(dataResource), false, false, Some(startDate))
       else
           throw new Exception("Must supply data resource and start date")
   }
@@ -325,7 +325,7 @@ object Store {
   /**
    * Indexes a dataResource from a specific date
    */
-  def index(dataResource:java.lang.String) = IndexRecords.index(None, Some(dataResource), false, false, None)
+  def index(dataResource:java.lang.String) = IndexRecords.index(None, None, Some(dataResource), false, false, None)
 
   /**
    * Run the sampling for this dataset
