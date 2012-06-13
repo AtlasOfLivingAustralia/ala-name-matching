@@ -45,6 +45,7 @@ class Occurrence extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var occurrenceAttributes:String = _
   @BeanProperty var occurrenceDetails:String = _
   @BeanProperty var occurrenceRemarks:String = _
+  @BeanProperty var occurrenceStatus:String = _
   @BeanProperty var otherCatalogNumbers:String = _
   @BeanProperty var preparations:String = _
   @BeanProperty var previousIdentifications:String = _
@@ -247,6 +248,7 @@ class Location extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var decimalLongitude:String = _
   @BeanProperty var footprintSpatialFit:String = _
   @BeanProperty var footprintWKT:String = _
+  @BeanProperty var footprintSRS:String = _  
   @BeanProperty var geodeticDatum:String = _
   @BeanProperty var georeferencedBy:String = _
   @BeanProperty var georeferenceProtocol:String = _
@@ -277,6 +279,7 @@ class Location extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var verbatimLatitude:String = _
   @BeanProperty var verbatimLocality:String = _
   @BeanProperty var verbatimLongitude:String = _
+  @BeanProperty var verbatimSRS:String = _
   @BeanProperty var waterBody:String = _
   //custom additional fields
   @BeanProperty var ibra:String = _
