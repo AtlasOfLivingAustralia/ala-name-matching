@@ -297,10 +297,11 @@ public class JmsMessageListener implements MessageListener {
 	}
 	
 	private class BatchThread extends Thread {
-	    public void run(){
+	    public void run(){	        
 	        while(true){
     	        long current = System.currentTimeMillis();
-    	        if(lastMessage != 0 && ((current-lastMessage)/1000 >secondsBeforeBatch || upsertList.size() == batchSize || deleteList.size() == batchSize)){
+    	        
+    	        if(lastMessage != 0 && ((current-lastMessage)/1000 >secondsBeforeBatch || upsertList.size() >= batchSize || deleteList.size() >= batchSize)){
     	            //send the batch off to the biocache-store
     	            logger.debug("Sending " + upsertList.size() + " records for update and " + deleteList.size() + " records to be deleted.");
     	            synchronized(upsertList){
@@ -308,6 +309,7 @@ public class JmsMessageListener implements MessageListener {
         	                try{
         	                Store.loadRecords(CITIZEN_SCIENCE_DRUID, upsertList, ID_LIST, true);
         	                upsertList.clear();
+        	                lastMessage=0;
         	                }
         	                catch(Exception e){
         	                    //leave the upsert list identical 
@@ -321,6 +323,7 @@ public class JmsMessageListener implements MessageListener {
         	                try{
         	                Store.deleteRecords(deleteList);
         	                deleteList.clear();
+        	                lastMessage=0;
         	                }
         	                catch(Exception e){
         	                    //leave the delete list identical
@@ -328,7 +331,7 @@ public class JmsMessageListener implements MessageListener {
         	                }
         	            }
     	            }
-    	            lastMessage=0;
+    	            
     	        }
     	        try{
 //    	            logger.debug("Sleeping to wait for a batch");
