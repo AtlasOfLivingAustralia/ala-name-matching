@@ -264,6 +264,7 @@ class TasNvaDataLoader extends DataLoader {
         val pageSize = customParams("pagesize").toInt
         
         val urlTemplate = params("url")
+        var processedRecords = 0
 
         if (loadFromCache) {
             // re-load previously cached data
@@ -276,7 +277,9 @@ class TasNvaDataLoader extends DataLoader {
                 for (recordNode <- recordNodes) {
                     val mappedValues = processRecord(recordNode)
                     val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
-                    load(dataResourceUid, fr, uniqueTerms)
+                    val uniqueTermsValues = uniqueTerms.map(t => mappedValues.getOrElse(t,""))
+                    load(dataResourceUid, fr, uniqueTermsValues)
+                    processedRecords += 1
                 }
             }
         } else {
@@ -296,20 +299,23 @@ class TasNvaDataLoader extends DataLoader {
                 for (recordNode <- recordNodes) {
                     val mappedValues = processRecord(recordNode)
                     val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
-                    load(dataResourceUid, fr, uniqueTerms)
+                    val uniqueTermsValues = uniqueTerms.map(t => mappedValues.getOrElse(t,""))
+                    load(dataResourceUid, fr, uniqueTermsValues)
                     
                     writePageToCache(cacheDirectoryPath, xml.toString(), pageNumber)
+                    processedRecords += 1
                 }
                 
                 startIndex += pageSize
                 pageNumber += 1
             }
         }
+        
+        println(processedRecords + " records processed")
     }
 
     def retrieveDataFromWebService(username: String, password: String, urlTemplate: String, numRecords: Int, startIndex: Int): String = {
         var url = MessageFormat.format(urlTemplate, numRecords.toString(), startIndex.toString())
-        println(url)
         
         var dataXML: String = null
 
