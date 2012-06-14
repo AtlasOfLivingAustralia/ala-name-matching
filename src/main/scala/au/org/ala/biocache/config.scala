@@ -45,7 +45,7 @@ object Config {
       val str = configModule.properties.getProperty("fieldsToSample")
       val defaultFields = configModule.properties.getProperty("defaultFieldsToSample")
       if (str == null || str.trim == ""){
-        var dbfields = Client.getLayerIntersectDao.getConfig.getFieldsByDB
+        var dbfields = try{Client.getLayerIntersectDao.getConfig.getFieldsByDB} catch{case e:Exception =>new java.util.ArrayList()}
         var fields: Array[String] = if(dbfields.size>0) Array.ofDim(dbfields.size()) else defaultFields.split(",").map(x => x.trim).toArray
         if(dbfields.size > 0){
             for (a <- 0 until dbfields.size()) {
