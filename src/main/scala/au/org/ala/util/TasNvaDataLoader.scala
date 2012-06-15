@@ -351,8 +351,8 @@ class TasNvaDataLoader extends DataLoader {
         // convert easting, northing into WGS84 decimal lat long
         if (mappedValues.contains(TasNvaDataLoader.verbatimCoordinates_KEY)) {
             val arrayEastingNorthing = (mappedValues(TasNvaDataLoader.verbatimCoordinates_KEY)).split(";")
-            val easting = arrayEastingNorthing(0).toInt
-            val northing = arrayEastingNorthing(1).toInt
+            val easting = arrayEastingNorthing(0).toDouble
+            val northing = arrayEastingNorthing(1).toDouble
             val (lat, long) = convertEastingNorthingToLatLong(easting, northing)
 
             mappedValues = mappedValues + ((TasNvaDataLoader.decimalLatitude_KEY) -> lat.toString())
@@ -398,7 +398,7 @@ class TasNvaDataLoader extends DataLoader {
         featureCollection.toString()
     }
 
-    def convertEastingNorthingToLatLong(easting: Int, northing: Int): (Double, Double) = {
+    def convertEastingNorthingToLatLong(easting: Double, northing: Double): (Double, Double) = {
         val eastingNorthing = new GeneralDirectPosition(easting, northing)
         val latLong = transformOp.getMathTransform().transform(eastingNorthing, eastingNorthing)
         (latLong.getOrdinate(0), latLong.getOrdinate(1))
