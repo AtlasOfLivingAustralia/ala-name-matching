@@ -132,6 +132,20 @@ object ExportByFacetQuery {
       fileWriter.close
     }
   }
+  
+  def downloadSingleTaxon(taxonID:String, fieldsToExport:Array[String], facetField:String, filterQueries:Array[String],sortField:Option[String]=None, sortDir:Option[String]=None, fileWriter:FileWriter){
+    var counter =0
+    Config.indexDAO.pageOverIndex(map  => {
+          counter += 1
+          if (counter % 1000 == 0) { println("Exported :" + counter); fileWriter.flush; }
+          val outputLine = fieldsToExport.map(f => getFromMap(map,f))
+          fileWriter.write(outputLine.mkString("\t"))
+          fileWriter.write("\n")
+          true
+        }, fieldsToExport, facetField + ":\""+taxonID+"\"", filterQueries, sortField,sortDir)
+
+       
+  }
 
   def getTaxonID(csvReader:CSVReader): String = {
     val row = csvReader.readNext()

@@ -695,6 +695,11 @@
    <!-- the layers this record is an outlier for -->
    <field name="outlier_layer" type="string" indexed="true" stored="true" multiValued="true" omitNorms="true" />
 
+   <!-- Duplication fields -->
+   <field name="duplicate_status" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="duplicate_record" type="string" indexed="true" stored="true" multiValued="true" omitNorms="true" />
+   <field name="duplicate_type" type="int" indexed="true" stored="true" multiValued="true" omitNorms="true" />
+
    <!-- Some ALA dynamic fields -->
    <dynamicField name="*_id"  type="string" indexed="true" stored="true"/>
    <dynamicField name="*_name"  type="string" indexed="true" stored="true"/>

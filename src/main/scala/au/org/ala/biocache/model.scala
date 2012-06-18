@@ -87,6 +87,10 @@ class Occurrence extends Cloneable /*with Mappable*/ with POSO {
   //custom fields
   @BeanProperty var videos:Array[String] = _
   @BeanProperty var interactions:Array[String] = _
+  //stores either U,R or D.  U - a unique record, R - a representative record in a group of duplicates, D - a duplicate record in a group
+  // when null a value of "U" is assumed
+  @BeanProperty var duplicationStatus:String =_
+  @BeanProperty var duplicationType:Array[String] =_
   //Store the conservation status
   //FIXME these should actually be on the classification object
   @BeanProperty var austConservation:String = _

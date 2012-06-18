@@ -75,7 +75,7 @@ trait OccurrenceDAO {
 
     def updateOccurrence(rowKey: String, anObject: AnyRef, version: Version): Unit
 
-    def addSystemAssertion(rowKey: String, qualityAssertion: QualityAssertion): Unit
+    def addSystemAssertion(rowKey: String, qualityAssertion: QualityAssertion, checkExisting:Boolean=true): Unit
 
     def removeSystemAssertion(rowKey: String, errorCode:ErrorCode) : Unit
 
@@ -673,10 +673,12 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      *
      * @param qualityAssertion
      */
-    def addSystemAssertion(rowKey: String, qualityAssertion: QualityAssertion) {
+    def addSystemAssertion(rowKey: String, qualityAssertion: QualityAssertion,checkExisting:Boolean=true) {
       val systemAssertions = (getSystemAssertions(rowKey) :+ qualityAssertion).groupBy(x => x.code).values.map( _.head).toList
-      val userAssertions = getUserAssertions(rowKey)
-      updateAssertionStatus(rowKey, qualityAssertion, systemAssertions, userAssertions)
+      if(checkExisting){
+        val userAssertions = getUserAssertions(rowKey)
+        updateAssertionStatus(rowKey, qualityAssertion, systemAssertions, userAssertions)
+      }
       persistenceManager.putList(rowKey, entityName, FullRecordMapper.qualityAssertionColumn, systemAssertions.toList, classOf[QualityAssertion], true)
     }
 

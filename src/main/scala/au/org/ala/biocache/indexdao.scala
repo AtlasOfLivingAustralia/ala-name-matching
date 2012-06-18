@@ -43,7 +43,7 @@ trait IndexDAO {
 
     def pageOverFacet(proc:(String,Int) => Boolean, facetName:String, query:String, filterQueries:Array[String])
 
-    def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], query:String, filterQueries:Array[String])
+    def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], query:String, filterQueries:Array[String],sortField:Option[String]=None, sortDir:Option[String]=None)
     
     def shouldIncludeSensitiveValue(dr:String):Boolean
 
@@ -145,7 +145,7 @@ trait IndexDAO {
       "last_load_date","last_processed_date", "modified_date", "establishment_means","loan_number","loan_identifier","loan_destination",
       "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric",
       "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue","raw_identification_qualifier","species_habitats",
-      "identified_by","identified_date","sensitive_longitude","sensitive_latitude","pest_flag_s","collectors") // ++ elFields ++ clFields
+      "identified_by","identified_date","sensitive_longitude","sensitive_latitude","pest_flag_s","collectors","duplicate_status","duplicate_record","duplicate_type") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -314,7 +314,11 @@ trait IndexDAO {
                   val outlierForLayerStr = getValue("outlierForLayers.p", map)
                   if(outlierForLayerStr != "") Json.toStringArray(outlierForLayerStr)
                   else Array()
-                }              
+                }
+                val dupTypes:Array[String]={
+                  val s= map.getOrElse("duplicationType.p","[]")
+                  Json.toStringArray(s)
+                }
 
                 //Only set the geospatially kosher field if there are coordinates supplied
                 val geoKosher = if(slat == "" && slon == "") "" else map.getOrElse(FullRecordMapper.geospatialDecisionColumn, "")
@@ -447,7 +451,7 @@ trait IndexDAO {
                     habitats.mkString("|"), map.getOrElse("identifiedBy",""), 
                     if(map.contains("dateIdentified.p")) map.getOrElse("dateIdentified.p","") + "T00:00:00Z" else "",
                     sensitiveMap.getOrElse("decimalLongitude",""), sensitiveMap.getOrElse("decimalLatitude",""),pest_tmp,
-                    map.getOrElse("recordedBy.p","")
+                    map.getOrElse("recordedBy.p",""), map.getOrElse("duplicationStatus.p",""), map.getOrElse("associatedOccurrences.p",""), dupTypes.mkString("|")
                     ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
                 //)
             }
@@ -599,7 +603,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
   }
 
 
-  def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], queryString:String = "*:*", filterQueries:Array[String] = Array()){
+  def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], queryString:String = "*:*", filterQueries:Array[String] = Array(), sortField:Option[String]=None, sortDir:Option[String]=None){
     init
 
 
@@ -624,6 +628,11 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
       q.setStart(counter)
       q.setFilterQueries(filterQueries: _ *)
       q.setFacet(false)
+      if(sortField.isDefined){
+        val dir = sortDir.getOrElse("asc")
+        q.setSortField(sortField.get,if(dir == "asc")org.apache.solr.client.solrj.SolrQuery.ORDER.asc else org.apache.solr.client.solrj.SolrQuery.ORDER.desc)
+      }
+      
 
       if(counter + pageSize > fullResults){
         pageSize = fullResults - counter
@@ -766,7 +775,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
     }
     
   val multifields = Array("duplicate_inst","establishment_means","species_group","assertions","data_hub_uid","interactions","outlier_layer",
-                          "species_habitats","multimedia","all_image_url", "collectors")  
+                          "species_habitats","multimedia","all_image_url", "collectors","duplicate_record","duplicate_type")  
 
     /**
      * A SOLR specific implementation of indexing from a map.
@@ -832,7 +841,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
           if (!StringUtils.isEmpty(values(0)))
             solrDocList.add(doc)
 
-          if (solrDocList.size == 1000 || commit) {
+          if (solrDocList.size == 1000 || (commit && solrDocList.size>0)) {
 //            while (!thread.ready) {
 //              Thread.sleep(50)
 //            }

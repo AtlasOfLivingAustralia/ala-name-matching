@@ -172,6 +172,9 @@ class RecordProcessor {
     processed.lastModifiedTime = processTime
     //put the properties that are not updated during processing
     processed.occurrence.outlierForLayers = currentProcessed.occurrence.outlierForLayers
+    processed.occurrence.duplicationStatus = currentProcessed.occurrence.duplicationStatus
+    processed.occurrence.duplicationType = currentProcessed.occurrence.duplicationType
+    processed.occurrence.associatedOccurrences = currentProcessed.occurrence.associatedOccurrences
     
     //store the occurrence
     occurrenceDAO.updateOccurrence(guid, currentProcessed, processed, systemAssertions, Processed)
