@@ -138,6 +138,7 @@ class DuplicationDetection{
       val fileWriter = new FileWriter(new File(filename))
       
       ExportByFacetQuery.downloadSingleTaxon(lsid, fieldsToExport ,field,if(field == "species_guid") speciesFilters else subspeciesFilters,Some("row_key"),Some("asc"), fileWriter)
+      fileWriter.close
     }
     //open the tmp file that contains the information about the lsid
     val reader =  new CSVReader(new FileReader(filename),'\t', '`', '~')

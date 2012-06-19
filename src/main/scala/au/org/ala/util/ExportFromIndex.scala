@@ -144,7 +144,7 @@ object ExportByFacetQuery {
           true
         }, fieldsToExport, facetField + ":\""+taxonID+"\"", filterQueries, sortField,sortDir)
 
-       
+       fileWriter.flush
   }
 
   def getTaxonID(csvReader:CSVReader): String = {
