@@ -94,7 +94,7 @@ public class ConservationService implements ValidationService {
             emptyValueIfNecessary("locality", biocacheData, originalSensitiveValues, results);
             emptyValueIfNecessary("verbatimLocality", biocacheData, originalSensitiveValues, results);
 
-            if (gl.getGeneralisationInMetres().equals("") && gl.getGeneralisedLatitude().equals("")) {
+            if (gl.getGeneralisationInMetres().equals("") && gl.getGeneralisedLatitude() != null && gl.getGeneralisedLatitude().equals("")) {
                 results.put("informationWithheld", "Location co-ordinates have been withheld in accordance with " + facts.get(FactCollection.STATE_PROVINCE_KEY) + " sensitive species policy");
             }
         } else {
