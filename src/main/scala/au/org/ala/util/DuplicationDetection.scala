@@ -18,6 +18,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ArrayBlockingQueue
 import org.slf4j.LoggerFactory
+import org.apache.commons.io.FileUtils
 /**
  * 
  * Duplication detection is only possible if latitude and longitude are provided.
@@ -43,11 +44,13 @@ object DuplicationDetection{
     var guid:Option[String] = None
     var speciesFile:Option[String] = None
     var threads = 4
+    var cleanup = false
     //Options to perform on all "species", select species, use existing file or download
     val parser = new OptionParser("Duplication Detection - Detects duplication based on a matched species.") {
       opt("all", "detct duplicates for all species", { all = true })
       opt("g", "guid", "A single guid to test for duplications", { v: String => guid = Some(v)})
       opt("exist","use existing occurrence dumps",{exist = true})
+      opt("cleanup","cleanup the temporary files that get created",{cleanup = true})
       opt("f","file","A file that contains a list of species guids to detect duplication for",{v: String => speciesFile = Some(v)})
       intOpt("t","threads" ," The number of concurrent species duplications to perform.",{v:Int => threads=v})
       
@@ -59,14 +62,14 @@ object DuplicationDetection{
         val filename = "/tmp/dd_all_species_guids"
         ExportFacet.main(Array("species_guid",filename))
         //now detect the duplicates
-        detectDuplicates(new File(filename), threads,exist)
+        detectDuplicates(new File(filename), threads,exist,cleanup)
       }
       else if(guid.isDefined){
         //just a single detection - ignore the thread settings etc...
-        new DuplicationDetection().detect(guid.get, !exist)
+        new DuplicationDetection().detect(guid.get,shouldDownloadRecords= !exist ,cleanup=cleanup)
       }
       else if(speciesFile.isDefined){
-        detectDuplicates(new File(speciesFile.get), threads, exist)
+        detectDuplicates(new File(speciesFile.get), threads, exist, cleanup)
       }
       else{
         parser.showUsage
@@ -78,13 +81,13 @@ object DuplicationDetection{
     
   }
   
-  def detectDuplicates(file:File, threads:Int, exist:Boolean){
+  def detectDuplicates(file:File, threads:Int, exist:Boolean, cleanup:Boolean){
     val queue = new ArrayBlockingQueue[String](100)
     //create the consumer threads
     
     //val pool = Array.fill(threads){ val p = new GuidConsumer(queue,{guid => new DuplicationDetection().detect(guid,!exist)}); p.start }
     var ids=0
-    val pool:Array[GuidConsumer] = Array.fill(threads){ val p = new GuidConsumer(queue,ids,{guid => new DuplicationDetection().detect(guid,!exist)});ids +=1;p.start;p }
+    val pool:Array[GuidConsumer] = Array.fill(threads){ val p = new GuidConsumer(queue,ids,{guid => new DuplicationDetection().detect(guid,shouldDownloadRecords= !exist ,cleanup=cleanup)});ids +=1;p.start;p }
     
     file.foreachLine(line =>{
       //add to the queue
@@ -96,7 +99,7 @@ object DuplicationDetection{
 class GuidConsumer(q:BlockingQueue[String],id:Int,proc:String=>Unit) extends Thread{  
   var shouldStop = false;
   override def run(){
-    while(!shouldStop){
+    while(!shouldStop || q.size()>0){
       try{
         //wait 1 second before assuming that the queue is empty
         val guid = q.poll(1,java.util.concurrent.TimeUnit.SECONDS)
@@ -114,18 +117,22 @@ class GuidConsumer(q:BlockingQueue[String],id:Int,proc:String=>Unit) extends Thr
 }
 //TODO Use the "sensitive" coordinates for sensitive species
 class DuplicationDetection{
-  val duplicatesToReindex = "/tmp/duplicatesreindex_"
-  val filePrefix = "/tmp/dd_"
+  val baseDir = "/tmp"
+  val duplicatesToReindex = "duplicatesreindex.txt"
+  val filePrefix = "dd_data.txt"
   val fieldsToExport = Array("row_key", "uuid", "species_guid", "year", "month", "occurrence_date", "point-1", "point-0.1", 
                              "point-0.01","point-0.001", "point-0.0001","lat_long", "collectors")
   val speciesFilters = Array("lat_long:[* TO *]")
   // we have decided that a subspecies can be evalutated as part of the species level duplicates
   val subspeciesFilters = Array("lat_long:[* TO *]", "-species_guid:[* TO *]") 
 
-  def detect(lsid:String, shouldDownloadRecords:Boolean = false, field:String="species_guid"){
+  def detect(lsid:String, shouldDownloadRecords:Boolean = false, field:String="species_guid", cleanup:Boolean=false){
     DuplicationDetection.logger.info("Starting to detect duplicates")
-    val filename = filePrefix + lsid.replaceAll("[\\.:]","_") + ".txt"
-    val dupFilename = duplicatesToReindex + lsid.replaceAll("[\\.:]","_") + ".txt"
+    val directory = baseDir + "/" +  lsid.replaceAll("[\\.:]","_") + "/"
+    val dirFile = new File(directory)
+    FileUtils.forceMkdir(dirFile)
+    val filename = directory + filePrefix
+    val dupFilename =directory + duplicatesToReindex 
     val duplicateWriter = new FileWriter(new File(dupFilename))
     if(shouldDownloadRecords){
       val fileWriter = new FileWriter(new File(filename))
@@ -175,6 +182,9 @@ class DuplicationDetection{
     duplicateWriter.close
     //index the duplicate records
     IndexRecords.indexList(new File(dupFilename))
+    //remove the directory that we used 
+    if(cleanup)
+      FileUtils.deleteDirectory(dirFile)
   }
 }
 //Each year is handled separately so they can be processed in a threaded manner
@@ -227,8 +237,8 @@ class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWrite
         val uuidList = duplicates.map(r => r.uuid)
         addRowKeysToIndexFile(primaryRecord)
         //add the items for the PRIMARY record
-        //println(primaryRecord.uuid,mapper.writeValueAsString(primaryRecord))
-        Config.persistenceManager.put(primaryRecord.taxonConceptLsid, "occ_duplicates", primaryRecord.uuid,mapper.writeValueAsString(primaryRecord))
+        //println(primaryRecord.uuid,mapper.writeValueAsString(primaryRecord))        
+        Config.persistenceManager.put(primaryRecord.taxonConceptLsid+"|"+primaryRecord.year+"|"+primaryRecord.month +"|" +primaryRecord.day, "occ_duplicates", primaryRecord.uuid,mapper.writeValueAsString(primaryRecord))
         Config.persistenceManager.put(primaryRecord.rowKey, "occ",Map("associatedOccurrences.p"->uuidList.mkString("|"),"duplicationStatus.p"->"R"))
         //val primaryUuid = duplicates.
         duplicates.foreach(r =>{
