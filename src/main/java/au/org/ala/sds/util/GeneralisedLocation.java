@@ -17,6 +17,8 @@ package au.org.ala.sds.util;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
+
 import au.org.ala.sds.model.ConservationInstance;
 import au.org.ala.sds.model.SensitivityInstance;
 import au.org.ala.sds.model.SensitivityZone;
@@ -48,7 +50,11 @@ public class GeneralisedLocation {
     }
 
     public boolean isGeneralised() {
-        return !originalLatitude.equals(generalisedLatitude) || !originalLongitude.equals(generalisedLongitude);
+        if (StringUtils.isBlank(originalLatitude) || StringUtils.isBlank(originalLongitude)) {
+            return false;
+        } else {
+            return !originalLatitude.equals(generalisedLatitude) || !originalLongitude.equals(generalisedLongitude);
+        }
     }
 
     public boolean isSensitive() {
@@ -89,18 +95,26 @@ public class GeneralisedLocation {
 
     private void generaliseCoordinates() {
 
+        generalisationInMetres = "";
         if (this.locationGeneralisation == null) {
             // Not sensitive at given location
             generalisedLatitude = originalLatitude;
             generalisedLongitude = originalLongitude;
-            generalisationInMetres = "";
             String state = SensitivityZone.getState(zones);
             description = MessageFactory.getMessageText(MessageFactory.LOCATION_NOT_GENERALISED, state.equalsIgnoreCase("Outside Australia") ? state : "in " + state);
             sensitive = false;
             return;
         }
 
-        generalisationInMetres = "";
+        if (StringUtils.isBlank(this.originalLatitude) || StringUtils.isBlank(this.originalLongitude)) {
+            // location not provided
+            generalisedLatitude = originalLatitude;
+            generalisedLongitude = originalLongitude;
+            description = MessageFactory.getMessageText(MessageFactory.LOCATION_MISSING);
+            sensitive = this.locationGeneralisation != null;
+            return;
+        }
+
         if (this.locationGeneralisation.equalsIgnoreCase("WITHHOLD")) {
             generalisedLatitude = "";
             generalisedLongitude = "";
