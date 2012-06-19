@@ -29,6 +29,21 @@ class ProcessLocationTest extends ConfigFunSuite {
     pm.put("-35.2|144.8", "loc", "stateProvince","New South Wales")
   }
 
+  test("State based sensitivity"){
+    val raw = new FullRecord
+    var processed = new FullRecord
+    raw.classification.scientificName = "Diuris disposita"
+    processed.classification.setScientificName("Diuris disposita")
+      processed.classification.setTaxonConceptID("urn:lsid:biodiversity.org.au:apni.taxon:167966")
+      processed.classification.setTaxonRankID("7000")
+      raw.location.stateProvince="NSW"
+      raw.location.locality="My test locality"  
+      (new LocationProcessor).process("test", raw, processed)
+      println(processed.toMap)
+      expect(true){
+      processed.occurrence.dataGeneralizations.length()>0
+    }
+  }
     
   test("Sensitive Species Generalise"){
       val raw = new FullRecord

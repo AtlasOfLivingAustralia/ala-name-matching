@@ -120,7 +120,7 @@ class DuplicationDetection{
   val baseDir = "/tmp"
   val duplicatesToReindex = "duplicatesreindex.txt"
   val filePrefix = "dd_data.txt"
-  val fieldsToExport = Array("row_key", "uuid", "species_guid", "year", "month", "occurrence_date", "point-1", "point-0.1", 
+  val fieldsToExport = Array("row_key", "id", "species_guid", "year", "month", "occurrence_date", "point-1", "point-0.1", 
                              "point-0.01","point-0.001", "point-0.0001","lat_long", "collectors")
   val speciesFilters = Array("lat_long:[* TO *]")
   // we have decided that a subspecies can be evalutated as part of the species level duplicates

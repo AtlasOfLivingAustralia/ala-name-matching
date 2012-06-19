@@ -581,6 +581,8 @@ class LocationProcessor extends Processor {
       val stateTerm = StateProvinces.matchTerm(raw.location.stateProvince)
       if (!stateTerm.isEmpty) {
         processed.location.stateProvince = stateTerm.get.canonical
+        //now check for sensitivity based on state
+        processSensitivity(raw, processed, processed.location, Map())
         processed.location.country = StateProvinceToCountry.map.getOrElse(processed.location.stateProvince, "")
       }
     }
@@ -865,15 +867,16 @@ class LocationProcessor extends Processor {
               //conservation sensitive species will have a map of new values in the result
                 //the map that is returned needs to be used to update the raw record
                 val map:scala.collection.mutable.Map[java.lang.String,Object] = voutcome.getResult
+                //logger.debug("SDS return map: "+map)
                 //convert it to a string string map
-                val stringMap = map.map({case(k, v) => if(k=="originalSensitiveValues"){
+                val stringMap = map.collect({case(k, v)  if v != null => if(k=="originalSensitiveValues"){
                     val osv = v.asInstanceOf[java.util.HashMap[String,String]]
                     val newv = Json.toJSON(osv)
                     (k->newv)
                 } else (k->v.toString)
                     
                 })           
-                
+                //logger.debug("AFTER : " + stringMap)
                 //take away the values that need to be added to the processed record NOT the raw record
                 val uncertainty = map.get("generalisationInMetres")
                 if(!uncertainty.isEmpty){
