@@ -289,6 +289,7 @@ class TasNvaDataLoader extends DataLoader {
             var pageNumber = 0
             
             while (moreRecords && (pageLimit == -1 || startIndex < pageSize * pageLimit)) {
+                println("Loading page " + pageNumber)
                 val xml = XML.loadString(retrieveDataFromWebService(username, password, urlTemplate, pageSize, startIndex))
                 val recordNodes = (xml \\ TasNvaDataLoader.OBSERVATION_KEY)
                 
@@ -316,6 +317,7 @@ class TasNvaDataLoader extends DataLoader {
 
     def retrieveDataFromWebService(username: String, password: String, urlTemplate: String, numRecords: Int, startIndex: Int): String = {
         var url = MessageFormat.format(urlTemplate, numRecords.toString(), startIndex.toString())
+        println(url)
         
         var dataXML: String = null
 
