@@ -67,6 +67,7 @@ object DuplicationDetection{
       else if(guid.isDefined){
         //just a single detection - ignore the thread settings etc...
         new DuplicationDetection().detect(guid.get,shouldDownloadRecords= !exist ,cleanup=cleanup)
+        //println(new DuplicationDetection().getCurrentDuplicates(guid.get))
       }
       else if(speciesFile.isDefined){
         detectDuplicates(new File(speciesFile.get), threads, exist, cleanup)
@@ -127,13 +128,16 @@ class DuplicationDetection{
   val subspeciesFilters = Array("lat_long:[* TO *]", "-species_guid:[* TO *]") 
 
   def detect(lsid:String, shouldDownloadRecords:Boolean = false, field:String="species_guid", cleanup:Boolean=false){
-    DuplicationDetection.logger.info("Starting to detect duplicates")
+    DuplicationDetection.logger.info("Starting to detect duplicates for " + lsid)
+    //get a list of the current records that are considered duplicates
+    val oldDuplicates = getCurrentDuplicates(lsid)
     val directory = baseDir + "/" +  lsid.replaceAll("[\\.:]","_") + "/"
     val dirFile = new File(directory)
     FileUtils.forceMkdir(dirFile)
     val filename = directory + filePrefix
     val dupFilename =directory + duplicatesToReindex 
     val duplicateWriter = new FileWriter(new File(dupFilename))
+    val duplicateIdBuffer = new ArrayBuffer[String]
     if(shouldDownloadRecords){
       val fileWriter = new FileWriter(new File(filename))
       
@@ -144,7 +148,7 @@ class DuplicationDetection{
     val reader =  new CSVReader(new FileReader(filename),'\t', '`', '~')
 
      var currentLine = reader.readNext //first line is header
-     val buff = new ArrayBuffer[RecordDetails]
+     val buff = new ArrayBuffer[DuplicateRecordDetails]
      var counter =0
      while(currentLine !=  null){
        counter +=1
@@ -162,7 +166,7 @@ class DuplicationDetection{
         }
        val day = if(date != null) Integer.toString(date.getDate()) else null
        val collector = StringUtils.trimToNull(currentLine(12))
-       buff + new RecordDetails(rowKey,uuid,taxon_lsid,year,month,day,currentLine(6), currentLine(7),
+       buff + new DuplicateRecordDetails(rowKey,uuid,taxon_lsid,year,month,day,currentLine(6), currentLine(7),
            currentLine(8),currentLine(9),currentLine(10),currentLine(11), collector)
        currentLine = reader.readNext
      }
@@ -173,12 +177,17 @@ class DuplicationDetection{
     DuplicationDetection.logger.debug("There are " + yearGroups.size + " year groups")
     val threads = new ArrayBuffer[Thread]
     yearGroups.foreach{case(year, yearList)=>{
-      val t =new Thread(new YearGroupDetection(year,yearList,duplicateWriter))
+      val t =new Thread(new YearGroupDetection(year,yearList,duplicateIdBuffer))
       t.start();
       threads + t
     }}
     //now wait for each thread to finish
     threads.foreach(_.join)
+    duplicateIdBuffer.foreach(d =>duplicateWriter.write(d + "\n"))
+    
+    //revert the records that are no longer considered duplicates
+    revertNonDuplicateRecords(oldDuplicates, duplicateIdBuffer.toSet, duplicateWriter)
+    
     duplicateWriter.flush
     duplicateWriter.close
     //index the duplicate records
@@ -187,9 +196,47 @@ class DuplicationDetection{
     if(cleanup)
       FileUtils.deleteDirectory(dirFile)
   }
+  /*
+   * Changes the stored values for the "old" duplicates that are no longer considered duplicates
+   */
+  def revertNonDuplicateRecords(oldDuplicates:Set[String], currentDuplicates:Set[String], write:FileWriter){
+    val nonDuplicates = oldDuplicates -- currentDuplicates
+    nonDuplicates.foreach(nd =>{
+      DuplicationDetection.logger.warn(nd + " is no longer a duplicate")
+      //remove the duplication columns
+      Config.persistenceManager.deleteColumns(nd, "occ","associatedOccurrences.p","duplicationStatus.p","duplicationType.p")
+      //now remove the system assertion if necessary
+      Config.occurrenceDAO.removeSystemAssertion(nd, AssertionCodes.INFERRED_DUPLICATE_RECORD)
+      write.write(nd +"\n")
+    })
+  }
+  
+  //gets a list of current duplicates so that records no longer considered a duplicate can be reset
+  def getCurrentDuplicates(lsid:String):Set[String]= {
+    val startKey = lsid+"|"
+    val endKey = lsid+"|~"
+    val mapper = new ObjectMapper
+    mapper.registerModule(DefaultScalaModule)
+    mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
+    val buf = new ArrayBuffer[String]
+  
+     Config.persistenceManager.pageOverAll("duplicates",(guid,map) =>{
+      DuplicationDetection.logger.debug("Getting old duplicates for " + guid)
+      map.values.foreach(v=>{
+        //turn it into a DuplicateRecordDetails
+        val rd = mapper.readValue[DuplicateRecordDetails](v, classOf[DuplicateRecordDetails])
+        buf + rd.rowKey
+        rd.duplicates.foreach(d => buf + d.rowKey)
+      })
+      true
+    }, startKey, endKey,100)
+    
+    buf.toSet
+  
+  }
 }
 //Each year is handled separately so they can be processed in a threaded manner
-class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWriter:FileWriter) extends Runnable{
+class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], duplicateBuffer:ArrayBuffer[String]) extends Runnable{
   val latLonPattern="""(\-?\d+(?:\.\d+)?),\s*(\-?\d+(?:\.\d+)?)""".r
   val alphaNumericPattern ="[^\\p{L}\\p{N}]".r
   val unknownPatternString = "(null|UNKNOWN OR ANONYMOUS)"
@@ -201,7 +248,7 @@ class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWrite
     val monthGroups = records.groupBy(r=> if(r.month != null) r.month else "UNKNOWN")
         
     val unknownGroup = monthGroups.getOrElse("UNKNOWN",List())
-    val buffGroups = new ArrayBuffer[RecordDetails]
+    val buffGroups = new ArrayBuffer[DuplicateRecordDetails]
     monthGroups.foreach{case (month, monthList)=>{
       //val (month, monthList) = values
         //if(month != "UNKNOWN"){
@@ -238,10 +285,12 @@ class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWrite
         val hasDay = StringUtils.isEmpty(record.day)
         val (primaryRecord,duplicates) = markRecordsAsDuplicates(record)
         val uuidList = duplicates.map(r => r.uuid)
-        addRowKeysToIndexFile(primaryRecord)
+        addRowKeysToBuffer(primaryRecord)
         //add the items for the PRIMARY record
-        //println(primaryRecord.uuid,mapper.writeValueAsString(primaryRecord))        
-        Config.persistenceManager.put(primaryRecord.taxonConceptLsid+"|"+primaryRecord.year+"|"+primaryRecord.month +"|" +primaryRecord.day, "occ_duplicates", primaryRecord.uuid,mapper.writeValueAsString(primaryRecord))
+        //println(primaryRecord.uuid,mapper.writeValueAsString(primaryRecord))
+        val stringValue = mapper.writeValueAsString(primaryRecord)
+        Config.persistenceManager.put(primaryRecord.uuid, "occ_duplicates","value",stringValue)
+        Config.persistenceManager.put(primaryRecord.taxonConceptLsid+"|"+primaryRecord.year+"|"+primaryRecord.month +"|" +primaryRecord.day, "duplicates", primaryRecord.uuid,stringValue)
         Config.persistenceManager.put(primaryRecord.rowKey, "occ",Map("associatedOccurrences.p"->uuidList.mkString("|"),"duplicationStatus.p"->"R"))
         //val primaryUuid = duplicates.
         duplicates.foreach(r =>{
@@ -257,18 +306,20 @@ class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWrite
         
         //println("RECORD: " + record.rowKey + " has " + record.duplicates.size + " duplicates")
     })
-    duplicateWriter.synchronized{
-      duplicateWriter.flush()
-    }
+//    duplicateWriter.synchronized{
+//      duplicateWriter.flush()
+//    }
   }
-  def addRowKeysToIndexFile(rr:RecordDetails){
-    duplicateWriter.synchronized{
-     duplicateWriter.write(rr.rowKey + "\n")     
-     rr.duplicates.foreach(dup =>duplicateWriter.write(dup.rowKey + "\n"))
+  def addRowKeysToBuffer(rr:DuplicateRecordDetails){
+    duplicateBuffer.synchronized{
+     //duplicateWriter.write(rr.rowKey + "\n")
+      duplicateBuffer + rr.rowKey
+     //rr.duplicates.foreach(dup =>duplicateWriter.write(dup.rowKey + "\n"))
+      rr.duplicates.foreach(dup =>duplicateBuffer + dup.rowKey)
      
     }
   }
-  def markRecordsAsDuplicates(record: RecordDetails):(RecordDetails,List[RecordDetails])={
+  def markRecordsAsDuplicates(record: DuplicateRecordDetails):(DuplicateRecordDetails,List[DuplicateRecordDetails])={
     //find the "representative" record for the duplicate
     var highestPrecision = determinePrecision(record.latLong)
     var representativeRecord = record
@@ -310,7 +361,7 @@ class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWrite
       case e:Exception => DuplicationDetection.logger.error("ISSUE WITH " + latLong,e); 0
     }
   }
-  def checkDuplicates(recordGroup:List[RecordDetails]):List[RecordDetails]={
+  def checkDuplicates(recordGroup:List[DuplicateRecordDetails]):List[DuplicateRecordDetails]={
     
     recordGroup.foreach(record=>{
       if(record.duplicateOf == null){
@@ -320,7 +371,7 @@ class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWrite
     })    
     recordGroup.filter(_.duplicateOf == null)
   }
-  def findDuplicates(record:RecordDetails, recordGroup:List[RecordDetails]){
+  def findDuplicates(record:DuplicateRecordDetails, recordGroup:List[DuplicateRecordDetails]){
     
     val points =Array(record.point1,record.point0_1,record.point0_01,record.point0_001,record.point0_0001,record.latLong)
     recordGroup.foreach(otherRecord =>{
@@ -341,7 +392,7 @@ class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWrite
     StringUtils.isEmpty(in) || in.matches(unknownPatternString)
   }
   
-    def isCollectorDuplicate(r1:RecordDetails, r2:RecordDetails): Boolean ={
+    def isCollectorDuplicate(r1:DuplicateRecordDetails, r2:DuplicateRecordDetails): Boolean ={
       
       //if one of the collectors haven't been supplied assume that they are the same.
       if(isEmptyUnknownCollector(r1.collector) || isEmptyUnknownCollector(r2.collector)){
@@ -405,7 +456,7 @@ class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWrite
   }
   
   //TODO
-  def compareValueWithUnknown(value:RecordDetails,unknownGroup:List[RecordDetails], currentDuplicateList:List[RecordDetails]):(List[RecordDetails],List[RecordDetails])={
+  def compareValueWithUnknown(value:DuplicateRecordDetails,unknownGroup:List[DuplicateRecordDetails], currentDuplicateList:List[DuplicateRecordDetails]):(List[DuplicateRecordDetails],List[DuplicateRecordDetails])={
     (List(),List())
   }
 }
@@ -424,19 +475,21 @@ object DuplicationTypes{
   val MISSING_COLLECTOR = DupType(8)
 }
 
-class RecordDetails(@BeanProperty var rowKey:String, @BeanProperty var uuid:String, @BeanProperty var taxonConceptLsid:String,
+class DuplicateRecordDetails(@BeanProperty var rowKey:String, @BeanProperty var uuid:String, @BeanProperty var taxonConceptLsid:String,
                     @BeanProperty var year:String, @BeanProperty var month:String, @BeanProperty var day:String,
                     @BeanProperty var point1:String, @BeanProperty var point0_1:String, 
                     @BeanProperty var point0_01:String, @BeanProperty var point0_001:String, 
                     @BeanProperty var point0_0001:String,@BeanProperty var latLong:String, @BeanProperty var collector:String){
   
+  def this() =this(null,null,null,null,null,null,null,null,null,null,null,null,null)
+  
   @BeanProperty var status="U"
   var duplicateOf:String = null
-  @BeanProperty var duplicates:ArrayBuffer[RecordDetails]=null
+  @BeanProperty var duplicates:ArrayBuffer[DuplicateRecordDetails]=null
   @BeanProperty var dupTypes:List[DupType]=_
-  def addDuplicate(dup:RecordDetails) ={
+  def addDuplicate(dup:DuplicateRecordDetails) ={
     if(duplicates == null)
-      duplicates = new ArrayBuffer[RecordDetails]
+      duplicates = new ArrayBuffer[DuplicateRecordDetails]
     duplicates + dup
   }
   def addDupType(dup:DupType){
@@ -445,6 +498,7 @@ class RecordDetails(@BeanProperty var rowKey:String, @BeanProperty var uuid:Stri
     else
       dupTypes =dupTypes :+ dup
   }
+  
   
 }
 
