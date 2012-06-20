@@ -1113,7 +1113,7 @@ class ClassificationProcessor extends Processor {
         Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, "Homonym issue resolving the classification"))
       }
       case se: SearchResultException => logger.debug(se.getMessage,se); Array()
-      case e: Exception => logger.error("Exception during classification match.",e);Array()
+      case e: Exception => logger.error("Exception during classification match for record " + guid,e);Array()
     }
   }
   def getName = FullRecordMapper.taxonomicalQa
