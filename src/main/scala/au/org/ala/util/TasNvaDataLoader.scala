@@ -201,7 +201,6 @@ object TasNvaDataLoader extends DataLoader {
         (POSITION_ACCURACY_KEY -> coordinateUncertaintyInMeters_KEY),
         (MAPPING_METHOD_KEY -> georeferenceProtocol_KEY),
         (OBSERVATION_DATE_KEY -> eventDate_KEY),
-        (DATE_ACCURACY_KEY -> eventDate_KEY),
         (SPECIES_OBSERVATION_NOTES_KEY -> eventRemarks_KEY),
         (OBSERVATION_STATE_KEY -> occurrenceStatus_KEY),
         (ORIGINAL_SPECIES_NAME_KEY -> previousIdentifications_KEY),
@@ -299,6 +298,7 @@ class TasNvaDataLoader extends DataLoader {
                 
                 for (recordNode <- recordNodes) {
                     val mappedValues = processRecord(recordNode)
+                    println(mappedValues)
                     val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
                     val uniqueTermsValues = uniqueTerms.map(t => mappedValues.getOrElse(t,""))
                     load(dataResourceUid, fr, uniqueTermsValues)
