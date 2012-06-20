@@ -198,15 +198,16 @@ class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWrite
   mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
   override def run()={
     DuplicationDetection.logger.debug("Starting deduplication for " + year)
-    val monthGroups = records.groupBy(r => if(r.month != null) r.month else "UNKNOWN")
+    val monthGroups = records.groupBy(r=> if(r.month != null) r.month else "UNKNOWN")
+        
     val unknownGroup = monthGroups.getOrElse("UNKNOWN",List())
     val buffGroups = new ArrayBuffer[RecordDetails]
-    monthGroups.foreach{case (month, monthList) =>{
+    monthGroups.foreach{case (month, monthList)=>{
       //val (month, monthList) = values
         //if(month != "UNKNOWN"){
           //if there is more than 1 record group by days
           if(monthList.size>1){
-            val dayGroups = records.groupBy(r => if(r.day != null) r.day else "UNKNOWN")
+            val dayGroups = monthList.groupBy(r=> if(r.day != null) r.day else "UNKNOWN")
             val unknownDays = dayGroups.getOrElse("UNKNOWN",List())
             dayGroups.foreach{case (day, dayList)=>{
               //if(day != "UNKNOWN"){
@@ -229,12 +230,13 @@ class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWrite
     }
     }
     DuplicationDetection.logger.debug("Number of distinct records for year " + year + " is " + buffGroups.size)
+    
     buffGroups.foreach(record =>{
       if(record.duplicates != null && record.duplicates.size > 0){
         val hasYear = StringUtils.isEmpty(record.year)
         val hasMonth = StringUtils.isEmpty(record.month)
         val hasDay = StringUtils.isEmpty(record.day)
-        val (primaryRecord,duplicates) = markRecordsAsDuplicates(record)        
+        val (primaryRecord,duplicates) = markRecordsAsDuplicates(record)
         val uuidList = duplicates.map(r => r.uuid)
         addRowKeysToIndexFile(primaryRecord)
         //add the items for the PRIMARY record
@@ -256,13 +258,14 @@ class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWrite
         //println("RECORD: " + record.rowKey + " has " + record.duplicates.size + " duplicates")
     })
     duplicateWriter.synchronized{
-      duplicateWriter.flush()      
+      duplicateWriter.flush()
     }
   }
   def addRowKeysToIndexFile(rr:RecordDetails){
     duplicateWriter.synchronized{
-     duplicateWriter.write(rr.rowKey + "\n")
+     duplicateWriter.write(rr.rowKey + "\n")     
      rr.duplicates.foreach(dup =>duplicateWriter.write(dup.rowKey + "\n"))
+     
     }
   }
   def markRecordsAsDuplicates(record: RecordDetails):(RecordDetails,List[RecordDetails])={
@@ -314,8 +317,7 @@ class YearGroupDetection(year:String,records:List[RecordDetails], duplicateWrite
         //this record needs to be considered for duplication 
         findDuplicates(record, recordGroup)
       }
-    })
-    
+    })    
     recordGroup.filter(_.duplicateOf == null)
   }
   def findDuplicates(record:RecordDetails, recordGroup:List[RecordDetails]){
