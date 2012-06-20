@@ -298,7 +298,6 @@ class TasNvaDataLoader extends DataLoader {
                 
                 for (recordNode <- recordNodes) {
                     val mappedValues = processRecord(recordNode)
-                    println(mappedValues)
                     val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
                     val uniqueTermsValues = uniqueTerms.map(t => mappedValues.getOrElse(t,""))
                     load(dataResourceUid, fr, uniqueTermsValues)
