@@ -219,8 +219,8 @@ object TasNvaDataLoader extends DataLoader {
     val epsg4326Name = "EPSG:4326"
     val epsg28355Name = "EPSG:28355"
     val eastingAndNorthingCoordSysName = "Easting and northing"
-        
-    val cachedPageNamePrefix = "tas_nva_page"    
+
+    val cachedPageNamePrefix = "tas_nva_page"
 
     def main(args: Array[String]) {
         //Use EasySSLProtocolFactory to get around problem with the self-signed certificate used by the web service.
@@ -237,7 +237,7 @@ object TasNvaDataLoader extends DataLoader {
             arg("<data-resource-uid>", "the data resource to import", { v: String => dataResourceUid = v })
             arg("<cache-directory-path>", "the location of the cache", { v: String => cacheDirectoryPath = v })
             booleanOpt("c", "loadFromCache", "load previously cached data instead of data from the web service", { v: Boolean => loadFromCache = v })
-            opt("l", "pageLimit", "Limit loading to the specified number of pages. For testing purposes only", {v: String => pageLimit = v.toInt } )
+            opt("l", "pageLimit", "Limit loading to the specified number of pages. For testing purposes only", { v: String => pageLimit = v.toInt })
         }
 
         if (parser.parse(args)) {
@@ -261,7 +261,7 @@ class TasNvaDataLoader extends DataLoader {
         val username = customParams("username")
         val password = customParams("password")
         val pageSize = customParams("pagesize").toInt
-        
+
         val urlTemplate = params("url")
         var processedRecords = 0
 
@@ -272,11 +272,11 @@ class TasNvaDataLoader extends DataLoader {
                 val cacheFile = new File(cacheDirectoryPath, cacheFileName)
                 val xml = XML.loadString(FileUtils.readFileToString(cacheFile, "UTF-8"))
                 val recordNodes = (xml \\ TasNvaDataLoader.OBSERVATION_KEY)
-                
+
                 for (recordNode <- recordNodes) {
                     val mappedValues = processRecord(recordNode)
                     val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
-                    val uniqueTermsValues = uniqueTerms.map(t => mappedValues.getOrElse(t,""))
+                    val uniqueTermsValues = uniqueTerms.map(t => mappedValues.getOrElse(t, ""))
                     load(dataResourceUid, fr, uniqueTermsValues)
                     processedRecords += 1
                 }
@@ -286,38 +286,43 @@ class TasNvaDataLoader extends DataLoader {
             var moreRecords = true
             var startIndex = 0
             var pageNumber = 0
-            
+
             while (moreRecords && (pageLimit == -1 || startIndex < pageSize * pageLimit)) {
                 println("Loading page " + pageNumber)
-                val xml = XML.loadString(retrieveDataFromWebService(username, password, urlTemplate, pageSize, startIndex))
-                val recordNodes = (xml \\ TasNvaDataLoader.OBSERVATION_KEY)
-                
-                if (recordNodes.isEmpty) {
-                    moreRecords = false
+
+                try {
+                    val xml = XML.loadString(retrieveDataFromWebService(username, password, urlTemplate, pageSize, startIndex))
+                    val recordNodes = (xml \\ TasNvaDataLoader.OBSERVATION_KEY)
+
+                    if (recordNodes.isEmpty) {
+                        moreRecords = false
+                    }
+
+                    for (recordNode <- recordNodes) {
+                        val mappedValues = processRecord(recordNode)
+                        val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
+                        val uniqueTermsValues = uniqueTerms.map(t => mappedValues.getOrElse(t, ""))
+                        load(dataResourceUid, fr, uniqueTermsValues)
+
+                        writePageToCache(cacheDirectoryPath, xml.toString(), pageNumber)
+                        processedRecords += 1
+                    }
+                } catch {
+                    case ex: Throwable => println("ERROR: page " + pageNumber.toString() + " failed to load:"); ex.printStackTrace()
                 }
-                
-                for (recordNode <- recordNodes) {
-                    val mappedValues = processRecord(recordNode)
-                    val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
-                    val uniqueTermsValues = uniqueTerms.map(t => mappedValues.getOrElse(t,""))
-                    load(dataResourceUid, fr, uniqueTermsValues)
-                    
-                    writePageToCache(cacheDirectoryPath, xml.toString(), pageNumber)
-                    processedRecords += 1
-                }
-                
+
                 startIndex += pageSize
                 pageNumber += 1
             }
         }
-        
+
         println(processedRecords + " records processed")
     }
 
     def retrieveDataFromWebService(username: String, password: String, urlTemplate: String, numRecords: Int, startIndex: Int): String = {
         var url = MessageFormat.format(urlTemplate, numRecords.toString(), startIndex.toString())
         println(url)
-        
+
         var dataXML: String = null
 
         val credentials = new UsernamePasswordCredentials(username, password)
@@ -337,7 +342,7 @@ class TasNvaDataLoader extends DataLoader {
 
         dataXML
     }
-    
+
     def writePageToCache(cacheDirectoryPath: String, xml: String, pageNumber: Int) = {
         val fileName = TasNvaDataLoader.cachedPageNamePrefix + pageNumber.toString() + ".xml"
         val file = new File(cacheDirectoryPath, fileName)
@@ -380,15 +385,15 @@ class TasNvaDataLoader extends DataLoader {
         if (node.label == TasNvaDataLoader.GEOMETRY_KEY) {
             map + ((TasNvaDataLoader.footprintWKT_KEY) -> convertGMLToWKT(node.child(0).toString()))
         } else if (TasNvaDataLoader.darwinCoreMapping.contains(node.label)) {
-                val dwcKey = TasNvaDataLoader.darwinCoreMapping(node.label)
+            val dwcKey = TasNvaDataLoader.darwinCoreMapping(node.label)
 
-                if (map.contains(dwcKey)) {
-                    map + (dwcKey -> (map(dwcKey) + ";" + node.text))
-                } else {
-                    map + (dwcKey -> node.text)
-                }
-
+            if (map.contains(dwcKey)) {
+                map + (dwcKey -> (map(dwcKey) + ";" + node.text))
             } else {
+                map + (dwcKey -> node.text)
+            }
+
+        } else {
             map + (node.label -> node.text)
         }
     }
