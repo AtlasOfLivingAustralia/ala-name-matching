@@ -4,9 +4,6 @@ import com.google.inject.Inject
 import java.io.{File, OutputStream}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.codehaus.jackson.map.ObjectMapper
-
-//import au.org.ala.sds.SensitiveSpeciesFinderFactory
-
 import au.org.ala.util.ReflectBean
 import scala.collection.JavaConversions
 import java.lang.reflect.Method
@@ -16,6 +13,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
 import au.org.ala.biocache.outliers.JackKnifeStats
 import au.org.ala.biocache.outliers.RecordJackKnifeStats
+import au.org.ala.util.DuplicateRecordDetails
 
 trait OccurrenceDAO {
 
@@ -985,6 +983,26 @@ class DeletedRecordDAOImpl extends DeletedRecordDAO{
   }
 }
 
+trait DuplicateDAO{
+  def getDuplicateInfo(uuid:String) : Option[DuplicateRecordDetails]
+}
+
+class DuplicateDAOImpl extends DuplicateDAO{
+  protected val logger = LoggerFactory.getLogger("DuplicateDAO")
+  @Inject
+  var persistenceManager: PersistenceManager = _
+  override def getDuplicateInfo(uuid:String):Option[DuplicateRecordDetails]={
+    
+    val mapper = new ObjectMapper
+    mapper.registerModule(DefaultScalaModule)
+    val stringValue =persistenceManager.get(uuid, "occ_duplicates", "value")
+    if(stringValue.isDefined){
+      Some(mapper.readValue[DuplicateRecordDetails](stringValue.get, classOf[DuplicateRecordDetails]))
+    }
+    else
+      None
+  }
+}
 
 trait OutlierStatsDAO {
   def getJackKnifeStatsFor(guid:String) : java.util.Map[String, JackKnifeStats]
@@ -1000,36 +1018,36 @@ class OutlierStatsDAOImpl extends OutlierStatsDAO {
 
   def getJackKnifeStatsFor(guid:String) : java.util.Map[String, JackKnifeStats] = {
 
-    println("Getting outlier stats for: " + guid)
+    logger.debug("Getting outlier stats for: " + guid)
     val mapper = new ObjectMapper
     mapper.registerModule(DefaultScalaModule)
     val stringValue = persistenceManager.get(guid,"outliers", "jackKnifeStats").getOrElse("{}")
 
-    println("Retrieved outlier stats for: " + stringValue)
+    logger.debug("Retrieved outlier stats for: " + stringValue)
     val obj = mapper.readValue(stringValue, classOf[java.util.Map[String, JackKnifeStats]])
     obj.asInstanceOf[java.util.Map[String, JackKnifeStats]]
   }
 
   def getJackKnifeOutliersFor(guid:String) : java.util.Map[String, Array[String]] = {
 
-    println("Getting outlier stats for: " + guid)
+    logger.debug("Getting outlier stats for: " + guid)
     val mapper = new ObjectMapper
     mapper.registerModule(DefaultScalaModule)
     val stringValue = persistenceManager.get(guid,"outliers", "jackKnifeOutliers").getOrElse("{}")
 
-    println("Retrieved outlier stats for: " + stringValue)
+    logger.debug("Retrieved outlier stats for: " + stringValue)
     val obj = mapper.readValue(stringValue, classOf[java.util.Map[String, Array[String]]])
     obj.asInstanceOf[java.util.Map[String, Array[String]]]
   }
 
   def getJackKnifeRecordDetailsFor(uuid:String) : Array[RecordJackKnifeStats] = {
 
-    println("Getting outlier stats for record: " + uuid)
+    logger.debug("Getting outlier stats for record: " + uuid)
     val mapper = new ObjectMapper
     mapper.registerModule(DefaultScalaModule)
     val stringValue = persistenceManager.get(uuid,"occ_outliers", "jackKnife").getOrElse("[]")
 
-    println("Retrieved outlier stats for: " + stringValue)
+    logger.debug("Retrieved outlier stats for: " + stringValue)
     val obj = mapper.readValue(stringValue, classOf[Array[RecordJackKnifeStats]])
     obj.asInstanceOf[Array[RecordJackKnifeStats]]
   }

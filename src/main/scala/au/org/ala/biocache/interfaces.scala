@@ -27,6 +27,7 @@ object Store {
   private val occurrenceDAO = Config.getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
   private val outlierStatsDAO = Config.getInstance(classOf[OutlierStatsDAO]).asInstanceOf[OutlierStatsDAO]
   private val deletedRecordDAO = Config.deletedRecordDAO
+  private val duplicateDAO = Config.duplicateDAO
 
   private var readOnly = false;
 
@@ -439,6 +440,9 @@ object Store {
   def getJackKnifeOutliersFor(guid:String) : java.util.Map[String, Array[String]] = outlierStatsDAO.getJackKnifeOutliersFor(guid)
 
   def getJackKnifeRecordDetailsFor(uuid:String) : Array[RecordJackKnifeStats] = outlierStatsDAO.getJackKnifeRecordDetailsFor(uuid)
+  
+  def getDuplicateDetails(uuid:String):DuplicateRecordDetails = duplicateDAO.getDuplicateInfo(uuid).getOrElse(null)
+  
   /**
    * Returns a list of record uuids that have been deleted since the supplied date inclusive
    */

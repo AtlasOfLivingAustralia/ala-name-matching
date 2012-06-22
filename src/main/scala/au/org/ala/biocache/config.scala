@@ -21,6 +21,7 @@ object Config {
     def occurrenceDAO = getInstance(classOf[OccurrenceDAO]).asInstanceOf[OccurrenceDAO]
     def outlierStatsDAO = getInstance(classOf[OutlierStatsDAO]).asInstanceOf[OutlierStatsDAO]
     def deletedRecordDAO = getInstance(classOf[DeletedRecordDAO]).asInstanceOf[DeletedRecordDAO]
+    def duplicateDAO = getInstance(classOf[DuplicateDAO]).asInstanceOf[DuplicateDAO]
     def persistenceManager = getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
     def nameIndex = getInstance(classOf[CBIndexSearch]).asInstanceOf[CBIndexSearch]
     def indexDAO = getInstance(classOf[IndexDAO]).asInstanceOf[IndexDAO]
@@ -87,6 +88,7 @@ class ConfigModule extends AbstractModule {
         bind(classOf[OutlierStatsDAO]).to(classOf[OutlierStatsDAOImpl]).in(Scopes.SINGLETON)
         bind(classOf[IndexDAO]).to(classOf[SolrIndexDAO]).in(Scopes.SINGLETON)
         bind(classOf[DeletedRecordDAO]).to(classOf[DeletedRecordDAOImpl]).in(Scopes.SINGLETON)
+        bind(classOf[DuplicateDAO]).to(classOf[DuplicateDAOImpl]).in(Scopes.SINGLETON)
         try {
             val nameIndex = new CBIndexSearch(properties.getProperty("nameIndexLocation"))
             bind(classOf[CBIndexSearch]).toInstance(nameIndex)

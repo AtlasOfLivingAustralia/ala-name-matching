@@ -19,6 +19,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ArrayBlockingQueue
 import org.slf4j.LoggerFactory
 import org.apache.commons.io.FileUtils
+import java.util.ArrayList
 /**
  * 
  * Duplication detection is only possible if latitude and longitude are provided.
@@ -118,11 +119,12 @@ class GuidConsumer(q:BlockingQueue[String],id:Int,proc:String=>Unit) extends Thr
 }
 //TODO Use the "sensitive" coordinates for sensitive species
 class DuplicationDetection{
+  import JavaConversions._
   val baseDir = "/tmp"
   val duplicatesToReindex = "duplicatesreindex.txt"
   val filePrefix = "dd_data.txt"
   val fieldsToExport = Array("row_key", "id", "species_guid", "year", "month", "occurrence_date", "point-1", "point-0.1", 
-                             "point-0.01","point-0.001", "point-0.0001","lat_long", "collectors")
+                             "point-0.01","point-0.001", "point-0.0001","lat_long","raw_taxon_name", "collectors")
   val speciesFilters = Array("lat_long:[* TO *]")
   // we have decided that a subspecies can be evalutated as part of the species level duplicates
   val subspeciesFilters = Array("lat_long:[* TO *]", "-species_guid:[* TO *]") 
@@ -165,9 +167,10 @@ class DuplicationDetection{
           case _=> null
         }
        val day = if(date != null) Integer.toString(date.getDate()) else null
-       val collector = StringUtils.trimToNull(currentLine(12))
+       val rawName = StringUtils.trimToNull(currentLine(12))
+       val collector = StringUtils.trimToNull(currentLine(13))
        buff + new DuplicateRecordDetails(rowKey,uuid,taxon_lsid,year,month,day,currentLine(6), currentLine(7),
-           currentLine(8),currentLine(9),currentLine(10),currentLine(11), collector)
+           currentLine(8),currentLine(9),currentLine(10),currentLine(11),rawName, collector)
        currentLine = reader.readNext
      }
     DuplicationDetection.logger.info("Read in " + counter + " records for " + lsid)
@@ -226,7 +229,7 @@ class DuplicationDetection{
         //turn it into a DuplicateRecordDetails
         val rd = mapper.readValue[DuplicateRecordDetails](v, classOf[DuplicateRecordDetails])
         buf + rd.rowKey
-        rd.duplicates.foreach(d => buf + d.rowKey)
+        rd.duplicates.toList.foreach(d => buf + d.rowKey)
       })
       true
     }, startKey, endKey,100)
@@ -237,6 +240,7 @@ class DuplicationDetection{
 }
 //Each year is handled separately so they can be processed in a threaded manner
 class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], duplicateBuffer:ArrayBuffer[String]) extends Runnable{
+  import JavaConversions._
   val latLonPattern="""(\-?\d+(?:\.\d+)?),\s*(\-?\d+(?:\.\d+)?)""".r
   val alphaNumericPattern ="[^\\p{L}\\p{N}]".r
   val unknownPatternString = "(null|UNKNOWN OR ANONYMOUS)"
@@ -279,11 +283,8 @@ class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], dupli
     DuplicationDetection.logger.debug("Number of distinct records for year " + year + " is " + buffGroups.size)
     
     buffGroups.foreach(record =>{
-      if(record.duplicates != null && record.duplicates.size > 0){
-        val hasYear = StringUtils.isEmpty(record.year)
-        val hasMonth = StringUtils.isEmpty(record.month)
-        val hasDay = StringUtils.isEmpty(record.day)
-        val (primaryRecord,duplicates) = markRecordsAsDuplicates(record)
+      if(record.duplicates != null && record.duplicates.size > 0){        
+        val (primaryRecord,duplicates) = markRecordsAsDuplicatesAndSetTypes(record)
         val uuidList = duplicates.map(r => r.uuid)
         addRowKeysToBuffer(primaryRecord)
         //add the items for the PRIMARY record
@@ -292,12 +293,14 @@ class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], dupli
         Config.persistenceManager.put(primaryRecord.uuid, "occ_duplicates","value",stringValue)
         Config.persistenceManager.put(primaryRecord.taxonConceptLsid+"|"+primaryRecord.year+"|"+primaryRecord.month +"|" +primaryRecord.day, "duplicates", primaryRecord.uuid,stringValue)
         Config.persistenceManager.put(primaryRecord.rowKey, "occ",Map("associatedOccurrences.p"->uuidList.mkString("|"),"duplicationStatus.p"->"R"))
+        //remove any Duplicate errors for the primary record
+        Config.occurrenceDAO.removeSystemAssertion(primaryRecord.rowKey, AssertionCodes.INFERRED_DUPLICATE_RECORD)
         //val primaryUuid = duplicates.
-        duplicates.foreach(r =>{
-          val types = if(r.dupTypes != null)r.dupTypes.map(t => t.id) else List()
+        duplicates.foreach(r =>{          
+          val types = if(r.dupTypes != null)r.dupTypes.toList.map(t => t.id) else List()
           Config.persistenceManager.put(r.rowKey, "occ", Map("associatedOccurrences.p"->primaryRecord.uuid,"duplicationStatus.p"->"D","duplicationType.p"->mapper.writeValueAsString(types)))
           //add a system message for the record - a duplication does not change the kosher fields and should always be displayed thus don't "checkExisting"
-          Config.occurrenceDAO.addSystemAssertion(r.rowKey, QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD,"Record has been inferred as a duplicate of " + primaryRecord.uuid),false)
+          Config.occurrenceDAO.addSystemAssertion(r.rowKey, QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD,"Record has been inferred as closely related to  " + primaryRecord.uuid),false)
           
         }
 
@@ -315,16 +318,31 @@ class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], dupli
      //duplicateWriter.write(rr.rowKey + "\n")
       duplicateBuffer + rr.rowKey
      //rr.duplicates.foreach(dup =>duplicateWriter.write(dup.rowKey + "\n"))
-      rr.duplicates.foreach(dup =>duplicateBuffer + dup.rowKey)
+      rr.duplicates.toList.foreach(dup =>duplicateBuffer + dup.rowKey)
      
     }
   }
-  def markRecordsAsDuplicates(record: DuplicateRecordDetails):(DuplicateRecordDetails,List[DuplicateRecordDetails])={
+  def setDateTypes(r:DuplicateRecordDetails,hasYear:Boolean, hasMonth:Boolean, hasDay:Boolean){
+    if(hasYear && hasMonth && !hasDay)
+       r.addDupType(DuplicationTypes.MISSING_DAY)
+    else if(hasYear && !hasMonth)
+       r.addDupType(DuplicationTypes.MISSING_MONTH)
+    else if(!hasYear)
+       r.addDupType(DuplicationTypes.MISSING_YEAR)
+  }
+  def markRecordsAsDuplicatesAndSetTypes(record: DuplicateRecordDetails):(DuplicateRecordDetails,List[DuplicateRecordDetails])={
     //find the "representative" record for the duplicate
     var highestPrecision = determinePrecision(record.latLong)
     var representativeRecord = record
     val duplicates = record.duplicates
+    
+    //find out whether or not record has date components
+    val hasYear = StringUtils.isNotEmpty(record.year)
+    val hasMonth = StringUtils.isNotEmpty(record.month)
+    val hasDay = StringUtils.isNotEmpty(record.day)
+    setDateTypes(record,hasYear,hasMonth,hasDay)
     duplicates.foreach(r =>{
+      setDateTypes(r,hasYear,hasMonth,hasDay)
       val pre = determinePrecision(r.latLong)
       if(pre > highestPrecision){
         highestPrecision = pre
@@ -462,41 +480,42 @@ class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], dupli
 }
 
 
-sealed case class DupType(id:Int)
+sealed case class DupType(@BeanProperty var id:Int){
+  def this() = this(-1)
+}
 
 object DuplicationTypes{
-  val MISSING_YEAR = DupType(1)
-  val MISSING_MONTH = DupType(2)
-  val MISSING_DAY   = DupType(3)
-  val EXACT_COORD = DupType(4)
-  val DIFFERENT_PRECISION = DupType(5)
-  val EXACT_COLLECTOR = DupType(6)
-  val FUZZY_COLLECTOR = DupType(7)
-  val MISSING_COLLECTOR = DupType(8)
+  val MISSING_YEAR = DupType(1)//"Occurrences were compared without dates."
+  val MISSING_MONTH = DupType(2)// "Occurrences were compared without a month and day component.")
+  val MISSING_DAY   = DupType(3)//,"Occurrences were compared without a day component.")
+  val EXACT_COORD = DupType(4)//," The coordinates were identical.")
+  val DIFFERENT_PRECISION = DupType(5)//, "The precision between the occurrences was different.")
+  val EXACT_COLLECTOR = DupType(6)//, "Occurrences had identical collectors.")
+  val FUZZY_COLLECTOR = DupType(7) // The occurrences had collectors that are similar
+  val MISSING_COLLECTOR = DupType(8)// At least one of the occurrences was missing a collector
 }
 
 class DuplicateRecordDetails(@BeanProperty var rowKey:String, @BeanProperty var uuid:String, @BeanProperty var taxonConceptLsid:String,
                     @BeanProperty var year:String, @BeanProperty var month:String, @BeanProperty var day:String,
                     @BeanProperty var point1:String, @BeanProperty var point0_1:String, 
                     @BeanProperty var point0_01:String, @BeanProperty var point0_001:String, 
-                    @BeanProperty var point0_0001:String,@BeanProperty var latLong:String, @BeanProperty var collector:String){
+                    @BeanProperty var point0_0001:String,@BeanProperty var latLong:String, @BeanProperty var rawScientificName:String, @BeanProperty var collector:String){
   
-  def this() =this(null,null,null,null,null,null,null,null,null,null,null,null,null)
+  def this() =this(null,null,null,null,null,null,null,null,null,null,null,null,null,null)
   
   @BeanProperty var status="U"
   var duplicateOf:String = null
-  @BeanProperty var duplicates:ArrayBuffer[DuplicateRecordDetails]=null
-  @BeanProperty var dupTypes:List[DupType]=_
+  @BeanProperty var duplicates:ArrayList[DuplicateRecordDetails]=null
+  @BeanProperty var dupTypes:ArrayList[DupType]=_
   def addDuplicate(dup:DuplicateRecordDetails) ={
     if(duplicates == null)
-      duplicates = new ArrayBuffer[DuplicateRecordDetails]
-    duplicates + dup
+      duplicates = new ArrayList[DuplicateRecordDetails]
+    duplicates.add(dup)
   }
   def addDupType(dup:DupType){
     if(dupTypes == null)
-      dupTypes = List(dup)
-    else
-      dupTypes =dupTypes :+ dup
+      dupTypes = new ArrayList[DupType]()
+    dupTypes.add(dup)
   }
   
   
