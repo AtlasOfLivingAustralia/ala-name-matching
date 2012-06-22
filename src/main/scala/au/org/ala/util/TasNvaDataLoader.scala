@@ -334,7 +334,7 @@ class TasNvaDataLoader extends DataLoader {
             if (responseCode == 200) {
                 dataXML = get.getResponseBodyAsString();
             } else {
-                println("Request failed (" + responseCode + ")")
+                throw new Exception("Request failed (" + responseCode + ")")
             }
         } finally {
             get.releaseConnection()
