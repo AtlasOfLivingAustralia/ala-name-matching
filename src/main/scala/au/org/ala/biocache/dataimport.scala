@@ -99,7 +99,7 @@ trait DataLoader {
       !Config.occurrenceDAO.getUUIDForUniqueID(createUniqueID(dataResourceUid, identifyingTerms)).isEmpty
     }
 
-    private def createUniqueID(dataResourceUid:String,identifyingTerms:List[String]) : String = {
+    protected def createUniqueID(dataResourceUid:String,identifyingTerms:List[String]) : String = {
       (List(dataResourceUid) ::: identifyingTerms).mkString("|").trim
     }
 
