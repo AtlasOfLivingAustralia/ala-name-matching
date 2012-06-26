@@ -33,7 +33,7 @@ import scala.util.parsing.json.JSON
  * @author Natasha Carter
  */
 object ClassificationDAO {
-
+  val logger = LoggerFactory.getLogger("CLassificationDAO")
   private val columnFamily ="namecl"
  // private val cachedValues = new java.util.Hashtable[LinnaeanRankClassification, Classification]
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
@@ -96,14 +96,26 @@ object ClassificationDAO {
 
       if(nsr!=null){
           //handle the case where the species is a synonym this is a temporary fix should probably go in ala-name-matching
-          val result = if(nsr.isSynonym) Some(nameIndex.searchForRecordByLsid(nsr.getAcceptedLsid))  else Some(nsr)
-          //change the name match metric for a synonym 
-          if(nsr.isSynonym())
-            result.get.setMatchType(nsr.getMatchType())
-          //update the subspecies or below value if necessary
-          val rank = result.get.getRank  
-          if(rank != null && rank.getId() >7000 && rank.getId <9999){
-            result.get.getRankClassification.setSubspecies(result.get.getRankClassification.getScientificName())            
+          var result:Option[NameSearchResult] = if(nsr.isSynonym) Some(nameIndex.searchForRecordByLsid(nsr.getAcceptedLsid))  else Some(nsr)
+          if(result.get != null){
+              //change the name match metric for a synonym 
+              if(nsr.isSynonym())
+                result.get.setMatchType(nsr.getMatchType())
+              //update the subspecies or below value if necessary
+              val rank = result.get.getRank  
+              if(rank != null && rank.getId() >7000 && rank.getId <9999){
+                result.get.getRankClassification.setSubspecies(result.get.getRankClassification.getScientificName())            
+              }
+          }
+          else{
+            logger.warn("Unable to locate accepted concept for synonym " + nsr + ". Attempting a higher level match")
+            if(cl.kingdom != null || cl.phylum!=null || cl.classs != null || cl.order != null || cl.family != null || cl.genus != null){
+                val newcl = cl.clone()
+                newcl.setScientificName(null)
+                newcl.setInfraspecificEpithet(null)
+                newcl.setSpecificEpithet(null)
+                result = getByHashLRU(newcl)
+            }
           }
           lock.synchronized { lru.put(hash, result) }
           result

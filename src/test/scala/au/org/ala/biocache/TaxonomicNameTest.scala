@@ -36,4 +36,16 @@ class TaxonomicNameTest extends ConfigFunSuite {
         println(processed.classification.taxonConceptID)
         expect(10006){qas(0).code}
     }
+    
+    test("missing accepted name"){
+      val raw = new FullRecord
+      var processed = new FullRecord
+      raw.classification.scientificName="Gnaphalium collinum"
+      (new ClassificationProcessor).process("test", raw, processed)
+      expect(null){processed.classification.scientificName}
+      //raw.classification.genus = "Gnaphalium"
+      raw.classification.family ="Asteraceae"
+      (new ClassificationProcessor).process("test", raw, processed)
+      expect("Asteraceae"){processed.classification.scientificName}
+    }
 }
