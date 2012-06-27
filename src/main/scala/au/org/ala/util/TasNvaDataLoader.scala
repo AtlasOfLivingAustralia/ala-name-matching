@@ -231,17 +231,19 @@ object TasNvaDataLoader extends DataLoader {
         var dataResourceUid: String = null
         var cacheDirectoryPath: String = null
         var loadFromCache = false
+        var startAtPage = 0
         var pageLimit = -1
 
         val parser = new OptionParser("Import Tasmanian Natural Values Atlas data") {
             arg("<data-resource-uid>", "the data resource to import", { v: String => dataResourceUid = v })
             arg("<cache-directory-path>", "the location of the cache", { v: String => cacheDirectoryPath = v })
             booleanOpt("c", "loadFromCache", "load previously cached data instead of data from the web service", { v: Boolean => loadFromCache = v })
+            opt("p", "startAtPage", "Start loading from the specified page index", { v: String => startAtPage = v.toInt })
             opt("l", "pageLimit", "Limit loading to the specified number of pages. For testing purposes only", { v: String => pageLimit = v.toInt })
         }
 
         if (parser.parse(args)) {
-            loader.load(dataResourceUid, cacheDirectoryPath, loadFromCache, pageLimit)
+            loader.load(dataResourceUid, cacheDirectoryPath, loadFromCache, startAtPage, pageLimit)
         }
     }
 }
@@ -256,7 +258,7 @@ class TasNvaDataLoader extends DataLoader {
     val gda94MGAZone55crs = CRS.decode(TasNvaDataLoader.epsg28355Name)
     val transformOp = new DefaultCoordinateOperationFactory().createOperation(gda94MGAZone55crs, wgs84crs)
 
-    def load(dataResourceUid: String, cacheDirectoryPath: String, loadFromCache: Boolean, pageLimit: Int) {
+    def load(dataResourceUid: String, cacheDirectoryPath: String, loadFromCache: Boolean, startAtPage: Int, pageLimit: Int) {
         val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
         val username = customParams("username")
         val password = customParams("password")
@@ -285,7 +287,7 @@ class TasNvaDataLoader extends DataLoader {
             // load data using the web service
             var moreRecords = true
             var startIndex = 0
-            var pageNumber = 0
+            var pageNumber = startAtPage
 
             while (moreRecords && (pageLimit == -1 || startIndex < pageSize * pageLimit)) {
                 println("Loading page " + pageNumber)
