@@ -9,6 +9,7 @@ import scala.xml.Node
 import au.org.ala.biocache.FullRecordMapper
 import au.org.ala.biocache.Versions
 import org.apache.commons.lang3.StringUtils
+import collection.mutable
 
 object MorphbankLoader extends DataLoader {
 
@@ -53,9 +54,12 @@ object MorphbankLoader extends DataLoader {
 
 class MorphbankLoader extends DataLoader {
 
+  var specimenImagesMap = new scala.collection.mutable.HashMap[String, mutable.ListBuffer[String]]()
+
   def load(dataResourceUid: String) {
     val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
-    val idsUrl = params("url")
+    var idsUrl = params("url")
+    //idsUrl = idsUrl.replace("-1", "10")
     val objectUrlTemplate = customParams("objectRequestUrlTemplate")
     val imageUrlTemplate = customParams("imageRequestUrlTemplate")
     val specimenPageUrlTemplate = customParams("specimenDetailsPageUrlTemplate")
@@ -71,20 +75,24 @@ class MorphbankLoader extends DataLoader {
     for (id <- ids) {
       val url = MessageFormat.format(objectUrlTemplate, id)
       val recordXml = getXMLFromWebService(url)
-      val obj = (recordXml \\ MorphbankLoader.OBJECT_KEY).first
+      val obj = (recordXml \\ MorphbankLoader.OBJECT_KEY).head
 
-      val typ = obj.attribute(MorphbankLoader.TYPE_KEY).first.text
+      val typ = obj.attribute(MorphbankLoader.TYPE_KEY).head.text
 
       if (typ == MorphbankLoader.SPECIMEN_TYPE) {
         processSpecimen(obj, dataResourceUid, uniqueTerms, specimenPageUrlTemplate)
         loadedSpecimens += 1
       } else if (typ == MorphbankLoader.IMAGE_TYPE) {
-        processImage(obj, imageUrlTemplate, dataResourceUid, uniqueTerms)
+        processImage(obj)
         loadedImages += 1
       } else {
         throw new IllegalArgumentException("Unrecognised object type: " + typ)
       }
     }
+
+    println(specimenImagesMap)
+
+    setSpecimenImages(imageUrlTemplate, dataResourceUid)
 
     println("Loaded " + loadedSpecimens + " specimens, and " + loadedImages + " images.")
   }
@@ -138,7 +146,47 @@ class MorphbankLoader extends DataLoader {
     }
   }
 
-  def processImage(image: Node, imageUrlTemplate: String, dataResourceUid: String, uniqueTerms: List[String]) {
+  def processImage(image: Node) {
+    val imageId = (image \\ MorphbankLoader.OBJECT_ID_KEY).head.text.trim()
+    val specimenIdNodeSeq = (image \\ MorphbankLoader.SPECIMEN_ID_KEY)
+
+    if (specimenIdNodeSeq.length != 0) {
+      // Record ids for all images associated with the specimen. These will later be added to the specimen
+      // record in Cassandra all in one hit
+      val specimenId = specimenIdNodeSeq.head.text.trim()
+
+      if (specimenImagesMap.contains(specimenId)) {
+          specimenImagesMap(specimenId).append(imageId)
+      } else {
+           val listBuf = new mutable.ListBuffer[String]()
+           listBuf.append(imageId)
+           specimenImagesMap += (specimenId -> listBuf)
+      }
+
+      println("Processed image " + imageId + " for specimen " + specimenId)
+    } else {
+      println("ERROR: No associated specimen for image " + imageId)
+    }
+
+  }
+
+  def setSpecimenImages(imageUrlTemplate: String, dataResourceUid: String) {
+    for (specimenId <- specimenImagesMap.keySet) {
+      val specimenImages = specimenImagesMap(specimenId)
+      val specimenImageUrls = specimenImages.map(t => MessageFormat.format(imageUrlTemplate, t))
+      println(specimenImageUrls)
+
+      val mappedValues = Map(MorphbankLoader.CATALOG_NUMBER_KEY -> specimenId, MorphbankLoader.ASSOCIATED_MEDIA_KEY -> specimenImageUrls.mkString(";"))
+      val uniqueTermsValues = List(specimenId)
+
+      val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
+      load(dataResourceUid, fr, uniqueTermsValues)
+
+      println("Loaded images for specimen " + specimenId)
+    }
+  }
+
+  /*def processImage(image: Node, imageUrlTemplate: String, dataResourceUid: String, uniqueTerms: List[String]) {
     val imageId = (image \\ MorphbankLoader.OBJECT_ID_KEY).first.text.trim()
     val specimenIdNodeSeq = (image \\ MorphbankLoader.SPECIMEN_ID_KEY)
 
@@ -167,6 +215,6 @@ class MorphbankLoader extends DataLoader {
     } else {
       println("ERROR: No associated specimen for image " + imageId)
     }
-  }
+  } */
 
 }
