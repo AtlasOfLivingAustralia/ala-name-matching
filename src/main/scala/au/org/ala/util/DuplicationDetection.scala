@@ -63,7 +63,7 @@ object DuplicationDetection{
       if(all){
         //download all the species guids
         val filename = "/tmp/dd_all_species_guids"
-        ExportFacet.main(Array("species_guid",filename))
+        ExportFacet.main(Array("species_guid",filename,"--open"))
         //now detect the duplicates
         detectDuplicates(new File(filename), threads,exist,cleanup,load)
       }
@@ -125,7 +125,7 @@ class StringConsumer(q:BlockingQueue[String],id:Int,proc:String=>Unit) extends T
         }
       }
       catch{
-        case e:Exception=>
+        case e:Exception=> e.printStackTrace()
       }
     }
   }
@@ -151,7 +151,7 @@ class DuplicationDetection{
   
   //loads the dupicates from the lsid based on the tmp file being populated
   def loadDuplicates(lsid:String, threads:Int){
-    //get a list of the current records that are considered duplicates
+    //get a list of the current records that are considered duplicates   
     val oldDuplicates = getCurrentDuplicates(lsid)
     val directory = baseDir + "/" +  lsid.replaceAll("[\\.:]","_") + "/"
     val dupFilename =directory + duplicatesFile
@@ -206,7 +206,7 @@ class DuplicationDetection{
    
     if(shouldDownloadRecords){
       val fileWriter = new FileWriter(new File(filename))
-      
+      DuplicationDetection.logger.info("Starting to download the occurrences for " + lsid)
       ExportByFacetQuery.downloadSingleTaxon(lsid, fieldsToExport ,field,if(field == "species_guid") speciesFilters else subspeciesFilters,Some("row_key"),Some("asc"), fileWriter)
       fileWriter.close
     }

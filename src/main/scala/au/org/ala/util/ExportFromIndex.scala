@@ -51,6 +51,7 @@ object ExportFacet {
   var lastMonth = false
   var includeCounts = false
   var indexDateField = "first_loaded_date"
+  var closeIndex = true
 
   var fieldsToExport = Array[String]()
 
@@ -58,6 +59,7 @@ object ExportFacet {
     arg("<facet-field>", "The field to facet on", { v: String => facetField = v })
     arg("<facet-output-file>", "The field to facet on", { v: String => facetOutputFile = v })
     opt("fq","filter query", "Filter query to use", { v: String => facetQuery = v })
+    opt("open","Keep the index open",{closeIndex=false})
     booleanOpt("ld","lastDay", "Only export those that have had new records in the last day", { v: Boolean => lastDay = v })
     booleanOpt("ld","lastWeek", "Only export those that have had new records in the last week", { v: Boolean => lastWeek = v })
     booleanOpt("ld","lastMonth", "Only export those that have had new records in the last month", { v: Boolean => lastMonth = v })
@@ -86,7 +88,8 @@ object ExportFacet {
       }, facetField, facetQuery, Array(facetFilterQuery))
       facetWriter.flush
       facetWriter.close
-      Config.indexDAO.shutdown
+      if(closeIndex)
+          Config.indexDAO.shutdown
     }
   }
 }
@@ -133,7 +136,7 @@ object ExportByFacetQuery {
     }
   }
   
-  def downloadSingleTaxon(taxonID:String, fieldsToExport:Array[String], facetField:String, filterQueries:Array[String],sortField:Option[String]=None, sortDir:Option[String]=None, fileWriter:FileWriter){
+  def downloadSingleTaxon(taxonID:String, fieldsToExport:Array[String], facetField:String, filterQueries:Array[String],sortField:Option[String]=None, sortDir:Option[String]=None, fileWriter:FileWriter){    
     var counter =0
     Config.indexDAO.pageOverIndex(map  => {
           counter += 1
