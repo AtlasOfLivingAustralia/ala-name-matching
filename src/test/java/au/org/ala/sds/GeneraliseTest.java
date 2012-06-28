@@ -378,6 +378,7 @@ public class GeneraliseTest {
         assertTrue(outcome.isSensitive());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void generaliseNoLocationFromState() {
         SensitiveTaxon ss = finder.findSensitiveSpecies("Diuris disposita");
@@ -389,7 +390,7 @@ public class GeneraliseTest {
         facts.put("stateProvince", "New South Wales");
         facts.put("scientificName", "Diuris disposita");
         facts.put("taxonConceptID", "urn:lsid:biodiversity.org.au:apni.taxon:167966");
-        facts.put("locationRemarks", "2.7 km by road towards Armidale from Toorooka road on Kempsey-Armidale road, NE side of road.");
+        facts.put("locality", "2.7 km by road towards Armidale from Toorooka road on Kempsey-Armidale road, NE side of road.");
         facts.put("day", "06");
         facts.put("month", "10");
         facts.put("year", "1992");
@@ -402,11 +403,11 @@ public class GeneraliseTest {
         Map<String, Object> result = outcome.getResult();
         assertNotNull(result);
 
-        assertEquals("locationRemarks", "", result.get("locationRemarks"));
+        assertEquals("locality", "", result.get("locality"));
         assertEquals("dataGeneralizations", "Latitude/Longitude is missing. \nSensitive in NSW [Endangered, NSW OEH]", result.get("dataGeneralizations"));
 
         Map<String, String> originalSenstiveValues = (Map<String, String>) outcome.getResult().get("originalSensitiveValues");
         assertNotNull(originalSenstiveValues);
-        assertEquals("Original locationRemarks", "2.7 km by road towards Armidale from Toorooka road on Kempsey-Armidale road, NE side of road.", originalSenstiveValues.get("locationRemarks"));
+        assertEquals("Original locality", "2.7 km by road towards Armidale from Toorooka road on Kempsey-Armidale road, NE side of road.", originalSenstiveValues.get("locality"));
     }
 }
