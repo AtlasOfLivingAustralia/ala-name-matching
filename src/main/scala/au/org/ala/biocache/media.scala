@@ -22,11 +22,11 @@ object MediaStore {
 
   //Regular expression used to parse an image URL - adapted from
   //http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
-  lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:jpg|gif|png|jpeg))$""".r
+  lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.?(?:jpg|gif|png|jpeg))$""".r
   lazy val soundParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:wav|mp3|ogg|flac))$""".r
   lazy val videoParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:wmv|mp4|mpg|avi|mov))$""".r
 
-  val imageExtension = Array(".jpg",".gif",".png",".jpeg")
+  val imageExtension = Array(".jpg",".gif",".png",".jpeg","imgType=jpeg")
   val soundExtension = Array(".wav",".mp3",".ogg",".flac")
   val videoExtension = Array(".wmv",".mp4",".mpg",".avi",".mov")
 
@@ -35,14 +35,14 @@ object MediaStore {
 
   def doesFileExist(urlString:String) :Boolean ={
     val urlToTest = if(urlString.startsWith(rootDir)) "file://"+urlString else urlString
-      try{
-        val url = new java.net.URL(urlToTest.replaceAll(" ", "%20"))
-        val in = url.openStream
-        true
-      }
-      catch{
-        case _ => false
-      }
+    try{
+      val url = new java.net.URL(urlToTest.replaceAll(" ", "%20"))
+      val in = url.openStream
+      true
+    }
+    catch{
+      case _ => false
+    }
   }
 
   def isValidImageURL(url:String) : Boolean = {
@@ -58,7 +58,7 @@ object MediaStore {
   }
 
   def isStoredMedia(acceptedExtensions:Array[String], url:String) : Boolean = {
-     url.startsWith(MediaStore.rootDir) && endsWithOneOf(acceptedExtensions,url.toLowerCase)
+    url.startsWith(MediaStore.rootDir) && endsWithOneOf(acceptedExtensions,url.toLowerCase)
   }
 
   def endsWithOneOf(acceptedExtensions:Array[String], url:String) : Boolean = {
@@ -95,6 +95,8 @@ object MediaStore {
     val fileName = {
       if(urlToMedia.contains("fileName=")){  //HACK for CS URLs which dont make for nice file names
         urlToMedia.substring(urlToMedia.indexOf("fileName=") + "fileName=".length).replace(" ", "_")
+      } else if (urlToMedia.contains("?id=") && urlToMedia.contains("imgType=")) { // HACK for Morphbank URLs which don't make nice filenames
+        urlToMedia.substring(urlToMedia.lastIndexOf("/") + 1).replace("?id=", "").replace("&imgType=", ".")
       } else if (urlToMedia.lastIndexOf("/") == urlToMedia.length - 1) {
         "raw"
       } else {
@@ -108,29 +110,29 @@ object MediaStore {
    * Returns the file path
    */
   def save(uuid: String, resourceUID: String, urlToMedia: String): Option[String] = {
-      //handle the situation where the urlToMedia does not exits - 
-    try{  
-        val fullPath = createFilePath(uuid, resourceUID, urlToMedia)
-        val file = new File(fullPath)
-        val url = new java.net.URL(urlToMedia.replaceAll(" ", "%20"))
-        val in = url.openStream
-        val out = new FileOutputStream(file)
-        val buffer: Array[Byte] = new Array[Byte](1024)
-        var numRead = 0
-        while ( {
-          numRead = in.read(buffer); numRead != -1
-        }) {
-          out.write(buffer, 0, numRead)
-          out.flush
-        }
-        out.close
-        logger.info("File saved to: " + fullPath)
-        //is this file an image???
-        if (isValidImageURL(urlToMedia)){
-           Thumbnailer.generateAllSizes(new File(fullPath))
-        }
-        //store the media
-        Some(fullPath)
+    //handle the situation where the urlToMedia does not exits -
+    try{
+      val fullPath = createFilePath(uuid, resourceUID, urlToMedia)
+      val file = new File(fullPath)
+      val url = new java.net.URL(urlToMedia.replaceAll(" ", "%20"))
+      val in = url.openStream
+      val out = new FileOutputStream(file)
+      val buffer: Array[Byte] = new Array[Byte](1024)
+      var numRead = 0
+      while ( {
+        numRead = in.read(buffer); numRead != -1
+      }) {
+        out.write(buffer, 0, numRead)
+        out.flush
+      }
+      out.close
+      logger.info("File saved to: " + fullPath)
+      //is this file an image???
+      if (isValidImageURL(urlToMedia)){
+        Thumbnailer.generateAllSizes(new File(fullPath))
+      }
+      //store the media
+      Some(fullPath)
     }
     catch{
         case e:Exception => logger.warn("Unable to load media " + urlToMedia + ". " + e.getMessage);None
@@ -198,14 +200,14 @@ object Thumbnailer {
     //dont generate thumbnails for thumbnails
     println("Starting with directory: " + directory.getAbsolutePath)
     if (directory.isDirectory) {
-        var children = directory.list
-        if (children == null) {
-            children = Array[String]()
-        }
-        println("Recursive Dir: " + directory.getName + ", size of subDirs: " + children.length);
-        for (i <- 0 until children.length) {
-            recursivelyGenerateThumbnails(new File(directory, children(i)))
-        }
+      var children = directory.list
+      if (children == null) {
+        children = Array[String]()
+      }
+      println("Recursive Dir: " + directory.getName + ", size of subDirs: " + children.length);
+      for (i <- 0 until children.length) {
+        recursivelyGenerateThumbnails(new File(directory, children(i)))
+      }
     } else {
       //generate a thumbnail if this is an image
       if (MediaStore.isValidImageURL(directory.getAbsolutePath)){

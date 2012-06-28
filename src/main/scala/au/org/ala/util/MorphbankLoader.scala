@@ -1,15 +1,17 @@
 package au.org.ala.util
-import au.org.ala.biocache.DataLoader
+import au.org.ala.biocache.{Json, DataLoader, FullRecordMapper, Versions}
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.methods.GetMethod
 import scala.xml.Elem
 import scala.xml.XML
 import java.text.MessageFormat
 import scala.xml.Node
-import au.org.ala.biocache.FullRecordMapper
-import au.org.ala.biocache.Versions
 import org.apache.commons.lang3.StringUtils
-import collection.mutable
+import collection.{JavaConversions, mutable}
+import org.codehaus.jackson.map.ObjectMapper
+import org.codehaus.jackson.map.annotate.JsonSerialize
+import java.util
+import org.apache.commons.io.FileUtils
 
 object MorphbankLoader extends DataLoader {
 
@@ -40,14 +42,16 @@ object MorphbankLoader extends DataLoader {
 
   def main(args: Array[String]) {
     var dataResourceUid: String = null
+    var jsonFilePath: String = null
 
     val parser = new OptionParser("Import Tasmanian Natural Values Atlas data") {
       arg("<data-resource-uid>", "the data resource to import", { v: String => dataResourceUid = v })
+      arg("<json-file-path>", "The file to write json representation of specimen -> images mapping. This file can be used to speed up reprocessing (TODO)", { v: String => jsonFilePath = v })
     }
 
     if (parser.parse(args)) {
       val loader = new MorphbankLoader
-      loader.load(dataResourceUid)
+      loader.load(dataResourceUid, jsonFilePath)
     }
   }
 }
@@ -56,7 +60,7 @@ class MorphbankLoader extends DataLoader {
 
   var specimenImagesMap = new scala.collection.mutable.HashMap[String, mutable.ListBuffer[String]]()
 
-  def load(dataResourceUid: String) {
+  def load(dataResourceUid: String, jsonFilePath: String) {
     val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
     var idsUrl = params("url")
     //idsUrl = idsUrl.replace("-1", "10")
@@ -90,7 +94,16 @@ class MorphbankLoader extends DataLoader {
       }
     }
 
-    println(specimenImagesMap)
+    //Convert specimenImagesMap to java collection for easy conversion to JSON
+    val javaSpecimenImagesMap = new util.HashMap[String, java.util.List[String]]()
+    for (k <- specimenImagesMap.keys) {
+      javaSpecimenImagesMap.put(k, JavaConversions.seqAsJavaList(specimenImagesMap(k)))
+    }
+
+    //Write java representation of specimenImagesMap to file
+    val mapper = new ObjectMapper
+    mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
+    FileUtils.writeStringToFile(new java.io.File(jsonFilePath), mapper.writeValueAsString(javaSpecimenImagesMap))
 
     setSpecimenImages(imageUrlTemplate, dataResourceUid)
 
@@ -174,7 +187,6 @@ class MorphbankLoader extends DataLoader {
     for (specimenId <- specimenImagesMap.keySet) {
       val specimenImages = specimenImagesMap(specimenId)
       val specimenImageUrls = specimenImages.map(t => MessageFormat.format(imageUrlTemplate, t))
-      println(specimenImageUrls)
 
       val mappedValues = Map(MorphbankLoader.CATALOG_NUMBER_KEY -> specimenId, MorphbankLoader.ASSOCIATED_MEDIA_KEY -> specimenImageUrls.mkString(";"))
       val uniqueTermsValues = List(specimenId)
@@ -185,36 +197,5 @@ class MorphbankLoader extends DataLoader {
       println("Loaded images for specimen " + specimenId)
     }
   }
-
-  /*def processImage(image: Node, imageUrlTemplate: String, dataResourceUid: String, uniqueTerms: List[String]) {
-    val imageId = (image \\ MorphbankLoader.OBJECT_ID_KEY).first.text.trim()
-    val specimenIdNodeSeq = (image \\ MorphbankLoader.SPECIMEN_ID_KEY)
-
-    if (specimenIdNodeSeq.length != 0) {
-      val specimenId = specimenIdNodeSeq.first.text.trim()
-
-      val uniqueTermsValues = List(specimenId)
-      val rowKey = createUniqueID(dataResourceUid, uniqueTermsValues)
-
-      val imageUrl = MessageFormat.format(imageUrlTemplate, imageId)
-
-      var associatedMediaValue = pm.get(rowKey, MorphbankLoader.OCC_NAMESPACE, MorphbankLoader.ASSOCIATED_MEDIA_KEY).getOrElse("")
-
-      if (StringUtils.isEmpty(associatedMediaValue)) {
-        associatedMediaValue = imageUrl
-      } else {
-        associatedMediaValue = associatedMediaValue + ";" + imageUrl
-      }
-
-      val mappedValues = Map(MorphbankLoader.CATALOG_NUMBER_KEY -> specimenId, MorphbankLoader.ASSOCIATED_MEDIA_KEY -> associatedMediaValue)
-
-      val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
-      load(dataResourceUid, fr, uniqueTermsValues)
-
-      println("Loaded image " + imageId + " for specimen " + specimenId)
-    } else {
-      println("ERROR: No associated specimen for image " + imageId)
-    }
-  } */
 
 }
