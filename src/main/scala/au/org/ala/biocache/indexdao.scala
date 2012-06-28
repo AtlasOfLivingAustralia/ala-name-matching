@@ -145,7 +145,8 @@ trait IndexDAO {
       "last_load_date","last_processed_date", "modified_date", "establishment_means","loan_number","loan_identifier","loan_destination",
       "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric",
       "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue","raw_identification_qualifier","species_habitats",
-      "identified_by","identified_date","sensitive_longitude","sensitive_latitude","pest_flag_s","collectors","duplicate_status","duplicate_record","duplicate_type") // ++ elFields ++ clFields
+      "identified_by","identified_date","sensitive_longitude","sensitive_latitude","pest_flag_s","collectors","duplicate_status","duplicate_record",
+      "duplicate_type", "sensitive_coordinate_uncertainty") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -451,7 +452,8 @@ trait IndexDAO {
                     habitats.mkString("|"), map.getOrElse("identifiedBy",""), 
                     if(map.contains("dateIdentified.p")) map.getOrElse("dateIdentified.p","") + "T00:00:00Z" else "",
                     sensitiveMap.getOrElse("decimalLongitude",""), sensitiveMap.getOrElse("decimalLatitude",""),pest_tmp,
-                    map.getOrElse("recordedBy.p",""), map.getOrElse("duplicationStatus.p",""), map.getOrElse("associatedOccurrences.p",""), dupTypes.mkString("|")
+                    map.getOrElse("recordedBy.p",""), map.getOrElse("duplicationStatus.p",""), map.getOrElse("associatedOccurrences.p",""), dupTypes.mkString("|"),
+                    sensitiveMap.getOrElse("coordinateUncertaintyInMeters.p","")
                     ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
                 //)
             }

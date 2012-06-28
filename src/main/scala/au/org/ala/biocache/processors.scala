@@ -870,9 +870,12 @@ class LocationProcessor extends Processor {
                 //logger.debug("SDS return map: "+map)
                 //convert it to a string string map
                 val stringMap = map.collect({case(k, v)  if v != null => if(k=="originalSensitiveValues"){
-                    val osv = v.asInstanceOf[java.util.HashMap[String,String]]
-                    val newv = Json.toJSON(osv)
-                    (k->newv)
+                  val osv = v.asInstanceOf[java.util.HashMap[String,String]]
+                  //add the original "processed" coordinate uncertainty to the sensitive values so that it can be available if necessary
+                  if(processed.location.coordinateUncertaintyInMeters != null)
+                    osv.put("coordinateUncertaintyInMeters.p",processed.location.coordinateUncertaintyInMeters)
+                  val newv = Json.toJSON(osv)
+                  (k->newv)
                 } else (k->v.toString)
                     
                 })           
@@ -880,11 +883,11 @@ class LocationProcessor extends Processor {
                 //take away the values that need to be added to the processed record NOT the raw record
                 val uncertainty = map.get("generalisationInMetres")
                 if(!uncertainty.isEmpty){
-                    //we know that we have sensitised
-                    processed.location.coordinateUncertaintyInMeters = uncertainty.get.toString
-                    processed.location.decimalLatitude = stringMap.getOrElse("decimalLatitude","")
-                    processed.location.decimalLongitude = stringMap.getOrElse("decimalLongitude","")
-                    stringMap -= "generalisationInMetres"
+                  //we know that we have sensitised                  
+                  processed.location.coordinateUncertaintyInMeters = uncertainty.get.toString
+                  processed.location.decimalLatitude = stringMap.getOrElse("decimalLatitude","")
+                  processed.location.decimalLongitude = stringMap.getOrElse("decimalLongitude","")
+                  stringMap -= "generalisationInMetres"
                 }
                 processed.occurrence.informationWithheld = stringMap.getOrElse("informationWithheld","")
                 processed.occurrence.dataGeneralizations = stringMap.getOrElse("dataGeneralizations","")
@@ -892,10 +895,10 @@ class LocationProcessor extends Processor {
                 stringMap -="dataGeneralizations"
                 
                 if(stringMap.contains("day") || stringMap.contains("eventDate")){
-                    //remove the day from the values
-                    raw.event.day = ""
-                    processed.event.day =""
-                    processed.event.eventDate=""
+                  //remove the day from the values
+                  raw.event.day = ""
+                  processed.event.day =""
+                  processed.event.eventDate=""
                 }
                 
                 //update the raw record with whatever is left in the stringMap
