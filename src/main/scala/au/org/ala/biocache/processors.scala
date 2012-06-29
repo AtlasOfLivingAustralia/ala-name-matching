@@ -883,8 +883,11 @@ class LocationProcessor extends Processor {
                 //take away the values that need to be added to the processed record NOT the raw record
                 val uncertainty = map.get("generalisationInMetres")
                 if(!uncertainty.isEmpty){
-                  //we know that we have sensitised                  
-                  processed.location.coordinateUncertaintyInMeters = uncertainty.get.toString
+                  //we know that we have sensitised
+                  //add the uncertainty to the currently processed uncertainty
+                  val currentUncertainty = if(processed.location.coordinateUncertaintyInMeters != null) java.lang.Float.parseFloat(processed.location.coordinateUncertaintyInMeters) else 0
+                  val newuncertainty = currentUncertainty + java.lang.Integer.parseInt(uncertainty.get.toString)
+                  processed.location.coordinateUncertaintyInMeters = newuncertainty.toString
                   processed.location.decimalLatitude = stringMap.getOrElse("decimalLatitude","")
                   processed.location.decimalLongitude = stringMap.getOrElse("decimalLongitude","")
                   stringMap -= "generalisationInMetres"
