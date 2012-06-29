@@ -6,6 +6,7 @@ import org.apache.commons.lang.StringUtils
 import java.util.UUID
 import java.io.FileReader
 import au.com.bytecode.opencsv.CSVReader
+import java.util.concurrent.ArrayBlockingQueue
 
 /**
  * 1. Classification matching
@@ -39,14 +40,19 @@ object ProcessRecords {
   def main(args: Array[String]): Unit = {
 
     var fileName: String = ""
+    var threads =1
     val parser = new OptionParser("index records options") {
       opt("f", "fileName", "The record to start processing with", { v: String => fileName = v })
+      intOpt("t","threads" ," The number of concurrent threads to perform the FILE processing on.",{v:Int => threads=v})
     }
 
     val p = new RecordProcessor
     if (parser.parse(args)) {
       if (fileName != "") {
-        p.processFileOfRowKeys(fileName)
+        if(threads ==1)
+          p.processFileOfRowKeys(fileName)
+        else
+          p.processFileThreaded(new java.io.File(fileName), threads)
       } else {
         p.processAll
       }
@@ -57,6 +63,7 @@ object ProcessRecords {
 }
 
 class RecordProcessor {
+  import FileHelper._
 
   val logger = LoggerFactory.getLogger(classOf[RecordProcessor])
   //The time that the processing started - used to populate lastProcessed
@@ -118,6 +125,40 @@ class RecordProcessor {
       current = csvReader.readNext()
     }
     println("Finished processing from file.")
+  }
+  
+  def processFileThreaded(file:java.io.File, threads:Int){
+    val queue = new ArrayBlockingQueue[String](100)
+    var ids =0
+     val pool:Array[StringConsumer] = Array.fill(threads){
+     var counter=0 
+     var startTime = System.currentTimeMillis
+     var finishTime = System.currentTimeMillis
+            
+      val p = new StringConsumer(queue,ids,{guid =>
+        counter +=1
+        val rawProcessed = Config.occurrenceDAO.getRawProcessedByRowKey(guid)
+        if (!rawProcessed.isEmpty){
+        val rp = rawProcessed.get
+        processRecord(rp(0), rp(1))
+        
+        //debug counter
+        if (counter % 1000 == 0) {
+          finishTime = System.currentTimeMillis
+          println(counter + " >> Last key : " + rp(0).uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          startTime = System.currentTimeMillis
+        }
+      }
+      });ids +=1;p.start;p }
+    
+    file.foreachLine(line =>{
+      //add to the queue
+      queue.put(line.trim)
+    }) 
+    pool.foreach(t =>t.shouldStop = true)
+    pool.foreach(_.join)
+    Config.persistenceManager.shutdown
+    Config.indexDAO.shutdown
   }
 
   /**
