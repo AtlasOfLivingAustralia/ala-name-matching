@@ -64,10 +64,12 @@ object DuplicationDetection{
       //ensure that we have either all, guidsToTest or speciesFile
       if(all){
         //download all the species guids
+       
         val filename = rootDir+"dd_all_species_guids"
         ExportFacet.main(Array("species_guid",filename,"--open"))
         //now detect the duplicates
         detectDuplicates(new File(filename), threads,exist,cleanup,load)
+        
       }
       else if(guid.isDefined){
         //just a single detection - ignore the thread settings etc...
@@ -102,24 +104,40 @@ object DuplicationDetection{
     
     //val pool = Array.fill(threads){ val p = new GuidConsumer(queue,{guid => new DuplicationDetection().detect(guid,!exist)}); p.start }
     var ids=0
-    val pool:Array[StringConsumer] = Array.fill(threads){
+    val pool:Array[Thread] = Array.fill(threads){
       val dir = rootDir + ids + File.separator
       FileUtils.forceMkdir(new File(dir))
       val sourceFile = dir + "dd_data.txt"
       val dupfilename = dir + "duplicates.txt"
       val indexfilename = dir + "reindex.txt"
-      FileUtils.deleteQuietly(new File(dupfilename))
+      
       //val duplicateWriter = new FileWriter(new File(dupfilename))      
-      val p = new StringConsumer(queue,ids,{guid =>
+      val p = if(load){
+        new Thread(){
+          override def run(){
+            new DuplicationDetection().loadMulitpleDuplicatesFromFile(dupfilename, threads,new FileWriter(new File(indexfilename)))
+            //now reindex all the items
+            IndexRecords.indexList(new File(indexfilename))
+            }
+        }
+      }else{
+        FileUtils.deleteQuietly(new File(dupfilename))
+        new StringConsumer(queue,ids,{guid =>
             
       val dd= new DuplicationDetection();
-      if(load)dd.loadDuplicates(guid, threads, dupfilename, new FileWriter(indexfilename)) else dd.detect(sourceFile,new FileWriter(dupfilename, true),guid,shouldDownloadRecords= !exist ,cleanup=cleanup)});ids +=1;p.start;p }
+      if(load)dd.loadDuplicates(guid, threads, dupfilename, new FileWriter(indexfilename)) else dd.detect(sourceFile,new FileWriter(dupfilename, true),guid,shouldDownloadRecords= !exist ,cleanup=cleanup)})
+      }
+      ids +=1
+      p.start
+      p }
     
-    file.foreachLine(line =>{
-      //add to the queue
-      queue.put(line.trim)
-    }) 
-    pool.foreach(t =>t.shouldStop = true)
+    if(!load){
+      file.foreachLine(line =>{
+        //add to the queue
+        queue.put(line.trim)
+      }) 
+    }
+    pool.foreach(t =>if(t.isInstanceOf[StringConsumer]) t.asInstanceOf[StringConsumer].shouldStop = true)
     pool.foreach(_.join)
     Config.persistenceManager.shutdown
     Config.indexDAO.shutdown
@@ -162,8 +180,52 @@ class DuplicationDetection{
   val mapper = new ObjectMapper
   mapper.registerModule(DefaultScalaModule)
   mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
+  /**
+   * Loads the duplicates from a file that contains duplicates from multiple taxon concepts
+   */
+  def loadMulitpleDuplicatesFromFile(dupFilename:String, threads:Int, reindexWriter:FileWriter){
+    var currentLsid=""
+     val queue = new ArrayBlockingQueue[String](100)
+    var ids=0
+    var buffer = new ArrayBuffer[String] // The buffer to store all the rowKeys that need to be reindexed
+    //"taxonConceptLsid":"urn:lsid:catalogueoflife.org:taxon:df43e19e-29c1-102b-9a4a-00304854f820:ac2010"
+    val conceptPattern = """"taxonConceptLsid":"([A-Za-z0-9\-:\.]*)"""".r
+    var oldDuplicates:Set[String] =null
+    val pool:Array[StringConsumer] = Array.fill(threads){ val p = new StringConsumer(queue,ids,{duplicate =>loadDuplicate(duplicate, reindexWriter, buffer)});ids +=1;p.start;p }
+    new File(dupFilename).foreachLine(line =>{
+      val lsidMatch = conceptPattern.findFirstMatchIn(line)
+      if(lsidMatch.isDefined){
+        val strlsidMatch = lsidMatch.get.group(1)
+        if(currentLsid != strlsidMatch){
+          
+          if(oldDuplicates != null){
+            buffer.foreach(v=>reindexWriter.write(v + "\n"))
+            //revert the old duplicates that don't exist
+            revertNonDuplicateRecords(oldDuplicates, buffer.toSet, reindexWriter)
+            DuplicationDetection.logger.debug("REVERTING THE OLD duplicates for " + currentLsid)
+            buffer.reduceToSize(0)            
+            reindexWriter.flush                       
+          }
+          //get new old duplicates          
+          currentLsid = strlsidMatch
+          DuplicationDetection.logger.debug("STARTING to process the all the dupicates for " + currentLsid)
+          oldDuplicates = getCurrentDuplicates(currentLsid)
+        }
+        //add line to queue
+        queue.put(line)
+      }
+    })
+    
+    pool.foreach(t =>t.shouldStop = true)
+    pool.foreach(_.join)
+    oldDuplicates = getCurrentDuplicates(currentLsid)
+    buffer.foreach(v=>reindexWriter.write(v + "\n"))
+    revertNonDuplicateRecords(oldDuplicates, buffer.toSet, reindexWriter)
+    reindexWriter.flush
+    reindexWriter.close    
+  }
   
-  //loads the dupicates from the lsid based on the tmp file being populated
+  //loads the dupicates from the lsid based on the tmp file being populated - this is based on a single lsid being in the file
   def loadDuplicates(lsid:String, threads:Int, dupFilename:String, reindexWriter:FileWriter){
     //get a list of the current records that are considered duplicates   
     val oldDuplicates = getCurrentDuplicates(lsid)
