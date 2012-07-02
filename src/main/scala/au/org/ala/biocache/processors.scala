@@ -885,9 +885,11 @@ class LocationProcessor extends Processor {
                 if(!uncertainty.isEmpty){
                   //we know that we have sensitised
                   //add the uncertainty to the currently processed uncertainty
-                  val currentUncertainty = if(processed.location.coordinateUncertaintyInMeters != null) java.lang.Float.parseFloat(processed.location.coordinateUncertaintyInMeters) else 0
-                  val newuncertainty = currentUncertainty + java.lang.Integer.parseInt(uncertainty.get.toString)
-                  processed.location.coordinateUncertaintyInMeters = newuncertainty.toString
+                  if(StringUtils.isNotEmpty(uncertainty.get.toString)){
+                    val currentUncertainty = if(StringUtils.isNotEmpty(processed.location.coordinateUncertaintyInMeters)) java.lang.Float.parseFloat(processed.location.coordinateUncertaintyInMeters) else 0                
+                    val newuncertainty = currentUncertainty + java.lang.Integer.parseInt(uncertainty.get.toString)
+                    processed.location.coordinateUncertaintyInMeters = newuncertainty.toString
+                  }
                   processed.location.decimalLatitude = stringMap.getOrElse("decimalLatitude","")
                   processed.location.decimalLongitude = stringMap.getOrElse("decimalLongitude","")
                   stringMap -= "generalisationInMetres"
