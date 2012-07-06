@@ -239,7 +239,7 @@ object TasNvaDataLoader extends DataLoader {
             arg("<cache-directory-path>", "the location of the cache", { v: String => cacheDirectoryPath = v })
             booleanOpt("c", "loadFromCache", "load previously cached data instead of data from the web service", { v: Boolean => loadFromCache = v })
             opt("p", "startAtPage", "Start loading from the specified page index", { v: String => startAtPage = v.toInt })
-            opt("l", "pageLimit", "Limit loading to the specified number of pages. For testing purposes only", { v: String => pageLimit = v.toInt })
+            opt("l", "pageLimit", "Load up to but excluding the specified page number. For testing purposes only", { v: String => pageLimit = v.toInt })
         }
 
         if (parser.parse(args)) {
@@ -286,10 +286,10 @@ class TasNvaDataLoader extends DataLoader {
         } else {
             // load data using the web service
             var moreRecords = true
-            var startIndex = 0
             var pageNumber = startAtPage
+            var startIndex = pageNumber * pageSize
 
-            while (moreRecords && (pageLimit == -1 || startIndex < pageSize * pageLimit)) {
+          while (moreRecords && (pageLimit == -1 || startIndex < pageSize * pageLimit)) {
                 println("Loading page " + pageNumber)
 
                 try {
