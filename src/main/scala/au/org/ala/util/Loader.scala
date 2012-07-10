@@ -78,7 +78,7 @@ class Loader extends DataLoader {
           }
           case "custom" => println("custom webservice loading")
           case "autofeed" => {
-            println("AutoFeed Darwin cire headed CSV loading")
+            println("AutoFeed Darwin core headed CSV loading")
             val l = new AutoDwcCSVLoader
             l.load(dataResourceUid)
           }
