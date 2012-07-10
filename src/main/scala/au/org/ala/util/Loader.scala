@@ -77,6 +77,11 @@ class Loader extends DataLoader {
             l.load(dataResourceUid)
           }
           case "custom" => println("custom webservice loading")
+          case "autofeed" => {
+            println("AutoFeed Darwin cire headed CSV loading")
+            val l = new AutoDwcCSVLoader
+            l.load(dataResourceUid)
+          }
           case _ => println("Protocol " + protocol + " currently unsupported.")
         }
       } catch {

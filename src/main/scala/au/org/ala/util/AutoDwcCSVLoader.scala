@@ -64,7 +64,7 @@ class AutoDwcCSVLoader extends SecureDataLoader{
     //val loadPattern ="""([\x00-\x7F\s]*_dwc.csv)""".r //"""(dwc-data[\x00-\x7F\s]*.gz)""".r
     val loadPattern = """([\x00-\x7F\s]*dwc[\x00-\x7F\s]*.csv[\x00-\x7F\s]*)""".r
     println(loadPattern.toString())
-    def load(dataResourceUid:String, includeIds:Boolean){
+    def load(dataResourceUid:String, includeIds:Boolean=false){
         //TODO support complete reload by looking up webservice
         val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
         //clean out the dr load directory before downloading the new file.
