@@ -12,6 +12,13 @@ import org.slf4j.LoggerFactory
 import scalaj.http.Http
 import collection.mutable.ArrayBuffer
 import collection.JavaConversions
+import com.jcraft.jsch.JSch
+import com.jcraft.jsch.ChannelSftp
+import com.jcraft.jsch.ChannelSftp._
+import java.io.FileInputStream
+import com.jcraft.jsch.Session
+import org.rev6.scf._
+
 
 class SimpleLoader extends DataLoader
 
@@ -43,7 +50,9 @@ trait DataLoader {
     val registryUrl = "http://collections.ala.org.au/ws/dataResource/"
     val pm = Config.persistenceManager
     val loadTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
-
+    
+    def emptyTempFileStore(resourceUid:String)=FileUtils.deleteQuietly(new File(temporaryFileStore+File.separator+resourceUid))
+    
     def getDataResourceDetailsAsMap(resourceUid:String) : Map[String, String] = {
       val json = Source.fromURL(registryUrl + resourceUid + ".json").getLines.mkString
       JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
@@ -243,4 +252,130 @@ trait DataLoader {
           case e:Exception => e.printStackTrace();false
         }
     }
+}
+
+
+class SecureDataLoader extends DataLoader{
+      import JavaConversions._
+
+      val connectionPattern = """sftp://([a-zA-Z]*):([a-zA-Z]*)@([a-zA-z\.]*):([a-zA-Z/]*)""".r
+      println(connectionPattern)
+      
+      var channelSftp:ChannelSftp = null
+      var session:Session = null
+      
+      def sftpLatestArchive(url:String, resourceUid:String):Option[String]={
+        
+        url match{
+          case connectionPattern(user, password, host, directory) =>{
+            connect(host, user, password)
+            val lastFile = getLatestFile(directory, "*.*")
+            disconnect
+            if(lastFile.isDefined){
+              val dir = temporaryFileStore + resourceUid
+              //scp the file is faster than sftp
+              scpFile(host,user,password,lastFile.get,new File(dir+ File.separator+lastFile.get))              
+            }
+            else{             
+              logger.error("No latest file for " + url); None
+            }            
+          }
+          case _=>logger.error("Unable to connect to " + url);None
+        }
+      }
+      
+      def connect(host:String,  user:String, password:String,port:Int=22){
+        val jsch = new JSch()
+        session = jsch.getSession(user,host,port)
+        val config = new java.util.Properties()
+        config.put("StrictHostKeyChecking", "no")
+        session.setConfig(config)
+        session.setPassword(password)
+        session.connect()
+        val channel = session.openChannel("sftp")
+        channel.connect()
+        channelSftp =channel.asInstanceOf[ChannelSftp]
+      }
+      def disconnect(){
+        channelSftp.disconnect()
+        session.disconnect()
+      }
+      
+      def scpFile(host:String, user:String, password:String, remoteFile:String, localFile:File):Option[String]={
+        var  ssh:SshConnection = null
+        try{
+          ssh= new SshConnection(host,user,password)
+          ssh.connect()
+          
+          FileUtils.forceMkdir(localFile.getParentFile())
+          val scpFile = new ScpFile(localFile, remoteFile)      
+          ssh.executeTask(new ScpDownload(scpFile))
+          Some(localFile.getAbsolutePath())
+        }
+        catch{
+          case e:Exception => logger.error("Unable to SCP " + remoteFile ,e);None
+        }
+        finally{
+          if(ssh != null)
+            ssh.disconnect()
+          None
+        }
+        
+        
+      }
+      
+      def sftpFile(serverFile:String, localDir:String):Option[String]={
+        //FileUtils.forceMkdir(localDir)
+//        val file = getLatestFile(dir)
+//        if(file.isDefined){
+        try{
+          val inputStream = channelSftp.get(serverFile)
+          //val outputStream = new FileOutputStream(new File(localDir + File.separator + file.get))//put(new FileInputStream(localDir+ File.separator+file.get), file.get);
+          //Source.fromInputStream(inputStream).foreach(c => outputStream.write(c))
+          org.apache.commons.io.FileUtils.copyInputStreamToFile(inputStream,new File(localDir + File.separator + serverFile))
+          Some(localDir + File.separator + serverFile)
+        }
+        catch{
+          case e:Exception=>None
+        }
+//        }        
+      }
+      
+      def getLatestFile(dir:String, filePattern:String):Option[String]={
+        
+        val list = listFiles(dir+File.separator+filePattern)
+        if(list.size>0){
+          val item=list.reduceLeft((a,b)=>if(a.getAttrs().getMTime() > b.getAttrs().getMTime()) a else b)
+                    
+          Some(dir + File.separator+item.getFilename)
+        }
+        else{
+          None
+        }
+      }
+      
+      implicit val o = Ordering.by((p: ChannelSftp#LsEntry) => (p.getAttrs().getMTime()))
+      
+      def listFiles(filePattern:String):List[ChannelSftp#LsEntry]={
+//        val jsch = new JSch()
+//        val session = jsch.getSession(user,host,port)
+//        val config = new java.util.Properties()
+//        config.put("StrictHostKeyChecking", "no")
+//        session.setConfig(config)
+//        session.setPassword(password)
+//        session.connect()
+//        val channel = session.openChannel("sftp")
+//        channel.connect()
+//        val channelSftp = channel.asInstanceOf[ChannelSftp];
+        //channelSftp.cd("samus")
+        val vector =channelSftp.ls(filePattern)
+//        for(i<- 0 to vector.size-1){
+//          val value = vector.get(i).asInstanceOf[ChannelSftp#LsEntry]
+//          println(value + " : " +value.getClass)
+//          
+//        }
+        
+        
+        vector.asInstanceOf[java.util.Vector[ChannelSftp#LsEntry]].toList.sorted(o.reverse)//.sort()
+      }
 }

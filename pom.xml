@@ -205,6 +205,12 @@
 			<groupId>org.gbif</groupId>
 			<artifactId>dwca-reader</artifactId>
 			<version>1.7.6</version>
+			<exclusions>
+				<exclusion>
+					<groupId>commons-io</groupId>
+					<artifactId>commons-io</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<!-- Google Commons -->
 		<dependency>
@@ -277,6 +283,23 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<!-- SFTP -->
+		<dependency>
+      		<groupId>com.jcraft</groupId>
+      		<artifactId>jsch</artifactId>
+      		<version>0.1.42</version>
+    	</dependency>
+    	<dependency>
+    		<groupId>org.rev6</groupId>
+  			<artifactId>SecureChannelFacade</artifactId>
+  			<version>0.2</version>
+  			<exclusions>
+  				<exclusion>
+  					<groupId>com.jcroft</groupId>
+  					<artifactId>jsch</artifactId>
+  				</exclusion>
+  			</exclusions>
+    	</dependency>
 		<!-- <dependency> <groupId>com.h2database</groupId> <artifactId>h2</artifactId> 
 			<version>1.3.162</version> </dependency> -->
 		<!-- <dependency> <groupId>org.scale7</groupId> <artifactId>scale7-pelops</artifactId> 
