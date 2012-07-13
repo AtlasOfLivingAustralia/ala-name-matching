@@ -125,7 +125,7 @@ ownerInstitutionCode
 parentNameUsage	parentTaxon	higherTaxon	higherNameUsage
 phylum
 pointRadiusSpatialFit
-preparations	PreparationType
+preparations	PreparationType	AbcdConcept0401
 previousIdentifications
 recordNumber	collectorNumber
 recordedBy	collector
@@ -172,3 +172,27 @@ year	YearCollected
 verificationDate	verification_date_iso
 verificationNotes	verification_notes
 preferredFlag	preferred_flag
+cultivarName	AbcdConcept0315
+verbatimDateIdentified	AbcdConcept0383
+typifiedName	AbcdConcept0604
+verifier	AbcdConcept0649
+verificationDate	AbcdConcept0657
+verificationNotes	AbcdConcept0658
+identifierRole	AbcdConcept0376
+loanReturnDate	AbcdConcept0718
+loanDate	AbcdConcept0717
+loanForBotanist	AbcdConcept0715
+loanDestination	AbcdConcept0714
+loanIdentifier	AbcdConcept0712
+cultivated	cultivatedOccurrence
+generalisedLocality	AbcdConcept0977
+nearNamedPlaceRelationTo	AbcdConcept0980
+ibra	ibraRegion
+duplicates	AbcdConcept0711
+duplicatesOriginalInstitutionID	AbcdConcept0580
+duplicatesOriginalUnitID	AbcdConcept0579
+scientificNameAddendum	AbcdConcept0334
+typeStatusQualifier	AbcdConcept0647
+abcdTypeStatus	AbcdConcept0645
+abcdIdentificationQualifier	AbcdConcept0332
+abcdIdentificationQualifierInsertionPoint	AbcdConcept0333

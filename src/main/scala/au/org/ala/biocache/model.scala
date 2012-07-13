@@ -65,19 +65,21 @@ class Occurrence extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var sex:String = _
   @BeanProperty var source:String = _
   //Additional fields for HISPID support
-  @BeanProperty var collectorFieldNumber:String = _
-  @BeanProperty var cultivated:String = _
-  @BeanProperty var duplicates:String = _
-  @BeanProperty var duplicatesOriginalInstitutionID:String = _
-  @BeanProperty var duplicatesOriginalUnitID:String = _
-  @BeanProperty var loanIdentifier:String = _
-  @BeanProperty var loanSequenceNumber:String = _
-  @BeanProperty var loanDestination:String = _
-  @BeanProperty var loanForBotanist:String = _
-  @BeanProperty var loanDate:String = _
-  @BeanProperty var loanReturnDate:String = _
-  @BeanProperty var phenology:String =_
+  @BeanProperty var collectorFieldNumber:String = _  //This value now maps to the correct DWC field http://rs.tdwg.org/dwc/terms/fieldNumber
+  @BeanProperty var cultivated:String = _ //http://www.chah.org.au/hispid/terms/cultivatedOccurrence
+  @BeanProperty var duplicates:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0711
+  @BeanProperty var duplicatesOriginalInstitutionID:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0580
+  @BeanProperty var duplicatesOriginalUnitID:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0579
+  @BeanProperty var loanIdentifier:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0712
+  @BeanProperty var loanSequenceNumber:String = _  //this one would be http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0713 but not in current archive
+  @BeanProperty var loanDestination:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0714
+  @BeanProperty var loanForBotanist:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0715
+  @BeanProperty var loanDate:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0717
+  @BeanProperty var loanReturnDate:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0718
+  @BeanProperty var phenology:String =_ //http://www.chah.org.au/hispid/terms/phenology
   @BeanProperty var preferredFlag:String =_
+  @BeanProperty var secondaryCollectors:String =_ //http://www.chah.org.au/hispid/terms/secondaryCollectors
+  @BeanProperty var naturalOccurrence:String = _ //http://www.chah.org.au/hispid/terms/naturalOccurrence
   //this property is in use in flickr tagging - currently no equivalent in DwC
   @BeanProperty var validDistribution:String = _
   //custom fields
@@ -129,6 +131,7 @@ class Classification extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var subspecies:String = _
   @BeanProperty var infraspecificEpithet:String = _
   @BeanProperty var infraspecificMarker:String = _
+  @BeanProperty var cultivarName:String = _ //an addition to darwin core for http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0315
   @BeanProperty var higherClassification:String = _
   @BeanProperty var parentNameUsage:String = _
   @BeanProperty var parentNameUsageID:String = _
@@ -149,6 +152,7 @@ class Classification extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var nomenclaturalStatus:String = _
   //additional fields for HISPID support
   @BeanProperty var scientificNameWithoutAuthor:String = _
+  @BeanProperty var scientificNameAddendum:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0334
   //custom additional fields
   @BeanProperty var taxonRankID:String = _
   @BeanProperty var kingdomID:String = _
@@ -199,15 +203,18 @@ class Identification extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var identificationReferences:String = _
   @BeanProperty var identificationRemarks:String = _
   @BeanProperty var identifiedBy:String = _
-  @BeanProperty var identifierRole:String = _ //HISPID addition
+  @BeanProperty var identifierRole:String = _ //HISPID addition http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0376
   @BeanProperty var typeStatus:String = _
   /* AVH addition */
-  @BeanProperty var typeStatusQualifier:String = _
-  @BeanProperty var typifiedName:String = _
-  @BeanProperty var verbatimDateIdentified:String = _
-  @BeanProperty var verifier:String = _
-  @BeanProperty var verificationDate:String =_
-  @BeanProperty var verificationNotes:String = _
+  @BeanProperty var abcdTypeStatus:String = _ //ABCD addition for AVH http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0645
+  @BeanProperty var typeStatusQualifier:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0647
+  @BeanProperty var typifiedName:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0604
+  @BeanProperty var verbatimDateIdentified:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0383
+  @BeanProperty var verifier:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0649
+  @BeanProperty var verificationDate:String =_ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0657
+  @BeanProperty var verificationNotes:String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0658
+  @BeanProperty var abcdIdentificationQualifier:String =_ //ABCD addition for AVH http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0332
+  @BeanProperty var abcdIdentificationQualifierInsertionPoint:String =_ //ABCD addition for AVH http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0333
 }
 
 /**
@@ -287,8 +294,14 @@ class Location extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var waterBody:String = _
   //custom additional fields
   @BeanProperty var ibra:String = _
+  @BeanProperty var ibraSubregion:String = _ //http://www.chah.org.au/hispid/terms/ibraSubregion
   @BeanProperty var imcra:String = _
   @BeanProperty var lga:String = _
+  //AVH additions
+  @BeanProperty var generalisedLocality: String =_ ///http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0977
+  @BeanProperty var nearNamedPlaceRelationTo: String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0980
+  @BeanProperty var australianHerbariumRegion: String = _ //http://www.chah.org.au/hispid/terms/australianHerbariumRegion
+  
   //fields that need be hidden from all public API
   //These fields can NOT be @BeanProperty because we need the getter method to have a @JsonIgnore annotation
   var originalDecimalLatitude:String =_
