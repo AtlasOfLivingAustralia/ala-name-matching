@@ -81,6 +81,13 @@ class MiscTest extends ConfigFunSuite {
         raw.event.day = "31"
         qas = (new EventProcessor).process("test", raw, processed)
         expect(30007){qas(0).code}
+        
+        //First Fleet date test
+        raw.event.year="1788"
+        raw.event.month="1"
+        raw.event.day="26"
+        qas = (new EventProcessor).process("test", raw, processed)
+        expect(30007){qas(0).code}
     }
     
     test("Default DwC Values"){
@@ -101,6 +108,34 @@ class MiscTest extends ConfigFunSuite {
         raw.occurrence.associatedTaxa = "infects:Test Species"
         (new MiscellaneousProcessor).process("test", raw, processed)
         expect ("Infects"){processed.occurrence.interactions(0)}
+    }
+    test("modified"){
+        val raw = new FullRecord
+        val processed = new FullRecord
+        raw.occurrence.modified = "2004-08-17"
+        (new MiscellaneousProcessor).process("test", raw, processed)
+        expect("2004-08-17"){processed.occurrence.modified}
+    }
+    
+    test("establishment means"){
+      val raw = new FullRecord
+      var processed = new FullRecord
+      raw.occurrence.establishmentMeans ="not cultivated; not native"
+      val mp = new MiscellaneousProcessor 
+      mp.process("test",raw, processed)
+      expect("not cultivated; not native"){processed.occurrence.establishmentMeans}
+      raw.occurrence.establishmentMeans="not cultivated; missing from vocab"
+      mp.process("test", raw, processed)
+      expect("not cultivated"){processed.occurrence.establishmentMeans}
+      processed = new FullRecord
+      raw.occurrence.establishmentMeans=null
+      mp.process("test,",raw,processed)
+      expect(null){processed.occurrence.establishmentMeans}
+    }
+    
+    test("species group" ){
+      println(SpeciesGroups.getStringList)
+      println(SpeciesGroups.getSpeciesGroups("1768844","1781197"))
     }
     /*test("Layers Test" ){
         expect("ibra_merged"){Layers.idToNameMap("ibra")}

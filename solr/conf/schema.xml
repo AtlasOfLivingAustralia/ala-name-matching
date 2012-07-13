@@ -624,7 +624,7 @@
    <field name="collector" type="string" indexed="true" stored="true" multiValued="false"  />
    <field name="collectors" type="string" indexed="true" stored="true" multiValued="true"  />
 
-	<field name="establishment_means" type="string" indexed="true" stored="false" multiValued="false" />	
+	<field name="establishment_means" type="string" indexed="true" stored="false" multiValued="true" />	
 	<field name="exchange_number" type="string" indexed="true" stored="false" multiValued="false" />
 	<field name="duplicate_inst" type="textgen" indexed="true" stored="false" multiValued="true" />
 	<field name="original_name_usage" type="string" indexed="true" stored="false" multiValued="false" />

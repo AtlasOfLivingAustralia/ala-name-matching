@@ -436,7 +436,7 @@ trait IndexDAO {
                     if(lastLoaded.isEmpty)"2010-11-1T00:00:00Z" else DateFormatUtils.format(lastLoaded.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
                     if(lastProcessed.isEmpty)"" else DateFormatUtils.format(lastProcessed.get,"yyyy-MM-dd'T'HH:mm:ss'Z'"),
                     if(map.contains("modified.p")) map.getOrElse("modified.p","") + "T00:00:00Z" else "",
-                    map.getOrElse("establishmentMeans.p","").replaceAll(",","|"),
+                    map.getOrElse("establishmentMeans.p","").replaceAll("; ","|"),
                     map.getOrElse("loanSequenceNumber", ""), map.getOrElse("loanIdentifier", ""), map.getOrElse("loanDestination",""),
                     map.getOrElse("loanForBotanist",""), 
                     if(map.contains("loanDate")) map.getOrElse("loanDate","") + "T00:00:00Z" else "",
@@ -849,7 +849,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
 //            }
               
             solrServer.add(solrDocList)
-            if(commit)
+            if(commit || solrDocList.size >= 10000)
               solrServer.commit
 //            val tmpDocList = new java.util.ArrayList[SolrInputDocument](solrDocList);
 //            while(docQueue.size()>1){Thread.sleep(250)}

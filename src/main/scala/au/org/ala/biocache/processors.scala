@@ -98,7 +98,7 @@ class DefaultValuesProcessor extends Processor {
 }
 
 class MiscellaneousProcessor extends Processor {
-
+  val LIST_DELIM = ";".r;
   val interactionPattern = """([A-Za-z]*):([\x00-\x7F\s]*)""".r
   
   def process(guid:String, raw:FullRecord, processed:FullRecord) :Array[QualityAssertion] ={
@@ -148,11 +148,16 @@ class MiscellaneousProcessor extends Processor {
   def processEstablishmentMeans(raw:FullRecord, processed:FullRecord)={
       //2012-0202: At this time AVH is the only data resource to support this. In the future it may be necessary for the value to be a list...
       //handle the "cultivated" type
-      if(raw.occurrence.cultivated != null && !raw.occurrence.cultivated.isEmpty){
-          val term = EstablishmentMeans.matchTerm(raw.occurrence.cultivated)
-          if(!term.isEmpty){
-              processed.occurrence.establishmentMeans = term.get.getCanonical
-          }
+      //2012-07-13: AVH has moved this to establishmentMeans and has also include nativeness 
+      if(StringUtils.isNotBlank(raw.occurrence.establishmentMeans)){
+        val ameans = LIST_DELIM.split(raw.occurrence.establishmentMeans)
+        val newmeans = ameans.map(means =>{
+          val term = EstablishmentMeans.matchTerm(means)
+          if(term.isDefined) term.get.getCanonical else ""
+        }).filter(_.length>0)
+        if(newmeans.size>0)
+          processed.occurrence.establishmentMeans = newmeans.mkString("; ") 
+
       }
   }
   
