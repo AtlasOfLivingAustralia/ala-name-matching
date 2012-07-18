@@ -38,8 +38,10 @@ import java.util.ArrayList
 
 object DuplicationDetection{
   import FileHelper._
+  import JavaConversions._
   val logger = LoggerFactory.getLogger("DuplicateDetection")
-  val rootDir = "/tmp/dd/"
+  val rootDir = "/data/dedup/"
+
   def main(args:Array[String])={
     var all = false
     var exist = false
@@ -204,13 +206,13 @@ class DuplicationDetection{
             buffer.foreach(v=>reindexWriter.write(v + "\n"))
             //revert the old duplicates that don't exist
             revertNonDuplicateRecords(oldDuplicates, buffer.toSet, reindexWriter)
-            DuplicationDetection.logger.debug("REVERTING THE OLD duplicates for " + currentLsid)
+            DuplicationDetection.logger.info("REVERTING THE OLD duplicates for " + currentLsid)
             buffer.reduceToSize(0)            
             reindexWriter.flush                       
           }
           //get new old duplicates          
           currentLsid = strlsidMatch
-          DuplicationDetection.logger.debug("STARTING to process the all the dupicates for " + currentLsid)
+          DuplicationDetection.logger.info("STARTING to process the all the dupicates for " + currentLsid)
           oldDuplicates = getCurrentDuplicates(currentLsid)
         }
         //add line to queue
@@ -451,6 +453,7 @@ class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], dupli
   def markRecordsAsDuplicatesAndSetTypes(record: DuplicateRecordDetails):(DuplicateRecordDetails,List[DuplicateRecordDetails])={
     //find the "representative" record for the duplicate
     var highestPrecision = determinePrecision(record.latLong)
+    record.precision = highestPrecision
     var representativeRecord = record
     val duplicates = record.duplicates
     
@@ -461,14 +464,14 @@ class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], dupli
     setDateTypes(record,hasYear,hasMonth,hasDay)
     duplicates.foreach(r =>{
       setDateTypes(r,hasYear,hasMonth,hasDay)
-      val pre = determinePrecision(r.latLong)
-      if(pre > highestPrecision){
-        highestPrecision = pre
-        representativeRecord.status = "D"
+      r.precision = determinePrecision(r.latLong)
+      if(r.precision > highestPrecision){
+        highestPrecision = r.precision
+        //representativeRecord.status = "D"
         representativeRecord = r
       }
-      else
-        r.status = "D"
+//      else
+//        r.status = "D"
     })
     representativeRecord.status = "R"
     
@@ -477,12 +480,16 @@ class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], dupli
       duplicates += record
       duplicates -= representativeRecord
       representativeRecord.duplicates = duplicates
+      //set the duplication types of the old rep record 
+      record.dupTypes = representativeRecord.dupTypes
     }
-//    else{
-//      duplicates - representativeRecord
-//      representativeRecord.duplicates = duplicates      
-//    }
-      
+
+    //set the duplication type based data resource uid
+    duplicates.foreach(d => {
+      d.status = if(d.druid == representativeRecord.druid) "D1" else "D2"
+      d.addDupType(if(d.precision == representativeRecord.precision) DuplicationTypes.EXACT_COORD else DuplicationTypes.DIFFERENT_PRECISION)
+      })
+    
     (representativeRecord,duplicates.toList)
   }
   //reports the maximum number of decimal places that the lat/long are reported to
@@ -622,7 +629,10 @@ class DuplicateRecordDetails(@BeanProperty var rowKey:String, @BeanProperty var 
   def this() = this(null,null,null,null,null,null,null,null,null,null,null,null,null,null)
   
   @BeanProperty var status="U"
+  @BeanProperty var druid:String = if(rowKey != null)rowKey.split("\\|")(0) else null
   var duplicateOf:String = null
+  //stores the precision so that coordinate dup types can be established - we don't want to persist this property
+  var precision =0
   @BeanProperty var duplicates:ArrayList[DuplicateRecordDetails]=null
   @BeanProperty var dupTypes:ArrayList[DupType]=_
   def addDuplicate(dup:DuplicateRecordDetails) ={
@@ -634,134 +644,5 @@ class DuplicateRecordDetails(@BeanProperty var rowKey:String, @BeanProperty var 
     if(dupTypes == null)
       dupTypes = new ArrayList[DupType]()
     dupTypes.add(dup)
-  }
-}
-
-class DuplicationDetectionOld {
-  import JavaConversions._
- 
-  def detect(lsid:String){
-    //only interested in considering records that have been matched to the same concept
-    //Also only want records that have coordinates. Locality information can be too broad to correctly detect duplications
-    //We may wish to consider this in the future...
-    //TO DO lft and rgt values...
-    val query = "taxon_concept_lsid:" + ClientUtils.escapeQueryChars(lsid) + " AND lat_long:[* TO *]"
-
-    Config.indexDAO.pageOverFacet((value,count)=>{
-      //so year facet exists need to
-      if(count >0){
-        val fq = Array("year:"+value) 
-        
-        val yearRecords = retrieveRecordGroup(query,fq)
-        //now groupBy the value in the year
-        val groups = yearRecords.groupBy{_.getOrElse("year","UNKNOWN")}
-        
-        //group by date
-//        Config.indexDAO.pageOverFacet((value2,count2)=>{
-//          if(count2>0){
-//            //now we need to grab all the records and perform the duplicate groupings.
-//            val fq2:Array[String] = fq ++ Array("occurrence_date:"+value2)
-//            
-//          }
-//          true
-//        },"occurrence_date",query,fq)
-        
-        //need to handle the null dates
-      }
-      true
-    },"year",  query ,Array())
-    
-    //also need to consider the null year
-    
-    //Config.indexDAO.pageOverIndex(map=>{true},Array("row_key","id","taxon_name","year","month","occurrence_date","collector","lat_long","point-0.0001","point-0.001","point-0.01","point-0.1","point-1"),"taxon_concept_lsid:"+SolrUtils.)
-  }
-  
-  def processYearGroup(yearGroup:List[Map[String,String]]){
-    //get them into month groups
-    val monthGroups = yearGroup.groupBy(_.getOrElse("month","UNKNOWN"))
-    val unknownGroup = monthGroups.getOrElse("UNKNOWN",List())
-    monthGroups.foreach{case (month, monthList) =>{
-      //val (month, monthList) = values
-        if(month != "UNKNOWN"){
-          //now group by days
-          val dayGroups = monthList.groupBy(_.getOrElse("occurrence_date","UNKNOWN"))
-          dayGroups.foreach{case (day, dayList) =>{
-            //detect the duplicates within the same group
-            
-          }} 
-        }
-    }}
-  }
-  
-  def retrieveRecordGroup(query:String, fqs:Array[String]):List[Map[String,String]]={
-    val buffer= new scala.collection.mutable.ArrayBuffer[Map[String,String]]
-    //ret
-    Config.indexDAO.pageOverIndex(map=>{
-      //TODO special preprocessing of collectors names if necessary
-       val smap = map.toMap[String,AnyRef].mapValues[String](value => {if(value.getClass == classOf[java.util.Date])
-         //store the day of month only
-           org.apache.commons.lang.time.DateFormatUtils.format(value.asInstanceOf[java.util.Date], "dd")
-         else
-           value.toString
-         })
-       buffer += smap
-       true
-       },Array("row_key","id","taxon_name","year","month","occurrence_date","collector","lat_long","point-0.0001","point-0.001","point-0.01","point-0.1","point-1"),
-       query,fqs)
-              
-     buffer.toList
-  }
-  
-  def groupDuplicates(sampleList:List[Map[String,String]],duplicateBuffer:ArrayBuffer[List[Map[String,String]]]):List[Map[String,String]]={
-    //based on the remaining occurences in the smapleList get the next group of potential duplicates.
-    val list = new scala.collection.mutable.LinkedList[Map[String,String]]
-    val recordToWorkWith = sampleList.head
-    val points = Array(recordToWorkWith.getOrElse("point-1",""),
-                       recordToWorkWith.getOrElse("point-0.1",""),
-                       recordToWorkWith.getOrElse("point-0.01",""),
-                       recordToWorkWith.getOrElse("point-0.001",""),
-                       recordToWorkWith.getOrElse("point-0.0001",""),
-                       recordToWorkWith.getOrElse("lat_long",""))
-    val collector = recordToWorkWith.getOrElse("collector","")
-    sampleList.foreach(map=>{
-      if(recordToWorkWith.getOrElse("id","") != map.getOrElse("id","A")){
-        //check for duplication
-        //check the lat lon
-        val mpoints = Array(map.getOrElse("point-1",""),
-                       map.getOrElse("point-0.1",""),
-                       map.getOrElse("point-0.01",""),
-                       map.getOrElse("point-0.001",""),
-                       map.getOrElse("point-0.0001",""),
-                       map.getOrElse("lat_long",""))
-        val mcollector =  map.getOrElse("collector","")
-//        val mdiff = mpoints.diff(points)
-//        val pdiff = points(mpoints.indexOf(mdiff))
-        
-        //if(isSpatialDuplicate(points, mpoints) && isCollectorDuplicate(collector,mcollector)) 
-      }
-    })
-    List()
-  }
-  def isCollectorDuplicate(collector1:String, collector2:String): Boolean ={
-    //if(collector1 is null )
-    false;
-  }
-  def isSpatialDuplicate(points:Array[String], pointsb:Array[String]):Boolean ={
-    for(i <- 0 to 5){
-      if(points(i) != pointsb(i)){
-        //check to see if the precision is different
-        if(i>0){
-          //one of the current points has the same coordinates as the previous precision
-          if(points(i) == points(i-1) || pointsb(i) == pointsb(i-1)){
-            //indicates that we have a precision difference
-            return true
-          }
-          //now check if we have a rounding error by look at the subsequent coordinates...
-          return false  
-        }
-          
-      }
-    }
-    true
   }
 }

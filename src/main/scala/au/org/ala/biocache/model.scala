@@ -91,6 +91,11 @@ class Occurrence extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var interactions:Array[String] = _
   //stores either U,R or D.  U - a unique record, R - a representative record in a group of duplicates, D - a duplicate record in a group
   // when null a value of "U" is assumed
+  /*
+    D has been split into categories: 
+    D1- duplicate belongs to the same data resource as the representative record. 
+    D2- duplicate belongs to a different data resource as the representative record
+  */
   @BeanProperty var duplicationStatus:String =_
   @BeanProperty var duplicationType:Array[String] =_
   //Store the conservation status
