@@ -34,7 +34,6 @@ object TempDataLoader {
       post.getResponseHeaders().foreach(h => println(h.getName() + ": " +h.getValue()))
       println(post.getRequestHeader("location"))
       //println(request.responseCode)
-      
     }
   }
 }

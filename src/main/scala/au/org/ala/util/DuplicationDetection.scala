@@ -58,8 +58,8 @@ object DuplicationDetection{
       opt("load", "load to duplicates into the database",{load=true})
       opt("f","file","A file that contains a list of species guids to detect duplication for",{v: String => speciesFile = Some(v)})
       intOpt("t","threads" ," The number of concurrent species duplications to perform.",{v:Int => threads=v})
-      
     }
+
     if(parser.parse(args)){
       //ensure that we have either all, guidsToTest or speciesFile
       if(all){
@@ -120,16 +120,18 @@ object DuplicationDetection{
             IndexRecords.indexList(new File(indexfilename))
             }
         }
-      }else{
+      } else {
         FileUtils.deleteQuietly(new File(dupfilename))
         new StringConsumer(queue,ids,{guid =>
             
-      val dd= new DuplicationDetection();
-      if(load)dd.loadDuplicates(guid, threads, dupfilename, new FileWriter(indexfilename)) else dd.detect(sourceFile,new FileWriter(dupfilename, true),guid,shouldDownloadRecords= !exist ,cleanup=cleanup)})
+        val dd = new DuplicationDetection();
+        if(load)dd.loadDuplicates(guid, threads, dupfilename, new FileWriter(indexfilename)) else dd.detect(sourceFile,new FileWriter(dupfilename, true),guid,shouldDownloadRecords= !exist ,cleanup=cleanup)})
       }
-      ids +=1
+
+      ids += 1
       p.start
-      p }
+      p
+    }
     
     if(!load){
       file.foreachLine(line =>{
@@ -617,7 +619,7 @@ class DuplicateRecordDetails(@BeanProperty var rowKey:String, @BeanProperty var 
                     @BeanProperty var point0_01:String, @BeanProperty var point0_001:String, 
                     @BeanProperty var point0_0001:String,@BeanProperty var latLong:String, @BeanProperty var rawScientificName:String, @BeanProperty var collector:String){
   
-  def this() =this(null,null,null,null,null,null,null,null,null,null,null,null,null,null)
+  def this() = this(null,null,null,null,null,null,null,null,null,null,null,null,null,null)
   
   @BeanProperty var status="U"
   var duplicateOf:String = null
@@ -633,8 +635,6 @@ class DuplicateRecordDetails(@BeanProperty var rowKey:String, @BeanProperty var 
       dupTypes = new ArrayList[DupType]()
     dupTypes.add(dup)
   }
-  
-  
 }
 
 class DuplicationDetectionOld {
@@ -646,9 +646,7 @@ class DuplicationDetectionOld {
     //We may wish to consider this in the future...
     //TO DO lft and rgt values...
     val query = "taxon_concept_lsid:" + ClientUtils.escapeQueryChars(lsid) + " AND lat_long:[* TO *]"
-    
-    //
-    
+
     Config.indexDAO.pageOverFacet((value,count)=>{
       //so year facet exists need to
       if(count >0){

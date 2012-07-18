@@ -5,7 +5,6 @@ import au.com.bytecode.opencsv.{CSVWriter,CSVReader}
 import scala.collection.mutable.HashSet
 import java.io.{FileReader, FileWriter}
 
-
 /**
  * A re-sampler for sensitive records.
  */
@@ -113,7 +112,6 @@ object ResampleSensitiveRecords extends ResampleRecords {
     }
   }
 }
-
 
 /**
  * A resampler for records that have had their coordinates changed during processing.

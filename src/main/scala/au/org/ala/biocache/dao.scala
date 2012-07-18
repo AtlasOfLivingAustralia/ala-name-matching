@@ -6,7 +6,6 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.codehaus.jackson.map.ObjectMapper
 import au.org.ala.util.ReflectBean
 import scala.collection.JavaConversions
-import java.lang.reflect.Method
 import java.util.UUID
 import org.slf4j.LoggerFactory
 import scala.collection.mutable.ArrayBuffer
@@ -264,50 +263,43 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      */
     def writeToRecordWriter(writer:RecordWriter, rowKeys: Array[String], fields: Array[String], qaFields:Array[String], includeSensitive:Boolean=false){
       //get the codes for the qa fields that need to be included in the download
-        //TODO fix thi in case the value can't be found
-        val mfields = scala.collection.mutable.ArrayBuffer[String]()
-        mfields ++= fields
-        val codes = qaFields.map(value=>AssertionCodes.getByName(value).get.getCode)
-        val firstEL = fields.find(value => {elpattern.findFirstIn(value).nonEmpty})
-        val firstCL = fields.find(value => {clpattern.findFirstIn(value).nonEmpty})        
-        if(firstEL.isDefined)
-          mfields + "el.p"
-        if(firstCL.isDefined)
-          mfields + "cl.p"
-        if(includeSensitive)
-          mfields + "originalSensitiveValues"
-        mfields ++=  FullRecordMapper.qaFields
-        
-        
-        
-        persistenceManager.selectRows(rowKeys, entityName, mfields.toArray , {          
-            fieldMap =>
-                val array = scala.collection.mutable.ArrayBuffer[String]()
-                val sensitiveMap:scala.collection.Map[String,String] = if(includeSensitive) Json.toStringMap(fieldMap.getOrElse("originalSensitiveValues", "{}")) else Map()
-                val elMap = if(firstEL.isDefined) Json.toStringMap(fieldMap.getOrElse("el.p", "{}")) else Map[String,String]()
-                val clMap = if(firstCL.isDefined)Json.toStringMap(fieldMap.getOrElse("cl.p", "{}")) else Map[String,String]()
-                for (field <- fields) {
-                    val fieldValue = field match{
-                      case a if elpattern.findFirstIn(a).nonEmpty => elMap.getOrElse(a, "")
-                      case a if clpattern.findFirstIn(a).nonEmpty => clMap.getOrElse(a, "")
-                      case _ => if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap))else getHackValue(field,fieldMap)
-                    }
-                     // if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap))else getHackValue(field,fieldMap)
-                    //Create a MS Excel compliant CSV file thus field with delimiters are quoted and embedded quotes are escaped
-                    
-                   array + fieldValue
-                }
-                //now handle the QA fields
-                val failedCodes = getErrorCodes(fieldMap);
-                //work way through the codes and add to output
-                for(code <-codes){
-                    array + (failedCodes.contains(code)).toString
-                    
-                }
-                writer.write(array.toArray)
+      //TODO fix this in case the value can't be found
+      val mfields = scala.collection.mutable.ArrayBuffer[String]()
+      mfields ++= fields
+      val codes = qaFields.map(value=>AssertionCodes.getByName(value).get.getCode)
+      val firstEL = fields.find(value => {elpattern.findFirstIn(value).nonEmpty})
+      val firstCL = fields.find(value => {clpattern.findFirstIn(value).nonEmpty})
+      if(firstEL.isDefined)
+        mfields + "el.p"
+      if(firstCL.isDefined)
+        mfields + "cl.p"
+      if(includeSensitive)
+        mfields + "originalSensitiveValues"
+      mfields ++=  FullRecordMapper.qaFields
+
+      persistenceManager.selectRows(rowKeys, entityName, mfields.toArray , { fieldMap =>
+        val array = scala.collection.mutable.ArrayBuffer[String]()
+        val sensitiveMap:scala.collection.Map[String,String] = if(includeSensitive) Json.toStringMap(fieldMap.getOrElse("originalSensitiveValues", "{}")) else Map()
+        val elMap = if(firstEL.isDefined) Json.toStringMap(fieldMap.getOrElse("el.p", "{}")) else Map[String,String]()
+        val clMap = if(firstCL.isDefined)Json.toStringMap(fieldMap.getOrElse("cl.p", "{}")) else Map[String,String]()
+        fields.foreach(field => {
+          val fieldValue = field match{
+            case a if elpattern.findFirstIn(a).nonEmpty => elMap.getOrElse(a, "")
+            case a if clpattern.findFirstIn(a).nonEmpty => clMap.getOrElse(a, "")
+            case _ => if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap)) else getHackValue(field,fieldMap)
+          }
+          // if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap))else getHackValue(field,fieldMap)
+          //Create a MS Excel compliant CSV file thus field with delimiters are quoted and embedded quotes are escaped
+          array + fieldValue
         })
-        
-        
+        //now handle the QA fields
+        val failedCodes = getErrorCodes(fieldMap);
+        //work way through the codes and add to output
+        for(code <-codes){
+            array + (failedCodes.contains(code)).toString
+        }
+        writer.write(array.toArray)
+      })
     }
     
     /**
@@ -332,34 +324,33 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         mfields ++=  FullRecordMapper.qaFields
           
         //val fieldsToQuery = if(includeSensitive) fields ++ FullRecordMapper.qaFields ++ Array("originalSensitiveValues") else fields ++ FullRecordMapper.qaFields
-        persistenceManager.selectRows(rowKeys, entityName, mfields.toArray , {
-            fieldMap =>
-                val sensitiveMap:scala.collection.Map[String,String] = if(includeSensitive) Json.toStringMap(fieldMap.getOrElse("originalSensitiveValues", "{}")) else Map()
-                val elMap = if(firstEL.isDefined) Json.toStringMap(fieldMap.getOrElse("el.p", "{}")) else Map[String,String]()
-                val clMap = if(firstCL.isDefined)Json.toStringMap(fieldMap.getOrElse("cl.p", "{}")) else Map[String,String]()
-                for (field <- fields) {
-                    val fieldValue = field match{
-                      case a if elpattern.findFirstIn(a).nonEmpty => elMap.getOrElse(a, "")
-                      case a if clpattern.findFirstIn(a).nonEmpty => clMap.getOrElse(a, "")
-                      case _ => if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap))else getHackValue(field,fieldMap)
-                    }
-                     // if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap))else getHackValue(field,fieldMap)
-                    //Create a MS Excel compliant CSV file thus field with delimiters are quoted and embedded quotes are escaped
-                    
-                    if (fieldValue.contains(fieldDelimiter) || fieldValue.contains(recordDelimiter) || fieldValue.contains("\""))
-                        outputStream.write(("\"" + fieldValue.replaceAll("\"", "\"\"") + "\"").getBytes)
-                    else
-                        outputStream.write(fieldValue.getBytes)
-                    outputStream.write(fieldDelimiter.getBytes)
-                }
-                //now handle the QA fields
-                val failedCodes = getErrorCodes(fieldMap);
-                //work way through the codes and add to output
-                for(code <-codes){
-                    outputStream.write((failedCodes.contains(code)).toString.getBytes)
-                    outputStream.write(fieldDelimiter.getBytes)
-                }
-                outputStream.write(recordDelimiter.getBytes)
+        persistenceManager.selectRows(rowKeys, entityName, mfields.toArray , { fieldMap =>
+          val sensitiveMap:scala.collection.Map[String,String] = if(includeSensitive) Json.toStringMap(fieldMap.getOrElse("originalSensitiveValues", "{}")) else Map()
+          val elMap = if(firstEL.isDefined) Json.toStringMap(fieldMap.getOrElse("el.p", "{}")) else Map[String,String]()
+          val clMap = if(firstCL.isDefined)Json.toStringMap(fieldMap.getOrElse("cl.p", "{}")) else Map[String,String]()
+          for (field <- fields) {
+              val fieldValue = field match{
+                case a if elpattern.findFirstIn(a).nonEmpty => elMap.getOrElse(a, "")
+                case a if clpattern.findFirstIn(a).nonEmpty => clMap.getOrElse(a, "")
+                case _ => if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap))else getHackValue(field,fieldMap)
+              }
+               // if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap))else getHackValue(field,fieldMap)
+              //Create a MS Excel compliant CSV file thus field with delimiters are quoted and embedded quotes are escaped
+
+              if (fieldValue.contains(fieldDelimiter) || fieldValue.contains(recordDelimiter) || fieldValue.contains("\""))
+                  outputStream.write(("\"" + fieldValue.replaceAll("\"", "\"\"") + "\"").getBytes)
+              else
+                  outputStream.write(fieldValue.getBytes)
+              outputStream.write(fieldDelimiter.getBytes)
+          }
+          //now handle the QA fields
+          val failedCodes = getErrorCodes(fieldMap);
+          //work way through the codes and add to output
+          for(code <-codes){
+              outputStream.write((failedCodes.contains(code)).toString.getBytes)
+              outputStream.write(fieldDelimiter.getBytes)
+          }
+          outputStream.write(recordDelimiter.getBytes)
         })
     }
     /**
@@ -401,14 +392,14 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * @param endKey, The row key of the occurrence at which to end the paging
      */
     def pageOverAllVersions(proc: ((Option[Array[FullRecord]]) => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000) {
-        persistenceManager.pageOverAll(entityName, (guid, map) => {
-            //retrieve all versions
-            val raw = FullRecordMapper.createFullRecord(guid, map, Raw)
-            val processed = FullRecordMapper.createFullRecord(guid, map, Processed)
-            val consensus = FullRecordMapper.createFullRecord(guid, map, Consensus)
-            //pass all version to the procedure, wrapped in the Option
-            proc(Some(Array(raw, processed, consensus)))
-        },startKey, endKey, pageSize)
+      persistenceManager.pageOverAll(entityName, (guid, map) => {
+        //retrieve all versions
+        val raw = FullRecordMapper.createFullRecord(guid, map, Raw)
+        val processed = FullRecordMapper.createFullRecord(guid, map, Processed)
+        val consensus = FullRecordMapper.createFullRecord(guid, map, Consensus)
+        //pass all version to the procedure, wrapped in the Option
+        proc(Some(Array(raw, processed, consensus)))
+      },startKey, endKey, pageSize)
     }
 
     /**
@@ -420,12 +411,12 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * @param endKey, The row key of the occurrence at which to end the paging
      */
     def pageOverAll(version: Version, proc: ((Option[FullRecord]) => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000) {
-        persistenceManager.pageOverAll(entityName, (guid, map) => {
-            //retrieve all versions
-            val fullRecord = FullRecordMapper.createFullRecord(guid, map, version)
-            //pass all version to the procedure, wrapped in the Option
-            proc(Some(fullRecord))
-        },startKey, endKey, pageSize)
+      persistenceManager.pageOverAll(entityName, (guid, map) => {
+        //retrieve all versions
+        val fullRecord = FullRecordMapper.createFullRecord(guid, map, version)
+        //pass all version to the procedure, wrapped in the Option
+        proc(Some(fullRecord))
+      },startKey, endKey, pageSize)
     }
 
     /**
@@ -437,13 +428,13 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * @param endKey, The row key of the occurrence at which to end the paging
      */
     def pageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000) {
-        persistenceManager.pageOverAll(entityName, (guid, map) => {
-            //retrieve all versions
-            val raw = FullRecordMapper.createFullRecord(guid, map, Versions.RAW)
-            val processed = FullRecordMapper.createFullRecord(guid, map, Versions.PROCESSED)
-            //pass all version to the procedure, wrapped in the Option
-            proc(Some(raw, processed))
-        },startKey,endKey, pageSize)
+      persistenceManager.pageOverAll(entityName, (guid, map) => {
+        //retrieve all versions
+        val raw = FullRecordMapper.createFullRecord(guid, map, Versions.RAW)
+        val processed = FullRecordMapper.createFullRecord(guid, map, Versions.PROCESSED)
+        //pass all version to the procedure, wrapped in the Option
+        proc(Some(raw, processed))
+      },startKey,endKey, pageSize)
     }
 
     /**
@@ -456,25 +447,25 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     def conditionalPageOverRawProcessed(proc: (Option[(FullRecord, FullRecord)] => Boolean),
                                         condition:(Map[String,String]=>Boolean),columnsToRetrieve:Array[String],
                                         startKey:String="", endKey:String="", pageSize: Int = 1000){
-        val columns = columnsToRetrieve ++ Array("uuid","rowKey")
-        persistenceManager.pageOverSelect(entityName, (guid, map)=>{
-            //val deleted = map.getOrElse(FullRecordMapper.deletedColumn,"false")            
-            //if(deleted.equals("false")){
-            if(condition(map)){
-                if(map.contains("rowKey")){
-                    val recordmap = persistenceManager.get(map.get("rowKey").get,entityName)                
-                    if(!recordmap.isEmpty){
-                        val raw = FullRecordMapper.createFullRecord(guid, recordmap.get, Versions.RAW)
-                        val processed = FullRecordMapper.createFullRecord(guid, recordmap.get, Versions.PROCESSED)
-                        //pass all version to the procedure, wrapped in the Option
-                        proc(Some(raw, processed))
-                    }
-                 }else {
-                    logger.info("Unable to page over records : " +guid)
-                }
+      val columns = columnsToRetrieve ++ Array("uuid","rowKey")
+      persistenceManager.pageOverSelect(entityName, (guid, map)=>{
+        //val deleted = map.getOrElse(FullRecordMapper.deletedColumn,"false")
+        //if(deleted.equals("false")){
+        if(condition(map)){
+          if(map.contains("rowKey")){
+            val recordmap = persistenceManager.get(map.get("rowKey").get,entityName)
+            if(!recordmap.isEmpty){
+              val raw = FullRecordMapper.createFullRecord(guid, recordmap.get, Versions.RAW)
+              val processed = FullRecordMapper.createFullRecord(guid, recordmap.get, Versions.PROCESSED)
+              //pass all version to the procedure, wrapped in the Option
+              proc(Some(raw, processed))
             }
-            true
-        }, startKey, endKey,pageSize, columns: _*)
+          } else {
+            logger.info("Unable to page over records : " +guid)
+          }
+        }
+        true
+      }, startKey, endKey,pageSize, columns: _*)
     }
 
     /**
@@ -491,32 +482,31 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      * Update the version of the occurrence record.
      */
     def addRawOccurrenceBatch(fullRecords: Array[FullRecord]) {
-
-        var batch = scala.collection.mutable.Map[String, Map[String, String]]()
-        fullRecords.foreach(fr  => {
-          //download the media in associatedMedia?????
-          if (fr.occurrence.associatedMedia != null){
-            val filesToImport = fr.occurrence.associatedMedia.split(";")
-            val associatedMediaBuffer = new ArrayBuffer[String]
-            filesToImport.foreach(fileToStore => {
-              val filePath = MediaStore.save(fr.uuid, fr.attribution.dataResourceUid, fileToStore)
-              if(!filePath.isEmpty) associatedMediaBuffer += filePath.get
-            })
-            fr.occurrence.associatedMedia = associatedMediaBuffer.toArray.mkString(";")
-          }
-          //process the record
-          var properties = FullRecordMapper.fullRecord2Map(fr, Versions.RAW)
-          batch.put(fr.rowKey, properties.toMap)
-        })
-        //commit
-        persistenceManager.putBatch(entityName, batch.toMap)
+      var batch = scala.collection.mutable.Map[String, Map[String, String]]()
+      fullRecords.foreach(fr  => {
+        //download the media in associatedMedia?????
+        if (fr.occurrence.associatedMedia != null){
+          val filesToImport = fr.occurrence.associatedMedia.split(";")
+          val associatedMediaBuffer = new ArrayBuffer[String]
+          filesToImport.foreach(fileToStore => {
+            val filePath = MediaStore.save(fr.uuid, fr.attribution.dataResourceUid, fileToStore)
+            if(!filePath.isEmpty) associatedMediaBuffer += filePath.get
+          })
+          fr.occurrence.associatedMedia = associatedMediaBuffer.toArray.mkString(";")
+        }
+        //process the record
+        var properties = FullRecordMapper.fullRecord2Map(fr, Versions.RAW)
+        batch.put(fr.rowKey, properties.toMap)
+      })
+      //commit
+      persistenceManager.putBatch(entityName, batch.toMap)
     }
 
     /**
      * Update the version of the occurrence record.
      */
     def updateOccurrence(rowKey: String, fullRecord: FullRecord, version: Version) {
-        updateOccurrence(rowKey, fullRecord, None, version)
+      updateOccurrence(rowKey, fullRecord, None, version)
     }
 
     /**
@@ -524,16 +514,16 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      */
     def updateOccurrence(rowKey: String, fullRecord: FullRecord, assertions: Option[Map[String,Array[QualityAssertion]]], version: Version) {
 
-        //construct a map of properties to write
-        val properties = FullRecordMapper.fullRecord2Map(fullRecord, version)
+      //construct a map of properties to write
+      val properties = FullRecordMapper.fullRecord2Map(fullRecord, version)
 
-        if (!assertions.isEmpty) {
-            properties ++= convertAssertionsToMap(rowKey,assertions.get, fullRecord.userVerified)
-            updateSystemAssertions(rowKey, assertions.get)
-        }
+      if (!assertions.isEmpty) {
+        properties ++= convertAssertionsToMap(rowKey,assertions.get, fullRecord.userVerified)
+        updateSystemAssertions(rowKey, assertions.get)
+      }
 
-        //commit to cassandra
-        persistenceManager.put(rowKey, entityName, properties.toMap)
+      //commit to cassandra
+      persistenceManager.put(rowKey, entityName, properties.toMap)
     }
 
     /**
@@ -983,11 +973,11 @@ class DeletedRecordDAOImpl extends DeletedRecordDAO{
   }
 }
 
-trait DuplicateDAO{
+trait DuplicateDAO {
   def getDuplicateInfo(uuid:String) : Option[DuplicateRecordDetails]
 }
 
-class DuplicateDAOImpl extends DuplicateDAO{
+class DuplicateDAOImpl extends DuplicateDAO {
   protected val logger = LoggerFactory.getLogger("DuplicateDAO")
   @Inject
   var persistenceManager: PersistenceManager = _
@@ -1051,5 +1041,4 @@ class OutlierStatsDAOImpl extends OutlierStatsDAO {
     val obj = mapper.readValue(stringValue, classOf[Array[RecordJackKnifeStats]])
     obj.asInstanceOf[Array[RecordJackKnifeStats]]
   }
-
 }

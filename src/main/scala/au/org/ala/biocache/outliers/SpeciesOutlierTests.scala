@@ -24,8 +24,6 @@ class Timings {
 
 /**
  * Runnable for testing for outliers.
- *
- * TODO write the results to the DB
  */
 object SpeciesOutlierTests {
 
@@ -149,19 +147,16 @@ object SpeciesOutlierTests {
         //println("Time taken for [Jacknife]: " + (now - startTime)/1000)
         timings checkpoint "jacknife with " + variable
         
-        println(">>> For layer: " + variable + ", we've detected: " + recordsIDs.length + " outliers out of " + lines.size+ " records tested.")
+        printf(">>> For layer: %s we've detected: %d outliers out of %d records tested.", variable, recordsIDs.length,lines.size)
 
         if(recordsIDs.length  >  lines.size){
-          println(">>> records: " + recordsIDs.length + ", distinct values: " + recordsIDs.toSet.size)
-
+          println(">>> records: %d, distinct values: %d"  , recordsIDs.length, recordsIDs.toSet.size)
           throw new RuntimeException("Error in processing")
         }
-
       })
 
       //store the results for this taxon
       storeResultsWithStats(taxonConceptID, resultsBuffer)
-
 
       if (nextLine == null) finished = true
       else nextTaxonConceptID = nextLine.head
@@ -204,6 +199,13 @@ object SpeciesOutlierTests {
     (idForBatch, buffer, currentLine)
   }
 
+  /**
+   * This is for adhoc one-off testing of outlier detection.
+   * This method will dynamically download data from the biocache webservices
+   * and run jack knife for a selected group of layers.
+   *
+   * @param lsid
+   */
   def testForOutliers(lsid:String){
     val variablesToTest = Array("el889", "el882", "el887", "el865", "el894")
     val requiredFields = Array("id", "latitude", "longitude") ++ variablesToTest
@@ -239,18 +241,17 @@ object SpeciesOutlierTests {
     storeResults(lsid, record2Layer)
 
     val recordLayerCounts = filterOutliersForXLayers(outlierValues).toList
-//
-//    val outlier5 = recordLayerCounts.filter(x => x._2 == 5).map(x => x._1).toList.sorted
-//    val outlier4 = recordLayerCounts.filter(x => x._2 == 4).map(x => x._1).toList.sorted
-//    val outlier3 = recordLayerCounts.filter(x => x._2 == 3).map(x => x._1).toList.sorted
-//    val outlier2 = recordLayerCounts.filter(x => x._2 == 2).map(x => x._1).toList.sorted
-//    val outlier1 = recordLayerCounts.filter(x => x._2 == 1).map(x => x._1).toList.sorted
-//
-//    printLinks(5, outlier5)
-//    printLinks(4, outlier4)
-//    printLinks(3, outlier3)
-//    printLinks(2, outlier2)
-//    printLinks(1, outlier1)
+    val outlier5 = recordLayerCounts.filter(x => x._2 == 5).map(x => x._1).toList
+    val outlier4 = recordLayerCounts.filter(x => x._2 == 4).map(x => x._1).toList
+    val outlier3 = recordLayerCounts.filter(x => x._2 == 3).map(x => x._1).toList
+    val outlier2 = recordLayerCounts.filter(x => x._2 == 2).map(x => x._1).toList
+    val outlier1 = recordLayerCounts.filter(x => x._2 == 1).map(x => x._1).toList
+
+    printLinksForRecords(5, outlier5)
+    printLinksForRecords(4, outlier4)
+    printLinksForRecords(3, outlier3)
+    printLinksForRecords(2, outlier2)
+    printLinksForRecords(1, outlier1)
   }
 
   def storeResultsWithStats(taxonID:String, results:Seq[(String, Seq[SampledRecord], JackKnifeStats)] ){
@@ -258,14 +259,9 @@ object SpeciesOutlierTests {
     val mapper = new ObjectMapper
     mapper.registerModule(DefaultScalaModule)
 
-   // println("Storing results for : " + taxonID)
-
     val jackKnifeStatsMap = results.map(x => x._1 -> x._3).toMap[String, JackKnifeStats]
 
-    //results.foreach ( x => {
-      //Config.persistenceManager.put(taxonID, "outliers", x._1, Json.toJSON(x._3))
-    //})
-
+    //store the outlier stats for this taxon
     Config.persistenceManager.put(taxonID, "outliers", "jackKnifeStats", mapper.writeValueAsString(jackKnifeStatsMap))
 
     //recordUUID -> list of layers
@@ -339,7 +335,6 @@ object SpeciesOutlierTests {
   }
 
   def storeResults(taxonID:String, record2Layers:Map[SampledRecord, String] ){
-  //  println("Storing results for : " + taxonID)
     Config.persistenceManager.put(taxonID, "outliers", "current", record2Layers.toString)
   }
 
@@ -355,6 +350,14 @@ object SpeciesOutlierTests {
     })
 
     record2Layer.toMap
+  }
+
+  def printLinksForRecords(count: Int, records: Seq[SampledRecord]) {
+    println()
+    println("************************ outlier for : " + count + " ******************")
+    records.foreach(c => println("http://biocache.ala.org.au/occurrences/" + c.id))
+    println("************************ end of outlier for : " + count + " ******************")
+    println()
   }
 
   def printLinks(count: Int, records: Seq[String]) {
@@ -492,10 +495,10 @@ object SpeciesOutlierTests {
         row = 0
       }
       if (col >= ncols) {
-        col = ncols - 1;
+        col = ncols - 1
       }
       if (row >= nrows) {
-        row = nrows - 1;
+        row = nrows - 1
       }
 
       row * ncols + col

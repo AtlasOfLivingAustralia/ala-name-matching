@@ -31,7 +31,7 @@ object CommandLineTool {
     //close down the data store and index so the program can exit normally
     au.org.ala.biocache.Config.persistenceManager.shutdown
     IndexRecords.indexer.shutdown
-    println("All the best. Bye.\n")
+    println("Bye.\n")
   }
 
   /**
@@ -45,15 +45,15 @@ object CommandLineTool {
       input.toLowerCase.trim match {
         case it if (it startsWith "describe ") || (it startsWith "d ") => l.describeResource(it.split(" ").map(x => x.trim).toList.tail)
         case it if (it startsWith "list") || (it == "l") => l.printResourceList
-        case it if (it startsWith "load") || (it startsWith "ld") =>  l.load(it.split(" ").map(x => x.trim).toList.last)
+        case it if (it startsWith "load") || (it startsWith "ld") =>  {
+          it.split(" ").map(x => x.trim).tail.foreach(drUid => l.load(drUid))
+        }
         case it if (it startsWith "process-single") => {
-          ProcessSingleRecord.processRecord(it.split(" ").map(x => x.trim).toList.last)
+          it.split(" ").map(x => x.trim).tail.foreach(uuid => ProcessSingleRecord.processRecord(uuid))
         }
         case it if (it startsWith "process") || (it startsWith "process") => {
           val drs = it.split(" ").map(x => x.trim).toList.tail
-          for (dr <- drs) {
-            ProcessWithActors.processRecords(4, None, Some(dr))
-          }
+          drs.foreach(dr => ProcessWithActors.processRecords(4, None, Some(dr)))
         }
         case it if (it startsWith "process-all") => {
           ProcessWithActors.processRecords(4, None, None)
@@ -85,9 +85,7 @@ object CommandLineTool {
         }
         case it if (it startsWith "index ") || (it startsWith "index") => {
           val drs = it.split(" ").map(x => x.trim).toList.tail
-          for (dr <- drs) {
-            IndexRecords.index(None, None, Some(dr), false, false)
-          }
+          drs.foreach(dr => IndexRecords.index(None, None, Some(dr), false, false))
         }
         case it if (it startsWith "createdwc") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
@@ -121,12 +119,14 @@ object CommandLineTool {
         }
         case it if (it startsWith "delete-resource") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
-          val drvd = new DataResourceDelete(args.last)
-          println("Delete from storage")
-          drvd.deleteFromPersistent
-          println("Delete from index")
-          drvd.deleteFromIndex
-          println("Finished delete.")
+          args.foreach(drUid => {
+            val drvd = new DataResourceDelete(drUid)
+            println("Delete from storage: " + drUid)
+            drvd.deleteFromPersistent
+            println("Delete from index: " + drUid)
+            drvd.deleteFromIndex
+            println("Finished delete for : " + drUid)
+          })
         }
         case it if (it startsWith "delete") => {
           val query = it.replaceFirst("delete ","")
