@@ -76,7 +76,21 @@ class Loader extends DataLoader {
             val l = new FlickrLoader
             l.load(dataResourceUid)
           }
-          case "custom" => println("custom webservice loading")
+          case "customwebservice" => {
+            println("custom webservice loading")
+            val className = customParams.getOrElse("classname", null)
+            if (className == null) {
+              println("Classname of customer harvester class not present in parameters")
+            } else {
+              val wsClass = Class.forName(className)
+              val l = wsClass.newInstance()
+              if (l.isInstanceOf[CustomWebserviceLoader]) {
+                l.asInstanceOf[CustomWebserviceLoader].load(dataResourceUid)
+              } else {
+                println("Class " + className + " is not a subtype of au.org.ala.util.CustomWebserviceLoader")
+              }
+            }
+          }
           case "autofeed" => {
             println("AutoFeed Darwin core headed CSV loading")
             val l = new AutoDwcCSVLoader
