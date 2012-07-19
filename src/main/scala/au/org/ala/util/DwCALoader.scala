@@ -87,7 +87,7 @@ class DwCALoader extends DataLoader {
     def loadLocal(resourceUid:String, fileName:String){
     	val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(resourceUid)
     	val conceptTerms = mapConceptTerms(uniqueTerms)
-    	val strip = params.getOrElse("strip", "false") == "true"
+    	val strip = params.getOrElse("strip", false).asInstanceOf[Boolean] 
         //load the DWC file
     	loadArchive(fileName, resourceUid, conceptTerms, strip)
     	//shut down the persistence manager after all the files have been loaded.
