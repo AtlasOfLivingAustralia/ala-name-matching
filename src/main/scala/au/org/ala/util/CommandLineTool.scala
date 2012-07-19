@@ -3,6 +3,7 @@ package au.org.ala.util
 import au.org.ala.biocache.Config
 import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.{NameValuePair, HttpClient}
+import java.io.{BufferedReader, InputStreamReader}
 
 /**
  * Command line tool that allows administrators to run commands on
@@ -21,18 +22,47 @@ object CommandLineTool {
 
       var input = readLine
       while (input != "exit" && input != "q" && input != "quit") {
-        executeCommand(input)
+        CMD.executeCommand(input)
         print("\nPlease supply a command or hit ENTER to view command list: ")
         input = readLine
       }
     } else {
-      executeCommand(args.mkString(" "))
+      CMD.executeCommand(args.mkString(" "))
     }
     //close down the data store and index so the program can exit normally
     au.org.ala.biocache.Config.persistenceManager.shutdown
     IndexRecords.indexer.shutdown
     println("Bye.\n")
   }
+}
+
+object ScriptTool {
+
+  def main(args:Array[String]){
+    val isReader = new InputStreamReader(System.in)
+    val bufReader = new BufferedReader(isReader)
+    try {
+     var inputStr = bufReader.readLine()
+     while(inputStr !=null){
+        println("Executing command '" + inputStr + "'")
+        if(inputStr.trim.length>0) CMD.executeCommand(inputStr)
+        inputStr = bufReader.readLine()
+     }
+     au.org.ala.biocache.Config.persistenceManager.shutdown
+     IndexRecords.indexer.shutdown
+     println("Script complete.\n")
+     System.exit(1)
+  } catch {
+      case e:Exception => {
+        au.org.ala.biocache.Config.persistenceManager.shutdown
+        IndexRecords.indexer.shutdown
+        System.exit(1)
+      }
+    }
+  }
+}
+
+object CMD {
 
   /**
    * Attempt to execute the supplied command
@@ -145,12 +175,12 @@ object CommandLineTool {
 
   def printHelp = {
     padAndPrint(" [1]  list - Print the list of resources available for harvesting")
-    padAndPrint(" [2]  describe <dr-uid> <dr-uid1> <dr-uid2> - Show the configuration or the resource")
-    padAndPrint(" [3]  load <dr-uid> - Load resource into biocache (does not index)")
-    padAndPrint(" [4]  process-single <uuid> - Process single record (SDS/namematching)")
-    padAndPrint(" [5]  process <dr-uid> - Process resource")
+    padAndPrint(" [2]  describe <dr-uid1> <dr-uid2>... - Show the configuration or the resource")
+    padAndPrint(" [3]  load <dr-uid1> <dr-uid2>... - Load resource into biocache (does not index)")
+    padAndPrint(" [4]  process-single <uuid1> <uuid2> ... - Process single record (SDS/namematching)")
+    padAndPrint(" [5]  process <dr-uid1> <dr-uid2>... - Process resource")
     padAndPrint(" [6]  process-all - Process all records (this takes a long time for full biocache)")
-    padAndPrint(" [7]  index <dr-uid> - Index resource (for offline use only)")
+    padAndPrint(" [7]  index <dr-uid1> <dr-uid2>... - Index resource (for offline use only)")
     padAndPrint(" [8]  index-live <dr-uid> - Index resource by calling webservice to index. Dont use for large resources.")
     padAndPrint(" [9]  createdwc <dr-uid> <export directory> - Create a darwin core archive for a resource")
     padAndPrint("[10]  healthcheck - Do a healthcheck on the configured resources in the collectory")
@@ -158,10 +188,10 @@ object CommandLineTool {
     padAndPrint("[12]  import - CSV import of data")
     padAndPrint("[13]  optimise - Optimisation of SOLR index (this takes some time)")
     padAndPrint("[14]  sample-all - Run geospatial sampling for all records")
-    padAndPrint("[15]  sample <dr-uid> - Run geospatial sampling for records for a data resource")
+    padAndPrint("[15]  sample <dr-uid1> <dr-uid2>... - Run geospatial sampling for records for a data resource")
     padAndPrint("[16]  resample <query> - Rerun geospatial sampling for records that match a SOLR query")
     padAndPrint("[17]  delete <solr-query> - Delete records matching a query")
-    padAndPrint("[18]  delete-resource <data-resource-uid> - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
+    padAndPrint("[18]  delete-resource <dr-uid1> <dr-uid2>... - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
     padAndPrint("[19]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
     padAndPrint("[20]  exit")
   }

@@ -186,7 +186,7 @@ object AdHocParser {
   def processCSV(filepath: String) {
     (new File(filepath)).readAsCSV(',', '"', processColumnHeaders, (hdrs, values) => {
       val result = processLine(hdrs, values)
-      CommandLineTool.printTable(result.values.map(r => {
+      CMD.printTable(result.values.map(r => {
         Map("name" -> r.name, "raw" -> r.raw, "processed" -> r.processed)
       }).toList)
     })

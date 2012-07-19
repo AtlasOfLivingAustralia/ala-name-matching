@@ -46,10 +46,10 @@ class Loader extends DataLoader {
         })
     }
     
-    def printResourceList :Unit = {
+    def printResourceList {
       val json = Source.fromURL("http://collections.ala.org.au/ws/dataResource?resourceType=records").getLines.mkString
       val drs = JSON.parseFull(json).get.asInstanceOf[List[Map[String, String]]]
-      CommandLineTool.printTable(drs)
+      CMD.printTable(drs)
     }
 
     def load(dataResourceUid: String) {
@@ -142,7 +142,6 @@ class Loader extends DataLoader {
                         status.getOrElse("Status", "NO STATUS").fixWidth(15) +"\t" + drName.fixWidth(65) + "\t" + url.fixWidth(85) + "\t" +
                         displaySize)
               }
-
             })
           }
       })
