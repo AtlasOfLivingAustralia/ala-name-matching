@@ -6,6 +6,7 @@ import scala.reflect.BeanProperty
 import au.org.ala.checklist.lucene.HomonymException
 import au.com.bytecode.opencsv.{CSVWriter, CSVReader}
 import java.io._
+import au.org.ala.data.model.LinnaeanRankClassification
 
 case class ProcessedValue(@BeanProperty name: String, @BeanProperty raw: String, @BeanProperty processed: String)
 
@@ -363,7 +364,20 @@ object ScientificNameExtractor {
   def unapply(str: String): Option[String] = {
     if (str != "") {
       try {
-        val nsr = Config.nameIndex.searchForRecord(str, null, null)
+        val nsr = Config.nameIndex.searchForRecord(new LinnaeanRankClassification(
+          null, //k
+          null, //p
+          null, //c
+          null, //o
+          null, //f
+          null, //g
+          null, //s
+          null, //ss
+          null, //epithet
+          null, //infra
+          str),
+          true,
+          true)
         if (nsr != null && nsr.getLsid != null && nsr.getRank != null) {
           Some(nsr.getRank.getRank)
         } else {
