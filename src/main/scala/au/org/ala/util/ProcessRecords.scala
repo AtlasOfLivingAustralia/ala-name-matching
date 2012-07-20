@@ -68,7 +68,7 @@ class RecordProcessor {
   val logger = LoggerFactory.getLogger(classOf[RecordProcessor])
   //The time that the processing started - used to populate lastProcessed
   val processTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
-
+  val duplicates = List("D","D1","D2")
   /**
    * Processes a list of records
    */
@@ -208,7 +208,7 @@ class RecordProcessor {
       assertions += ( processor.getName -> processor.process(guid, raw, processed))
     })
     
-    val systemAssertions = Some(assertions.toMap)
+   
     //mark the processed time
     processed.lastModifiedTime = processTime
     //put the properties that are not updated during processing
@@ -216,8 +216,14 @@ class RecordProcessor {
     processed.occurrence.duplicationStatus = currentProcessed.occurrence.duplicationStatus
     processed.occurrence.duplicationType = currentProcessed.occurrence.duplicationType
     processed.occurrence.associatedOccurrences = currentProcessed.occurrence.associatedOccurrences
+    //add the QA for the duplicate record
+    if(duplicates.contains(processed.occurrence.duplicationStatus)){
+      //need to add the QA
+      assertions += ("duplicates" -> Array(QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD,"Record has been inferred as closely related to  " + processed.occurrence.associatedOccurrences)))
+    }
     
     //store the occurrence
+    val systemAssertions = Some(assertions.toMap)
     occurrenceDAO.updateOccurrence(guid, currentProcessed, processed, systemAssertions, Processed)
   }
 

@@ -11,14 +11,14 @@ object ProcessSingleRecord {
 
   def processRecord(uuid: String) {
     val processor = new RecordProcessor
-    var rawRecord = Config.occurrenceDAO.getByRowKey(uuid, au.org.ala.biocache.Raw)
-    if (rawRecord.isEmpty) {
-      rawRecord = Config.occurrenceDAO.getByUuid(uuid, au.org.ala.biocache.Raw)
+    var records = Config.occurrenceDAO.getAllVersionsByRowKey(uuid)
+    if (records.isEmpty) {
+      records = Config.occurrenceDAO.getAllVersionsByUuid(uuid)
     }
-    if (!rawRecord.isEmpty) {
+    if (!records.isEmpty) {
       println("Processing record.....")
-      processor.processRecordAndUpdate(rawRecord.get)
-      val processedRecord = Config.occurrenceDAO.getByRowKey(rawRecord.get.rowKey, au.org.ala.biocache.Processed)
+      processor.processRecord(records.get(0), records.get(1))
+      val processedRecord = Config.occurrenceDAO.getByRowKey(records.get(1).rowKey, au.org.ala.biocache.Processed)
       val objectMapper = new ObjectMapper
       if (!processedRecord.isEmpty)
         println(objectMapper.writeValueAsString(processedRecord.get))
