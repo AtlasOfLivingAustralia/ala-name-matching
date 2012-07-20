@@ -169,7 +169,10 @@ object ResourceCleanupTask {
         occDao.delete(guid, false,true)
         count= count +1
       }
-      if(totalRecords % 1000 == 0) println()
+      if(totalRecords % 1000 == 0){
+        println("Deleted " + count + " records out of " + totalRecords  )
+        println("Last key checked: " + guid)
+      }
             true
     }, startUuid, endUuid, 1000, "rowKey", "uuid", FullRecordMapper.deletedColumn)
   }
