@@ -946,6 +946,10 @@ class LocationProcessor extends Processor {
   def getExactSciName(raw: FullRecord): String = {
     if (raw.classification.scientificName != null)
       raw.classification.scientificName
+    else if (raw.classification.subspecies != null)
+      raw.classification.subspecies
+    else if (raw.classification.species != null)
+      raw.classification.species
     else if (raw.classification.genus != null) {
       if (raw.classification.specificEpithet != null) {
         if (raw.classification.infraspecificEpithet != null)
