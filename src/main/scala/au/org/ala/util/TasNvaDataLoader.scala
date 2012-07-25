@@ -273,8 +273,16 @@ class TasNvaDataLoader extends CustomWebserviceLoader {
     val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
     val cacheDirectoryPath = customParams("cachedir")
     val loadFromCache = false
-    val startAtPage = 0
-    val pageLimit = -1
+    var startAtPage = 0
+    if (customParams.contains("startAtPage")) {
+      startAtPage = Integer.parseInt(customParams("startAtPage"))
+    }
+
+    var pageLimit = -1
+    if (customParams.contains("pageLimit")) {
+      pageLimit = Integer.parseInt(customParams("pageLimit"))
+    }
+
     load(dataResourceUid, cacheDirectoryPath, loadFromCache, startAtPage, pageLimit)
   }
 
