@@ -351,6 +351,9 @@ trait IndexDAO {
                                                
                 val firstLoadDate = DateParser.parseStringToDate(getValue("firstLoaded",map))
                 
+                val loanDate = DateParser.parseStringToDate(map.getOrElse("loanDate",""))
+                val loanReturnDate = DateParser.parseStringToDate(map.getOrElse("loanReturnDate",""))
+                
                 val pest_tmp = if(map.getOrElse("informationWithheld.p","").startsWith("PEST")) "PEST" else ""
                 
                 //get the el and cl maps to work with
@@ -439,8 +442,8 @@ trait IndexDAO {
                     map.getOrElse("establishmentMeans.p","").replaceAll("; ","|"),
                     map.getOrElse("loanSequenceNumber", ""), map.getOrElse("loanIdentifier", ""), map.getOrElse("loanDestination",""),
                     map.getOrElse("loanForBotanist",""), 
-                    if(map.contains("loanDate")) map.getOrElse("loanDate","") + "T00:00:00Z" else "",
-                    if(map.contains("loanReturnDate")) map.getOrElse("loanReturnDate","") + "T00:00:00Z" else "",
+                    if(loanDate.isEmpty)"" else DateFormatUtils.format(loanDate.get,"yyyy-MM-dd'T'HH:mm:ss'Z'"),
+                    if(loanReturnDate.isEmpty)"" else DateFormatUtils.format(loanReturnDate.get,"yyyy-MM-dd'T'HH:mm:ss'Z'"),                    
                     map.getOrElse("originalNameUsage", map.getOrElse("typifiedName","")),
                     map.getOrElse("duplicates",""),//.replaceAll(",","|"),
                     map.getOrElse("recordNumber",""),
