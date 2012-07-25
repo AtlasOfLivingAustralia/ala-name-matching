@@ -353,6 +353,7 @@ trait IndexDAO {
                 
                 val loanDate = DateParser.parseStringToDate(map.getOrElse("loanDate",""))
                 val loanReturnDate = DateParser.parseStringToDate(map.getOrElse("loanReturnDate",""))
+                val dateIdentified = DateParser.parseStringToDate(map.getOrElse("dateIdentified.p","")) 
                 
                 val pest_tmp = if(map.getOrElse("informationWithheld.p","").startsWith("PEST")) "PEST" else ""
                 
@@ -453,7 +454,7 @@ trait IndexDAO {
                     outlierForLayers.mkString("|"),
                     outlierForLayers.length.toString, map.getOrElse("taxonomicIssue.p",""), map.getOrElse("identificationQualifier",""),
                     habitats.mkString("|"), map.getOrElse("identifiedBy",""), 
-                    if(map.contains("dateIdentified.p")) map.getOrElse("dateIdentified.p","") + "T00:00:00Z" else "",
+                    if(dateIdentified.isEmpty) "" else DateFormatUtils.format(dateIdentified.get,"yyyy-MM-dd'T'HH:mm:ss'Z'"),
                     sensitiveMap.getOrElse("decimalLongitude",""), sensitiveMap.getOrElse("decimalLatitude",""),pest_tmp,
                     map.getOrElse("recordedBy.p",""), map.getOrElse("duplicationStatus.p",""), map.getOrElse("associatedOccurrences.p",""), dupTypes.mkString("|"),
                     sensitiveMap.getOrElse("coordinateUncertaintyInMeters.p","")
