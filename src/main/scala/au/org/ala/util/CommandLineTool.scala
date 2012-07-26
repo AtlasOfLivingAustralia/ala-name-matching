@@ -89,7 +89,8 @@ object CMD {
           ProcessWithActors.processRecords(4, None, None)
         }
         case it if(it startsWith "index-delete")=> {
-          val query = it.replaceFirst("index-delete ","")
+          //need to preserve the query case because T and Z mean things in dates
+          val query = input.replaceFirst("index-delete ","")
           val deletor = new QueryDelete(query)
           println("Delete from index using query : " + query)
           deletor.deleteFromIndex
