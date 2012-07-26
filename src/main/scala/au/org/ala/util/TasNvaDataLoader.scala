@@ -325,7 +325,13 @@ class TasNvaDataLoader extends CustomWebserviceLoader {
           val recordNodes = (xml \\ TasNvaDataLoader.OBSERVATION_KEY)
 
           if (recordNodes.isEmpty) {
-            moreRecords = false
+            if (xml.label != "FeatureCollection") {
+              println("ERROR: Server side error loading page " + pageNumber + ":")
+              println(xml.toString())
+            } else {
+              // We have received an empty response, therefore all records have been processed.
+              moreRecords = false
+            }
           }
 
           for (recordNode <- recordNodes) {
@@ -334,8 +340,10 @@ class TasNvaDataLoader extends CustomWebserviceLoader {
             val uniqueTermsValues = uniqueTerms.map(t => mappedValues.getOrElse(t, ""))
             load(dataResourceUid, fr, uniqueTermsValues)
 
-            writePageToCache(cacheDirectoryPath, xml.toString(), pageNumber)
             processedRecords += 1
+          }
+          if (!recordNodes.isEmpty) {
+            writePageToCache(cacheDirectoryPath, xml.toString(), pageNumber)
           }
         } catch {
           case ex: Throwable => println("ERROR: page " + pageNumber.toString() + " failed to load:"); ex.printStackTrace()
