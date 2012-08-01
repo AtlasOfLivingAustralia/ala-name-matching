@@ -8,7 +8,7 @@ import au.org.ala.biocache.Raw
 import au.org.ala.biocache.Versions
 import au.org.ala.biocache.DwC
 import au.org.ala.biocache.MediaStore
-import java.io.{FilenameFilter, FileReader, File}
+import java.io.{FilenameFilter, FileReader, File,InputStreamReader, FileInputStream}
 import org.apache.commons.io.{FilenameUtils, FileUtils}
 import collection.mutable.ArrayBuffer
 
@@ -83,8 +83,8 @@ class DwcCSVLoader extends DataLoader {
           if (separatorString == "\\t") '\t'
           else separatorString.toCharArray.head
         }
-        val escape = params.getOrElse("csv_escape_char","\\").head
-        val reader =  new CSVReader(new FileReader(file), separator, quotechar, escape)
+        val escape = params.getOrElse("csv_escape_char","|").head
+        val reader =  new CSVReader(new InputStreamReader(new org.apache.commons.io.input.BOMInputStream(new FileInputStream(file))), separator, quotechar, escape)
         
         println("Using CSV reader with the following settings quotes: " + quotechar + " separator: " + separator + " escape: " + escape)
         //match the column headers to dwc terms
