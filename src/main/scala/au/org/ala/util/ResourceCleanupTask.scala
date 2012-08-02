@@ -118,7 +118,7 @@ object ResourceCleanupTask {
   
   def modifyRecord(dr:String, lastDate:java.util.Date, start:Option[String], end:Option[String], test:Boolean=false){
     val startUuid = start.getOrElse(dr +"|")
-    val endUuid = end.getOrElse(startUuid + "~")
+    val endUuid = end.getOrElse(dr + "|~")
     val deleteTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
     var totalRecords=0
     var deleted=0
