@@ -58,7 +58,157 @@ trait DataLoader {
       val json = Source.fromURL(registryUrl + resourceUid + ".json").getLines.mkString
       JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
     }
-   
+    def getTestDRAsMap(resourceUid:String) :Map[String,String] ={
+      val json ="""{
+
+    "name": "Australia's Virtual Herbarium",
+    "acronym": "AVH",
+    "uid": "dr376",
+    "guid": "urn:lsid:biocol.org:col:15596",
+    "address": {
+        "street": null,
+        "city": null,
+        "state": null,
+        "postcode": null,
+        "country": "Australia",
+        "postBox": null
+    },
+    "phone": null,
+    "email": null,
+    "pubDescription": "Australia's Virtual Herbarium records - AVH specimen and observation records",
+    "techDescription": null,
+    "focus": null,
+    "state": null,
+    "websiteUrl": "http://chah.gov.au/avh/",
+    "alaPublicUrl": "http://collections.ala.org.au/public/show/dr376",
+    "networkMembership": [
+        {
+            "name": "Council of Heads of Australasian Herbaria",
+            "acronym": "CHAH",
+            "logo": "http://collections.ala.org.au/data/network/CHAH_logo_col_70px_white.gif"
+        }
+    ],
+    "hubMembership": [
+        {
+            "uid": "dh2",
+            "name": "Australia's Virtual Herbarium",
+            "uri": "http://collections.ala.org.au/ws/dataHub/dh2"
+        }
+    ],
+    "taxonomyCoverageHints": [
+        {
+            "kingdom": "plantae"
+        },
+        {
+            "kingdom": "fungi"
+        },
+        {
+            "kingdom": "chromista"
+        },
+        {
+            "kingdom": "protozoa"
+        },
+        {
+            "kingdom": "bacteria"
+        }
+    ],
+    "attributions": [ ],
+    "dateCreated": "2010-10-26T23:54:15Z",
+    "lastUpdated": "2012-05-02T23:07:06Z",
+    "userLastModified": "David.Martin@csiro.au",
+    "provider": {
+        "name": "Australia's Virtual Herbarium",
+        "uri": "http://collections.ala.org.au/ws/dataProvider/dp36",
+        "uid": "dp36"
+    },
+    "rights": "You acknowledge that the Data may contain errors and omissions and that you employ the Data at your own risk. Neither the Council of Heads of Australasian Herbaria nor its member Herbaria nor any other Data Custodian will accept liability for any loss, damage, cost or expenses that you may incur as a result of the use of or reliance upon the Data. Note that the Data are continuously updated, corrected and added to. You should use the current Data from the AVH portal and not rely on material you have previously printed or downloaded.",
+    "licenseType": "CC BY",
+    "licenseVersion": "3.0",
+    "citation": "You must attribute the source of these Data as: Australia's Virtual Herbarium, a resource of the Council of Heads of Australasian Herbaria and its member Herbaria listed at www.chah.gov.au.\r\n\r\nYou should cite the data as: The Council of Heads of Australasian Herbaria (1999-) Australia's Virtual Herbarium www.chah.gov.au/avh [Accessed <date of access>]",
+    "resourceType": "records",
+    "dataGeneralizations": null,
+    "informationWithheld": null,
+    "permissionsDocument": "http://www2.ala.org.au/datasets/occurrence/dr376/license/ALA re AVH data licensing.pdf",
+    "permissionsDocumentType": "Email",
+    "contentTypes": [
+        "point occurrence data"
+    ],
+    "linkedRecordConsumers": [
+        {
+            "name": "State Herbarium of South Australia",
+            "uri": "http://collections.ala.org.au/ws/collection/co48",
+            "uid": "co48"
+        },
+        {
+            "name": "National Herbarium of Victoria",
+            "uri": "http://collections.ala.org.au/ws/collection/co55",
+            "uid": "co55"
+        },
+        {
+            "name": "National Herbarium of New South Wales",
+            "uri": "http://collections.ala.org.au/ws/collection/co54",
+            "uid": "co54"
+        },
+        {
+            "name": "Queensland Herbarium ",
+            "uri": "http://collections.ala.org.au/ws/collection/co49",
+            "uid": "co49"
+        },
+        {
+            "name": "Western Australian Herbarium",
+            "uri": "http://collections.ala.org.au/ws/collection/co75",
+            "uid": "co75"
+        },
+        {
+            "name": "Australian National Herbarium",
+            "uri": "http://collections.ala.org.au/ws/collection/co12",
+            "uid": "co12"
+        },
+        {
+            "name": "Tasmanian Herbarium",
+            "uri": "http://collections.ala.org.au/ws/collection/co60",
+            "uid": "co60"
+        },
+        {
+            "name": "Northern Territory Herbarium",
+            "uri": "http://collections.ala.org.au/ws/collection/co25",
+            "uid": "co25"
+        },
+        {
+            "name": "Northern Territory Herbarium (Alice Springs)",
+            "uri": "http://collections.ala.org.au/ws/collection/co24",
+            "uid": "co24"
+        }
+    ],
+    "connectionParameters": {
+        "protocol": "DwC",
+        "csv_text_enclosure": "\"",
+        "termsForUniqueKey": [
+            "institutionCode",
+            "catalogNumber"
+        ],
+        "csv_eol": "\n",
+        "csv_delimiter": "\\t",
+        "automation": false,
+        "strip": true,
+        "csv_escape_char": "|",
+        "url": ["sftp://upload.ala.org.au:avh/AVH_CNS.zip"]
+    },
+    "defaultDarwinCoreValues": { },
+    "hasMappedCollections": true,
+    "status": "dataAvailable",
+    "provenance": "Published dataset",
+    "harvestFrequency": 0,
+    "lastChecked": null,
+    "dataCurrency": null,
+    "harvestingNotes": null,
+    "publicArchiveAvailable": false,
+    "publicArchiveUrl": "http://biocache.ala.org.au/archives/dr376/dr376_ror_dwca.zip",
+    "downloadLimit": 0
+
+}"""
+        JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
+    }
     def getDataProviderDetailsAsMap(uid:String) : Map[String, String] = {
       val json = Source.fromURL("http://collections.ala.org.au/ws/dataProvider/" + uid + ".json").getLines.mkString
       JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
@@ -118,22 +268,22 @@ trait DataLoader {
     }
 
     def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String]) : Boolean = {
-       load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], true, false,false)
+       load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], true, false,false,None)
     }
 
     def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], updateLastModified:Boolean) : Boolean = {
-      load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], updateLastModified, false,false)
+      load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], updateLastModified, false,false,None)
     }
     
     def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], updateLastModified:Boolean, downloadMedia:Boolean):Boolean ={
-      load(dataResourceUid, fr, identifyingTerms, updateLastModified, downloadMedia, false)
+      load(dataResourceUid, fr, identifyingTerms, updateLastModified, downloadMedia, false,None)
     }
 
-    def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], updateLastModified:Boolean, downloadMedia:Boolean, stripSpaces:Boolean) : Boolean = {
+    def load(dataResourceUid:String, fr:FullRecord, identifyingTerms:List[String], updateLastModified:Boolean, downloadMedia:Boolean, stripSpaces:Boolean, rowKeyWriter:Option[java.io.Writer]) : Boolean = {
         
         //the details of how to construct the UniqueID belong in the Collectory
         val uniqueID = if(identifyingTerms.isEmpty) None else Some(createUniqueID(dataResourceUid,identifyingTerms,stripSpaces))
-
+        
         //lookup the column
         val (recordUuid, isNew) = {
           if(fr.uuid != null && fr.uuid.trim != ""){
@@ -150,6 +300,10 @@ trait DataLoader {
         fr.uuid = recordUuid
         //The row key is the uniqueID for the record. This will always start with the dataResourceUid
         fr.rowKey = if(uniqueID.isEmpty) dataResourceUid +"|"+recordUuid else uniqueID.get
+        //write the rowkey to file if a writer is provided. allows large data resources to be incrementally updated and only process/index changes
+        if(rowKeyWriter.isDefined)
+          rowKeyWriter.get.write(fr.rowKey+"\n")
+        
         //The last load time
         if(updateLastModified){
           fr.lastModifiedTime = loadTime
