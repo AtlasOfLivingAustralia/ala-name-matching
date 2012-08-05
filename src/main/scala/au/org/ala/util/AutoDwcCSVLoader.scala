@@ -67,6 +67,7 @@ class AutoDwcCSVLoader extends SecureDataLoader{
     def load(dataResourceUid:String, includeIds:Boolean=false){
         //TODO support complete reload by looking up webservice
         val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+        val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]
         //clean out the dr load directory before downloading the new file.
         emptyTempFileStore(dataResourceUid)
         //the supplied url should be an sftp string to the directory that contains the dumps
@@ -74,7 +75,7 @@ class AutoDwcCSVLoader extends SecureDataLoader{
           if(url.startsWith("sftp")){
             val filePath = sftpLatestArchive(url, dataResourceUid)
             if(filePath.isDefined)
-              loadAutoFile(new File(filePath.get), dataResourceUid, uniqueTerms, params, includeIds)
+              loadAutoFile(new File(filePath.get), dataResourceUid, uniqueTerms, params, includeIds,strip)
           }
           else
             logger.error("Unable to process " + url + " with the auto loader")
@@ -83,10 +84,11 @@ class AutoDwcCSVLoader extends SecureDataLoader{
     
     def loadLocalFile(dataResourceUid:String, filePath:String, includeIds:Boolean){
         val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
-        loadAutoFile(new File(filePath),dataResourceUid, uniqueTerms, params, includeIds) 
+        val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]
+        loadAutoFile(new File(filePath),dataResourceUid, uniqueTerms, params, includeIds,strip) 
     }
     
-    def loadAutoFile(file:File, dataResourceUid:String, uniqueTerms:List[String], params:Map[String,String], includeIds:Boolean){
+    def loadAutoFile(file:File, dataResourceUid:String, uniqueTerms:List[String], params:Map[String,String], includeIds:Boolean, stripSpaces:Boolean){
         //From the file extract the files to load
         val baseDir = file.getParent
         val csvLoader = new DwcCSVLoader
@@ -122,10 +124,10 @@ class AutoDwcCSVLoader extends SecureDataLoader{
             dataFiles.foreach(dfile =>{ 
                 if(includeIds || !dfile.getName().contains("dwc-id")){
                   if(dfile.getName.endsWith("gz")){
-                      csvLoader.loadFile(dfile.extractGzip, dataResourceUid, uniqueTerms, params) 
+                      csvLoader.loadFile(dfile.extractGzip, dataResourceUid, uniqueTerms, params,stripSpaces) 
                   }
                   else{
-                      csvLoader.loadFile(dfile, dataResourceUid, uniqueTerms, params) 
+                      csvLoader.loadFile(dfile, dataResourceUid, uniqueTerms, params, stripSpaces) 
                   }
                 }
             })
