@@ -81,7 +81,7 @@ class DwcCSVLoader extends DataLoader {
         })
     }
     
-    def loadFile(file:File, dataResourceUid:String, uniqueTerms:List[String], params:Map[String,String], stripSpaces:Boolean, logRowKeys:Boolean=false, test:Boolean=false){
+    def loadFile(file:File, dataResourceUid:String, uniqueTerms:List[String], params:Map[String,String], stripSpaces:Boolean=false, logRowKeys:Boolean=false, test:Boolean=false){
         val rowKeyWriter = if(logRowKeys){
           FileUtils.forceMkdir(new File("/data/tmp/"))
           Some(new java.io.FileWriter("/data/tmp/row_key_"+dataResourceUid+".csv"))
