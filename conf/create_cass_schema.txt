@@ -72,6 +72,13 @@ create column family occ_duplicates
   and compaction_strategy_options = {'sstable_size_in_mb' : '200'}
   and comment = 'The column family to store information about duplicates';
 
+create column family upload
+  with comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
+  and compaction_strategy_options = {'sstable_size_in_mb' : '200'}
+  and comment = 'The column family to store information about dynamically uploaded datasets';
 
 create column family outliers with comparator = 'UTF8Type' and default_validation_class = 'UTF8Type'
 and comment='The column family for occurrence records' and gc_grace=2000;
