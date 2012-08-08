@@ -177,7 +177,7 @@ class CassandraPersistenceManager @Inject() (
                 Some(columnList2Map(columnList))
             }
         } catch {
-            case e:Exception => logger.debug(e.getMessage, e); None
+            case e:Exception => logger.trace(e.getMessage, e); None   //this is expected behaviour where no value exists
         }
     }
     /**

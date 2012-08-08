@@ -73,7 +73,6 @@ object Store {
    */
   def getComparisonByUuid(uuid: java.lang.String): java.util.Map[String,java.util.List[ProcessedValue]] = getComparison(occurrenceDAO.getAllVersionsByUuid(uuid).getOrElse(null))
 
-   
   /**
    * Get the raw processed comparison based on the rowKey for the occurrence
    */
@@ -163,7 +162,6 @@ object Store {
       if(shouldIndex)
         IndexRecords.indexList(rowKeys)
    }
-   
   }
   
   /**
@@ -328,6 +326,11 @@ object Store {
    */
   def index(dataResource:java.lang.String) = IndexRecords.index(None, None, Some(dataResource), false, false, None)
 
+  def index(dataResource:java.lang.String, customIndexFields:Array[String]) = {
+    IndexRecords.index(None, None, Some(dataResource), false, false, None, miscIndexProperties = customIndexFields)
+    storeCustomIndexFields(dataResource,customIndexFields)
+  }
+
   /**
    * Run the sampling for this dataset
    * @param dataResourceUid
@@ -342,7 +345,6 @@ object Store {
   def process(dataResourceUid:java.lang.String, threads:Int = 1) = {
     ProcessWithActors.processRecords(1, None , Some(dataResourceUid))
   }
-
 
   /**
    * Writes the select records to the stream. Optionally including the sensitive values.
@@ -446,7 +448,21 @@ object Store {
   /**
    * Returns a list of record uuids that have been deleted since the supplied date inclusive
    */
-  def getDeletedRecords(date:java.util.Date):Array[String] = deletedRecordDAO.getUuidsForDeletedRecords(org.apache.commons.lang.time.DateFormatUtils.format(date, "yyyy-MM-dd")) 
+  def getDeletedRecords(date:java.util.Date):Array[String] = deletedRecordDAO.getUuidsForDeletedRecords(org.apache.commons.lang.time.DateFormatUtils.format(date, "yyyy-MM-dd"))
+
+
+  def storeCustomIndexFields(tempUid:String, customIndexFields:Array[String]){
+    Config.persistenceManager.put(tempUid, "upload", "customIndexFields", Json.toJSON(customIndexFields.map(_ + "_s")))
+  }
+
+  def retrieveCustomIndexFields(tempUid:String) : Array[String] = {
+    try {
+      val s = Config.persistenceManager.get(tempUid, "upload", "customIndexFields")
+      Json.toStringArray(s.getOrElse("[]"))
+    } catch {
+      case _ => Array()
+    }
+  }
 }
 
 /**

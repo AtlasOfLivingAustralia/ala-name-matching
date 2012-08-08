@@ -156,19 +156,20 @@ trait CentrePoints {
 
         //how many decimal places are the supplied coordinates
         try {
-            //convert supplied values to float
-            val latitude = decimalLatitude.toFloat
-            val longitude = decimalLongitude.toFloat
+          //convert supplied values to float
+          val latitude = decimalLatitude.toFloat
+          val longitude = decimalLongitude.toFloat
 
-            val latDecPlaces = noOfDecimalPlace(latitude)
-            val longDecPlaces = noOfDecimalPlace(longitude)
+          val latDecPlaces = noOfDecimalPlace(latitude)
+          val longDecPlaces = noOfDecimalPlace(longitude)
 
-            //approximate the centre points appropriately
-            val approximatedLat = round(latlng.latitude,latDecPlaces)
-            val approximatedLong = round(latlng.longitude,longDecPlaces)
+          //approximate the centre points appropriately
+          val approximatedLat = round(latlng.latitude,latDecPlaces)
+          val approximatedLong = round(latlng.longitude,longDecPlaces)
 
-            //compare approximated centre point with supplied coordinates
-            approximatedLat == latitude && approximatedLong == longitude
+          //compare approximated centre point with supplied coordinates
+          approximatedLat == latitude && approximatedLong == longitude
+
         } catch {
           case e:NumberFormatException => false
         }
@@ -509,6 +510,7 @@ object HabitatMap extends VocabMaps {
       val matchedGroups = groups.collect{case sg: SpeciesGroup if sg.values.contains(StringUtils.capitalize(StringUtils.lowerCase(cl.getter(sg.rank).asInstanceOf[String]))) => sg.name}
       Some(matchedGroups)
     }
+
     /**
      * Returns all the species groups to which the supplied left right values belong
      */
@@ -519,10 +521,9 @@ object HabitatMap extends VocabMaps {
         val matchedGroups = groups.collect{case sg:SpeciesGroup if(sg.isPartOfGroup(ilft)) => sg.name}
         Some(matchedGroups)
       }
-      catch{
+      catch {
         case _=> None
       }
-      
     }
   }
 

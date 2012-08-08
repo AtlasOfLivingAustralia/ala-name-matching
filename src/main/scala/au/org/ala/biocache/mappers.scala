@@ -21,8 +21,10 @@ object FullRecordMapper {
     val environmentalLayersColumn = "el.p"
     val contextualLayersColumn = "el.p"
     val deletedColumn = "deleted"
+    val miscPropertiesColumn = "miscProperties"
     val geospatialQa = "loc"
     val taxonomicalQa = "class"
+
     val qaFields = Processors.processorMap.values.map(processor=> markAsQualityAssertion(processor.asInstanceOf[Processor].getName))
 
     /**
@@ -31,9 +33,9 @@ object FullRecordMapper {
     def fullRecord2Map(fullRecord: FullRecord, version: Version): scala.collection.mutable.Map[String, String] = {
         val properties = scala.collection.mutable.Map[String, String]()
         fullRecord.objectArray.foreach(poso => {
-            val map = FullRecordMapper.mapObjectToProperties(poso, version)
-            //add all to map
-            properties ++= map
+          val map = FullRecordMapper.mapObjectToProperties(poso, version)
+          //add all to map
+          properties ++= map
         })
 
         //add the special cases to the map
@@ -41,10 +43,10 @@ object FullRecordMapper {
           properties.put("miscProperties", Json.toJSON(fullRecord.miscProperties))        //store them as JSON array
         }
         if(fullRecord.firstLoaded != null && !fullRecord.firstLoaded.isEmpty && version == Raw){
-            properties.put("firstLoaded", fullRecord.firstLoaded)
+          properties.put("firstLoaded", fullRecord.firstLoaded)
         }
         if(fullRecord.dateDeleted != null && !fullRecord.dateDeleted.isEmpty && version == Raw){
-            properties.put("dateDeleted", fullRecord.firstLoaded)
+          properties.put("dateDeleted", fullRecord.firstLoaded)
         }
         if(fullRecord.el!=null && !fullRecord.el.isEmpty && version == Processed){
           properties.put("el.p", Json.toJSON(fullRecord.el))        //store them as JSON array
@@ -57,7 +59,7 @@ object FullRecordMapper {
         properties.put(FullRecordMapper.defaultValuesColumn, fullRecord.defaultValuesUsed.toString)
         properties.put(FullRecordMapper.locationDeterminedColumn, fullRecord.locationDetermined.toString)
         if(fullRecord.lastModifiedTime != ""){
-            properties.put(FullRecordMapper.markNameBasedOnVersion(FullRecordMapper.alaModifiedColumn, version), fullRecord.lastModifiedTime)
+          properties.put(FullRecordMapper.markNameBasedOnVersion(FullRecordMapper.alaModifiedColumn, version), fullRecord.lastModifiedTime)
         }
         properties
     }
@@ -67,26 +69,26 @@ object FullRecordMapper {
      * Change to use the toMap method of a Mappable
      */
     def mapObjectToProperties(anObject: AnyRef, version:Version = Raw): Map[String, String] = {
-        anObject match {
-            //case m:Mappable => m.getMap
-            case p:POSO => { p.toMap.map({ case(key, value) => (markNameBasedOnVersion(key,version) -> value) }) }
-            case _ => throw new Exception("Unrecognised object. Object isnt a Mappable or a POSO. Class : " + anObject.getClass.getName)
-        }
+      anObject match {
+        //case m:Mappable => m.getMap
+        case p:POSO => { p.toMap.map({ case(key, value) => (markNameBasedOnVersion(key,version) -> value) }) }
+        case _ => throw new Exception("Unrecognised object. Object isnt a Mappable or a POSO. Class : " + anObject.getClass.getName)
+      }
     }
     /**
      * changes the name based on the version
      */
     def markNameBasedOnVersion(name:String, version:Version) = version match {
-        case Processed => markAsProcessed(name)
-        case Consensus => markAsConsensus(name)
-        case _ => name
+      case Processed => markAsProcessed(name)
+      case Consensus => markAsConsensus(name)
+      case _ => name
     }
 
     /**
      * Set the property on the correct model object
      */
     def mapPropertiesToObject(anObject: POSO, map: Map[String, String]) =
-        map.foreach({case (key,value) => anObject.setProperty(key,value)})
+      map.foreach({case (key,value) => anObject.setProperty(key,value)})
 
     /**
      * Sets the properties on the supplied object based on 2 maps
@@ -148,7 +150,6 @@ object FullRecordMapper {
                             codeBuff += retrievedCode.get.getName
                           }
                         })
-
                         fullRecord.assertions =  codeBuff.toArray
                       }
                     }
@@ -169,10 +170,11 @@ object FullRecordMapper {
                     case it if version == Raw && fullRecord.hasProperty(fieldName) => fullRecord.setProperty(fieldName, fieldValue)
                     case it if version == Raw &&  !isProcessedValue(fieldName) => {
                       //any property that is not recognised is lumped into miscProperties
+                      //println("*********** field added to misc properties '" + fieldName+"', '"+fieldValue + "'")
                       fullRecord.miscProperties.put(fieldName, fieldValue)
                     }
                     case _ => {
-//                      println("*********** field added to miscProperties. " + fieldName+", "+fieldValue)
+                      //println("*********** field not recognised or supported. " + fieldName+", "+fieldValue)
 //                      //any property that is not recognised is lumped into miscProperties
 //                      miscProperties.put(fieldName, fieldValue)
                     }

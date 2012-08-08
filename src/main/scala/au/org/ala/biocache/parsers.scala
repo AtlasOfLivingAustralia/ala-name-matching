@@ -19,7 +19,6 @@ object LatOrLong extends Enumeration {
   }
 }
 
-
 /**
  * Parser for coordinates in deg, min sec format
  */
@@ -130,7 +129,6 @@ object CollectorNameParser {
   val INITIALS_Surname = ("(?:(?:"+titles+")(?:[. ]|$))?"+initialsRegEx+"[. ]([\\p{Lu}\\p{Ll}'-]*) ?(?:(?:"+titles+")(?:[. ]|$)?)?(?:" +etAl+")?").r  
   val SURNAMEFirstnamePattern = (""""?([\p{Lu}'-]*) ((?:[A-Z][-. ] ?){0,4}) ?([\p{Lu}\p{Ll}']*)(?: """+na+""")?"?""").r
   val SurnamePuncFirstnamePattern = ("\"?" +SURNAME_PREFIX_REGEX +"""([\p{Lu}\p{Ll}'-]*) ?[,] ?(?:(?:"""+titles+""")(?:[. ]|$))? ?((?:[A-Z][-. ] ?){0,4}) ?"""+SURNAME_PREFIX_REGEX+"""([\p{Lu}\p{Ll}']*)? ?([\p{Lu}\p{Ll}']{3,})? ?((?:[A-Z][. ]? ?){0,4})"""+SURNAME_PREFIX_REGEX+"""(?: """ +na+")?\"?").r
-  logger.debug( SurnamePuncFirstnamePattern.toString())
   val SINGLE_NAME_PATTERN = ("(?:(?:"+titles+")(?:[. ]|$))?([\\p{Lu}\\p{Ll}']*)").r
   val ORGANISATION_PATTERN = ("((?:.*?)?(?:"+ORGANISATION_WORDS+")(?:.*)?)").r
   val AND = "AND|and|And|&"  
@@ -139,11 +137,16 @@ object CollectorNameParser {
   val suffixes = "jr|Jr|JR"  
   val AND_NAME_LISTPattern = ("((?:[A-Z][. ] ?){0,3})(["+NAME_LETTERS+"][\\p{Ll}-']*)? ?(["+NAME_LETTERS+"][\\p{Ll}\\p{Lu}'-]*)? ?" +"(?:"+AND+") ?((?:[A-Z][. ] ?){0,3})(["+NAME_LETTERS+"][\\p{Ll}'-]*)? ?(["+NAME_LETTERS+"][\\p{Ll}\\p{Lu}'-]*)?").r
   val FirstnameSurnamePattern = ("(["+NAME_LETTERS+"][\\p{Ll}']*) ((?:[A-Z][. ] ?){0,4}) ?([\\p{Lu}\\p{Ll}'-]*)? ?(?:"+na+")?").r //"(["+NAME_LETTERS +"][" + name_letters + "?]{1,}" + " ) (["+NAME_LETTERS +"][" + name_letters + "?]{1,}" + " )"
-  logger.debug(FirstnameSurnamePattern.toString)
   val unknown = List("\"?ANON  N/A\"?","\"NOT ENTERED[ ]*-[ ]*SEE ORIGINAL DATA[ ]*-[ ]*\"","\\[unknown\\]","Anon.","No data","Unknown","Anonymous","\\?")
   val unknownPattern = ("("+unknown.mkString("|")+")").r
-  logger.debug(unknownPattern.toString)
-  def parseForList(stringValue:String) : Option[List[String]] ={  
+
+  if(logger.isDebugEnabled){
+    logger.debug(FirstnameSurnamePattern.toString)
+    logger.debug( SurnamePuncFirstnamePattern.toString())
+    logger.debug(unknownPattern.toString)
+  }
+
+  def parseForList(stringValue:String) : Option[List[String]] ={
     
     stringValue match {
       case AND_NAME_LISTPattern(initials1,firstName, secondName,initials2,thirdName,forthName) =>{
@@ -339,7 +342,7 @@ object DistanceRangeParser {
     try {
       denom match {
         case metres(demon) => { Some(value.toFloat)  }
-        case kilometres(denom) => {Some(value.toFloat * 1000)  }
+        case kilometres(denom) => { Some(value.toFloat * 1000)  }
         case _ => {  Some(value.toFloat) }
       }
     } catch {

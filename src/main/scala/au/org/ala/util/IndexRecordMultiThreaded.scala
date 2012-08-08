@@ -202,12 +202,8 @@ class ProcessRecordsRunner(centralCounter:Counter, threadId:Int, startKey:String
        true;
      },startKey, endKey, 1000)
      val fin = System.currentTimeMillis
-     //
      println("[Processor Thread "+threadId+"] " +counter + " took " + ((fin-start).toFloat) / 1000f + " seconds" )
-     
-
-    println("Finished.")
-
+     println("Finished.")
   }
 }
 
@@ -263,53 +259,3 @@ class IndexRunner (centralCounter:Counter, threadId:Int, startKey:String, endKey
     println("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
   }
 }
-
-//class IndexRunner (centralCounter:Counter, threadId:Int, startKey:String, endKey:String, sourceConfDirPath:String, targetConfDir:String) extends Runnable {
-//
-//  def run {
-//
-//    val newIndexDir = new File(targetConfDir)
-//    if (newIndexDir.exists) FileUtils.deleteDirectory(newIndexDir)
-//    FileUtils.forceMkdir(newIndexDir)
-//
-//    //create a copy of SOLR home
-//    val sourceConfDir = new File(sourceConfDirPath)
-//
-//    FileUtils.copyDirectory(sourceConfDir, newIndexDir)
-//
-//    FileUtils.copyFileToDirectory(new File(sourceConfDir.getParent+"/solr.xml"), newIndexDir.getParentFile)
-//
-//    val pageSize = 1000
-//    println("Set SOLR Home: " + newIndexDir.getParent)
-//    val indexer = new SolrIndexDAO(newIndexDir.getParent, newIndexDir.getAbsolutePath+"/solrconfig.xml")
-//    var counter = 0
-//    val start = System.currentTimeMillis
-//    var startTime = System.currentTimeMillis
-//    var finishTime = System.currentTimeMillis
-//
-//    //page through and create and index for this range
-//    Config.persistenceManager.pageOverAll("occ", (guid, map) => {
-//        counter += 1
-//        val fullMap = new HashMap[String, String]
-//        fullMap ++= map
-//        ///convert EL and CL properties at this stage
-//        fullMap ++= Json.toStringMap(map.getOrElse("el.p", "{}"))
-//        fullMap ++= Json.toStringMap(map.getOrElse("cl.p", "{}"))
-//        val mapToIndex = fullMap.toMap
-//
-//        indexer.indexFromMap(guid, mapToIndex)
-//        if (counter % pageSize == 0 && counter> 0) {
-//          centralCounter.addToCounter(pageSize)
-//          finishTime = System.currentTimeMillis
-//          centralCounter.printOutStatus(threadId, guid)
-//          startTime = System.currentTimeMillis
-//        }
-//        true
-//    }, startKey, endKey, pageSize = pageSize)
-//
-//    indexer.finaliseIndex(true,true)
-//
-//    finishTime = System.currentTimeMillis
-//    println("Total indexing time " + ((finishTime-start).toFloat)/1000f + " seconds")
-//  }
-//}

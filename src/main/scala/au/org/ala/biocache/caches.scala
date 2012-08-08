@@ -68,43 +68,64 @@ object ClassificationDAO {
             cl.subspecies,cl.infraspecificEpithet,cl.scientificName).reduceLeft(_+"|"+_)
               else cl.vernacularName
     }
-    
+
+    if (cl.scientificName == null){
+      if (cl.subspecies != null) cl.scientificName = cl.subspecies
+      else if (cl.species != null) cl.scientificName = cl.species
+      else if (cl.genus != null) cl.scientificName = cl.genus
+      else if (cl.family != null) cl.scientificName = cl.family
+      else if (cl.classs != null) cl.scientificName = cl.classs
+      else if (cl.order != null) cl.scientificName = cl.order
+      else if (cl.phylum != null) cl.scientificName = cl.phylum
+      else if (cl.kingdom != null) cl.scientificName = cl.kingdom
+    }
+
     val cachedObject = lock.synchronized { lru.get(hash) }
 
     if(cachedObject!=null){
        cachedObject.asInstanceOf[Option[NameSearchResult]]
     } else {
       //search for a scientific name if values for the classification were provided otherwise search for a common name
-      val nsr = {
-        if (cl.taxonConceptID != null) nameIndex.searchForRecordByLsid(cl.taxonConceptID)
-        else if(hash.contains("|")) nameIndex.searchForRecord(new LinnaeanRankClassification(
-          stripStrayQuotes(cl.kingdom),
-          stripStrayQuotes(cl.phylum),
-          stripStrayQuotes(cl.classs),
-          stripStrayQuotes(cl.order),
-          stripStrayQuotes(cl.family),
-          stripStrayQuotes(cl.genus),
-          stripStrayQuotes(cl.species),
-          stripStrayQuotes(cl.specificEpithet),
-          stripStrayQuotes(cl.subspecies),
-          stripStrayQuotes(cl.infraspecificEpithet),
-          stripStrayQuotes(cl.scientificName)),
-          true,
-          true) //fuzzy matching is enabled because we have taxonomic hints to help prevent dodgy matches
-        else nameIndex.searchForCommonName(cl.getVernacularName)
+      var nsr = {
+        try {
+          if (cl.taxonConceptID != null) nameIndex.searchForRecordByLsid(cl.taxonConceptID)
+          else if(hash.contains("|")) nameIndex.searchForRecord(new LinnaeanRankClassification(
+            stripStrayQuotes(cl.kingdom),
+            stripStrayQuotes(cl.phylum),
+            stripStrayQuotes(cl.classs),
+            stripStrayQuotes(cl.order),
+            stripStrayQuotes(cl.family),
+            stripStrayQuotes(cl.genus),
+            stripStrayQuotes(cl.species),
+            stripStrayQuotes(cl.specificEpithet),
+            stripStrayQuotes(cl.subspecies),
+            stripStrayQuotes(cl.infraspecificEpithet),
+            stripStrayQuotes(cl.scientificName)),
+            true,
+            true) //fuzzy matching is enabled because we have taxonomic hints to help prevent dodgy matches
+          else null
+        } catch {
+          case e:Exception => {
+            logger.debug(e.getMessage + ", hash =  " + hash, e)
+          }; null
+        }
       }
 
-      if(nsr!=null){
+      if(nsr == null) {
+        nsr = nameIndex.searchForCommonName(cl.getVernacularName)
+      }
+
+      if(nsr != null){
           //handle the case where the species is a synonym this is a temporary fix should probably go in ala-name-matching
-          var result:Option[NameSearchResult] = if(nsr.isSynonym) Some(nameIndex.searchForRecordByLsid(nsr.getAcceptedLsid))  else Some(nsr)
+          var result:Option[NameSearchResult] = if(nsr.isSynonym) Some(nameIndex.searchForRecordByLsid(nsr.getAcceptedLsid)) else Some(nsr)
           if(result.get != null){
               //change the name match metric for a synonym 
               if(nsr.isSynonym())
                 result.get.setMatchType(nsr.getMatchType())
               //update the subspecies or below value if necessary
-              val rank = result.get.getRank  
+              val rank = result.get.getRank
               if(rank != null && rank.getId() >7000 && rank.getId <9999){
-                result.get.getRankClassification.setSubspecies(result.get.getRankClassification.getScientificName())            
+                result.get.getRankClassification.setSubspecies(result.get.getRankClassification.getScientificName())
               }
           }
           else{

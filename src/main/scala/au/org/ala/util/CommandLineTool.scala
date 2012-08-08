@@ -3,7 +3,7 @@ package au.org.ala.util
 import au.org.ala.biocache.Config
 import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.{NameValuePair, HttpClient}
-import java.io.{BufferedReader, InputStreamReader}
+import java.io.{File, BufferedReader, InputStreamReader}
 
 /**
  * Command line tool that allows administrators to run commands on
@@ -75,6 +75,11 @@ object CMD {
       input.toLowerCase.trim match {
         case it if (it startsWith "describe ") || (it startsWith "d ") => l.describeResource(it.split(" ").map(x => x.trim).toList.tail)
         case it if (it startsWith "list") || (it == "l") => l.printResourceList
+        case it if ((it startsWith "load-local-csv") && (it.split(" ").length == 3))  =>  {
+          val parts = it.split(" ")
+          val d = new DwcCSVLoader()
+          d.loadFile(new File(parts(2)),parts(1), List(), Map())
+        }
         case it if (it startsWith "load") || (it startsWith "ld") =>  {
           it.split(" ").map(x => x.trim).tail.foreach(drUid => l.load(drUid))
         }
@@ -114,6 +119,12 @@ object CMD {
           println("Response: " + responseCode)
           println("The data is viewable here: " + Config.reindexViewDataResourceUrl + dr)
         }
+        case it if (it startsWith "index-custom") => {
+          if (it.split(" ").length > 2){
+            val (cmdAndDr, additionalFields) = it.split(" ").splitAt(2)
+            IndexRecords.index(None, None, Some(cmdAndDr(1)), false, false, miscIndexProperties = additionalFields)
+          }
+        }
         case it if (it startsWith "index ") || (it startsWith "index") => {
           val drs = it.split(" ").map(x => x.trim).toList.tail
           drs.foreach(dr => IndexRecords.index(None, None, Some(dr), false, false))
@@ -126,6 +137,18 @@ object CMD {
           IndexRecords.indexer.optimise
         }
         case it if (it startsWith "healthcheck") => l.healthcheck
+        case it if (it startsWith "export-index") => {
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+          ExportFromIndex.main(args)
+        }
+        case it if (it startsWith "export-facet") => {
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+          ExportFacet.main(args)
+        }
+        case it if (it startsWith "export-facet-query") => {
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+          ExportByFacetQuery.main(args)
+        }
         case it if (it startsWith "export") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           ExportUtil.main(args)
@@ -183,18 +206,23 @@ object CMD {
     padAndPrint(" [6]  process-all - Process all records (this takes a long time for full biocache)")
     padAndPrint(" [7]  index <dr-uid1> <dr-uid2>... - Index resource (for offline use only)")
     padAndPrint(" [8]  index-live <dr-uid> - Index resource by calling webservice to index. Dont use for large resources.")
-    padAndPrint(" [9]  createdwc <dr-uid> <export directory> - Create a darwin core archive for a resource")
-    padAndPrint("[10]  healthcheck - Do a healthcheck on the configured resources in the collectory")
-    padAndPrint("[11]  export - CSV export of data")
-    padAndPrint("[12]  import - CSV import of data")
-    padAndPrint("[13]  optimise - Optimisation of SOLR index (this takes some time)")
-    padAndPrint("[14]  sample-all - Run geospatial sampling for all records")
-    padAndPrint("[15]  sample <dr-uid1> <dr-uid2>... - Run geospatial sampling for records for a data resource")
-    padAndPrint("[16]  resample <query> - Rerun geospatial sampling for records that match a SOLR query")
-    padAndPrint("[17]  delete <solr-query> - Delete records matching a query")
-    padAndPrint("[18]  delete-resource <dr-uid1> <dr-uid2>... - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
-    padAndPrint("[19]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
-    padAndPrint("[20]  exit")
+    padAndPrint(" [9]  index-custom <dr-uid> <list-of-misc-fields> - Index resource while indexing miscellanous properties.")
+    padAndPrint("[10]  createdwc <dr-uid> <export directory> - Create a darwin core archive for a resource")
+    padAndPrint("[11]  healthcheck - Do a healthcheck on the configured resources in the collectory")
+    padAndPrint("[12]  export - CSV export of data")
+    padAndPrint("[13]  export-index <output-file> <csv-list-of fields> <solr-query> - export data from index")
+    padAndPrint("[14]  export-facet <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
+    padAndPrint("[15]  export-facet-query <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
+    padAndPrint("[16]  import - CSV import of data")
+    padAndPrint("[17]  optimise - Optimisation of SOLR index (this takes some time)")
+    padAndPrint("[18]  sample-all - Run geospatial sampling for all records")
+    padAndPrint("[19]  sample <dr-uid1> <dr-uid2>... - Run geospatial sampling for records for a data resource")
+    padAndPrint("[20]  resample <query> - Rerun geospatial sampling for records that match a SOLR query")
+    padAndPrint("[21]  delete <solr-query> - Delete records matching a query")
+    padAndPrint("[22]  delete-resource <dr-uid1> <dr-uid2>... - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
+    padAndPrint("[23]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
+    padAndPrint("[24]  load-local-csv <dr-uid> <filepath>... - Load a local file into biocache. For development use only. Not to be used in production.")
+    padAndPrint("[25]  exit")
   }
 
   def padAndPrint(str:String) = println(padElementTo60(str))

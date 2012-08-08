@@ -237,7 +237,7 @@ class RecordProcessor {
     var assertions = new scala.collection.mutable.HashMap[String, Array[QualityAssertion]]
 
     Processors.foreach(processor => {
-        assertions += (processor.getName -> processor.process(raw.rowKey, raw, processed))
+      assertions += (processor.getName -> processor.process(raw.rowKey, raw, processed))
     })
   
     //store the occurrence

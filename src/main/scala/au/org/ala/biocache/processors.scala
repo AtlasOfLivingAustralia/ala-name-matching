@@ -1016,9 +1016,8 @@ class ClassificationProcessor extends Processor {
   }
   
   def hasMatchToDefault(rank:String, taxon:String, classification:Classification) : Boolean ={
-    def term = DwC.matchTerm(rank);
+    def term = DwC.matchTerm(rank)
     def field = if(term.isDefined)term.get.canonical else rank
-    
     taxon!=null && taxon.equalsIgnoreCase(classification.getProperty(field).getOrElse(""))
   }
 
@@ -1044,25 +1043,25 @@ class ClassificationProcessor extends Processor {
       if (nsr != null) {
         val classification = nsr.getRankClassification
         //Check to see if the classification fits in with the supplied taxonomic hints        
-          //get the taxonomic hints from the collection or data resource
-          var attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
-          if(attribution.isEmpty)
-            attribution = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
+        //get the taxonomic hints from the collection or data resource
+        var attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
+        if(attribution.isEmpty)
+          attribution = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
 
-          if(!attribution.isEmpty){
-            logger.debug("Checking taxonomic hints")
-            val taxonHints = attribution.get.taxonomicHints
+        if(!attribution.isEmpty){
+          logger.debug("Checking taxonomic hints")
+          val taxonHints = attribution.get.taxonomicHints
 
-            if(taxonHints != null && !taxonHints.isEmpty){
-              val (isValid, comment) = isMatchValid(classification, attribution.get.retrieveParseHints)
-              if(!isValid){
-                  logger.info("Conflict in matched classification. Matched: " + guid+ ", Matched: "+comment+", Taxonomic hints in use: " + taxonHints.toList)
-                  processed.classification.nameMatchMetric="matchFailedHint"
-                  //TODO think about logging this information to a separate column family
-                  return Array()//QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Conflict in matched classification. Matched: "+ comment))
-              }
+          if(taxonHints != null && !taxonHints.isEmpty){
+            val (isValid, comment) = isMatchValid(classification, attribution.get.retrieveParseHints)
+            if(!isValid){
+                logger.info("Conflict in matched classification. Matched: " + guid+ ", Matched: "+comment+", Taxonomic hints in use: " + taxonHints.toList)
+                processed.classification.nameMatchMetric="matchFailedHint"
+                //TODO think about logging this information to a separate column family
+                return Array()//QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Conflict in matched classification. Matched: "+ comment))
             }
           }
+        }
           
         //check for default match before updating the classification.
         val hasDefaultMatch = processed.defaultValuesUsed && nsr.getRank() != null&& hasMatchToDefault(nsr.getRank().getRank(), nsr.getRankClassification().getScientificName(),processed.classification)
@@ -1080,8 +1079,6 @@ class ClassificationProcessor extends Processor {
           if(taxonProfile.get.habitats != null)
             processed.classification.speciesHabitats = taxonProfile.get.habitats
         }
-        
-        
 
         //Add the species group information - I think that it is better to store this value than calculate it at index time
         //val speciesGroups = SpeciesGroups.getSpeciesGroups(processed.classification)

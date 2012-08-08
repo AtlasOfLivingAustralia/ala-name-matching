@@ -75,7 +75,7 @@ object IndexRecords {
   }
 
   def index(startUuid:Option[String], endUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false,
-            startDate:Option[String]=None, checkDeleted:Boolean=false, pageSize:Int = 1000) = {
+            startDate:Option[String]=None, checkDeleted:Boolean=false, pageSize:Int = 1000, miscIndexProperties:Seq[String] = Array[String]()) {
 
     val startKey = {
         if(startUuid.isEmpty && !dataResource.isEmpty) {
@@ -99,12 +99,13 @@ object IndexRecords {
     } else {
        logger.info("Starting to index " + startKey + " until " + endKey)
     }
-    indexRange(startKey, endKey, date, checkDeleted)
+    indexRange(startKey, endKey, date, checkDeleted, miscIndexProperties = miscIndexProperties)
     //index any remaining items before exiting
     indexer.finaliseIndex(optimise, shutdown)  
   }
 
-  def indexRange(startUuid:String, endUuid:String, startDate:Option[Date]=None, checkDeleted:Boolean=false, pageSize:Int = 1000)={
+  def indexRange(startUuid:String, endUuid:String, startDate:Option[Date]=None, checkDeleted:Boolean=false,
+                 pageSize:Int = 1000, miscIndexProperties:Seq[String] = Array[String]()) {
     var counter = 0
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
@@ -112,15 +113,11 @@ object IndexRecords {
     performPaging( (guid, map) => {
         counter += 1
         //println("Indexing doc: " + counter)
-        val fullMap = new HashMap[String, String]
-        fullMap ++= map
+        //val fullMap = new HashMap[String, String]
+        //fullMap ++= map
         ///convert EL and CL properties at this stage
-//        fullMap ++= Json.toStringMap(map.getOrElse("el.p", "{}"))
-//        fullMap ++= Json.toStringMap(map.getOrElse("cl.p", "{}"))
-        val mapToIndex = fullMap.toMap
         val shouldcommit = counter % 100000 == 0
-
-        indexer.indexFromMap(guid, mapToIndex, startDate=startDate, commit=shouldcommit)
+        indexer.indexFromMap(guid, map, startDate=startDate, commit=shouldcommit, miscIndexProperties=miscIndexProperties)
         if (counter % pageSize == 0) {
           finishTime = System.currentTimeMillis
           logger.info(counter + " >> Last key : " + guid + ", records per sec: " +
@@ -150,7 +147,6 @@ object IndexRecords {
         true
       }, startKey, endKey, pageSize, "uuid", "rowKey", FullRecordMapper.deletedColumn)
     } else {
-      println("****** Performing selective paging with list of fields.....")
       persistenceManager.pageOverAll("occ", (guid, map) => {
         proc(guid, map)
       }, startKey, endKey, pageSize)
@@ -173,7 +169,6 @@ object IndexRecords {
         logger.debug(counter + " >> Last key : " + rowKey + ", records per sec: " + 100f / (((finishTime - startTime).toFloat) / 1000f))
         startTime = System.currentTimeMillis
       }
-
     })
     indexer.finaliseIndex(false, false)//commit but don't optimise or shutdown
   }

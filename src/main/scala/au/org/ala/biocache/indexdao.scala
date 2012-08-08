@@ -50,7 +50,9 @@ trait IndexDAO {
     /**
      * Index a record with the supplied properties.
      */
-    def indexFromMap(guid: String, map: Map[String, String], batch:Boolean=true,startDate:Option[Date]=None,commit:Boolean = false)
+    def indexFromMap(guid: String, map:scala.collection.Map[String,String], batch:Boolean = true,
+                     startDate:Option[Date] = None, commit:Boolean = false,
+                     miscIndexProperties:Seq[String] = Array[String]())
 
     /**
      * Truncate the current index
@@ -72,7 +74,7 @@ trait IndexDAO {
      */
     def finaliseIndex(optimise:Boolean=false, shutdown:Boolean=true)
 
-    def getValue(field: String, map: Map[String, String]) : String = {
+    def getValue(field: String, map: scala.collection.Map[String, String]) : String = {
         val value = map.get(field)
         if (!value.isEmpty){
             return value.get
@@ -81,7 +83,7 @@ trait IndexDAO {
         }
     }
 
-    def getValue(field: String, map: Map[String, String], checkparsed:Boolean):String ={
+    def getValue(field: String, map: scala.collection.Map[String, String], checkparsed:Boolean):String ={
        var value = getValue(field, map)
        if(value == "" && checkparsed)
          value = getValue(field + ".p", map)
@@ -95,7 +97,7 @@ trait IndexDAO {
      *
      * TODO we may wish to fix this so that it uses the same code in the mappers
      */
-    def getAssertions(map: Map[String, String]): Array[String] = {
+    def getAssertions(map: scala.collection.Map[String, String]): Array[String] = {
 
         val columns = map.keySet
         val buff = new ArrayBuffer[String]
@@ -154,7 +156,7 @@ trait IndexDAO {
    * TODO Factor this out of indexing logic, and have a separate field in cassandra that stores this.
    * TODO Construction of this field can then happen as part of the processing.
    */
-  def getRawScientificName(map: Map[String, String]): String = {
+  def getRawScientificName(map: scala.collection.Map[String, String]): String = {
     val scientificName: String = {
       if (map.contains("scientificName"))
         map.get("scientificName").get
@@ -180,7 +182,7 @@ trait IndexDAO {
      * should result in a quicker load time.
      *
      */
-    def getOccIndexModel(guid: String, map: Map[String, String]): List[String] = {
+    def getOccIndexModel(guid: String, map: scala.collection.Map[String, String]): List[String] = {
 
         try {
             //get the lat lon values so that we can determine all the point values
@@ -298,17 +300,13 @@ trait IndexDAO {
                 if(stateCons == "null") stateCons = rawStateCons;
                 
                 val sensitive:String = {
-                    //if(sensitiveMap.size>0) {
-                        val dataGen = map.getOrElse("dataGeneralizations.p", "")
-                        if(dataGen.contains("already generalised"))
-                            "alreadyGeneralised"
-                        else if(dataGen != "")
-                            "generalised"
-                        else
-                            ""
-                    //}
-//                    else
-//                        ""
+                    val dataGen = map.getOrElse("dataGeneralizations.p", "")
+                    if(dataGen.contains("already generalised"))
+                        "alreadyGeneralised"
+                    else if(dataGen != "")
+                        "generalised"
+                    else
+                        ""
                 }
 
                 val outlierForLayers:Array[String] = {
@@ -612,7 +610,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
   def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], queryString:String = "*:*", filterQueries:Array[String] = Array(), sortField:Option[String]=None, sortDir:Option[String]=None){
     init
 
-
     var startIndex = 0
     var query:SolrQuery = new SolrQuery(queryString)
     query.setFacet(false)
@@ -638,7 +635,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
         val dir = sortDir.getOrElse("asc")
         q.setSortField(sortField.get,if(dir == "asc")org.apache.solr.client.solrj.SolrQuery.ORDER.asc else org.apache.solr.client.solrj.SolrQuery.ORDER.desc)
       }
-      
 
       if(counter + pageSize > fullResults){
         pageSize = fullResults - counter
@@ -657,35 +653,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
       counter += pageSize
     }
   }
-
-//    def XXXXXpageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], queryString:String = "*:*", filterQueries:Array[String] = Array()){
-//      init
-//
-//      var pageSize = 0
-//      var startIndex = 0
-//      var query:SolrQuery = new SolrQuery(queryString)
-//      query.setFacet(false)
-//      query.setRows(pageSize)
-//      query.setStart(startIndex)
-//      fieldToRetrieve.foreach(f => query.addField(f))
-//      var response = solrServer.query(query)
-//
-//      val fullResults = response.getResults.getNumFound
-//      println("Total found for :" + queryString +", " + fullResults)
-//      query.setRows(fullResults.toInt)
-//      query.setFacet(false)
-//      query.setFilterQueries(filterQueries: _ *)
-//      response = solrServer.query(query)
-//
-//
-//
-//      val solrDocumentList = response.getResults
-//      val iter = solrDocumentList.iterator()
-//      while(iter.hasNext){
-//        val solrDocument = iter.next()
-//        proc(solrDocument.getFieldValueMap)
-//      }
-//    }
 
     def emptyIndex() {
         init
@@ -726,16 +693,9 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
         init
         if (!solrDocList.isEmpty) {
              solrServer.add(solrDocList)
-           //SolrIndexDAO.solrServer.add(solrDocList)
-
-//          while(docQueue.size()>1){Thread.sleep(250)}
-//          docQueue.add(solrDocList)
-//           
-           //wait enough time for the Actor to get the message
           Thread.sleep(50)
         }
 
-//        while(docQueue.size > 0){Thread.sleep(50)}
         solrServer.commit
         solrDocList.clear
         println(printNumDocumentsInIndex)
@@ -759,9 +719,9 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
         	cc.shutdown
     }
     def optimise():String = {
-        init
-        solrServer.optimize
-        printNumDocumentsInIndex
+      init
+      solrServer.optimize
+      printNumDocumentsInIndex
     }
     override def commit(){
       init
@@ -771,13 +731,13 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
     /**
      * Decides whether or not the current record should be indexed based on processed times
      */
-    def shouldIndex(map:Map[String,String], startDate:Option[Date]):Boolean={
-        if(!startDate.isEmpty){            
-            val lastLoaded = DateParser.parseStringToDate(getValue(FullRecordMapper.alaModifiedColumn,map))
-            val lastProcessed = DateParser.parseStringToDate(getValue(FullRecordMapper.alaModifiedColumn+".p",map))
-            return startDate.get.before(lastProcessed.getOrElse(startDate.get)) || startDate.get.before(lastLoaded.getOrElse(startDate.get))
-        }        
-        true
+    def shouldIndex(map:scala.collection.Map[String,String], startDate:Option[Date]):Boolean={
+      if(!startDate.isEmpty){
+        val lastLoaded = DateParser.parseStringToDate(getValue(FullRecordMapper.alaModifiedColumn,map))
+        val lastProcessed = DateParser.parseStringToDate(getValue(FullRecordMapper.alaModifiedColumn+".p",map))
+        return startDate.get.before(lastProcessed.getOrElse(startDate.get)) || startDate.get.before(lastLoaded.getOrElse(startDate.get))
+      }
+      true
     }
     
   val multifields = Array("duplicate_inst","establishment_means","species_group","assertions","data_hub_uid","interactions","outlier_layer",
@@ -786,8 +746,11 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
     /**
      * A SOLR specific implementation of indexing from a map.
      */
-  override def indexFromMap(guid: String, map: Map[String, String], batch: Boolean = true, startDate: Option[Date] = None, commit:Boolean = false) = {
+  override def indexFromMap(guid: String, map: scala.collection.Map[String, String], batch: Boolean = true,
+                            startDate: Option[Date] = None, commit:Boolean = false,
+                            miscIndexProperties:Seq[String] = Array[String]()){
     init
+
     //val header = getHeaderValues()
     if (shouldIndex(map, startDate)) {
       val values = getOccIndexModel(guid, map)
@@ -812,7 +775,18 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
               doc.addField(header(i), values(i))
           }
         }
-        
+
+        //add the misc properties here......
+        if(!miscIndexProperties.isEmpty){
+          val unparsedJson = map.getOrElse(FullRecordMapper.miscPropertiesColumn, "")
+          if(unparsedJson != ""){
+            val map = Json.toMap(unparsedJson)
+            map.foreach({ case(k,v) => {
+              doc.addField(k + "_s", v)
+            }})
+          }
+        }
+
         //now index the QA names for the user if userQA = true
         val hasUserAssertions = map.getOrElse(FullRecordMapper.userQualityAssertionColumn, "false")
         if("true".equals(hasUserAssertions)){

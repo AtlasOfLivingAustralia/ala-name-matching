@@ -50,6 +50,7 @@ object AdHocParser {
 
   import au.org.ala.util.StringHelper._
   import FileHelper._
+  import scala.collection.JavaConversions._
 
   def main(args: Array[String]) {
     var filePath = ""
@@ -147,16 +148,18 @@ object AdHocParser {
     //if not try and match them
     if (matchedCount > 2) {
       val t = DwC.retrieveCanonicals(list.toList)
-      println("Matched terms: " + t)
+     // println("Matched terms: " + t)
       t.toArray
     } else {
       val t = guessColumnHeaders(list)
-      println("Guessed terms: " + t.zip(list).filter(x => x._2 !="").map(x=> x._1+":"+x._2).mkString(","))
+     // println("Guessed terms: " + t.zip(list).filter(x => x._2 !="").map(x=> x._1+":"+x._2).mkString(","))
       t
     }
   }
 
   def mapColumnHeaders(list: Array[String]): Array[String] = DwC.retrieveCanonicalsOrNothing(list.toList).toArray
+
+  def mapOrReturnColumnHeaders(list: Array[String]): Array[String] = DwC.retrieveCanonicals(list.toList).toArray
 
   def processLine(hdrs: Array[String], values: Array[String]): ParsedRecord = {
     val tuples = (hdrs zip values).toMap
@@ -169,8 +172,6 @@ object AdHocParser {
     val rawAndProcessed = raw.objectArray zip processed.objectArray
     val listBuff = new ListBuffer[ProcessedValue]
     for ((rawPoso, procPoso) <- rawAndProcessed) {
-
-//      if (!rawPoso.isInstanceOf[ContextualLayers] && !rawPoso.isInstanceOf[EnvironmentalLayers]) {
         rawPoso.propertyNames.foreach(name => {
           val rawValue = rawPoso.getProperty(name)
           val procValue = procPoso.getProperty(name)
@@ -179,8 +180,10 @@ object AdHocParser {
             listBuff += term
           }
         })
-//      }
     }
+
+    //add miscellaneous properties that arent recognised.
+    raw.miscProperties.foreach({case (k,v) => listBuff += ProcessedValue(k, v, "")})
     ParsedRecord(listBuff.toList.toArray, assertions.values.flatten.toArray)
   }
 

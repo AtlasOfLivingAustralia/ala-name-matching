@@ -20,7 +20,10 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.springframework.version>3.0.6.RELEASE</org.springframework.version>
 	</properties>
-	<description>Scala implementation of biocache backend.</description>
+	<description>
+        Scala implementation of biocache backend.
+        This code base managed the loading, processing, indexing of occurrence records for the ALA.
+    </description>
 	<repositories>
 		<repository>
 			<id>repo2</id>
