@@ -58,6 +58,7 @@ public class CBCreateLuceneIndex {
     protected String lexFile = "cb_lex_names.txt";
     protected String irmngFile = "irmng_classification.txt";
     protected String colFile = "col_common_names.txt";
+    protected String extraALAConcepts = "/data/bie-staging/ala-names/ala-extra.txt";
     protected String afdFile = "/data/bie-staging/anbg/AFD-common-names.csv";
     protected String apniFile = "/data/bie-staging/anbg/APNI-common-names.csv";
     protected String taxonConeptName = "/data/bie-staging/anbg/taxonConcepts.txt";
@@ -234,6 +235,23 @@ public class CBCreateLuceneIndex {
         }catch(IOException e){e.printStackTrace();}
         return value;
     }
+    /**
+     * Adds the extra ALA concepts from the legislated lists that are missing from the NSL.
+     * 
+     * @param iw
+     * @param file
+     * @throws Exception
+     */
+    private void addExtraALAConcept(IndexWriter iw, String file) throws Exception{
+      au.com.bytecode.opencsv.CSVReader reader = new au.com.bytecode.opencsv.CSVReader(new FileReader(file), ',', '"', '\\', 1);
+      for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
+        String lsid = values[0];
+        String scientificName = values[1];
+        String authority = values[2];
+        Document doc = createALAIndexDocument(scientificName, "-1", lsid, authority, null);
+        iw.addDocument(doc);
+      }
+    }
 
     private void indexALA(IndexWriter iw, String file) throws Exception{
         int records =0;
@@ -274,6 +292,7 @@ public class CBCreateLuceneIndex {
                         log.info("Processed " + records + " in " + (System.currentTimeMillis() - time) + " msecs");
                     }
         }
+        addExtraALAConcept(iw,extraALAConcepts);
         iw.commit();
         iw.optimize();
         iw.close();
