@@ -135,7 +135,7 @@ class DwcCSVLoader extends DataLoader {
                 })
                 
                 //only continue if there is at least one nonnull unique term
-                if(uniqueTerms.find(t => map.getOrElse(t,"").length>0).isDefined){
+                if(uniqueTerms.find(t => map.getOrElse(t,"").length>0).isDefined || uniqueTerms.length==0){
                    
                     val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,""))
                     if(!uniqueTerms.forall(t => map.getOrElse(t,"").length>0)){
