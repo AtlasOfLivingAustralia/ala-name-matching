@@ -130,6 +130,7 @@ public class CBCreateLuceneIndex {
     };
     NameParser parser = new PhraseNameParser();
     Set<String> knownHomonyms = new HashSet<String>();
+    Set<String> blacklist = new HashSet<String>();
     private TaxonNameSoundEx tnse;
 
     public void init() throws Exception {
@@ -143,9 +144,26 @@ public class CBCreateLuceneIndex {
                 new InputStreamReader(
                 this.getClass().getClassLoader().getResource(
                 "au/org/ala/propertystore/known_homonyms.txt").openStream(), "ISO-8859-1")));
-        while (lines.hasNext()) {
-            String line = lines.nextLine().trim();
-            knownHomonyms.add(line.toUpperCase());
+        LineIterator blines = new LineIterator(new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResource("blacklist.txt").openStream())));
+        try{
+          //load known homonyms
+            while (lines.hasNext()) {
+                String line = lines.nextLine().trim();
+                knownHomonyms.add(line.toUpperCase());
+            }
+            //load the blacklist
+            while(blines.hasNext()){
+                String line = blines.nextLine().trim();
+                if(!line.startsWith("#") && StringUtils.isNotBlank(line))
+                    blacklist.add(line);
+            }
+        }
+        catch (Exception e){
+          e.printStackTrace();
+        }
+        finally{
+          lines.close();
+          blines.close();
         }
     }
 
@@ -286,11 +304,13 @@ public class CBCreateLuceneIndex {
 
             
 
-            iw.addDocument(doc);
-                    records++;
-                    if (records % 100000 == 0) {
-                        log.info("Processed " + records + " in " + (System.currentTimeMillis() - time) + " msecs");
-                    }
+            if(doc != null){
+                iw.addDocument(doc);
+                records++;
+                if (records % 100000 == 0) {
+                    log.info("Processed " + records + " in " + (System.currentTimeMillis() - time) + " msecs");
+                }
+            }
         }
         addExtraALAConcept(iw,extraALAConcepts);
         iw.commit();
@@ -557,6 +577,10 @@ public class CBCreateLuceneIndex {
             cl = new LinnaeanRankClassification();
         return createALAIndexDocument(name, id, lsid, null, null, cl.getKingdom(), null, cl.getPhylum(), null, cl.getKlass(), null, cl.getOrder(), null, cl.getFamily(), null, cl.getGenus(), null, null, null, null, null, null, null, null, author, 1.0f);
     }
+    
+    private boolean isBlacklisted(String scientificName){
+      return blacklist.contains(scientificName.trim());
+    }
 
     private Document createALAIndexDocument(String name, String id, String lsid, String rank, String rankString,
     		String kingdom, String kid, String phylum, String pid, String clazz, String cid, String order,
@@ -564,7 +588,11 @@ public class CBCreateLuceneIndex {
     		String species, String sid, String left, String right, String acceptedConcept,String specificEpithet, 
                 String infraspecificEpithet, String author,
                 float boost){
-
+        //
+        if(isBlacklisted(name)){
+          System.out.println(name + " has been blacklisted");
+          return null;
+        }
         Document doc = new Document();
         doc.setBoost(boost);
 
@@ -763,7 +791,7 @@ public class CBCreateLuceneIndex {
             }
             indexer.createIndex(args[0], args[1], sn, cn);
         } else {
-            indexer.createIndex("/data/names/Version2011", "/data/lucene/namematchingv1_1", false, true);
+            indexer.createIndex("/data/names/Version2011", "/data/lucene/namematchingv1_12", true, false);
             //System.out.println("au.org.ala.checklist.lucene.CBCreateLuceneIndex <directory with export files> <directory in which to create indexes>");
            //indexer.createIndex("/data/exports/cb", "/data/lucene/namematching", false, true);
 
