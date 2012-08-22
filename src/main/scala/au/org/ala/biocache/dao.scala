@@ -994,6 +994,43 @@ class DuplicateDAOImpl extends DuplicateDAO {
   }
 }
 
+trait AssertionQueryDAO{
+  def getAssertionQuery(id:String) : Option[AssertionQuery]
+  def upsertAssertionQuery(assertionQuery:AssertionQuery)
+  def deleteAssertionQuery(id:String, date:java.util.Date=null, physicallyRemove:Boolean=false)
+}
+
+class AssertionQueryDAOImpl extends AssertionQueryDAO{
+  import BiocacheConversions._
+  @Inject
+  var persistenceManager: PersistenceManager = _
+  
+  def getAssertionQuery(id:String):Option[AssertionQuery]={
+    val aq = new AssertionQuery()
+    
+    val map = persistenceManager.get(id, "queryassert")
+    if(map.isDefined){
+      FullRecordMapper.mapPropertiesToObject(aq, map.get)
+      Some(aq)
+    }
+    else
+      None
+  }
+  
+  def upsertAssertionQuery(assertionQuery:AssertionQuery){
+    val properties = FullRecordMapper.mapObjectToProperties(assertionQuery)
+    persistenceManager.put(assertionQuery.getId(),"queryassert",properties)
+  }
+  
+  def deleteAssertionQuery(id:String, date:java.util.Date=null, physicallyRemove:Boolean=false){
+    if(physicallyRemove)
+      persistenceManager.delete(id, "queryassert")
+    else if(date != null){
+      persistenceManager.put(id, "queryassert", "deletedDate",date)
+    }
+  }
+}
+
 trait OutlierStatsDAO {
   def getJackKnifeStatsFor(guid:String) : java.util.Map[String, JackKnifeStats]
   def getJackKnifeOutliersFor(guid:String) : java.util.Map[String, Array[String]]

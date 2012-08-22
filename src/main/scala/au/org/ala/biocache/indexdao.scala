@@ -285,7 +285,8 @@ trait IndexDAO {
                     parsed.get.asInstanceOf[Map[String,String]]
                     }
                     catch{
-                      case _=>{println("Unable to get sensitive map for : " + guid)
+                      case _=>{
+                      //println("Unable to get sensitive map for : " + guid)
                         Map[String,String]()                      
                       }
                     }

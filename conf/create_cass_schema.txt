@@ -95,3 +95,10 @@ and column_metadata=[{column_name: portalId, validation_class: UTF8Type, index_t
 {column_name: uuid, validation_class: UTF8Type, index_type: KEYS}];
 
 
+create column family queryassert  
+  with comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'  
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
+  and compaction_strategy_options = {'sstable_size_in_mb' : '200'}
+  and comment = 'The column family to store information about query based assertions';

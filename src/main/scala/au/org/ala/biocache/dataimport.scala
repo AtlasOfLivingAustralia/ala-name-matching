@@ -360,7 +360,7 @@ trait DataLoader {
         }
       
     }
-    val sftpPattern = """sftp://([a-zA-z\.]*):([a-zA-Z_/\.]*)""".r
+    val sftpPattern = """sftp://([a-zA-z\.]*):([0-9a-zA-Z_/\.]*)""".r
     def downloadSecureArchive(url:String, resourceUid:String) : (File,Boolean,Boolean) = {
       url match{
         case sftpPattern(server,filename)=>{

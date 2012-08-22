@@ -607,6 +607,49 @@ object QualityAssertion {
     new QualityAssertion(uuid,null,assertionCode,problemAsserted,comment,null,null,null,new Date())
   }
 }
+/**
+ * A class that represents a JCU assertion query. 
+ */
+class JCUAssertion(@BeanProperty var id:java.lang.Integer,
+      @BeanProperty var apiKey:String,
+      @BeanProperty var status:String,
+      @BeanProperty var lastModified:java.util.Date,
+      @BeanProperty var comment:String,
+      @BeanProperty var classification:String,
+      @BeanProperty var species:String,
+      @BeanProperty var user:JCUUser,
+      @BeanProperty var area:String
+    ) {
+  def this() = this(null,null,null,null,null,null,null,null,null)
+}
+
+    
+class JCUUser(@BeanProperty var email:String, @BeanProperty var authority:java.lang.Integer, @BeanProperty var isAdmin:Boolean){
+  def this() = this(null,null,false)
+}
+
+
+/**
+ * A type of Quality Assertion that needs to be applied based on a query 
+ */
+class AssertionQuery(@BeanProperty var id:String,
+  @BeanProperty var rawAssertion:String,
+  @BeanProperty var createdDate:java.util.Date,
+  @BeanProperty var modifiedDate:java.util.Date,  
+  @BeanProperty var rawQuery:String,
+  @BeanProperty var qidQuery:String,
+  @BeanProperty var deletedDate:java.util.Date,
+  @BeanProperty var userName:String,
+  @BeanProperty var authority:String,
+  @BeanProperty var assertionType:String,
+  @BeanProperty var comment: String,
+  @BeanProperty var includeNew:Boolean) extends POSO{
+  
+  def this()= this(null, null,null, null, null,null,null,null,null,null,null,true)
+    
+  def this(jcu:JCUAssertion) = this(jcu.apiKey + "|" + jcu.id,null,null,jcu.lastModified,null,null,null,jcu.user.email, if(jcu.user.authority != null) jcu.user.authority.toString() else null, jcu.classification, jcu.comment, true)
+}
+
 
 class OutlierResult (
   @BeanProperty var testUuid:String,

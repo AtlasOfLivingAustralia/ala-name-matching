@@ -25,4 +25,13 @@ class PosoTest extends ConfigFunSuite {
     	println(raw.attribution)
     	expect(2){raw.attribution.dataHubUid.size}
     }
+    
+    test("query attribution with date"){
+      val aq = new AssertionQuery()
+      val date = DateParser.parseStringToDate("2012-01-01T10:22:00")
+      aq.setCreatedDate(date.get)
+      val map = aq.toMap
+      expect("2012-01-01T10:22:00Z"){map.getOrElse("createdDate","")}
+      
+    }
 }

@@ -28,6 +28,7 @@ object Store {
   private val outlierStatsDAO = Config.getInstance(classOf[OutlierStatsDAO]).asInstanceOf[OutlierStatsDAO]
   private val deletedRecordDAO = Config.deletedRecordDAO
   private val duplicateDAO = Config.duplicateDAO
+  private val assertionQueryDAO = Config.assertionQueryDAO
 
   private var readOnly = false;
 
@@ -264,6 +265,10 @@ object Store {
       throw new Exception("In read only mode. Please try again later")
     }
   }
+  
+  def addAssertionQuery(assertionQuery:AssertionQuery) = assertionQueryDAO.upsertAssertionQuery(assertionQuery)
+  
+  def deleteAssertionQuery(id:java.lang.String, date:java.util.Date) = assertionQueryDAO.deleteAssertionQuery(id, date)
 
   /**
    * Delete an assertion

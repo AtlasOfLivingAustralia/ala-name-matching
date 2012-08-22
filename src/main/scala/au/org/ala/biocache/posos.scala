@@ -155,6 +155,7 @@ trait CompositePOSO extends POSO {
 trait POSO {
 
     import scala.collection.JavaConversions._
+    import BiocacheConversions._
 
     protected val lookup = ReflectionCache.getPosoLookup(this)
     val propertyNames = lookup.keys
@@ -272,6 +273,9 @@ trait POSO {
                           val stringValue = Json.toJSON(value)
                           map.put(property.name, stringValue)
                         }
+                    }
+                    case "java.util.Date" =>{
+                      map.put(property.name, unparsed.asInstanceOf[java.util.Date])
                     }
                     case _ => {
                       if (unparsed.isInstanceOf[POSO]){
