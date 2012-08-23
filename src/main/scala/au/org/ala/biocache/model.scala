@@ -610,6 +610,7 @@ object QualityAssertion {
 /**
  * A class that represents a JCU assertion query. 
  */
+@JsonIgnoreProperties(ignoreUnknown=true) 
 class JCUAssertion(@BeanProperty var id:java.lang.Integer,
       @BeanProperty var apiKey:String,
       @BeanProperty var status:String,
@@ -618,12 +619,13 @@ class JCUAssertion(@BeanProperty var id:java.lang.Integer,
       @BeanProperty var classification:String,
       @BeanProperty var species:String,
       @BeanProperty var user:JCUUser,
-      @BeanProperty var area:String
+      @BeanProperty var area:String,
+      @BeanProperty var ignored:java.lang.Boolean
     ) {
-  def this() = this(null,null,null,null,null,null,null,null,null)
+  def this() = this(null,null,null,null,null,null,null,null,null,null)
 }
 
-    
+@JsonIgnoreProperties(ignoreUnknown=true)     
 class JCUUser(@BeanProperty var email:String, @BeanProperty var authority:java.lang.Integer, @BeanProperty var isAdmin:Boolean){
   def this() = this(null,null,false)
 }
@@ -643,11 +645,12 @@ class AssertionQuery(@BeanProperty var id:String,
   @BeanProperty var authority:String,
   @BeanProperty var assertionType:String,
   @BeanProperty var comment: String,
-  @BeanProperty var includeNew:Boolean) extends POSO{
+  @BeanProperty var includeNew:Boolean,
+  @BeanProperty var disabled:Boolean) extends POSO{
   
-  def this()= this(null, null,null, null, null,null,null,null,null,null,null,true)
+  def this()= this(null, null,null, null, null,null,null,null,null,null,null,true, false)
     
-  def this(jcu:JCUAssertion) = this(jcu.apiKey + "|" + jcu.id,null,null,jcu.lastModified,null,null,null,jcu.user.email, if(jcu.user.authority != null) jcu.user.authority.toString() else null, jcu.classification, jcu.comment, true)
+  def this(jcu:JCUAssertion) = this(jcu.apiKey + "|" + jcu.id,null,null,jcu.lastModified,null,null,null,jcu.user.email, if(jcu.user.authority != null) jcu.user.authority.toString() else null, jcu.classification, jcu.comment, true, if(jcu.ignored == null) false else jcu.ignored)
 }
 
 
