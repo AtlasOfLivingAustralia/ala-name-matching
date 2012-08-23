@@ -54,10 +54,14 @@ trait DataLoader {
     
     def emptyTempFileStore(resourceUid:String)=FileUtils.deleteQuietly(new File(temporaryFileStore+File.separator+resourceUid))
     
-    def getRowKeyWriter(resourceUid:String, writeRowKeys:Boolean):Option[java.io.Writer]={
+    def deleteOldRowKeys(resourceUid:String){
       //delete the row key file so that it only exists if the load is configured to 
       //thus processing and indexing of the data resource should check to see if a file exists first
       FileUtils.deleteQuietly(new File("/data/tmp/row_key_"+resourceUid+".csv"))
+    }
+    
+    def getRowKeyWriter(resourceUid:String, writeRowKeys:Boolean):Option[java.io.Writer]={
+      
       if(writeRowKeys){
         FileUtils.forceMkdir(new File("/data/tmp/"))
         //the file is deleted first so we set it up to append.  allows resources with multiple files to have row keys recorded

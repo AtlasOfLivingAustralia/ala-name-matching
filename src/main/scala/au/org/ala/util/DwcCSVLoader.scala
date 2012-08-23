@@ -35,6 +35,7 @@ object DwcCSVLoader {
 
         if(parser.parse(args)){
             val l = new DwcCSVLoader
+            l.deleteOldRowKeys(dataResourceUid)
             try {
                 if (bypassConnParamLookup && !localFilePath.isEmpty){
                   l.loadFile(new File(localFilePath.get),dataResourceUid, List(), Map(),false,logRowKeys,testFile)

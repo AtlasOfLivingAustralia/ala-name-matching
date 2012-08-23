@@ -53,6 +53,7 @@ object DwCALoader {
         }
         if(parser.parse(args)){
             val l = new DwCALoader
+            l.deleteOldRowKeys(resourceUid)
             if(localFilePath.isEmpty){
               l.load(resourceUid, logRowKeys)
             } else {
