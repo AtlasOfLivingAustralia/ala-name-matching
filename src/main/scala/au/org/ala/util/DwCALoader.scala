@@ -45,17 +45,18 @@ object DwCALoader {
 
         var resourceUid = ""
         var localFilePath:Option[String] = None
-
+        var logRowKeys = false;
         val parser = new OptionParser("load darwin core archive") {
             arg("<data resource UID>", "The UID of the data resource to load", {v: String => resourceUid = v})
             opt("l", "local", "skip the download and use local file", {v:String => localFilePath = Some(v) } )
+            opt("log","log row keys to file - allows processing/indexing of changed records",{logRowKeys = true})
         }
         if(parser.parse(args)){
             val l = new DwCALoader
             if(localFilePath.isEmpty){
-              l.load(resourceUid)
+              l.load(resourceUid, logRowKeys)
             } else {
-              l.loadLocal(resourceUid, localFilePath.get)
+              l.loadLocal(resourceUid, localFilePath.get, logRowKeys)
             }
             //initialise the delete
             //update the collectory information
@@ -70,7 +71,7 @@ class DwCALoader extends DataLoader {
     import ReflectBean._
     import JavaConversions._
     
-    def load(resourceUid:String){
+    def load(resourceUid:String, logRowKeys:Boolean=false){
     	val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(resourceUid)
     	val conceptTerms = mapConceptTerms(uniqueTerms)
     	val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]    	
@@ -78,23 +79,24 @@ class DwCALoader extends DataLoader {
           //download
         val fileName = downloadArchive(url,resourceUid)
           //load the DWC file
-        loadArchive(fileName, resourceUid, conceptTerms, strip)
+        loadArchive(fileName, resourceUid, conceptTerms, strip, logRowKeys)
       })
       //shut down the persistence manager after all the files have been loaded.
       Config.persistenceManager.shutdown
     }
     
-    def loadLocal(resourceUid:String, fileName:String){
+    def loadLocal(resourceUid:String, fileName:String, logRowKeys:Boolean){
     	val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(resourceUid)
     	val conceptTerms = mapConceptTerms(uniqueTerms)
     	val strip = params.getOrElse("strip", false).asInstanceOf[Boolean] 
         //load the DWC file
-    	loadArchive(fileName, resourceUid, conceptTerms, strip)
+    	loadArchive(fileName, resourceUid, conceptTerms, strip, logRowKeys)
     	//shut down the persistence manager after all the files have been loaded.
     	Config.persistenceManager.shutdown
     }
     
-    def loadArchive(fileName:String, resourceUid:String, uniqueTerms:List[ConceptTerm], stripSpaces:Boolean){
+    def loadArchive(fileName:String, resourceUid:String, uniqueTerms:List[ConceptTerm], stripSpaces:Boolean, logRowKeys:Boolean){
+      val rowKeyWriter = getRowKeyWriter(resourceUid, logRowKeys)
         val archive = ArchiveFactory.openArchive(new File(fileName))
         val iter = archive.iterator
         val terms = DwcTerm.values
@@ -164,6 +166,8 @@ class DwCALoader extends DataLoader {
                 fieldTuples + ("firstLoaded"-> loadTime)
 
             val rowKey = if(uniqueID.isEmpty) resourceUid + "|" + recordUuid else uniqueID.get
+            if(rowKeyWriter.isDefined)
+              rowKeyWriter.get.write(rowKey+"\n")
             //val recordUuid = UUID.randomUUID.toString
             val fullRecord = FullRecordMapper.createFullRecord(rowKey, fieldTuples.toArray, Raw)
             //println("record UUID: "  + recordUuid)
@@ -178,6 +182,10 @@ class DwCALoader extends DataLoader {
                 //clear the buffer
                 currentBatch.clear
             }
+        }
+        if(rowKeyWriter.isDefined){
+          rowKeyWriter.get.flush
+          rowKeyWriter.get.close
         }
         //commit the batch
         Config.occurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)

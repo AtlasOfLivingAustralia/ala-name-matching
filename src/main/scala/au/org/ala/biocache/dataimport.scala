@@ -54,6 +54,18 @@ trait DataLoader {
     
     def emptyTempFileStore(resourceUid:String)=FileUtils.deleteQuietly(new File(temporaryFileStore+File.separator+resourceUid))
     
+    def getRowKeyWriter(resourceUid:String, writeRowKeys:Boolean):Option[java.io.Writer]={
+      //delete the row key file so that it only exists if the load is configured to 
+      //thus processing and indexing of the data resource should check to see if a file exists first
+      FileUtils.deleteQuietly(new File("/data/tmp/row_key_"+resourceUid+".csv"))
+      if(writeRowKeys){
+        FileUtils.forceMkdir(new File("/data/tmp/"))
+        //the file is deleted first so we set it up to append.  allows resources with multiple files to have row keys recorded
+          Some(new java.io.FileWriter("/data/tmp/row_key_"+resourceUid+".csv", true))
+        }
+      else None
+    }
+    
     def getDataResourceDetailsAsMap(resourceUid:String) : Map[String, String] = {
       val json = Source.fromURL(registryUrl + resourceUid + ".json").getLines.mkString
       JSON.parseFull(json).get.asInstanceOf[Map[String, String]]

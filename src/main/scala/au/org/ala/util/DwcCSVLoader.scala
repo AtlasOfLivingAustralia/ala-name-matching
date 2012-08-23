@@ -82,10 +82,8 @@ class DwcCSVLoader extends DataLoader {
     }
     
     def loadFile(file:File, dataResourceUid:String, uniqueTerms:List[String], params:Map[String,String], stripSpaces:Boolean=false, logRowKeys:Boolean=false, test:Boolean=false){
-        val rowKeyWriter = if(logRowKeys){
-          FileUtils.forceMkdir(new File("/data/tmp/"))
-          Some(new java.io.FileWriter("/data/tmp/row_key_"+dataResourceUid+".csv"))
-        }else None
+      
+        val rowKeyWriter = getRowKeyWriter(dataResourceUid, logRowKeys)
         
         val quotechar = params.getOrElse("csv_text_enclosure", "\"").head
         val separator = {
@@ -138,9 +136,10 @@ class DwcCSVLoader extends DataLoader {
                 if(uniqueTerms.find(t => map.getOrElse(t,"").length>0).isDefined || uniqueTerms.length==0){
                    
                     val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,""))
-                    if(!uniqueTerms.forall(t => map.getOrElse(t,"").length>0)){
-                     logger.warn("There is at least one null key " + uniqueTermsValues.mkString("|"))
-                   }
+                    
+//                    if(!uniqueTerms.forall(t => map.getOrElse(t,"").length>0)){
+//                     logger.warn("There is at least one null key " + uniqueTermsValues.mkString("|"))
+//                   }
                   if(!test){
   	                val fr = FullRecordMapper.createFullRecord("", map, Versions.RAW)
   	                //load(dataResourceUid, fr, uniqueTermsValues)
