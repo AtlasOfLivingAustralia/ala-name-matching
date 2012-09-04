@@ -71,6 +71,8 @@ object ClassificationDAO {
 
     if (cl.scientificName == null){
       if (cl.subspecies != null) cl.scientificName = cl.subspecies
+      else if (cl.specificEpithet != null && cl.genus != null && cl.infraspecificEpithet!=null) cl.scientificName = cl.genus + " " + cl.specificEpithet + " " +cl.infraspecificEpithet
+      else if (cl.specificEpithet != null && cl.genus != null) cl.scientificName = cl.genus + " " + cl.specificEpithet
       else if (cl.species != null) cl.scientificName = cl.species
       else if (cl.genus != null) cl.scientificName = cl.genus
       else if (cl.family != null) cl.scientificName = cl.family

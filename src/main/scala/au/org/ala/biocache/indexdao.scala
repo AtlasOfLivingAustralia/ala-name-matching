@@ -595,16 +595,20 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
     
   def pageOverFacet(proc:(String,Int) => Boolean, facetName:String, queryString:String = "*:*", filterQueries:Array[String] = Array()){
     init
-    var query:SolrQuery = new SolrQuery(queryString)
+    val query = new SolrQuery(queryString)
     query.setFacet(true)
     query.addFacetField(facetName)
     query.setRows(0)
     query.setFacetLimit(200000)
     query.setStart(0)
-    if (!filterQueries.isEmpty) query.setFilterQueries(filterQueries: _ *)
+    query.setFacetMinCount(1)
+    filterQueries.foreach(query.addFilterQuery(_))
+    //query.setFilterQueries(filterQueries: _ *)
       
     var response = solrServer.query(query)
-    response.getFacetField(facetName).getValues.foreach(s => proc(s.getName, s.getCount.toInt))
+    val values = response.getFacetField(facetName).getValues
+    if (values!=null)
+      values.foreach(s => proc(s.getName, s.getCount.toInt))
   }
 
 
