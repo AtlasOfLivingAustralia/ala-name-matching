@@ -830,7 +830,7 @@ class LocationProcessor extends Processor {
     if (location.stateProvince != null) {
       //location.country == "Australia"){
       val sensitiveTaxon = {
-        //check to see if the rank of the matched taxon is above a speceies
+        //check to see if the rank of the matched taxon is above a species
         val exact = getExactSciName(raw)
         if(processed.classification.taxonConceptID != null && exact != null){
             val lsidVersion = sdsFinder.findSensitiveSpeciesByLsid(processed.classification.taxonConceptID)
@@ -960,6 +960,8 @@ class LocationProcessor extends Processor {
       else
         raw.classification.genus
     }
+    else if(raw.classification.vernacularName != null) // handle the case where only a common name is provided.
+      raw.classification.vernacularName
     else //return the name default name string which will be null
       raw.classification.scientificName
   }
