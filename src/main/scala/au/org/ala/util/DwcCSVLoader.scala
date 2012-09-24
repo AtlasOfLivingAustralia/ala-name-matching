@@ -69,16 +69,18 @@ class DwcCSVLoader extends DataLoader {
     def loadLocalFile(dataResourceUid:String, filePath:String,logRowKeys:Boolean=false, testFile:Boolean=false){
         val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
         val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]
-        loadFile(new File(filePath),dataResourceUid, uniqueTerms, params,strip, logRowKeys, testFile) 
+        val incremental = params.getOrElse("incremental",false).asInstanceOf[Boolean]
+        loadFile(new File(filePath),dataResourceUid, uniqueTerms, params,strip, incremental || logRowKeys, testFile) 
     }
     
     def load(dataResourceUid:String,logRowKeys:Boolean=false, testFile:Boolean=false){
         val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
-        val strip = params.getOrElse("strip", false).asInstanceOf[Boolean] 
+        val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]
+        val incremental = params.getOrElse("incremental",false).asInstanceOf[Boolean]
         urls.foreach(url => {
           val fileName = downloadArchive(url,dataResourceUid)
           val directory = new File(fileName)
-          directory.listFiles.foreach(file => loadFile(file,dataResourceUid, uniqueTerms, params,strip,logRowKeys,testFile))
+          directory.listFiles.foreach(file => loadFile(file,dataResourceUid, uniqueTerms, params,strip,incremental||logRowKeys,testFile))
         })
     }
     
@@ -100,11 +102,12 @@ class DwcCSVLoader extends DataLoader {
         val dwcTermHeaders = {
         	val headerLine = reader.readNext
         	if(headerLine != null){
-        	  val columnHeaders = reader.readNext.map(t => t.replace(" ", "").trim).toList
+        	  val columnHeaders = headerLine.map(t => t.replace(" ", "").trim).toList
         	  DwC.retrieveCanonicals(columnHeaders)
         	} else {
         	  null
         	}
+
         }
         
         if(dwcTermHeaders == null){
