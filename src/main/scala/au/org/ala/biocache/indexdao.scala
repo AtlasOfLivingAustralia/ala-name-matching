@@ -889,9 +889,13 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
     val response = solrServer.query(solrQuery)
     val facets = response.getFacetField(field)
     //TODO page through the facets to make more efficient.
+    if(facets.getValues() != null && facets.getValues().size()>0){
     val values = facets.getValues().asScala[org.apache.solr.client.solrj.response.FacetField.Count]
-    if (values.size > 0) {
-      Some(values.map(facet => facet.getName).asInstanceOf[List[String]]);
+      if (values != null && values.size > 0) {
+        Some(values.map(facet => facet.getName).asInstanceOf[List[String]]);
+      }
+      else
+        None
     }
     else
       None

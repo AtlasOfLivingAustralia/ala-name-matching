@@ -11,6 +11,7 @@ import au.org.ala.biocache.MediaStore
 import java.io.{FilenameFilter, FileReader, File,InputStreamReader, FileInputStream}
 import org.apache.commons.io.{FilenameUtils, FileUtils}
 import collection.mutable.ArrayBuffer
+import au.org.ala.biocache.Config
 
 
 object DwcCSVLoader {
@@ -126,7 +127,18 @@ class DwcCSVLoader extends DataLoader {
               dataResourceUid+". CSV file is missing unique terms.")
         }
         
+        val institutionCodes = Config.indexDAO.getDistinctValues("data_resource_uid:"+dataResourceUid, "institution_code",100).getOrElse(List()).toSet[String]
+        
+        val collectionCodes = Config.indexDAO.getDistinctValues("data_resource_uid:"+dataResourceUid, "collection_code",100).getOrElse(List()).toSet[String]
+
+        println("The current institution codes for the data resource: " + institutionCodes)
+        println("The current collection codes for the data resource: " + collectionCodes)
+        
+        val newCollCodes=new scala.collection.mutable.HashSet[String]
+        val newInstCodes= new scala.collection.mutable.HashSet[String]
+        
         var counter = 1
+        var newCount = 0
         var noSkipped = 0
         var startTime = System.currentTimeMillis
         var finishTime = System.currentTimeMillis
@@ -150,6 +162,14 @@ class DwcCSVLoader extends DataLoader {
                 if(uniqueTerms.find(t => map.getOrElse(t,"").length>0).isDefined || uniqueTerms.length==0){
                    
                     val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,""))
+                    
+                    if(test){                      
+                      newInstCodes.add(map.getOrElse("institutionCode", "<NULL>"))                      
+                      newCollCodes.add(map.getOrElse("collectionCode", "<NULL>"))
+                      val (uuid, isnew) =Config.occurrenceDAO.createOrRetrieveUuid(createUniqueID(dataResourceUid, uniqueTermsValues, stripSpaces))
+                      if(isnew)
+                        newCount +=1
+                    }
                     
 //                    if(!uniqueTerms.forall(t => map.getOrElse(t,"").length>0)){
 //                     logger.warn("There is at least one null key " + uniqueTermsValues.mkString("|"))
@@ -213,6 +233,16 @@ class DwcCSVLoader extends DataLoader {
         if(rowKeyWriter.isDefined){
           rowKeyWriter.get.flush
           rowKeyWriter.get.close
+        }
+        //check to see if the inst/coll codes are new
+        if(test){
+          val unknownInstitutions = newInstCodes &~ institutionCodes
+          val unknownCollections = newCollCodes &~ collectionCodes
+          if(unknownInstitutions.size > 0)
+            println("Warning there are new institution codes in the set. " + unknownInstitutions)
+          if(unknownCollections.size > 0)
+            println("Warning there are new collection codes in the set. " + unknownCollections)
+          println("There are " + counter + " records in the file. The number of NEW records: " + newCount)
         }
         println("Load finished")
     }

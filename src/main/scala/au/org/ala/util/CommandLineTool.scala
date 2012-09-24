@@ -83,6 +83,9 @@ object CMD {
         case it if (it startsWith "load") || (it startsWith "ld") =>  {
           it.split(" ").map(x => x.trim).tail.foreach(drUid => l.load(drUid))
         }
+        case it if(it startsWith "test-load") =>{
+          it.split(" ").map(x => x.trim).tail.foreach(drUid => l.load(drUid,true))
+        }
         case it if (it startsWith "process-single") => {
           it.split(" ").map(x => x.trim).tail.foreach(uuid => ProcessSingleRecord.processRecord(uuid))
         }
@@ -222,7 +225,8 @@ object CMD {
     padAndPrint("[22]  delete-resource <dr-uid1> <dr-uid2>... - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
     padAndPrint("[23]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
     padAndPrint("[24]  load-local-csv <dr-uid> <filepath>... - Load a local file into biocache. For development use only. Not to be used in production.")
-    padAndPrint("[25]  exit")
+    padAndPrint("[25]  test-load <dr-uid1> <dr-uid2>... - Performs some testing on the load process.  Please read the output to determine whether or not a load should proceed.")
+    padAndPrint("[26]  exit")
   }
 
   def padAndPrint(str:String) = println(padElementTo60(str))
