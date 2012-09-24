@@ -98,8 +98,18 @@ class DwcCSVLoader extends DataLoader {
         println("Using CSV reader with the following settings quotes: " + quotechar + " separator: " + separator + " escape: " + escape)
         //match the column headers to dwc terms
         val dwcTermHeaders = {
-            val columnHeaders = reader.readNext.map(t => t.replace(" ", "").trim).toList
-            DwC.retrieveCanonicals(columnHeaders)
+        	val headerLine = reader.readNext
+        	if(headerLine != null){
+        	  val columnHeaders = reader.readNext.map(t => t.replace(" ", "").trim).toList
+        	  DwC.retrieveCanonicals(columnHeaders)
+        	} else {
+        	  null
+        	}
+        }
+        
+        if(dwcTermHeaders == null){
+          println("No content in file.")
+          return
         }
         
         var currentLine = reader.readNext
