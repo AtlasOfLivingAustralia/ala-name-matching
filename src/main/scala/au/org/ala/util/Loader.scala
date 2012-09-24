@@ -52,54 +52,73 @@ class Loader extends DataLoader {
       CMD.printTable(drs)
     }
 
-    def load(dataResourceUid: String) {
+    def load(dataResourceUid: String, test:Boolean=false) {
       try {
         val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
         protocol.toLowerCase match {
           case "dwc" => {
             println("Darwin core headed CSV loading")
             val l = new DwcCSVLoader
-            l.load(dataResourceUid)
+            l.load(dataResourceUid, false,test)
           }
           case "dwca" => {
             println("Darwin core archive loading")
             val l = new DwCALoader
-            l.load(dataResourceUid)
+            l.load(dataResourceUid, false,test)
           }
           case "digir" => {
             println("digir webservice loading")
             val l = new DiGIRLoader
-            l.load(dataResourceUid)
+            if(!test)
+              l.load(dataResourceUid)
+            else
+              println("TESTING is not supported for DiGIR")
           }
           case "flickr" => {
             println("flickr webservice loading")
             val l = new FlickrLoader
-            l.load(dataResourceUid)
+            if(!test)
+              l.load(dataResourceUid)
+            else
+              println("TESTING is not supported for Flickr")
           }
           case "customwebservice" => {
             println("custom webservice loading")
-            val className = customParams.getOrElse("classname", null)
-            if (className == null) {
-              println("Classname of customer harvester class not present in parameters")
-            } else {
-              val wsClass = Class.forName(className)
-              val l = wsClass.newInstance()
-              if (l.isInstanceOf[CustomWebserviceLoader]) {
-                l.asInstanceOf[CustomWebserviceLoader].load(dataResourceUid)
+            if(!test){
+              val className = customParams.getOrElse("classname", null)
+              if (className == null) {
+                println("Classname of customer harvester class not present in parameters")
               } else {
-                println("Class " + className + " is not a subtype of au.org.ala.util.CustomWebserviceLoader")
+                val wsClass = Class.forName(className)
+                val l = wsClass.newInstance()
+                if (l.isInstanceOf[CustomWebserviceLoader]) {
+                  l.asInstanceOf[CustomWebserviceLoader].load(dataResourceUid)
+                } else {
+                  println("Class " + className + " is not a subtype of au.org.ala.util.CustomWebserviceLoader")
+                }
               }
             }
+            else
+              println("TESTING is not suppported for custom web service")
           }
           case "autofeed" => {
             println("AutoFeed Darwin core headed CSV loading")
             val l = new AutoDwcCSVLoader
-            l.load(dataResourceUid)
+            if(!test)
+              l.load(dataResourceUid)
+            else
+              println("TESTING is not supported for autofeed")
           }
           case _ => println("Protocol " + protocol + " currently unsupported.")
         }
       } catch {
         case e: Exception => e.printStackTrace
+      }
+      
+      if(test){
+        println("Check the output for any warning/error messages.")
+        println("If there are any new institution and collection codes ensure that they are handled correctly in the Collectory.")
+        println("""Don't forget to check that number of NEW records.  If this is high for updated data set it may indicate that the "unique values" have changed format.""")
       }
     }
     
