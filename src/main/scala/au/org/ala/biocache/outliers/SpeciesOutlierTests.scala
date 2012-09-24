@@ -8,7 +8,6 @@ import org.codehaus.jackson.map.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import java.io.{FileWriter, FileOutputStream, File, FileReader}
 import au.org.ala.util.{IndexRecords, OptionParser, FileHelper}
-import au.org.ala.biocache.outliers.SampledRecord
 
 class Timings {
 

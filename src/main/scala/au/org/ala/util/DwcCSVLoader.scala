@@ -108,7 +108,6 @@ class DwcCSVLoader extends DataLoader {
         	} else {
         	  null
         	}
-
         }
         
         if(dwcTermHeaders == null){

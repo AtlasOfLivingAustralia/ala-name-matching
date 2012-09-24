@@ -8,13 +8,31 @@ object ExportForOutliers {
 
   def main(args:Array[String]){
 
-    val indexReader = IndexReader.open(FSDirectory.open(new File(args(0))))
+    var indexDirectory = ""    
+    var exportDirectory = ""
+    var separator = '\t'
     
-    val spWriter = new FileWriter(new File(args(1)+File.separator+"species-unsorted.txt"))
-    val sbpWriter = new FileWriter(new File(args(1)+File.separator+"subspecies-unsorted.txt"))
+    val parser = new OptionParser("Test for outliers") {
+      arg("indexDirectory", "The Lucene/SOLR index to export from e.g. /data/solr/bio-proto/data/index", {v:String => indexDirectory = v})
+      arg("exportDirectory", "The directory to export to", {v:String => exportDirectory = v})
+      //opt("s", "separator", "Field separator character e.g. '\t' or ','", {v:String => separator = v })
+    }
+    if(parser.parse(args)){    
+    	runExtract(indexDirectory,exportDirectory)
+    }
+  }
+  
+  def runExtract(indexDir:String, exportDir:String, separator:Char = '\t'){
+    println("Running extract....")
+    
+    val indexReader = IndexReader.open(FSDirectory.open(new File(indexDir)))
+    
+    val spWriter = new FileWriter(new File(exportDir + File.separator + "species-unsorted.txt"))
+    val sbpWriter = new FileWriter(new File(exportDir + File.separator + "subspecies-unsorted.txt"))
     
     var counter = 0
     val maxDocId = indexReader.maxDoc()
+    println("Number of documents...." + maxDocId)    
 
     while(counter < maxDocId){
       val doc = indexReader.document(counter)
@@ -27,28 +45,28 @@ object ExportForOutliers {
         if (rank == "species" || rank == "subspecies"){
 
           spWriter.write(doc.getValues("species_guid").head
-            +"\t"+ doc.getValues("id").head
-            +"\t"+ doc.getValues("latitude").head
-            +"\t"+ doc.getValues("longitude").head
-            +"\t"+ doc.getValues("el882").head
-            +"\t"+ doc.getValues("el889").head
-            +"\t"+ doc.getValues("el887").head
-            +"\t"+ doc.getValues("el865").head
-            +"\t"+ doc.getValues("el894").head
+            +separator+ doc.getValues("id").head
+            +separator+ doc.getValues("latitude").head
+            +separator+ doc.getValues("longitude").head
+            +separator+ doc.getValues("el882").head
+            +separator+ doc.getValues("el889").head
+            +separator+ doc.getValues("el887").head
+            +separator+ doc.getValues("el865").head
+            +separator+ doc.getValues("el894").head
             +"\n"
           )
         }
         
         if (rank == "subspecies" && !doc.getValues("subspecies_guid").isEmpty){
           sbpWriter.write(doc.getValues("subspecies_guid").head
-            +"\t"+ doc.getValues("id").head
-            +"\t"+ doc.getValues("latitude").head
-            +"\t"+ doc.getValues("longitude").head
-            +"\t"+ doc.getValues("el882").head
-            +"\t"+ doc.getValues("el889").head
-            +"\t"+ doc.getValues("el887").head
-            +"\t"+ doc.getValues("el865").head
-            +"\t"+ doc.getValues("el894").head
+            +separator+ doc.getValues("id").head
+            +separator+ doc.getValues("latitude").head
+            +separator+ doc.getValues("longitude").head
+            +separator+ doc.getValues("el882").head
+            +separator+ doc.getValues("el889").head
+            +separator+ doc.getValues("el887").head
+            +separator+ doc.getValues("el865").head
+            +separator+ doc.getValues("el894").head
             +"\n"
           )
         }
@@ -62,6 +80,8 @@ object ExportForOutliers {
     spWriter.flush
     sbpWriter.close
     spWriter.close
+    
+    println("Extract complete. Files located in " + exportDir)
   }
 }
 
@@ -73,6 +93,7 @@ object ExportSpecies {
     val indexReader = IndexReader.open(FSDirectory.open(new File(args.head)))
     var counter = 0
     val maxDocId = indexReader.maxDoc()
+    var separator:Char = '\t'
 
     while(counter < maxDocId){
       val doc = indexReader.document(counter)
@@ -85,14 +106,14 @@ object ExportSpecies {
         if (rank == "species" || rank == "subspecies"){
         
           println(doc.getValues("species_guid").head
-            +"\t"+ doc.getValues("id").head
-            +"\t"+ doc.getValues("latitude").head
-            +"\t"+ doc.getValues("longitude").head
-            +"\t"+ doc.getValues("el882").head
-            +"\t"+ doc.getValues("el889").head
-            +"\t"+ doc.getValues("el887").head
-            +"\t"+ doc.getValues("el865").head
-            +"\t"+ doc.getValues("el894").head
+            +separator+ doc.getValues("id").head
+            +separator+ doc.getValues("latitude").head
+            +separator+ doc.getValues("longitude").head
+            +separator+ doc.getValues("el882").head
+            +separator+ doc.getValues("el889").head
+            +separator+ doc.getValues("el887").head
+            +separator+ doc.getValues("el865").head
+            +separator+ doc.getValues("el894").head
           )
         }
       }
@@ -109,6 +130,7 @@ object ExportSubspecies {
     val indexReader = IndexReader.open(FSDirectory.open(new File(args.head)))
     var counter = 0
     val maxDocId = indexReader.maxDoc()
+    var separator:Char = '\t'
 
     while(counter < maxDocId){
       val doc = indexReader.document(counter)
@@ -121,14 +143,14 @@ object ExportSubspecies {
         if (rank == "subspecies"){
 
           println(doc.getValues("subspecies_guid").head
-            +"\t"+ doc.getValues("id").head
-            +"\t"+ doc.getValues("latitude").head
-            +"\t"+ doc.getValues("longitude").head
-            +"\t"+ doc.getValues("el882").head
-            +"\t"+ doc.getValues("el889").head
-            +"\t"+ doc.getValues("el887").head
-            +"\t"+ doc.getValues("el865").head
-            +"\t"+ doc.getValues("el894").head
+            +separator+ doc.getValues("id").head
+            +separator+ doc.getValues("latitude").head
+            +separator+ doc.getValues("longitude").head
+            +separator+ doc.getValues("el882").head
+            +separator+ doc.getValues("el889").head
+            +separator+ doc.getValues("el887").head
+            +separator+ doc.getValues("el865").head
+            +separator+ doc.getValues("el894").head
           )
         }
       }

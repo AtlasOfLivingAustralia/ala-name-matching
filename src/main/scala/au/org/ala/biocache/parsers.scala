@@ -1,6 +1,5 @@
 package au.org.ala.biocache
 import java.util.regex.Pattern
-import au.org.ala.biocache.LatOrLong
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.text.WordUtils
 import org.slf4j.LoggerFactory
@@ -259,7 +258,6 @@ object CollectorNameParser {
       case SINGLE_NAME_PATTERN(surname) =>logger.debug(stringValue +" SINGLENAME PATTERN");Some(generateName(null,surname,null))
       case _ => None
     }
-    
   }
   
   def generateName(firstName:String,surname:String,initials:String, middlename:String=null, surnamePrefix:String = null):String ={

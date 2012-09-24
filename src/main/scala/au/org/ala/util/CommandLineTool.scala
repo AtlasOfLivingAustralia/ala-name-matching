@@ -140,6 +140,10 @@ object CMD {
           IndexRecords.indexer.optimise
         }
         case it if (it startsWith "healthcheck") => l.healthcheck
+        case it if (it startsWith "export-for-outlier") => {
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+          ExportForOutliers.main(args)
+        }        
         case it if (it startsWith "export-index") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           ExportFromIndex.main(args)
@@ -152,7 +156,7 @@ object CMD {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           ExportByFacetQuery.main(args)
         }
-        case it if (it startsWith "export") => {
+        case it if (it startsWith "export ") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           ExportUtil.main(args)
         }
@@ -216,6 +220,7 @@ object CMD {
     padAndPrint("[13]  export-index <output-file> <csv-list-of fields> <solr-query> - export data from index")
     padAndPrint("[14]  export-facet <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
     padAndPrint("[15]  export-facet-query <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
+    padAndPrint("[15]  export-for-outliers <index-directory> <export-directory> -fq <filter-query> - export data from index for outlier detection")   
     padAndPrint("[16]  import - CSV import of data")
     padAndPrint("[17]  optimise - Optimisation of SOLR index (this takes some time)")
     padAndPrint("[18]  sample-all - Run geospatial sampling for all records")
