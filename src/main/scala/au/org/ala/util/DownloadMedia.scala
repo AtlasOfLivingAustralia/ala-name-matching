@@ -22,7 +22,6 @@ object DownloadMedia {
       else if (rowKey != "") processRecord(rowKey)
       else parser.showUsage
     }
-
     Config.persistenceManager.shutdown
   }
 

@@ -37,11 +37,7 @@ object DwCACreator {
       val jsonString = Source.fromURL(url).getLines.mkString
       val json = JSON.parseFull(jsonString).get.asInstanceOf[Map[String, String]]
       val results = json.get("facetResults").get.asInstanceOf[List[Map[String, String]]].head.get("fieldResult").get.asInstanceOf[List[Map[String, String]]]
-      results.map(facet => {
-        val uid = facet.get("label").get
-        println(uid)
-        uid
-      })
+      results.map(facet => facet.get("label").get)
     }    
 }
 

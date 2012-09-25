@@ -40,9 +40,9 @@ object DuplicationDetection{
   import FileHelper._
   import JavaConversions._
   val logger = LoggerFactory.getLogger("DuplicateDetection")
-  val rootDir = "/data/dedup/"
+  var rootDir = "/data/dedup/"
 
-  def main(args:Array[String])={
+  def main(args:Array[String]){
     var all = false
     var exist = false
     var guid:Option[String] = None
@@ -53,7 +53,7 @@ object DuplicationDetection{
    
     //Options to perform on all "species", select species, use existing file or download
     val parser = new OptionParser("Duplication Detection - Detects duplication based on a matched species.") {
-      opt("all", "detct duplicates for all species", { all = true })
+      opt("all", "detect duplicates for all species", { all = true })
       opt("g", "guid", "A single guid to test for duplications", { v: String => guid = Some(v)})
       opt("exist","use existing occurrence dumps",{exist = true})
       opt("cleanup","cleanup the temporary files that get created",{cleanup = true})
@@ -66,12 +66,10 @@ object DuplicationDetection{
       //ensure that we have either all, guidsToTest or speciesFile
       if(all){
         //download all the species guids
-       
-        val filename = rootDir+"dd_all_species_guids"
+        val filename = rootDir + "dd_all_species_guids"
         ExportFacet.main(Array("species_guid",filename,"--open"))
         //now detect the duplicates
         detectDuplicates(new File(filename), threads,exist,cleanup,load)
-        
       }
       else if(guid.isDefined){
         //just a single detection - ignore the thread settings etc...
@@ -97,7 +95,6 @@ object DuplicationDetection{
   //new DuplicationDetection().detect("urn:lsid:biodiversity.org.au:afd.taxon:b76f8dcf-fabd-4e48-939c-fd3cafc1887a")
   //new DuplicationDetection().detect("urn:lsid:biodiversity.org.au:afd.taxon:9e23c727-f3b0-4c29-a345-9cbd306eed84")
     //new DuplicationDetection().detect("urn:lsid:biodiversity.org.au:apni.taxon:425841")
-    
   }
   
   def detectDuplicates(file:File, threads:Int, exist:Boolean, cleanup:Boolean, load:Boolean){
@@ -136,10 +133,8 @@ object DuplicationDetection{
     }
     
     if(!load){
-      file.foreachLine(line =>{
-        //add to the queue
-        queue.put(line.trim)
-      }) 
+      //add to the queue
+      file.foreachLine(line => queue.put(line.trim))
     }
     pool.foreach(t =>if(t.isInstanceOf[StringConsumer]) t.asInstanceOf[StringConsumer].shouldStop = true)
     pool.foreach(_.join)
@@ -147,6 +142,7 @@ object DuplicationDetection{
     Config.indexDAO.shutdown
   }
 }
+
 //A generic threaded consumer that takes a string and calls the supplied proc
 class StringConsumer(q:BlockingQueue[String],id:Int,proc:String=>Unit) extends Thread{  
   var shouldStop = false;
@@ -165,8 +161,8 @@ class StringConsumer(q:BlockingQueue[String],id:Int,proc:String=>Unit) extends T
       }
     }
   }
-  
 }
+
 //TODO Use the "sensitive" coordinates for sensitive species
 class DuplicationDetection{
   import JavaConversions._
@@ -381,6 +377,7 @@ class DuplicationDetection{
   
   }
 }
+
 //Each year is handled separately so they can be processed in a threaded manner
 class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], duplicateWriter:FileWriter) extends Runnable{
   import JavaConversions._
@@ -609,7 +606,7 @@ sealed case class DupType(@BeanProperty var id:Int){
   def this() = this(-1)
 }
 
-object DuplicationTypes{
+object DuplicationTypes {
   val MISSING_YEAR = DupType(1)//"Occurrences were compared without dates."
   val MISSING_MONTH = DupType(2)// "Occurrences were compared without a month and day component.")
   val MISSING_DAY   = DupType(3)//,"Occurrences were compared without a day component.")
@@ -628,11 +625,11 @@ class DuplicateRecordDetails(@BeanProperty var rowKey:String, @BeanProperty var 
   
   def this() = this(null,null,null,null,null,null,null,null,null,null,null,null,null,null)
   
-  @BeanProperty var status="U"
-  @BeanProperty var druid:String = if(rowKey != null)rowKey.split("\\|")(0) else null
+  @BeanProperty var status = "U"
+  @BeanProperty var druid:String = if(rowKey != null) rowKey.split("\\|")(0) else null
   var duplicateOf:String = null
   //stores the precision so that coordinate dup types can be established - we don't want to persist this property
-  var precision =0
+  var precision = 0
   @BeanProperty var duplicates:ArrayList[DuplicateRecordDetails]=null
   @BeanProperty var dupTypes:ArrayList[DupType]=_
   def addDuplicate(dup:DuplicateRecordDetails) ={

@@ -12,6 +12,9 @@ import java.io.FileWriter
 import java.io.File
 import util.parsing.json.JSON
 
+/**
+ * This utility generates a CSV listing of data resources to supply to GBIF.
+ */
 object GBIFOrgCSVCreator {
 
     def main(args: Array[String]): Unit = {
@@ -46,7 +49,7 @@ object GBIFOrgCSVCreator {
  */
 class GBIFOrgCSVCreator {
 
-    val technicalContactEmail="support@ala.org.au"
+    val technicalContactEmail = "support@ala.org.au"
 
     def create(fileName:String,dataResources:Seq[String]){
       println("Creating CSV for " + dataResources)

@@ -820,7 +820,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      */
     def updateAssertionStatus(rowKey: String, assertion:QualityAssertion, systemAssertions: List[QualityAssertion], userAssertions: List[QualityAssertion]) {
 
-        logger.info("Updating the assertion status for : " + rowKey)
+        logger.debug("Updating the assertion status for : " + rowKey)
 
         //get the phase based on the error type
         val phase = Processors.getProcessorForError(assertion.code)
@@ -885,7 +885,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
           properties += (FullRecordMapper.taxonomicDecisionColumn -> AssertionCodes.isTaxonomicallyKosher(listErrorCodes.toArray).toString)
         }
         if(properties.size >0){
-          logger.info("Updating the assertion status for : " + rowKey + properties)
+          logger.debug("Updating the assertion status for : " + rowKey + properties)
           persistenceManager.put(rowKey, entityName, properties.toMap)
         }
     }

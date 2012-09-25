@@ -4,6 +4,7 @@ import au.org.ala.biocache.Config
 import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.{NameValuePair, HttpClient}
 import java.io.{File, BufferedReader, InputStreamReader}
+import au.org.ala.biocache.outliers.SpeciesOutlierTests
 
 /**
  * Command line tool that allows administrators to run commands on
@@ -17,13 +18,12 @@ object CommandLineTool {
       println("----------------------------")
       println("| Biocache management tool |")
       println("----------------------------")
-      print("\n\nWarning: this tool may hurt your eyes with spurious logging levels.")
-      print("\nPlease supply a command or hit ENTER to view command list:")
+      print("\nPlease supply a command or hit ENTER to view command list. \nbiocache> ")
 
       var input = readLine
       while (input != "exit" && input != "q" && input != "quit") {
         CMD.executeCommand(input)
-        print("\nPlease supply a command or hit ENTER to view command list: ")
+        print("\nbiocache> ")
         input = readLine
       }
     } else {
@@ -160,7 +160,7 @@ object CMD {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           ExportByFacetQuery.main(args)
         }
-        case it if (it startsWith "export ") => {
+        case it if (it startsWith  "export") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           ExportUtil.main(args)
         }
@@ -182,6 +182,18 @@ object CMD {
           val query = it.replaceFirst("resample","")
           ResampleRecordsByQuery.main(Array(query))
         }
+        case it if (it startsWith "download-media") => {
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+          DownloadMedia.main(args)
+        }  
+        case it if (it startsWith "dedup") => {
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+          DuplicationDetection.main(args)
+        }   
+        case it if (it.startsWith("jackknife") || it.startsWith("jacknife")) => {
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+          SpeciesOutlierTests.main(args)
+        }           
         case it if (it startsWith "delete-resource") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           args.foreach(drUid => {
@@ -236,7 +248,10 @@ object CMD {
     padAndPrint("[25]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
     padAndPrint("[26]  load-local-csv <dr-uid> <filepath>... - Load a local file into biocache. For development use only. Not to be used in production.")
     padAndPrint("[27]  test-load <dr-uid1> <dr-uid2>... - Performs some testing on the load process.  Please read the output to determine whether or not a load should proceed.")
-    padAndPrint("[28]  exit")
+    padAndPrint("[28]  download-media - Force the (re)download of media associated with a resource.")
+    padAndPrint("[29]  dedup - Run duplication detection over the records.")
+    padAndPrint("[30]  jackknife - Run jackknife outlier detection.")
+    padAndPrint("[31]  exit")
   }
 
   def padAndPrint(str:String) = println(padElementTo60(str))
