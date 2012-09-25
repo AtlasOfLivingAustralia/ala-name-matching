@@ -144,7 +144,7 @@ object CMD {
           val args = input.split(" ").map(x => x.trim).toArray.tail
           ExportForOutliers.main(args)
         }    
-        case it if (it startsWith "export-gbif-archives") => {
+        case it if (it startsWith "gbif-csv") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
            GBIFOrgCSVCreator.main(args)
         }        
@@ -218,7 +218,7 @@ object CMD {
     padAndPrint(" [7]  index <dr-uid1> <dr-uid2>... - Index resource (for offline use only)")
     padAndPrint(" [8]  index-live <dr-uid> - Index resource by calling webservice to index. Dont use for large resources.")
     padAndPrint(" [9]  index-custom <dr-uid> <list-of-misc-fields> - Index resource while indexing miscellanous properties.")
-    padAndPrint("[10]  createdwc <dr-uid> <export directory> - Create a darwin core archive for a resource")
+    padAndPrint("[10]  createdwc <dr-uid or 'all'> <export directory> - Create a darwin core archive for a resource")
     padAndPrint("[11]  healthcheck - Do a healthcheck on the configured resources in the collectory")
     padAndPrint("[12]  export - CSV export of data")
     padAndPrint("[13]  export-gbif-archives - Comma separated list of data resources or 'all'")    

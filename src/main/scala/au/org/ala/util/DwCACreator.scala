@@ -5,6 +5,7 @@ import java.util.zip.ZipEntry
 import au.com.bytecode.opencsv.CSVWriter
 import scala.io.Source
 import org.apache.commons.io.FileUtils
+import scala.util.parsing.json.JSON
 
 object DwCACreator {
 
@@ -14,21 +15,41 @@ object DwCACreator {
         var directory =""
 
         val parser = new OptionParser("Create Darwin Core Archive") {
-            arg("<data resource UID>", "The UID of the data resource to load", {v: String => resourceUid = v})
+            arg("<data resource UID>", "The UID of the data resource to load or 'all' to generate for all", {v: String => resourceUid = v})
             arg("<directory to dump>", "skip the download and use local file", {v:String => directory = v } )
         }
         if(parser.parse(args)){
             val dwcc = new DwCACreator
-            dwcc.create(directory , resourceUid)
+            if("all".equalsIgnoreCase(resourceUid)){
+              try {
+            	getDataResourceUids.foreach( dwcc.create(directory, _) )
+              } catch {
+                case e:Exception => e.printStackTrace()
+              }
+            } else {
+              dwcc.create(directory, resourceUid)
+            }
         }
     }
+    
+    def getDataResourceUids : Seq[String] = {
+      val url = "http://biocache.ala.org.au/ws/occurrences/search?q=*:*&facets=data_resource_uid&pageSize=0&flimit=10000"
+      val jsonString = Source.fromURL(url).getLines.mkString
+      val json = JSON.parseFull(jsonString).get.asInstanceOf[Map[String, String]]
+      val results = json.get("facetResults").get.asInstanceOf[List[Map[String, String]]].head.get("fieldResult").get.asInstanceOf[List[Map[String, String]]]
+      results.map(facet => {
+        val uid = facet.get("label").get
+        println(uid)
+        uid
+      })
+    }    
 }
 
 /**
  * TODO support for dwc fields in collectory metadata. When not available use the default fields
  */
 class DwCACreator {
-    val defaultFields =List("uuid", "catalogNumber", "collectionCode", "institutionCode", "scientificName", "recordedBy", 
+    val defaultFields = List("uuid", "catalogNumber", "collectionCode", "institutionCode", "scientificName", "recordedBy", 
             "taxonRank", "kingdom", "phylum", "class", "order", "family", "genus", "specificEpithet", "infraspecificEpithet", 
             "decimalLatitude", "decimalLongitude", "coordinatePrecision", "coordinateUncertaintyInMeters", "maximumElevationInMeters", "minimumElevationInMeters", 
             "minimumDepthInMeters", "maximumDepthInMeters", "continent", "country", "stateProvince", "county", "locality", "year", "month", 
@@ -36,8 +57,9 @@ class DwCACreator {
             "vernacularName", "identificationQualifier", "individualCount", "eventID", "geodeticDatum", "eventTime", "associatedSequences", 
             "eventDate")
     //The compulsory mapping fields for GBIF. This indicates that the data resource name may need to be assigned at load time instead of processing        
-    val compulsoryFields =Map("catalogNumber"->"uuid", "collectionCode"->"dataResourceName.p", "institutionCode"->"dataResourceName.p")
-    def create(directory:String, dataResource:String)={
+    val compulsoryFields = Map("catalogNumber"->"uuid", "collectionCode"->"dataResourceName.p", "institutionCode"->"dataResourceName.p")
+
+    def create(directory:String, dataResource:String) {
         val zipFile = new java.io.File(directory+System.getProperty("file.separator")+dataResource + System.getProperty("file.separator")+dataResource +"_ror_dwca.zip")
         FileUtils.forceMkdir(zipFile.getParentFile)
         val zop = new ZipOutputStream(new FileOutputStream(zipFile))
@@ -46,6 +68,7 @@ class DwCACreator {
         addCSV(zop, dataResource)
         zop.close
     }
+    
     def addEML(zop:ZipOutputStream, dr:String) ={
         //query from the collectory to get the EML file
         zop.putNextEntry(new ZipEntry("eml.xml"))
@@ -55,6 +78,7 @@ class DwCACreator {
         zop.flush
         zop.closeEntry
     }
+    
     def addMeta(zop:ZipOutputStream) ={
         
         zop.putNextEntry(new ZipEntry("meta.xml"))
@@ -74,6 +98,7 @@ class DwCACreator {
         zop.flush
         zop.closeEntry
     }
+    
     def addCSV(zop:ZipOutputStream, dr:String) ={
         zop.putNextEntry(new ZipEntry("raw_occurrence_record.csv"))
         val startUuid = dr+"|"
