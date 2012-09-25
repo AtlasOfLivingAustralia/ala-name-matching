@@ -23,6 +23,7 @@ object GBIFOrgCSVCreator {
             arg("<data resource UID>", "Comma separated list of data resources or all", {v: String => resourceUids = v})
             arg("<file name>", "The name of the file to create", {v:String => fileName = v } )
         }
+        
         if(parser.parse(args)){
           val creator = new GBIFOrgCSVCreator
             if("all".equals(resourceUids)){
@@ -115,5 +116,3 @@ class GBIFOrgCSVCreator {
       })
     }
 }
-
-

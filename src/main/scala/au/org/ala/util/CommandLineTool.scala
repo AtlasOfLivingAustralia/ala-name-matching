@@ -141,8 +141,12 @@ object CMD {
         }
         case it if (it startsWith "healthcheck") => l.healthcheck
         case it if (it startsWith "export-for-outlier") => {
-          val args = it.split(" ").map(x => x.trim).toArray.tail
+          val args = input.split(" ").map(x => x.trim).toArray.tail
           ExportForOutliers.main(args)
+        }    
+        case it if (it startsWith "export-gbif-archives") => {
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+           GBIFOrgCSVCreator.main(args)
         }        
         case it if (it startsWith "export-index") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
@@ -217,21 +221,22 @@ object CMD {
     padAndPrint("[10]  createdwc <dr-uid> <export directory> - Create a darwin core archive for a resource")
     padAndPrint("[11]  healthcheck - Do a healthcheck on the configured resources in the collectory")
     padAndPrint("[12]  export - CSV export of data")
-    padAndPrint("[13]  export-index <output-file> <csv-list-of fields> <solr-query> - export data from index")
-    padAndPrint("[14]  export-facet <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
-    padAndPrint("[15]  export-facet-query <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
-    padAndPrint("[15]  export-for-outliers <index-directory> <export-directory> -fq <filter-query> - export data from index for outlier detection")   
-    padAndPrint("[16]  import - CSV import of data")
-    padAndPrint("[17]  optimise - Optimisation of SOLR index (this takes some time)")
-    padAndPrint("[18]  sample-all - Run geospatial sampling for all records")
-    padAndPrint("[19]  sample <dr-uid1> <dr-uid2>... - Run geospatial sampling for records for a data resource")
-    padAndPrint("[20]  resample <query> - Rerun geospatial sampling for records that match a SOLR query")
-    padAndPrint("[21]  delete <solr-query> - Delete records matching a query")
-    padAndPrint("[22]  delete-resource <dr-uid1> <dr-uid2>... - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
-    padAndPrint("[23]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
-    padAndPrint("[24]  load-local-csv <dr-uid> <filepath>... - Load a local file into biocache. For development use only. Not to be used in production.")
-    padAndPrint("[25]  test-load <dr-uid1> <dr-uid2>... - Performs some testing on the load process.  Please read the output to determine whether or not a load should proceed.")
-    padAndPrint("[26]  exit")
+    padAndPrint("[13]  export-gbif-archives - Comma separated list of data resources or 'all'")    
+    padAndPrint("[14]  export-index <output-file> <csv-list-of fields> <solr-query> - export data from index")
+    padAndPrint("[15]  export-facet <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
+    padAndPrint("[16]  export-facet-query <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
+    padAndPrint("[17]  export-for-outliers <index-directory> <export-directory> -fq <filter-query> - export data from index for outlier detection")   
+    padAndPrint("[18]  import - CSV import of data")
+    padAndPrint("[19]  optimise - Optimisation of SOLR index (this takes some time)")
+    padAndPrint("[20]  sample-all - Run geospatial sampling for all records")
+    padAndPrint("[21]  sample <dr-uid1> <dr-uid2>... - Run geospatial sampling for records for a data resource")
+    padAndPrint("[22]  resample <query> - Rerun geospatial sampling for records that match a SOLR query")
+    padAndPrint("[23]  delete <solr-query> - Delete records matching a query")
+    padAndPrint("[24]  delete-resource <dr-uid1> <dr-uid2>... - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
+    padAndPrint("[25]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
+    padAndPrint("[26]  load-local-csv <dr-uid> <filepath>... - Load a local file into biocache. For development use only. Not to be used in production.")
+    padAndPrint("[27]  test-load <dr-uid1> <dr-uid2>... - Performs some testing on the load process.  Please read the output to determine whether or not a load should proceed.")
+    padAndPrint("[28]  exit")
   }
 
   def padAndPrint(str:String) = println(padElementTo60(str))
