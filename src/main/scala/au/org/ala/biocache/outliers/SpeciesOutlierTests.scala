@@ -440,10 +440,11 @@ object SpeciesOutlierTests {
     //create a value -> cell map    
     val valuesToCells = cellToValue.groupBy(x => x._2).map(x => x._1 -> x._2.keys.toSet[Int]).toMap
 
-    //the environmental properties to throw at Jackknife test
-    val valuesToTest = cellToValue.values.filter(x => x != null).map(y => y.toFloat).toList
+    //the environmental properties to throw at Jack knife test
+    //val valuesToTest = cellToValue.values.filter(x => x != null).map(y => y.toFloat).toList
+    val valuesToTest = cellToValue.values.map(y => y.toFloat).toSeq
 
-    //do jacknife test
+    //do jack knife test
     val jacknife = new JackKnife
 
     //FIXME - this is adding the same record to the buffer more than once....

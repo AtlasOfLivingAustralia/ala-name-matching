@@ -12,24 +12,24 @@ case class ProcessedValue(@BeanProperty name: String, @BeanProperty raw: String,
 
 case class ParsedRecord(@BeanProperty values: Array[ProcessedValue], @BeanProperty assertions: Array[QualityAssertion])
 
-/**
- * Runnable for testing column parsing functionality.
- */
-object ColumnParserTest {
-
-  def main(args:Array[String]){
-
-    var noExit = true
-    while(noExit){
-      val input = readLine
-      val columns = input.split(",")
-      val matchedColumns = AdHocParser.processColumnHeaders(columns)
-      (matchedColumns zip columns).foreach(x =>{
-        println(x._1 +" : " + x._2)
-      })
-    }
-  }
-}
+///**
+// * Runnable for testing column parsing functionality.
+// */
+//object ColumnParserTest {
+//
+//  def main(args:Array[String]){
+//
+//    var noExit = true
+//    while(noExit){
+//      val input = readLine
+//      val columns = input.split(",")
+//      val matchedColumns = AdHocParser.processColumnHeaders(columns)
+//      (matchedColumns zip columns).foreach(x =>{
+//        println(x._1 +" : " + x._2)
+//      })
+//    }
+//  }
+//}
 
 object ProcessToStreamTest {
 
