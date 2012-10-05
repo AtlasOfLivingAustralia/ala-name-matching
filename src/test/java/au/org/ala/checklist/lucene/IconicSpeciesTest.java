@@ -1,12 +1,14 @@
 package au.org.ala.checklist.lucene;
 
+import java.io.FileReader;
+import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.model.LinnaeanRankClassification;
 import au.org.ala.data.util.RankType;
 import java.io.File;
 import java.util.List;
 import org.apache.commons.lang.StringUtils;
-import org.gbif.file.CSVReader;
+//import org.gbif.file.CSVReader;
 import org.junit.Test;
 import static org.junit.Assert.*;
 /**
@@ -86,9 +88,9 @@ public class IconicSpeciesTest {
         try{
             
            
-            CSVReader reader = CSVReader.build(new File(getClass().getResource("iconic_species_list.csv").toURI()), "UTF-8", ",", '"', 0);
+            CSVReader reader = new CSVReader(new FileReader(new File(getClass().getResource("iconic_species_list.csv").toURI())), ',','"');//CSVReader.build(new File(getClass().getResource("iconic_species_list.csv").toURI()), "UTF-8", ",", '"', 0);
             //cycle through all the test cases
-            String[] values = reader.next();
+            String[] values = reader.readNext();
             //fail("Testing");
 
             int passed = 0, failed =0;
@@ -159,7 +161,7 @@ public class IconicSpeciesTest {
                         //fail("Searching for : "+search + " caused an exception");
                     }
                 }
-                values = reader.next();
+                values = reader.readNext();
             }
             System.out.println("Total names tested: "+ (failed+passed) + " passed: "+ passed);
             if(failed >40)
