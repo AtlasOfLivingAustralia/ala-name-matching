@@ -787,7 +787,8 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
           if(unparsedJson != ""){
             val map = Json.toMap(unparsedJson)
             map.foreach({ case(k,v) => {
-              doc.addField(k + "_s", v)
+              if(v != null)
+            	  doc.addField(k + "_s", v.toString()) //fix for number format issue ?
             }})
           }
         }
