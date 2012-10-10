@@ -132,11 +132,12 @@ object ClassificationDAO {
           }
           else{
             logger.debug("Unable to locate accepted concept for synonym " + nsr + ". Attempting a higher level match")
-            if(cl.kingdom != null || cl.phylum!=null || cl.classs != null || cl.order != null || cl.family != null || cl.genus != null){
+            if(cl.kingdom != null || cl.phylum != null || cl.classs != null || cl.order != null || cl.family != null || cl.genus != null){
                 val newcl = cl.clone()
                 newcl.setScientificName(null)
                 newcl.setInfraspecificEpithet(null)
                 newcl.setSpecificEpithet(null)
+                newcl.setSpecies(null)
                 result = getByHashLRU(newcl)
             }
           }
