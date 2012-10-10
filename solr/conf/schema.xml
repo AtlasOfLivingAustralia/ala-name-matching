@@ -702,6 +702,7 @@
    <field name="duplicate_type" type="int" indexed="true" stored="true" multiValued="true" omitNorms="true" />
 
    <!-- Some ALA dynamic fields -->
+   <dynamicField name="*_s" type="string" indexed="true" stored="false" omitNorms="true" />    
    <dynamicField name="*_id"  type="string" indexed="true" stored="true"/>
    <dynamicField name="*_name"  type="string" indexed="true" stored="true"/>
    <dynamicField name="point-*" type="string" indexed="true" stored="true"/>
@@ -713,10 +714,7 @@
    <!-- They are being stored just in case they need to be faceted on -->
    <dynamicField name="el*" type="double" indexed="true" stored="true" omitNorms="true" />
    <dynamicField name="cl*" type="string" indexed="true" stored="true" omitNorms="true" />
-   <dynamicField name="*_s" type="string" indexed="true" stored="false" omitNorms="true" />
-
-   <!-- catchall text field that indexes tokens both normally and in reverse for efficient
-        leading wildcard queries. -->
+   <!-- catchall text field that indexes tokens both normally and in reverse for efficient leading wildcard queries. -->
    <field name="text_rev" type="text_rev" indexed="true" stored="false" multiValued="true"/>
 
  </fields>
