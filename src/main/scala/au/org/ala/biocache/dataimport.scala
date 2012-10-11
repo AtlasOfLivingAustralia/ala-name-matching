@@ -382,36 +382,36 @@ trait DataLoader {
     def downloadSecureArchive(url:String, resourceUid:String) : (File,Boolean,Boolean) = {
       url match{
         case sftpPattern(server,filename)=>{
-          val (targetfile, isZipped, isGzipped) = {
+          val (targetfile, isZipped, isGzipped,downloaded) = {
           if (url.endsWith(".zip") ){
             val f = new File(temporaryFileStore + resourceUid + ".zip")
             f.createNewFile()
-            (f, true, false)
+            (f, true, false,false)
           } else if (url.endsWith(".gz")){
             val f = new File(temporaryFileStore + resourceUid + File.separator + resourceUid +".gz")
             println("  creating file: " + f.getAbsolutePath)
             FileUtils.forceMkdir(f.getParentFile())
             f.createNewFile()
-            (f, false, true)
+            (f, false, true,false)
           } else if (filename.contains(".")) {
             val f = new File(temporaryFileStore + resourceUid + File.separator + resourceUid +".csv")
             println("  creating file: " + f.getAbsolutePath)
             FileUtils.forceMkdir(f.getParentFile())
             f.createNewFile()
-            (f, false, false)
+            (f, false, false,false)
           }
           else{
             println("SFTP the most recent from " + url)
             def file = SFTPTools.sftpLatestArchive(url, resourceUid, temporaryFileStore)
             if(file.isDefined){
               println("The most recent file is " + file)
-              (new File(file.get),file.get.endsWith("zip"),file.get.endsWith("gz"))
+              (new File(file.get),file.get.endsWith("zip"),file.get.endsWith("gz"),true)
             }
             else
-              (null,false,false)
+              (null,false,false,false)
           }}
           
-          val file = if(!targetfile.exists())SFTPTools.scpFile(server,Config.getProperty("uploadUser"), Config.getProperty("uploadPassword"),filename,targetfile) else Some(targetfile)          
+          val file = if(!downloaded)SFTPTools.scpFile(server,Config.getProperty("uploadUser"), Config.getProperty("uploadPassword"),filename,targetfile) else Some(targetfile)          
           (if(file.isDefined)targetfile else null,isZipped,isGzipped)
         }
         case _ => (null,false,false)
