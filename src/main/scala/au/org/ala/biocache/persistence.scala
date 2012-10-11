@@ -26,6 +26,11 @@ trait PersistenceManager {
      * Get a single property.
      */
     def get(uuid:String, entityName:String, propertyName:String) : Option[String]
+    
+    /**
+     * Gets the supplied properties for this record
+     */
+    def getSelected(uuid:String, entityName:String, propertyNames:Array[String]):Option[Map[String,String]]
 
     /**
      * Get a key value pair map for this record.
@@ -290,6 +295,23 @@ class CassandraPersistenceManager @Inject() (
       } catch {
           case e:Exception => None   //this is epected behaviour with cassandra
       }
+    }
+    /**
+     * Only retrieves the supplied fields for the record.
+     */
+    def getSelected(uuid:String, entityName:String, propertyNames:Array[String]):Option[Map[String,String]] ={
+      val selector = Pelops.createSelector(poolName)
+        val slicePredicate = Selector.newColumnsPredicate(propertyNames:_*)
+        try {
+            val columnList = selector.getColumnsFromRow(entityName,uuid, slicePredicate, ConsistencyLevel.ONE)
+            if(columnList.isEmpty){
+                None
+            } else {
+                Some(columnList2Map(columnList))
+            }
+        } catch {
+            case e:Exception => logger.trace(e.getMessage, e); None   //this is expected behaviour where no value exists
+        }
     }
 
     /**

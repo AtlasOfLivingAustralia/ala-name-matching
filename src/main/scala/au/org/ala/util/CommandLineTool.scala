@@ -192,7 +192,12 @@ object CMD {
         case it if (it startsWith "sample") => {
           println("****** Warning - this requires at least 8g of memory allocation -Xmx8g -Xms8g")
           val args = it.split(" ").map(x => x.trim).toArray.tail
-          Sampling.main(Array("-dr") ++ args )
+          val dr = args(0)
+          val (hasRowKeys, filename) = hasRowKey(dr)
+          if(!hasRowKeys)
+            Sampling.main(Array("-dr") ++ args )
+          else
+            Sampling.main(Array("-rf", filename.get,"-dr") ++ args)
         }
         case it if (it startsWith "resample") => {
           println("****** Warning - this requires at least 8g of memory allocation -Xmx8g -Xms8g")

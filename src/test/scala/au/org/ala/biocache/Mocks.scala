@@ -29,7 +29,9 @@ class MockPersistenceManager extends PersistenceManager {
       case None => None
     }
   }
-  
+  def getSelected(uuid:String, entityName:String, propertyNames:Array[String]):Option[Map[String,String]] ={
+    throw new RuntimeException("not implemented yet")
+  }
   def pageOverColumnRange(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String="", endUuid:String="", pageSize:Int=1000, startColumn:String="", endColumn:String="")=
     throw new RuntimeException("not implemented yet")
   

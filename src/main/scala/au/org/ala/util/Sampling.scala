@@ -17,11 +17,13 @@ object Sampling {
     var dataResourceUid = ""
     var locFilePath = ""
     var singleLayerName = ""
+    var rowKeyFile = ""
 
     val parser = new OptionParser("Sample coordinates against geospatial layers") {
       opt("dr", "data-resource-uid", "the data resource to sample for", { v:String => dataResourceUid = v })
       opt("cf", "coordinates-file", "the file containing coordinates", { v:String => locFilePath = v })
       opt("l", "single-layer-sample", "sample a single layer only", { v:String => singleLayerName = v })
+      opt("rf", "row-key-file", "The row keys which to sample",{v:String => rowKeyFile =v })
     }
 
     if (parser.parse(args)) {
@@ -34,7 +36,10 @@ object Sampling {
 
       if(locFilePath == ""){
         locFilePath = "/tmp/loc-" + fileSufffix + ".txt"
-        s.getDistinctCoordinatesForResource(locFilePath, dataResourceUid)
+        if(rowKeyFile == "")
+          s.getDistinctCoordinatesForResource(locFilePath, dataResourceUid)
+        else
+          s.getDistinctCoordinatesForFile(locFilePath, rowKeyFile)
       }
       val samplingFilePath = "/tmp/sampling-" + fileSufffix + ".txt"
 
@@ -58,7 +63,79 @@ object Sampling {
 }
 
 class Sampling {
+ import FileHelper._
+  //TODO refactor this so that code is NOT duplicated.
+  def getDistinctCoordinatesForFile(locFilePath:String, rowKeyFile:String){
+    println("Creating distinct list of coordinates for row keys in " + rowKeyFile)
+    var counter = 0
+    var passed = 0
+    val rowKeys = new File(rowKeyFile)
+    val properties = Array("decimalLatitude", "decimalLongitude",
+      "decimalLatitude.p", "decimalLongitude.p",
+      "verbatimLatitude", "verbatimLongitude",
+      "originalDecimalLatitude", "originalDecimalLongitude",
+      "originalSensitiveValues")
+    val coordinates = new HashSet[String]
+    val lp = new LocationProcessor
+    rowKeys.foreachLine(line =>{
+      val values = Config.persistenceManager.getSelected(line,"occ", properties)
+      if(values.isDefined){
+        def map = values.get
+        val latLongWithOption = lp.processLatLong(map.getOrElse("decimalLatitude", null),
+        map.getOrElse("decimalLongitude", null),
+        map.getOrElse("verbatimLongitude", null),
+        map.getOrElse("verbatimLongitude", null)
+      )
+      latLongWithOption match {
+        case Some(latLong) => coordinates += (latLong._2 + "," + latLong._1) // write long lat (x,y)
+        case None => {}
+      }
 
+      val originalSensitiveValues = map.getOrElse("originalSensitiveValues", "")
+      if(originalSensitiveValues != ""){
+        val sensitiveLatLong = Json.toMap(originalSensitiveValues)
+        val lat = sensitiveLatLong.getOrElse("decimalLatitude", null)
+        val lon = sensitiveLatLong.getOrElse("decimalLongitude", null)
+        if (lat != null && lon != null) {
+          coordinates += (lon + "," + lat)
+        }
+      }
+
+      //legacy storage of old lat/long original values before SDS processing - superceded by originalSensitiveValues
+      val originalDecimalLatitude = map.getOrElse("originalDecimalLatitude", "")
+      val originalDecimalLongitude = map.getOrElse("originalDecimalLongitude", "")
+      if (originalDecimalLatitude != "" && originalDecimalLongitude != ""){
+        coordinates += (originalDecimalLongitude + "," + originalDecimalLatitude)
+      }
+
+      //add the processed values
+      val processedDecimalLatitude = map.getOrElse("decimalLatitude.p", "")
+      val processedDecimalLongitude = map.getOrElse("decimalLongitude.p", "")
+      if (processedDecimalLatitude != "" && processedDecimalLongitude != ""){
+        coordinates += (processedDecimalLongitude + "," + processedDecimalLatitude)
+      }
+
+      if (counter % 10000 == 0 && counter > 0) println("Distinct coordinates counter: " + counter + ", current count:" + coordinates.size)
+      counter += 1
+      passed += 1
+      }
+    })
+    try {
+      var fw = new FileWriter(locFilePath);
+      coordinates.foreach(c => {
+        fw.write(c)
+        fw.write("\n")
+      })
+      fw.flush
+      fw.close
+    } catch {
+      case e => {
+        e.printStackTrace()
+        println("failed to write");
+      }
+    }
+  }
+  
   /**
    * Get the distinct coordinates for this resource
    * and write them to file.
