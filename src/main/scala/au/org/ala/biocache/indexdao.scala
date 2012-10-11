@@ -62,6 +62,7 @@ trait IndexDAO {
     def shutdown
     def optimise :String
     def commit
+    def init
     /**
      * Remove all the records with the specified value in the specified field
      */
@@ -562,7 +563,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
     
     lazy val drToExcludeSensitive = excludeSensitiveValuesFor.split(",")
 
-    def init(){
+    override def init(){
       if(solrServer == null){
         if (solrConfigPath != ""){
           //System.setProperty("solr.solr.home", solrHome)

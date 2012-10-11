@@ -91,7 +91,18 @@ object CMD {
         }
         case it if (it startsWith "process") || (it startsWith "process") => {
           val drs = it.split(" ").map(x => x.trim).toList.tail
-          drs.foreach(dr => ProcessWithActors.processRecords(4, None, Some(dr)))
+          drs.foreach(dr =>{
+            val (hasRowKeys, filename) = hasRowKey(dr)
+            println("Processing " + dr + " incremental=" +hasRowKeys)
+            if(!hasRowKeys)
+              ProcessWithActors.processRecords(4, None, Some(dr))
+            else{
+              val p = new RecordProcessor
+              p.processFileThreaded(new java.io.File(filename.get), 4)
+              //ProcessRecords.main(Array("-f",filename.get, "-t","4"))
+            }
+          }
+            )
         }
         case it if (it startsWith "process-all") => {
           ProcessWithActors.processRecords(4, None, None)
@@ -130,7 +141,13 @@ object CMD {
         }
         case it if (it startsWith "index ") || (it startsWith "index") => {
           val drs = it.split(" ").map(x => x.trim).toList.tail
-          drs.foreach(dr => IndexRecords.index(None, None, Some(dr), false, false))
+          drs.foreach(dr => {
+            val (hasRowKeys, filename) = hasRowKey(dr)
+            if(!hasRowKeys)
+              IndexRecords.index(None, None, Some(dr), false, false)
+            else 
+              IndexRecords.indexListThreaded(new File(filename.get), 4)
+            })
         }
         case it if (it startsWith "createdwc") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
@@ -252,6 +269,31 @@ object CMD {
     padAndPrint("[29]  dedup - Run duplication detection over the records.")
     padAndPrint("[30]  jackknife - Run jackknife outlier detection.")
     padAndPrint("[31]  exit")
+  }
+  
+  def hasRowKey(resourceUid:String):(Boolean, Option[String])={
+    def filename = "/data/tmp/row_key_"+resourceUid+".csv"
+    def file = new java.io.File(filename)
+    
+    if(file.exists()){
+      val date = new java.util.GregorianCalendar()
+      date.setTime(new java.util.Date)
+      date.add(java.util.Calendar.HOUR, -24)
+      //if it is on the same day assume that we want the incremental process or index.
+      if(org.apache.commons.io.FileUtils.isFileNewer(file,date.getTime()))
+        (true, Some(filename))
+      else{
+        //prompt the user 
+        println("There is an incremental row key file for this resource.  Would you like to perform an incremental process (y/n) ?")
+        val answer = readLine
+        if(answer.toLowerCase().equals("y") || answer.toLowerCase().equals("yes"))
+          (true,Some(filename))
+        else
+          (false, None)
+      }
+    }
+    else
+      (false,None)
   }
 
   def padAndPrint(str:String) = println(padElementTo60(str))

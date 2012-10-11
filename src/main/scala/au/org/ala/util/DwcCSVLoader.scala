@@ -75,6 +75,8 @@ class DwcCSVLoader extends DataLoader {
     }
     
     def load(dataResourceUid:String,logRowKeys:Boolean=false, testFile:Boolean=false){
+      //delete the old file
+      deleteOldRowKeys(dataResourceUid)
         val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
         val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]
         val incremental = params.getOrElse("incremental",false).asInstanceOf[Boolean]

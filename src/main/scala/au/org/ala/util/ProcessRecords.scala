@@ -156,9 +156,7 @@ class RecordProcessor {
       queue.put(line.trim)
     }) 
     pool.foreach(t =>t.shouldStop = true)
-    pool.foreach(_.join)
-    Config.persistenceManager.shutdown
-    Config.indexDAO.shutdown
+    pool.foreach(_.join)    
   }
 
   /**

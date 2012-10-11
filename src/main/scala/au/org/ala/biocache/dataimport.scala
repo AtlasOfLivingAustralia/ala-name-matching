@@ -44,6 +44,7 @@ class MapDataLoader extends DataLoader{
 trait DataLoader {
     
     import FileHelper._
+    import JavaConversions._
     val user = "harvest services"
     val api_key = "Venezuela"
     val logger = LoggerFactory.getLogger("DataLoader")
@@ -51,6 +52,7 @@ trait DataLoader {
     val registryUrl = "http://collections.ala.org.au/ws/dataResource/"
     val pm = Config.persistenceManager
     val loadTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    
     
     def emptyTempFileStore(resourceUid:String)=FileUtils.deleteQuietly(new File(temporaryFileStore+File.separator+resourceUid))
     
@@ -376,7 +378,7 @@ trait DataLoader {
         }
       
     }
-    val sftpPattern = """sftp://([a-zA-z\.]*):([0-9a-zA-Z_/\.]*)""".r
+    val sftpPattern = """sftp://([a-zA-z\.]*):([0-9a-zA-Z_/\.\-]*)""".r
     def downloadSecureArchive(url:String, resourceUid:String) : (File,Boolean,Boolean) = {
       url match{
         case sftpPattern(server,filename)=>{
@@ -391,44 +393,36 @@ trait DataLoader {
             FileUtils.forceMkdir(f.getParentFile())
             f.createNewFile()
             (f, false, true)
-          } else {
+          } else if (filename.contains(".")) {
             val f = new File(temporaryFileStore + resourceUid + File.separator + resourceUid +".csv")
             println("  creating file: " + f.getAbsolutePath)
             FileUtils.forceMkdir(f.getParentFile())
             f.createNewFile()
             (f, false, false)
+          }
+          else{
+            println("SFTP the most recent from " + url)
+            def file = SFTPTools.sftpLatestArchive(url, resourceUid, temporaryFileStore)
+            if(file.isDefined){
+              println("The most recent file is " + file)
+              (new File(file.get),file.get.endsWith("zip"),file.get.endsWith("gz"))
+            }
+            else
+              (null,false,false)
           }}
-          val file = scpFile(server,Config.getProperty("uploadUser"), Config.getProperty("uploadPassword"),filename,targetfile)          
+          
+          val file = if(!targetfile.exists())SFTPTools.scpFile(server,Config.getProperty("uploadUser"), Config.getProperty("uploadPassword"),filename,targetfile) else Some(targetfile)          
           (if(file.isDefined)targetfile else null,isZipped,isGzipped)
         }
         case _ => (null,false,false)
       }
       
     }
-    //SCP the remote file from the supplied host into localFile
-    def scpFile(host:String, user:String, password:String, remoteFile:String, localFile:File):Option[String]={
-      if(StringUtils.isEmpty(user) || StringUtils.isEmpty(password))
-        logger.error("SCP User or password has not been supplied. Please supply as part of the biocache.properties")
-      var  ssh:SshConnection = null
-      try{
-        ssh= new SshConnection(host,user,password)
-        ssh.connect()
-        
-        FileUtils.forceMkdir(localFile.getParentFile())
-        val scpFile = new ScpFile(localFile, remoteFile)      
-        ssh.executeTask(new ScpDownload(scpFile))
-        Some(localFile.getAbsolutePath())
-      }catch{
-         case e:Exception => logger.error("Unable to SCP " + remoteFile ,e);None
-       }
-       finally{
-         if(ssh != null)
-           ssh.disconnect()
-         None
-       }
-        
-        
-      }
+    
+    def sftpLatestArchive(url:String, resourceUid:String):Option[String]={
+      SFTPTools.sftpLatestArchive(url, resourceUid, temporaryFileStore)
+    }
+
     def downloadStandardArchive(url:String, resourceUid:String) : (File,Boolean,Boolean) = {
         val tmpStore = new File(temporaryFileStore)
         if(!tmpStore.exists){
@@ -495,19 +489,24 @@ trait DataLoader {
           case e:Exception => e.printStackTrace();false
         }
     }
+    
+    
+    
+    
 }
 
-
-class SecureDataLoader extends DataLoader{
-      import JavaConversions._
-
-      val connectionPattern = """sftp://([a-zA-Z]*):([a-zA-Z]*)@([a-zA-z\.]*):([a-zA-Z/]*)""".r
+object SFTPTools {
+  import JavaConversions._
+  val logger = LoggerFactory.getLogger("SFTPTools")
+  //SFTP items
+    val connectionPattern = """sftp://([a-zA-Z]*):([a-zA-Z]*)@([a-zA-z\.]*):([a-zA-Z/]*)""".r
       println(connectionPattern)
       
       var channelSftp:ChannelSftp = null
       var session:Session = null
+      val sftpPattern = """sftp://([a-zA-z\.]*):([0-9a-zA-Z_/\.\-]*)""".r
       
-      def sftpLatestArchive(url:String, resourceUid:String):Option[String]={
+      def sftpLatestArchive(url:String, resourceUid:String, tempDir:String):Option[String]={
         
         val (user,password,host,directory) ={
           url match{
@@ -527,7 +526,7 @@ class SecureDataLoader extends DataLoader{
         val lastFile = getLatestFile(directory, "*.*")
         disconnect
         if(lastFile.isDefined){
-          val dir = temporaryFileStore + resourceUid
+          val dir = tempDir + resourceUid
           //scp the file is faster than sftp
           scpFile(host,user,password,lastFile.get,new File(dir+ File.separator+lastFile.get))              
           }
@@ -552,26 +551,6 @@ class SecureDataLoader extends DataLoader{
         channelSftp.disconnect()
         session.disconnect()
       }
-      
-      
-      
-      def sftpFile(serverFile:String, localDir:String):Option[String]={
-        //FileUtils.forceMkdir(localDir)
-//        val file = getLatestFile(dir)
-//        if(file.isDefined){
-        try{
-          val inputStream = channelSftp.get(serverFile)
-          //val outputStream = new FileOutputStream(new File(localDir + File.separator + file.get))//put(new FileInputStream(localDir+ File.separator+file.get), file.get);
-          //Source.fromInputStream(inputStream).foreach(c => outputStream.write(c))
-          org.apache.commons.io.FileUtils.copyInputStreamToFile(inputStream,new File(localDir + File.separator + serverFile))
-          Some(localDir + File.separator + serverFile)
-        }
-        catch{
-          case e:Exception=>None
-        }
-//        }        
-      }
-      
       def getLatestFile(dir:String, filePattern:String):Option[String]={
         
         val list = listFiles(dir+File.separator+filePattern)
@@ -595,4 +574,131 @@ class SecureDataLoader extends DataLoader{
         
         vector.asInstanceOf[java.util.Vector[ChannelSftp#LsEntry]].toList.sorted(o.reverse)//.sort()
       }
+      
+      
+          //SCP the remote file from the supplied host into localFile
+    def scpFile(host:String, user:String, password:String, remoteFile:String, localFile:File):Option[String]={
+      if(StringUtils.isEmpty(user) || StringUtils.isEmpty(password))
+        logger.error("SCP User or password has not been supplied. Please supply as part of the biocache.properties")
+      var  ssh:SshConnection = null
+      try{
+        ssh= new SshConnection(host,user,password)
+        ssh.connect()
+        
+        FileUtils.forceMkdir(localFile.getParentFile())
+        val scpFile = new ScpFile(localFile, remoteFile)      
+        ssh.executeTask(new ScpDownload(scpFile))
+        Some(localFile.getAbsolutePath())
+      }catch{
+         case e:Exception => logger.error("Unable to SCP " + remoteFile ,e);None
+       }
+       finally{
+         if(ssh != null)
+           ssh.disconnect()
+         None
+       }
+        
+        
+      }
+      
 }
+
+
+//class SecureDataLoader extends DataLoader{
+//      import JavaConversions._
+//
+//      val connectionPattern = """sftp://([a-zA-Z]*):([a-zA-Z]*)@([a-zA-z\.]*):([a-zA-Z/]*)""".r
+//      println(connectionPattern)
+//      
+//      var channelSftp:ChannelSftp = null
+//      var session:Session = null
+//      
+//      def sftpLatestArchive(url:String, resourceUid:String):Option[String]={
+//        
+//        val (user,password,host,directory) ={
+//          url match{
+//          case connectionPattern(user, password, host, directory) =>{
+//            (user, password, host, directory)      
+//          }
+//          case sftpPattern(host,directory) =>{
+//            val u=Config.getProperty("uploadUser")
+//            val p =Config.getProperty("uploadPassword")
+//            if(StringUtils.isEmpty(u) || StringUtils.isEmpty(p))
+//              logger.error("SCP User or password has not been supplied. Please supply as part of the biocache.properties")
+//             (u,p,host,directory)
+//          }
+//          case _=>logger.error("Unable to connect to " + url);(null,null,null,null)
+//        }}
+//        connect(host, user, password)
+//        val lastFile = getLatestFile(directory, "*.*")
+//        disconnect
+//        if(lastFile.isDefined){
+//          val dir = temporaryFileStore + resourceUid
+//          //scp the file is faster than sftp
+//          scpFile(host,user,password,lastFile.get,new File(dir+ File.separator+lastFile.get))              
+//          }
+//          else{             
+//            logger.error("No latest file for " + url); None
+//          } 
+//      }
+//      
+//      def connect(host:String,  user:String, password:String,port:Int=22){
+//        val jsch = new JSch()
+//        session = jsch.getSession(user,host,port)
+//        val config = new java.util.Properties()
+//        config.put("StrictHostKeyChecking", "no")
+//        session.setConfig(config)
+//        session.setPassword(password)
+//        session.connect()
+//        val channel = session.openChannel("sftp")
+//        channel.connect()
+//        channelSftp =channel.asInstanceOf[ChannelSftp]
+//      }
+//      def disconnect(){
+//        channelSftp.disconnect()
+//        session.disconnect()
+//      }
+//      
+//      
+//      
+//      def sftpFile(serverFile:String, localDir:String):Option[String]={
+//        //FileUtils.forceMkdir(localDir)
+////        val file = getLatestFile(dir)
+////        if(file.isDefined){
+//        try{
+//          val inputStream = channelSftp.get(serverFile)
+//          //val outputStream = new FileOutputStream(new File(localDir + File.separator + file.get))//put(new FileInputStream(localDir+ File.separator+file.get), file.get);
+//          //Source.fromInputStream(inputStream).foreach(c => outputStream.write(c))
+//          org.apache.commons.io.FileUtils.copyInputStreamToFile(inputStream,new File(localDir + File.separator + serverFile))
+//          Some(localDir + File.separator + serverFile)
+//        }
+//        catch{
+//          case e:Exception=>None
+//        }
+////        }        
+//      }
+//      
+//      def getLatestFile(dir:String, filePattern:String):Option[String]={
+//        
+//        val list = listFiles(dir+File.separator+filePattern)
+//        if(list.size>0){
+//          val item=list.reduceLeft((a,b)=>if(a.getAttrs().getMTime() > b.getAttrs().getMTime()) a else b)
+//                    
+//          Some(dir + File.separator+item.getFilename)
+//        }
+//        else{
+//          None
+//        }
+//      }
+//      /*
+//       * An ordering that sorts a list of SFTP files by the last modified time.
+//       */
+//      implicit val o = Ordering.by((p: ChannelSftp#LsEntry) => (p.getAttrs().getMTime()))
+//      
+//      def listFiles(filePattern:String):List[ChannelSftp#LsEntry]={
+//
+//        val vector =channelSftp.ls(filePattern)
+//        
+//        vector.asInstanceOf[java.util.Vector[ChannelSftp#LsEntry]].toList.sorted(o.reverse)//.sort()
+//      }
+//}

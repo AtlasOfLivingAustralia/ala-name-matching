@@ -5,7 +5,7 @@ import org.apache.commons.compress.archivers.ArchiveStreamFactory
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.io.{FilenameUtils,FileUtils}
 import org.apache.commons.compress.utils.IOUtils
-import au.org.ala.biocache.SecureDataLoader
+import au.org.ala.biocache.DataLoader
 
 /**
  * Loads a data resource that provides reloads and incremental updates.
@@ -59,7 +59,7 @@ def main(args:Array[String]){
     }
 }
 
-class AutoDwcCSVLoader extends SecureDataLoader{
+class AutoDwcCSVLoader extends DataLoader{
     import FileHelper._
     //val loadPattern ="""([\x00-\x7F\s]*_dwc.csv)""".r //"""(dwc-data[\x00-\x7F\s]*.gz)""".r
     val loadPattern = """([\x00-\x7F\s]*dwc[\x00-\x7F\s]*.csv[\x00-\x7F\s]*)""".r

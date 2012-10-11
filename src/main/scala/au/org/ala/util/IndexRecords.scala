@@ -4,6 +4,7 @@ import au.org.ala.biocache._
 import java.io.File
 import java.util.Date
 import scala.collection.mutable.HashMap
+import java.util.concurrent.ArrayBlockingQueue
 
 /**
  * Runnable for optimising the index.
@@ -13,10 +14,9 @@ object OptimiseIndex {
     println("Starting optimise....")
     val indexer = Config.getInstance(classOf[IndexDAO]).asInstanceOf[IndexDAO]
     indexer.optimise
-    println("Optimise complete.")    
+    println("Optimise complete.")
   }
 }
-
 /**
  * Index the Cassandra Records to conform to the fields
  * as defined in the schema.xml file.
@@ -42,6 +42,7 @@ object IndexRecords {
     var pageSize = 1000
     var uuidFile:String = ""
     var rowKeyFile:String = ""
+    var threads=1
 
     val parser = new OptionParser("index records options") {
         opt("empty", "empty the index first", {empty=true})
@@ -54,6 +55,7 @@ object IndexRecords {
         intOpt("ps", "pageSize", "The page size for indexing", {v:Int => pageSize = v })
         opt("if", "file-uuids-to-index","Absolute file path to fle containing UUIDs to index", {v:String => uuidFile = v})
         opt("rf", "file-rowkeys-to-index","Absolute file path to fle containing rowkeys to index", {v:String => rowKeyFile = v})
+        intOpt("t","threads","Number of threads to index from",{v:Int => threads = v})
     }
     if(parser.parse(args)){
         //delete the content of the index
@@ -64,7 +66,10 @@ object IndexRecords {
         if (uuidFile != ""){
           indexListOfUUIDs(new File(uuidFile))
         } else if (rowKeyFile != ""){
-          indexList(new File(rowKeyFile))
+          if(threads == 1)
+            indexList(new File(rowKeyFile))
+          else
+            indexListThreaded(new File(rowKeyFile), threads)
         } else {
           index(startUuid, endUuid, dataResource, false, false, startDate, check, pageSize)
         }
@@ -172,6 +177,71 @@ object IndexRecords {
     })
     indexer.finaliseIndex(false, false)//commit but don't optimise or shutdown
   }
+  
+  def indexListThreaded(rowKeys:File, threads:Int){
+    val queue = new ArrayBlockingQueue[String](100)
+    var ids =0
+     val pool:Array[StringConsumer] = Array.fill(threads){
+     var counter=0 
+     var startTime = System.currentTimeMillis
+     var finishTime = System.currentTimeMillis
+     indexer.init
+     val p = new StringConsumer(queue,ids,{rowKey =>
+        counter +=1
+        val map = persistenceManager.get(rowKey, "occ")
+        val shouldcommit = counter % 1000 == 0
+        if (!map.isEmpty) indexer.indexFromMap(rowKey, map.get, commit=shouldcommit)
+        //debug counter
+        if (counter % 1000 == 0) {
+          finishTime = System.currentTimeMillis
+          println(counter + " >> Last key : " + rowKey + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          startTime = System.currentTimeMillis
+        }
+      });ids +=1;p.start;p }
+    rowKeys.foreachLine(line =>{
+      //add to the queue
+      queue.put(line.trim)
+    }) 
+    pool.foreach(t =>t.shouldStop = true)
+    pool.foreach(_.join)
+    indexer.finaliseIndex(false, false)
+  }
+  
+  /*
+   * def processFileThreaded(file:java.io.File, threads:Int){
+    val queue = new ArrayBlockingQueue[String](100)
+    var ids =0
+     val pool:Array[StringConsumer] = Array.fill(threads){
+     var counter=0 
+     var startTime = System.currentTimeMillis
+     var finishTime = System.currentTimeMillis
+            
+      val p = new StringConsumer(queue,ids,{guid =>
+        counter +=1
+        val rawProcessed = Config.occurrenceDAO.getRawProcessedByRowKey(guid)
+        if (!rawProcessed.isEmpty){
+        val rp = rawProcessed.get
+        processRecord(rp(0), rp(1))
+        
+        //debug counter
+        if (counter % 1000 == 0) {
+          finishTime = System.currentTimeMillis
+          println(counter + " >> Last key : " + rp(0).uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          startTime = System.currentTimeMillis
+        }
+      }
+      });ids +=1;p.start;p }
+    
+    file.foreachLine(line =>{
+      //add to the queue
+      queue.put(line.trim)
+    }) 
+    pool.foreach(t =>t.shouldStop = true)
+    pool.foreach(_.join)
+    Config.persistenceManager.shutdown
+    Config.indexDAO.shutdown
+  }
+   */
 
   /**
    * Indexes the supplied list of rowKeys
@@ -182,7 +252,7 @@ object IndexRecords {
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
 
-    file.foreachLine(line => {      
+    file.foreachLine(line => {
       counter += 1
       val rowKey = if (line.head == '"' && line.last == '"') line.substring(1,line.length-1) else line
       val map = persistenceManager.get(rowKey, "occ")

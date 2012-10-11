@@ -65,6 +65,8 @@ object DwCALoader {
             //update the collectory information
             l.updateLastChecked(resourceUid)
         }
+        //shut down the persistence manager after all the files have been loaded.
+      Config.persistenceManager.shutdown
     }
 } 
     
@@ -75,17 +77,19 @@ class DwCALoader extends DataLoader {
     import JavaConversions._
     
     def load(resourceUid:String, logRowKeys:Boolean=false, testFile:Boolean=false){
+      //remove the old row keys:
+      deleteOldRowKeys(resourceUid)
     	val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(resourceUid)
     	val conceptTerms = mapConceptTerms(uniqueTerms)
+    	val incremental = params.getOrElse("incremental", false).asInstanceOf[Boolean]
     	val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]    	
       urls.foreach(url => {
           //download
         val fileName = downloadArchive(url,resourceUid)
           //load the DWC file
-        loadArchive(fileName, resourceUid, conceptTerms, strip, logRowKeys,testFile)
+        loadArchive(fileName, resourceUid, conceptTerms, strip, logRowKeys||incremental,testFile)
       })
-      //shut down the persistence manager after all the files have been loaded.
-      Config.persistenceManager.shutdown
+      
     }
     
     def loadLocal(resourceUid:String, fileName:String, logRowKeys:Boolean, testFile:Boolean){
@@ -94,11 +98,11 @@ class DwCALoader extends DataLoader {
     	val strip = params.getOrElse("strip", false).asInstanceOf[Boolean] 
         //load the DWC file
     	loadArchive(fileName, resourceUid, conceptTerms, strip, logRowKeys, testFile)
-    	//shut down the persistence manager after all the files have been loaded.
-    	Config.persistenceManager.shutdown
+    	
     }
     
     def loadArchive(fileName:String, resourceUid:String, uniqueTerms:List[ConceptTerm], stripSpaces:Boolean, logRowKeys:Boolean, testFile:Boolean){
+      println("Loading archive " + fileName + " for resource " + resourceUid + " with unique terms " + uniqueTerms + " stripping spaces " + stripSpaces + " incremental " + logRowKeys + " testing " + testFile)
       val rowKeyWriter = getRowKeyWriter(resourceUid, logRowKeys)
         val archive = ArchiveFactory.openArchive(new File(fileName))
         val iter = archive.iterator
