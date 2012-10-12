@@ -149,7 +149,7 @@ trait IndexDAO {
       "loan_botanist","loan_date", "loan_return_date","original_name_usage","duplicate_inst", "record_number","first_loaded_date","name_match_metric",
       "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue","raw_identification_qualifier","species_habitats",
       "identified_by","identified_date","sensitive_longitude","sensitive_latitude","pest_flag_s","collectors","duplicate_status","duplicate_record",
-      "duplicate_type", "sensitive_coordinate_uncertainty") // ++ elFields ++ clFields
+      "duplicate_type", "sensitive_coordinate_uncertainty", "distance_outside_expert_range") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -457,7 +457,8 @@ trait IndexDAO {
                     if(dateIdentified.isEmpty) "" else DateFormatUtils.format(dateIdentified.get,"yyyy-MM-dd'T'HH:mm:ss'Z'"),
                     sensitiveMap.getOrElse("decimalLongitude",""), sensitiveMap.getOrElse("decimalLatitude",""),pest_tmp,
                     map.getOrElse("recordedBy.p",""), map.getOrElse("duplicationStatus.p",""), map.getOrElse("associatedOccurrences.p",""), dupTypes.mkString("|"),
-                    sensitiveMap.getOrElse("coordinateUncertaintyInMeters.p","")
+                    sensitiveMap.getOrElse("coordinateUncertaintyInMeters.p",""),
+                    map.getOrElse("distanceOutsideExpertRange.p","")
                     ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
                 //)
             }

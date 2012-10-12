@@ -305,6 +305,8 @@ class Location extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var generalisedLocality: String =_ ///http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0977
   @BeanProperty var nearNamedPlaceRelationTo: String = _ //http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0980
   @BeanProperty var australianHerbariumRegion: String = _ //http://www.chah.org.au/hispid/terms/australianHerbariumRegion
+  // For occurrences found to be outside the expert distribution range for the associated speces.
+  @BeanProperty var distanceOutsideExpertRange: Double = _
   
   //fields that need be hidden from all public API
   //These fields can NOT be @BeanProperty because we need the getter method to have a @JsonIgnore annotation

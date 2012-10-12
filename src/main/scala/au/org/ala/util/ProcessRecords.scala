@@ -214,6 +214,7 @@ class RecordProcessor {
     processed.occurrence.duplicationStatus = currentProcessed.occurrence.duplicationStatus
     processed.occurrence.duplicationType = currentProcessed.occurrence.duplicationType
     processed.occurrence.associatedOccurrences = currentProcessed.occurrence.associatedOccurrences
+    processed.location.distanceOutsideExpertRange = currentProcessed.location.distanceOutsideExpertRange
     //add the QA for the duplicate record
     if(duplicates.contains(processed.occurrence.duplicationStatus)){
       //need to add the QA
