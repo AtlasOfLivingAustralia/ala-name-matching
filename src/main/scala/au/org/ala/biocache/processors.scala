@@ -231,11 +231,11 @@ class AttributionProcessor extends Processor {
     if (raw.attribution.dataResourceUid != null) {
       val dataResource = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
       if (!dataResource.isEmpty) {
-
-        if (dataResource.get.hasMappedCollections && raw.occurrence.collectionCode != null) {
-          val collCode = raw.occurrence.collectionCode
+        //the processed collection code is catering for the situation where the collection code is provided as a default in the collectory
+        if (dataResource.get.hasMappedCollections && (raw.occurrence.collectionCode != null || processed.occurrence.collectionCode != null)) {
+          val collCode = if(raw.occurrence.collectionCode != null) raw.occurrence.collectionCode else processed.occurrence.collectionCode
           //use the collection code as the institution code when one does not exist
-          val instCode = if (raw.occurrence.institutionCode != null) raw.occurrence.institutionCode else collCode
+          val instCode = if (raw.occurrence.institutionCode != null) raw.occurrence.institutionCode else if(processed.occurrence.institutionCode != null) processed.occurrence.institutionCode else collCode
           val attribution = AttributionDAO.getByCodes(instCode, collCode)
           if (!attribution.isEmpty) {
             processed.attribution = attribution.get
