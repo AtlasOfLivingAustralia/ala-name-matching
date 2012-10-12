@@ -228,7 +228,8 @@ object CMD {
           })
         }
         case it if (it startsWith "delete") => {
-          val query = it.replaceFirst("delete ","")
+          //need to preserve the query case because T and Z mean things in dates
+          val query = input.replaceFirst("delete ","")
           val deletor = new QueryDelete(query)
           println("Delete from storage using the query: " + query)
           deletor.deleteFromPersistent()
