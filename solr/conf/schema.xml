@@ -705,7 +705,9 @@
    <field name="distance_outside_expert_range" type="double" indexed="true" stored="true" multiValued="false" />
 
    <!-- Some ALA dynamic fields -->
-   <dynamicField name="*_s" type="string" indexed="true" stored="false" omitNorms="true" />    
+   <dynamicField name="*_s" type="string" indexed="true" stored="false" omitNorms="true" /> 
+   <dynamicField name="*_d" type="double" indexed="true" stored="true" omitNorms="true" />
+   <dynamicField name="*_i" type="int" indexed="true" stored="true" omitNorms="true" />   
    <dynamicField name="*_id"  type="string" indexed="true" stored="true"/>
    <dynamicField name="*_name"  type="string" indexed="true" stored="true"/>
    <dynamicField name="point-*" type="string" indexed="true" stored="true"/>

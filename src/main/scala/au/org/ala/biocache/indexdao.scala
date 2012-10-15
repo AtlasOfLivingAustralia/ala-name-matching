@@ -540,10 +540,10 @@ object IndexFields{
 /**
  * DAO for indexing to SOLR
  */
-class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("excludeSensitiveValuesFor") excludeSensitiveValuesFor:String) extends IndexDAO {
+class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("excludeSensitiveValuesFor") excludeSensitiveValuesFor:String, @Named("extraMiscFields")defaultMiscFields:String) extends IndexDAO {
     import org.apache.commons.lang.StringUtils.defaultString
     import scalaj.collection.Imports._
-
+    val arrDefaultMiscFields = if(defaultMiscFields == null)Array[String]()else defaultMiscFields.split(",")
     //val cc = new CoreContainer.Initializer().initialize
     var cc:CoreContainer = _
     var solrServer:SolrServer =_ //new EmbeddedSolrServer(cc, "")
@@ -558,6 +558,9 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
     //val thread = new SolrIndexActor()
     //val docQueue: ArrayBlockingQueue[java.util.List[SolrInputDocument]] = new ArrayBlockingQueue[java.util.List[SolrInputDocument]](2);
     var ids =0
+    val fieldSuffix="""([A-Za-z_\-0.9]*)""" 
+    val doublePattern =(fieldSuffix +"""_d""").r
+    val intPattern =(fieldSuffix +"""_i""").r
 //    lazy val threads:Array[AddDocThread] ={
 //      Array.fill[AddDocThread](1){ val t = new AddDocThread(docQueue,ids); ids +=1; t.start;t}
 //    }
@@ -792,6 +795,49 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
               if(v != null)
             	  doc.addField(k + "_s", v.toString()) //fix for number format issue ?
             }})
+          }
+        }
+        
+        if(!arrDefaultMiscFields.isEmpty){
+          val unparsedJson = map.getOrElse(FullRecordMapper.miscPropertiesColumn, "")
+          if(unparsedJson != ""){
+            val map = Json.toMap(unparsedJson)
+            arrDefaultMiscFields.foreach(value=>{
+              value match{
+                case doublePattern(field)=>{
+                  //ensure that the value represents a double value before adding to the index.
+                  val fvalue = map.getOrElse(field,"").toString()
+                  if(fvalue.size>0){
+                    try{
+                      java.lang.Double.parseDouble(fvalue)
+                      doc.addField(value, fvalue)
+                    }
+                    catch{
+                      case _ =>println("Unable to convert value to double " + fvalue+ " for " + guid)
+                    }
+                  }
+                }
+                case intPattern(field)=>{
+                  val fvalue = map.getOrElse(field,"").toString()
+                  if(fvalue.size > 0){
+                    try{
+                      java.lang.Integer.parseInt(fvalue)
+                      doc.addField(value, fvalue)
+                    }
+                    catch{
+                      case _=>println("Unable to convert value to int " + fvalue+ " for " + guid)
+                    }
+                  }
+                }
+                case _ => { 
+                  //remove the suffix
+                  val item = if(value.contains("_"))value.substring(0, value.lastIndexOf("_")) else value
+                  val fvalue = map.getOrElse(value, map.getOrElse(item, "")).toString()
+                  if(fvalue.size > 0)
+                    doc.addField(value, fvalue)
+                }
+              }
+            })
           }
         }
 
