@@ -160,6 +160,7 @@ class StringConsumer(q:BlockingQueue[String],id:Int,proc:String=>Unit) extends T
         case e:Exception=> e.printStackTrace()
       }
     }
+    println("Stopping " + id)
   }
 }
 
@@ -244,7 +245,7 @@ class DuplicationDetection{
     revertNonDuplicateRecords(oldDuplicates, buffer.toSet, reindexWriter)
     reindexWriter.flush
     reindexWriter.close
-    IndexRecords.indexList(new File(directory + duplicatesToReindex))
+    IndexRecords.indexList(new File(directory + duplicatesToReindex), false)
   }
   //Loads the specific duplicate - allows duplicates to be loaded in a threaded manner
   def loadDuplicate(dup:String, writer:FileWriter, buffer:ArrayBuffer[String])={

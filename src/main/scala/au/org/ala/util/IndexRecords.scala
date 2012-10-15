@@ -246,7 +246,7 @@ object IndexRecords {
   /**
    * Indexes the supplied list of rowKeys
    */
-  def indexList(file: File) {
+  def indexList(file: File, shutdown:Boolean=true) {
     println("Starting the reindex by row key....")
     var counter = 0
     var startTime = System.currentTimeMillis
@@ -264,7 +264,7 @@ object IndexRecords {
         startTime = System.currentTimeMillis
       }
     })
-    indexer.finaliseIndex(false, true)
+    indexer.finaliseIndex(false, shutdown)
   }
 
   /**
