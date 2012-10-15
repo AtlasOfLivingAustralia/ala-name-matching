@@ -103,8 +103,10 @@ object FullRecordMapper {
         //get the target name
         val targetName = targetMap.getOrElse(sourceName,"")
         if(targetName != ""){
+          val value = valueMap.get(sourceName)
           //get the setter method
-          poso.setProperty(targetName, valueMap.get(sourceName).get.toString)
+          if(value.isDefined && value.get != null)
+            poso.setProperty(targetName, value.get.toString)
         }
       })
     }
