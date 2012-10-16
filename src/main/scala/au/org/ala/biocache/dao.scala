@@ -269,12 +269,15 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
       val codes = qaFields.map(value=>AssertionCodes.getByName(value).get.getCode)
       val firstEL = fields.find(value => {elpattern.findFirstIn(value).nonEmpty})
       val firstCL = fields.find(value => {clpattern.findFirstIn(value).nonEmpty})
+      val firstMisc = fields.find(value =>{IndexFields.storeMiscFields.contains(value)})
       if(firstEL.isDefined)
         mfields + "el.p"
       if(firstCL.isDefined)
         mfields + "cl.p"
       if(includeSensitive)
         mfields + "originalSensitiveValues"
+      if(firstMisc.isDefined)
+        mfields + FullRecordMapper.miscPropertiesColumn
       mfields ++=  FullRecordMapper.qaFields
 
       persistenceManager.selectRows(rowKeys, entityName, mfields.toArray , { fieldMap =>
@@ -282,10 +285,12 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         val sensitiveMap:scala.collection.Map[String,String] = if(includeSensitive) Json.toStringMap(fieldMap.getOrElse("originalSensitiveValues", "{}")) else Map()
         val elMap = if(firstEL.isDefined) Json.toStringMap(fieldMap.getOrElse("el.p", "{}")) else Map[String,String]()
         val clMap = if(firstCL.isDefined)Json.toStringMap(fieldMap.getOrElse("cl.p", "{}")) else Map[String,String]()
+        val miscMap = if(firstMisc.isDefined)Json.toStringMap(fieldMap.getOrElse(FullRecordMapper.miscPropertiesColumn, "{}")) else Map[String,String]()
         fields.foreach(field => {
           val fieldValue = field match{
             case a if elpattern.findFirstIn(a).nonEmpty => elMap.getOrElse(a, "")
             case a if clpattern.findFirstIn(a).nonEmpty => clMap.getOrElse(a, "")
+            case a if firstMisc.isDefined && IndexFields.storeMiscFields.contains(a) => miscMap.getOrElse(a, "")
             case _ => if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap)) else getHackValue(field,fieldMap)
           }
           // if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap))else getHackValue(field,fieldMap)

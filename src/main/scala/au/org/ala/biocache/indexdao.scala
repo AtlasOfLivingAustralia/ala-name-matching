@@ -476,7 +476,7 @@ trait IndexDAO {
  * 
  * Not in use yet.
  */
-case class IndexField(fieldName:String, dataType:String, sourceField:String, multi:Boolean=false, storeAsArray:Boolean=false, extraField:Option[String]=None){
+case class IndexField(fieldName:String, dataType:String, sourceField:String, multi:Boolean=false, storeAsArray:Boolean=false, extraField:Option[String]=None, isMiscProperty:Boolean=false){
     
     def getValuesForIndex(map: Map[String, String]):(String,Option[Array[String]])={
         //get the source value. Cater for the situation where we get the parsed value if raw doesn't exist
@@ -530,10 +530,12 @@ object IndexFields{
   
   val storeFieldMap = fieldList.map(indexField => {(indexField.sourceField -> indexField.fieldName)}).toMap
   
+  val storeMiscFields = fieldList collect { case value if value.isMiscProperty => value.sourceField}
+  
   def loadFromFile()={
     scala.io.Source.fromURL(getClass.getResource("/indexFields.txt"), "utf-8").getLines.toList.collect{ case row if !row.startsWith("#") =>{
-      val values = row.split("\t")    
-      new IndexField(values(0),values(1),values(2),false,false,None)}
+      val values = row.split("\t")      
+      new IndexField(values(0),values(1),values(2),"T" == values(3),"T"==values(4),if(values(5).size>0) Some(values(5)) else None, "T" == values(6))}
   }}
 }
 
