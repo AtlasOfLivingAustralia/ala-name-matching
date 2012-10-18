@@ -5,9 +5,10 @@ import org.apache.commons.httpclient.methods.{PostMethod, GetMethod}
 import org.codehaus.jackson.map.ObjectMapper
 import java.util
 import collection.mutable.ArrayBuffer
-import java.text.MessageFormat
+import java.text.{DateFormat, SimpleDateFormat, MessageFormat}
 import collection.JavaConversions._
 import au.org.ala.biocache.{AssertionCodes, QualityAssertion, Config}
+import util.TimeZone
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,24 +20,64 @@ import au.org.ala.biocache.{AssertionCodes, QualityAssertion, Config}
 
 object ExpertDistributionOutlierTool {
   val DISTRIBUTION_DETAILS_URL = "http://spatial.ala.org.au/layers-service/distributions"
-  val RECORDS_URL_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}&fl=id,row_key,latitude,longitude&facet=off&pageSize={1}"
-  val DISTANCE_URL_TEMPLATE = "http://localhost:8080/layers-service/distribution/outliers/{0}"
+  val RECORDS_URL_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
+  val RECORD_URL_WITH_DATE_FILTER_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D%20AND%20last_load_date:%5B{1}%20TO%20%2A%5D%20AND%20last_processed_date:%5B{2}%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={3}"
+  val DISTANCE_URL_TEMPLATE = "http://spatial-dev.ala.org.au/layers-service/distribution/outliers/{0}"
+  val LAST_SUCCESSFUL_BUILD_URL = "http://ala-macropus.it.csiro.au:8080/jenkins/job/Biocache%20Index%20Optimise/lastStableBuild/api/json"
 
   def main(args: Array[String]) {
     val tool = new ExpertDistributionOutlierTool();
-    tool.findOutliers()
+
+    var examineAllRecords = false
+
+    val parser = new OptionParser("Find expert distribution outliers") {
+      booleanOpt("a", "examineallrecords", "Examine all records. Default behaviour is to examine only those records that have been loaded or processed since the last run of the Jenkins job that kicks off this tool", {
+        v: Boolean => examineAllRecords = v
+      })
+    }
+
+    if (parser.parse(args)) {
+      tool.findOutliers(examineAllRecords)
+    }
+  }
+
+  def getDateOfLastSuccessfulRun(): java.util.Date = {
+    val httpClient = new HttpClient()
+    val get = new GetMethod(ExpertDistributionOutlierTool.LAST_SUCCESSFUL_BUILD_URL)
+    try {
+      val responseCode = httpClient.executeMethod(get)
+      if (responseCode == 200) {
+        val dataJSON = get.getResponseBodyAsString();
+        val mapper = new ObjectMapper();
+        val mapClass = classOf[java.util.Map[_, _]]
+        val responseMap = mapper.readValue(dataJSON, mapClass)
+
+        val timestamp = responseMap.get("timestamp").asInstanceOf[java.lang.Long]
+        val time = new java.util.Date(timestamp)
+        time
+      } else {
+        throw new Exception("getDateOfLastSuccessfulRun Request failed (" + responseCode + ")")
+      }
+    } finally {
+      get.releaseConnection()
+    }
   }
 }
 
 class ExpertDistributionOutlierTool {
 
-  def findOutliers() {
+  // Solr index requires dates to be in ISO 8601 at UTC, with 'Z' timezone identifier
+  val dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+  dateFormatter.setTimeZone(TimeZone.getTimeZone("GMT"))
+  val dateLastSuccessfulRun = ExpertDistributionOutlierTool.getDateOfLastSuccessfulRun()
+
+  def findOutliers(examineAllRecords: Boolean) {
     val distributionLsids = getExpertDistributionLsids();
     for (lsid <- distributionLsids) {
       println("LSID: " + lsid)
-      val recordsMap = getRecordsForLsid(lsid)
+      val recordsMap = getRecordsForLsid(lsid, examineAllRecords)
       val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
-      print(outlierRecordDistances)
+      markOutlierOccurrences(outlierRecordDistances, recordsMap)
     }
   }
 
@@ -62,15 +103,23 @@ class ExpertDistributionOutlierTool {
         }
         retBuffer
       } else {
-        throw new Exception("Request failed (" + responseCode + ")")
+        throw new Exception("getExpertDistributionLsids Request failed (" + responseCode + ")")
       }
     } finally {
       get.releaseConnection()
     }
   }
 
-  def getRecordsForLsid(lsid: String): scala.collection.mutable.Map[String, Map[String, Object]] = {
-    val url = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_URL_TEMPLATE, lsid, java.lang.Integer.MAX_VALUE.toString)
+  def getRecordsForLsid(lsid: String, examineAllRecords: Boolean): scala.collection.mutable.Map[String, Map[String, Object]] = {
+    var url = ""
+
+    if (examineAllRecords) {
+      url = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_URL_TEMPLATE, lsid, java.lang.Integer.MAX_VALUE.toString)
+    } else {
+      // and filter for records that were loaded or processed after the last successful run of the Jenkins job associated with this tool.
+      val formattedDate = dateFormatter.format(dateLastSuccessfulRun)
+      url = MessageFormat.format(ExpertDistributionOutlierTool.RECORD_URL_WITH_DATE_FILTER_TEMPLATE, lsid, formattedDate, formattedDate, java.lang.Integer.MAX_VALUE.toString)
+    }
 
     val httpClient = new HttpClient()
     val get = new GetMethod(url)
@@ -90,12 +139,13 @@ class ExpertDistributionOutlierTool {
           val rowKey = occurrenceMap.get("rowKey")
           val decimalLatitude = occurrenceMap.get("decimalLatitude")
           val decimalLongitude = occurrenceMap.get("decimalLongitude")
+          val coordinateUncertaintyInMeters = occurrenceMap.get("coordinateUncertaintyInMeters")
 
-          retMap(uuid) = Map("rowKey" -> rowKey, "decimalLatitude" -> decimalLatitude, "decimalLongitude" -> decimalLongitude)
+          retMap(uuid) = Map("rowKey" -> rowKey, "decimalLatitude" -> decimalLatitude, "decimalLongitude" -> decimalLongitude, "coordinateUncertaintyInMeters" -> coordinateUncertaintyInMeters)
         }
         retMap
       } else {
-        throw new Exception("Request failed (" + responseCode + ")")
+        throw new Exception("getRecordsForLsid Request failed (" + responseCode + ")")
       }
     } finally {
       get.releaseConnection()
@@ -115,7 +165,6 @@ class ExpertDistributionOutlierTool {
     val httpClient = new HttpClient()
 
     val url = MessageFormat.format(ExpertDistributionOutlierTool.DISTANCE_URL_TEMPLATE, lsid)
-    println(url)
     val post = new PostMethod(url)
     post.addParameter("pointsJson", recordsMapWithoutRowKeysJSON)
     try {
@@ -129,7 +178,7 @@ class ExpertDistributionOutlierTool {
 
         distancesMap
       } else {
-        throw new Exception("Request failed (" + responseCode + ")")
+        throw new Exception("getOutlierRecordDistances Request failed (" + responseCode + ")")
       }
     } finally {
       post.releaseConnection()
@@ -138,14 +187,32 @@ class ExpertDistributionOutlierTool {
 
   def markOutlierOccurrences(outlierDistances: scala.collection.mutable.Map[String, Double], recordsMap: scala.collection.mutable.Map[String, Map[String, Object]]) {
     for ((uuid, distance) <- outlierDistances) {
-      val rowKey = recordsMap(uuid)("rowKey").asInstanceOf[String]
-      // Add data quality assertion
-      Config.occurrenceDAO.addSystemAssertion(rowKey, QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE, distance + " metres outside of expert distribution range"))
 
-      // Record distance against record
-      Config.persistenceManager.put(rowKey, "occ",Map("distanceOutsideExpertRange.p"->distance.toString()))
+      //Round distance from distribution to nearest metre. Any occurrences outside the distribution by less than a metre are not considered outliers.
+      val roundedDistance = scala.math.round(distance)
+
+      if (roundedDistance > 0) {
+        var coordinateUncertaintyInMeters: Double = 0;
+        if (recordsMap(uuid)("coordinateUncertaintyInMeters") != null) {
+          coordinateUncertaintyInMeters = recordsMap(uuid)("coordinateUncertaintyInMeters").asInstanceOf[java.lang.Double]
+        }
+
+        // The occurrence is only considered an outlier if its distance from the distribution is greater than its coordinate uncertainty
+        if ((roundedDistance - coordinateUncertaintyInMeters) > 0) {
+          val rowKey = recordsMap(uuid)("rowKey").asInstanceOf[String]
+          // Add data quality assertion
+          Config.occurrenceDAO.addSystemAssertion(rowKey, QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE, distance + " metres outside of expert distribution range"))
+
+          // Record distance against record
+          Config.persistenceManager.put(rowKey, "occ", Map("distanceOutsideExpertRange.p" -> roundedDistance.toString()))
+
+          // Print rowKey to stdout so that output of this application can be used for reindexing.
+          println(rowKey + " (" + uuid + " " + roundedDistance + ")")
+        }
+      }
     }
   }
+
 }
 
 

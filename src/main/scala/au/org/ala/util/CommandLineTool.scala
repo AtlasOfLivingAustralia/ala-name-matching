@@ -215,7 +215,11 @@ object CMD {
         case it if (it.startsWith("jackknife") || it.startsWith("jacknife")) => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           SpeciesOutlierTests.main(args)
-        }           
+        }
+        case it if (it.startsWith("distribution-outliers") || it.startsWith("distribution-outliers")) => {
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+          ExpertDistributionOutlierTool.main(args)
+        }
         case it if (it startsWith "delete-resource") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           args.foreach(drUid => {
