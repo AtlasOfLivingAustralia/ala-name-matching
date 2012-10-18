@@ -14,7 +14,7 @@ object CommandLineTool {
 
   def main(args: Array[String]) {
 
-    if(args.isEmpty){
+    if (args.isEmpty) {
       println("----------------------------")
       println("| Biocache management tool |")
       println("----------------------------")
@@ -38,22 +38,22 @@ object CommandLineTool {
 
 object ScriptTool {
 
-  def main(args:Array[String]){
+  def main(args: Array[String]) {
     val isReader = new InputStreamReader(System.in)
     val bufReader = new BufferedReader(isReader)
     try {
-     var inputStr = bufReader.readLine()
-     while(inputStr !=null){
+      var inputStr = bufReader.readLine()
+      while (inputStr != null) {
         println("Executing command '" + inputStr + "'")
-        if(inputStr.trim.length>0) CMD.executeCommand(inputStr)
+        if (inputStr.trim.length > 0) CMD.executeCommand(inputStr)
         inputStr = bufReader.readLine()
-     }
-     au.org.ala.biocache.Config.persistenceManager.shutdown
-     IndexRecords.indexer.shutdown
-     println("Script complete.\n")
-     System.exit(1)
-  } catch {
-      case e:Exception => {
+      }
+      au.org.ala.biocache.Config.persistenceManager.shutdown
+      IndexRecords.indexer.shutdown
+      println("Script complete.\n")
+      System.exit(1)
+    } catch {
+      case e: Exception => {
         au.org.ala.biocache.Config.persistenceManager.shutdown
         IndexRecords.indexer.shutdown
         System.exit(1)
@@ -66,57 +66,57 @@ object CMD {
 
   /**
    * Attempt to execute the supplied command
-   * 
+   *
    * @param input
    */
-  def executeCommand(input:String){
+  def executeCommand(input: String) {
     try {
       val l = new Loader
       input.toLowerCase.trim match {
         case it if (it startsWith "describe ") || (it startsWith "d ") => l.describeResource(it.split(" ").map(x => x.trim).toList.tail)
         case it if (it startsWith "list") || (it == "l") => l.printResourceList
-        case it if ((it startsWith "load-local-csv") && (it.split(" ").length == 3))  =>  {
+        case it if ((it startsWith "load-local-csv") && (it.split(" ").length == 3)) => {
           val parts = it.split(" ")
           val d = new DwcCSVLoader()
-          d.loadFile(new File(parts(2)),parts(1), List(), Map())
+          d.loadFile(new File(parts(2)), parts(1), List(), Map())
         }
-        case it if (it startsWith "load") || (it startsWith "ld") =>  {
+        case it if (it startsWith "load") || (it startsWith "ld") => {
           it.split(" ").map(x => x.trim).tail.foreach(drUid => l.load(drUid))
         }
-        case it if(it startsWith "test-load") =>{
-          it.split(" ").map(x => x.trim).tail.foreach(drUid => l.load(drUid,true))
+        case it if (it startsWith "test-load") => {
+          it.split(" ").map(x => x.trim).tail.foreach(drUid => l.load(drUid, true))
         }
         case it if (it startsWith "process-single") => {
           it.split(" ").map(x => x.trim).tail.foreach(uuid => ProcessSingleRecord.processRecord(uuid))
         }
         case it if (it startsWith "process") || (it startsWith "process") => {
           val drs = it.split(" ").map(x => x.trim).toList.tail
-          drs.foreach(dr =>{
+          drs.foreach(dr => {
             val (hasRowKeys, filename) = hasRowKey(dr)
-            println("Processing " + dr + " incremental=" +hasRowKeys)
-            if(!hasRowKeys)
+            println("Processing " + dr + " incremental=" + hasRowKeys)
+            if (!hasRowKeys)
               ProcessWithActors.processRecords(4, None, Some(dr))
-            else{
+            else {
               val p = new RecordProcessor
               p.processFileThreaded(new java.io.File(filename.get), 4)
               //ProcessRecords.main(Array("-f",filename.get, "-t","4"))
             }
           }
-            )
+          )
         }
         case it if (it startsWith "process-all") => {
           ProcessWithActors.processRecords(4, None, None)
         }
-        case it if(it startsWith "index-delete")=> {
+        case it if (it startsWith "index-delete") => {
           //need to preserve the query case because T and Z mean things in dates
-          val query = input.replaceFirst("index-delete ","")
+          val query = input.replaceFirst("index-delete ", "")
           val deletor = new QueryDelete(query)
           println("Delete from index using query : " + query)
           deletor.deleteFromIndex
         }
         case it if (it.startsWith("index-live ") && input.split(" ").length == 2) => {
           val dr = it.split(" ").map(x => x.trim).toList.last
-          println("Indexing live with URL: " + Config.reindexUrl +", and params: " + Config.reindexData + "&dataResource=" + dr)
+          println("Indexing live with URL: " + Config.reindexUrl + ", and params: " + Config.reindexData + "&dataResource=" + dr)
           val http = new HttpClient
           val post = new PostMethod(Config.reindexUrl)
 
@@ -134,7 +134,7 @@ object CMD {
           println("The data is viewable here: " + Config.reindexViewDataResourceUrl + dr)
         }
         case it if (it startsWith "index-custom") => {
-          if (it.split(" ").length > 2){
+          if (it.split(" ").length > 2) {
             val (cmdAndDr, additionalFields) = it.split(" ").splitAt(2)
             IndexRecords.index(None, None, Some(cmdAndDr(1)), false, false, miscIndexProperties = additionalFields)
           }
@@ -143,11 +143,11 @@ object CMD {
           val drs = it.split(" ").map(x => x.trim).toList.tail
           drs.foreach(dr => {
             val (hasRowKeys, filename) = hasRowKey(dr)
-            if(!hasRowKeys)
+            if (!hasRowKeys)
               IndexRecords.index(None, None, Some(dr), false, false)
-            else 
+            else
               IndexRecords.indexListThreaded(new File(filename.get), 4)
-            })
+          })
         }
         case it if (it startsWith "createdwc") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
@@ -160,11 +160,11 @@ object CMD {
         case it if (it startsWith "export-for-outlier") => {
           val args = input.split(" ").map(x => x.trim).toArray.tail
           ExportForOutliers.main(args)
-        }    
+        }
         case it if (it startsWith "gbif-csv") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
-           GBIFOrgCSVCreator.main(args)
-        }        
+          GBIFOrgCSVCreator.main(args)
+        }
         case it if (it startsWith "export-index") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           ExportFromIndex.main(args)
@@ -177,7 +177,7 @@ object CMD {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           ExportByFacetQuery.main(args)
         }
-        case it if (it startsWith  "export") => {
+        case it if (it startsWith "export") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           ExportUtil.main(args)
         }
@@ -194,24 +194,24 @@ object CMD {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           val dr = args(0)
           val (hasRowKeys, filename) = hasRowKey(dr)
-          if(!hasRowKeys)
-            Sampling.main(Array("-dr") ++ args )
+          if (!hasRowKeys)
+            Sampling.main(Array("-dr") ++ args)
           else
-            Sampling.main(Array("-rf", filename.get,"-dr") ++ args)
+            Sampling.main(Array("-rf", filename.get, "-dr") ++ args)
         }
         case it if (it startsWith "resample") => {
           println("****** Warning - this requires at least 8g of memory allocation -Xmx8g -Xms8g")
-          val query = it.replaceFirst("resample","")
+          val query = it.replaceFirst("resample", "")
           ResampleRecordsByQuery.main(Array(query))
         }
         case it if (it startsWith "download-media") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           DownloadMedia.main(args)
-        }  
+        }
         case it if (it startsWith "dedup") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           DuplicationDetection.main(args)
-        }   
+        }
         case it if (it.startsWith("jackknife") || it.startsWith("jacknife")) => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           SpeciesOutlierTests.main(args)
@@ -233,18 +233,18 @@ object CMD {
         }
         case it if (it startsWith "delete") => {
           //need to preserve the query case because T and Z mean things in dates
-          val query = input.replaceFirst("delete ","")
+          val query = input.replaceFirst("delete ", "")
           val deletor = new QueryDelete(query)
           println("Delete from storage using the query: " + query)
           deletor.deleteFromPersistent()
           println("Delete from index")
           deletor.deleteFromIndex
-        }        
+        }
         case _ => printHelp
       }
     } catch {
       case e: Exception => e.printStackTrace
-    }    
+    }
   }
 
   def printHelp = {
@@ -260,11 +260,11 @@ object CMD {
     padAndPrint("[10]  createdwc <dr-uid or 'all'> <export directory> - Create a darwin core archive for a resource")
     padAndPrint("[11]  healthcheck - Do a healthcheck on the configured resources in the collectory")
     padAndPrint("[12]  export - CSV export of data")
-    padAndPrint("[13]  export-gbif-archives - Comma separated list of data resources or 'all'")    
+    padAndPrint("[13]  export-gbif-archives - Comma separated list of data resources or 'all'")
     padAndPrint("[14]  export-index <output-file> <csv-list-of fields> <solr-query> - export data from index")
     padAndPrint("[15]  export-facet <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
     padAndPrint("[16]  export-facet-query <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
-    padAndPrint("[17]  export-for-outliers <index-directory> <export-directory> -fq <filter-query> - export data from index for outlier detection")   
+    padAndPrint("[17]  export-for-outliers <index-directory> <export-directory> -fq <filter-query> - export data from index for outlier detection")
     padAndPrint("[18]  import - CSV import of data")
     padAndPrint("[19]  optimise - Optimisation of SOLR index (this takes some time)")
     padAndPrint("[20]  sample-all - Run geospatial sampling for all records")
@@ -278,41 +278,42 @@ object CMD {
     padAndPrint("[28]  download-media - Force the (re)download of media associated with a resource.")
     padAndPrint("[29]  dedup - Run duplication detection over the records.")
     padAndPrint("[30]  jackknife - Run jackknife outlier detection.")
-    padAndPrint("[31]  exit")
+    padAndPrint("[31]  distribution outliers -a <examinealloccurences> - Run expert distribution outlier detection. If examinealloccurrences is true, all occurrences will be examined. Otherwise only records that have been loaded or processed since the last successful run of the Jenkins job associated with this option will be examined.")
+    padAndPrint("[32]  exit")
   }
-  
-  def hasRowKey(resourceUid:String):(Boolean, Option[String])={
-    def filename = "/data/tmp/row_key_"+resourceUid+".csv"
+
+  def hasRowKey(resourceUid: String): (Boolean, Option[String]) = {
+    def filename = "/data/tmp/row_key_" + resourceUid + ".csv"
     def file = new java.io.File(filename)
-    
-    if(file.exists()){
+
+    if (file.exists()) {
       val date = new java.util.GregorianCalendar()
       date.setTime(new java.util.Date)
       date.add(java.util.Calendar.HOUR, -24)
       //if it is on the same day assume that we want the incremental process or index.
-      if(org.apache.commons.io.FileUtils.isFileNewer(file,date.getTime()))
+      if (org.apache.commons.io.FileUtils.isFileNewer(file, date.getTime()))
         (true, Some(filename))
-      else{
+      else {
         //prompt the user 
         println("There is an incremental row key file for this resource.  Would you like to perform an incremental process (y/n) ?")
         val answer = readLine
-        if(answer.toLowerCase().equals("y") || answer.toLowerCase().equals("yes"))
-          (true,Some(filename))
+        if (answer.toLowerCase().equals("y") || answer.toLowerCase().equals("yes"))
+          (true, Some(filename))
         else
           (false, None)
       }
     }
     else
-      (false,None)
+      (false, None)
   }
 
-  def padAndPrint(str:String) = println(padElementTo60(str))
+  def padAndPrint(str: String) = println(padElementTo60(str))
 
-  def padElementTo60(str:String) = padElement(str, 60)
+  def padElementTo60(str: String) = padElement(str, 60)
 
-  def padElement(str:String, width:Int) = {
+  def padElement(str: String, width: Int) = {
     val indexOfHyphen = str.indexOf(" -")
-    str.replace(" - ",  Array.fill(width - indexOfHyphen)(' ').mkString  + " - " )
+    str.replace(" - ", Array.fill(width - indexOfHyphen)(' ').mkString + " - ")
   }
 
   def printTable(table: List[Map[String, String]]) {
