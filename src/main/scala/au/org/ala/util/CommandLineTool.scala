@@ -114,6 +114,22 @@ object CMD {
           println("Delete from index using query : " + query)
           deletor.deleteFromIndex
         }
+        case it if(it.startsWith("index-file ") && input.split(" ").length>=2) => {
+          val args = input.split(" ").tail
+          try{
+            if(args.length == 2){
+              println("Indexing from " + args(0) + " using " + args(1) +" threads")              
+              IndexRecords.indexListThreaded(new File(args(0)), Integer.parseInt(args(1)))
+            }
+            else if(args.length ==1){
+              println("Indexing from " + args(0))
+              IndexRecords.indexList(new File(args(0)), false)
+            }
+          }
+            catch{
+              case e:Exception => println(e.getMessage())
+            }
+        }
         case it if (it.startsWith("index-live ") && input.split(" ").length == 2) => {
           val dr = it.split(" ").map(x => x.trim).toList.last
           println("Indexing live with URL: " + Config.reindexUrl + ", and params: " + Config.reindexData + "&dataResource=" + dr)
@@ -257,29 +273,31 @@ object CMD {
     padAndPrint(" [7]  index <dr-uid1> <dr-uid2>... - Index resource (for offline use only)")
     padAndPrint(" [8]  index-live <dr-uid> - Index resource by calling webservice to index. Dont use for large resources.")
     padAndPrint(" [9]  index-custom <dr-uid> <list-of-misc-fields> - Index resource while indexing miscellanous properties.")
-    padAndPrint("[10]  createdwc <dr-uid or 'all'> <export directory> - Create a darwin core archive for a resource")
-    padAndPrint("[11]  healthcheck - Do a healthcheck on the configured resources in the collectory")
-    padAndPrint("[12]  export - CSV export of data")
-    padAndPrint("[13]  export-gbif-archives - Comma separated list of data resources or 'all'")
-    padAndPrint("[14]  export-index <output-file> <csv-list-of fields> <solr-query> - export data from index")
-    padAndPrint("[15]  export-facet <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
-    padAndPrint("[16]  export-facet-query <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
-    padAndPrint("[17]  export-for-outliers <index-directory> <export-directory> -fq <filter-query> - export data from index for outlier detection")
-    padAndPrint("[18]  import - CSV import of data")
-    padAndPrint("[19]  optimise - Optimisation of SOLR index (this takes some time)")
-    padAndPrint("[20]  sample-all - Run geospatial sampling for all records")
-    padAndPrint("[21]  sample <dr-uid1> <dr-uid2>... - Run geospatial sampling for records for a data resource")
-    padAndPrint("[22]  resample <query> - Rerun geospatial sampling for records that match a SOLR query")
-    padAndPrint("[23]  delete <solr-query> - Delete records matching a query")
-    padAndPrint("[24]  delete-resource <dr-uid1> <dr-uid2>... - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
-    padAndPrint("[25]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
-    padAndPrint("[26]  load-local-csv <dr-uid> <filepath>... - Load a local file into biocache. For development use only. Not to be used in production.")
-    padAndPrint("[27]  test-load <dr-uid1> <dr-uid2>... - Performs some testing on the load process.  Please read the output to determine whether or not a load should proceed.")
-    padAndPrint("[28]  download-media - Force the (re)download of media associated with a resource.")
-    padAndPrint("[29]  dedup - Run duplication detection over the records.")
-    padAndPrint("[30]  jackknife - Run jackknife outlier detection.")
-    padAndPrint("[31]  distribution outliers -a <examinealloccurences> - Run expert distribution outlier detection. If examinealloccurrences is true, all occurrences will be examined. Otherwise only records that have been loaded or processed since the last successful run of the Jenkins job associated with this option will be examined.")
-    padAndPrint("[32]  exit")
+    padAndPrint("[10]  index-file <file to index> <numberof threads> - Indexes based on the rowKeys contained in the supplied file")
+    padAndPrint("[11]  createdwc <dr-uid or 'all'> <export directory> - Create a darwin core archive for a resource")
+    padAndPrint("[12]  healthcheck - Do a healthcheck on the configured resources in the collectory")
+    padAndPrint("[13]  export - CSV export of data")
+    padAndPrint("[14]  export-gbif-archives - Comma separated list of data resources or 'all'")    
+    padAndPrint("[15]  export-index <output-file> <csv-list-of fields> <solr-query> - export data from index")
+    padAndPrint("[16]  export-facet <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
+    padAndPrint("[17]  export-facet-query <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
+    padAndPrint("[18]  export-for-outliers <index-directory> <export-directory> -fq <filter-query> - export data from index for outlier detection")   
+    padAndPrint("[19]  import - CSV import of data")
+    padAndPrint("[20]  optimise - Optimisation of SOLR index (this takes some time)")
+    padAndPrint("[21]  sample-all - Run geospatial sampling for all records")
+    padAndPrint("[22]  sample <dr-uid1> <dr-uid2>... - Run geospatial sampling for records for a data resource")
+    padAndPrint("[23]  resample <query> - Rerun geospatial sampling for records that match a SOLR query")
+    padAndPrint("[24]  delete <solr-query> - Delete records matching a query")
+    padAndPrint("[25]  delete-resource <dr-uid1> <dr-uid2>... - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
+    padAndPrint("[26]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
+    padAndPrint("[27]  load-local-csv <dr-uid> <filepath>... - Load a local file into biocache. For development use only. Not to be used in production.")
+    padAndPrint("[28]  test-load <dr-uid1> <dr-uid2>... - Performs some testing on the load process.  Please read the output to determine whether or not a load should proceed.")
+    padAndPrint("[29]  download-media - Force the (re)download of media associated with a resource.")
+    padAndPrint("[30]  dedup - Run duplication detection over the records.")
+    padAndPrint("[31]  jackknife - Run jackknife outlier detection.")
+    padAndPrint("[32]  distribution outliers -a <examinealloccurences> - Run expert distribution outlier detection. If examinealloccurrences is true, all occurrences will be examined. Otherwise only records that have been loaded or processed since the last successful run of the Jenkins job associated with this option will be examined.")
+    padAndPrint("[33]  exit")
+
   }
 
   def hasRowKey(resourceUid: String): (Boolean, Option[String]) = {
