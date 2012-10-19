@@ -20,8 +20,10 @@ import util.TimeZone
 
 object ExpertDistributionOutlierTool {
   val DISTRIBUTION_DETAILS_URL = "http://spatial.ala.org.au/layers-service/distributions"
-  val RECORDS_URL_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
-  val RECORD_URL_WITH_DATE_FILTER_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D%20AND%20last_load_date:%5B{1}%20TO%20%2A%5D%20AND%20last_processed_date:%5B{2}%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={3}"
+  val RECORDS_URL_TEMPLATE = "http://sandbox.ala.org.au/biocache-service/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
+  val RECORD_URL_WITH_DATE_FILTER_TEMPLATE = "http://sandbox.ala.org.au/biocache-service/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D%20AND%20last_load_date:%5B{1}%20TO%20%2A%5D%20AND%20last_processed_date:%5B{2}%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={3}"
+  //val RECORDS_URL_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
+  //val RECORD_URL_WITH_DATE_FILTER_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D%20AND%20last_load_date:%5B{1}%20TO%20%2A%5D%20AND%20last_processed_date:%5B{2}%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={3}"
   val DISTANCE_URL_TEMPLATE = "http://spatial-dev.ala.org.au/layers-service/distribution/outliers/{0}"
   val LAST_SUCCESSFUL_BUILD_URL = "http://ala-macropus.it.csiro.au:8080/jenkins/job/Biocache%20Index%20Optimise/lastStableBuild/api/json"
 
@@ -74,7 +76,6 @@ class ExpertDistributionOutlierTool {
   def findOutliers(examineAllRecords: Boolean) {
     val distributionLsids = getExpertDistributionLsids();
     for (lsid <- distributionLsids) {
-      println("LSID: " + lsid)
       val recordsMap = getRecordsForLsid(lsid, examineAllRecords)
       val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
       markOutlierOccurrences(outlierRecordDistances, recordsMap)
@@ -207,7 +208,7 @@ class ExpertDistributionOutlierTool {
           Config.persistenceManager.put(rowKey, "occ", Map("distanceOutsideExpertRange.p" -> roundedDistance.toString()))
 
           // Print rowKey to stdout so that output of this application can be used for reindexing.
-          println(rowKey + " (" + uuid + " " + roundedDistance + ")")
+          println(rowKey)
         }
       }
     }
