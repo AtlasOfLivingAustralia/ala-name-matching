@@ -202,7 +202,7 @@ class ExpertDistributionOutlierTool {
         if ((roundedDistance - coordinateUncertaintyInMeters) > 0) {
           val rowKey = recordsMap(uuid)("rowKey").asInstanceOf[String]
           // Add data quality assertion
-          Config.occurrenceDAO.addSystemAssertion(rowKey, QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE, distance + " metres outside of expert distribution range"))
+          Config.occurrenceDAO.addSystemAssertion(rowKey, QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE, roundedDistance + " metres outside of expert distribution range"))
 
           // Record distance against record
           Config.persistenceManager.put(rowKey, "occ", Map("distanceOutsideExpertRange.p" -> roundedDistance.toString()))
