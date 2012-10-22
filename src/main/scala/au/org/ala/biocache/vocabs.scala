@@ -564,7 +564,7 @@ object AssertionCodes {
   val COORDINATE_PRECISION_MISMATCH = ErrorCode("coordinatePrecisionMismatch",23,false,"Coordinate precision not valid")
   val UNCERTAINTY_RANGE_MISMATCH = ErrorCode("uncertaintyRangeMismatch",24,false,"Coordinate accuracy not valid")
   val UNCERTAINTY_IN_PRECISION = ErrorCode("uncertaintyInPrecision",25,false,"Coordinate precision and accuracy transposed")
-  val SPECIES_OUTSIDE_EXPERT_RANGE = ErrorCode("speciesOutsideExpertRange",26,false,"Geographic coordinates are outside the range as defined by 'expert/s' for the taxa")
+  val SPECIES_OUTSIDE_EXPERT_RANGE = ErrorCode("speciesOutsideExpertRange",26,true,"Geographic coordinates are outside the range as defined by 'expert/s' for the taxa")
   val UNCERTAINTY_NOT_SPECIFIED = ErrorCode("uncertaintyNotSpecified", 27, false, "Coordinate uncertainty was not supplied")
   val COORDINATES_CENTRE_OF_COUNTRY = ErrorCode("coordinatesCentreOfCountry",28,true,"Supplied coordinates centre of country")
   val MISSING_COORDINATEPRECISION = ErrorCode("missingCoordinatePrecision", 29, false, "coordinatePrecision not supplied with the record")
