@@ -114,21 +114,21 @@ object CMD {
           println("Delete from index using query : " + query)
           deletor.deleteFromIndex
         }
-        case it if(it.startsWith("index-file ") && input.split(" ").length>=2) => {
+        case it if (it.startsWith("index-file ") && input.split(" ").length >= 2) => {
           val args = input.split(" ").tail
-          try{
-            if(args.length == 2){
-              println("Indexing from " + args(0) + " using " + args(1) +" threads")              
+          try {
+            if (args.length == 2) {
+              println("Indexing from " + args(0) + " using " + args(1) + " threads")
               IndexRecords.indexListThreaded(new File(args(0)), Integer.parseInt(args(1)))
             }
-            else if(args.length ==1){
+            else if (args.length == 1) {
               println("Indexing from " + args(0))
               IndexRecords.indexList(new File(args(0)), false)
             }
           }
-            catch{
-              case e:Exception => println(e.getMessage())
-            }
+          catch {
+            case e: Exception => println(e.getMessage())
+          }
         }
         case it if (it.startsWith("index-live ") && input.split(" ").length == 2) => {
           val dr = it.split(" ").map(x => x.trim).toList.last
@@ -277,11 +277,11 @@ object CMD {
     padAndPrint("[11]  createdwc <dr-uid or 'all'> <export directory> - Create a darwin core archive for a resource")
     padAndPrint("[12]  healthcheck - Do a healthcheck on the configured resources in the collectory")
     padAndPrint("[13]  export - CSV export of data")
-    padAndPrint("[14]  export-gbif-archives - Comma separated list of data resources or 'all'")    
+    padAndPrint("[14]  export-gbif-archives - Comma separated list of data resources or 'all'")
     padAndPrint("[15]  export-index <output-file> <csv-list-of fields> <solr-query> - export data from index")
     padAndPrint("[16]  export-facet <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
     padAndPrint("[17]  export-facet-query <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
-    padAndPrint("[18]  export-for-outliers <index-directory> <export-directory> -fq <filter-query> - export data from index for outlier detection")   
+    padAndPrint("[18]  export-for-outliers <index-directory> <export-directory> -fq <filter-query> - export data from index for outlier detection")
     padAndPrint("[19]  import - CSV import of data")
     padAndPrint("[20]  optimise - Optimisation of SOLR index (this takes some time)")
     padAndPrint("[21]  sample-all - Run geospatial sampling for all records")
@@ -295,7 +295,7 @@ object CMD {
     padAndPrint("[29]  download-media - Force the (re)download of media associated with a resource.")
     padAndPrint("[30]  dedup - Run duplication detection over the records.")
     padAndPrint("[31]  jackknife - Run jackknife outlier detection.")
-    padAndPrint("[32]  distribution outliers -a <examinealloccurences> - Run expert distribution outlier detection. If examinealloccurrences is true, all occurrences will be examined. Otherwise only records that have been loaded or processed since the last successful run of the Jenkins job associated with this option will be examined.")
+    padAndPrint("[32]  distribution outliers -l <speciesLsid> - Run expert distribution outlier detection. If species LSID is supplied, outlier detection is only performed for occurrences of the species with the supplied taxon concept LSID")
     padAndPrint("[33]  exit")
 
   }

@@ -21,64 +21,45 @@ import util.TimeZone
 object ExpertDistributionOutlierTool {
   val DISTRIBUTION_DETAILS_URL = "http://spatial.ala.org.au/layers-service/distributions"
   val RECORDS_URL_TEMPLATE = "http://sandbox.ala.org.au/biocache-service/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
-  val RECORD_URL_WITH_DATE_FILTER_TEMPLATE = "http://sandbox.ala.org.au/biocache-service/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D%20AND%20last_load_date:%5B{1}%20TO%20%2A%5D%20AND%20last_processed_date:%5B{2}%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={3}"
   //val RECORDS_URL_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
-  //val RECORD_URL_WITH_DATE_FILTER_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D%20AND%20last_load_date:%5B{1}%20TO%20%2A%5D%20AND%20last_processed_date:%5B{2}%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={3}"
   val DISTANCE_URL_TEMPLATE = "http://spatial-dev.ala.org.au/layers-service/distribution/outliers/{0}"
-  val LAST_SUCCESSFUL_BUILD_URL = "http://ala-macropus.it.csiro.au:8080/jenkins/job/Biocache%20Index%20Optimise/lastStableBuild/api/json"
 
   def main(args: Array[String]) {
     val tool = new ExpertDistributionOutlierTool();
 
-    var examineAllRecords = false
+    var speciesLsid: String = null
 
     val parser = new OptionParser("Find expert distribution outliers") {
-      booleanOpt("a", "examineallrecords", "Examine all records. Default behaviour is to examine only those records that have been loaded or processed since the last run of the Jenkins job that kicks off this tool", {
-        v: Boolean => examineAllRecords = v
+      opt("l", "specieslsid", "Species LSID. If supplied, outlier detection is only performed for occurrences of the species with the supplied taxon concept LSID ", {
+        v: String => speciesLsid = v
       })
     }
 
     if (parser.parse(args)) {
-      tool.findOutliers(examineAllRecords)
-    }
-  }
-
-  def getDateOfLastSuccessfulRun(): java.util.Date = {
-    val httpClient = new HttpClient()
-    val get = new GetMethod(ExpertDistributionOutlierTool.LAST_SUCCESSFUL_BUILD_URL)
-    try {
-      val responseCode = httpClient.executeMethod(get)
-      if (responseCode == 200) {
-        val dataJSON = get.getResponseBodyAsString();
-        val mapper = new ObjectMapper();
-        val mapClass = classOf[java.util.Map[_, _]]
-        val responseMap = mapper.readValue(dataJSON, mapClass)
-
-        val timestamp = responseMap.get("timestamp").asInstanceOf[java.lang.Long]
-        val time = new java.util.Date(timestamp)
-        time
-      } else {
-        throw new Exception("getDateOfLastSuccessfulRun Request failed (" + responseCode + ")")
-      }
-    } finally {
-      get.releaseConnection()
+      tool.findOutliers(speciesLsid)
     }
   }
 }
 
 class ExpertDistributionOutlierTool {
 
-  // Solr index requires dates to be in ISO 8601 at UTC, with 'Z' timezone identifier
-  val dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
-  dateFormatter.setTimeZone(TimeZone.getTimeZone("GMT"))
-  val dateLastSuccessfulRun = ExpertDistributionOutlierTool.getDateOfLastSuccessfulRun()
-
-  def findOutliers(examineAllRecords: Boolean) {
+  def findOutliers(speciesLsid: String) {
     val distributionLsids = getExpertDistributionLsids();
-    for (lsid <- distributionLsids) {
-      val recordsMap = getRecordsForLsid(lsid, examineAllRecords)
-      val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
-      markOutlierOccurrences(outlierRecordDistances, recordsMap)
+
+    if (speciesLsid != null) {
+      if (distributionLsids.contains(speciesLsid)) {
+        val recordsMap = getRecordsForLsid(speciesLsid)
+        val outlierRecordDistances = getOutlierRecordDistances(speciesLsid, recordsMap)
+        markOutlierOccurrences(outlierRecordDistances, recordsMap)
+      } else {
+        throw new IllegalArgumentException("No expert distribution for species with taxon concept LSID " + speciesLsid)
+      }
+    } else {
+      for (lsid <- distributionLsids) {
+        val recordsMap = getRecordsForLsid(lsid)
+        val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
+        markOutlierOccurrences(outlierRecordDistances, recordsMap)
+      }
     }
   }
 
@@ -111,16 +92,8 @@ class ExpertDistributionOutlierTool {
     }
   }
 
-  def getRecordsForLsid(lsid: String, examineAllRecords: Boolean): scala.collection.mutable.Map[String, Map[String, Object]] = {
-    var url = ""
-
-    if (examineAllRecords) {
-      url = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_URL_TEMPLATE, lsid, java.lang.Integer.MAX_VALUE.toString)
-    } else {
-      // and filter for records that were loaded or processed after the last successful run of the Jenkins job associated with this tool.
-      val formattedDate = dateFormatter.format(dateLastSuccessfulRun)
-      url = MessageFormat.format(ExpertDistributionOutlierTool.RECORD_URL_WITH_DATE_FILTER_TEMPLATE, lsid, formattedDate, formattedDate, java.lang.Integer.MAX_VALUE.toString)
-    }
+  def getRecordsForLsid(lsid: String): scala.collection.mutable.Map[String, Map[String, Object]] = {
+    val url = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_URL_TEMPLATE, lsid, java.lang.Integer.MAX_VALUE.toString)
 
     val httpClient = new HttpClient()
     val get = new GetMethod(url)
