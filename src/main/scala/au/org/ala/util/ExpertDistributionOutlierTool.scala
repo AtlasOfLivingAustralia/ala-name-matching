@@ -20,9 +20,8 @@ import util.TimeZone
 
 object ExpertDistributionOutlierTool {
   val DISTRIBUTION_DETAILS_URL = "http://spatial.ala.org.au/layers-service/distributions"
-  val RECORDS_URL_TEMPLATE = "http://sandbox.ala.org.au/biocache-service/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
-  //val RECORDS_URL_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
-  val DISTANCE_URL_TEMPLATE = "http://spatial-dev.ala.org.au/layers-service/distribution/outliers/{0}"
+  val RECORDS_URL_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
+  val DISTANCE_URL_TEMPLATE = "http://spatial.ala.org.au/layers-service/distribution/outliers/{0}"
 
   // key to use when storing outlier row keys for an LSID in the distribution_outliers column family
   val DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY = "rowkeys"
@@ -205,12 +204,8 @@ class ExpertDistributionOutlierTool {
     val oldRowKeysJson: String = Config.persistenceManager.get(lsid, "distribution_outliers", ExpertDistributionOutlierTool.DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY).getOrElse(null)
     if (oldRowKeysJson != null) {
       val oldRowKeys = Json.toList(oldRowKeysJson, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[List[String]]
-      Console.err.print("Old row keys: ")
-      Console.err.println(oldRowKeys)
 
       val noLongerOutlierRowKeys = oldRowKeys diff newOutlierRowKeys
-      Console.err.print("Row keys no longer outliers: ")
-      Console.err.println(noLongerOutlierRowKeys)
 
       for (rowKey <- noLongerOutlierRowKeys) {
         Console.err.println(rowKey + " is no longer an outlier")
