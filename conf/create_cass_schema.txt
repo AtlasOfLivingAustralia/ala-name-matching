@@ -102,3 +102,11 @@ create column family queryassert
   and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
   and compaction_strategy_options = {'sstable_size_in_mb' : '200'}
   and comment = 'The column family to store information about query based assertions';
+
+create column family distribution_outliers
+  with comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
+  and compaction_strategy_options = {'sstable_size_in_mb' : '200'}
+  and comment = 'The column family to store information about expert distribution outlier records';

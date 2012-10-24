@@ -4,10 +4,10 @@ import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.methods.{PostMethod, GetMethod}
 import org.codehaus.jackson.map.ObjectMapper
 import java.util
-import collection.mutable.ArrayBuffer
+import collection.mutable.{ListBuffer, ArrayBuffer}
 import java.text.{DateFormat, SimpleDateFormat, MessageFormat}
 import collection.JavaConversions._
-import au.org.ala.biocache.{AssertionCodes, QualityAssertion, Config}
+import au.org.ala.biocache.{Json, AssertionCodes, QualityAssertion, Config}
 import util.TimeZone
 
 /**
@@ -23,6 +23,9 @@ object ExpertDistributionOutlierTool {
   val RECORDS_URL_TEMPLATE = "http://sandbox.ala.org.au/biocache-service/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
   //val RECORDS_URL_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
   val DISTANCE_URL_TEMPLATE = "http://spatial-dev.ala.org.au/layers-service/distribution/outliers/{0}"
+
+  // key to use when storing outlier row keys for an LSID in the distribution_outliers column family
+  val DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY = "rowkeys"
 
   def main(args: Array[String]) {
     val tool = new ExpertDistributionOutlierTool();
@@ -48,17 +51,19 @@ class ExpertDistributionOutlierTool {
 
     if (speciesLsid != null) {
       if (distributionLsids.contains(speciesLsid)) {
+        Console.err.println("Finding distribution outliers for " + speciesLsid)
         val recordsMap = getRecordsForLsid(speciesLsid)
         val outlierRecordDistances = getOutlierRecordDistances(speciesLsid, recordsMap)
-        markOutlierOccurrences(outlierRecordDistances, recordsMap)
+        markOutlierOccurrences(speciesLsid, outlierRecordDistances, recordsMap)
       } else {
         throw new IllegalArgumentException("No expert distribution for species with taxon concept LSID " + speciesLsid)
       }
     } else {
       for (lsid <- distributionLsids) {
+        Console.err.println("Finding distribution outliers for " + speciesLsid)
         val recordsMap = getRecordsForLsid(lsid)
         val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
-        markOutlierOccurrences(outlierRecordDistances, recordsMap)
+        markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
       }
     }
   }
@@ -131,7 +136,7 @@ class ExpertDistributionOutlierTool {
 
     val recordsMapWithoutRowKeys = new java.util.HashMap[String, java.util.Map[String, Object]]()
     for ((k, v) <- recordsMap) {
-      recordsMapWithoutRowKeys.put(k, (v - "rowKey"))
+      recordsMapWithoutRowKeys.put(k, ((v - "rowKey") - "coordinateUncertaintyInMeters"))
     }
 
     val recordsMapWithoutRowKeysJSON = mapper.writeValueAsString(recordsMapWithoutRowKeys)
@@ -159,7 +164,11 @@ class ExpertDistributionOutlierTool {
     }
   }
 
-  def markOutlierOccurrences(outlierDistances: scala.collection.mutable.Map[String, Double], recordsMap: scala.collection.mutable.Map[String, Map[String, Object]]) {
+  def markOutlierOccurrences(lsid: String, outlierDistances: scala.collection.mutable.Map[String, Double], recordsMap: scala.collection.mutable.Map[String, Map[String, Object]]) {
+
+    val newOutlierRowKeys = new ListBuffer[String]()
+
+    // Mark records as outliers
     for ((uuid, distance) <- outlierDistances) {
 
       //Round distance from distribution to nearest metre. Any occurrences outside the distribution by less than a metre are not considered outliers.
@@ -173,18 +182,47 @@ class ExpertDistributionOutlierTool {
 
         // The occurrence is only considered an outlier if its distance from the distribution is greater than its coordinate uncertainty
         if ((roundedDistance - coordinateUncertaintyInMeters) > 0) {
+
           val rowKey = recordsMap(uuid)("rowKey").asInstanceOf[String]
+
+          Console.err.println("Outlier: " + uuid + "(" + rowKey + ") " + roundedDistance + " metres")
+
           // Add data quality assertion
           Config.occurrenceDAO.addSystemAssertion(rowKey, QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE, roundedDistance + " metres outside of expert distribution range"))
 
           // Record distance against record
           Config.persistenceManager.put(rowKey, "occ", Map("distanceOutsideExpertRange.p" -> roundedDistance.toString()))
 
+          newOutlierRowKeys += rowKey
+
           // Print rowKey to stdout so that output of this application can be used for reindexing.
           println(rowKey)
         }
       }
     }
+
+    // Remove outlier information from any records that are no longer outliers
+    val oldRowKeysJson: String = Config.persistenceManager.get(lsid, "distribution_outliers", ExpertDistributionOutlierTool.DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY).getOrElse(null)
+    if (oldRowKeysJson != null) {
+      val oldRowKeys = Json.toList(oldRowKeysJson, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[List[String]]
+      Console.err.print("Old row keys: ")
+      Console.err.println(oldRowKeys)
+
+      val noLongerOutlierRowKeys = oldRowKeys diff newOutlierRowKeys
+      Console.err.print("Row keys no longer outliers: ")
+      Console.err.println(noLongerOutlierRowKeys)
+
+      for (rowKey <- noLongerOutlierRowKeys) {
+        Console.err.println(rowKey + " is no longer an outlier")
+        Config.persistenceManager.deleteColumns(rowKey, "occ", "distanceOutsideExpertRange.p")
+        Config.occurrenceDAO.removeSystemAssertion(rowKey, AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE)
+      }
+    }
+
+    // Store row keys for the LSID in the distribution_outliers column family
+    val newRowKeysJson = Json.toJSON(newOutlierRowKeys.toList)
+    Config.persistenceManager.put(lsid, "distribution_outliers", ExpertDistributionOutlierTool.DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY, newRowKeysJson)
+
   }
 
 }
