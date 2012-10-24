@@ -211,6 +211,9 @@ class ExpertDistributionOutlierTool {
         Console.err.println(rowKey + " is no longer an outlier")
         Config.persistenceManager.deleteColumns(rowKey, "occ", "distanceOutsideExpertRange.p")
         Config.occurrenceDAO.removeSystemAssertion(rowKey, AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE)
+
+        // Print rowKey to stdout so that output of this application can be used for reindexing.
+        println(rowKey)
       }
     }
 
