@@ -59,7 +59,7 @@ class ExpertDistributionOutlierTool {
       }
     } else {
       for (lsid <- distributionLsids) {
-        Console.err.println("Finding distribution outliers for " + speciesLsid)
+        Console.err.println("Finding distribution outliers for " + lsid)
         val recordsMap = getRecordsForLsid(lsid)
         val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
         markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
