@@ -14,7 +14,11 @@ import au.org.ala.biocache.outliers.JackKnifeStats
 import au.org.ala.biocache.outliers.RecordJackKnifeStats
 import au.org.ala.util.DuplicateRecordDetails
 
-trait OccurrenceDAO {
+trait DAO{
+  def createUuid = UUID.randomUUID.toString
+}
+
+trait OccurrenceDAO extends DAO{
 
     val entityName = "occ"
      
@@ -44,9 +48,7 @@ trait OccurrenceDAO {
 
     def getUUIDForUniqueID(uniqueID: String) : Option[String]
 
-    def createOrRetrieveUuid(uniqueID: String): (String, Boolean)
-    
-    def createUuid = UUID.randomUUID.toString
+    def createOrRetrieveUuid(uniqueID: String): (String, Boolean)    
 
     def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String, rowKeys: Array[String], fields: Array[String], qaFields:Array[String], includeSensitive:Boolean=false): Unit
     
@@ -999,10 +1001,12 @@ class DuplicateDAOImpl extends DuplicateDAO {
   }
 }
 
-trait AssertionQueryDAO{
+trait AssertionQueryDAO extends DAO{
   def getAssertionQuery(id:String) : Option[AssertionQuery]
   def upsertAssertionQuery(assertionQuery:AssertionQuery)
   def deleteAssertionQuery(id:String, date:java.util.Date=null, physicallyRemove:Boolean=false)
+  def pageOver(proc: (Option[AssertionQuery] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
+  def createOrRetrieveUuid(uniqueID: String): String
 }
 
 class AssertionQueryDAOImpl extends AssertionQueryDAO{
@@ -1013,7 +1017,9 @@ class AssertionQueryDAOImpl extends AssertionQueryDAO{
   def getAssertionQuery(id:String):Option[AssertionQuery]={
     val aq = new AssertionQuery()
     
-    val map = persistenceManager.get(id, "queryassert")
+    var map = persistenceManager.get(id, "queryassert")
+    if(map.isEmpty) //check to see if the query assertion is being identified by uuid
+      map = persistenceManager.getByIndex(id, "queryassert", "uuid")
     if(map.isDefined){
       FullRecordMapper.mapPropertiesToObject(aq, map.get)
       Some(aq)
@@ -1034,6 +1040,32 @@ class AssertionQueryDAOImpl extends AssertionQueryDAO{
       persistenceManager.put(id, "queryassert", "deletedDate",date)
     }
   }
+  
+  def pageOver(proc: (Option[AssertionQuery] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000){
+    
+     persistenceManager.pageOverAll("queryassert", (guid, map) => {
+        //retrieve all versions
+        val aq = new AssertionQuery()        
+        FullRecordMapper.mapPropertiesToObject(aq, map)
+        //pass all version to the procedure, wrapped in the Option
+        proc(Some(aq))
+      },startKey,endKey, pageSize)
+  }
+  def createOrRetrieveUuid(uniqueID: String): String = {
+     //look up by index
+     val recordUUID = getUUIDForUniqueID(uniqueID)
+     if (recordUUID.isEmpty) {
+         val newUuid = createUuid
+         //The uuid will be added when the record is inserted
+         //persistenceManager.put(uniqueID, "dr", "uuid", newUuid)
+         newUuid
+     } else {
+       recordUUID.get
+     }
+ }
+
+    def getUUIDForUniqueID(uniqueID: String) = persistenceManager.get(uniqueID, "queryassert", "uuid")
+  
 }
 
 trait OutlierStatsDAO {

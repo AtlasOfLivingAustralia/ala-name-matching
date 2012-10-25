@@ -850,6 +850,13 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
             assertionUserIds.foreach(id => doc.addField("assertion_user_id",id))
         }
         
+        val queryAssertions = Json.toStringMap(map.getOrElse(FullRecordMapper.queryAssertionColumn,"{}"))
+        queryAssertions.foreach{case (key,value) =>{
+          doc.addField("query_assertion_id", key)
+          doc.addField("query_assertion_type_s",value)
+        }}
+        
+        
         //index the available el and cl's - more efficient to use the supplied map than using the old way 
         val els = Json.toStringMap(map.getOrElse("el.p", "{}"))      
         els.foreach{case (key,value) => doc.addField(key, value)}

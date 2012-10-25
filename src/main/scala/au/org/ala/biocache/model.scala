@@ -464,6 +464,7 @@ class Attribution (
   @BeanProperty var el:java.util.Map[String,String] = new java.util.HashMap[String,String](),        //environmental layers
   @BeanProperty var cl:java.util.Map[String,String] = new java.util.HashMap[String,String](),        //contextual layers
   @BeanProperty var miscProperties:java.util.Map[String,String] = new java.util.HashMap[String,String](),
+  @BeanProperty var queryAssertions:java.util.Map[String,String] = new java.util.HashMap[String,String](),
   @BeanProperty var locationDetermined:Boolean = false,
   @BeanProperty var defaultValuesUsed:Boolean = false,
   @BeanProperty var geospatiallyKosher:Boolean = true,
@@ -635,7 +636,10 @@ class JCUUser(@BeanProperty var email:String, @BeanProperty var authority:java.l
 /**
  * A type of Quality Assertion that needs to be applied based on a query 
  */
-class AssertionQuery(@BeanProperty var id:String,
+@JsonIgnoreProperties(Array("id","rawAssertion", "rawQuery","records"))
+class AssertionQuery(
+  @BeanProperty var id:String,
+  @BeanProperty var uuid:String,
   @BeanProperty var rawAssertion:String,
   @BeanProperty var createdDate:java.util.Date,
   @BeanProperty var modifiedDate:java.util.Date,  
@@ -647,11 +651,13 @@ class AssertionQuery(@BeanProperty var id:String,
   @BeanProperty var assertionType:String,
   @BeanProperty var comment: String,
   @BeanProperty var includeNew:Boolean,
-  @BeanProperty var disabled:Boolean) extends POSO{
+  @BeanProperty var disabled:Boolean,
+  @BeanProperty var lastApplied:java.util.Date,
+  @BeanProperty var records:Array[String] = Array()) extends POSO{
   
-  def this()= this(null, null,null, null, null,null,null,null,null,null,null,true, false)
+  def this()= this(null,null, null,null, null, null,null,null,null,null,null,null,true, false,null)
     
-  def this(jcu:JCUAssertion) = this(jcu.apiKey + "|" + jcu.id,null,null,jcu.lastModified,null,null,null,jcu.user.email, if(jcu.user.authority != null) jcu.user.authority.toString() else null, jcu.classification, jcu.comment, true, if(jcu.ignored == null) false else jcu.ignored)
+  def this(jcu:JCUAssertion) = this(jcu.apiKey + "|" + jcu.id, Config.assertionQueryDAO.createOrRetrieveUuid(jcu.apiKey + "|" + jcu.id),null,null,jcu.lastModified,null,null,null,jcu.user.email, if(jcu.user.authority != null) jcu.user.authority.toString() else null, jcu.classification, jcu.comment, true, if(jcu.ignored == null) false else jcu.ignored,null)
 }
 
 

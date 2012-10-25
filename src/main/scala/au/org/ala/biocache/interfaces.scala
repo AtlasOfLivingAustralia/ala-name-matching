@@ -9,6 +9,7 @@ import java.util.UUID
 import java.util.Date
 import au.org.ala.util._
 import au.org.ala.biocache.outliers.{JackKnifeStats,RecordJackKnifeStats}
+import au.org.ala.bioache.qa.QueryAssertion
 
 
 /**
@@ -267,6 +268,12 @@ object Store {
   }
   
   def addAssertionQuery(assertionQuery:AssertionQuery) = assertionQueryDAO.upsertAssertionQuery(assertionQuery)
+  
+  def getAssertionQuery(uuid:java.lang.String):AssertionQuery = assertionQueryDAO.getAssertionQuery(uuid).getOrElse(null)
+  /**
+   * Applies the supplied query assertion to the records.
+   */
+  def applyAssertionQuery(uuid:java.lang.String) = new QueryAssertion().applySingle(uuid)
   
   def deleteAssertionQuery(id:java.lang.String, date:java.util.Date) = assertionQueryDAO.deleteAssertionQuery(id, date)
 

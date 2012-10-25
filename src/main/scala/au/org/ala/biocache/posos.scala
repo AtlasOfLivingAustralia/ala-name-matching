@@ -189,6 +189,11 @@ trait POSO {
           }
         }
         case "java.util.Map" => property.setter.invoke(this, Json.toJavaStringMap(value))
+        case "java.util.Date" =>{ 
+          def date = DateParser.parseStringToDate(value)
+          if(date.isDefined)
+            property.setter.invoke(this, date.get)        
+        }
         case _ => println("Unhandled data type: " + property.typeName)
       }
     }

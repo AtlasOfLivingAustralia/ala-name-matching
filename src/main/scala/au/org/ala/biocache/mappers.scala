@@ -19,11 +19,12 @@ object FullRecordMapper {
     val dateDeletedColumn ="dateDeleted"
     val lastUserAssertionDateColumn ="lastUserAssertionDate"
     val environmentalLayersColumn = "el.p"
-    val contextualLayersColumn = "el.p"
+    val contextualLayersColumn = "cl.p"
     val deletedColumn = "deleted"
     val miscPropertiesColumn = "miscProperties"
     val geospatialQa = "loc"
     val taxonomicalQa = "class"
+    val queryAssertionColumn = "queryAssertion.p"
 
     val qaFields = Processors.processorMap.values.map(processor=> markAsQualityAssertion(processor.asInstanceOf[Processor].getName))
 

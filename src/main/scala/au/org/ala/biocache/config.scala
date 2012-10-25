@@ -42,6 +42,8 @@ object Config {
     
     lazy val excludeSensitiveValuesFor = configModule.properties.getProperty("excludeSensitiveValuesFor","")
     
+    lazy val biocacheServiceURL = configModule.properties.getProperty("biocacheServiceURL","http://biocache.ala.org.au/ws")
+    
     lazy val extraMiscFields=configModule.properties.getProperty("extraMiscFields","")
 
     lazy val fieldsToSample = {
