@@ -46,23 +46,49 @@ object ExpertDistributionOutlierTool {
 class ExpertDistributionOutlierTool {
 
   def findOutliers(speciesLsid: String) {
+    //record lsids for distributions that caused errors while finding outliers
+    val errorLsids = new ListBuffer[String]()
+
     val distributionLsids = getExpertDistributionLsids();
 
     if (speciesLsid != null) {
       if (distributionLsids.contains(speciesLsid)) {
         Console.err.println("Finding distribution outliers for " + speciesLsid)
-        val recordsMap = getRecordsForLsid(speciesLsid)
-        val outlierRecordDistances = getOutlierRecordDistances(speciesLsid, recordsMap)
-        markOutlierOccurrences(speciesLsid, outlierRecordDistances, recordsMap)
+        try {
+          val recordsMap = getRecordsForLsid(speciesLsid)
+          val outlierRecordDistances = getOutlierRecordDistances(speciesLsid, recordsMap)
+          markOutlierOccurrences(speciesLsid, outlierRecordDistances, recordsMap)
+        } catch {
+          case ex: Exception => {
+            Console.err.println("ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + speciesLsid)
+            ex.printStackTrace(Console.err)
+            errorLsids += speciesLsid
+          }
+        }
       } else {
         throw new IllegalArgumentException("No expert distribution for species with taxon concept LSID " + speciesLsid)
       }
     } else {
       for (lsid <- distributionLsids) {
         Console.err.println("Finding distribution outliers for " + lsid)
-        val recordsMap = getRecordsForLsid(lsid)
-        val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
-        markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
+        try {
+          val recordsMap = getRecordsForLsid(lsid)
+          val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
+          markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
+        } catch {
+          case ex: Exception => {
+            Console.err.println("ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + speciesLsid)
+            ex.printStackTrace(Console.err)
+            errorLsids += lsid
+          }
+        }
+      }
+    }
+
+    if (!errorLsids.isEmpty) {
+      Console.err.println("ERROR OCCURRED FINDING OUTLIERS FOR THE FOLLOWING LSIDS:")
+      for (errorLsid <- errorLsids) {
+        Console.err.println(errorLsid)
       }
     }
   }
