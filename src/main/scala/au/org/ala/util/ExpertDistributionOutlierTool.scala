@@ -45,6 +45,10 @@ object ExpertDistributionOutlierTool {
 
 class ExpertDistributionOutlierTool {
 
+  /**
+   * Entry point for the tool. Find distribution outliers for all records, or for a single species identified by its LSID
+   * @param speciesLsid If supplied, restrict identification of outliers to occurrence records associated by a single species, as identified by its LSID.
+   */
   def findOutliers(speciesLsid: String) {
     //record lsids for distributions that caused errors while finding outliers
     val errorLsids = new ListBuffer[String]()
@@ -53,11 +57,8 @@ class ExpertDistributionOutlierTool {
 
     if (speciesLsid != null) {
       if (distributionLsids.contains(speciesLsid)) {
-        Console.err.println("Finding distribution outliers for " + speciesLsid)
         try {
-          val recordsMap = getRecordsForLsid(speciesLsid)
-          val outlierRecordDistances = getOutlierRecordDistances(speciesLsid, recordsMap)
-          markOutlierOccurrences(speciesLsid, outlierRecordDistances, recordsMap)
+          findOutliersForLsid(speciesLsid)
         } catch {
           case ex: Exception => {
             Console.err.println("ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + speciesLsid)
@@ -70,14 +71,11 @@ class ExpertDistributionOutlierTool {
       }
     } else {
       for (lsid <- distributionLsids) {
-        Console.err.println("Finding distribution outliers for " + lsid)
         try {
-          val recordsMap = getRecordsForLsid(lsid)
-          val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
-          markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
+          findOutliersForLsid(lsid)
         } catch {
           case ex: Exception => {
-            Console.err.println("ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + speciesLsid)
+            Console.err.println("ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + lsid)
             ex.printStackTrace(Console.err)
             errorLsids += lsid
           }
@@ -86,13 +84,36 @@ class ExpertDistributionOutlierTool {
     }
 
     if (!errorLsids.isEmpty) {
-      Console.err.println("ERROR OCCURRED FINDING OUTLIERS FOR THE FOLLOWING LSIDS:")
+      Console.err.println("RETRYING OUTLIER IDENTIFICATION FOR LSIDS THAT FAILED WITH ERRORS")
       for (errorLsid <- errorLsids) {
-        Console.err.println(errorLsid)
+        Console.err.println("ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + errorLsid)
+        try {
+          findOutliersForLsid(errorLsid)
+        } catch {
+          case ex: Exception => {
+            Console.err.println("ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + errorLsid)
+            ex.printStackTrace(Console.err)
+            errorLsids += errorLsid
+          }
+        }
       }
     }
   }
 
+  /**
+   * Find outlier records associated with a species as identified by a taxon concept lsid
+   * @param lsid a taxon concept lsid
+   */
+  def findOutliersForLsid(lsid: String) {
+    Console.err.println("Finding distribution outliers for " + lsid)
+    val recordsMap = getRecordsForLsid(lsid)
+    val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
+    markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
+  }
+
+  /**
+   * @return The list of taxon concept LSIDS for which an expert distribution has been loaded into the ALA
+   */
   def getExpertDistributionLsids(): ArrayBuffer[String] = {
 
     val httpClient = new HttpClient()
@@ -122,6 +143,11 @@ class ExpertDistributionOutlierTool {
     }
   }
 
+  /**
+   * Get details of all the occurrence records for a species identified by a taxon concept LSID.
+   * @param lsid A taxon concept lsid
+   * @return Occurrence record detail. Only the following fields are retreived: id,row_key,latitude,longitude,coordinate_uncertainty. Only records that have a location (lat/long) are returned.
+   */
   def getRecordsForLsid(lsid: String): scala.collection.mutable.Map[String, Map[String, Object]] = {
     val url = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_URL_TEMPLATE, lsid, java.lang.Integer.MAX_VALUE.toString)
 
@@ -156,6 +182,13 @@ class ExpertDistributionOutlierTool {
     }
   }
 
+  /**
+   * For a series of occurrence records associated with a single taxon concept lsid, find which records are outside the expert distribution associated with
+   * the taxon concept lsid, and how far outside the expert distribution the outliers occur.
+   * @param lsid the taxon concept LSID
+   * @param recordsMap the occurrence records data
+   * @return A map of outlier record uid to distance outside the expert distribution
+   */
   def getOutlierRecordDistances(lsid: String, recordsMap: scala.collection.mutable.Map[String, Map[String, Object]]): scala.collection.mutable.Map[String, Double] = {
     val mapper = new ObjectMapper();
 
@@ -189,6 +222,13 @@ class ExpertDistributionOutlierTool {
     }
   }
 
+  /**
+   * Mark outlier records as outliers in the biocache. Note that a record is not considered an outlier if its distance outside the expert distribution is less than
+   * the record's coordinate uncertainty in metres.
+   * @param lsid The taxon concept lsid associated with the occurrence records and expert distribution
+   * @param outlierDistances A map of outlier record uid to distance outside the expert distribution
+   * @param recordsMap the occurrence records data
+   */
   def markOutlierOccurrences(lsid: String, outlierDistances: scala.collection.mutable.Map[String, Double], recordsMap: scala.collection.mutable.Map[String, Map[String, Object]]) {
 
     val newOutlierRowKeys = new ListBuffer[String]()
