@@ -103,6 +103,8 @@ create column family queryassert
   and compaction_strategy_options = {'sstable_size_in_mb' : '200'}
   and comment = 'The column family to store information about query based assertions';
 
+update column family queryassert with column_metadata=[{column_name: uuid, validation_class: UTF8Type, index_type: KEYS}];
+
 create column family distribution_outliers
   with comparator = 'UTF8Type'
   and default_validation_class = 'UTF8Type'
