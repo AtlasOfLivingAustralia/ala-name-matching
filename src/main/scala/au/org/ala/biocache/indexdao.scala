@@ -754,6 +754,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
     
   val multifields = Array("duplicate_inst","establishment_means","species_group","assertions","data_hub_uid","interactions","outlier_layer",
                           "species_habitats","multimedia","all_image_url", "collectors","duplicate_record","duplicate_type")  
+  val typeNotSuitableForModelling = Array("invalid","historic","vagrant","irruptive")
 
     /**
      * A SOLR specific implementation of indexing from a map.
@@ -851,11 +852,15 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
         }
         
         val queryAssertions = Json.toStringMap(map.getOrElse(FullRecordMapper.queryAssertionColumn,"{}"))
+        var suitableForModelling = true
         queryAssertions.foreach{case (key,value) =>{
-          doc.addField("query_assertion_id", key)
+          doc.addField("query_assertion_uuid", key)
           doc.addField("query_assertion_type_s",value)
+          if(suitableForModelling && typeNotSuitableForModelling.contains(value))
+            suitableForModelling = false;
         }}
-        
+        //this will not exist for all records until a complete reindex is performed...
+        doc.addField("suitable_modelling", suitableForModelling.toString())
         
         //index the available el and cl's - more efficient to use the supplied map than using the old way 
         val els = Json.toStringMap(map.getOrElse("el.p", "{}"))      

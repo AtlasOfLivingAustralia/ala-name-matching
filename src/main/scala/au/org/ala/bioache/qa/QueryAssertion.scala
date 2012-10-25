@@ -19,17 +19,18 @@ object QueryAssertion{
     //new QueryAssertion().applySingle("jcuap03|5069")
     var apiKey:Option[String] = None
     var id:Option[String] = None
+    var unapply =false
     val parser = new OptionParser("Application of Query Assertions") {
       opt("a", "apiKey","The apiKey whose assertions shoud be applied", {v:String => apiKey = Some(v)})
       opt("i","record id", "The uuid or the rowKey for the query assertion to apply", {v:String => id = Some(v)})
-
+      opt("unapply", "Unapply the query assertions",{unapply=true})
     }
     if(parser.parse(args)){      
       val qaApplier = new QueryAssertion()
       if(apiKey.isDefined)
-        qaApplier.apply(apiKey.get)
+        qaApplier.apply(apiKey.get, unapply)
       else if(id.isDefined)
-        qaApplier.applySingle(id.get)
+        qaApplier.applySingle(id.get, unapply)
       Config.persistenceManager.shutdown
       Config.indexDAO.shutdown
     }
@@ -42,14 +43,20 @@ class QueryAssertion {
   import JavaConversions._
   val BIOCACHE_QUERY_URL = Config.biocacheServiceURL +"/occurrences/search{0}&facet=off{1}&pageSize={2}&startIndex={3}&fl=row_key"
   
-  def applySingle(rowKey:String){
+  def applySingle(rowKey:String, unapply:Boolean=false){
     //get the query for the supplied key
     var buffer = new ArrayBuffer[String]
     def qa=Config.assertionQueryDAO.getAssertionQuery(rowKey)
     val filename = "/tmp/query_"+rowKey+"_reindex.txt"
     val reindexWriter = new FileWriter(filename)
-    if(qa.isDefined)
-      applyAssertion(qa.get,buffer);
+    if(qa.isDefined){
+      if(unapply){
+        modifyList(qa.get.records.toList, qa.get, buffer, false)
+        Config.persistenceManager.deleteColumns(qa.get.id, "queryassert","records","lastApplied")
+      }
+      else
+        applyAssertion(qa.get,buffer)
+    }
     val rowKeySet = buffer.toSet[String]
     rowKeySet.foreach(v=>reindexWriter.write(v + "\n"))
     reindexWriter.flush
@@ -57,7 +64,7 @@ class QueryAssertion {
     IndexRecords.indexListThreaded(new File(filename), 4)
   }
   
-  def apply(apiKey:String){
+  def apply(apiKey:String, unapply:Boolean=false){
     //val queryPattern = """\?q=([\x00-\x7F\s]*)&wkt=([\x00-\x7F\s]*)""".r
     val start = apiKey+"|"
     val end = start+"~"
@@ -72,9 +79,13 @@ class QueryAssertion {
       if(aq.isDefined){
         val assertion = aq.get
 //        val queryPattern(query, wkt)=assertion.getRawQuery()
-        applyAssertion(assertion, buffer)
-//        modifyList(assertion.records.toList, assertion, buffer, false)
-//          Config.persistenceManager.deleteColumns(assertion.id, "queryassert","records","lastApplied")
+        if(unapply){
+          modifyList(assertion.records.toList, assertion, buffer, false)
+          Config.persistenceManager.deleteColumns(assertion.id, "queryassert","records","lastApplied")
+        }
+        else
+          applyAssertion(assertion, buffer)
+
       }
       true
       },start,end)

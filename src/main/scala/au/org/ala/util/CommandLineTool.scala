@@ -5,6 +5,7 @@ import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.{NameValuePair, HttpClient}
 import java.io.{File, BufferedReader, InputStreamReader}
 import au.org.ala.biocache.outliers.SpeciesOutlierTests
+import au.org.ala.bioache.qa.QueryAssertion
 
 /**
  * Command line tool that allows administrators to run commands on
@@ -256,6 +257,12 @@ object CMD {
           println("Delete from index")
           deletor.deleteFromIndex
         }
+        case it if (it startsWith "apply-aq") =>{
+          val apiKey = input.replaceFirst("apply-aq ","")
+          println("Applying the assertions for the queries supplied by apiKey: " + apiKey)
+          val qa = new QueryAssertion()
+          qa.apply(apiKey)
+        }
         case _ => printHelp
       }
     } catch {
@@ -296,7 +303,8 @@ object CMD {
     padAndPrint("[30]  dedup - Run duplication detection over the records.")
     padAndPrint("[31]  jackknife - Run jackknife outlier detection.")
     padAndPrint("[32]  distribution outliers -l <speciesLsid> - Run expert distribution outlier detection. If species LSID is supplied, outlier detection is only performed for occurrences of the species with the supplied taxon concept LSID")
-    padAndPrint("[33]  exit")
+    padAndPrint("[33]  apply-aq <apiKey> - applies the assertion queries for the suppplied apiKey")
+    padAndPrint("[34]  exit")
 
   }
 

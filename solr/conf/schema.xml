@@ -643,6 +643,7 @@
    <!-- TODO work out the extra search fields that are required for the issues -->
    <field name="taxonomic_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="geospatial_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="suitable_modelling" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="sensitive" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="assertions" type="string" indexed="true" stored="true" multiValued="true"  />
    <field name="user_assertions" type="string" indexed="true" stored="true" multiValued="false"  />
@@ -715,6 +716,7 @@
    <dynamicField name="loan_*" type="string" indexed="true" stored="false" />
   
    <dynamicField name="*_uid" type="string" indexed="true" stored="true"/>
+   <dynamicField name="*_uuid" type="string" indexed="true" stored="true"/>
    <!--  catches all the environment and contextual layers that are being indexed -->
    <!-- They are being stored just in case they need to be faceted on -->
    <dynamicField name="el*" type="double" indexed="true" stored="true" omitNorms="true" />
