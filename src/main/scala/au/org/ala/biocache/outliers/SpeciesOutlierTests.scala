@@ -17,7 +17,7 @@ class Timings {
 
   def checkpoint(comment:String) {
     val now = System.currentTimeMillis()
-    println("Time taken for [%s] : %d seconds.".format(comment, ((now - lapTime).toFloat / 1000.0f)))
+    println("Time taken for [%s] : %f seconds.".format(comment, ((now - lapTime).toFloat / 1000.0f)))
     lapTime = now
   }
 }
