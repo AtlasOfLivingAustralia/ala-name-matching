@@ -1003,6 +1003,7 @@ class DuplicateDAOImpl extends DuplicateDAO {
 
 trait AssertionQueryDAO extends DAO{
   def getAssertionQuery(id:String) : Option[AssertionQuery]
+  def getAssertionQueries(ids:List[String]):List[AssertionQuery]
   def upsertAssertionQuery(assertionQuery:AssertionQuery)
   def deleteAssertionQuery(id:String, date:java.util.Date=null, physicallyRemove:Boolean=false)
   def pageOver(proc: (Option[AssertionQuery] => Boolean),startKey:String="", endKey:String="", pageSize: Int = 1000): Unit
@@ -1026,6 +1027,10 @@ class AssertionQueryDAOImpl extends AssertionQueryDAO{
     }
     else
       None
+  }
+  //Because most of these will be accessed by index we will need to read each separately ( OR's are not supported)
+  def getAssertionQueries(ids:List[String]):List[AssertionQuery]={
+    ids.map(id => getAssertionQuery(id)).collect{case Some(aq) => aq}
   }
   
   def upsertAssertionQuery(assertionQuery:AssertionQuery){

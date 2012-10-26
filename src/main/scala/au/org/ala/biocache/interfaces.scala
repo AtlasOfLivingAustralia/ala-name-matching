@@ -270,6 +270,9 @@ object Store {
   def addAssertionQuery(assertionQuery:AssertionQuery) = assertionQueryDAO.upsertAssertionQuery(assertionQuery)
   
   def getAssertionQuery(uuid:java.lang.String):AssertionQuery = assertionQueryDAO.getAssertionQuery(uuid).getOrElse(null)
+  
+  def getAssertionQueries(ids:Array[String]):Array[AssertionQuery] = assertionQueryDAO.getAssertionQueries(ids.toList).toArray[AssertionQuery]
+  
   /**
    * Applies the supplied query assertion to the records.
    */
