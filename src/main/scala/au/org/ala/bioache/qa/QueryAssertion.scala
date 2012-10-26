@@ -34,6 +34,9 @@ object QueryAssertion{
       Config.persistenceManager.shutdown
       Config.indexDAO.shutdown
     }
+    else{
+        parser.showUsage
+      }
     //new QueryAssertion().pageOverQuery("?q=lsid:urn:lsid:biodiversity.org.au:afd.taxon:1277dd43-882d-49d8-a009-2def58b0446e&wkt=MULTIPOLYGON(((144.75:-38,144.75:-37.75,145:-37.75,145.25:-37.75,145.25:-38,145:-38,144.75:-38)),((145.25:-38,145.5:-38,145.5:-38.25,145.25:-38.25,145.25:-38)),((145.25:-37.5,145.25:-37.25,145.5:-37.25,145.5:-37.5,145.25:-37.5)),((143.75:-37.75,143.75:-37.5,144:-37.5,144:-37.75,143.75:-37.75)))", Array(), {list => println(list);true;})
   }
 }

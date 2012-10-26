@@ -24,7 +24,7 @@ object FullRecordMapper {
     val miscPropertiesColumn = "miscProperties"
     val geospatialQa = "loc"
     val taxonomicalQa = "class"
-    val queryAssertionColumn = "queryAssertion.p"
+    val queryAssertionColumn = "queryAssertions.p"
 
     val qaFields = Processors.processorMap.values.map(processor=> markAsQualityAssertion(processor.asInstanceOf[Processor].getName))
 
