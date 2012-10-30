@@ -33,7 +33,8 @@ object MediaStore {
   val rootDir = "/data/biocache-media"
   val limit = 32000
 
-  def doesFileExist(urlString:String) :Boolean ={
+  def doesFileExist(urlString:String) :Boolean = {
+    
     val urlToTest = if(urlString.startsWith(rootDir)) "file://"+urlString else urlString
     try{
       val url = new java.net.URL(urlToTest.replaceAll(" ", "%20"))
@@ -114,28 +115,31 @@ object MediaStore {
     try{
       val fullPath = createFilePath(uuid, resourceUID, urlToMedia)
       val file = new File(fullPath)
-      val url = new java.net.URL(urlToMedia.replaceAll(" ", "%20"))
-      val in = url.openStream
-      val out = new FileOutputStream(file)
-      val buffer: Array[Byte] = new Array[Byte](1024)
-      var numRead = 0
-      while ( {
-        numRead = in.read(buffer); numRead != -1
-      }) {
-        out.write(buffer, 0, numRead)
-        out.flush
-      }
-      out.close
-      logger.info("File saved to: " + fullPath)
-      //is this file an image???
-      if (isValidImageURL(urlToMedia)){
-        Thumbnailer.generateAllSizes(new File(fullPath))
+      if(!file.exists() || file.length() == 0){
+	      val url = new java.net.URL(urlToMedia.replaceAll(" ", "%20"))
+	      val in = url.openStream
+	      val out = new FileOutputStream(file)
+	      val buffer: Array[Byte] = new Array[Byte](1024)
+	      var numRead = 0
+	      while ( {
+	        numRead = in.read(buffer); numRead != -1
+	      }) {
+	        out.write(buffer, 0, numRead)
+	        out.flush
+	      }
+	      out.close
+	      logger.info("File saved to: " + fullPath)
+	      //is this file an image???
+	      if (isValidImageURL(urlToMedia)){
+	        Thumbnailer.generateAllSizes(new File(fullPath))
+	      }
+      } else {
+	      logger.info("File previously saved to: " + fullPath)        
       }
       //store the media
       Some(fullPath)
-    }
-    catch{
-        case e:Exception => logger.warn("Unable to load media " + urlToMedia + ". " + e.getMessage);None
+    } catch {
+      case e:Exception => logger.warn("Unable to load media " + urlToMedia + ". " + e.getMessage);None
     }
   }
 
@@ -166,7 +170,7 @@ object SMALL extends ImageSize { def suffix = "__small"; def size = 314f; }
 object LARGE extends ImageSize { def suffix = "__large"; def size = 650f; }
 
 /**
- * A utility for thumbnailing images
+ * A utility for thumbnailling images
  */
 object Thumbnailer {
   final val logger = LoggerFactory.getLogger("Thumbnailer")

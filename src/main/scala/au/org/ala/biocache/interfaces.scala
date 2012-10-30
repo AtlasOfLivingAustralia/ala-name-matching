@@ -9,8 +9,7 @@ import java.util.UUID
 import java.util.Date
 import au.org.ala.util._
 import au.org.ala.biocache.outliers.{JackKnifeStats,RecordJackKnifeStats}
-import au.org.ala.bioache.qa.QueryAssertion
-
+import au.org.ala.biocache.qa.QueryAssertion
 
 /**
  * This is the interface to use for java applications.

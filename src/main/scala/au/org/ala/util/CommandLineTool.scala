@@ -5,7 +5,7 @@ import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.{NameValuePair, HttpClient}
 import java.io.{File, BufferedReader, InputStreamReader}
 import au.org.ala.biocache.outliers.SpeciesOutlierTests
-import au.org.ala.bioache.qa.QueryAssertion
+import au.org.ala.biocache.qa.QueryAssertion
 
 /**
  * Command line tool that allows administrators to run commands on
