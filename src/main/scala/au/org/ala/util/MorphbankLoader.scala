@@ -43,6 +43,10 @@ object MorphbankLoader extends DataLoader {
 
   val OCC_NAMESPACE = "occ"
 
+  // A large number of images have broken HTML in the licence information field. Replace such values with a textual version of the appropriate licence.
+  val PARTIAL_HTML_LICENCE_TEXT = "<a rel=\"license\" href=\"http://creativecommons.org/licenses/by-nc/3.0/\"><img alt=\"Creative Commons License\" style=\"border-width:0\" src=\"http://i.creativecommons.org/l/by-nc/3.0/88x31.png\" /></a><br />This work is licensed under a <a rel=\"license\" href=\"htt"
+  val REPLACEMENT_FOR_PARTIAL_HTML_LICENCE_TEXT = "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
+
   /* val fieldMapping = Map(
 ("sourceId" -> "catalogNumber"),
 ("dateLastModified" -> "modified"),
@@ -205,11 +209,14 @@ class MorphbankLoader extends CustomWebserviceLoader {
       // Record the creative commons licence text and photographer name from the image against the specimen,
       // if no such information has been recorded yet for the specimen. This information will be added to the specimen
       // record in Cassandra later, at the same time that the image information is added.
-      var creativeCommonsLicenceText : String = null
-      var photographerText : String = null
+      var creativeCommonsLicenceText: String = null
+      var photographerText: String = null
 
       if (!(image \\ MorphbankLoader.CREATIVE_COMMONS_KEY).isEmpty) {
         creativeCommonsLicenceText = (image \\ MorphbankLoader.CREATIVE_COMMONS_KEY).head.text.trim()
+        if (creativeCommonsLicenceText == MorphbankLoader.PARTIAL_HTML_LICENCE_TEXT) {
+          creativeCommonsLicenceText = MorphbankLoader.REPLACEMENT_FOR_PARTIAL_HTML_LICENCE_TEXT
+        }
       }
 
       if (!(image \\ MorphbankLoader.PHOTOGRAPHER_KEY).isEmpty) {
