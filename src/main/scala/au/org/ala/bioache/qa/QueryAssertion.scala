@@ -1,4 +1,4 @@
-package au.org.ala.bioache.qa
+package au.org.ala.biocache.qa
 import au.org.ala.biocache.Config
 import java.text.MessageFormat
 import scala.io.Source
