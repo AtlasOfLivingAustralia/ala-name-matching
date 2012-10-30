@@ -81,6 +81,15 @@ object CMD {
           val d = new DwcCSVLoader()
           d.loadFile(new File(parts(2)), parts(1), List(), Map())
         }
+        case it if (it startsWith "ingest")  => {
+          val drs = it.split(" ").map(x => x.trim).tail
+          drs.foreach(dr => {
+           l.load(dr) 
+           Sampling.main(Array("-dr", dr))
+           ProcessWithActors.processRecords(4, None, Some(dr))
+           indexDataResourceLive(dr)
+          })
+        }        
         case it if (it startsWith "load") || (it startsWith "ld") => {
           it.split(" ").map(x => x.trim).tail.foreach(drUid => l.load(drUid))
         }
@@ -133,22 +142,7 @@ object CMD {
         }
         case it if (it.startsWith("index-live ") && input.split(" ").length == 2) => {
           val dr = it.split(" ").map(x => x.trim).toList.last
-          println("Indexing live with URL: " + Config.reindexUrl + ", and params: " + Config.reindexData + "&dataResource=" + dr)
-          val http = new HttpClient
-          val post = new PostMethod(Config.reindexUrl)
-
-          val nameValuePairs = {
-            val keyValue = Config.reindexData.split("&")
-            val nvpairs = keyValue.map(kv => {
-              val parts = kv.split("=")
-              new NameValuePair(parts(0), parts(1))
-            })
-            nvpairs.toArray ++ Array(new NameValuePair("dataResource", dr))
-          }
-          post.setRequestBody(nameValuePairs)
-          val responseCode = http.executeMethod(post)
-          println("Response: " + responseCode)
-          println("The data is viewable here: " + Config.reindexViewDataResourceUrl + dr)
+          indexDataResourceLive(dr)
         }
         case it if (it startsWith "index-custom") => {
           if (it.split(" ").length > 2) {
@@ -267,6 +261,25 @@ object CMD {
       }
     } catch {
       case e: Exception => e.printStackTrace
+    }
+    
+    def indexDataResourceLive(dr:String){
+      println("Indexing live with URL: " + Config.reindexUrl + ", and params: " + Config.reindexData + "&dataResource=" + dr)
+      val http = new HttpClient
+      val post = new PostMethod(Config.reindexUrl)
+
+      val nameValuePairs = {
+        val keyValue = Config.reindexData.split("&")
+        val nvpairs = keyValue.map(kv => {
+          val parts = kv.split("=")
+          new NameValuePair(parts(0), parts(1))
+        })
+        nvpairs.toArray ++ Array(new NameValuePair("dataResource", dr))
+      }
+      post.setRequestBody(nameValuePairs)
+      val responseCode = http.executeMethod(post)
+      println("Response: " + responseCode)
+      println("The data is viewable here: " + Config.reindexViewDataResourceUrl + dr)
     }
   }
 
