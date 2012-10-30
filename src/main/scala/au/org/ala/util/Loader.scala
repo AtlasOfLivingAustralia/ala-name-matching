@@ -87,7 +87,7 @@ class Loader extends DataLoader {
             if(!test){
               val className = customParams.getOrElse("classname", null)
               if (className == null) {
-                println("Classname of customer harvester class not present in parameters")
+                println("Classname of custom harvester class not present in parameters")
               } else {
                 val wsClass = Class.forName(className)
                 val l = wsClass.newInstance()

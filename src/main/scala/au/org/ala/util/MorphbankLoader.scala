@@ -26,6 +26,8 @@ object MorphbankLoader extends DataLoader {
   val MORPHBANK_ID_KEY = "morphbank"
   val SPECIMEN_ID_KEY = "specimen"
   val DATE_LAST_MODIFIED_KEY = "dateLastModified"
+  val CREATIVE_COMMONS_KEY = "creativeCommons"
+  val PHOTOGRAPHER_KEY = "photographer"
   val COLLECTOR_OLDDWC_KEY = "Collector"
   val EARLIEST_DATE_COLLECTED_OLDDWC_KEY = "EarliestDateCollected"
 
@@ -36,6 +38,8 @@ object MorphbankLoader extends DataLoader {
   val RECORDED_BY_DWC_KEY = "recordedBy"
   val EVENT_DATE_DWC_KEY = "eventDate"
   val OTHER_CATALOG_NUMBERS_DWC_KEY = "otherCatalogNumbers"
+  val RIGHTS_DWC_KEY = "rights"
+  val RIGHTS_HOLDER_DWC_KEY = "rightsholder"
 
   val OCC_NAMESPACE = "occ"
 
@@ -64,7 +68,9 @@ object MorphbankLoader extends DataLoader {
 
 class MorphbankLoader extends CustomWebserviceLoader {
 
-  var specimenImagesMap = new scala.collection.mutable.HashMap[String, mutable.ListBuffer[String]]()
+  val specimenImagesMap = new scala.collection.mutable.HashMap[String, mutable.ListBuffer[String]]()
+  val specimenLicenseMap = new scala.collection.mutable.HashMap[String, String]()
+  val specimenPhotographerMap = new scala.collection.mutable.HashMap[String, String]()
 
   def load(dataResourceUid: String) {
     val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
@@ -106,7 +112,7 @@ class MorphbankLoader extends CustomWebserviceLoader {
         }
       }
 
-      setSpecimenImages(imageUrlTemplate, dataResourceUid)
+      setSpecimenImagesLicenceAndPhotographer(imageUrlTemplate, dataResourceUid)
 
       println("Finished processing records with keywords " + keywords + ". Loaded " + loadedSpecimens + " specimens, and " + loadedImages + " images.")
     }
@@ -196,6 +202,28 @@ class MorphbankLoader extends CustomWebserviceLoader {
         specimenImagesMap += (specimenId -> listBuf)
       }
 
+      // Record the creative commons licence text and photographer name from the image against the specimen,
+      // if no such information has been recorded yet for the specimen. This information will be added to the specimen
+      // record in Cassandra later, at the same time that the image information is added.
+      var creativeCommonsLicenceText : String = null
+      var photographerText : String = null
+
+      if (!(image \\ MorphbankLoader.CREATIVE_COMMONS_KEY).isEmpty) {
+        creativeCommonsLicenceText = (image \\ MorphbankLoader.CREATIVE_COMMONS_KEY).head.text.trim()
+      }
+
+      if (!(image \\ MorphbankLoader.PHOTOGRAPHER_KEY).isEmpty) {
+        photographerText = (image \\ MorphbankLoader.PHOTOGRAPHER_KEY).head.text.trim()
+      }
+
+      if (creativeCommonsLicenceText != null) {
+        specimenLicenseMap += (specimenId -> creativeCommonsLicenceText)
+      }
+
+      if (photographerText != null) {
+        specimenPhotographerMap += (specimenId -> photographerText)
+      }
+
       println("Processed image " + imageId + " for specimen " + specimenId)
     } else {
       println("ERROR: No associated specimen for image " + imageId)
@@ -203,9 +231,12 @@ class MorphbankLoader extends CustomWebserviceLoader {
 
   }
 
-  def setSpecimenImages(imageUrlTemplate: String, dataResourceUid: String) {
+  def setSpecimenImagesLicenceAndPhotographer(imageUrlTemplate: String, dataResourceUid: String) {
     for (specimenId <- specimenImagesMap.keySet) {
       val specimenImages = specimenImagesMap(specimenId)
+      val specimenImagesLicence = specimenLicenseMap.getOrElse(specimenId, null)
+      val specimenImagesPhotographer = specimenPhotographerMap.getOrElse(specimenId, null)
+
       var specimenImageUrls = specimenImages.map(t => MessageFormat.format(imageUrlTemplate, t))
 
       // Test each image url. If it returns mimetype image/png, we know that this is a placeholder image. In this case, the image should be ignored.
@@ -221,7 +252,16 @@ class MorphbankLoader extends CustomWebserviceLoader {
         specimenImageUrls = specimenImageUrls - placeholderImageUrl
       }
 
-      val mappedValues = Map(MorphbankLoader.CATALOG_NUMBER_DWC_KEY -> specimenId, MorphbankLoader.ASSOCIATED_MEDIA_DWC_KEY -> specimenImageUrls.mkString(";"))
+      var mappedValues = Map(MorphbankLoader.CATALOG_NUMBER_DWC_KEY -> specimenId, MorphbankLoader.ASSOCIATED_MEDIA_DWC_KEY -> specimenImageUrls.mkString(";"))
+
+      if (specimenImagesLicence != null) {
+        mappedValues += (MorphbankLoader.RIGHTS_DWC_KEY -> specimenImagesLicence)
+      }
+
+      if (specimenImagesPhotographer != null) {
+        mappedValues += (MorphbankLoader.RIGHTS_HOLDER_DWC_KEY -> specimenImagesPhotographer)
+      }
+
       val uniqueTermsValues = List(specimenId)
 
       val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
