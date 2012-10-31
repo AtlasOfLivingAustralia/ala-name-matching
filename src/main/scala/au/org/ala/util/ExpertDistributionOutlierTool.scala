@@ -19,12 +19,15 @@ import util.TimeZone
  */
 
 object ExpertDistributionOutlierTool {
-  val DISTRIBUTION_DETAILS_URL = "http://spatial.ala.org.au/layers-service/distributions"
-  val RECORDS_URL_TEMPLATE = "http://biocache.ala.org.au/ws/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
-  val DISTANCE_URL_TEMPLATE = "http://spatial.ala.org.au/layers-service/distribution/outliers/{0}"
+  val DISTRIBUTION_DETAILS_URL = Config.layersServiceUrl + "/distributions"
+  val RECORDS_URL_TEMPLATE = Config.biocacheServiceUrl + "/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
+  val DISTANCE_URL_TEMPLATE = Config.layersServiceUrl + "/distribution/outliers/{0}"
 
   // key to use when storing outlier row keys for an LSID in the distribution_outliers column family
   val DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY = "rowkeys"
+
+  // Threshold value to use for detection of outliers. An occurrence is only considered an outlier if it is found to be over 50km outside of the expert distribution
+  val OUTLIER_THRESHOLD = 50000
 
   def main(args: Array[String]) {
     val tool = new ExpertDistributionOutlierTool();
@@ -246,7 +249,7 @@ class ExpertDistributionOutlierTool {
         }
 
         // The occurrence is only considered an outlier if its distance from the distribution is greater than its coordinate uncertainty
-        if ((roundedDistance - coordinateUncertaintyInMeters) > 0) {
+        if ((roundedDistance - coordinateUncertaintyInMeters) > ExpertDistributionOutlierTool.OUTLIER_THRESHOLD) {
 
           val rowKey = recordsMap(uuid)("rowKey").asInstanceOf[String]
 

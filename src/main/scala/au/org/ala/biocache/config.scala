@@ -69,6 +69,8 @@ object Config {
     lazy val reindexUrl = configModule.properties.getProperty("reindexUrl")
     lazy val reindexData = configModule.properties.getProperty("reindexData")
     lazy val reindexViewDataResourceUrl = configModule.properties.getProperty("reindexViewDataResourceUrl")
+    lazy val layersServiceUrl = configModule.properties.getProperty("layersServiceUrl")
+    lazy val biocacheServiceUrl = configModule.properties.getProperty("biocacheServiceUrl")
     def getProperty(prop:String) = configModule.properties.getProperty(prop)
 }
 
