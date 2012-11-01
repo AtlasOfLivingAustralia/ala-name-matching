@@ -9,6 +9,8 @@ import java.text.{DateFormat, SimpleDateFormat, MessageFormat}
 import collection.JavaConversions._
 import au.org.ala.biocache.{Json, AssertionCodes, QualityAssertion, Config}
 import util.TimeZone
+import actors.Actor._
+import actors.Actor
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,7 +23,8 @@ import util.TimeZone
 object ExpertDistributionOutlierTool {
   val DISTRIBUTION_DETAILS_URL = Config.layersServiceUrl + "/distributions"
   val RECORDS_URL_TEMPLATE = Config.biocacheServiceUrl + "/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
-  val DISTANCE_URL_TEMPLATE = Config.layersServiceUrl + "/distribution/outliers/{0}"
+  //val DISTANCE_URL_TEMPLATE = Config.layersServiceUrl + "/distribution/outliers/{0}"
+  val DISTANCE_URL_TEMPLATE = "http://localhost:8080/layers-service/distribution/outliers/{0}"
 
   // key to use when storing outlier row keys for an LSID in the distribution_outliers column family
   val DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY = "rowkeys"
@@ -32,7 +35,7 @@ object ExpertDistributionOutlierTool {
   def main(args: Array[String]) {
     val tool = new ExpertDistributionOutlierTool();
 
-    var speciesLsid: String = null
+    var speciesLsid: String = "urn:lsid:biodiversity.org.au:afd.taxon:c20d9b40-9c19-47e9-9602-c793ae028244"
 
     val parser = new OptionParser("Find expert distribution outliers") {
       opt("l", "specieslsid", "Species LSID. If supplied, outlier detection is only performed for occurrences of the species with the supplied taxon concept LSID ", {
@@ -53,71 +56,69 @@ class ExpertDistributionOutlierTool {
    * @param speciesLsid If supplied, restrict identification of outliers to occurrence records associated by a single species, as identified by its LSID.
    */
   def findOutliers(speciesLsid: String) {
-    //record lsids for distributions that caused errors while finding outliers
-    val errorLsids = new ListBuffer[String]()
 
-    val distributionLsids = getExpertDistributionLsids();
+    val numThreads = 2
 
-    if (speciesLsid != null) {
-      if (distributionLsids.contains(speciesLsid)) {
-        try {
-          findOutliersForLsid(speciesLsid)
-        } catch {
-          case ex: Exception => {
-            Console.err.println("ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + speciesLsid)
-            ex.printStackTrace(Console.err)
-            errorLsids += speciesLsid
-          }
+    actor {
+      val distributionLsids = getExpertDistributionLsids();
+      //println(distributionLsids.length)
+
+      if (speciesLsid != null) {
+        if (distributionLsids.contains(speciesLsid)) {
+          println("single lsid " + speciesLsid)
+          val speciesLsidInList = new ListBuffer[String]
+          speciesLsidInList += speciesLsid
+          val a = new ExpertDistributionActor();
+          a.start()
+          a !(self, speciesLsidInList)
+        } else {
+          throw new IllegalArgumentException("No expert distribution for species with taxon concept LSID " + speciesLsid)
         }
       } else {
-        throw new IllegalArgumentException("No expert distribution for species with taxon concept LSID " + speciesLsid)
-      }
-    } else {
-      for (lsid <- distributionLsids) {
-        try {
-          findOutliersForLsid(lsid)
-        } catch {
-          case ex: Exception => {
-            Console.err.println("ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + lsid)
-            ex.printStackTrace(Console.err)
-            errorLsids += lsid
+        val partitionSize = scala.math.ceil(distributionLsids.length / numThreads).toInt
+
+        for (i <- 0 to numThreads - 1) {
+          val lowerBound = partitionSize * i
+          val upperBound = lowerBound + 4
+
+          val lsidPartition = new ListBuffer[String]
+          if (upperBound >= distributionLsids.length) {
+            lsidPartition ++= distributionLsids.subList(lowerBound, distributionLsids.length)
+          } else {
+            lsidPartition ++= distributionLsids.subList(lowerBound, upperBound)
           }
+
+          println(lsidPartition)
+          println(lsidPartition.length)
+
+          val a = new ExpertDistributionActor();
+          a.start()
+          a !(self, lsidPartition)
+        }
+      }
+
+      var completedThreads = 0;
+      loopWhile(completedThreads < numThreads) {
+        receive {
+          case rowKeysForReindexing: ListBuffer[String] => {
+            for (rowKey <- rowKeysForReindexing) {
+              Console.println(rowKey)
+            }
+          }
+          case "COMPLETED" => {
+            completedThreads += 1
+            Console.err.println("THREAD COMPLETE")
+          }
+          case msg: String => Console.err.println(msg)
         }
       }
     }
-
-    if (!errorLsids.isEmpty) {
-      Console.err.println("RETRYING OUTLIER IDENTIFICATION FOR LSIDS THAT FAILED WITH ERRORS")
-      for (errorLsid <- errorLsids) {
-        Console.err.println("ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + errorLsid)
-        try {
-          findOutliersForLsid(errorLsid)
-        } catch {
-          case ex: Exception => {
-            Console.err.println("ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + errorLsid)
-            ex.printStackTrace(Console.err)
-            errorLsids += errorLsid
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Find outlier records associated with a species as identified by a taxon concept lsid
-   * @param lsid a taxon concept lsid
-   */
-  def findOutliersForLsid(lsid: String) {
-    Console.err.println("Finding distribution outliers for " + lsid)
-    val recordsMap = getRecordsForLsid(lsid)
-    val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
-    markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
   }
 
   /**
    * @return The list of taxon concept LSIDS for which an expert distribution has been loaded into the ALA
    */
-  def getExpertDistributionLsids(): ArrayBuffer[String] = {
+  def getExpertDistributionLsids(): ListBuffer[String] = {
 
     val httpClient = new HttpClient()
     val get = new GetMethod(ExpertDistributionOutlierTool.DISTRIBUTION_DETAILS_URL)
@@ -129,7 +130,7 @@ class ExpertDistributionOutlierTool {
         val listClass = classOf[java.util.List[java.util.Map[String, String]]]
         val distributionList = mapper.readValue(dataJSON, listClass)
 
-        val retBuffer = new ArrayBuffer[String]()
+        val retBuffer = new ListBuffer[String]()
         for (m <- distributionList.toArray) {
           val lsid = m.asInstanceOf[java.util.Map[String, String]].get("lsid")
           // Ignore any expert distributions for which we do not have an associated LSID.
@@ -144,6 +145,62 @@ class ExpertDistributionOutlierTool {
     } finally {
       get.releaseConnection()
     }
+  }
+}
+
+class ExpertDistributionActor extends Actor {
+
+  def act() {
+    receive {
+      case (caller: Actor, distributionLsids: ListBuffer[String]) => {
+        //record lsids for distributions that caused errors while finding outliers
+        val errorLsids = new ListBuffer[String]()
+
+        for (lsid <- distributionLsids) {
+          try {
+            caller ! "Finding distribution outliers for " + lsid
+            val rowKeysForIndexing = findOutliersForLsid(lsid)
+            caller ! rowKeysForIndexing
+          } catch {
+            case ex: Exception => {
+              caller ! "ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + lsid
+              ex.printStackTrace(Console.err)
+              errorLsids += lsid
+            }
+          }
+        }
+
+        if (!errorLsids.isEmpty) {
+          caller ! "RETRYING OUTLIER IDENTIFICATION FOR LSIDS THAT FAILED WITH ERRORS"
+          for (errorLsid <- errorLsids) {
+            caller ! "RETRYING LSID " + errorLsid
+            try {
+              val rowKeysForIndexing = findOutliersForLsid(errorLsid)
+              caller ! rowKeysForIndexing
+            } catch {
+              case ex: Exception => {
+                caller ! "ERROR OCCURRED WHILE FINDING OUTLIERS FOR LSID " + errorLsid
+                ex.printStackTrace(Console.err)
+              }
+            }
+          }
+        }
+
+        caller ! "COMPLETED"
+      }
+    }
+  }
+
+  /**
+   * Find outlier records associated with a species as identified by a taxon concept lsid
+   * @param lsid a taxon concept lsid
+   */
+  def findOutliersForLsid(lsid: String): ListBuffer[String] = {
+    val recordsMap = getRecordsForLsid(lsid)
+    val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
+    val rowKeysForIndexing = markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
+
+    rowKeysForIndexing
   }
 
   /**
@@ -232,9 +289,10 @@ class ExpertDistributionOutlierTool {
    * @param outlierDistances A map of outlier record uid to distance outside the expert distribution
    * @param recordsMap the occurrence records data
    */
-  def markOutlierOccurrences(lsid: String, outlierDistances: scala.collection.mutable.Map[String, Double], recordsMap: scala.collection.mutable.Map[String, Map[String, Object]]) {
+  def markOutlierOccurrences(lsid: String, outlierDistances: scala.collection.mutable.Map[String, Double], recordsMap: scala.collection.mutable.Map[String, Map[String, Object]]): ListBuffer[String] = {
 
     val newOutlierRowKeys = new ListBuffer[String]()
+    val rowKeysForIndexing = new ListBuffer[String]
 
     // Mark records as outliers
     for ((uuid, distance) <- outlierDistances) {
@@ -253,24 +311,23 @@ class ExpertDistributionOutlierTool {
 
           val rowKey = recordsMap(uuid)("rowKey").asInstanceOf[String]
 
-          Console.err.println("Outlier: " + uuid + "(" + rowKey + ") " + roundedDistance + " metres")
+          //Console.err.println("Outlier: " + uuid + "(" + rowKey + ") " + roundedDistance + " metres")
 
           // Add data quality assertion
-          Config.occurrenceDAO.addSystemAssertion(rowKey, QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE, roundedDistance + " metres outside of expert distribution range"))
+          // Config.occurrenceDAO.addSystemAssertion(rowKey, QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE, roundedDistance + " metres outside of expert distribution range"))
 
           // Record distance against record
-          Config.persistenceManager.put(rowKey, "occ", Map("distanceOutsideExpertRange.p" -> roundedDistance.toString()))
+          // Config.persistenceManager.put(rowKey, "occ", Map("distanceOutsideExpertRange.p" -> roundedDistance.toString()))
 
           newOutlierRowKeys += rowKey
-
-          // Print rowKey to stdout so that output of this application can be used for reindexing.
-          println(rowKey)
         }
       }
     }
 
+    rowKeysForIndexing ++= newOutlierRowKeys
+
     // Remove outlier information from any records that are no longer outliers
-    val oldRowKeysJson: String = Config.persistenceManager.get(lsid, "distribution_outliers", ExpertDistributionOutlierTool.DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY).getOrElse(null)
+    /*val oldRowKeysJson: String = Config.persistenceManager.get(lsid, "distribution_outliers", ExpertDistributionOutlierTool.DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY).getOrElse(null)
     if (oldRowKeysJson != null) {
       val oldRowKeys = Json.toList(oldRowKeysJson, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[List[String]]
 
@@ -278,18 +335,17 @@ class ExpertDistributionOutlierTool {
 
       for (rowKey <- noLongerOutlierRowKeys) {
         Console.err.println(rowKey + " is no longer an outlier")
-        Config.persistenceManager.deleteColumns(rowKey, "occ", "distanceOutsideExpertRange.p")
-        Config.occurrenceDAO.removeSystemAssertion(rowKey, AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE)
-
-        // Print rowKey to stdout so that output of this application can be used for reindexing.
-        println(rowKey)
+        //Config.persistenceManager.deleteColumns(rowKey, "occ", "distanceOutsideExpertRange.p")
+        //Config.occurrenceDAO.removeSystemAssertion(rowKey, AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE)
+        rowKeysForIndexing += rowKey
       }
-    }
+    }*/
 
     // Store row keys for the LSID in the distribution_outliers column family
     val newRowKeysJson = Json.toJSON(newOutlierRowKeys.toList)
-    Config.persistenceManager.put(lsid, "distribution_outliers", ExpertDistributionOutlierTool.DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY, newRowKeysJson)
+    //Config.persistenceManager.put(lsid, "distribution_outliers", ExpertDistributionOutlierTool.DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY, newRowKeysJson)
 
+    rowKeysForIndexing
   }
 
 }
