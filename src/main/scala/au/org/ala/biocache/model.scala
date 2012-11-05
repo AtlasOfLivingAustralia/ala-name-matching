@@ -650,14 +650,22 @@ class AssertionQuery(
   @BeanProperty var authority:String,
   @BeanProperty var assertionType:String,
   @BeanProperty var comment: String,
+  @BeanProperty var wkt: String,
   @BeanProperty var includeNew:Boolean,
   @BeanProperty var disabled:Boolean,
   @BeanProperty var lastApplied:java.util.Date,
-  @BeanProperty var records:Array[String] = Array()) extends POSO{
+  @BeanProperty var records:Array[String] = Array()
+  ) extends POSO{
   
-  def this()= this(null,null, null,null, null, null,null,null,null,null,null,null,true, false,null)
-    
-  def this(jcu:JCUAssertion) = this(jcu.apiKey + "|" + jcu.id, Config.assertionQueryDAO.createOrRetrieveUuid(jcu.apiKey + "|" + jcu.id),null,null,jcu.lastModified,null,null,null,jcu.user.email, if(jcu.user.authority != null) jcu.user.authority.toString() else null, jcu.classification, jcu.comment, true, if(jcu.ignored == null) false else jcu.ignored,null)
+  var recordCount:Int=0
+  
+  def this()= this(null,null, null,null, null, null,null,null,null,null,null,null,null,true, false,null)
+  
+  def this(jcu:JCUAssertion) = this(jcu.apiKey + "|" + jcu.id, Config.assertionQueryDAO.createOrRetrieveUuid(jcu.apiKey + "|" + jcu.id),null,null,jcu.lastModified,null,null,null,jcu.user.email, if(jcu.user.authority != null) jcu.user.authority.toString() else null, jcu.classification, jcu.comment,jcu.area, true, if(jcu.ignored == null) false else jcu.ignored,null)
+  //The number of records that have been applied to this assertion
+  def getRecordCount():Int = if(recordCount ==0)records.size else recordCount
+  def setRecordCount(value:Int) = recordCount=value
+  
 }
 
 

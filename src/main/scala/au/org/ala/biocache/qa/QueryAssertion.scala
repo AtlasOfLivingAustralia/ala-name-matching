@@ -13,10 +13,10 @@ import au.org.ala.util.{IndexRecords, OptionParser, FileHelper}
 import java.io.File
 import scala.collection.JavaConversions
 import au.org.ala.biocache.outliers.Timings
+import org.codehaus.jackson.map.ObjectMapper
 
 object QueryAssertion{
-  def main(args: Array[String]) {
-    //new QueryAssertion().applySingle("jcuap03|5069")
+  def main(args: Array[String]) {    
     var apiKey:Option[String] = None
     var id:Option[String] = None
     var unapply =false
@@ -109,6 +109,18 @@ class QueryAssertion {
           assertion.uuid = Config.assertionQueryDAO.createUuid
           Config.persistenceManager.put(assertion.id, "queryassert","uuid",assertion.uuid)
         }
+    if(assertion.wkt == null){
+      //attempt to locate one from the raw query
+      try{
+        val om = new ObjectMapper()
+        val jcuAssertion =om.readValue(assertion.rawAssertion, classOf[au.org.ala.biocache.JCUAssertion])
+        println(assertion.id + " " + jcuAssertion.area)
+        Config.persistenceManager.put(assertion.id, "queryassert","wkt",jcuAssertion.area)
+      }
+      catch{
+        case e:Exception =>e.printStackTrace()
+      }
+    }
         if(assertion.disabled){
           //potentially need to remove the associated records
           modifyList(assertion.records.toList, assertion, buffer, false)
