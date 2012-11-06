@@ -110,3 +110,9 @@ OriginalSeedQuantity_i	integer	OriginalSeedQuantity	F	F		T
 AdjustedSeedQuantity_i	integer	AdjustedSeedQuantity	F	F		T
 CurrentSeedQuantity_i	integer	CurrentSeedQuantity	F	F		T
 ViabilitySummary_d	double	ViabilitySummary	F	F		T
+elevation_d	double	verbatimElevation.p	F	F		F
+min_elevation_d	double	minimumElevationInMeters.p	F	F		F
+max_elevation_d	double	maximumElevationInMeters.p	F	F		F
+depth_d	double	verbatimDepth.p	F	F		F
+min_depth_d	double	minimumDepthInMeters.p	F	F		F
+max_depth_d	double	maximumDepthInMeters.p	F	F		F
