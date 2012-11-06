@@ -8,6 +8,7 @@ import collection.mutable.{ListBuffer, ArrayBuffer}
 import java.text.{DateFormat, SimpleDateFormat, MessageFormat}
 import collection.JavaConversions._
 import au.org.ala.biocache.{Json, AssertionCodes, QualityAssertion, Config}
+import util.concurrent.CountDownLatch
 import util.TimeZone
 import actors.Actor._
 import actors.Actor
@@ -33,7 +34,6 @@ object ExpertDistributionOutlierTool {
 
   def main(args: Array[String]) {
     val tool = new ExpertDistributionOutlierTool();
-
     var speciesLsid: String = null
     var numThreads = 1
 
@@ -60,26 +60,29 @@ class ExpertDistributionOutlierTool {
    */
   def findOutliers(speciesLsid: String, numThreads: Int) {
 
+    val countDownLatch = new CountDownLatch(numThreads);
+
     actor {
       val distributionLsids = getExpertDistributionLsids();
 
       if (speciesLsid != null) {
+        // If we are only finding outliers for a single lsid, one worker actor will suffice, no need to partition the work.
         if (distributionLsids.contains(speciesLsid)) {
-          println("single lsid " + speciesLsid)
           val speciesLsidInList = new ListBuffer[String]
           speciesLsidInList += speciesLsid
           val a = new ExpertDistributionActor(0, self);
           a.start()
-          a !(speciesLsidInList)
+          a ! (speciesLsidInList)
         } else {
           throw new IllegalArgumentException("No expert distribution for species with taxon concept LSID " + speciesLsid)
         }
       } else {
+        // Partition the lsids for which outliers need to be processed, and get an actor to work on each batch
         val partitionSize = scala.math.ceil(distributionLsids.length / numThreads).toInt
 
         for (i <- 0 to numThreads - 1) {
           val lowerBound = partitionSize * i
-          val upperBound = lowerBound + 4
+          val upperBound = lowerBound + partitionSize
 
           val lsidPartition = new ListBuffer[String]
           if (upperBound >= distributionLsids.length) {
@@ -90,7 +93,7 @@ class ExpertDistributionOutlierTool {
 
           val a = new ExpertDistributionActor(i, self);
           a.start()
-          a !(lsidPartition)
+          a ! (lsidPartition)
         }
       }
 
@@ -105,11 +108,15 @@ class ExpertDistributionOutlierTool {
           case "COMPLETED" => {
             completedThreads += 1
             Console.err.println("THREAD COMPLETE")
+            countDownLatch.countDown()
           }
           case msg: String => Console.err.println(msg)
         }
       }
     }
+
+    // Calling thread must wait until all actors have finished processing.
+    countDownLatch.await()
   }
 
   /**
@@ -183,6 +190,7 @@ class ExpertDistributionActor(val id: Int, val caller: Actor) extends Actor {
           }
         }
 
+        caller ! id + " Completed"
         caller ! "COMPLETED"
       }
     }
