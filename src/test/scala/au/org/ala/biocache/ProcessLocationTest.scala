@@ -25,8 +25,10 @@ class ProcessLocationTest extends ConfigFunSuite {
     tp.setScientificName("Macropus rufus")
     tp.setHabitats(Array("Non-marine"))
     TaxonProfileDAO.add(tp);
+    
     pm.put("-35.21667|144.81060", "loc", "stateProvince","New South Wales")
     pm.put("-35.2|144.8", "loc", "stateProvince","New South Wales")
+    println(pm)
   }
 
   test("State based sensitivity"){
@@ -346,5 +348,63 @@ class ProcessLocationTest extends ConfigFunSuite {
     expect(27) {
       qas(0).code
     }
+  }
+  
+  test("non numeric depth"){
+    val raw = new FullRecord
+    var processed = new FullRecord
+    raw.location.verbatimDepth = "test"
+    val qas = (new LocationProcessor).process("test", raw, processed)
+    expect(15){qas(0).code}
+  }
+  
+  test("non numeric altitude"){
+    val raw = new FullRecord
+    var processed = new FullRecord
+    raw.location.verbatimElevation="test"
+    val qas = (new LocationProcessor).process("test", raw, processed)
+    expect(14){qas(0).code}  
+  }
+  
+  test("depth out of range"){
+    val raw = new FullRecord
+    var processed = new FullRecord
+    raw.location.verbatimDepth ="20000"    
+    var qas = (new LocationProcessor).process("test", raw, processed)
+    expect(11){qas(0).code}
+    raw.location.verbatimDepth="200"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0){qas.size}
+  }
+  
+  test("altitude out of range"){
+    val raw = new FullRecord
+    var processed = new FullRecord
+    raw.location.verbatimElevation = "20000"    
+    var qas = (new LocationProcessor).process("test", raw, processed)
+    expect(7){qas(0).code}
+    raw.location.verbatimElevation = "-200"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(7){qas(0).code}
+    raw.location.verbatimElevation="100" 
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0){qas.size}  
+  }
+  
+  test("transposed min and max"){
+    val raw = new FullRecord
+    var processed = new FullRecord
+    raw.location.minimumDepthInMeters = "20"
+    raw.location.maximumDepthInMeters = "10"
+    var qas = (new LocationProcessor).process("test", raw, processed)
+    expect(12){qas(0).code}
+    raw.location.maximumDepthInMeters="100"
+    raw.location.minimumElevationInMeters = "100"
+    raw.location.maximumElevationInMeters = "20"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(9){qas(0).code}
+    raw.location.maximumElevationInMeters="test"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0){qas.size}  
   }
 }

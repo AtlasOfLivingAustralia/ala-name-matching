@@ -113,7 +113,7 @@ class MiscellaneousProcessor extends Processor {
       //processIdentification(raw,processed,assertions)
       processCollectors(raw,processed,assertions)
       assertions.toArray
-  }
+  }  
   /**
    * parse the collector string to place in a consistent format
    */
@@ -514,6 +514,8 @@ class LocationProcessor extends Processor {
 
     //handle the situation where the coordinates have already been sensitised
     setProcessedCoordinates(raw, processed)
+    
+    processAltitudeAndDepth(guid, raw, processed, assertions)
 
     //Continue processing location if a processed longitude and latitude exists
     if (processed.location.decimalLatitude != null && processed.location.decimalLongitude != null) {
@@ -606,6 +608,71 @@ class LocationProcessor extends Processor {
     //validateGeoreferenceValues(raw,processed,assertions)
     
     assertions.toArray
+  }
+  /**
+   * Performs the QAs associated with elevation and depth
+   */
+  def processAltitudeAndDepth(guid:String, raw:FullRecord, processed:FullRecord, assertions: ArrayBuffer[QualityAssertion]){
+    //check that the values are numeric
+    if(raw.location.verbatimDepth !=  null){
+      try{
+        val vdepth = raw.location.verbatimDepth.toFloat
+        processed.location.verbatimDepth = vdepth.toString
+        if(vdepth > 10000)
+          assertions  + QualityAssertion(AssertionCodes.DEPTH_OUT_OF_RANGE, "Depth " + vdepth + " is greater than 10,000 metres")
+      }
+      catch{
+        case e:Exception => assertions + QualityAssertion(AssertionCodes.DEPTH_NON_NUMERIC, "Can't parse verbatimDepth " + raw.location.verbatimDepth)
+      }
+    }
+    if(raw.location.verbatimElevation != null){
+      try{
+        val velevation = raw.location.verbatimElevation.toFloat
+        processed.location.verbatimElevation = velevation.toString
+        if(velevation > 10000 || velevation < -100)
+          assertions + QualityAssertion(AssertionCodes.ALTITUDE_OUT_OF_RANGE, "Elevation " + velevation + " is greater than 10,000 metres or less than -100 metres.")
+      }
+      catch{
+        case e:Exception => assertions + QualityAssertion(AssertionCodes.ALTITUDE_NON_NUMERIC, "Can't parse verbatimElevation " + raw.location.verbatimElevation)
+      }
+    }
+    //check for max and min reversals
+    if(raw.location.minimumDepthInMeters != null && raw.location.maximumDepthInMeters != null){
+      try{
+        val min = raw.location.minimumDepthInMeters.toFloat
+        val max = raw.location.maximumDepthInMeters.toFloat        
+        if(min > max){
+          processed.location.minimumDepthInMeters = max.toString
+          processed.location.maximumDepthInMeters = min.toString
+          assertions + QualityAssertion(AssertionCodes.MIN_MAX_DEPTH_REVERSED, "The minimum, " + min + ", and maximum, " + max + ", depths have been transposed.")
+        }
+        else{
+          processed.location.minimumDepthInMeters = min.toString
+          processed.location.maximumDepthInMeters = max.toString
+        }
+      }
+      catch{
+        case _ =>
+      }
+    }
+    if(raw.location.minimumElevationInMeters != null && raw.location.maximumElevationInMeters != null){
+      try{
+        val min = raw.location.minimumElevationInMeters.toFloat
+        val max = raw.location.maximumElevationInMeters.toFloat
+        if(min > max){
+          processed.location.minimumElevationInMeters = max.toString
+          processed.location.maximumElevationInMeters = min.toString
+          assertions + QualityAssertion(AssertionCodes.MIN_MAX_ALTITUDE_REVERSED, "The minimum, " + min + ", and maximum, " + max + ", elevations have been transposed.")
+        }
+        else{
+          processed.location.minimumElevationInMeters = min.toString
+          processed.location.maximumElevationInMeters = max.toString
+        }
+      }
+      catch{
+        case _=>
+      }
+    }
   }
 
   def setProcessedCoordinates(raw: FullRecord, processed: FullRecord) {
