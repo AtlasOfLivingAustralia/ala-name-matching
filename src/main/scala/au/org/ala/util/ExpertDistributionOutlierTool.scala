@@ -78,7 +78,7 @@ class ExpertDistributionOutlierTool {
         }
       } else {
         // Partition the lsids for which outliers need to be processed, and get an actor to work on each batch
-        val partitionSize = scala.math.ceil(distributionLsids.length / numThreads).toInt
+        val partitionSize = scala.math.ceil(distributionLsids.length / (numThreads * 1.0)).toInt
 
         for (i <- 0 to numThreads - 1) {
           val lowerBound = partitionSize * i
