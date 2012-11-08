@@ -78,8 +78,6 @@ class MorphbankLoader extends CustomWebserviceLoader {
   val specimenPhotographerMap = new scala.collection.mutable.HashMap[String, String]()
 
   val httpClient = new HttpClient()
-  val httpClientParams = new HttpConnectionManagerParams()
-  httpClientParams.setMaxTotalConnections(500)
 
   def load(dataResourceUid: String) {
     val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
@@ -126,7 +124,6 @@ class MorphbankLoader extends CustomWebserviceLoader {
       println("Finished processing records with keywords " + keywords + ". Loaded " + loadedSpecimens + " specimens, and " + loadedImages + " images.")
     }
 
-    httpClient.getHttpConnectionManager.closeIdleConnections(1000)
   }
 
   def getXMLFromWebService(requestUrl: String): Elem = {
@@ -145,6 +142,7 @@ class MorphbankLoader extends CustomWebserviceLoader {
     }
 
     XML.loadString(xmlContent)
+    httpClient.getHttpConnectionManager.closeIdleConnections(0)
   }
 
   def processSpecimen(specimen: Node, dataResourceUid: String, uniqueTerms: List[String], specimenPageUrlTemplate: String) {
