@@ -9,6 +9,7 @@ import java.text.MessageFormat
 import scala.xml.Node
 import org.apache.commons.lang3.StringUtils
 import collection.mutable
+import org.apache.commons.httpclient.params.HttpConnectionManagerParams
 
 object MorphbankLoader extends DataLoader {
 
@@ -76,6 +77,10 @@ class MorphbankLoader extends CustomWebserviceLoader {
   val specimenLicenseMap = new scala.collection.mutable.HashMap[String, String]()
   val specimenPhotographerMap = new scala.collection.mutable.HashMap[String, String]()
 
+  val httpClient = new HttpClient()
+  val httpClientParams = new HttpConnectionManagerParams()
+  httpClientParams.setMaxTotalConnections(500)
+
   def load(dataResourceUid: String) {
     val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
     var idsUrlTemplate = params("url")
@@ -120,12 +125,13 @@ class MorphbankLoader extends CustomWebserviceLoader {
 
       println("Finished processing records with keywords " + keywords + ". Loaded " + loadedSpecimens + " specimens, and " + loadedImages + " images.")
     }
+
+    httpClient.getHttpConnectionManager.closeIdleConnections(1000)
   }
 
   def getXMLFromWebService(requestUrl: String): Elem = {
     var xmlContent: String = null
 
-    val httpClient = new HttpClient()
     val get = new GetMethod(requestUrl)
     try {
       val responseCode = httpClient.executeMethod(get)
