@@ -139,9 +139,9 @@ class MorphbankLoader extends CustomWebserviceLoader {
       }
     } finally {
       get.releaseConnection()
+      httpClient.getHttpConnectionManager.closeIdleConnections(0)
     }
 
-    httpClient.getHttpConnectionManager.closeIdleConnections(0)
     XML.loadString(xmlContent)
   }
 
@@ -284,11 +284,11 @@ class MorphbankLoader extends CustomWebserviceLoader {
 
   def getImageMimeType(imageUrl: String): String = {
 
-    val httpClient = new HttpClient()
     val get = new GetMethod(imageUrl)
     httpClient.executeMethod(get)
     val mimeType = get.getResponseHeader("Content-Type").getValue
     get.releaseConnection()
+    httpClient.getHttpConnectionManager.closeIdleConnections(0)
 
     mimeType
   }
