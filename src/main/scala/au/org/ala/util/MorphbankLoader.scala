@@ -141,8 +141,8 @@ class MorphbankLoader extends CustomWebserviceLoader {
       get.releaseConnection()
     }
 
-    XML.loadString(xmlContent)
     httpClient.getHttpConnectionManager.closeIdleConnections(0)
+    XML.loadString(xmlContent)
   }
 
   def processSpecimen(specimen: Node, dataResourceUid: String, uniqueTerms: List[String], specimenPageUrlTemplate: String) {
