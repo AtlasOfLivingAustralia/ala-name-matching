@@ -10,6 +10,7 @@ import scala.xml.Node
 import org.apache.commons.lang3.StringUtils
 import collection.mutable
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams
+import org.apache.commons.codec.digest.DigestUtils
 
 object MorphbankLoader extends DataLoader {
 
@@ -44,9 +45,10 @@ object MorphbankLoader extends DataLoader {
 
   val OCC_NAMESPACE = "occ"
 
-  // A large number of images have broken HTML in the licence information field. Replace such values with a textual version of the appropriate licence.
-  val PARTIAL_HTML_LICENCE_TEXT = "<a rel=\"license\" href=\"http://creativecommons.org/licenses/by-nc/3.0/\"><img alt=\"Creative Commons License\" style=\"border-width:0\" src=\"http://i.creativecommons.org/l/by-nc/3.0/88x31.png\" /></a><br />This work is licensed under a <a rel=\"license\" href=\"htt"
+  // A large number of images have HTML in the licence information field, which includes a link to the following remote image. Replace such values with a textual version of the appropriate licence.
+  val CREATIVE_COMMONS_IMG = "http://i.creativecommons.org/l/by-nc/3.0/88x31.png"
   val REPLACEMENT_FOR_PARTIAL_HTML_LICENCE_TEXT = "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
+  val PLACEHOLDER_IMAGE_MD5 = "b5e90bf8f521706a3b2a88f2602990b8"
 
   /* val fieldMapping = Map(
 ("sourceId" -> "catalogNumber"),
@@ -218,7 +220,7 @@ class MorphbankLoader extends CustomWebserviceLoader {
 
       if (!(image \\ MorphbankLoader.CREATIVE_COMMONS_KEY).isEmpty) {
         creativeCommonsLicenceText = (image \\ MorphbankLoader.CREATIVE_COMMONS_KEY).head.text.trim()
-        if (creativeCommonsLicenceText == MorphbankLoader.PARTIAL_HTML_LICENCE_TEXT) {
+        if (creativeCommonsLicenceText.contains(MorphbankLoader.CREATIVE_COMMONS_IMG)) {
           creativeCommonsLicenceText = MorphbankLoader.REPLACEMENT_FOR_PARTIAL_HTML_LICENCE_TEXT
         }
       }
@@ -253,7 +255,7 @@ class MorphbankLoader extends CustomWebserviceLoader {
       // Test each image url. If it returns mimetype image/png, we know that this is a placeholder image. In this case, the image should be ignored.
       val placeholderImageUrls = new mutable.ListBuffer[String]()
       for (specimenImageUrl <- specimenImageUrls) {
-        if (getImageMimeType(specimenImageUrl) != "image/jpeg") {
+        if (isPlaceholderImage(specimenImageUrl)) {
           placeholderImageUrls.append(specimenImageUrl)
           println("Ignoring placeholder image " + specimenImageUrl)
         }
@@ -263,6 +265,7 @@ class MorphbankLoader extends CustomWebserviceLoader {
         specimenImageUrls = specimenImageUrls - placeholderImageUrl
       }
 
+      //TODO - NEED TO REMOVE ANY DUPLICATES FROM THE IMAGE URL LIST!!!!!!!!!!!!!
       var mappedValues = Map(MorphbankLoader.CATALOG_NUMBER_DWC_KEY -> specimenId, MorphbankLoader.ASSOCIATED_MEDIA_DWC_KEY -> specimenImageUrls.mkString(";"))
 
       if (specimenImagesLicence != null) {
@@ -282,15 +285,16 @@ class MorphbankLoader extends CustomWebserviceLoader {
     }
   }
 
-  def getImageMimeType(imageUrl: String): String = {
+  def isPlaceholderImage(imageUrl: String): Boolean = {
 
     val get = new GetMethod(imageUrl)
     httpClient.executeMethod(get)
-    val mimeType = get.getResponseHeader("Content-Type").getValue
+    val responseBytes = get.getResponseBody()
+    val md5Hex = DigestUtils.md5Hex(responseBytes)
     get.releaseConnection()
     httpClient.getHttpConnectionManager.closeIdleConnections(0)
 
-    mimeType
+    md5Hex == MorphbankLoader.PLACEHOLDER_IMAGE_MD5
   }
 
 }
