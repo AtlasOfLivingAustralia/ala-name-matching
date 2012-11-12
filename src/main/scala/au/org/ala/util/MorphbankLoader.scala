@@ -47,7 +47,7 @@ object MorphbankLoader extends DataLoader {
 
   // A large number of images have HTML in the licence information field, which includes a link to the following remote image. Replace such values with a textual version of the appropriate licence.
   val CREATIVE_COMMONS_IMG = "http://i.creativecommons.org/l/by-nc/3.0/88x31.png"
-  val REPLACEMENT_FOR_PARTIAL_HTML_LICENCE_TEXT = "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
+  val REPLACEMENT_FOR_HTML_LICENCE_TEXT = "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
   val PLACEHOLDER_IMAGE_MD5 = "b5e90bf8f521706a3b2a88f2602990b8"
 
   /* val fieldMapping = Map(
@@ -221,7 +221,7 @@ class MorphbankLoader extends CustomWebserviceLoader {
       if (!(image \\ MorphbankLoader.CREATIVE_COMMONS_KEY).isEmpty) {
         creativeCommonsLicenceText = (image \\ MorphbankLoader.CREATIVE_COMMONS_KEY).head.text.trim()
         if (creativeCommonsLicenceText.contains(MorphbankLoader.CREATIVE_COMMONS_IMG)) {
-          creativeCommonsLicenceText = MorphbankLoader.REPLACEMENT_FOR_PARTIAL_HTML_LICENCE_TEXT
+          creativeCommonsLicenceText = MorphbankLoader.REPLACEMENT_FOR_HTML_LICENCE_TEXT
         }
       }
 
@@ -265,8 +265,14 @@ class MorphbankLoader extends CustomWebserviceLoader {
         specimenImageUrls = specimenImageUrls - placeholderImageUrl
       }
 
-      //TODO - NEED TO REMOVE ANY DUPLICATES FROM THE IMAGE URL LIST!!!!!!!!!!!!!
-      var mappedValues = Map(MorphbankLoader.CATALOG_NUMBER_DWC_KEY -> specimenId, MorphbankLoader.ASSOCIATED_MEDIA_DWC_KEY -> specimenImageUrls.mkString(";"))
+      //Remove any duplicates from the URL list
+      var specimenImageUrlsSet = Set[String]()
+      for (imageUrl <- specimenImageUrls) {
+        specimenImageUrlsSet = specimenImageUrlsSet + imageUrl
+      }
+      val specimenImageUrlsNoDuplicates = specimenImageUrlsSet.toSeq.sortWith((s1, s2) => s1 < s2)
+
+      var mappedValues = Map(MorphbankLoader.CATALOG_NUMBER_DWC_KEY -> specimenId, MorphbankLoader.ASSOCIATED_MEDIA_DWC_KEY -> specimenImageUrlsNoDuplicates.mkString(";"))
 
       if (specimenImagesLicence != null) {
         mappedValues += (MorphbankLoader.RIGHTS_DWC_KEY -> specimenImagesLicence)
