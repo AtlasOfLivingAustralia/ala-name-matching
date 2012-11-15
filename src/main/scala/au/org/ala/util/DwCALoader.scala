@@ -76,24 +76,35 @@ class DwCALoader extends DataLoader {
     import ReflectBean._
     import JavaConversions._
     
-    def load(resourceUid:String, logRowKeys:Boolean=false, testFile:Boolean=false){
+    def load(resourceUid:String, logRowKeys:Boolean=false, testFile:Boolean=false, forceLoad:Boolean = false){
       //remove the old row keys:
       deleteOldRowKeys(resourceUid)
-    	val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(resourceUid)
+    	val (protocol, urls, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(resourceUid)
     	val conceptTerms = mapConceptTerms(uniqueTerms)
     	val incremental = params.getOrElse("incremental", false).asInstanceOf[Boolean]
-    	val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]    	
+    	val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]   
+      var loaded = false
+      var maxLastModifiedDate:java.util.Date = null
       urls.foreach(url => {
           //download
-        val fileName = downloadArchive(url,resourceUid)
+        val (fileName,date) = downloadArchive(url,resourceUid,if(forceLoad)None else lastChecked)
+        if(maxLastModifiedDate == null || date.after(maxLastModifiedDate))
+            maxLastModifiedDate = date
+        println("File last modified date: " + maxLastModifiedDate)
+        if(fileName != null){
           //load the DWC file
-        loadArchive(fileName, resourceUid, conceptTerms, strip, logRowKeys||incremental,testFile)
+          loadArchive(fileName, resourceUid, conceptTerms, strip, logRowKeys||incremental,testFile)
+          loaded = true
+        }
       })
+      //now update the last checked and if necessary data currency dates
+      if(!testFile)
+        updateLastChecked(resourceUid, if(loaded) Some(maxLastModifiedDate) else None)
       
     }
     
     def loadLocal(resourceUid:String, fileName:String, logRowKeys:Boolean, testFile:Boolean){
-    	val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(resourceUid)
+    	val (protocol, url, uniqueTerms, params, customParams,lastChecked) = retrieveConnectionParameters(resourceUid)
     	val conceptTerms = mapConceptTerms(uniqueTerms)
     	val strip = params.getOrElse("strip", false).asInstanceOf[Boolean] 
         //load the DWC file

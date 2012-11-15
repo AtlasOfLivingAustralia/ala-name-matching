@@ -19,6 +19,7 @@ import java.io.FileInputStream
 import com.jcraft.jsch.Session
 import org.rev6.scf._
 import org.apache.commons.lang3.StringUtils
+import java.util.Date
 
 
 class SimpleLoader extends DataLoader
@@ -45,6 +46,7 @@ trait DataLoader {
     
     import FileHelper._
     import JavaConversions._
+    import BiocacheConversions._
     val user = "harvest services"
     val api_key = "Venezuela"
     val logger = LoggerFactory.getLogger("DataLoader")
@@ -75,6 +77,7 @@ trait DataLoader {
     def getDataResourceDetailsAsMap(resourceUid:String) : Map[String, String] = {
       val json = Source.fromURL(registryUrl + resourceUid + ".json").getLines.mkString
       JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
+      //getTestDRAsMap(resourceUid)
     }
     def getTestDRAsMap(resourceUid:String) :Map[String,String] ={
       val json ="""{
@@ -199,25 +202,26 @@ trait DataLoader {
         }
     ],
     "connectionParameters": {
-        "protocol": "DwC",
-        "csv_text_enclosure": "\"",
+        "protocolold": "DwCA",
+        "protocol": "AutoFeed",
+        "protocolold2": "DwC",
         "termsForUniqueKey": [
-            "institutionCode",
-            "catalogNumber"
-        ],
-        "csv_eol": "\n",
-        "csv_delimiter": "\\t",
-        "automation": false,
-        "strip": true,
-        "csv_escape_char": "|",
-        "url": ["sftp://upload.ala.org.au:avh/AVH_CNS.zip"]
+        "institutionCode",
+        "catalogNumber"
+    ],
+    "automation": false,
+    "incremental": true,
+    "strip": true,
+    "urlold": "sftp://upload.ala.org.au:avh",
+     "urlold2": "http://www2.ala.org.au/datasets/occurrence/dr743/ala_full_upload_mapped.csv",
+     "url": "sftp://upload.ala.org.au:anwc"
     },
     "defaultDarwinCoreValues": { },
     "hasMappedCollections": true,
     "status": "dataAvailable",
     "provenance": "Published dataset",
     "harvestFrequency": 0,
-    "lastChecked": null,
+    "lastChecked": "2012-11-13T13:00:00Z",
     "dataCurrency": null,
     "harvestingNotes": null,
     "publicArchiveAvailable": false,
@@ -237,7 +241,7 @@ trait DataLoader {
       JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
     }
 
-    def retrieveConnectionParameters(resourceUid: String) : (String, List[String], List[String], Map[String,String], Map[String,String]) = {
+    def retrieveConnectionParameters(resourceUid: String) : (String, List[String], List[String], Map[String,String], Map[String,String],Option[Date]) = {
 
       //full document
       val map = getDataResourceDetailsAsMap(resourceUid)
@@ -265,7 +269,10 @@ trait DataLoader {
           }
           case _ => Map[String,String]()
       }
-      (protocol, urls.asInstanceOf[List[String]], uniqueTerms, map("connectionParameters").asInstanceOf[Map[String,String]], customParams)
+      //last checked date
+      val lastChecked = map("lastChecked").asInstanceOf[String]
+      val dateLastChecked = DateParser.parseStringToDate(lastChecked)
+      (protocol, urls.asInstanceOf[List[String]], uniqueTerms, map("connectionParameters").asInstanceOf[Map[String,String]], customParams,dateLastChecked)
     }
     
     def mapConceptTerms(terms: List[String]): List[org.gbif.dwc.terms.ConceptTerm] = {
@@ -350,21 +357,22 @@ trait DataLoader {
         true
     }
     
-    def downloadArchive(url:String, resourceUid:String) : String = {
+    def downloadArchive(url:String, resourceUid:String, lastChecked:Option[Date]) : (String,Date) = {
       //when the url starts with SFTP need to SCP the file from the supplied server.
-      val (file,isZipped,isGzipped) ={
+      val (file,date,isZipped,isGzipped) ={
         if(url.startsWith("sftp://"))      
-          downloadSecureArchive(url,resourceUid)
+          downloadSecureArchive(url,resourceUid,lastChecked)
         else
-          downloadStandardArchive(url, resourceUid)
+          downloadStandardArchive(url, resourceUid,lastChecked)
       }
+      if(file != null){
       //extract the file
         if (isZipped){
           println("Extracting ZIP " + file.getAbsolutePath)
           file.extractZip
           val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
           println("Archive extracted to directory: " + fileName)
-          fileName
+          (fileName,date)
         } else if (isGzipped){
           println("Extracting GZIP " + file.getAbsolutePath)
           file.extractGzip
@@ -372,58 +380,71 @@ trait DataLoader {
           FileUtils.forceDelete(file)
           val fileName = FilenameUtils.removeExtension(file.getAbsolutePath)
           println("Archive extracted to directory: " + fileName)
-          (new File(fileName)).getParentFile.getAbsolutePath
+          ((new File(fileName)).getParentFile.getAbsolutePath,date)
         } else {
-          file.getParentFile.getAbsolutePath
+          (file.getParentFile.getAbsolutePath,date)
         }
+      }
+      else{
+        println("Unable to extract a new file for " +resourceUid + " at " + url)
+        (null,null)
+      }
       
     }
     val sftpPattern = """sftp://([a-zA-z\.]*):([0-9a-zA-Z_/\.\-]*)""".r
-    def downloadSecureArchive(url:String, resourceUid:String) : (File,Boolean,Boolean) = {
+    def downloadSecureArchive(url:String, resourceUid:String, lastChecked:Option[Date]) : (File, Date,Boolean,Boolean) = {
       url match{
         case sftpPattern(server,filename)=>{
-          val (targetfile, isZipped, isGzipped,downloaded) = {
+          val (targetfile,date, isZipped, isGzipped,downloaded) = {
           if (url.endsWith(".zip") ){
             val f = new File(temporaryFileStore + resourceUid + ".zip")
             f.createNewFile()
-            (f, true, false,false)
+            (f,null, true, false,false)
           } else if (url.endsWith(".gz")){
             val f = new File(temporaryFileStore + resourceUid + File.separator + resourceUid +".gz")
             println("  creating file: " + f.getAbsolutePath)
             FileUtils.forceMkdir(f.getParentFile())
             f.createNewFile()
-            (f, false, true,false)
+            (f,null, false, true,false)
           } else if (filename.contains(".")) {
             val f = new File(temporaryFileStore + resourceUid + File.separator + resourceUid +".csv")
             println("  creating file: " + f.getAbsolutePath)
             FileUtils.forceMkdir(f.getParentFile())
             f.createNewFile()
-            (f, false, false,false)
+            (f,null, false, false,false)
           }
           else{
             println("SFTP the most recent from " + url)
-            def file = SFTPTools.sftpLatestArchive(url, resourceUid, temporaryFileStore)
-            if(file.isDefined){
-              println("The most recent file is " + file)
-              (new File(file.get),file.get.endsWith("zip"),file.get.endsWith("gz"),true)
+            def fileDetails = SFTPTools.sftpLatestArchive(url, resourceUid, temporaryFileStore,lastChecked)
+            if(fileDetails.isDefined){
+              val (file, date) = fileDetails.get
+              println("The most recent file is " + file + " with last modified date : " + date)
+              (new File(file),date,file.endsWith("zip"),file.endsWith("gz"),true)
             }
             else
-              (null,false,false,false)
+              (null,null,false,false,false)
           }}
           
-          val file = if(!downloaded)SFTPTools.scpFile(server,Config.getProperty("uploadUser"), Config.getProperty("uploadPassword"),filename,targetfile) else Some(targetfile)          
-          (if(file.isDefined)targetfile else null,isZipped,isGzipped)
+          val fileDetails = if(targetfile == null) None else if(!downloaded)SFTPTools.scpFile(server,Config.getProperty("uploadUser"), Config.getProperty("uploadPassword"),filename,targetfile) else Some((targetfile,date))
+          if(fileDetails.isDefined){
+            val (file, date) = fileDetails.get
+            (targetfile,date,isZipped,isGzipped)
+          }
+          else
+            (null,null,false,false)
+            
+          //(if(file.isDefined)targetfile else null,isZipped,isGzipped)
         }
-        case _ => (null,false,false)
+        case _ => (null,null,false,false)
       }
       
     }
     
-    def sftpLatestArchive(url:String, resourceUid:String):Option[String]={
-      SFTPTools.sftpLatestArchive(url, resourceUid, temporaryFileStore)
+    def sftpLatestArchive(url:String, resourceUid:String, afterDate:Option[Date]):Option[(String,Date)]={
+      SFTPTools.sftpLatestArchive(url, resourceUid, temporaryFileStore,afterDate)
     }
 
-    def downloadStandardArchive(url:String, resourceUid:String) : (File,Boolean,Boolean) = {
+    def downloadStandardArchive(url:String, resourceUid:String, afterDate:Option[Date]) : (File,Date,Boolean,Boolean) = {
         val tmpStore = new File(temporaryFileStore)
         if(!tmpStore.exists){
         	FileUtils.forceMkdir(tmpStore)
@@ -431,6 +452,9 @@ trait DataLoader {
 
         print("Downloading zip file from "+ url)
         val urlConnection = new java.net.URL(url.replaceAll(" " ,"%20")).openConnection()
+        val date = if(urlConnection.getLastModified() == 0) new Date() else new Date(urlConnection.getLastModified())
+        //println("URL Last Modified: " +urlConnection.getLastModified())
+        if(afterDate.isEmpty || urlConnection.getLastModified() ==0 || afterDate.get.getTime() < urlConnection.getLastModified()){
         //handle the situation where the files name is not supplied in the URL but in the Content-Disposition
         val contentDisp = urlConnection.getHeaderField("Content-Disposition");
         if(contentDisp != null)
@@ -470,20 +494,31 @@ trait DataLoader {
 
         printf("\nDownloaded. File size: ", counter / 1024 +"kB, " + file.getAbsolutePath +", is zipped: " + isZipped+"\n")
 
-        (file,isZipped,isGzipped)
+        (file,date,isZipped,isGzipped)
+        }
+        else{
+          (null,null,false,false)
+        }
     }
 
     /**
      * Calls the collectory webservice to update the last loaded time for a data resource
      */
-    def updateLastChecked(resourceUid:String) :Boolean ={
+    def updateLastChecked(resourceUid:String,dataCurrency:Option[Date]=None) :Boolean ={
         try {
-          //set the last check time for the supplied resourceUid
-          val map = Map("user"-> user, "api_key"-> api_key, "lastChecked" ->loadTime)
-          //turn the map of values into JSON representation
-          val data = map.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
-          //"http://woodfired.ala.org.au:8080/Collectory/ws/dataResource/"
-          println(Http.postData(registryUrl+resourceUid,data).header("content-type", "application/json").responseCode)
+          //set the last check time for the supplied resourceUid only if configured to allow updates
+          if(Config.allowCollectoryUpdates == "true"){
+            val map =new  scala.collection.mutable.HashMap[String,String]()
+            map ++=Map("user"-> user, "api_key"-> api_key, "lastChecked" ->loadTime)
+            if(dataCurrency.isDefined)
+              map += ("dataCurrency" -> dataCurrency.get) 
+            //turn the map of values into JSON representation
+            val data = map.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
+            
+            //"http://woodfired.ala.org.au:8080/Collectory/ws/dataResource/"
+                       
+            println(Http.postData(registryUrl+resourceUid,data).header("content-type", "application/json").responseCode)
+          }
           true
         } catch {
           case e:Exception => e.printStackTrace();false
@@ -506,7 +541,7 @@ object SFTPTools {
       var session:Session = null
       val sftpPattern = """sftp://([a-zA-z\.]*):([0-9a-zA-Z_/\.\-]*)""".r
       
-      def sftpLatestArchive(url:String, resourceUid:String, tempDir:String):Option[String]={
+      def sftpLatestArchive(url:String, resourceUid:String, tempDir:String, afterDate:Option[Date]):Option[(String,Date)]={
         
         val (user,password,host,directory) ={
           url match{
@@ -523,7 +558,7 @@ object SFTPTools {
           case _=>logger.error("Unable to connect to " + url);(null,null,null,null)
         }}
         connect(host, user, password)
-        val lastFile = getLatestFile(directory, "*.*")
+        val lastFile = getLatestFile(directory, "*.*",afterDate)
         disconnect
         if(lastFile.isDefined){
           val dir = tempDir + resourceUid
@@ -551,13 +586,15 @@ object SFTPTools {
         channelSftp.disconnect()
         session.disconnect()
       }
-      def getLatestFile(dir:String, filePattern:String):Option[String]={
+      def getLatestFile(dir:String, filePattern:String, afterDate:Option[Date]):Option[String]={
         
         val list = listFiles(dir+File.separator+filePattern)
         if(list.size>0){
           val item=list.reduceLeft((a,b)=>if(a.getAttrs().getMTime() > b.getAttrs().getMTime()) a else b)
-                    
-          Some(dir + File.separator+item.getFilename)
+          if(afterDate.isEmpty || (afterDate.get.getTime()/1000)<item.getAttrs().getMTime())          
+            Some(dir + File.separator+item.getFilename)
+          else
+            None
         }
         else{
           None
@@ -577,7 +614,7 @@ object SFTPTools {
       
       
           //SCP the remote file from the supplied host into localFile
-    def scpFile(host:String, user:String, password:String, remoteFile:String, localFile:File):Option[String]={
+    def scpFile(host:String, user:String, password:String, remoteFile:String, localFile:File):Option[(String,Date)]={
       if(StringUtils.isEmpty(user) || StringUtils.isEmpty(password))
         logger.error("SCP User or password has not been supplied. Please supply as part of the biocache.properties")
       var  ssh:SshConnection = null
@@ -586,9 +623,24 @@ object SFTPTools {
         ssh.connect()
         
         FileUtils.forceMkdir(localFile.getParentFile())
-        val scpFile = new ScpFile(localFile, remoteFile)      
+        val scpFile = new ScpFile(localFile, remoteFile) 
+        //command to get the last modified date in number of seconds since epoch
+        val outputStream = new java.io.ByteArrayOutputStream()
+        val command = new SshCommand("date -r " + remoteFile + " +%s", outputStream)
+        val date = {
+          try{
+            ssh.executeTask(command)
+            val stringvalue = outputStream.toString()
+            //println("The string value of the modified date :$" + stringvalue+"$")
+            new Date(stringvalue.trim.toLong *1000)
+          }
+          catch{
+            case e:Exception => e.printStackTrace();new Date()
+          }
+        }
+        
         ssh.executeTask(new ScpDownload(scpFile))
-        Some(localFile.getAbsolutePath())
+        Some((localFile.getAbsolutePath(),date))
       }catch{
          case e:Exception => logger.error("Unable to SCP " + remoteFile ,e);None
        }

@@ -44,6 +44,8 @@ object Config {
     
     lazy val biocacheServiceURL = configModule.properties.getProperty("biocacheServiceURL","http://biocache.ala.org.au/ws")
     
+    lazy val allowCollectoryUpdates = configModule.properties.getProperty("allowCollectoryUpdates","false")
+    
     lazy val extraMiscFields=configModule.properties.getProperty("extraMiscFields","")
 
     lazy val fieldsToSample = {

@@ -24,7 +24,7 @@ class DiGIRLoader extends DataLoader {
 
   def load(dataResourceUid: String) {
 
-    val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+    val (protocol, urls, uniqueTerms, params, customParams,lastChecked) = retrieveConnectionParameters(dataResourceUid)
     val url = urls(0)
 
     val firstchars = (0 to 25).map(x => (x + 'A').toChar).toList

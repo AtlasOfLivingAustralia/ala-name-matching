@@ -35,8 +35,9 @@ class Loader extends DataLoader {
 
     def describeResource(drlist:List[String]){
         drlist.foreach(dr => {
-        	val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dr)
+        	val (protocol, url, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(dr)
           println("UID: " + dr)
+          println("This data resource was last checked " + lastChecked)
           println("Protocol: "+ protocol)
           println("URL: " + url.mkString(";"))
           println("Unique terms: " + uniqueTerms.mkString(","))
@@ -52,19 +53,19 @@ class Loader extends DataLoader {
       CMD.printTable(drs)
     }
 
-    def load(dataResourceUid: String, test:Boolean=false) {
+    def load(dataResourceUid: String, test:Boolean=false, forceLoad:Boolean=false) {
       try {
-        val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+        val (protocol, url, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(dataResourceUid)
         protocol.toLowerCase match {
           case "dwc" => {
             println("Darwin core headed CSV loading")
             val l = new DwcCSVLoader
-            l.load(dataResourceUid, false,test)
+            l.load(dataResourceUid, false,test,forceLoad)
           }
           case "dwca" => {
             println("Darwin core archive loading")
             val l = new DwCALoader
-            l.load(dataResourceUid, false,test)
+            l.load(dataResourceUid, false,test,forceLoad)
           }
           case "digir" => {
             println("digir webservice loading")
@@ -105,7 +106,7 @@ class Loader extends DataLoader {
             println("AutoFeed Darwin core headed CSV loading")
             val l = new AutoDwcCSVLoader
             if(!test)
-              l.load(dataResourceUid)
+              l.load(dataResourceUid, forceLoad=forceLoad)
             else
               println("TESTING is not supported for autofeed")
           }

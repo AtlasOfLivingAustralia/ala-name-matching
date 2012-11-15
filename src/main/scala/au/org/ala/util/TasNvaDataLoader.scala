@@ -270,7 +270,7 @@ class TasNvaDataLoader extends CustomWebserviceLoader {
   val transformOp = new DefaultCoordinateOperationFactory().createOperation(gda94MGAZone55crs, wgs84crs)
 
   def load(dataResourceUid: String): Unit = {
-    val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+    val (protocol, urls, uniqueTerms, params, customParams,lastChecked) = retrieveConnectionParameters(dataResourceUid)
     val cacheDirectoryPath = customParams("cachedir")
     val loadFromCache = false
     var startAtPage = 0
@@ -287,7 +287,7 @@ class TasNvaDataLoader extends CustomWebserviceLoader {
   }
 
   def load(dataResourceUid: String, cacheDirectoryPath: String, loadFromCache: Boolean, startAtPage: Int, pageLimit: Int) {
-    val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+    val (protocol, urls, uniqueTerms, params, customParams,lastChecked) = retrieveConnectionParameters(dataResourceUid)
     val username = customParams("username")
     val password = customParams("password")
     val pageSize = customParams("pagesize").toInt

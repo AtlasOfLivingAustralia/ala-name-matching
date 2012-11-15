@@ -83,7 +83,7 @@ class FlickrLoader extends DataLoader {
    */
   def load(dataResourceUid: String, suppliedStartDate: Option[Date], suppliedEndDate: Option[Date], overwriteImages: Boolean = false){
 
-    val (protocol, url, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+    val (protocol, url, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(dataResourceUid)
 
     val licences = retrieveLicenceMap(params)
 

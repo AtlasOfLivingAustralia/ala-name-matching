@@ -64,26 +64,35 @@ class AutoDwcCSVLoader extends DataLoader{
     //val loadPattern ="""([\x00-\x7F\s]*_dwc.csv)""".r //"""(dwc-data[\x00-\x7F\s]*.gz)""".r
     val loadPattern = """([\x00-\x7F\s]*dwc[\x00-\x7F\s]*.csv[\x00-\x7F\s]*)""".r
     println(loadPattern.toString())
-    def load(dataResourceUid:String, includeIds:Boolean=false){
+    def load(dataResourceUid:String, includeIds:Boolean=false, forceLoad:Boolean = false){
         //TODO support complete reload by looking up webservice
-        val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+        val (protocol, urls, uniqueTerms, params, customParams,lastChecked) = retrieveConnectionParameters(dataResourceUid)
         val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]
         //clean out the dr load directory before downloading the new file.
         emptyTempFileStore(dataResourceUid)
+        var loaded =false
+        var maxLastModifiedDate:java.util.Date = null
         //the supplied url should be an sftp string to the directory that contains the dumps
         urls.foreach(url=>{
           if(url.startsWith("sftp")){
-            val filePath = sftpLatestArchive(url, dataResourceUid)
-            if(filePath.isDefined)
-              loadAutoFile(new File(filePath.get), dataResourceUid, uniqueTerms, params, includeIds,strip)
+            val fileDetails = sftpLatestArchive(url, dataResourceUid,if(forceLoad)None else lastChecked)
+            if(fileDetails.isDefined){
+              val (filePath,date) = fileDetails.get
+              if(maxLastModifiedDate == null || date.after(maxLastModifiedDate))
+                  maxLastModifiedDate = date
+              loadAutoFile(new File(filePath), dataResourceUid, uniqueTerms, params, includeIds,strip)
+              loaded = true
+            }
           }
           else
             logger.error("Unable to process " + url + " with the auto loader")
         })
+        //now update the last checked and if necessary data currency dates
+        updateLastChecked(dataResourceUid, if(loaded) Some(maxLastModifiedDate) else None)
     }
     
     def loadLocalFile(dataResourceUid:String, filePath:String, includeIds:Boolean){
-        val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+        val (protocol, urls, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(dataResourceUid)
         val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]
         loadAutoFile(new File(filePath),dataResourceUid, uniqueTerms, params, includeIds,strip) 
     }
@@ -137,7 +146,7 @@ class AutoDwcCSVLoader extends DataLoader{
         // File contains a complete list of the current ids will need to mark records and ten delete all records that have not been marked???
         
         //update the last time this data resource was loaded in the collectory
-        updateLastChecked(dataResourceUid)
+        //updateLastChecked(dataResourceUid)
     }
     def extractTarFile(io:InputStream,baseDir:String, filename:String):File={        
         //construct the file

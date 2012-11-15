@@ -82,7 +82,7 @@ class MorphbankLoader extends CustomWebserviceLoader {
   val httpClient = new HttpClient()
 
   def load(dataResourceUid: String) {
-    val (protocol, urls, uniqueTerms, params, customParams) = retrieveConnectionParameters(dataResourceUid)
+    val (protocol, urls, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(dataResourceUid)
     var idsUrlTemplate = params("url")
     val objectUrlTemplate = customParams("objectRequestUrlTemplate")
     val imageUrlTemplate = customParams("imageRequestUrlTemplate")
