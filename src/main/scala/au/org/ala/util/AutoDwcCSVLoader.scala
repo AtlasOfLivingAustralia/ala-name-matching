@@ -89,6 +89,8 @@ class AutoDwcCSVLoader extends DataLoader{
         })
         //now update the last checked and if necessary data currency dates
         updateLastChecked(dataResourceUid, if(loaded) Some(maxLastModifiedDate) else None)
+        if(!loaded)
+            setNotLoadedForOtherPhases(dataResourceUid)
     }
     
     def loadLocalFile(dataResourceUid:String, filePath:String, includeIds:Boolean){

@@ -94,8 +94,11 @@ class DwcCSVLoader extends DataLoader {
           }
         })
         //now update the last checked and if necessary data currency dates
-        if(!testFile)
+        if(!testFile){
           updateLastChecked(dataResourceUid, if(loaded) Some(maxLastModifiedDate) else None)
+          if(!loaded)
+            setNotLoadedForOtherPhases(dataResourceUid)
+        }
     }
     
     def loadFile(file:File, dataResourceUid:String, uniqueTerms:List[String], params:Map[String,String], stripSpaces:Boolean=false, logRowKeys:Boolean=false, test:Boolean=false){

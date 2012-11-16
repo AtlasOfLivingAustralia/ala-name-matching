@@ -65,6 +65,7 @@ object DwCALoader {
             //update the collectory information
             l.updateLastChecked(resourceUid)
         }
+        
         //shut down the persistence manager after all the files have been loaded.
       Config.persistenceManager.shutdown
     }
@@ -98,9 +99,11 @@ class DwCALoader extends DataLoader {
         }
       })
       //now update the last checked and if necessary data currency dates
-      if(!testFile)
+      if(!testFile){
         updateLastChecked(resourceUid, if(loaded) Some(maxLastModifiedDate) else None)
-      
+        if(!loaded)
+            setNotLoadedForOtherPhases(resourceUid)
+      }
     }
     
     def loadLocal(resourceUid:String, fileName:String, logRowKeys:Boolean, testFile:Boolean){

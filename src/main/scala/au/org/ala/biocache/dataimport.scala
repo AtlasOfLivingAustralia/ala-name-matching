@@ -73,6 +73,16 @@ trait DataLoader {
         }
       else None
     }
+    //Sampling, Processing and INdexing look for the row key file.
+    // An empty file should be enough to prevent the phase from going ahead...
+    //TODO We should probably change this to be more robust.
+    def setNotLoadedForOtherPhases(resourceUid:String){
+      def writer = getRowKeyWriter(resourceUid, true)
+      if(writer.isDefined){
+        writer.get.flush
+        writer.get.close
+      }
+    }
     
     def getDataResourceDetailsAsMap(resourceUid:String) : Map[String, String] = {
       val json = Source.fromURL(registryUrl + resourceUid + ".json").getLines.mkString
