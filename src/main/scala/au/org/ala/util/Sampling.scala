@@ -2,10 +2,11 @@ package au.org.ala.util
 
 import java.io.{FileInputStream, InputStreamReader, FileWriter, File}
 import org.apache.commons.lang.StringUtils
-import au.org.ala.biocache.{LocationDAO, LocationProcessor, Config, Json}
+import au.org.ala.biocache._
 import au.com.bytecode.opencsv.{CSVWriter, CSVReader}
 import scala.collection.mutable.{ArrayBuffer, HashSet}
 import org.ala.layers.client.Client
+import scala.Some
 
 /**
  * Executable for running the sampling for a data resource.
@@ -20,23 +21,31 @@ object Sampling {
     var rowKeyFile = ""
 
     val parser = new OptionParser("Sample coordinates against geospatial layers") {
-      opt("dr", "data-resource-uid", "the data resource to sample for", { v:String => dataResourceUid = v })
-      opt("cf", "coordinates-file", "the file containing coordinates", { v:String => locFilePath = v })
-      opt("l", "single-layer-sample", "sample a single layer only", { v:String => singleLayerName = v })
-      opt("rf", "row-key-file", "The row keys which to sample",{v:String => rowKeyFile =v })
+      opt("dr", "data-resource-uid", "the data resource to sample for", {
+        v: String => dataResourceUid = v
+      })
+      opt("cf", "coordinates-file", "the file containing coordinates", {
+        v: String => locFilePath = v
+      })
+      opt("l", "single-layer-sample", "sample a single layer only", {
+        v: String => singleLayerName = v
+      })
+      opt("rf", "row-key-file", "The row keys which to sample", {
+        v: String => rowKeyFile = v
+      })
     }
 
     if (parser.parse(args)) {
       val s = new Sampling
       //for this data resource
       val fileSufffix = {
-        if(dataResourceUid != "") dataResourceUid
+        if (dataResourceUid != "") dataResourceUid
         else "all"
       }
 
-      if(locFilePath == ""){
+      if (locFilePath == "") {
         locFilePath = "/tmp/loc-" + fileSufffix + ".txt"
-        if(rowKeyFile == "")
+        if (rowKeyFile == "")
           s.getDistinctCoordinatesForResource(locFilePath, dataResourceUid)
         else
           s.getDistinctCoordinatesForFile(locFilePath, rowKeyFile)
@@ -50,7 +59,7 @@ object Sampling {
     }
   }
 
-  def sampleDataResource(dataResourceUid:String, singleLayerName:String = ""){
+  def sampleDataResource(dataResourceUid: String, singleLayerName: String = "") {
     val locFilePath = "/tmp/loc-" + dataResourceUid + ".txt"
     val s = new Sampling
     s.getDistinctCoordinatesForResource(locFilePath, dataResourceUid)
@@ -63,9 +72,11 @@ object Sampling {
 }
 
 class Sampling {
- import FileHelper._
+
+  import FileHelper._
+
   //TODO refactor this so that code is NOT duplicated.
-  def getDistinctCoordinatesForFile(locFilePath:String, rowKeyFile:String){
+  def getDistinctCoordinatesForFile(locFilePath: String, rowKeyFile: String) {
     println("Creating distinct list of coordinates for row keys in " + rowKeyFile)
     var counter = 0
     var passed = 0
@@ -74,50 +85,56 @@ class Sampling {
       "decimalLatitude.p", "decimalLongitude.p",
       "verbatimLatitude", "verbatimLongitude",
       "originalDecimalLatitude", "originalDecimalLongitude",
-      "originalSensitiveValues")
+      "originalSensitiveValues", "geodeticDatum", "verbatimSRS", "easting", "northing", "zone")
     val coordinates = new HashSet[String]
     val lp = new LocationProcessor
-    rowKeys.foreachLine(line =>{
-      val values = Config.persistenceManager.getSelected(line,"occ", properties)
-      if(values.isDefined){
+    rowKeys.foreachLine(line => {
+      val values = Config.persistenceManager.getSelected(line, "occ", properties)
+      if (values.isDefined) {
         def map = values.get
         val latLongWithOption = lp.processLatLong(map.getOrElse("decimalLatitude", null),
-        map.getOrElse("decimalLongitude", null),
-        map.getOrElse("verbatimLongitude", null),
-        map.getOrElse("verbatimLongitude", null)
-      )
-      latLongWithOption match {
-        case Some(latLong) => coordinates += (latLong._2 + "," + latLong._1) // write long lat (x,y)
-        case None => {}
-      }
-
-      val originalSensitiveValues = map.getOrElse("originalSensitiveValues", "")
-      if(originalSensitiveValues != ""){
-        val sensitiveLatLong = Json.toMap(originalSensitiveValues)
-        val lat = sensitiveLatLong.getOrElse("decimalLatitude", null)
-        val lon = sensitiveLatLong.getOrElse("decimalLongitude", null)
-        if (lat != null && lon != null) {
-          coordinates += (lon + "," + lat)
+          map.getOrElse("decimalLongitude", null),
+          map.getOrElse("geodeticDatum", null),
+          map.getOrElse("verbatimLongitude", null),
+          map.getOrElse("verbatimLongitude", null),
+          map.getOrElse("verbatimSRS", null),
+          map.getOrElse("easting", null),
+          map.getOrElse("northing", null),
+          map.getOrElse("zone", null),
+          new ArrayBuffer[QualityAssertion]
+        )
+        latLongWithOption match {
+          case Some(latLong) => coordinates += (latLong._2 + "," + latLong._1) // write long lat (x,y)
+          case None => {}
         }
-      }
 
-      //legacy storage of old lat/long original values before SDS processing - superceded by originalSensitiveValues
-      val originalDecimalLatitude = map.getOrElse("originalDecimalLatitude", "")
-      val originalDecimalLongitude = map.getOrElse("originalDecimalLongitude", "")
-      if (originalDecimalLatitude != "" && originalDecimalLongitude != ""){
-        coordinates += (originalDecimalLongitude + "," + originalDecimalLatitude)
-      }
+        val originalSensitiveValues = map.getOrElse("originalSensitiveValues", "")
+        if (originalSensitiveValues != "") {
+          val sensitiveLatLong = Json.toMap(originalSensitiveValues)
+          val lat = sensitiveLatLong.getOrElse("decimalLatitude", null)
+          val lon = sensitiveLatLong.getOrElse("decimalLongitude", null)
+          if (lat != null && lon != null) {
+            coordinates += (lon + "," + lat)
+          }
+        }
 
-      //add the processed values
-      val processedDecimalLatitude = map.getOrElse("decimalLatitude.p", "")
-      val processedDecimalLongitude = map.getOrElse("decimalLongitude.p", "")
-      if (processedDecimalLatitude != "" && processedDecimalLongitude != ""){
-        coordinates += (processedDecimalLongitude + "," + processedDecimalLatitude)
-      }
+        //legacy storage of old lat/long original values before SDS processing - superceded by originalSensitiveValues
+        val originalDecimalLatitude = map.getOrElse("originalDecimalLatitude", "")
+        val originalDecimalLongitude = map.getOrElse("originalDecimalLongitude", "")
+        if (originalDecimalLatitude != "" && originalDecimalLongitude != "") {
+          coordinates += (originalDecimalLongitude + "," + originalDecimalLatitude)
+        }
 
-      if (counter % 10000 == 0 && counter > 0) println("Distinct coordinates counter: " + counter + ", current count:" + coordinates.size)
-      counter += 1
-      passed += 1
+        //add the processed values
+        val processedDecimalLatitude = map.getOrElse("decimalLatitude.p", "")
+        val processedDecimalLongitude = map.getOrElse("decimalLongitude.p", "")
+        if (processedDecimalLatitude != "" && processedDecimalLongitude != "") {
+          coordinates += (processedDecimalLongitude + "," + processedDecimalLatitude)
+        }
+
+        if (counter % 10000 == 0 && counter > 0) println("Distinct coordinates counter: " + counter + ", current count:" + coordinates.size)
+        counter += 1
+        passed += 1
       }
     })
     try {
@@ -135,7 +152,7 @@ class Sampling {
       }
     }
   }
-  
+
   /**
    * Get the distinct coordinates for this resource
    * and write them to file.
@@ -146,11 +163,11 @@ class Sampling {
     var passed = 0
 
     val startUuid: String = {
-      if(dataResourceUid == "") ""
+      if (dataResourceUid == "") ""
       else dataResourceUid + "|"
     }
     val endUuid: String = {
-      if(dataResourceUid == "") ""
+      if (dataResourceUid == "") ""
       else dataResourceUid + "|~"
     }
 
@@ -160,8 +177,14 @@ class Sampling {
     Config.persistenceManager.pageOverSelect("occ", (guid, map) => {
       val latLongWithOption = lp.processLatLong(map.getOrElse("decimalLatitude", null),
         map.getOrElse("decimalLongitude", null),
+        map.getOrElse("geodeticDatum", null),
         map.getOrElse("verbatimLongitude", null),
-        map.getOrElse("verbatimLongitude", null)
+        map.getOrElse("verbatimLongitude", null),
+        map.getOrElse("verbatimSRS", null),
+        map.getOrElse("easting", null),
+        map.getOrElse("northing", null),
+        map.getOrElse("zone", null),
+        new ArrayBuffer[QualityAssertion]
       )
       latLongWithOption match {
         case Some(latLong) => coordinates += (latLong._2 + "," + latLong._1) // write long lat (x,y)
@@ -169,7 +192,7 @@ class Sampling {
       }
 
       val originalSensitiveValues = map.getOrElse("originalSensitiveValues", "")
-      if(originalSensitiveValues != ""){
+      if (originalSensitiveValues != "") {
         val sensitiveLatLong = Json.toMap(originalSensitiveValues)
         val lat = sensitiveLatLong.getOrElse("decimalLatitude", null)
         val lon = sensitiveLatLong.getOrElse("decimalLongitude", null)
@@ -181,14 +204,14 @@ class Sampling {
       //legacy storage of old lat/long original values before SDS processing - superceded by originalSensitiveValues
       val originalDecimalLatitude = map.getOrElse("originalDecimalLatitude", "")
       val originalDecimalLongitude = map.getOrElse("originalDecimalLongitude", "")
-      if (originalDecimalLatitude != "" && originalDecimalLongitude != ""){
+      if (originalDecimalLatitude != "" && originalDecimalLongitude != "") {
         coordinates += (originalDecimalLongitude + "," + originalDecimalLatitude)
       }
 
       //add the processed values
       val processedDecimalLatitude = map.getOrElse("decimalLatitude.p", "")
       val processedDecimalLongitude = map.getOrElse("decimalLongitude.p", "")
-      if (processedDecimalLatitude != "" && processedDecimalLongitude != ""){
+      if (processedDecimalLatitude != "" && processedDecimalLongitude != "") {
         coordinates += (processedDecimalLongitude + "," + processedDecimalLatitude)
       }
 
@@ -221,13 +244,13 @@ class Sampling {
   /**
    * Run the sampling with a file
    */
-  def sampling(filePath: String, outputFilePath: String, singleLayerName:String = "") {
+  def sampling(filePath: String, outputFilePath: String, singleLayerName: String = "") {
 
     println("********* START - TEST BATCH SAMPLING FROM FILE ***************")
     //load the CSV of points into memory
     val points = loadPoints(filePath)
     //do the sampling
-    if (singleLayerName != ""){
+    if (singleLayerName != "") {
       processBatch(outputFilePath, points, Array(singleLayerName))
     } else {
       processBatch(outputFilePath, points, Config.fieldsToSample)
@@ -238,7 +261,7 @@ class Sampling {
   /**
    * Load a set of points from a CSV file
    */
-  private def loadPoints(filePath:String) : Array[Array[Double]] = {
+  private def loadPoints(filePath: String): Array[Array[Double]] = {
     //load the CSV of points into memory
     println("Loading points from file: " + filePath)
     val csvReader = new CSVReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"))
@@ -248,7 +271,7 @@ class Sampling {
       try {
         points += current.map(x => x.toDouble)
       } catch {
-        case e:Exception => println("Error reading point: " + current)
+        case e: Exception => println("Error reading point: " + current)
       }
       current = csvReader.readNext
     }
@@ -314,7 +337,7 @@ class Sampling {
           }
           counter += 1
         } catch {
-          case e: Exception => e.printStackTrace();println("Problem writing line: " + counter + ", line length: " + line.length + ", header length: " + header.length)
+          case e: Exception => e.printStackTrace(); println("Problem writing line: " + counter + ", line length: " + line.length + ", header length: " + header.length)
         }
         line = csvReader.readNext
       }

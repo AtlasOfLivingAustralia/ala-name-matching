@@ -307,6 +307,9 @@ class Location extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var australianHerbariumRegion: String = _ //http://www.chah.org.au/hispid/terms/australianHerbariumRegion
   // For occurrences found to be outside the expert distribution range for the associated speces.
   @BeanProperty var distanceOutsideExpertRange: String = _
+  @BeanProperty var easting: String =_
+  @BeanProperty var northing: String =_
+  @BeanProperty var zone: String =_
   
   //fields that need be hidden from all public API
   //These fields can NOT be @BeanProperty because we need the getter method to have a @JsonIgnore annotation

@@ -577,6 +577,15 @@ object AssertionCodes {
   
   val MISSING_GEOREFERENCE_DATE = ErrorCode("missingGeoreferenceDate",42,false, "GeoreferenceDate not supplied with the record")
 
+  val DECIMAL_LAT_LONG_CONVERTED = ErrorCode("decimalLatLongConverted", 43, false, "Decimal latitude and longitude were converted to WGS84")
+  val DECIMAL_LAT_LONG_CONVERSION_FAILED = ErrorCode("decimalLatLongConverionFailed", 44, false, "Conversion of decimal latitude and longitude to WGS84 failed")
+  val DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM = ErrorCode("decimalLatLongCalculatedFromVerbatim", 45, false, "Decimal latitude and longitude were calculated using verbatimLatitude, verbatimLongitude and verbatimSRS")
+  val DECIMAL_LAT_LONG_CALCULATION_FROM_VERBATIM_FAILED = ErrorCode("decimalLatLongCalculationFromVerbatimFailed", 46, true, "Failed to calculate decimal latitude and longitude from verbatimLatitude, verbatimLongitude and verbatimSRS")
+  val DECIMAL_LAT_LONG_CALCULATED_FROM_EASTING_NORTHING = ErrorCode("decimalLatLongCalculatedFromEastingNorthing", 47, false, "Decimal latitude and longitude were calculated using easting, nothing and zone")
+  val DECIMAL_LAT_LONG_CALCULATION_FROM_EASTING_NORTHING_FAILED = ErrorCode("decimalLatLongCalculationFromEastingNorthingFailed", 48, true, "Failed to calculate decimal latitude and longitude using easting, northing and zone")
+  val GEODETIC_DATUM_ASSUMED_WGS84 = ErrorCode("geodeticDatumAssumedWgs84", 49, false, "Geodetic datum assumed to be WGS84 (EPSG:4326)")
+  val UNRECOGNIZED_GEODETIC_DATUM = ErrorCode("unrecognizedGeodeticDatum", 50, true, "Geodetic datum not recognized")
+
   //taxonomy issues
   val TAXONOMIC_ISSUE = ErrorCode("taxonomicIssue",10000,false,"Taxonomic issue")  // general purpose option
   val INVALID_SCIENTIFIC_NAME = ErrorCode("invalidScientificName",10001,false,"Invalid scientific name")

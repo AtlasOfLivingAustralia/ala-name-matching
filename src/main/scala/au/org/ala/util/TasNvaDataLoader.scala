@@ -249,9 +249,11 @@ object TasNvaDataLoader extends DataLoader {
       })
     }
 
-    if (parser.parse(args)) {
-      loader.load(dataResourceUid, cacheDirectoryPath, loadFromCache, startAtPage, pageLimit)
-    }
+//    if (parser.parse(args)) {
+//      loader.load(dataResourceUid, cacheDirectoryPath, loadFromCache, startAtPage, pageLimit)
+//    }
+    println(CRS.getSupportedAuthorities(true))
+    println(CRS.getSupportedCodes("EPSG"))
   }
 }
 
