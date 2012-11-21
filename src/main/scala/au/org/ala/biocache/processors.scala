@@ -759,7 +759,7 @@ class LocationProcessor extends Processor {
               assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CONVERSION_FAILED, "Transformation of decimal latiude and longitude to WGS84 failed")
               None
             } else {
-              assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CONVERTED)
+              assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CONVERTED, "Decimal latitude and longitude were converted to WGS84 (EPSG:4326)")
               val (reprojectedLatitude, reprojectedLongitude) = reprojectedCoords.get
               Some(reprojectedLatitude, reprojectedLongitude, WGS84_EPSG_Code)
             }
@@ -770,7 +770,7 @@ class LocationProcessor extends Processor {
         }
       } else {
         //assume coordinates already in WGS84
-        assertions + QualityAssertion(AssertionCodes.GEODETIC_DATUM_ASSUMED_WGS84)
+        assertions + QualityAssertion(AssertionCodes.GEODETIC_DATUM_ASSUMED_WGS84, "Geodetic datum assumed to be WGS84 (EPSG:4326)")
         Some((rawLatitude, rawLongitude, WGS84_EPSG_Code))
       }
 
@@ -794,7 +794,7 @@ class LocationProcessor extends Processor {
             if (!sourceEpsgCode.isEmpty) {
               if (sourceEpsgCode.get == WGS84_EPSG_Code) {
                 //already in WGS84, no need to reproject
-                assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM)
+                assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM, "Decimal latitude and longitude were calculated using verbatimLatitude, verbatimLongitude and verbatimSRS")
                 Some((decimalVerbatimLat.get.toString, decimalVerbatimLong.get.toString, WGS84_EPSG_Code))
               } else {
                 val desiredNoDecimalPlaces = math.min(getNumberOfDecimalPlacesInDouble(decimalVerbatimLat.get.toString), getNumberOfDecimalPlacesInDouble(decimalVerbatimLong.get.toString))
@@ -804,7 +804,7 @@ class LocationProcessor extends Processor {
                   assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_VERBATIM_FAILED, "Transformation of verbatim latiude and longitude to WGS84 failed")
                   None
                 } else {
-                  assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM)
+                  assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM, "Decimal latitude and longitude were calculated using verbatimLatitude, verbatimLongitude and verbatimSRS")
                   val (reprojectedLatitude, reprojectedLongitude) = reprojectedCoords.get
                   Some(reprojectedLatitude, reprojectedLongitude, WGS84_EPSG_Code)
                 }
@@ -815,7 +815,7 @@ class LocationProcessor extends Processor {
             }
             // Otherwise, assume latitude and longitude are already in WGS 84
           } else if (decimalVerbatimLat.get.toString.isLatitude && decimalVerbatimLong.get.toString.isLongitude) {
-            assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM)
+            assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM, "Decimal latitude and longitude were calculated using verbatimLatitude, verbatimLongitude and verbatimSRS")
             Some((decimalVerbatimLat.get.toString, decimalVerbatimLong.get.toString, WGS84_EPSG_Code))
           } else {
             // Invalid latitude, longitude
@@ -851,7 +851,7 @@ class LocationProcessor extends Processor {
             assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_EASTING_NORTHING_FAILED, "Transformation of verbatim easting and northing to WGS84 failed")
             None
           } else {
-            assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_EASTING_NORTHING)
+            assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_EASTING_NORTHING, "Decimal latitude and longitude were calculated using easting, northing and zone.")
             val (reprojectedLongitude, reprojectedLatitude) = reprojectedCoords.get
             Some(reprojectedLatitude, reprojectedLongitude, WGS84_EPSG_Code)
           }
