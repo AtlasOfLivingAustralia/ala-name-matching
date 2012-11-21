@@ -465,6 +465,15 @@ class ProcessLocationTest extends ConfigFunSuite {
     expect(true) {
       assertions(0).getName == "decimalLatLongCalculatedFromEastingNorthing"
     }
+    expect(false) {
+      var coordinatesInverted = false
+      for (qa <- assertions) {
+        if (qa.getName == "invertedCoordinates") {
+          coordinatesInverted = true
+        }
+      }
+      coordinatesInverted
+    }
   }
 
   test("Calculate lat/long from verbatim lat/long supplied in degrees, minutes, seconds") {
@@ -516,6 +525,15 @@ class ProcessLocationTest extends ConfigFunSuite {
     expect(true) {
       assertions(0).getName == "decimalLatLongConverted"
     }
+    expect(false) {
+      var coordinatesInverted = false
+      for (qa <- assertions) {
+        if (qa.getName == "invertedCoordinates") {
+          coordinatesInverted = true
+        }
+      }
+      coordinatesInverted
+    }
   }
 
   test("Calculate decimal latitude/longitude by reprojecting verbatim latitude/longitude") {
@@ -540,6 +558,15 @@ class ProcessLocationTest extends ConfigFunSuite {
     }
     expect(true) {
       assertions(0).getName == "decimalLatLongCalculatedFromVerbatim"
+    }
+    expect(false) {
+      var coordinatesInverted = false
+      for (qa <- assertions) {
+        if (qa.getName == "invertedCoordinates") {
+          coordinatesInverted = true
+        }
+      }
+      coordinatesInverted
     }
   }
 

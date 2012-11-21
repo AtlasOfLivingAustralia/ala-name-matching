@@ -852,7 +852,7 @@ class LocationProcessor extends Processor {
             None
           } else {
             assertions + QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_EASTING_NORTHING, "Decimal latitude and longitude were calculated using easting, northing and zone.")
-            val (reprojectedLongitude, reprojectedLatitude) = reprojectedCoords.get
+            val (reprojectedLatitude, reprojectedLongitude) = reprojectedCoords.get
             Some(reprojectedLatitude, reprojectedLongitude, WGS84_EPSG_Code)
           }
         } else {
@@ -877,7 +877,7 @@ class LocationProcessor extends Processor {
    * @param coordinate2 first coordinate. If source value is easting/northing, then this should be the northing value. Otherwise it should be the longitude
    * @param sourceCrsEpsgCode epsg code for the source CRS, e.g. EPSG:4202 for AGD66
    * @param decimalPlacesToRoundTo number of decimal places to round the reprojected coordinates to
-   * @return Reprojected coordinates, or None if the operation failed. NOTE: when converting degree values, return value will be latitude, longitude. However when converting easting/northing values, return value will be longitude, latitude.
+   * @return Reprojected coordinates (latitude, longitude), or None if the operation failed.
    */
   def reprojectCoordinatesToWGS84(coordinate1: Double, coordinate2: Double, sourceCrsEpsgCode: String, decimalPlacesToRoundTo: Int): Option[(String, String)] = {
     try {
@@ -887,13 +887,15 @@ class LocationProcessor extends Processor {
       val directPosition = new GeneralDirectPosition(coordinate1, coordinate2)
       val wgs84LatLong = transformOp.getMathTransform().transform(directPosition, null)
 
-      val reprojectedCoordinate1 = wgs84LatLong.getOrdinate(0)
-      val reprojectedCoordinate2 = wgs84LatLong.getOrdinate(1)
+      //NOTE - returned coordinates are longitude, latitude, despite the fact that if coverting latitude and longitude values, they must be supplied as latitude, longitude.
+      //No idea why this is the case.
+      val longitude = wgs84LatLong.getOrdinate(0)
+      val latitude = wgs84LatLong.getOrdinate(1)
 
-      val roundedCoordinate1 = Precision.round(reprojectedCoordinate1, decimalPlacesToRoundTo)
-      val roundedCoordinate2 = Precision.round(reprojectedCoordinate2, decimalPlacesToRoundTo)
+      val roundedLongitude = Precision.round(longitude, decimalPlacesToRoundTo)
+      val roundedLatitude = Precision.round(latitude, decimalPlacesToRoundTo)
 
-      Some(roundedCoordinate1.toString, roundedCoordinate2.toString)
+      Some(roundedLatitude.toString, roundedLongitude.toString)
     } catch {
       case ex: Exception => None
     }
