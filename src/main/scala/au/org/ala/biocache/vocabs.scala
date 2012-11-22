@@ -578,7 +578,7 @@ object AssertionCodes {
   val MISSING_GEOREFERENCE_DATE = ErrorCode("missingGeoreferenceDate",42,false, "GeoreferenceDate not supplied with the record")
 
   val DECIMAL_LAT_LONG_CONVERTED = ErrorCode("decimalLatLongConverted", 45, false, "Decimal latitude and longitude were converted to WGS84")
-  val DECIMAL_LAT_LONG_CONVERSION_FAILED = ErrorCode("decimalLatLongConverionFailed", 46, false, "Conversion of decimal latitude and longitude to WGS84 failed")
+  val DECIMAL_LAT_LONG_CONVERSION_FAILED = ErrorCode("decimalLatLongConverionFailed", 46, true, "Conversion of decimal latitude and longitude to WGS84 failed")
   val DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM = ErrorCode("decimalLatLongCalculatedFromVerbatim", 47, false, "Decimal latitude and longitude were calculated using verbatimLatitude, verbatimLongitude and verbatimSRS")
   val DECIMAL_LAT_LONG_CALCULATION_FROM_VERBATIM_FAILED = ErrorCode("decimalLatLongCalculationFromVerbatimFailed", 48, true, "Failed to calculate decimal latitude and longitude from verbatimLatitude, verbatimLongitude and verbatimSRS")
   val DECIMAL_LAT_LONG_CALCULATED_FROM_EASTING_NORTHING = ErrorCode("decimalLatLongCalculatedFromEastingNorthing", 49, false, "Decimal latitude and longitude were calculated using easting, nothing and zone")
