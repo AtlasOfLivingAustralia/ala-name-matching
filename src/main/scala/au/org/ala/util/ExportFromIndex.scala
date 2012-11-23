@@ -138,7 +138,7 @@ object ExportByFacetQuery {
     }
   }
   
-  def downloadSingleTaxon(taxonID:String, fieldsToExport:Array[String], facetField:String, filterQueries:Array[String],sortField:Option[String]=None, sortDir:Option[String]=None, fileWriter:FileWriter){    
+  def downloadSingleTaxon(taxonID:String, fieldsToExport:Array[String], facetField:String, filterQueries:Array[String],sortField:Option[String]=None, sortDir:Option[String]=None, fileWriter:FileWriter, multivaluedFields:Option[Array[String]]=None){    
     var counter =0
     Config.indexDAO.pageOverIndex(map  => {
           counter += 1
@@ -147,10 +147,12 @@ object ExportByFacetQuery {
           fileWriter.write(outputLine.mkString("\t"))
           fileWriter.write("\n")
           true
-        }, fieldsToExport, facetField + ":\""+taxonID+"\"", filterQueries, sortField,sortDir)
+        }, fieldsToExport, facetField + ":\""+taxonID+"\"", filterQueries, sortField,sortDir,multivaluedFields)
 
        fileWriter.flush
   }
+  
+  
 
   def getTaxonID(csvReader:CSVReader): String = {
     val row = csvReader.readNext()

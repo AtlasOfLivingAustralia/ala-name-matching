@@ -982,16 +982,35 @@ class DeletedRecordDAOImpl extends DeletedRecordDAO{
 
 trait DuplicateDAO {
   def getDuplicateInfo(uuid:String) : Option[DuplicateRecordDetails]
+  def getDuplicatesFor(lsid:String, year:String, month:String, day:String):List[DuplicateRecordDetails]
+  def getLastDuplicationRun():Option[String]
+  def setLastDuplicationRun(date:java.util.Date)
+  def deleteObsoleteDuplicate(uuid:String)
 }
 
 class DuplicateDAOImpl extends DuplicateDAO {
+  import BiocacheConversions._
   protected val logger = LoggerFactory.getLogger("DuplicateDAO")
   @Inject
   var persistenceManager: PersistenceManager = _
+  val mapper = new ObjectMapper
+  mapper.registerModule(DefaultScalaModule)
+  val lastRunRowKey="DDLastRun"
+    
+  override def deleteObsoleteDuplicate(uuid:String){
+    val duplicate = getDuplicateInfo(uuid)
+    if(duplicate.isDefined){
+      //now construct the row key for the "duplicates" column family
+      val otherKey = duplicate.get.taxonConceptLsid+ "|" + duplicate.get.year + "|" + duplicate.get.month + "|" + duplicate.get.day
+      persistenceManager.delete(uuid, "occ_duplicates")
+      //now delete the column
+      persistenceManager.deleteColumns(otherKey, "duplicates",uuid)
+      
+    }
+  }  
+    
   override def getDuplicateInfo(uuid:String):Option[DuplicateRecordDetails]={
     
-    val mapper = new ObjectMapper
-    mapper.registerModule(DefaultScalaModule)
     val stringValue =persistenceManager.get(uuid, "occ_duplicates", "value")
     if(stringValue.isDefined){
       Some(mapper.readValue[DuplicateRecordDetails](stringValue.get, classOf[DuplicateRecordDetails]))
@@ -999,6 +1018,37 @@ class DuplicateDAOImpl extends DuplicateDAO {
     else
       None
   }
+  /*
+   * Returns the existing duplicates for the supplied species and date information.
+   * 
+   * Will allow incremental checks for records that have changed...
+   * 
+   */
+  override def getDuplicatesFor(lsid:String, year:String, month:String, day:String):List[DuplicateRecordDetails] ={
+    def kvpMap=persistenceManager.get(lsid + "|" +year+"|" +month+"|"+day,"duplicates")
+    if(kvpMap.isDefined){
+      def buf = new scala.collection.mutable.ArrayBuffer[DuplicateRecordDetails]()
+      kvpMap.get.foreach{case (key,value)=>{
+        buf +=  mapper.readValue[DuplicateRecordDetails](value, classOf[DuplicateRecordDetails])
+      }}
+      buf.toList
+    }
+    else
+      List()
+  }
+  /**
+   * Returns the last time that the duplication detection was run. 
+   */
+  override def getLastDuplicationRun():Option[String] ={
+    persistenceManager.get(lastRunRowKey, "duplicates", lastRunRowKey)
+  }
+  /**
+   * Updates the last duplication detection run with the supplied date.
+   */
+  override def setLastDuplicationRun(date:java.util.Date) {
+    persistenceManager.put(lastRunRowKey, "duplicates", lastRunRowKey, date)
+  }
+  
 }
 
 trait AssertionQueryDAO extends DAO{

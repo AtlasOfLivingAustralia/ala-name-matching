@@ -24,7 +24,17 @@ import au.com.bytecode.opencsv.CSVReader
  * File helper - used as a implicit converter to add additional helper methods to java.io.File
  */
 class FileHelper(file: File) {
-
+    //Appends the supplied file to this one
+    def append(afile:FileHelper)={
+      val writer = new FileWriter(file, true)      
+      afile.foreachLine(line =>{
+        println(line)
+        writer.write(line+"\n")        
+        })
+      writer.flush
+      writer.close
+    }
+    
     def write(text: String): Unit = {
         val fw = new FileWriter(file)
         try { fw.write(text) }
@@ -37,7 +47,10 @@ class FileHelper(file: File) {
             while (br.ready) {
                 proc(br.readLine)
             }
-        } finally { br.close }
+        } 
+        catch{
+          case e:Exception =>e.printStackTrace()
+        }finally { br.close }
     }
 
     def deleteAll: Unit = {
@@ -135,4 +148,7 @@ class FileHelper(file: File) {
  */
 object FileHelper {
     implicit def file2helper(file: File) = new FileHelper(file)
+    def main(args:Array[String]){
+      println(org.apache.commons.lang.time.DateUtils.truncate(new java.util.Date(), java.util.Calendar.DAY_OF_MONTH))
+    }
 }

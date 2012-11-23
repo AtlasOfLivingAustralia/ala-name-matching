@@ -43,7 +43,7 @@ trait IndexDAO {
 
     def pageOverFacet(proc:(String,Int) => Boolean, facetName:String, query:String, filterQueries:Array[String])
 
-    def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], query:String, filterQueries:Array[String],sortField:Option[String]=None, sortDir:Option[String]=None)
+    def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], query:String, filterQueries:Array[String],sortField:Option[String]=None, sortDir:Option[String]=None, multivaluedFields:Option[Array[String]]=None)
     
     def shouldIncludeSensitiveValue(dr:String):Boolean
 
@@ -622,7 +622,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
   }
 
 
-  def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], queryString:String = "*:*", filterQueries:Array[String] = Array(), sortField:Option[String]=None, sortDir:Option[String]=None){
+  def pageOverIndex(proc:java.util.Map[String,AnyRef] => Boolean, fieldToRetrieve:Array[String], queryString:String = "*:*", filterQueries:Array[String] = Array(), sortField:Option[String]=None, sortDir:Option[String]=None,multivaluedFields:Option[Array[String]]=None){
     init
 
     var startIndex = 0
@@ -663,7 +663,12 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome:String, @Named("exclude
       val iter = solrDocumentList.iterator()
       while(iter.hasNext){
         val solrDocument = iter.next()
-        proc(solrDocument.getFieldValueMap)
+        val map = new java.util.HashMap[String,Object]
+        solrDocument.getFieldValueMap().keySet().asScala[String].foreach(s=>map.put(s, if(multivaluedFields.isDefined && multivaluedFields.get.contains(s))solrDocument.getFieldValues(s) else solrDocument.getFieldValue(s)))
+//        if(multivaluedFields.isDefined){
+//          multivaluedFields.get.foreach(f => map.put(f, solrDocument.getFieldValues(f)))
+//        }
+        proc(map)
       }
       counter += pageSize
     }
