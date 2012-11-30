@@ -30,6 +30,7 @@ object MorphbankLoader extends DataLoader {
   val DATE_LAST_MODIFIED_KEY = "dateLastModified"
   val CREATIVE_COMMONS_KEY = "creativeCommons"
   val PHOTOGRAPHER_KEY = "photographer"
+  val COPYRIGHT_TEXT_KEY = "copyrightText"
   val COLLECTOR_OLDDWC_KEY = "Collector"
   val EARLIEST_DATE_COLLECTED_OLDDWC_KEY = "EarliestDateCollected"
 
@@ -42,6 +43,7 @@ object MorphbankLoader extends DataLoader {
   val OTHER_CATALOG_NUMBERS_DWC_KEY = "otherCatalogNumbers"
   val RIGHTS_DWC_KEY = "rights"
   val RIGHTS_HOLDER_DWC_KEY = "rightsholder"
+  val PHOTOGRAPHER_FULLRECORD_KEY = "photographer"
 
   val OCC_NAMESPACE = "occ"
 
@@ -78,6 +80,7 @@ class MorphbankLoader extends CustomWebserviceLoader {
   val specimenImagesMap = new scala.collection.mutable.HashMap[String, mutable.ListBuffer[String]]()
   val specimenLicenseMap = new scala.collection.mutable.HashMap[String, String]()
   val specimenPhotographerMap = new scala.collection.mutable.HashMap[String, String]()
+  val specimenCopyrightTextMap = new scala.collection.mutable.HashMap[String, String]()
 
   val httpClient = new HttpClient()
 
@@ -212,11 +215,12 @@ class MorphbankLoader extends CustomWebserviceLoader {
         specimenImagesMap += (specimenId -> listBuf)
       }
 
-      // Record the creative commons licence text and photographer name from the image against the specimen,
+      // Record the creative commons licence text, copyright text and photographer name from the image against the specimen,
       // if no such information has been recorded yet for the specimen. This information will be added to the specimen
       // record in Cassandra later, at the same time that the image information is added.
       var creativeCommonsLicenceText: String = null
       var photographerText: String = null
+      var copyrightText: String = null
 
       if (!(image \\ MorphbankLoader.CREATIVE_COMMONS_KEY).isEmpty) {
         creativeCommonsLicenceText = (image \\ MorphbankLoader.CREATIVE_COMMONS_KEY).head.text.trim()
@@ -229,12 +233,20 @@ class MorphbankLoader extends CustomWebserviceLoader {
         photographerText = (image \\ MorphbankLoader.PHOTOGRAPHER_KEY).head.text.trim()
       }
 
+      if (!(image \\ MorphbankLoader.COPYRIGHT_TEXT_KEY).isEmpty) {
+        copyrightText = (image \\ MorphbankLoader.COPYRIGHT_TEXT_KEY).head.text.trim()
+      }
+
       if (creativeCommonsLicenceText != null) {
         specimenLicenseMap += (specimenId -> creativeCommonsLicenceText)
       }
 
       if (photographerText != null) {
         specimenPhotographerMap += (specimenId -> photographerText)
+      }
+
+      if (copyrightText != null) {
+        specimenCopyrightTextMap += (specimenId -> copyrightText)
       }
 
       println("Processed image " + imageId + " for specimen " + specimenId)
@@ -249,6 +261,7 @@ class MorphbankLoader extends CustomWebserviceLoader {
       val specimenImages = specimenImagesMap(specimenId)
       val specimenImagesLicence = specimenLicenseMap.getOrElse(specimenId, null)
       val specimenImagesPhotographer = specimenPhotographerMap.getOrElse(specimenId, null)
+      val specimenImagesCopyrightText = specimenCopyrightTextMap.getOrElse(specimenId, null)
 
       var specimenImageUrls = specimenImages.map(t => MessageFormat.format(imageUrlTemplate, t))
 
@@ -279,7 +292,11 @@ class MorphbankLoader extends CustomWebserviceLoader {
       }
 
       if (specimenImagesPhotographer != null) {
-        mappedValues += (MorphbankLoader.RIGHTS_HOLDER_DWC_KEY -> specimenImagesPhotographer)
+        mappedValues += (MorphbankLoader.PHOTOGRAPHER_FULLRECORD_KEY -> specimenImagesPhotographer)
+      }
+
+      if (specimenImagesCopyrightText != null) {
+        mappedValues += (MorphbankLoader.RIGHTS_HOLDER_DWC_KEY -> specimenImagesCopyrightText)
       }
 
       val uniqueTermsValues = List(specimenId)
