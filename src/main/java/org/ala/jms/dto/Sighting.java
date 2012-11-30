@@ -1,9 +1,16 @@
 package org.ala.jms.dto;
 
+/**
+ * A DTO for a sighting.
+ */
 public class Sighting {
-	
-	/** the id of the sighting */
+
+    /** the uid for the data resource supplying the sighting e.g. dr364*/
+    String dataResourceUid;
+    /** the id of the sighting */
     String id;
+    /** guid for sighting */
+    String guid;
 	/** the id of the user who contributed sighting */
     String userId;
 	/** the name of the user who contributed sighting */
@@ -20,9 +27,9 @@ public class Sighting {
     String family;
     /** the kingdom of the taxon contributed sighting */
     String kingdom;
-    /** the date of the observation */
+    /** the date of the observation in yyyy-MM-dd format*/
     String eventDate;
-    /** the recorded time */
+    /** the recorded time in hh:mm format */
     String eventTime;
     /** the number of individuals */
     Integer individualCount;
@@ -30,10 +37,16 @@ public class Sighting {
     String locality;
     /** the location as a string */
     String stateProvince;
+    /** the location as a string */
+    String geodeticDatum;
     /** latitude */
     Float latitude;
     /** longitude */
     Float longitude;
+    /** Georeferencing method */
+    String georeferenceProtocol;
+    /** Confidence in the identification */
+    String identificationVerificationStatus;
     /** coordinate uncertainty */
     Number coordinateUncertaintyInMeters;
     /** general notes */
@@ -42,17 +55,13 @@ public class Sighting {
     String countryCode;
     /** general notes */
     String occurrenceRemarks;
+    /** Images etc */
+    String[] associatedMedia;
+    /** Licence for the images */
+    String licence;
+    /** Rights for the images */
+    String rights;
    
-    /** guid for sighting */
-    String guid;
-    
-	public String getGuid() {
-		return guid;
-	}
-	public void setGuid(String guid) {
-		this.guid = guid;
-	}
-	    
 	/**
 	 * @return the id
 	 */
@@ -64,6 +73,18 @@ public class Sighting {
 	 */
 	public void setId(String id) {
 		this.id = id;
+	}
+    /**
+     * @return the guid
+     */
+	public String getGuid() {
+		return guid;
+	}
+    /**
+     * @param guid
+     */
+	public void setGuid(String guid) {
+		this.guid = guid;
 	}
 	/**
 	 * @return the userId
@@ -246,7 +267,6 @@ public class Sighting {
 	public void setLatitude(Float latitude) {
 		this.latitude = latitude;
 	}
-	
 	/**
 	 * @return the latitude
 	 */
@@ -271,7 +291,6 @@ public class Sighting {
 	public void setDecimalLongitude(Float longitude) {
 		this.longitude = longitude;
 	}
-	
 	/**
 	 * @return the longitude
 	 */
@@ -332,4 +351,59 @@ public class Sighting {
 	public void setStateProvince(String stateProvince) {
 		this.stateProvince = stateProvince;
 	}
+
+	public String[] getAssociatedMedia() {
+		return this.associatedMedia;
+	}
+
+	public void setAssociatedMedia(String[] associatedMedia) {
+		this.associatedMedia = associatedMedia;
+	}
+
+    public String getGeodeticDatum() {
+        return geodeticDatum;
+    }
+
+    public void setGeodeticDatum(String geodeticDatum) {
+        this.geodeticDatum = geodeticDatum;
+    }
+
+    public String getDataResourceUid() {
+        return dataResourceUid;
+    }
+
+    public void setDataResourceUid(String dataResourceUid) {
+        this.dataResourceUid = dataResourceUid;
+    }
+    public String getLicence() {
+        return licence;
+    }
+
+    public void setLicence(String licence) {
+        this.licence = licence;
+    }
+
+    public String getRights() {
+        return rights;
+    }
+
+    public void setRights(String rights) {
+        this.rights = rights;
+    }
+
+    public String getGeoreferenceProtocol() {
+        return georeferenceProtocol;
+    }
+
+    public void setGeoreferenceProtocol(String georeferenceProtocol) {
+        this.georeferenceProtocol = georeferenceProtocol;
+    }
+
+    public String getIdentificationVerificationStatus() {
+        return identificationVerificationStatus;
+    }
+
+    public void setIdentificationVerificationStatus(String identificationVerificationStatus) {
+        this.identificationVerificationStatus = identificationVerificationStatus;
+    }
 }

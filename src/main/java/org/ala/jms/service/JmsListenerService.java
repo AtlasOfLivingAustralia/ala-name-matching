@@ -15,24 +15,27 @@
 
 package org.ala.jms.service;
 
+import org.apache.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
+ * Stand alone runnable for testing the listener functionality.
  * 
  * @author mok011
- *
  */
-
 public class JmsListenerService {
+
+    private static final Logger logger = Logger.getLogger(JmsMessageListener.class);
 
 	public static void main(String[] args) throws Exception {
 		long t = System.currentTimeMillis() + 5000;
 		
-		System.out.println("Loading ClassPathXmlApplicationContext....... ");
+		logger.info("Loading ClassPathXmlApplicationContext....... ");
 		
 		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("classpath*:activemq-context.xml");
 		
-		System.out.println("ClassPathXmlApplicationContext: " + context);
+		logger.info("ClassPathXmlApplicationContext: " + context);
+
 		// delay for pelpop client stating up
 		if(context != null){
 			
@@ -42,7 +45,7 @@ public class JmsListenerService {
 				}
 			}
 			context.start();
-			System.out.println("JMS listener is started!!!");
+			logger.info("JMS listener is started!!!");
 		}
 	}
 }
