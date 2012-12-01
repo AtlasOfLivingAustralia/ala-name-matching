@@ -179,6 +179,9 @@ public class JmsMessageListener implements MessageListener {
                         return;
                     }
 
+                    //remove transport info from payload if supplied
+                    map.remove("messageMethod");
+
 	                //process request
 	                switch(messageMethod){
 	                	case CREATE:
@@ -215,13 +218,15 @@ public class JmsMessageListener implements MessageListener {
         if(map != null && !map.isEmpty()){
             synchronized(upsertList){
                 String dataResourceUid = getDataResourceUidForSighting(map);
-                logger.info("Message added to queue for CREATE: " + dataResourceUid);
-                List<Map<String,String>> recordList = upsertList.get("dataResourceUid");
+                List<Map<String,String>> recordList = upsertList.get(dataResourceUid);
                 if(recordList == null){
                    recordList = new ArrayList<Map<String, String>>();
-                   upsertList.put(dataResourceUid, recordList);
                 }
                 recordList.add(map);
+                upsertList.put(dataResourceUid, recordList);
+                if(logger.isDebugEnabled()){
+                    logger.debug("Message added to queue for CREATE: " + dataResourceUid + ", current size: " + upsertList.get(dataResourceUid).size());
+                }
             }
         } else {
             logger.info("Empty map supplied.");
