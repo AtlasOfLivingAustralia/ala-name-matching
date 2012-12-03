@@ -34,7 +34,7 @@ object ExpertDistributionOutlierTool {
 
   def main(args: Array[String]) {
     val tool = new ExpertDistributionOutlierTool();
-    var speciesLsid: String = "urn:lsid:catalogueoflife.org:taxon:d138e8df-2dc5-11e0-98c6-2ce70255a436:col20110201"
+    var speciesLsid: String = null
     var numThreads = 1
 
     val parser = new OptionParser("Find expert distribution outliers") {
@@ -203,10 +203,9 @@ class ExpertDistributionActor(val id: Int, val caller: Actor) extends Actor {
   def findOutliersForLsid(lsid: String): ListBuffer[String] = {
     val recordsMap = getRecordsForLsid(lsid)
     val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
-    //val rowKeysForIndexing = markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
+    val rowKeysForIndexing = markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
 
-    //rowKeysForIndexing
-    new ListBuffer[String]
+    rowKeysForIndexing
   }
 
   /**
@@ -281,7 +280,6 @@ class ExpertDistributionActor(val id: Int, val caller: Actor) extends Actor {
 
         distancesMap
       } else {
-        println(post.getResponseBodyAsString)
         throw new Exception("getOutlierRecordDistances Request failed (" + responseCode + ")")
       }
     } finally {
