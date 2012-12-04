@@ -194,6 +194,7 @@ public class JmsMessageListener implements MessageListener {
 	                	    if(map != null){
                                 //TODO deletes for when the data resource UID is supplied
 	                	        occId = getDefaultDataResourceUid() + "|" + map.get("occurrenceID");
+                                logger.info("Delete request received for ID: " + occId);
 	                	        synchronized(deleteList){
 	                	            deleteList.add(occId);
 	                	        }
@@ -232,7 +233,6 @@ public class JmsMessageListener implements MessageListener {
             logger.info("Empty map supplied.");
         }
     }
-
 
 	/**
 	 * 
@@ -335,7 +335,7 @@ public class JmsMessageListener implements MessageListener {
     	            //send the batch off to the biocache-store
     	            logger.debug("Sending " + upsertList.size() + " records for update and " + deleteList.size() + " records to be deleted.");
     	            synchronized(upsertList){
-        	            if(upsertList.size()>0){
+        	            if(!upsertList.isEmpty()){
         	                try{
                                 Iterator it = upsertList.entrySet().iterator();
                                 while (it.hasNext()) {
@@ -353,12 +353,12 @@ public class JmsMessageListener implements MessageListener {
         	            }
     	            }
     	            synchronized(deleteList){
-        	            if(deleteList.size()>0){
+        	            if(!deleteList.isEmpty()){
         	                //delete the list of records...
         	                try{
-        	                Store.deleteRecords(deleteList);
-        	                deleteList.clear();
-        	                lastMessage=0;
+        	                    Store.deleteRecords(deleteList);
+        	                    deleteList.clear();
+        	                    lastMessage = 0;
         	                }
         	                catch(Exception e){
         	                    //leave the delete list identical
