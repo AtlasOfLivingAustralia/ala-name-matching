@@ -58,9 +58,7 @@ public class Sighting {
     /** Images etc */
     String[] associatedMedia;
     /** Licence for the images */
-    String licence;
-    /** Rights for the images */
-    String rights;
+    String imageLicence;
    
 	/**
 	 * @return the id
@@ -375,12 +373,12 @@ public class Sighting {
     public void setDataResourceUid(String dataResourceUid) {
         this.dataResourceUid = dataResourceUid;
     }
-    public String getLicence() {
-        return licence;
+    public String getImageLicence() {
+        return imageLicence;
     }
 
-    public void setLicence(String licence) {
-        this.licence = licence;
+    public void setImageLicence(String imageLicence) {
+        this.imageLicence = imageLicence;
     }
 
     public String getRights() {
