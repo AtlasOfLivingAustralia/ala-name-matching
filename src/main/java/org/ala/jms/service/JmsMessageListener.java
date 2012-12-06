@@ -148,10 +148,10 @@ public class JmsMessageListener implements MessageListener {
     	                                map.put("associatedMedia", newValue);
 	                                }
 	                            }
-	                            else if("userID".equalsIgnoreCase(key)){
-	                                if(value != null)
-	                                    map.put("recordedBy", value.toString());
-	                            }
+//	                            else if("userID".equalsIgnoreCase(key)){
+//	                                if(value != null)
+//	                                    map.put("recordedBy", value.toString());
+//	                            }
 	                            else if("guid".equalsIgnoreCase(key)){
 	                                if(value != null)
 	                                    map.put("occurrenceID", value.toString());
