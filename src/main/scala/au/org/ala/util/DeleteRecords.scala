@@ -142,7 +142,7 @@ class ListDelete(rowKeys:List[String]) extends RecordDeletor{
 class QueryDelete(query :String) extends RecordDeletor{
     import FileHelper._
      override def deleteFromPersistent() ={
-        val file = new File("delrowkeys.out")
+        val file = new File("/data/tmp/delrowkeys.out")
         var count =0
         val start = System.currentTimeMillis
         val out = new BufferedOutputStream(new FileOutputStream(file))        
