@@ -381,13 +381,6 @@ public class Sighting {
         this.imageLicence = imageLicence;
     }
 
-    public String getRights() {
-        return rights;
-    }
-
-    public void setRights(String rights) {
-        this.rights = rights;
-    }
 
     public String getGeoreferenceProtocol() {
         return georeferenceProtocol;
