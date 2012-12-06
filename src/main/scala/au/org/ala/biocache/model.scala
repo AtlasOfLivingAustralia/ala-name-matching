@@ -64,6 +64,7 @@ class Occurrence extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var samplingProtocol:String = _
   @BeanProperty var sex:String = _
   @BeanProperty var source:String = _
+  @BeanProperty var userId:String = _  //this is the ALA ID for the user
   //Additional fields for HISPID support
   @BeanProperty var collectorFieldNumber:String = _  //This value now maps to the correct DWC field http://rs.tdwg.org/dwc/terms/fieldNumber
   @BeanProperty var cultivated:String = _ //http://www.chah.org.au/hispid/terms/cultivatedOccurrence
