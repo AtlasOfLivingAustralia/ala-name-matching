@@ -107,6 +107,8 @@ class Occurrence extends Cloneable /*with Mappable*/ with POSO {
   var originalSensitiveValues:Map[String,String] =_
   @BeanProperty var outlierForLayers:Array[String] = _
 
+  @BeanProperty var photographer:String =_
+
    @JsonIgnore
   def getOriginalSensitiveValues():Map[String,String] = originalSensitiveValues
   def setOriginalSensitiveValues(originalSensitiveValues:Map[String,String])=this.originalSensitiveValues = originalSensitiveValues
