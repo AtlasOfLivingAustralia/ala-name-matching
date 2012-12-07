@@ -658,6 +658,7 @@
    <field name="modified_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
    <!-- This is for Citzen Science records only -->
    <field name="user_id" type="string_lowercase" indexed="true" stored="true" multiValued="false" omitNorms="false" />
+   <field name="alau_user_id" type="string_lowercase" indexed="true" stored="true" multiValued="false" omitNorms="false" />
    <field name="assertion_user_id" type="string_lowercase" indexed="true" stored="false" multiValued="true" omitNorms="false" />
    <!-- Not displayed in search results -->
    <!--field name="generalised_metres" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" / >
