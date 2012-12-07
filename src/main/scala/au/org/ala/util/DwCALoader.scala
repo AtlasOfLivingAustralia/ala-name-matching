@@ -78,6 +78,8 @@ class DwCALoader extends DataLoader {
     import JavaConversions._
     
     def load(resourceUid:String, logRowKeys:Boolean=false, testFile:Boolean=false, forceLoad:Boolean = false){
+      //remove the old files
+      emptyTempFileStore(resourceUid)
       //remove the old row keys:
       deleteOldRowKeys(resourceUid)
     	val (protocol, urls, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(resourceUid)
