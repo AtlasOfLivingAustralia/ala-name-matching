@@ -58,7 +58,7 @@ object DuplicationDetection{
       opt("all", "detect duplicates for all species", { all = true })
       opt("g", "guid", "A single guid to test for duplications", { v: String => guid = Some(v)})
       opt("exist","use existing occurrence dumps",{exist = true})
-      opt("inc","perform an incremental duplication detection based on the last time it was run",{exist = true})
+      opt("inc","perform an incremental duplication detection based on the last time it was run",{incremental = true})
       opt("cleanup","cleanup the temporary files that get created",{cleanup = true})
       opt("load", "load to duplicates into the database",{load=true})
       opt("f","file","A file that contains a list of species guids to detect duplication for",{v: String => speciesFile = Some(v)})
