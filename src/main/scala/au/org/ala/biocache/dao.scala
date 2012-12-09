@@ -1000,6 +1000,7 @@ class DuplicateDAOImpl extends DuplicateDAO {
   override def deleteObsoleteDuplicate(uuid:String){
     val duplicate = getDuplicateInfo(uuid)
     if(duplicate.isDefined){
+      println("Deleting " + duplicate.get.getRowKey() + " - " + uuid)
       //now construct the row key for the "duplicates" column family
       val otherKey = duplicate.get.taxonConceptLsid+ "|" + duplicate.get.year + "|" + duplicate.get.month + "|" + duplicate.get.day
       persistenceManager.delete(uuid, "occ_duplicates")
