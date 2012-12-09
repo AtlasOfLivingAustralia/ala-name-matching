@@ -27,8 +27,7 @@ class FileHelper(file: File) {
     //Appends the supplied file to this one
     def append(afile:FileHelper)={
       val writer = new FileWriter(file, true)      
-      afile.foreachLine(line =>{
-        println(line)
+      afile.foreachLine(line =>{        
         writer.write(line+"\n")        
         })
       writer.flush
