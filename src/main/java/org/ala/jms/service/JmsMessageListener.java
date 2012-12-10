@@ -70,6 +70,16 @@ public class JmsMessageListener implements MessageListener {
         logger.info("JMS Listener initialised.");
 	}
 
+    private int getListSize(Map<String,List<Map<String,String>>> listToProcess){
+        int count = 0;
+        Iterator it = listToProcess.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String,List<Map<String,String>>> resourceList = (Map.Entry) it.next();
+            count += resourceList.getValue().size();
+        }
+        return count;
+    }
+
     public Method getMethod(Message message){
         try {
             logger.debug("Message type: " + message.getClass().getName() + ", TextMessage: " + (message instanceof TextMessage));
@@ -331,9 +341,9 @@ public class JmsMessageListener implements MessageListener {
 
 	        while(true){
     	        long current = System.currentTimeMillis();
-    	        if(lastMessage != 0 && ((current-lastMessage)/1000 > secondsBeforeBatch || upsertList.size() >= batchSize || deleteList.size() >= batchSize)){
+    	        if(lastMessage != 0 && ((current-lastMessage)/1000 > secondsBeforeBatch || getListSize(upsertList) >= batchSize || deleteList.size() >= batchSize)){
     	            //send the batch off to the biocache-store
-    	            logger.debug("Sending " + upsertList.size() + " records for update and " + deleteList.size() + " records to be deleted.");
+    	            logger.debug("Sending " + getListSize(upsertList) + " records for update and " + deleteList.size() + " records to be deleted.");
     	            synchronized(upsertList){
         	            if(!upsertList.isEmpty()){
         	                try{
