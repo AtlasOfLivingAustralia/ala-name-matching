@@ -336,10 +336,19 @@ public class JmsMessageListener implements MessageListener {
 	
 	private class BatchThread extends Thread {
 
+        private long lastCheck = 0;
+
+
 	    public void run(){
             logger.info("JMS Listener starting batch thread....");
 
 	        while(true){
+                long now = System.currentTimeMillis();
+                if(lastCheck == 0 || now - lastCheck > 60000){
+                    logger.debug("Last message: " + lastMessage + ", Upsert size " + getListSize(upsertList) + ", delete size " + deleteList.size());
+                    lastCheck = now;
+                }
+
     	        long current = System.currentTimeMillis();
     	        if(lastMessage != 0 && ((current-lastMessage)/1000 > secondsBeforeBatch || getListSize(upsertList) >= batchSize || deleteList.size() >= batchSize)){
     	            //send the batch off to the biocache-store
@@ -350,6 +359,7 @@ public class JmsMessageListener implements MessageListener {
                                 Iterator it = upsertList.entrySet().iterator();
                                 while (it.hasNext()) {
                                     Map.Entry<String,List<Map<String,String>>> resourceList = (Map.Entry) it.next();
+                                    logger.debug("Sending records for resource:" + resourceList.getKey() + " records for update and " + deleteList.size() + " records to be deleted.");
                                     Store.loadRecords(resourceList.getKey(), resourceList.getValue(), ID_LIST, true);
                                     it.remove(); // avoids a ConcurrentModificationException
                                 }
