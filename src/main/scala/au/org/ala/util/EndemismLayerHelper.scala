@@ -143,12 +143,16 @@ class EndemismLayerHelper {
         for (line <- IOUtils.readLines(contentStream).toArray()) {
           lines += line.asInstanceOf[String]
         }
+
+        contentStream.close()
+
         return lines;
       } else {
         throw new Exception("facet download request failed (" + responseCode + ")")
       }
     } finally {
       get.releaseConnection()
+      httpClient.getHttpConnectionManager.closeIdleConnections(0)
     }
   }
 
