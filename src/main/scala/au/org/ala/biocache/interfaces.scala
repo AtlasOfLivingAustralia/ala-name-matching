@@ -457,7 +457,7 @@ object Store {
 
   def getJackKnifeRecordDetailsFor(uuid:String) : Array[RecordJackKnifeStats] = outlierStatsDAO.getJackKnifeRecordDetailsFor(uuid)
   
-  def getDuplicateDetails(uuid:String):DuplicateRecordDetails = duplicateDAO.getDuplicateInfo(uuid).getOrElse(null)
+  def getDuplicateDetails(uuid:String):DuplicateRecordDetails = duplicateDAO.getDuplicateInfo(uuid).getOrElse(new DuplicateRecordDetails())
   
   /**
    * Returns a list of record uuids that have been deleted since the supplied date inclusive
