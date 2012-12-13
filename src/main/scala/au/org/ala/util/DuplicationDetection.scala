@@ -321,7 +321,8 @@ class DuplicationDetection{
     //println("primaryrecord uuid: "+ primaryRecord.uuid)
     //newduplicates.foreach(i =>println(i.oldDuplicateOf))
     val uuidList = primaryRecord.duplicates.map(r => r.uuid)
-    if(newduplicates.size() >0 || primaryRecord.duplicates.size != primaryRecord.oldDuplicateOf.split(",").size){
+    try{
+    if(newduplicates.size() >0 || primaryRecord.oldDuplicateOf == null || primaryRecord.duplicates.size != primaryRecord.oldDuplicateOf.split(",").size){
       buffer.synchronized{buffer + primaryRecord.rowKey}
       Config.persistenceManager.put(primaryRecord.uuid, "occ_duplicates","value",dup)
       Config.persistenceManager.put(primaryRecord.taxonConceptLsid+"|"+primaryRecord.year+"|"+primaryRecord.month +"|" +primaryRecord.day, "duplicates", primaryRecord.uuid,dup)
@@ -336,6 +337,10 @@ class DuplicationDetection{
         Config.occurrenceDAO.addSystemAssertion(r.rowKey, QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD,"Record has been inferred as closely related to  " + primaryRecord.uuid),false)
         buffer.synchronized{buffer + r.rowKey}
       })
+    }
+    }
+    catch{
+      case e:Exception=> e.printStackTrace();println(dup)
     }
     
   }
