@@ -19,8 +19,8 @@ import org.apache.commons.lang3.StringUtils
  * To change this template use File | Settings | File Templates.
  */
 object EndemismLayerHelper {
-  //val FACET_DOWNLOAD_URL_TEMPLATE = Config.biocacheServiceUrl + "/occurrences/facets/download?q={0}&facets={1}"
-  val FACET_DOWNLOAD_URL_TEMPLATE = "http://ala-rufus.it.csiro.au/biocache-service/occurrences/facets/download?q={0}&facets={1}"
+  val FACET_DOWNLOAD_URL_TEMPLATE = Config.biocacheServiceUrl + "/occurrences/facets/download?q={0}&facets={1}"
+  //val FACET_DOWNLOAD_URL_TEMPLATE = "http://ala-rufus.it.csiro.au/biocache-service/occurrences/facets/download?q={0}&facets={1}"
 
   val ALL_SPECIES_QUERY = "species_guid:[* TO *] AND geospatial_kosher:true"
   val SPECIES_QUERY_TEMPLATE = "species_guid:{0} AND geospatial_kosher:true"
