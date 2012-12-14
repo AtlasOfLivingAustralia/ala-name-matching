@@ -56,38 +56,20 @@ class EndemismLayerHelper {
 
   val indexDAO = Config.indexDAO
 
-  def doThing(s : String, i : Int) : Boolean = {
-    println(s + ": " + i)
-    true
-  }
-
   def calculateSpeciesEndemismValues(speciesCellCountsFilePath: String, cellSpeciesFilePath: String, allSpecies: Boolean) {
     var cellSpecies = Map[String, Set[String]]()
     var speciesCellCounts = Map[String, Int]()
 
     // get list of species
-    //val speciesLsids = doFacetDownload(EndemismLayerHelper.ALL_SPECIES_QUERY, EndemismLayerHelper.SPECIES_FACET)
-    indexDAO.pageOverFacet(doThing, "species_guid", "geospatial_kosher:true", Array())
-
-    /*
-    // remove first line as this will contain the text "taxon_concept_id"
-    speciesLsids.remove(0)
+    val speciesLsids = doFacetQuery(EndemismLayerHelper.ALL_SPECIES_QUERY, EndemismLayerHelper.SPECIES_FACET)
 
     for (lsid <- speciesLsids) {
-      val occurrencePoints = doFacetDownload(MessageFormat.format(EndemismLayerHelper.SPECIES_QUERY_TEMPLATE, lsid), EndemismLayerHelper.POINT_001_FACET)
+      val occurrencePoints = doFacetQuery(MessageFormat.format(EndemismLayerHelper.SPECIES_QUERY_TEMPLATE, lsid), EndemismLayerHelper.POINT_001_FACET)
 
       // remove first line as this will contain the text "taxon_concept_id"
       occurrencePoints.remove(0)
 
       var pointsSet = Set[String]()
-
-      var minLatitude = Double.PositiveInfinity
-      var maxLatitude = Double.NegativeInfinity
-      var minLongitude = Double.PositiveInfinity
-      var maxLongitude = Double.NegativeInfinity
-
-      var plus360MinLongitude = Double.PositiveInfinity
-      var plus360MaxLongitude = Double.NegativeInfinity
 
       for (point <- occurrencePoints) {
         val splitPoint = point.split(",")
@@ -132,37 +114,21 @@ class EndemismLayerHelper {
     }
     bwCellSpecies.flush()
     bwCellSpecies.close()
-    */
   }
 
-//  def doFacetDownload(query: String, facet: String): ListBuffer[String] = {
-//    val urlCodec = new URLCodec()
-//
-//    val url = MessageFormat.format(EndemismLayerHelper.FACET_DOWNLOAD_URL_TEMPLATE, urlCodec.encode(query), urlCodec.encode(facet))
-//
-//    val httpClient = new HttpClient()
-//    val get = new GetMethod(url)
-//    try {
-//      val responseCode = httpClient.executeMethod(get)
-//      if (responseCode == 200) {
-//        val contentStream = get.getResponseBodyAsStream();
-//
-//        val lines = new ListBuffer[String]
-//
-//        for (line <- IOUtils.readLines(contentStream).toArray()) {
-//          lines += line.asInstanceOf[String]
-//        }
-//
-//        contentStream.close()
-//
-//        return lines;
-//      } else {
-//        throw new Exception("facet download request failed (" + responseCode + ")")
-//      }
-//    } finally {
-//      get.releaseConnection()
-//      httpClient.getHttpConnectionManager.closeIdleConnections(0)
-//    }
-//  }
+  def doFacetQuery(query: String, facet: String): ListBuffer[String] = {
+
+    var resultsList = new ListBuffer[String]
+
+    def addToList(name: String, count: Int) : Boolean = {
+      resultsList += name
+
+      true
+    }
+
+    indexDAO.pageOverFacet(addToList, facet, query, Array())
+
+    resultsList
+  }
 
 }
