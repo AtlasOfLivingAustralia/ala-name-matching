@@ -67,7 +67,7 @@ class EndemismLayerHelper {
 
     // get list of species
     //val speciesLsids = doFacetDownload(EndemismLayerHelper.ALL_SPECIES_QUERY, EndemismLayerHelper.SPECIES_FACET)
-    indexDAO.pageOverFacet(doThing, "species_guid", "geospatial_kosher:true")
+    indexDAO.pageOverFacet(doThing, "species_guid", "geospatial_kosher:true", Array())
 
     /*
     // remove first line as this will contain the text "taxon_concept_id"
