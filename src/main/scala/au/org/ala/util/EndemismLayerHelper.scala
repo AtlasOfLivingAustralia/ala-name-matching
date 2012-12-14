@@ -54,13 +54,22 @@ object EndemismLayerHelper {
 
 class EndemismLayerHelper {
 
+  val indexDAO = Config.indexDAO
+
+  def doThing(s : String, i : Int) : Boolean = {
+    println(s + ": " + i)
+    true
+  }
+
   def calculateSpeciesEndemismValues(speciesCellCountsFilePath: String, cellSpeciesFilePath: String, allSpecies: Boolean) {
     var cellSpecies = Map[String, Set[String]]()
     var speciesCellCounts = Map[String, Int]()
 
     // get list of species
-    val speciesLsids = doFacetDownload(EndemismLayerHelper.ALL_SPECIES_QUERY, EndemismLayerHelper.SPECIES_FACET)
+    //val speciesLsids = doFacetDownload(EndemismLayerHelper.ALL_SPECIES_QUERY, EndemismLayerHelper.SPECIES_FACET)
+    indexDAO.pageOverFacet(doThing, "species_guid", "geospatial_kosher:true")
 
+    /*
     // remove first line as this will contain the text "taxon_concept_id"
     speciesLsids.remove(0)
 
@@ -123,37 +132,37 @@ class EndemismLayerHelper {
     }
     bwCellSpecies.flush()
     bwCellSpecies.close()
-
+    */
   }
 
-  def doFacetDownload(query: String, facet: String): ListBuffer[String] = {
-    val urlCodec = new URLCodec()
-
-    val url = MessageFormat.format(EndemismLayerHelper.FACET_DOWNLOAD_URL_TEMPLATE, urlCodec.encode(query), urlCodec.encode(facet))
-
-    val httpClient = new HttpClient()
-    val get = new GetMethod(url)
-    try {
-      val responseCode = httpClient.executeMethod(get)
-      if (responseCode == 200) {
-        val contentStream = get.getResponseBodyAsStream();
-
-        val lines = new ListBuffer[String]
-
-        for (line <- IOUtils.readLines(contentStream).toArray()) {
-          lines += line.asInstanceOf[String]
-        }
-
-        contentStream.close()
-
-        return lines;
-      } else {
-        throw new Exception("facet download request failed (" + responseCode + ")")
-      }
-    } finally {
-      get.releaseConnection()
-      httpClient.getHttpConnectionManager.closeIdleConnections(0)
-    }
-  }
+//  def doFacetDownload(query: String, facet: String): ListBuffer[String] = {
+//    val urlCodec = new URLCodec()
+//
+//    val url = MessageFormat.format(EndemismLayerHelper.FACET_DOWNLOAD_URL_TEMPLATE, urlCodec.encode(query), urlCodec.encode(facet))
+//
+//    val httpClient = new HttpClient()
+//    val get = new GetMethod(url)
+//    try {
+//      val responseCode = httpClient.executeMethod(get)
+//      if (responseCode == 200) {
+//        val contentStream = get.getResponseBodyAsStream();
+//
+//        val lines = new ListBuffer[String]
+//
+//        for (line <- IOUtils.readLines(contentStream).toArray()) {
+//          lines += line.asInstanceOf[String]
+//        }
+//
+//        contentStream.close()
+//
+//        return lines;
+//      } else {
+//        throw new Exception("facet download request failed (" + responseCode + ")")
+//      }
+//    } finally {
+//      get.releaseConnection()
+//      httpClient.getHttpConnectionManager.closeIdleConnections(0)
+//    }
+//  }
 
 }
