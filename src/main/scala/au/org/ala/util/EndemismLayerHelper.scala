@@ -10,6 +10,7 @@ import org.apache.commons.math3.util.Precision
 import org.apache.commons.io.IOUtils
 import java.io.{BufferedWriter, FileWriter}
 import org.apache.commons.lang3.StringUtils
+import org.apache.solr.client.solrj.util.ClientUtils
 
 /**
  * Created with IntelliJ IDEA.
@@ -64,7 +65,7 @@ class EndemismLayerHelper {
     val speciesLsids = doFacetQuery(EndemismLayerHelper.ALL_SPECIES_QUERY, EndemismLayerHelper.SPECIES_FACET)
 
     for (lsid <- speciesLsids) {
-      val occurrencePoints = doFacetQuery(MessageFormat.format(EndemismLayerHelper.SPECIES_QUERY_TEMPLATE, lsid), EndemismLayerHelper.POINT_001_FACET)
+      val occurrencePoints = doFacetQuery(MessageFormat.format(EndemismLayerHelper.SPECIES_QUERY_TEMPLATE, ClientUtils.escapeQueryChars(lsid)), EndemismLayerHelper.POINT_001_FACET)
 
       // remove first line as this will contain the text "taxon_concept_id"
       occurrencePoints.remove(0)
