@@ -67,9 +67,6 @@ class EndemismLayerHelper {
     for (lsid <- speciesLsids) {
       val occurrencePoints = doFacetQuery(MessageFormat.format(EndemismLayerHelper.SPECIES_QUERY_TEMPLATE, ClientUtils.escapeQueryChars(lsid)), EndemismLayerHelper.POINT_001_FACET)
 
-      // remove first line as this will contain the text "taxon_concept_id"
-      occurrencePoints.remove(0)
-
       var pointsSet = Set[String]()
 
       for (point <- occurrencePoints) {
