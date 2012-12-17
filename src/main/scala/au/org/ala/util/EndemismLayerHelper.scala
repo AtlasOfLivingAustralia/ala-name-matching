@@ -51,9 +51,12 @@ object EndemismLayerHelper {
       //      })
     }
 
-    //if (parser.parse(args)) {
+    if (parser.parse(args)) {
+      println("Output file directory: " + outputFileDirectory)
+      println("Species cell counts file prefix: " + speciesCellCountsFilePrefix)
+      println("Cell species file prefix: " + cellSpeciesFilePrefix)
       helper.calculateSpeciesEndemismValues(outputFileDirectory, speciesCellCountsFilePrefix, cellSpeciesFilePrefix)
-    //}
+    }
   }
 }
 
@@ -87,7 +90,7 @@ class EndemismLayerHelper {
       // process for 0.1 degree resolution
       processOccurrencePoints(occurrencePoints, lsid, cellSpeciesPoint1Degree, speciesCellCountsPoint1Degree, 1)
 
-      // process for 0.1 degree resolution
+      // process for 1 degree resolution
       processOccurrencePoints(occurrencePoints, lsid, cellSpecies1Degree, speciesCellCounts1Degree, 0)
     }
 
