@@ -19,6 +19,7 @@ import au.org.ala.data.util.RankType;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author trobertson
@@ -28,17 +29,17 @@ import org.apache.commons.lang.builder.ToStringBuilder;
  */
 public class LinnaeanRankClassification {
 	protected String kingdom;
-        protected String kid;
+    protected String kid;
 	protected String phylum;
-        protected String pid;
+    protected String pid;
 	protected String klass;
-        protected String cid;
+    protected String cid;
 	protected String order;
-        protected String oid;
+    protected String oid;
 	protected String family;
-        protected String fid;
+    protected String fid;
 	protected String genus; // Aus
-        protected String gid;
+    protected String gid;
     protected String species; // Aus bus
     protected String sid;
 	protected String specificEpithet; // bus
@@ -392,19 +393,19 @@ public class LinnaeanRankClassification {
         public String getLuceneSearchString(boolean optional){
             String prefix = optional ? " " : " +";
             StringBuilder sb = new StringBuilder();
-            if(kingdom != null)
+            if(StringUtils.isNotEmpty(kingdom))
                 sb.append(prefix).append(RankType.KINGDOM.getRank()).append(":").append(kingdom);
-            if(phylum != null)
+            if(StringUtils.isNotEmpty(phylum))
                 sb.append(prefix).append(RankType.PHYLUM.getRank()).append(":").append(phylum);
-            if(klass != null)
+            if(StringUtils.isNotEmpty(klass))
                 sb.append(prefix).append(RankType.CLASS.getRank()).append(":").append(klass);
-            if(order != null)
+            if(StringUtils.isNotEmpty(order))
                 sb.append(prefix).append(RankType.ORDER.getRank()).append(":").append(order);
-            if(family != null)
+            if(StringUtils.isNotEmpty(family))
                 sb.append(prefix).append(RankType.FAMILY.getRank()).append(":").append(family);
-            if(genus != null)
+            if(StringUtils.isNotEmpty(genus))
                 sb.append(prefix).append(RankType.GENUS.getRank()).append(":").append(genus);
-            if(species != null)
+            if(StringUtils.isNotEmpty(species))
                 sb.append(prefix).append(RankType.SPECIES.getRank()).append(":\"").append(species).append("\"");
             return sb.toString();
         }
