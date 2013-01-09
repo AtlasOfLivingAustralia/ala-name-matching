@@ -249,6 +249,18 @@ object CMD {
             println("Finished delete for : " + drUid)
           })
         }
+        case it if (it startsWith "mark-deleted") => {
+          //need to construct the args that will be used 
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+          
+          val args2:Array[String] = if(args.size == 2) Array(args(0), "rows" ,"-d", args(1)) else if(args.size>2) Array(args(0), "rows" ,"-d", args(1), "--test") else Array()
+          ResourceCleanupTask.main(args2)
+        }
+        case it if (it startsWith "remove-deleted") =>{
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+          if(args.size==1)
+            ResourceCleanupTask.main(Array(args(0), "delete"))
+        }
         case it if (it startsWith "delete") => {
           //need to preserve the query case because T and Z mean things in dates
           val query = input.replaceFirst("delete ", "")
@@ -325,7 +337,9 @@ object CMD {
     padAndPrint("[32]  jackknife - Run jackknife outlier detection.")
     padAndPrint("[33]  distribution outliers -l <speciesLsid> - Run expert distribution outlier detection. If species LSID is supplied, outlier detection is only performed for occurrences of the species with the supplied taxon concept LSID")
     padAndPrint("[34]  apply-aq <apiKey> - applies the assertion queries for the suppplied apiKey")
-    padAndPrint("[35]  exit")
+    padAndPrint("[35]  mark-deleted <dr-uid> <date of last load YYYY-MM-DD> - Marks records as deleted in the data store when that have not been updated on the last load. - only run if a complete data set was loaded.")
+    padAndPrint("[36]  remove-deleted <dr-uid> - removes all records from the data-store that have been marked as deleted")
+    padAndPrint("[37]  exit")
 
   }
 
