@@ -148,6 +148,13 @@ object ResourceCleanupTask {
           }
         }
       }
+      else{
+        //need to delete it anyway because there was no last modified for the record
+        deleted +=1
+        if(!test){
+          Config.occurrenceDAO.setDeleted(guid, true,Some(deleteTime))
+        }
+      }
       true
     },startUuid,endUuid,1000,"rowKey","uuid","lastModifiedTime","dateDeleted")
     println("Finished cleanup for rows")
