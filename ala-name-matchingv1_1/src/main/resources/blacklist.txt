@@ -1,0 +1,3 @@
+# a file that contains a list of scientific names that should not be included in the name matching index.
+Siganus nebulosa
+Siganus nebulosus
