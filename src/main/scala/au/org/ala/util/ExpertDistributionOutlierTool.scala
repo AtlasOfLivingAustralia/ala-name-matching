@@ -23,7 +23,7 @@ import actors.Actor
 
 object ExpertDistributionOutlierTool {
   val DISTRIBUTION_DETAILS_URL = Config.layersServiceUrl + "/distributions"
-  val RECORDS_URL_TEMPLATE = Config.biocacheServiceUrl + "/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&pageSize={1}"
+  val RECORDS_URL_TEMPLATE = Config.biocacheServiceUrl + "/occurrences/search?q=taxon_concept_lsid:{0}%20AND%20lat_long:%5B%2A%20TO%20%2A%5D&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&startIndex={1}&pageSize={2}"
   val DISTANCE_URL_TEMPLATE = Config.layersServiceUrl + "/distribution/outliers/{0}"
 
   // key to use when storing outlier row keys for an LSID in the distribution_outliers column family
@@ -31,6 +31,9 @@ object ExpertDistributionOutlierTool {
 
   // Threshold value to use for detection of outliers. An occurrence is only considered an outlier if it is found to be over 50km outside of the expert distribution
   val OUTLIER_THRESHOLD = 50000
+
+  // Some distributions have an extremely large number of records associated with them. Handle the records one "page" at a time.
+  val RECORDS_PAGE_SIZE = 5000
 
   def main(args: Array[String]) {
     val tool = new ExpertDistributionOutlierTool();
@@ -150,6 +153,7 @@ class ExpertDistributionOutlierTool {
       get.releaseConnection()
     }
   }
+
 }
 
 class ExpertDistributionActor(val id: Int, val caller: Actor) extends Actor {
@@ -201,9 +205,23 @@ class ExpertDistributionActor(val id: Int, val caller: Actor) extends Actor {
    * @param lsid a taxon concept lsid
    */
   def findOutliersForLsid(lsid: String): ListBuffer[String] = {
-    val recordsMap = getRecordsForLsid(lsid)
-    val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
-    val rowKeysForIndexing = markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
+    val rowKeysForIndexing = new ListBuffer[String]
+
+    // Some distributions have an extremely large number of records associated with them. Handle the records one "page" at a time.
+    var recordsMap = getRecordsForLsid(lsid, ExpertDistributionOutlierTool.RECORDS_PAGE_SIZE, 0)
+
+    var pageNumber = 1
+
+    while (!recordsMap.isEmpty) {
+      recordsMap = getRecordsForLsid(lsid, ExpertDistributionOutlierTool.RECORDS_PAGE_SIZE, pageNumber * ExpertDistributionOutlierTool.RECORDS_PAGE_SIZE)
+
+      if (!recordsMap.isEmpty) {
+        val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
+        rowKeysForIndexing ++= markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
+      }
+
+      pageNumber = pageNumber + 1
+    }
 
     rowKeysForIndexing
   }
@@ -213,9 +231,8 @@ class ExpertDistributionActor(val id: Int, val caller: Actor) extends Actor {
    * @param lsid A taxon concept lsid
    * @return Occurrence record detail. Only the following fields are retreived: id,row_key,latitude,longitude,coordinate_uncertainty. Only records that have a location (lat/long) are returned.
    */
-  def getRecordsForLsid(lsid: String): scala.collection.mutable.Map[String, Map[String, Object]] = {
-    val url = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_URL_TEMPLATE, lsid, java.lang.Integer.MAX_VALUE.toString)
-
+  def getRecordsForLsid(lsid: String, pageSize: Int, startIndex: Int): scala.collection.mutable.Map[String, Map[String, Object]] = {
+    val url = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_URL_TEMPLATE, lsid, startIndex.toString, pageSize.toString)
     val httpClient = new HttpClient()
     val get = new GetMethod(url)
     try {
