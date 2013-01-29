@@ -24,7 +24,12 @@ object EndemismLayerHelper {
   //val FACET_DOWNLOAD_URL_TEMPLATE = "http://ala-rufus.it.csiro.au/biocache-service/occurrences/facets/download?q={0}&facets={1}"
 
   val ALL_SPECIES_QUERY = "species_guid:[* TO *] AND geospatial_kosher:true"
-  val SPECIES_QUERY_TEMPLATE = "species_guid:{0} AND geospatial_kosher:true"
+  val MARINE_ONLY_QUERY = "species_guid:[* TO *] AND species_habitats:Marine AND geospatial_kosher:true"
+  val TERRESTRIAL_ONLY_QUERY = "species_guid:[* TO *] AND !species_habitats:Marine AND geospatial_kosher:true"
+
+  val SPECIES_QUERY_TEMPLATE_ALL_OCCURRENCES = "species_guid:{0} AND geospatial_kosher:true"
+  val SPECIES_QUERY_TEMPLATE_MARINE_ONLY = "species_guid:{0} AND species_habitats:Marine AND geospatial_kosher:true"
+  val SPECIES_QUERY_TEMPLATE_TERRESTRIAL_ONLY = "species_guid:{0} AND !species_habitats:Marine AND geospatial_kosher:true"
 
   val SPECIES_FACET = "species_guid"
   val POINT_001_FACET = "point-0.001"
@@ -65,49 +70,66 @@ class EndemismLayerHelper {
   val indexDAO = Config.indexDAO
 
   def calculateSpeciesEndemismValues(outputFileDirectory: String, speciesCellCountsFilePrefix: String, cellSpeciesFilePrefix: String) {
-    // Data for 0.01 degree by 0.01 degree cells
-    var cellSpeciesPoint01Degree = scala.collection.mutable.Map[String, Set[String]]()
-    var speciesCellCountsPoint01Degree = scala.collection.mutable.Map[String, Int]()
+    // Data for all occurrences
+    var cellSpeciesAll = scala.collection.mutable.Map[String, Set[String]]()
+    var speciesCellCountsAll = scala.collection.mutable.Map[String, Int]()
 
-    // Data for 0.1 degree by 0.1 degree cells
-    var cellSpeciesPoint1Degree = scala.collection.mutable.Map[String, Set[String]]()
-    var speciesCellCountsPoint1Degree = scala.collection.mutable.Map[String, Int]()
+    // Data for marine only
+    var cellSpeciesMarineOnly = scala.collection.mutable.Map[String, Set[String]]()
+    var speciesCellCountsMarineOnly = scala.collection.mutable.Map[String, Int]()
 
-    // Data for 1 degree by 1 degree cells
-    var cellSpecies1Degree = scala.collection.mutable.Map[String, Set[String]]()
-    var speciesCellCounts1Degree = scala.collection.mutable.Map[String, Int]()
+    // Data for terrestrial only
+    var cellSpeciesTerrestrialOnly = scala.collection.mutable.Map[String, Set[String]]()
+    var speciesCellCountsTerrestrialOnly = scala.collection.mutable.Map[String, Int]()
 
-    // get list of species
-    val speciesLsids = doFacetQuery(EndemismLayerHelper.ALL_SPECIES_QUERY, EndemismLayerHelper.SPECIES_FACET)
+    // get list of species for all occurrences
+    val speciesLsidsAll = doFacetQuery(EndemismLayerHelper.ALL_SPECIES_QUERY, EndemismLayerHelper.SPECIES_FACET)
 
-    for (lsid <- speciesLsids) {
+    for (lsid <- speciesLsidsAll) {
       println(lsid)
-      val occurrencePoints = doFacetQuery(MessageFormat.format(EndemismLayerHelper.SPECIES_QUERY_TEMPLATE, ClientUtils.escapeQueryChars(lsid)), EndemismLayerHelper.POINT_001_FACET)
-
-      // process for 0.01 degree resolution
-      processOccurrencePoints(occurrencePoints, lsid, cellSpeciesPoint01Degree, speciesCellCountsPoint01Degree, 2)
+      val occurrencePoints = doFacetQuery(MessageFormat.format(EndemismLayerHelper.SPECIES_QUERY_TEMPLATE_ALL_OCCURRENCES, ClientUtils.escapeQueryChars(lsid)), EndemismLayerHelper.POINT_001_FACET)
 
       // process for 0.1 degree resolution
-      processOccurrencePoints(occurrencePoints, lsid, cellSpeciesPoint1Degree, speciesCellCountsPoint1Degree, 1)
-
-      // process for 1 degree resolution
-      processOccurrencePoints(occurrencePoints, lsid, cellSpecies1Degree, speciesCellCounts1Degree, 0)
+      processOccurrencePoints(occurrencePoints, lsid, cellSpeciesAll, speciesCellCountsAll, 1)
     }
 
-    //write output for 0.01 degree resolution
-    val cellSpeciesFilePoint01Degree = outputFileDirectory + '/' + cellSpeciesFilePrefix + "-0.01-degree.txt"
-    val speciesCellCountsFilePoint01Degree = outputFileDirectory + '/' + speciesCellCountsFilePrefix + "-0.01-degree.txt"
-    writeFileOutput(cellSpeciesPoint01Degree, speciesCellCountsPoint01Degree, cellSpeciesFilePoint01Degree, speciesCellCountsFilePoint01Degree)
+    // get list of species for marine occurrences only
+    val speciesLsidsMarineOnly = doFacetQuery(EndemismLayerHelper.MARINE_ONLY_QUERY, EndemismLayerHelper.SPECIES_FACET)
 
-    //write output for 0.1 degree resolution
-    val cellSpeciesFilePoint1Degree = outputFileDirectory + '/' + cellSpeciesFilePrefix + "-0.1-degree.txt"
-    val speciesCellCountsFilePoint1Degree = outputFileDirectory + '/' + speciesCellCountsFilePrefix + "-0.1-degree.txt"
-    writeFileOutput(cellSpeciesPoint1Degree, speciesCellCountsPoint1Degree, cellSpeciesFilePoint1Degree, speciesCellCountsFilePoint1Degree)
+    for (lsid <- speciesLsidsMarineOnly) {
+      println(lsid)
+      val occurrencePoints = doFacetQuery(MessageFormat.format(EndemismLayerHelper.SPECIES_QUERY_TEMPLATE_MARINE_ONLY, ClientUtils.escapeQueryChars(lsid)), EndemismLayerHelper.POINT_001_FACET)
 
-    //write output for 1 degree resolution
-    val cellSpeciesFile1Degree = outputFileDirectory + '/' + cellSpeciesFilePrefix + "-1-degree.txt"
-    val speciesCellCountsFile1Degree = outputFileDirectory + '/' + speciesCellCountsFilePrefix + "-1-degree.txt"
-    writeFileOutput(cellSpecies1Degree, speciesCellCounts1Degree, cellSpeciesFile1Degree, speciesCellCountsFile1Degree)
+      // process for 0.1 degree resolution
+      processOccurrencePoints(occurrencePoints, lsid, cellSpeciesMarineOnly, speciesCellCountsMarineOnly, 1)
+    }
+
+    // get list of species for marine occurrences only
+    val speciesLsidsTerrestrialOnly = doFacetQuery(EndemismLayerHelper.TERRESTRIAL_ONLY_QUERY, EndemismLayerHelper.SPECIES_FACET)
+
+    for (lsid <- speciesLsidsTerrestrialOnly) {
+      println(lsid)
+      val occurrencePoints = doFacetQuery(MessageFormat.format(EndemismLayerHelper.SPECIES_QUERY_TEMPLATE_TERRESTRIAL_ONLY, ClientUtils.escapeQueryChars(lsid)), EndemismLayerHelper.POINT_001_FACET)
+
+      // process for 0.1 degree resolution
+      processOccurrencePoints(occurrencePoints, lsid, cellSpeciesTerrestrialOnly, speciesCellCountsTerrestrialOnly, 1)
+    }
+
+    // write output for all occurrences
+    val cellSpeciesFileAllOccurrences = outputFileDirectory + '/' + cellSpeciesFilePrefix + "-0.1-degree.txt"
+    val speciesCellCountsFileAllOccurrences = outputFileDirectory + '/' + speciesCellCountsFilePrefix + "-0.1-degree.txt"
+    writeFileOutput(cellSpeciesAll, speciesCellCountsAll, cellSpeciesFileAllOccurrences, speciesCellCountsFileAllOccurrences)
+
+    // write output for marine occurrences only
+    val cellSpeciesFileMarineOnly = outputFileDirectory + '/' + cellSpeciesFilePrefix + "-0.1-degree-marine-only.txt"
+    val speciesCellCountsFileMarineOnly = outputFileDirectory + '/' + speciesCellCountsFilePrefix + "-0.1-degree-marine-only.txt"
+    writeFileOutput(cellSpeciesMarineOnly, speciesCellCountsMarineOnly, cellSpeciesFileMarineOnly, speciesCellCountsFileMarineOnly)
+
+    //write output for terrestrial occurrences only
+    val cellSpeciesFileTerrestrialOnly = outputFileDirectory + '/' + cellSpeciesFilePrefix + "-0.1-degree-terrestrial-only.txt"
+    val speciesCellCountsFileTerrestrialOnly = outputFileDirectory + '/' + speciesCellCountsFilePrefix + "-0.1-degree-terrestrial-only.txt"
+    writeFileOutput(cellSpeciesTerrestrialOnly, speciesCellCountsTerrestrialOnly, cellSpeciesFileTerrestrialOnly, speciesCellCountsFileTerrestrialOnly)
+
   }
 
   def processOccurrencePoints(occurrencePoints: ListBuffer[String], lsid: String, cellSpecies: scala.collection.mutable.Map[String, Set[String]], speciesCellCounts: scala.collection.mutable.Map[String, Int], numDecimalPlacesToRoundTo: Int) {
