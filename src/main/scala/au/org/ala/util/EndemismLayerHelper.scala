@@ -23,13 +23,13 @@ object EndemismLayerHelper {
   val FACET_DOWNLOAD_URL_TEMPLATE = Config.biocacheServiceUrl + "/occurrences/facets/download?q={0}&facets={1}"
   //val FACET_DOWNLOAD_URL_TEMPLATE = "http://ala-rufus.it.csiro.au/biocache-service/occurrences/facets/download?q={0}&facets={1}"
 
-  val ALL_SPECIES_QUERY = "species_guid:[* TO *] AND geospatial_kosher:true"
-  val MARINE_ONLY_QUERY = "species_guid:[* TO *] AND species_habitats:Marine AND geospatial_kosher:true"
-  val TERRESTRIAL_ONLY_QUERY = "species_guid:[* TO *] AND !species_habitats:Marine AND geospatial_kosher:true"
+  val ALL_SPECIES_QUERY = "species_guid:[* TO *] AND geospatial_kosher:true AND longitude:[40 TO 172] AND% latitude:[-72 TO -8]"
+  val MARINE_ONLY_QUERY = "species_guid:[* TO *] AND species_habitats:Marine AND geospatial_kosher:true AND longitude:[40 TO 172] AND% latitude:[-72 TO -8]"
+  val TERRESTRIAL_ONLY_QUERY = "species_guid:[* TO *] AND !species_habitats:Marine AND geospatial_kosher:true AND longitude:[40 TO 172] AND% latitude:[-72 TO -8]"
 
-  val SPECIES_QUERY_TEMPLATE_ALL_OCCURRENCES = "species_guid:{0} AND geospatial_kosher:true"
-  val SPECIES_QUERY_TEMPLATE_MARINE_ONLY = "species_guid:{0} AND species_habitats:Marine AND geospatial_kosher:true"
-  val SPECIES_QUERY_TEMPLATE_TERRESTRIAL_ONLY = "species_guid:{0} AND !species_habitats:Marine AND geospatial_kosher:true"
+  val SPECIES_QUERY_TEMPLATE_ALL_OCCURRENCES = "species_guid:{0} AND geospatial_kosher:true AND longitude:[40 TO 172] AND% latitude:[-72 TO -8]"
+  val SPECIES_QUERY_TEMPLATE_MARINE_ONLY = "species_guid:{0} AND species_habitats:Marine AND geospatial_kosher:true AND longitude:[40 TO 172] AND% latitude:[-72 TO -8]"
+  val SPECIES_QUERY_TEMPLATE_TERRESTRIAL_ONLY = "species_guid:{0} AND !species_habitats:Marine AND geospatial_kosher:true AND longitude:[40 TO 172] AND% latitude:[-72 TO -8]"
 
   val SPECIES_FACET = "species_guid"
   val POINT_001_FACET = "point-0.001"
