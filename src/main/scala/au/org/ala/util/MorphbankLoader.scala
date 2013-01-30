@@ -163,6 +163,11 @@ class MorphbankLoader extends CustomWebserviceLoader {
     // this field will be completely repopulated.
     pm.put(createUniqueID(dataResourceUid, uniqueTermsValues), MorphbankLoader.OCC_NAMESPACE, MorphbankLoader.ASSOCIATED_MEDIA_DWC_KEY, "")
 
+    // clear out CatalogNumber field if it has not been populated.
+    if (!mappedValues.contains(MorphbankLoader.CATALOG_NUMBER_DWC_KEY)) {
+      mappedValues = mappedValues + (MorphbankLoader.CATALOG_NUMBER_DWC_KEY -> "")
+    }
+
     val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
     load(dataResourceUid, fr, uniqueTermsValues)
 
