@@ -172,16 +172,15 @@ class MorphbankLoader extends CustomWebserviceLoader {
   //record content of an xml node if it is of interest
   def addValue(node: Node, map: Map[String, String]): Map[String, String] = {
     if (node.label.toLowerCase == MorphbankLoader.SOURCE_ID_KEY.toLowerCase) {
-      // use the morphbank ID for the specimen as the catalog number
+      // use the morphbank ID to "otherCatalogNumbers" in the biocache for the specimen as the catalog number
       val morphbankIdNode = node \\ MorphbankLoader.MORPHBANK_ID_KEY
-      map + (MorphbankLoader.CATALOG_NUMBER_DWC_KEY -> morphbankIdNode.text.trim())
+      map + (MorphbankLoader.OTHER_CATALOG_NUMBERS_DWC_KEY -> morphbankIdNode.text.trim())
     } else if (node.label.toLowerCase == MorphbankLoader.DATE_LAST_MODIFIED_KEY.toLowerCase) {
       // map date last modified to corresponding darwin core field
       map + (MorphbankLoader.MODIFIED_DWC_KEY -> node.text.trim())
     } else if (node.label.toLowerCase == MorphbankLoader.CATALOG_NUMBER_DWC_KEY.toLowerCase()) {
-      // map darwin core catalog number field to "otherCatalogNumbers" in the biocache, as the morphbank id is used for the
-      // catalog number
-      map + (MorphbankLoader.OTHER_CATALOG_NUMBERS_DWC_KEY -> node.text.trim())
+      // If it is supplied, use the darwin core catalog number as the catalog number in the biocache
+      map + (MorphbankLoader.CATALOG_NUMBER_DWC_KEY -> node.text.trim())
     } else if (node.label.toLowerCase == MorphbankLoader.COLLECTOR_OLDDWC_KEY.toLowerCase) {
       // Map the old darwin core "collector" field to the new "recorded by" field
       map + (MorphbankLoader.RECORDED_BY_DWC_KEY -> node.text.trim())
