@@ -155,7 +155,7 @@ class MorphbankLoader extends CustomWebserviceLoader {
     var mappedValues = Map[String, String]()
     specimen.child.foreach(node => (mappedValues = addValue(node, mappedValues)))
 
-    val specimenPageUrl = MessageFormat.format(specimenPageUrlTemplate, mappedValues(MorphbankLoader.CATALOG_NUMBER_DWC_KEY))
+    val specimenPageUrl = MessageFormat.format(specimenPageUrlTemplate, mappedValues(MorphbankLoader.OTHER_CATALOG_NUMBERS_DWC_KEY))
     mappedValues = mappedValues + (MorphbankLoader.OCCURRENCE_DETAILS_DWC_KEY -> specimenPageUrl)
     val uniqueTermsValues = uniqueTerms.map(t => mappedValues.getOrElse(t, ""))
 
@@ -166,7 +166,7 @@ class MorphbankLoader extends CustomWebserviceLoader {
     val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
     load(dataResourceUid, fr, uniqueTermsValues)
 
-    println("Loaded specimen " + mappedValues(MorphbankLoader.CATALOG_NUMBER_DWC_KEY))
+    println("Loaded specimen " + mappedValues(MorphbankLoader.OTHER_CATALOG_NUMBERS_DWC_KEY))
   }
 
   //record content of an xml node if it is of interest
@@ -284,7 +284,7 @@ class MorphbankLoader extends CustomWebserviceLoader {
       }
       val specimenImageUrlsNoDuplicates = specimenImageUrlsSet.toSeq.sortWith((s1, s2) => s1 < s2)
 
-      var mappedValues = Map(MorphbankLoader.CATALOG_NUMBER_DWC_KEY -> specimenId, MorphbankLoader.ASSOCIATED_MEDIA_DWC_KEY -> specimenImageUrlsNoDuplicates.mkString(";"))
+      var mappedValues = Map(MorphbankLoader.OTHER_CATALOG_NUMBERS_DWC_KEY -> specimenId, MorphbankLoader.ASSOCIATED_MEDIA_DWC_KEY -> specimenImageUrlsNoDuplicates.mkString(";"))
 
       if (specimenImagesLicence != null) {
         mappedValues += (MorphbankLoader.RIGHTS_DWC_KEY -> specimenImagesLicence)
