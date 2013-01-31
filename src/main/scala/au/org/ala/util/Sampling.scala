@@ -7,11 +7,14 @@ import au.com.bytecode.opencsv.{CSVWriter, CSVReader}
 import scala.collection.mutable.{ArrayBuffer, HashSet}
 import org.ala.layers.client.Client
 import scala.Some
+import org.slf4j.LoggerFactory
 
 /**
  * Executable for running the sampling for a data resource.
  */
 object Sampling {
+
+  protected val logger = LoggerFactory.getLogger("Sampling")
 
   def main(args: Array[String]) {
 
@@ -72,12 +75,13 @@ object Sampling {
 }
 
 class Sampling {
+  val logger = LoggerFactory.getLogger("Sampling")
 
   import FileHelper._
 
   //TODO refactor this so that code is NOT duplicated.
   def getDistinctCoordinatesForFile(locFilePath: String, rowKeyFile: String) {
-    println("Creating distinct list of coordinates for row keys in " + rowKeyFile)
+    logger.info("Creating distinct list of coordinates for row keys in " + rowKeyFile)
     var counter = 0
     var passed = 0
     val rowKeys = new File(rowKeyFile)
@@ -147,8 +151,7 @@ class Sampling {
       fw.close
     } catch {
       case e => {
-        e.printStackTrace()
-        println("failed to write");
+        logger.error("failed to write - " + e.getMessage, e)
       }
     }
   }
@@ -246,7 +249,7 @@ class Sampling {
    */
   def sampling(filePath: String, outputFilePath: String, singleLayerName: String = "") {
 
-    println("********* START - TEST BATCH SAMPLING FROM FILE ***************")
+    logger.info("********* START - TEST BATCH SAMPLING FROM FILE ***************")
     //load the CSV of points into memory
     val points = loadPoints(filePath)
     //do the sampling
@@ -255,7 +258,7 @@ class Sampling {
     } else {
       processBatch(outputFilePath, points, Config.fieldsToSample)
     }
-    println("********* END - TEST BATCH SAMPLING FROM FILE ***************")
+    logger.info("********* END - TEST BATCH SAMPLING FROM FILE ***************")
   }
 
   /**
@@ -263,7 +266,7 @@ class Sampling {
    */
   private def loadPoints(filePath: String): Array[Array[Double]] = {
     //load the CSV of points into memory
-    println("Loading points from file: " + filePath)
+    logger.info("Loading points from file: " + filePath)
     val csvReader = new CSVReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"))
     var current: Array[String] = csvReader.readNext
     val points: ArrayBuffer[Array[Double]] = new ArrayBuffer[Array[Double]]
@@ -271,7 +274,7 @@ class Sampling {
       try {
         points += current.map(x => x.toDouble)
       } catch {
-        case e: Exception => println("Error reading point: " + current)
+        case e: Exception => logger.error("Error reading point: " + current)
       }
       current = csvReader.readNext
     }
@@ -343,6 +346,6 @@ class Sampling {
       }
       csvReader.close
     }
-    println("Finished loading: " + inputFileName + " in " + (System.currentTimeMillis - startTime) + "ms");
+    logger.info("Finished loading: " + inputFileName + " in " + (System.currentTimeMillis - startTime) + "ms");
   }
 }

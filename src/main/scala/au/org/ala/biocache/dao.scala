@@ -315,7 +315,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     def writeToStream(outputStream: OutputStream, fieldDelimiter: String, recordDelimiter: String,
                       rowKeys: Array[String], fields: Array[String], qaFields:Array[String], includeSensitive:Boolean=false) {
         //get the codes for the qa fields that need to be included in the download
-        //TODO fix thi in case the value can't be found
+        //TODO fix this in case the value can't be found
         val mfields = scala.collection.mutable.ArrayBuffer[String]()
         mfields ++= fields
         val codes = qaFields.map(value=>AssertionCodes.getByName(value).get.getCode)

@@ -97,7 +97,7 @@ class RecordProcessor {
    * Process all records in the store
    */
   def processFileOfRowKeys(fileName:String) {
-    println("Starting processing from file......" + fileName)
+    logger.info("Starting processing from file......" + fileName)
     var counter = 0
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
@@ -124,7 +124,7 @@ class RecordProcessor {
       }
       current = csvReader.readNext()
     }
-    println("Finished processing from file.")
+    logger.info("Finished processing from file.")
   }
   
   def processFileThreaded(file:java.io.File, threads:Int){
@@ -145,7 +145,7 @@ class RecordProcessor {
         //debug counter
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
-          println(counter + " >> Last key : " + rp(0).uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          logger.info(counter + " >> Last key : " + rp(0).uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
           startTime = System.currentTimeMillis
         }
       }

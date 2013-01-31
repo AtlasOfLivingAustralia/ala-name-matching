@@ -5,6 +5,7 @@ import scala.collection.mutable.ArrayBuffer
 import au.org.ala.biocache._
 import java.io.File
 import org.scale7.cassandra.pelops.Pelops
+import org.slf4j.LoggerFactory
 
 /**
  * A simple threaded implementation of the processing.
@@ -13,6 +14,7 @@ object ProcessWithActors {
   import FileHelper._
   val occurrenceDAO = Config.occurrenceDAO
   val persistenceManager = Config.persistenceManager
+  val logger = LoggerFactory.getLogger("ProcessWithActors")
 
   def main(args : Array[String]) : Unit = {
 
@@ -50,7 +52,7 @@ object ProcessWithActors {
   def processRecords(threads: Int, file:File, startUuid:Option[String]) : Unit ={
     var ids = 0
     val pool = Array.fill(threads){ val p = new Consumer(Actor.self,ids); ids +=1; p.start }
-    println("Starting to process a list of records...");
+    logger.info("Starting to process a list of records...");
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
@@ -59,7 +61,7 @@ object ProcessWithActors {
     var batches = 0
     var count =0 
     //val processor = new RecordProcessor
-    println("Initialised actors...")
+    logger.info("Initialised actors...")
     file.foreachLine(line => {
         count+=1
         if(startUuid.isEmpty || startUuid.get == line)
@@ -77,7 +79,7 @@ object ProcessWithActors {
 
       if (count % 1000 == 0) {
         finishTime = System.currentTimeMillis
-        println(count
+        logger.info(count
             + " >> Last key : " + line
             + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f)
             + ", time taken for "+1000+" records: " + (finishTime - startTime).toFloat / 1000f
@@ -92,12 +94,12 @@ object ProcessWithActors {
       batches+=1
     }
 
-    println(count
+    logger.info(count
             + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f)
             + ", time taken for "+1000+" records: " + (finishTime - startTime).toFloat / 1000f
             + ", total time: "+ (finishTime - start).toFloat / 60000f +" minutes"
         )
-    println("Finished.")
+    logger.info("Finished.")
 
     //kill the actors
     pool.foreach(actor => actor ! "exit")
@@ -133,12 +135,12 @@ object ProcessWithActors {
     var ids = 0
     val pool = Array.fill(threads){ val p = new Consumer(Actor.self,ids); ids +=1; p.start }
     
-    println("Starting with " + startUuid +" endingwith " + endUuid)
+    logger.info("Starting with " + startUuid +" endingwith " + endUuid)
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
 
-    println("Initialised actors...")
+    logger.info("Initialised actors...")
 
     var count = 0
     var guid = "";
@@ -173,7 +175,7 @@ object ProcessWithActors {
       //debug counter
       if (count % 1000 == 0) {
         finishTime = System.currentTimeMillis
-        println(count
+        logger.info(count
             + " >> Last key : " + rawAndProcessed.get._1.rowKey
             + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f)
             + ", time taken for "+1000+" records: " + (finishTime - startTime).toFloat / 1000f
@@ -184,13 +186,13 @@ object ProcessWithActors {
       true //indicate to continue
     }, startUuid, endUuid)
     
-    println("Last row key processed: " + guid)
+    logger.info("Last row key processed: " + guid)
     //add the remaining records from the buff
     if(buff.size>0){
       pool(0).asInstanceOf[Consumer] ! buff.toArray
       batches+=1
     }
-    println("Finished.")
+    logger.info("Finished.")
     //kill the actors
     pool.foreach(actor => actor ! "exit")
 
@@ -207,7 +209,9 @@ object ProcessWithActors {
  */
 class Consumer (master:Actor,val id:Int)  extends Actor  {
 
-  println("Initialising thread: "+id)
+  val logger = LoggerFactory.getLogger("Consumer")
+
+  logger.info("Initialising thread: "+id)
   val processor = new RecordProcessor
   val occurrenceDAO = Config.occurrenceDAO
   var received, processedRecords = 0
@@ -215,7 +219,7 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
   def ready = processedRecords == received
 
   def act {
-    println("In (Actor.act) thread: "+id)
+    logger.info("In thread: "+id)
     loop{
       react {
         case rawAndProcessed :(FullRecord,FullRecord) => {
@@ -236,8 +240,7 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
                 processedOK = true
               } catch {
                 case e:Exception => {
-                  e.printStackTrace()
-                  println("Error processing record: "+raw.rowKey+",  sleeping for 20 secs before retries")
+                  logger.error("Error processing record: '"+raw.rowKey+"',  sleeping for 20 secs before retries")
                   Thread.sleep(20000)
                   retries += 1
                 }
@@ -259,12 +262,12 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
                 }
             }
             val finished = System.currentTimeMillis
-            println("Actor "+id +">>> Last Key: "+keys.last+", records per sec: " + counter / (((finished - start).toFloat) / 1000f))
+            logger.info("Actor "+id +">>> Last Key: "+keys.last+", records per sec: " + counter / (((finished - start).toFloat) / 1000f))
             processedRecords+=1
         }
         case s:String => {
             if(s == "exit"){
-              println("Killing (Actor.act) thread: "+id)
+              logger.info("Killing (Actor.act) thread: "+id)
               exit()
             }
         }
