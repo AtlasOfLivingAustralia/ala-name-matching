@@ -2,6 +2,7 @@ package au.org.ala.checklist.lucene;
 
 import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.checklist.lucene.analyzer.LowerCaseKeywordAnalyzer;
+import au.org.ala.checklist.lucene.model.SynonymType;
 import au.org.ala.data.model.ALAParsedName;
 import au.org.ala.data.model.LinnaeanRankClassification;
 import au.org.ala.data.util.PhraseNameParser;
@@ -58,7 +59,8 @@ public class CBCreateLuceneIndex {
     protected String lexFile = "cb_lex_names.txt";
     protected String irmngFile = "irmng_classification.txt";
     protected String colFile = "col_common_names.txt";
-    protected String extraALAConcepts = "/data/bie-staging/ala-names/ala-extra.txt";
+    protected String extraALAConcepts = "/data/bie-staging/ala-names/ala-extraggg.txt";
+    protected String alaSynonyms = "/data/bie-staging/ala-names/ala_synonyms_dump.txt";
     protected String afdFile = "/data/bie-staging/anbg/AFD-common-names.csv";
     protected String apniFile = "/data/bie-staging/anbg/APNI-common-names.csv";
     protected String taxonConeptName = "/data/bie-staging/anbg/taxonConcepts.txt";
@@ -99,6 +101,7 @@ public class CBCreateLuceneIndex {
     private final int POS_G = 27;
     private final int POS_SID = 28;
     private final int POS_S = 29;
+    private final int POS_EXCLUDED=36;
 
     private String indexDirectory;
     private IndexWriter cbIndexWriter;
@@ -183,17 +186,18 @@ public class CBCreateLuceneIndex {
         //generate the extra id index
         createExtraIdIndex(indexDir + File.separator + "id",new File(exportsDir + File.separator + "identifiers.txt"));
         if(generateSciNames){            
-            indexALA(createIndexWriter(new File(indexDir + File.separator + "cb"), analyzer,true), exportsDir + File.separator + "ala_concepts_dump.txt");//, exportsDir + File.separator + lexFile);
+            indexALA(createIndexWriter(new File(indexDir + File.separator + "cb"), analyzer,true), exportsDir + File.separator + "ala_accepted_concepts_dump.txt");//, exportsDir + File.separator + lexFile);
             //IRMNG index to aid in the resolving of homonyms
             IndexWriter irmngWriter = createIndexWriter(new File(indexDir + File.separator + "irmng"), analyzer,true);
             indexIRMNG(irmngWriter, exportsDir + File.separator + irmngFile, RankType.GENUS);
             indexIRMNG(irmngWriter, "/data/bie-staging/irmng/irmng_species_homonyms.txt", RankType.SPECIES);
+            indexIRMNG(irmngWriter, exportsDir + File.separator + "ala-species-homonyms.txt", RankType.SPECIES);
             irmngWriter.optimize();
             irmngWriter.close();
         }
         if(generateCommonNames){
             //vernacular index to search for common names
-            indexCommonNames(createIndexWriter(new File(indexDir + File.separator + "vernacular"), analyzer,true), exportsDir);
+            indexCommonNames(createIndexWriter(new File(indexDir + File.separator + "vernacular"), analyzer,true), exportsDir, indexDir);
         }
     }
     /**
@@ -261,14 +265,26 @@ public class CBCreateLuceneIndex {
      * @throws Exception
      */
     private void addExtraALAConcept(IndexWriter iw, String file) throws Exception{
-      au.com.bytecode.opencsv.CSVReader reader = new au.com.bytecode.opencsv.CSVReader(new FileReader(file), ',', '"', '\\', 1);
-      for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
-        String lsid = values[0];
-        String scientificName = values[1];
-        String authority = values[2];
-        Document doc = createALAIndexDocument(scientificName, "-1", lsid, authority, null);
-        iw.addDocument(doc);
-      }
+       if(new File(file).exists()){
+              au.com.bytecode.opencsv.CSVReader reader = new au.com.bytecode.opencsv.CSVReader(new FileReader(file), ',', '"', '\\', 1);
+              for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
+                String lsid = values[0];
+                String scientificName = values[1];
+                String authority = values[2];
+                Document doc = createALAIndexDocument(scientificName, "-1", lsid, authority, null);
+                iw.addDocument(doc);
+              }
+        }
+    }
+
+    private void addALASyonyms(IndexWriter iw, String file) throws Exception {
+        au.com.bytecode.opencsv.CSVReader reader = new au.com.bytecode.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 1);
+        for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
+            //select 'id','lsid', 'name_lsid', 'accepted_lsid','accepted_id','scientific_name', 'author', 'col_id'
+            //String scientificName, String author, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, float boost){
+
+            iw.addDocument(createALASynonymDocument(values[5], values[6], values[0], values[1], values[2], values[3], values[4], 1.0f, values[8]));
+        }
     }
 
     private void indexALA(IndexWriter iw, String file) throws Exception{
@@ -303,7 +319,9 @@ public class CBCreateLuceneIndex {
                                                 values[POS_SP_EPITHET], values[POS_INFRA_EPITHET], values[POS_AUTHOR],boost);
 
             
-
+            //add the excluded information if applicable
+            if("T".equals(values[POS_EXCLUDED]) || "Y".equals(values[POS_EXCLUDED]))
+                doc.add(new Field(NameIndexField.SYNONYM_TYPE.toString(), SynonymType.EXCLUDES.getId().toString(), Store.YES, Index.ANALYZED));
             if(doc != null){
                 iw.addDocument(doc);
                 records++;
@@ -313,6 +331,8 @@ public class CBCreateLuceneIndex {
             }
         }
         addExtraALAConcept(iw,extraALAConcepts);
+        //add the synonyms
+        addALASyonyms(iw, alaSynonyms);
         iw.commit();
         iw.optimize();
         iw.close();
@@ -388,7 +408,7 @@ public class CBCreateLuceneIndex {
      * @param anbgFileName
      * @throws Exception
      */
-    private void indexCommonNames(IndexWriter iw,String exportDir)throws Exception{
+    private void indexCommonNames(IndexWriter iw,String exportDir,String indexDir)throws Exception{
         log.info("Creating Common Names Index ...");
 
 
@@ -416,10 +436,12 @@ public class CBCreateLuceneIndex {
 
         //process the ANBG common names and add them to the same index
         //create the tmp index for the taxonConcepts used to ensure that a supplied taxon lsid is covered in the export
-        IndexSearcher searcher = createTmpIndex(taxonConeptName);
+        //IndexSearcher searcher = createTmpIndex(taxonConeptName);
+        IndexSearcher currentNameSearcher = new IndexSearcher(FSDirectory.open(new File(indexDir+File.separator+"cb")), true);
+        IndexSearcher extraSearcher = new IndexSearcher(FSDirectory.open(new File(indexDir+File.separator+"id")), true);
 
-        addAnbgCommonNames(afdFile, iw, searcher);
-        addAnbgCommonNames(apniFile, iw, searcher );
+        addAnbgCommonNames(afdFile, iw, currentNameSearcher,extraSearcher,'\t');
+        addAnbgCommonNames(apniFile, iw, currentNameSearcher,extraSearcher,',' );
 
         iw.commit();
         iw.optimize();
@@ -432,18 +454,18 @@ public class CBCreateLuceneIndex {
      * @param searcher
      * @throws Exception
      */
-    private void addAnbgCommonNames(String fileName, IndexWriter iw, IndexSearcher searcher) throws Exception{
+    private void addAnbgCommonNames(String fileName, IndexWriter iw, IndexSearcher currentSearcher, IndexSearcher idSearcher, char recordSep) throws Exception{
         File namesFile = new File(fileName);
         Pattern p = Pattern.compile(",");
         if(namesFile.exists()){
-            CSVReader reader = new CSVReader(new FileReader(namesFile), '\t','"', '~');//CSVReader.build(namesFile,"UTF-8","\t", '"' , 1);
+            CSVReader reader = new CSVReader(new FileReader(namesFile), recordSep,'"', '\\');//CSVReader.build(namesFile,"UTF-8","\t", '"' , 1);
             int count = 0;
             String[] values = reader.readNext();
             while ((values = reader.readNext()) != null){
                 if(values!= null && values.length>= 4){
                 //all ANBG records should have the highest boost as they are our authoritive source
                     //we only want to add an ANBG record if the taxon concept LSID exists in the taxonConcepts.txt export
-                    if(doesTaxonConceptExist(searcher, values[3])){
+                    if(doesTaxonConceptExist(currentSearcher, values[3]) || doesTaxonConceptExist(idSearcher, values[3])){
                         //each common name could be a comma separated list
                         if(!values[2].contains(",") || values[2].toLowerCase().contains(" and ")){
                             iw.addDocument(getCommonNameDocument(values[2], null,values[3],2.0f));
@@ -577,6 +599,15 @@ public class CBCreateLuceneIndex {
             cl = new LinnaeanRankClassification();
         return createALAIndexDocument(name, id, lsid, null, null, cl.getKingdom(), null, cl.getPhylum(), null, cl.getKlass(), null, cl.getOrder(), null, cl.getFamily(), null, cl.getGenus(), null, null, null, null, null, null, null, null, author, 1.0f);
     }
+
+    private Document createALASynonymDocument(String scientificName, String author, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, float boost, String synonymType){
+        lsid = StringUtils.isBlank(lsid)?nameLsid:lsid;
+        Document doc = createALAIndexDocument(scientificName, id, lsid,null,null,
+                null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,
+                acceptedLsid,null,null,author,boost);
+        doc.add(new Field(NameIndexField.SYNONYM_TYPE.toString(), synonymType, Store.YES, Index.ANALYZED));
+        return doc;
+    }
     
     private boolean isBlacklisted(String scientificName){
       return blacklist.contains(scientificName.trim());
@@ -679,7 +710,7 @@ public class CBCreateLuceneIndex {
         ParsedName cn = parser.parse(name);
             //if(cn != null && !cn.hasProblem() && !cn.isIndetermined()){
             if(cn != null && cn.isParsableType()&& !cn.isIndetermined() 
-            && cn.getType()!= NameType.informal)// a scientific name with some informal addition like "cf." or indetermined like Abies spec.
+            && cn.getType()!= NameType.informal && !"6500".equals(rank))// a scientific name with some informal addition like "cf." or indetermined like Abies spec. ALSO prevent subgenus because they parse down to genus plus author
             {
                doc.add(new Field(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES, Index.ANALYZED));
                if(specificEpithet == null && cn.isBinomial()){
@@ -791,7 +822,7 @@ public class CBCreateLuceneIndex {
             }
             indexer.createIndex(args[0], args[1], sn, cn);
         } else {
-            indexer.createIndex("/data/names/Version2011", "/data/lucene/namematchingv1_12", true, false);
+            indexer.createIndex("/data/bie-staging/ala-names", "/data/lucene/namematching_v13", true, true);
             //System.out.println("au.org.ala.checklist.lucene.CBCreateLuceneIndex <directory with export files> <directory in which to create indexes>");
            //indexer.createIndex("/data/exports/cb", "/data/lucene/namematching", false, true);
 

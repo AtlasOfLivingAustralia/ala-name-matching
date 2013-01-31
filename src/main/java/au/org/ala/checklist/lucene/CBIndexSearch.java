@@ -1,6 +1,8 @@
 package au.org.ala.checklist.lucene;
 
+import au.org.ala.checklist.lucene.model.ErrorType;
 import au.org.ala.checklist.lucene.model.MatchType;
+import au.org.ala.checklist.lucene.model.MetricsResultDTO;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -40,6 +42,7 @@ import au.org.ala.data.model.ALAParsedName;
 import au.org.ala.data.model.LinnaeanRankClassification;
 import au.org.ala.data.util.PhraseNameParser;
 import au.org.ala.data.util.RankType;
+import java.util.HashSet;
 import java.util.Set;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
@@ -80,7 +83,9 @@ public class CBIndexSearch {
     private static final Pattern RANK_MARKER = Pattern.compile(RANK_MARKER_ALL);
     //public static final Set<String> stopWords = new java.util.HashSet<String>(java.util.Arrays.asList(new String[]{"virus", "ictv", "ICTV"}));
     public static final Pattern virusStopPattern = Pattern.compile(" virus| ictv| ICTV");
-    public static final Pattern voucherRemovePattern = Pattern.compile(" |,|&|\\.");    
+    public static final Pattern voucherRemovePattern = Pattern.compile(" |,|&|\\.");
+    public static final Pattern affPattern = Pattern.compile("([\\x00-\\x7F\\s]*) aff[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
+    public static final Pattern cfPattern = Pattern.compile("([\\x00-\\x7F\\s]*) cf[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
     /**
      * A set of names that are cross rank homonyms.
      */
@@ -103,7 +108,9 @@ public class CBIndexSearch {
             queryParser = new ThreadLocal<QueryParser>(){
                @Override
                protected QueryParser initialValue() {
-                   return new QueryParser(Version.LUCENE_34, "genus", new au.org.ala.checklist.lucene.analyzer.LowerCaseKeywordAnalyzer());
+                   QueryParser qp =new QueryParser(Version.LUCENE_34, "genus", new au.org.ala.checklist.lucene.analyzer.LowerCaseKeywordAnalyzer());
+                   qp.setFuzzyMinSim(0.8f); //fuzzy match similarity setting. used to match the authorship.
+                   return qp;
                }
             };
             idParser = new ThreadLocal<QueryParser>(){
@@ -363,6 +370,14 @@ public class CBIndexSearch {
         return searchForRecord(cl, recursiveMatching, false, false);
     }
 
+    public MetricsResultDTO searchForRecordMetrics(LinnaeanRankClassification cl, boolean recursiveMatching)throws SearchResultException{
+        return searchForRecordMetrics(cl, recursiveMatching, false, false);
+    }
+
+    public MetricsResultDTO searchForRecordMetrics(LinnaeanRankClassification cl, boolean recursiveMatching, boolean fuzzy)throws SearchResultException{
+        return searchForRecordMetrics(cl, recursiveMatching, false, fuzzy);
+    }
+
     public NameSearchResult searchForRecord(LinnaeanRankClassification cl, boolean recursiveMatching, boolean fuzzy)throws SearchResultException{
         return searchForRecord(cl, recursiveMatching, false, fuzzy);
     }
@@ -378,16 +393,33 @@ public class CBIndexSearch {
      * @throws SearchResultException
      */
     public NameSearchResult searchForRecord(LinnaeanRankClassification cl, boolean recursiveMatching, boolean addGuids, boolean fuzzy) throws SearchResultException {
+        MetricsResultDTO res = searchForRecordMetrics(cl, recursiveMatching, addGuids, fuzzy);
+        if(res.getLastException() != null)
+            throw res.getLastException();
+        return res.getResult();
+    }
+    /**
+     * Search for a specific name returning extra metrics that can be reported as name match quality...
+     * @param cl
+     * @param recursiveMatching
+     * @param addGuids
+     * @param fuzzy
+     * @return
+     */
+    public MetricsResultDTO searchForRecordMetrics(LinnaeanRankClassification cl, boolean recursiveMatching, boolean addGuids, boolean fuzzy) {
+
+        //set up the Object to return
+        MetricsResultDTO metrics = new MetricsResultDTO();
+
+
 
     	RankType rank = null;
     	String name = cl.getScientificName();
-//        if(name.contains("?")){
-//            name =name.replaceAll("\\?", "").replaceAll("\\[", "").replaceAll("]", "");
-//
-//            //Add warning that removed question marks...
-//        }
+        String originalName =name;
+
     	NameSearchResult nsr = null;
-        SearchResultException currentError = null;
+        metrics.setErrors(new HashSet<ErrorType>());
+        
     	if(name==null){
     		//ascertain the rank and construct the scientific name
             if (StringUtils.isNotEmpty(cl.getInfraspecificEpithet()) && !isInfraSpecificMarker(cl.getSubspecies())) {
@@ -444,6 +476,7 @@ public class CBIndexSearch {
                 //construct the full scientific name from the parts
             	name = cl.getKingdom();
 	        }
+            originalName = name;
            // nsr = searchForRecord(name, cl, rank, false);
     	} else {
                 //check to see if the rank can be determined by matching the scentific name to one of values
@@ -474,16 +507,17 @@ public class CBIndexSearch {
                     }
                     //check to see if the rank can be determined from the scientific name
                     try{
-                    ParsedName<?> cn = parser.parse(name);
+                    ParsedName<?> cn = parser.parse(name.replaceAll("\\?", ""));
                     if(cn != null && cn.type == NameType.doubtful){
                         //if recursive set the issue
                         if(recursiveMatching){
                             name = cn.genusOrAbove;
-//                            currentError = new SearchResultException("Questionable identification of species");
-//                            currentError.setErrorType(au.org.ala.checklist.lucene.model.ErrorType.QUESTION_SPECIES);
+                            rank = RankType.GENUS;
+                            metrics.setNameType(NameType.doubtful);
+
                         }
                     }
-                    if(cn!=null && cn.isBinomial()) {
+                    else if(cn != null && cn.isBinomial()) {
                         //set the genus if it is empty
                             if(StringUtils.isEmpty(cl.getGenus()))
                                 cl.setGenus(cn.genusOrAbove);
@@ -510,69 +544,137 @@ public class CBIndexSearch {
                     }
                     catch(org.gbif.ecat.parser.UnparsableException e){
                         //TODO log error maybe??
+                        metrics.setNameType(e.type);
                     }
                 }
 
     		//nsr = searchForRecord(name, cl, rank, false);
     	}
+
+        
        
-        try{
-            nsr = searchForRecord(name, cl, rank, fuzzy);
-        }
-        catch(SearchResultException e){
-            if(e instanceof HomonymException)
-                throw e;
-            else{
-                currentError = e;
-                nsr = null;
-            }
-        }
+//        try{
+//            nsr = searchForRecord(name, cl, rank, fuzzy);
+//        }
+//        catch(SearchResultException e){
+//            if(e instanceof HomonymException)
+//                throw e;
+//            else{
+//                currentError = e;
+//                nsr = null;
+//            }
+//        }
+
+
+        nsr = performErrorCheckSearch(name.replaceAll("\\?", ""), cl, rank, fuzzy, metrics);
 
     	if(nsr==null && recursiveMatching){
+            //get the name type for the original name
+            
+            try{
+                ParsedName pn = parser.parse(name);
+                metrics.setNameType(pn.getType());
+                if(pn.type == NameType.doubtful || (rank != null && rank.getId()<=7000) || rank == null)
+                    nsr = performErrorCheckSearch(pn.getGenusOrAbove(), cl, null, fuzzy, metrics);
+            }catch(Exception e){}
                 if(nsr == null && rank != RankType.SPECIES
                         && ((StringUtils.isNotEmpty(cl.getSpecificEpithet()) && !isSpecificMarker(cl.getSpecies())) ||
                         (StringUtils.isNotEmpty(cl.getSpecies()) && !isSpecificMarker(cl.getSpecies())))){
                     name = cl.getSpecies();
                     if(StringUtils.isEmpty(name))
                         name = cl.getGenus()+ " " + cl.getSpecificEpithet();
-                    nsr = searchForRecord(name, cl, RankType.SPECIES, fuzzy);
+
+                    nsr = performErrorCheckSearch(name, cl, RankType.SPECIES, fuzzy, metrics);
                 }
     		if(nsr == null && cl.getGenus()!=null){
-    			nsr = searchForRecord(cl.getGenus(), cl, RankType.GENUS, fuzzy);
+    			nsr = performErrorCheckSearch(cl.getGenus(), cl, RankType.GENUS, fuzzy, metrics);
     		}
     		if(nsr == null && cl.getFamily()!=null){
-    			nsr = searchForRecord(cl.getFamily(), cl, RankType.FAMILY, fuzzy);
+    			nsr = performErrorCheckSearch(cl.getFamily(), cl, RankType.FAMILY, fuzzy, metrics);
     		}
     		if(nsr == null && cl.getOrder()!=null){
-    			nsr = searchForRecord(cl.getOrder(), cl, RankType.ORDER, fuzzy);
+    			nsr = performErrorCheckSearch(cl.getOrder(), cl, RankType.ORDER, fuzzy, metrics);
     		}
     		if(nsr == null && cl.getKlass()!=null){
-    			nsr = searchForRecord(cl.getKlass(), cl, RankType.CLASS, fuzzy);
+    			nsr = performErrorCheckSearch(cl.getKlass(), cl, RankType.CLASS, fuzzy, metrics);
     		}
     		if(nsr == null && cl.getPhylum()!=null){
-    			nsr = searchForRecord(cl.getPhylum(), cl, RankType.PHYLUM, fuzzy);
+    			nsr = performErrorCheckSearch(cl.getPhylum(), cl, RankType.PHYLUM, fuzzy, metrics);
     		}
     		if(nsr == null && cl.getKingdom()!=null){
-    			nsr = searchForRecord(cl.getKingdom(), cl, RankType.KINGDOM, fuzzy);
+    			nsr = performErrorCheckSearch(cl.getKingdom(), cl, RankType.KINGDOM, fuzzy, metrics);
     		}
 
-            if (nsr != null)
-                nsr.setMatchType(MatchType.RECURSIVE);
+            if (nsr != null){
+                nsr.setMatchType(MatchType.RECURSIVE);                                
+            }
                 
     	}
-        //Obtain and store the GUIDs for the classification identifiers
-        if (nsr != null && addGuids) {
-            updateClassificationWithGUID(nsr.getRankClassification());
+
+        //now start to get the metric object ready
+        if(metrics.getNameType() == null){
+            try{
+                ParsedName pn = parser.parse(originalName);
+                metrics.setNameType(pn.type);
+            }
+            catch(UnparsableException e){
+                metrics.setNameType(e.type);
+            }
+        }
+
+        checkOtherIssues(originalName, metrics);
+        if (nsr != null) {            
+             //Obtain and store the GUIDs for the classification identifiers
+             if(addGuids)
+                   updateClassificationWithGUID(nsr.getRankClassification());
         }
         
-            //set the error type so that the user knows that there was an error
-//            if (currentError != null) {
-//                nsr.setErrorType(currentError.getErrorType());
-//            }
+        if(metrics.getErrors().size()==0)
+            metrics.getErrors().add(ErrorType.NONE);
         
-        if (nsr == null && currentError != null)
-            throw currentError;
-    	return nsr;
+        metrics.setResult(nsr);
+            
+    	return metrics;
+    }
+    private void checkOtherIssues(String originalName, MetricsResultDTO metrics){
+        if(originalName.contains("?")){
+            metrics.getErrors().add(ErrorType.QUESTION_SPECIES);
+            metrics.setNameType(NameType.doubtful); //a questionable species is always a doubtful name type
+        }
+        if(cfPattern.matcher(originalName).matches())
+            metrics.getErrors().add(ErrorType.CONFER_SPECIES);
+        if(affPattern.matcher(originalName).matches())
+            metrics.getErrors().add(ErrorType.AFFINITY_SPECIES);
+    }
+    /**
+     * Performs a search.  Any error's encountered will be added to the supplied error set.
+     * @param name
+     * @param cl
+     * @param rank
+     * @param fuzzy
+     * @param errors
+     * @return
+     */
+    private NameSearchResult performErrorCheckSearch(String name, LinnaeanRankClassification cl, RankType rank, boolean fuzzy, MetricsResultDTO metrics){
+        NameSearchResult nsr = null;
+        try{
+            nsr = searchForRecord(name, cl, rank,fuzzy);
+        }
+        catch(ParentSynonymChildException e){
+            metrics.setLastException(e);
+            metrics.getErrors().add(e.errorType);
+            nsr = e.getChildResult();
+        }
+        catch(ExcludedNameException e){
+            metrics.setLastException(e);
+            metrics.getErrors().add(e.errorType);
+            nsr = e.getNonExcludedName() != null? e.getNonExcludedName():e.getExcludedName();
+        }
+        catch(SearchResultException e){
+            metrics.setLastException(e);
+            metrics.getErrors().add(e.errorType);
+        }
+        return nsr;
     }
 
     /**
@@ -689,7 +791,7 @@ public class CBIndexSearch {
      */
     public NameSearchResult searchForRecordByID(String id){
         try{
-            List<NameSearchResult> results = performSearch(CBCreateLuceneIndex.IndexField.ID.toString(),id, null,  null, 1, null, false, idParser.get());
+            List<NameSearchResult> results = performSearch(CBCreateLuceneIndex.IndexField.ID.toString(),id, null,  null, 1, null,  false, idParser.get());
             if(results.size()>0)
                 return results.get(0);
         }
@@ -793,93 +895,116 @@ public class CBIndexSearch {
         if(name.contains("spp."))
             throw new SPPException();//SearchResultException("Unable to perform search. Can not match to a subset of species within a genus.");
 
-        try{
+        try {
+            NameType nameType = null;
+            ParsedName<?> pn = null;
+            try {
+                pn = parser.parse(name);
+                nameType = pn != null ? pn.getType() : null;
+            } catch (UnparsableException e) {
+                log.warn("Unable to parse " + name + ". " + e.getMessage());
+            }
             //Check for the exact match
-            List<NameSearchResult> hits = performSearch(NameIndexField.NAME.toString(), name, rank, cl, max, MatchType.EXACT, true, queryParser.get());
-                if (hits == null) // situation where searcher has not been initialised
-                    return null;
-                if (hits.size() > 0)
+            List<NameSearchResult> hits = performSearch(NameIndexField.NAME.toString(), name, rank, cl, max, MatchType.EXACT,  true, queryParser.get());
+            if (hits == null) // situation where searcher has not been initialised
+            {
+                return null;
+            }
+            if (hits.size() > 0) {
+                return hits;
+            }
+
+            //Use the parsed name and see what type of check to do next
+            //at this point we don't want to match informal names
+            //if(pn.getType() == NameType.informal)
+            //    throw new InformalNameException();
+
+            if (pn instanceof ALAParsedName) {
+                //check the phrase name
+                ALAParsedName alapn = (ALAParsedName) pn;
+                String genus = alapn.getGenusOrAbove();
+                String phrase = alapn.cleanPhrase;//alapn.getLocationPhraseDesciption();
+                String voucher = alapn.cleanVoucher;
+                //String voucher = alapn.phraseVoucher != null ? voucherRemovePattern.matcher(alapn.phraseVoucher).replaceAll("") :null;
+                String specific = alapn.rank != null && alapn.rank.equals("sp.") ? null : alapn.specificEpithet;
+                String[][] searchFields = new String[4][];
+                searchFields[0] = new String[]{RankType.GENUS.getRank(), genus};
+                searchFields[1] = new String[]{NameIndexField.PHRASE.toString(), phrase};
+                searchFields[2] = new String[]{NameIndexField.VOUCHER.toString(), voucher};
+                searchFields[3] = new String[]{NameIndexField.SPECIFIC.toString(), specific};
+                hits = performSearch(searchFields, rank, cl, max, MatchType.PHRASE, false, queryParser.get()); //don't want to check for homonyms yet...
+                if (hits.size() == 1) {
                     return hits;
-
-            //Parse the name and see what type of check to do next
-            try{
-                ParsedName<?> pn = parser.parse(name);
-
-                //at this point we don't want to match informal names
-                //if(pn.getType() == NameType.informal)
-                //    throw new InformalNameException();
-                
-                if(pn instanceof ALAParsedName){
-                    //check the phrase name
-                    ALAParsedName alapn = (ALAParsedName)pn;
-                    String genus = alapn.getGenusOrAbove();
-                    String phrase = alapn.cleanPhrase;//alapn.getLocationPhraseDesciption();
-                    String voucher = alapn.cleanVoucher;
-                    //String voucher = alapn.phraseVoucher != null ? voucherRemovePattern.matcher(alapn.phraseVoucher).replaceAll("") :null;
-                    String specific = alapn.rank != null && alapn.rank.equals("sp.")?null: alapn.specificEpithet;
+                } else if (hits.size() > 1) {
+                    //this represents a homonym issue between vouchers.
+                    //don't throw a homonym if all results point to the same accepted concept
+                    NameSearchResult commonAccepted = getCommonAccepetedConcept(hits);
+                    if (commonAccepted != null) {
+                        hits.removeAll(hits);
+                        hits.add(commonAccepted);
+                        return hits;
+                    }
+                    throw new HomonymException(hits);
+                }
+            } else if (pn != null &&pn.isParsableType() && pn.authorsParsed && pn.getType() != NameType.informal && pn.getType() != NameType.doubtful) {
+                //check the canonical name
+                String canonicalName = pn.canonicalName();
+                if (cl == null) {
+                    cl = new LinnaeanRankClassification();
+                }
+                //set the authorship if it has been supplied as part of the scientific name
+                if (cl.getAuthorship() == null) {
+                    cl.setAuthorship(pn.authorshipComplete());
+                }
+                hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), canonicalName, rank, cl, max, MatchType.CANONICAL,  true, queryParser.get());
+                if (hits.size() > 0) {
+                    return hits;
+                }
+                //if the parse type was a cultivar and we didn't match it check to see if we can match as a phrase name
+                if (pn.getType() == NameType.cultivar) {
+                    String genus = pn.getGenusOrAbove();
+                    String phrase = pn.getCultivar();
+                    String voucher = null;
+                    String specific = pn.rank != null && pn.rank.equals("sp.") ? null : pn.getSpecificEpithet();
                     String[][] searchFields = new String[4][];
-                    searchFields[0] = new String[]{RankType.GENUS.getRank(),genus};
-                    searchFields[1]= new String[]{NameIndexField.PHRASE.toString(), phrase};
+                    searchFields[0] = new String[]{RankType.GENUS.getRank(), genus};
+                    searchFields[1] = new String[]{NameIndexField.PHRASE.toString(), phrase};
                     searchFields[2] = new String[]{NameIndexField.VOUCHER.toString(), voucher};
                     searchFields[3] = new String[]{NameIndexField.SPECIFIC.toString(), specific};
-                    hits = performSearch(searchFields, rank, cl, max, MatchType.PHRASE, false, queryParser.get()); //don't want to check for homonyms yet...
-                    if(hits.size()>0)
-                        return hits;                    
-                }
-                else if(pn.isParsableType() && pn.authorsParsed && pn.getType() != NameType.informal && pn.getType() != NameType.doubtful)
-                {
-                    //check the canonical name
-                    String canonicalName = pn.canonicalName();
-                    hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), canonicalName, rank, cl, max, MatchType.CANONICAL, true, queryParser.get());
-                    if(hits.size()>0)
+                    hits = performSearch(searchFields, rank, cl, max, MatchType.PHRASE,  false, queryParser.get());
+                    if (hits.size() > 0) {
                         return hits;
-                    //if the parse type was a cultivar and we didn't match it check to see if we can match as a phrase name
-                    if(pn.getType() == NameType.cultivar){
-                        String genus = pn.getGenusOrAbove();
-                        String phrase = pn.getCultivar();
-                        String voucher =null;
-                        String specific = pn.rank != null &&pn.rank.equals("sp.")?null:pn.getSpecificEpithet();
-                        String[][] searchFields = new String[4][];
-                        searchFields[0] = new String[]{RankType.GENUS.getRank(),genus};
-                        searchFields[1]= new String[]{NameIndexField.PHRASE.toString(), phrase};
-                        searchFields[2] = new String[]{NameIndexField.VOUCHER.toString(), voucher};
-                        searchFields[3] = new String[]{NameIndexField.SPECIFIC.toString(), specific};
-                        hits = performSearch(searchFields, rank, cl, max, MatchType.PHRASE, false, queryParser.get());
-                        if(hits.size()>0)
-                            return hits;
                     }
                 }
-                //now check for a "sounds like" match if we don't have an informal name
-                if(fuzzy && pn.isBinomial() && pn.getType() != NameType.informal && pn.getType() != NameType.doubtful){
-                    String genus = TaxonNameSoundEx.treatWord(pn.genusOrAbove,"genus");
-                    String specific = TaxonNameSoundEx.treatWord(pn.specificEpithet, "species");
-                    String infra = pn.infraSpecificEpithet == null?null:TaxonNameSoundEx.treatWord(pn.infraSpecificEpithet, "species");
-                    String[][] searchFields = new String[3][];
-                    searchFields[0] = new String[]{NameIndexField.GENUS_EX.toString(), genus};
-                    searchFields[1] = new String[]{NameIndexField.SPECIES_EX.toString(), specific};
-                    if(StringUtils.isNotEmpty(infra)){
-                        searchFields[2] = new String[]{NameIndexField.INFRA_EX.toString(), infra};
-                    }
-                    else{
-                        searchFields[2] = new String[] {NameIndexField.INFRA_EX.toString(), "<null>"};
-                    }
-                    hits = performSearch(searchFields, rank, cl, max, MatchType.SOUNDEX, false, queryParser.get()); //don't want to check for homonyms yet...
-                    if(hits.size()>0)
-                        return hits;
+            }
+            //now check for a "sounds like" match if we don't have an informal name
+            if (fuzzy && pn.isBinomial() && pn.getType() != NameType.informal && pn.getType() != NameType.doubtful) {
+                String genus = TaxonNameSoundEx.treatWord(pn.genusOrAbove, "genus");
+                String specific = TaxonNameSoundEx.treatWord(pn.specificEpithet, "species");
+                String infra = pn.infraSpecificEpithet == null ? null : TaxonNameSoundEx.treatWord(pn.infraSpecificEpithet, "species");
+                String[][] searchFields = new String[3][];
+                searchFields[0] = new String[]{NameIndexField.GENUS_EX.toString(), genus};
+                searchFields[1] = new String[]{NameIndexField.SPECIES_EX.toString(), specific};
+                if (StringUtils.isNotEmpty(infra)) {
+                    searchFields[2] = new String[]{NameIndexField.INFRA_EX.toString(), infra};
+                } else {
+                    searchFields[2] = new String[]{NameIndexField.INFRA_EX.toString(), "<null>"};
+                }
+                hits = performSearch(searchFields, rank, cl, max, MatchType.SOUNDEX, false, queryParser.get()); //don't want to check for homonyms yet...
+                if (hits.size() > 0) {
+                    return hits;
+                }
 //                    else if(hits.size()>1){
 //                        //We can only make a fuzzy match if the number of results == 1
 //                        //Thus we can be more sure that the fuzzy match is correct
 //
 //                        throw new SearchResultException("Fuzzy match is ambiguous", hits);
 //                    }
-                }
-
-            }
-            catch(UnparsableException e){
-                log.warn("Unable to parse " + name + ". " + e.getMessage());
             }
 
-            
+
+
+
 
             return null;
         }
@@ -890,6 +1015,27 @@ public class CBIndexSearch {
 
 
     }
+    /**
+     * If all results point to the same accepted concept it is returned.
+     * Otherwise null is returned.
+     * @param hits
+     * @return
+     */
+    private NameSearchResult getCommonAccepetedConcept(List<NameSearchResult> hits){
+
+        String acceptedLsid=hits.get(0).getAcceptedLsid();
+
+        for(NameSearchResult hit :hits){
+            if(hit.getAcceptedLsid() == null)
+                return null;
+            if(!hit.getAcceptedLsid().equals(acceptedLsid))
+                return null;
+        }
+        if(acceptedLsid != null)
+            return searchForRecordByLsid(acceptedLsid);
+        return null;
+    }
+
     /**
      * Checks to see if the "soundex" matched results are ambiguous.
      * @param hits
@@ -927,7 +1073,7 @@ public class CBIndexSearch {
         try{
 
             //1. Direct Name hit
-            List<NameSearchResult> hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), name, rank, cl, max, MatchType.DIRECT, true, queryParser.get());
+            List<NameSearchResult> hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), name, rank, cl, max, MatchType.DIRECT,  true, queryParser.get());
 			if (hits == null) // situation where searcher has not been initialised
 				return null;
 			if (hits.size() > 0)
@@ -938,7 +1084,7 @@ public class CBIndexSearch {
             rank = getUpdatedRank(name, rank);
 
 
-            hits = performSearch(CBCreateLuceneIndex.IndexField.NAMES.toString(), name, rank, cl, max, MatchType.ALTERNATE, true, queryParser.get());
+            hits = performSearch(CBCreateLuceneIndex.IndexField.NAMES.toString(), name, rank, cl, max, MatchType.ALTERNATE,  true, queryParser.get());
             if(hits.size()>0)
                 return hits;
 
@@ -947,7 +1093,7 @@ public class CBIndexSearch {
             if(fuzzy){
                 String searchable = tnse.soundEx(name);
                 //searchable canonical should not check for homonyms due to the more erratic nature of the result
-                hits = performSearch(CBCreateLuceneIndex.IndexField.SEARCHABLE_NAME.toString(), searchable, rank, cl, max, MatchType.SEARCHABLE, false, idParser.get());
+                hits = performSearch(CBCreateLuceneIndex.IndexField.SEARCHABLE_NAME.toString(), searchable, rank, cl, max, MatchType.SEARCHABLE,  false, idParser.get());
                 if(hits.size()>0)
                     return hits;
             }
@@ -1099,26 +1245,56 @@ public class CBIndexSearch {
                 List<NameSearchResult> results = new java.util.ArrayList<NameSearchResult>();
 
                 for(ScoreDoc sdoc : hits.scoreDocs){
-                    results.add(new NameSearchResult(cbReader.document(sdoc.doc), type));
+                    NameSearchResult nsr = new NameSearchResult(cbReader.document(sdoc.doc), type);                    
+                    results.add(nsr);
                 }
 
-                //HOMONYM CHECKS
-                if(checkHomo){
+                //HOMONYM CHECKS and other checks
+                if (checkHomo) {
+
+                    //check to see if one of the results is excluded
+                    if (results.size() > 0) {
+                        int exclCount = 0;
+                        NameSearchResult notExcludedResult = null;
+                        NameSearchResult excludedResult = null;
+                        for (NameSearchResult nsr : results) {
+                            if (nsr.getSynonymType() == au.org.ala.checklist.lucene.model.SynonymType.EXCLUDES) {
+                                exclCount++;
+                                excludedResult = nsr;
+                            } else if (notExcludedResult == null) {
+                                notExcludedResult = nsr;
+                            }
+                        }
+                        if (exclCount > 0) {
+                            //throw the basic exception if count == result size
+                            if (exclCount == results.size()) {
+                                throw new ExcludedNameException("The result is a name that has been excluded from the NSL", excludedResult);
+                            } else if (notExcludedResult != null) {
+                                //one of the results was an excluded concept
+                                throw new ExcludedNameException("One of the results was excluded.  Use the nonExcludedName for your match.", notExcludedResult, excludedResult);
+                            }
+                        }
+                    }
+
+                    //check to see if we have a situtation where a species has been split into subspecies and a synonym exists to the subspecies
+                    checkForSpeciesSplit(results);
+                    
+
                     //check result level homonyms
                     //TODO 2012-04-17: Work out edge case issues for canonical matches...
                     //checkResultLevelHomonym(results);
 
                     //check to see if we have a cross rank homonym
                     //cross rank homonyms are resolvable if a rank has been supplied
-                    if(rank == null){
+                    if (rank == null) {
                         checkForCrossRankHomonym(results);
                     }
 
                     //check to see if the search criteria could represent an unresolved genus or species homonym
-                    if(results.size() > 0){
+                    if (results.size() > 0) {
                         RankType resRank = results.get(0).getRank();
-                        if(resRank == RankType.GENUS || resRank == RankType.SPECIES){
-                            NameSearchResult result= validateHomonyms(results,scientificName, cl);
+                        if (resRank == RankType.GENUS || resRank == RankType.SPECIES) {
+                            NameSearchResult result = (cl != null && StringUtils.isNotBlank(cl.getAuthorship())) ? validateHomonymByAuthor(results, scientificName, cl) : validateHomonyms(results, scientificName, cl);
                             results.clear();
                             results.add(result);
                         }
@@ -1177,6 +1353,55 @@ public class CBIndexSearch {
         }
         return false;
     }
+
+    private void checkForSpeciesSplit(List<NameSearchResult> results) throws ParentSynonymChildException{
+        //very specific situtation - there will be 2 results one accepted and the other a synonym to a child of the accepted name
+        if(results.size()==2){
+            if(results.get(0).isSynonym() != results.get(1).isSynonym()){
+                NameSearchResult synResult = results.get(0).isSynonym()?results.get(0):results.get(1);
+                NameSearchResult accResult = results.get(0).isSynonym()?results.get(1):results.get(0);
+                NameSearchResult accSynResult = searchForRecordByLsid(synResult.getAcceptedLsid());
+                if(accResult.getLeft() != null && accSynResult.getLeft() != null){
+                    int asyLeft = Integer.parseInt(accSynResult.getLeft());
+                    if(asyLeft>Integer.parseInt(accResult.getLeft()) && asyLeft < Integer.parseInt(accResult.getRight()))
+                        throw new ParentSynonymChildException(accResult, accSynResult);
+                }
+            }
+        }
+        else if(results.size()>2){
+            //check to see if the all other results as synonyms of the same concept AND that concept is a child to the acc concept
+            NameSearchResult accResult=null;
+            String acceptedLsid=null;
+            for(NameSearchResult nsr:results){
+                if(!nsr.isSynonym()){
+                    if(accResult == null)
+                        accResult = nsr;
+                    else
+                        return;
+                }
+                else{
+                    if(acceptedLsid !=null){
+                        if(!acceptedLsid.equals(nsr.getAcceptedLsid()))
+                            return;
+                    }
+                    else{
+                        acceptedLsid = nsr.getAcceptedLsid();
+                    }
+                }
+            }
+            //now check to see if the accepeted concept is a child of the accResult
+            if(accResult != null && acceptedLsid !=null){
+                NameSearchResult accSynResult = searchForRecordByLsid(acceptedLsid);
+                if(accResult.getLeft() != null && accSynResult.getLeft() != null){
+                    int asyLeft = Integer.parseInt(accSynResult.getLeft());
+                    if(asyLeft>Integer.parseInt(accResult.getLeft()) && asyLeft < Integer.parseInt(accResult.getRight()))
+                        throw new ParentSynonymChildException(accResult, accSynResult);
+                }
+            }
+        }
+        
+    }
+
     /**
      * Checks to see if the first result represents a scientific name that is a cross
      * rank homonym.
@@ -1193,6 +1418,22 @@ public class CBIndexSearch {
         }
     }
 
+
+    public NameSearchResult validateHomonymByAuthor(List<NameSearchResult> result, String name, LinnaeanRankClassification cl) throws HomonymException{
+        //based on the facte that the author is included in the search the first result should be the most complete
+        String suppliedAuthor = prepareAuthor(cl.getAuthorship());
+        String resultAuthor =result.get(0).getRankClassification().getAuthorship();
+        uk.ac.shef.wit.simmetrics.similaritymetrics.SmithWatermanGotoh similarity =new uk.ac.shef.wit.simmetrics.similaritymetrics.SmithWatermanGotoh();
+        if(similarity.getSimilarity(suppliedAuthor, resultAuthor)<0.8){
+            //test based on the irmng list of homoymns
+            validateHomonyms(result, name, cl);
+        }
+        return result.get(0);
+    }
+
+    private String prepareAuthor(String author){
+        return author.replaceAll("\\p{P}", "").replaceAll("\\p{Z}","");
+    }
 
 
     /**

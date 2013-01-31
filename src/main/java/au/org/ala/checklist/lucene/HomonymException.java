@@ -18,6 +18,7 @@ public class HomonymException extends SearchResultException {
     }
     public HomonymException(String message){
         super("Warning an unresolved homonym has been detected. "+message);
+        errorType = au.org.ala.checklist.lucene.model.ErrorType.HOMONYM;
     }
     public HomonymException(){
         this("Warning an unresolved homonym has been detected. ");

@@ -46,6 +46,7 @@ public class LinnaeanRankClassification {
 	protected String subspecies; // Aus bus cus
 	protected String infraspecificEpithet; // cus
 	protected String scientificName;
+        protected String authorship;
 
         public LinnaeanRankClassification(){
         }
@@ -292,6 +293,14 @@ public class LinnaeanRankClassification {
             this.sid = sid;
         }
 
+    public String getAuthorship() {
+        return authorship;
+    }
+
+    public void setAuthorship(String authorship) {
+        this.authorship = authorship;
+    }
+
 
 	/**
 	 * @see java.lang.Object#toString()
@@ -311,6 +320,15 @@ public class LinnaeanRankClassification {
 				.append("scientificName",this.scientificName)
 				.toString();
 	}
+
+        public String toCSV(char sep){
+            StringBuilder sb = new StringBuilder();
+            sb.append("\"").append(authorship).append("\"").append(sep)
+                    .append(this.kingdom).append(sep).append(this.phylum).append(sep)
+                    .append(this.klass).append(sep).append(this.order).append(sep)
+                    .append(this.family).append(sep).append(genus);
+            return sb.toString();
+        }
 
 	/**
 	 * @see java.lang.Object#equals(Object)
@@ -407,6 +425,9 @@ public class LinnaeanRankClassification {
                 sb.append(prefix).append(RankType.GENUS.getRank()).append(":").append(genus);
             if(StringUtils.isNotEmpty(species))
                 sb.append(prefix).append(RankType.SPECIES.getRank()).append(":\"").append(species).append("\"");
+            //authorship is always optional due to inconsistencies in the name format etc...
+            if(authorship != null)
+                sb.append(" ").append(au.org.ala.checklist.lucene.NameIndexField.AUTHOR.toString()).append(":\"").append(authorship).append("\"~");
             return sb.toString();
         }
 

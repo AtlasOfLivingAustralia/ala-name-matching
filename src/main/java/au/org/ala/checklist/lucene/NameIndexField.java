@@ -21,7 +21,8 @@ public enum NameIndexField {
     AUTHOR("author"),
     PHRASE("phrase"),//stores the values of a "phrase" name.  Some more intelligence will be needed when matching these
     VOUCHER("voucher"), //stores a voucher value minus the spaces and fullstops.
-    ALA("ala"); //stores whether or not it is an ALA generated name
+    ALA("ala"), //stores whether or not it is an ALA generated name
+    SYNONYM_TYPE("syn_type"); //stores the type of synonym that it represents
     String name;
 
     NameIndexField(String name) {

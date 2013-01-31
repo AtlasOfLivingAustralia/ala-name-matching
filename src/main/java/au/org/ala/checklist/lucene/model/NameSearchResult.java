@@ -27,8 +27,9 @@ public class NameSearchResult {
     private String left,right;
     private LinnaeanRankClassification rankClass;
     private RankType rank;
-
-    private MatchType matchType;
+    //The type of match that was performed
+    private MatchType matchType;    
+    private SynonymType synonymType; //store that type of synonym that this name is    
     public NameSearchResult(String id, String lsid, MatchType type){
         this.id = id;//Long.parseLong(id);
         this.lsid = StringUtils.trimToNull(lsid)==null ? id : StringUtils.trimToNull(lsid);
@@ -59,9 +60,11 @@ public class NameSearchResult {
         rankClass.setFid(doc.get("fid"));
         rankClass.setGid(doc.get("gid"));
         rankClass.setSid(doc.get("sid"));
+        rankClass.setAuthorship(doc.get(NameIndexField.AUTHOR.toString()));
         //left and right values for the taxon concept
         left = doc.get("left");
         right = doc.get("right");
+        synonymType = SynonymType.getTypeFor(doc.get(NameIndexField.SYNONYM_TYPE.toString()));
         String syn = doc.get(NameIndexField.ACCEPTED.toString());
         if(syn != null){
             //String[] synDetails = syn.split("\t",2);
@@ -73,6 +76,10 @@ public class NameSearchResult {
 //                acceptedId = -1;
 //            }
         }
+    }
+
+    public SynonymType getSynonymType() {
+        return synonymType;
     }
     public LinnaeanRankClassification getRankClassification(){
         return rankClass;
@@ -174,6 +181,4 @@ public class NameSearchResult {
     public void setRight(String right) {
         this.right = right;
     }
-
-
 }

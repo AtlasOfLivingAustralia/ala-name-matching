@@ -4,7 +4,7 @@
   <groupId>au.org.ala</groupId>
   <artifactId>ala-name-matching</artifactId>
   <packaging>jar</packaging>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.2-SNAPSHOT</version>
   <name>ALA Name Matching</name>
 	<properties>
 		<!-- This project uses UTF8 for Regular Expressions -->
@@ -54,6 +54,11 @@
       <artifactId>opencsv</artifactId>
       <version>2.2</version>
       <type>jar</type>
+    </dependency>
+    <dependency>
+        <groupId>uk.ac.shef.wit</groupId>
+        <artifactId>simmetrics</artifactId>
+        <version>1.6.2</version>
     </dependency>
   </dependencies>
     <build>

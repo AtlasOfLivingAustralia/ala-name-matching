@@ -1,0 +1,968 @@
+Acanthagenys rufogularis
+Acanthis flammea
+Acanthiza (Acanthiza) apicalis
+Acanthiza (Acanthiza) ewingii
+Acanthiza (Acanthiza) katherina
+Acanthiza (Acanthiza) pusilla
+Acanthiza (Geobasileus) chrysorrhoa
+Acanthiza (Geobasileus) inornata
+Acanthiza (Geobasileus) iredalei
+Acanthiza (Geobasileus) reguloides
+Acanthiza (Geobasileus) uropygialis
+Acanthiza (Milligania) robustirostris
+Acanthiza (Subacanthiza) lineata
+Acanthiza (Subacanthiza) nana
+Acanthorhynchus superciliosus
+Acanthorhynchus tenuirostris
+Acanthornis magna
+Accipiter (Leucospiza) fasciatus
+Accipiter (Leucospiza) novaehollandiae
+Accipiter (Paraspizias) cirrocephalus
+Accipiter collaris
+Acridotheres fuscus
+Acridotheres tristis
+Acrocephalus (Acrocephalus) australis
+Acrocephalus (Acrocephalus) orientalis
+Acrocephalus stentoreus
+Actitis hypoleucos
+Aegotheles (Aegotheles) cristatus
+Aerodramus fuciphagus
+Aerodramus spodiopygius
+Aerodramus terraereginae
+Aerodramus vanikorensis
+Agapornis canus
+Agapornis personatus
+Agapornis roseicollis
+Ailuroedus crassirostris
+Ailuroedus melanotis
+Aix galericulata
+Aix sponsa
+Alauda arvensis
+Alcedo pusilla
+Alectoris chukar
+Alectoris graeca
+Alectura lathami
+Alisterus scapularis
+Alle alle
+Amandava subflava
+Amaurornis cinerea
+Amaurornis moluccana
+Amaurornis olivacea
+Amazona auropalliata
+Amblyornis newtonianus
+Amytornis (Amytornis) ballarae
+Amytornis (Amytornis) dorotheae
+Amytornis (Amytornis) goyderi
+Amytornis (Amytornis) housei
+Amytornis (Amytornis) merrotsyi
+Amytornis (Amytornis) modestus
+Amytornis (Amytornis) purnelli
+Amytornis (Amytornis) striatus
+Amytornis (Amytornis) textilis
+Amytornis (Amytornis) woodwardi
+Amytornis (Maluropsis) barbatus
+Anas (Anas) platyrhynchos
+Anas (Anas) superciliosa
+Anas (Dafila) acuta
+Anas (Nettion) castanea
+Anas (Nettion) crecca
+Anas (Nettion) gracilis
+Anas (Querquedula) querquedula
+Anas (Spatula) clypeata
+Anas (Spatula) rhynchotis
+Anas gibberifrons
+Anhinga melanogaster
+Anhinga novaehollandiae
+Anous minutus
+Anous stolidus
+Anous tenuirostris
+Anser anser
+Anser cygnoides
+Anseranas semipalmata
+Anthochaera (Anellobia) chrysoptera
+Anthochaera (Anellobia) lunulata
+Anthochaera (Anthochaera) carunculata
+Anthochaera (Anthochaera) paradoxa
+Anthochaera (Xanthomyza) phrygia
+Anthropoides paradiseus
+Anthropoides virgo
+Anthus (Anthus) novaeseelandiae
+Anthus (Leimoniptera) cervinus
+Aphelocephala leucopsis
+Aphelocephala nigricincta
+Aphelocephala pectoralis
+Aplornis (Aplornis) cantoroides
+Aplornis (Aplornis) fusca
+Aplornis (Lamprocorax) metallica
+Aprosmictus erythropterus
+Aptenodytes patagonicus
+Apus (Apus) pacificus
+Apus (Colletoptera) affinis
+Apus nipalensis
+Aquila (Aquila) gurneyi
+Aquila (Uroaetus) audax
+Ara ararauna
+Ardea (Ardea) cinerea
+Ardea (Ardea) pacifica
+Ardea (Bubulcus) ibis
+Ardea (Casmerodius) modesta
+Ardea (Mesophoyx) intermedia
+Ardea (Typhon) sumatrana
+Ardea alba
+Ardea cocoi
+Ardea goliath
+Ardenna bulleri
+Ardenna carneipes
+Ardenna grisea
+Ardenna pacifica
+Ardenna tenuirostris
+Ardeola bacchus
+Ardeola speciosa
+Ardeotis australis
+Arenaria interpres
+Argusianus argus
+Arses kaupi
+Arses lorealis
+Arses telescopthalmus
+Artamus (Angroyan) cinereus
+Artamus (Angroyan) cyanopterus
+Artamus (Angroyan) minor
+Artamus (Artamus) leucorynchus
+Artamus (Campbellornis) personatus
+Artamus (Campbellornis) superciliosus
+Ashbyia lovensis
+Atrichornis (Atrichornis) rufescens
+Atrichornis (Rahcinta) clamosus
+Aviceda (Aviceda) subcristata
+Aythya (Nyroca) australis
+Barnardius zonarius
+Bartramia longicauda
+Biziura lobata
+Botaurus poiciloptilus
+Branta canadensis
+Bulweria bulwerii
+Burhinus (Burhinus) grallarius
+Butastur teesa
+Butorides striatus
+Cacatua (Cacatua) galerita
+Cacatua (Licmetis) pastinator
+Cacatua (Licmetis) sanguinea
+Cacatua (Licmetis) tenuirostris
+Cacatua alba
+Cacatua sulphurea
+Cacomantis (Cacomantis) variolosus
+Cacomantis (Vidgenia) castaneiventris
+Cacomantis (Vidgenia) flabelliformis
+Cacomantis (Vidgenia) pallidus
+Cairina moschata
+Calamanthus (Calamanthus) campestris
+Calamanthus (Calamanthus) fuliginosus
+Calidris (Calidris) canutus
+Calidris (Calidris) tenuirostris
+Calidris (Crocethia) alba
+Calidris (Ereunetes) minuta
+Calidris (Ereunetes) ruficollis
+Calidris (Ereunetes) subminuta
+Calidris (Erolia) acuminata
+Calidris (Erolia) alpina
+Calidris (Erolia) bairdii
+Calidris (Erolia) ferruginea
+Calidris (Erolia) fuscicollis
+Calidris (Erolia) himantopus
+Calidris (Erolia) melanotos
+Calidris mauri
+Callipepla (Lophortyx) californica
+Callocephalon fimbriatum
+Calonectris leucomelas
+Calyptorhynchus (Calyptorhynchus) banksii
+Calyptorhynchus (Calyptorhynchus) lathami
+Calyptorhynchus (Zanda) baudinii
+Calyptorhynchus (Zanda) funereus
+Calyptorhynchus (Zanda) latirostris
+Caprimulgus affinis
+Caprimulgus macrurus
+Cardinalis cardinalis
+Carduelis cannabina
+Carduelis carduelis
+Carduelis chloris
+Carduelis flammea
+Carterornis leucotis
+Casuarius casuarius
+Cecropis (Lillia) daurica
+Centropus (Polophilus) phasianinus
+Cereopsis novaehollandiae
+Certhionyx (Certhionyx) variegatus
+Certhionyx niger
+Certhionyx pectoralis
+Ceyx azureus
+Ceyx pusilla
+Chalcites (Chalcites) basalis
+Chalcites (Chalcites) lucidus
+Chalcites (Chalcites) minutillus
+Chalcites (Misocalius) osculans
+Chalcophaps indica
+Charadrius (Charadrius) alexandrinus
+Charadrius (Charadrius) bicinctus
+Charadrius (Charadrius) dubius
+Charadrius (Charadrius) hiaticula
+Charadrius (Charadrius) leschenaultii
+Charadrius (Charadrius) mongolus
+Charadrius (Charadrius) ruficapillus
+Charadrius (Eupoda) asiaticus
+Charadrius (Eupoda) australis
+Charadrius (Eupoda) veredus
+Charadrius cinctus
+Charadrius semipalmatus
+Chenonetta jubata
+Cheramoeca leucosterna
+Chionis minor
+Chlidonias (Chlidonias) leucopterus
+Chlidonias (Chlidonias) niger
+Chlidonias (Pelodes) hybrida
+Chloris chloris
+Chroicocephalus novaehollandiae
+Chroicocephalus ridibundus
+Chrysococcyx basalis
+Chrysococcyx lucidus
+Chrysococcyx minutillus
+Chrysococcyx osculans
+Chrysolophus pictus
+Chthonicola sagittata
+Cincloramphus (Cincloramphus) cruralis
+Cincloramphus (Maclennania) mathewsi
+Cinclosoma (Cinclosoma) punctatum
+Cinclosoma (Malleeavis) castanotum
+Cinclosoma (Samuela) castaneothorax
+Cinclosoma (Samuela) cinnamomeum
+Circus aeruginosus
+Circus approximans
+Circus assimilis
+Cissomela pectoralis
+Cisticola (Cisticola) exilis
+Cisticola (Cisticola) juncidis
+Cladorhynchus leucocephalus
+Climacteris (Climacteris) melanura
+Climacteris (Climacteris) picumnus
+Climacteris (Climacteris) rufa
+Climacteris (Climacterobates) affinis
+Climacteris (Climacterobates) erythrops
+Collocalia esculenta
+Colluricincla (Colluricincla) harmonica
+Colluricincla (Colluricincla) woodwardi
+Colluricincla (Myiolestes) boweri
+Colluricincla (Myiolestes) megarhyncha
+Columba (Columba) livia
+Columba (Janthoenas) leucomela
+Columba (Janthoenas) vitiensis
+Conopophila (Conopophila) albogularis
+Conopophila (Conopophila) rufogularis
+Conopophila (Lacustroica) whitei
+Coracina (Coracina) novaehollandiae
+Coracina (Coracina) papuensis
+Coracina (Edolisoma) tenuirostris
+Coracina (Paragraucalus) lineata
+Coracina (Pteropodocys) maxima
+Corcorax melanorhamphos
+Cormobates leucophaea
+Corvus bennetti
+Corvus coronoides
+Corvus mellori
+Corvus orru
+Corvus splendens
+Corvus tasmanicus
+Coturnix (Coturnix) pectoralis
+Coturnix (Synoicus) ypsilophora
+Coturnix adansonii
+Coturnix chinensis
+Coturnix coturnix
+Coturnix novaezelandiae
+Cracticus mentalis
+Cracticus nigrogularis
+Cracticus quoyi
+Cracticus tibicen
+Cracticus torquatus
+Crex crex
+Cuculus (Cuculus) optatus
+Cuculus (Cuculus) saturatus
+Cuculus canorus
+Cuculus pallidus
+Cyanoptila cyanomelana
+Cyanoramphus cookii
+Cyanoramphus novaezelandiae
+Cyclopsitta diophthalma
+Cygnus (Chenopis) atratus
+Cygnus (Cygnus) olor
+Dacelo (Dacelo) leachii
+Dacelo (Dacelo) novaeguineae
+Daphoenositta (Neositta) chrysoptera
+Daption capense
+Dasyornis (Dasyornis) brachypterus
+Dasyornis (Dasyornis) longirostris
+Dasyornis (Maccoyornis) broadbenti
+Dendrocygna (Dendrocygna) arcuata
+Dendrocygna (Leptotarsis) eytoni
+Dendrocygna (Leptotarsis) guttata
+Dicaeum (Dicaeum) geelvinkianum
+Dicaeum (Dicaeum) hirundinaceum
+Dicrurus bracteatus
+Dicrurus hottentottus
+Dicrurus megarhynchus
+Didunculus strigirostris
+Diomedea epomophora
+Diomedea exulans
+Dromaius ater
+Dromaius baudinianus
+Dromaius novaehollandiae
+Drymodes brunneopygia
+Drymodes superciliaris
+Ducula (Ducula) concinna
+Ducula (Ducula) mullerii
+Ducula (Ducula) whartoni
+Ducula (Myristicivora) bicolor
+Ducula pinon
+Eclectus roratus
+Egretta garzetta
+Egretta novaehollandiae
+Egretta picata
+Egretta sacra
+Elanus axillaris
+Elanus caeruleus
+Elanus leucurus
+Elanus scriptus
+Elseyornis melanops
+Emblema pictum
+Entomyzon cyanotis
+Eolophus roseicapillus
+Eopsaltria (Eopsaltria) australis
+Eopsaltria (Eopsaltria) griseogularis
+Eopsaltria (Quoyornis) georgiana
+Eopsaltria pulverulenta
+Ephippiorhynchus (Ephippiorhynchus) asiaticus
+Epthianura (Aurepthianura) aurifrons
+Epthianura (Aurepthianura) crocea
+Epthianura (Epthianura) albifrons
+Epthianura (Parepthianura) tricolor
+Eremiornis carteri
+Erythrogonys cinctus
+Erythrotriorchis radiatus
+Erythrura (Acalanthe) trichroa
+Erythrura (Chloebia) gouldiae
+Erythrura cyaneovirens
+Erythrura prasina
+Esacus magnirostris
+Eudynamys orientalis
+Eudynamys scolopaceus
+Eudyptes chrysocome
+Eudyptes chrysolophus
+Eudyptes pachyrhynchus
+Eudyptes sclateri
+Eudyptula minor
+Eulabeornis castaneoventris
+Euplectes albonotatus
+Euplectes orix
+Eurostopodus (Eurostopodus) argus
+Eurostopodus (Eurostopodus) mystacalis
+Eurystomus orientalis
+Excalfactoria chinensis
+Falco (Falco) longipennis
+Falco (Hierofalco) hypoleucos
+Falco (Hierofalco) peregrinus
+Falco (Hierofalco) subniger
+Falco (Ieracidea) berigora
+Falco (Tinnunculus) cenchroides
+Falcunculus frontatus
+Fregata andrewsi
+Fregata ariel
+Fregata minor
+Fregetta grallaria
+Fregetta tropica
+Fringilla coelebs
+Fulica atra
+Fulmarus glacialoides
+Gallicolumba jobiensis
+Gallinago (Gallinago) hardwickii
+Gallinago (Gallinago) megala
+Gallinago (Gallinago) stenura
+Gallinula (Gallinula) tenebrosa
+Gallirallus (Hypotaenidia) philippensis
+Gallirallus (Sylvestrornis) sylvestris
+Gallirallus australis
+Gallus gallus
+Gallus varius
+Garrodia nereis
+Gelochelidon nilotica
+Geoffroyus geoffroyi
+Geopelia cuneata
+Geopelia humeralis
+Geopelia striata
+Geophaps (Geophaps) scripta
+Geophaps (Geophaps) smithii
+Geophaps (Lophophaps) plumifera
+Gerygone chloronota
+Gerygone chrysogaster
+Gerygone fusca
+Gerygone igata
+Gerygone insularis
+Gerygone levigaster
+Gerygone magnirostris
+Gerygone modesta
+Gerygone mouki
+Gerygone olivacea
+Gerygone palpebrosa
+Gerygone tenebrosa
+Glareola (Glareola) maldivarum
+Glareola pratincola
+Gliciphila melanops
+Glossopsitta concinna
+Glossopsitta porphyrocephala
+Glossopsitta pusilla
+Glycichaera fallax
+Gracula religiosa
+Grallina cyanoleuca
+Grantiella picta
+Grus (Mathewsia) antigone
+Grus (Mathewsia) rubicunda
+Gygis alba
+Haematopus finschi
+Haematopus fuliginosus
+Haematopus longirostris
+Haematopus ostralegus
+Haematopus unicolor
+Halcyon pileata
+Haliaeetus (Pontoaetus) leucogaster
+Haliastur indus
+Haliastur sphenurus
+Halobaena caerulea
+Hamirostra melanosternon
+Hemiphaga novaeseelandiae
+Henicopernis longicauda
+Heteromunia pectoralis
+Heteromyias albispecularis
+Heteromyias cinereifrons
+Hieraaetus (Hieraaetus) morphnoides
+Himantopus himantopus
+Hirundapus caudacutus
+Hirundo (Hirundo) neoxena
+Hirundo (Hirundo) rustica
+Hirundo (Hirundo) tahitica
+Hirundo ariel
+Hirundo daurica
+Hydrobates leucorhoa
+Hydrobates matsudairae
+Hydrobates pelagicus
+Hydrophasianus chirurgus
+Hydroprogne caspia
+Hylacola cautus
+Hylacola pyrrhopygia
+Icterus nigrogularis
+Irediparra gallinacea
+Ixobrychus cinnamomeus
+Ixobrychus dubius
+Ixobrychus flavicollis
+Ixobrychus minutus
+Ixobrychus sinensis
+Lalage (Karua) leucomela
+Lalage (Lalage) sueurii
+Lalage tricolor
+Lanius tigrinus
+Larus (Larus) canus
+Larus (Larus) crassirostris
+Larus (Larus) dominicanus
+Larus (Larus) fuscus
+Larus (Larus) pacificus
+Larus schistisagus
+Lathamus discolor
+Leipoa ocellata
+Leucocarbo atriceps
+Leucophaeus atricilla
+Leucophaeus pipixcan
+Leucosarcia melanoleuca
+Lewinia pectoralis
+Lichenostomus (Caligavis) chrysops
+Lichenostomus (Gavicalis) fasciogularis
+Lichenostomus (Gavicalis) versicolor
+Lichenostomus (Gavicalis) virescens
+Lichenostomus (Lichenostomus) cratitius
+Lichenostomus (Lichenostomus) melanops
+Lichenostomus (Nesoptilotis) flavicollis
+Lichenostomus (Nesoptilotis) leucotis
+Lichenostomus (Ptilotula) flavescens
+Lichenostomus (Ptilotula) fuscus
+Lichenostomus (Ptilotula) keartlandi
+Lichenostomus (Ptilotula) ornatus
+Lichenostomus (Ptilotula) penicillatus
+Lichenostomus (Ptilotula) plumulus
+Lichenostomus (Stomiopera) flavus
+Lichenostomus (Stomiopera) unicolor
+Lichenostomus frenatus
+Lichenostomus hindwoodi
+Lichmera (Lichmera) indistincta
+Limicola falcinellus
+Limnodromus griseus
+Limnodromus semipalmatus
+Limosa haemastica
+Limosa lapponica
+Limosa limosa
+Lonchura (Lonchura) punctulata
+Lonchura (Munia) castaneothorax
+Lonchura (Munia) flaviprymna
+Lonchura maja
+Lophochroa leadbeateri
+Lophoictinia isura
+Lopholaimus antarcticus
+Lugensa brevirostris
+Machaerirhynchus flaviventer
+Macronectes giganteus
+Macronectes halli
+Macropygia (Macropygia) amboinensis
+Malacorhynchus membranaceus
+Malurus (Leggeornis) amabilis
+Malurus (Leggeornis) elegans
+Malurus (Leggeornis) lamberti
+Malurus (Leggeornis) pulcherrimus
+Malurus (Malurus) coronatus
+Malurus (Malurus) cyaneus
+Malurus (Malurus) splendens
+Malurus (Musciparus) leucopterus
+Malurus (Musciparus) melanocephalus
+Manorina (Manorina) melanophrys
+Manorina (Myzantha) flavigula
+Manorina (Myzantha) melanocephala
+Manorina (Myzantha) melanotis
+Manucodia keraudrenii
+Megalurus gramineus
+Megalurus timoriensis
+Megapodius (Megapodius) reinwardt
+Megapodius freycinet
+Melanodryas (Amaurodryas) vittata
+Melanodryas (Melanodryas) cucullata
+Meleagris gallopavo
+Meliphaga (Meliphaga) lewinii
+Meliphaga (Meliphaga) notata
+Meliphaga (Microptilotis) albilineata
+Meliphaga (Microptilotis) fordiana
+Meliphaga (Microptilotis) gracilis
+Melithreptus (Eidopsarus) brevirostris
+Melithreptus (Eidopsarus) gularis
+Melithreptus (Eidopsarus) validirostris
+Melithreptus (Melithreptus) affinis
+Melithreptus (Melithreptus) albogularis
+Melithreptus (Melithreptus) lunatus
+Melopsittacus undulatus
+Menura (Harriwhitea) alberti
+Menura (Menura) novaehollandiae
+Merops (Merops) ornatus
+Microcarbo melanoleucos
+Microeca (Kempiella) griseoceps
+Microeca (Microeca) fascinans
+Microeca (Microeca) flavigaster
+Milvus migrans
+Mirafra (Mirafra) javanica
+Mirafra cantillans
+Monarcha (Monarcha) cinerascens
+Monarcha (Monarcha) frater
+Monarcha (Monarcha) melanopsis
+Monticola solitarius
+Morus capensis
+Morus serrator
+Motacilla (Budytes) citreola
+Motacilla (Budytes) tschutschensis
+Motacilla (Calobates) cinerea
+Motacilla (Motacilla) alba
+Motacilla flava
+Myiagra (Myiagra) cyanoleuca
+Myiagra (Myiagra) rubecula
+Myiagra (Myiagra) ruficollis
+Myiagra (Piezorhynchus) alecto
+Myiagra (Seisura) inquieta
+Myzomela (Cosmeteira) obscura
+Myzomela (Myzomela) erythrocephala
+Myzomela (Myzomela) sanguinolenta
+Myzomela melanocephala
+Nectarinia (Cyrtostomus) jugularis
+Nectarinia aspasia
+Neochmia (Aegintha) temporalis
+Neochmia (Aidemosyne) modesta
+Neochmia (Neochmia) phaeton
+Neochmia (Neochmia) ruficauda
+Neophema (Neonanodes) chrysogaster
+Neophema (Neonanodes) chrysostoma
+Neophema (Neonanodes) elegans
+Neophema (Neonanodes) petrophila
+Neophema (Neophema) pulchella
+Neophema (Neophema) splendida
+Neopsephotus bourkii
+Nettapus (Cheniscus) coromandelianus
+Nettapus (Cheniscus) pulchellus
+Ninox (Hieracoglaux) connivens
+Ninox (Ninox) novaeseelandiae
+Ninox (Rhabdoglaux) rufa
+Ninox (Rhabdoglaux) strenua
+Northiella haematogaster
+Numenius (Mesoscolopax) minutus
+Numenius (Numenius) madagascariensis
+Numenius (Phaeopus) phaeopus
+Numida meleagris
+Nycticorax caledonicus
+Nymphicus hollandicus
+Oceanites oceanicus
+Ocyphaps lophotes
+Oenanthe isabellina
+Onychoprion anaethetus
+Onychoprion fuscata
+Oreoica gutturalis
+Oreoscopus gutturalis
+Origma solitaria
+Oriolus (Mimeta) flavocinctus
+Oriolus (Mimeta) sagittatus
+Orthonyx spaldingii
+Orthonyx temminckii
+Otus sunia
+Oxyura australis
+Pachycephala (Alisterornis) lanioides
+Pachycephala (Alisterornis) rufiventris
+Pachycephala (Mattingleya) simplex
+Pachycephala (Pachycephala) melanura
+Pachycephala (Pachycephala) pectoralis
+Pachycephala (Timixos) inornata
+Pachycephala (Timixos) olivacea
+Pachycephala (Timixos) rufogularis
+Pachycephala caledonica
+Pachycephala griseiceps
+Pachyptila belcheri
+Pachyptila crassirostris
+Pachyptila desolata
+Pachyptila salvini
+Pachyptila turtur
+Pachyptila vittata
+Pagodroma nivea
+Pandion cristatus
+Pandion haliaetus
+Papasula abbotti
+Paradisaea raggiana
+Pardalotus (Pardalotinus) rubricatus
+Pardalotus (Pardalotinus) striatus
+Pardalotus (Pardalotus) punctatus
+Pardalotus (Pardalotus) quadragintus
+Paroaria coronata
+Passer (Passer) domesticus
+Passer (Passer) montanus
+Pavo cristatus
+Pedionomus torquatus
+Pelagodroma marina
+Pelecanoides georgicus
+Pelecanoides urinatrix
+Pelecanus conspicillatus
+Peltohyas australis
+Peneoenanthe pulverulenta
+Pernis ptilorynchus
+Petrochelidon (Hylochelidon) nigricans
+Petrochelidon (Petrochelidon) ariel
+Petroica (Erythrodryas) rodinogaster
+Petroica (Erythrodryas) rosea
+Petroica (Littlera) phoenicea
+Petroica (Petroica) boodang
+Petroica (Petroica) goodenovii
+Petroica (Petroica) multicolor
+Petrophassa albipennis
+Petrophassa rufipennis
+Pezoporus occidentalis
+Pezoporus wallicus
+Phaethon aethereus
+Phaethon lepturus
+Phaethon rubricauda
+Phalacrocorax (Anacarbo) fuscescens
+Phalacrocorax (Phalacrocorax) carbo
+Phalacrocorax (Phalacrocorax) sulcirostris
+Phalacrocorax (Phalacrocorax) varius
+Phalacrocorax albiventer
+Phalaropus fulicarius
+Phalaropus lobatus
+Phaps (Histriophaps) histrionica
+Phaps (Phaps) chalcoptera
+Phaps (Phaps) elegans
+Phasianus colchicus
+Philemon (Microphilemon) citreogularis
+Philemon (Philemon) argenticeps
+Philemon (Philemon) buceroides
+Philemon (Tropidorhynchus) corniculatus
+Philomachus pugnax
+Phoebetria fusca
+Phoebetria palpebrata
+Phonygammus keraudrenii
+Phylidonyris (Meliornis) niger
+Phylidonyris (Meliornis) novaehollandiae
+Phylidonyris (Phylidonyris) pyrrhoptera
+Phylidonyris albifrons
+Phylloscopus (Acanthopneuste) borealis
+Pitta (Erythropitta) erythrogaster
+Pitta (Pitta) iris
+Pitta (Pitta) moluccensis
+Pitta (Pitta) versicolor
+Pitta nympha
+Pitta sordida
+Platalea (Platalea) regia
+Platalea (Platibis) flavipes
+Platalea leucorodia
+Platycercus (Platycercus) caledonicus
+Platycercus (Platycercus) elegans
+Platycercus (Violania) adscitus
+Platycercus (Violania) eximius
+Platycercus (Violania) icterotis
+Platycercus (Violania) venustus
+Plectorhyncha lanceolata
+Plegadis falcinellus
+Pluvialis apricaria
+Pluvialis dominicus
+Pluvialis fulva
+Pluvialis squatarola
+Podargus ocellatus
+Podargus papuensis
+Podargus strigoides
+Podiceps cristatus
+Podiceps ruficollis
+Poecilodryas (Poecilodryas) cerviniventris
+Poecilodryas (Poecilodryas) superciliosa
+Poephila (Neopoephila) personata
+Poephila (Poephila) acuticauda
+Poephila (Poephila) cincta
+Poliocephalus poliocephalus
+Polytelis alexandrae
+Polytelis anthopeplus
+Polytelis swainsonii
+Pomatostomus (Morganornis) ruficeps
+Pomatostomus (Morganornis) superciliosus
+Pomatostomus (Pomatostomus) halli
+Pomatostomus (Pomatostomus) temporalis
+Porphyrio (Notornis) albus
+Porphyrio (Porphyrio) porphyrio
+Porzana (Porzana) fluminea
+Porzana (Porzana) pusilla
+Porzana (Porzana) tabuensis
+Porzana cinerea
+Probosciger aterrimus
+Procellaria (Adamastor) cinerea
+Procellaria (Procellaria) aequinoctialis
+Procellaria (Procellaria) parkinsoni
+Procellaria (Procellaria) westlandica
+Procelsterna cerulea
+Psephotus (Psephotellus) chrysopterygius
+Psephotus (Psephotellus) dissimilis
+Psephotus (Psephotellus) pulcherrimus
+Psephotus (Psephotus) haematonotus
+Psephotus (Psephotus) varius
+Pseudobulweria rostrata
+Psittacula cyanocephala
+Psittacula eupatria
+Psittacula himalayana
+Psittacula krameri
+Psittacus erithacus
+Psitteuteles versicolor
+Psophodes (Phodopses) nigrogularis
+Psophodes (Psophodes) olivaceus
+Psophodes (Sphenostoma) cristatus
+Psophodes (Sphenostoma) occidentalis
+Pterodroma (Aestrelata) cervicalis
+Pterodroma (Aestrelata) externa
+Pterodroma (Aestrelata) occulta
+Pterodroma (Cookilaria) cookii
+Pterodroma (Cookilaria) incerta
+Pterodroma (Cookilaria) leucoptera
+Pterodroma (Cookilaria) nigripennis
+Pterodroma (Hallstroma) heraldica
+Pterodroma (Hallstroma) neglecta
+Pterodroma (Pterodroma) lessonii
+Pterodroma (Pterodroma) macroptera
+Pterodroma (Pterodroma) solandri
+Pterodroma (Unplaced) inexpectata
+Pterodroma (Unplaced) mollis
+Ptilinopus (Megaloprepia) cinctus
+Ptilinopus (Megaloprepia) magnificus
+Ptilinopus (Ptilinopus) regina
+Ptilinopus (Ptilinopus) superbus
+Ptilinopus rivoli
+Ptilonorhynchus cerviniventris
+Ptilonorhynchus guttatus
+Ptilonorhynchus maculatus
+Ptilonorhynchus nuchalis
+Ptilonorhynchus violaceus
+Ptiloris (Craspedophora) magnificus
+Ptiloris (Ptiloris) paradiseus
+Ptiloris (Ptiloris) victoriae
+Puffinus (Puffinus) assimilis
+Puffinus (Puffinus) gavia
+Puffinus (Puffinus) huttoni
+Puffinus (Puffinus) puffinus
+Puffinus gravis
+Puffinus griseus
+Puffinus tenuirostris
+Purnella albifrons
+Purpureicephalus spurius
+Pycnonotus (Pycnonotus) cafer
+Pycnonotus (Pycnonotus) jocosus
+Pycnonotus leucotis
+Pycnoptilus floccosus
+Pygoscelis adeliae
+Pygoscelis antarcticus
+Pygoscelis papua
+Pyrrholaemus brunneus
+Pytilia melba
+Pytilia phoenicoptera
+Rallina (Rallina) fasciata
+Rallina (Rallina) tricolor
+Rallus aquaticus
+Ramsayornis fasciatus
+Ramsayornis modestus
+Recurvirostra novaehollandiae
+Rhipidura (Howeavis) dryas
+Rhipidura (Howeavis) rufifrons
+Rhipidura (Rhipidura) albiscapa
+Rhipidura (Rhipidura) fuliginosa
+Rhipidura (Rhipidura) phasiana
+Rhipidura (Sauloprocta) leucophrys
+Rhipidura (Setosura) rufiventris
+Rostratula australis
+Rostratula benghalensis
+Scenopoeetes dentirostris
+Scythrops novaehollandiae
+Sericornis (Arfakornis) beccarii
+Sericornis (Arfakornis) magnirostra
+Sericornis (Sericornis) citreogularis
+Sericornis (Sericornis) frontalis
+Sericornis (Sericornis) humilis
+Sericornis (Sericornis) keri
+Sericulus (Sericulus) chrysocephalus
+Serinus canaria
+Serinus mozambicus
+Serinus serinus
+Smicrornis brevirostris
+Sphecotheres vieilloti
+Sphecotheres viridis
+Spheniscus magellanicus
+Stagonopleura (Stagonopleura) guttata
+Stagonopleura (Zonaeginthus) bella
+Stagonopleura (Zonaeginthus) oculata
+Steganopus tricolor
+Stercorarius antarcticus
+Stercorarius longicaudus
+Stercorarius maccormicki
+Stercorarius parasiticus
+Stercorarius pomarinus
+Stercorarius skua
+Sterna (Gygisterna) sumatrana
+Sterna (Sterna) dougallii
+Sterna (Sterna) hirundo
+Sterna (Sterna) paradisaea
+Sterna (Sterna) striata
+Sterna (Sterna) vittata
+Sterna nereis
+Sternula albifrons
+Sternula nereis
+Stictonetta naevosa
+Stiltia isabella
+Stipiturus malachurus
+Stipiturus mallee
+Stipiturus ruficeps
+Strepera (Neostrepera) versicolor
+Strepera (Strepera) fuliginosa
+Strepera (Strepera) graculina
+Streptopelia (Spilopelia) chinensis
+Streptopelia (Spilopelia) roseogrisea
+Streptopelia (Spilopelia) senegalensis
+Streptopelia capicola
+Streptopelia decaocto
+Streptopelia risoria
+Struthidea cinerea
+Struthio camelus
+Sturnus (Sturnus) tristis
+Sturnus (Sturnus) vulgaris
+Sugomel niger
+Sula dactylatra
+Sula leucogaster
+Sula sula
+Sylvia borin
+Syma torotoro
+Symposiachrus trivirgatus
+Tachybaptus novaehollandiae
+Tachybaptus ruficollis
+Tadorna (Casarca) tadornoides
+Tadorna (Casarca) variegata
+Tadorna (Radjah) radjah
+Taeniopygia bichenovii
+Taeniopygia guttata
+Tanysiptera (Uralcyon) sylvia
+Tanysiptera galatea
+Tanysiptera hydrocharis
+Thalassarche bulleri
+Thalassarche cauta
+Thalassarche chlororhynchos
+Thalassarche chrysostoma
+Thalassarche melanophris
+Thalasseus bengalensis
+Thalasseus bergii
+Thalassoica antarctica
+Thinornis rubricollis
+Threskiornis aethiopicus
+Threskiornis melanocephalus
+Threskiornis molucca
+Threskiornis spinicollis
+Timeliopsis fallax
+Todiramphus (Cyanalcyon) pyrrhopygius
+Todiramphus (Lazulena) macleayii
+Todiramphus (Todiramphus) chloris
+Todiramphus (Todiramphus) sanctus
+Tregellasia capito
+Tregellasia leucops
+Tribonyx mortierii
+Tribonyx ventralis
+Trichodere cockerelli
+Trichoglossus chlorolepidotus
+Trichoglossus haematodus
+Tringa (Erythroscelus) erythropus
+Tringa (Glottis) nebularia
+Tringa (Heteroscelus) brevipes
+Tringa (Heteroscelus) incana
+Tringa (Rhyacophilus) flavipes
+Tringa (Rhyacophilus) glareola
+Tringa (Rhyacophilus) stagnatilis
+Tringa (Totanus) guttifer
+Tringa (Totanus) totanus
+Tringa ochropus
+Tryngites subruficollis
+Turdus merula
+Turdus obscurus
+Turdus philomelos
+Turdus poliocephalus
+Turnix (Alphaturnia) velox
+Turnix (Austroturnix) castanotus
+Turnix (Austroturnix) melanogaster
+Turnix (Austroturnix) olivii
+Turnix (Austroturnix) varius
+Turnix (Ortygodes) maculosus
+Turnix (Unplaced) pyrrhothorax
+Tyto (Megastrix) novaehollandiae
+Tyto (Megastrix) tenebricosa
+Tyto (Tyto) javanica
+Tyto (Tyto) longimembris
+Tyto alba
+Tyto capensis
+Tyto multipunctata
+Urodynamis taitensis
+Vanellus (Lobipluvia) miles
+Vanellus (Lobivanellus) tricolor
+Vanellus (Unplaced) cinereus
+Xanthotis flaviventer
+Xanthotis macleayanus
+Xema sabini
+Xenus cinereus
+Zoothera (Zoothera) heinei
+Zoothera (Zoothera) lunulata
+Zoothera dauma
+Zosterops chloris
+Zosterops citrinellus
+Zosterops japonicus
+Zosterops lateralis
+Zosterops luteus
+Zosterops natalis
+Zosterops strenuus
+Zosterops tenuirostris
