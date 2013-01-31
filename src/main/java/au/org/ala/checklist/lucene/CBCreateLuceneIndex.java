@@ -283,7 +283,7 @@ public class CBCreateLuceneIndex {
             //select 'id','lsid', 'name_lsid', 'accepted_lsid','accepted_id','scientific_name', 'author', 'col_id'
             //String scientificName, String author, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, float boost){
 
-            iw.addDocument(createALASynonymDocument(values[5], values[6], values[0], values[1], values[2], values[3], values[4], 1.0f, values[8]));
+            iw.addDocument(createALASynonymDocument(values[5], values[6], values[0], values[1], values[2], values[3], values[4], 1.0f, values[9]));
         }
     }
 
