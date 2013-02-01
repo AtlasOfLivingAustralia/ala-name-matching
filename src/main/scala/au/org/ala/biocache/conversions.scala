@@ -3,8 +3,10 @@ package au.org.ala.biocache
 import au.org.ala.checklist.lucene.model.NameSearchResult
 import java.util.Date
 import org.apache.commons.lang.time.DateFormatUtils
+import org.slf4j.LoggerFactory
 
 object BiocacheConversions {
+  val logger = LoggerFactory.getLogger("BiocacheConversions")
 
   implicit def asClassification(nsr: NameSearchResult): au.org.ala.biocache.Classification = {
     val cl = new au.org.ala.biocache.Classification
@@ -36,12 +38,12 @@ object BiocacheConversions {
     	cl.taxonRankID = nsr.getRank.getId.toString
     }
     else
-      println("ERROR : " + nsr.getLsid + " doesn't have a rank " + rankClassification.getScientificName)
+      logger.warn("ERROR : " + nsr.getLsid + " doesn't have a rank " + rankClassification.getScientificName)
     
     //put the match reason
     cl.nameMatchMetric = nsr.getMatchType.toString
     cl
   }
   
-  implicit def dateToString(date:Date):String= DateFormatUtils.format(date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
+  implicit def dateToString(date:Date):String = DateFormatUtils.format(date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
 }
