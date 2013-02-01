@@ -318,7 +318,7 @@ object AttributionDAO {
    def getDataResourceFromWS(value:String):Option[Attribution]={
     try{
     val attribution = new Attribution
-    println("Calling web service for " + value)
+    logger.info("Calling web service for " + value)
 
     val wscontent = WebServiceLoader.getWSStringContent(AttributionDAO.collectoryURL+"/ws/dataResource/"+value+".json")
 
@@ -382,7 +382,7 @@ object AttributionDAO {
     Some(attribution)
     }
     catch{
-      case e:Exception => {e.printStackTrace();None;}
+      case e:Exception => { logger.error(e.getMessage,e); None }
     }
   }
 

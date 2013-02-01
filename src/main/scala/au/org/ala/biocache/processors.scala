@@ -615,7 +615,7 @@ class LocationProcessor extends Processor {
         try {
           processSensitivity(raw, processed, location, contextualLayers)
         } catch {
-          case e: Exception => println("Problem processing using the SDS for record " + guid); e.printStackTrace
+          case e: Exception => logger.error("Problem processing using the SDS for record " + guid, e)
         }
       }
     }

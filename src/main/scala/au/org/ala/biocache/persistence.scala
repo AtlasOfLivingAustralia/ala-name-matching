@@ -484,7 +484,7 @@ class CassandraPersistenceManager @Inject() (
         columnMap.remove(startKey)
       }
 
-      if(counter > 0) println("Finished paging. Records paged over : "+counter)
+      if(counter > 0) logger.debug("Finished paging. Records paged over : "+counter)
     }
 
    /**
@@ -588,7 +588,7 @@ class CassandraPersistenceManager @Inject() (
         columnMap.remove(startKey)
       }
 
-      if(counter > 0) println("Finished paging. Records paged over : "+counter)
+      if(counter > 0) logger.debug("Finished paging. Records paged over : "+counter)
     }
 
     /**
