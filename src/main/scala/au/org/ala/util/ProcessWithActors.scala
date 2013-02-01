@@ -18,7 +18,7 @@ object ProcessWithActors {
 
   def main(args : Array[String]) : Unit = {
 
-    println("Starting...")
+    logger.info("Starting processing...")
     var threads:Int = 4
     var startUuid:Option[String] = None
     var check = false
@@ -32,7 +32,7 @@ object ProcessWithActors {
     }
     
     if(parser.parse(args)){
-        println("Processing " + dr.getOrElse("") + " from " + startUuid + " with " + threads + "actors")
+        logger.info("Processing " + dr.getOrElse("") + " from " + startUuid + " with " + threads + "actors")
         processRecords(threads, startUuid, dr, check)
     }
     //shutdown the persistence
@@ -106,7 +106,7 @@ object ProcessWithActors {
 
     //We can't shutdown the persistence manager until all of the Actors have completed their work
     while(batches > getProcessedTotal(pool)){
-      println(batches + " : " + getProcessedTotal(pool))
+      logger.info(batches + " : " + getProcessedTotal(pool))
       Thread.sleep(50)
     }
   }
@@ -152,7 +152,7 @@ object ProcessWithActors {
     //occurrenceDAO.pageOverAll(Raw, fullRecord => {
     //occurrenceDAO.pageOverRawProcessed(rawAndProcessed => {
     performPaging(rawAndProcessed => {
-      if(guid == "") println("First rowKey processed: " + rawAndProcessed.get._1.rowKey)
+      if(guid == "") logger.info("First rowKey processed: " + rawAndProcessed.get._1.rowKey)
       guid = rawAndProcessed.get._1.rowKey
       count += 1
 
