@@ -212,7 +212,10 @@ class SingleDate {
    */
   def unapply(str: String): Option[EventDate] = {
     try {
-      val eventDateParsed = DateUtils.parseDate(str,formats)
+      //  2001-03-14T00:00:00+11:00
+      //bug in commons lang - http://stackoverflow.com/questions/424522/how-can-i-recognize-the-zulu-time-zone-in-java-dateutils-parsedate
+      val strWithoutTime = str.replaceFirst("[+|-][0-2][0-9]:[0-5][0-9]","")
+      val eventDateParsed = DateUtils.parseDate(strWithoutTime,formats)
       val startYear, endYear = DateFormatUtils.format(eventDateParsed, "yyyy")
       val startDate, endDate = DateFormatUtils.format(eventDateParsed, "yyyy-MM-dd")
       val startDay, endDay = DateFormatUtils.format(eventDateParsed, "dd")

@@ -138,6 +138,10 @@
 					</exclusion> <exclusion> <groupId>org.drools</groupId> <artifactId>drools-compiler</artifactId> 
 					</exclusion> -->
 				<exclusion>
+					<groupId>commons-lang</groupId>
+					<artifactId>commons-lang</artifactId>
+				</exclusion>
+				<exclusion>
 					<groupId>org.slf4j</groupId>
 					<artifactId>jcl-over-slf4j</artifactId>
 				</exclusion>
@@ -368,6 +372,12 @@
 			<artifactId>commons-httpclient</artifactId>
 			<version>3.1</version>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.1</version>
+		</dependency>
+
 		<!-- Contib classes for httpclient project. These are availabe in the source 
 			but not distributed as part of the default jar. They were built into a separate 
 			jar and manually installed into the ala maven repostory. -->
