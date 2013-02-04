@@ -35,6 +35,19 @@ public class CBIndexSearchTest {
 	}
 
         @Test
+        public void parserBlackList(){
+            //Bettongia lesueur unnamed subsp. - this name should NOT throw a NPE
+            String name = "Bettongia lesueur unnamed subsp.";
+            try{
+                searcher.searchForLSID(name, true);
+            }
+            catch(Exception e){
+                e.printStackTrace();
+                fail("No Exception should occur.");
+            }
+        }
+
+        @Test
         public void testRescursiveSearch(){
             String name = "Varanus timorensis";
             LinnaeanRankClassification cl = new LinnaeanRankClassification();

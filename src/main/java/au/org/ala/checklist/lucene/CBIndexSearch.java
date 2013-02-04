@@ -978,7 +978,7 @@ public class CBIndexSearch {
                 }
             }
             //now check for a "sounds like" match if we don't have an informal name
-            if (fuzzy && pn.isBinomial() && pn.getType() != NameType.informal && pn.getType() != NameType.doubtful) {
+            if (pn != null &&fuzzy && pn.isBinomial() && pn.getType() != NameType.informal && pn.getType() != NameType.doubtful) {
                 String genus = TaxonNameSoundEx.treatWord(pn.genusOrAbove, "genus");
                 String specific = TaxonNameSoundEx.treatWord(pn.specificEpithet, "species");
                 String infra = pn.infraSpecificEpithet == null ? null : TaxonNameSoundEx.treatWord(pn.infraSpecificEpithet, "species");
