@@ -1424,7 +1424,7 @@ public class CBIndexSearch {
         String suppliedAuthor = prepareAuthor(cl.getAuthorship());
         String resultAuthor =result.get(0).getRankClassification().getAuthorship();
         uk.ac.shef.wit.simmetrics.similaritymetrics.SmithWatermanGotoh similarity =new uk.ac.shef.wit.simmetrics.similaritymetrics.SmithWatermanGotoh();
-        if(similarity.getSimilarity(suppliedAuthor, resultAuthor)<0.8){
+        if(resultAuthor == null || similarity.getSimilarity(suppliedAuthor, resultAuthor)<0.8){
             //test based on the irmng list of homoymns
             validateHomonyms(result, name, cl);
         }

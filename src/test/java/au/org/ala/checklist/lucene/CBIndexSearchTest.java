@@ -33,7 +33,17 @@ public class CBIndexSearchTest {
 		}
 
 	}
-
+        @Test
+        public void npeInAuthorTest(){
+            String name="Sphacelaria Lynbye";
+            try{
+                searcher.searchForLSID(name);
+            }
+            catch(Exception e){
+                e.printStackTrace();
+                fail("No exception shoul occur");
+            }
+        }
         @Test
         public void parserBlackList(){
             //Bettongia lesueur unnamed subsp. - this name should NOT throw a NPE
