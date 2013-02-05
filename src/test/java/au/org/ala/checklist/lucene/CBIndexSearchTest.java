@@ -308,10 +308,10 @@ public class CBIndexSearchTest {
 //                        fail("There should be homonyms for Elaeocarpus sp. Rocky Creek");
 //                    }
                 }
-                //thisone represents a "common" accepted name for multiple entries so the accepted name is returned.
+                
                 name = "Elaeocarpus sp. Rocky Creek (Hunter s.n., 16 Sep 1993)";
                 nsr = searcher.searchForRecord(name, null);
-                assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:331597", nsr.getLsid());
+                assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:285662", nsr.getLsid());
                 
                 name = " Pultenaea sp. Olinda";
                 nsr = searcher.searchForRecord(name, null);

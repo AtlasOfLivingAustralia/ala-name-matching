@@ -24,15 +24,15 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.KeywordAnalyzer;
-import org.apache.lucene.analysis.SimpleAnalyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.IndexWriter.MaxFieldLength;
+//import org.apache.lucene.index.IndexWriter.MaxFieldLength;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
@@ -44,6 +44,9 @@ import au.org.ala.data.util.TaxonNameSoundEx;
 //import org.springframework.jdbc.core.JdbcTemplate;
 
 import au.org.ala.data.util.RankType;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.util.Version;
 import org.gbif.ecat.voc.NameType;
@@ -192,12 +195,12 @@ public class CBCreateLuceneIndex {
             indexIRMNG(irmngWriter, exportsDir + File.separator + irmngFile, RankType.GENUS);
             indexIRMNG(irmngWriter, "/data/bie-staging/irmng/irmng_species_homonyms.txt", RankType.SPECIES);
             indexIRMNG(irmngWriter, exportsDir + File.separator + "ala-species-homonyms.txt", RankType.SPECIES);
-            irmngWriter.optimize();
+            irmngWriter.forceMerge(1);
             irmngWriter.close();
         }
         if(generateCommonNames){
             //vernacular index to search for common names
-            indexCommonNames(createIndexWriter(new File(indexDir + File.separator + "vernacular"), analyzer,true), exportsDir, indexDir);
+            indexCommonNames(createIndexWriter(new File(indexDir + File.separator + "vernacular"), new KeywordAnalyzer(),true), exportsDir, indexDir);
         }
     }
     /**
@@ -220,9 +223,10 @@ public class CBCreateLuceneIndex {
         }
         System.out.println("Finished writing the tmp guid index...");
         iw.commit();
-        iw.optimize();
+        iw.forceMerge(1);
         iw.close();
-        return new IndexSearcher(FSDirectory.open(new File("/data/tmp/guid")), true);
+        //As of lucene 4.0 all IndexReaders are read only
+        return new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File("/data/tmp/guid"))));
     }
     /**
      * Creates an index writer in the specified directory.  It will create/recreate
@@ -334,7 +338,7 @@ public class CBCreateLuceneIndex {
         //add the synonyms
         addALASyonyms(iw, alaSynonyms);
         iw.commit();
-        iw.optimize();
+        iw.forceMerge(1);
         iw.close();
         log.info("Lucene index created - processed a total of " + records + " records in " + (System.currentTimeMillis() - time) + " msecs ");
     }
@@ -437,14 +441,14 @@ public class CBCreateLuceneIndex {
         //process the ANBG common names and add them to the same index
         //create the tmp index for the taxonConcepts used to ensure that a supplied taxon lsid is covered in the export
         //IndexSearcher searcher = createTmpIndex(taxonConeptName);
-        IndexSearcher currentNameSearcher = new IndexSearcher(FSDirectory.open(new File(indexDir+File.separator+"cb")), true);
-        IndexSearcher extraSearcher = new IndexSearcher(FSDirectory.open(new File(indexDir+File.separator+"id")), true);
+        IndexSearcher currentNameSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(indexDir+File.separator+"cb"))));
+        IndexSearcher extraSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(indexDir+File.separator+"id"))));
 
         addAnbgCommonNames(afdFile, iw, currentNameSearcher,extraSearcher,'\t');
         addAnbgCommonNames(apniFile, iw, currentNameSearcher,extraSearcher,',' );
 
         iw.commit();
-        iw.optimize();
+        iw.forceMerge(1);
         iw.close();
     }
     /**
@@ -515,9 +519,9 @@ public class CBCreateLuceneIndex {
             }
         }
         iw.commit();
-        iw.optimize();
+        iw.forceMerge(1);
         iw.close();
-        idSearcher = new IndexSearcher(FSDirectory.open(indexDir), true);
+        idSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(indexDir)));
     }
     /**
      * Creates a temporary index that stores the taxon concept LSIDs that were
@@ -543,9 +547,9 @@ public class CBCreateLuceneIndex {
             }
         }
         iw.commit();
-        iw.optimize();
+        iw.forceMerge(1);
         iw.close();
-        return new IndexSearcher(FSDirectory.open(indexDir), true);
+        return new IndexSearcher(DirectoryReader.open(FSDirectory.open(indexDir)));
     }
     /**
      * Determines whether or not the supplied taxon lsid was included in the
@@ -585,12 +589,16 @@ public class CBCreateLuceneIndex {
         Document doc = new Document();
         //we are only interested in keeping all the alphanumerical values of the common name
         //when searching the same operations will need to be peformed on the search string
-        doc.add(new Field(IndexField.COMMON_NAME.toString(), cn.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", ""), Store.YES, Index.NOT_ANALYZED));
+        TextField tf = new TextField(IndexField.COMMON_NAME.toString(), cn.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", ""), Store.YES);
+        tf.setBoost(boost);
+
+        //doc.add(new TextField(IndexField.COMMON_NAME.toString(), cn.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", ""), Store.YES, Index.NOT_ANALYZED));
+        doc.add(tf);
         if(sn != null)
             doc.add(new Field(IndexField.NAME.toString(), sn, Store.YES, Index.ANALYZED));
         String newLsid = getAcceptedLSID(lsid);
         doc.add(new Field(IndexField.LSID.toString(), newLsid, Store.YES, Index.NO));
-        doc.setBoost(boost);
+        //doc.setBoost(boost);
         return doc;
     }
 
@@ -625,7 +633,7 @@ public class CBCreateLuceneIndex {
           return null;
         }
         Document doc = new Document();
-        doc.setBoost(boost);
+        //doc.setBoost(boost);
 
         //Add the ids
         doc.add(new Field(NameIndexField.ID.toString(), id, Store.YES, Index.NOT_ANALYZED));
@@ -635,7 +643,9 @@ public class CBCreateLuceneIndex {
             doc.add(new Field(NameIndexField.ALA.toString(), "T", Store.NO, Index.ANALYZED));
 
         //Add the scientific name information
-        doc.add(new Field(NameIndexField.NAME.toString(), name, Store.YES, Index.ANALYZED));
+        Field f = new Field(NameIndexField.NAME.toString(), name, Store.YES, Index.ANALYZED);
+        f.setBoost(boost);
+        doc.add(f);
         
 
         //rank information
@@ -712,7 +722,9 @@ public class CBCreateLuceneIndex {
             if(cn != null && cn.isParsableType()&& !cn.isIndetermined() 
             && cn.getType()!= NameType.informal && !"6500".equals(rank))// a scientific name with some informal addition like "cf." or indetermined like Abies spec. ALSO prevent subgenus because they parse down to genus plus author
             {
-               doc.add(new Field(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES, Index.ANALYZED));
+               Field f2 =new Field(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES, Index.ANALYZED);
+               f2.setBoost(boost);
+               doc.add(f2);
                if(specificEpithet == null && cn.isBinomial()){
                    //check to see if we need to determine the epithets from the parse
                    genus = cn.getGenusOrAbove();

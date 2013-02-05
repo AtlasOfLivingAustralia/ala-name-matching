@@ -22,12 +22,12 @@ import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.IndexWriter.MaxFieldLength;
+//import org.apache.lucene.index.IndexWriter.MaxFieldLength;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.Searcher;
+//import org.apache.lucene.search.Searcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -44,8 +44,10 @@ import au.org.ala.data.util.PhraseNameParser;
 import au.org.ala.data.util.RankType;
 import java.util.HashSet;
 import java.util.Set;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.util.Version;
 import org.gbif.ecat.parser.UnparsableException;
 import org.gbif.ecat.voc.Rank;
@@ -73,7 +75,7 @@ import org.gbif.ecat.voc.Rank;
  */
 public class CBIndexSearch {
     protected Log log = LogFactory.getLog(CBIndexSearch.class);
-    private IndexReader cbReader,irmngReader, vernReader;
+    private DirectoryReader cbReader,irmngReader, vernReader;
     private IndexSearcher cbSearcher, irmngSearcher, vernSearcher, idSearcher;
     private ThreadLocal<QueryParser> queryParser;
     private ThreadLocal<QueryParser>idParser;
@@ -116,21 +118,21 @@ public class CBIndexSearch {
             idParser = new ThreadLocal<QueryParser>(){
                 @Override
                 protected QueryParser initialValue() {
-                    return new QueryParser(Version.LUCENE_34, "lsid", new org.apache.lucene.analysis.KeywordAnalyzer());
+                    return new QueryParser(Version.LUCENE_34, "lsid", new org.apache.lucene.analysis.core.KeywordAnalyzer());
                 }
             };
 
 
-		cbReader = IndexReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"cb")), false);
+		cbReader = DirectoryReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"cb")));//false
 		cbSearcher = new IndexSearcher(cbReader);
                 //Initalise the IRMNG index searching items
-                irmngReader = IndexReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"irmng")), true);
+                irmngReader = DirectoryReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"irmng")));
                 irmngSearcher = new IndexSearcher(irmngReader);
                 //initalise the Common name index searching items
-                vernReader = IndexReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"vernacular")), true);
+                vernReader = DirectoryReader.open(FSDirectory.open(createIfNotExist(indexDirectory+File.separator+"vernacular")));
                 vernSearcher = new IndexSearcher(vernReader);
                 //initialise the identifier index
-                idSearcher = new IndexSearcher(FSDirectory.open(createIfNotExist(indexDirectory + File.separator + "id")), true);
+                idSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(createIfNotExist(indexDirectory + File.separator + "id"))));
 		tnse = new TaxonNameSoundEx();
 		parser = new PhraseNameParser();
                 crossRankHomonyms =au.org.ala.data.util.FileUtils.streamToSet(
@@ -141,8 +143,9 @@ public class CBIndexSearch {
             File idxFile = new File(indexDirectory);
 		if(!idxFile.exists()){
 			FileUtils.forceMkdir(idxFile);
-			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_29);
-            IndexWriter iw = new IndexWriter(FSDirectory.open(idxFile), analyzer, MaxFieldLength.UNLIMITED);
+			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_34);
+            IndexWriterConfig conf = new IndexWriterConfig(Version.LUCENE_34, analyzer);
+            IndexWriter iw = new IndexWriter(FSDirectory.open(idxFile), conf);
             iw.commit();
             iw.close();
 		}
@@ -152,13 +155,15 @@ public class CBIndexSearch {
         public void reopenReaders(){
             //this should only need to reopen the cbSearcher because the others should NOT be changing
             try{
-            IndexReader tmpReader = cbReader.reopen();
-            if(tmpReader!=cbReader){
-                cbReader.close();
-                cbReader = tmpReader;
+                DirectoryReader newReader = DirectoryReader.openIfChanged(cbReader);
+
+                //IndexReader tmpReader = cbReader.reopen();
+                if(newReader != null){
+                    cbReader.close();
+                    cbReader = newReader;
                 //now reinit the searcher
-                cbSearcher= new IndexSearcher(cbReader);
-            }
+                    cbSearcher= new IndexSearcher(cbReader);
+                }
             }
             catch(Exception e){
 
