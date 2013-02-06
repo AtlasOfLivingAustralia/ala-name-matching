@@ -70,13 +70,15 @@ class AutoDwcCSVLoader extends DataLoader{
         val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]
         //clean out the dr load directory before downloading the new file.
         emptyTempFileStore(dataResourceUid)
+        //remove the old file 
+        deleteOldRowKeys(dataResourceUid)
         var loaded =false
         var maxLastModifiedDate:java.util.Date = null
         //the supplied url should be an sftp string to the directory that contains the dumps
         urls.foreach(url=>{
           if(url.startsWith("sftp")){
             val fileDetails = sftpLatestArchive(url, dataResourceUid,if(forceLoad)None else lastChecked)
-            if(fileDetails.isDefined){
+            if(fileDetails.isDefined){              
               val (filePath,date) = fileDetails.get
               if(maxLastModifiedDate == null || date.after(maxLastModifiedDate))
                   maxLastModifiedDate = date
