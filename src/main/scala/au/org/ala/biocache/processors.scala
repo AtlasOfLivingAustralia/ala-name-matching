@@ -22,7 +22,7 @@ import org.drools.lang.DRLParser.entry_point_key_return
  * This is a simple Command Pattern.
  */
 trait Processor {
-  def process(uuid: String, raw: FullRecord, processed: FullRecord): Array[QualityAssertion]
+  def process(uuid: String, raw: FullRecord, processed: FullRecord, lastProcessed: Option[FullRecord]=None): Array[QualityAssertion]
 
   def getName: String
 }
@@ -71,7 +71,7 @@ object Processors {
  *
  */
 class DefaultValuesProcessor extends Processor {
-  def process(guid: String, raw: FullRecord, processed: FullRecord): Array[QualityAssertion] = {
+  def process(guid: String, raw: FullRecord, processed: FullRecord,lastProcessed: Option[FullRecord]=None): Array[QualityAssertion] = {
     //add the default dwc fields if their is no raw value for them.
     val dr = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
     if (!dr.isEmpty) {
@@ -91,8 +91,11 @@ class DefaultValuesProcessor extends Processor {
 
     //reset the original sensitive values for use in subsequent processing.
     //covers all values that could have been change - thus allowing event dates to be processed correctly...
-    if (raw.occurrence.originalSensitiveValues != null) {
-      //TODO: Only apply the originalSensitiveValues if the last processed date occurs after the last load date
+    //Only update the values if the record has NOT been reloaded since the last processing.
+    val lastLoadedDate = DateParser.parseStringToDate(raw.lastModifiedTime)
+    val lastProcessedDate = if(lastProcessed.isEmpty) None else DateParser.parseStringToDate(lastProcessed.get.lastModifiedTime)
+    if (raw.occurrence.originalSensitiveValues != null && (lastLoadedDate.isEmpty || lastProcessedDate.isEmpty || lastLoadedDate.get.before(lastProcessedDate.get) )) {
+      
       FullRecordMapper.mapPropertiesToObject(raw, raw.occurrence.originalSensitiveValues)
     }
 
@@ -106,7 +109,7 @@ class MiscellaneousProcessor extends Processor {
   val LIST_DELIM = ";".r;
   val interactionPattern = """([A-Za-z]*):([\x00-\x7F\s]*)""".r
 
-  def process(guid: String, raw: FullRecord, processed: FullRecord): Array[QualityAssertion] = {
+  def process(guid: String, raw: FullRecord, processed: FullRecord, lastProcessed: Option[FullRecord]=None): Array[QualityAssertion] = {
     var assertions = new ArrayBuffer[QualityAssertion]
     processImages(guid, raw, processed, assertions)
     processInteractions(guid, raw, processed)
@@ -230,7 +233,7 @@ class AttributionProcessor extends Processor {
   /**
    * Retrieve attribution infromation from collectory and tag the occurrence record.
    */
-  def process(guid: String, raw: FullRecord, processed: FullRecord): Array[QualityAssertion] = {
+  def process(guid: String, raw: FullRecord, processed: FullRecord, lastProcessed: Option[FullRecord]=None): Array[QualityAssertion] = {
     var assertions = new ArrayBuffer[QualityAssertion]
 
     //get the data resource information to check if it has mapped collections
@@ -295,7 +298,7 @@ class EventProcessor extends Processor {
    * Date parsing - this is pretty much copied from GBIF source code and needs
    * splitting into several methods
    */
-  def process(guid: String, raw: FullRecord, processed: FullRecord): Array[QualityAssertion] = {
+  def process(guid: String, raw: FullRecord, processed: FullRecord, lastProcessed: Option[FullRecord]=None): Array[QualityAssertion] = {
 
     if ((raw.event.day == null || raw.event.day.isEmpty)
       && (raw.event.month == null || raw.event.month.isEmpty)
@@ -456,7 +459,7 @@ class TypeStatusProcessor extends Processor {
   /**
    * Process the type status
    */
-  def process(guid: String, raw: FullRecord, processed: FullRecord): Array[QualityAssertion] = {
+  def process(guid: String, raw: FullRecord, processed: FullRecord,lastProcessed: Option[FullRecord]=None): Array[QualityAssertion] = {
 
     if (raw.identification.typeStatus != null && !raw.identification.typeStatus.isEmpty) {
       val term = TypeStatus.matchTerm(raw.identification.typeStatus)
@@ -482,7 +485,7 @@ class BasisOfRecordProcessor extends Processor {
   /**
    * Process basis of record
    */
-  def process(guid: String, raw: FullRecord, processed: FullRecord): Array[QualityAssertion] = {
+  def process(guid: String, raw: FullRecord, processed: FullRecord,lastProcessed: Option[FullRecord]=None): Array[QualityAssertion] = {
 
     if (raw.occurrence.basisOfRecord == null || raw.occurrence.basisOfRecord.isEmpty) {
       if (processed.occurrence.basisOfRecord != null && !processed.occurrence.basisOfRecord.isEmpty)
@@ -545,7 +548,7 @@ class LocationProcessor extends Processor {
    * expressions/test cases he has used previously...
    *
    */
-  def process(guid: String, raw: FullRecord, processed: FullRecord): Array[QualityAssertion] = {
+  def process(guid: String, raw: FullRecord, processed: FullRecord, lastProcessed: Option[FullRecord]=None): Array[QualityAssertion] = {
 
     //retrieve the point
     var assertions = new ArrayBuffer[QualityAssertion]
@@ -1316,7 +1319,7 @@ class ClassificationProcessor extends Processor {
   /**
    * Match the classification
    */
-  def process(guid: String, raw: FullRecord, processed: FullRecord): Array[QualityAssertion] = {
+  def process(guid: String, raw: FullRecord, processed: FullRecord,lastProcessed: Option[FullRecord]=None): Array[QualityAssertion] = {
 
     try {
       //update the raw with the "default" values if necessary
