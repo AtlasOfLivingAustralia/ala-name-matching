@@ -203,7 +203,7 @@ class RecordProcessor {
 
     //run each processor in the specified order
     Processors.foreach(processor => {
-      assertions += ( processor.getName -> processor.process(guid, raw, processed))
+      assertions += ( processor.getName -> processor.process(guid, raw, processed, Some(currentProcessed)))
     })
     
    

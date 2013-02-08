@@ -452,7 +452,7 @@ class CassandraPersistenceManager @Inject() (
      */
     def pageOver(entityName:String,proc:((String, Map[String,String])=>Boolean), pageSize:Int,
                  slicePredicate:SlicePredicate, checkEmpty:Boolean=false,startUuid:String="",endUuid:String="") = {
-
+     
       var startKey = new Bytes(startUuid.getBytes)
       var endKey = new Bytes(endUuid.getBytes)
       var keyRange = Selector.newKeyRange(startKey, endKey, pageSize+1)
@@ -473,7 +473,7 @@ class CassandraPersistenceManager @Inject() (
               //procedure a map of key value pairs
               val map = columnList2Map(columnList)
               //more efficient to use a stored version of the rowKey then attempt to convert the buuid
-              val uuid = map.getOrElse("rowKey", buuid.toUTF8)
+              val uuid = map.getOrElse("rowKey", buuid.toUTF8)              
               //pass the record ID and the key value pair map to the proc
               continue = proc(uuid, map)
           }
