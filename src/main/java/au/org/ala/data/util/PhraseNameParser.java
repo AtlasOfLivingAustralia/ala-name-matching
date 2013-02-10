@@ -42,6 +42,9 @@ public class PhraseNameParser extends NameParser{
     protected static final String SOURCE_AUTHORITY="(["+all_letters_numbers+"\\[\\]'\" -,\\.]+|\\.)";
     protected static final String PHRASE = "";
     protected static final String  PHRASE_RANKS = "(?:"+StringUtils.join(VALID_PHRASE_RANKS.keySet(), "|")+")\\.? ";
+    private static final String RANK_MARKER_ALL = "(notho)? *(" + StringUtils.join(Rank.RANK_MARKER_MAP.keySet(), "|")
+      + ")\\.?";
+    public static final Pattern RANK_MARKER = Pattern.compile("^" + RANK_MARKER_ALL + "$");
     protected static final Pattern SPECIES_PATTERN = Pattern.compile("sp\\.?");
 
     protected static final Pattern POTENTIAL_SPECIES_PATTERN = Pattern.compile("^"+"([\\x00-\\x7F\\s]*)("+SPECIES_PATTERN.pattern()+" )" + "(["+name_letters+"]{3,})(?: *)" + "([\\x00-\\x7F\\s]*)");

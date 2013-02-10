@@ -884,6 +884,9 @@ public class CBIndexSearch {
         //Check for null name before attempting to do anything else
         if(name == null)
             throw new SearchResultException("Unable to perform search. Null value supplied for the name.");
+        //Check that the scientific name supplied is NOT a rank marker.
+        if(PhraseNameParser.RANK_MARKER.matcher(name).matches())
+            throw new SearchResultException("Supplied scientific name is a rank marker.");
 
         //remove all the "stop" words from the scientific name
         try{

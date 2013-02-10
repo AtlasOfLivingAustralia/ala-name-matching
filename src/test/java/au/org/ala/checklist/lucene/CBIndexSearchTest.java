@@ -33,6 +33,29 @@ public class CBIndexSearchTest {
 		}
 
 	}
+
+
+        @Test
+        public void catchAllSpeciesTest(){
+            /*
+             * _:topic_0 <http://ala.org.au/ontology/ALA#hasScientificName> "Tetragnatha sp" ;
+	<http://ala.org.au/ontology/ALA#hasClass> "Arachnida" ;
+	<http://ala.org.au/ontology/ALA#hasOrder> "Araneomorphae" ;
+	<http://ala.org.au/ontology/ALA#hasFamily> "Tetragnathidae" ;
+	<http://ala.org.au/ontology/ALA#hasGenus> "Tetragnatha" ;
+	<http://ala.org.au/ontology/ALA#hasSpecies> "sp" .
+
+             */
+            String name ="sp";
+            try{
+                String lsid =searcher.searchForLSID(name);
+                fail("A rank marker should not match to a name");
+            }
+            catch(Exception e){
+                assertEquals("Supplied scientific name is a rank marker.",e.getMessage());
+            }
+        }
+
         @Test
         public void npeInAuthorTest(){
             String name="Sphacelaria Lynbye";
