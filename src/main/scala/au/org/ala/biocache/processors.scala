@@ -768,7 +768,7 @@ class LocationProcessor extends Processor {
             }
           }
         } else {
-          assertions + QualityAssertion(AssertionCodes.UNRECOGNIZED_GEODETIC_DATUM, rawGeodeticDatum + "not recognized.")
+          assertions + QualityAssertion(AssertionCodes.UNRECOGNIZED_GEODETIC_DATUM, "Geodetic datum \"" + rawGeodeticDatum + "\" not recognized.")
           Some((rawLatitude, rawLongitude, rawGeodeticDatum))
         }
       } else {
