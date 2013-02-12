@@ -503,10 +503,11 @@ trait DataLoader {
         out.close
 
         printf("\nDownloaded. File size: ", counter / 1024 +"kB, " + file.getAbsolutePath +", is zipped: " + isZipped+"\n")
-
+        
         (file,date,isZipped,isGzipped)
         }
         else{
+          println("The file has not changed since the last time it  was loaded.  To load the data a force-load  will need ot be performed")
           (null,null,false,false)
         }
     }
