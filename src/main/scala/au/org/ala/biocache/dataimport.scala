@@ -507,7 +507,7 @@ trait DataLoader {
         (file,date,isZipped,isGzipped)
         }
         else{
-          println("The file has not changed since the last time it  was loaded.  To load the data a force-load  will need ot be performed")
+          println("\nThe file has not changed since the last time it  was loaded.  To load the data a force-load  will need to be performed")
           (null,null,false,false)
         }
     }
