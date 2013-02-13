@@ -24,12 +24,12 @@ object EndemismLayerHelper {
   // Australian EEZ.
 
   // All occurrences
-  val ALL_SPECIES_QUERY = "species_guid:[* TO *] AND geospatial_kosher:true"
+  val ALL_SPECIES_QUERY = "species_guid:* AND geospatial_kosher:true"
   val SPECIES_QUERY_TEMPLATE_ALL_OCCURRENCES = "species_guid:{0} AND geospatial_kosher:true"
 
   // Terrestrial (non-marine) occurrences
-  val NON_MARINE_QUERY = "species_guid:[* TO *] AND !species_habitats:Marine AND geospatial_kosher:true AND (state:[* TO *] OR country:Australia)"
-  val SPECIES_QUERY_TEMPLATE_NON_MARINE = "species_guid:{0} AND !species_habitats:Marine AND geospatial_kosher:true AND (state:[* TO *] OR country:Australia)"
+  val NON_MARINE_QUERY = "species_guid:* AND !species_habitats:Marine AND geospatial_kosher:true AND (state:* OR country:Australia)"
+  val SPECIES_QUERY_TEMPLATE_NON_MARINE = "species_guid:{0} AND !species_habitats:Marine AND geospatial_kosher:true AND (state:* OR country:Australia)"
 
   val SPECIES_FACET = "species_guid"
   val POINT_001_FACET = "point-0.001"
@@ -78,19 +78,6 @@ class EndemismLayerHelper {
     var cellSpeciesNonMarine = scala.collection.mutable.Map[String, Set[String]]()
     var speciesCellCountsNonMarine = scala.collection.mutable.Map[String, Int]()
 
-    println("PROCESSING ALL OCCURRENCES")
-
-    // get list of species for all occurrences
-    val speciesLsidsAll = doFacetQuery(EndemismLayerHelper.ALL_SPECIES_QUERY, EndemismLayerHelper.SPECIES_FACET)
-
-    for (lsid <- speciesLsidsAll) {
-      println(lsid)
-      val occurrencePoints = doFacetQuery(MessageFormat.format(EndemismLayerHelper.SPECIES_QUERY_TEMPLATE_ALL_OCCURRENCES, ClientUtils.escapeQueryChars(lsid)), EndemismLayerHelper.POINT_001_FACET)
-
-      // process for 0.1 degree resolution
-      processOccurrencePoints(occurrencePoints, lsid, cellSpeciesAll, speciesCellCountsAll, 1)
-    }
-
     println("PROCESSING TERRESTRIAL (NON-MARINE) OCCURRENCES")
 
     // get list of species for marine occurrences only
@@ -104,15 +91,28 @@ class EndemismLayerHelper {
       processOccurrencePoints(occurrencePoints, lsid, cellSpeciesNonMarine, speciesCellCountsNonMarine, 1)
     }
 
-    // write output for all occurrences
-    val cellSpeciesFileAllOccurrences = outputFileDirectory + '/' + cellSpeciesFilePrefix + "-0.1-degree.txt"
-    val speciesCellCountsFileAllOccurrences = outputFileDirectory + '/' + speciesCellCountsFilePrefix + "-0.1-degree.txt"
-    writeFileOutput(cellSpeciesAll, speciesCellCountsAll, cellSpeciesFileAllOccurrences, speciesCellCountsFileAllOccurrences)
-
     //write output for terrestrial occurrences only
     val cellSpeciesFileNonMarine = outputFileDirectory + '/' + cellSpeciesFilePrefix + "-0.1-degree-non-marine.txt"
     val speciesCellCountsFileNonMarine = outputFileDirectory + '/' + speciesCellCountsFilePrefix + "-0.1-degree-non-marine.txt"
     writeFileOutput(cellSpeciesNonMarine, speciesCellCountsNonMarine, cellSpeciesFileNonMarine, speciesCellCountsFileNonMarine)
+
+    println("PROCESSING ALL OCCURRENCES")
+
+    // get list of species for all occurrences
+    val speciesLsidsAll = doFacetQuery(EndemismLayerHelper.ALL_SPECIES_QUERY, EndemismLayerHelper.SPECIES_FACET)
+
+    for (lsid <- speciesLsidsAll) {
+      println(lsid)
+      val occurrencePoints = doFacetQuery(MessageFormat.format(EndemismLayerHelper.SPECIES_QUERY_TEMPLATE_ALL_OCCURRENCES, ClientUtils.escapeQueryChars(lsid)), EndemismLayerHelper.POINT_001_FACET)
+
+      // process for 0.1 degree resolution
+      processOccurrencePoints(occurrencePoints, lsid, cellSpeciesAll, speciesCellCountsAll, 1)
+    }
+
+    // write output for all occurrences
+    val cellSpeciesFileAllOccurrences = outputFileDirectory + '/' + cellSpeciesFilePrefix + "-0.1-degree.txt"
+    val speciesCellCountsFileAllOccurrences = outputFileDirectory + '/' + speciesCellCountsFilePrefix + "-0.1-degree.txt"
+    writeFileOutput(cellSpeciesAll, speciesCellCountsAll, cellSpeciesFileAllOccurrences, speciesCellCountsFileAllOccurrences)
 
   }
 
