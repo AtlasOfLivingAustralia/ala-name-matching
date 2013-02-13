@@ -20,8 +20,6 @@ import org.apache.solr.client.solrj.util.ClientUtils
  * To change this template use File | Settings | File Templates.
  */
 object EndemismLayerHelper {
-  val FACET_DOWNLOAD_URL_TEMPLATE = Config.biocacheServiceUrl + "/occurrences/facets/download?q={0}&facets={1}"
-
   // NOTE all queries filter out any occurrences that do not call within the bounding box 40E-172E and 8S-72S - this is a rough approximation of the
   // Australian EEZ.
 
@@ -31,7 +29,7 @@ object EndemismLayerHelper {
 
   // Terrestrial (non-marine) occurrences
   val NON_MARINE_QUERY = "species_guid:[* TO *] AND !species_habitats:Marine AND geospatial_kosher:true AND (state:[* TO *] OR country:Australia)"
-  val SPECIES_QUERY_TEMPLATE_NON_MARINE = "species_guid:{0} AND !species_habitats:Marine AND geospatial_kosher:true AND AND (state:[* TO *] OR country:Australia)"
+  val SPECIES_QUERY_TEMPLATE_NON_MARINE = "species_guid:{0} AND !species_habitats:Marine AND geospatial_kosher:true AND (state:[* TO *] OR country:Australia)"
 
   val SPECIES_FACET = "species_guid"
   val POINT_001_FACET = "point-0.001"
