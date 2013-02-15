@@ -797,8 +797,10 @@ public class CBIndexSearch {
     public NameSearchResult searchForRecordByID(String id){
         try{
             List<NameSearchResult> results = performSearch(CBCreateLuceneIndex.IndexField.ID.toString(),id, null,  null, 1, null,  false, idParser.get());
-            if(results.size()>0)
+            if(results.size()>0){
+                results.get(0).setMatchType(MatchType.TAXON_ID);
                 return results.get(0);
+            }
         }
         catch(SearchResultException e){
             //this should not happen as we are  not checking for homonyms
@@ -1765,6 +1767,7 @@ public class CBIndexSearch {
             //we are not checking for homonyms so this should never happen
             log.error("Unable to search for record by LSID");
         }
+        result.setMatchType(MatchType.TAXON_ID);
         return result;
     }
 }

@@ -13,7 +13,8 @@ public enum MatchType{
         ALTERNATE("alternateMatch", "Deprecated"),
         SEARCHABLE("searchableMatch", "Deprecated"),
         VERNACULAR("vernacularMatch", "A match was determined by the vernacular name. Matches of this type may be unreliable due to the regional/dulicate nature of common names."),
-        RECURSIVE("higherMatch", "The match is based on the higher level classification");
+        RECURSIVE("higherMatch", "The match is based on the higher level classification"),
+        TAXON_ID("taxonIdMatch","The match was based on the supplied taxon concept ID rathjer than the scientific name.");
         private String title;
         private String description;
 

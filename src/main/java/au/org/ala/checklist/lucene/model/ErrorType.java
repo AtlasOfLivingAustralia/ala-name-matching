@@ -19,7 +19,7 @@ public enum ErrorType {
     PARENT_CHILD_SYNONYM("parentChildSynonym", "The parent names has been detected as a synonym of the child"),
     EXCLUDED("excludedSpecies", "The species is excluded from the species list.  Ususally because it is not found in Australia"),
     ASSOCIATED_EXCLUDED("associatedNameExcluded", "There are 2 species names one is excluded and the other is not"),
-    NONE("noError","No error was detected");
+    NONE("noIssue","No issue was detected");
     private String title;
     private String description;
 
