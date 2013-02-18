@@ -1767,7 +1767,8 @@ public class CBIndexSearch {
             //we are not checking for homonyms so this should never happen
             log.error("Unable to search for record by LSID");
         }
-        result.setMatchType(MatchType.TAXON_ID);
+        if(result != null)
+            result.setMatchType(MatchType.TAXON_ID);
         return result;
     }
 }
