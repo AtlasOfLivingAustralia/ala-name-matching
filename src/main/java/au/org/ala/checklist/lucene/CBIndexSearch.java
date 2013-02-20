@@ -1367,7 +1367,7 @@ public class CBIndexSearch {
     private void checkForSpeciesSplit(List<NameSearchResult> results) throws ParentSynonymChildException{
         //very specific situtation - there will be 2 results one accepted and the other a synonym to a child of the accepted name
         if(results.size()==2){
-            if(results.get(0).isSynonym() != results.get(1).isSynonym()){
+            if(results.get(0).isSynonym() != results.get(1).isSynonym() && ((!results.get(0).isSynonym() && results.get(0).getRank()== RankType.SPECIES) || (!results.get(1).isSynonym() && results.get(1).getRank() == RankType.SPECIES))){
                 NameSearchResult synResult = results.get(0).isSynonym()?results.get(0):results.get(1);
                 NameSearchResult accResult = results.get(0).isSynonym()?results.get(1):results.get(0);
                 NameSearchResult accSynResult = searchForRecordByLsid(synResult.getAcceptedLsid());
