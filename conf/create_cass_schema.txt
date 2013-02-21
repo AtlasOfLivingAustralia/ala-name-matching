@@ -90,7 +90,7 @@ update column family outliers with comparator = 'UTF8Type' and default_validatio
 and column_metadata=[{column_name: portalId, validation_class: UTF8Type, index_type: KEYS},
 {column_name: uuid, validation_class: UTF8Type, index_type: KEYS}];
 
-update column family occ_outlier with comparator = 'UTF8Type' and default_validation_class = 'UTF8Type'
+update column family occ_outliers with comparator = 'UTF8Type' and default_validation_class = 'UTF8Type'
 and column_metadata=[{column_name: portalId, validation_class: UTF8Type, index_type: KEYS},
 {column_name: uuid, validation_class: UTF8Type, index_type: KEYS}];
 
