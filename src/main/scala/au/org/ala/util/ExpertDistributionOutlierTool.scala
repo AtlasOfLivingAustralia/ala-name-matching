@@ -136,34 +136,31 @@ class ExpertDistributionOutlierTool {
    * @return The list of taxon concept LSIDS for which an expert distribution has been loaded into the ALA
    */
   def getExpertDistributionLsids(): ListBuffer[String] = {
-    val retBuffer = new ListBuffer[String]()
-    //retBuffer += "urn:lsid:biodiversity.org.au:afd.taxon:d236cf0c-bdca-46b9-83bf-305d7c2a7ac8"
-    retBuffer += "urn:lsid:biodiversity.org.au:afd.taxon:bd8f089d-8484-43ef-98f0-e29213a4bc5f"
-    //    val httpClient = new HttpClient()
-    //    val get = new GetMethod(ExpertDistributionOutlierTool.DISTRIBUTIONS_URL)
-    //    try {
-    //      val responseCode = httpClient.executeMethod(get)
-    //      if (responseCode == 200) {
-    //        val dataJSON = get.getResponseBodyAsString();
-    //        val mapper = new ObjectMapper();
-    //        val listClass = classOf[java.util.List[java.util.Map[String, String]]]
-    //        val distributionList = mapper.readValue(dataJSON, listClass)
-    //
-    //        val retBuffer = new ListBuffer[String]()
-    //        for (m <- distributionList.toArray) {
-    //          val lsid = m.asInstanceOf[java.util.Map[String, String]].get("lsid")
-    //          // Ignore any expert distributions for which we do not have an associated LSID.
-    //          if (lsid != null) {
-    //            retBuffer += lsid
-    //          }
-    //        }
-    //        retBuffer
-    //      } else {
-    //        throw new Exception("getExpertDistributionLsids Request failed (" + responseCode + ")")
-    //      }
-    //    } finally {
-    //      get.releaseConnection()
-    //    }
+        val httpClient = new HttpClient()
+        val get = new GetMethod(ExpertDistributionOutlierTool.DISTRIBUTIONS_URL)
+        try {
+          val responseCode = httpClient.executeMethod(get)
+          if (responseCode == 200) {
+            val dataJSON = get.getResponseBodyAsString();
+            val mapper = new ObjectMapper();
+            val listClass = classOf[java.util.List[java.util.Map[String, String]]]
+            val distributionList = mapper.readValue(dataJSON, listClass)
+
+            val retBuffer = new ListBuffer[String]()
+            for (m <- distributionList.toArray) {
+              val lsid = m.asInstanceOf[java.util.Map[String, String]].get("lsid")
+              // Ignore any expert distributions for which we do not have an associated LSID.
+              if (lsid != null) {
+                retBuffer += lsid
+              }
+            }
+            retBuffer
+          } else {
+            throw new Exception("getExpertDistributionLsids Request failed (" + responseCode + ")")
+          }
+        } finally {
+          get.releaseConnection()
+        }
   }
 
 }
@@ -245,38 +242,38 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
    * @return Occurrence record detail. Only the following fields are retreived: id,row_key,latitude,longitude,coordinate_uncertainty. Only records that have a location (lat/long) are returned.
    */
   def getRecordsOutsideDistribution(lsid: String, distributionWkt: String, pageSize: Int, startIndex: Int): scala.collection.mutable.Map[String, Map[String, Object]] = {
-    //    val urlCodec = new URLCodec()
-    //
-    //    val url = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_URL_TEMPLATE, lsid, urlCodec.encode(distributionWkt), startIndex.toString, pageSize.toString)
-    //    val httpClient = new HttpClient()
-    //    val get = new GetMethod(url)
-    //    try {
-    //      val responseCode = httpClient.executeMethod(get)
-    //      if (responseCode == 200) {
-    //        val dataJSON = get.getResponseBodyAsString();
-    //        val mapper = new ObjectMapper();
-    //        val mapClass = classOf[java.util.Map[_, _]]
-    //        val responseMap = mapper.readValue(dataJSON, mapClass)
-    //        val occurrencesList = responseMap.get("occurrences").asInstanceOf[java.util.List[java.util.Map[String, Object]]]
-    //
-    //        var retMap = scala.collection.mutable.Map[String, Map[String, Object]]()
-    //        for (m <- occurrencesList.toArray) {
-    //          val occurrenceMap = m.asInstanceOf[java.util.Map[String, Object]]
-    //          val uuid = occurrenceMap.get("uuid").asInstanceOf[String]
-    //          val rowKey = occurrenceMap.get("rowKey")
-    //          val decimalLatitude = occurrenceMap.get("decimalLatitude")
-    //          val decimalLongitude = occurrenceMap.get("decimalLongitude")
-    //          val coordinateUncertaintyInMeters = occurrenceMap.get("coordinateUncertaintyInMeters")
-    //
-    //          retMap(uuid) = Map("rowKey" -> rowKey, "decimalLatitude" -> decimalLatitude, "decimalLongitude" -> decimalLongitude, "coordinateUncertaintyInMeters" -> coordinateUncertaintyInMeters)
-    //        }
-    //        retMap
-    //      } else {
-    //        throw new Exception("getRecordsOutsideDistribution Request failed (" + responseCode + ")")
-    //      }
-    //    } finally {
-    //      get.releaseConnection()
-    //    }
+//        val urlCodec = new URLCodec()
+//
+//        val url = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_URL_TEMPLATE, lsid, urlCodec.encode(distributionWkt), startIndex.toString, pageSize.toString)
+//        val httpClient = new HttpClient()
+//        val get = new GetMethod(url)
+//        try {
+//          val responseCode = httpClient.executeMethod(get)
+//          if (responseCode == 200) {
+//            val dataJSON = get.getResponseBodyAsString();
+//            val mapper = new ObjectMapper();
+//            val mapClass = classOf[java.util.Map[_, _]]
+//            val responseMap = mapper.readValue(dataJSON, mapClass)
+//            val occurrencesList = responseMap.get("occurrences").asInstanceOf[java.util.List[java.util.Map[String, Object]]]
+//
+//            var retMap = scala.collection.mutable.Map[String, Map[String, Object]]()
+//            for (m <- occurrencesList.toArray) {
+//              val occurrenceMap = m.asInstanceOf[java.util.Map[String, Object]]
+//              val uuid = occurrenceMap.get("uuid").asInstanceOf[String]
+//              val rowKey = occurrenceMap.get("rowKey")
+//              val decimalLatitude = occurrenceMap.get("decimalLatitude")
+//              val decimalLongitude = occurrenceMap.get("decimalLongitude")
+//              val coordinateUncertaintyInMeters = occurrenceMap.get("coordinateUncertaintyInMeters")
+//
+//              retMap(uuid) = Map("rowKey" -> rowKey, "decimalLatitude" -> decimalLatitude, "decimalLongitude" -> decimalLongitude, "coordinateUncertaintyInMeters" -> coordinateUncertaintyInMeters)
+//            }
+//            retMap
+//          } else {
+//            throw new Exception("getRecordsOutsideDistribution Request failed (" + responseCode + ")")
+//          }
+//        } finally {
+//          get.releaseConnection()
+//        }
 
     var resultsMap = scala.collection.mutable.Map[String, Map[String, Object]]()
 
@@ -372,10 +369,10 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
           Console.err.println("Outlier: " + uuid + "(" + rowKey + ") " + roundedDistance + " metres")
 
           // Add data quality assertion
-          //Config.occurrenceDAO.addSystemAssertion(rowKey, QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE, roundedDistance + " metres outside of expert distribution range"))
+          Config.occurrenceDAO.addSystemAssertion(rowKey, QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE, roundedDistance + " metres outside of expert distribution range"))
 
           // Record distance against record
-          //Config.persistenceManager.put(rowKey, "occ", Map("distanceOutsideExpertRange.p" -> roundedDistance.toString()))
+          Config.persistenceManager.put(rowKey, "occ", Map("distanceOutsideExpertRange.p" -> roundedDistance.toString()))
 
           newOutlierRowKeys += rowKey
         }
@@ -385,8 +382,7 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
     rowKeysForIndexing ++= newOutlierRowKeys
 
     // Remove outlier information from any records that are no longer outliers
-    //val oldRowKeysJson: String = Config.persistenceManager.get(lsid, "distribution_outliers", ExpertDistributionOutlierTool.DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY).getOrElse(null)
-    val oldRowKeysJson: String = null
+    val oldRowKeysJson: String = Config.persistenceManager.get(lsid, "distribution_outliers", ExpertDistributionOutlierTool.DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY).getOrElse(null)
     if (oldRowKeysJson != null) {
       val oldRowKeys = Json.toList(oldRowKeysJson, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[List[String]]
 
@@ -394,15 +390,15 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
 
       for (rowKey <- noLongerOutlierRowKeys) {
         Console.err.println(rowKey + " is no longer an outlier")
-        //Config.persistenceManager.deleteColumns(rowKey, "occ", "distanceOutsideExpertRange.p")
-        //Config.occurrenceDAO.removeSystemAssertion(rowKey, AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE)
+        Config.persistenceManager.deleteColumns(rowKey, "occ", "distanceOutsideExpertRange.p")
+        Config.occurrenceDAO.removeSystemAssertion(rowKey, AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE)
         rowKeysForIndexing += rowKey
       }
     }
 
     // Store row keys for the LSID in the distribution_outliers column family
     val newRowKeysJson = Json.toJSON(newOutlierRowKeys.toList)
-    //Config.persistenceManager.put(lsid, "distribution_outliers", ExpertDistributionOutlierTool.DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY, newRowKeysJson)
+    Config.persistenceManager.put(lsid, "distribution_outliers", ExpertDistributionOutlierTool.DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY, newRowKeysJson)
 
     rowKeysForIndexing
   }
