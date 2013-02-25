@@ -4,6 +4,8 @@ import au.org.ala.biocache.{ Config}
 import scala.Array._
 import au.com.bytecode.opencsv.CSVWriter
 import java.io.{FileWriter,  File}
+import scala.collection.mutable.HashSet
+import au.org.ala.biocache.Json
 
 /**
  * Utility for exporting data from the biocache.
@@ -16,6 +18,10 @@ object ExportUtil {
     var fieldsRequired = List[String]()
     var entity = ""
     var filePath = ""
+    var startkey =""
+    var endkey = ""
+    var distinct = false
+    var json =false
     var maxRecords = Integer.MAX_VALUE
 
     val parser = new OptionParser("export") {
@@ -27,16 +33,55 @@ object ExportUtil {
       opt("r", "required-columns", "<column1 column2 ...>", "space separated required columns", {
         columns: String => fieldsRequired = columns.split(" ").toList
       })
+      opt("s", "start", "The row key to start with", {s:String =>startkey = s})
+      opt("e", "end", "The row key to end with", {s:String =>endkey = s})
+      opt("distinct", "distinct values for the columns only", {distinct=true})
+      opt("json","export the values as json",{json=true})
       intOpt("m", "max-records", "number of records to export", { v: Int => maxRecords = v })
     }
 
     if (parser.parse(args)) {
       val outWriter = new FileWriter(new File(filePath))
       val writer = new CSVWriter(outWriter, '\t', '"')
-      export(writer, entity, fieldsToExport, fieldsRequired, maxRecords=maxRecords)
+      if(json)
+        exportJson(outWriter,entity, startkey, endkey, maxRecords)
+      else if(distinct)
+        exportDistinct(writer, entity, fieldsToExport, startkey, endkey)
+      else
+        export(writer, entity, fieldsToExport, fieldsRequired, maxRecords=maxRecords)
       writer.flush
       writer.close
     }
+  }
+  
+  def exportJson(writer:FileWriter,entity:String, startKey:String, endKey:String, maxRecords:Int){
+    
+    val pm = Config.persistenceManager
+    var counter=0
+    pm.pageOverAll(entity, (guid,map) =>{
+      val finalMap = map +(entity+"rowKey"->guid)
+      //println(Json.toJSON(finalMap))
+      writer.write(Json.toJSON(finalMap))
+      writer.write("\n")
+      counter += 1
+      maxRecords > counter
+    },startKey,endKey,1000)
+    writer.flush
+    writer.close
+  }
+  
+  def exportDistinct(writer: CSVWriter, entity:String, fieldsToExport:List[String], startUuid:String="", endUuid:String="")={
+      val pm = Config.persistenceManager
+      val valueSet = new scala.collection.mutable.HashSet[String]
+      pm.pageOverSelect(entity, (guid, map) =>{
+          val line = (for (field <- fieldsToExport) yield map.getOrElse(field, ""))
+          val sline:String = line.mkString(",")
+          if(!valueSet.contains(sline)){
+              valueSet += sline
+              writer.writeNext(line.toArray)
+          }
+          true
+      }, startUuid, endUuid, 1000, fieldsToExport: _*)
   }
 
   def export(writer: CSVWriter, entity: String, fieldsToExport: List[String], fieldsRequired: List[String],
@@ -66,5 +111,37 @@ object ExportUtil {
   def exportRecordDefaultValues(writer:CSVWriter, fieldsToExport:List[String], defaultMap:Map[String,String], valuesMap:Map[String,String]){
     val line:Array[String] = (for(field <- fieldsToExport) yield valuesMap.getOrElse(field,if(defaultMap.contains(field)) valuesMap.getOrElse(defaultMap.get(field).get,"") else "")).toArray
     writer.writeNext(line)
+  }
+}
+
+
+object GenericColumnExporter {
+  def main(args: Array[String]) {
+     var filePath=""
+     var entity =""
+     val parser = new OptionParser("export") {
+          arg("<entity>", "the entity (column family in cassandra) to export from", { v: String => entity = v })
+          arg("<file-path>", "file to export to", { v: String => filePath = v })
+     }
+     if(parser.parse(args)){
+       val cols = getColumns(entity)
+       val outWriter = new FileWriter(new File(filePath))
+       val writer = new CSVWriter(outWriter, '\t', '"')
+       ExportUtil.export(writer,entity, cols, List(),maxRecords=Integer.MAX_VALUE)
+     }
+  }
+  def getColumns(entity:String):List[String]={
+    println("Getting the columns for " +entity)
+    val pm = Config.persistenceManager
+    val myset = new HashSet[String]
+    var count=0
+    pm.pageOverAll(entity, (guid,map)=>{
+      myset ++= map.keySet
+      count+=1
+      true
+    },"","",1000)
+    println("Finished cycling through " + count +" records")
+    println("The columns to export " + myset)
+    myset.toList
   }
 }

@@ -45,7 +45,7 @@
     that avoids logging every request
 -->
 
-<schema name="example" version="1.3">
+<schema name="example" version="1.5">
   <!-- attribute "name" is the name of this schema and is only used for display purposes.
        Applications should change this to reflect the nature of the search collection.
        version="1.2" is Solr's version number for the schema syntax and semantics.  It should
@@ -472,12 +472,9 @@
     <!-- A specialized field for geospatial search. If indexed, this fieldType must not be multivalued. -->
     <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate"/>
 
-   <!--
-    A Geohash is a compact representation of a latitude longitude pair in a single field.
-    See http://wiki.apache.org/solr/SpatialSearch
-   -->
-    <fieldtype name="geohash" class="solr.GeoHashField"/>
 
+    <fieldType name="quad"      class="solr.SpatialTermQueryPrefixTreeFieldType" units="degrees" />
+    <fieldType name="geohash"   class="solr.SpatialRecursivePrefixTreeFieldType" spatialContextFactory="com.spatial4j.core.context.jts.JtsSpatialContextFactory" units="degrees" />
 
  </types>
 
@@ -510,6 +507,7 @@
        when adding a document.
    -->
    <!-- start of BIE Biocache Fields -->
+   <field name="_version_" type="long" indexed="true" stored="true"/>
    <field name="id" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="row_key" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="occurrence_id" type="string" stored="true" multiValued="false"  />
@@ -561,6 +559,7 @@
    <field name="image_url" type="string" indexed="true" stored="true" multiValued="false" />
    <field name="all_image_url" type="string" indexed="true" stored="true" multiValued="true" />
    <field name="species_group" type="string" indexed="true" stored="true" multiValued="true" />
+   <field name="species_subgroup" type="string" indexed="true" stored="true" multiValued="true" />
    <field name="interaction" type="string" indexed="true" stored="true" multiValued="true" />
 
    <!-- Not displayed in search resutls -->
@@ -643,6 +642,7 @@
    <!-- TODO work out the extra search fields that are required for the issues -->
    <field name="taxonomic_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="geospatial_kosher" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="mappable" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" default="true" />
    <field name="suitable_modelling" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="sensitive" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="assertions" type="string" indexed="true" stored="true" multiValued="true"  />
@@ -678,6 +678,8 @@
    <field name="last_processed_date" type="tdate" indexed="true" stored="false" multiValued="false" />
    <field name="modified_date" type="tdate" indexed="true" stored="false" multiValued="false" />
    <field name="first_loaded_date" type="tdate" indexed="true" stored="false" multiValued="false" />
+   <field name="date_deleted" type="tdate" indexed="true" stored="false" multiValued="false" />
+   <field name="deleted" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
 
    <!-- end of Biocache Lucene Fields -->
 
@@ -698,18 +700,29 @@
    <!-- the layers this record is an outlier for -->
    <field name="outlier_layer" type="string" indexed="true" stored="true" multiValued="true" omitNorms="true" />
 
-   <!-- Duplication fields -->
+<!-- Duplication fields -->
    <field name="duplicate_status" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="duplicate_record" type="string" indexed="true" stored="true" multiValued="true" omitNorms="true" />
    <field name="duplicate_type" type="int" indexed="true" stored="true" multiValued="true" omitNorms="true" />
 
-   <!-- Distance from expert distribution for associated species -->
-   <field name="distance_outside_expert_range" type="double" indexed="true" stored="true" multiValued="false" />
+<!-- Distance from expert distribution for associated species -->
+	<field name="distance_outside_expert_range" type="double" indexed="true" stored="true" multiValued="false" />
+
+	<field name="query_assertion_uuid" type="string" indexed="true" stored="true" multiValued="true" omitNorms="true" />
+	<field name="query_assertion_type_s" type="string" indexed="true" stored="true" multiValued="true" omitNorms="true" />
+
+<!-- SOLR 4.0 Spatial Fields -->   
+   <field name="quad"     type="quad"     indexed="true" stored="true"  multiValued="false" />
+   <field name="geohash"  type="geohash"  indexed="true" stored="true"  multiValued="false" />
+
+
 
    <!-- Some ALA dynamic fields -->
-   <dynamicField name="*_s" type="string" indexed="true" stored="false" omitNorms="true" /> 
+      <dynamicField name="*_s" type="string" indexed="true" stored="false" omitNorms="true" /> 
    <dynamicField name="*_d" type="double" indexed="true" stored="true" omitNorms="true" />
-   <dynamicField name="*_i" type="int" indexed="true" stored="true" omitNorms="true" />   
+   <dynamicField name="*_d_rng" type="double" indexed="true" stored="false" omitNorms="true" />
+   <dynamicField name="*_i" type="int" indexed="true" stored="true" omitNorms="true" /> 
+   <dynamicField name="*_i_rng" type="int" indexed="true" stored="false" omitNorms="true" />
    <dynamicField name="*_id"  type="string" indexed="true" stored="true"/>
    <dynamicField name="*_name"  type="string" indexed="true" stored="true"/>
    <dynamicField name="point-*" type="string" indexed="true" stored="true"/>
@@ -722,7 +735,10 @@
    <!-- They are being stored just in case they need to be faceted on -->
    <dynamicField name="el*" type="double" indexed="true" stored="true" omitNorms="true" />
    <dynamicField name="cl*" type="string" indexed="true" stored="true" omitNorms="true" />
-   <!-- catchall text field that indexes tokens both normally and in reverse for efficient leading wildcard queries. -->
+   
+
+   <!-- catchall text field that indexes tokens both normally and in reverse for efficient
+        leading wildcard queries. -->
    <field name="text_rev" type="text_rev" indexed="true" stored="false" multiValued="true"/>
 
  </fields>
@@ -741,7 +757,9 @@
   <!-- copyField commands copy one field to another at the time a document
         is added to the index.  It's used either to index the same field differently,
         or to add multiple fields to the same field for easier/faster searching.  -->
-
+	<!-- SOLR 4.0 spatial support -->
+   <copyField source="lat_long" dest="quad"/>
+   <copyField source="lat_long" dest="geohash"/>
    <!-- BIE additions -->
    <copyField source="data_provider" dest="text"/>
    <copyField source="data_resource" dest="text"/>
@@ -764,10 +782,12 @@
    <copyField source="genus" dest="text"/>
    <copyField source="species" dest="text" />
    <copyField source="species_group" dest="text" />
+   <copyField source="species_subgroup" dest="text" />
    <copyField source="original_name_usage" dest="text" />
    <copyField source="collector" dest="collector_text"/>
    <copyField source="identified_by" dest="identified_by_text"/>
-   
+   <copyField source="*_d" dest="*_d_rng"/>
+   <copyField source="*_i" dest="*_i_rng"/>
    
    <!--  This copy field is not in use anywhere -->
    <!--copyField source="taxon_name" dest="taxon_name_text"/-->

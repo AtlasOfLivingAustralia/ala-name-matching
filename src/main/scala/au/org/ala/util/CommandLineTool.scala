@@ -261,6 +261,24 @@ object CMD {
           if(args.size==1)
             ResourceCleanupTask.main(Array(args(0), "delete"))
         }
+        case it if (it startsWith "delete-columns") =>{
+          //first arg is data resource
+          val args = input.split(" ").map(x => x.trim).toArray.tail
+          if(args.length > 1){
+            ResourceCleanupTask.main(Array(args.head)++Array("columns","--delcols","-c")++args.tail)
+          }
+          else
+            println ("Need to supply a data resource and list of columns")
+        }
+        case it if(it startsWith "delete-missing") =>{
+          //first arg is data resource
+          val args = input.split(" ").map(x => x.trim).toArray.tail
+          if(args.length > 1){
+            ResourceCleanupTask.main(Array(args.head)++Array("columns","-c")++args.tail)
+          }
+          else
+            println ("Need to supply a data resource and list of columns")
+        }
         case it if (it startsWith "delete") => {
           //need to preserve the query case because T and Z mean things in dates
           val query = input.replaceFirst("delete ", "")
@@ -339,7 +357,9 @@ object CMD {
     padAndPrint("[34]  apply-aq <apiKey> - applies the assertion queries for the suppplied apiKey")
     padAndPrint("[35]  mark-deleted <dr-uid> <date of last load YYYY-MM-DD> - Marks records as deleted in the data store when that have not been updated on the last load. - only run if a complete data set was loaded.")
     padAndPrint("[36]  remove-deleted <dr-uid> - removes all records from the data-store that have been marked as deleted")
-    padAndPrint("[37]  exit")
+    padAndPrint("[37]  delete-columns <dr-uid> <list of columns> - deletes all the columns specified in the space separated list")
+    padAndPrint("[38]  delete-missing <dr-uid> <list of columns> - deletes all the columns that are not specified in the space separated list")
+    padAndPrint("[39]  exit")
 
   }
 

@@ -467,13 +467,42 @@ object HabitatMap extends VocabMaps {
      createSpeciesGroup("Algae","phylum", Array("Bacillariophyta","Chlorophyta","Cyanidiophyta","Prasinophyta","Rhodophyta",
                                                  "Cryptophyta","Ochrophyta","Sagenista","Cercozoa","Euglenozoa","Cyanobacteria"),Array(),null)
     )
+    
+    def main(args:Array[String]){
+      println(subgroups)
+    }
+    
+    val subgroups = {
+      //look up the JSON String
+      val json = Source.fromURL("https://ala-bie.googlecode.com/svn/trunk/bie-profile/src/main/resources/subgroups.json").getLines.mkString
+      
+      val list =JSON.parseFull(json).get.asInstanceOf[List[Map[String,Object]]]//.get(0).asInstanceOf[Map[String, String]]
+      val subGroupBuffer= new scala.collection.mutable.ArrayBuffer[SpeciesGroup]
+      println(list)
+      list.foreach{map =>{
+        if(map.containsKey("taxonRank")){
+          val rank = map.getOrElse("taxonRank","class").toString()
+          val taxaList=map.get("taxa").get.asInstanceOf[List[Map[String,String]]]
+          taxaList.foreach{taxaMap=>          
+            taxaMap.foreach{case (key,value)=>{
+              subGroupBuffer + createSpeciesGroup(taxaMap.getOrElse("common",""), rank,Array(taxaMap.getOrElse("name","")), Array(), null)            
+            }}
+          }
+        }
+      }}
+      subGroupBuffer.toList
+//      map.foreach{case (key, value)=>{
+//        val rank = 
+//      }}
+      
+    }
 
     /*
      * Creates a species group by first determining the left right ranges for the values and excluded values.
      */
     def createSpeciesGroup(title:String, rank:String, values:Array[String], excludedValues:Array[String], parent:String):SpeciesGroup={
       val lftRgts = values.map((v:String) =>{
-        var snr = Config.nameIndex.searchForRecord(v, null)
+        var snr = Config.nameIndex.searchForRecord(v, au.org.ala.data.util.RankType.getForName(rank))
         if(snr != null){
         if(snr.isSynonym)
           snr = Config.nameIndex.searchForRecordByLsid(snr.getAcceptedLsid)
@@ -515,10 +544,16 @@ object HabitatMap extends VocabMaps {
      * Returns all the species groups to which the supplied left right values belong
      */
     def getSpeciesGroups(lft:String, rgt:String):Option[List[String]]={
+      getGenericGroups(lft,rgt, groups)
+    }
+    def getSpeciesSubGroups(lft:String, rgt:String):Option[List[String]] ={
+      getGenericGroups(lft,rgt,subgroups)
+    }
+    def getGenericGroups(lft:String, rgt:String, groupingList:List[SpeciesGroup]):Option[List[String]]={
       try{
         val ilft = Integer.parseInt(lft)
         //val irgt = Integer.parseInt(rgt)
-        val matchedGroups = groups.collect{case sg:SpeciesGroup if(sg.isPartOfGroup(ilft)) => sg.name}
+        val matchedGroups = groupingList.collect{case sg:SpeciesGroup if(sg.isPartOfGroup(ilft)) => sg.name}
         Some(matchedGroups)
       }
       catch {

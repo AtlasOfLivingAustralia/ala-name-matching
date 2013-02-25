@@ -19,6 +19,8 @@
 		<scala.version>2.9.1</scala.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.springframework.version>3.0.6.RELEASE</org.springframework.version>
+		<solr.version>4.1.0</solr.version>
+		<jts.version>1.12</jts.version>
 	</properties>
 	<description>
         Scala implementation of biocache backend.
@@ -163,7 +165,7 @@
 		<dependency>
 			<groupId>au.org.ala</groupId>
 			<artifactId>ala-name-matching</artifactId>
-			<version>1.1-SNAPSHOT</version>
+			<version>1.2-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.gbif</groupId>
@@ -211,7 +213,7 @@
 		<dependency>
 			<groupId>org.gbif</groupId>
 			<artifactId>dwca-reader</artifactId>
-			<version>1.7.6</version>
+			<version>1.14-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<groupId>commons-io</groupId>
@@ -223,7 +225,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>r09</version>
+			<version>13.0.1</version>
 		</dependency>
 		<!-- Google Guice -->
 		<dependency>
@@ -325,7 +327,7 @@
 		<dependency>
 			<artifactId>solr-core</artifactId>
 			<groupId>org.apache.solr</groupId>
-			<version>3.6.0</version>
+			<version>${solr.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>org.slf4j</artifactId>
@@ -340,7 +342,7 @@
 		<dependency>
 			<artifactId>solr-solrj</artifactId>
 			<groupId>org.apache.solr</groupId>
-			<version>3.6.0</version>
+			<version>${solr.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>org.slf4j</artifactId>
@@ -359,13 +361,26 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		
+		    <dependency>
+      <groupId>com.vividsolutions</groupId>
+      <artifactId>jts</artifactId>
+      <version>${jts.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+		
 		<!-- Spatial-SOLR plugin patched by Adam Collins (ALA Spatial Team) to 
 			have wkt support -->
-		<dependency>
+<!-- 		<dependency>
 			<groupId>nl.jteam</groupId>
 			<artifactId>spatial-solr</artifactId>
 			<version>2.0-RC5_ssplex_wkt</version>
-		</dependency>
+		</dependency> -->
 		<!-- COMMONS -->
 		<dependency>
 			<groupId>commons-httpclient</groupId>
@@ -497,7 +512,7 @@
 						<arg>-target:jvm-1.5</arg>
 					</args>
 					<jvmArgs>
-						<jvmArg>-Xmx1024m</jvmArg>
+						<jvmArg>-Xmx2G</jvmArg>
 					</jvmArgs>
 				</configuration>
 			</plugin>

@@ -127,17 +127,19 @@ trait IndexDAO {
     buff.toArray
   }
 
-  /**
-   * Returns a lat,long string expression formatted to the supplied Double format
-   */
-  def getLatLongString(lat: Double, lon: Double, format: String): String = {
-    if (!lat.isNaN && !lon.isNaN) {
-      val df = new java.text.DecimalFormat(format)
-      df.format(lat) + "," + df.format(lon)
-    } else {
-      ""
+    /**
+     * Returns a lat,long string expression formatted to the supplied Double format
+     */
+    def getLatLongString(lat: Double, lon: Double, format: String): String = {
+        if (!lat.isNaN && !lon.isNaN) {
+            val df = new java.text.DecimalFormat(format)
+            //By some "strange" decision the default rounding mode is HALF_EVEN
+            df.setRoundingMode(java.math.RoundingMode.HALF_UP)
+            df.format(lat) + "," + df.format(lon)
+        } else {
+            ""
+        }    
     }
-  }
 
   /**
    * The header values for the CSV file.
@@ -149,7 +151,7 @@ trait IndexDAO {
     "rank", "rank_id", "raw_taxon_name", "raw_common_name", "multimedia", "image_url", "all_image_url",
     "species_group", "country_code", "country", "lft", "rgt", "kingdom", "phylum", "class", "order",
     "family", "genus", "genus_guid", "species", "species_guid", "state", "imcra", "ibra", "places", "latitude", "longitude",
-    "lat_long", "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
+    "lat_long",  "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
     "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
     "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
     "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector", "state_conservation", "raw_state_conservation",
@@ -159,7 +161,7 @@ trait IndexDAO {
     "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue", "raw_identification_qualifier", "species_habitats",
     "identified_by", "identified_date", "sensitive_longitude", "sensitive_latitude", "pest_flag_s", "collectors", "duplicate_status", "duplicate_record",
     "duplicate_type", "sensitive_coordinate_uncertainty", "distance_outside_expert_range", "elevation_d", "min_elevation_d", "max_elevation_d",
-    "depth_d", "min_depth_d", "max_depth_d") // ++ elFields ++ clFields
+    "depth_d", "min_depth_d", "max_depth_d", "name_parse_type_s","occurrence_status_s") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -202,7 +204,7 @@ trait IndexDAO {
       if (!deleted.equals("true") && map.size > 1) {
         var slat = getValue("decimalLatitude.p", map)
         var slon = getValue("decimalLongitude.p", map)
-        var latlon = ""
+        var latlon = ""        
         val sciName = getValue("scientificName.p", map)
         val taxonConceptId = getValue("taxonConceptID.p", map)
         val vernacularName = getValue("vernacularName.p", map).trim
@@ -281,6 +283,7 @@ trait IndexDAO {
             //ensure that the lat longs are in the required range before
             if (lat <= 90 && lat >= test && lon <= 180 && lon >= test2) {
               latlon = slat + "," + slon
+              
             }
           } catch {
             //If the latitude or longitude can't be parsed into a double we don't want to index the values
@@ -364,6 +367,13 @@ trait IndexDAO {
         val loanDate = DateParser.parseStringToDate(map.getOrElse("loanDate", ""))
         val loanReturnDate = DateParser.parseStringToDate(map.getOrElse("loanReturnDate", ""))
         val dateIdentified = DateParser.parseStringToDate(map.getOrElse("dateIdentified.p", ""))
+        
+        var taxonIssue = map.getOrElse("taxonomicIssue.p", "[]")
+        if(!taxonIssue.startsWith("[")){
+          println("WARNING " + map.getOrElse("rowKey","") +" does not have an updated taxonIssue: " + guid)
+          taxonIssue = "[]"
+        }
+        val taxonIssueArray= Json.toStringArray(taxonIssue)
 
         val pest_tmp = if (map.getOrElse("informationWithheld.p", "").startsWith("PEST")) "PEST" else ""
 
@@ -418,7 +428,7 @@ trait IndexDAO {
           getValue("lga.p", map),
           slat,
           slon,
-          latlon,
+          latlon,          
           getLatLongString(lat, lon, "#"),
           getLatLongString(lat, lon, "#.#"),
           getLatLongString(lat, lon, "#.##"),
@@ -463,7 +473,7 @@ trait IndexDAO {
           map.getOrElse("nameMatchMetric.p", ""),
           map.getOrElse("phenology", ""), //TODO make this a controlled vocab that gets mapped during processing...
           outlierForLayers.mkString("|"),
-          outlierForLayers.length.toString, map.getOrElse("taxonomicIssue.p", ""), map.getOrElse("identificationQualifier", ""),
+          outlierForLayers.length.toString, taxonIssueArray.mkString("|"), map.getOrElse("identificationQualifier", ""),
           habitats.mkString("|"), map.getOrElse("identifiedBy", ""),
           if (dateIdentified.isEmpty) "" else DateFormatUtils.format(dateIdentified.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
           sensitiveMap.getOrElse("decimalLongitude", ""), sensitiveMap.getOrElse("decimalLatitude", ""), pest_tmp,
@@ -471,7 +481,8 @@ trait IndexDAO {
           sensitiveMap.getOrElse("coordinateUncertaintyInMeters.p", ""),
           map.getOrElse("distanceOutsideExpertRange.p", ""),
           map.getOrElse("verbatimElevation.p", ""), map.getOrElse("minimumElevationInMeters.p", ""), map.getOrElse("maximumElevationInMeters.p", ""),
-          map.getOrElse("verbatimDepth.p", ""), map.getOrElse("minimumDepthInMeters.p", ""), map.getOrElse("maximumDepthInMeters.p", "")
+          map.getOrElse("verbatimDepth.p", ""), map.getOrElse("minimumDepthInMeters.p", ""), map.getOrElse("maximumDepthInMeters.p", ""),
+          map.getOrElse("nameParseType.p",""),map.getOrElse("occurrenceStatus","")
         ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
         //)
       }
@@ -619,7 +630,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     }
   }
 
-  def reload = cc.reload("")
+  def reload = cc.reload("biocache")
 
 
   override def shouldIncludeSensitiveValue(dr: String): Boolean = {
@@ -803,7 +814,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
   }
 
   val multifields = Array("duplicate_inst", "establishment_means", "species_group", "assertions", "data_hub_uid", "interactions", "outlier_layer",
-    "species_habitats", "multimedia", "all_image_url", "collectors", "duplicate_record", "duplicate_type")
+    "species_habitats", "multimedia", "all_image_url", "collectors", "duplicate_record", "duplicate_type","taxonomic_issue")
   val typeNotSuitableForModelling = Array("invalid", "historic", "vagrant", "irruptive")
 
   /**
@@ -928,14 +939,14 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
 
         //TODO Think about moving species group stuff here.
         //index the additional species information - ie species groups
-        //        val lft = map.get("left.p")
-        //        val rgt = map.get("right.p")
-        //        if(lft.isDefined && rgt.isDefined){
-        //          val sgs = SpeciesGroups.getSpeciesGroups(lft.get, rgt.get)
-        //          if(sgs.isDefined){
-        //            sgs.get.foreach{v:String => doc.addField("species_group", v)}
-        //          }
-        //        }
+                val lft = map.get("left.p")
+                val rgt = map.get("right.p")
+                if(lft.isDefined && rgt.isDefined){
+                  val sgs = SpeciesGroups.getSpeciesSubGroups(lft.get, rgt.get)
+                  if(sgs.isDefined){
+                    sgs.get.foreach{v:String => doc.addField("species_subgroup", v)}
+                  }
+                }
 
 
         if (!batch) {

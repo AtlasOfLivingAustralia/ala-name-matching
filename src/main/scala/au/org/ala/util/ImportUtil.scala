@@ -1,10 +1,12 @@
 package au.org.ala.util
 
 import au.org.ala.biocache.{Config}
+import scala.util.parsing.json.JSON
 import org.apache.commons.io.FileUtils
 import java.io.{File, FileReader}
 import au.com.bytecode.opencsv.CSVReader
 import scala.collection.JavaConversions
+import org.apache.commons.lang.StringUtils
 
 /**
  * Load a CSV file into the BioCache store
@@ -18,8 +20,9 @@ object ImportUtil {
     var filesToImport = List[String]()
     var linesToSkip = 0
     var quotechar: Option[Char] = None
-    var separator:Char = ','
+    var separator= '\t'
     var idColumnIdx = 0
+    var json =false
 
     val parser = new OptionParser("import") {
       arg("<entity>", "the entity (column family in cassandra) to export from", { v: String => entity = v })
@@ -29,6 +32,7 @@ object ImportUtil {
       opt("cf", "column header file", "e.g. /data/headers.txt", "column headers", {
         v: String => fieldsToImport = FileUtils.readFileToString(new File(v)).trim.split(',').toList
       })
+      opt("json","import the values as json",{json=true})
       intOpt("s", "skip-line", "number of lines to skip before importing", { v: Int => linesToSkip = v })
       intOpt("id", "id-column-idx", "id column index. indexed from 0", { v: Int => idColumnIdx = v })
 
@@ -38,12 +42,29 @@ object ImportUtil {
       val pm = Config.persistenceManager
       //process each file
       filesToImport.foreach {
-        importFile(entity, fieldsToImport, separator, quotechar, _, idColumnIdx)
+        if(json)
+          importJson(entity,_)
+        else
+          importFile(entity, fieldsToImport, separator, quotechar, _, idColumnIdx)
       }
       pm.shutdown
     }
   }
-
+  
+  def importJson(entity: String, filepath:String){
+    for(line <- scala.io.Source.fromFile(filepath).getLines()){
+      //now turn the line into JSON
+     val map =JSON.parseFull(line).get.asInstanceOf[Map[String, String]]
+     val guid= map.get(entity+"rowKey")
+     if(guid.isDefined){
+       val finalMap:Map[String,String] = map - (entity+"rowKey")
+       //println(finalMap)
+       //now add the record
+       Config.persistenceManager.put(guid.get, entity, finalMap)
+     }
+    }
+  }
+  
   def importFile(entity: java.lang.String, fieldsToImport: List[String], separator: Char,  quotechar: Option[Char], filepath: String, idColumnIdx:Int = 0) {
     val reader = quotechar.isEmpty match {
       case false => new CSVReader(new FileReader(filepath), separator, quotechar.get)
@@ -56,7 +77,7 @@ object ImportUtil {
       //println("Reading line: " + currentLine)
       val columns = currentLine.toList
       //println(columns)
-      if (columns.length == fieldsToImport.length) {
+      if (columns.length == fieldsToImport.length && StringUtils.isNotEmpty(columns(idColumnIdx))) {
         val map = (fieldsToImport zip columns).toMap[String, String].filter {
           case (key, value) => value != null && value.toString.trim.length > 0
         }
