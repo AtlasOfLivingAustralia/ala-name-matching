@@ -23,6 +23,7 @@ import java.io.{File, OutputStream}
 import java.util.concurrent.ArrayBlockingQueue
 import scala.util.parsing.json.JSON
 import org.apache.solr.client.solrj.response.FacetField
+import org.apache.solr.client.solrj.impl.HttpSolrServer
 
 
 /**
@@ -608,29 +609,35 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
 
   override def init() {
     if (solrServer == null) {
-      if (solrConfigPath != "") {
-        //System.setProperty("solr.solr.home", solrHome)
-        println("Initialising SOLR with config path: " + solrConfigPath + ", and SOLR HOME: " + solrHome)
-        val solrConfigFile = new File(solrConfigPath)
-        val home = solrConfigFile.getParentFile.getParentFile
-        val f = new File(solrConfigFile.getParentFile.getParentFile, "solr.xml");
-        cc = new CoreContainer();
-        cc.load(home.getAbsolutePath, f);
-        solrServer = new EmbeddedSolrServer(cc, "biocache");
-
-        //          threads
-      } else {
-        System.setProperty("solr.solr.home", solrHome)
-        val initializer = new CoreContainer.Initializer()
-        cc = initializer.initialize
-        solrServer = new EmbeddedSolrServer(cc, "biocache")
-
-        //          threads
+      if(!solrHome.startsWith("http://")){
+        if (solrConfigPath != "") {
+          //System.setProperty("solr.solr.home", solrHome)
+          println("Initialising SOLR with config path: " + solrConfigPath + ", and SOLR HOME: " + solrHome)
+          val solrConfigFile = new File(solrConfigPath)
+          val home = solrConfigFile.getParentFile.getParentFile
+          val f = new File(solrConfigFile.getParentFile.getParentFile, "solr.xml");
+          cc = new CoreContainer();
+          cc.load(home.getAbsolutePath, f);
+          solrServer = new EmbeddedSolrServer(cc, "biocache");
+  
+          //          threads
+        } else {
+          System.setProperty("solr.solr.home", solrHome)
+          val initializer = new CoreContainer.Initializer()
+          cc = initializer.initialize
+          solrServer = new EmbeddedSolrServer(cc, "biocache")
+  
+          //          threads
+        }
+      }
+      else {
+        solrServer = new HttpSolrServer(solrHome)
       }
     }
   }
 
   def reload = cc.reload("biocache")
+
 
 
   override def shouldIncludeSensitiveValue(dr: String): Boolean = {
@@ -768,6 +775,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
 
     solrServer.commit
     solrDocList.clear
+    //now we should close the indexWriter
     println(printNumDocumentsInIndex)
     if (optimise) {
       println("Optimising the indexing...")
@@ -777,6 +785,14 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
       println("Shutting down the indexing...")
       this.shutdown
     }
+//    println("Attempting to release writer...")
+//    println(cc.getCore("biocache").getUpdateHandler().getClass())
+//    //val objectt =new org.apache.solr.update.DirectUpdateHandler2()
+//    val scorstate = cc.getCore("biocache").getSolrCoreState()
+//    val solrCore = cc.getCore("biocache")
+//    scorstate.getIndexWriter(solrCore).decref
+//    //cc.getCore("biocache").getUpdateHandler().close()
+//    println("Finished...")
     println("Finalise finished.")
   }
 
