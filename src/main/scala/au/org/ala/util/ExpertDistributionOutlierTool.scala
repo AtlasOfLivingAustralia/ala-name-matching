@@ -353,7 +353,7 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
 
           val rowKey = recordsMap(uuid)("rowKey").asInstanceOf[String]
 
-          //Console.err.println("Outlier: " + uuid + "(" + rowKey + ") " + roundedDistance + " metres")
+          Console.err.println("Outlier: " + uuid + "(" + rowKey + ") " + roundedDistance + " metres")
 
           // Add data quality assertion
           Config.occurrenceDAO.addSystemAssertion(rowKey, QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE, roundedDistance + " metres outside of expert distribution range"))
@@ -376,7 +376,7 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
       val noLongerOutlierRowKeys = oldRowKeys diff newOutlierRowKeys
 
       for (rowKey <- noLongerOutlierRowKeys) {
-        //Console.err.println(rowKey + " is no longer an outlier")
+        Console.err.println(rowKey + " is no longer an outlier")
         Config.persistenceManager.deleteColumns(rowKey, "occ", "distanceOutsideExpertRange.p")
         Config.occurrenceDAO.removeSystemAssertion(rowKey, AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE)
         rowKeysForIndexing += rowKey
