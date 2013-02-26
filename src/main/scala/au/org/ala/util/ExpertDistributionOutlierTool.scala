@@ -215,6 +215,8 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
     // Some distributions have an extremely large number of records associated with them. Handle the records one "page" at a time.
     var recordsMap = getRecordsOutsideDistribution(lsid, wkt)
 
+    Console.err.println(recordsMap.size + " suspect records")
+
     if (!recordsMap.isEmpty) {
       val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
       rowKeysForIndexing ++= markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
