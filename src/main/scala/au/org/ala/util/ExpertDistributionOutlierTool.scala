@@ -38,7 +38,7 @@ object ExpertDistributionOutlierTool {
   val OUTLIER_THRESHOLD = 50000
 
   // Some distributions have an extremely large number of records associated with them. Handle the records one "page" at a time.
-  val RECORDS_PAGE_SIZE = 5000
+  //val RECORDS_PAGE_SIZE = 5000
 
   def main(args: Array[String]) {
     val tool = new ExpertDistributionOutlierTool();
@@ -213,24 +213,11 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
     val wkt = getExpertDistributionWkt(lsid)
 
     // Some distributions have an extremely large number of records associated with them. Handle the records one "page" at a time.
-    var recordsMap = getRecordsOutsideDistribution(lsid, wkt, ExpertDistributionOutlierTool.RECORDS_PAGE_SIZE, 0)
+    var recordsMap = getRecordsOutsideDistribution(lsid, wkt)
 
     if (!recordsMap.isEmpty) {
       val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
       rowKeysForIndexing ++= markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
-    }
-
-    var pageNumber = 1
-
-    while (!recordsMap.isEmpty) {
-      recordsMap = getRecordsOutsideDistribution(lsid, wkt, ExpertDistributionOutlierTool.RECORDS_PAGE_SIZE, pageNumber * ExpertDistributionOutlierTool.RECORDS_PAGE_SIZE)
-
-      if (!recordsMap.isEmpty) {
-        val outlierRecordDistances = getOutlierRecordDistances(lsid, recordsMap)
-        rowKeysForIndexing ++= markOutlierOccurrences(lsid, outlierRecordDistances, recordsMap)
-      }
-
-      pageNumber = pageNumber + 1
     }
 
     rowKeysForIndexing
@@ -241,7 +228,7 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
    * @param lsid A taxon concept lsid
    * @return Occurrence record detail. Only the following fields are retreived: id,row_key,latitude,longitude,coordinate_uncertainty. Only records that have a location (lat/long) are returned.
    */
-  def getRecordsOutsideDistribution(lsid: String, distributionWkt: String, pageSize: Int, startIndex: Int): scala.collection.mutable.Map[String, Map[String, Object]] = {
+  def getRecordsOutsideDistribution(lsid: String, distributionWkt: String): scala.collection.mutable.Map[String, Map[String, Object]] = {
 //        val urlCodec = new URLCodec()
 //
 //        val url = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_URL_TEMPLATE, lsid, urlCodec.encode(distributionWkt), startIndex.toString, pageSize.toString)
@@ -366,7 +353,7 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
 
           val rowKey = recordsMap(uuid)("rowKey").asInstanceOf[String]
 
-          Console.err.println("Outlier: " + uuid + "(" + rowKey + ") " + roundedDistance + " metres")
+          //Console.err.println("Outlier: " + uuid + "(" + rowKey + ") " + roundedDistance + " metres")
 
           // Add data quality assertion
           Config.occurrenceDAO.addSystemAssertion(rowKey, QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE, roundedDistance + " metres outside of expert distribution range"))
@@ -389,7 +376,7 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
       val noLongerOutlierRowKeys = oldRowKeys diff newOutlierRowKeys
 
       for (rowKey <- noLongerOutlierRowKeys) {
-        Console.err.println(rowKey + " is no longer an outlier")
+        //Console.err.println(rowKey + " is no longer an outlier")
         Config.persistenceManager.deleteColumns(rowKey, "occ", "distanceOutsideExpertRange.p")
         Config.occurrenceDAO.removeSystemAssertion(rowKey, AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE)
         rowKeysForIndexing += rowKey
