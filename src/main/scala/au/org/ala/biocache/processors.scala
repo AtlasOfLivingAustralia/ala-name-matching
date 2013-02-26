@@ -1270,7 +1270,7 @@ class ClassificationProcessor extends Processor {
   val cfPattern = """([\x00-\x7F\s]*) cf[#!?\\.]?([\x00-\x7F\s]*)""".r
 
   import au.org.ala.biocache.BiocacheConversions._
-
+  import JavaConversions._
   /**
    * Parse the hints into a usable map with rank -> Set.
    */
@@ -1316,6 +1316,15 @@ class ClassificationProcessor extends Processor {
     taxon != null && taxon.equalsIgnoreCase(classification.getProperty(field).getOrElse(""))
   }
 
+  def setMatchStats(nameMetrics:au.org.ala.checklist.lucene.model.MetricsResultDTO, processed:FullRecord){
+    //set the parse type and errors for all results before continuing
+    processed.classification.nameParseType = if(nameMetrics.getNameType != null)nameMetrics.getNameType.toString else "UNKNOWN"
+    //add the taxonomic issues for the match
+    processed.classification.taxonomicIssue = if(nameMetrics.getErrors != null)nameMetrics.getErrors.toList.map(_.toString).toArray else Array("noIssue")
+    
+  }
+  
+  
   /**
    * Match the classification
    */
@@ -1332,101 +1341,125 @@ class ClassificationProcessor extends Processor {
       }
 
       //val nsr = DAO.nameIndex.searchForRecord(classification, true)
-      val nsr = ClassificationDAO.getByHashLRU(raw.classification).getOrElse(null)
-
-      //store the matched classification
-      if (nsr != null) {
-        val classification = nsr.getRankClassification
-        //Check to see if the classification fits in with the supplied taxonomic hints
-        //get the taxonomic hints from the collection or data resource
-        var attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
-        if (attribution.isEmpty)
-          attribution = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
-
-        if (!attribution.isEmpty) {
-          logger.debug("Checking taxonomic hints")
-          val taxonHints = attribution.get.taxonomicHints
-
-          if (taxonHints != null && !taxonHints.isEmpty) {
-            val (isValid, comment) = isMatchValid(classification, attribution.get.retrieveParseHints)
-            if (!isValid) {
-              logger.info("Conflict in matched classification. Matched: " + guid + ", Matched: " + comment + ", Taxonomic hints in use: " + taxonHints.toList)
-              processed.classification.nameMatchMetric = "matchFailedHint"
-              //TODO think about logging this information to a separate column family
-              return Array() //QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Conflict in matched classification. Matched: "+ comment))
+      val nameMetrics = ClassificationDAO.getByHashLRU(raw.classification).getOrElse(null)
+      if(nameMetrics != null){
+       
+        val nsr = nameMetrics.getResult
+  
+        //store the matched classification
+        if (nsr != null) {
+          val classification = nsr.getRankClassification
+          //Check to see if the classification fits in with the supplied taxonomic hints
+          //get the taxonomic hints from the collection or data resource
+          var attribution = AttributionDAO.getByCodes(raw.occurrence.institutionCode, raw.occurrence.collectionCode)
+          if (attribution.isEmpty)
+            attribution = AttributionDAO.getDataResourceByUid(raw.attribution.dataResourceUid)
+  
+          if (!attribution.isEmpty) {
+            logger.debug("Checking taxonomic hints")
+            val taxonHints = attribution.get.taxonomicHints
+  
+            if (taxonHints != null && !taxonHints.isEmpty) {
+              val (isValid, comment) = isMatchValid(classification, attribution.get.retrieveParseHints)
+              if (!isValid) {
+                logger.info("Conflict in matched classification. Matched: " + guid + ", Matched: " + comment + ", Taxonomic hints in use: " + taxonHints.toList)
+                processed.classification.nameMatchMetric = "matchFailedHint"
+                //TODO think about logging this information to a separate column family
+                return Array() //QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Conflict in matched classification. Matched: "+ comment))
+              }
             }
           }
-        }
-
-        //check for default match before updating the classification.
-        val hasDefaultMatch = processed.defaultValuesUsed && nsr.getRank() != null && hasMatchToDefault(nsr.getRank().getRank(), nsr.getRankClassification().getScientificName(), processed.classification)
-        //store ".p" values
-        processed.classification = nsr
-        //check to see if the classification has been matched to a default value
-        if (hasDefaultMatch)
-          processed.classification.nameMatchMetric = "defaultHigherMatch" //indicates that a default value was used to make the higher level match
-
-        //try to apply the vernacular name
-        val taxonProfile = TaxonProfileDAO.getByGuid(nsr.getLsid)
-        if (!taxonProfile.isEmpty) {
-          if (taxonProfile.get.commonName != null)
-            processed.classification.vernacularName = taxonProfile.get.commonName
-          if (taxonProfile.get.habitats != null)
-            processed.classification.speciesHabitats = taxonProfile.get.habitats
-        }
-
-        //Add the species group information - I think that it is better to store this value than calculate it at index time
-        //val speciesGroups = SpeciesGroups.getSpeciesGroups(processed.classification)
-        val speciesGroups = SpeciesGroups.getSpeciesGroups(processed.classification.getLeft(), processed.classification.getRight())
-        logger.debug("Species Groups: " + speciesGroups)
-        if (!speciesGroups.isEmpty && !speciesGroups.get.isEmpty) {
-          processed.classification.speciesGroups = speciesGroups.get.toArray[String]
-        }
-
-        //add the taxonomic rating for the raw name
-        val scientificName = {
-          if (raw.classification.scientificName != null) raw.classification.scientificName
-          else if (raw.classification.species != null) raw.classification.species
-          else if (raw.classification.specificEpithet != null && raw.classification.genus != null) raw.classification.genus + " " + raw.classification.specificEpithet
-          else null
-        }
-        processed.classification.taxonomicIssue = scientificName match {
-          case questionPattern(a, b) => "questionSpecies"
-          case affPattern(a, b) => "affinitySpecies"
-          case cfPattern(a, b) => "conferSpecies"
-          case _ => "noIssue"
-        }
-
-        //is the name in the NSLs ???
-        if (afdApniIdentifier.findFirstMatchIn(nsr.getLsid).isEmpty) {
-          Array(QualityAssertion(AssertionCodes.NAME_NOT_IN_NATIONAL_CHECKLISTS, "Record not attached to concept in national species lists"))
-        } else {
+  
+          //check for default match before updating the classification.
+          val hasDefaultMatch = processed.defaultValuesUsed && nsr.getRank() != null && hasMatchToDefault(nsr.getRank().getRank(), nsr.getRankClassification().getScientificName(), processed.classification)
+          //store ".p" values
+          processed.classification = nsr
+          //check to see if the classification has been matched to a default value
+          if (hasDefaultMatch)
+            processed.classification.nameMatchMetric = "defaultHigherMatch" //indicates that a default value was used to make the higher level match
+  
+          //try to apply the vernacular name
+          val taxonProfile = TaxonProfileDAO.getByGuid(nsr.getLsid)
+          if (!taxonProfile.isEmpty) {
+            if (taxonProfile.get.commonName != null)
+              processed.classification.vernacularName = taxonProfile.get.commonName
+            if (taxonProfile.get.habitats != null)
+              processed.classification.speciesHabitats = taxonProfile.get.habitats
+          }
+  
+          //Add the species group information - I think that it is better to store this value than calculate it at index time
+          //val speciesGroups = SpeciesGroups.getSpeciesGroups(processed.classification)
+          val speciesGroups = SpeciesGroups.getSpeciesGroups(processed.classification.getLeft(), processed.classification.getRight())
+          logger.debug("Species Groups: " + speciesGroups)
+          if (!speciesGroups.isEmpty && !speciesGroups.get.isEmpty) {
+            processed.classification.speciesGroups = speciesGroups.get.toArray[String]
+          }
+  
+          //add the taxonomic rating for the raw name
+          val scientificName = {
+            if (raw.classification.scientificName != null) raw.classification.scientificName
+            else if (raw.classification.species != null) raw.classification.species
+            else if (raw.classification.specificEpithet != null && raw.classification.genus != null) raw.classification.genus + " " + raw.classification.specificEpithet
+            else null
+          }
+          //NC: 2013-02-15 This is handled from the name match as an "errorType"
+  //        processed.classification.taxonomicIssue = scientificName match {
+  //          case questionPattern(a, b) => "questionSpecies"
+  //          case affPattern(a, b) => "affinitySpecies"
+  //          case cfPattern(a, b) => "conferSpecies"
+  //          case _ => "noIssue"
+  //        }
+          
+          setMatchStats(nameMetrics,processed)
+  
+          //is the name in the NSLs ???
+          if (afdApniIdentifier.findFirstMatchIn(nsr.getLsid).isEmpty) {
+            Array(QualityAssertion(AssertionCodes.NAME_NOT_IN_NATIONAL_CHECKLISTS, "Record not attached to concept in national species lists"))
+          } else {
+            Array()
+          }
+  
+        } else if(nameMetrics.getErrors.contains(au.org.ala.checklist.lucene.model.ErrorType.HOMONYM)){
+          logger.debug("[QualityAssertion] A homonym was detected (with  no higher level match), classification for Kingdom: " +
+            raw.classification.kingdom + ", Family:" + raw.classification.family + ", Genus:" + raw.classification.genus +
+            ", Species: " + raw.classification.species + ", Epithet: " + raw.classification.specificEpithet)
+          processed.classification.nameMatchMetric = "noMatch"
+          setMatchStats(nameMetrics,processed)
           Array()
+        } else {
+          logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " +
+            raw.classification.kingdom + ", Family:" + raw.classification.family + ", Genus:" + raw.classification.genus +
+            ", Species: " + raw.classification.species + ", Epithet: " + raw.classification.specificEpithet)
+          processed.classification.nameMatchMetric = "noMatch"
+          setMatchStats(nameMetrics,processed)
+          Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, "Name not recognised"))
         }
-
-      } else {
+      }
+      
+      else {
         logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " +
-          raw.classification.kingdom + ", Family:" + raw.classification.family + ", Genus:" + raw.classification.genus +
-          ", Species: " + raw.classification.species + ", Epithet: " + raw.classification.specificEpithet)
-        processed.classification.nameMatchMetric = "noMatch"
-        Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, "Name not recognised"))
+            raw.classification.kingdom + ", Family:" + raw.classification.family + ", Genus:" + raw.classification.genus +
+            ", Species: " + raw.classification.species + ", Epithet: " + raw.classification.specificEpithet)
+          processed.classification.nameMatchMetric = "noMatch"
+          Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, "Name not recognised"))
       }
     } catch {
-      case he: HomonymException => {
-        logger.debug(he.getMessage, he)
-        //need to remove any default values from the processed classification
-        processed.classification.kingdom = null
-        processed.classification.phylum = null
-        processed.classification.classs = null
-        processed.classification.order = null
-        processed.classification.family = null
-        Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, "Homonym issue resolving the classification"))
-      }
-      case se: SearchResultException => logger.debug(se.getMessage, se); Array()
+      //NC:20113-02-15  The "getNameResultMetrics" method does not throw exceptions rather it recursively looks for a result logging the exceptions that occurred
+      
+//      case he: HomonymException => {
+//        logger.debug(he.getMessage, he)
+//        //need to remove any default values from the processed classification
+//        processed.classification.kingdom = null
+//        processed.classification.phylum = null
+//        processed.classification.classs = null
+//        processed.classification.order = null
+//        processed.classification.family = null
+//        Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, "Homonym issue resolving the classification"))
+//      }
+//      case se: SearchResultException => logger.debug(se.getMessage, se); Array()
       case e: Exception => logger.error("Exception during classification match for record " + guid, e); Array()
     }
   }
-
   def getName = FullRecordMapper.taxonomicalQa
 
 }

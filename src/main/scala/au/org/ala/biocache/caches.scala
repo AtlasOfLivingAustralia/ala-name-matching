@@ -6,7 +6,7 @@ package au.org.ala.biocache
  */
 import au.org.ala.data.model.LinnaeanRankClassification
 import au.org.ala.util.ReflectBean
-import au.org.ala.checklist.lucene.model.NameSearchResult
+import au.org.ala.checklist.lucene.model.{NameSearchResult,MetricsResultDTO}
 import au.org.ala.checklist.lucene.{CBIndexSearch, HomonymException, SearchResultException}
 import scala.io.Source
 import org.slf4j.LoggerFactory
@@ -59,11 +59,11 @@ object ClassificationDAO {
   /**
    * Uses a LRU cache
    */
-  def getByHashLRU(cl:Classification) : Option[NameSearchResult] = {
+  def getByHashLRU(cl:Classification) : Option[MetricsResultDTO] = {
     //use the vernacular name to lookup if there if there is no scientific name or higher level classification
     //we don't really trust vernacular name matches thus only use as a last resort
     val hash = { if(cl.vernacularName==null || cl.scientificName != null || cl.specificEpithet != null || cl.infraspecificEpithet != null 
-    				|| cl.kingdom != null || cl.phylum != null || cl.classs != null || cl.order != null || cl.family !=null  || cl.genus!=null)
+            || cl.kingdom != null || cl.phylum != null || cl.classs != null || cl.order != null || cl.family !=null  || cl.genus!=null)
         Array(cl.kingdom,cl.phylum,cl.classs,cl.order,cl.family,cl.genus,cl.species,cl.specificEpithet,
             cl.subspecies,cl.infraspecificEpithet,cl.scientificName).reduceLeft(_+"|"+_)
               else cl.vernacularName
@@ -85,13 +85,20 @@ object ClassificationDAO {
     val cachedObject = lock.synchronized { lru.get(hash) }
 
     if(cachedObject!=null){
-       cachedObject.asInstanceOf[Option[NameSearchResult]]
+       cachedObject.asInstanceOf[Option[MetricsResultDTO]]
     } else {
       //search for a scientific name if values for the classification were provided otherwise search for a common name
-      var nsr = {
+      val idnsr = if(cl.taxonConceptID != null)  nameIndex.searchForRecordByLsid(cl.taxonConceptID) else null
+      
+      var resultMetric = {
         try {
-          if (cl.taxonConceptID != null) nameIndex.searchForRecordByLsid(cl.taxonConceptID)
-          else if(hash.contains("|")) nameIndex.searchForRecord(new LinnaeanRankClassification(
+          if(idnsr != null){
+              val metric = new MetricsResultDTO
+              metric.setResult(idnsr)
+              metric
+          }
+          //if (cl.taxonConceptID != null) nameIndex.searchForRecordByLsid(cl.taxonConceptID)
+          else if(hash.contains("|")) nameIndex.searchForRecordMetrics(new LinnaeanRankClassification(
             stripStrayQuotes(cl.kingdom),
             stripStrayQuotes(cl.phylum),
             stripStrayQuotes(cl.classs),
@@ -113,26 +120,43 @@ object ClassificationDAO {
         }
       }
 
-      if(nsr == null) {
-        nsr = nameIndex.searchForCommonName(cl.getVernacularName)
+      if(resultMetric == null) {
+        val cnsr = nameIndex.searchForCommonName(cl.getVernacularName)
+        if(cnsr != null){
+          resultMetric = new MetricsResultDTO
+          resultMetric.setResult(cnsr);
+        }
+        
       }
 
-      if(nsr != null){
+      if(resultMetric != null && resultMetric.getResult() != null){
+          
           //handle the case where the species is a synonym this is a temporary fix should probably go in ala-name-matching
-          var result:Option[NameSearchResult] = if(nsr.isSynonym) Some(nameIndex.searchForRecordByLsid(nsr.getAcceptedLsid)) else Some(nsr)
-          if(result.get != null){
+          var result:Option[MetricsResultDTO] = if(resultMetric.getResult.isSynonym){
+                val ansr =nameIndex.searchForRecordByLsid(resultMetric.getResult.getAcceptedLsid)
+                if(ansr != null){
+                   //change the name match metric for a synonym
+                  ansr.setMatchType(resultMetric.getResult.getMatchType())
+                  resultMetric.setResult(ansr)
+                  Some(resultMetric)
+                } else{ 
+                  None
+                }
+              } else Some(resultMetric)
+          //}
+          if(result.isDefined){
               //change the name match metric for a synonym 
-              if(nsr.isSynonym())
-                result.get.setMatchType(nsr.getMatchType())
+//              if(nsr.isSynonym())
+//                result.get.setMatchType(nsr.getMatchType())
               //update the subspecies or below value if necessary
-              val rank = result.get.getRank
+              val rank = result.get.getResult.getRank
               if(rank != null && rank.getId() >7000 && rank.getId <9999){
-                result.get.getRankClassification.setSubspecies(result.get.getRankClassification.getScientificName())
+                result.get.getResult.getRankClassification.setSubspecies(result.get.getResult.getRankClassification.getScientificName())
               }
           }
           else{
-            logger.debug("Unable to locate accepted concept for synonym " + nsr + ". Attempting a higher level match")
-            if(cl.kingdom != null || cl.phylum != null || cl.classs != null || cl.order != null || cl.family != null || cl.genus != null){
+            logger.debug("Unable to locate accepted concept for synonym " + resultMetric.getResult + ". Attempting a higher level match")
+            if((cl.kingdom != null || cl.phylum != null || cl.classs != null || cl.order != null || cl.family != null || cl.genus != null) && (cl.getScientificName() != null || cl.getSpecies() != null || cl.getSpecificEpithet() != null || cl.getInfraspecificEpithet() != null)){
                 val newcl = cl.clone()
                 newcl.setScientificName(null)
                 newcl.setInfraspecificEpithet(null)
@@ -140,11 +164,15 @@ object ClassificationDAO {
                 newcl.setSpecies(null)
                 result = getByHashLRU(newcl)
             }
+            else{
+              logger.warn("Recursively unable to locate a synonym for " + cl)
+              
+            }
           }
           lock.synchronized { lru.put(hash, result) }
           result
       } else {
-          val result = None
+          val result = if(resultMetric != null) Some(resultMetric) else None
           lock.synchronized { lru.put(hash, result) }
           result
       }
