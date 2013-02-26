@@ -27,7 +27,7 @@ object ExpertDistributionOutlierTool {
   val DISTANCE_URL_TEMPLATE = Config.layersServiceUrl + "/distribution/outliers/{0}"
 
   val RECORDS_QUERY_TEMPLATE = "taxon_concept_lsid:{0} AND geospatial_kosher:true"
-  val RECORDS_FILTER_QUERY_TEMPLATE = "-geohash:Intersects({0})"
+  val RECORDS_FILTER_QUERY_TEMPLATE = "-geohash:\"Intersects({0})\""
 
   //val RECORDS_URL_TEMPLATE = Config.biocacheServiceUrl + "/occurrences/search?q=taxon_concept_lsid:{0}&fq=-geohash:%22Intersects%28{1}%29%22&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&startIndex={2}&pageSize={3}"
 
@@ -290,7 +290,7 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
     }
 
     val query = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_QUERY_TEMPLATE, ClientUtils.escapeQueryChars(lsid))
-    val filterQuery = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_FILTER_QUERY_TEMPLATE, ClientUtils.escapeQueryChars(distributionWkt))
+    val filterQuery = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_FILTER_QUERY_TEMPLATE, distributionWkt)
 
     Config.indexDAO.pageOverIndex(addRecordToMap, Array("id", "row_key", "latitude", "longitude", "coordinate_uncertainty"), query, Array(filterQuery))
 
