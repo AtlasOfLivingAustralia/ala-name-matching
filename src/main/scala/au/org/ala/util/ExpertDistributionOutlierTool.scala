@@ -26,8 +26,11 @@ object ExpertDistributionOutlierTool {
   val DISTRIBUTION_DETAILS_URL_TEMPLATE = Config.layersServiceUrl + "/distribution/lsid/{0}"
   val DISTANCE_URL_TEMPLATE = Config.layersServiceUrl + "/distribution/outliers/{0}"
 
-  val RECORDS_QUERY_TEMPLATE = "taxon_concept_lsid:{0} AND geospatial_kosher:true"
-  val RECORDS_FILTER_QUERY_TEMPLATE = "-geohash:\"Intersects({0})\""
+  //val RECORDS_QUERY_TEMPLATE = "taxon_concept_lsid:{0} AND geospatial_kosher:true"
+  //val RECORDS_FILTER_QUERY_TEMPLATE = "-geohash:\"Intersects({0})\""
+
+  val RECORDS_QUERY_TEMPLATE = "taxon_concept_lsid:{0}"
+  val RECORDS_FILTER_QUERY_TEMPLATE = "geospatial_kosher:true"
 
   //val RECORDS_URL_TEMPLATE = Config.biocacheServiceUrl + "/occurrences/search?q=taxon_concept_lsid:{0}&fq=-geohash:%22Intersects%28{1}%29%22&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&startIndex={2}&pageSize={3}"
 
@@ -38,7 +41,7 @@ object ExpertDistributionOutlierTool {
   val OUTLIER_THRESHOLD = 50000
 
   // Some distributions have an extremely large number of records associated with them. Handle the records one "page" at a time.
-  //val RECORDS_PAGE_SIZE = 5000
+  val RECORDS_PAGE_SIZE = 5000
 
   def main(args: Array[String]) {
     val tool = new ExpertDistributionOutlierTool();
@@ -279,7 +282,8 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor 
     }
 
     val query = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_QUERY_TEMPLATE, ClientUtils.escapeQueryChars(lsid))
-    val filterQuery = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_FILTER_QUERY_TEMPLATE, distributionWkt)
+    //val filterQuery = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_FILTER_QUERY_TEMPLATE, distributionWkt)
+    val filterQuery = ExpertDistributionOutlierTool.RECORDS_FILTER_QUERY_TEMPLATE
 
     Config.indexDAO.pageOverIndex(addRecordToMap, Array("id", "row_key", "latitude", "longitude", "coordinate_uncertainty"), query, Array(filterQuery))
 
