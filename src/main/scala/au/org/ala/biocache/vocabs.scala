@@ -478,14 +478,14 @@ object HabitatMap extends VocabMaps {
       
       val list =JSON.parseFull(json).get.asInstanceOf[List[Map[String,Object]]]//.get(0).asInstanceOf[Map[String, String]]
       val subGroupBuffer= new scala.collection.mutable.ArrayBuffer[SpeciesGroup]
-      println(list)
+      //println(list)
       list.foreach{map =>{
         if(map.containsKey("taxonRank")){
           val rank = map.getOrElse("taxonRank","class").toString()
           val taxaList=map.get("taxa").get.asInstanceOf[List[Map[String,String]]]
           taxaList.foreach{taxaMap=>          
             taxaMap.foreach{case (key,value)=>{
-              subGroupBuffer + createSpeciesGroup(taxaMap.getOrElse("common",""), rank,Array(taxaMap.getOrElse("name","")), Array(), null)            
+              subGroupBuffer + createSpeciesGroup(taxaMap.getOrElse("common","").trim, rank,Array(taxaMap.getOrElse("name","").trim), Array(), null)            
             }}
           }
         }
@@ -502,7 +502,11 @@ object HabitatMap extends VocabMaps {
      */
     def createSpeciesGroup(title:String, rank:String, values:Array[String], excludedValues:Array[String], parent:String):SpeciesGroup={
       val lftRgts = values.map((v:String) =>{
-        var snr = Config.nameIndex.searchForRecord(v, au.org.ala.data.util.RankType.getForName(rank))
+        var snr:au.org.ala.checklist.lucene.model.NameSearchResult ={ try{Config.nameIndex.searchForRecord(v, au.org.ala.data.util.RankType.getForName(rank))}
+        catch{
+          case e:au.org.ala.checklist.lucene.HomonymException => e.getResults()(0) 
+          case _ => null 
+        }}
         if(snr != null){
         if(snr.isSynonym)
           snr = Config.nameIndex.searchForRecordByLsid(snr.getAcceptedLsid)
