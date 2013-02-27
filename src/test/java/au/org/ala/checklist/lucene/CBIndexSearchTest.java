@@ -43,6 +43,13 @@ public class CBIndexSearchTest {
             catch(Exception e){
                 assertTrue(e instanceof HomonymException);
             }
+            try{
+                String lsid = searcher.searchForLSID("ISOPTERA", RankType.ORDER);
+                assertTrue(lsid != null);
+            }
+            catch(Exception e){
+                fail("When supplied with a higher order rank no homonym exception should be thrown");
+            }
         }
 
 

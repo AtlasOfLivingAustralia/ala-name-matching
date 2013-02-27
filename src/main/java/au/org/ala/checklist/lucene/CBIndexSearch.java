@@ -1303,7 +1303,7 @@ public class CBIndexSearch {
                     //check to see if the search criteria could represent an unresolved genus or species homonym
                     if (results.size() > 0) {
                         RankType resRank = results.get(0).getRank();
-                        if ((resRank == RankType.GENUS || resRank == RankType.SPECIES)|| results.get(0).isSynonym()) {
+                        if ((resRank == RankType.GENUS || resRank == RankType.SPECIES)|| (results.get(0).isSynonym() && (rank == null|| rank==RankType.GENUS || rank==RankType.SPECIES))) {
                             NameSearchResult result = (cl != null && StringUtils.isNotBlank(cl.getAuthorship())) ? validateHomonymByAuthor(results, scientificName, cl) : validateHomonyms(results, scientificName, cl);
                             results.clear();
                             results.add(result);
