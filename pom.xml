@@ -462,6 +462,13 @@
             <artifactId>gt-epsg-hsql</artifactId>
             <version>2.7.5</version>
         </dependency>
+
+        <!-- htmlunit to help with screen scraping -->
+        <dependency>
+            <groupId>net.sourceforge.htmlunit</groupId>
+            <artifactId>htmlunit</artifactId>
+            <version>2.5</version>
+        </dependency>
 	</dependencies>
 	<organization>
 		<name>Atlas of Living Australia</name>
