@@ -34,6 +34,18 @@ public class CBIndexSearchTest {
 
 	}
 
+        @Test
+        public void testSynonymAsHomonym(){
+            try{
+                searcher.searchForLSID("Terebratella");
+                fail("This test should throw a homonym for a matched synonym");
+            }
+            catch(Exception e){
+                assertTrue(e instanceof HomonymException);
+            }
+        }
+
+
 
         @Test
         public void catchAllSpeciesTest(){
@@ -111,14 +123,15 @@ public class CBIndexSearchTest {
                 assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:ca722c6d-6d53-4de6-b296-310621eeffa8", psce.getParentResult().getLsid());
                 assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:18ee79c4-3822-4d95-908c-f5c61f50b87f",psce.getChildResult().getLsid());
             }
-            name = "Culex";
-            try{
-                searcher.searchForLSID(name);
-                fail("An exception should have been thrown");
-            }
-            catch(Exception e){
-                assertTrue(e instanceof ParentSynonymChildException);
-            }
+            //This test is removed because we are not checking the genus,subgenus splits anymore
+//            name = "Culex";
+//            try{
+//                System.out.println("CULEX: "+searcher.searchForRecord(name,null));
+//                fail("An exception should have been thrown");
+//            }
+//            catch(Exception e){
+//                assertTrue(e instanceof ParentSynonymChildException);
+//            }
         }
 
         @Test

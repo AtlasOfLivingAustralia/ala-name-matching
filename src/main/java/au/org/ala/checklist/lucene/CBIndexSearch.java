@@ -1303,7 +1303,7 @@ public class CBIndexSearch {
                     //check to see if the search criteria could represent an unresolved genus or species homonym
                     if (results.size() > 0) {
                         RankType resRank = results.get(0).getRank();
-                        if (resRank == RankType.GENUS || resRank == RankType.SPECIES) {
+                        if ((resRank == RankType.GENUS || resRank == RankType.SPECIES)|| results.get(0).isSynonym()) {
                             NameSearchResult result = (cl != null && StringUtils.isNotBlank(cl.getAuthorship())) ? validateHomonymByAuthor(results, scientificName, cl) : validateHomonyms(results, scientificName, cl);
                             results.clear();
                             results.add(result);
@@ -1475,13 +1475,27 @@ public class CBIndexSearch {
 
         //check to see if the homonym is resolvable given the details provide
         try{
+
+            if (rank == null && results.get(0).isSynonym()) {
+                cl = new LinnaeanRankClassification(null, null);
+                String synName = results.get(0).getRankClassification().getScientificName();
+                if (synName.contains(" ")) {
+                    cl.setSpecies(synName);
+                    rank = RankType.SPECIES;
+                } else {
+                    cl.setGenus(synName);
+                    rank = RankType.GENUS;
+                }
+            }
+
             if(cl == null){
                 if(rank == RankType.GENUS)
                     cl = new LinnaeanRankClassification(null, name);
-                else{
+                else if(rank == RankType.SPECIES){
                     cl = new LinnaeanRankClassification(null, null);
                     cl.setSpecies(name);
                 }
+                
             }
             if(rank == RankType.GENUS && cl.getGenus() == null)
                 cl.setGenus(name);
@@ -1692,7 +1706,8 @@ public class CBIndexSearch {
                             return null;
                     }
                 }
-                return firstLsid;
+                //want to get the primary lsid for the taxon name thus we get the current lsid in the index...
+                return getPrimaryLsid(firstLsid);
             }
             catch(IOException e){
                 //
@@ -1746,13 +1761,14 @@ public class CBIndexSearch {
      * @return
      */
     public String getPrimaryLsid(String lsid){
-
-        TermQuery tq = new TermQuery(new Term("lsid", lsid));
-        try{
-        org.apache.lucene.search.TopDocs results = idSearcher.search(tq, 1);
-        if(results.totalHits>0)
-            return idSearcher.doc(results.scoreDocs[0].doc).get("reallsid");
-        }catch(IOException e){}
+        if(lsid != null){
+            TermQuery tq = new TermQuery(new Term("lsid", lsid));
+            try{
+            org.apache.lucene.search.TopDocs results = idSearcher.search(tq, 1);
+            if(results.totalHits>0)
+                return idSearcher.doc(results.scoreDocs[0].doc).get("reallsid");
+            }catch(IOException e){}
+        }
 
         return lsid;
     }
