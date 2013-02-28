@@ -64,7 +64,7 @@ class AutoDwcCSVLoader extends DataLoader{
     //val loadPattern ="""([\x00-\x7F\s]*_dwc.csv)""".r //"""(dwc-data[\x00-\x7F\s]*.gz)""".r
     val loadPattern = """([\x00-\x7F\s]*dwc[\x00-\x7F\s]*.csv[\x00-\x7F\s]*)""".r
     println(loadPattern.toString())
-    def load(dataResourceUid:String, includeIds:Boolean=false, forceLoad:Boolean = false){
+    def load(dataResourceUid:String, includeIds:Boolean=true, forceLoad:Boolean = false){
         //TODO support complete reload by looking up webservice
         val (protocol, urls, uniqueTerms, params, customParams,lastChecked) = retrieveConnectionParameters(dataResourceUid)
         val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]
@@ -98,6 +98,8 @@ class AutoDwcCSVLoader extends DataLoader{
     def loadLocalFile(dataResourceUid:String, filePath:String, includeIds:Boolean){
         val (protocol, urls, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(dataResourceUid)
         val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]
+        //remove the old file 
+        deleteOldRowKeys(dataResourceUid)
         loadAutoFile(new File(filePath),dataResourceUid, uniqueTerms, params, includeIds,strip) 
     }
     
@@ -135,12 +137,14 @@ class AutoDwcCSVLoader extends DataLoader{
             
             //NOw take the load files and use the DwcCSVLoader to load them
             dataFiles.foreach(dfile =>{ 
-                if(includeIds || !dfile.getName().contains("dwc-id")){
+                if(includeIds || (!dfile.getName().contains("dwc-id") && !dfile.getName().contains("dwcid"))){                  
+                  val storeKeys = !dfile.getName().contains("dwc-id") && !dfile.getName().contains("dwcid")
+                  logger.info("Loading " + dfile.getName() + " storing the keys for reprocessing: " + storeKeys)
                   if(dfile.getName.endsWith("gz")){
-                      csvLoader.loadFile(dfile.extractGzip, dataResourceUid, uniqueTerms, params,stripSpaces) 
+                      csvLoader.loadFile(dfile.extractGzip, dataResourceUid, uniqueTerms, params,stripSpaces,logRowKeys=storeKeys) 
                   }
                   else{
-                      csvLoader.loadFile(dfile, dataResourceUid, uniqueTerms, params, stripSpaces) 
+                      csvLoader.loadFile(dfile, dataResourceUid, uniqueTerms, params, stripSpaces,logRowKeys=storeKeys) 
                   }
                 }
             })

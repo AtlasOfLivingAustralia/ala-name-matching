@@ -153,6 +153,10 @@ object CMD {
             IndexRecords.index(None, None, Some(cmdAndDr(1)), false, false, miscIndexProperties = additionalFields)
           }
         }
+        case it if (it startsWith "force-index")=> {
+          val drs = it.split(" ").map(x => x.trim).toList.tail
+          drs.foreach(dr => IndexRecords.index(None, None, Some(dr), false, false))
+        }
         case it if (it startsWith "index ") || (it startsWith "index") => {
           val drs = it.split(" ").map(x => x.trim).toList.tail
           drs.foreach(dr => {
@@ -255,6 +259,16 @@ object CMD {
           
           val args2:Array[String] = if(args.size == 2) Array(args(0), "rows" ,"-d", args(1)) else if(args.size>2) Array(args(0), "rows" ,"-d", args(1), "--test") else Array()
           ResourceCleanupTask.main(args2)
+        }
+        case it if (it startsWith "remove-deleted-index") => {
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+          //generate a data that we are happy to delete from
+          //TODO base this on the last load date in the collectory
+          val delDate = au.org.ala.biocache.BiocacheConversions.dateToString(getLastLoadDate)
+          val query ="data_resource_uid:"+args(0)+ " AND last_load_date:[* TO " + delDate +"]"
+          val deletor = new QueryDelete(query)
+          println("Delete from index using query : " + query)
+          deletor.deleteFromIndex
         }
         case it if (it startsWith "remove-deleted") =>{
           val args = it.split(" ").map(x => x.trim).toArray.tail
@@ -359,8 +373,16 @@ object CMD {
     padAndPrint("[36]  remove-deleted <dr-uid> - removes all records from the data-store that have been marked as deleted")
     padAndPrint("[37]  delete-columns <dr-uid> <list of columns> - deletes all the columns specified in the space separated list")
     padAndPrint("[38]  delete-missing <dr-uid> <list of columns> - deletes all the columns that are not specified in the space separated list")
-    padAndPrint("[39]  exit")
+    padAndPrint("[39]  remove-deleted-index <dr-uid> - removes the records not loaded during the last load from index (NB last load will be interpreted as within the last 24 hours).")
+    padAndPrint("[40]  force-index <dr-uid1> <dr-uid2>  - forces a complete reindex of the supplied data resource (ignoring incremental file)")
+    padAndPrint("[41]  exit")
 
+  }
+  
+  def getLastLoadDate :java.util.Date ={
+    //At the moment return the current date minus 24 hours. 
+    //TODO obtain this from the last checked or data currency dates. - But not always updated and we don't want to lose data
+    org.apache.commons.lang.time.DateUtils.addDays(new java.util.Date(), -1)
   }
 
   def hasRowKey(resourceUid: String): (Boolean, Option[String]) = {
