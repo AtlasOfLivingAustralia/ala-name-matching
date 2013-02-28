@@ -256,8 +256,10 @@ object CMD {
         case it if (it startsWith "mark-deleted") => {
           //need to construct the args that will be used 
           val args = it.split(" ").map(x => x.trim).toArray.tail
+          val delDate = org.apache.commons.lang.time.DateFormatUtils.format(getLastLoadDate, "yyyy-MM-dd")          
+          //when no date provided use today minus 1 day.
+          val args2:Array[String] = if(args.size == 1) Array(args(0), "rows", "-d", delDate) else if(args.size == 2) Array(args(0), "rows" ,"-d", args(1)) else if(args.size>2) Array(args(0), "rows" ,"-d", args(1), "--test") else Array()
           
-          val args2:Array[String] = if(args.size == 2) Array(args(0), "rows" ,"-d", args(1)) else if(args.size>2) Array(args(0), "rows" ,"-d", args(1), "--test") else Array()
           ResourceCleanupTask.main(args2)
         }
         case it if (it startsWith "remove-deleted-index") => {
