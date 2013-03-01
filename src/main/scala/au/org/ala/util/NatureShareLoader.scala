@@ -1,12 +1,13 @@
 package au.org.ala.util
 
-import au.org.ala.biocache.DataLoader
+import au.org.ala.biocache.{Versions, FullRecordMapper, DataLoader}
 import com.gargoylesoftware.htmlunit.{Page, WebRequestSettings, BrowserVersion, WebClient}
 import java.net.URL
 import com.gargoylesoftware.htmlunit.html.{HtmlHead, HtmlPage}
 import xml.{Node, Elem, XML}
 import java.text.{SimpleDateFormat, MessageFormat}
 import java.util.Calendar
+import org.apache.commons.lang3.StringUtils
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,7 +27,33 @@ object NatureShareLoader extends DataLoader {
   val EMPTY_LOCATION_STRING = "(No location.)"
   val EMPTY_COMMENTS_STRING = "(No comments.)"
 
+  val OVERALL_TAG_SPECIES = "(overall)"
+
+  val ASSOCIATED_MEDIA_DWC_KEY = "associatedMedia"
+  val ASSOCIATED_OCCURRENCES_DWC_KEY = "associatedOccurrences"
+  val CATALOG_NUMBER_DWC_KEY = "catalogNumber"
+  val OCCURRENCE_DETAILS_DWC_KEY = "occurrenceDetails"
+  val OCCURRENCE_REMARKS_DWC_KEY = "occurrenceRemarks"
+  val RECORDED_BY_DWC_KEY = "recordedBy"
+  val EVENT_DATE_DWC_KEY = "eventDate"
+  val RIGHTS_DWC_KEY = "rights"
+  val PHOTOGRAPHER_FULLRECORD_KEY = "photographer"
+  val VERBATIM_LATITUDE_DWC_KEY = "verbatimLatitude"
+  val VERBATIM_LONGITUDE_DWC_KEY = "verbatimLongitude"
+  val EVENT_REMARKS_DWC_KEY = "eventRemarks"
+  val GEOREFERENCE_PROTOCOL_DWC_KEY = "georeferenceProtocol"
+  val SCIENTIFIC_NAME_DWC_KEY = "scientificName"
+
   def main(args: Array[String]) {
+    val loader = new TasNvaDataLoader
+    var dataResourceUid: String = null
+
+    val parser = new OptionParser("Import Natureshare data") {
+      arg("<data-resource-uid>", "the data resource to import", {
+        v: String => dataResourceUid = v
+      })
+    }
+
     new NatureShareLoader().load("foo")
   }
 
@@ -76,29 +103,31 @@ class NatureShareLoader extends CustomWebserviceLoader {
     val firstLink = pageLinks.find(_.toString().startsWith("/observation/")).get
 
     val latestObservationNumber = firstLink.toString().split("/")(2)
-    processObservation(latestObservationNumber)
+
+    for (i <- 1 to Integer.parseInt(latestObservationNumber)) {
+      println("Processing observation " + i)
+      processObservation(dataResourceUid, i.toString)
+    }
   }
 
-  def processObservation(observationNumber: String) {
-    val xml = NatureShareLoader.getHTMLPageAsXML(MessageFormat.format(NatureShareLoader.OBSERVATION_PAGE_TEMPLATE, "122"))
+  def processObservation(dataResourceUid : String, observationNumber: String) {
+    val observationUrl = MessageFormat.format(NatureShareLoader.OBSERVATION_PAGE_TEMPLATE, observationNumber)
+    val xml = NatureShareLoader.getHTMLPageAsXML(observationUrl)
     val divs = xml \\ "div"
 
     // scrape contributor
     val documentDiv = divs.find(nodeContainsAttributeWithValue(_, "class", "document")).get
     val contributor = (documentDiv \\ "a").head.text.trim
-    println(contributor)
 
     // scrape photos
     val photoDivs = divs.filter(nodeContainsAttributeWithValue(_, "class", "observation_page_photo"))
-    val imageUrls = photoDivs.map(n => (n \\ "a").last.attribute("href").get.text)
-    println(imageUrls)
+    val imageUrls = photoDivs.map(n => "http://natureshare.org.au" + (n \\ "a").last.attribute("href").get.text)
 
     // scrape species
     val speciesDiv = divs.find(nodeContainsAttributeWithValue(_, "id", "species")).get
     val spans = speciesDiv \\ "span"
     val nonDeletedSpeciesSpans = spans.filter(!nodeContainsAttributeWithValue(_, "class", "deleted"))
     val nonDeletedSpecies = nonDeletedSpeciesSpans.map(n => (n \\ "a").head.text.trim)
-    println(nonDeletedSpecies)
 
     // scrape tags
     var tagTuples: Seq[(java.lang.String, java.lang.String)] = null
@@ -112,14 +141,14 @@ class NatureShareLoader extends CustomWebserviceLoader {
         if (!nodeContainsAttributeWithValue((row \\ "td").head, "class", "deleted")) {
           ((row \\ "td").head.text.trim(), (row \\ "td").last.text.trim())
         } else {
-          (null, null)
+          // Deleted tag. Must return a value as using the map function here. Return a tuple with two empty strings as a placeholder.
+          ("", "")
         }
       })
     }
-    println(tagTuples)
 
     // scrape date/time
-    var parsedDateTime: java.util.Date = null
+    var formattedDateTime: String = null
     val dateTimeDiv = divs.find(nodeContainsAttributeWithValue(_, "id", "datetime")).get
     if (!dateTimeDiv.text.contains(NatureShareLoader.EMPTY_DATETIME_STRING)) {
       val dateTime = (dateTimeDiv \\ "p").head.text.trim
@@ -138,13 +167,18 @@ class NatureShareLoader extends CustomWebserviceLoader {
       if (dateTimeParts.length >= 4) {
         val time = dateTimeParts(4).replace("(", "").replace(")", "").trim
         val natureServeDateTimeFormat = new SimpleDateFormat("MMM. dd, yyyy hh:mm a")
-        parsedDateTime = natureServeDateTimeFormat.parse(date + " " + time)
+        val parsedDateTime = natureServeDateTimeFormat.parse(date + " " + time)
+
+        val isoDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+        formattedDateTime = isoDateTimeFormat.format(parsedDateTime)
       } else {
         val natureServeDateFormat = new SimpleDateFormat("MMM. dd, yyyy")
-        parsedDateTime = natureServeDateFormat.parse(date)
+        val parsedDateTime = natureServeDateFormat.parse(date)
+
+        val isoDateFormat = new SimpleDateFormat("yyyy-MM-dd")
+        formattedDateTime = isoDateFormat.format(parsedDateTime)
       }
     }
-    println(parsedDateTime)
 
     // scrape description
     var description: String = null
@@ -153,10 +187,7 @@ class NatureShareLoader extends CustomWebserviceLoader {
       description = (descriptionDiv \\ "p").head.text.trim.replace("\n", " ")
     }
 
-    println(description)
-
-    // scrape collections
-    // (ignore)
+    // ignore collections
 
     // scrape location
     var latitude: String = null
@@ -168,8 +199,6 @@ class NatureShareLoader extends CustomWebserviceLoader {
       latitude = latitudeLongitude.split(",")(0).trim
       longitude = latitudeLongitude.split(",")(1).trim
     }
-    println(latitude)
-    println(longitude)
 
     // scrape comments
     var comments: Seq[String] = null
@@ -179,17 +208,105 @@ class NatureShareLoader extends CustomWebserviceLoader {
       //The text that we want for the comment comes in 3 pieces. Strip out the newlines and spaces that separate them.
       comments = commentItems.map(node => node.text.trim.replace("\n", "").replaceAll( """\s{2,}""", " "))
     }
-    println(comments)
 
     // scrape parts of the metadata
     val metadataDiv = divs.find(nodeContainsAttributeWithValue(_, "id", "meta")).get
     val metadataLines = (metadataDiv \\ "p").text.split("\n")
     val photoDateTimeUsed = (metadataLines(11).trim == "Photo datetime used: yes")
     val photoGeotagUsed = (metadataLines(14).trim == "Photo geotag used: yes")
-    println(photoDateTimeUsed)
-    println(photoGeotagUsed)
 
+    // To create an occurrence record we need a scientific name and a location at a minimum.
+    if (!nonDeletedSpecies.isEmpty && latitude != null && longitude != null) {
+      if (nonDeletedSpecies.size > 1) {
+        for (scientificName <- nonDeletedSpecies) {
+          val tagList = generateTagList(tagTuples, scientificName)
+          val catalogNumber = observationNumber + "_" + scientificName.replace(" ", "_")
+          val associatedOccurrences = nonDeletedSpecies.filter(species => species != scientificName).map(species => observationNumber + "_" + species.replace(" ", "_"))
+          createOccurrenceRecord(dataResourceUid, catalogNumber, scientificName, contributor, formattedDateTime, latitude, longitude, imageUrls, description, comments, associatedOccurrences, tagList, observationUrl, photoDateTimeUsed, photoGeotagUsed)
+        }
+      } else {
+        val scientificName = nonDeletedSpecies.head
+        val tagList = generateTagList(tagTuples, scientificName)
+
+
+        createOccurrenceRecord(dataResourceUid, observationNumber, scientificName, contributor, formattedDateTime, latitude, longitude, imageUrls, description, comments, null, tagList, observationUrl, photoDateTimeUsed, photoGeotagUsed)
+      }
+    } else {
+      println("Insufficient data - ignoring " + observationNumber)
+    }
+  }
+
+  def generateTagList(tagTuples: Seq[(String, String)], scientificName: String) : Seq[String] = {
+    var tagList: Seq[String] = Seq[String]()
+    if (tagTuples != null) {
+      for ((tag: String, speciesForTag: String) <- tagTuples) {
+        // skip tuples where both values are null. These are placeholders for deleted tags.
+        if (tag != "" && speciesForTag != "") {
+          if ((speciesForTag == scientificName || speciesForTag == NatureShareLoader.OVERALL_TAG_SPECIES) && !tagList.contains(tag)) {
+            tagList = tagList :+ tag
+          }
+        }
+      }
+    }
+    tagList
+  }
+
+  def createOccurrenceRecord(dataResourceUid : String, catalogNumber: String, scientificName: String, contributor: String, date: String,
+                             latitude: String, longitude: String, imageUrls: Seq[String], description: String,
+                             comments: Seq[String], associatedOccurrences: Seq[String], tags: Seq[String], originalRecordUrl: String,
+                             photoDateTimeUsed: Boolean, photoGeotagUsed: Boolean) {
+
+    var mappedValues = Map[String, String]()
+    mappedValues += (NatureShareLoader.CATALOG_NUMBER_DWC_KEY -> catalogNumber.trim())
+    mappedValues += (NatureShareLoader.SCIENTIFIC_NAME_DWC_KEY -> scientificName.trim())
+    mappedValues += (NatureShareLoader.RECORDED_BY_DWC_KEY -> contributor.trim())
+    mappedValues += (NatureShareLoader.EVENT_DATE_DWC_KEY -> date.trim())
+    mappedValues += (NatureShareLoader.VERBATIM_LATITUDE_DWC_KEY -> latitude.trim())
+    mappedValues += (NatureShareLoader.VERBATIM_LONGITUDE_DWC_KEY -> longitude.trim())
     // All records have licence CC BY 2.5 AU
+    mappedValues += (NatureShareLoader.RIGHTS_DWC_KEY -> "CC BY 2.5 AU")
+
+    if (imageUrls != null && !imageUrls.isEmpty) {
+      mappedValues += (NatureShareLoader.ASSOCIATED_MEDIA_DWC_KEY -> imageUrls.mkString(";"))
+
+      mappedValues += (NatureShareLoader.PHOTOGRAPHER_FULLRECORD_KEY -> contributor.trim())
+    }
+
+    if (associatedOccurrences != null && !associatedOccurrences.isEmpty) {
+      mappedValues += (NatureShareLoader.ASSOCIATED_OCCURRENCES_DWC_KEY -> associatedOccurrences.mkString(";"))
+    }
+
+    mappedValues += (NatureShareLoader.OCCURRENCE_DETAILS_DWC_KEY -> originalRecordUrl.trim())
+
+    if (photoDateTimeUsed) {
+      mappedValues += (NatureShareLoader.EVENT_REMARKS_DWC_KEY -> "Photo date/time used.")
+    }
+
+    if (photoGeotagUsed) {
+      mappedValues += (NatureShareLoader.GEOREFERENCE_PROTOCOL_DWC_KEY -> "Photo geotag used.")
+    }
+
+    var occurrencesRemarksString: String = ""
+    if (!StringUtils.isEmpty(description)) {
+      occurrencesRemarksString += "Description: " + description + " "
+    }
+
+    if (tags != null && !tags.isEmpty) {
+      occurrencesRemarksString += "Tags: " + tags.mkString(",") + " "
+    }
+
+    if (comments != null && !comments.isEmpty) {
+      occurrencesRemarksString += "Comments: " + comments.mkString(",") + " "
+    }
+
+    if (!StringUtils.isEmpty(occurrencesRemarksString)) {
+      mappedValues += (NatureShareLoader.OCCURRENCE_REMARKS_DWC_KEY -> occurrencesRemarksString.trim())
+    }
+
+    println(mappedValues)
+    val fr = FullRecordMapper.createFullRecord("", mappedValues, Versions.RAW)
+    val uniqueTermsValues = List(mappedValues(NatureShareLoader.CATALOG_NUMBER_DWC_KEY))
+    load(dataResourceUid, fr, uniqueTermsValues)
   }
 
   def nodeContainsAttributeWithValue(node: Node, key: String, value: String): Boolean = {
