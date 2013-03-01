@@ -43,6 +43,7 @@ object NatureShareLoader extends DataLoader {
   val EVENT_REMARKS_DWC_KEY = "eventRemarks"
   val GEOREFERENCE_PROTOCOL_DWC_KEY = "georeferenceProtocol"
   val SCIENTIFIC_NAME_DWC_KEY = "scientificName"
+  val RIGHTS_HOLDER_DWC_KEY = "rightsholder"
 
   def main(args: Array[String]) {
     val loader = new TasNvaDataLoader
@@ -102,9 +103,11 @@ class NatureShareLoader extends CustomWebserviceLoader {
     val pageLinks = xml \\ "@href"
     val firstLink = pageLinks.find(_.toString().startsWith("/observation/")).get
 
-    val latestObservationNumber = firstLink.toString().split("/")(2)
+    val latestObservationNumberAsString = firstLink.toString().split("/")(2)
 
-    for (i <- 1 to Integer.parseInt(latestObservationNumber)) {
+    val totalObservations = Integer.parseInt(latestObservationNumberAsString)
+    for (i <- totalObservations - 10 to totalObservations) {
+    //for (i <- 1 to totalObservations) {
       println("Processing observation " + i)
       processObservation(dataResourceUid, i.toString)
     }
@@ -265,6 +268,9 @@ class NatureShareLoader extends CustomWebserviceLoader {
     mappedValues += (NatureShareLoader.VERBATIM_LONGITUDE_DWC_KEY -> longitude.trim())
     // All records have licence CC BY 2.5 AU
     mappedValues += (NatureShareLoader.RIGHTS_DWC_KEY -> "CC BY 2.5 AU")
+
+    // Rights holder is always "NatureShare"
+    mappedValues += (NatureShareLoader.RIGHTS_HOLDER_DWC_KEY -> "NatureShare")
 
     if (imageUrls != null && !imageUrls.isEmpty) {
       mappedValues += (NatureShareLoader.ASSOCIATED_MEDIA_DWC_KEY -> imageUrls.mkString(";"))
