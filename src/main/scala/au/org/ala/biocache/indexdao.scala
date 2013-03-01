@@ -369,6 +369,8 @@ trait IndexDAO {
         val loanReturnDate = DateParser.parseStringToDate(map.getOrElse("loanReturnDate", ""))
         val dateIdentified = DateParser.parseStringToDate(map.getOrElse("dateIdentified.p", ""))
         
+        val modifiedDate = DateParser.parseStringToDate(map.getOrElse("modified.p", ""))
+        
         var taxonIssue = map.getOrElse("taxonomicIssue.p", "[]")
         if(!taxonIssue.startsWith("[")){
           println("WARNING " + map.getOrElse("rowKey","") +" does not have an updated taxonIssue: " + guid)
@@ -461,7 +463,7 @@ trait IndexDAO {
           if (lastUserAssertion.isEmpty) "" else DateFormatUtils.format(lastUserAssertion.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
           if (lastLoaded.isEmpty) "2010-11-1T00:00:00Z" else DateFormatUtils.format(lastLoaded.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
           if (lastProcessed.isEmpty) "" else DateFormatUtils.format(lastProcessed.get, "yyyy-MM-dd'T'HH:mm:ss'Z'"),
-          if (map.contains("modified.p")) map.getOrElse("modified.p", "") + "T00:00:00Z" else "",
+          if(modifiedDate.isEmpty)"" else DateFormatUtils.format(modifiedDate.get,"yyy-MM-dd'T'HH:mm:ss'Z'"),          
           map.getOrElse("establishmentMeans.p", "").replaceAll("; ", "|"),
           map.getOrElse("loanSequenceNumber", ""), map.getOrElse("loanIdentifier", ""), map.getOrElse("loanDestination", ""),
           map.getOrElse("loanForBotanist", ""),
