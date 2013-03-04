@@ -106,8 +106,7 @@ class NatureShareLoader extends CustomWebserviceLoader {
     val latestObservationNumberAsString = firstLink.toString().split("/")(2)
 
     val totalObservations = Integer.parseInt(latestObservationNumberAsString)
-    for (i <- totalObservations - 10 to totalObservations) {
-    //for (i <- 1 to totalObservations) {
+    for (i <- 1 to totalObservations) {
       println("Processing observation " + i)
       processObservation(dataResourceUid, i.toString)
     }
@@ -270,7 +269,8 @@ class NatureShareLoader extends CustomWebserviceLoader {
     mappedValues += (NatureShareLoader.RIGHTS_DWC_KEY -> "CC BY 2.5 AU")
 
     // Rights holder is always "NatureShare"
-    mappedValues += (NatureShareLoader.RIGHTS_HOLDER_DWC_KEY -> "NatureShare")
+    val rightsHolderString = contributor + " via NatureShare"
+    mappedValues += (NatureShareLoader.RIGHTS_HOLDER_DWC_KEY -> rightsHolderString)
 
     if (imageUrls != null && !imageUrls.isEmpty) {
       mappedValues += (NatureShareLoader.ASSOCIATED_MEDIA_DWC_KEY -> imageUrls.mkString(";"))
