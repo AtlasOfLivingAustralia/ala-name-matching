@@ -108,13 +108,23 @@ class NatureShareLoader extends CustomWebserviceLoader {
     val totalObservations = Integer.parseInt(latestObservationNumberAsString)
     for (i <- 1 to totalObservations) {
       println("Processing observation " + i)
+
+      try {
       processObservation(dataResourceUid, i.toString)
+      } catch {
+        case ex: Throwable => {
+          println("ERROR: observation " + i.toString() + " failed to load:")
+          ex.printStackTrace()
+        };
+      }
     }
   }
 
   def processObservation(dataResourceUid : String, observationNumber: String) {
     val observationUrl = MessageFormat.format(NatureShareLoader.OBSERVATION_PAGE_TEMPLATE, observationNumber)
+
     val xml = NatureShareLoader.getHTMLPageAsXML(observationUrl)
+
     val divs = xml \\ "div"
 
     // scrape contributor
