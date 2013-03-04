@@ -55,7 +55,7 @@ object NatureShareLoader extends DataLoader {
       })
     }
 
-    new NatureShareLoader().load("foo")
+    new NatureShareLoader().load(dataResourceUid)
   }
 
   def getHTMLPageAsXML(url: String): Elem = {
@@ -262,7 +262,11 @@ class NatureShareLoader extends CustomWebserviceLoader {
     mappedValues += (NatureShareLoader.CATALOG_NUMBER_DWC_KEY -> catalogNumber.trim())
     mappedValues += (NatureShareLoader.SCIENTIFIC_NAME_DWC_KEY -> scientificName.trim())
     mappedValues += (NatureShareLoader.RECORDED_BY_DWC_KEY -> contributor.trim())
-    mappedValues += (NatureShareLoader.EVENT_DATE_DWC_KEY -> date.trim())
+
+    if (date != null) {
+      mappedValues += (NatureShareLoader.EVENT_DATE_DWC_KEY -> date.trim())
+    }
+
     mappedValues += (NatureShareLoader.VERBATIM_LATITUDE_DWC_KEY -> latitude.trim())
     mappedValues += (NatureShareLoader.VERBATIM_LONGITUDE_DWC_KEY -> longitude.trim())
     // All records have licence CC BY 2.5 AU
