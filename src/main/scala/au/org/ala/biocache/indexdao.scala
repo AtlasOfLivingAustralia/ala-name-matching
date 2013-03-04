@@ -638,7 +638,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     }
   }
 
-  def reload = cc.reload("biocache")
+  def reload = if(cc != null) cc.reload("biocache")
 
 
 
