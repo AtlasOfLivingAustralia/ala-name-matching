@@ -110,7 +110,7 @@ class NatureShareLoader extends CustomWebserviceLoader {
       println("Processing observation " + i)
 
       try {
-      processObservation(dataResourceUid, i.toString)
+        processObservation(dataResourceUid, i.toString)
       } catch {
         case ex: Throwable => {
           println("ERROR: observation " + i.toString() + " failed to load:")
@@ -138,6 +138,7 @@ class NatureShareLoader extends CustomWebserviceLoader {
     // scrape species
     val speciesDiv = divs.find(nodeContainsAttributeWithValue(_, "id", "species")).get
     val spans = speciesDiv \\ "span"
+
     val nonDeletedSpeciesSpans = spans.filter(!nodeContainsAttributeWithValue(_, "class", "deleted"))
     val nonDeletedSpecies = nonDeletedSpeciesSpans.map(n => (n \\ "a").head.text.trim)
 
@@ -238,10 +239,10 @@ class NatureShareLoader extends CustomWebserviceLoader {
         }
       } else {
         val scientificName = nonDeletedSpecies.head
+        val catalogNumber = observationNumber + "_" + scientificName.replace(" ", "_")
         val tagList = generateTagList(tagTuples, scientificName)
 
-
-        createOccurrenceRecord(dataResourceUid, observationNumber, scientificName, contributor, formattedDateTime, latitude, longitude, imageUrls, description, comments, null, tagList, observationUrl, photoDateTimeUsed, photoGeotagUsed)
+        createOccurrenceRecord(dataResourceUid, catalogNumber, scientificName, contributor, formattedDateTime, latitude, longitude, imageUrls, description, comments, null, tagList, observationUrl, photoDateTimeUsed, photoGeotagUsed)
       }
     } else {
       println("Insufficient data - ignoring " + observationNumber)
