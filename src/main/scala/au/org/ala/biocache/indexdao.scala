@@ -162,7 +162,7 @@ trait IndexDAO {
     "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue", "raw_identification_qualifier", "species_habitats",
     "identified_by", "identified_date", "sensitive_longitude", "sensitive_latitude", "pest_flag_s", "collectors", "duplicate_status", "duplicate_record",
     "duplicate_type", "sensitive_coordinate_uncertainty", "distance_outside_expert_range", "elevation_d", "min_elevation_d", "max_elevation_d",
-    "depth_d", "min_depth_d", "max_depth_d", "name_parse_type_s","occurrence_status_s") // ++ elFields ++ clFields
+    "depth_d", "min_depth_d", "max_depth_d", "name_parse_type_s","occurrence_status_s", "occurrence_details", "photographer_s", "rights") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -485,7 +485,8 @@ trait IndexDAO {
           map.getOrElse("distanceOutsideExpertRange.p", ""),
           map.getOrElse("verbatimElevation.p", ""), map.getOrElse("minimumElevationInMeters.p", ""), map.getOrElse("maximumElevationInMeters.p", ""),
           map.getOrElse("verbatimDepth.p", ""), map.getOrElse("minimumDepthInMeters.p", ""), map.getOrElse("maximumDepthInMeters.p", ""),
-          map.getOrElse("nameParseType.p",""),map.getOrElse("occurrenceStatus","")
+          map.getOrElse("nameParseType.p",""),map.getOrElse("occurrenceStatus",""), map.getOrElse("occurrenceDetails",""), map.getOrElse("photographer",""),
+          map.getOrElse("rights","")
         ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
         //)
       }
