@@ -35,6 +35,35 @@ public class CBIndexSearchTest {
 	}
 
         @Test
+        public void testMisappliedNames(){
+            try{
+                //test to ensure that the accepted name is returned when it also exists as a misapplied name.
+                String lsid = searcher.searchForLSID("Tephrosia savannicola");
+                fail("A misapplied exception should be thrown");
+                //assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:549612",lsid);
+            }
+            catch(MisappliedException e){
+                assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:549612", e.getMatchedResult().getLsid());
+                assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:685259", e.getMisappliedResult().getLsid());
+            }
+            catch(Exception e){
+                fail("No other exceptions should occur");
+            }
+            //test a misapplied name that does not have an accepted concept
+            try{
+                String lsid = searcher.searchForLSID("Myosurus minimus");
+                fail("a misapplied expcetption shoudl be thrown.");
+            }
+            catch(MisappliedException e){
+                assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:303525", e.getMatchedResult().getLsid());
+                assertTrue(e.getMisappliedResult() == null);
+            }
+            catch(Exception e){
+                fail("no other exceptions should occur.");
+            }
+        }
+
+        @Test
         public void testSynonymAsHomonym(){
             try{
                 searcher.searchForLSID("Terebratella");

@@ -34,6 +34,48 @@ public class BiocacheMatchTest {
 
     }
     @Test
+    public void testHomonym(){
+        try{
+            System.out.println(searcher.searchForRecord("Terebratella",null));
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+    @Test
+    public void commonName(){
+        try{
+            //System.out.println(searcher.searchForCommonName("Red Kangaroo"));
+           // searcher.searchForLSID("Centropogon australis");
+            searcher.searchForRecord("Dexillus muelleri",null);
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testMisappliedNames(){
+        try{
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName("Tephrosia savannicola");
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
+            assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:549612", metrics.getResult().getLsid());
+            cl = new LinnaeanRankClassification();
+            cl.setScientificName("Myosurus minimus");
+            metrics = searcher.searchForRecordMetrics(cl, true);
+            assertTrue(metrics.getErrors().contains(ErrorType.MISAPPLIED));
+            assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:319672", metrics.getResult().getLsid());
+        }
+
+        catch(Exception e){
+            fail("No exception shoudl occur");
+            e.printStackTrace();
+        }
+    }
+
+    @Test
     public void testAuthorsProvidedInName(){
         try{
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
@@ -53,9 +95,15 @@ public class BiocacheMatchTest {
     public void testAffCfSpecies(){
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
         try{
+
+            cl.setScientificName("Zabidius novemaculeatus");
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            System.out.println(metrics);
+
+
             cl.setScientificName("Climacteris affinis");
             //this on should match with parent child synonym issue
-            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            metrics = searcher.searchForRecordMetrics(cl, true);
             assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
             cl = new LinnaeanRankClassification();
             cl.setScientificName("Acacia aff. retinodes");

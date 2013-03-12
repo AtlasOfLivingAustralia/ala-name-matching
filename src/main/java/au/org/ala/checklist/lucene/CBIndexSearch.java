@@ -665,6 +665,12 @@ public class CBIndexSearch {
         try{
             nsr = searchForRecord(name, cl, rank,fuzzy);
         }
+        catch(MisappliedException e){
+            metrics.setLastException(e);
+            metrics.getErrors().add(e.errorType);
+            if(e.getMisappliedResult() != null)
+                nsr = e.getMatchedResult();
+        }
         catch(ParentSynonymChildException e){
             metrics.setLastException(e);
             metrics.getErrors().add(e.errorType);
@@ -1288,6 +1294,9 @@ public class CBIndexSearch {
 
                     //check to see if we have a situtation where a species has been split into subspecies and a synonym exists to the subspecies
                     checkForSpeciesSplit(results);
+
+                    //check to see if one of the results is a misapplied synonym
+                    checkForMisapplied(results);
                     
 
                     //check result level homonyms
@@ -1362,6 +1371,23 @@ public class CBIndexSearch {
 
         }
         return false;
+    }
+
+    private void checkForMisapplied(List<NameSearchResult> results) throws MisappliedException{
+        if(results.size() >=1){
+            NameSearchResult first = results.get(0);
+            NameSearchResult second = (results.size()>1) ? results.get(1):null;
+            if(first.getSynonymType() ==  au.org.ala.checklist.lucene.model.SynonymType.MISAPPLIED){
+                //the first result is misapplied
+                NameSearchResult accepted = searchForRecordByLsid(first.getAcceptedLsid());
+                throw new MisappliedException(accepted);
+            }
+            else if(!first.isSynonym() && second != null && second.getSynonymType() == au.org.ala.checklist.lucene.model.SynonymType.MISAPPLIED){
+                NameSearchResult accepted = searchForRecordByLsid(second.getAcceptedLsid());
+                throw new MisappliedException(first, accepted);
+            }
+            //nsr.getSynonymType() == au.org.ala.checklist.lucene.model.SynonymType.EXCLUDES
+        }
     }
 
     private void checkForSpeciesSplit(List<NameSearchResult> results) throws ParentSynonymChildException{
