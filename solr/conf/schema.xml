@@ -711,6 +711,8 @@
 <!-- used for harvesting images into the BIE -->
      <field name="occurrence_details" type="string" indexed="false" stored="true" multiValued="false" omitNorms="true" />
      <field name="rights" type="string" indexed="false" stored="true" multiValued="false" omitNorms="true" />
+     <field name="photographer_s" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+
 
 	<field name="query_assertion_uuid" type="string" indexed="true" stored="true" multiValued="true" omitNorms="true" />
 	<field name="query_assertion_type_s" type="string" indexed="true" stored="true" multiValued="true" omitNorms="true" />
