@@ -750,6 +750,65 @@ public class CBIndexSearch {
         return searchForRecord(name, rank, false);
     }
     /**
+     * Returns the accepted LSID for the supplied classification.
+     *
+     * If a synonym is matched the accepted LSID is retrieved and returned.
+     *
+     * It uses the default error handling.  For example matches to excluded concepts are permitted.
+     *
+     * Do not use this method if you would like control over how error conditions are handled.
+     *
+     * @param cl
+     * @param fuzzy
+     * @return
+     */
+    public String searchForAcceptedLsidDefaultHandling(LinnaeanRankClassification cl,boolean fuzzy){
+        NameSearchResult nsr = searchForAcceptedRecordDefaultHandling(cl, fuzzy);
+        if(nsr == null)
+            return null;
+        return nsr.getLsid();
+    }
+
+    /**
+     * Returns the accepted result for the supplied classification.
+     *
+     * If a synonym is matched the accepted result is retrieved and returned.
+     *
+     * It uses the default error handling.  For example matches to excluded concepts are permitted.
+     *
+     * Do not use this method if you would like control over how error conditions are handled.
+     *
+     * @param cl
+     * @param fuzzy
+     * @return
+     */
+    public NameSearchResult searchForAcceptedRecordDefaultHandling(LinnaeanRankClassification cl,boolean fuzzy){
+        NameSearchResult nsr = null;
+        try{
+            nsr =searchForRecord(cl.getScientificName(), cl, null, fuzzy);
+        }
+        catch(MisappliedException e){
+            if(e.getMisappliedResult() != null)
+                nsr = e.getMatchedResult();
+        }
+        catch(ParentSynonymChildException e){
+            nsr = e.getChildResult();
+        }
+        catch(ExcludedNameException e){
+            nsr = e.getNonExcludedName() != null? e.getNonExcludedName():e.getExcludedName();
+        }
+        catch(SearchResultException e){
+            //do nothing
+        }
+
+        //now check for accepted concepts
+        if(nsr != null && nsr.isSynonym())
+            nsr = searchForRecordByLsid(nsr.getAcceptedLsid());
+
+        return nsr;
+    }
+
+    /**
      * Searches for a record based on the supplied name and rank. It uses the kingdom and genus to resolve homonyms.
      *
      * @param name
