@@ -598,7 +598,7 @@ object LocationDAO {
             }
             location.ibra = map.getOrElse("cl20", null)
             location.imcra = map.getOrElse("cl21", null)
-            location.country = map.getOrElse("cl922", null)
+            location.country = map.getOrElse("cl932", null) //NC 20130322 - this is the new layer that supersedes cl922
             location.lga = map.getOrElse("cl23", null)
             
             //if the country is null but the stateProvince has a value we can assume that it is an Australian point
