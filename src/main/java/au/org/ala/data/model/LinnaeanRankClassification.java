@@ -412,17 +412,17 @@ public class LinnaeanRankClassification {
             String prefix = optional ? " " : " +";
             StringBuilder sb = new StringBuilder();
             if(StringUtils.isNotEmpty(kingdom))
-                sb.append(prefix).append(RankType.KINGDOM.getRank()).append(":").append(kingdom);
+                sb.append(prefix).append(RankType.KINGDOM.getRank()).append(":\"").append(kingdom).append("\"");
             if(StringUtils.isNotEmpty(phylum))
-                sb.append(prefix).append(RankType.PHYLUM.getRank()).append(":").append(phylum);
+                sb.append(prefix).append(RankType.PHYLUM.getRank()).append(":\"").append(phylum).append("\"");
             if(StringUtils.isNotEmpty(klass))
-                sb.append(prefix).append(RankType.CLASS.getRank()).append(":").append(klass);
+                sb.append(prefix).append(RankType.CLASS.getRank()).append(":\"").append(klass).append("\"");
             if(StringUtils.isNotEmpty(order))
-                sb.append(prefix).append(RankType.ORDER.getRank()).append(":").append(order);
+                sb.append(prefix).append(RankType.ORDER.getRank()).append(":\"").append(order).append("\"");
             if(StringUtils.isNotEmpty(family))
-                sb.append(prefix).append(RankType.FAMILY.getRank()).append(":").append(family);
+                sb.append(prefix).append(RankType.FAMILY.getRank()).append(":\"").append(family).append("\"");
             if(StringUtils.isNotEmpty(genus))
-                sb.append(prefix).append(RankType.GENUS.getRank()).append(":").append(genus);
+                sb.append(prefix).append(RankType.GENUS.getRank()).append(":\"").append(genus).append("\"");
             if(StringUtils.isNotEmpty(species))
                 sb.append(prefix).append(RankType.SPECIES.getRank()).append(":\"").append(species).append("\"");
             //authorship is always optional due to inconsistencies in the name format etc...
