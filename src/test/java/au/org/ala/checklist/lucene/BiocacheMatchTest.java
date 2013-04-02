@@ -33,6 +33,43 @@ public class BiocacheMatchTest {
         }
 
     }
+
+//    @Test public void testKing(){
+//        try{
+//            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+//            cl.setScientificName("Howea");
+//            cl.setKingdom("animalia");
+//            searcher.searchForAcceptedLsidDefaultHandling(cl, true);
+//        }
+//        catch(Exception e){
+//            e.printStackTrace();
+//        }
+//    }
+
+    @Test
+    public void genericIssueTest(){
+        try{
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setAuthorship("L.");
+            cl.setScientificName("Echium vulgare L.");
+            cl.setKlass("Equisetopsida");
+            cl.setPhylum("Streptophyta");
+            cl.setKingdom("Plantae");
+            cl.setGenus("EcHium");
+            cl.setOrder("[Boraginales]");
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:308506", metrics.getResult().getLsid());
+            //System.out.println(metrics);
+            //System.out.println(metrics.getLastException());
+            //System.out.println(metrics.getErrors());
+            //System.out.println(metrics.getResult());
+            //metrics.getLastException().printStackTrace();
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
     @Test
     public void testHomonym(){
         try{
@@ -152,7 +189,7 @@ public class BiocacheMatchTest {
             assertTrue(metrics.getErrors().contains(ErrorType.HOMONYM));
             assertTrue(metrics.getErrors().contains(ErrorType.QUESTION_SPECIES));
             assertTrue(metrics.getResult() == null);
-            
+
             //System.out.println(metrics);
         }
         catch(Exception e){
