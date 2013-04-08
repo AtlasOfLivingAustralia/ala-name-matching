@@ -79,7 +79,7 @@ class Loader extends DataLoader {
             println("flickr webservice loading")
             val l = new FlickrLoader
             if(!test)
-              l.load(dataResourceUid)
+              l.load(dataResourceUid, true)
             else
               println("TESTING is not supported for Flickr")
           }

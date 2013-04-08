@@ -34,21 +34,17 @@ object FlickrLoader extends DataLoader {
       if(lastMonth){
         val today = new Date
         val monthAgo = DateUtils.addMonths(today, -1)
-        l.load(dataResourceUid, Some(monthAgo), Some(today), overwriteImages)
+        l.load(dataResourceUid, Some(monthAgo), Some(today), updateCollectory, overwriteImages)
       } else if(lastDay){
         val today = new Date
         val yesterday = DateUtils.addDays(today, -1)
-        l.load(dataResourceUid, Some(yesterday), Some(today), overwriteImages)
+        l.load(dataResourceUid, Some(yesterday), Some(today), updateCollectory, overwriteImages)
       } else if(lastWeek){
         val today = new Date
         val sevenDaysAgo = DateUtils.addWeeks(today, -1)
-        l.load(dataResourceUid, Some(sevenDaysAgo), Some(today), overwriteImages)
+        l.load(dataResourceUid, Some(sevenDaysAgo), Some(today), updateCollectory, overwriteImages)
       } else {
-        l.load(dataResourceUid, startDate, endDate, overwriteImages)
-      }
-
-      if (updateCollectory){
-        l.updateLastChecked(dataResourceUid)
+        l.load(dataResourceUid, startDate, endDate, updateCollectory, overwriteImages)
       }
     }
   }
@@ -62,7 +58,7 @@ class FlickrLoader extends DataLoader {
   val BHLLinkInText = """([.*]*)?(biodiversitylibrary.org/page/)([0-9]*)([.*]*)?"""".r
   val BHLLink = """(biodiversitylibrary.org/page/)([0-9]*)"""".r
 
-  def load(dataResourceUid: String):Unit = load(dataResourceUid, None, None)
+  def load(dataResourceUid: String, updateCollectory: Boolean):Unit = load(dataResourceUid, None, None, updateCollectory)
 
   /**
    * Retrieve a map of licences
@@ -81,7 +77,7 @@ class FlickrLoader extends DataLoader {
   /**
    * Load the resource between the supplied dates.
    */
-  def load(dataResourceUid: String, suppliedStartDate: Option[Date], suppliedEndDate: Option[Date], overwriteImages: Boolean = false){
+  def load(dataResourceUid: String, suppliedStartDate: Option[Date], suppliedEndDate: Option[Date], updateCollectory: Boolean, overwriteImages: Boolean = false){
 
     val (protocol, url, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(dataResourceUid)
 
@@ -137,6 +133,10 @@ class FlickrLoader extends DataLoader {
       }
       currentEndDate = currentStartDate
       currentStartDate = DateUtils.addDays(currentEndDate, -1)
+    }
+
+    if (updateCollectory){
+      updateLastChecked(dataResourceUid)
     }
   }
 
