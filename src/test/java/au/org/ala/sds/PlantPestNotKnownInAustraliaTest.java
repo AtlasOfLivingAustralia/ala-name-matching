@@ -50,9 +50,11 @@ public class PlantPestNotKnownInAustraliaTest {
 //        ((BasicDataSource) dataSource).setUrl("jdbc:mysql://localhost/portal");
 //        ((BasicDataSource) dataSource).setUsername("root");
 //        ((BasicDataSource) dataSource).setPassword("password");
-
+        System.out.println(Configuration.getInstance().getNameMatchingIndex());
         cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
+        String uri = cbIndexSearch.getClass().getClassLoader().getResource("sensitive-species.xml").toURI().toString();
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(uri, cbIndexSearch, true);
+        //finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species-test.xml", cbIndexSearch);
     }
 
     @Test
@@ -161,5 +163,23 @@ public class PlantPestNotKnownInAustraliaTest {
         assertTrue(outcome.isValid());
         assertTrue(outcome.isLoadable());
    }
+
+    @Test
+    public void category8HeterobostrychusAequalis() {
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Heterobostrychus aequalis");
+        assertNotNull(ss);
+        Map<String,String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.STATE_PROVINCE_KEY, "NT");
+        facts.put(FactCollection.ZONES_KEY, "NT");
+        facts.put(FactCollection.EVENT_DATE_KEY, "1977-06-01");
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+
+        assertTrue(outcome.isValid());
+        assertTrue(outcome.isLoadable());
+        System.out.println(outcome.getReport());
+
+    }
 
 }

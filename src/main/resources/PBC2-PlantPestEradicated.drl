@@ -48,7 +48,7 @@ rule "Outside PQA or After quarantine period"
         $zones : List()
         $date : Date()
         eval(PlantPestUtils.isOutsideZone($st, SensitivityCategory.PLANT_PEST_ERADICATED, $zones) || PlantPestUtils.isAfterPeriod($st, SensitivityCategory.PLANT_PEST_ERADICATED, $date))
-    then        
+    then
         state.setDelegateRules("PBC1");
         state.setComplete(false);
         logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");

@@ -17,6 +17,11 @@ public class ValidationOutcome {
     private ValidationReport report;
     private Map<String, Object> result;
 
+    public ValidationOutcome(){
+        super();
+        this.valid = true;
+    }
+
     public ValidationOutcome(ValidationReport report) {
         super();
         this.report = report;

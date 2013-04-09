@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sensitiveSpeciesList>
+    <sensitiveSpecies name="Crex crex" family="Rallidae" rank="SPECIES" commonName="Corncrake">
+        <instances>
+            <conservationInstance category="EN" authority="Birds Australia" dataResourceId="dr494" zone="AUS" generalisation="10km" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Heterobostrychus aequalis" family="Bostrychidae" rank="SPECIES" commonName="powder post beetle">
+        <instances>
+            <plantPestInstance category="PBC1" authority="DAFF" dataResourceId="" zone="AUS" reason="Plant biosecurity category 1 - absent from Australia" remarks="RWG7 - Forest Pests" fromDate="" toDate="" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Achatina fulica" family="Achatinidae" rank="SPECIES" commonName="Giant African snail">
+        <instances>
+            <plantPestInstance category="PBC1" authority="DAFF" dataResourceId="" zone="AUS" reason="Plant biosecurity category 1 - absent from Australia" remarks="State Regulated Pests (Exotic)" fromDate="" toDate="" />
+            <plantPestInstance category="PBC6" authority="NT DRDPIFR" dataResourceId="" zone="NT" fromDate="" toDate="" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Lymantria dispar" family="Lymantriidae" rank="SPECIES" commonName="Asian gypsy moth">
+        <instances>
+            <plantPestInstance category="PBC1" authority="DAFF" dataResourceId="" zone="AUS" reason="Plant biosecurity category 1 - absent from Australia" remarks="RWG7 - Forest Pests" fromDate="" toDate="" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Bactrocera philippinensis" family="Tephritidae" rank="SPECIES" commonName="Philippine fruit fly">
+        <instances>
+            <plantPestInstance category="PBC1" authority="DAFF" dataResourceId="" zone="AUS" reason="Plant biosecurity category 1 - absent from Australia" remarks="Exotic Fruitfly Species" fromDate="" toDate="" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Bactrocera papayae" family="Tephritidae" rank="SPECIES" commonName="Papaya fruit fly">
+        <instances>
+            <plantPestInstance category="PBC2" authority="Qld DPI" dataResourceId="" zone="PFFPQA1995" fromDate="1995-10-18" toDate="1999-04-29" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Xanthomonas axonopodis citri" family="Xanthomonadaceae" rank="SPECIES" commonName="Citrus canker">
+        <instances>
+            <plantPestInstance category="PBC2" authority="Qld DPI" dataResourceId="" zone="ECCPQA2004" fromDate="2004-06-30" toDate="2009-01-22" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Daktulosphaira vitifoliae" family="Phylloxeridae" rank="SPECIES" commonName="Grapevine phylloxera">
+        <instances>
+            <plantPestInstance category="PBC4" authority="NSW DPII" dataResourceId="" zone="PIZNSWAC" fromDate="2006-12-22" toDate="" />
+            <plantPestInstance category="PBC4" authority="NSW DPII" dataResourceId="" zone="PIZNSWSR" fromDate="2006-12-22" toDate="" />
+            <plantPestInstance category="PBC4" authority="Vic DPI" dataResourceId="" zone="PIZVICNE" fromDate="1897-01-01" toDate="" />
+            <plantPestInstance category="PBC4" authority="Vic DPI" dataResourceId="" zone="PIZVICMAR" fromDate="2008-11-28" toDate="" />
+            <plantPestInstance category="PBC4" authority="Vic DPI" dataResourceId="" zone="PIZVICNAG" fromDate="1897-01-01" toDate="" />
+            <plantPestInstance category="PBC4" authority="Vic DPI" dataResourceId="" zone="PIZVICMOR" fromDate="1901-01-01" toDate="" />
+            <plantPestInstance category="PBC4" authority="Vic DPI" dataResourceId="" zone="PIZVICUPT" fromDate="2000-09-01" toDate="" />
+            <plantPestInstance category="PBC4" authority="Vic DPI" dataResourceId="" zone="PIZVICWHB" fromDate="2008-01-01" toDate="" />
+            <plantPestInstance category="PBC6" authority="NSW DPII" dataResourceId="" zone="NSW" fromDate="" toDate="" />
+            <plantPestInstance category="PBC6" authority="Environment ACT" dataResourceId="" zone="ACT" fromDate="" toDate="" />
+            <plantPestInstance category="PBC6" authority="NT DRDPIFR" dataResourceId="" zone="NT" fromDate="" toDate="" />
+            <plantPestInstance category="PBC6" authority="QLD DEECI" dataResourceId="" zone="QLD" fromDate="" toDate="" />
+            <plantPestInstance category="PBC6" authority="SA PIR" dataResourceId="" zone="SA" fromDate="" toDate="" />
+            <plantPestInstance category="PBC6" authority="Tas DPIW" dataResourceId="" zone="TAS" fromDate="" toDate="" />
+            <plantPestInstance category="PBC6" authority="WA DAF" dataResourceId="" zone="WA" fromDate="" toDate="" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Heterobostrychus aequalis" family="Bostrychidae" rank="SPECIES" commonName="powder post beetle">
+        <instances>
+            <plantPestInstance category="PBC1" authority="DAFF" dataResourceId="" zone="AUS" reason="Plant biosecurity category 1 - absent from Australia" remarks="RWG7 - Forest Pests" fromDate="" toDate="">
+                <transientEvent eventDate="1977-06-01" collector="Allwood,A." zone="NT" />
+            </plantPestInstance>
+        </instances>
+    </sensitiveSpecies>
+    <!-- A fictitious example of a category 9 biological control agent - obtained from DAFF website http://www.daff.gov.au/ba/reviews/biological_control_agents/risk_analyses/completed_risk_analyses/release_of_eueupithecia_cisplatensis_for_the_biological_control_of_parkinsonia  -->
+    <sensitiveSpecies name="Eueupithecia cisplatensis" family=" Geometridae" rank="SPECIES">
+        <instances>
+            <plantPestInstance category="PBC9" authority="DAFF" dataResourceId="" zone="AUS" reason="Plant biosecurity category 9 - exotic biological control species never released" />
+        </instances>
+    </sensitiveSpecies>
+</sensitiveSpeciesList>

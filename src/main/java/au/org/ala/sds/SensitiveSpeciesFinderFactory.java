@@ -41,10 +41,14 @@ public class SensitiveSpeciesFinderFactory {
     }
 
     public static SensitiveSpeciesFinder getSensitiveSpeciesFinder(String dataUrl, CBIndexSearch cbIndexSearcher) throws Exception {
+        return getSensitiveSpeciesFinder(dataUrl, cbIndexSearcher,false);
+    }
+
+    public static SensitiveSpeciesFinder getSensitiveSpeciesFinder(String dataUrl, CBIndexSearch cbIndexSearcher, boolean forceReload) throws Exception {
 
         SensitiveTaxonStore store = null;
 
-        if (Configuration.getInstance().isCached()) {
+        if (Configuration.getInstance().isCached() && !forceReload) {
             File cache = new File(Configuration.getInstance().getCacheUrl());
             if (cache.exists()) {
                 logger.info("Reading SensitveTaxonStore from serialized cache file " + cache.getPath());

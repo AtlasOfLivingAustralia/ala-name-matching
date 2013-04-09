@@ -93,6 +93,13 @@ public class PlantPestService implements ValidationService {
         outcome.setLoadable(state.isLoadable());
         outcome.setSensitive(!state.isLoadable());
 
+        //remove the properties if the final state is restricted
+        if(state.isRestricted()){
+            Map<String,Object> result =ValidationUtils.restrictForPests(biocacheData);
+            outcome.setResult(result);
+        }
+
+
         return outcome;
     }
 

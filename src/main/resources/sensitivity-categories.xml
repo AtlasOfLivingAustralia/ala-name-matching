@@ -25,4 +25,5 @@
     <sensitivity-category id="PBC5a" name="Plant pest in Torres Strait Zone" type="Plant_Pest"/>
     <sensitivity-category id="PBC5b" name="Plant pest is Queensland Fruit Fly" type="Plant_Pest"/>
     <sensitivity-category id="PBC6" name="Plant pest notifiable under State Legislation" type="Plant_Pest"/>
+    <sensitivity-category id="PBC9" name="Plant pest is unreleased Exotic Biological Control Agent" type="Plant_Pest"/>
 </sensitivity-categories>

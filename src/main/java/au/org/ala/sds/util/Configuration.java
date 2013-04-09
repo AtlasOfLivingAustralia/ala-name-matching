@@ -23,6 +23,14 @@ public class Configuration {
         return instance;
     }
 
+    public String get(String field){
+        return config.getProperty(field,field);
+    }
+
+    public String getFlagRules(){
+        return config.getProperty("flag-rules","PBC7,PBC8,PBC9");
+    }
+
     public String getSpeciesUrl() {
         return config.getProperty("species-data", "http://sds.ala.org.au/sensitive-species-data.xml");
     }
@@ -48,6 +56,6 @@ public class Configuration {
     }
 
     public String getNameMatchingIndex() {
-        return config.getProperty("namematching-index", "/data/lucene/namematchingv1_1");
+        return config.getProperty("namematching-index", "/data/lucene/namematching_v13");
     }
 }

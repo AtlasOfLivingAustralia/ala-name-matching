@@ -7,9 +7,11 @@ import java.util.Date;
 import java.util.List;
 
 import au.org.ala.sds.model.PlantPestInstance;
+import au.org.ala.sds.model.PlantPestInstance.TransientEvent;
 import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityInstance;
 import au.org.ala.sds.model.SensitivityZone;
+
 
 /**
  *
@@ -76,6 +78,32 @@ public class PlantPestUtils {
         for (SensitivityInstance si : st.getInstances()) {
             if (si.getCategory().getId().equals(categoryId) && date.getTime() > ((PlantPestInstance) si).getToDate().getTime()) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check to see if the supplied date represents a non actionable transient event in ONE of the supplied zones.
+     * @param st
+     * @param categoryId
+     * @param date
+     * @param zones
+     * @return
+     */
+    public static boolean isANonActionableTransientEvent(SensitiveTaxon st, String categoryId, Date date, List<SensitivityZone> zones){
+        for(SensitivityInstance si : st.getInstances()){
+            if(si.getCategory().getId().equals(categoryId) && si instanceof PlantPestInstance){
+                List<TransientEvent> events = ((PlantPestInstance)si).getTransientEventList();
+                if(events != null){
+                    for(TransientEvent te : events){
+                        System.out.println("Testing transient event " + te.toString());
+                        if(te.getEventDate().equals(date) && zones.contains(te.getZone())){
+                            System.out.println("Is a transient event ...");
+                            return true;
+                        }
+                    }
+                }
             }
         }
         return false;

@@ -52,7 +52,7 @@ public class PlantPestEradicatedTest {
 //        ((BasicDataSource) dataSource).setPassword("password");
 
         cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species-new.xml", cbIndexSearch);
     }
 
     @Test

@@ -3,9 +3,11 @@
  */
 package au.org.ala.sds.util;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -15,6 +17,7 @@ import au.org.ala.sds.model.SensitivityZoneFactory;
 import au.org.ala.sds.validation.FactCollection;
 import au.org.ala.sds.validation.MessageFactory;
 import au.org.ala.sds.validation.ValidationReport;
+import org.gbif.dwc.terms.DwcTerm;
 
 /**
  *
@@ -119,5 +122,66 @@ public class ValidationUtils {
         }
 
         return true;
+    }
+
+    /**
+     * Restricts the supplied properties to ones that are allowed to be displayed in a PEST.
+     *
+     * @param properties
+     * @return
+     */
+    public static Map<String,Object> restrictForPests(Map<String,String>properties){
+        return restrictToTypes(properties,new String[]{"dataResourceUid","institutionCode", "collectionCode",},"Taxon");
+    }
+
+    /**
+     * Restricts the supplied map to the DWC fields in the "types" AND the extraFields.
+     * @param properties
+     * @param extraFields
+     * @param types
+     * @return
+     */
+    public static Map<String,Object> restrictToTypes(Map<String,String>properties,String[] extraFields,String...types){
+        List<String> list = new java.util.ArrayList<String>();
+        for(String type: types){
+            List<DwcTerm> terms=DwcTerm.listByGroup(type);
+            for(DwcTerm term:terms)
+                list.add(term.simpleName());
+        }
+        if(extraFields != null){
+            for(String f:extraFields)
+                list.add(f);
+        }
+        //System.out.println("LIST: " + list);
+        return restrictProperties(properties,list,false);
+
+    }
+
+    /**
+     * Modifies the supplied map so that it contains either only the properties in the list OR doesn't
+     * contain the properties in the list. The action depends on the isBlacklist setting
+     * @param properties
+     * @param list
+     * @param isBlacklist
+     */
+    public static Map<String, Object> restrictProperties(Map<String,String> properties, List<String> list, boolean isBlacklist){
+        Map<String, String> originalSensitiveValues = new HashMap<String, String>();
+        Map<String, Object> results = new HashMap<String, Object>();
+        for(String key:properties.keySet()){
+            String value = properties.get(key);
+            if(StringUtils.isNotBlank(value) &&((list.contains(key) && isBlacklist)||(!list.contains(key) && !isBlacklist))){
+                //add it to the original sensitive values
+                results.put(key,"");
+                originalSensitiveValues.put(key, value);
+            }
+            else{
+                //we can return the property
+                results.put(key, value);
+            }
+        }
+        //at the end add the original sensitive values
+        results.put("originalSensitiveValues", originalSensitiveValues);
+
+        return results;
     }
 }

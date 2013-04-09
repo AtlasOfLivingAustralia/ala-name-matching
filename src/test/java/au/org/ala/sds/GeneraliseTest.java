@@ -79,6 +79,7 @@ public class GeneraliseTest {
         facts.put("day", "10");
         facts.put("month", "10");
         facts.put("year", "2010");
+        facts.put("verbatimCoordinates", "These need to be withheld");
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
@@ -99,6 +100,8 @@ public class GeneraliseTest {
 
         Map<String, String> originalSenstiveValues = (Map<String, String>) outcome.getResult().get("originalSensitiveValues");
         assertNotNull(originalSenstiveValues);
+        
+        assertFalse(outcome.getResult().containsKey("verbatimCoordinates"));
 
         assertEquals("Original latitude", "-35.276771", originalSenstiveValues.get("decimalLatitude"));
         assertEquals("Original longitude", "149.112539", originalSenstiveValues.get("decimalLongitude"));

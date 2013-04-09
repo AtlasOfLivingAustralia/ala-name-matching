@@ -11,6 +11,8 @@ public class RuleState {
 
     private boolean complete;
     private boolean loadable;
+    /** Indicates that the properties of the supplied record should be restricted to taxonomic and institution information */
+    private boolean restricted;
     private String delegateRules;
     private String annotation;
 
@@ -48,5 +50,13 @@ public class RuleState {
 
     public void setAnnotation(String annotation) {
         this.annotation = annotation;
+    }
+
+    public boolean isRestricted() {
+        return restricted;
+    }
+
+    public void setRestricted(boolean restricted) {
+        this.restricted = restricted;
     }
 }

@@ -1,0 +1,29 @@
+package au.org.ala.sds.validation;
+
+import org.apache.log4j.Logger;
+import java.util.List;
+import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.validation.MessageFactory;
+import org.drools.runtime.rule.RuleContext;
+import au.org.ala.sds.model.SensitiveTaxon;
+
+global ValidationReport validationReport;
+global RuleState state;
+global Logger logger;
+
+import function au.org.ala.sds.validation.ValidationHelper.*;
+
+
+rule "Is Unreleased Exotic Biological Control Agent"
+    when
+        $st : SensitiveTaxon()
+        $zones : List()
+        eval(SensitivityZone.isInAustralia($zones))
+    then
+        // Category 9 is loadable but the data available is restricted from the general public
+        state.setLoadable(true);
+        state.setComplete(true);
+        state.setRestricted(true);
+        info(kcontext, MessageFactory.PLANT_PEST_MSG_CAT9, $st.getTaxonName());
+        logger.warn("PBC9 Rule '" + kcontext.getRule().getName() + "'");
+end

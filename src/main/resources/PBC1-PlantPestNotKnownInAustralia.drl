@@ -2,9 +2,13 @@ package au.org.ala.sds.validation;
 
 import au.org.ala.sds.model.SensitivityZone;
 import au.org.ala.sds.validation.MessageFactory;
+import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.validation.RuleState;
 import au.org.ala.sds.validation.ValidationReport;
+import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.util.PlantPestUtils;
 import java.util.List;
+import java.util.Date;
 import org.apache.log4j.Logger;
 import org.drools.runtime.rule.RuleContext;
 
@@ -17,7 +21,7 @@ import function au.org.ala.sds.validation.ValidationHelper.*;
 rule "In Australia"
     when
         $zones : List()
-        eval(SensitivityZone.isInAustralia($zones))
+        eval(SensitivityZone.isInAustralia($zones) && !state.isComplete())
     then
         state.setLoadable(false);
         warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_A1);
@@ -62,4 +66,21 @@ rule "Location not provided"
         state.setLoadable(false);
         info(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_A0);
         logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
+end
+//NC: Category 8 rule is a subset of category 1 "In Australia" rule.
+rule "Transient: non actionable"
+    //give this rule a higher priority
+    salience 10
+    when
+        $st : SensitiveTaxon()
+        $zones : List()
+        $date : Date()
+        eval(SensitivityZone.isInAustralia($zones) && PlantPestUtils.isANonActionableTransientEvent($st, SensitivityCategory.PLANT_PEST_NOT_KNOWN_IN_AUSTRALIA, $date, $zones))
+    then
+        //the record can be loaded but it needs restricted attributes.
+        state.setLoadable(true);
+        state.setComplete(true);
+        state.setRestricted(true);
+        info(kcontext, MessageFactory.PLANT_PEST_MSG_CAT8, $st.getTaxonName());
+        logger.warn("PBC8 Rule '" + kcontext.getRule().getName() + "'");
 end
