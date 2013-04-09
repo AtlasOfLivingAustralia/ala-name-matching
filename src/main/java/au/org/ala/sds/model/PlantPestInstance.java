@@ -4,6 +4,7 @@
 package au.org.ala.sds.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
@@ -20,6 +21,7 @@ public class PlantPestInstance extends SensitivityInstance implements Serializab
 
     private final Date fromDate;
     private final Date toDate;
+    private java.util.List<TransientEvent> transientEventList;
 
     /**
      * @param category
@@ -27,7 +29,6 @@ public class PlantPestInstance extends SensitivityInstance implements Serializab
      * @param fromDate
      * @param toDate
      * @param zone
-     * @param generalisation
      */
     public PlantPestInstance(
             SensitivityCategory category,
@@ -49,6 +50,42 @@ public class PlantPestInstance extends SensitivityInstance implements Serializab
 
     public Date getToDate() {
         return toDate;
+    }
+
+    public void addTransientEvent(String eventDate, SensitivityZone zone){
+        if(transientEventList == null)
+            transientEventList = new ArrayList<TransientEvent>();
+        transientEventList.add(new TransientEvent(eventDate, zone));
+    }
+
+    public java.util.List<TransientEvent> getTransientEventList(){
+        return transientEventList;
+    }
+
+    public class TransientEvent implements Serializable{
+        private final Date eventDate;
+        private final SensitivityZone zone;
+        public TransientEvent(String eventDate, SensitivityZone zone){
+            this.eventDate = StringUtils.isNotEmpty(eventDate) ? DateHelper.parseDate(eventDate) : null;
+            this.zone = zone;
+        }
+
+        public Date getEventDate() {
+            return eventDate;
+        }
+
+
+        public SensitivityZone getZone() {
+            return zone;
+        }
+
+        @Override
+        public String toString() {
+            return "TransientEvent{" +
+                    "eventDate=" + eventDate +
+                    ", zone=" + zone +
+                    '}';
+        }
     }
 
 }

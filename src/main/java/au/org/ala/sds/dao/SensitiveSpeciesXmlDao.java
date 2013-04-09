@@ -88,6 +88,15 @@ public class SensitiveSpeciesXmlDao implements SensitiveSpeciesDao {
                             ie.getAttributeValue("remarks"),
                             ie.getAttributeValue("fromDate"),
                             ie.getAttributeValue("toDate"));
+                            //check if there are any children transientEvents
+                            List<Element> transChildren = ie.getChildren();
+                            if(transChildren.size()>0){
+                                for(Element te : transChildren){
+                                    ((PlantPestInstance)instance).addTransientEvent(
+                                            te.getAttributeValue("eventDate"),
+                                            SensitivityZoneFactory.getZone(te.getAttributeValue("zone")));
+                                }
+                            }
                 }
                 ss.getInstances().add(instance);
             }
