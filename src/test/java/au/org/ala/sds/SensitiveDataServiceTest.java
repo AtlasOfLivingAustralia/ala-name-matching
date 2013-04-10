@@ -134,4 +134,25 @@ public class SensitiveDataServiceTest {
         assertTrue(outcome.isValid());
         assertFalse(outcome.isLoadable());
     }
+    @Test
+    public void testPestSpeciesIdedAtHigherTaxon(){
+        Map<String,String> props = new HashMap<String,String>();
+        String latitude = "-35.276771";   // Black Mountain (Epicorp)
+        String longitude = "149.112539";
+        props.put("scientificName", "TEPHRITIDAE");
+        props.put("eventDate","2013-04-09");
+        props.put("recordedBy", "Natasha Carter");
+        props.put("decimalLatitude", "123.123");
+        props.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        props.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+
+        ValidationOutcome outcome = sds.testMapDetails(finder, props, "TEPHRITIDAE");
+        assertTrue(outcome.isValid());
+        assertTrue(outcome.isLoadable());
+
+        Map<String, Object> result = outcome.getResult();
+        assertNotNull(result);
+        assertTrue(((Map)result.get("originalSensitiveValues")).size() >0);
+        assertTrue(outcome.getReport().getMessages().get(0).getMessageText().contains("potentially of plant biosecurity concern, are held in Australian reference collections."));
+    }
 }

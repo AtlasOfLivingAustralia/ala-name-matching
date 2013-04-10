@@ -67,6 +67,7 @@ public class MessageFactory {
     public static final String PLANT_PEST_MSG_CAT7 = "PBC7";
     public static final String PLANT_PEST_MSG_CAT8 = "PBC8";
     public static final String PLANT_PEST_MSG_CAT9 = "PBC9";
+    public static final String PLANT_PEST_MSG_CAT10 = "PBC10";
 
     // Resource file is sds-messages.properties
     private static String BUNDLE_NAME = "sds-messages";

@@ -63,9 +63,29 @@
         </instances>
     </sensitiveSpecies>
     <!-- A fictitious example of a category 9 biological control agent - obtained from DAFF website http://www.daff.gov.au/ba/reviews/biological_control_agents/risk_analyses/completed_risk_analyses/release_of_eueupithecia_cisplatensis_for_the_biological_control_of_parkinsonia  -->
-    <sensitiveSpecies name="Eueupithecia cisplatensis" family=" Geometridae" rank="SPECIES">
+    <sensitiveSpecies name="Eueupithecia cisplatensis" family="Geometridae" rank="SPECIES">
         <instances>
             <plantPestInstance category="PBC9" authority="DAFF" dataResourceId="" zone="AUS" reason="Plant biosecurity category 9 - exotic biological control species never released" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Bactrocera" family="TEPHRITIDAE" rank="GENUS">
+        <instances>
+            <plantPestInstance category="PBC10" authority="DAFF" dataResourceId="" zone="AUS" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Bactrocera sp." family="TEPHRITIDAE" rank="SPECIES">
+        <instances>
+            <plantPestInstance category="PBC10" authority="DAFF" dataResourceId="" zone="AUS" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Bactrocera spp." family="TEPHRITIDAE" rank="SUBSPECIES">
+        <instances>
+            <plantPestInstance category="PBC10" authority="DAFF" dataResourceId="" zone="AUS" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="TEPHRITIDAE" family="TEPHRITIDAE" rank="FAMILY">
+        <instances>
+            <plantPestInstance category="PBC10" authority="DAFF" dataResourceId="" zone="AUS" />
         </instances>
     </sensitiveSpecies>
 </sensitiveSpeciesList>

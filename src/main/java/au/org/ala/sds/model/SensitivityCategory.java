@@ -52,6 +52,7 @@ public class SensitivityCategory implements Serializable {
     public static final String PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY = "PBC5b";
     public static final String PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION = "PBC6";
     public static final String PLANT_PEST_EXOTIC_BIOLOGICAL_CONTROL_AGENT = "PBC9";
+    public static final String PLANT_PEST_HIGHER_TAXON_ID = "PBC10";
 
     public enum CategoryType { CONSERVATION, PLANT_PEST }
 

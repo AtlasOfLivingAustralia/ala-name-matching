@@ -189,7 +189,7 @@ public class SensitiveTaxonStore implements Serializable {
             try {
                 name = st.getTaxonName();
                 LinnaeanRankClassification lrc = new LinnaeanRankClassification(null, null, null, null, st.getFamily().equals("") ? null : st.getFamily() , null, name);
-                match = cbIndexSearcher.searchForRecord(name, lrc, StringUtils.contains(name, ' ') ? null : RankType.GENUS);
+                match = cbIndexSearcher.searchForRecord(name, lrc, null);
             } catch (SearchResultException e) {
                 logger.debug("'" + name + "' - " + e.getMessage());
             } catch (RuntimeException e) {

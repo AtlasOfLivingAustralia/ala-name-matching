@@ -35,6 +35,7 @@ public class KnowledgeBaseFactory {
         rules.put(SensitivityCategory.PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY, "PBC5b-PlantPestIsQueenslandFruitFly.drl");
         rules.put(SensitivityCategory.PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION, "PBC6-PlantPestNotifiableUnderStateLegislation.drl");
         rules.put(SensitivityCategory.PLANT_PEST_EXOTIC_BIOLOGICAL_CONTROL_AGENT, "PBC9-ExoticBiologicalControlAgent.drl");
+        rules.put(SensitivityCategory.PLANT_PEST_HIGHER_TAXON_ID, "PBC10-IdentificationToHigherTaxon.drl");
     }
     static private Map<SensitivityCategory, KnowledgeBase> kbs = new HashMap<SensitivityCategory, KnowledgeBase>();
 

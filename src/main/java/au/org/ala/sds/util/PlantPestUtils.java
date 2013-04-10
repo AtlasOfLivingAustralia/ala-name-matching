@@ -5,6 +5,7 @@ package au.org.ala.sds.util;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import au.org.ala.sds.model.PlantPestInstance;
 import au.org.ala.sds.model.PlantPestInstance.TransientEvent;
@@ -97,9 +98,9 @@ public class PlantPestUtils {
                 List<TransientEvent> events = ((PlantPestInstance)si).getTransientEventList();
                 if(events != null){
                     for(TransientEvent te : events){
-                        System.out.println("Testing transient event " + te.toString());
+                        //System.out.println("Testing transient event " + te.toString());
                         if(te.getEventDate().equals(date) && zones.contains(te.getZone())){
-                            System.out.println("Is a transient event ...");
+                          //  System.out.println("Is a transient event ...");
                             return true;
                         }
                     }
@@ -107,6 +108,25 @@ public class PlantPestUtils {
             }
         }
         return false;
+    }
+
+    public static boolean isExactMatch(Map<String, String> properties, SensitiveTaxon st){
+        //construct the name from the properties
+        String name = null;
+        if(properties.containsKey("scientificName"))
+            name = properties.get("scientificName");
+        else if(properties.containsKey("genus")){
+            if(properties.containsKey("specificEpithet"))
+                name = properties.get("genus") + " " + properties.get("specificEpithet");
+            else
+                name = properties.get("genus");
+        }
+        else if(properties.containsKey("family"))
+            name = properties.get("family");
+        else if (properties.containsKey("order"))
+            name = properties.get("order");
+
+        return name == null || st.getName().trim().equalsIgnoreCase(name.trim());
     }
 
     public static String getSensitivityZone(SensitiveTaxon st, String categoryId, List<SensitivityZone> zones) {

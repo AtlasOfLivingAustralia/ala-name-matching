@@ -77,7 +77,7 @@ public class PlantPestService implements ValidationService {
             session.setGlobal("state", state);
             session.setGlobal("logger", logger);
 
-            session.execute(getFacts(taxon, zones, date));
+            session.execute(getFacts(taxon, zones, date, biocacheData));
 
             if (!state.isComplete()) {
                 if (StringUtils.isNotBlank(state.getDelegateRules())) {
@@ -114,11 +114,12 @@ public class PlantPestService implements ValidationService {
     /**
      * @return facts that the rules will reason upon
      */
-    private Collection<Object> getFacts(SensitiveTaxon st, List<SensitivityZone> zones, Date date) {
+    private Collection<Object> getFacts(SensitiveTaxon st, List<SensitivityZone> zones, Date date, Map<String,String> props) {
       ArrayList<Object> facts = new ArrayList<Object>();
       facts.add(st);
       facts.add(zones);
       facts.add(date);
+      facts.add(props);
       return facts;
     }
 
