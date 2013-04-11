@@ -45,7 +45,9 @@ public class SearchTest {
 
         cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
 //        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(dataSource, cbIndexSearch);
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
+        //finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
+        String uri = cbIndexSearch.getClass().getClassLoader().getResource("sensitive-species.xml").toURI().toString();
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(uri, cbIndexSearch, true);
     }
 
     @Test
@@ -56,21 +58,23 @@ public class SearchTest {
         ss = finder.findSensitiveSpecies("Crex crex");
         assertNotNull(ss);
 
-        ss = finder.findSensitiveSpeciesByLsid("urn:lsid:biodiversity.org.au:afd.taxon:fb2de285-c58c-4c63-9268-9beef7c61c16");
+        ss = finder.findSensitiveSpeciesByLsid("urn:lsid:biodiversity.org.au:afd.taxon:1365807d-927b-4219-97bf-7e619afa5f72");
         assertNotNull(ss);
         assertEquals(ss.getTaxonName(), "Lophochroa leadbeateri");
-
-        ss = finder.findSensitiveSpecies("Anigozanthos humilis subsp. Badgingarra (SD Hopper 7114)");
-        assertNotNull(ss);
+        //NC 2013-04-10: This species does not exist in the current SDS lists
+        //ss = finder.findSensitiveSpecies("Anigozanthos humilis subsp. Badgingarra (SD Hopper 7114)");
+        //assertNotNull(ss);
 
         ss = finder.findSensitiveSpecies("Cacatua leadbeateri");
         assertNotNull(ss);
         assertEquals(ss.getTaxonName(), "Lophochroa leadbeateri");
 
-        ss = finder.findSensitiveSpecies("Dendrobium speciosum subsp. hillii");
-        assertNotNull(ss);
+        //NC 2013-04-10: This species does not exist in the current SDS lists
+        //ss = finder.findSensitiveSpecies("Dendrobium speciosum subsp. hillii");
+        //assertNotNull(ss);
 
-        ss = finder.findSensitiveSpecies("Thelymitra nuda");
-        assertNotNull(ss);
+        //NC 2013-04-10: This species does not exist in the current SDS lists
+        //ss = finder.findSensitiveSpecies("Thelymitra nuda");
+        //assertNotNull(ss);
     }
 }

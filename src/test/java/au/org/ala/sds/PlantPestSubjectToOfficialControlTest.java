@@ -52,29 +52,9 @@ public class PlantPestSubjectToOfficialControlTest {
 //        ((BasicDataSource) dataSource).setPassword("password");
 
         cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species-test.xml", cbIndexSearch);
-    }
-
-    @Test
-    public void phylloxeraInPIZDuringInfestation() {
-        System.out.println("phylloxeraInPIZDuringInfestation");
-        SensitiveTaxon ss = finder.findSensitiveSpecies("Daktulosphaira vitifoliae");
-        assertNotNull(ss);
-
-        String latitude = "-35.998337";   // Albury, NSW
-        String longitude = "147.014848";
-        String date = "2011-03-21";
-
-        Map<String, String> facts = new HashMap<String, String>();
-        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
-        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
-        facts.put(FactCollection.EVENT_DATE_KEY, date);
-
-        ValidationService service = ServiceFactory.createValidationService(ss);
-        ValidationOutcome outcome = service.validate(facts);
-
-        assertTrue(outcome.isValid());
-        assertTrue(outcome.isLoadable());
+        //finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species-test.xml", cbIndexSearch);
+        String uri = cbIndexSearch.getClass().getClassLoader().getResource("sensitive-species.xml").toURI().toString();
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(uri, cbIndexSearch, true);
     }
 
     @Test
@@ -100,14 +80,14 @@ public class PlantPestSubjectToOfficialControlTest {
     }
 
     @Test
-    public void phylloxeraOutsidePIZ() {
-        System.out.println("phylloxeraOutsidePIZ");
+    public void phylloxeraInPIZDuringInfestation() {
+        System.out.println("phylloxeraInPIZDuringInfestation");
         SensitiveTaxon ss = finder.findSensitiveSpecies("Daktulosphaira vitifoliae");
         assertNotNull(ss);
 
-        String latitude = "-35.974255";   // Wahgunyah, Vic
-        String longitude = "146.427294";
-        String date = "2011-01-29";
+        String latitude = "-35.998337";   // Albury, NSW
+        String longitude = "147.014848";
+        String date = "2011-03-21";
 
         Map<String, String> facts = new HashMap<String, String>();
         facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
@@ -117,6 +97,36 @@ public class PlantPestSubjectToOfficialControlTest {
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
+        assertTrue(outcome.isValid());
+        assertTrue(outcome.isLoadable());
+    }
+
+    @Test
+    public void phylloxeraOutsidePIZ() {
+        System.out.println("phylloxeraOutsidePIZ");
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Daktulosphaira vitifoliae");
+        assertNotNull(ss);
+
+        //String latitude = "-35.974255";   // Wahgunyah, Vic
+        //String longitude = "146.427294";
+        String latitude="-38.3827659";  // Warnambool Vic
+        String longitude ="142.48449949";
+        String date = "2011-01-29";
+
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.put(FactCollection.EVENT_DATE_KEY, date);
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+        //VIC doesn't need this specie notifiable if it is outside the PIZ
+        assertTrue(outcome.isValid());
+        assertTrue(outcome.isLoadable());
+        //NSW does need it notifiable
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY,"-35.12577");  //Wagga Wagga
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY,"147.35374");
+        outcome = service.validate(facts);
         assertTrue(outcome.isValid());
         assertFalse(outcome.isLoadable());
     }

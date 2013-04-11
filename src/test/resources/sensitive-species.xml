@@ -5,6 +5,39 @@
             <conservationInstance category="EN" authority="Birds Australia" dataResourceId="dr494" zone="AUS" generalisation="10km" />
         </instances>
     </sensitiveSpecies>
+    <sensitiveSpecies name="Callocephalon fimbriatum" family="Cacatuidae" rank="SPECIES" commonName="Gang Gang Cockatoo">
+        <instances>
+            <conservationInstance category="VU" authority="NSW OEH" dataResourceId="dr487" zone="NSW" reason="Risk of egg collection and nest disturbance" remarks="TSC Status V Vulnerable, OEH Category 3" generalisation="1km" />
+            <conservationInstance category="EN" authority="Vic DSE" dataResourceId="dr490" zone="VIC" generalisation="10km" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Wollemia nobilis" family="Araucariaceae" rank="SPECIES" commonName="Wollemi Pine">
+        <instances>
+            <conservationInstance category="EN" authority="NSW OEH" dataResourceId="dr487" zone="NSW" reason="High biological significance; susceptible to exploitation and disease" remarks="TSC Status E1 Endangered, OEH Category 1" generalisation="WITHHOLD" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Galaxias fontanus" family="Galaxiidae" rank="SPECIES" commonName="Swan galaxias">
+        <instances>
+            <conservationInstance category="EN" authority="Tas DPIPWE" dataResourceId="dr491" zone="TAS" generalisation="WITHHOLD" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Lophochroa leadbeateri" family="Cacatuidae" rank="SPECIES" commonName="Major Mitchell's Cockatoo">
+        <instances>
+            <conservationInstance category="EN" authority="Birds Australia" dataResourceId="dr494" zone="AUS" generalisation="10km" />
+            <conservationInstance category="EN" authority="Vic DSE" dataResourceId="dr490" zone="VIC" generalisation="10km" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Cacatua leadbeateri" family="Psittacidae" rank="SPECIES" commonName="Major Mitchell's Cockatoo">
+        <instances>
+            <conservationInstance category="VU" authority="NSW OEH" dataResourceId="dr487" zone="NSW" reason="Risk of egg collection and nest disturbance" remarks="TSC Status V Vulnerable, OEH Category 2" generalisation="10km"/>
+            <conservationInstance category="SP" authority="WA DEC" dataResourceId="dr467" zone="WA" generalisation="10km"/>
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Diuris disposita" family="Orchidaceae" rank="SPECIES" commonName="Willawarrin Doubletail">
+        <instances>
+            <conservationInstance category="EN" authority="NSW OEH" dataResourceId="dr487" zone="NSW" reason="Risk of disturbance and collection" remarks="TSC Status E1 Endangered, OEH Category 2" generalisation="10km"/>
+        </instances>
+    </sensitiveSpecies>
     <sensitiveSpecies name="Heterobostrychus aequalis" family="Bostrychidae" rank="SPECIES" commonName="powder post beetle">
         <instances>
             <plantPestInstance category="PBC1" authority="DAFF" dataResourceId="" zone="AUS" reason="Plant biosecurity category 1 - absent from Australia" remarks="RWG7 - Forest Pests" fromDate="" toDate="" />

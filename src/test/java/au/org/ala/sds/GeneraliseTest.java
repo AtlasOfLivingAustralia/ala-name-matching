@@ -52,7 +52,9 @@ public class GeneraliseTest {
 //        ((BasicDataSource) dataSource).setPassword("password");
 
         cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(cbIndexSearch);
+        //finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(cbIndexSearch);
+        String uri = cbIndexSearch.getClass().getClassLoader().getResource("sensitive-species.xml").toURI().toString();
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(uri, cbIndexSearch, true);
     }
 
     /**
@@ -101,7 +103,7 @@ public class GeneraliseTest {
         Map<String, String> originalSenstiveValues = (Map<String, String>) outcome.getResult().get("originalSensitiveValues");
         assertNotNull(originalSenstiveValues);
         
-        assertFalse(outcome.getResult().containsKey("verbatimCoordinates"));
+        assertFalse(outcome.getResult().get("verbatimCoordinates").toString().length()>0);
 
         assertEquals("Original latitude", "-35.276771", originalSenstiveValues.get("decimalLatitude"));
         assertEquals("Original longitude", "149.112539", originalSenstiveValues.get("decimalLongitude"));
@@ -285,7 +287,7 @@ public class GeneraliseTest {
      */
     @Test
     public void findSpeciesByLsid() {
-        SensitiveTaxon ss = finder.findSensitiveSpeciesByLsid("urn:lsid:biodiversity.org.au:afd.taxon:fb2de285-c58c-4c63-9268-9beef7c61c16");
+        SensitiveTaxon ss = finder.findSensitiveSpeciesByLsid("urn:lsid:biodiversity.org.au:afd.taxon:1365807d-927b-4219-97bf-7e619afa5f72");
         assertNotNull(ss);
         String latitude = "-33.630629";    // NSW
         String longitude = "150.441284";
@@ -307,9 +309,10 @@ public class GeneraliseTest {
     /**
      * Find sensitive species by accepted name (that differs from provided name)
      */
-    @Test
+    //@Test
+    //TODO Find a new example that will work for this test case and re-enable
     public void findSpeciesByAcceptedName() {
-        SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Diplodium elegans");
+        SensitiveTaxon ss = finder.findSensitiveSpeciesByAcceptedName("Diplodium elegans"); //NC 2013-04-10 : This species is no longer has synonyms
         assertNotNull(ss);
         String latitude = "-33.630629";    // NSW
         String longitude = "150.441284";
