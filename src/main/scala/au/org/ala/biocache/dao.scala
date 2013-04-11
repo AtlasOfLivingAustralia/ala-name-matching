@@ -987,6 +987,11 @@ trait DuplicateDAO {
   def setLastDuplicationRun(date:java.util.Date)
   def deleteObsoleteDuplicate(uuid:String)
 }
+object test{
+   def main(args: Array[String]) {
+    Config.duplicateDAO.getDuplicateInfo("a035065f-1672-44f0-ac8a-8d1bbad92c60")
+  }
+}
 
 class DuplicateDAOImpl extends DuplicateDAO {
   import BiocacheConversions._
@@ -1014,7 +1019,9 @@ class DuplicateDAOImpl extends DuplicateDAO {
     
     val stringValue =persistenceManager.get(uuid, "occ_duplicates", "value")
     if(stringValue.isDefined){
-      Some(mapper.readValue[DuplicateRecordDetails](stringValue.get, classOf[DuplicateRecordDetails]))
+      //println(stringValue.get.replaceAll("\"\"\",","###,").replaceAll("\"\"\"", "\"\\\\\"").replaceAll("\"\"","\\\\\"").replaceAll("###","\\\\\"\""))
+      //handle """, at the end of attribute and """ at the beginning of attribute and "" in the attribute
+      Some(mapper.readValue[DuplicateRecordDetails](stringValue.get.replaceAll("\"\"\",","###,").replaceAll("\"\"\"", "\"\\\\\"").replaceAll("\"\"","\\\\\"").replaceAll("###","\\\\\"\""), classOf[DuplicateRecordDetails]))
     }
     else
       None
