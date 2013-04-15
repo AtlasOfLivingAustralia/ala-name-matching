@@ -377,8 +377,8 @@ trait IndexDAO {
           taxonIssue = "[]"
         }
         val taxonIssueArray= Json.toStringArray(taxonIssue)
-
-        val pest_tmp = if (map.getOrElse("informationWithheld.p", "").startsWith("PEST")) "PEST" else ""
+        val infoWith = map.getOrElse("informationWithheld.p", "")
+        val pest_tmp = if (infoWith.contains("\t")) infoWith.substring(0, infoWith.indexOf("\t")) else ""//startsWith("PEST")) "PEST" else ""
 
         //get the el and cl maps to work with
         //                val elmap =map.getOrElse("el.p","").dropRight(1).drop(1).split(",").map(_ split ":") collect {case Array(k,v) => (k.substring(1,k.length-1), v.substring(1,v.length-1))} toMap
