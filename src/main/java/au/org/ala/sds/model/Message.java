@@ -10,4 +10,5 @@ public interface Message {
     Type getType();
 
     String getMessageText();
+    String getCategory();
 }

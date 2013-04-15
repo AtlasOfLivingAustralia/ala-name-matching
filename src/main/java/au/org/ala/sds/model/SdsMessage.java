@@ -10,14 +10,16 @@ public class SdsMessage implements Message, Serializable {
     private static final long serialVersionUID = 7415409339201655333L;
     private final Message.Type type;
     private final String messageText;
+    private final String category;
 
-    public SdsMessage(Message.Type type, String text) {
+    public SdsMessage(Message.Type type, String text, String category) {
         if (type == null || text == null) {
             throw new IllegalArgumentException(
                     "Type and message text cannot be null");
         }
         this.type = type;
         this.messageText = text;
+        this.category = category == null?"":category;
     }
 
     public Message.Type getType() {
@@ -26,6 +28,10 @@ public class SdsMessage implements Message, Serializable {
 
     public String getMessageText() {
         return messageText;
+    }
+
+    public String getCategory() {
+        return category;
     }
 
     @Override

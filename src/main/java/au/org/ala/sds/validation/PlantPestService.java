@@ -61,7 +61,7 @@ public class PlantPestService implements ValidationService {
         try {
             date = DateHelper.validateDate(facts);
         } catch (Exception e) {
-            report.addMessage(new SdsMessage(Message.Type.ERROR, e.getMessage()));
+            report.addMessage(new SdsMessage(Message.Type.ERROR, e.getMessage(),null));
             return new ValidationOutcome(report, false);
         }
 
