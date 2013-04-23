@@ -223,6 +223,16 @@ object Store {
     deletor.deleteFromPersistent
     deletor.deleteFromIndex
   }
+  
+  def deleteRecords(dataResource:java.lang.String,query:java.lang.String, fromPersistent:Boolean, fromIndex:Boolean){              
+    val deletor:RecordDeletor = if(dataResource != null) new DataResourceDelete(dataResource)  else new QueryDelete(query)
+    //println("Delete from storage using the query: " + query)
+    if(fromPersistent)
+      deletor.deleteFromPersistent
+    //println("Delete from index")
+    if(fromIndex)
+      deletor.deleteFromIndex
+  }
 
   /**
    * Retrieve the system supplied systemAssertions.
@@ -333,6 +343,25 @@ object Store {
           IndexRecords.index(None, None, Some(dataResource), false, false, Some(startDate))
       else
           throw new Exception("Must supply data resource and start date")
+  }
+  def reindexRange(startKey:java.lang.String, endKey:java.lang.String){
+    if(startKey!=null && endKey !=null)
+      IndexRecords.index(Some(startKey), Some(endKey), None, false, false, None)
+    else
+      throw new Exception("Start and end key must be supplied")
+  }
+  /**
+   * reindexes the supplied list of items 
+   * The type of reindex tat is performed is based on the keyTYpe
+   * keyType can be rowKey or uuid
+   */
+  def reindex(keys:Array[String], keyType:String){
+    reindex(keys, 4, keyType)
+  }
+  
+  def reindex(keys:Array[String], threads:Int, keyType:String){
+    if(keys != null && keys.length>0)
+      IndexRecords.indexListThreaded(keys.toList, threads, keyType=="rowKey")
   }
 
   /**
@@ -466,7 +495,7 @@ object Store {
 
 
   def storeCustomIndexFields(tempUid:String, customIndexFields:Array[String]){
-    Config.persistenceManager.put(tempUid, "upload", "customIndexFields", Json.toJSON(customIndexFields.map(_ + "_s")))
+    Config.persistenceManager.put(tempUid, "upload", "customIndexFields", Json.toJSON(customIndexFields.map(v=> if(v.endsWith("_i") || v.endsWith("_d")) v else v + "_s")))
   }
 
   def retrieveCustomIndexFields(tempUid:String) : Array[String] = {

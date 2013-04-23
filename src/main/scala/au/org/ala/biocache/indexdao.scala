@@ -869,17 +869,35 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
           }
         }
 
-        //add the misc properties here......
+        //add the misc properties here....
+        //NC 2013-04-23: Change this code to support data types in misc fields.
         if (!miscIndexProperties.isEmpty) {
           val unparsedJson = map.getOrElse(FullRecordMapper.miscPropertiesColumn, "")
           if (unparsedJson != "") {
             val map = Json.toMap(unparsedJson)
-            map.foreach({
-              case (k, v) => {
-                if (v != null)
-                  doc.addField(k + "_s", v.toString()) //fix for number format issue ?
+            miscIndexProperties.foreach(prop =>{              
+              prop match{
+                case it if it.endsWith("_i") || it.endsWith("_d") || it.endsWith("_s") =>{
+                  val v = map.get(it.take(it.length-2))
+                  if(v.isDefined){                    
+                    doc.addField(it, v.get.toString())
+                  }
+                }                
+                case _ =>{
+                  val v = map.get(prop)
+                  if(v.isDefined){                    
+                    doc.addField(prop + "_s", v.get.toString())
+                  }
+                }
               }
             })
+            //NC 2013-04-23: The code below is adding all the miscProperties as index values, it does not limit it to the values supplied
+//            map.foreach({
+//              case (k, v) => {
+//                if (v != null)
+//                  doc.addField(k + "_s", v.toString()) //fix for number format issue ?
+//              }
+//            })
           }
         }
 
