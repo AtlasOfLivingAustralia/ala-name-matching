@@ -90,6 +90,8 @@ public class SensitiveDataService {
 
         ValidationOutcome vo = new ValidationOutcome(reportFactory.createValidationReport(null));
         vo.setLoadable(true);
+        vo.getReport().setCategory(rule);
+        vo.getReport().setAssertion(MessageFactory.getMessageText(rule, scientificName));
         vo.getReport().addMessage(MessageFactory.createMessage(Message.Type.INFO, rule, scientificName));
         //now remove all the non-classification/attribution properties
         Map<String,Object> results=ValidationUtils.restrictForPests(properties);

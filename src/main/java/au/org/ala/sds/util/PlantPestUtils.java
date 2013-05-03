@@ -20,6 +20,23 @@ import au.org.ala.sds.model.SensitivityZone;
  */
 public class PlantPestUtils {
 
+    public static String mapGetOrElse(Map<String,String> map, String key, String defaultValue){
+        if(map.containsKey(key))
+            return map.get(key);
+        else
+            return defaultValue;
+    }
+    public static String getLocalityFromMapForMessage(Map<String,String> map, List<SensitivityZone> zones){
+        return mapGetOrElse(map, "locality", mapGetOrElse(map, GeoLocationHelper.LGA_BOUNDARIES_LAYER, zones.get(0).getName()));
+        //PlantPestUtils.mapGetOrElse($map, "locality", PlantPestUtils.mapGetOrElse($map, GeoLocationHelper.LGA_BOUNDARIES_LAYER,((SensitivityZone)$zones.get(0)).getName()))
+    }
+
+    public static String getStateFromMapForMessage(Map<String,String> map, List<SensitivityZone> zones){
+        List<SensitivityZone>states = GeoLocationHelper.filterForZoneType(zones, SensitivityZone.ZoneType.STATE);
+        String zoneState = states.size()>0? states.get(0).getName():"Unknown State";
+        return mapGetOrElse(map, "stateProvince", mapGetOrElse(map, GeoLocationHelper.COASTAL_WATERS_LAYER, zoneState));
+    }
+
     public static boolean isInsideZone(SensitiveTaxon st, String categoryId, List<SensitivityZone> zones) {
         for (SensitivityInstance si : st.getInstances()) {
             if (si.getCategory().getId().equals(categoryId) && zones.contains(si.getZone())) {
@@ -36,6 +53,22 @@ public class PlantPestUtils {
             }
         }
         return true;
+    }
+
+    public static boolean isInStateBasedZone(SensitiveTaxon st, String categoryId, List<SensitivityZone> zones){
+        PlantPestInstance ppi = (PlantPestInstance) getMatchingSensitivityInstance(st, categoryId, zones);
+        if(ppi != null){
+            return ppi.getZone().getType() == SensitivityZone.ZoneType.STATE;
+        }
+        return false;
+    }
+
+    public static boolean isInShapeBasedZone(SensitiveTaxon st, String categoryId, List<SensitivityZone> zones){
+        PlantPestInstance ppi = (PlantPestInstance) getMatchingSensitivityInstance(st, categoryId, zones);
+        if(ppi != null){
+            return ppi.getZone().getType() == SensitivityZone.ZoneType.QUARANTINE_ZONE;
+        }
+        return false;
     }
 
     public static boolean isInZoneDuringPeriod(SensitiveTaxon st, String categoryId, List<SensitivityZone> zones, Date date) {

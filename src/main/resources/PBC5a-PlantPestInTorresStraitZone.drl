@@ -8,6 +8,7 @@ import au.org.ala.sds.validation.RuleState;
 import au.org.ala.sds.validation.ValidationReport;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import org.apache.log4j.Logger;
 import org.drools.runtime.rule.RuleContext;
 
@@ -16,7 +17,7 @@ global RuleState state;
 global Logger logger;
 
 import function au.org.ala.sds.validation.ValidationHelper.*;
-
+//NC: 2013-005-01 - This part of the rule does not make sense to me because the exclusion zone does NOT overlap with the Torres Strait zones...
 rule "Queensland Fruit Fly"
     when
         $st : SensitiveTaxon(taxonName == "Bactrocera tryoni")
@@ -25,17 +26,45 @@ rule "Queensland Fruit Fly"
         state.setComplete(false);
         logger.warn("PBC5a Rule '" + kcontext.getRule().getName() + "'");
 end
+/**
+ NC: 2013-05-01 - This rule does not exist in the document but it is a situation that has not been catered for.
+*/
+rule "Within Torres Strait Zone and taxon is in family Tephritidae no date provided"
+    when
+        $st : SensitiveTaxon(family == "Tephritidae", taxonName != "Bactrocera tryoni")
+        $zones : List()
+        not Date()
+        $map: Map()
+        eval(SensitivityZone.isInTorresStrait($zones))
+    then
+        state.setLoadable(true);
+
+        //alert for the authorities
+        alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT5A_C2,$st.getTaxonName(),
+        PlantPestUtils.getLocalityFromMapForMessage($map, $zones),
+        PlantPestUtils.mapGetOrElse($map, "dataResourceName",PlantPestUtils.mapGetOrElse($map,"dataResourceUid","Unknown submitting resource")));
+        //assertion for the record
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT5A_C1), $st.getTaxonName());
+        logger.warn("PBC5a Rule '" + kcontext.getRule().getName() + "'");
+end
 
 rule "Within Torres Strait Zone and taxon is in family Tephritidae and before commencement date"
     when
         $st : SensitiveTaxon(family == "Tephritidae", taxonName != "Bactrocera tryoni")
         $zones : List()
         $date : Date()
+        $map: Map()
         eval(SensitivityZone.isInTorresStrait($zones))
         eval(DateHelper.dateBefore($date, "1996-01-01"))
     then
         state.setLoadable(true);
-        state.setAnnotation("");
+
+        //alert for the authorities
+        alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT5A_A2,$st.getTaxonName(),
+        PlantPestUtils.getLocalityFromMapForMessage($map, $zones),
+        PlantPestUtils.mapGetOrElse($map, "dataResourceName",PlantPestUtils.mapGetOrElse($map,"dataResourceUid","Unknown submitting resource")));
+        //assertion for the record
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT5A_A1), $st.getTaxonName());
         logger.warn("PBC5a Rule '" + kcontext.getRule().getName() + "'");
 end
 
@@ -44,11 +73,19 @@ rule "Within Torres Strait Zone and taxon is in family Tephritidae and after com
         $st : SensitiveTaxon(family == "Tephritidae", taxonName != "Bactrocera tryoni")
         $zones : List()
         $date : Date()
+        $map: Map()
         eval(SensitivityZone.isInTorresStrait($zones))
         eval(DateHelper.dateOnOrAfter($date, "1996-01-01"))
     then
         state.setLoadable(true);
-        state.setAnnotation("");
+
+        //alert for the authorities
+        alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT5A_B2,$st.getTaxonName(),
+        PlantPestUtils.getLocalityFromMapForMessage($map, $zones),
+        PlantPestUtils.mapGetOrElse($map, "dataResourceName",PlantPestUtils.mapGetOrElse($map,"dataResourceUid","Unknown submitting resource")));
+
+        //assertion for the record
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT5A_B1), $st.getTaxonName());
         logger.warn("PBC5a Rule '" + kcontext.getRule().getName() + "'");
 end
 
@@ -56,9 +93,18 @@ rule "Within Torres Strait Zone and taxon not in family Tephritidae"
     when
         $st : SensitiveTaxon(family != "Tephritidae")
         $zones : List()
+        $map : Map()
         eval(SensitivityZone.isInTorresStrait($zones))
     then
         state.setLoadable(true);
-        state.setAnnotation("");
+
+        //alert for authorities
+        alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT5A_D2,$st.getTaxonName(),
+                PlantPestUtils.getLocalityFromMapForMessage($map, $zones),
+                PlantPestUtils.mapGetOrElse($map, "eventDate","Unknown date"),
+                PlantPestUtils.mapGetOrElse($map, "dataResourceName",PlantPestUtils.mapGetOrElse($map,"dataResourceUid","Unknown submitting resource")));
+
+        //assertion for record
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT5A_D1), $st.getTaxonName());
         logger.warn("PBC5a Rule '" + kcontext.getRule().getName() + "'");
 end

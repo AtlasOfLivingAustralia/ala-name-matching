@@ -68,7 +68,7 @@ public class PlantPestService implements ValidationService {
         List<SensitivityZone> zones = SensitivityZone.getListFromString(facts.get(FactCollection.ZONES_KEY));
 
         RuleState state = new RuleState();
-
+        String category = taxon.getInstances().get(0).getCategory().getId();
         do {
             state.setComplete(true);
             StatelessKnowledgeSession session = knowledgeBase.newStatelessKnowledgeSession();
@@ -82,6 +82,7 @@ public class PlantPestService implements ValidationService {
             if (!state.isComplete()) {
                 if (StringUtils.isNotBlank(state.getDelegateRules())) {
                     knowledgeBase = KnowledgeBaseFactory.getKnowledgeBase(SensitivityCategoryFactory.getCategory(state.getDelegateRules()));
+                    category = state.getDelegateRules();
                     state.setDelegateRules(null);
                 } else {
                     throw new IllegalStateException("Delegate rules not specified.");
@@ -92,6 +93,9 @@ public class PlantPestService implements ValidationService {
         ValidationOutcome outcome = new ValidationOutcome(report);
         outcome.setLoadable(state.isLoadable());
         outcome.setSensitive(!state.isLoadable());
+        report.setAssertion(state.getAnnotation());
+        report.setCategory(category);
+        outcome.setControlledAccess(state.isControlledAccess());
 
         //remove the properties if the final state is restricted
         if(state.isRestricted()){

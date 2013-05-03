@@ -32,7 +32,17 @@ rule "Transient: non actionable"
         state.setComplete(true);
         state.setRestricted(true);
         info(kcontext, MessageFactory.PLANT_PEST_MSG_CAT8, $st.getTaxonName());
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT8, $st.getTaxonName()));
         logger.warn("PBC8 Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "Not Transient partt 1"
+    when
+        not Date()
+    then
+        logger.debug("PBC8 Rule Not applicable without a date - checking PBC1");
+        state.setDelegateRules("PBC1");
+        state.setComplete(false);
 end
 
 rule "Not Transient"

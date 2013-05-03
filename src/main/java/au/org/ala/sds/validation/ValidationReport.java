@@ -18,4 +18,12 @@ public interface ValidationReport {
      */
     void addMessage(Message message);
 
+    void setAssertion(String assertion);
+
+    String getAssertion();
+
+    String getCategory();
+
+    void setCategory(String category);
+
 }

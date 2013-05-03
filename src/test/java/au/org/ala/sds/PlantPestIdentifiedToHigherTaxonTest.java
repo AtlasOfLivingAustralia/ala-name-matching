@@ -18,20 +18,14 @@ import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.util.Configuration;
 import au.org.ala.sds.util.PlantPestUtils;
-import au.org.ala.sds.validation.FactCollection;
-import au.org.ala.sds.validation.ServiceFactory;
-import au.org.ala.sds.validation.ValidationOutcome;
-import au.org.ala.sds.validation.ValidationService;
+import au.org.ala.sds.validation.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Tests the rules associated with category 10 of the Plant Pest
@@ -88,6 +82,8 @@ public class PlantPestIdentifiedToHigherTaxonTest {
         assertTrue(outcome.isLoadable());
         assertTrue(outcome.getReport().getMessages().get(0).getMessageText().contains("potentially of plant biosecurity concern, are held in Australian reference collections."));
         assertTrue(((Map)outcome.getResult().get("originalSensitiveValues")).size()>0);
+        assertEquals(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT10, "Bactrocera sp."), outcome.getReport().getAssertion());
+        assertEquals("PBC10", outcome.getReport().getCategory());
         //Test a species that does NOT match the exact text in which case it should not have any messages are restrictions applied
         facts.put("scientificName", "Bactrocera sp. test");
         outcome = service.validate(facts);

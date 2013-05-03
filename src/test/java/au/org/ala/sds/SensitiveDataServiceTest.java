@@ -17,6 +17,7 @@ package au.org.ala.sds;
 import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.util.Configuration;
 import au.org.ala.sds.validation.FactCollection;
+import au.org.ala.sds.validation.MessageFactory;
 import au.org.ala.sds.validation.ValidationOutcome;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -57,10 +58,11 @@ public class SensitiveDataServiceTest {
         props.put("recordedBy", "Natasha Carter");
         props.put("decimalLatitude", "123.123");
         props.put("PBC7", "T");
-        ValidationOutcome vo =sds.testMapDetails(finder, props,"Aus,bus");
+        ValidationOutcome vo =sds.testMapDetails(finder, props,"Aus bus");
         assertNotNull(vo);
         assertTrue(vo.isLoadable());
         assertTrue(vo.getReport().getMessages().get(0).getMessageText().contains("has been intercepted during a quarantine"));
+        assertEquals(MessageFactory.getMessageText("PBC7", "Aus bus"), vo.getReport().getAssertion());
         assertTrue(vo.getResult().get("decimalLatitude").equals(""));
         System.out.println(vo.getResult());
 
@@ -71,6 +73,7 @@ public class SensitiveDataServiceTest {
         assertNotNull(vo);
         assertTrue(vo.isLoadable());
         assertTrue(vo.getReport().getMessages().get(0).getMessageText().contains("but transient populations have occurred from time to time"));
+        assertEquals(MessageFactory.getMessageText("PBC8", "Aus,bus"), vo.getReport().getAssertion());
         assertTrue(vo.getResult().get("decimalLatitude").equals(""));
         System.out.println(vo.getResult());
     }

@@ -14,23 +14,21 @@
  ***************************************************************************/
 package au.org.ala.sds;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
+import au.org.ala.sds.model.Message;
+import au.org.ala.sds.validation.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.util.Configuration;
-import au.org.ala.sds.validation.FactCollection;
-import au.org.ala.sds.validation.ServiceFactory;
-import au.org.ala.sds.validation.ValidationOutcome;
-import au.org.ala.sds.validation.ValidationService;
+
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -70,6 +68,8 @@ public class PlantPestNotKnownInAustraliaTest {
 
         assertTrue(outcome.isValid());
         assertFalse(outcome.isLoadable());
+        System.out.println("MESSAGES::" +outcome.getReport().getMessages());
+        assertTrue(outcome.getReport().getMessages().contains(MessageFactory.createInfoMessage(MessageFactory.PLANT_PEST_MSG_CAT1_A0, "Heterobostrychus aequalis")));
     }
 
     @Test
@@ -89,6 +89,8 @@ public class PlantPestNotKnownInAustraliaTest {
 
         assertTrue(outcome.isValid());
         assertFalse(outcome.isLoadable());
+        assertTrue(outcome.getReport().getMessagesByType(Message.Type.WARNING).get(0).getMessageText().contains("This determination has triggered an alert message to Office of the Chief Plant Protection"));
+        assertTrue(outcome.getReport().getMessagesByType(Message.Type.ALERT).get(0).getMessageText().contains(" The record was rejected and a message set to the submitter advising them to phone the Exotic Plant Pest Hotline"));
     }
 
     @Test
@@ -127,6 +129,8 @@ public class PlantPestNotKnownInAustraliaTest {
 
         assertTrue(outcome.isValid());
         assertTrue(outcome.isLoadable());
+        assertTrue(outcome.getReport().getCategory().equals("PBC1"));
+        assertTrue(outcome.getReport().getAssertion().equals(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT1_B1,"Coral Sea Islands" ,"Lymantria dispar")));
     }
 
     @Test
@@ -162,7 +166,25 @@ public class PlantPestNotKnownInAustraliaTest {
 
         assertTrue(outcome.isValid());
         assertTrue(outcome.isLoadable());
+        assertTrue(outcome.getReport().getCategory().equals("PBC1"));
+        assertTrue(outcome.getReport().getAssertion().equals(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT1_D1, "Lymantria dispar")));
+        //assertTrue(outcome.getReport().getMessages().contains(MessageFactory.createInfoMessage(MessageFactory.PLANT_PEST_MSG_CAT1_D1, "Lymantria dispar")));//"This record of a plant biosecurity sensitive species is based on a specimen or specimens collected from a locality outside Australia and now deposited in an Australian reference collection that contributes records to the ALA. The record does not imply that Lymantria dispar has been recorded in Australia. (PPC1-D1)")));
    }
+
+    @Test
+    public void failingSpecies(){
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Mucor mucedo");
+        Map<String,String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY,"-32.4");
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY,"149.4667");
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+        System.out.println(outcome);
+        assertTrue(outcome.isValid());
+        assertFalse(outcome.isLoadable());
+
+    }
 
     @Test
     public void category8HeterobostrychusAequalis() {
@@ -178,8 +200,27 @@ public class PlantPestNotKnownInAustraliaTest {
 
         assertTrue(outcome.isValid());
         assertTrue(outcome.isLoadable());
+        assertEquals("PBC8", outcome.getReport().getCategory());
+        assertEquals(MessageFactory.getMessageText("PBC8", "Heterobostrychus aequalis"), outcome.getReport().getAssertion());
         System.out.println(outcome.getReport());
 
+    }
+
+    @Test
+    public void testCat8WithoutDate(){
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Heterobostrychus aequalis");
+        assertNotNull(ss);
+        Map<String,String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.STATE_PROVINCE_KEY, "NT");
+        facts.put(FactCollection.ZONES_KEY, "NT");
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+
+        assertTrue(outcome.isValid());
+        assertFalse(outcome.isLoadable());
+        assertEquals("PBC1", outcome.getReport().getCategory());
+        System.out.println(outcome.getReport());
     }
 
 }

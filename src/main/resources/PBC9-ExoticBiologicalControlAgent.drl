@@ -25,5 +25,6 @@ rule "Is Unreleased Exotic Biological Control Agent"
         state.setComplete(true);
         state.setRestricted(true);
         info(kcontext, MessageFactory.PLANT_PEST_MSG_CAT9, $st.getTaxonName());
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT9, $st.getTaxonName()));
         logger.warn("PBC9 Rule '" + kcontext.getRule().getName() + "'");
 end

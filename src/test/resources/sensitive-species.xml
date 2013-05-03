@@ -64,9 +64,26 @@
             <plantPestInstance category="PBC2" authority="Qld DPI" dataResourceId="" zone="PFFPQA1995" fromDate="1995-10-18" toDate="1999-04-29" />
         </instances>
     </sensitiveSpecies>
+    <sensitiveSpecies name="Bactrocera tryoni" family="Tephritidae" rank="SPECIES" commonName="Queensland Fruit Fly">
+        <instances>
+            <plantPestInstance category="PBC1" authority="DAFF" dataResourceId="" zone="AUS" reason="Plant biosecurity category 1 - absent from Australia" remarks="PaDIL (Exotic regulated pests)" fromDate="" toDate="" />
+            <plantPestInstance category="PBC5b" authority="Tri-State Fruit Fly Program" dataResourceId="" zone="FFEZ" fromDate="1994-01-01" toDate="" />
+            <plantPestInstance category="PBC6" authority="SA" dataResourceId="" zone="SA" reason="Notifiable under SA state legislation" remarks="" fromDate="" toDate="" />
+        </instances>
+    </sensitiveSpecies>
     <sensitiveSpecies name="Xanthomonas axonopodis citri" family="Xanthomonadaceae" rank="SPECIES" commonName="Citrus canker">
         <instances>
             <plantPestInstance category="PBC2" authority="Qld DPI" dataResourceId="" zone="ECCPQA2004" fromDate="2004-06-30" toDate="2009-01-22" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Solenopsis invicta" family="Formicidae" rank="SPECIES" commonName="Red imported fire ant">
+        <instances>
+            <plantPestInstance category="PBC3" authority="Qld DPI" dataResourceId="" zone="RIFARA" fromDate="2001-09-01" toDate="" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Idioscopus nitidulus" family="" rank="SPECIES" commonName="">
+        <instances>
+            <plantPestInstance category="PBC4" authority="QLD" zone="QLD" fromDate="" toDate=""/>
         </instances>
     </sensitiveSpecies>
     <sensitiveSpecies name="Daktulosphaira vitifoliae" family="Phylloxeridae" rank="SPECIES" commonName="Grapevine phylloxera">
@@ -90,7 +107,8 @@
     </sensitiveSpecies>
     <sensitiveSpecies name="Heterobostrychus aequalis" family="Bostrychidae" rank="SPECIES" commonName="powder post beetle">
         <instances>
-            <plantPestInstance category="PBC1" authority="DAFF" dataResourceId="" zone="AUS" reason="Plant biosecurity category 1 - absent from Australia" remarks="RWG7 - Forest Pests" fromDate="" toDate="">
+            <!-- ALL PBC8 are PBC1 as well -->
+            <plantPestInstance category="PBC8" authority="DAFF" dataResourceId="" zone="AUS" reason="Plant biosecurity category 1 - absent from Australia" remarks="RWG7 - Forest Pests" fromDate="" toDate="">
                 <transientEvent eventDate="1977-06-01" collector="Allwood,A." zone="NT" />
             </plantPestInstance>
         </instances>
@@ -119,6 +137,11 @@
     <sensitiveSpecies name="TEPHRITIDAE" family="TEPHRITIDAE" rank="FAMILY">
         <instances>
             <plantPestInstance category="PBC10" authority="DAFF" dataResourceId="" zone="AUS" />
+        </instances>
+    </sensitiveSpecies>
+    <sensitiveSpecies name="Mucor mucedo" family="" rank="SPECIES" commonName="">
+        <instances>
+            <plantPestInstance category="PBC1" authority="DAFF" dataResourceId="" zone="AUS" reason="Plant biosecurity category 1 - absent from Australia" remarks="Import Risk Analysis (IRA) Maize" fromDate="" toDate="" />
         </instances>
     </sensitiveSpecies>
 </sensitiveSpeciesList>

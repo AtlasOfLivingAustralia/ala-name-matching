@@ -4,10 +4,12 @@ import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.model.SensitivityCategory;
 import au.org.ala.sds.model.SensitivityZone;
 import au.org.ala.sds.util.PlantPestUtils;
+import au.org.ala.sds.util.GeoLocationHelper;
 import au.org.ala.sds.validation.RuleState;
 import au.org.ala.sds.validation.ValidationReport;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import org.apache.log4j.Logger;
 import org.drools.runtime.rule.RuleContext;
 
@@ -25,7 +27,7 @@ rule "Inside PQA during quarantine period"
         eval(PlantPestUtils.isInZoneDuringPeriod($st, SensitivityCategory.PLANT_PEST_ERADICATED, $zones, $date))
     then
         state.setLoadable(true);
-        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT2_A1));
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT2_A1), $st.getName());
         logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
 end
 
@@ -34,11 +36,16 @@ rule "Inside PQA earlier than quarantine period"
         $st : SensitiveTaxon()
         $zones : List()
         $date : Date()
+        $map: Map()
         eval(PlantPestUtils.isInZoneBeforePeriod($st, SensitivityCategory.PLANT_PEST_ERADICATED, $zones, $date))
     then
         state.setLoadable(true);
-        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT2_B1));
-        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT2_B2);
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT2_B1),$st.getName(),
+            PlantPestUtils.getLocalityFromMapForMessage($map, $zones));
+        state.setControlledAccess(true);
+        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT2_B2, PlantPestUtils.mapGetOrElse($map, "scientificName", $st.getTaxonName()) + ","+
+               PlantPestUtils.mapGetOrElse($map, "eventDate","Unknown Date") + " and " +PlantPestUtils.getLocalityFromMapForMessage($map, $zones),
+               PlantPestUtils.getLocalityFromMapForMessage($map, $zones));
         logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
 end
 
@@ -47,9 +54,40 @@ rule "Outside PQA or After quarantine period"
         $st : SensitiveTaxon()
         $zones : List()
         $date : Date()
-        eval(PlantPestUtils.isOutsideZone($st, SensitivityCategory.PLANT_PEST_ERADICATED, $zones) || PlantPestUtils.isAfterPeriod($st, SensitivityCategory.PLANT_PEST_ERADICATED, $date))
+        $map: Map()
+        eval(!SensitivityZone.isInTorresStrait($zones) &&(PlantPestUtils.isOutsideZone($st, SensitivityCategory.PLANT_PEST_ERADICATED, $zones) || PlantPestUtils.isAfterPeriod($st, SensitivityCategory.PLANT_PEST_ERADICATED, $date)))
     then
-        state.setDelegateRules("PBC1");
-        state.setComplete(false);
+        //NC 2013-05-03: There is a variation of the Cat1 messages that are applied to this situation so we don't want to resubmit under cat 1 rules
+        //state.setDelegateRules("PBC1");
+        //state.setComplete(false);
+        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT2_C1,
+                        PlantPestUtils.mapGetOrElse($map, "scientificName", $st.getTaxonName()) + ","+
+                        PlantPestUtils.mapGetOrElse($map, "eventDate","Unknown Date") + " and " +PlantPestUtils.getLocalityFromMapForMessage($map, $zones),
+                        PlantPestUtils.getLocalityFromMapForMessage($map, $zones)
+                        );
+                //the alert for the biosecurity authority
+                alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT2_C2,$st.getTaxonName(),
+                      PlantPestUtils.mapGetOrElse($map, "dataResourceName",PlantPestUtils.mapGetOrElse($map,"dataResourceUid","Unknown submitting resource")),
+                      PlantPestUtils.getLocalityFromMapForMessage($map, $zones),
+                      PlantPestUtils.mapGetOrElse($map, "eventDate", "Unknown Date"));
+                logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
+        logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
+end
+//NC 2013-05-03 - This situation is not defined in the Rules documentation but it is a legitimate possibility
+rule "Inside PQA No Date Provided"
+    when
+        $st: SensitiveTaxon()
+        not Date()
+        $map: Map()
+        $zones:List()
+    then
+        state.setLoadable(true);
+        state.setControlledAccess(true);
+        //same email sent to contributor as id a date before eradication
+        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT2_B2, PlantPestUtils.mapGetOrElse($map, "scientificName", $st.getTaxonName()) + ","+
+                PlantPestUtils.mapGetOrElse($map, "eventDate","Unknown Date") + " and " +PlantPestUtils.getLocalityFromMapForMessage($map, $zones),
+                PlantPestUtils.getLocalityFromMapForMessage($map, $zones));
+        //same annotation as if it was during an eradication event...
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT2_A1), $st.getName());
         logger.warn("PBC2 Rule '" + kcontext.getRule().getName() + "'");
 end

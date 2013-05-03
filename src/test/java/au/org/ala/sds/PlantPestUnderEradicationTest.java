@@ -14,11 +14,22 @@
  ***************************************************************************/
 package au.org.ala.sds;
 
+import au.org.ala.sds.model.Message;
+import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.util.GeoLocationHelper;
+import au.org.ala.sds.validation.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.util.Configuration;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -40,11 +51,36 @@ public class PlantPestUnderEradicationTest {
 //        ((BasicDataSource) dataSource).setPassword("password");
 
         cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
+        //finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species-new.xml", cbIndexSearch);
+        String uri = cbIndexSearch.getClass().getClassLoader().getResource("sensitive-species.xml").toURI().toString();
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(uri, cbIndexSearch, true);
+    }
+    @Test
+    public void testTemporaryCatchAllRuleForCategory3(){
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Solenopsis invicta");
+        String latitude = "-23.546678";   // Emerald, Qld
+        String longitude = "148.151751";
+
+
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+
+        facts.put(GeoLocationHelper.LGA_BOUNDARIES_LAYER,"Emerald");
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+
+        assertTrue(outcome.isValid());
+        assertTrue(outcome.isLoadable());
+        assertTrue(outcome.isControlledAccess());
+        assertEquals(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT3_ALL3, "Solenopsis invicta"),outcome.getReport().getAssertion());
+        assertTrue(outcome.getReport().getMessagesByType(Message.Type.ALERT).get(0).getMessageText().contains("This record may represent a new outbreak of the pest. The submitter has been requested to check the status with local biosecurity authorities"));
+        assertTrue(outcome.getReport().getMessagesByType(Message.Type.WARNING).get(0).getMessageText().contains("is the subject of an ongoing eradication program. Your record"));
+
     }
 
-    @Test
-    public void redImportedFireAntInPQADuringEradication() {
+//    @Test
+//    public void redImportedFireAntInPQADuringEradication() {
 //        System.out.println("redImportedFireAntInPQADuringEradication");
 //        SensitiveTaxon ss = finder.findSensitiveSpecies("Solenopsis invicta");
 //        assertNotNull(ss);
@@ -63,10 +99,10 @@ public class PlantPestUnderEradicationTest {
 //
 //        assertTrue(outcome.isValid());
 //        assertTrue(outcome.isLoadable());
-    }
-
-    @Test
-    public void redImportedFireAntInPQABeforeEradication() {
+//    }
+//
+//    @Test
+//    public void redImportedFireAntInPQABeforeEradication() {
 //        System.out.println("redImportedFireAntInPQABeforeEradication");
 //        SensitiveTaxon ss = finder.findSensitiveSpecies("Solenopsis invicta");
 //        assertNotNull(ss);
@@ -85,10 +121,10 @@ public class PlantPestUnderEradicationTest {
 //
 //        assertTrue(outcome.isValid());
 //        assertTrue(outcome.isLoadable());
-    }
-
-    @Test
-    public void redImportedFireAntOutsidePQA() {
+//    }
+//
+//    @Test
+//    public void redImportedFireAntOutsidePQA() {
 //        System.out.println("redImportedFireAntOutsidePQA");
 //        SensitiveTaxon ss = finder.findSensitiveSpecies("Solenopsis invicta");
 //        assertNotNull(ss);
@@ -107,6 +143,6 @@ public class PlantPestUnderEradicationTest {
 //
 //        assertTrue(outcome.isValid());
 //        assertFalse(outcome.isLoadable());
-    }
+//    }
 
 }

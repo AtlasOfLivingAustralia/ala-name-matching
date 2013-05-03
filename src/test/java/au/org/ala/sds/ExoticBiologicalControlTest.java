@@ -17,16 +17,14 @@ package au.org.ala.sds;
 import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.util.Configuration;
-import au.org.ala.sds.validation.FactCollection;
-import au.org.ala.sds.validation.ServiceFactory;
-import au.org.ala.sds.validation.ValidationOutcome;
-import au.org.ala.sds.validation.ValidationService;
+import au.org.ala.sds.validation.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -61,5 +59,7 @@ public class ExoticBiologicalControlTest {
 
         assertTrue(outcome.isLoadable());
         assertTrue(outcome.isValid());
+        assertEquals("PBC9", outcome.getReport().getCategory());
+        assertEquals(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT9, "Eueupithecia cisplatensis"), outcome.getReport().getAssertion());
     }
 }

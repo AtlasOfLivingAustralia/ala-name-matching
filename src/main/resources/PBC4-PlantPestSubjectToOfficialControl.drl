@@ -10,6 +10,7 @@ import au.org.ala.sds.validation.RuleState;
 import au.org.ala.sds.validation.ValidationReport;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import org.apache.log4j.Logger;
 import org.drools.runtime.rule.RuleContext;
 
@@ -19,42 +20,43 @@ global Logger logger;
 
 import function au.org.ala.sds.validation.ValidationHelper.*;
 
-rule "Inside infested zone during infestation period"
-    when
-        $st : SensitiveTaxon()
-        $zones : List()
-        $date : Date()
-        eval(PlantPestUtils.isInZoneDuringPeriod($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones, $date))
-    then
-        state.setLoadable(true);
-        state.setAnnotation(
-            MessageFactory.getMessageText(
-                MessageFactory.PLANT_PEST_MSG_CAT4_A1,
-                PlantPestUtils.getSensitivityZone($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones),
-                DateHelper.getYear(PlantPestUtils.getSensitivityZoneStartDate($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones))));
-        logger.warn("PBC4 Rule '" + kcontext.getRule().getName() + "'");
-end
-
-rule "Inside infested zone prior to infestation period"
-    when
-        $st : SensitiveTaxon()
-        $zones : List()
-        $date : Date()
-        eval(PlantPestUtils.isInZoneBeforePeriod($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones, $date))
-    then
-        state.setLoadable(true);
-        state.setAnnotation(
-            MessageFactory.getMessageText(
-                MessageFactory.PLANT_PEST_MSG_CAT4_B1,
-                PlantPestUtils.getSensitivityZone($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones),
-                DateHelper.formattedNiceDate(PlantPestUtils.getSensitivityZoneStartDate($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones))));
-        warning(kcontext,
-            MessageFactory.PLANT_PEST_MSG_CAT4_B2,
-            PlantPestUtils.getSensitivityZone($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones),
-            DateHelper.formattedNiceDate(PlantPestUtils.getSensitivityZoneStartDate($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones)));
-        alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT4_B3);
-        logger.warn("PBC4 Rule '" + kcontext.getRule().getName() + "'");
-end
+//NC 2013-05-03: According to the documentation the rules are based on being inside a particular location NOT within time periods. So I have temporarily disabled these rules
+//rule "Inside infested zone during infestation period"
+//    when
+//        $st : SensitiveTaxon()
+//        $zones : List()
+//        $date : Date()
+//        eval(PlantPestUtils.isInZoneDuringPeriod($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones, $date))
+//    then
+//        state.setLoadable(true);
+//        state.setAnnotation(
+//            MessageFactory.getMessageText(
+//                MessageFactory.PLANT_PEST_MSG_CAT4_A1,
+//                PlantPestUtils.getSensitivityZone($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones),
+//                DateHelper.getYear(PlantPestUtils.getSensitivityZoneStartDate($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones))));
+//        logger.warn("PBC4 Rule '" + kcontext.getRule().getName() + "'");
+//end
+//
+//rule "Inside infested zone prior to infestation period"
+//    when
+//        $st : SensitiveTaxon()
+//        $zones : List()
+//        $date : Date()
+//        eval(PlantPestUtils.isInZoneBeforePeriod($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones, $date))
+//    then
+//        state.setLoadable(true);
+//        state.setAnnotation(
+//            MessageFactory.getMessageText(
+//                MessageFactory.PLANT_PEST_MSG_CAT4_B1,
+//                PlantPestUtils.getSensitivityZone($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones),
+//                DateHelper.formattedNiceDate(PlantPestUtils.getSensitivityZoneStartDate($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones))));
+//        warning(kcontext,
+//            MessageFactory.PLANT_PEST_MSG_CAT4_B2,
+//            PlantPestUtils.getSensitivityZone($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones),
+//            DateHelper.formattedNiceDate(PlantPestUtils.getSensitivityZoneStartDate($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones)));
+//        alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT4_B3);
+//        logger.warn("PBC4 Rule '" + kcontext.getRule().getName() + "'");
+//end
 
 rule "Outside infested area"
     when
@@ -65,4 +67,38 @@ rule "Outside infested area"
         state.setDelegateRules("PBC6");
         state.setComplete(false);
         logger.warn("PBC4 Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "Inside shape file based infested area"
+    when
+        $st : SensitiveTaxon()
+        $zones : List()
+        $map : Map()
+        eval(PlantPestUtils.isInShapeBasedZone($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones))
+    then
+        state.setLoadable(true);
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT4_A1, $st.getName(), PlantPestUtils.getStateFromMapForMessage($map, $zones)));
+end
+
+rule "Inside state based infested area"
+    when
+        $st : SensitiveTaxon()
+        $zones : List()
+        $map : Map()
+        eval(PlantPestUtils.isInStateBasedZone($st, SensitivityCategory.PLANT_PEST_SUBJECT_TO_OFFICIAL_CONTROL, $zones))
+    then
+        state.setLoadable(true);
+        state.setControlledAccess(true);
+
+        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT4_B1,
+                PlantPestUtils.mapGetOrElse($map, "scientificName", $st.getTaxonName()), PlantPestUtils.getStateFromMapForMessage($map, $zones),
+                PlantPestUtils.mapGetOrElse($map, "eventDate","Unknown Date") ,PlantPestUtils.getLocalityFromMapForMessage($map, $zones)
+               );
+                //the alert for the biosecurity authority
+        alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT4_B2,$st.getTaxonName(), PlantPestUtils.mapGetOrElse($map, "eventDate", "Unknown Date"),
+              PlantPestUtils.getLocalityFromMapForMessage($map, $zones),
+              PlantPestUtils.mapGetOrElse($map, "dataResourceName",PlantPestUtils.mapGetOrElse($map,"dataResourceUid","Unknown submitting resource"))
+              );
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT4_B3, $st.getName(), PlantPestUtils.getStateFromMapForMessage($map, $zones)));
+
 end

@@ -41,10 +41,15 @@ public class MessageFactory {
     public static final String PLANT_PEST_MSG_CAT2_A1 = "PPC2-A1";
     public static final String PLANT_PEST_MSG_CAT2_B1 = "PPC2-B1";
     public static final String PLANT_PEST_MSG_CAT2_B2 = "PPC2-B2";
+    public static final String PLANT_PEST_MSG_CAT2_C1 = "PPC2-C1";
+    public static final String PLANT_PEST_MSG_CAT2_C2 = "PPC2-C2";
 
     public static final String PLANT_PEST_MSG_CAT3_A1 = "PPC3-A1";
     public static final String PLANT_PEST_MSG_CAT3_B1 = "PPC3-B1";
     public static final String PLANT_PEST_MSG_CAT3_B2 = "PPC3-B2";
+    public static final String PLANT_PEST_MSG_CAT3_ALL1 = "PPC3-ALL-1";
+    public static final String PLANT_PEST_MSG_CAT3_ALL2 = "PPC3-ALL-2";
+    public static final String PLANT_PEST_MSG_CAT3_ALL3 = "PPC3-ALL-3";
 
     public static final String PLANT_PEST_MSG_CAT4_A1 = "PPC4-A1";
     public static final String PLANT_PEST_MSG_CAT4_B1 = "PPC4-B1";
@@ -55,11 +60,15 @@ public class MessageFactory {
     public static final String PLANT_PEST_MSG_CAT5A_A2 = "PPC5a-A2";
     public static final String PLANT_PEST_MSG_CAT5A_B1 = "PPC5a-B1";
     public static final String PLANT_PEST_MSG_CAT5A_B2 = "PPC5a-B2";
-    public static final String PLANT_PEST_MSG_CAT5A_C1 = "PPC5a-C1";
+    public static final String PLANT_PEST_MSG_CAT5A_C1 = "PPC5a-A1";
     public static final String PLANT_PEST_MSG_CAT5A_C2 = "PPC5a-C2";
+    public static final String PLANT_PEST_MSG_CAT5A_D1 = "PPC5a-A1";
+    public static final String PLANT_PEST_MSG_CAT5A_D2 = "PPC5a-D2";
+
 
     public static final String PLANT_PEST_MSG_CAT5B_A1 = "PPC5b-A1";
     public static final String PLANT_PEST_MSG_CAT5B_A2 = "PPC5b-A2";
+    public static final String PLANT_PEST_MSG_CAT5B_A3 = "PPC5b-A3";
 
     public static final String PLANT_PEST_MSG_CAT6_A1 = "PPC6-A1";
     public static final String PLANT_PEST_MSG_CAT6_A2 = "PPC6-A2";

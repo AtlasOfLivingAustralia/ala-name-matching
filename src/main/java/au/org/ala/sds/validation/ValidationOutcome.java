@@ -14,6 +14,7 @@ public class ValidationOutcome {
     private boolean valid;
     private boolean sensitive = false;
     private boolean loadable = false;
+    private boolean controlledAccess=false;
     private ValidationReport report;
     private Map<String, Object> result;
 
@@ -66,11 +67,30 @@ public class ValidationOutcome {
         this.loadable = loadable;
     }
 
+    public void setControlledAccess(boolean controlledAccess){
+        this.controlledAccess = controlledAccess;
+    }
+
+    public boolean isControlledAccess(){
+        return this.controlledAccess;
+    }
+
     public Map<String, Object> getResult() {
         return result;
     }
 
     public void setResult(Map<String, Object> result) {
         this.result = result;
+    }
+
+    @Override
+    public String toString() {
+        return "ValidationOutcome{" +
+                "valid=" + valid +
+                ", sensitive=" + sensitive +
+                ", loadable=" + loadable +
+                ", report=" + report +
+                ", result=" + result +
+                '}';
     }
 }

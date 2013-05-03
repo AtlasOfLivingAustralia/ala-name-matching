@@ -38,7 +38,8 @@ rule "Inside FFEZ since commencement date"
         eval(PlantPestUtils.isInZoneDuringPeriod($st, SensitivityCategory.PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY, $zones, $date))
     then
         state.setLoadable(true);
-        state.setAnnotation("Occurrence of QFF from a region where active managment in the form of trapping and suppression activities protects important horticultural areas");
+        //state.setAnnotation("Occurrence of QFF from a region where active managment in the form of trapping and suppression activities protects important horticultural areas");
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT5B_A1));
         logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
 end
 
@@ -50,7 +51,22 @@ rule "Inside FFEZ before commencement date"
         eval(PlantPestUtils.isInZoneBeforePeriod($st, SensitivityCategory.PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY, $zones, $date))
     then
         state.setLoadable(true);
-        state.setAnnotation("Historic record that occurred before management practises where implemented to protect important horticultural areas from QFF");
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT5B_A2));
+        //state.setAnnotation("Historic record that occurred before management practises where implemented to protect important horticultural areas from QFF");
+        logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
+end
+   /**
+     * This rule  is NOT covered in the documentation.  But is a legitimate condition that should probably be
+     * handled
+     */
+rule "Inside FFEZ no date"
+    when
+        not Date()
+        $st: SensitiveTaxon()
+        $zones: List()
+    then
+        state.setLoadable(true);
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT5B_A3));
         logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
 end
 
@@ -61,6 +77,10 @@ rule "Outside FFEZ"
         eval(PlantPestUtils.isOutsideZone($st, SensitivityCategory.PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY, $zones))
     then        
         state.setLoadable(true);
-        state.setAnnotation("Occurrence of QFF outside of the FFEZ");
+        //NC: According to documentation records of this typep DO NOT need to be annotated or notified
+        //state.setAnnotation("Occurrence of QFF outside of the FFEZ");
+        //need to test if the sensitive species is notifiable under state legislation
+        state.setDelegateRules("PBC6");
+        state.setComplete(false);
         logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
 end

@@ -16,6 +16,8 @@ public class SdsValidationReport implements ValidationReport, Serializable {
 
     private final List<Message> messages;
 
+    private String category,assertion;
+
     public SdsValidationReport(SensitiveTaxon species) {
         super();
         this.species = species;
@@ -46,6 +48,22 @@ public class SdsValidationReport implements ValidationReport, Serializable {
         if (message != null) {
             messages.add(message);
         }
+    }
+
+    public String getCategory(){
+        return this.category;
+    }
+
+    public void setCategory(String category){
+        this.category = category;
+    }
+
+    public void setAssertion(String assertion){
+        this.assertion = assertion;
+    }
+
+    public String getAssertion(){
+        return this.assertion;
     }
 
     @Override

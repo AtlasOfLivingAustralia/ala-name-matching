@@ -3,10 +3,7 @@ package au.org.ala.sds.util;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
@@ -20,8 +17,8 @@ public class GeoLocationHelper {
 
     final static Logger logger = Logger.getLogger(GeoLocationHelper.class);
 
-    final static String COASTAL_WATERS_LAYER = "cl927";
-    final static String LGA_BOUNDARIES_LAYER = "cl23";
+    public final static String COASTAL_WATERS_LAYER = "cl927";
+    public final static String LGA_BOUNDARIES_LAYER = "cl23";
     final static String TSPZ_LAYER = "cl937";
     final static String TSSQZ_LAYER = "cl941";
     final static String FFEZ_TRI_STATE_LAYER = "cl938";
@@ -34,6 +31,7 @@ public class GeoLocationHelper {
     final static String PIZ_VIC_MOOROOPNA_LAYER = "cl960";
     final static String PIZ_VIC_UPTON_LAYER = "cl964";
     final static String PIZ_VIC_WHITEBRIDGE_LAYER = "cl965";
+    final static String STATES_TERRITORIES_LAYER ="cl22";
 
     final static List<String> SDS_GEOSPATIAL_LAYERS = Arrays.asList(
             COASTAL_WATERS_LAYER,
@@ -49,7 +47,8 @@ public class GeoLocationHelper {
             PIZ_VIC_NAGAMBIE_LAYER,
             PIZ_VIC_MOOROOPNA_LAYER,
             PIZ_VIC_UPTON_LAYER,
-            PIZ_VIC_WHITEBRIDGE_LAYER);
+            PIZ_VIC_WHITEBRIDGE_LAYER,
+            STATES_TERRITORIES_LAYER);
 
     public static Set<SensitivityZone> getZonesContainingPoint(String latitude, String longitude) throws Exception {
 
@@ -87,6 +86,14 @@ public class GeoLocationHelper {
                     NumberUtils.toFloat(latitude) >= -19.0 &&
                     NumberUtils.toFloat(longitude) >= 144.25) {
                     zones.add(SensitivityZoneFactory.getZone(SensitivityZone.PFFPQA1995));
+                }
+
+            }  else if(field.equalsIgnoreCase(STATES_TERRITORIES_LAYER)){
+                //NC 2013-04-29: This is necessary to insert the external territories
+                //TODO find out which layer should actually be used for this purpose
+                SensitivityZone zone;
+                if ((zone = SensitivityZoneFactory.getZoneByName(value)) != null) {
+                    zones.add(zone);
                 }
 
             } else if (field.equalsIgnoreCase(LGA_BOUNDARIES_LAYER)) {
@@ -155,6 +162,15 @@ public class GeoLocationHelper {
 
     public static List<String> getGeospatialLayers() {
         return SDS_GEOSPATIAL_LAYERS;
+    }
+
+    public static List<SensitivityZone> filterForZoneType(List<SensitivityZone> zones, SensitivityZone.ZoneType type){
+        List<SensitivityZone> newZones = new ArrayList<SensitivityZone>();
+        for(SensitivityZone zone : zones){
+            if(zone.getType() == type)
+                newZones.add(zone);
+        }
+        return newZones;
     }
 
     private static String getLayersForUri() {

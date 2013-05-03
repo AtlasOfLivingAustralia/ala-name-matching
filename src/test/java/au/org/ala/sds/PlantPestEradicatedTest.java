@@ -14,23 +14,20 @@
  ***************************************************************************/
 package au.org.ala.sds;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import java.util.HashMap;
 import java.util.Map;
 
+import au.org.ala.sds.model.Message;
+import au.org.ala.sds.util.GeoLocationHelper;
+import au.org.ala.sds.validation.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.util.Configuration;
-import au.org.ala.sds.validation.FactCollection;
-import au.org.ala.sds.validation.ServiceFactory;
-import au.org.ala.sds.validation.ValidationOutcome;
-import au.org.ala.sds.validation.ValidationService;
+
+import static org.junit.Assert.*;
 
 /**
  *
@@ -78,6 +75,8 @@ public class PlantPestEradicatedTest {
         assertTrue(outcome.isValid());
         assertTrue(outcome.isLoadable());
         //assertNotNull(outcome.getAnnotation());
+        assertNotNull(outcome.getReport().getAssertion());
+        assertEquals(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT2_A1, "Bactrocera papayae"),outcome.getReport().getAssertion());
     }
 
     @Test
@@ -94,12 +93,18 @@ public class PlantPestEradicatedTest {
         facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
         facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
         facts.put(FactCollection.EVENT_DATE_KEY, date);
+        facts.put(GeoLocationHelper.LGA_BOUNDARIES_LAYER,"Emerald");
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertTrue(outcome.isLoadable());
+        assertTrue(outcome.isControlledAccess());
+        //test for the correct messages
+        assertEquals(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT2_B1, "Xanthomonas axonopodis citri","Emerald"),outcome.getReport().getAssertion());
+        assertTrue(outcome.getReport().getMessages().get(0).getMessageText().contains("Your record Xanthomonas axonopodis citri,2004-01-29 and Emerald has been forwarded to a secure view with the Atlas of Living Australia"));
+
     }
 
     @Test
@@ -116,12 +121,15 @@ public class PlantPestEradicatedTest {
         facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
         facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
         facts.put(FactCollection.EVENT_DATE_KEY, date);
+        facts.put(GeoLocationHelper.LGA_BOUNDARIES_LAYER,"Emerald");
 
         ValidationService service = ServiceFactory.createValidationService(ss);
         ValidationOutcome outcome = service.validate(facts);
 
         assertTrue(outcome.isValid());
         assertFalse(outcome.isLoadable());
+        assertTrue(outcome.getReport().getMessagesByType(Message.Type.ALERT).get(0).getMessageText().contains("previously considered eradicated from Australia, has been  forwarded to Atlas of Living Australia from"));
+        assertTrue(outcome.getReport().getMessagesByType(Message.Type.WARNING).get(0).getMessageText().contains("This record has been determined to have plant biosecurity sensitivity because the pest is believed absent from Australia having been the subject of a successful eradication campaign"));
     }
 
     @Test
@@ -144,5 +152,32 @@ public class PlantPestEradicatedTest {
 
         assertTrue(outcome.isValid());
         assertFalse(outcome.isLoadable());
+        assertTrue(outcome.getReport().getMessagesByType(Message.Type.ALERT).get(0).getMessageText().contains("previously considered eradicated from Australia, has been  forwarded to Atlas of Living Australia from"));
+        assertTrue(outcome.getReport().getMessagesByType(Message.Type.WARNING).get(0).getMessageText().contains("This record has been determined to have plant biosecurity sensitivity because the pest is believed absent from Australia having been the subject of a successful eradication campaign"));
+    }
+
+    @Test
+    public void citrusCankerNoDate(){
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Xanthomonas axonopodis citri");
+        assertNotNull(ss);
+
+        String latitude = "-23.546678";   // Emerald
+        String longitude = "148.151751";
+
+
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.put(GeoLocationHelper.LGA_BOUNDARIES_LAYER,"Emerald");
+
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+
+        assertTrue(outcome.isValid());
+        assertTrue(outcome.isLoadable());
+        assertTrue(outcome.isControlledAccess());
+        assertTrue(outcome.getReport().getMessages().get(0).getMessageText().contains("and Emerald has been forwarded to a secure view with the Atlas of Living Australia"));
+        assertEquals(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT2_A1, "Xanthomonas axonopodis citri"),outcome.getReport().getAssertion());
     }
 }

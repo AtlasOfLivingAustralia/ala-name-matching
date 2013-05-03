@@ -3,6 +3,8 @@
  */
 package au.org.ala.sds.validation;
 
+import java.text.MessageFormat;
+
 /**
  *
  * @author Peter Flemming (peter.flemming@csiro.au)
@@ -12,8 +14,11 @@ public class RuleState {
     private boolean complete;
     private boolean loadable;
     /** Indicates that the properties of the supplied record should be restricted to taxonomic and institution information */
-    private boolean restricted;
+    private boolean restricted=false;
+    /** Indicates that the supplied record is fully viewable under controlled access **/
+    private boolean controlledAccess=false;
     private String delegateRules;
+    /** NC 2013-04-29: Is this the annotation to place against the record?? **/
     private String annotation;
 
     public RuleState() {
@@ -52,11 +57,22 @@ public class RuleState {
         this.annotation = annotation;
     }
 
+    public void setAnnotation(String annotation, Object... context) {
+        this.annotation = MessageFormat.format(annotation, context);
+    }
+
     public boolean isRestricted() {
         return restricted;
     }
 
     public void setRestricted(boolean restricted) {
         this.restricted = restricted;
+    }
+    public void setControlledAccess(boolean controlledAccess){
+        this.controlledAccess = controlledAccess;
+    }
+
+    public boolean isControlledAccess(){
+        return this.controlledAccess;
     }
 }
