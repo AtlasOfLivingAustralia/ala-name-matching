@@ -355,14 +355,15 @@ object Store {
    * The type of reindex tat is performed is based on the keyTYpe
    * keyType can be rowKey or uuid
    */
-  def reindex(keys:Array[String], keyType:String){
-    reindex(keys, 4, keyType)
-  }
-  
-  def reindex(keys:Array[String], threads:Int, keyType:String){
-    if(keys != null && keys.length>0)
-      IndexRecords.indexListThreaded(keys.toList, threads, keyType=="rowKey")
-  }
+  //NC: Commented out because they were never necessary. We changed to using a HTTP SOLR server instead.
+//  def reindex(keys:Array[String], keyType:String){
+//    reindex(keys, 4, keyType)
+//  }
+//  
+//  def reindex(keys:Array[String], threads:Int, keyType:String){
+//    if(keys != null && keys.length>0)
+//      IndexRecords.indexListThreaded(keys.toList, threads, keyType=="rowKey")
+//  }
 
   /**
    * Indexes a dataResource from a specific date
