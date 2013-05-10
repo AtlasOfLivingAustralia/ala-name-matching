@@ -113,7 +113,8 @@ class Loader extends DataLoader {
           case _ => println("Protocol " + protocol + " currently unsupported.")
         }
       } catch {
-        case e: Exception => e.printStackTrace
+        //NC 2013-05-10: Need to rethrow the exception to allow the tools to allow the tools to pick up on them.
+        case e: Exception => e.printStackTrace;throw e
       }
       
       if(test){

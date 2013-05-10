@@ -46,13 +46,13 @@ object ScriptTool {
       var inputStr = bufReader.readLine()
       while (inputStr != null) {
         println("Executing command '" + inputStr + "'")
-        if (inputStr.trim.length > 0) CMD.executeCommand(inputStr)
+        if (inputStr.trim.length > 0) CMD.executeCommand(inputStr,true)
         inputStr = bufReader.readLine()
       }
       au.org.ala.biocache.Config.persistenceManager.shutdown
       IndexRecords.indexer.shutdown
       println("Script complete.\n")
-      System.exit(1)
+      System.exit(0) //need a successful exit
     } catch {
       case e: Exception => {
         au.org.ala.biocache.Config.persistenceManager.shutdown
@@ -70,7 +70,7 @@ object CMD {
    *
    * @param input
    */
-  def executeCommand(input: String) {
+  def executeCommand(input: String, throwException:Boolean=false) {
     try {
       val l = new Loader
       input.toLowerCase.trim match {
@@ -149,7 +149,7 @@ object CMD {
         }
         case it if (it startsWith "index-custom") => {
           if (it.split(" ").length > 2) {
-            val (cmdAndDr, additionalFields) = it.split(" ").splitAt(2)
+            val (cmdAndDr, additionalFields) = input.split(" ").splitAt(2)
             IndexRecords.index(None, None, Some(cmdAndDr(1)), false, false, miscIndexProperties = additionalFields)
           }
         }
@@ -313,7 +313,8 @@ object CMD {
         case _ => printHelp
       }
     } catch {
-      case e: Exception => e.printStackTrace
+      //NC:2013-05-10: Need to rethrow the exception so that the script tool knows about it.
+      case e: Exception => e.printStackTrace; if(throwException)throw e;
     }
     
     def indexDataResourceLive(dr:String){

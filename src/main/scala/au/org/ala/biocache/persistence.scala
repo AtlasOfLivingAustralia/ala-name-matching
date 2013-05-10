@@ -286,14 +286,20 @@ class CassandraPersistenceManager @Inject() (
 
     /**
      * Retrieve the column value, handling NotFoundExceptions from cassandra thrift.
+     * 
+     * NC:2013-05-10: we want to throw the exception when any other exception is received.  This is so that errors are
+     * not swallowed in the guise of being a "NotFoundException". Thus allowing us to terminate a load midcycle.
+     * 
      */
     def get(uuid:String, entityName:String, propertyName:String) = {
+      //logger.info("Getting " + propertyName)
       try {
           val selector = Pelops.createSelector(poolName)
           val column = selector.getColumnFromRow(entityName, uuid, propertyName, ConsistencyLevel.ONE)
           Some(new String(column.getValue, "UTF-8"))
       } catch {
-          case e:Exception => None   //this is epected behaviour with cassandra
+          case e:org.scale7.cassandra.pelops.exceptions.NotFoundException => None   //this is epected behaviour with cassandra
+          case e:Exception =>e.printStackTrace();throw e
       }
     }
     /**
