@@ -991,7 +991,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
           solrServer.commit
         }
         else {
-
+          solrDocList.synchronized{
           if (!StringUtils.isEmpty(values(0)))
             solrDocList.add(doc)
 
@@ -1008,6 +1008,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
             //            docQueue.add(tmpDocList)
             //thread ! tmpDocList
             solrDocList.clear
+          }
           }
         }
       }
