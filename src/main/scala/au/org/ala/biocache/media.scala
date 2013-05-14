@@ -51,7 +51,7 @@ object MediaStore {
       }
     }
   }
-
+  
   def isValidImageURL(url: String): Boolean = {
     !imageParser.unapplySeq(url.trim.toLowerCase).isEmpty || isStoredMedia(imageExtension, url)
   }
@@ -62,6 +62,11 @@ object MediaStore {
 
   def isValidVideoURL(url: String): Boolean = {
     !videoParser.unapplySeq(url.trim.toLowerCase).isEmpty || isStoredMedia(videoExtension, url)
+  }
+  
+  def isMediaFile(file:File): Boolean ={
+    val name = file.getAbsolutePath()
+    endsWithOneOf(imageExtension,name)||endsWithOneOf(soundExtension,name)||endsWithOneOf(videoExtension,name)
   }
 
   def isStoredMedia(acceptedExtensions: Array[String], url: String): Boolean = {

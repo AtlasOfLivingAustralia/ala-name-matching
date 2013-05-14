@@ -91,7 +91,8 @@ class DwcCSVLoader extends DataLoader {
           println("File last modified date: " + maxLastModifiedDate)
           if(fileName != null){
             val directory = new File(fileName)
-            directory.listFiles.foreach(file => loadFile(file,dataResourceUid, uniqueTerms, params,strip,incremental||logRowKeys,testFile))
+            loadDirectory(directory,dataResourceUid, uniqueTerms, params,strip,incremental||logRowKeys,testFile)
+            //directory.listFiles.foreach(file => if(file.isFile())loadFile(file,dataResourceUid, uniqueTerms, params,strip,incremental||logRowKeys,testFile) else logger.warn("Unable to load file " + file.getAbsolutePath()))
             loaded = true
           }
         })
@@ -102,6 +103,11 @@ class DwcCSVLoader extends DataLoader {
             setNotLoadedForOtherPhases(dataResourceUid)
         }
     }
+    //loads all the files in the subdirectories that are not multimedia
+    def loadDirectory(directory:File, dataResourceUid:String, uniqueTerms:List[String], params:Map[String,String], stripSpaces:Boolean=false, logRowKeys:Boolean=false, test:Boolean=false){
+        directory.listFiles.foreach(file => if(file.isFile()&& !MediaStore.isMediaFile(file))loadFile(file,dataResourceUid, uniqueTerms, params,stripSpaces,logRowKeys,test) else if(file.isDirectory) loadDirectory(file,dataResourceUid, uniqueTerms, params,stripSpaces,logRowKeys,test) else logger.warn("Unable to load as CSV: " + file.getAbsolutePath()))
+    }
+    
     
     def loadFile(file:File, dataResourceUid:String, uniqueTerms:List[String], params:Map[String,String], stripSpaces:Boolean=false, logRowKeys:Boolean=false, test:Boolean=false){
       
@@ -115,8 +121,9 @@ class DwcCSVLoader extends DataLoader {
         }
         val escape = params.getOrElse("csv_escape_char","|").head
         val reader =  new CSVReader(new InputStreamReader(new org.apache.commons.io.input.BOMInputStream(new FileInputStream(file))), separator, quotechar, escape)
+    
         
-        println("Using CSV reader with the following settings quotes: " + quotechar + " separator: " + separator + " escape: " + escape)
+        logger.info("Using CSV reader with the following settings quotes: " + quotechar + " separator: " + separator + " escape: " + escape)
         //match the column headers to dwc terms
         val dwcTermHeaders = {
         	val headerLine = reader.readNext
@@ -129,14 +136,14 @@ class DwcCSVLoader extends DataLoader {
         }
         
         if(dwcTermHeaders == null){
-          println("No content in file.")
+          logger.warn("No content in file.")
           return
         }
         
         var currentLine = reader.readNext
         
-        println("Unique terms: " + uniqueTerms)
-        println("Column headers: " + dwcTermHeaders)
+        logger.info("Unique terms: " + uniqueTerms)
+        logger.info("Column headers: " + dwcTermHeaders)
         
         val validConfig = uniqueTerms.forall(t => dwcTermHeaders.contains(t))
         if(!validConfig){
@@ -148,8 +155,8 @@ class DwcCSVLoader extends DataLoader {
         
         val collectionCodes = Config.indexDAO.getDistinctValues("data_resource_uid:"+dataResourceUid, "collection_code",100).getOrElse(List()).toSet[String]
 
-        println("The current institution codes for the data resource: " + institutionCodes)
-        println("The current collection codes for the data resource: " + collectionCodes)
+        logger.info("The current institution codes for the data resource: " + institutionCodes)
+        logger.info("The current collection codes for the data resource: " + collectionCodes)
         
         val newCollCodes=new scala.collection.mutable.HashSet[String]
         val newInstCodes= new scala.collection.mutable.HashSet[String]
@@ -180,6 +187,7 @@ class DwcCSVLoader extends DataLoader {
                    
                     val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,""))
                     
+                                       
                     if(test){                      
                       newInstCodes.add(map.getOrElse("institutionCode", "<NULL>"))                      
                       newCollCodes.add(map.getOrElse("collectionCode", "<NULL>"))
@@ -221,6 +229,8 @@ class DwcCSVLoader extends DataLoader {
                       fr.occurrence.associatedMedia = filePathsInStore.mkString(";")
                     }
   
+  	                //println(FullRecordMapper.fullRecord2Map(fr, Versions.RAW))
+  	               
                     load(dataResourceUid, fr, uniqueTermsValues,true, false,stripSpaces,rowKeyWriter)
                   }
 
@@ -256,11 +266,11 @@ class DwcCSVLoader extends DataLoader {
           val unknownInstitutions = newInstCodes &~ institutionCodes
           val unknownCollections = newCollCodes &~ collectionCodes
           if(unknownInstitutions.size > 0)
-            println("Warning there are new institution codes in the set. " + unknownInstitutions)
+            logger.warn("Warning there are new institution codes in the set. " + unknownInstitutions)
           if(unknownCollections.size > 0)
-            println("Warning there are new collection codes in the set. " + unknownCollections)
-          println("There are " + counter + " records in the file. The number of NEW records: " + newCount)
+            logger.warn("Warning there are new collection codes in the set. " + unknownCollections)
+          logger.info("There are " + counter + " records in the file. The number of NEW records: " + newCount)
         }
-        println("Load finished")
+        logger.info("Load finished for " + file.getName())
     }
 }
