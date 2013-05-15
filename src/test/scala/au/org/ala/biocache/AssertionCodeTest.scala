@@ -194,13 +194,13 @@ class AssertionCodeTest extends ConfigFunSuite {
     val qa1 = QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, true)
     qa1.userId = "Natasha.Carter@csiro.au"
     qa1.userDisplayName = "Natasha Carter"
-    occurrenceDAO.addUserAssertion(rowKey3, qa1)
+    occurrenceDAO.addUserAssertion(rowKey3, qa1)    
     expect("true") {
-      Config.persistenceManager.get(rowKey3, "occ", FullRecordMapper.userQualityAssertionColumn).get
+      pm.get(rowKey3, "occ", FullRecordMapper.userQualityAssertionColumn).get
     }
     occurrenceDAO.deleteUserAssertion(rowKey3, qa1.uuid)
     expect("false") {
-      Config.persistenceManager.get(rowKey3, "occ", FullRecordMapper.userQualityAssertionColumn).get
+      pm.get(rowKey3, "occ", FullRecordMapper.userQualityAssertionColumn).get
     }
   }
 }
