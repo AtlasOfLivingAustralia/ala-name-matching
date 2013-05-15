@@ -28,7 +28,17 @@ class ProcessLocationTest extends ConfigFunSuite {
     TaxonProfileDAO.add(tp);
 
     pm.put("-35.21667|144.81060", "loc", "stateProvince", "New South Wales")
+    pm.put("-35.21667|144.81060", "loc", "cl927", "New South Wales")
+    pm.put("-35.21667|144.8106", "loc", "cl927", "New South Wales")
     pm.put("-35.2|144.8", "loc", "stateProvince", "New South Wales")
+    pm.put("-35.2|144.8", "loc", "cl927", "New South Wales")
+    pm.put("-40.857|145.52","loc","cl21","onwater")
+    pm.put("-23.73750|133.85720","loc","cl20","onland")
+    
+    pm.put("-31.2532183|146.921099","loc","cl927","New South Wales")
+    pm.put("-31.253218|146.9211","loc","cl927","New South Wales")//NC 20130515: There is an issue where by our location cache converst toFLoat and loses accurancy.  This is the point above after going through the system
+    
+    
     println(pm)
   }
 
@@ -149,8 +159,9 @@ class ProcessLocationTest extends ConfigFunSuite {
     val qas = (new LocationProcessor).process("test", raw, processed)
     println(processed.location.coordinateUncertaintyInMeters)
     println(qas(0))
-    expect(25) {
-      qas(0).code
+    expect(true) {
+     qas.find(_.code == 25) != None
+      //qas(0).code
     }
     expect("100") {
       processed.location.coordinateUncertaintyInMeters
@@ -165,8 +176,8 @@ class ProcessLocationTest extends ConfigFunSuite {
     raw.location.coordinateUncertaintyInMeters = "100 meters";
     val qas = (new LocationProcessor).process("test", raw, processed)
     println(processed.location.coordinateUncertaintyInMeters)
-    expect(true) {
-      qas.isEmpty
+    expect(None) {
+      qas.find(_.code == 27)
     }
     expect("100.0") {
       processed.location.coordinateUncertaintyInMeters
@@ -181,36 +192,36 @@ class ProcessLocationTest extends ConfigFunSuite {
     raw.location.coordinateUncertaintyInMeters = "1000"
     var qas = (new LocationProcessor).process("test", raw, processed)
 
-    expect(5) {
-      qas(0) code
+    expect(true) {
+      qas.find(_.code == 5) != None
     }
 
     raw.location.decimalLatitude = "-32"
     raw.location.decimalLongitude = "190"
     qas = (new LocationProcessor).process("test", raw, processed)
-    expect(5) {
-      qas(0) code
+    expect(true) {
+      qas.find(_.code == 5) != None
     }
 
     raw.location.decimalLatitude = "-32"
     raw.location.decimalLongitude = "120"
     qas = (new LocationProcessor).process("test", raw, processed)
-    expect(true) {
-      qas.isEmpty
+    expect(None) {
+      qas.find(_.code == 5)
     }
 
     raw.location.decimalLatitude = "-120"
     raw.location.decimalLongitude = "120"
     qas = (new LocationProcessor).process("test", raw, processed)
-    expect(5) {
-      qas(0) code
+    expect(true) {
+      qas.find(_.code == 5) != None
     }
 
     raw.location.decimalLatitude = "-32"
     raw.location.decimalLongitude = "-200"
     qas = (new LocationProcessor).process("test", raw, processed)
-    expect(5) {
-      qas(0) code
+    expect(true) {
+      qas.find(_.code == 5) != None
     }
 
   }
@@ -221,8 +232,8 @@ class ProcessLocationTest extends ConfigFunSuite {
     raw.location.decimalLatitude = "123.123"
     raw.location.decimalLongitude = "-34.29"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(3) {
-      qas(0).code
+    expect(true) {
+      qas.find(_.code == 3) != None
     }
     expect("-34.29") {
       processed.location.decimalLatitude
@@ -279,14 +290,14 @@ class ProcessLocationTest extends ConfigFunSuite {
     raw.location.decimalLongitude = "145.52"
     raw.location.coordinateUncertaintyInMeters = "100"
     var qas = locationProcessor.process("test", raw, processed)
-    expect(19) {
-      qas(0).code
+    expect(true) {
+      qas.find(_.code == 19) != None
     }
     raw.location.decimalLatitude = "-23.73750"
     raw.location.decimalLongitude = "133.85720"
     qas = locationProcessor.process("test", raw, processed)
-    expect(true) {
-      qas.isEmpty
+    expect(None) {
+      qas.find(_.code == 19)
     }
   }
   test("zero coordinates") {
@@ -296,8 +307,8 @@ class ProcessLocationTest extends ConfigFunSuite {
     raw.location.decimalLongitude = "0.0"
     raw.location.coordinateUncertaintyInMeters = "100"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(4) {
-      qas(0).code
+    expect(true) {
+      qas.find(_.code == 4) != None
     }
   }
 
@@ -309,8 +320,8 @@ class ProcessLocationTest extends ConfigFunSuite {
     raw.location.coordinateUncertaintyInMeters = "100"
     raw.location.country = "dummy"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(6) {
-      qas(0).code
+    expect(true) {
+      qas.find(_.code == 6) != None
     }
   }
 
@@ -323,8 +334,8 @@ class ProcessLocationTest extends ConfigFunSuite {
     raw.location.country = "Australia"
     raw.location.stateProvince = "Australian Capital Territory"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(18) {
-      qas(0).code
+    expect(true) {
+      qas.find(_.code == 18) != None
     }
   }
 
@@ -337,8 +348,8 @@ class ProcessLocationTest extends ConfigFunSuite {
     raw.location.country = "Australia"
     raw.location.stateProvince = "New South Wales"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(22) {
-      qas(0).code
+    expect(true) {
+      qas.find(_.code == 22) != None
     }
   }
 
@@ -349,8 +360,8 @@ class ProcessLocationTest extends ConfigFunSuite {
     raw.location.decimalLongitude = "146.921099"
     raw.location.coordinateUncertaintyInMeters = "-1"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(24) {
-      qas(0).code
+    expect(true) {
+      qas.find(_.code == 24) != None
     }
   }
 
@@ -360,8 +371,8 @@ class ProcessLocationTest extends ConfigFunSuite {
     raw.location.decimalLatitude = "-31.2532183"
     raw.location.decimalLongitude = "146.921099"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(27) {
-      qas(0).code
+    expect(true) {
+      qas.find(_.code == 27) != None
     }
   }
 

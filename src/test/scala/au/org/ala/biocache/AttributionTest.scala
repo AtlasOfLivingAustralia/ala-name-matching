@@ -11,6 +11,10 @@ class AttributionTest extends ConfigFunSuite{
         val dr= AttributionDAO.getDataResourceFromWS("dr367")        
         expect(true){dr.get.hasMappedCollections}
         expect("dp33"){dr.get.dataProviderUid}
+        
+        val dr376 = AttributionDAO.getDataResourceFromWS("dr376")
+        println(dr376)
+        println(dr376.get.taxonomicHints)
     }
     
     test("Collection lookup"){
@@ -33,7 +37,7 @@ class AttributionTest extends ConfigFunSuite{
     
     test("Default DWC Values in DR Lookup"){
         val dr = AttributionDAO.getDataResourceFromWS("dr92")
-        expect("MachineObservation"){dr.get.defaultDwcValues.get("basisOfRecord")}
+        expect(Some("MachineObservation")){dr.get.defaultDwcValues.get("basisOfRecord")}
     }
     
     

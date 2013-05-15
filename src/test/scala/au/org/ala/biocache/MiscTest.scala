@@ -57,7 +57,8 @@ class MiscTest extends ConfigFunSuite {
         var qas = (new EventProcessor).process("test", raw, processed)
         expect(true){qas.isEmpty}
         
-        raw.event.year = "2012"
+        //future dated - make sure that it far intot the future so that the test will always pass
+        raw.event.year = "2212"
         raw.event.month = "11"
         raw.event.day = "22"
         qas = (new EventProcessor).process("test", raw, processed)

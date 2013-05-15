@@ -147,6 +147,9 @@ object FullRecordMapper {
                       if (fieldValue != "true" && fieldValue != "false") {
                         //parses an array of integers
                         val codeBuff = new ArrayBuffer[String]
+                        //Add the assertions that already exist
+                        if(fullRecord.assertions != null)
+                          codeBuff ++= fullRecord.assertions
                         Json.toIntArray(fieldValue).foreach(code => {
                           val retrievedCode = AssertionCodes.getByCode(code)
                           if(!retrievedCode.isEmpty){

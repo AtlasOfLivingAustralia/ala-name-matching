@@ -52,6 +52,8 @@ object ClassificationDAO {
       var normalised = str
       if(normalised.startsWith("'") || normalised.startsWith("\"")) normalised = normalised.drop(1)
       if(normalised.endsWith("'") || normalised.endsWith("\"")) normalised = normalised.dropRight(1)
+      //if((normalised.endsWith("'") || normalised.endsWith("\"")) && (normalised.startsWith("'") || normalised.startsWith("\"") || normalised.)) normalised = normalised.dropRight(1)
+      //if((normalised.endsWith("'") || normalised.endsWith("\"")) && (normalised.startsWith("'") || normalised.startsWith("\"") )) normalised = normalised.dropRight(1)
       normalised
     }
   }
@@ -162,6 +164,7 @@ object ClassificationDAO {
                 newcl.setInfraspecificEpithet(null)
                 newcl.setSpecificEpithet(null)
                 newcl.setSpecies(null)
+                updateClassificationRemovingMissingSynonym(newcl, resultMetric.getResult())
                 result = getByHashLRU(newcl)
             }
             else{
@@ -177,6 +180,19 @@ object ClassificationDAO {
           result
       }
     }
+  }
+  def updateClassificationRemovingMissingSynonym(newcl:Classification, result:NameSearchResult){
+    val sciName = result.getRankClassification().getScientificName()
+    if(newcl.genus == sciName)
+      newcl.genus =null
+    if(newcl.family == sciName)
+      newcl.family = null
+    if(newcl.order == sciName)
+      newcl.order = null
+    if(newcl.classs == sciName)
+      newcl.classs = null
+    if(newcl.phylum == sciName)
+      newcl.phylum = null
   }
 }
 
