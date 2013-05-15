@@ -66,8 +66,10 @@ public class SensitiveDataService {
         //Only continue if no flags were discovered
         //Step 2 extract the sensitive species and validate the service
         //search for a sensitive taxon
-        SensitiveTaxon st = taxonId!=null?finder.findSensitiveSpeciesByLsid(taxonId):finder.findSensitiveSpecies(scientificName);
-        if(st == null  &taxonId != null)
+        SensitiveTaxon st = null;
+        if(taxonId != null)
+            st = finder.findSensitiveSpeciesByLsid(taxonId);
+        if(st == null && scientificName != null)
             st = finder.findSensitiveSpecies(scientificName);
         if(st != null){
             ValidationService service =ServiceFactory.createValidationService(st);
