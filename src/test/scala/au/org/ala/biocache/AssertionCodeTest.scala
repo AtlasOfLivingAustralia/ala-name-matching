@@ -50,14 +50,14 @@ class AssertionCodeTest extends ConfigFunSuite {
         record.get.geospatiallyKosher
       }
     }
-    println(Config.persistenceManager)
+    //println(Config.persistenceManager)
     //now have a false user assertion counteract this one
     val qa = QualityAssertion(AssertionCodes.GEOSPATIAL_ISSUE, false)
     qa.comment = "Overrride the system assertion"
     qa.userId = "Natasha.Carter@csiro.au"
     qa.userDisplayName = "Natasha Carter"
     occurrenceDAO.addUserAssertion(rowKey, qa)
-    println(Config.persistenceManager)
+    //println(Config.persistenceManager)
     expect(true) {
       val record = occurrenceDAO.getByRowKey(rowKey)
       if (record.isEmpty)
@@ -78,13 +78,13 @@ class AssertionCodeTest extends ConfigFunSuite {
     qa1.userId = "Natasha.Carter@csiro.au"
     qa1.userDisplayName = "Natasha Carter"
     occurrenceDAO.addUserAssertion(rowKey, qa1)
-    println(Config.persistenceManager)
+    //println(Config.persistenceManager)
     expect(2) {
       occurrenceDAO.getUserAssertions(rowKey).size
     }
     expect(true) {
       val record = occurrenceDAO.getByRowKey(rowKey)
-      println(record.get.assertions.toSet)
+      //println(record.get.assertions.toSet)
       record.get.assertions.contains("taxonomicIssue")
     }
     val qa2 = QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, false)
@@ -92,7 +92,7 @@ class AssertionCodeTest extends ConfigFunSuite {
     qa2.userId = "Natasha.Carter2@csiro.au"
     qa2.userDisplayName = "Natasha Carter"
     occurrenceDAO.addUserAssertion(rowKey, qa2)
-    println(Config.persistenceManager)
+    //println(Config.persistenceManager)
     expect(3) {
       occurrenceDAO.getUserAssertions(rowKey).size
     }
@@ -123,7 +123,7 @@ class AssertionCodeTest extends ConfigFunSuite {
       val record = occurrenceDAO.getByRowKey(rowKey)
       record.get.assertions.contains("idPreOccurrence")
     }
-    println(Config.persistenceManager)
+    //println(Config.persistenceManager)
     val qa2 = QualityAssertion(AssertionCodes.ID_PRE_OCCURRENCE, false)
     qa2.comment = "False value overrides"
     qa2.userId = "Natasha.Carter2@csiro.au"
@@ -138,7 +138,7 @@ class AssertionCodeTest extends ConfigFunSuite {
       val record = occurrenceDAO.getByRowKey(rowKey)
       record.get.assertions.contains("idPreOccurrence")
     }
-    println(Config.persistenceManager)
+    //println(Config.persistenceManager)
   }
 
   test("Verify Record") {
@@ -150,7 +150,7 @@ class AssertionCodeTest extends ConfigFunSuite {
     processed.uuid=uuid  
     val assertions = Some(Map("loc" -> Array(QualityAssertion(AssertionCodes.GEOSPATIAL_ISSUE))))
     occurrenceDAO.updateOccurrence(rowKey2, processed, assertions, Versions.PROCESSED)
-    println(Config.persistenceManager)
+    //println(Config.persistenceManager)
     //Test that the record starts off as geospatialKosher =false
     expect(false) {
       val record = occurrenceDAO.getByRowKey(rowKey2)
@@ -161,7 +161,7 @@ class AssertionCodeTest extends ConfigFunSuite {
     vr.userId = "Natasha.Carter@csiro.au"
     vr.userDisplayName = "Natasha Carter"
     occurrenceDAO.addUserAssertion(rowKey2, vr)
-    println(Config.persistenceManager)
+    //println(Config.persistenceManager)
     //test that verifying the records changes the geospatialKosher=true
     expect(true) {
       val record = occurrenceDAO.getByRowKey(rowKey2)
@@ -172,7 +172,7 @@ class AssertionCodeTest extends ConfigFunSuite {
     //test that reprocessing a verified record retains the geospatialKosher = true even when applying failing qa
     expect(true) {
       val record = occurrenceDAO.getByRowKey(rowKey2)
-      println(record.get.assertions.toList)
+      //println(record.get.assertions.toList)
       record.get.geospatiallyKosher && record.get.assertions.contains("userVerified")
 
     }
