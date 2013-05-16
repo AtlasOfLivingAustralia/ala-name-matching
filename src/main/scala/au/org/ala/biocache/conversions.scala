@@ -38,7 +38,7 @@ object BiocacheConversions {
     	cl.taxonRankID = nsr.getRank.getId.toString
     }
     else
-      logger.warn("ERROR : " + nsr.getLsid + " doesn't have a rank " + rankClassification.getScientificName)
+      logger.debug(nsr.getLsid + " doesn't have a rank " + rankClassification.getScientificName)
     
     //put the match reason
     cl.nameMatchMetric = nsr.getMatchType.toString
