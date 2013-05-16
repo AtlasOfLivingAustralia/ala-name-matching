@@ -537,7 +537,7 @@ object SFTPTools {
   val logger = LoggerFactory.getLogger("SFTPTools")
   //SFTP items
   val connectionPattern = """sftp://([a-zA-Z]*):([a-zA-Z]*)@([a-zA-z\.]*):([a-zA-Z/]*)""".r
-  logger.debug(connectionPattern)
+  logger.debug(connectionPattern.toString())
 
   var channelSftp:ChannelSftp = null
   var session:Session = null
