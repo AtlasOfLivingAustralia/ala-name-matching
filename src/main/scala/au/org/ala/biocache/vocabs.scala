@@ -620,7 +620,7 @@ object AssertionCodes {
   val DECIMAL_LAT_LONG_CALCULATED_FROM_EASTING_NORTHING = ErrorCode("decimalLatLongCalculatedFromEastingNorthing", 49, false, "Decimal latitude and longitude were calculated using easting, nothing and zone")
   val DECIMAL_LAT_LONG_CALCULATION_FROM_EASTING_NORTHING_FAILED = ErrorCode("decimalLatLongCalculationFromEastingNorthingFailed", 50, true, "Failed to calculate decimal latitude and longitude using easting, northing and zone")
   val GEODETIC_DATUM_ASSUMED_WGS84 = ErrorCode("geodeticDatumAssumedWgs84", 51, false, "Geodetic datum assumed to be WGS84 (EPSG:4326)")
-  val UNRECOGNIZED_GEODETIC_DATUM = ErrorCode("unrecognizedGeodeticDatum", 52, true, "Geodetic datum not recognized")
+  val UNRECOGNIZED_GEODETIC_DATUM = ErrorCode("unrecognizedGeodeticDatum", 52, false, "Geodetic datum not recognized")
 
   //taxonomy issues
   val TAXONOMIC_ISSUE = ErrorCode("taxonomicIssue",10000,false,"Taxonomic issue")  // general purpose option
