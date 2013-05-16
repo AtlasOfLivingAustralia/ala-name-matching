@@ -10,7 +10,6 @@ class MockPersistenceManager extends PersistenceManager {
   override def toString = mockStore.toString   
     
   private val mockStore = new HashMap[String, HashMap[String,HashMap[String,String]]]
-  
 
   def clear = mockStore.clear
 
@@ -137,7 +136,7 @@ class MockPersistenceManager extends PersistenceManager {
 class TestConfigModule extends com.google.inject.AbstractModule{
     
     override def configure() {
-val properties = {
+    val properties = {
       val properties = new java.util.Properties()
       properties.load(this.getClass.getResourceAsStream("/biocache.properties"))
       properties
@@ -150,15 +149,12 @@ val properties = {
         try {
             val nameIndex = new au.org.ala.checklist.lucene.CBIndexSearch(properties.getProperty("nameIndexLocation"))
             bind(classOf[au.org.ala.checklist.lucene.CBIndexSearch]).toInstance(nameIndex)
-           
-            
         } catch {
             case e: Exception =>e.printStackTrace()
         }
         bind(classOf[PersistenceManager]).to(classOf[MockPersistenceManager]).in(com.google.inject.Scopes.SINGLETON)
         println("Using Test Config")
     }
-    
 }
 
 @Ignore

@@ -65,7 +65,7 @@ object DwcCSVLoader {
 class DwcCSVLoader extends DataLoader {
 
     import JavaConversions._
-    import scalaj.collection.Imports._
+    import scala.collection.JavaConverters._
 
     def loadLocalFile(dataResourceUid:String, filePath:String,logRowKeys:Boolean=false, testFile:Boolean=false){
         val (protocol, urls, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(dataResourceUid)
@@ -187,7 +187,6 @@ class DwcCSVLoader extends DataLoader {
                    
                     val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,""))
                     
-                                       
                     if(test){                      
                       newInstCodes.add(map.getOrElse("institutionCode", "<NULL>"))                      
                       newCollCodes.add(map.getOrElse("collectionCode", "<NULL>"))
@@ -229,8 +228,6 @@ class DwcCSVLoader extends DataLoader {
                       fr.occurrence.associatedMedia = filePathsInStore.mkString(";")
                     }
   
-  	                //println(FullRecordMapper.fullRecord2Map(fr, Versions.RAW))
-  	               
                     load(dataResourceUid, fr, uniqueTermsValues,true, false,stripSpaces,rowKeyWriter)
                   }
 

@@ -6,18 +6,19 @@ import scala.collection.JavaConversions
 import scala.io.Source
 import scala.util.parsing.json.JSON
 import org.apache.commons.lang.StringUtils
+import org.slf4j.LoggerFactory
 
 /** Case class that encapsulates a canonical form and variants. */
 class Term (@BeanProperty val canonical:String, @BeanProperty rawVariants:Array[String]){
-    val variants = rawVariants.map(v => v.toLowerCase.trim) ++ rawVariants.map(v => Stemmer.stem(v)) :+ Stemmer.stem(canonical)
+  val variants = rawVariants.map(v => v.toLowerCase.trim) ++ rawVariants.map(v => Stemmer.stem(v)) :+ Stemmer.stem(canonical)
 }
 
 /** Factory for terms */
 object Term {
-    def apply(canonical: String): Term = new Term(canonical, Array[String]())
-    def apply(canonical: String, variant: String): Term = new Term(canonical, Array(variant))
-    def apply(canonical: String, variants: String*): Term = new Term(canonical, Array(variants:_*))
-    def apply(canonical: String, variants: Array[String]): Term = new Term(canonical, variants)
+  def apply(canonical: String): Term = new Term(canonical, Array[String]())
+  def apply(canonical: String, variant: String): Term = new Term(canonical, Array(variant))
+  def apply(canonical: String, variants: String*): Term = new Term(canonical, Array(variants:_*))
+  def apply(canonical: String, variants: Array[String]): Term = new Term(canonical, variants)
 }
 
 /**
@@ -32,7 +33,7 @@ trait Vocab {
 
   val regexNorm = """[ \\"\\'\\.\\,\\-\\?]*"""
   
-  def getStringList : java.util.List[String] = all.map(t => t.canonical).toList.sort((x,y) => x.compare(y) < 0)
+  def getStringList : java.util.List[String] = all.map(t => t.canonical).toList.sorted
   
   /**
    * Match a term. Matches canonical form or variants in array
@@ -58,7 +59,7 @@ trait Vocab {
     None
   }
   
-  def retrieveCanonicals(terms:List[String]) = {
+  def retrieveCanonicals(terms:Seq[String]) = {
     terms.map(ch => {
         DwC.matchTerm(ch) match {
             case Some(term) => term.canonical
@@ -67,7 +68,7 @@ trait Vocab {
     })
   }
 
-  def retrieveCanonicalsOrNothing(terms:List[String]) = {
+  def retrieveCanonicalsOrNothing(terms:Seq[String]) = {
     terms.map(ch => {
         DwC.matchTerm(ch) match {
             case Some(term) => term.canonical
@@ -348,7 +349,7 @@ trait VocabMaps {
   val termMap:Map[String, Array[String]]
 
   /** retrieve a java friendly string list of the canonicals */
-  def getStringList : java.util.List[String] = termMap.keys.toList.sort((x,y) => x.compare(y) < 0)
+  def getStringList : java.util.List[String] = termMap.keys.toList.sorted
   
   /**
    * Compares the supplied term to an array of options
@@ -440,6 +441,7 @@ object HabitatMap extends VocabMaps {
     import au.org.ala.util.ReflectBean._
     
     import JavaConversions._
+    val logger = LoggerFactory.getLogger("SpeciesGroups")
     
     val groups = List(
      createSpeciesGroup("Animals", "kingdom", Array("Animalia"), Array(), null),
@@ -474,27 +476,24 @@ object HabitatMap extends VocabMaps {
     
     val subgroups = {
       //look up the JSON String
+      //FIXME this should be a URL from a webservice. This URL isnt stable!!!
       val json = Source.fromURL("https://ala-bie.googlecode.com/svn/trunk/bie-profile/src/main/resources/subgroups.json").getLines.mkString
       
-      val list =JSON.parseFull(json).get.asInstanceOf[List[Map[String,Object]]]//.get(0).asInstanceOf[Map[String, String]]
-      val subGroupBuffer= new scala.collection.mutable.ArrayBuffer[SpeciesGroup]
+      val list = JSON.parseFull(json).get.asInstanceOf[List[Map[String,Object]]]//.get(0).asInstanceOf[Map[String, String]]
+      val subGroupBuffer = new scala.collection.mutable.ArrayBuffer[SpeciesGroup]
       //println(list)
       list.foreach{map =>{
         if(map.containsKey("taxonRank")){
-          val rank = map.getOrElse("taxonRank","class").toString()
-          val taxaList=map.get("taxa").get.asInstanceOf[List[Map[String,String]]]
-          taxaList.foreach{taxaMap=>          
-            taxaMap.foreach{case (key,value)=>{
-              subGroupBuffer + createSpeciesGroup(taxaMap.getOrElse("common","").trim, rank,Array(taxaMap.getOrElse("name","").trim), Array(), null)            
+          val rank = map.getOrElse("taxonRank","class").toString
+          val taxaList = map.get("taxa").get.asInstanceOf[List[Map[String,String]]]
+          taxaList.foreach{taxaMap =>
+            taxaMap.foreach{case (key,value) => {
+              subGroupBuffer += createSpeciesGroup(taxaMap.getOrElse("common","").trim, rank,Array(taxaMap.getOrElse("name","").trim), Array(), null)
             }}
           }
         }
       }}
       subGroupBuffer.toList
-//      map.foreach{case (key, value)=>{
-//        val rank = 
-//      }}
-      
     }
 
     /*
@@ -505,7 +504,7 @@ object HabitatMap extends VocabMaps {
         var snr:au.org.ala.checklist.lucene.model.NameSearchResult ={ try{Config.nameIndex.searchForRecord(v, au.org.ala.data.util.RankType.getForName(rank))}
         catch{
           case e:au.org.ala.checklist.lucene.HomonymException => e.getResults()(0) 
-          case _ => null 
+          case _:Exception => null
         }}
         if(snr != null){
         if(snr.isSynonym)
@@ -513,7 +512,7 @@ object HabitatMap extends VocabMaps {
         (Integer.parseInt(snr.getLeft()), Integer.parseInt(snr.getRight()),true)
       }
       else{
-        println(v + " has no name " )
+        logger.debug(v + " has no name " )
         (-1,-1,false)
       }
       })
@@ -525,14 +524,14 @@ object HabitatMap extends VocabMaps {
         (Integer.parseInt(snr.getLeft()), Integer.parseInt(snr.getRight()),false)
         }
         else{
-          println(v + " has no name")
+          logger.debug(v + " has no name")
           (-1,-1,false)
         }
       })
       SpeciesGroup(title, rank, values, excludedValues, lftRgtExcluded ++ lftRgts, parent) // Excluded values are first so that we can discount a species group if necessary
     }
     
-    def getStringList : java.util.List[String] = groups.map(g => g.name).toList.sort((x,y) => x.compare(y) < 0)
+    def getStringList : java.util.List[String] = groups.map(g => g.name).toList.sorted
     
     /**
      * Returns all the species groups to which supplied classification belongs
@@ -547,12 +546,10 @@ object HabitatMap extends VocabMaps {
     /**
      * Returns all the species groups to which the supplied left right values belong
      */
-    def getSpeciesGroups(lft:String, rgt:String):Option[List[String]]={
-      getGenericGroups(lft,rgt, groups)
-    }
-    def getSpeciesSubGroups(lft:String, rgt:String):Option[List[String]] ={
-      getGenericGroups(lft,rgt,subgroups)
-    }
+    def getSpeciesGroups(lft:String, rgt:String):Option[List[String]]= getGenericGroups(lft,rgt, groups)
+
+    def getSpeciesSubGroups(lft:String, rgt:String):Option[List[String]] = getGenericGroups(lft,rgt,subgroups)
+
     def getGenericGroups(lft:String, rgt:String, groupingList:List[SpeciesGroup]):Option[List[String]]={
       try{
         val ilft = Integer.parseInt(lft)
@@ -561,7 +558,7 @@ object HabitatMap extends VocabMaps {
         Some(matchedGroups)
       }
       catch {
-        case _=> None
+        case _:Exception => None
       }
     }
   }
@@ -640,7 +637,7 @@ object AssertionCodes {
   val MISSING_IDENTIFICATIONREFERENCES = ErrorCode("missingIdentificationReferences",10011,false,"identificationReferences not supplied with the record")
   val MISSING_DATEIDENTIFIED = ErrorCode("missingDateIdentified", 10012,false,"identificationDate not supplied with the record")
 
-  //miscellanous
+  //miscellaneous issues
   val MISSING_BASIS_OF_RECORD = ErrorCode("missingBasisOfRecord",20001,true,"Basis of record not supplied")
   val BADLY_FORMED_BASIS_OF_RECORD = ErrorCode("badlyFormedBasisOfRecord",20002,true,"Basis of record badly formed")
   val UNRECOGNISED_TYPESTATUS = ErrorCode("unrecognisedTypeStatus",20004,false,"Type status not recognised")
@@ -651,7 +648,7 @@ object AssertionCodes {
   val INFERRED_DUPLICATE_RECORD = ErrorCode("inferredDuplicateRecord",20014,false,"The occurrence appears to be a duplicate")
   val RECORDED_BY_UNPARSABLE = ErrorCode("recordedByUnparsable", 20016, false,"")
 
-  //temporal
+  //temporal issues
   val TEMPORAL_ISSUE = ErrorCode("temporalIssue",30000,false,"Temporal issue")  // general purpose option
   val ID_PRE_OCCURRENCE = ErrorCode("idPreOccurrence",30001,false,"Identification date before occurrence date")
   val GEOREFERENCE_POST_OCCURRENCE = ErrorCode("georefPostDate",30002,false,"Georeferenced after occurrence date")

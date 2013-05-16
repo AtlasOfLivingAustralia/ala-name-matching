@@ -108,7 +108,7 @@ object VerbatimLatLongParser {
           case _ => Some(decimalValue.toFloat/10000000)
       }
     } catch {
-      case _ =>None
+      case _:Exception => None
     }
   }
 }
@@ -281,9 +281,9 @@ object CollectorNameParser {
     if(StringUtils.isNotBlank(firstName)){
       
       if(StringUtils.isBlank(initials)){
-        name += ", "+ firstName.charAt(0).toUpperCase +"."
+        name += ", "+ firstName.charAt(0).toUpper +"."
         if(StringUtils.isNotBlank(middlename))
-          name += middlename.charAt(0).toUpperCase + "."
+          name += middlename.charAt(0).toUpper + "."
       }
       name += " "+ org.apache.commons.lang3.StringUtils.capitalize(firstName.toLowerCase())
     }
@@ -332,7 +332,7 @@ object DistanceRangeParser {
         case _ => None
       }
     } catch {
-      case _ => None
+      case _:Exception => None
     }
   }
 
@@ -344,7 +344,7 @@ object DistanceRangeParser {
         case _ => {  Some(value.toFloat) }
       }
     } catch {
-        case _ => None
+        case _ :Exception => None
     }
   }
 }

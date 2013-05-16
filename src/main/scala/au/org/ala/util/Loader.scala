@@ -29,7 +29,7 @@ object Loader {
 
 class Loader extends DataLoader {
 
-    import scalaj.collection.Imports
+    import scala.collection.JavaConverters._
     import JavaConversions._
     import StringHelper._
 

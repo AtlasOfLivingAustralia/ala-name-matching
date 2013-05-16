@@ -12,26 +12,18 @@ case class ProcessedValue(@BeanProperty name: String, @BeanProperty raw: String,
 
 case class ParsedRecord(@BeanProperty values: Array[ProcessedValue], @BeanProperty assertions: Array[QualityAssertion])
 
-///**
-// * Runnable for testing column parsing functionality.
-// */
-//object ColumnParserTest {
-//
-//  def main(args:Array[String]){
-//
-//    var noExit = true
-//    while(noExit){
-//      val input = readLine
-//      val columns = input.split(",")
-//      val matchedColumns = AdHocParser.processColumnHeaders(columns)
-//      (matchedColumns zip columns).foreach(x =>{
-//        println(x._1 +" : " + x._2)
-//      })
-//    }
-//  }
-//}
-
 object ProcessToStreamTest {
+
+  def main(args:Array[String]){
+    val headers = Array("country", "recordNumber","stateProvince", "scientificName", "decimalLatitude","decimalLongitude")
+    val data = """Australia,1,TAS,Macropus rufus,12.0,12.3"""
+    val fout = new FileOutputStream("/tmp/testoutput.csv")
+    AdHocParser.processToStream(headers, data, fout)
+    fout.close
+  }
+}
+
+object ProcessJohnsData {
 
   def main(args:Array[String]){
     val headers = Array("country", "recordNumber","stateProvince", "scientificName", "decimalLatitude","decimalLongitude")
@@ -101,6 +93,7 @@ object AdHocParser {
 
     //println("**Processed fields: " + processedFields.mkString(","))
     //println("**Raw fields: " + rawFields.mkString(","))
+
     //need a list of common to both....
     val commonHdrs = commonFields.map(x => List(x, x + " (processed)")).flatten
     //println("**Common fields: " + commonFields.mkString(","))
@@ -142,45 +135,49 @@ object AdHocParser {
     matchedCount > (list.size/3)
   }
 
-  def processColumnHeaders(list: Array[String]): Array[String] = {
+  def processColumnHeaders(list: Seq[String]): Seq[String] = {
     //are these darwin core terms?
-      val matchedCount = DwC.retrieveCanonicalsOrNothing(list.toList).count(x => x != "")
+    val matchedCount = DwC.retrieveCanonicalsOrNothing(list).count(x => x != "")
     //if not try and match them
     if (matchedCount > 2) {
-      val t = DwC.retrieveCanonicals(list.toList)
-     // println("Matched terms: " + t)
-      t.toArray
+      DwC.retrieveCanonicals(list)
     } else {
-      val t = guessColumnHeaders(list)
-     // println("Guessed terms: " + t.zip(list).filter(x => x._2 !="").map(x=> x._1+":"+x._2).mkString(","))
-      t
+      guessColumnHeaders(list)
     }
   }
 
-  def mapColumnHeaders(list: Array[String]): Array[String] = DwC.retrieveCanonicalsOrNothing(list.toList).toArray
+  //Java friendly version
+  def guessColumnHeadersArray(values: Array[String]): Array[String] = guessColumnHeaders(values).toArray
+  def mapColumnHeadersArray(list: Array[String]): Array[String] = DwC.retrieveCanonicalsOrNothing(list).toArray
+  def mapOrReturnColumnHeadersArray(list: Array[String]): Array[String] = DwC.retrieveCanonicals(list).toArray
 
-  def mapOrReturnColumnHeaders(list: Array[String]): Array[String] = DwC.retrieveCanonicals(list.toList).toArray
+  def mapColumnHeaders(list: Seq[String]): Seq[String] = DwC.retrieveCanonicalsOrNothing(list)
 
-  def processLine(hdrs: Array[String], values: Array[String]): ParsedRecord = {
+  def mapOrReturnColumnHeaders(list: Seq[String]): Seq[String] = DwC.retrieveCanonicals(list)
+
+  def processLine(hdrs: Array[String], values: Array[String]): ParsedRecord = processLine(hdrs, values)
+
+  def processLine(hdrs: Seq[String], values: Seq[String]): ParsedRecord = {
+
     val tuples = (hdrs zip values).toMap
     val raw = FullRecordMapper.createFullRecord("", tuples, Versions.RAW)
-    //println(raw.classification.scientificName)
+
     val p = new RecordProcessor
     val (processed, assertions) = p.processRecord(raw)
-    //what values are processed???
 
+    //what values are processed???
     val rawAndProcessed = raw.objectArray zip processed.objectArray
     val listBuff = new ListBuffer[ProcessedValue]
-    for ((rawPoso, procPoso) <- rawAndProcessed) {
-        rawPoso.propertyNames.foreach(name => {
-          val rawValue = rawPoso.getProperty(name)
-          val procValue = procPoso.getProperty(name)
-          if (!rawValue.isEmpty || !procValue.isEmpty) {
-            val term = ProcessedValue(name, rawValue.getOrElse(""), procValue.getOrElse(""))
-            listBuff += term
-          }
-        })
-    }
+    rawAndProcessed.foreach( { case (rawPoso, procPoso) => {
+      rawPoso.propertyNames.foreach(name => {
+        val rawValue = rawPoso.getProperty(name)
+        val procValue = procPoso.getProperty(name)
+        if (!rawValue.isEmpty || !procValue.isEmpty) {
+          val term = ProcessedValue(name, rawValue.getOrElse(""), procValue.getOrElse(""))
+          listBuff += term
+        }
+      })
+    }})
 
     //add miscellaneous properties that arent recognised.
     raw.miscProperties.foreach({case (k,v) => listBuff += ProcessedValue(k, v, "")})
@@ -207,7 +204,8 @@ object AdHocParser {
     }
   }
 
-  def guessColumnHeaders(values: Array[String]): Array[String] = {
+
+  def guessColumnHeaders(values: Seq[String]): Seq[String] = {
     //assume we have darwin core terms
     val matchedDwc = DwC.retrieveCanonicalsOrNothing(values.toList)
     val nofMatched = matchedDwc.filter(x => x.size > 0).size
@@ -250,37 +248,21 @@ object AdHocParser {
 
         if(!sequentialPairs.isEmpty){
           //replace with (decimalLat, decimalLong)
-          val tuple = sequentialPairs.first
+          val tuple = sequentialPairs.head
           parsedValues updated (tuple._1, "decimalLatitude") updated (tuple._2, "decimalLongitude")
         } else {
           parsedValues
         }
-//      } else if(!duplicateTerms.get("verbatimLatitude").isEmpty){
-//
-//        val duplicateIndexes = duplicateTerms.get("verbatimLatitude").get.map(x => x._2)
-//        val sequentialPairs = (for(i <- 0 to duplicateIndexes.size-2; if(duplicateIndexes(i)==duplicateIndexes(i+1)-1) )
-//         yield (duplicateIndexes(i),duplicateIndexes(i+1))
-//        )
-//
-//        if(!sequentialPairs.isEmpty){
-//          //replace with (decimalLat, decimalLong)
-//          val tuple = sequentialPairs.first
-//          parsedValues updated (tuple._1, "verbatimLatitude") updated (tuple._2, "verbatimLongitude")
-//        } else {
-//          parsedValues
-//        }
-//
       } else {
         parsedValues
       }
     } else {
-      matchedDwc.toArray
+      matchedDwc
     }
   }
 
   def parseHead(column1: String, column2: String): Option[(String, String)] = column1 match {
     case it if (column1.isLatitude && column2.isLatitude) => Some("decimalLatitude", "decimalLongitude")
-//    case it if (column1.isLatitude && column2.isLongitude) => Some("decimalLongitude", "decimalLatitude")
     case it if it.isInt => Some("recordNumber", "")
     case it if it.startsWith("urn") => Some("occurrenceID", "")
     case it if it.startsWith("http://") => Some("occurrenceID", "")
@@ -290,7 +272,7 @@ object AdHocParser {
   /**
    * Just returns the best guess for each field.
    */
-  def parse(values: Array[String]): Array[String] = values.map(value => parse(value))
+  def parse(values: Seq[String]): Seq[String] = values.map(value => parse(value))
 
   /**
    * Just return the best guess for field value.
@@ -388,7 +370,7 @@ object ScientificNameExtractor {
         }
       } catch {
         case e:HomonymException => Some("scientificName")
-        case _ => None
+        case _:Exception => None
       }
     } else {
       None
@@ -408,7 +390,7 @@ object CommonNameExtractor {
         }
       } catch {
         case e:HomonymException => Some("commonName")
-        case _ => None
+        case _:Exception => None
       }
     } else {
       None

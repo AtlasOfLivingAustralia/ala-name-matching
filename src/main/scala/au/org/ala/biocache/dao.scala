@@ -2,8 +2,6 @@ package au.org.ala.biocache
 
 import com.google.inject.Inject
 import java.io.{File, OutputStream}
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import org.codehaus.jackson.map.ObjectMapper
 import au.org.ala.util.ReflectBean
 import scala.collection.JavaConversions
 import java.util.UUID
@@ -13,6 +11,8 @@ import scala.collection.mutable.ListBuffer
 import au.org.ala.biocache.outliers.JackKnifeStats
 import au.org.ala.biocache.outliers.RecordJackKnifeStats
 import au.org.ala.util.DuplicateRecordDetails
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.databind.ObjectMapper
 
 trait DAO{
   def createUuid = UUID.randomUUID.toString
@@ -742,14 +742,13 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
      */
     def getUserAssertions(rowKey:String): List[QualityAssertion] ={
       val startKey = rowKey + "|"
-      val endKey = startKey +"~"
-      val system = new ArrayBuffer[QualityAssertion]
+      val endKey = startKey + "~"
       val userAssertions = new ArrayBuffer[QualityAssertion]
       //page over all the qa's that are for this record
       persistenceManager.pageOverAll(qaEntityName,(guid, map)=>{
           val qa = new QualityAssertion()
           FullRecordMapper.mapPropertiesToObject(qa, map)
-          userAssertions + qa
+          userAssertions += qa
           true
       },startKey, endKey, 1000)
 
@@ -999,7 +998,7 @@ class DuplicateDAOImpl extends DuplicateDAO {
   @Inject
   var persistenceManager: PersistenceManager = _
   val mapper = new ObjectMapper
-  mapper.registerModule(DefaultScalaModule)
+  mapper.registerModule(new DefaultScalaModule())
   val lastRunRowKey="DDLastRun"
     
   override def deleteObsoleteDuplicate(uuid:String){

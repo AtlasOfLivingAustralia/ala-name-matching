@@ -33,16 +33,10 @@ import scala.util.parsing.json.JSON
  * @author Natasha Carter
  */
 object ClassificationDAO {
+
   val logger = LoggerFactory.getLogger("CLassificationDAO")
-  private val columnFamily ="namecl"
- // private val cachedValues = new java.util.Hashtable[LinnaeanRankClassification, Classification]
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
-//  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[NameSearchResult]]()
-//    .maximumWeightedCapacity(10000)
-//    .build();
-
   private val lock : AnyRef = new Object()
-
   private val nameIndex = Config.nameIndex
 
   def stripStrayQuotes(str:String) : String  = {
@@ -128,7 +122,6 @@ object ClassificationDAO {
           resultMetric = new MetricsResultDTO
           resultMetric.setResult(cnsr);
         }
-        
       }
 
       if(resultMetric != null && resultMetric.getResult() != null){
@@ -155,8 +148,7 @@ object ClassificationDAO {
               if(rank != null && rank.getId() >7000 && rank.getId <9999){
                 result.get.getResult.getRankClassification.setSubspecies(result.get.getResult.getRankClassification.getScientificName())
               }
-          }
-          else{
+          } else {
             logger.debug("Unable to locate accepted concept for synonym " + resultMetric.getResult + ". Attempting a higher level match")
             if((cl.kingdom != null || cl.phylum != null || cl.classs != null || cl.order != null || cl.family != null || cl.genus != null) && (cl.getScientificName() != null || cl.getSpecies() != null || cl.getSpecificEpithet() != null || cl.getInfraspecificEpithet() != null)){
                 val newcl = cl.clone()
@@ -166,25 +158,24 @@ object ClassificationDAO {
                 newcl.setSpecies(null)
                 updateClassificationRemovingMissingSynonym(newcl, resultMetric.getResult())
                 result = getByHashLRU(newcl)
-            }
-            else{
+            } else {
               logger.warn("Recursively unable to locate a synonym for " + cl)
-              
             }
-          }
-          lock.synchronized { lru.put(hash, result) }
-          result
+        }
+        lock.synchronized { lru.put(hash, result) }
+        result
       } else {
-          val result = if(resultMetric != null) Some(resultMetric) else None
-          lock.synchronized { lru.put(hash, result) }
-          result
+        val result = if(resultMetric != null) Some(resultMetric) else None
+        lock.synchronized { lru.put(hash, result) }
+        result
       }
     }
   }
+
   def updateClassificationRemovingMissingSynonym(newcl:Classification, result:NameSearchResult){
     val sciName = result.getRankClassification().getScientificName()
     if(newcl.genus == sciName)
-      newcl.genus =null
+      newcl.genus = null
     if(newcl.family == sciName)
       newcl.family = null
     if(newcl.order == sciName)
@@ -309,14 +300,11 @@ object AttributionDAO {
   import JavaConversions._
   var collectoryURL ="http://collections.ala.org.au"
   private val columnFamily = "attr"
-  //can't use a scala hashap because missing keys return None not null...
+  //can't use a scala hashmap because missing keys return None not null...
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)//new HashMap[String, Option[Attribution]]
   private val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
   //A mapping of the ws json properties to attribution properties
   private val wsPropertyMap = Map("name"->"collectionName", "uid"->"collectionUid", "taxonomyCoverageHints"->"taxonomicHints", "institutionUid"->"institutionUid", "institution"->"institutionName")
-//  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[Attribution]]()
-//      .maximumWeightedCapacity(1000)
-//      .build();
   private val lock : AnyRef = new Object()
   val logger = LoggerFactory.getLogger("AttributionDAO")
 
@@ -360,76 +348,75 @@ object AttributionDAO {
    }
 
    def getDataResourceFromWS(value:String):Option[Attribution]={
-    try{
-    val attribution = new Attribution
-    logger.info("Calling web service for " + value)
+    try {
+      if(value == null) return None
 
-    val wscontent = WebServiceLoader.getWSStringContent(AttributionDAO.collectoryURL+"/ws/dataResource/"+value+".json")
+      val attribution = new Attribution
+      logger.info("Calling web service for " + value)
 
-    val wsmap = Json.toMap(wscontent)
+      val wscontent = WebServiceLoader.getWSStringContent(AttributionDAO.collectoryURL+"/ws/dataResource/"+value+".json")
 
-    val name = wsmap.getOrElse("name","").asInstanceOf[String]
-    
-    val provenance = wsmap.getOrElse("provenance","").asInstanceOf[String]
+      val wsmap = Json.toMap(wscontent)
 
-    val hints =wsmap.getOrElse("taxonomyCoverageHints",null)
-    val ahints = {
-      if(hints != null){
-        hints.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object) => {
-          o.toString().replace("=",":").replace("{","").replace("}","")
-        })
-      }
-      else null
-    }
+      val name = wsmap.getOrElse("name","").asInstanceOf[String]
 
-    //the hubMembership
-    val hub = wsmap.getOrElse("hubMembership", null)
-    val ahub = {
-      if(hub !=  null){
-        hub.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object) => {
-          (o.asInstanceOf[java.util.LinkedHashMap[Object,Object]]).get("uid").toString
-        })
-      }
-      else null
-    }
+      val provenance = wsmap.getOrElse("provenance","").asInstanceOf[String]
 
-    //data Provider
-    val dp = wsmap.getOrElse("provider", null).asInstanceOf[java.util.Map[String,String]]
-    val dpname = if(dp != null) dp.get("name") else null
-    val dpuid = if(dp != null) dp.get("uid") else null
-    val hasColl = wsmap.getOrElse("hasMappedCollections", false).asInstanceOf[Boolean]
-    //the default DWC terms 
-    val defaultDwc = wsmap.getOrElse("defaultDarwinCoreValues", null)
-    attribution.dataResourceName = name
-    attribution.dataProviderUid = dpuid
-    attribution.dataProviderName = dpname
-    attribution.dataHubUid = ahub
-    attribution.taxonomicHints = ahints
-    attribution.hasMappedCollections = hasColl
-    attribution.provenance = provenance
-    if(defaultDwc!= null){
-      //retrieve the dwc values for the supplied values      
-        val map = defaultDwc.asInstanceOf[java.util.LinkedHashMap[String,String]]
-        map.keys.foreach{key:String =>{
-          //get the vocab value          
-          val v = DwC.matchTerm(key)          
-          if(v.isDefined && !v.get.canonical.equals(key)){            
-            val value=attribution.defaultDwcValues.get(key)            
-            map.remove(key);            
-            map.put(v.get.canonical, value.get);
-          }
-          }
-        attribution.defaultDwcValues = map.toMap
+      val hints = wsmap.getOrElse("taxonomyCoverageHints",null)
+      val ahints = {
+        if(hints != null){
+          hints.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object) => {
+            o.toString().replace("=",":").replace("{","").replace("}","")
+          })
         }
-        
-    }
-    Some(attribution)
-    }
-    catch{
+        else null
+      }
+
+      //the hubMembership
+      val hub = wsmap.getOrElse("hubMembership", null)
+      val ahub = {
+        if(hub !=  null){
+          hub.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object) => {
+            (o.asInstanceOf[java.util.LinkedHashMap[Object,Object]]).get("uid").toString
+          })
+        }
+        else null
+      }
+
+      //data Provider
+      val dp = wsmap.getOrElse("provider", null).asInstanceOf[java.util.Map[String,String]]
+      val dpname = if(dp != null) dp.get("name") else null
+      val dpuid = if(dp != null) dp.get("uid") else null
+      val hasColl = wsmap.getOrElse("hasMappedCollections", false).asInstanceOf[Boolean]
+      //the default DWC terms
+      val defaultDwc = wsmap.getOrElse("defaultDarwinCoreValues", null)
+      attribution.dataResourceName = name
+      attribution.dataProviderUid = dpuid
+      attribution.dataProviderName = dpname
+      attribution.dataHubUid = ahub
+      attribution.taxonomicHints = ahints
+      attribution.hasMappedCollections = hasColl
+      attribution.provenance = provenance
+      if(defaultDwc!= null){
+        //retrieve the dwc values for the supplied values
+          val map = defaultDwc.asInstanceOf[java.util.LinkedHashMap[String,String]]
+          map.keys.foreach { key:String => {
+            //get the vocab value
+            val v = DwC.matchTerm(key)
+            if(v.isDefined && !v.get.canonical.equals(key)){
+              val value=attribution.defaultDwcValues.get(key)
+              map.remove(key);
+              map.put(v.get.canonical, value.get);
+            }
+          }
+          attribution.defaultDwcValues = map.toMap
+        }
+      }
+      Some(attribution)
+    } catch {
       case e:Exception => { logger.error(e.getMessage,e); None }
     }
   }
-
 
   /**
    * Retrieve attribution via institution/collection codes.
@@ -608,7 +595,7 @@ object LocationDAO {
                 case Some(term) => location.stateProvince = term.canonical
                 case None => {
                   /*do nothing for now */
-                  logger.warn("Unrecognised stateprovince value retrieved from layer cl927: " + stateProvinceValue)
+                  logger.warn("Unrecognised state province value retrieved from layer cl927: " + stateProvinceValue)
                 }
               }
             }

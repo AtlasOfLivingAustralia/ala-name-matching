@@ -7,6 +7,7 @@ import scala.collection.mutable.HashMap
 import scala.collection.immutable.Map
 import scala.util.parsing.json.JSON
 import org.codehaus.jackson.annotate.JsonIgnore
+import org.slf4j.LoggerFactory
 
 /**
  * Holds the details of a property for a bean
@@ -93,7 +94,7 @@ trait CompositePOSO extends POSO {
           try {
             property.setter.invoke(this, jsonOption.get.asInstanceOf[Map[String, String]])
           } catch {
-            case e: Exception => e.printStackTrace()
+            case e: Exception => logger.error(e.getMessage, e)
           }
         }
       } else if (property.typeName == "[Ljava.lang.String;") {
@@ -105,7 +106,7 @@ trait CompositePOSO extends POSO {
               property.setter.invoke(this, jsonOption.get.asInstanceOf[Array[String]])
             }
           } catch {
-            case e: Exception => e.printStackTrace()
+            case e: Exception => logger.error(e.getMessage, e)
           }
         }
       } else if (property.typeName == "java.util.Map") {
@@ -114,7 +115,7 @@ trait CompositePOSO extends POSO {
           try {
             property.setter.invoke(this, stringMap)
           } catch {
-            case e: Exception => e.printStackTrace()
+            case e: Exception => logger.error(e.getMessage, e)
           }
         }
       } else {
@@ -137,7 +138,7 @@ trait CompositePOSO extends POSO {
         val poso = method.invoke(this).asInstanceOf[POSO]
         poso.getProperty(name)
       }
-      case None => None //println("Set nested - Unrecognised property: " + name); None
+      case None => None
     }
   }
 
@@ -148,7 +149,7 @@ trait CompositePOSO extends POSO {
         val poso = method.invoke(this).asInstanceOf[POSO]
         poso.setProperty(name, value)
       }
-      case None => //println("Set nested - Unrecognised property: " + name); None
+      case None => //do nothing
     }
   }
 }
@@ -157,7 +158,7 @@ trait POSO {
 
   import scala.collection.JavaConversions._
   import BiocacheConversions._
-
+  val logger = LoggerFactory.getLogger("POSO")
   protected val lookup = ReflectionCache.getPosoLookup(this)
   val propertyNames = lookup.keys
 
@@ -172,7 +173,7 @@ trait POSO {
             val array = Json.toArray(value, classOf[String].asInstanceOf[java.lang.Class[AnyRef]])
             property.setter.invoke(this, array)
           } catch {
-            case e: Exception => e.printStackTrace
+            case e: Exception => logger.error(e.getMessage, e)
           }
         }
         case "int" => property.setter.invoke(this, Integer.parseInt(value).asInstanceOf[AnyRef])
@@ -185,7 +186,7 @@ trait POSO {
               property.setter.invoke(this, fromJson.get.asInstanceOf[Map[String, String]])
           }
           catch {
-            case e: Exception => println("Unable to set POSO map property. " + e.getMessage)
+            case e: Exception => logger.warn("Unable to set POSO map property. " + e.getMessage)
           }
         }
         case "java.util.Map" => property.setter.invoke(this, Json.toJavaStringMap(value))
@@ -214,7 +215,7 @@ trait POSO {
               else
                 null
             } catch {
-              case e: Exception => e.printStackTrace; null
+              case e: Exception => logger.error(e.getMessage, e); null
             }
           }
           case "int" => property.getter.invoke(this)
@@ -223,10 +224,12 @@ trait POSO {
           case "scala.collection.immutable.Map" => {
             try {
               val map = property.getter.invoke(this)
-              Json.toJSONMap(map.asInstanceOf[Map[String,Any]])
+              if(map != null)
+                Json.toJSONMap(map.asInstanceOf[Map[String,Any]])
+              else None
             }
             catch {
-              case e: Exception => e.printStackTrace; null
+              case e: Exception => logger.error(e.getMessage, e); null
             }
           }
           case "java.util.Map" => {
@@ -238,7 +241,7 @@ trait POSO {
                 null;
               }
             } catch {
-              case e: Exception => e.printStackTrace; null
+              case e: Exception => logger.error(e.getMessage, e); null
             }
           }
           case _ => null
@@ -280,7 +283,7 @@ trait POSO {
                 map.put(property.name, array)
               }
             } catch {
-              case e: Exception => e.printStackTrace
+              case e: Exception => logger.error(e.getMessage, e)
             }
           }
           case "int" => {

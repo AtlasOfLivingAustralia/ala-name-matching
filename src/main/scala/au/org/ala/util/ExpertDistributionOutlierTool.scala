@@ -7,8 +7,8 @@ import collection.mutable.ListBuffer
 import java.text.MessageFormat
 import collection.JavaConversions._
 import au.org.ala.biocache.{Json, AssertionCodes, QualityAssertion, Config}
-import actors.Actor._
-import actors.Actor
+import scala.actors.Actor._
+import scala.actors.Actor
 import java.util.concurrent.CountDownLatch
 import org.apache.commons.codec.net.URLCodec
 import org.apache.solr.client.solrj.util.ClientUtils
@@ -20,7 +20,6 @@ import org.apache.solr.client.solrj.util.ClientUtils
  * Time: 2:07 PM
  * To change this template use File | Settings | File Templates.
  */
-
 object ExpertDistributionOutlierTool {
   val DISTRIBUTIONS_URL = Config.layersServiceUrl + "/distributions"
   val DISTRIBUTION_DETAILS_URL_TEMPLATE = Config.layersServiceUrl + "/distribution/lsid/{0}"
@@ -165,7 +164,6 @@ class ExpertDistributionOutlierTool {
           get.releaseConnection()
         }
   }
-
 }
 
 class ExpertDistributionActor(val id: Int, val dispatcher: Actor) extends Actor {

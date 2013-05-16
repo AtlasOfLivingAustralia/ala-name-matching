@@ -12,7 +12,7 @@ import scala.util.parsing.json.JSON
 object Json {
 	
     import JavaConversions._
-    import scalaj.collection.Imports._
+    import scala.collection.JavaConverters._
 
     def toJSONWithGeneric[A](list:List[A]) : String = {
         val mapper = new ObjectMapper
@@ -94,7 +94,7 @@ object Json {
         mapper.getDeserializationConfig().set(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         val valueType = TypeFactory.collectionType(classOf[ArrayList[AnyRef]], theClass)
         var listOfObject = mapper.readValue[ArrayList[AnyRef]](jsonString, valueType)
-        listOfObject.asScala[AnyRef].toList
+        listOfObject.asScala.toList
     }
 
     /**
@@ -122,7 +122,7 @@ object Json {
    def toMap(jsonString:String): scala.collection.Map[String,Object]={
      try {
         val mapper = new ObjectMapper
-        mapper.readValue(jsonString,classOf[java.util.Map[String,Object]]).asScala[String,Object];
+        mapper.readValue(jsonString,classOf[java.util.Map[String,Object]]).asScala
      } catch {
         case e:Exception => Map()
      }
@@ -131,7 +131,7 @@ object Json {
    def toStringMap(jsonString:String): scala.collection.Map[String,String] = {
      try {
         val mapper = new ObjectMapper
-        mapper.readValue(jsonString,classOf[java.util.Map[String,String]]).asScala[String,String];
+        mapper.readValue(jsonString,classOf[java.util.Map[String,String]]).asScala
      } catch {
         case e:Exception => Map()
      }

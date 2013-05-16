@@ -16,7 +16,6 @@
  */
 package au.org.ala.util
 import java.io._
-import java.io._
 import java.util.jar.JarFile
 import java.util.zip.GZIPInputStream
 import au.com.bytecode.opencsv.CSVReader
@@ -24,6 +23,7 @@ import au.com.bytecode.opencsv.CSVReader
  * File helper - used as a implicit converter to add additional helper methods to java.io.File
  */
 class FileHelper(file: File) {
+
     //Appends the supplied file to this one
     def append(afile:FileHelper)={
       val writer = new FileWriter(file, true)      
@@ -47,9 +47,11 @@ class FileHelper(file: File) {
                 proc(br.readLine)
             }
         } 
-        catch{
+        catch {
           case e:Exception =>e.printStackTrace()
-        }finally { br.close }
+        } finally {
+          br.close
+        }
     }
 
     def deleteAll: Unit = {
@@ -123,7 +125,7 @@ class FileHelper(file: File) {
     /**
      * Read this file as a CSV
      */
-    def readAsCSV(separator:Char, quotechar:Char, procHdr:(Array[String] => Array[String]), read:((Array[String], Array[String]) => Unit)){
+    def readAsCSV(separator:Char, quotechar:Char, procHdr:(Seq[String] => Seq[String]), read:((Seq[String], Seq[String]) => Unit)){
         val reader =  new CSVReader(new FileReader(file), separator, quotechar)
         val rawColumnHdrs = reader.readNext
         val columnHdrs = procHdr(rawColumnHdrs)

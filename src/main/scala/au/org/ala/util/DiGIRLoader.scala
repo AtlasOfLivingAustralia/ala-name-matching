@@ -77,7 +77,7 @@ class DiGIRLoader extends DataLoader {
           hasResponse = true
           response = get.getResponseBodyAsString
         } catch {
-          case _ => println("Error in request: retrying.....")
+          case _:Exception => println("Error in request: retrying.....")
         }
       }
       response
@@ -117,7 +117,7 @@ class DiGIRLoader extends DataLoader {
       //end of records
       (xml \\ "diagnostic").filter(x => (x \ "@code").text == "END_OF_RECORDS").text.toBoolean
     } catch {
-      case _ => println("Error processing response")
+      case _:Exception => println("Error processing response")
     }
     true
   }

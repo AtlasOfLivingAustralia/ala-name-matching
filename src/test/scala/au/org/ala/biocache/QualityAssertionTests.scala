@@ -43,10 +43,6 @@ class QualityAssertionTests extends FunSuite {
     expect(false){ fullRecord.geospatiallyKosher }
 
     //cleanup
-
-
-
-
     Pelops.shutdown
   }
 }

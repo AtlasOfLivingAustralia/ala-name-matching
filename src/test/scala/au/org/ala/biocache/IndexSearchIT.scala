@@ -83,11 +83,11 @@ object IndexSearchIT {
         //searchResult.setOccurrences(results);
         // populate SOLR facet results
         if (facets != null) {
-          for (val facet <- facets.iterator) {
+          for (facet <- facets.iterator) {
                 val facetEntries:java.util.List[FacetField.Count] = facet.getValues();
                 if ((facetEntries != null) && (facetEntries.size() > 0)) {
                     
-          for (val fcount <- facetEntries.iterator) {
+          for (fcount <- facetEntries.iterator) {
 //                        String msg = fcount.getName() + ": " + fcount.getCount();
                         println(fcount.getName() + ": " + fcount.getCount());
                         
@@ -96,9 +96,6 @@ object IndexSearchIT {
                 }
             }
         }
-
-   
-        
     }
 
   

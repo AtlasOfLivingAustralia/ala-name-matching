@@ -7,15 +7,14 @@ import org.junit.runner.RunWith
 @RunWith(classOf[JUnitRunner])
 class TaxonomicNameTest extends ConfigFunSuite {
 
-    
     test("recursive issue"){
       val raw = new FullRecord
       val processed = new FullRecord
-      raw.classification.scientificName="Pseudosuberia genthi"
-      raw.classification.phylum="Cnidaria"
-      raw.classification.kingdom="Animalia"
-      raw.classification.genus ="Pseudosuberia"
-      raw.classification.family="Briareidae"
+      raw.classification.scientificName = "Pseudosuberia genthi"
+      raw.classification.phylum = "Cnidaria"
+      raw.classification.kingdom = "Animalia"
+      raw.classification.genus = "Pseudosuberia"
+      raw.classification.family = "Briareidae"
       val qas = (new ClassificationProcessor).process("test", raw, processed)
       println(processed.classification.scientificName)
       

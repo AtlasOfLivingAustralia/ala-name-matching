@@ -11,12 +11,12 @@
 	</issueManagement>
 	<ciManagement>
 		<system>Hudson</system>
-		<url>http://hudson.ala.org.au:8081/job/biocache-store/</url>
+		<url>http://hudson.ala.org.au/job/biocache-store/</url>
 	</ciManagement>
 	<inceptionYear>2011</inceptionYear>
 	<name>biocache-store</name>
 	<properties>
-		<scala.version>2.9.1</scala.version>
+		<scala.version>2.10.0</scala.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.springframework.version>3.0.6.RELEASE</org.springframework.version>
 		<solr.version>4.1.0</solr.version>
@@ -47,10 +47,6 @@
 			<name>opengeo Repository</name>
 			<url>http://repo.opengeo.org</url>
 		</repository>
-		<!-- Don't include gbif repository. Enforce the loading from ala repository. 
-			Prevents the potential loading of corrupt jars -->
-		<!-- < repository> <id>gbif-all</id> <url>http://repository.gbif.org/content/groups/gbif</url> 
-			</repository> -->
 	</repositories>
 	<pluginRepositories>
 		<pluginRepository>
@@ -61,7 +57,7 @@
 		<pluginRepository>
 			<id>scala-tools.org</id>
 			<name>Scala-Tools Maven2 Repository</name>
-			<url>http://scala-tools.org/repo-releases</url>
+			<url>https://oss.sonatype.org/content/groups/scala-tools/</url>
 		</pluginRepository>
 	</pluginRepositories>
 	<dependencies>
@@ -86,32 +82,32 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-core</artifactId>
-			<version>3.0.6.RELEASE</version>
+			<version>${org.springframework.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
-			<version>3.0.6.RELEASE</version>
+			<version>${org.springframework.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context-support</artifactId>
-			<version>3.0.6.RELEASE</version>
+			<version>${org.springframework.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-jdbc</artifactId>
-			<version>3.0.6.RELEASE</version>
+			<version>${org.springframework.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-orm</artifactId>
-			<version>3.0.6.RELEASE</version>
+			<version>${org.springframework.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-oxm</artifactId>
-			<version>3.0.6.RELEASE</version>
+			<version>${org.springframework.version}</version>
 		</dependency>
 		<!-- LOG4J -->
 		<dependency>
@@ -136,9 +132,6 @@
 			<artifactId>sds</artifactId>
 			<version>1.1-SNAPSHOT</version>
 			<exclusions>
-				<!--<exclusion> <groupId>org.drools</groupId> <artifactId>drools-core</artifactId> 
-					</exclusion> <exclusion> <groupId>org.drools</groupId> <artifactId>drools-compiler</artifactId> 
-					</exclusion> -->
 				<exclusion>
 					<groupId>commons-lang</groupId>
 					<artifactId>commons-lang</artifactId>
@@ -235,43 +228,47 @@
 		</dependency>
 		<!-- Jackson (JSON serialisation) -->
 		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-core-asl</artifactId>
-			<version>1.9.2</version>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.2.0</version>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-mapper-asl</artifactId>
-			<version>1.9.2</version>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.2.0</version>
 		</dependency>
 		<dependency>
-			<groupId>com.fasterxml</groupId>
-			<artifactId>jackson-module-scala</artifactId>
-			<version>1.9.2</version>
+			<groupId>com.fasterxml.jackson.module</groupId>
+			<artifactId>jackson-module-scala_2.10</artifactId>
+			<version>2.2.0</version>
 		</dependency>
 		<!-- SCALA -->
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-library</artifactId>
-			<version>2.9.1</version>
+			<version>${scala.version}</version>
 		</dependency>
-		<!-- SCALA -> JAVA COLLECTIONS -->
-		<dependency>
-			<groupId>org.scalaj</groupId>
-			<artifactId>scalaj-collection_2.9.1</artifactId>
-			<version>1.2</version>
-		</dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-actors</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-reflect</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
 		<!--- SCALA HTTP support -->
 		<dependency>
 			<groupId>org.scalaj</groupId>
-			<artifactId>scalaj-http_2.9.1</artifactId>
-			<version>0.2.9</version>
+			<artifactId>scalaj-http_2.10</artifactId>
+			<version>0.3.7</version>
 		</dependency>
 		<!-- SCALATEST -->
 		<dependency>
 			<groupId>org.scalatest</groupId>
-			<artifactId>scalatest_2.9.1</artifactId>
-			<version>1.6.1</version>
+            <artifactId>scalatest_2.10</artifactId>
+            <version>1.9</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -309,20 +306,6 @@
   				</exclusion>
   			</exclusions>
     	</dependency>
-		<!-- <dependency> <groupId>com.h2database</groupId> <artifactId>h2</artifactId> 
-			<version>1.3.162</version> </dependency> -->
-		<!-- <dependency> <groupId>org.scale7</groupId> <artifactId>scale7-pelops</artifactId> 
-			<version>1.3-1.0.x-SNAPSHOT</version> </dependency> -->
-		<!-- MongoDB -->
-		<!-- <dependency> <groupId>com.mongodb.casbah</groupId> <artifactId>casbah-query_2.9.0-1</artifactId> 
-			<version>2.1.5-1</version> <scope>provided</scope> </dependency> <dependency> 
-			<groupId>com.mongodb.casbah</groupId> <artifactId>casbah-core_2.9.0-1</artifactId> 
-			<version>2.1.5-1</version> <scope>provided</scope> </dependency> <dependency> 
-			<groupId>com.mongodb.casbah</groupId> <artifactId>casbah-commons_2.9.0-1</artifactId> 
-			<version>2.1.5-1</version> <exclusions> <exclusion> <artifactId>org.slf4j</artifactId> 
-			<groupId>slf4j-api</groupId> </exclusion> </exclusions> <scope>provided</scope> 
-			</dependency> <dependency> <groupId>com.mongodb.casbah</groupId> <artifactId>casbah-gridfs_2.9.0-1</artifactId> 
-			<version>2.1.5-1</version> <scope>provided</scope> </dependency> -->
 		<!-- SOLR -->
 		<dependency>
 			<artifactId>solr-core</artifactId>
@@ -361,26 +344,17 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		
-		    <dependency>
-      <groupId>com.vividsolutions</groupId>
-      <artifactId>jts</artifactId>
-      <version>${jts.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>xerces</groupId>
-          <artifactId>xercesImpl</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-		
-		<!-- Spatial-SOLR plugin patched by Adam Collins (ALA Spatial Team) to 
-			have wkt support -->
-<!-- 		<dependency>
-			<groupId>nl.jteam</groupId>
-			<artifactId>spatial-solr</artifactId>
-			<version>2.0-RC5_ssplex_wkt</version>
-		</dependency> -->
+        <dependency>
+          <groupId>com.vividsolutions</groupId>
+          <artifactId>jts</artifactId>
+          <version>${jts.version}</version>
+          <exclusions>
+            <exclusion>
+              <groupId>xerces</groupId>
+              <artifactId>xercesImpl</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
 		<!-- COMMONS -->
 		<dependency>
 			<groupId>commons-httpclient</groupId>
@@ -392,8 +366,7 @@
 			<artifactId>commons-lang3</artifactId>
 			<version>3.1</version>
 		</dependency>
-
-		<!-- Contib classes for httpclient project. These are availabe in the source 
+		<!-- Contib classes for httpclient project. These are availabe in the source
 			but not distributed as part of the default jar. They were built into a separate 
 			jar and manually installed into the ala maven repostory. -->
 		<dependency>
@@ -411,7 +384,6 @@
             <artifactId>commons-math3</artifactId>
             <version>3.0</version>
         </dependency>
-
 		<!-- Added for cassandra test -->
 		<dependency>
 			<groupId>org.cliffc.high_scale_lib</groupId>
@@ -462,7 +434,6 @@
             <artifactId>gt-epsg-hsql</artifactId>
             <version>2.7.5</version>
         </dependency>
-
         <!-- htmlunit to help with screen scraping -->
         <dependency>
             <groupId>net.sourceforge.htmlunit</groupId>
@@ -482,7 +453,7 @@
 				<plugin>
 					<groupId>org.scala-tools</groupId>
 					<artifactId>maven-scala-plugin</artifactId>
-					<version>2.15.2-SNAPSHOT</version>
+					<version>2.15.2</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -585,6 +556,27 @@
 					</execution>
 				</executions>
 			</plugin>
+            <plugin>
+            <groupId>org.scalastyle</groupId>
+            <artifactId>scalastyle-maven-plugin</artifactId>
+            <version>0.2.0</version>
+            <configuration>
+              <verbose>false</verbose>
+              <failOnViolation>false</failOnViolation>
+              <includeTestSourceDirectory>true</includeTestSourceDirectory>
+              <failOnWarning>false</failOnWarning>
+              <sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
+              <testSourceDirectory>${basedir}/src/test/scala</testSourceDirectory>
+              <configLocation>${basedir}/lib/scalastyle_config.xml</configLocation>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+              </execution>
+            </executions>
+            </plugin>
 		</plugins>
 	</build>
 	<reporting>

@@ -47,6 +47,8 @@ trait DataLoader {
     import FileHelper._
     import JavaConversions._
     import BiocacheConversions._
+    import scala.collection.JavaConverters._
+
     val user = "harvest services"
     val api_key = "Venezuela"
     val logger = LoggerFactory.getLogger("DataLoader")

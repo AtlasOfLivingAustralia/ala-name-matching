@@ -10,16 +10,18 @@ import java.io.FileWriter
 import java.io.File
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.DateUtils
-import org.codehaus.jackson.map.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.databind.ObjectMapper
 import au.org.ala.biocache.AssertionCodes
 import au.org.ala.biocache.QualityAssertion
-import org.codehaus.jackson.map.annotate.JsonSerialize
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ArrayBlockingQueue
 import org.slf4j.LoggerFactory
 import org.apache.commons.io.FileUtils
 import java.util.ArrayList
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.annotation.JsonInclude.Include
+
 /**
  * 
  * Duplication detection is only possible if latitude and longitude are provided.
@@ -225,7 +227,7 @@ class DuplicationDetection{
   
   val mapper = new ObjectMapper
   mapper.registerModule(DefaultScalaModule)
-  mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
+  mapper.setSerializationInclusion(Include.NON_NULL)
   /**
    * Loads the duplicates from a file that contains duplicates from multiple taxon concepts
    */
@@ -399,7 +401,7 @@ class DuplicationDetection{
          val collector = StringUtils.trimToNull(currentLine(13))
          val oldStatus = StringUtils.trimToNull(currentLine(14))
          val oldDuplicateOf = StringUtils.trimToNull(currentLine(15).replaceAll("\\[","").replaceAll("\\]",""))
-         buff + new DuplicateRecordDetails(rowKey,uuid,taxon_lsid,year,month,day,currentLine(6), currentLine(7),
+         buff += new DuplicateRecordDetails(rowKey,uuid,taxon_lsid,year,month,day,currentLine(6), currentLine(7),
              currentLine(8),currentLine(9),currentLine(10),currentLine(11),rawName, collector, oldStatus,oldDuplicateOf)
        }
        else{
@@ -414,9 +416,9 @@ class DuplicationDetection{
     DuplicationDetection.logger.debug("There are " + yearGroups.size + " year groups")
     val threads = new ArrayBuffer[Thread]
     yearGroups.foreach{case(year, yearList)=>{
-      val t =new Thread(new YearGroupDetection(year,yearList,duplicateWriter))
+      val t = new Thread(new YearGroupDetection(year,yearList,duplicateWriter))
       t.start();
-      threads + t
+      threads += t
     }}
     //now wait for each thread to finish
     threads.foreach(_.join)
@@ -482,7 +484,7 @@ class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], dupli
   val unknownPatternString = "(null|UNKNOWN OR ANONYMOUS)"
   val mapper = new ObjectMapper
   mapper.registerModule(DefaultScalaModule)
-  mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
+  mapper.setSerializationInclusion(Include.NON_NULL)
   override def run()={
     DuplicationDetection.logger.debug("Starting deduplication for " + year)
     val monthGroups = records.groupBy(r=> if(r.month != null) r.month else "UNKNOWN")
@@ -503,7 +505,7 @@ class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], dupli
                   buffGroups ++= checkDuplicates(dayList)
                 }
                 else{
-                  buffGroups + dayList.head
+                  buffGroups += dayList.head
                 }
               //}
             }
@@ -511,7 +513,7 @@ class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], dupli
             }
           }
           else{
-            buffGroups + monthList.head
+            buffGroups += monthList.head
           }
         //}
     }
@@ -737,10 +739,7 @@ class IncrementalDuplicationDetection(lastDupDate:String) extends DuplicationDet
     ExportByFacetQuery.downloadSingleTaxon(lsid, fieldsToExport ,field,filters,Some("row_key"),Some("asc"), fileWriter)
     fileWriter.close
   }
-  
-  
 }
-
 
 sealed case class DupType(@BeanProperty var id:Int){
   def this() = this(-1)

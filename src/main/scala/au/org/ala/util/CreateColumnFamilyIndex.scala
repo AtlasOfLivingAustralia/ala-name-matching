@@ -161,7 +161,7 @@ class CreateInvertedIndexOnProperty(keyspace:String) {
 
         def act {
             println("In (Actor.act) thread: "+id)
-            loop{
+            loop {
               react {
                 case guidAndMap : (String,Map[String,String]) => {
                     process(guidAndMap._1, guidAndMap._2)

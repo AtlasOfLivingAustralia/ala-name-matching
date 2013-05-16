@@ -172,13 +172,11 @@ class Stemmer
 
   // process the list of tuples to find which prefix matches the case.
   // checker is the conditional checker for m.
-  def processSubList( l:List[(String, String)], checker: Int=>Boolean ): Boolean =
-  {
-    var iter = l.elements
+  def processSubList( l:List[(String, String)], checker: Int => Boolean ): Boolean = {
+    var iter = l.iterator
     var done = false
 
-    while (!done && iter.hasNext )
-    {
+    while (!done && iter.hasNext){
       var v = iter.next
       done = replacer( v._1, v._2, checker )
 

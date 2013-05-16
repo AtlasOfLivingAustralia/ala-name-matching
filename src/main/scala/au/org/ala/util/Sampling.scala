@@ -54,11 +54,12 @@ object Sampling {
           s.getDistinctCoordinatesForFile(locFilePath, rowKeyFile)
       }
       val samplingFilePath = "/tmp/sampling-" + fileSufffix + ".txt"
-
       //generate sampling
       s.sampling(locFilePath, samplingFilePath, singleLayerName)
       //load the loc table
       s.loadSampling(samplingFilePath)
+      //clean up the file
+      (new File(samplingFilePath)).delete()
     }
   }
 
@@ -71,6 +72,8 @@ object Sampling {
     s.sampling(locFilePath, samplingFilePath, singleLayerName)
     //load the loc table
     s.loadSampling(samplingFilePath)
+    //clean up the file
+    (new File(samplingFilePath)).delete()
   }
 }
 
@@ -136,13 +139,13 @@ class Sampling {
           coordinates += (processedDecimalLongitude + "," + processedDecimalLatitude)
         }
 
-        if (counter % 10000 == 0 && counter > 0) println("Distinct coordinates counter: " + counter + ", current count:" + coordinates.size)
+        if (counter % 10000 == 0 && counter > 0) logger.debug("Distinct coordinates counter: " + counter + ", current count:" + coordinates.size)
         counter += 1
         passed += 1
       }
     })
     try {
-      var fw = new FileWriter(locFilePath);
+      val fw = new FileWriter(locFilePath)
       coordinates.foreach(c => {
         fw.write(c)
         fw.write("\n")
@@ -150,9 +153,7 @@ class Sampling {
       fw.flush
       fw.close
     } catch {
-      case e => {
-        logger.error("failed to write - " + e.getMessage, e)
-      }
+      case e:Exception =>  logger.error("failed to write - " + e.getMessage, e)
     }
   }
 
@@ -161,7 +162,7 @@ class Sampling {
    * and write them to file.
    */
   def getDistinctCoordinatesForResource(locFilePath: String, dataResourceUid: String = "") {
-    println("Creating distinct list of coordinates....")
+    logger.info("Creating distinct list of coordinates....")
     var counter = 0
     var passed = 0
 
@@ -218,7 +219,7 @@ class Sampling {
         coordinates += (processedDecimalLongitude + "," + processedDecimalLatitude)
       }
 
-      if (counter % 10000 == 0 && counter > 0) println("Distinct coordinates counter: " + counter + ", current count:" + coordinates.size)
+      if (counter % 10000 == 0 && counter > 0) logger.debug("Distinct coordinates counter: " + counter + ", current count:" + coordinates.size)
       counter += 1
       passed += 1
       Integer.MAX_VALUE > counter
@@ -229,7 +230,7 @@ class Sampling {
       "originalSensitiveValues")
 
     try {
-      var fw = new FileWriter(locFilePath);
+      val fw = new FileWriter(locFilePath)
       coordinates.foreach(c => {
         fw.write(c)
         fw.write("\n")
@@ -237,10 +238,7 @@ class Sampling {
       fw.flush
       fw.close
     } catch {
-      case e => {
-        e.printStackTrace()
-        println("failed to write");
-      }
+      case e:Exception =>  logger.error(e.getMessage,e)
     }
   }
 
@@ -289,7 +287,7 @@ class Sampling {
 
     //process a batch of points
     val layerIntersectDAO = Client.getLayerIntersectDao()
-    val samples: java.util.ArrayList[String] = layerIntersectDAO.sampling(fields, points);
+    val samples: java.util.ArrayList[String] = layerIntersectDAO.sampling(fields, points)
     var columns: Array[Array[String]] = Array.ofDim(samples.size, points.length)
 
     for (i <- 0 until samples.size) {
@@ -334,13 +332,16 @@ class Sampling {
           val cl = map.filter(x => x._1.startsWith("cl")).toMap
           LocationDAO.addLayerIntersects(line(1), line(0), cl, el)
           if (counter % 1000 == 0) {
-            println("writing to loc:" + counter + ": " + line(1) + "|" + line(0) +
+            logger.debug("writing to loc:" + counter + ": " + line(1) + "|" + line(0) +
               ", records per sec: " + 1000f / (((System.currentTimeMillis - nextTime).toFloat) / 1000f))
             nextTime = System.currentTimeMillis
           }
           counter += 1
         } catch {
-          case e: Exception => e.printStackTrace(); println("Problem writing line: " + counter + ", line length: " + line.length + ", header length: " + header.length)
+          case e: Exception => {
+            logger.error(e.getMessage,e)
+            logger.error("Problem writing line: " + counter + ", line length: " + line.length + ", header length: " + header.length)
+          }
         }
         line = csvReader.readNext
       }

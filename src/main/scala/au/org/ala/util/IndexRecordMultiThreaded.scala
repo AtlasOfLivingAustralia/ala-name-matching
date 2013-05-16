@@ -71,7 +71,7 @@ trait RangeCalculator{
       for (i <- 0 until threads){
         val json  = JSON.parseFull(Source.fromURL(new URL(baseUrl + "/occurrences/search?q="+query+"&pageSize=1&facet=off&sort=row_key&dir=asc&start=" + (i * pageSize))).mkString)
         val occurrences = json.get.asInstanceOf[Map[String, Object]].getOrElse("occurrences", List[Map[String, String]]()).asInstanceOf[List[Map[String, String]]]
-        val rowKey:String = occurrences.first.getOrElse("rowKey", "")
+        val rowKey:String = occurrences.head.getOrElse("rowKey", "")
 
         println("Retrieved rowkey: "  + rowKey)
 
@@ -96,11 +96,11 @@ trait RangeCalculator{
     var i =0
     while(i<keys.size){
       if(i==0)
-        buff + ((start,keys(i)))
+        buff += ((start,keys(i)))
       else if (i==keys.size-1)
-        buff + ((keys(i-1),end))
+        buff += ((keys(i-1),end))
       else
-        buff + ((keys(i-1), keys(i)))
+        buff += ((keys(i-1), keys(i)))
       i+=1
     }
     buff.toArray[(String,String)]
@@ -172,9 +172,9 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
             }
             val t = new Thread(ir)
             t.start
-            threads + t
+            threads += t
             if(ir.isInstanceOf[ColumnReporterRunner])
-              columnRunners + ir.asInstanceOf[ColumnReporterRunner]
+              columnRunners += ir.asInstanceOf[ColumnReporterRunner]
             //solrDirs + (dirPrefix+"/solr-create/bio-proto-thread-"+counter +"/data/index")
             counter += 1
           })

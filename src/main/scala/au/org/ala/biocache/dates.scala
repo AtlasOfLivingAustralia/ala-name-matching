@@ -83,7 +83,7 @@ object DateParser {
           Array("yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss")))
     }
     catch {
-      case _ => None
+      case _:Exception => None
     }
   }
 

@@ -159,7 +159,7 @@ object ProcessWithActors {
       //we want to add the record to the buffer whether or not we send them to the actor
       //add it to the buffer isnt a deleted record
       if (!rawAndProcessed.isEmpty && !rawAndProcessed.get._1.deleted){
-        buff + rawAndProcessed.get
+        buff += rawAndProcessed.get
       }
 
       if(buff.size>=50){

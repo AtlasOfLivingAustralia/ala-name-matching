@@ -51,7 +51,7 @@ class VocabTest extends ConfigFunSuite {
   }
   
   test("Coordinates unknown state"){
-      StateProvinceCentrePoints.coordinatesMatchCentre("Unknown1","-54.50285462","158.9173835")
+    StateProvinceCentrePoints.coordinatesMatchCentre("Unknown1","-54.50285462","158.9173835")
   }
 
   test("Expect coordinates for Australia centre to match"){
@@ -63,15 +63,15 @@ class VocabTest extends ConfigFunSuite {
   }
 
   test("Paratypes - case insensitive for types"){
-      expect(false){ TypeStatus.matchTerm("Paratype").isEmpty}
+    expect(false){ TypeStatus.matchTerm("Paratype").isEmpty}
   }
   
   test("Paratypes - plurals for types"){
-      expect(false){ TypeStatus.matchTerm("Paratypes").isEmpty}
+    expect(false){ TypeStatus.matchTerm("Paratypes").isEmpty}
   }
   
   test("Observations - plurals for BOR"){
-      expect(false){ BasisOfRecord.matchTerm("Observation").isEmpty}
+    expect(false){ BasisOfRecord.matchTerm("Observation").isEmpty}
   }
 
   test("Test Australia hemispheres"){
@@ -99,25 +99,21 @@ class VocabTest extends ConfigFunSuite {
   }
 
   test("Our dog food"){
-      val downloadFieldNames = List("Catalog Number","Match Taxon Concept GUID","Scientific Name","Vernacular Name",
-        "Matched Scientific Name","Taxon Rank - matched","Vernacular Name - matched","Kingdom - matched",
-        "Phylum - matched","Class - matched","Order - matched","Family - matched","Genus - matched","Species - matched",
-        "Subspecies - matched","Institution Code","Collection Code","Latitude - processed","Longitude - processed",
-        "Coordinate Precision","Country - parsed","IBRA Region - parsed","IMCRA Region - parsed","State - parsed",
-        "Local Government Area - parsed","Minimum Elevation In Metres","Maximum Elevation In Metres",
-        "Minimum Depth In Meters","Maximum Depth In Meters","Year - parsed","Month - parsed","Day - parsed",
-        "Event Date - parsed","Event Time - parsed","Basis Of Record","Sex","Preparations")
+    val downloadFieldNames = List("Catalog Number","Match Taxon Concept GUID","Scientific Name","Vernacular Name",
+      "Matched Scientific Name","Taxon Rank - matched","Vernacular Name - matched","Kingdom - matched",
+      "Phylum - matched","Class - matched","Order - matched","Family - matched","Genus - matched","Species - matched",
+      "Subspecies - matched","Institution Code","Collection Code","Latitude - processed","Longitude - processed",
+      "Coordinate Precision","Country - parsed","IBRA Region - parsed","IMCRA Region - parsed","State - parsed",
+      "Local Government Area - parsed","Minimum Elevation In Metres","Maximum Elevation In Metres",
+      "Minimum Depth In Meters","Maximum Depth In Meters","Year - parsed","Month - parsed","Day - parsed",
+      "Event Date - parsed","Event Time - parsed","Basis Of Record","Sex","Preparations")
 
-     downloadFieldNames.foreach(name => {
-       expect(false) {
-         println(name)
-         DwC.matchTerm(name).isEmpty
-       }
-     })
+    downloadFieldNames.foreach(name => {
+      expect(false) { DwC.matchTerm(name).isEmpty }
+    })
   }
   
   test("establishmentMeans"){
-      expect("formerly cultivated (extinct)"){EstablishmentMeans.matchTerm("formerly cultivated (extinct)").get.canonical}
-      
+    expect("formerly cultivated (extinct)"){EstablishmentMeans.matchTerm("formerly cultivated (extinct)").get.canonical}
   }
 }

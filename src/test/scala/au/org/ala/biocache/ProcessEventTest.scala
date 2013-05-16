@@ -192,7 +192,6 @@ class ProcessEventTest extends ConfigFunSuite {
     expect(true){ assertions.size > 0 }
   }
 
-
   test("a digit year which gives a future date") {
     var raw = new FullRecord("1234", "1234")
     var processed = new FullRecord("1234", "1234")

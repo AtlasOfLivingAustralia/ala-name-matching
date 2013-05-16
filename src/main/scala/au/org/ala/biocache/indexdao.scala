@@ -14,7 +14,6 @@ import org.apache.solr.core.CoreContainer
 import org.slf4j.LoggerFactory
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import scala.actors.Actor
 import scala.collection.mutable.ArrayBuffer
 import java.util.Date
 import org.apache.commons.lang.StringUtils
@@ -33,8 +32,7 @@ trait IndexDAO {
 
   import org.apache.commons.lang.StringUtils.defaultString
 
-  //    val elFields = Config.fieldsToSample.filter(x => x.startsWith("el"))
-  //    val clFields = Config.fieldsToSample.filter(x => x.startsWith("cl"))
+  val logger = LoggerFactory.getLogger("IndexDAO")
 
   def getRowKeysForQuery(query: String, limit: Int = 1000): Option[List[String]]
 
@@ -300,7 +298,7 @@ trait IndexDAO {
               parsed.get.asInstanceOf[Map[String, String]]
             }
             catch {
-              case _ => {
+              case _:Exception => {
                 //println("Unable to get sensitive map for : " + guid)
                 Map[String, String]()
               }
@@ -351,7 +349,7 @@ trait IndexDAO {
                 ("", "")
             }
             catch {
-              case _ => ("", "")
+              case _:Exception => ("", "")
             }
           }
           else ("", "")
@@ -373,7 +371,7 @@ trait IndexDAO {
         
         var taxonIssue = map.getOrElse("taxonomicIssue.p", "[]")
         if(!taxonIssue.startsWith("[")){
-          println("WARNING " + map.getOrElse("rowKey","") +" does not have an updated taxonIssue: " + guid)
+          logger.warn("WARNING " + map.getOrElse("rowKey","") +" does not have an updated taxonIssue: " + guid)
           taxonIssue = "[]"
         }
         val taxonIssueArray= Json.toStringArray(taxonIssue)
@@ -531,7 +529,7 @@ case class IndexField(fieldName: String, dataType: String, sourceField: String, 
           return (fieldName, Some(Array(sourceValue)))
         }
         catch {
-          case _ => (fieldName, None)
+          case _:Exception => (fieldName, None)
         }
       }
       case _ => {
@@ -583,30 +581,20 @@ object IndexFields {
 class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("excludeSensitiveValuesFor") excludeSensitiveValuesFor: String, @Named("extraMiscFields") defaultMiscFields: String) extends IndexDAO {
 
   import org.apache.commons.lang.StringUtils.defaultString
-  import scalaj.collection.Imports._
-
+  import scala.collection.JavaConverters._
+  override val logger = LoggerFactory.getLogger("SolrIndexDAO")
   val arrDefaultMiscFields = if (defaultMiscFields == null) Array[String]() else defaultMiscFields.split(",")
-  //val cc = new CoreContainer.Initializer().initialize
   var cc: CoreContainer = _
   var solrServer: SolrServer = _
-  //new EmbeddedSolrServer(cc, "")
   var solrConfigPath: String = ""
 
   @Inject
   var occurrenceDAO: OccurrenceDAO = _
-
-  val logger = LoggerFactory.getLogger("SolrOccurrenceDAO")
   val solrDocList = new java.util.ArrayList[SolrInputDocument](1000)
-
-  //val thread = new SolrIndexActor()
-  //val docQueue: ArrayBlockingQueue[java.util.List[SolrInputDocument]] = new ArrayBlockingQueue[java.util.List[SolrInputDocument]](2);
   var ids = 0
   val fieldSuffix = """([A-Za-z_\-0.9]*)"""
   val doublePattern = (fieldSuffix + """_d""").r
   val intPattern = (fieldSuffix + """_i""").r
-  //    lazy val threads:Array[AddDocThread] ={
-  //      Array.fill[AddDocThread](1){ val t = new AddDocThread(docQueue,ids); ids +=1; t.start;t}
-  //    }
 
   lazy val drToExcludeSensitive = excludeSensitiveValuesFor.split(",")
 
@@ -615,7 +603,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
       if(!solrHome.startsWith("http://")){
         if (solrConfigPath != "") {
           //System.setProperty("solr.solr.home", solrHome)
-          println("Initialising SOLR with config path: " + solrConfigPath + ", and SOLR HOME: " + solrHome)
+          logger.info("Initialising SOLR with config path: " + solrConfigPath + ", and SOLR HOME: " + solrHome)
           val solrConfigFile = new File(solrConfigPath)
           val home = solrConfigFile.getParentFile.getParentFile
           val f = new File(solrConfigFile.getParentFile.getParentFile, "solr.xml");
@@ -640,8 +628,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
   }
 
   def reload = if(cc != null) cc.reload("biocache")
-
-
 
   override def shouldIncludeSensitiveValue(dr: String): Boolean = {
     !drToExcludeSensitive.contains(dr)
@@ -672,9 +658,8 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
       val response = solrServer.query(query)
       values = response.getFacetField(facetName).getValues
       if (values != null) {
-        values.foreach(s => proc(s.getName, s.getCount.toInt))
+        values.asScala.foreach(s => proc(s.getName, s.getCount.toInt))
       }
-
       facetOffset += FACET_PAGE_SIZE
 
     } while (values != null && !values.isEmpty)
@@ -694,7 +679,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     fieldToRetrieve.foreach(f => query.addField(f))
     var response = solrServer.query(query)
     val fullResults = response.getResults.getNumFound.toInt
-    println("Total found for :" + queryString + ", " + fullResults)
+    logger.debug("Total found for :" + queryString + ", " + fullResults)
 
     var counter = 0
     var pageSize = 5000
@@ -717,13 +702,13 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
       //setup the next query
       q.setRows(pageSize)
       response = solrServer.query(q)
-      println("Paging through :" + queryString + ", " + counter)
+      logger.info("Paging through :" + queryString + ", " + counter)
       val solrDocumentList = response.getResults
       val iter = solrDocumentList.iterator()
       while (iter.hasNext) {
         val solrDocument = iter.next()
         val map = new java.util.HashMap[String, Object]
-        solrDocument.getFieldValueMap().keySet().asScala[String].foreach(s => map.put(s, if (multivaluedFields.isDefined && multivaluedFields.get.contains(s)) solrDocument.getFieldValues(s) else solrDocument.getFieldValue(s)))
+        solrDocument.getFieldValueMap().keySet().asScala.foreach(s => map.put(s, if (multivaluedFields.isDefined && multivaluedFields.get.contains(s)) solrDocument.getFieldValues(s) else solrDocument.getFieldValue(s)))
         //        if(multivaluedFields.isDefined){
         //          multivaluedFields.get.foreach(f => map.put(f, solrDocument.getFieldValues(f)))
         //        }
@@ -738,8 +723,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     try {
       solrServer.deleteByQuery("*:*")
     } catch {
-      case e: Exception => e.printStackTrace();
-      println("Problem clearing index...")
+      case e: Exception => logger.error("Problem clearing index...", e)
     }
   }
 
@@ -752,7 +736,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
       solrServer.commit
     }
     catch {
-      case e: Exception => e.printStackTrace
+      case e: Exception => logger.error("Problem removing from index...", e)
     }
   }
 
@@ -779,24 +763,17 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     solrServer.commit
     solrDocList.clear
     //now we should close the indexWriter
-    println(printNumDocumentsInIndex)
+    logger.info(printNumDocumentsInIndex)
     if (optimise) {
-      println("Optimising the indexing...")
+      logger.info("Optimising the indexing...")
       this.optimise
     }
     if (shutdown) {
-      println("Shutting down the indexing...")
+      logger.info("Shutting down the indexing...")
       this.shutdown
     }
-//    println("Attempting to release writer...")
-//    println(cc.getCore("biocache").getUpdateHandler().getClass())
-//    //val objectt =new org.apache.solr.update.DirectUpdateHandler2()
-//    val scorstate = cc.getCore("biocache").getSolrCoreState()
-//    val solrCore = cc.getCore("biocache")
-//    scorstate.getIndexWriter(solrCore).decref
-//    //cc.getCore("biocache").getUpdateHandler().close()
-//    println("Finished...")
-    println("Finalise finished.")
+
+    logger.info("Finalise finished.")
   }
 
   /**
@@ -848,9 +825,9 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     if (shouldIndex(map, startDate)) {
       val values = getOccIndexModel(guid, map)
       if (values.length > 0 && values.length != header.length) {
-        println("values don't matcher header: " + values.length + ":" + header.length + ", values:header")
-        println(header)
-        println(values)
+        logger.warn("values don't matcher header: " + values.length + ":" + header.length + ", values:header")
+        logger.warn("Headers: " + header.toString())
+        logger.warn("Values: " + values.toString())
         exit(1)
       }
       if (values.length > 0) {
@@ -916,7 +893,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
                       doc.addField(value, fvalue)
                     }
                     catch {
-                      case _ => println("Unable to convert value to double " + fvalue + " for " + guid)
+                      case e:Exception => logger.error("Unable to convert value to double " + fvalue + " for " + guid, e)
                     }
                   }
                 }
@@ -928,7 +905,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
                       doc.addField(value, fvalue)
                     }
                     catch {
-                      case _ => println("Unable to convert value to int " + fvalue + " for " + guid)
+                      case e:Exception => logger.error("Unable to convert value to int " + fvalue + " for " + guid, e)
                     }
                   }
                 }
@@ -1037,7 +1014,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     logger.debug("query " + solrQuery.toString)
     //now process all the values that are in the row_key facet
     val rowKeyFacets = response.getFacetField("row_key")
-    val values = rowKeyFacets.getValues().asScala[org.apache.solr.client.solrj.response.FacetField.Count]
+    val values = rowKeyFacets.getValues().asScala
     if (values.size > 0) {
       Some(values.map(facet => facet.getName).asInstanceOf[List[String]]);
     }
@@ -1060,9 +1037,9 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     val facets = response.getFacetField(field)
     //TODO page through the facets to make more efficient.
     if (facets.getValues() != null && facets.getValues().size() > 0) {
-      val values = facets.getValues().asScala[org.apache.solr.client.solrj.response.FacetField.Count]
-      if (values != null && values.size > 0) {
-        Some(values.map(facet => facet.getName).asInstanceOf[List[String]]);
+      val values = facets.getValues().asScala
+      if (values != null && !values.isEmpty) {
+        Some(values.map(facet => facet.getName).asInstanceOf[List[String]])
       }
       else
         None
@@ -1103,8 +1080,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
 
 
   def printNumDocumentsInIndex(): String = {
-    val rq = solrServer.query(new SolrQuery("*:*"))
-    ">>>>>>>>>>>>>Document count of index: " + rq.getResults().getNumFound()
+    ">>>>>>>>>>>>> Document count of index: " + solrServer.query(new SolrQuery("*:*")).getResults().getNumFound()
   }
 
   class AddDocThread(queue: ArrayBlockingQueue[java.util.List[SolrInputDocument]], id: Int) extends Thread {
@@ -1116,7 +1092,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     }
 
     override def run() {
-      println("Starting AddDocThread thread....")
+      logger.info("Starting AddDocThread thread....")
       while (shouldRun || queue.size > 0) {
         if (queue.size > 0) {
           var docs = queue.poll()
@@ -1130,57 +1106,19 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
               docs = null
             }
             catch {
-              case _ => //do nothing
+              case e:Exception => logger.debug("Error committing to index", e)//do nothing
             }
           }
         }
         else {
           try {
             Thread.sleep(250);
-          }
-          catch {
-            case _ => //do nothing
+          } catch {
+            case e:Exception => logger.debug("Error sleeping thread", e)//do nothing
           }
         }
       }
-      println("Finishing AddDocThread thread.")
+      logger.info("Finishing AddDocThread thread.")
     }
   }
-
-  /**
-   * The Actor which allows solr index inserts to be performed on a Thread.
-   * solrServer.add(docs) is not thread safe - we should only ever have one thread adding documents to the solr server
-   */
-  //  class SolrIndexActor extends Actor{
-  //    var processed = 0
-  //    var received =0
-  //
-  //    def ready = processed==received
-  //    def act {
-  //      loop{
-  //        react{
-  //          case docs:java.util.ArrayList[SolrInputDocument] =>{
-  //            //send them off to the solr server using a thread...
-  //            println("Sending docs to SOLR "+ docs.size+"-" + received)
-  //            received += 1
-  //            try {
-  //                solrServer.add(docs)
-  //                solrServer.commit
-  //                //printNumDocumentsInIndex
-  //            } catch {
-  //                case e: Exception => logger.error(e.getMessage, e)
-  //            }
-  //            processed +=1
-  //          }
-  //          case msg:String =>{
-  //              if(msg == "reload"){
-  //                cc.reload("")
-  //              }
-  //              if(msg == "exit")
-  //                exit()
-  //          }
-  //        }
-  //      }
-  //    }
-  //  }
 }

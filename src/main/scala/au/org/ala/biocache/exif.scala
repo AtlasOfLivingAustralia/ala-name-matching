@@ -14,7 +14,7 @@ import com.drew.metadata.exif.ExifSubIFDDirectory
 object EXIFUtil {
     
   import JavaConversions._
-  import scalaj.collection.Imports._
+  import scala.collection.JavaConverters._
 
   def main(args : Array[String]) : Unit = {
       val directory = new File("/data/biocache-media/dr360/")

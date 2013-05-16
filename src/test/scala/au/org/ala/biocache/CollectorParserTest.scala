@@ -66,7 +66,6 @@ class CollectorParserTest extends FunSuite {
     //Annabell, Mr. Graeme R
     //B Kaspiew (Professor)
     //A.G. Gunness et al.
-    
   }
   
   test("Unknown/Anonymous"){    
@@ -97,17 +96,10 @@ class CollectorParserTest extends FunSuite {
     expect(List("Hedley, C.","Starkey","Kesteven, H.L.")){CollectorNameParser.parseForList("""C.Hedley, Mrs.Starkey & H.L.Kesteven""").get}
     expect(List("Gomersall, N.","Gomersall, V.")){CollectorNameParser.parseForList("""N.& V.Gomersall""").get}
     expect(List("Kenny, S.D. Sue", "Wallace-Ward, D. Di")){CollectorNameParser.parseForList(""""KENNY S.D. Sue""WALLACE-WARD D. Di"""").get}
-    //Nicole Spillane & Paul Jacobson
-    //Keith & Lindsay Fisher
-    //Pauline and Arthur Spurgeon
     //"GREENWOOD G. Graeme""PITTS B. Brenda"
-    //Virginia Andrews-Goff and Jim Spinks
-    //Simmons, J.G.; Simmons, M.H.
     //Kim and Geoff Larmour
-    //David James, Paul Scofield -- this one is going to be problematic due to possible surname, entries...
     //C.Hedley, Mrs.Starkey & H.L.Kesteven
     //N.& V.Gomersall
     //"KEMPER C.M. Cath""CARPENTER G.A. Graham""BROWN T. Tonia""HOW T.L. Travis""LOUGHLIN C. Chris"
   }
-  
 }

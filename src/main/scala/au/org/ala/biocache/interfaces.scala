@@ -33,7 +33,7 @@ object Store {
   private var readOnly = false;
 
   import JavaConversions._
-  import scalaj.collection.Imports._
+  import scala.collection.JavaConverters._
   import BiocacheConversions._
   /**
    * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
@@ -242,7 +242,7 @@ object Store {
   def getSystemAssertions(uuid: java.lang.String): java.util.List[QualityAssertion] = {
     //systemassertions are handled using row keys - this is unlike user assertions.
     val rowKey = occurrenceDAO.getRowKeyFromUuid(uuid).getOrElse(uuid);
-    occurrenceDAO.getSystemAssertions(rowKey).asJava[QualityAssertion]
+    occurrenceDAO.getSystemAssertions(rowKey).asJava
   }
 
   /**
@@ -258,7 +258,7 @@ object Store {
    */
   def getUserAssertions(uuid: java.lang.String): java.util.List[QualityAssertion] = {
     val rowKey = occurrenceDAO.getRowKeyFromUuid(uuid).getOrElse(uuid);
-    occurrenceDAO.getUserAssertions(rowKey).asJava[QualityAssertion]
+    occurrenceDAO.getUserAssertions(rowKey).asJava
   }
 
   /**
@@ -455,7 +455,7 @@ object Store {
   /**
    * Retrieve the list of species groups
    */
-  def retrieveSpeciesGroups: java.util.List[SpeciesGroup] = SpeciesGroups.groups.asJava[SpeciesGroup]
+  def retrieveSpeciesGroups: java.util.List[SpeciesGroup] = SpeciesGroups.groups.asJava
   /**
    * Retrieves a map of index fields to storage fields
    */
@@ -504,7 +504,7 @@ object Store {
       val s = Config.persistenceManager.get(tempUid, "upload", "customIndexFields")
       Json.toStringArray(s.getOrElse("[]"))
     } catch {
-      case _ => Array()
+      case _:Exception => Array()
     }
   }
 }

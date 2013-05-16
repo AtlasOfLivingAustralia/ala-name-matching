@@ -4,8 +4,8 @@ import au.com.bytecode.opencsv.CSVReader
 import org.ala.layers.intersect.Grid
 import au.org.ala.biocache.{Config, Json, QualityAssertion, AssertionCodes}
 import collection.mutable.{HashMap, ListBuffer}
-import org.codehaus.jackson.map.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.databind.ObjectMapper
 import java.io.{FileWriter, FileOutputStream, File, FileReader}
 import au.org.ala.util.{IndexRecords, OptionParser, FileHelper}
 import org.slf4j.LoggerFactory
@@ -277,7 +277,7 @@ object SpeciesOutlierTests {
       try {
         Config.persistenceManager.get(taxonID, "outliers", "jackKnifeOutliers")
       } catch {
-        case _ => None
+        case _:Exception => None
       }
     }
 

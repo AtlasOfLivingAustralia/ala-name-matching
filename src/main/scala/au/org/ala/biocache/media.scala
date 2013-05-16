@@ -44,14 +44,14 @@ object MediaStore {
       true
     }
     catch {
-      case _ => false
+      case _:Exception => false
     } finally {
       if (in != null) {
         in.close()
       }
     }
   }
-  
+
   def isValidImageURL(url: String): Boolean = {
     !imageParser.unapplySeq(url.trim.toLowerCase).isEmpty || isStoredMedia(imageExtension, url)
   }

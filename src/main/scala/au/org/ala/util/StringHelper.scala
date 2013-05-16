@@ -35,7 +35,7 @@ class StringHelper(str: String) {
       str.toInt
       true
     } catch {
-      case _ => false
+      case _:Exception => false
     }
   }
 
@@ -44,7 +44,7 @@ class StringHelper(str: String) {
       str.toFloat
       true
     } catch {
-      case _ => false
+      case _:Exception => false
     }
   }
 
@@ -64,7 +64,7 @@ class StringHelper(str: String) {
         false
       }
     } catch {
-      case _ => false
+      case _:Exception => false
     }
   }
 
@@ -77,7 +77,7 @@ class StringHelper(str: String) {
         false
       }
     } catch {
-      case _ => false
+      case _:Exception => false
     }
   }
 

@@ -186,7 +186,7 @@ class DwCALoader extends DataLoader {
               val (src,model) = v
               val property = star.core.value(src)
               if(StringUtils.isNotBlank(property))
-                fieldTuples + (model -> property)
+                fieldTuples += (model -> property)
             })
             
               //lookup the column
@@ -198,13 +198,13 @@ class DwCALoader extends DataLoader {
               }
   
               //add the record uuid to the map
-              fieldTuples + ("uuid" -> recordUuid)
+              fieldTuples += ("uuid" -> recordUuid)
               //add the data resouce uid
-              fieldTuples + ("dataResourceUid"-> resourceUid)
+              fieldTuples += ("dataResourceUid"-> resourceUid)
               //add last load time
-              fieldTuples + ("lastModifiedTime"-> loadTime)
+              fieldTuples += ("lastModifiedTime"-> loadTime)
               if(isNew){
-                  fieldTuples + ("firstLoaded"-> loadTime)
+                  fieldTuples += ("firstLoaded"-> loadTime)
                   newCount +=1
               }
   
