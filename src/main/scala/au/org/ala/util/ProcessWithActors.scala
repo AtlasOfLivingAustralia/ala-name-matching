@@ -23,7 +23,6 @@ object ProcessWithActors {
     var startUuid:Option[String] = None
     var check = false
     var dr:Option[String] = None
-//    var fileName = ""
 
     val parser = new OptionParser("process records options") {
         intOpt("t", "thread", "The number of threads to use", {v:Int => threads = v } )
@@ -121,7 +120,7 @@ object ProcessWithActors {
   /**
    * Process the records using the supplied number of threads
    */
-  def processRecords(threads: Int, firstKey:Option[String], dr: Option[String], checkDeleted:Boolean=false): Unit = {
+  def processRecords(threads: Int, firstKey:Option[String], dr: Option[String], checkDeleted:Boolean=false, callback:ObserverCallback = null): Unit = {
     
     val endUuid = if(dr.isEmpty) "" else dr.get +"|~"
     
@@ -172,6 +171,9 @@ object ProcessWithActors {
         buff.clear
       }
 
+      if(callback != null && count % 100 == 0)
+        callback.progressMessage(count)
+
       //debug counter
       if (count % 1000 == 0) {
         finishTime = System.currentTimeMillis
@@ -188,7 +190,7 @@ object ProcessWithActors {
     
     logger.info("Last row key processed: " + guid)
     //add the remaining records from the buff
-    if(buff.size>0){
+    if(buff.nonEmpty){
       pool(0).asInstanceOf[Consumer] ! buff.toArray
       batches+=1
     }
@@ -198,7 +200,6 @@ object ProcessWithActors {
 
     //We can't shutdown the persistence manager until all of the Actors have completed their work
     while(batches > getProcessedTotal(pool)){
-      //println(batches + " : " + getProcessedTotal(pool))
       Thread.sleep(50)
     }
   }

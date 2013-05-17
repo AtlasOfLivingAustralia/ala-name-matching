@@ -10,6 +10,7 @@ import java.util.Date
 import au.org.ala.util._
 import au.org.ala.biocache.outliers.{JackKnifeStats,RecordJackKnifeStats}
 import au.org.ala.biocache.qa.QueryAssertion
+import org.ala.layers.dao.IntersectCallback
 
 /**
  * This is the interface to use for java applications.
@@ -29,8 +30,9 @@ object Store {
   private val deletedRecordDAO = Config.deletedRecordDAO
   private val duplicateDAO = Config.duplicateDAO
   private val assertionQueryDAO = Config.assertionQueryDAO
-
-  private var readOnly = false;
+  //TODO need a better mechanism for doing this....
+  private val propertiesToHide = Set("originalSensitiveValues","originalDecimalLatitude","originalDecimalLongitude", "orginalLocationRemarks", "originalVerbatimLatitude", "originalVerbatimLongitude")
+  private var readOnly = false
 
   import JavaConversions._
   import scala.collection.JavaConverters._
@@ -66,9 +68,6 @@ object Store {
     occurrenceDAO.getAllVersionsByRowKey(rowKey, includeSensitive).getOrElse(null)
   }
 
-  //TODO need a better mechanism for doing this....
-  private val propertiesToHide = Set("originalSensitiveValues","originalDecimalLatitude","originalDecimalLongitude", "orginalLocationRemarks", "originalVerbatimLatitude", "originalVerbatimLongitude")
-
   /**
    * Get the raw processed comparison based on the uuid for the occurrence.
    */
@@ -79,7 +78,7 @@ object Store {
    */
   def getComparisonByRowKey(rowKey: java.lang.String) : java.util.Map[String,java.util.List[ProcessedValue]] = getComparison(occurrenceDAO.getAllVersionsByRowKey(rowKey).getOrElse(null))
   
-  private def getComparison(recordVersions:Array[FullRecord]) ={
+  private def getComparison(recordVersions:Array[FullRecord]) = {
     if (recordVersions != null && recordVersions.length > 1) {
       val map = new java.util.HashMap[String, java.util.List[ProcessedValue]]
 
@@ -139,9 +138,8 @@ object Store {
    * Load the record, download any media associated with the record.
    */
   def loadRecord(dataResourceUid:String, fr:FullRecord, identifyingTerms:java.util.List[String], shouldIndex:Boolean = true){
-    val s = new SimpleLoader
     fr.lastModifiedTime = new Date()
-    s.load(dataResourceUid, fr, identifyingTerms.toList, true, true)
+    (new SimpleLoader).load(dataResourceUid, fr, identifyingTerms.toList, true, true)
     val processor = new RecordProcessor
     processor.processRecordAndUpdate(fr)
     if(shouldIndex){
@@ -158,10 +156,10 @@ object Store {
    val loader = new MapDataLoader
    val rowKeys = loader.load(dataResourceUid, recordsProperties.toList,identifyFields.toList)
    if(rowKeys.size>0){
-      val processor = new RecordProcessor
-      processor.processRecords(rowKeys)
-      if(shouldIndex)
-        IndexRecords.indexList(rowKeys)
+     val processor = new RecordProcessor
+     processor.processRecords(rowKeys)
+     if(shouldIndex)
+       IndexRecords.indexList(rowKeys)
    }
   }
   
@@ -174,18 +172,18 @@ object Store {
   def upsertRecord(record:FullRecord, shouldIndex:Boolean){
     //rowKey = dr|<cxyzsuid>
     if(record.rowKey != null){
-        val (recordUuid, isNew)= occurrenceDAO.createOrRetrieveUuid(record.rowKey)
-        record.uuid =recordUuid
-        //add the last load time
-        record.lastModifiedTime = new Date()
-        if(isNew)
-            record.firstLoaded = record.lastModifiedTime
-        occurrenceDAO.addRawOccurrence(record)
-        val processor = new RecordProcessor
-        processor.processRecordAndUpdate(record)
-        if(shouldIndex){
-            occurrenceDAO.reIndex(record.rowKey)
-        }
+      val (recordUuid, isNew)= occurrenceDAO.createOrRetrieveUuid(record.rowKey)
+      record.uuid =recordUuid
+      //add the last load time
+      record.lastModifiedTime = new Date()
+      if(isNew)
+        record.firstLoaded = record.lastModifiedTime
+      occurrenceDAO.addRawOccurrence(record)
+      val processor = new RecordProcessor
+      processor.processRecordAndUpdate(record)
+      if(shouldIndex){
+        occurrenceDAO.reIndex(record.rowKey)
+      }
     }
   }
 
@@ -215,6 +213,7 @@ object Store {
    * Deletes the records for the supplied rowKey from the index and data store
    */
   def deleteRecord(rowKey:String) = if(rowKey != null) occurrenceDAO.delete(rowKey)
+
   /**
    * Deletes the supplied list of row keys from the index and data store
    */
@@ -313,21 +312,20 @@ object Store {
   def isReadOnly = readOnly
   
   def optimiseIndex() :String = {
-      val start = System.currentTimeMillis
-      readOnly = true
-      try {
-          val indexString =Config.indexDAO.optimise
-          val finished = System.currentTimeMillis
-          readOnly = false
-          "Optimised in " + (finished -start).toFloat / 60000f + " minutes.\n" +indexString
+    val start = System.currentTimeMillis
+    readOnly = true
+    try {
+      val indexString =Config.indexDAO.optimise
+      val finished = System.currentTimeMillis
+      readOnly = false
+      "Optimised in " + (finished -start).toFloat / 60000f + " minutes.\n" +indexString
+    } catch {
+      case e:Exception => {
+        //report error message and take out of readOnly
+        readOnly = false
+        e.getMessage
       }
-      catch{
-          case e:Exception => {
-              //report error message and take out of readOnly
-              readOnly = false
-              e.getMessage
-          }
-      }
+    }
   }
 
   /**
@@ -339,39 +337,37 @@ object Store {
    * Indexes a dataResource from a specific date
    */
   def reindex(dataResource:java.lang.String, startDate:java.lang.String){
-      if(dataResource != null && startDate != null)
-          IndexRecords.index(None, None, Some(dataResource), false, false, Some(startDate))
-      else
-          throw new Exception("Must supply data resource and start date")
+    if(dataResource != null && startDate != null)
+      IndexRecords.index(None, None, Some(dataResource), false, false, Some(startDate))
+    else
+      throw new Exception("Must supply data resource and start date")
   }
+
   def reindexRange(startKey:java.lang.String, endKey:java.lang.String){
     if(startKey!=null && endKey !=null)
       IndexRecords.index(Some(startKey), Some(endKey), None, false, false, None)
     else
       throw new Exception("Start and end key must be supplied")
   }
-  /**
-   * reindexes the supplied list of items 
-   * The type of reindex tat is performed is based on the keyTYpe
-   * keyType can be rowKey or uuid
-   */
-  //NC: Commented out because they were never necessary. We changed to using a HTTP SOLR server instead.
-//  def reindex(keys:Array[String], keyType:String){
-//    reindex(keys, 4, keyType)
-//  }
-//  
-//  def reindex(keys:Array[String], threads:Int, keyType:String){
-//    if(keys != null && keys.length>0)
-//      IndexRecords.indexListThreaded(keys.toList, threads, keyType=="rowKey")
-//  }
 
   /**
    * Indexes a dataResource from a specific date
+   *
+   * @param dataResource the resource to index
    */
-  def index(dataResource:java.lang.String) = IndexRecords.index(None, None, Some(dataResource), false, false, None)
+  def index(dataResource:java.lang.String) =
+    IndexRecords.index(None, None, Some(dataResource), false, false, None)
 
-  def index(dataResource:java.lang.String, customIndexFields:Array[String]) = {
-    IndexRecords.index(None, None, Some(dataResource), false, false, None, miscIndexProperties = customIndexFields)
+  /**
+   * Index a resource, indexing custom fields
+   *
+   * @param dataResource the resource to index
+   * @param customIndexFields the additional fields to index on top of the default set of fields
+   * @param callback a callback used for monitoring the process
+   */
+  def index(dataResource:java.lang.String, customIndexFields:Array[String], callback:ObserverCallback = null) = {
+    IndexRecords.index(None, None, Some(dataResource), false, false, None,
+      miscIndexProperties = customIndexFields, callback = callback)
     storeCustomIndexFields(dataResource,customIndexFields)
   }
 
@@ -382,12 +378,19 @@ object Store {
   def sample(dataResourceUid:java.lang.String) = Sampling.sampleDataResource(dataResourceUid)
 
   /**
+   * Run the sampling for this dataset
+   * @param dataResourceUid
+   */
+  def sample(dataResourceUid:java.lang.String, callback:IntersectCallback) =
+    Sampling.sampleDataResource(dataResourceUid, callback)
+
+  /**
    * Process records for the supplied resource
    * @param dataResourceUid
    * @param threads
    */
-  def process(dataResourceUid:java.lang.String, threads:Int = 1) = {
-    ProcessWithActors.processRecords(1, None , Some(dataResourceUid))
+  def process(dataResourceUid:java.lang.String, threads:Int = 1, callback:ObserverCallback = null) = {
+    ProcessWithActors.processRecords(1, None , Some(dataResourceUid), callback=callback)
   }
 
   /**
@@ -407,11 +410,11 @@ object Store {
   }
   
   def writeToWriter(writer:RecordWriter,keys: Array[String], fields: Array[java.lang.String], qaFields: Array[java.lang.String], includeSensitive:Boolean){
-      occurrenceDAO.writeToRecordWriter(writer, keys, fields, qaFields, includeSensitive)      
+    occurrenceDAO.writeToRecordWriter(writer, keys, fields, qaFields, includeSensitive)
   }
 
   def writeToWriter(writer:RecordWriter,keys: Array[String], fields: Array[java.lang.String], qaFields: Array[java.lang.String]){
-      writeToWriter(writer, keys, fields, qaFields, false)
+    writeToWriter(writer, keys, fields, qaFields, false)
   }
   
   /**
@@ -494,7 +497,6 @@ object Store {
    */
   def getDeletedRecords(date:java.util.Date):Array[String] = deletedRecordDAO.getUuidsForDeletedRecords(org.apache.commons.lang.time.DateFormatUtils.format(date, "yyyy-MM-dd"))
 
-
   def storeCustomIndexFields(tempUid:String, customIndexFields:Array[String]){
     Config.persistenceManager.put(tempUid, "upload", "customIndexFields", Json.toJSON(customIndexFields.map(v=> if(v.endsWith("_i") || v.endsWith("_d")) v else v + "_s")))
   }
@@ -510,7 +512,14 @@ object Store {
 }
 
 /**
- *    A trait to implement by java classes to process occurrence records.
+ * A trait to implement by java classes to process occurrence records.
+ */
+trait ObserverCallback {
+  def progressMessage(recordCount: Int)
+}
+
+/**
+ * A trait to implement by java classes to process occurrence records.
  */
 trait OccurrenceConsumer {
   /** Consume the supplied record */
@@ -524,6 +533,7 @@ trait OccurrenceVersionConsumer {
   /** Passes an array of versions. Raw, Process and consensus versions */
   def consume(record: Array[FullRecord]): Boolean
 }
+
 /**
  * A trait to be implemented by java classes to write records.
  */

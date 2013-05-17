@@ -8,6 +8,7 @@ import scala.collection.mutable.{ArrayBuffer, HashSet}
 import org.ala.layers.client.Client
 import scala.Some
 import org.slf4j.LoggerFactory
+import org.ala.layers.dao.IntersectCallback
 
 /**
  * Executable for running the sampling for a data resource.
@@ -55,25 +56,29 @@ object Sampling {
       }
       val samplingFilePath = "/tmp/sampling-" + fileSufffix + ".txt"
       //generate sampling
-      s.sampling(locFilePath, samplingFilePath, singleLayerName)
+      s.sampling(locFilePath, samplingFilePath, singleLayerName=singleLayerName)
       //load the loc table
       s.loadSampling(samplingFilePath)
       //clean up the file
+      logger.info("Removing temporary file: " + samplingFilePath)
       (new File(samplingFilePath)).delete()
+      (new File(locFilePath)).delete()
     }
   }
 
-  def sampleDataResource(dataResourceUid: String, singleLayerName: String = "") {
+  def sampleDataResource(dataResourceUid: String, callback:IntersectCallback = null, singleLayerName: String = "") {
     val locFilePath = "/tmp/loc-" + dataResourceUid + ".txt"
     val s = new Sampling
     s.getDistinctCoordinatesForResource(locFilePath, dataResourceUid)
     val samplingFilePath = "/tmp/sampling-" + dataResourceUid + ".txt"
     //generate sampling
-    s.sampling(locFilePath, samplingFilePath, singleLayerName)
+    s.sampling(locFilePath, samplingFilePath, callback, singleLayerName)
     //load the loc table
     s.loadSampling(samplingFilePath)
     //clean up the file
+    logger.info("Removing temporary file: " + samplingFilePath)
     (new File(samplingFilePath)).delete()
+    (new File(locFilePath)).delete()
   }
 }
 
@@ -144,6 +149,7 @@ class Sampling {
         passed += 1
       }
     })
+
     try {
       val fw = new FileWriter(locFilePath)
       coordinates.foreach(c => {
@@ -190,6 +196,7 @@ class Sampling {
         map.getOrElse("zone", null),
         new ArrayBuffer[QualityAssertion]
       )
+
       latLongWithOption match {
         case Some(latLong) => coordinates += (latLong._2 + "," + latLong._1) // write long lat (x,y)
         case None => {}
@@ -219,14 +226,14 @@ class Sampling {
         coordinates += (processedDecimalLongitude + "," + processedDecimalLatitude)
       }
 
-      if (counter % 10000 == 0 && counter > 0) logger.debug("Distinct coordinates counter: " + counter + ", current count:" + coordinates.size)
+      if (counter % 10000 == 0 && counter > 0){
+        logger.debug("Distinct coordinates counter: " + counter + ", current count:" + coordinates.size)
+      }
       counter += 1
       passed += 1
       Integer.MAX_VALUE > counter
-    }, startUuid, endUuid, 1000, "decimalLatitude", "decimalLongitude",
-      "decimalLatitude.p", "decimalLongitude.p",
-      "verbatimLatitude", "verbatimLongitude",
-      "originalDecimalLatitude", "originalDecimalLongitude",
+    }, startUuid, endUuid, 1000, "decimalLatitude", "decimalLongitude","decimalLatitude.p", "decimalLongitude.p",
+      "verbatimLatitude", "verbatimLongitude","originalDecimalLatitude", "originalDecimalLongitude",
       "originalSensitiveValues")
 
     try {
@@ -245,16 +252,16 @@ class Sampling {
   /**
    * Run the sampling with a file
    */
-  def sampling(filePath: String, outputFilePath: String, singleLayerName: String = "") {
+  def sampling(filePath: String, outputFilePath: String, callback:IntersectCallback = null,singleLayerName: String = "") {
 
     logger.info("********* START - TEST BATCH SAMPLING FROM FILE ***************")
     //load the CSV of points into memory
     val points = loadPoints(filePath)
     //do the sampling
     if (singleLayerName != "") {
-      processBatch(outputFilePath, points, Array(singleLayerName))
+      processBatch(outputFilePath, points, Array(singleLayerName), callback)
     } else {
-      processBatch(outputFilePath, points, Config.fieldsToSample)
+      processBatch(outputFilePath, points, Config.fieldsToSample, callback)
     }
     logger.info("********* END - TEST BATCH SAMPLING FROM FILE ***************")
   }
@@ -280,15 +287,15 @@ class Sampling {
     points.toArray
   }
 
-  private def processBatch(outputFilePath: String, points: Array[Array[Double]], fields: Array[String]): Unit = {
+  private def processBatch(outputFilePath: String, points: Array[Array[Double]], fields: Array[String], callback:IntersectCallback=null): Unit = {
 
     val writer = new CSVWriter(new FileWriter(outputFilePath))
     writer.writeNext(Array("longitude", "latitude") ++ fields)
 
     //process a batch of points
-    val layerIntersectDAO = Client.getLayerIntersectDao()
-    val samples: java.util.ArrayList[String] = layerIntersectDAO.sampling(fields, points)
-    var columns: Array[Array[String]] = Array.ofDim(samples.size, points.length)
+    val layerIntersectDAO = org.ala.layers.client.Client.getLayerIntersectDao()
+    val samples: java.util.ArrayList[String] = layerIntersectDAO.sampling(fields, points, callback)
+    val columns: Array[Array[String]] = Array.ofDim(samples.size, points.length)
 
     for (i <- 0 until samples.size) {
       columns(i) = samples.get(i).split('\n')
@@ -298,9 +305,7 @@ class Sampling {
       val sampledPoint = Array.fill(2 + columns.length)("")
       sampledPoint(0) = points(i)(0).toString()
       sampledPoint(1) = points(i)(1).toString()
-
       for (j <- 0 until columns.length) {
-        //print(",")
         if (i < columns(j).length) {
           if (columns(j)(i) != "n/a") {
             sampledPoint(j + 2) = columns(j)(i)

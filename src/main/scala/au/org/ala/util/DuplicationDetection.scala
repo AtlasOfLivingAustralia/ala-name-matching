@@ -395,7 +395,11 @@ class DuplicationDetection{
          val year = StringUtils.trimToNull(currentLine(3))
          val month = StringUtils.trimToNull(currentLine(4))
          
-         val date: java.util.Date = try{DateUtils.parseDate(currentLine(5),"EEE MMM dd hh:mm:ss zzz yyyy")}catch{case _=> null}
+         val date: java.util.Date = try {
+           DateUtils.parseDate(currentLine(5),"EEE MMM dd hh:mm:ss zzz yyyy")
+         } catch {
+           case _:Exception => null
+         }
          val day = if(date != null) Integer.toString(date.getDate()) else null
          val rawName = StringUtils.trimToNull(currentLine(12))
          val collector = StringUtils.trimToNull(currentLine(13))

@@ -119,12 +119,12 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.6.4</version>
+			<version>1.7.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.6.4</version>
+			<version>1.7.5</version>
 		</dependency>
 		<!-- ALA SDS point generalising -->
 		<dependency>
@@ -313,12 +313,12 @@
 			<version>${solr.version}</version>
 			<exclusions>
 				<exclusion>
-					<artifactId>org.slf4j</artifactId>
-					<groupId>slf4j-api</groupId>
+					<groupId>org.slf4j</groupId>
+					<artifactId>jcl-over-slf4j</artifactId>
 				</exclusion>
 				<exclusion>
-					<artifactId>org.slf4j</artifactId>
-					<groupId>slf4j-jdk14</groupId>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-jdk14</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -541,9 +541,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- <plugin> <groupId>com.jteigen</groupId> <artifactId>maven-scalatest-plugin</artifactId> 
-				<version>1.1-SNAPSHOT</version> <executions> <execution> <phase>package</phase> 
-				<goals> <goal>test</goal> </goals> </execution> </executions> </plugin> -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>

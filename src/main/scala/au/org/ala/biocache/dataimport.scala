@@ -263,7 +263,7 @@ trait DataLoader {
       val protocol = connectionParameters("protocol").asInstanceOf[String]
       val urlsObject = connectionParameters.getOrElse("url", List[String]())
       val urls = {
-        if(urlsObject.isInstanceOf[List[String]]){
+        if(urlsObject.isInstanceOf[List[_]]){
           urlsObject
         } else {
           val singleValue = connectionParameters("url").asInstanceOf[String]
@@ -528,7 +528,7 @@ trait DataLoader {
           true
         } catch {
           case e:Exception => e.printStackTrace();false
-        }
+       }
     }
 }
 

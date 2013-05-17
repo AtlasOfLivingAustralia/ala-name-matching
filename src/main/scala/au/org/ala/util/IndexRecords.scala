@@ -79,8 +79,16 @@ object IndexRecords {
      }
   }
 
-  def index(startUuid:Option[String], endUuid:Option[String], dataResource:Option[String], optimise:Boolean = false, shutdown:Boolean = false,
-            startDate:Option[String]=None, checkDeleted:Boolean=false, pageSize:Int = 1000, miscIndexProperties:Seq[String] = Array[String]()) {
+  def index(startUuid:Option[String],
+            endUuid:Option[String],
+            dataResource:Option[String],
+            optimise:Boolean = false,
+            shutdown:Boolean = false,
+            startDate:Option[String] = None,
+            checkDeleted:Boolean = false,
+            pageSize:Int = 1000,
+            miscIndexProperties:Seq[String] = Array[String](),
+            callback:ObserverCallback = null) {
 
     val startKey = {
         if(startUuid.isEmpty && !dataResource.isEmpty) {
@@ -104,13 +112,14 @@ object IndexRecords {
     } else {
        logger.info("Starting to index " + startKey + " until " + endKey)
     }
-    indexRange(startKey, endKey, date, checkDeleted, miscIndexProperties = miscIndexProperties)
+    indexRange(startKey, endKey, date, checkDeleted, miscIndexProperties = miscIndexProperties, callback = callback)
     //index any remaining items before exiting
     indexer.finaliseIndex(optimise, shutdown)  
   }
 
   def indexRange(startUuid:String, endUuid:String, startDate:Option[Date]=None, checkDeleted:Boolean=false,
-                 pageSize:Int = 1000, miscIndexProperties:Seq[String] = Array[String]()) {
+                 pageSize:Int = 1000, miscIndexProperties:Seq[String] = Array[String](),
+                 callback:ObserverCallback = null) {
     var counter = 0
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
@@ -124,6 +133,7 @@ object IndexRecords {
         val shouldcommit = counter % 100000 == 0
         indexer.indexFromMap(guid, map, startDate=startDate, commit=shouldcommit, miscIndexProperties=miscIndexProperties)
         if (counter % pageSize == 0) {
+          if(callback !=null) callback.progressMessage(counter)
           finishTime = System.currentTimeMillis
           logger.info(counter + " >> Last key : " + guid + ", records per sec: " +
             pageSize.toFloat / (((finishTime - startTime).toFloat) / 1000f))

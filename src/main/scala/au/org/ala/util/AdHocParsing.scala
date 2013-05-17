@@ -148,14 +148,16 @@ object AdHocParser {
 
   //Java friendly version
   def guessColumnHeadersArray(values: Array[String]): Array[String] = guessColumnHeaders(values).toArray
+
   def mapColumnHeadersArray(list: Array[String]): Array[String] = DwC.retrieveCanonicalsOrNothing(list).toArray
+
   def mapOrReturnColumnHeadersArray(list: Array[String]): Array[String] = DwC.retrieveCanonicals(list).toArray
+
+  def processLineArrays(hdrs: Array[String], values: Array[String]): ParsedRecord = processLine(hdrs, values)
 
   def mapColumnHeaders(list: Seq[String]): Seq[String] = DwC.retrieveCanonicalsOrNothing(list)
 
   def mapOrReturnColumnHeaders(list: Seq[String]): Seq[String] = DwC.retrieveCanonicals(list)
-
-  def processLine(hdrs: Array[String], values: Array[String]): ParsedRecord = processLine(hdrs, values)
 
   def processLine(hdrs: Seq[String], values: Seq[String]): ParsedRecord = {
 

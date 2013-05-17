@@ -141,7 +141,7 @@ class Loader extends DataLoader {
 
             val urlsObject = connParams.getOrElse("url", List[String]())
             val urls:Seq[String] = {
-              if(urlsObject.isInstanceOf[Seq[String]]) urlsObject.asInstanceOf[Seq[String]]
+              if(urlsObject.isInstanceOf[Seq[_]]) urlsObject.asInstanceOf[Seq[String]]
               else List(connParams("url").asInstanceOf[String])
             }
 
