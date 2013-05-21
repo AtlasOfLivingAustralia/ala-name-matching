@@ -116,7 +116,7 @@ class ExpertDistributionOutlierTool {
             completedThreads += 1
             countDownLatch.countDown()
           }
-          case ("PROCESSED", speciesLsid: String, rowKeysForIndexing: ListBuffer[String], actor: ExpertDistributionActor) => {
+          case ("PROCESSED", speciesLsid: String, rowKeysForIndexing: ListBuffer[_], actor: ExpertDistributionActor) => {
             for (rowKey <- rowKeysForIndexing) {
               Console.println(rowKey)
             }

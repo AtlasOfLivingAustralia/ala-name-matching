@@ -8,30 +8,6 @@ import au.org.ala.biocache._
 import collection.mutable.ListBuffer
 import actors.Actor
 
-//
-//object CreateTestIndex {
-//
-//  def main(args:Array[String]){
-//      val keyspace = "occ"
-//      val indexName = "taxonConceptLookup"
-//      val keyOn = Array("scientificName")
-//      val createIndex = new CreateInvertedIndexOnProperty
-//      createIndex.create(keyspace, indexName, keyOn, "basisOfRecord", 1000000, true)
-//  }
-//}
-
-//object CreateTaxonUUIDIndex {
-//
-//  def main(args:Array[String]){
-//    val keyspace = "occ"
-//    val indexName = "taxonIndex"
-//    val keyOn = Array("scientificName")
-//    val propertiesToStore = Array("el593.p","decimalLatitude","decimalLongitude")
-//    val createIndex = new CreateCompositeKeyIndex
-//    createIndex.create(keyspace, indexName, keyOn, propertiesToStore, 1000000,false)
-//  }
-//}
-
 object CreateLayerByTaxon {
 
   def main(args:Array[String]){    
@@ -71,9 +47,7 @@ class CreateCompositeKeyIndex {
       var counter = 0
       //page through and create the index
       pm.pageOverSelect(keyspace, (guid, map) => {
-        //println(map.get(keyOn) +" " + guid)
         //retrieve all the values required to construct the key
-
         val key = {
             val keyParts = new ListBuffer[String]
             for(keyPart <- keyOn){
@@ -86,7 +60,6 @@ class CreateCompositeKeyIndex {
             keyParts.toList.mkString("||")
         }
 
-        //println("Generated key : " + key)
         val mutator = Pelops.createMutator(pm.poolName)
         for(propertyName <- propertiesToStore){
             val propertyValue = map.getOrElse(propertyName, "")
@@ -145,7 +118,6 @@ class CreateInvertedIndexOnProperty(keyspace:String) {
         counter = counter + 1
         if (counter % 100 == 0)   println("Record:"+counter)
         counter < maxRecords
-      //},"",10000)
       }, "", "", 1000, fieldsToRequest:_* )
 
       //close cassandra connections

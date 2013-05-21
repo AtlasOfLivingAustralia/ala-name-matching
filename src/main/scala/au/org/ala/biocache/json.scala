@@ -112,9 +112,6 @@ object Json {
      * Convert the supplied list from JSON
      */
     def toIntArray(jsonString:String) : Array[Int] = {
-//        val mapper = new ObjectMapper
-//        mapper.readValue(jsonString,classOf[java.util.List[java.lang.Integer]])
-      //jsonString.replace("[")
       if (jsonString =="" || jsonString =="[]") return Array()
       jsonString.replace("[","").replace("]","").split(",").map(x => x.toInt).toArray
     }

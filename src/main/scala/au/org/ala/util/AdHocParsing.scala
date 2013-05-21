@@ -91,19 +91,14 @@ object AdHocParser {
       ).flatten.distinct
     }
 
-    //println("**Processed fields: " + processedFields.mkString(","))
-    //println("**Raw fields: " + rawFields.mkString(","))
-
     //need a list of common to both....
     val commonHdrs = commonFields.map(x => List(x, x + " (processed)")).flatten
-    //println("**Common fields: " + commonFields.mkString(","))
 
     //write out headers for CSV
-    //println((commonHdrs :::  rawOnly  ::: processedOnly).toArray.mkString(","))
     output.writeNext((commonHdrs :::  rawFields  ::: processedFields).toArray)
 
     //for each row, construct the output
-    for (el <- l){
+    l.foreach (el => {
       //do common fields first - with raw/processed
       val valueMap = el.values.map(p => (p.name -> p)).toMap
 
@@ -122,10 +117,9 @@ object AdHocParser {
         case _ => ""
       })
 
-      //println((commonOutput ::: rawOutput ::: processedOutput).toArray.asInstanceOf[Array[String]].mkString(","))
       output.writeNext((commonOutput ::: rawOutput ::: processedOutput).toArray.asInstanceOf[Array[String]])
       output.flush
-    }
+    })
     reader.close
   }
 
@@ -205,7 +199,6 @@ object AdHocParser {
       currentLine = csvReader.readNext
     }
   }
-
 
   def guessColumnHeaders(values: Seq[String]): Seq[String] = {
     //assume we have darwin core terms
@@ -445,20 +438,16 @@ object DecimalLongitudeExtractor {
 object VerbatimLatitudeExtractor {
   def unapply(str: String): Option[Float] = VerbatimLatLongParser.parseWithDirection(str) match {
     case (Some(latitude),Some(latLong)) =>  if(latLong == LatOrLong.Latitude) Some(latitude) else None
-    case (None, None) => None
+    case _ => None
   }
 }
 
 object VerbatimLongitudeExtractor {
   def unapply(str: String): Option[Float] = VerbatimLatLongParser.parseWithDirection(str) match {
     case (Some(longitude),Some(latLong)) =>  if(latLong == LatOrLong.Longitude) Some(longitude) else None
-    case (None, None) => None
+    case _ => None
   }
 }
-
-//object TaxonRankExtractor {
-//  def unapply(str: String): Option[Term] = TaxonRanks.matchTerm(str)
-//}
 
 object BasisOfRecordExtractor {
   def unapply(str: String): Option[Term] = BasisOfRecord.matchTerm(str)

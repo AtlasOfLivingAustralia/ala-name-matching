@@ -3,6 +3,9 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
+import au.org.ala.util.DuplicateRecordDetails
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.databind.ObjectMapper
 
 @RunWith(classOf[JUnitRunner])
 class PosoTest extends ConfigFunSuite {
@@ -32,6 +35,14 @@ class PosoTest extends ConfigFunSuite {
       aq.setCreatedDate(date.get)
       val map = aq.toMap
       expect("2012-01-01T10:22:00Z"){map.getOrElse("createdDate","")}
-      
+    }
+
+    test("DuplicateDetails Serialisations"){
+
+      val d = new DuplicateRecordDetails()
+      val mapper = new ObjectMapper()
+      mapper.registerModule(new DefaultScalaModule())
+
+      println(mapper.writeValueAsString(d))
     }
 }

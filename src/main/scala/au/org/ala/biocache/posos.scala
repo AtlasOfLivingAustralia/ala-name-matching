@@ -31,7 +31,7 @@ object ReflectionCache {
       cposo.getClass.getDeclaredFields.map(field => {
         val name = field.getName
         try {
-          val getter = cposo.getClass.getDeclaredMethod("get" + StringUtils.capitalize(name));
+          val getter = cposo.getClass.getDeclaredMethod("get" + StringUtils.capitalize(name))
           val isAPoso = !(getter.getReturnType.getInterfaces.forall(i => i == classOf[POSO]))
           if (isAPoso) {
             val poso = getter.invoke(cposo).asInstanceOf[POSO]
