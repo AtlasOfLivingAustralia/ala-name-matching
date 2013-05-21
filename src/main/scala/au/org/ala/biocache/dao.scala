@@ -1006,7 +1006,8 @@ class DuplicateDAOImpl extends DuplicateDAO {
     if(stringValue.isDefined){
       //println(stringValue.get.replaceAll("\"\"\",","###,").replaceAll("\"\"\"", "\"\\\\\"").replaceAll("\"\"","\\\\\"").replaceAll("###","\\\\\"\""))
       //handle """, at the end of attribute and """ at the beginning of attribute and "" in the attribute
-      Some(mapper.readValue[DuplicateRecordDetails](stringValue.get, classOf[DuplicateRecordDetails]))
+      //FIXME - is this because of bad data at the DB level ?
+      Some(mapper.readValue[DuplicateRecordDetails](stringValue.get.replaceAll("\"\"\",","###,").replaceAll("\"\"\"", "\"\\\\\"").replaceAll("\"\"","\\\\\"").replaceAll("###","\\\\\"\""), classOf[DuplicateRecordDetails]))
     }
     else
       None
