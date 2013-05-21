@@ -155,13 +155,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
       val consensus = FullRecordMapper.createFullRecord(rowKey, map.get, Consensus)
       if(includeSensitive && raw.occurrence.originalSensitiveValues != null){
         FullRecordMapper.mapPropertiesToObject(raw, raw.occurrence.originalSensitiveValues)
-        //Only the RAW values are being changed back to sensitive values. The processed values will reflect the values due to processing.
-//              //update lat and lon of processed
-//              processed.location.decimalLatitude = raw.location.decimalLatitude
-//              processed.location.decimalLongitude = raw.location.decimalLongitude
-//              //remove the values in data generalisations and information withheld
-//              processed.occurrence.dataGeneralizations = null
-//              processed.occurrence.informationWithheld = null
       }
       //pass all version to the procedure, wrapped in the Option
       Some(Array(raw, processed, consensus))
@@ -239,8 +232,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
    * This method has been changed so that it queries the existing occ record
    * to see if it exists.  We wish for uuids to be persistent between loads.
    *
-   *  Returns uuid and true when a new uid was created
-   *
+   * Returns uuid and true when a new uid was created
    */
   def createOrRetrieveUuid(uniqueID: String): (String,Boolean) = {
     //look up by index
@@ -266,8 +258,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
   def writeToRecordWriter(writer:RecordWriter, rowKeys: Array[String], fields: Array[String], qaFields:Array[String], includeSensitive:Boolean=false){
     //get the codes for the qa fields that need to be included in the download
     //TODO fix this in case the value can't be found
-    val mfields = scala.collection.mutable.ArrayBuffer[String]()
-    mfields ++= fields
+    val mfields = fields.toBuffer
     val codes = qaFields.map(value=>AssertionCodes.getByName(value).get.getCode)
     val firstEL = fields.find(value => {elpattern.findFirstIn(value).nonEmpty})
     val firstCL = fields.find(value => {clpattern.findFirstIn(value).nonEmpty})
@@ -991,9 +982,11 @@ class DuplicateDAOImpl extends DuplicateDAO {
   protected val logger = LoggerFactory.getLogger("DuplicateDAO")
   @Inject
   var persistenceManager: PersistenceManager = _
+
   val mapper = new ObjectMapper
-  mapper.registerModule(new DefaultScalaModule())
-  val lastRunRowKey="DDLastRun"
+//  mapper.registerModule(new DefaultScalaModule())
+
+  val lastRunRowKey = "DDLastRun"
     
   override def deleteObsoleteDuplicate(uuid:String){
     val duplicate = getDuplicateInfo(uuid)
@@ -1009,11 +1002,11 @@ class DuplicateDAOImpl extends DuplicateDAO {
   }  
     
   override def getDuplicateInfo(uuid:String):Option[DuplicateRecordDetails]={
-    val stringValue =persistenceManager.get(uuid, "occ_duplicates", "value")
+    val stringValue = persistenceManager.get(uuid, "occ_duplicates", "value")
     if(stringValue.isDefined){
       //println(stringValue.get.replaceAll("\"\"\",","###,").replaceAll("\"\"\"", "\"\\\\\"").replaceAll("\"\"","\\\\\"").replaceAll("###","\\\\\"\""))
       //handle """, at the end of attribute and """ at the beginning of attribute and "" in the attribute
-      Some(mapper.readValue[DuplicateRecordDetails](stringValue.get.replaceAll("\"\"\",","###,").replaceAll("\"\"\"", "\"\\\\\"").replaceAll("\"\"","\\\\\"").replaceAll("###","\\\\\"\""), classOf[DuplicateRecordDetails]))
+      Some(mapper.readValue[DuplicateRecordDetails](stringValue.get, classOf[DuplicateRecordDetails]))
     }
     else
       None
@@ -1022,7 +1015,6 @@ class DuplicateDAOImpl extends DuplicateDAO {
    * Returns the existing duplicates for the supplied species and date information.
    * 
    * Will allow incremental checks for records that have changed...
-   * 
    */
   override def getDuplicatesFor(lsid:String, year:String, month:String, day:String):List[DuplicateRecordDetails] ={
     def kvpMap=persistenceManager.get(lsid + "|" +year+"|" +month+"|"+day,"duplicates")
