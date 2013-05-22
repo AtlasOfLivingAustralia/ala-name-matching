@@ -1039,13 +1039,17 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     if (facets.getValues() != null && facets.getValues().size() > 0) {
       val values = facets.getValues().asScala
       if (values != null && !values.isEmpty) {
-        Some(values.map(facet => facet.getName).asInstanceOf[List[String]])
-      }
-      else
+        /*
+          NC: Needed to change this method after the upgrade as it now throws a cast exception
+          old value: Some(values.map(facet => facet.getName).asInstanceOf[List[String]])
+         */
+        Some(values.map(facet => facet.getName).toList)
+      } else{
         None
-    }
-    else
+      }
+    } else{
       None
+    }
   }
 
   /**
