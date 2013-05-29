@@ -193,8 +193,8 @@ class QueryAssertion {
     var filter = fqs.mkString("&fq=","&fq=","").replaceAll(" " ,"%20") 
     //println(filter)
     while(total == -1 || total > startIndex){
-      val url = MessageFormat.format(BIOCACHE_QUERY_URL, query,filter, pageSize.toString(), startIndex.toString())
-      //println(url)
+      val url = MessageFormat.format(BIOCACHE_QUERY_URL, query.replaceAll(" " ,"%20"),filter, pageSize.toString(), startIndex.toString())
+      logger.info(url)
       val jsonString = Source.fromURL(url).getLines.mkString
       val json = JSON.parseFull(jsonString).get.asInstanceOf[Map[String, String]]
       //println(json)
