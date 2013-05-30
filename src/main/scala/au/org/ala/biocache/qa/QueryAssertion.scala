@@ -14,23 +14,26 @@ import java.io.File
 import scala.collection.JavaConversions
 import au.org.ala.biocache.outliers.Timings
 import org.codehaus.jackson.map.ObjectMapper
+import org.slf4j.LoggerFactory
 
 object QueryAssertion{
   def main(args: Array[String]) {    
     var apiKey:Option[String] = None
     var id:Option[String] = None
     var unapply =false
+    var reindex = false
     val parser = new OptionParser("Application of Query Assertions") {
       opt("a", "apiKey","The apiKey whose assertions shoud be applied", {v:String => apiKey = Some(v)})
       opt("i","record id", "The uuid or the rowKey for the query assertion to apply", {v:String => id = Some(v)})
       opt("unapply", "Unapply the query assertions",{unapply=true})
+      opt("reindex", "Reindex all the records for the query assertions",{reindex=true})
     }
     if(parser.parse(args)){      
       val qaApplier = new QueryAssertion()
       if(apiKey.isDefined)
-        qaApplier.apply(apiKey.get, unapply)
+        qaApplier.apply(apiKey.get, unapply, reindex)
       else if(id.isDefined)
-        qaApplier.applySingle(id.get, unapply)
+        qaApplier.applySingle(id.get, unapply, reindex)
       Config.persistenceManager.shutdown
       Config.indexDAO.shutdown
     }
@@ -45,29 +48,34 @@ class QueryAssertion {
   import BiocacheConversions._
   import JavaConversions._
   val BIOCACHE_QUERY_URL = Config.biocacheServiceURL +"/occurrences/search{0}&facet=off{1}&pageSize={2}&startIndex={3}&fl=row_key"
+  val logger = LoggerFactory.getLogger("QueryAssertion")
   
-  def applySingle(rowKey:String, unapply:Boolean=false){
+  def applySingle(rowKey:String, unapply:Boolean=false, reindexOnly:Boolean=false){
     //get the query for the supplied key
     var buffer = new ArrayBuffer[String]
     def qa=Config.assertionQueryDAO.getAssertionQuery(rowKey)
     val filename = "/tmp/query_"+rowKey+"_reindex.txt"
     val reindexWriter = new FileWriter(filename)
     if(qa.isDefined){
-      if(unapply){
+      if(reindexOnly){
+        buffer ++= qa.get.records
+      } else if(unapply){
         modifyList(qa.get.records.toList, qa.get, buffer, false)
         Config.persistenceManager.deleteColumns(qa.get.id, "queryassert","records","lastApplied")
       }
-      else
+      else {
         applyAssertion(qa.get,buffer)
+      }
     }
     val rowKeySet = buffer.toSet[String]
+    logger.debug("Row set : " + rowKeySet)
     rowKeySet.foreach(v=>reindexWriter.write(v + "\n"))
     reindexWriter.flush
     reindexWriter.close
     IndexRecords.indexListThreaded(new File(filename), 4)
   }
   
-  def apply(apiKey:String, unapply:Boolean=false){
+  def apply(apiKey:String, unapply:Boolean=false, reindexOnly:Boolean=false){
     //val queryPattern = """\?q=([\x00-\x7F\s]*)&wkt=([\x00-\x7F\s]*)""".r
     val start = apiKey+"|"
     val end = start+"~"
@@ -82,12 +90,15 @@ class QueryAssertion {
       if(aq.isDefined){
         val assertion = aq.get
 //        val queryPattern(query, wkt)=assertion.getRawQuery()
-        if(unapply){
+       if(reindexOnly){
+         buffer ++= aq.get.records
+       } else if(unapply){
           modifyList(assertion.records.toList, assertion, buffer, false)
           Config.persistenceManager.deleteColumns(assertion.id, "queryassert","records","lastApplied")
         }
-        else
+        else {
           applyAssertion(assertion, buffer)
+        }
 
       }
       true
@@ -95,6 +106,7 @@ class QueryAssertion {
       //write the buffer out to file 
       val rowKeySet = buffer.toSet[String]
       rowKeySet.foreach(v=>reindexWriter.write(v + "\n"))
+      logger.debug("Row set : " + rowKeySet)
       reindexWriter.flush
       reindexWriter.close
       IndexRecords.indexListThreaded(new File("/tmp/queryAssertionReindex.txt"), 4)
@@ -181,7 +193,7 @@ class QueryAssertion {
           map.remove(aq.uuid)
         //println(rowKey + " " + map)
         Config.persistenceManager.put(rowKey, "occ",FullRecordMapper.queryAssertionColumn,Json.toJSON(map))//.asScala[String,String].asInstanceOf[Map[String, Any]]))
-        buffer + rowKey
+        buffer += rowKey
       }
     })
   }
