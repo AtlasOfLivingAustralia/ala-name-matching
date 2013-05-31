@@ -274,6 +274,10 @@ object TagsToDwc extends ValueMap {
   map = loadFromFile("/tagsToDwc.txt")
 }
 
+object Kingdoms extends Vocab {
+  val all = loadVocabFromFile("/kingdoms.txt")
+}
+
 object DwC extends Vocab {
   val junk = List("matched", "parsed", "processed", "-", "\\.","_")
   override def matchTerm(string2Match: String) = {
@@ -567,7 +571,7 @@ object HabitatMap extends VocabMaps {
  * Case class that represents an error code for a occurrence record.
  */
 sealed case class ErrorCode(@BeanProperty name:String, @BeanProperty code:Int, @BeanProperty isFatal:Boolean,
-                               @BeanProperty description:String)
+                               @BeanProperty description:String, @BeanProperty isAMissingCheck:Boolean=false)
 
 /**
  * Assertion codes for records. These codes are a reflection of http://bit.ly/evMJv5
@@ -598,21 +602,23 @@ object AssertionCodes {
   val COUNTRY_INFERRED_FROM_COORDINATES = ErrorCode("countryInferredByCoordinates",21,false,"Country inferred from coordinates")
   val COORDINATES_CENTRE_OF_STATEPROVINCE = ErrorCode("coordinatesCentreOfStateProvince",22,true,"Supplied coordinates centre of state")
   val COORDINATE_PRECISION_MISMATCH = ErrorCode("coordinatePrecisionMismatch",23,false,"Coordinate precision not valid")
+  val PRECISION_RANGE_MISMATCH = ErrorCode("precisionRangeMismatch", 17, false, "The precision value should be between 0 and 1.")
   val UNCERTAINTY_RANGE_MISMATCH = ErrorCode("uncertaintyRangeMismatch",24,false,"Coordinate accuracy not valid")
   val UNCERTAINTY_IN_PRECISION = ErrorCode("uncertaintyInPrecision",25,false,"Coordinate precision and accuracy transposed")
   val SPECIES_OUTSIDE_EXPERT_RANGE = ErrorCode("speciesOutsideExpertRange",26,true,"Geographic coordinates are outside the range as defined by 'expert/s' for the taxa")
-  val UNCERTAINTY_NOT_SPECIFIED = ErrorCode("uncertaintyNotSpecified", 27, false, "Coordinate uncertainty was not supplied")
+  val UNCERTAINTY_NOT_SPECIFIED = ErrorCode("uncertaintyNotSpecified", 27, false, "Coordinate uncertainty was not supplied", true)
   val COORDINATES_CENTRE_OF_COUNTRY = ErrorCode("coordinatesCentreOfCountry",28,true,"Supplied coordinates centre of country")
-  val MISSING_COORDINATEPRECISION = ErrorCode("missingCoordinatePrecision", 29, false, "coordinatePrecision not supplied with the record")
-  val MISSING_GEODETICDATUM = ErrorCode("missingGeodeticDatum",30, false, "geodeticDatum not supplied for coordinates")
-  val MISSING_GEOREFERNCEDBY = ErrorCode("missingGeorefencedBy", 31, false, "GeoreferencedBy not supplied with the record")
-  val MISSING_GEOREFERENCEPROTOCOL = ErrorCode("missingGeoreferenceProtocol",32, false, "GeoreferenceProtocol not supplied with the record")
-  val MISSING_GEOREFERENCESOURCES = ErrorCode("missingGeoreferenceSources",33,false,"GeoreferenceSources not supplied with the record")
-  val MISSING_GEOREFERENCEVERIFICATIONSTATUS = ErrorCode("missingGeoreferenceVerificationStatus",34, false,"GeoreferenceVerificationStatus not supplied with the record")
+  val MISSING_COORDINATEPRECISION = ErrorCode("missingCoordinatePrecision", 29, false, "coordinatePrecision not supplied with the record",true)
+  val MISSING_GEODETICDATUM = ErrorCode("missingGeodeticDatum",30, false, "geodeticDatum not supplied for coordinates",true)
+  val MISSING_GEOREFERNCEDBY = ErrorCode("missingGeorefencedBy", 31, false, "GeoreferencedBy not supplied with the record",true)
+  val MISSING_GEOREFERENCEPROTOCOL = ErrorCode("missingGeoreferenceProtocol",32, false, "GeoreferenceProtocol not supplied with the record",true)
+  val MISSING_GEOREFERENCESOURCES = ErrorCode("missingGeoreferenceSources",33,false,"GeoreferenceSources not supplied with the record",true)
+  val MISSING_GEOREFERENCEVERIFICATIONSTATUS = ErrorCode("missingGeoreferenceVerificationStatus",34, false,"GeoreferenceVerificationStatus not supplied with the record",true)
   val INVALID_GEODETICDATUM = ErrorCode("invalidGeodeticDatum", 35, false,"The geodetic datum is not valid")
   
-  val MISSING_GEOREFERENCE_DATE = ErrorCode("missingGeoreferenceDate",42,false, "GeoreferenceDate not supplied with the record")
-
+  val MISSING_GEOREFERENCE_DATE = ErrorCode("missingGeoreferenceDate",42,false, "GeoreferenceDate not supplied with the record",true)
+  val LOCATION_NOT_SUPPLIED = ErrorCode("locationNotSupplied", 43, false, "No location information has been provided with the record", true)
+  val DECIMAL_COORDINATES_NOT_SUPPLIED = ErrorCode("decimalCoordinatesNotSupplied", 44, false, "No decimal longitude and latitude provided", true)
   val DECIMAL_LAT_LONG_CONVERTED = ErrorCode("decimalLatLongConverted", 45, false, "Decimal latitude and longitude were converted to WGS84")
   val DECIMAL_LAT_LONG_CONVERSION_FAILED = ErrorCode("decimalLatLongConverionFailed", 46, true, "Conversion of decimal latitude and longitude to WGS84 failed")
   val DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM = ErrorCode("decimalLatLongCalculatedFromVerbatim", 47, false, "Decimal latitude and longitude were calculated using verbatimLatitude, verbatimLongitude and verbatimSRS")
@@ -631,21 +637,25 @@ object AssertionCodes {
   val NAME_NOT_IN_NATIONAL_CHECKLISTS = ErrorCode("nameNotInNationalChecklists",10005,false,"Name not in national checklists")
   val HOMONYM_ISSUE = ErrorCode("homonymIssue",10006,false,"Homonym issues with supplied name")
   val IDENTIFICATION_INCORRECT = ErrorCode("identificationIncorrect",10007,false,"Taxon misidentified")
-  val MISSING_TAXONRANK = ErrorCode("missingTaxonRank",10008,false,"taxonRank not supplied with the record")
-  val MISSING_IDENTIFICATIONQUALIFIER = ErrorCode("missingIdentificationQualifier",10009, false,"identificationQualifier not supplied with the record")
-  val MISSING_IDENTIFIEDBY = ErrorCode("missingIdentifiedBy",10010,false,"identifiedBy not supplied with the record")
-  val MISSING_IDENTIFICATIONREFERENCES = ErrorCode("missingIdentificationReferences",10011,false,"identificationReferences not supplied with the record")
-  val MISSING_DATEIDENTIFIED = ErrorCode("missingDateIdentified", 10012,false,"identificationDate not supplied with the record")
+  val MISSING_TAXONRANK = ErrorCode("missingTaxonRank",10008,false,"taxonRank not supplied with the record",true)
+  val MISSING_IDENTIFICATIONQUALIFIER = ErrorCode("missingIdentificationQualifier",10009, false,"identificationQualifier not supplied with the record",true)
+  val MISSING_IDENTIFIEDBY = ErrorCode("missingIdentifiedBy",10010,false,"identifiedBy not supplied with the record",true)
+  val MISSING_IDENTIFICATIONREFERENCES = ErrorCode("missingIdentificationReferences",10011,false,"identificationReferences not supplied with the record",true)
+  val MISSING_DATEIDENTIFIED = ErrorCode("missingDateIdentified", 10012,false,"identificationDate not supplied with the record",true)
+  val NAME_NOT_SUPPLIED = ErrorCode("nameNotSupplied", 10015,false,"No scientific name or vernacular name was supplied",true)
 
   //miscellaneous issues
-  val MISSING_BASIS_OF_RECORD = ErrorCode("missingBasisOfRecord",20001,true,"Basis of record not supplied")
+  val MISSING_BASIS_OF_RECORD = ErrorCode("missingBasisOfRecord",20001,true,"Basis of record not supplied",true)
   val BADLY_FORMED_BASIS_OF_RECORD = ErrorCode("badlyFormedBasisOfRecord",20002,true,"Basis of record badly formed")
   val UNRECOGNISED_TYPESTATUS = ErrorCode("unrecognisedTypeStatus",20004,false,"Type status not recognised")
   val UNRECOGNISED_COLLECTIONCODE = ErrorCode("unrecognisedCollectionCode",20005,false,"Collection code not recognised")
   val UNRECOGNISED_INSTITUTIONCODE = ErrorCode("unrecognisedInstitutionCode",20006,false,"Institution code not recognised")
   val INVALID_IMAGE_URL = ErrorCode("invalidImageUrl", 20007, false,"Image URL invalid")
   val RESOURCE_TAXONOMIC_SCOPE_MISMATCH = ErrorCode("resourceTaxonomicScopeMismatch", 20008, false, "")
+  val DATA_ARE_GENERALISED = ErrorCode("dataAreGeneralised", 20009, false, "The data has been supplied generalised")
+  val OCCURRENCE_IS_CULTIVATED_OR_ESCAPEE = ErrorCode("occCultivatedEscapee", 20010, false, "The occurrence is cultivated or escaped.")
   val INFERRED_DUPLICATE_RECORD = ErrorCode("inferredDuplicateRecord",20014,false,"The occurrence appears to be a duplicate")
+  val MISSING_CATALOGUENUMBER = ErrorCode("missingCatalogueNumber", 20015, false,"No catalogue number has been supplied", true)
   val RECORDED_BY_UNPARSABLE = ErrorCode("recordedByUnparsable", 20016, false,"")
 
   //temporal issues
@@ -657,7 +667,7 @@ object AssertionCodes {
   val FIRST_OF_CENTURY = ErrorCode("firstOfCentury",30005,false,"First of the century")
   val DATE_PRECISION_MISMATCH = ErrorCode("datePrecisionMismatch",30006,false,"Date precision invalid")
   val INVALID_COLLECTION_DATE = ErrorCode("invalidCollectionDate",30007,false,"Invalid collection date")
-  val MISSING_COLLECTION_DATE = ErrorCode("missingCollectionDate",30008,false,"Missing collection date")
+  val MISSING_COLLECTION_DATE = ErrorCode("missingCollectionDate",30008,false,"Missing collection date", true)
   val DAY_MONTH_TRANSPOSED = ErrorCode("dayMonthTransposed",30009,false,"Day and month transposed")
 
   //verified type - this is a special code 
@@ -694,11 +704,17 @@ object AssertionCodes {
   val temporalCodes = all.filter(errorCode => {errorCode.code>=30000 && errorCode.code<40000})
 
   val userAssertionCodes = Array(GEOSPATIAL_ISSUE,COORDINATE_HABITAT_MISMATCH,DETECTED_OUTLIER,TAXONOMIC_ISSUE,IDENTIFICATION_INCORRECT,TEMPORAL_ISSUE)
+  //the assertions that are NOT performed during the processing phase
+  val offlineAssertionCodes = Array(INFERRED_DUPLICATE_RECORD, SPECIES_OUTSIDE_EXPERT_RANGE, DETECTED_OUTLIER)
 
   /** Retrieve an error code by the numeric code */
   def getByCode(code:Int) : Option[ErrorCode] = all.find(errorCode => errorCode.code == code)
   
   def getByName(name:String) :Option[ErrorCode] = all.find(errorCode => errorCode.name == name)
+
+  def getMissingCodes(code:Set[ErrorCode]) : Set[ErrorCode] ={
+    AssertionCodes.all &~ (code ++ userAssertionCodes.toSet ++ Set(VERIFIED, PROCESSING_ERROR))
+  }
 
   def isVerified(assertion:QualityAssertion) :Boolean = assertion.code == VERIFIED.code
   

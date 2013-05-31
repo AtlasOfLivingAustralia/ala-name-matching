@@ -241,7 +241,7 @@ class Consumer (master:Actor,val id:Int)  extends Actor  {
                 processedOK = true
               } catch {
                 case e:Exception => {
-                  logger.error("Error processing record: '"+raw.rowKey+"',  sleeping for 20 secs before retries")
+                  logger.error("Error processing record: '"+raw.rowKey+"',  sleeping for 20 secs before retries", e)
                   Thread.sleep(20000)
                   retries += 1
                 }

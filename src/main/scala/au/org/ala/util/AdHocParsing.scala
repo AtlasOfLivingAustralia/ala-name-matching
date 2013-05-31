@@ -474,7 +474,7 @@ object StateProvinceExtractor {
 }
 
 object CoordinateUncertaintyExtractor {
-  def unapply(str: String): Option[Float] = DistanceRangeParser.parse(str)
+  def unapply(str: String): Option[(Float, MeasurementUnit)] = DistanceRangeParser.parse(str)
 }
 
 object OccurrenceStatusExtractor {

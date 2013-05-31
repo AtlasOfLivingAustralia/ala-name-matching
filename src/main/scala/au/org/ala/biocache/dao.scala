@@ -596,9 +596,9 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     }
 
     val userAssertions = getUserAssertions(rowKey)
-    val falseUserAssertions = userAssertions.filter(a => !a.problemAsserted)
+    val falseUserAssertions = userAssertions.filter(qa => qa.qaStatus == 1)//userAssertions.filter(a => !a.problemAsserted)
     //true user assertions are assertions that have not been proven false by another user
-    val trueUserAssertions = userAssertions.filter(a => a.problemAsserted && !doesListContainCode(falseUserAssertions,a.code))
+    val trueUserAssertions = userAssertions.filter(a => a.qaStatus == 0 && !doesListContainCode(falseUserAssertions,a.code))
 
     //for each qa type get the list of QA's that failed
     val assertionsDeleted = ListBuffer[QualityAssertion]() // stores the assertions that should not be considered for the kosher fields
@@ -833,7 +833,8 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     //if the a user assertion has been set for the supplied QA we will set the status bases on user assertions
     if (!assertions.isEmpty) {
         //if a single user has decided that there is NO QA issue this takes precidence
-      val negativeAssertion = assertions.find(qa => !qa.problemAsserted)
+      //val negativeAssertion = assertions.find(qa => !qa.problemAsserted)
+      val negativeAssertion = assertions.find(qa => qa.qaStatus == 1)
       if (!negativeAssertion.isEmpty) {
         //need to remove this assertion from the error codes if it exists
         listErrorCodes = listErrorCodes - assertion.code

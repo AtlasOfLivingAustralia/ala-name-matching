@@ -80,7 +80,7 @@ object DateParser {
         None
       else
         Some(DateUtils.parseDate(date,
-          Array("yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss")))
+          Array("yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss","yyyy-MM-dd")))
     }
     catch {
       case _:Exception => None

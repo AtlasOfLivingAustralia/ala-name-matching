@@ -34,7 +34,7 @@ class ConfigFunSuite extends FunSuite {
     
     pm.put("-31.2532183|146.921099","loc","cl927","New South Wales")
     pm.put("-31.253218|146.9211","loc","cl927","New South Wales")//NC 20130515: There is an issue where by our location cache converst toFLoat and loses accurancy.  This is the point above after going through the system
-    
-    
+
+    pm.put("-29.04|167.95","loc","cl932", "Norfolk Island")
     println("THE pm after setup: " +pm)
 }

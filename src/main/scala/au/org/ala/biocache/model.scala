@@ -14,7 +14,7 @@ import org.codehaus.jackson.annotate.{JsonIgnoreProperties, JsonIgnore}
  * the latest darwin core terms, with a few additional fields.
  */
 class Occurrence extends Cloneable /*with Mappable*/ with POSO {
-  import JavaConversions._  
+  import JavaConversions._
   override def clone : Occurrence = super.clone.asInstanceOf[Occurrence]
   @BeanProperty var occurrenceID:String = _
   @BeanProperty var accessrights:String = _
@@ -93,8 +93,8 @@ class Occurrence extends Cloneable /*with Mappable*/ with POSO {
   //stores either U,R or D.  U - a unique record, R - a representative record in a group of duplicates, D - a duplicate record in a group
   // when null a value of "U" is assumed
   /*
-    D has been split into categories: 
-    D1- duplicate belongs to the same data resource as the representative record. 
+    D has been split into categories:
+    D1- duplicate belongs to the same data resource as the representative record.
     D2- duplicate belongs to a different data resource as the representative record
   */
   @BeanProperty var duplicationStatus:String =_
@@ -132,7 +132,7 @@ class Classification extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var superfamily:String = _	//an addition to darwin core
   @BeanProperty var family:String = _
   @BeanProperty var subfamily:String = _ //an addition to darwin core
-  @BeanProperty var genus:String = _  
+  @BeanProperty var genus:String = _
   @BeanProperty var subgenus:String = _
   @BeanProperty var species:String = _
   @BeanProperty var specificEpithet:String = _
@@ -168,7 +168,7 @@ class Classification extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var classID:String = _
   @BeanProperty var orderID:String = _
   @BeanProperty var familyID:String = _
-  @BeanProperty var genusID:String = _  
+  @BeanProperty var genusID:String = _
   @BeanProperty var subgenusID:String = _
   @BeanProperty var speciesID:String = _
   @BeanProperty var subspeciesID:String = _
@@ -255,7 +255,7 @@ class Event extends Cloneable/*with Mappable*/with POSO {
 class Location extends Cloneable /*with Mappable*/ with POSO {
   import JavaConversions._
   override def clone : Location = super.clone.asInstanceOf[Location]
-  @BeanProperty var uuid:String = _	
+  @BeanProperty var uuid:String = _
   //dwc terms
   @BeanProperty var continent:String = _
   @BeanProperty var coordinatePrecision:String = _
@@ -267,9 +267,10 @@ class Location extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var decimalLongitude:String = _
   @BeanProperty var footprintSpatialFit:String = _
   @BeanProperty var footprintWKT:String = _
-  @BeanProperty var footprintSRS:String = _  
+  @BeanProperty var footprintSRS:String = _
   @BeanProperty var geodeticDatum:String = _
   @BeanProperty var georeferencedBy:String = _
+  @BeanProperty var georeferencedDate:String = _
   @BeanProperty var georeferenceProtocol:String = _
   @BeanProperty var georeferenceRemarks:String = _
   @BeanProperty var georeferenceSources:String = _
@@ -314,7 +315,7 @@ class Location extends Cloneable /*with Mappable*/ with POSO {
   @BeanProperty var easting: String =_
   @BeanProperty var northing: String =_
   @BeanProperty var zone: String =_
-  
+
   //fields that need be hidden from all public API
   //These fields can NOT be @BeanProperty because we need the getter method to have a @JsonIgnore annotation
   var originalDecimalLatitude:String =_
@@ -329,19 +330,19 @@ class Location extends Cloneable /*with Mappable*/ with POSO {
   @JsonIgnore
   def getOriginalDecimalLatitude():String = originalDecimalLatitude
   def setOriginalDecimalLatitude(decimalLatitude:String)=this.originalDecimalLatitude = decimalLatitude
-  
+
   @JsonIgnore
   def getOriginalDecimalLongitude():String = originalDecimalLongitude
   def setOriginalDecimalLongitude(decimalLongitude:String)= this.originalDecimalLongitude = decimalLongitude
-  
+
   @JsonIgnore
   def getOriginalVerbatimLatitude():String = originalVerbatimLatitude
   def setOriginalVerbatimLatitude(latitude:String)=this.originalVerbatimLatitude = latitude
-  
+
   @JsonIgnore
   def getOriginalVerbatimLongitude():String = originalVerbatimLongitude
   def setOriginalVerbatimLongitude(longitude:String)= this.originalVerbatimLongitude = longitude
-  
+
   @JsonIgnore
   def getOriginalLocality():String = originalLocality
   def setOrginalLocality(locality:String) = this.originalLocality = locality
@@ -350,10 +351,15 @@ class Location extends Cloneable /*with Mappable*/ with POSO {
   def setOriginalLocationRemarks(remarks:String) = this.originalLocationRemarks = remarks
 }
 
+abstract sealed class MeasurementUnit
+case object Metres extends MeasurementUnit
+case object Kilometres extends MeasurementUnit
+case object Feet extends MeasurementUnit
+
 /**
  * Enumeration of record versions.
  * sealed = cannot be extended unless declared in this source file.
- * 
+ *
  * @author Dave Martin (David.Martin@csiro.au)
  */
 abstract sealed class Version
@@ -409,7 +415,7 @@ class TaxonProfile (
 /**
  * Represents the full attribution for a record.
  */
-class Attribution (  
+class Attribution (
   @BeanProperty var dataProviderUid:String,
   @BeanProperty var dataProviderName:String,
   @BeanProperty var dataResourceUid:String,
@@ -483,7 +489,7 @@ class Attribution (
   @BeanProperty var dateDeleted:String = "",
   @BeanProperty var lastUserAssertionDate:String = "")
   extends Cloneable with CompositePOSO {
-    
+
   def objectArray:Array[POSO] = Array(occurrence,classification,location,event,attribution,identification,measurement)
 
   def this(rowKey:String, uuid:String) = this(rowKey,uuid,new Occurrence,new Classification,new Location,new Event,new Attribution,new Identification,
@@ -529,7 +535,7 @@ class Attribution (
 
 /**
  * Stores the information about a sensitive species
- * 
+ *
  */
 class SensitiveSpecies(
   @BeanProperty var zone:String,
@@ -560,7 +566,8 @@ class QualityAssertion (
   @BeanProperty var uuid:String,
   @BeanProperty var name:String,
   @BeanProperty var code:Int,
-  @BeanProperty var problemAsserted:Boolean,
+  @Deprecated var problemAsserted:java.lang.Boolean,
+  @BeanProperty var qaStatus:Int,//either 0-failed, 1-passed, 2-not tested
   @BeanProperty var comment:String,
   @BeanProperty var value:String,
   @BeanProperty var userId:String,
@@ -568,14 +575,25 @@ class QualityAssertion (
   @BeanProperty var created:String)
   extends Cloneable with Comparable[AnyRef] with POSO {
 
-  def this() = this(null,null,-1,false,null,null,null,null,null)
+  def this() = this(null,null,-1,null, 2,null,null,null,null,null)
   override def clone : QualityAssertion = super.clone.asInstanceOf[QualityAssertion]
   override def equals(that: Any) = that match {
     case other: QualityAssertion => {
-      (other.code == code) && (other.problemAsserted == problemAsserted) && (other.userId == userId)
+      (other.code == code) && (other.problemAsserted == problemAsserted) && (other.userId == userId) && (other.qaStatus == qaStatus)
     }
     case _ => false
   }
+
+  /**
+   * NC a temporary measure so that the qaStatus is correctly set for historic records.
+   * @param asserted
+   */
+  def setProblemAsserted(asserted:java.lang.Boolean){
+    problemAsserted = asserted
+    qaStatus = if(asserted) 0 else 1
+  }
+
+  def getProblemAsserted = problemAsserted
 
   def compareTo(qa:AnyRef) = -1
 }
@@ -585,41 +603,57 @@ class QualityAssertion (
  * type functionality.
  */
 object QualityAssertion {
-  import BiocacheConversions._  
+  import BiocacheConversions._
   def apply(code:Int) = {
     val uuid = UUID.randomUUID.toString
     val errorCode = AssertionCodes.getByCode(code)
     if(errorCode.isEmpty){
-        throw new Exception("Unrecognised code: "+ code)
+      throw new Exception("Unrecognised code: "+ code)
     }
-    new QualityAssertion(uuid,errorCode.get.name,errorCode.get.code,true,null,null,null,null,new Date())
+    new QualityAssertion(uuid,errorCode.get.name,errorCode.get.code,null,2,null,null,null,null,new Date())
   }
 
   def apply(errorCode:ErrorCode) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,true,null,null,null,null,new Date())
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,null,0,null,null,null,null,new Date())
   }
   def apply(errorCode:ErrorCode,problemAsserted:Boolean) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,problemAsserted,null,null,null,null,new Date())
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,null,if(problemAsserted) 0 else 1,null,null,null,null,new Date())
   }
   def apply(errorCode:ErrorCode,problemAsserted:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,problemAsserted,comment,null,null,null,new Date())
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,null,if(problemAsserted) 0 else 1,comment,null,null,null,new Date())
   }
   def apply(errorCode:ErrorCode,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,true,comment,null,null,null,new Date())
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,null,0,comment,null,null,null,new Date())
+  }
+  def apply(errorCode:ErrorCode, qaStatus:Int, comment:String)={
+    val uuid = UUID.randomUUID.toString
+    new QualityAssertion(uuid, errorCode.name, errorCode.code,null, qaStatus, comment, null, null, null, new Date())
+  }
+  def apply(errorCode:ErrorCode, qaStatus:Int)={
+    val uuid = UUID.randomUUID.toString
+    new QualityAssertion(uuid, errorCode.name, errorCode.code,null, qaStatus, null, null, null, null, new Date())
   }
   def apply(assertionCode:Int,problemAsserted:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,null,assertionCode,problemAsserted,comment,null,null,null,new Date())
+    new QualityAssertion(uuid,null,assertionCode,null,if(problemAsserted) 0 else 1,comment,null,null,null,new Date())
+  }
+  def apply(assertionCode:Int, qaStatus:Int, comment:String) ={
+    val uuid = UUID.randomUUID().toString
+    new QualityAssertion(uuid, null, assertionCode,null,qaStatus,comment,null,null,null,new Date())
+  }
+  def apply(assertionCode:Int, qaStatus:Int) ={
+    val uuid = UUID.randomUUID().toString
+    new QualityAssertion(uuid, null, assertionCode,null,qaStatus,null,null,null,null,new Date())
   }
 }
 /**
- * A class that represents a JCU assertion query. 
+ * A class that represents a JCU assertion query.
  */
-@JsonIgnoreProperties(ignoreUnknown=true) 
+@JsonIgnoreProperties(ignoreUnknown=true)
 class JCUAssertion(@BeanProperty var id:java.lang.Integer,
       @BeanProperty var apiKey:String,
       @BeanProperty var status:String,
@@ -634,14 +668,14 @@ class JCUAssertion(@BeanProperty var id:java.lang.Integer,
   def this() = this(null,null,null,null,null,null,null,null,null,null)
 }
 
-@JsonIgnoreProperties(ignoreUnknown=true)     
+@JsonIgnoreProperties(ignoreUnknown=true)
 class JCUUser(@BeanProperty var email:String, @BeanProperty var authority:java.lang.Integer, @BeanProperty var isAdmin:Boolean){
   def this() = this(null,null,false)
 }
 
 
 /**
- * A type of Quality Assertion that needs to be applied based on a query 
+ * A type of Quality Assertion that needs to be applied based on a query
  */
 @JsonIgnoreProperties(Array("id","rawAssertion", "rawQuery","records"))
 class AssertionQuery(
@@ -649,7 +683,7 @@ class AssertionQuery(
   @BeanProperty var uuid:String,
   @BeanProperty var rawAssertion:String,
   @BeanProperty var createdDate:java.util.Date,
-  @BeanProperty var modifiedDate:java.util.Date,  
+  @BeanProperty var modifiedDate:java.util.Date,
   @BeanProperty var rawQuery:String,
   @BeanProperty var qidQuery:String,
   @BeanProperty var deletedDate:java.util.Date,
@@ -663,16 +697,16 @@ class AssertionQuery(
   @BeanProperty var lastApplied:java.util.Date,
   @BeanProperty var records:Array[String] = Array()
   ) extends POSO{
-  
+
   var recordCount:Int=0
-  
+
   def this()= this(null,null, null,null, null, null,null,null,null,null,null,null,null,true, false,null)
-  
+
   def this(jcu:JCUAssertion) = this(jcu.apiKey + "|" + jcu.id, Config.assertionQueryDAO.createOrRetrieveUuid(jcu.apiKey + "|" + jcu.id),null,null,jcu.lastModified,null,null,null,jcu.user.email, if(jcu.user.authority != null) jcu.user.authority.toString() else null, jcu.classification, jcu.comment,jcu.area, true, if(jcu.ignored == null) false else jcu.ignored,null)
   //The number of records that have been applied to this assertion
   def getRecordCount():Int = if(recordCount ==0)records.size else recordCount
   def setRecordCount(value:Int) = recordCount=value
-  
+
 }
 
 

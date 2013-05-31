@@ -11,7 +11,7 @@ class MiscTest extends ConfigFunSuite {
         val raw = new FullRecord
         var processed = new FullRecord
         val qas = (new BasisOfRecordProcessor).process("test", raw, processed)
-        expect(20001){qas(0).code}
+        expect(0){qas.find(_.code == 20001).get.qaStatus}
     }
     
     test("badly formed basis of record"){
@@ -19,7 +19,7 @@ class MiscTest extends ConfigFunSuite {
         var processed = new FullRecord
         raw.occurrence.basisOfRecord = "dummy"
         val qas = (new BasisOfRecordProcessor).process("test", raw, processed)
-        expect(20002){qas(0).code}
+        expect(0){qas.find(_.code == 20002).get.qaStatus}
     }
     
     test("unrecognised type status"){
@@ -27,7 +27,7 @@ class MiscTest extends ConfigFunSuite {
         var processed = new FullRecord
         raw.identification.typeStatus = "dummy"
         val qas = (new TypeStatusProcessor).process("test", raw, processed)
-        expect(20004){qas(0).code}
+        expect(0){qas.find(_.code == 20004).get.qaStatus}
     }
     
     test("unrecognised collection code"){
@@ -37,7 +37,7 @@ class MiscTest extends ConfigFunSuite {
         raw.occurrence.collectionCode = "dummy"
         raw.occurrence.institutionCode = "dummy"
         var qas = (new AttributionProcessor).process("test", raw, processed)
-        expect(20005){qas(0).code}
+        expect(0){qas.find(_.code == 20005).get.qaStatus}
     }
     
     test("invalid image url"){
@@ -45,7 +45,7 @@ class MiscTest extends ConfigFunSuite {
         var processed = new FullRecord
         raw.occurrence.associatedMedia = "invalidimageurl.ppp"
         var qas = (new MiscellaneousProcessor).process("test", raw, processed)
-        expect(20007){qas(0).code}
+        expect(0){qas.find(_.code == 20007).get.qaStatus}
     }
     
     test("invalid collection date"){
@@ -55,7 +55,7 @@ class MiscTest extends ConfigFunSuite {
         raw.event.month = "11"
         raw.event.day = "22"
         var qas = (new EventProcessor).process("test", raw, processed)
-        expect(true){qas.isEmpty}
+        expect(1){qas.find(_.code == 30007).get.qaStatus}
         
         //future dated - make sure that it far intot the future so that the test will always pass
         raw.event.year = "2212"
@@ -63,32 +63,32 @@ class MiscTest extends ConfigFunSuite {
         raw.event.day = "22"
         qas = (new EventProcessor).process("test", raw, processed)
         expect(false){qas.isEmpty}
-        expect(30007){qas(0).code}
+        expect(0){qas.find(_.code == 30007).get.qaStatus}
         
         raw.event.year = "2011"
         raw.event.month = "13"
         raw.event.day = "22"
         qas = (new EventProcessor).process("test", raw, processed)
-        expect(30007){qas(0).code}
+        expect(0){qas.find(_.code == 30007).get.qaStatus}
         
         raw.event.year = "2011"
         raw.event.month = "11"
         raw.event.day = "33"
         qas = (new EventProcessor).process("test", raw, processed)
-        expect(30007){qas(0).code}
+        expect(0){qas.find(_.code == 30007).get.qaStatus}
         
         raw.event.year = "2011"
         raw.event.month = "11"
         raw.event.day = "31"
         qas = (new EventProcessor).process("test", raw, processed)
-        expect(30007){qas(0).code}
+        expect(0){qas.find(_.code == 30007).get.qaStatus}
         
         //First Fleet date test
         raw.event.year="1788"
         raw.event.month="1"
         raw.event.day="26"
         qas = (new EventProcessor).process("test", raw, processed)
-        expect(30007){qas(0).code}
+        expect(0){qas.find(_.code == 30007).get.qaStatus}
     }
     
     test("Default DwC Values"){
@@ -96,11 +96,12 @@ class MiscTest extends ConfigFunSuite {
         val processed = new FullRecord
         raw.attribution.dataResourceUid = "dr354"
         val qas = (new BasisOfRecordProcessor).process("test", raw,processed)
-        expect(20001){qas(0).code}
+        expect(0){qas.find(_.code == 20001).get.qaStatus}
         (new DefaultValuesProcessor).process("test", raw, processed)
         expect("HumanObservation"){processed.occurrence.basisOfRecord}
         val qas2 = (new BasisOfRecordProcessor).process("test", raw,processed)
-        expect(0){qas2.size}         
+        //when the default value is being used no test is being performed so the BoR QA should NOT be in the results
+        expect(None){qas2.find(_.code == 20001)}
     }
     
     test("interactions"){
@@ -114,7 +115,7 @@ class MiscTest extends ConfigFunSuite {
         val raw = new FullRecord
         val processed = new FullRecord
         raw.occurrence.modified = "2004-08-17"
-        (new MiscellaneousProcessor).process("test", raw, processed)
+        (new EventProcessor).process("test", raw, processed)
         expect("2004-08-17"){processed.occurrence.modified}
     }
     
@@ -138,6 +139,136 @@ class MiscTest extends ConfigFunSuite {
       println(SpeciesGroups.getStringList)
       println(SpeciesGroups.getSpeciesGroups("1768844","1781197"))
     }
+
+    test ("taxon rank missing"){
+      val raw = new FullRecord
+      val processed = new FullRecord
+      raw.classification.scientificName="Macropus rufus"
+      var qas = (new ClassificationProcessor).process("test",raw,processed)
+      expect(0){
+        qas.find(_.getName == "missingTaxonRank").get.qaStatus
+      }
+      raw.classification.taxonRank="species"
+      qas = (new ClassificationProcessor).process("test",raw,processed)
+      expect(1){
+        qas.find(_.getName == "missingTaxonRank").get.qaStatus
+      }
+    }
+
+  test ("missing catalogue number"){
+    val raw = new FullRecord
+    val processed = new FullRecord
+    var qas = (new MiscellaneousProcessor).process("test", raw, processed)
+    expect(0){
+      qas.find(_.getName == "missingCatalogueNumber").get.qaStatus
+    }
+    raw.occurrence.catalogNumber="XYZABC"
+    qas = (new MiscellaneousProcessor).process("test", raw, processed)
+    expect(1){
+      qas.find(_.getName == "missingCatalogueNumber").get.qaStatus
+    }
+  }
+
+  test ("name not supplied") {
+    val raw= new FullRecord
+    val processed = new FullRecord
+    raw.classification.genus="Macropus"
+    raw.classification.specificEpithet="rufus"
+    var qas = (new ClassificationProcessor).process("test", raw, processed)
+    expect(0) {
+      qas.find(_.getName == "nameNotSupplied").get.qaStatus
+    }
+    raw.classification.vernacularName="Red Kangaroo"
+    qas = (new ClassificationProcessor).process("test", raw, processed)
+    expect(1) {
+      qas.find(_.getName == "nameNotSupplied").get.qaStatus
+    }
+    raw.classification.vernacularName = null
+    raw.classification.scientificName = "Macropus rufus"
+    qas = (new ClassificationProcessor).process("test", raw, processed)
+    expect(1) {
+      qas.find(_.getName == "nameNotSupplied").get.qaStatus
+    }
+  }
+
+  test ("Invalid scientificName") {
+    val raw= new FullRecord
+    val processed = new FullRecord
+    raw.classification.scientificName = "UNKNOWN"
+    var qas = (new ClassificationProcessor).process("test", raw, processed)
+    expect(0) {
+      //invalid scientific name
+      qas.find(_.getName == "invalidScientificName").get.qaStatus
+    }
+
+    raw.classification.scientificName = "Macropus rufus"
+    qas = (new ClassificationProcessor).process("test", raw, processed)
+    expect(1) {
+      //valid scientific name
+      qas.find(_.getName == "invalidScientificName").get.qaStatus
+    }
+  }
+
+  test ("Unknown Kingdom") {
+    val raw = new FullRecord
+    val processed = new FullRecord
+    raw.classification.scientificName = "Macropus rufus"
+    raw.classification.kingdom = "Animals"
+
+    var qas = (new ClassificationProcessor).process("test", raw, processed)
+    expect(0) {
+      //Animals is an unknown kingdom
+      qas.find(_.getName == "unknownKingdom").get.qaStatus
+    }
+    raw.classification.kingdom = "ANIMALIA"
+    qas = (new ClassificationProcessor).process("test", raw, processed)
+    expect(1) {
+      //Kingdom is known
+      qas.find(_.getName == "unknownKingdom").get.qaStatus
+    }
+  }
+
+  test ("Supplied data generalised"){
+    val raw = new FullRecord
+    val processed = new FullRecord
+    raw.occurrence.dataGeneralizations = "coordinates to 1dp"
+
+    var qas = (new MiscellaneousProcessor).process("test", raw, processed)
+    expect(0){
+      qas.find(_.getName == "dataAreGeneralised").get.qaStatus
+    }
+
+    raw.occurrence.dataGeneralizations=null
+    qas = (new MiscellaneousProcessor).process("test", raw, processed)
+    expect(1){
+      //data has not been generalised by the provider
+      qas.find(_.getName == "dataAreGeneralised").get.qaStatus
+    }
+  }
+
+  test ("occurrence cultivatd or escaped"){
+    val raw = new FullRecord
+    val processed = new FullRecord
+    raw.occurrence.establishmentMeans="cultivated"
+    var qas = (new MiscellaneousProcessor).process("test", raw, processed)
+    expect(0){
+      qas.find(_.getName == "occCultivatedEscapee").get.qaStatus
+    }
+
+    raw.occurrence.establishmentMeans="not cultivated"
+    qas = (new MiscellaneousProcessor).process("test", raw, processed)
+    expect(1){
+      //represents natural occurrence
+      qas.find(_.getName == "occCultivatedEscapee").get.qaStatus
+    }
+
+    raw.occurrence.establishmentMeans=null
+    qas = (new MiscellaneousProcessor).process("test", raw, processed)
+    expect(None){
+      //not checked
+      qas.find(_.getName == "occCultivatedEscapee")
+    }
+  }
     /*test("Layers Test" ){
         expect("ibra_merged"){Layers.idToNameMap("ibra")}
         expect("el790"){Layers.nameToIdMap("worldclim_bio_3")}

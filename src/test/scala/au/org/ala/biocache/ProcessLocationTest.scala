@@ -178,8 +178,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     raw.location.coordinateUncertaintyInMeters = "100 meters";
     val qas = (new LocationProcessor).process("test", raw, processed)
     println(processed.location.coordinateUncertaintyInMeters)
-    expect(None) {
-      qas.find(_.code == 27)
+    expect(1) {
+      qas.find(_.code == 27).get.qaStatus
     }
     expect("100.0") {
       processed.location.coordinateUncertaintyInMeters
@@ -208,8 +208,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     raw.location.decimalLatitude = "-32"
     raw.location.decimalLongitude = "120"
     qas = (new LocationProcessor).process("test", raw, processed)
-    expect(None) {
-      qas.find(_.code == 5)
+    expect(1) {
+      qas.find(_.code == 5).get.qaStatus
     }
 
     raw.location.decimalLatitude = "-120"
@@ -311,8 +311,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     raw.location.decimalLongitude = "0.0"
     raw.location.coordinateUncertaintyInMeters = "100"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(true) {
-      qas.find(_.code == 4) != None
+    expect(0) {
+      qas.find(_.code == 4).get.qaStatus
     }
   }
 
@@ -324,8 +324,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     raw.location.coordinateUncertaintyInMeters = "100"
     raw.location.country = "dummy"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(true) {
-      qas.find(_.code == 6) != None
+    expect(0) {
+      qas.find(_.code == 6).get.qaStatus
     }
   }
 
@@ -338,8 +338,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     raw.location.country = "Australia"
     raw.location.stateProvince = "Australian Capital Territory"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(true) {
-      qas.find(_.code == 18) != None
+    expect(0) {
+      qas.find(_.code == 18).get.qaStatus
     }
   }
 
@@ -352,8 +352,64 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     raw.location.country = "Australia"
     raw.location.stateProvince = "New South Wales"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(true) {
-      qas.find(_.code == 22) != None
+    expect(0) {
+      qas.find(_.code == 22).get.qaStatus
+    }
+  }
+
+  test("coordinates center of country") {
+    val raw = new FullRecord
+    val processed = new FullRecord
+    raw.location.country="Norfolk Island"
+    raw.location.decimalLatitude="-29.04"
+    raw.location.decimalLongitude="167.95"
+    val qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0) {
+      qas.find(_.code == 28).get.qaStatus
+    }
+  }
+
+  test("country inferred from coordinates") {
+    var raw = new FullRecord
+    var processed = new FullRecord
+    raw.location.decimalLatitude="-29.04"
+    raw.location.decimalLongitude="167.95"
+    var qas = (new LocationProcessor).process("test", raw, processed)
+
+    expect(0){
+      //qa test has failed
+      qas.find(_.getName == "countryInferredByCoordinates").get.qaStatus
+    }
+
+    raw = new FullRecord
+    processed = new FullRecord
+    raw.location.decimalLatitude="-29.04"
+    raw.location.decimalLongitude="167.95"
+    raw.location.country="Norfolk island"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    //qa test has passed
+    expect(1)  {
+      qas.find(_.getName == "countryInferredByCoordinates").get.qaStatus
+    }
+  }
+
+  test ("country coordinate mismatch") {
+    val raw = new FullRecord
+    val processed = new FullRecord
+    raw.location.country="Norfolk Island"
+    raw.location.decimalLatitude = "-31.2532183"
+    raw.location.decimalLongitude = "146.921099"
+    var qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0){
+      //qa test has failed
+      qas.find(_.getName == "countryCoordinateMismatch").get.qaStatus
+    }
+    raw.location.decimalLatitude="-29.04"
+    raw.location.decimalLongitude="167.95"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(None){
+      //no coordinate mismatch has occurred
+      qas.find(_.getName == "countryCoordinateMismatch")
     }
   }
 
@@ -364,8 +420,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     raw.location.decimalLongitude = "146.921099"
     raw.location.coordinateUncertaintyInMeters = "-1"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(true) {
-      qas.find(_.code == 24) != None
+    expect(0) {
+      qas.find(_.code == 24).get.qaStatus
     }
   }
 
@@ -375,8 +431,28 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     raw.location.decimalLatitude = "-31.2532183"
     raw.location.decimalLongitude = "146.921099"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(true) {
-      qas.find(_.code == 27) != None
+    expect(0) {
+      qas.find(_.code == 27).get.qaStatus
+    }
+  }
+
+  test ("depth in feet") {
+    val raw = new FullRecord
+    var processed = new FullRecord
+    raw.location.verbatimDepth = "100ft"
+    val qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0) {
+      qas.find(_.getName == "depthInFeet").get.qaStatus
+    }
+  }
+
+  test ("altitude in feet") {
+    val raw = new FullRecord
+    var processed = new FullRecord
+    raw.location.verbatimElevation = "100ft"
+    val qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0) {
+      qas.find(_.getName == "altitudeInFeet").get.qaStatus
     }
   }
 
@@ -385,8 +461,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     var processed = new FullRecord
     raw.location.verbatimDepth = "test"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(15) {
-      qas(0).code
+    expect(0) {
+      qas.find(_.code == 15).get.qaStatus
     }
   }
 
@@ -395,8 +471,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     var processed = new FullRecord
     raw.location.verbatimElevation = "test"
     val qas = (new LocationProcessor).process("test", raw, processed)
-    expect(14) {
-      qas(0).code
+    expect(0) {
+      qas.find(_.code == 14).get.qaStatus
     }
   }
 
@@ -405,13 +481,13 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     var processed = new FullRecord
     raw.location.verbatimDepth = "20000"
     var qas = (new LocationProcessor).process("test", raw, processed)
-    expect(11) {
-      qas(0).code
+    expect(0) {
+      qas.find(_.code == 11).get.qaStatus
     }
     raw.location.verbatimDepth = "200"
     qas = (new LocationProcessor).process("test", raw, processed)
-    expect(0) {
-      qas.size
+    expect(1) {
+      qas.find(_.code == 11).get.qaStatus
     }
   }
 
@@ -420,18 +496,18 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     var processed = new FullRecord
     raw.location.verbatimElevation = "20000"
     var qas = (new LocationProcessor).process("test", raw, processed)
-    expect(7) {
-      qas(0).code
+    expect(0) {
+      qas.find(_.code == 7).get.qaStatus
     }
     raw.location.verbatimElevation = "-200"
     qas = (new LocationProcessor).process("test", raw, processed)
-    expect(7) {
-      qas(0).code
+    expect(0) {
+      qas.find(_.code == 7).get.qaStatus
     }
     raw.location.verbatimElevation = "100"
     qas = (new LocationProcessor).process("test", raw, processed)
-    expect(0) {
-      qas.size
+    expect(1) {
+      qas.find(_.code == 7).get.qaStatus
     }
   }
 
@@ -441,20 +517,20 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     raw.location.minimumDepthInMeters = "20"
     raw.location.maximumDepthInMeters = "10"
     var qas = (new LocationProcessor).process("test", raw, processed)
-    expect(12) {
-      qas(0).code
+    expect(0) {
+      qas.find(_.code == 12).get.qaStatus
     }
     raw.location.maximumDepthInMeters = "100"
     raw.location.minimumElevationInMeters = "100"
     raw.location.maximumElevationInMeters = "20"
     qas = (new LocationProcessor).process("test", raw, processed)
-    expect(9) {
-      qas(0).code
+    expect(0) {
+      qas.find(_.code == 9).get.qaStatus
     }
     raw.location.maximumElevationInMeters = "test"
     qas = (new LocationProcessor).process("test", raw, processed)
-    expect(0) {
-      qas.size
+    expect(None) {
+      qas.find(_.code == 9)
     }
   }
 
@@ -477,13 +553,13 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     expect("147.47628") {
       processed.location.decimalLongitude
     }
-    expect(true) {
-      assertions(0).getName == "decimalLatLongCalculatedFromEastingNorthing"
+    expect(0) {
+      assertions.find(_.getName == "decimalLatLongCalculatedFromEastingNorthing").get.qaStatus
     }
     expect(false) {
       var coordinatesInverted = false
       for (qa <- assertions) {
-        if (qa.getName == "invertedCoordinates") {
+        if (qa.getName == "invertedCoordinates" && qa.qaStatus == 0) {
           coordinatesInverted = true
         }
       }
@@ -512,8 +588,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     expect("EPSG:4326") {
       processed.location.geodeticDatum
     }
-    expect(true) {
-      assertions(0).getName == "decimalLatLongCalculatedFromVerbatim"
+    expect(0) {
+      assertions.find(_.getName == "decimalLatLongCalculatedFromVerbatim").get.qaStatus
     }
   }
 
@@ -537,13 +613,13 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     expect("EPSG:4326") {
       processed.location.geodeticDatum
     }
-    expect(true) {
-      assertions(0).getName == "decimalLatLongConverted"
+    expect(0) {
+      assertions.find(_.getName == "decimalLatLongConverted").get.qaStatus
     }
     expect(false) {
       var coordinatesInverted = false
       for (qa <- assertions) {
-        if (qa.getName == "invertedCoordinates") {
+        if (qa.getName == "invertedCoordinates" && qa.qaStatus == 0) {
           coordinatesInverted = true
         }
       }
@@ -571,13 +647,13 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     expect("EPSG:4326") {
       processed.location.geodeticDatum
     }
-    expect(true) {
-      assertions(0).getName == "decimalLatLongCalculatedFromVerbatim"
+    expect(0) {
+      assertions.find(_.getName == "decimalLatLongCalculatedFromVerbatim").get.qaStatus
     }
     expect(false) {
       var coordinatesInverted = false
       for (qa <- assertions) {
-        if (qa.getName == "invertedCoordinates") {
+        if (qa.getName == "invertedCoordinates" && qa.qaStatus == 0 ) {
           coordinatesInverted = true
         }
       }
@@ -604,8 +680,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     expect("EPSG:4326") {
       processed.location.geodeticDatum
     }
-    expect(true) {
-      assertions(0).getName == "geodeticDatumAssumedWgs84"
+    expect(0) {
+      assertions.find(_.getName == "geodeticDatumAssumedWgs84").get.qaStatus
     }
   }
 
@@ -629,8 +705,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     expect("EPSG:4326") {
       processed.location.geodeticDatum
     }
-    expect(true) {
-      assertions(0).getName == "decimalLatLongCalculatedFromVerbatim"
+    expect(0) {
+      assertions.find(_.getName == "decimalLatLongCalculatedFromVerbatim").get.qaStatus
     }
   }
 
@@ -654,8 +730,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     expect("EPSG:4326") {
       processed.location.geodeticDatum
     }
-    expect(true) {
-      assertions(0).getName == "decimalLatLongConverted"
+    expect(0) {
+      assertions.find(_.getName == "decimalLatLongConverted").get.qaStatus
     }
   }
 
@@ -679,8 +755,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     expect("EPSG:4326") {
       processed.location.geodeticDatum
     }
-    expect(true) {
-      assertions(0).getName == "decimalLatLongCalculatedFromVerbatim"
+    expect(0) {
+      assertions.find(_.getName == "decimalLatLongCalculatedFromVerbatim").get.qaStatus
     }
   }
 
@@ -705,8 +781,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
       processed.location.geodeticDatum
     }
 
-    expect(true) {
-      assertions(0).getName == "unrecognizedGeodeticDatum"
+    expect(0) {
+      assertions.find(_.getName == "unrecognizedGeodeticDatum").get.qaStatus
     }
   }
 
@@ -731,9 +807,122 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
       processed.location.geodeticDatum
     }
 
-    expect(true) {
-      assertions(0).getName == "decimalLatLongCalculationFromVerbatimFailed"
+    expect(0) {
+      assertions.find(_.getName == "decimalLatLongCalculationFromVerbatimFailed").get.qaStatus
     }
+  }
+
+  test ("decimal coordinates not supplied") {
+    val raw = new FullRecord
+    val processed = new FullRecord
+    raw.location.verbatimLatitude = "-35.126"
+    raw.location.verbatimLongitude = "150.681"
+    var qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0) {
+      qas.find(_.getName == "decimalCoordinatesNotSupplied").get.qaStatus
+    }
+    raw.location.decimalLatitude = "-35.126"
+    raw.location.decimalLongitude = "150.681"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(1) {
+      qas.find(_.getName == "decimalCoordinatesNotSupplied").get.qaStatus
+    }
+  }
+
+  test ("precision range mismatch") {
+    val raw = new FullRecord
+    val processed = new FullRecord
+    raw.location.verbatimLatitude = "-35.126"
+    raw.location.verbatimLongitude = "150.681"
+    raw.location.coordinatePrecision = "test"
+    var qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0) {
+      qas.find(_.getName == "precisionRangeMismatch").get.qaStatus
+    }
+    raw.location.coordinatePrecision = "700"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(None) {
+      //no error message because assumed to be coordinate uncertainty in metres
+      qas.find(_.getName == "precisionRangeMismatch")
+    }
+    raw.location.coordinatePrecision = "0"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0) {
+      qas.find(_.getName == "precisionRangeMismatch").get.qaStatus
+    }
+    raw.location.coordinatePrecision = "0.01"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(1) {
+      qas.find(_.getName == "precisionRangeMismatch").get.qaStatus
+    }
+  }
+
+  test ("coordinate precision mismatch") {
+    val raw = new FullRecord
+    val processed = new FullRecord
+    raw.location.verbatimLatitude = "-35.126"
+    raw.location.verbatimLongitude = "150.681"
+    raw.location.coordinatePrecision = "0.001"
+    var qas = (new LocationProcessor).process("test", raw, processed)
+    expect(1) {
+      //no mismatch
+      qas.find(_.getName == "coordinatePrecisionMismatch").get.qaStatus
+    }
+    raw.location.verbatimLongitude = "150.68"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0) {
+      //one mismatch
+      qas.find(_.getName == "coordinatePrecisionMismatch").get.qaStatus
+    }
+    raw.location.verbatimLatitude = "-35.1"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0) {
+      //both mismatch
+      qas.find(_.getName == "coordinatePrecisionMismatch").get.qaStatus
+    }
+  }
+
+  test ("Missing georeference date") {
+    val raw = new FullRecord
+    val processed = new FullRecord
+
+    var qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0) {
+      //date is missing
+      qas.find(_.getName == "missingGeoreferenceDate").get.qaStatus
+    }
+
+    raw.miscProperties.put("georeferencedDate", "2013-05-28")
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(1) {
+      //date is in miscProperties
+      qas.find(_.getName == "missingGeoreferenceDate").get.qaStatus
+    }
+
+    raw.location.georeferencedDate ="2013-05-28"
+    raw.miscProperties.clear()
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(1) {
+      //date is in field
+      qas.find(_.getName == "missingGeoreferenceDate").get.qaStatus
+    }
+  }
+
+  test ("location not supplied") {
+    val raw = new FullRecord
+    val processed = new FullRecord
+    var qas = (new LocationProcessor).process("test", raw, processed)
+    expect(0) {
+      //no location information
+      qas.find(_.getName == "locationNotSupplied").get.qaStatus
+    }
+    raw.location.footprintWKT="my footprint"
+    qas = (new LocationProcessor).process("test", raw, processed)
+    expect(1) {
+      //no location information
+      qas.find(_.getName == "locationNotSupplied").get.qaStatus
+    }
+
   }
 
 }

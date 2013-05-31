@@ -17,6 +17,8 @@ import org.geotools.referencing.crs.DefaultGeographicCRS
 import org.apache.commons.math3.util.{Precision, MathUtils}
 import org.drools.lang.DRLParser.entry_point_key_return
 import au.org.ala.sds.SensitiveDataService
+import au.org.ala.biocache.QualityAssertion
+import com.sun.xml.internal.ws.api.server.AbstractServerAsyncTransport
 
 /**
  * Trait to be implemented by all processors. 
@@ -40,6 +42,7 @@ object Processors {
   val processorMap = scala.collection.mutable.LinkedHashMap(
     "DEFAULT" -> new DefaultValuesProcessor,
     "IMAGE" -> new MiscellaneousProcessor,
+    "OFFLINE" -> new OfflineTestProcessor,
     "ATTR" -> new AttributionProcessor,
     "CLASS" -> new ClassificationProcessor,
     "BOR" -> new BasisOfRecordProcessor,
@@ -105,6 +108,32 @@ class DefaultValuesProcessor extends Processor {
 
   def getName = "default"
 }
+/*
+A processor to ensure that the offline test that were performed get recorded correctly
+ */
+class OfflineTestProcessor extends Processor {
+
+  def process(guid: String, raw: FullRecord, processed: FullRecord, lastProcessed: Option[FullRecord]=None): Array[QualityAssertion] = {
+     if(lastProcessed.isDefined){
+       //get the current system assertions
+       val currentProcessed = lastProcessed.get
+       val systemAssertions = Config.occurrenceDAO.getSystemAssertions(guid)
+       val offlineAssertions = systemAssertions.filter(sa => AssertionCodes.offlineAssertionCodes.contains(AssertionCodes.getByCode(sa.code).getOrElse(AssertionCodes.GEOSPATIAL_ISSUE)) )
+       processed.occurrence.outlierForLayers = currentProcessed.occurrence.outlierForLayers
+       processed.occurrence.duplicationStatus = currentProcessed.occurrence.duplicationStatus
+       processed.occurrence.duplicationType = currentProcessed.occurrence.duplicationType
+       processed.occurrence.associatedOccurrences = currentProcessed.occurrence.associatedOccurrences
+       processed.location.distanceOutsideExpertRange = currentProcessed.location.distanceOutsideExpertRange
+       processed.queryAssertions = currentProcessed.queryAssertions
+       offlineAssertions.toArray
+     } else{
+       //assume that the assertions were not tested
+       Array()
+     }
+
+  }
+  def getName = "offline"
+}
 
 class MiscellaneousProcessor extends Processor {
   val LIST_DELIM = ";".r;
@@ -115,13 +144,28 @@ class MiscellaneousProcessor extends Processor {
     processImages(guid, raw, processed, assertions)
     processInteractions(guid, raw, processed)
     //now process the "establishmentMeans" values
-    processEstablishmentMeans(raw, processed)
-    //process the dates
-    processDates(raw, processed)
-    //TODO reenable identification processing after we have categorised issues better.
-    //processIdentification(raw,processed,assertions)
+    processEstablishmentMeans(raw, processed, assertions)
+
+
+    processIdentification(raw,processed,assertions)
     processCollectors(raw, processed, assertions)
+    processMiscOccurrence(raw, processed, assertions)
     assertions.toArray
+  }
+
+  def processMiscOccurrence(raw:FullRecord, processed: FullRecord, assertions: ArrayBuffer[QualityAssertion]){
+    if(StringUtils.isBlank(raw.occurrence.catalogNumber)){
+      assertions += QualityAssertion(AssertionCodes.MISSING_CATALOGUENUMBER,"No catalogue number provided")
+    } else {
+      assertions += QualityAssertion(AssertionCodes.MISSING_CATALOGUENUMBER, 1)
+    }
+    //check to see if the source data has been provided in a generalised form
+    if(StringUtils.isNotBlank(raw.occurrence.dataGeneralizations)){
+      assertions += QualityAssertion(AssertionCodes.DATA_ARE_GENERALISED)
+    } else {
+      //data not generalised by the provider
+      assertions += QualityAssertion(AssertionCodes.DATA_ARE_GENERALISED, 1)
+    }
   }
 
   /**
@@ -132,6 +176,7 @@ class MiscellaneousProcessor extends Processor {
       val parsedCollectors = CollectorNameParser.parseForList(raw.occurrence.recordedBy)
       if (parsedCollectors.isDefined) {
         processed.occurrence.recordedBy = parsedCollectors.get.mkString("|")
+        assertions += QualityAssertion(AssertionCodes.RECORDED_BY_UNPARSABLE, 1)
       }
       else {
         //println("Unable to parse: " + raw.occurrence.recordedBy)
@@ -140,22 +185,9 @@ class MiscellaneousProcessor extends Processor {
     }
   }
 
-  def processDates(raw: FullRecord, processed: FullRecord) = {
-    //process the "modified" date for the occurrence - we want all modified dates in the same format so that we can index on them...
-    if (raw.occurrence.modified != null) {
-      val parsedDate = DateParser.parseDate(raw.occurrence.modified)
-      if (parsedDate.isDefined) {
-        processed.occurrence.modified = parsedDate.get.startDate
-      }
-    }
-    if (raw.identification.dateIdentified != null) {
-      val parsedDate = DateParser.parseDate(raw.identification.dateIdentified)
-      if (parsedDate.isDefined)
-        processed.identification.dateIdentified = parsedDate.get.startDate
-    }
-  }
 
-  def processEstablishmentMeans(raw: FullRecord, processed: FullRecord) = {
+
+  def processEstablishmentMeans(raw: FullRecord, processed: FullRecord, assertions:ArrayBuffer[QualityAssertion]) = {
     //2012-0202: At this time AVH is the only data resource to support this. In the future it may be necessary for the value to be a list...
     //handle the "cultivated" type
     //2012-07-13: AVH has moved this to establishmentMeans and has also include nativeness
@@ -167,6 +199,14 @@ class MiscellaneousProcessor extends Processor {
       }).filter(_.length > 0)
       if (newmeans.size > 0)
         processed.occurrence.establishmentMeans = newmeans.mkString("; ")
+      //check to see if the establishment mean corresponds to culitvayed or escaped
+      val cultEsacped = newmeans.find(em => em == "cultivated" || em == "assumed to be cultivated" || em == "formerly cultivated (extinct)" || em == "possibly cultivated" || em == "presumably cultivated")
+      if(cultEsacped.isDefined){
+        assertions += QualityAssertion(AssertionCodes.OCCURRENCE_IS_CULTIVATED_OR_ESCAPEE)
+      } else {
+        //represents a natural occurrence. not cultivated ot escaped
+        assertions += QualityAssertion(AssertionCodes.OCCURRENCE_IS_CULTIVATED_OR_ESCAPEE, 1)
+      }
 
     }
   }
@@ -175,15 +215,23 @@ class MiscellaneousProcessor extends Processor {
     //check missing identification qualifier
     if (raw.identification.identificationQualifier == null)
       assertions += QualityAssertion(AssertionCodes.MISSING_IDENTIFICATIONQUALIFIER, "Missing identificationQualifier")
+    else
+      assertions += QualityAssertion(AssertionCodes.MISSING_IDENTIFICATIONQUALIFIER, 1)
     //check missing identifiedBy
     if (raw.identification.identifiedBy == null)
       assertions += QualityAssertion(AssertionCodes.MISSING_IDENTIFIEDBY, "Missing identifiedBy")
+    else
+      assertions += QualityAssertion(AssertionCodes.MISSING_IDENTIFIEDBY, 1)
     //check missing identification references
     if (raw.identification.identificationReferences == null)
       assertions += QualityAssertion(AssertionCodes.MISSING_IDENTIFICATIONREFERENCES, "Missing identificationReferences")
+    else
+      assertions += QualityAssertion(AssertionCodes.MISSING_IDENTIFICATIONREFERENCES,1)
     //check missing date identified
     if (raw.identification.dateIdentified == null)
       assertions += QualityAssertion(AssertionCodes.MISSING_DATEIDENTIFIED, "Missing dateIdentified")
+    else
+      assertions += QualityAssertion(AssertionCodes.MISSING_DATEIDENTIFIED,1)
   }
 
   def processInteractions(guid: String, raw: FullRecord, processed: FullRecord) = {
@@ -220,6 +268,8 @@ class MiscellaneousProcessor extends Processor {
 
       if (aurls.length != (processed.occurrence.images.length + processed.occurrence.sounds.length + processed.occurrence.videos.length))
         assertions += QualityAssertion(AssertionCodes.INVALID_IMAGE_URL, "URL refers to an invalid file.")
+      else
+        assertions += QualityAssertion(AssertionCodes.INVALID_IMAGE_URL,1)
     }
 
   }
@@ -249,11 +299,14 @@ class AttributionProcessor extends Processor {
           val attribution = AttributionDAO.getByCodes(instCode, collCode)
           if (!attribution.isEmpty) {
             processed.attribution = attribution.get
+            assertions ++= Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE,1))
+            assertions ++= Array(QualityAssertion(AssertionCodes.UNRECOGNISED_INSTITUTIONCODE,1))
             //need to reinitialise the object array - DM switched to def, that
             //way objectArray created each time its accessed
             //processed.reinitObjectArray
           } else {
             assertions ++= Array(QualityAssertion(AssertionCodes.UNRECOGNISED_COLLECTIONCODE, "Unrecognised collection code institution code combination"))
+            assertions ++= Array(QualityAssertion(AssertionCodes.UNRECOGNISED_INSTITUTIONCODE, "Unrecognised collection code institution code combination"))
           }
         }
         //update the details that come from the data resource
@@ -300,157 +353,266 @@ class EventProcessor extends Processor {
    * splitting into several methods
    */
   def process(guid: String, raw: FullRecord, processed: FullRecord, lastProcessed: Option[FullRecord]=None): Array[QualityAssertion] = {
-
+    var assertions = new ArrayBuffer[QualityAssertion]
     if ((raw.event.day == null || raw.event.day.isEmpty)
       && (raw.event.month == null || raw.event.month.isEmpty)
       && (raw.event.year == null || raw.event.year.isEmpty)
       && (raw.event.eventDate == null || raw.event.eventDate.isEmpty)
       && (raw.event.verbatimEventDate == null || raw.event.verbatimEventDate.isEmpty)
-    )
-      return Array(QualityAssertion(AssertionCodes.MISSING_COLLECTION_DATE, "No date information supplied"))
+    ){
+      assertions += QualityAssertion(AssertionCodes.MISSING_COLLECTION_DATE, "No date information supplied")
+    } else {
 
-    var assertions = new ArrayBuffer[QualityAssertion]
-    var date: Option[java.util.Date] = None
-    val currentYear = DateUtil.getCurrentYear
-    var comment = ""
+      var date: Option[java.util.Date] = None
+      val currentYear = DateUtil.getCurrentYear
+      var comment = ""
+      var addPassedInvalidCollectionDate=true
 
-    var (year, validYear) = validateNumber(raw.event.year, {
-      year => year > 0 && year <= currentYear
-    })
-    var (month, validMonth) = validateNumber(raw.event.month, {
-      month => month >= 1 && month <= 12
-    })
-    var (day, validDay) = validateNumber(raw.event.day, {
-      day => day >= 1 && day <= 31
-    })
-    //check month and day not transposed
-    if (!validMonth && raw.event.month.isInt && raw.event.day.isInt) {
-      //are day and month transposed?
-      val monthValue = raw.event.month.toInt
-      val dayValue = raw.event.day.toInt
-      if (monthValue > 12 && dayValue < 12) {
-        month = dayValue
-        day = monthValue
-        assertions += QualityAssertion(AssertionCodes.DAY_MONTH_TRANSPOSED, "Assume day and month transposed")
-        validMonth = true
-      } else {
-        assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Invalid month supplied")
-      }
-    }
-
-    //TODO need to check for other months
-    if (day == 0 || day > 31) {
-      assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Invalid day supplied")
-    }
-
-    //check for sensible year value
-    if (year > 0) {
-      if (year < 100) {
-        //parse 89 for 1989
-        if (year > currentYear % 100) {
-          // Must be in last century
-          year += ((currentYear / 100) - 1) * 100
+      var (year, validYear) = validateNumber(raw.event.year, {
+        year => year > 0 && year <= currentYear
+      })
+      var (month, validMonth) = validateNumber(raw.event.month, {
+        month => month >= 1 && month <= 12
+      })
+      var (day, validDay) = validateNumber(raw.event.day, {
+        day => day >= 1 && day <= 31
+      })
+      //check month and day not transposed
+      if (!validMonth && raw.event.month.isInt && raw.event.day.isInt) {
+        //are day and month transposed?
+        val monthValue = raw.event.month.toInt
+        val dayValue = raw.event.day.toInt
+        if (monthValue > 12 && dayValue < 12) {
+          month = dayValue
+          day = monthValue
+          assertions += QualityAssertion(AssertionCodes.DAY_MONTH_TRANSPOSED, "Assume day and month transposed")
+          //assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,1) //this one is not applied
+          validMonth = true
         } else {
-          // Must be in this century
-          year += (currentYear / 100) * 100
+          assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Invalid month supplied")
+          addPassedInvalidCollectionDate = false
+          assertions += QualityAssertion(AssertionCodes.DAY_MONTH_TRANSPOSED, 1) //this one has been tested and does not apply
+        }
+      }
 
-          //although check that combined year-month-day isnt in the future
-          if (day != 0 && month != 0) {
-            val date = DateUtils.parseDate(year.toString + String.format("%02d", int2Integer(month)) + day.toString, Array("yyyyMMdd"))
-            if (date.after(new Date())) {
-              year -= 100
+      //TODO need to check for other months
+
+      if (day == 0 || day > 31) {
+        assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Invalid day supplied")
+        addPassedInvalidCollectionDate = false
+      }
+
+
+      //check for sensible year value
+      if (year > 0) {
+        if (year < 100) {
+          //parse 89 for 1989
+          if (year > currentYear % 100) {
+            // Must be in last century
+            year += ((currentYear / 100) - 1) * 100
+          } else {
+            // Must be in this century
+            year += (currentYear / 100) * 100
+
+            //although check that combined year-month-day isnt in the future
+            if (day != 0 && month != 0) {
+              val date = DateUtils.parseDate(year.toString + String.format("%02d", int2Integer(month)) + day.toString, Array("yyyyMMdd"))
+              if (date.after(new Date())) {
+                year -= 100
+              }
             }
           }
+        } else if (year >= 100 && year < 1600) {
+          year = -1
+          validYear = false
+          comment = "Year out of range"
+        } else if (year > DateUtil.getCurrentYear) {
+          year = -1
+          validYear = false
+          comment = "Future year supplied"
+          //assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
+        } else if (year == 1788 && month == 1 && day == 26) {
+          //First fleet arrival date indicative of a null date.
+          validYear = false
+          comment = "First Fleet arrival implies a null date"
         }
-      } else if (year >= 100 && year < 1600) {
-        year = -1
-        validYear = false
-        comment = "Year out of range"
-      } else if (year > DateUtil.getCurrentYear) {
-        year = -1
-        validYear = false
-        comment = "Future year supplied"
-        //assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
-      } else if (year == 1788 && month == 1 && day == 26) {
-        //First fleet arrival date indicative of a null date.
-        validYear = false
-        comment = "First Fleet arrival implies a null date"
-      }
-      if (StringUtils.isNotEmpty(comment))
-        assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, comment)
-    }
-
-    var validDayMonthYear = validYear && validDay && validMonth
-
-    //construct
-    if (validDayMonthYear) {
-      try {
-
-        val calendar = new GregorianCalendar(
-          year.toInt,
-          month.toInt - 1,
-          day.toInt
-        );
-        //don't allow the calendar to be lenient we want exceptions with incorrect dates
-        calendar.setLenient(false);
-        date = Some(calendar.getTime)
-      } catch {
-        case e: Exception => {
-          validDayMonthYear = false
-          comment = "Invalid year, day, month"
+        if (StringUtils.isNotEmpty(comment)){
           assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, comment)
+          addPassedInvalidCollectionDate=false
+        }
+
+      }
+
+      var validDayMonthYear = validYear && validDay && validMonth
+
+      //construct
+      if (validDayMonthYear) {
+        try {
+
+          val calendar = new GregorianCalendar(
+            year.toInt,
+            month.toInt - 1,
+            day.toInt
+          );
+          //don't allow the calendar to be lenient we want exceptions with incorrect dates
+          calendar.setLenient(false);
+          date = Some(calendar.getTime)
+        } catch {
+          case e: Exception => {
+            validDayMonthYear = false
+            comment = "Invalid year, day, month"
+            assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, comment)
+            addPassedInvalidCollectionDate = false
+          }
         }
       }
-    }
 
-    //set the processed values
-    if (validYear) processed.event.year = year.toString
-    if (validMonth) processed.event.month = String.format("%02d", int2Integer(month)) //NC ensure that a month is 2 characters long
-    if (validDay) processed.event.day = day.toString
-    if (!date.isEmpty) processed.event.eventDate = DateFormatUtils.format(date.get, "yyyy-MM-dd")
+      //set the processed values
+      if (validYear) processed.event.year = year.toString
+      if (validMonth) processed.event.month = String.format("%02d", int2Integer(month)) //NC ensure that a month is 2 characters long
+      if (validDay) processed.event.day = day.toString
+      if (!date.isEmpty) processed.event.eventDate = DateFormatUtils.format(date.get, "yyyy-MM-dd")
 
-    //deal with event date if we dont have separate day, month, year fields
-    if (date.isEmpty && raw.event.eventDate != null && !raw.event.eventDate.isEmpty) {
-      val parsedDate = DateParser.parseDate(raw.event.eventDate)
-      if (!parsedDate.isEmpty) {
-        //set processed values
-        processed.event.eventDate = parsedDate.get.startDate
-        processed.event.day = parsedDate.get.startDay
-        processed.event.month = parsedDate.get.startMonth
-        processed.event.year = parsedDate.get.startYear
+      //deal with event date if we dont have separate day, month, year fields
+      if (date.isEmpty && raw.event.eventDate != null && !raw.event.eventDate.isEmpty) {
+        val parsedDate = DateParser.parseDate(raw.event.eventDate)
+        if (!parsedDate.isEmpty) {
+          //set processed values
+          processed.event.eventDate = parsedDate.get.startDate
+          processed.event.day = parsedDate.get.startDay
+          processed.event.month = parsedDate.get.startMonth
+          processed.event.year = parsedDate.get.startYear
 
-        if (DateUtil.isFutureDate(parsedDate.get)) {
-          assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Future date supplied")
+          if (DateUtil.isFutureDate(parsedDate.get)) {
+            assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Future date supplied")
+            addPassedInvalidCollectionDate = false
+          }
         }
       }
-    }
 
-    //deal with verbatim date
-    if (date.isEmpty && raw.event.verbatimEventDate != null && !raw.event.verbatimEventDate.isEmpty) {
-      val parsedDate = DateParser.parseDate(raw.event.verbatimEventDate)
-      if (!parsedDate.isEmpty) {
-        //set processed values
-        processed.event.eventDate = parsedDate.get.startDate
-        processed.event.day = parsedDate.get.startDay
-        processed.event.month = parsedDate.get.startMonth
-        processed.event.year = parsedDate.get.startYear
-        if (DateUtil.isFutureDate(parsedDate.get)) {
-          assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Future date supplied")
+      //deal with verbatim date
+      if (date.isEmpty && raw.event.verbatimEventDate != null && !raw.event.verbatimEventDate.isEmpty) {
+        val parsedDate = DateParser.parseDate(raw.event.verbatimEventDate)
+        if (!parsedDate.isEmpty) {
+          //set processed values
+          processed.event.eventDate = parsedDate.get.startDate
+          processed.event.day = parsedDate.get.startDay
+          processed.event.month = parsedDate.get.startMonth
+          processed.event.year = parsedDate.get.startYear
+          if (DateUtil.isFutureDate(parsedDate.get)) {
+            assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Future date supplied")
+            addPassedInvalidCollectionDate = false
+          }
         }
       }
-    }
 
-    //if invalid date, add assertion
-    if (!validYear && (processed.event.eventDate == null || processed.event.eventDate == "")) {
-      assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, comment)
-    }
+      //if invalid date, add assertion
+      if (!validYear && (processed.event.eventDate == null || processed.event.eventDate == "")) {
+        assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, comment)
+        addPassedInvalidCollectionDate = false
+      }
 
-    //chec for future date
-    if (!date.isEmpty && date.get.after(new Date())) {
-      assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Future date supplied")
-    }
+      //chec for future date
+      if (!date.isEmpty && date.get.after(new Date())) {
+        assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Future date supplied")
+        addPassedInvalidCollectionDate = false
+      }
 
+      //check to see if we need add a passed test for the invalid collection dates
+      if(addPassedInvalidCollectionDate)
+        assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, 1)
+    }
+    //now process the other dates
+    processOtherDates(raw, processed, assertions)
+    //check for the "first" of month,year,century
+    processFirstDates(raw, processed, assertions)
     assertions.toArray
+  }
+
+  def processFirstDates(raw:FullRecord, processed:FullRecord, assertions:ArrayBuffer[QualityAssertion]){
+    //check to see if the date is the first of a month
+    if(processed.event.day == "1" || processed.event.day == "01"){
+      assertions += QualityAssertion(AssertionCodes.FIRST_OF_MONTH)
+      //check to see if the date is the first of the year
+      if(processed.event.month == "01" || processed.event.month == "1") {
+        assertions += QualityAssertion(AssertionCodes.FIRST_OF_YEAR)
+        //check to see if the date is the first of the century
+        if(processed.event.year != null){
+          var (year, validYear) = validateNumber(processed.event.year, {
+            year => year > 0
+          })
+          if(validYear && year % 100 == 0){
+            assertions += QualityAssertion(AssertionCodes.FIRST_OF_CENTURY)
+          } else {
+            //the date is NOT the first of the century
+            assertions += QualityAssertion(AssertionCodes.FIRST_OF_CENTURY, 1)
+          }
+        }
+      } else if(processed.event.month != null) {
+        //the date is not the first of the year
+        assertions += QualityAssertion(AssertionCodes.FIRST_OF_YEAR, 1)
+      }
+    } else if(processed.event.day != null) {
+      //the date is not the first of the month
+      assertions += QualityAssertion(AssertionCodes.FIRST_OF_MONTH, 1)
+    }
+
+
+
+
+  }
+
+  /**
+   * processed the other dates for the occurrence including performing data checks
+   * @param raw
+   * @param processed
+   * @param assertions
+   */
+  def processOtherDates(raw:FullRecord, processed:FullRecord, assertions:ArrayBuffer[QualityAssertion]){
+    //process the "modified" date for the occurrence - we want all modified dates in the same format so that we can index on them...
+    if (raw.occurrence.modified != null) {
+      val parsedDate = DateParser.parseDate(raw.occurrence.modified)
+      if (parsedDate.isDefined) {
+        processed.occurrence.modified = parsedDate.get.startDate
+      }
+    }
+    if (raw.identification.dateIdentified != null) {
+      val parsedDate = DateParser.parseDate(raw.identification.dateIdentified)
+      if (parsedDate.isDefined)
+        processed.identification.dateIdentified = parsedDate.get.startDate
+    }
+    if (raw.location.georeferencedDate != null || raw.miscProperties.containsKey("georeferencedDate")){
+      def rawdate = if (raw.location.georeferencedDate != null) raw.location.georeferencedDate else raw.miscProperties.get("georeferencedDate")
+      val parsedDate = DateParser.parseDate(rawdate)
+      if (parsedDate.isDefined){
+        processed.location.georeferencedDate = parsedDate.get.startDate
+      }
+    }
+
+
+    if (StringUtils.isNotBlank(processed.event.eventDate)){
+      val eventDate = DateParser.parseStringToDate(processed.event.eventDate).get
+      //now test if the record was identified before it was collected
+      if(StringUtils.isNotBlank(processed.identification.dateIdentified)){
+        if (DateParser.parseStringToDate(processed.identification.dateIdentified).get.before(eventDate)){
+          //the record was identified before it was collected !!
+          assertions += QualityAssertion(AssertionCodes.ID_PRE_OCCURRENCE, "The records was identified before it was collected")
+        } else {
+          assertions += QualityAssertion(AssertionCodes.ID_PRE_OCCURRENCE, 1)
+        }
+      }
+
+      //now check if the record was georeferenced after the collection date
+      if(StringUtils.isNotBlank(processed.location.georeferencedDate)) {
+        if(DateParser.parseStringToDate(processed.location.georeferencedDate).get.after(eventDate)){
+          //the record was not georeference when it was collected!!
+          assertions += QualityAssertion(AssertionCodes.GEOREFERENCE_POST_OCCURRENCE, "The record was not georeferenced when it was collected")
+        } else {
+          assertions += QualityAssertion(AssertionCodes.GEOREFERENCE_POST_OCCURRENCE, 1)
+        }
+      }
+    }
+
   }
 
   def getName = "event"
@@ -469,7 +631,7 @@ class TypeStatusProcessor extends Processor {
         Array(QualityAssertion(AssertionCodes.UNRECOGNISED_TYPESTATUS, "Unrecognised type status"))
       } else {
         processed.identification.typeStatus = term.get.canonical
-        Array()
+        Array(QualityAssertion(AssertionCodes.UNRECOGNISED_TYPESTATUS,1))
       }
     } else {
       Array()
@@ -490,7 +652,7 @@ class BasisOfRecordProcessor extends Processor {
 
     if (raw.occurrence.basisOfRecord == null || raw.occurrence.basisOfRecord.isEmpty) {
       if (processed.occurrence.basisOfRecord != null && !processed.occurrence.basisOfRecord.isEmpty)
-        Array[QualityAssertion]()
+        Array[QualityAssertion]()//NC: When using default values we are not testing against so the QAs don't need to be included.
       else //add a quality assertion
         Array(QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD, "Missing basis of record"))
     } else {
@@ -498,10 +660,10 @@ class BasisOfRecordProcessor extends Processor {
       if (term.isEmpty) {
         //add a quality assertion
         logger.debug("[QualityAssertion] " + guid + ", unrecognised BoR: " + guid + ", BoR:" + raw.occurrence.basisOfRecord)
-        Array(QualityAssertion(AssertionCodes.BADLY_FORMED_BASIS_OF_RECORD, "Unrecognised basis of record"))
+        Array(QualityAssertion(AssertionCodes.BADLY_FORMED_BASIS_OF_RECORD, "Unrecognised basis of record"), QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,1))
       } else {
         processed.occurrence.basisOfRecord = term.get.canonical
-        Array[QualityAssertion]()
+        Array[QualityAssertion](QualityAssertion(AssertionCodes.MISSING_BASIS_OF_RECORD,1), QualityAssertion(AssertionCodes.BADLY_FORMED_BASIS_OF_RECORD,1))
       }
     }
   }
@@ -606,15 +768,7 @@ class LocationProcessor extends Processor {
           checkForHabitatMismatch(raw, processed, taxonProfile.get, assertions)
         }
 
-        //check centre point of the state
-        if (StateProvinceCentrePoints.coordinatesMatchCentre(location.stateProvince, raw.location.decimalLatitude, raw.location.decimalLongitude)) {
-          assertions += QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE, "Coordinates are centre point of " + location.stateProvince)
-        }
 
-        //check centre point of the country
-        if (CountryCentrePoints.coordinatesMatchCentre(location.country, raw.location.decimalLatitude, raw.location.decimalLongitude)) {
-          assertions += QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_COUNTRY, "Coordinates are centre point of " + location.country)
-        }
 
         //sensitise the coordinates if necessary.  Do this last so that habitat checks etc are performed on originally supplied coordinates
         try {
@@ -624,6 +778,46 @@ class LocationProcessor extends Processor {
           e.printStackTrace()
         }
       }
+      assertions += QualityAssertion(AssertionCodes.LOCATION_NOT_SUPPLIED,1)
+    } else{
+      //check to see if we have any location information at all for the record
+      if (raw.location.footprintWKT == null && raw.location.locality == null && raw.location.locationID == null){
+        assertions += QualityAssertion(AssertionCodes.LOCATION_NOT_SUPPLIED)
+      } else {
+        assertions += QualityAssertion(AssertionCodes.LOCATION_NOT_SUPPLIED, 1)
+      }
+    }
+
+
+
+    processLocations(raw,processed,assertions)
+
+    //validate the gereference values
+    //TODO reenable georeferencing processing after we have categorised issues better.
+    validateGeoreferenceValues(raw,processed,assertions)
+
+    assertions.toArray
+  }
+
+  def processLocations(raw: FullRecord, processed: FullRecord, assertions: ArrayBuffer[QualityAssertion]){
+    if(raw.location.country == null && processed.location.country != null){
+      assertions += QualityAssertion(AssertionCodes.COUNTRY_INFERRED_FROM_COORDINATES,0)
+    } else{
+      assertions += QualityAssertion(AssertionCodes.COUNTRY_INFERRED_FROM_COORDINATES,1)
+    }
+
+    //check centre point of the state
+    if (StateProvinceCentrePoints.coordinatesMatchCentre(processed.location.stateProvince, raw.location.decimalLatitude, raw.location.decimalLongitude)) {
+      assertions += QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE, "Coordinates are centre point of " + processed.location.stateProvince)
+    } else{
+      assertions += QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_STATEPROVINCE,1)
+    }
+
+    //check centre point of the country
+    if (CountryCentrePoints.coordinatesMatchCentre(processed.location.country, raw.location.decimalLatitude, raw.location.decimalLongitude)) {
+      assertions += QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_COUNTRY, "Coordinates are centre point of " + processed.location.country)
+    } else {
+      assertions += QualityAssertion(AssertionCodes.COORDINATES_CENTRE_OF_COUNTRY, 1)
     }
 
     //Only process the raw state value if no latitude and longitude is provided
@@ -647,11 +841,6 @@ class LocationProcessor extends Processor {
       }
     }
 
-    //validate the gereference values
-    //TODO reenable georeferencing processing after we have categorised issues better.
-    //validateGeoreferenceValues(raw,processed,assertions)
-
-    assertions.toArray
   }
 
   /**
@@ -660,26 +849,72 @@ class LocationProcessor extends Processor {
   def processAltitudeAndDepth(guid: String, raw: FullRecord, processed: FullRecord, assertions: ArrayBuffer[QualityAssertion]) {
     //check that the values are numeric
     if (raw.location.verbatimDepth != null) {
-      try {
-        val vdepth = raw.location.verbatimDepth.toFloat
+      val parseDepthResult = DistanceRangeParser.parse(raw.location.verbatimDepth)
+      if (parseDepthResult.isDefined){
+        val (vdepth, sourceUnit) = parseDepthResult.get
         processed.location.verbatimDepth = vdepth.toString
         if (vdepth > 10000)
           assertions += QualityAssertion(AssertionCodes.DEPTH_OUT_OF_RANGE, "Depth " + vdepth + " is greater than 10,000 metres")
+        else
+          assertions += QualityAssertion(AssertionCodes.DEPTH_OUT_OF_RANGE, 1)
+        assertions += QualityAssertion(AssertionCodes.DEPTH_NON_NUMERIC, 1)
+        //check on the units
+        if(sourceUnit == Feet){
+          assertions += QualityAssertion(AssertionCodes.DEPTH_IN_FEET, "The supplied depth was in feet it has been converted to metres")
+        } else {
+          assertions += QualityAssertion(AssertionCodes.DEPTH_IN_FEET, 1)
+        }
+
+      } else{
+        assertions += QualityAssertion(AssertionCodes.DEPTH_NON_NUMERIC, "Can't parse verbatimDepth " + raw.location.verbatimDepth)
       }
-      catch {
-        case e: Exception => assertions += QualityAssertion(AssertionCodes.DEPTH_NON_NUMERIC, "Can't parse verbatimDepth " + raw.location.verbatimDepth)
-      }
+//      try {
+//        val vdepth = raw.location.verbatimDepth.toFloat
+//        processed.location.verbatimDepth = vdepth.toString
+//        if (vdepth > 10000)
+//          assertions += QualityAssertion(AssertionCodes.DEPTH_OUT_OF_RANGE, "Depth " + vdepth + " is greater than 10,000 metres")
+//        else
+//          assertions += QualityAssertion(AssertionCodes.DEPTH_OUT_OF_RANGE, 1)
+//        assertions += QualityAssertion(AssertionCodes.DEPTH_NON_NUMERIC, 1)
+//      }
+//      catch {
+//        case e: Exception => assertions += QualityAssertion(AssertionCodes.DEPTH_NON_NUMERIC, "Can't parse verbatimDepth " + raw.location.verbatimDepth)
+//      }
     }
     if (raw.location.verbatimElevation != null) {
-      try {
-        val velevation = raw.location.verbatimElevation.toFloat
+      val parseElevationResult = DistanceRangeParser.parse(raw.location.verbatimElevation)
+      if(parseElevationResult.isDefined){
+        val (velevation, sourceUnit) = parseElevationResult.get
         processed.location.verbatimElevation = velevation.toString
-        if (velevation > 10000 || velevation < -100)
+        if (velevation > 10000 || velevation < -100){
           assertions += QualityAssertion(AssertionCodes.ALTITUDE_OUT_OF_RANGE, "Elevation " + velevation + " is greater than 10,000 metres or less than -100 metres.")
+        } else {
+          assertions += QualityAssertion(AssertionCodes.ALTITUDE_OUT_OF_RANGE, 1)
+        }
+        assertions += QualityAssertion(AssertionCodes.ALTITUDE_NON_NUMERIC,1)
+
+        if(sourceUnit == Feet){
+          assertions += QualityAssertion(AssertionCodes.ALTITUDE_IN_FEET, "The supplied altitude was in feet it has been converted to metres")
+        } else {
+          assertions += QualityAssertion(AssertionCodes.ALTITUDE_IN_FEET , 1)
+        }
+
+      } else {
+        assertions += QualityAssertion(AssertionCodes.ALTITUDE_NON_NUMERIC, "Can't parse verbatimElevation " + raw.location.verbatimElevation)
       }
-      catch {
-        case e: Exception => assertions += QualityAssertion(AssertionCodes.ALTITUDE_NON_NUMERIC, "Can't parse verbatimElevation " + raw.location.verbatimElevation)
-      }
+
+//      try {
+//        val velevation = raw.location.verbatimElevation.toFloat
+//        processed.location.verbatimElevation = velevation.toString
+//        if (velevation > 10000 || velevation < -100)
+//          assertions += QualityAssertion(AssertionCodes.ALTITUDE_OUT_OF_RANGE, "Elevation " + velevation + " is greater than 10,000 metres or less than -100 metres.")
+//        else
+//          assertions += QualityAssertion(AssertionCodes.ALTITUDE_OUT_OF_RANGE, 1)
+//        assertions += QualityAssertion(AssertionCodes.ALTITUDE_NON_NUMERIC,1)
+//      }
+//      catch {
+//        case e: Exception => assertions += QualityAssertion(AssertionCodes.ALTITUDE_NON_NUMERIC, "Can't parse verbatimElevation " + raw.location.verbatimElevation)
+//      }
     }
     //check for max and min reversals
     if (raw.location.minimumDepthInMeters != null && raw.location.maximumDepthInMeters != null) {
@@ -690,10 +925,10 @@ class LocationProcessor extends Processor {
           processed.location.minimumDepthInMeters = max.toString
           processed.location.maximumDepthInMeters = min.toString
           assertions += QualityAssertion(AssertionCodes.MIN_MAX_DEPTH_REVERSED, "The minimum, " + min + ", and maximum, " + max + ", depths have been transposed.")
-        }
-        else {
+        } else {
           processed.location.minimumDepthInMeters = min.toString
           processed.location.maximumDepthInMeters = max.toString
+          assertions += QualityAssertion(AssertionCodes.MIN_MAX_DEPTH_REVERSED, 1)
         }
       }
       catch {
@@ -712,6 +947,7 @@ class LocationProcessor extends Processor {
         else {
           processed.location.minimumElevationInMeters = min.toString
           processed.location.maximumElevationInMeters = max.toString
+          assertions += QualityAssertion(AssertionCodes.MIN_MAX_ALTITUDE_REVERSED,1)
         }
       }
       catch {
@@ -748,11 +984,17 @@ class LocationProcessor extends Processor {
   def processLatLong(rawLatitude: String, rawLongitude: String, rawGeodeticDatum: String, verbatimLatitude: String, verbatimLongitude: String, verbatimSRS: String, easting: String, northing: String, zone: String, assertions: ArrayBuffer[QualityAssertion]): Option[(String, String, String)] = {
     //check to see if we have coordinates specified
     if (rawLatitude != null && rawLongitude != null && !rawLatitude.toFloatWithOption.isEmpty && !rawLongitude.toFloatWithOption.isEmpty) {
+      //coordinates were supplied so the test passed
+      assertions += QualityAssertion(AssertionCodes.DECIMAL_COORDINATES_NOT_SUPPLIED, 1)
       // if decimal lat/long is provided in a CRS other than WGS84, then we need to reproject
 
       if (rawGeodeticDatum != null) {
+        //no assumptions about the datum is being made:
+        assertions += QualityAssertion(AssertionCodes.GEODETIC_DATUM_ASSUMED_WGS84, 1)
         val sourceEpsgCode = lookupEpsgCode(rawGeodeticDatum)
         if (!sourceEpsgCode.isEmpty) {
+          //datum is recognised so pass the test:
+          assertions += QualityAssertion(AssertionCodes.UNRECOGNIZED_GEODETIC_DATUM,1)
           if (sourceEpsgCode.get == WGS84_EPSG_Code) {
             //already in WGS84, no need to reproject
             Some((rawLatitude, rawLongitude, WGS84_EPSG_Code))
@@ -765,6 +1007,8 @@ class LocationProcessor extends Processor {
               assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CONVERSION_FAILED, "Transformation of decimal latiude and longitude to WGS84 failed")
               None
             } else {
+              //transformation of coordinates did not fail:
+              assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CONVERSION_FAILED, 1)
               assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CONVERTED, "Decimal latitude and longitude were converted to WGS84 (EPSG:4326)")
               val (reprojectedLatitude, reprojectedLongitude) = reprojectedCoords.get
               Some(reprojectedLatitude, reprojectedLongitude, WGS84_EPSG_Code)
@@ -781,99 +1025,111 @@ class LocationProcessor extends Processor {
       }
 
       // Attempt to infer the decimal latitude and longitude from the verbatim latitude and longitude
-    } else if (verbatimLatitude != null && verbatimLongitude != null) {
-      var decimalVerbatimLat = verbatimLatitude.toFloatWithOption
-      var decimalVerbatimLong = verbatimLongitude.toFloatWithOption
+    } else {
+      //no decimal latitude/longitude was provided
+      assertions += QualityAssertion(AssertionCodes.DECIMAL_COORDINATES_NOT_SUPPLIED)
+      if (verbatimLatitude != null && verbatimLongitude != null) {
+        var decimalVerbatimLat = verbatimLatitude.toFloatWithOption
+        var decimalVerbatimLong = verbatimLongitude.toFloatWithOption
 
-      if (decimalVerbatimLat.isEmpty || decimalVerbatimLong.isEmpty) {
-        //parse the expressions into their decimal equivalents
-        decimalVerbatimLat = VerbatimLatLongParser.parse(verbatimLatitude)
-        decimalVerbatimLong = VerbatimLatLongParser.parse(verbatimLongitude)
-      }
+        if (decimalVerbatimLat.isEmpty || decimalVerbatimLong.isEmpty) {
+          //parse the expressions into their decimal equivalents
+          decimalVerbatimLat = VerbatimLatLongParser.parse(verbatimLatitude)
+          decimalVerbatimLong = VerbatimLatLongParser.parse(verbatimLongitude)
+        }
 
-      if (!decimalVerbatimLat.isEmpty && !decimalVerbatimLong.isEmpty) {
-        if (decimalVerbatimLat.get.toString.isLatitude && decimalVerbatimLong.get.toString.isLongitude) {
+        if (!decimalVerbatimLat.isEmpty && !decimalVerbatimLong.isEmpty) {
+          if (decimalVerbatimLat.get.toString.isLatitude && decimalVerbatimLong.get.toString.isLongitude) {
 
-          // If a verbatim SRS is supplied, reproject coordinates to WGS 84
-          if (verbatimSRS != null) {
-            val sourceEpsgCode = lookupEpsgCode(verbatimSRS)
-            if (!sourceEpsgCode.isEmpty) {
-              if (sourceEpsgCode.get == WGS84_EPSG_Code) {
-                //already in WGS84, no need to reproject
-                assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM, "Decimal latitude and longitude were calculated using verbatimLatitude, verbatimLongitude and verbatimSRS")
-                Some((decimalVerbatimLat.get.toString, decimalVerbatimLong.get.toString, WGS84_EPSG_Code))
-              } else {
-                val desiredNoDecimalPlaces = math.min(getNumberOfDecimalPlacesInDouble(decimalVerbatimLat.get.toString), getNumberOfDecimalPlacesInDouble(decimalVerbatimLong.get.toString))
-
-                val reprojectedCoords = reprojectCoordinatesToWGS84(decimalVerbatimLat.get, decimalVerbatimLong.get, sourceEpsgCode.get, desiredNoDecimalPlaces)
-                if (reprojectedCoords.isEmpty) {
-                  assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_VERBATIM_FAILED, "Transformation of verbatim latiude and longitude to WGS84 failed")
-                  None
-                } else {
+            // If a verbatim SRS is supplied, reproject coordinates to WGS 84
+            if (verbatimSRS != null) {
+              val sourceEpsgCode = lookupEpsgCode(verbatimSRS)
+              if (!sourceEpsgCode.isEmpty) {
+                //calculation from verbatim did NOT fail:
+                assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_VERBATIM_FAILED, 1)
+                if (sourceEpsgCode.get == WGS84_EPSG_Code) {
+                  //already in WGS84, no need to reproject
                   assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM, "Decimal latitude and longitude were calculated using verbatimLatitude, verbatimLongitude and verbatimSRS")
-                  val (reprojectedLatitude, reprojectedLongitude) = reprojectedCoords.get
-                  Some(reprojectedLatitude, reprojectedLongitude, WGS84_EPSG_Code)
+                  Some((decimalVerbatimLat.get.toString, decimalVerbatimLong.get.toString, WGS84_EPSG_Code))
+                } else {
+                  val desiredNoDecimalPlaces = math.min(getNumberOfDecimalPlacesInDouble(decimalVerbatimLat.get.toString), getNumberOfDecimalPlacesInDouble(decimalVerbatimLong.get.toString))
+
+                  val reprojectedCoords = reprojectCoordinatesToWGS84(decimalVerbatimLat.get, decimalVerbatimLong.get, sourceEpsgCode.get, desiredNoDecimalPlaces)
+                  if (reprojectedCoords.isEmpty) {
+                    assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_VERBATIM_FAILED, "Transformation of verbatim latiude and longitude to WGS84 failed")
+                    None
+                  } else {
+                    //reprojection did NOT fail:
+                    assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_VERBATIM_FAILED, 1)
+                    assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM, "Decimal latitude and longitude were calculated using verbatimLatitude, verbatimLongitude and verbatimSRS")
+                    val (reprojectedLatitude, reprojectedLongitude) = reprojectedCoords.get
+                    Some(reprojectedLatitude, reprojectedLongitude, WGS84_EPSG_Code)
+                  }
                 }
+              } else {
+                assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_VERBATIM_FAILED, "Unrecognized verbatimSRS " + verbatimSRS)
+                None
               }
+              // Otherwise, assume latitude and longitude are already in WGS 84
+            } else if (decimalVerbatimLat.get.toString.isLatitude && decimalVerbatimLong.get.toString.isLongitude) {
+              //conversion dod NOT fail
+              assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_VERBATIM_FAILED,1)
+              assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM, "Decimal latitude and longitude were calculated using verbatimLatitude, verbatimLongitude and verbatimSRS")
+              Some((decimalVerbatimLat.get.toString, decimalVerbatimLong.get.toString, WGS84_EPSG_Code))
             } else {
-              assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_VERBATIM_FAILED, "Unrecognized verbatimSRS " + verbatimSRS)
+              // Invalid latitude, longitude
+              assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_VERBATIM_FAILED, "Could not parse verbatim latitude and longitude")
               None
             }
-            // Otherwise, assume latitude and longitude are already in WGS 84
-          } else if (decimalVerbatimLat.get.toString.isLatitude && decimalVerbatimLong.get.toString.isLongitude) {
-            assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_VERBATIM, "Decimal latitude and longitude were calculated using verbatimLatitude, verbatimLongitude and verbatimSRS")
-            Some((decimalVerbatimLat.get.toString, decimalVerbatimLong.get.toString, WGS84_EPSG_Code))
           } else {
-            // Invalid latitude, longitude
-            assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_VERBATIM_FAILED, "Could not parse verbatim latitude and longitude")
             None
           }
         } else {
           None
         }
-      } else {
-        None
-      }
-    } else if (easting != null && northing != null && zone != null) {
-      // Need a datum and a zone to get an epsg code for transforming easting/northing values
-      var epsgCodeKey = {
-        if (verbatimSRS != null) {
-          verbatimSRS.toUpperCase + "|" + zone
-        } else {
-          // Assume GDA94 / MGA zone
-          "GDA94|" + zone
-        }
-      }
-
-      if (zoneEpsgCodesMap.contains(epsgCodeKey)) {
-        val crsEpsgCode = zoneEpsgCodesMap(epsgCodeKey)
-        val eastingAsDouble = easting.toDoubleWithOption;
-        val northingAsDouble = northing.toDoubleWithOption;
-
-        if (!eastingAsDouble.isEmpty && !northingAsDouble.isEmpty) {
-          // Always round to 5 decimal places as easting/northing values are in metres and 0.00001 degree is approximately equal to 1m.
-          val reprojectedCoords = reprojectCoordinatesToWGS84(eastingAsDouble.get, northingAsDouble.get, crsEpsgCode, 5)
-          if (reprojectedCoords.isEmpty) {
-            assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_EASTING_NORTHING_FAILED, "Transformation of verbatim easting and northing to WGS84 failed")
-            None
+      } else if (easting != null && northing != null && zone != null) {
+        // Need a datum and a zone to get an epsg code for transforming easting/northing values
+        var epsgCodeKey = {
+          if (verbatimSRS != null) {
+            verbatimSRS.toUpperCase + "|" + zone
           } else {
-            assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_EASTING_NORTHING, "Decimal latitude and longitude were calculated using easting, northing and zone.")
-            val (reprojectedLatitude, reprojectedLongitude) = reprojectedCoords.get
-            Some(reprojectedLatitude, reprojectedLongitude, WGS84_EPSG_Code)
+            // Assume GDA94 / MGA zone
+            "GDA94|" + zone
+          }
+        }
+
+        if (zoneEpsgCodesMap.contains(epsgCodeKey)) {
+          val crsEpsgCode = zoneEpsgCodesMap(epsgCodeKey)
+          val eastingAsDouble = easting.toDoubleWithOption;
+          val northingAsDouble = northing.toDoubleWithOption;
+
+          if (!eastingAsDouble.isEmpty && !northingAsDouble.isEmpty) {
+            // Always round to 5 decimal places as easting/northing values are in metres and 0.00001 degree is approximately equal to 1m.
+            val reprojectedCoords = reprojectCoordinatesToWGS84(eastingAsDouble.get, northingAsDouble.get, crsEpsgCode, 5)
+            if (reprojectedCoords.isEmpty) {
+              assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_EASTING_NORTHING_FAILED, "Transformation of verbatim easting and northing to WGS84 failed")
+              None
+            } else {
+              //lat and long from easting and northing did NOT fail:
+              assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_EASTING_NORTHING_FAILED, 1)
+              assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATED_FROM_EASTING_NORTHING, "Decimal latitude and longitude were calculated using easting, northing and zone.")
+              val (reprojectedLatitude, reprojectedLongitude) = reprojectedCoords.get
+              Some(reprojectedLatitude, reprojectedLongitude, WGS84_EPSG_Code)
+            }
+          } else {
+            None
           }
         } else {
+          if (verbatimSRS == null) {
+            assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_EASTING_NORTHING_FAILED, "Unrecognized zone GDA94 / MGA zone " + zone)
+          } else {
+            assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_EASTING_NORTHING_FAILED, "Unrecognized zone " + verbatimSRS + " / zone " + zone)
+          }
           None
         }
       } else {
-        if (verbatimSRS == null) {
-          assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_EASTING_NORTHING_FAILED, "Unrecognized zone GDA94 / MGA zone " + zone)
-        } else {
-          assertions += QualityAssertion(AssertionCodes.DECIMAL_LAT_LONG_CALCULATION_FROM_EASTING_NORTHING_FAILED, "Unrecognized zone " + verbatimSRS + " / zone " + zone)
-        }
         None
       }
-    } else {
-      None
     }
   }
 
@@ -946,12 +1202,21 @@ class LocationProcessor extends Processor {
 
   def checkCoordinateUncertainty(raw: FullRecord, processed: FullRecord, assertions: ArrayBuffer[QualityAssertion]) {
     //validate coordinate accuracy (coordinateUncertaintyInMeters) and coordinatePrecision (precision - A. Chapman)
+    var checkedPrecision =false
     if (raw.location.coordinateUncertaintyInMeters != null && raw.location.coordinateUncertaintyInMeters.length > 0) {
       //parse it into a numeric number in metres
       //TODO should this be a whole number??
-      val parsedValue = DistanceRangeParser.parse(raw.location.coordinateUncertaintyInMeters)
-      if (!parsedValue.isEmpty) {
-        processed.location.coordinateUncertaintyInMeters = parsedValue.get.toString
+      val parsedResult = DistanceRangeParser.parse(raw.location.coordinateUncertaintyInMeters)
+      if (!parsedResult.isEmpty) {
+        val (parsedValue, rawUnit) = parsedResult.get
+        if(parsedValue > 0){
+          //not an uncertainty mismatch
+          assertions += QualityAssertion(AssertionCodes.UNCERTAINTY_RANGE_MISMATCH, 1)
+        } else {
+          val comment = "Supplied uncertainty, " + raw.location.coordinateUncertaintyInMeters + ", is not a supported format"
+          assertions += QualityAssertion(AssertionCodes.UNCERTAINTY_RANGE_MISMATCH, comment)
+        }
+        processed.location.coordinateUncertaintyInMeters = parsedValue.toString
       } else {
         val comment = "Supplied uncertainty, " + raw.location.coordinateUncertaintyInMeters + ", is not a supported format"
         assertions += QualityAssertion(AssertionCodes.UNCERTAINTY_RANGE_MISMATCH, comment)
@@ -965,11 +1230,43 @@ class LocationProcessor extends Processor {
           processed.location.coordinateUncertaintyInMeters = value.get.toInt.toString
           val comment = "Supplied precision, " + raw.location.coordinatePrecision + ", is assumed to be uncertainty in metres";
           assertions += QualityAssertion(AssertionCodes.UNCERTAINTY_IN_PRECISION, comment)
+          checkedPrecision = true
         }
       }
     }
-    if (raw.location.coordinatePrecision == null)
+    if (raw.location.coordinatePrecision == null){
       assertions += QualityAssertion(AssertionCodes.MISSING_COORDINATEPRECISION, "Missing coordinatePrecision")
+    } else {
+      assertions += QualityAssertion(AssertionCodes.MISSING_COORDINATEPRECISION, 1)
+      if(!checkedPrecision){
+        val value = raw.location.coordinatePrecision.toFloatWithOption
+        if(value.isDefined){
+          //Ensure that the precision is within the required ranges
+          if (value.get > 0 && value.get <= 1){
+            assertions += QualityAssertion(AssertionCodes.PRECISION_RANGE_MISMATCH, 1)
+            //now test for coordinate precision
+            val pre = if (raw.location.coordinatePrecision.contains(".")) raw.location.coordinatePrecision.split("\\.")(1).length else 0
+            val lat = processed.location.decimalLatitude
+            val long = processed.location.decimalLongitude
+            val latp = if(lat.contains("."))lat.split("\\.")(1).length else 0
+            val lonp = if(long.contains("."))long.split("\\.")(1).length else 0
+            if(pre == latp && pre == lonp){
+              // no coordinate precision mismatch exists
+              assertions += QualityAssertion(AssertionCodes.COORDINATE_PRECISION_MISMATCH, 1)
+            } else {
+              assertions += QualityAssertion(AssertionCodes.COORDINATE_PRECISION_MISMATCH)
+            }
+          }
+          else{
+            assertions += QualityAssertion(AssertionCodes.PRECISION_RANGE_MISMATCH, "Coordinate precision is not between 0 and 1" )
+          }
+        }
+        else {
+           assertions += QualityAssertion(AssertionCodes.PRECISION_RANGE_MISMATCH, "Unable to parse the coordinate precision")
+        }
+      }
+
+    }
 
     // If the coordinateUncertainty is still empty populate it with the default
     // value (we don't test until now because the SDS will sometime include coordinate uncertainty)
@@ -977,6 +1274,8 @@ class LocationProcessor extends Processor {
     // will already be populated if a default value exists
     if (processed.location.coordinateUncertaintyInMeters == null) {
       assertions += QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, "Uncertainty was not supplied")
+    } else{
+      assertions += QualityAssertion(AssertionCodes.UNCERTAINTY_NOT_SPECIFIED, 1)
     }
   }
 
@@ -999,6 +1298,9 @@ class LocationProcessor extends Processor {
               ", Value determined from coordinates: " + habitatFromPoint
             assertions += QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH, comment)
           }
+        } else{
+          //habitats ARE compatible
+          assertions += QualityAssertion(AssertionCodes.COORDINATE_HABITAT_MISMATCH, 1)
         }
       }
     }
@@ -1025,6 +1327,9 @@ class LocationProcessor extends Processor {
         //add a quality assertion
         val comment = "Supplied: " + stateTerm.get.canonical + ", calculated: " + processed.location.stateProvince
         assertions += QualityAssertion(AssertionCodes.STATE_COORDINATE_MISMATCH, comment)
+      } else{
+        //states are not in mismatch
+        assertions += QualityAssertion(AssertionCodes.STATE_COORDINATE_MISMATCH, 1)
       }
     }
   }
@@ -1033,20 +1338,35 @@ class LocationProcessor extends Processor {
     //check for missing geodeticDatum
     if (raw.location.geodeticDatum == null && processed.location.geodeticDatum == null)
       assertions += QualityAssertion(AssertionCodes.MISSING_GEODETICDATUM, "Missing geodeticDatum")
+    else
+      assertions += QualityAssertion(AssertionCodes.MISSING_GEODETICDATUM,1)
     //check for missing georeferencedBy
     if (raw.location.georeferencedBy == null && processed.location.georeferencedBy == null)
       assertions += QualityAssertion(AssertionCodes.MISSING_GEOREFERNCEDBY, "Missing georeferencedBy")
+    else
+      assertions += QualityAssertion(AssertionCodes.MISSING_GEOREFERNCEDBY, 1)
     //check for missing georeferencedProtocol
     if (raw.location.georeferenceProtocol == null && processed.location.georeferenceProtocol == null)
       assertions += QualityAssertion(AssertionCodes.MISSING_GEOREFERENCEPROTOCOL, "Missing georeferenceProtocol")
+    else
+      assertions += QualityAssertion(AssertionCodes.MISSING_GEOREFERENCEPROTOCOL,1)
     //check for missing georeferenceSources
     if (raw.location.georeferenceSources == null && processed.location.georeferenceSources == null)
       assertions += QualityAssertion(AssertionCodes.MISSING_GEOREFERENCESOURCES, "Missing georeferenceSources")
+    else
+      assertions += QualityAssertion(AssertionCodes.MISSING_GEOREFERENCESOURCES,1)
     //check for missing georeferenceVerificationStatus
     if (raw.location.georeferenceVerificationStatus == null && processed.location.georeferenceVerificationStatus == null)
       assertions += QualityAssertion(AssertionCodes.MISSING_GEOREFERENCEVERIFICATIONSTATUS, "Missing georeferenceVerificationStatus")
+    else
+      assertions += QualityAssertion(AssertionCodes.MISSING_GEOREFERENCEVERIFICATIONSTATUS,1)
     //check for missing georeferenceDate
-    //there is no georeferenceDate in out model ???
+    if (StringUtils.isBlank(raw.location.georeferencedDate) && !raw.miscProperties.containsKey("georeferencedDate")){
+      assertions += QualityAssertion(AssertionCodes.MISSING_GEOREFERENCE_DATE)
+    } else {
+      assertions += QualityAssertion(AssertionCodes.MISSING_GEOREFERENCE_DATE, 1)
+    }
+
   }
 
   /**
@@ -1072,38 +1392,55 @@ class LocationProcessor extends Processor {
           val tmp = processed.location.decimalLatitude
           processed.location.decimalLatitude = processed.location.decimalLongitude
           processed.location.decimalLongitude = tmp
+          //coordinates are not out of range:
+          assertions += QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, 1)
         } else {
           assertions += QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, "Coordinates are out of range: " +
             processed.location.decimalLatitude + "," + processed.location.decimalLongitude)
+          assertions += QualityAssertion(AssertionCodes.INVERTED_COORDINATES,1)
         }
+      } else{
+        assertions ++= Array(QualityAssertion(AssertionCodes.INVERTED_COORDINATES,1), QualityAssertion(AssertionCodes.COORDINATES_OUT_OF_RANGE, 1))
       }
 
       if (lat == 0.0f && lon == 0.0f) {
         assertions += QualityAssertion(AssertionCodes.ZERO_COORDINATES, "Coordinates 0,0")
         processed.location.decimalLatitude = null
         processed.location.decimalLongitude = null
+      } else{
+        assertions += QualityAssertion(AssertionCodes.ZERO_COORDINATES,1)
       }
 
       if (raw.location.country != null && raw.location.country != "") {
         val country = Countries.matchTerm(raw.location.country)
         if (!country.isEmpty) {
-
+          assertions += QualityAssertion(AssertionCodes.UNKNOWN_COUNTRY_NAME, 1)
           val latlngBBoxOption = CountryCentrePoints.matchName(country.get.canonical)
           latlngBBoxOption match {
             case Some((latlng, bbox)) => {
 
               if (!bbox.containsPoint(lat, lon)) {
+                var hasCoordinateMismatch = true
                 if (bbox.containsPoint(lat * -1, lon)) {
                   //latitude is negated
                   assertions += QualityAssertion(AssertionCodes.NEGATED_LATITUDE,
                     "Latitude seems to be negated.  Original value:" + processed.location.decimalLatitude)
                   processed.location.decimalLatitude = (lat * -1).toString
+                  hasCoordinateMismatch = false
                 }
                 if (bbox.containsPoint(lat, lon * -1)) {
                   //point in wrong EW hemisphere - what do we do?
                   assertions += QualityAssertion(AssertionCodes.NEGATED_LONGITUDE,
                     "Longitude seems to be negated. Original value: " + processed.location.decimalLongitude)
                   processed.location.decimalLongitude = (lon * -1).toString
+                  hasCoordinateMismatch = false
+                }
+
+                if(hasCoordinateMismatch){
+                  assertions += QualityAssertion(AssertionCodes.COUNTRY_COORDINATE_MISMATCH)
+                } else {
+                  //there was no mismatch
+                  assertions += QualityAssertion(AssertionCodes.COUNTRY_COORDINATE_MISMATCH, 1)
                 }
               }
             }
@@ -1436,17 +1773,53 @@ class ClassificationProcessor extends Processor {
     taxon != null && taxon.equalsIgnoreCase(classification.getProperty(field).getOrElse(""))
   }
 
-  def setMatchStats(nameMetrics:au.org.ala.checklist.lucene.model.MetricsResultDTO, processed:FullRecord){
+  def setMatchStats(nameMetrics:au.org.ala.checklist.lucene.model.MetricsResultDTO, processed:FullRecord, assertions:ArrayBuffer[QualityAssertion]){
     //set the parse type and errors for all results before continuing
     processed.classification.nameParseType = if(nameMetrics.getNameType != null)nameMetrics.getNameType.toString else "UNKNOWN"
     //add the taxonomic issues for the match
     processed.classification.taxonomicIssue = if(nameMetrics.getErrors != null)nameMetrics.getErrors.toList.map(_.toString).toArray else Array("noIssue")
+    //check the name parse tye to see if the scientific name was valid
+    if (processed.classification.nameParseType == "blacklisted"){
+      assertions += QualityAssertion(AssertionCodes.INVALID_SCIENTIFIC_NAME)
+    } else {
+      assertions += QualityAssertion(AssertionCodes.INVALID_SCIENTIFIC_NAME, 1)
+    }
+  }
+
+  def testSuppliedValues(raw:FullRecord, processed:FullRecord, assertions:ArrayBuffer[QualityAssertion]){
+    //test for the missing taxon rank
+    if (StringUtils.isBlank(raw.classification.taxonRank)){
+      assertions += QualityAssertion(AssertionCodes.MISSING_TAXONRANK, "Missing taxonRank")
+    } else {
+      assertions += QualityAssertion(AssertionCodes.MISSING_TAXONRANK, 1)
+    }
+    //test that a scientific name or vernacular name has been supplied
+    if (StringUtils.isBlank(raw.classification.scientificName) && StringUtils.isBlank(raw.classification.vernacularName)){
+      assertions += QualityAssertion(AssertionCodes.NAME_NOT_SUPPLIED, "No scientificName or vernacularName has been supplied. Name match will be based on a constructed name.")
+    } else {
+      assertions += QualityAssertion(AssertionCodes.NAME_NOT_SUPPLIED, 1)
+    }
+
+    //test for mismatch in kingdom
+    if (StringUtils.isNotBlank(raw.classification.kingdom)){
+      val matchedKingdom = Kingdoms.matchTerm(raw.classification.kingdom)
+      if (matchedKingdom.isDefined){
+        //the supplied kingdom is recognised
+        assertions += QualityAssertion(AssertionCodes.UNKNOWN_KINGDOM, 1)
+      } else {
+        assertions += QualityAssertion(AssertionCodes.UNKNOWN_KINGDOM, "The supplied kingdom is not recognised")
+      }
+    }
+
   }
 
   /**
    * Match the classification
    */
   def process(guid: String, raw: FullRecord, processed: FullRecord,lastProcessed: Option[FullRecord] = None): Array[QualityAssertion] = {
+    var assertions = new ArrayBuffer[QualityAssertion]
+
+    testSuppliedValues(raw, processed, assertions)
 
     try {
       //update the raw with the "default" values if necessary
@@ -1461,11 +1834,13 @@ class ClassificationProcessor extends Processor {
       //val nsr = DAO.nameIndex.searchForRecord(classification, true)
       val nameMetrics = ClassificationDAO.getByHashLRU(raw.classification).getOrElse(null)
       if(nameMetrics != null){
-       
+
         val nsr = nameMetrics.getResult
   
         //store the matched classification
         if (nsr != null) {
+          //The name is recognised:
+          assertions += QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, 1)
           val classification = nsr.getRankClassification
           //Check to see if the classification fits in with the supplied taxonomic hints
           //get the taxonomic hints from the collection or data resource
@@ -1482,8 +1857,10 @@ class ClassificationProcessor extends Processor {
               if (!isValid) {
                 logger.info("Conflict in matched classification. Matched: " + guid + ", Matched: " + comment + ", Taxonomic hints in use: " + taxonHints.toList)
                 processed.classification.nameMatchMetric = "matchFailedHint"
-                //TODO think about logging this information to a separate column family
-                return Array() //QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, "Conflict in matched classification. Matched: "+ comment))
+                assertions += QualityAssertion(AssertionCodes.RESOURCE_TAXONOMIC_SCOPE_MISMATCH, comment)
+              } else if (attribution.get.retrieveParseHints.size >0){
+                //the taxonomic hints passed
+                assertions += QualityAssertion(AssertionCodes.RESOURCE_TAXONOMIC_SCOPE_MISMATCH, 1)
               }
             }
           }
@@ -1528,13 +1905,13 @@ class ClassificationProcessor extends Processor {
   //          case _ => "noIssue"
   //        }
           
-          setMatchStats(nameMetrics,processed)
+          setMatchStats(nameMetrics,processed, assertions)
   
           //is the name in the NSLs ???
           if (afdApniIdentifier.findFirstMatchIn(nsr.getLsid).isEmpty) {
-            Array(QualityAssertion(AssertionCodes.NAME_NOT_IN_NATIONAL_CHECKLISTS, "Record not attached to concept in national species lists"))
+            assertions += QualityAssertion(AssertionCodes.NAME_NOT_IN_NATIONAL_CHECKLISTS, "Record not attached to concept in national species lists")
           } else {
-            Array()
+            assertions += QualityAssertion(AssertionCodes.NAME_NOT_IN_NATIONAL_CHECKLISTS, 1)
           }
   
         } else if(nameMetrics.getErrors.contains(au.org.ala.checklist.lucene.model.ErrorType.HOMONYM)){
@@ -1542,41 +1919,27 @@ class ClassificationProcessor extends Processor {
             raw.classification.kingdom + ", Family:" + raw.classification.family + ", Genus:" + raw.classification.genus +
             ", Species: " + raw.classification.species + ", Epithet: " + raw.classification.specificEpithet)
           processed.classification.nameMatchMetric = "noMatch"
-          setMatchStats(nameMetrics,processed)
-          Array()
+          setMatchStats(nameMetrics,processed, assertions)
+          assertions += QualityAssertion(AssertionCodes.HOMONYM_ISSUE, "A homonym was detected in supplied classificaiton.")
         } else {
           logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " +
             raw.classification.kingdom + ", Family:" + raw.classification.family + ", Genus:" + raw.classification.genus +
             ", Species: " + raw.classification.species + ", Epithet: " + raw.classification.specificEpithet)
           processed.classification.nameMatchMetric = "noMatch"
-          setMatchStats(nameMetrics,processed)
-          Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, "Name not recognised"))
+          setMatchStats(nameMetrics,processed,assertions)
+          assertions += QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, "Name not recognised")
         }
-      }
-      
-      else {
+      } else {
         logger.debug("[QualityAssertion] No match for record, classification for Kingdom: " +
             raw.classification.kingdom + ", Family:" + raw.classification.family + ", Genus:" + raw.classification.genus +
             ", Species: " + raw.classification.species + ", Epithet: " + raw.classification.specificEpithet)
           processed.classification.nameMatchMetric = "noMatch"
-          Array(QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, "Name not recognised"))
+          assertions += QualityAssertion(AssertionCodes.NAME_NOTRECOGNISED, "Name not recognised")
       }
     } catch {
-      //NC:20113-02-15  The "getNameResultMetrics" method does not throw exceptions rather it recursively looks for a result logging the exceptions that occurred
-      
-//      case he: HomonymException => {
-//        logger.debug(he.getMessage, he)
-//        //need to remove any default values from the processed classification
-//        processed.classification.kingdom = null
-//        processed.classification.phylum = null
-//        processed.classification.classs = null
-//        processed.classification.order = null
-//        processed.classification.family = null
-//        Array(QualityAssertion(AssertionCodes.HOMONYM_ISSUE, "Homonym issue resolving the classification"))
-//      }
-//      case se: SearchResultException => logger.debug(se.getMessage, se); Array()
-      case e: Exception => logger.error("Exception during classification match for record " + guid, e); Array()
+      case e: Exception => logger.error("Exception during classification match for record " + guid, e)
     }
+    assertions.toArray
   }
   def getName = FullRecordMapper.taxonomicalQa
 

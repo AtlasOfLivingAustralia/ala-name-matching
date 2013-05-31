@@ -152,15 +152,16 @@ trait IndexDAO {
     "family", "genus", "genus_guid", "species", "species_guid", "state", "imcra", "ibra", "places", "latitude", "longitude",
     "lat_long",  "point-1", "point-0.1", "point-0.01", "point-0.001", "point-0.0001",
     "year", "month", "basis_of_record", "raw_basis_of_record", "type_status",
-    "raw_type_status", "taxonomic_kosher", "geospatial_kosher", "assertions", "location_remarks",
-    "occurrence_remarks", "citation", "user_assertions", "system_assertions", "collector", "state_conservation", "raw_state_conservation",
+    "raw_type_status", "taxonomic_kosher", "geospatial_kosher",  "location_remarks",
+    "occurrence_remarks", "citation", "user_assertions",  "collector", "state_conservation", "raw_state_conservation",
     "sensitive", "coordinate_uncertainty", "user_id", "alau_user_id", "provenance", "subspecies_guid", "subspecies_name", "interaction", "last_assertion_date",
     "last_load_date", "last_processed_date", "modified_date", "establishment_means", "loan_number", "loan_identifier", "loan_destination",
     "loan_botanist", "loan_date", "loan_return_date", "original_name_usage", "duplicate_inst", "record_number", "first_loaded_date", "name_match_metric",
     "life_stage", "outlier_layer", "outlier_layer_count", "taxonomic_issue", "raw_identification_qualifier", "species_habitats",
     "identified_by", "identified_date", "sensitive_longitude", "sensitive_latitude", "pest_flag_s", "collectors", "duplicate_status", "duplicate_record",
     "duplicate_type", "sensitive_coordinate_uncertainty", "distance_outside_expert_range", "elevation_d", "min_elevation_d", "max_elevation_d",
-    "depth_d", "min_depth_d", "max_depth_d", "name_parse_type_s","occurrence_status_s", "occurrence_details", "photographer_s", "rights") // ++ elFields ++ clFields
+    "depth_d", "min_depth_d", "max_depth_d", "name_parse_type_s","occurrence_status_s", "occurrence_details", "photographer_s", "rights",
+    "raw_geo_validation_status_s", "raw_occurrence_status_s") // ++ elFields ++ clFields
 
   /**
    * Constructs a scientific name.
@@ -443,12 +444,13 @@ trait IndexDAO {
           getValue("typeStatus", map),
           getValue(FullRecordMapper.taxonomicDecisionColumn, map),
           geoKosher,
-          getAssertions(map).mkString("|"),
+          //NC 2013-05-23: Assertions are now values, failed, passed and untested these will be handled separately
+          //getAssertions(map).mkString("|"),
           getValue("locationRemarks", map),
           getValue("occurrenceRemarks", map),
           "",
           hasUserAss,
-          (getValue(FullRecordMapper.qualityAssertionColumn, map).length > 3).toString,
+          //(getValue(FullRecordMapper.qualityAssertionColumn, map).length > 3).toString,  //NC 2013-05-23: See comment above
           getValue("recordedBy", map),
           stateCons, //stat
           rawStateCons,
@@ -484,7 +486,7 @@ trait IndexDAO {
           map.getOrElse("verbatimElevation.p", ""), map.getOrElse("minimumElevationInMeters.p", ""), map.getOrElse("maximumElevationInMeters.p", ""),
           map.getOrElse("verbatimDepth.p", ""), map.getOrElse("minimumDepthInMeters.p", ""), map.getOrElse("maximumDepthInMeters.p", ""),
           map.getOrElse("nameParseType.p",""),map.getOrElse("occurrenceStatus",""), map.getOrElse("occurrenceDetails",""), map.getOrElse("photographer",""),
-          map.getOrElse("rights","")
+          map.getOrElse("rights",""), map.getOrElse("georeferenceVerificationStatus",""), map.getOrElse("occurrenceStatus", "")
         ) //++ elFields.map(field => elmap.getOrElse(field,"")) ++ clFields.map(field=> clmap.getOrElse(field,"")
         //)
       }
@@ -709,9 +711,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
         val solrDocument = iter.next()
         val map = new java.util.HashMap[String, Object]
         solrDocument.getFieldValueMap().keySet().asScala.foreach(s => map.put(s, if (multivaluedFields.isDefined && multivaluedFields.get.contains(s)) solrDocument.getFieldValues(s) else solrDocument.getFieldValue(s)))
-        //        if(multivaluedFields.isDefined){
-        //          multivaluedFields.get.foreach(f => map.put(f, solrDocument.getFieldValues(f)))
-        //        }
         proc(map)
       }
       counter += pageSize
@@ -731,7 +730,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
   def removeFromIndex(field: String, value: String) = {
     init
     try {
-      //println("Deleting " + field +":" + value)
+      logger.debug("Deleting " + field +":" + value)
       solrServer.deleteByQuery(field + ":\"" + value + "\"")
       solrServer.commit
     }
@@ -921,6 +920,16 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
           }
         }
 
+        //now index the System QA assertions
+        val systemAssertions = Json.toArray(map.getOrElse(FullRecordMapper.qualityAssertionColumn, "[]"), classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[QualityAssertion]]
+        val types = systemAssertions.groupBy(_.getQaStatus)
+        types.getOrElse(0, Array()).foreach(qa=> doc.addField(if(AssertionCodes.getByCode(qa.getCode).get.isAMissingCheck) "assertions_missing" else "assertions", qa.getName()))
+        types.getOrElse(1, Array()).foreach(qa => doc.addField("assertions_passed", qa.getName()))
+        val unchecked = AssertionCodes.getMissingCodes((systemAssertions.map(it=>AssertionCodes.getByCode(it.code).getOrElse(null))).toSet)
+        unchecked.foreach(ec => doc.addField("assertions_unchecked", ec.name))
+        //add system assertions boolean value
+        doc.addField("system_assertions", types.contains(0))
+        //"system_assertions"
         //now index the QA names for the user if userQA = true
         val hasUserAssertions = map.getOrElse(FullRecordMapper.userQualityAssertionColumn, "false")
         if ("true".equals(hasUserAssertions)) {
@@ -953,9 +962,9 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
 
         //TODO Think about moving species group stuff here.
         //index the additional species information - ie species groups
-                val lft = map.get("left.p")
-                val rgt = map.get("right.p")
-                if(lft.isDefined && rgt.isDefined){
+        val lft = map.get("left.p")
+        val rgt = map.get("right.p")
+        if(lft.isDefined && rgt.isDefined){
                   val sgs = SpeciesGroups.getSpeciesSubGroups(lft.get, rgt.get)
                   if(sgs.isDefined){
                     sgs.get.foreach{v:String => doc.addField("species_subgroup", v)}
@@ -973,17 +982,12 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
             solrDocList.add(doc)
 
           if (solrDocList.size == 1000 || (commit && solrDocList.size > 0)) {
-            //            while (!thread.ready) {
-            //              Thread.sleep(50)
-            //            }
+
 
             solrServer.add(solrDocList)
-            if (commit || solrDocList.size >= 10000)
+            if (commit || solrDocList.size >= 10000){
               solrServer.commit
-            //            val tmpDocList = new java.util.ArrayList[SolrInputDocument](solrDocList);
-            //            while(docQueue.size()>1){Thread.sleep(250)}
-            //            docQueue.add(tmpDocList)
-            //thread ! tmpDocList
+            }
             solrDocList.clear
           }
           }

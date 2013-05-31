@@ -234,14 +234,33 @@ object Store {
   }
 
   /**
+   * Get system assertions that have failed.
+   *
+   * @param uuid
+   * @return
+   */
+  def getSystemAssertions(uuid: java.lang.String): java.util.List[QualityAssertion] = {
+    val rowKey = occurrenceDAO.getRowKeyFromUuid(uuid).getOrElse(uuid);
+    occurrenceDAO.getSystemAssertions(rowKey).filter(_.qaStatus == 0).asJava
+  }
+
+  /**
    * Retrieve the system supplied systemAssertions.
    * 
    * A user can supply either a uuid or rowKey
    */
-  def getSystemAssertions(uuid: java.lang.String): java.util.List[QualityAssertion] = {
+  def getAllSystemAssertions(uuid: java.lang.String): java.util.Map[String,java.util.List[QualityAssertion]] = {
     //systemassertions are handled using row keys - this is unlike user assertions.
     val rowKey = occurrenceDAO.getRowKeyFromUuid(uuid).getOrElse(uuid);
-    occurrenceDAO.getSystemAssertions(rowKey).asJava
+    val list = occurrenceDAO.getSystemAssertions(rowKey)
+    val unchecked = AssertionCodes.getMissingCodes((list.map(it=>AssertionCodes.getByCode(it.code).getOrElse(null))).toSet)
+
+    ((list ++ unchecked.map(it => QualityAssertion(it, 3))).groupBy{
+                                                              case i if (i.qaStatus == 0 && AssertionCodes.getByCode(i.code).getOrElse(AssertionCodes.GEOSPATIAL_ISSUE).isAMissingCheck) => "missing"
+                                                              case i if i.qaStatus == 0 => "failed"
+                                                              case i if i.qaStatus == 1 => "passed"
+                                                              case _ => "unchecked"
+                                                            }).mapValues(_.asJava).asJava
   }
 
   /**

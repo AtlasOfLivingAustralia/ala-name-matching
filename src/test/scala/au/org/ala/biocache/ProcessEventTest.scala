@@ -98,8 +98,8 @@ class ProcessEventTest extends ConfigFunSuite {
     expect("16"){ processed.event.day }
     expect("06"){ processed.event.month }
     expect("1978"){ processed.event.year }
-    expect(1){ assertions.size }
-    expect(30009){ assertions(0).code }
+    //expect(1){ assertions.size }
+    expect(0){ assertions.find(_.code == 30009).get.qaStatus }
   }
 
   test("invalid month test") {
@@ -117,7 +117,8 @@ class ProcessEventTest extends ConfigFunSuite {
     expect(null){ processed.event.month }
     expect("1978"){ processed.event.year }
 
-    expect(1){ assertions.size }
+    //expect(1){ assertions.size }
+    expect(0){ assertions.find(_.code == 30007).get.qaStatus }
   }
 
   test("invalid month test > 12") {
@@ -135,7 +136,8 @@ class ProcessEventTest extends ConfigFunSuite {
     expect(null){ processed.event.month }
     expect("1978"){ processed.event.year }
 
-    expect(1){ assertions.size }
+    //expect(1){ assertions.size }
+    expect(0){ assertions.find(_.code == 30007).get.qaStatus }
   }
 
   test("year = 11, month = 02, day = 01") {
@@ -153,7 +155,8 @@ class ProcessEventTest extends ConfigFunSuite {
     expect("02"){ processed.event.month }
     expect("2011"){ processed.event.year }
 
-    expect(0){ assertions.size }
+    //expect(0){ assertions.size }
+    expect(1){ assertions.find(_.code == 30007).get.qaStatus }
   }
 
   test("1973-10-14") {
@@ -169,7 +172,8 @@ class ProcessEventTest extends ConfigFunSuite {
     expect("10"){ processed.event.month }
     expect("1973"){ processed.event.year }
 
-    expect(0){ assertions.size }
+    //expect(0){ assertions.size }
+    expect(1){ assertions.find(_.code == 30007).get.qaStatus }
   }
 
   test("today"){
@@ -179,7 +183,8 @@ class ProcessEventTest extends ConfigFunSuite {
     raw.event.eventDate = sf.format(new Date())
     val assertions = (new EventProcessor).process("1234", raw, processed)
     expect(DateUtil.getCurrentYear.toString){ processed.event.year }
-    expect(0){ assertions.size }
+    //expect(0){ assertions.size }
+    expect(1){ assertions.find(_.code == 30007).get.qaStatus }
   }
 
   test("tomorrow"){
@@ -190,6 +195,7 @@ class ProcessEventTest extends ConfigFunSuite {
     val assertions = (new EventProcessor).process("1234", raw, processed)
     expect(DateUtil.getCurrentYear.toString){ processed.event.year }
     expect(true){ assertions.size > 0 }
+    expect(0){ assertions.find(_.code == 30007).get.qaStatus }
   }
 
   test("a digit year which gives a future date") {
@@ -207,6 +213,117 @@ class ProcessEventTest extends ConfigFunSuite {
 
     expect("19"+twoDigitYear){ processed.event.year }
 
-    expect(0){ assertions.size }
+    //expect(0){ assertions.size }
+    expect(1){ assertions.find(_.code == 30007).get.qaStatus }
+  }
+
+  test ("Identification predates the occurrence") {
+    val raw = new FullRecord
+    val processed = new FullRecord
+    raw.identification.dateIdentified = "2012-01-01"
+    raw.event.eventDate = " 2013-01-01"
+
+    var qas = (new EventProcessor).process("test", raw, processed)
+    expect(0) {
+      //the identification happened before the collection !!
+      qas.find {_.getName == "idPreOccurrence"}.get.qaStatus
+    }
+
+    raw.identification.dateIdentified = "2013-01-01"
+    qas = (new EventProcessor).process("test", raw, processed)
+    expect(1) {
+      //the identification happened at the same time of the collection
+      qas.find {_.getName == "idPreOccurrence"}.get.qaStatus
+    }
+  }
+
+  test ("Georeferencing postdates the occurrence") {
+    val raw = new FullRecord
+    val processed = new FullRecord
+    raw.location.georeferencedDate = "2013-04-01"
+    raw.event.eventDate = " 2013-01-01"
+
+    var qas = (new EventProcessor).process("test", raw, processed)
+    expect(0) {
+      //the georeferencing happened after the collection !!
+      qas.find {_.getName == "georefPostDate"}.get.qaStatus
+    }
+
+    raw.location.georeferencedDate = "2013-01-01"
+    qas = (new EventProcessor).process("test", raw, processed)
+    expect(1) {
+      //the georeferecing happened at the same time as the collection
+      qas.find {_.getName == "georefPostDate"}.get.qaStatus
+    }
+  }
+
+  test("First of dates") {
+    val raw = new FullRecord
+    var processed = new FullRecord
+    raw.event.day ="1"
+    raw.event.month="1"
+    raw.event.year="2000"
+
+    var qas = (new EventProcessor).process("test", raw, processed)
+    expect(0) {
+      //date is first of month
+      qas.find {_.getName == "firstOfMonth"}.get.qaStatus
+    }
+    expect(0) {
+      //date is also the first of the year
+      qas.find {_.getName == "firstOfYear"}.get.qaStatus
+    }
+    expect(0) {
+      //date is also the first of the century
+      qas.find {_.getName == "firstOfCentury"}.get.qaStatus
+    }
+
+    raw.event.year="2001"
+    processed = new FullRecord
+    qas = (new EventProcessor).process("test", raw, processed)
+    expect(0) {
+      //date is first of month
+      qas.find {_.getName == "firstOfMonth"}.get.qaStatus
+    }
+    expect(0) {
+      //date is also the first of the year
+      qas.find {_.getName == "firstOfYear"}.get.qaStatus
+    }
+    expect(1) {
+      //date is NOT the first of the century
+      qas.find {_.getName == "firstOfCentury"}.get.qaStatus
+    }
+
+    raw.event.month="2"
+    processed = new FullRecord
+    qas = (new EventProcessor).process("test", raw, processed)
+    expect(0) {
+      //date is first of month
+      qas.find {_.getName == "firstOfMonth"}.get.qaStatus
+    }
+    expect(1) {
+      //date is NOT the first of the year
+      qas.find {_.getName == "firstOfYear"}.get.qaStatus
+    }
+    expect(None) {
+      //date is NOT the first of the century  - not tested since the month is not January
+      qas.find {_.getName == "firstOfCentury"}
+    }
+
+    raw.event.day = "2"
+    processed = new FullRecord
+    qas = (new EventProcessor).process("test", raw, processed)
+    expect(1) {
+      //date is NOT first of month
+      qas.find {_.getName == "firstOfMonth"}.get.qaStatus
+    }
+    expect(None) {
+      //date is NOT the first of the year - gtested since the day is not 1
+      qas.find {_.getName == "firstOfYear"}
+    }
+    expect(None) {
+      //date is NOT the first of the century - not tested since the month is not January
+      qas.find {_.getName == "firstOfCentury"}
+    }
   }
 }
