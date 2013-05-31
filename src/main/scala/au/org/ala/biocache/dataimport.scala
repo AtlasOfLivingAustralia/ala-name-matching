@@ -32,7 +32,7 @@ class MapDataLoader extends DataLoader{
         val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,""))
         val fr = FullRecordMapper.createFullRecord("", map, Versions.RAW)
         load(dataResourceUid, fr, uniqueTermsValues)
-        rowKeys + fr.rowKey
+        rowKeys += fr.rowKey
     })
     rowKeys.toList
   }
