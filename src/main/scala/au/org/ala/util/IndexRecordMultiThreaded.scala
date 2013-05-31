@@ -147,7 +147,7 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
           val threads = new ArrayBuffer[Thread]
           val columnRunners = new ArrayBuffer[ColumnReporterRunner]
           val solrDirs = new ArrayBuffer[String]
-          solrDirs + (dirPrefix +"/solr/bio-proto-merged/data/index")
+          solrDirs += (dirPrefix +"/solr/bio-proto-merged/data/index")
           ranges.foreach(r => {
             println("start: " + r._1 +", end key: " + r._2)
   //          val runner = new ProcessRecordsRunner(this, counter, r._1, r._2)
@@ -157,7 +157,7 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
       
             val ir ={ 
               if(action == "index"){
-                solrDirs + (dirPrefix+"/solr-create/bio-proto-thread-"+counter +"/data/index")
+                solrDirs += (dirPrefix+"/solr-create/bio-proto-thread-"+counter +"/data/index")
                 new IndexRunner(this, counter,  r._1,  r._2, dirPrefix+"/solr-template/bio-proto/conf", dirPrefix+"/solr-create/bio-proto-thread-"+counter+"/conf")
               }else if(action == "process"){
                 new ProcessRecordsRunner(this, counter, r._1, r._2)

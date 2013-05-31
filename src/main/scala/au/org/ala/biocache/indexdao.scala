@@ -223,9 +223,9 @@ trait IndexDAO {
           val s = map.getOrElse("sounds.p", "[]")
           val v = map.getOrElse("videos.p", "[]")
           val ab = new ArrayBuffer[String]
-          if (i.length() > 3) ab + "Image"
-          if (s.length() > 3) ab + "Sound"
-          if (v.length() > 3) ab + "Video"
+          if (i.length() > 3) ab += "Image"
+          if (s.length() > 3) ab += "Sound"
+          if (v.length() > 3) ab += "Video"
           if (ab.size > 0)
             ab.toArray
           else

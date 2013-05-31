@@ -288,13 +288,13 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
         }
         // if(includeSensitive) sensitiveMap.getOrElse(field, getHackValue(field,fieldMap))else getHackValue(field,fieldMap)
         //Create a MS Excel compliant CSV file thus field with delimiters are quoted and embedded quotes are escaped
-        array + fieldValue
+        array += fieldValue
       })
       //now handle the QA fields
       val failedCodes = getErrorCodes(fieldMap);
       //work way through the codes and add to output
       for(code <-codes){
-          array + (failedCodes.contains(code)).toString
+          array += (failedCodes.contains(code)).toString
       }
       writer.write(array.toArray)
     })
@@ -314,11 +314,11 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     val firstCL = fields.find(value => {clpattern.findFirstIn(value).nonEmpty})
     var extraFields = Array[String]()
     if(firstEL.isDefined)
-      mfields + "el.p"
+      mfields += "el.p"
     if(firstCL.isDefined)
-      mfields + "cl.p"
+      mfields += "cl.p"
     if(includeSensitive)
-      mfields + "originalSensitiveValues"
+      mfields += "originalSensitiveValues"
     mfields ++=  FullRecordMapper.qaFields
 
     //val fieldsToQuery = if(includeSensitive) fields ++ FullRecordMapper.qaFields ++ Array("originalSensitiveValues") else fields ++ FullRecordMapper.qaFields
@@ -755,7 +755,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     persistenceManager.pageOverSelect(qaEntityName, (guid, map) =>{
       val userId = map.get("userId")
       if(userId.isDefined)
-        userIds + userId.get
+        userIds += userId.get
       true
     }, startKey, endKey, 1000, "userId")
     userIds.toSet

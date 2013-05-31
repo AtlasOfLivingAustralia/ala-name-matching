@@ -325,7 +325,7 @@ class DuplicationDetection{
     val uuidList = primaryRecord.duplicates.map(r => r.uuid)
     try{
     if(newduplicates.size() >0 || primaryRecord.oldDuplicateOf == null || primaryRecord.duplicates.size != primaryRecord.oldDuplicateOf.split(",").size){
-      buffer.synchronized{buffer + primaryRecord.rowKey}
+      buffer.synchronized{buffer += primaryRecord.rowKey}
       Config.persistenceManager.put(primaryRecord.uuid, "occ_duplicates","value",dup)
       Config.persistenceManager.put(primaryRecord.taxonConceptLsid+"|"+primaryRecord.year+"|"+primaryRecord.month +"|" +primaryRecord.day, "duplicates", primaryRecord.uuid,dup)
       Config.persistenceManager.put(primaryRecord.rowKey, "occ",Map("associatedOccurrences.p"->uuidList.mkString("|"),"duplicationStatus.p"->"R"))
@@ -337,7 +337,7 @@ class DuplicationDetection{
         Config.persistenceManager.put(r.rowKey, "occ", Map("associatedOccurrences.p"->primaryRecord.uuid,"duplicationStatus.p"->"D","duplicationType.p"->mapper.writeValueAsString(types)))
         //add a system message for the record - a duplication does not change the kosher fields and should always be displayed thus don't "checkExisting"
         Config.occurrenceDAO.addSystemAssertion(r.rowKey, QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD,"Record has been inferred as closely related to  " + primaryRecord.uuid),false)
-        buffer.synchronized{buffer + r.rowKey}
+        buffer.synchronized{buffer += r.rowKey}
       })
     }
     }
