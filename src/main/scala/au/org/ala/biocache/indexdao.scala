@@ -923,7 +923,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
         //now index the System QA assertions
         val systemAssertions = Json.toArray(map.getOrElse(FullRecordMapper.qualityAssertionColumn, "[]"), classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[QualityAssertion]]
         val types = systemAssertions.groupBy(_.getQaStatus)
-        types.getOrElse(0, Array()).foreach(qa=> doc.addField(if(AssertionCodes.getByCode(qa.getCode).get.isAMissingCheck) "assertions_missing" else "assertions", qa.getName()))
+        types.getOrElse(0, Array()).foreach(qa=> doc.addField(if(AssertionCodes.getByCode(qa.getCode).get.category == Missing) "assertions_missing" else "assertions", qa.getName()))
         types.getOrElse(1, Array()).foreach(qa => doc.addField("assertions_passed", qa.getName()))
         val unchecked = AssertionCodes.getMissingCodes((systemAssertions.map(it=>AssertionCodes.getByCode(it.code).getOrElse(null))).toSet)
         unchecked.foreach(ec => doc.addField("assertions_unchecked", ec.name))

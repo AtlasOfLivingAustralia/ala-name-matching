@@ -256,8 +256,12 @@ object Store {
     val unchecked = AssertionCodes.getMissingCodes((list.map(it=>AssertionCodes.getByCode(it.code).getOrElse(null))).toSet)
 
     ((list ++ unchecked.map(it => QualityAssertion(it, 3))).groupBy{
-                                                              case i if (i.qaStatus == 0 && AssertionCodes.getByCode(i.code).getOrElse(AssertionCodes.GEOSPATIAL_ISSUE).isAMissingCheck) => "missing"
-                                                              case i if i.qaStatus == 0 => "failed"
+                                                              case i if (i.qaStatus == 0)=>{
+                                                                AssertionCodes.getByCode(i.code).getOrElse(AssertionCodes.GEOSPATIAL_ISSUE).category match{
+                                                                  case Error => "failed"
+                                                                  case code:ErrorCodeCategory => code.toString.toLowerCase
+                                                                }
+                                                              }
                                                               case i if i.qaStatus == 1 => "passed"
                                                               case _ => "unchecked"
                                                             }).mapValues(_.asJava).asJava

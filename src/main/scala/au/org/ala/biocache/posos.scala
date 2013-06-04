@@ -179,6 +179,7 @@ trait POSO {
         case "int" => property.setter.invoke(this, Integer.parseInt(value).asInstanceOf[AnyRef])
         case "double" => property.setter.invoke(this, java.lang.Double.parseDouble(value).asInstanceOf[AnyRef])
         case "boolean" => property.setter.invoke(this, java.lang.Boolean.parseBoolean(value).asInstanceOf[AnyRef])
+        case "java.lang.Boolean" => property.setter.invoke(this, java.lang.Boolean.parseBoolean(value).asInstanceOf[AnyRef])
         case "scala.collection.immutable.Map" => {
           try {
             val fromJson = JSON.parseFull(value)
