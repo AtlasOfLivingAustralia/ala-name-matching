@@ -551,7 +551,7 @@
    <field name="names_and_lsid" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="common_name_and_lsid" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="rank" type="string" indexed="true" stored="true" multiValued="false" />   
-   <field name="rank_id" type="int" indexed="true" stored="true" multiValued="false"  />
+   <field name="rank_id" type="tint" indexed="true" stored="true" multiValued="false"  />
    <field name="raw_taxon_name" type="string" indexed="true" stored="true" multiValued="false" />
    <field name="raw_common_name" type="string" indexed="true" stored="true" multiValued="false"  />
 
@@ -566,8 +566,8 @@
    <!-- field name="raw_author" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
    <field name="country_code" type="string" indexed="true" stored="true" multiValued="false"  />
    <field name="country" type="string" indexed="true" stored="true" multiValued="false" />
-   <field name="lft" type="int" indexed="true" stored="true" multiValued="false" omitNorms="true" />
-   <field name="rgt" type="int" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="lft" type="tint" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="rgt" type="tint" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    
    <field name="kingdom" type="string" indexed="true" stored="true" multiValued="false" />
    
@@ -646,6 +646,9 @@
    <field name="suitable_modelling" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="sensitive" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="assertions" type="string" indexed="true" stored="true" multiValued="true"  />
+   <field name="assertions_passed" type="string" indexed="true" stored="true" multiValued="true"  />
+   <field name="assertions_unchecked" type="string" indexed="true" stored="true" multiValued="true"  />
+   <field name="assertions_missing" type="string" indexed="true" stored="true" multiValued="true"  />
    <field name="user_assertions" type="string" indexed="true" stored="true" multiValued="false"  />
    <field name="system_assertions" type="string" indexed="true" stored="true" multiValued="false"  />
    <field name="name_match_metric" type="string" indexed="true" stored="false" multiValued="false"  />
@@ -696,14 +699,14 @@
    <field name="identified_by_text" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
 
    <!-- the number of layers this record is an outlier for -->
-   <field name="outlier_layer_count" type="int" indexed="true" stored="true" multiValued="false" omitNorms="true" />
+   <field name="outlier_layer_count" type="tint" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <!-- the layers this record is an outlier for -->
    <field name="outlier_layer" type="string" indexed="true" stored="true" multiValued="true" omitNorms="true" />
 
 <!-- Duplication fields -->
    <field name="duplicate_status" type="string" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <field name="duplicate_record" type="string" indexed="true" stored="true" multiValued="true" omitNorms="true" />
-   <field name="duplicate_type" type="int" indexed="true" stored="true" multiValued="true" omitNorms="true" />
+   <field name="duplicate_type" type="tint" indexed="true" stored="true" multiValued="true" omitNorms="true" />
 
 <!-- Distance from expert distribution for associated species -->
 	<field name="distance_outside_expert_range" type="double" indexed="true" stored="true" multiValued="false" />
@@ -726,9 +729,9 @@
    <!-- Some ALA dynamic fields -->
       <dynamicField name="*_s" type="string" indexed="true" stored="false" omitNorms="true" /> 
    <dynamicField name="*_d" type="double" indexed="true" stored="true" omitNorms="true" />
-   <dynamicField name="*_d_rng" type="double" indexed="true" stored="false" omitNorms="true" />
+   <dynamicField name="*_d_rng" type="tdouble" indexed="true" stored="false" omitNorms="true" />
    <dynamicField name="*_i" type="int" indexed="true" stored="true" omitNorms="true" /> 
-   <dynamicField name="*_i_rng" type="int" indexed="true" stored="false" omitNorms="true" />
+   <dynamicField name="*_i_rng" type="tint" indexed="true" stored="false" omitNorms="true" />
    <dynamicField name="*_id"  type="string" indexed="true" stored="true"/>
    <dynamicField name="*_name"  type="string" indexed="true" stored="true"/>
    <dynamicField name="point-*" type="string" indexed="true" stored="true"/>
@@ -739,7 +742,7 @@
    <dynamicField name="*_uuid" type="string" indexed="true" stored="true"/>
    <!--  catches all the environment and contextual layers that are being indexed -->
    <!-- They are being stored just in case they need to be faceted on -->
-   <dynamicField name="el*" type="double" indexed="true" stored="true" omitNorms="true" />
+   <dynamicField name="el*" type="tdouble" indexed="true" stored="true" omitNorms="true" />
    <dynamicField name="cl*" type="string" indexed="true" stored="true" omitNorms="true" />
    
 
