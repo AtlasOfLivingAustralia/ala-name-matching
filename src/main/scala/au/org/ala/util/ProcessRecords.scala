@@ -210,17 +210,18 @@ class RecordProcessor {
     //mark the processed time
     processed.lastModifiedTime = processTime
     //put the properties that are not updated during processing
-    processed.occurrence.outlierForLayers = currentProcessed.occurrence.outlierForLayers
-    processed.occurrence.duplicationStatus = currentProcessed.occurrence.duplicationStatus
-    processed.occurrence.duplicationType = currentProcessed.occurrence.duplicationType
-    processed.occurrence.associatedOccurrences = currentProcessed.occurrence.associatedOccurrences
-    processed.location.distanceOutsideExpertRange = currentProcessed.location.distanceOutsideExpertRange
-    processed.queryAssertions = currentProcessed.queryAssertions
-    //add the QA for the duplicate record
-    if(duplicates.contains(processed.occurrence.duplicationStatus)){
-      //need to add the QA
-      assertions += ("duplicates" -> Array(QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD,"Record has been inferred as closely related to  " + processed.occurrence.associatedOccurrences)))
-    }
+    //NC: 2013-0605 This is now handled in the processing
+//    processed.occurrence.outlierForLayers = currentProcessed.occurrence.outlierForLayers
+//    processed.occurrence.duplicationStatus = currentProcessed.occurrence.duplicationStatus
+//    processed.occurrence.duplicationType = currentProcessed.occurrence.duplicationType
+//    processed.occurrence.associatedOccurrences = currentProcessed.occurrence.associatedOccurrences
+//    processed.location.distanceOutsideExpertRange = currentProcessed.location.distanceOutsideExpertRange
+//    processed.queryAssertions = currentProcessed.queryAssertions
+//    //add the QA for the duplicate record
+//    if(duplicates.contains(processed.occurrence.duplicationStatus)){
+//      //need to add the QA
+//      assertions += ("duplicates" -> Array(QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD,"Record has been inferred as closely related to  " + processed.occurrence.associatedOccurrences)))
+//    }
     
     //store the occurrence
     val systemAssertions = Some(assertions.toMap)
