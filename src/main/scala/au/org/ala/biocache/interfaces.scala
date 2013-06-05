@@ -258,8 +258,8 @@ object Store {
     ((list ++ unchecked.map(it => QualityAssertion(it, 3))).groupBy{
                                                               case i if (i.qaStatus == 0)=>{
                                                                 AssertionCodes.getByCode(i.code).getOrElse(AssertionCodes.GEOSPATIAL_ISSUE).category match{
-                                                                  case Error => "failed"
-                                                                  case code:ErrorCodeCategory => code.toString.toLowerCase
+                                                                  case ErrorCodeCategory.Error => "failed"
+                                                                  case code:String => code.toString.toLowerCase
                                                                 }
                                                               }
                                                               case i if i.qaStatus == 1 => "passed"

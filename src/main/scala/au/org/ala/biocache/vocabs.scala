@@ -567,23 +567,25 @@ object HabitatMap extends VocabMaps {
     }
   }
 
-abstract sealed class ErrorCodeCategory
-case object Error extends ErrorCodeCategory
-case object Warning extends ErrorCodeCategory
-case object Missing extends ErrorCodeCategory
-case object Verified extends ErrorCodeCategory
+object ErrorCodeCategory {
+
+  val Error = "error"
+  val Missing = "missing"
+  val Warning = "warning"
+  val Verified = "verified"
+}
 
 /**
  * Case class that represents an error code for a occurrence record.
  */
 sealed case class ErrorCode(@BeanProperty name:String, @BeanProperty code:Int, @BeanProperty isFatal:Boolean,
-                               @BeanProperty description:String, @BeanProperty category:ErrorCodeCategory=Error)
+                               @BeanProperty description:String, @BeanProperty category:String =ErrorCodeCategory.Error)
 
 /**
  * Assertion codes for records. These codes are a reflection of http://bit.ly/evMJv5
  */
 object AssertionCodes {
-  
+  import ErrorCodeCategory._
   //geospatial issues
   val GEOSPATIAL_ISSUE = ErrorCode("geospatialIssue",0,true,"Geospatial issue")  // general purpose option
   val NEGATED_LATITUDE = ErrorCode("negatedLatitude",1,false,"Latitude is negated", Warning)
