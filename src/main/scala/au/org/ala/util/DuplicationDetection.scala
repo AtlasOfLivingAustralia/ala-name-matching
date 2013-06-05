@@ -760,28 +760,41 @@ object DuplicationTypes {
   val MISSING_COLLECTOR = DupType(8)// At least one of the occurrences was missing a collector
 }
 
-class DuplicateRecordDetails(@BeanProperty var rowKey:String, @BeanProperty var uuid:String, @BeanProperty var taxonConceptLsid:String,
-                    @BeanProperty var year:String, @BeanProperty var month:String, @BeanProperty var day:String,
-                    @BeanProperty var point1:String, @BeanProperty var point0_1:String, 
-                    @BeanProperty var point0_01:String, @BeanProperty var point0_001:String, 
-                    @BeanProperty var point0_0001:String,@BeanProperty var latLong:String, 
-                    @BeanProperty var rawScientificName:String, @BeanProperty var collector:String, 
-                    @BeanProperty var oldStatus:String, @BeanProperty var oldDuplicateOf:String){
+class DuplicateRecordDetails(
+                    @BeanProperty var rowKey:String,
+                    @BeanProperty var uuid:String,
+                    @BeanProperty var taxonConceptLsid:String,
+                    @BeanProperty var year:String,
+                    @BeanProperty var month:String,
+                    @BeanProperty var day:String,
+                    @BeanProperty var point1:String,
+                    @BeanProperty var point0_1:String,
+                    @BeanProperty var point0_01:String,
+                    @BeanProperty var point0_001:String,
+                    @BeanProperty var point0_0001:String,
+                    @BeanProperty var latLong:String,
+                    @BeanProperty var rawScientificName:String,
+                    @BeanProperty var collector:String,
+                    @BeanProperty var oldStatus:String,
+                    @BeanProperty var oldDuplicateOf:String){
   
   def this() = this(null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
   
   @BeanProperty var status = "U"
   @BeanProperty var druid:String = if(rowKey != null) rowKey.split("\\|")(0) else null
+  @BeanProperty var duplicates:ArrayList[DuplicateRecordDetails] = null
+  @BeanProperty var dupTypes:ArrayList[DupType] = _
+
   var duplicateOf:String = null
   //stores the precision so that coordinate dup types can be established - we don't want to persist this property
   var precision = 0
-  @BeanProperty var duplicates:ArrayList[DuplicateRecordDetails]=null
-  @BeanProperty var dupTypes:ArrayList[DupType]=_
-  def addDuplicate(dup:DuplicateRecordDetails) ={
+
+  def addDuplicate(dup:DuplicateRecordDetails) = {
     if(duplicates == null)
       duplicates = new ArrayList[DuplicateRecordDetails]
     duplicates.add(dup)
   }
+
   def addDupType(dup:DupType){
     if(dupTypes == null)
       dupTypes = new ArrayList[DupType]()

@@ -115,11 +115,11 @@ class EndemismLayerHelper {
       workQueue ++= speciesLsids
 
       for (i <- 0 to numThreads - 1) {
-        val a = new EndemismWorkerActor(i, filterQuery, self);
+        val a = new EndemismWorkerActor(i, filterQuery, self)
         a.start()
       }
 
-      var completedThreads = 0;
+      var completedThreads = 0
       loopWhile(completedThreads < numThreads) {
         receive {
           case ("SEND JOB", actor: EndemismWorkerActor) => {

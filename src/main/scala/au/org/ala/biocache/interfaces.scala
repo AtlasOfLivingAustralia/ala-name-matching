@@ -40,44 +40,45 @@ object Store {
   /**
    * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
    */
-  def getByUuid(uuid: java.lang.String, version: Version): FullRecord = {
+  def getByUuid(uuid: java.lang.String, version: Version): FullRecord =
     occurrenceDAO.getByUuid(uuid, version).getOrElse(null)
-  }
+
+  def getSensitiveByUuid(uuid:java.lang.String, version:Version):FullRecord =
+    occurrenceDAO.getByUuid(uuid, version, true).getOrElse(null)
   
-  def getSensitiveByUuid(uuid:java.lang.String, version:Version):FullRecord = occurrenceDAO.getByUuid(uuid, version, true).getOrElse(null)
+  def getByRowKey(rowKey: java.lang.String, version: Version): FullRecord =
+    occurrenceDAO.getByRowKey(rowKey, version).getOrElse(null)
   
-  def getByRowKey(rowKey: java.lang.String, version: Version): FullRecord = occurrenceDAO.getByRowKey(rowKey, version).getOrElse(null)
-  
-  def getSensitiveByRowKey(rowKey: java.lang.String, version: Version): FullRecord = occurrenceDAO.getByRowKey(rowKey, version, true).getOrElse(null)
+  def getSensitiveByRowKey(rowKey: java.lang.String, version: Version): FullRecord =
+    occurrenceDAO.getByRowKey(rowKey, version, true).getOrElse(null)
 
   /**
    * A java API friendly version of the getByUuid that doesnt require knowledge of a scala type.
    */
-  def getByUuid(uuid: java.lang.String): FullRecord = {
-    occurrenceDAO.getByUuid(uuid, Raw).getOrElse(null)
-  }
+  def getByUuid(uuid: java.lang.String): FullRecord = occurrenceDAO.getByUuid(uuid, Raw).getOrElse(null)
 
   /**
    * Retrieve all versions of the record with the supplied UUID.
    */
-  def getAllVersionsByUuid(uuid: java.lang.String, includeSensitive:java.lang.Boolean): Array[FullRecord] = {
+  def getAllVersionsByUuid(uuid: java.lang.String, includeSensitive:java.lang.Boolean): Array[FullRecord] =
     occurrenceDAO.getAllVersionsByUuid(uuid, includeSensitive).getOrElse(null)
-  }
-  
-  def getAllVersionsByRowKey(rowKey: java.lang.String, includeSensitive:java.lang.Boolean) : Array[FullRecord]={
+
+  def getAllVersionsByRowKey(rowKey: java.lang.String, includeSensitive:java.lang.Boolean) : Array[FullRecord] =
     occurrenceDAO.getAllVersionsByRowKey(rowKey, includeSensitive).getOrElse(null)
-  }
 
   /**
    * Get the raw processed comparison based on the uuid for the occurrence.
    */
-  def getComparisonByUuid(uuid: java.lang.String): java.util.Map[String,java.util.List[ProcessedValue]] = getComparison(occurrenceDAO.getAllVersionsByUuid(uuid).getOrElse(null))
+  def getComparisonByUuid(uuid: java.lang.String): java.util.Map[String,java.util.List[ProcessedValue]] =
+    getComparison(occurrenceDAO.getAllVersionsByUuid(uuid).getOrElse(null))
 
   /**
    * Get the raw processed comparison based on the rowKey for the occurrence
    */
-  def getComparisonByRowKey(rowKey: java.lang.String) : java.util.Map[String,java.util.List[ProcessedValue]] = getComparison(occurrenceDAO.getAllVersionsByRowKey(rowKey).getOrElse(null))
-  
+  def getComparisonByRowKey(rowKey: java.lang.String) : java.util.Map[String,java.util.List[ProcessedValue]] =
+    getComparison(occurrenceDAO.getAllVersionsByRowKey(rowKey).getOrElse(null))
+
+
   private def getComparison(recordVersions:Array[FullRecord]) = {
     if (recordVersions != null && recordVersions.length > 1) {
       val map = new java.util.HashMap[String, java.util.List[ProcessedValue]]
@@ -155,11 +156,12 @@ object Store {
   def loadRecords(dataResourceUid:String, recordsProperties:java.util.List[java.util.Map[String,String]], identifyFields:java.util.List[String], shouldIndex:Boolean=true){
    val loader = new MapDataLoader
    val rowKeys = loader.load(dataResourceUid, recordsProperties.toList,identifyFields.toList)
-   if(rowKeys.size>0){
+   if(!rowKeys.isEmpty){
      val processor = new RecordProcessor
      processor.processRecords(rowKeys)
-     if(shouldIndex)
+     if(shouldIndex){
        IndexRecords.indexList(rowKeys)
+     }
    }
   }
   
@@ -175,9 +177,10 @@ object Store {
       val (recordUuid, isNew)= occurrenceDAO.createOrRetrieveUuid(record.rowKey)
       record.uuid =recordUuid
       //add the last load time
-      record.lastModifiedTime = new Date()
-      if(isNew)
+      record.lastModifiedTime = new Date
+      if(isNew){
         record.firstLoaded = record.lastModifiedTime
+      }
       occurrenceDAO.addRawOccurrence(record)
       val processor = new RecordProcessor
       processor.processRecordAndUpdate(record)
@@ -194,8 +197,7 @@ object Store {
    * Record is processed and indexed if should index is true
    */
   def insertRecord(dataResourceIdentifer:String, properties:java.util.Map[String,String], shouldIndex:Boolean){
-    val processor = new RecordProcessor
-    processor.addRecordAndProcess(dataResourceIdentifer, properties.toMap[String,String])
+    (new RecordProcessor).addRecordAndProcess(dataResourceIdentifer, properties.toMap[String,String])
   }
 
   /**
@@ -205,8 +207,7 @@ object Store {
    * Record is processed and indexed if should index is true
    */
   def loadRecord(dataResourceIdentifer:String, properties:java.util.Map[String,String], shouldIndex:Boolean){
-    val processor = new RecordProcessor
-    processor.addRecord(dataResourceIdentifer, properties.toMap[String,String])
+    (new RecordProcessor).addRecord(dataResourceIdentifer, properties.toMap[String,String])
   }
 
   /**
@@ -225,12 +226,15 @@ object Store {
   
   def deleteRecords(dataResource:java.lang.String,query:java.lang.String, fromPersistent:Boolean, fromIndex:Boolean){              
     val deletor:RecordDeletor = if(dataResource != null) new DataResourceDelete(dataResource)  else new QueryDelete(query)
-    //println("Delete from storage using the query: " + query)
-    if(fromPersistent)
+    logger.debug("Delete from storage using the query: " + query)
+    if(fromPersistent){
       deletor.deleteFromPersistent
-    //println("Delete from index")
-    if(fromIndex)
+    }
+    logger.debug("Delete from index")
+    if(fromIndex){
       deletor.deleteFromIndex
+    }
+    logger.debug("Delete complete.")
   }
 
   /**
@@ -271,7 +275,7 @@ object Store {
    * Retrieve the user supplied systemAssertions.
    */
   def getUserAssertion(uuid: java.lang.String, assertionUuid: java.lang.String): QualityAssertion = {
-    val rowKey = occurrenceDAO.getRowKeyFromUuid(uuid).getOrElse(uuid);
+    val rowKey = occurrenceDAO.getRowKeyFromUuid(uuid).getOrElse(uuid)
     occurrenceDAO.getUserAssertions(rowKey).find(ass => { ass.uuid == assertionUuid }).getOrElse(null)
   }
 
@@ -300,9 +304,11 @@ object Store {
   
   def addAssertionQuery(assertionQuery:AssertionQuery) = assertionQueryDAO.upsertAssertionQuery(assertionQuery)
   
-  def getAssertionQuery(uuid:java.lang.String):AssertionQuery = assertionQueryDAO.getAssertionQuery(uuid).getOrElse(null)
+  def getAssertionQuery(uuid:java.lang.String):AssertionQuery =
+    assertionQueryDAO.getAssertionQuery(uuid).getOrElse(null)
   
-  def getAssertionQueries(ids:Array[String]):Array[AssertionQuery] = assertionQueryDAO.getAssertionQueries(ids.toList).toArray[AssertionQuery]
+  def getAssertionQueries(ids:Array[String]):Array[AssertionQuery] =
+    assertionQueryDAO.getAssertionQueries(ids.toList).toArray[AssertionQuery]
   
   /**
    * Applies the supplied query assertion to the records.

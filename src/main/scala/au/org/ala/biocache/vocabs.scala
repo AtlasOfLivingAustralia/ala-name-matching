@@ -568,7 +568,6 @@ object HabitatMap extends VocabMaps {
   }
 
 object ErrorCodeCategory {
-
   val Error = "error"
   val Missing = "missing"
   val Warning = "warning"
@@ -578,8 +577,12 @@ object ErrorCodeCategory {
 /**
  * Case class that represents an error code for a occurrence record.
  */
-sealed case class ErrorCode(@BeanProperty name:String, @BeanProperty code:Int, @BeanProperty isFatal:Boolean,
-                               @BeanProperty description:String, @BeanProperty category:String =ErrorCodeCategory.Error)
+sealed case class ErrorCode(@BeanProperty name:String,
+  @BeanProperty code:Int,
+  @BeanProperty isFatal:Boolean,
+  @BeanProperty description:String,
+  @BeanProperty category:String = ErrorCodeCategory.Error
+)
 
 /**
  * Assertion codes for records. These codes are a reflection of http://bit.ly/evMJv5
@@ -679,7 +682,7 @@ object AssertionCodes {
   val DAY_MONTH_TRANSPOSED = ErrorCode("dayMonthTransposed",30009,false,"Day and month transposed", Warning)
 
   //verified type - this is a special code 
-  val VERIFIED =ErrorCode("userVerified", 50000, true, "Record Verified by collection manager", Verified)
+  val VERIFIED = ErrorCode("userVerified", 50000, true, "Record Verified by collection manager", Verified)
 
   //this is a code user can use to flag a issue with processing
   val PROCESSING_ERROR = ErrorCode("processingError", 60000, true, "The system has incorrectly processed a record", Error)
@@ -690,7 +693,7 @@ object AssertionCodes {
    */
   val retrieveAll : Set[ErrorCode] = {
     val methods = this.getClass.getMethods
-    (for{
+    (for {
       method<-methods
       if(method.getReturnType.getName == "au.org.ala.biocache.ErrorCode")
     } yield (method.invoke(this).asInstanceOf[ErrorCode])).toSet[ErrorCode]
@@ -720,9 +723,8 @@ object AssertionCodes {
   
   def getByName(name:String) :Option[ErrorCode] = all.find(errorCode => errorCode.name == name)
 
-  def getMissingCodes(code:Set[ErrorCode]) : Set[ErrorCode] ={
+  def getMissingCodes(code:Set[ErrorCode]) : Set[ErrorCode] =
     AssertionCodes.all &~ (code ++ userAssertionCodes.toSet ++ Set(VERIFIED, PROCESSING_ERROR))
-  }
 
   def isVerified(assertion:QualityAssertion) :Boolean = assertion.code == VERIFIED.code
   

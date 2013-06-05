@@ -1,19 +1,17 @@
 package au.org.ala.biocache
-import scala.reflect.BeanProperty
+import scala.beans.BeanProperty
 import java.util.UUID
-import org.apache.solr.client.solrj.beans.Field
 import collection.mutable.HashMap
 import collection.JavaConversions
 import org.apache.commons.lang.builder.{ToStringBuilder, EqualsBuilder}
 import java.util.Date
-import org.apache.commons.lang.time.DateFormatUtils
 import org.codehaus.jackson.annotate.{JsonIgnoreProperties, JsonIgnore}
 
 /**
  * Represents an occurrence record. These fields map directly on to
  * the latest darwin core terms, with a few additional fields.
  */
-class Occurrence extends Cloneable /*with Mappable*/ with POSO {
+class Occurrence extends Cloneable with POSO {
   import JavaConversions._
   override def clone : Occurrence = super.clone.asInstanceOf[Occurrence]
   @BeanProperty var occurrenceID:String = _
@@ -117,7 +115,7 @@ class Occurrence extends Cloneable /*with Mappable*/ with POSO {
 /**
  * POSO for handling details of a classification associated with an occurrence.
  */
-class Classification extends Cloneable /*with Mappable*/ with POSO {
+class Classification extends Cloneable with POSO {
   import JavaConversions._
   override def clone : Classification = super.clone.asInstanceOf[Classification]
   @BeanProperty var scientificName:String = _
@@ -184,7 +182,7 @@ class Classification extends Cloneable /*with Mappable*/ with POSO {
 /**
  * POSO for holding measurement information for an occurrence.
  */
-class Measurement extends Cloneable /*with Mappable*/ with POSO {
+class Measurement extends Cloneable with POSO {
   import JavaConversions._
   override def clone : Measurement = super.clone.asInstanceOf[Measurement]
   @BeanProperty var measurementAccuracy:String = _
@@ -201,7 +199,7 @@ class Measurement extends Cloneable /*with Mappable*/ with POSO {
 /**
  * POSO for handling identification information for an occurrence.
  */
-class Identification extends Cloneable /*with Mappable*/ with POSO {
+class Identification extends Cloneable with POSO {
   import JavaConversions._
   override def clone : Identification = super.clone.asInstanceOf[Identification]
   @BeanProperty var dateIdentified:String = _
@@ -252,7 +250,7 @@ class Event extends Cloneable/*with Mappable*/with POSO {
 /**
  * POSO for holding location information for an occurrence.
  */
-class Location extends Cloneable /*with Mappable*/ with POSO {
+class Location extends Cloneable with POSO {
   import JavaConversions._
   override def clone : Location = super.clone.asInstanceOf[Location]
   @BeanProperty var uuid:String = _
@@ -328,26 +326,27 @@ class Location extends Cloneable /*with Mappable*/ with POSO {
   override def toString = ToStringBuilder.reflectionToString(this)
 
   @JsonIgnore
-  def getOriginalDecimalLatitude():String = originalDecimalLatitude
+  def getOriginalDecimalLatitude:String = originalDecimalLatitude
   def setOriginalDecimalLatitude(decimalLatitude:String)=this.originalDecimalLatitude = decimalLatitude
 
   @JsonIgnore
-  def getOriginalDecimalLongitude():String = originalDecimalLongitude
+  def getOriginalDecimalLongitude:String = originalDecimalLongitude
   def setOriginalDecimalLongitude(decimalLongitude:String)= this.originalDecimalLongitude = decimalLongitude
 
   @JsonIgnore
-  def getOriginalVerbatimLatitude():String = originalVerbatimLatitude
+  def getOriginalVerbatimLatitude:String = originalVerbatimLatitude
   def setOriginalVerbatimLatitude(latitude:String)=this.originalVerbatimLatitude = latitude
 
   @JsonIgnore
-  def getOriginalVerbatimLongitude():String = originalVerbatimLongitude
+  def getOriginalVerbatimLongitude:String = originalVerbatimLongitude
   def setOriginalVerbatimLongitude(longitude:String)= this.originalVerbatimLongitude = longitude
 
   @JsonIgnore
-  def getOriginalLocality():String = originalLocality
+  def getOriginalLocality:String = originalLocality
   def setOrginalLocality(locality:String) = this.originalLocality = locality
+
   @JsonIgnore
-  def getOriginalLocationRemarks():String = originalLocationRemarks
+  def getOriginalLocationRemarks:String = originalLocationRemarks
   def setOriginalLocationRemarks(remarks:String) = this.originalLocationRemarks = remarks
 }
 
@@ -392,7 +391,8 @@ class TaxonProfile (
   extends Cloneable {
   def this() = this(null,null,null,null,null,null,null, null,null)
   override def clone : TaxonProfile = super.clone.asInstanceOf[TaxonProfile]
-  private var conservationMap:Map[String,String]= null
+  private var conservationMap:Map[String,String] = null
+
   def retrieveConservationStatus(loc: String): Option[String] = {
     if (conservation != null) {
       if (conservationMap == null) {
@@ -402,9 +402,7 @@ class TaxonProfile (
           if (map.getOrElse(cs.region, "null").contains("null"))
             map += cs.region -> (cs.status + "," + cs.rawStatus)
         }
-
         conservationMap = map.toMap
-        //println("conservation " + conservationMap)
       }
       return conservationMap.get(loc)
     }
@@ -436,8 +434,9 @@ class Attribution (
   override def clone : Attribution = super.clone.asInstanceOf[Attribution]
   override def toString = ToStringBuilder.reflectionToString(this)
   // stores whether or not the data resource has collections associated with it
-  @JsonIgnore var hasMappedCollections:Boolean=false
+  @JsonIgnore var hasMappedCollections:Boolean = false
   @JsonIgnore private var parsedHints:Map[String,Set[String]] = null
+
   /**
    * Parse the hints into a usable map with rank -> Set.
    */
@@ -463,7 +462,8 @@ class Attribution (
 /**
  * Encapsulates a complete specimen or occurrence record.
  */
-@JsonIgnoreProperties class FullRecord (
+@JsonIgnoreProperties
+class FullRecord (
   @BeanProperty var rowKey:String,
   @BeanProperty var uuid:String,
   @BeanProperty var occurrence:Occurrence,
@@ -535,7 +535,6 @@ class Attribution (
 
 /**
  * Stores the information about a sensitive species
- *
  */
 class SensitiveSpecies(
   @BeanProperty var zone:String,
@@ -543,18 +542,16 @@ class SensitiveSpecies(
 
   def this() = this(null, null)
 
-  override def toString():String = {
-    "zone:"+zone+" category:" + category
-  }
+  override def toString():String = "zone:" + zone + " category:" + category
 }
 
 class ConservationSpecies(
-        @BeanProperty var region:String,
-        @BeanProperty var regionId:String,
-        @BeanProperty var status:String,
-        @BeanProperty var rawStatus:String
-        ){
-    def this() = this(null, null, null,null)
+  @BeanProperty var region:String,
+  @BeanProperty var regionId:String,
+  @BeanProperty var status:String,
+  @BeanProperty var rawStatus:String
+  ){
+  def this() = this(null, null, null,null)
 }
 
 /**
@@ -570,12 +567,16 @@ class QualityAssertion (
   @BeanProperty var qaStatus:Int,//either 0-failed, 1-passed, 2-not tested
   @BeanProperty var comment:String,
   @BeanProperty var value:String,
-  @BeanProperty var userId:String,
-  @BeanProperty var userDisplayName:String,
+  @BeanProperty var userId:String, //null for system assertions
+  @BeanProperty var userEmail:String,  //null for system assertions
+  @BeanProperty var userDisplayName:String,  //null for system assertions
+  @BeanProperty var userRole:String,  //null for system assertions, example - collection manager
+  @BeanProperty var userEntityUid:String,  //null for system assertions, example - co13
+  @BeanProperty var userEntityName:String,  //null for system assertions, example - ANIC
   @BeanProperty var created:String)
   extends Cloneable with Comparable[AnyRef] with POSO {
 
-  def this() = this(null,null,-1,null, 2,null,null,null,null,null)
+  def this() = this(null,null,-1,false,2,null,null,null,null,null,null,null,null,null)
   override def clone : QualityAssertion = super.clone.asInstanceOf[QualityAssertion]
   override def equals(that: Any) = that match {
     case other: QualityAssertion => {
@@ -608,77 +609,81 @@ object QualityAssertion {
     val uuid = UUID.randomUUID.toString
     val errorCode = AssertionCodes.getByCode(code)
     if(errorCode.isEmpty){
-      throw new Exception("Unrecognised code: "+ code)
+      throw new Exception("Unrecognised code: " + code)
     }
-    new QualityAssertion(uuid,errorCode.get.name,errorCode.get.code,null,2,null,null,null,null,new Date())
+    new QualityAssertion(uuid,errorCode.get.name,errorCode.get.code,null,2,null,null,null,null,null,null,null,null,new Date())
   }
 
   def apply(errorCode:ErrorCode) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,null,0,null,null,null,null,new Date())
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,null,0,null,null,null,null,null,null,null,null,new Date())
   }
   def apply(errorCode:ErrorCode,problemAsserted:Boolean) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,null,if(problemAsserted) 0 else 1,null,null,null,null,new Date())
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,null,if(problemAsserted) 0 else 1,null,null,null,null,null,null,null,null,new Date())
   }
   def apply(errorCode:ErrorCode,problemAsserted:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,null,if(problemAsserted) 0 else 1,comment,null,null,null,new Date())
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,null,if(problemAsserted) 0 else 1,comment,null,null,null,null,null,null,null,new Date())
   }
   def apply(errorCode:ErrorCode,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,errorCode.name,errorCode.code,null,0,comment,null,null,null,new Date())
+    new QualityAssertion(uuid,errorCode.name,errorCode.code,null,0,comment,null,null,null,null,null,null,null,new Date())
   }
   def apply(errorCode:ErrorCode, qaStatus:Int, comment:String)={
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid, errorCode.name, errorCode.code,null, qaStatus, comment, null, null, null, new Date())
+    new QualityAssertion(uuid, errorCode.name, errorCode.code,null, qaStatus, comment, null,null,null,null,null,null,null,new Date())
   }
   def apply(errorCode:ErrorCode, qaStatus:Int)={
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid, errorCode.name, errorCode.code,null, qaStatus, null, null, null, null, new Date())
+    new QualityAssertion(uuid, errorCode.name, errorCode.code,null, qaStatus, null, null,null,null,null,null,null,null,new Date())
   }
   def apply(assertionCode:Int,problemAsserted:Boolean,comment:String) = {
     val uuid = UUID.randomUUID.toString
-    new QualityAssertion(uuid,null,assertionCode,null,if(problemAsserted) 0 else 1,comment,null,null,null,new Date())
+    new QualityAssertion(uuid,null,assertionCode,null,if(problemAsserted) 0 else 1,comment,null,null,null,null,null,null,null,new Date())
   }
   def apply(assertionCode:Int, qaStatus:Int, comment:String) ={
     val uuid = UUID.randomUUID().toString
-    new QualityAssertion(uuid, null, assertionCode,null,qaStatus,comment,null,null,null,new Date())
+    new QualityAssertion(uuid, null, assertionCode,null,qaStatus,comment,null,null,null,null,null,null,null,new Date())
   }
   def apply(assertionCode:Int, qaStatus:Int) ={
     val uuid = UUID.randomUUID().toString
-    new QualityAssertion(uuid, null, assertionCode,null,qaStatus,null,null,null,null,new Date())
+    new QualityAssertion(uuid, null, assertionCode,null,qaStatus,null,null,null,null,null,null,null,null,new Date())
   }
 }
+
 /**
  * A class that represents a JCU assertion query.
+ * These assertions are supplied by the Edgar project.
+ *
+ * https://github.com/jcu-eresearch/Edgar
  */
 @JsonIgnoreProperties(ignoreUnknown=true)
 class JCUAssertion(@BeanProperty var id:java.lang.Integer,
-      @BeanProperty var apiKey:String,
-      @BeanProperty var status:String,
-      @BeanProperty var lastModified:java.util.Date,
-      @BeanProperty var comment:String,
-      @BeanProperty var classification:String,
-      @BeanProperty var species:String,
-      @BeanProperty var user:JCUUser,
-      @BeanProperty var area:String,
-      @BeanProperty var ignored:java.lang.Boolean
-    ) {
+  @BeanProperty var apiKey:String,
+  @BeanProperty var status:String,
+  @BeanProperty var lastModified:java.util.Date,
+  @BeanProperty var comment:String,
+  @BeanProperty var classification:String,
+  @BeanProperty var species:String,
+  @BeanProperty var user:JCUUser,
+  @BeanProperty var area:String,
+  @BeanProperty var ignored:java.lang.Boolean) {
   def this() = this(null,null,null,null,null,null,null,null,null,null)
 }
 
 @JsonIgnoreProperties(ignoreUnknown=true)
-class JCUUser(@BeanProperty var email:String, @BeanProperty var authority:java.lang.Integer, @BeanProperty var isAdmin:Boolean){
+class JCUUser(@BeanProperty var email:String,
+  @BeanProperty var authority:java.lang.Integer,
+  @BeanProperty var isAdmin:Boolean){
   def this() = this(null,null,false)
 }
-
 
 /**
  * A type of Quality Assertion that needs to be applied based on a query
  */
-@JsonIgnoreProperties(Array("id","rawAssertion", "rawQuery","records"))
-class AssertionQuery(
+@JsonIgnoreProperties(Array("id", "rawAssertion", "rawQuery", "records"))
+class AssertionQuery (
   @BeanProperty var id:String,
   @BeanProperty var uuid:String,
   @BeanProperty var rawAssertion:String,
@@ -687,6 +692,8 @@ class AssertionQuery(
   @BeanProperty var rawQuery:String,
   @BeanProperty var qidQuery:String,
   @BeanProperty var deletedDate:java.util.Date,
+  @BeanProperty var userId:String,
+  @BeanProperty var userEmail:String,
   @BeanProperty var userName:String,
   @BeanProperty var authority:String,
   @BeanProperty var assertionType:String,
@@ -696,21 +703,35 @@ class AssertionQuery(
   @BeanProperty var disabled:Boolean,
   @BeanProperty var lastApplied:java.util.Date,
   @BeanProperty var records:Array[String] = Array()
-  ) extends POSO{
+  ) extends POSO {
 
-  var recordCount:Int=0
+  var recordCount:Int = 0
 
-  def this()= this(null,null, null,null, null, null,null,null,null,null,null,null,null,true, false,null)
+  def this()= this(null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,true,false,null)
 
-  def this(jcu:JCUAssertion) = this(jcu.apiKey + "|" + jcu.id, Config.assertionQueryDAO.createOrRetrieveUuid(jcu.apiKey + "|" + jcu.id),null,null,jcu.lastModified,null,null,null,jcu.user.email, if(jcu.user.authority != null) jcu.user.authority.toString() else null, jcu.classification, jcu.comment,jcu.area, true, if(jcu.ignored == null) false else jcu.ignored,null)
+  def this(jcu:JCUAssertion) = this(
+    jcu.apiKey + "|" + jcu.id,
+    Config.assertionQueryDAO.createOrRetrieveUuid(jcu.apiKey + "|" + jcu.id),
+    null,
+    null,
+    jcu.lastModified,
+    null,
+    null,
+    null,
+    null,
+    jcu.user.email,
+    jcu.user.email,
+    if(jcu.user.authority != null) jcu.user.authority.toString() else null,
+    jcu.classification,
+    jcu.comment,jcu.area,
+    true,
+    if(jcu.ignored == null) false else jcu.ignored,
+    null
+  )
+
   //The number of records that have been applied to this assertion
-  def getRecordCount():Int = if(recordCount ==0)records.size else recordCount
-  def setRecordCount(value:Int) = recordCount=value
-
+  def getRecordCount : Int = if(recordCount == 0) records.size else recordCount
+  def setRecordCount(value:Int) = recordCount = value
 }
 
-
-class OutlierResult (
-  @BeanProperty var testUuid:String,
-  @BeanProperty var outlierForLayersCount:Int)
-
+class OutlierResult (@BeanProperty var testUuid:String, @BeanProperty var outlierForLayersCount:Int)

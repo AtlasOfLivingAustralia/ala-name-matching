@@ -196,7 +196,7 @@ trait POSO {
           if(date.isDefined)
             property.setter.invoke(this, date.get)        
         }
-        case _ => println("Unhandled data type: " + property.typeName)
+        case _ => logger.warn("Unhandled data type: " + property.typeName)
       }
     }
     case None => {} //println("Property not mapped: " +name +", on " + this.getClass.getName)

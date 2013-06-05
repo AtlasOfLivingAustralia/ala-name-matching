@@ -944,11 +944,11 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
             doc.addField("query_assertion_uuid", key)
             doc.addField("query_assertion_type_s", value)
             if (suitableForModelling && typeNotSuitableForModelling.contains(value))
-              suitableForModelling = false;
+              suitableForModelling = false
           }
         }
         //this will not exist for all records until a complete reindex is performed...
-        doc.addField("suitable_modelling", suitableForModelling.toString())
+        doc.addField("suitable_modelling", suitableForModelling.toString)
 
         //index the available el and cl's - more efficient to use the supplied map than using the old way
         val els = Json.toStringMap(map.getOrElse("el.p", "{}"))
@@ -965,31 +965,28 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
         val lft = map.get("left.p")
         val rgt = map.get("right.p")
         if(lft.isDefined && rgt.isDefined){
-                  val sgs = SpeciesGroups.getSpeciesSubGroups(lft.get, rgt.get)
-                  if(sgs.isDefined){
-                    sgs.get.foreach{v:String => doc.addField("species_subgroup", v)}
-                  }
-                }
-
+          val sgs = SpeciesGroups.getSpeciesSubGroups(lft.get, rgt.get)
+          if(sgs.isDefined){
+            sgs.get.foreach{v:String => doc.addField("species_subgroup", v)}
+          }
+        }
 
         if (!batch) {
-          solrServer.add(doc);
+          solrServer.add(doc)
           solrServer.commit
-        }
-        else {
-          solrDocList.synchronized{
-          if (!StringUtils.isEmpty(values(0)))
-            solrDocList.add(doc)
+        } else {
+          solrDocList.synchronized {
+            if (!StringUtils.isEmpty(values(0)))
+              solrDocList.add(doc)
 
-          if (solrDocList.size == 1000 || (commit && solrDocList.size > 0)) {
+            if (solrDocList.size == 1000 || (commit && solrDocList.size > 0)) {
 
-
-            solrServer.add(solrDocList)
-            if (commit || solrDocList.size >= 10000){
-              solrServer.commit
+              solrServer.add(solrDocList)
+              if (commit || solrDocList.size >= 10000){
+                solrServer.commit
+              }
+              solrDocList.clear
             }
-            solrDocList.clear
-          }
           }
         }
       }
@@ -1020,10 +1017,10 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     val rowKeyFacets = response.getFacetField("row_key")
     val values = rowKeyFacets.getValues().asScala
     if (values.size > 0) {
-      Some(values.map(facet => facet.getName).asInstanceOf[List[String]]);
-    }
-    else
+      Some(values.map(facet => facet.getName).asInstanceOf[List[String]])
+    } else {
       None
+    }
   }
 
   def getDistinctValues(query: String, field: String, max: Int): Option[List[String]] = {
@@ -1048,10 +1045,10 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
           old value: Some(values.map(facet => facet.getName).asInstanceOf[List[String]])
          */
         Some(values.map(facet => facet.getName).toList)
-      } else{
+      } else {
         None
       }
-    } else{
+    } else {
       None
     }
   }
