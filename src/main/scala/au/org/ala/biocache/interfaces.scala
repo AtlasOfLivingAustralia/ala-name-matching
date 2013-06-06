@@ -8,7 +8,7 @@ import au.org.ala.util.IndexRecords
 import java.util.UUID
 import java.util.Date
 import au.org.ala.util._
-import au.org.ala.biocache.outliers.{JackKnifeStats,RecordJackKnifeStats}
+import outliers.{SampledRecord, JackKnifeStats, RecordJackKnifeStats}
 import au.org.ala.biocache.qa.QueryAssertion
 import org.ala.layers.dao.IntersectCallback
 
@@ -515,7 +515,7 @@ object Store {
 
   def getJackKnifeStatsFor(guid:String) : java.util.Map[String, JackKnifeStats] = outlierStatsDAO.getJackKnifeStatsFor(guid)
 
-  def getJackKnifeOutliersFor(guid:String) : java.util.Map[String, Array[String]] = outlierStatsDAO.getJackKnifeOutliersFor(guid)
+  def getJackKnifeOutliersFor(guid:String) : java.util.List[(String,java.util.List[SampledRecord])] = outlierStatsDAO.getJackKnifeOutliersFor(guid)
 
   def getJackKnifeRecordDetailsFor(uuid:String) : Array[RecordJackKnifeStats] = outlierStatsDAO.getJackKnifeRecordDetailsFor(uuid)
   

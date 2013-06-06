@@ -8,8 +8,7 @@ import java.util.UUID
 import org.slf4j.LoggerFactory
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
-import au.org.ala.biocache.outliers.JackKnifeStats
-import au.org.ala.biocache.outliers.RecordJackKnifeStats
+import outliers.{SampledRecord, JackKnifeStats, RecordJackKnifeStats}
 import au.org.ala.util.DuplicateRecordDetails
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -574,9 +573,11 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
 
   private def initAssertions(processed:FullRecord, assertions:Map[String, Array[QualityAssertion]]){
     for(array <- assertions.values){
-      for(i <- 0 to array.size-1){
-        processed.assertions = processed.assertions :+ array(i).getName
-      }
+      val failedQas = array.filter(_.qaStatus==0).map(_.getName)
+      processed.assertions = processed.assertions  ++ failedQas
+//      for(i <- 0 to array.size-1){
+//        processed.assertions = processed.assertions :+ array(i).getName
+//      }
     }
   }
 
@@ -606,11 +607,14 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
       val assertions = systemAssertions.get(name).get
       val failedass = new ArrayBuffer[Int]
       for(qa <- assertions){
-        //check to see if a user assertion counteracts this code
-        if(!doesListContainCode(falseUserAssertions,qa.code))
-            failedass.add(qa.code)
-        else
-            assertionsDeleted += qa
+        //only add if it has failed
+        if(qa.getQaStatus == 0){
+          //check to see if a user assertion counteracts this code
+          if(!doesListContainCode(falseUserAssertions,qa.code))
+              failedass.add(qa.code)
+          else
+              assertionsDeleted += qa
+        }
       }
       //add the "true" user assertions to the arrays
       //filter the list based on the name of the phase
@@ -850,7 +854,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
       if (!matchingAssertion.isEmpty) {
         //this assertion has been set by the system
         val sysassertion = matchingAssertion.get
-        listErrorCodes = listErrorCodes + sysassertion.code
+         listErrorCodes = listErrorCodes + sysassertion.code
       }
       else {
         //code needs to be removed
@@ -1120,7 +1124,7 @@ class AssertionQueryDAOImpl extends AssertionQueryDAO{
 
 trait OutlierStatsDAO {
   def getJackKnifeStatsFor(guid:String) : java.util.Map[String, JackKnifeStats]
-  def getJackKnifeOutliersFor(guid:String) : java.util.Map[String, Array[String]]
+  def getJackKnifeOutliersFor(guid:String) : java.util.List[(String,java.util.List[SampledRecord])]
   def getJackKnifeRecordDetailsFor(uuid:String) : Array[RecordJackKnifeStats]
 }
 
@@ -1142,7 +1146,7 @@ class OutlierStatsDAOImpl extends OutlierStatsDAO {
     obj.asInstanceOf[java.util.Map[String, JackKnifeStats]]
   }
 
-  def getJackKnifeOutliersFor(guid:String) : java.util.Map[String, Array[String]] = {
+  def getJackKnifeOutliersFor(guid:String) : java.util.List[(String,java.util.List[SampledRecord])] = {
 
     logger.debug("Getting outlier stats for: " + guid)
     val mapper = new ObjectMapper
@@ -1150,8 +1154,10 @@ class OutlierStatsDAOImpl extends OutlierStatsDAO {
     val stringValue = persistenceManager.get(guid,"outliers", "jackKnifeOutliers").getOrElse("{}")
 
     logger.debug("Retrieved outlier stats for: " + stringValue)
-    val obj = mapper.readValue(stringValue, classOf[java.util.Map[String, Array[String]]])
-    obj.asInstanceOf[java.util.Map[String, Array[String]]]
+    //val obj = mapper.readValue(stringValue, classOf[java.util.Map[String, Array[String]]])
+    val obj = mapper.readValue(stringValue, classOf[java.util.List[(String,java.util.List[SampledRecord])]])
+    //obj.asInstanceOf[java.util.Map[String, Array[String]]]
+    obj.asInstanceOf[java.util.List[(String,java.util.List[SampledRecord])]]
   }
 
   def getJackKnifeRecordDetailsFor(uuid:String) : Array[RecordJackKnifeStats] = {

@@ -1,6 +1,6 @@
 package au.org.ala.util
 import scala.collection.mutable.HashMap
-import au.org.ala.biocache.{Json, SolrIndexDAO, Config}
+import au.org.ala.biocache._
 import org.apache.commons.io.FileUtils
 import java.io.File
 import org.apache.lucene.misc.IndexMergeTool
@@ -10,7 +10,6 @@ import scala.util.parsing.json.JSON
 import java.lang.Thread
 import scala.collection.mutable.ArrayBuffer
 import scala.actors.Actor
-import au.org.ala.biocache.FullRecord
 import java.io.FileWriter
 import au.com.bytecode.opencsv.CSVWriter
 import scala.collection.mutable.HashSet
@@ -121,7 +120,7 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
     var action = ""
     var start,end =""
     var dr:Option[String]=None
-    var validActions = List("range","process","index", "col")
+    var validActions = List("range","process","index", "col","repair")
       
     val parser = new OptionParser("multithread index"){
        arg("<action>", "The action to perform by the Multithreader; either range, process or index, col", {v:String => action = v})
@@ -155,8 +154,11 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
   //          t.start()
   //          threads + t
       
-            val ir ={ 
-              if(action == "index"){
+            val ir ={
+              if(action == "repair"){
+                new RepairRecordsRunner(this, counter, r._1, r._2)
+              }
+              else if(action == "index"){
                 solrDirs += (dirPrefix+"/solr-create/bio-proto-thread-"+counter +"/data/index")
                 new IndexRunner(this, counter,  r._1,  r._2, dirPrefix+"/solr-template/bio-proto/conf", dirPrefix+"/solr-create/bio-proto-thread-"+counter+"/conf")
               }else if(action == "process"){
@@ -258,6 +260,60 @@ class ColumnReporterRunner(centralCounter:Counter, threadId:Int, startKey:String
       val fin = System.currentTimeMillis
       println("[Thread "+threadId+"] " +counter + " took " + ((fin-start).toFloat) / 1000f + " seconds" )
       println("[THREAD " + threadId + "] " + myset)
+  }
+}
+
+class RepairRecordsRunner(centralCounter:Counter, threadId:Int, startKey:String, endKey:String) extends Runnable {
+  var counter =0
+  def run {
+    val pageSize = 1000
+    var counter=0
+    val start = System.currentTimeMillis
+    var startTime = System.currentTimeMillis
+    var finishTime = System.currentTimeMillis
+    println("Starting to repair from " +startKey + " to " + endKey)
+    Config.persistenceManager.pageOverSelect("occ", (guid, map) => {
+      counter += 1
+
+
+      //update the values
+      val list =Json.toListWithGeneric(map.getOrElse(FullRecordMapper.qualityAssertionColumn,"[]"), classOf[QualityAssertion])
+      sortOutQas(guid, list)
+      if (counter % pageSize == 0 && counter> 0) {
+        centralCounter.addToCounter(pageSize)
+        finishTime = System.currentTimeMillis
+        centralCounter.printOutStatus(threadId, guid, "Indexer")
+        startTime = System.currentTimeMillis
+      }
+
+      true
+    }, startKey, endKey, pageSize ,"qualityAssertion", "rowKey", "uuid")
+  }
+
+  val qaphases = Array("loc.qa", "offline.qa", "class.qa", "bor.qa","type.qa", "attr.qa", "image.qa", "event.qa")
+  def sortOutQas(guid:String,list :List[QualityAssertion]):(String,String)={
+    val failed:Map[String,List[Int]] = list.filter(_.qaStatus == 0).map(_.code).groupBy(qa =>Processors.getProcessorForError(qa) +".qa")
+    val gk = AssertionCodes.isGeospatiallyKosher(failed.getOrElse("loc.qa",List()).toArray).toString
+    val tk = AssertionCodes.isTaxonomicallyKosher(failed.getOrElse("class.qa",List()).toArray).toString
+
+    val empty = qaphases.filterNot(p => failed.contains(p)).map(_->"[]")
+    val map = Map("geospatiallyKosher"->gk, "taxonomicallyKosher"->tk) ++ failed.filterNot(_._1 == ".qa").map{case (key,value)=>{(key, Json.toJSON(value.toArray))}} ++ empty
+    //revise the properties in the db
+    Config.persistenceManager.put(guid, "occ", map)
+
+    //check to see if there is a duplicate QA and remove one
+    val dupQA = list.filter(_.code == AssertionCodes.INFERRED_DUPLICATE_RECORD.code)
+    //dupQA.foreach(qa => println(qa.getComment))
+    if(dupQA.size >1){
+      val newList:List[QualityAssertion] = list.diff(dupQA) ++ List(dupQA(0))
+      //println("Original size " + list.length + "  new size =" + newList.length)
+      Config.persistenceManager.putList(guid, "occ", FullRecordMapper.qualityAssertionColumn, newList, classOf[QualityAssertion], true)
+    }
+
+    //println("FAILED: " + failed)
+    //println("The map to add " + map)
+    (gk,tk)
+
   }
 }
 
