@@ -742,7 +742,7 @@
    <dynamicField name="*_uuid" type="string" indexed="true" stored="true"/>
    <!--  catches all the environment and contextual layers that are being indexed -->
    <!-- They are being stored just in case they need to be faceted on -->
-   <dynamicField name="el*" type="tdouble" indexed="true" stored="true" omitNorms="true" />
+   <dynamicField name="el*" type="double" indexed="true" stored="true" omitNorms="true" />
    <dynamicField name="cl*" type="string" indexed="true" stored="true" omitNorms="true" />
    
 
