@@ -87,6 +87,7 @@ object DuplicationDetection{
         //just a single detection - ignore the thread settings etc...
         val dd = new DuplicationDetection
         val datafilename = rootDir+"dd_data_"+guid.get.replaceAll("[\\.:]","_") + ".txt"
+        val passedfilename = rootDir+"passed"+guid.get.replaceAll("[\\.:]","_") + ".txt"
         val dupfilename = rootDir+"duplicates_"+guid.get.replaceAll("[\\.:]","_") + ".txt"
         val indexfilename = rootDir+"reindex_"+guid.get.replaceAll("[\\.:]","_") + ".txt"
         val olddup = rootDir+"olddup_"+guid.get.replaceAll("[\\.:]","_") + ".txt"
@@ -96,7 +97,7 @@ object DuplicationDetection{
           updateLastDuplicateTime()
         }
         else
-          dd.detect(datafilename,new FileWriter(dupfilename),guid.get,shouldDownloadRecords= !exist ,cleanup=cleanup)
+          dd.detect(datafilename,new FileWriter(dupfilename), new FileWriter(passedfilename),guid.get,shouldDownloadRecords= !exist ,cleanup=cleanup)
         //println(new DuplicationDetection().getCurrentDuplicates(guid.get))
         
         Config.persistenceManager.shutdown
@@ -136,6 +137,7 @@ object DuplicationDetection{
       FileUtils.forceMkdir(new File(dir))
       val sourceFile = dir + "dd_data.txt"
       val dupfilename = dir + "duplicates.txt"
+      val passedfilename = dir + "passed.txt"
       val indexfilename = dir + "reindex.txt"
       val olddupfilename = dir + "olddups.txt"
       
@@ -143,7 +145,7 @@ object DuplicationDetection{
       val p = if(load){
         new Thread(){
           override def run(){
-            new DuplicationDetection().loadMulitpleDuplicatesFromFile(dupfilename, threads,new FileWriter(new File(indexfilename)), new FileWriter(new File(olddupfilename)))
+            new DuplicationDetection().loadMulitpleDuplicatesFromFile(dupfilename, passedfilename, threads,new FileWriter(new File(indexfilename)), new FileWriter(new File(olddupfilename)))
             //now reindex all the items
             IndexRecords.indexList(new File(indexfilename),false)
             }
@@ -153,7 +155,7 @@ object DuplicationDetection{
         new StringConsumer(queue,ids,{guid =>
             
         val dd = new DuplicationDetection();
-        dd.detect(sourceFile,new FileWriter(dupfilename, true),guid,shouldDownloadRecords= !exist ,cleanup=cleanup)})
+        dd.detect(sourceFile,new FileWriter(dupfilename, true), new FileWriter(passedfilename, true),guid,shouldDownloadRecords= !exist ,cleanup=cleanup)})
       }
 
       ids += 1
@@ -231,7 +233,7 @@ class DuplicationDetection{
   /**
    * Loads the duplicates from a file that contains duplicates from multiple taxon concepts
    */
-  def loadMulitpleDuplicatesFromFile(dupFilename:String, threads:Int, reindexWriter:FileWriter, oldDuplicatesWriter:FileWriter){
+  def loadMulitpleDuplicatesFromFile(dupFilename:String, passedFilename:String, threads:Int, reindexWriter:FileWriter, oldDuplicatesWriter:FileWriter){
     var currentLsid=""
      val queue = new ArrayBlockingQueue[String](100)
     var ids=0
@@ -283,6 +285,14 @@ class DuplicationDetection{
     reindexWriter.close
     oldDuplicatesWriter.flush
     oldDuplicatesWriter.close
+
+    //now load all the records that passed duplication detection
+    new File(passedFilename).foreachLine(line =>{
+      //each line represents a row key that is not considered a duplicate
+      Config.occurrenceDAO.addSystemAssertion(line, QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD, 1), replaceExistCode = true)
+      Config.persistenceManager.deleteColumns(line, "occ","associatedOccurrences.p","duplicationStatus.p","duplicationType.p")
+
+    })
   }
   
   //loads the dupicates from the lsid based on the tmp file being populated - this is based on a single lsid being in the file
@@ -359,7 +369,7 @@ class DuplicationDetection{
   /*
    * Performs the duplicate detection - each year of records is processed on a separate thread.
    */
-  def detect(sourceFileName:String, duplicateWriter:FileWriter,lsid:String, shouldDownloadRecords:Boolean = false, field:String="species_guid", cleanup:Boolean=false){
+  def detect(sourceFileName:String, duplicateWriter:FileWriter, passedWriter:FileWriter,lsid:String, shouldDownloadRecords:Boolean = false, field:String="species_guid", cleanup:Boolean=false){
     DuplicationDetection.logger.info("Starting to detect duplicates for " + lsid)
 
 //    val directory = baseDir + "/" +  lsid.replaceAll("[\\.:]","_") + "/"
@@ -420,7 +430,7 @@ class DuplicationDetection{
     DuplicationDetection.logger.debug("There are " + yearGroups.size + " year groups")
     val threads = new ArrayBuffer[Thread]
     yearGroups.foreach{case(year, yearList)=>{
-      val t = new Thread(new YearGroupDetection(year,yearList,duplicateWriter))
+      val t = new Thread(new YearGroupDetection(year,yearList,duplicateWriter, passedWriter))
       t.start();
       threads += t
     }}
@@ -481,7 +491,7 @@ class DuplicationDetection{
 }
 
 //Each year is handled separately so they can be processed in a threaded manner
-class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], duplicateWriter:FileWriter) extends Runnable{
+class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], duplicateWriter:FileWriter, passedWriter:FileWriter) extends Runnable{
   import JavaConversions._
   val latLonPattern="""(\-?\d+(?:\.\d+)?),\s*(\-?\d+(?:\.\d+)?)""".r
   val alphaNumericPattern ="[^\\p{L}\\p{N}]".r
@@ -532,12 +542,21 @@ class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], dupli
         duplicateWriter.synchronized{
           duplicateWriter.write(stringValue +"\n")
         }
+      } else if((record.duplicates == null || record.duplicates.size() ==0) && StringUtils.isBlank(record.duplicateOf) ){
+        //this record has passed its duplicate detection
+        passedWriter.synchronized{
+          passedWriter.write(record.getRowKey+"\n")
+        }
+
       }
         
         //println("RECORD: " + record.rowKey + " has " + record.duplicates.size + " duplicates")
     })
     duplicateWriter.synchronized{
       duplicateWriter.flush()
+    }
+    passedWriter.synchronized{
+      passedWriter.flush()
     }
   }
   
@@ -704,7 +723,7 @@ class YearGroupDetection(year:String,records:List[DuplicateRecordDetails], dupli
 }
 
 
-class IncrementalYearGroupDetection(year:String,records:List[DuplicateRecordDetails], duplicateWriter:FileWriter) extends YearGroupDetection(year, records,duplicateWriter){
+class IncrementalYearGroupDetection(year:String,records:List[DuplicateRecordDetails], duplicateWriter:FileWriter,passedWriter:FileWriter) extends YearGroupDetection(year, records,duplicateWriter,passedWriter:FileWriter){
   override def checkDuplicates(recordGroup:List[DuplicateRecordDetails]):List[DuplicateRecordDetails]={
     
     recordGroup.foreach(record=>{

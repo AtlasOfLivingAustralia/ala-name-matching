@@ -129,13 +129,13 @@ trait PersistenceManager {
  * Major change: The thrift API now works with ByteBuffer instead of byte[]
  */
 class CassandraPersistenceManager @Inject() (
-  @Named("cassandraHosts") val host:String = "localhost",
-  @Named("cassandraPort") val port:Int = 9160,
-  @Named("cassandraPoolName") val poolName:String = "biocache-store-pool",
-  @Named("cassandraKeyspace") val keyspace:String = "occ",
-  @Named("cassandraMaxConnections")val maxConnections:Int= -1,
-  @Named("cassandraMaxRetries") val maxRetries:Int= 3,
-  @Named("thriftOperationTimeout") val operationTimeout:Int= 4000) extends PersistenceManager {
+                                              @Named("cassandraHosts") val host:String = "localhost",
+                                              @Named("cassandraPort") val port:Int = 9160,
+                                              @Named("cassandraPoolName") val poolName:String = "biocache-store-pool",
+                                              @Named("cassandraKeyspace") val keyspace:String = "occ",
+                                              @Named("cassandraMaxConnections")val maxConnections:Int= -1,
+                                              @Named("cassandraMaxRetries") val maxRetries:Int= 3,
+                                              @Named("thriftOperationTimeout") val operationTimeout:Int= 4000) extends PersistenceManager {
 
   protected val logger = LoggerFactory.getLogger("CassandraPersistenceManager")
 
@@ -230,9 +230,9 @@ class CassandraPersistenceManager @Inject() (
   def getByIndex(uuid:String, entityName:String, idxColumn:String) : Option[Map[String,String]] =
     getFirstValuesFromIndex(entityName, idxColumn, uuid, Selector.newColumnsPredicateAll(true, maxColumnLimit))
 
-    /**
-     * Retrieves a specific property value using the index as the retrieval method.
-     */
+  /**
+   * Retrieves a specific property value using the index as the retrieval method.
+   */
   def getByIndex(uuid:String, entityName:String, idxColumn:String, propertyName:String) = {
     val map = getFirstValuesFromIndex(entityName, idxColumn, uuid, Selector.newColumnsPredicate(propertyName))
     if(map.isEmpty)
@@ -380,7 +380,7 @@ class CassandraPersistenceManager @Inject() (
   def putList[A](uuid: String, entityName: String, propertyName: String, newList: List[A], theClass:java.lang.Class[_], overwrite: Boolean) = {
 
     val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
-      //initialise the serialiser
+    //initialise the serialiser
     val mutator = Pelops.createMutator(poolName)
 
     if (overwrite) {
@@ -406,7 +406,7 @@ class CassandraPersistenceManager @Inject() (
         for (theObject <- currentList) {
           if (!newList.contains(theObject)) {
             //add to buffer
-            buffer + theObject
+            buffer += theObject
           }
         }
 
@@ -470,11 +470,11 @@ class CassandraPersistenceManager @Inject() (
     if(counter > 0) logger.debug("Finished paging. Records paged over : "+counter)
   }
 
- /**
-  * Retrieve a list of records as maps of columns.
-  */
+  /**
+   * Retrieve a list of records as maps of columns.
+   */
   private def getColumnsFromRowsWithRetries(entityName:String, keyRange:KeyRange, slicePredicate:SlicePredicate,
-             cl:ConsistencyLevel, permittedRetries:Int) : java.util.Map[Bytes, java.util.List[Column]] = {
+                                            cl:ConsistencyLevel, permittedRetries:Int) : java.util.Map[Bytes, java.util.List[Column]] = {
     var success = false
     var noOfRetries = 0
     var columnMap:java.util.Map[Bytes, java.util.List[Column]] = null
@@ -590,24 +590,24 @@ class CassandraPersistenceManager @Inject() (
    * Select fields from rows and pass to the supplied function.
    */
   def selectRows(rowkeys:Array[String], entityName:String, fields:Array[String], proc:((Map[String,String])=>Unit)) {
-     val selector = Pelops.createSelector(poolName)
-     val slicePredicate = Selector.newColumnsPredicate(fields:_*)
+    val selector = Pelops.createSelector(poolName)
+    val slicePredicate = Selector.newColumnsPredicate(fields:_*)
 
-     //retrieve the columns
-     var columnMap = selector.getColumnsFromRowsUtf8Keys(entityName, rowkeys.toList, slicePredicate, ConsistencyLevel.ONE)
+    //retrieve the columns
+    var columnMap = selector.getColumnsFromRowsUtf8Keys(entityName, rowkeys.toList, slicePredicate, ConsistencyLevel.ONE)
 
-     //write them out to the output stream
-     val keys = List(columnMap.keySet.toArray : _*)
+    //write them out to the output stream
+    val keys = List(columnMap.keySet.toArray : _*)
 
-     //identify el* cl* fields
-     keys.foreach(key =>{
-       val columnsList = columnMap.get(key)
-       val fieldValues = columnsList.map(column => (new String(column.getName, "UTF-8"),new String(column.getValue, "UTF-8"))).toArray
-       val map = scala.collection.mutable.Map.empty[String,String]
-       fieldValues.foreach(fieldValue =>  map(fieldValue._1) = fieldValue._2)
-       proc(map.toMap) //pass the map to the function for processing
-     })
-   }
+    //identify el* cl* fields
+    keys.foreach(key =>{
+      val columnsList = columnMap.get(key)
+      val fieldValues = columnsList.map(column => (new String(column.getName, "UTF-8"),new String(column.getValue, "UTF-8"))).toArray
+      val map = scala.collection.mutable.Map.empty[String,String]
+      fieldValues.foreach(fieldValue =>  map(fieldValue._1) = fieldValue._2)
+      proc(map.toMap) //pass the map to the function for processing
+    })
+  }
 
   /**
    * Convert a set of cassandra columns into a key-value pair map.

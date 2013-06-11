@@ -64,7 +64,7 @@ object ProcessWithActors {
     file.foreachLine(line => {
         count+=1
         if(startUuid.isEmpty || startUuid.get == line)
-            buff + line
+            buff += line
         if(buff.size >= 50){
             val actor = pool(batches % threads).asInstanceOf[Consumer]
         batches += 1

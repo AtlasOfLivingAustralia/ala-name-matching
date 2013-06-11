@@ -73,7 +73,7 @@ trait OccurrenceDAO extends DAO{
 
   def updateOccurrence(rowKey: String, anObject: AnyRef, version: Version): Unit
 
-  def addSystemAssertion(rowKey: String, qualityAssertion: QualityAssertion, checkExisting:Boolean=true): Unit
+  def addSystemAssertion(rowKey: String, qualityAssertion: QualityAssertion, replaceExistCode:Boolean=false, checkExisting:Boolean=true): Unit
 
   def removeSystemAssertion(rowKey: String, errorCode:ErrorCode) : Unit
 
@@ -662,8 +662,9 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
    *
    * @param qualityAssertion
    */
-  def addSystemAssertion(rowKey: String, qualityAssertion: QualityAssertion,checkExisting:Boolean=true) {
-    val systemAssertions = (getSystemAssertions(rowKey) :+ qualityAssertion).groupBy(x => x.code).values.map( _.head).toList
+  def addSystemAssertion(rowKey: String, qualityAssertion: QualityAssertion,replaceExistCode:Boolean=false,checkExisting:Boolean=true) {
+    val baseAssertions = if(replaceExistCode) (getSystemAssertions(rowKey).filterNot(_.code == qualityAssertion.code) :+ qualityAssertion) else (getSystemAssertions(rowKey) :+ qualityAssertion)
+    val systemAssertions =baseAssertions.groupBy(x => x.code).values.map( _.head).toList
     if(checkExisting){
       val userAssertions = getUserAssertions(rowKey)
       updateAssertionStatus(rowKey, qualityAssertion, systemAssertions, userAssertions)

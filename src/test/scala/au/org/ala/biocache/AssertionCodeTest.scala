@@ -26,7 +26,6 @@ class AssertionCodeTest extends ConfigFunSuite {
         expect(false){AssertionCodes.isGeospatiallyKosher(codes2)}
     }
     
-    
       /**
    * A user assertion true or false overrides the value of a system assertion
    */
@@ -202,5 +201,24 @@ class AssertionCodeTest extends ConfigFunSuite {
     expect("false") {
       pm.get(rowKey3, "occ", FullRecordMapper.userQualityAssertionColumn).get
     }
+  }
+
+  test ("Test add adhoc System assertion") {
+    occurrenceDAO.addSystemAssertion("satest1", QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD))
+    occurrenceDAO.addSystemAssertion("satest1", QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD, 1))
+
+    expect(0){
+      val dups =occurrenceDAO.getSystemAssertions("satest1").filter(_.code == AssertionCodes.INFERRED_DUPLICATE_RECORD.code)
+
+      dups(0).qaStatus
+    }
+    //now we want to remove the existing first
+    occurrenceDAO.addSystemAssertion("satest1", QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD, 1), replaceExistCode=true)
+    expect(1) {
+      val dups =occurrenceDAO.getSystemAssertions("satest1").filter(_.code == AssertionCodes.INFERRED_DUPLICATE_RECORD.code)
+
+      dups(0).qaStatus
+    }
+
   }
 }

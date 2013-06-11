@@ -53,9 +53,9 @@ class CreateCompositeKeyIndex {
             for(keyPart <- keyOn){
                 val keyPartValue = map.getOrElse(keyPart, "")
                 if(keyPartValue != ""){
-                   keyParts + keyPartValue
+                   keyParts += keyPartValue
                 }
-                keyParts + guid
+                keyParts += guid
             }
             keyParts.toList.mkString("||")
         }
@@ -148,11 +148,11 @@ class CreateInvertedIndexOnProperty(keyspace:String) {
             keyOnVariables.foreach( variableName => {
                 val key = {
                     val keyParts = new ListBuffer[String]
-                    keyParts + variableName
+                    keyParts += variableName
                     for(keyPart <- keyOn){
                         val keyPartValue = map.getOrElse(keyPart, "")
                         if(keyPartValue != ""){
-                           keyParts + keyPartValue
+                           keyParts += keyPartValue
                         }
                     }
                     keyParts.toList.mkString("||")

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import java.io.{FileWriter, FileOutputStream, File, FileReader}
 import au.org.ala.util.{IndexRecords, OptionParser, FileHelper}
 import org.slf4j.LoggerFactory
+import collection.mutable
 
 class Timings {
 
@@ -108,7 +109,8 @@ object SpeciesOutlierTests {
       logger.debug(lines.head.mkString(","))
 
       val resultsBuffer = new ListBuffer[(String,Seq[SampledRecord],JackKnifeStats)]
-
+      val recordIds = new ListBuffer[String]
+      var loadedIds = false
         //run jacknife for each variable
       variables.foreach(variable => {
         //println("Testing with variable name: " + variable)
@@ -128,6 +130,9 @@ object SpeciesOutlierTests {
           val variableValue = line(variableIdx - 1)
           val latitude = line(latitudeIdx - 1)
           val longitude = line(longitudeIdx - 1)
+          if (!loadedIds){
+            recordIds += line(0)
+          }
           if (variableValue != "" && variableValue != null && latitude != "" && longitude != ""){
             val cellId = getCellId(grid, latitude.toFloat, longitude.toFloat)
             pointBuffer += SampledRecord(line(0), variableValue.toFloat, cellId)
@@ -155,10 +160,24 @@ object SpeciesOutlierTests {
           }
           throw new RuntimeException("Error in processing")
         }
+        loadedIds = true
       })
 
+
+      //now identify the records that were not outlier but were tested.
+      //If outliers were NOT testsed the resutlsBuffer will be empty.
+      val passedRecords = {
+        if(resultsBuffer.length>0){
+          recordIds.toSet &~ resultsBuffer.map{_._2}.foldLeft(ListBuffer[SampledRecord]())(_ ++ _).map(_.id).toSet
+        }
+        else{
+          Set[String]()
+        }
+      }
+      logger.debug("The records that passed " + passedRecords + " " + recordIds.size)
       //store the results for this taxon
-      storeResultsWithStats(taxonConceptID, resultsBuffer)
+      storeResultsWithStats(taxonConceptID, resultsBuffer, passedRecords,idsWriter)
+
 
       if (nextLine == null) finished = true
       else nextTaxonConceptID = nextLine.head
@@ -259,7 +278,7 @@ object SpeciesOutlierTests {
     printLinksForRecords(1, outlier1)
   }
 
-  def storeResultsWithStats(taxonID:String, results:Seq[(String, Seq[SampledRecord], JackKnifeStats)] ){
+  def storeResultsWithStats(taxonID:String, results:Seq[(String, Seq[SampledRecord], JackKnifeStats)], passed:Set[String], idsWriter:FileWriter ){
 
     val mapper = new ObjectMapper
     mapper.registerModule(DefaultScalaModule)
@@ -318,25 +337,57 @@ object SpeciesOutlierTests {
 
     //reset the records that are no longer considered outliers -
     //do an ID diff between the results
+ //   println(mapper.readValue(previous.get, classOf[List[(String,List[SampledRecord])]]) + " " + mapper.readValue(previous.get, classOf[List[(String,List[SampledRecord])]]).getClass)
     val previousIDs = {
+      if(previous.isDefined){
+//        println("PREVIOUS: " +previous.get)
       //mapper.readValue(previous.getOrElse("{}"), classOf[Map[String, List[String]]]).keys
-      List[String]()
+        val tmplist = new ListBuffer[String]
+        val prelist:List[mutable.Buffer[AnyRef]] = mapper.readValue(previous.get, classOf[List[(String,List[SampledRecord])]]).asInstanceOf[List[mutable.Buffer[AnyRef]]]
+        //println("prelist : "+ prelist)
+        prelist.foreach(_.foreach{
+                                b1 =>
+                                    if(b1.isInstanceOf[mutable.Buffer[Map[String,String]]]){
+                                      b1.asInstanceOf[mutable.Buffer[scala.collection.convert.Wrappers$JMapWrapper]].foreach(v => tmplist += v.get("id").get.toString)//.foreach(v => println("v => " + v + "  " + v.getClass +" " +v.get("id").toString() ))//v => if(v._1 == "id") tmplist+= v._2)//foreach(v => tmplist += v.getOrElse("id",""))
+                                    }
+                                  })
+        tmplist.toList
+      } else{
+        List[String]()
+      }
     }
+    logger.debug("previousIDs: " + previousIDs)
     val currentIDs = record2OutlierLayer.map(_._1.id)
 
     //IDs in the previous not in current need to be reset
     val newIDs = previousIDs diff currentIDs
+    logger.debug("previous : " + previousIDs.size + " current " + currentIDs.size + " new : " + newIDs.size)
     
     logger.debug("[WARNING] Number of old IDs not marked as outliers anymore: " + newIDs.size)
 
     newIDs.foreach(recordID =>  {
+      logger.debug("Record " + recordID +" is no longer an outlier")
       val rowKey = Config.occurrenceDAO.getRowKeyFromUuid(recordID)
       if (!rowKey.isEmpty){
+        //add the uuid as one that is needing reindexing:
+        idsWriter.write(recordID)
+        idsWriter.write("\n")
         Config.persistenceManager.deleteColumns(rowKey.get, "occ", "outlierForLayers.p")
         //remove the system assertions
         Config.occurrenceDAO.removeSystemAssertion(rowKey.get, AssertionCodes.DETECTED_OUTLIER)
       }
     })
+
+    //mark the records that have passed
+    passed.foreach(uuid => {
+      val rowKey = Config.occurrenceDAO.getRowKeyFromUuid(uuid)
+      if(rowKey.isDefined){
+        //mark the test as passed
+        Config.occurrenceDAO.addSystemAssertion(rowKey.get,QualityAssertion(AssertionCodes.DETECTED_OUTLIER, 1))
+      }
+    })
+
+
   }
 
   def storeResults(taxonID:String, record2Layers:Seq[(SampledRecord, String)] ){
