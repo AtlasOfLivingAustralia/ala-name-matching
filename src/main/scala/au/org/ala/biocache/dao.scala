@@ -263,13 +263,13 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     val firstCL = fields.find(value => {clpattern.findFirstIn(value).nonEmpty})
     val firstMisc = fields.find(value =>{IndexFields.storeMiscFields.contains(value)})
     if(firstEL.isDefined)
-      mfields + "el.p"
+      mfields += "el.p"
     if(firstCL.isDefined)
-      mfields + "cl.p"
+      mfields += "cl.p"
     if(includeSensitive)
-      mfields + "originalSensitiveValues"
+      mfields += "originalSensitiveValues"
     if(firstMisc.isDefined)
-      mfields + FullRecordMapper.miscPropertiesColumn
+      mfields += FullRecordMapper.miscPropertiesColumn
     mfields ++=  FullRecordMapper.qaFields
 
     persistenceManager.selectRows(rowKeys, entityName, mfields.toArray , { fieldMap =>
