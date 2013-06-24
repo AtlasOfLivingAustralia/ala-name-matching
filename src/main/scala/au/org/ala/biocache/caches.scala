@@ -400,16 +400,20 @@ object AttributionDAO {
       if(defaultDwc!= null){
         //retrieve the dwc values for the supplied values
           val map = defaultDwc.asInstanceOf[java.util.LinkedHashMap[String,String]]
+          val newMap = new java.util.LinkedHashMap[String,String]()
           map.keys.foreach { key:String => {
+            val value=map.get(key)
             //get the vocab value
             val v = DwC.matchTerm(key)
             if(v.isDefined && !v.get.canonical.equals(key)){
-              val value=attribution.defaultDwcValues.get(key)
-              map.remove(key);
-              map.put(v.get.canonical, value.get);
+
+              //map.remove(key);
+              newMap.put(v.get.canonical, value);
+            } else {
+              newMap.put(key, value)
             }
           }
-          attribution.defaultDwcValues = map.toMap
+          attribution.defaultDwcValues = newMap.toMap
         }
       }
       Some(attribution)
@@ -550,7 +554,7 @@ object LocationDAO {
       persistenceManager.put(guid, columnFamily, mapBuffer.toMap)
     }
   }
-  
+
   private def getLatLongKey(latitude:String, longitude:String) : String = {
     latitude.toFloat.toString.trim + "|" + longitude.toFloat.toString
   }
