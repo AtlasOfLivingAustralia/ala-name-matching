@@ -143,20 +143,12 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
    * @return
    */
   def getAllVersionsByUuid(uuid: String, includeSensitive:Boolean=false): Option[Array[FullRecord]] = {
-    val map = getMapFromIndex(uuid)//persistenceManager.getByIndex(uuid, entityName, "uuid")
-    if (map.isEmpty) {
-      None
+    //get the rowKey for the uuid
+    val rowKey = getRowKeyFromUuid(uuid)
+    if(rowKey.isDefined){
+      getAllVersionsByRowKey(rowKey.get, includeSensitive)
     } else {
-      // the versions of the record
-      val rowKey = map.get.getOrElse("rowKey",uuid)
-      val raw = FullRecordMapper.createFullRecord(rowKey, map.get, Raw)
-      val processed = FullRecordMapper.createFullRecord(rowKey, map.get, Processed)
-      val consensus = FullRecordMapper.createFullRecord(rowKey, map.get, Consensus)
-      if(includeSensitive && raw.occurrence.originalSensitiveValues != null){
-        FullRecordMapper.mapPropertiesToObject(raw, raw.occurrence.originalSensitiveValues)
-      }
-      //pass all version to the procedure, wrapped in the Option
-      Some(Array(raw, processed, consensus))
+      None
     }
   }
 
@@ -212,14 +204,12 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
    * Get an occurrence, specifying the version of the occurrence.
    */
   def getByUuid(uuid: String, version: Version, includeSensitive:Boolean=false): Option[FullRecord] = {
-    val propertyMap = getMapFromIndex(uuid)//persistenceManager.getByIndex(uuid, entityName, "uuid")
-    if (propertyMap.isEmpty) {
-      None
+    //get the row key from the supplied uuid
+    val rowKey = getRowKeyFromUuid(uuid)
+    if(rowKey.isDefined){
+        getByRowKey(rowKey.get, version,includeSensitive)
     } else {
-      val record =FullRecordMapper.createFullRecord(propertyMap.get.get("rowKey").get, propertyMap.get, version)
-      if(includeSensitive && record.occurrence.originalSensitiveValues != null && version == Versions.RAW)
-          FullRecordMapper.mapPropertiesToObject(record, record.occurrence.originalSensitiveValues)
-      Some(record)
+      None
     }
   }
 
@@ -910,7 +900,27 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
   /**
    * Returns the rowKey based on the supplied uuid
    */
-  def getRowKeyFromUuid(uuid:String):Option[String] = persistenceManager.getByIndex(uuid, entityName, "uuid", "rowKey")
+  def getRowKeyFromUuid(uuid:String):Option[String] = {
+    def rk = getRowKeyFromUuidDB(uuid)
+    if(rk.isDefined){
+      rk
+    } else {
+      //work around so that index is searched if it can't be found in the cassandra secondary index.
+      getRowKeyFromUuidIndex(uuid)
+    }
+  }
+
+  def getRowKeyFromUuidDB(uuid:String):Option[String] = persistenceManager.getByIndex(uuid, entityName, "uuid", "rowKey")
+
+  def getRowKeyFromUuidIndex(uuid:String):Option[String] = {
+    val list = Config.indexDAO.getRowKeysForQuery("id:"+uuid,1)
+    if(list.isDefined){
+      list.get.headOption
+    } else {
+      None
+    }
+
+  }
 
   /**
    * Should be possible to factor this out

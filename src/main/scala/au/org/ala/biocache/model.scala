@@ -23,12 +23,15 @@ class Occurrence extends Cloneable with POSO {
   @BeanProperty var associatedTaxa:String = _
   @BeanProperty var basisOfRecord:String = _
   @BeanProperty var behavior:String = _
+  @BeanProperty var bibliographicCitation:String = _
   @BeanProperty var catalogNumber:String = _
   @BeanProperty var collectionCode:String = _
   @BeanProperty var collectionID:String = _
   @BeanProperty var dataGeneralizations:String = _		//used for sensitive data information
   @BeanProperty var datasetID:String = _
+  @BeanProperty var datasetName:String = _
   @BeanProperty var disposition:String = _
+  @BeanProperty var dynamicProperties:String = _
   @BeanProperty var establishmentMeans:String = _
   @BeanProperty var fieldNotes:String = _
   @BeanProperty var fieldNumber:String = _
@@ -37,6 +40,7 @@ class Occurrence extends Cloneable with POSO {
   @BeanProperty var individualID:String = _
   @BeanProperty var informationWithheld:String = _   //used for sensitive data information
   @BeanProperty var institutionCode:String = _
+  @BeanProperty var institutionID:String = _
   @BeanProperty var language:String = _
   @BeanProperty var lifeStage:String = _
   @BeanProperty var modified:String = _
@@ -45,6 +49,7 @@ class Occurrence extends Cloneable with POSO {
   @BeanProperty var occurrenceRemarks:String = _
   @BeanProperty var occurrenceStatus:String = _
   @BeanProperty var otherCatalogNumbers:String = _
+  @BeanProperty var ownerInstitutionCode:String = _
   @BeanProperty var preparations:String = _
   @BeanProperty var previousIdentifications:String = _
   @BeanProperty var recordedBy:String = _
@@ -60,6 +65,7 @@ class Occurrence extends Cloneable with POSO {
   @BeanProperty var rights:String = _
   @BeanProperty var rightsholder:String = _
   @BeanProperty var samplingProtocol:String = _
+  @BeanProperty var samplingEffort:String = _
   @BeanProperty var sex:String = _
   @BeanProperty var source:String = _
   @BeanProperty var userId:String = _  //this is the ALA ID for the user
@@ -153,6 +159,7 @@ class Classification extends Cloneable with POSO {
   @BeanProperty var nameAccordingTo:String = _
   @BeanProperty var nameAccordingToID:String = _
   @BeanProperty var namePublishedIn:String = _
+  @BeanProperty var namePublishedInYear:String = _
   @BeanProperty var namePublishedInID:String = _
   @BeanProperty var nomenclaturalCode:String = _
   @BeanProperty var nomenclaturalStatus:String = _
@@ -208,6 +215,7 @@ class Identification extends Cloneable with POSO {
   @BeanProperty var identificationQualifier:String = _
   @BeanProperty var identificationReferences:String = _
   @BeanProperty var identificationRemarks:String = _
+  @BeanProperty var identificationVerificationStatus:String = _
   @BeanProperty var identifiedBy:String = _
   @BeanProperty var identifierRole:String = _ //HISPID addition http://wiki.tdwg.org/twiki/bin/view/ABCD/AbcdConcept0376
   @BeanProperty var typeStatus:String = _
@@ -279,6 +287,7 @@ class Location extends Cloneable with POSO {
   @BeanProperty var island:String = _
   @BeanProperty var islandGroup:String = _
   @BeanProperty var locality:String = _
+  @BeanProperty var locationAccordingTo:String = _
   @BeanProperty var locationAttributes:String = _
   @BeanProperty var locationID:String = _
   @BeanProperty var locationRemarks:String = _
@@ -288,6 +297,7 @@ class Location extends Cloneable with POSO {
   @BeanProperty var minimumDepthInMeters:String = _
   @BeanProperty var minimumDistanceAboveSurfaceInMeters:String = _
   @BeanProperty var minimumElevationInMeters:String = _
+  @BeanProperty var municipality:String = _
   @BeanProperty var pointRadiusSpatialFit:String = _
   @BeanProperty var stateProvince:String = _
   @BeanProperty var verbatimCoordinates:String = _

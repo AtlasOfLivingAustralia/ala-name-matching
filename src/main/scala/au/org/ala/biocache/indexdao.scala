@@ -188,6 +188,32 @@ trait IndexDAO {
     scientificName
   }
 
+  def sortOutQas(guid:String,list :List[QualityAssertion]):(String,String)={
+    val failed:Map[String,List[Int]] = list.filter(_.qaStatus == 0).map(_.code).groupBy(qa =>Processors.getProcessorForError(qa) +".qa")
+    val gk = AssertionCodes.isGeospatiallyKosher(failed.getOrElse("loc.qa",List()).toArray).toString
+    val tk = AssertionCodes.isTaxonomicallyKosher(failed.getOrElse("class.qa",List()).toArray).toString
+
+
+    val qaphases = Array("loc.qa", "offline.qa", "class.qa", "bor.qa","type.qa", "attr.qa", "image.qa", "event.qa")
+    val empty = qaphases.filterNot(p => failed.contains(p)).map(_->"[]")
+    val map = Map("geospatiallyKosher"->gk, "taxonomicallyKosher"->tk) ++ failed.filterNot(_._1 == ".qa").map{case (key,value)=>{(key, Json.toJSON(value.toArray))}} ++ empty
+    //revise the properties in the db
+    //Config.persistenceManager.put(guid, "occ", map)
+    println("FAILED: " + failed)
+    println("The map to add " + map)
+
+    val dupQA = list.filter(_.code == AssertionCodes.INFERRED_DUPLICATE_RECORD.code)
+    //dupQA.foreach(qa => println(qa.getComment))
+    if(dupQA.size >1){
+      val newList:List[QualityAssertion] = list.diff(dupQA) ++ List(dupQA(0))
+      //println("Original size " + list.length + "  new size =" + newList.length)
+      Config.persistenceManager.putList(guid, "occ", FullRecordMapper.qualityAssertionColumn, newList, classOf[QualityAssertion], true)
+    }
+
+    (gk,tk)
+
+  }
+
   /**
    * Generates an string array version of the occurrence model.
    *
@@ -333,6 +359,9 @@ trait IndexDAO {
           val s = map.getOrElse("duplicationType.p", "[]")
           Json.toStringArray(s)
         }
+
+        //NC tmp fix up for koserh valus
+        //val(gk,tk) = sortOutQas(guid, Json.toListWithGeneric(map.getOrElse(FullRecordMapper.qualityAssertionColumn,"[]"), classOf[QualityAssertion]))
 
         //Only set the geospatially kosher field if there are coordinates supplied
         val geoKosher = if (slat == "" && slon == "") "" else map.getOrElse(FullRecordMapper.geospatialDecisionColumn, "")
@@ -1009,7 +1038,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     solrQuery.addFacetField("row_key")
     solrQuery.setQuery(query)
     solrQuery.setRows(0)
-    solrQuery.setFacetLimit(-1)
+    solrQuery.setFacetLimit(limit)
     solrQuery.setFacetMinCount(1)
     val response = solrServer.query(solrQuery)
     logger.debug("query " + solrQuery.toString)
@@ -1017,7 +1046,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     val rowKeyFacets = response.getFacetField("row_key")
     val values = rowKeyFacets.getValues().asScala
     if (values.size > 0) {
-      Some(values.map(facet => facet.getName).asInstanceOf[List[String]])
+      Some(values.map(facet => facet.getName).toList)
     } else {
       None
     }
