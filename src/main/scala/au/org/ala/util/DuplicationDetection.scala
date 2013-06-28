@@ -228,7 +228,7 @@ class DuplicationDetection{
   val subspeciesFilters = Array("lat_long:[* TO *]", "-species_guid:[* TO *]") 
   
   val mapper = new ObjectMapper
-  mapper.registerModule(DefaultScalaModule)
+  //mapper.registerModule(DefaultScalaModule)
   mapper.setSerializationInclusion(Include.NON_NULL)
   /**
    * Loads the duplicates from a file that contains duplicates from multiple taxon concepts
@@ -326,8 +326,8 @@ class DuplicationDetection{
     DuplicationDetection.logger.debug("HANDLING " + primaryRecord.rowKey)
     //get the duplicates that are not already part of the primary record
     allDuplicates.synchronized{
-      allDuplicates + primaryRecord.rowKey
-      primaryRecord.duplicates.foreach(d => allDuplicates + d.rowKey)
+      allDuplicates += primaryRecord.rowKey
+      primaryRecord.duplicates.foreach(d => allDuplicates += d.rowKey)
     }
     val newduplicates = primaryRecord.duplicates.filter(_.oldDuplicateOf != primaryRecord.uuid)
     //println("primaryrecord uuid: "+ primaryRecord.uuid)
@@ -475,10 +475,10 @@ class DuplicationDetection{
       map.values.foreach(v=>{
         //turn it into a DuplicateRecordDetails
         val rd = mapper.readValue[DuplicateRecordDetails](v, classOf[DuplicateRecordDetails])
-        buf + rd.rowKey
+        buf += rd.rowKey
         uuidMap += rd.rowKey->rd.uuid
         rd.duplicates.toList.foreach(d =>{
-          buf + d.rowKey
+          buf += d.rowKey
           uuidMap += d.rowKey -> d.uuid
           })
       })
