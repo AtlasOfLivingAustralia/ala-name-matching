@@ -15,7 +15,7 @@ public class DateHelper {
     public static Date parseDate(String date) {
         Date parsedDate = null;
         try {
-            parsedDate = DateUtils.parseDateStrictly(date, new String[] {"yyyy-MM-dd", "yyyy", "yyyy-MM", "dd/mm/yy"});
+            parsedDate = DateUtils.parseDateStrictly(date, new String[] {"yyyy-MM-dd", "yyyy", "yyyy-MM", "dd/mm/yy","yyyy-MM-dd'T'HH:mm:ss'Z'"});
         } catch (ParseException pe) {
             throw new IllegalArgumentException("Date " + date + " cannot be parsed", pe);
         }

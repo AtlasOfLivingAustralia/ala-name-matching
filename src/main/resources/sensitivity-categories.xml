@@ -17,6 +17,7 @@
     <sensitivity-category id="P4" name="WA Priority 4" type="Conservation"/>
     <sensitivity-category id="P5" name="WA Priority 5" type="Conservation"/>
     <sensitivity-category id="SP" name="WA Specially Protected" type="Conservation"/>
+    <sensitivity-category id="C2" name="SA Category 2 Conservation Sensitive" type="Conservation"/>
 
     <sensitivity-category id="PBC1" name="Plant pest not known in Australia" type="Plant_Pest"/>
     <sensitivity-category id="PBC2" name="Plant pest eradicated" type="Plant_Pest"/>

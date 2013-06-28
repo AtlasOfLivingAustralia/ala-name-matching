@@ -70,7 +70,11 @@ public class SensitiveSpeciesFinderFactory {
         return getSensitiveSpeciesFinder(Configuration.getInstance().getSpeciesUrl(), cbIndexSearcher);
 
     }
-
+    /*
+        TODO NC 2013-06-28: Remove the need for the cbIndexSearcher by using the supplied guid in the XML file.
+        This should be appropriate because the list will be updated more regularly and the name match supplied
+        should be the correct guid
+    */
     private static SensitiveTaxonStore getStoreFromUrl(String dataUrl, CBIndexSearch cbIndexSearcher) throws Exception {
 
         URL url = null;

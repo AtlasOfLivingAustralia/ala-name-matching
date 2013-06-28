@@ -58,4 +58,8 @@ public class Configuration {
     public String getNameMatchingIndex() {
         return config.getProperty("namematching-index", "/data/lucene/namematching_v13");
     }
+
+    public String getListToolUrl(){
+        return config.getProperty("list-url", "http://lists.ala.org.au");
+    }
 }
