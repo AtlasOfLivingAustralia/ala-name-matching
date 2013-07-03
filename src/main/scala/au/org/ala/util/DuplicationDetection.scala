@@ -804,9 +804,9 @@ class DuplicateRecordDetails(
   @BeanProperty var duplicates:ArrayList[DuplicateRecordDetails] = null
   @BeanProperty var dupTypes:ArrayList[DupType] = _
 
-  var duplicateOf:String = null
-  //stores the precision so that coordinate dup types can be established - we don't want to persist this property
-  var precision = 0
+  @BeanProperty var duplicateOf:String = null
+  //stores the precision so that coordinate dup types can be established - we don't want to persist this property (NC TODO regression issue after scala upgrade persists these so I added @BeanProperty)
+  @BeanProperty var precision = 0
 
   def addDuplicate(dup:DuplicateRecordDetails) = {
     if(duplicates == null)
