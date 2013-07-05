@@ -22,9 +22,9 @@ object MediaStore {
 
   //Regular expression used to parse an image URL - adapted from
   //http://stackoverflow.com/questions/169625/regex-to-check-if-valid-url-that-ends-in-jpg-png-or-gif#169656
-  lazy val imageParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.?(?:jpg|gif|png|jpeg))$""".r
-  lazy val soundParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:wav|mp3|ogg|flac))$""".r
-  lazy val videoParser = """^(https?://(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,6}(?:/[^/#]+)+\.(?:wmv|mp4|mpg|avi|mov))$""".r
+  lazy val imageParser = """^(https?://[^\'"<>]+?\.(jpg|jpeg|gif|png))$""".r
+  lazy val soundParser = """^(https?://[^\'"<>]+?\.(?:wav|mp3|ogg|flac))$""".r
+  lazy val videoParser = """^(https?://[^\'"<>]+?\.(?:wmv|mp4|mpg|avi|mov))$""".r
 
   val imageExtension = Array(".jpg", ".gif", ".png", ".jpeg", "imgType=jpeg")
   val soundExtension = Array(".wav", ".mp3", ".ogg", ".flac")
@@ -311,31 +311,35 @@ class ThumbnailableImage(imageFile: File) {
    * Write a thumbnail to file
    */
   def writeThumbnailToFile(newThumbnailFile: File, edgeLength: Float) {
-
-    val height = originalImage.getHeight
-    val width = originalImage.getWidth
-    val renderedImage = originalImage.createSnapshot.asInstanceOf[javax.media.jai.RenderedOp]
-    if (!(height < edgeLength && width < edgeLength)) {
-      val denom = {
-        if (height > width) height
-        else width
+    try{
+      val height = originalImage.getHeight
+      val width = originalImage.getWidth
+      val renderedImage = originalImage.createSnapshot.asInstanceOf[javax.media.jai.RenderedOp]
+      if (!(height < edgeLength && width < edgeLength)) {
+        val denom = {
+          if (height > width) height
+          else width
+        }
+        val modifier = edgeLength / denom
+        val w = (width * modifier).toInt
+        val h = (height * modifier).toInt
+        val i = renderedImage.getAsBufferedImage.getScaledInstance(w, h, Image.SCALE_SMOOTH)
+        val bufferedImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
+        val g = bufferedImage.createGraphics
+        g.drawImage(i, null, null)
+        g.dispose
+        i.flush
+        val modifiedImage = JAI.create("awtImage", bufferedImage.asInstanceOf[Image])
+        val fOut = new FileOutputStream(newThumbnailFile)
+        ImageIO.write(modifiedImage, "jpg", fOut)
+        fOut.flush
+        fOut.close
+      } else {
+        FileUtils.copyFile(imageFile, newThumbnailFile)
       }
-      val modifier = edgeLength / denom
-      val w = (width * modifier).toInt
-      val h = (height * modifier).toInt
-      val i = renderedImage.getAsBufferedImage.getScaledInstance(w, h, Image.SCALE_SMOOTH)
-      val bufferedImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
-      val g = bufferedImage.createGraphics
-      g.drawImage(i, null, null)
-      g.dispose
-      i.flush
-      val modifiedImage = JAI.create("awtImage", bufferedImage.asInstanceOf[Image])
-      val fOut = new FileOutputStream(newThumbnailFile)
-      ImageIO.write(modifiedImage, "jpg", fOut)
-      fOut.flush
-      fOut.close
-    } else {
-      FileUtils.copyFile(imageFile, newThumbnailFile)
+    } catch {
+      //NC:2013-07-05: Need to catch this exception in case there is an issue with one of the images.
+      case e: Exception => logger.error("Unable to generate thumbnail for " + imageFile.getAbsoluteFile , e)
     }
   }
 }

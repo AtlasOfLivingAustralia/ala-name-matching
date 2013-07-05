@@ -47,6 +47,17 @@ class MiscTest extends ConfigFunSuite {
         var qas = (new MiscellaneousProcessor).process("test", raw, processed)
         expect(0){qas.find(_.code == 20007).get.qaStatus}
     }
+
+    test("is valid image url"){
+      val url ="/data/biocache-media/dr344/12874/2ec04a49-7e44-4a0b-8351-5d37155e3ef7/o29275a.jpg"
+      expect(true){(MediaStore.isValidImageURL(url))}
+      //"""^(https?://(?:[a-zA-Z0-9\-]+(\.)+([a-zA-Z]{2,6})?(?:/[^/#]+)+\.?(?:jpg|gif|png|jpeg))$"""
+      var url2 ="http://74.50.62.163/images/display/biodiversity/vertebrates/id_images/web-birds/o29275a.jpg"
+      expect(true){(MediaStore.isValidImageURL(url2))}
+      expect(true){MediaStore.isValidImageURL("https://test.ala.org.au/images/image1/img.gif")}
+      expect(false){MediaStore.isValidImageURL("https://test.ala.org.au/images/image1/img.bmp")}
+      expect(false){MediaStore.isValidImageURL("http://tests.ala.org.au/images/image1/img")}
+    }
     
     test("invalid collection date"){
         val raw = new FullRecord
