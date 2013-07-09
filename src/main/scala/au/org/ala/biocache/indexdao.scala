@@ -1049,7 +1049,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
       if (values.size > 0) {
         Some(values.map(facet => facet.getName).toList)
       } else {
-        logger.debug("NOE RESULTS: " + query)
         None
       }
     } catch {
