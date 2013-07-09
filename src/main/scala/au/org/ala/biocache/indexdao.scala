@@ -1040,15 +1040,20 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     solrQuery.setRows(0)
     solrQuery.setFacetLimit(limit)
     solrQuery.setFacetMinCount(1)
-    val response = solrServer.query(solrQuery)
-    logger.debug("query " + solrQuery.toString)
-    //now process all the values that are in the row_key facet
-    val rowKeyFacets = response.getFacetField("row_key")
-    val values = rowKeyFacets.getValues().asScala
-    if (values.size > 0) {
-      Some(values.map(facet => facet.getName).toList)
-    } else {
-      None
+    try{
+      val response = solrServer.query(solrQuery)
+      logger.debug("query " + solrQuery.toString)
+      //now process all the values that are in the row_key facet
+      val rowKeyFacets = response.getFacetField("row_key")
+      val values = rowKeyFacets.getValues().asScala
+      if (values.size > 0) {
+        Some(values.map(facet => facet.getName).toList)
+      } else {
+        logger.debug("NOE RESULTS: " + query)
+        None
+      }
+    } catch {
+      case e:Exception => logger.warn("Unable to get key " + query+".");None
     }
   }
 
