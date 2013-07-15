@@ -54,7 +54,7 @@ object DuplicationDetection{
     var load = false
     var incremental = false
     var removeObsoleteData =false
-   
+
     //Options to perform on all "species", select species, use existing file or download
     val parser = new OptionParser("Duplication Detection - Detects duplication based on a matched species.") {
       opt("all", "detect duplicates for all species", { all = true })
@@ -99,7 +99,7 @@ object DuplicationDetection{
         else
           dd.detect(datafilename,new FileWriter(dupfilename), new FileWriter(passedfilename),guid.get,shouldDownloadRecords= !exist ,cleanup=cleanup)
         //println(new DuplicationDetection().getCurrentDuplicates(guid.get))
-        
+
         Config.persistenceManager.shutdown
         Config.indexDAO.shutdown
       }
@@ -343,7 +343,7 @@ class DuplicationDetection{
       
       
       newduplicates.foreach(r =>{
-        val types = if(r.dupTypes != null)r.dupTypes.toList.map(t => t.id) else List()
+        val types = if(r.dupTypes != null)r.dupTypes.toList.map( t => t.getId.toString ).toArray[String] else Array[String]()
         Config.persistenceManager.put(r.rowKey, "occ", Map("associatedOccurrences.p"->primaryRecord.uuid,"duplicationStatus.p"->"D","duplicationType.p"->mapper.writeValueAsString(types)))
         //add a system message for the record - a duplication does not change the kosher fields and should always be displayed thus don't "checkExisting"
         Config.occurrenceDAO.addSystemAssertion(r.rowKey, QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD,"Record has been inferred as closely related to  " + primaryRecord.uuid),false)
@@ -395,7 +395,7 @@ class DuplicationDetection{
      val buff = new ArrayBuffer[DuplicateRecordDetails]
      var counter =0
      while(currentLine !=  null){
-       if(currentLine.size>=14){
+       if(currentLine.size>=16){
          counter +=1
          if(counter % 10000 == 0)
            DuplicationDetection.logger.debug("Loaded into memory : " + counter +" + records")
