@@ -13,6 +13,7 @@ import scala.actors.Actor
 import java.io.FileWriter
 import au.com.bytecode.opencsv.CSVWriter
 import scala.collection.mutable.HashSet
+import org.apache.commons.lang3.StringUtils
 
 object CreateIndexesAndMerge extends Counter {
 
@@ -68,10 +69,14 @@ trait RangeCalculator{
       var buff = Array.fill(threads)(("",""))
 
       for (i <- 0 until threads){
-        val json  = JSON.parseFull(Source.fromURL(new URL(baseUrl + "/occurrences/search?q="+query+"&pageSize=1&facet=off&sort=row_key&dir=asc&start=" + (i * pageSize))).mkString)
-        val occurrences = json.get.asInstanceOf[Map[String, Object]].getOrElse("occurrences", List[Map[String, String]]()).asInstanceOf[List[Map[String, String]]]
-        val rowKey:String = occurrences.head.getOrElse("rowKey", "")
+        //val json  = JSON.parseFull(Source.fromURL(new URL(baseUrl + "/occurrences/search?q="+query+"&pageSize=1&facet=off&sort=row_key&dir=asc&start=" + (i * pageSize))).mkString)
+        //val occurrences = json.get.asInstanceOf[Map[String, Object]].getOrElse("occurrences", List[Map[String, String]]()).asInstanceOf[List[Map[String, String]]]
+        //val rowKey:String = occurrences.head.getOrElse("rowKey", "")
+        val json = JSON.parseFull(Source.fromURL(new URL(baseUrl+"/occurrences/search?q="+query+"&facets=row_key&pageSize=0&flimit=1&fsort=index&foffset="+ (i * pageSize))).mkString)
+        val facetResults= json.get.asInstanceOf[Map[String, Object]].getOrElse("facetResults", List[Map[String,Object]]()).asInstanceOf[List[Map[String,Object]]]
+        //println(facetResults.getClass + " " + facetResults)//.getOrElse("facetResults", List[Map[String, Map[String,Object]]]()).asInstanceOf[List[Map[String, Map[String,Object]]]]
 
+        val rowKey = facetResults.head.get("fieldResult").get.asInstanceOf[List[Map[String,String]]].head.getOrElse("label","")
         println("Retrieved rowkey: "  + rowKey)
 
         if (i > 0){
@@ -120,7 +125,7 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
     var action = ""
     var start,end =""
     var dr:Option[String]=None
-    var validActions = List("range","process","index", "col","repair")
+    var validActions = List("range","process","index", "col","repair","datum")
       
     val parser = new OptionParser("multithread index"){
        arg("<action>", "The action to perform by the Multithreader; either range, process or index, col", {v:String => action = v})
@@ -155,7 +160,10 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
   //          threads + t
       
             val ir ={
-              if(action == "repair"){
+              if (action == "datum"){
+                new DatumRecordsRunner(this, counter, r._1,r._2)
+              }
+              else if(action == "repair"){
                 new RepairRecordsRunner(this, counter, r._1, r._2)
               }
               else if(action == "index"){
@@ -316,6 +324,52 @@ class RepairRecordsRunner(centralCounter:Counter, threadId:Int, startKey:String,
 
   }
 }
+
+
+class DatumRecordsRunner(centralCounter:Counter, threadId:Int, startKey:String, endKey:String) extends Runnable {
+  val processor = new RecordProcessor
+  var ids = 0
+  val threads = 2
+  var batches=0
+  def run{
+    val pageSize = 1000
+    var counter=0
+    var numIssue=0
+    val start = System.currentTimeMillis
+    var startTime = System.currentTimeMillis
+    var finishTime = System.currentTimeMillis
+    //var buff = new ArrayBuffer[(FullRecord,FullRecord)]
+    println("Starting thread " + threadId + " from " + startKey + " to " + endKey)
+    def locProcess = new LocationProcessor
+    Config.persistenceManager.pageOverSelect("occ", (guid, map) => {
+      counter +=1
+
+
+      if(StringUtils.isNotBlank(map.getOrElse("geodeticDatum",""))){
+        //check the precision of the lat/lon
+        def lat = map.getOrElse("decimalLatitude","0")
+        def lon = map.getOrElse("decimalLongitude","0")
+        def locqa = Json.toIntArray(map.getOrElse("loc.qa","[]"))
+        if(locProcess.getNumberOfDecimalPlacesInDouble(lat) != locProcess.getNumberOfDecimalPlacesInDouble(lon) && locqa.contains(45)){
+          numIssue+=1
+          println("FIXME from THREAD " + threadId +"\t" +guid)
+        }
+      }
+
+      if (counter % pageSize == 0 && counter> 0) {
+        centralCounter.addToCounter(pageSize)
+        finishTime = System.currentTimeMillis
+        centralCounter.printOutStatus(threadId,guid, "Datum")
+        startTime = System.currentTimeMillis
+      }
+      true;
+    },startKey, endKey, 1000,"decimalLatitude","decimalLongitude", "rowKey", "uuid","geodeticDatum","loc.qa")
+    val fin = System.currentTimeMillis
+    println("[Datum Thread "+threadId+"] " +counter + " took " + ((fin-start).toFloat) / 1000f + " seconds" )
+    println("Finished.")
+  }
+}
+
 
 class ProcessRecordsRunner(centralCounter:Counter, threadId:Int, startKey:String, endKey:String) extends Runnable {
   val processor = new RecordProcessor
