@@ -116,3 +116,8 @@ max_elevation_d	double	maximumElevationInMeters.p	F	F		F
 depth_d	double	verbatimDepth.p	F	F		F
 min_depth_d	double	minimumDepthInMeters.p	F	F		F
 max_depth_d	double	maximumDepthInMeters.p	F	F		F
+raw_latitude	string	decimalLatitude	F	F		F
+raw_longitude	string	decimalLongitude	F	F		F
+raw_locality	string	locality	F	F		F
+raw_sex	string	sex	F	F		F
+raw_datum	string	geodeticDatum	F	F		F

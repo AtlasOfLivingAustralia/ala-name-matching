@@ -531,7 +531,7 @@
    <field name="collection_name" type="string" indexed="true" stored="true" multiValued="false"/>
    <!-- Not displayed in search results -->
    <!-- field name="catalogue_number_id" type="int" indexed="false" stored="true" multiValued="false" omitNorms="false" / -->
-   <field name="catalogue_number" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="catalogue_number" type="string_lowercase" indexed="true" stored="true" multiValued="false"/>
    <field name="taxon_concept_lsid" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="occurrence_date" type="tdate" indexed="true" stored="true" multiValued="false"/>
    <!-- 
@@ -651,10 +651,15 @@
    <field name="assertions_missing" type="string" indexed="true" stored="true" multiValued="true"  />
    <field name="user_assertions" type="string" indexed="true" stored="true" multiValued="false"  />
    <field name="system_assertions" type="string" indexed="true" stored="true" multiValued="false"  />
-   <field name="name_match_metric" type="string" indexed="true" stored="false" multiValued="false"  />
-   <field name="taxonomic_issue" type="string" indexed="true" stored="false" multiValued="true"/>
+   <field name="name_match_metric" type="string" indexed="true" stored="true" multiValued="false"  />
+   <field name="taxonomic_issue" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="raw_identification_qualifier" type="string" indexed="true" stored="false" multiValued="false"/>
    <field name="species_habitats" type="string" indexed="true" stored="false" multiValued="true"/>
+   <field name="raw_locality" type="string" indexed="false" stored="true" multiValued="true" />
+   <field name="raw_datum" type="string" indexed="false" stored="true" multiValued="true" />
+   <field name="raw_latitude" type="string" indexed="false" stored="true" multiValued="true" />
+   <field name="raw_longitude" type="string" indexed="false" stored="true" multiValued="true" />
+   <field name="raw_sex" type="string" indexed="true" stored="true" multiValued="true" />
   
    <!-- Not displayed in search results -->   
    <!-- field name="created_date" type="tdate" indexed="false" stored="true" multiValued="false" omitNorms="false" />
