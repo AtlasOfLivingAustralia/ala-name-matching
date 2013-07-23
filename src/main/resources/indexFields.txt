@@ -70,12 +70,12 @@ occurrence_remarks	string	occurrenceRemarks	F	F		F
 # citation - not being used at the moment	F
 user_assertions	string	userQualityAssertion	F	F		F
 # system_assertions - if length of qualityAssertion > 3 true else false	F
+user_id	string	recordedBy	F	F		F
 collector	string	recordedBy	F	F		F
 # state_conservation - first value of CSV stateConservation.p	F
 # raw_state_conservation - second value of stateConservation.p	F
 # sensitive - when dataGeneralizations.p contains "already generalised" then alreadyGeneralised when originalSensitiveValues.length >3 then generalised	F
 coordinate_uncertainty	double	coordinateUncertaintyInMeters.p	F	F		F
-user_id	string	recordedBy	F	F		F
 provenance	string	provenance.p	F	F		F
 # subspecies_guid - if rankid > 7000 taxonConceptID.p	F
 # subspecies_name - if rank_id > 7 then scientificName.p	F
