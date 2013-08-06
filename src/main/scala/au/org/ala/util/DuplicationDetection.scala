@@ -72,7 +72,7 @@ object DuplicationDetection{
       //ensure that we have either all, guidsToTest or speciesFile
       val lastRunDate:Option[String] = if(incremental) Config.duplicateDAO.getLastDuplicationRun() else None
       if(removeObsoleteData){
-        removeObsoleteDuplicates()
+        removeObsoleteDuplicates(speciesFile)
       }
       else if(all){
         //download all the species guids
@@ -116,8 +116,8 @@ object DuplicationDetection{
   }
 
   
-  def removeObsoleteDuplicates(){
-     val olddupfilename = rootDir + "olddups.txt"
+  def removeObsoleteDuplicates(filename:Option[String] ){
+     val olddupfilename = filename.getOrElse(rootDir + "olddups.txt")
      val file = new File(olddupfilename)
      file.foreachLine(line =>{
        val parts = line.split("\t")
