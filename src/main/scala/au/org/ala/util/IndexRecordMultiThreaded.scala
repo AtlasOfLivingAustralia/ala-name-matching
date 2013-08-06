@@ -118,6 +118,7 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
     
     var wsBase = "http://biocache.ala.org.au/ws"
     var numThreads = 8
+    var pageSize=200
     var ranges:Array[(String,String)] = Array()
     var dirPrefix = "/data"
     var keys:Option[Array[String]]=None
@@ -130,6 +131,7 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
     val parser = new OptionParser("multithread index"){
        arg("<action>", "The action to perform by the Multithreader; either range, process or index, col", {v:String => action = v})
        intOpt("t","threads", "The number of threads to perform the indexing on",{v: Int => numThreads =v})
+       intOpt("ps","pagesize", "The pagesSize for the records",{v: Int => pageSize =v})
        opt("ws","wsBase","The base URL for the biocache ws to query for the ranges",{v: String => wsBase = v})
        opt("p","prefix","The prefix to apply to the solr dirctories",{v: String => dirPrefix =v})
        opt("k","keys","A comma separated list of keys on which to perform the range threads. Prevents the need to query SOLR for the ranges.",{v:String =>keys = Some(v.split(","))})
@@ -141,7 +143,7 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
     if(parser.parse(args)){
       if(validActions.contains(action)){
         val (query, start, end) = if(dr.isDefined)("data_resource_uid:" + dr.get, dr.get+"|", dr.get+"|~") else ("*:*","","")
-        
+        Config.persistenceManager.get("test","occ","blah")
         ranges = if(keys.isEmpty) calculateRanges(wsBase, numThreads,query, start, end) else generateRanges(keys.get,start,end)
         if(action == "range")
           println(ranges.mkString("\n"))
@@ -168,7 +170,8 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
               }
               else if(action == "index"){
                 solrDirs += (dirPrefix+"/solr-create/bio-proto-thread-"+counter +"/data/index")
-                new IndexRunner(this, counter,  r._1,  r._2, dirPrefix+"/solr-template/bio-proto/conf", dirPrefix+"/solr-create/bio-proto-thread-"+counter+"/conf")
+                new IndexRunner(this, counter,  r._1,  r._2, dirPrefix+"/solr-template/bio-proto/conf", dirPrefix+"/solr-create/bio-proto-thread-"+counter+"/conf", pageSize)
+                //new IndexRunner(this, counter,  r._1,  r._2, dirPrefix+"/solr-template/bio-proto/biocache/conf", dirPrefix+"/solr-create/bio-proto-thread-"+counter+"/biocache/conf", pageSize)
               }else if(action == "process"){
                 new ProcessRecordsRunner(this, counter, r._1, r._2)
               } else if(action =="col"){
@@ -283,19 +286,34 @@ class RepairRecordsRunner(centralCounter:Counter, threadId:Int, startKey:String,
     Config.persistenceManager.pageOverSelect("occ", (guid, map) => {
       counter += 1
 
+      val dstatus = map.getOrElse("duplicationStatus.p","")
+      if(dstatus.equals("D")){
+        val qa=Config.occurrenceDAO.getSystemAssertions(guid).find(_.getCode == AssertionCodes.INFERRED_DUPLICATE_RECORD.code)
+        if (qa.isEmpty){
+          //need to add the QA
+          Config.occurrenceDAO.addSystemAssertion(guid, QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD,"Record has been inferred as closely related to  " + map.getOrElse("associatedOccurrences.p","")),false,false)
+          println("REINDEX:::"+guid)
+        }
 
-      //update the values
-      val list =Json.toListWithGeneric(map.getOrElse(FullRecordMapper.qualityAssertionColumn,"[]"), classOf[QualityAssertion])
-      sortOutQas(guid, list)
+      }
       if (counter % pageSize == 0 && counter> 0) {
         centralCounter.addToCounter(pageSize)
         finishTime = System.currentTimeMillis
-        centralCounter.printOutStatus(threadId, guid, "Indexer")
+        centralCounter.printOutStatus(threadId, guid, "Repairer")
         startTime = System.currentTimeMillis
       }
+      //update the values
+//      val list =Json.toListWithGeneric(map.getOrElse(FullRecordMapper.qualityAssertionColumn,"[]"), classOf[QualityAssertion])
+//      sortOutQas(guid, list)
+//      if (counter % pageSize == 0 && counter> 0) {
+//        centralCounter.addToCounter(pageSize)
+//        finishTime = System.currentTimeMillis
+//        centralCounter.printOutStatus(threadId, guid, "Indexer")
+//        startTime = System.currentTimeMillis
+//      }
 
       true
-    }, startKey, endKey, pageSize ,"qualityAssertion", "rowKey", "uuid")
+    }, startKey, endKey, pageSize ,"qualityAssertion", "rowKey", "uuid","duplicationStatus.p","associatedOccurrences.p")
   }
 
   val qaphases = Array("loc.qa", "offline.qa", "class.qa", "bor.qa","type.qa", "attr.qa", "image.qa", "event.qa")
@@ -402,7 +420,7 @@ class ProcessRecordsRunner(centralCounter:Counter, threadId:Int, startKey:String
   }
 }
 
-class IndexRunner (centralCounter:Counter, threadId:Int, startKey:String, endKey:String, sourceConfDirPath:String, targetConfDir:String) extends Runnable {
+class IndexRunner (centralCounter:Counter, threadId:Int, startKey:String, endKey:String, sourceConfDirPath:String, targetConfDir:String, pageSize:Int=200) extends Runnable {
 
   def run {
 
@@ -416,8 +434,9 @@ class IndexRunner (centralCounter:Counter, threadId:Int, startKey:String, endKey
     FileUtils.copyDirectory(sourceConfDir, newIndexDir)
 
     FileUtils.copyFileToDirectory(new File(sourceConfDir.getParent+"/solr.xml"), newIndexDir.getParentFile)
+    //FileUtils.copyFileToDirectory(new File(sourceConfDir.getParentFile.getParent+"/solr.xml"), newIndexDir.getParentFile.getParentFile)
 
-    val pageSize = 1000
+    //val pageSize = 1000
     println("Set SOLR Home: " + newIndexDir.getParent)
     val indexer = new SolrIndexDAO(newIndexDir.getParent,Config.excludeSensitiveValuesFor, Config.extraMiscFields)
     indexer.solrConfigPath = newIndexDir.getAbsolutePath+"/solrconfig.xml"
@@ -426,18 +445,23 @@ class IndexRunner (centralCounter:Counter, threadId:Int, startKey:String, endKey
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
-
+    var check =true
     //page through and create and index for this range
     Config.persistenceManager.pageOverAll("occ", (guid, map) => {
         counter += 1
-//        val fullMap = new HashMap[String, String]
-//        fullMap ++= map
-        ///convert EL and CL properties at this stage
-//        fullMap ++= Json.toStringMap(map.getOrElse("el.p", "{}"))
-//        fullMap ++= Json.toStringMap(map.getOrElse("cl.p", "{}"))
-       // val mapToIndex = fullMap.toMap
-        val commit = counter % 200000 == 0        
-        indexer.indexFromMap(guid, map, commit=commit)
+
+        val commit = counter % 10000 == 0
+        //ignore the record if it has the guid that is the startKey this is because it will be indexed last by the previous thread.
+        if(check){
+          check = false
+          if(!guid.equals(startKey)){
+            indexer.indexFromMap(guid, map, commit=commit)
+          }
+        } else {
+          indexer.indexFromMap(guid, map, commit=commit)
+        }
+
+
         if (counter % pageSize == 0 && counter> 0) {
           centralCounter.addToCounter(pageSize)
           finishTime = System.currentTimeMillis
