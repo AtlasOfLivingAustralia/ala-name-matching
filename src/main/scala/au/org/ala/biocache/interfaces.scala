@@ -11,6 +11,7 @@ import au.org.ala.util._
 import outliers.{SampledRecord, JackKnifeStats, RecordJackKnifeStats}
 import au.org.ala.biocache.qa.QueryAssertion
 import org.ala.layers.dao.IntersectCallback
+import collection.mutable.ArrayBuffer
 
 /**
  * This is the interface to use for java applications.
@@ -297,6 +298,30 @@ object Store {
       val rowKey = occurrenceDAO.getRowKeyFromUuid(uuid).getOrElse(uuid);
       occurrenceDAO.addUserAssertion(rowKey, qualityAssertion)
       occurrenceDAO.reIndex(rowKey)
+    } else {
+      throw new Exception("In read only mode. Please try again later")
+    }
+  }
+
+  /**
+   * Adds the supplied list of qa's to the data store and reindexes to allow changes to be available in the search
+   * @param assertionMap
+   */
+  def addUserAssertions(assertionMap:java.util.Map[String, QualityAssertion]) {
+    if (!readOnly){
+        val arrayBuffer = new ArrayBuffer[String]()
+        var count=0
+         assertionMap.foreach({
+           case (uuid, qa) =>{
+             count+=1
+             //apply the assertion and add to the reindex list
+             val rowKey = occurrenceDAO.getRowKeyFromUuid(uuid).getOrElse(uuid);
+             occurrenceDAO.addUserAssertion(rowKey, qa)
+             arrayBuffer += rowKey
+           }})
+        // now reindex
+        IndexRecords.indexList(arrayBuffer.toList)
+      logger.debug("Added " + count + " user assertions in bulk")
     } else {
       throw new Exception("In read only mode. Please try again later")
     }
