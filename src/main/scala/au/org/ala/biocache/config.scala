@@ -85,7 +85,12 @@ class ConfigModule extends AbstractModule {
   protected val logger = LoggerFactory.getLogger("ConfigModule")
   val properties = {
     val properties = new Properties()
-    properties.load(this.getClass.getResourceAsStream("/biocache.properties"))
+    //try the biocache-config.properties first
+    var stream = this.getClass.getResourceAsStream("/biocache-config.properties")
+    if(stream == null){
+      stream = this.getClass.getResourceAsStream("/biocache.properties")
+    }
+    properties.load(stream)
     properties
   }
 
