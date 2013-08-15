@@ -53,7 +53,7 @@ trait IndexDAO {
    */
   def indexFromMap(guid: String, map: scala.collection.Map[String, String], batch: Boolean = true,
                    startDate: Option[Date] = None, commit: Boolean = false,
-                   miscIndexProperties: Seq[String] = Array[String]())
+                   miscIndexProperties: Seq[String] = Array[String](), test:Boolean = false)
 
   /**
    * Truncate the current index
@@ -624,6 +624,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
   val arrDefaultMiscFields = if (defaultMiscFields == null) Array[String]() else defaultMiscFields.split(",")
   var cc: CoreContainer = _
   var solrServer: SolrServer = _
+  var cloudServer: org.apache.solr.client.solrj.impl.CloudSolrServer = _
   var solrConfigPath: String = ""
 
   @Inject
@@ -637,23 +638,26 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
   lazy val drToExcludeSensitive = excludeSensitiveValuesFor.split(",")
 
   override def init() {
+
+
     if (solrServer == null) {
+      logger.info("Initialisising the solr server " + solrHome + " " + cloudServer + " " + solrServer)
       if(!solrHome.startsWith("http://")){
-        if (solrConfigPath != "") {
-          //System.setProperty("solr.solr.home", solrHome)
-          logger.info("Initialising SOLR with config path: " + solrConfigPath + ", and SOLR HOME: " + solrHome)
-          val solrConfigFile = new File(solrConfigPath)
-          val home = solrConfigFile.getParentFile.getParentFile
-          val f = new File(solrConfigFile.getParentFile.getParentFile, "solr.xml");
-          cc = new CoreContainer();
-          cc.load(home.getAbsolutePath, f);
-          solrServer = new EmbeddedSolrServer(cc, "biocache");
+        if(solrHome.contains(":")) {
+          //assume that it represents a SolrCloud
+          cloudServer = new org.apache.solr.client.solrj.impl.CloudSolrServer(solrHome)
+          cloudServer.setDefaultCollection("biocache1")
+          solrServer = cloudServer
+        }
+        else if (solrConfigPath != "") {
+
+          cc = CoreContainer.createAndLoad(solrHome, new File(solrHome+"/solr.xml"))
+          solrServer = new EmbeddedSolrServer(cc, "biocache")
   
           //          threads
         } else {
           System.setProperty("solr.solr.home", solrHome)
-          val initializer = new CoreContainer.Initializer()
-          cc = initializer.initialize
+          cc = CoreContainer.createAndLoad(solrHome,new File(solrHome + "/solr.xml"))//new CoreContainer(solrHome)
           solrServer = new EmbeddedSolrServer(cc, "biocache")
   
           //          threads
@@ -663,6 +667,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
         solrServer = new HttpSolrServer(solrHome)
       }
     }
+
   }
 
   def reload = if(cc != null) cc.reload("biocache")
@@ -848,12 +853,30 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     "species_habitats", "multimedia", "all_image_url", "collectors", "duplicate_record", "duplicate_type","taxonomic_issue")
   val typeNotSuitableForModelling = Array("invalid", "historic", "vagrant", "irruptive")
 
+
+  def extractPassAndFailed(json:String):(List[Int], List[(String,String)])={
+    val codes = codeRegex.findAllMatchIn(json).map(_.group(1).toInt).toList
+    val names = nameRegex.findAllMatchIn(json).map(_.group(1)).toList
+    val qaStatuses = qaStatusRegex.findAllMatchIn(json).map(_.group(1)).toList
+    val assertions = (names zip qaStatuses)
+    if(logger.isDebugEnabled()){
+      logger.debug(codes)
+      logger.debug(names)
+      logger.debug(qaStatuses)
+      logger.debug(assertions)
+    }
+
+    (codes, assertions)
+  }
+  val nameRegex="""(?:name":")([a-zA-z0-9]*)""".r
+  val  codeRegex = """(?:code":)([0-9]*)""".r
+  val qaStatusRegex = """(?:qaStatus":)([0-9]*)""".r
   /**
    * A SOLR specific implementation of indexing from a map.
    */
   override def indexFromMap(guid: String, map: scala.collection.Map[String, String], batch: Boolean = true,
                             startDate: Option[Date] = None, commit: Boolean = false,
-                            miscIndexProperties: Seq[String] = Array[String]()) {
+                            miscIndexProperties: Seq[String] = Array[String](), test:Boolean = false) {
     init
 
     //val header = getHeaderValues()
@@ -957,16 +980,43 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
         }
 
         //now index the System QA assertions
-        val systemAssertions = Json.toArray(map.getOrElse(FullRecordMapper.qualityAssertionColumn, "[]"), classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[QualityAssertion]]
+         //NC 2013-08-01: It is very inefficient to make a JSONArray of QualityAssertions We will parse the raw string instead.
+        /* val systemAssertions = Json.toArray(map.getOrElse(FullRecordMapper.qualityAssertionColumn, "[]"), classOf[QualityAssertion].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[Array[QualityAssertion]]
         val types = systemAssertions.groupBy(_.getQaStatus)
         types.getOrElse(0, Array()).foreach(qa=> doc.addField(if(AssertionCodes.getByCode(qa.getCode).get.category == ErrorCodeCategory.Missing) "assertions_missing" else "assertions", qa.getName()))
         types.getOrElse(1, Array()).foreach(qa => doc.addField("assertions_passed", qa.getName()))
         val unchecked = AssertionCodes.getMissingCodes((systemAssertions.map(it=>AssertionCodes.getByCode(it.code).getOrElse(null))).toSet)
         unchecked.foreach(ec => doc.addField("assertions_unchecked", ec.name))
         //add system assertions boolean value
-        doc.addField("system_assertions", types.contains(0))
+        doc.addField("system_assertions", types.contains(0)) */
+
+        val qaJson  = map.getOrElse(FullRecordMapper.qualityAssertionColumn, "[]")
+        val(qa, status) = extractPassAndFailed(qaJson)
+        var sa = false
+        status.foreach{case (test, status)=>
+          if (status.equals("1")){
+            doc.addField("assertions_passed", test)
+          } else if (status.equals("0")){
+            sa = true
+            //get the error code to see if it is "missing"
+            //println(test +" " + guid)
+            def indexField = if(AssertionCodes.getByName(test).get.category == ErrorCodeCategory.Missing) "assertions_missing" else "assertions"
+            doc.addField(indexField, test)
+          }
+        }
+
+        val unchecked = AssertionCodes.getMissingByCode(qa)
+        unchecked.foreach(ec => doc.addField("assertions_unchecked", ec.name))
+
+        doc.addField("system_assertions", sa)
+
+
+
         //"system_assertions"
-        //now index the QA names for the user if userQA = true
+        //now index the QA names for the
+        //
+        //
+        // user if userQA = true
         val hasUserAssertions = map.getOrElse(FullRecordMapper.userQualityAssertionColumn, "false")
         if ("true".equals(hasUserAssertions)) {
           val assertionUserIds = Config.occurrenceDAO.getUserIdsForAssertions(guid)
@@ -1006,22 +1056,23 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
             sgs.get.foreach{v:String => doc.addField("species_subgroup", v)}
           }
         }
+        if(!test){
+          if (!batch) {
+            solrServer.add(doc)
+            solrServer.commit
+          } else {
+            solrDocList.synchronized {
+              if (!StringUtils.isEmpty(values(0)))
+                solrDocList.add(doc)
 
-        if (!batch) {
-          solrServer.add(doc)
-          solrServer.commit
-        } else {
-          solrDocList.synchronized {
-            if (!StringUtils.isEmpty(values(0)))
-              solrDocList.add(doc)
+              if (solrDocList.size == 1000 || (commit && solrDocList.size > 0)) {
 
-            if (solrDocList.size == 1000 || (commit && solrDocList.size > 0)) {
-
-              solrServer.add(solrDocList)
-              if (commit || solrDocList.size >= 10000){
-                solrServer.commit
+                solrServer.add(solrDocList)
+                if (commit || solrDocList.size >= 10000){
+                  solrServer.commit
+                }
+                solrDocList.clear
               }
-              solrDocList.clear
             }
           }
         }

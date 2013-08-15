@@ -43,7 +43,7 @@ object IndexRecords {
     var uuidFile:String = ""
     var rowKeyFile:String = ""
     var threads=1
-
+    var test= false
     val parser = new OptionParser("index records options") {
         opt("empty", "empty the index first", {empty=true})
         opt("check","check to see if the record is deleted before indexing",{check=true})
@@ -56,6 +56,7 @@ object IndexRecords {
         opt("if", "file-uuids-to-index","Absolute file path to fle containing UUIDs to index", {v:String => uuidFile = v})
         opt("rf", "file-rowkeys-to-index","Absolute file path to fle containing rowkeys to index", {v:String => rowKeyFile = v})
         intOpt("t","threads","Number of threads to index from",{v:Int => threads = v})
+        opt("test", "test the speed of creating the index the minus the actual SOLR indexing costs",{test = true})
     }
     if(parser.parse(args)){
         //delete the content of the index
@@ -71,7 +72,7 @@ object IndexRecords {
           else
             indexListThreaded(new File(rowKeyFile), threads)
         } else {
-          index(startUuid, endUuid, dataResource, false, false, startDate, check, pageSize)
+          index(startUuid, endUuid, dataResource, false, false, startDate, check, pageSize, test=test)
         }
         //shut down pelops and index to allow normal exit
         indexer.shutdown
@@ -88,7 +89,8 @@ object IndexRecords {
             checkDeleted:Boolean = false,
             pageSize:Int = 1000,
             miscIndexProperties:Seq[String] = Array[String](),
-            callback:ObserverCallback = null) {
+            callback:ObserverCallback = null,
+             test:Boolean = false) {
 
     val startKey = {
         if(startUuid.isEmpty && !dataResource.isEmpty) {
@@ -112,14 +114,14 @@ object IndexRecords {
     } else {
        logger.info("Starting to index " + startKey + " until " + endKey)
     }
-    indexRange(startKey, endKey, date, checkDeleted, miscIndexProperties = miscIndexProperties, callback = callback)
+    indexRange(startKey, endKey, date, checkDeleted, miscIndexProperties = miscIndexProperties, callback = callback, test=test)
     //index any remaining items before exiting
     indexer.finaliseIndex(optimise, shutdown)  
   }
 
   def indexRange(startUuid:String, endUuid:String, startDate:Option[Date]=None, checkDeleted:Boolean=false,
                  pageSize:Int = 1000, miscIndexProperties:Seq[String] = Array[String](),
-                 callback:ObserverCallback = null) {
+                 callback:ObserverCallback = null, test:Boolean =false) {
     var counter = 0
     val start = System.currentTimeMillis
     var startTime = System.currentTimeMillis
@@ -130,8 +132,8 @@ object IndexRecords {
         //val fullMap = new HashMap[String, String]
         //fullMap ++= map
         ///convert EL and CL properties at this stage
-        val shouldcommit = counter % 100000 == 0
-        indexer.indexFromMap(guid, map, startDate=startDate, commit=shouldcommit, miscIndexProperties=miscIndexProperties)
+        val shouldcommit = counter % 10000 == 0
+        indexer.indexFromMap(guid, map, startDate=startDate, commit=shouldcommit, miscIndexProperties=miscIndexProperties, test=test)
         if (counter % pageSize == 0) {
           if(callback !=null) callback.progressMessage(counter)
           finishTime = System.currentTimeMillis
