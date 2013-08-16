@@ -723,6 +723,12 @@ object AssertionCodes {
   
   def getByName(name:String) :Option[ErrorCode] = all.find(errorCode => errorCode.name == name)
 
+  def getAllByCode(codes:Array[String]):Set[ErrorCode] = all.filter(ec => codes.contains(ec.code.toString))
+
+  def getMissingByCode(codes:List[Int]):Set[ErrorCode] ={
+    (AssertionCodes.all &~ Set(VERIFIED, PROCESSING_ERROR)).filterNot(e =>codes.contains(e.code))
+  }
+
   def getMissingCodes(code:Set[ErrorCode]) : Set[ErrorCode] =
     AssertionCodes.all &~ (code ++ userAssertionCodes.toSet ++ Set(VERIFIED, PROCESSING_ERROR))
 
