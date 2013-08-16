@@ -8,6 +8,7 @@ import au.org.ala.checklist.lucene.CBIndexSearch
 import org.slf4j.LoggerFactory
 import com.google.inject._
 import org.ala.layers.client.Client
+import java.io.FileInputStream
 
 /**
  * Simple singleton wrapper for Guice (or spring)
@@ -85,11 +86,14 @@ class ConfigModule extends AbstractModule {
   protected val logger = LoggerFactory.getLogger("ConfigModule")
   val properties = {
     val properties = new Properties()
-    //try the biocache-config.properties first
-    var stream = this.getClass.getResourceAsStream("/biocache-config.properties")
-    if(stream == null){
-      stream = this.getClass.getResourceAsStream("/biocache.properties")
-    }
+    //NC 2013-08-16: Supply the properties file as a system property via -Dbiocache.config=<file>
+    //or the default /data/biocache/config/biocache-config.properties file is used.
+
+    //check to see if a system property has been supplied with the location of the config file
+    val filename = System.getProperty("biocache.config","/data/biocache/config/biocache-config.properties")
+    logger.info("Loading configuration from " + filename)
+    val stream = new FileInputStream(new java.io.File(filename));
+
     properties.load(stream)
     properties
   }
