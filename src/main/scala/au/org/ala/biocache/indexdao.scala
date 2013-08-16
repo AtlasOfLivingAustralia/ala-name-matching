@@ -860,10 +860,10 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     val qaStatuses = qaStatusRegex.findAllMatchIn(json).map(_.group(1)).toList
     val assertions = (names zip qaStatuses)
     if(logger.isDebugEnabled()){
-      logger.debug(codes)
-      logger.debug(names)
-      logger.debug(qaStatuses)
-      logger.debug(assertions)
+      logger.debug(codes.toString)
+      logger.debug(names.toString)
+      logger.debug(qaStatuses.toString)
+      logger.debug(assertions.toString)
     }
 
     (codes, assertions)
