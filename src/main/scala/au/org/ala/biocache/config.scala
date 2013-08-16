@@ -91,10 +91,12 @@ class ConfigModule extends AbstractModule {
 
     //check to see if a system property has been supplied with the location of the config file
     val filename = System.getProperty("biocache.config","/data/biocache/config/biocache-config.properties")
+    var file =new java.io.File(filename)
+    //only load the properties file if it exists otherwise default to the biocache.properties on the classpath
+    val stream = if(file.exists())new FileInputStream(file) else this.getClass.getResourceAsStream("/biocache.properties")
     logger.info("Loading configuration from " + filename)
-    val stream = new FileInputStream(new java.io.File(filename));
-
     properties.load(stream)
+
     properties
   }
 
