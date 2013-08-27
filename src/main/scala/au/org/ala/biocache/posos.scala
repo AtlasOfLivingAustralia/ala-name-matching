@@ -119,7 +119,8 @@ trait CompositePOSO extends POSO {
           }
         }
       } else {
-        println(property.name + " : "+property.typeName + " : " + value)
+        //NC The print statement below can be enabled for debug purposes but please don't check it back without commenting it out because it creates a lot of output when loading a DwcA
+        //println(property.name + " : "+property.typeName + " : " + value)
         property.setter.invoke(this, value)
       }
     }
