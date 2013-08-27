@@ -1,6 +1,6 @@
 package au.org.ala.util
 import java.io._
-import org.gbif.dwc.text.ArchiveFactory
+import org.gbif.dwc.text.{StarRecord, ArchiveFactory}
 import org.gbif.dwc.terms.DwcTerm
 import scala.collection.mutable.ArrayBuffer
 import au.org.ala.biocache._
@@ -11,22 +11,22 @@ import org.apache.commons.lang3.StringUtils
 
 /**
  * Loading utility for pulling in a darwin core archive file.
- * 
+ *
  * This class will retrieve details from the collectory and load in a darwin core archive.
  * The workflow is the following:
- * 
+ *
  * <ol>
  * <li>Retrieve JSON from collectory</li>
  * <li>Download the zipped archive to the local file system</li>
  * <li>Extract</li>
  * <li>Load</li>
  * </ol>
- * 
+ *
  * Optimisations - with a significant memory allocation, this loader _could_ retrieve all
  * uniqueKey to UUID mappings first.
- * 
+ *
  * This makes this class completely reliant upon configuration in the collectory.
- * 
+ *
  * @author Dave Martin
  */
 object DwCALoader {
@@ -56,11 +56,11 @@ object DwCALoader {
       l.updateLastChecked(resourceUid)
     }
 
-      //shut down the persistence manager after all the files have been loaded.
+    //shut down the persistence manager after all the files have been loaded.
     Config.persistenceManager.shutdown
   }
-} 
-    
+}
+
 class DwCALoader extends DataLoader {
 
   import FileHelper._
@@ -79,10 +79,10 @@ class DwCALoader extends DataLoader {
     var loaded = false
     var maxLastModifiedDate:java.util.Date = null
     urls.foreach(url => {
-        //download
+      //download
       val (fileName,date) = downloadArchive(url,resourceUid,if(forceLoad)None else lastChecked)
       if(maxLastModifiedDate == null || date.after(maxLastModifiedDate))
-          maxLastModifiedDate = date
+        maxLastModifiedDate = date
       println("File last modified date: " + maxLastModifiedDate)
       if(fileName != null){
         //load the DWC file
@@ -94,7 +94,7 @@ class DwCALoader extends DataLoader {
     if(!testFile){
       updateLastChecked(resourceUid, if(loaded) Some(maxLastModifiedDate) else None)
       if(!loaded)
-          setNotLoadedForOtherPhases(resourceUid)
+        setNotLoadedForOtherPhases(resourceUid)
     }
   }
 
@@ -102,8 +102,25 @@ class DwCALoader extends DataLoader {
     val (protocol, url, uniqueTerms, params, customParams,lastChecked) = retrieveConnectionParameters(resourceUid)
     val conceptTerms = mapConceptTerms(uniqueTerms)
     val strip = params.getOrElse("strip", false).asInstanceOf[Boolean]
-      //load the DWC file
+    //load the DWC file
     loadArchive(fileName, resourceUid, conceptTerms, strip, logRowKeys, testFile)
+  }
+
+//  def getUniqueId(star:StarRecord,uniqueTerms:List[ConceptTerm]):Option[String]={
+//    if (!uniqueTerms.isEmpty) {
+//      val uniqueTermValues = uniqueTerms.map(t => star.core.value(t))
+//      val id =(List(resourceUid) ::: uniqueTermValues).mkString("|").trim
+//      Some(if(stripSpaces) id.replaceAll("\\s","") else id)
+//    } else {
+//      None
+//    }
+//  }
+
+  def getUuid(uniqueID:Option[String], star:StarRecord,uniqueTerms:List[ConceptTerm], mappedProperties:Option[Map[String,String]]) :((String, Boolean),Option[Map[String,String]])={
+    uniqueID match {
+      case Some(value) => (Config.occurrenceDAO.createOrRetrieveUuid(value),mappedProperties)
+      case None => ((Config.occurrenceDAO.createUuid, true), mappedProperties)
+    }
   }
 
   def loadArchive(fileName:String, resourceUid:String, uniqueTerms:List[ConceptTerm], stripSpaces:Boolean, logRowKeys:Boolean, testFile:Boolean){
@@ -145,14 +162,14 @@ class DwCALoader extends DataLoader {
       //the details of how to construct the UniqueID belong in the Collectory
       //val uniqueTermValues = uniqueTerms.map(t => dwc.getProperty(t))
       val uniqueID = {
-          //create the unique ID
-          if (!uniqueTerms.isEmpty) {
-              val uniqueTermValues = uniqueTerms.map(t => star.core.value(t))
-              val id =(List(resourceUid) ::: uniqueTermValues).mkString("|").trim
-              Some(if(stripSpaces) id.replaceAll("\\s","") else id)
-          } else {
-              None
-          }
+        //create the unique ID
+        if (!uniqueTerms.isEmpty) {
+          val uniqueTermValues = uniqueTerms.map(t => star.core.value(t))
+          val id =(List(resourceUid) ::: uniqueTermValues).mkString("|").trim
+          Some(if(stripSpaces) id.replaceAll("\\s","") else id)
+        } else {
+          None
+        }
       }
 
       if(testFile){
@@ -174,12 +191,16 @@ class DwCALoader extends DataLoader {
       })
 
       //lookup the column
-      val (recordUuid, isNew) = {
-          uniqueID match {
-              case Some(value) => Config.occurrenceDAO.createOrRetrieveUuid(value)
-              case None => (Config.occurrenceDAO.createUuid, true)
-          }
+      val ((recordUuid, isNew), mappedProps) = getUuid(uniqueID,star, uniqueTerms,None)
+      if(mappedProps.isDefined && uniqueID.isDefined){
+        Config.persistenceManager.put(uniqueID.get, "occ", mappedProps.get)
       }
+//      {
+//        uniqueID match {
+//          case Some(value) => Config.occurrenceDAO.createOrRetrieveUuid(value)
+//          case None => (Config.occurrenceDAO.createUuid, true)
+//        }
+//      }
 
       //add the record uuid to the map
       fieldTuples += ("uuid" -> recordUuid)
@@ -188,8 +209,8 @@ class DwCALoader extends DataLoader {
       //add last load time
       fieldTuples += ("lastModifiedTime"-> loadTime)
       if(isNew){
-          fieldTuples += ("firstLoaded"-> loadTime)
-          newCount +=1
+        fieldTuples += ("firstLoaded"-> loadTime)
+        newCount +=1
       }
 
       val rowKey = if(uniqueID.isEmpty) resourceUid + "|" + recordUuid else uniqueID.get
@@ -228,8 +249,8 @@ class DwCALoader extends DataLoader {
       if(unknownCollections.size > 0)
         println("Warning there are new collection codes in the set: " + unknownCollections.mkString(","))
 
-       //Report the number of new/existing records
-        println("There are " + count + " records in the file. The number of NEW records: " + newCount)
+      //Report the number of new/existing records
+      println("There are " + count + " records in the file. The number of NEW records: " + newCount)
     }
     //commit the batch
     Config.occurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)
