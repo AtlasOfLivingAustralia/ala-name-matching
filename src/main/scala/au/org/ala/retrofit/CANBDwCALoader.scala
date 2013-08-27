@@ -84,7 +84,7 @@ class CANBDwCALoader extends DwCALoader{
     while(currentLine != null){
 
       if(currentLine.size>1){
-        nonDefaultMapping += (currentLine(0)->currentLine(1))
+        nonDefaultMapping += (currentLine(1)->currentLine(0))
       }
       currentLine = reader.readNext()
     }
