@@ -103,25 +103,27 @@ class ConfigModule extends AbstractModule {
   override def configure() {
 
     Names.bindProperties(this.binder, properties)
-
     //bind concrete implementations
     bind(classOf[OccurrenceDAO]).to(classOf[OccurrenceDAOImpl]).in(Scopes.SINGLETON)
     bind(classOf[OutlierStatsDAO]).to(classOf[OutlierStatsDAOImpl]).in(Scopes.SINGLETON)
+    logger.info("Initialise SOLR")
     bind(classOf[IndexDAO]).to(classOf[SolrIndexDAO]).in(Scopes.SINGLETON)
     bind(classOf[DeletedRecordDAO]).to(classOf[DeletedRecordDAOImpl]).in(Scopes.SINGLETON)
     bind(classOf[DuplicateDAO]).to(classOf[DuplicateDAOImpl]).in(Scopes.SINGLETON)
     bind(classOf[AssertionQueryDAO]).to(classOf[AssertionQueryDAOImpl]).in(Scopes.SINGLETON)
+    logger.info("Initialise name matching indexes")
     try {
       val nameIndex = new CBIndexSearch(properties.getProperty("nameIndexLocation"))
       bind(classOf[CBIndexSearch]).toInstance(nameIndex)
     } catch {
         case e: Exception => logger.warn("Lucene indexes arent currently available.")
     }
-
+    logger.info("Initialise persistence manager")
     properties.getProperty("db") match {
         case "cassandra" => bind(classOf[PersistenceManager]).to(classOf[CassandraPersistenceManager]).in(Scopes.SINGLETON)
         //case "mongodb" => bind(classOf[PersistenceManager]).to(classOf[MongoDBPersistenceManager]).in(Scopes.SINGLETON)
         case _ => bind(classOf[PersistenceManager]).to(classOf[CassandraPersistenceManager]).in(Scopes.SINGLETON)
     }
+    logger.info("Configure complete")
   }
 }

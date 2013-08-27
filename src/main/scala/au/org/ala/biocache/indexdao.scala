@@ -639,7 +639,6 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
 
   override def init() {
 
-
     if (solrServer == null) {
       logger.info("Initialisising the solr server " + solrHome + " " + cloudServer + " " + solrServer)
       if(!solrHome.startsWith("http://")){
@@ -648,26 +647,20 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
           cloudServer = new org.apache.solr.client.solrj.impl.CloudSolrServer(solrHome)
           cloudServer.setDefaultCollection("biocache1")
           solrServer = cloudServer
-        }
-        else if (solrConfigPath != "") {
-
+        } else if (solrConfigPath != "") {
           cc = CoreContainer.createAndLoad(solrHome, new File(solrHome+"/solr.xml"))
           solrServer = new EmbeddedSolrServer(cc, "biocache")
-  
-          //          threads
         } else {
           System.setProperty("solr.solr.home", solrHome)
           cc = CoreContainer.createAndLoad(solrHome,new File(solrHome + "/solr.xml"))//new CoreContainer(solrHome)
           solrServer = new EmbeddedSolrServer(cc, "biocache")
-  
-          //          threads
         }
-      }
-      else {
+      } else {
+        logger.info("Initialising connection to SOLR server.....")      
         solrServer = new HttpSolrServer(solrHome)
+        logger.info("Initialising connection to SOLR server - done.")
       }
     }
-
   }
 
   def reload = if(cc != null) cc.reload("biocache")

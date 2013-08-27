@@ -92,7 +92,11 @@ class RecordProcessor {
       }
     })
   }
-  
+
+  def downloadMedia(raw:FullRecord){
+     Config.occurrenceDAO.downloadMedia(raw)
+  }
+
   /**
    * Process all records in the store
    */
@@ -278,6 +282,10 @@ class RecordProcessor {
     raw.uuid = uuid
     raw.attribution.dataResourceUid = dataResourceUid
     au.org.ala.biocache.Config.occurrenceDAO.updateOccurrence(raw.rowKey, raw, Versions.RAW)
+    val downloaded = au.org.ala.biocache.Config.occurrenceDAO.downloadMedia(raw)
+    if(downloaded){
+      au.org.ala.biocache.Config.occurrenceDAO.updateOccurrence(raw.rowKey, raw, Versions.RAW)
+    }
     uuid
   }
 }

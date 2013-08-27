@@ -119,7 +119,7 @@ trait CompositePOSO extends POSO {
           }
         }
       } else {
-        //println(property.name + " : "+property.typeName)
+        println(property.name + " : "+property.typeName + " : " + value)
         property.setter.invoke(this, value)
       }
     }

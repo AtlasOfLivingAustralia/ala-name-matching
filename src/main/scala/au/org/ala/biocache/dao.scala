@@ -94,6 +94,8 @@ trait OccurrenceDAO extends DAO{
   def reIndex(rowKey: String)
 
   def delete(rowKey: String, removeFromIndex:Boolean=true,logDeleted:Boolean=false)
+
+  def downloadMedia(fr:FullRecord) : Boolean
 }
 
 /**
@@ -115,7 +117,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
    */
   def getMapFromIndex(value:String):Option[Map[String,String]]={
     persistenceManager.getByIndex(value, entityName, "uuid") match {
-     case None => persistenceManager.getByIndex(value, entityName, "portalId")
+     case None => persistenceManager.getByIndex(value, entityName, "portalId")  //legacy record ID
      case Some(map) => Some(map)
     }
   }
@@ -471,21 +473,34 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     var batch = scala.collection.mutable.Map[String, Map[String, String]]()
     fullRecords.foreach(fr  => {
       //download the media in associatedMedia?????
-      if (fr.occurrence.associatedMedia != null){
-        val filesToImport = fr.occurrence.associatedMedia.split(";")
-        val associatedMediaBuffer = new ArrayBuffer[String]
-        filesToImport.foreach(fileToStore => {
-          val filePath = MediaStore.save(fr.uuid, fr.attribution.dataResourceUid, fileToStore)
-          if(!filePath.isEmpty) associatedMediaBuffer += filePath.get
-        })
-        fr.occurrence.associatedMedia = associatedMediaBuffer.toArray.mkString(";")
-      }
+      downloadMedia(fr)
       //process the record
       var properties = FullRecordMapper.fullRecord2Map(fr, Versions.RAW)
       batch.put(fr.rowKey, properties.toMap)
     })
     //commit
     persistenceManager.putBatch(entityName, batch.toMap)
+  }
+
+  /**
+   * Download the associated media and update the references in the FR.
+   * Returns true if media has been downloaded.
+   *
+   * @param fr
+   */
+  def downloadMedia(fr:FullRecord) : Boolean = {
+    if (fr.occurrence.associatedMedia != null){
+      val filesToImport = fr.occurrence.associatedMedia.split(";")
+      val associatedMediaBuffer = new ArrayBuffer[String]
+      filesToImport.foreach(fileToStore => {
+        val filePath = MediaStore.save(fr.uuid, fr.attribution.dataResourceUid, fileToStore)
+        if(!filePath.isEmpty) associatedMediaBuffer += filePath.get
+      })
+      fr.occurrence.associatedMedia = associatedMediaBuffer.toArray.mkString(";")
+      true
+    } else {
+      false
+    }
   }
 
   /**
@@ -717,7 +732,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
       persistenceManager.put(rowKey, entityName, FullRecordMapper.lastUserAssertionDateColumn, qualityAssertion.created)
       //when the user assertion is verified need to add extra value
       if(AssertionCodes.isVerified(qualityAssertion)){
-          persistenceManager.put(rowKey, entityName, FullRecordMapper.userVerifiedColumn,"true")
+        persistenceManager.put(rowKey, entityName, FullRecordMapper.userVerifiedColumn, "true")
       }
     }
   }
@@ -739,6 +754,18 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
 
     userAssertions.toList
   }
+
+  /**
+   * Retrieve annotations for the supplied UUID.
+   */
+  def getRecordVersionForAssertion(assertionRowKey:String): FullRecord = {
+    val snapshotInJson = persistenceManager.get(assertionRowKey, "qa", "snapshot")
+    //de-serialise to FullRecord
+    val om = new ObjectMapper
+    null
+  }
+
+
 
   /**
    * Retrieves a distinct list of user ids for the assertions

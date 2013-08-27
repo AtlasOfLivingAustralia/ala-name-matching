@@ -137,6 +137,24 @@ object Store {
   }
 
   /**
+   * Adds or updates a raw full record with values that are in the FullRecord
+   * relies on a rowKey being set. This method only loads the record.
+   *
+   * Record is processed and indexed if should index is true
+   */
+  def loadRecord(dataResourceIdentifer:String, properties:java.util.Map[String,String], shouldIndex:Boolean){
+    (new RecordProcessor).addRecord(dataResourceIdentifer, properties.toMap[String,String])
+  }
+
+  /**
+   * Load the record, download any media associated with the record but avoid processing the record.
+   */
+  def loadRecordOnly(dataResourceUid:String, fr:FullRecord, identifyingTerms:java.util.List[String]){
+    fr.lastModifiedTime = new Date()
+    (new SimpleLoader).load(dataResourceUid, fr, identifyingTerms.toList, true, true)
+  }
+
+  /**
    * Load the record, download any media associated with the record.
    */
   def loadRecord(dataResourceUid:String, fr:FullRecord, identifyingTerms:java.util.List[String], shouldIndex:Boolean = true){
@@ -199,16 +217,6 @@ object Store {
    */
   def insertRecord(dataResourceIdentifer:String, properties:java.util.Map[String,String], shouldIndex:Boolean){
     (new RecordProcessor).addRecordAndProcess(dataResourceIdentifer, properties.toMap[String,String])
-  }
-
-  /**
-   * Adds or updates a raw full record with values that are in the FullRecord
-   * relies on a rowKey being set. This method only loads the record.
-   *
-   * Record is processed and indexed if should index is true
-   */
-  def loadRecord(dataResourceIdentifer:String, properties:java.util.Map[String,String], shouldIndex:Boolean){
-    (new RecordProcessor).addRecord(dataResourceIdentifer, properties.toMap[String,String])
   }
 
   /**

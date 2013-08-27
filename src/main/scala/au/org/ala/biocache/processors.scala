@@ -1,8 +1,6 @@
 package au.org.ala.biocache
 
-import au.org.ala.checklist.lucene.HomonymException
 import collection.mutable.{HashMap, ArrayBuffer}
-import au.org.ala.checklist.lucene.SearchResultException
 import org.slf4j.LoggerFactory
 import au.org.ala.data.model.LinnaeanRankClassification
 import au.org.ala.sds.validation.ServiceFactory
@@ -14,19 +12,19 @@ import org.geotools.referencing.CRS
 import org.geotools.referencing.operation.DefaultCoordinateOperationFactory
 import org.geotools.geometry.GeneralDirectPosition
 import org.geotools.referencing.crs.DefaultGeographicCRS
-import org.apache.commons.math3.util.{Precision, MathUtils}
-import org.drools.lang.DRLParser.entry_point_key_return
+import org.apache.commons.math3.util.{Precision}
 import au.org.ala.sds.SensitiveDataService
-import au.org.ala.biocache.QualityAssertion
-import com.sun.xml.internal.ws.api.server.AbstractServerAsyncTransport
 
 /**
  * Trait to be implemented by all processors. 
  * This is a simple Command Pattern.
  */
 trait Processor {
+
+  /** Process the raw version of the record, updating the processed and returning an array of assertions */
   def process(uuid: String, raw: FullRecord, processed: FullRecord, lastProcessed: Option[FullRecord]=None): Array[QualityAssertion]
 
+  /** Return the name of this processor (largely for logging purposes) */
   def getName: String
 }
 
@@ -100,7 +98,6 @@ class DefaultValuesProcessor extends Processor {
     val lastLoadedDate = DateParser.parseStringToDate(raw.lastModifiedTime)
     val lastProcessedDate = if(lastProcessed.isEmpty) None else DateParser.parseStringToDate(lastProcessed.get.lastModifiedTime)
     if (raw.occurrence.originalSensitiveValues != null && (lastLoadedDate.isEmpty || lastProcessedDate.isEmpty || lastLoadedDate.get.before(lastProcessedDate.get) )) {
-      
       FullRecordMapper.mapPropertiesToObject(raw, raw.occurrence.originalSensitiveValues)
     }
 
@@ -127,12 +124,12 @@ class OfflineTestProcessor extends Processor {
        processed.location.distanceOutsideExpertRange = currentProcessed.location.distanceOutsideExpertRange
        processed.queryAssertions = currentProcessed.queryAssertions
        offlineAssertions.toArray
-     } else{
+     } else {
        //assume that the assertions were not tested
        Array()
      }
-
   }
+
   def getName = "offline"
 }
 
@@ -144,10 +141,7 @@ class MiscellaneousProcessor extends Processor {
     var assertions = new ArrayBuffer[QualityAssertion]
     processImages(guid, raw, processed, assertions)
     processInteractions(guid, raw, processed)
-    //now process the "establishmentMeans" values
     processEstablishmentMeans(raw, processed, assertions)
-
-
     processIdentification(raw,processed,assertions)
     processCollectors(raw, processed, assertions)
     processMiscOccurrence(raw, processed, assertions)
@@ -178,17 +172,14 @@ class MiscellaneousProcessor extends Processor {
       if (parsedCollectors.isDefined) {
         processed.occurrence.recordedBy = parsedCollectors.get.mkString("|")
         assertions += QualityAssertion(AssertionCodes.RECORDED_BY_UNPARSABLE, 1)
-      }
-      else {
+      } else {
         //println("Unable to parse: " + raw.occurrence.recordedBy)
         assertions += QualityAssertion(AssertionCodes.RECORDED_BY_UNPARSABLE, "Can not parse recordedBy")
       }
     }
   }
 
-
-
-  def processEstablishmentMeans(raw: FullRecord, processed: FullRecord, assertions:ArrayBuffer[QualityAssertion]) = {
+  def processEstablishmentMeans(raw: FullRecord, processed: FullRecord, assertions:ArrayBuffer[QualityAssertion]) : Unit = {
     //2012-0202: At this time AVH is the only data resource to support this. In the future it may be necessary for the value to be a list...
     //handle the "cultivated" type
     //2012-07-13: AVH has moved this to establishmentMeans and has also include nativeness
@@ -198,17 +189,20 @@ class MiscellaneousProcessor extends Processor {
         val term = EstablishmentMeans.matchTerm(means)
         if (term.isDefined) term.get.getCanonical else ""
       }).filter(_.length > 0)
-      if (newmeans.size > 0)
+
+      if (!newmeans.isEmpty){
         processed.occurrence.establishmentMeans = newmeans.mkString("; ")
-      //check to see if the establishment mean corresponds to culitvayed or escaped
-      val cultEsacped = newmeans.find(em => em == "cultivated" || em == "assumed to be cultivated" || em == "formerly cultivated (extinct)" || em == "possibly cultivated" || em == "presumably cultivated")
-      if(cultEsacped.isDefined){
+      }
+
+      //check to see if the establishment mean corresponds to culitvated or escaped
+      //FIXME extract to a vocabulary
+      val cultEscaped = newmeans.find(em => em == "cultivated" || em == "assumed to be cultivated" || em == "formerly cultivated (extinct)" || em == "possibly cultivated" || em == "presumably cultivated")
+      if(cultEscaped.isDefined){
         assertions += QualityAssertion(AssertionCodes.OCCURRENCE_IS_CULTIVATED_OR_ESCAPEE)
       } else {
         //represents a natural occurrence. not cultivated ot escaped
         assertions += QualityAssertion(AssertionCodes.OCCURRENCE_IS_CULTIVATED_OR_ESCAPEE, 1)
       }
-
     }
   }
 
@@ -238,7 +232,7 @@ class MiscellaneousProcessor extends Processor {
   def processInteractions(guid: String, raw: FullRecord, processed: FullRecord) = {
     //interactions are supplied as part of the assciatedTaxa string
     //TODO more sophisticated parsing of the string. ATM we are only supporting the structure for dr642
-    // TODO support multiple interactions
+    //TODO support multiple interactions
     if (raw.occurrence.associatedTaxa != null && !raw.occurrence.associatedTaxa.isEmpty) {
       val interaction = parseInteraction(raw.occurrence.associatedTaxa)
       if (!interaction.isEmpty) {
@@ -272,7 +266,6 @@ class MiscellaneousProcessor extends Processor {
       else
         assertions += QualityAssertion(AssertionCodes.INVALID_IMAGE_URL,1)
     }
-
   }
 
   def getName = "image"
@@ -350,8 +343,9 @@ class EventProcessor extends Processor {
   }
 
   /**
-   * Date parsing - this is pretty much copied from GBIF source code and needs
-   * splitting into several methods
+   * Date parsing
+   *
+   * TODO needs splitting into several methods
    */
   def process(guid: String, raw: FullRecord, processed: FullRecord, lastProcessed: Option[FullRecord]=None): Array[QualityAssertion] = {
     var assertions = new ArrayBuffer[QualityAssertion]
@@ -397,12 +391,10 @@ class EventProcessor extends Processor {
       }
 
       //TODO need to check for other months
-
       if (day == 0 || day > 31) {
         assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Invalid day supplied")
         addPassedInvalidCollectionDate = false
       }
-
 
       //check for sensible year value
       if (year > 0) {
@@ -441,7 +433,6 @@ class EventProcessor extends Processor {
           assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, comment)
           addPassedInvalidCollectionDate=false
         }
-
       }
 
       var validDayMonthYear = validYear && validDay && validMonth
@@ -577,11 +568,13 @@ class EventProcessor extends Processor {
         processed.occurrence.modified = parsedDate.get.startDate
       }
     }
+
     if (raw.identification.dateIdentified != null) {
       val parsedDate = DateParser.parseDate(raw.identification.dateIdentified)
       if (parsedDate.isDefined)
         processed.identification.dateIdentified = parsedDate.get.startDate
     }
+
     if (raw.location.georeferencedDate != null || raw.miscProperties.containsKey("georeferencedDate")){
       def rawdate = if (raw.location.georeferencedDate != null) raw.location.georeferencedDate else raw.miscProperties.get("georeferencedDate")
       val parsedDate = DateParser.parseDate(rawdate)
@@ -589,7 +582,6 @@ class EventProcessor extends Processor {
         processed.location.georeferencedDate = parsedDate.get.startDate
       }
     }
-
 
     if (StringUtils.isNotBlank(processed.event.eventDate)){
       val eventDate = DateParser.parseStringToDate(processed.event.eventDate).get
@@ -613,7 +605,6 @@ class EventProcessor extends Processor {
         }
       }
     }
-
   }
 
   def getName = "event"
@@ -750,7 +741,7 @@ class LocationProcessor extends Processor {
         //add the layers that are associated with the point
         //processed.environmentalLayers = environmentalLayers
         //processed.contextualLayers = contextualLayers
-        // TODO find out if the EEZ layer has been include so the value can be obtained for this.
+        //TODO find out if the EEZ layer has been include so the value can be obtained for this.
         processed.location.habitat = {
           if (!StringUtils.isEmpty(location.ibra)) "Terrestrial"
           else if (!StringUtils.isEmpty(location.imcra)) "Marine"
@@ -769,8 +760,6 @@ class LocationProcessor extends Processor {
           checkForHabitatMismatch(raw, processed, taxonProfile.get, assertions)
         }
 
-
-
         //sensitise the coordinates if necessary.  Do this last so that habitat checks etc are performed on originally supplied coordinates
         try {
           processSensitivity(raw, processed, location, contextualLayers)
@@ -788,8 +777,6 @@ class LocationProcessor extends Processor {
         assertions += QualityAssertion(AssertionCodes.LOCATION_NOT_SUPPLIED, 1)
       }
     }
-
-
 
     processLocations(raw,processed,assertions)
 
@@ -841,7 +828,6 @@ class LocationProcessor extends Processor {
         processed.location.country = countryTerm.get.canonical
       }
     }
-
   }
 
   /**
@@ -882,6 +868,7 @@ class LocationProcessor extends Processor {
 //        case e: Exception => assertions += QualityAssertion(AssertionCodes.DEPTH_NON_NUMERIC, "Can't parse verbatimDepth " + raw.location.verbatimDepth)
 //      }
     }
+
     if (raw.location.verbatimElevation != null) {
       val parseElevationResult = DistanceRangeParser.parse(raw.location.verbatimElevation)
       if(parseElevationResult.isDefined){
@@ -936,6 +923,7 @@ class LocationProcessor extends Processor {
         case _:Exception =>
       }
     }
+
     if (raw.location.minimumElevationInMeters != null && raw.location.maximumElevationInMeters != null) {
       try {
         val min = raw.location.minimumElevationInMeters.toFloat
@@ -944,14 +932,12 @@ class LocationProcessor extends Processor {
           processed.location.minimumElevationInMeters = max.toString
           processed.location.maximumElevationInMeters = min.toString
           assertions += QualityAssertion(AssertionCodes.MIN_MAX_ALTITUDE_REVERSED, "The minimum, " + min + ", and maximum, " + max + ", elevations have been transposed.")
-        }
-        else {
+        } else {
           processed.location.minimumElevationInMeters = min.toString
           processed.location.maximumElevationInMeters = max.toString
           assertions += QualityAssertion(AssertionCodes.MIN_MAX_ALTITUDE_REVERSED,1)
         }
-      }
-      catch {
+      } catch {
         case e:Exception => logger.debug("Exception thrown processing elevation:" + e.getMessage())
       }
     }
@@ -1266,7 +1252,6 @@ class LocationProcessor extends Processor {
            assertions += QualityAssertion(AssertionCodes.PRECISION_RANGE_MISMATCH, "Unable to parse the coordinate precision")
         }
       }
-
     }
 
     // If the coordinateUncertainty is still empty populate it with the default
@@ -1461,114 +1446,112 @@ class LocationProcessor extends Processor {
   def processSensitivity(raw: FullRecord, processed: FullRecord, location: Location, contextualLayers: Map[String, String]) = {
     //needs to be performed for all records whether or not they are in Australia
     //get a map representation of the raw record...
-        var rawMap = scala.collection.mutable.Map[String, String]()
-        raw.objectArray.foreach(poso => {
-          val map = FullRecordMapper.mapObjectToProperties(poso, Versions.RAW)
-          rawMap.putAll(map)
+    var rawMap = scala.collection.mutable.Map[String, String]()
+    raw.objectArray.foreach(poso => {
+      val map = FullRecordMapper.mapObjectToProperties(poso, Versions.RAW)
+      rawMap.putAll(map)
+    })
+
+    //put the state information that we have from the point
+    if(location.stateProvince != null){
+      rawMap.put("stateProvince", location.stateProvince)
+    }
+
+    //put the required contexual layers in the map
+    au.org.ala.sds.util.GeoLocationHelper.getGeospatialLayers.foreach(key => {
+      rawMap.put(key, contextualLayers.getOrElse(key, "n/a"))
+    })
+
+    //put the processed event date components in to allow for correct date applications of the rules
+    if(processed.event.day != null)
+      rawMap("day") = processed.event.day
+    if(processed.event.month != null)
+      rawMap("month") = processed.event.month
+    if(processed.event.year != null)
+      rawMap("year") = processed.event.year
+
+    val exact = getExactSciName(raw)
+    //now get the ValidationOutcome from the Sensitive Data Service
+    val outcome = sds.testMapDetails(sdsFinder,rawMap, exact, processed.classification.taxonConceptID)
+
+    if (outcome != null && outcome.isValid && outcome.isSensitive) {
+
+      if (outcome.getResult != null) {
+        //conservation sensitive species will have a map of new values in the result
+        //the map that is returned needs to be used to update the raw record
+        val map: scala.collection.mutable.Map[java.lang.String, Object] = outcome.getResult
+        //logger.debug("SDS return map: "+map)
+        //convert it to a string string map
+        val stringMap = map.collect({
+          case (k, v) if v != null => if (k == "originalSensitiveValues") {
+            val osv = v.asInstanceOf[java.util.HashMap[String, String]]
+            //add the original "processed" coordinate uncertainty to the sensitive values so that it can be available if necessary
+            if (processed.location.coordinateUncertaintyInMeters != null)
+              osv.put("coordinateUncertaintyInMeters.p", processed.location.coordinateUncertaintyInMeters)
+              //remove all the el/cl's from the original sensitive values
+              au.org.ala.sds.util.GeoLocationHelper.getGeospatialLayers.foreach(key =>osv.remove(key))
+            val newv = Json.toJSON(osv)
+            (k -> newv)
+          } else (k -> v.toString)
+
         })
-        //put the state information that we have from the point
-        if(location.stateProvince != null)
-          rawMap.put("stateProvince", location.stateProvince)
-
-        //put the required contexual layers in the map
-        au.org.ala.sds.util.GeoLocationHelper.getGeospatialLayers.foreach(key => {
-          rawMap.put(key, contextualLayers.getOrElse(key, "n/a"))
-        })
-        
-        //put the processed event date components in to allow for correct date applications of the rules
-        if(processed.event.day != null)
-          rawMap("day") = processed.event.day
-        if(processed.event.month != null)
-          rawMap("month") = processed.event.month
-        if(processed.event.year != null)
-          rawMap("year") = processed.event.year
-        
-        val exact = getExactSciName(raw)
-        //now get the ValidationOutcome from the Sensitive Data Service
-        val outcome = sds.testMapDetails(sdsFinder,rawMap, exact, processed.classification.taxonConceptID)
-        
-        if (outcome != null && outcome.isValid && outcome.isSensitive) {
-
-          if (outcome.getResult != null) {
-            //conservation sensitive species will have a map of new values in the result
-            //the map that is returned needs to be used to update the raw record
-            val map: scala.collection.mutable.Map[java.lang.String, Object] = outcome.getResult
-            //logger.debug("SDS return map: "+map)
-            //convert it to a string string map
-            val stringMap = map.collect({
-              case (k, v) if v != null => if (k == "originalSensitiveValues") {
-                val osv = v.asInstanceOf[java.util.HashMap[String, String]]
-                //add the original "processed" coordinate uncertainty to the sensitive values so that it can be available if necessary
-                if (processed.location.coordinateUncertaintyInMeters != null)
-                  osv.put("coordinateUncertaintyInMeters.p", processed.location.coordinateUncertaintyInMeters)
-                  //remove all the el/cl's from the original sensitive values
-                  au.org.ala.sds.util.GeoLocationHelper.getGeospatialLayers.foreach(key =>osv.remove(key))
-                val newv = Json.toJSON(osv)
-                (k -> newv)
-              } else (k -> v.toString)
-
-            })
-            //logger.debug("AFTER : " + stringMap)
-            //take away the values that need to be added to the processed record NOT the raw record
-            val uncertainty = map.get("generalisationInMetres")
-            if (!uncertainty.isEmpty) {
-              //we know that we have sensitised
-              //add the uncertainty to the currently processed uncertainty
-              if (StringUtils.isNotEmpty(uncertainty.get.toString)) {
-                val currentUncertainty = if (StringUtils.isNotEmpty(processed.location.coordinateUncertaintyInMeters)) java.lang.Float.parseFloat(processed.location.coordinateUncertaintyInMeters) else 0
-                val newuncertainty = currentUncertainty + java.lang.Integer.parseInt(uncertainty.get.toString)
-                processed.location.coordinateUncertaintyInMeters = newuncertainty.toString
-              }
-              processed.location.decimalLatitude = stringMap.getOrElse("decimalLatitude", "")
-              processed.location.decimalLongitude = stringMap.getOrElse("decimalLongitude", "")
-              stringMap -= "generalisationInMetres"
-            }
-            processed.occurrence.informationWithheld = stringMap.getOrElse("informationWithheld", "")
-            processed.occurrence.dataGeneralizations = stringMap.getOrElse("dataGeneralizations", "")
-            stringMap -= "informationWithheld"
-            stringMap -= "dataGeneralizations"
-
-            if (stringMap.contains("day") || stringMap.contains("eventDate")) {
-              //remove the day from the values
-              raw.event.day = ""
-              processed.event.day = ""
-              processed.event.eventDate = ""
-            }
-
-            //update the raw record with whatever is left in the stringMap
-            Config.persistenceManager.put(raw.rowKey, "occ", stringMap.toMap)
-
-            //TODO may need to fix locality information... change ths so that the generalisation
-            // is performed before the point matching to gazetteer..
-            //We want to associate the ibra layers to the sensitised point
-            //update the required locality information
-            logger.debug("**************** Performing lookup for new point ['" + raw.rowKey
-              + "'," + processed.location.decimalLongitude + "," + processed.location.decimalLatitude + "]")
-            val newPoint = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
-            newPoint match {
-              case Some((loc, el, cl)) => processed.location.lga = loc.lga
-              case _ => processed.location.lga = null //unset the lga
-            }
+        //logger.debug("AFTER : " + stringMap)
+        //take away the values that need to be added to the processed record NOT the raw record
+        val uncertainty = map.get("generalisationInMetres")
+        if (!uncertainty.isEmpty) {
+          //we know that we have sensitised
+          //add the uncertainty to the currently processed uncertainty
+          if (StringUtils.isNotEmpty(uncertainty.get.toString)) {
+            val currentUncertainty = if (StringUtils.isNotEmpty(processed.location.coordinateUncertaintyInMeters)) java.lang.Float.parseFloat(processed.location.coordinateUncertaintyInMeters) else 0
+            val newuncertainty = currentUncertainty + java.lang.Integer.parseInt(uncertainty.get.toString)
+            processed.location.coordinateUncertaintyInMeters = newuncertainty.toString
           }
-          if(outcome.getReport().getMessages() != null){
-            var infoMessage =""
-            outcome.getReport().getMessages().foreach(message=>{
-              infoMessage += message.getCategory() + "\t" + message.getMessageText() + "\n"
-            })
-            processed.occurrence.informationWithheld=infoMessage
-          }
-          //else {
-            
-          //}
+          processed.location.decimalLatitude = stringMap.getOrElse("decimalLatitude", "")
+          processed.location.decimalLongitude = stringMap.getOrElse("decimalLongitude", "")
+          stringMap -= "generalisationInMetres"
         }
-        else {
-        //Species is NOT sensitive
-        //if the raw record has originalSensitive values we need to re-initialise the value
-        if (raw.occurrence.originalSensitiveValues != null && !raw.occurrence.originalSensitiveValues.isEmpty) {
-          Config.persistenceManager.put(raw.rowKey, "occ", raw.occurrence.originalSensitiveValues + ("originalSensitiveValues" -> ""))
+        processed.occurrence.informationWithheld = stringMap.getOrElse("informationWithheld", "")
+        processed.occurrence.dataGeneralizations = stringMap.getOrElse("dataGeneralizations", "")
+        stringMap -= "informationWithheld"
+        stringMap -= "dataGeneralizations"
+
+        if (stringMap.contains("day") || stringMap.contains("eventDate")) {
+          //remove the day from the values
+          raw.event.day = ""
+          processed.event.day = ""
+          processed.event.eventDate = ""
+        }
+
+        //update the raw record with whatever is left in the stringMap
+        Config.persistenceManager.put(raw.rowKey, "occ", stringMap.toMap)
+
+        //TODO may need to fix locality information... change ths so that the generalisation
+        // is performed before the point matching to gazetteer..
+        //We want to associate the ibra layers to the sensitised point
+        //update the required locality information
+        logger.debug("**************** Performing lookup for new point ['" + raw.rowKey
+          + "'," + processed.location.decimalLongitude + "," + processed.location.decimalLatitude + "]")
+        val newPoint = LocationDAO.getByLatLon(processed.location.decimalLatitude, processed.location.decimalLongitude);
+        newPoint match {
+          case Some((loc, el, cl)) => processed.location.lga = loc.lga
+          case _ => processed.location.lga = null //unset the lga
         }
       }
-        
+
+      if(outcome.getReport().getMessages() != null){
+        var infoMessage =""
+        outcome.getReport().getMessages().foreach(message=>{
+          infoMessage += message.getCategory() + "\t" + message.getMessageText() + "\n"
+        })
+        processed.occurrence.informationWithheld=infoMessage
+      }
+    } else {
+      //Species is NOT sensitive
+      //if the raw record has originalSensitive values we need to re-initialise the value
+      if (raw.occurrence.originalSensitiveValues != null && !raw.occurrence.originalSensitiveValues.isEmpty) {
+        Config.persistenceManager.put(raw.rowKey, "occ", raw.occurrence.originalSensitiveValues + ("originalSensitiveValues" -> ""))
+      }
+    }
   }
 
   /** Performs all the sensitivity processing.  Returns the new point ot be working with */
@@ -1587,12 +1570,11 @@ class LocationProcessor extends Processor {
             lsidVersion
           else
             sdsFinder.findSensitiveSpeciesByExactMatch(exact)
-        }
-        else if (exact != null)
+        } else if (exact != null){
           sdsFinder.findSensitiveSpeciesByExactMatch(exact)
-        else
+        } else {
           null
-
+        }
       }
 
       //only proceed if the taxon has been identified as sensitive
@@ -1610,7 +1592,6 @@ class LocationProcessor extends Processor {
         au.org.ala.sds.util.GeoLocationHelper.getGeospatialLayers.foreach(key => {
           rawMap.put(key, contextualLayers.getOrElse(key, "n/a"))
         })
-        
 
         val service = ServiceFactory.createValidationService(sensitiveTaxon)
         //TODO fix for different types of outcomes...
@@ -1675,15 +1656,13 @@ class LocationProcessor extends Processor {
               case Some((loc, el, cl)) => processed.location.lga = loc.lga
               case _ => processed.location.lga = null //unset the lga
             }
-          }
-          else {
+          } else {
             //TO do something with the PEST
             if (voutcome.getReport() != null)
               processed.occurrence.informationWithheld = "PEST: " + voutcome.getReport().toString()
           }
         }
-      }
-      else {
+      } else {
         //Species is NOT sensitive
         //if the raw record has originalSensitive values we need to re-initialise the value
         if (raw.occurrence.originalSensitiveValues != null && !raw.occurrence.originalSensitiveValues.isEmpty) {
@@ -1811,7 +1790,6 @@ class ClassificationProcessor extends Processor {
         assertions += QualityAssertion(AssertionCodes.UNKNOWN_KINGDOM, "The supplied kingdom is not recognised")
       }
     }
-
   }
 
   /**
@@ -1942,6 +1920,6 @@ class ClassificationProcessor extends Processor {
     }
     assertions.toArray
   }
-  def getName = FullRecordMapper.taxonomicalQa
 
+  def getName = FullRecordMapper.taxonomicalQa
 }
