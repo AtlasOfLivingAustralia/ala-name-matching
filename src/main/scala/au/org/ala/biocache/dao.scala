@@ -940,11 +940,15 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
   def getRowKeyFromUuidDB(uuid:String):Option[String] = persistenceManager.getByIndex(uuid, entityName, "uuid", "rowKey")
 
   def getRowKeyFromUuidIndex(uuid:String):Option[String] = {
-    val list = Config.indexDAO.getRowKeysForQuery("id:"+uuid,1)
-    if(list.isDefined){
-      list.get.headOption
+    if(uuid.startsWith("dr")){
+      Some(uuid)
     } else {
-      None
+      val list = Config.indexDAO.getRowKeysForQuery("id:"+uuid,1)
+      if(list.isDefined){
+        list.get.headOption
+      } else {
+        None
+      }
     }
 
   }

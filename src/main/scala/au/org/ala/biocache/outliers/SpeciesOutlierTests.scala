@@ -7,9 +7,10 @@ import collection.mutable.{HashMap, ListBuffer}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.io.{FileWriter, FileOutputStream, File, FileReader}
-import au.org.ala.util.{IndexRecords, OptionParser, FileHelper}
+import au.org.ala.util.{StringConsumer, IndexRecords, OptionParser, FileHelper}
 import org.slf4j.LoggerFactory
 import collection.mutable
+import java.util.concurrent.ArrayBlockingQueue
 
 class Timings {
 
@@ -46,7 +47,10 @@ object SpeciesOutlierTests {
     var fullDumpFilePath:String = ""
     var headerForDumpFile:List[String] = List("taxonConceptID","uuid","decimalLatitude","decimalLongitude","el882","el889","el887","el865","el894")
     var idsToIndexFile = "/tmp/idsToReIndex.txt"
-    var persistResults = false  
+    var persistResults = false
+    var numPassThreadWriters=16
+    var numSourceThreads =4
+    var taxonRank="species"
 
     val parser = new OptionParser("Reverse jackknife for outliers") {
       opt("t", "taxonID","The LSID of the species to check for outliers. This wll download from LIVE", {v:String => taxonID = v})
@@ -55,14 +59,73 @@ object SpeciesOutlierTests {
       opt("hfd","headerForDumpFile", "The header for the dump file, space separated headings. Default is: 'taxonConceptID uuid decimalLatitude decimalLongitude el882 el889 el887 el865 el894'", {
         v:String => headerForDumpFile = v.split(' ').toList
       })
+      opt("type","The type either species or subspecies", {v:String => taxonRank = v})
+      intOpt("pt","passThreads","The number of threads to use when writing the passed records to the data store", {v:Int => numPassThreadWriters = v})
+      intOpt("st","sourceThreads", "The number of threads that were used to create the source files.", {v:Int => numSourceThreads = v})
       opt("if", "indexFilePath", "Filepath to file of IDs to reindex", {v:String => idsToIndexFile = v})
       opt("persist","persist results to the database",{persistResults = true})
     }
     if(parser.parse(args)){
+      //set up threads
+      val queue = new ArrayBlockingQueue[String](100000)
+      var ids =0
+      val pool:Array[StringConsumer] = Array.fill(numPassThreadWriters){
+        var counter=0
+        var startTime = System.currentTimeMillis
+        var finishTime = System.currentTimeMillis
+        val p = new StringConsumer(queue,ids,{uuid =>
+          counter +=1
+
+          //add the details for the records that have passed
+          try{
+            val rowKey = Config.occurrenceDAO.getRowKeyFromUuid(uuid)
+            if(rowKey.isDefined){
+              //mark the test as passed
+              Config.occurrenceDAO.addSystemAssertion(rowKey.get,QualityAssertion(AssertionCodes.DETECTED_OUTLIER, 1))
+            }
+          } catch{
+            case e:Exception => logger.error("Unable to markup " + uuid + " as passed. " + e.getMessage)
+          }
+
+          if (counter % 1000 == 0) {
+            finishTime = System.currentTimeMillis
+            println(counter + " >> Last key : " + uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+            startTime = System.currentTimeMillis
+          }
+        });ids +=1;p.start;p }
+
+
       if (taxonID != "") testForOutliers(taxonID, persistResults)
       else if (taxonIDsFilepath != "") scala.io.Source.fromFile(taxonIDsFilepath).getLines().foreach(line => testForOutliers(taxonID))
-      else if (fullDumpFilePath != "") runOutlierTestingForDumpFile(fullDumpFilePath, headerForDumpFile, idsToIndexFile, persistResults)
+      else if (fullDumpFilePath != "") {
+        val file = new File(fullDumpFilePath)
+        if (file.isDirectory){
+          var dids = 0
+          //set the threads up to detect the species outliers.
+          val detectpool:Array[Thread] = Array.fill(numSourceThreads){
+            val dumpFilePath = fullDumpFilePath + File.separator + dids + File.separator + taxonRank+".out"
+
+            val t = new Thread(){
+              override def run(){
+                 runOutlierTestingForDumpFile(dumpFilePath, headerForDumpFile, idsToIndexFile+"."+dids, persistResults, queue)
+              }
+            }
+
+            dids +=1
+            t.start
+            t
+          }
+          detectpool.foreach(_.join)
+
+
+        } else{
+          runOutlierTestingForDumpFile(fullDumpFilePath, headerForDumpFile, idsToIndexFile, persistResults,queue)
+        }
+      }
       else parser.showUsage
+      //stop the threads that are adding the passed outlier information
+      pool.foreach(t =>t.shouldStop = true)
+      pool.foreach(_.join)
     }
 
     //shutdown
@@ -79,7 +142,7 @@ object SpeciesOutlierTests {
    * @param columnHeaders
    */
   def runOutlierTestingForDumpFile(dumpFilePath:String, columnHeaders:List[String] = List(), 
-      idsToIndexFile:String = "/tmp/idsToReIndex.txt", persistResults:Boolean=false){
+      idsToIndexFile:String = "/tmp/idsToReIndex.txt", persistResults:Boolean=false, queue:ArrayBlockingQueue[String]){
 
     val uuidIndexFile = new File(idsToIndexFile)
     val idsWriter = new FileWriter(uuidIndexFile)
@@ -92,17 +155,23 @@ object SpeciesOutlierTests {
     }
     
     //get a list of variables
-    val variables = headers.filter { !mandatoryHeaders.contains(_) }
+    val variables = headers.filter { _.startsWith("el") }// !mandatoryHeaders.contains(_) }
 
     //iterate through file
     var finished = false
     var nextTaxonConceptID = ""
     val timings = new Timings
     var lastLine = Array[String]()
-    
+
+    //the index of decimalLat and long will not change
+    val latitudeIdx = headers.indexOf("decimalLatitude")
+    val longitudeIdx = headers.indexOf("decimalLongitude")
+    val taxonIDIdx = headers.indexOf("taxonConceptID")
+    val uuidIdx = headers.indexOf("uuid")
+
     while(!finished){
 
-      val (taxonConceptID, lines, nextLine) = readAllForTaxon(reader,nextTaxonConceptID,lastLine)
+      val (taxonConceptID, lines, nextLine) = readAllForTaxon(reader,nextTaxonConceptID, taxonIDIdx,lastLine)
       lastLine = nextLine
 
       logger.debug(taxonConceptID + ", records: " + lines.size)
@@ -121,21 +190,20 @@ object SpeciesOutlierTests {
         //get the column Idx for variable
         val variableIdx = headers.indexOf(variable)
         //println(headers.indexOf(variable))
-        val latitudeIdx = headers.indexOf("decimalLatitude")
-        val longitudeIdx = headers.indexOf("decimalLongitude")
+
         val pointBuffer = new ListBuffer[SampledRecord]
 
         //create a set of points
         lines.foreach(line => {
-          val variableValue = line(variableIdx - 1)
-          val latitude = line(latitudeIdx - 1)
-          val longitude = line(longitudeIdx - 1)
+          val variableValue = line(variableIdx)
+          val latitude = line(latitudeIdx )
+          val longitude = line(longitudeIdx)
           if (!loadedIds){
-            recordIds += line(0)
+            recordIds += line(uuidIdx)
           }
           if (variableValue != "" && variableValue != null && latitude != "" && longitude != ""){
             val cellId = getCellId(grid, latitude.toFloat, longitude.toFloat)
-            pointBuffer += SampledRecord(line(0), variableValue.toFloat, cellId)
+            pointBuffer += SampledRecord(line(uuidIdx), variableValue.toFloat, cellId)
           }
         })
 
@@ -174,9 +242,9 @@ object SpeciesOutlierTests {
           Set[String]()
         }
       }
-      logger.debug("The records that passed " + passedRecords + " " + recordIds.size)
+      logger.debug("The records that passed " + passedRecords.size + " " + recordIds.size)
       //store the results for this taxon
-      storeResultsWithStats(taxonConceptID, resultsBuffer, passedRecords,idsWriter)
+      storeResultsWithStats(taxonConceptID, resultsBuffer, passedRecords,idsWriter, queue)
 
 
       if (nextLine == null) finished = true
@@ -198,13 +266,13 @@ object SpeciesOutlierTests {
    * @param taxonConceptID
    * @return
    */
-  def readAllForTaxon(reader:CSVReader, taxonConceptID:String, lastLine:Array[String] = Array()): (String,  Seq[Array[String]], Array[String]) = {
+  def readAllForTaxon(reader:CSVReader, taxonConceptID:String, taxonConceptIDIdx:Int, lastLine:Array[String] = Array()): (String,  Seq[Array[String]], Array[String]) = {
 
     var currentLine:Array[String] = reader.readNext()
     val idForBatch:String = if (taxonConceptID != ""){
       taxonConceptID
     } else {
-      currentLine.head
+      currentLine(taxonConceptIDIdx)
     }
     
     logger.debug("###### Running for:" + idForBatch)
@@ -212,8 +280,8 @@ object SpeciesOutlierTests {
     val buffer = new ListBuffer[Array[String]]
     if (!lastLine.isEmpty) buffer += lastLine.tail
 
-    while(currentLine !=null && currentLine.head == idForBatch){
-      buffer += currentLine.tail
+    while(currentLine !=null && currentLine(taxonConceptIDIdx) == idForBatch){
+      buffer += currentLine
       currentLine = reader.readNext()
     }
     
@@ -278,7 +346,7 @@ object SpeciesOutlierTests {
     printLinksForRecords(1, outlier1)
   }
 
-  def storeResultsWithStats(taxonID:String, results:Seq[(String, Seq[SampledRecord], JackKnifeStats)], passed:Set[String], idsWriter:FileWriter ){
+  def storeResultsWithStats(taxonID:String, results:Seq[(String, Seq[SampledRecord], JackKnifeStats)], passed:Set[String], idsWriter:FileWriter, queue:ArrayBlockingQueue[String] ){
 
     val mapper = new ObjectMapper
     mapper.registerModule(DefaultScalaModule)
@@ -380,11 +448,16 @@ object SpeciesOutlierTests {
 
     //mark the records that have passed
     passed.foreach(uuid => {
-      val rowKey = Config.occurrenceDAO.getRowKeyFromUuid(uuid)
-      if(rowKey.isDefined){
-        //mark the test as passed
-        Config.occurrenceDAO.addSystemAssertion(rowKey.get,QualityAssertion(AssertionCodes.DETECTED_OUTLIER, 1))
+      if(queue.remainingCapacity()>0){
+        queue.add(uuid)
+      } else{
+        Thread.sleep(100)
       }
+//      val rowKey = Config.occurrenceDAO.getRowKeyFromUuid(uuid)
+//      if(rowKey.isDefined){
+//        //mark the test as passed
+//        Config.occurrenceDAO.addSystemAssertion(rowKey.get,QualityAssertion(AssertionCodes.DETECTED_OUTLIER, 1))
+//      }
     })
 
 

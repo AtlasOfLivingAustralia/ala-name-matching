@@ -6,10 +6,9 @@ package au.org.ala.biocache
 import java.lang.reflect.Method
 import java.util.Collections
 import org.apache.commons.lang.time.DateUtils
-import org.apache.solr.client.solrj.SolrQuery
+import org.apache.solr.client.solrj.{StreamingResponseCallback, SolrQuery, SolrServer}
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer
-import org.apache.solr.client.solrj.SolrServer
-import org.apache.solr.common.SolrInputDocument
+import org.apache.solr.common.{SolrDocument, SolrInputDocument}
 import org.apache.solr.core.CoreContainer
 import org.slf4j.LoggerFactory
 import com.google.inject.Inject
@@ -23,6 +22,8 @@ import java.util.concurrent.ArrayBlockingQueue
 import scala.util.parsing.json.JSON
 import org.apache.solr.client.solrj.response.FacetField
 import org.apache.solr.client.solrj.impl.HttpSolrServer
+import org.apache.solr.common.params.{MapSolrParams, ModifiableSolrParams}
+import java.lang.Float
 
 
 /**
@@ -45,6 +46,8 @@ trait IndexDAO {
   def pageOverFacet(proc: (String, Int) => Boolean, facetName: String, query: String, filterQueries: Array[String])
 
   def pageOverIndex(proc: java.util.Map[String, AnyRef] => Boolean, fieldToRetrieve: Array[String], query: String, filterQueries: Array[String], sortField: Option[String] = None, sortDir: Option[String] = None, multivaluedFields: Option[Array[String]] = None)
+
+  def streamIndex(proc: java.util.Map[String,AnyRef] =>Boolean, fieldsToRetrieve:Array[String], query:String, filterQueries: Array[String], sortFields: Array[String],multivaluedFields: Option[Array[String]] = None)
 
   def shouldIncludeSensitiveValue(dr: String): Boolean
 
@@ -620,6 +623,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
 
   import org.apache.commons.lang.StringUtils.defaultString
   import scala.collection.JavaConverters._
+  import scala.collection.JavaConversions._
   override val logger = LoggerFactory.getLogger("SolrIndexDAO")
   val arrDefaultMiscFields = if (defaultMiscFields == null) Array[String]() else defaultMiscFields.split(",")
   var cc: CoreContainer = _
@@ -701,6 +705,57 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     } while (values != null && !values.isEmpty)
   }
 
+  def streamIndex(proc: java.util.Map[String,AnyRef] => Boolean, fieldsToRetrieve:Array[String], query:String, filterQueries: Array[String], sortFields: Array[String], multivaluedFields: Option[Array[String]] = None){
+    init
+
+    val params = collection.immutable.HashMap(
+      "collectionName" -> "biocache",
+      "q" -> query,
+      "start" -> "0",
+      "rows" -> Int.MaxValue.toString,
+      "fl" -> fieldsToRetrieve.mkString(","))
+
+    val solrParams = new ModifiableSolrParams()
+    solrParams.add(new MapSolrParams(params) )
+    solrParams.add("fq", filterQueries:_*)
+    if(sortFields.length>0){
+
+      solrParams.add("sort",sortFields.mkString(" asc,") +" asc")
+    }
+
+    //now stream
+    val solrCallback = new StreamingResponseCallback() {
+      var maxResults=0l
+      var counter =0l
+      val start = System.currentTimeMillis
+      var startTime = System.currentTimeMillis
+      var finishTime = System.currentTimeMillis
+      def streamSolrDocument(doc: SolrDocument) {
+        val map = new java.util.HashMap[String, Object]
+        doc.getFieldValueMap().keySet().asScala.foreach(s => map.put(s, if (multivaluedFields.isDefined && multivaluedFields.get.contains(s)) doc.getFieldValues(s) else doc.getFieldValue(s)))
+        proc(map)
+        counter+=1
+        if (counter%10000==0){
+          finishTime = System.currentTimeMillis
+          logger.info(counter + " >> Last record : " + doc.getFieldValueMap + ", records per sec: " +
+            10000.toFloat / (((finishTime - startTime).toFloat) / 1000f))
+          startTime = System.currentTimeMillis
+        }
+      }
+
+      def streamDocListInfo(numFound: Long, start: Long, maxScore: Float) {
+        logger.info("NumFound: " + numFound +" start: " +start + " maxScore: " +maxScore)
+        logger.info(new java.util.Date().toString)
+        startTime = System.currentTimeMillis
+        //exit(-2)
+        maxResults = numFound
+      }
+    }
+    logger.info("Starting to strem: " +new java.util.Date().toString + " " + params)
+    solrServer.queryAndStreamResponse(solrParams, solrCallback)
+    logger.info("Finished streaming : " +new java.util.Date().toString + " " + params)
+
+  }
 
   def pageOverIndex(proc: java.util.Map[String, AnyRef] => Boolean, fieldToRetrieve: Array[String], queryString: String = "*:*", filterQueries: Array[String] = Array(), sortField: Option[String] = None, sortDir: Option[String] = None, multivaluedFields: Option[Array[String]] = None) {
     init
@@ -1081,6 +1136,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
    * Use writeRowKeysToStream instead
    */
   override def getRowKeysForQuery(query: String, limit: Int = 1000): Option[List[String]] = {
+
     init
     val solrQuery = new SolrQuery();
     solrQuery.setQueryType("standard");
