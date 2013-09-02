@@ -53,11 +53,23 @@ trait DataLoader {
     val api_key = "Venezuela"
     val logger = LoggerFactory.getLogger("DataLoader")
     val temporaryFileStore = "/data/biocache-load/"
+    val deletedFileStore ="/data/biocache-delete/"
     val registryUrl = "http://collections.ala.org.au/ws/dataResource/"
     val pm = Config.persistenceManager
     val loadTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
 
     def emptyTempFileStore(resourceUid:String) = FileUtils.deleteQuietly(new File(temporaryFileStore + File.separator + resourceUid))
+
+  /**
+   * Returns the file writer to be used to store the row keys that need to be deleted for a data resource
+   * @param resourceUid
+   * @return
+   */
+    def getDeletedFileWriter(resourceUid:String):java.io.FileWriter ={
+      val file =  new File(deletedFileStore +File.separator + resourceUid+File.separator+"deleted.txt")
+      FileUtils.forceMkdir(file.getParentFile)
+      new java.io.FileWriter(file)
+    }
     
     def deleteOldRowKeys(resourceUid:String){
       //delete the row key file so that it only exists if the load is configured to 
@@ -198,7 +210,7 @@ trait DataLoader {
       fr.attribution.dataResourceUid = dataResourceUid
     
       //download the media - checking if it exists already
-      println("########Associated media = " + fr.occurrence.associatedMedia)
+      logger.debug("########Associated media = " + fr.occurrence.associatedMedia)
       if (fr.occurrence.associatedMedia != null){
         val filesToImport = fr.occurrence.associatedMedia.split(";")
         val associatedMediaBuffer = new ArrayBuffer[String]

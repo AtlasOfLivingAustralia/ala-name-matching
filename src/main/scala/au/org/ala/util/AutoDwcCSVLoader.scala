@@ -1,11 +1,15 @@
 package au.org.ala.util
 //import au.org.ala.biocache.DataLoader
-import java.io.{File, FileInputStream,InputStream, FileOutputStream}
+import java.io._
 import org.apache.commons.compress.archivers.ArchiveStreamFactory
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.io.{FilenameUtils,FileUtils}
 import org.apache.commons.compress.utils.IOUtils
-import au.org.ala.biocache.DataLoader
+import au.org.ala.biocache.{Config, DwC, DataLoader}
+import au.com.bytecode.opencsv.CSVReader
+import scala.Some
+import scala.Console
+import collection.mutable.ArrayBuffer
 
 /**
  * Loads a data resource that provides reloads and incremental updates.
@@ -134,20 +138,45 @@ class AutoDwcCSVLoader extends DataLoader{
                 entry = tarInputStream.getNextEntry
             }
             logger.info(dataFiles.toString())
-            
+
+            //val dwcfiles = dataFiles.fil
+             var validRowKeys= List[String]()
             //NOw take the load files and use the DwcCSVLoader to load them
             dataFiles.foreach(dfile =>{ 
-                if(includeIds || (!dfile.getName().contains("dwc-id") && !dfile.getName().contains("dwcid"))){                  
+                if((!dfile.getName().contains("dwc-id") && !dfile.getName().contains("dwcid"))){
                   val storeKeys = !dfile.getName().contains("dwc-id") && !dfile.getName().contains("dwcid")
                   logger.info("Loading " + dfile.getName() + " storing the keys for reprocessing: " + storeKeys)
                   if(dfile.getName.endsWith("gz")){
-                      csvLoader.loadFile(dfile.extractGzip, dataResourceUid, uniqueTerms, params,stripSpaces,logRowKeys=storeKeys) 
+                      csvLoader.loadFile(dfile.extractGzip, dataResourceUid, uniqueTerms, params,stripSpaces,logRowKeys=storeKeys)
                   }
                   else{
-                      csvLoader.loadFile(dfile, dataResourceUid, uniqueTerms, params, stripSpaces,logRowKeys=storeKeys) 
+                      csvLoader.loadFile(dfile, dataResourceUid, uniqueTerms, params, stripSpaces,logRowKeys=storeKeys)
                   }
+                } else{
+                  //load the id's into a list of valid rowKeys
+                  validRowKeys ++= extractValidRowKeys(if(dfile.getName.endsWith(".gz")) dfile.extractGzip else dfile, dataResourceUid, uniqueTerms,params, stripSpaces)
+                  logger.info("Number of validRowKeys: " + validRowKeys.size)
                 }
             })
+
+          //Create the list of distinct row keys that are no longer in the source system
+          //This is achieved by extracting all the current row keys from the index and removing the values that we loaded from the current id files.
+
+          val listbuf = new ArrayBuffer[String]()
+          logger.info("Retrieving the current rowKeys for the dataResource...")
+          Config.indexDAO.streamIndex(map=>{
+            listbuf += map.get("row_key").toString
+            true
+          }, Array("row_key"),"data_resource_uid:"+dataResourceUid,Array(),Array(),None)
+          logger.info("Number of currentrowKeys: " + listbuf.size)
+          val deleted =  listbuf.toSet &~ validRowKeys.toSet
+          logger.info("Number to delete deleted " + deleted.size)
+          if (deleted.size >0){
+            val writer = getDeletedFileWriter(dataResourceUid)
+            deleted.foreach(line =>writer.write(line +"\n"))
+            writer.flush()
+            writer.close()
+          }
         }
         
         //TODO use the id files to find out which records need to be deleted
@@ -155,6 +184,74 @@ class AutoDwcCSVLoader extends DataLoader{
         
         //update the last time this data resource was loaded in the collectory
         //updateLastChecked(dataResourceUid)
+    }
+
+  /**
+   * Takes a DWC CSV file and outputs a list of all the unique identifiers for the records
+   * @param file
+   * @param dataResourceUid
+   * @param uniqueTerms
+   * @param params
+   * @param stripSpaces
+   * @return
+   */
+    def extractValidRowKeys(file:File, dataResourceUid:String,uniqueTerms:List[String], params:Map[String,String], stripSpaces:Boolean):List[String]={
+      logger.info("Extracting the valid row keys from " + file.getAbsolutePath)
+      val quotechar = params.getOrElse("csv_text_enclosure", "\"").head
+      val separator = {
+        val separatorString = params.getOrElse("csv_delimiter", ",")
+        if (separatorString == "\\t") '\t'
+        else separatorString.toCharArray.head
+      }
+      val escape = params.getOrElse("csv_escape_char","|").head
+      val reader =  new CSVReader(new InputStreamReader(new org.apache.commons.io.input.BOMInputStream(new FileInputStream(file))), separator, quotechar, escape)
+
+
+      logger.info("Using CSV reader with the following settings quotes: " + quotechar + " separator: " + separator + " escape: " + escape)
+      //match the column headers to dwc terms
+      val dwcTermHeaders = {
+        val headerLine = reader.readNext
+        if(headerLine != null){
+          val columnHeaders = headerLine.map(t => t.replace(" ", "").trim).toList
+          DwC.retrieveCanonicals(columnHeaders)
+        } else {
+          null
+        }
+      }
+
+      var currentLine = reader.readNext
+
+      logger.info("Unique terms: " + uniqueTerms)
+      logger.info("Column headers: " + dwcTermHeaders)
+
+      val validConfig = uniqueTerms.forall(t => dwcTermHeaders.contains(t))
+      if(!validConfig){
+        throw new RuntimeException("Bad configuration for file: "+ file.getName + " for resource: " +
+          dataResourceUid+". CSV file is missing unique terms.")
+      }
+      val listbuf = new ArrayBuffer[String]()
+      while(currentLine!=null){
+
+        val columns = currentLine.toList
+        if (columns.length >= dwcTermHeaders.size - 1){
+          val map = (dwcTermHeaders zip columns).toMap[String,String].filter( {
+            case (key,value) => {
+              if(value != null){
+                val upperCased = value.trim.toUpperCase
+                upperCased != "NULL" && upperCased != "N/A" && upperCased != "\\N" && upperCased != ""
+              } else {
+                false
+              }
+            }
+          })
+
+        val uniqueTermsValues = uniqueTerms.map(t => map.getOrElse(t,""))
+        listbuf += createUniqueID(dataResourceUid,uniqueTermsValues,stripSpaces)
+        currentLine = reader.readNext()
+        }
+      }
+
+      listbuf.toList
     }
     def extractTarFile(io:InputStream,baseDir:String, filename:String):File={        
         //construct the file
