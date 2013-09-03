@@ -202,7 +202,7 @@ object DuplicationDetection{
 }
 
 //A generic threaded consumer that takes a string and calls the supplied proc
-class StringConsumer(q:BlockingQueue[String],id:Int,proc:String=>Unit) extends Thread{  
+class StringConsumer(q:BlockingQueue[String],id:Int,proc:String=>Unit) extends Thread{
   var shouldStop = false;
   override def run(){
     while(!shouldStop || q.size()>0){
@@ -212,6 +212,42 @@ class StringConsumer(q:BlockingQueue[String],id:Int,proc:String=>Unit) extends T
         if(guid !=null){
         DuplicationDetection.logger.debug("Guid Consumer " + id + " is handling " + guid)
         proc(guid)        
+        }
+      }
+      catch{
+        case e:Exception=> e.printStackTrace()
+      }
+    }
+    println("Stopping " + id)
+  }
+}
+
+class CountAwareFacetConsumer(q:BlockingQueue[String],id:Int,proc:Array[String]=>Unit, countSize:Int=0, minSize:Int=1) extends Thread{
+  var shouldStop =false
+  override def run(){
+    val buf = new ArrayBuffer[String]()
+    var counter =0
+    var batchSize=0
+    while(!shouldStop || q.size()>0){
+      try{
+        //wait 1 second before assuming that the queue is empty
+        val value = q.poll(1,java.util.concurrent.TimeUnit.SECONDS)
+        if(value !=null){
+          DuplicationDetection.logger.debug("Count Aware Consumer " + id + " is handling " + value)
+          val values = value.split("\t")
+          val count = Integer.parseInt(values(1))
+          if (count >= minSize){
+            counter+=count
+            batchSize+=1
+            buf+= values(0)
+            if(counter >=countSize || batchSize ==200){
+              val array = buf.toArray
+              buf.clear()
+              counter =0
+              batchSize=0
+              proc(array)
+            }
+          }
         }
       }
       catch{
@@ -461,7 +497,7 @@ class DuplicationDetection{
     FileUtils.forceMkdir(file.getParentFile)
     val fileWriter = new FileWriter(file)
     DuplicationDetection.logger.info("Starting to download the occurrences for " + lsid)
-    ExportByFacetQuery.downloadSingleTaxonByStream(lsid, fieldsToExport ,field,if(field == "species_guid") speciesFilters else subspeciesFilters,Array("row_key"), fileWriter, None, Some(Array("duplicate_record")))
+    ExportByFacetQuery.downloadSingleTaxonByStream(null,lsid, fieldsToExport ,field,if(field == "species_guid") speciesFilters else subspeciesFilters,Array("row_key"), fileWriter, None, Some(Array("duplicate_record")))
     fileWriter.close
   }
   

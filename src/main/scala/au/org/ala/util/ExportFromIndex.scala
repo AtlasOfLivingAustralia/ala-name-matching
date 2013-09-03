@@ -29,7 +29,7 @@ object ExportAllRecordFacetFilter {
     if (parser.parse(args)){
       val filename = exportDirectory+ File.separator + "species-guids.txt"
       FileUtils.forceMkdir(new File(exportDirectory))
-      val args2 = if(filter.isDefined) Array(facet,filename, "-fq",filter.get,"--open") else Array(facet,filename,"--open")
+      val args2 = if(filter.isDefined) Array(facet,filename, "-fq",filter.get,"--open", "-c" ,"true") else Array(facet,filename,"--open", "-c","true")
       println(new Date() + " Exporting the facets to be ued in the download")
       ExportFacet.main(args2)
       //now based on the number of threads download the other data
@@ -40,11 +40,14 @@ object ExportAllRecordFacetFilter {
         val subspeciesfile = new File(exportDirectory +  File.separator + ids + File.separator+"subspecies.out")
         FileUtils.forceMkdir(file.getParentFile)
         val fileWriter = new FileWriter(file)
-        val p=new StringConsumer(queue,ids,{lsid =>
-          DuplicationDetection.logger.info("Starting to download the occurrences for " + lsid)
-          ExportByFacetQuery.downloadSingleTaxonByStream(lsid, fieldsToExport ,"species_guid",Array("lat_long:[* TO *]"),Array("subspecies_guid","row_key"), fileWriter, Some(new FileWriter(subspeciesfile)), Some(Array("duplicate_record")))
+        val p=new CountAwareFacetConsumer(queue,ids,{lsids =>
+          val query = lsids.mkString("species_guid:\"", "\" OR species_guid:\"", "\"")
+          DuplicationDetection.logger.info("Starting to download the occurrences for " + lsids.mkString(","))
+          ExportByFacetQuery.downloadSingleTaxonByStream(query,null, fieldsToExport ,"species_guid",Array("lat_long:[* TO *]"),Array("species_guid","subspecies_guid","row_key"), fileWriter, Some(new FileWriter(subspeciesfile)), Some(Array("duplicate_record")))
           fileWriter.flush()
-        })
+        },10000,
+        //at least 2 occurrences are necessary for the dump
+        2)
         ids += 1
         p.start
         p
@@ -192,7 +195,8 @@ object ExportByFacetQuery {
     }
   }
 
-  def downloadSingleTaxonByStream(taxonID:String, fieldsToExport:Array[String], facetField:String, filterQueries:Array[String],sortFields:Array[String], fileWriter:FileWriter, subspeciesWriter:Option[FileWriter]=None, multivaluedFields:Option[Array[String]]=None){
+  def downloadSingleTaxonByStream(query:String=null, taxonID:String, fieldsToExport:Array[String], facetField:String, filterQueries:Array[String],sortFields:Array[String], fileWriter:FileWriter, subspeciesWriter:Option[FileWriter]=None, multivaluedFields:Option[Array[String]]=None){
+    val q=if (query != null) query else   facetField + ":\""+taxonID+"\""
     Config.indexDAO.streamIndex(map => {
       val outputLine = fieldsToExport.map(f => getFromMap(map,f)).mkString("\t")
       fileWriter.write(outputLine)
@@ -206,7 +210,7 @@ object ExportByFacetQuery {
 
       }
       true
-    }, fieldsToExport, facetField + ":\""+taxonID+"\"", filterQueries, sortFields,multivaluedFields)
+    }, fieldsToExport,q, filterQueries, sortFields,multivaluedFields)
   }
 
   def downloadSingleTaxon(taxonID:String, fieldsToExport:Array[String], facetField:String, filterQueries:Array[String],sortField:Option[String]=None, sortDir:Option[String]=None, fileWriter:FileWriter, multivaluedFields:Option[Array[String]]=None){    
