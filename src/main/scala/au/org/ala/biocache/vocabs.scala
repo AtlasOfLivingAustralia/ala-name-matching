@@ -436,6 +436,9 @@ object HabitatMap extends VocabMaps {
         }
       false
     }
+   override def toString():String={
+     "SpeciesGroup(name:"+name +", rank:"+rank+", values: "+values.mkString("[",",","]") +", excludedValues: " + excludedValues.mkString("[",",","]") + ", lftRgtValues: "+lftRgtValues.mkString("[",",","]")
+   }
   }
 
   /**
@@ -476,6 +479,13 @@ object HabitatMap extends VocabMaps {
     
     def main(args:Array[String]){
       println(subgroups)
+      println(groups)
+      //362235 362236
+      println(getSpeciesGroups("362235","362236"))
+      println(getSpeciesSubGroups("362235","362236"))
+      println(getSpeciesGroups("32353","32354"))
+      println(getSpeciesSubGroups("32353","32354"))
+
     }
     
     val subgroups = {
@@ -491,10 +501,52 @@ object HabitatMap extends VocabMaps {
           val rank = map.getOrElse("taxonRank","class").toString
           val taxaList = map.get("taxa").get.asInstanceOf[List[Map[String,String]]]
           taxaList.foreach{taxaMap =>
-            taxaMap.foreach{case (key,value) => {
               subGroupBuffer += createSpeciesGroup(taxaMap.getOrElse("common","").trim, rank,Array(taxaMap.getOrElse("name","").trim), Array(), null)
-            }}
           }
+        } else{
+          //it might be the "Plants" in which case we map the corresponding species group to the subgroup
+          //IT needs to be represented in the JSON in the format below, ie name is the same as a species_group and common is the name to be used for the species_subgroup
+          /*
+
+            {
+            "speciesGroup": "Plants",
+            "facetName": "species_group",
+            "taxa": [
+              {
+                  "name": "Monocots",
+                  "common": "Monocots"
+              },
+              {
+                  "name": "Dicots",
+                  "common": "Dicots"
+              },
+              {
+                  "name": "Angiosperms",
+                  "common": "Flowering plants"
+              },
+              {
+                  "name": "FernsAndAllies",
+                  "common": "Ferns and Allies"
+              },
+              {
+                  "name": "Gymnosperms",
+                  "common": "Conifers, Cycads"
+              }
+            ]
+            }
+             */
+
+          if (map.getOrElse("speciesGroup","none") == "Plants"){
+            val taxaList = map.get("taxa").get.asInstanceOf[List[Map[String,String]]]
+            taxaList.foreach{taxaMap =>
+              //search for the sub group in the species group
+              val g=groups.find(_.name == taxaMap.getOrElse("name","NONE"))
+              if (g.isDefined){
+                subGroupBuffer += createSpeciesGroup(taxaMap.getOrElse("common","").trim, g.get.rank, g.get.values, g.get.excludedValues,null)
+              }
+            }
+          }
+
         }
       }}
       subGroupBuffer.toList
