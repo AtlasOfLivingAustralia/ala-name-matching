@@ -9,6 +9,98 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.ArrayBlockingQueue
 import org.apache.commons.io.FileUtils
 
+/**
+ * Uses one Streamer to write the spatial species to multiple files based on a number of "threads" that will be used to consume
+ * the files.
+ */
+object ExportAllSpatialSpecies {
+  def main(args:Array[String]) {
+    var threads =4
+    val fieldsToExport = Array("row_key", "id", "species_guid","subspecies_guid", "year", "month", "occurrence_date", "point-1", "point-0.1",
+      "point-0.01","point-0.001", "point-0.0001","lat_long","raw_taxon_name", "collectors", "duplicate_status", "duplicate_record", "latitude","longitude",
+      "el882","el889","el887","el865","el894")
+    val query = "lat_long:* AND species_guid:*"
+    val filterQueries = Array[String]()
+    val sortFields = Array("species_guid","subspecies_guid","row_key")
+    val multivaluedFields =Some(Array("duplicate_record"))
+    var exportDirectory = "/data/offline/exports"
+
+    val parser = new OptionParser("Export based on facet and optional filter") {
+      arg("<output directory>", "the output directory for the exports", {v:String => exportDirectory = v})
+
+      intOpt("t","threads","the number of threads/files to have for the exports", {v:Int => threads =v})
+      //opt("f","filter", "optional filter to apply to the list", {v:String => filter = Some(v)})
+    }
+    if (parser.parse(args)){
+
+
+      var ids=0
+      //construct all the file writers that will be randomly assigned taxon concepts
+      val files:Array[(FileWriter,FileWriter)]=Array.fill(threads){
+        val file = new File(exportDirectory+File.separator + ids)
+        FileUtils.forceMkdir(file)
+        ids+=1
+        (new FileWriter(new File(file.getAbsolutePath + File.separator + "species.out")), new FileWriter(new File(file.getAbsolutePath + File.separator + "subspecies.out")))
+      }
+      //val file = new File(exportDirectory +  File.separator + ids + File.separator+"species.out")
+      //FileUtils.forceMkdir(file.getParentFile)
+      //val subspeciesfile = new File(exportDirectory +  File.separator + ids + File.separator+"subspecies.out")
+      //val fileWriter = new FileWriter(file)
+      //val subspeciesWriter = new FileWriter(subspeciesfile)
+      var counter =0
+      var currentLsid=""
+      var lsidCount=0
+      var fileWriter:FileWriter = null
+      var subspeciesWriter:FileWriter = null
+      Config.indexDAO.streamIndex(map=>{
+        val outputLine = fieldsToExport.map(f => getFromMap(map,f)).mkString("\t")
+        counter+=1
+        val thisLsid = map.get("species_guid")
+        if(thisLsid != null && thisLsid != currentLsid){
+          println("Starting to handle " + thisLsid + " " + counter + " " + lsidCount)
+          lsidCount += 1
+          currentLsid = thisLsid.toString
+          if (fileWriter != null){
+            fileWriter.flush
+            subspeciesWriter.flush
+          }
+          fileWriter= files(lsidCount%threads)._1
+          subspeciesWriter = files(lsidCount%threads)._2
+        }
+        fileWriter.write(outputLine)
+        fileWriter.write("\n")
+
+        val subspecies = map.get("subspecies_guid")
+          if (subspecies != null) {
+            subspeciesWriter.write(outputLine)
+            subspeciesWriter.write("\n")
+          }
+
+        if (counter % 10000 ==0){
+          fileWriter.flush
+          subspeciesWriter.flush
+        }
+
+        true},fieldsToExport, query, filterQueries, sortFields, multivaluedFields)
+
+      files.foreach{case (fw1, fw2) => {
+        fw1.flush()
+        fw1.close()
+        fw2.flush()
+        fw2.close()
+      }}
+
+    }
+
+
+  }
+
+  def getFromMap(map:java.util.Map[String, AnyRef],key:String) : String = {
+    val value = map.get(key)
+    if (value == null) "" else value.toString
+  }
+}
+
 object ExportAllRecordFacetFilter {
   import FileHelper._
   def main(args:Array[String]){
@@ -72,7 +164,7 @@ object ExportFromIndex {
     var query = "*:*"
     var fieldsToExport = Array[String]()
     var counter = 0
-    
+
     val parser = new OptionParser("load flickr resource") {
       arg("<output-file>", "The UID of the data resource to load", { v: String => outputFilePath = v })
       arg("<list of fields>", "The UID of the data resource to load", { v: String => fieldsToExport = v.split(" ").toArray })
@@ -93,7 +185,7 @@ object ExportFromIndex {
       fileWriter.close
     }
   }
-  
+
   def getFromMap(map:java.util.Map[String, AnyRef],key:String) : String = {
     val value = map.get(key)
     if (value == null) "" else value.toString
@@ -213,7 +305,7 @@ object ExportByFacetQuery {
     }, fieldsToExport,q, filterQueries, sortFields,multivaluedFields)
   }
 
-  def downloadSingleTaxon(taxonID:String, fieldsToExport:Array[String], facetField:String, filterQueries:Array[String],sortField:Option[String]=None, sortDir:Option[String]=None, fileWriter:FileWriter, multivaluedFields:Option[Array[String]]=None){    
+  def downloadSingleTaxon(taxonID:String, fieldsToExport:Array[String], facetField:String, filterQueries:Array[String],sortField:Option[String]=None, sortDir:Option[String]=None, fileWriter:FileWriter, multivaluedFields:Option[Array[String]]=None){
     var counter =0
     Config.indexDAO.pageOverIndex(map  => {
           counter += 1
@@ -226,8 +318,8 @@ object ExportByFacetQuery {
 
        fileWriter.flush
   }
-  
-  
+
+
 
   def getTaxonID(csvReader:CSVReader): String = {
     val row = csvReader.readNext()
