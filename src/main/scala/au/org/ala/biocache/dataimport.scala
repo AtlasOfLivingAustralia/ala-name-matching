@@ -42,7 +42,7 @@ class MapDataLoader extends DataLoader{
 /**
  * A trait with utility code for loading data
  */
-trait DataLoader {
+ trait DataLoader {
     
     import FileHelper._
     import JavaConversions._
@@ -53,7 +53,6 @@ trait DataLoader {
     val api_key = "Venezuela"
     val logger = LoggerFactory.getLogger("DataLoader")
     val temporaryFileStore = "/data/biocache-load/"
-    val deletedFileStore ="/data/biocache-delete/"
     val registryUrl = "http://collections.ala.org.au/ws/dataResource/"
     val pm = Config.persistenceManager
     val loadTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
@@ -66,7 +65,7 @@ trait DataLoader {
    * @return
    */
     def getDeletedFileWriter(resourceUid:String):java.io.FileWriter ={
-      val file =  new File(deletedFileStore +File.separator + resourceUid+File.separator+"deleted.txt")
+      val file =  new File(Config.deletedFileStore +File.separator + resourceUid+File.separator+"deleted.txt")
       FileUtils.forceMkdir(file.getParentFile)
       new java.io.FileWriter(file)
     }

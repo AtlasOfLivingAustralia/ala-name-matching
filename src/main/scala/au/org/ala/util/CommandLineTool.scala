@@ -295,6 +295,21 @@ object CMD {
           else
             println ("Need to supply a data resource and list of columns")
         }
+        case it if (it startsWith "delete-inc") =>{
+          //perform an incremental delete based on the rowkeys in the file
+          val args = input.split(" ").tail
+          //check to see if the file exists
+          if(args.size>0){
+            val file = getDeleteRowFile(args(0))
+            if(file.isDefined){
+              val fd = new FileDelete(file.get)
+              fd.deleteFromPersistent
+              fd.deleteFromIndex
+            } else{
+              println("There is no incremental delete file for " + args(0))
+            }
+          }
+      }
         case it if (it startsWith "delete") => {
           //need to preserve the query case because T and Z mean things in dates
           val query = input.replaceFirst("delete ", "")
@@ -365,20 +380,21 @@ object CMD {
     padAndPrint("[25]  delete <solr-query> - Delete records matching a query")
     padAndPrint("[26]  delete-resource <dr-uid1> <dr-uid2>... - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
     padAndPrint("[27]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
-    padAndPrint("[28]  load-local-csv <dr-uid> <filepath>... - Load a local file into biocache. For development use only. Not to be used in production.")
-    padAndPrint("[29]  test-load <dr-uid1> <dr-uid2>... - Performs some testing on the load process.  Please read the output to determine whether or not a load should proceed.")
-    padAndPrint("[30]  download-media - Force the (re)download of media associated with a resource.")
-    padAndPrint("[31]  dedup - Run duplication detection over the records.")
-    padAndPrint("[32]  jackknife - Run jackknife outlier detection.")
-    padAndPrint("[33]  distribution outliers -l <speciesLsid> - Run expert distribution outlier detection. If species LSID is supplied, outlier detection is only performed for occurrences of the species with the supplied taxon concept LSID")
-    padAndPrint("[34]  apply-aq <apiKey> - applies the assertion queries for the suppplied apiKey")
-    padAndPrint("[35]  mark-deleted <dr-uid> <date of last load YYYY-MM-DD> - Marks records as deleted in the data store when that have not been updated on the last load. - only run if a complete data set was loaded.")
-    padAndPrint("[36]  remove-deleted <dr-uid> - removes all records from the data-store that have been marked as deleted")
-    padAndPrint("[37]  delete-columns <dr-uid> <list of columns> - deletes all the columns specified in the space separated list")
-    padAndPrint("[38]  delete-missing <dr-uid> <list of columns> - deletes all the columns that are not specified in the space separated list")
-    padAndPrint("[39]  remove-deleted-index <dr-uid> - removes the records not loaded during the last load from index (NB last load will be interpreted as within the last 24 hours).")
-    padAndPrint("[40]  force-index <dr-uid1> <dr-uid2>  - forces a complete reindex of the supplied data resource (ignoring incremental file)")
-    padAndPrint("[41]  exit")
+    padAndPrint("[28]  delete-inc <dr> - checks for and will delete all the records in an incremental delete file. This file is created during a load phase if applicable")
+    padAndPrint("[29]  load-local-csv <dr-uid> <filepath>... - Load a local file into biocache. For development use only. Not to be used in production.")
+    padAndPrint("[30]  test-load <dr-uid1> <dr-uid2>... - Performs some testing on the load process.  Please read the output to determine whether or not a load should proceed.")
+    padAndPrint("[31]  download-media - Force the (re)download of media associated with a resource.")
+    padAndPrint("[32]  dedup - Run duplication detection over the records.")
+    padAndPrint("[33]  jackknife - Run jackknife outlier detection.")
+    padAndPrint("[34]  distribution outliers -l <speciesLsid> - Run expert distribution outlier detection. If species LSID is supplied, outlier detection is only performed for occurrences of the species with the supplied taxon concept LSID")
+    padAndPrint("[35]  apply-aq <apiKey> - applies the assertion queries for the suppplied apiKey")
+    padAndPrint("[36]  mark-deleted <dr-uid> <date of last load YYYY-MM-DD> - Marks records as deleted in the data store when that have not been updated on the last load. - only run if a complete data set was loaded.")
+    padAndPrint("[37]  remove-deleted <dr-uid> - removes all records from the data-store that have been marked as deleted")
+    padAndPrint("[38]  delete-columns <dr-uid> <list of columns> - deletes all the columns specified in the space separated list")
+    padAndPrint("[39]  delete-missing <dr-uid> <list of columns> - deletes all the columns that are not specified in the space separated list")
+    padAndPrint("[40]  remove-deleted-index <dr-uid> - removes the records not loaded during the last load from index (NB last load will be interpreted as within the last 24 hours).")
+    padAndPrint("[41]  force-index <dr-uid1> <dr-uid2>  - forces a complete reindex of the supplied data resource (ignoring incremental file)")
+    padAndPrint("[42]  exit")
 
   }
   
@@ -387,7 +403,14 @@ object CMD {
     //TODO obtain this from the last checked or data currency dates. - But not always updated and we don't want to lose data
     org.apache.commons.lang.time.DateUtils.addDays(new java.util.Date(), -1)
   }
-
+  def getDeleteRowFile(resourceUid:String) : Option[String] ={
+    def filename =  Config.deletedFileStore + File.separator + resourceUid + File.separator + "deleted.txt"
+    if(new File(filename).exists()){
+      Some(filename)
+    } else {
+      None
+    }
+  }
   def hasRowKey(resourceUid: String): (Boolean, Option[String]) = {
     def filename = "/data/tmp/row_key_" + resourceUid + ".csv"
     def file = new java.io.File(filename)

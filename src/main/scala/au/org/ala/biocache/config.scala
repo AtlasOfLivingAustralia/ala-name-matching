@@ -41,7 +41,7 @@ object Config {
       false
     }
   }
-
+  val deletedFileStore = configModule.properties.getProperty("deletedFileStore","/data/biocache-delete/")
   lazy val excludeSensitiveValuesFor = configModule.properties.getProperty("excludeSensitiveValuesFor","")
 
   lazy val biocacheServiceURL = configModule.properties.getProperty("biocacheServiceURL","http://biocache.ala.org.au/ws")
@@ -120,6 +120,7 @@ class ConfigModule extends AbstractModule {
     }
     logger.info("Initialise persistence manager")
     properties.getProperty("db") match {
+        //case "mock" => bind(classOf[PersistenceManager]).to(classOf[MockPersistenceManager]).in(Scopes.SINGLETON)
         case "cassandra" => bind(classOf[PersistenceManager]).to(classOf[CassandraPersistenceManager]).in(Scopes.SINGLETON)
         //case "mongodb" => bind(classOf[PersistenceManager]).to(classOf[MongoDBPersistenceManager]).in(Scopes.SINGLETON)
         case _ => bind(classOf[PersistenceManager]).to(classOf[CassandraPersistenceManager]).in(Scopes.SINGLETON)

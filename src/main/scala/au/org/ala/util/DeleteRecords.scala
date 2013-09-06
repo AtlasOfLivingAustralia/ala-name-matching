@@ -8,6 +8,7 @@ import au.org.ala.biocache._
 import java.io.File
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
+import collection.mutable.ArrayBuffer
 
 object DeleteRecords {
 
@@ -18,16 +19,19 @@ object DeleteRecords {
       
       var query:Option[String]=None
       var dr:Option[String]=None
+      var file:Option[String]=None
       val parser = new OptionParser("delete records options") {
-            opt("q", "query", "The query to run to obtain the records for deletion e.g. 'year:[2001 TO *]' or 'taxon_name:Macropus'",
-              { v:String => query = Some(v) }
-            )
-            opt("dr", "resource", "The data resource to process", {v:String => dr = Some(v)})
+        opt("q", "query", "The query to run to obtain the records for deletion e.g. 'year:[2001 TO *]' or 'taxon_name:Macropus'",
+            { v:String => query = Some(v) }
+           )
+        opt("dr", "resource", "The data resource to process", {v:String => dr = Some(v)})
+        opt("f","file","The file of row keys to delete", {v:String => file = Some(v)})
         }
       if(parser.parse(args)){
           val deletor:Option[RecordDeletor] = {
               if(!query.isEmpty) Some(new QueryDelete(query.get))
               else if(!dr.isEmpty) Some(new DataResourceDelete(dr.get))
+              else if(file.isDefined) Some (new FileDelete(file.get))
               else None
           }
           println("Starting delete " + query + " " + dr)
@@ -123,6 +127,29 @@ class DataResourceDelete(dataResource:String) extends RecordDeletor{
     override def deleteFromIndex {
         indexer.removeByQuery("data_resource_uid:" +dataResource)        
     }
+}
+
+class FileDelete(fileName:String) extends RecordDeletor {
+  //import the file constructs to allow lines to be easily iterated over
+  import FileHelper._
+  override def deleteFromPersistent() ={
+    new File(fileName).foreachLine(line =>
+      occurrenceDAO.delete(line, false, true)
+    )
+  }
+  override def deleteFromIndex {
+    val buf = new ArrayBuffer[String]
+
+    new File(fileName).foreachLine(line => {
+      buf += line
+      if(buf.size >999){
+        val query = "row_key:\"" + buf.mkString("\" OR row_key:\"") +"\""
+        indexer.removeByQuery(query)
+        buf.clear()
+      }
+    }
+    )
+  }
 }
 
 class ListDelete(rowKeys:List[String]) extends RecordDeletor{
