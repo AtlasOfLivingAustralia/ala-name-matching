@@ -174,7 +174,7 @@ object SpeciesOutlierTests {
       val (taxonConceptID, lines, nextLine) = readAllForTaxon(reader,nextTaxonConceptID, taxonIDIdx,lastLine)
       lastLine = nextLine
 
-      logger.debug(taxonConceptID + ", records: " + lines.size)
+      logger.info(taxonConceptID + ", records: " + lines.size)
       logger.debug(lines.head.mkString(","))
 
       val resultsBuffer = new ListBuffer[(String,Seq[SampledRecord],JackKnifeStats)]
@@ -248,7 +248,7 @@ object SpeciesOutlierTests {
 
 
       if (nextLine == null) finished = true
-      else nextTaxonConceptID = nextLine.head
+      else nextTaxonConceptID = nextLine(taxonIDIdx)
     }
 
     idsWriter.close
@@ -278,7 +278,7 @@ object SpeciesOutlierTests {
     logger.debug("###### Running for:" + idForBatch)
 
     val buffer = new ListBuffer[Array[String]]
-    if (!lastLine.isEmpty) buffer += lastLine.tail
+    if (!lastLine.isEmpty) buffer += lastLine
 
     while(currentLine !=null && currentLine(taxonConceptIDIdx) == idForBatch){
       buffer += currentLine
