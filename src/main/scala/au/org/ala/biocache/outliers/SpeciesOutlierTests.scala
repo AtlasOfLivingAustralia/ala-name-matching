@@ -69,7 +69,7 @@ object SpeciesOutlierTests {
     }
     if(parser.parse(args)){
       //set up threads
-      val queue = new ArrayBlockingQueue[String](100000)
+      val queue = new ArrayBlockingQueue[String](200000)
       var ids =0
       val pool:Array[StringConsumer] = Array.fill(numPassThreadWriters){
         var counter=0
@@ -106,10 +106,10 @@ object SpeciesOutlierTests {
           //set the threads up to detect the species outliers.
           val detectpool:Array[Thread] = Array.fill(numSourceThreads){
             val dumpFilePath = fullDumpFilePath + File.separator + dids + File.separator + taxonRank+".out"
-
+            val reindexFile =  idsToIndexFile+"."+dids
             val t = new Thread(){
               override def run(){
-                 runOutlierTestingForDumpFile(dumpFilePath, headerForDumpFile, idsToIndexFile+"."+dids, persistResults, queue, index)
+                 runOutlierTestingForDumpFile(dumpFilePath, headerForDumpFile, reindexFile , persistResults, queue, index)
               }
             }
 
@@ -452,11 +452,7 @@ object SpeciesOutlierTests {
 
     //mark the records that have passed
     passed.foreach(uuid => {
-      if(queue.remainingCapacity()>0){
-        queue.add(uuid)
-      } else{
-        Thread.sleep(100)
-      }
+      queue.put(uuid)
 //      val rowKey = Config.occurrenceDAO.getRowKeyFromUuid(uuid)
 //      if(rowKey.isDefined){
 //        //mark the test as passed
