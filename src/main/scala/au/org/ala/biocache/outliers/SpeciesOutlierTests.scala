@@ -51,6 +51,7 @@ object SpeciesOutlierTests {
     var numPassThreadWriters=16
     var numSourceThreads =4
     var taxonRank="species"
+    var index=false
 
     val parser = new OptionParser("Reverse jackknife for outliers") {
       opt("t", "taxonID","The LSID of the species to check for outliers. This wll download from LIVE", {v:String => taxonID = v})
@@ -64,6 +65,7 @@ object SpeciesOutlierTests {
       intOpt("st","sourceThreads", "The number of threads that were used to create the source files.", {v:Int => numSourceThreads = v})
       opt("if", "indexFilePath", "Filepath to file of IDs to reindex", {v:String => idsToIndexFile = v})
       opt("persist","persist results to the database",{persistResults = true})
+      opt("index", "index the records that are marked as outliers", {index =true})
     }
     if(parser.parse(args)){
       //set up threads
@@ -107,7 +109,7 @@ object SpeciesOutlierTests {
 
             val t = new Thread(){
               override def run(){
-                 runOutlierTestingForDumpFile(dumpFilePath, headerForDumpFile, idsToIndexFile+"."+dids, persistResults, queue)
+                 runOutlierTestingForDumpFile(dumpFilePath, headerForDumpFile, idsToIndexFile+"."+dids, persistResults, queue, index)
               }
             }
 
@@ -119,7 +121,7 @@ object SpeciesOutlierTests {
 
 
         } else{
-          runOutlierTestingForDumpFile(fullDumpFilePath, headerForDumpFile, idsToIndexFile, persistResults,queue)
+          runOutlierTestingForDumpFile(fullDumpFilePath, headerForDumpFile, idsToIndexFile, persistResults,queue, index)
         }
       }
       else parser.showUsage
@@ -142,7 +144,7 @@ object SpeciesOutlierTests {
    * @param columnHeaders
    */
   def runOutlierTestingForDumpFile(dumpFilePath:String, columnHeaders:List[String] = List(), 
-      idsToIndexFile:String = "/tmp/idsToReIndex.txt", persistResults:Boolean=false, queue:ArrayBlockingQueue[String]){
+      idsToIndexFile:String = "/tmp/idsToReIndex.txt", persistResults:Boolean=false, queue:ArrayBlockingQueue[String], index:Boolean=false){
 
     val uuidIndexFile = new File(idsToIndexFile)
     val idsWriter = new FileWriter(uuidIndexFile)
@@ -254,9 +256,11 @@ object SpeciesOutlierTests {
     idsWriter.close
 
     //reindex the records that have been marked as outliers
-    logger.debug("Starting the indexing of marked records....")
-    IndexRecords.indexListOfUUIDs(uuidIndexFile)
-    logger.debug("Finished the indexing of marked records.")
+    if(index){
+      logger.debug("Starting the indexing of marked records....")
+      IndexRecords.indexListOfUUIDs(uuidIndexFile)
+      logger.debug("Finished the indexing of marked records.")
+    }
   }
 
   /**
