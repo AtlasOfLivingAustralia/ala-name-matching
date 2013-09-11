@@ -599,6 +599,7 @@
    <field name="sensitive_longitude" type="double" indexed="false" stored="true" multiValued="false" />
    <field name="coordinate_uncertainty" type="double" indexed="true" stored="true" multiValued="false" />
    <field name="sensitive_coordinate_uncertainty" type="double" indexed="true" stored="true" multiValued="false" />
+   <field name="sensitive_locality" type="string" indexed="false" stored="true" multiValued="false" />
    <!-- Not displayed in search results -->
    <!-- field name="lat_long_precision" type="string" indexed="false" stored="true" multiValued="false" omitNorms="false" /-->
    <!-- <field name="lat_long" type="location" indexed="true" stored="true"/> Requires SOLR 1.5 -->
