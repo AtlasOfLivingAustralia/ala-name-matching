@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils
 import java.util.ArrayList
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.annotation.JsonInclude.Include
+import au.org.ala.biocache.qa.QaPasser
 
 /**
  * 
@@ -198,6 +199,26 @@ object DuplicationDetection{
     cal.setTime(date)
     cal.add(java.util.Calendar.HOUR, -24)   
     Config.duplicateDAO.setLastDuplicationRun(cal.getTime())
+  }
+}
+
+class GenericConsumer[T](q:BlockingQueue[T], id:Int, proc: (T,Int) =>Unit) extends Thread {
+  var shouldStop = false
+  override def run(){
+    while(!shouldStop || q.size()>0){
+      try{
+        //wait 1 second before assuming that the queue is empty
+        val value = q.poll(1,java.util.concurrent.TimeUnit.SECONDS)
+        if(value !=null){
+          DuplicationDetection.logger.debug("Generic Consumer " + id + " is handling " + value)
+          proc(value, id)
+        }
+      }
+      catch{
+        case e:Exception=> e.printStackTrace()
+      }
+    }
+    println("Stopping " + id)
   }
 }
 
@@ -399,7 +420,7 @@ class DuplicationDetection{
           }
           //get new old duplicates          
           currentLsid = strlsidMatch
-          DuplicationDetection.logger.info("STARTING to process the all the dupicates for " + currentLsid)
+          DuplicationDetection.logger.info("STARTING to process the all the duplicates for " + currentLsid)
           val olddds = getCurrentDuplicates(currentLsid)
           oldDuplicates = olddds._1
           oldDupMap = olddds._2
@@ -422,12 +443,21 @@ class DuplicationDetection{
     oldDuplicatesWriter.close
 
     //now load all the records that passed duplication detection
+    val passer = new QaPasser(QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD, 1), 10,deleteColumns = Some(List("associatedOccurrences.p","duplicationStatus.p","duplicationType.p")))
+    val buf = new ArrayBuffer[String]()
     new File(passedFilename).foreachLine(line =>{
+      buf+= line
+      if (buf.size ==1000){
+        passer.markRecords(buf.toList)
+        buf.clear()
+      }
       //each line represents a row key that is not considered a duplicate
-      Config.occurrenceDAO.addSystemAssertion(line, QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD, 1), replaceExistCode = true)
-      Config.persistenceManager.deleteColumns(line, "occ","associatedOccurrences.p","duplicationStatus.p","duplicationType.p")
+      //Config.occurrenceDAO.addSystemAssertion(line, QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD, 1), replaceExistCode = true)
+      //Config.persistenceManager.deleteColumns(line, "occ","associatedOccurrences.p","duplicationStatus.p","duplicationType.p")
 
     })
+    passer.markRecords(buf.toList)
+    passer.stop()
   }
   
   //loads the dupicates from the lsid based on the tmp file being populated - this is based on a single lsid being in the file
