@@ -188,7 +188,7 @@ object CMD {
           ExportFromIndex.main(args)
         }
         case it if (it startsWith "export-stream") => {
-          val args = it.split(" ").map(x => x.trim).toArray.tail
+          val args = input.split(" ").map(x => x.trim).toArray.tail
           ExportFromIndexStream.main(args)
         }
         case it if (it startsWith "export-facet") => {
