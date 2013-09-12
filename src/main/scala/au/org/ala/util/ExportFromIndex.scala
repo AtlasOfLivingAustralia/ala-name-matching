@@ -8,12 +8,14 @@ import java.util.Date
 import java.text.SimpleDateFormat
 import java.util.concurrent.ArrayBlockingQueue
 import org.apache.commons.io.FileUtils
+import collection.mutable.ArrayBuffer
 
 /**
  * Uses one Streamer to write the spatial species to multiple files based on a number of "threads" that will be used to consume
  * the files.
  */
 object ExportAllSpatialSpecies {
+  import FileHelper._
   def main(args:Array[String]) {
     var threads =4
     val fieldsToExport = Array("row_key", "id", "species_guid","subspecies_guid", "year", "month", "occurrence_date", "point-1", "point-0.1",
@@ -24,14 +26,31 @@ object ExportAllSpatialSpecies {
     val sortFields = Array("species_guid","subspecies_guid","row_key")
     val multivaluedFields =Some(Array("duplicate_record"))
     var exportDirectory = "/data/offline/exports"
+    var lastWeek = false
+    var validGuids:Option[List[String]] = None
 
     val parser = new OptionParser("Export based on facet and optional filter") {
       arg("<output directory>", "the output directory for the exports", {v:String => exportDirectory = v})
 
       intOpt("t","threads","the number of threads/files to have for the exports", {v:Int => threads =v})
+      opt("lastWeek", "species that have changed in the last week",{lastWeek =true})
       //opt("f","filter", "optional filter to apply to the list", {v:String => filter = Some(v)})
     }
     if (parser.parse(args)){
+
+      if (lastWeek){
+        //need to obtain a list of species guids that have changed in the last week
+        def filename = exportDirectory + File.separator + "delta-species-guids.txt"
+        val args = Array("species_guid",filename, "--lastWeek","true","--open")
+        ExportFacet.main(args)
+        //now load the acceptable lsids into the list
+        val buf = new ArrayBuffer[String]()
+        new File(filename).foreachLine(line =>{
+          buf += line
+        })
+        validGuids = Some(buf.toList)
+        println("There are " + buf.size + " valid guids to download")
+      }
 
 
       var ids=0
@@ -52,14 +71,19 @@ object ExportAllSpatialSpecies {
       var lsidCount=0
       var fileWriter:FileWriter = null
       var subspeciesWriter:FileWriter = null
+      var loadCurrent = true
       Config.indexDAO.streamIndex(map=>{
         val outputLine = fieldsToExport.map(f => getFromMap(map,f)).mkString("\t")
         counter+=1
         val thisLsid = map.get("species_guid")
         if(thisLsid != null && thisLsid != currentLsid){
           println("Starting to handle " + thisLsid + " " + counter + " " + lsidCount)
-          lsidCount += 1
+
           currentLsid = thisLsid.toString
+          loadCurrent = validGuids.isEmpty || validGuids.get.contains(currentLsid)
+          if (loadCurrent){
+            lsidCount += 1
+          }
           if (fileWriter != null){
             fileWriter.flush
             subspeciesWriter.flush
@@ -67,14 +91,16 @@ object ExportAllSpatialSpecies {
           fileWriter= files(lsidCount%threads)._1
           subspeciesWriter = files(lsidCount%threads)._2
         }
-        fileWriter.write(outputLine)
-        fileWriter.write("\n")
+        if (loadCurrent){
+          fileWriter.write(outputLine)
+          fileWriter.write("\n")
 
-        val subspecies = map.get("subspecies_guid")
-          if (subspecies != null) {
-            subspeciesWriter.write(outputLine)
-            subspeciesWriter.write("\n")
-          }
+          val subspecies = map.get("subspecies_guid")
+            if (subspecies != null) {
+              subspeciesWriter.write(outputLine)
+              subspeciesWriter.write("\n")
+            }
+        }
 
         if (counter % 10000 ==0){
           fileWriter.flush
@@ -192,6 +218,38 @@ object ExportFromIndex {
   }
 }
 
+object ExportFromIndexStream{
+  var outputFilePath = ""
+  var query = "*:*"
+  var fieldsToExport = Array[String]()
+  var counter = 0
+  var orderFields = Array("row_key")
+  def main(args:Array[String]){
+    val parser = new OptionParser("export index stream") {
+      arg("<output-file>", "The file name for the export file", { v: String => outputFilePath = v })
+      arg("<list of fields>", "CSV list of fields to export", { v: String => fieldsToExport = v.split(",").toArray })
+      opt("q","query", "The SOLR query to use", { v: String => query = v })
+    }
+
+    if (parser.parse(args)) {
+      val fileWriter = new FileWriter(new File(outputFilePath))
+      Config.indexDAO.streamIndex(map=>{
+        counter += 1
+        if (counter % 1000 == 0) {  fileWriter.flush; }
+        val outputLine = fieldsToExport.map(f => {
+          if(map.containsKey(f))map.get(f).toString else ""
+        })
+        fileWriter.write(outputLine.mkString("\t"))
+        fileWriter.write("\n")
+        true
+      }, fieldsToExport, query, Array(), orderFields,None)
+      Config.indexDAO.shutdown
+      fileWriter.flush
+      fileWriter.close
+    }
+  }
+}
+
 object ExportFacet {
 
   var facetField = "species_guid"
@@ -221,11 +279,11 @@ object ExportFacet {
   def main(args:Array[String]){
     if (parser.parse(args)) {
       // first_loaded_date:[2012-03-26T00:00:00Z%20TO%20*]
-      val sfd = new SimpleDateFormat()
+      val sfd = new SimpleDateFormat("yyyy-MM-dd")
       var facetFilterQuery =  ""
-      if (lastDay) facetFilterQuery = indexDateField + ":[" + sfd.format(DateUtils.addDays(new Date(), -1), "yyyy-MM-dd") + "T00:00:00Z%20TO%20*]"
-      else if (lastWeek) facetFilterQuery = indexDateField + ":[" + sfd.format(DateUtils.addWeeks(new Date(), -1), "yyyy-MM-dd") + "T00:00:00Z%20TO%20*]"
-      else if (lastMonth) facetFilterQuery = indexDateField + ":[" + sfd.format(DateUtils.addMonths(new Date(), -1), "yyyy-MM-dd") + "T00:00:00Z%20TO%20*]"
+      if (lastDay) facetFilterQuery = indexDateField + ":[" + sfd.format(DateUtils.addDays(new Date(), -1))  + "T00:00:00Z TO *]"
+      else if (lastWeek) facetFilterQuery = indexDateField + ":[" + sfd.format(DateUtils.addWeeks(new Date(), -1)) + "T00:00:00Z TO *]"
+      else if (lastMonth) facetFilterQuery = indexDateField + ":[" + sfd.format(DateUtils.addMonths(new Date(), -1)) + "T00:00:00Z TO *]"
 
       //do the facet query
       val facetWriter = new FileWriter(new File(facetOutputFile))
