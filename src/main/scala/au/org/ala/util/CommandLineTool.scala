@@ -192,7 +192,7 @@ object CMD {
           ExportFromIndexStream.main(args)
         }
         case it if (it startsWith "export-facet") => {
-          val args = it.split(" ").map(x => x.trim).toArray.tail
+          val args = input.split(" ").map(x => x.trim).toArray.tail
           ExportFacet.main(args)
         }
         case it if (it startsWith "export-facet-query") => {
