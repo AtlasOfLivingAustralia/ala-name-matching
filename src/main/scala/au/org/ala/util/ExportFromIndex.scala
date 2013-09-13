@@ -18,9 +18,10 @@ object ExportAllSpatialSpecies {
   import FileHelper._
   def main(args:Array[String]) {
     var threads =4
+    //Warning changing these fields may cause issues in the offline processing tasks
     val fieldsToExport = Array("row_key", "id", "species_guid","subspecies_guid", "year", "month", "occurrence_date", "point-1", "point-0.1",
       "point-0.01","point-0.001", "point-0.0001","lat_long","raw_taxon_name", "collectors", "duplicate_status", "duplicate_record", "latitude","longitude",
-      "el882","el889","el887","el865","el894")
+      "el882","el889","el887","el865","el894","coordinate_uncertainty")
     val query = "lat_long:* AND species_guid:*"
     val filterQueries = Array[String]()
     val sortFields = Array("species_guid","subspecies_guid","row_key")
