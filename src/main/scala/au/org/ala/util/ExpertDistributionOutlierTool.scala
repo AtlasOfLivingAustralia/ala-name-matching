@@ -17,7 +17,9 @@ import scala.Array
 import com.vividsolutions.jts.io.WKTReader
 import com.vividsolutions.jts.operation.distance.DistanceOp
 import au.org.ala.biocache.qa.QaPasser
-import java.io.{FileWriter, File}
+import java.io.{FileReader, FileWriter, File}
+import au.com.bytecode.opencsv.CSVReader
+import org.apache.commons.lang.StringUtils
 
 /**
  * Created with IntelliJ IDEA.
@@ -54,6 +56,7 @@ object ExpertDistributionOutlierTool {
     var numThreads = 1
     var passThreads=16
     var test=false
+    var dir:Option[String] =None
 
     val parser = new OptionParser("Find expert distribution outliers") {
       opt("l", "specieslsid", "Species LSID. If supplied, outlier detection is only performed for occurrences of the species with the supplied taxon concept LSID ", {
@@ -64,11 +67,13 @@ object ExpertDistributionOutlierTool {
       })
       intOpt("pt","passThreads","Number of threads to write the passed records on.", {v:Int => passThreads = v})
       opt("test","Test the outliers but don't write to Cassandra", {test =true})
+      opt("d","dir","The directory in which the offline dumps are located", {v:String => dir = Some(v)})
     }
 
     if (parser.parse(args)) {
       val qaPasser = new QaPasser(QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE,1), passThreads)
-      tool.findOutliers(speciesLsid, numThreads, test,qaPasser)
+      Config.indexDAO.init
+      tool.findOutliers(speciesLsid, numThreads, test,qaPasser,dir)
     }
   }
 }
@@ -79,7 +84,7 @@ class ExpertDistributionOutlierTool {
    * Entry point for the tool. Find distribution outliers for all records, or for a single species identified by its LSID
    * @param speciesLsid If supplied, restrict identification of outliers to occurrence records associated by a single species, as identified by its LSID.
    */
-  def findOutliers(speciesLsid: String, numThreads: Int, test:Boolean, qaPasser:QaPasser) {
+  def findOutliers(speciesLsid: String, numThreads: Int, test:Boolean, qaPasser:QaPasser, directory:Option[String]) {
     logger.info("Starting to detect the outliers...")
     val countDownLatch = new CountDownLatch(numThreads);
     val reindexFile = new FileWriter(new File("/data/offline/expert_index_row_keys.out"))
@@ -93,17 +98,19 @@ class ExpertDistributionOutlierTool {
         // If we are only finding outliers for a single lsid, one worker actor will suffice, no need to partition the work.
         if (distributionLsids.contains(speciesLsid)) {
           workQueue += speciesLsid
-          val a = new ExpertDistributionActor(0, self, test, qaPasser);
+          val a = new ExpertDistributionActor(0, self, test, qaPasser,None, List());
           a.start()
         } else {
           throw new IllegalArgumentException("No expert distribution for species with taxon concept LSID " + speciesLsid)
         }
       } else {
-
-        workQueue ++= distributionLsids
+        if (directory.isEmpty){
+          //only add to work queue if the directory dump files are nto provided.
+          workQueue ++= distributionLsids
+        }
 
         for (i <- 0 to numThreads - 1) {
-          val a = new ExpertDistributionActor(i, self, test, qaPasser);
+          val a = new ExpertDistributionActor(i, self, test, qaPasser, directory,distributionLsids.toList);
           a.start()
         }
       }
@@ -184,47 +191,101 @@ class ExpertDistributionOutlierTool {
   }
 }
 
-class ExpertDistributionActor(val id: Int, val dispatcher: Actor, test:Boolean, qaPasser:QaPasser) extends Actor {
+class ExpertDistributionActor(val id: Int, val dispatcher: Actor, test:Boolean, qaPasser:QaPasser, directory:Option[String], distributionLsids:List[String]) extends Actor {
   val logger = LoggerFactory.getLogger("ExpertDistributionOutlierTool")
   def act() {
     logger.info("Worker(" + id + ") started")
+    if(directory.isEmpty){
+      // Ask the dispatcher for an initial job
+      dispatcher !("SEND JOB", self)
 
-    // Ask the dispatcher for an initial job
-    dispatcher !("SEND JOB", self)
-
-    loop {
-      react {
-        case "EXIT" => {
-          logger.info("Worker(" + id + ") stopping")
-          dispatcher !("EXITED", self)
-          exit()
-        }
-        case (speciesLsid: String) => {
-          logger.info("Worker(" + id + ") finding distribution outliers for " + speciesLsid)
-
-          try {
-            val rowKeysForIndexing = findOutliersForLsid(speciesLsid, test)
-            dispatcher !("PROCESSED", speciesLsid, rowKeysForIndexing, self)
-          } catch {
-            case ex: Exception => {
-
-              logger.error("Worker(" + id + ") experienced error finding distribution outliers for " + speciesLsid, ex)
-              dispatcher !("ERROR", speciesLsid, self)
-            }
+      loop {
+        react {
+          case "EXIT" => {
+            logger.info("Worker(" + id + ") stopping")
+            dispatcher !("EXITED", self)
+            exit()
           }
+          case (speciesLsid: String) => {
+            logger.info("Worker(" + id + ") finding distribution outliers for " + speciesLsid)
 
-          // ask dispatcher for next job
-          dispatcher !("SEND JOB", self)
+            try {
+              val rowKeysForIndexing = findOutliersForLsid(speciesLsid, test)
+              dispatcher !("PROCESSED", speciesLsid, rowKeysForIndexing, self)
+            } catch {
+              case ex: Exception => {
+
+                logger.error("Worker(" + id + ") experienced error finding distribution outliers for " + speciesLsid, ex)
+                dispatcher !("ERROR", speciesLsid, self)
+              }
+            }
+
+            // ask dispatcher for next job
+            dispatcher !("SEND JOB", self)
+          }
         }
       }
+    } else{
+      //we will take out file and try to locate lsids to test
+      handleFile(directory.get + File.separator + id + File.separator+"species.out",2,test)
+      handleFile(directory.get + File.separator + id + File.separator+"subspecies.out",3,test)
+      //tell dispatcher that we are finished
+      dispatcher !("EXITED", self)
+      exit()
     }
+  }
+
+  /**
+   * Extracts the occurrence records details out of a file only if the lsid represents one that has a distribution.
+   *
+   * @param fileName The absolute path to the file to use in the detection
+   * @param guidIdx The index for the guid
+   * @param test Whether or not to perform a test load
+   */
+  def handleFile(fileName:String, guidIdx:Int, test:Boolean){
+    val uuidIdx = 1
+    val rowIdx = 0
+    val latIdx = 17
+    val longIdx = 18
+    val coorIdx = 23
+
+    val reader:CSVReader = new CSVReader(new FileReader(fileName), '\t')
+    var currentLsid = ""
+    var currentLine = reader.readNext()
+    var isValid = false
+    val map = scala.collection.mutable.Map[String, Map[String, Object]]()
+    while (currentLine != null) {
+      if (currentLsid != currentLine(guidIdx)){
+        if(map.size>0){
+          val rowKeysForIndexing = findOutliersForLsid(currentLsid, test,Some(map))
+          dispatcher !("PROCESSED", currentLsid, rowKeysForIndexing, self)
+          map.clear()
+        }
+          currentLsid = currentLine(guidIdx)
+          isValid = distributionLsids.contains(currentLsid)
+          logger.info("will gather all records for " + currentLsid + " " + isValid)
+      }
+      if(isValid){
+        //add it to the map
+        val uncertainty = StringUtils.trimToNull(currentLine(coorIdx))
+        map(currentLine(uuidIdx)) = Map("rowKey" -> currentLine(rowIdx), "decimalLatitude" -> currentLine(latIdx),
+          "decimalLongitude" -> currentLine(longIdx), "coordinateUncertaintyInMeters" -> (if(uncertainty == null) uncertainty else java.lang.Double.parseDouble(uncertainty).asInstanceOf[Object]))
+      }
+      currentLine = reader.readNext
+    }
+
+    if (map.size>0){
+      val rowKeysForIndexing = findOutliersForLsid(currentLsid, test,Some(map))
+      dispatcher !("PROCESSED", currentLsid, rowKeysForIndexing, self)
+    }
+
   }
 
   /**
    * Find outlier records associated with a species as identified by a taxon concept lsid
    * @param lsid a taxon concept lsid
    */
-  def findOutliersForLsid(lsid: String, test:Boolean): ListBuffer[String] = {
+  def findOutliersForLsid(lsid: String, test:Boolean, occPoints:Option[scala.collection.mutable.Map[String, Map[String, Object]]]=None): ListBuffer[String] = {
     logger.info("Starting to find the outliers for " +lsid)
     val rowKeysForIndexing = new ListBuffer[String]
     val rowKeyPassed = new ListBuffer[String]
@@ -235,7 +296,7 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor, test:Boolean, 
 
     // Some distributions have an extremely large number of records associated with them. Handle the records one "page" at a time.
     logger.info("Get records for " + lsid)
-    var recordsMap = getRecordsOutsideDistribution(lsid, wkt)
+    var recordsMap = if(occPoints.isDefined) occPoints.get else getRecordsOutsideDistribution(lsid, wkt)
     logger.info("Finished getting records fo " + lsid)
 
 
