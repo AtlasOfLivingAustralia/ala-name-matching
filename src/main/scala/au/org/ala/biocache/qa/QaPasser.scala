@@ -61,7 +61,12 @@ class QaPasser(qa:QualityAssertion, numThreads:Int, isUuid:Boolean=false, delete
   val queue = new ArrayBlockingQueue[String](500000)
   var ids =0
   val pool:Array[GenericConsumer[String]] = Array.fill(numThreads){
+      var counter=0
+      var startTime = System.currentTimeMillis
+      var finishTime = System.currentTimeMillis
+
       val thread = new GenericConsumer[String](queue, ids, (value,id)=>{
+        counter+=1
         //the value needs to have the QA applied to it
         val rowKey = if (isUuid) Config.occurrenceDAO.getRowKeyFromUuid(value) else Some(value)
         //now assign the QA to the record
@@ -71,6 +76,12 @@ class QaPasser(qa:QualityAssertion, numThreads:Int, isUuid:Boolean=false, delete
             Config.persistenceManager.deleteColumns(value, "occ",deleteColumns.get:_*)
           }
          // println(rowKey.toString + " has passed " + qa)
+        }
+
+        if (counter % 1000 == 0) {
+          finishTime = System.currentTimeMillis
+          println(counter +">>"+id+ " >> Last key : " + value + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          startTime = System.currentTimeMillis
         }
 
       })
