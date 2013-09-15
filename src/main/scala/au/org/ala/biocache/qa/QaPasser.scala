@@ -5,6 +5,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import au.org.ala.util.{FileHelper, OptionParser, GenericConsumer, StringConsumer}
 import java.io.File
 import collection.mutable.ArrayBuffer
+import org.slf4j.LoggerFactory
 
 /*
  * Copyright (C) 2012 Atlas of Living Australia
@@ -58,6 +59,7 @@ object QaPasser{
   }
 }
 class QaPasser(qa:QualityAssertion, numThreads:Int, isUuid:Boolean=false, deleteColumns:Option[List[String]]=None) {
+  val logger = LoggerFactory.getLogger("QaPasser")
   val queue = new ArrayBlockingQueue[String](500000)
   var ids =0
   val pool:Array[GenericConsumer[String]] = Array.fill(numThreads){
@@ -80,7 +82,7 @@ class QaPasser(qa:QualityAssertion, numThreads:Int, isUuid:Boolean=false, delete
 
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
-          println(counter +">>"+id+ " >> Last key : " + value + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+          logger.info(counter +">>"+id+ " >> Last key : " + value + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f) +" " + queue.size())
           startTime = System.currentTimeMillis
         }
 
@@ -98,6 +100,7 @@ class QaPasser(qa:QualityAssertion, numThreads:Int, isUuid:Boolean=false, delete
     })
   }
   def stop(){
+    logger.info("Stopping the QAPasser " + queue.size())
     pool.foreach(t =>t.shouldStop = true)
     pool.foreach(_.join)
   }

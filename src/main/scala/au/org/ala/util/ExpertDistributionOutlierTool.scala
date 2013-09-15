@@ -139,6 +139,7 @@ class ExpertDistributionOutlierTool {
               logger.debug("PROCESSED : " + rowKey)
               reindexFile.append(rowKey+"\n")
             }
+            reindexFile.flush()
           }
           case ("ERROR", speciesLsid: String, actor: ExpertDistributionActor) => {
             errorLsidsQueue += speciesLsid
@@ -243,6 +244,7 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor, test:Boolean, 
    * @param test Whether or not to perform a test load
    */
   def handleFile(fileName:String, guidIdx:Int, test:Boolean){
+    logger.info("Starting to handle file: " + fileName)
     val uuidIdx = 1
     val rowIdx = 0
     val latIdx = 17
@@ -278,6 +280,7 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor, test:Boolean, 
       val rowKeysForIndexing = findOutliersForLsid(currentLsid, test,Some(map))
       dispatcher !("PROCESSED", currentLsid, rowKeysForIndexing, self)
     }
+    logger.info("Finished handling file " + fileName)
 
   }
 
@@ -560,15 +563,19 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor, test:Boolean, 
     if(!test){
       val oldRowKeysJson: String = Config.persistenceManager.get(lsid, "distribution_outliers", ExpertDistributionOutlierTool.DISTRIBUTION_OUTLIERS_COLUMN_FAMILY_KEY).getOrElse(null)
       if (oldRowKeysJson != null) {
-        val oldRowKeys = Json.toList(oldRowKeysJson, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[List[String]]
+        try{
+          val oldRowKeys = Json.toList(oldRowKeysJson, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[List[String]]
 
-        val noLongerOutlierRowKeys = oldRowKeys diff newOutlierRowKeys
+          val noLongerOutlierRowKeys = oldRowKeys diff newOutlierRowKeys
 
-        for (rowKey <- noLongerOutlierRowKeys) {
-          logger.warn(rowKey + " is no longer an outlier")
-          Config.persistenceManager.deleteColumns(rowKey, "occ", "distanceOutsideExpertRange.p")
-          Config.occurrenceDAO.removeSystemAssertion(rowKey, AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE)
-          rowKeysForIndexing += rowKey
+          for (rowKey <- noLongerOutlierRowKeys) {
+            logger.warn(rowKey + " is no longer an outlier")
+            Config.persistenceManager.deleteColumns(rowKey, "occ", "distanceOutsideExpertRange.p")
+            Config.occurrenceDAO.removeSystemAssertion(rowKey, AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE)
+            rowKeysForIndexing += rowKey
+          }
+        } catch {
+          case e: Exception => logger.error("Unable to get parse past distribution ingto array: " + oldRowKeysJson + " for " + lsid, e)
         }
       }
 
