@@ -161,7 +161,7 @@ object SpeciesOutlierTests {
       val uuidIndexFile = new File(idsToIndexFile)
       val idsWriter = new FileWriter(uuidIndexFile)
       val passWriter = new FileWriter(passFile)
-      val reader:CSVReader = new CSVReader(new FileReader(dumpFilePath), '\t')
+      val reader:CSVReader = new CSVReader(new FileReader(dumpFilePath), '\t', '~')
 
       val headers = if (columnHeaders.isEmpty) reader.readNext.toList else columnHeaders
 
