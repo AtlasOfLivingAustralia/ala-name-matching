@@ -136,4 +136,4 @@ case class RecordJackKnifeStats(@BeanProperty uuid:String,
                           @BeanProperty threshold:Float,
                           @BeanProperty outlierValues:Array[Float])
 
-case class SampledRecord(id: String, value: Float, cellId: Int)
+case class SampledRecord(id: String, value: Float, cellId: Int, rowKey:Option[String]=None)
