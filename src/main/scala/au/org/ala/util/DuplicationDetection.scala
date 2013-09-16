@@ -443,7 +443,8 @@ class DuplicationDetection{
     oldDuplicatesWriter.close
 
     //now load all the records that passed duplication detection
-    val passer = new QaPasser(QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD, 1), 10,deleteColumns = Some(List("associatedOccurrences.p","duplicationStatus.p","duplicationType.p")))
+    //NC will load thepassed records external to the duplication process.
+    /*val passer = new QaPasser(QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD, 1), 10,deleteColumns = Some(List("associatedOccurrences.p","duplicationStatus.p","duplicationType.p")))
     val buf = new ArrayBuffer[String]()
     new File(passedFilename).foreachLine(line =>{
       buf+= line
@@ -451,13 +452,15 @@ class DuplicationDetection{
         passer.markRecords(buf.toList)
         buf.clear()
       }
+
+
       //each line represents a row key that is not considered a duplicate
       //Config.occurrenceDAO.addSystemAssertion(line, QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD, 1), replaceExistCode = true)
       //Config.persistenceManager.deleteColumns(line, "occ","associatedOccurrences.p","duplicationStatus.p","duplicationType.p")
 
     })
     passer.markRecords(buf.toList)
-    passer.stop()
+    passer.stop()*/
   }
   
   //loads the dupicates from the lsid based on the tmp file being populated - this is based on a single lsid being in the file
