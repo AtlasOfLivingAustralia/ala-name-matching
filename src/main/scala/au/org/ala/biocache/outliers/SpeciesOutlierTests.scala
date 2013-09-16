@@ -271,7 +271,6 @@ object SpeciesOutlierTests {
       }
       //logger.debug("The records that passed " + passedRecords.size + " " + recordIds.size)
       //store the results for this taxon
-      storeResultsWithStats(taxonConceptID, resultsBuffer, passedRecords,idsWriter, queue,passWriter)
 
       idsWriter.close
       passWriter.flush
