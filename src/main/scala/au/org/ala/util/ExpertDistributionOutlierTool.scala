@@ -4,7 +4,7 @@ import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.methods.{PostMethod, GetMethod}
 import org.codehaus.jackson.map.ObjectMapper
 import collection.mutable.ListBuffer
-import java.text.MessageFormat
+import java.text.{SimpleDateFormat, MessageFormat}
 import collection.JavaConversions._
 import au.org.ala.biocache.{Json, AssertionCodes, QualityAssertion, Config}
 import scala.actors.Actor._
@@ -20,6 +20,8 @@ import au.org.ala.biocache.qa.QaPasser
 import java.io.{FileReader, FileWriter, File}
 import au.com.bytecode.opencsv.CSVReader
 import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.time.DateUtils
+import java.util.Date
 
 /**
  * Created with IntelliJ IDEA.
@@ -38,6 +40,7 @@ object ExpertDistributionOutlierTool {
 
   val RECORDS_QUERY_TEMPLATE = "species_guid:{0} OR subspecies_guid:{0}"
   val RECORDS_FILTER_QUERY_TEMPLATE = "geospatial_kosher:true"
+  val DATE_RANGE_FILTER = "last_load_date:[{0} TO *]"
 
   //val RECORDS_URL_TEMPLATE = Config.biocacheServiceUrl + "/occurrences/search?q=taxon_concept_lsid:{0}&fq=-geohash:%22Intersects%28{1}%29%22&fl=id,row_key,latitude,longitude,coordinate_uncertainty&facet=off&startIndex={2}&pageSize={3}"
 
@@ -57,6 +60,7 @@ object ExpertDistributionOutlierTool {
     var passThreads=16
     var test=false
     var dir:Option[String] =None
+    var lastModifiedDate:Option[String]=None
 
     val parser = new OptionParser("Find expert distribution outliers") {
       opt("l", "specieslsid", "Species LSID. If supplied, outlier detection is only performed for occurrences of the species with the supplied taxon concept LSID ", {
@@ -68,12 +72,17 @@ object ExpertDistributionOutlierTool {
       intOpt("pt","passThreads","Number of threads to write the passed records on.", {v:Int => passThreads = v})
       opt("test","Test the outliers but don't write to Cassandra", {test =true})
       opt("d","dir","The directory in which the offline dumps are located", {v:String => dir = Some(v)})
+      intOpt("day","numDaysMod","Number of days since the last modified.  This will limit the records that are marked as passed.", { v:Int=>
+        val sfd = new SimpleDateFormat("yyyy-MM-dd")
+        val days:Int = 0 -v
+        lastModifiedDate = Some(sfd.format(DateUtils.addDays(new Date(), days)) + "T00:00:00Z")
+      })
     }
 
     if (parser.parse(args)) {
       val qaPasser = new QaPasser(QualityAssertion(AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE,1), passThreads)
       Config.indexDAO.init
-      tool.findOutliers(speciesLsid, numThreads, test,qaPasser,dir)
+      tool.findOutliers(speciesLsid, numThreads, test,qaPasser,dir,lastModifiedDate)
     }
   }
 }
@@ -84,7 +93,7 @@ class ExpertDistributionOutlierTool {
    * Entry point for the tool. Find distribution outliers for all records, or for a single species identified by its LSID
    * @param speciesLsid If supplied, restrict identification of outliers to occurrence records associated by a single species, as identified by its LSID.
    */
-  def findOutliers(speciesLsid: String, numThreads: Int, test:Boolean, qaPasser:QaPasser, directory:Option[String]) {
+  def findOutliers(speciesLsid: String, numThreads: Int, test:Boolean, qaPasser:QaPasser, directory:Option[String],lastModifiedDate:Option[String]) {
     logger.info("Starting to detect the outliers...")
     val countDownLatch = new CountDownLatch(numThreads);
     val reindexFile = new FileWriter(new File("/data/offline/expert_index_row_keys.out"))
@@ -98,7 +107,7 @@ class ExpertDistributionOutlierTool {
         // If we are only finding outliers for a single lsid, one worker actor will suffice, no need to partition the work.
         if (distributionLsids.contains(speciesLsid)) {
           workQueue += speciesLsid
-          val a = new ExpertDistributionActor(0, self, test, qaPasser,None, List());
+          val a = new ExpertDistributionActor(0, self, test, qaPasser,None, List(),lastModifiedDate);
           a.start()
         } else {
           throw new IllegalArgumentException("No expert distribution for species with taxon concept LSID " + speciesLsid)
@@ -110,7 +119,7 @@ class ExpertDistributionOutlierTool {
         }
 
         for (i <- 0 to numThreads - 1) {
-          val a = new ExpertDistributionActor(i, self, test, qaPasser, directory,distributionLsids.toList);
+          val a = new ExpertDistributionActor(i, self, test, qaPasser, directory,distributionLsids.toList, lastModifiedDate);
           a.start()
         }
       }
@@ -192,7 +201,7 @@ class ExpertDistributionOutlierTool {
   }
 }
 
-class ExpertDistributionActor(val id: Int, val dispatcher: Actor, test:Boolean, qaPasser:QaPasser, directory:Option[String], distributionLsids:List[String]) extends Actor {
+class ExpertDistributionActor(val id: Int, val dispatcher: Actor, test:Boolean, qaPasser:QaPasser, directory:Option[String], distributionLsids:List[String], lastModifiedDate:Option[String]) extends Actor {
   val logger = LoggerFactory.getLogger("ExpertDistributionOutlierTool")
   def act() {
     logger.info("Worker(" + id + ") started")
@@ -251,7 +260,7 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor, test:Boolean, 
     val longIdx = 18
     val coorIdx = 23
 
-    val reader:CSVReader = new CSVReader(new FileReader(fileName), '\t')
+    val reader:CSVReader = new CSVReader(new FileReader(fileName), '\t','~')
     var currentLsid = ""
     var currentLine = reader.readNext()
     var isValid = false
@@ -421,13 +430,16 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor, test:Boolean, 
 
     val query = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_QUERY_TEMPLATE, ClientUtils.escapeQueryChars(lsid))
     //val filterQuery = MessageFormat.format(ExpertDistributionOutlierTool.RECORDS_FILTER_QUERY_TEMPLATE, distributionWkt)
-    val filterQuery = ExpertDistributionOutlierTool.RECORDS_FILTER_QUERY_TEMPLATE
+    var filterQuery = Array(ExpertDistributionOutlierTool.RECORDS_FILTER_QUERY_TEMPLATE)
+    if(lastModifiedDate.isDefined){
+      filterQuery = filterQuery ++ Array(MessageFormat.format(ExpertDistributionOutlierTool.DATE_RANGE_FILTER, lastModifiedDate.get))
+    }
 
-    Config.indexDAO.streamIndex(addRecordToMap, Array("id", "row_key", "latitude", "longitude", "coordinate_uncertainty"), query, Array(filterQuery), Array())
+    Config.indexDAO.pageOverIndex(addRecordToMap, Array("id", "row_key", "latitude", "longitude", "coordinate_uncertainty"), query, filterQuery)
 
     resultsMap
   }
-
+   //-d /data/offline/exports
   /**
    * Retrieves the outlier distances using JTS/geotools rather than a WS call to the layers-service
    * @param lsid The lsid of the species that is being tested
@@ -566,13 +578,18 @@ class ExpertDistributionActor(val id: Int, val dispatcher: Actor, test:Boolean, 
         try{
           val oldRowKeys = Json.toList(oldRowKeysJson, classOf[String].asInstanceOf[java.lang.Class[AnyRef]]).asInstanceOf[List[String]]
 
-          val noLongerOutlierRowKeys = oldRowKeys diff newOutlierRowKeys
-
-          for (rowKey <- noLongerOutlierRowKeys) {
-            logger.warn(rowKey + " is no longer an outlier")
-            Config.persistenceManager.deleteColumns(rowKey, "occ", "distanceOutsideExpertRange.p")
-            Config.occurrenceDAO.removeSystemAssertion(rowKey, AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE)
-            rowKeysForIndexing += rowKey
+          //only remove old outliers if it is not a incremental load
+          if(lastModifiedDate.isEmpty){
+            val noLongerOutlierRowKeys = oldRowKeys diff newOutlierRowKeys
+            for (rowKey <- noLongerOutlierRowKeys) {
+              logger.warn(rowKey + " is no longer an outlier")
+              Config.persistenceManager.deleteColumns(rowKey, "occ", "distanceOutsideExpertRange.p")
+              Config.occurrenceDAO.removeSystemAssertion(rowKey, AssertionCodes.SPECIES_OUTSIDE_EXPERT_RANGE)
+              rowKeysForIndexing += rowKey
+            }
+          } else{
+            //add this row key to the "oldKeys"
+            newOutlierRowKeys ++= oldRowKeys
           }
         } catch {
           case e: Exception => logger.error("Unable to get parse past distribution ingto array: " + oldRowKeysJson + " for " + lsid, e)
