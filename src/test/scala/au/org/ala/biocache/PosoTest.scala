@@ -18,15 +18,15 @@ class PosoTest extends ConfigFunSuite {
         
         val map = a.toMap
         
-        expect("""["dh1","dh2"]"""){map("dataHubUid")}
-        expect("AM"){map("institutionName")}
+        expectResult("""["dh1","dh2"]"""){map("dataHubUid")}
+        expectResult("AM"){map("institutionName")}
     }
     
     test("Attribution from map with array"){
     	val map = Map("dataHubUid"-> """["dh1","dh2"]""", "dataResourceUid"->"dr349", "dataProviderName"->"OZCAM provider for Museum")
     	val raw =FullRecordMapper.createFullRecord("test1234", map, Versions.RAW)
     	println(raw.attribution)
-    	expect(2){raw.attribution.dataHubUid.size}
+    	expectResult(2){raw.attribution.dataHubUid.size}
     }
     
     test("query attribution with date"){
@@ -34,7 +34,7 @@ class PosoTest extends ConfigFunSuite {
       val date = DateParser.parseStringToDate("2012-01-01T10:22:00")
       aq.setCreatedDate(date.get)
       val map = aq.toMap
-      expect("2012-01-01T10:22:00Z"){map.getOrElse("createdDate","")}
+      expectResult("2012-01-01T10:22:00Z"){map.getOrElse("createdDate","")}
     }
 
     test("DuplicateDetails Serialisations"){

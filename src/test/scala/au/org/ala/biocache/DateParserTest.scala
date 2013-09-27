@@ -19,260 +19,260 @@ class DateParserTest extends FunSuite {
 
   test("Single Year"){
     val result = DateParser.parseDate("1978")
-    expect(false){ result.isEmpty }
-    expect("1978"){ result.get.startYear }
-    expect("1978"){ result.get.endYear }
-    expect(false){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("1978"){ result.get.startYear }
+    expectResult("1978"){ result.get.endYear }
+    expectResult(false){ result.get.singleDate }
   }
 
   test("Single Year with full month"){
     val result = DateParser.parseDate("1978-April-01")
-    expect(false){ result.isEmpty }
-    expect("1978"){ result.get.startYear }
-    expect("1978"){ result.get.endYear }
-    expect("04"){ result.get.startMonth }
-    expect("01"){ result.get.startDay }
-    expect(true){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("1978"){ result.get.startYear }
+    expectResult("1978"){ result.get.endYear }
+    expectResult("04"){ result.get.startMonth }
+    expectResult("01"){ result.get.startDay }
+    expectResult(true){ result.get.singleDate }
   }
 
   test("Single Year with full month - long name"){
     val result = DateParser.parseDate("1978-December-01")
-    expect(false){ result.isEmpty }
-    expect("1978"){ result.get.startYear }
-    expect("1978"){ result.get.endYear }
-    expect("12"){ result.get.startMonth }
-    expect("01"){ result.get.startDay }
-    expect(true){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("1978"){ result.get.startYear }
+    expectResult("1978"){ result.get.endYear }
+    expectResult("12"){ result.get.startMonth }
+    expectResult("01"){ result.get.startDay }
+    expectResult(true){ result.get.singleDate }
   }
 
   test("Single date") {
 
     val result = DateParser.parseDate("1978-01-01")
 
-    expect(false){ result.isEmpty }
-    expect("1978"){ result.get.startYear }
-    expect("1978"){ result.get.endYear }
-    expect(true){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("1978"){ result.get.startYear }
+    expectResult("1978"){ result.get.endYear }
+    expectResult(true){ result.get.singleDate }
   }
 
   test("Single date with time") {
 
     val result = DateParser.parseDate("2009-02-20T08:40Z")
 
-    expect(false){ result.isEmpty }
-    expect("2009"){ result.get.startYear }
-    expect("02"){ result.get.startMonth }
-    expect("20"){ result.get.startDay }
-    expect(true){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("2009"){ result.get.startYear }
+    expectResult("02"){ result.get.startMonth }
+    expectResult("20"){ result.get.startDay }
+    expectResult(true){ result.get.singleDate }
   }
 
   test("Single month date") {
 
     val result = DateParser.parseDate("1978-01")
 
-    expect(false){ result.isEmpty }
-    expect("1978"){ result.get.startYear }
-    expect("1978"){ result.get.endYear }
-    expect("01"){ result.get.startMonth }
-    expect("01"){ result.get.endMonth }
-    expect(true){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("1978"){ result.get.startYear }
+    expectResult("1978"){ result.get.endYear }
+    expectResult("01"){ result.get.startMonth }
+    expectResult("01"){ result.get.endMonth }
+    expectResult(true){ result.get.singleDate }
   }
 
   test("Single month date with trailing hyphen") {
 
     val result = DateParser.parseDate("1978-01-")
 
-    expect(false){ result.isEmpty }
-    expect("1978"){ result.get.startYear }
-    expect("1978"){ result.get.endYear }
-    expect("01"){ result.get.startMonth }
-    expect("01"){ result.get.endMonth }
-    expect(true){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("1978"){ result.get.startYear }
+    expectResult("1978"){ result.get.endYear }
+    expectResult("01"){ result.get.startMonth }
+    expectResult("01"){ result.get.endMonth }
+    expectResult(true){ result.get.singleDate }
   }
 
   test("Date range") {
 
     val result = DateParser.parseDate("1978-01-01/1979-02-13")
 
-    expect(false){ result.isEmpty }
-    expect("1978"){ result.get.startYear }
-    expect("1979"){ result.get.endYear }
-    expect("01"){ result.get.startMonth }
-    expect("02"){ result.get.endMonth }
-    expect(false){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("1978"){ result.get.startYear }
+    expectResult("1979"){ result.get.endYear }
+    expectResult("01"){ result.get.startMonth }
+    expectResult("02"){ result.get.endMonth }
+    expectResult(false){ result.get.singleDate }
   }
 
   test("Month range") {
 
     val result = DateParser.parseDate("1978-01/1979-05")
 
-    expect(false){ result.isEmpty }
-    expect("1978"){ result.get.startYear }
-    expect("1979"){ result.get.endYear }
-    expect("01"){ result.get.startMonth }
-    expect("05"){ result.get.endMonth }
-    expect(false){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("1978"){ result.get.startYear }
+    expectResult("1979"){ result.get.endYear }
+    expectResult("01"){ result.get.startMonth }
+    expectResult("05"){ result.get.endMonth }
+    expectResult(false){ result.get.singleDate }
   }
 
   test("Month range trailing hyphens") {
 
     val result = DateParser.parseDate("1978-01-/1979-05-")
 
-    expect(false){ result.isEmpty }
-    expect("1978"){ result.get.startYear }
-    expect("1979"){ result.get.endYear }
-    expect("01"){ result.get.startMonth }
-    expect("05"){ result.get.endMonth }
-    expect(false){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("1978"){ result.get.startYear }
+    expectResult("1979"){ result.get.endYear }
+    expectResult("01"){ result.get.startMonth }
+    expectResult("05"){ result.get.endMonth }
+    expectResult(false){ result.get.singleDate }
   }
 
   test("Year range") {
 
     val result = DateParser.parseDate("1978/1991")
 
-    expect(false){ result.isEmpty }
-    expect("1978"){ result.get.startYear }
-    expect("1991"){ result.get.endYear }
-    expect(false){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("1978"){ result.get.startYear }
+    expectResult("1991"){ result.get.endYear }
+    expectResult(false){ result.get.singleDate }
   }
 
   test("Same century range") {
 
     val result = DateParser.parseDate("1978/91")
 
-    expect(false){ result.isEmpty }
-    expect("1978"){ result.get.startYear }
-    expect("1991"){ result.get.endYear }
-    expect(false){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("1978"){ result.get.startYear }
+    expectResult("1991"){ result.get.endYear }
+    expectResult(false){ result.get.singleDate }
   }
 
   test("2002-03-10 00:00:00.0/2002-03-10 00:00:00.0") {
 
     val result = DateParser.parseDate("2002-03-10 00:00:00.0/2003-03-10 00:00:00.0")
 
-    expect(false){ result.isEmpty }
-    expect("2002"){ result.get.startYear }
-    expect("2003"){ result.get.endYear }
-    expect(false){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("2002"){ result.get.startYear }
+    expectResult("2003"){ result.get.endYear }
+    expectResult(false){ result.get.singleDate }
   }
 
   test("2005-06-12 00:00:00.0/2005-06-12 00:00:00.0") {
     val result = DateParser.parseDate("2005-06-12 00:00:00.0/2005-06-12 00:00:00.0")
-    expect(false){ result.isEmpty }
-    expect("2005"){ result.get.startYear }
-    expect("2005"){ result.get.endYear }
-    expect(true){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("2005"){ result.get.startYear }
+    expectResult("2005"){ result.get.endYear }
+    expectResult(true){ result.get.singleDate }
   }
 
   test("12-06-2005") {
     val result = DateParser.parseDate("12-06-2005")
-    expect(false){ result.isEmpty }
-    expect("2005"){ result.get.startYear }
-    expect("2005"){ result.get.endYear }
-    expect(true){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("2005"){ result.get.startYear }
+    expectResult("2005"){ result.get.endYear }
+    expectResult(true){ result.get.singleDate }
   }
 
   test("Mon Apr 23 00:00:00 EST 1984/Sun Apr 29 00:00:00 EST 1984") {
     val result = DateParser.parseDate("Mon Apr 23 00:00:00 EST 1984/Sun Apr 29 00:00:00 EST 1984")
-    expect(false){ result.isEmpty }
-    expect("1984"){ result.get.startYear }
-    expect("1984"){ result.get.endYear }
-    expect(false){ result.get.singleDate }
+    expectResult(false){ result.isEmpty }
+    expectResult("1984"){ result.get.startYear }
+    expectResult("1984"){ result.get.endYear }
+    expectResult(false){ result.get.singleDate }
   }
 
   test("Fri Aug 12 15:19:20 EST 2011"){
       val result = DateParser.parseDate("Fri Aug 12 15:19:20 EST 2011")
-      expect(false){ result.isEmpty }
-      expect("2011"){ result.get.startYear }
-      expect("2011"){ result.get.endYear }
-      expect(true){ result.get.singleDate }
+      expectResult(false){ result.isEmpty }
+      expectResult("2011"){ result.get.startYear }
+      expectResult("2011"){ result.get.endYear }
+      expectResult(true){ result.get.singleDate }
   }
 
   test("1982-03-12"){
       val result = DateParser.parseDate("1982-03-12 ")
-      expect(false){ result.isEmpty }
-      expect("1982"){ result.get.startYear }
-      expect("03"){ result.get.startMonth }
-      expect(true){ result.get.singleDate }
+      expectResult(false){ result.isEmpty }
+      expectResult("1982"){ result.get.startYear }
+      expectResult("03"){ result.get.startMonth }
+      expectResult(true){ result.get.singleDate }
   }
 
   test("2011-09-13 09:29:08"){
       val result = DateParser.parseDate("2011-09-13 09:29:08")
-      expect(false){ result.isEmpty }
-      expect("2011"){ result.get.startYear }
-      expect("09"){ result.get.startMonth }
-      expect("13"){ result.get.startDay }
-      expect(true){ result.get.singleDate }
+      expectResult(false){ result.isEmpty }
+      expectResult("2011"){ result.get.startYear }
+      expectResult("09"){ result.get.startMonth }
+      expectResult("13"){ result.get.startDay }
+      expectResult(true){ result.get.singleDate }
   }
 
   test("21-Aug-2005"){
       val result = DateParser.parseDate("21-Aug-2005")
-      expect(false){ result.isEmpty }
-      expect("2005"){ result.get.startYear }
-      expect("08"){ result.get.startMonth }
-      expect("21"){ result.get.startDay }
-      expect(true){ result.get.singleDate }
+      expectResult(false){ result.isEmpty }
+      expectResult("2005"){ result.get.startYear }
+      expectResult("08"){ result.get.startMonth }
+      expectResult("21"){ result.get.startDay }
+      expectResult(true){ result.get.singleDate }
   }
 
   test("Aug-2005"){
       val result = DateParser.parseDate("Aug-2005")
-      expect(false){ result.isEmpty }
-      expect("2005"){ result.get.startYear }
-      expect("08"){ result.get.startMonth }
-      expect(true){ result.get.singleDate }
+      expectResult(false){ result.isEmpty }
+      expectResult("2005"){ result.get.startYear }
+      expectResult("08"){ result.get.startMonth }
+      expectResult(true){ result.get.singleDate }
   }
 
   test("1998-9-30/10-7"){
     val result = DateParser.parseDate("1998-9-30/10-7")
-    expect(false){ result.isEmpty}
-    expect("1998"){result.get.startYear}
-    expect("09"){result.get.startMonth}
-    expect("10"){result.get.endMonth}
-    expect("30"){result.get.startDay}
-    expect("07"){result.get.endDay}
+    expectResult(false){ result.isEmpty}
+    expectResult("1998"){result.get.startYear}
+    expectResult("09"){result.get.startMonth}
+    expectResult("10"){result.get.endMonth}
+    expectResult("30"){result.get.startDay}
+    expectResult("07"){result.get.endDay}
   }
 
   test("2011-10-31T18:50:00"){
     val result = DateParser.parseDate("2011-10-31T18:50:00")
-    expect(false){ result.isEmpty}
-    expect("2011"){result.get.startYear}
-    expect("10"){result.get.startMonth}
-    expect("10"){result.get.endMonth}
-    expect("31"){result.get.startDay}
-    expect("31"){result.get.endDay}
-    expect(true){result.get.singleDate}
+    expectResult(false){ result.isEmpty}
+    expectResult("2011"){result.get.startYear}
+    expectResult("10"){result.get.startMonth}
+    expectResult("10"){result.get.endMonth}
+    expectResult("31"){result.get.startDay}
+    expectResult("31"){result.get.endDay}
+    expectResult(true){result.get.singleDate}
   }
 
   test("2011-10-31Z"){
     val result = DateParser.parseDate("2011-10-31Z")
-    expect(false){ result.isEmpty}
-    expect("2011"){result.get.startYear}
-    expect("10"){result.get.startMonth}
-    expect("10"){result.get.endMonth}
-    expect("31"){result.get.startDay}
-    expect("31"){result.get.endDay}
-    expect(true){result.get.singleDate}
+    expectResult(false){ result.isEmpty}
+    expectResult("2011"){result.get.startYear}
+    expectResult("10"){result.get.startMonth}
+    expectResult("10"){result.get.endMonth}
+    expectResult("31"){result.get.startDay}
+    expectResult("31"){result.get.endDay}
+    expectResult(true){result.get.singleDate}
   }
 
   test("2001-03-14T00:00:00+11:00"){
     val result = DateParser.parseDate("2001-03-14T00:00:00+11:00")
-    expect(false){result.isEmpty}
-    expect("2001"){result.get.startYear}
-    expect("03"){result.get.startMonth}
-    expect("03"){result.get.endMonth}
-    expect("14"){result.get.startDay}
-    expect("14"){result.get.endDay}
-    expect(true){result.get.singleDate}
+    expectResult(false){result.isEmpty}
+    expectResult("2001"){result.get.startYear}
+    expectResult("03"){result.get.startMonth}
+    expectResult("03"){result.get.endMonth}
+    expectResult("14"){result.get.startDay}
+    expectResult("14"){result.get.endDay}
+    expectResult(true){result.get.singleDate}
   }
 
 
   //03/041957
 //  test("03/041957"){
 //    val result = DateParser.parseDate("03/041957")
-//    expect(false){ result.isEmpty}
-//    expect("1957"){result.get.startYear}
-//    expect("04"){result.get.startMonth}
-//    expect("03"){result.get.startDay}
-//    expect(true){ result.get.singleDate }
+//    expectResult(false){ result.isEmpty}
+//    expectResult("1957"){result.get.startYear}
+//    expectResult("04"){result.get.startMonth}
+//    expectResult("03"){result.get.startDay}
+//    expectResult(true){ result.get.singleDate }
 //  }
 }

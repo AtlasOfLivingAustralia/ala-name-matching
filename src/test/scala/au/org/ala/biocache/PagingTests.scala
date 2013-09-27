@@ -37,7 +37,7 @@ class PagingTests extends FunSuite {
     var count = 0
     occurrenceDAO.pageOverAllVersions(recordVersions => {
         val versions = recordVersions.get
-        expect(3){versions.length}
+        expectResult(3){versions.length}
         for(fullRecord <- versions){
           val occurrence = fullRecord.occurrence
           val classification = fullRecord.classification

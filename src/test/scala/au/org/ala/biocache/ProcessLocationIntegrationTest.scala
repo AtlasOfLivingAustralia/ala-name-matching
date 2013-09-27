@@ -17,7 +17,7 @@ class ProcessLocationIntegrationTest extends ConfigFunSuite {
     processed.classification.taxonConceptID = "urn:lsid:biodiversity.org.au:afd.taxon:3809b1ca-8b60-4fcb-acf5-ca4f1dc0e263"
     (new LocationProcessor).process("test", raw, processed)
     println(processed.occurrence.stateConservation)
-    expect("Endangered,Endangered") {
+    expectResult("Endangered,Endangered") {
       processed.occurrence.stateConservation
     }
   }

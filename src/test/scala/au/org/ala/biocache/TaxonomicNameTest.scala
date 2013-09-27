@@ -25,7 +25,7 @@ class TaxonomicNameTest extends ConfigFunSuite {
         var processed = new FullRecord
         raw.classification.scientificName = "dummy name"
         val qas = (new ClassificationProcessor).process("test", raw, processed)
-        expect(0){qas.find(_.code == 10004).get.qaStatus}
+        expectResult(0){qas.find(_.code == 10004).get.qaStatus}
     }
 
     test("Parse type"){
@@ -33,7 +33,7 @@ class TaxonomicNameTest extends ConfigFunSuite {
       val processed = new FullRecord
       raw.classification.scientificName ="Zabidius novemaculeatus"
       (new ClassificationProcessor).process("test",raw,processed)
-      expect("wellformed"){processed.classification.nameParseType}
+      expectResult("wellformed"){processed.classification.nameParseType}
     }
 
     test("name not in national checklists"){
@@ -41,11 +41,11 @@ class TaxonomicNameTest extends ConfigFunSuite {
         var processed = new FullRecord
         raw.classification.scientificName = "Amanita farinacea"
         var qas = (new ClassificationProcessor).process("test", raw, processed)
-        expect(1){qas.find(_.code == 10005).get.qaStatus}
+        expectResult(1){qas.find(_.code == 10005).get.qaStatus}
 
         raw.classification.scientificName = "Acridotheres tristis"
         qas = (new ClassificationProcessor).process("test", raw, processed)
-        expect(0){qas.find(_.code == 10005).get.qaStatus}
+        expectResult(0){qas.find(_.code == 10005).get.qaStatus}
     }
 
     test("homonym issue"){
@@ -55,9 +55,9 @@ class TaxonomicNameTest extends ConfigFunSuite {
         raw.classification.scientificName = "Macropus ?";
         val qas = (new ClassificationProcessor).process("test", raw, processed);
         println(processed.classification.taxonConceptID)
-        expect(true){processed.classification.getTaxonomicIssue().contains("homonym")}
-        expect(true){processed.classification.getTaxonomicIssue().contains("questionSpecies")}
-//        expect(10006){qas(0).code}
+        expectResult(true){processed.classification.getTaxonomicIssue().contains("homonym")}
+        expectResult(true){processed.classification.getTaxonomicIssue().contains("questionSpecies")}
+//        expectResult(10006){qas(0).code}
     }
 
 //    test("missing accepted name"){
@@ -65,10 +65,10 @@ class TaxonomicNameTest extends ConfigFunSuite {
 //      var processed = new FullRecord
 //      raw.classification.scientificName="Gnaphalium collinum"
 //      (new ClassificationProcessor).process("test", raw, processed)
-//      expect(null){processed.classification.scientificName}
+//      expectResult(null){processed.classification.scientificName}
 //      //raw.classification.genus = "Gnaphalium"
 //      raw.classification.family ="Asteraceae"
 //      (new ClassificationProcessor).process("test", raw, processed)
-//      expect("Asteraceae"){processed.classification.scientificName}
+//      expectResult("Asteraceae"){processed.classification.scientificName}
 //    }
 }

@@ -32,13 +32,13 @@ class VersionTest extends FunSuite {
     if(r.isEmpty) fail("Empty result")
 
     val array = r.get
-    expect("Raw version"){array(0).classification.scientificName}
-    expect("Processed version"){array(1).classification.scientificName}
-    expect("Consenus version"){array(2).classification.scientificName}
+    expectResult("Raw version"){array(0).classification.scientificName}
+    expectResult("Processed version"){array(1).classification.scientificName}
+    expectResult("Consenus version"){array(2).classification.scientificName}
 
-    expect(1){array(0).assertions.length}
-    expect(1){array(1).assertions.length}
-    expect(1){array(2).assertions.length}
+    expectResult(1){array(0).assertions.length}
+    expectResult(1){array(1).assertions.length}
+    expectResult(1){array(2).assertions.length}
 
     persistenceManager.shutdown
   }
