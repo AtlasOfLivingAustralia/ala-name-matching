@@ -304,6 +304,10 @@ object Countries extends Vocab {
   val all = loadVocabFromFile("/countries.txt")
 }
 
+object SpeciesListAcronyms extends Vocab {
+  val all = loadVocabFromFile("/speciesListAcronyms.txt")
+}
+
 object StateProvinces extends Vocab {
   val all = loadVocabFromFile("/stateProvinces.txt")
 }

@@ -704,6 +704,8 @@
    <field name="collector_text" type="textgen" indexed="true" stored="true" multiValued="true" omitNorms="true" />
    <field name="identified_by_text" type="textgen" indexed="true" stored="false" multiValued="true" omitNorms="true" />
 
+   <field name="species_list_uid" type="string" indexed="true" stored="true" multiValued="true"/>
+
    <!-- the number of layers this record is an outlier for -->
    <field name="outlier_layer_count" type="tint" indexed="true" stored="true" multiValued="false" omitNorms="true" />
    <!-- the layers this record is an outlier for -->
@@ -750,6 +752,7 @@
    <!-- They are being stored just in case they need to be faceted on -->
    <dynamicField name="el*" type="double" indexed="true" stored="true" omitNorms="true" />
    <dynamicField name="cl*" type="string" indexed="true" stored="true" omitNorms="true" />
+   <dynamicField name="dr*" type="string" indexed="true" stored="false" omitNorms="true" />
    
 
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient

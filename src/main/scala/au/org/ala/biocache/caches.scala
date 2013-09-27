@@ -188,6 +188,82 @@ object ClassificationDAO {
 }
 
 /**
+ * A cache that stores the species lists for a taxon lsid.
+ *
+ * It will only store the lists that are configured via the specieslists property.
+ *
+ */
+object TaxonSpeciesListDAO {
+  def listToolUrl = "http://lists.ala.org.au/ws/species/"
+  private val lru = new org.apache.commons.collections.map.LRUMap(100000)
+  private val lock : AnyRef = new Object()
+  private val validLists = Config.getProperty("specieslists","").split(",")
+  private val prefixFields = Config.getProperty("slPrefix","stateProvince").split(",").toSet
+  private val indexValues = Config.getProperty("slIndexKeys","category").split(",").toSet
+
+  //retrieves the species list information from the WS
+  def getListsForTaxon(conceptLsid:String):(List[String], Map[String,String])={
+    val cachedObject = lock.synchronized { lru.get(conceptLsid) }
+    if(cachedObject == null){
+      val response = WebServiceLoader.getWSStringContent(listToolUrl+conceptLsid)
+      if(response != ""){
+        val list =JSON.parseFull(response).get.asInstanceOf[List[Map[String, AnyRef]]]
+        //get a distinct list of lists that the supplied concept belongs to
+        val newObject= list.map(_.getOrElse("dataResourceUid","").toString).filter(v => validLists.contains(v)).toSet.toList
+        val newMap = collection.mutable.Map[String, String]()
+        list.foreach(map =>{
+          val dr = map.getOrElse("dataResourceUid","").toString
+          //only add the KVP items if they come from valid list
+          if(validLists.contains(dr)){
+            val kvparrayopt =map.get("kvpValues")
+
+            if(kvparrayopt.isDefined){
+              val kvparray = kvparrayopt.get.asInstanceOf[List[Map[String,String]]]
+              //get the prefix information
+              val prefix = kvparray.find(map => prefixFields.contains(map.getOrElse("key","")))
+              val stringPrefix = {
+                if(prefix.isDefined){
+                    val value = getValueBasedOnKVP(prefix.get)
+                    val matchedPrefix = SpeciesListAcronyms.matchTerm(value)
+                    if(matchedPrefix.isDefined) matchedPrefix.get.canonical.toLowerCase() else value.replaceAll(" " , "_").toLowerCase()
+                } else{
+                  ""
+                }
+              }
+
+              val filteredList = kvparray.filter(_.values.toSet.intersect(indexValues).size> 0)
+
+              filteredList.foreach( item =>{
+
+                //now grab the indexItems
+                if(indexValues.contains(item.getOrElse("key",""))){
+                  val value = getValueBasedOnKVP(item)
+                  newMap(dr + getEscapedValue(stringPrefix) + getEscapedValue(item.getOrElse("key",""))) = value
+                }
+
+              })
+            }
+          }
+        })
+        lock.synchronized{lru.put(conceptLsid, (newObject,newMap.toMap))}
+        (newObject,newMap.toMap)
+      } else{
+        (List(),Map())
+      }
+    } else{
+     cachedObject.asInstanceOf[(List[String],Map[String,String])]
+    }
+  }
+  def getEscapedValue(value:String)= if(value.trim.size>0) "_" + value else value.trim
+  def getValueBasedOnKVP(item:Map[String,String]):String =  if (item.getOrElse("vocabValue",null) != null) item.getOrElse("vocabValue",null) else item.getOrElse("value","")
+  def clearCache(){
+    lock.synchronized{
+      lru.clear()
+    }
+  }
+}
+
+/**
  * A DAO for accessing taxon profile information by GUID.
  * 
  * This should provide an abstraction layer, that (eventually) handles

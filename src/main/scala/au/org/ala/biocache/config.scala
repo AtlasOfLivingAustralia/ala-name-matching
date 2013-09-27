@@ -76,6 +76,7 @@ object Config {
   lazy val layersServiceUrl = configModule.properties.getProperty("layersServiceUrl")
   lazy val biocacheServiceUrl = configModule.properties.getProperty("biocacheServiceUrl")
   def getProperty(prop:String) = configModule.properties.getProperty(prop)
+  def getProperty(prop:String, default:String) = configModule.properties.getProperty(prop,default)
 }
 
 /**
