@@ -120,7 +120,7 @@ class MiscTest extends ConfigFunSuite {
         var processed = new FullRecord
         raw.occurrence.associatedTaxa = "infects:Test Species"
         (new MiscellaneousProcessor).process("test", raw, processed)
-        expect ("Infects"){processed.occurrence.interactions(0)}
+        expectResult("Infects"){processed.occurrence.interactions(0)}
     }
     test("modified"){
         val raw = new FullRecord
