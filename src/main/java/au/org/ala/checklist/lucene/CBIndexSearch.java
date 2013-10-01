@@ -582,8 +582,10 @@ public class CBIndexSearch {
                 if(pn.type == NameType.doubtful || (rank != null && rank.getId()<=7000) || rank == null)
                     nsr = performErrorCheckSearch(pn.getGenusOrAbove(), cl, null, fuzzy, metrics);
             }catch(Exception e){}
+
+
                 if(nsr == null && rank != RankType.SPECIES
-                        && ((StringUtils.isNotEmpty(cl.getSpecificEpithet()) && !isSpecificMarker(cl.getSpecies())) ||
+                        && ((StringUtils.isNotEmpty(cl.getSpecificEpithet()) && !isSpecificMarker(cl.getSpecificEpithet())) ||
                         (StringUtils.isNotEmpty(cl.getSpecies()) && !isSpecificMarker(cl.getSpecies())))){
                     name = cl.getSpecies();
                     if(StringUtils.isEmpty(name))
@@ -711,7 +713,7 @@ public class CBIndexSearch {
 	private boolean isSpecificMarker(String species) {
     	String epithet = StringUtils.trimToNull(species);
     	if(epithet!=null){
-    		if("sp".equalsIgnoreCase(epithet) || "sp.".equalsIgnoreCase(epithet)) return true;
+    		if("sp".equalsIgnoreCase(epithet) || "sp.".equalsIgnoreCase(epithet) || "sp.nov.".equalsIgnoreCase(species.replaceAll(" ", ""))) return true;
     	}
 		return false;
 	}

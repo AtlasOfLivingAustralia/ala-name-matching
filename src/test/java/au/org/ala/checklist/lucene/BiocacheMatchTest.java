@@ -34,6 +34,42 @@ public class BiocacheMatchTest {
 
     }
 
+    @Test
+    public void testSPNovName(){
+        try{
+            String name="Eremophila sp.nov.";
+            String genus="Eremophila";
+            String family ="Myoporaceae";
+            String spEp = "sp.nov.";
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName(name);
+            cl.setGenus(genus);
+            cl.setFamily(family);
+            cl.setSpecificEpithet(spEp);
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            //System.out.println(metrics.getResult());
+            assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:399930", metrics.getResult().getAcceptedLsid());
+            assertTrue(metrics.getErrors().contains(ErrorType.HOMONYM));
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
+    @Test
+    public void testAlternatePhraseName(){
+        try{
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName("Senna form taxon 'petiolaris'");
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            System.out.println(metrics);
+        }
+        catch(Exception e){
+
+        }
+    }
+
 //    @Test public void testKing(){
 //        try{
 //            LinnaeanRankClassification cl = new LinnaeanRankClassification();
