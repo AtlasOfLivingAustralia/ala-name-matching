@@ -30,7 +30,8 @@ object Config {
   def indexDAO = getInstance(classOf[IndexDAO]).asInstanceOf[IndexDAO]
 
   lazy val sdsFinder = {
-    SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("http://sds.ala.org.au/sensitive-species-data.xml", nameIndex)
+    val sdsUrl = configModule.properties.getProperty("sdsUrl","http://sds.ala.org.au/sensitive-species-data.xml")
+    SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(sdsUrl, nameIndex)
   }
 
   val allowLayerLookup = {
@@ -70,6 +71,7 @@ object Config {
     }
   }
 
+  lazy val flickrUsersUrl = configModule.properties.getProperty("flickrUsersUrl", "http://auth.ala.org.au/userdetails/external/flickr")
   lazy val reindexUrl = configModule.properties.getProperty("reindexUrl")
   lazy val reindexData = configModule.properties.getProperty("reindexData")
   lazy val reindexViewDataResourceUrl = configModule.properties.getProperty("reindexViewDataResourceUrl")
@@ -85,6 +87,7 @@ object Config {
 class ConfigModule extends AbstractModule {
 
   protected val logger = LoggerFactory.getLogger("ConfigModule")
+
   val properties = {
     val properties = new Properties()
     //NC 2013-08-16: Supply the properties file as a system property via -Dbiocache.config=<file>

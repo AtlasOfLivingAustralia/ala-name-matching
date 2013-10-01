@@ -5,6 +5,37 @@ import scala.xml.XML
 import scala.collection.mutable.ListBuffer
 import au.org.ala.biocache._
 import java.util.Date
+import org.slf4j.LoggerFactory
+import scala.collection.mutable
+import scala.util.parsing.json.JSON
+
+object FlickrUserLoader extends DataLoader {
+  def main(args: Array[String]) {
+
+    var dataResourceUid = ""
+    var flickrUserId = ""
+
+    val parser = new OptionParser("Load flickr images for registered users") {
+      arg("<data resource UID>", "The UID of the data resource to load", { v: String => dataResourceUid = v })
+      opt("nsid", "The Flickr NSID for this user", "The Flickr NSID (internal flickr ID) for this user", { v: String => flickrUserId = v })
+    }
+    if(parser.parse(args)){
+      val l = new FlickrLoader
+      //get the connection details
+      val (protocol, url, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(dataResourceUid)
+      if(flickrUserId != ""){
+        l.loadWithoutDateRange(params ++ Map("user_id"  -> flickrUserId), dataResourceUid, false)
+      } else {
+        val userLookup = l.getUserLookup
+        userLookup.keys.foreach(flickrUserId => {
+          //get the connection details
+          val (protocol, url, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(dataResourceUid)
+          l.loadWithoutDateRange(params ++ Map("user_id"  -> flickrUserId), dataResourceUid, false)
+        })
+      }
+    }
+  }
+}
 
 object FlickrLoader extends DataLoader {
 
@@ -19,7 +50,7 @@ object FlickrLoader extends DataLoader {
     var lastWeek = false
     var updateCollectory = false
 
-    val parser = new OptionParser("load flickr resource") {
+    val parser = new OptionParser("Load flickr resource") {
       arg("<data resource UID>", "The UID of the data resource to load", { v: String => dataResourceUid = v })
       opt("s", "startDate", "start date to harvest from in yyyy-MM-dd format", { v: String => startDate = Some(DateUtils.parseDate(v, Array("yyyy-MM-dd"))) })
       opt("e", "endDate", "end date in yyyy-MM-dd format", { v: String => endDate = Some(DateUtils.parseDate(v, Array("yyyy-MM-dd"))) })
@@ -29,7 +60,7 @@ object FlickrLoader extends DataLoader {
       booleanOpt("o", "overwrite", "overwrite images", { v: Boolean => overwriteImages = v })
       booleanOpt("u", "updateCollectory", "Update the harvesting information in the collectory", { v: Boolean => updateCollectory = v })
     }
-    if (parser.parse(args)) {
+    if(parser.parse(args)){
       val l = new FlickrLoader
       if(lastMonth){
         val today = new Date
@@ -78,12 +109,80 @@ class FlickrLoader extends DataLoader {
    * Load the resource between the supplied dates.
    */
   def load(dataResourceUid: String, suppliedStartDate: Option[Date], suppliedEndDate: Option[Date], updateCollectory: Boolean, overwriteImages: Boolean = false){
-
     val (protocol, url, uniqueTerms, params, customParams, lastChecked) = retrieveConnectionParameters(dataResourceUid)
+    load(params, suppliedEndDate, suppliedStartDate, dataResourceUid, updateCollectory)
+  }
 
+  def getUserLookup : Map[String,String] = {
+    if(Config.flickrUsersUrl == "")
+      return Map()
+
+    try {
+      val mapBuff = new mutable.HashMap[String,String]
+      //retrieve from properties
+      val userListJson = scala.io.Source.fromURL(Config.flickrUsersUrl).getLines().mkString
+      //convert to flickrId -> alaID map.....
+      val userArray:Seq[Map[String,String]] =  JSON.parseFull(userListJson).get.asInstanceOf[Seq[Map[String, String]]]
+      userArray.foreach(u => mapBuff.put(u.getOrElse("externalId",""), u.getOrElse("id","")))
+      mapBuff.toMap
+    } catch {
+      case e:Exception => logger.error(e.getMessage, e); Map()
+    }
+  }
+
+  /**
+   * Load the supplied data source
+   *
+   * @param params
+   * @param dataResourceUid
+   * @param updateCollectory
+   */
+  def loadWithoutDateRange(params: Map[String, String], dataResourceUid: String, updateCollectory: Boolean) {
     val licences = retrieveLicenceMap(params)
-
     val keywords = params.getOrElse("keywords", "").split(",").map(keyword => keyword.trim.replaceAll(" ", "").toLowerCase).toList
+    val userLookup = getUserLookup
+
+    try {
+      val photoIds = getPhotoIds(params)
+      photoIds.foreach(photoId => {
+
+        try {
+          //persist the occurrence with image metadata
+          val (photoPageUrl, imageUrl, fr, tags) = processPhoto(params, licences, userLookup, photoId)
+
+          //have we already loaded this record?
+          val alreadyLoaded = exists(dataResourceUid, List(photoPageUrl))
+
+          //load it if its of interest and we havent loaded it
+          if (isOfInterest(fr, tags, keywords)) {
+            load(dataResourceUid, fr, List(photoPageUrl), !alreadyLoaded, true)
+          }
+        } catch {
+          case e: Exception => logger.error(e.getMessage, e)
+        }
+      })
+    } catch {
+      case e: Exception => logger.error(e.getMessage, e)
+    }
+
+    if (updateCollectory) {
+      updateLastChecked(dataResourceUid)
+    }
+  }
+
+  /**
+   * Load the supplied data source
+   *
+   * @param params
+   * @param suppliedEndDate
+   * @param suppliedStartDate
+   * @param dataResourceUid
+   * @param updateCollectory
+   */
+  def load(params: Map[String, String], suppliedEndDate: Option[Date], suppliedStartDate: Option[Date], dataResourceUid: String, updateCollectory: Boolean) {
+    val licences = retrieveLicenceMap(params)
+    val keywords = params.getOrElse("keywords", "").split(",").map(keyword => keyword.trim.replaceAll(" ", "").toLowerCase).toList
+    val userLookup = getUserLookup
 
     val endDate = suppliedEndDate.getOrElse({
       params.get("end_date") match {
@@ -103,39 +202,39 @@ class FlickrLoader extends DataLoader {
 
     val df = new SimpleDateFormat("yyyy-MM-dd")
 
-    println("Starting with range: " + df.format(currentStartDate) + " to " + df.format(currentEndDate));
+    logger.info("Starting with range: " + df.format(currentStartDate) + " to " + df.format(currentEndDate))
 
     // page through the images month-by-month
     while (currentStartDate.after(startDate) || currentStartDate.equals(startDate)) {
 
-      println("Harvesting time period: " + df.format(currentStartDate) + " to " + df.format(currentEndDate));
+      logger.info("Harvesting time period: " + df.format(currentStartDate) + " to " + df.format(currentEndDate))
       try {
-        val photoIds = getPhotoIdsForDateRange(params, currentStartDate, currentEndDate);
+        val photoIds = getPhotoIdsForDateRange(params, currentStartDate, currentEndDate)
         photoIds.foreach(photoId => {
 
           try {
             //persist the occurrence with image metadata
-            val (photoPageUrl, imageUrl, fr, tags) = processPhoto(params, licences, photoId)
+            val (photoPageUrl, imageUrl, fr, tags) = processPhoto(params, licences, userLookup, photoId)
 
             //have we already loaded this record?
             val alreadyLoaded = exists(dataResourceUid, List(photoPageUrl))
 
             //load it if its of interest and we havent loaded it
-            if (isOfInterest(tags, keywords)) {
+            if (isOfInterest(fr, tags, keywords)) {
               load(dataResourceUid, fr, List(photoPageUrl), !alreadyLoaded, true)
             }
           } catch {
-            case e: Exception => e.printStackTrace
+            case e: Exception => logger.error(e.getMessage, e)
           }
         })
       } catch {
-        case e: Exception => e.printStackTrace
+        case e: Exception => logger.error(e.getMessage, e)
       }
       currentEndDate = currentStartDate
       currentStartDate = DateUtils.addDays(currentEndDate, -1)
     }
 
-    if (updateCollectory){
+    if (updateCollectory) {
       updateLastChecked(dataResourceUid)
     }
   }
@@ -143,7 +242,18 @@ class FlickrLoader extends DataLoader {
   /**
    * Is the image of interest
    */
-  def isOfInterest(tags: List[String], keywords: List[String]): Boolean = {
+  def isOfInterest(fr:FullRecord, tags: Seq[String], keywords: Seq[String]): Boolean = {
+
+    val hasTaxon = {
+      val nonEmptyTaxonProp = fr.classification.getPropertyNames.find(p => {
+         !fr.classification.getProperty(p).isEmpty
+      })
+      !nonEmptyTaxonProp.isEmpty
+    }
+    if(!hasTaxon){
+      return false
+    }
+
     //match on keywords
     val index = tags.indexWhere(
       tag => {
@@ -153,17 +263,25 @@ class FlickrLoader extends DataLoader {
     index >= 0
   }
 
-
-  def processPhoto(connectParams: Map[String, String], licences: Map[String,FlickrLicence], photoId: String): (String, String, FullRecord, List[String]) = {
+  /**
+   * Process a single photo returning a FullRecord representing this photo.
+   *
+   * @param connectParams
+   * @param licences
+   * @param photoId
+   * @return
+   */
+  def processPhoto(connectParams: Map[String, String], licences: Map[String,FlickrLicence],
+                   userLookup:Map[String,String], photoId: String): (String, String, FullRecord, Seq[String]) = {
 
     //create an occurrence record
     val fr = new FullRecord
     val infoPage: String = makeGetInfoUrl(connectParams, photoId)
 
-    println(infoPage)
+    logger.info(infoPage)
 
-    val listBuffer = new ListBuffer[String]
-    val xml = XML.loadString(scala.io.Source.fromURL(infoPage).mkString)
+    val tagList = new ListBuffer[String]
+    val xml = XML.loadString(scala.io.Source.fromURL(infoPage).mkString.trim)
     //val listBuffer = new ListBuffer[String]
     //get the tags
     val tags = (xml \\ "tag").foreach(el => {
@@ -172,7 +290,7 @@ class FlickrLoader extends DataLoader {
       if (!raw.isEmpty && raw.get.text.contains("=")) {
         //parse machine tage
         val (namespace, tagName, tagValue) = parseMachineTag(raw.get.text.trim)
-        listBuffer += tagValue
+        tagList += tagValue
         //match to darwin core terms
         if (!tagName.isEmpty){
           val dwcTerm = matchDwcTerm(namespace, tagName.get)
@@ -192,10 +310,16 @@ class FlickrLoader extends DataLoader {
     val licenseID = (xml \\ "photo")(0).attribute("license").get.text.toString
     val title = (xml \\ "title")(0).text.toString
     val description = (xml \\ "description")(0).text.toString
-    val (username, realname, location) = {
+    val (username, realname, location, nsid) = {
       val ownerElem = (xml \\ "owner")(0)
-      (ownerElem.attribute("username"), ownerElem.attribute("realname"), ownerElem.attribute("location"))
+      (ownerElem.attribute("username"), ownerElem.attribute("realname"), ownerElem.attribute("location"), ownerElem.attribute("nsid"))
     }
+
+    //lookup the ID
+    userLookup.get(nsid.get.text).exists(userId => {
+      fr.occurrence.userId = userId
+      true
+    })
 
     val photoElem = (xml \\ "photo")(0)
     val farmId = photoElem.attribute("farm").get
@@ -233,7 +357,7 @@ class FlickrLoader extends DataLoader {
     }
 
     fr.occurrence.basisOfRecord = "Image"
-    (fr.occurrence.occurrenceID, photoImageUrl, fr, listBuffer.toList)
+    (fr.occurrence.occurrenceID, photoImageUrl, fr, tagList)
   }
 
   def matchDwcTerm(namespace:Option[String], tagName:String) : Option[String] = DwC.matchTerm(tagName) match {
@@ -273,15 +397,36 @@ class FlickrLoader extends DataLoader {
     }
   }
 
+  def createParamIfNotNull(connectParams: Map[String, String], name:String, key:String) : String = {
+    val value = connectParams.getOrElse(key, "")
+    if(value != ""){
+      "&" + name + "=" + value
+    } else {
+      ""
+    }
+  }
+
+  def makeSearchUrl(connectParams: Map[String, String], pageNumber: Int) = connectParams("url") +
+    "?method=flickr.photos.search" +
+    createParamIfNotNull(connectParams, "content_type", "content_type") +
+    createParamIfNotNull(connectParams, "user_id", "user_id") +
+    createParamIfNotNull(connectParams, "group_id", "group_id") +
+    createParamIfNotNull(connectParams, "privacy_filter", "privacy_filter") +
+    createParamIfNotNull(connectParams, "api_key", "api_key") +
+    createParamIfNotNull(connectParams, "per_page", "per_page") +
+    "&page=" + pageNumber
+
+
   def makeSearchUrl(connectParams: Map[String, String], minUpdateDate: String, maxUpdateDate: String, pageNumber: Int) = connectParams("url") +
     "?method=flickr.photos.search" +
-    "&content_type=" + connectParams("content_type") +
-    "&group_id=" + connectParams("group_id") +
-    "&privacy_filter=" + connectParams("privacy_filter") +
+    createParamIfNotNull(connectParams, "content_type", "content_type") +
+    createParamIfNotNull(connectParams, "user_id", "user_id") +
+    createParamIfNotNull(connectParams, "group_id", "group_id") +
+    createParamIfNotNull(connectParams, "privacy_filter", "privacy_filter") +
+    createParamIfNotNull(connectParams, "api_key", "api_key") +
+    createParamIfNotNull(connectParams, "per_page", "per_page") +
     "&min_upload_date=" + minUpdateDate + //startDate
     "&max_upload_date=" + maxUpdateDate + //endDate
-    "&api_key=" + connectParams("api_key") +
-    "&per_page=" + connectParams("per_page") +
     "&page=" + pageNumber
 
   def makeGetInfoUrl(connectParams: Map[String, String], photoId: String): String = connectParams("url") +
@@ -295,10 +440,12 @@ class FlickrLoader extends DataLoader {
 
   def getPhotoIdsForDateRange(connectParams: Map[String, String], startDate: Date, endDate: Date): List[String] = {
 
-    val mysqlDateTime = new SimpleDateFormat("yyyy-MM-dd");
-    val minUpdateDate = mysqlDateTime.format(startDate);
-    val maxUpdateDate = mysqlDateTime.format(endDate);
+    val mysqlDateTime = new SimpleDateFormat("yyyy-MM-dd")
+    val minUpdateDate = mysqlDateTime.format(startDate)
+    val maxUpdateDate = mysqlDateTime.format(endDate)
     val firstUrl = makeSearchUrl(connectParams, minUpdateDate, maxUpdateDate, 0)
+    println(firstUrl)
+    println(scala.io.Source.fromURL(firstUrl).mkString)
     val xml = XML.loadString(scala.io.Source.fromURL(firstUrl).mkString)
     val pages = ((xml \\ "photos")(0) \ "@pages").toString.toInt
 
@@ -308,6 +455,28 @@ class FlickrLoader extends DataLoader {
       (firstBatch ::: theRest.toList.flatten)
     }
     photoIds
+  }
+
+  def getPhotoIds(connectParams: Map[String, String]): List[String] = {
+
+    val firstUrl = makeSearchUrl(connectParams, 0)
+    println(firstUrl)
+    println(scala.io.Source.fromURL(firstUrl).mkString)
+    val xml = XML.loadString(scala.io.Source.fromURL(firstUrl).mkString)
+    val pages = ((xml \\ "photos")(0) \ "@pages").toString.toInt
+
+    val photoIds = {
+      val firstBatch = (xml \\ "photo").toList.map(photo => photo.attribute("id").get.toString)
+      val theRest = for (pageNo <- 2 until pages + 1) yield retrieveBatch(connectParams, pageNo)
+      (firstBatch ::: theRest.toList.flatten)
+    }
+    photoIds
+  }
+
+  def retrieveBatch(connectParams: Map[String, String], pageNo: Int): List[String] = {
+    val urlToSearch = makeSearchUrl(connectParams, pageNo)
+    val xmlPage = XML.loadString(scala.io.Source.fromURL(urlToSearch).mkString)
+    retrievePhotoIds(xmlPage)
   }
 
   def retrieveBatch(connectParams: Map[String, String], minUpdateDate: String, maxUpdateDate: String, pageNo: Int): List[String] = {
@@ -321,11 +490,8 @@ class FlickrLoader extends DataLoader {
   def checkForBHLUrl(description:String):Option[String] = BHLLinkInText.findFirstIn(description) match {
     case Some(url) => {
       val BHLLink(domain, pageId) = url
-      Some("http://bhl.ala.org.au/page/" + pageId)
+      Some("http://www.biodiversitylibrary.org/page/" + pageId)
     }
     case None => None
   }
 }
-
-
-

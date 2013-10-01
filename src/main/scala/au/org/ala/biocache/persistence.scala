@@ -146,7 +146,7 @@ class CassandraPersistenceManager @Inject() (
   val policy = new CommonsBackedPool.Policy()
   policy.setMaxTotal(maxConnections)
   //According to Pelops : As a general rule the pools maxWaitForConnection should be three times larger than the thrift timeout value.
-  policy.setMaxWaitForConnection(3 * operationTimeout);
+  policy.setMaxWaitForConnection(3 * operationTimeout)
   //operations policy, first arg indicates how many time a failed operation will be retried, the second indicates that null value insert should be treated as a delete
   val operandPolicy = new OperandPolicy(maxRetries,false)
 
@@ -497,7 +497,7 @@ class CassandraPersistenceManager @Inject() (
           //Pelops.removePool(poolName)
           initialise //re-initialise
           if (noOfRetries == permittedRetries){
-            logger.error("Problem retrieving data. Number of DB connection retries exceeeded. Error: " + e.getMessage, e)
+            logger.error("Problem retrieving data. Number of DB connection retries exceeded. Error: " + e.getMessage, e)
             throw new RuntimeException(e)
           }
           noOfRetries += 1
@@ -679,7 +679,7 @@ class CassandraPersistenceManager @Inject() (
    */
   def delete(uuid:String, entityName:String)={
     if(uuid != null && entityName != null){
-      val deletor =Pelops.createRowDeletor(poolName)
+      val deletor = Pelops.createRowDeletor(poolName)
       deletor.deleteRow(entityName, uuid, ConsistencyLevel.ONE)
     }
   }

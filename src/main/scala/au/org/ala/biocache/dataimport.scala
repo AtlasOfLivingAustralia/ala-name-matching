@@ -42,7 +42,7 @@ class MapDataLoader extends DataLoader{
 /**
  * A trait with utility code for loading data
  */
- trait DataLoader {
+trait DataLoader {
     
     import FileHelper._
     import JavaConversions._
@@ -209,7 +209,6 @@ class MapDataLoader extends DataLoader{
       fr.attribution.dataResourceUid = dataResourceUid
     
       //download the media - checking if it exists already
-      logger.debug("########Associated media = " + fr.occurrence.associatedMedia)
       if (fr.occurrence.associatedMedia != null){
         val filesToImport = fr.occurrence.associatedMedia.split(";")
         val associatedMediaBuffer = new ArrayBuffer[String]

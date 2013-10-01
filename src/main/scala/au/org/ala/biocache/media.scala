@@ -249,13 +249,13 @@ object Thumbnailer {
    */
   def recursivelyGenerateThumbnails(directory: File) {
     //dont generate thumbnails for thumbnails
-    println("Starting with directory: " + directory.getAbsolutePath)
+    logger.info("Starting with directory: " + directory.getAbsolutePath)
     if (directory.isDirectory) {
       var children = directory.list
       if (children == null) {
         children = Array[String]()
       }
-      println("Recursive Dir: " + directory.getName + ", size of subDirs: " + children.length);
+      logger.info("Recursive Dir: " + directory.getName + ", size of subDirs: " + children.length);
       for (i <- 0 until children.length) {
         recursivelyGenerateThumbnails(new File(directory, children(i)))
       }
