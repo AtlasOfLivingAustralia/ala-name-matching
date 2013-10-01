@@ -154,7 +154,7 @@ object DuplicationDetection{
             }
         }
       } else {
-        val sourceFileName = offlineDir + File.separator + ids +File.separator+ "species.out"
+        val sourceFileName = offlineDir + File.separator + ids + File.separator + "species.out"
         new Thread(){
           override def run() {
             //the writers should override the files because they will only ever have one instance...
@@ -308,7 +308,7 @@ class DuplicationDetection{
   def detectMultipleDuplicatesFromFile(sourceFileName:String, duplicateWriter:FileWriter, passedWriter:FileWriter, threads:Int){
 
 
-    val reader =  new CSVReader(new FileReader(sourceFileName),'\t', '`', '~')
+    val reader =  new CSVReader(new FileReader(sourceFileName),'\t', '~')
 
     var currentLine = reader.readNext //first line is header
     val buff = new ArrayBuffer[DuplicateRecordDetails]
@@ -502,7 +502,7 @@ class DuplicationDetection{
     //newduplicates.foreach(i =>println(i.oldDuplicateOf))
     val uuidList = primaryRecord.duplicates.map(r => r.uuid)
     try{
-    if(newduplicates.size() >0 || primaryRecord.oldDuplicateOf == null || primaryRecord.duplicates.size != primaryRecord.oldDuplicateOf.split(",").size){
+    if(newduplicates.size > 0 || primaryRecord.oldDuplicateOf == null || primaryRecord.duplicates.size != primaryRecord.oldDuplicateOf.split(",").size){
       buffer.synchronized{buffer += primaryRecord.rowKey}
       Config.persistenceManager.put(primaryRecord.uuid, "occ_duplicates","value",dup)
       Config.persistenceManager.put(primaryRecord.taxonConceptLsid+"|"+primaryRecord.year+"|"+primaryRecord.month +"|" +primaryRecord.day, "duplicates", primaryRecord.uuid,dup)
