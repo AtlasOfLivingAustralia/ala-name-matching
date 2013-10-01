@@ -114,12 +114,12 @@ object SpeciesOutlierTests {
           var dids = 0
           //set the threads up to detect the species outliers.
           val detectpool:Array[Thread] = Array.fill(numSourceThreads){
-            val dumpFilePath = fullDumpFilePath + File.separator + dids + File.separator + taxonRank+".out"
-            val reindexFile =  idsToIndexFile+"."+dids
-            val passFile = fullDumpFilePath + File.separator + dids + File.separator +"layer-outlier-passed.out"
+            val dumpFilePath = fullDumpFilePath + File.separator + dids + File.separator + taxonRank + ".out"
+            val reindexFile =  idsToIndexFile + "." + dids
+            val passFile = fullDumpFilePath + File.separator + dids + File.separator +"layer" + taxonRank + "-outlier-passed.out"
             val t = new Thread(){
               override def run(){
-                 runOutlierTestingForDumpFile(dumpFilePath, headerForDumpFile, reindexFile , persistResults, queue, index, lastModifiedDate, taxonRank+"_guid", passFile)
+                 runOutlierTestingForDumpFile(dumpFilePath, headerForDumpFile, reindexFile , persistResults, queue, index, lastModifiedDate, taxonRank + "_guid", passFile)
               }
             }
 
