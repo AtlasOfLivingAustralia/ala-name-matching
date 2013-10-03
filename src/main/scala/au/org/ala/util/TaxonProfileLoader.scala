@@ -1,7 +1,6 @@
 package au.org.ala.util
 
-import au.org.ala.biocache.TaxonProfileDAO
-import au.org.ala.biocache.{TaxonProfile,SensitiveSpecies, ConservationSpecies}
+import au.org.ala.biocache._
 import java.net.InetSocketAddress
 import org.apache.avro.ipc.SocketTransceiver
 import org.apache.avro.specific.SpecificRequestor
@@ -10,6 +9,9 @@ import au.org.ala.bie.rpc.{ ProfileArray, Page, SpeciesProfile }
 import au.com.bytecode.opencsv.CSVReader
 import java.io.FileReader
 import org.apache.commons.lang.StringUtils
+import collection.mutable.ArrayBuffer
+import java.text.MessageFormat
+import util.parsing.json.JSON
 
 /**
  * Primes the cache of species profiles. To run this, you need to have
@@ -139,7 +141,38 @@ object TaxonProfileLoader {
 	    array = proxy.send(page).asInstanceOf[ProfileArray]
     }
     client.close
-    println("Finshed loading " + count + " profiles ")
+    println("Finished loading " + count + " profiles ")
   }
   println("Finished species profile loading.")
+}
+
+/**
+ * Loads the taxon profile information from the species list tool
+ */
+object TaxonSpeciesListLoader {
+  val guidUrl="http://lists.ala.org.au/ws/speciesList/{0}/taxa"
+  val guidsArray = new ArrayBuffer[String]()
+  def main(args:Array[String]){
+    // grab a list of distinct guids that form the list
+    val lists = Config.getProperty("specieslists","").split(",")
+    lists.foreach(v =>{
+      //get the guids on the list
+      val url = MessageFormat.format(guidUrl, v)
+      val response = WebServiceLoader.getWSStringContent(url)
+      if(response != ""){
+        val list =JSON.parseFull(response).get.asInstanceOf[List[String]]
+        guidsArray ++= list.filter(_ != null)
+      }
+    })
+    val guids = guidsArray.toSet
+    //now load all the details
+    println("The number of distinct species " + guids.size)
+    guids.foreach(g =>{
+      //get the values from the cache
+      val (lists, props) =TaxonSpeciesListDAO.getListsForTaxon(g, true)
+      //now add the values to the DB
+      TaxonSpeciesListDAO.addToPM(g, lists, props)
+    })
+  }
+
 }

@@ -851,7 +851,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     solrServer.commit
     solrDocList.clear
     //clear the cache for the SpeciesLIst
-    TaxonSpeciesListDAO.clearCache()
+    //TaxonSpeciesListDAO.clearCache()
     //now we should close the indexWriter
     logger.info(printNumDocumentsInIndex)
     if (optimise) {
@@ -1061,7 +1061,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
         doc.addField("system_assertions", sa)
 
         //load the species lists that are configured for the matched guid.
-        val (speciesLists,extraValues) = TaxonSpeciesListDAO.getListsForTaxon(map.getOrElse("taxonConceptID.p",""))
+        val (speciesLists,extraValues) = TaxonSpeciesListDAO.getCachedListsForTaxon(map.getOrElse("taxonConceptID.p",""))
         speciesLists.foreach(v=>{
           doc.addField("species_list_uid",v)
           //doc.addField(v, "true")
