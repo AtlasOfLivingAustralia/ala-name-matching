@@ -195,9 +195,12 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
           threads.foreach(thread =>
             thread.join
             )
-            if(action == "index")
+            if(action == "index") {
               IndexMergeTool.main(solrDirs.toArray)
-            else if(action == "col"){
+              Config.persistenceManager.shutdown
+              println("Waiting to see if shutdown")
+              System.exit(0)
+            } else if(action == "col"){
               var allSet:Set[String] = Set()
               columnRunners.foreach(c => allSet ++= c.myset)
               allSet = allSet.filterNot(it => it.endsWith(".p") || it.endsWith(".qa"))
