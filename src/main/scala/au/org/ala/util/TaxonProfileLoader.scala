@@ -12,6 +12,96 @@ import org.apache.commons.lang.StringUtils
 import collection.mutable.ArrayBuffer
 import java.text.MessageFormat
 import util.parsing.json.JSON
+import au.org.ala.data.model.LinnaeanRankClassification
+
+object GenericTaxonProfileLoader {
+  def main(args:Array[String]){
+    //lsid, lft,rgt,rank,scientificname
+    val file = if(args.size==1) args(0) else "/data/biocache-load/merge-taxon-profile.csv"
+    val reader =  new CSVReader(new FileReader(file), '\t', '"', '~')
+    var currentLine = reader.readNext
+    var count =0
+    while(currentLine != null){
+      var tp = new TaxonProfile()
+      tp.setGuid(currentLine(0))
+      tp.setLeft(currentLine(1))
+      tp.setRight(currentLine(2))
+      tp.setRankString(currentLine(3))
+      tp.setScientificName(currentLine(4))
+      TaxonProfileDAO.add(tp)
+      count+=1
+      if(count%10000 == 0){
+        println("Loaded " + count + " taxon >>>> " + currentLine.mkString(","))
+      }
+      currentLine = reader.readNext()
+    }
+
+  }
+}
+object HabitatLoader {
+  def main(args:Array[String]){
+    //get the habitat information
+    val files = if(args.size == 0)Array("/data/biocache-load/species_list.txt","/data/biocache-load/family_list.txt", "/data/biocache-load/genus_list.txt")else args
+    files.foreach( file=>{
+      processFile(file)
+    })
+  }
+  def processFile(file:String){
+
+    println("Loading habitats from " + file)
+    val reader =  new CSVReader(new FileReader(file), '\t', '"', '~')
+    var currentLine = reader.readNext()
+    var previousScientificName=""
+    var count =0
+    while(currentLine != null){
+      var currentScientificName = currentLine(1)
+      var habitat:String=null
+      if(currentScientificName!=null && !currentScientificName.equalsIgnoreCase(previousScientificName)){
+        val cl = new LinnaeanRankClassification()
+        cl.setScientificName(currentScientificName)
+        if (currentLine.length == 12){
+          //we are dealing with a family
+          cl.setFamily(currentScientificName)
+          cl.setKingdom(currentLine(2))
+          habitat = getValue(currentLine(4))
+        } else if (currentLine.length==13){
+          //dealing with genus or species
+          val isGenus = !currentScientificName.contains(" ")
+          if(isGenus){
+            cl.setGenus(currentLine(1))
+            if(currentLine(2).contains("unallocated")){
+              cl.setFamily(currentLine(2));
+            }
+          }else{
+            cl.setGenus(currentLine(2));
+          }
+        }
+        val guid = Config.nameIndex.searchForAcceptedLsidDefaultHandling(cl,false);
+        previousScientificName = currentScientificName;
+        if(guid != null && habitat != null){
+          //add the habitat status
+          Config.persistenceManager.put(guid,"taxon","habitats",habitat);
+          //println("Adding " +habitat + " for " +guid)
+        }
+        count+=1
+        if(count%10000 == 0){
+          println("Loaded " + count + " taxon >>>> " + currentLine.mkString(","))
+        }
+      }
+      currentLine = reader.readNext()
+    }
+
+  }
+
+  def getValue(v:String):String={
+    v match{
+      case it if it == 'M' => "Marine"
+      case it if it == "N" => "Non-Marine"
+      case it if it == "MN" => "Marine and Non-marine"
+      case _ =>null
+    }
+  }
+}
 
 /**
  * Primes the cache of species profiles. To run this, you need to have
