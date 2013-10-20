@@ -59,20 +59,30 @@ class DwCACreator {
     val zipFile = new java.io.File(directory+System.getProperty("file.separator")+dataResource + System.getProperty("file.separator")+dataResource +"_ror_dwca.zip")
     FileUtils.forceMkdir(zipFile.getParentFile)
     val zop = new ZipOutputStream(new FileOutputStream(zipFile))
-    addEML(zop, dataResource)
-    addMeta(zop)
-    addCSV(zop, dataResource)
-    zop.close
+    if(addEML(zop, dataResource)){
+      addMeta(zop)
+      addCSV(zop, dataResource)
+      zop.close
+    } else{
+      //no EML implies that a DWCA should not be generated.
+      zop.close()
+      FileUtils.deleteQuietly(zipFile)
+    }
   }
 
-  def addEML(zop:ZipOutputStream, dr:String) ={
+  def addEML(zop:ZipOutputStream, dr:String):Boolean ={
     //query from the collectory to get the EML file
-    zop.putNextEntry(new ZipEntry("eml.xml"))
+    try {
+      zop.putNextEntry(new ZipEntry("eml.xml"))
 
-    val content=Source.fromURL("http://collections.ala.org.au/eml/"+dr).mkString
-    zop.write(content.getBytes)
-    zop.flush
-    zop.closeEntry
+      val content=Source.fromURL("http://collections.ala.org.au/eml/"+dr).mkString
+      zop.write(content.getBytes)
+      zop.flush
+      zop.closeEntry
+      true
+    } catch{
+      case e:Exception => e.printStackTrace();false
+    }
   }
 
   def addMeta(zop:ZipOutputStream) ={
