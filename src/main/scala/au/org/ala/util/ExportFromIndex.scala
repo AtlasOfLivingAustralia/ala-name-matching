@@ -23,6 +23,7 @@ object ExportAllSpatialSpecies {
       "point-0.01","point-0.001", "point-0.0001","lat_long","raw_taxon_name", "collectors", "duplicate_status", "duplicate_record", "latitude","longitude",
       "el882","el889","el887","el865","el894","coordinate_uncertainty")
     val query = "lat_long:* AND species_guid:*"
+    //val query = "lat_long:* AND (species_guid:\"urn:lsid:biodiversity.org.au:afd.taxon:3428ab9c-1bf4-4542-947a-8ea048327c4c\" OR species_guid:\"urn:lsid:biodiversity.org.au:afd.taxon:33bd7bb6-f374-4d9c-80f8-248671c919cd\" OR species_guid:\"urn:lsid:biodiversity.org.au:afd.taxon:1a39ed75-0e3d-4fbd-bdda-ba51231911e0\" OR species_guid:\"urn:lsid:biodiversity.org.au:afd.taxon:98b232ae-b2fe-4c91-8b58-933aa608ab5e\")"
     val filterQueries = Array[String]()
     val sortFields = Array("species_guid","subspecies_guid","row_key")
     val multivaluedFields =Some(Array("duplicate_record"))
@@ -124,7 +125,7 @@ object ExportAllSpatialSpecies {
 
   def getFromMap(map:java.util.Map[String, AnyRef],key:String) : String = {
     val value = map.get(key)
-    if (value == null) "" else value.toString
+    if (value == null) "" else value.toString.replaceAll("(\r\n|\n)", " ")
   }
 }
 
