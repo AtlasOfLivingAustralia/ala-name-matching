@@ -1,11 +1,10 @@
 package au.org.ala.util
 
-import au.org.ala.biocache.{ Config}
+import au.org.ala.biocache.{FullRecordMapper, Config, Json}
 import scala.Array._
 import au.com.bytecode.opencsv.CSVWriter
 import java.io.{FileWriter,  File}
 import scala.collection.mutable.HashSet
-import au.org.ala.biocache.Json
 
 /**
  * Utility for exporting data from the biocache.
@@ -85,20 +84,22 @@ object ExportUtil {
   }
 
   def export(writer: CSVWriter, entity: String, fieldsToExport: List[String], fieldsRequired: List[String],
-             defaultMappings:Option[Map[String,String]]=None,startUuid:String="", endUuid:String="", maxRecords: Int) {
+             defaultMappings:Option[Map[String,String]]=None,startUuid:String="", endUuid:String="", maxRecords: Int, includeDeleted:Boolean=false) {
     val pm = Config.persistenceManager
     var counter = 0
-    val newFields:List[String] = if(defaultMappings.isEmpty) fieldsToExport else fieldsToExport ++ defaultMappings.get.values
+    val newFields:List[String] = if(defaultMappings.isEmpty) fieldsToExport ++ List(FullRecordMapper.deletedColumn) else fieldsToExport ++ defaultMappings.get.values
     
     //page through and create the index
     pm.pageOverSelect(entity, (guid, map) => {
-      if (fieldsRequired.forall(field => map.contains(field))) {
-        if(defaultMappings.isEmpty)
-            exportRecord(writer, fieldsToExport, guid, map)
-        else
-            exportRecordDefaultValues(writer, fieldsToExport, defaultMappings.get, map)
+      if(includeDeleted || map.getOrElse(FullRecordMapper.deletedColumn, "false").equals("false")){
+        if (fieldsRequired.forall(field => map.contains(field))) {
+          if(defaultMappings.isEmpty)
+              exportRecord(writer, fieldsToExport, guid, map)
+          else
+              exportRecordDefaultValues(writer, fieldsToExport, defaultMappings.get, map)
+        }
+        counter += 1
       }
-      counter += 1
       maxRecords > counter
     }, startUuid,endUuid, 1000, newFields: _*)
   }
