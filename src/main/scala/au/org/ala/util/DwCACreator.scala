@@ -6,6 +6,7 @@ import au.com.bytecode.opencsv.CSVWriter
 import scala.io.Source
 import org.apache.commons.io.FileUtils
 import scala.util.parsing.json.JSON
+import org.slf4j.LoggerFactory
 
 object DwCACreator {
 
@@ -45,6 +46,7 @@ object DwCACreator {
  * TODO support for dwc fields in collectory metadata. When not available use the default fields
  */
 class DwCACreator {
+  val logger = LoggerFactory.getLogger("DataLoader")
   val defaultFields = List("uuid", "catalogNumber", "collectionCode", "institutionCode", "scientificName", "recordedBy",
       "taxonRank", "kingdom", "phylum", "class", "order", "family", "genus", "specificEpithet", "infraspecificEpithet",
       "decimalLatitude", "decimalLongitude", "coordinatePrecision", "coordinateUncertaintyInMeters", "maximumElevationInMeters", "minimumElevationInMeters",
@@ -56,6 +58,7 @@ class DwCACreator {
   val compulsoryFields = Map("catalogNumber"->"uuid", "collectionCode"->"dataResourceName.p", "institutionCode"->"dataResourceName.p")
 
   def create(directory:String, dataResource:String) {
+    logger.info("Creating archive for " + dataResource)
     val zipFile = new java.io.File(directory+System.getProperty("file.separator")+dataResource + System.getProperty("file.separator")+dataResource +"_ror_dwca.zip")
     FileUtils.forceMkdir(zipFile.getParentFile)
     val zop = new ZipOutputStream(new FileOutputStream(zipFile))
