@@ -111,7 +111,7 @@ class DwCACreator {
     zop.putNextEntry(new ZipEntry("raw_occurrence_record.csv"))
     val startUuid = dr+"|"
     val endUuid = startUuid+"~"
-    ExportUtil.export(new CSVWriter(new OutputStreamWriter(zop)),"occ", defaultFields, List(), Some(compulsoryFields), startUuid, endUuid, Integer.MAX_VALUE)
+    ExportUtil.export(new CSVWriter(new OutputStreamWriter(zop)),"occ", defaultFields, List("uuid"),List("uuid"), Some(compulsoryFields), startUuid, endUuid, Integer.MAX_VALUE)
     zop.flush
     zop.closeEntry
   }

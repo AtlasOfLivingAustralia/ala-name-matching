@@ -5,12 +5,14 @@ import scala.Array._
 import au.com.bytecode.opencsv.CSVWriter
 import java.io.{FileWriter,  File}
 import scala.collection.mutable.HashSet
+import org.apache.commons.lang.StringUtils
+import org.slf4j.LoggerFactory
 
 /**
  * Utility for exporting data from the biocache.
  */
 object ExportUtil {
-
+  val logger = LoggerFactory.getLogger("ExportUtil")
   def main(args: Array[String]) {
 
     var fieldsToExport = List[String]()
@@ -47,7 +49,7 @@ object ExportUtil {
       else if(distinct)
         exportDistinct(writer, entity, fieldsToExport, startkey, endkey)
       else
-        export(writer, entity, fieldsToExport, fieldsRequired, maxRecords=maxRecords)
+        export(writer, entity, fieldsToExport, fieldsRequired,List(), maxRecords=maxRecords)
       writer.flush
       writer.close
     }
@@ -83,22 +85,26 @@ object ExportUtil {
       }, startUuid, endUuid, 1000, fieldsToExport: _*)
   }
 
-  def export(writer: CSVWriter, entity: String, fieldsToExport: List[String], fieldsRequired: List[String],
+  def export(writer: CSVWriter, entity: String, fieldsToExport: List[String], fieldsRequired: List[String], nonNullFields:List[String],
              defaultMappings:Option[Map[String,String]]=None,startUuid:String="", endUuid:String="", maxRecords: Int, includeDeleted:Boolean=false) {
     val pm = Config.persistenceManager
     var counter = 0
-    val newFields:List[String] = if(defaultMappings.isEmpty) fieldsToExport ++ List(FullRecordMapper.deletedColumn) else fieldsToExport ++ defaultMappings.get.values
+    val newFields:List[String] = if(defaultMappings.isEmpty) fieldsToExport ++ List(FullRecordMapper.deletedColumn) else fieldsToExport ++ defaultMappings.get.values ++ List(FullRecordMapper.deletedColumn)
     
     //page through and create the index
     pm.pageOverSelect(entity, (guid, map) => {
+       val deleted=map.getOrElse(FullRecordMapper.deletedColumn, "false")
       if(includeDeleted || map.getOrElse(FullRecordMapper.deletedColumn, "false").equals("false")){
-        if (fieldsRequired.forall(field => map.contains(field))) {
+        if (fieldsRequired.forall(field => map.contains(field)) && nonNullFields.forall(field => StringUtils.isNotBlank(map.getOrElse(field,"")))) {
           if(defaultMappings.isEmpty)
               exportRecord(writer, fieldsToExport, guid, map)
           else
               exportRecordDefaultValues(writer, fieldsToExport, defaultMappings.get, map)
         }
         counter += 1
+        if(counter % 10000 == 0){
+          logger.info("Exported " + counter + " Last key " + guid)
+        }
       }
       maxRecords > counter
     }, startUuid,endUuid, 1000, newFields: _*)
@@ -128,7 +134,7 @@ object GenericColumnExporter {
        val cols = getColumns(entity)
        val outWriter = new FileWriter(new File(filePath))
        val writer = new CSVWriter(outWriter, '\t', '"')
-       ExportUtil.export(writer,entity, cols, List(),maxRecords=Integer.MAX_VALUE)
+       ExportUtil.export(writer,entity, cols, List(),List(),maxRecords=Integer.MAX_VALUE)
      }
   }
   def getColumns(entity:String):List[String]={
