@@ -11,7 +11,7 @@ import org.ala.layers.client.Client
 import java.io.FileInputStream
 
 /**
- * Simple singleton wrapper for Guice (or spring)
+ * Simple singleton wrapper for Guice.
  */
 object Config {
 
@@ -42,7 +42,9 @@ object Config {
       false
     }
   }
+
   val deletedFileStore = configModule.properties.getProperty("deletedFileStore","/data/biocache-delete/")
+
   lazy val excludeSensitiveValuesFor = configModule.properties.getProperty("excludeSensitiveValuesFor","")
 
   lazy val biocacheServiceURL = configModule.properties.getProperty("biocacheServiceURL","http://biocache.ala.org.au/ws")
@@ -77,7 +79,9 @@ object Config {
   lazy val reindexViewDataResourceUrl = configModule.properties.getProperty("reindexViewDataResourceUrl")
   lazy val layersServiceUrl = configModule.properties.getProperty("layersServiceUrl")
   lazy val biocacheServiceUrl = configModule.properties.getProperty("biocacheServiceUrl")
+
   def getProperty(prop:String) = configModule.properties.getProperty(prop)
+
   def getProperty(prop:String, default:String) = configModule.properties.getProperty(prop,default)
 }
 
@@ -95,7 +99,7 @@ class ConfigModule extends AbstractModule {
 
     //check to see if a system property has been supplied with the location of the config file
     val filename = System.getProperty("biocache.config","/data/biocache/config/biocache-config.properties")
-    var file =new java.io.File(filename)
+    var file = new java.io.File(filename)
     //only load the properties file if it exists otherwise default to the biocache.properties on the classpath
     val stream = if(file.exists())new FileInputStream(file) else this.getClass.getResourceAsStream("/biocache.properties")
     logger.info("Loading configuration from " + filename)
@@ -120,12 +124,13 @@ class ConfigModule extends AbstractModule {
       val nameIndex = new CBIndexSearch(properties.getProperty("nameIndexLocation"))
       bind(classOf[CBIndexSearch]).toInstance(nameIndex)
     } catch {
-        case e: Exception => logger.warn("Lucene indexes arent currently available.")
+      case e: Exception => logger.warn("Lucene indexes arent currently available. Message: " + e.getMessage())
     }
     logger.info("Initialise persistence manager")
     properties.getProperty("db") match {
         //case "mock" => bind(classOf[PersistenceManager]).to(classOf[MockPersistenceManager]).in(Scopes.SINGLETON)
-        case "cassandra" => bind(classOf[PersistenceManager]).to(classOf[CassandraPersistenceManager]).in(Scopes.SINGLETON)
+        case "postgres" => bind(classOf[PersistenceManager]).to(classOf[PostgresPersistenceManager]).in(Scopes.SINGLETON)
+        //case "cassandra" => bind(classOf[PersistenceManager]).to(classOf[CassandraPersistenceManager]).in(Scopes.SINGLETON)
         //case "mongodb" => bind(classOf[PersistenceManager]).to(classOf[MongoDBPersistenceManager]).in(Scopes.SINGLETON)
         case _ => bind(classOf[PersistenceManager]).to(classOf[CassandraPersistenceManager]).in(Scopes.SINGLETON)
     }

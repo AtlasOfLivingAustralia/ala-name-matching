@@ -23,7 +23,7 @@ import java.util.Date
 
 class SimpleLoader extends DataLoader
 
-class MapDataLoader extends DataLoader{
+class MapDataLoader extends DataLoader {
   import JavaConversions._
 
   def load(dataResourceUid:String, values:List[java.util.Map[String,String]], uniqueTerms:List[String]):List[String]={

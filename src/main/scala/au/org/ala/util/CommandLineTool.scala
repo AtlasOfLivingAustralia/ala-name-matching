@@ -332,8 +332,8 @@ object CMD {
         case _ => printHelp
       }
     } catch {
-      //NC:2013-05-10: Need to rethrow the exception so that the script tool knows about it.
-      case e: Exception => e.printStackTrace; if(throwException)throw e;
+      //NC:2013-05-10: Need to re-throw the exception so that the script tool knows about it.
+      case e: Exception => e.printStackTrace; if(throwException) throw e;
     }
     
     def indexDataResourceLive(dr:String){
@@ -408,6 +408,7 @@ object CMD {
     //TODO obtain this from the last checked or data currency dates. - But not always updated and we don't want to lose data
     org.apache.commons.lang.time.DateUtils.addDays(new java.util.Date(), -1)
   }
+  
   def getDeleteRowFile(resourceUid:String) : Option[String] ={
     def filename =  Config.deletedFileStore + File.separator + resourceUid + File.separator + "deleted.txt"
     if(new File(filename).exists()){
@@ -416,6 +417,7 @@ object CMD {
       None
     }
   }
+  
   def hasRowKey(resourceUid: String): (Boolean, Option[String]) = {
     def filename = "/data/tmp/row_key_" + resourceUid + ".csv"
     def file = new java.io.File(filename)
@@ -425,20 +427,21 @@ object CMD {
       date.setTime(new java.util.Date)
       date.add(java.util.Calendar.HOUR, -24)
       //if it is on the same day assume that we want the incremental process or index.
-      if (org.apache.commons.io.FileUtils.isFileNewer(file, date.getTime()))
+      if (org.apache.commons.io.FileUtils.isFileNewer(file, date.getTime())){
         (true, Some(filename))
-      else {
+      } else {
         //prompt the user 
         println("There is an incremental row key file for this resource.  Would you like to perform an incremental process (y/n) ?")
         val answer = readLine
-        if (answer.toLowerCase().equals("y") || answer.toLowerCase().equals("yes"))
+        if (answer.toLowerCase().equals("y") || answer.toLowerCase().equals("yes")) {
           (true, Some(filename))
-        else
+        } else { 
           (false, None)
+        }
       }
-    }
-    else
+    } else {
       (false, None)
+    }
   }
 
   def padAndPrint(str: String) = println(padElementTo60(str))

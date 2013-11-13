@@ -12,6 +12,12 @@ object Json {
   import JavaConversions._
   import scala.collection.JavaConverters._
 
+  def toJSONWithGeneric[A](list:Seq[A]) : String = {
+    val mapper = new ObjectMapper
+    mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)
+    mapper.writeValueAsString(list.asJava)
+  }  
+  
   def toJSONWithGeneric[A](list:List[A]) : String = {
     val mapper = new ObjectMapper
     mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL)

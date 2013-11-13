@@ -293,68 +293,60 @@ object TaxonSpeciesListDAO {
 
   //retrieves the species list information from the WS
   def getListsForTaxon(conceptLsid:String, forceLoad:Boolean):(List[String], Map[String,String])={
-    //if(loadSpeciesLists || forceLoad){
-      //val cachedObject = lock.synchronized { lru.get(conceptLsid) }
-      //if(cachedObject == null){
-        val response = WebServiceLoader.getWSStringContent(listToolUrl+conceptLsid)
-        if(response != ""){
-          val list =JSON.parseFull(response).get.asInstanceOf[List[Map[String, AnyRef]]]
-          //get a distinct list of lists that the supplied concept belongs to
-          val newObject= list.map(_.getOrElse("dataResourceUid","").toString).filter(v => validLists.contains(v)).toSet.toList
-          val newMap = collection.mutable.Map[String, String]()
-          list.foreach(map =>{
-            val dr = map.getOrElse("dataResourceUid","").toString
-            //only add the KVP items if they come from valid list
-            if(validLists.contains(dr)){
-              val kvparrayopt =map.get("kvpValues")
+    val response = WebServiceLoader.getWSStringContent(listToolUrl+conceptLsid)
+    if(response != ""){
+      val list = JSON.parseFull(response).get.asInstanceOf[List[Map[String, AnyRef]]]
+      //get a distinct list of lists that the supplied concept belongs to
+      val newObject = list.map(_.getOrElse("dataResourceUid","").toString).filter(v => validLists.contains(v)).toSet.toList
+      val newMap = collection.mutable.Map[String, String]()
+      list.foreach(map => {
+        val dr = map.getOrElse("dataResourceUid","").toString
+        //only add the KVP items if they come from valid list
+        if(validLists.contains(dr)){
+          val kvparrayopt = map.get("kvpValues")
 
-              if(kvparrayopt.isDefined){
-                val kvparray = kvparrayopt.get.asInstanceOf[List[Map[String,String]]]
-                //get the prefix information
-                val prefix = kvparray.find(map => prefixFields.contains(map.getOrElse("key","")))
-                val stringPrefix = {
-                  if(prefix.isDefined){
-                      val value = getValueBasedOnKVP(prefix.get)
-                      val matchedPrefix = SpeciesListAcronyms.matchTerm(value)
-                      if(matchedPrefix.isDefined) matchedPrefix.get.canonical.toLowerCase() else value.replaceAll(" " , "_").toLowerCase()
-                  } else{
-                    ""
-                  }
-                }
-
-                val filteredList = kvparray.filter(_.values.toSet.intersect(indexValues).size> 0)
-
-                filteredList.foreach( item =>{
-
-                  //now grab the indexItems
-                  if(indexValues.contains(item.getOrElse("key",""))){
-                    val value = getValueBasedOnKVP(item)
-                    newMap(dr + getEscapedValue(stringPrefix) + getEscapedValue(item.getOrElse("key",""))) = value
-                  }
-
-                })
+          if(kvparrayopt.isDefined){
+            val kvparray = kvparrayopt.get.asInstanceOf[List[Map[String,String]]]
+            //get the prefix information
+            val prefix = kvparray.find(map => prefixFields.contains(map.getOrElse("key","")))
+            val stringPrefix = {
+              if(prefix.isDefined){
+                  val value = getValueBasedOnKVP(prefix.get)
+                  val matchedPrefix = SpeciesListAcronyms.matchTerm(value)
+                  if(matchedPrefix.isDefined) matchedPrefix.get.canonical.toLowerCase() else value.replaceAll(" " , "_").toLowerCase()
+              } else {
+                ""
               }
             }
-          })
-          lock.synchronized{lru.put(conceptLsid, (newObject,newMap.toMap))}
-          (newObject,newMap.toMap)
-        } else{
-          (List(),Map())
+
+            val filteredList = kvparray.filter(_.values.toSet.intersect(indexValues).size > 0)
+
+            filteredList.foreach( item => {
+
+              //now grab the indexItems
+              if(indexValues.contains(item.getOrElse("key",""))){
+                val value = getValueBasedOnKVP(item)
+                newMap(dr + getEscapedValue(stringPrefix) + getEscapedValue(item.getOrElse("key",""))) = value
+              }
+
+            })
+          }
         }
-//      } else{
-//       cachedObject.asInstanceOf[(List[String],Map[String,String])]
-//      }
-//    } else{
-//      (List(),Map())
-//    }
-  }
-  def getEscapedValue(value:String)= if(value.trim.size>0) "_" + value else value.trim
-  def getValueBasedOnKVP(item:Map[String,String]):String =  if (item.getOrElse("vocabValue",null) != null) item.getOrElse("vocabValue",null) else item.getOrElse("value","")
-  def refreshCache(){
-    lock.synchronized{
-      val tmpMap = updateLists()
-      speciesListMap = tmpMap
+      })
+      lock.synchronized{lru.put(conceptLsid, (newObject,newMap.toMap))}
+      (newObject,newMap.toMap)
+    } else{
+      (List(),Map())
     }
+  }
+  
+  def getEscapedValue(value:String) = if(value.trim.size>0) "_" + value else value.trim
+  
+  def getValueBasedOnKVP(item:Map[String,String]):String =  if (item.getOrElse("vocabValue",null) != null) item.getOrElse("vocabValue",null) else item.getOrElse("value","")
+  
+  def refreshCache = lock.synchronized {
+    val tmpMap = updateLists()
+    speciesListMap = tmpMap
   }
 }
 
@@ -371,9 +363,6 @@ object TaxonProfileDAO {
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
   private val lock : AnyRef = new Object()
   private val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
-//  private val lru = new ConcurrentLinkedHashMap.Builder[String, Option[TaxonProfile]]()
-//      .maximumWeightedCapacity(10000)
-//      .build();
 
   /**
    * Retrieve the profile by the taxon concept's GUID
@@ -469,7 +458,7 @@ object AttributionDAO {
 
   import ReflectBean._
   import JavaConversions._
-  var collectoryURL ="http://collections.ala.org.au"
+  var collectoryURL = "http://collections.ala.org.au"
   private val columnFamily = "attr"
   //can't use a scala hashmap because missing keys return None not null...
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)//new HashMap[String, Option[Attribution]]
@@ -539,11 +528,12 @@ object AttributionDAO {
           hints.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object) => {
             o.toString().replace("=",":").replace("{","").replace("}","")
           })
+        } else {
+          null
         }
-        else null
       }
 
-      //the hubMembership
+      //the hub membership
       val hub = wsmap.getOrElse("hubMembership", null)
       val ahub = {
         if(hub !=  null){
@@ -559,6 +549,7 @@ object AttributionDAO {
       val dpname = if(dp != null) dp.get("name") else null
       val dpuid = if(dp != null) dp.get("uid") else null
       val hasColl = wsmap.getOrElse("hasMappedCollections", false).asInstanceOf[Boolean]
+      
       //the default DWC terms
       val defaultDwc = wsmap.getOrElse("defaultDarwinCoreValues", null)
       attribution.dataResourceName = name
@@ -568,7 +559,7 @@ object AttributionDAO {
       attribution.taxonomicHints = ahints
       attribution.hasMappedCollections = hasColl
       attribution.provenance = provenance
-      if(defaultDwc!= null){
+      if(defaultDwc != null){
         //retrieve the dwc values for the supplied values
           val map = defaultDwc.asInstanceOf[java.util.LinkedHashMap[String,String]]
           val newMap = new java.util.LinkedHashMap[String,String]()
@@ -606,60 +597,58 @@ object AttributionDAO {
 
     if(institutionCode!=null && collectionCode!=null){
       val uuid = institutionCode.toUpperCase+"|"+collectionCode.toUpperCase
+      val cachedObject = lru.get(uuid)
       
-      val cachedObject = lru.get(uuid)      
-      if(cachedObject!=null){
+      if(cachedObject != null){
         cachedObject.asInstanceOf[Option[Attribution]]
       } else {
+        
         //lookup the collectory against the WS
         logger.info("Looking up collectory web service for " + uuid)
-          val wscontent = WebServiceLoader.getWSStringContent(collectoryURL+"/lookup/inst/"+URLEncoder.encode(institutionCode)+"/coll/"+URLEncoder.encode(collectionCode)+".json")
-          val wsmap = Json.toMap(wscontent)
+        val wscontent = WebServiceLoader.getWSStringContent(collectoryURL+"/lookup/inst/"+URLEncoder.encode(institutionCode)+"/coll/"+URLEncoder.encode(collectionCode)+".json")
+        val wsmap = Json.toMap(wscontent)
 
         if(!wsmap.isEmpty && !wsmap.contains("error")){
-              //attempt to map the attribution proerties from the JSON objects
-              val attribution = new Attribution
-              //handle the non standard properties
-              val hints =wsmap.getOrElse("taxonomyCoverageHints",null)
-              if(hints != null){
-                val ahint = hints.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> o.toString().replace("=",":").replace("{","").replace("}",""));
-                attribution.taxonomicHints = ahint
-              }
-              //the hubMembership no longer in collections obtain from the data resource instead
-//              val hub = wsmap.getOrElse("hubMembership", null)
-//              if(hub !=  null){
-//                val ahub = hub.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> (o.asInstanceOf[java.util.LinkedHashMap[Object,Object]]).get("uid").toString)
-//                attribution.setDataHubUid(ahub)
-//                //println("Hub membership: " +ahub)
-//              }
-              //update the properties
-              FullRecordMapper.mapmapPropertiesToObject(attribution, wsmap - "taxonomyCoverageHints", wsPropertyMap)
-              val result = Some(attribution)
-              //add it to the caches
-              lock.synchronized { lru.put(uuid,result) }
-              add(institutionCode, collectionCode, attribution)
-              result
-          }
-          else{
-              // grab the value from the cache if it exists
-              val map = persistenceManager.get(uuid,"attr")
-              val result = {
-                  if(!map.isEmpty){
-                    val attribution = new Attribution
-                    FullRecordMapper.mapPropertiesToObject(attribution,map.get)
-                    Some(attribution)
-                  } else {
-                    None
-                  }
-              }
-              lock.synchronized { lru.put(uuid,result) }
           
-              //lru.put(uuid,result)
-              result
+          //attempt to map the attribution properties from the JSON objects
+          val attribution = new Attribution
+          //handle the non standard properties
+          val hints = wsmap.getOrElse("taxonomyCoverageHints",null)
+          
+          if(hints != null){
+            val ahint = hints.asInstanceOf[java.util.ArrayList[Object]].toArray.map((o:Object)=> o.toString().replace("=",":").replace("{","").replace("}",""));
+            attribution.taxonomicHints = ahint
           }
+
+          //update the properties
+          FullRecordMapper.mapmapPropertiesToObject(attribution, wsmap - "taxonomyCoverageHints", wsPropertyMap)
+          val result = Some(attribution)
+          //add it to the caches
+          lock.synchronized { lru.put(uuid,result) }
+          add(institutionCode, collectionCode, attribution)
+          result
+          
+        } else {
+          
+          // grab the value from the cache if it exists
+          val map = persistenceManager.get(uuid,"attr")
+          val result = {
+              if(!map.isEmpty){
+                val attribution = new Attribution
+                FullRecordMapper.mapPropertiesToObject(attribution,map.get)
+                Some(attribution)
+              } else {
+                None
+              }
+          }
+          lock.synchronized { lru.put(uuid,result) }
+      
+          //lru.put(uuid,result)
+          result
+        }
       }
     } else {
-        None
+      None
     }
   }
 }

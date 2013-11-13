@@ -13,7 +13,7 @@ import au.org.ala.util.DuplicateRecordDetails
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.databind.ObjectMapper
 
-trait DAO{
+trait DAO {
   def createUuid = UUID.randomUUID.toString
 }
 
@@ -111,6 +111,9 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
   var persistenceManager: PersistenceManager = _
   @Inject
   var indexDAO: IndexDAO = _
+
+  val elpattern = """el[0-9]+""".r
+  val clpattern = """cl[0-9]+""".r
 
   /**
    * Gets the map for a record based on searching the index for new and old ids
@@ -239,8 +242,6 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
   }
 
   def getUUIDForUniqueID(uniqueID: String) = persistenceManager.get(uniqueID, "occ", "uuid")
-  val elpattern = """el[0-9]+""".r
-  val clpattern = """cl[0-9]+""".r
 
   /**
    * Writes the supplied field values to the writer.  The Writer specifies the format in which the record is
@@ -264,7 +265,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
       mfields += FullRecordMapper.miscPropertiesColumn
     mfields ++=  FullRecordMapper.qaFields
 
-    persistenceManager.selectRows(rowKeys, entityName, mfields.toArray , { fieldMap =>
+    persistenceManager.selectRows(rowKeys, entityName, mfields , { fieldMap =>
       val array = scala.collection.mutable.ArrayBuffer[String]()
       val sensitiveMap:scala.collection.Map[String,String] = if(includeSensitive) Json.toStringMap(fieldMap.getOrElse("originalSensitiveValues", "{}")) else Map()
       val elMap = if(firstEL.isDefined) Json.toStringMap(fieldMap.getOrElse("el.p", "{}")) else Map[String,String]()
@@ -313,7 +314,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     mfields ++=  FullRecordMapper.qaFields
 
     //val fieldsToQuery = if(includeSensitive) fields ++ FullRecordMapper.qaFields ++ Array("originalSensitiveValues") else fields ++ FullRecordMapper.qaFields
-    persistenceManager.selectRows(rowKeys, entityName, mfields.toArray , { fieldMap =>
+    persistenceManager.selectRows(rowKeys, entityName, mfields, { fieldMap =>
       val sensitiveMap:scala.collection.Map[String,String] = if(includeSensitive) Json.toStringMap(fieldMap.getOrElse("originalSensitiveValues", "{}")) else Map()
       val elMap = if(firstEL.isDefined) Json.toStringMap(fieldMap.getOrElse("el.p", "{}")) else Map[String,String]()
       val clMap = if(firstCL.isDefined)Json.toStringMap(fieldMap.getOrElse("cl.p", "{}")) else Map[String,String]()
@@ -463,7 +464,7 @@ class OccurrenceDAOImpl extends OccurrenceDAO {
     //process the record
     val properties = FullRecordMapper.fullRecord2Map(fr, Versions.RAW)
     //commit
-    persistenceManager. put(fr.rowKey, entityName, properties.toMap)
+    persistenceManager.put(fr.rowKey, entityName, properties.toMap)
   }
 
   /**

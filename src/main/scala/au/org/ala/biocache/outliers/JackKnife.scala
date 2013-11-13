@@ -32,7 +32,7 @@ class JackKnife {
 
     if (threshold <= 0) return None
 
-    //interate through samples generating
+    //iterate through samples generating
     for(i <- 0 until n){
 
       val y = samples(i) compare smean match {

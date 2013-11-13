@@ -644,7 +644,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
   override def init() {
 
     if (solrServer == null) {
-      logger.info("Initialisising the solr server " + solrHome + " " + cloudServer + " " + solrServer)
+      logger.info("Initialising the solr server " + solrHome + " " + cloudServer + " " + solrServer)
       if(!solrHome.startsWith("http://")){
         if(solrHome.contains(":")) {
           //assume that it represents a SolrCloud
@@ -652,9 +652,11 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
           cloudServer.setDefaultCollection("biocache1")
           solrServer = cloudServer
         } else if (solrConfigPath != "") {
+          logger.info("Initialising embedded SOLR server.....")                
           cc = CoreContainer.createAndLoad(solrHome, new File(solrHome+"/solr.xml"))
           solrServer = new EmbeddedSolrServer(cc, "biocache")
         } else {
+          logger.info("Initialising embedded SOLR server.....")
           System.setProperty("solr.solr.home", solrHome)
           cc = CoreContainer.createAndLoad(solrHome,new File(solrHome + "/solr.xml"))//new CoreContainer(solrHome)
           solrServer = new EmbeddedSolrServer(cc, "biocache")
@@ -910,10 +912,10 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     val qaStatuses = qaStatusRegex.findAllMatchIn(json).map(_.group(1)).toList
     val assertions = (names zip qaStatuses)
     if(logger.isDebugEnabled()){
-      logger.debug(codes.toString)
-      logger.debug(names.toString)
-      logger.debug(qaStatuses.toString)
-      logger.debug(assertions.toString)
+      logger.debug("Codes:" + codes.toString)
+      logger.debug("Name:" + names.toString)
+      logger.debug("QA statuses:" + qaStatuses.toString)
+      logger.debug("Assertions:" + assertions.toString)
     }
 
     (codes, assertions)
@@ -1160,7 +1162,7 @@ class SolrIndexDAO @Inject()(@Named("solrHome") solrHome: String, @Named("exclud
     solrQuery.setFacetMinCount(1)
     try{
       val response = solrServer.query(solrQuery)
-      logger.debug("query " + solrQuery.toString)
+      logger.debug("Query " + solrQuery.toString)
       //now process all the values that are in the row_key facet
       val rowKeyFacets = response.getFacetField("row_key")
       val values = rowKeyFacets.getValues().asScala

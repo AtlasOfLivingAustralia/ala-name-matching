@@ -676,10 +676,8 @@ class LocationProcessor extends Processor {
       val values = line.split('=')
       valuesMap += (values(0) -> values(1))
     }
-
     valuesMap
   }
-
 
   lazy val zoneEpsgCodesMap = {
     var valuesMap = Map[String, String]()
@@ -687,7 +685,6 @@ class LocationProcessor extends Processor {
       val values = line.split('=')
       valuesMap += (values(0) -> values(1))
     }
-
     valuesMap
   }
 
@@ -1398,22 +1395,29 @@ class LocationProcessor extends Processor {
       }
 
       if (raw.location.country != null && raw.location.country != "") {
+
         val country = Countries.matchTerm(raw.location.country)
+
         if (!country.isEmpty) {
+
           assertions += QualityAssertion(AssertionCodes.UNKNOWN_COUNTRY_NAME, 1)
-          val latlngBBoxOption = CountryCentrePoints.matchName(country.get.canonical)
-          latlngBBoxOption match {
+
+          CountryCentrePoints.matchName(country.get.canonical) match {
+
             case Some((latlng, bbox)) => {
 
               if (!bbox.containsPoint(lat, lon)) {
+
                 var hasCoordinateMismatch = true
+
                 if (bbox.containsPoint(lat * -1, lon)) {
                   //latitude is negated
                   assertions += QualityAssertion(AssertionCodes.NEGATED_LATITUDE,
-                    "Latitude seems to be negated.  Original value:" + processed.location.decimalLatitude)
+                    "Latitude seems to be negated. Original value:" + processed.location.decimalLatitude)
                   processed.location.decimalLatitude = (lat * -1).toString
                   hasCoordinateMismatch = false
                 }
+
                 if (bbox.containsPoint(lat, lon * -1)) {
                   //point in wrong EW hemisphere - what do we do?
                   assertions += QualityAssertion(AssertionCodes.NEGATED_LONGITUDE,
@@ -1428,6 +1432,7 @@ class LocationProcessor extends Processor {
                   //there was no mismatch
                   assertions += QualityAssertion(AssertionCodes.COUNTRY_COORDINATE_MISMATCH, 1)
                 }
+
               }
             }
             case _ => //do nothing

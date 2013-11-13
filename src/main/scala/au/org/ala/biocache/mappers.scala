@@ -4,6 +4,10 @@ import scala.collection.{mutable, JavaConversions}
 import collection.mutable.{ArrayBuffer, HashMap}
 import com.fasterxml.jackson.databind.ObjectMapper
 
+/**
+ * This object maps the data from key value pairs into the FullRecord object
+ * which represents a record.
+ */
 object FullRecordMapper {
 
   import JavaConversions._
@@ -172,8 +176,9 @@ object FullRecordMapper {
               //parses an array of integers
               val codeBuff = new ArrayBuffer[String]
               //Add the assertions that already exist
-              if(fullRecord.assertions != null)
+              if(fullRecord.assertions != null){
                 codeBuff ++= fullRecord.assertions
+              }
               Json.toIntArray(fieldValue).foreach(code => {
                 val retrievedCode = AssertionCodes.getByCode(code)
                 if(!retrievedCode.isEmpty){

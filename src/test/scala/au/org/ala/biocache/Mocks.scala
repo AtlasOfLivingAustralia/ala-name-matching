@@ -28,7 +28,7 @@ class MockPersistenceManager extends PersistenceManager {
       case None => None
     }
   }
-  def getSelected(uuid:String, entityName:String, propertyNames:Array[String]):Option[Map[String,String]] ={
+  def getSelected(uuid:String, entityName:String, propertyNames:Seq[String]):Option[Map[String,String]] ={
     throw new RuntimeException("not implemented yet")
   }
   def pageOverColumnRange(entityName:String, proc:((String, Map[String,String])=>Boolean), startUuid:String="", endUuid:String="", pageSize:Int=1000, startColumn:String="", endColumn:String="")=
@@ -74,7 +74,7 @@ class MockPersistenceManager extends PersistenceManager {
   def putBatch(entityName: String, batch: Map[String, Map[String, String]]) =
    throw new RuntimeException("not implemented yet")
 
-  def putList[A](uuid: String, entityName: String, propertyName: String, newList: List[A], theClass: Class[_], overwrite: Boolean) ={
+  def putList[A](uuid: String, entityName: String, propertyName: String, newList: Seq[A], theClass: Class[_], overwrite: Boolean) ={
       val recordId = { if(uuid != null) uuid else UUID.randomUUID.toString }
       val entityMap = mockStore.getOrElseUpdate(entityName, HashMap(uuid -> HashMap[String,String]()))
       val recordMap = entityMap.getOrElse(uuid, HashMap[String,String]())
@@ -117,7 +117,7 @@ class MockPersistenceManager extends PersistenceManager {
   def pageOverSelect(entityName: String, proc: (String, Map[String, String]) => Boolean, startUuid: String, endUuid:String, pageSize: Int, columnName: String*) =
     throw new RuntimeException("not implemented yet")
 
-  def selectRows(uuids: Array[String], entityName: String, propertyNames: Array[String], proc: (Map[String, String]) => Unit) =
+  def selectRows(uuids: Seq[String], entityName: String, propertyNames: Seq[String], proc: (Map[String, String]) => Unit) =
     throw new RuntimeException("not implemented yet")
 
   def deleteColumns(uuid: String, entityName: String, columnName: String*) =

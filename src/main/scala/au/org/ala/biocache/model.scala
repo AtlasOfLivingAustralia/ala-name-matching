@@ -586,6 +586,8 @@ class QualityAssertion (
   @BeanProperty var created:String)
   extends Cloneable with Comparable[AnyRef] with POSO {
 
+  override def toString :String = s"name:$name, code:$code, value:$value, comment:$comment, qaStatus:$qaStatus"
+  
   def this() = this(null,null,-1,false,2,null,null,null,null,null,null,null,null,null)
   override def clone : QualityAssertion = super.clone.asInstanceOf[QualityAssertion]
   override def equals(that: Any) = that match {

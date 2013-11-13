@@ -129,8 +129,7 @@ object SpeciesOutlierTests {
           }
           detectpool.foreach(_.join)
 
-
-        } else{
+        } else {
           runOutlierTestingForDumpFile(fullDumpFilePath, headerForDumpFile, idsToIndexFile, persistResults,queue, index,lastModifiedDate, taxonRank+"_guid")
         }
       }
@@ -439,14 +438,14 @@ object SpeciesOutlierTests {
         val tmplist = new ListBuffer[String]
         val prelist:List[mutable.Buffer[AnyRef]] = mapper.readValue(previous.get, classOf[List[(String,List[SampledRecord])]]).asInstanceOf[List[mutable.Buffer[AnyRef]]]
         //println("prelist : "+ prelist)
-        prelist.foreach(_.foreach{
-                                b1 =>
-                                    if(b1.isInstanceOf[mutable.Buffer[Map[String,String]]]){
-                                      b1.asInstanceOf[mutable.Buffer[scala.collection.convert.Wrappers$JMapWrapper]].foreach(v => tmplist += v.get("id").get.toString)//.foreach(v => println("v => " + v + "  " + v.getClass +" " +v.get("id").toString() ))//v => if(v._1 == "id") tmplist+= v._2)//foreach(v => tmplist += v.getOrElse("id",""))
-                                    }
-                                  })
+        prelist.foreach(_.foreach { b1 =>
+	      if(b1.isInstanceOf[mutable.Buffer[Map[String,String]]]){
+	        b1.asInstanceOf[mutable.Buffer[scala.collection.convert.Wrappers$JMapWrapper]]
+	          .foreach(v => tmplist += v.get("id").get.toString)
+	      }
+        })
         tmplist.toList
-      } else{
+      } else {
         List[String]()
       }
     }
@@ -614,7 +613,7 @@ object SpeciesOutlierTests {
     //do jack knife test
     val jacknife = new JackKnife
 
-    //FIXME - this is adding the same record to the buffer more than once....
+    //this is adding the same record to the buffer more than once....
     jacknife.jackknife(valuesToTest) match {
       case Some(stats) => {
         val outliers = new ListBuffer[SampledRecord]
