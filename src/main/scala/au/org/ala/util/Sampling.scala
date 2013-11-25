@@ -23,6 +23,7 @@ object Sampling {
     var locFilePath = ""
     var singleLayerName = ""
     var rowKeyFile = ""
+    var keepFiles = false
 
     val parser = new OptionParser("Sample coordinates against geospatial layers") {
       opt("dr", "data-resource-uid", "the data resource to sample for", {
@@ -37,6 +38,10 @@ object Sampling {
       opt("rf", "row-key-file", "The row keys which to sample", {
         v: String => rowKeyFile = v
       })
+      opt("keep", "Keep the files produced from the sampling",{
+        keepFiles = true
+      })
+
     }
 
     if (parser.parse(args)) {
@@ -60,9 +65,11 @@ object Sampling {
       //load the loc table
       s.loadSampling(samplingFilePath)
       //clean up the file
-      logger.info("Removing temporary file: " + samplingFilePath)
-      (new File(samplingFilePath)).delete()
-      (new File(locFilePath)).delete()
+      if(!keepFiles){
+        logger.info("Removing temporary file: " + samplingFilePath)
+        (new File(samplingFilePath)).delete()
+        (new File(locFilePath)).delete()
+      }
     }
   }
 
