@@ -127,6 +127,11 @@ object CMD {
           println("Delete from index using query : " + query)
           deletor.deleteFromIndex
         }
+        case it if(it.startsWith("index-query")&& it.indexOf(" ")>0) => {
+          val query = input.substring(input.indexOf(" ")).trim
+          println("Reindexing based on query " + query)
+          ReprocessIndexSelect.main(Array("-q", query , "--index"))
+        }
         case it if (it.startsWith("index-file ") && input.split(" ").length >= 2) => {
           val args = input.split(" ").tail
           try {
@@ -399,7 +404,8 @@ object CMD {
     padAndPrint("[40]  delete-missing <dr-uid> <list of columns> - deletes all the columns that are not specified in the space separated list")
     padAndPrint("[41]  remove-deleted-index <dr-uid> - removes the records not loaded during the last load from index (NB last load will be interpreted as within the last 24 hours).")
     padAndPrint("[42]  force-index <dr-uid1> <dr-uid2>  - forces a complete reindex of the supplied data resource (ignoring incremental file)")
-    padAndPrint("[43]  exit")
+    padAndPrint("[43]  index-query <query to index> - Indexes all the records that satisfy the supplied query")
+    padAndPrint("[44]  exit")
 
   }
   
