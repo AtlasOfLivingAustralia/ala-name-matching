@@ -23,7 +23,7 @@ object FixUpQas {
     val userMap = new mutable.HashMap[String,String]
 
     jsonNode.elements().foreach( node => {
-      val email = node.get("email").textValue()
+      val email = node.get("email").textValue().toLowerCase()
       val id = node.get("id").intValue().toString()
       println(email + ":" + id)
       userMap.put(email, id)
@@ -32,7 +32,6 @@ object FixUpQas {
     //paging through queryassert
     Config.persistenceManager.pageOverAll("queryassert", (key,map) => {
       println(key)
-
       val userEmail =  map.getOrElse("userName", "")
       Config.persistenceManager.put(key, "queryassert", "userEmail", userEmail)
 
@@ -41,7 +40,6 @@ object FixUpQas {
       if(!id.isEmpty){
         Config.persistenceManager.put(key, "queryassert", "userId", id.get)
       }
-
       true
     })
 

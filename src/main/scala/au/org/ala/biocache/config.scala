@@ -15,7 +15,7 @@ import java.io.FileInputStream
  */
 object Config {
 
-  protected val logger = LoggerFactory.getLogger("Sampling")
+  protected val logger = LoggerFactory.getLogger("Config")
   private val configModule = new ConfigModule()
   var inj:Injector = Guice.createInjector(configModule)
   def getInstance(classs:Class[_]) = inj.getInstance(classs)
@@ -46,6 +46,8 @@ object Config {
   val deletedFileStore = configModule.properties.getProperty("deletedFileStore","/data/biocache-delete/")
 
   lazy val excludeSensitiveValuesFor = configModule.properties.getProperty("excludeSensitiveValuesFor","")
+
+  lazy val registryURL = configModule.properties.getProperty("registryURL","http://collections.ala.org.au/ws")
 
   lazy val biocacheServiceURL = configModule.properties.getProperty("biocacheServiceURL","http://biocache.ala.org.au/ws")
 
@@ -100,8 +102,18 @@ class ConfigModule extends AbstractModule {
     //check to see if a system property has been supplied with the location of the config file
     val filename = System.getProperty("biocache.config","/data/biocache/config/biocache-config.properties")
     var file = new java.io.File(filename)
+    
     //only load the properties file if it exists otherwise default to the biocache.properties on the classpath
-    val stream = if(file.exists())new FileInputStream(file) else this.getClass.getResourceAsStream("/biocache.properties")
+    val stream = if(file.exists()) {
+      new FileInputStream(file) 
+    } else {
+      this.getClass.getResourceAsStream("/biocache.properties")
+    }
+    
+    if(stream == null){
+      throw new RuntimeException("Configuration file not found. Please add to classpath or /data/biocache/config/biocache-config.properties")
+    }
+    
     logger.info("Loading configuration from " + filename)
     properties.load(stream)
 

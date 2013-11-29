@@ -3,6 +3,7 @@ import au.org.ala.biocache.Json
 import scalaj.http.Http
 import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.HttpClient
+import au.org.ala.biocache.Config
 
 /**
  * Load a temp resource
@@ -15,7 +16,6 @@ object TempDataLoader {
     var userId = ""
     var apiKey = ""
     var name = ""
-    val registryUrl = "http://collections.ala.org.au"
 
     val parser = new OptionParser("Create a temporary resource") {
       arg("<user>", "The user uploading", { v: String => userId = v })
@@ -28,7 +28,7 @@ object TempDataLoader {
       println(data)
       
       val http = new HttpClient()
-      val post = new PostMethod(registryUrl + "/ws/tempDataResource")
+      val post = new PostMethod(Config.registryURL + "/ws/tempDataResource")
       post.setRequestBody(data)
       http.executeMethod(post)
       post.getResponseHeaders().foreach(h => println(h.getName() + ": " +h.getValue()))

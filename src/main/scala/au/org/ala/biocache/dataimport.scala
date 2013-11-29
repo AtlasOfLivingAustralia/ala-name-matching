@@ -53,7 +53,6 @@ trait DataLoader {
     val api_key = "Venezuela"
     val logger = LoggerFactory.getLogger("DataLoader")
     val temporaryFileStore = "/data/biocache-load/"
-    val registryUrl = "http://collections.ala.org.au/ws/dataResource/"
     val pm = Config.persistenceManager
     val loadTime = org.apache.commons.lang.time.DateFormatUtils.format(new java.util.Date, "yyyy-MM-dd'T'HH:mm:ss'Z'")
 
@@ -97,17 +96,17 @@ trait DataLoader {
     }
     
     def getDataResourceDetailsAsMap(resourceUid:String) : Map[String, String] = {
-      val json = Source.fromURL(registryUrl + resourceUid + ".json").getLines.mkString
+      val json = Source.fromURL(Config.registryURL + "/dataResource/" + resourceUid + ".json").getLines.mkString
       JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
     }
 
     def getDataProviderDetailsAsMap(uid:String) : Map[String, String] = {
-      val json = Source.fromURL("http://collections.ala.org.au/ws/dataProvider/" + uid + ".json").getLines.mkString
+      val json = Source.fromURL(Config.registryURL + "/dataProvider/" + uid + ".json").getLines.mkString
       JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
     }
 
     def getInstitutionDetailsAsMap(uid:String) : Map[String, String] = {
-      val json = Source.fromURL("http://collections.ala.org.au/ws/institution/" + uid + ".json").getLines.mkString
+      val json = Source.fromURL(Config.registryURL + "/institution/" + uid + ".json").getLines.mkString
       JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
     }
 
@@ -379,7 +378,7 @@ trait DataLoader {
             //turn the map of values into JSON representation
             val data = map.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
             
-            val responseCode = Http.postData(registryUrl+resourceUid,data).header("content-type", "application/json").responseCode
+            val responseCode = Http.postData(Config.registryURL + "/dataResource/" +resourceUid,data).header("content-type", "application/json").responseCode
             logger.info("Registry response code: " + responseCode)
           }
           true

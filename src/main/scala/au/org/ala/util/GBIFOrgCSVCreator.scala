@@ -88,7 +88,7 @@ class GBIFOrgCSVCreator {
           val description = map("pubDescription")
           val url = map("websiteUrl")
           
-          val accessPointURL = map("publicArchiveUrl")//"http://biocache.ala.org.au/archives/"+dr+"/"+dr+"_ror_dwca.zip" 
+          val accessPointURL = map("publicArchiveUrl") 
           writer.writeNext(Array(organisationName, organisationDescription, "Technical",technicalContactEmail, "au", name, description,url,"Technical",technicalContactEmail, accessPointURL))
           
       }) 
@@ -108,7 +108,7 @@ class GBIFOrgCSVCreator {
     }
 
     def getDataResourceUids : Seq[String] = {
-      val url = "http://biocache.ala.org.au/ws/occurrences/search?q=*:*&facets=data_resource_uid&pageSize=0&flimit=10000"
+      val url = Config.biocacheServiceURL + "/occurrences/search?q=*:*&facets=data_resource_uid&pageSize=0&flimit=10000"
       val jsonString = Source.fromURL(url).getLines.mkString
       val json = JSON.parseFull(jsonString).get.asInstanceOf[Map[String, String]]
       val results = json.get("facetResults").get.asInstanceOf[List[Map[String, String]]].head.get("fieldResult").get.asInstanceOf[List[Map[String, String]]]

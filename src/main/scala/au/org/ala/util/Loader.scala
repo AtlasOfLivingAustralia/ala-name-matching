@@ -4,6 +4,7 @@ import scala.io.Source
 import scala.util.parsing.json.JSON
 import scala.collection.JavaConversions
 import scala.collection.mutable.HashMap
+import au.org.ala.biocache.Config
 
 /**
  * Runnable loader that just takes a resource UID and delegates based on the protocol.
@@ -48,7 +49,7 @@ class Loader extends DataLoader {
   }
 
   def printResourceList {
-    val json = Source.fromURL("http://collections.ala.org.au/ws/dataResource?resourceType=records").getLines.mkString
+    val json = Source.fromURL(Config.registryURL + "/dataResource?resourceType=records").getLines.mkString
     val drs = JSON.parseFull(json).get.asInstanceOf[List[Map[String, String]]]
     CMD.printTable(drs)
   }
@@ -125,7 +126,7 @@ class Loader extends DataLoader {
   }
 
   def healthcheck = {
-    val json = Source.fromURL("http://collections.ala.org.au/ws/dataResource/harvesting.json").getLines.mkString
+    val json = Source.fromURL(Config.registryURL+"/dataResource/harvesting.json").getLines.mkString
     val drs = JSON.parseFull(json).get.asInstanceOf[List[Map[String, String]]]
     // UID, name, protocol, URL,
     var digirCache = new HashMap[String, Map[String, String]]()

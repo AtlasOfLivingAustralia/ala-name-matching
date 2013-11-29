@@ -458,7 +458,6 @@ object AttributionDAO {
 
   import ReflectBean._
   import JavaConversions._
-  var collectoryURL = "http://collections.ala.org.au"
   private val columnFamily = "attr"
   //can't use a scala hashmap because missing keys return None not null...
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)//new HashMap[String, Option[Attribution]]
@@ -498,12 +497,12 @@ object AttributionDAO {
   }
   
    def getDataProviderAsMap(value:String):Map[String,String]={
-     val json = Source.fromURL(AttributionDAO.collectoryURL+"/ws/dataProvider/" + value + ".json").getLines.mkString
+     val json = Source.fromURL(Config.registryURL+"/dataProvider/" + value + ".json").getLines.mkString
      JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
    }
   
    def getDataResourceAsMap(value:String):Map[String,String]={
-     val json = Source.fromURL(AttributionDAO.collectoryURL+"/ws/dataResource/" + value + ".json").getLines.mkString
+     val json = Source.fromURL(Config.registryURL+"/dataResource/" + value + ".json").getLines.mkString
      JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
    }
 
@@ -514,7 +513,7 @@ object AttributionDAO {
       val attribution = new Attribution
       logger.info("Calling web service for " + value)
 
-      val wscontent = WebServiceLoader.getWSStringContent(AttributionDAO.collectoryURL+"/ws/dataResource/"+value+".json")
+      val wscontent = WebServiceLoader.getWSStringContent(Config.registryURL+"dataResource/"+value+".json")
 
       val wsmap = Json.toMap(wscontent)
 
@@ -605,7 +604,7 @@ object AttributionDAO {
         
         //lookup the collectory against the WS
         logger.info("Looking up collectory web service for " + uuid)
-        val wscontent = WebServiceLoader.getWSStringContent(collectoryURL+"/lookup/inst/"+URLEncoder.encode(institutionCode)+"/coll/"+URLEncoder.encode(collectionCode)+".json")
+        val wscontent = WebServiceLoader.getWSStringContent(Config.registryURL+"/lookup/inst/"+URLEncoder.encode(institutionCode)+"/coll/"+URLEncoder.encode(collectionCode)+".json")
         val wsmap = Json.toMap(wscontent)
 
         if(!wsmap.isEmpty && !wsmap.contains("error")){

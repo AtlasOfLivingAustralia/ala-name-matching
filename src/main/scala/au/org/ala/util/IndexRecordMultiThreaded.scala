@@ -52,13 +52,10 @@ trait RangeCalculator{
   /**
    * For a give webservice URL, calculate a partitioning per thread
    */
-  def calculateRanges(baseUrl:String, threads:Int, query:String="*:*",start:String="", end:String="") : Array[(String,String)] = {
+  def calculateRanges(threads:Int, query:String="*:*",start:String="", end:String="") : Array[(String,String)] = {
 
-    //http://biocache.ala.org.au/ws/occurrences/search?q=*:*&facet=off&sort=row_key&dir=asc
-    
-    val firstRequest = baseUrl + "/occurrences/search?q="+query+"&pageSize=1&facet=off&sort=row_key&dir=asc"
-    println(baseUrl)
-    val json  = JSON.parseFull(Source.fromURL(new URL(firstRequest)).mkString)
+    val firstRequest = Config.biocacheServiceURL + "/occurrences/search?q=" + query + "&pageSize=1&facet=off&sort=row_key&dir=asc"
+    val json = JSON.parseFull(Source.fromURL(new URL(firstRequest)).mkString)
     if (!json.isEmpty){
       val totalRecords = json.get.asInstanceOf[Map[String, Object]].getOrElse("totalRecords", 0).asInstanceOf[Double].toInt
       println("Total records: " + totalRecords)
@@ -72,7 +69,7 @@ trait RangeCalculator{
         //val json  = JSON.parseFull(Source.fromURL(new URL(baseUrl + "/occurrences/search?q="+query+"&pageSize=1&facet=off&sort=row_key&dir=asc&start=" + (i * pageSize))).mkString)
         //val occurrences = json.get.asInstanceOf[Map[String, Object]].getOrElse("occurrences", List[Map[String, String]]()).asInstanceOf[List[Map[String, String]]]
         //val rowKey:String = occurrences.head.getOrElse("rowKey", "")
-        val json = JSON.parseFull(Source.fromURL(new URL(baseUrl+"/occurrences/search?q="+query+"&facets=row_key&pageSize=0&flimit=1&fsort=index&foffset="+ (i * pageSize))).mkString)
+        val json = JSON.parseFull(Source.fromURL(new URL(Config.biocacheServiceURL+"/occurrences/search?q="+query+"&facets=row_key&pageSize=0&flimit=1&fsort=index&foffset="+ (i * pageSize))).mkString)
         val facetResults= json.get.asInstanceOf[Map[String, Object]].getOrElse("facetResults", List[Map[String,Object]]()).asInstanceOf[List[Map[String,Object]]]
         //println(facetResults.getClass + " " + facetResults)//.getOrElse("facetResults", List[Map[String, Map[String,Object]]]()).asInstanceOf[List[Map[String, Map[String,Object]]]]
 
@@ -116,7 +113,6 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
 
   def main(args:Array[String]){
     
-    var wsBase = "http://biocache.ala.org.au/ws"
     var numThreads = 8
     var pageSize=200
     var ranges:Array[(String,String)] = Array()
@@ -132,7 +128,6 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
        arg("<action>", "The action to perform by the Multithreader; either range, process or index, col", {v:String => action = v})
        intOpt("t","threads", "The number of threads to perform the indexing on",{v: Int => numThreads =v})
        intOpt("ps","pagesize", "The pagesSize for the records",{v: Int => pageSize =v})
-       opt("ws","wsBase","The base URL for the biocache ws to query for the ranges",{v: String => wsBase = v})
        opt("p","prefix","The prefix to apply to the solr dirctories",{v: String => dirPrefix =v})
        opt("k","keys","A comma separated list of keys on which to perform the range threads. Prevents the need to query SOLR for the ranges.",{v:String =>keys = Some(v.split(","))})
        opt("s", "start", "The rowKey in which to start the range",{v:String => start=v})
@@ -144,7 +139,7 @@ object RecordActionMultiThreaded extends Counter with RangeCalculator {
       if(validActions.contains(action)){
         val (query, start, end) = if(dr.isDefined)("data_resource_uid:" + dr.get, dr.get+"|", dr.get+"|~") else ("*:*","","")
         Config.persistenceManager.get("test","occ","blah")
-        ranges = if(keys.isEmpty) calculateRanges(wsBase, numThreads,query, start, end) else generateRanges(keys.get,start,end)
+        ranges = if(keys.isEmpty) calculateRanges(numThreads,query, start, end) else generateRanges(keys.get,start,end)
         if(action == "range")
           println(ranges.mkString("\n"))
         

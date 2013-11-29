@@ -7,6 +7,7 @@ import scala.io.Source
 import org.apache.commons.io.FileUtils
 import scala.util.parsing.json.JSON
 import org.slf4j.LoggerFactory
+import au.org.ala.biocache.Config
 
 object DwCACreator {
 
@@ -34,7 +35,7 @@ object DwCACreator {
   }
 
   def getDataResourceUids : Seq[String] = {
-    val url = "http://biocache.ala.org.au/ws/occurrences/search?q=*:*&facets=data_resource_uid&pageSize=0&flimit=10000"
+    val url = Config.biocacheServiceURL + "/occurrences/search?q=*:*&facets=data_resource_uid&pageSize=0&flimit=10000"
     val jsonString = Source.fromURL(url).getLines.mkString
     val json = JSON.parseFull(jsonString).get.asInstanceOf[Map[String, String]]
     val results = json.get("facetResults").get.asInstanceOf[List[Map[String, String]]].head.get("fieldResult").get.asInstanceOf[List[Map[String, String]]]
@@ -77,8 +78,7 @@ class DwCACreator {
     //query from the collectory to get the EML file
     try {
       zop.putNextEntry(new ZipEntry("eml.xml"))
-
-      val content=Source.fromURL("http://collections.ala.org.au/eml/"+dr).mkString
+      val content = Source.fromURL(Config.registryURL + "/eml/"+dr).mkString
       zop.write(content.getBytes)
       zop.flush
       zop.closeEntry
