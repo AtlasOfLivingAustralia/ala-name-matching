@@ -69,17 +69,17 @@ object CalculatedLayerHelper {
       println("Species cell counts file prefix: " + speciesCellCountsFilePrefix)
       println("Cell species file prefix: " + cellSpeciesFilePrefix)
       println("Cell occurrence counts file prefix: " + cellOccurrenceCountsFilePrefix)
-      helper.execute(numThreads, outputFileDirectory, speciesCellCountsFilePrefix, cellSpeciesFilePrefix)
+      helper.execute(numThreads, outputFileDirectory, speciesCellCountsFilePrefix, cellSpeciesFilePrefix, cellOccurrenceCountsFilePrefix)
     }
   }
 
-  def doFacetQuery(query: String, filterQuery: String, facet: String): ListBuffer[String] = {
+  def doFacetQuery(query: String, filterQuery: String, facet: String): (ListBuffer[String], scala.collection.mutable.Map[String, Int]) = {
 
     var valuesList = new ListBuffer[String]
     val valuesCountMap = scala.collection.mutable.Map[String, Int]()
 
     def addToList(name: String, count: Int): Boolean = {
-      resultsList += name
+      valuesList += name
       valuesCountMap.put(name, count)
 
       true
@@ -87,7 +87,7 @@ object CalculatedLayerHelper {
 
     Config.indexDAO.pageOverFacet(addToList, facet, query, Array(filterQuery))
 
-    (resultsList, valuesCountMap)
+    (valuesList, valuesCountMap)
   }
 }
 
@@ -95,7 +95,7 @@ class CalculatedLayerHelper {
 
   def execute(numThreads: Int, outputFileDirectory: String, speciesCellCountsFilePrefix: String, cellSpeciesFilePrefix: String, cellOccurrenceCountsFilePrefix: String) {
     println("PROCESSING TERRESTRIAL (NON-MARINE) OCCURRENCES (0.1 degree)")
-    calculateCellValues(numThreads, outputFileDirectory, speciesCellCountsFilePrefix + "-0.1-degree-non-marine", cellSpeciesFilePrefix + "-0.1-degree-non-marine", cellOccurrenceCountsFilePrefix + "-0.1-degree-non-marine", cellCalculatedLayerHelper.NON_MARINE_SPECIES_FILTER_QUERY, 1)
+    calculateCellValues(numThreads, outputFileDirectory, speciesCellCountsFilePrefix + "-0.1-degree-non-marine", cellSpeciesFilePrefix + "-0.1-degree-non-marine", cellOccurrenceCountsFilePrefix + "-0.1-degree-non-marine", CalculatedLayerHelper.NON_MARINE_SPECIES_FILTER_QUERY, 1)
 
     println("PROCESSING ALL OCCURRENCES (0.1 degree)")
     calculateCellValues(numThreads, outputFileDirectory, speciesCellCountsFilePrefix + "-0.1-degree", cellSpeciesFilePrefix + "-0.1-degree", cellOccurrenceCountsFilePrefix + "-0.1-degree", CalculatedLayerHelper.ALL_SPECIES_FILTER_QUERY, 1)
@@ -124,7 +124,7 @@ class CalculatedLayerHelper {
       workQueue ++= speciesLsids
 
       for (i <- 0 to numThreads - 1) {
-        val a = new CalculatedLayerWorkerActor(i, filterQuery, self)
+        val a = new CalculatedLayerWorkerActor(i, filterQuery, numDecimalPlacesToRoundTo, self)
         a.start()
       }
 
@@ -161,12 +161,12 @@ class CalculatedLayerHelper {
             // merge the worker's cellOccurrenceCounts into the global cell occurrenceCounts
             for (coords <- actor.cellOccurrenceCounts.keys) {
               val actorCellOccurrenceCount = actor.cellOccurrenceCounts(coords)
-              if (cellOccurenceCounts.contains(coords)) {
+              if (cellOccurrenceCounts.contains(coords)) {
                 var globalCellOccurrenceCount = cellOccurrenceCounts(coords)
                 globalCellOccurrenceCount = globalCellOccurrenceCount + actorCellOccurrenceCount
-                cellSpecies.put(coords, globalCellOccurrenceCount)
+                cellOccurrenceCounts.put(coords, globalCellOccurrenceCount)
               } else {
-                cellSpecies.put(coords, actorCellOccurrenceCount)
+                cellOccurrenceCounts.put(coords, actorCellOccurrenceCount)
               }
             }
 
@@ -225,7 +225,7 @@ class CalculatedLayerHelper {
 
 }
 
-class CalculatedLayerWorkerActor(id: Int, filterQuery: String, dispatcher: Actor) extends Actor {
+class CalculatedLayerWorkerActor(id: Int, filterQuery: String, numDecimalPlacesToRoundTo: Int, dispatcher: Actor) extends Actor {
 
   var cellSpecies = scala.collection.mutable.Map[String, Set[String]]()
   var speciesCellCounts = scala.collection.mutable.Map[String, Int]()
@@ -260,7 +260,7 @@ class CalculatedLayerWorkerActor(id: Int, filterQuery: String, dispatcher: Actor
   def processSpeciesOccurrences(speciesLsid: String, speciesPoints: ListBuffer[String], speciesPointOccurrenceCounts: scala.collection.mutable.Map[String, Int], cellSpecies: scala.collection.mutable.Map[String, Set[String]], speciesCellCounts: scala.collection.mutable.Map[String, Int], cellOccurrenceCounts: scala.collection.mutable.Map[String, Int], numDecimalPlacesToRoundTo: Int) {
     var pointsSet = Set[String]()
 
-    for (point <- speciesCellCoords) {
+    for (point <- speciesPoints) {
       val splitPoint = point.split(",")
       val strLatitude = splitPoint(0)
       val strLongitude = splitPoint(1)
@@ -276,7 +276,7 @@ class CalculatedLayerWorkerActor(id: Int, filterQuery: String, dispatcher: Actor
         thisCellSpecies = Set[String]()
       }
 
-      thisCellSpecies += lsid
+      thisCellSpecies += speciesLsid
       cellSpecies.put(strRoundedCoords, thisCellSpecies)
 
       val speciesPointOccurrenceCount = speciesPointOccurrenceCounts.getOrElse(point, 0)
@@ -286,6 +286,6 @@ class CalculatedLayerWorkerActor(id: Int, filterQuery: String, dispatcher: Actor
       cellOccurrenceCounts.put(strRoundedCoords, thisCellOccurrenceCount)
     }
 
-    speciesCellCounts.put(lsid, pointsSet.size)
+    speciesCellCounts.put(speciesLsid, pointsSet.size)
   }
 }
