@@ -215,7 +215,7 @@ class CalculatedLayerHelper {
     for (cellCoords <- cellOccurrenceCounts.keys) {
       bwCellOccurrenceCounts.append(cellCoords)
       bwCellOccurrenceCounts.append(",")
-      bwCellOccurrenceCounts.append(cellSpecies(cellCoords).mkString(","))
+      bwCellOccurrenceCounts.append(cellOccurrenceCounts(cellCoords).toString)
       bwCellOccurrenceCounts.newLine()
     }
     bwCellOccurrenceCounts.flush()
