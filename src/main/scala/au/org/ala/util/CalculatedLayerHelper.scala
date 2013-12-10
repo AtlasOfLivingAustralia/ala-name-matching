@@ -21,7 +21,7 @@ import org.apache.commons.io.IOUtils
  * Time: 4:13 PM
  * To change this template use File | Settings | File Templates.
  */
-object EndemismLayerHelper {
+object CalculatedLayerHelper {
   //val FACET_DOWNLOAD_URL_TEMPLATE = Config.biocacheServiceUrl + "/occurrences/facets/download?q={0}&facets={1}"
   //val FACET_DOWNLOAD_URL_TEMPLATE = "http://ala-rufus.it.csiro.au/biocache-service/occurrences/facets/download?q={0}&facets={1}"
 
@@ -39,10 +39,11 @@ object EndemismLayerHelper {
   val POINT_001_FACET = "point-0.001"
 
   def main(args: Array[String]) {
-    val helper = new EndemismLayerHelper();
+    val helper = new CalculatedLayerHelper();
     var outputFileDirectory: String = null;
     var speciesCellCountsFilePrefix: String = null;
     var cellSpeciesFilePrefix: String = null;
+    var cellOccurrenceCountsFilePrefix: String = null;
     var numThreads = 1;
 
     val parser = new OptionParser("Find expert distribution outliers") {
@@ -55,6 +56,9 @@ object EndemismLayerHelper {
       arg("cellSpeciesFilePrefix", "Prefix for files containing cell species lists (without .txt extension)", {
         v: String => cellSpeciesFilePrefix = v
       })
+      arg("cellOccurrenceCountsFilePrefix", "Prefix for files containing cell occurrence counts (without .txt extension)", {
+        v: String => cellOccurrenceCountsFilePrefix = v
+      })
       intOpt("t", "numThreads", "Number of threads to use", {
         v: Int => numThreads = v
       })
@@ -64,37 +68,43 @@ object EndemismLayerHelper {
       println("Output file directory: " + outputFileDirectory)
       println("Species cell counts file prefix: " + speciesCellCountsFilePrefix)
       println("Cell species file prefix: " + cellSpeciesFilePrefix)
+      println("Cell occurrence counts file prefix: " + cellOccurrenceCountsFilePrefix)
       helper.execute(numThreads, outputFileDirectory, speciesCellCountsFilePrefix, cellSpeciesFilePrefix)
     }
   }
 
   def doFacetQuery(query: String, filterQuery: String, facet: String): ListBuffer[String] = {
 
-    var resultsList = new ListBuffer[String]
+    var valuesList = new ListBuffer[String]
+    val valuesCountMap = scala.collection.mutable.Map[String, Int]()
 
     def addToList(name: String, count: Int): Boolean = {
       resultsList += name
+      valuesCountMap.put(name, count)
 
       true
     }
 
     Config.indexDAO.pageOverFacet(addToList, facet, query, Array(filterQuery))
 
-    resultsList
+    (resultsList, valuesCountMap)
   }
 }
 
-class EndemismLayerHelper {
+class CalculatedLayerHelper {
 
-  def execute(numThreads: Int, outputFileDirectory: String, speciesCellCountsFilePrefix: String, cellSpeciesFilePrefix: String) {
-    println("PROCESSING TERRESTRIAL (NON-MARINE) OCCURRENCES")
-    calculateSpeciesEndemismValues(numThreads, outputFileDirectory, speciesCellCountsFilePrefix + "-0.1-degree-non-marine", cellSpeciesFilePrefix + "-0.1-degree-non-marine", EndemismLayerHelper.NON_MARINE_SPECIES_FILTER_QUERY)
+  def execute(numThreads: Int, outputFileDirectory: String, speciesCellCountsFilePrefix: String, cellSpeciesFilePrefix: String, cellOccurrenceCountsFilePrefix: String) {
+    println("PROCESSING TERRESTRIAL (NON-MARINE) OCCURRENCES (0.1 degree)")
+    calculateCellValues(numThreads, outputFileDirectory, speciesCellCountsFilePrefix + "-0.1-degree-non-marine", cellSpeciesFilePrefix + "-0.1-degree-non-marine", cellOccurrenceCountsFilePrefix + "-0.1-degree-non-marine", cellCalculatedLayerHelper.NON_MARINE_SPECIES_FILTER_QUERY, 1)
 
-    println("PROCESSING ALL OCCURRENCES")
-    calculateSpeciesEndemismValues(numThreads, outputFileDirectory, speciesCellCountsFilePrefix + "-0.1-degree", cellSpeciesFilePrefix + "-0.1-degree", EndemismLayerHelper.ALL_SPECIES_FILTER_QUERY)
+    println("PROCESSING ALL OCCURRENCES (0.1 degree)")
+    calculateCellValues(numThreads, outputFileDirectory, speciesCellCountsFilePrefix + "-0.1-degree", cellSpeciesFilePrefix + "-0.1-degree", cellOccurrenceCountsFilePrefix + "-0.1-degree", CalculatedLayerHelper.ALL_SPECIES_FILTER_QUERY, 1)
+
+    println("PROCESSING ALL OCCURRENCES (0.01 degree)")
+    calculateCellValues(numThreads, outputFileDirectory, speciesCellCountsFilePrefix + "-0.01-degree", cellSpeciesFilePrefix + "-0.01-degree", cellOccurrenceCountsFilePrefix + "-0.01-degree", CalculatedLayerHelper.ALL_SPECIES_FILTER_QUERY, 2)
   }
 
-  def calculateSpeciesEndemismValues(numThreads: Int, outputFileDirectory: String, speciesCellCountsFilePrefix: String, cellSpeciesFilePrefix: String, filterQuery: String) {
+  def calculateCellValues(numThreads: Int, outputFileDirectory: String, speciesCellCountsFilePrefix: String, cellSpeciesFilePrefix: String, cellOccurrenceCountsFilePrefix: String, filterQuery: String, numDecimalPlacesToRoundTo:Int) {
 
     val countDownLatch = new CountDownLatch(numThreads);
 
@@ -102,27 +112,26 @@ class EndemismLayerHelper {
     actor {
       var cellSpecies = scala.collection.mutable.Map[String, Set[String]]()
       var speciesCellCounts = scala.collection.mutable.Map[String, Int]()
+      var cellOccurrenceCounts = scala.collection.mutable.Map[String, Int]()
 
       val cellSpeciesFile = outputFileDirectory + '/' + cellSpeciesFilePrefix + ".txt"
       val speciesCellCountsFile = outputFileDirectory + '/' + speciesCellCountsFilePrefix + ".txt"
+      val cellOccurrenceCountsFile = outputFileDirectory + '/' + cellOccurrenceCountsFilePrefix + ".txt"
 
-      val speciesLsids = EndemismLayerHelper.doFacetQuery(EndemismLayerHelper.SPECIES_GUID_QUERY, filterQuery, EndemismLayerHelper.SPECIES_FACET)
-//      var speciesLsids = ListBuffer[String]()
-//      speciesLsids += "urn:lsid:biodiversity.org.au:afd.taxon:b76f8dcf-fabd-4e48-939c-fd3cafc1887a"
-//      speciesLsids += "urn:lsid:biodiversity.org.au:afd.taxon:eb00b378-cb04-4abc-bdca-295ddd52ada9"
+      val (speciesLsids, speciesOccurrenceCounts) = CalculatedLayerHelper.doFacetQuery(CalculatedLayerHelper.SPECIES_GUID_QUERY, filterQuery, CalculatedLayerHelper.SPECIES_FACET)
 
       var workQueue = scala.collection.mutable.Queue[String]()
       workQueue ++= speciesLsids
 
       for (i <- 0 to numThreads - 1) {
-        val a = new EndemismWorkerActor(i, filterQuery, self)
+        val a = new CalculatedLayerWorkerActor(i, filterQuery, self)
         a.start()
       }
 
       var completedThreads = 0
       loopWhile(completedThreads < numThreads) {
         receive {
-          case ("SEND JOB", actor: EndemismWorkerActor) => {
+          case ("SEND JOB", actor: CalculatedLayerWorkerActor) => {
             if (!workQueue.isEmpty) {
               val lsid = workQueue.dequeue
               actor ! (lsid)
@@ -131,7 +140,7 @@ class EndemismLayerHelper {
             }
           }
 
-          case ("EXITED", actor: EndemismWorkerActor) => {
+          case ("EXITED", actor: CalculatedLayerWorkerActor) => {
             // merge the worker's speciesCellCounts into the global species cell counts
             for (lsid <- actor.speciesCellCounts.keys) {
               speciesCellCounts.put(lsid, actor.speciesCellCounts(lsid))
@@ -149,11 +158,23 @@ class EndemismLayerHelper {
               }
             }
 
+            // merge the worker's cellOccurrenceCounts into the global cell occurrenceCounts
+            for (coords <- actor.cellOccurrenceCounts.keys) {
+              val actorCellOccurrenceCount = actor.cellOccurrenceCounts(coords)
+              if (cellOccurenceCounts.contains(coords)) {
+                var globalCellOccurrenceCount = cellOccurrenceCounts(coords)
+                globalCellOccurrenceCount = globalCellOccurrenceCount + actorCellOccurrenceCount
+                cellSpecies.put(coords, globalCellOccurrenceCount)
+              } else {
+                cellSpecies.put(coords, actorCellOccurrenceCount)
+              }
+            }
+
             completedThreads += 1
 
             //If all threads have exited, then write file output
             if (completedThreads == numThreads) {
-              writeFileOutput(cellSpecies, speciesCellCounts, cellSpeciesFile, speciesCellCountsFile)
+              writeFileOutput(cellSpecies, speciesCellCounts, cellOccurrenceCounts, cellSpeciesFile, speciesCellCountsFile, cellOccurrenceCountsFile)
             }
 
             countDownLatch.countDown()
@@ -168,7 +189,7 @@ class EndemismLayerHelper {
     countDownLatch.await()
   }
 
-  def writeFileOutput(cellSpecies: scala.collection.mutable.Map[String, Set[String]], speciesCellCounts: scala.collection.mutable.Map[String, Int], cellSpeciesFile: String, speciesCellCountsFile: String) {
+  def writeFileOutput(cellSpecies: scala.collection.mutable.Map[String, Set[String]], speciesCellCounts: scala.collection.mutable.Map[String, Int], cellOccurrenceCounts: scala.collection.mutable.Map[String, Int], cellSpeciesFile: String, speciesCellCountsFile: String, cellOccurrenceCountsFile: String) {
     val bwSpeciesCellCounts = new BufferedWriter(new FileWriter(speciesCellCountsFile));
     for (lsid <- speciesCellCounts.keys) {
       bwSpeciesCellCounts.append(lsid)
@@ -188,13 +209,27 @@ class EndemismLayerHelper {
     }
     bwCellSpecies.flush()
     bwCellSpecies.close()
+
+
+    val bwCellOccurrenceCounts = new BufferedWriter(new FileWriter(cellOccurrenceCountsFile));
+    for (cellCoords <- cellOccurrenceCounts.keys) {
+      bwCellOccurrenceCounts.append(cellCoords)
+      bwCellOccurrenceCounts.append(",")
+      bwCellOccurrenceCounts.append(cellSpecies(cellCoords).mkString(","))
+      bwCellOccurrenceCounts.newLine()
+    }
+    bwCellOccurrenceCounts.flush()
+    bwCellOccurrenceCounts.close()
+
   }
+
 }
 
-class EndemismWorkerActor(id: Int, filterQuery: String, dispatcher: Actor) extends Actor {
+class CalculatedLayerWorkerActor(id: Int, filterQuery: String, dispatcher: Actor) extends Actor {
 
   var cellSpecies = scala.collection.mutable.Map[String, Set[String]]()
   var speciesCellCounts = scala.collection.mutable.Map[String, Int]()
+  var cellOccurrenceCounts = scala.collection.mutable.Map[String, Int]()
 
   def act() {
     println("Worker(" + id + ") started")
@@ -211,10 +246,9 @@ class EndemismWorkerActor(id: Int, filterQuery: String, dispatcher: Actor) exten
         }
         case (speciesLsid: String) => {
           println("Worker(" + id + ") processing " + speciesLsid)
-          val occurrencePoints = EndemismLayerHelper.doFacetQuery(MessageFormat.format(EndemismLayerHelper.SPECIFIC_SPECIES_GUID_QUERY_TEMPLATE, ClientUtils.escapeQueryChars(speciesLsid)), filterQuery, EndemismLayerHelper.POINT_001_FACET)
+          val (speciesPoints, speciesPointOccurrenceCounts)  = CalculatedLayerHelper.doFacetQuery(MessageFormat.format(CalculatedLayerHelper.SPECIFIC_SPECIES_GUID_QUERY_TEMPLATE, ClientUtils.escapeQueryChars(speciesLsid)), filterQuery, CalculatedLayerHelper.POINT_001_FACET)
 
-          // process for 0.1 degree resolution
-          processOccurrencePoints(occurrencePoints, speciesLsid, cellSpecies, speciesCellCounts, 1)
+          processSpeciesOccurrences(speciesLsid, speciesPoints, speciesPointOccurrenceCounts, cellSpecies, speciesCellCounts, cellOccurrenceCounts, numDecimalPlacesToRoundTo) // 1 decimal place for 0.1 degree resolution, 2 decimal places for 0.01 degree resolution etc.
 
           // ask dispatcher for next job
           dispatcher !("SEND JOB", self)
@@ -223,10 +257,10 @@ class EndemismWorkerActor(id: Int, filterQuery: String, dispatcher: Actor) exten
     }
   }
 
-  def processOccurrencePoints(occurrencePoints: ListBuffer[String], lsid: String, cellSpecies: scala.collection.mutable.Map[String, Set[String]], speciesCellCounts: scala.collection.mutable.Map[String, Int], numDecimalPlacesToRoundTo: Int) {
+  def processSpeciesOccurrences(speciesLsid: String, speciesPoints: ListBuffer[String], speciesPointOccurrenceCounts: scala.collection.mutable.Map[String, Int], cellSpecies: scala.collection.mutable.Map[String, Set[String]], speciesCellCounts: scala.collection.mutable.Map[String, Int], cellOccurrenceCounts: scala.collection.mutable.Map[String, Int], numDecimalPlacesToRoundTo: Int) {
     var pointsSet = Set[String]()
 
-    for (point <- occurrencePoints) {
+    for (point <- speciesCellCoords) {
       val splitPoint = point.split(",")
       val strLatitude = splitPoint(0)
       val strLongitude = splitPoint(1)
@@ -244,6 +278,12 @@ class EndemismWorkerActor(id: Int, filterQuery: String, dispatcher: Actor) exten
 
       thisCellSpecies += lsid
       cellSpecies.put(strRoundedCoords, thisCellSpecies)
+
+      val speciesPointOccurrenceCount = speciesPointOccurrenceCounts.getOrElse(point, 0)
+      var thisCellOccurrenceCount = cellOccurrenceCounts.getOrElse(strRoundedCoords, 0)
+
+      thisCellOccurrenceCount = thisCellOccurrenceCount + speciesPointOccurrenceCount
+      cellOccurrenceCounts.put(strRoundedCoords, thisCellOccurrenceCount)
     }
 
     speciesCellCounts.put(lsid, pointsSet.size)

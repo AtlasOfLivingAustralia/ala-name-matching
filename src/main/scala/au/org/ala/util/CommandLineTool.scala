@@ -249,7 +249,7 @@ object CMD {
         }
         case it if (it.startsWith("endemism") || it.startsWith("endemism")) => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
-          EndemismLayerHelper.main(args)
+          CalculatedLayerHelper.main(args)
         }
         case it if (it startsWith "delete-resource") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
