@@ -513,7 +513,7 @@ object AttributionDAO {
       val attribution = new Attribution
       logger.info("Calling web service for " + value)
 
-      val wscontent = WebServiceLoader.getWSStringContent(Config.registryURL+"dataResource/"+value+".json")
+      val wscontent = WebServiceLoader.getWSStringContent(Config.registryURL+"/dataResource/"+value+".json")
 
       val wsmap = Json.toMap(wscontent)
 
