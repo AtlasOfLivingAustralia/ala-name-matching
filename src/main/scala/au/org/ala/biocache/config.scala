@@ -46,8 +46,8 @@ object Config {
   val deletedFileStore = configModule.properties.getProperty("deletedFileStore","/data/biocache-delete/")
 
   lazy val excludeSensitiveValuesFor = configModule.properties.getProperty("excludeSensitiveValuesFor","")
-
-  lazy val registryURL = configModule.properties.getProperty("registryURL","http://collections.ala.org.au/ws")
+  //NQ 2013-12-16: Can't use http://collections.ala.org.au/ws because the collection/institution code lookup does NOT include the ws suffix
+  lazy val registryURL = configModule.properties.getProperty("registryURL","http://collections.ala.org.au")
 
   lazy val biocacheServiceURL = configModule.properties.getProperty("biocacheServiceURL","http://biocache.ala.org.au/ws")
 
