@@ -96,17 +96,17 @@ trait DataLoader {
     }
     
     def getDataResourceDetailsAsMap(resourceUid:String) : Map[String, String] = {
-      val json = Source.fromURL(Config.registryURL + "/dataResource/" + resourceUid + ".json").getLines.mkString
+      val json = Source.fromURL(Config.registryURL + "/ws/dataResource/" + resourceUid + ".json").getLines.mkString
       JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
     }
 
     def getDataProviderDetailsAsMap(uid:String) : Map[String, String] = {
-      val json = Source.fromURL(Config.registryURL + "/dataProvider/" + uid + ".json").getLines.mkString
+      val json = Source.fromURL(Config.registryURL + "/ws/dataProvider/" + uid + ".json").getLines.mkString
       JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
     }
 
     def getInstitutionDetailsAsMap(uid:String) : Map[String, String] = {
-      val json = Source.fromURL(Config.registryURL + "/institution/" + uid + ".json").getLines.mkString
+      val json = Source.fromURL(Config.registryURL + "/ws/institution/" + uid + ".json").getLines.mkString
       JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
     }
 
@@ -378,7 +378,7 @@ trait DataLoader {
             //turn the map of values into JSON representation
             val data = map.map(pair => "\""+pair._1 +"\":\"" +pair._2 +"\"").mkString("{",",", "}")
             
-            val responseCode = Http.postData(Config.registryURL + "/dataResource/" +resourceUid,data).header("content-type", "application/json").responseCode
+            val responseCode = Http.postData(Config.registryURL + "/ws/dataResource/" +resourceUid,data).header("content-type", "application/json").responseCode
             logger.info("Registry response code: " + responseCode)
           }
           true
