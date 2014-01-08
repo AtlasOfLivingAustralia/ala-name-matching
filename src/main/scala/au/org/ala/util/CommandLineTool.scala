@@ -256,15 +256,16 @@ object CMD {
           if(args.length>0){
             val dr = args(0)
             val test = args.length>1
+            val extraArgs:Array[String] =  if(test) Array("--test") else Array()
             val (hasRowKeys, filename) = hasRowKey(dr)
 
 
             //delete columns that were not updated in the last day
             val lastLoadDate = org.apache.commons.lang.time.DateFormatUtils.format(getLastLoadDate, "yyyy-MM-dd")
             if (hasRowKeys){
-              ResourceCleanupTask.main(Array(dr, "columns","-d",lastLoadDate, "-f" ,filename.get) ++ (if(test) Array("test") else Array()))
+              ResourceCleanupTask.main(Array(dr, "columns","-d",lastLoadDate, "-f" ,filename.get) ++ extraArgs)
             } else{
-              ResourceCleanupTask.main(Array(dr, "columns","-d",lastLoadDate) ++ (if(test) Array("test") else Array()))
+              ResourceCleanupTask.main(Array(dr, "columns","-d",lastLoadDate) ++ extraArgs)
             }
           } else{
             println("Unable to delete-obsolete without a data resource uid being provided")

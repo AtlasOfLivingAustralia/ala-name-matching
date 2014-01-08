@@ -159,6 +159,7 @@ object ResourceCleanupTask {
         val (mod,rem) = removeRecordColumnsBasedOnTime(line, editTime, valueSet, fullRecord, test)
         totalColumnsRemoved += rem
         totalRecordModified += mod
+        totalRecords +=1
       }
     }
     println("Finished cleanup for columns")
