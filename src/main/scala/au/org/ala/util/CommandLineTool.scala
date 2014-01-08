@@ -251,6 +251,26 @@ object CMD {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           CalculatedLayerHelper.main(args)
         }
+        case it if (it startsWith "delete-obsolete") =>{
+          val args = it.split(" ").map(x => x.trim).toArray.tail
+          if(args.length>0){
+            val dr = args(0)
+            val test = args.length>1
+            val (hasRowKeys, filename) = hasRowKey(dr)
+
+
+            //delete columns that were not updated in the last day
+            val lastLoadDate = org.apache.commons.lang.time.DateFormatUtils.format(getLastLoadDate, "yyyy-MM-dd")
+            if (hasRowKeys){
+              ResourceCleanupTask.main(Array(dr, "columns","-d",lastLoadDate, "-f" ,filename.get) ++ (if(test) Array("test") else Array()))
+            } else{
+              ResourceCleanupTask.main(Array(dr, "columns","-d",lastLoadDate) ++ (if(test) Array("test") else Array()))
+            }
+          } else{
+            println("Unable to delete-obsolete without a data resource uid being provided")
+          }
+
+        }
         case it if (it startsWith "delete-resource") => {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           args.foreach(drUid => {
@@ -405,7 +425,8 @@ object CMD {
     padAndPrint("[41]  remove-deleted-index <dr-uid> - removes the records not loaded during the last load from index (NB last load will be interpreted as within the last 24 hours).")
     padAndPrint("[42]  force-index <dr-uid1> <dr-uid2>  - forces a complete reindex of the supplied data resource (ignoring incremental file)")
     padAndPrint("[43]  index-query <query to index> - Indexes all the records that satisfy the supplied query")
-    padAndPrint("[44]  exit")
+    padAndPrint("[44]  delete-obsolete <dr> - deletes the obsolete columns based on a last load date within the last 24 hours")
+    padAndPrint("[45]  exit")
 
   }
   

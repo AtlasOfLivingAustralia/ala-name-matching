@@ -14,7 +14,7 @@ import au.org.ala.biocache.FullRecordMapper
  * 
  */
 object ResourceCleanupTask {
-  
+  import FileHelper._
   def main(args: Array[String]) {
     var druid = ""
     
@@ -28,7 +28,8 @@ object ResourceCleanupTask {
     var start:Option[String] =None
     var end:Option[String]= None
     var columns = Array[String]() //stores the columns to keep or remove depending on the args
-    var isInclusiveList = true // the record need to include all the columns 
+    var isInclusiveList = true // the record need to include all the columns
+    var filename:Option[String] = None
 
     val parser = new OptionParser("cleanup") {
       arg("<data resource>", "The data resource on which to perform the clean up.", { v: String => druid = v })
@@ -38,7 +39,8 @@ object ResourceCleanupTask {
         case "rows"=> removeRows = true
         case "delete" => removeDeleted = true
         case _ =>
-      }})      
+      }})
+      opt("f", "file", "<absolute path to file>", "The name of the file to incrementally remove obsolete columns from",{ value :String => filename = Some(value)})
       opt("d", "date", "<date last loaded yyyy-MM-dd format>", "The date of the last load.  Any records that have not been updated since this date will be marked as deleted.", {
         value:String => lastLoadDate = value + "T00:00:00Z"
       })
@@ -62,8 +64,13 @@ object ResourceCleanupTask {
       if(checkDate.isDefined && columns.length == 0){
         if(removeRows)
           modifyRecord(druid, checkDate.get,start,end, test)
-        if(removeColumns)
-          removeObsoleteColumns(druid, checkDate.get.getTime(), start, end,test)
+        if(removeColumns) {
+          if(filename.isDefined){
+            removeObsoleteColumnsIncremental(new java.io.File(filename.get), checkDate.get.getTime(),test);
+          } else{
+            removeObsoleteColumns(druid, checkDate.get.getTime(), start, end,test)
+          }
+        }
         if(removeDeleted && !test)
           removeDeletedRecords(druid,start,end)
       }
@@ -101,7 +108,7 @@ object ResourceCleanupTask {
                   }
                     
                 }
-                case _ =>//ignore
+                case _ => //ignore
               }
       })
       if(colToDelete.size >0){
@@ -132,6 +139,68 @@ object ResourceCleanupTask {
       true
     }, startUuid, endUuid,1000, "rowKey", "uuid")
     println("Finished removing columns on list for " + count + " records")
+  }
+
+  /**
+   * Removes the obsolete columns for the records that are contained in the supplied file.
+   *
+   * @param file
+   * @param editTime
+   * @param test
+   */
+  def removeObsoleteColumnsIncremental(file:java.io.File, editTime:Long, test:Boolean){
+    println("Starting to remove the obsolete columns from an incremental file " + file.getAbsolutePath)
+    var totalRecords=0
+    var totalRecordModified=0
+    var totalColumnsRemoved=0
+    val valueSet = new scala.collection.mutable.HashSet[String]
+    val fullRecord =new FullRecord()
+    file.foreachLine{ line => {
+        val (mod,rem) = removeRecordColumnsBasedOnTime(line, editTime, valueSet, fullRecord, test)
+        totalColumnsRemoved += rem
+        totalRecordModified += mod
+      }
+    }
+    println("Finished cleanup for columns")
+    println("List of columns that have been removed from one or more records:")
+    println(valueSet)
+    println("total records changed: " + totalRecordModified + " out of " + totalRecords+". " + totalColumnsRemoved + " columns were removed from cassandra")
+  }
+
+  def removeRecordColumnsBasedOnTime(rowKey:String, editTime:Long, valueSet:scala.collection.mutable.HashSet[String], fullRecord:FullRecord, test:Boolean):(Int,Int)={
+    //check all the raw properties for the modified time.
+    val timemap = Config.persistenceManager.getColumnsWithTimestamps(rowKey,"occ")
+    val colToDelete=new ArrayBuffer[String]
+    var totalColumnsRemoved=0
+    var totalRecordModified=0
+
+    //only interested in the raw values
+    if(timemap.isDefined){
+      timemap.get.keySet.foreach( fieldName => {
+        //              if(fieldName == "kingdom")
+        //                println(fullRecord.hasProperty(fieldName) +" "+ timemap.get.get(fieldName).get)
+        fieldName match {
+          case it if (fullRecord.hasNestedProperty(fieldName))=> {
+            //                  if(fieldName == "kingdom")
+            //                    println("Edit time: " +editTime + " less than : " + (timemap.get.get(fieldName).get < editTime))
+            if(timemap.get.get(fieldName).get < editTime){
+              totalColumnsRemoved += 1
+              colToDelete += fieldName
+              valueSet += fieldName
+            }
+          }
+          case _ => //ignore
+        }
+      })
+    }
+    if(colToDelete.size >0){
+      totalRecordModified =1
+      if(!test){
+        //delete all the columns that were not updated
+        Config.persistenceManager.deleteColumns(rowKey, "occ",colToDelete.toArray : _*)
+      }
+    }
+    (totalRecordModified, totalColumnsRemoved)
   }
   
   def removeObsoleteColumns(dr:String, editTime:Long, start:Option[String], end:Option[String], test:Boolean =false){
@@ -167,7 +236,7 @@ object ResourceCleanupTask {
                     valueSet += fieldName
                   }
                 }
-                case _ =>//ignore
+                case _ => //ignore
               }
             })
         }
