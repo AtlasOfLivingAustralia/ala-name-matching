@@ -43,7 +43,6 @@ object Sampling {
       })
 
     }
-
     if (parser.parse(args)) {
       val s = new Sampling
       //for this data resource
@@ -123,7 +122,10 @@ class Sampling {
           new ArrayBuffer[QualityAssertion]
         )
         latLongWithOption match {
-          case Some(latLong) => coordinates += (latLong._2 + "," + latLong._1) // write long lat (x,y)
+          case Some(latLong) => {
+            coordinates += (latLong._2 + "," + latLong._1) // write long lat (x,y)
+            coordinates += (latLong._2.toFloat.toString.trim+ ","+latLong._1.toFloat.toString.trim)
+          }
           case None => {}
         }
 
@@ -205,7 +207,10 @@ class Sampling {
       )
 
       latLongWithOption match {
-        case Some(latLong) => coordinates += (latLong._2 + "," + latLong._1) // write long lat (x,y)
+        case Some(latLong) => {
+          coordinates += (latLong._2 + "," + latLong._1) // write long lat (x,y)
+          coordinates += (latLong._2.toFloat.toString.trim+ ","+latLong._1.toFloat.toString.trim)
+        }
         case None => {}
       }
 
