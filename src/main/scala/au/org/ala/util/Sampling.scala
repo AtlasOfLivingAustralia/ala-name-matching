@@ -9,6 +9,7 @@ import org.ala.layers.client.Client
 import scala.Some
 import org.slf4j.LoggerFactory
 import org.ala.layers.dao.IntersectCallback
+import collection.mutable
 
 /**
  * Executable for running the sampling for a data resource.
@@ -24,6 +25,7 @@ object Sampling {
     var singleLayerName = ""
     var rowKeyFile = ""
     var keepFiles = false
+    var singleRowKey=""
 
     val parser = new OptionParser("Sample coordinates against geospatial layers") {
       opt("dr", "data-resource-uid", "the data resource to sample for", {
@@ -41,6 +43,9 @@ object Sampling {
       opt("keep", "Keep the files produced from the sampling",{
         keepFiles = true
       })
+      opt("rk","key","the single rowkey to sample",{
+        v:String => singleRowKey = v
+      })
 
     }
     if (parser.parse(args)) {
@@ -53,10 +58,14 @@ object Sampling {
 
       if (locFilePath == "") {
         locFilePath = "/tmp/loc-" + fileSufffix + ".txt"
-        if (rowKeyFile == "")
+        if (rowKeyFile == "" && singleRowKey == "") {
           s.getDistinctCoordinatesForResource(locFilePath, dataResourceUid)
-        else
+        } else if (singleRowKey != "") {
+          s.getDistinctCoordiantesForRowKey(singleRowKey)
+          exit(0)
+        } else {
           s.getDistinctCoordinatesForFile(locFilePath, rowKeyFile)
+        }
       }
       val samplingFilePath = "/tmp/sampling-" + fileSufffix + ".txt"
       //generate sampling
@@ -93,65 +102,84 @@ class Sampling {
 
   import FileHelper._
 
-  //TODO refactor this so that code is NOT duplicated.
+  def handleLatLongInMap(map:Map[String,String], coordinates:mutable.HashSet[String], lp:LocationProcessor){
+    val latLongWithOption = lp.processLatLong(map.getOrElse("decimalLatitude", null),
+      map.getOrElse("decimalLongitude", null),
+      map.getOrElse("geodeticDatum", null),
+      map.getOrElse("verbatimLongitude", null),
+      map.getOrElse("verbatimLongitude", null),
+      map.getOrElse("verbatimSRS", null),
+      map.getOrElse("easting", null),
+      map.getOrElse("northing", null),
+      map.getOrElse("zone", null),
+      new ArrayBuffer[QualityAssertion]
+    )
+    latLongWithOption match {
+      case Some(latLong) => {
+        coordinates += (latLong._2 + "," + latLong._1) // write long lat (x,y)
+        coordinates += (latLong._2.toFloat.toString.trim+ ","+latLong._1.toFloat.toString.trim)
+      }
+      case None => {}
+    }
+  }
+  def handleRecordMap(map:Map[String,String], coordinates:HashSet[String], lp:LocationProcessor){
+    handleLatLongInMap(map, coordinates, lp)
+
+    val originalSensitiveValues = map.getOrElse("originalSensitiveValues", "")
+    if (originalSensitiveValues != "") {
+      val sensitiveLatLong = Json.toMap(originalSensitiveValues)
+      val lat = sensitiveLatLong.getOrElse("decimalLatitude", null)
+      val lon = sensitiveLatLong.getOrElse("decimalLongitude", null)
+      if (lat != null && lon != null) {
+        coordinates += (lon + "," + lat)
+        val newMap = map ++ Map("decimalLatitude"-> lat.toString, "decimalLongitude"->lon.toString)
+        handleLatLongInMap(newMap, coordinates,lp)
+      }
+    }
+
+    //legacy storage of old lat/long original values before SDS processing - superceded by originalSensitiveValues
+    val originalDecimalLatitude = map.getOrElse("originalDecimalLatitude", "")
+    val originalDecimalLongitude = map.getOrElse("originalDecimalLongitude", "")
+    if (originalDecimalLatitude != "" && originalDecimalLongitude != "") {
+      coordinates += (originalDecimalLongitude + "," + originalDecimalLatitude)
+    }
+
+    //add the processed values
+    val processedDecimalLatitude = map.getOrElse("decimalLatitude.p", "")
+    val processedDecimalLongitude = map.getOrElse("decimalLongitude.p", "")
+    if (processedDecimalLatitude != "" && processedDecimalLongitude != "") {
+      coordinates += (processedDecimalLongitude + "," + processedDecimalLatitude)
+    }
+  }
+
+  val properties = Array("decimalLatitude", "decimalLongitude",
+    "decimalLatitude.p", "decimalLongitude.p",
+    "verbatimLatitude", "verbatimLongitude",
+    "originalDecimalLatitude", "originalDecimalLongitude",
+    "originalSensitiveValues", "geodeticDatum", "verbatimSRS", "easting", "northing", "zone")
+
+  def getDistinctCoordiantesForRowKey(rowKey:String){
+    val values = Config.persistenceManager.getSelected(rowKey, "occ", properties)
+    if(values.isDefined){
+      val coordinates = new HashSet[String]
+      handleRecordMap(values.get, coordinates, new LocationProcessor)
+      println(coordinates)
+    }
+
+  }
+
   def getDistinctCoordinatesForFile(locFilePath: String, rowKeyFile: String) {
     logger.info("Creating distinct list of coordinates for row keys in " + rowKeyFile)
     var counter = 0
     var passed = 0
     val rowKeys = new File(rowKeyFile)
-    val properties = Array("decimalLatitude", "decimalLongitude",
-      "decimalLatitude.p", "decimalLongitude.p",
-      "verbatimLatitude", "verbatimLongitude",
-      "originalDecimalLatitude", "originalDecimalLongitude",
-      "originalSensitiveValues", "geodeticDatum", "verbatimSRS", "easting", "northing", "zone")
     val coordinates = new HashSet[String]
     val lp = new LocationProcessor
     rowKeys.foreachLine(line => {
       val values = Config.persistenceManager.getSelected(line, "occ", properties)
       if (values.isDefined) {
         def map = values.get
-        val latLongWithOption = lp.processLatLong(map.getOrElse("decimalLatitude", null),
-          map.getOrElse("decimalLongitude", null),
-          map.getOrElse("geodeticDatum", null),
-          map.getOrElse("verbatimLongitude", null),
-          map.getOrElse("verbatimLongitude", null),
-          map.getOrElse("verbatimSRS", null),
-          map.getOrElse("easting", null),
-          map.getOrElse("northing", null),
-          map.getOrElse("zone", null),
-          new ArrayBuffer[QualityAssertion]
-        )
-        latLongWithOption match {
-          case Some(latLong) => {
-            coordinates += (latLong._2 + "," + latLong._1) // write long lat (x,y)
-            coordinates += (latLong._2.toFloat.toString.trim+ ","+latLong._1.toFloat.toString.trim)
-          }
-          case None => {}
-        }
-
-        val originalSensitiveValues = map.getOrElse("originalSensitiveValues", "")
-        if (originalSensitiveValues != "") {
-          val sensitiveLatLong = Json.toMap(originalSensitiveValues)
-          val lat = sensitiveLatLong.getOrElse("decimalLatitude", null)
-          val lon = sensitiveLatLong.getOrElse("decimalLongitude", null)
-          if (lat != null && lon != null) {
-            coordinates += (lon + "," + lat)
-          }
-        }
-
-        //legacy storage of old lat/long original values before SDS processing - superceded by originalSensitiveValues
-        val originalDecimalLatitude = map.getOrElse("originalDecimalLatitude", "")
-        val originalDecimalLongitude = map.getOrElse("originalDecimalLongitude", "")
-        if (originalDecimalLatitude != "" && originalDecimalLongitude != "") {
-          coordinates += (originalDecimalLongitude + "," + originalDecimalLatitude)
-        }
-
-        //add the processed values
-        val processedDecimalLatitude = map.getOrElse("decimalLatitude.p", "")
-        val processedDecimalLongitude = map.getOrElse("decimalLongitude.p", "")
-        if (processedDecimalLatitude != "" && processedDecimalLongitude != "") {
-          coordinates += (processedDecimalLongitude + "," + processedDecimalLatitude)
-        }
+        handleRecordMap(map, coordinates, lp)
 
         if (counter % 10000 == 0 && counter > 0) logger.debug("Distinct coordinates counter: " + counter + ", current count:" + coordinates.size)
         counter += 1
@@ -194,49 +222,7 @@ class Sampling {
     val coordinates = new HashSet[String]
 
     Config.persistenceManager.pageOverSelect("occ", (guid, map) => {
-      val latLongWithOption = lp.processLatLong(map.getOrElse("decimalLatitude", null),
-        map.getOrElse("decimalLongitude", null),
-        map.getOrElse("geodeticDatum", null),
-        map.getOrElse("verbatimLongitude", null),
-        map.getOrElse("verbatimLongitude", null),
-        map.getOrElse("verbatimSRS", null),
-        map.getOrElse("easting", null),
-        map.getOrElse("northing", null),
-        map.getOrElse("zone", null),
-        new ArrayBuffer[QualityAssertion]
-      )
-
-      latLongWithOption match {
-        case Some(latLong) => {
-          coordinates += (latLong._2 + "," + latLong._1) // write long lat (x,y)
-          coordinates += (latLong._2.toFloat.toString.trim+ ","+latLong._1.toFloat.toString.trim)
-        }
-        case None => {}
-      }
-
-      val originalSensitiveValues = map.getOrElse("originalSensitiveValues", "")
-      if (originalSensitiveValues != "") {
-        val sensitiveLatLong = Json.toMap(originalSensitiveValues)
-        val lat = sensitiveLatLong.getOrElse("decimalLatitude", null)
-        val lon = sensitiveLatLong.getOrElse("decimalLongitude", null)
-        if (lat != null && lon != null) {
-          coordinates += (lon + "," + lat)
-        }
-      }
-
-      //legacy storage of old lat/long original values before SDS processing - superceded by originalSensitiveValues
-      val originalDecimalLatitude = map.getOrElse("originalDecimalLatitude", "")
-      val originalDecimalLongitude = map.getOrElse("originalDecimalLongitude", "")
-      if (originalDecimalLatitude != "" && originalDecimalLongitude != "") {
-        coordinates += (originalDecimalLongitude + "," + originalDecimalLatitude)
-      }
-
-      //add the processed values
-      val processedDecimalLatitude = map.getOrElse("decimalLatitude.p", "")
-      val processedDecimalLongitude = map.getOrElse("decimalLongitude.p", "")
-      if (processedDecimalLatitude != "" && processedDecimalLongitude != "") {
-        coordinates += (processedDecimalLongitude + "," + processedDecimalLatitude)
-      }
+      handleRecordMap(map, coordinates,lp)
 
       if (counter % 10000 == 0 && counter > 0){
         logger.debug("Distinct coordinates counter: " + counter + ", current count:" + coordinates.size)
