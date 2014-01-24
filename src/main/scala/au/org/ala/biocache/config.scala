@@ -114,7 +114,7 @@ class ConfigModule extends AbstractModule {
       throw new RuntimeException("Configuration file not found. Please add to classpath or /data/biocache/config/biocache-config.properties")
     }
     
-    logger.info("Loading configuration from " + filename)
+    logger.debug("Loading configuration from " + filename)
     properties.load(stream)
 
     properties
@@ -126,19 +126,19 @@ class ConfigModule extends AbstractModule {
     //bind concrete implementations
     bind(classOf[OccurrenceDAO]).to(classOf[OccurrenceDAOImpl]).in(Scopes.SINGLETON)
     bind(classOf[OutlierStatsDAO]).to(classOf[OutlierStatsDAOImpl]).in(Scopes.SINGLETON)
-    logger.info("Initialise SOLR")
+    logger.debug("Initialise SOLR")
     bind(classOf[IndexDAO]).to(classOf[SolrIndexDAO]).in(Scopes.SINGLETON)
     bind(classOf[DeletedRecordDAO]).to(classOf[DeletedRecordDAOImpl]).in(Scopes.SINGLETON)
     bind(classOf[DuplicateDAO]).to(classOf[DuplicateDAOImpl]).in(Scopes.SINGLETON)
     bind(classOf[AssertionQueryDAO]).to(classOf[AssertionQueryDAOImpl]).in(Scopes.SINGLETON)
-    logger.info("Initialise name matching indexes")
+    logger.debug("Initialise name matching indexes")
     try {
       val nameIndex = new CBIndexSearch(properties.getProperty("nameIndexLocation"))
       bind(classOf[CBIndexSearch]).toInstance(nameIndex)
     } catch {
       case e: Exception => logger.warn("Lucene indexes arent currently available. Message: " + e.getMessage())
     }
-    logger.info("Initialise persistence manager")
+    logger.debug("Initialise persistence manager")
     properties.getProperty("db") match {
         //case "mock" => bind(classOf[PersistenceManager]).to(classOf[MockPersistenceManager]).in(Scopes.SINGLETON)
         case "postgres" => bind(classOf[PersistenceManager]).to(classOf[PostgresPersistenceManager]).in(Scopes.SINGLETON)
@@ -146,6 +146,6 @@ class ConfigModule extends AbstractModule {
         //case "mongodb" => bind(classOf[PersistenceManager]).to(classOf[MongoDBPersistenceManager]).in(Scopes.SINGLETON)
         case _ => bind(classOf[PersistenceManager]).to(classOf[CassandraPersistenceManager]).in(Scopes.SINGLETON)
     }
-    logger.info("Configure complete")
+    logger.debug("Configure complete")
   }
 }

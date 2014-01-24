@@ -49,9 +49,13 @@ class Loader extends DataLoader {
   }
 
   def printResourceList {
+    CMD.printTable(resourceList)
+  }
+
+  def resourceList : List[Map[String, String]] = {
     val json = Source.fromURL(Config.registryURL + "/dataResource?resourceType=records").getLines.mkString
     val drs = JSON.parseFull(json).get.asInstanceOf[List[Map[String, String]]]
-    CMD.printTable(drs)
+    drs
   }
 
   def load(dataResourceUid: String, test:Boolean=false, forceLoad:Boolean=false) {

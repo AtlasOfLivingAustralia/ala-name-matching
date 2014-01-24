@@ -28,7 +28,7 @@ object TempDataLoader {
       println(data)
       
       val http = new HttpClient()
-      val post = new PostMethod(Config.registryURL + "/ws/tempDataResource")
+      val post = new PostMethod(Config.registryURL + "/tempDataResource")
       post.setRequestBody(data)
       http.executeMethod(post)
       post.getResponseHeaders().foreach(h => println(h.getName() + ": " +h.getValue()))

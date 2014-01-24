@@ -81,13 +81,26 @@ object CMD {
           val d = new DwcCSVLoader()
           d.loadFile(new File(parts(2)), parts(1), List(), Map())
         }
+        case it if (it == "ingest-all")  => {
+          l.resourceList.foreach(resource => {
+           val uid = resource.getOrElse("uid", "")
+           val name = resource.getOrElse("name", "")
+           println(s"Ingesting resource $name, uid: $uid")
+           if(uid != ""){
+             l.load(uid)
+             Sampling.main(Array("-dr", uid))
+             ProcessWithActors.processRecords(4, None, Some(uid))
+             IndexRecords.index(None, None, Some(uid), false, false)
+           }
+          })
+        }
         case it if (it startsWith "ingest")  => {
           val drs = it.split(" ").map(x => x.trim).tail
           drs.foreach(dr => {
            l.load(dr) 
            Sampling.main(Array("-dr", dr))
            ProcessWithActors.processRecords(4, None, Some(dr))
-           indexDataResourceLive(dr)
+           IndexRecords.index(None, None, Some(dr), false, false)
           })
         }
         case it if (it startsWith "force-load") => {
@@ -383,52 +396,54 @@ object CMD {
   }
 
   def printHelp = {
-    padAndPrint(" [1]  list - Print the list of resources available for harvesting")
-    padAndPrint(" [2]  describe <dr-uid1> <dr-uid2>... - Show the configuration or the resource")
-    padAndPrint(" [3]  load <dr-uid1> <dr-uid2>... - Load resource into biocache if the file has been modified after the lastCheckedDate (does not index)")
-    padAndPrint(" [4]  force-load <dr-uid1> <dr-uid2>... - Forces the resource to be loaded into biocache ignoring lastCheckedDate (does not index)")
-    padAndPrint(" [5]  process-single <uuid1> <uuid2> ... - Process single record (SDS/namematching)")
-    padAndPrint(" [6]  process <dr-uid1> <dr-uid2>... - Process resource")
-    padAndPrint(" [7]  process-all - Process all records (this takes a long time for full biocache)")
-    padAndPrint(" [8]  index <dr-uid1> <dr-uid2>... - Index resource (for offline use only)")
-    padAndPrint(" [9]  index-live <dr-uid> - Index resource by calling webservice to index. Dont use for large resources.")
-    padAndPrint("[10]  index-custom <dr-uid> <list-of-misc-fields> - Index resource while indexing miscellanous properties.")
-    padAndPrint("[11]  index-file <file to index> <numberof threads> - Indexes based on the rowKeys contained in the supplied file")
-    padAndPrint("[12]  createdwc <dr-uid or 'all'> <export directory> - Create a darwin core archive for a resource")
-    padAndPrint("[13]  healthcheck - Do a healthcheck on the configured resources in the collectory")
-    padAndPrint("[14]  export - CSV export of data")
-    padAndPrint("[15]  export-gbif-archives - Comma separated list of data resources or 'all'")
-    padAndPrint("[16]  export-index <output-file> <csv-list-of fields> <solr-query> - export data from index")
-    padAndPrint("[17]  export-stream <output-file> <csv-list-of fields> <solr-query> - export data from index")
-    padAndPrint("[18]  export-facet <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
-    padAndPrint("[19]  export-facet-query <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
-    padAndPrint("[20]  export-for-outliers <index-directory> <export-directory> -fq <filter-query> - export data from index for outlier detection")
-    padAndPrint("[21]  import - CSV import of data")
-    padAndPrint("[22]  optimise - Optimisation of SOLR index (this takes some time)")
-    padAndPrint("[23]  sample-all - Run geospatial sampling for all records")
-    padAndPrint("[24]  sample <dr-uid1> <dr-uid2>... - Run geospatial sampling for records for a data resource")
-    padAndPrint("[25]  resample <query> - Rerun geospatial sampling for records that match a SOLR query")
-    padAndPrint("[26]  delete <solr-query> - Delete records matching a query")
-    padAndPrint("[27]  delete-resource <dr-uid1> <dr-uid2>... - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
-    padAndPrint("[28]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
-    padAndPrint("[29]  delete-inc <dr> - checks for and will delete all the records in an incremental delete file. This file is created during a load phase if applicable")
-    padAndPrint("[30]  load-local-csv <dr-uid> <filepath>... - Load a local file into biocache. For development use only. Not to be used in production.")
-    padAndPrint("[31]  test-load <dr-uid1> <dr-uid2>... - Performs some testing on the load process.  Please read the output to determine whether or not a load should proceed.")
-    padAndPrint("[32]  download-media - Force the (re)download of media associated with a resource.")
-    padAndPrint("[33]  dedup - Run duplication detection over the records.")
-    padAndPrint("[34]  jackknife - Run jackknife outlier detection.")
-    padAndPrint("[35]  distribution outliers -l <speciesLsid> - Run expert distribution outlier detection. If species LSID is supplied, outlier detection is only performed for occurrences of the species with the supplied taxon concept LSID")
-    padAndPrint("[36]  apply-aq <apiKey> - applies the assertion queries for the suppplied apiKey")
-    padAndPrint("[37]  mark-deleted <dr-uid> <date of last load YYYY-MM-DD> - Marks records as deleted in the data store when that have not been updated on the last load. - only run if a complete data set was loaded.")
-    padAndPrint("[38]  remove-deleted <dr-uid> - removes all records from the data-store that have been marked as deleted")
-    padAndPrint("[39]  delete-columns <dr-uid> <list of columns> - deletes all the columns specified in the space separated list")
-    padAndPrint("[40]  delete-missing <dr-uid> <list of columns> - deletes all the columns that are not specified in the space separated list")
-    padAndPrint("[41]  remove-deleted-index <dr-uid> - removes the records not loaded during the last load from index (NB last load will be interpreted as within the last 24 hours).")
-    padAndPrint("[42]  force-index <dr-uid1> <dr-uid2>  - forces a complete reindex of the supplied data resource (ignoring incremental file)")
-    padAndPrint("[43]  index-query <query to index> - Indexes all the records that satisfy the supplied query")
-    padAndPrint("[44]  delete-obsolete <dr> - deletes the obsolete columns based on a last load date within the last 24 hours")
-    padAndPrint("[45]  exit")
-
+    var s = 0
+    padAndPrint(s"[${s=s+1;s}]  list - Print the list of resources available for harvesting")
+    padAndPrint(s"[${s=s+1;s}]  describe <dr-uid1> <dr-uid2>... - Show the configuration or the resource")
+    padAndPrint(s"[${s=s+1;s}]  load <dr-uid1> <dr-uid2>... - Load resource into biocache if the file has been modified after the lastCheckedDate (does not index)")
+    padAndPrint(s"[${s=s+1;s}]  force-load <dr-uid1> <dr-uid2>... - Forces the resource to be loaded into biocache ignoring lastCheckedDate (does not index)")
+    padAndPrint(s"[${s=s+1;s}]  process-single <uuid1> <uuid2> ... - Process single record (SDS/namematching)")
+    padAndPrint(s"[${s=s+1;s}]  process <dr-uid1> <dr-uid2>... - Process resource")
+    padAndPrint(s"[${s=s+1;s}]  process-all - Process all records (this takes a long time for full biocache)")
+    padAndPrint(s"[${s=s+1;s}]  index <dr-uid1> <dr-uid2>... - Index resource (for offline use only)")
+    padAndPrint(s"[${s=s+1;s}]  index-live <dr-uid> - Index resource by calling webservice to index. Dont use for large resources.")
+    padAndPrint(s"[${s=s+1;s}]  index-custom <dr-uid> <list-of-misc-fields> - Index resource while indexing miscellanous properties.")
+    padAndPrint(s"[${s=s+1;s}]  index-file <file to index> <numberof threads> - Indexes based on the rowKeys contained in the supplied file")
+    padAndPrint(s"[${s=s+1;s}]  ingest <dr-uid> - Load, Sample, Process, Index a data resource")
+    padAndPrint(s"[${s=s+1;s}]  ingest-all - Load, Sample, Process, Index all listed data resources. Not for production use.")
+    padAndPrint(s"[${s=s+1;s}]  createdwc <dr-uid or 'all'> <export directory> - Create a darwin core archive for a resource")
+    padAndPrint(s"[${s=s+1;s}]  healthcheck - Do a healthcheck on the configured resources in the collectory")
+    padAndPrint(s"[${s=s+1;s}]  export - CSV export of data")
+    padAndPrint(s"[${s=s+1;s}]  export-gbif-archives - Comma separated list of data resources or 'all'")
+    padAndPrint(s"[${s=s+1;s}]  export-index <output-file> <csv-list-of fields> <solr-query> - export data from index")
+    padAndPrint(s"[${s=s+1;s}]  export-stream <output-file> <csv-list-of fields> <solr-query> - export data from index")
+    padAndPrint(s"[${s=s+1;s}]  export-facet <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
+    padAndPrint(s"[${s=s+1;s}]  export-facet-query <facet-field> <facet-output-file> -fq <filter-query> - export data from index")
+    padAndPrint(s"[${s=s+1;s}]  export-for-outliers <index-directory> <export-directory> -fq <filter-query> - export data from index for outlier detection")
+    padAndPrint(s"[${s=s+1;s}]  import - CSV import of data")
+    padAndPrint(s"[${s=s+1;s}]  optimise - Optimisation of SOLR index (this takes some time)")
+    padAndPrint(s"[${s=s+1;s}]  sample-all - Run geospatial sampling for all records")
+    padAndPrint(s"[${s=s+1;s}]  sample <dr-uid1> <dr-uid2>... - Run geospatial sampling for records for a data resource")
+    padAndPrint(s"[${s=s+1;s}]  resample <query> - Rerun geospatial sampling for records that match a SOLR query")
+    padAndPrint(s"[${s=s+1;s}]  delete <solr-query> - Delete records matching a query")
+    padAndPrint(s"[${s=s+1;s}]  delete-resource <dr-uid1> <dr-uid2>... - Delete records for a resource. Requires a index reopen (http get on /ws/admin/modify?reopenIndex=true)")
+    padAndPrint(s"[${s=s+1;s}]  index-delete <query> - Delete record that satisfies the supplied query from the index ONLY")
+    padAndPrint(s"[${s=s+1;s}]  delete-inc <dr> - checks for and will delete all the records in an incremental delete file. This file is created during a load phase if applicable")
+    padAndPrint(s"[${s=s+1;s}]  load-local-csv <dr-uid> <filepath>... - Load a local file into biocache. For development use only. Not to be used in production.")
+    padAndPrint(s"[${s=s+1;s}]  test-load <dr-uid1> <dr-uid2>... - Performs some testing on the load process.  Please read the output to determine whether or not a load should proceed.")
+    padAndPrint(s"[${s=s+1;s}]  download-media - Force the (re)download of media associated with a resource.")
+    padAndPrint(s"[${s=s+1;s}]  dedup - Run duplication detection over the records.")
+    padAndPrint(s"[${s=s+1;s}]  jackknife - Run jackknife outlier detection.")
+    padAndPrint(s"[${s=s+1;s}]  distribution outliers -l <speciesLsid> - Run expert distribution outlier detection. If species LSID is supplied, outlier detection is only performed for occurrences of the species with the supplied taxon concept LSID")
+    padAndPrint(s"[${s=s+1;s}]  apply-aq <apiKey> - applies the assertion queries for the supplied apiKey")
+    padAndPrint(s"[${s=s+1;s}]  mark-deleted <dr-uid> <date of last load YYYY-MM-DD> - Marks records as deleted in the data store when that have not been updated on the last load. - only run if a complete data set was loaded.")
+    padAndPrint(s"[${s=s+1;s}]  remove-deleted <dr-uid> - removes all records from the data-store that have been marked as deleted")
+    padAndPrint(s"[${s=s+1;s}]  delete-columns <dr-uid> <list of columns> - deletes all the columns specified in the space separated list")
+    padAndPrint(s"[${s=s+1;s}]  delete-missing <dr-uid> <list of columns> - deletes all the columns that are not specified in the space separated list")
+    padAndPrint(s"[${s=s+1;s}]  remove-deleted-index <dr-uid> - removes the records not loaded during the last load from index (NB last load will be interpreted as within the last 24 hours).")
+    padAndPrint(s"[${s=s+1;s}]  force-index <dr-uid1> <dr-uid2>  - forces a complete reindex of the supplied data resource (ignoring incremental file)")
+    padAndPrint(s"[${s=s+1;s}]  index-query <query to index> - Indexes all the records that satisfy the supplied query")
+    padAndPrint(s"[${s=s+1;s}]  delete-obsolete <dr> - deletes the obsolete columns based on a last load date within the last 24 hours")
+    padAndPrint(s"[${s=s+1;s}]  exit")
   }
   
   def getLastLoadDate :java.util.Date ={
@@ -489,7 +504,7 @@ object CMD {
     }).toMap[String, Int]
     val columns = table(0).keys.map(k => {
       if (k.length < valueLengths(k)) {
-        k + (List.fill[String](valueLengths(k) - k.length)(" ").mkString)
+        k + List.fill[String](valueLengths(k) - k.length)(" ").mkString
       } else {
         k
       }
@@ -503,7 +518,7 @@ object CMD {
     table.foreach(dr => {
       println(dr.map(kv => {
         if (kv._2.length < valueLengths(kv._1)) {
-          kv._2 + (List.fill[String](valueLengths(kv._1) - kv._2.length)(" ").mkString)
+          kv._2 + List.fill[String](valueLengths(kv._1) - kv._2.length)(" ").mkString
         } else {
           kv._2
         }
