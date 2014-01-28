@@ -239,6 +239,9 @@ public class CBIndexSearch {
     public String searchForLSID(String name, boolean fuzzy) throws SearchResultException{
         return searchForLSID(name, null, fuzzy);
     }
+    public String searchForLSID(String name, boolean fuzzy,boolean ignoreHomonyms) throws SearchResultException{
+        return searchForLSID(name, null, fuzzy,ignoreHomonyms);
+    }
     /**
      * Searches for the name without using fuzzy name matching...
      *
@@ -265,8 +268,22 @@ public class CBIndexSearch {
      * @return
      */
     public String searchForLSID(String name, RankType rank, boolean fuzzy)throws SearchResultException{
-        return searchForLSID(name, null, rank, fuzzy);
+        return searchForLSID(name, null, rank, fuzzy, false);
 
+    }
+
+    /**
+     * Searches for the supplied name of the specified rank with or without fuzzy name matching. When ignoreHomonyms is true
+     * A homonym exception will only be thrown if a homonym is detected where the ALA has both names.
+     * @param name
+     * @param rank
+     * @param fuzzy
+     * @param ignoreHomonyms
+     * @return
+     * @throws SearchResultException
+     */
+    public String searchForLSID(String name, RankType rank, boolean fuzzy, boolean ignoreHomonyms) throws SearchResultException {
+        return searchForLSID(name, null, rank, fuzzy, ignoreHomonyms);
     }
     /**
      * Searches for an LSID of the supplied name and rank without a fuzzy match...
@@ -279,7 +296,7 @@ public class CBIndexSearch {
      * @throws SearchResultException
      */
     public String searchForLSID(String name, RankType rank) throws SearchResultException {
-        return searchForLSID(name, null, rank, false);
+        return searchForLSID(name, null, rank, false,false);
     }
     /**
      * Searches for the LSID of the supplied name and rank. Using the kingdom to
@@ -300,7 +317,7 @@ public class CBIndexSearch {
     @Deprecated
     public String searchForLSID(String name, String kingdom, String scientificName, RankType rank) throws SearchResultException{
         LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, scientificName);
-        return searchForLSID(name, cl, rank, false);
+        return searchForLSID(name, cl, rank, false,false);
     }
     /**
      * Search for an LSID based on the supplied name, classification and rank with or without fuzzy name matching.
@@ -321,9 +338,9 @@ public class CBIndexSearch {
      * @return
      * @throws HomonymException  When an unresolved homonym is detected
      */
-    public String searchForLSID(String name, LinnaeanRankClassification cl, RankType rank, boolean fuzzy) throws SearchResultException{
+    public String searchForLSID(String name, LinnaeanRankClassification cl, RankType rank, boolean fuzzy, boolean ignoreHomonym) throws SearchResultException{
 		String lsid = null;
-    	NameSearchResult result = searchForRecord(name, cl, rank, fuzzy);
+    	NameSearchResult result = searchForRecord(name, cl, rank, fuzzy, ignoreHomonym);
 		if (result != null) {
 			if (result.getAcceptedLsid()==null && result.getLsid()==null) {
 				log.warn("LSID missing for [name=" + name + ", id=" + result.getId() + "]");
@@ -412,6 +429,9 @@ public class CBIndexSearch {
      * @return
      */
     public MetricsResultDTO searchForRecordMetrics(LinnaeanRankClassification cl, boolean recursiveMatching, boolean addGuids, boolean fuzzy) {
+        return searchForRecordMetrics(cl, recursiveMatching, addGuids, fuzzy, false);
+    }
+    public MetricsResultDTO searchForRecordMetrics(LinnaeanRankClassification cl, boolean recursiveMatching, boolean addGuids, boolean fuzzy,boolean ignoreHomonym) {
 
         //set up the Object to return
         MetricsResultDTO metrics = new MetricsResultDTO();
@@ -571,7 +591,7 @@ public class CBIndexSearch {
 //        }
 
 
-        nsr = performErrorCheckSearch(name.replaceAll("\\?", ""), cl, rank, fuzzy, metrics);
+        nsr = performErrorCheckSearch(name.replaceAll("\\?", ""), cl, rank, fuzzy, ignoreHomonym, metrics);
 
     	if(nsr==null && recursiveMatching){
             //get the name type for the original name
@@ -580,7 +600,7 @@ public class CBIndexSearch {
                 ParsedName pn = parser.parse(name);
                 metrics.setNameType(pn.getType());
                 if(pn.type == NameType.doubtful || (rank != null && rank.getId()<=7000) || rank == null)
-                    nsr = performErrorCheckSearch(pn.getGenusOrAbove(), cl, null, fuzzy, metrics);
+                    nsr = performErrorCheckSearch(pn.getGenusOrAbove(), cl, null, fuzzy, ignoreHomonym, metrics);
             }catch(Exception e){}
 
 
@@ -591,25 +611,25 @@ public class CBIndexSearch {
                     if(StringUtils.isEmpty(name))
                         name = cl.getGenus()+ " " + cl.getSpecificEpithet();
 
-                    nsr = performErrorCheckSearch(name, cl, RankType.SPECIES, fuzzy, metrics);
+                    nsr = performErrorCheckSearch(name, cl, RankType.SPECIES, fuzzy, ignoreHomonym, metrics);
                 }
     		if(nsr == null && cl.getGenus()!=null){
-    			nsr = performErrorCheckSearch(cl.getGenus(), cl, RankType.GENUS, fuzzy, metrics);
+    			nsr = performErrorCheckSearch(cl.getGenus(), cl, RankType.GENUS, fuzzy, ignoreHomonym, metrics);
     		}
     		if(nsr == null && cl.getFamily()!=null){
-    			nsr = performErrorCheckSearch(cl.getFamily(), cl, RankType.FAMILY, fuzzy, metrics);
+    			nsr = performErrorCheckSearch(cl.getFamily(), cl, RankType.FAMILY, fuzzy, ignoreHomonym, metrics);
     		}
     		if(nsr == null && cl.getOrder()!=null){
-    			nsr = performErrorCheckSearch(cl.getOrder(), cl, RankType.ORDER, fuzzy, metrics);
+    			nsr = performErrorCheckSearch(cl.getOrder(), cl, RankType.ORDER, fuzzy, ignoreHomonym, metrics);
     		}
     		if(nsr == null && cl.getKlass()!=null){
-    			nsr = performErrorCheckSearch(cl.getKlass(), cl, RankType.CLASS, fuzzy, metrics);
+    			nsr = performErrorCheckSearch(cl.getKlass(), cl, RankType.CLASS, fuzzy, ignoreHomonym, metrics);
     		}
     		if(nsr == null && cl.getPhylum()!=null){
-    			nsr = performErrorCheckSearch(cl.getPhylum(), cl, RankType.PHYLUM, fuzzy, metrics);
+    			nsr = performErrorCheckSearch(cl.getPhylum(), cl, RankType.PHYLUM, fuzzy, ignoreHomonym, metrics);
     		}
     		if(nsr == null && cl.getKingdom()!=null){
-    			nsr = performErrorCheckSearch(cl.getKingdom(), cl, RankType.KINGDOM, fuzzy, metrics);
+    			nsr = performErrorCheckSearch(cl.getKingdom(), cl, RankType.KINGDOM, fuzzy, ignoreHomonym, metrics);
     		}
 
             if (nsr != null){
@@ -662,10 +682,10 @@ public class CBIndexSearch {
      * @param errors
      * @return
      */
-    private NameSearchResult performErrorCheckSearch(String name, LinnaeanRankClassification cl, RankType rank, boolean fuzzy, MetricsResultDTO metrics){
+    private NameSearchResult performErrorCheckSearch(String name, LinnaeanRankClassification cl, RankType rank, boolean fuzzy, boolean ignoreHomonym, MetricsResultDTO metrics){
         NameSearchResult nsr = null;
         try{
-            nsr = searchForRecord(name, cl, rank,fuzzy);
+            nsr = searchForRecord(name, cl, rank,fuzzy,ignoreHomonym);
         }
         catch(MisappliedException e){
             metrics.setLastException(e);
@@ -727,7 +747,7 @@ public class CBIndexSearch {
      * @throws SearchResultException
      */
     public String searchForLSID(String name, LinnaeanRankClassification cl, RankType rank) throws SearchResultException{
-        return searchForLSID(name, cl, rank, false);
+        return searchForLSID(name, cl, rank, false,false);
     }
     /**
      * Searches the index for the supplied name of the specified rank.  Returns
@@ -765,7 +785,10 @@ public class CBIndexSearch {
      * @return
      */
     public String searchForAcceptedLsidDefaultHandling(LinnaeanRankClassification cl,boolean fuzzy){
-        NameSearchResult nsr = searchForAcceptedRecordDefaultHandling(cl, fuzzy);
+        return searchForAcceptedLsidDefaultHandling(cl, fuzzy, false);
+    }
+    public String searchForAcceptedLsidDefaultHandling(LinnaeanRankClassification cl,boolean fuzzy, boolean ignoreHomonyms){
+        NameSearchResult nsr = searchForAcceptedRecordDefaultHandling(cl, fuzzy, ignoreHomonyms);
         if(nsr == null)
             return null;
         return nsr.getLsid();
@@ -785,9 +808,12 @@ public class CBIndexSearch {
      * @return
      */
     public NameSearchResult searchForAcceptedRecordDefaultHandling(LinnaeanRankClassification cl,boolean fuzzy){
+        return searchForAcceptedRecordDefaultHandling(cl, fuzzy, false);
+    }
+    public NameSearchResult searchForAcceptedRecordDefaultHandling(LinnaeanRankClassification cl,boolean fuzzy, boolean ignoreHomonym){
         NameSearchResult nsr = null;
         try{
-            nsr =searchForRecord(cl.getScientificName(), cl, null, fuzzy);
+            nsr =searchForRecord(cl.getScientificName(), cl, null, fuzzy,ignoreHomonym);
         }
         catch(MisappliedException e){
             if(e.getMisappliedResult() != null)
@@ -827,6 +853,9 @@ public class CBIndexSearch {
         LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, genus);
         return searchForRecord(name,cl, rank, false);
     }
+    public NameSearchResult searchForRecord(String name, LinnaeanRankClassification cl, RankType rank, boolean fuzzy)throws SearchResultException{
+        return searchForRecord(name, cl, rank, fuzzy, false);
+    }
     /**
      * Searches for a record based on the supplied name, rank and classification
      * with or without fuzzy name matching.
@@ -837,9 +866,9 @@ public class CBIndexSearch {
      * @return
      * @throws SearchResultException
      */
-    public NameSearchResult searchForRecord(String name, LinnaeanRankClassification cl, RankType rank, boolean fuzzy)throws SearchResultException{
+    public NameSearchResult searchForRecord(String name, LinnaeanRankClassification cl, RankType rank, boolean fuzzy,boolean ignoreHomonyms)throws SearchResultException{
         //search for more than 1 term in case homonym resolution takes place at a lower level??
-        List<NameSearchResult> results = searchForRecords(name, rank, cl, 10, fuzzy);
+        List<NameSearchResult> results = searchForRecords(name, rank, cl, 10, fuzzy, ignoreHomonyms);
         if(results != null && results.size()>0)
             return results.get(0);
 
@@ -926,7 +955,11 @@ public class CBIndexSearch {
      * @throws SearchResultException
      */
     public List<NameSearchResult> searchForRecords(String name, RankType rank, LinnaeanRankClassification cl, int max, boolean fuzzy) throws SearchResultException{
-        return searchForRecords(name, rank, cl, max, fuzzy, true);
+        return searchForRecords(name, rank, cl, max, fuzzy, true, false);
+    }
+
+    public List<NameSearchResult> searchForRecords(String name, RankType rank, LinnaeanRankClassification cl, int max, boolean fuzzy, boolean ignoreHomonyms) throws SearchResultException{
+        return searchForRecords(name, rank, cl, max, fuzzy, true, ignoreHomonyms);
     }
 
     /**
@@ -943,10 +976,11 @@ public class CBIndexSearch {
      * @param max
      * @param fuzzy
      * @param clean
+     * @param ignoreHomonym When true ignore the homonym exception if a single result is returned.
      * @return
      * @throws SearchResultException
      */
-    private List<NameSearchResult> searchForRecords(String name, RankType rank, LinnaeanRankClassification cl, int max, boolean fuzzy, boolean clean) throws SearchResultException{
+    private List<NameSearchResult> searchForRecords(String name, RankType rank, LinnaeanRankClassification cl, int max, boolean fuzzy, boolean clean, boolean ignoreHomonym) throws SearchResultException{
                 //The name is not allowed to be null
 
        
@@ -1085,6 +1119,13 @@ public class CBIndexSearch {
 
             return null;
         }
+        catch(HomonymException e){
+            if(ignoreHomonym && e.getResults().size()==1){
+                return e.getResults();
+            } else{
+                throw e;
+            }
+        }
         catch(IOException e){
             log.warn(e.getMessage());
             return null;
@@ -1184,7 +1225,7 @@ public class CBIndexSearch {
                     if (StringUtils.trimToNull(cleanName) != null && !name.equals(cleanName)) {
                         //we only want to clean the name once.  This should prevent incorrect genus match for Astroloma sp. Cataby (EA Griffin 1022)
                         List<NameSearchResult> results = searchForRecords(
-                                cleanName, rank, cl, max, fuzzy, false);
+                                cleanName, rank, cl, max, fuzzy, false,false);
                         if (results != null) {
                             for (NameSearchResult result : results) {
                                 result.setCleanName(cleanName);

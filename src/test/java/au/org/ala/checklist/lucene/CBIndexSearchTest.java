@@ -28,6 +28,8 @@ public class CBIndexSearchTest {
 	public static void init() {
 		try {
 			searcher = new CBIndexSearch("/data/lucene/namematching_v13");
+                    //searcher = new CBIndexSearch("/data/lucene/merge_namematching");
+                    //searcher = new CBIndexSearch("/data/lucene/col_namematching");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -696,7 +698,48 @@ public class CBIndexSearchTest {
 		return equals;
 	}
 
-
+        @Test
+        public void testIgnoredHomonyms(){
+            //test that Macropus throws an exception in normal situations
+            try{
+                searcher.searchForLSID("Macropus");
+            } catch(SearchResultException e){
+                assertTrue(e instanceof HomonymException);
+                assertEquals(1, e.getResults().size());
+            }
+            //test that Macropus doesn't throw and exception when "ignoreHomonyms" is set
+            try{
+                LinnaeanRankClassification cl = new LinnaeanRankClassification();
+                cl.setScientificName("Macropus");
+                cl.setGenus("Macropus");
+                //NameSearchResult nsr =searcher.searchForRecord(cl.getScientificName(), cl, null, true,true);
+                String lsid = searcher.searchForLSID("Macropus", false, true);
+                assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:9e6a0bba-de5b-4465-8544-aa8fe3943fab", lsid);
+            } catch (Exception e){
+                fail("ignored homonyms should not throw exception " + e.getMessage());
+            }
+            //test that Agathis still throws a homonym exception when "ignoreHomonyms" are set (because we have 2 different versions of this.
+            try{
+                LinnaeanRankClassification cl = new LinnaeanRankClassification();
+                cl.setScientificName("Agathis");
+                cl.setGenus("Agathis");
+                NameSearchResult nsr =searcher.searchForRecord(cl.getScientificName(), cl, null, true,true);
+                fail("A Homonym should have been detected. Not result returned: " + nsr);
+            } catch (Exception e){
+                assertTrue(e instanceof HomonymException);
+            }
+            //test that Agathis is resolvable with a kingdom
+            try{
+                LinnaeanRankClassification cl = new LinnaeanRankClassification();
+                cl.setScientificName("Agathis");
+                cl.setGenus("Agathis");
+                cl.setKingdom("Animalia");
+                NameSearchResult nsr =searcher.searchForRecord(cl.getScientificName(), cl, null, true,true);
+                assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:f604ded9-4c69-4da2-af64-90ded6d7325a", nsr.getLsid());
+            } catch (Exception e){
+                fail("A kingdom was supplied and should be resolvable. " + e.getMessage());
+            }
+        }
 
 	@Test
 	public void testHomonym() {

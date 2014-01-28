@@ -155,7 +155,7 @@ public class NameSearchResult {
     }
     @Override
     public String toString(){
-        return "Match: " + matchType + " id: " + id+ " lsid: "+ lsid+ " classification: " +rankClass +" synonym: "+ acceptedLsid;
+        return "Match: " + matchType + " id: " + id+ " lsid: "+ lsid+ " classification: " +rankClass +" synonym: "+ acceptedLsid + " rank: " + rank;
     }
 
     public RankType getRank() {
