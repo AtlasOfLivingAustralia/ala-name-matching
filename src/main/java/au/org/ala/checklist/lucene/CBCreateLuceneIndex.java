@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import javax.sql.DataSource;
@@ -25,7 +24,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.core.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
@@ -44,11 +42,14 @@ import au.org.ala.data.util.TaxonNameSoundEx;
 //import org.springframework.jdbc.core.JdbcTemplate;
 
 import au.org.ala.data.util.RankType;
+import java.util.Iterator;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.util.Version;
+import org.gbif.dwc.record.DarwinCoreRecord;
+import org.gbif.dwc.text.*;
 import org.gbif.ecat.voc.NameType;
 
 /**
@@ -65,6 +66,7 @@ public class CBCreateLuceneIndex {
     protected String extraALAConcepts = "/data/bie-staging/ala-names/ala-extra.txt";
     protected String alaConcepts ="/data/bie-staging/ala-names/ala_accepted_concepts_dump.txt";
     protected String alaSynonyms = "/data/bie-staging/ala-names/ala_synonyms_dump.txt";
+    protected String irmngDwcaDirectory = "/data/bie-staging/irmng/IRMNG_DWC_HOMONYMS";
     protected String afdFile = "/data/bie-staging/anbg/AFD-common-names.csv";
     protected String apniFile = "/data/bie-staging/anbg/APNI-common-names.csv";
     protected String taxonConeptName = "/data/bie-staging/anbg/taxonConcepts.txt";
@@ -186,9 +188,17 @@ public class CBCreateLuceneIndex {
      * @throws Exception
      */
     public void createIndex(String exportsDir, String indexDir, boolean generateSciNames, boolean generateCommonNames) throws Exception {
-        createIndex(exportsDir, indexDir, alaConcepts, alaSynonyms, generateSciNames, generateCommonNames);
+        createIndex(exportsDir, indexDir, alaConcepts, alaSynonyms, irmngDwcaDirectory, generateSciNames, generateCommonNames);
     }
-    public void createIndex(String exportsDir, String indexDir, String acceptedFile,String synonymFile, boolean generateSciNames, boolean generateCommonNames) throws Exception {
+    public void createIrmngIndex(String exportsDir,String indexDir) throws Exception{
+        Analyzer analyzer = new LowerCaseKeywordAnalyzer();
+        IndexWriter irmngWriter = createIndexWriter(new File(indexDir + File.separator + "irmng"), analyzer,true);
+        indexIrmngDwcA(irmngWriter, irmngDwcaDirectory);
+        indexIRMNG(irmngWriter, exportsDir + File.separator + "ala-species-homonyms.txt", RankType.SPECIES);
+        irmngWriter.forceMerge(1);
+        irmngWriter.close();
+    }
+    public void createIndex(String exportsDir, String indexDir, String acceptedFile,String synonymFile, String irmngDwca, boolean generateSciNames, boolean generateCommonNames) throws Exception {
 
         Analyzer analyzer = new LowerCaseKeywordAnalyzer();
         //generate the extra id index
@@ -197,8 +207,9 @@ public class CBCreateLuceneIndex {
             indexALA(createIndexWriter(new File(indexDir + File.separator + "cb"), analyzer,true), acceptedFile, synonymFile);//exportsDir + File.separator + "ala_accepted_concepts_dump.txt");//, exportsDir + File.separator + lexFile);
             //IRMNG index to aid in the resolving of homonyms
             IndexWriter irmngWriter = createIndexWriter(new File(indexDir + File.separator + "irmng"), analyzer,true);
-            indexIRMNG(irmngWriter, exportsDir + File.separator + irmngFile, RankType.GENUS);
-            indexIRMNG(irmngWriter, "/data/bie-staging/irmng/irmng_species_homonyms.txt", RankType.SPECIES);
+            indexIrmngDwcA(irmngWriter, irmngDwca);
+            //indexIRMNG(irmngWriter, exportsDir + File.separator + irmngFile, RankType.GENUS);
+            //indexIRMNG(irmngWriter, "/data/bie-staging/irmng/irmng_species_homonyms.txt", RankType.SPECIES);
             indexIRMNG(irmngWriter, exportsDir + File.separator + "ala-species-homonyms.txt", RankType.SPECIES);
             irmngWriter.forceMerge(1);
             irmngWriter.close();
@@ -220,7 +231,7 @@ public class CBCreateLuceneIndex {
             Document doc = new Document();
             String id = values[POS_ID];
             String guid = values[POS_LSID];
-            doc.add(new Field("id", id, Store.YES, Index.NOT_ANALYZED));
+            doc.add(new StringField("id", id, Store.YES));//new Field("id", id, Store.YES, Index.NOT_ANALYZED));
             if(StringUtils.isEmpty(id))
                 guid = id;
             doc.add(new Field("guid", guid, Store.YES, Index.NO));
@@ -371,6 +382,61 @@ public class CBCreateLuceneIndex {
              cbIndexWriter.commit();
      }
 
+     private void indexIrmngDwcA(IndexWriter iw, String archiveDirectory) throws Exception {
+         log.info("Creating the IRMNG index from the DWCA " + archiveDirectory);
+         //open the archive to extract the required information
+          Archive archive = ArchiveFactory.openArchive(new File(archiveDirectory));
+          Iterator<DarwinCoreRecord> it =archive.iteratorDwc();
+          while(it.hasNext()){
+              Document doc = new Document();
+              DarwinCoreRecord dwcr = it.next();
+              if(dwcr.getId().equals("10063")){
+                  System.out.println("here");
+              }
+              String kingdom = dwcr.getKingdom();
+              if(StringUtils.isNotEmpty(kingdom)){
+                  doc.add(new Field(RankType.KINGDOM.getRank(), kingdom, Store.YES, Index.ANALYZED));
+              }
+              String phylum = dwcr.getPhylum();
+              if(StringUtils.isNotEmpty(phylum)){
+                  doc.add(new Field(RankType.PHYLUM.getRank(), phylum, Store.YES, Index.ANALYZED));
+              }
+              String classs = dwcr.getClasss();
+              if(StringUtils.isNotEmpty(classs)){
+                  doc.add(new Field(RankType.CLASS.getRank(), classs, Store.YES, Index.ANALYZED));
+              }
+              String order = dwcr.getOrder();
+              if(StringUtils.isNotEmpty(order)){
+                  doc.add(new Field(RankType.ORDER.getRank(), order, Store.YES, Index.ANALYZED));
+              }
+              String family = dwcr.getFamily();
+              if(StringUtils.isNotEmpty(family)){
+                  doc.add(new Field(RankType.FAMILY.getRank(), family, Store.YES, Index.ANALYZED));
+              }
+              String genus = dwcr.getGenus();
+              String calculatedRank="genus";
+              if(StringUtils.isNotEmpty(genus)){
+                  doc.add(new Field(RankType.GENUS.getRank(), genus, Store.YES, Index.ANALYZED));
+                  String specificEpithet = dwcr.getSpecificEpithet();
+                  if(StringUtils.isNotEmpty(specificEpithet)){
+                      calculatedRank="species";
+                      doc.add(new Field(RankType.SPECIES.getRank(), genus +" " + specificEpithet, Store.YES, Index.ANALYZED));
+                  }
+              }
+              String rank = dwcr.getTaxonRank() != null?dwcr.getTaxonRank():calculatedRank;
+              doc.add(new Field(IndexField.RANK.toString(), rank, Store.YES, Index.ANALYZED));
+              //now add the author - we don't do anything about this on homonym resolution yet
+               //Add the author information
+              String author = dwcr.getScientificNameAuthorship();
+              if(StringUtils.isNotEmpty(author)){
+                  //TODO think about whether we need to treat the author string with the taxamatch
+                  doc.add(new Field(NameIndexField.AUTHOR.toString(), author, Store.YES, Index.ANALYZED));
+              }
+              //now add it to the index
+              iw.addDocument(doc);
+
+          }
+     }
 
     /**
      * Indexes an IRMNG export for use in homonym resolution.
@@ -765,7 +831,7 @@ public class CBCreateLuceneIndex {
         ParsedName cn = parser.parse(name);
             //if(cn != null && !cn.hasProblem() && !cn.isIndetermined()){
             if(cn != null && cn.isParsableType()&& !cn.isIndetermined() 
-            && cn.getType()!= NameType.informal && !"6500".equals(rank))// a scientific name with some informal addition like "cf." or indetermined like Abies spec. ALSO prevent subgenus because they parse down to genus plus author
+            && cn.getType()!= NameType.informal && !"6500".equals(rank) && cn.getType() != NameType.doubtful)// a scientific name with some informal addition like "cf." or indetermined like Abies spec. ALSO prevent subgenus because they parse down to genus plus author
             {
                Field f2 =new Field(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES, Index.ANALYZED);
                f2.setBoost(boost);
@@ -869,6 +935,7 @@ public class CBCreateLuceneIndex {
     public static void main(String[] args) throws Exception {
         CBCreateLuceneIndex indexer = new CBCreateLuceneIndex();
         indexer.init();
+        //indexer.createIrmngIndex("/data/bie-staging/ala-names","/data/lucene/namematching13");
         for(String arg: args)
             System.out.println(arg);
         if (args.length >= 2) {
@@ -878,9 +945,9 @@ public class CBCreateLuceneIndex {
                 sn = args[2].equals("-sn");
                 cn = args[2].equals("-cn");
             }
-            if(args.length==4){
+            if(args.length==5){
                 //the file names have been supplied to the generated.  Used in the case where we are not generating the ALA names index.
-                indexer.createIndex(args[0], args[1], args[2], args[3], sn, cn);
+                indexer.createIndex(args[0], args[1], args[2], args[3], args[4], sn, cn);
             }
             else{
                 indexer.createIndex(args[0], args[1], sn, cn);
