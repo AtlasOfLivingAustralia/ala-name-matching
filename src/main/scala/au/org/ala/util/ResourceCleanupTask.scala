@@ -174,6 +174,7 @@ object ResourceCleanupTask {
     val colToDelete=new ArrayBuffer[String]
     var totalColumnsRemoved=0
     var totalRecordModified=0
+    val columnsToAlwaysKeep= Set("uuid","originalSensitiveValues","rowKey")
 
     //only interested in the raw values
     if(timemap.isDefined){
@@ -181,7 +182,7 @@ object ResourceCleanupTask {
         //              if(fieldName == "kingdom")
         //                println(fullRecord.hasProperty(fieldName) +" "+ timemap.get.get(fieldName).get)
         fieldName match {
-          case it if (fullRecord.hasNestedProperty(fieldName))=> {
+          case it if (fullRecord.hasNestedProperty(it) && !columnsToAlwaysKeep.contains(it) )=> {
             //                  if(fieldName == "kingdom")
             //                    println("Edit time: " +editTime + " less than : " + (timemap.get.get(fieldName).get < editTime))
             if(timemap.get.get(fieldName).get < editTime){
@@ -228,7 +229,7 @@ object ResourceCleanupTask {
 //              if(fieldName == "kingdom")
 //                println(fullRecord.hasProperty(fieldName) +" "+ timemap.get.get(fieldName).get)
               fieldName match {
-                case it if (fullRecord.hasNestedProperty(fieldName))=> {
+                case it if (fullRecord.hasNestedProperty(fieldName) && !valuesToIgnore.contains(it))=> {
 //                  if(fieldName == "kingdom")
 //                    println("Edit time: " +editTime + " less than : " + (timemap.get.get(fieldName).get < editTime))
                   if(timemap.get.get(fieldName).get < editTime){
