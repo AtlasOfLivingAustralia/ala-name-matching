@@ -37,9 +37,11 @@ object DwCALoader {
     var localFilePath:Option[String] = None
     var logRowKeys = false;
     var testFile =false
+    var bypassConnParamLookup = false
     val parser = new OptionParser("load darwin core archive") {
       arg("<data resource UID>", "The UID of the data resource to load", {v: String => resourceUid = v})
       opt("l", "local", "skip the download and use local file", {v:String => localFilePath = Some(v) } )
+      booleanOpt("b", "bypassConnParamLookup", "bypass connection param lookup", {v:Boolean => bypassConnParamLookup = v } )
       opt("log","log row keys to file - allows processing/indexing of changed records",{logRowKeys = true})
       opt("test", "test the file only do not load", {testFile=true})
     }
@@ -49,7 +51,11 @@ object DwCALoader {
       if(localFilePath.isEmpty){
         l.load(resourceUid, logRowKeys,testFile)
       } else {
-        l.loadLocal(resourceUid, localFilePath.get, logRowKeys,testFile)
+        if(bypassConnParamLookup){
+          l.loadArchive(localFilePath.get, resourceUid, List(), false, logRowKeys, testFile)
+        } else {
+          l.loadLocal(resourceUid, localFilePath.get, logRowKeys,testFile)
+        }
       }
       //initialise the delete
       //update the collectory information
