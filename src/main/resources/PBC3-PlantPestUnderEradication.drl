@@ -80,3 +80,5 @@ end
 //        state.setComplete(false);
 //        logger.warn("PBC3 Rule '" + kcontext.getRule().getName() + "'");
 //end
+//can't end the drl file with a comment thus an empty line
+
