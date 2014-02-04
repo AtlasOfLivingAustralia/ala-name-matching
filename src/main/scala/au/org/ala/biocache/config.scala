@@ -53,14 +53,24 @@ object Config {
 
   lazy val allowCollectoryUpdates = configModule.properties.getProperty("allowCollectoryUpdates","false")
 
-  lazy val extraMiscFields=configModule.properties.getProperty("extraMiscFields","")
+  lazy val extraMiscFields = configModule.properties.getProperty("extraMiscFields","")
 
   lazy val fieldsToSample = {
     val str = configModule.properties.getProperty("fieldsToSample")
     val defaultFields = configModule.properties.getProperty("defaultFieldsToSample")
-    if (str == null || str.trim == ""){
-      var dbfields = try{Client.getLayerIntersectDao.getConfig.getFieldsByDB} catch{case e:Exception =>new java.util.ArrayList()}
-      var fields: Array[String] = if(dbfields.size>0) Array.ofDim(dbfields.size()) else defaultFields.split(",").map(x => x.trim).toArray
+    if ((str != null && str.trim != "" && str.trim != "none"){
+      var dbfields = try {
+        Client.getLayerIntersectDao.getConfig.getFieldsByDB
+      } catch {
+        case e:Exception => new java.util.ArrayList()
+      }
+
+      var fields: Array[String] = if(dbfields.size > 0){
+        Array.ofDim(dbfields.size())
+      } else {
+        defaultFields.split(",").map(x => x.trim).toArray
+      }
+
       if(dbfields.size > 0){
           for (a <- 0 until dbfields.size()) {
             fields(a) = dbfields.get(a).getId()
