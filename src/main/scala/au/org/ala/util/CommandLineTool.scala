@@ -120,6 +120,9 @@ object CMD {
         case it if (it startsWith "process-single") => {
           it.split(" ").map(x => x.trim).tail.foreach(uuid => ProcessSingleRecord.processRecord(uuid))
         }
+        case it if (it == "process-all") => {
+          ProcessWithActors.processRecords(4, None, None)
+        }
         case it if (it startsWith "process") || (it startsWith "process") => {
           val drs = it.split(" ").map(x => x.trim).toList.tail
           drs.foreach(dr => {
@@ -133,9 +136,6 @@ object CMD {
             }
           }
           )
-        }
-        case it if (it startsWith "process-all") => {
-          ProcessWithActors.processRecords(4, None, None)
         }
         case it if (it startsWith "index-delete") => {
           //need to preserve the query case because T and Z mean things in dates
