@@ -73,8 +73,6 @@ class DwCALoader extends DataLoader {
   import ReflectBean._
   import JavaConversions._
 
-  val logger = LoggerFactory.getLogger("DwCALoader")
-
   def load(resourceUid:String, logRowKeys:Boolean=false, testFile:Boolean=false, forceLoad:Boolean = false){
     //remove the old files
     emptyTempFileStore(resourceUid)
