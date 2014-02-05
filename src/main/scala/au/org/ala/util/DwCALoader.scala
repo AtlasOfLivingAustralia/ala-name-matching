@@ -8,7 +8,7 @@ import org.gbif.dwc.terms.ConceptTerm
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConversions
 import org.apache.commons.lang3.StringUtils
-
+import org.slf4j.LoggerFactory
 /**
  * Loading utility for pulling in a darwin core archive file.
  *
