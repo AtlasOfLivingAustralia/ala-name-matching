@@ -87,10 +87,15 @@ object CMD {
            val name = resource.getOrElse("name", "")
            println(s"Ingesting resource $name, uid: $uid")
            if(uid != ""){
+             println("Loading: " + uid)
              l.load(uid)
+             println("Sampling: " + uid)
              Sampling.main(Array("-dr", uid))
+             println("Processing: " + uid)
              ProcessWithActors.processRecords(4, None, Some(uid))
+             println("Indexing: " + uid)
              IndexRecords.index(None, None, Some(uid), false, false)
+             println("Finished ingest for: " + uid)
            }
           })
         }
@@ -125,7 +130,6 @@ object CMD {
             else {
               val p = new RecordProcessor
               p.processFileThreaded(new java.io.File(filename.get), 4)
-              //ProcessRecords.main(Array("-f",filename.get, "-t","4"))
             }
           }
           )
@@ -151,13 +155,11 @@ object CMD {
             if (args.length == 2) {
               println("Indexing from " + args(0) + " using " + args(1) + " threads")
               IndexRecords.indexListThreaded(new File(args(0)), Integer.parseInt(args(1)))
-            }
-            else if (args.length == 1) {
+            } else if (args.length == 1) {
               println("Indexing from " + args(0))
               IndexRecords.indexList(new File(args(0)), false)
             }
-          }
-          catch {
+          } catch {
             case e: Exception => println(e.getMessage())
           }
         }
@@ -179,10 +181,11 @@ object CMD {
           val drs = it.split(" ").map(x => x.trim).toList.tail
           drs.foreach(dr => {
             val (hasRowKeys, filename) = hasRowKey(dr)
-            if (!hasRowKeys)
+            if (!hasRowKeys){
               IndexRecords.index(None, None, Some(dr), false, false)
-            else
+            } else {
               IndexRecords.indexListThreaded(new File(filename.get), 4)
+            }
           })
         }
         case it if (it startsWith "createdwc") => {
@@ -234,10 +237,11 @@ object CMD {
           val args = it.split(" ").map(x => x.trim).toArray.tail
           val dr = args(0)
           val (hasRowKeys, filename) = hasRowKey(dr)
-          if (!hasRowKeys)
+          if (!hasRowKeys){
             Sampling.main(Array("-dr") ++ args)
-          else
+          } else {
             Sampling.main(Array("-rf", filename.get, "-dr") ++ args)
+          }
         }
         case it if (it startsWith "resample") => {
           println("****** Warning - this requires at least 8g of memory allocation -Xmx8g -Xms8g")
@@ -277,10 +281,10 @@ object CMD {
             val lastLoadDate = org.apache.commons.lang.time.DateFormatUtils.format(getLastLoadDate, "yyyy-MM-dd")
             if (hasRowKeys){
               ResourceCleanupTask.main(Array(dr, "columns","-d",lastLoadDate, "-f" ,filename.get) ++ extraArgs)
-            } else{
+            } else {
               ResourceCleanupTask.main(Array(dr, "columns","-d",lastLoadDate) ++ extraArgs)
             }
-          } else{
+          } else {
             println("Unable to delete-obsolete without a data resource uid being provided")
           }
 
@@ -352,7 +356,7 @@ object CMD {
               println("There is no incremental delete file for " + args(0))
             }
           }
-      }
+        }
         case it if (it startsWith "delete") => {
           //need to preserve the query case because T and Z mean things in dates
           val query = input.replaceFirst("delete ", "")

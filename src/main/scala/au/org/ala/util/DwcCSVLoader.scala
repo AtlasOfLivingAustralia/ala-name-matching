@@ -87,7 +87,7 @@ class DwcCSVLoader extends DataLoader {
         val (fileName,date) = downloadArchive(url,dataResourceUid,if(forceLoad)None else lastChecked)
         if(maxLastModifiedDate == null || date.after(maxLastModifiedDate))
           maxLastModifiedDate = date
-        println("File last modified date: " + maxLastModifiedDate)
+        logger.info("File last modified date: " + maxLastModifiedDate)
         if(fileName != null){
           val directory = new File(fileName)
           loadDirectory(directory,dataResourceUid, uniqueTerms, params,strip,incremental||logRowKeys,testFile)
@@ -226,22 +226,22 @@ class DwcCSVLoader extends DataLoader {
 
           if (counter % 1000 == 0 && counter > 0) {
             finishTime = System.currentTimeMillis
-            println(counter + ", >> last key : " + dataResourceUid + "|" +
+            logger.info(counter + ", >> last key : " + dataResourceUid + "|" +
               uniqueTermsValues.mkString("|") + ", records per sec: " +
               1000 / (((finishTime - startTime).toFloat) / 1000f))
             startTime = System.currentTimeMillis
           }
         } else {
           noSkipped += 1
-          print("Skipping line: " + counter + ", missing unique term value. Number skipped: "+ noSkipped)
+          logger.warn("Skipping line: " + counter + ", missing unique term value. Number skipped: "+ noSkipped)
           uniqueTerms.foreach(t => print("," + t +":"+map.getOrElse(t,"")))
           println
         }
       } else {
-        println("Skipping line: " +counter + " incorrect number of columns (" +
+        logger.warn("Skipping line: " +counter + " incorrect number of columns (" +
           columns.length + ")...headers (" + dwcTermHeaders.length + ")")
-        println("First element : "+columns(0) +"...headers :" + dwcTermHeaders(0))
-        println("last element : "+columns.last +"...headers :" + dwcTermHeaders.last)
+        logger.info("First element : "+columns(0) +"...headers :" + dwcTermHeaders(0))
+        logger.info("last element : "+columns.last +"...headers :" + dwcTermHeaders.last)
       }
       //read next
       currentLine = reader.readNext

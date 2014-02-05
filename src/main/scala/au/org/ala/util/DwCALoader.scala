@@ -16,7 +16,7 @@ import org.apache.commons.lang3.StringUtils
  * The workflow is the following:
  *
  * <ol>
- * <li>Retrieve JSON from collectory</li>
+ * <li>Retrieve JSON from registry</li>
  * <li>Download the zipped archive to the local file system</li>
  * <li>Extract</li>
  * <li>Load</li>
@@ -73,6 +73,8 @@ class DwCALoader extends DataLoader {
   import ReflectBean._
   import JavaConversions._
 
+  val logger = LoggerFactory.getLogger("DwCALoader")
+
   def load(resourceUid:String, logRowKeys:Boolean=false, testFile:Boolean=false, forceLoad:Boolean = false){
     //remove the old files
     emptyTempFileStore(resourceUid)
@@ -89,7 +91,7 @@ class DwCALoader extends DataLoader {
       val (fileName,date) = downloadArchive(url,resourceUid,if(forceLoad)None else lastChecked)
       if(maxLastModifiedDate == null || date.after(maxLastModifiedDate))
         maxLastModifiedDate = date
-      println("File last modified date: " + maxLastModifiedDate)
+      logger.info("File last modified date: " + maxLastModifiedDate)
       if(fileName != null){
         //load the DWC file
         loadArchive(fileName, resourceUid, conceptTerms, strip, logRowKeys||incremental,testFile)
@@ -112,16 +114,6 @@ class DwCALoader extends DataLoader {
     loadArchive(fileName, resourceUid, conceptTerms, strip, logRowKeys, testFile)
   }
 
-//  def getUniqueId(star:StarRecord,uniqueTerms:List[ConceptTerm]):Option[String]={
-//    if (!uniqueTerms.isEmpty) {
-//      val uniqueTermValues = uniqueTerms.map(t => star.core.value(t))
-//      val id =(List(resourceUid) ::: uniqueTermValues).mkString("|").trim
-//      Some(if(stripSpaces) id.replaceAll("\\s","") else id)
-//    } else {
-//      None
-//    }
-//  }
-
   def getUuid(uniqueID:Option[String], star:StarRecord,uniqueTerms:List[ConceptTerm], mappedProperties:Option[Map[String,String]]) :((String, Boolean),Option[Map[String,String]])={
     uniqueID match {
       case Some(value) => (Config.occurrenceDAO.createOrRetrieveUuid(value),mappedProperties)
@@ -142,8 +134,6 @@ class DwCALoader extends DataLoader {
     val fieldShortName = fieldMap.keySet().toList
     val biocacheModelValues = DwC.retrieveCanonicals(fieldShortName.map(_.simpleName))
     val fieldToModelMap = (fieldShortName zip biocacheModelValues).toMap
-    println(fieldShortName zip biocacheModelValues)
-
 
     var startTime = System.currentTimeMillis
     var finishTime = System.currentTimeMillis
@@ -153,8 +143,8 @@ class DwCALoader extends DataLoader {
 
     val collectionCodes = Config.indexDAO.getDistinctValues("data_resource_uid:"+resourceUid, "collection_code",100).getOrElse(List()).toSet[String]
 
-    println("The current institution codes for the data resource: " + institutionCodes)
-    println("The current collection codes for the data resource: " + collectionCodes)
+    logger.info("The current institution codes for the data resource: " + institutionCodes)
+    logger.info("The current collection codes for the data resource: " + collectionCodes)
 
     val newCollCodes=new scala.collection.mutable.HashSet[String]
     val newInstCodes= new scala.collection.mutable.HashSet[String]
@@ -201,12 +191,6 @@ class DwCALoader extends DataLoader {
       if(mappedProps.isDefined && uniqueID.isDefined){
         Config.persistenceManager.put(uniqueID.get, "occ", mappedProps.get)
       }
-//      {
-//        uniqueID match {
-//          case Some(value) => Config.occurrenceDAO.createOrRetrieveUuid(value)
-//          case None => (Config.occurrenceDAO.createUuid, true)
-//        }
-//      }
 
       //add the record uuid to the map
       fieldTuples += ("uuid" -> recordUuid)
@@ -235,7 +219,7 @@ class DwCALoader extends DataLoader {
           Config.occurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)
         }
         finishTime = System.currentTimeMillis
-        println(count + ", >> last key : " + uniqueID + ", UUID: " + recordUuid + ", records per sec: " + 1000 / (((finishTime - startTime).toFloat) / 1000f))
+        logger.info(count + ", >> last key : " + uniqueID + ", UUID: " + recordUuid + ", records per sec: " + 1000 / (((finishTime - startTime).toFloat) / 1000f))
         startTime = System.currentTimeMillis
         //clear the buffer
         currentBatch.clear
@@ -251,16 +235,16 @@ class DwCALoader extends DataLoader {
       val unknownInstitutions = newInstCodes &~ institutionCodes
       val unknownCollections = newCollCodes &~ collectionCodes
       if(unknownInstitutions.size > 0)
-        println("Warning there are new institution codes in the set: " + unknownInstitutions.mkString(","))
+        logger.warn("Warning there are new institution codes in the set: " + unknownInstitutions.mkString(","))
       if(unknownCollections.size > 0)
-        println("Warning there are new collection codes in the set: " + unknownCollections.mkString(","))
+        logger.warn("Warning there are new collection codes in the set: " + unknownCollections.mkString(","))
 
       //Report the number of new/existing records
-      println("There are " + count + " records in the file. The number of NEW records: " + newCount)
+      logger.info("There are " + count + " records in the file. The number of NEW records: " + newCount)
     }
     //commit the batch
     Config.occurrenceDAO.addRawOccurrenceBatch(currentBatch.toArray)
-    println("Finished DwC loader. Records processed: " + count)
+    logger.info("Finished DwC loader. Records processed: " + count)
     count
   }
 }

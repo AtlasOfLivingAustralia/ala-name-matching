@@ -36,7 +36,7 @@ import scala.util.parsing.json.JSON
  */
 object ClassificationDAO {
 
-  val logger = LoggerFactory.getLogger("CLassificationDAO")
+  val logger = LoggerFactory.getLogger("ClassificationDAO")
   private val lru = new org.apache.commons.collections.map.LRUMap(10000)
   private val lock : AnyRef = new Object()
   private val nameIndex = Config.nameIndex
@@ -193,12 +193,11 @@ object ClassificationDAO {
  * A cache that stores the species lists for a taxon lsid.
  *
  * It will only store the lists that are configured via the specieslists property.
- *
  */
 object TaxonSpeciesListDAO {
   val logger = LoggerFactory.getLogger("TaxonSpeciesListDAO")
   def listToolUrl = "http://lists.ala.org.au/ws/species/"
-  val guidUrl="http://lists.ala.org.au/ws/speciesList/{0}/taxa"
+  val guidUrl = "http://lists.ala.org.au/ws/speciesList/{0}/taxa"
   private val lru = new org.apache.commons.collections.map.LRUMap(100000)
 
 
@@ -206,7 +205,7 @@ object TaxonSpeciesListDAO {
   private val validLists = Config.getProperty("specieslists","").split(",")
   private val prefixFields = Config.getProperty("slPrefix","stateProvince").split(",").toSet
   private val indexValues = Config.getProperty("slIndexKeys","category").split(",").toSet
-  private val loadSpeciesLists=Config.getProperty("includeSpeciesLists","false").equals("true")
+  private val loadSpeciesLists = Config.getProperty("includeSpeciesLists","false").equals("true")
 
   private val columnFamily = "taxon"
   private val persistenceManager = Config.getInstance(classOf[PersistenceManager]).asInstanceOf[PersistenceManager]
@@ -497,12 +496,12 @@ object AttributionDAO {
   }
   
    def getDataProviderAsMap(value:String):Map[String,String]={
-     val json = Source.fromURL(Config.registryURL+"/ws/dataProvider/" + value + ".json").getLines.mkString
+     val json = Source.fromURL(Config.registryURL+"/dataProvider/" + value + ".json").getLines.mkString
      JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
    }
   
    def getDataResourceAsMap(value:String):Map[String,String]={
-     val json = Source.fromURL(Config.registryURL+"/ws/dataResource/" + value + ".json").getLines.mkString
+     val json = Source.fromURL(Config.registryURL+"/dataResource/" + value + ".json").getLines.mkString
      JSON.parseFull(json).get.asInstanceOf[Map[String, String]]
    }
 
@@ -513,7 +512,7 @@ object AttributionDAO {
       val attribution = new Attribution
       logger.info("Calling web service for " + value)
 
-      val wscontent = WebServiceLoader.getWSStringContent(Config.registryURL+"/ws/dataResource/"+value+".json")
+      val wscontent = WebServiceLoader.getWSStringContent(Config.registryURL+"/dataResource/"+value+".json")
 
       val wsmap = Json.toMap(wscontent)
 

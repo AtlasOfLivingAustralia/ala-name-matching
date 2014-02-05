@@ -165,7 +165,6 @@ class Sampling {
       handleRecordMap(values.get, coordinates, new LocationProcessor)
       println(coordinates)
     }
-
   }
 
   def getDistinctCoordinatesForFile(locFilePath: String, rowKeyFile: String) {
