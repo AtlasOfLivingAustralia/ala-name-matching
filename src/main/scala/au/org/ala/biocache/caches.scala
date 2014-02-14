@@ -57,7 +57,7 @@ object ClassificationDAO {
   /**
    * Uses a LRU cache
    */
-  def getByHashLRU(cl:Classification) : Option[MetricsResultDTO] = {
+  def getByHashLRU(cl:Classification, count:Int=0) : Option[MetricsResultDTO] = {
     //use the vernacular name to lookup if there if there is no scientific name or higher level classification
     //we don't really trust vernacular name matches thus only use as a last resort
     val hash = { if(cl.vernacularName==null || cl.scientificName != null || cl.specificEpithet != null || cl.infraspecificEpithet != null 
@@ -159,7 +159,12 @@ object ClassificationDAO {
                 newcl.setSpecificEpithet(null)
                 newcl.setSpecies(null)
                 updateClassificationRemovingMissingSynonym(newcl, resultMetric.getResult())
-                result = getByHashLRU(newcl)
+              if(count<4){
+                result = getByHashLRU(newcl, count+1)
+              } else{
+                logger.warn("Potential recursive issue with " + cl.getKingdom()+" " + cl.getPhylum + " " + cl.getClasss + " " + cl.getOrder + " " + cl.getFamily)
+              }
+              //[Processor Thread 7] 710000 >> Last key : dr695|BAS|SOMBASE/TOTAL BIOCONSTRUCTORS|74175, records per sec: 772.2008 recursive Stack overflow
             } else {
               logger.warn("Recursively unable to locate a synonym for " + cl)
             }
