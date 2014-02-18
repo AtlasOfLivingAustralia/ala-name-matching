@@ -4,10 +4,10 @@
   <groupId>au.org.ala</groupId>
   <artifactId>biocache-service</artifactId>
   <packaging>war</packaging>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.1-SNAPSHOT</version>
   <name>biocache-service</name>
-  <url>http://www.ala.org.au</url>
-  <description>This is a the service layer for the BioCache</description>
+  <url>http://biocache.ala.org.au/ws</url>
+  <description>This is a the service layer for the Biocache</description>
   <properties>
     <!-- This project uses UTF8 for Regular Expressions -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -30,12 +30,12 @@
 		<!--  version 5.0.1 is incompatible with tomcat 6 due to el 2.1 being used. -->
 		<!-- <version>5.0.1.Final</version> -->
 	</dependency>
-    <!-- ALA header and tails -->
-    <dependency>
-      <groupId>au.org.ala</groupId>
-      <artifactId>ala-header-and-tails</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
+      <!-- ALA header and tails -->
+      <dependency>
+          <groupId>au.org.ala</groupId>
+          <artifactId>ala-header-and-tails</artifactId>
+          <version>2.0-SNAPSHOT</version>
+      </dependency>
     <!-- ALA logging -->
     <dependency>
       <groupId>au.org.ala</groupId>
@@ -82,12 +82,6 @@
       <artifactId>opencsv</artifactId>
       <version>2.3</version>
     </dependency>
-    <!-- Lightweight Persistent DB  -->
-    <!-- <dependency>
-        <groupId>com.db40</groupId>
-        <artifactId>db4o-core</artifactId>
-        <version>8.0</version>
-    </dependency> -->
     <!--  Cache  -->
     <dependency>
         <groupId>com.googlecode.ehcache-spring-annotations</groupId>
@@ -410,18 +404,17 @@
 		<artifactId>jetty-maven-plugin</artifactId>
 		<version>7.0.0.pre5</version>
 		<configuration>
-
 			<webAppConfig>
 				<contextPath>/biocache-service</contextPath>
 				<!-- NC 20130808: Add the external directory to the classpath to allow 
 					biocache.properties to be override -->
 				<!-- <extraClasspath>/data/biocache/config/</extraClasspath> -->
 			</webAppConfig>
-			<systemProperty>
-				<!-- <name>org.eclipse.jetty.server.Request.maxFormContentSize</name> -->
-				<name>org.mortbay.jetty.Request.maxFormContentSize</name>
-				<value>-1</value>
-			</systemProperty>
+			<!--<systemProperty>-->
+				<!--&lt;!&ndash; <name>org.eclipse.jetty.server.Request.maxFormContentSize</name> &ndash;&gt;-->
+				<!--<name>org.mortbay.jetty.Request.maxFormContentSize</name>-->
+				<!--<value>-1</value>-->
+			<!--</systemProperty>-->
 			<scanIntervalSeconds>10</scanIntervalSeconds>
 			<stopKey>foo</stopKey>
 			<stopPort>9099</stopPort>
