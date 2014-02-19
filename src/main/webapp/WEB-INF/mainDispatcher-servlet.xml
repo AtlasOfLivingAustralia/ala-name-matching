@@ -31,7 +31,7 @@
     </bean>  
           
     <!--<context:spring-configured/>-->
-    <context:component-scan base-package="org.ala.biocache"/>
+    <context:component-scan base-package="au.org.ala.biocache"/>
     
     <!-- Configures the @Controller programming model -->
     <mvc:annotation-driven />
