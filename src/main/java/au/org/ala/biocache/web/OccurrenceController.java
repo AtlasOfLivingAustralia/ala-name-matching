@@ -137,7 +137,23 @@ public class OccurrenceController extends AbstractSecureController {
         model.addAttribute("webservicesRoot", hostUrl);
         return HOME;
     }
-    
+
+    /**
+     * Custom handler for the welcome view.
+     * <p>
+     * Note that this handler relies on the RequestToViewNameTranslator to
+     * determine the logical view name based on the request URL: "/welcome.do"
+     * -&gt; "welcome".
+     *
+     * @return viewname to render
+     */
+    @RequestMapping("/oldapi")
+    public String oldApiHandler(Model model) {
+        model.addAttribute("webservicesRoot", hostUrl);
+        return "oldapi";
+    }
+
+
     @RequestMapping("/active/download/stats")
     public @ResponseBody List<DownloadDetailsDTO> getCurrentDownloads(){
         return downloadService.getCurrentDownloads();
