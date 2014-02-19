@@ -53,7 +53,7 @@ public class ValidationRuleController extends AbstractSecureController {
     protected SearchDAO searchDAO;
 
     @RequestMapping(value = {"/validation/rules", "/validation/rules/", "/assertions/queries", "/assertions/queries/"}, method = RequestMethod.GET)
-    public ValidationRule[] getValidationRules() throws Exception {
+    public @ResponseBody ValidationRule[] getValidationRules() throws Exception {
         return Store.getValidationRules();
     }
 
