@@ -1,22 +1,28 @@
 package au.org.ala.checklist.lucene;
 
-import java.io.FileReader;
 import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.checklist.lucene.model.NameSearchResult;
 import au.org.ala.data.model.LinnaeanRankClassification;
 import au.org.ala.data.util.RankType;
-import java.io.File;
-import java.util.List;
 import org.apache.commons.lang.StringUtils;
-//import org.gbif.file.CSVReader;
+import org.junit.Ignore;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.io.File;
+import java.io.FileReader;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+//import org.gbif.file.CSVReader;
 /**
  * Test cases for the Iconic species.  Ensures that that checklist bank classification
  * and the ALA name matching is working correctly.
  *
  * @author Natasha
  */
+@Ignore
 public class IconicSpeciesTest {
 
     static CBIndexSearch searcher;
@@ -24,7 +30,7 @@ public class IconicSpeciesTest {
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new CBIndexSearch("/data/lucene/namematchingv1_1");
+            searcher = new CBIndexSearch("/data/lucene/namematchingv1_3");
         } catch (Exception e) {
             e.printStackTrace();
         }

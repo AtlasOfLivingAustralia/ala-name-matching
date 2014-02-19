@@ -1,38 +1,38 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>au.org.ala</groupId>
-  <artifactId>ala-name-matching</artifactId>
-  <packaging>jar</packaging>
-  <version>1.3-SNAPSHOT</version>
-  <name>ALA Name Matching</name>
-	<properties>
-		<!-- This project uses UTF8 for Regular Expressions -->
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<org.apache.lucene.version>4.1.0</org.apache.lucene.version>
-	</properties>
-  <dependencies>
-    <dependency>
-        <groupId>org.gbif</groupId>
-        <artifactId>dwca-reader</artifactId>
-        <version>1.14-SNAPSHOT</version>
-        <exclusions>
-            <exclusion>
-                <groupId>commons-io</groupId>
-                <artifactId>commons-io</artifactId>
-            </exclusion>
-        </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>3.2</version>
-    </dependency>
-    <dependency>
-        <groupId>org.gbif</groupId>
-        <artifactId>ecat-common</artifactId>
-        <version>1.5.1-SNAPSHOT</version>
-    </dependency>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>au.org.ala</groupId>
+    <artifactId>ala-name-matching</artifactId>
+    <packaging>jar</packaging>
+    <version>1.3-SNAPSHOT</version>
+    <name>ALA Name Matching</name>
+    <properties>
+        <!-- This project uses UTF8 for Regular Expressions -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <org.apache.lucene.version>4.1.0</org.apache.lucene.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.gbif</groupId>
+            <artifactId>dwca-reader</artifactId>
+            <version>1.14</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-io</groupId>
+                    <artifactId>commons-io</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.gbif</groupId>
+            <artifactId>ecat-common</artifactId>
+            <version>1.6</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -44,11 +44,6 @@
             <artifactId>lucene-core</artifactId>
             <version>${org.apache.lucene.version}</version>
         </dependency>
-<!--        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers</artifactId>
-            <version>${org.apache.lucene.version}</version>
-        </dependency>-->
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
@@ -63,25 +58,25 @@
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>2.5</version>
-          <exclusions>
-            <exclusion>
-                <groupId>xerces</groupId>
-                <artifactId>xercesImpl</artifactId>
-            </exclusion>
-        </exclusions>
+            <exclusions>
+                <exclusion>
+                    <groupId>xerces</groupId>
+                    <artifactId>xercesImpl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-    <dependency>
-      <groupId>au.com.bytecode</groupId>
-      <artifactId>opencsv</artifactId>
-      <version>2.2</version>
-      <type>jar</type>
-    </dependency>
-    <dependency>
-        <groupId>uk.ac.shef.wit</groupId>
-        <artifactId>simmetrics</artifactId>
-        <version>1.6.2</version>
-    </dependency>
-  </dependencies>
+        <dependency>
+            <groupId>au.com.bytecode</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>2.2</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>uk.ac.shef.wit</groupId>
+            <artifactId>simmetrics</artifactId>
+            <version>1.6.2</version>
+        </dependency>
+    </dependencies>
     <build>
         <plugins>
             <plugin>
@@ -117,37 +112,41 @@
                 </executions>
             </plugin>
             <plugin>
-            	<groupId>org.apache.maven.plugins</groupId>
-            	<artifactId>maven-source-plugin</artifactId>
-            	<version>2.1.1</version>
-		        <executions>
-		          <execution>
-		            <id>attach-sources</id>
-		            <phase>verify</phase>
-		            <goals>
-		              <goal>jar-no-fork</goal>
-		            </goals>
-		          </execution>
-		        </executions>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.1.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
     <repositories>
         <repository>
+            <id>gbif-central-mirror</id>
+            <name>gbif</name>
+            <url>http://repository.gbif.org/service/local/repo_groups/gbif/content/</url>
+        </repository>
+        <repository>
             <id>ala-repository</id>
             <name>ala-repository</name>
             <url>http://maven.ala.org.au/repository</url>
         </repository>
-
     </repositories>
-	<distributionManagement>
-	  <downloadUrl>https://maven.ala.org.au/repository</downloadUrl>
-	  <repository>
-	    <uniqueVersion>false</uniqueVersion>
-	    <id>ala-repository</id>
-	    <name>ALA Maven Repository</name>
-	    <url>scp://maven.ala.org.au/data/maven</url>
-	    <layout>default</layout>
-	  </repository>
-	</distributionManagement>
+    <distributionManagement>
+        <downloadUrl>https://maven.ala.org.au/repository</downloadUrl>
+        <repository>
+            <uniqueVersion>false</uniqueVersion>
+            <id>ala-repository</id>
+            <name>ALA Maven Repository</name>
+            <url>scp://maven.ala.org.au/data/maven</url>
+            <layout>default</layout>
+        </repository>
+    </distributionManagement>
 </project>
