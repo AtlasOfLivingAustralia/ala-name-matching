@@ -58,8 +58,7 @@ public class ValidationRuleController extends AbstractSecureController {
     }
 
     @RequestMapping(value = {"/validation/rule/{uuid}", "/validation/rule/{uuid}/", "/assertions/query/{uuid}", "/assertions/query/{uuid}/"}, method = RequestMethod.GET)
-    public @ResponseBody
-    ValidationRule getValidationRule(@PathVariable(value="uuid") String uuid,HttpServletRequest request) throws Exception {
+    public @ResponseBody ValidationRule getValidationRule(@PathVariable(value="uuid") String uuid,HttpServletRequest request) throws Exception {
         String apiKey = request.getParameter("apiKey");
         if(apiKey != null){
             return Store.getValidationRule(apiKey + "|" + uuid);
