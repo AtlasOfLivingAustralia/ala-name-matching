@@ -12,11 +12,10 @@
  *  implied. See the License for the specific language governing
  *  rights and limitations under the License.
  */
-package au.org.ala.biocache.dto.store;
+package au.org.ala.biocache.dto;
 
 import au.org.ala.biocache.model.FullRecord;
 import au.org.ala.biocache.model.QualityAssertion;
-import au.org.ala.biocache.dto.MediaDTO;
 
 import java.io.Serializable;
 import java.util.List;

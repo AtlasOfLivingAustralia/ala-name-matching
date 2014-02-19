@@ -19,7 +19,7 @@ import au.org.ala.biocache.model.FullRecord;
 import au.org.ala.biocache.model.QualityAssertion;
 import au.org.ala.biocache.Store;
 import au.org.ala.biocache.dto.ContactDTO;
-import au.org.ala.biocache.dto.store.OccurrenceDTO;
+import au.org.ala.biocache.dto.OccurrenceDTO;
 import au.org.ala.biocache.service.AuthService;
 import org.springframework.stereotype.Component;
 

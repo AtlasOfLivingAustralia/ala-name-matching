@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.net.HttpURLConnection;
 
 /**
- * A controller for the submission and lookup of validation rules.
+ * A controller for the submission and lookup of validation rules against occurrence records.
  */
 @Controller
 public class ValidationRuleController extends AbstractSecureController {
@@ -52,9 +52,14 @@ public class ValidationRuleController extends AbstractSecureController {
     @Inject
     protected SearchDAO searchDAO;
 
+    @RequestMapping(value = {"/validation/rules", "/validation/rules/", "/assertions/queries", "/assertions/queries/"}, method = RequestMethod.GET)
+    public ValidationRule[] getValidationRules() throws Exception {
+        return Store.getValidationRules();
+    }
+
     @RequestMapping(value = {"/validation/rule/{uuid}", "/validation/rule/{uuid}/", "/assertions/query/{uuid}", "/assertions/query/{uuid}/"}, method = RequestMethod.GET)
     public @ResponseBody
-    ValidationRule getQueryAssertion(@PathVariable(value="uuid") String uuid,HttpServletRequest request) throws Exception {
+    ValidationRule getValidationRule(@PathVariable(value="uuid") String uuid,HttpServletRequest request) throws Exception {
         String apiKey = request.getParameter("apiKey");
         if(apiKey != null){
             return Store.getValidationRule(apiKey + "|" + uuid);
@@ -64,7 +69,7 @@ public class ValidationRuleController extends AbstractSecureController {
     }
 
     @RequestMapping(value = {"/validation/rules/{uuids}", "/validation/rules/{uuids}/", "/assertions/queries/{uuids}", "/assertions/queries/{uuids}/"}, method = RequestMethod.GET)
-    public @ResponseBody ValidationRule[] getQueryAssertions(@PathVariable(value="uuids") String uuids,HttpServletRequest request) throws Exception {
+    public @ResponseBody ValidationRule[] getValidationRules(@PathVariable(value="uuids") String uuids,HttpServletRequest request) throws Exception {
         String apiKey = request.getParameter("apiKey");
         ValidationRule[] aqs = apiKey != null ? Store.getValidationRules((apiKey+"|"+uuids.replaceAll(",",","+apiKey+"|")).split(",")) : Store.getValidationRules(uuids.split(","));
         //look up the authService userId so that the display value can be used
@@ -75,7 +80,7 @@ public class ValidationRuleController extends AbstractSecureController {
     }
 
     @RequestMapping(value = {"/assertions/query/{uuid}/apply", "/assertions/query/{uuid}/apply/","/validation/rule/{uuid}/apply", "/validation/rule/{uuid}/apply/"}, method = RequestMethod.GET)
-    public @ResponseBody String applyAssertion(@PathVariable(value="uuid") String uuid,HttpServletRequest request) throws Exception {
+    public @ResponseBody String applyValidationRule(@PathVariable(value="uuid") String uuid,HttpServletRequest request) throws Exception {
         String apiKey = request.getParameter("apiKey");
         if(apiKey != null){
             Store.applyValidationRule(apiKey+"|"+uuid);

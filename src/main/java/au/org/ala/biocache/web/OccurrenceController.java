@@ -21,7 +21,7 @@ import au.org.ala.biocache.model.FullRecord;
 import au.org.ala.biocache.dao.SearchDAO;
 import au.org.ala.biocache.dto.*;
 import au.org.ala.biocache.dto.DownloadDetailsDTO.DownloadType;
-import au.org.ala.biocache.dto.store.OccurrenceDTO;
+import au.org.ala.biocache.dto.OccurrenceDTO;
 import au.org.ala.biocache.service.AuthService;
 import au.org.ala.biocache.service.DownloadService;
 import au.org.ala.biocache.service.SpeciesLookupService;
