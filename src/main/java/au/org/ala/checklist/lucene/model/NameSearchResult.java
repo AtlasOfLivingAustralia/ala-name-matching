@@ -67,14 +67,7 @@ public class NameSearchResult {
         synonymType = SynonymType.getTypeFor(doc.get(NameIndexField.SYNONYM_TYPE.toString()));
         String syn = doc.get(NameIndexField.ACCEPTED.toString());
         if(syn != null){
-            //String[] synDetails = syn.split("\t",2);
-            acceptedLsid =syn;// StringUtils.trimToNull(synDetails[1]) == null?synDetails[0]:synDetails[1];
-//            try{
-//                acceptedId = Long.parseLong(synDetails[0]);
-//            }
-//            catch(NumberFormatException e){
-//                acceptedId = -1;
-//            }
+            acceptedLsid =syn;
         }
     }
 
@@ -120,18 +113,7 @@ public class NameSearchResult {
     public boolean isSynonym(){
         return acceptedLsid != null;// || acceptedId >0;
     }
-    /**
-     *
-     * @return
-     * @deprecated Use {@link #getAcceptedId()} instead;
-     */
-    //@Deprecated
-//    public long getSynonymId(){
-//        return getAcceptedId();
-//    }
-//    public long getAcceptedId(){
-//        return acceptedId;
-//    }
+
     /**
      * When the LSID for the synonym is null return the ID for the synonym
      * @return
