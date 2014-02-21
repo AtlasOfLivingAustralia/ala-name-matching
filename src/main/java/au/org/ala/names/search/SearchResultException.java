@@ -1,10 +1,10 @@
 
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.search;
 
-import au.org.ala.checklist.lucene.model.ErrorType;
+import au.org.ala.names.model.ErrorType;
 import java.util.List;
 
-import au.org.ala.checklist.lucene.model.NameSearchResult;
+import au.org.ala.names.model.NameSearchResult;
 
 /**
  *  @see HomonymException

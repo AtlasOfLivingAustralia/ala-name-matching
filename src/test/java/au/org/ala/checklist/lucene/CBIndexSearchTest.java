@@ -2,18 +2,19 @@
 
 package au.org.ala.checklist.lucene;
 
-import au.org.ala.checklist.lucene.model.MatchType;
+import au.org.ala.names.model.MatchType;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.List;
+
+import au.org.ala.names.model.LinnaeanRankClassification;
 import org.junit.Test;
 
 
-import au.org.ala.checklist.lucene.model.NameSearchResult;
-import au.org.ala.data.util.RankType;
-import au.org.ala.data.model.LinnaeanRankClassification;
+import au.org.ala.names.model.NameSearchResult;
+import au.org.ala.names.model.RankType;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
 
@@ -644,7 +645,7 @@ public class CBIndexSearchTest {
 //			System.out.println("testSpecies: " + nsr.toString() + "!!");
 //			NameSearchResult expectedResult = new NameSearchResult(String.valueOf(48899), "urn:lsid:biodiversity.org.au:afd.taxon:ca722c6d-6d53-4de6-b296-310621eeffa8", MatchType.EXACT);
 //			assertTrue(nameSearchResultEqual(expectedResult, nsr));
-//			//			assertEquals("Match: DIRECT id: 101300 lsid: urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a classification: au.org.ala.data.model.LinnaeanRankClassification@15e232b5[kingdom=Animalia,phylum=Arthropoda,klass=Arachnida,order=Araneae,family=Sparassidae,genus=Holconia,species=Holconia nigrigularis,specificEpithet=<null>,scientificName=Holconia nigrigularis] synonym: null", nsr.toString());
+//			//			assertEquals("Match: DIRECT id: 101300 lsid: urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a classification: au.org.ala.names.model.LinnaeanRankClassification@15e232b5[kingdom=Animalia,phylum=Arthropoda,klass=Arachnida,order=Araneae,family=Sparassidae,genus=Holconia,species=Holconia nigrigularis,specificEpithet=<null>,scientificName=Holconia nigrigularis] synonym: null", nsr.toString());
 //		} catch (SearchResultException e) {
 //			e.printStackTrace();
 //			fail("testSpecies failed");
@@ -949,7 +950,7 @@ public class CBIndexSearchTest {
 //			System.out.println("Bullia fuzzy: " + nsr);
 //			NameSearchResult expectedResult = new NameSearchResult(String.valueOf(103077301), "urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010", MatchType.SEARCHABLE);
 //			assertTrue(nameSearchResultEqual(expectedResult, nsr));
-//			//			assertEquals("Match: SEARCHABLE id: 103077301 lsid: urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010 classification: au.org.ala.data.model.LinnaeanRankClassification@709446e4[kingdom=Animalia,phylum=Arthropoda,klass=Insecta,order=Lepidoptera,family=Noctuidae,genus=Bulia,species=<null>,specificEpithet=<null>,scientificName=Bulia] synonym: null", output);
+//			//			assertEquals("Match: SEARCHABLE id: 103077301 lsid: urn:lsid:catalogueoflife.org:taxon:d8ccac42-29c1-102b-9a4a-00304854f820:ac2010 classification: au.org.ala.names.model.LinnaeanRankClassification@709446e4[kingdom=Animalia,phylum=Arthropoda,klass=Insecta,order=Lepidoptera,family=Noctuidae,genus=Bulia,species=<null>,specificEpithet=<null>,scientificName=Bulia] synonym: null", output);
 //			//Anochetus
 //			LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Arthropoda", "Insecta", "Hymenoptera", "Formicidae","Anochetus", null);
 //			output = searcher.searchForLSID("Anochetus",cl, null);

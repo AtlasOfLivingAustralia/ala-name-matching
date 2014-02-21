@@ -1,4 +1,4 @@
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.model;
 
 /**
  * An Enum for all the fields that are indexed for the name matching

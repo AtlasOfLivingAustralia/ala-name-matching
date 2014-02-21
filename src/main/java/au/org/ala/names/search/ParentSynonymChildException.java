@@ -1,7 +1,7 @@
 
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.search;
 
-import au.org.ala.checklist.lucene.model.NameSearchResult;
+import au.org.ala.names.model.NameSearchResult;
 
 /**
  *
@@ -17,7 +17,7 @@ public class ParentSynonymChildException extends SearchResultException{
         super("The parent name is a synonym to the child name");
         this.parentResult = parentResult;
         this.childResult = childResult;
-        errorType=au.org.ala.checklist.lucene.model.ErrorType.PARENT_CHILD_SYNONYM;
+        errorType=au.org.ala.names.model.ErrorType.PARENT_CHILD_SYNONYM;
 
     }
 

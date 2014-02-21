@@ -1,11 +1,10 @@
 package au.org.ala.checklist.lucene;
 
-import au.org.ala.checklist.lucene.model.MetricsResultDTO;
-import au.org.ala.data.util.RankType;
-import au.org.ala.checklist.lucene.model.MatchType;
-import au.org.ala.checklist.lucene.model.ErrorType;
-import au.org.ala.checklist.lucene.model.NameSearchResult;
-import au.org.ala.data.model.LinnaeanRankClassification;
+import au.org.ala.names.model.MetricsResultDTO;
+import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.MatchType;
+import au.org.ala.names.model.ErrorType;
+import au.org.ala.names.model.LinnaeanRankClassification;
 import org.gbif.ecat.voc.NameType;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;

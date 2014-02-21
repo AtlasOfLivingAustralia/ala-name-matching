@@ -1,5 +1,5 @@
 
-package au.org.ala.data.model;
+package au.org.ala.names.model;
 
 import java.util.regex.Pattern;
 import org.gbif.ecat.model.ParsedName;

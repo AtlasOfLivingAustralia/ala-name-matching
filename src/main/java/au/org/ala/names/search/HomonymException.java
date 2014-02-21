@@ -1,10 +1,10 @@
 
 
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.search;
 
 import java.util.List;
 
-import au.org.ala.checklist.lucene.model.NameSearchResult;
+import au.org.ala.names.model.NameSearchResult;
 
 /**
  *  Exception that is thrown when the result is an unresolved
@@ -18,7 +18,7 @@ public class HomonymException extends SearchResultException {
     }
     public HomonymException(String message){
         super("Warning an unresolved homonym has been detected. "+message);
-        errorType = au.org.ala.checklist.lucene.model.ErrorType.HOMONYM;
+        errorType = au.org.ala.names.model.ErrorType.HOMONYM;
     }
     public HomonymException(){
         this("Warning an unresolved homonym has been detected. ");

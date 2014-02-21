@@ -1,10 +1,12 @@
 
-package au.org.ala.data.util;
+package au.org.ala.parser;
 
-import au.org.ala.data.model.ALAParsedName;
+import au.org.ala.names.model.ALAParsedName;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import au.org.ala.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.gbif.ecat.model.ParsedName;
@@ -150,11 +152,11 @@ public class PhraseNameParser extends NameParser{
          System.out.println(parser.parse(name1));
          parser.parse("Dendronephthya michaelseni var laevis");
          System.out.println("(M.D. Barrett 685)".replaceAll("[\\.| ]", ""));
-          org.apache.lucene.analysis.Analyzer analyzer = new au.org.ala.checklist.lucene.analyzer.LowerCaseKeywordAnalyzer();
+          org.apache.lucene.analysis.Analyzer analyzer = new LowerCaseKeywordAnalyzer();
           String virus = "Cucumovirus cucumber mosaic virus";
           org.apache.lucene.analysis.TokenStream ts = analyzer.tokenStream("name", new java.io.StringReader("Cucumovirus cucumber mosaic virus"));
           //System.out.println(new String(ts.next().termBuffer()));
-          System.out.println(au.org.ala.checklist.lucene.CBIndexSearch.virusStopPattern.matcher(virus).replaceAll(" "));
+          System.out.println(au.org.ala.names.search.CBIndexSearch.virusStopPattern.matcher(virus).replaceAll(" "));
           ParsedName pn = parser.parse("Acacia sp. Manmanning (BR Maslin 7711) [aff. multispicata]");
           System.out.println(pn);
         }

@@ -1,4 +1,4 @@
-package au.org.ala.checklist.lucene.model;
+package au.org.ala.names.model;
 
 import java.util.EnumSet;
 import java.util.HashMap;

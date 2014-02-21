@@ -1,7 +1,7 @@
 
-package au.org.ala.checklist.lucene.model;
+package au.org.ala.names.model;
 
-import au.org.ala.checklist.lucene.SearchResultException;
+import au.org.ala.names.search.SearchResultException;
 import java.util.Set;
 import org.gbif.ecat.voc.NameType;
 

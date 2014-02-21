@@ -1,9 +1,9 @@
 package au.org.ala.checklist.lucene;
 
 import au.com.bytecode.opencsv.CSVReader;
-import au.org.ala.checklist.lucene.model.NameSearchResult;
-import au.org.ala.data.model.LinnaeanRankClassification;
-import au.org.ala.data.util.RankType;
+import au.org.ala.names.model.NameSearchResult;
+import au.org.ala.names.model.LinnaeanRankClassification;
+import au.org.ala.names.model.RankType;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Ignore;
 import org.junit.Test;

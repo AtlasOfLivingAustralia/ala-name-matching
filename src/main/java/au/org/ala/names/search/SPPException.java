@@ -1,5 +1,5 @@
 
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.search;
 
 /**
  * The exception to be thrown when a Genus spp. scientific name is supplied
@@ -8,6 +8,6 @@ package au.org.ala.checklist.lucene;
 public class SPPException extends SearchResultException {
 public SPPException(){
     super("Unable to perform search. Can not match to a subset of species within a genus.");
-    errorType= au.org.ala.checklist.lucene.model.ErrorType.SPECIES_PLURAL;
+    errorType= au.org.ala.names.model.ErrorType.SPECIES_PLURAL;
 }
 }

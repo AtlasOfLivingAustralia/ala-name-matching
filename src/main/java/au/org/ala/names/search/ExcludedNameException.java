@@ -1,8 +1,8 @@
 
 
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.search;
 
-import au.org.ala.checklist.lucene.model.NameSearchResult;
+import au.org.ala.names.model.NameSearchResult;
 
 /**
  *  An exception that is thrown when the match is to a name that has been excluded.
@@ -20,14 +20,14 @@ public class ExcludedNameException extends SearchResultException{
     public ExcludedNameException(String message, NameSearchResult excludedName){
         super(message);
         this.excludedName= excludedName;
-        errorType =au.org.ala.checklist.lucene.model.ErrorType.EXCLUDED;
+        errorType =au.org.ala.names.model.ErrorType.EXCLUDED;
         
     }
 
     public ExcludedNameException(String message, NameSearchResult nonExcludedName, NameSearchResult excludedName){
         this(message, excludedName);
         this.nonExcludedName = nonExcludedName;
-        errorType=au.org.ala.checklist.lucene.model.ErrorType.ASSOCIATED_EXCLUDED;
+        errorType=au.org.ala.names.model.ErrorType.ASSOCIATED_EXCLUDED;
     }
 
     public NameSearchResult getExcludedName() {

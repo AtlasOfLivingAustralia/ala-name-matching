@@ -1,4 +1,4 @@
-package au.org.ala.data.util;
+package au.org.ala.names.model;
 
 import java.util.EnumSet;
 import java.util.HashMap;

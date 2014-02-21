@@ -1,8 +1,7 @@
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.search;
 
-import au.org.ala.checklist.lucene.model.ErrorType;
-import au.org.ala.checklist.lucene.model.MatchType;
-import au.org.ala.checklist.lucene.model.MetricsResultDTO;
+import au.org.ala.names.model.*;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -11,6 +10,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import au.org.ala.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -19,29 +19,22 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 //import org.apache.lucene.index.IndexWriter.MaxFieldLength;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 //import org.apache.lucene.search.Searcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.store.FSDirectory;
 import org.gbif.ecat.model.ParsedName;
-import org.gbif.ecat.parser.NameParser;
 import org.gbif.ecat.voc.NameType;
 import au.org.ala.data.util.TaxonNameSoundEx;
 
-import au.org.ala.checklist.lucene.model.NameSearchResult;
-import au.org.ala.data.model.ALAParsedName;
-import au.org.ala.data.model.LinnaeanRankClassification;
-import au.org.ala.data.util.PhraseNameParser;
-import au.org.ala.data.util.RankType;
+import au.org.ala.parser.PhraseNameParser;
+
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.lucene.index.DirectoryReader;
@@ -110,7 +103,7 @@ public class CBIndexSearch {
             queryParser = new ThreadLocal<QueryParser>(){
                @Override
                protected QueryParser initialValue() {
-                   QueryParser qp =new QueryParser(Version.LUCENE_34, "genus", new au.org.ala.checklist.lucene.analyzer.LowerCaseKeywordAnalyzer());
+                   QueryParser qp =new QueryParser(Version.LUCENE_34, "genus", new LowerCaseKeywordAnalyzer());
                    qp.setFuzzyMinSim(0.8f); //fuzzy match similarity setting. used to match the authorship.
                    return qp;
                }
@@ -175,7 +168,7 @@ public class CBIndexSearch {
 //            cbReader.deleteDocument(id);
 //
 //            cbReader.close();
-//             IndexWriter iw = new IndexWriter(FSDirectory.open(new File("/data/lucene/namematching/cb")), new au.org.ala.checklist.lucene.analyzer.LowerCaseKeywordAnalyzer(), false, MaxFieldLength.UNLIMITED);
+//             IndexWriter iw = new IndexWriter(FSDirectory.open(new File("/data/lucene/namematching/cb")), new au.org.ala.lucene.analyzer.LowerCaseKeywordAnalyzer(), false, MaxFieldLength.UNLIMITED);
 //            System.out.println("Optimizing...");
 //             iw.optimize();
 //            iw.close();
@@ -288,7 +281,7 @@ public class CBIndexSearch {
     /**
      * Searches for an LSID of the supplied name and rank without a fuzzy match...
      *
-     * @see #searchForLSID(java.lang.String, au.org.ala.data.util.RankType, boolean)
+     * @see #searchForLSID(java.lang.String, au.org.ala.names.model.RankType, boolean)
      *
      * @param name
      * @param rank
@@ -308,7 +301,7 @@ public class CBIndexSearch {
      * @param kingdom
      * @param genus
      * @param rank
-     * @deprecated Use {@link #searchForLSID(java.lang.String, au.org.ala.data.model.LinnaeanRankClassification, au.org.ala.data.util.RankType, boolean)} instead.
+     * @deprecated Use {@link #searchForLSID(java.lang.String, au.org.ala.names.model.LinnaeanRankClassification, au.org.ala.names.model.RankType, boolean)} instead.
      * It is more extensible to supply a classification object then a list of higher classification
 
      * @return
@@ -843,7 +836,7 @@ public class CBIndexSearch {
      * @param kingdom
      * @param genus
      * @param rank
-     * @deprecated Use {@link #searchForRecord(java.lang.String, au.org.ala.data.model.LinnaeanRankClassification, au.org.ala.data.util.RankType, boolean)} instead.
+     * @deprecated Use {@link #searchForRecord(java.lang.String, au.org.ala.names.model.LinnaeanRankClassification, au.org.ala.names.model.RankType, boolean)} instead.
      * It is more extensible to supply a classification object then a list of higher classification
      * @return
      * @throws SearchResultException
@@ -1166,86 +1159,6 @@ public class CBIndexSearch {
         }
         return false;
     }
-    /**
-     * 
-     * @param name
-     * @param rank
-     * @param cl
-     * @param max
-     * @param fuzzy
-     * @param clean whether or not to clean the name and retest
-     * @return
-     * @throws SearchResultException
-     */
-    @Deprecated
-    private List<NameSearchResult> searchForRecordsOLD(String name, RankType rank, LinnaeanRankClassification cl, int max, boolean fuzzy, boolean clean) throws SearchResultException{
-        //The name is not allowed to be null
-        if(name == null)
-            throw new SearchResultException("Unable to perform search. Null value supplied for the name.");
-        //According to http://en.wikipedia.org/wiki/Species spp. is used as follows:
-        //The authors use "spp." as a short way of saying that something applies to many species within a genus,
-        //but do not wish to say that it applies to all species within that genus.
-        //Thus we don't want to attempt to match on spp.
-        if(name.contains("spp."))
-            throw new SPPException();//SearchResultException("Unable to perform search. Can not match to a subset of species within a genus.");
-        try{
-
-            //1. Direct Name hit
-            List<NameSearchResult> hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), name, rank, cl, max, MatchType.DIRECT,  true, queryParser.get());
-			if (hits == null) // situation where searcher has not been initialised
-				return null;
-			if (hits.size() > 0)
-				return hits;
-
-			//2. Hit on the alternative names
-            //check to see if the name needs a different rank associated with it
-            rank = getUpdatedRank(name, rank);
-
-
-            hits = performSearch(CBCreateLuceneIndex.IndexField.NAMES.toString(), name, rank, cl, max, MatchType.ALTERNATE,  true, queryParser.get());
-            if(hits.size()>0)
-                return hits;
-
-
-            //3. searchable canonical name if fuzzy match is enabled
-            if(fuzzy){
-                String searchable = tnse.soundEx(name);
-                //searchable canonical should not check for homonyms due to the more erratic nature of the result
-                hits = performSearch(CBCreateLuceneIndex.IndexField.SEARCHABLE_NAME.toString(), searchable, rank, cl, max, MatchType.SEARCHABLE,  false, idParser.get());
-                if(hits.size()>0)
-                    return hits;
-            }
-            //4. if clean = true then clean the name and then search for the new version
-            //DON'T search for the clean name if the original name contains a " cf " or " aff " (these are informal names)
-            if (clean) {
-                try{
-                ParsedName<?> cn = parser.parse(name);
-                if (cn != null && cn.getType() != NameType.informal) {
-                    String cleanName = cn.canonicalName();
-                    if (StringUtils.trimToNull(cleanName) != null && !name.equals(cleanName)) {
-                        //we only want to clean the name once.  This should prevent incorrect genus match for Astroloma sp. Cataby (EA Griffin 1022)
-                        List<NameSearchResult> results = searchForRecords(
-                                cleanName, rank, cl, max, fuzzy, false,false);
-                        if (results != null) {
-                            for (NameSearchResult result : results) {
-                                result.setCleanName(cleanName);
-                            }
-                        }
-                        return results;
-                    }
-                }
-                }
-                catch(org.gbif.ecat.parser.UnparsableException e){
-
-                }
-            }
-        }
-        catch(IOException e){
-            log.warn(e.getMessage());
-            return null;
-        }
-        return null;
-    }
 
     /**
      * Update the rank for the name based on it containing rank strings.
@@ -1376,7 +1289,7 @@ public class CBIndexSearch {
                         NameSearchResult notExcludedResult = null;
                         NameSearchResult excludedResult = null;
                         for (NameSearchResult nsr : results) {
-                            if (nsr.getSynonymType() == au.org.ala.checklist.lucene.model.SynonymType.EXCLUDES) {
+                            if (nsr.getSynonymType() == au.org.ala.names.model.SynonymType.EXCLUDES) {
                                 exclCount++;
                                 excludedResult = nsr;
                             } else if (notExcludedResult == null) {
@@ -1479,12 +1392,12 @@ public class CBIndexSearch {
         if(results.size() >=1){
             NameSearchResult first = results.get(0);
             NameSearchResult second = (results.size()>1) ? results.get(1):null;
-            if(first.getSynonymType() ==  au.org.ala.checklist.lucene.model.SynonymType.MISAPPLIED){
+            if(first.getSynonymType() ==  au.org.ala.names.model.SynonymType.MISAPPLIED){
                 //the first result is misapplied
                 NameSearchResult accepted = searchForRecordByLsid(first.getAcceptedLsid());
                 throw new MisappliedException(accepted);
             }
-            else if(!first.isSynonym() && second != null && second.getSynonymType() == au.org.ala.checklist.lucene.model.SynonymType.MISAPPLIED){
+            else if(!first.isSynonym() && second != null && second.getSynonymType() == au.org.ala.names.model.SynonymType.MISAPPLIED){
                 NameSearchResult accepted = searchForRecordByLsid(second.getAcceptedLsid());
                 throw new MisappliedException(first, accepted);
             }

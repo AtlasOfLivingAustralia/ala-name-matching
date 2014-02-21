@@ -12,10 +12,9 @@
  * implied. See the License for the specific language governing
  * rights and limitations under the License.
  ***************************************************************************/
-package au.org.ala.data.model;
+package au.org.ala.names.model;
 
 
-import au.org.ala.data.util.RankType;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -427,7 +426,7 @@ public class LinnaeanRankClassification {
                 sb.append(prefix).append(RankType.SPECIES.getRank()).append(":\"").append(species).append("\"");
             //authorship is always optional due to inconsistencies in the name format etc...
             if(authorship != null)
-                sb.append(" ").append(au.org.ala.checklist.lucene.NameIndexField.AUTHOR.toString()).append(":\"").append(authorship).append("\"~");
+                sb.append(" ").append(NameIndexField.AUTHOR.toString()).append(":\"").append(authorship).append("\"~");
             return sb.toString();
         }
 

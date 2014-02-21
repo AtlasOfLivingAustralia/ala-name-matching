@@ -1,7 +1,7 @@
 
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.search;
 
-import au.org.ala.checklist.lucene.model.NameSearchResult;
+import au.org.ala.names.model.NameSearchResult;
 
 /**
  *
@@ -22,7 +22,7 @@ public class MisappliedException extends SearchResultException{
     public MisappliedException(NameSearchResult match){
         super("The scientific name has been misapplied in the past");
         matchedResult = match;
-        errorType=au.org.ala.checklist.lucene.model.ErrorType.MISAPPLIED;
+        errorType=au.org.ala.names.model.ErrorType.MISAPPLIED;
     }
     /**
      * Constructor to use if the first result is accepted and second result is a misapplied synonym
@@ -32,7 +32,7 @@ public class MisappliedException extends SearchResultException{
     public MisappliedException(NameSearchResult match, NameSearchResult misapplied){
         this(match);
         misappliedResult = misapplied;
-        errorType=au.org.ala.checklist.lucene.model.ErrorType.MATCH_MISAPPLIED;
+        errorType=au.org.ala.names.model.ErrorType.MATCH_MISAPPLIED;
     }
 
     public NameSearchResult getMatchedResult() {

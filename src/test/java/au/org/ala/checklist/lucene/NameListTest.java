@@ -1,6 +1,6 @@
 package au.org.ala.checklist.lucene;
-import au.org.ala.checklist.lucene.model.NameSearchResult;
-import au.org.ala.data.util.RankType;
+import au.org.ala.names.model.NameSearchResult;
+import au.org.ala.names.model.RankType;
 import org.apache.commons.lang.StringUtils;
 import java.io.FileNotFoundException;
 import org.apache.commons.io.LineIterator;

@@ -1,8 +1,10 @@
 package au.org.ala.data.util;
 
+import au.org.ala.parser.PhraseNameParser;
+import au.org.ala.names.model.ALAParsedName;
 import org.gbif.ecat.voc.NameType;
 import java.io.FileReader;
-import au.org.ala.data.model.ALAParsedName;
+
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.UnparsableException;
 import org.junit.Test;

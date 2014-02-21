@@ -1,11 +1,9 @@
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.search;
 
 import au.com.bytecode.opencsv.CSVReader;
-import au.org.ala.checklist.lucene.analyzer.LowerCaseKeywordAnalyzer;
-import au.org.ala.checklist.lucene.model.SynonymType;
-import au.org.ala.data.model.ALAParsedName;
-import au.org.ala.data.model.LinnaeanRankClassification;
-import au.org.ala.data.util.PhraseNameParser;
+import au.org.ala.lucene.analyzer.LowerCaseKeywordAnalyzer;
+import au.org.ala.names.model.*;
+import au.org.ala.parser.PhraseNameParser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -41,7 +39,6 @@ import au.org.ala.data.util.TaxonNameSoundEx;
 //import org.springframework.context.support.ClassPathXmlApplicationContext;
 //import org.springframework.jdbc.core.JdbcTemplate;
 
-import au.org.ala.data.util.RankType;
 import java.util.Iterator;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
@@ -144,10 +141,7 @@ public class CBCreateLuceneIndex {
     private TaxonNameSoundEx tnse;
 
     public void init() throws Exception {
-        //String[] locations = {"classpath*:au/org/ala/**/applicationContext-cb*.xml"};
-        //context = new ClassPathXmlApplicationContext(locations);
-        //dataSource = (DataSource) context.getBean("cbDataSource");
-        //dTemplate = new JdbcTemplate(dataSource);
+
         tnse = new TaxonNameSoundEx();
         // init the known homonyms
         LineIterator lines = new LineIterator(new BufferedReader(
@@ -866,7 +860,7 @@ public class CBCreateLuceneIndex {
         catch(org.gbif.ecat.parser.UnparsableException e){
             //check to see if the name is a virus in which case an extra name is added without the virus key word
             if(e.type == NameType.virus)
-                doc.add(new Field(NameIndexField.NAME.toString(), au.org.ala.checklist.lucene.CBIndexSearch.virusStopPattern.matcher(name).replaceAll(" "), Store.YES, Index.ANALYZED));
+                doc.add(new Field(NameIndexField.NAME.toString(), au.org.ala.names.search.CBIndexSearch.virusStopPattern.matcher(name).replaceAll(" "), Store.YES, Index.ANALYZED));
 
         }
         catch(Exception e){
@@ -920,12 +914,10 @@ public class CBCreateLuceneIndex {
     }
 
 
- 
-
     /**
      * Generates the Lucene index required for the name matching API.
      * eg
-     * au.org.ala.checklist.lucene.CBCreateLuceneIndex "/data/exports" "/data/lucene/namematching"
+     * au.org.ala.names.search.CBCreateLuceneIndex "/data/exports" "/data/lucene/namematching"
      *  Extra optional args that should appear after the directory names
      * -sn: Only create the indexes necessary for the scientific name lookups
      * -cn: Only create the indexes necessary for the common name lookups
@@ -935,7 +927,6 @@ public class CBCreateLuceneIndex {
     public static void main(String[] args) throws Exception {
         CBCreateLuceneIndex indexer = new CBCreateLuceneIndex();
         indexer.init();
-        //indexer.createIrmngIndex("/data/bie-staging/ala-names","/data/lucene/namematching13");
         for(String arg: args)
             System.out.println(arg);
         if (args.length >= 2) {
@@ -953,10 +944,7 @@ public class CBCreateLuceneIndex {
                 indexer.createIndex(args[0], args[1], sn, cn);
             }
         } else {
-            System.out.println("au.org.ala.checklist.lucene.CBCreateLuceneIndex <directory with export files> <directory in which to create indexes> [<accepted name file>] [<synonym name file>][-cn OR -sn]");
-            //indexer.createIndex("/data/bie-staging/ala-names", "/data/lucene/namematching_v13", true, true);
-            //System.out.println("au.org.ala.checklist.lucene.CBCreateLuceneIndex <directory with export files> <directory in which to create indexes>");
-           //indexer.createIndex("/data/exports/cb", "/data/lucene/namematching", false, true);
+            System.out.println("au.org.ala.names.search.CBCreateLuceneIndex <directory with export files> <directory in which to create indexes> [<accepted name file>] [<synonym name file>][-cn OR -sn]");
 
         }
     }

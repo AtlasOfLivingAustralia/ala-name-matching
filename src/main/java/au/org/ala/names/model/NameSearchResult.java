@@ -1,12 +1,8 @@
 
-package au.org.ala.checklist.lucene.model;
+package au.org.ala.names.model;
 
 import org.apache.lucene.document.Document;
 
-import au.org.ala.checklist.lucene.CBCreateLuceneIndex.IndexField;
-import au.org.ala.checklist.lucene.NameIndexField;
-import au.org.ala.data.model.LinnaeanRankClassification;
-import au.org.ala.data.util.RankType;
 import org.apache.commons.lang.StringUtils;
 
 /**
