@@ -10,6 +10,7 @@ import org.gbif.ecat.voc.NameType;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 /**
@@ -32,6 +33,19 @@ public class BiocacheMatchTest {
             e.printStackTrace();
         }
 
+    }
+
+   // @Test
+    public void testTibicentibicen(){
+        try{
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName("Tibicen tibicen");
+            //don't want Tibicen tibicen to match to Tibicen (?) blah
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertNull("Result should be null: " + metrics.getResult(),metrics.getResult());
+        } catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     @Test
