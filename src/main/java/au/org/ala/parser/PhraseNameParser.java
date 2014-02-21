@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import au.org.ala.lucene.analyzer.LowerCaseKeywordAnalyzer;
+import au.org.ala.names.search.ALANameSearcher;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.gbif.ecat.model.ParsedName;
@@ -156,7 +157,7 @@ public class PhraseNameParser extends NameParser{
           String virus = "Cucumovirus cucumber mosaic virus";
           org.apache.lucene.analysis.TokenStream ts = analyzer.tokenStream("name", new java.io.StringReader("Cucumovirus cucumber mosaic virus"));
           //System.out.println(new String(ts.next().termBuffer()));
-          System.out.println(au.org.ala.names.search.CBIndexSearch.virusStopPattern.matcher(virus).replaceAll(" "));
+          System.out.println(ALANameSearcher.virusStopPattern.matcher(virus).replaceAll(" "));
           ParsedName pn = parser.parse("Acacia sp. Manmanning (BR Maslin 7711) [aff. multispicata]");
           System.out.println(pn);
         }

@@ -1,6 +1,6 @@
 
 
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.search;
 
 import au.org.ala.names.model.MatchType;
 import static org.junit.Assert.assertEquals;
@@ -22,15 +22,15 @@ import org.gbif.ecat.parser.NameParser;
  *
  * @author Natasha, Tommy
  */
-public class CBIndexSearchTest {
-	private static CBIndexSearch searcher;
+public class ALANameSearcherTest {
+	private static ALANameSearcher searcher;
 
 	@org.junit.BeforeClass
 	public static void init() {
 		try {
-			searcher = new CBIndexSearch("/data/lucene/namematching_v13");
-                    //searcher = new CBIndexSearch("/data/lucene/merge_namematching");
-                    //searcher = new CBIndexSearch("/data/lucene/col_namematching");
+			searcher = new ALANameSearcher("/data/lucene/namematching_v13");
+                    //searcher = new ALANameSearcher("/data/lucene/merge_namematching");
+                    //searcher = new ALANameSearcher("/data/lucene/col_namematching");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

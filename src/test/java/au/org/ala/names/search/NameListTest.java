@@ -1,8 +1,6 @@
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.search;
 import au.org.ala.names.model.NameSearchResult;
-import au.org.ala.names.model.RankType;
 import org.apache.commons.lang.StringUtils;
-import java.io.FileNotFoundException;
 import org.apache.commons.io.LineIterator;
 import java.io.BufferedReader;
 import org.junit.Test;
@@ -16,15 +14,15 @@ import static org.junit.Assert.fail;
  */
 public class NameListTest {
 
-    private static CBIndexSearch searcher,searcherOld;
+    private static ALANameSearcher searcher,searcherOld;
 
     @org.junit.BeforeClass
     public static void init() {
         try {
             //namematchingv1_1
             //namematching_v13
-            searcher = new CBIndexSearch("/data/lucene/namematching_v13");
-            searcherOld = new CBIndexSearch("/data/lucene/namematchingv1_1");
+            searcher = new ALANameSearcher("/data/lucene/namematching_v13");
+            searcherOld = new ALANameSearcher("/data/lucene/namematchingv1_1");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -67,7 +65,7 @@ public class NameListTest {
 
     //@Test
     public void testSpatialDistributionNames() {
-        assertEquals(0,testFile("spatial-distribution-names.txt"));
+        assertEquals(0, testFile("spatial-distribution-names.txt"));
     }
     private int testFile(String filename){
         boolean retValue = true;

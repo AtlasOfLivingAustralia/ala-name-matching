@@ -22,26 +22,21 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
+import org.apache.lucene.document.*;
+
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-//import org.apache.lucene.index.IndexWriter.MaxFieldLength;
+
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
 import au.org.ala.data.util.TaxonNameSoundEx;
-//import org.springframework.context.ApplicationContext;
-//import org.springframework.context.support.ClassPathXmlApplicationContext;
-//import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.Iterator;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
+
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.util.Version;
@@ -54,7 +49,7 @@ import org.gbif.ecat.voc.NameType;
  *
  * @author Natasha
  */
-public class CBCreateLuceneIndex {
+public class ALANameIndexer {
 
     protected String cbExportFile = "cb_name_usages.txt";
     protected String lexFile = "cb_lex_names.txt";
@@ -67,7 +62,7 @@ public class CBCreateLuceneIndex {
     protected String afdFile = "/data/bie-staging/anbg/AFD-common-names.csv";
     protected String apniFile = "/data/bie-staging/anbg/APNI-common-names.csv";
     protected String taxonConeptName = "/data/bie-staging/anbg/taxonConcepts.txt";
-    protected Log log = LogFactory.getLog(CBCreateLuceneIndex.class);
+    protected Log log = LogFactory.getLog(ALANameIndexer.class);
    // protected ApplicationContext context;
     protected DataSource dataSource;
    // protected JdbcTemplate dTemplate;
@@ -228,7 +223,8 @@ public class CBCreateLuceneIndex {
             doc.add(new StringField("id", id, Store.YES));//new Field("id", id, Store.YES, Index.NOT_ANALYZED));
             if(StringUtils.isEmpty(id))
                 guid = id;
-            doc.add(new Field("guid", guid, Store.YES, Index.NO));
+            //doc.add(new Field("guid", guid, Store.YES, Index.NO));
+            doc.add(new StoredField("guid",guid));
             iw.addDocument(doc);
         }
         System.out.println("Finished writing the tmp guid index...");
@@ -343,8 +339,10 @@ public class CBCreateLuceneIndex {
 
             
             //add the excluded information if applicable
-            if("T".equals(values[POS_EXCLUDED]) || "Y".equals(values[POS_EXCLUDED]))
-                doc.add(new Field(NameIndexField.SYNONYM_TYPE.toString(), SynonymType.EXCLUDES.getId().toString(), Store.YES, Index.ANALYZED));
+            if("T".equals(values[POS_EXCLUDED]) || "Y".equals(values[POS_EXCLUDED])) {
+                //doc.add( new Field(NameIndexField.SYNONYM_TYPE.toString(), SynonymType.EXCLUDES.getId().toString(), Store.YES, Index.ANALYZED));
+                doc.add(new TextField(NameIndexField.SYNONYM_TYPE.toString(),SynonymType.EXCLUDES.getId().toString(), Store.YES));
+            }
             if(doc != null){
                 iw.addDocument(doc);
                 records++;
@@ -389,42 +387,51 @@ public class CBCreateLuceneIndex {
               }
               String kingdom = dwcr.getKingdom();
               if(StringUtils.isNotEmpty(kingdom)){
-                  doc.add(new Field(RankType.KINGDOM.getRank(), kingdom, Store.YES, Index.ANALYZED));
+                  //doc.add(new Field(RankType.KINGDOM.getRank(), kingdom, Store.YES, Index.ANALYZED));
+                  doc.add(new TextField(RankType.KINGDOM.getRank(), kingdom, Store.YES));
               }
               String phylum = dwcr.getPhylum();
               if(StringUtils.isNotEmpty(phylum)){
-                  doc.add(new Field(RankType.PHYLUM.getRank(), phylum, Store.YES, Index.ANALYZED));
+                  //doc.add(new Field(RankType.PHYLUM.getRank(), phylum, Store.YES, Index.ANALYZED));
+                  doc.add(new TextField(RankType.PHYLUM.getRank(), phylum, Store.YES));
               }
               String classs = dwcr.getClasss();
               if(StringUtils.isNotEmpty(classs)){
-                  doc.add(new Field(RankType.CLASS.getRank(), classs, Store.YES, Index.ANALYZED));
+                  //doc.add(new Field(RankType.CLASS.getRank(), classs, Store.YES, Index.ANALYZED));
+                  doc.add(new TextField(RankType.CLASS.getRank(), classs, Store.YES));
               }
               String order = dwcr.getOrder();
               if(StringUtils.isNotEmpty(order)){
-                  doc.add(new Field(RankType.ORDER.getRank(), order, Store.YES, Index.ANALYZED));
+                  //doc.add(new Field(RankType.ORDER.getRank(), order, Store.YES, Index.ANALYZED));
+                  doc.add(new TextField(RankType.ORDER.getRank(), order, Store.YES));
               }
               String family = dwcr.getFamily();
               if(StringUtils.isNotEmpty(family)){
-                  doc.add(new Field(RankType.FAMILY.getRank(), family, Store.YES, Index.ANALYZED));
+                  //doc.add(new Field(RankType.FAMILY.getRank(), family, Store.YES, Index.ANALYZED));
+                  doc.add(new TextField(RankType.FAMILY.getRank(), family, Store.YES));
               }
               String genus = dwcr.getGenus();
               String calculatedRank="genus";
               if(StringUtils.isNotEmpty(genus)){
-                  doc.add(new Field(RankType.GENUS.getRank(), genus, Store.YES, Index.ANALYZED));
+                  //doc.add(new Field(RankType.GENUS.getRank(), genus, Store.YES, Index.ANALYZED));
+                  doc.add(new TextField(RankType.GENUS.getRank(), genus, Store.YES));
                   String specificEpithet = dwcr.getSpecificEpithet();
                   if(StringUtils.isNotEmpty(specificEpithet)){
                       calculatedRank="species";
-                      doc.add(new Field(RankType.SPECIES.getRank(), genus +" " + specificEpithet, Store.YES, Index.ANALYZED));
+                      //doc.add(new Field(RankType.SPECIES.getRank(), genus +" " + specificEpithet, Store.YES, Index.ANALYZED));
+                      doc.add(new TextField(RankType.SPECIES.getRank(), genus +" " + specificEpithet, Store.YES));
                   }
               }
               String rank = dwcr.getTaxonRank() != null?dwcr.getTaxonRank():calculatedRank;
-              doc.add(new Field(IndexField.RANK.toString(), rank, Store.YES, Index.ANALYZED));
+              //doc.add(new Field(IndexField.RANK.toString(), rank, Store.YES, Index.ANALYZED));
+              doc.add(new TextField(IndexField.RANK.toString(), rank, Store.YES));
               //now add the author - we don't do anything about this on homonym resolution yet
                //Add the author information
               String author = dwcr.getScientificNameAuthorship();
               if(StringUtils.isNotEmpty(author)){
                   //TODO think about whether we need to treat the author string with the taxamatch
-                  doc.add(new Field(NameIndexField.AUTHOR.toString(), author, Store.YES, Index.ANALYZED));
+                  //doc.add(new Field(NameIndexField.AUTHOR.toString(), author, Store.YES, Index.ANALYZED));
+                  doc.add(new TextField(NameIndexField.AUTHOR.toString(), author, Store.YES));
               }
               //now add it to the index
               iw.addDocument(doc);
@@ -449,23 +456,32 @@ public class CBCreateLuceneIndex {
             while ((values=reader.readNext()) != null) {
                 Document doc = new Document();
                 if (values != null && values.length >= 7) {
-                    doc.add(new Field(RankType.KINGDOM.getRank(), values[0], Store.YES, Index.ANALYZED));
-                    doc.add(new Field(RankType.PHYLUM.getRank(), values[1], Store.YES, Index.ANALYZED));
-                    doc.add(new Field(RankType.CLASS.getRank(), values[2], Store.YES, Index.ANALYZED));
-                    doc.add(new Field(RankType.ORDER.getRank(), values[3], Store.YES, Index.ANALYZED));
-                    doc.add(new Field(RankType.FAMILY.getRank(), values[4], Store.YES, Index.ANALYZED));
-                    doc.add(new Field(RankType.GENUS.getRank(), values[5], Store.YES, Index.ANALYZED));
+                    //doc.add(new Field(RankType.KINGDOM.getRank(), values[0], Store.YES, Index.ANALYZED));
+                    doc.add(new TextField(RankType.KINGDOM.getRank(), values[0], Store.YES));
+                    //doc.add(new Field(RankType.PHYLUM.getRank(), values[1], Store.YES, Index.ANALYZED));
+                    doc.add(new TextField(RankType.PHYLUM.getRank(), values[1], Store.YES));
+                    //doc.add(new Field(RankType.CLASS.getRank(), values[2], Store.YES, Index.ANALYZED));
+                    doc.add(new TextField(RankType.CLASS.getRank(), values[2], Store.YES));
+                    //doc.add(new Field(RankType.ORDER.getRank(), values[3], Store.YES, Index.ANALYZED));
+                    doc.add(new TextField(RankType.ORDER.getRank(), values[3], Store.YES));
+                    //doc.add(new Field(RankType.FAMILY.getRank(), values[4], Store.YES, Index.ANALYZED));
+                    doc.add(new TextField(RankType.FAMILY.getRank(), values[4], Store.YES));
+                    //doc.add(new Field(RankType.GENUS.getRank(), values[5], Store.YES, Index.ANALYZED));
+                    doc.add(new TextField(RankType.GENUS.getRank(), values[5], Store.YES));
                     if(rank == RankType.GENUS){
-                        doc.add(new Field(IndexField.ID.toString(), values[6], Store.YES, Index.ANALYZED));//genus id
-                        //            doc.add(new Field(, values[7], Store.YES, Index.NOT_ANALYZED));//synonym flag
-                        doc.add(new Field(IndexField.ACCEPTED.toString(), values[8], Store.YES, Index.ANALYZED));//synonym id
-                        //            doc.add(new Field(,values[9], Store.YES, Index.NOT_ANALYZED)); //synonym name
-                        doc.add(new Field(IndexField.HOMONYM.toString(), values[10], Store.YES, Index.ANALYZED)); //homonym flag
+                        //doc.add(new Field(IndexField.ID.toString(), values[6], Store.YES, Index.ANALYZED));//genus id
+                        doc.add(new TextField(IndexField.ID.toString(), values[6], Store.YES));
+                        //doc.add(new Field(IndexField.ACCEPTED.toString(), values[8], Store.YES, Index.ANALYZED));//synonym id
+                        doc.add(new TextField(IndexField.ACCEPTED.toString(), values[8], Store.YES));
+                        //doc.add(new Field(IndexField.HOMONYM.toString(), values[10], Store.YES, Index.ANALYZED)); //homonym flag
+                        doc.add(new TextField(IndexField.HOMONYM.toString(), values[10], Store.YES));
                     }
                     else if(rank == RankType.SPECIES){
-                        doc.add(new Field(RankType.SPECIES.getRank(), values[6], Store.YES, Index.ANALYZED));
+                        //doc.add(new Field(RankType.SPECIES.getRank(), values[6], Store.YES, Index.ANALYZED));
+                        doc.add(new TextField(RankType.SPECIES.getRank(), values[6], Store.YES));
                     }
-                    doc.add(new Field(IndexField.RANK.toString(), rank.getRank(), Store.YES, Index.ANALYZED));
+                    //doc.add(new Field(IndexField.RANK.toString(), rank.getRank(), Store.YES, Index.ANALYZED));
+                    doc.add(new TextField(IndexField.RANK.toString(), rank.getRank(), Store.YES));
                     iw.addDocument(doc);
                     count++;
                 }
@@ -611,8 +627,10 @@ public class CBCreateLuceneIndex {
             
             if(values != null && values.length >=3){
                 Document doc = new Document();
-                doc.add(new Field("lsid", values[2], Store.NO, Index.NOT_ANALYZED));
-                doc.add(new Field("reallsid", values[1], Store.YES, Index.NO));
+                //doc.add(new Field("lsid", values[2], Store.NO, Index.NOT_ANALYZED));
+                doc.add(new StringField("lsid", values[2], Store.NO));
+                //doc.add(new Field("reallsid", values[1], Store.YES, Index.NO));
+                doc.add(new StoredField("reallsid", values[1]));
                 iw.addDocument(doc);
             }
         }
@@ -639,7 +657,8 @@ public class CBCreateLuceneIndex {
             if(values!= null && values.length>1){
                 //just add the LSID to the index
                 Document doc = new Document();
-                doc.add(new Field("lsid", values[0], Store.NO, Index.NOT_ANALYZED));
+                //doc.add(new Field("lsid", values[0], Store.NO, Index.NOT_ANALYZED));
+                doc.add(new StringField("lsid", values[0], Store.NO));
                 iw.addDocument(doc);
 
             }
@@ -692,17 +711,21 @@ public class CBCreateLuceneIndex {
 
         //doc.add(new TextField(IndexField.COMMON_NAME.toString(), cn.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", ""), Store.YES, Index.NOT_ANALYZED));
         doc.add(tf);
-        if(sn != null)
-            doc.add(new Field(IndexField.NAME.toString(), sn, Store.YES, Index.ANALYZED));
+        if(sn != null) {
+            //doc.add(new Field(IndexField.NAME.toString(), sn, Store.YES, Index.ANALYZED));
+            doc.add(new TextField(IndexField.NAME.toString(), sn, Store.YES));
+        }
         String newLsid = getAcceptedLSID(lsid);
-        doc.add(new Field(IndexField.LSID.toString(), newLsid, Store.YES, Index.NO));
+        //doc.add(new Field(IndexField.LSID.toString(), newLsid, Store.YES, Index.NO));
+        doc.add(new StoredField(IndexField.LSID.toString(), newLsid));
         //doc.setBoost(boost);
         return doc;
     }
 
     public Document createALAIndexDocument(String name, String id, String lsid, String author, LinnaeanRankClassification cl){
-        if(cl == null)
+        if(cl == null) {
             cl = new LinnaeanRankClassification();
+        }
         return createALAIndexDocument(name, id, lsid, null, null, cl.getKingdom(), null, cl.getPhylum(), null, cl.getKlass(), null, cl.getOrder(), null, cl.getFamily(), null, cl.getGenus(), null, null, null, null, null, null, null, null, author, 1.0f);
     }
 
@@ -713,7 +736,8 @@ public class CBCreateLuceneIndex {
                 acceptedLsid,null,null,author,boost);
         if(doc != null &&synonymType != null){
             try{
-            doc.add(new Field(NameIndexField.SYNONYM_TYPE.toString(), synonymType, Store.YES, Index.ANALYZED));
+                //doc.add(new Field(NameIndexField.SYNONYM_TYPE.toString(), synonymType, Store.YES, Index.ANALYZED));
+                doc.add(new TextField(NameIndexField.SYNONYM_TYPE.toString(), synonymType, Store.YES));
             }
             catch(Exception e){
                 System.out.println("Error on " + scientificName + " " + author + " " + id + ".  " + e.getMessage());
@@ -741,81 +765,118 @@ public class CBCreateLuceneIndex {
         //doc.setBoost(boost);
 
         //Add the ids
-        doc.add(new Field(NameIndexField.ID.toString(), id, Store.YES, Index.NOT_ANALYZED));
-        doc.add(new Field(NameIndexField.LSID.toString(), lsid, Store.YES, Index.NOT_ANALYZED));//need to be able to search by LSID with a result from common names
-
-        if(lsid.startsWith("ALA"))
-            doc.add(new Field(NameIndexField.ALA.toString(), "T", Store.NO, Index.ANALYZED));
+        //doc.add(new Field(NameIndexField.ID.toString(), id, Store.YES, Index.NOT_ANALYZED));
+        doc.add(new StringField(NameIndexField.ID.toString(), id, Store.YES));
+        //doc.add(new Field(NameIndexField.LSID.toString(), lsid, Store.YES, Index.NOT_ANALYZED));//need to be able to search by LSID with a result from common names
+        doc.add(new StringField(NameIndexField.LSID.toString(), lsid, Store.YES));
+        if(lsid.startsWith("ALA")){
+            //doc.add(new Field(NameIndexField.ALA.toString(), "T", Store.NO, Index.ANALYZED));
+            doc.add(new TextField(NameIndexField.ALA.toString(), "T", Store.NO));
+        }
 
         //Add the scientific name information
-        Field f = new Field(NameIndexField.NAME.toString(), name, Store.YES, Index.ANALYZED);
+        //Field f = new Field(NameIndexField.NAME.toString(), name, Store.YES, Index.ANALYZED);
+        Field f = new TextField(NameIndexField.NAME.toString(), name, Store.YES);
         f.setBoost(boost);
         doc.add(f);
         
 
         //rank information
-        if(StringUtils.isNotEmpty(rank))
-            doc.add(new Field(NameIndexField.RANK_ID.toString(), rank, Store.YES, Index.NOT_ANALYZED));
-        if(StringUtils.isNotEmpty(rankString))
-            doc.add(new Field(NameIndexField.RANK.toString(), rankString, Store.YES, Index.ANALYZED));
+        if(StringUtils.isNotEmpty(rank)) {
+            //doc.add(new Field(NameIndexField.RANK_ID.toString(), rank, Store.YES, Index.NOT_ANALYZED));
+            doc.add(new StringField(NameIndexField.RANK_ID.toString(), rank, Store.YES));
+        }
+        if(StringUtils.isNotEmpty(rankString)) {
+            //doc.add(new Field(NameIndexField.RANK.toString(), rankString, Store.YES, Index.ANALYZED));
+            doc.add(new StringField(NameIndexField.RANK.toString(), rankString, Store.YES));
+        }
 
         
 
         //handle the synonyms
         if (StringUtils.isNotEmpty(acceptedConcept)) {
-            doc.add(new Field(NameIndexField.ACCEPTED.toString(), acceptedConcept, Store.YES, Index.NO));
-            doc.add(new Field(NameIndexField.iS_SYNONYM.toString(), "T", Store.NO, Index.ANALYZED));
+            //doc.add(new Field(NameIndexField.ACCEPTED.toString(), acceptedConcept, Store.YES, Index.NO));
+            doc.add(new StringField(NameIndexField.ACCEPTED.toString(), acceptedConcept, Store.YES));
+            //doc.add(new Field(NameIndexField.iS_SYNONYM.toString(), "T", Store.NO, Index.ANALYZED));
+            doc.add(new TextField(NameIndexField.iS_SYNONYM.toString(), "T", Store.NO));
         }
         else{
-            doc.add(new Field(NameIndexField.iS_SYNONYM.toString(), "F", Store.NO, Index.ANALYZED));
+            //doc.add(new Field(NameIndexField.iS_SYNONYM.toString(), "F", Store.NO, Index.ANALYZED));
+            doc.add(new TextField(NameIndexField.iS_SYNONYM.toString(), "F", Store.NO));
         }
 
         //Add the classification information
         if (StringUtils.trimToNull(kingdom) != null) {
-                doc.add(new Field(RankType.KINGDOM.getRank(), kingdom, Store.YES, Index.ANALYZED));
-                if(StringUtils.isNotBlank(kid))
-                    doc.add(new Field("kid", kid, Store.YES, Index.NO));
+            //doc.add(new Field(RankType.KINGDOM.getRank(), kingdom, Store.YES, Index.ANALYZED));
+            doc.add(new TextField(RankType.KINGDOM.getRank(), kingdom, Store.YES));
+                if(StringUtils.isNotBlank(kid)){
+                    //doc.add(new Field("kid", kid, Store.YES, Index.NO));
+                    doc.add(new StoredField("kid",kid));
+                }
             }
             if(StringUtils.trimToNull(phylum) != null){
-                doc.add(new Field(RankType.PHYLUM.getRank(), phylum, Store.YES, Index.ANALYZED));
-                if(StringUtils.isNotBlank(pid))
-                    doc.add(new Field("pid", pid, Store.YES, Index.NO));
+                //doc.add(new Field(RankType.PHYLUM.getRank(), phylum, Store.YES, Index.ANALYZED));
+                doc.add(new TextField(RankType.PHYLUM.getRank(), phylum, Store.YES));
+                if(StringUtils.isNotBlank(pid)) {
+                    //doc.add(new Field("pid", pid, Store.YES, Index.NO));
+                    doc.add(new StoredField("pid",pid));
+                }
             }
             if(StringUtils.trimToNull(clazz) != null){
-                doc.add(new Field(RankType.CLASS.getRank(), clazz, Store.YES, Index.ANALYZED));
-                if(StringUtils.isNotBlank(cid))
-                    doc.add(new Field("cid", cid, Store.YES, Index.NO));
+                //doc.add(new Field(RankType.CLASS.getRank(), clazz, Store.YES, Index.ANALYZED));
+                doc.add(new TextField(RankType.CLASS.getRank(), clazz, Store.YES));
+                if(StringUtils.isNotBlank(cid)) {
+                    //doc.add(new Field("cid", cid, Store.YES, Index.NO));
+                    doc.add(new StoredField("cid",cid));
+                }
             }
             if(StringUtils.trimToNull(order) != null){
-                doc.add(new Field(RankType.ORDER.getRank(), order, Store.YES, Index.ANALYZED));
-                if(StringUtils.isNotBlank(oid))
-                    doc.add(new Field("oid", oid, Store.YES, Index.NO));
+                //doc.add(new Field(RankType.ORDER.getRank(), order, Store.YES, Index.ANALYZED));
+                doc.add(new TextField(RankType.ORDER.getRank(), order, Store.YES));
+                if(StringUtils.isNotBlank(oid)) {
+                    //doc.add(new Field("oid", oid, Store.YES, Index.NO));
+                    doc.add(new StoredField("oid",oid));
+                }
             }
             if(StringUtils.trimToNull(family) != null){
-                doc.add(new Field(RankType.FAMILY.getRank(), family, Store.YES, Index.ANALYZED));
-                if(StringUtils.isNotBlank(fid))
-                    doc.add(new Field("fid",fid, Store.YES, Index.NO));
+                //doc.add(new Field(RankType.FAMILY.getRank(), family, Store.YES, Index.ANALYZED));
+                doc.add(new TextField(RankType.FAMILY.getRank(), family, Store.YES));
+                if(StringUtils.isNotBlank(fid)){
+                    //doc.add(new Field("fid",fid, Store.YES, Index.NO));
+                    doc.add(new StoredField("fid",fid));
+                }
             }
             if (StringUtils.trimToNull(genus) != null){
-                doc.add(new Field(RankType.GENUS.getRank(), genus, Store.YES, Index.ANALYZED));
-                if(StringUtils.isNotBlank(gid))
-                    doc.add(new Field("gid", gid, Store.YES, Index.NO));
+                //doc.add(new Field(RankType.GENUS.getRank(), genus, Store.YES, Index.ANALYZED));
+                doc.add(new TextField(RankType.GENUS.getRank(), genus, Store.YES));
+                if(StringUtils.isNotBlank(gid)) {
+                    //doc.add(new Field("gid", gid, Store.YES, Index.NO));
+                    doc.add(new StoredField("gid",gid));
+                }
             }
             if(StringUtils.trimToNull(species) != null){
-                doc.add(new Field(RankType.SPECIES.getRank(), species, Store.YES, Index.ANALYZED));
-                if(StringUtils.isNotBlank(sid))
-                    doc.add(new Field("sid", sid, Store.YES, Index.NO));
+                //doc.add(new Field(RankType.SPECIES.getRank(), species, Store.YES, Index.ANALYZED));
+                doc.add(new TextField(RankType.SPECIES.getRank(), species, Store.YES));
+                if(StringUtils.isNotBlank(sid)) {
+                    //doc.add(new Field("sid", sid, Store.YES, Index.NO));
+                    doc.add(new StoredField("sid",sid));
+                }
             }
-            if(StringUtils.trimToNull(left) != null)
-                doc.add(new Field("left", left, Store.YES, Index.NOT_ANALYZED));
-            if(StringUtils.trimToNull(right) != null)
-                doc.add(new Field("right", right, Store.YES, Index.NOT_ANALYZED));
+            if(StringUtils.trimToNull(left) != null) {
+                //doc.add(new Field("left", left, Store.YES, Index.NOT_ANALYZED));
+                doc.add(new StringField("left", left, Store.YES));
+            }
+            if(StringUtils.trimToNull(right) != null) {
+                //doc.add(new Field("right", right, Store.YES, Index.NOT_ANALYZED));
+                doc.add(new StringField("right", right, Store.YES));
+            }
 
 
         //Add the author information
         if(StringUtils.isNotEmpty(author)){
             //TODO think about whether we need to treat the author string with the taxamatch
-            doc.add(new Field(NameIndexField.AUTHOR.toString(), author, Store.YES, Index.ANALYZED));
+            //doc.add(new Field(NameIndexField.AUTHOR.toString(), author, Store.YES, Index.ANALYZED));
+            doc.add( new TextField(NameIndexField.AUTHOR.toString(), author, Store.YES));
         }
 
 
@@ -827,7 +888,8 @@ public class CBCreateLuceneIndex {
             if(cn != null && cn.isParsableType()&& !cn.isIndetermined() 
             && cn.getType()!= NameType.informal && !"6500".equals(rank) && cn.getType() != NameType.doubtful)// a scientific name with some informal addition like "cf." or indetermined like Abies spec. ALSO prevent subgenus because they parse down to genus plus author
             {
-               Field f2 =new Field(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES, Index.ANALYZED);
+               //Field f2 =new Field(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES, Index.ANALYZED);
+               Field f2 = new TextField(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES);
                f2.setBoost(boost);
                doc.add(f2);
                if(specificEpithet == null && cn.isBinomial()){
@@ -839,28 +901,40 @@ public class CBCreateLuceneIndex {
             }
             //check to see if the concept represents a phrase name
             if(cn instanceof ALAParsedName){
+                //set up the field type that is stored and Index.ANALYZED_NO_NORMS
+                FieldType ft = new FieldType(TextField.TYPE_STORED);
+                ft.setOmitNorms(true);
                 ALAParsedName alapn = (ALAParsedName)cn;
-                if((!"sp.".equals(alapn.rank)) && alapn.specificEpithet != null)
-                    doc.add(new Field(NameIndexField.SPECIFIC.toString(), alapn.getSpecificEpithet(), Store.YES, Index.ANALYZED_NO_NORMS));
+                if((!"sp.".equals(alapn.rank)) && alapn.specificEpithet != null) {
+                    //doc.add(new Field(NameIndexField.SPECIFIC.toString(), alapn.getSpecificEpithet(), Store.YES, Index.ANALYZED_NO_NORMS));
+                    doc.add(new Field(NameIndexField.SPECIFIC.toString(), alapn.getSpecificEpithet(),ft));
+                }
                 else if((!"sp.".equals(alapn.rank)) && alapn.specificEpithet == null){
                     log.warn( lsid + " " +name + " has an empty specific for non sp. phrase");
                 }
-                if(StringUtils.trimToNull(alapn.getLocationPhraseDesciption()) != null)
-                    doc.add(new Field(NameIndexField.PHRASE.toString(), alapn.cleanPhrase, Store.YES, Index.ANALYZED_NO_NORMS));
+                if(StringUtils.trimToNull(alapn.getLocationPhraseDesciption()) != null) {
+                    //doc.add(new Field(NameIndexField.PHRASE.toString(), alapn.cleanPhrase, Store.YES, Index.ANALYZED_NO_NORMS));
+                    doc.add(new Field(NameIndexField.PHRASE.toString(), alapn.cleanPhrase,ft));
                     //doc.add(new Field(NameIndexField.PHRASE.toString(), alapn.getLocationPhraseDesciption(), Store.YES, Index.ANALYZED_NO_NORMS));
-                if(alapn.getPhraseVoucher() != null)
-                    doc.add(new Field(NameIndexField.VOUCHER.toString(), alapn.cleanVoucher, Store.YES,Index.ANALYZED_NO_NORMS));
+                }
+                if(alapn.getPhraseVoucher() != null) {
+                    //doc.add(new Field(NameIndexField.VOUCHER.toString(), alapn.cleanVoucher, Store.YES,Index.ANALYZED_NO_NORMS));
+                    doc.add(new Field(NameIndexField.VOUCHER.toString(), alapn.cleanVoucher,ft));
+                }
                 if(StringUtils.isBlank(genus) && StringUtils.isNotBlank(alapn.getGenusOrAbove())){
                     //add the genus to the index as it is necessary to match on the phrase name.
-                     doc.add(new Field(RankType.GENUS.getRank(), alapn.getGenusOrAbove(), Store.YES, Index.ANALYZED));
+                     //doc.add(new Field(RankType.GENUS.getRank(), alapn.getGenusOrAbove(), Store.YES, Index.ANALYZED));
+                    doc.add(new TextField(RankType.GENUS.getRank(), alapn.getGenusOrAbove(), Store.YES));
                 }
-                    //doc.add(new Field(NameIndexField.VOUCHER.toString(), CBIndexSearch.voucherRemovePattern.matcher(alapn.getPhraseVoucher()).replaceAll(""), Store.YES,Index.ANALYZED_NO_NORMS));
+                    //doc.add(new Field(NameIndexField.VOUCHER.toString(), ALANameSearcher.voucherRemovePattern.matcher(alapn.getPhraseVoucher()).replaceAll(""), Store.YES,Index.ANALYZED_NO_NORMS));
             }
         }
         catch(org.gbif.ecat.parser.UnparsableException e){
             //check to see if the name is a virus in which case an extra name is added without the virus key word
-            if(e.type == NameType.virus)
-                doc.add(new Field(NameIndexField.NAME.toString(), au.org.ala.names.search.CBIndexSearch.virusStopPattern.matcher(name).replaceAll(" "), Store.YES, Index.ANALYZED));
+            if(e.type == NameType.virus) {
+                //doc.add(new Field(NameIndexField.NAME.toString(), ALANameSearcher.virusStopPattern.matcher(name).replaceAll(" "), Store.YES, Index.ANALYZED));
+                doc.add(new TextField(NameIndexField.NAME.toString(), ALANameSearcher.virusStopPattern.matcher(name).replaceAll(" "), Store.YES));
+            }
 
         }
         catch(Exception e){
@@ -873,20 +947,25 @@ public class CBCreateLuceneIndex {
         //add the sound expressions for the name if required
         try{
         if(StringUtils.isNotBlank(genus)){
-            doc.add(new Field(NameIndexField.GENUS_EX.toString(), TaxonNameSoundEx.treatWord(genus, "genus"), Store.YES, Index.ANALYZED));
+            //doc.add(new Field(NameIndexField.GENUS_EX.toString(), TaxonNameSoundEx.treatWord(genus, "genus"), Store.YES, Index.ANALYZED));
+            doc.add(new TextField(NameIndexField.GENUS_EX.toString(), TaxonNameSoundEx.treatWord(genus, "genus"), Store.YES));
         }
         if(StringUtils.isNotBlank(specificEpithet)){
-            doc.add(new Field(NameIndexField.SPECIES_EX.toString(), TaxonNameSoundEx.treatWord(specificEpithet, "species"), Store.YES, Index.ANALYZED));
+            //doc.add(new Field(NameIndexField.SPECIES_EX.toString(), TaxonNameSoundEx.treatWord(specificEpithet, "species"), Store.YES, Index.ANALYZED));
+            doc.add(new TextField(NameIndexField.SPECIES_EX.toString(), TaxonNameSoundEx.treatWord(specificEpithet, "species"), Store.YES));
         }
         else if(StringUtils.isNotBlank(genus)){
-            doc.add(new Field(NameIndexField.SPECIES_EX.toString(), "<null>", Store.YES, Index.ANALYZED));
+            //doc.add(new Field(NameIndexField.SPECIES_EX.toString(), "<null>", Store.YES, Index.ANALYZED));
+            doc.add(new TextField(NameIndexField.SPECIES_EX.toString(), "<null>", Store.YES));
         }
         if(StringUtils.isNotBlank(infraspecificEpithet)){
-            doc.add(new Field(NameIndexField.INFRA_EX.toString(), TaxonNameSoundEx.treatWord(infraspecificEpithet, "species"), Store.YES, Index.ANALYZED));
+            //doc.add(new Field(NameIndexField.INFRA_EX.toString(), TaxonNameSoundEx.treatWord(infraspecificEpithet, "species"), Store.YES, Index.ANALYZED));
+            doc.add(new TextField(NameIndexField.INFRA_EX.toString(), TaxonNameSoundEx.treatWord(infraspecificEpithet, "species"), Store.YES));
         }
         else if(StringUtils.isNotBlank(specificEpithet)){
             //make searching for an empty infraspecific soudex easier
-            doc.add(new Field(NameIndexField.INFRA_EX.toString(), "<null>", Store.YES, Index.ANALYZED));
+            //doc.add(new Field(NameIndexField.INFRA_EX.toString(), "<null>", Store.YES, Index.ANALYZED));
+            doc.add(new TextField(NameIndexField.INFRA_EX.toString(), "<null>", Store.YES));
         }
         }
         catch(Exception e){
@@ -917,7 +996,7 @@ public class CBCreateLuceneIndex {
     /**
      * Generates the Lucene index required for the name matching API.
      * eg
-     * au.org.ala.names.search.CBCreateLuceneIndex "/data/exports" "/data/lucene/namematching"
+     * au.org.ala.names.search.ALANameIndexer "/data/exports" "/data/lucene/namematching"
      *  Extra optional args that should appear after the directory names
      * -sn: Only create the indexes necessary for the scientific name lookups
      * -cn: Only create the indexes necessary for the common name lookups
@@ -925,7 +1004,7 @@ public class CBCreateLuceneIndex {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-        CBCreateLuceneIndex indexer = new CBCreateLuceneIndex();
+        ALANameIndexer indexer = new ALANameIndexer();
         indexer.init();
         for(String arg: args)
             System.out.println(arg);
@@ -944,7 +1023,7 @@ public class CBCreateLuceneIndex {
                 indexer.createIndex(args[0], args[1], sn, cn);
             }
         } else {
-            System.out.println("au.org.ala.names.search.CBCreateLuceneIndex <directory with export files> <directory in which to create indexes> [<accepted name file>] [<synonym name file>][-cn OR -sn]");
+            System.out.println("au.org.ala.names.search.ALANameIndexer <directory with export files> <directory in which to create indexes> [<accepted name file>] [<synonym name file>][-cn OR -sn]");
 
         }
     }

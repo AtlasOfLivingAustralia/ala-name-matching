@@ -1,4 +1,4 @@
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.search;
 
 import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.names.model.NameSearchResult;
@@ -26,12 +26,12 @@ import static org.junit.Assert.fail;
 @Ignore
 public class IconicSpeciesTest {
 
-    static CBIndexSearch searcher;
+    static ALANameSearcher searcher;
 
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new CBIndexSearch("/data/lucene/namematchingv1_3");
+            searcher = new ALANameSearcher("/data/lucene/namematchingv1_3");
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,5 +1,6 @@
 package au.org.ala.data.util;
 
+import au.org.ala.names.search.ALANameSearcher;
 import au.org.ala.parser.PhraseNameParser;
 import au.org.ala.names.model.ALAParsedName;
 import org.gbif.ecat.voc.NameType;
@@ -131,7 +132,7 @@ public class PhraseNameParserTests {
 
             //test a date based one
             pn = parser.parse("Baeckea sp. Beringbooding (AR Main 11/9/1957)");
-            System.out.println(au.org.ala.checklist.lucene.CBIndexSearch.voucherRemovePattern.matcher("(BJ Lepschi & LA Craven 4586)").replaceAll(""));
+            System.out.println(ALANameSearcher.voucherRemovePattern.matcher("(BJ Lepschi & LA Craven 4586)").replaceAll(""));
             assertTrue(pn instanceof ALAParsedName);
 
             pn = parser.parse("Baeckea sp. Calingiri (F.Hort 1710)");

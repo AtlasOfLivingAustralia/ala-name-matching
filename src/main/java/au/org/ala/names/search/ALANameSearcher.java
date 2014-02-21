@@ -66,8 +66,8 @@ import org.gbif.ecat.voc.Rank;
  *
  * @author Natasha
  */
-public class CBIndexSearch {
-    protected Log log = LogFactory.getLog(CBIndexSearch.class);
+public class ALANameSearcher {
+    protected Log log = LogFactory.getLog(ALANameSearcher.class);
     private DirectoryReader cbReader,irmngReader, vernReader;
     private IndexSearcher cbSearcher, irmngSearcher, vernSearcher, idSearcher;
     private ThreadLocal<QueryParser> queryParser;
@@ -86,7 +86,7 @@ public class CBIndexSearch {
      */
     private Set crossRankHomonyms;
 
-	public CBIndexSearch() {}
+	public ALANameSearcher() {}
 
 	/**
          * Creates a new name searcher. Using the indexDirectory
@@ -96,7 +96,7 @@ public class CBIndexSearch {
          * @throws CorruptIndexException
          * @throws IOException
          */
-        public CBIndexSearch(String indexDirectory) throws CorruptIndexException, IOException {
+        public ALANameSearcher(String indexDirectory) throws CorruptIndexException, IOException {
                 //Initialis CB index searching items
             log.debug("Creating the search object for the name matching api...");
             //make the query parsers thread safe
@@ -179,7 +179,7 @@ public class CBIndexSearch {
          */
 //        public static void main(String[] args){
 //            try{
-//                CBIndexSearch searcher = new CBIndexSearch("/data/lucene/namematching");
+//                ALANameSearcher searcher = new ALANameSearcher("/data/lucene/namematching");
 //                //searcher.dumpSpecies();
 //                searcher.deleteRecord(2324132);
 //            }
@@ -885,7 +885,7 @@ public class CBIndexSearch {
      */
     public NameSearchResult searchForRecordByID(String id){
         try{
-            List<NameSearchResult> results = performSearch(CBCreateLuceneIndex.IndexField.ID.toString(),id, null,  null, 1, null,  false, idParser.get());
+            List<NameSearchResult> results = performSearch(ALANameIndexer.IndexField.ID.toString(),id, null,  null, 1, null,  false, idParser.get());
             if(results.size()>0){
                 results.get(0).setMatchType(MatchType.TAXON_ID);
                 return results.get(0);
@@ -1060,7 +1060,7 @@ public class CBIndexSearch {
                 if (cl.getAuthorship() == null) {
                     cl.setAuthorship(pn.authorshipComplete());
                 }
-                hits = performSearch(CBCreateLuceneIndex.IndexField.NAME.toString(), canonicalName, rank, cl, max, MatchType.CANONICAL,  true, queryParser.get());
+                hits = performSearch(ALANameIndexer.IndexField.NAME.toString(), canonicalName, rank, cl, max, MatchType.CANONICAL,  true, queryParser.get());
                 if (hits.size() > 0) {
                     return hits;
                 }
@@ -1254,7 +1254,7 @@ public class CBIndexSearch {
                 query.append("+(");
                 if(rank.getId()>= RankType.SPECIES.getId()){
                     query.append(NameIndexField.RANK_ID.toString()).append(":[7000 TO 9999]");
-                    //query.append(CBCreateLuceneIndex.IndexField.RANK.toString()).append(":").append(RankType.INFRASPECIFICNAME.getRank()).append(" OR ");
+                    //query.append(ALANameIndexer.IndexField.RANK.toString()).append(":").append(RankType.INFRASPECIFICNAME.getRank()).append(" OR ");
                 }
                 else
                     query.append(NameIndexField.RANK.toString() + ":" + rank.getRank());
@@ -1729,7 +1729,7 @@ public class CBIndexSearch {
      */
     private String getLSIDForUniqueCommonName(String name){
         if(name != null){
-            TermQuery query = new TermQuery(new Term(CBCreateLuceneIndex.IndexField.COMMON_NAME.toString(), name.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", "")));
+            TermQuery query = new TermQuery(new Term(ALANameIndexer.IndexField.COMMON_NAME.toString(), name.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", "")));
             try{
                 TopDocs results = vernSearcher.search(query, 10);
                 //if all the results have the same scientific name result the LSID for the first
@@ -1739,11 +1739,11 @@ public class CBIndexSearch {
                 for(ScoreDoc sdoc: results.scoreDocs){
                     org.apache.lucene.document.Document doc =vernSearcher.doc(sdoc.doc);
                     if(firstLsid == null){
-                        firstLsid = doc.get(CBCreateLuceneIndex.IndexField.LSID.toString());
-                        firstName = doc.get(CBCreateLuceneIndex.IndexField.NAME.toString());
+                        firstLsid = doc.get(ALANameIndexer.IndexField.LSID.toString());
+                        firstName = doc.get(ALANameIndexer.IndexField.NAME.toString());
                     }
                     else{
-                        if(!doSciNamesMatch(firstName, doc.get(CBCreateLuceneIndex.IndexField.NAME.toString())))
+                        if(!doSciNamesMatch(firstName, doc.get(ALANameIndexer.IndexField.NAME.toString())))
                             return null;
                     }
                 }
@@ -1816,7 +1816,7 @@ public class CBIndexSearch {
     public NameSearchResult searchForRecordByLsid(String lsid){
         NameSearchResult result = null;
         try{
-            List<NameSearchResult> results= performSearch(CBCreateLuceneIndex.IndexField.LSID.toString(), lsid, null, null, 1,MatchType.DIRECT, false, idParser.get());
+            List<NameSearchResult> results= performSearch(ALANameIndexer.IndexField.LSID.toString(), lsid, null, null, 1,MatchType.DIRECT, false, idParser.get());
                 if(results.size()>0)
                     result = results.get(0);
         }

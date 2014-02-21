@@ -1,4 +1,4 @@
-package au.org.ala.checklist.lucene;
+package au.org.ala.names.search;
 
 import au.org.ala.names.model.MetricsResultDTO;
 import au.org.ala.names.model.RankType;
@@ -22,12 +22,12 @@ import static org.junit.Assert.fail;
  */
 public class BiocacheMatchTest {
 
-    private static CBIndexSearch searcher;
+    private static ALANameSearcher searcher;
 
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new CBIndexSearch("/data/lucene/namematching_v13");
+            searcher = new ALANameSearcher("/data/lucene/namematching_v13");
         } catch (Exception e) {
             e.printStackTrace();
         }
