@@ -1,5 +1,5 @@
 
-package au.org.ala.data.util;
+package au.org.ala.names.util;
 
 import java.util.Collections;
 import java.util.LinkedList;

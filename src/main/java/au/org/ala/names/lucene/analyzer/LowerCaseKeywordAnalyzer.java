@@ -1,4 +1,4 @@
-package au.org.ala.lucene.analyzer;
+package au.org.ala.names.lucene.analyzer;
 
 import java.io.IOException;
 import java.io.Reader;

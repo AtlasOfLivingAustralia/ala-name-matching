@@ -1,9 +1,9 @@
 package au.org.ala.names.search;
 
 import au.com.bytecode.opencsv.CSVReader;
-import au.org.ala.lucene.analyzer.LowerCaseKeywordAnalyzer;
+import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
-import au.org.ala.parser.PhraseNameParser;
+import au.org.ala.names.parser.PhraseNameParser;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -33,7 +33,7 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
-import au.org.ala.data.util.TaxonNameSoundEx;
+import au.org.ala.names.util.TaxonNameSoundEx;
 
 import java.util.Iterator;
 

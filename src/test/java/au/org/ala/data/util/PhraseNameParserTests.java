@@ -1,7 +1,7 @@
 package au.org.ala.data.util;
 
 import au.org.ala.names.search.ALANameSearcher;
-import au.org.ala.parser.PhraseNameParser;
+import au.org.ala.names.parser.PhraseNameParser;
 import au.org.ala.names.model.ALAParsedName;
 import org.gbif.ecat.voc.NameType;
 import java.io.FileReader;

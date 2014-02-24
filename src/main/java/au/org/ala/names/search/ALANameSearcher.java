@@ -1,5 +1,6 @@
 package au.org.ala.names.search;
 
+import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
 
 import java.io.File;
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import au.org.ala.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -21,19 +21,17 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-//import org.apache.lucene.index.IndexWriter.MaxFieldLength;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-//import org.apache.lucene.search.Searcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.voc.NameType;
-import au.org.ala.data.util.TaxonNameSoundEx;
+import au.org.ala.names.util.TaxonNameSoundEx;
 
-import au.org.ala.parser.PhraseNameParser;
+import au.org.ala.names.parser.PhraseNameParser;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -168,7 +166,7 @@ public class ALANameSearcher {
 //            cbReader.deleteDocument(id);
 //
 //            cbReader.close();
-//             IndexWriter iw = new IndexWriter(FSDirectory.open(new File("/data/lucene/namematching/cb")), new au.org.ala.lucene.analyzer.LowerCaseKeywordAnalyzer(), false, MaxFieldLength.UNLIMITED);
+//             IndexWriter iw = new IndexWriter(FSDirectory.open(new File("/data/lucene/namematching/cb")), new au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer(), false, MaxFieldLength.UNLIMITED);
 //            System.out.println("Optimizing...");
 //             iw.optimize();
 //            iw.close();

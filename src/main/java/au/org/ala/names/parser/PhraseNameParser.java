@@ -1,12 +1,12 @@
 
-package au.org.ala.parser;
+package au.org.ala.names.parser;
 
 import au.org.ala.names.model.ALAParsedName;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import au.org.ala.lucene.analyzer.LowerCaseKeywordAnalyzer;
+import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.search.ALANameSearcher;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
