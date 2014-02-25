@@ -1499,10 +1499,12 @@ public class CBIndexSearch {
                 NameSearchResult synResult = results.get(0).isSynonym()?results.get(0):results.get(1);
                 NameSearchResult accResult = results.get(0).isSynonym()?results.get(1):results.get(0);
                 NameSearchResult accSynResult = searchForRecordByLsid(synResult.getAcceptedLsid());
-                if(accResult.getLeft() != null && accSynResult.getLeft() != null){
+                if(accResult != null && accResult.getLeft() != null && accSynResult!=null &&accSynResult.getLeft() != null){
                     int asyLeft = Integer.parseInt(accSynResult.getLeft());
                     if(asyLeft>Integer.parseInt(accResult.getLeft()) && asyLeft < Integer.parseInt(accResult.getRight()))
                         throw new ParentSynonymChildException(accResult, accSynResult);
+                } else {
+                    log.warn("Error checking for species split.  Either lft are null or one of the results: " + accResult + " " + accSynResult);
                 }
             }
         }
