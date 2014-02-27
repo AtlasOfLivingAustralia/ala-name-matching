@@ -41,10 +41,8 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.TreeSet;
 
 /**
  * This controller provides mapping services which include WMS services. Includes support for:
@@ -270,14 +268,14 @@ public class WMSController {
     @ResponseBody public List<LegendItem> legend(
             SpatialSearchRequestParams requestParams,
             @RequestParam(value = "cm", required = false, defaultValue = "") String colourMode,
-            @RequestParam(value="type",required=false,defaultValue="application/csv") String returnType,
+            @RequestParam(value="type", required = false, defaultValue = "application/csv") String returnType,
             HttpServletRequest request,
             HttpServletResponse response)
             throws Exception {
 
-        String[] acceptableTypes=new String[]{"application/json", "application/csv"};
+        String[] acceptableTypes = new String[]{"application/json", "application/csv"};
         
-        String accepts=request.getHeader("Accept"); 
+        String accepts = request.getHeader("Accept");
         //only allow a single format to be supplied in the header otherwise use the default returnType
         returnType = StringUtils.isNotEmpty(accepts) && !accepts.contains(",") ?accepts:returnType;
         if(!Arrays.asList(acceptableTypes).contains(returnType)){
@@ -1133,7 +1131,7 @@ public class WMSController {
             throws Exception {
 
         if("GetMap".equalsIgnoreCase(requestString)){
-            wmsCached(
+            generateWmsTile(
                     requestParams,
                     cql_filter,
                     env,
@@ -1147,6 +1145,7 @@ public class WMSController {
                     outlinePoints,
                     outlineColour,
                     layers,
+                    null,
                     request,
                     response);
             return;
@@ -1303,7 +1302,7 @@ public class WMSController {
             }
 
             query = searchUtils.convertRankAndName(query);
-            logger.debug("GetCapabilities query in use: "  + query);
+            logger.debug("GetCapabilities query in use: " + query);
 
             if(useSpeciesGroups){
                 taxonDAO.extractBySpeciesGroups(baseWsUrl + "/ogc/getMetadata", query, filterQueries, writer);
@@ -1362,7 +1361,7 @@ public class WMSController {
      * @throws Exception
      */
     @RequestMapping(value = {"/webportal/wms/reflect","/ogc/wms/reflect","/mapping/wms/reflect"}, method = RequestMethod.GET)
-    public void wmsCached(
+    public void generateWmsTile(
             SpatialSearchRequestParams requestParams,
             @RequestParam(value = "CQL_FILTER", required = false, defaultValue = "")           String cql_filter,
             @RequestParam(value = "ENV", required = false, defaultValue = "")                  String env,
@@ -1376,9 +1375,11 @@ public class WMSController {
             @RequestParam(value = "OUTLINE", required = true, defaultValue = "false")          boolean outlinePoints,
             @RequestParam(value = "OUTLINECOLOUR", required = true, defaultValue = "0x000000") String outlineColour,
             @RequestParam(value = "LAYERS", required = false, defaultValue = "")               String layers,
+            @RequestParam(value = "HQ", required = false)                                      String[] hqs,
             HttpServletRequest request,
             HttpServletResponse response)
             throws Exception {
+
 
         //Some WMS clients are ignoring sections of the GetCapabilities....
         if("GetLegendGraphic".equalsIgnoreCase(requestString)) {
@@ -1386,7 +1387,14 @@ public class WMSController {
             return;
         }
 
-        logger.debug("WMS Cached: " + request.getQueryString());
+        Set<Integer> hq = new HashSet<Integer>();
+        if(hqs != null && hqs.length>0){
+            for(String h : hqs){
+                hq.add(Integer.parseInt(h));
+            }
+        }
+
+        logger.debug("WMS tile: " + request.getQueryString());
 
         response.setHeader("Cache-Control", "max-age=86400"); //age == 1 day
         response.setContentType("image/png"); //only png images generated
@@ -1439,21 +1447,22 @@ public class WMSController {
         String[] originalFqs = requestParams.getFq();
 
         //get from cache
-        WMSCacheObject wco = null;
+        WMSTile wco = null;
         if (WMSCache.isEnabled() && cache.equalsIgnoreCase("on")) {
             wco = getWMSCacheObject(vars, pointType, requestParams, bbox);
         } else if (!cache.equalsIgnoreCase("on")) {
             WMSCache.remove(requestParams.getUrlParams(), vars.colourMode, pointType);
         }
+
         ImgObj imgObj = null;
         if (wco == null) {
-            imgObj = wmsUncached(wco, requestParams, vars, pointType, pbbox, mbbox,
+            imgObj = wmsUncached(requestParams, vars, pointType, pbbox, mbbox,
                     width, height, width_mult, height_mult, pointWidth,
-                    originalFqs, boundingBoxFqs, outlinePoints, outlineColour, response);
+                    originalFqs, hq, boundingBoxFqs, outlinePoints, outlineColour, response);
         } else {
             imgObj = wmsCached(wco, requestParams, vars, pointType, pbbox, bbox, mbbox,
                     width, height, width_mult, height_mult, pointWidth,
-                    originalFqs, boundingBoxFqs, outlinePoints, outlineColour, response);
+                    originalFqs, hq, boundingBoxFqs, outlinePoints, outlineColour, response);
         }
 
         if (imgObj != null && imgObj.g != null) {
@@ -1493,7 +1502,7 @@ public class WMSController {
      * @throws Exception
      */
     @RequestMapping(value = {"/webportal/wms/image","/mapping/wms/image"}, method = RequestMethod.GET)
-    public void image(
+    public void generatePublicationMap(
             SpatialSearchRequestParams requestParams,
             @RequestParam(value = "format", required = false, defaultValue = "jpg") String format,
             @RequestParam(value = "extents", required = true) String extents,
@@ -1616,13 +1625,18 @@ public class WMSController {
         }
     }
 
-    private ImgObj wmsCached(WMSCacheObject wco, SpatialSearchRequestParams requestParams,
-            WmsEnv vars, PointType pointType, double[] pbbox,
-            double[] bbox, double[] mbbox, int width, int height, double width_mult,
-            double height_mult, int pointWidth, String[] originalFqs,
-            String[] boundingBoxFqs, boolean outlinePoints,
-            String outlineColour,
-            HttpServletResponse response) throws Exception {
+    /**
+     *
+     * @return
+     * @throws Exception
+     */
+    private ImgObj wmsCached(WMSTile wco, SpatialSearchRequestParams requestParams,
+                             WmsEnv vars, PointType pointType, double[] pbbox,
+                             double[] bbox, double[] mbbox, int width, int height, double width_mult,
+                             double height_mult, int pointWidth, String[] originalFqs, Set<Integer> hq,
+                             String[] boundingBoxFqs, boolean outlinePoints,
+                             String outlineColour,
+                             HttpServletResponse response) throws Exception {
 
         ImgObj imgObj = null;
 
@@ -1636,29 +1650,34 @@ public class WMSController {
 
         int x, y;
 
+        //if not transparent and zero size, render dots
         if (vars.alpha > 0 && vars.size > 0) {
-            ArrayList<float[]> points = wco.getPoints();
-            ArrayList<int[]> counts = wco.getCounts();
+            List<float[]> points = wco.getPoints();
+            List<int[]> counts = wco.getCounts();
             List<Integer> pColour = wco.getColours();
             if (pColour.size() == 1 && vars.colourMode.equals("-1")) {
                 pColour.set(0, vars.colour | (vars.alpha << 24));
             }
 
             for (int j = 0; j < points.size(); j++) {
+
+                if(hq != null && hq.contains(j)){
+                    //dont render these points
+                    continue;
+                }
+
+
                 float[] ps = points.get(j);
 
                 if (ps == null || ps.length == 0) {
                     continue;
                 }
 
-                if (imgObj == null) {
-                    BufferedImage img =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                    Graphics2D g = (Graphics2D) img.getGraphics();
-                    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    imgObj = new ImgObj(g, img);
-                }
+                //initialise the image object
+                imgObj = ImgObj.create(width,height);
 
                 if (vars.colourMode.equals("grid")) {
+                    //render grids
                     int[] count = counts.get(j);
 
                     //populate grid
@@ -1676,10 +1695,10 @@ public class WMSController {
                         }
                     }
                 } else {
-
+                    //render points
                     Paint currentFill = new Color(pColour.get(j), true);
                     imgObj.g.setPaint(currentFill);
-
+                    Color oColour = Color.decode(outlineColour);
                     for (int i = 0; i < ps.length; i += 2) {
                         float lng = ps[i];
                         float lat = ps[i + 1];
@@ -1690,7 +1709,7 @@ public class WMSController {
 
                             imgObj.g.fillOval(x - vars.size, y - vars.size, pointWidth, pointWidth);
                             if(outlinePoints){
-                                imgObj.g.setPaint(Color.BLACK);
+                                imgObj.g.setPaint(oColour);
                                 imgObj.g.drawOval(x - vars.size, y - vars.size, pointWidth, pointWidth);
                                 imgObj.g.setPaint(currentFill);
                             }
@@ -1722,7 +1741,7 @@ public class WMSController {
                 }
             }
         } else {
-            drawUncertaintyCircles(requestParams, vars, pointType, width, height, pbbox, mbbox, width_mult, height_mult, imgObj.img, imgObj.g, originalFqs, boundingBoxFqs);
+            drawUncertaintyCircles(requestParams, vars, height, pbbox, mbbox, width_mult, height_mult, imgObj.g, originalFqs, boundingBoxFqs);
         }
 
         //highlight
@@ -1733,7 +1752,7 @@ public class WMSController {
         return imgObj;
     }
 
-    void drawUncertaintyCircles(SpatialSearchRequestParams requestParams, WmsEnv vars, PointType pointType, int width, int height, double[] pbbox, double[] mbbox, double width_mult, double height_mult, BufferedImage img, Graphics2D g, String[] originalFqs, String[] boundingBoxFqs) throws Exception {
+    void drawUncertaintyCircles(SpatialSearchRequestParams requestParams, WmsEnv vars, int height, double[] pbbox, double[] mbbox, double width_mult, double height_mult, Graphics2D g, String[] originalFqs, String[] boundingBoxFqs) throws Exception {
         //draw uncertainty circles
         double hmult = (height / (mbbox[3] - mbbox[1]));
 
@@ -1808,10 +1827,7 @@ public class WMSController {
 
         if (ps != null && ps.size() > 0) {
             if (imgObj == null || imgObj.img == null) {  //when vars.alpha == 0 img is null
-                BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D g = (Graphics2D) img.getGraphics();
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                imgObj = new ImgObj(g, img);
+                imgObj = ImgObj.create(width,height);
             }
 
             int highightRadius = vars.size + HIGHLIGHT_RADIUS;
@@ -1835,13 +1851,22 @@ public class WMSController {
         return imgObj;
     }
 
-    WMSCacheObject getWMSCacheObject(WmsEnv vars, PointType pointType, SpatialSearchRequestParams requestParams, double[] bbox) throws Exception {
+    /**
+     * Returns the wms cache object and initialises it if required.
+     * @param vars
+     * @param pointType
+     * @param requestParams
+     * @param bbox
+     * @return
+     * @throws Exception
+     */
+    WMSTile getWMSCacheObject(WmsEnv vars, PointType pointType, SpatialSearchRequestParams requestParams, double[] bbox) throws Exception {
         if(WMSCache.isFull() || !WMSCache.isEnabled()) {
             return null;
         }
         
         String q = requestParams.getUrlParams();
-        WMSCacheObject wco = WMSCache.get(q, vars.colourMode, pointType);
+        WMSTile wco = WMSCache.get(q, vars.colourMode, pointType);
         if (wco.getCached()) {
             return wco;
         } else if (!wco.isCacheable()) {
@@ -1922,7 +1947,7 @@ public class WMSController {
             }
 
             //construct points and their counts
-            ArrayList<float[]> pointsArrays = new ArrayList<float[]>(points.size());
+            List<float[]> pointsArrays = new ArrayList<float[]>(points.size());
             for (int i = 0; i < points.size(); i++) {
                 List<OccurrencePoint> ops = points.get(i);
                 float[] d = new float[ops.size() * 2];
@@ -1933,7 +1958,7 @@ public class WMSController {
                 pointsArrays.add(d);
             }
 
-            ArrayList<int[]> countsArrays = null;
+            List<int[]> countsArrays = null;
             if (vars.colourMode.equals("grid")) {
                 countsArrays = new ArrayList<int[]>(points.size());
                 for (int i = 0; i < points.size(); i++) {
@@ -1960,11 +1985,18 @@ public class WMSController {
         }
     }
 
-    private ImgObj wmsUncached(WMSCacheObject wco, SpatialSearchRequestParams requestParams,
+    /**
+     * TODO remove code duplicate between wmsUncached and wmsCached
+     *
+     * @return
+     * @throws Exception
+     */
+    private ImgObj wmsUncached(SpatialSearchRequestParams requestParams,
             WmsEnv vars, PointType pointType, double[] pbbox,
             double[] mbbox, int width, int height, double width_mult,
-            double height_mult, int pointWidth, String[] originalFqs,
+            double height_mult, int pointWidth, String[] originalFqs, Set<Integer> hq,
             String[] boundingBoxFqs, boolean outlinePoints, String outlineColour, HttpServletResponse response) throws Exception {
+
         //colour mapping
         List<LegendItem> colours = (vars.colourMode.equals("-1") || vars.colourMode.equals("grid")) ? null : getColours(requestParams, vars.colourMode);
         int sz = colours == null ? 1 : colours.size() + 1;
@@ -1972,7 +2004,7 @@ public class WMSController {
         List<List<OccurrencePoint>> points = new ArrayList<List<OccurrencePoint>>(sz);
         List<Integer> pColour = new ArrayList<Integer>(sz);
 
-        ArrayList<String> forNulls = new ArrayList<String>(sz);
+        List<String> forNulls = new ArrayList<String>(sz);
         String[] fqs = null;
         String[] origAndBBoxFqs = null;
         if (requestParams.getFq() == null || requestParams.getFq().length == 0) {
@@ -2030,8 +2062,6 @@ public class WMSController {
             }
         }
 
-        BufferedImage img = null;
-        Graphics2D g = null;
         ImgObj imgObj = null;
 
         //grid setup
@@ -2044,17 +2074,20 @@ public class WMSController {
         int x, y;
 
         for (int j = 0; j < points.size(); j++) {
+
+            if(hq != null && hq.contains(j)){
+                //dont render these points
+                continue;
+            }
+
             List<OccurrencePoint> ps = points.get(j);
 
             if (ps == null || ps.isEmpty()) {
                 continue;
             }
 
-            if (img == null) {
-                img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                g = (Graphics2D) img.getGraphics();
-                imgObj = new ImgObj(g, img);
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            if (imgObj == null || imgObj.img == null) {
+                imgObj = ImgObj.create(width,height);
             }
 
             if (vars.colourMode.equals("grid")) {
@@ -2072,31 +2105,12 @@ public class WMSController {
                     }
                 }
             } else {
-                Paint currentFill = new Color(pColour.get(j), true);
-                g.setPaint(currentFill);
-                Color oColour = Color.decode(outlineColour);
-
-                for (int i = 0; i < ps.size(); i++) {
-                    OccurrencePoint pt = ps.get(i);
-                    float lng = pt.getCoordinates().get(0).floatValue();
-                    float lat = pt.getCoordinates().get(1).floatValue();
-
-                    x = (int) ((convertLngToPixel(lng) - pbbox[0]) * width_mult);
-                    y = (int) ((convertLatToPixel(lat) - pbbox[3]) * height_mult);
-
-                    //System.out.println("Drawing an oval.....");
-                    g.fillOval(x - vars.size, y - vars.size, pointWidth, pointWidth);
-                    if(outlinePoints){
-                        g.setPaint(oColour);
-                        g.drawOval(x - vars.size, y - vars.size, pointWidth, pointWidth);
-                        g.setPaint(currentFill);
-                    }
-                }
+                renderPoints(vars, pbbox, width_mult, height_mult, pointWidth, outlinePoints, outlineColour, pColour, imgObj, j, ps);
             }
         }
 
         //no points
-        if (img == null) {
+        if (imgObj == null || imgObj.img == null) {
             if (vars.highlight == null) {
                 displayBlankImage(response);
                 return null;
@@ -2111,13 +2125,13 @@ public class WMSController {
                             v = 500;
                         }
                         int colour = (((500 - v) / 2) << 8) | (vars.alpha << 24) | 0x00FF0000;
-                        g.setColor(new Color(colour));
-                        g.fillRect(x * xstep, y * ystep, xstep, ystep);
+                        imgObj.g.setColor(new Color(colour));
+                        imgObj.g.fillRect(x * xstep, y * ystep, xstep, ystep);
                     }
                 }
             }
         } else {
-            drawUncertaintyCircles(requestParams, vars, pointType, width, height, pbbox, mbbox, width_mult, height_mult, img, g, originalFqs, boundingBoxFqs);
+            drawUncertaintyCircles(requestParams, vars, height, pbbox, mbbox, width_mult, height_mult, imgObj.g, originalFqs, boundingBoxFqs);
         }
 
         //highlight
@@ -2126,6 +2140,31 @@ public class WMSController {
         }
 
         return imgObj;
+    }
+
+    private void renderPoints(WmsEnv vars, double[] pbbox, double width_mult, double height_mult, int pointWidth, boolean outlinePoints, String outlineColour, List<Integer> pColour, ImgObj imgObj, int j, List<OccurrencePoint> ps) {
+        int x;
+        int y;
+        Paint currentFill = new Color(pColour.get(j), true);
+        imgObj.g.setPaint(currentFill);
+        Color oColour = Color.decode(outlineColour);
+
+        for (int i = 0; i < ps.size(); i++) {
+            OccurrencePoint pt = ps.get(i);
+            float lng = pt.getCoordinates().get(0).floatValue();
+            float lat = pt.getCoordinates().get(1).floatValue();
+
+            x = (int) ((convertLngToPixel(lng) - pbbox[0]) * width_mult);
+            y = (int) ((convertLatToPixel(lat) - pbbox[3]) * height_mult);
+
+            //System.out.println("Drawing an oval.....");
+            imgObj.g.fillOval(x - vars.size, y - vars.size, pointWidth, pointWidth);
+            if(outlinePoints){
+                imgObj.g.setPaint(oColour);
+                imgObj.g.drawOval(x - vars.size, y - vars.size, pointWidth, pointWidth);
+                imgObj.g.setPaint(currentFill);
+            }
+        }
     }
 
     //method from 1.3.3.1 Mercator (Spherical) http://www.epsg.org/guides/docs/g7-2.pdf
@@ -2264,6 +2303,13 @@ class ImgObj {
 
     Graphics2D g;
     BufferedImage img;
+
+    public static ImgObj create(int width, int height){
+        BufferedImage img =  new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = (Graphics2D) img.getGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        return new ImgObj(g, img);
+    }
 
     public ImgObj(Graphics2D g, BufferedImage img) {
         this.g = g;

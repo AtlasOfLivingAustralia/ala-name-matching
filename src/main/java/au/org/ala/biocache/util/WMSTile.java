@@ -22,20 +22,20 @@ import java.util.List;
  *
  * @author Adam
  */
-public class WMSCacheObject {
+public class WMSTile {
 
     String query;
-    String colourmode;
-    ArrayList<float[]> points;
-    ArrayList<int[]> counts;
-    List<Integer> colours;
+    String colourmode; //this is typically a facet name e.g. "year"
+    List<float[]> points; //points stored in a 1-d array of long,lat,long,lat
+    List<int[]> counts;
+    List<Integer> colours; //colours of the separate facets
     double[] bbox;
     long lastUse;
     long created;
     long size;
     boolean cached = false;
 
-    WMSCacheObject(String query, String colourmode, ArrayList<float[]> points, ArrayList<int[]> counts, List<Integer> colours, double[] bbox) {
+    WMSTile(String query, String colourmode, ArrayList<float[]> points, ArrayList<int[]> counts, List<Integer> colours, double[] bbox) {
         this.query = query;
         this.colourmode = colourmode;
         this.points = points;
@@ -47,7 +47,7 @@ public class WMSCacheObject {
         updateSize();
     }
 
-    WMSCacheObject() {
+    WMSTile() {
         this.created = System.currentTimeMillis();
         cached = false;
     }
@@ -68,11 +68,11 @@ public class WMSCacheObject {
         this.colourmode = colourmode;
     }
 
-    public ArrayList<float[]> getPoints() {
+    public List<float[]> getPoints() {
         return points;
     }
 
-    public void setPoints(ArrayList<float[]> points) {
+    public void setPoints(List<float[]> points) {
         this.points = points;
     }
 
@@ -109,11 +109,11 @@ public class WMSCacheObject {
         colours = null;
     }
 
-    public ArrayList<int[]> getCounts() {
+    public List<int[]> getCounts() {
         return counts;
     }
 
-    public void setCounts(ArrayList<int[]> counts) {
+    public void setCounts(List<int[]> counts) {
         this.counts = counts;
     }
 
@@ -136,7 +136,7 @@ public class WMSCacheObject {
     }
 
     /**
-     * get approximate size in bytes for a WMSCacheObject.
+     * get approximate size in bytes for a WMSTile.
      *
      * @param numberOfPoints
      * @param hasCounts true if points counts are to be stored.

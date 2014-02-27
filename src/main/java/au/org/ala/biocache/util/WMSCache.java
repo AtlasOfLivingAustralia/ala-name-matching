@@ -14,23 +14,20 @@
  ***************************************************************************/
 package au.org.ala.biocache.util;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import au.org.ala.biocache.dto.PointType;
 import org.apache.log4j.Logger;
 
+import java.io.InputStream;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+
 /**
- * A cache of points and colours used by webportal/wms.  This is not
- * intended to be used in all webportal/wms mapping.
+ * A cache of points and colours for WMS.
  *
  * Cache size defaults can overridden in wms.properties or directly at runtime.
+ * TODO refactor to use the common configuration file biocache-config.properties
  *
  * Management of the cache size not exact.
  *
@@ -52,7 +49,7 @@ public class WMSCache {
     //biocache url for /webportal/wms/image
     static String BIOCACHE_URL = null;
     //in memory store of params
-    static ConcurrentHashMap<String, WMSCacheObject> cache = new ConcurrentHashMap<String, WMSCacheObject>();
+    static ConcurrentHashMap<String, WMSTile> cache = new ConcurrentHashMap<String, WMSTile>();
     //cache size management
     final static Object counterLock = new Object();
     static long cacheSize;
@@ -121,12 +118,12 @@ public class WMSCache {
      * @param q Search url params to store as String.
      * @param colourMode to store as String
      * @param pointType resolution of data to store as PointType
-     * @param wco data to store as WMSCacheObject
+     * @param wco data to store as WMSTile
      * @return true when successfully added to the cache.  WMSCache must be 
      * enabled, not full.  wco must be not too large and not cause the cache
      * to exceed max size when added.
      */
-    public static boolean put(String q, String colourMode, PointType pointType, WMSCacheObject wco) {
+    public static boolean put(String q, String colourMode, PointType pointType, WMSTile wco) {
         if (isFull() || !isEnabled()) {
             return false;
         }
@@ -168,21 +165,20 @@ public class WMSCache {
 
     /**
      * Retrieve search parameter object
-     * @param key id returned by put as long.
      * @return search parameter q as String, or null if not in memory
      * or in file storage.
      *
      * @param query Search url params to store as String.
      * @param colourmode colourmode as String
      * @param pointType data resolution as PointType
-     * @return WMSCacheObject that can be in varying states:
+     * @return WMSTile that can be in varying states:
      * - being filled when !getCached() and isCacheable() and is locked
      * - will not be filled when !isCacheable()
      * - ready to use when getCached()
      */
-    public static WMSCacheObject get(String query, String colourmode, PointType pointType) {
+    public static WMSTile get(String query, String colourmode, PointType pointType) {
         String key = getKey(query, colourmode, pointType);
-        WMSCacheObject obj = null;
+        WMSTile obj = null;
         synchronized (getLock) {
             obj = cache.get(key);
 
@@ -192,7 +188,7 @@ public class WMSCache {
             }
 
             if (obj == null) {
-                obj = new WMSCacheObject();
+                obj = new WMSTile();
                 cache.put(key, obj);
             }
         }
@@ -208,13 +204,13 @@ public class WMSCache {
      * empty the cache to <= MIN_CACHE_SIZE
      */
     static void cleanCache() {
-        List<Entry<String, WMSCacheObject>> entries = new ArrayList(cache.entrySet());
+        List<Entry<String, WMSTile>> entries = new ArrayList(cache.entrySet());
 
         //sort ascending by last use time
-        Collections.sort(entries, new Comparator<Entry<String, WMSCacheObject>>() {
+        Collections.sort(entries, new Comparator<Entry<String, WMSTile>>() {
 
             @Override
-            public int compare(Entry<String, WMSCacheObject> o1, Entry<String, WMSCacheObject> o2) {
+            public int compare(Entry<String, WMSTile> o1, Entry<String, WMSTile> o2) {
                 long c = o1.getValue().lastUse - o2.getValue().lastUse;
                 return (c < 0) ? -1 : ((c > 0) ? 1 : 0);
             }
@@ -271,7 +267,7 @@ public class WMSCache {
     }
 
     /**
-     * determine if a WMSCacheObject created with the given characteristics
+     * determine if a WMSTile created with the given characteristics
      * will be too large for the cache.
      *
      * @param wco
@@ -279,8 +275,8 @@ public class WMSCache {
      * @param hasCounts
      * @return
      */
-    public static boolean isCachable(WMSCacheObject wco, int occurrenceCount, boolean hasCounts) {
-        long size = WMSCacheObject.sizeOf(occurrenceCount, hasCounts);
+    public static boolean isCachable(WMSTile wco, int occurrenceCount, boolean hasCounts) {
+        long size = WMSTile.sizeOf(occurrenceCount, hasCounts);
         if (size > LARGEST_CACHEABLE_SIZE) {
             if (wco != null) {
                 wco.setSize(size);
