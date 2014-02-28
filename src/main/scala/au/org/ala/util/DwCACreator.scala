@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils
 import scala.util.parsing.json.JSON
 import org.slf4j.LoggerFactory
 import au.org.ala.biocache.Config
+import util.matching.Regex
 
 object DwCACreator {
 
@@ -33,13 +34,21 @@ object DwCACreator {
       }
     }
   }
-
+ // pattern to extract a data resource uid from a filter query , because the label show i18n value
+  val dataResourcePattern ="(?:[\"]*)?(?:[a-z_]*_uid:\")([a-z0-9]*)(?:[\"]*)?".r
   def getDataResourceUids : Seq[String] = {
     val url = Config.biocacheServiceURL + "/occurrences/search?q=*:*&facets=data_resource_uid&pageSize=0&flimit=10000"
     val jsonString = Source.fromURL(url).getLines.mkString
     val json = JSON.parseFull(jsonString).get.asInstanceOf[Map[String, String]]
     val results = json.get("facetResults").get.asInstanceOf[List[Map[String, String]]].head.get("fieldResult").get.asInstanceOf[List[Map[String, String]]]
-    results.map(facet => facet.get("label").get)
+    results.map(facet => {
+      val fq = facet.get("fq").get
+      parseFq(fq)
+    }).filterNot(_.equals("Unknown"))
+  }
+  def parseFq(fq: String): String = fq match {
+    case dataResourcePattern(dr) => dr
+    case _ => "Unknown"
   }
 }
 
