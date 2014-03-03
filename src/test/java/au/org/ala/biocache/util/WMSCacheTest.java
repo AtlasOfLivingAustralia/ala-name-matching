@@ -1,4 +1,8 @@
-package org.ala.biocache.util;
+package au.org.ala.biocache.util;
+
+import au.org.ala.biocache.dto.PointType;
+import junit.framework.TestCase;
+import org.junit.Ignore;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,9 +11,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import junit.framework.TestCase;
-import org.ala.biocache.dto.PointType;
-import org.junit.Ignore;
 
 /**
  * This test isnt written in a fashion that can be executed as part of a build.
@@ -22,10 +23,10 @@ public class WMSCacheTest extends TestCase {
      */
     public void testPutGetWMS() {
         //test a cache put and get
-        WMSCacheObject wco1 = getDefaultWMSCacheObject("q1", 100, true);
+        WMSTile wco1 = getDefaultWMSCacheObject("q1", 100, true);
         WMSCache.put(wco1.getQuery(), wco1.getColourmode(), PointType.POINT_001, wco1);
 
-        WMSCacheObject wco2 = getDefaultWMSCacheObject("q2", 100, true);
+        WMSTile wco2 = getDefaultWMSCacheObject("q2", 100, true);
         WMSCache.put(wco2.getQuery(), wco2.getColourmode(), PointType.POINT_001, wco2);
 
         //test get returns the correct object
@@ -33,7 +34,7 @@ public class WMSCacheTest extends TestCase {
         assertTrue(compareWMSObjects(WMSCache.get(wco2.getQuery(), wco2.getColourmode(), PointType.POINT_001), wco2));
 
         //get from cache an object that does not exist returns a placeholder
-        WMSCacheObject wcop = WMSCache.get("", "", PointType.POINT_00001);
+        WMSTile wcop = WMSCache.get("", "", PointType.POINT_00001);
         assertNotNull(wcop);
         assertTrue(!wcop.getCached());
 
@@ -51,12 +52,12 @@ public class WMSCacheTest extends TestCase {
         //setup
         WMSCache.setMaxCacheSize(50000);
         WMSCache.setMinCacheSize(5000);
-        ArrayList<WMSCacheObject> wcos = new ArrayList<WMSCacheObject>();
+        ArrayList<WMSTile> wcos = new ArrayList<WMSTile>();
         long putSize = 0;
         long maxSize = 0;
         int cacheSizeDropCount = 0;
         for (int i = 0; i < 1000; i++) {
-            WMSCacheObject wco = getDefaultWMSCacheObject("q" + i, 50, true);
+            WMSTile wco = getDefaultWMSCacheObject("q" + i, 50, true);
             putSize += wco.getSize();
 
             wcos.add(wco);
@@ -93,7 +94,7 @@ public class WMSCacheTest extends TestCase {
         //test gets.  Anything that is a placeholder will be null.
         int cachedCount = 0;
         for (int i = 0; i < wcos.size(); i++) {
-            WMSCacheObject getwco = WMSCache.get(wcos.get(i).getQuery(), wcos.get(i).getColourmode(), PointType.POINT_1);
+            WMSTile getwco = WMSCache.get(wcos.get(i).getQuery(), wcos.get(i).getColourmode(), PointType.POINT_1);
             if (getwco.getCached()) {
                 assertTrue(compareWMSObjects(wcos.get(i), getwco));
                 cachedCount++;
@@ -113,7 +114,7 @@ public class WMSCacheTest extends TestCase {
         WMSCache.setMaxCacheSize(50000);
         WMSCache.setMinCacheSize(5000);
 
-        final ArrayList<WMSCacheObject> wcos = new ArrayList<WMSCacheObject>();
+        final ArrayList<WMSTile> wcos = new ArrayList<WMSTile>();
         final ArrayList<Integer> test = new ArrayList<Integer>();
         final LinkedBlockingQueue<Integer> idxs = new LinkedBlockingQueue<Integer>();
 
@@ -134,7 +135,7 @@ public class WMSCacheTest extends TestCase {
 
                     //get
                     if (ok) {
-                        WMSCacheObject wco = WMSCache.get(wcos.get(i).getQuery(), wcos.get(i).getColourmode(), PointType.POINT_1);
+                        WMSTile wco = WMSCache.get(wcos.get(i).getQuery(), wcos.get(i).getColourmode(), PointType.POINT_1);
                         if (wco.getCached()) {
                             if (compareWMSObjects(wco, wcos.get(i))) {
                                 test.set(i, 1);
@@ -167,7 +168,7 @@ public class WMSCacheTest extends TestCase {
         assertTrue(invalid == 0);
     }
 
-    WMSCacheObject getDefaultWMSCacheObject(String name, int points, boolean counts) {
+    WMSTile getDefaultWMSCacheObject(String name, int points, boolean counts) {
         double[] defaultBbox = {1, 2, 3, 4};
 
         ArrayList<float[]> defaultPoints = new ArrayList<float[]>();
@@ -190,17 +191,17 @@ public class WMSCacheTest extends TestCase {
         ArrayList<Integer> defaultColours = new ArrayList<Integer>();
         defaultColours.add(0xffffff00);
 
-        return new WMSCacheObject(name, "colourmode", defaultPoints, defaultCounts, defaultColours, defaultBbox);
+        return new WMSTile(name, "colourmode", defaultPoints, defaultCounts, defaultColours, defaultBbox);
     }
 
-    private boolean compareWMSObjects(WMSCacheObject wco1, WMSCacheObject wco2) {
+    private boolean compareWMSObjects(WMSTile wco1, WMSTile wco2) {
         boolean status = true;
 
         status = status && wco1.getQuery().equals(wco2.getQuery());
         status = status && wco1.getColourmode().equals(wco2.getColourmode());
 
-        ArrayList<float[]> p1 = wco1.getPoints();
-        ArrayList<float[]> p2 = wco2.getPoints();
+        List<float[]> p1 = wco1.getPoints();
+        List<float[]> p2 = wco2.getPoints();
         status = status && (p1.size() == p2.size());
         for (int i = 0; i < p1.size(); i++) {
             float[] f1 = p1.get(i);
@@ -211,8 +212,8 @@ public class WMSCacheTest extends TestCase {
             }
         }
 
-        ArrayList<int[]> c1 = wco1.getCounts();
-        ArrayList<int[]> c2 = wco2.getCounts();
+        List<int[]> c1 = wco1.getCounts();
+        List<int[]> c2 = wco2.getCounts();
         if (c1 != null && c2 != null) {
             status = status && (c1.size() == c2.size());
             for (int i = 0; i < c1.size(); i++) {

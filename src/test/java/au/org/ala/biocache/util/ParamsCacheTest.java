@@ -1,4 +1,7 @@
-package org.ala.biocache.util;
+package au.org.ala.biocache.util;
+
+import junit.framework.TestCase;
+import org.junit.Ignore;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -7,8 +10,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import junit.framework.TestCase;
-import org.junit.Ignore;
 
 /**
  * This test isnt written in a fashion that can be executed as part of a build.
