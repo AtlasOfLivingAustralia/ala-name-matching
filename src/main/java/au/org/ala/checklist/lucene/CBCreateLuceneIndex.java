@@ -390,10 +390,18 @@ public class CBCreateLuceneIndex {
         cbIndexWriter.deleteDocuments(new TermQuery(term));
         term = new Term("accepted_lsid", lsid);
         cbIndexWriter.deleteDocuments(new TermQuery(term));
+
     }
      public void commit() throws Exception{
-         if(cbIndexWriter !=  null)
+         commit(false);
+     }
+     public void commit(boolean close) throws Exception{
+         if(cbIndexWriter !=  null){
              cbIndexWriter.commit();
+             if(close){
+                 cbIndexWriter.close();
+             }
+         }
      }
 
      private void indexIrmngDwcA(IndexWriter iw, String archiveDirectory) throws Exception {
