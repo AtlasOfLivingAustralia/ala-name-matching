@@ -377,6 +377,20 @@ public class CBCreateLuceneIndex {
         cbIndexWriter.addDocument(doc);
             
     }
+    /**
+     * Deletes the entry that has the supplied lsid. It will also delete all the synonyms associated with it
+     * @param lsid
+     * @throws Exception
+     */
+    public void deleteName(String lsid) throws Exception{
+        if(cbIndexWriter == null){
+            cbIndexWriter = createIndexWriter(new File(indexDirectory+ File.separator + "cb"), new LowerCaseKeywordAnalyzer(), false);
+        }
+        Term term = new Term("lsid", lsid);
+        cbIndexWriter.deleteDocuments(new TermQuery(term));
+        term = new Term("accepted_lsid", lsid);
+        cbIndexWriter.deleteDocuments(new TermQuery(term));
+    }
      public void commit() throws Exception{
          if(cbIndexWriter !=  null)
              cbIndexWriter.commit();
@@ -389,10 +403,7 @@ public class CBCreateLuceneIndex {
           Iterator<DarwinCoreRecord> it =archive.iteratorDwc();
           while(it.hasNext()){
               Document doc = new Document();
-              DarwinCoreRecord dwcr = it.next();
-              if(dwcr.getId().equals("10063")){
-                  System.out.println("here");
-              }
+              DarwinCoreRecord dwcr = it.next();              
               String kingdom = dwcr.getKingdom();
               if(StringUtils.isNotEmpty(kingdom)){
                   doc.add(new Field(RankType.KINGDOM.getRank(), kingdom, Store.YES, Index.ANALYZED));
