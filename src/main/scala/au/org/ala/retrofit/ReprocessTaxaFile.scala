@@ -33,23 +33,28 @@ object ReprocessTaxaFile {
     var count =0
     var numberRecords=0
     val processor = new RecordProcessor
-
+    val buffer = new scala.collection.mutable.ArrayBuffer[String]
     while(line != null){
       val url = Config.biocacheServiceURL + "/occurrences/facets/download?q=lsid:"+line(0)+"&facets=row_key"
       val values=Source.fromURL(new URL(url)).mkString.split("\n").map(v=>if(v.length >2)v.substring(1,v.length-1) else v)
 
       println(line(0) + " " + line(1) + " :: " + values.length)
       if(values.length>1){
-        processor.processRecords(values.toList)
-        IndexRecords.indexList(values.toList)
+        //processor.processRecords(values.toList)
+        //IndexRecords.indexList(values.toList)
+        buffer ++= values
         numberRecords += values.length
       }
-
-
       count += 1
       line = reader.readNext()
 
     }
+    println("Starting to process " + new java.util.Date())
+    val list = buffer.toList
+    processor.processRecords(list)
+    println("Starting to index " + new java.util.Date())
+    IndexRecords.indexList(list)
+
     println("Processed " + count +" taxa. With  " + numberRecords + " reprocessed and indexed" )
   }
 
