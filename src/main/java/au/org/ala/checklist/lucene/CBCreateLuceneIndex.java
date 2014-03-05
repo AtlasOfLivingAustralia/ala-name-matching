@@ -393,13 +393,22 @@ public class CBCreateLuceneIndex {
 
     }
      public void commit() throws Exception{
-         commit(false);
+         commit(false, false);
      }
-     public void commit(boolean close) throws Exception{
+     /**
+      *
+      * @param merge whether or not to merge the index
+      * @param close whether or not to close the index
+      * @throws Exception
+      */
+     public void commit(boolean close, boolean merge) throws Exception{
          if(cbIndexWriter !=  null){
              cbIndexWriter.commit();
+             if(merge){
+                 cbIndexWriter.forceMerge(1);
+             }
              if(close){
-                 cbIndexWriter.close();
+                 cbIndexWriter.close();                 
              }
          }
      }
