@@ -7,6 +7,7 @@ import au.org.ala.names.model.ErrorType;
 import au.org.ala.names.model.LinnaeanRankClassification;
 import org.gbif.ecat.voc.NameType;
 import org.junit.Test;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
@@ -14,10 +15,11 @@ import static org.junit.Assert.fail;
 
 /**
  * The set of test associated with performing correct matches of biocache names
- *  - includes tests for error/issues types
- *  - matches based on higher classification etc...
- *
+ * - includes tests for error/issues types
+ * - matches based on higher classification etc...
+ * <p/>
  * TODO Need to add more test cases to this class
+ *
  * @author Natasha Carter
  */
 public class BiocacheMatchTest {
@@ -34,25 +36,25 @@ public class BiocacheMatchTest {
 
     }
 
-   // @Test
-    public void testTibicentibicen(){
-        try{
+    // @Test
+    public void testTibicentibicen() {
+        try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             cl.setScientificName("Tibicen tibicen");
             //don't want Tibicen tibicen to match to Tibicen (?) blah
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertNull("Result should be null: " + metrics.getResult(),metrics.getResult());
-        } catch(Exception e){
+            assertNull("Result should be null: " + metrics.getResult(), metrics.getResult());
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Test
-    public void testSPNovName(){
-        try{
-            String name="Eremophila sp.nov.";
-            String genus="Eremophila";
-            String family ="Myoporaceae";
+    public void testSPNovName() {
+        try {
+            String name = "Eremophila sp.nov.";
+            String genus = "Eremophila";
+            String family = "Myoporaceae";
             String spEp = "sp.nov.";
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             cl.setScientificName(name);
@@ -64,21 +66,20 @@ public class BiocacheMatchTest {
             assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:399930", metrics.getResult().getAcceptedLsid());
             assertTrue(metrics.getErrors().contains(ErrorType.HOMONYM));
 
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
     @Test
-    public void testAlternatePhraseName(){
-        try{
+    public void testAlternatePhraseName() {
+        try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             cl.setScientificName("Senna form taxon 'petiolaris'");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             System.out.println(metrics);
-        }
-        catch(Exception e){
+        } catch (Exception e) {
 
         }
     }
@@ -96,8 +97,8 @@ public class BiocacheMatchTest {
 //    }
 
     @Test
-    public void genericIssueTest(){
-        try{
+    public void genericIssueTest() {
+        try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             cl.setAuthorship("L.");
             cl.setScientificName("Echium vulgare L.");
@@ -113,36 +114,34 @@ public class BiocacheMatchTest {
             //System.out.println(metrics.getErrors());
             //System.out.println(metrics.getResult());
             //metrics.getLastException().printStackTrace();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Test
-    public void testHomonym(){
-        try{
-            System.out.println(searcher.searchForRecord("Terebratella",null));
-        }
-        catch(Exception e){
+    public void testHomonym() {
+        try {
+            System.out.println(searcher.searchForRecord("Terebratella", null));
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     @Test
-    public void commonName(){
-        try{
+    public void commonName() {
+        try {
             //System.out.println(searcher.searchForCommonName("Red Kangaroo"));
-           // searcher.searchForLSID("Centropogon australis");
-            searcher.searchForRecord("Dexillus muelleri",null);
-        }
-        catch(Exception e){
+            // searcher.searchForLSID("Centropogon australis");
+            searcher.searchForRecord("Dexillus muelleri", null);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Test
-    public void testMisappliedNames(){
-        try{
+    public void testMisappliedNames() {
+        try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             cl.setScientificName("Tephrosia savannicola");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
@@ -153,23 +152,20 @@ public class BiocacheMatchTest {
             metrics = searcher.searchForRecordMetrics(cl, true);
             assertTrue(metrics.getErrors().contains(ErrorType.MISAPPLIED));
             assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:319672", metrics.getResult().getLsid());
-        }
-
-        catch(Exception e){
+        } catch (Exception e) {
             fail("No exception shoudl occur");
             e.printStackTrace();
         }
     }
 
     @Test
-    public void testAuthorsProvidedInName(){
-        try{
+    public void testAuthorsProvidedInName() {
+        try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             cl.setScientificName("Acanthastrea bowerbanki Edwards & Haime, 1857");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             assertEquals(NameType.wellformed, metrics.getNameType());
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             fail("No exception should  occur");
         }
@@ -178,9 +174,9 @@ public class BiocacheMatchTest {
     //Acacia retinodes
 
     @Test
-    public void testAffCfSpecies(){
+    public void testAffCfSpecies() {
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
-        try{
+        try {
 
             cl.setScientificName("Zabidius novemaculeatus");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
@@ -205,18 +201,17 @@ public class BiocacheMatchTest {
             cl.setScientificName("Acanthastrea cf. bowerbanki Edwards & Haime, 1857");
             metrics = searcher.searchForRecordMetrics(cl, true);
             assertTrue(metrics.getErrors().contains(ErrorType.CONFER_SPECIES));
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             fail("No excpetion shoudl occur");
         }
     }
 
     @Test
-    public void testQuestionSpecies(){
-        String name ="Lepidosperma ? sp. Mt Short (S. Kern et al. LCH 17510)";
+    public void testQuestionSpecies() {
+        String name = "Lepidosperma ? sp. Mt Short (S. Kern et al. LCH 17510)";
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
         cl.setScientificName(name);
-        try{
+        try {
             //test a one where the species does not exists
             //ensures that higher matches work in this case
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
@@ -240,8 +235,7 @@ public class BiocacheMatchTest {
             assertTrue(metrics.getResult() == null);
 
             //System.out.println(metrics);
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             fail("No exception should occur");
         }

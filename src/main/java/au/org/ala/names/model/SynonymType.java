@@ -1,9 +1,23 @@
+/*
+ * Copyright (C) 2014 Atlas of Living Australia
+ * All Rights Reserved.
+ *
+ * The contents of this file are subject to the Mozilla Public
+ * License Version 1.1 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of
+ * the License at http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS
+ * IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+ * implied. See the License for the specific language governing
+ * rights and limitations under the License.
+ */
 package au.org.ala.names.model;
 
 /**
  * Stores the Synonym type information
- *
- * TODO: Get a correct description for the synonym types. 
+ * <p/>
+ * TODO: Get a correct description for the synonym types.
  *
  * @author Natasha Carter
  */
@@ -48,6 +62,7 @@ public enum SynonymType {
             idLookup.put(st.id, st);
         }
     }
+
     private Integer id;
     private String description;
 
@@ -55,17 +70,19 @@ public enum SynonymType {
         this.id = id;
         this.description = description;
     }
-    public Integer getId(){
+
+    public Integer getId() {
         return id;
     }
-    public static SynonymType getTypeFor(String value){
-        try{
-            if(value != null){
+
+    public static SynonymType getTypeFor(String value) {
+        try {
+            if (value != null) {
                 return idLookup.get(Integer.parseInt(value));
-            }
-            else
+            } else
                 return null;
+        } catch (Exception e) {
+            return null;
         }
-        catch(Exception e){return null;}
     }
 }
