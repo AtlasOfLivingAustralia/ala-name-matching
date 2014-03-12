@@ -3,9 +3,9 @@ package au.org.ala.biocache.util;
 import au.org.ala.biocache.Config;
 import au.org.ala.biocache.caches.TaxonProfileDAO;
 import au.org.ala.biocache.model.TaxonProfile;
-import au.org.ala.checklist.lucene.CBIndexSearch;
-import au.org.ala.checklist.lucene.model.NameSearchResult;
-import au.org.ala.data.util.RankType;
+import au.org.ala.names.search.ALANameSearcher;
+import au.org.ala.names.model.NameSearchResult;
+import au.org.ala.names.model.RankType;
 import au.org.ala.biocache.dto.Facet;
 import au.org.ala.biocache.dto.OccurrenceSourceDTO;
 import au.org.ala.biocache.dto.SearchRequestParams;
@@ -58,7 +58,7 @@ public class SearchUtils {
     @Value("${taxon.profile.enabled:false}")
     protected boolean taxonProfileEnabled;
 
-    CBIndexSearch nameIndex = null;
+    ALANameSearcher nameIndex = null;
 
     protected static List<String> defaultParams = new ArrayList<String>();
 
@@ -235,7 +235,7 @@ public class SearchUtils {
             //use the name matching index
             try {
                 if(nameIndex == null){
-                    nameIndex = new CBIndexSearch(nameIndexLocation);
+                    nameIndex = new ALANameSearcher(nameIndexLocation);
                 }
                 NameSearchResult nsr = nameIndex.searchForRecordByLsid(lsid);
                 if(nsr != null ){
