@@ -23,7 +23,7 @@ import au.org.ala.sds.validation.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import au.org.ala.checklist.lucene.CBIndexSearch;
+import au.org.ala.names.search.ALANameSearcher;
 import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.util.Configuration;
 
@@ -38,7 +38,7 @@ import static org.junit.Assert.assertEquals;
 public class PlantPestNotKnownInAustraliaTest {
 
 //  static DataSource dataSource;
-    static CBIndexSearch cbIndexSearch;
+    static ALANameSearcher nameSearcher;
     static SensitiveSpeciesFinder finder;
 
     @BeforeClass
@@ -49,9 +49,9 @@ public class PlantPestNotKnownInAustraliaTest {
 //        ((BasicDataSource) dataSource).setUsername("root");
 //        ((BasicDataSource) dataSource).setPassword("password");
         System.out.println(Configuration.getInstance().getNameMatchingIndex());
-        cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
-        String uri = cbIndexSearch.getClass().getClassLoader().getResource("sensitive-species.xml").toURI().toString();
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(uri, cbIndexSearch, true);
+        nameSearcher = new ALANameSearcher(Configuration.getInstance().getNameMatchingIndex());
+        String uri = nameSearcher.getClass().getClassLoader().getResource("sensitive-species.xml").toURI().toString();
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(uri, nameSearcher, true);
         //finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species-test.xml", cbIndexSearch);
     }
 
@@ -221,6 +221,26 @@ public class PlantPestNotKnownInAustraliaTest {
         assertFalse(outcome.isLoadable());
         assertEquals("PBC1", outcome.getReport().getCategory());
         System.out.println(outcome.getReport());
+    }
+
+    //@Test
+    /* NQ:2014-03-12 This test is designed to align with new requirements obtained in the Feb 2014 meeting about APPD
+    At the moment it fails because Category1 is consulted before all others. NOT used as a "catch all" as was suggested
+    at the meeting. */
+    public void testCat6TakesPrecindent(){
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Acarapis woodi");
+        assertNotNull(ss);
+        Map<String,String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.STATE_PROVINCE_KEY, "NSW");
+        facts.put(FactCollection.ZONES_KEY, "NSW");
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+        assertTrue(outcome.isValid());
+        assertFalse(outcome.isLoadable());
+        assertEquals("PBC6", outcome.getReport().getCategory());
+        System.out.println(outcome.getReport());
+
     }
 
 }

@@ -6,7 +6,7 @@ import org.apache.commons.lang.StringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import au.org.ala.checklist.lucene.CBIndexSearch;
+import au.org.ala.names.search.ALANameSearcher;
 import au.org.ala.sds.dao.DataRowHandler;
 import au.org.ala.sds.dao.DataStreamDao;
 import au.org.ala.sds.dao.DataStreamDaoFactory;
@@ -21,16 +21,16 @@ import au.org.ala.sds.validation.ValidationService;
 
 public class ProblematicFileInputTest {
 
-    static CBIndexSearch cbIndexSearch;
+    static ALANameSearcher nameSearcher;
     static SensitiveSpeciesFinder finder;
 
-    @BeforeClass
+    //@BeforeClass
     public static void runOnce() throws Exception {
-        cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
+        nameSearcher = new ALANameSearcher(Configuration.getInstance().getNameMatchingIndex());
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", nameSearcher);
     }
 
-    @Test
+   // @Test
     public void readExcelXmlWorkbook() throws Exception {
         String inputFileName = "/Users/peterflemming/Dropbox/SDS/SDStest1.xls";
         DataStreamDao dao = DataStreamDaoFactory.createDao(inputFileName);

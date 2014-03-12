@@ -21,7 +21,7 @@ import au.org.ala.sds.validation.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import au.org.ala.checklist.lucene.CBIndexSearch;
+import au.org.ala.names.search.ALANameSearcher;
 import au.org.ala.sds.util.Configuration;
 
 import java.util.HashMap;
@@ -39,7 +39,7 @@ import static org.junit.Assert.assertTrue;
 public class PlantPestUnderEradicationTest {
 
 //  static DataSource dataSource;
-    static CBIndexSearch cbIndexSearch;
+    static ALANameSearcher nameSearcher;
     static SensitiveSpeciesFinder finder;
 
     @BeforeClass
@@ -50,10 +50,10 @@ public class PlantPestUnderEradicationTest {
 //        ((BasicDataSource) dataSource).setUsername("root");
 //        ((BasicDataSource) dataSource).setPassword("password");
 
-        cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
+        nameSearcher = new ALANameSearcher(Configuration.getInstance().getNameMatchingIndex());
         //finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species-new.xml", cbIndexSearch);
-        String uri = cbIndexSearch.getClass().getClassLoader().getResource("sensitive-species.xml").toURI().toString();
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(uri, cbIndexSearch, true);
+        String uri = nameSearcher.getClass().getClassLoader().getResource("sensitive-species.xml").toURI().toString();
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(uri, nameSearcher, true);
     }
     @Test
     public void testTemporaryCatchAllRuleForCategory3(){

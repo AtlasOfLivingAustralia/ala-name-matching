@@ -14,7 +14,7 @@
  */
 package au.org.ala.sds;
 
-import au.org.ala.checklist.lucene.CBIndexSearch;
+import au.org.ala.names.search.ALANameSearcher;
 import au.org.ala.sds.model.SensitiveTaxon;
 import au.org.ala.sds.util.Configuration;
 import au.org.ala.sds.util.PlantPestUtils;
@@ -33,17 +33,17 @@ import static org.junit.Assert.*;
  * @author Natasha Carter (natasha.carter@csiro.au)
  */
 public class PlantPestIdentifiedToHigherTaxonTest {
-    static CBIndexSearch cbIndexSearch;
+    static ALANameSearcher nameSearcher;
     static SensitiveSpeciesFinder finder;
 
     @BeforeClass
     public static void runOnce() throws Exception {
 
         System.out.println(Configuration.getInstance().getNameMatchingIndex());
-        cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
+        nameSearcher = new ALANameSearcher(Configuration.getInstance().getNameMatchingIndex());
         //The URI to the test list - only contains entries that are used in one or more the the tests
-        String uri = cbIndexSearch.getClass().getClassLoader().getResource("sensitive-species.xml").toURI().toString();
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(uri, cbIndexSearch, true);
+        String uri = nameSearcher.getClass().getClassLoader().getResource("sensitive-species.xml").toURI().toString();
+        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder(uri, nameSearcher, true);
     }
 
     @Test

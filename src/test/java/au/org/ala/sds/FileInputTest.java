@@ -2,11 +2,12 @@ package au.org.ala.sds;
 
 import java.util.Map;
 
+import au.org.ala.names.search.ALANameSearcher;
 import org.apache.commons.lang.StringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import au.org.ala.checklist.lucene.CBIndexSearch;
+import au.org.ala.names.search.ALANameIndexer;
 import au.org.ala.sds.dao.DataRowHandler;
 import au.org.ala.sds.dao.DataStreamDao;
 import au.org.ala.sds.dao.DataStreamDaoFactory;
@@ -23,72 +24,72 @@ import au.org.ala.sds.validation.ValidationService;
 
 public class FileInputTest {
 
-    static CBIndexSearch cbIndexSearch;
+    static ALANameSearcher nameSearcher;
     static SensitiveSpeciesFinder finder;
 
-    @BeforeClass
-    public static void runOnce() throws Exception {
-        cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
-        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
-    }
-
-    @Test
-    public void readExcelXmlWorkbook() throws Exception {
-        String inputFileName = "/Users/peterflemming/Documents/workspaces/sds/sensitive-species/src/test/resources/workbook.xlsx";
-        DataStreamDao dao = DataStreamDaoFactory.createDao(inputFileName);
-        DataColumnMapper mapper = new DataColumnMapper();
-        mapper.add("family", "E");
-        mapper.add("genus", "F");
-        mapper.add("specificEpithet", "G");
-        mapper.add("intraspecificEpithet", "H");
-        mapper.add("municipality", "Q");
-        mapper.add("stateProvince", "R");
-        mapper.add("country", "S");
-        mapper.add("decimalLatitude", "T");
-        mapper.add("decimalLongitude", "U");
-        mapper.add("eventDate", "W");
-        mapper.add("year", "X");
-
-        DataStreamProperties properties = new DataStreamProperties(2, 11, 2);
-
-        dao.processStream(
-                mapper,
-                properties,
-                new DataRowHandler() {
-                    public void handleRow(Map<String, String> facts) {
-                        processRow(facts);
-                    }
-                });
-    }
-
-    @Test
-    public void readExcelWorkbook() throws Exception {
-        String inputFileName = "/Users/peterflemming/Documents/workspaces/sds/sensitive-species/src/test/resources/workbook.xls";
-        DataStreamDao dao = DataStreamDaoFactory.createDao(inputFileName);
-        DataColumnMapper mapper = new DataColumnMapper();
-        mapper.add("family", "E");
-        mapper.add("genus", "F");
-        mapper.add("specificEpithet", "G");
-        mapper.add("intraspecificEpithet", "H");
-        mapper.add("municipality", "Q");
-        mapper.add("stateProvince", "R");
-        mapper.add("country", "S");
-        mapper.add("decimalLatitude", "T");
-        mapper.add("decimalLongitude", "U");
-        mapper.add("eventDate", "W");
-        mapper.add("year", "X");
-
-        DataStreamProperties properties = new DataStreamProperties(2, 0, 3);
-
-        dao.processStream(
-                mapper,
-                properties,
-                new DataRowHandler() {
-                    public void handleRow(Map<String, String> facts) {
-                        processRow(facts);
-                    }
-                });
-    }
+//    @BeforeClass
+//    public static void runOnce() throws Exception {
+//        cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
+//        finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
+//    }
+//
+//    @Test
+//    public void readExcelXmlWorkbook() throws Exception {
+//        String inputFileName = "/Users/peterflemming/Documents/workspaces/sds/sensitive-species/src/test/resources/workbook.xlsx";
+//        DataStreamDao dao = DataStreamDaoFactory.createDao(inputFileName);
+//        DataColumnMapper mapper = new DataColumnMapper();
+//        mapper.add("family", "E");
+//        mapper.add("genus", "F");
+//        mapper.add("specificEpithet", "G");
+//        mapper.add("intraspecificEpithet", "H");
+//        mapper.add("municipality", "Q");
+//        mapper.add("stateProvince", "R");
+//        mapper.add("country", "S");
+//        mapper.add("decimalLatitude", "T");
+//        mapper.add("decimalLongitude", "U");
+//        mapper.add("eventDate", "W");
+//        mapper.add("year", "X");
+//
+//        DataStreamProperties properties = new DataStreamProperties(2, 11, 2);
+//
+//        dao.processStream(
+//                mapper,
+//                properties,
+//                new DataRowHandler() {
+//                    public void handleRow(Map<String, String> facts) {
+//                        processRow(facts);
+//                    }
+//                });
+//    }
+//
+//    @Test
+//    public void readExcelWorkbook() throws Exception {
+//        String inputFileName = "/Users/peterflemming/Documents/workspaces/sds/sensitive-species/src/test/resources/workbook.xls";
+//        DataStreamDao dao = DataStreamDaoFactory.createDao(inputFileName);
+//        DataColumnMapper mapper = new DataColumnMapper();
+//        mapper.add("family", "E");
+//        mapper.add("genus", "F");
+//        mapper.add("specificEpithet", "G");
+//        mapper.add("intraspecificEpithet", "H");
+//        mapper.add("municipality", "Q");
+//        mapper.add("stateProvince", "R");
+//        mapper.add("country", "S");
+//        mapper.add("decimalLatitude", "T");
+//        mapper.add("decimalLongitude", "U");
+//        mapper.add("eventDate", "W");
+//        mapper.add("year", "X");
+//
+//        DataStreamProperties properties = new DataStreamProperties(2, 0, 3);
+//
+//        dao.processStream(
+//                mapper,
+//                properties,
+//                new DataRowHandler() {
+//                    public void handleRow(Map<String, String> facts) {
+//                        processRow(facts);
+//                    }
+//                });
+//    }
 
 //    @Test
 //    public void readCsvFile() throws Exception {

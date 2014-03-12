@@ -15,7 +15,7 @@ import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
 
-import au.org.ala.checklist.lucene.CBIndexSearch;
+import au.org.ala.names.search.ALANameSearcher;
 import au.org.ala.sds.dao.SensitiveSpeciesDao;
 import au.org.ala.sds.dao.SensitiveSpeciesMySqlDao;
 import au.org.ala.sds.dao.SensitiveSpeciesXmlDao;
@@ -32,19 +32,19 @@ public class SensitiveSpeciesFinderFactory {
 
     private static final String SPECIES_RESOURCE = "sensitive-species.xml";
 
-    public static SensitiveSpeciesFinder getSensitiveSpeciesFinder(DataSource dataSource, CBIndexSearch cbIndexSearcher) throws Exception {
+    public static SensitiveSpeciesFinder getSensitiveSpeciesFinder(DataSource dataSource, ALANameSearcher nameSearcher) throws Exception {
 
         SensitiveSpeciesDao dao = new SensitiveSpeciesMySqlDao(dataSource);
-        SensitiveTaxonStore store = new SensitiveTaxonStore(dao, cbIndexSearcher);
+        SensitiveTaxonStore store = new SensitiveTaxonStore(dao, nameSearcher);
         return new SensitiveSpeciesFinder(store);
 
     }
 
-    public static SensitiveSpeciesFinder getSensitiveSpeciesFinder(String dataUrl, CBIndexSearch cbIndexSearcher) throws Exception {
-        return getSensitiveSpeciesFinder(dataUrl, cbIndexSearcher,false);
+    public static SensitiveSpeciesFinder getSensitiveSpeciesFinder(String dataUrl, ALANameSearcher nameSearcher) throws Exception {
+        return getSensitiveSpeciesFinder(dataUrl, nameSearcher,false);
     }
 
-    public static SensitiveSpeciesFinder getSensitiveSpeciesFinder(String dataUrl, CBIndexSearch cbIndexSearcher, boolean forceReload) throws Exception {
+    public static SensitiveSpeciesFinder getSensitiveSpeciesFinder(String dataUrl, ALANameSearcher nameSearcher, boolean forceReload) throws Exception {
 
         SensitiveTaxonStore store = null;
 
@@ -54,20 +54,20 @@ public class SensitiveSpeciesFinderFactory {
                 logger.info("Reading SensitveTaxonStore from serialized cache file " + cache.getPath());
                 store = getStoreFromCache(cache);
             } else {
-                store = getStoreFromUrl(dataUrl, cbIndexSearcher);
+                store = getStoreFromUrl(dataUrl, nameSearcher);
                 writeStoreCache(cache, store);
             }
         } else {
-            store = getStoreFromUrl(dataUrl, cbIndexSearcher);
+            store = getStoreFromUrl(dataUrl, nameSearcher);
         }
 
         return new SensitiveSpeciesFinder(store);
 
     }
 
-    public static SensitiveSpeciesFinder getSensitiveSpeciesFinder(CBIndexSearch cbIndexSearcher) throws Exception {
+    public static SensitiveSpeciesFinder getSensitiveSpeciesFinder(ALANameSearcher nameSearcher) throws Exception {
 
-        return getSensitiveSpeciesFinder(Configuration.getInstance().getSpeciesUrl(), cbIndexSearcher);
+        return getSensitiveSpeciesFinder(Configuration.getInstance().getSpeciesUrl(), nameSearcher);
 
     }
     /*
@@ -75,7 +75,7 @@ public class SensitiveSpeciesFinderFactory {
         This should be appropriate because the list will be updated more regularly and the name match supplied
         should be the correct guid
     */
-    private static SensitiveTaxonStore getStoreFromUrl(String dataUrl, CBIndexSearch cbIndexSearcher) throws Exception {
+    private static SensitiveTaxonStore getStoreFromUrl(String dataUrl, ALANameSearcher cbIndexSearcher) throws Exception {
 
         URL url = null;
         InputStream is = null;

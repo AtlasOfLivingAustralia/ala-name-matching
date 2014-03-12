@@ -24,11 +24,11 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
-import au.org.ala.checklist.lucene.CBIndexSearch;
-import au.org.ala.checklist.lucene.SearchResultException;
-import au.org.ala.checklist.lucene.model.NameSearchResult;
-import au.org.ala.data.model.LinnaeanRankClassification;
-import au.org.ala.data.util.RankType;
+import au.org.ala.names.search.ALANameSearcher;
+import au.org.ala.names.search.SearchResultException;
+import au.org.ala.names.model.NameSearchResult;
+import au.org.ala.names.model.LinnaeanRankClassification;
+import au.org.ala.names.model.RankType;
 import au.org.ala.sds.dao.SensitiveSpeciesDao;
 import au.org.ala.sds.model.SensitiveTaxon.Rank;
 
@@ -48,10 +48,10 @@ public class SensitiveTaxonStore implements Serializable {
     private final Map<String, Integer> lsidMap;
     private final Map<String, Integer> nameMap;
 
-    private transient final CBIndexSearch cbIndexSearcher;
+    private transient final ALANameSearcher namesSearcher;
 
-    public SensitiveTaxonStore(SensitiveSpeciesDao dao, CBIndexSearch cbIndexSearcher) throws Exception {
-        this.cbIndexSearcher = cbIndexSearcher;
+    public SensitiveTaxonStore(SensitiveSpeciesDao dao, ALANameSearcher nameSearcher) throws Exception {
+        this.namesSearcher = nameSearcher;
         this.lsidMap = new HashMap<String, Integer>();
         this.nameMap = new HashMap<String, Integer>();
         this.taxonList = dao.getAll();
@@ -166,9 +166,9 @@ public class SensitiveTaxonStore implements Serializable {
 
     private NameSearchResult getAcceptedName(String name) {
         NameSearchResult match = null;
-        if (cbIndexSearcher != null) {
+        if (namesSearcher != null) {
             try {
-                match = cbIndexSearcher.searchForRecord(name, null);
+                match = namesSearcher.searchForRecord(name, null);
                 if (match != null && match.isSynonym()) {
                     match = getAcceptedNameFromSynonym(match);
                 }
@@ -185,11 +185,11 @@ public class SensitiveTaxonStore implements Serializable {
     private NameSearchResult lookupName(SensitiveTaxon st) {
         String name = null;
         NameSearchResult match = null;
-        if (cbIndexSearcher != null) {
+        if (namesSearcher != null) {
             try {
                 name = st.getTaxonName();
                 LinnaeanRankClassification lrc = new LinnaeanRankClassification(null, null, null, null, st.getFamily().equals("") ? null : st.getFamily() , null, name);
-                match = cbIndexSearcher.searchForRecord(name, lrc, null);
+                match = namesSearcher.searchForRecord(name, lrc, null);
             } catch (SearchResultException e) {
                 logger.debug("'" + name + "' - " + e.getMessage());
             } catch (RuntimeException e) {
@@ -203,7 +203,7 @@ public class SensitiveTaxonStore implements Serializable {
     private NameSearchResult getAcceptedNameFromSynonym(NameSearchResult match) {
         NameSearchResult accepted;
         if (match.isSynonym()) {
-            accepted = cbIndexSearcher.searchForRecordByLsid(match.getAcceptedLsid());
+            accepted = namesSearcher.searchForRecordByLsid(match.getAcceptedLsid());
             if (accepted == null) {
                 logger.error("Could not find accepted name for synonym '" + match.getCleanName() + "'");
             }

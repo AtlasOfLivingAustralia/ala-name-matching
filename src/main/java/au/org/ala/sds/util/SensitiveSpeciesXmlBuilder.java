@@ -12,7 +12,7 @@ import java.util.*;
 
 import javax.sql.DataSource;
 
-import au.org.ala.data.util.PhraseNameParser;
+import au.org.ala.names.parser.PhraseNameParser;
 import au.org.ala.sds.model.*;
 import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.commons.lang3.StringUtils;
