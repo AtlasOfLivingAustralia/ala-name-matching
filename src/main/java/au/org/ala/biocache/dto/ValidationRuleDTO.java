@@ -27,6 +27,7 @@ public class ValidationRuleDTO {
     public String classification;
     public String species;
     public String area;
+    public String query; //support a generic query as well
     public java.lang.Boolean ignored;
 
     public Integer getId() {
@@ -107,5 +108,13 @@ public class ValidationRuleDTO {
 
     public void setUser(ValidationUserDTO user) {
         this.user = user;
+    }
+
+    public String getQuery() {
+        return query;
+    }
+
+    public void setQuery(String query) {
+        this.query = query;
     }
 }

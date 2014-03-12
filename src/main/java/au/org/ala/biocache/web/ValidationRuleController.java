@@ -89,6 +89,38 @@ public class ValidationRuleController extends AbstractSecureController {
         return "Success";
     }
 
+    @RequestMapping(value={"/validation/rules/rematch"})
+    public void reinitialiseRules(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        String apiKey = request.getParameter("apiKey");
+        ObjectMapper om = new ObjectMapper();
+        if(shouldPerformOperation(apiKey, response)){
+            int count=0,changed=0,notfound=0;
+            for(ValidationRule vr: Store.getValidationRules()){
+                //get the ValidationRuleDTO for the raw value
+                String rawValue = vr.getRawAssertion();
+                ValidationRuleDTO validationRuleDTO = om.readValue(rawValue, ValidationRuleDTO.class);
+                if(validationRuleDTO != null && validationRuleDTO.getSpecies()!=null){
+                    count++;
+                    String guid = speciesLookupService.getGuidForName(validationRuleDTO.getSpecies());
+                    if(guid != null){
+                        if(!vr.getRawQuery().contains(guid)){
+                            logger.warn("GUID has changed OLD:" + vr.getRawQuery() + " new : " + guid);
+                            changed++;
+                            vr.setWkt(validationRuleDTO.getArea());
+                            vr.setRawQuery(getRawQuery(null, guid, vr.getWkt()));
+                            //now update it in the store
+                            Store.addValidationRule(vr);
+                        }
+                    }   else{
+                        logger.warn("Unable to find species " + validationRuleDTO.getSpecies());
+                        notfound++;
+                    }
+                }
+            }
+            logger.info("Finished rematching the validation rules to species. Total records checked: " + count + ". Changed: " + changed + " . Not found: " + notfound);
+        }
+    }
+
     /**
      * Example expected payload
      *
@@ -133,10 +165,11 @@ public class ValidationRuleController extends AbstractSecureController {
                         //new or update
                         //does the species exist
                         String guid = speciesLookupService.getGuidForName(validationRuleDTO.getSpecies());
-                        if (guid != null){
+                        if ((guid != null || validationRuleDTO.getQuery() != null) && validationRuleDTO.getId() != null){
                             //check to see if the area is well formed.
                             SpatialSearchRequestParams ssr = new SpatialSearchRequestParams();
-                            ssr.setQ("lsid:" +guid);
+                            String query = guid != null ? "lsid:" + guid:validationRuleDTO.getQuery();
+                            ssr.setQ(query);
                             ssr.setWkt(validationRuleDTO.getArea());
                             ssr.setFacet(false);
                             try {
@@ -145,6 +178,8 @@ public class ValidationRuleController extends AbstractSecureController {
                                 logger.debug("Validation rule should apply to records: " + recordCount);
                                 //now create the query assertion
                                 ValidationRule validationRule = new ValidationRule();
+                                //NQ: need the id to be populated to construct the correct validation rowkey to allow for updates
+                                validationRule.setId(validationRuleDTO.getId().toString());
                                 //copy form DTO -> model object for storage
                                 validationRule.setApiKey(validationRuleDTO.apiKey);
                                 validationRule.setRawAssertion(rawValue);
@@ -156,7 +191,8 @@ public class ValidationRuleController extends AbstractSecureController {
                                 validationRule.setUserId(userId);
                                 validationRule.setUserEmail(validationRuleDTO.user.getEmail());
                                 validationRule.setAuthority(validationRuleDTO.user.getAuthority().toString());
-                                validationRule.setRawQuery("?q=" + ssr.getQ() + "&wkt=" + ssr.getWkt());
+
+                                validationRule.setRawQuery(getRawQuery(validationRuleDTO.getQuery(), guid, validationRuleDTO.getArea()));
                                 if(validationRuleDTO.getStatus().equals("new")){
                                     validationRule.setCreatedDate(validationRuleDTO.getLastModified());
                                 }
@@ -179,6 +215,20 @@ public class ValidationRuleController extends AbstractSecureController {
             logger.error(e.getMessage(),e);
             response.sendError(HttpURLConnection.HTTP_BAD_REQUEST);
         }
+    }
+    private String getRawQuery(String query, String guid, String wkt){
+        StringBuilder sb = new StringBuilder("?q=");
+        if(guid != null){
+            sb.append("lsid:").append(guid);
+        } else if(query != null){
+            sb.append(query);
+        } else {
+            sb.append("*:*");
+        }
+        if(wkt != null){
+            sb.append("&wkt=").append(wkt);
+        }
+        return sb.toString();
     }
     /**
      * Returns a list of query assertions.
