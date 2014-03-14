@@ -83,6 +83,7 @@ public class SensitiveSpeciesXmlBuilder {
             return false;
 
         String currentGuid = "";
+        List<String> resources= new ArrayList<String>();
         Element sensitiveSpecies = null;
         Element instances =null;
 
@@ -113,9 +114,13 @@ public class SensitiveSpeciesXmlBuilder {
                 //sensitiveSpecies.setAttribute("commonName", st.getCommonName() != null ? st.getCommonName() : "");
                 root.addContent(sensitiveSpecies);
                 currentGuid = item.getGuid();
-
+                resources.clear();
             }
-            addInstanceInformation(sdsLists, item,instances);
+            //NQ 2014-03-14 - Ensure that each data resource only has one inclusion for each species
+            if(!resources.contains(item.getDataResourceUid())){
+                resources.add(item.getDataResourceUid());
+                addInstanceInformation(sdsLists, item,instances);
+            }
         }
         sensitiveSpecies.addContent(instances);
         //Step 2: get all the items that could NOT be matched to the current species list
@@ -123,6 +128,7 @@ public class SensitiveSpeciesXmlBuilder {
         String currentName = "";
         sensitiveSpecies = null;
         instances =null;
+        resources.clear();
         for(SDSSpeciesListItemDTO item : unmatchedItems){
             //if it si a new guid add a new sensitive species
             if(!currentName.equals(item.getName())){
@@ -145,9 +151,12 @@ public class SensitiveSpeciesXmlBuilder {
                 //sensitiveSpecies.setAttribute("commonName", st.getCommonName() != null ? st.getCommonName() : "");
                 root.addContent(sensitiveSpecies);
                 currentName = item.getName();
-
+                resources.clear();
             }
-            addInstanceInformation(sdsLists, item,instances);
+            if(!resources.contains(item.getDataResourceUid())){
+                resources.add(item.getDataResourceUid());
+                addInstanceInformation(sdsLists, item,instances);
+            }
         }
         sensitiveSpecies.addContent(instances);
 
