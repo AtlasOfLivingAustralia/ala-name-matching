@@ -40,6 +40,7 @@ public class KnowledgeBaseFactory {
         rules.put(SensitivityCategory.PLANT_PEST_HIGHER_TAXON_ID, "PBC10-IdentificationToHigherTaxon.drl");
         //attempt to create all on a single thread
         for(String drl : rules.values()){
+            logger.warn("Prebuilding " + drl);
             KnowledgeBuilder builder = KnowledgeBuilderFactory.newKnowledgeBuilder();
             builder.add(ResourceFactory.newClassPathResource(drl), ResourceType.DRL);
         }
