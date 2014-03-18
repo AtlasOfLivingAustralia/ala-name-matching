@@ -1,7 +1,7 @@
 package au.org.ala.sds.validation;
 
-import org.drools.runtime.KnowledgeRuntime;
-import org.drools.runtime.rule.RuleContext;
+import org.kie.api.runtime.KieRuntime;
+import org.kie.api.runtime.rule.RuleContext;
 
 import au.org.ala.sds.model.Message;
 
@@ -40,7 +40,7 @@ public class ValidationHelper {
     }
 
     public static void addMessage(RuleContext drools, Message.Type type, String msgKey, Object... context) {
-        KnowledgeRuntime knowledgeRuntime = drools.getKnowledgeRuntime();
+        KieRuntime knowledgeRuntime = drools.getKieRuntime();
         ValidationReport validationReport = (ValidationReport) knowledgeRuntime.getGlobal("validationReport");
         validationReport.addMessage(MessageFactory.createMessage(type, msgKey, context));
     }

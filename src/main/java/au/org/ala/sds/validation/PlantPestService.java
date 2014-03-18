@@ -11,8 +11,8 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.drools.KnowledgeBase;
-import org.drools.runtime.StatelessKnowledgeSession;
+import org.kie.internal.KnowledgeBase;
+import org.kie.internal.runtime.StatelessKnowledgeSession;
 
 import au.org.ala.sds.knowledgebase.KnowledgeBaseFactory;
 import au.org.ala.sds.model.Message;
