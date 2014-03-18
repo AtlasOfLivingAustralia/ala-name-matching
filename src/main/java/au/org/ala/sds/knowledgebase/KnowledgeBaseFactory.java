@@ -24,6 +24,7 @@ import au.org.ala.sds.model.SensitivityCategory;
 public class KnowledgeBaseFactory {
 
     protected static final Logger logger = Logger.getLogger(KnowledgeBaseFactory.class);
+    private static final Object lock = new Object();
 
     static private Map<String, String> rules  = new HashMap<String, String>();
     static {
@@ -40,23 +41,25 @@ public class KnowledgeBaseFactory {
     }
     static private Map<SensitivityCategory, KnowledgeBase> kbs = new HashMap<SensitivityCategory, KnowledgeBase>();
 
-    public static KnowledgeBase getKnowledgeBase(SensitivityCategory category) {
+public static KnowledgeBase getKnowledgeBase(SensitivityCategory category) {
         KnowledgeBase knowledgeBase;
+        //NQ 20140318 : It is necessary to synchronise to prevent: Exception in thread "Thread-5" java.lang.LinkageError: au/org/ala/sds/validation/Rule_In_Australia_bebc6a80b9c9410ba9c5d297087be8cc
+        synchronized (lock){
+            if ((knowledgeBase = kbs.get(category)) == null) {
+                logger.debug("Instantiating KnowledgeBase '" + rules.get(category.getId()) + "'");
+                KnowledgeBuilder builder = KnowledgeBuilderFactory.newKnowledgeBuilder();
+                builder.add(ResourceFactory.newClassPathResource(rules.get(category.getId())), ResourceType.DRL);
+                if (builder.hasErrors()) {
+                    throw new RuntimeException(builder.getErrors().toString());
+                }
 
-        if ((knowledgeBase = kbs.get(category)) == null) {
-            logger.debug("Instantiating KnowledgeBase '" + rules.get(category.getId()) + "'");
-            KnowledgeBuilder builder = KnowledgeBuilderFactory.newKnowledgeBuilder();
-            builder.add(ResourceFactory.newClassPathResource(rules.get(category.getId())), ResourceType.DRL);
-            if (builder.hasErrors()) {
-                throw new RuntimeException(builder.getErrors().toString());
+                KnowledgeBaseConfiguration configuration = org.drools.KnowledgeBaseFactory.newKnowledgeBaseConfiguration();
+                configuration.setOption(SequentialOption.YES);
+
+                knowledgeBase = org.drools.KnowledgeBaseFactory.newKnowledgeBase(configuration);
+                knowledgeBase.addKnowledgePackages(builder.getKnowledgePackages());
+                kbs.put(category, knowledgeBase);
             }
-
-            KnowledgeBaseConfiguration configuration = org.drools.KnowledgeBaseFactory.newKnowledgeBaseConfiguration();
-            configuration.setOption(SequentialOption.YES);
-
-            knowledgeBase = org.drools.KnowledgeBaseFactory.newKnowledgeBase(configuration);
-            knowledgeBase.addKnowledgePackages(builder.getKnowledgePackages());
-            kbs.put(category, knowledgeBase);
         }
 
         logger.debug("Using KnowledgeBase '" + rules.get(category.getId()) + "'");
