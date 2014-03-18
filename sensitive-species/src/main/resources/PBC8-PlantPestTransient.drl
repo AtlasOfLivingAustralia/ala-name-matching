@@ -1,0 +1,58 @@
+import java.lang.String;
+import java.util.List;
+import java.util.Map;
+import java.util.Date;
+import org.apache.log4j.Logger;
+import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.validation.MessageFactory;
+import au.org.ala.sds.model.SensitivityCategory;
+import au.org.ala.sds.validation.RuleState;
+import au.org.ala.sds.validation.ValidationReport;
+import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.util.PlantPestUtils;
+
+import org.drools.runtime.rule.RuleContext;
+
+global ValidationReport validationReport;
+global RuleState state;
+global Logger logger;
+
+import function au.org.ala.sds.validation.ValidationHelper.*;
+
+//NC: Category 8 rule is a subset of category 1 "In Australia" rule.
+rule "Transient: non actionable"
+    when
+        $st : SensitiveTaxon()
+        $zones : List()
+        $date : Date()
+        eval(SensitivityZone.isInAustralia($zones) && PlantPestUtils.isANonActionableTransientEvent($st, SensitivityCategory.PLANT_PEST_NON_TRANSIENT, $date, $zones))
+    then
+        //the record can be loaded but it needs restricted attributes.
+        state.setLoadable(true);
+        state.setComplete(true);
+        state.setRestricted(true);
+        info(kcontext, MessageFactory.PLANT_PEST_MSG_CAT8, $st.getTaxonName());
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT8, $st.getTaxonName()));
+        logger.warn("PBC8 Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "Not Transient partt 1"
+    when
+        not Date()
+    then
+        logger.debug("PBC8 Rule Not applicable without a date - checking PBC1");
+        state.setDelegateRules("PBC1");
+        state.setComplete(false);
+end
+
+rule "Not Transient"
+    when
+        $st : SensitiveTaxon()
+        $zones : List()
+        $date : Date()
+        eval(!SensitivityZone.isInAustralia($zones) || !PlantPestUtils.isANonActionableTransientEvent($st, SensitivityCategory.PLANT_PEST_NON_TRANSIENT, $date, $zones))
+    then
+        logger.debug("PBC8 Rule Not applicable in this situation - checking PBC1");
+        state.setDelegateRules("PBC1");
+        state.setComplete(false);
+end

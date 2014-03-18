@@ -1,0 +1,86 @@
+package au.org.ala.sds.validation;
+
+import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.model.SensitivityCategory;
+import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.model.SensitivityZoneFactory;
+import au.org.ala.sds.util.PlantPestUtils;
+import au.org.ala.sds.validation.RuleState;
+import au.org.ala.sds.validation.ValidationReport;
+import java.util.Date;
+import java.util.List;
+import org.apache.log4j.Logger;
+import org.drools.runtime.rule.RuleContext;
+
+global ValidationReport validationReport;
+global RuleState state;
+global Logger logger;
+
+import function au.org.ala.sds.validation.ValidationHelper.*;
+
+rule "In South Australia outside FFEZ"
+    when
+        $st : SensitiveTaxon()
+        $zones : List()
+        eval($zones.contains(SensitivityZoneFactory.getZone(SensitivityZone.SA)) && PlantPestUtils.isOutsideZone($st, SensitivityCategory.PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY, $zones))
+    then
+        state.setDelegateRules("PBC6");
+        state.setComplete(false);
+        logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
+        //warning(kcontext, );
+end
+
+rule "Inside FFEZ since commencement date"
+    when
+        $st : SensitiveTaxon()
+        $zones : List()
+        $date : Date()
+        eval(PlantPestUtils.isInZoneDuringPeriod($st, SensitivityCategory.PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY, $zones, $date))
+    then
+        state.setLoadable(true);
+        //state.setAnnotation("Occurrence of QFF from a region where active managment in the form of trapping and suppression activities protects important horticultural areas");
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT5B_A1));
+        logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "Inside FFEZ before commencement date"
+    when
+        $st : SensitiveTaxon()
+        $zones : List()
+        $date : Date()
+        eval(PlantPestUtils.isInZoneBeforePeriod($st, SensitivityCategory.PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY, $zones, $date))
+    then
+        state.setLoadable(true);
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT5B_A2));
+        //state.setAnnotation("Historic record that occurred before management practises where implemented to protect important horticultural areas from QFF");
+        logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
+end
+   /**
+     * This rule  is NOT covered in the documentation.  But is a legitimate condition that should probably be
+     * handled
+     */
+rule "Inside FFEZ no date"
+    when
+        not Date()
+        $st: SensitiveTaxon()
+        $zones: List()
+    then
+        state.setLoadable(true);
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT5B_A3));
+        logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "Outside FFEZ"
+    when
+        $st : SensitiveTaxon()
+        $zones : List()
+        eval(PlantPestUtils.isOutsideZone($st, SensitivityCategory.PLANT_PEST_IS_QUEENSLAND_FRUIT_FLY, $zones))
+    then        
+        state.setLoadable(true);
+        //NC: According to documentation records of this typep DO NOT need to be annotated or notified
+        //state.setAnnotation("Occurrence of QFF outside of the FFEZ");
+        //need to test if the sensitive species is notifiable under state legislation
+        state.setDelegateRules("PBC6");
+        state.setComplete(false);
+        logger.warn("PBC5b Rule '" + kcontext.getRule().getName() + "'");
+end

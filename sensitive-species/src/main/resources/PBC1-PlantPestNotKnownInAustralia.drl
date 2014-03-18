@@ -1,0 +1,116 @@
+package au.org.ala.sds.validation;
+
+import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.validation.MessageFactory;
+import au.org.ala.sds.model.SensitivityCategory;
+import au.org.ala.sds.validation.RuleState;
+import au.org.ala.sds.validation.ValidationReport;
+import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.util.PlantPestUtils;
+import java.util.List;
+import java.util.Map;
+import java.util.Date;
+import org.apache.log4j.Logger;
+import org.drools.runtime.rule.RuleContext;
+
+global ValidationReport validationReport;
+global RuleState state;
+global Logger logger;
+
+import function au.org.ala.sds.validation.ValidationHelper.*;
+//dialect "mvel"
+
+rule "Queensland Fruit Fly"
+    when
+        $st :SensitiveTaxon(name == "Bactrocera tryoni")
+    then
+        state.setDelegateRules("PBC5b");
+        state.setComplete(false);
+end
+
+//rule "In Australia details 1"
+//    when
+//        $zones : List()
+//        $st : SensitiveTaxon(name != "Bactrocera tryoni")
+//        $map: Map( eval( $map.get("dataResourceUid") !=null ))
+//        //eval(this["dataResourceUid"] ! =null))
+//        // Map( eval( ($dr: this["dataResourceUid"]) !=null ))
+//        eval(SensitivityZone.isInAustralia($zones))
+//    then
+//        state.setLoadable(false);
+//        // The warning message for the submitter?
+//        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_A1);
+//        //the alert for the biosecurity authority
+//        alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_A3,$st.getTaxonName(), $map.get("dataResourceUid"), ((SensitivityZone)$zones.get(0)).getName());
+//        logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
+//end
+
+rule "In Australia"
+    when
+        $zones : List()
+        $st : SensitiveTaxon(name !="Bactrocera tryoni")
+        $map: Map()
+        eval(SensitivityZone.isInAustralia($zones) && !SensitivityZone.isInTorresStrait($zones))
+    then
+        state.setLoadable(false);
+        // The warning message for the submitter?
+        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_A1,
+                PlantPestUtils.mapGetOrElse($map, "scientificName", $st.getTaxonName()) + ","+
+                PlantPestUtils.mapGetOrElse($map, "eventDate","Unknown Date") + " and " +PlantPestUtils.getLocalityFromMapForMessage($map, $zones)
+                );
+        //the alert for the biosecurity authority
+        alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_A3,$st.getTaxonName(),
+              PlantPestUtils.mapGetOrElse($map, "dataResourceName",PlantPestUtils.mapGetOrElse($map,"dataResourceUid","Unknown submitting resource")), $zones.get(0),
+              PlantPestUtils.mapGetOrElse($map, "eventDate", "Unknown Date"));
+        logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "In External Territory"
+    when
+        $zones : List()
+        $st: SensitiveTaxon(name != "Bactrocera tryoni")
+        $map: Map()
+        eval(SensitivityZone.isExternalTerritory($zones))
+    then
+        state.setLoadable(true);
+        //The info for the assertion on the occurrence record
+        //info(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_B1, ((SensitivityZone)$zones.get(0)).getName(), $st.getTaxonName());
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT1_B1),
+                        PlantPestUtils.getLocalityFromMapForMessage($map, $zones),
+                        $st.getTaxonName());
+        logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "In Torres Strait Zone"
+    when
+        $zones : List()
+        eval(SensitivityZone.isInTorresStrait($zones))
+    then        
+        state.setDelegateRules("PBC5a");
+        state.setComplete(false);
+        logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "Not in Australia"
+    when
+        $zones : List()
+        $st: SensitiveTaxon(name != "Bactrocera tryoni")
+        eval(SensitivityZone.isNotInAustralia($zones))
+    then
+        state.setLoadable(true);
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT1_D1), $st.getTaxonName());
+        info(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_D1, $st.getTaxonName());
+        logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "Location not provided"
+    when
+        $zones : List()
+        $st: SensitiveTaxon(name != "Bactrocera tryoni")
+        eval($zones.isEmpty())
+    then
+        state.setLoadable(false);
+        state.setAnnotation(MessageFactory.getMessageText(MessageFactory.PLANT_PEST_MSG_CAT1_A0), $st.getTaxonName());
+        info(kcontext, MessageFactory.PLANT_PEST_MSG_CAT1_A0, $st.getTaxonName());
+        logger.warn("PBC1 Rule '" + kcontext.getRule().getName() + "'");
+end

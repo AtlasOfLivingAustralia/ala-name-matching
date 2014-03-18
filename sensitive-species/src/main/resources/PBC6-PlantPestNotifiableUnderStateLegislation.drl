@@ -1,0 +1,48 @@
+package au.org.ala.sds.validation;
+
+import au.org.ala.sds.model.SensitiveTaxon;
+import au.org.ala.sds.model.SensitivityCategory;
+import au.org.ala.sds.model.SensitivityZone;
+import au.org.ala.sds.util.PlantPestUtils;
+import au.org.ala.sds.validation.RuleState;
+import au.org.ala.sds.validation.ValidationReport;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import org.apache.log4j.Logger;
+import org.drools.runtime.rule.RuleContext;
+
+global ValidationReport validationReport;
+global RuleState state;
+global Logger logger;
+
+import function au.org.ala.sds.validation.ValidationHelper.*;
+
+rule "Plant pest notifiable in this State"
+    when
+        $st : SensitiveTaxon()
+        $zones : List()
+        $map: Map()
+        eval(PlantPestUtils.isInsideZone($st, SensitivityCategory.PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION, $zones))
+    then
+        state.setLoadable(false);
+        warning(kcontext, MessageFactory.PLANT_PEST_MSG_CAT6_A1,PlantPestUtils.mapGetOrElse($map, "scientificName", $st.getTaxonName()) + ","+
+                PlantPestUtils.mapGetOrElse($map, "eventDate","Unknown Date") + " and " +PlantPestUtils.getLocalityFromMapForMessage($map, $zones),
+                PlantPestUtils.getSensitivityZone($st, SensitivityCategory.PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION, $zones));
+        alert(kcontext, MessageFactory.PLANT_PEST_MSG_CAT6_A2, $st.getTaxonName(),
+                PlantPestUtils.getSensitivityZone($st, SensitivityCategory.PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION, $zones),
+                PlantPestUtils.mapGetOrElse($map, "dataResourceName",PlantPestUtils.mapGetOrElse($map,"dataResourceUid","Unknown submitting resource")),
+                PlantPestUtils.getLocalityFromMapForMessage($map, $zones),
+                PlantPestUtils.mapGetOrElse($map, "eventDate","Unknown date"));
+        logger.warn("PBC6 Rule '" + kcontext.getRule().getName() + "'");
+end
+
+rule "Plant pest not notifiable in this State"
+    when
+        $st : SensitiveTaxon()
+        $zones : List()
+        eval(PlantPestUtils.isOutsideZone($st, SensitivityCategory.PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION, $zones))
+    then
+        state.setLoadable(true);
+        logger.warn("PBC6 Rule '" + kcontext.getRule().getName() + "'" + " " + SensitivityCategory.PLANT_PEST_NOTIFIABLE_UNDER_STATE_LEGISLATION);
+end
