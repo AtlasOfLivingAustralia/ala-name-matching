@@ -38,6 +38,11 @@ public class KnowledgeBaseFactory {
         rules.put(SensitivityCategory.PLANT_PEST_NON_TRANSIENT, "PBC8-PlantPestTransient.drl");
         rules.put(SensitivityCategory.PLANT_PEST_EXOTIC_BIOLOGICAL_CONTROL_AGENT, "PBC9-ExoticBiologicalControlAgent.drl");
         rules.put(SensitivityCategory.PLANT_PEST_HIGHER_TAXON_ID, "PBC10-IdentificationToHigherTaxon.drl");
+        //attempt to create all on a single thread
+        for(String drl : rules.values()){
+            KnowledgeBuilder builder = KnowledgeBuilderFactory.newKnowledgeBuilder();
+            builder.add(ResourceFactory.newClassPathResource(drl), ResourceType.DRL);
+        }
     }
     static private Map<SensitivityCategory, KnowledgeBase> kbs = new HashMap<SensitivityCategory, KnowledgeBase>();
 
