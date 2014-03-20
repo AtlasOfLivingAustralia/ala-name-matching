@@ -260,7 +260,7 @@ public class ALANameIndexer {
      * @return
      * @throws Exception
      */
-    private IndexWriter createIndexWriter(File directory, Analyzer analyzer, boolean replace) throws Exception {
+    protected IndexWriter createIndexWriter(File directory, Analyzer analyzer, boolean replace) throws Exception {
         IndexWriterConfig conf = new IndexWriterConfig(Version.LUCENE_34, analyzer);
         if (replace)
             conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
@@ -387,12 +387,43 @@ public class ALANameIndexer {
 
     }
 
-    public void commit() throws Exception {
-        if (cbIndexWriter != null)
+    /**
+     * Deletes the entry that has the supplied lsid. It will also delete all the synonyms associated with it
+     * @param lsid
+     * @throws Exception
+     */
+    public void deleteName(String lsid) throws Exception{
+        if(cbIndexWriter == null){
+            cbIndexWriter = createIndexWriter(new File(indexDirectory+ File.separator + "cb"), new LowerCaseKeywordAnalyzer(), false);
+        }
+        Term term = new Term("lsid", lsid);
+        cbIndexWriter.deleteDocuments(new TermQuery(term));
+        term = new Term("accepted_lsid", lsid);
+        cbIndexWriter.deleteDocuments(new TermQuery(term));
+
+    }
+    public void commit() throws Exception{
+        commit(false, false);
+    }
+    /**
+     *
+     * @param merge whether or not to merge the index
+     * @param close whether or not to close the index
+     * @throws Exception
+     */
+    public void commit(boolean close, boolean merge) throws Exception{
+        if(cbIndexWriter !=  null){
             cbIndexWriter.commit();
+            if(merge){
+                cbIndexWriter.forceMerge(1);
+            }
+            if(close){
+                cbIndexWriter.close();
+            }
+        }
     }
 
-    private void indexIrmngDwcA(IndexWriter iw, String archiveDirectory) throws Exception {
+    protected void indexIrmngDwcA(IndexWriter iw, String archiveDirectory) throws Exception {
         log.info("Creating the IRMNG index from the DWCA " + archiveDirectory);
         //open the archive to extract the required information
         Archive archive = ArchiveFactory.openArchive(new File(archiveDirectory));
@@ -682,7 +713,11 @@ public class ALANameIndexer {
         return value;
     }
 
-    private Document getCommonNameDocument(String cn, String sn, String lsid, float boost) {
+    protected Document getCommonNameDocument(String cn, String sn, String lsid,float boost){
+        return getCommonNameDocument(cn,sn,lsid,boost,true);
+    }
+
+    protected Document getCommonNameDocument(String cn, String sn, String lsid, float boost,boolean checkAccepted) {
         Document doc = new Document();
         //we are only interested in keeping all the alphanumerical values of the common name
         //when searching the same operations will need to be peformed on the search string
@@ -701,14 +736,19 @@ public class ALANameIndexer {
         return doc;
     }
 
-    public Document createALAIndexDocument(String name, String id, String lsid, String author, LinnaeanRankClassification cl) {
-        if (cl == null) {
-            cl = new LinnaeanRankClassification();
-        }
-        return createALAIndexDocument(name, id, lsid, null, null, cl.getKingdom(), null, cl.getPhylum(), null, cl.getKlass(), null, cl.getOrder(), null, cl.getFamily(), null, cl.getGenus(), null, null, null, null, null, null, null, null, author, 1.0f);
+    public Document createALAIndexDocument(String name, String id, String lsid, String author, LinnaeanRankClassification cl){
+        return createALAIndexDocument(name,id, lsid, author,null,null, null, null,cl);
     }
 
-    private Document createALASynonymDocument(String scientificName, String author, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, float boost, String synonymType) {
+    public Document createALAIndexDocument(String name, String id, String lsid, String author, String rank, String rankId, String left, String right, LinnaeanRankClassification cl){
+        if(cl == null)
+            cl = new LinnaeanRankClassification();
+        return createALAIndexDocument(name, id, lsid, rankId, rank, cl.getKingdom(), cl.getKid(), cl.getPhylum()
+                , cl.getPid(), cl.getKlass(), cl.getCid(), cl.getOrder(), cl.getOid(), cl.getFamily(),
+                cl.getFid(), cl.getGenus(), cl.getGid(), cl.getSpecies(), cl.getSid(), left, right, null, null, null, author, 1.0f);
+    }
+
+    protected Document createALASynonymDocument(String scientificName, String author, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, float boost, String synonymType) {
         lsid = StringUtils.isBlank(lsid) ? nameLsid : lsid;
         Document doc = createALAIndexDocument(scientificName, id, lsid, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
