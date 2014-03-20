@@ -20,7 +20,7 @@ public enum RankType {
 
     KINGDOM(1000, "kingdom", Rank.KINGDOM,2f,"http://rs.tdwg.org/ontology/voc/TaxonRank#Kingdom", "Kingdom"),
     SUBKINGDOM(1200, "subkingdom", Rank.Subkingdom,null),
-    PHYLUM(2000, "phylum", Rank.PHYLUM,2f, "http://rs.tdwg.org/ontology/voc/TaxonRank#Phylum", "Phylum", "div"),
+    PHYLUM(2000, "phylum", Rank.PHYLUM,2f, "http://rs.tdwg.org/ontology/voc/TaxonRank#Phylum", "Phylum", "div","Division"),
     SUBPHYLUM(2200, "subphylum", Rank.Subphylum,null),
     SUPERCLASS(2800, "superclass", Rank.Superclass,null),
     CLASS(3000, "class", Rank.CLASS, 2f,"http://rs.tdwg.org/ontology/voc/TaxonRank#Class", "Class"),
@@ -74,7 +74,7 @@ public enum RankType {
                 cbRankLookup.put(rt.cbRank,rt);
             if(rt.strRanks != null){
                 for(String rank : rt.strRanks)
-                    strRankLookup.put(rank, rt);
+                    strRankLookup.put(rank.toLowerCase(), rt);
             }
         }
     }
@@ -122,7 +122,7 @@ public enum RankType {
      * @return
      */
     public static RankType getForStrRank(String rank){
-        return strRankLookup.get(rank);
+        return strRankLookup.get(rank.toLowerCase());
     }
 
     public Float getBoost() {

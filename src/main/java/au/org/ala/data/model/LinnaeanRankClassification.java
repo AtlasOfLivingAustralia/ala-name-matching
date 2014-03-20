@@ -66,6 +66,27 @@ public class LinnaeanRankClassification {
 		this.infraspecificEpithet = infraspecificEpithet;
 		this.scientificName = scientificName;
 	}
+    public LinnaeanRankClassification(LinnaeanRankClassification cl){
+        this.kingdom = cl.kingdom;
+        this.kid = cl.kid;
+        this.phylum = cl.phylum;
+        this.pid = cl.pid;
+        this.klass = cl.klass;
+        this.kid = cl.cid;
+        this.order = cl.order;
+        this.oid = cl.oid;
+        this.family = cl.family;
+        this.fid = cl.fid;
+        this.genus = cl.genus;
+        this.gid = cl.gid;
+        this.species = cl.species;
+        this.sid = cl.sid;
+        this.specificEpithet = cl.specificEpithet;
+        this.subspecies = cl.subspecies;
+        this.infraspecificEpithet = cl.infraspecificEpithet;
+        this.authorship = cl.authorship;
+        this.scientificName = cl.scientificName;
+    }
 	/**
 	 * @param kingdom
 	 * @param phylum

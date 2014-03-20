@@ -253,7 +253,7 @@ public class CBCreateLuceneIndex {
      * @return
      * @throws Exception
      */
-    private IndexWriter createIndexWriter(File directory, Analyzer analyzer,boolean replace) throws Exception{
+    protected IndexWriter createIndexWriter(File directory, Analyzer analyzer,boolean replace) throws Exception{
         IndexWriterConfig conf = new IndexWriterConfig(Version.LUCENE_34,analyzer);
         if(replace)
             conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
@@ -413,7 +413,7 @@ public class CBCreateLuceneIndex {
          }
      }
 
-     private void indexIrmngDwcA(IndexWriter iw, String archiveDirectory) throws Exception {
+     protected void indexIrmngDwcA(IndexWriter iw, String archiveDirectory) throws Exception {
          log.info("Creating the IRMNG index from the DWCA " + archiveDirectory);
          //open the archive to extract the required information
           Archive archive = ArchiveFactory.openArchive(new File(archiveDirectory));
@@ -717,7 +717,10 @@ public class CBCreateLuceneIndex {
         }catch(IOException e){}
         return value;
     }
-    private Document getCommonNameDocument(String cn, String sn, String lsid,float boost){
+    protected Document getCommonNameDocument(String cn, String sn, String lsid,float boost){
+        return getCommonNameDocument(cn,sn,lsid,boost,true);
+    }
+    protected Document getCommonNameDocument(String cn, String sn, String lsid,float boost, boolean checkAccepted){
         Document doc = new Document();
         //we are only interested in keeping all the alphanumerical values of the common name
         //when searching the same operations will need to be peformed on the search string
@@ -728,19 +731,25 @@ public class CBCreateLuceneIndex {
         doc.add(tf);
         if(sn != null)
             doc.add(new Field(IndexField.NAME.toString(), sn, Store.YES, Index.ANALYZED));
-        String newLsid = getAcceptedLSID(lsid);
+        String newLsid = checkAccepted ? getAcceptedLSID(lsid) : lsid;
         doc.add(new Field(IndexField.LSID.toString(), newLsid, Store.YES, Index.NO));
         //doc.setBoost(boost);
         return doc;
     }
 
     public Document createALAIndexDocument(String name, String id, String lsid, String author, LinnaeanRankClassification cl){
-        if(cl == null)
-            cl = new LinnaeanRankClassification();
-        return createALAIndexDocument(name, id, lsid, null, null, cl.getKingdom(), null, cl.getPhylum(), null, cl.getKlass(), null, cl.getOrder(), null, cl.getFamily(), null, cl.getGenus(), null, null, null, null, null, null, null, null, author, 1.0f);
+        return createALAIndexDocument(name,id, lsid, author,null,null, null, null,cl);
     }
 
-    private Document createALASynonymDocument(String scientificName, String author, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, float boost, String synonymType){
+    public Document createALAIndexDocument(String name, String id, String lsid, String author, String rank, String rankId, String left, String right, LinnaeanRankClassification cl){
+        if(cl == null)
+            cl = new LinnaeanRankClassification();
+        return createALAIndexDocument(name, id, lsid, rankId, rank, cl.getKingdom(), cl.getKid(), cl.getPhylum()
+                , cl.getPid(), cl.getKlass(), cl.getCid(), cl.getOrder(), cl.getOid(), cl.getFamily(),
+                cl.getFid(), cl.getGenus(), cl.getGid(), cl.getSpecies(), cl.getSid(), left, right, null, null, null, author, 1.0f);
+    }
+
+    protected Document createALASynonymDocument(String scientificName, String author, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, float boost, String synonymType){
         lsid = StringUtils.isBlank(lsid)?nameLsid:lsid;
         Document doc = createALAIndexDocument(scientificName, id, lsid,null,null,
                 null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,
@@ -760,7 +769,7 @@ public class CBCreateLuceneIndex {
       return blacklist.contains(scientificName.trim());
     }
 
-    private Document createALAIndexDocument(String name, String id, String lsid, String rank, String rankString,
+    protected Document createALAIndexDocument(String name, String id, String lsid, String rank, String rankString,
     		String kingdom, String kid, String phylum, String pid, String clazz, String cid, String order,
                 String oid, String family, String fid, String genus, String gid,
     		String species, String sid, String left, String right, String acceptedConcept,String specificEpithet, 
