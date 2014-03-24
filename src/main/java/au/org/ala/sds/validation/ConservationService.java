@@ -3,6 +3,7 @@
  */
 package au.org.ala.sds.validation;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,8 @@ import au.org.ala.sds.util.ValidationUtils;
  */
 public class ConservationService implements ValidationService {
 
-    private static final String BIRDS_AUSTRALIA = "dr359";
+    //TODO perhaps a better way would be to populate this from the collectory
+    private static final List<String> BIRDS_AUSTRALIA = Arrays.asList(new String[]{"dr359", "dr570", "dr571"});
 
     private ReportFactory reportFactory;
     private final SensitiveTaxon taxon;
@@ -55,7 +57,7 @@ public class ConservationService implements ValidationService {
         List<SensitivityInstance> instances = taxon.getInstancesForZones(zones);
 
         // Check data provider (Birds Australia generalisation only happens for BA occurrences)
-        if (facts.get("dataResourceUid") == null || !facts.get("dataResourceUid").equalsIgnoreCase(BIRDS_AUSTRALIA)) {
+        if (facts.get("dataResourceUid") == null || !BIRDS_AUSTRALIA.contains(facts.get("dataResourceUid"))) {
             SensitivityInstance.removeInstance(instances, SensitivityInstance.BIRDS_AUSTRALIA_INSTANCE);
         }
 
@@ -104,7 +106,7 @@ public class ConservationService implements ValidationService {
         }
 
         // Handle Birds Australia occurrences
-        if (facts.get("dataResourceUid") != null && facts.get("dataResourceUid").equalsIgnoreCase(BIRDS_AUSTRALIA)) {
+        if (facts.get("dataResourceUid") != null && BIRDS_AUSTRALIA.contains(facts.get("dataResourceUid"))) {
             emptyValueIfNecessary("eventID", biocacheData, originalSensitiveValues, results);
             emptyValueIfNecessary("day", biocacheData, originalSensitiveValues, results);
             emptyValueIfNecessary("eventDate",biocacheData, originalSensitiveValues, results);
