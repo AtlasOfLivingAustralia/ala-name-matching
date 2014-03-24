@@ -134,6 +134,38 @@ public class GeneraliseTest {
         assertTrue(outcome.isValid());
         assertFalse(outcome.isSensitive());
     }
+    @Test
+    public void otherBAResources(){
+        SensitiveTaxon ss = finder.findSensitiveSpecies("Crex crex");
+        assertNotNull(ss);
+        String latitude = "-35.276771";   // Epicorp
+        String longitude = "149.112539";
+
+        Map<String, String> facts = new HashMap<String, String>();
+        facts.put(FactCollection.DECIMAL_LATITUDE_KEY, latitude);
+        facts.put(FactCollection.DECIMAL_LONGITUDE_KEY, longitude);
+        facts.put("stateProvince", "Australian Capital Territory");
+        facts.put("scientificName", "Crex crex");
+        facts.put("dataResourceUid", "dr570");
+
+        ValidationService service = ServiceFactory.createValidationService(ss);
+        ValidationOutcome outcome = service.validate(facts);
+
+        assertTrue(outcome.isValid());
+        assertTrue(outcome.isSensitive());
+
+        //now test a non BA resource
+        facts.put("dataResourceUid", "dr341");
+        outcome = service.validate(facts);
+        assertTrue(outcome.isValid());
+        assertFalse(outcome.isSensitive());
+
+        //test the last resource
+        facts.put("dataResourceUid", "dr571");
+        outcome = service.validate(facts);
+        assertTrue(outcome.isValid());
+        assertTrue(outcome.isSensitive());
+    }
 
     /**
      * Not Birds Australia occurrence in NSW - position generalised
