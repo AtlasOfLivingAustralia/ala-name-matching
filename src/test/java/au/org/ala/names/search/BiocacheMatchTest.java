@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
@@ -34,6 +35,25 @@ public class BiocacheMatchTest {
             e.printStackTrace();
         }
 
+    }
+
+    @Test
+    public void testCrossRankHomonym(){
+        try{
+            //test unresolved
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName("Symphyta");
+            cl.setFamily("LASIOCAMPIDAE");
+            MetricsResultDTO metrics =searcher.searchForRecordMetrics(cl, true);
+            assertTrue("Failed the cross rank homonym test",metrics.getErrors().contains(ErrorType.HOMONYM));
+            //test resolved
+            cl.setGenus("Symphyta");
+            metrics = searcher.searchForRecordMetrics(cl, true);
+            assertFalse("Cross rank homonym should have been resolved",metrics.getErrors().contains(ErrorType.HOMONYM));
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     // @Test
