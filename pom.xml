@@ -26,6 +26,10 @@
         Scala implementation of biocache backend.
         This code base managed the loading, processing, indexing of occurrence records for the ALA.
     </description>
+<!-- AN SCM entry that points to the SVN directory that contains the pom file for the project  -->
+    <scm>
+        <developerConnection>scm:svn:https://ala-portal.googlecode.com/svn/trunk/biocache-store/</developerConnection>
+    </scm>
 	<repositories>
 		<repository>
 			<id>repo2</id>
@@ -602,6 +606,11 @@
 					</execution>
 				</executions>
 			</plugin>
+            		<plugin>
+                		<groupId>org.apache.maven.plugins</groupId>
+	            		<artifactId>maven-release-plugin</artifactId>
+                		<version>2.5</version>
+            		</plugin>
 		</plugins>
 	</build>
 	<reporting>
