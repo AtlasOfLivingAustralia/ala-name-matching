@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
@@ -18,19 +19,20 @@ import au.org.ala.sds.validation.FactCollection;
 import au.org.ala.sds.validation.ServiceFactory;
 import au.org.ala.sds.validation.ValidationOutcome;
 import au.org.ala.sds.validation.ValidationService;
-
+@Ignore
 public class ProblematicFileInputTest {
 
     static CBIndexSearch cbIndexSearch;
     static SensitiveSpeciesFinder finder;
 
     @BeforeClass
+
     public static void runOnce() throws Exception {
         cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
         finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
     }
 
-    @Test
+    //@Test
     public void readExcelXmlWorkbook() throws Exception {
         String inputFileName = "/Users/peterflemming/Dropbox/SDS/SDStest1.xls";
         DataStreamDao dao = DataStreamDaoFactory.createDao(inputFileName);

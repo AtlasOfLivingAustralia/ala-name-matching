@@ -11,7 +11,7 @@ import au.org.ala.sds.validation.ValidationReport;
 import au.org.ala.sds.model.SensitivityZone;
 import au.org.ala.sds.util.PlantPestUtils;
 
-import org.drools.runtime.rule.RuleContext;
+import org.kie.api.runtime.rule.RuleContext;
 
 global ValidationReport validationReport;
 global RuleState state;

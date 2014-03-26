@@ -3,7 +3,8 @@
  */
 package au.org.ala.sds.validation;
 
-import org.drools.KnowledgeBase;
+//import org.drools.KnowledgeBase;
+import org.kie.internal.KnowledgeBase;
 
 import au.org.ala.sds.knowledgebase.KnowledgeBaseFactory;
 import au.org.ala.sds.model.ConservationInstance;
