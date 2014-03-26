@@ -1,15 +1,12 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>au.org.ala</groupId>
     <artifactId>ala-name-matching</artifactId>
     <packaging>jar</packaging>
-    <version>1.4-SNAPSHOT</version>
+    <!-- Major version increment due to package structure change -->
+    <version>2.0-SNAPSHOT</version>
     <name>ALA Name Matching</name>
-   <!-- SCM entry that points to SVN directory that contains pom -->
-    <scm>
-	<developerConnection>scm:svn:https://ala-portal.googlecode.com/svn/trunk/ala-name-matching/</developerConnection>
-    </scm>
-
     <properties>
         <!-- This project uses UTF8 for Regular Expressions -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -134,11 +131,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-	       <groupId>org.apache.maven.plugins</groupId>
-	       <artifactId>maven-release-plugin</artifactId>
-	       <version>2.5</version>
             </plugin>
         </plugins>
     </build>
