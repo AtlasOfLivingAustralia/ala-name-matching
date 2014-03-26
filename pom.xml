@@ -31,7 +31,7 @@
 	    <dependency>
 	      <groupId>au.org.ala</groupId>
 	      <artifactId>biocache-store</artifactId>
-	      <version>1.0-SNAPSHOT</version>
+	      <version>1.0</version>
 	    </dependency>
 		
         <dependency>
