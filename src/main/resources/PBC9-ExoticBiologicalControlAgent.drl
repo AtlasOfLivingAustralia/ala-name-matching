@@ -4,7 +4,7 @@ import org.apache.log4j.Logger;
 import java.util.List;
 import au.org.ala.sds.model.SensitivityZone;
 import au.org.ala.sds.validation.MessageFactory;
-import org.drools.runtime.rule.RuleContext;
+import org.kie.api.runtime.rule.RuleContext;
 import au.org.ala.sds.model.SensitiveTaxon;
 
 global ValidationReport validationReport;

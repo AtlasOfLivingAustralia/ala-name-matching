@@ -47,12 +47,12 @@ public class DateHelperTest {
 
         date = DateHelper.parseDate("1905-06");
         assertEquals(DateHelper.formattedIso8601Date(date), "1905-06-01");
-
+        String sdate="2011-11-31";
         try {
-            date = DateHelper.parseDate("2011-11-31");
+            date = DateHelper.parseDate(sdate);
             fail("parseDate() should have thrown an exception");
         } catch (Exception e) {
-            assert(e instanceof IllegalArgumentException && e.getMessage().equals("Date " + date + " cannot be parsed"));
+            assert(e instanceof IllegalArgumentException && e.getMessage().equals("Date " + sdate + " cannot be parsed"));
         }
     }
 

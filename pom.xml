@@ -5,16 +5,16 @@
     <version>1.1</version>
     <name>Sensitive Species Lookup API</name>
     <description>Routines to check whether a species is sensitive and to apply data generalisation.</description>
-  
+
 
     <!-- AN SCM entry that points to the SVN directory that contains the pom file for the project  -->
     <scm>
-	<developerConnection>scm:svn:https://ala-portal.googlecode.com/svn/tags/sds-1.1</developerConnection>
+        <developerConnection>scm:svn:https://ala-portal.googlecode.com/svn/tags/sds-1.1</developerConnection>
     </scm>
 
     <properties>
         <spring.version>3.0.0.RELEASE</spring.version>
-        <drools.version>5.6.0.Final</drools.version>
+        <drools.version>6.0.1.Final</drools.version>
     </properties>
   
     <dependencies>
@@ -126,7 +126,7 @@
             <version>${spring.version}</version>
         </dependency>
     </dependencies>
-   
+
     <distributionManagement>
         <repository>
             <id>ala-repository</id>

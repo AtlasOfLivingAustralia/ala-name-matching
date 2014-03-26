@@ -7,13 +7,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.drools.KnowledgeBase;
-import org.drools.KnowledgeBaseConfiguration;
-import org.drools.builder.KnowledgeBuilder;
-import org.drools.builder.KnowledgeBuilderFactory;
-import org.drools.builder.ResourceType;
-import org.drools.conf.SequentialOption;
-import org.drools.io.ResourceFactory;
+import org.kie.internal.KnowledgeBase;
+//import org.drools.KnowledgeBase;
+import org.kie.api.KieBaseConfiguration;
+//import org.drools.KnowledgeBaseConfiguration;
+import org.kie.api.conf.EventProcessingOption;
+import org.kie.internal.builder.KnowledgeBuilder;
+//import org.drools.builder.KnowledgeBuilder;
+import org.kie.internal.builder.KnowledgeBuilderFactory;
+//import org.drools.builder.KnowledgeBuilderFactory;
+import org.kie.api.io.ResourceType;
+//import org.drools.builder.ResourceType;
+//import org.drools.conf.SequentialOption;
+import org.kie.internal.io.ResourceFactory;
+//import org.drools.io.ResourceFactory;
 
 import au.org.ala.sds.model.SensitivityCategory;
 
@@ -40,9 +47,9 @@ public class KnowledgeBaseFactory {
         rules.put(SensitivityCategory.PLANT_PEST_HIGHER_TAXON_ID, "PBC10-IdentificationToHigherTaxon.drl");
         //attempt to create all on a single thread
         for(String drl : rules.values()){
-            logger.warn("Prebuilding " + drl);
-            KnowledgeBuilder builder = KnowledgeBuilderFactory.newKnowledgeBuilder();
-            builder.add(ResourceFactory.newClassPathResource(drl), ResourceType.DRL);
+            //logger.warn("Prebuilding " + drl);
+            //KnowledgeBuilder builder = KnowledgeBuilderFactory.newKnowledgeBuilder();
+            //builder.add(ResourceFactory.newClassPathResource(drl), ResourceType.DRL);
         }
     }
     static private Map<SensitivityCategory, KnowledgeBase> kbs = new HashMap<SensitivityCategory, KnowledgeBase>();
@@ -59,10 +66,11 @@ public static KnowledgeBase getKnowledgeBase(SensitivityCategory category) {
                     throw new RuntimeException(builder.getErrors().toString());
                 }
 
-                KnowledgeBaseConfiguration configuration = org.drools.KnowledgeBaseFactory.newKnowledgeBaseConfiguration();
-                configuration.setOption(SequentialOption.YES);
+                KieBaseConfiguration configuration = org.kie.internal.KnowledgeBaseFactory.newKnowledgeBaseConfiguration();
+                //configuration.setOption(SequentialOption.YES);
+                configuration.setOption(EventProcessingOption.STREAM);
 
-                knowledgeBase = org.drools.KnowledgeBaseFactory.newKnowledgeBase(configuration);
+                knowledgeBase =org.kie.internal.KnowledgeBaseFactory.newKnowledgeBase(configuration);
                 knowledgeBase.addKnowledgePackages(builder.getKnowledgePackages());
                 kbs.put(category, knowledgeBase);
             }

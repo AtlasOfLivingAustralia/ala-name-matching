@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import org.apache.log4j.Logger;
-import org.drools.runtime.rule.RuleContext;
+import org.kie.api.runtime.rule.RuleContext;
 
 global ValidationReport validationReport;
 global RuleState state;

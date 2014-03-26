@@ -5,6 +5,7 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import au.org.ala.checklist.lucene.CBIndexSearch;
 import au.org.ala.sds.dao.DataRowHandler;
@@ -21,18 +22,20 @@ import au.org.ala.sds.validation.ValidationOutcome;
 import au.org.ala.sds.validation.ValidationReport;
 import au.org.ala.sds.validation.ValidationService;
 
+@Ignore
 public class FileInputTest {
 
     static CBIndexSearch cbIndexSearch;
     static SensitiveSpeciesFinder finder;
 
     @BeforeClass
+
     public static void runOnce() throws Exception {
         cbIndexSearch = new CBIndexSearch(Configuration.getInstance().getNameMatchingIndex());
         finder = SensitiveSpeciesFinderFactory.getSensitiveSpeciesFinder("file:///data/sds/sensitive-species.xml", cbIndexSearch);
     }
 
-    @Test
+    //@Test
     public void readExcelXmlWorkbook() throws Exception {
         String inputFileName = "/Users/peterflemming/Documents/workspaces/sds/sensitive-species/src/test/resources/workbook.xlsx";
         DataStreamDao dao = DataStreamDaoFactory.createDao(inputFileName);
@@ -61,7 +64,7 @@ public class FileInputTest {
                 });
     }
 
-    @Test
+    //@Test
     public void readExcelWorkbook() throws Exception {
         String inputFileName = "/Users/peterflemming/Documents/workspaces/sds/sensitive-species/src/test/resources/workbook.xls";
         DataStreamDao dao = DataStreamDaoFactory.createDao(inputFileName);
