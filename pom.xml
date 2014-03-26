@@ -84,7 +84,7 @@
 		<dependency>
 			<groupId>org.ala.layers</groupId>
 			<artifactId>layers-store</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<version>1.0</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>xercesImpl</artifactId>
@@ -149,7 +149,7 @@
 		<dependency>
 			<groupId>au.org.ala</groupId>
 			<artifactId>sds</artifactId>
-			<version>1.1-SNAPSHOT</version>
+			<version>1.1</version>
 			<exclusions>
 				<exclusion>
 					<groupId>commons-lang</groupId>
@@ -177,7 +177,7 @@
 		<dependency>
 			<groupId>au.org.ala</groupId>
 			<artifactId>ala-name-matching</artifactId>
-			<version>1.2-SNAPSHOT</version>
+			<version>1.3</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.gbif</groupId>
@@ -209,31 +209,11 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<!-- BIE Species Profile syncing -->
-		<dependency>
-			<groupId>au.org.ala</groupId>
-			<artifactId>bie-rpc</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>au.org.ala</groupId>
-					<artifactId>bie-hbase</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-simple</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
 		<!-- DWC-A -->
 		<dependency>
 			<groupId>org.gbif</groupId>
 			<artifactId>dwca-reader</artifactId>
-			<version>1.14-SNAPSHOT</version>
+			<version>1.14</version>
 			<exclusions>
 				<exclusion>
 					<groupId>commons-io</groupId>
