@@ -2,7 +2,7 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import au.org.ala.util.AdHocParser
+import au.org.ala.biocache.parser.AdHocParser
 
 @RunWith(classOf[JUnitRunner])
 class AdhocParsingTest extends ConfigFunSuite {

@@ -2,6 +2,8 @@ package au.org.ala.biocache
 
 import org.scalatest.FunSuite
 import org.junit.Ignore
+import au.org.ala.biocache.dao.OccurrenceDAO
+import au.org.ala.biocache.persistence.PersistenceManager
 
 /**
  * @author Dave Martin (David.Martin@csiro.au)

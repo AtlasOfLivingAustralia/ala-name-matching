@@ -3,6 +3,8 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+import au.org.ala.biocache.parser.DateParser
+import au.org.ala.biocache.index.SolrIndexDAO
 
 /**
  * Performs some Index Processing tests

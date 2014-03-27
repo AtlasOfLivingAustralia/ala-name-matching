@@ -5,6 +5,9 @@ import org.junit.runner.RunWith
 import org.apache.commons.lang.time.DateUtils
 import java.util.Date
 import java.text.SimpleDateFormat
+import au.org.ala.biocache.processor.EventProcessor
+import au.org.ala.biocache.model.FullRecord
+import au.org.ala.biocache.util.DateUtil
 
 /**
  * Tests for event date parsing. To run these tests create a new scala application
@@ -12,7 +15,7 @@ import java.text.SimpleDateFormat
  * 
  * See http://www.scalatest.org/getting_started_with_fun_suite
  * 
- * scala -cp scalatest-1.0.jar org.scalatest.tools.Runner -p . -o -s ay.org.ala.biocache.ProcessEventTests 
+ * scala -cp scalatest-1.0.jar org.scalatest.tools.Runner -p . -o -s ay.au.biocache.ProcessEventTests
  * 
  * @author Dave Martin (David.Martin@csiro.au)
  */
@@ -26,7 +29,7 @@ class ProcessEventTest extends ConfigFunSuite {
     raw.event.year = "0"
     var processed = raw.clone
     (new EventProcessor).process("1234", raw, processed)
-    println(processed.event)
+//    println(processed.event)
   }
   
   test("yyyy-dd-mm correctly sets year, month, day values in process object") {

@@ -17,8 +17,10 @@ package au.org.ala.util
 import au.org.ala.biocache._
 import java.util.UUID
 import au.com.bytecode.opencsv.CSVReader
-import au.org.ala.biocache.OccurrenceDAO
 import java.io.{FileReader, File, InputStreamReader, FileInputStream}
+import Config
+import au.org.ala.biocache.dao.OccurrenceDAO
+import au.org.ala.biocache.persistence.PersistenceManager
 
 /**
  * Reads a CSV file with DwC header fields, updates existing but inserts new

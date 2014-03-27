@@ -2,6 +2,7 @@ package au.org.ala.biocache
 
 import org.scalatest.FunSuite
 import org.junit.Ignore
+import au.org.ala.biocache.model.QualityAssertion
 
 @Ignore
 class PersistenceTests extends FunSuite {

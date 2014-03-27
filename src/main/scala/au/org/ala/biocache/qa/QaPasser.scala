@@ -1,13 +1,4 @@
-package au.org.ala.biocache.qa
-
-import au.org.ala.biocache.{AssertionCodes, QualityAssertion, Config}
-import java.util.concurrent.ArrayBlockingQueue
-import au.org.ala.util.{FileHelper, OptionParser, GenericConsumer, StringConsumer}
-import java.io.File
-import collection.mutable.ArrayBuffer
-import org.slf4j.LoggerFactory
-
-/*
+/**
  * Copyright (C) 2012 Atlas of Living Australia
  * All Rights Reserved.
  *
@@ -21,15 +12,27 @@ import org.slf4j.LoggerFactory
  * implied. See the License for the specific language governing
  * rights and limitations under the License.
  */
+package au.org.ala.biocache.qa
+
+import au.org.ala.biocache.Config
+import java.util.concurrent.ArrayBlockingQueue
+import java.io.File
+import org.slf4j.LoggerFactory
+import au.org.ala.biocache.vocab.AssertionCodes
+import au.org.ala.biocache.model.QualityAssertion
+import au.org.ala.biocache.util.{FileHelper, GenericConsumer, OptionParser}
 
 /**
- *  A class that is responsible for marking a set of record passed for a specific test.
+ * A class that is responsible for marking a set of record passed for a specific test.
  *
- *  Mostly used for the offline processing
+ * Mostly used for the offline processing
+ *
  * @author Natasha Carter (natasha.carter@csiro.au)
  */
-object QaPasser{
+object QaPasser {
+
   import FileHelper._
+
   def main(args:Array[String]){
     var qa:Option[QualityAssertion] = None
     var deleteColumns:Option[List[String]] =None
@@ -50,7 +53,7 @@ object QaPasser{
     if (parser.parse(args)){
       if(qa.isDefined){
         val qaPasser = new QaPasser(qa.get, threads, deleteColumns=deleteColumns)
-        new File(file).foreachLine{ line =>
+        new File(file).foreachLine { line =>
           qaPasser.markRecord(line)
         }
         qaPasser.stop()
@@ -61,14 +64,14 @@ object QaPasser{
 class QaPasser(qa:QualityAssertion, numThreads:Int, isUuid:Boolean=false, deleteColumns:Option[List[String]]=None) {
   val logger = LoggerFactory.getLogger("QaPasser")
   val queue = new ArrayBlockingQueue[String](500000)
-  var ids =0
+  var ids = 0
   val pool:Array[GenericConsumer[String]] = Array.fill(numThreads){
-      var counter=0
+      var counter = 0
       var startTime = System.currentTimeMillis
       var finishTime = System.currentTimeMillis
 
       val thread = new GenericConsumer[String](queue, ids, (value,id)=>{
-        counter+=1
+        counter += 1
         //the value needs to have the QA applied to it
         val rowKey = if (isUuid) Config.occurrenceDAO.getRowKeyFromUuid(value) else Some(value)
         //now assign the QA to the record
@@ -79,26 +82,27 @@ class QaPasser(qa:QualityAssertion, numThreads:Int, isUuid:Boolean=false, delete
           }
          // println(rowKey.toString + " has passed " + qa)
         }
-
         if (counter % 1000 == 0) {
           finishTime = System.currentTimeMillis
           logger.info(counter +">>"+id+ " >> Last key : " + value + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f) +" " + queue.size())
           startTime = System.currentTimeMillis
         }
-
       })
       thread.start()
       ids+=1
       thread
   }
+
   def markRecord(key:String){
     queue.put(key)
   }
+
   def markRecords(rowKeys:List[String]){
     rowKeys.foreach(key=>{
       queue.put(key)
     })
   }
+
   def stop(){
     logger.info("Stopping the QAPasser " + queue.size())
     pool.foreach(t =>t.shouldStop = true)

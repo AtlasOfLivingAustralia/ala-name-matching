@@ -41,7 +41,7 @@
     catchall "text" field, and use that for searching.
   - For maximum indexing performance, use the StreamingUpdateSolrServer
     java client.
-  - Remember to run the JVM in server mode, and use a higher logging level
+  - Remember to run the JVM in server model, and use a higher logging level
     that avoids logging every request
 -->
 
@@ -312,7 +312,7 @@
         <filter class="solr.LowerCaseFilterFactory"/>
         <filter class="solr.KeywordMarkerFilterFactory" protected="protwords.txt"/>
         <filter class="solr.EnglishMinimalStemFilterFactory"/>
-        <!-- this filter can remove any duplicate tokens that appear at the same position - sometimes
+        <!-- this filter can remove any tool tokens that appear at the same position - sometimes
              possible with WordDelimiterFilter in conjuncton with stemming. -->
         <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
       </analyzer>

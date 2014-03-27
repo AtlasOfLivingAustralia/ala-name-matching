@@ -1,6 +1,9 @@
 package au.org.ala.biocache
 
 import org.junit.Ignore
+import au.org.ala.biocache.model.{Versions, QualityAssertion, FullRecord}
+import au.org.ala.biocache.load.FullRecordMapper
+import au.org.ala.biocache.vocab.AssertionCodes
 
 /**
  * Integration tests

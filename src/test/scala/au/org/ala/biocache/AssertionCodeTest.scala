@@ -1,32 +1,43 @@
 package au.org.ala.biocache
-import org.scalatest.FunSuite
+
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+import au.org.ala.biocache.model.{Versions, QualityAssertion, FullRecord}
+import au.org.ala.biocache.load.FullRecordMapper
+import au.org.ala.biocache.vocab.AssertionCodes
 
 @RunWith(classOf[JUnitRunner])
 class AssertionCodeTest extends ConfigFunSuite {
-      val rowKey = "test1"
+  val rowKey = "test1"
   val rowKey2 = "test2"
   val rowKey3 = "test3"
-    val uuid ="uuid"
+  val uuid = "uuid"
   val occurrenceDAO = Config.occurrenceDAO
-    test("Test the geospatially kosher test") {
+  test("Test the geospatially kosher test") {
 
-        val assertions1 = Array( QualityAssertion(AssertionCodes.GEOSPATIAL_ISSUE), QualityAssertion(AssertionCodes.INVERTED_COORDINATES) )
-        expectResult(false){ AssertionCodes.isGeospatiallyKosher(assertions1) }
+    val assertions1 = Array(QualityAssertion(AssertionCodes.GEOSPATIAL_ISSUE), QualityAssertion(AssertionCodes.INVERTED_COORDINATES))
+    expectResult(false) {
+      AssertionCodes.isGeospatiallyKosher(assertions1)
+    }
 
-        val assertions2 = Array( QualityAssertion(AssertionCodes.INVERTED_COORDINATES) )
-        expectResult(true){ AssertionCodes.isGeospatiallyKosher(assertions2) }
+    val assertions2 = Array(QualityAssertion(AssertionCodes.INVERTED_COORDINATES))
+    expectResult(true) {
+      AssertionCodes.isGeospatiallyKosher(assertions2)
     }
-    
-    test("Test kosher based on list of int codes"){
-        val codes1 = Array(1,2,3,30)
-        expectResult(true){AssertionCodes.isGeospatiallyKosher(codes1)}
-        val codes2 = Array(1,2,0)
-        expectResult(false){AssertionCodes.isGeospatiallyKosher(codes2)}
+  }
+
+  test("Test kosher based on list of int codes") {
+    val codes1 = Array(1, 2, 3, 30)
+    expectResult(true) {
+      AssertionCodes.isGeospatiallyKosher(codes1)
     }
-    
-      /**
+    val codes2 = Array(1, 2, 0)
+    expectResult(false) {
+      AssertionCodes.isGeospatiallyKosher(codes2)
+    }
+  }
+
+  /**
    * A user assertion true or false overrides the value of a system assertion
    */
   test("Test User Assertion takes precedence") {
@@ -34,8 +45,8 @@ class AssertionCodeTest extends ConfigFunSuite {
     val processed = new FullRecord
     processed.location.decimalLatitude = "123.123"
     processed.location.decimalLongitude = "123.123"
-    processed.rowKey=rowKey
-    processed.uuid=uuid
+    processed.rowKey = rowKey
+    processed.uuid = uuid
     val assertions = Some(Map("loc" -> Array(QualityAssertion(AssertionCodes.GEOSPATIAL_ISSUE))))
     occurrenceDAO.updateOccurrence(rowKey, processed, assertions, Versions.PROCESSED)
     expectResult(1) {
@@ -65,7 +76,6 @@ class AssertionCodeTest extends ConfigFunSuite {
         record.get.geospatiallyKosher
       }
     }
-
   }
 
   /**
@@ -114,8 +124,8 @@ class AssertionCodeTest extends ConfigFunSuite {
     val processed = new FullRecord
     processed.location.decimalLatitude = "123.123"
     processed.location.decimalLongitude = "123.123"
-    processed.rowKey=rowKey
-    processed.uuid=uuid
+    processed.rowKey = rowKey
+    processed.uuid = uuid
     val assertions = Some(Map("loc" -> Array(QualityAssertion(AssertionCodes.GEOSPATIAL_ISSUE)), "event" -> Array[QualityAssertion]()))
     occurrenceDAO.updateOccurrence(rowKey, processed, assertions, Versions.PROCESSED)
     expectResult(true) {
@@ -145,8 +155,8 @@ class AssertionCodeTest extends ConfigFunSuite {
     val processed = new FullRecord
     processed.location.decimalLatitude = "123.123"
     processed.location.decimalLongitude = "123.123"
-    processed.rowKey=rowKey
-    processed.uuid=uuid  
+    processed.rowKey = rowKey
+    processed.uuid = uuid
     val assertions = Some(Map("loc" -> Array(QualityAssertion(AssertionCodes.GEOSPATIAL_ISSUE))))
     occurrenceDAO.updateOccurrence(rowKey2, processed, assertions, Versions.PROCESSED)
     //println(Config.persistenceManager)
@@ -187,13 +197,13 @@ class AssertionCodeTest extends ConfigFunSuite {
 
   test("user assertion flag") {
     val processed = new FullRecord
-    processed.rowKey=rowKey3
-    processed.uuid=uuid
+    processed.rowKey = rowKey3
+    processed.uuid = uuid
     occurrenceDAO.updateOccurrence(rowKey3, processed, None, Versions.PROCESSED)
     val qa1 = QualityAssertion(AssertionCodes.TAXONOMIC_ISSUE, true)
     qa1.userId = "Natasha.Carter@csiro.au"
     qa1.userDisplayName = "Natasha Carter"
-    occurrenceDAO.addUserAssertion(rowKey3, qa1)    
+    occurrenceDAO.addUserAssertion(rowKey3, qa1)
     expectResult("true") {
       pm.get(rowKey3, "occ", FullRecordMapper.userQualityAssertionColumn).get
     }
@@ -203,22 +213,21 @@ class AssertionCodeTest extends ConfigFunSuite {
     }
   }
 
-  test ("Test add adhoc System assertion") {
+  test("Test add adhoc System assertion") {
     occurrenceDAO.addSystemAssertion("satest1", QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD))
     occurrenceDAO.addSystemAssertion("satest1", QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD, 1))
 
-    expectResult(0){
-      val dups =occurrenceDAO.getSystemAssertions("satest1").filter(_.code == AssertionCodes.INFERRED_DUPLICATE_RECORD.code)
+    expectResult(0) {
+      val dups = occurrenceDAO.getSystemAssertions("satest1").filter(_.code == AssertionCodes.INFERRED_DUPLICATE_RECORD.code)
 
       dups(0).qaStatus
     }
     //now we want to remove the existing first
-    occurrenceDAO.addSystemAssertion("satest1", QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD, 1), replaceExistCode=true)
+    occurrenceDAO.addSystemAssertion("satest1", QualityAssertion(AssertionCodes.INFERRED_DUPLICATE_RECORD, 1), replaceExistCode = true)
     expectResult(1) {
-      val dups =occurrenceDAO.getSystemAssertions("satest1").filter(_.code == AssertionCodes.INFERRED_DUPLICATE_RECORD.code)
+      val dups = occurrenceDAO.getSystemAssertions("satest1").filter(_.code == AssertionCodes.INFERRED_DUPLICATE_RECORD.code)
 
       dups(0).qaStatus
     }
-
   }
 }

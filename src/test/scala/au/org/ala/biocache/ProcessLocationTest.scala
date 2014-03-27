@@ -4,6 +4,8 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfterAll
+import au.org.ala.biocache.processor.{EventProcessor, LocationProcessor}
+import au.org.ala.biocache.model.FullRecord
 
 //import org.junit.Ignore
 
@@ -12,37 +14,6 @@ import org.scalatest.BeforeAndAfterAll
  */
 @RunWith(classOf[JUnitRunner])
 class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
-// override def beforeAll() {
-//    //WS will automatically grab the location details that are necessary
-//    //Add conservation status
-//    println("The PM before ProcessLocationTest: " + pm)
-//    val taxonProfile = new TaxonProfile
-//    taxonProfile.setGuid("urn:lsid:biodiversity.org.au:afd.taxon:3809b1ca-8b60-4fcb-acf5-ca4f1dc0e263")
-//    taxonProfile.setScientificName("Victaphanta compacta")
-//    taxonProfile.setConservation(Array(new ConservationSpecies("Victoria", "aus_states/Victoria", "Endangered", "Endangered")
-//      , new ConservationSpecies("Victoria", "aus_states/Victoria", null, "Listed under FFG Act")))
-//    TaxonProfileDAO.add(taxonProfile)
-//
-//    val tp = new TaxonProfile
-//    tp.setGuid("urn:lsid:biodiversity.org.au:afd.taxon:aa745ff0-c776-4d0e-851d-369ba0e6f537")
-//    tp.setScientificName("Macropus rufus")
-//    tp.setHabitats(Array("Non-marine"))
-//    TaxonProfileDAO.add(tp);
-//
-//    pm.put("-35.21667|144.81060", "loc", "stateProvince", "New South Wales")
-//    pm.put("-35.21667|144.81060", "loc", "cl927", "New South Wales")
-//    pm.put("-35.21667|144.8106", "loc", "cl927", "New South Wales")
-//    pm.put("-35.2|144.8", "loc", "stateProvince", "New South Wales")
-//    pm.put("-35.2|144.8", "loc", "cl927", "New South Wales")
-//    pm.put("-40.857|145.52","loc","cl21","onwater")
-//    pm.put("-23.73750|133.85720","loc","cl20","onland")
-//    
-//    pm.put("-31.2532183|146.921099","loc","cl927","New South Wales")
-//    pm.put("-31.253218|146.9211","loc","cl927","New South Wales")//NC 20130515: There is an issue where by our location cache converst toFLoat and loses accurancy.  This is the point above after going through the system
-//    
-//    
-//    println("THE pm after prepare: " +pm)
-//  }
 
   test("State based sensitivity") {
     val raw = new FullRecord
@@ -54,7 +25,7 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     raw.location.stateProvince = "NSW"
     raw.location.locality = "My test locality"
     (new LocationProcessor).process("test", raw, processed)
-    println(processed.toMap)
+//    println(processed.toMap)
     expectResult(true) {
       processed.occurrence.dataGeneralizations.length() > 0
     }
@@ -159,8 +130,8 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     raw.location.decimalLongitude = "144.81060"
     raw.location.coordinatePrecision = "100.66";
     val qas = (new LocationProcessor).process("test", raw, processed)
-    println(processed.location.coordinateUncertaintyInMeters)
-    println(qas(0))
+//    println(processed.location.coordinateUncertaintyInMeters)
+//    println(qas(0))
     expectResult(true) {
      qas.find(_.code == 25) != None
       //qas(0).code
@@ -177,7 +148,7 @@ class ProcessLocationTest extends ConfigFunSuite with BeforeAndAfterAll {
     raw.location.decimalLongitude = "144.81060"
     raw.location.coordinateUncertaintyInMeters = "100 meters";
     val qas = (new LocationProcessor).process("test", raw, processed)
-    println(processed.location.coordinateUncertaintyInMeters)
+//    println(processed.location.coordinateUncertaintyInMeters)
     expectResult(1) {
       qas.find(_.code == 27).get.qaStatus
     }

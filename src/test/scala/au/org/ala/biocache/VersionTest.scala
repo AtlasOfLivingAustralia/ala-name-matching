@@ -2,6 +2,11 @@ package au.org.ala.biocache
 
 import org.scalatest.FunSuite
 import org.junit.Ignore
+import au.org.ala.biocache.dao.OccurrenceDAO
+import au.org.ala.biocache.model._
+import au.org.ala.biocache.persistence.PersistenceManager
+import au.org.ala.biocache.vocab.AssertionCodes
+import scala.Some
 
 @Ignore
 class VersionTest extends FunSuite {

@@ -1,10 +1,11 @@
 package au.org.ala.biocache
 
 import org.scalatest.FunSuite
-import au.org.ala.data.model.LinnaeanRankClassification
+import au.org.ala.names.model.LinnaeanRankClassification
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 import org.junit.Ignore
+import au.org.ala.biocache.processor.ClassificationProcessor
 
 @RunWith(classOf[JUnitRunner])
 class TaxonomicHintsTest extends ConfigFunSuite {

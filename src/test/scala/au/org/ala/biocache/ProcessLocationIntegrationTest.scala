@@ -1,6 +1,8 @@
 package au.org.ala.biocache
 
 import org.junit.Ignore
+import au.org.ala.biocache.processor.LocationProcessor
+import au.org.ala.biocache.model.FullRecord
 
 /**
  * Integration test the relies on data present in cassandra.

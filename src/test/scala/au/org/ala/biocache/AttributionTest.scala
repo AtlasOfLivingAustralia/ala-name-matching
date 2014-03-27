@@ -3,6 +3,9 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 import org.junit.Ignore
+import au.org.ala.biocache.caches.AttributionDAO
+import au.org.ala.biocache.model.FullRecord
+import au.org.ala.biocache.processor.AttributionProcessor
 
 @RunWith(classOf[JUnitRunner])
 class AttributionTest extends ConfigFunSuite{
@@ -13,8 +16,8 @@ class AttributionTest extends ConfigFunSuite{
         expectResult("dp33"){dr.get.dataProviderUid}
         
         val dr376 = AttributionDAO.getDataResourceFromWS("dr376")
-        println(dr376)
-        println(dr376.get.taxonomicHints)
+//        println(dr376)
+//        println(dr376.get.taxonomicHints)
     }
     
     test("Collection lookup"){
@@ -39,6 +42,4 @@ class AttributionTest extends ConfigFunSuite{
         val dr = AttributionDAO.getDataResourceFromWS("dr92")
         expectResult(Some("MachineObservation")){dr.get.defaultDwcValues.get("basisOfRecord")}
     }
-    
-    
 }

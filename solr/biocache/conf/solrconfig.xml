@@ -1126,7 +1126,7 @@
 
          http://wiki.apache.org/solr/SolrReplication
 
-         It is also neccessary for SolrCloud to function (in Cloud mode, the
+         It is also neccessary for SolrCloud to function (in Cloud model, the
          replication handler is used to bulk transfer segments when nodes
          are added or need to recover).
 
@@ -1616,7 +1616,7 @@
       -->
     <!-- Deduplication
 
-         An example dedup update processor that creates the "id" field
+         An example tool update processor that creates the "id" field
          on the fly based on the hash code of some other fields.  This
          example has overwriteDupes set to false since we are using the
          id field as the signatureField and Solr will maintain

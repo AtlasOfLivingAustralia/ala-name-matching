@@ -24,6 +24,9 @@ import java.util.HashMap
 import scala.io.Source
 import org.apache.commons.lang.time.DateFormatUtils
 import java.util.Date
+import Config
+import au.org.ala.biocache.persistence.PersistenceManager
+
 /**
  * Reads a DwC-A in csv format and writes the data to the BioCache
  *

@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 import org.scalatest.Assertions.expect
+import au.org.ala.biocache.vocab._
 
 /**
  * Test for vocabulary mapping and lookups.

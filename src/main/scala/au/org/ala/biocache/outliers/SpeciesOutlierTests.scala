@@ -2,27 +2,31 @@ package au.org.ala.biocache.outliers
 import java.net.URL
 import au.com.bytecode.opencsv.CSVReader
 import org.ala.layers.intersect.Grid
-import au.org.ala.biocache.{Config, Json, QualityAssertion, AssertionCodes}
-import collection.mutable.{ArrayBuffer, HashMap, ListBuffer}
+import au.org.ala.biocache.Config
+import collection.mutable.{ArrayBuffer, ListBuffer}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.io.{FileWriter, FileOutputStream, File, FileReader}
-import au.org.ala.util.{StringConsumer, IndexRecords, OptionParser, FileHelper}
 import org.slf4j.LoggerFactory
 import collection.mutable
 import java.util.concurrent.ArrayBlockingQueue
 import org.apache.commons.lang3.time.DateUtils
 import java.util.Date
 import java.text.SimpleDateFormat
+import au.org.ala.biocache.vocab.AssertionCodes
+import au.org.ala.biocache.util.{FileHelper, StringConsumer, OptionParser}
+import au.org.ala.biocache.model.QualityAssertion
+import au.org.ala.biocache.index.IndexRecords
 
 class Timings {
+  val logger = LoggerFactory.getLogger("Timings")
 
   val startTime = System.currentTimeMillis()
   var lapTime = startTime
 
   def checkpoint(comment:String) {
     val now = System.currentTimeMillis()
-    println("Time taken for [%s] : %f seconds.".format(comment, ((now - lapTime).toFloat / 1000.0f)))
+    logger.info("Time taken for [%s] : %f seconds.".format(comment, ((now - lapTime).toFloat / 1000.0f)))
     lapTime = now
   }
 }
@@ -33,6 +37,7 @@ class Timings {
 object SpeciesOutlierTests {
 
   import FileHelper._
+
   val logger = LoggerFactory.getLogger("SpeciesOutlierTests")
   val mandatoryHeaders = List("taxonConceptID", "uuid", "decimalLatitude", "decimalLongitude")
   val envLayerMap = Map(
@@ -51,11 +56,11 @@ object SpeciesOutlierTests {
     var headerForDumpFile:List[String] = List("taxonConceptID","uuid","decimalLatitude","decimalLongitude","el882","el889","el887","el865","el894")
     var idsToIndexFile = "/tmp/idsToReIndex.txt"
     var persistResults = false
-    var numPassThreadWriters=16
-    var numSourceThreads =4
-    var taxonRank="species"
-    var index=false
-    var lastModifiedDate:Option[String]=None
+    var numPassThreadWriters = 16
+    var numSourceThreads = 4
+    var taxonRank = "species"
+    var index = false
+    var lastModifiedDate:Option[String] = None
 
     val parser = new OptionParser("Reverse jackknife for outliers") {
       opt("t", "taxonID","The LSID of the species to check for outliers. This wll download from LIVE", {v:String => taxonID = v})
@@ -69,19 +74,19 @@ object SpeciesOutlierTests {
       intOpt("st","sourceThreads", "The number of threads that were used to create the source files.", {v:Int => numSourceThreads = v})
       opt("if", "indexFilePath", "Filepath to file of IDs to reindex", {v:String => idsToIndexFile = v})
       opt("persist","persist results to the database",{persistResults = true})
-      opt("index", "index the records that are marked as outliers", {index =true})
+      opt("index", "index the records that are marked as outliers", {index = true})
       intOpt("day","numDaysMod","Number of days since the last modified.  This will limit the records that are marked as passed.", { v:Int=>
           val sfd = new SimpleDateFormat("yyyy-MM-dd")
-          val days:Int = 0 -v
+          val days:Int = 0 - v
           lastModifiedDate = Some(sfd.format(DateUtils.addDays(new Date(), days)) + "T00:00:00Z")
       })
     }
     if(parser.parse(args)){
       //set up threads
       val queue = new ArrayBlockingQueue[String](200000)
-      var ids =0
+      var ids = 0
       val pool:Array[StringConsumer] = Array.fill(numPassThreadWriters){
-        var counter=0
+        var counter = 0
         var startTime = System.currentTimeMillis
         var finishTime = System.currentTimeMillis
         val p = new StringConsumer(queue,ids,{uuid =>
@@ -94,21 +99,23 @@ object SpeciesOutlierTests {
               //mark the test as passed
               Config.occurrenceDAO.addSystemAssertion(rowKey.get,QualityAssertion(AssertionCodes.DETECTED_OUTLIER, 1))
             }
-          } catch{
+          } catch {
             case e:Exception => logger.error("Unable to markup " + uuid + " as passed. " + e.getMessage)
           }
 
           if (counter % 1000 == 0) {
             finishTime = System.currentTimeMillis
-            println(counter + " >> Last key : " + uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
+            logger.info(counter + " >> Last key : " + uuid + ", records per sec: " + 1000f / (((finishTime - startTime).toFloat) / 1000f))
             startTime = System.currentTimeMillis
           }
-        });ids +=1;p.start;p }
+        });ids +=1;p.start;p
+      }
 
-
-      if (taxonID != "") testForOutliers(taxonID, persistResults)
-      else if (taxonIDsFilepath != "") scala.io.Source.fromFile(taxonIDsFilepath).getLines().foreach(line => testForOutliers(taxonID))
-      else if (fullDumpFilePath != "") {
+      if (taxonID != ""){
+        testForOutliers(taxonID, persistResults)
+      } else if (taxonIDsFilepath != ""){
+        scala.io.Source.fromFile(taxonIDsFilepath).getLines().foreach(line => testForOutliers(taxonID))
+      } else if (fullDumpFilePath != "") {
         val file = new File(fullDumpFilePath)
         if (file.isDirectory){
           var dids = 0
@@ -123,7 +130,7 @@ object SpeciesOutlierTests {
               }
             }
 
-            dids +=1
+            dids += 1
             t.start
             t
           }
@@ -132,8 +139,9 @@ object SpeciesOutlierTests {
         } else {
           runOutlierTestingForDumpFile(fullDumpFilePath, headerForDumpFile, idsToIndexFile, persistResults,queue, index,lastModifiedDate, taxonRank+"_guid")
         }
+      } else {
+        parser.showUsage
       }
-      else parser.showUsage
       //stop the threads that are adding the passed outlier information
       pool.foreach(t =>t.shouldStop = true)
       pool.foreach(_.join)
@@ -240,7 +248,7 @@ object SpeciesOutlierTests {
 
           if(recordsIDs.length  >  lines.size){
             if(logger.isDebugEnabled()){
-            logger.debug(">>> records: %d, distinct values: %d".format(recordsIDs.length, recordsIDs.toSet.size))
+              logger.debug(">>> records: %d, distinct values: %d".format(recordsIDs.length, recordsIDs.toSet.size))
             }
             throw new RuntimeException("Error in processing")
           }
@@ -251,26 +259,25 @@ object SpeciesOutlierTests {
         //now identify the records that were not outlier but were tested.
         //If outliers were NOT testsed the resutlsBuffer will be empty.
         val passedRecords = {
-          if(resultsBuffer.length>0){
+          if(!resultsBuffer.isEmpty){
             recordIds.toSet &~ resultsBuffer.map{_._2}.foldLeft(ListBuffer[SampledRecord]())(_ ++ _).map(v=>v.rowKey.getOrElse(v.id)).toSet
-          }
-          else{
+          } else {
             Set[String]()
           }
         }
-
 
         logger.info("The records that passed " + passedRecords.size + " " + recordIds.size)
         //store the results for this taxon
         storeResultsWithStats(taxonConceptID, resultsBuffer, passedRecords,idsWriter, queue,lastModifiedDate,field,passWriter)
 
-
-        if (nextLine == null) finished = true
-        else nextTaxonConceptID = nextLine(taxonIDIdx)
+        if (nextLine == null) {
+          finished = true
+        } else {
+          nextTaxonConceptID = nextLine(taxonIDIdx)
+        }
       }
-      //logger.debug("The records that passed " + passedRecords.size + " " + recordIds.size)
-      //store the results for this taxon
 
+      //store the results for this taxon
       idsWriter.close
       passWriter.flush
       passWriter.close
@@ -303,9 +310,11 @@ object SpeciesOutlierTests {
     logger.debug("###### Running for:" + idForBatch)
 
     val buffer = new ListBuffer[Array[String]]
-    if (!lastLine.isEmpty) buffer += lastLine
+    if (!lastLine.isEmpty){
+      buffer += lastLine
+    }
 
-    while(currentLine !=null && currentLine(taxonConceptIDIdx) == idForBatch){
+    while(currentLine != null && currentLine(taxonConceptIDIdx) == idForBatch){
       buffer += currentLine
       currentLine = reader.readNext()
     }
@@ -324,7 +333,7 @@ object SpeciesOutlierTests {
     val variablesToTest = Array("el889", "el882", "el887", "el865", "el894")
     val requiredFields = Array("id", "latitude", "longitude") ++ variablesToTest
 
-    val u = new URL(Config.biocacheServiceURL + "/webportal/occurrences.gz?pageSize=3000000&q=lsid:\"" + 
+    val u = new URL(Config.biocacheServiceUrl + "/webportal/occurrences.gz?pageSize=3000000&q=lsid:\"" +
         lsid + "\"&fl=" + requiredFields.mkString(","))
 
     val in = u.openStream
@@ -346,7 +355,7 @@ object SpeciesOutlierTests {
     val outlierValues: Seq[(String, Seq[SampledRecord])] = variablesToTest.map(variable => {
      // println("************ test with " + variable)
       val (list,stats) = performJacknife(variable, extractedFile, requiredFields)
-      println("Variable: %s, Outliers: %d".format(variable,list.size))
+      logger.info("Variable: %s, Outliers: %d".format(variable,list.size))
       list.foreach(println(_))
       variable -> list
     })
@@ -430,19 +439,15 @@ object SpeciesOutlierTests {
 
     //reset the records that are no longer considered outliers -
     //do an ID diff between the results
- //   println(mapper.readValue(previous.get, classOf[List[(String,List[SampledRecord])]]) + " " + mapper.readValue(previous.get, classOf[List[(String,List[SampledRecord])]]).getClass)
     val previousIDs = {
       if(previous.isDefined){
-//        println("PREVIOUS: " +previous.get)
-      //mapper.readValue(previous.getOrElse("{}"), classOf[Map[String, List[String]]]).keys
         val tmplist = new ListBuffer[String]
         val prelist:List[mutable.Buffer[AnyRef]] = mapper.readValue(previous.get, classOf[List[(String,List[SampledRecord])]]).asInstanceOf[List[mutable.Buffer[AnyRef]]]
-        //println("prelist : "+ prelist)
         prelist.foreach(_.foreach { b1 =>
-	      if(b1.isInstanceOf[mutable.Buffer[Map[String,String]]]){
-	        b1.asInstanceOf[mutable.Buffer[scala.collection.convert.Wrappers$JMapWrapper]]
-	          .foreach(v => tmplist += v.get("id").get.toString)
-	      }
+          if(b1.isInstanceOf[mutable.Buffer[Map[String,String]]]){
+            b1.asInstanceOf[mutable.Buffer[scala.collection.convert.Wrappers$JMapWrapper]]
+              .foreach(v => tmplist += v.get("id").get.toString)
+          }
         })
         tmplist.toList
       } else {
@@ -478,22 +483,6 @@ object SpeciesOutlierTests {
       }
     })
     passedWriter.flush()
-
-    //mark the records that have passed if they have been modified since the lastModifiedDate
-    //NC this is taking too ;long just generate the files and have a background process handle the update slowly
-//    val uuids = if(lastModifiedDate.isDefined) Some(getRecordsChangedSince(lastModifiedDate.get, field, taxonID)) else None
-//    passed.foreach(uuid => {
-//      if (uuids.isEmpty || uuids.get.contains(uuid)){
-//        queue.put(uuid)
-//      }
-//      val rowKey = Config.occurrenceDAO.getRowKeyFromUuid(uuid)
-//      if(rowKey.isDefined){
-//        //mark the test as passed
-//        Config.occurrenceDAO.addSystemAssertion(rowKey.get,QualityAssertion(AssertionCodes.DETECTED_OUTLIER, 1))
-//      }
-//    })
-
-
   }
 
   def getRecordsChangedSince(date:String, field:String, taxonId:String):List[String]={
@@ -522,19 +511,15 @@ object SpeciesOutlierTests {
   }
 
   def printLinksForRecords(count: Int, records: Seq[String]) {
-    println()
-    println("## outlier for : " + count + " ##")
-    records.foreach(c => println(Config.biocacheServiceURL + "/occurrences/" + c))
-    println("## end of outlier for : " + count + " ##")
-    println()
+    logger.info("## outlier for : " + count + " ##")
+    records.foreach(c => logger.info(Config.biocacheServiceUrl + "/occurrences/" + c))
+    logger.info("## end of outlier for : " + count + " ##")
   }
 
   def printLinks(count: Int, records: Seq[String]) {
-    println()
-    println("************************ outlier for : " + count + " ******************")
-    records.foreach(c => println(Config.biocacheServiceURL + "/occurrences/" + c))
-    println("************************ end of outlier for : " + count + " ******************")
-    println()
+    logger.info("************************ outlier for : " + count + " ******************")
+    records.foreach(c => println(Config.biocacheServiceUrl + "/occurrences/" + c))
+    logger.info("************************ end of outlier for : " + count + " ******************")
   }
 
   def generateOutlierCounts(outliers:Seq[(SampledRecord, String)]): Seq[(String, Int)] = {
@@ -572,7 +557,6 @@ object SpeciesOutlierTests {
 
       val fields = (headers zip line).toMap
 
-      //println(fields)
       if (fields.contains("latitude") && fields("latitude") != "" && fields.getOrElse(variableName, "") != "") {
         val id = fields("id")
         val x = fields("longitude").toFloat

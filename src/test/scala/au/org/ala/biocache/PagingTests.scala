@@ -2,6 +2,9 @@ package au.org.ala.biocache
 
 import org.scalatest.FunSuite
 import org.junit.Ignore
+import au.org.ala.biocache.dao.OccurrenceDAO
+import au.org.ala.biocache.persistence.PersistenceManager
+import au.org.ala.biocache.model.Raw
 
 /**
  * Demonstrator paging code.  Need to find a way of running this as tests.

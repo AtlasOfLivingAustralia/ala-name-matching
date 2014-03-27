@@ -169,7 +169,7 @@ row_cache_provider: SerializingCacheProvider
 saved_caches_directory: /data/cassandra1.2/saved_caches
 
 # commitlog_sync may be either "periodic" or "batch." 
-# When in batch mode, Cassandra won't ack writes until the commit log
+# When in batch model, Cassandra won't ack writes until the commit log
 # has been fsynced to disk.  It will wait up to
 # commitlog_sync_batch_window_in_ms milliseconds for other writes, before
 # performing the sync.

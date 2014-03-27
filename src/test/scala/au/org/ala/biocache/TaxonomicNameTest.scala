@@ -3,6 +3,9 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
+import au.org.ala.biocache.model.FullRecord
+import au.org.ala.biocache.processor.ClassificationProcessor
+import au.org.ala.biocache.vocab.AssertionCodes
 
 @RunWith(classOf[JUnitRunner])
 class TaxonomicNameTest extends ConfigFunSuite {
@@ -16,8 +19,7 @@ class TaxonomicNameTest extends ConfigFunSuite {
       raw.classification.genus = "Pseudosuberia"
       raw.classification.family = "Briareidae"
       val qas = (new ClassificationProcessor).process("test", raw, processed)
-      println(processed.classification.scientificName)
-      
+//      println(processed.classification.scientificName)
     }
   
     test("name not recognised"){
@@ -39,13 +41,19 @@ class TaxonomicNameTest extends ConfigFunSuite {
     test("name not in national checklists"){
         val raw = new FullRecord
         var processed = new FullRecord
-        raw.classification.scientificName = "Amanita farinacea"
-        var qas = (new ClassificationProcessor).process("test", raw, processed)
-        expectResult(1){qas.find(_.code == 10005).get.qaStatus}
 
+        raw.classification.scientificName = "Amanita farinacea"
+        expectResult(1){
+          var qas = (new ClassificationProcessor).process("test", raw, processed)
+          qas.find(_.code == AssertionCodes.NAME_NOT_IN_NATIONAL_CHECKLISTS.code).get.qaStatus
+        }
+
+        //indian mynah - not in AFD currently
         raw.classification.scientificName = "Acridotheres tristis"
-        qas = (new ClassificationProcessor).process("test", raw, processed)
-        expectResult(0){qas.find(_.code == 10005).get.qaStatus}
+        expectResult(0){
+          val qas = (new ClassificationProcessor).process("test", raw, processed)
+          qas.find(_.code == 10005).get.qaStatus
+        }
     }
 
     test("homonym issue"){
@@ -54,7 +62,7 @@ class TaxonomicNameTest extends ConfigFunSuite {
         raw.classification.genus = "Macropus";
         raw.classification.scientificName = "Macropus ?";
         val qas = (new ClassificationProcessor).process("test", raw, processed);
-        println(processed.classification.taxonConceptID)
+//        println(processed.classification.taxonConceptID)
         expectResult(true){processed.classification.getTaxonomicIssue().contains("homonym")}
         expectResult(true){processed.classification.getTaxonomicIssue().contains("questionSpecies")}
 //        expectResult(10006){qas(0).code}

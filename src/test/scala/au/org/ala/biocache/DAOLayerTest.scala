@@ -1,15 +1,15 @@
 package au.org.ala.biocache
 
-import org.scalatest.FunSuite
 import org.junit.Ignore
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-import au.org.ala.util.DuplicateRecordDetails
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
-import scala.reflect.BeanProperty
 import com.fasterxml.jackson.annotation.JsonInclude.Include
+import au.org.ala.biocache.model._
+import au.org.ala.biocache.load.FullRecordMapper
+import au.org.ala.biocache.vocab.AssertionCodes
+import au.org.ala.biocache.util.Json
+
 @Ignore
 class DAOLayerTest extends ConfigFunSuite {
   val occurrenceDAO = Config.occurrenceDAO

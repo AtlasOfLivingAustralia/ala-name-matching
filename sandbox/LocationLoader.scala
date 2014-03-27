@@ -1,9 +1,9 @@
 package au.org.ala.util
 
-import au.org.ala.biocache.LocationDAO
-import au.org.ala.biocache.PersistenceManager
 import au.org.ala.biocache.Config
 import java.io.File
+import au.org.ala.biocache.caches.LocationDAO
+import au.org.ala.biocache.persistence.PersistenceManager
 
 /**
  * Loads an export from the gazetteer based on point from the old portal database.

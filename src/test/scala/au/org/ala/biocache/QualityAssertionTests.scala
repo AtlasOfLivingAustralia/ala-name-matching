@@ -3,6 +3,10 @@ package au.org.ala.biocache
 import org.scalatest.FunSuite
 import org.scale7.cassandra.pelops.{Pelops}
 import org.junit.Ignore
+import au.org.ala.biocache.dao.OccurrenceDAO
+import au.org.ala.biocache.model.{QualityAssertion, FullRecord}
+import au.org.ala.biocache.persistence.PersistenceManager
+import au.org.ala.biocache.vocab.AssertionCodes
 
 /**
  * This is an integration test - hence it needs a running cassandra DB to work.

@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>au.org.ala</groupId>
 	<artifactId>biocache-store</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<version>1.1-SNAPSHOT</version>
 	<url>http://biocache.ala.org.au</url>
 	<issueManagement>
 		<system>Google code</system>
@@ -16,7 +16,7 @@
 	<inceptionYear>2011</inceptionYear>
 	<name>biocache-store</name>
 	<properties>
-		<scala.version>2.10.0</scala.version>
+		<scala.version>2.10.3</scala.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.springframework.version>3.0.6.RELEASE</org.springframework.version>
 		<solr.version>4.4.0</solr.version>
@@ -26,6 +26,11 @@
         Scala implementation of biocache backend.
         This code base managed the loading, processing, indexing of occurrence records for the ALA.
     </description>
+<!-- AN SCM entry that points to the SVN directory that contains the pom file for the project  -->
+    <scm>
+        <developerConnection>scm:svn:https://ala-portal.googlecode.com/svn/trunk/biocache-store/</developerConnection>
+    </scm>
+
 	<repositories>
 		<repository>
 			<id>repo2</id>
@@ -86,6 +91,10 @@
 					<artifactId>xercesImpl</artifactId>
 					<groupId>xerces</groupId>
 				</exclusion>
+                <exclusion>
+                    <artifactId>xercesImpl</artifactId>
+                    <groupId>xerces</groupId>
+                </exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -145,7 +154,7 @@
 		<dependency>
 			<groupId>au.org.ala</groupId>
 			<artifactId>sds</artifactId>
-			<version>1.1-SNAPSHOT</version>
+			<version>1.2-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<groupId>commons-lang</groupId>
@@ -173,7 +182,7 @@
 		<dependency>
 			<groupId>au.org.ala</groupId>
 			<artifactId>ala-name-matching</artifactId>
-			<version>1.2-SNAPSHOT</version>
+			<version>2.0-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.gbif</groupId>
@@ -202,26 +211,6 @@
 				<exclusion>
 					<artifactId>org.slf4j</artifactId>
 					<groupId>slf4j-api</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<!-- BIE Species Profile syncing -->
-		<dependency>
-			<groupId>au.org.ala</groupId>
-			<artifactId>bie-rpc</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>au.org.ala</groupId>
-					<artifactId>bie-hbase</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-simple</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -369,24 +358,22 @@
 			<artifactId>solr-solrj</artifactId>
 			<groupId>org.apache.solr</groupId>
 			<version>${solr.version}</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>org.slf4j</artifactId>
-					<groupId>slf4j-jdk14</groupId>
-				</exclusion>
-			</exclusions>
+			<!--<exclusions>-->
+				<!--<exclusion>-->
+					<!--<artifactId>org.slf4j</artifactId>-->
+					<!--<groupId>slf4j-jdk14</groupId>-->
+				<!--</exclusion>-->
+			<!--</exclusions>-->
 		</dependency>
-		<dependency>
-			<artifactId>velocity-tools</artifactId>
-			<groupId>org.apache.velocity</groupId>
-			<version>2.0</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>org.slf4j</artifactId>
-					<groupId>slf4j-jdk14</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+        <!--
+           The following dependency is required for a SOLR embedded service only
+           See http://lucene.472066.n3.nabble.com/EmbeddedSolrServer-java-lang-NoClassDefFoundError-javax-servlet-ServletRequest-td483937.html
+         -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
+        </dependency>
         <dependency>
           <groupId>com.vividsolutions</groupId>
           <artifactId>jts</artifactId>
@@ -494,14 +481,9 @@
 		<pluginManagement>
 			<plugins>
 				<plugin>
-					<groupId>org.scala-tools</groupId>
-					<artifactId>maven-scala-plugin</artifactId>
-					<version>2.15.2</version>
-				</plugin>
-				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>2.0.2</version>
+					<version>3.1</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -528,10 +510,12 @@
 					</execution>
 				</executions>
 				<configuration>
+                    <checkMultipleScalaVersions>false</checkMultipleScalaVersions>
 					<scalaVersion>${scala.version}</scalaVersion>
 					<args>
 						<arg>-target:jvm-1.6</arg>
                         <arg>-deprecation</arg>
+                        <arg>-nowarn</arg>
 					</args>
 					<jvmArgs>
 						<jvmArg>-Xmx2G</jvmArg>
@@ -561,6 +545,11 @@
 					</sourceIncludes>
 				</configuration>
 			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
+            </plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -572,7 +561,7 @@
 						<manifest>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
-							<mainClass>au.org.ala.util.CommandLineTool</mainClass>
+							<mainClass>au.org.ala.biocache.cmd.CommandLineTool</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
@@ -602,6 +591,12 @@
 					</execution>
 				</executions>
 			</plugin>
+                        <plugin>
+                                <groupId>org.apache.maven.plugins</groupId>
+                                <artifactId>maven-release-plugin</artifactId>
+                                <version>2.5</version>
+                        </plugin>
+
 		</plugins>
 	</build>
 	<reporting>
@@ -609,9 +604,6 @@
 			<plugin>
 				<groupId>org.scala-tools</groupId>
 				<artifactId>maven-scala-plugin</artifactId>
-				<configuration>
-					<vscalaVersion>1.0</vscalaVersion>
-				</configuration>
 			</plugin>
 		</plugins>
 	</reporting>

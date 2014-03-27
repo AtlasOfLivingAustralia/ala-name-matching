@@ -13,7 +13,7 @@
 //import java.io.File
 //import java.util.{UUID, Arrays}
 //import org.wyki.cassandra.pelops.Pelops
-//import au.org.ala.biocache._
+//import au.au.biocache._
 //import collection.JavaConversions
 //
 ///**
