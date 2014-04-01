@@ -16,7 +16,10 @@ package au.org.ala.biocache.load
 
 import au.org.ala.biocache.{Config, ConfigFunSuite}
 import java.util
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class MapDataLoaderTest extends ConfigFunSuite {
   test("map load with dwc substitution"){
     val loader = new MapDataLoader
