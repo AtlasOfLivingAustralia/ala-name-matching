@@ -70,7 +70,7 @@ object Config {
   lazy val fieldsToSample = {
     val str = configModule.properties.getProperty("sample.fields")
     val defaultFields = configModule.properties.getProperty("default.sample.fields")
-    if (str != null && str.trim != "" && str.trim != "none"){
+    if (str == null || str.trim == "" ){
       val dbfields = try {
         Client.getLayerIntersectDao.getConfig.getFieldsByDB
       } catch {
@@ -90,6 +90,8 @@ object Config {
       }
       logger.info("Fields to sample: " + fields.mkString(","))
       fields   //fields.dropWhile(x => List("el898","cl909","cl900").contains(x))
+    } else if (str == "none"){
+      Array[String]()
     } else {
       val fields = str.split(",").map(x => x.trim).toArray
       logger.info("Fields to sample: " + fields.mkString(","))
