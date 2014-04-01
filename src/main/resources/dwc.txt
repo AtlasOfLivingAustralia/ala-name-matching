@@ -9,7 +9,7 @@ basisOfRecord	recordBasis
 bed
 behavior	behaviour
 catalogNumber	catalogID	catalogNumberNumeric	catalogueNumber	ID	strainNumber
-class   classs  klass
+class	classs	klass
 classs	_class	class	klass	clazz
 collectionCode	collection code
 collectionID	collection id
@@ -137,6 +137,7 @@ relationshipRemarks
 reproductiveCondition
 resourceID
 resourceRelationshipID
+rights	imageLicence
 samplingEffort
 samplingProtocol
 scientificName	sci name	taxon name	taxonomic name	bionomial	bionomial name	binomial	binomial name
