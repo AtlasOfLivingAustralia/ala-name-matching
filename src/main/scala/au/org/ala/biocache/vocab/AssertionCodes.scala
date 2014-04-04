@@ -98,6 +98,7 @@ object AssertionCodes {
   val INVALID_COLLECTION_DATE = ErrorCode("invalidCollectionDate",30007,false,"Invalid collection date", Error)
   val MISSING_COLLECTION_DATE = ErrorCode("missingCollectionDate",30008,false,"Missing collection date",Missing)
   val DAY_MONTH_TRANSPOSED = ErrorCode("dayMonthTransposed",30009,false,"Day and month transposed", Warning)
+  val INCOMPLETE_COLLECTION_DATE = ErrorCode("incompleteCollectionDate",30010,false,"The date supplied was incomplete, missing the day and/or month component", Warning)
 
   //verified type - this is a special code
   val VERIFIED = ErrorCode("userVerified", 50000, true, "Record Verified by collection manager", Verified)

@@ -53,6 +53,7 @@ class EventProcessor extends Processor {
       val currentYear = DateUtil.getCurrentYear
       var comment = ""
       var addPassedInvalidCollectionDate=true
+      var dateComplete=false
 
       var (year, validYear) = validateNumber(raw.event.year, {
         year => year > 0 && year <= currentYear
@@ -89,37 +90,11 @@ class EventProcessor extends Processor {
 
       //check for sensible year value
       if (year > 0) {
-        if (year < 100) {
-          //parse 89 for 1989
-          if (year > currentYear % 100) {
-            // Must be in last century
-            year += ((currentYear / 100) - 1) * 100
-          } else {
-            // Must be in this century
-            year += (currentYear / 100) * 100
+        val (newComment,newValidYear,newYear) = runYearValidation(year,currentYear,day,month)
+        comment = newComment
+        validYear = newValidYear
+        year = newYear
 
-            //although check that combined year-month-day isnt in the future
-            if (day != 0 && month != 0) {
-              val date = DateUtils.parseDate(year.toString + String.format("%02d", int2Integer(month)) + day.toString, Array("yyyyMMdd"))
-              if (date.after(new Date())) {
-                year -= 100
-              }
-            }
-          }
-        } else if (year >= 100 && year < 1600) {
-          year = -1
-          validYear = false
-          comment = "Year out of range"
-        } else if (year > DateUtil.getCurrentYear) {
-          year = -1
-          validYear = false
-          comment = "Future year supplied"
-          //assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
-        } else if (year == 1788 && month == 1 && day == 26) {
-          //First fleet arrival date indicative of a null date.
-          validYear = false
-          comment = "First Fleet arrival implies a null date"
-        }
         if (StringUtils.isNotEmpty(comment)){
           assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, comment)
           addPassedInvalidCollectionDate=false
@@ -140,6 +115,7 @@ class EventProcessor extends Processor {
           //don't allow the calendar to be lenient we want exceptions with incorrect dates
           calendar.setLenient(false);
           date = Some(calendar.getTime)
+          dateComplete = true
         } catch {
           case e: Exception => {
             validDayMonthYear = false
@@ -165,6 +141,18 @@ class EventProcessor extends Processor {
           processed.event.day = parsedDate.get.startDay
           processed.event.month = parsedDate.get.startMonth
           processed.event.year = parsedDate.get.startYear
+          //set the valid year if one was supplied in the eventDate
+          if(parsedDate.get.startYear != "") {
+            val(newComment,newValidYear,newYear) = runYearValidation(parsedDate.get.startYear.toInt, currentYear,if(parsedDate.get.startDay =="") 0 else parsedDate.get.startDay.toInt, if(parsedDate.get.startMonth =="") 0 else parsedDate.get.startMonth.toInt)
+            comment = newComment
+            validYear = newValidYear
+            year = newYear
+          }
+
+          if(StringUtils.isNotBlank(parsedDate.get.startDate)){
+            //we have a complete date
+            dateComplete=true
+          }
 
           if (DateUtil.isFutureDate(parsedDate.get)) {
             assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Future date supplied")
@@ -182,6 +170,20 @@ class EventProcessor extends Processor {
           processed.event.day = parsedDate.get.startDay
           processed.event.month = parsedDate.get.startMonth
           processed.event.year = parsedDate.get.startYear
+
+          //set the valid year if one was supplied in the verbatimEventDate
+          if(parsedDate.get.startYear != "") {
+            val(newComment,newValidYear,newYear) = runYearValidation(parsedDate.get.startYear.toInt, currentYear,if(parsedDate.get.startDay =="") 0 else parsedDate.get.startDay.toInt, if(parsedDate.get.startMonth =="") 0 else parsedDate.get.startMonth.toInt)
+            comment = newComment
+            validYear = newValidYear
+            year = newYear
+          }
+
+          if(StringUtils.isNotBlank(parsedDate.get.startDate)){
+            //we have a complete date
+            dateComplete=true
+          }
+
           if (DateUtil.isFutureDate(parsedDate.get)) {
             assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, "Future date supplied")
             addPassedInvalidCollectionDate = false
@@ -190,7 +192,7 @@ class EventProcessor extends Processor {
       }
 
       //if invalid date, add assertion
-      if (!validYear && (processed.event.eventDate == null || processed.event.eventDate == "")) {
+      if (!validYear && (processed.event.eventDate == null || processed.event.eventDate == "" || comment != "")) {
         assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, comment)
         addPassedInvalidCollectionDate = false
       }
@@ -204,12 +206,62 @@ class EventProcessor extends Processor {
       //check to see if we need add a passed test for the invalid collection dates
       if(addPassedInvalidCollectionDate)
         assertions += QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE, 1)
+
+      if(dateComplete){
+        //add a pass condition for this test
+        assertions += QualityAssertion(AssertionCodes.INCOMPLETE_COLLECTION_DATE, 1)
+      } else{
+        //incomplete date
+        assertions += QualityAssertion(AssertionCodes.INCOMPLETE_COLLECTION_DATE, "The supplied collection date is not complete")
+      }
     }
+
     //now process the other dates
     processOtherDates(raw, processed, assertions)
     //check for the "first" of month,year,century
     processFirstDates(raw, processed, assertions)
     assertions.toArray
+  }
+
+  def runYearValidation(rawyear:Int, currentYear:Int, day:Int=0, month:Int=0):(String,Boolean,Int)={
+    var validYear =true
+    var comment=""
+    var year = rawyear
+    if (year > 0) {
+      if (year < 100) {
+        //parse 89 for 1989
+        if (year > currentYear % 100) {
+          // Must be in last century
+          year += ((currentYear / 100) - 1) * 100
+        } else {
+          // Must be in this century
+          year += (currentYear / 100) * 100
+
+          //although check that combined year-month-day isnt in the future
+          if (day != 0 && month != 0) {
+            val date = DateUtils.parseDate(year.toString + String.format("%02d", int2Integer(month)) + day.toString, Array("yyyyMMdd"))
+            if (date.after(new Date())) {
+              year -= 100
+            }
+          }
+        }
+      } else if (year >= 100 && year < 1600) {
+        year = -1
+        validYear = false
+        comment = "Year out of range"
+      } else if (year > DateUtil.getCurrentYear) {
+        year = -1
+        validYear = false
+        comment = "Future year supplied"
+        //assertions + QualityAssertion(AssertionCodes.INVALID_COLLECTION_DATE,comment)
+      } else if (year == 1788 && month == 1 && day == 26) {
+        //First fleet arrival date indicative of a null date.
+        validYear = false
+        comment = "First Fleet arrival implies a null date"
+      }
+
+    }
+    (comment,validYear,year)
   }
 
   def processFirstDates(raw:FullRecord, processed:FullRecord, assertions:ArrayBuffer[QualityAssertion]){

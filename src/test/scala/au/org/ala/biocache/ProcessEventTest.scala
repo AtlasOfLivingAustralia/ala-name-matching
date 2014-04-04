@@ -16,7 +16,7 @@ import au.org.ala.biocache.util.DateUtil
  * See http://www.scalatest.org/getting_started_with_fun_suite
  * 
  * scala -cp scalatest-1.0.jar org.scalatest.tools.Runner -p . -o -s ay.au.biocache.ProcessEventTests
- * 
+ *
  * @author Dave Martin (David.Martin@csiro.au)
  */
 @RunWith(classOf[JUnitRunner])
@@ -328,5 +328,89 @@ class ProcessEventTest extends ConfigFunSuite {
       //date is NOT the first of the century - not tested since the month is not January
       qas.find {_.getName == "firstOfCentury"}
     }
+  }
+
+  test("Year only - results in incomplete date error but NOT invalid date"){
+    val raw = new FullRecord
+    val processed = new FullRecord
+
+    raw.event.eventDate="1978"
+
+    val qas = (new EventProcessor).process("test",raw,processed)
+    //AssertionCodes.INVALID_COLLECTION_DATE
+    println(qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INVALID_COLLECTION_DATE.code))
+    println(qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INCOMPLETE_COLLECTION_DATE.code))
+  }
+
+  test("Incomplete Date Tests"){
+
+    //valid but incomlete event year
+    var raw = new FullRecord
+    var processed = new FullRecord
+    raw.event.year="2014"
+    var qas = (new EventProcessor).process("test",raw,processed)
+    expectResult(0){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INCOMPLETE_COLLECTION_DATE.code).get.getQaStatus}
+    expectResult(1){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INVALID_COLLECTION_DATE.code).get.getQaStatus}
+
+    //valid and complete day, month and year
+    raw.event.month="01"
+    raw.event.day="11"
+    qas = (new EventProcessor).process("test",raw,processed)
+    expectResult(1){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INCOMPLETE_COLLECTION_DATE.code).get.getQaStatus}
+    expectResult(1){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INVALID_COLLECTION_DATE.code).get.getQaStatus}
+
+    //valid but incomplete eventDate
+    raw = new FullRecord
+    raw.event.eventDate="2014-02"
+    qas = (new EventProcessor).process("test",raw,processed)
+    expectResult(0){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INCOMPLETE_COLLECTION_DATE.code).get.getQaStatus}
+    expectResult(1){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INVALID_COLLECTION_DATE.code).get.getQaStatus}
+
+    //invalid date
+    raw.event.eventDate="2012-22"
+    qas = (new EventProcessor).process("test",raw,processed)
+    expectResult(0){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INVALID_COLLECTION_DATE.code).get.getQaStatus}
+
+    //valid and complete event date
+    raw.event.eventDate="2014-02-15"
+    qas = (new EventProcessor).process("test",raw,processed)
+    expectResult(1){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INCOMPLETE_COLLECTION_DATE.code).get.getQaStatus}
+    expectResult(1){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INVALID_COLLECTION_DATE.code).get.getQaStatus}
+
+    //valid and incomplete verbatim event date
+    raw = new FullRecord
+    raw.event.verbatimEventDate="2014-02"
+    qas = (new EventProcessor).process("test",raw,processed)
+    expectResult(0){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INCOMPLETE_COLLECTION_DATE.code).get.getQaStatus}
+    expectResult(1){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INVALID_COLLECTION_DATE.code).get.getQaStatus}
+
+    //valid and complete verbatim event date
+    raw.event.verbatimEventDate="2014-02-15"
+    qas = (new EventProcessor).process("test",raw,processed)
+    expectResult(1){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INCOMPLETE_COLLECTION_DATE.code).get.getQaStatus}
+    expectResult(1){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INVALID_COLLECTION_DATE.code).get.getQaStatus}
+
+  }
+
+  test("First Fleet Tests"){
+    var raw = new FullRecord
+    var processed = new FullRecord
+    raw.event.year="1788"
+    raw.event.month="01"
+    raw.event.day="26"
+    var qas = (new EventProcessor).process("test", raw, processed)
+    expectResult("First Fleet arrival implies a null date"){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INVALID_COLLECTION_DATE.code).get.getComment}
+
+    raw = new FullRecord
+    raw.event.eventDate = "1788-01-26"
+    qas = (new EventProcessor).process("test", raw, processed)
+    expectResult("First Fleet arrival implies a null date"){qas.find(_.code ==au.org.ala.biocache.vocab.AssertionCodes.INVALID_COLLECTION_DATE.code).get.getComment}
+  }
+
+  test("00 month and day"){
+    var raw = new FullRecord
+    var processed = new FullRecord
+    raw.event.eventDate="2014-00-00"
+    //should be an invalid date
   }
 }
