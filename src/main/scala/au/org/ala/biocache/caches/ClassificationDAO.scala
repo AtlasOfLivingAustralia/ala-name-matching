@@ -66,7 +66,7 @@ object ClassificationDAO {
         || cl.infraspecificEpithet != null || cl.kingdom != null || cl.phylum != null
         || cl.classs != null || cl.order != null || cl.family !=null  || cl.genus!=null){
         Array(cl.kingdom,cl.phylum,cl.classs,cl.order,cl.family,cl.genus,cl.species,cl.specificEpithet,
-          cl.subspecies,cl.infraspecificEpithet,cl.scientificName).reduceLeft(_+"|"+_)
+          cl.subspecies,cl.infraspecificEpithet,cl.scientificName,cl.taxonRank).reduceLeft(_+"|"+_)
       } else {
         cl.vernacularName
       }
@@ -101,20 +101,25 @@ object ClassificationDAO {
             metric
           }
           //if (cl.taxonConceptID != null) nameIndex.searchForRecordByLsid(cl.taxonConceptID)
-          else if(hash.contains("|")) nameIndex.searchForRecordMetrics(new LinnaeanRankClassification(
-            stripStrayQuotes(cl.kingdom),
-            stripStrayQuotes(cl.phylum),
-            stripStrayQuotes(cl.classs),
-            stripStrayQuotes(cl.order),
-            stripStrayQuotes(cl.family),
-            stripStrayQuotes(cl.genus),
-            stripStrayQuotes(cl.species),
-            stripStrayQuotes(cl.specificEpithet),
-            stripStrayQuotes(cl.subspecies),
-            stripStrayQuotes(cl.infraspecificEpithet),
-            stripStrayQuotes(cl.scientificName)),
+
+          else if(hash.contains("|")) {
+            val lrcl = new LinnaeanRankClassification(
+              stripStrayQuotes(cl.kingdom),
+              stripStrayQuotes(cl.phylum),
+              stripStrayQuotes(cl.classs),
+              stripStrayQuotes(cl.order),
+              stripStrayQuotes(cl.family),
+              stripStrayQuotes(cl.genus),
+              stripStrayQuotes(cl.species),
+              stripStrayQuotes(cl.specificEpithet),
+              stripStrayQuotes(cl.subspecies),
+              stripStrayQuotes(cl.infraspecificEpithet),
+              stripStrayQuotes(cl.scientificName))
+            lrcl.setRank(cl.taxonRank)
+            nameIndex.searchForRecordMetrics(lrcl,
             true,
             true) //fuzzy matching is enabled because we have taxonomic hints to help prevent dodgy matches
+          }
           else null
         } catch {
           case e:Exception => {

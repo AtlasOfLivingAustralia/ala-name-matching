@@ -68,6 +68,25 @@ class TaxonomicNameTest extends ConfigFunSuite {
 //        expectResult(10006){qas(0).code}
     }
 
+    test("cross rank homonym resolved"){
+      val raw = new FullRecord
+      var processed = new FullRecord
+
+      raw.classification.scientificName = "Symphyta"
+      raw.classification.family = "LASIOCAMPIDAE"
+      //unresolved cross rank homonym
+      var qas = (new ClassificationProcessor).process("test", raw, processed);
+      expectResult(true){processed.classification.getTaxonomicIssue().contains("homonym")}
+
+      //resolve the homonym by setting the rank
+      processed = new FullRecord
+      raw.classification.taxonRank ="genus"
+      qas = (new ClassificationProcessor).process("test", raw, processed);
+      expectResult(false){processed.classification.getTaxonomicIssue().contains("homonym")}
+      expectResult("Symphyta"){processed.classification.scientificName}
+      expectResult("ANIMALIA"){processed.classification.kingdom}
+    }
+
 //    test("missing accepted name"){
 //      val raw = new FullRecord
 //      var processed = new FullRecord
