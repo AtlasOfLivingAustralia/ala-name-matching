@@ -36,7 +36,15 @@ object DateParser {
           eventDateWithOption
         }
       }
-      case None => None
+      case None => {
+        //NQ 2014-04-07: second attempt - needed because when strict parsing is enabled non iso formats will fall down to here
+        val secondAttempt = parseNonISODate(dateStrNormalised)
+        if(!secondAttempt.isEmpty && isValid(secondAttempt.get)){
+          secondAttempt
+        } else {
+          None
+        }
+      }
     }
   }
 
@@ -48,7 +56,7 @@ object DateParser {
       if(date == "")
         None
       else
-        Some(DateUtils.parseDate(date,
+        Some(DateUtils.parseDateStrictly(date,
           Array("yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss","yyyy-MM-dd")))
     } catch {
       case _:Exception => None
@@ -128,8 +136,8 @@ object ISOWithMonthNameDate /*extends (String=>Option[EventDate]) */ {
    */
   def unapply(str: String): Option[EventDate] = {
     try {
-      val eventDateParsed = DateUtils.parseDate(str,
-        Array("yyyy-MMMMM-dd", "yyyy-MMMMM-dd'T'hh:mm-ss", "yyyy-MMMMM-dd'T'hh:mm'Z'"))
+      val eventDateParsed = DateUtils.parseDateStrictly(str,
+        Array("yyyy-MMMMM-dd", "yyyy-MMMMM-dd'T'hh:mm-ss", "yyyy-MMMMM-dd'T'HH:mm-ss", "yyyy-MMMMM-dd'T'hh:mm'Z'", "yyyy-MMMMM-dd'T'HH:mm'Z'"))
 
       val startDate, endDate = DateFormatUtils.format(eventDateParsed, "yyyy-MM-dd")
       val startDay, endDay = DateFormatUtils.format(eventDateParsed, "dd")
@@ -147,14 +155,14 @@ object ISOWithMonthNameDate /*extends (String=>Option[EventDate]) */ {
 /** Extractor for the format yyyy-MM-dd */
 object ISOSingleYear {
 
-  def formats = Array("yyyy")
+  def formats = Array("yyyy", "yyyy-00-00")
 
   /**
    * Extraction method
    */
   def unapply(str: String): Option[EventDate] = {
     try {
-      val eventDateParsed = DateUtils.parseDate(str,formats)
+      val eventDateParsed = DateUtils.parseDateStrictly(str,formats)
       val startYear, endYear = DateFormatUtils.format(eventDateParsed, "yyyy")
       val startDate, endDate = ""
       val startDay, endDay = ""
@@ -173,7 +181,7 @@ class SingleDate {
   def baseFormats = Array("yyyy-MM-dd","yyyy/MM/dd")
 
 //  2001-03-14T00:00:00+11:00
-  def formats = baseFormats.map(f => Array(f, f + "'Z'", f + "'T'hh:mm'Z'", f + "'T'hh:mm:ss", f + "'T'hh:mm:ssZ",f + " hh:mm:ss")).flatten
+  def formats = baseFormats.map(f => Array(f, f + "'Z'", f + "'T'hh:mm'Z'",f + "'T'HH:mm'Z'", f + "'T'hh:mm:ss",f + "'T'HH:mm:ss", f + "'T'hh:mm:ssZ", f + "'T'HH:mm:ssZ",f + " hh:mm:ss",f + " HH:mm:ss")).flatten
 
   /**
    * Extraction method
@@ -183,7 +191,7 @@ class SingleDate {
       //  2001-03-14T00:00:00+11:00
       //bug in commons lang - http://stackoverflow.com/questions/424522/how-can-i-recognize-the-zulu-time-zone-in-java-dateutils-parsedate
       val strWithoutTime = str.replaceFirst("[+|-][0-2][0-9]:[0-5][0-9]","")
-      val eventDateParsed = DateUtils.parseDate(strWithoutTime,formats)
+      val eventDateParsed = DateUtils.parseDateStrictly(strWithoutTime,formats)
       val startYear, endYear = DateFormatUtils.format(eventDateParsed, "yyyy")
       val startDate, endDate = DateFormatUtils.format(eventDateParsed, "yyyy-MM-dd")
       val startDay, endDay = DateFormatUtils.format(eventDateParsed, "dd")
@@ -212,8 +220,8 @@ object ISOMonthDate {
    */
   def unapply(str: String): Option[EventDate] = {
     try {
-      val eventDateParsed = DateUtils.parseDate(str,
-        Array("yyyy-MM", "yyyy-MM-", "MM yyyy", "MMM-yyyy"))
+      val eventDateParsed = DateUtils.parseDateStrictly(str,
+        Array("yyyy-MM", "yyyy-MM-", "MM yyyy", "MMM-yyyy", "yyyy-MM-00"))
 
       val startDate, endDate = ""
       val startDay, endDay = ""
@@ -231,15 +239,15 @@ object ISOMonthDate {
 /** Extractor for the format yyyy-MM-dd/yyyy-MM-dd */
 object ISODateRange {
 
-  val formats = Array("yyyy-MM-dd", "yyyy-MM-dd'T'hh:mm-ss", "yyyy-MM-dd'T'hh:mm'Z'")
+  val formats = Array("yyyy-MM-dd", "yyyy-MM-dd'T'hh:mm-ss", "yyyy-MM-dd'T'HH:mm-ss", "yyyy-MM-dd'T'hh:mm'Z'", "yyyy-MM-dd'T'HH:mm'Z'")
 
   def unapply(str: String): Option[EventDate] = {
     try {
 
       val parts = str.split("/")
       if (parts.length != 2) return None
-      val startDateParsed = DateUtils.parseDate(parts(0), formats)
-      val endDateParsed = DateUtils.parseDate(parts(1), formats)
+      val startDateParsed = DateUtils.parseDateStrictly(parts(0), formats)
+      val endDateParsed = DateUtils.parseDateStrictly(parts(1), formats)
 
       val startDate = DateFormatUtils.format(startDateParsed, "yyyy-MM-dd")
       val endDate = DateFormatUtils.format(endDateParsed, "yyyy-MM-dd")
@@ -265,10 +273,10 @@ object ISOMonthYearDateRange {
     try {
       val parts = str.split("/")
       if (parts.length != 2) return None
-      val startDateParsed = DateUtils.parseDate(parts(0),
-        Array("yyyy-MM", "yyyy-MM-"))
-      val endDateParsed = DateUtils.parseDate(parts(1),
-        Array("yyyy-MM", "yyyy-MM-"))
+      val startDateParsed = DateUtils.parseDateStrictly(parts(0),
+        Array("yyyy-MM", "yyyy-MM-", "yyyy-MM-00"))
+      val endDateParsed = DateUtils.parseDateStrictly(parts(1),
+        Array("yyyy-MM", "yyyy-MM-","yyyy-MM-00"))
 
       val startDate, endDate = ""
       val startDay, endDay = ""
@@ -294,9 +302,9 @@ object ISOMonthDateRange {
     try {
       val parts = str.split("/")
       if (parts.length != 2) return None
-      val startDateParsed = DateUtils.parseDate(parts(0),
-        Array("yyyy-MM", "yyyy-MM-"))
-      val endDateParsed = DateUtils.parseDate(parts(1),
+      val startDateParsed = DateUtils.parseDateStrictly(parts(0),
+        Array("yyyy-MM", "yyyy-MM-", "yyyy-MM-00"))
+      val endDateParsed = DateUtils.parseDateStrictly(parts(1),
         Array("MM", "MM-"))
 
       val startDate, endDate = ""
@@ -320,10 +328,10 @@ object ISODateTimeRange {
     try {
       val parts = str.split("/")
       if (parts.length != 2) return None
-      val startDateParsed = DateUtils.parseDate(parts(0),
-        Array("yyyy-MM-dd hh:mm:ss.sss"))
-      val endDateParsed = DateUtils.parseDate(parts(1),
-        Array("yyyy-MM-dd hh:mm:ss.sss"))
+      val startDateParsed = DateUtils.parseDateStrictly(parts(0),
+        Array("yyyy-MM-dd hh:mm:ss.sss","yyyy-MM-dd HH:mm:ss.sss"))
+      val endDateParsed = DateUtils.parseDateStrictly(parts(1),
+        Array("yyyy-MM-dd hh:mm:ss.sss","yyyy-MM-dd HH:mm:ss.sss"))
 
       val startDate = DateFormatUtils.format(startDateParsed, "yyyy-MM-dd")
       val endDate = DateFormatUtils.format(endDateParsed, "yyyy-MM-dd")
@@ -347,9 +355,8 @@ object ISOVerboseDateTime {
 
   def unapply(str: String): Option[EventDate] = {
     try {
-
-      val eventDateParsed = DateUtils.parseDate(str,
-        Array("EEE MMM dd hh:mm:ss zzz yyyy"))
+      val eventDateParsed = DateUtils.parseDateStrictly(str,
+        Array("EEE MMM dd hh:mm:ss zzz yyyy","EEE MMM dd HH:mm:ss zzz yyyy"))
 
       val startYear, endYear = DateFormatUtils.format(eventDateParsed, "yyyy")
       val startDate, endDate = DateFormatUtils.format(eventDateParsed, "yyyy-MM-dd")
@@ -372,10 +379,10 @@ object ISOVerboseDateTimeRange {
     try {
       val parts = str.split("/")
       if (parts.length != 2) return None
-      val startDateParsed = DateUtils.parseDate(parts(0),
-        Array("EEE MMM dd hh:mm:ss zzz yyyy"))
-      val endDateParsed = DateUtils.parseDate(parts(1),
-        Array("EEE MMM dd hh:mm:ss zzz yyyy"))
+      val startDateParsed = DateUtils.parseDateStrictly(parts(0),
+        Array("EEE MMM dd hh:mm:ss zzz yyyy","EEE MMM dd HH:mm:ss zzz yyyy"))
+      val endDateParsed = DateUtils.parseDateStrictly(parts(1),
+        Array("EEE MMM dd hh:mm:ss zzz yyyy","EEE MMM dd HH:mm:ss zzz yyyy"))
 
       val startDate = DateFormatUtils.format(startDateParsed, "yyyy-MM-dd")
       val endDate = DateFormatUtils.format(endDateParsed, "yyyy-MM-dd")
@@ -402,9 +409,9 @@ object ISODayMonthRange {
     try {
       val parts = str.split("/")
       if (parts.length != 2) return None
-      val startDateParsed = DateUtils.parseDate(parts(0),
+      val startDateParsed = DateUtils.parseDateStrictly(parts(0),
         Array("yyyy-MM-dd"))
-      val endDateParsed = DateUtils.parseDate(parts(1),
+      val endDateParsed = DateUtils.parseDateStrictly(parts(1),
         Array("MM-dd"))
 
       val startDate = DateFormatUtils.format(startDateParsed, "yyyy-MM-dd")
@@ -430,9 +437,9 @@ object ISODayDateRange {
     try {
       val parts = str.split("/")
       if (parts.length != 2) return None
-      val startDateParsed = DateUtils.parseDate(parts(0),
+      val startDateParsed = DateUtils.parseDateStrictly(parts(0),
         Array("yyyy-MM-dd"))
-      val endDateParsed = DateUtils.parseDate(parts(1),
+      val endDateParsed = DateUtils.parseDateStrictly(parts(1),
         Array("dd"))
 
       val startDate = DateFormatUtils.format(startDateParsed, "yyyy-MM-dd")
@@ -457,15 +464,15 @@ object ISOYearRange {
     try {
       val parts = str.split("/")
       if (parts.length != 2) return None
-      val startDateParsed = DateUtils.parseDate(parts(0),
-        Array("yyyy"))
+      val startDateParsed = DateUtils.parseDateStrictly(parts(0),
+        Array("yyyy", "yyyy-00-00"))
       val startDate, endDate = ""
       val startDay, endDay = ""
       val startMonth, endMonth = ""
       val startYear = DateFormatUtils.format(startDateParsed, "yyyy")
       val endYear = {
         if (parts.length == 2) {
-          val endDateParsed = DateUtils.parseDate(parts(1),
+          val endDateParsed = DateUtils.parseDateStrictly(parts(1),
             Array("yyyy", "yy", "y"))
 
           if (parts(1).length == 1) {
