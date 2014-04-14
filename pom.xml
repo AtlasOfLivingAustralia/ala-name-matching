@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>au.org.ala</groupId>
     <artifactId>sds</artifactId>
-    <version>1.3-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
     <name>Sensitive Species Lookup API</name>
     <description>Routines to check whether a species is sensitive and to apply data generalisation.</description>
 
@@ -125,6 +125,15 @@
             <version>${spring.version}</version>
         </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <repository>
+            <id>ala-repository</id>
+            <uniqueVersion>false</uniqueVersion>
+            <url>scp://maven.ala.org.au/data/maven</url>
+        </repository>
+    </distributionManagement>
+
 
     <repositories>
         <!-- ALA repository  -->
