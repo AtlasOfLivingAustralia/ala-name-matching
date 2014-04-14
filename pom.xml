@@ -126,6 +126,15 @@
         </dependency>
     </dependencies>
 
+    <distributionManagement>
+        <repository>
+            <id>ala-repository</id>
+            <uniqueVersion>false</uniqueVersion>
+            <url>scp://maven.ala.org.au/data/maven</url>
+        </repository>
+    </distributionManagement>
+
+
     <repositories>
         <!-- ALA repository  -->
         <repository>
