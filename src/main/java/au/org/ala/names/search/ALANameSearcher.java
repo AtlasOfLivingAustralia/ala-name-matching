@@ -1538,12 +1538,17 @@ public class ALANameSearcher {
             if (rank == null && results.get(0).isSynonym()) {
                 cl = new LinnaeanRankClassification(null, null);
                 String synName = results.get(0).getRankClassification().getScientificName();
-                if (synName.contains(" ")) {
-                    cl.setSpecies(synName);
+                try{
+                ParsedName pn = parser.parse(synName);
+                if (pn.isBinomial()) {
+                    cl.setSpecies(pn.canonicalName());
                     rank = RankType.SPECIES;
                 } else {
-                    cl.setGenus(synName);
+                    cl.setGenus(pn.genusOrAbove);
                     rank = RankType.GENUS;
+                }
+                } catch(Exception e){
+                    //don't do anything
                 }
             }
 
