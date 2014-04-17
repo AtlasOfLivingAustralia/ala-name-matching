@@ -615,7 +615,9 @@ public class ALANameSearcher {
 
         if (nsr == null && recursiveMatching) {
             //get the name type for the original name
-
+            //remove the authorship from the search
+            String authorship = cl.getAuthorship();
+            cl.setAuthorship(null);
             try {
                 ParsedName pn = parser.parse(name);
                 metrics.setNameType(pn.getType());
@@ -656,6 +658,8 @@ public class ALANameSearcher {
             if (nsr != null) {
                 nsr.setMatchType(MatchType.RECURSIVE);
             }
+            //rest the author
+            cl.setAuthorship(authorship);
 
         }
 

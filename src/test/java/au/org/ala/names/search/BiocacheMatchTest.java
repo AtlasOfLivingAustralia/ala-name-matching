@@ -30,11 +30,47 @@ public class BiocacheMatchTest {
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new ALANameSearcher("/data/lucene/namematching_v13");
+            searcher = new ALANameSearcher("/data/lucene/namematching13");
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+    }
+
+    @Test
+    public void synonymHomonymIssue(){
+        try{
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName("Codium sp.");
+            cl.setGenus("Codium");
+            cl.setFamily("Alga");
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertTrue("Homonyms exception should have been detected", metrics.getErrors().contains(ErrorType.HOMONYM));
+
+
+        } catch (Exception e){
+            e.printStackTrace();
+            fail("Exception should not occur");
+        }
+    }
+
+    @Test
+    public void testRecursiveAuthorshipIssue(){
+        try{
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName("Graphis erythrocardia Mull.Arg.");
+            cl.setAuthorship("Mull.Arg.");
+            cl.setFamily("Graphidaceae");
+            cl.setGenus("Graphis");
+            cl.setSpecificEpithet("erythrocardia");
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("urn:lsid:catalogueoflife.org:taxon:4e6be113-52c2-102c-b3cd-957176fb88b9:col20120124", metrics.getResult().getLsid());
+            System.out.println(metrics.getResult());
+        } catch(Exception e){
+            e.printStackTrace();
+            fail("Exception should not occur");
+
+        }
     }
 
     @Test
