@@ -30,11 +30,41 @@ public class BiocacheMatchTest {
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new ALANameSearcher("/data/lucene/namematching13");
+            searcher = new ALANameSearcher("/data/lucene/namematching");
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+    }
+
+    @Test
+    public void testMatchHybrid(){
+        try{
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName("Eucalyptus globulus x Eucalyptus ovata");
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("hybrid", metrics.getNameType().toString());
+            assertEquals(RankType.SPECIES, metrics.getResult().getRank());
+
+        } catch(Exception e){
+            e.printStackTrace();
+            fail("Exception should not occur");
+        }
+    }
+
+    @Test
+    public void higherClassificationProvided(){
+        try{
+            LinnaeanRankClassification cl= new LinnaeanRankClassification();
+            cl.setScientificName("Macropus rufus");
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("ANIMALIA", metrics.getResult().getRankClassification().getKingdom());
+            assertEquals("Macropus", metrics.getResult().getRankClassification().getGenus());
+
+        } catch(Exception e){
+            e.printStackTrace();
+            fail("Exception should not occur");
+        }
     }
 
     @Test
@@ -262,6 +292,7 @@ public class BiocacheMatchTest {
             cl.setScientificName("Acanthastrea cf. bowerbanki Edwards & Haime, 1857");
             metrics = searcher.searchForRecordMetrics(cl, true);
             assertTrue(metrics.getErrors().contains(ErrorType.CONFER_SPECIES));
+            assertEquals(RankType.GENUS, metrics.getResult().getRank());
         } catch (Exception e) {
             fail("No excpetion shoudl occur");
         }
@@ -269,11 +300,11 @@ public class BiocacheMatchTest {
 
     @Test
     public void testQuestionSpecies() {
-        String name = "Lepidosperma ? sp. Mt Short (S. Kern et al. LCH 17510)";
+        String name = "Lepidosperma ? sp. Mt Short TESTS (S. Kern et al. LCH 17510)";
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
         cl.setScientificName(name);
         try {
-            //test a one where the species does not exists
+            //test a one where the species does not exists so that the higher level match can be tested
             //ensures that higher matches work in this case
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             assertEquals(NameType.doubtful, metrics.getNameType());
