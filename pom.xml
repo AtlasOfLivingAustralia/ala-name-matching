@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>au.org.ala</groupId>
 	<artifactId>biocache-store</artifactId>
-	<version>1.1</version>
+	<version>1.1.1-SNAPSHOT</version>
 	<url>http://biocache.ala.org.au</url>
 	<issueManagement>
 		<system>Google code</system>
@@ -25,7 +25,7 @@
         Scala implementation of biocache backend.
         This code base managed the loading, processing, indexing of occurrence records for the ALA.
     </description>
-<!-- AN SCM entry that points to the SVN directory that contains the pom file for the project  -->
+    <!-- AN SCM entry that points to the SVN directory that contains the pom file for the project  -->
     <scm>
         <developerConnection>scm:svn:https://ala-portal.googlecode.com/svn/tags/biocache-store-1.1</developerConnection>
     </scm>
@@ -217,7 +217,7 @@
 		<dependency>
 			<groupId>org.gbif</groupId>
 			<artifactId>dwca-reader</artifactId>
-			<version>1.14</version>
+			<version>1.17</version>
 			<exclusions>
 				<exclusion>
 					<groupId>commons-io</groupId>

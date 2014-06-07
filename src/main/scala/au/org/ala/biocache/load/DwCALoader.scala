@@ -5,7 +5,7 @@ import org.gbif.dwc.text.{StarRecord, ArchiveFactory}
 import org.gbif.dwc.terms.DwcTerm
 import scala.collection.mutable.ArrayBuffer
 import au.org.ala.biocache._
-import org.gbif.dwc.terms.ConceptTerm
+import org.gbif.dwc.terms.Term
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConversions
 import org.apache.commons.lang3.StringUtils
@@ -114,14 +114,14 @@ class DwCALoader extends DataLoader {
     loadArchive(fileName, resourceUid, conceptTerms, strip, logRowKeys, testFile)
   }
 
-  def getUuid(uniqueID:Option[String], star:StarRecord,uniqueTerms:List[ConceptTerm], mappedProperties:Option[Map[String,String]]) :((String, Boolean),Option[Map[String,String]])={
+  def getUuid(uniqueID:Option[String], star:StarRecord,uniqueTerms:List[Term], mappedProperties:Option[Map[String,String]]) :((String, Boolean),Option[Map[String,String]])={
     uniqueID match {
       case Some(value) => (Config.occurrenceDAO.createOrRetrieveUuid(value),mappedProperties)
       case None => ((Config.occurrenceDAO.createUuid, true), mappedProperties)
     }
   }
 
-  def loadArchive(fileName:String, resourceUid:String, uniqueTerms:List[ConceptTerm], stripSpaces:Boolean, logRowKeys:Boolean, testFile:Boolean){
+  def loadArchive(fileName:String, resourceUid:String, uniqueTerms:List[Term], stripSpaces:Boolean, logRowKeys:Boolean, testFile:Boolean){
     println("Loading archive " + fileName + " for resource " + resourceUid + " with unique terms " + uniqueTerms + " stripping spaces " + stripSpaces + " incremental " + logRowKeys + " testing " + testFile)
     val rowKeyWriter = getRowKeyWriter(resourceUid, logRowKeys)
     val archive = ArchiveFactory.openArchive(new File(fileName))
