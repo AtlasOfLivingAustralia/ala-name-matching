@@ -16,7 +16,7 @@ package au.org.ala.retrofit
  */
 
 import org.gbif.dwc.text.StarRecord
-import org.gbif.dwc.terms.ConceptTerm
+import org.gbif.dwc.terms.Term
 import au.com.bytecode.opencsv.CSVReader
 import java.io.{FileInputStream, InputStreamReader}
 import collection.mutable
@@ -90,14 +90,14 @@ class CANBDwCALoader extends DwCALoader {
 
     println(nonDefaultMapping)
   }
-  val list=List("firstLoaded", "outlierForLayers.p" , "duplicationStatus.p"  ,"duplicationType.p" ,"associatedOccurrences.p"  ,"qualityAssertion",  "userQualityAssertion")
+  val list =List("firstLoaded", "outlierForLayers.p" , "duplicationStatus.p"  ,"duplicationType.p" ,"associatedOccurrences.p"  ,"qualityAssertion",  "userQualityAssertion")
   /**
    * override so that we can have the very customised mapping to get the correct value
    * @param star
    * @param uniqueTerms
    * @return
    */
-  override def getUuid(uniqueID:Option[String], star:StarRecord,uniqueTerms:List[ConceptTerm], mappedProperties:Option[Map[String,String]]) :((String, Boolean), Option[Map[String,String]])={
+  override def getUuid(uniqueID:Option[String], star:StarRecord,uniqueTerms:List[Term], mappedProperties:Option[Map[String,String]]) :((String, Boolean), Option[Map[String,String]])={
     //Rule: If the catalogue number suffix is .1 OR is in the supplied CSV then we remove the suffix before we test for the UUID
 
     val newUniqueId = {
@@ -129,7 +129,7 @@ class CANBDwCALoader extends DwCALoader {
       value
     }
   }
-  def getRetrofitValue(field:ConceptTerm, value:String):String ={
+  def getRetrofitValue(field:Term, value:String):String ={
     if(field.simpleName() == "catalogNumber"){
       //check to see if the suffix needs to be removed
       getRevisedCatalogueNumber(value)

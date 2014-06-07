@@ -117,8 +117,8 @@ trait DataLoader {
       (protocol, urls.asInstanceOf[List[String]], uniqueTerms, map("connectionParameters").asInstanceOf[Map[String,String]], customParams,dateLastChecked)
     }
 
-    def mapConceptTerms(terms: List[String]): List[org.gbif.dwc.terms.ConceptTerm] = {
-      val termFactory = new TermFactory
+    def mapConceptTerms(terms: List[String]): List[org.gbif.dwc.terms.Term] = {
+      val termFactory =  TermFactory.instance()
       terms.map(term => termFactory.findTerm(term))
     }
 
