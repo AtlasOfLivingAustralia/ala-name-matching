@@ -19,10 +19,7 @@ import au.org.ala.names.model.LinnaeanRankClassification;
 import au.org.ala.names.model.NameIndexField;
 import au.org.ala.names.model.NameSearchResult;
 import au.org.ala.names.model.RankType;
-import org.apache.commons.cli.BasicParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.Options;
+import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
@@ -417,6 +414,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
         Options options = new Options();
         options.addOption("v", false, "Retrieve version information");
+        options.addOption("help", false, "Retrieve options");
         options.addOption("all", false, "Generates the load index and search index");
         options.addOption("load", false, "Generate the load index only. " +
                 "The load index is a temporary index generated from the raw data files" +
@@ -445,6 +443,12 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 } else {
                     System.err.println("Unable to retrieve versioning information");
                 }
+                System.exit(-1);
+            }
+
+            if (line.hasOption("help")){
+                //only load the properties file if it exists otherwise default to the biocache-test-config.properties on the classpath
+                new HelpFormatter().printHelp("nameindexer", options);
                 System.exit(-1);
             }
 
@@ -504,7 +508,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
             File targetDirectory = new File(line.getOptionValue("target", DEFAULT_TARGET_DIR));
             if(targetDirectory.exists()){
-                String newPath =  targetDirectory.getAbsolutePath() + "_" + DateFormatUtils.format(new Date(), "yyyy-MM-dd_hh:mm");
+                String newPath =  targetDirectory.getAbsolutePath() + "_" + DateFormatUtils.format(new Date(), "yyyy-MM-dd_hh-mm-ss");
                 log.info("Target directory already exists. Backing up to : " + newPath);
                 File newTargetDirectory = new File(newPath);
                 FileUtils.moveDirectory(targetDirectory, newTargetDirectory);
