@@ -89,7 +89,7 @@ Unzip this into a /data/lucene directory
 In your program create a single new ALANameSearcher to perform all your searches
 
 `
-ALANameSearcher  searcher = new ALANameSearcher ("/data/lucene/namematching13")
+ALANameSearcher  searcher = new ALANameSearcher ("/data/lucene/namematching")
 `
 
 The easiest way to perform a search is to have the searcher handle all the exceptional situations using the default handling:
