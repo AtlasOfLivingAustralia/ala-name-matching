@@ -200,7 +200,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>au.org.ala.biocache.search.DwcaNameIndexer</mainClass>
+                            <mainClass>au.org.ala.names.search.DwcaNameIndexer</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

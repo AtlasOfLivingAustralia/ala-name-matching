@@ -45,6 +45,14 @@ java –cp .:names.jar au.org.ala.checklist.lucene.DwcaNameIndexer --all --dwca 
 
 Please be aware that the names indexing could take over an hour to complete.
 
+## Build notes
+
+This library is built with maven. By default a `mvn install` will try to run a test suite which will fail without a local installation of a name index.
+The name index can be downloaded [here](http://biocache.ala.org.au/archives/nameindexes/20140610/namematching_v13.tgz) and needs to be extracted to the
+directory `/data/lucene/namematching`
+
+To skip this step, run a build with ```mvn install -DskipTests=true```.
+
 ## ALA Names List
 
 The ALA sources most of its names from the National Species List (NSL), 
