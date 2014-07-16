@@ -2,22 +2,17 @@
 
 package au.org.ala.names.search;
 
-import au.org.ala.names.model.MatchType;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.List;
-
 import au.org.ala.names.model.LinnaeanRankClassification;
-import org.junit.Test;
-
-
+import au.org.ala.names.model.MatchType;
 import au.org.ala.names.model.NameSearchResult;
 import au.org.ala.names.model.RankType;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
+import org.junit.Test;
+
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Natasha, Tommy
@@ -28,7 +23,8 @@ public class ALANameSearcherTest {
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new ALANameSearcher("/data/lucene/namematching_v13");
+            searcher = new ALANameSearcher("/data/lucene/namematching");
+            //searcher = new ALANameSearcher("/data/lucene/namematching_v13");
             //searcher = new ALANameSearcher("/data/lucene/merge_namematching");
             //searcher = new ALANameSearcher("/data/lucene/col_namematching");
         } catch (Exception e) {
