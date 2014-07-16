@@ -1,34 +1,38 @@
 # Atlas Name matching API 
 
+This is the API in use by the Atlas of Living Australia to match scientific name to taxon concepts.
+This API borrows heavily from the name parsing great work done by [GBIF](https://github.com/gbif) 
+in their [scientific name parser library](https://github.com/gbif/name-parser)
+This code contains additions for handling some Australian specific issues.
+
 ## Generating a name match index
 
 This requires a single Darwin Core Archive (DwCA) that contains all the scientific names that you wish to add (including synonyms).
 
 There is an example Catalogue of Life DwcA that can be downloaded here: 
-`
-http://biocache.ala.org.au/archives/dwca-col.zip 
-`
+
+[dwca-col.zip](http://biocache.ala.org.au/archives/dwca-col.zip) 
+
 Users can modify the col_dwc.txt file to include any additional species names.
 
 The name matching index can also support common name. Here are the Catalogue of Life common names that can be loaded in conjunction to the Darwin Core Archive: 
-`
-http://biocache.ala.org.au/archives/col_vernacular.txt.zip
-`
+
+[col_vernacular.txt.zip](http://biocache.ala.org.au/archives/col_vernacular.txt.zip)
+
 The name matching supports homonym detection. Homonym detection is supported through the using of IRMNG. 
 You can download the IRMNG DwCA for homonyms from the following URL: 
-`
-http://www.cmar.csiro.au/datacentre/downloads/IRMNG_DWC_HOMONYMS.zip
-`
+
+[IRMNG_DWC_HOMONYMS.zip](http://www.cmar.csiro.au/datacentre/downloads/IRMNG_DWC_HOMONYMS.zip)
+
 The indexing code is [in the class DwcaNameIndexer.java](src/main/java/au/org/ala/checklist/lucene/DwcaNameIndexer.java)
 
 An assembly jar file for this can be downloaded from our maven repository : 
-```
-http://maven.ala.org.au/repository/au/org/ala/ala-name-matching/1.3-SNAPSHOT/ala-name-matching-1.3-SNAPSHOT-assembly.jar
-```
+
+[ala-name-matching-2.0-assembly.jar](http://maven.ala.org.au/repository/au/org/ala/ala-name-matching/2.0/ala-name-matching-2.0-assembly.jar)
 
 To generate the name using the assembly jar:
 1) Rename the jar :
-mv ala-name-matching-1.3-SNAPSHOT-assembly.jar names.jar
+mv ala-name-matching-2.0-SNAPSHOT-assembly.jar names.jar
 
 2) Extract the lib directory:
  jar –xf names.jar lib
