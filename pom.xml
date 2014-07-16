@@ -6,11 +6,13 @@
     <!-- Major version increment due to package structure change -->
     <version>2.1-SNAPSHOT</version>
     <name>ALA Name Matching</name>
-<!-- SCM entry that points to SVN directory that contains pom -->
+    <!-- SCM entry that points to SVN directory that contains pom -->
     <scm>
-        <developerConnection>scm:svn:https://ala-portal.googlecode.com/svn/trunk/ala-name-matching</developerConnection>
+        <connection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</connection>
+        <url>https://github.com/AtlasOfLivingAustralia/ala-name-matching</url>
+        <developerConnection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</developerConnection>
+        <tag>HEAD</tag>
     </scm>
-
     <properties>
         <!-- This project uses UTF8 for Regular Expressions -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -26,7 +28,22 @@
                     <groupId>commons-io</groupId>
                     <artifactId>commons-io</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
             </exclusions>
+        </dependency>
+        <!-- SL4J -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.5</version>
         </dependency>
         <dependency>
             <groupId>commons-collections</groupId>
@@ -140,6 +157,53 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-release-plugin</artifactId>
                <version>2.5</version>
+            </plugin>
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+                <version>2.1.3</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <prefix>git</prefix>
+                    <dateFormat>dd.MM.yyyy '@' HH:mm:ss z</dateFormat>
+                    <verbose>false</verbose>
+                    <useNativeGit>false</useNativeGit>
+                    <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
+                    <skipPoms>true</skipPoms>
+                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                    <generateGitPropertiesFilename>src/main/resources/git.properties</generateGitPropertiesFilename>
+                    <failOnNoGitDirectory>false</failOnNoGitDirectory>
+                    <abbrevLength>7</abbrevLength>
+                    <skip>false</skip>
+                    <excludeProperties></excludeProperties>
+                    <gitDescribe>
+                        <skip>false</skip>
+                        <always>false</always>
+                        <abbrev>7</abbrev>
+                        <dirty>-dirty</dirty>
+                        <forceLongFormat>false</forceLongFormat>
+                    </gitDescribe>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass>au.org.ala.biocache.search.DwcaNameIndexer</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>

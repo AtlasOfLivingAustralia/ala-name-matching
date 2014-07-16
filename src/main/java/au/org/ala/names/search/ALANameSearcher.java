@@ -17,15 +17,8 @@ package au.org.ala.names.search;
 
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import au.org.ala.names.parser.PhraseNameParser;
+import au.org.ala.names.util.TaxonNameSoundEx;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -33,31 +26,26 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.store.FSDirectory;
-import org.gbif.ecat.model.ParsedName;
-import org.gbif.ecat.voc.NameType;
-import au.org.ala.names.util.TaxonNameSoundEx;
-
-import au.org.ala.names.parser.PhraseNameParser;
-
-import java.util.HashSet;
-import java.util.Set;
-
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.*;
+import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
+import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.UnparsableException;
+import org.gbif.ecat.voc.NameType;
 import org.gbif.ecat.voc.Rank;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The API used to perform a search on the ALA Name Matching Lucene Index.  It follows the following
@@ -787,6 +775,17 @@ public class ALANameSearcher {
      */
     public NameSearchResult searchForRecord(String name, RankType rank, boolean fuzzy) throws SearchResultException {
         return searchForRecord(name, null, rank, fuzzy);
+    }
+
+    /**
+     * Searches index for the supplied name and rank without a fuzzy match.
+     *
+     * @param name
+     * @return
+     * @throws SearchResultException
+     */
+    public NameSearchResult searchForRecord(String name) throws SearchResultException {
+        return searchForRecord(name, null, false);
     }
 
     /**

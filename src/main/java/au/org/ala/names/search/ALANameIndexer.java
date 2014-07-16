@@ -19,18 +19,7 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
 import au.org.ala.names.parser.PhraseNameParser;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.sql.DataSource;
-
+import au.org.ala.names.util.TaxonNameSoundEx;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang.StringUtils;
@@ -39,26 +28,27 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.*;
-
 import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
-
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
-import org.gbif.ecat.model.ParsedName;
-import org.gbif.ecat.parser.NameParser;
-import au.org.ala.names.util.TaxonNameSoundEx;
-
-import java.util.Iterator;
-
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.util.Version;
 import org.gbif.dwc.record.DarwinCoreRecord;
-import org.gbif.dwc.text.*;
+import org.gbif.dwc.text.Archive;
+import org.gbif.dwc.text.ArchiveFactory;
+import org.gbif.ecat.model.ParsedName;
+import org.gbif.ecat.parser.NameParser;
 import org.gbif.ecat.voc.NameType;
+
+import java.io.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Creates the Lucene index based on the names that are exported from
@@ -722,12 +712,14 @@ public class ALANameIndexer {
      * @return
      */
     private String getAcceptedLSID(String value) {
-        TermQuery tq = new TermQuery(new Term("lsid", value));
-        try {
-            org.apache.lucene.search.TopDocs results = idSearcher.search(tq, 1);
-            if (results.totalHits > 0)
-                return idSearcher.doc(results.scoreDocs[0].doc).get("reallsid");
-        } catch (IOException e) {
+        if(idSearcher != null) {
+            try {
+                TermQuery tq = new TermQuery(new Term("lsid", value));
+                org.apache.lucene.search.TopDocs results = idSearcher.search(tq, 1);
+                if (results.totalHits > 0)
+                    return idSearcher.doc(results.scoreDocs[0].doc).get("reallsid");
+            } catch (IOException e) {
+            }
         }
         return value;
     }
