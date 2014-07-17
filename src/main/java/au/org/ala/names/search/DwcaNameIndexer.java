@@ -252,9 +252,12 @@ public class DwcaNameIndexer extends ALANameIndexer {
         iw.close();
         lsearcher =new IndexSearcher(DirectoryReader.open(FSDirectory.open(indexDir)));
     }
-    private TopDocs getLoadIdxResults(String field, String value,int max) throws Exception{
+
+    private TopDocs getLoadIdxResults(String field, String value,int max) throws Exception {
         if(lsearcher == null && new File(dirTmpIndex).exists()) {
             lsearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(dirTmpIndex))));
+        } else if(lsearcher == null && !new File(dirTmpIndex).exists()){
+            throw new RuntimeException("A load index has not been generated. Please run this tool with '-load' before creating the search index.");
         }
         TermQuery tq = new TermQuery(new Term(field, value));
         return lsearcher.search(tq,max);
@@ -477,6 +480,11 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
             boolean load = line.hasOption("load") || line.hasOption("all");
             boolean search = line.hasOption("search") || line.hasOption("all");
+
+            if(!line.hasOption("load") && !line.hasOption("search") && !line.hasOption("all") ){
+                load = true;
+                search = true;
+            }
 
             log.info("Generating loading index: " + load);
             log.info("Generating searching index: " + search);
