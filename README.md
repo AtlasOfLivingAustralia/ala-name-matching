@@ -53,6 +53,12 @@ directory `/data/lucene/namematching`
 
 To skip this step, run a build with ```mvn install -DskipTests=true```.
 
+Note this builds 3 artefacts in the target directory:
+
+* ala-name-matching-2.1-SNAPSHOT.jar - built jar for the project code only
+* ala-name-matching-2.1-SNAPSHOT-distribution.zip - zip containing the project jar and dependencies
+* ala-name-matching-2.1-SNAPSHOT-sources.jar - source jar for the project code only
+
 ## ALA Names List
 
 The ALA sources most of its names from the National Species List (NSL), 
