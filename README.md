@@ -24,23 +24,19 @@ You can download the IRMNG DwCA for homonyms from the following URL:
 
 [IRMNG_DWC_HOMONYMS.zip](http://www.cmar.csiro.au/datacentre/downloads/IRMNG_DWC_HOMONYMS.zip)
 
-The indexing code is [in the class DwcaNameIndexer.java](src/main/java/au/org/ala/checklist/lucene/DwcaNameIndexer.java)
+An assembly zip file for this can be downloaded from our maven repository : 
 
-An assembly jar file for this can be downloaded from our maven repository : 
+[ala-name-matching-2.1-distribution.zip](http://maven.ala.org.au/repository/au/org/ala/ala-name-matching/2.1/ala-name-matching-2.1-distribution.zip)
 
-[ala-name-matching-2.0-assembly.jar](http://maven.ala.org.au/repository/au/org/ala/ala-name-matching/2.0/ala-name-matching-2.0-assembly.jar)
+To generate the name index using the data described above, follow these steps. Alternatively use the [ALA Ansible scripts](https://github.com/AtlasOfLivingAustralia/ala-install) 
+here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustralia/ala-install/blob/master/ansible/nameindexer-standalone.yml) which does it all for you.
 
-To generate the name using the assembly jar:
-1) Rename the jar :
-mv ala-name-matching-2.0-SNAPSHOT-assembly.jar names.jar
-
-2) Extract the lib directory:
- jar –xf names.jar lib
-
-3) Generate the names index – here is the command that I used.
+* Download the zip files linked above to a directory e.g. /data/names/ and extract them
+* Download the distribution zip [ala-name-matching-2.1-distribution.zip](http://maven.ala.org.au/repository/au/org/ala/ala-name-matching/2.1/ala-name-matching-2.1-distribution.zip)
+* Generate the names index with command:
 
 ```
-java –cp .:names.jar au.org.ala.checklist.lucene.DwcaNameIndexer --all --dwca /data/bie-staging/names-lists/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/bie-staging/irmng/IRMNG_DWC_HOMONYMS --common /data/bie-staging/ala-names/col_vernacular.txt
+java –jar ala-name-matching-2.1.jar --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
 ```
 
 Please be aware that the names indexing could take over an hour to complete.
@@ -48,16 +44,16 @@ Please be aware that the names indexing could take over an hour to complete.
 ## Build notes
 
 This library is built with maven. By default a `mvn install` will try to run a test suite which will fail without a local installation of a name index.
-The name index can be downloaded [here](http://biocache.ala.org.au/archives/nameindexes/20140610/namematching_v13.tgz) and needs to be extracted to the
-directory `/data/lucene/namematching`
-
 To skip this step, run a build with ```mvn install -DskipTests=true```.
 
-Note this builds 3 artefacts in the target directory:
+T build creates 3 artefacts in the ala-name-matching/target directory: 
 
-* ala-name-matching-2.1-SNAPSHOT.jar - built jar for the project code only
-* ala-name-matching-2.1-SNAPSHOT-distribution.zip - zip containing the project jar and dependencies
-* ala-name-matching-2.1-SNAPSHOT-sources.jar - source jar for the project code only
+* ala-name-matching-2.1.jar - built jar for the project code only
+* ala-name-matching-2.1-distribution.zip - zip containing the project jar and dependencies
+* ala-name-matching-2.1-sources.jar - source jar for the project code only
+
+A name index for Australian names lists can be downloaded [here](http://biocache.ala.org.au/archives/nameindexes/20140610/namematching_v13.tgz) and needs to be extracted to the
+directory `/data/lucene/namematching`
 
 ## ALA Names List
 
