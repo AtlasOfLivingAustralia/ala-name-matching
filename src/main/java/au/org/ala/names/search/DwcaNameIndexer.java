@@ -416,8 +416,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
         final String DEFAULT_TMP_DIR = "/data/lucene/nmload-tmp";
 
         Options options = new Options();
-        options.addOption("v", false, "Retrieve version information");
-        options.addOption("help", false, "Retrieve options");
+        options.addOption("v", "version", false, "Retrieve version information");
+        options.addOption("h", "help", false, "Retrieve options");
         options.addOption("all", false, "Generates the load index and search index");
         options.addOption("load", false, "Generate the load index only. " +
                 "The load index is a temporary index generated from the raw data files" +

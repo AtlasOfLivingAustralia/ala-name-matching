@@ -185,47 +185,42 @@ http://biocache.ala.org.au/occurrences/search?q=*:*&fq=name_match_metric:phraseM
 
 # Release notes 
 
-## Release notes v2.1
+### Release notes v2.1
 
-readme fixes
-Added details of separate built artefacts
-changes to check for the load index - will throw a runtime if the load index isn’t available
-fixed the move to directory format, added the help options display
-fix the package for the exec
-changes to assembly to copy the model of biocache-store
-standard name index location to /data/lucene/namematching
-An initial README
-addition of defaults for DWCANameIndexer and test searching
-Fixed issue where homonym wasn't being detected from the synonym (due to authorship) correctly
+* Added details of separate built artefacts
+* changes to check for the load index - will throw a runtime if the load index isn’t available
+* fixed the move to directory format, added the help options display
+* fix the package for the exec
+* changes to assembly to copy the model of biocache-store
+* standard name index location to /data/lucene/namematching
+* An initial README
+* addition of defaults for DWCANameIndexer and test searching
+* Fixed issue where homonym wasn't being detected from the synonym (due to authorship) correctly
 
+### Release notes v2.0
 
-## Release notes v2.0
-
-support for maven release
-Copy new package structure from branch to trunk
-Added cross rank homonym test
-Major package restructure
+* support for maven release
+* Copy new package structure from branch to trunk
+* Added cross rank homonym test
+* Major package restructure
 
 
-## Release notes v1.3
+### Release notes v1.3
 
-Update pom for distribution
-Added cross rank homonym test
-NPE fix
-More package restructure
-Test changes
-set the iconicspeciestest to Ignore and updated ecat-common and dwca reader version
-fixed typo
-Fixed NPE
-Support for excluded concepts
-Better support for homonyms - including authorship resolution
-Metric provided for search if a searchForResultMetrics method is used
-fix for empty strings that where breaking the lucene query
-Added support for blacklisting names
-Forgot to remove ErrorType
-Added missing rank infraclass
-New snapshot version for the name matching:
-Removal of Checklist bank
-Phrase name parsing/matching
-Better match logic for soundex
-added solr boost value for bie-search
+* Update pom for distribution
+* Added cross rank homonym test
+* More package restructure
+* Test changes
+* set the iconicspeciestest to Ignore and updated ecat-common and dwca reader version
+* Support for excluded concepts
+* Better support for homonyms - including authorship resolution
+* Metric provided for search if a searchForResultMetrics method is used
+* fix for empty strings that where breaking the lucene query
+* Added support for blacklisting names
+* Forgot to remove ErrorType
+* Added missing rank infraclass
+* New snapshot version for the name matching:
+* Removal of Checklist bank
+* Phrase name parsing/matching
+* Better match logic for soundex
+* added solr boost value for bie-search
