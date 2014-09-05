@@ -46,7 +46,7 @@ Please be aware that the names indexing could take over an hour to complete.
 This library is built with maven. By default a `mvn install` will try to run a test suite which will fail without a local installation of a name index.
 To skip this step, run a build with ```mvn install -DskipTests=true```.
 
-T build creates 3 artefacts in the ala-name-matching/target directory: 
+The build creates 3 artefacts in the ala-name-matching/target directory: 
 
 * ala-name-matching-2.1.jar - built jar for the project code only
 * ala-name-matching-2.1-distribution.zip - zip containing the project jar and dependencies
@@ -83,13 +83,13 @@ This names list is used as a backbone for the ALA species pages and to create a 
 The ALA Name Matching is available as a library that can be used in other projects.   It is available in the ALA Maven Repository (http://maven.ala.org.au/).  
 
 To use ala-name-matching, include it as a dependency in your pom file:
-`
+```
    <dependency>
       <groupId>au.org.ala</groupId>
       <artifactId>ala-name-matching</artifactId>
       <version>2.0</version>
    </dependency>
-`
+```
 
 Download the most recently generated name matching index: 
 
@@ -98,19 +98,19 @@ http://biocache.ala.org.au/archives/namematching13.tgz
 Unzip this into a /data/lucene directory
 In your program create a single new ALANameSearcher to perform all your searches
 
-`
+```
 ALANameSearcher  searcher = new ALANameSearcher ("/data/lucene/namematching")
-`
+```
 
 The easiest way to perform a search is to have the searcher handle all the exceptional situations using the default handling:
 
 
-`
+```
 LinnaeanRankClassification cl = new LinnaeanRankClassification()
 cl.setScientificName("Macropus rufus")
 String lsid = searcher.searchForAcceptedLsidDefaultHandling(cl,true)
 NameSearchResult result = searcher.searchForAcceptedRecordDefaultHandling(cl, true)
-`
+```
 
 ### Understanding the Name Matching Algorithm
 
@@ -181,3 +181,51 @@ http://biocache.ala.org.au/occurrences/search?q=*:*&fq=name_match_metric:phraseM
 `
 * Split Species - A species that has been split into a few subspecies. This results in the original species name becoming a synonym to the subspecies.
 * Voucher - The voucher component of a Phrase Name.  This is generally composed of a collector name and identification.  See Phrase Name for more information.  
+
+
+# Release notes 
+
+## Release notes v2.1
+
+readme fixes
+Added details of separate built artefacts
+changes to check for the load index - will throw a runtime if the load index isn’t available
+fixed the move to directory format, added the help options display
+fix the package for the exec
+changes to assembly to copy the model of biocache-store
+standard name index location to /data/lucene/namematching
+An initial README
+addition of defaults for DWCANameIndexer and test searching
+Fixed issue where homonym wasn't being detected from the synonym (due to authorship) correctly
+
+
+## Release notes v2.0
+
+support for maven release
+Copy new package structure from branch to trunk
+Added cross rank homonym test
+Major package restructure
+
+
+## Release notes v1.3
+
+Update pom for distribution
+Added cross rank homonym test
+NPE fix
+More package restructure
+Test changes
+set the iconicspeciestest to Ignore and updated ecat-common and dwca reader version
+fixed typo
+Fixed NPE
+Support for excluded concepts
+Better support for homonyms - including authorship resolution
+Metric provided for search if a searchForResultMetrics method is used
+fix for empty strings that where breaking the lucene query
+Added support for blacklisting names
+Forgot to remove ErrorType
+Added missing rank infraclass
+New snapshot version for the name matching:
+Removal of Checklist bank
+Phrase name parsing/matching
+Better match logic for soundex
+added solr boost value for bie-search
