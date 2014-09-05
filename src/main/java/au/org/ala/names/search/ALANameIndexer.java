@@ -775,7 +775,7 @@ public class ALANameIndexer {
     }
 
     private boolean isBlacklisted(String scientificName) {
-        return blacklist.contains(scientificName.trim());
+        return scientificName == null || blacklist.contains(scientificName.trim());
     }
 
     private Document createALAIndexDocument(String name, String id, String lsid, String rank, String rankString,
