@@ -87,7 +87,7 @@ To use ala-name-matching, include it as a dependency in your pom file:
    <dependency>
       <groupId>au.org.ala</groupId>
       <artifactId>ala-name-matching</artifactId>
-      <version>2.0</version>
+      <version>2.1</version>
    </dependency>
 ```
 
@@ -167,18 +167,20 @@ This section outlines the errors that can be returned as part of a MetricsResult
 * Phrase - The phrase component of a Phrase Name, generally indicating a location. See Phrase Name for more information.
 * Phrase Name - An official scientific name that uses a phrase and optional voucher in place of a specific or infraspecific epithet.   This type of name is generally assigned before an official name can be published.  We need to consider them because we receive occurrence records using them AND more importantly they are included in official conservation lists.  
 
-`
+```
 Example of a phrase name:
 Stylidium sp. Boulder Rock (A.H. Burbidge 2536)<br>
 Genus = Stylidium<br>
 Phrase = Boulder Rock<br>
 Voucher = A.H. Burbidge 2536<br>
-`
+```
 
 Here is a link to all the biocache records that have been matched to a phrase name:
+
 `
 http://biocache.ala.org.au/occurrences/search?q=*:*&fq=name_match_metric:phraseMatch
 `
+
 * Split Species - A species that has been split into a few subspecies. This results in the original species name becoming a synonym to the subspecies.
 * Voucher - The voucher component of a Phrase Name.  This is generally composed of a collector name and identification.  See Phrase Name for more information.  
 
