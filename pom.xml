@@ -4,14 +4,14 @@
     <artifactId>ala-name-matching</artifactId>
     <packaging>jar</packaging>
     <!-- Major version increment due to package structure change -->
-    <version>2.1</version>
+    <version>2.2-SNAPSHOT</version>
     <name>ALA Name Matching</name>
     <!-- SCM entry that points to SVN directory that contains pom -->
     <scm>
         <connection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</connection>
         <url>https://github.com/AtlasOfLivingAustralia/ala-name-matching</url>
         <developerConnection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</developerConnection>
-        <tag>ala-name-matching-2.1</tag>
+        <tag>HEAD</tag>
     </scm>
     <properties>
         <!-- This project uses UTF8 for Regular Expressions -->
