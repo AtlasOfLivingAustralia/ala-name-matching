@@ -446,6 +446,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 } else {
                     System.err.println("Unable to retrieve versioning information");
                 }
+                new HelpFormatter().printHelp("nameindexer", options);
                 System.exit(-1);
             }
 
@@ -475,6 +476,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 } else {
                     System.err.println("Index unreadable. Check " + DEFAULT_TARGET_DIR);
                 }
+                new HelpFormatter().printHelp("nameindexer", options);
                 System.exit(-1);
             }
 
@@ -499,6 +501,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 log.info("Using the default DwCA name file: " + DEFAULT_DWCA);
             } else {
                 log.error("No DwC Archive specified and the default file path does not exist or is inaccessible. Default path: " + DEFAULT_DWCA);
+                new HelpFormatter().printHelp("nameindexer", options);
                 System.exit(-1);
             }
 
