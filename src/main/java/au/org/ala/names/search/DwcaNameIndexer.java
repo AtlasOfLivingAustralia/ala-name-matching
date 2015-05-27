@@ -25,6 +25,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -73,7 +75,7 @@ import java.util.Properties;
  */
 public class DwcaNameIndexer extends ALANameIndexer {
 
-    static protected Log log = LogFactory.getLog(DwcaNameIndexer.class);
+    static protected Logger log = Logger.getLogger(DwcaNameIndexer.class);
     private IndexSearcher lsearcher;
     private IndexWriter writer;
     private String dirTmpIndex;
@@ -387,7 +389,30 @@ public class DwcaNameIndexer extends ALANameIndexer {
             if(StringUtils.isNotEmpty(acceptedId) && (!StringUtils.equals(acceptedId , id) && !StringUtils.equals(acceptedId, lsid))){
                 count++;
                 //we have a synonym that needs to be load
-                writer.addDocument(this.createALASynonymDocument(dwcr.getScientificName(), dwcr.getScientificNameAuthorship(), dwcr.getId(), lsid, lsid, dwcr.getAcceptedNameUsageID(), dwcr.getAcceptedNameUsageID(), 1.0f, dwcr.getTaxonomicStatus()));
+                try {
+                    if(log.isDebugEnabled()){
+                        log.debug("Scientific name:  " + dwcr.getScientificName() + ", LSID:  " + dwcr.getId());
+                    }
+                    Document doc = createALASynonymDocument(
+                            dwcr.getScientificName(),
+                            dwcr.getScientificNameAuthorship(),
+                            dwcr.getId(),
+                            lsid,
+                            lsid,
+                            dwcr.getAcceptedNameUsageID(),
+                            dwcr.getAcceptedNameUsageID(),
+                            1.0f,
+                            dwcr.getTaxonomicStatus());
+
+                    if(doc != null){
+                        writer.addDocument(doc);
+                    } else {
+                        log.warn("Problem processing scientificName:  " + dwcr.getScientificName() + ", ID:  " + dwcr.getId() + ", LSID:  " + lsid);
+                    }
+                } catch (Exception e){
+                    log.error("Exception thrown processing Scientific name:  " + dwcr.getScientificName() + ", LSID:  " + dwcr.getId());
+                    log.error(e.getMessage(), e);
+                }
             }
             if(i % 1000 == 0){
                 log.debug("Processed " + i + " records " + count + " synonyms" );
