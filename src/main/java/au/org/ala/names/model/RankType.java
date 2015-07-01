@@ -98,7 +98,7 @@ public enum RankType {
     private Float boost;
     private String[] strRanks;
 
-    private RankType(Integer id, String field, Rank rank, Float boost, String... strRanks) {
+    RankType(Integer id, String field, Rank rank, Float boost, String... strRanks) {
 
 
         this.id = id;

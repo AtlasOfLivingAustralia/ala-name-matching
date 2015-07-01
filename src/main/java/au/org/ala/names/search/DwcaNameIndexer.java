@@ -23,9 +23,6 @@ import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.Document;
@@ -144,7 +141,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 TopDocs result = getLoadIdxResults("lsid", lsid, 1);
                 if(result.totalHits>0){
                     //we can add the common name
-                    Document doc = getCommonNameDocument(values[3], values[2], lsid, 1.0f, false);
+                    Document doc = createCommonNameDocument(values[3], values[2], lsid, 1.0f, false);
                     iw.addDocument(doc);
                     count++;
                 }

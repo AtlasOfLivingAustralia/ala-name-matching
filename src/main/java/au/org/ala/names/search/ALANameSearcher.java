@@ -12,7 +12,6 @@
  * implied. See the License for the specific language governing
  * rights and limitations under the License.
  */
-
 package au.org.ala.names.search;
 
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
@@ -69,6 +68,7 @@ import java.util.regex.Pattern;
  * @author Natasha
  */
 public class ALANameSearcher {
+
     protected Log log = LogFactory.getLog(ALANameSearcher.class);
     private DirectoryReader cbReader, irmngReader, vernReader;
     private IndexSearcher cbSearcher, irmngSearcher, vernSearcher, idSearcher;
@@ -76,9 +76,6 @@ public class ALANameSearcher {
     private ThreadLocal<QueryParser> idParser;
     protected TaxonNameSoundEx tnse;
     private PhraseNameParser parser;
-    private static final String RANK_MARKER_ALL = "( " + StringUtils.join(Rank.RANK_MARKER_MAP.keySet(), "| ") + ")\\.";
-    private static final Pattern RANK_MARKER = Pattern.compile(RANK_MARKER_ALL);
-    //public static final Set<String> stopWords = new java.util.HashSet<String>(java.util.Arrays.asList(new String[]{"virus", "ictv", "ICTV"}));
     public static final Pattern virusStopPattern = Pattern.compile(" virus| ictv| ICTV");
     public static final Pattern voucherRemovePattern = Pattern.compile(" |,|&|\\.");
     public static final Pattern affPattern = Pattern.compile("([\\x00-\\x7F\\s]*) aff[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
@@ -88,8 +85,7 @@ public class ALANameSearcher {
      */
     private Set crossRankHomonyms;
 
-    public ALANameSearcher() {
-    }
+    public ALANameSearcher(){}
 
     /**
      * Creates a new name searcher. Using the indexDirectory
@@ -99,7 +95,7 @@ public class ALANameSearcher {
      * @throws CorruptIndexException
      * @throws IOException
      */
-    public ALANameSearcher(String indexDirectory) throws CorruptIndexException, IOException {
+    public ALANameSearcher(String indexDirectory) throws IOException {
         //Initialis CB index searching items
         log.debug("Creating the search object for the name matching api...");
         //make the query parsers thread safe
@@ -118,13 +114,12 @@ public class ALANameSearcher {
             }
         };
 
-
         cbReader = DirectoryReader.open(FSDirectory.open(createIfNotExist(indexDirectory + File.separator + "cb")));//false
         cbSearcher = new IndexSearcher(cbReader);
-        //Initalise the IRMNG index searching items
+        //Initialise the IRMNG index searching items
         irmngReader = DirectoryReader.open(FSDirectory.open(createIfNotExist(indexDirectory + File.separator + "irmng")));
         irmngSearcher = new IndexSearcher(irmngReader);
-        //initalise the Common name index searching items
+        //initialise the Common name index searching items
         vernReader = DirectoryReader.open(FSDirectory.open(createIfNotExist(indexDirectory + File.separator + "vernacular")));
         vernSearcher = new IndexSearcher(vernReader);
         //initialise the identifier index
@@ -149,25 +144,6 @@ public class ALANameSearcher {
         return idxFile;
     }
 
-    public void reopenReaders() {
-        //this should only need to reopen the cbSearcher because the others should NOT be changing
-        try {
-            DirectoryReader newReader = DirectoryReader.openIfChanged(cbReader);
-
-            //IndexReader tmpReader = cbReader.reopen();
-            if (newReader != null) {
-                cbReader.close();
-                cbReader = newReader;
-                //now reinit the searcher
-                cbSearcher = new IndexSearcher(cbReader);
-            }
-        } catch (Exception e) {
-
-        }
-
-    }
-
-
     /**
      * Dumps a list of the species LSID's that are contained in the index.
      */
@@ -177,24 +153,20 @@ public class ALANameSearcher {
             Term term = new Term("rank", "species");
             TopDocs hits = cbSearcher.search(new TermQuery(term), 2000000);
 
-
             for (ScoreDoc sdoc : hits.scoreDocs) {
                 Document doc = cbReader.document(sdoc.doc);
-
                 if (doc.getField("synonym") == null) {
                     String lsid = StringUtils.trimToNull(doc.getField("lsid").stringValue());
                     if (lsid == null)
                         lsid = doc.getField("id").stringValue();
                     fileOut.write(lsid + "\n");
                 }
-
             }
             fileOut.flush();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -251,7 +223,6 @@ public class ALANameSearcher {
      */
     public String searchForLSID(String name, RankType rank, boolean fuzzy) throws SearchResultException {
         return searchForLSID(name, null, rank, fuzzy, false);
-
     }
 
     /**
@@ -546,7 +517,6 @@ public class ALANameSearcher {
             else if (rank == null && StringUtils.equalsIgnoreCase(name, cl.getKingdom()))
                 rank = RankType.KINGDOM;
 
-
             if (rank == null) {
                 if (recursiveMatching) {
                     if (name.endsWith(" sp") || name.endsWith(" sp.")) {
@@ -591,13 +561,7 @@ public class ALANameSearcher {
                     metrics.setNameType(e.type);
                 }
             }
-
-
         }
-
-
-
-
 
         nsr = performErrorCheckSearch(name.replaceAll("\\?", ""), cl, rank, fuzzy, ignoreHomonym, metrics);
 
@@ -1143,8 +1107,6 @@ public class ALANameSearcher {
                 }
 
             }
-
-
             return null;
         } catch (HomonymException e) {
             if (ignoreHomonym && e.getResults().size() == 1) {
@@ -1156,8 +1118,6 @@ public class ALANameSearcher {
             log.warn(e.getMessage());
             return null;
         }
-
-
     }
 
     /**
@@ -1182,63 +1142,9 @@ public class ALANameSearcher {
         return null;
     }
 
-    /**
-     * Checks to see if the "soundex" matched results are ambiguous.
-     *
-     * @param hits
-     * @return
-     */
-    private boolean areMatchesAmbiguous(List<NameSearchResult> hits) {
-        if (hits.size() > 1) {
-            //not ambiguous if all records have the smae accepted_lsid
-
-        }
-        return false;
-    }
-
-    /**
-     * Update the rank for the name based on it containing rank strings.
-     * Provides a bit of a sanity check on the name matching.  If we expect a
-     * species we don't want to match on a genus
-     *
-     * @param name
-     * @param rank
-     */
-    private RankType getUpdatedRank(String name, RankType rank) {
-        Matcher matcher = RANK_MARKER.matcher(name);
-
-        if (matcher.find()) {
-            String value = name.substring(matcher.start(), matcher.end());
-            log.debug("Changing rank to : " + value);
-            if (value.endsWith("."))
-                rank = RankType.getForCBRank(Rank.RANK_MARKER_MAP.get(value.substring(1, value.length() - 1)));
-            log.debug("Using the new rank " + rank);
-        }
-        return rank;
-    }
-
-    /**
-     * Checks to see if the supplied name is a synonym. A synonym will not have
-     * an associated kingdom and genus in the index.
-     *
-     * @param name
-     * @param rank
-     * @param kingdom
-     * @param genus
-     * @param max
-     * @throws SearchResultException
-     */
-    private void checkForSynonym(String name, RankType rank, String kingdom, String genus, int max) throws SearchResultException {
-        //search on name field with name and empty kingdom and genus
-        //search on the alternative names field with name and empty kingdom and genus
-        //if we get a match that is a synonym verify match against IRMNG
-    }
-
-    private boolean doesSynonymMatch(String name, RankType rank, String kingdom, String genus) {
-        return false;
-    }
-
-    private List<NameSearchResult> performSearch(String field, String value, RankType rank, LinnaeanRankClassification cl, int max, MatchType type, boolean checkHomo, QueryParser parser) throws IOException, SearchResultException {
+    private List<NameSearchResult> performSearch(String field, String value, RankType rank,
+                                                 LinnaeanRankClassification cl, int max, MatchType type,
+                                                 boolean checkHomo, QueryParser parser) throws IOException, SearchResultException {
         String[][] compValues = new String[1][];
         compValues[0] = new String[]{field, value};
         return performSearch(compValues, rank, cl, max, type, checkHomo, parser);
@@ -1259,7 +1165,9 @@ public class ALANameSearcher {
      * @throws SearchResultException
      */
 
-    private List<NameSearchResult> performSearch(String[][] compulsoryValues, RankType rank, LinnaeanRankClassification cl, int max, MatchType type, boolean checkHomo, QueryParser parser) throws IOException, SearchResultException {
+    private List<NameSearchResult> performSearch(String[][] compulsoryValues, RankType rank,
+                                                 LinnaeanRankClassification cl, int max, MatchType type, boolean checkHomo,
+                                                 QueryParser parser) throws IOException, SearchResultException {
         if (cbSearcher != null) {
             String scientificName = null;
             StringBuilder query = new StringBuilder();
@@ -1389,27 +1297,6 @@ public class ALANameSearcher {
                 }
             }
         }
-
-    }
-
-    /**
-     * Uses the distance between 2 strings to determine whether or not the
-     * 2 strings are a close match.
-     *
-     * @param s1
-     * @param s2
-     * @param maxLengthDif The maximum differences in length that the 2 strings can  be
-     * @param maxDist      The maximum distance between the 2 strings
-     * @return
-     */
-    private boolean isCloseMatch(String s1, String s2, int maxLengthDif, int maxDist) {
-        if (s1 != null && s2 != null && Math.abs(s1.length() - s2.length()) <= maxLengthDif) {
-            //if the difference in the length of the 2 strings is at the most maxLengthDif characters compare the L distance
-            //log.debug("Difference ("+s1 + ", " + s2+") : " + StringUtils.getLevenshteinDistance(s1, s2));
-            return StringUtils.getLevenshteinDistance(s1, s2) <= maxDist;
-
-        }
-        return false;
     }
 
     private void checkForMisapplied(List<NameSearchResult> results) throws MisappliedException {
@@ -1712,29 +1599,6 @@ public class ALANameSearcher {
         throw new HomonymException("Problem resolving the classification: " + cl);
     }
 
-    private String getValueForSynonym(String name) {
-        //get the genus for the name
-        try {
-            ParsedName<?> pn = parser.parse(name);
-            if (pn != null) {
-                String genus = pn.getGenusOrAbove();
-                LinnaeanRankClassification cl = new LinnaeanRankClassification(null, genus);
-                TopDocs docs = getIRMNGGenus(cl, RankType.GENUS);
-                try {
-                    if (docs.totalHits > 0)
-                        return irmngSearcher.doc(docs.scoreDocs[0].doc).get(RankType.KINGDOM.getRank());
-                } catch (IOException e) {
-                    log.warn("Unable to get value for synonym. ", e);
-                }
-                //seach for the genus in irmng
-                //return simpleIndexLookup(irmngSearcher, RankType.GENUS.getRank(), genus, RankType.KINGDOM.getRank());
-            }
-        } catch (org.gbif.ecat.parser.UnparsableException e) {
-
-        }
-        return null;
-    }
-
     /**
      * Performs a search on the common name index for the supplied name.
      *
@@ -1742,8 +1606,63 @@ public class ALANameSearcher {
      * @return
      */
     public String searchForLSIDCommonName(String commonName) {
-
         return getLSIDForUniqueCommonName(commonName);
+    }
+
+    /**
+     * Retrieve a single common name for this LSID.
+     * @param lsid
+     * @return
+     */
+    public String getCommonNameForLSID(String lsid) {
+        if (lsid != null) {
+            TermQuery query = new TermQuery(new Term(ALANameIndexer.IndexField.LSID.toString(), lsid));
+            try {
+                TopDocs results = vernSearcher.search(query, 1);
+                log.debug("Number of matches for " + lsid + " " + results.totalHits);
+                for (ScoreDoc sdoc : results.scoreDocs) {
+                    org.apache.lucene.document.Document doc = vernSearcher.doc(sdoc.doc);
+                    return doc.get(ALANameIndexer.IndexField.COMMON_NAME.toString());
+                }
+            } catch (IOException e) {
+                log.debug("Unable to access document for common name.", e);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Retrieve a single common name for this LSID.
+     * @param lsid
+     * @return
+     */
+    public Set<String> getCommonNamesForLSID(String lsid, int maxNumberOfNames) {
+        if (lsid != null) {
+            TermQuery query = new TermQuery(new Term(ALANameIndexer.IndexField.LSID.toString(), lsid));
+            try {
+                TopDocs results = vernSearcher.search(query, maxNumberOfNames);
+                //if all the results have the same scientific name result the LSID for the first
+                log.debug("Number of matches for " + lsid + " " + results.totalHits);
+                Set<String> names = new HashSet<String>();
+                Set<String> lowerCaseResults = new HashSet<String>();
+
+                int idx = 0;
+                for (ScoreDoc sdoc : results.scoreDocs) {
+                    org.apache.lucene.document.Document doc = vernSearcher.doc(sdoc.doc);
+                    String name = doc.get(ALANameIndexer.IndexField.COMMON_NAME.toString());
+                    if(!lowerCaseResults.contains(name.toLowerCase())){
+                        lowerCaseResults.add(name.toLowerCase());
+                        names.add(name);
+                    }
+
+                    idx++;
+                }
+                return names;
+            } catch (IOException e) {
+                log.debug("Unable to access document for common name.", e);
+            }
+        }
+        return new HashSet<String>();
     }
 
     /**
@@ -1756,7 +1675,7 @@ public class ALANameSearcher {
      */
     private String getLSIDForUniqueCommonName(String name) {
         if (name != null) {
-            TermQuery query = new TermQuery(new Term(ALANameIndexer.IndexField.COMMON_NAME.toString(), name.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", "")));
+            TermQuery query = new TermQuery(new Term(ALANameIndexer.IndexField.SEARCHABLE_COMMON_NAME.toString(), name.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", "")));
             try {
                 TopDocs results = vernSearcher.search(query, 10);
                 //if all the results have the same scientific name result the LSID for the first
@@ -1857,5 +1776,16 @@ public class ALANameSearcher {
         if (result != null)
             result.setMatchType(MatchType.TAXON_ID);
         return result;
+    }
+
+    public static void main(String[] args) throws IOException {
+        ALANameSearcher nameindex = new ALANameSearcher(args[0]);
+        String name = nameindex.getCommonNameForLSID("urn:lsid:biodiversity.org.au:afd.taxon:31a9b8b8-4e8f-4343-a15f-2ed24e0bf1ae");
+        System.out.println(name);
+
+        Set<String> names = nameindex.getCommonNamesForLSID("urn:lsid:biodiversity.org.au:apni.taxon:295861", 100);
+        for(String commonName: names){
+            System.out.println(commonName);
+        }
     }
 }

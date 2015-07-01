@@ -12,7 +12,6 @@
  * implied. See the License for the specific language governing
  * rights and limitations under the License.
  */
-
 package au.org.ala.names.search;
 
 import au.com.bytecode.opencsv.CSVReader;
@@ -61,14 +60,15 @@ public class ALANameIndexer {
     //private String cbExportFile = "cb_name_usages.txt";
     //private String lexFile = "cb_lex_names.txt";
     //private String irmngFile = "irmng_classification.txt";
-    private String colFile = "/data/bie-staging/ala-names/col_common_names.txt";
+
     private String extraALAConcepts = "/data/bie-staging/ala-names/ala-extra.txt";
     private String alaConcepts = "/data/bie-staging/ala-names/ala_accepted_concepts_dump.txt";
     private String alaSynonyms = "/data/bie-staging/ala-names/ala_synonyms_dump.txt";
     private String irmngDwcaDirectory = "/data/bie-staging/irmng/IRMNG_DWC_HOMONYMS";
+
+    private String colFile = "/data/bie-staging/ala-names/col_common_names.txt";
     private String afdFile = "/data/bie-staging/anbg/AFD-common-names.csv";
     private String apniFile = "/data/bie-staging/anbg/APNI-common-names.csv";
-    //private String taxonConeptName = "/data/bie-staging/anbg/taxonConcepts.txt";
     private Log log = LogFactory.getLog(ALANameIndexer.class);
     // protected ApplicationContext context;
     //private DataSource dataSource;
@@ -125,7 +125,8 @@ public class ALANameIndexer {
         ACCEPTED("synonym"),
         LEFT("left"),
         RIGHT("right"),
-        COMMON_NAME("common");
+        SEARCHABLE_COMMON_NAME("common"),
+        COMMON_NAME("common_orig");
 
         String name;
 
@@ -136,7 +137,8 @@ public class ALANameIndexer {
         public String toString() {
             return name;
         }
-    };
+    }
+
     NameParser parser = new PhraseNameParser();
     Set<String> knownHomonyms = new HashSet<String>();
     Set<String> blacklist = new HashSet<String>();
@@ -181,7 +183,8 @@ public class ALANameIndexer {
      * @param generateCommonNames true when the common name index should be generated
      * @throws Exception
      */
-    public void createIndex(String exportsDir, String indexDir, boolean generateSciNames, boolean generateCommonNames) throws Exception {
+    public void createIndex(String exportsDir, String indexDir, boolean generateSciNames, boolean generateCommonNames)
+            throws Exception {
         createIndex(exportsDir, indexDir, alaConcepts, alaSynonyms, irmngDwcaDirectory, generateSciNames, generateCommonNames);
     }
 
@@ -200,13 +203,14 @@ public class ALANameIndexer {
         irmngWriter.close();
     }
 
-    public void createIndex(String exportsDir, String indexDir, String acceptedFile, String synonymFile, String irmngDwca, boolean generateSciNames, boolean generateCommonNames) throws Exception {
+    public void createIndex(String exportsDir, String indexDir, String acceptedFile, String synonymFile,
+                            String irmngDwca, boolean generateSciNames, boolean generateCommonNames) throws Exception {
 
         Analyzer analyzer = new LowerCaseKeywordAnalyzer();
         //generate the extra id index
         createExtraIdIndex(indexDir + File.separator + "id", new File(exportsDir + File.separator + "identifiers.txt"));
         if (generateSciNames) {
-            indexALA(createIndexWriter(new File(indexDir + File.separator + "cb"), analyzer, true), acceptedFile, synonymFile);//exportsDir + File.separator + "ala_accepted_concepts_dump.txt");//, exportsDir + File.separator + lexFile);
+            indexALA(createIndexWriter(new File(indexDir + File.separator + "cb"), analyzer, true), acceptedFile, synonymFile);
             //IRMNG index to aid in the resolving of homonyms
             IndexWriter irmngWriter = createIndexWriter(new File(indexDir + File.separator + "irmng"), analyzer, true);
             indexIrmngDwcA(irmngWriter, irmngDwca);
@@ -217,7 +221,8 @@ public class ALANameIndexer {
         }
         if (generateCommonNames) {
             //vernacular index to search for common names
-            indexCommonNames(createIndexWriter(new File(indexDir + File.separator + "vernacular"), new KeywordAnalyzer(), true), exportsDir, indexDir);
+            indexCommonNames(createIndexWriter(new File(indexDir + File.separator + "vernacular"),
+                    new KeywordAnalyzer(), true), exportsDir, indexDir);
         }
     }
 
@@ -325,7 +330,6 @@ public class ALANameIndexer {
 
             String lsid = values[POS_LSID];
             String id = values[POS_ID];
-            String rank = values[POS_RANK];
             int rankId = -1;
             try {
                 rankId = Integer.parseInt(values[POS_RANK_ID]);
@@ -399,9 +403,11 @@ public class ALANameIndexer {
         cbIndexWriter.deleteDocuments(new TermQuery(term));
 
     }
+
     public void commit() throws Exception{
         commit(false, false);
     }
+
     /**
      *
      * @param merge whether or not to merge the index
@@ -513,8 +519,6 @@ public class ALANameIndexer {
                     iw.addDocument(doc);
                     count++;
                 }
-
-
             }
             iw.commit();
 
@@ -533,8 +537,6 @@ public class ALANameIndexer {
      */
     private void indexCommonNames(IndexWriter iw, String exportDir, String indexDir) throws Exception {
         log.info("Creating Common Names Index ...");
-
-        //TODO think about adding additional sources for common names
 
         IndexSearcher currentNameSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(indexDir + File.separator + "cb"))));
         IndexSearcher extraSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(indexDir + File.separator + "id"))));
@@ -564,17 +566,17 @@ public class ALANameIndexer {
             while ((values = reader.readNext()) != null) {
                 if (values.length == 3) {
                     if (doesTaxonConceptExist(currentSearcher, values[2])) {
-                        iw.addDocument(getCommonNameDocument(values[0], values[1], values[2], 1.0f));
+                        iw.addDocument(createCommonNameDocument(values[0], values[1], values[2], 1.0f));
                         count++;
                     } else {
                         System.out.println("Unable to locate LSID " + values[2] + " in current dump");
                     }
                 }
-
             }
             log.info("Finished indexing " + count + " common names from " + fileCol);
-        } else
+        } else {
             log.warn("Unable to index common names. Unable to locate : " + fileCol);
+        }
     }
 
     /**
@@ -601,13 +603,13 @@ public class ALANameIndexer {
                     if (doesTaxonConceptExist(currentSearcher, values[3]) || doesTaxonConceptExist(idSearcher, values[3])) {
                         //each common name could be a comma separated list
                         if (!values[2].contains(",") || values[2].toLowerCase().contains(" and ")) {
-                            iw.addDocument(getCommonNameDocument(values[2], null, values[3], 2.0f));
+                            iw.addDocument(createCommonNameDocument(values[2], null, values[3], 2.0f));
                             count++;
                         } else {
                             //we need to process each common name in the list
                             String[] names = p.split(values[2]);
                             for (String name : names) {
-                                iw.addDocument(getCommonNameDocument(name, null, values[3], 2.0f));
+                                iw.addDocument(createCommonNameDocument(name, null, values[3], 2.0f));
                                 count++;
                             }
                         }
@@ -724,25 +726,26 @@ public class ALANameIndexer {
         return value;
     }
 
-    protected Document getCommonNameDocument(String cn, String sn, String lsid,float boost){
-        return getCommonNameDocument(cn,sn,lsid,boost,true);
+    protected Document createCommonNameDocument(String cn, String sn, String lsid, float boost){
+        return createCommonNameDocument(cn, sn, lsid, boost, true);
     }
 
-    protected Document getCommonNameDocument(String cn, String sn, String lsid, float boost,boolean checkAccepted) {
+    protected Document createCommonNameDocument(String cn, String sn, String lsid, float boost, boolean checkAccepted) {
         Document doc = new Document();
         //we are only interested in keeping all the alphanumerical values of the common name
         //when searching the same operations will need to be peformed on the search string
-        TextField tf = new TextField(IndexField.COMMON_NAME.toString(), cn.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", ""), Store.YES);
-        tf.setBoost(boost);
+        TextField searchAbleName = new TextField(IndexField.SEARCHABLE_COMMON_NAME.toString(), cn.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", ""), Store.YES);
+        searchAbleName.setBoost(boost);
+        doc.add(searchAbleName);
 
-        doc.add(tf);
         if (sn != null) {
-
             doc.add(new TextField(IndexField.NAME.toString(), sn, Store.YES));
         }
+
         String newLsid = getAcceptedLSID(lsid);
 
-        doc.add(new StoredField(IndexField.LSID.toString(), newLsid));
+        doc.add(new TextField(IndexField.COMMON_NAME.toString(), cn, Store.YES));
+        doc.add(new TextField(IndexField.LSID.toString(), newLsid, Store.YES));
 
         return doc;
     }
@@ -791,7 +794,6 @@ public class ALANameIndexer {
         }
         Document doc = new Document();
 
-
         //Add the ids
         doc.add(new StringField(NameIndexField.ID.toString(), id, Store.YES));
 
@@ -801,7 +803,6 @@ public class ALANameIndexer {
         }
 
         //Add the scientific name information
-
         Field f = new TextField(NameIndexField.NAME.toString(), name, Store.YES);
         f.setBoost(boost);
         doc.add(f);
@@ -888,7 +889,9 @@ public class ALANameIndexer {
             ParsedName cn = parser.parse(name);
             //if(cn != null && !cn.hasProblem() && !cn.isIndetermined()){
             if (cn != null && cn.isParsableType() && !cn.isIndetermined()
-                    && cn.getType() != NameType.informal && !"6500".equals(rank) && cn.getType() != NameType.doubtful)// a scientific name with some informal addition like "cf." or indetermined like Abies spec. ALSO prevent subgenus because they parse down to genus plus author
+                    // a scientific name with some informal addition like "cf." or indetermined like Abies spec.
+                    // ALSO prevent subgenus because they parse down to genus plus author
+                    && cn.getType() != NameType.informal && !"6500".equals(rank) && cn.getType() != NameType.doubtful)
             {
 
                 Field f2 = new TextField(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES);
@@ -935,7 +938,6 @@ public class ALANameIndexer {
             //throw e;
         }
 
-
         //add the sound expressions for the name if required
         try {
             if (StringUtils.isNotBlank(genus)) {
@@ -956,14 +958,8 @@ public class ALANameIndexer {
             log.warn(lsid + " " + name + " has issues creating a soundex: " + e.getMessage());
         }
 
-
         return doc;
 
-    }
-
-    private String getPhraseName(String specificEpithet, String infraspecificEpithet) {
-
-        return null;
     }
 
     public String getIndexDirectory() {

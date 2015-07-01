@@ -46,10 +46,7 @@ public class FileUtils {
     }
 
     private static boolean ignore(String line) {
-        if (StringUtils.trimToNull(line) == null || line.startsWith("#")) {
-            return true;
-        }
-        return false;
+        return StringUtils.trimToNull(line) == null || line.startsWith("#");
     }
 
 
