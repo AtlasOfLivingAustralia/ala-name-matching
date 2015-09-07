@@ -1322,7 +1322,7 @@ public class ALANameSearcher {
                 NameSearchResult synResult = results.get(0).isSynonym() ? results.get(0) : results.get(1);
                 NameSearchResult accResult = results.get(0).isSynonym() ? results.get(1) : results.get(0);
                 NameSearchResult accSynResult = searchForRecordByLsid(synResult.getAcceptedLsid());
-                if (accResult.getLeft() != null && accSynResult.getLeft() != null) {
+                if (accSynResult != null && accResult.getLeft() != null && accSynResult.getLeft() != null) {
                     int asyLeft = Integer.parseInt(accSynResult.getLeft());
                     if (asyLeft > Integer.parseInt(accResult.getLeft()) && asyLeft < Integer.parseInt(accResult.getRight()))
                         throw new ParentSynonymChildException(accResult, accSynResult);
@@ -1779,6 +1779,7 @@ public class ALANameSearcher {
     }
 
     public static void main(String[] args) throws IOException {
+
         ALANameSearcher nameindex = new ALANameSearcher(args[0]);
         String name = nameindex.getCommonNameForLSID("urn:lsid:biodiversity.org.au:afd.taxon:31a9b8b8-4e8f-4343-a15f-2ed24e0bf1ae");
         System.out.println(name);

@@ -89,7 +89,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * @param commonNameFile
      * @throws Exception
      */
-    public void create(boolean loadingIndex, boolean sciIndex, String indexDirectory, String tmpLoadIndex, String namesDwc, String irmngDwc, String commonNameFile) throws Exception{
+    public void create(boolean loadingIndex, boolean sciIndex, String indexDirectory, String tmpLoadIndex,
+                       String namesDwc, String irmngDwc, String commonNameFile) throws Exception{
         dirTmpIndex = tmpLoadIndex;
         LowerCaseKeywordAnalyzer analyzer = new LowerCaseKeywordAnalyzer();
         if(loadingIndex){
@@ -111,7 +112,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
         }
         if(commonNameFile != null && new File(commonNameFile).exists()){
             //index the common names
-            indexCommonNames(createIndexWriter(new File(indexDirectory + File.separator + "vernacular"), new KeywordAnalyzer(),true),commonNameFile);
+            indexCommonNames(createIndexWriter(new File(indexDirectory + File.separator + "vernacular"),
+                    new KeywordAnalyzer(),true), commonNameFile);
         }
     }
 
@@ -529,14 +531,18 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
             if(line.getOptionValue("irmng") == null && !defaultIrmngReadable){
                 log.warn("No IRMNG export specified and the default file path does not exist or is inaccessible. Default path: " + DEFAULT_IRMNG);
-            } else {
+            } else if(line.getOptionValue("irmng") == null) {
                 log.info("Using the default IRMNG name file: " + DEFAULT_IRMNG);
+            } else {
+                log.info("Using the  IRMNG name file: " + line.getOptionValue("irmng"));
             }
 
             if(line.getOptionValue("common") == null && !defaultCommonReadable) {
                 log.warn("No common name export specified and the default file path does not exist or is inaccessible. Default path: " + DEFAULT_COMMON_NAME);
-            } else {
+            } else if(line.getOptionValue("common") == null){
                 log.info("Using the default common name file: " + DEFAULT_COMMON_NAME);
+            } else {
+                log.info("Using the common name file: " + line.getOptionValue("common"));
             }
 
             File targetDirectory = new File(line.getOptionValue("target", DEFAULT_TARGET_DIR));
