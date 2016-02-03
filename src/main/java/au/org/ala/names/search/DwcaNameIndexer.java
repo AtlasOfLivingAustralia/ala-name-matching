@@ -38,8 +38,12 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 import org.gbif.dwc.record.DarwinCoreRecord;
+import org.gbif.dwc.record.Record;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.ArchiveFactory;
+import org.gbif.dwc.text.ArchiveFile;
 import org.gbif.ecat.model.ParsedName;
 
 import java.io.File;
@@ -110,17 +114,25 @@ public class DwcaNameIndexer extends ALANameIndexer {
             irmngWriter.forceMerge(1);
             irmngWriter.close();
         }
+
+
         if(commonNameFile != null && new File(commonNameFile).exists()){
             //index the common names
-            indexCommonNames(createIndexWriter(new File(indexDirectory + File.separator + "vernacular"),
-                    new KeywordAnalyzer(),true), commonNameFile);
+            indexCommonNames(createIndexWriter(
+                    new File(indexDirectory + File.separator + "vernacular"),
+                    new KeywordAnalyzer(),true),
+                    commonNameFile);
+        } else {
+            indexCommonNameExtension(createIndexWriter(
+                    new File(indexDirectory + File.separator + "vernacular"),
+                    new KeywordAnalyzer(),true), namesDwc);
         }
     }
 
     /**
      * Index the common names CSV file supplied.
      *
-     * CSV header need to be txaonId, taxonLsid, scientificName, vernacularName, languageCode, countryCode
+     * CSV header need to be taxonId, taxonLsid, scientificName, vernacularName, languageCode, countryCode
      *
      * The languageCode and countryCode are not necessary as they are not used.
      *
@@ -128,7 +140,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * @param file
      * @throws Exception
      */
-    private void indexCommonNames(IndexWriter iw, String file) throws Exception{
+    private void indexCommonNames(IndexWriter iw, String file) throws Exception {
         //assumes that the quoted TSV file is in the following format
         //taxon id, taxon lsid, scientific name, vernacular name, language code, country code
         log.info("Starting to load the common names");
@@ -159,6 +171,32 @@ public class DwcaNameIndexer extends ALANameIndexer {
         iw.forceMerge(1);
         iw.close();
     }
+
+    private void indexCommonNameExtension(IndexWriter iw, String archiveDirectory) throws Exception {
+
+        Archive archive = ArchiveFactory.openArchive(new File(archiveDirectory));
+        ArchiveFile vernacularArchiveFile = archive.getExtension(GbifTerm.VernacularName);
+        Iterator<Record> iter = vernacularArchiveFile.iterator();
+        int count = 0;
+        while (iter.hasNext()) {
+            Record record = iter.next();
+            String taxonID = record.id();
+            String vernacularName = record.value(DwcTerm.vernacularName);
+            TopDocs result = getLoadIdxResults("lsid", taxonID, 1);
+            if(result.totalHits > 0){
+                Document sciNameDoc = lsearcher.doc(result.scoreDocs[0].doc);
+                //get the scientific name
+                //we can add the common name
+                Document doc = createCommonNameDocument(vernacularName, sciNameDoc.get(NameIndexField.NAME.toString()), taxonID, 1.0f, false);
+                iw.addDocument(doc);
+                count++;
+            }
+        }
+        iw.commit();
+        iw.forceMerge(1);
+        iw.close();
+    }
+
 
     /**
      * Creates a loading index to use to generate the hierarchy including the left right values.
@@ -278,7 +316,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         int right = left;
         for(ScoreDoc sd : rootConcepts.scoreDocs){
             left = right + 1;
-            Document doc =lsearcher.doc(sd.doc);
+            Document doc = lsearcher.doc(sd.doc);
             right = addIndex(doc, 1, left,new LinnaeanRankClassification());
             log.info("Finished loading "+ doc.get(NameIndexField.LSID.toString()) + " "  + doc.get(NameIndexField.NAME.toString()) + " " + left + " " + right);
         }
@@ -495,8 +533,17 @@ public class DwcaNameIndexer extends ALANameIndexer {
                             System.out.println(entry.getKey() + ": " + entry.getValue());
                         }
                     } else {
-                        System.err.println("No match for " + line.getOptionValue("testSearch"));
+                        nsr = searcher.searchForCommonName(line.getOptionValue("testSearch"));
+                        if(nsr != null) {
+                            Map<String, String> props = nsr.toMap();
+                            for (Map.Entry<String, String> entry : props.entrySet()) {
+                                System.out.println(entry.getKey() + ": " + entry.getValue());
+                            }
+                        } else {
+                            System.err.println("No match for " + line.getOptionValue("testSearch"));
+                        }
                     }
+                    System.exit(1);
                 } else {
                     System.err.println("Index unreadable. Check " + DEFAULT_TARGET_DIR);
                 }
