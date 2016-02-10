@@ -24,13 +24,9 @@ public class ALANameSearcherTest {
     public static void init() {
         try {
             searcher = new ALANameSearcher("/data/lucene/namematching");
-            //searcher = new ALANameSearcher("/data/lucene/namematching_v13");
-            //searcher = new ALANameSearcher("/data/lucene/merge_namematching");
-            //searcher = new ALANameSearcher("/data/lucene/col_namematching");
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     @Test
@@ -362,7 +358,7 @@ public class ALANameSearcherTest {
             cl.setKingdom("Animalia");
             cl.setScientificName("Gymnorhina tibicen");
             NameSearchResult nsr = searcher.searchForRecord(cl, true, true);
-            assertEquals("Gymnorhina tibicen", nsr.getRankClassification().getScientificName());
+            assertEquals("Gymnorhina tibicen (Latham, 1801)", nsr.getRankClassification().getScientificName());
             nsr = searcher.searchForRecord("Cracticus tibicen", RankType.SPECIES);
             assertEquals("Cracticus tibicen", nsr.getRankClassification().getScientificName());
             nsr = searcher.searchForRecord("Cracticus tibicen", RankType.GENUS);
@@ -408,8 +404,6 @@ public class ALANameSearcherTest {
             System.out.println(searcher.searchForRecord("Grevillea brachystylis subsp. Busselton (G.J.Keighery s.n. 28/6/1985)", null));
             System.out.println(searcher.searchForRecord("Prostanthera sp. Bundjalung Nat. Pk. (B.J.Conn 3471)", null));
 
-
-
         } catch (Exception e) {
             e.printStackTrace();
             fail("testInfragenericAndSoundEx failed " + e.getMessage());
@@ -432,18 +426,6 @@ public class ALANameSearcherTest {
             String name = "Turnix castanota magnifica";
             System.out.println(searcher.searchForRecord(name, null));
             System.out.println(searcher.searchForRecord("Baeckea sp. Baladjie (PJ Spencer 24)", null));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    //@Test
-    public void testVirusName() {
-        try {
-            String name = "Cucumovirus cucumber mosaic";
-            NameParser parser = new NameParser();
-            ParsedName cn = parser.parse(name);
-            System.out.println(cn);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -485,25 +467,6 @@ public class ALANameSearcherTest {
         }
     }
 
-    //@Test
-    public void testBadCommonName() {
-        try {
-            System.out.println("Higher_sulfur_oxides: " + searcher.searchForCommonName("Higher sulfur oxides"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    //@Test
-    public void testSpeciesSynonymOfSubspecies() {
-        LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Chordata", "Aves", "Charadriiformes", "Laridae", "Larus", "Larus novaehollandiae");
-        try {
-            System.out.println(searcher.searchForRecord(cl, true));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     @Test
     public void testNoRank() {
         try {
@@ -525,9 +488,9 @@ public class ALANameSearcherTest {
         try {
             String primaryLsid = searcher.getPrimaryLsid("urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a");
             System.out.println("testGetPrimaryLsid: " + primaryLsid);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:1f81ef20-e651-4d27-909e-a4d0be1b2782", primaryLsid);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a", primaryLsid);
             primaryLsid = searcher.getPrimaryLsid("urn:lsid:biodiversity.org.au:afd.taxon:1f81ef20-e651-4d27-909e-a4d0be1b2782");
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:1f81ef20-e651-4d27-909e-a4d0be1b2782", primaryLsid);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:00d9e076-b619-4a65-bd9e-8538d958817a", primaryLsid);
         } catch (Exception e) {
             e.printStackTrace();
             fail("testGetPrimaryLsid failed");
@@ -545,7 +508,6 @@ public class ALANameSearcherTest {
         }
     }
 
-
     private void printAllResults(String prefix, List<NameSearchResult> results) {
         System.out.println("## " + prefix + " ##");
         if (results != null && results.size() != 0) {
@@ -553,33 +515,6 @@ public class ALANameSearcherTest {
                 System.out.println(result);
         }
         System.out.println("###################################");
-    }
-
-    private boolean nameSearchResultEqual(NameSearchResult nsr1, NameSearchResult nsr2) {
-        boolean equals = true;
-
-        try {
-            if (nsr1.getMatchType() == null && nsr2.getMatchType() == null) {
-                equals = true;
-            } else if (!nsr1.getMatchType().equals(nsr2.getMatchType())) {
-                equals = false;
-            }
-
-            if (!nsr1.getId().equals(nsr2.getId())) {
-                equals = false;
-            }
-
-            if (nsr1.getLsid() == null && nsr2.getLsid() == null) {
-                equals = true;
-            } else if (!nsr1.getLsid().equals(nsr2.getLsid())) {
-                equals = false;
-            }
-
-        } catch (NullPointerException npe) {
-            equals = false;
-        }
-
-        return equals;
     }
 
     @Test
@@ -619,7 +554,7 @@ public class ALANameSearcherTest {
             cl.setGenus("Agathis");
             cl.setKingdom("Animalia");
             NameSearchResult nsr = searcher.searchForRecord(cl.getScientificName(), cl, null, true, true);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:f604ded9-4c69-4da2-af64-90ded6d7325a", nsr.getLsid());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:d60bf8e8-1a02-4e08-b0af-62abb5b2be12", nsr.getLsid());
         } catch (Exception e) {
             fail("A kingdom was supplied and should be resolvable. " + e.getMessage());
         }
@@ -649,7 +584,6 @@ public class ALANameSearcherTest {
             cl.setKingdom("Plantae");
             results = searcher.searchForRecords("Gaillardia", RankType.getForId(6000), cl, 10);
             printAllResults("hymonyms test (Gaillardia)", results);
-
 
         } catch (SearchResultException e) {
             //			System.err.println(e.getMessage());
@@ -705,7 +639,7 @@ public class ALANameSearcherTest {
         lsid = getCommonNameLSID("Pacific Black Duck");
         sciName = getCommonName("Pacific Black Duck");
         System.out.println("Pacific Black Duck LSID: " + lsid + ", sciName: " + sciName);
-        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:ce7507c4-eafc-411b-8b12-84b9e425018b", lsid);
+        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:05d1fda5-40e6-4c91-9cab-ca1cd3a65bd0", lsid);
         //assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:d09b3807-f8d8-4cfb-a951-70e614e2d546", lsid);
         //Maps to many different species thus should return no LSID
         lsid = getCommonNameLSID("Carp");
@@ -820,20 +754,15 @@ public class ALANameSearcherTest {
     public void testFuzzyMatches() {
         try {
             //Eolophus roseicapillus - non fuzzy match
-            assertEquals(searcher.searchForLSID("Eolophus roseicapillus"), "urn:lsid:biodiversity.org.au:afd.taxon:8d061243-c39f-4b81-92a9-c81f4419e93c");
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:53f876f0-2c4d-40c8-ae6c-f478db8b07af", searcher.searchForLSID("Eolophus roseicapillus"));
 
             //Eolophus roseicapilla - fuzzy match
-            assertEquals(searcher.searchForLSID("Eolophus roseicapilla", true), "urn:lsid:biodiversity.org.au:afd.taxon:8d061243-c39f-4b81-92a9-c81f4419e93c");
-
-
-
-
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:53f876f0-2c4d-40c8-ae6c-f478db8b07af", searcher.searchForLSID("Eolophus roseicapilla", true));
         } catch (Exception e) {
             e.printStackTrace();
             fail("testFuzzyMatches failed");
         }
     }
-
 
     @Test
     public void testCrossRankHomonyms() {
@@ -846,7 +775,6 @@ public class ALANameSearcherTest {
             assertEquals("Cross Homonysm Patellina test 1 failed to throw correct exception", e.getClass(), HomonymException.class);
         }
     }
-
 
     @Test
     /**
