@@ -6,6 +6,11 @@ branches:
   - master
 before_install:
 - mkdir -p ~/.m2; wget -q -O ~/.m2/settings.xml https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/travis_maven_settings.xml
+
+before_script:
+- mkdir -p /data/lucene; wget -O /data/lucene/namematching.tgz http://downloads.ala.org.au/proxy/download/31?reasonTypeId=10;
+- tar zxvf /data/lucene/namematching.tgz
+
 script: mvn -X -P travis clean install deploy -DskipTests=true
 env:
   global:
