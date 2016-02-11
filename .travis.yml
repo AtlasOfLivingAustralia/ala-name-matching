@@ -14,6 +14,7 @@ before_install:
 - sudo wget -O /data/lucene/namematching.tgz http://biocache.ala.org.au/archives/nameindexes/20140610/namematching.tgz
 - echo 'Extracting name index'
 - sudo tar zxvf /data/lucene/namematching.tgz
+- sudo mv /data/lucene/namematching13 /data/lucene/namematching
 - echo 'echo | ls -la /data/lucene/'
 
 script: mvn -X -P travis clean install deploy
