@@ -11,7 +11,7 @@ before_install:
 - echo 'Creating lucene data dir'
 - sudo mkdir -p /data/lucene
 - echo 'Downloading index'
-- sudo wget -O /data/lucene/namematching.tgz http://downloads.ala.org.au/proxy/download/31?reasonTypeId=10
+- sudo wget -O /data/lucene/namematching.tgz http://biocache.ala.org.au/archives/nameindexes/20140610/namematching.tgz
 - echo 'Extracting name index'
 - sudo tar zxvf /data/lucene/namematching.tgz
 - echo 'echo | ls -la /data/lucene/'
