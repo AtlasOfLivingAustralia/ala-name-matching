@@ -38,6 +38,7 @@ public enum NameIndexField {
     PHRASE("phrase"),//stores the values of a "phrase" name.  Some more intelligence will be needed when matching these
     VOUCHER("voucher"), //stores a voucher value minus the spaces and fullstops.
     ALA("ala"), //stores whether or not it is an ALA generated name
+    DATASET_ID("dataset_id"), // The source dataset
     SYNONYM_TYPE("syn_type"); //stores the type of synonym that it represents
     String name;
 

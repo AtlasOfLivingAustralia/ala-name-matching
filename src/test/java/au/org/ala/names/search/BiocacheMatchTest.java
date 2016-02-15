@@ -57,7 +57,7 @@ public class BiocacheMatchTest {
             LinnaeanRankClassification cl= new LinnaeanRankClassification();
             cl.setScientificName("Macropus rufus");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("ANIMALIA", metrics.getResult().getRankClassification().getKingdom());
+            assertEquals("Animalia", metrics.getResult().getRankClassification().getKingdom());
             assertEquals("Macropus", metrics.getResult().getRankClassification().getGenus());
 
         } catch(Exception e){
@@ -93,7 +93,7 @@ public class BiocacheMatchTest {
             cl.setGenus("Graphis");
             cl.setSpecificEpithet("erythrocardia");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("urn:lsid:catalogueoflife.org:taxon:4e6be113-52c2-102c-b3cd-957176fb88b9:col20120124", metrics.getResult().getLsid());
+            assertEquals("NZOR-3-107188", metrics.getResult().getLsid());
             System.out.println(metrics.getResult());
         } catch(Exception e){
             e.printStackTrace();
@@ -102,13 +102,12 @@ public class BiocacheMatchTest {
         }
     }
 
-    @Test
+    //@Test // TODO FInd a suitable x-rank
     public void testCrossRankHomonym(){
         try{
             //test unresolved
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
-            cl.setScientificName("Symphyta");
-            cl.setFamily("LASIOCAMPIDAE");
+            cl.setScientificName("Blattidae");
             MetricsResultDTO metrics =searcher.searchForRecordMetrics(cl, true);
             assertTrue("Failed the cross rank homonym test",metrics.getErrors().contains(ErrorType.HOMONYM));
             //test resolved based on rank
@@ -117,7 +116,7 @@ public class BiocacheMatchTest {
             assertFalse("Cross rank homonym should have been resolved",metrics.getErrors().contains(ErrorType.HOMONYM));
             //test resolved based on rank being determined
             cl.setRank(null);
-            cl.setGenus("Symphyta");
+            cl.setPhylum("Arthropoda");
             metrics = searcher.searchForRecordMetrics(cl, true);
             assertFalse("Cross rank homonym should have been resolved",metrics.getErrors().contains(ErrorType.HOMONYM));
         }
@@ -153,7 +152,7 @@ public class BiocacheMatchTest {
             cl.setSpecificEpithet(spEp);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             //System.out.println(metrics.getResult());
-            assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:399930", metrics.getResult().getAcceptedLsid());
+            assertEquals("http://id.biodiversity.org.au/node/apni/2888850", metrics.getResult().getAcceptedLsid());
             assertTrue(metrics.getErrors().contains(ErrorType.HOMONYM));
 
         } catch (Exception e) {
@@ -198,7 +197,7 @@ public class BiocacheMatchTest {
             cl.setGenus("EcHium");
             cl.setOrder("[Boraginales]");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:308506", metrics.getResult().getLsid());
+            assertEquals("http://id.biodiversity.org.au/node/apni/2895788", metrics.getResult().getLsid());
             //System.out.println(metrics);
             //System.out.println(metrics.getLastException());
             //System.out.println(metrics.getErrors());
@@ -213,6 +212,7 @@ public class BiocacheMatchTest {
     public void testHomonym() {
         try {
             System.out.println(searcher.searchForRecord("Terebratella", null));
+            fail("Expected homonym exception");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -236,12 +236,12 @@ public class BiocacheMatchTest {
             cl.setScientificName("Tephrosia savannicola");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
-            assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:549612", metrics.getResult().getLsid());
+            assertEquals("http://id.biodiversity.org.au/node/apni/2894621", metrics.getResult().getLsid());
             cl = new LinnaeanRankClassification();
             cl.setScientificName("Myosurus minimus");
             metrics = searcher.searchForRecordMetrics(cl, true);
             assertTrue(metrics.getErrors().contains(ErrorType.MISAPPLIED));
-            assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:319672", metrics.getResult().getLsid());
+            assertEquals("http://id.biodiversity.org.au/node/apni/2896644", metrics.getResult().getLsid());
         } catch (Exception e) {
             fail("No exception shoudl occur");
             e.printStackTrace();

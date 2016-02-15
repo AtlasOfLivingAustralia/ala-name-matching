@@ -18,6 +18,7 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
 import au.org.ala.names.parser.PhraseNameParser;
+import au.org.ala.names.util.CleanedScientificName;
 import au.org.ala.names.util.TaxonNameSoundEx;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
@@ -26,6 +27,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.document.*;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.index.DirectoryReader;
@@ -44,6 +46,7 @@ import org.gbif.ecat.parser.NameParser;
 import org.gbif.ecat.voc.NameType;
 
 import java.io.*;
+import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -751,15 +754,15 @@ public class ALANameIndexer {
     }
 
     public Document createALAIndexDocument(String name, String id, String lsid, String author, LinnaeanRankClassification cl){
-        return createALAIndexDocument(name,id, lsid, author,null,null, null, null,cl);
+        return createALAIndexDocument(name,id, lsid, author,null,null, null, null, cl, 1.0f);
     }
 
-    public Document createALAIndexDocument(String name, String id, String lsid, String author, String rank, String rankId, String left, String right, LinnaeanRankClassification cl){
+    public Document createALAIndexDocument(String name, String id, String lsid, String author, String rank, String rankId, String left, String right, LinnaeanRankClassification cl, float boost){
         if(cl == null)
             cl = new LinnaeanRankClassification();
         return createALAIndexDocument(name, id, lsid, rankId, rank, cl.getKingdom(), cl.getKid(), cl.getPhylum()
                 , cl.getPid(), cl.getKlass(), cl.getCid(), cl.getOrder(), cl.getOid(), cl.getFamily(),
-                cl.getFid(), cl.getGenus(), cl.getGid(), cl.getSpecies(), cl.getSid(), left, right, null, null, null, author, 1.0f);
+                cl.getFid(), cl.getGenus(), cl.getGid(), cl.getSpecies(), cl.getSid(), left, right, null, null, null, author, boost);
     }
 
     protected Document createALASynonymDocument(String scientificName, String author, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, float boost, String synonymType) {
@@ -792,6 +795,10 @@ public class ALANameIndexer {
             System.out.println(name + " has been blacklisted");
             return null;
         }
+        if (boost > 10.0)
+            System.out.println("Found it");
+
+        CleanedScientificName cname = new CleanedScientificName(name);
         Document doc = new Document();
 
         //Add the ids
@@ -802,10 +809,24 @@ public class ALANameIndexer {
             doc.add(new TextField(NameIndexField.ALA.toString(), "T", Store.NO));
         }
 
-        //Add the scientific name information
-        Field f = new TextField(NameIndexField.NAME.toString(), name, Store.YES);
+        //Add the scientific name information (use the normalised name)
+        Field f = new TextField(NameIndexField.NAME.toString(), cname.getNormalised(), Store.YES);
         f.setBoost(boost);
         doc.add(f);
+        //Add the non-normalised scientific name if different
+        if (cname.hasNormalised()) {
+            log.info("Using normalised version of \"" + cname.getName() + "\" as \"" + cname.getNormalised() + " for " + lsid);
+            Field nf = new TextField(NameIndexField.NAME.toString(), cname.getName(), Store.YES);
+            nf.setBoost(boost);
+            doc.add(nf);
+        }
+        //Add the basic scientific name if different
+        if (cname.hasBasic()) {
+            log.info("Using basic latin version of \"" + cname.getName() + "\" as \"" + cname.getBasic() + " for " + lsid);
+            Field nf = new TextField(NameIndexField.NAME.toString(), cname.getName(), Store.YES);
+            nf.setBoost(boost);
+            doc.add(nf);
+        }
 
 
         //rank information
@@ -886,7 +907,7 @@ public class ALANameIndexer {
         //Generate the canonical
         //add the canonical form of the name
         try {
-            ParsedName cn = parser.parse(name);
+            ParsedName cn = parser.parse(cname.getNormalised());
             //if(cn != null && !cn.hasProblem() && !cn.isIndetermined()){
             if (cn != null && cn.isParsableType() && !cn.isIndetermined()
                     // a scientific name with some informal addition like "cf." or indetermined like Abies spec.
@@ -899,13 +920,13 @@ public class ALANameIndexer {
                 doc.add(f2);
                 if (specificEpithet == null && cn.isBinomial()) {
                     //check to see if we need to determine the epithets from the parse
-                    genus = cn.getGenusOrAbove();
+                    //genus = cn.getGenusOrAbove(); // Removed because it means that the phrase name genus is not set
                     if (specificEpithet == null) specificEpithet = cn.getSpecificEpithet();
                     if (infraspecificEpithet == null) infraspecificEpithet = cn.getInfraSpecificEpithet();
                 }
             }
             //check to see if the concept represents a phrase name
-            if (cn instanceof ALAParsedName) {
+            if (cn != null && cn instanceof ALAParsedName) {
                 //set up the field type that is stored and Index.ANALYZED_NO_NORMS
                 FieldType ft = new FieldType(TextField.TYPE_STORED);
                 ft.setOmitNorms(true);
@@ -915,7 +936,7 @@ public class ALANameIndexer {
                 } else if ((!"sp.".equals(alapn.rank)) && alapn.specificEpithet == null) {
                     log.warn(lsid + " " + name + " has an empty specific for non sp. phrase");
                 }
-                if (StringUtils.trimToNull(alapn.getLocationPhraseDesciption()) != null) {
+                if (StringUtils.trimToNull(alapn.getLocationPhraseDescription()) != null) {
                     doc.add(new Field(NameIndexField.PHRASE.toString(), alapn.cleanPhrase, ft));
                 }
                 if (alapn.getPhraseVoucher() != null) {

@@ -26,8 +26,8 @@ public class NameListTest {
         try {
             //namematchingv1_1
             //namematching_v13
-            searcher = new ALANameSearcher("/data/lucene/namematching_v13");
-            searcherOld = new ALANameSearcher("/data/lucene/namematchingv1_1");
+            searcher = new ALANameSearcher("/data/lucene/namematching");
+            searcherOld = new ALANameSearcher("/data/lucene/namematchingv13");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -44,7 +44,7 @@ public class NameListTest {
         }
     }
 
-    @Test
+    //@Test
     public void testBiocacheAnimalCoLName2012() {
         assertEquals(0, testFile("biocache_animal_col.txt"));
     }
