@@ -21,6 +21,7 @@ import au.org.ala.names.model.NameSearchResult;
 import au.org.ala.names.model.RankType;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.log4j.Logger;
@@ -44,6 +45,7 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.ArchiveFactory;
+import org.gbif.dwc.text.ArchiveField;
 import org.gbif.dwc.text.ArchiveFile;
 import org.gbif.ecat.model.ParsedName;
 
@@ -290,6 +292,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
         log.info("Starting to create the temporary loading index for " + archiveDirectory);
         //create the loading index so that left right values and classifications can be generated
         Archive archive = ArchiveFactory.openArchive(archiveDirectory);
+        ArchiveField nameCompleteField = archive.getCore().getField("nameComplete");
+        org.gbif.dwc.terms.Term nameCompleteTerm = nameCompleteField == null ? null : nameCompleteField.getTerm();
         Iterator<DarwinCoreRecord> it = archive.iteratorDwc();
         int i=0;
         long start=System.currentTimeMillis();
@@ -299,6 +303,10 @@ public class DwcaNameIndexer extends ALANameIndexer {
             String id = dwcr.getId();
             String lsid = dwcr.getTaxonID() == null ? id : dwcr.getTaxonID();
             String acceptedLsid = dwcr.getAcceptedNameUsageID();
+            String nameComplete = nameCompleteTerm == null ? null: dwcr.getProperty(nameCompleteTerm);
+            String scientificName = dwcr.getScientificName();
+            String scientificNameAuthorship = dwcr.getScientificNameAuthorship();
+            nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete);
             //add and store the identifier for the record
             doc.add(new StringField(NameIndexField.ID.toString(), dwcr.getId(), Field.Store.YES));
             if(StringUtils.isNotBlank(lsid)){
@@ -312,13 +320,16 @@ public class DwcaNameIndexer extends ALANameIndexer {
             if(StringUtils.isNotBlank(dwcr.getAcceptedNameUsageID())) {
                 doc.add(new StringField(NameIndexField.ACCEPTED.toString(),dwcr.getAcceptedNameUsageID(), Field.Store.YES));
             }
-            if(StringUtils.isNotBlank(dwcr.getScientificName())) {
+            if(StringUtils.isNotBlank(scientificName)) {
                 //stored no need to search on
                 doc.add(new StoredField(NameIndexField.NAME.toString(),dwcr.getScientificName()));
             }
-            if(StringUtils.isNotBlank(dwcr.getScientificNameAuthorship())) {
+            if(StringUtils.isNotBlank(scientificNameAuthorship)) {
                 //stored no need to search on
                 doc.add(new StoredField(NameIndexField.AUTHOR.toString(),dwcr.getScientificNameAuthorship()));
+            }
+            if (StringUtils.isNotBlank(nameComplete)) {
+                doc.add(new StoredField(NameIndexField.NAME_COMPLETE.toString(), nameComplete));
             }
             if(StringUtils.isNotBlank(dwcr.getGenus())) {
                 //stored no need to search on
@@ -370,7 +381,14 @@ public class DwcaNameIndexer extends ALANameIndexer {
         log.info("Finished creating the temporary load index with " + i + " concepts");
         this.loadingIndexWriter.commit();
         this.loadingIndexWriter.forceMerge(1);
-        this.lsearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(this.tmpDir)));
+    }
+
+    public void commitLoadingIndexes() throws IOException {
+        if (this.loadingIndexWriter != null) {
+            this.loadingIndexWriter.close(true);
+            this.loadingIndexWriter = null;
+        }
+        this.lsearcher = null;
     }
 
     private TopDocs getLoadIdxResults(ScoreDoc after, String field, String value,int max) throws Exception {
@@ -396,6 +414,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
         TopDocs rootConcepts = getLoadIdxResults(null, "root", "T", PAGE_SIZE);
         int left = 0;
         int right = left;
+        int lastRight = right;
+        int count = 0;
         while (rootConcepts != null && rootConcepts.totalHits > 0) {
             ScoreDoc lastConcept = null;
             for (ScoreDoc sd : rootConcepts.scoreDocs) {
@@ -403,7 +423,11 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 left = right + 1;
                 Document doc = lsearcher.doc(sd.doc);
                 right = addIndex(doc, 1, left, new LinnaeanRankClassification());
-                log.info("Finished loading " + doc.get(NameIndexField.LSID.toString()) + " " + doc.get(NameIndexField.NAME.toString()) + " " + left + " " + right);
+                if (right - lastRight > 1000) {
+                    log.info("Finished loading root " + doc.get(NameIndexField.LSID.toString()) + " " + doc.get(NameIndexField.NAME.toString()) + " left:" + left + " right" + right + " root count:" + count);
+                    lastRight = right;
+                }
+                count++;
             }
             rootConcepts = lastConcept == null ? null : getLoadIdxResults(lastConcept, "root", "T", PAGE_SIZE);
             if (rootConcepts != null && rootConcepts.scoreDocs.length > 0)
@@ -433,6 +457,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         int right = left;
         int rankId = Integer.parseInt(doc.get(NameIndexField.RANK_ID.toString()));
         String name = doc.get(NameIndexField.NAME.toString());
+        String nameComplete = doc.get(NameIndexField.NAME_COMPLETE.toString());
         String lsid = doc.get(NameIndexField.LSID.toString());
         //get the canonical version if the sciname
         String cname = getCanonical(name);
@@ -485,7 +510,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         }
         //now insert this term
         float boost = this.getBoost(doc.get(NameIndexField.DATASET_ID.toString()), rankId);
-        Document indexDoc = this.createALAIndexDocument(name, doc.get(NameIndexField.ID.toString()), lsid, doc.get(NameIndexField.AUTHOR.toString()),doc.get(NameIndexField.RANK.toString()),doc.get(NameIndexField.RANK_ID.toString()), Integer.toString(left), Integer.toString(right), newcl, boost);
+        Document indexDoc = this.createALAIndexDocument(name, doc.get(NameIndexField.ID.toString()), lsid, doc.get(NameIndexField.AUTHOR.toString()),doc.get(NameIndexField.RANK.toString()),doc.get(NameIndexField.RANK_ID.toString()), Integer.toString(left), Integer.toString(right), newcl, nameComplete, boost);
         writer.addDocument(indexDoc);
         return right + 1;
     }
@@ -536,12 +561,18 @@ public class DwcaNameIndexer extends ALANameIndexer {
         Iterator<DarwinCoreRecord> it = archive.iteratorDwc();
         int i = 0;
         int count = 0;
+        ArchiveField nameCompleteField = archive.getCore().getField("nameComplete");
+        org.gbif.dwc.terms.Term nameCompleteTerm = nameCompleteField == null ? null : nameCompleteField.getTerm();
         while(it.hasNext()){
             DarwinCoreRecord dwcr = it.next();
             i++;
             String lsid = dwcr.getTaxonID() != null ? dwcr.getTaxonID() : dwcr.getId();
             String id = dwcr.getId();
             String acceptedId = dwcr.getAcceptedNameUsageID();
+            String nameComplete = nameCompleteTerm == null ? null: dwcr.getProperty(nameCompleteTerm);
+            String scientificName = dwcr.getScientificName();
+            String scientificNameAuthorship = dwcr.getScientificNameAuthorship();
+            nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete);
             float boost = this.getBoost(dwcr.getDatasetID(), -1);
             if(StringUtils.isNotEmpty(acceptedId) && (!StringUtils.equals(acceptedId , id) && !StringUtils.equals(acceptedId, lsid))){
                 count++;
@@ -551,8 +582,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
                         log.debug("Scientific name:  " + dwcr.getScientificName() + ", LSID:  " + dwcr.getId());
                     }
                     Document doc = createALASynonymDocument(
-                            dwcr.getScientificName(),
-                            dwcr.getScientificNameAuthorship(),
+                            scientificName,
+                            scientificNameAuthorship,
+                            nameComplete,
                             dwcr.getId(),
                             lsid,
                             lsid,
@@ -768,9 +800,11 @@ public class DwcaNameIndexer extends ALANameIndexer {
                     search
             );
             indexer.begin();
-            if (load)
-                for (File dwca: dwcas)
+            if (load) {
+                for (File dwca : dwcas)
                     indexer.createLoadingIndex(dwca);
+                indexer.commitLoadingIndexes();
+            }
             indexer.generateIndex();
             for (File dwca: dwcas)
                 indexer.create(dwca);

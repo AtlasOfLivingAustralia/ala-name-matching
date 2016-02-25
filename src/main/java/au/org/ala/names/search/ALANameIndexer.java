@@ -319,7 +319,7 @@ public class ALANameIndexer {
             String source = values[11];
             //give CoL synonyms a lower boost than NSL
             float boost = source.trim().equals("") || source.equalsIgnoreCase("CoL") ? 0.75f : 1.0f;
-            Document doc = createALASynonymDocument(values[5], values[6], values[0], values[1], values[2], values[3], values[4], boost, values[9]);
+            Document doc = createALASynonymDocument(values[5], values[6], null, values[0], values[1], values[2], values[3], values[4], boost, values[9]);
             if (doc != null)
                 iw.addDocument(doc);
         }
@@ -358,7 +358,7 @@ public class ALANameIndexer {
                     values[POS_O], values[POS_OID], values[POS_F], values[POS_FID],
                     values[POS_G], values[POS_GID], values[POS_S], values[POS_SID],
                     values[POS_LFT], values[POS_RGT], acceptedValues,
-                    values[POS_SP_EPITHET], values[POS_INFRA_EPITHET], values[POS_AUTHOR], boost);
+                    values[POS_SP_EPITHET], values[POS_INFRA_EPITHET], values[POS_AUTHOR], null, boost);
 
 
             //add the excluded information if applicable
@@ -754,22 +754,22 @@ public class ALANameIndexer {
     }
 
     public Document createALAIndexDocument(String name, String id, String lsid, String author, LinnaeanRankClassification cl){
-        return createALAIndexDocument(name,id, lsid, author,null,null, null, null, cl, 1.0f);
+        return createALAIndexDocument(name,id, lsid, author,null,null, null, null, cl, null, 1.0f);
     }
 
-    public Document createALAIndexDocument(String name, String id, String lsid, String author, String rank, String rankId, String left, String right, LinnaeanRankClassification cl, float boost){
+    public Document createALAIndexDocument(String name, String id, String lsid, String author, String rank, String rankId, String left, String right, LinnaeanRankClassification cl, String nameComplete, float boost){
         if(cl == null)
             cl = new LinnaeanRankClassification();
         return createALAIndexDocument(name, id, lsid, rankId, rank, cl.getKingdom(), cl.getKid(), cl.getPhylum()
                 , cl.getPid(), cl.getKlass(), cl.getCid(), cl.getOrder(), cl.getOid(), cl.getFamily(),
-                cl.getFid(), cl.getGenus(), cl.getGid(), cl.getSpecies(), cl.getSid(), left, right, null, null, null, author, boost);
+                cl.getFid(), cl.getGenus(), cl.getGid(), cl.getSpecies(), cl.getSid(), left, right, null, null, null, author, nameComplete, boost);
     }
 
-    protected Document createALASynonymDocument(String scientificName, String author, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, float boost, String synonymType) {
+    protected Document createALASynonymDocument(String scientificName, String author, String nameComplete, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, float boost, String synonymType) {
         lsid = StringUtils.isBlank(lsid) ? nameLsid : lsid;
         Document doc = createALAIndexDocument(scientificName, id, lsid, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                acceptedLsid, null, null, author, boost);
+                acceptedLsid, null, null, author, nameComplete, boost);
         if (doc != null && synonymType != null) {
             try {
                 doc.add(new TextField(NameIndexField.SYNONYM_TYPE.toString(), synonymType, Store.YES));
@@ -788,18 +788,19 @@ public class ALANameIndexer {
                                             String kingdom, String kid, String phylum, String pid, String clazz, String cid, String order,
                                             String oid, String family, String fid, String genus, String gid,
                                             String species, String sid, String left, String right, String acceptedConcept, String specificEpithet,
-                                            String infraspecificEpithet, String author,
+                                            String infraspecificEpithet, String author, String nameComplete,
                                             float boost) {
         //
         if (isBlacklisted(name)) {
             System.out.println(name + " has been blacklisted");
             return null;
         }
-        if (boost > 10.0)
-            System.out.println("Found it");
 
+        nameComplete = buildNameComplete(name, author, nameComplete);
         CleanedScientificName cname = new CleanedScientificName(name);
+        CleanedScientificName cnameComplete = new CleanedScientificName(nameComplete);
         Document doc = new Document();
+        String soundexGenus = genus;
 
         //Add the ids
         doc.add(new StringField(NameIndexField.ID.toString(), id, Store.YES));
@@ -809,25 +810,21 @@ public class ALANameIndexer {
             doc.add(new TextField(NameIndexField.ALA.toString(), "T", Store.NO));
         }
 
-        //Add the scientific name information (use the normalised name)
-        Field f = new TextField(NameIndexField.NAME.toString(), cname.getNormalised(), Store.YES);
-        f.setBoost(boost);
-        doc.add(f);
-        //Add the non-normalised scientific name if different
-        if (cname.hasNormalised()) {
-            log.info("Using normalised version of \"" + cname.getName() + "\" as \"" + cname.getNormalised() + " for " + lsid);
-            Field nf = new TextField(NameIndexField.NAME.toString(), cname.getName(), Store.YES);
-            nf.setBoost(boost);
-            doc.add(nf);
-        }
-        //Add the basic scientific name if different
-        if (cname.hasBasic()) {
-            log.info("Using basic latin version of \"" + cname.getName() + "\" as \"" + cname.getBasic() + " for " + lsid);
-            Field nf = new TextField(NameIndexField.NAME.toString(), cname.getName(), Store.YES);
-            nf.setBoost(boost);
-            doc.add(nf);
+        HashSet<String> nameSet = new HashSet<String>(3);
+        nameSet.add(cname.getName());
+        nameSet.add(cname.getNormalised());
+        nameSet.add(cname.getBasic());
+        nameSet.add(cnameComplete.getName());
+        nameSet.add(cnameComplete.getNormalised());
+        nameSet.add(cnameComplete.getBasic());
+        for (String n: nameSet) {
+            Field f = new TextField(NameIndexField.NAME.toString(), n, Store.YES);
+            f.setBoost(boost);
+            doc.add(f);
         }
 
+        doc.add(new StringField(NameIndexField.NAME_CANONICAL.toString(), cname.getNormalised(), Store.YES));
+        doc.add(new StringField(NameIndexField.NAME_COMPLETE.toString(), cnameComplete.getNormalised(), Store.YES));
 
         //rank information
         if (StringUtils.isNotEmpty(rank)) {
@@ -914,13 +911,12 @@ public class ALANameIndexer {
                     // ALSO prevent subgenus because they parse down to genus plus author
                     && cn.getType() != NameType.informal && !"6500".equals(rank) && cn.getType() != NameType.doubtful)
             {
-
                 Field f2 = new TextField(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES);
                 f2.setBoost(boost);
                 doc.add(f2);
                 if (specificEpithet == null && cn.isBinomial()) {
                     //check to see if we need to determine the epithets from the parse
-                    //genus = cn.getGenusOrAbove(); // Removed because it means that the phrase name genus is not set
+                    soundexGenus = cn.getGenusOrAbove();
                     if (specificEpithet == null) specificEpithet = cn.getSpecificEpithet();
                     if (infraspecificEpithet == null) infraspecificEpithet = cn.getInfraSpecificEpithet();
                 }
@@ -961,12 +957,12 @@ public class ALANameIndexer {
 
         //add the sound expressions for the name if required
         try {
-            if (StringUtils.isNotBlank(genus)) {
-                doc.add(new TextField(NameIndexField.GENUS_EX.toString(), TaxonNameSoundEx.treatWord(genus, "genus"), Store.YES));
+            if (StringUtils.isNotBlank(soundexGenus)) {
+                doc.add(new TextField(NameIndexField.GENUS_EX.toString(), TaxonNameSoundEx.treatWord(soundexGenus, "genus"), Store.YES));
             }
             if (StringUtils.isNotBlank(specificEpithet)) {
                 doc.add(new TextField(NameIndexField.SPECIES_EX.toString(), TaxonNameSoundEx.treatWord(specificEpithet, "species"), Store.YES));
-            } else if (StringUtils.isNotBlank(genus)) {
+            } else if (StringUtils.isNotBlank(soundexGenus)) {
                 doc.add(new TextField(NameIndexField.SPECIES_EX.toString(), "<null>", Store.YES));
             }
             if (StringUtils.isNotBlank(infraspecificEpithet)) {
@@ -991,6 +987,17 @@ public class ALANameIndexer {
         this.indexDirectory = indexDirectory;
     }
 
+    protected String buildNameComplete(String name, String author, String nameComplete) {
+        if (StringUtils.isNotBlank(nameComplete))
+            return nameComplete;
+        StringBuilder ncb = new StringBuilder(64);
+        if (name != null)
+            ncb.append(name);
+        ncb.append(" ");
+        if (author != null)
+            ncb.append(author);
+        return ncb.toString().trim();
+    }
 
     /**
      * Generates the Lucene index required for the name matching API.

@@ -27,6 +27,34 @@ public class CleanedScientificName {
     /** The punctuation translation table */
     private static final Substitute[] PUNCT_TRANSLATE = {
             new Substitute('\u00a0', ' '), // Non breaking space
+            new Substitute('\u00ad', '-'), // Soft hyphen
+            new Substitute('\u2010', '-'), // Hyphen
+            new Substitute('\u2011', '-'), // Non-breaking hyphen
+            new Substitute('\u2012', '-'), // Figure dash
+            new Substitute('\u2013', '-'), // En-dash
+            new Substitute('\u2014', '-'), // Em-dash
+            new Substitute('\u2015', '-'), // Horizontal bar
+            new Substitute('\u2018', '\''), // Single left quotation
+            new Substitute('\u2019', '\''), // Single right quotation
+            new Substitute('\u201a', '\''), // Single low quotation
+            new Substitute('\u201b', '\''), // Single high reversed quotation
+            new Substitute('\u201c', '"'), // Left quote
+            new Substitute('\u201d', '"'), // Right quote
+            new Substitute('\u201e', '"'), // Low quote
+            new Substitute('\u201f', '"'), // Reversed high quote
+            new Substitute('\u2027', ""), // Hyphenation point
+            new Substitute('\u2028', ' '), // Line seperator
+            new Substitute('\u2029', ' '), // Paragraph seperator
+            new Substitute('\u202a', ""), // Left to right embedding
+            new Substitute('\u202b', ""), // Right to left embeddiong
+            new Substitute('\u202c', ""), // Pop directional formatting
+            new Substitute('\u202d', ""), // Left to right override
+            new Substitute('\u202e', ""), // Right to left override
+            new Substitute('\u202f', ' '), // Narrow no break space
+    };
+
+    /** The special character translation table for spelling some things out and replacing interesting punctuation with basic latin versions */
+    private static final Substitute[] BASIC_TRANSLATE = {
             new Substitute('\u00a1', '!'), // Inverted exclamation
             new Substitute('\u00a2', 'c'), // Cent sign
             new Substitute('\u00a3', '#'), // Pound sign
@@ -39,7 +67,7 @@ public class CleanedScientificName {
             new Substitute('\u00aa', ""), // Feminine ordinal
             new Substitute('\u00ab', "<<"), // Left angle quotation
             new Substitute('\u00ac', '~'), // Not sign
-            new Substitute('\u00ad', '-'), // Soft hyphen
+            new Substitute('\u00d7', " x "), // Multiplication sign
             new Substitute('\u00ae', 'r'), // Registerd
             new Substitute('\u00af', ' '), // Macron
             new Substitute('\u00b0', 'o'), // Degree
@@ -54,23 +82,34 @@ public class CleanedScientificName {
             new Substitute('\u00b9', '1'), // Superscript 1
             new Substitute('\u00bb', ">>"), // Right angle quotation
             new Substitute('\u00bf', '?'), // Inverted question mark
-            new Substitute('\u00d7', " x "), // Multiplication sign
-            new Substitute('\u2010', '-'), // Hyphen
-            new Substitute('\u2011', '-'), // Non-breaking hyphen
-            new Substitute('\u2012', '-'), // Figure dash
-            new Substitute('\u2013', '-'), // En-dash
-            new Substitute('\u2014', '-'), // Em-dash
-            new Substitute('\u2015', '-'), // Horizontal bar
+            new Substitute('\u00df', "ss"), // Small sharp s
+            new Substitute('\u03b1', " alpha "),
+            new Substitute('\u03b2', " beta "),
+            new Substitute('\u03b3', " gamma "),
+            new Substitute('\u03b4', " delta "),
+            new Substitute('\u03b5', " epsilon "),
+            new Substitute('\u03b6', " zeta "),
+            new Substitute('\u03b7', " eta"),
+            new Substitute('\u03b8', " theta "),
+            new Substitute('\u03ba', " kappa "),
+            new Substitute('\u03bb', " lambda "),
+            new Substitute('\u03bc', " mu "),
+            new Substitute('\u03bd', " nu "),
+            new Substitute('\u03be', " xi "),
+            new Substitute('\u03bf', " omicron "),
+            new Substitute('\u03c0', " pi "),
+            new Substitute('\u03c1', " rho "),
+            new Substitute('\u03c2', " sigma "),
+            new Substitute('\u03c3', " sigma"),
+            new Substitute('\u03c4', " tau "),
+            new Substitute('\u03c5', " upsilon "),
+            new Substitute('\u03c6', " phi "),
+            new Substitute('\u03c7', " chi "),
+            new Substitute('\u03c8', " psi "),
+            new Substitute('\u03c9', " omega "),
+            new Substitute('\u1e9e', "SS"), // Capital sharp s
             new Substitute('\u2016', '|'), // Double vertical line
             new Substitute('\u2017', '-'), // Double low line
-            new Substitute('\u2018', '\''), // Single left quotation
-            new Substitute('\u2019', '\''), // Single right quotation
-            new Substitute('\u201a', '\''), // Single low quotation
-            new Substitute('\u201b', '\''), // Single high reversed quotation
-            new Substitute('\u201c', '"'), // Left quote
-            new Substitute('\u201d', '"'), // Right quote
-            new Substitute('\u201e', '"'), // Low quote
-            new Substitute('\u201f', '"'), // Reversed high quote
             new Substitute('\u2020', '*'), // Dagger
             new Substitute('\u2021', '*'), // Double dagger
             new Substitute('\u2022', '*'), // Bullet
@@ -78,15 +117,6 @@ public class CleanedScientificName {
             new Substitute('\u2024', '.'), // One dot leader
             new Substitute('\u2025', '.'), // Two dot leader
             new Substitute('\u2026', '.'), // Three dot leader
-            new Substitute('\u2027', ""), // Hyphenation point
-            new Substitute('\u2028', ' '), // Line seperator
-            new Substitute('\u2029', ' '), // Paragraph seperator
-            new Substitute('\u202a', ""), // Left to right embedding
-            new Substitute('\u202b', ""), // Right to left embeddiong
-            new Substitute('\u202c', ""), // Pop directional formatting
-            new Substitute('\u202d', ""), // Left to right override
-            new Substitute('\u202e', ""), // Right to left override
-            new Substitute('\u202f', ' '), // Narrow no break space
             new Substitute('\u2030', '%'), // Per mille
             new Substitute('\u2031', '%'), // Per ten thousand
             new Substitute('\u2032', '\''), // Prime
@@ -114,36 +144,6 @@ public class CleanedScientificName {
             new Substitute('\u2715', " x "), // Multiplication x
             new Substitute('\u2a09', " x "), // n-ary cross
             new Substitute('\u2a7f', " x ") // Cross product
-    };
-
-    /** The special character translation table for spelling some things out */
-    private static final Substitute[] BASIC_TRANSLATE = {
-            new Substitute('\u00df', "ss"), // Small sharp s
-            new Substitute('\u03b1', " alpha "),
-            new Substitute('\u03b2', " beta "),
-            new Substitute('\u03b3', " gamma "),
-            new Substitute('\u03b4', " delta "),
-            new Substitute('\u03b5', " epsilon "),
-            new Substitute('\u03b6', " zeta "),
-            new Substitute('\u03b7', " eta"),
-            new Substitute('\u03b8', " theta "),
-            new Substitute('\u03ba', " kappa "),
-            new Substitute('\u03bb', " lambda "),
-            new Substitute('\u03bc', " mu "),
-            new Substitute('\u03bd', " nu "),
-            new Substitute('\u03be', " xi "),
-            new Substitute('\u03bf', " omicron "),
-            new Substitute('\u03c0', " pi "),
-            new Substitute('\u03c1', " rho "),
-            new Substitute('\u03c2', " sigma "),
-            new Substitute('\u03c3', " sigma"),
-            new Substitute('\u03c4', " tau "),
-            new Substitute('\u03c5', " upsilon "),
-            new Substitute('\u03c6', " phi "),
-            new Substitute('\u03c7', " chi "),
-            new Substitute('\u03c8', " psi "),
-            new Substitute('\u03c9', " omega "),
-            new Substitute('\u1e9e', "SS") // Capital sharp s
     };
 
     /** The source name */

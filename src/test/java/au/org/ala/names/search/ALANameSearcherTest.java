@@ -66,12 +66,26 @@ public class ALANameSearcherTest {
         try {
             //test to ensure that the accepted name is returned when it also exists as a misapplied name.
             String lsid = searcher.searchForLSID("Bertya rosmarinifolia");
-            fail("A misapplied exception should be thrown");
+            fail("A misapplied exception should be thrown, got " + lsid);
         } catch (MisappliedException ex) {
             assertEquals("http://id.biodiversity.org.au/node/apni/2893214", ex.getMatchedResult().getLsid());
             assertEquals("http://id.biodiversity.org.au/node/apni/2898349", ex.getMisappliedResult().getLsid());
         } catch (Exception ex) {
             fail("No other exceptions should occur, got " + ex);
+        }
+    }
+
+    @Test
+    public void testMisappliedNames3()  {
+        try {
+            String name = "Scleroderma aurantium (L. : Pers.) Pers.";
+            NameSearchResult nsr = searcher.searchForRecord(name);
+            fail("Expecting misapplied exception");
+            assertNotNull(nsr);
+        } catch (MisappliedException ex) {
+            assertEquals("690bcf05-149f-4ab9-82c0-a2746e4d0bcb", ex.getMatchedResult().getLsid());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
         }
     }
 
@@ -117,7 +131,7 @@ public class ALANameSearcherTest {
         String name = "Sphacelaria Lynbye";
         try {
             String lsid = searcher.searchForLSID(name);
-            assertNull(lsid);
+            assertNull("Whoops found lsid " + lsid, lsid);
         } catch (Exception e) {
             e.printStackTrace();
             fail("No exception shoul occur");
@@ -157,17 +171,17 @@ public class ALANameSearcherTest {
 
     }
 
-    //@Test // TODO To be re-instated when we find an example
+    @Test
     public void testSpeciesSplitSynonym() {
-        String name = "Grevillea brachystylis 'sprawling form'";
+        String name = "Corvus orru'";
         try {
             List<NameSearchResult> results = searcher.searchForRecords(name, null, true);
             fail("An exception should have been thrown");
         } catch (Exception e) {
             assertTrue(e instanceof ParentSynonymChildException);
             ParentSynonymChildException psce = (ParentSynonymChildException) e;
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:ca722c6d-6d53-4de6-b296-310621eeffa8", psce.getParentResult().getLsid());
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:18ee79c4-3822-4d95-908c-f5c61f50b87f", psce.getChildResult().getLsid());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:32216e12-b8e8-48d9-8a2c-193633745762", psce.getParentResult().getLsid());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:f8efc550-d7c1-44c9-9d16-787d50c8e857", psce.getChildResult().getLsid());
         }
 
     }
@@ -669,12 +683,25 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testSoundExMatch() {
+    public void testSoundExMatch1() {
         String name = "Argyrotegium nitidulus";
         try {
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
             assertNotNull(nsr);
             assertEquals("http://id.biodiversity.org.au/node/apni/2918399", nsr.getLsid());
+            assertEquals(MatchType.SOUNDEX, nsr.getMatchType());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex.getMessage());
+        }
+    }
+
+    @Test
+    public void testSoundExMatch2() {
+        String name = "Globigerinoides tennellus";
+        try {
+            NameSearchResult nsr = searcher.searchForRecord(name, null, true);
+            assertNotNull(nsr);
+            assertEquals("CoL:25498086", nsr.getLsid());
             assertEquals(MatchType.SOUNDEX, nsr.getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
@@ -765,7 +792,7 @@ public class ALANameSearcherTest {
             String lsid = searcher.searchForLSID("Animalia");
             assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:4647863b-760d-4b59-aaa1-502c8cdf8d3c", lsid);
             lsid = searcher.searchForLSID("Bacteria");
-            assertEquals("CoL:25745022", lsid);
+            assertEquals("CAAB:72000000", lsid);
         } catch (SearchResultException e) {
             e.printStackTrace();
             fail("testNoRank failed");
@@ -986,6 +1013,21 @@ public class ALANameSearcherTest {
         String sciName = getCommonName(name);
         assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:16171fac-8d6c-4327-9fab-f2db864d71bf", lsid);
         assertEquals("Cyprinus carpio", sciName);
+    }
+
+    @Test
+    public void testCommonNames7() {
+        String name = "Sulphur-crested Cockatoo";
+        String lsid = getCommonNameLSID(name);
+        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:8f8d2e99-0135-4574-bd0b-8ba5604118e6", lsid);
+        name = "Sulphur crested Cockatoo";
+        lsid = getCommonNameLSID(name);
+        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:8f8d2e99-0135-4574-bd0b-8ba5604118e6", lsid);
+        name = "SULPHUR CRESTED COCKATOO";
+        lsid = getCommonNameLSID(name);
+        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:8f8d2e99-0135-4574-bd0b-8ba5604118e6", lsid);
+        String sciName = getCommonName(name);
+        assertEquals("Cacatua (Cacatua) galerita", sciName);
     }
 
     private String getCommonNameLSID(String name) {
@@ -1220,6 +1262,129 @@ public class ALANameSearcherTest {
             System.out.println("ssp: " + lsid);
         } catch (Exception e) {
             fail("rank marker test failed");
+        }
+    }
+
+    @Test
+    public void testSimpleLookup1()  {
+        try {
+            String name = "Megalurus gramineus";
+            NameSearchResult nsr = searcher.searchForRecord(name);
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:b88430ed-f7d7-482e-a586-f0a02d8e11ce", nsr.getLsid());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
+
+    @Test
+    public void testSimpleLookup2()  {
+        try {
+            String name = "Synemon plana";
+            NameSearchResult nsr = searcher.searchForRecord(name);
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:fb552f98-f304-47d5-a332-f3868fbf8556", nsr.getLsid());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
+    @Test
+    public void testSimpleLookup3()  {
+        try {
+            String name = "Sargassum podacanthum";
+            NameSearchResult nsr = searcher.searchForRecord(name);
+            assertNotNull(nsr);
+            assertEquals("CAAB:54105060", nsr.getLsid());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
+
+    @Test
+    public void testSimpleLookup4()  {
+        try {
+            String name = "Freesia alba x Freesia leichtlinii";
+            NameSearchResult nsr = searcher.searchForRecord(name);
+            assertNotNull(nsr);
+            assertEquals("CAAB:54105060", nsr.getLsid());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
+    @Test
+    public void testSimpleLookup5()  {
+        try {
+            String name = "Favolus";
+            NameSearchResult nsr = searcher.searchForRecord(name, null, RankType.GENUS);
+            assertNotNull(nsr);
+            assertEquals("690bcf05-149f-4ab9-82c0-a2746e4d0bcb", nsr.getLsid());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+
+    @Test
+    public void testSimpleLookup6()  {
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setKingdom("Plantae");
+            cl.setScientificName("Andreaea");
+            NameSearchResult nsr = searcher.searchForRecord(cl, true);
+            assertNotNull(nsr);
+            assertEquals("http://id.biodiversity.org.au/name/apni/120791", nsr.getLsid());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+    @Test
+    public void testSimpleLookup7()  {
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setKingdom("Plantae");
+            String name = "Astomum";
+            NameSearchResult nsr = searcher.searchForRecord(name, cl, RankType.GENUS);
+            assertNotNull(nsr);
+            assertEquals("690bcf05-149f-4ab9-82c0-a2746e4d0bcb", nsr.getLsid());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+    @Test
+    public void testHigherTaxonMatch1()  {
+        try {
+            String name = "Breutelia scoparia";
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName(name);
+            NameSearchResult nsr = searcher.searchForRecord(cl, true);
+            assertNotNull(nsr);
+            assertEquals("http://id.biodiversity.org.au/name/apni/120820", nsr.getLsid());
+            assertEquals("Breutelia", nsr.getRankClassification().getGenus());
+            assertEquals(MatchType.RECURSIVE, nsr.getMatchType());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
+    @Test
+    public void testHigherTaxonMatch2()  {
+        try {
+            String name = "Ramalina aspera";
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName(name);
+            NameSearchResult nsr = searcher.searchForRecord(cl, true);
+            assertNotNull(nsr);
+            assertEquals("NZOR-3-54382", nsr.getLsid());
+            assertEquals("Ramalina", nsr.getRankClassification().getGenus());
+            assertEquals(MatchType.RECURSIVE, nsr.getMatchType());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
         }
     }
 

@@ -104,10 +104,10 @@ public class CleanedScientificNameTest {
     public void testPunctName5() {
         CleanedScientificName name = new CleanedScientificName("Olearia\u00a0\u00d7matthewsii");
         assertEquals("Olearia \u00d7matthewsii", name.getName());
-        assertEquals("Olearia x matthewsii", name.getNormalised());
+        assertEquals("Olearia \u00d7matthewsii", name.getNormalised());
         assertEquals("Olearia x matthewsii", name.getBasic());
-        assertTrue(name.hasNormalised());
-        assertFalse(name.hasBasic());
+        assertFalse(name.hasNormalised());
+        assertTrue(name.hasBasic());
     }
 
     @Test

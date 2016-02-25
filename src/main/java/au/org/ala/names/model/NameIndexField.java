@@ -31,7 +31,9 @@ public enum NameIndexField {
     INFRA_EX("infra_ex"),//infra specific epithet sounds like expression
     SPECIFIC("specific"),
     INFRA_SPECIFIC("infra"),
-    NAME("name"),//canonical name
+    NAME("name"),// search name
+    NAME_CANONICAL("name_canonical"), // Canonical name
+    NAME_COMPLETE("name_complete"), // Complete name
     RANK_ID("rank_id"),
     RANK("rank"),
     AUTHOR("author"),
