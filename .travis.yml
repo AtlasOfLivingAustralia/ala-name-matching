@@ -11,9 +11,11 @@ before_install:
 - sudo mkdir -p /data/lucene; sudo wget -O /data/lucene/namematching.tgz http://biocache.ala.org.au/archives/nameindexes/20140610/namematching.tgz
 - cd /data/lucene
 - sudo tar zxvf namematching.tgz
+- sudo ln -s namematching13 namematching
+- ls -laF
 - cd $TRAVIS_BUILD_DIR
 
-script: mvn -X -P travis clean install deploy -DskipTests=true
+script: mvn -X -P travis clean install deploy
 env:
   global:
   - secure: KccCleAFdCTTPEtUYcsBSsIbIIvpbZJ16aV0F8ydRErupFrTIsniWM5xmyUyL3VYaViIViBFke1hAiVEoYG3U33a4X3RVdZV0vS6KhS1K36q0jg61wnyzYqucVk8XBh8X0JHS6DmZ++IV2JAEpY6mEWKG+LpNGkyZ58gqj1AJsY=
