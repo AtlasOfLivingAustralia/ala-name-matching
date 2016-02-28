@@ -551,7 +551,8 @@ public class ALANameSearcherTest {
             cl.setKingdom("Animalia");
             cl.setScientificName("Gymnorhina tibicen");
             NameSearchResult nsr = searcher.searchForRecord(cl, true, true);
-            assertEquals("Gymnorhina tibicen (Latham, 1801)", nsr.getRankClassification().getScientificName());
+            assertEquals("Gymnorhina tibicen", nsr.getRankClassification().getScientificName());
+            assertEquals("Latham, 1801", nsr.getRankClassification().getAuthorship());
             nsr = searcher.searchForRecord("Cracticus tibicen", RankType.SPECIES);
             assertEquals("Cracticus tibicen", nsr.getRankClassification().getScientificName());
             nsr = searcher.searchForRecord("Cracticus tibicen", RankType.GENUS);
@@ -1112,10 +1113,10 @@ public class ALANameSearcherTest {
     public void testFuzzyMatches() {
         try {
             //Eolophus roseicapillus - non fuzzy match
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:53f876f0-2c4d-40c8-ae6c-f478db8b07af", searcher.searchForLSID("Eolophus roseicapillus"));
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:8d061243-c39f-4b81-92a9-c81f4419e93c", searcher.searchForLSID("Eolophus roseicapillus"));
 
             //Eolophus roseicapilla - fuzzy match
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:53f876f0-2c4d-40c8-ae6c-f478db8b07af", searcher.searchForLSID("Eolophus roseicapilla", true));
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:8d061243-c39f-4b81-92a9-c81f4419e93c", searcher.searchForLSID("Eolophus roseicapilla", true));
         } catch (Exception e) {
             e.printStackTrace();
             fail("testFuzzyMatches failed");
