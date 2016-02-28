@@ -24,13 +24,9 @@ public class ALANameSearcherTest {
     public static void init() {
         try {
             searcher = new ALANameSearcher("/data/lucene/namematching");
-            //searcher = new ALANameSearcher("/data/lucene/namematching_v13");
-            //searcher = new ALANameSearcher("/data/lucene/merge_namematching");
-            //searcher = new ALANameSearcher("/data/lucene/col_namematching");
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     @Test
@@ -555,7 +551,7 @@ public class ALANameSearcherTest {
             cl.setKingdom("Animalia");
             cl.setScientificName("Gymnorhina tibicen");
             NameSearchResult nsr = searcher.searchForRecord(cl, true, true);
-            assertEquals("Gymnorhina tibicen", nsr.getRankClassification().getScientificName());
+            assertEquals("Gymnorhina tibicen (Latham, 1801)", nsr.getRankClassification().getScientificName());
             nsr = searcher.searchForRecord("Cracticus tibicen", RankType.SPECIES);
             assertEquals("Cracticus tibicen", nsr.getRankClassification().getScientificName());
             nsr = searcher.searchForRecord("Cracticus tibicen", RankType.GENUS);
@@ -720,18 +716,6 @@ public class ALANameSearcherTest {
     }
 
     //@Test
-    public void testVirusName() {
-        try {
-            String name = "Cucumovirus cucumber mosaic";
-            NameParser parser = new NameParser();
-            ParsedName cn = parser.parse(name);
-            System.out.println(cn);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    //@Test
     public void testPhraseNames() {
         //All the names below need to map to the same concept
         try {
@@ -767,25 +751,6 @@ public class ALANameSearcherTest {
         }
     }
 
-    //@Test
-    public void testBadCommonName() {
-        try {
-            System.out.println("Higher_sulfur_oxides: " + searcher.searchForCommonName("Higher sulfur oxides"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    //@Test
-    public void testSpeciesSynonymOfSubspecies() {
-        LinnaeanRankClassification cl = new LinnaeanRankClassification("Animalia", "Chordata", "Aves", "Charadriiformes", "Laridae", "Larus", "Larus novaehollandiae");
-        try {
-            System.out.println(searcher.searchForRecord(cl, true));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     @Test
     public void testNoRank() {
         try {
@@ -815,7 +780,6 @@ public class ALANameSearcherTest {
         assertEquals(lsid, nsr.getLsid());
     }
 
-
     private void printAllResults(String prefix, List<NameSearchResult> results) {
         System.out.println("## " + prefix + " ##");
         if (results != null && results.size() != 0) {
@@ -823,33 +787,6 @@ public class ALANameSearcherTest {
                 System.out.println(result);
         }
         System.out.println("###################################");
-    }
-
-    private boolean nameSearchResultEqual(NameSearchResult nsr1, NameSearchResult nsr2) {
-        boolean equals = true;
-
-        try {
-            if (nsr1.getMatchType() == null && nsr2.getMatchType() == null) {
-                equals = true;
-            } else if (!nsr1.getMatchType().equals(nsr2.getMatchType())) {
-                equals = false;
-            }
-
-            if (!nsr1.getId().equals(nsr2.getId())) {
-                equals = false;
-            }
-
-            if (nsr1.getLsid() == null && nsr2.getLsid() == null) {
-                equals = true;
-            } else if (!nsr1.getLsid().equals(nsr2.getLsid())) {
-                equals = false;
-            }
-
-        } catch (NullPointerException npe) {
-            equals = false;
-        }
-
-        return equals;
     }
 
     @Test
@@ -932,7 +869,6 @@ public class ALANameSearcherTest {
             cl.setKingdom("Plantae");
             results = searcher.searchForRecords("Gaillardia", RankType.getForId(6000), cl, 10);
             printAllResults("hymonyms test (Gaillardia)", results);
-
 
         } catch (SearchResultException e) {
             //			System.err.println(e.getMessage());
@@ -1176,20 +1112,15 @@ public class ALANameSearcherTest {
     public void testFuzzyMatches() {
         try {
             //Eolophus roseicapillus - non fuzzy match
-            assertEquals(searcher.searchForLSID("Eolophus roseicapillus"), "urn:lsid:biodiversity.org.au:afd.taxon:8d061243-c39f-4b81-92a9-c81f4419e93c");
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:53f876f0-2c4d-40c8-ae6c-f478db8b07af", searcher.searchForLSID("Eolophus roseicapillus"));
 
             //Eolophus roseicapilla - fuzzy match
-            assertEquals(searcher.searchForLSID("Eolophus roseicapilla", true), "urn:lsid:biodiversity.org.au:afd.taxon:8d061243-c39f-4b81-92a9-c81f4419e93c");
-
-
-
-
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:53f876f0-2c4d-40c8-ae6c-f478db8b07af", searcher.searchForLSID("Eolophus roseicapilla", true));
         } catch (Exception e) {
             e.printStackTrace();
             fail("testFuzzyMatches failed");
         }
     }
-
 
     @Test
     public void testCrossRankHomonyms() {
@@ -1202,7 +1133,6 @@ public class ALANameSearcherTest {
             assertEquals("Cross Homonysm Patellina test 1 failed to throw correct exception", e.getClass(), HomonymException.class);
         }
     }
-
 
     @Test
     /**

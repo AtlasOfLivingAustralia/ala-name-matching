@@ -76,7 +76,6 @@ public class BiocacheMatchTest {
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             assertTrue("Homonyms exception should have been detected", metrics.getErrors().contains(ErrorType.HOMONYM));
 
-
         } catch (Exception e){
             e.printStackTrace();
             fail("Exception should not occur");
@@ -97,7 +96,6 @@ public class BiocacheMatchTest {
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception should not occur");
-
         }
     }
 
@@ -136,8 +134,7 @@ public class BiocacheMatchTest {
             cl.setPhylum("Arthropoda");
             metrics = searcher.searchForRecordMetrics(cl, true);
             assertFalse("Cross rank homonym should have been resolved",metrics.getErrors().contains(ErrorType.HOMONYM));
-        }
-        catch(Exception e){
+        } catch(Exception e) {
             e.printStackTrace();
         }
     }
@@ -177,7 +174,6 @@ public class BiocacheMatchTest {
         }
     }
 
-
     @Test
     public void testAlternatePhraseName() {
         try {
@@ -189,18 +185,6 @@ public class BiocacheMatchTest {
 
         }
     }
-
-//    @Test public void testKing(){
-//        try{
-//            LinnaeanRankClassification cl = new LinnaeanRankClassification();
-//            cl.setScientificName("Howea");
-//            cl.setKingdom("animalia");
-//            searcher.searchForAcceptedLsidDefaultHandling(cl, true);
-//        }
-//        catch(Exception e){
-//            e.printStackTrace();
-//        }
-//    }
 
     @Test
     public void genericIssueTest() {
@@ -228,10 +212,10 @@ public class BiocacheMatchTest {
     @Test
     public void testHomonym() {
         try {
-            System.out.println(searcher.searchForRecord("Terebratella", null));
+            searcher.searchForRecord("Terebratella", null);
             fail("Expected homonym exception");
         } catch (Exception e) {
-            e.printStackTrace();
+            assertTrue(e instanceof HomonymException);
         }
     }
 
