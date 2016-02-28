@@ -84,8 +84,26 @@ public class BiocacheMatchTest {
     }
 
     @Test
-    public void testRecursiveAuthorshipIssue(){
-        try{
+    public void testRecursiveAuthorshipIssue() {
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName("Graphis erythrocardia Mull.Arg.");
+            cl.setAuthorship("Mull.Arg.");
+            cl.setKingdom("Animalia");
+            cl.setGenus("Graphis");
+            cl.setSpecificEpithet("erythrocardia");
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:934c68e8-1a64-49ff-b89e-e275b93043af", metrics.getResult().getLsid()); // Graphis from AFD
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Exception should not occur");
+
+        }
+    }
+
+    @Test
+    public void testRecursiveAuthorshipIssue2() {
+        try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             cl.setScientificName("Graphis erythrocardia Mull.Arg.");
             cl.setAuthorship("Mull.Arg.");
@@ -93,9 +111,8 @@ public class BiocacheMatchTest {
             cl.setGenus("Graphis");
             cl.setSpecificEpithet("erythrocardia");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("NZOR-3-107188", metrics.getResult().getLsid());
-            System.out.println(metrics.getResult());
-        } catch(Exception e){
+            assertEquals("NZOR-3-83007", metrics.getResult().getLsid()); // Can't find Graphis since not APC placed so gets Graphidaceae
+        } catch (Exception e) {
             e.printStackTrace();
             fail("Exception should not occur");
 
