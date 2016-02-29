@@ -15,7 +15,12 @@ before_install:
 - ls -laF
 - cd $TRAVIS_BUILD_DIR
 
-script: mvn -X -P travis clean install deploy
+script:
+- if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
+-   mvn -X -P travis clean install delploy
+- else
+-   mvn -X -P travis clean install
+- fi
 env:
   global:
   - secure: KccCleAFdCTTPEtUYcsBSsIbIIvpbZJ16aV0F8ydRErupFrTIsniWM5xmyUyL3VYaViIViBFke1hAiVEoYG3U33a4X3RVdZV0vS6KhS1K36q0jg61wnyzYqucVk8XBh8X0JHS6DmZ++IV2JAEpY6mEWKG+LpNGkyZ58gqj1AJsY=
