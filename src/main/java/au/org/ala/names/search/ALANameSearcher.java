@@ -575,12 +575,13 @@ public class ALANameSearcher {
             try {
                 ParsedName pn = parser.parse(name);
                 metrics.setNameType(pn.getType());
-                if (pn.type == NameType.doubtful || (rank != null && rank.getId() <= 7000) || rank == null)
+                if (pn.isBinomial() && pn.type != NameType.doubtful && (pn.type != NameType.informal || (pn.getRank() != null && pn.getRank().isInfraspecific())) && (rank == null || rank.getId() >= 7000))
+                    nsr = performErrorCheckSearch(pn.canonicalSpeciesName(), cl, null, fuzzy, ignoreHomonym, metrics);
+                if (nsr == null && (pn.type == NameType.doubtful || (rank != null && rank.getId() <= 7000) || rank == null))
                     nsr = performErrorCheckSearch(pn.getGenusOrAbove(), cl, null, fuzzy, ignoreHomonym, metrics);
-            } catch (Exception e) {
+
+            } catch (Exception ex) {
             }
-
-
             if (nsr == null && rank != RankType.SPECIES
                     && ((StringUtils.isNotEmpty(cl.getSpecificEpithet()) && !isSpecificMarker(cl.getSpecificEpithet())) ||
                     (StringUtils.isNotEmpty(cl.getSpecies()) && !isSpecificMarker(cl.getSpecies())))) {
@@ -614,7 +615,6 @@ public class ALANameSearcher {
             }
             //rest the author
             cl.setAuthorship(authorship);
-
         }
 
         //now start to get the metric object ready

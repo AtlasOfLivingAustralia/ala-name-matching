@@ -118,6 +118,7 @@ public enum RankType {
                 idLookup.put(rt.getId(), rt);
                 if (rt.cbRank != null)
                     cbRankLookup.put(rt.cbRank, rt);
+                strRankLookup.put(rt.getRank(), rt);
                 if (rt.strRanks != null) {
                     for (String rank : rt.strRanks)
                         strRankLookup.put(rank.toLowerCase(), rt);

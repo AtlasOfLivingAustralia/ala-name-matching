@@ -6,6 +6,7 @@ import au.org.ala.names.model.MatchType;
 import au.org.ala.names.model.ErrorType;
 import au.org.ala.names.model.LinnaeanRankClassification;
 import org.gbif.ecat.voc.NameType;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -332,4 +333,127 @@ public class BiocacheMatchTest {
             fail("No exception should occur");
         }
     }
+
+
+    // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/1
+    @Test
+    public void testSubSpeciesMarker1()  {
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            String name = "Asparagus asparagoides (NC)";
+            cl.setScientificName(name);
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("http://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
+            assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+    // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/1
+    @Test
+    public void testSubSpeciesMarker2()  {
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            String name = "Asparagus asparagoides f. asparagoides";
+            cl.setScientificName(name);
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("http://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
+            assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+    // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/1
+    // At the moment, not able to correctly parse this out
+    @Ignore
+    @Test
+    public void testSubSpeciesMarker3()  {
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            String name = "Asparagus asparagoides f. Western Cape (R.Taplin 1133)";
+            cl.setScientificName(name);
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("http://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
+            assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+    // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/1
+    @Test
+    public void testSubSpeciesMarker4()  {
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            String name = "Asparagus asparagoides f.";
+            cl.setScientificName(name);
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("http://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
+            assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+    // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/1
+    @Test
+    public void testSubSpeciesMarker5()  {
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            String name = "Asparagus asparagoides (L.) Druce f. asparagoides";
+            cl.setScientificName(name);
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("http://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
+            assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+    // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/10
+    @Test
+    public void testSubSpeciesMarker6()  {
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            String name = "Salvia verbenaca var.";
+            cl.setScientificName(name);
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("http://id.biodiversity.org.au/node/apni/2887555", metrics.getResult().getLsid());
+            assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+    // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/10
+    @Test
+    public void testSubSpeciesMarker7()  {
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            String name = "Eucalyptus leucoxylon ssp.";
+            cl.setScientificName(name);
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("http://id.biodiversity.org.au/node/apni/2909698", metrics.getResult().getLsid());
+            assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+    // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/5
+    @Test
+    public void testHybrid1()  {
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            String name = "Correa reflexa (Labill.) Vent. hybrid";
+            cl.setScientificName(name);
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("http://id.biodiversity.org.au/node/apni/2893483", metrics.getResult().getLsid());
+            assertEquals("Correa reflexa", metrics.getResult().getRankClassification().getScientificName());
+            assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
 }

@@ -1290,6 +1290,63 @@ public class ALANameSearcherTest {
     }
 
     @Test
+    public void testSimpleLookup8()  {
+        try {
+            String name = "Carbo ater";
+            NameSearchResult nsr = searcher.searchForRecord(name);
+            fail("Expecting ecxluded name exception");
+        } catch (ExcludedNameException ex) {
+            assertNotNull(ex.getNonExcludedName());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.name:258782", ex.getNonExcludedName().getLsid());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+    @Test
+    public void testSimpleLookup9()  {
+        try {
+            String name = "Neobatrachus sudellae";
+            NameSearchResult nsr = searcher.searchForRecord(name);
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:31753086-def1-48dd-b22e-946937979653", nsr.getLsid());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+    @Test
+    public void testSimpleLookup10()  {
+        try {
+            String name = "Neobatrachus sudelli";
+            NameSearchResult nsr = searcher.searchForRecord(name);
+            fail("Expecting misapplied exception");
+        } catch (MisappliedException ex) {
+            assertNotNull(ex.getMatchedResult());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:31753086-def1-48dd-b22e-946937979653", ex.getMatchedResult().getLsid());
+         } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+
+    @Test
+    public void testSimpleLookup11()  {
+        try {
+            String name = "Cereopsis novaehollandiae";
+            NameSearchResult nsr = searcher.searchForRecord(name);
+            fail("Expecting parent-child synonym exception");
+        } catch (ParentSynonymChildException ex) {
+            NameSearchResult nsr = ex.getChildResult();
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:6667178a-4c9c-475d-938b-7f9733707588", nsr.getLsid());
+            assertEquals(RankType.SUBSPECIES, nsr.getRank());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+    @Test
     public void testHigherTaxonMatch1()  {
         try {
             String name = "Breutelia scoparia";

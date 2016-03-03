@@ -9,6 +9,7 @@ import java.io.FileReader;
 
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.UnparsableException;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -186,5 +187,21 @@ public class PhraseNameParserTests {
         }
     }
 
+
+    // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/1
+    // At the moment, not able to correctly parse this out
+    @Ignore
+    @Test
+    public void testSpeciesMarkerPhraseName() {
+        try {
+            PhraseNameParser parser = new PhraseNameParser();
+            ParsedName pn = parser.parse("Marsilea sp. Neutral Junction (D.E.Albrecht 9192)");
+            pn = parser.parse("Asparagus asparagoides f. Western Cape (R.Taplin 1133)");
+            assertEquals("RTaplin1133", ((ALAParsedName) pn).cleanVoucher);
+
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
 
 }
