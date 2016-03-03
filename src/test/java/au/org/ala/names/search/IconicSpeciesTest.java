@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -31,7 +32,7 @@ public class IconicSpeciesTest {
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new ALANameSearcher("/data/lucene/namematchingv1_3");
+            searcher = new ALANameSearcher("/data/lucene/namematching");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -97,7 +98,7 @@ public class IconicSpeciesTest {
         try {
 
 
-            CSVReader reader = new CSVReader(new FileReader(new File(getClass().getResource("iconic_species_list.csv").toURI())), ',', '"');//CSVReader.build(new File(getClass().getResource("iconic_species_list.csv").toURI()), "UTF-8", ",", '"', 0);
+            CSVReader reader = new CSVReader(new InputStreamReader(this.getClass().getResourceAsStream("iconic_species_list.csv")), ',', '"');
             //cycle through all the test cases
             String[] values = reader.readNext();
             //fail("Testing");

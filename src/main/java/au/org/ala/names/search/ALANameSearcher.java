@@ -17,6 +17,7 @@ package au.org.ala.names.search;
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
 import au.org.ala.names.parser.PhraseNameParser;
+import au.org.ala.names.util.CleanedScientificName;
 import au.org.ala.names.util.TaxonNameSoundEx;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -40,6 +41,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -573,12 +575,13 @@ public class ALANameSearcher {
             try {
                 ParsedName pn = parser.parse(name);
                 metrics.setNameType(pn.getType());
-                if (pn.type == NameType.doubtful || (rank != null && rank.getId() <= 7000) || rank == null)
+                if (pn.isBinomial() && pn.type != NameType.doubtful && (pn.type != NameType.informal || (pn.getRank() != null && pn.getRank().isInfraspecific())) && (rank == null || rank.getId() >= 7000))
+                    nsr = performErrorCheckSearch(pn.canonicalSpeciesName(), cl, null, fuzzy, ignoreHomonym, metrics);
+                if (nsr == null && (pn.type == NameType.doubtful || (rank != null && rank.getId() <= 7000) || rank == null))
                     nsr = performErrorCheckSearch(pn.getGenusOrAbove(), cl, null, fuzzy, ignoreHomonym, metrics);
-            } catch (Exception e) {
+
+            } catch (Exception ex) {
             }
-
-
             if (nsr == null && rank != RankType.SPECIES
                     && ((StringUtils.isNotEmpty(cl.getSpecificEpithet()) && !isSpecificMarker(cl.getSpecificEpithet())) ||
                     (StringUtils.isNotEmpty(cl.getSpecies()) && !isSpecificMarker(cl.getSpecies())))) {
@@ -612,7 +615,6 @@ public class ALANameSearcher {
             }
             //rest the author
             cl.setAuthorship(authorship);
-
         }
 
         //now start to get the metric object ready
@@ -1007,16 +1009,17 @@ public class ALANameSearcher {
             throw new SPPException();//SearchResultException("Unable to perform search. Can not match to a subset of species within a genus.");
 
         try {
+            CleanedScientificName cleaned = new CleanedScientificName(name);
             NameType nameType = null;
             ParsedName<?> pn = null;
             try {
-                pn = parser.parse(name);
+                pn = parser.parse(cleaned.getNormalised());
                 nameType = pn != null ? pn.getType() : null;
             } catch (UnparsableException e) {
                 log.warn("Unable to parse " + name + ". " + e.getMessage());
             }
             //Check for the exact match
-            List<NameSearchResult> hits = performSearch(NameIndexField.NAME.toString(), name, rank, cl, max, MatchType.EXACT, true, queryParser.get());
+            List<NameSearchResult> hits = performSearch(NameIndexField.NAME.toString(), cleaned.getNormalised(), rank, cl, max, MatchType.EXACT, true, queryParser.get());
             if (hits == null) // situation where searcher has not been initialised
             {
                 return null;
@@ -1049,12 +1052,9 @@ public class ALANameSearcher {
                 } else if (hits.size() > 1) {
                     //this represents a homonym issue between vouchers.
                     //don't throw a homonym if all results point to the same accepted concept
-                    NameSearchResult commonAccepted = getCommonAccepetedConcept(hits);
-                    if (commonAccepted != null) {
-                        hits.removeAll(hits);
-                        hits.add(commonAccepted);
-                        return hits;
-                    }
+                    NameSearchResult commonAccepted = getCommonAcceptedConcept(hits);
+                    if (commonAccepted != null)
+                        return Collections.singletonList(commonAccepted);
                     throw new HomonymException(hits);
                 }
             } else if (pn != null && pn.isParsableType() && pn.authorsParsed && pn.getType() != NameType.informal && pn.getType() != NameType.doubtful) {
@@ -1127,19 +1127,21 @@ public class ALANameSearcher {
      * @param hits
      * @return
      */
-    private NameSearchResult getCommonAccepetedConcept(List<NameSearchResult> hits) {
-
-        String acceptedLsid = hits.get(0).getAcceptedLsid();
+    private NameSearchResult getCommonAcceptedConcept(List<NameSearchResult> hits) {
+        String acceptedLsid = null;
 
         for (NameSearchResult hit : hits) {
-            if (hit.getAcceptedLsid() == null)
-                return null;
-            if (!hit.getAcceptedLsid().equals(acceptedLsid))
-                return null;
+            if (acceptedLsid == null)
+                acceptedLsid = hit.getAcceptedLsid() != null ? hit.getAcceptedLsid() : hit.getLsid();
+            else if (hit.getAcceptedLsid() != null) {
+                if (!acceptedLsid.equals(hit.getAcceptedLsid()))
+                    return null;
+            } else {
+                if (!acceptedLsid.equals(hit.getLsid()))
+                    return null;
+            }
         }
-        if (acceptedLsid != null)
-            return searchForRecordByLsid(acceptedLsid);
-        return null;
+        return  acceptedLsid == null ? null : searchForRecordByLsid(acceptedLsid);
     }
 
     private List<NameSearchResult> performSearch(String field, String value, RankType rank,
