@@ -1363,6 +1363,20 @@ public class ALANameSearcherTest {
     }
 
     @Test
+    public void testCorreaReflexaHybrid()  {
+        try {
+            String name = "Correa reflexa (Labill.) Vent. hybrid";
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName(name);
+            NameSearchResult nsr = searcher.searchForRecord(cl, true);
+            assertNotNull(nsr);
+            assertEquals("Correa reflexa", nsr.getRankClassification().getSpecies());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
+    @Test
     public void testHigherTaxonMatch1()  {
         try {
             String name = "Breutelia scoparia";
