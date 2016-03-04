@@ -1296,8 +1296,7 @@ public class ALANameSearcherTest {
             NameSearchResult nsr = searcher.searchForRecord(name);
             fail("Expecting ecxluded name exception");
         } catch (ExcludedNameException ex) {
-            assertNotNull(ex.getNonExcludedName());
-            assertEquals("urn:lsid:biodiversity.org.au:afd.name:258782", ex.getNonExcludedName().getLsid());
+            assertNull(ex.getNonExcludedName()); // Two types both excluded
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }
@@ -1320,11 +1319,9 @@ public class ALANameSearcherTest {
         try {
             String name = "Neobatrachus sudelli";
             NameSearchResult nsr = searcher.searchForRecord(name);
-            fail("Expecting misapplied exception");
-        } catch (MisappliedException ex) {
-            assertNotNull(ex.getMatchedResult());
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:31753086-def1-48dd-b22e-946937979653", ex.getMatchedResult().getLsid());
-         } catch (SearchResultException ex) {
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:31753086-def1-48dd-b22e-946937979653", nsr.getAcceptedLsid());
+          } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }
     }
