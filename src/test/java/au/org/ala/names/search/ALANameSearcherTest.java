@@ -1344,6 +1344,36 @@ public class ALANameSearcherTest {
     }
 
     @Test
+    public void testStigmoderaAurifera()  {
+        try {
+            String name = "Stigmodera aurifera Carter";
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName(name);
+            NameSearchResult nsr = searcher.searchForRecord(cl, true);
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:0d010263-838e-4ed5-ba31-ce72ab9c2831", nsr.getAcceptedLsid());
+            assertEquals("Stigmodera (Curis) aurifera", nsr.getRankClassification().getScientificName());
+            assertEquals(MatchType.CANONICAL, nsr.getMatchType());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
+    @Test
+    public void testCorreaReflexaHybrid()  {
+        try {
+            String name = "Correa reflexa (Labill.) Vent. hybrid";
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName(name);
+            NameSearchResult nsr = searcher.searchForRecord(cl, true);
+            assertNotNull(nsr);
+            assertEquals("Correa reflexa", nsr.getRankClassification().getSpecies());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
+    @Test
     public void testHigherTaxonMatch1()  {
         try {
             String name = "Breutelia scoparia";
