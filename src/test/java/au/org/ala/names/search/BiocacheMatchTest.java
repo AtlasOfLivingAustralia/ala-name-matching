@@ -456,4 +456,18 @@ public class BiocacheMatchTest {
         }
     }
 
+    @Test
+    public void tesDingo1()  {
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            String name = "Canis lupus dingo";
+            cl.setScientificName(name);
+            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c2056f1b-fcde-45b9-904b-1cab280368d1", metrics.getResult().getAcceptedLsid());
+            assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
 }

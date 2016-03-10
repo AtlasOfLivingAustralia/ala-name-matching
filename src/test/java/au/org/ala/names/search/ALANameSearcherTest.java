@@ -1296,8 +1296,7 @@ public class ALANameSearcherTest {
             NameSearchResult nsr = searcher.searchForRecord(name);
             fail("Expecting ecxluded name exception");
         } catch (ExcludedNameException ex) {
-            assertNotNull(ex.getNonExcludedName());
-            assertEquals("urn:lsid:biodiversity.org.au:afd.name:258782", ex.getNonExcludedName().getLsid());
+            assertNull(ex.getNonExcludedName()); // Two types both excluded
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }
@@ -1320,11 +1319,9 @@ public class ALANameSearcherTest {
         try {
             String name = "Neobatrachus sudelli";
             NameSearchResult nsr = searcher.searchForRecord(name);
-            fail("Expecting misapplied exception");
-        } catch (MisappliedException ex) {
-            assertNotNull(ex.getMatchedResult());
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:31753086-def1-48dd-b22e-946937979653", ex.getMatchedResult().getLsid());
-         } catch (SearchResultException ex) {
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:31753086-def1-48dd-b22e-946937979653", nsr.getAcceptedLsid());
+          } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }
     }
@@ -1403,6 +1400,32 @@ public class ALANameSearcherTest {
             assertEquals("NZOR-3-54382", nsr.getLsid());
             assertEquals("Ramalina", nsr.getRankClassification().getGenus());
             assertEquals(MatchType.RECURSIVE, nsr.getMatchType());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
+    @Test
+    public void testHomonymWithFamilyResolution1()  {
+        try {
+            String name = "Tyto delicatula";
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName(name);
+            NameSearchResult nsr = searcher.searchForRecord(cl, true);
+            fail("Expecting homonym exception");
+        } catch (HomonymException ex) {
+            assertEquals(1, ex.getResults().size());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+        try {
+            String name = "Tyto delicatula";
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName(name);
+            cl.setOrder("Strigiformes");
+            NameSearchResult nsr = searcher.searchForRecord(cl, true);
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:97bc55da-8870-45ac-a828-97787740ad61", nsr.getLsid());
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
         }

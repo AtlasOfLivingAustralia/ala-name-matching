@@ -56,7 +56,7 @@ public class LinnaeanRankClassification {
         this.phylum = cl.phylum;
         this.pid = cl.pid;
         this.klass = cl.klass;
-        this.kid = cl.cid;
+        this.cid = cl.cid;
         this.order = cl.order;
         this.oid = cl.oid;
         this.family = cl.family;
