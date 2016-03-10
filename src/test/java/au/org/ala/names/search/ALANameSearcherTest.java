@@ -1375,4 +1375,30 @@ public class ALANameSearcherTest {
         }
     }
 
+    @Test
+    public void testHomonymWithFamilyResolution1()  {
+        try {
+            String name = "Tyto delicatula";
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName(name);
+            NameSearchResult nsr = searcher.searchForRecord(cl, true);
+            fail("Expecting homonym exception");
+        } catch (HomonymException ex) {
+            assertEquals(1, ex.getResults().size());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+        try {
+            String name = "Tyto delicatula";
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName(name);
+            cl.setOrder("Strigiformes");
+            NameSearchResult nsr = searcher.searchForRecord(cl, true);
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:97bc55da-8870-45ac-a828-97787740ad61", nsr.getLsid());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
 }
