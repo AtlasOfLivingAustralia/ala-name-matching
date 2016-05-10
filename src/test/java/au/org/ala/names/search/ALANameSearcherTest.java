@@ -507,7 +507,7 @@ public class ALANameSearcherTest {
     @Test
     public void testPhraseMatch3() {
         try {
-            String name = "Pultenaea sp. Olinda";
+            String name = "Pultenaea sp. Olinda (R.Coveny 6616)";
             NameSearchResult nsr = null;
             nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
@@ -552,7 +552,7 @@ public class ALANameSearcherTest {
             cl.setScientificName("Gymnorhina tibicen");
             NameSearchResult nsr = searcher.searchForRecord(cl, true, true);
             assertEquals("Gymnorhina tibicen", nsr.getRankClassification().getScientificName());
-            assertEquals("Latham, 1801", nsr.getRankClassification().getAuthorship());
+            assertEquals("(Latham, 1801)", nsr.getRankClassification().getAuthorship());
             nsr = searcher.searchForRecord("Cracticus tibicen", RankType.SPECIES);
             assertEquals("Cracticus tibicen", nsr.getRankClassification().getScientificName());
             nsr = searcher.searchForRecord("Cracticus tibicen", RankType.GENUS);
@@ -596,7 +596,7 @@ public class ALANameSearcherTest {
             NameSearchResult nsr = searcher.searchForRecord(nameWithInfraGenric, null, true);
             assertNotNull(nsr);
             assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:28fe15f4-ea77-482e-9bfc-cbd14ade35cf", nsr.getLsid());
-            assertEquals(MatchType.CANONICAL, nsr.getMatchType());
+            assertEquals(MatchType.EXACT, nsr.getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
         }
@@ -1269,7 +1269,7 @@ public class ALANameSearcherTest {
             cl.setScientificName("Andreaea");
             NameSearchResult nsr = searcher.searchForRecord(cl, true);
             assertNotNull(nsr);
-            assertEquals("http://id.biodiversity.org.au/name/apni/120791", nsr.getLsid());
+            assertEquals("0404cb28-4189-435d-8d7c-e7d600ba04e5", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }
@@ -1283,7 +1283,7 @@ public class ALANameSearcherTest {
             String name = "Astomum";
             NameSearchResult nsr = searcher.searchForRecord(name, cl, RankType.GENUS);
             assertNotNull(nsr);
-            assertEquals("NZOR-3-26824", nsr.getLsid());
+            assertEquals("78b20c8e-564b-4a05-838b-69cd5c2801ee", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }
@@ -1351,8 +1351,8 @@ public class ALANameSearcherTest {
             cl.setScientificName(name);
             NameSearchResult nsr = searcher.searchForRecord(cl, true);
             assertNotNull(nsr);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:0d010263-838e-4ed5-ba31-ce72ab9c2831", nsr.getAcceptedLsid());
-            assertEquals("Stigmodera (Curis) aurifera", nsr.getRankClassification().getScientificName());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:b43ac4f1-94ff-4a00-96c3-ed027aa44941", nsr.getAcceptedLsid());
+            assertEquals("Stigmodera aurifera", nsr.getRankClassification().getScientificName());
             assertEquals(MatchType.CANONICAL, nsr.getMatchType());
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
@@ -1381,7 +1381,7 @@ public class ALANameSearcherTest {
             cl.setScientificName(name);
             NameSearchResult nsr = searcher.searchForRecord(cl, true);
             assertNotNull(nsr);
-            assertEquals("http://id.biodiversity.org.au/name/apni/120820", nsr.getLsid());
+            assertEquals("10f4ed8a-d572-46c3-83a6-69e083ac68a6", nsr.getLsid());
             assertEquals("Breutelia", nsr.getRankClassification().getGenus());
             assertEquals(MatchType.RECURSIVE, nsr.getMatchType());
         } catch (SearchResultException e) {
@@ -1406,20 +1406,20 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testHomonymWithFamilyResolution1()  {
+    public void testHomonymWithOrderResolution1()  {
         try {
-            String name = "Tyto delicatula";
+            String name = "Tyto";
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             cl.setScientificName(name);
             NameSearchResult nsr = searcher.searchForRecord(cl, true);
             fail("Expecting homonym exception");
         } catch (HomonymException ex) {
-            assertEquals(1, ex.getResults().size());
+            assertEquals(2, ex.getResults().size());
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
         }
         try {
-            String name = "Tyto delicatula";
+            String name = "Tyto";
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             cl.setScientificName(name);
             cl.setOrder("Strigiformes");
