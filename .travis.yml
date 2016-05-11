@@ -16,7 +16,7 @@ before_install:
 - cd $TRAVIS_BUILD_DIR
 
 script:
-- [ "${TRAVIS_PULL_REQUEST}" = "false" ] && mvn -X -P travis clean install deploy || mvn -X -P travis clean install
+- "[ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ] && mvn -X -P travis clean install deploy || mvn -X -P travis clean install"
 
 env:
   global:
