@@ -24,6 +24,7 @@ package au.org.ala.names.model;
 public enum NameIndexField {
     ID("id"),
     LSID("lsid"),
+    DOCUMENT_TYPE("doctype"),
     ACCEPTED("accepted_lsid"),
     iS_SYNONYM("is_synonym"),//whether or not the record is a synonym
     GENUS_EX("genus_ex"), //genus sounds like expression - handles masculine and feminine too.
