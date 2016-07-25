@@ -18,6 +18,7 @@ package au.org.ala.names.parser;
 import au.org.ala.names.model.ALAParsedName;
 
 import java.util.HashMap;
+import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,12 +86,30 @@ public class PhraseNameParser extends NameParser {
             + "|" + "(" + StringUtils.join(Rank.RANK_MARKER_MAP_INFRAGENERIC.keySet(), "|") + ")\\.? ?([" + NAME_LETTERS
             + "][" + name_letters + "-]+)" + ")");
 
-    protected static final Pattern IGNORE_MARKERS = Pattern.compile("s[\\.| ]+str[\\. ]+");
-
-
     @Override
-    public <T> ParsedName<T> parse(String scientificName) throws UnparsableException {
-        ParsedName pn = super.parse(scientificName);
+    public <T> ParsedName<T> parse(final String scientificName) throws UnparsableException {
+//        System.out.println("PhraseNameParser: " + scientificName);
+        ParsedName pn = null;
+        ExecutorService executor = null;
+        try {
+             executor = Executors.newSingleThreadExecutor();
+            Future<ParsedName> future = executor.submit(new Callable<ParsedName>() {
+                @Override
+                public ParsedName call() throws Exception {
+                    return PhraseNameParser.super.parse(scientificName);
+                }
+            });
+            pn = future.get(2, TimeUnit.SECONDS);
+
+        } catch (Exception ie){
+            System.out.println("Problem parsing name: " + scientificName + " - done - " + ie.getMessage());
+            throw new UnparsableException(null, "Unable to parse " + scientificName + ". Skipping.......");
+        } finally {
+            if(executor != null){
+                executor.shutdownNow();
+            }
+        }
+
         if (pn.getType() != NameType.wellformed && isPhraseRank(pn.rank) && (!pn.authorsParsed || pn.specificEpithet == null || SPECIES_PATTERN.matcher(pn.specificEpithet).matches())) {
             //if the rank marker is sp. and the word after the rank marker is lower case check to see if removing the marker will result is a wellformed name
             if (SPECIES_PATTERN.matcher(pn.rank).matches()) {
@@ -118,8 +137,8 @@ public class PhraseNameParser extends NameParser {
             //check for the situation where the subgenus was supplied without Title case.
             Matcher m = WRONG_CASE_INFRAGENERIC.matcher(scientificName);
             if (m.find()) {
-                scientificName = WordUtils.capitalize(scientificName, '(');
-                pn = super.parse(scientificName);
+                String scientificNameCapitalised = WordUtils.capitalize(scientificName, '(');
+                pn = super.parse(scientificNameCapitalised);
             }
         }
 
