@@ -36,7 +36,7 @@ public final class LowerCaseKeywordAnalyzer extends Analyzer {
                                                      Reader reader) {
 
         KeywordTokenizer src = new KeywordTokenizer(reader);
-        TokenStream result = new LowerCaseFilter(Version.LUCENE_34, src);
+        TokenStream result = new LowerCaseFilter(Version.LATEST, src);
 
         return new TokenStreamComponents(src, result) {
 
