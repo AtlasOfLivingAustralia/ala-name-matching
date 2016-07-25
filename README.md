@@ -8,7 +8,15 @@ This code contains additions for handling some Australian specific issues.
 
 ## Generating a name match index
 
-This requires a single Darwin Core Archive (DwCA) that contains all the scientific names that you wish to add (including synonyms).
+The name match index can be built from multiple Darwin Core Archives (DwCAs) that contains all the 
+scientific names that you wish to add (including synonyms).
+The DwCA can also contain an optional vernacular name extension.
+The taxon DwCA must have a core row type of `http://rs.tdwg.org/dwc/terms/Taxon`
+The vernacular name extension must have a row type of `http://rs.gbif.org/terms/1.0/VernacularName`
+
+Additional vernacular names (matched by scientific name, along with author and any other taxonomic hints that you have)
+can be supplied by a DwCA with a core row type of `http://rs.gbif.org/terms/1.0/VernacularName`
+These names are matched against the taxon information supplied above.
 
 There is an example Catalogue of Life DwcA that can be downloaded here: 
 
@@ -71,6 +79,8 @@ We take all the species in CAAB, that have distributions in Australian waters, a
 We use AusFungi to supply all the Fungi and AusMoss to supply all the mosses. 
 These lists will eventually become part of the NSL, but until then we merge them using DwCA supplied by AusMoss and AusFungi directly.
 
+We use the New Zealand Organisms Register (NZOR) for New Zealand species.
+
 We pad out the Birds and Jellyfish branches of AFD with species from Catalog of Life 2012 (CoL).
 
 We also use CoL to supply the complete classification of kingdoms that are missing from the NSL.
@@ -94,9 +104,9 @@ To use ala-name-matching, include it as a dependency in your pom file:
 
 Download the most recently generated name matching index: 
 
-http://biocache.ala.org.au/archives/namematching13.tgz
+http://biocache.ala.org.au/archives/namematching/YYYMMDD/namematching-YYYMMDD.tgz
 
-Unzip this into a /data/lucene directory
+Unzip this into a /data/lucene directory and create a symbolic link from namematching to the datestamped directory.
 In your program create a single new ALANameSearcher to perform all your searches
 
 ```
