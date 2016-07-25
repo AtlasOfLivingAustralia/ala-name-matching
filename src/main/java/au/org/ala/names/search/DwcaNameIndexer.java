@@ -21,10 +21,12 @@ import au.org.ala.names.model.NameSearchResult;
 import au.org.ala.names.model.RankType;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.output.StringBuilderWriter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StoredField;
@@ -43,16 +45,12 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.ArchiveFactory;
+import org.gbif.dwc.text.ArchiveField;
 import org.gbif.dwc.text.ArchiveFile;
 import org.gbif.ecat.model.ParsedName;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.InputStream;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
+import java.io.*;
+import java.util.*;
 
 /**
  *
@@ -77,56 +75,125 @@ import java.util.Properties;
 public class DwcaNameIndexer extends ALANameIndexer {
 
     static protected Logger log = Logger.getLogger(DwcaNameIndexer.class);
+    private static int PAGE_SIZE = 25000;
+    private boolean loadingIndex;
+    private boolean sciIndex;
+    private File targetDir;
+    private File tmpDir;
     private IndexSearcher lsearcher;
-    private IndexWriter writer;
-    private String dirTmpIndex;
+    private IndexWriter writer = null;
+    private IndexWriter loadingIndexWriter = null;
+    private IndexWriter vernacularIndexWriter = null;
+    private LowerCaseKeywordAnalyzer analyzer;
+    private Map<String, Float> priorities;
+
+
+    public DwcaNameIndexer(File targetDir, File tmpDir, Properties priorities, boolean loadingIndex, boolean sciIndex) {
+        this.targetDir = targetDir;
+        this.tmpDir = tmpDir;
+        this.loadingIndex = loadingIndex;
+        this.sciIndex = sciIndex;
+        this.analyzer = new LowerCaseKeywordAnalyzer();
+        this.priorities = this.buildPriorities(priorities);
+    }
+
+    /**
+     * Begin index construction by initialising the indexes.
+     *
+     * @throws Exception
+     */
+    public void begin() throws Exception {
+        if (this.loadingIndex) {
+             this.loadingIndexWriter = this.createIndexWriter(this.tmpDir, new KeywordAnalyzer(), true);
+        }
+        if (this.sciIndex) {
+            this.writer = createIndexWriter(new File(this.targetDir, "cb"), analyzer, true);
+            this.vernacularIndexWriter = createIndexWriter(new File(this.targetDir, "vernacular"), new KeywordAnalyzer(), true);
+        }
+    }
+
+    /**
+     * Commit and close the constructed indexes.
+     */
+    public void commit()  {
+        if (this.loadingIndexWriter != null) {
+            try {
+                this.loadingIndexWriter.close();
+            } catch (IOException ex) {
+                log.error("Unable to close loading index", ex);
+            } finally {
+                this.loadingIndexWriter = null;
+            }
+        }
+        if (this.writer != null) {
+            try {
+                this.writer.close();
+            } catch (IOException ex) {
+                log.error("Unable to close index", ex);
+            } finally {
+                this.writer = null;
+            }
+        }
+        if (this.vernacularIndexWriter != null) {
+            try {
+                this.vernacularIndexWriter.close();
+            } catch (IOException ex) {
+                log.error("Unable to close vernacular index", ex);
+            } finally {
+                this.vernacularIndexWriter = null;
+            }
+        }
+    }
+
+    /**
+     * Build a datasetID -> Priority map for different data sources
+     *
+     * @param properties A propetty list for the priorities
+     *
+     * @return The resulting map
+     */
+    protected Map<String, Float> buildPriorities(Properties properties) {
+        Map<String, Float> map = new HashMap<String, Float>(properties.size());
+
+        for (String ds: properties.stringPropertyNames()) {
+            String p = properties.getProperty(ds);
+            float pr = 1.0f;
+            try {
+                pr = Float.parseFloat(p);
+            } catch (NumberFormatException ex) {
+                log.warn("Unable to parse priority " + p + " for " + ds + " defaulting to 1.0");
+            }
+            map.put(ds, pr);
+        }
+        return map;
+    }
 
     /**
      * Creates the name matching index based on a complete list of names supplied in a single DwCA
      *
-     * @param loadingIndex True when the loading index should be created. This is necessary to generate the index, but you may wish to skip this step if it has be generated earlier
-     * @param sciIndex True when the name matching index should be generated
-     * @param indexDirectory The directory in which to create the name matching index
-     * @param tmpLoadIndex The directory in which to create the temporary loading index
      * @param namesDwc The absolute path to the directory that contains the unzipped DWC archive to index
-     * @param irmngDwc The absolute path to the directory that contains the unzipped IRMNG DWCA
-     * @param commonNameFile
      * @throws Exception
      */
-    public void create(boolean loadingIndex, boolean sciIndex, String indexDirectory, String tmpLoadIndex,
-                       String namesDwc, String irmngDwc, String commonNameFile) throws Exception{
-        dirTmpIndex = tmpLoadIndex;
-        LowerCaseKeywordAnalyzer analyzer = new LowerCaseKeywordAnalyzer();
-        if(loadingIndex){
-            createLoadingIndex(tmpLoadIndex, namesDwc);
+    public void create(File namesDwc) throws Exception{
+        if (namesDwc == null || !namesDwc.exists()) {
+            log.warn("Skipping " + namesDwc + " as it does not exist");
+            return;
         }
-        if(sciIndex){
-            writer = createIndexWriter(new File(indexDirectory + File.separator + "cb"), analyzer,true);
-            generateIndex();
-            addSynonymsToIndex(namesDwc);
-            writer.commit();
-            writer.forceMerge(1);
-            writer.close();
-        }
-        if(irmngDwc != null && new File(irmngDwc).exists()){
-            IndexWriter irmngWriter = createIndexWriter(new File(indexDirectory + File.separator + "irmng"), analyzer, true);
-            this.indexIrmngDwcA(irmngWriter,irmngDwc);
-            irmngWriter.forceMerge(1);
-            irmngWriter.close();
-        }
+        log.info("Loading synonyms for " + namesDwc);
+        addSynonymsToIndex(namesDwc);
+        writer.commit();
+        writer.forceMerge(1);
+        this.indexCommonNameExtension(namesDwc);
+     }
 
-
-        if(commonNameFile != null && new File(commonNameFile).exists()){
-            //index the common names
-            indexCommonNames(createIndexWriter(
-                    new File(indexDirectory + File.separator + "vernacular"),
-                    new KeywordAnalyzer(),true),
-                    commonNameFile);
-        } else {
-            indexCommonNameExtension(createIndexWriter(
-                    new File(indexDirectory + File.separator + "vernacular"),
-                    new KeywordAnalyzer(),true), namesDwc);
-        }
+    public void createIrmng(File irmngDwc) throws Exception {
+        if (irmngDwc == null || !irmngDwc.exists())
+            return;
+        IndexWriter irmngWriter = this.createIndexWriter(new File(this.targetDir, "irmng"), this.analyzer, true);
+        this.indexIrmngDwcA(irmngWriter, irmngDwc.getCanonicalPath());
+        irmngWriter.commit();
+        irmngWriter.forceMerge(1);
+        irmngWriter.close();
     }
 
     /**
@@ -136,14 +203,17 @@ public class DwcaNameIndexer extends ALANameIndexer {
      *
      * The languageCode and countryCode are not necessary as they are not used.
      *
-     * @param iw
      * @param file
      * @throws Exception
      */
-    private void indexCommonNames(IndexWriter iw, String file) throws Exception {
+    private void indexCommonNames(File file) throws Exception {
         //assumes that the quoted TSV file is in the following format
         //taxon id, taxon lsid, scientific name, vernacular name, language code, country code
-        log.info("Starting to load the common names");
+        if (file == null || !file.exists()) {
+            log.info("Skipping common name file " + file);
+            return;
+        }
+        log.info("Starting to load the common names from " + file);
         int i =0, count=0;
         au.com.bytecode.opencsv.CSVReader cbreader = new au.com.bytecode.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 0);
         for (String[] values = cbreader.readNext(); values != null; values = cbreader.readNext()) {
@@ -152,65 +222,78 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 //relies on having the same lsid supplied as the DWCA file
                 String lsid = StringUtils.isNotEmpty(values[1]) ? values[1] : values[0];
                 //check to see if it exists
-                TopDocs result = getLoadIdxResults("lsid", lsid, 1);
+                TopDocs result = getLoadIdxResults(null, "lsid", lsid, 1);
                 if(result.totalHits>0){
                     //we can add the common name
                     Document doc = createCommonNameDocument(values[3], values[2], lsid, 1.0f, false);
-                    iw.addDocument(doc);
+                    this.vernacularIndexWriter.addDocument(doc);
                     count++;
                 }
             } else {
                 log.info("Issue on line " + i + "  " + values[0]);
             }
             if(i%1000 == 0){
-                log.info("Finished processing " + i + " common names with " + count + " added to index ");
+                log.info("Processed " + i + " common names with " + count + " added to index");
             }
         }
-        log.info("Finished processing " + i + " common names with " + count + " added to index ");
-        iw.commit();
-        iw.forceMerge(1);
-        iw.close();
+        log.info("Finished processing " + i + " common names with " + count + " added to index");
+        this.vernacularIndexWriter.commit();
+        this.vernacularIndexWriter.forceMerge(1);
     }
 
-    private void indexCommonNameExtension(IndexWriter iw, String archiveDirectory) throws Exception {
-
-        Archive archive = ArchiveFactory.openArchive(new File(archiveDirectory));
+    private void indexCommonNameExtension(File archiveDirectory) throws Exception {
+        Archive archive = ArchiveFactory.openArchive(archiveDirectory);
         ArchiveFile vernacularArchiveFile = archive.getExtension(GbifTerm.VernacularName);
-        Iterator<Record> iter = vernacularArchiveFile.iterator();
-        int count = 0;
+        Iterator<Record> iter = vernacularArchiveFile == null ? null : vernacularArchiveFile.iterator();
+        int i = 0, count = 0;
+
+        if (vernacularArchiveFile == null)
+            return;
+        log.info("Starting to load the common names extension from " + archiveDirectory);
         while (iter.hasNext()) {
+            i++;
             Record record = iter.next();
             String taxonID = record.id();
             String vernacularName = record.value(DwcTerm.vernacularName);
-            TopDocs result = getLoadIdxResults("lsid", taxonID, 1);
+            TopDocs result = getLoadIdxResults(null, "lsid", taxonID, 1);
             if(result.totalHits > 0){
                 Document sciNameDoc = lsearcher.doc(result.scoreDocs[0].doc);
                 //get the scientific name
                 //we can add the common name
                 Document doc = createCommonNameDocument(vernacularName, sciNameDoc.get(NameIndexField.NAME.toString()), taxonID, 1.0f, false);
-                iw.addDocument(doc);
+                this.vernacularIndexWriter.addDocument(doc);
                 count++;
             }
+            if(i%1000 == 0){
+                log.info("Processed " + i + " common names with " + count + " added to index");
+            }
         }
-        iw.commit();
-        iw.forceMerge(1);
-        iw.close();
+        log.info("Finished processing " + i + " common names with " + count + " added to index");
+        this.vernacularIndexWriter.commit();
+        this.vernacularIndexWriter.forceMerge(1);
     }
 
 
     /**
      * Creates a loading index to use to generate the hierarchy including the left right values.
      *
-     * @param tmpIndexDir
      * @param archiveDirectory
      * @throws Exception
      */
-    private void createLoadingIndex(String tmpIndexDir,String archiveDirectory) throws Exception{
-        log.info("Starting to create the temporary loading index.");
-        File indexDir = new File(tmpIndexDir);
-        IndexWriter iw = createIndexWriter(indexDir, new KeywordAnalyzer(), true);
+    private void createLoadingIndex(File archiveDirectory) throws Exception{
+        if (archiveDirectory == null || !archiveDirectory.exists()) {
+            log.warn("Unable to created loading index for " + archiveDirectory + " as it does not exisit");
+            return;
+        }
+        if (!this.loadingIndex) {
+            log.warn("Skipping loading index for " + archiveDirectory);
+            return;
+        }
+        log.info("Starting to create the temporary loading index for " + archiveDirectory);
         //create the loading index so that left right values and classifications can be generated
-        Archive archive = ArchiveFactory.openArchive(new File(archiveDirectory));
+        Archive archive = ArchiveFactory.openArchive(archiveDirectory);
+        ArchiveField nameCompleteField = archive.getCore().getField("nameComplete");
+        org.gbif.dwc.terms.Term nameCompleteTerm = nameCompleteField == null ? null : nameCompleteField.getTerm();
         Iterator<DarwinCoreRecord> it = archive.iteratorDwc();
         int i=0;
         long start=System.currentTimeMillis();
@@ -220,6 +303,10 @@ public class DwcaNameIndexer extends ALANameIndexer {
             String id = dwcr.getId();
             String lsid = dwcr.getTaxonID() == null ? id : dwcr.getTaxonID();
             String acceptedLsid = dwcr.getAcceptedNameUsageID();
+            String nameComplete = nameCompleteTerm == null ? null: dwcr.getProperty(nameCompleteTerm);
+            String scientificName = dwcr.getScientificName();
+            String scientificNameAuthorship = dwcr.getScientificNameAuthorship();
+            nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete);
             //add and store the identifier for the record
             doc.add(new StringField(NameIndexField.ID.toString(), dwcr.getId(), Field.Store.YES));
             if(StringUtils.isNotBlank(lsid)){
@@ -233,13 +320,16 @@ public class DwcaNameIndexer extends ALANameIndexer {
             if(StringUtils.isNotBlank(dwcr.getAcceptedNameUsageID())) {
                 doc.add(new StringField(NameIndexField.ACCEPTED.toString(),dwcr.getAcceptedNameUsageID(), Field.Store.YES));
             }
-            if(StringUtils.isNotBlank(dwcr.getScientificName())) {
+            if(StringUtils.isNotBlank(scientificName)) {
                 //stored no need to search on
                 doc.add(new StoredField(NameIndexField.NAME.toString(),dwcr.getScientificName()));
             }
-            if(StringUtils.isNotBlank(dwcr.getScientificNameAuthorship())) {
+            if(StringUtils.isNotBlank(scientificNameAuthorship)) {
                 //stored no need to search on
                 doc.add(new StoredField(NameIndexField.AUTHOR.toString(),dwcr.getScientificNameAuthorship()));
+            }
+            if (StringUtils.isNotBlank(nameComplete)) {
+                doc.add(new StoredField(NameIndexField.NAME_COMPLETE.toString(), nameComplete));
             }
             if(StringUtils.isNotBlank(dwcr.getGenus())) {
                 //stored no need to search on
@@ -277,7 +367,10 @@ public class DwcaNameIndexer extends ALANameIndexer {
             } else {
                 doc.add(new StringField(NameIndexField.iS_SYNONYM.toString(),"T", Field.Store.YES));
             }
-            iw.addDocument(doc);
+            if (StringUtils.isNotBlank(dwcr.getDatasetID())) {
+                doc.add(new StoredField(NameIndexField.DATASET_ID.toString(), dwcr.getDatasetID()));
+            }
+            this.loadingIndexWriter.addDocument(doc);
             i++;
             if(i % 1000 == 0){
                 long finish = System.currentTimeMillis();
@@ -286,20 +379,26 @@ public class DwcaNameIndexer extends ALANameIndexer {
             }
         }
         log.info("Finished creating the temporary load index with " + i + " concepts");
-        iw.commit();
-        iw.forceMerge(1);
-        iw.close();
-        lsearcher =new IndexSearcher(DirectoryReader.open(FSDirectory.open(indexDir)));
+        this.loadingIndexWriter.commit();
+        this.loadingIndexWriter.forceMerge(1);
     }
 
-    private TopDocs getLoadIdxResults(String field, String value,int max) throws Exception {
-        if(lsearcher == null && new File(dirTmpIndex).exists()) {
-            lsearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(dirTmpIndex))));
-        } else if(lsearcher == null && !new File(dirTmpIndex).exists()){
+    public void commitLoadingIndexes() throws IOException {
+        if (this.loadingIndexWriter != null) {
+            this.loadingIndexWriter.close(true);
+            this.loadingIndexWriter = null;
+        }
+        this.lsearcher = null;
+    }
+
+    private TopDocs getLoadIdxResults(ScoreDoc after, String field, String value,int max) throws Exception {
+        if(lsearcher == null && this.tmpDir.exists()) {
+            lsearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(this.tmpDir)));
+        } else if(lsearcher == null && !this.tmpDir.exists()){
             throw new RuntimeException("A load index has not been generated. Please run this tool with '-load' before creating the search index.");
         }
         TermQuery tq = new TermQuery(new Term(field, value));
-        return lsearcher.search(tq,max);
+        return after == null ? lsearcher.search(tq, max) : lsearcher.searchAfter(after, tq, max);
     }
 
     /**
@@ -311,14 +410,28 @@ public class DwcaNameIndexer extends ALANameIndexer {
      */
     private void generateIndex() throws Exception{
         //get all the records that don't have parents that are accepted
-        TopDocs rootConcepts = getLoadIdxResults("root","T", 25000);
+        log.info("Loading index from temporary index.");
+        TopDocs rootConcepts = getLoadIdxResults(null, "root", "T", PAGE_SIZE);
         int left = 0;
         int right = left;
-        for(ScoreDoc sd : rootConcepts.scoreDocs){
-            left = right + 1;
-            Document doc = lsearcher.doc(sd.doc);
-            right = addIndex(doc, 1, left,new LinnaeanRankClassification());
-            log.info("Finished loading "+ doc.get(NameIndexField.LSID.toString()) + " "  + doc.get(NameIndexField.NAME.toString()) + " " + left + " " + right);
+        int lastRight = right;
+        int count = 0;
+        while (rootConcepts != null && rootConcepts.totalHits > 0) {
+            ScoreDoc lastConcept = null;
+            for (ScoreDoc sd : rootConcepts.scoreDocs) {
+                lastConcept = sd;
+                left = right + 1;
+                Document doc = lsearcher.doc(sd.doc);
+                right = addIndex(doc, 1, left, new LinnaeanRankClassification());
+                if (right - lastRight > 1000) {
+                    log.info("Finished loading root " + doc.get(NameIndexField.LSID.toString()) + " " + doc.get(NameIndexField.NAME.toString()) + " left:" + left + " right" + right + " root count:" + count);
+                    lastRight = right;
+                }
+                count++;
+            }
+            rootConcepts = lastConcept == null ? null : getLoadIdxResults(lastConcept, "root", "T", PAGE_SIZE);
+            if (rootConcepts != null && rootConcepts.scoreDocs.length > 0)
+                log.info("Loading next page of root concepts");
         }
     }
 
@@ -332,16 +445,19 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * @throws Exception
      */
     private int addIndex(Document doc,int currentDepth,int currentLeft, LinnaeanRankClassification higherClass ) throws Exception {
+        //log.info("Add to index " + doc.get(NameIndexField.ID.toString()) + "/" + doc.get(NameIndexField.NAME.toString()) + "/" + doc.get(NameIndexField.RANK_ID.toString()) + " depth=" + currentDepth + " left=" + currentLeft);
         String id = doc.get(NameIndexField.ID.toString());
         //get children for this record
-        TopDocs children = getLoadIdxResults("parent_id", id, 25000);
+        TopDocs children = getLoadIdxResults(null, "parent_id", id, PAGE_SIZE);
         if(children.totalHits == 0){
-            children = getLoadIdxResults("parent_id", doc.get(NameIndexField.LSID.toString()), 25000);
+            id =  doc.get(NameIndexField.LSID.toString());
+            children = getLoadIdxResults(null, "parent_id", id, PAGE_SIZE);
         }
         int left = currentLeft;
         int right = left;
         int rankId = Integer.parseInt(doc.get(NameIndexField.RANK_ID.toString()));
         String name = doc.get(NameIndexField.NAME.toString());
+        String nameComplete = doc.get(NameIndexField.NAME_COMPLETE.toString());
         String lsid = doc.get(NameIndexField.LSID.toString());
         //get the canonical version if the sciname
         String cname = getCanonical(name);
@@ -377,18 +493,46 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 newcl.setSid(lsid);
                 break;
         }
-        for(ScoreDoc child : children.scoreDocs){
-            Document cdoc = lsearcher.doc(child.doc);
-            //child, currentDepth + 1, right + 1, map.toMap, dao)
-            right = addIndex(cdoc, currentDepth +1, right+1, newcl);
+        while (children != null && children.scoreDocs.length > 0) {
+            ScoreDoc lastChild = null;
+            for (ScoreDoc child : children.scoreDocs) {
+                lastChild = child;
+                Document cdoc = lsearcher.doc(child.doc);
+                //child, currentDepth + 1, right + 1, map.toMap, dao)
+                right = addIndex(cdoc, currentDepth + 1, right + 1, newcl);
+            }
+            children = lastChild == null ? null : this.getLoadIdxResults(lastChild, "parent_id", id, PAGE_SIZE);
+            if (children != null && children.scoreDocs.length > 0)
+                log.info("Loading next page of children for " + id);
         }
         if(left % 2000 == 0){
             log.debug("Last processed lft:" + left + " rgt:" + right + " depth:" + currentDepth + " classification " + newcl );
         }
         //now insert this term
-        Document indexDoc = this.createALAIndexDocument(cname, doc.get(NameIndexField.ID.toString()), lsid, doc.get(NameIndexField.AUTHOR.toString()),doc.get(NameIndexField.RANK.toString()),doc.get(NameIndexField.RANK_ID.toString()), Integer.toString(left), Integer.toString(right), newcl);
+        float boost = this.getBoost(doc.get(NameIndexField.DATASET_ID.toString()), rankId);
+        Document indexDoc = this.createALAIndexDocument(name, doc.get(NameIndexField.ID.toString()), lsid, doc.get(NameIndexField.AUTHOR.toString()),doc.get(NameIndexField.RANK.toString()),doc.get(NameIndexField.RANK_ID.toString()), Integer.toString(left), Integer.toString(right), newcl, nameComplete, boost);
         writer.addDocument(indexDoc);
         return right + 1;
+    }
+
+    /**
+     * Build a boost level for this data.
+     * <p>
+     * Derived from the dataset ID priorities, with extra emphasis placed on major ranks.
+     * Default initial boost is 1.0.
+     * </p>
+     *
+     * @param datasetID The dataset id (may be null)
+     * @param rankId The rank level (-1 for unknown/not used)
+     *
+     * @return The boost level
+     */
+    protected float getBoost(String datasetID, int rankId) {
+        float boost = this.priorities.containsKey(datasetID) ? this.priorities.get(datasetID) : 1.0f;
+
+        if (rankId >= 0 && rankId % 1000 == 0)
+            boost *= 5.0f;
+        return boost;
     }
 
     /**
@@ -412,17 +556,24 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * Adds the synonyms to the indexed based on the dwca.  A synonym is where the id, lsid is different to the accepted lsid
      * @param dwcaDir
      */
-    private void addSynonymsToIndex(String dwcaDir) throws Exception {
-        Archive archive = ArchiveFactory.openArchive(new File(dwcaDir));
+    private void addSynonymsToIndex(File dwcaDir) throws Exception {
+        Archive archive = ArchiveFactory.openArchive(dwcaDir);
         Iterator<DarwinCoreRecord> it = archive.iteratorDwc();
         int i = 0;
         int count = 0;
+        ArchiveField nameCompleteField = archive.getCore().getField("nameComplete");
+        org.gbif.dwc.terms.Term nameCompleteTerm = nameCompleteField == null ? null : nameCompleteField.getTerm();
         while(it.hasNext()){
             DarwinCoreRecord dwcr = it.next();
             i++;
             String lsid = dwcr.getTaxonID() != null ? dwcr.getTaxonID() : dwcr.getId();
             String id = dwcr.getId();
             String acceptedId = dwcr.getAcceptedNameUsageID();
+            String nameComplete = nameCompleteTerm == null ? null: dwcr.getProperty(nameCompleteTerm);
+            String scientificName = dwcr.getScientificName();
+            String scientificNameAuthorship = dwcr.getScientificNameAuthorship();
+            nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete);
+            float boost = this.getBoost(dwcr.getDatasetID(), -1);
             if(StringUtils.isNotEmpty(acceptedId) && (!StringUtils.equals(acceptedId , id) && !StringUtils.equals(acceptedId, lsid))){
                 count++;
                 //we have a synonym that needs to be load
@@ -431,14 +582,15 @@ public class DwcaNameIndexer extends ALANameIndexer {
                         log.debug("Scientific name:  " + dwcr.getScientificName() + ", LSID:  " + dwcr.getId());
                     }
                     Document doc = createALASynonymDocument(
-                            dwcr.getScientificName(),
-                            dwcr.getScientificNameAuthorship(),
+                            scientificName,
+                            scientificNameAuthorship,
+                            nameComplete,
                             dwcr.getId(),
                             lsid,
                             lsid,
                             dwcr.getAcceptedNameUsageID(),
                             dwcr.getAcceptedNameUsageID(),
-                            1.0f,
+                            boost,
                             dwcr.getTaxonomicStatus());
 
                     if(doc != null){
@@ -453,6 +605,19 @@ public class DwcaNameIndexer extends ALANameIndexer {
             }
             if(i % 1000 == 0){
                 log.debug("Processed " + i + " records " + count + " synonyms" );
+            }
+        }
+    }
+
+    public static void findDwcas(File dir, boolean recurse, List<File> found) {
+        File meta = new File(dir, "meta.xml");
+
+        if (meta.exists())
+            found.add(dir);
+        if (recurse && dir.exists()) {
+            for (File d : dir.listFiles()) {
+                if (d.isDirectory())
+                    findDwcas(d, recurse, found);
             }
         }
     }
@@ -476,6 +641,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         final String DEFAULT_COMMON_NAME = "/data/lucene/sources/col_vernacular.txt";
         final String DEFAULT_TARGET_DIR = "/data/lucene/namematching";
         final String DEFAULT_TMP_DIR = "/data/lucene/nmload-tmp";
+        final String DEFAULT_PRIORITIES = "/data/lucene/sources/priorities.properties";
 
         Options options = new Options();
         options.addOption("v", "version", false, "Retrieve version information");
@@ -486,7 +652,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 " used to load the main search index");
         options.addOption("search", false, "Generates the search index. A load index must already be created for this to run.");
         options.addOption("irmng", true, "The absolute path to the unzipped irmng DwCA. IRMNG is used to detect homonyms. Defaults to " + DEFAULT_IRMNG);
-        options.addOption("dwca", true, "The absolute path to the unzipped DwCA for the scientific names. Defaults to " + DEFAULT_DWCA);
+        options.addOption("dwca", true, "The absolute path to the unzipped DwCA for the scientific names. If  Defaults to " + DEFAULT_DWCA + " See also, the recurse option");
+        options.addOption("recurse", false, "Recurse through the sub-directories of the dwca directory, looking for directories with a meta.xml");
+        options.addOption("priorities", true, "A properties file containing priority multiplers for the different data sources, keyed by datasetID->float. Defaults to " + DEFAULT_PRIORITIES);
         options.addOption("target", true, "The target directory to write the new name index to. Defaults to " + DEFAULT_TARGET_DIR);
         options.addOption("tmp", true, "The tmp directory for the load index. Defaults to " + DEFAULT_TMP_DIR);
         options.addOption("common", true, "The common (vernacular) name file. Defaults to " + DEFAULT_COMMON_NAME);
@@ -551,6 +719,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 System.exit(-1);
             }
 
+            boolean recurse = line.hasOption("recurse");
             boolean load = line.hasOption("load") || line.hasOption("all");
             boolean search = line.hasOption("search") || line.hasOption("all");
 
@@ -565,6 +734,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             boolean defaultIrmngReadable = (new File(DEFAULT_IRMNG).exists());
             boolean defaultCommonReadable = (new File(DEFAULT_COMMON_NAME).exists());
             boolean defaultDwcaReadable = (new File(DEFAULT_DWCA).exists());
+            boolean defaultPriorities = (new File(DEFAULT_PRIORITIES).exists());
 
             if(line.getOptionValue("dwca") != null){
                 log.info("Using the  DwCA name file: " + line.getOptionValue("dwca"));
@@ -592,6 +762,14 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 log.info("Using the common name file: " + line.getOptionValue("common"));
             }
 
+            if(line.getOptionValue("priorities") == null && !defaultPriorities) {
+                log.warn("No priorities file, defaulting to uniform priorities.");
+            } else if(line.getOptionValue("priorities") == null){
+                log.info("Using the default priorities file: " + DEFAULT_PRIORITIES);
+            } else {
+                log.info("Using the priorities file: " + line.getOptionValue("priorities"));
+            }
+
             File targetDirectory = new File(line.getOptionValue("target", DEFAULT_TARGET_DIR));
             if(targetDirectory.exists()){
                 String newPath =  targetDirectory.getAbsolutePath() + "_" + DateFormatUtils.format(new Date(), "yyyy-MM-dd_hh-mm-ss");
@@ -600,17 +778,39 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 FileUtils.moveDirectory(targetDirectory, newTargetDirectory);
                 FileUtils.forceMkdir(targetDirectory);
             }
-
-            DwcaNameIndexer indexer = new DwcaNameIndexer();
-            indexer.create(
+            File commonNameFile = new File(line.getOptionValue("common", DEFAULT_COMMON_NAME));
+            File irmngFile = new File(line.getOptionValue("irmng", DEFAULT_IRMNG));
+            File prioritiesFile = new File(line.getOptionValue("priorities", DEFAULT_PRIORITIES));
+            Properties priorities = new Properties();
+            if (prioritiesFile.exists())
+                priorities.load(new FileInputStream(prioritiesFile));
+            List<File> dwcas = new ArrayList<File>();
+            File base = new File(line.getOptionValue("dwca", DEFAULT_DWCA));
+            findDwcas(base, recurse, dwcas);
+            if (dwcas.isEmpty()) {
+                log.warn("No DwCA directories found under " + base);
+                System.exit(1);
+            }
+            log.info("Loading DwCAs: " + dwcas);
+            DwcaNameIndexer indexer = new DwcaNameIndexer(
+                    targetDirectory,
+                    new File(line.getOptionValue("tmp", DEFAULT_TMP_DIR)),
+                    priorities,
                     load,
-                    search,
-                    line.getOptionValue("target", DEFAULT_TARGET_DIR),
-                    line.getOptionValue("tmp", DEFAULT_TMP_DIR),
-                    line.getOptionValue("dwca", DEFAULT_DWCA),
-                    line.getOptionValue("irmng", DEFAULT_IRMNG),
-                    line.getOptionValue("common", DEFAULT_COMMON_NAME)
+                    search
             );
+            indexer.begin();
+            if (load) {
+                for (File dwca : dwcas)
+                    indexer.createLoadingIndex(dwca);
+                indexer.commitLoadingIndexes();
+            }
+            indexer.generateIndex();
+            for (File dwca: dwcas)
+                indexer.create(dwca);
+            indexer.indexCommonNames(commonNameFile);
+            indexer.createIrmng(irmngFile);
+            indexer.commit();
         } catch (Exception e) {
             e.printStackTrace();
         }

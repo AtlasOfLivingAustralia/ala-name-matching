@@ -58,13 +58,18 @@ public class NameSearchResult {
             rank = RankType.getForId(Integer.parseInt(doc.get(NameIndexField.RANK_ID.toString())));
         } catch (Exception e) {
         }
+        String name = doc.get(NameIndexField.NAME_CANONICAL.toString());
+        if (name == null)
+            name = doc.get(NameIndexField.NAME.toString());
+        if (name == null)
+            name = doc.get(NameIndexField.NAME_COMPLETE.toString());
         rankClass = new LinnaeanRankClassification(doc.get(RankType.KINGDOM.getRank()),
                 doc.get(RankType.PHYLUM.getRank()),
                 doc.get(RankType.CLASS.getRank()),
                 doc.get(RankType.ORDER.getRank()),
                 doc.get(RankType.FAMILY.getRank()),
                 doc.get(RankType.GENUS.getRank()),
-                doc.get(NameIndexField.NAME.toString()));
+                name);
         rankClass.setSpecies(doc.get(RankType.SPECIES.getRank()));
         //add the ids
         rankClass.setKid(doc.get("kid"));

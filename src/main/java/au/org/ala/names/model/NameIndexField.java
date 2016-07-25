@@ -31,13 +31,16 @@ public enum NameIndexField {
     INFRA_EX("infra_ex"),//infra specific epithet sounds like expression
     SPECIFIC("specific"),
     INFRA_SPECIFIC("infra"),
-    NAME("name"),//canonical name
+    NAME("name"),// search name
+    NAME_CANONICAL("name_canonical"), // Canonical name
+    NAME_COMPLETE("name_complete"), // Complete name
     RANK_ID("rank_id"),
     RANK("rank"),
     AUTHOR("author"),
     PHRASE("phrase"),//stores the values of a "phrase" name.  Some more intelligence will be needed when matching these
     VOUCHER("voucher"), //stores a voucher value minus the spaces and fullstops.
     ALA("ala"), //stores whether or not it is an ALA generated name
+    DATASET_ID("dataset_id"), // The source dataset
     SYNONYM_TYPE("syn_type"); //stores the type of synonym that it represents
     String name;
 
