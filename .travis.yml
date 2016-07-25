@@ -8,16 +8,15 @@ branches:
   
 before_install:
 - mkdir -p ~/.m2; wget -q -O ~/.m2/settings.xml https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/travis_maven_settings.xml
-- sudo mkdir -p /data/lucene; sudo wget -O /data/lucene/namematching.tgz http://biocache.ala.org.au/archives/nameindexes/20160509/namematching-20160509.tgz
-- cd /data/lucene
-- sudo tar zxvf namematching.tgz
-- sudo ln -s namematching-20160509 namematching
-- ls -laF
-- cd $TRAVIS_BUILD_DIR
+- echo 'Creating lucene data dir'
+- sudo mkdir -p /data/lucene
+- echo 'Downloading index'
+- sudo wget -O /data/lucene/namematching.tgz http://biocache.ala.org.au/archives/nameindexes/20140610/namematching.tgz
+- echo 'Extracting name index'
+- sudo tar zxvf /data/lucene/namematching.tgz -C /data/lucene/
+- sudo mv /data/lucene/namematching13 /data/lucene/namematching
 
-script:
-- "[ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ] && mvn -X -P travis clean install deploy || mvn -X -P travis clean install"
-
+script: mvn -X -P travis clean install deploy
 env:
   global:
   - secure: KccCleAFdCTTPEtUYcsBSsIbIIvpbZJ16aV0F8ydRErupFrTIsniWM5xmyUyL3VYaViIViBFke1hAiVEoYG3U33a4X3RVdZV0vS6KhS1K36q0jg61wnyzYqucVk8XBh8X0JHS6DmZ++IV2JAEpY6mEWKG+LpNGkyZ58gqj1AJsY=
