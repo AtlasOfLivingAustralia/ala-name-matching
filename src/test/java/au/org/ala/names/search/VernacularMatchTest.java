@@ -16,6 +16,7 @@ import static org.junit.Assert.*;
  *
  * @author Natasha Carter
  */
+@Ignore
 public class VernacularMatchTest {
 
     private static ALANameSearcher searcher;
