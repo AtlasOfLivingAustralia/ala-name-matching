@@ -1,7 +1,9 @@
 package au.org.ala.names.search;
 
-import au.org.ala.names.model.*;
-import org.gbif.ecat.voc.NameType;
+import au.org.ala.names.model.LinnaeanRankClassification;
+import au.org.ala.names.model.MatchType;
+import au.org.ala.names.model.MetricsResultDTO;
+import au.org.ala.names.model.NameSearchResult;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -13,8 +15,6 @@ import static org.junit.Assert.*;
  * - matches based on higher classification etc...
  * <p/>
  * TODO Need to add more test cases to this class
- *
- * @author Natasha Carter
  */
 public class VernacularMatchTest {
 
@@ -23,7 +23,7 @@ public class VernacularMatchTest {
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new ALANameSearcher("/data/lucene/test");
+            searcher = new ALANameSearcher("/data/lucene/namematching");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -45,6 +45,7 @@ public class VernacularMatchTest {
     }
 
     @Test
+    @Ignore // Requires IEK
     public void testVernacular2() throws Exception {
         String name = "Dhulwa";
         String expectedLsid = "http://id.biodiversity.org.au/node/apni/2904436";
@@ -95,6 +96,7 @@ public class VernacularMatchTest {
 
 
     @Test
+    @Ignore // Requires IEK
     public void testVernacular6() throws Exception {
         String name = "Dharaban";
         String expectedLsid = "http://id.biodiversity.org.au/node/apni/2886278";
