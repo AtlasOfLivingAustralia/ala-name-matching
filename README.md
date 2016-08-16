@@ -35,13 +35,13 @@ You can download the IRMNG DwCA for homonyms from the following URL:
 
 An assembly zip file for this can be downloaded from our maven repository : 
 
-[ala-name-matching-2.1-distribution.zip](http://maven.ala.org.au/repository/au/org/ala/ala-name-matching/2.1/ala-name-matching-2.1-distribution.zip)
+[ala-name-matching-2.1-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.1/ala-name-matching-2.1-distribution.zip)
 
 To generate the name index using the data described above, follow these steps. Alternatively use the [ALA Ansible scripts](https://github.com/AtlasOfLivingAustralia/ala-install) 
 here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustralia/ala-install/blob/master/ansible/nameindexer-standalone.yml) which does it all for you.
 
 * Download the zip files linked above to a directory e.g. /data/names/ and extract them
-* Download the distribution zip [ala-name-matching-2.1-distribution.zip](http://maven.ala.org.au/repository/au/org/ala/ala-name-matching/2.1/ala-name-matching-2.1-distribution.zip)
+* Download the distribution zip [ala-name-matching-2.1-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.1/ala-name-matching-2.1-distribution.zip)
 * Generate the names index with command:
 
 ```
@@ -91,7 +91,7 @@ This names list is used as a backbone for the ALA species pages and to create a 
 
 ### Using ALA Name Matching
 
-The ALA Name Matching is available as a library that can be used in other projects.   It is available in the ALA Maven Repository (http://maven.ala.org.au/).  
+The ALA Name Matching is available as a library that can be used in other projects.   It is available in the ALA Maven Repository (http://nexus.ala.org.au/).  
 
 To use ala-name-matching, include it as a dependency in your pom file:
 ```
