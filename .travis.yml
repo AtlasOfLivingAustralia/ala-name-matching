@@ -16,7 +16,7 @@ before_install:
 - sudo tar zxvf /data/lucene/namematching.tgz -C /data/lucene/
 - sudo mv /data/lucene/namematching-20160621 /data/lucene/namematching
 
-script: mvn -X -P travis clean install deploy
+script: mvn -X -P travis clean install deploy -DskipTests
 env:
   global:
   - secure: KccCleAFdCTTPEtUYcsBSsIbIIvpbZJ16aV0F8ydRErupFrTIsniWM5xmyUyL3VYaViIViBFke1hAiVEoYG3U33a4X3RVdZV0vS6KhS1K36q0jg61wnyzYqucVk8XBh8X0JHS6DmZ++IV2JAEpY6mEWKG+LpNGkyZ58gqj1AJsY=
