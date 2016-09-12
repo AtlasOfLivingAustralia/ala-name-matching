@@ -538,7 +538,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 lastConcept = sd;
                 left = right + 1;
                 Document doc = lsearcher.doc(sd.doc);
-                right = addIndex(doc, 1, left, new LinnaeanRankClassification());
+                right = addIndex(doc, 1, left, new LinnaeanRankClassification(), 0);
                 if (right - lastRight > 1000) {
                     log.info("Finished loading root " + doc.get(NameIndexField.LSID.toString()) + " " + doc.get(NameIndexField.NAME.toString()) + " left:" + left + " right" + right + " root count:" + count);
                     lastRight = right;
@@ -564,7 +564,11 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * @return
      * @throws Exception
      */
-    private int addIndex(Document doc, int currentDepth, int currentLeft, LinnaeanRankClassification higherClass) throws Exception {
+    private int addIndex(Document doc, int currentDepth,
+                         int currentLeft,
+                         LinnaeanRankClassification higherClass,
+                         int stackCheck
+                         ) throws Exception {
         //log.info("Add to index " + doc.get(NameIndexField.ID.toString()) + "/" + doc.get(NameIndexField.NAME.toString()) + "/" + doc.get(NameIndexField.RANK_ID.toString()) + " depth=" + currentDepth + " left=" + currentLeft);
         String id = doc.get(NameIndexField.ID.toString());
         //get children for this record
@@ -618,8 +622,25 @@ public class DwcaNameIndexer extends ALANameIndexer {
             for (ScoreDoc child : children.scoreDocs) {
                 lastChild = child;
                 Document cdoc = lsearcher.doc(child.doc);
-                //child, currentDepth + 1, right + 1, map.toMap, dao)
-                right = addIndex(cdoc, currentDepth + 1, right + 1, newcl);
+                if(cdoc != null && !cdoc.get("id").equals(doc.get("id"))){
+                    if(stackCheck > 900){
+                        log.warn("Stack check depth " + stackCheck +
+                                "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
+                                "\n\t\tChild: " + cdoc.get("id") + " - " +  cdoc.get("lsid") + " _ " + cdoc.get("parent_id") + " - " +  cdoc.get("name")
+                        );
+                    }
+
+                    if(stackCheck < 1000) {
+//                        catch stack overflow
+                        right = addIndex(cdoc, currentDepth + 1, right + 1, newcl, stackCheck++);
+                    } else {
+                        log.warn("Stack overflow detected for name - depth " + stackCheck +
+                                "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
+                                "\n\t\tChild: " + cdoc.get("id") + " - " +  cdoc.get("lsid") + " _ " + cdoc.get("parent_id") + " - " +  cdoc.get("name")
+
+                        );
+                    }
+                }
             }
             children = lastChild == null ? null : this.getLoadIdxResults(lastChild, "parent_id", id, PAGE_SIZE);
             if (children != null && children.scoreDocs.length > 0)
