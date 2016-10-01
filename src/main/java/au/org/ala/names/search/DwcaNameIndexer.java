@@ -195,6 +195,97 @@ public class DwcaNameIndexer extends ALANameIndexer {
     }
 
     /**
+     * Load common names from a vernacular DwcA with a core row type of gbif:VernacularName
+     *
+     * @param verncacularDwc The archive directory
+     * @return True if used
+     *
+     * @throws Exception if unable to open the archive
+     */
+    private boolean loadCommonNames(File verncacularDwc) throws Exception {
+        if (verncacularDwc == null || !verncacularDwc.exists()) {
+            log.warn("Skipping " + verncacularDwc + " as it does not exist");
+            return false;
+        }
+        Archive archive = ArchiveFactory.openArchive(verncacularDwc);
+        if (!archive.getCore().getRowType().equals(GbifTerm.VernacularName.qualifiedName())) {
+            log.info("Skipping non-vernacular DwCA");
+            return false;
+        }
+        if (!archive.getCore().hasTerm(DwcTerm.vernacularName)) {
+            log.error("Vernacular file " + verncacularDwc + " requires " + DwcTerm.vernacularName);
+            return false;
+        }
+        if (!archive.getCore().hasTerm(DwcTerm.scientificName) && !archive.getCore().hasTerm(DwcTerm.taxonID)) {
+            log.error("Vernacular file " + verncacularDwc + " requires either " + DwcTerm.scientificName + " or " + DwcTerm.taxonID);
+            return false;
+        }
+        if (archive.getCore().hasTerm(DwcTerm.scientificName) && !archive.getCore().hasTerm(DwcTerm.scientificNameAuthorship)) {
+            log.warn("Vernacular file " + verncacularDwc + " has" + DwcTerm.scientificName + " but not " + DwcTerm.scientificNameAuthorship);
+            return false;
+        }
+        for (org.gbif.dwc.terms.Term term: Arrays.asList(DcTerm.language)) {
+            log.warn("Vernacular file " + verncacularDwc + " is missing " + term);
+        }
+        log.info("Loading vernacular names for " + verncacularDwc);
+        ALANameSearcher searcher = new ALANameSearcher(this.targetDir.getAbsolutePath());
+        Iterator<Record> records = archive.getCore().iterator();
+        while (records.hasNext()) {
+            Record record = records.next();
+            String taxonId = record.value(DwcTerm.taxonID);
+            String scientificName = record.value(DwcTerm.scientificName);
+            String vernacularName = record.value(DwcTerm.vernacularName);
+            String scientificNameAuthorship = record.value(DwcTerm.scientificNameAuthorship);
+            String kingdom = record.value(DwcTerm.kingdom);
+            String phylum = record.value(DwcTerm.phylum);
+            String klass = record.value(DwcTerm.class_);
+            String order = record.value(DwcTerm.order);
+            String family = record.value(DwcTerm.family);
+            String genus = record.value(DwcTerm.genus);
+            String specificEpithet = record.value(DwcTerm.specificEpithet);
+            String infraspecificEpithet = record.value(DwcTerm.infraspecificEpithet);
+            String rank = record.value(DwcTerm.taxonRank);
+            LinnaeanRankClassification classification = new LinnaeanRankClassification();
+            NameSearchResult result = null;
+            String lsid;
+
+            if (taxonId != null) {
+                result = searcher.searchForRecordByLsid(taxonId);
+            }
+            if (result == null && scientificName != null) {
+                // Try and give as many hints as possible, if available
+                classification.setScientificName(scientificName);
+                classification.setAuthorship(scientificNameAuthorship);
+                classification.setKingdom(kingdom);
+                classification.setPhylum(phylum);
+                classification.setKlass(klass);
+                classification.setOrder(order);
+                classification.setFamily(family);
+                classification.setGenus(genus);
+                classification.setSpecificEpithet(specificEpithet);
+                classification.setInfraspecificEpithet(infraspecificEpithet);
+                classification.setRank(rank);
+                try {
+                    result = searcher.searchForRecord(classification, false, false);
+                } catch (SearchResultException ex) {
+                    log.warn("Can't find matching taxon for " + classification + " and vernacular name " + vernacularName + " exception " + ex.getMessage());
+                    continue;
+                }
+            }
+            if (result == null) {
+                log.warn("Can't find matching taxon for " + classification + " and vernacular name " + vernacularName);
+                continue;
+            }
+            lsid = result.getAcceptedLsid() != null ? result.getAcceptedLsid() : result.getLsid();
+            if (scientificName == null)
+                scientificName = result.getRankClassification().getScientificName();
+            Document doc = this.createCommonNameDocument(vernacularName, scientificName, lsid, 1.0f, false);
+            this.vernacularIndexWriter.addDocument(doc);
+        }
+        return true;
+    }
+
+    /**
      * Index the common names CSV file supplied.
      *
      * CSV header need to be taxonId, taxonLsid, scientificName, vernacularName, languageCode, countryCode
