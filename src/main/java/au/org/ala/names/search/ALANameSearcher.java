@@ -104,7 +104,7 @@ public class ALANameSearcher {
         queryParser = new ThreadLocal<QueryParser>() {
             @Override
             protected QueryParser initialValue() {
-                QueryParser qp = new QueryParser(Version.LUCENE_34, "genus", new LowerCaseKeywordAnalyzer());
+                QueryParser qp = new QueryParser(Version.LATEST, "genus", new LowerCaseKeywordAnalyzer());
                 qp.setFuzzyMinSim(0.8f); //fuzzy match similarity setting. used to match the authorship.
                 return qp;
             }
@@ -112,7 +112,7 @@ public class ALANameSearcher {
         idParser = new ThreadLocal<QueryParser>() {
             @Override
             protected QueryParser initialValue() {
-                return new QueryParser(Version.LUCENE_34, "lsid", new org.apache.lucene.analysis.core.KeywordAnalyzer());
+                return new QueryParser(Version.LATEST, "lsid", new org.apache.lucene.analysis.core.KeywordAnalyzer());
             }
         };
 
@@ -137,8 +137,8 @@ public class ALANameSearcher {
         File idxFile = new File(indexDirectory);
         if (!idxFile.exists()) {
             FileUtils.forceMkdir(idxFile);
-            Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_34);
-            IndexWriterConfig conf = new IndexWriterConfig(Version.LUCENE_34, analyzer);
+            Analyzer analyzer = new StandardAnalyzer(Version.LATEST);
+            IndexWriterConfig conf = new IndexWriterConfig(Version.LATEST, analyzer);
             IndexWriter iw = new IndexWriter(FSDirectory.open(idxFile), conf);
             iw.commit();
             iw.close();
@@ -1016,7 +1016,7 @@ public class ALANameSearcher {
                 pn = parser.parse(cleaned.getNormalised());
                 nameType = pn != null ? pn.getType() : null;
             } catch (UnparsableException e) {
-                log.warn("Unable to parse " + name + ". " + e.getMessage());
+                log.warn("Unable to parse " + name + ". " + e.getMessage(), e);
             }
             //Check for the exact match
             List<NameSearchResult> hits = performSearch(NameIndexField.NAME.toString(), cleaned.getNormalised(), rank, cl, max, MatchType.EXACT, true, queryParser.get());

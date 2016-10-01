@@ -28,8 +28,8 @@
     <dependencies>
         <dependency>
             <groupId>org.gbif</groupId>
-            <artifactId>dwca-reader</artifactId>
-            <version>1.18</version>
+            <artifactId>dwca-io</artifactId>
+            <version>1.27</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-io</groupId>
@@ -61,6 +61,12 @@
             <groupId>org.gbif</groupId>
             <artifactId>ecat-common</artifactId>
             <version>1.6</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.gbif</groupId>
+                    <artifactId>dwca-reader</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

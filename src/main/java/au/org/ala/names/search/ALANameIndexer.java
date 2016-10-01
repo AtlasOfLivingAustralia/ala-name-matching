@@ -38,9 +38,12 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
-import org.gbif.dwc.record.DarwinCoreRecord;
-import org.gbif.dwc.text.Archive;
-import org.gbif.dwc.text.ArchiveFactory;
+//import org.gbif.dwc.record.DarwinCoreRecord;
+//import org.gbif.dwc.text.Archive;
+//import org.gbif.dwc.text.ArchiveFactory;
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.io.ArchiveFactory;
+import org.gbif.dwca.record.DarwinCoreRecord;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
 import org.gbif.ecat.voc.NameType;
@@ -55,7 +58,7 @@ import java.util.regex.Pattern;
 /**
  * Creates the Lucene index based on the names that are exported from
  * http://code.google.com/p/ala-portal/source/browse/trunk/ala-names-generator/src/main/resources/create-dumps.sql
- *
+ * @Deprecated
  * @author Natasha
  */
 public class ALANameIndexer {
@@ -145,11 +148,9 @@ public class ALANameIndexer {
     NameParser parser = new PhraseNameParser();
     Set<String> knownHomonyms = new HashSet<String>();
     Set<String> blacklist = new HashSet<String>();
-    private TaxonNameSoundEx tnse;
 
     public void init() throws Exception {
 
-        tnse = new TaxonNameSoundEx();
         // init the known homonyms
         LineIterator lines = new LineIterator(new BufferedReader(
                 new InputStreamReader(
@@ -191,20 +192,6 @@ public class ALANameIndexer {
         createIndex(exportsDir, indexDir, alaConcepts, alaSynonyms, irmngDwcaDirectory, generateSciNames, generateCommonNames);
     }
 
-    /**
-     * Creates the IRMNG homonym index based on the DWCA and species homonyms supplied from the NSL
-     * @param exportsDir
-     * @param indexDir
-     * @throws Exception
-     */
-    public void createIrmngIndex(String exportsDir, String indexDir) throws Exception {
-        Analyzer analyzer = new LowerCaseKeywordAnalyzer();
-        IndexWriter irmngWriter = createIndexWriter(new File(indexDir + File.separator + "irmng"), analyzer, true);
-        indexIrmngDwcA(irmngWriter, irmngDwcaDirectory);
-        indexIRMNG(irmngWriter, exportsDir + File.separator + "ala-species-homonyms.txt", RankType.SPECIES);
-        irmngWriter.forceMerge(1);
-        irmngWriter.close();
-    }
 
     public void createIndex(String exportsDir, String indexDir, String acceptedFile, String synonymFile,
                             String irmngDwca, boolean generateSciNames, boolean generateCommonNames) throws Exception {
@@ -230,33 +217,6 @@ public class ALANameIndexer {
     }
 
     /**
-     * Creates the temporary index that provides a lookup of checklist bank id to
-     * GUID
-     */
-    private IndexSearcher createTmpGuidIndex(String cbExportFile) throws Exception {
-        System.out.println("Starting to create the tmp guid index...");
-        IndexWriter iw = createIndexWriter(new File("/data/tmp/guid"), new KeywordAnalyzer(), true);
-        au.com.bytecode.opencsv.CSVReader cbreader = new au.com.bytecode.opencsv.CSVReader(new FileReader(cbExportFile), '\t', '"', '/', 1);
-        for (String[] values = cbreader.readNext(); values != null; values = cbreader.readNext()) {
-            Document doc = new Document();
-            String id = values[POS_ID];
-            String guid = values[POS_LSID];
-            doc.add(new StringField("id", id, Store.YES));
-            if (StringUtils.isEmpty(id))
-                guid = id;
-
-            doc.add(new StoredField("guid", guid));
-            iw.addDocument(doc);
-        }
-        System.out.println("Finished writing the tmp guid index...");
-        iw.commit();
-        iw.forceMerge(1);
-        iw.close();
-        //As of lucene 4.0 all IndexReaders are read only
-        return new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File("/data/tmp/guid"))));
-    }
-
-    /**
      * Creates an index writer in the specified directory.  It will create/recreate
      * the target directory
      *
@@ -266,7 +226,7 @@ public class ALANameIndexer {
      * @throws Exception
      */
     protected IndexWriter createIndexWriter(File directory, Analyzer analyzer, boolean replace) throws Exception {
-        IndexWriterConfig conf = new IndexWriterConfig(Version.LUCENE_34, analyzer);
+        IndexWriterConfig conf = new IndexWriterConfig(Version.LATEST, analyzer);
         if (replace)
             conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
         else
@@ -276,20 +236,7 @@ public class ALANameIndexer {
             FileUtils.forceDelete(directory);
         }
         FileUtils.forceMkdir(directory);
-        IndexWriter iw = new IndexWriter(FSDirectory.open(directory), conf);
-        return iw;
-    }
-
-    private String getValueFromIndex(IndexSearcher is, String searchField, String value, String retField) {
-        TermQuery tq = new TermQuery(new Term(searchField, value));
-        try {
-            org.apache.lucene.search.TopDocs results = is.search(tq, 1);
-            if (results.totalHits > 0)
-                return is.doc(results.scoreDocs[0].doc).get(retField);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return value;
+        return new IndexWriter(FSDirectory.open(directory), conf);
     }
 
     /**
