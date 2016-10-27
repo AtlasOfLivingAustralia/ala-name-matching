@@ -16,6 +16,7 @@ import static org.junit.Assert.*;
  * <p/>
  * TODO Need to add more test cases to this class
  */
+@Ignore
 public class VernacularMatchTest {
 
     private static ALANameSearcher searcher;

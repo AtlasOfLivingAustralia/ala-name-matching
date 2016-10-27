@@ -196,12 +196,18 @@ public class NameSearchResult {
         Map<String,String> map = new LinkedHashMap<String, String>();
         map.put("ID", id);
         map.put("GUID", lsid);
-        map.put("Classification", rankClass.toCSV(','));
-        map.put("Scientific name", rankClass.getScientificName());
-        map.put("Authorship", rankClass.getAuthorship());
-        map.put("Rank", rank.toString());
+        if(rankClass !=null) {
+            map.put("Classification", rankClass.toCSV(','));
+            map.put("Scientific name", rankClass.getScientificName());
+            map.put("Authorship", rankClass.getAuthorship());
+        }
+        if(rank !=null) {
+            map.put("Rank", rank.toString());
+        }
         map.put("Synonym", acceptedLsid);
-        map.put("Match type", matchType.toString());
+        if(matchType !=null) {
+            map.put("Match type", matchType.toString());
+        }
         return map;
     }
 

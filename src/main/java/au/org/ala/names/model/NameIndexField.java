@@ -24,8 +24,10 @@ package au.org.ala.names.model;
 public enum NameIndexField {
     ID("id"),
     LSID("lsid"),
+    PARENT_ID("parent_id"),
     ACCEPTED("accepted_lsid"),
     iS_SYNONYM("is_synonym"),//whether or not the record is a synonym
+    GENUS("genus"),
     GENUS_EX("genus_ex"), //genus sounds like expression - handles masculine and feminine too.
     SPECIES_EX("specific_ex"),// specific epithet sounds like expression
     INFRA_EX("infra_ex"),//infra specific epithet sounds like expression

@@ -1,4 +1,3 @@
-
 package au.org.ala.names.util;
 
 import java.util.Collections;
@@ -14,29 +13,14 @@ import org.apache.commons.lang.StringUtils;
  */
 public class TaxonNameSoundEx {
 
-
-    /* remove leading whitespace */
-    public static String ltrim(String source) {
-        return source.replaceAll("^\\s+", "");
-    }
-
-    /* remove trailing whitespace */
-    public static String rtrim(String source) {
-        return source.replaceAll("\\s+$", "");
-    }
-
     private static String translate(String source, String transSource, String transTarget) {
         String result = source;
 
         while (transSource.length() > transTarget.length()) {
-
             transTarget += " ";
-
         }
         for (int i = 0; i < transSource.length(); i++) {
-
             result = result.replace(transSource.charAt(i), transTarget.charAt(i));
-
         }
         return result;
     }

@@ -11,7 +11,7 @@
     <artifactId>ala-name-matching</artifactId>
     <packaging>jar</packaging>
     <!-- Major version increment due to package structure change -->
-    <version>2.4.1-SNAPSHOT</version>
+    <version>2.4.1</version>
     <name>ALA Name Matching</name>
     <!-- SCM entry that points to SVN directory that contains pom -->
     <scm>
@@ -28,8 +28,8 @@
     <dependencies>
         <dependency>
             <groupId>org.gbif</groupId>
-            <artifactId>dwca-reader</artifactId>
-            <version>1.18</version>
+            <artifactId>dwca-io</artifactId>
+            <version>1.27</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-io</groupId>
@@ -61,6 +61,12 @@
             <groupId>org.gbif</groupId>
             <artifactId>ecat-common</artifactId>
             <version>1.6</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.gbif</groupId>
+                    <artifactId>dwca-reader</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
