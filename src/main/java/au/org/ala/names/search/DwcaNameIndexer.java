@@ -22,7 +22,6 @@ import au.org.ala.names.model.RankType;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
@@ -43,7 +42,6 @@ import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.ArchiveField;
 import org.gbif.dwca.io.ArchiveFile;
-import org.gbif.dwca.record.DarwinCoreRecord;
 import org.gbif.dwca.record.Record;
 import org.gbif.dwca.record.StarRecord;
 import org.gbif.ecat.model.ParsedName;
@@ -75,8 +73,14 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
     static protected Logger log = Logger.getLogger(DwcaNameIndexer.class);
     private static int PAGE_SIZE = 25000;
+    /** The point at which we should be getting concerned about a loop or odd taxonomy */
+    private static int DEPTH_WARN = 20;
+    /** OK, that's just going too far */
+    private static int DEPTH_LIMIT = 80;
+
     private boolean loadingIndex;
     private boolean sciIndex;
+    private boolean fullName;
     private File targetDir;
     private File tmpDir;
     private IndexSearcher lsearcher;
@@ -86,11 +90,12 @@ public class DwcaNameIndexer extends ALANameIndexer {
     private LowerCaseKeywordAnalyzer analyzer;
     private Map<String, Float> priorities;
 
-    public DwcaNameIndexer(File targetDir, File tmpDir, Properties priorities, boolean loadingIndex, boolean sciIndex) {
+    public DwcaNameIndexer(File targetDir, File tmpDir, Properties priorities, boolean loadingIndex, boolean sciIndex, boolean fullName) {
         this.targetDir = targetDir;
         this.tmpDir = tmpDir;
         this.loadingIndex = loadingIndex;
         this.sciIndex = sciIndex;
+        this.fullName = fullName;
         this.analyzer = new LowerCaseKeywordAnalyzer();
         this.priorities = this.buildPriorities(priorities);
     }
@@ -144,9 +149,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
     }
 
     /**
-     * Build a datasetID -> Priority map for different data sources
+     * Build a datasetID, taxonomicStatus, etc. -> Priority map for different data sources and name types
      *
-     * @param properties A propetty list for the priorities
+     * @param properties A property list for the priorities
      *
      * @return The resulting map
      */
@@ -172,17 +177,26 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * @param namesDwc The absolute path to the directory that contains the unzipped DWC archive to index
      * @throws Exception
      */
-    public void create(File namesDwc) throws Exception{
+    public boolean create(File namesDwc) throws Exception{
+        boolean used = false;
         if (namesDwc == null || !namesDwc.exists()) {
             log.warn("Skipping " + namesDwc + " as it does not exist");
-            return;
+            return false;
         }
-        log.info("Loading synonyms for " + namesDwc);
-        addSynonymsToIndex(namesDwc);
-        writer.commit();
-        writer.forceMerge(1);
-        this.indexCommonNameExtension(namesDwc);
-     }
+        Archive archive = ArchiveFactory.openArchive(namesDwc);
+        if (archive.getCore().getRowType().equals(DwcTerm.Taxon)) {
+            log.info("Loading synonyms for " + namesDwc);
+            used = addSynonymsToIndex(archive) || used;
+            writer.commit();
+            writer.forceMerge(1);
+            used = this.indexCommonNameExtension(archive) || used;
+        } else if (archive.getCore().getRowType().equals(GbifTerm.VernacularName)) {
+            used = loadCommonNames(archive) || used;
+        } else {
+            log.info("Ignoring " + namesDwc + " of type " + archive.getCore().getRowType());
+        }
+        return used;
+    }
 
     public void createIrmng(File irmngDwc) throws Exception {
         if (irmngDwc == null || !irmngDwc.exists())
@@ -197,37 +211,32 @@ public class DwcaNameIndexer extends ALANameIndexer {
     /**
      * Load common names from a vernacular DwcA with a core row type of gbif:VernacularName
      *
-     * @param verncacularDwc The archive directory
+     * @param archive The DwC archive to use
      * @return True if used
      *
      * @throws Exception if unable to open the archive
      */
-    private boolean loadCommonNames(File verncacularDwc) throws Exception {
-        if (verncacularDwc == null || !verncacularDwc.exists()) {
-            log.warn("Skipping " + verncacularDwc + " as it does not exist");
-            return false;
-        }
-        Archive archive = ArchiveFactory.openArchive(verncacularDwc);
-        if (!archive.getCore().getRowType().equals(GbifTerm.VernacularName.qualifiedName())) {
-            log.info("Skipping non-vernacular DwCA");
+    private boolean loadCommonNames(Archive archive) throws Exception {
+        if (!archive.getCore().getRowType().equals(GbifTerm.VernacularName)) {
+            log.info("Skipping non-vernacular DwCA " + archive.getLocation());
             return false;
         }
         if (!archive.getCore().hasTerm(DwcTerm.vernacularName)) {
-            log.error("Vernacular file " + verncacularDwc + " requires " + DwcTerm.vernacularName);
+            log.error("Vernacular file " + archive.getLocation() + " requires " + DwcTerm.vernacularName);
             return false;
         }
         if (!archive.getCore().hasTerm(DwcTerm.scientificName) && !archive.getCore().hasTerm(DwcTerm.taxonID)) {
-            log.error("Vernacular file " + verncacularDwc + " requires either " + DwcTerm.scientificName + " or " + DwcTerm.taxonID);
+            log.error("Vernacular file " + archive.getLocation() + " requires either " + DwcTerm.scientificName + " or " + DwcTerm.taxonID);
             return false;
         }
         if (archive.getCore().hasTerm(DwcTerm.scientificName) && !archive.getCore().hasTerm(DwcTerm.scientificNameAuthorship)) {
-            log.warn("Vernacular file " + verncacularDwc + " has" + DwcTerm.scientificName + " but not " + DwcTerm.scientificNameAuthorship);
+            log.warn("Vernacular file " + archive.getLocation() + " has" + DwcTerm.scientificName + " but not " + DwcTerm.scientificNameAuthorship);
             return false;
         }
         for (org.gbif.dwc.terms.Term term: Arrays.asList(DcTerm.language)) {
-            log.warn("Vernacular file " + verncacularDwc + " is missing " + term);
+            log.warn("Vernacular file " + archive.getLocation() + " is missing " + term);
         }
-        log.info("Loading vernacular names for " + verncacularDwc);
+        log.info("Loading vernacular names for " + archive.getLocation());
         ALANameSearcher searcher = new ALANameSearcher(this.targetDir.getAbsolutePath());
         Iterator<Record> records = archive.getCore().iterator();
         while (records.hasNext()) {
@@ -330,15 +339,14 @@ public class DwcaNameIndexer extends ALANameIndexer {
         this.vernacularIndexWriter.forceMerge(1);
     }
 
-    private void indexCommonNameExtension(File archiveDirectory) throws Exception {
-        Archive archive = ArchiveFactory.openArchive(archiveDirectory);
+    private boolean indexCommonNameExtension(Archive archive) throws Exception {
         ArchiveFile vernacularArchiveFile = archive.getExtension(GbifTerm.VernacularName);
         Iterator<Record> iter = vernacularArchiveFile == null ? null : vernacularArchiveFile.iterator();
         int i = 0, count = 0;
 
         if (vernacularArchiveFile == null)
-            return;
-        log.info("Starting to load the common names extension from " + archiveDirectory);
+            return false;
+        log.info("Starting to load the common names extension from " + archive.getLocation());
         while (iter.hasNext()) {
             i++;
             Record record = iter.next();
@@ -360,6 +368,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         log.info("Finished processing " + i + " common names with " + count + " added to index");
         this.vernacularIndexWriter.commit();
         this.vernacularIndexWriter.forceMerge(1);
+        return true;
     }
 
 
@@ -367,25 +376,30 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * Creates a loading index to use to generate the hierarchy including the left right values.
      *
      * @param archiveDirectory
+     * @return True if the archive was used
      * @throws Exception
      */
-    private void createLoadingIndex(File archiveDirectory, boolean colformat) throws Exception{
+    private boolean createLoadingIndex(File archiveDirectory, boolean colformat) throws Exception{
 
         if (archiveDirectory == null || !archiveDirectory.exists()) {
             log.warn("Unable to created loading index for " + archiveDirectory + " as it does not exisit");
-            return;
+            return false;
         }
         if (!this.loadingIndex) {
             log.warn("Skipping loading index for " + archiveDirectory);
-            return;
+            return false;
         }
-        log.info("Starting to create the temporary loading index for " + archiveDirectory);
 
         //create the loading index so that left right values and classifications can be generated
         Archive archive = ArchiveFactory.openArchive(archiveDirectory);
+        if (!archive.getCore().getRowType().equals(DwcTerm.Taxon)) {
+            log.info("Skipping non-taxon archive of type " + archive.getCore().getRowType());
+            return false;
+        }
         ArchiveField nameCompleteField = archive.getCore().getField("nameComplete");
         org.gbif.dwc.terms.Term nameCompleteTerm = nameCompleteField == null ? null : nameCompleteField.getTerm();
         Iterator<StarRecord> it = archive.iterator();
+        log.info("Starting to create the temporary loading index for " + archiveDirectory);
 
         int i = 0;
         long start = System.currentTimeMillis();
@@ -407,11 +421,15 @@ public class DwcaNameIndexer extends ALANameIndexer {
             String specificEpithet = record.value(DwcTerm.specificEpithet);
             String infraspecificEpithet = record.value(DwcTerm.infraspecificEpithet);
             String taxonRank = record.value(DwcTerm.taxonRank);
+            String taxonomicStatus = record.value(DwcTerm.taxonomicStatus);
+            String nomenclaturalStatus = record.value(DwcTerm.nomenclaturalStatus);
+
             String datasetID = record.value(DwcTerm.datasetID);
 
             String nameComplete = nameCompleteTerm == null ? null: record.value(nameCompleteTerm);
 
-            nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete);
+            nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete, this.fullName);
+            scientificName = this.buildScientificName(scientificName, scientificNameAuthorship, this.fullName);
 
             //add and store the identifier for the record
             doc.add(new StringField(NameIndexField.ID.toString(), id, Field.Store.YES));
@@ -474,6 +492,14 @@ public class DwcaNameIndexer extends ALANameIndexer {
             } else {
                 doc.add(new StringField(NameIndexField.iS_SYNONYM.toString(),"T", Field.Store.YES));
             }
+            if(StringUtils.isNotBlank(taxonomicStatus)) {
+                //stored no need to search on
+                doc.add(new StoredField(NameIndexField.TAXONOMIC_STATUS.toString(), taxonomicStatus));
+            }
+            if(StringUtils.isNotBlank(nomenclaturalStatus)) {
+                //stored no need to search on
+                doc.add(new StoredField(NameIndexField.NOMENCLATURAL_STATUS.toString(), nomenclaturalStatus));
+            }
             if (StringUtils.isNotBlank(datasetID)) {
                 doc.add(new StoredField(NameIndexField.DATASET_ID.toString(), datasetID));
             }
@@ -490,12 +516,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
         log.info("Finished creating the temporary load index with " + i + " concepts");
         this.loadingIndexWriter.commit();
         this.loadingIndexWriter.forceMerge(1);
-        this.loadingIndexWriter.close();
 
         if(colformat){
-
-            //reopen the index for updates
-            this.loadingIndexWriter = this.createIndexWriter(this.tmpDir, new KeywordAnalyzer(), false);
 
             IndexReader reader = IndexReader.open(FSDirectory.open(this.tmpDir));
             IndexSearcher loadingIdxSearch = new IndexSearcher(DirectoryReader.open(FSDirectory.open(this.tmpDir)));
@@ -520,7 +542,6 @@ public class DwcaNameIndexer extends ALANameIndexer {
                             IndexableField parentID = currentDoc.getField("parent_id");
                             updates.remove(parentID);
                             updates.add(new StringField(NameIndexField.PARENT_ID.toString(), parentLsid, Field.Store.YES));
-
                             this.loadingIndexWriter.updateDocument(new Term("id", id), updates);
                         }
                     }
@@ -529,15 +550,16 @@ public class DwcaNameIndexer extends ALANameIndexer {
             }
             this.loadingIndexWriter.commit();
             this.loadingIndexWriter.forceMerge(1);
-            this.loadingIndexWriter.close();
         }
 
         log.info("Finished creating the temporary load index with " + i + " concepts");
+        return true;
     }
 
     public void commitLoadingIndexes() throws IOException {
         if (this.loadingIndexWriter != null) {
-            this.loadingIndexWriter.close(true);
+            this.loadingIndexWriter.commit();
+            this.loadingIndexWriter.close(); // Waits for merges by default
             this.loadingIndexWriter = null;
         }
         this.lsearcher = null;
@@ -714,16 +736,16 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 lastChild = child;
                 Document cdoc = lsearcher.doc(child.doc);
                 if(cdoc != null && !cdoc.get("id").equals(doc.get("id"))){
-                    if(stackCheck > 900){
+                    if(stackCheck > DEPTH_WARN){
                         log.warn("Stack check depth " + stackCheck +
                                 "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
                                 "\n\t\tChild: " + cdoc.get("id") + " - " +  cdoc.get("lsid") + " _ " + cdoc.get("parent_id") + " - " +  cdoc.get("name")
                         );
                     }
 
-                    if(stackCheck < 1000) {
+                    if(stackCheck < DEPTH_LIMIT) {
 //                        catch stack overflow
-                        right = addIndex(cdoc, currentDepth + 1, right + 1, newcl, stackCheck++);
+                        right = addIndex(cdoc, currentDepth + 1, right + 1, newcl, stackCheck + 1);
                     } else {
                         log.warn("Stack overflow detected for name - depth " + stackCheck +
                                 "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
@@ -741,7 +763,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             log.debug("Last processed lft:" + left + " rgt:" + right + " depth:" + currentDepth + " classification " + newcl );
         }
         //now insert this term
-        float boost = this.getBoost(doc.get(NameIndexField.DATASET_ID.toString()), rankId);
+        float boost = this.getBoost(doc.get(NameIndexField.DATASET_ID.toString()), doc.get(NameIndexField.TAXONOMIC_STATUS.toString()), doc.get(NameIndexField.NOMENCLATURAL_STATUS.toString()), rankId);
         Document indexDoc = this.createALAIndexDocument(
                 name,
                 doc.get(NameIndexField.ID.toString()),
@@ -766,13 +788,19 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * </p>
      *
      * @param datasetID The dataset id (may be null)
+     * @param taxonomicStatus The taxonomic status (may be null)
+     * @param nomenclaturalStatus The nomenclatural status (may be null)
      * @param rankId The rank level (-1 for unknown/not used)
      *
      * @return The boost level
      */
-    protected float getBoost(String datasetID, int rankId) {
+    protected float getBoost(String datasetID, String taxonomicStatus, String nomenclaturalStatus, int rankId) {
         float boost = this.priorities.containsKey(datasetID) ? this.priorities.get(datasetID) : 1.0f;
 
+        if (taxonomicStatus != null && !taxonomicStatus.isEmpty())
+            boost *= this.priorities.containsKey(taxonomicStatus) ? this.priorities.get(taxonomicStatus) : 1.0f;
+        if (nomenclaturalStatus != null && !nomenclaturalStatus.isEmpty())
+            boost *= this.priorities.containsKey(nomenclaturalStatus) ? this.priorities.get(nomenclaturalStatus) : 1.0f;
         if (rankId >= 0 && rankId % 1000 == 0)
             boost *= 5.0f;
         return boost;
@@ -797,52 +825,59 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
     /**
      * Adds the synonyms to the indexed based on the dwca.  A synonym is where the id, lsid is different to the accepted lsid
-     * @param dwcaDir
+     * @param archive The archive file
      */
-    private void addSynonymsToIndex(File dwcaDir) throws Exception {
-        Archive archive = ArchiveFactory.openArchive(dwcaDir);
-        Iterator<DarwinCoreRecord> it = archive.iteratorDwc();
+    private boolean addSynonymsToIndex(Archive archive) throws Exception {
+        if (!archive.getCore().getRowType().equals(DwcTerm.Taxon)) {
+            log.warn("Tried to load synonyms from non-taxon archive " + archive.getLocation() + " ... skipping");
+            return false;
+        }
+        Iterator<Record> it = archive.getCore().iterator();
         int i = 0;
         int count = 0;
         ArchiveField nameCompleteField = archive.getCore().getField("nameComplete");
         org.gbif.dwc.terms.Term nameCompleteTerm = nameCompleteField == null ? null : nameCompleteField.getTerm();
         while(it.hasNext()){
-            DarwinCoreRecord dwcr = it.next();
+            Record dwcr = it.next();
             i++;
-            String lsid = dwcr.getTaxonID() != null ? dwcr.getTaxonID() : dwcr.getId();
-            String id = dwcr.getId();
-            String acceptedId = dwcr.getAcceptedNameUsageID();
-            String nameComplete = nameCompleteTerm == null ? null: dwcr.getProperty(nameCompleteTerm);
-            String scientificName = dwcr.getScientificName();
-            String scientificNameAuthorship = dwcr.getScientificNameAuthorship();
-            nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete);
-            float boost = this.getBoost(dwcr.getDatasetID(), -1);
+            String lsid = dwcr.value(DwcTerm.taxonID);
+            if (lsid == null)
+                lsid = dwcr.id();
+            String id = dwcr.id();
+            String acceptedId = dwcr.value(DwcTerm.acceptedNameUsageID);
+            String nameComplete = nameCompleteTerm == null ? null: dwcr.value(nameCompleteTerm);
+            String scientificName = dwcr.value(DwcTerm.scientificName);
+            String scientificNameAuthorship = dwcr.value(DwcTerm.scientificNameAuthorship);
+            String taxonomicStatus = dwcr.value(DwcTerm.taxonomicStatus);
+            String nomenclaturalStatus = dwcr.value(DwcTerm.nomenclaturalStatus);
+            nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete, this.fullName);
+            float boost = this.getBoost(dwcr.value(DwcTerm.datasetID), taxonomicStatus, nomenclaturalStatus, -1);
             if(StringUtils.isNotEmpty(acceptedId) && (!StringUtils.equals(acceptedId , id) && !StringUtils.equals(acceptedId, lsid))){
                 count++;
                 //we have a synonym that needs to be load
                 try {
                     if(log.isDebugEnabled()){
-                        log.debug("Scientific name:  " + dwcr.getScientificName() + ", LSID:  " + dwcr.getId());
+                        log.debug("Scientific name:  " + scientificName + ", LSID:  " + lsid);
                     }
                     Document doc = createALASynonymDocument(
                             scientificName,
                             scientificNameAuthorship,
                             nameComplete,
-                            dwcr.getId(),
+                            id,
                             lsid,
                             lsid,
-                            dwcr.getAcceptedNameUsageID(),
-                            dwcr.getAcceptedNameUsageID(),
+                            acceptedId,
+                            acceptedId,
                             boost,
-                            dwcr.getTaxonomicStatus());
+                            taxonomicStatus);
 
                     if(doc != null){
                         writer.addDocument(doc);
                     } else {
-                        log.warn("Problem processing scientificName:  " + dwcr.getScientificName() + ", ID:  " + dwcr.getId() + ", LSID:  " + lsid);
+                        log.warn("Problem processing scientificName:  " + scientificName + ", ID:  " + id + ", LSID:  " + lsid);
                     }
                 } catch (Exception e){
-                    log.error("Exception thrown processing Scientific name:  " + dwcr.getScientificName() + ", LSID:  " + dwcr.getId());
+                    log.error("Exception thrown processing Scientific name:  " + scientificName + ", LSID:  " + lsid);
                     log.error(e.getMessage(), e);
                 }
             }
@@ -850,6 +885,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 log.debug("Processed " + i + " records " + count + " synonyms" );
             }
         }
+        return true;
     }
 
     public static void findDwcas(File dir, boolean recurse, List<File> found) {
@@ -890,6 +926,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         options.addOption("v", "version", false, "Retrieve version information");
         options.addOption("h", "help", false, "Retrieve options");
         options.addOption("col_format", false, "Pass this flag if the DWCAs are provided by Catalogue of Life (which uses dcterms:identifier to store the LSID/GUID)");
+        options.addOption("full_name", false, "Pass this flag if the the scientificName field inj the DwCA also contains the author");
         options.addOption("all", false, "Generates the load index and search index");
         options.addOption("load", false, "Generate the load index only. " +
                 "The load index is a temporary index generated from the raw data files" +
@@ -898,7 +935,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         options.addOption("irmng", true, "The absolute path to the unzipped irmng DwCA. IRMNG is used to detect homonyms. Defaults to " + DEFAULT_IRMNG);
         options.addOption("dwca", true, "The absolute path to the unzipped DwCA (or a directory containing unzipped DWC-A - see recurse) for the scientific names. If  Defaults to " + DEFAULT_DWCA + " See also, the recurse option");
         options.addOption("recurse", false, "Recurse through the sub-directories of the dwca directory, looking for directories with a meta.xml");
-        options.addOption("priorities", true, "A properties file containing priority multiplers for the different data sources, keyed by datasetID->float. Defaults to " + DEFAULT_PRIORITIES);
+        options.addOption("priorities", true, "A properties file containing priority multiplers for the different data sources, taxonomic status and nomenclatural status terms, keyed by datasetID->float. Defaults to " + DEFAULT_PRIORITIES);
         options.addOption("target", true, "The target directory to write the new name index to. Defaults to " + DEFAULT_TARGET_DIR);
         options.addOption("tmp", true, "The tmp directory for the load index. Defaults to " + DEFAULT_TMP_DIR);
         options.addOption("common", true, "The common (vernacular) name file. Defaults to " + DEFAULT_COMMON_NAME);
@@ -967,6 +1004,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             boolean load = line.hasOption("load") || line.hasOption("all");
             boolean search = line.hasOption("search") || line.hasOption("all");
             boolean colformat = line.hasOption("col_format");
+            boolean fullname = line.hasOption("full_name");
 
             if(!line.hasOption("load") && !line.hasOption("search") && !line.hasOption("all") ){
                 load = true;
@@ -1037,24 +1075,30 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 System.exit(1);
             }
             log.info("Loading DwCAs: " + dwcas);
+            Set<File> available = new HashSet<File>(dwcas);
             DwcaNameIndexer indexer = new DwcaNameIndexer(
                     targetDirectory,
                     new File(line.getOptionValue("tmp", DEFAULT_TMP_DIR)),
                     priorities,
                     load,
-                    search
+                    search,
+                    fullname
             );
             indexer.begin();
             if (load) {
                 for (File dwca : dwcas) {
-                    indexer.createLoadingIndex(dwca, colformat);
+                    if (indexer.createLoadingIndex(dwca, colformat))
+                        available.remove(dwca);
                 }
                 indexer.commitLoadingIndexes();
             }
             indexer.generateIndex();
             for (File dwca: dwcas) {
-                indexer.create(dwca);
+                if (indexer.create(dwca))
+                    available.remove(dwca);
             }
+            if (!available.isEmpty())
+                log.warn("Unused DwCAs: " + available);
             indexer.indexCommonNames(commonNameFile);
             indexer.createIrmng(irmngFile);
             indexer.commit();

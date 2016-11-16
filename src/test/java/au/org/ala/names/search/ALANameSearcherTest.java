@@ -8,6 +8,7 @@ import au.org.ala.names.model.NameSearchResult;
 import au.org.ala.names.model.RankType;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -122,8 +123,8 @@ public class ALANameSearcherTest {
         }
     }
 
-    //@Test TODO What does NPE mean? Sphacelaria is in CAAB
-    public void npeInAuthorTest() {
+    @Ignore
+    public void nullPointerExceptionInAuthorTest() {
         String name = "Sphacelaria Lynbye";
         try {
             String lsid = searcher.searchForLSID(name);
@@ -524,7 +525,7 @@ public class ALANameSearcherTest {
             NameSearchResult nsr = null;
             nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
-            assertEquals("http://id.biodiversity.org.au/name/apni/190511", nsr.getLsid());
+            assertEquals("http://id.biodiversity.org.au/name/apni/233691", nsr.getLsid());
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
         }
@@ -886,16 +887,35 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testSearchForRecord() {
+    public void testSearchForRecord1() {
         NameSearchResult result = null;
         try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification(null, "Rhinotia");
             result = searcher.searchForRecord("Rhinotia", cl, RankType.GENUS);
+            assertNotNull(result);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:73986806-7e29-407c-b0f4-e40868f2ea93", result.getLsid());
         } catch (SearchResultException e) {
             e.printStackTrace();
             fail("testSearchForRecord failed");
         }
-        System.out.println("testSearchForRecord: " + result);
+    }
+
+    @Test
+    public void testSearchForRecord2() {
+        NameSearchResult result = null;
+        try {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setAuthorship("Meisn.");
+            cl.setFamily("Celastraceae");
+            cl.setGenus("Denhamia");
+            cl.setScientificName("Denhamia Meisn.");
+            result = searcher.searchForRecord(cl, true);
+            assertNotNull(result);
+            assertEquals("http://id.biodiversity.org.au/node/apni/2887827", result.getLsid());
+        } catch (SearchResultException e) {
+            e.printStackTrace();
+            fail("testSearchForRecord failed");
+        }
     }
 
     @Test

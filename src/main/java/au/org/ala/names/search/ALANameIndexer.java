@@ -27,7 +27,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.document.*;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.index.DirectoryReader;
@@ -38,9 +37,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
-//import org.gbif.dwc.record.DarwinCoreRecord;
-//import org.gbif.dwc.text.Archive;
-//import org.gbif.dwc.text.ArchiveFactory;
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.record.DarwinCoreRecord;
@@ -49,11 +45,14 @@ import org.gbif.ecat.parser.NameParser;
 import org.gbif.ecat.voc.NameType;
 
 import java.io.*;
-import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+//import org.gbif.dwc.record.DarwinCoreRecord;
+//import org.gbif.dwc.text.Archive;
+//import org.gbif.dwc.text.ArchiveFactory;
 
 /**
  * Creates the Lucene index based on the names that are exported from
@@ -743,7 +742,7 @@ public class ALANameIndexer {
             return null;
         }
 
-        nameComplete = buildNameComplete(name, author, nameComplete);
+        nameComplete = buildNameComplete(name, author, nameComplete, false); // Assume already normalised
         CleanedScientificName cname = new CleanedScientificName(name);
         CleanedScientificName cnameComplete = new CleanedScientificName(nameComplete);
         Document doc = new Document();
@@ -934,9 +933,11 @@ public class ALANameIndexer {
         this.indexDirectory = indexDirectory;
     }
 
-    protected String buildNameComplete(String name, String author, String nameComplete) {
+    protected String buildNameComplete(String name, String author, String nameComplete, boolean fullName) {
         if (StringUtils.isNotBlank(nameComplete))
             return nameComplete;
+        if (fullName)
+            return name;
         StringBuilder ncb = new StringBuilder(64);
         if (name != null)
             ncb.append(name);
@@ -944,6 +945,16 @@ public class ALANameIndexer {
         if (author != null)
             ncb.append(author);
         return ncb.toString().trim();
+    }
+
+    protected String buildScientificName(String name, String author, boolean fullName) {
+        name = name.trim();
+        if (fullName && !StringUtils.isBlank(author)) {
+            author = author.trim();
+            if (name.endsWith(author))
+                name = name.substring(0, name.length() - author.length()).trim();
+        }
+        return name;
     }
 
     /**

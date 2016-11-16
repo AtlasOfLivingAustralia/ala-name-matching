@@ -43,6 +43,8 @@ public enum NameIndexField {
     VOUCHER("voucher"), //stores a voucher value minus the spaces and fullstops.
     ALA("ala"), //stores whether or not it is an ALA generated name
     DATASET_ID("dataset_id"), // The source dataset
+    TAXONOMIC_STATUS("taxonomic_status"), // The taxonomic status of the name
+    NOMENCLATURAL_STATUS("nomenclatural_status"), // The nomenclatural status of the name
     SYNONYM_TYPE("syn_type"); //stores the type of synonym that it represents
     String name;
 
