@@ -497,8 +497,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
             //reopen the index for updates
             this.loadingIndexWriter = this.createIndexWriter(this.tmpDir, new KeywordAnalyzer(), false);
 
-            IndexReader reader = IndexReader.open(FSDirectory.open(this.tmpDir));
-            IndexSearcher loadingIdxSearch = new IndexSearcher(DirectoryReader.open(FSDirectory.open(this.tmpDir)));
+            IndexReader reader = DirectoryReader.open(FSDirectory.open(this.tmpDir.toPath()));
+            IndexSearcher loadingIdxSearch = new IndexSearcher(DirectoryReader.open(FSDirectory.open(this.tmpDir.toPath())));
             int docIdx = 0;
             int maxDocId = reader.maxDoc();
 
@@ -537,7 +537,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
     public void commitLoadingIndexes() throws IOException {
         if (this.loadingIndexWriter != null) {
-            this.loadingIndexWriter.close(true);
+            this.loadingIndexWriter.close();
             this.loadingIndexWriter = null;
         }
         this.lsearcher = null;
@@ -545,7 +545,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
     private TopDocs getLoadIdxResults(ScoreDoc after, String field, String value,int max) throws Exception {
         if(lsearcher == null && this.tmpDir.exists()) {
-            lsearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(this.tmpDir)));
+            lsearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(this.tmpDir.toPath())));
         } else if(lsearcher == null && !this.tmpDir.exists()){
             throw new RuntimeException("A load index has not been generated. Please run this tool with '-load' before creating the search index.");
         }

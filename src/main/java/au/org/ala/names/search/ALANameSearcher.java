@@ -41,6 +41,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -98,13 +100,13 @@ public class ALANameSearcher {
      * @throws IOException
      */
     public ALANameSearcher(String indexDirectory) throws IOException {
-        //Initialis CB index searching items
+        //Initialise CB index searching items
         log.debug("Creating the search object for the name matching api...");
         //make the query parsers thread safe
         queryParser = new ThreadLocal<QueryParser>() {
             @Override
             protected QueryParser initialValue() {
-                QueryParser qp = new QueryParser(Version.LATEST, "genus", new LowerCaseKeywordAnalyzer());
+                QueryParser qp = new QueryParser("genus", new LowerCaseKeywordAnalyzer());
                 qp.setFuzzyMinSim(0.8f); //fuzzy match similarity setting. used to match the authorship.
                 return qp;
             }
@@ -112,7 +114,7 @@ public class ALANameSearcher {
         idParser = new ThreadLocal<QueryParser>() {
             @Override
             protected QueryParser initialValue() {
-                return new QueryParser(Version.LATEST, "lsid", new org.apache.lucene.analysis.core.KeywordAnalyzer());
+                return new QueryParser( "lsid", new org.apache.lucene.analysis.core.KeywordAnalyzer());
             }
         };
 
@@ -132,18 +134,19 @@ public class ALANameSearcher {
                 this.getClass().getClassLoader().getResourceAsStream("au/org/ala/homonyms/cross_rank_homonyms.txt"), new java.util.HashSet<String>(), true);
     }
 
-    private File createIfNotExist(String indexDirectory) throws IOException {
+    private Path createIfNotExist(String indexDirectory) throws IOException {
 
         File idxFile = new File(indexDirectory);
+        Path path = Paths.get(indexDirectory);
         if (!idxFile.exists()) {
             FileUtils.forceMkdir(idxFile);
-            Analyzer analyzer = new StandardAnalyzer(Version.LATEST);
-            IndexWriterConfig conf = new IndexWriterConfig(Version.LATEST, analyzer);
-            IndexWriter iw = new IndexWriter(FSDirectory.open(idxFile), conf);
+            Analyzer analyzer = new StandardAnalyzer();
+            IndexWriterConfig conf = new IndexWriterConfig(analyzer);
+            IndexWriter iw = new IndexWriter(FSDirectory.open(path), conf);
             iw.commit();
             iw.close();
         }
-        return idxFile;
+        return path;
     }
 
     /**

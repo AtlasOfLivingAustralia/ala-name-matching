@@ -226,7 +226,7 @@ public class ALANameIndexer {
      * @throws Exception
      */
     protected IndexWriter createIndexWriter(File directory, Analyzer analyzer, boolean replace) throws Exception {
-        IndexWriterConfig conf = new IndexWriterConfig(Version.LATEST, analyzer);
+        IndexWriterConfig conf = new IndexWriterConfig(analyzer);
         if (replace)
             conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
         else
@@ -236,7 +236,7 @@ public class ALANameIndexer {
             FileUtils.forceDelete(directory);
         }
         FileUtils.forceMkdir(directory);
-        return new IndexWriter(FSDirectory.open(directory), conf);
+        return new IndexWriter(FSDirectory.open(directory.toPath()), conf);
     }
 
     /**
@@ -488,8 +488,8 @@ public class ALANameIndexer {
     private void indexCommonNames(IndexWriter iw, String exportDir, String indexDir) throws Exception {
         log.info("Creating Common Names Index ...");
 
-        IndexSearcher currentNameSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(indexDir + File.separator + "cb"))));
-        IndexSearcher extraSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(indexDir + File.separator + "id"))));
+        IndexSearcher currentNameSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(indexDir + File.separator + "cb").toPath())));
+        IndexSearcher extraSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(indexDir + File.separator + "id").toPath())));
 
         addCoLCommonNames(iw, currentNameSearcher);
         addAnbgCommonNames(afdFile, iw, currentNameSearcher, extraSearcher, '\t');
@@ -603,7 +603,7 @@ public class ALANameIndexer {
         iw.commit();
         iw.forceMerge(1);
         iw.close();
-        idSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(indexDir)));
+        idSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(indexDir.toPath())));
     }
 
     /**
@@ -633,7 +633,7 @@ public class ALANameIndexer {
         iw.commit();
         iw.forceMerge(1);
         iw.close();
-        return new IndexSearcher(DirectoryReader.open(FSDirectory.open(indexDir)));
+        return new IndexSearcher(DirectoryReader.open(FSDirectory.open(indexDir.toPath())));
     }
 
     /**

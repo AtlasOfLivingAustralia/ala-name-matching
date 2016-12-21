@@ -40,7 +40,7 @@ public class NameListGenerator {
 
     public NameListGenerator(Writer output, File index) throws IOException {
         this.writer = new CSVWriter(output);
-        this.cbReader = DirectoryReader.open(FSDirectory.open(new File(index, "cb")));
+        this.cbReader = DirectoryReader.open(FSDirectory.open(new File(index, "cb").toPath()));
         this.synonymTypes = new HashSet<String>();
     }
 
