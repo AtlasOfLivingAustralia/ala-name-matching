@@ -22,7 +22,6 @@ import au.org.ala.names.model.RankType;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
@@ -939,6 +938,11 @@ public class DwcaNameIndexer extends ALANameIndexer {
                     System.out.println("Search for name");
                     ALANameSearcher searcher = new ALANameSearcher(line.getOptionValue("target", DEFAULT_TARGET_DIR));
                     NameSearchResult nsr = searcher.searchForRecord(line.getOptionValue("testSearch"));
+
+                    if(nsr == null){
+                         nsr = searcher.searchForRecordByLsid(line.getOptionValue("testSearch"));
+                    }
+
                     if(nsr != null) {
                         Map<String, String> props = nsr.toMap();
                         for (Map.Entry<String, String> entry : props.entrySet()) {
