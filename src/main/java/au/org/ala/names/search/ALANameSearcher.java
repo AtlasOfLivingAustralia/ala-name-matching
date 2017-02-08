@@ -1352,10 +1352,10 @@ public class ALANameSearcher {
                     }
                 }
             }
-            //now check to see if the accepeted concept is a child of the accResult
+            //now check to see if the accepted concept is a child of the accResult
             if (accResult != null && acceptedLsid != null) {
                 NameSearchResult accSynResult = searchForRecordByLsid(acceptedLsid);
-                if (accResult.getLeft() != null && accSynResult.getLeft() != null) {
+                if (accResult != null && accResult.getLeft() != null && accSynResult.getLeft() != null) {
                     int asyLeft = Integer.parseInt(accSynResult.getLeft());
                     if (asyLeft > Integer.parseInt(accResult.getLeft()) && asyLeft < Integer.parseInt(accResult.getRight()))
                         throw new ParentSynonymChildException(accResult, accSynResult);
