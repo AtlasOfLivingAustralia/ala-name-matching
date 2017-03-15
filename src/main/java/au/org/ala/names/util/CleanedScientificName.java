@@ -20,8 +20,6 @@ import java.util.regex.Pattern;
  * @copyright Copyright (c) 2016 ALA
  */
 public class CleanedScientificName {
-    /** The non-ascii only pattern */
-    private static final Pattern NON_ASCII = Pattern.compile("^[\\p{ASCII}]");
     /** The multiple space pattern */
     private static final Pattern SPACES = Pattern.compile("\\s+", Pattern.UNICODE_CHARACTER_CLASS);
     /** The punctuation translation table */

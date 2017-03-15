@@ -44,14 +44,6 @@ public enum MatchType {
      */
     SOUNDEX("fuzzyMatch", "A match was determined by using a sound expression of the supplied name.  There is a greater that average chance that the match is incorrect."),
     /**
-     * @deprecated Used in the OLD search API
-     */
-    ALTERNATE("alternateMatch", "Deprecated"),
-    /**
-     * @deprecated Usde in the OLD search API
-     */
-    SEARCHABLE("searchableMatch", "Deprecated"),
-    /**
      * A match was determined by the vernacular name. Matches of this type may be unreliable due to the regional/duplicate nature of common names.
      *
      * Limited to searches by common name {@link au.org.ala.names.search.ALANameSearcher#searchForCommonName(String)}
@@ -84,7 +76,6 @@ public enum MatchType {
     }
 
     MatchType(String title, String description) {
-
         this.title = title;
         this.description = description;
     }
