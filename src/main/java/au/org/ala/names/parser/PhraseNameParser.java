@@ -102,7 +102,11 @@ public class PhraseNameParser extends NameParser {
 
         } catch (Exception ie){
             log.debug("Problem parsing name: " + scientificName + " - done - " + ie.getMessage());
-            throw new UnparsableException(null, "Unable to parse " + scientificName + ". Skipping.......");
+            if (ie instanceof ExecutionException && ((ExecutionException) ie).getCause() instanceof UnparsableException) {
+                throw (UnparsableException) ((ExecutionException) ie).getCause();
+            } else {
+                throw new UnparsableException(null, "Unable to parse " + scientificName + ". Skipping.......");
+            }
         } finally {
             if(executor != null){
                 executor.shutdownNow();
