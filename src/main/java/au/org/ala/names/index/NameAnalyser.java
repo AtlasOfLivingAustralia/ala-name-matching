@@ -1,8 +1,10 @@
 package au.org.ala.names.index;
 
-import au.org.ala.names.parser.PhraseNameParser;
-import org.gbif.ecat.model.ParsedName;
-import org.gbif.ecat.parser.UnparsableException;
+import org.gbif.api.exception.UnparsableException;
+import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.nameparser.PhraseNameParser;
+
+import java.util.Comparator;
 
 /**
  * Work out the indexable details of a name.
@@ -13,7 +15,7 @@ import org.gbif.ecat.parser.UnparsableException;
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright (c) 2017 CSIRO
  */
-abstract public class NameAnalyser {
+abstract public class NameAnalyser implements Comparator<NameAnalyser.NameKey> {
     private PhraseNameParser parser;
 
     public NameAnalyser() {
@@ -47,20 +49,45 @@ abstract public class NameAnalyser {
     abstract public String canonicaliseName(ParsedName parsedName);
 
     /**
-     * Canonicalised the scientific name authorship
+     * Canonicalise the scientfic authorship
      *
      * @param parsedName The parsed name
-     * @param author The separately supplied author
+     * @param scientificNameAuthorship The supplied author
      *
-     * @return The canonicalised author
+     * @return The canonicalised authorship
      */
-    abstract public String canonicaliseAuthor(ParsedName parsedName, String author);
+    abstract public String canonicaliseAuthor(ParsedName parsedName, String scientificNameAuthorship);
+
+    /**
+     * Compare two name keys.
+     * <p>
+     * What constitutes "equal" depends on the implementation of the analyser.
+     * </p>
+     *
+     * @param key1 The first key to compare
+     * @param key2 The second key to compare
+     *
+     * @return Less than, equal to or greater than zero depending on whether key1 is less than, equal to or greater than key2
+     */
+    abstract public int compare(NameKey key1, NameKey key2);
+
+    /**
+     * Compute a hash code for a name key.
+     * <p>
+     * The hash code computation has to be within
+     * </p>
+     *
+     * @param key1 The key
+     *
+     * @return The resulting hash code
+     */
+    abstract public int hashCode(NameKey key1);
 
     /**
      * A name key is a unique identifier for either a scientific name (code + name) or
      * a taxonomic concept (code + name + authorship)
      */
-    public static class NameKey {
+    public class NameKey {
         /** The nomenclatural code for homonyms */
         public String code;
         /** The scientific name */
@@ -80,18 +107,12 @@ abstract public class NameAnalyser {
             if (o == null || getClass() != o.getClass()) return false;
 
             NameKey nameKey = (NameKey) o;
-
-            if (!code.equals(nameKey.code)) return false;
-            if (!scientificName.equals(nameKey.scientificName)) return false;
-            return scientificNameAuthorship != null ? scientificNameAuthorship.equals(nameKey.scientificNameAuthorship) : nameKey.scientificNameAuthorship == null;
+            return NameAnalyser.this.compare(this, nameKey) == 0;
         }
 
         @Override
         public int hashCode() {
-            int result = code.hashCode();
-            result = 31 * result + scientificName.hashCode();
-            result = 31 * result + (scientificNameAuthorship != null ? scientificNameAuthorship.hashCode() : 0);
-            return result;
+            return NameAnalyser.this.hashCode(this);
         }
     }
 }

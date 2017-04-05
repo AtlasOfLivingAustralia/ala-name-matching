@@ -17,7 +17,6 @@ package au.org.ala.names.search;
 import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
-import au.org.ala.names.parser.PhraseNameParser;
 import au.org.ala.names.util.CleanedScientificName;
 import au.org.ala.names.util.TaxonNameSoundEx;
 import org.apache.commons.io.FileUtils;
@@ -27,7 +26,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.document.*;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.index.DirectoryReader;
@@ -38,15 +36,15 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
+import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.api.vocabulary.NameType;
+import org.gbif.api.vocabulary.Rank;
 import org.gbif.dwc.record.DarwinCoreRecord;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.ArchiveFactory;
-import org.gbif.ecat.model.ParsedName;
-import org.gbif.ecat.parser.NameParser;
-import org.gbif.ecat.voc.NameType;
+import org.gbif.nameparser.PhraseNameParser;
 
 import java.io.*;
-import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -142,7 +140,7 @@ public class ALANameIndexer {
         }
     }
 
-    NameParser parser = new PhraseNameParser();
+    PhraseNameParser parser = new PhraseNameParser();
     Set<String> knownHomonyms = new HashSet<String>();
     Set<String> blacklist = new HashSet<String>();
     private TaxonNameSoundEx tnse;
@@ -909,7 +907,7 @@ public class ALANameIndexer {
             if (cn != null && cn.isParsableType() && !cn.isIndetermined()
                     // a scientific name with some informal addition like "cf." or indetermined like Abies spec.
                     // ALSO prevent subgenus because they parse down to genus plus author
-                    && cn.getType() != NameType.informal && !"6500".equals(rank) && cn.getType() != NameType.doubtful)
+                    && cn.getType() != NameType.INFORMAL && !"6500".equals(rank) && cn.getType() != NameType.DOUBTFUL)
             {
                 Field f2 = new TextField(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES);
                 f2.setBoost(boost);
@@ -927,9 +925,9 @@ public class ALANameIndexer {
                 FieldType ft = new FieldType(TextField.TYPE_STORED);
                 ft.setOmitNorms(true);
                 ALAParsedName alapn = (ALAParsedName) cn;
-                if ((!"sp.".equals(alapn.rank)) && alapn.specificEpithet != null) {
+                if (alapn.getRank() != Rank.SPECIES && alapn.getSpecificEpithet() != null) {
                     doc.add(new Field(NameIndexField.SPECIFIC.toString(), alapn.getSpecificEpithet(), ft));
-                } else if ((!"sp.".equals(alapn.rank)) && alapn.specificEpithet == null) {
+                } else if (alapn.getRank() != Rank.SPECIES && alapn.getSpecificEpithet() == null) {
                     log.warn(lsid + " " + name + " has an empty specific for non sp. phrase");
                 }
                 if (StringUtils.trimToNull(alapn.getLocationPhraseDescription()) != null) {
@@ -944,9 +942,9 @@ public class ALANameIndexer {
                 }
 
             }
-        } catch (org.gbif.ecat.parser.UnparsableException e) {
+        } catch (org.gbif.api.exception.UnparsableException e) {
             //check to see if the name is a virus in which case an extra name is added without the virus key word
-            if (e.type == NameType.virus) {
+            if (e.type == NameType.VIRUS) {
                 doc.add(new TextField(NameIndexField.NAME.toString(), ALANameSearcher.virusStopPattern.matcher(name).replaceAll(" "), Store.YES));
             }
 

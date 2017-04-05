@@ -1,6 +1,6 @@
-package au.ala.org.vocab
+package au.ala.org.vocab;
 
-import org.gbif.dwc.terms.Term
+import org.gbif.dwc.terms.Term;
 
 /**
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
@@ -13,15 +13,15 @@ enum ALATerm implements Term {
     nameID,
     status;
 
-    static NS = "http://ala.org.au/terms/1.0/"
-    static PREFIX = "ala:"
+    public static final String NS = "http://ala.org.au/terms/1.0/";
+    public static final String PREFIX = "ala:";
 
     public String qualifiedName() {
-        return NS + this.simpleName()
+        return NS + this.simpleName();
     }
 
     public String simpleName() {
-        return this.name()
+        return this.name();
     }
 
     public String toString() {

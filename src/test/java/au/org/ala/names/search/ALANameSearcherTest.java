@@ -6,8 +6,8 @@ import au.org.ala.names.model.LinnaeanRankClassification;
 import au.org.ala.names.model.MatchType;
 import au.org.ala.names.model.NameSearchResult;
 import au.org.ala.names.model.RankType;
-import org.gbif.ecat.model.ParsedName;
-import org.gbif.ecat.parser.NameParser;
+import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.nameparser.PhraseNameParser;
 import org.junit.Test;
 
 import java.util.List;
@@ -725,7 +725,7 @@ public class ALANameSearcherTest {
             String name3 = "Goodenia sp. Bachsten Creek";
             String name4 = "Goodenia sp. Bachsten Creek (M.D. Barrett 685)";
             String name5 = "Goodenia sp. Bachsten Creek M.D. Barrett 685";
-            NameParser parser = new NameParser();
+            PhraseNameParser parser = new PhraseNameParser();
             ParsedName cn = parser.parse(name1);
             System.out.println(cn + "##" + cn.canonicalName());
             cn = parser.parse(name1);

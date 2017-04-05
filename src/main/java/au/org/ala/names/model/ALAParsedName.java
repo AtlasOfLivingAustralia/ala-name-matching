@@ -14,9 +14,10 @@
  */
 package au.org.ala.names.model;
 
-import java.util.regex.Pattern;
+import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.api.vocabulary.Rank;
 
-import org.gbif.ecat.model.ParsedName;
+import java.util.regex.Pattern;
 
 
 /**
@@ -24,7 +25,7 @@ import org.gbif.ecat.model.ParsedName;
  *
  * @author Natasha Carter
  */
-public class ALAParsedName<T> extends ParsedName<T> {
+public class ALAParsedName extends ParsedName {
 
     public String locationPhraseDescription = null;
     public String cleanPhrase = null;
@@ -56,21 +57,21 @@ public class ALAParsedName<T> extends ParsedName<T> {
 
     }
 
-    public ALAParsedName(ParsedName<T> pn) {
-        this.authorsParsed = pn.authorsParsed;
+    public ALAParsedName(ParsedName pn) {
+        this.setAuthorsParsed(pn.isAuthorsParsed());
         this.setAuthorship(pn.getAuthorship());
         this.setBracketAuthorship(pn.getBracketAuthorship());
         this.setBracketYear(pn.getBracketYear());
-        this.setCode(pn.getCode());
-        this.setCultivar(pn.getCultivar());
+        //this.setCode(pn.getCode());
+        this.setCultivarEpithet(pn.getCultivarEpithet());
         this.setGenusOrAbove(pn.getGenusOrAbove());
-        this.setId(pn.getId());
+        //this.setId(pn.getId());
         this.setInfraGeneric(pn.getInfraGeneric());
         this.setInfraSpecificEpithet(pn.getInfraSpecificEpithet());
         this.setNomStatus(pn.getNomStatus());
         this.setNotho(pn.getNotho());
         this.setRank(pn.getRank());
-        this.setRankMarker(pn.getRankMarker());
+        //this.setRankMarker(pn.getRankMarker());
         this.setRemarks(pn.getRemarks());
         this.setSensu(pn.getSensu());
         this.setSpecificEpithet(pn.getSpecificEpithet());
@@ -92,10 +93,12 @@ public class ALAParsedName<T> extends ParsedName<T> {
 
     public void setLocationPhraseDescription(String locationPhraseDescription) {
         this.locationPhraseDescription = locationPhraseDescription;
-        if (rank == "sp") {
-            this.specificEpithet = locationPhraseDescription;
+        if (this.getRank() == Rank.SPECIES) {
+            this.setSpecificEpithet(locationPhraseDescription);
+        } else if (this.getRank() == Rank.CULTIVAR) {
+            this.setCultivarEpithet(locationPhraseDescription);
         } else {
-            this.infraSpecificEpithet = locationPhraseDescription;
+            this.setInfraSpecificEpithet(locationPhraseDescription);
         }
         if (locationPhraseDescription != null) {
             cleanPhrase = phraseBlacklist.matcher(" " + locationPhraseDescription).replaceAll(" ").trim();

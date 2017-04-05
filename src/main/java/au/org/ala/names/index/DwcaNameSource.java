@@ -1,31 +1,20 @@
 package au.org.ala.names.index;
 
-import au.ala.org.vocab.DocumentType;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
-import au.org.ala.names.model.NameIndexField;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.IndexableFieldType;
-import org.apache.lucene.util.BytesRef;
 import org.gbif.dwc.record.Record;
+import org.gbif.dwc.record.StarRecord;
 import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.text.Archive;
 import org.gbif.dwc.text.ArchiveFactory;
 import org.gbif.dwc.text.ArchiveFile;
-import org.gbif.dwc.text.StarRecord;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.*;
 
 /**
@@ -158,15 +147,15 @@ public class DwcaNameSource extends NameSource {
             if (taxonID == null)
                 taxonID = id;
             docs.add(this.create(core, core.rowType(), taxonID));
-            for (Map.Entry<String, List<Record>> entry: record.extensions().entrySet()) {
+            for (Map.Entry<Term, List<Record>> entry: record.extensions().entrySet()) {
                 for (Record ext: entry.getValue())
                     docs.add(this.create(ext, entry.getKey(), id));
             }
             return docs;
         }
 
-        protected Document create(Record record, String type, String taxonID) {
-            if (DwcTerm.Taxon.qualifiedName().equals(type))
+        protected Document create(Record record, Term type, String taxonID) {
+            if (DwcTerm.Taxon.equals(type))
                 return createTaxon(record, taxonID);
             else
                 return createDetail(record, taxonID);
@@ -179,6 +168,18 @@ public class DwcaNameSource extends NameSource {
                 doc.add(new StringField(t.toString(), record.value(t), Field.Store.YES));
             }
             return doc;
+        }
+
+        protected Document createDetail(Record record, String taxonID) {
+            throw new IllegalArgumentException();
+            /*
+            Document doc = new Document();
+            doc.add(new StringField(DcTerm.type.toString(), DwcTerm.Taxon.qualifiedName(), Field.Store.YES));
+            for (Term t: record.terms()) {
+                doc.add(new StringField(t.toString(), record.value(t), Field.Store.YES));
+            }
+            return doc;
+            */
         }
 
         @Override

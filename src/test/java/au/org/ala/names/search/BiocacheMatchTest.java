@@ -1,19 +1,11 @@
 package au.org.ala.names.search;
 
-import au.org.ala.names.model.MetricsResultDTO;
-import au.org.ala.names.model.RankType;
-import au.org.ala.names.model.MatchType;
-import au.org.ala.names.model.ErrorType;
-import au.org.ala.names.model.LinnaeanRankClassification;
-import org.gbif.ecat.voc.NameType;
+import au.org.ala.names.model.*;
+import org.gbif.api.vocabulary.NameType;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * The set of test associated with performing correct matches of biocache names
@@ -256,7 +248,7 @@ public class BiocacheMatchTest {
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             cl.setScientificName("Acanthastrea bowerbanki Edwards & Haime, 1857");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals(NameType.wellformed, metrics.getNameType());
+            assertEquals(NameType.SCIENTIFIC, metrics.getNameType());
         } catch (Exception e) {
             e.printStackTrace();
             fail("No exception should  occur");
@@ -308,14 +300,14 @@ public class BiocacheMatchTest {
             //test a one where the species does not exists so that the higher level match can be tested
             //ensures that higher matches work in this case
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals(NameType.doubtful, metrics.getNameType());
+            assertEquals(NameType.DOUBTFUL, metrics.getNameType());
             assertTrue(metrics.getErrors().contains(ErrorType.QUESTION_SPECIES));
             assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
             //Cardium media ?
             cl = new LinnaeanRankClassification();
             cl.setScientificName("Macropus rufus ?");
             metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals(NameType.doubtful, metrics.getNameType());
+            assertEquals(NameType.DOUBTFUL, metrics.getNameType());
             assertTrue(metrics.getErrors().contains(ErrorType.QUESTION_SPECIES));
             assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
             cl = new LinnaeanRankClassification();
