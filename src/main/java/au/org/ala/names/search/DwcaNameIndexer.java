@@ -40,6 +40,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.dwc.record.DarwinCoreRecord;
 import org.gbif.dwc.record.Record;
+import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.text.Archive;
@@ -172,16 +173,23 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * @param namesDwc The absolute path to the directory that contains the unzipped DWC archive to index
      * @throws Exception
      */
-    public void create(File namesDwc) throws Exception{
+    public boolean create(File namesDwc) throws Exception{
         if (namesDwc == null || !namesDwc.exists()) {
             log.warn("Skipping " + namesDwc + " as it does not exist");
-            return;
+            return false;
+        }
+        Archive archive = ArchiveFactory.openArchive(namesDwc);
+        if (!archive.getCore().getRowType().equals(DwcTerm.Taxon.qualifiedName())) {
+            log.info("Skipping non-taxon DwCA");
+            return false;
         }
         log.info("Loading synonyms for " + namesDwc);
-        addSynonymsToIndex(namesDwc);
+        addSynonymsToIndex(archive);
         writer.commit();
         writer.forceMerge(1);
-        this.indexCommonNameExtension(namesDwc);
+        log.info("Loading vernacular for " + namesDwc);
+        this.indexCommonNameExtension(archive);
+        return true;
      }
 
     public void createIrmng(File irmngDwc) throws Exception {
@@ -192,6 +200,97 @@ public class DwcaNameIndexer extends ALANameIndexer {
         irmngWriter.commit();
         irmngWriter.forceMerge(1);
         irmngWriter.close();
+    }
+
+    /**
+     * Load common names from a vernacular DwcA with a core row type of gbif:VernacularName
+     *
+     * @param verncacularDwc The archive directory
+     * @return True if used
+     *
+     * @throws Exception if unable to open the archive
+     */
+    private boolean loadCommonNames(File verncacularDwc) throws Exception {
+        if (verncacularDwc == null || !verncacularDwc.exists()) {
+            log.warn("Skipping " + verncacularDwc + " as it does not exist");
+            return false;
+        }
+        Archive archive = ArchiveFactory.openArchive(verncacularDwc);
+        if (!archive.getCore().getRowType().equals(GbifTerm.VernacularName.qualifiedName())) {
+            log.info("Skipping non-vernacular DwCA");
+            return false;
+        }
+        if (!archive.getCore().hasTerm(DwcTerm.vernacularName)) {
+            log.error("Vernacular file " + verncacularDwc + " requires " + DwcTerm.vernacularName);
+            return false;
+        }
+        if (!archive.getCore().hasTerm(DwcTerm.scientificName) && !archive.getCore().hasTerm(DwcTerm.taxonID)) {
+            log.error("Vernacular file " + verncacularDwc + " requires either " + DwcTerm.scientificName + " or " + DwcTerm.taxonID);
+            return false;
+        }
+        if (archive.getCore().hasTerm(DwcTerm.scientificName) && !archive.getCore().hasTerm(DwcTerm.scientificNameAuthorship)) {
+            log.warn("Vernacular file " + verncacularDwc + " has" + DwcTerm.scientificName + " but not " + DwcTerm.scientificNameAuthorship);
+            return false;
+        }
+        for (org.gbif.dwc.terms.Term term: Arrays.asList(DcTerm.language)) {
+            log.warn("Vernacular file " + verncacularDwc + " is missing " + term);
+        }
+        log.info("Loading vernacular names for " + verncacularDwc);
+        ALANameSearcher searcher = new ALANameSearcher(this.targetDir.getAbsolutePath());
+        Iterator<Record> records = archive.getCore().iterator();
+        while (records.hasNext()) {
+            Record record = records.next();
+            String taxonId = record.value(DwcTerm.taxonID);
+            String scientificName = record.value(DwcTerm.scientificName);
+            String vernacularName = record.value(DwcTerm.vernacularName);
+            String scientificNameAuthorship = record.value(DwcTerm.scientificNameAuthorship);
+            String kingdom = record.value(DwcTerm.kingdom);
+            String phylum = record.value(DwcTerm.phylum);
+            String klass = record.value(DwcTerm.class_);
+            String order = record.value(DwcTerm.order);
+            String family = record.value(DwcTerm.family);
+            String genus = record.value(DwcTerm.genus);
+            String specificEpithet = record.value(DwcTerm.specificEpithet);
+            String infraspecificEpithet = record.value(DwcTerm.infraspecificEpithet);
+            String rank = record.value(DwcTerm.taxonRank);
+            LinnaeanRankClassification classification = new LinnaeanRankClassification();
+            NameSearchResult result = null;
+            String lsid;
+
+            if (taxonId != null) {
+                result = searcher.searchForRecordByLsid(taxonId);
+            }
+            if (result == null && scientificName != null) {
+                // Try and give as many hints as possible, if available
+                classification.setScientificName(scientificName);
+                classification.setAuthorship(scientificNameAuthorship);
+                classification.setKingdom(kingdom);
+                classification.setPhylum(phylum);
+                classification.setKlass(klass);
+                classification.setOrder(order);
+                classification.setFamily(family);
+                classification.setGenus(genus);
+                classification.setSpecificEpithet(specificEpithet);
+                classification.setInfraspecificEpithet(infraspecificEpithet);
+                classification.setRank(rank);
+                try {
+                    result = searcher.searchForRecord(classification, false, false);
+                } catch (SearchResultException ex) {
+                    log.warn("Can't find matching taxon for " + classification + " and vernacular name " + vernacularName + " exception " + ex.getMessage());
+                    continue;
+                }
+            }
+            if (result == null) {
+                log.warn("Can't find matching taxon for " + classification + " and vernacular name " + vernacularName);
+                continue;
+            }
+            lsid = result.getAcceptedLsid() != null ? result.getAcceptedLsid() : result.getLsid();
+            if (scientificName == null)
+                scientificName = result.getRankClassification().getScientificName();
+            Document doc = this.createCommonNameDocument(vernacularName, scientificName, lsid, 1.0f, false);
+            this.vernacularIndexWriter.addDocument(doc);
+        }
+        return true;
     }
 
     /**
@@ -239,15 +338,14 @@ public class DwcaNameIndexer extends ALANameIndexer {
         this.vernacularIndexWriter.forceMerge(1);
     }
 
-    private void indexCommonNameExtension(File archiveDirectory) throws Exception {
-        Archive archive = ArchiveFactory.openArchive(archiveDirectory);
+    private void indexCommonNameExtension(Archive archive) throws Exception {
         ArchiveFile vernacularArchiveFile = archive.getExtension(GbifTerm.VernacularName);
         Iterator<Record> iter = vernacularArchiveFile == null ? null : vernacularArchiveFile.iterator();
         int i = 0, count = 0;
 
         if (vernacularArchiveFile == null)
             return;
-        log.info("Starting to load the common names extension from " + archiveDirectory);
+        log.info("Starting to load the common names extension from " + archive.getLocation());
         while (iter.hasNext()) {
             i++;
             Record record = iter.next();
@@ -278,18 +376,22 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * @param archiveDirectory
      * @throws Exception
      */
-    private void createLoadingIndex(File archiveDirectory) throws Exception{
+    private boolean createLoadingIndex(File archiveDirectory) throws Exception{
         if (archiveDirectory == null || !archiveDirectory.exists()) {
             log.warn("Unable to created loading index for " + archiveDirectory + " as it does not exisit");
-            return;
+            return false;
         }
         if (!this.loadingIndex) {
             log.warn("Skipping loading index for " + archiveDirectory);
-            return;
+            return false;
         }
         log.info("Starting to create the temporary loading index for " + archiveDirectory);
         //create the loading index so that left right values and classifications can be generated
         Archive archive = ArchiveFactory.openArchive(archiveDirectory);
+        if (!archive.getCore().getRowType().equals(DwcTerm.Taxon.qualifiedName())) {
+            log.info("Skipping non-taxon DwCA");
+            return false;
+        }
         ArchiveField nameCompleteField = archive.getCore().getField("nameComplete");
         org.gbif.dwc.terms.Term nameCompleteTerm = nameCompleteField == null ? null : nameCompleteField.getTerm();
         Iterator<DarwinCoreRecord> it = archive.iteratorDwc();
@@ -379,6 +481,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         log.info("Finished creating the temporary load index with " + i + " concepts");
         this.loadingIndexWriter.commit();
         this.loadingIndexWriter.forceMerge(1);
+        return true;
     }
 
     public void commitLoadingIndexes() throws IOException {
@@ -552,10 +655,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
     /**
      * Adds the synonyms to the indexed based on the dwca.  A synonym is where the id, lsid is different to the accepted lsid
-     * @param dwcaDir
+     * @param archive The archive for synonyms
      */
-    private void addSynonymsToIndex(File dwcaDir) throws Exception {
-        Archive archive = ArchiveFactory.openArchive(dwcaDir);
+    private void addSynonymsToIndex(Archive archive) throws Exception {
         Iterator<DarwinCoreRecord> it = archive.iteratorDwc();
         int i = 0;
         int count = 0;
@@ -650,7 +752,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 " used to load the main search index");
         options.addOption("search", false, "Generates the search index. A load index must already be created for this to run.");
         options.addOption("irmng", true, "The absolute path to the unzipped irmng DwCA. IRMNG is used to detect homonyms. Defaults to " + DEFAULT_IRMNG);
-        options.addOption("dwca", true, "The absolute path to the unzipped DwCA for the scientific names. If  Defaults to " + DEFAULT_DWCA + " See also, the recurse option");
+        options.addOption("dwca", true, "The absolute path to the unzipped DwCA for the scientific names. Multiple dwca arguments can be specified. Defaults to " + DEFAULT_DWCA + " See also, the recurse option");
         options.addOption("recurse", false, "Recurse through the sub-directories of the dwca directory, looking for directories with a meta.xml");
         options.addOption("priorities", true, "A properties file containing priority multiplers for the different data sources, keyed by datasetID->float. Defaults to " + DEFAULT_PRIORITIES);
         options.addOption("target", true, "The target directory to write the new name index to. Defaults to " + DEFAULT_TARGET_DIR);
@@ -783,10 +885,17 @@ public class DwcaNameIndexer extends ALANameIndexer {
             if (prioritiesFile.exists())
                 priorities.load(new FileInputStream(prioritiesFile));
             List<File> dwcas = new ArrayList<File>();
-            File base = new File(line.getOptionValue("dwca", DEFAULT_DWCA));
-            findDwcas(base, recurse, dwcas);
+            List<File> bases = new ArrayList<File>();
+            if (line.hasOption("dwca"))
+                for (String base: line.getOptionValues("dwca"))
+                    bases.add(new File(base));
+            else
+                bases.add(new File(DEFAULT_DWCA));
+            log.info("Base sources: " + bases);
+            for (File base: bases)
+                findDwcas(base, recurse, dwcas);
             if (dwcas.isEmpty()) {
-                log.warn("No DwCA directories found under " + base);
+                log.warn("No DwCA directories found under " + bases);
                 System.exit(1);
             }
             log.info("Loading DwCAs: " + dwcas);
@@ -798,17 +907,26 @@ public class DwcaNameIndexer extends ALANameIndexer {
                     search
             );
             indexer.begin();
+            Set<File> used = new HashSet<File>();
             if (load) {
                 for (File dwca : dwcas)
-                    indexer.createLoadingIndex(dwca);
+                    if (indexer.createLoadingIndex(dwca))
+                        used.add(dwca);
                 indexer.commitLoadingIndexes();
             }
             indexer.generateIndex();
             for (File dwca: dwcas)
-                indexer.create(dwca);
+                if (indexer.create(dwca))
+                    used.add(dwca);
             indexer.indexCommonNames(commonNameFile);
             indexer.createIrmng(irmngFile);
+            for (File dwca: dwcas)
+                if (indexer.loadCommonNames(dwca))
+                    used.add(dwca);
             indexer.commit();
+            for (File dwca: dwcas)
+                if (!used.contains(dwca))
+                    log.warn("Source " + dwca + " is unused");
         } catch (Exception e) {
             e.printStackTrace();
         }

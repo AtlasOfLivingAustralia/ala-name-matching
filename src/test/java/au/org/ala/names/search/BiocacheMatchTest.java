@@ -425,7 +425,7 @@ public class BiocacheMatchTest {
             String name = "Eucalyptus leucoxylon ssp.";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("http://id.biodiversity.org.au/node/apni/2909698", metrics.getResult().getLsid());
+            assertEquals("http://id.biodiversity.org.au/name/apni/237881", metrics.getResult().getLsid());
             assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
