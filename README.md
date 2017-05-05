@@ -61,7 +61,7 @@ The build creates 3 artefacts in the ala-name-matching/target directory:
 * ala-name-matching-2.1-distribution.zip - zip containing the project jar and dependencies
 * ala-name-matching-2.1-sources.jar - source jar for the project code only
 
-A name index for Australian names lists can be downloaded [here](http://biocache.ala.org.au/archives/nameindexes/20140610/namematching_v13.tgz) and needs to be extracted to the
+A name index for Australian names lists can be downloaded [from here](http://biocache.ala.org.au/archives/nameindexes/latest/) and needs to be extracted to the
 directory `/data/lucene/namematching`
 
 ## ALA Names List
@@ -98,7 +98,7 @@ To use ala-name-matching, include it as a dependency in your pom file:
    <dependency>
       <groupId>au.org.ala</groupId>
       <artifactId>ala-name-matching</artifactId>
-      <version>2.1</version>
+      <version>2.4.2</version>
    </dependency>
 ```
 
@@ -114,7 +114,6 @@ ALANameSearcher  searcher = new ALANameSearcher ("/data/lucene/namematching")
 ```
 
 The easiest way to perform a search is to have the searcher handle all the exceptional situations using the default handling:
-
 
 ```
 LinnaeanRankClassification cl = new LinnaeanRankClassification()
