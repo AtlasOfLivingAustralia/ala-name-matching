@@ -88,7 +88,6 @@ public class PhraseNameParser extends NameParser {
 
     @Override
     public <T> ParsedName<T> parse(final String scientificName) throws UnparsableException {
-//        System.out.println("PhraseNameParser: " + scientificName);
         ParsedName pn = null;
         ExecutorService executor = null;
         try {
@@ -102,8 +101,12 @@ public class PhraseNameParser extends NameParser {
             pn = future.get(2, TimeUnit.SECONDS);
 
         } catch (Exception ie){
-            System.out.println("Problem parsing name: " + scientificName + " - done - " + ie.getMessage());
-            throw new UnparsableException(null, "Unable to parse " + scientificName + ". Skipping.......");
+            log.debug("Problem parsing name: " + scientificName + " - done - " + ie.getMessage());
+            if (ie instanceof ExecutionException && ((ExecutionException) ie).getCause() instanceof UnparsableException) {
+                throw (UnparsableException) ((ExecutionException) ie).getCause();
+            } else {
+                throw new UnparsableException(null, "Unable to parse " + scientificName + ". Skipping.......");
+            }
         } finally {
             if(executor != null){
                 executor.shutdownNow();
@@ -114,7 +117,6 @@ public class PhraseNameParser extends NameParser {
             //if the rank marker is sp. and the word after the rank marker is lower case check to see if removing the marker will result is a wellformed name
             if (SPECIES_PATTERN.matcher(pn.rank).matches()) {
                 Matcher m1 = POTENTIAL_SPECIES_PATTERN.matcher(scientificName);
-                //System.out.println(POTENTIAL_SPECIES_PATTERN.pattern());
                 if (m1.find()) {
                     //now reparse without the rankMarker
                     String newName = m1.group(1) + m1.group(3) + StringUtils.defaultString(m1.group(4), "");
