@@ -6,6 +6,12 @@ This API borrows heavily from the name parsing great work done by [GBIF](https:/
 in their [scientific name parser library](https://github.com/gbif/name-parser)
 This code contains additions for handling some Australian specific issues.
 
+## Versions
+
+Currently there are 2 versions of this library, 2.x and 3.x.
+* 2.x is using lucene 4.
+* 3.x is using lucene 5 or above.
+
 ## Generating a name match index
 
 The name match index can be built from multiple Darwin Core Archives (DwCAs) that contains all the 
