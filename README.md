@@ -41,11 +41,11 @@ To generate the name index using the data described above, follow these steps. A
 here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustralia/ala-install/blob/master/ansible/nameindexer-standalone.yml) which does it all for you.
 
 * Download the zip files linked above to a directory e.g. /data/names/ and extract them
-* Download the distribution zip [ala-name-matching-2.1-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.1/ala-name-matching-2.1-distribution.zip)
+* Download the distribution zip [ala-name-matching-2.4.2-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.4.2/ala-name-matching-2.4.2-distribution.zip)
 * Generate the names index with command:
 
 ```
-java –jar ala-name-matching-2.1.jar --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
+java –jar ala-name-matching-2.4.2.jar --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
 ```
 
 Please be aware that the names indexing could take over an hour to complete.
