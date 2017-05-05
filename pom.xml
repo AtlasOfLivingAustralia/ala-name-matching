@@ -11,8 +11,8 @@
     <artifactId>ala-name-matching</artifactId>
     <packaging>jar</packaging>
     <!-- Major version increment due to package structure change -->
-    <version>3.0-SNAPSHOT</version>
-    <name>ALA Name Matching</name>
+    <version>3.0</version>
+    <name>ALA Name Matching (for Lucene 5 or above)</name>
     <!-- SCM entry that points to SVN directory that contains pom -->
     <scm>
         <connection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</connection>
