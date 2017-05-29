@@ -1,48 +1,66 @@
 package au.org.ala.names.index;
 
-import org.apache.lucene.document.Document;
+import org.apache.commons.collections.MapUtils;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.Term;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
- * A source of name information.
+ * An abstract source of names.
+ * <p>
+ * Subclasses can be used to load name information into a taxonomy.
+ * </p>
  *
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
- *
- * Copyright (c) 2016 CSIRO
+ * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
-abstract public class NameSource implements Iterable<Collection<Document>> {
-    /** The source identifier */
-    private String id;
-    /** The source priority */
-    private float priority;
+abstract public class NameSource {
+    /** Fields expected in the DwCA */
+    protected static final Set<Term> TAXON_REQUIRED = new HashSet<Term>(Arrays.asList(
+            DwcTerm.taxonID,
+            DwcTerm.nomenclaturalCode,
+            DwcTerm.acceptedNameUsageID,
+            DwcTerm.parentNameUsageID,
+            DwcTerm.scientificName,
+            DwcTerm.scientificNameAuthorship,
+            DwcTerm.taxonomicStatus,
+            DwcTerm.taxonRank
+    ));
+    /** Optional fields from the DwCA */
+    protected static final Set<Term> ADDITIONAL_FIELDS = new HashSet<Term>(Arrays.asList(
+            DwcTerm.taxonConceptID,
+            DwcTerm.scientificNameID,
+            DwcTerm.nomenclaturalStatus,
+            DwcTerm.kingdom,
+            DwcTerm.phylum,
+            DwcTerm.class_,
+            DwcTerm.order,
+            DwcTerm.family,
+            DwcTerm.genus,
+            DwcTerm.specificEpithet,
+            DwcTerm.infraspecificEpithet
+    ));
+    /** A map of row types and what is needed to ensure that row is useful */
+    protected static final Map<String, Set<Term>> REQUIRED_TERMS = MapUtils.putAll(new HashMap<String, Set<Term>>(),
+            new Object[][] {
+                    { DwcTerm.Taxon.qualifiedName(), TAXON_REQUIRED }
+            }
+    );
 
     /**
-     * Create a name source.
+     * Validate the source of information before loading
      *
-     * @param id The source identifier
-     * @param priority The source priority
+     * @throws IndexBuilderException if the source is not valid
      */
-    public NameSource(String id, float priority) {
-        this.id = id;
-        this.priority = priority;
-    }
+    abstract public void validate() throws IndexBuilderException;
 
     /**
-     * Get the source identifier.
+     * Load the information from this source into a taxonomy.
      *
-     * @return The source ID.
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * Get the source priority
+     * @param taxonomy The taxonomy
      *
-     * @return The priority
+     * @throws IndexBuilderException if unable to load the data
      */
-    public float getPriority() {
-        return priority;
-    }
+    abstract public void loadIntoTaxonomy(Taxonomy taxonomy) throws IndexBuilderException;
 }

@@ -18,5 +18,5 @@ public class IndexBuilder {
     static protected Logger log = Logger.getLogger(IndexBuilder.class);
 
     /** The sources for index construction */
-    private Map<String, NameSource> sources;
+    private Map<String, NameProvider> sources;
 }

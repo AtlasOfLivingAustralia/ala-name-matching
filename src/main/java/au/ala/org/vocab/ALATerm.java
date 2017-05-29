@@ -7,7 +7,7 @@ import org.gbif.dwc.terms.Term;
 
  * Copyright (c) 2016 CSIRO
  */
-enum ALATerm implements Term {
+public enum ALATerm implements Term {
     nameComplete,
     nameFormatted,
     nameID,

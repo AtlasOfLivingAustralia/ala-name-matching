@@ -1,0 +1,8 @@
+{
+  "nameAnalyserClass" : "au.org.ala.names.index.ALANameAnalyser",
+  "providers" : [ {
+    "id" : "ID-1",
+    "priority" : 1.5
+  } ],
+  "defaultProvider" : "ID-1"
+}

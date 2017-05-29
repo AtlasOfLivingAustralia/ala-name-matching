@@ -1,7 +1,12 @@
 package au.org.ala.names.index;
 
+import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.SynonymType;
 import org.gbif.api.exception.UnparsableException;
 import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.api.vocabulary.NomenclaturalCode;
+import org.gbif.api.vocabulary.NomenclaturalStatus;
+import org.gbif.api.vocabulary.TaxonomicStatus;
 import org.gbif.nameparser.PhraseNameParser;
 
 import java.util.Comparator;
@@ -15,7 +20,7 @@ import java.util.Comparator;
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright (c) 2017 CSIRO
  */
-abstract public class NameAnalyser implements Comparator<NameAnalyser.NameKey> {
+abstract public class NameAnalyser implements Comparator<NameKey> {
     private PhraseNameParser parser;
 
     public NameAnalyser() {
@@ -23,11 +28,15 @@ abstract public class NameAnalyser implements Comparator<NameAnalyser.NameKey> {
     }
 
     public NameKey analyse(String code, String scientificName, String scientificNameAuthorship) throws UnparsableException {
+        NomenclaturalCode canonicalCode = this.canonicaliseCode(code);
+        return this.analyse(canonicalCode, scientificName, scientificNameAuthorship);
+    }
+
+    public NameKey analyse(NomenclaturalCode code, String scientificName, String scientificNameAuthorship) throws UnparsableException {
         ParsedName parsedName = this.parser.parse(scientificName);
-        String canonicalCode = this.canonicaliseCode(code);
         String canonicalName = this.canonicaliseName(parsedName);
         String canonicalAuthor = this.canonicaliseAuthor(parsedName, scientificNameAuthorship);
-        return new NameKey(canonicalCode, canonicalName, canonicalAuthor);
+        return new NameKey(this, code, canonicalName, canonicalAuthor);
     }
 
     /**
@@ -37,7 +46,43 @@ abstract public class NameAnalyser implements Comparator<NameAnalyser.NameKey> {
      *
      * @return The canonicalised code
      */
-    abstract public String canonicaliseCode(String code);
+    abstract public NomenclaturalCode canonicaliseCode(String code);
+
+    /**
+     * Canonicalise the taxonomic status
+     *
+     * @param taxonomicStatus The taxonomic status
+     *
+     * @return The canonicalised taxonomic status
+     */
+    abstract public TaxonomicStatus canonicaliseTaxonomicStatus(String taxonomicStatus);
+
+    /**
+     * Canonicalise the synonym type
+     *
+     * @param taxonomicStatus The taxonomic status
+     *
+     * @return The canonicalised synonym type, if present
+     */
+    abstract public SynonymType canonicaliseSynonymType(String taxonomicStatus);
+
+    /**
+     * Canonicalise the rank
+     *
+     * @param rank The rank name
+     *
+     * @return The canonicalised rank, if present
+     */
+    abstract public RankType canonicaliseRank(String rank);
+
+    /**
+     * Canonicalise a nomenclatural status
+     *
+     * @param nomenclaturalStatus The nomenclatural status
+     *
+     * @return The canonicalised nomenclatural status, if present
+     */
+    abstract public NomenclaturalStatus canonicaliseNomenclaturalStatus(String nomenclaturalStatus);
 
     /**
      * Canonicalise the scientfic name
@@ -82,37 +127,4 @@ abstract public class NameAnalyser implements Comparator<NameAnalyser.NameKey> {
      * @return The resulting hash code
      */
     abstract public int hashCode(NameKey key1);
-
-    /**
-     * A name key is a unique identifier for either a scientific name (code + name) or
-     * a taxonomic concept (code + name + authorship)
-     */
-    public class NameKey {
-        /** The nomenclatural code for homonyms */
-        public String code;
-        /** The scientific name */
-        public String scientificName;
-        /** The authorship */
-        public String scientificNameAuthorship;
-
-        public NameKey(String code, String scientificName, String scientificNameAuthorship) {
-            this.code = code;
-            this.scientificName = scientificName;
-            this.scientificNameAuthorship = scientificNameAuthorship;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            NameKey nameKey = (NameKey) o;
-            return NameAnalyser.this.compare(this, nameKey) == 0;
-        }
-
-        @Override
-        public int hashCode() {
-            return NameAnalyser.this.hashCode(this);
-        }
-    }
 }

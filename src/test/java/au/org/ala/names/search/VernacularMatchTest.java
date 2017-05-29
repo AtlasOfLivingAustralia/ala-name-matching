@@ -1,8 +1,9 @@
 package au.org.ala.names.search;
 
-import au.org.ala.names.model.*;
-import org.gbif.ecat.voc.NameType;
-import org.junit.Ignore;
+import au.org.ala.names.model.LinnaeanRankClassification;
+import au.org.ala.names.model.MatchType;
+import au.org.ala.names.model.MetricsResultDTO;
+import au.org.ala.names.model.NameSearchResult;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

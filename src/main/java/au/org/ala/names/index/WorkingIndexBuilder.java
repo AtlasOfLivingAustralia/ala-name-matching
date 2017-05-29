@@ -26,7 +26,7 @@ public class WorkingIndexBuilder {
     static protected Logger log = Logger.getLogger(WorkingIndexBuilder.class);
 
     /** The source index builder */
-    private Collection<NameSource> sources;
+    private Collection<NameProvider> sources;
     /** The target directory */
     private File target;
     /** The index writer */
@@ -38,7 +38,7 @@ public class WorkingIndexBuilder {
      * @param sources The name sources
      * @param target The target directory to build the index in
      */
-    public WorkingIndexBuilder(Collection<NameSource> sources, File target) {
+    public WorkingIndexBuilder(Collection<NameProvider> sources, File target) {
         this.sources = sources;
         this.target = target;
         this.writer = null;
@@ -49,7 +49,7 @@ public class WorkingIndexBuilder {
      *
      * @param source The source
      */
-    protected void build(NameSource source) {
+    protected void build(NameProvider source) {
 
     }
 
@@ -74,7 +74,7 @@ public class WorkingIndexBuilder {
         log.info("Building working index at " + this.target);
         try {
             this.begin();
-            for (NameSource source : this.sources)
+            for (NameProvider source : this.sources)
                 this.build(source);
         } finally {
             this.commit();

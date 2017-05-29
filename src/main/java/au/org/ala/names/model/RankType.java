@@ -39,9 +39,9 @@ public enum RankType {
     SUBCLASS(3200, "subclass", Rank.SUBCLASS, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subclass"),
     INFRACLASS(3350, "infraclass", null, null),
     SUBINFRACLASS(3370, "subinfraclass", null, null),
-    SUPERDIVISION_ZOOLOGY(3450, "superdivision zooology", null, null),
-    DIVISION_ZOOLOGY(3500, "division zooology", null, null),
-    SUBDIVISION_ZOOLOGY(3550, "subdivision zooology", null, null),
+    SUPERDIVISION_ZOOLOGY(3450, "superdivision zoology", null, null),
+    DIVISION_ZOOLOGY(3500, "division zoology", null, null),
+    SUBDIVISION_ZOOLOGY(3550, "subdivision zoology", null, null),
     SUPERCOHORT(3650, "supercohort", null, null),
     COHORT(3700, "cohort", null, null),
     SUBCOHORT(3750, "subcohort", null, null),
@@ -50,12 +50,12 @@ public enum RankType {
     SUBORDER(4200, "suborder", Rank.SUBORDER, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Suborder"),
     INFRAORDER(4350, "infraorder", Rank.INFRAORDER, null),
     PARVORDER(4400, "parvorder", Rank.PARVORDER, null),
-    SUPERSERIES_ZOOLOGY(4445, "superseries zooology", null, null),
-    SERIES_ZOOLOGY(4450, "series zooology", null, null),
-    SUBSERIES_ZOOLOGY(4455, "subseries zooology", null, null),
-    SUPERSECTION_ZOOLOGY(4465, "supersectionzooology", null, null),
-    SECTION_ZOOLOGY(4470, "section zooology", null, null),
-    SUBSECTION_ZOOLOGY(4475, "subsection zooology", null, null),
+    SUPERSERIES_ZOOLOGY(4445, "superseries zoology", null, null),
+    SERIES_ZOOLOGY(4450, "series zoology", null, null),
+    SUBSERIES_ZOOLOGY(4455, "subseries zoology", null, null),
+    SUPERSECTION_ZOOLOGY(4465, "supersectionzoology", null, null),
+    SECTION_ZOOLOGY(4470, "section zoology", null, null),
+    SUBSECTION_ZOOLOGY(4475, "subsection zoology", null, null),
     SUPERFAMILY(4500, "superfamily", Rank.SUPERFAMILY, null, "Superfamily"),
     FAMILY(5000, "family", Rank.FAMILY, 2f, "http://rs.tdwg.org/ontology/voc/TaxonRank#Family", "Family"),
     SUBFAMILY(5500, "subfamily", Rank.SUBFAMILY, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subfamily"),
@@ -165,6 +165,14 @@ public enum RankType {
      */
     public String getRank() {
         return this.field;
+    }
+
+
+    /**
+     * @return The additional labels for the rank
+     */
+    public String[] getStrRanks() {
+        return strRanks;
     }
 
     /**
