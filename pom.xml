@@ -10,10 +10,8 @@
     <groupId>au.org.ala</groupId>
     <artifactId>ala-name-matching</artifactId>
     <packaging>jar</packaging>
-    <!-- Major version increment due to package structure change -->
-    <version>2.4.2</version>
+    <version>2.4.3-SNAPSHOT</version>
     <name>ALA Name Matching</name>
-    <!-- SCM entry that points to SVN directory that contains pom -->
     <scm>
         <connection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</connection>
         <url>https://github.com/AtlasOfLivingAustralia/ala-name-matching</url>
