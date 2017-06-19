@@ -35,7 +35,6 @@ import org.apache.lucene.util.Version;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.UnparsableException;
 import org.gbif.ecat.voc.NameType;
-import org.gbif.ecat.voc.Rank;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -45,7 +44,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -1781,14 +1779,64 @@ public class ALANameSearcher {
     }
 
     public static void main(String[] args) throws IOException {
+        if (args.length < 1) {
+            System.out.println("usage: java -jar ala-name-matching.jar au.org.ala.names.search.ALANameSearcher name [index]");
+            System.exit(1);
+        }
+        String name = args[0];
+        String index = args.length > 1 ? args[1] : "/data/lucene/namematching";
 
-        ALANameSearcher nameindex = new ALANameSearcher(args[0]);
-        String name = nameindex.getCommonNameForLSID("urn:lsid:biodiversity.org.au:afd.taxon:31a9b8b8-4e8f-4343-a15f-2ed24e0bf1ae");
-        System.out.println(name);
+        try {
+            ALANameSearcher nameindex = new ALANameSearcher(index);
+            LinnaeanRankClassification lc = new LinnaeanRankClassification();
+            lc.setScientificName(name);
+            MetricsResultDTO result = nameindex.searchForRecordMetrics(lc, true, true);
+            if (result == null) {
+                System.out.println("Name " + name + " not found");
+            } else {
+                System.out.println("Results for " + name);
+                if (result.getResult() == null) {
+                    System.out.println("No result");
+                } else {
+                    System.out.println("Scientific Name: " + result.getResult().getRankClassification().getScientificName());
+                    System.out.println("Authorship: " + result.getResult().getRankClassification().getAuthorship());
+                    System.out.println("LSID: " + result.getResult().getLsid());
+                    System.out.println("Accepted LSID: " + result.getResult().getAcceptedLsid());
+                    System.out.println("Rank: " + result.getResult().getRank());
+                    System.out.println("Kingdom LSID: " + result.getResult().getRankClassification().getKid());
+                    System.out.println("Kingdom: " + result.getResult().getRankClassification().getKingdom());
+                    System.out.println("Phylum: " + result.getResult().getRankClassification().getPhylum());
+                    System.out.println("Plylum LSID: " + result.getResult().getRankClassification().getPid());
+                    System.out.println("Class: " + result.getResult().getRankClassification().getKlass());
+                    System.out.println("Class LSID: " + result.getResult().getRankClassification().getCid());
+                    System.out.println("Order LSID: " + result.getResult().getRankClassification().getOid());
+                    System.out.println("Order " + result.getResult().getRankClassification().getOrder());
+                    System.out.println("Family: " + result.getResult().getRankClassification().getFamily());
+                    System.out.println("Family LSID: " + result.getResult().getRankClassification().getFid());
+                    System.out.println("Genus: " + result.getResult().getRankClassification().getGenus());
+                    System.out.println("Genus LSID: " + result.getResult().getRankClassification().getGid());
+                    System.out.println("Species LSID: " + result.getResult().getRankClassification().getSid());
+                    System.out.println("Species: " + result.getResult().getRankClassification().getSpecies());
+                    System.out.println("Specific Epithet: " + result.getResult().getRankClassification().getSpecificEpithet());
+                    System.out.println("Infraspecific Epithet: " + result.getResult().getRankClassification().getInfraspecificEpithet());
+                    System.out.println("Classification Rank: " + result.getResult().getRankClassification().getRank());
+                    System.out.println("Subspecies: " + result.getResult().getRankClassification().getSubspecies());
+                    System.out.println("Name Type: " + result.getNameType());
+                    System.out.println("Match Type: " + result.getResult().getMatchType());
+                    System.out.println("Synonym Type: " + result.getResult().getSynonymType());
+                    System.out.println("Homonym: " + result.getResult().isHomonym());
+                    System.out.println("Synonym: " + result.getResult().isSynonym());
+                    System.out.println("ID: " + result.getResult().getId());
+                    System.out.println("Left: " + result.getResult().getLeft());
+                    System.out.println("Right: " + result.getResult().getRight());
+                }
+                System.out.println("Errors: " + result.getErrors());
+                System.out.println("Last Exception: " + result.getLastException());
 
-        Set<String> names = nameindex.getCommonNamesForLSID("urn:lsid:biodiversity.org.au:apni.taxon:295861", 100);
-        for(String commonName: names){
-            System.out.println(commonName);
+            }
+        } catch (SearchResultException e) {
+            System.err.println("Error looking up " + name + ": " + e.getMessage());
+            e.printStackTrace(System.err);
         }
     }
 }
