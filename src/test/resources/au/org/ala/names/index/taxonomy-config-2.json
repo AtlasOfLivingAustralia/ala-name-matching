@@ -1,0 +1,18 @@
+{
+  "nameAnalyserClass" : "au.org.ala.names.index.ALANameAnalyser",
+  "resolverClass" : "au.org.ala.names.index.ALATaxonResolver",
+  "providers" : [ {
+    "id" : "unknown",
+      "defaultScore" : 100
+  },{
+    "id" : "dr100",
+    "defaultScore" : 150
+  },{
+    "id" : "dr101",
+    "defaultScore" : 125,
+    "scores" : {
+      "Hypnales": 200
+    }
+  }],
+  "defaultProvider" : "unknown"
+}

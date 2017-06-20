@@ -1,0 +1,149 @@
+{
+  "nameAnalyserClass" : "au.org.ala.names.index.ALANameAnalyser",
+  "resolverClass" : "au.org.ala.names.index.ALATaxonResolver",
+  "providers" : [
+    {
+      "id" : "default",
+      "defaultScore" : 0,
+      "adjuster": {
+        "forbidden": [
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonomicStatus": "INCERTAE_SEDIS"
+          }
+        ],
+        "adjustments": [
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "HYBRID"
+            },
+            "adjustment": -100
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "INFORMAL"
+            },
+            "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "CULTIVAR"
+            },
+            "adjustment": -100
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "CANDIDATUS"
+            },
+            "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "DOUBTFUL"
+            },
+            "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "PLACEHOLDER"
+            },
+            "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "NO_NAME"
+            },
+            "adjustment": -100
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "ALTERNATIVE"
+            },
+            "adjustment": -10
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "PROVISIONAL"
+            },
+            "adjustment": -10
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "DOUBTFUL"
+            },
+            "adjustment": -20
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "FORGOTTEN"
+            },
+            "adjustment": -20
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "ORTHOGRAPHIC_VARIANT"
+            },
+            "adjustment": -10
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "REJECTED"
+            },
+            "adjustment": -20
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "ILLEGITIMATE"
+            },
+            "adjustment": -20
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "INVALID"
+            },
+            "adjustment": -10
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "DENIED"
+            },
+            "adjustment": -10
+          }
+        ]
+      }
+    },
+    {
+      "id" : "dr2702",
+      "description": "AusFungi",
+      "parent": "default",
+      "defaultScore" : 1000,
+      "owner": [
+        "Fungi"
+      ]
+    },
+    {
+      "id" : "inference",
+      "description": "Provider of inferences from the  ",
+      "parent": "default",
+      "defaultScore" : 0
+    }
+  ],
+  "defaultProvider" : "default",
+  "inferenceProvider" : "inference"
+}

@@ -1,0 +1,43 @@
+package au.org.ala.names.index;
+
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * Something that can construct a taxon resolution out of a bunch of taxon instances.
+ * <p>
+ * Resolvers are generally singleton instances that are attached to a {@link Taxonomy} so
+ * beware of including state.
+ * </p>
+ *
+ * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
+ * @copyright Copyright &copy; 2017 Atlas of Living Australia
+ */
+abstract public interface TaxonResolver {
+    /**
+     * Compute a list of principal instances.
+     * <p>
+     * The principal instances are the "preferred" list of instances that
+     * can be used to decide which of several instances the taxonomy is going to use.
+     * </p>
+     *
+     * @param instances The complete set of instances
+     *
+     * @return The instance list, ordered with the highest score first
+     *
+     * @throws IndexBuilderException if unable to collect principals
+     */
+    public List<TaxonConceptInstance> principals(Collection<TaxonConceptInstance> instances) throws IndexBuilderException;
+
+    /**
+     * Resolve a set of instances against a list of principals.
+     *
+     * @param principals The list of principals.
+     * @param instances The instances
+     *
+     * @return A complete resolution of the instances against the principals
+     *
+     * @throws IndexBuilderException If unable to resolve things.
+     */
+    public TaxonResolution resolve(List<TaxonConceptInstance> principals, Collection<TaxonConceptInstance> instances) throws IndexBuilderException;
+}

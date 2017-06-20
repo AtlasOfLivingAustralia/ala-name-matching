@@ -229,7 +229,8 @@ public class NameListComparer {
                 throw new IllegalArgumentException("Can't find input file " + nf);
             Reader names = new InputStreamReader(new FileInputStream(nf), "UTF-8");
             String of = cmd.getOptionValue('o', "-");
-            Writer output = of == null || of.equals("-") ? new OutputStreamWriter(System.out) : new FileWriter(of);
+            OutputStream os = of == null || of.equals("-") ? System.out : new FileOutputStream(of);
+            Writer output = new OutputStreamWriter(os, "UTF-8");
             File index = new File(cmd.getOptionValue('i', "/data/lucene/namematching"));
             boolean tabs = cmd.hasOption("tabs");
             NameListComparer comparer = new NameListComparer(names, output, index, tabs);

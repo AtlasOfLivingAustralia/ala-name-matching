@@ -1,9 +1,11 @@
 package au.org.ala.names.index;
 
+import au.ala.org.vocab.ALATerm;
+import au.org.ala.names.util.FileUtils;
 import org.apache.commons.collections.MapUtils;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.Term;
+import org.gbif.dwc.terms.*;
 
+import java.io.*;
 import java.util.*;
 
 /**
@@ -11,13 +13,17 @@ import java.util.*;
  * <p>
  * Subclasses can be used to load name information into a taxonomy.
  * </p>
+ * <p>
+ * Required and additional fields are derived from
+ * https://tools.gbif.org/dwca-validator/extensions.do
+ * </p>
  *
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
 abstract public class NameSource {
     /** Fields expected in the DwCA */
-    protected static final Set<Term> TAXON_REQUIRED = new HashSet<Term>(Arrays.asList(
+    protected static final List<Term> TAXON_REQUIRED = Arrays.asList(
             DwcTerm.taxonID,
             DwcTerm.nomenclaturalCode,
             DwcTerm.acceptedNameUsageID,
@@ -25,10 +31,11 @@ abstract public class NameSource {
             DwcTerm.scientificName,
             DwcTerm.scientificNameAuthorship,
             DwcTerm.taxonomicStatus,
-            DwcTerm.taxonRank
-    ));
+            DwcTerm.taxonRank,
+            DwcTerm.datasetID
+    );
     /** Optional fields from the DwCA */
-    protected static final Set<Term> ADDITIONAL_FIELDS = new HashSet<Term>(Arrays.asList(
+    protected static final List<Term> TAXON_ADDITIONAL = Arrays.asList(
             DwcTerm.taxonConceptID,
             DwcTerm.scientificNameID,
             DwcTerm.nomenclaturalStatus,
@@ -39,12 +46,139 @@ abstract public class NameSource {
             DwcTerm.family,
             DwcTerm.genus,
             DwcTerm.specificEpithet,
-            DwcTerm.infraspecificEpithet
-    ));
+            DwcTerm.infraspecificEpithet,
+            ALATerm.nameComplete,
+            ALATerm.nameFormatted,
+            DwcTerm.nameAccordingTo,
+            DwcTerm.namePublishedIn,
+            DwcTerm.namePublishedInYear,
+            DcTerm.source
+    );
+    /** Terms not to be included in taxon outputs */
+    protected static final List<Term> TAXON_FORBIDDEN = Arrays.asList(
+            DwcTerm.kingdom,
+            DwcTerm.phylum,
+            DwcTerm.class_,
+            DwcTerm.order,
+            DwcTerm.family,
+            DwcTerm.genus,
+            DwcTerm.specificEpithet,
+            DwcTerm.infraspecificEpithet,
+            ALATerm.kingdomID,
+            ALATerm.phylumID,
+            ALATerm.classID,
+            ALATerm.orderID,
+            ALATerm.familyID,
+            ALATerm.genusID,
+            ALATerm.speciesID
+
+    );
+    /** Fields expected for an identifier */
+    protected static final List<Term> IDENTIFIER_REQUIRED = Arrays.asList(
+            DwcTerm.taxonID,
+            DcTerm.identifier,
+            DwcTerm.datasetID
+    );
+    /** Fields optional for an identifier */
+    protected static final List<Term> IDENTIFIER_ADDITIONAL = Arrays.asList(
+            DcTerm.title,
+            DcTerm.subject,
+            DcTerm.format,
+            ALATerm.status,
+            DcTerm.source
+    );
+    /** Terms not to be included in identifier outputs */
+    protected static final List<Term> IDENTIFIER_FORBIDDEN = Arrays.asList(
+    );
+    /** Fields expected for a verncular name */
+    protected static final List<Term> VERNACULAR_REQUIRED = Arrays.asList(
+            DwcTerm.taxonID,
+            DwcTerm.vernacularName,
+            DwcTerm.datasetID
+    );
+    /** Fields optional for an identifier */
+    protected static final List<Term> VERNACULAR_ADDITIONAL = Arrays.asList(
+            DcTerm.language,
+            DcTerm.temporal,
+            DwcTerm.locationID,
+            DwcTerm.locality,
+            DwcTerm.countryCode,
+            DwcTerm.sex,
+            DwcTerm.lifeStage,
+            GbifTerm.isPlural,
+            GbifTerm.isPreferredName,
+            GbifTerm.organismPart,
+            DwcTerm.taxonRemarks,
+            DcTerm.source
+    );
+    /** Terms not to be included in identifier outputs */
+    protected static final List<Term> VERNACULAR_FORBIDDEN = Arrays.asList(
+    );
+    /** Fields expected for a speices distribution */
+    protected static final List<Term> DISTRIBUTION_REQUIRED = Arrays.asList(
+            DwcTerm.taxonID,
+            DwcTerm.datasetID
+    );
+    /** Fields optional for a speices distribution */
+    protected static final List<Term> DISTRIBUTION_ADDITIONAL = Arrays.asList(
+            DwcTerm.countryCode,
+            DwcTerm.stateProvince,
+            DwcTerm.locationID,
+            DwcTerm.locality,
+            DwcTerm.lifeStage,
+            DwcTerm.occurrenceStatus,
+            IucnTerm.threatStatus,
+            DwcTerm.establishmentMeans,
+            GbifTerm.appendixCITES,
+            DwcTerm.eventDate,
+            DwcTerm.startDayOfYear,
+            DwcTerm.endDayOfYear,
+            DwcTerm.occurrenceRemarks,
+            DcTerm.source
+    );
+    /** Terms not to be included in identifier outputs */
+    protected static final List<Term> DISTRIBUTION_FORBIDDEN = Arrays.asList(
+    );
+
+
     /** A map of row types and what is needed to ensure that row is useful */
-    protected static final Map<String, Set<Term>> REQUIRED_TERMS = MapUtils.putAll(new HashMap<String, Set<Term>>(),
+    protected static final Map<Term, List<Term>> REQUIRED_TERMS = MapUtils.putAll(new HashMap<String, Set<Term>>(),
             new Object[][] {
-                    { DwcTerm.Taxon.qualifiedName(), TAXON_REQUIRED }
+                    { DwcTerm.Taxon, TAXON_REQUIRED },
+                    { GbifTerm.Identifier, IDENTIFIER_REQUIRED },
+                    { GbifTerm.VernacularName, VERNACULAR_REQUIRED },
+                    { GbifTerm.Distribution, DISTRIBUTION_REQUIRED },
+                    { ALATerm.TaxonVariant, TAXON_REQUIRED }
+            }
+    );
+    /** A map of row types and helpful additional terms */
+    protected static final Map<Term, List<Term>> ADDIIONAL_TERMS = MapUtils.putAll(new HashMap<String, List<Term>>(),
+            new Object[][] {
+                    { DwcTerm.Taxon, TAXON_ADDITIONAL },
+                    { GbifTerm.Identifier, IDENTIFIER_ADDITIONAL },
+                    { GbifTerm.VernacularName, VERNACULAR_ADDITIONAL },
+                    { GbifTerm.Distribution, DISTRIBUTION_ADDITIONAL },
+                    { ALATerm.TaxonVariant, TAXON_ADDITIONAL }
+            }
+    );
+    /** A map of row types and terms not to be included in outputsd */
+    protected static final Map<Term, List<Term>> FORBIDDEN_TERMS = MapUtils.putAll(new HashMap<String, List<Term>>(),
+            new Object[][] {
+                    { DwcTerm.Taxon, TAXON_FORBIDDEN },
+                    { GbifTerm.Identifier, IDENTIFIER_FORBIDDEN },
+                    { GbifTerm.VernacularName, VERNACULAR_FORBIDDEN },
+                    { GbifTerm.Distribution, DISTRIBUTION_FORBIDDEN },
+                    { ALATerm.TaxonVariant, TAXON_FORBIDDEN }
+            }
+    );
+    /** Only include the required/additional terms */
+    protected static final Map<Term, Boolean> ONLY_INCLUDE_ALLOWED = MapUtils.putAll(new HashMap<String, Boolean>(),
+            new Object[][] {
+                    { DwcTerm.Taxon, false },
+                    { GbifTerm.Identifier, false },
+                    { GbifTerm.VernacularName, false },
+                    { GbifTerm.Distribution, false },
+                    { ALATerm.TaxonVariant, true }
             }
     );
 
@@ -63,4 +197,33 @@ abstract public class NameSource {
      * @throws IndexBuilderException if unable to load the data
      */
     abstract public void loadIntoTaxonomy(Taxonomy taxonomy) throws IndexBuilderException;
+
+    /**
+     * Create a name source
+     * <p>
+     * The name source
+     * </p>
+     *
+     * @param f The file name
+     *
+     * @return A name source
+     *
+     * @throws IndexBuilderException if unable to create the name source
+     */
+    public static NameSource create(String f) throws IndexBuilderException {
+        try {
+            File nf = new File(f);
+            NameSource ns;
+            if (!nf.exists())
+                throw new IndexBuilderException("Name source " + nf + " does not exist");
+            if (nf.isDirectory())
+                ns = new DwcaNameSource(nf);
+            else
+                ns = new CSVNameSource(new InputStreamReader(new FileInputStream(nf), "UTF-8"));
+            ns.validate();
+            return ns;
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
 }

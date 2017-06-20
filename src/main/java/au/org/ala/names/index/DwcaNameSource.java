@@ -2,6 +2,7 @@ package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.SynonymType;
+import au.org.ala.names.model.TaxonomicType;
 import org.apache.commons.collections.MapUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -9,18 +10,19 @@ import org.apache.lucene.document.StringField;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.api.vocabulary.TaxonomicStatus;
-import org.gbif.dwc.record.Record;
-import org.gbif.dwc.record.StarRecord;
+import org.gbif.dwca.record.Record;
+import org.gbif.dwca.record.StarRecord;
 import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwc.text.Archive;
-import org.gbif.dwc.text.ArchiveFactory;
-import org.gbif.dwc.text.ArchiveFile;
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.io.ArchiveFactory;
+import org.gbif.dwca.io.ArchiveFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A source of names from a Darwin Core Archive
@@ -71,7 +73,7 @@ public class DwcaNameSource extends NameSource {
      * @throws IndexBuilderException if there is a problem with the file
      */
     protected void checkStructure(ArchiveFile af) throws IndexBuilderException {
-        Set<Term> required = REQUIRED_TERMS.get(af.getRowType());
+        List<Term> required = REQUIRED_TERMS.get(af.getRowType());
 
         if (required != null) {
             for (Term term: required)
@@ -90,6 +92,7 @@ public class DwcaNameSource extends NameSource {
      */
     @Override
     public void loadIntoTaxonomy(Taxonomy taxonomy) throws IndexBuilderException {
+        List<Term> classifiers = TaxonConceptInstance.CLASSIFICATION_FIELDS.stream().filter(t -> archive.getCore().hasTerm(t)).collect(Collectors.toList());
         try {
             for (StarRecord record : this.archive) {
                 Record core = record.core();
@@ -99,19 +102,48 @@ public class DwcaNameSource extends NameSource {
                 String scientificName = core.value(DwcTerm.scientificName);
                 String scientificNameAuthorship = core.value(DwcTerm.scientificNameAuthorship);
                 String year = core.value(DwcTerm.namePublishedInYear);
-                TaxonomicStatus taxonomicStatus = taxonomy.resolveTaxonomicStatus(core.value(DwcTerm.taxonomicStatus));
-                SynonymType synonymType = taxonomy.resolveSynonymType(core.value(DwcTerm.taxonomicStatus));
+                TaxonomicType taxonomicStatus = taxonomy.resolveTaxonomicType(core.value(DwcTerm.taxonomicStatus));
                 RankType rank = taxonomy.resolveRank(core.value(DwcTerm.taxonRank));
                 Set<NomenclaturalStatus> nomenclaturalStatus = taxonomy.resolveNomenclaturalStatus(core.value(DwcTerm.nomenclaturalStatus));
                 String parentNameUsageID = core.value(DwcTerm.parentNameUsageID);
                 String acceptedNameUsageID = core.value(DwcTerm.acceptedNameUsageID);
-                TaxonConceptInstance instance = new TaxonConceptInstance(taxonID, code, provider, scientificName, scientificNameAuthorship, year, taxonomicStatus, synonymType, rank, nomenclaturalStatus, parentNameUsageID, acceptedNameUsageID);
+                Map<Term, Optional<String>> classification = classifiers.stream().collect(Collectors.toMap(t -> t, t -> Optional.ofNullable(core.value(t))));
+                TaxonConceptInstance instance = new TaxonConceptInstance(taxonID, code, provider, scientificName, scientificNameAuthorship, year, taxonomicStatus, rank, nomenclaturalStatus, parentNameUsageID, acceptedNameUsageID, classification);
                 taxonomy.addInstance(instance);
+
+                List<Document> docs = new ArrayList<>();
+                docs.add(this.makeDocument(core));
+                for (List<Record> ext: record.extensions().values()) {
+                    for (Record er: ext) {
+                        docs.add(makeDocument(er));
+                    }
+                }
+                taxonomy.addRecords(docs);
+
             }
         } catch (IndexBuilderException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new IndexBuilderException("Unable to load archive " + this.archive.getLocation(), ex);
         }
+    }
+
+    /**
+     * Convert a record into a lucene document
+     *
+     * @param record The record
+     *
+     * @return The record as a document
+     */
+    private Document makeDocument(Record record) {
+        Document doc = new Document();
+        doc.add(new StringField("type", record.rowType().qualifiedName(), Field.Store.YES));
+        doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
+        for (Term term: record.terms()) {
+            String value = record.value(term);
+            if (term != null && value != null && !value.isEmpty())
+                doc.add(new StringField(term.qualifiedName(), value, Field.Store.YES));
+        }
+        return doc;
     }
 }

@@ -2,7 +2,13 @@
   "nameAnalyserClass" : "au.org.ala.names.index.ALANameAnalyser",
   "providers" : [ {
     "id" : "ID-1",
-    "priority" : 1.5
+    "defaultScore" : 150,
+    "scores" : { },
+    "owner" : [ ],
+    "adjuster" : {
+      "forbidden" : [ ],
+      "adjustments" : [ ]
+    }
   } ],
   "defaultProvider" : "ID-1"
 }

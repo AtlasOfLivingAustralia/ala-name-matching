@@ -1,12 +1,11 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
-import au.org.ala.names.model.SynonymType;
+import au.org.ala.names.model.TaxonomicType;
 import org.gbif.api.exception.UnparsableException;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
-import org.gbif.api.vocabulary.TaxonomicStatus;
 import org.gbif.nameparser.PhraseNameParser;
 
 import java.util.Comparator;
@@ -36,7 +35,7 @@ abstract public class NameAnalyser implements Comparator<NameKey> {
         ParsedName parsedName = this.parser.parse(scientificName);
         String canonicalName = this.canonicaliseName(parsedName);
         String canonicalAuthor = this.canonicaliseAuthor(parsedName, scientificNameAuthorship);
-        return new NameKey(this, code, canonicalName, canonicalAuthor);
+        return new NameKey(this, code, canonicalName, canonicalAuthor, parsedName.getType());
     }
 
     /**
@@ -55,16 +54,7 @@ abstract public class NameAnalyser implements Comparator<NameKey> {
      *
      * @return The canonicalised taxonomic status
      */
-    abstract public TaxonomicStatus canonicaliseTaxonomicStatus(String taxonomicStatus);
-
-    /**
-     * Canonicalise the synonym type
-     *
-     * @param taxonomicStatus The taxonomic status
-     *
-     * @return The canonicalised synonym type, if present
-     */
-    abstract public SynonymType canonicaliseSynonymType(String taxonomicStatus);
+    abstract public TaxonomicType canonicaliseTaxonomicType(String taxonomicStatus);
 
     /**
      * Canonicalise the rank

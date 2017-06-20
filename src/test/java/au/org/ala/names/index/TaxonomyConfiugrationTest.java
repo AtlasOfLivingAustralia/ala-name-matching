@@ -1,6 +1,7 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.util.TestUtils;
+import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,14 +18,17 @@ import static org.junit.Assert.*;
  */
 public class TaxonomyConfiugrationTest extends TestUtils {
     private static final String ID_1 = "ID-1";
-    private static final float PRIORITY_1 = 1.5f;
+    private static final String ID_2 = "ID-2";
+    private static final String NAME_1 = "Acacia dealbata";
+    private static final int PRIORITY_1 = 150;
+
 
     @Test
     public void testWrite1() throws Exception {
         NameProvider provider1 = new NameProvider(ID_1, PRIORITY_1);
         TaxonomyConfiguration config = new TaxonomyConfiguration();
         config.providers = Arrays.asList(provider1);
-        config.defaultProvider = ID_1;
+        config.defaultProvider = provider1;
         config.nameAnalyserClass = ALANameAnalyser.class;
         StringWriter sw = new StringWriter();
         config.write(sw);
@@ -35,12 +39,14 @@ public class TaxonomyConfiugrationTest extends TestUtils {
     @Test
     public void testRead1() throws Exception {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-1.json"));
-        assertEquals(ID_1, config.defaultProvider);
         assertNotNull(config.providers);
         assertEquals(1, config.providers.size());
-        assertEquals(ID_1, config.providers.get(0).getId());
-        assertEquals(PRIORITY_1, config.providers.get(0).getPriority(), 0.001);
+        NameProvider provider = config.providers.get(0);
+        assertEquals(ID_1, provider.getId());
         assertEquals(ALANameAnalyser.class, config.nameAnalyserClass);
+        TaxonConceptInstance instance = this.createInstance(ID_2, NomenclaturalCode.BOTANICAL, NAME_1, provider);
+        assertEquals(PRIORITY_1, provider.computeScore(instance));
+        assertEquals(provider, config.defaultProvider);
     }
 
 }

@@ -3,10 +3,10 @@ package au.org.ala.names.index;
 import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.SynonymType;
+import au.org.ala.names.model.TaxonomicType;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
-import org.gbif.api.vocabulary.TaxonomicStatus;
 import org.gbif.checklistbank.authorship.AuthorComparator;
 import org.gbif.checklistbank.model.Equality;
 import org.gbif.checklistbank.utils.SciNameNormalizer;
@@ -34,30 +34,25 @@ public class ALANameAnalyser extends NameAnalyser {
     /** The default set of code identifiers. TODO allow overrides */
     private static final String DEFAULT_NOMENCLATURAL_CODE_MAP = "nomenclatural_codes.csv";
     /** The default set of synonym identifiers. TODO allow overrides */
-    private static final String DEFAULT_TAXONOMIC_STATUS_CODE_MAP = "taxonomic_status_codes.csv";
-    /** The default set of synonym identifiers. TODO allow overrides */
-    private static final String DEFAULT_SYNONYM_CODE_MAP = "synonym_codes.csv";
+    private static final String DEFAULT_TAXONOMIC_TYPE_CODE_MAP = "taxonomic_type_codes.csv";
     /** The default set of synonym identifiers. TODO allow overrides */
     private static final String DEFAULT_RANK_CODE_MAP = "rank_codes.csv";
     /** The default set of synonym identifiers. TODO allow overrides */
     private static final String DEFAULT_NONEMCLATURAL_STATUS_CODE_MAP = "nomenclatural_status_codes.csv";
 
     private Map<String, NomenclaturalCode> codeMap;
-    private Map<String, TaxonomicStatus> taxonomicStatusMap;
+    private Map<String, TaxonomicType> taxonomicTypeMap;
     private Map<String, SynonymType> synonymMap;
     private Map<String, RankType> rankMap;
     private Map<String, NomenclaturalStatus> nomenclaturalStatusMap;
     private NomStatusParser nomStatusParser;
-    private SciNameNormalizer nameNormalizer;
     private AuthorComparator authorComparator;
 
     public ALANameAnalyser() {
         this.nomStatusParser = NomStatusParser.getInstance();
-        this.nameNormalizer = new SciNameNormalizer();
         this.authorComparator = AuthorComparator.createWithAuthormap();
         this.buildCodeMap();
-        this.buildTaxonomicStatusMap();
-        this.buildSynonymMap();
+        this.buildTaxonomicTypeMap();
         this.buildRankMap();
         this.buildNomenclaturalStatusMap();
     }
@@ -98,22 +93,16 @@ public class ALANameAnalyser extends NameAnalyser {
     /**
      * Build a taxonomic status map.
      */
-    protected void buildTaxonomicStatusMap() {
-        this.taxonomicStatusMap = new HashMap<>(64);
-        for (TaxonomicStatus s: TaxonomicStatus.values())
-            this.taxonomicStatusMap.put(s.name().toUpperCase().trim(), s);
-        this.loadCsv(DEFAULT_TAXONOMIC_STATUS_CODE_MAP, this.taxonomicStatusMap, TaxonomicStatus.class);
-    }
-
-    /**
-     * Build a synonym map.
-     */
-    protected void buildSynonymMap() {
-        this.synonymMap = new HashMap<>(64);
-        for (SynonymType s: SynonymType.values())
-            for (String label: s.getLabels())
-                this.synonymMap.put(label.toUpperCase().trim(), s);
-        this.loadCsv(DEFAULT_SYNONYM_CODE_MAP, this.synonymMap, SynonymType.class);
+    protected void buildTaxonomicTypeMap() {
+        this.taxonomicTypeMap = new HashMap<String, TaxonomicType>(64);
+        for (TaxonomicType s: TaxonomicType.values()) {
+            this.taxonomicTypeMap.put(s.getTerm().toUpperCase().trim(), s);
+            if (s.getLabels() != null) {
+                for (String l : s.getLabels())
+                    this.taxonomicTypeMap.put(l.toUpperCase().trim(), s);
+            }
+        }
+        this.loadCsv(DEFAULT_TAXONOMIC_TYPE_CODE_MAP, this.taxonomicTypeMap, TaxonomicType.class);
     }
 
     /**
@@ -136,7 +125,7 @@ public class ALANameAnalyser extends NameAnalyser {
     protected void buildNomenclaturalStatusMap() {
         this.nomenclaturalStatusMap = new HashMap<>(64);
         // Use NomStatusParser for default values
-        this.loadCsv(DEFAULT_SYNONYM_CODE_MAP, this.synonymMap, SynonymType.class);
+        this.loadCsv(DEFAULT_NONEMCLATURAL_STATUS_CODE_MAP, this.synonymMap, SynonymType.class);
     }
 
     /**
@@ -163,27 +152,10 @@ public class ALANameAnalyser extends NameAnalyser {
      * @return The mapped status
      */
     @Override
-    public TaxonomicStatus canonicaliseTaxonomicStatus(String taxonomicStatus) {
+    public TaxonomicType canonicaliseTaxonomicType(String taxonomicStatus) {
         taxonomicStatus = taxonomicStatus.toUpperCase().trim();
-        TaxonomicStatus status = this.taxonomicStatusMap.get(taxonomicStatus);
-        if ((taxonomicStatus != null && !taxonomicStatus.isEmpty()) && status == null)
-            throw new IllegalArgumentException("Invalid taxonomicStatus string " + taxonomicStatus);
-        return status;
-    }
-
-    /**
-     * Canonicalise the synonym type.
-     *
-     * @param taxonomicStatus The taxonomic status term
-     *
-     * @return The mapped synonym type
-     */
-    @Override
-    public SynonymType canonicaliseSynonymType(String taxonomicStatus) {
-        taxonomicStatus = taxonomicStatus.toUpperCase().trim();
-        TaxonomicStatus status = this.taxonomicStatusMap.get(taxonomicStatus);
-        SynonymType type = this.synonymMap.get(taxonomicStatus);
-        if ((taxonomicStatus != null && !taxonomicStatus.isEmpty()) && (status != null && status.isSynonym() && type == null))
+        TaxonomicType type = this.taxonomicTypeMap.get(taxonomicStatus);
+        if ((taxonomicStatus != null && !taxonomicStatus.isEmpty()) && type == null)
             throw new IllegalArgumentException("Invalid taxonomicStatus string " + taxonomicStatus);
         return type;
     }
@@ -293,7 +265,7 @@ public class ALANameAnalyser extends NameAnalyser {
      * </p>
      * @param key1 The key
      *
-     * @return
+     * @return The hash code
      */
     @Override
     public int hashCode(NameKey key1) {

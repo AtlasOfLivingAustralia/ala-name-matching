@@ -3,10 +3,9 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
-import au.org.ala.names.model.SynonymType;
+import au.org.ala.names.model.TaxonomicType;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
-import org.gbif.api.vocabulary.TaxonomicStatus;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -67,7 +66,29 @@ public class ALANameAnalyserTest {
         NameKey key2 = this.analyser.analyse("ICZN", "Abantiades ocellatus Tindale, 1932", null);
         assertFalse(key1.equals(key2));
     }
-    
+
+    @Test
+    public void testkeyEquals5() throws Exception {
+        NameKey key1 = this.analyser.analyse("ICNAFP", "Bryidae Engl.", null);
+        NameKey key2 = this.analyser.analyse("ICNAFP", "Bryidae Engler", null);
+        assertTrue(key1.equals(key2));
+    }
+
+    @Test
+    public void testkeyEquals6() throws Exception {
+        NameKey key1 = this.analyser.analyse("ICNAFP", "Bryidae", "Engl.");
+        NameKey key2 = this.analyser.analyse("ICNAFP", "Bryidae", "Engler");
+        assertTrue(key1.equals(key2));
+    }
+
+    @Test
+    public void testkeyEquals7() throws Exception {
+        NameKey key1 = this.analyser.analyse("ICNAFP", "Bryidae", "Engl.");
+        NameKey key2 = this.analyser.analyse("ICNAFP", "Bryidae", "H.G.A.Engler");
+        assertTrue(key1.equals(key2));
+    }
+
+
     @Test
     public void testCanonicaliseCode1() throws Exception {
         NomenclaturalCode code = this.analyser.canonicaliseCode("ICZN");
@@ -84,54 +105,54 @@ public class ALANameAnalyserTest {
     }
 
     @Test
-    public void testCanonicaliseTaxonomicStatus1() throws Exception {
-        TaxonomicStatus status = this.analyser.canonicaliseTaxonomicStatus("accepted");
-        assertEquals(TaxonomicStatus.ACCEPTED, status);
+    public void testCanonicaliseTaxonomicType1() throws Exception {
+        TaxonomicType status = this.analyser.canonicaliseTaxonomicType("accepted");
+        assertEquals(TaxonomicType.ACCEPTED, status);
     }
 
     @Test
-    public void testCanonicaliseTaxonomicStatus2() throws Exception {
-        TaxonomicStatus status = this.analyser.canonicaliseTaxonomicStatus("synonym");
-        assertEquals(TaxonomicStatus.SYNONYM, status);
+    public void testCanonicaliseTaxonomicType2() throws Exception {
+        TaxonomicType status = this.analyser.canonicaliseTaxonomicType("synonym");
+        assertEquals(TaxonomicType.SYNONYM, status);
     }
     
     @Test
-    public void testCanonicaliseTaxonomicStatus3() throws Exception {
-        TaxonomicStatus status = this.analyser.canonicaliseTaxonomicStatus("");
+    public void testCanonicaliseTaxonomicType3() throws Exception {
+        TaxonomicType status = this.analyser.canonicaliseTaxonomicType("");
         assertNull(status);
     }
 
     @Test
-    public void testCanonicaliseTaxonomicStatus4() throws Exception {
+    public void testCanonicaliseTaxonomicType4() throws Exception {
         try {
-            TaxonomicStatus status = this.analyser.canonicaliseTaxonomicStatus("unknown");
+            TaxonomicType status = this.analyser.canonicaliseTaxonomicType("unknown");
             fail("Expecting exception");
         } catch (IllegalArgumentException ex) {
         }
     }
 
     @Test
-    public void testCanonicaliseSynonymType1() throws Exception {
-        SynonymType status = this.analyser.canonicaliseSynonymType("heterotypicSynonym");
-        assertEquals(SynonymType.SUBJECTIVE_SYNONYM, status);
+    public void testCanonicaliseTaxonomicType5() throws Exception {
+        TaxonomicType status = this.analyser.canonicaliseTaxonomicType("heterotypicSynonym");
+        assertEquals(TaxonomicType.HETEROTYPIC_SYNONYM, status);
     }
 
     @Test
-    public void testCanonicaliseSynonymType2() throws Exception {
-        SynonymType status = this.analyser.canonicaliseSynonymType("synonym");
-        assertEquals(SynonymType.SYNONYM, status);
+    public void testCanonicaliseTaxonomicType6() throws Exception {
+        TaxonomicType status = this.analyser.canonicaliseTaxonomicType("synonym");
+        assertEquals(TaxonomicType.SYNONYM, status);
     }
 
     @Test
-    public void testCanonicaliseSynonymType3() throws Exception {
-        SynonymType status = this.analyser.canonicaliseSynonymType("");
+    public void testCanonicaliseTaxonomicType7() throws Exception {
+        TaxonomicType status = this.analyser.canonicaliseTaxonomicType("");
         assertNull(status);
     }
 
     @Test
-    public void testCanonicaliseSynonymType4() throws Exception {
+    public void testCanonicaliseTaxonomicType8() throws Exception {
         try {
-            SynonymType status = this.analyser.canonicaliseSynonymType("something else");
+            TaxonomicType status = this.analyser.canonicaliseTaxonomicType("something else");
             fail("Expecting exception");
         } catch (IllegalArgumentException ex) {
         }

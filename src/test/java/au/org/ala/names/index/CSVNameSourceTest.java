@@ -1,11 +1,18 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.util.TestUtils;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.TaxonomicStatus;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.Term;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.Assert.*;
 
@@ -42,7 +49,7 @@ public class CSVNameSourceTest extends TestUtils {
     @Test
     public void testLoadIntoTaxonomy1() throws Exception {
         CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-1.csv"));
-        source.loadIntoTaxonomy(this.taxonomy);
+        this.taxonomy.load(Arrays.asList(source));
         TaxonConceptInstance instance = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044710");
         assertNotNull(instance);
         assertEquals("Bryidae", instance.getScientificName());
@@ -55,9 +62,42 @@ public class CSVNameSourceTest extends TestUtils {
         assertEquals("default", instance.getProvider().getId());
         assertEquals(RankType.SUBCLASS, instance.getRank());
         assertNull(instance.getStatus());
-        assertEquals(TaxonomicStatus.ACCEPTED, instance.getTaxonomicStatus());
-        assertNull(instance.getSynonymType());
+        assertEquals(TaxonomicType.ACCEPTED, instance.getTaxonomicStatus());
         assertNull(instance.getYear());
+        Map<Term, Optional<String>> classification = instance.getClassification();
+        assertNotNull(classification);
+        assertEquals("Plantae", classification.get(DwcTerm.kingdom).get());
+        assertEquals("Equisetopsida", classification.get(DwcTerm.class_).get());
+        TaxonConcept concept = instance.getTaxonConcept();
+        assertNotNull(concept);
+        ScientificName name = concept.getScientificName();
+        assertNotNull(name);
+        assertTrue(this.taxonomy.getNames().containsValue(name));
+    }
+
+
+    @Test
+    public void testLoadIntoTaxonomy2() throws Exception {
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-2.csv"));
+        this.taxonomy.load(Arrays.asList(source));
+        TaxonConceptInstance instance = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044710");
+        assertNotNull(instance);
+        assertEquals("Bryidae", instance.getScientificName());
+        assertEquals("Engl.", instance.getScientificNameAuthorship());
+        assertNull(instance.getAcceptedNameUsageID());
+        assertNull(instance.getParentNameUsageID());
+        assertEquals("http://id.biodiversity.org.au/node/ausmoss/10044710", instance.getTaxonID());
+        assertEquals(NomenclaturalCode.BOTANICAL, instance.getCode());
+        assertNotNull(instance.getProvider());
+        assertEquals("default", instance.getProvider().getId());
+        assertEquals(RankType.SUBCLASS, instance.getRank());
+        assertNull(instance.getStatus());
+        assertEquals(TaxonomicType.ACCEPTED, instance.getTaxonomicStatus());
+        assertNull(instance.getYear());
+        Map<Term, Optional<String>> classification = instance.getClassification();
+        assertNotNull(classification);
+        assertEquals("Plantae", classification.get(DwcTerm.kingdom).get());
+        assertEquals("Equisetopsida", classification.get(DwcTerm.class_).get());
         TaxonConcept concept = instance.getTaxonConcept();
         assertNotNull(concept);
         ScientificName name = concept.getScientificName();

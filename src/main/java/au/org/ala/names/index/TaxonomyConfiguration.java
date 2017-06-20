@@ -1,11 +1,10 @@
 package au.org.ala.names.index;
 
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -17,13 +16,18 @@ import java.util.List;
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
+@JsonInclude(value = JsonInclude.Include.NON_NULL)
 public class TaxonomyConfiguration {
     /** The type of name analyser */
     public Class<? extends NameAnalyser> nameAnalyserClass;
+    /** The type of resolver */
+    public Class<? extends TaxonResolver> resolverClass;
     /** The name providers */
     public List<NameProvider> providers;
-    /** The identifier for the default provider */
-    public String defaultProvider;
+    /** The default provider */
+    public NameProvider defaultProvider;
+    /** The name provider that represents inferences made by the taxon algorithm */
+    public NameProvider inferenceProvider;
 
     /**
      * Write the
@@ -33,7 +37,7 @@ public class TaxonomyConfiguration {
     public void write(Writer writer) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
 
-        mapper.enable(SerializationConfig.Feature.INDENT_OUTPUT);
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
         mapper.writeValue(writer, this);
     }
 
@@ -53,12 +57,30 @@ public class TaxonomyConfiguration {
     }
 
     /**
+     * Read a configuration from a source.
+     * <p>
+     * The configuration is assumed to be encoded in UTF-8
+     * </p>
+     *
+     * @param stream The configuration source.
+     *
+     * @return A taxonomy configuration
+     *
+     * @throws IOException if unable to read the configuration
+     */
+    public static TaxonomyConfiguration read(InputStream stream) throws IOException {
+        return read(new InputStreamReader(stream, "UTF-8"));
+    }
+
+    /**
      * Validate this configuration.
      *
      * @throws IndexBuilderException if the configuration is invalid in some way
      */
     public void validate() throws IndexBuilderException {
-        if (!this.providers.stream().anyMatch(p -> p.getId().equals(this.defaultProvider)))
-            throw new IndexBuilderException("Defauiklt provider does not exist");
+        if (!this.providers.stream().anyMatch(p -> p == this.defaultProvider))
+            throw new IndexBuilderException("Default provider not in provider list");
+        if (this.inferenceProvider != null && !this.providers.stream().anyMatch(p -> p == this.inferenceProvider))
+            throw new IndexBuilderException("Inference provider not in provider list");
     }
 }

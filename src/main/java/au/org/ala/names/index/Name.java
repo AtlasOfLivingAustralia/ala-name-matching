@@ -13,7 +13,7 @@ import java.util.Set;
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright (c) 2017 CSIRO
  */
-public class Name {
+abstract public class Name extends TaxonomicElement {
     /** The name key */
     private NameKey key;
 

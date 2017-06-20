@@ -1,12 +1,20 @@
 package au.org.ala.names.index;
 
+import au.ala.org.vocab.ALATerm;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.SynonymType;
+import au.org.ala.names.model.TaxonomicType;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.api.vocabulary.TaxonomicStatus;
+import org.gbif.dwc.terms.DcTerm;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.dwc.terms.Term;
 
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * An instance of a taxonomic concept from a particular source.
@@ -17,7 +25,22 @@ import java.util.Set;
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
-public class TaxonConceptInstance {
+public class TaxonConceptInstance extends TaxonomicElement {
+    /** The maximum number of iterations to attempt during resolution before suspecting somethiing is wrong */
+    public static final int MAX_RESOLUTION_STEPS = 20;
+
+    /** Classification fields from name sources */
+    protected static final List<Term> CLASSIFICATION_FIELDS = Arrays.asList(
+            DwcTerm.kingdom,
+            DwcTerm.phylum,
+            DwcTerm.class_,
+            DwcTerm.order,
+            DwcTerm.family,
+            DwcTerm.genus,
+            DwcTerm.specificEpithet,
+            DwcTerm.infraspecificEpithet
+    );
+
     /** The parent taxon concept */
     private TaxonConcept taxonConcept;
     /** The taxon identifier */
@@ -33,9 +56,7 @@ public class TaxonConceptInstance {
     /** The year of publication, if available */
     private String year;
     /** The taxonomic status */
-    private TaxonomicStatus taxonomicStatus;
-    /** The synonym type */
-    private SynonymType synonymType;
+    private TaxonomicType taxonomicStatus;
     /** The rank */
     private RankType rank;
     /** The status of the name */
@@ -48,6 +69,14 @@ public class TaxonConceptInstance {
     private String acceptedNameUsageID;
     /** The accepted taxon */
     private TaxonConceptInstance accepted;
+    /** Additional classification information */
+    private Map<Term, Optional<String>> classification;
+    /** The base score for position on the taxonomic tree */
+    private Integer baseScore;
+    /** The specific instance score */
+    private Integer score;
+    /** Is this concept forbidden? */
+    private boolean forbidden;
 
     /**
      * Construct a new taxon concept instance
@@ -59,13 +88,13 @@ public class TaxonConceptInstance {
      * @param scientificNameAuthorship The scientific name authorship
      * @param year The year of publication
      * @param taxonomicStatus The taxonomic status
-     * @param synonymType The synonym type
      * @param rank The taxon rank
      * @param status The nomenclatural status
      * @param parentNameUsageID A link to the parent taxon, for accepted taxa
      * @param acceptedNameUsageID A link the the accepted taxon, for synonyms
+     * @param classification The taxonomic classification
      */
-    public TaxonConceptInstance(String taxonID, NomenclaturalCode code, NameProvider provider, String scientificName, String scientificNameAuthorship, String year, TaxonomicStatus taxonomicStatus, SynonymType synonymType, RankType rank, Set<NomenclaturalStatus> status, String parentNameUsageID, String acceptedNameUsageID) {
+    public TaxonConceptInstance(String taxonID, NomenclaturalCode code, NameProvider provider, String scientificName, String scientificNameAuthorship, String year, TaxonomicType taxonomicStatus, RankType rank, Set<NomenclaturalStatus> status, String parentNameUsageID, String acceptedNameUsageID, Map<Term, Optional<String>> classification) {
         this.taxonID = taxonID;
         this.code = code;
         this.provider = provider;
@@ -73,11 +102,11 @@ public class TaxonConceptInstance {
         this.scientificNameAuthorship = scientificNameAuthorship;
         this.year = year;
         this.taxonomicStatus = taxonomicStatus;
-        this.synonymType = synonymType;
         this.rank = rank;
         this.status = status;
         this.parentNameUsageID = parentNameUsageID;
         this.acceptedNameUsageID = acceptedNameUsageID;
+        this.classification = classification;
     }
 
     /**
@@ -160,17 +189,8 @@ public class TaxonConceptInstance {
      *
      * @return The taxonomic status.
      */
-    public TaxonomicStatus getTaxonomicStatus() {
+    public TaxonomicType getTaxonomicStatus() {
         return taxonomicStatus;
-    }
-
-    /**
-     * If this is a synonym, get the synonym type.
-     *
-     * @return The ALA synonym type.
-     */
-    public SynonymType getSynonymType() {
-        return synonymType;
     }
 
     /**
@@ -227,6 +247,130 @@ public class TaxonConceptInstance {
         return accepted;
     }
 
+
+    /**
+     * Get the base score for this instance.
+     * <p>
+     * The score is lazily computed from the parent score, if one exists, or by a specific
+     * </p>
+     *
+     * @return The base score
+     */
+    public int getBaseScore() {
+        if (this.baseScore == null)
+            this.baseScore = this.provider.computeBaseScore(this);
+        return this.baseScore;
+    }
+
+    /**
+     * Get the score for this instance.
+     * <p>
+     * The score is lazily computed from the base score and any modifications
+     * based on taxonomic status, etc.
+     * </p>
+     *
+     * @return The instance score
+     */
+    public int getScore() {
+        if (this.score == null)
+            this.score = this.provider.computeScore(this);
+        return this.score;
+    }
+
+    /**
+     * Is this present because it has to be but is otherwise
+     * forbidden.
+     *
+     * @return True if this is a forbidden instance
+     */
+    public boolean isForbidden() {
+        return forbidden;
+    }
+
+    /**
+     * Set the forbidden flag
+     *
+     * @param forbidden
+     */
+    public void setForbidden(boolean forbidden) {
+        this.forbidden = forbidden;
+    }
+
+    /**
+     * Get the classification of the taxon in terms of higher-level taxa.
+     *
+     * @return
+     */
+    public Map<Term, Optional<String>> getClassification() {
+        return classification;
+    }
+
+    /**
+     * Get the resolved instance for this instance, based on the parent taxon concept.
+     * <p>
+     * This returns one step of resolution.
+     * Use {@link #getResolvedParent()} or {@link #getResolvedAccepted()} for fully resolved result
+     * </p>
+     *
+     * @return The resolved instance, or null for none.
+     */
+    public TaxonConceptInstance getResolved() {
+        return this.taxonConcept == null ? null : this.taxonConcept.getResolved(this);
+    }
+
+    public TaxonConceptInstance getResolvedParent() {
+        TaxonConceptInstance resolved = this.getResolved(this, MAX_RESOLUTION_STEPS);
+        if (resolved == null)
+            return null;
+        TaxonConceptInstance parent = this.getParent();
+        if (parent == null)
+            return null;
+        parent = parent.getResolved(this, MAX_RESOLUTION_STEPS);
+        if (parent == null || !parent.isForbidden())
+            return parent;
+        return parent.getResolvedParent();
+    }
+
+    public TaxonConceptInstance getResolvedAccepted() {
+        TaxonConceptInstance resolved = this.getResolved(this, MAX_RESOLUTION_STEPS);
+        if (resolved == null)
+            return null;
+        TaxonConceptInstance accepted = this.getAccepted();
+        if (accepted == null)
+            return null;
+        accepted = accepted.getResolved(this, MAX_RESOLUTION_STEPS);
+        if (accepted == null || !accepted.isForbidden())
+            return accepted;
+        return accepted.getResolvedAccepted();
+    }
+
+    private TaxonConceptInstance getResolved(TaxonConceptInstance original, int steps) {
+        if (steps <= 0)
+            throw new IllegalArgumentException("Detected possible loop resovling " + original.getLabel());
+        TaxonConceptInstance resolved = this.getResolved();
+        if (resolved != null && this != resolved)
+            return resolved.getResolved(original, steps - 1);
+        return resolved;
+    }
+
+    /**
+     * Has this instance been resolved?
+     *
+     * @return True if there is a resolved instance attached to the parent concept.
+     */
+    public boolean isResolved() {
+        return this.getResolved() != null;
+    }
+
+    /**
+     * Is this a primary instance?
+     *
+     * @return True if the tanomomic status is primary
+     */
+    public boolean isPrimary() {
+        return this.taxonomicStatus != null && this.taxonomicStatus.isPrimary();
+    }
+
     /**
      * Clean up common messinesses with the instance caused by different conventions:
      * <ul>
@@ -265,5 +409,218 @@ public class TaxonConceptInstance {
             if (this.accepted == null)
                 throw new IndexBuilderException("Unable to find accepted taxon " + this.acceptedNameUsageID);
         }
+        if (this.parent == null && this.taxonomicStatus.isAccepted() && this.classification != null) {
+            for (Term cls: CLASSIFICATION_FIELDS) {
+                Optional<String> name = this.classification.get(cls);
+                if (name != null && name.isPresent() && !name.get().equals(this.scientificName)) {
+                    TaxonConceptInstance p = taxonomy.findInstance(this.code, name.get(), this.provider);
+                    if (p != null)
+                        this.parent = p;
+                }
+            }
+        }
+    }
+
+    /**
+     * Is this an instance of an accepted taxon?
+     *
+     * @return True if this is supplied as an accepted taxonomic status
+     */
+    public boolean isAccepted() {
+        return this.taxonomicStatus.isAccepted();
+    }
+
+    /**
+     * Is this an instance of an synonym taxon?
+     *
+     * @return True if this is supplied as an synonym taxonomic status
+     */
+    public boolean isSynonym() {
+        return this.taxonomicStatus.isSynonym();
+    }
+
+    /**
+     * Get a map of taxon information for this particular taxon instance.
+     *
+     * @param taxonomy The taxonomy to collect additional information from
+     *
+     * @return The taxon map
+     *
+     * @throws IOException if unable to retrive source documents
+     */
+    public Map<Term,String> getTaxonMap(Taxonomy taxonomy) throws IOException {
+        List<Map<Term, String>> valuesList = taxonomy.getIndexValues(DwcTerm.Taxon, this.taxonID);
+        Map<Term, String> values;
+        if (valuesList.isEmpty()) {
+            if (this.provider != taxonomy.getInferenceProvider())
+                taxonomy.reportNote("No index entry for {}", this);
+            values = new HashMap<Term, String>();
+        } else {
+            if (valuesList.size() > 1)
+                taxonomy.reportError("Multiple index values for {}, choosing first", this);
+            values = valuesList.get(0);
+        }
+        values.put(DwcTerm.taxonID, this.taxonID);
+        values.put(DwcTerm.nomenclaturalCode, this.code.getAcronym());
+        values.put(DwcTerm.datasetID, this.provider.getId());
+        values.put(DwcTerm.scientificName, this.scientificName);
+        values.put(DwcTerm.scientificNameAuthorship, this.scientificNameAuthorship);
+        values.put(DwcTerm.namePublishedInYear, this.year);
+        values.put(DwcTerm.taxonomicStatus, this.taxonomicStatus.getTerm());
+        values.put(DwcTerm.nomenclaturalStatus, this.status == null ? null : this.status.stream().map(NomenclaturalStatus::getAbbreviatedLabel).collect(Collectors.joining(", ")));
+        values.put(DwcTerm.taxonRank, this.rank.getRank());
+        if (this.parentNameUsageID != null) {
+            TaxonConceptInstance rp = this.getResolvedParent();
+            if (rp == null) {
+                taxonomy.reportError("Unable to resolve parent for {} with parentNameUsageID=" + this.parentNameUsageID, this);
+            } else {
+                values.put(DwcTerm.parentNameUsageID, rp.taxonID);
+            }
+        }
+        if (this.acceptedNameUsageID != null) {
+            TaxonConceptInstance ra = this.getResolvedAccepted();
+            if (ra == null) {
+                taxonomy.reportError("Unable to resolve accepted for {} with acceptedNameUsageID=" + this.acceptedNameUsageID, this);
+            } else {
+                values.put(DwcTerm.acceptedNameUsageID, ra.taxonID);
+            }
+        }
+        return values;
+    }
+
+    /**
+     * Get a list of identifiers associated with this taxon instance.
+     * <p>
+     * The taxon, scientific name and taxon concept identifiers are added if they are not specifically listed.
+     * </p>
+     *
+     * @param taxonomy The taxonomy to collect additional information from
+     *
+     * @return The identifier list
+     *
+     * @throws IOException if unable to retrive source documents
+     */
+    public List<Map<Term,String>> getIdentifierMaps(Taxonomy taxonomy) throws IOException {
+        final Map<Term, String> taxon = this.getTaxonMap(taxonomy);
+        final String scientificNameID = taxon.get(DwcTerm.scientificNameID);
+        final String taxonConceptID = taxon.get(DwcTerm.taxonConceptID);
+        final String source = taxon.get(DcTerm.source);
+        List<Map<Term, String>> valuesList = taxonomy.getIndexValues(GbifTerm.Identifier, this.taxonID);
+        Set<String> identifiers = valuesList.stream().map(values -> values.get(DcTerm.identifier)).collect(Collectors.toSet());
+        if (!identifiers.contains(this.taxonID)) {
+            Map<Term, String> values = new HashMap<>();
+            values.put(DcTerm.identifier, this.taxonID);
+            values.put(DwcTerm.datasetID, this.provider.getId());
+            values.put(DcTerm.title, "Taxon");
+            values.put(ALATerm.status, "current");
+            if (source != null)
+                values.put(DcTerm.source, source);
+            valuesList.add(values);
+        }
+        if (scientificNameID != null && !identifiers.contains(scientificNameID)) {
+            Map<Term, String> values = new HashMap<>();
+            values.put(DcTerm.identifier, scientificNameID);
+            values.put(DwcTerm.datasetID, this.provider.getId());
+            values.put(DcTerm.title, "Scientific Name");
+            values.put(ALATerm.status, "current");
+            if (source != null)
+                values.put(DcTerm.source, source);
+            valuesList.add(values);
+        }
+        if (taxonConceptID != null && !identifiers.contains(taxonConceptID)) {
+            Map<Term, String> values = new HashMap<>();
+            values.put(DcTerm.identifier, taxonConceptID);
+            values.put(DwcTerm.datasetID, this.provider.getId());
+            values.put(DcTerm.title, "Taxon Concept");
+            values.put(ALATerm.status, "current");
+            if (source != null)
+                values.put(DcTerm.source, source);
+            valuesList.add(values);
+        }
+        return valuesList;
+    }
+
+    /**
+     * Get a list of vernacular names associated with this taxon instance.
+     *
+     * @param taxonomy The taxonomy to collect additional information from
+     *
+     * @return The vernacular name list
+     *
+     * @throws IOException if unable to retrive source documents
+     */
+    public List<Map<Term,String>> getVernacularMaps(Taxonomy taxonomy) throws IOException {
+        List<Map<Term, String>> valuesList = taxonomy.getIndexValues(GbifTerm.VernacularName, this.taxonID);
+        return valuesList;
+    }
+
+    /**
+     * Get a list of distribution maps associated with this taxon instance.
+     *
+     * @param taxonomy The taxonomy to collect additional information from
+     *
+     * @return The distribution list
+     *
+     * @throws IOException if unable to retrive source documents
+     */
+    public List<Map<Term,String>> getDistributionMaps(Taxonomy taxonomy) throws IOException {
+        List<Map<Term, String>> valuesList = taxonomy.getIndexValues(GbifTerm.Distribution, this.taxonID);
+        return valuesList;
+    }
+
+    /**
+     * A human readbale label for the concept
+     *
+     * @return The label
+     */
+    @Override
+    public String getLabel() {
+        return "TCI[" + this.taxonID + ", " + this.scientificName + ", " + this.scientificNameAuthorship + "]";
+    }
+
+    /**
+     * Is this an owned taxon concept.
+     * <p>
+     * A taxon concept is owned if the data provider asserts ownership over the name.
+     * </p>
+     *
+     * @return True if this is owned by the data provider
+     */
+    public boolean isOwned() {
+        return this.provider.owns(this.scientificName);
+    }
+
+    /**
+     * Create an inferred synonym to this taxon.
+     * <p>
+     * This points another taxon towards this taxon.
+     * </p>
+     * @param scientificName The source name of the synonym
+     * @param scientificNameAuthorship The authorship of the synonym
+     * @param year The year of authorship
+     * @param taxonomy The base taxonomy
+     *
+     * @return A synonym that points a name towards this instance
+     */
+    public TaxonConceptInstance createInferredSynonym(String scientificName, String scientificNameAuthorship, String year, Taxonomy taxonomy) {
+        TaxonConceptInstance synonym = new TaxonConceptInstance(
+                UUID.randomUUID().toString(),
+                this.code,
+                taxonomy.getInferenceProvider(),
+                scientificName,
+                scientificNameAuthorship,
+                year,
+                TaxonomicType.INFERRED_SYNONYM,
+                this.rank,
+                this.status,
+                null,
+                this.getTaxonID(),
+                this.classification
+        );
+        synonym.accepted = this;
+        synonym.baseScore = null;
+        synonym.score = null;
+        synonym.forbidden = false;
+        return synonym;
     }
 }

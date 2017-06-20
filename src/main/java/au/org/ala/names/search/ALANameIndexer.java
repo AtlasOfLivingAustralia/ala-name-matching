@@ -39,9 +39,9 @@ import org.apache.lucene.util.Version;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.vocabulary.NameType;
 import org.gbif.api.vocabulary.Rank;
-import org.gbif.dwc.record.DarwinCoreRecord;
-import org.gbif.dwc.text.Archive;
-import org.gbif.dwc.text.ArchiveFactory;
+import org.gbif.dwca.record.DarwinCoreRecord;
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.nameparser.PhraseNameParser;
 
 import java.io.*;

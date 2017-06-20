@@ -1,8 +1,8 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.TaxonomicType;
 import org.gbif.api.vocabulary.NomenclaturalCode;
-import org.gbif.api.vocabulary.TaxonomicStatus;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,7 +31,7 @@ public class ScientificNameTest {
     @Before
     public void setup() {
         this.analyser = new ALANameAnalyser();
-        this.provider = new NameProvider(PROVIDER_ID, 1.0f);
+        this.provider = new NameProvider(PROVIDER_ID, 150);
     }
 
     @Test
@@ -43,9 +43,9 @@ public class ScientificNameTest {
                 NAME_1,
                 AUTHOR_1,
                 YEAR_1,
-                TaxonomicStatus.ACCEPTED,
-                null,
+                TaxonomicType.ACCEPTED,
                 RankType.SPECIES,
+                null,
                 null,
                 null,
                 null

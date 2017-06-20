@@ -28,77 +28,77 @@ import java.util.*;
  */
 public enum RankType {
 
-    DOMAIN(800, "kingdom", Rank.DOMAIN, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Domain", "Domain"),
-    KINGDOM(1000, "kingdom", Rank.KINGDOM, 2f, "http://rs.tdwg.org/ontology/voc/TaxonRank#Kingdom", "Kingdom"),
-    SUBKINGDOM(1200, "subkingdom", Rank.SUBKINGDOM, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subkingdom"),
-    SUPERPHYLUM(1800, "superphylum", Rank.SUPERPHYLUM, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Superphylum"),
-    PHYLUM(2000, "phylum", Rank.PHYLUM, 2f, "http://rs.tdwg.org/ontology/voc/TaxonRank#Phylum", "Phylum", "division botany", "Division Botany"),
-    SUBPHYLUM(2200, "subphylum", Rank.SUBPHYLUM, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subphylum", "subdivision botany"),
-    SUPERCLASS(2800, "superclass", Rank.SUPERCLASS, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Superclass"),
-    CLASS(3000, "class", Rank.CLASS, 2f, "http://rs.tdwg.org/ontology/voc/TaxonRank#Class", "Class"),
-    SUBCLASS(3200, "subclass", Rank.SUBCLASS, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subclass"),
-    INFRACLASS(3350, "infraclass", null, null),
-    SUBINFRACLASS(3370, "subinfraclass", null, null),
-    SUPERDIVISION_ZOOLOGY(3450, "superdivision zoology", null, null),
-    DIVISION_ZOOLOGY(3500, "division zoology", null, null),
-    SUBDIVISION_ZOOLOGY(3550, "subdivision zoology", null, null),
-    SUPERCOHORT(3650, "supercohort", null, null),
-    COHORT(3700, "cohort", null, null),
-    SUBCOHORT(3750, "subcohort", null, null),
-    SUPERORDER(3800, "superorder", Rank.SUPERORDER, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Superorder"),
-    ORDER(4000, "order", Rank.ORDER, 2f, "http://rs.tdwg.org/ontology/voc/TaxonRank#Order", "Order"),
-    SUBORDER(4200, "suborder", Rank.SUBORDER, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Suborder"),
-    INFRAORDER(4350, "infraorder", Rank.INFRAORDER, null),
-    PARVORDER(4400, "parvorder", Rank.PARVORDER, null),
-    SUPERSERIES_ZOOLOGY(4445, "superseries zoology", null, null),
-    SERIES_ZOOLOGY(4450, "series zoology", null, null),
-    SUBSERIES_ZOOLOGY(4455, "subseries zoology", null, null),
-    SUPERSECTION_ZOOLOGY(4465, "supersectionzoology", null, null),
-    SECTION_ZOOLOGY(4470, "section zoology", null, null),
-    SUBSECTION_ZOOLOGY(4475, "subsection zoology", null, null),
-    SUPERFAMILY(4500, "superfamily", Rank.SUPERFAMILY, null, "Superfamily"),
-    FAMILY(5000, "family", Rank.FAMILY, 2f, "http://rs.tdwg.org/ontology/voc/TaxonRank#Family", "Family"),
-    SUBFAMILY(5500, "subfamily", Rank.SUBFAMILY, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subfamily"),
-    TRIBE(5600, "tribe", Rank.TRIBE, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Tribe"),
-    SUBTRIBE(5700, "subtribe", Rank.SUBTRIBE, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subtribe"),
-    SUPERGENUS(5900, "genus", null, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Supergenus", "Supergenus"),
-    GENUS_GROUP(5950, "genus group", null, null, "aggregate genera", "Aggregate Genera", "Genus Group"),
-    GENUS(6000, "genus", Rank.GENUS, 3f, "http://rs.tdwg.org/ontology/voc/TaxonRank#Genus", "Genus"),
-    SUBGENUS(6500, "subgenus", Rank.SUBGENUS, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subgenus"),
-    SUPERSECTION_BOTANY(6550, "supersection botany", Rank.SECTION, null),
-    SECTION_BOTANY(6600, "section botany", Rank.SECTION, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Section"),
-    SUBSECTION_BOTANY(6700, "subsection botany", Rank.SUBSECTION, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subsection"),
-    SUPERSERIES_BOTANY(6750, "superseries botany", null, null),
-    SERIES_BOTANY(6800, "series botany", Rank.SERIES, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Series"),
-    SUBSERIES_BOTANY(6900, "subseries botany", Rank.SUBSERIES, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subseries"),
-    INFRAGENERICNNAME(6925, "infragenericname", Rank.INFRAGENERIC_NAME, null),
-    SPECIES_GROUP(6950, "species group", null, null, "aggregate species", "Aggregate Species", "Species Group"),
-    SUPERSPECIES(6960, "superspecies", null, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Species", "Superspecies"),
-    SPECIES_SUBGROUP(6975, "species subgroup", null, null, "Species Subroup"),
-    SPECIES(7000, "species", Rank.SPECIES, 2f, "http://rs.tdwg.org/ontology/voc/TaxonRank#Species", "Species"),
-    NOTHOSPECIES(7001, "nothospecies", null, null),
-    HOLOMORPH(7100, "holomorph", null, null),
-    ANAMORPH(7120, "anamorph", null, null),
-    TELEOMORPH(7140, "teleomorph", null, null),
-    SUBSPECIES(8000, "subspecies", Rank.SUBSPECIES, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subspecies", "subsp", "subsp.", "ssp", "subtaxon", "staxon", "subsp..", "susp"),
-    NOTHOSUBPECIES(8001, "nothosubspecies", null, null),
-    INFRASPECIFICNAME(8005, "infraspecificname", Rank.INFRASPECIFIC_NAME, null, "Infraspecies"),
-    INFRASUBSPECIESNAME(-1, "infrasubspeciesname", Rank.INFRASUBSPECIFIC_NAME, null),
-    VARIETY(8010, "variety", Rank.VARIETY, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Variety", "var.", "var,", "var"),
-    NOTHOVARIETY(8011, "nothovariety", null, null),
-    SUBVARIETY(8015, "subvariety", Rank.SUBVARIETY, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Sub-Variety", "subvar."),
-    FORM(8020, "form", Rank.FORM, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Form", "forma"),
-    NOTHOFORM(8021, "nothoform", null, null),
-    SUBFORM(8025, "subform", Rank.SUBFORM, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subform"),
-    BOIVAR(8030, "biovar", null, null),
-    SEROVAR(8040, "serovar", null, null),
-    CULTIVARGROUP(-1, "cultivargroup", Rank.CULTIVAR, null),
-    CULTIVAR(8050, "cultivar", Rank.CULTIVAR, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#Cultivar", "cv."),
-    PATHOVAR(8080, "pathovar", null, null),
-    INFORMAL(-1, "informal", null, null),
-    UNRANKED(0, "unranked", Rank.UNRANKED, null),
-    SUPRAGENERICNAME(8200, "supragenericname", Rank.SUPRAGENERIC_NAME, null, "http://rs.tdwg.org/ontology/voc/TaxonRank#SupragenericTaxon"),
-    HYBRID(8150, "hybrid", null, null);
+    DOMAIN(800, "kingdom", Rank.DOMAIN, null, 800, "http://rs.tdwg.org/ontology/voc/TaxonRank#Domain", "Domain"),
+    KINGDOM(1000, "kingdom", Rank.KINGDOM, 2f, 1000, "http://rs.tdwg.org/ontology/voc/TaxonRank#Kingdom", "Kingdom"),
+    SUBKINGDOM(1200, "subkingdom", Rank.SUBKINGDOM, null, 1200, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subkingdom"),
+    SUPERPHYLUM(1800, "superphylum", Rank.SUPERPHYLUM, null, 2800, "http://rs.tdwg.org/ontology/voc/TaxonRank#Superphylum"),
+    PHYLUM(2000, "phylum", Rank.PHYLUM, 2f, 2000, "http://rs.tdwg.org/ontology/voc/TaxonRank#Phylum", "Phylum", "division botany", "Division Botany"),
+    SUBPHYLUM(2200, "subphylum", Rank.SUBPHYLUM, null, 2200, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subphylum", "subdivision botany"),
+    SUPERCLASS(2800, "superclass", Rank.SUPERCLASS, null, 2800, "http://rs.tdwg.org/ontology/voc/TaxonRank#Superclass"),
+    CLASS(3000, "class", Rank.CLASS, 2f, 3000, "http://rs.tdwg.org/ontology/voc/TaxonRank#Class", "Class"),
+    SUBCLASS(3200, "subclass", Rank.SUBCLASS, null, 3200, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subclass"),
+    INFRACLASS(3350, "infraclass", null, null, 3350),
+    SUBINFRACLASS(3370, "subinfraclass", null, null, 3370),
+    SUPERDIVISION_ZOOLOGY(3450, "superdivision zoology", null, null, 3450),
+    DIVISION_ZOOLOGY(3500, "division zoology", null, null, 3500),
+    SUBDIVISION_ZOOLOGY(3550, "subdivision zoology", null, null, 3550),
+    SUPERCOHORT(3650, "supercohort", null, null, 3650),
+    COHORT(3700, "cohort", null, null, 3700),
+    SUBCOHORT(3750, "subcohort", null, null, 3750),
+    SUPERORDER(3800, "superorder", Rank.SUPERORDER, null, 3800, "http://rs.tdwg.org/ontology/voc/TaxonRank#Superorder"),
+    ORDER(4000, "order", Rank.ORDER, 2f, 4000, "http://rs.tdwg.org/ontology/voc/TaxonRank#Order", "Order"),
+    SUBORDER(4200, "suborder", Rank.SUBORDER, null, 4200, "http://rs.tdwg.org/ontology/voc/TaxonRank#Suborder"),
+    INFRAORDER(4350, "infraorder", Rank.INFRAORDER, null, 4350),
+    PARVORDER(4400, "parvorder", Rank.PARVORDER, null, 4400),
+    SUPERSERIES_ZOOLOGY(4445, "superseries zoology", null, null, 4445),
+    SERIES_ZOOLOGY(4450, "series zoology", null, null, 4450),
+    SUBSERIES_ZOOLOGY(4455, "subseries zoology", null, null, 4455),
+    SUPERSECTION_ZOOLOGY(4465, "supersection zoology", null, null, 4465),
+    SECTION_ZOOLOGY(4470, "section zoology", null, null, 4470),
+    SUBSECTION_ZOOLOGY(4475, "subsection zoology", null, null, 4475),
+    SUPERFAMILY(4500, "superfamily", Rank.SUPERFAMILY, null, 4500, "Superfamily"),
+    FAMILY(5000, "family", Rank.FAMILY, 2f, 5000, "http://rs.tdwg.org/ontology/voc/TaxonRank#Family", "Family"),
+    SUBFAMILY(5500, "subfamily", Rank.SUBFAMILY, null, 5500, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subfamily"),
+    TRIBE(5600, "tribe", Rank.TRIBE, null, 5600, "http://rs.tdwg.org/ontology/voc/TaxonRank#Tribe"),
+    SUBTRIBE(5700, "subtribe", Rank.SUBTRIBE, null, 5700, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subtribe"),
+    SUPERGENUS(5900, "genus", null, null, 5900, "http://rs.tdwg.org/ontology/voc/TaxonRank#Supergenus", "Supergenus"),
+    GENUS_GROUP(5950, "genus group", null, null, 5950, "aggregate genera", "Aggregate Genera", "Genus Group"),
+    GENUS(6000, "genus", Rank.GENUS, 3f, 6000, "http://rs.tdwg.org/ontology/voc/TaxonRank#Genus", "Genus"),
+    SUBGENUS(6500, "subgenus", Rank.SUBGENUS, null, 6500, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subgenus"),
+    SUPERSECTION_BOTANY(6550, "supersection botany", Rank.SECTION, null, 6550),
+    SECTION_BOTANY(6600, "section botany", Rank.SECTION, null, 6600, "http://rs.tdwg.org/ontology/voc/TaxonRank#Section"),
+    SUBSECTION_BOTANY(6700, "subsection botany", Rank.SUBSECTION, null, 6700, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subsection"),
+    SUPERSERIES_BOTANY(6750, "superseries botany", null, null, 6750),
+    SERIES_BOTANY(6800, "series botany", Rank.SERIES, null, 6800, "http://rs.tdwg.org/ontology/voc/TaxonRank#Series"),
+    SUBSERIES_BOTANY(6900, "subseries botany", Rank.SUBSERIES, null, 6900, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subseries"),
+    INFRAGENERICNNAME(6925, "infragenericname", Rank.INFRAGENERIC_NAME, null, 6925),
+    SPECIES_GROUP(6950, "species group", null, null, 6950, "aggregate species", "Aggregate Species", "Species Group"),
+    SUPERSPECIES(6960, "superspecies", null, null, 6960, "http://rs.tdwg.org/ontology/voc/TaxonRank#Species", "Superspecies"),
+    SPECIES_SUBGROUP(6975, "species subgroup", null, null, 6975, "Species Subroup"),
+    SPECIES(7000, "species", Rank.SPECIES, 2f, 7000, "http://rs.tdwg.org/ontology/voc/TaxonRank#Species", "Species"),
+    NOTHOSPECIES(7001, "nothospecies", null, null, 7001),
+    HOLOMORPH(7100, "holomorph", null, null, 7100),
+    ANAMORPH(7120, "anamorph", null, null, 7120),
+    TELEOMORPH(7140, "teleomorph", null, null, 7140),
+    SUBSPECIES(8000, "subspecies", Rank.SUBSPECIES, null, 8000, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subspecies", "subsp", "subsp.", "ssp", "subtaxon", "staxon", "subsp..", "susp"),
+    NOTHOSUBPECIES(8001, "nothosubspecies", null, null, 8001),
+    INFRASPECIFICNAME(8005, "infraspecificname", Rank.INFRASPECIFIC_NAME, null, 8005, "Infraspecies"),
+    INFRASUBSPECIESNAME(-1, "infrasubspeciesname", Rank.INFRASUBSPECIFIC_NAME, null, 8007),
+    VARIETY(8010, "variety", Rank.VARIETY, null, 8010, "http://rs.tdwg.org/ontology/voc/TaxonRank#Variety", "var.", "var,", "var"),
+    NOTHOVARIETY(8011, "nothovariety", null, null, 8011),
+    SUBVARIETY(8015, "subvariety", Rank.SUBVARIETY, null, 8015, "http://rs.tdwg.org/ontology/voc/TaxonRank#Sub-Variety", "subvar."),
+    FORM(8020, "form", Rank.FORM, null, 8020, "http://rs.tdwg.org/ontology/voc/TaxonRank#Form", "forma"),
+    NOTHOFORM(8021, "nothoform", null, null, 8021),
+    SUBFORM(8025, "subform", Rank.SUBFORM, null, 8025, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subform"),
+    BOIVAR(8030, "biovar", null, null, 8030),
+    SEROVAR(8040, "serovar", null, null, 8040),
+    CULTIVARGROUP(-1, "cultivargroup", Rank.CULTIVAR, null, 8045),
+    CULTIVAR(8050, "cultivar", Rank.CULTIVAR, null, 8050, "http://rs.tdwg.org/ontology/voc/TaxonRank#Cultivar", "cv."),
+    PATHOVAR(8080, "pathovar", null, null, 8080),
+    INFORMAL(-1, "informal", null, null, 100000),
+    UNRANKED(0, "unranked", Rank.UNRANKED, null, 200000),
+    SUPRAGENERICNAME(8200, "supragenericname", Rank.SUPRAGENERIC_NAME, null, 8200, "http://rs.tdwg.org/ontology/voc/TaxonRank#SupragenericTaxon"),
+    HYBRID(8150, "hybrid", null, null, 8150);
 
 
     // Allow reverse-lookup (based on http://www.ajaxonomy.com/2007/java/making-the-most-of-java-50-enum-tricks)
@@ -131,12 +131,12 @@ public enum RankType {
     private String field;
     private Rank cbRank;
     private Float boost;
+    private int sortOrder;
     private String[] strRanks;
 
-    RankType(Integer id, String field, Rank rank, Float boost, String... strRanks) {
-
-
+    RankType(Integer id, String field, Rank rank, Float boost, int sortOrder, String... strRanks) {
         this.id = id;
+        this.sortOrder = sortOrder;
         this.field = field;
         this.cbRank = rank;
         this.strRanks = strRanks;
@@ -167,6 +167,17 @@ public enum RankType {
         return this.field;
     }
 
+    /**
+     * Get the sort order.
+     * <p>
+     * Wobbly ranks tend to get placed last
+     * </p>
+     *
+     * @return The sort order for this rank.
+     */
+    public int getSortOrder() {
+        return sortOrder;
+    }
 
     /**
      * @return The additional labels for the rank
