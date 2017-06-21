@@ -93,6 +93,9 @@ public class DwcaNameSource extends NameSource {
     @Override
     public void loadIntoTaxonomy(Taxonomy taxonomy) throws IndexBuilderException {
         List<Term> classifiers = TaxonConceptInstance.CLASSIFICATION_FIELDS.stream().filter(t -> archive.getCore().hasTerm(t)).collect(Collectors.toList());
+        taxonomy.addOutputTerms(archive.getCore().getRowType(), archive.getCore().getTerms());
+        for (ArchiveFile ext: archive.getExtensions())
+            taxonomy.addOutputTerms(ext.getRowType(), ext.getTerms());
         try {
             for (StarRecord record : this.archive) {
                 Record core = record.core();
@@ -112,10 +115,10 @@ public class DwcaNameSource extends NameSource {
                 taxonomy.addInstance(instance);
 
                 List<Document> docs = new ArrayList<>();
-                docs.add(this.makeDocument(core));
+                docs.add(this.makeDocument(taxonomy, core));
                 for (List<Record> ext: record.extensions().values()) {
                     for (Record er: ext) {
-                        docs.add(makeDocument(er));
+                        docs.add(makeDocument(taxonomy, er));
                     }
                 }
                 taxonomy.addRecords(docs);
@@ -131,18 +134,19 @@ public class DwcaNameSource extends NameSource {
     /**
      * Convert a record into a lucene document
      *
+     * @param taxonomy The target taxonomy
      * @param record The record
      *
      * @return The record as a document
      */
-    private Document makeDocument(Record record) {
+    private Document makeDocument(Taxonomy taxonomy, Record record) {
         Document doc = new Document();
         doc.add(new StringField("type", record.rowType().qualifiedName(), Field.Store.YES));
         doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
         for (Term term: record.terms()) {
             String value = record.value(term);
             if (term != null && value != null && !value.isEmpty())
-                doc.add(new StringField(term.qualifiedName(), value, Field.Store.YES));
+                doc.add(new StringField(taxonomy.fieldName(term), value, Field.Store.YES));
         }
         return doc;
     }

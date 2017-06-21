@@ -808,7 +808,7 @@ public class ALANameSearcherTest {
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             cl.setScientificName("Macropus");
             cl.setGenus("Macropus");
-            //NameSearchResult nsr =searcher.searchForRecord(cl.getScientificName(), cl, null, true,true);
+            //NameSearchResult nsr =searcher.searchForRecord(cl.getName(), cl, null, true,true);
             String lsid = searcher.searchForLSID("Macropus", false, true);
             assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:9e6a0bba-de5b-4465-8544-aa8fe3943fab", lsid);
         } catch (Exception e) {

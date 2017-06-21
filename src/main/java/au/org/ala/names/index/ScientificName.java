@@ -66,6 +66,30 @@ public class ScientificName extends Name implements Comparable<ScientificName> {
     }
 
     /**
+     * Validate this scientific name.
+     *
+     * @param taxonomy The taxonomy to validate against and report to
+     *
+     * @return True if the scientific name is valid
+     */
+    @Override
+    public boolean validate(Taxonomy taxonomy) {
+        boolean valid = true;
+        if (this.concepts.isEmpty()) {
+            taxonomy.report(IssueType.VALIDATION, "scientificName.validation.noConcepts", this);
+            valid = false;
+        }
+        for (TaxonConcept tc: this.concepts.values()) {
+            if (tc.getName() != this) {
+                taxonomy.report(IssueType.VALIDATION, "scientificName.validation.conceptParent", tc, this);
+                valid = false;
+            }
+            valid = tc.validate(taxonomy) && valid;
+        }
+        return valid;
+    }
+
+    /**
      * Resolve the principal taxon concept.
      * <ul>
      *     <li>If there are no accepted taxon convepts, then there is no principal concept</li>
@@ -88,11 +112,11 @@ public class ScientificName extends Name implements Comparable<ScientificName> {
         } else if (authored.size() == 1) {
             this.principal = authored.get(0);
         } else if (authored.size() > 1) {
-            taxonomy.reportError("Scientific name collision between " + authored.size() + " concepts: {} and {}", authored.get(0), authored.get(1));
+            taxonomy.report(IssueType.PROBLEM, "scientificName.collision", this, authored.get(0), authored.get(1));
             final int score = authored.stream().map(TaxonConcept::getRepresentative).mapToInt(TaxonConceptInstance::getScore).max().orElse(-1);
             List<TaxonConcept> candidates = authored.stream().map(TaxonConcept::getRepresentative).filter(tci -> tci.getScore() == score).map(TaxonConceptInstance::getTaxonConcept).collect(Collectors.toList());
             if (candidates.size() > 1)
-                taxonomy.reportError("More than one possible best match for collision: {}, {}, choosing first", candidates.get(0), candidates.get(1));
+                taxonomy.report(IssueType.PROBLEM, "scientificName.collision.match", this, candidates.get(0), candidates.get(1));
             this.principal = candidates.get(0);
         }
         if (this.principal != null) {
@@ -101,6 +125,7 @@ public class ScientificName extends Name implements Comparable<ScientificName> {
                 if (tc != this.principal && (owned || !tc.isAuthored()))
                     tc.addInferredSynonym(this.principal, taxonomy);
         }
+        taxonomy.count("count.resolve.scientificName.principal");
     }
 
     /**
@@ -145,6 +170,7 @@ public class ScientificName extends Name implements Comparable<ScientificName> {
         for (TaxonConcept concept: this.concepts.values())
             if (concept != this.principal)
                 concept.write(taxonomy, writer);
+        taxonomy.count("count.write.scientificName");
     }
 
 
@@ -154,8 +180,7 @@ public class ScientificName extends Name implements Comparable<ScientificName> {
      * @return The label
      */
     @Override
-    public String getLabel() {
+    public String toString() {
         return "SN[" + this.getKey().getScientificName() + "]";
     }
-
 }

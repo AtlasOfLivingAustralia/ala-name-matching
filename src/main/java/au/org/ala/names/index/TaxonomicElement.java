@@ -8,9 +8,36 @@ package au.org.ala.names.index;
  */
 abstract public class TaxonomicElement {
     /**
-     * A label for the element for logging purposes
+     * Validate this element.
+     * <p>
+     * Validation errors are reported to the taxonomy
+     * </p>
      *
-     * @return A human readable label for loggging
+     * @param taxonomy The taxonomy to validate against and report to
+     *
+     * @return False if the element is not valid, true otherwise
+     *
      */
-    abstract public String getLabel();
+    abstract public boolean validate(Taxonomy taxonomy);
+
+    /**
+     * An identifier for the element for logging purposes
+     *
+     * @return A human readable identifier for loggging
+     */
+    abstract public String getId();
+
+    /**
+     * The scientific name for the element for logging purposes
+     *
+     * @return A human readable name for loggging
+     */
+    abstract public String getScientificName();
+
+    /**
+     * The scientific name authorship for the element for logging purposes
+     *
+     * @return A human readable authorship for loggging
+     */
+    abstract public String getScientificNameAuthorship();
 }

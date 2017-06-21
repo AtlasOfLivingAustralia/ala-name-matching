@@ -56,6 +56,6 @@ public class ScientificNameTest {
         name.addInstance(instanceKey, instance);
         TaxonConcept concept = instance.getTaxonConcept();
         assertNotNull(concept);
-        assertSame(name, concept.getScientificName());
+        assertSame(name, concept.getName());
     }
 }

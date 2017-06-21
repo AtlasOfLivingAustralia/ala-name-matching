@@ -146,6 +146,16 @@ public class TaxonConceptInstance extends TaxonomicElement {
     }
 
     /**
+     * Get the taxon identifier, as specified by the source.
+     *
+     * @return The taxon identifier
+     */
+    @Override
+    public String getId() {
+        return taxonID;
+    }
+
+    /**
      * Get the originating source for the data
      *
      * @return The name source
@@ -272,8 +282,9 @@ public class TaxonConceptInstance extends TaxonomicElement {
      * @return The instance score
      */
     public int getScore() {
-        if (this.score == null)
+        if (this.score == null) {
             this.score = this.provider.computeScore(this);
+        }
         return this.score;
     }
 
@@ -346,7 +357,7 @@ public class TaxonConceptInstance extends TaxonomicElement {
 
     private TaxonConceptInstance getResolved(TaxonConceptInstance original, int steps) {
         if (steps <= 0)
-            throw new IllegalArgumentException("Detected possible loop resovling " + original.getLabel());
+            throw new IllegalArgumentException("Detected possible loop resovling " + original);
         TaxonConceptInstance resolved = this.getResolved();
         if (resolved != null && this != resolved)
             return resolved.getResolved(original, steps - 1);
@@ -419,6 +430,7 @@ public class TaxonConceptInstance extends TaxonomicElement {
                 }
             }
         }
+        taxonomy.count("count.resolve.instance.links");
     }
 
     /**
@@ -453,11 +465,11 @@ public class TaxonConceptInstance extends TaxonomicElement {
         Map<Term, String> values;
         if (valuesList.isEmpty()) {
             if (this.provider != taxonomy.getInferenceProvider())
-                taxonomy.reportNote("No index entry for {}", this);
+                taxonomy.report(IssueType.NOTE,"instance.noIndex", this);
             values = new HashMap<Term, String>();
         } else {
             if (valuesList.size() > 1)
-                taxonomy.reportError("Multiple index values for {}, choosing first", this);
+                taxonomy.report(IssueType.ERROR,"instance.multiIndex", this);
             values = valuesList.get(0);
         }
         values.put(DwcTerm.taxonID, this.taxonID);
@@ -472,7 +484,7 @@ public class TaxonConceptInstance extends TaxonomicElement {
         if (this.parentNameUsageID != null) {
             TaxonConceptInstance rp = this.getResolvedParent();
             if (rp == null) {
-                taxonomy.reportError("Unable to resolve parent for {} with parentNameUsageID=" + this.parentNameUsageID, this);
+                taxonomy.report(IssueType.ERROR, "instance.parent.resolve", this);
             } else {
                 values.put(DwcTerm.parentNameUsageID, rp.taxonID);
             }
@@ -480,7 +492,7 @@ public class TaxonConceptInstance extends TaxonomicElement {
         if (this.acceptedNameUsageID != null) {
             TaxonConceptInstance ra = this.getResolvedAccepted();
             if (ra == null) {
-                taxonomy.reportError("Unable to resolve accepted for {} with acceptedNameUsageID=" + this.acceptedNameUsageID, this);
+                taxonomy.report(IssueType.ERROR, "instance.accepted.resolve", this);
             } else {
                 values.put(DwcTerm.acceptedNameUsageID, ra.taxonID);
             }
@@ -574,7 +586,7 @@ public class TaxonConceptInstance extends TaxonomicElement {
      * @return The label
      */
     @Override
-    public String getLabel() {
+    public String toString() {
         return "TCI[" + this.taxonID + ", " + this.scientificName + ", " + this.scientificNameAuthorship + "]";
     }
 
@@ -623,4 +635,36 @@ public class TaxonConceptInstance extends TaxonomicElement {
         synonym.forbidden = false;
         return synonym;
     }
+
+    /**
+     * Validate this taxon concept instance.
+     *
+     * @param taxonomy The taxonomy to validate against and report to
+     *
+     * @return True if the scientific name is valid
+     */
+    @Override
+    public boolean validate(Taxonomy taxonomy) {
+        boolean valid = true;
+        if ((this.parentNameUsageID != null || this.isAccepted() && !this.classification.isEmpty()) && this.parent == null) {
+            taxonomy.report(IssueType.VALIDATION, "instance.validation.noParent", this);
+            valid = false;
+
+        }
+        if (this.acceptedNameUsageID != null && this.accepted == null) {
+            taxonomy.report(IssueType.VALIDATION, "instance.validation.noAccepted", this);
+            valid = false;
+
+        }
+        if (this.taxonConcept == null) {
+            taxonomy.report(IssueType.VALIDATION, "instance.validation.noTaxonConcept", this);
+            valid = false;
+
+        } else  if (this.taxonConcept.getName() == null) {
+            taxonomy.report(IssueType.VALIDATION, "instance.validation.noScientificName", this);
+            valid = false;
+        }
+        return valid;
+    }
+
 }

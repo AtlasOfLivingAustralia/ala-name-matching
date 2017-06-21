@@ -40,17 +40,16 @@ public class ALATaxonResolver implements TaxonResolver {
      * </p>
      */
     @Override
-    public List<TaxonConceptInstance> principals(Collection<TaxonConceptInstance> instances) throws IndexBuilderException {
-        TaxonConcept concept = instances.stream().findFirst().map(TaxonConceptInstance::getTaxonConcept).orElse(null);
+    public List<TaxonConceptInstance> principals(TaxonConcept concept, Collection<TaxonConceptInstance> instances) throws IndexBuilderException {
         List<TaxonConceptInstance> principals = instances.stream().filter(TaxonConceptInstance::isPrimary).collect(Collectors.toList());
         if (principals.isEmpty()) {
-            this.taxonomy.reportNote("Taxon {} has no principals, using all concepts", concept);
+           this.taxonomy.report(IssueType.NOTE, "taxonResolver.noPrincipals", concept);
             principals = new ArrayList<>(instances);
         }
         Optional<TaxonConceptInstance> max = principals.stream().max(SCORE);
         Optional<NameProvider> provider = max.map(TaxonConceptInstance::getProvider);
         if (!provider.isPresent()) {
-            this.taxonomy.reportNote("Taxon {} has no preferred provider, reverting to all concepts", concept);
+            this.taxonomy.report(IssueType.NOTE, "taxonResolver.noProvider", concept);
             max = instances.stream().max(SCORE);
             provider = max.map(TaxonConceptInstance::getProvider);
             principals = new ArrayList<>(instances);
@@ -67,7 +66,7 @@ public class ALATaxonResolver implements TaxonResolver {
      * @see #resolve(TaxonConceptInstance, TaxonResolution)
      */
     @Override
-    public TaxonResolution resolve(List<TaxonConceptInstance> principals, Collection<TaxonConceptInstance> instances) throws IndexBuilderException {
+    public TaxonResolution resolve(TaxonConcept concept, List<TaxonConceptInstance> principals, Collection<TaxonConceptInstance> instances) throws IndexBuilderException {
         TaxonResolution resolution = new TaxonResolution(principals);
         for (TaxonConceptInstance instance: instances) {
             this.resolve(instance, resolution);
@@ -124,17 +123,17 @@ public class ALATaxonResolver implements TaxonResolver {
         final TaxonomicType taxonomicStatus = instance.getTaxonomicStatus();
         final TaxonomicTypeGroup taxonomicGroup = taxonomicStatus.getGroup();
         final TaxonConcept taxonConcept = instance.getTaxonConcept();
-        final ScientificName scientificName = taxonConcept == null ? null : taxonConcept.getScientificName();
+        final ScientificName scientificName = taxonConcept == null ? null : taxonConcept.getName();
         final TaxonConceptInstance accepted = instance.getAccepted();
         final TaxonConcept acceptedTaxonConcept = accepted == null ? null : accepted.getTaxonConcept();
-        final ScientificName acceptedScientificName = acceptedTaxonConcept == null ? null : acceptedTaxonConcept.getScientificName();
+        final ScientificName acceptedScientificName = acceptedTaxonConcept == null ? null : acceptedTaxonConcept.getName();
         Optional<TaxonConceptInstance> resolved;
         if (instance.isAccepted() && instance.isPrimary()) {
             if ((resolved = resolution.getUsed().stream().filter(tci -> tci.isAccepted() && tci.getTaxonConcept() == taxonConcept).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.isAccepted() && tci.getTaxonConcept().getScientificName() == scientificName).findFirst()).isPresent()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.isAccepted() && tci.getTaxonConcept().getName() == scientificName).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
@@ -146,7 +145,7 @@ public class ALATaxonResolver implements TaxonResolver {
             if (!synonyms.isEmpty()) {
                 TaxonConceptInstance r = taxonomy.lub(synonyms);
                 if (r != null) {
-                    taxonomy.reportNote("Resolving {} to synonyms: {}", instance, r);
+                    taxonomy.report(IssueType.NOTE, "taxonResolver.synonyms", instance, r);
                     resolution.addExternal(instance, r, taxonomy);
                     return;
                 }
@@ -162,11 +161,11 @@ public class ALATaxonResolver implements TaxonResolver {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getTaxonConcept().getScientificName() == acceptedScientificName).findFirst()).isPresent()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getTaxonConcept().getName() == acceptedScientificName).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus().getGroup() == taxonomicGroup && tci.getAccepted() != null && tci.getAccepted().getTaxonConcept().getScientificName() == acceptedScientificName).findFirst()).isPresent()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus().getGroup() == taxonomicGroup && tci.getAccepted() != null && tci.getAccepted().getTaxonConcept().getName() == acceptedScientificName).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
@@ -174,7 +173,7 @@ public class ALATaxonResolver implements TaxonResolver {
             if (!synonyms.isEmpty()) {
                 TaxonConceptInstance r = taxonomy.lub(synonyms);
                 if (r != null) {
-                    taxonomy.reportNote("Resolving {} to synonyms: {}", instance, r);
+                    taxonomy.report(IssueType.NOTE, "taxonResolver.synonyms", instance, r);
                     resolution.addExternal(instance, r, taxonomy);
                     return;
                 }
@@ -186,7 +185,7 @@ public class ALATaxonResolver implements TaxonResolver {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getTaxonConcept().getScientificName() == acceptedScientificName).findFirst()).isPresent()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getTaxonConcept().getName() == acceptedScientificName).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }

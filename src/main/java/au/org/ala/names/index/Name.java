@@ -34,4 +34,32 @@ abstract public class Name extends TaxonomicElement {
     public NameKey getKey() {
         return key;
     }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getId() {
+        if (this.getScientificNameAuthorship() == null)
+            return this.key.getScientificName();
+        return this.key.getScientificName() + " " + this.key.getScientificNameAuthorship();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getScientificName() {
+        return this.key.getScientificName();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getScientificNameAuthorship() {
+        return this.key.getScientificNameAuthorship();
+    }
+
 }

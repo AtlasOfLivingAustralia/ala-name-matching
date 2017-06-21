@@ -1,4 +1,4 @@
-nomenclaturalCode,taxonID,nameType,scientificNameID,scientificName,nomenclaturalStatus,taxonomicStatus,proParte,acceptedNameUsage,acceptedNameUsageID,taxonRank,kingdom,class,subclass,family,canonicalName,scientificNameAuthorship
+nomenclaturalCode,taxonID,nameType,scientificNameID,name,nomenclaturalStatus,taxonomicStatus,proParte,acceptedNameUsage,acceptedNameUsageID,taxonRank,kingdom,class,subclass,family,canonicalName,scientificNameAuthorship
 ICNAFP,http://id.biodiversity.org.au/node/ausmoss/10044707,scientific,http://id.biodiversity.org.au/name/ausmoss/10001168,Plantae Haeckel,,accepted,f,,http://id.biodiversity.org.au/node/ausmoss/10044707,Kingdom,Plantae,,,,Plantae,Haeckel
 ICNAFP,http://id.biodiversity.org.au/node/ausmoss/10044708,scientific,http://id.biodiversity.org.au/name/ausmoss/10001169,Streptophyta,,accepted,f,,http://id.biodiversity.org.au/node/ausmoss/10044708,Phylum,Plantae,,,,Streptophyta,
 ICNAFP,http://id.biodiversity.org.au/node/ausmoss/10044709,scientific,http://id.biodiversity.org.au/name/ausmoss/10001170,Equisetopsida,,accepted,f,,http://id.biodiversity.org.au/node/ausmoss/10044709,Class,Plantae,Equisetopsida,,,Equisetopsida,

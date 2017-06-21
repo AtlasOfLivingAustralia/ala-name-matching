@@ -32,7 +32,9 @@ public enum ALATerm implements Term {
     /** A taxon identifier for the species */
     speciesID,
     /** Record type describing a variant (different source, spelling etc.) of a taxon */
-    TaxonVariant;
+    TaxonVariant,
+    /** Record type describing a problem or note about a taxon */
+    TaxonomicIssue;
 
     public static final String NS = "http://ala.org.au/terms/1.0/";
     public static final String PREFIX = "ala:";

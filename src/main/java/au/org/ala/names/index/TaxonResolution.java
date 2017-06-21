@@ -110,7 +110,7 @@ public class TaxonResolution {
      */
     public void addInternal(TaxonConceptInstance instance, TaxonConceptInstance resolved, Taxonomy taxonomy) {
         if (!this.used.contains(resolved)) {
-            taxonomy.reportNote("Added non-principal taxon {} to used taxa", resolved);
+            taxonomy.report(IssueType.NOTE,"taxonResolution.added", resolved);
             this.used.add(resolved);
         }
         this.resolution.put(instance, resolved);

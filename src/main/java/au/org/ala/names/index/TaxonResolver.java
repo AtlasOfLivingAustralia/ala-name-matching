@@ -21,17 +21,19 @@ abstract public interface TaxonResolver {
      * can be used to decide which of several instances the taxonomy is going to use.
      * </p>
      *
+     * @param concept The parent taxon concept
      * @param instances The complete set of instances
      *
      * @return The instance list, ordered with the highest score first
      *
      * @throws IndexBuilderException if unable to collect principals
      */
-    public List<TaxonConceptInstance> principals(Collection<TaxonConceptInstance> instances) throws IndexBuilderException;
+    public List<TaxonConceptInstance> principals(TaxonConcept concept, Collection<TaxonConceptInstance> instances) throws IndexBuilderException;
 
     /**
      * Resolve a set of instances against a list of principals.
      *
+     * @param concept The parent taxon concept
      * @param principals The list of principals.
      * @param instances The instances
      *
@@ -39,5 +41,5 @@ abstract public interface TaxonResolver {
      *
      * @throws IndexBuilderException If unable to resolve things.
      */
-    public TaxonResolution resolve(List<TaxonConceptInstance> principals, Collection<TaxonConceptInstance> instances) throws IndexBuilderException;
+    public TaxonResolution resolve(TaxonConcept concept, List<TaxonConceptInstance> principals, Collection<TaxonConceptInstance> instances) throws IndexBuilderException;
 }

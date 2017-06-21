@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 public class TaxonConcept extends TaxonomicElement {
     /** The parent scientific name */
-    private ScientificName scientificName;
+    private ScientificName name;
     /** The name key for this concept */
     private NameKey key;
     /** The list of instances that correspond to this concept */
@@ -35,11 +35,11 @@ public class TaxonConcept extends TaxonomicElement {
     /**
      * Construct for new scientific name and a name key
      *
-     * @param scientificName The parent scientific name
+     * @param name The parent scientific name
      * @param key The name key
      */
-    public TaxonConcept(ScientificName scientificName, NameKey key) {
-        this.scientificName = scientificName;
+    public TaxonConcept(ScientificName name, NameKey key) {
+        this.name = name;
         this.key = key;
         this.instances = new ArrayList<>();
         this.resolution = null;
@@ -50,8 +50,8 @@ public class TaxonConcept extends TaxonomicElement {
      *
      * @return The scientific name
      */
-    public ScientificName getScientificName() {
-        return scientificName;
+    public ScientificName getName() {
+        return name;
     }
 
     /**
@@ -123,9 +123,10 @@ public class TaxonConcept extends TaxonomicElement {
         if (this.resolution != null)
             return;
         TaxonResolver resolver = taxonomy.getResolver();
-        List<TaxonConceptInstance> principals = resolver.principals(this.instances);
-        this.resolution = resolver.resolve(principals, this.instances);
+        List<TaxonConceptInstance> principals = resolver.principals(this, this.instances);
+        this.resolution = resolver.resolve(this, principals, this.instances);
         Map<TaxonConceptInstance, TaxonConceptInstance> resolution = new HashMap<>(this.instances.size());
+        taxonomy.count("count.resolve.taxonConcept");
     }
 
     /**
@@ -149,7 +150,7 @@ public class TaxonConcept extends TaxonomicElement {
                     writer.addCoreColumn(term, values.get(term));
             Collection<TaxonConceptInstance> allocated = this.resolution.getChildren(tci);
             if (allocated == null || allocated.isEmpty())
-                taxonomy.reportIssue("Taxon concept {} has no instances allocated to {}", this, tci);
+                taxonomy.report(IssueType.PROBLEM, "taxonConcept.noInstances", tci);
             else {
                 for (TaxonConceptInstance sub : allocated) {
                     if (sub.isForbidden())
@@ -164,6 +165,7 @@ public class TaxonConcept extends TaxonomicElement {
                 }
             }
         }
+        taxonomy.count("count.write.taxonConcept");
     }
 
     private void writeExtension(Term type, Map<Term, String> values, Taxonomy taxonomy, DwcaWriter writer) throws IOException {
@@ -229,16 +231,17 @@ public class TaxonConcept extends TaxonomicElement {
         TaxonResolver resolver = taxonomy.getResolver();
         TaxonConceptInstance representative = principal.getRepresentative();
         if (representative == null) {
-            taxonomy.reportError("Unable to get respresentative for {}", principal);
+            taxonomy.report(IssueType.ERROR, "taxonConcept.representative", principal, this);
             return;
         }
         List<TaxonConceptInstance> inferred = principal.resolution.getUsed().stream().filter(tci -> tci.isAccepted()).map(tci -> tci.createInferredSynonym(representative.getScientificName(), representative.getScientificNameAuthorship(), representative.getYear(), taxonomy)).collect(Collectors.toList());
         if (inferred.isEmpty()) {
-            taxonomy.reportError("Unable to get inferred synonyms for {}", principal);
+            taxonomy.report(IssueType.ERROR, "taxonConcept.inferredSynonyms", principal, this);
             return;
         }
-        this.resolution = resolver.resolve(inferred, this.instances);
-     }
+        this.resolution = resolver.resolve(this, inferred, this.instances);
+        taxonomy.count("count.resolve.inferredSynonym");
+    }
 
     /**
      * Get a representative taxon instance.
@@ -259,7 +262,7 @@ public class TaxonConcept extends TaxonomicElement {
      * @return The label
      */
     @Override
-    public String getLabel() {
+    public String toString() {
         return "TC[" + this.key.getScientificName() + ", " + this.key.getScientificNameAuthorship() + "]";
     }
 
@@ -275,4 +278,55 @@ public class TaxonConcept extends TaxonomicElement {
         TaxonConceptInstance accepted = this.getRepresentative();
         return (accepted.getTaxonConcept() == this && accepted.isOwned());
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getId() {
+        return this.key.getScientificName() + " " + this.key.getScientificNameAuthorship();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getScientificName() {
+        return this.key.getScientificName();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getScientificNameAuthorship() {
+        return this.key.getScientificNameAuthorship();
+    }
+
+    /**
+     * Validate this taxon concept.
+     * <p>
+     * Note that this does not validate the taxon concept instances; these get done separately
+     * </p>
+     *
+     * @param taxonomy The taxonomy to validate against and report to
+     *
+     * @return True if the scientific name is valid
+     */
+    @Override
+    public boolean validate(Taxonomy taxonomy) {
+        boolean valid = true;
+        if (this.instances.isEmpty()) {
+            taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.noInstances", this);
+            valid = false;
+        }
+        for (TaxonConceptInstance tci: this.instances) {
+            if (tci.getTaxonConcept() != this) {
+                taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceParent", tci, this);
+                valid = false;
+            }
+        }
+        return valid;
+    }
+
 }

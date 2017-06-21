@@ -1,6 +1,7 @@
 package au.org.ala.names.index;
 
 import au.ala.org.vocab.ALATerm;
+import au.com.bytecode.opencsv.CSVWriter;
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.SynonymType;
@@ -8,7 +9,10 @@ import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.util.FileUtils;
 import com.google.common.collect.Maps;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.*;
@@ -24,8 +28,10 @@ import org.gbif.dwca.io.DwcaWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.text.DateFormat;
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,6 +46,9 @@ import java.util.stream.Collectors;
  */
 public class Taxonomy {
     private static Logger logger = LoggerFactory.getLogger(Taxonomy.class);
+    private static DateFormat ISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+    /** How many things to go before giving an update */
+    public static int PROGRESS_INTERVAL = 1000;
 
     /**
      * The default term list
@@ -60,8 +69,7 @@ public class Taxonomy {
     private File index;
     private Directory indexDir;
     private IndexWriter indexWriter;
-    private IndexReader indexReader;
-    private IndexSearcher indexSearcher;
+    private SearcherManager searcherManager;
     /** The list of scientific names */
     private Map<NameKey, ScientificName> names;
     /** The list of name instances, keyed by taxonID */
@@ -74,6 +82,14 @@ public class Taxonomy {
     private NameProvider inferenceProvider;
     /** The output map */
     private Map<Term, List<Term>> outputMap;
+    /** The resource bundle for error reporting */
+    private ResourceBundle resources;
+    /** The progress counts */
+    private Map<String, Integer> counts;
+    /** The map of terms onto lucene fields */
+    private Map<Term, String> fieldNames;
+    /** The map of lucene fields to terms */
+    private Map<String, Term> fieldTerms;
 
     /**
      * Default taxonomy constructor.
@@ -95,6 +111,11 @@ public class Taxonomy {
         this.instances = new HashMap<>();
         this.makeBaseOutputMap();
         this.makeWorkArea(null);
+        this.indexAnalyzer = new KeywordAnalyzer();
+        this.resources = ResourceBundle.getBundle("taxonomy");
+        this.counts = new HashMap<>();
+        this.fieldNames = new HashMap<>();
+        this.fieldTerms = new HashMap<>();
     }
 
     /**
@@ -134,7 +155,11 @@ public class Taxonomy {
         this.instances = new HashMap<>();
         this.makeBaseOutputMap();
         this.makeWorkArea(work);
-        this.indexAnalyzer = new LowerCaseKeywordAnalyzer();
+        this.indexAnalyzer = new KeywordAnalyzer();
+        this.resources = ResourceBundle.getBundle("taxonomy");
+        this.counts = new HashMap<>();
+        this.fieldNames = new HashMap<>();
+        this.fieldTerms = new HashMap<>();
     }
 
     /**
@@ -154,6 +179,11 @@ public class Taxonomy {
         this.instances = new HashMap<>();
         this.makeBaseOutputMap();
         this.makeWorkArea(null);
+        this.indexAnalyzer = new KeywordAnalyzer();
+        this.resources = ResourceBundle.getBundle("taxonomy");
+        this.counts = new HashMap<>();
+        this.fieldNames = new HashMap<>();
+        this.fieldTerms = new HashMap<>();
     }
 
     /**
@@ -195,6 +225,55 @@ public class Taxonomy {
     }
 
     /**
+     * Add a count to the statistics
+     *
+     * @param type The count type
+     */
+    public synchronized void count(String type) {
+       Integer count = this.counts.get(type);
+       if (count == null)
+           count = 0;
+       count++;
+       this.counts.put(type, count);
+       if (count % PROGRESS_INTERVAL == 0) {
+           String message = this.resources.getString(type);
+           message = MessageFormat.format(message, count);
+           this.logger.info(message);
+       }
+    }
+
+    /**
+     * Begin loading and processing.
+     */
+    public void begin() throws IndexBuilderException {
+        try {
+            IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_10_4, this.indexAnalyzer);
+            this.indexWriter = new IndexWriter(this.indexDir, config);
+            this.indexWriter.commit();
+            this.searcherManager = new SearcherManager(this.indexWriter, true, null);
+        } catch (IOException ex) {
+            throw new IndexBuilderException("Error creating working index", ex);
+        }
+    }
+
+    /**
+     * Close the taxonomy.
+     */
+    public void close() throws IndexBuilderException {
+        try {
+            if (this.indexWriter != null) {
+                this.indexWriter.close();
+                this.indexWriter = null;
+            }
+            if (this.searcherManager != null) {
+                this.searcherManager.close();
+                this.searcherManager = null;
+            }
+        } catch (IOException ex) {
+            throw new IndexBuilderException("Error closing taxonomy", ex);
+        }
+    }
+    /**
      * Load a sequence of name sources into the taxonomy.
      * <p>
      * This gets done as one unit to ensure that the index is completed by the time
@@ -207,13 +286,13 @@ public class Taxonomy {
      */
     public void load(List<NameSource> sources) throws IndexBuilderException {
         try {
-            IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_10_4, this.indexAnalyzer);
-            this.indexWriter = new IndexWriter(this.indexDir, config);
-            for (NameSource source: sources)
+            if (this.indexWriter == null)
+                throw new IllegalStateException("Index not opened");
+            for (NameSource source: sources) {
                 source.loadIntoTaxonomy(this);
-            this.indexWriter.commit();
-            this.indexWriter.close();
-            this.indexWriter = null;
+                this.indexWriter.commit();
+                this.searcherManager.maybeRefresh();
+            }
         } catch (IOException ex) {
             throw new IndexBuilderException("Error constructing source index", ex);
         }
@@ -230,6 +309,8 @@ public class Taxonomy {
      */
     public void resolve() throws IndexBuilderException {
         this.resolveLinks();
+        if (!this.validate())
+            throw new IndexBuilderException("Invalid source data");
         this.resolveTaxon();
         this.resolvePrincipal();
     }
@@ -246,6 +327,25 @@ public class Taxonomy {
         this.logger.info("Resolving links");
         this.instances.values().parallelStream().forEach(instance -> instance.resolveLinks(this));
         this.logger.info("Finished resolving links");
+    }
+
+    /**
+     * Validate the loaded data.
+     * <p>
+     * Errors are added as reports
+     * </p>
+     *
+     * @return True if the loaded data is valid, false otherwise
+     *
+     * @throws IndexBuilderException if unable to validate the loaded data
+     */
+    public boolean validate() throws IndexBuilderException {
+        this.logger.info("Starting validation");
+        boolean valid = true;
+        valid = this.instances.values().parallelStream().map(instance -> instance.validate(this)).reduce(valid, (a, b) -> a && b);
+        valid = this.names.values().parallelStream().map(instance -> instance.validate(this)).reduce(valid, (a, b) -> a && b);
+        this.logger.info("Finished validation");
+        return valid;
     }
 
 
@@ -393,10 +493,15 @@ public class Taxonomy {
         } catch (UnparsableException ex) {
             if (ex.type == NameType.PLACEHOLDER) {
                 // Handle a placeholder name by generating a fake name key and making this instance forbidden
+                this.report(IssueType.PROBLEM, "taxonomy.load.placeholder", instance);
                 taxonKey = new NameKey(this.analyser, instance.getCode(), UUID.randomUUID().toString(), null, ex.type);
                 instance.setForbidden(true);
             } else
                 throw ex;  // Still can't handle it
+        }
+        if (!instance.isForbidden() && instance.getProvider().forbid(instance)) {
+            this.report(IssueType.NOTE, "taxonomy.load.forbidden", instance);
+            instance.setForbidden(true);
         }
         nameKey = taxonKey.toNameKey();
         if (this.instances.containsKey(taxonID))
@@ -408,6 +513,7 @@ public class Taxonomy {
         }
         name.addInstance(taxonKey, instance);
         this.instances.put(taxonID, instance);
+        this.count("count.load.instance");
     }
 
 
@@ -489,69 +595,131 @@ public class Taxonomy {
      * @throws IOException if unable to write to the archive
      */
     public void createDwCA(File directory) throws IndexBuilderException, IOException {
+        this.logger.info("Creating DwCA");
         this.addOutputTerms(GbifTerm.Identifier, Arrays.asList(DcTerm.title, ALATerm.status, DcTerm.source)); // Generated by taxon concept instance
         DwcaWriter dwcaWriter = new DwcaWriter(DwcTerm.Taxon, DwcTerm.taxonID, directory, false);
-        this.indexReader = DirectoryReader.open(this.indexDir);
-        this.indexSearcher = new IndexSearcher(this.indexReader);
         List<ScientificName> nameList = new ArrayList<>(this.names.values());
         Collections.sort(nameList);
         for (ScientificName name: nameList)
             name.write(this, dwcaWriter);
-        this.indexReader.close();
-        this.indexSearcher = null;
-        this.indexReader = null;
         dwcaWriter.close();
+        this.logger.info("Finished creating DwCA");
     }
 
-
     /**
-     * Report an error with a taxonomic element.
+     * Add a report.
      * <p>
-     * Errors are likely to mean that the
+     * Message codes are retrieved using a message bundle pointing to <code>taxonomy.properties</code>
+     * These are formatted with a message formatter and have the following arguments:
      * </p>
+     * <ul>
+     *     <li>{0} The taxonID of the source element, either a name or a proper taxonID</li>
+     *     <li>{1} The scientific name of the source element</li>
+     *     <li>{2} The scientific name authorship of the source element</li>
+     *     <li>{3} Any associated taxon identifiers</li>
+     * </ul>
      *
-     * @param message The message (formatted according to SLF4J conventions
-     * @param sources The source elements. The first element is the major cause of the error
+     * @param type The type of report
+     * @param code The message code to use for the readable version of the report
+     * @param elements The elements that impact the report. The first element is the source (causative) element
      */
-    public void reportError(String message, TaxonomicElement... sources) {
-        this.logger.error(message, (Object) sourceLabels(sources));
+    public void report(IssueType type, String code, TaxonomicElement... elements) {
+        String taxonID = "";
+        String scientificName = "";
+        String scientificNameAuthorship = "";
+        String associatedTaxa = "";
+        String datasetID = "";
+        TaxonomicElement main = elements.length > 0 ? elements[0] : null;
+        if (main != null) {
+            taxonID = main.getId();
+            scientificName = main.getScientificName();
+            scientificNameAuthorship = main.getScientificNameAuthorship();
+            if (scientificNameAuthorship == null)
+                scientificNameAuthorship = "";
+            if (main instanceof TaxonConceptInstance)
+                datasetID = ((TaxonConceptInstance) main).getProvider().getId();
+        }
+        if (elements.length > 1) {
+            StringBuilder associated = new StringBuilder();
+            for (int i = 1; i < elements.length; i++) {
+                if (associated.length() > 0)
+                    associated.append("|");
+                associated.append(elements[i].getId());
+            }
+            associatedTaxa = associated.toString();
+        }
+        String message;
+        try {
+            message = this.resources.getString(code);
+            message = MessageFormat.format(message == null ? code : message, taxonID, scientificName, scientificNameAuthorship, associatedTaxa);
+        } catch (MissingResourceException ex) {
+            this.logger.error("Can't find resource for " + code + " defaulting to code");
+            message = code;
+        }
+        if (type == IssueType.ERROR)
+            this.logger.error(message);
+        if (type == IssueType.PROBLEM)
+            this.logger.warn(message);
+        if (type == IssueType.NOTE)
+            this.logger.debug(message);
+        Document doc = new Document();
+        doc.add(new StringField("type", ALATerm.TaxonomicIssue.qualifiedName(), Field.Store.YES));
+        doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DcTerm.type), type.name(), Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DcTerm.subject), code, Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DcTerm.description), message, Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DcTerm.date), ISO8601.format(new Date()), Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DwcTerm.taxonID), taxonID, Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DwcTerm.scientificName), scientificName, Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DwcTerm.scientificNameAuthorship), scientificNameAuthorship, Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DwcTerm.associatedTaxa), associatedTaxa, Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DwcTerm.datasetID), datasetID, Field.Store.YES));
+        try {
+            this.indexWriter.addDocument(doc);
+            this.indexWriter.commit();
+            this.searcherManager.maybeRefresh();
+        } catch (IOException ex) {
+            this.logger.error("Unable to write report to index", ex);
+        }
     }
+
 
     /**
-     * Report a non-fatal issue with a taxonomic element
+     * Create a report of all issues that have arisen.
      *
-     * @param message The message (formatted according to SLF4J conventions
-     * @param sources The source elements. The first element is the major cause of the error
+     * @param report The report file
+     *
+     * @throws IOException if unable to created the report
      */
-    public void reportIssue(String message, TaxonomicElement... sources) {
-        this.logger.warn(message, (Object) sourceLabels(sources));
+    public void createReport(File report) throws IOException {
+        this.logger.info("Writing report to " + report);
+        int pageSize = 100;
+        Writer fw = new OutputStreamWriter(new FileOutputStream(report), "UTF-8");
+        CSVWriter writer = new CSVWriter(fw);
+        List<Term> output = this.outputTerms(ALATerm.TaxonomicIssue);
+        String[] headers = output.stream().map(term -> term.toString()).collect(Collectors.toList()).toArray(new String[output.size()]);
+        writer.writeNext(headers);
+        IndexSearcher searcher = this.searcherManager.acquire();
+        try {
+            Query query = new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.TaxonomicIssue.qualifiedName()));
+            TopDocs docs = searcher.search(query, pageSize);
+            ScoreDoc last = null;
+            while (docs.scoreDocs.length > 0) {
+                for (ScoreDoc sd : docs.scoreDocs) {
+                    last = sd;
+                    Document doc = searcher.doc(sd.doc);
+                    String[] values = output.stream().map(term -> doc.get(this.fieldName(term))).collect(Collectors.toList()).toArray(new String[output.size()]);
+                    writer.writeNext(values);
+                    this.count("count.write.report");
+                }
+                docs = searcher.searchAfter(last, query, pageSize);
+            }
+        } finally {
+            this.searcherManager.release(searcher);
+        }
+        writer.close();
+        this.logger.info("Finished creating report");
     }
-
-    /**
-     * Report an informational note for a taxonomic element
-     *
-     * @param message The message (formatted according to SLF4J conventions
-     * @param sources The source elements. The first element is the major cause of the error
-     */
-    public void reportNote(String message, TaxonomicElement... sources) {
-        this.logger.info(message, (Object) sourceLabels(sources));
-    }
-
-    /**
-     * Make taxonomic elements into a label
-     *
-     * @param sources The list of taxonomic elements
-     *
-     * @return The labels
-     */
-    protected String[] sourceLabels(TaxonomicElement[] sources) {
-        String[] labels = new String[sources.length];
-        for (int i = 0; i < sources.length; i++)
-            labels[i] = sources[i] == null ? "null" : sources[i].getLabel();
-        return labels;
-    }
-
-
 
     /**
      *
@@ -610,10 +778,10 @@ public class Taxonomy {
      * included in the output file.
      * </p>
      *
-     * @param type
-     * @param terms
+     * @param type The row type
+     * @param terms The terms. If ordered, then the output map will respect the ordering
      */
-    public void addOutputTerms(Term type, List<Term> terms) {
+    public void addOutputTerms(Term type, Collection<Term> terms) {
         List<Term> map = this.outputMap.get(type);
         if (map == null) {
             map = new ArrayList<>(terms.size());
@@ -665,19 +833,28 @@ public class Taxonomy {
     public List<Map<Term,String>> getIndexValues(Term type, String taxonID) throws IOException {
         BooleanQuery query = new BooleanQuery();
         query.add(new TermQuery(new org.apache.lucene.index.Term("type", type.qualifiedName())), BooleanClause.Occur.MUST);
-        query.add(new TermQuery(new org.apache.lucene.index.Term(DwcTerm.taxonID.qualifiedName(), taxonID)), BooleanClause.Occur.MUST);
-        TopDocs docs = this.indexSearcher.search(query, 100);
-        List<Map<Term, String>> valueList = new ArrayList<>(docs.totalHits);
-        for (ScoreDoc sd: docs.scoreDocs) {
-            Document document = this.indexReader.document(sd.doc);
-            Map<Term, String> values = new HashMap<>();
-            for (IndexableField field: document) {
-                Term term = TermFactory.instance().findTerm(field.name());
-                values.put(term, field.stringValue());
+        query.add(new TermQuery(new org.apache.lucene.index.Term(this.fieldName(DwcTerm.taxonID), taxonID)), BooleanClause.Occur.MUST);
+        IndexSearcher searcher = this.searcherManager.acquire();
+        try {
+            TopDocs docs = searcher.search(query, 100, Sort.INDEXORDER);
+            List<Map<Term, String>> valueList = new ArrayList<>(docs.totalHits);
+            for (ScoreDoc sd : docs.scoreDocs) {
+                Document document = searcher.doc(sd.doc);
+                Map<Term, String> values = new HashMap<>();
+                for (IndexableField field : document) {
+                    if (!field.name().equals("id") && !field.name().equals("type")) {
+                        Term term = this.fieldTerms.get(field.name());
+                        if (term == null)
+                            throw new IllegalStateException("Can't find term for " + field.name());
+                        values.put(term, field.stringValue());
+                    }
+                }
+                valueList.add(values);
             }
-            valueList.add(values);
+            return valueList;
+        } finally {
+            this.searcherManager.release(searcher);
         }
-        return valueList;
     }
 
     /**
@@ -697,5 +874,28 @@ public class Taxonomy {
      */
     public NameProvider getInferenceProvider() {
         return this.inferenceProvider;
+    }
+
+    /**
+     * Create a lucene-fiendly field name for a term.
+     * <p>
+     * Basically, get rid of colons which might gum up the works.
+     * We then need to map back to the correct term.
+     * </p>
+     *
+     * @param term The term
+     *
+     * @return The field name
+     */
+    public String fieldName(Term term) {
+        String name = this.fieldNames.get(term);
+        if (name == null) {
+            name = term.toString().replace(':', '_');
+            synchronized (this.fieldNames) {
+                this.fieldNames.put(term, name);
+                this.fieldTerms.put(name, term);
+            }
+        }
+        return name;
     }
 }

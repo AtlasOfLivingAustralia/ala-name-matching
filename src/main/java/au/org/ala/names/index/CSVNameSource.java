@@ -141,7 +141,7 @@ public class CSVNameSource extends NameSource {
                     Term term = this.terms.get(i);
                     String value = record[i];
                     if (term != null && value != null && !value.isEmpty())
-                        doc.add(new StringField(term.qualifiedName(), value, Field.Store.YES));
+                        doc.add(new StringField(taxonomy.fieldName(term), value, Field.Store.YES));
                 }
                 taxonomy.addRecords(Collections.singletonList(doc));
             }

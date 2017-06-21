@@ -4,7 +4,6 @@ import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.util.TestUtils;
 import org.gbif.api.vocabulary.NomenclaturalCode;
-import org.gbif.api.vocabulary.TaxonomicStatus;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.junit.Before;
@@ -70,7 +69,7 @@ public class CSVNameSourceTest extends TestUtils {
         assertEquals("Equisetopsida", classification.get(DwcTerm.class_).get());
         TaxonConcept concept = instance.getTaxonConcept();
         assertNotNull(concept);
-        ScientificName name = concept.getScientificName();
+        ScientificName name = concept.getName();
         assertNotNull(name);
         assertTrue(this.taxonomy.getNames().containsValue(name));
     }
@@ -100,7 +99,7 @@ public class CSVNameSourceTest extends TestUtils {
         assertEquals("Equisetopsida", classification.get(DwcTerm.class_).get());
         TaxonConcept concept = instance.getTaxonConcept();
         assertNotNull(concept);
-        ScientificName name = concept.getScientificName();
+        ScientificName name = concept.getName();
         assertNotNull(name);
         assertTrue(this.taxonomy.getNames().containsValue(name));
     }
