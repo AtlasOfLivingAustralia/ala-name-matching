@@ -24,11 +24,11 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
-import org.gbif.ecat.model.ParsedName;
-import org.gbif.ecat.parser.NameParser;
-import org.gbif.ecat.parser.UnparsableException;
-import org.gbif.ecat.voc.NameType;
-import org.gbif.ecat.voc.Rank;
+import org.gbif.api.exception.UnparsableException;
+import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.api.vocabulary.NameType;
+import org.gbif.api.vocabulary.Rank;
+import org.gbif.nameparser.GBIFNameParser;
 
 /**
  * A Parser that can be used to parse a "Phrase" name.  It is assumed
@@ -42,7 +42,7 @@ import org.gbif.ecat.voc.Rank;
  *
  * @author Natasha Carter
  */
-public class PhraseNameParser extends NameParser {
+public class PhraseNameParser extends GBIFNameParser {
 
     public static final HashMap<String, Rank> VALID_PHRASE_RANKS;
 
@@ -87,7 +87,7 @@ public class PhraseNameParser extends NameParser {
             + "][" + name_letters + "-]+)" + ")");
 
     @Override
-    public <T> ParsedName<T> parse(final String scientificName) throws UnparsableException {
+    public ParsedName parse(final String scientificName) throws UnparsableException {
         ParsedName pn = null;
         ExecutorService executor = null;
         try {
@@ -113,7 +113,7 @@ public class PhraseNameParser extends NameParser {
             }
         }
 
-        if (pn.getType() != NameType.wellformed && isPhraseRank(pn.rank) && (!pn.authorsParsed || pn.specificEpithet == null || SPECIES_PATTERN.matcher(pn.specificEpithet).matches())) {
+        if (pn.getType() != NameType.INFORMAL && isPhraseRank(pn.getRank()) && (!pn.authorsParsed || pn.specificEpithet == null || SPECIES_PATTERN.matcher(pn.specificEpithet).matches())) {
             //if the rank marker is sp. and the word after the rank marker is lower case check to see if removing the marker will result is a wellformed name
             if (SPECIES_PATTERN.matcher(pn.rank).matches()) {
                 Matcher m1 = POTENTIAL_SPECIES_PATTERN.matcher(scientificName);
@@ -147,11 +147,11 @@ public class PhraseNameParser extends NameParser {
         return pn;
     }
 
-    private boolean isPhraseRank(String rank) {
-
-        if (rank == null)
+    private static boolean isPhraseRank(Rank rank) {
+        if (rank == null) {
             return false;
-        return VALID_PHRASE_RANKS.containsKey(rank.replaceAll("\\.", ""));
+        }
+        return VALID_PHRASE_RANKS.containsKey(rank.getMarker().replaceAll("\\.", ""));
     }
 
 }

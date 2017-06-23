@@ -18,7 +18,7 @@ import au.org.ala.names.search.SearchResultException;
 
 import java.util.Set;
 
-import org.gbif.ecat.voc.NameType;
+import org.gbif.api.vocabulary.NameType;
 
 /**
  * Stores the data the data that makes up a name match includes metrics such as name types and errors

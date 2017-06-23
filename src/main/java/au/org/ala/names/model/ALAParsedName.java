@@ -16,15 +16,15 @@ package au.org.ala.names.model;
 
 import java.util.regex.Pattern;
 
-import org.gbif.ecat.model.ParsedName;
-
+import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.api.vocabulary.Rank;
 
 /**
  * Stores the extra information for an ALA Parsed Phrase name.
  *
  * @author Natasha Carter
  */
-public class ALAParsedName<T> extends ParsedName<T> {
+public class ALAParsedName extends ParsedName {
 
     public String locationPhraseDescription = null;
     public String cleanPhrase = null;
@@ -42,26 +42,23 @@ public class ALAParsedName<T> extends ParsedName<T> {
 
     public ALAParsedName() {}
 
-    public ALAParsedName(ParsedName<T> pn) {
-        this.authorsParsed = pn.authorsParsed;
-        this.setAuthorship(pn.getAuthorship());
-        this.setBracketAuthorship(pn.getBracketAuthorship());
-        this.setBracketYear(pn.getBracketYear());
-        this.setCode(pn.getCode());
-        this.setCultivar(pn.getCultivar());
-        this.setGenusOrAbove(pn.getGenusOrAbove());
-        this.setId(pn.getId());
-        this.setInfraGeneric(pn.getInfraGeneric());
-        this.setInfraSpecificEpithet(pn.getInfraSpecificEpithet());
-        this.setNomStatus(pn.getNomStatus());
-        this.setNotho(pn.getNotho());
-        this.setRank(pn.getRank());
-        this.setRankMarker(pn.getRankMarker());
-        this.setRemarks(pn.getRemarks());
-        this.setSensu(pn.getSensu());
-        this.setSpecificEpithet(pn.getSpecificEpithet());
-        this.setType(pn.getType());
-        this.setYear(pn.getYear());
+    public ALAParsedName(ParsedName pn) {
+    	  super(pn.getType(),
+    			  pn.getGenusOrAbove(),
+    			  pn.getInfraGeneric(),
+    			  pn.getSpecificEpithet(),
+    			  pn.getInfraSpecificEpithet(),
+    			  pn.getNotho(),
+    			  pn.getRank(),
+    			  pn.getAuthorship(),
+    			  pn.getYear(),
+    			  pn.getBracketAuthorship(),
+    			  pn.getBracketYear(),
+    			  pn.getCultivarEpithet(),
+    			  pn.getStrain(),
+    			  pn.getSensu(),
+    			  pn.getNomStatus(),
+    			  pn.getRemarks());
     }
 
     /**
@@ -78,10 +75,10 @@ public class ALAParsedName<T> extends ParsedName<T> {
 
     public void setLocationPhraseDescription(String locationPhraseDescription) {
         this.locationPhraseDescription = locationPhraseDescription;
-        if (rank == "sp") {
-            this.specificEpithet = locationPhraseDescription;
+        if (getRank() == Rank.SPECIES) {
+            this.setSpecificEpithet(locationPhraseDescription);
         } else {
-            this.infraSpecificEpithet = locationPhraseDescription;
+            this.setInfraSpecificEpithet(locationPhraseDescription);
         }
         if (locationPhraseDescription != null) {
             cleanPhrase = phraseBlacklist.matcher(" " + locationPhraseDescription).replaceAll(" ").trim();

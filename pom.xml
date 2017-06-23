@@ -30,7 +30,7 @@
         <dependency>
             <groupId>org.gbif</groupId>
             <artifactId>dwca-io</artifactId>
-            <version>1.30</version>
+            <version>1.31</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-io</groupId>
@@ -60,14 +60,8 @@
         </dependency>
         <dependency>
             <groupId>org.gbif</groupId>
-            <artifactId>ecat-common</artifactId>
-            <version>1.6</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.gbif</groupId>
-                    <artifactId>dwca-reader</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>name-parser</artifactId>
+            <version>2.24</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
