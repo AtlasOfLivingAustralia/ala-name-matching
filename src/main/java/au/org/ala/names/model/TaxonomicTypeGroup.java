@@ -12,5 +12,7 @@ public enum TaxonomicTypeGroup {
     MISAPPLIED,
     EXCLUDED,
     MISCELLANEOUS,
-    INCERTAE_SEDIS
+    INCERTAE_SEDIS,
+    UNPLACED,
+    DOUBTFUL
 }

@@ -125,7 +125,7 @@ public class ALANameAnalyser extends NameAnalyser {
     protected void buildNomenclaturalStatusMap() {
         this.nomenclaturalStatusMap = new HashMap<>(64);
         // Use NomStatusParser for default values
-        this.loadCsv(DEFAULT_NONEMCLATURAL_STATUS_CODE_MAP, this.synonymMap, SynonymType.class);
+        this.loadCsv(DEFAULT_NONEMCLATURAL_STATUS_CODE_MAP, this.nomenclaturalStatusMap, NomenclaturalStatus.class);
     }
 
     /**
@@ -133,15 +133,14 @@ public class ALANameAnalyser extends NameAnalyser {
      *
      * @param code The code name
      *
-     * @return The mapped code
+     * @return The mapped code or null for not found
      */
     @Override
     public NomenclaturalCode canonicaliseCode(String code) {
+        if (code == null)
+            return null;
         code = code.toUpperCase().trim();
-        NomenclaturalCode nc = this.codeMap.get(code);
-        if (nc == null)
-            throw new IllegalArgumentException("Inavlid nomenclatural code acronym " + code);
-        return nc;
+        return this.codeMap.get(code);
     }
 
     /**

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import org.gbif.api.vocabulary.NomenclaturalCode;
 
 import java.util.*;
 
@@ -48,6 +49,8 @@ public class NameProvider {
     /** Score adjustments */
     @JsonProperty
     private ScoreAdjuster adjuster;
+    /** The default nomenclatural code */
+    private NomenclaturalCode defaultNomenclaturalCode;
 
     /**
      * Default constructor
@@ -57,6 +60,7 @@ public class NameProvider {
         this.description = null;
         this.parent = null;
         this.defaultScore = null;
+        this.defaultNomenclaturalCode = null;
         this.scores = new HashMap<>();
         this.owner = new HashSet<>();
         this.adjuster = new ScoreAdjuster();
@@ -74,6 +78,7 @@ public class NameProvider {
         this.description = null;
         this.parent = null;
         this.defaultScore= defaultScore;
+        this.defaultNomenclaturalCode = null;
         this.scores = scores;
         this.owner = new HashSet<>();
         this.adjuster = new ScoreAdjuster();
@@ -166,6 +171,23 @@ public class NameProvider {
         if (this.parent != null)
             return this.parent.getDefaultScore();
         return DEFAULT_SCORE;
+    }
+
+    /**
+     * Get the default nomeclatural code.
+     * <p>
+     * If not set and there is a parent, get the parent default.
+     * If nothing has been set, then throw an exception
+     * </p>
+     *
+     * @return The default code
+     */
+    public NomenclaturalCode getDefaultNomenclaturalCode() {
+        if (this.defaultNomenclaturalCode != null)
+            return this.defaultNomenclaturalCode;
+        if (this.parent != null)
+            return this.parent.getDefaultNomenclaturalCode();
+        throw new IllegalStateException("No default nomenclatural code available");
     }
 
     /**

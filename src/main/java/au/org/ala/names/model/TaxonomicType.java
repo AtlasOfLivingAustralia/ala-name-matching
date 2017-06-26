@@ -14,8 +14,6 @@ public enum TaxonomicType {
     ACCEPTED("accepted", TaxonomicTypeGroup.ACCEPTED, true, true, false),
     /** A taxon placed in the taxonomiuc tree by an algorithm */
     INFERRED_ACCEPTED("inferredAccepted", TaxonomicTypeGroup.ACCEPTED, true, true, false),
-    /** A taxon of uncertain placement */
-    INCERTAE_SEDIS("incertaeSedis", TaxonomicTypeGroup.INCERTAE_SEDIS, true, true, false),
     /** A generic synonym */
     SYNONYM("synonym", TaxonomicTypeGroup.SYNONYM, true, false, true),
     /** A homotypic synonym (botany). A nomenclatural synonym, meaning that the same taxon has gone under a different name. This can occur when two people describe the same species. @see #OBJECTIVE_SYNONYM */
@@ -34,6 +32,14 @@ public enum TaxonomicType {
     INFERRED_SYNONYM("inferredSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true),
     /** A name that shouldn't be used, since it refers to something not found in the region of the occurrence record. */
     EXCLUDED("excluded", TaxonomicTypeGroup.EXCLUDED, false, false, false),
+    /** A taxon of uncertain placement */
+    INCERTAE_SEDIS("incertaeSedis", TaxonomicTypeGroup.INCERTAE_SEDIS, true, true, false),
+    /** An unplaced taxon */
+    UNPLACED("unplaced", TaxonomicTypeGroup.UNPLACED, false, false, false),
+    /** An inferred unplaced taxon */
+    INFERRED_UNPLACED("inferredUnplaced", TaxonomicTypeGroup.UNPLACED, false, false, false),
+    /** A dubious taxon */
+    DOUBTFUL("doubtful", TaxonomicTypeGroup.DOUBTFUL, false, false, false),
     /** A name that occurs in other literature. */
     MISCELLANEOUS_LITERATURE("miscellaneousLiterature", TaxonomicTypeGroup.MISCELLANEOUS, false, false, false);
 

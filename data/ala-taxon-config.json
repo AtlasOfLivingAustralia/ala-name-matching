@@ -133,13 +133,26 @@
       "description": "AusFungi",
       "parent": "default",
       "defaultScore" : 1000,
+      "scores": {
+        "Fungi": 2000
+      },
       "owner": [
         "Fungi"
       ]
     },
     {
+      "id" : "dr2703",
+      "description": "AusMoss",
+      "parent": "default",
+      "defaultScore" : 1000,
+      "defaultNomenclaturalCode": "BOTANICAL",
+      "scores": {
+        "Bryidae": 2000
+      }
+    },
+    {
       "id" : "inference",
-      "description": "Provider of inferences from the  ",
+      "description": "Provider of inferences from the matching algorithm",
       "parent": "default",
       "defaultScore" : 0
     }

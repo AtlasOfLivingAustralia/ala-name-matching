@@ -419,6 +419,9 @@ public class Taxonomy {
 
     /**
      * Get a GBIF normenclatural code.
+     * <p>
+     * If not matched, then
+     * </p>
      *
      * @param nomenclaturalCode The nomenclatural code
      *
@@ -504,8 +507,23 @@ public class Taxonomy {
             instance.setForbidden(true);
         }
         nameKey = taxonKey.toNameKey();
-        if (this.instances.containsKey(taxonID))
-            throw new IndexBuilderException("Collision in taxonIDs on " + taxonID);
+        if (this.instances.containsKey(taxonID)) {
+            this.report(IssueType.VALIDATION, "taxonomy.load.collision", instance);
+            instance = new TaxonConceptInstance(
+                    UUID.randomUUID().toString(),
+                    instance.getCode(),
+                    this.getInferenceProvider(),
+                    instance.getScientificName(),
+                    instance.getScientificNameAuthorship(),
+                    instance.getYear(),
+                    TaxonomicType.INFERRED_UNPLACED,
+                    instance.getRank(),
+                    instance.getStatus(),
+                    instance.getParentNameUsageID(),
+                    instance.getAcceptedNameUsageID(),
+                    instance.getClassification()
+            );
+        }
         ScientificName name = this.names.get(nameKey);
         if (name == null) {
             name = new ScientificName(nameKey);
@@ -606,6 +624,48 @@ public class Taxonomy {
         this.logger.info("Finished creating DwCA");
     }
 
+
+    /**
+     * Add a report.
+     * <p>
+     * Message codes are retrieved using a message bundle pointing to <code>taxonomy.properties</code>
+     * </p>
+     *
+     * @param type The type of report
+     * @param code The message code to use for the readable version of the report
+     * @param args The arguments for the report message
+     */
+    public void report(IssueType type, String code, String... args) {
+        String message;
+        try {
+            message = this.resources.getString(code);
+            message = MessageFormat.format(message == null ? code : message, args);
+        } catch (MissingResourceException ex) {
+            this.logger.error("Can't find resource for " + code + " defaulting to code");
+            message = code;
+        }
+        if (type == IssueType.ERROR || type == IssueType.VALIDATION)
+            this.logger.error(message);
+        if (type == IssueType.PROBLEM)
+            this.logger.warn(message);
+        if (type == IssueType.NOTE)
+            this.logger.debug(message);
+        Document doc = new Document();
+        doc.add(new StringField("type", ALATerm.TaxonomicIssue.qualifiedName(), Field.Store.YES));
+        doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DcTerm.type), type.name(), Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DcTerm.subject), code, Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DcTerm.description), message, Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DcTerm.date), ISO8601.format(new Date()), Field.Store.YES));
+        try {
+            this.indexWriter.addDocument(doc);
+            this.indexWriter.commit();
+            this.searcherManager.maybeRefresh();
+        } catch (IOException ex) {
+            this.logger.error("Unable to write report to index", ex);
+        }
+    }
+
     /**
      * Add a report.
      * <p>
@@ -656,7 +716,7 @@ public class Taxonomy {
             this.logger.error("Can't find resource for " + code + " defaulting to code");
             message = code;
         }
-        if (type == IssueType.ERROR)
+        if (type == IssueType.ERROR || type == IssueType.VALIDATION)
             this.logger.error(message);
         if (type == IssueType.PROBLEM)
             this.logger.warn(message);

@@ -1,1 +1,5 @@
 label,NomenclaturalStatus,title,link
+orth cons,CONSERVED,A name with conserved orthography,https://en.wikipedia.org/wiki/Conserved_name
+orth. cons.,CONSERVED,A name with conserved orthography,https://en.wikipedia.org/wiki/Conserved_name
+nom et orth cons,CONSERVED,A name with conserved name and orthography,https://en.wikipedia.org/wiki/Conserved_name
+nom. et orth. cons.,CONSERVED,A name with conserved name and orthography,https://en.wikipedia.org/wiki/Conserved_name

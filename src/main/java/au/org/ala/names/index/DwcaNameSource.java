@@ -94,14 +94,20 @@ public class DwcaNameSource extends NameSource {
     public void loadIntoTaxonomy(Taxonomy taxonomy) throws IndexBuilderException {
         List<Term> classifiers = TaxonConceptInstance.CLASSIFICATION_FIELDS.stream().filter(t -> archive.getCore().hasTerm(t)).collect(Collectors.toList());
         taxonomy.addOutputTerms(archive.getCore().getRowType(), archive.getCore().getTerms());
+        String taxonID = null;
         for (ArchiveFile ext: archive.getExtensions())
             taxonomy.addOutputTerms(ext.getRowType(), ext.getTerms());
         try {
             for (StarRecord record : this.archive) {
                 Record core = record.core();
-                String taxonID = core.value(DwcTerm.taxonID);
-                NomenclaturalCode code = taxonomy.resolveCode(core.value(DwcTerm.nomenclaturalCode));
+                taxonID = core.value(DwcTerm.taxonID);
                 NameProvider provider = taxonomy.resolveProvider(core.value(DwcTerm.datasetID), core.value(DwcTerm.datasetName));
+                NomenclaturalCode code = taxonomy.resolveCode(core.value(DwcTerm.nomenclaturalCode));
+                if (code == null) {
+                    taxonomy.report(IssueType.PROBLEM, "taxonomy.load.nullCode", taxonID, core.value(DwcTerm.nomenclaturalCode));
+                    code = provider.getDefaultNomenclaturalCode();
+                    taxonomy.count("count.load.problem");
+                }
                 String scientificName = core.value(DwcTerm.scientificName);
                 String scientificNameAuthorship = core.value(DwcTerm.scientificNameAuthorship);
                 String year = core.value(DwcTerm.namePublishedInYear);
@@ -124,10 +130,8 @@ public class DwcaNameSource extends NameSource {
                 taxonomy.addRecords(docs);
 
             }
-        } catch (IndexBuilderException ex) {
-            throw ex;
         } catch (Exception ex) {
-            throw new IndexBuilderException("Unable to load archive " + this.archive.getLocation(), ex);
+            throw new IndexBuilderException("Unable to load archive " + this.archive.getLocation() + " at taxon " + taxonID, ex);
         }
     }
 
