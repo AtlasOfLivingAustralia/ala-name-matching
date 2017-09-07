@@ -5,6 +5,7 @@ import au.org.ala.names.index.TaxonConceptInstance;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
 import org.gbif.api.vocabulary.NomenclaturalCode;
+import org.gbif.api.vocabulary.Rank;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,11 +53,11 @@ public class TestUtils {
     }
 
     public TaxonConceptInstance createInstance(String id, NomenclaturalCode code, String name, NameProvider provider) {
-        return new TaxonConceptInstance(id, code, provider, name, null, null, TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null,null, null, null, null, null);
     }
 
     public TaxonConceptInstance createInstance(String id, NomenclaturalCode code, String name, NameProvider provider, TaxonomicType taxonomicStatus) {
-        return new TaxonConceptInstance(id, code, provider, name, null, null, taxonomicStatus, RankType.SPECIES, null, null, null, null);
+        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, taxonomicStatus, taxonomicStatus.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
     }
 
 }

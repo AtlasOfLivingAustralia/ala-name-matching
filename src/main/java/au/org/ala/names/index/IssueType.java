@@ -14,5 +14,7 @@ public enum IssueType {
     /** A problem loading the taxonomy that needs to be addressed */
     PROBLEM,
     /** A note about processing */
-    NOTE;
+    NOTE,
+    /** A statistic of some sort */
+    COUNT
 }

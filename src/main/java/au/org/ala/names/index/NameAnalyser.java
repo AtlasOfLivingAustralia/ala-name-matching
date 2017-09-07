@@ -2,12 +2,13 @@ package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
-import org.gbif.api.exception.UnparsableException;
-import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
-import org.gbif.nameparser.PhraseNameParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.Comparator;
 
 /**
@@ -19,23 +20,50 @@ import java.util.Comparator;
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright (c) 2017 CSIRO
  */
-abstract public class NameAnalyser implements Comparator<NameKey> {
-    private PhraseNameParser parser;
+abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
+    private static final Logger logger = LoggerFactory.getLogger(NameAnalyser.class);
+
+    /** Report possible informal names; can be used for debugging source data */
+    protected static final boolean REPORT_INFORMAL = true;
+
+    private Reporter reporter;
 
     public NameAnalyser() {
-        this.parser = new PhraseNameParser();
     }
 
-    public NameKey analyse(String code, String scientificName, String scientificNameAuthorship) throws UnparsableException {
+    /**
+     * Convienience method for testing.
+     */
+    public NameKey analyse(String code, String scientificName, String scientificNameAuthorship, String rank) {
         NomenclaturalCode canonicalCode = this.canonicaliseCode(code);
-        return this.analyse(canonicalCode, scientificName, scientificNameAuthorship);
+        RankType rankType = this.canonicaliseRank(rank);
+        return this.analyse(canonicalCode, scientificName, scientificNameAuthorship, rankType, false);
     }
 
-    public NameKey analyse(NomenclaturalCode code, String scientificName, String scientificNameAuthorship) throws UnparsableException {
-        ParsedName parsedName = this.parser.parse(scientificName);
-        String canonicalName = this.canonicaliseName(parsedName);
-        String canonicalAuthor = this.canonicaliseAuthor(parsedName, scientificNameAuthorship);
-        return new NameKey(this, code, canonicalName, canonicalAuthor, parsedName.getType());
+    /**
+     * Analyse a name and return a matching name key.
+     * <p>
+     * Name keys are expected to canonicalise the provided names so that
+     * we can link like name with like name.
+     * </p>
+     *
+     * @param code The nomenclatural code
+     * @param scientificName The scientific name
+     * @param scientificNameAuthorship The authorship
+     * @param rankType The taxon rank
+     * @param loose This is from a loose source that may have names and authors mixed up and the like
+     *
+     * @return A suitable name key
+     */
+    abstract public NameKey analyse(NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, @Nullable RankType rankType, boolean loose);
+
+    /**
+     * Set the issue reporter.
+     *
+     * @param reporter The issue reporter
+     */
+    public void setReporter(Reporter reporter) {
+        this.reporter = reporter;
     }
 
     /**
@@ -75,23 +103,14 @@ abstract public class NameAnalyser implements Comparator<NameKey> {
     abstract public NomenclaturalStatus canonicaliseNomenclaturalStatus(String nomenclaturalStatus);
 
     /**
-     * Canonicalise the scientfic name
+     * Test for an informal name.
+     * <p>
      *
-     * @param parsedName The parsed name
-     *
-     * @return The canonicalised scientfic name (no author)
+     * </p>
+     * @param name
+     * @return
      */
-    abstract public String canonicaliseName(ParsedName parsedName);
-
-    /**
-     * Canonicalise the scientfic authorship
-     *
-     * @param parsedName The parsed name
-     * @param scientificNameAuthorship The supplied author
-     *
-     * @return The canonicalised authorship
-     */
-    abstract public String canonicaliseAuthor(ParsedName parsedName, String scientificNameAuthorship);
+    abstract public boolean isInformal(String name);
 
     /**
      * Compare two name keys.
@@ -117,4 +136,26 @@ abstract public class NameAnalyser implements Comparator<NameKey> {
      * @return The resulting hash code
      */
     abstract public int hashCode(NameKey key1);
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void report(IssueType type, String code, String... args) {
+        if (this.reporter != null)
+            this.reporter.report(type, code, args);
+        else
+            logger.warn("Report " + type.name() + " code=" + code + " args=" + Arrays.toString(args));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void report(IssueType type, String code, TaxonomicElement... elements) {
+        if (this.reporter != null)
+            this.reporter.report(type, code, elements);
+        else
+            logger.warn("Report " + type.name() + " code=" + code + " elements=" + Arrays.toString(elements));
+    }
 }

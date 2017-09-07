@@ -14,7 +14,7 @@
 	<field index="3" term="http://rs.tdwg.org/dwc/terms/nubID"/>
 	<field index="4" term="http://rs.tdwg.org/dwc/terms/acceptedNameUsageID"/>
 	<field index="5" term="http://rs.tdwg.org/dwc/terms/scientificNameID"/> <!-- id from the name_string table -->
-	<field index="6" term="http://rs.tdwg.org/dwc/terms/ScientificName"/> <!-- this is a canonical name -->
+	<field index="6" term="http://rs.tdwg.org/dwc/terms/ScientificName"/> <!-- this is a canoniidname -->
 	<field index="7" term="http://rs.tdwg.org/dwc/terms/ScientificNameAuthorship"/>
 	<field index="8" term="rankID"/>
 	<field index="9" term="http://rs.tdwg.org/dwc/terms/TaxonRank"/>

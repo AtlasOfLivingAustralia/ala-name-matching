@@ -39,18 +39,24 @@ public class ScientificNameTest {
         TaxonConceptInstance instance = new TaxonConceptInstance(
                 TAXON_ID,
                 NomenclaturalCode.ZOOLOGICAL,
+                NomenclaturalCode.ZOOLOGICAL.getAcronym(),
                 provider,
                 NAME_1,
                 AUTHOR_1,
                 YEAR_1,
                 TaxonomicType.ACCEPTED,
+                TaxonomicType.ACCEPTED.getTerm(),
                 RankType.SPECIES,
+                RankType.SPECIES.getRank(),
+                null,
+                null,
+                null,
                 null,
                 null,
                 null,
                 null
         );
-        NameKey instanceKey = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, NAME_1, AUTHOR_1);
+        NameKey instanceKey = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, NAME_1, AUTHOR_1, RankType.SPECIES, false);
         NameKey nameKey = instanceKey.toNameKey();
         ScientificName name = new ScientificName(nameKey);
         name.addInstance(instanceKey, instance);

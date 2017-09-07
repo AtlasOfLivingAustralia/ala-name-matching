@@ -14,5 +14,6 @@ public enum TaxonomicTypeGroup {
     MISCELLANEOUS,
     INCERTAE_SEDIS,
     UNPLACED,
-    DOUBTFUL
+    DOUBTFUL,
+    INVALID
 }

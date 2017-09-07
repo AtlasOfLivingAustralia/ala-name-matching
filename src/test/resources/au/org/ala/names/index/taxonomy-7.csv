@@ -1,0 +1,5 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonomicStatus,nomenclaturalStatus
+NZOR-4-28207,,,dr100,ICNAFP,Corethron,,genus,accepted,
+53095000,,,dr101,ICNAFP,Corethron,,genus,accepted,
+53095000-1,,53095000,dr101,ICNAFP,Corethron A,,genus,synonym,
+53095002,53095000,,dr101,ICNAFP,Corethron inerme,"G. Karsten, 1905",species,accepted,

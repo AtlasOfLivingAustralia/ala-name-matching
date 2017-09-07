@@ -128,6 +128,11 @@ public class ALATaxonResolver implements TaxonResolver {
         final TaxonConcept acceptedTaxonConcept = accepted == null ? null : accepted.getTaxonConcept();
         final ScientificName acceptedScientificName = acceptedTaxonConcept == null ? null : acceptedTaxonConcept.getName();
         Optional<TaxonConceptInstance> resolved;
+
+        if (resolution.getPrincipal().contains(instance)) {
+            resolution.addInternal(instance, instance, this.taxonomy);
+            return;
+        }
         if (instance.isAccepted() && instance.isPrimary()) {
             if ((resolved = resolution.getUsed().stream().filter(tci -> tci.isAccepted() && tci.getTaxonConcept() == taxonConcept).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
@@ -143,7 +148,7 @@ public class ALATaxonResolver implements TaxonResolver {
             }
             List<TaxonConceptInstance> synonyms = resolution.getUsed().stream().filter(tci -> tci.isSynonym() && !tci.isForbidden()).collect(Collectors.toList());
             if (!synonyms.isEmpty()) {
-                TaxonConceptInstance r = taxonomy.lub(synonyms);
+                TaxonConceptInstance r = this.lub(synonyms);
                 if (r != null) {
                     taxonomy.report(IssueType.NOTE, "taxonResolver.synonyms", instance, r);
                     resolution.addExternal(instance, r, taxonomy);
@@ -171,7 +176,7 @@ public class ALATaxonResolver implements TaxonResolver {
             }
             List<TaxonConceptInstance> synonyms = resolution.getUsed().stream().filter(tci -> tci.isSynonym() && !tci.isForbidden()).collect(Collectors.toList());
             if (!synonyms.isEmpty()) {
-                TaxonConceptInstance r = taxonomy.lub(synonyms);
+                TaxonConceptInstance r = synonyms.size() == 1 ? synonyms.get(0) : this.lub(synonyms);
                 if (r != null) {
                     taxonomy.report(IssueType.NOTE, "taxonResolver.synonyms", instance, r);
                     resolution.addExternal(instance, r, taxonomy);
@@ -200,5 +205,49 @@ public class ALATaxonResolver implements TaxonResolver {
             return;
         }
     }
+
+    /**
+     * Get the resolved least upper bound (lub) of two instances.
+     * <p>
+     * Note that this has to work with unresolved instances.
+     * </p>
+     *
+     * @param i1 The first instance
+     * @param i2 The second instance
+     *
+     * @return The lowest common resolved taxon or null for not resolved or no common taxon
+     */
+    public TaxonConceptInstance lub(TaxonConceptInstance i1, TaxonConceptInstance i2) {
+        while (i1 != null) {
+            TaxonConceptInstance r1 = i1.getAccepted() == null ? i1 : i1.getAccepted();
+            TaxonConceptInstance p2 = i2;
+            while (p2 != null) {
+                p2 = p2.getAccepted() == null ? p2 : p2.getAccepted();
+                if (p2.getTaxonConcept() == r1.getTaxonConcept())
+                    return r1;
+                p2 = p2.getParent();
+            }
+            i1 = i1.getParent();
+        }
+        return null;
+    }
+
+    /**
+     * Compute the least upper bound of a collection of taxa.
+     *
+     * @param instances The collection
+     *
+     * @return The least upper bound, or null if the instances have not been resolved or if there is no lub
+     *
+     * @see #lub(TaxonConceptInstance, TaxonConceptInstance)
+     */
+    public TaxonConceptInstance lub(Collection<TaxonConceptInstance> instances) {
+        Iterator<TaxonConceptInstance> i = instances.iterator();
+        TaxonConceptInstance lub = i.hasNext() ? i.next() : null;
+        while (i.hasNext() && lub != null)
+            lub = this.lub(lub, i.next());
+        return lub;
+    }
+
 
 }

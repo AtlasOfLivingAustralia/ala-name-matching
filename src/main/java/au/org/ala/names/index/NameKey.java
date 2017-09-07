@@ -1,13 +1,14 @@
 package au.org.ala.names.index;
 
 /**
- * A name key is a unique identifier for either a scientific name (code + name) or
- * a taxonomic concept (code + name + authorship)
+ * A name key is a unique identifier for either a scientific name (code + name + rank) or
+ * a taxonomic concept (code + name + authorship + rank)
  *
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright (c) 2017 CSIRO
  */
 
+import au.org.ala.names.model.RankType;
 import org.gbif.api.vocabulary.NameType;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 
@@ -20,6 +21,8 @@ public class NameKey implements Comparable<NameKey> {
     private String scientificName;
     /** The authorship */
     private String scientificNameAuthorship;
+    /** The taxon rank */
+    private RankType rank;
     /** The name type */
     private NameType type;
 
@@ -30,13 +33,15 @@ public class NameKey implements Comparable<NameKey> {
      * @param code The nomenclatural code
      * @param scientificName The normalised scientific name
      * @param scientificNameAuthorship The normalised authorship, for taxon concepts (null for names)
+     *                               @param rank The rank
      * @param type The type of name
      */
-    public NameKey(NameAnalyser analyser, NomenclaturalCode code, String scientificName, String scientificNameAuthorship, NameType type) {
+    public NameKey(NameAnalyser analyser, NomenclaturalCode code, String scientificName, String scientificNameAuthorship, RankType rank, NameType type) {
         this.analyser = analyser;
         this.code = code;
         this.scientificName = scientificName;
         this.scientificNameAuthorship = scientificNameAuthorship;
+        this.rank = rank;
         this.type = type;
     }
 
@@ -78,6 +83,13 @@ public class NameKey implements Comparable<NameKey> {
     }
 
     /**
+     * Get the rank of the name
+     */
+    public RankType getRank() {
+        return rank;
+    }
+
+    /**
      * Get the type of name
      *
      * @return
@@ -86,6 +98,15 @@ public class NameKey implements Comparable<NameKey> {
         return type;
     }
 
+    /**
+     * Is this an uncoded name, meaning that it does not have a nomenclatural code to accurately
+     * distinguish between homonyms?
+     *
+     * @return True if the name key is uncoded
+     */
+    public boolean isUncoded() {
+        return this.code == null;
+    }
 
     /**
      * Is this a formaal name key, meaning that the name type represents something like a scientific name.
@@ -93,7 +114,7 @@ public class NameKey implements Comparable<NameKey> {
      * @return True if this represents a formal name
      */
     public boolean isFormal() {
-        return this.type != null && (this.type == NameType.SCIENTIFIC || this.type == NameType.HYBRID || this.type == NameType.CULTIVAR);
+        return this.code != null && this.type != null && (this.type == NameType.SCIENTIFIC || this.type == NameType.HYBRID || this.type == NameType.CULTIVAR || this.type == NameType.VIRUS);
     }
 
 
@@ -129,17 +150,40 @@ public class NameKey implements Comparable<NameKey> {
     /**
      * Convert a full taxon key into a name-only key.
      *
-     * @return A name key without authorship or type
+     * @return A name key without authorship
      */
     public NameKey toNameKey() {
         if (this.scientificNameAuthorship == null)
             return this;
-        return new NameKey(this.analyser, this.code, this.scientificName, null, this.type);
+        return new NameKey(this.analyser, this.code, this.scientificName, null, this.rank, this.type);
+    }
+
+    /**
+     * Convert a full taxon key into an unranked key.
+     *
+     * @return An unranked name key without authorship
+     */
+    public NameKey toUnrankedNameKey() {
+        if (this.scientificNameAuthorship == null && this.rank == RankType.UNRANKED)
+            return this;
+        return new NameKey(this.analyser, this.code, this.scientificName, null, RankType.UNRANKED, this.type);
+    }
+
+
+    /**
+     * Convert a full taxon key into an unranked and un-nomenclatural coded key.
+     *
+     * @return An unranked/uncoded name key without authorship
+     */
+    public NameKey toUncodedNameKey() {
+        if (this.scientificNameAuthorship == null && this.rank == RankType.UNRANKED && this.code == null)
+            return this;
+        return new NameKey(this.analyser, null, this.scientificName, null, RankType.UNRANKED, this.type);
     }
 
     @Override
     public String toString() {
-        return "[" + code + ":" + scientificName + (scientificNameAuthorship != null ? "," + scientificNameAuthorship : "") + ']';
+        return "[" + (code != null ? code.getAcronym() : "") + ":" + scientificName + (scientificNameAuthorship != null ? "," + scientificNameAuthorship : "") + ":" + this.rank.getRank() + ']';
     }
 
     /**

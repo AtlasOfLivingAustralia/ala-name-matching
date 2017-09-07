@@ -3,7 +3,11 @@ package au.org.ala.names.index;
 import au.ala.org.vocab.ALATerm;
 import au.org.ala.names.util.FileUtils;
 import org.apache.commons.collections.MapUtils;
+import org.gbif.api.model.registry.Citation;
+import org.gbif.api.model.registry.Contact;
+import org.gbif.api.vocabulary.Country;
 import org.gbif.dwc.terms.*;
+import org.gbif.dwca.io.MetadataException;
 
 import java.io.*;
 import java.util.*;
@@ -25,9 +29,9 @@ abstract public class NameSource {
     /** Fields expected in the DwCA */
     protected static final List<Term> TAXON_REQUIRED = Arrays.asList(
             DwcTerm.taxonID,
-            DwcTerm.nomenclaturalCode,
-            DwcTerm.acceptedNameUsageID,
             DwcTerm.parentNameUsageID,
+            DwcTerm.acceptedNameUsageID,
+            DwcTerm.nomenclaturalCode,
             DwcTerm.scientificName,
             DwcTerm.scientificNameAuthorship,
             DwcTerm.taxonomicStatus,
@@ -36,6 +40,8 @@ abstract public class NameSource {
     );
     /** Optional fields from the DwCA */
     protected static final List<Term> TAXON_ADDITIONAL = Arrays.asList(
+            DwcTerm.acceptedNameUsage,
+            DwcTerm.parentNameUsage,
             DwcTerm.taxonConceptID,
             DwcTerm.scientificNameID,
             DwcTerm.nomenclaturalStatus,
@@ -49,7 +55,9 @@ abstract public class NameSource {
             DwcTerm.infraspecificEpithet,
             ALATerm.nameComplete,
             ALATerm.nameFormatted,
+            DwcTerm.nameAccordingToID,
             DwcTerm.nameAccordingTo,
+            DwcTerm.namePublishedInID,
             DwcTerm.namePublishedIn,
             DwcTerm.namePublishedInYear,
             DcTerm.source
@@ -62,8 +70,13 @@ abstract public class NameSource {
             DwcTerm.order,
             DwcTerm.family,
             DwcTerm.genus,
+            DwcTerm.subgenus,
             DwcTerm.specificEpithet,
             DwcTerm.infraspecificEpithet,
+            ALATerm.subphylum,
+            ALATerm.subclass,
+            ALATerm.suborder,
+            ALATerm.infraorder,
             ALATerm.kingdomID,
             ALATerm.phylumID,
             ALATerm.classID,
@@ -146,7 +159,8 @@ abstract public class NameSource {
             DwcTerm.scientificNameAuthorship,
             DwcTerm.taxonomicStatus,
             DwcTerm.taxonRank,
-            DwcTerm.datasetID
+            DwcTerm.datasetID,
+            ALATerm.score
     );
     /** Optional fields from the DwCA */
     protected static final List<Term> TAXON_VARIANT_ADDITIONAL = Arrays.asList(
@@ -155,13 +169,26 @@ abstract public class NameSource {
             DwcTerm.nomenclaturalStatus,
             ALATerm.nameComplete,
             ALATerm.nameFormatted,
+            DwcTerm.nameAccordingToID,
             DwcTerm.nameAccordingTo,
+            DwcTerm.namePublishedInID,
             DwcTerm.namePublishedIn,
             DwcTerm.namePublishedInYear,
-            DcTerm.source
+            DcTerm.source,
+            ALATerm.verbatimNomenclaturalCode,
+            ALATerm.verbatimTaxonomicStatus,
+            ALATerm.verbatimNomenclaturalStatus,
+            DwcTerm.verbatimTaxonRank
     );
 
-    /** Fields expected for a taxonomic issue */
+    protected static final Map<Term, List<Term>> TAXON_VARIANT_IMPLIED_TERMS = MapUtils.putAll(new HashMap<String, List<Term>>(),
+            new Object[][] {
+                    { DwcTerm.nomenclaturalCode, Arrays.asList(ALATerm.verbatimNomenclaturalCode) },
+                    { DwcTerm.taxonomicStatus, Arrays.asList(ALATerm.verbatimTaxonomicStatus) },
+                    { DwcTerm.nomenclaturalStatus, Arrays.asList(ALATerm.verbatimNomenclaturalStatus) }
+            });
+
+            /** Fields expected for a taxonomic issue */
     protected static final List<Term> TAXONOMIC_ISSUE_REQUIRED = Arrays.asList(
             DcTerm.type,
             DcTerm.subject,
@@ -194,7 +221,7 @@ abstract public class NameSource {
             }
     );
     /** A map of row types and helpful additional terms */
-    protected static final Map<Term, List<Term>> ADDIIONAL_TERMS = MapUtils.putAll(new HashMap<String, List<Term>>(),
+    protected static final Map<Term, List<Term>> ADDITIONAL_TERMS = MapUtils.putAll(new HashMap<String, List<Term>>(),
             new Object[][] {
                     { DwcTerm.Taxon, TAXON_ADDITIONAL },
                     { GbifTerm.Identifier, IDENTIFIER_ADDITIONAL },
@@ -204,6 +231,7 @@ abstract public class NameSource {
                     { ALATerm.TaxonomicIssue, TAXONOMIC_ISSUE_ADDITIONAL }
             }
     );
+
     /** A map of row types and terms not to be included in outputsd */
     protected static final Map<Term, List<Term>> FORBIDDEN_TERMS = MapUtils.putAll(new HashMap<String, List<Term>>(),
             new Object[][] {
@@ -215,6 +243,14 @@ abstract public class NameSource {
                     { ALATerm.TaxonomicIssue, TAXONOMIC_ISSUE_FORBIDDEN },
             }
     );
+
+    /** A map of row types and terms implied by the presence of other terms */
+    protected static final Map<Term, Map<Term, List<Term>>> IMPLIED_TERMS = MapUtils.putAll(new HashMap<Term, Map<Term, List<Term>>>(),
+            new Object[][] {
+                    { ALATerm.TaxonVariant, TAXON_VARIANT_IMPLIED_TERMS }
+            }
+    );
+
     /** Only include the required/additional terms */
     protected static final Map<Term, Boolean> ONLY_INCLUDE_ALLOWED = MapUtils.putAll(new HashMap<String, Boolean>(),
             new Object[][] {
@@ -226,6 +262,13 @@ abstract public class NameSource {
                     { ALATerm.TaxonomicIssue, true }
             }
     );
+
+    /**
+     * Get a human-readable name for the source.
+     *
+     * @return The name
+     */
+    abstract public String getName();
 
     /**
      * Validate the source of information before loading
@@ -242,6 +285,33 @@ abstract public class NameSource {
      * @throws IndexBuilderException if unable to load the data
      */
     abstract public void loadIntoTaxonomy(Taxonomy taxonomy) throws IndexBuilderException;
+
+    /**
+     * Get a citation for this source
+     *
+     * @return The citation
+     *
+     * @throws IndexBuilderException if unable to build the citation
+     */
+    abstract public Citation getCitation() throws IndexBuilderException;
+
+    /**
+     * Get a list of covered countries for this resource
+     *
+     * @return The country list
+     *
+     * @throws IndexBuilderException if unable to build the citation
+     */
+    abstract public Collection<Country> getCountries() throws IndexBuilderException;
+
+    /**
+     * Get a list of contacts for this resource
+     *
+     * @return The contact list
+     *
+     * @throws IndexBuilderException if unable to build the citation
+     */
+    abstract public Collection<Contact> getContacts() throws IndexBuilderException;
 
     /**
      * Create a name source

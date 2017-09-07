@@ -1,15 +1,20 @@
 package au.org.ala.names.index;
 
+import au.ala.org.vocab.ALATerm;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.SynonymType;
 import au.org.ala.names.model.TaxonomicType;
+import javafx.scene.media.MediaException;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
-import org.gbif.api.vocabulary.NomenclaturalCode;
-import org.gbif.api.vocabulary.NomenclaturalStatus;
-import org.gbif.api.vocabulary.TaxonomicStatus;
+import org.gbif.api.model.registry.Citation;
+import org.gbif.api.model.registry.Contact;
+import org.gbif.api.model.registry.Dataset;
+import org.gbif.api.vocabulary.*;
+import org.gbif.dwca.io.MetadataException;
 import org.gbif.dwca.record.Record;
 import org.gbif.dwca.record.StarRecord;
 import org.gbif.dwc.terms.DcTerm;
@@ -52,6 +57,79 @@ public class DwcaNameSource extends NameSource {
     }
 
     /**
+     * Get the name of the source
+     *
+     * @return The archive path
+     */
+    @Override
+    public String getName() {
+        try {
+            return this.archive.getLocation().getCanonicalPath();
+        } catch (IOException e) {
+            return "Unreadable archive";
+        }
+    }
+
+    /**
+     * Get a citation for this source.
+     *
+     * @return The citation
+     */
+    @Override
+    public Citation getCitation()  {
+        try {
+            Dataset dataset = this.archive.getMetadata();
+            if (dataset != null)
+                return dataset.getCitation();
+        } catch (MetadataException e) {
+        }
+        return new Citation(this.getName(), this.archive.toString());
+    }
+
+    /**
+     * Get a list of countries for this resource
+     *
+     * @return The country list
+     */
+    @Override
+    public Collection<Country> getCountries()  {
+        try {
+            Dataset dataset = this.archive.getMetadata();
+            if (dataset != null)
+                return dataset.getCountryCoverage();
+        } catch (MetadataException e) {
+        }
+        return Collections.emptySet();
+    }
+
+    /**
+     * Get a list of contacts for this resource
+     *
+     * @return The contacts list
+     */
+    @Override
+    public Collection<Contact> getContacts()  {
+        try {
+            Dataset dataset = this.archive.getMetadata();
+            if (dataset != null) {
+                List<Contact> contacts = new ArrayList<>();
+                for (Contact contact: dataset.getContacts()) {
+                    if (contact.isPrimary() || contact.getType() == ContactType.ORIGINATOR) {
+                        contact = (Contact) BeanUtils.cloneBean(contact);
+                        contact.setPrimary(false);
+                        contact.setType(ContactType.CONTENT_PROVIDER);
+                        contacts.add(contact);
+                    }
+                }
+                return contacts;
+            }
+        } catch (Exception e) {
+        }
+        return Collections.emptySet();
+    }
+
+
+    /**
      * Validate the archive.
      * <p>
      * Ensure all the expected terms are present.
@@ -78,7 +156,7 @@ public class DwcaNameSource extends NameSource {
         if (required != null) {
             for (Term term: required)
                 if (!af.hasTerm(term))
-                    throw new IndexBuilderException("File " + af.getTitle() + " is of type " + af.getRowType() + " and is missing " + term);
+                    throw new IndexBuilderException("File " + af.getTitle() + " from " + this.archive.getLocation() + " is of type " + af.getRowType() + " and is missing " + term);
 
         }
     }
@@ -94,6 +172,8 @@ public class DwcaNameSource extends NameSource {
     public void loadIntoTaxonomy(Taxonomy taxonomy) throws IndexBuilderException {
         List<Term> classifiers = TaxonConceptInstance.CLASSIFICATION_FIELDS.stream().filter(t -> archive.getCore().hasTerm(t)).collect(Collectors.toList());
         taxonomy.addOutputTerms(archive.getCore().getRowType(), archive.getCore().getTerms());
+        if (archive.getCore().getRowType() == DwcTerm.Taxon)
+            taxonomy.addOutputTerms(ALATerm.TaxonVariant, archive.getCore().getTerms());
         String taxonID = null;
         for (ArchiveFile ext: archive.getExtensions())
             taxonomy.addOutputTerms(ext.getRowType(), ext.getTerms());
@@ -101,30 +181,58 @@ public class DwcaNameSource extends NameSource {
             for (StarRecord record : this.archive) {
                 Record core = record.core();
                 taxonID = core.value(DwcTerm.taxonID);
+                String verbatimNomenclaturalCode = core.value(DwcTerm.nomenclaturalCode);
                 NameProvider provider = taxonomy.resolveProvider(core.value(DwcTerm.datasetID), core.value(DwcTerm.datasetName));
-                NomenclaturalCode code = taxonomy.resolveCode(core.value(DwcTerm.nomenclaturalCode));
+                NomenclaturalCode code = taxonomy.resolveCode(verbatimNomenclaturalCode);
                 if (code == null) {
-                    taxonomy.report(IssueType.PROBLEM, "taxonomy.load.nullCode", taxonID, core.value(DwcTerm.nomenclaturalCode));
                     code = provider.getDefaultNomenclaturalCode();
-                    taxonomy.count("count.load.problem");
+                    if (code == null && !provider.isLoose())
+                        throw new IllegalStateException("No nomenclatural code for " + taxonID + " and code " + verbatimNomenclaturalCode);
+                    if (code != null) {
+                        taxonomy.report(IssueType.PROBLEM, "taxonomy.load.nullCode", taxonID, verbatimNomenclaturalCode);
+                        taxonomy.count("count.load.problem");
+                    }
                 }
                 String scientificName = core.value(DwcTerm.scientificName);
                 String scientificNameAuthorship = core.value(DwcTerm.scientificNameAuthorship);
                 String year = core.value(DwcTerm.namePublishedInYear);
-                TaxonomicType taxonomicStatus = taxonomy.resolveTaxonomicType(core.value(DwcTerm.taxonomicStatus));
-                RankType rank = taxonomy.resolveRank(core.value(DwcTerm.taxonRank));
-                Set<NomenclaturalStatus> nomenclaturalStatus = taxonomy.resolveNomenclaturalStatus(core.value(DwcTerm.nomenclaturalStatus));
+                String verbatimTaxonomicStatus = core.value(DwcTerm.taxonomicStatus);
+                TaxonomicType taxonomicStatus = taxonomy.resolveTaxonomicType(verbatimTaxonomicStatus);
+                String verbatiomTaxonRank = core.value(DwcTerm.taxonRank);
+                RankType rank = taxonomy.resolveRank(verbatiomTaxonRank);
+                String verbatimNomenclaturalStatus = core.value(DwcTerm.nomenclaturalStatus);
+                Set<NomenclaturalStatus> nomenclaturalStatus = taxonomy.resolveNomenclaturalStatus(verbatimNomenclaturalStatus);
+                String parentNameUsage = core.value(DwcTerm.parentNameUsage);
                 String parentNameUsageID = core.value(DwcTerm.parentNameUsageID);
+                String acceptedNameUsage = core.value(DwcTerm.acceptedNameUsage);
                 String acceptedNameUsageID = core.value(DwcTerm.acceptedNameUsageID);
                 Map<Term, Optional<String>> classification = classifiers.stream().collect(Collectors.toMap(t -> t, t -> Optional.ofNullable(core.value(t))));
-                TaxonConceptInstance instance = new TaxonConceptInstance(taxonID, code, provider, scientificName, scientificNameAuthorship, year, taxonomicStatus, rank, nomenclaturalStatus, parentNameUsageID, acceptedNameUsageID, classification);
-                taxonomy.addInstance(instance);
+                TaxonConceptInstance instance = new TaxonConceptInstance(
+                        taxonID,
+                        code,
+                        verbatimNomenclaturalCode,
+                        provider,
+                        scientificName,
+                        scientificNameAuthorship,
+                        year,
+                        taxonomicStatus,
+                        verbatimTaxonomicStatus,
+                        rank,
+                        verbatiomTaxonRank,
+                        nomenclaturalStatus,
+                        verbatimNomenclaturalStatus,
+                        parentNameUsage,
+                        parentNameUsageID,
+                        acceptedNameUsage,
+                        acceptedNameUsageID,
+                        classification);
+                instance = taxonomy.addInstance(instance);
 
                 List<Document> docs = new ArrayList<>();
-                docs.add(this.makeDocument(taxonomy, core));
+                docs.add(this.makeDocument(taxonomy, core, instance.getTaxonID()));
                 for (List<Record> ext: record.extensions().values()) {
                     for (Record er: ext) {
-                        docs.add(makeDocument(taxonomy, er));
+                        docs.add(makeDocument(taxonomy, er, instance.getTaxonID()));
                     }
                 }
                 taxonomy.addRecords(docs);
@@ -140,15 +248,16 @@ public class DwcaNameSource extends NameSource {
      *
      * @param taxonomy The target taxonomy
      * @param record The record
+     * @param taxonID The actual, stored taxonID
      *
      * @return The record as a document
      */
-    private Document makeDocument(Taxonomy taxonomy, Record record) {
+    private Document makeDocument(Taxonomy taxonomy, Record record, String taxonID) {
         Document doc = new Document();
         doc.add(new StringField("type", record.rowType().qualifiedName(), Field.Store.YES));
         doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
         for (Term term: record.terms()) {
-            String value = record.value(term);
+            String value = term == DwcTerm.taxonID ? taxonID : record.value(term);
             if (term != null && value != null && !value.isEmpty())
                 doc.add(new StringField(taxonomy.fieldName(term), value, Field.Store.YES));
         }

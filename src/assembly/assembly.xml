@@ -13,7 +13,7 @@
             <fileMode>0755</fileMode>
             <directoryMode>0755</directoryMode>
             <includes>
-                <include>au.org.ala:ala-name-matching</include>
+                <include>au.org.ala:ala-id-matching</include>
             </includes>
         </dependencySet>
         <dependencySet>

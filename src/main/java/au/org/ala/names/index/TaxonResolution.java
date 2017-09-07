@@ -171,4 +171,41 @@ public class TaxonResolution {
     public List<TaxonConceptInstance> getChildren(TaxonConceptInstance instance) {
         return this.resolution.keySet().stream().filter(tci -> this.resolution.get(tci) == instance).collect(Collectors.toList());
     }
+
+    /**
+     * Validate the resolution.
+     * <p>
+     * Basically, everything in the instance list, along with everything in the used list needs to have a resolution.
+     * </p>
+     *
+     * @param instances The list of instances
+     * @param reporter The issue reporter
+     *
+     * @return True if the resolution is valid, false if there is a problem
+     */
+    public boolean validate(Collection<TaxonConceptInstance> instances, Reporter reporter) {
+        boolean valid = true;
+        for (TaxonConceptInstance tci: this.getUsed())
+            valid = this.validate(tci, reporter) && valid; // Report all errors
+        for (TaxonConceptInstance tci: this.getPrincipal())
+            valid = this.validate(tci, reporter) && valid;
+        for (TaxonConceptInstance tci: instances)
+            valid = this.validate(tci, reporter) && valid;
+        return valid;
+    }
+
+    /**
+     * Validate a single taxon concept instance
+     *
+     * @param instance The instance
+     * @param reporter The reporter
+     *
+     * @return True if the instance is resolved, false otherwise
+     */
+    protected boolean validate(TaxonConceptInstance instance, Reporter reporter) {
+        boolean valid = this.getResolved(instance) != null;
+        if (!valid)
+            reporter.report(IssueType.ERROR, "taxonResolver.validation.noResolution", instance);
+        return valid;
+    }
 }

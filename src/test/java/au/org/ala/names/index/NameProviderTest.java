@@ -68,9 +68,9 @@ public class NameProviderTest extends TestUtils {
         TaxonConceptInstance instance1 = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia dealbata", provider);
         TaxonConceptInstance instance2 = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia", provider);
         TaxonConceptInstance instance3 = this.createInstance("ID-1", NomenclaturalCode.ZOOLOGICAL, "Macropus", provider);
-        assertEquals(100, provider.computeBaseScore(instance1));
-        assertEquals(150, (int) provider.computeBaseScore(instance2));
-        assertEquals(90, (int) provider.computeBaseScore(instance3));
+        assertEquals(100, provider.computeBaseScore(instance1, instance1));
+        assertEquals(150, provider.computeBaseScore(instance2, instance2));
+        assertEquals(90, provider.computeBaseScore(instance3, instance3));
     }
 
     @Test
@@ -79,9 +79,9 @@ public class NameProviderTest extends TestUtils {
         TaxonConceptInstance instance1 = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia dealbata", provider);
         TaxonConceptInstance instance2 = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia", provider);
         TaxonConceptInstance instance3 = this.createInstance("ID-1", NomenclaturalCode.ZOOLOGICAL, "Macropus", provider);
-        assertEquals(100, provider.computeBaseScore(instance1));
-        assertEquals(100, (int) provider.computeBaseScore(instance2));
-        assertEquals(90, (int) provider.computeBaseScore(instance3));
+        assertEquals(100, provider.computeBaseScore(instance1, instance1));
+        assertEquals(100, provider.computeBaseScore(instance2, instance2));
+        assertEquals(90, provider.computeBaseScore(instance3, instance3));
     }
 
     @Test
@@ -92,9 +92,9 @@ public class NameProviderTest extends TestUtils {
         TaxonConceptInstance instance3 = this.createInstance("ID-1", NomenclaturalCode.ZOOLOGICAL, "Macropus", provider);
         TaxonConceptInstance instance4 = this.createInstance("ID-1", NomenclaturalCode.ZOOLOGICAL, "Macropus", provider, TaxonomicType.EXCLUDED);
         assertEquals(110, provider.computeScore(instance1));
-        assertEquals(160, (int) provider.computeScore(instance2));
-        assertEquals(90, (int) provider.computeScore(instance3));
-        assertEquals(70, (int) provider.computeScore(instance4));
+        assertEquals(160, provider.computeScore(instance2));
+        assertEquals(90, provider.computeScore(instance3));
+        assertEquals(70, provider.computeScore(instance4));
     }
 
 
@@ -106,9 +106,9 @@ public class NameProviderTest extends TestUtils {
         TaxonConceptInstance instance3 = this.createInstance("ID-1", NomenclaturalCode.ZOOLOGICAL, "Macropus", provider, TaxonomicType.INFERRED_ACCEPTED);
         TaxonConceptInstance instance4 = this.createInstance("ID-1", NomenclaturalCode.ZOOLOGICAL, "Macropus", provider, TaxonomicType.EXCLUDED);
         assertEquals(110, provider.computeScore(instance1));
-        assertEquals(160, (int) provider.computeScore(instance2));
-        assertEquals(70, (int) provider.computeScore(instance3));
-        assertEquals(70, (int) provider.computeScore(instance4));
+        assertEquals(160, provider.computeScore(instance2));
+        assertEquals(70, provider.computeScore(instance3));
+        assertEquals(70, provider.computeScore(instance4));
     }
 
     @Test

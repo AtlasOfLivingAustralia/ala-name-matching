@@ -1,11 +1,17 @@
 package au.org.ala.names.index;
 
+import au.org.ala.names.util.GbifModule;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.gbif.api.model.registry.Contact;
 
 import java.io.*;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * A readable description of a taxonomy construction.
@@ -18,6 +24,16 @@ import java.util.List;
  */
 @JsonInclude(value = JsonInclude.Include.NON_NULL)
 public class TaxonomyConfiguration {
+    /** The configuration identifier */
+    public String id = UUID.randomUUID().toString();
+    /** The configuration name/title */
+    public String name;
+    /** The configurationm description */
+    public String description;
+    /** A reference URI for the configuration */
+    public URI uri;
+    /** The contact information */
+    public Contact contact;
     /** The type of name analyser */
     public Class<? extends NameAnalyser> nameAnalyserClass;
     /** The type of resolver */
@@ -28,6 +44,17 @@ public class TaxonomyConfiguration {
     public NameProvider defaultProvider;
     /** The name provider that represents inferences made by the taxon algorithm */
     public NameProvider inferenceProvider;
+
+    /**
+     * Construct an empty configuration
+     */
+    public TaxonomyConfiguration() {
+        this.id = UUID.randomUUID().toString();
+        this.name = "New taxonomy configuration";
+        this.nameAnalyserClass = ALANameAnalyser.class;
+        this.resolverClass = ALATaxonResolver.class;
+        this.providers = new ArrayList<>();
+    }
 
     /**
      * Write the
@@ -52,7 +79,7 @@ public class TaxonomyConfiguration {
      */
     public static TaxonomyConfiguration read(Reader reader) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-
+        mapper.registerModule(new GbifModule());
         return mapper.readValue(reader, TaxonomyConfiguration.class);
     }
 
@@ -82,5 +109,31 @@ public class TaxonomyConfiguration {
             throw new IndexBuilderException("Default provider not in provider list");
         if (this.inferenceProvider != null && !this.providers.stream().anyMatch(p -> p == this.inferenceProvider))
             throw new IndexBuilderException("Inference provider not in provider list");
+    }
+
+    /**
+     * Get a suitable contact name.
+     *
+     * @return The contact name
+     */
+    @JsonIgnore
+    public String getContactName() {
+        if (this.contact == null)
+            return null;
+        StringBuilder sb = new StringBuilder(32);
+        if (this.contact.getFirstName() != null) {
+            sb.append(this.contact.getFirstName());
+        }
+        if (this.contact.getLastName() != null) {
+            sb.append(" ");
+            sb.append(this.contact.getLastName());
+        }
+        if (this.contact.getOrganization() != null) {
+            if (sb.length() > 0)
+                sb.append(",");
+            sb.append(" ");
+            sb.append(this.contact.getOrganization());
+        }
+        return sb.toString().trim();
     }
 }

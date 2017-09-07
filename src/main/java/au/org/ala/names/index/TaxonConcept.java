@@ -5,7 +5,7 @@ import au.org.ala.names.model.RankType;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwca.io.DwcaWriter;
+import au.org.ala.names.util.DwcaWriter;
 
 import java.io.IOException;
 import java.util.*;
@@ -77,10 +77,17 @@ public class TaxonConcept extends TaxonomicElement {
      *
      * @param instance The instance to resolve
      *
-     * @return The resolved instance, or null for not resolved.
+     * @return The resolved instance
+     *
+     * @throws IllegalStateException if unable to resolve the instance
      */
     public TaxonConceptInstance getResolved(TaxonConceptInstance instance) {
-        return this.resolution == null ? null : this.resolution.getResolved(instance);
+        if (this.resolution == null)
+            return instance;
+        TaxonConceptInstance resolved = this.resolution.getResolved(instance);
+        if (resolved == null)
+            throw new IllegalStateException("Unable to get resolution for " + this);
+        return resolved;
     }
 
     /**
@@ -143,19 +150,19 @@ public class TaxonConcept extends TaxonomicElement {
         for (TaxonConceptInstance tci : this.resolution.getUsed()) {
             if (tci.isForbidden())
                 continue;
-            writer.newRecord(tci.getTaxonID());
-            Map<Term, String> values = tci.getTaxonMap(taxonomy);
-            for (Term term : taxonomy.outputTerms(DwcTerm.Taxon))
-                if (term != DwcTerm.taxonID) // Already added as coreId
-                    writer.addCoreColumn(term, values.get(term));
             Collection<TaxonConceptInstance> allocated = this.resolution.getChildren(tci);
-            if (allocated == null || allocated.isEmpty())
-                taxonomy.report(IssueType.PROBLEM, "taxonConcept.noInstances", tci);
-            else {
+            if (allocated == null || allocated.isEmpty()) {
+                taxonomy.report(IssueType.NOTE, "taxonConcept.noInstances", tci);
+            } else {
+                writer.newRecord(tci.getTaxonID());
+                Map<Term, String> values = tci.getTaxonMap(taxonomy);
+                for (Term term : taxonomy.outputTerms(DwcTerm.Taxon))
+                    if (term != DwcTerm.taxonID) // Already added as coreId
+                        writer.addCoreColumn(term, values.get(term));
                 for (TaxonConceptInstance sub : allocated) {
                     if (sub.isForbidden())
                         continue;
-                    this.writeExtension(ALATerm.TaxonVariant, sub.getTaxonMap(taxonomy), taxonomy, writer);
+                    this.writeExtension(ALATerm.TaxonVariant, sub == tci ? values : sub.getTaxonMap(taxonomy), taxonomy, writer);
                     for (Map<Term, String> id : sub.getIdentifierMaps(taxonomy))
                         this.writeExtension(GbifTerm.Identifier, id, taxonomy, writer);
                     for (Map<Term, String> vn : sub.getVernacularMaps(taxonomy))
@@ -173,8 +180,7 @@ public class TaxonConcept extends TaxonomicElement {
         List<Term> terms = taxonomy.outputTerms(type);
         for (Term term: terms) {
             String value = values.get(term);
-            if (value != null)
-                ext.put(term, value);
+            ext.put(term, value);
         }
         if (!ext.isEmpty())
             writer.addExtensionRecord(type, ext);
@@ -191,11 +197,14 @@ public class TaxonConcept extends TaxonomicElement {
 
     /**
      * Does this concept have an primary, accepted instance?
+     * <p>
+     * If we haven't resolved the instances, any accepted, non-forbidden instance will do
+     * </p>
      *
      * @return True if there is one accepted instance in the primary list
      */
     public boolean hasAccepted() {
-        return this.resolution == null ? false : this.resolution.hasAccepted();
+        return this.resolution != null ? this.resolution.hasAccepted() : this.instances.stream().anyMatch(tci -> tci.isAccepted() && !tci.isForbidden());
     }
 
     /**
@@ -219,9 +228,10 @@ public class TaxonConcept extends TaxonomicElement {
     }
 
     /**
-     * Link this taxon concept to a primcipal taxon concept.
+     * Link this taxon concept to a principal taxon concept.
      * <p>
-     * We generate inferred synonyms towards
+     * We generate inferred synonyms towards that concept.
+     * If this concept is owned, then we ignore this, as we assume that the
      * </p>
      *
      * @param principal
@@ -234,12 +244,16 @@ public class TaxonConcept extends TaxonomicElement {
             taxonomy.report(IssueType.ERROR, "taxonConcept.representative", principal, this);
             return;
         }
-        List<TaxonConceptInstance> inferred = principal.resolution.getUsed().stream().filter(tci -> tci.isAccepted()).map(tci -> tci.createInferredSynonym(representative.getScientificName(), representative.getScientificNameAuthorship(), representative.getYear(), taxonomy)).collect(Collectors.toList());
+        List<TaxonConceptInstance> inferred = this.resolution.getUsed().stream().filter(tci -> tci.isAccepted()).map(tci -> representative.createInferredSynonym(this, tci.getScientificName(), tci.getScientificNameAuthorship(), tci.getYear(), taxonomy)).collect(Collectors.toList());
         if (inferred.isEmpty()) {
             taxonomy.report(IssueType.ERROR, "taxonConcept.inferredSynonyms", principal, this);
             return;
         }
-        this.resolution = resolver.resolve(this, inferred, this.instances);
+        this.instances.addAll(inferred);
+        List<TaxonConceptInstance> used = this.instances.stream().filter(tci -> tci.isInferredSynonym()).collect(Collectors.toList());
+        if (used.size() > 1)
+            taxonomy.report(IssueType.NOTE, "taxonConcept.multipleInferredSynonyms", this, used.get(0), used.get(1));
+        this.resolution = resolver.resolve(this, used, this.instances);
         taxonomy.count("count.resolve.inferredSynonym");
     }
 
@@ -284,7 +298,19 @@ public class TaxonConcept extends TaxonomicElement {
      */
     @Override
     public String getId() {
-        return this.key.getScientificName() + " " + this.key.getScientificNameAuthorship();
+        StringBuilder sb = new StringBuilder(32);
+        sb.append(this.key.getScientificName());
+        if (this.key.getScientificNameAuthorship() != null) {
+            sb.append(" ");
+            sb.append(this.key.getScientificNameAuthorship());
+        }
+        TaxonConceptInstance rep = this.getRepresentative();
+        if (rep != null) {
+            sb.append(" [");
+            sb.append(rep.getTaxonID());
+            sb.append("]");
+        }
+        return sb.toString();
     }
 
     /**
@@ -326,6 +352,9 @@ public class TaxonConcept extends TaxonomicElement {
                 valid = false;
             }
         }
+        if (this.isResolved())
+            if (!this.resolution.validate(this.instances, taxonomy))
+                valid = false;
         return valid;
     }
 

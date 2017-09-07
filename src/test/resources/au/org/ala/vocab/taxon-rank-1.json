@@ -1,0 +1,14 @@
+{
+  "@class" : "au.ala.org.vocab.TaxonRank",
+  "id" : "genus",
+  "uri" : "urm:x-ala:vocabulary:tr-1#genus",
+  "names" : [ ],
+  "vocabulary" : {
+    "@class" : "au.ala.org.vocab.Vocabulary",
+    "id" : "tr-1",
+    "uri" : "urm:x-ala:vocabulary:tr-1"
+  },
+  "level" : 6000,
+  "comparable" : true,
+  "linnaean" : true
+}

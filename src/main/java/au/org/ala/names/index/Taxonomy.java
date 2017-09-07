@@ -2,12 +2,11 @@ package au.org.ala.names.index;
 
 import au.ala.org.vocab.ALATerm;
 import au.com.bytecode.opencsv.CSVWriter;
-import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.RankType;
-import au.org.ala.names.model.SynonymType;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.util.FileUtils;
 import com.google.common.collect.Maps;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.Document;
@@ -18,17 +17,22 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.store.*;
 import org.apache.lucene.util.Version;
 import org.gbif.api.exception.UnparsableException;
-import org.gbif.api.vocabulary.NameType;
-import org.gbif.api.vocabulary.NomenclaturalCode;
-import org.gbif.api.vocabulary.NomenclaturalStatus;
-import org.gbif.api.vocabulary.TaxonomicStatus;
+import org.gbif.api.model.registry.Citation;
+import org.gbif.api.model.registry.Contact;
+import org.gbif.api.model.registry.Dataset;
+import org.gbif.api.model.registry.Identifier;
+import org.gbif.api.vocabulary.*;
 import org.gbif.dwc.terms.*;
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwca.io.DwcaWriter;
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.io.ArchiveFactory;
+import org.gbif.dwca.io.ArchiveFile;
+import au.org.ala.names.util.DwcaWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
@@ -44,11 +48,19 @@ import java.util.stream.Collectors;
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
-public class Taxonomy {
+public class Taxonomy implements Reporter {
     private static Logger logger = LoggerFactory.getLogger(Taxonomy.class);
     private static DateFormat ISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
     /** How many things to go before giving an update */
-    public static int PROGRESS_INTERVAL = 1000;
+    public static int PROGRESS_INTERVAL = 10000;
+
+    /** The counts we do progress reports on */
+    public Set<String> COUNT_PROGRESS = new HashSet<>(Arrays.asList(
+            "count.load.instance",
+            "count.resolve.instance.links",
+            "count.resolve.taxonConcept",
+            "count.write.taxonConcept"
+    ));
 
     /**
      * The default term list
@@ -58,6 +70,8 @@ public class Taxonomy {
     ));
 
 
+    /** The configuration */
+    private TaxonomyConfiguration configuration;
     /** The name analyser */
     private NameAnalyser analyser;
     /** The taxon resolver */
@@ -72,6 +86,10 @@ public class Taxonomy {
     private SearcherManager searcherManager;
     /** The list of scientific names */
     private Map<NameKey, ScientificName> names;
+    /** The list of unranked scientific names */
+    private Map<NameKey, List<ScientificName>> unrankedNames;
+    /** The list of unranked/uncoded scientific names */
+    private Map<NameKey, List<ScientificName>> uncodedNames;
     /** The list of name instances, keyed by taxonID */
     private Map<String, TaxonConceptInstance> instances;
     /** The list of name sources, keyed by identifier */
@@ -90,6 +108,8 @@ public class Taxonomy {
     private Map<Term, String> fieldNames;
     /** The map of lucene fields to terms */
     private Map<String, Term> fieldTerms;
+    /** The list of name sources used */
+    private List<NameSource> sources;
 
     /**
      * Default taxonomy constructor.
@@ -101,21 +121,7 @@ public class Taxonomy {
      * @throws IndexBuilderException if unable to construct
      */
     public Taxonomy() throws IndexBuilderException {
-        this.analyser = new ALANameAnalyser();
-        this.resolver = new ALATaxonResolver(this);
-        this.defaultProvider = new NameProvider("default", 100);
-        this.inferenceProvider = this.defaultProvider;
-        this.providers = new HashMap<>();
-        this.providers.put(this.defaultProvider.getId(), this.defaultProvider);
-        this.names = new HashMap<>();
-        this.instances = new HashMap<>();
-        this.makeBaseOutputMap();
-        this.makeWorkArea(null);
-        this.indexAnalyzer = new KeywordAnalyzer();
-        this.resources = ResourceBundle.getBundle("taxonomy");
-        this.counts = new HashMap<>();
-        this.fieldNames = new HashMap<>();
-        this.fieldTerms = new HashMap<>();
+        this(null, null);
     }
 
     /**
@@ -128,30 +134,33 @@ public class Taxonomy {
      */
     public Taxonomy(TaxonomyConfiguration configuration, File work) throws IndexBuilderException {
         if (configuration == null) {
-            this.analyser = new ALANameAnalyser();
-            this.resolver = new ALATaxonResolver(this);
-            this.defaultProvider = new NameProvider("default", 100);
-            this.inferenceProvider = this.defaultProvider;
-            this.providers = new HashMap<>();
-            this.providers.put(this.defaultProvider.getId(), this.defaultProvider);
-        } else {
-            configuration.validate();
-            try {
-                this.analyser = configuration.nameAnalyserClass.newInstance();
-            } catch (Exception ex) {
-                throw new IndexBuilderException("Unable to create analyser", ex);
-            }
-            try {
-                this.resolver = configuration.resolverClass.getConstructor(Taxonomy.class).newInstance(this);
-            } catch (Exception ex) {
-                throw new IndexBuilderException("Unable to create resolver", ex);
-            }
-            this.providers = Maps.uniqueIndex(configuration.providers, p -> p.getId());
-            this.defaultProvider = configuration.defaultProvider;
-            this.inferenceProvider = configuration.inferenceProvider != null ? configuration.inferenceProvider : this.defaultProvider;
-
+            configuration = new TaxonomyConfiguration();
+            configuration.nameAnalyserClass = ALANameAnalyser.class;
+            configuration.resolverClass = ALATaxonResolver.class;
+            configuration.defaultProvider = new NameProvider("default", 100);
+            configuration.inferenceProvider = configuration.defaultProvider;
+            configuration.providers = new ArrayList<>();
+            configuration.providers.add(configuration.defaultProvider);
         }
+        this.configuration = configuration;
+        this.configuration.validate();
+        try {
+            this.analyser = this.configuration.nameAnalyserClass.newInstance();
+            this.analyser.setReporter(this);
+        } catch (Exception ex) {
+            throw new IndexBuilderException("Unable to create analyser", ex);
+        }
+        try {
+            this.resolver = this.configuration.resolverClass.getConstructor(Taxonomy.class).newInstance(this);
+        } catch (Exception ex) {
+            throw new IndexBuilderException("Unable to create resolver", ex);
+        }
+        this.providers = new HashMap<>(Maps.uniqueIndex(configuration.providers, p -> p.getId()));
+        this.defaultProvider = this.configuration.defaultProvider;
+        this.inferenceProvider = this.configuration.inferenceProvider != null ? configuration.inferenceProvider : this.defaultProvider;
         this.names = new HashMap<>();
+        this.unrankedNames = new HashMap<>();
+        this.uncodedNames = new HashMap<>();
         this.instances = new HashMap<>();
         this.makeBaseOutputMap();
         this.makeWorkArea(work);
@@ -160,6 +169,7 @@ public class Taxonomy {
         this.counts = new HashMap<>();
         this.fieldNames = new HashMap<>();
         this.fieldTerms = new HashMap<>();
+        this.sources = new ArrayList<>();
     }
 
     /**
@@ -171,11 +181,15 @@ public class Taxonomy {
      * @param defaultProvider The default provider
      */
     public Taxonomy(NameAnalyser analyser, TaxonResolver resolver, Map<String, NameProvider> providers, NameProvider defaultProvider) {
+        this.configuration = new TaxonomyConfiguration();
         this.analyser = analyser;
+        this.analyser.setReporter(this);
         this.resolver = resolver;
         this.providers = providers;
         this.defaultProvider = defaultProvider;
         this.names = new HashMap<>();
+        this.unrankedNames = new HashMap<>();
+        this.uncodedNames = new HashMap<>();
         this.instances = new HashMap<>();
         this.makeBaseOutputMap();
         this.makeWorkArea(null);
@@ -184,6 +198,7 @@ public class Taxonomy {
         this.counts = new HashMap<>();
         this.fieldNames = new HashMap<>();
         this.fieldTerms = new HashMap<>();
+        this.sources = new ArrayList<>();
     }
 
     /**
@@ -235,10 +250,10 @@ public class Taxonomy {
            count = 0;
        count++;
        this.counts.put(type, count);
-       if (count % PROGRESS_INTERVAL == 0) {
+       if (COUNT_PROGRESS.contains(type) && count % PROGRESS_INTERVAL == 0) {
            String message = this.resources.getString(type);
            message = MessageFormat.format(message, count);
-           this.logger.info(message);
+           logger.info(message);
        }
     }
 
@@ -289,9 +304,11 @@ public class Taxonomy {
             if (this.indexWriter == null)
                 throw new IllegalStateException("Index not opened");
             for (NameSource source: sources) {
+                logger.info("Loading " + source.getName());
                 source.loadIntoTaxonomy(this);
                 this.indexWriter.commit();
                 this.searcherManager.maybeRefresh();
+                this.sources.add(source);
             }
         } catch (IOException ex) {
             throw new IndexBuilderException("Error constructing source index", ex);
@@ -311,8 +328,12 @@ public class Taxonomy {
         this.resolveLinks();
         if (!this.validate())
             throw new IndexBuilderException("Invalid source data");
+        this.validateNameCollisions();
         this.resolveTaxon();
         this.resolvePrincipal();
+        if (!this.validate())
+            throw new IndexBuilderException("Invalid resolution");
+
     }
 
     /**
@@ -324,9 +345,9 @@ public class Taxonomy {
      * @throws IndexBuilderException
      */
     public void resolveLinks() throws IndexBuilderException {
-        this.logger.info("Resolving links");
+        logger.info("Resolving links");
         this.instances.values().parallelStream().forEach(instance -> instance.resolveLinks(this));
-        this.logger.info("Finished resolving links");
+        logger.info("Finished resolving links");
     }
 
     /**
@@ -340,12 +361,29 @@ public class Taxonomy {
      * @throws IndexBuilderException if unable to validate the loaded data
      */
     public boolean validate() throws IndexBuilderException {
-        this.logger.info("Starting validation");
+        logger.info("Starting validation");
         boolean valid = true;
         valid = this.instances.values().parallelStream().map(instance -> instance.validate(this)).reduce(valid, (a, b) -> a && b);
         valid = this.names.values().parallelStream().map(instance -> instance.validate(this)).reduce(valid, (a, b) -> a && b);
-        this.logger.info("Finished validation");
+        logger.info("Finished validation");
         return valid;
+    }
+
+    /**
+     * Check for similar/identical names at different ranks
+     *
+     * @throws IndexBuilderException
+     */
+    protected void validateNameCollisions() throws IndexBuilderException {
+        Map<String, Integer> counts = new HashMap<>(this.names.size());
+        for (NameKey key: this.names.keySet()) {
+            String name = key.getScientificName();
+            counts.put(name, counts.getOrDefault(name, 0) + 1);
+        }
+        for (Map.Entry<String, Integer> entry: counts.entrySet()) {
+            if (entry.getValue() > 1)
+                this.report(IssueType.NOTE, "name.homonym", entry.getKey());
+        }
     }
 
 
@@ -366,7 +404,7 @@ public class Taxonomy {
      * @see TaxonConcept#resolveTaxon(Taxonomy)
      */
     public void resolveTaxon() throws IndexBuilderException {
-        this.logger.info("Resolving taxa");
+        logger.info("Resolving taxa");
         final Collection<TaxonConceptInstance> allInstances = this.instances.values();
         final Set<RankType> rs = allInstances.parallelStream().map(TaxonConceptInstance::getRank).collect(Collectors.toSet());
         List<RankType> ranks = new ArrayList<>(rs);
@@ -380,9 +418,9 @@ public class Taxonomy {
             }
             prevResolved = resolved;
             resolved = allInstances.stream().filter(instance -> instance.isResolved()).count();
-            this.logger.debug("Resolved " + prevResolved + " -> " + resolved);
+            logger.debug("Resolved " + prevResolved + " -> " + resolved);
         } while (resolved != prevResolved);
-        this.logger.info("Finished resolving taxa");
+        logger.info("Finished resolving taxa");
 
     }
 
@@ -400,7 +438,7 @@ public class Taxonomy {
     /**
      * Map a provider dataset id or name onto a source.
      * <p>
-     * If one cannot be found, the default provider is returned.
+     * If one cannot be found, a nre provider with the correct ID is created, linked to the default provider.
      * </p>
      *
      * @param datasetID The dataset identifier
@@ -410,11 +448,19 @@ public class Taxonomy {
      */
     public NameProvider resolveProvider(String datasetID, String datasetName) {
         NameProvider provider;
+        if (datasetID == null && datasetName == null)
+            return this.defaultProvider;
         if ((provider = this.providers.get(datasetID)) != null)
             return provider;
         if ((provider = this.providers.get(datasetName)) != null)
             return provider;
-        return this.defaultProvider;
+        provider = new NameProvider(datasetID != null ? datasetID : datasetName, datasetName, this.defaultProvider, true);
+        this.report(IssueType.NOTE, "taxonomy.load.provider", provider.getId());
+        if (datasetID != null)
+            this.providers.put(datasetID, provider);
+        if (datasetName != null)
+            this.providers.put(datasetName, provider);
+        return provider;
     }
 
     /**
@@ -471,9 +517,12 @@ public class Taxonomy {
             return null;
         values = nomenclaturalStatus.split("[,;|]");
         Set<NomenclaturalStatus> status = new HashSet<>(values.length);
-        for (String v: values)
-            status.add(this.analyser.canonicaliseNomenclaturalStatus(v));
-        return status;
+        for (String v: values) {
+            NomenclaturalStatus s = this.analyser.canonicaliseNomenclaturalStatus(v);
+            if (s != null)
+                status.add(s);
+        }
+        return status.isEmpty() ? null : status;
     }
 
 
@@ -485,55 +534,111 @@ public class Taxonomy {
      *
      * @param instance The instance
      *
+     * @return The instance that was actually added
+     *
      * @throws Exception if unable to slot the instance in.
      */
-    public void addInstance(TaxonConceptInstance instance) throws Exception {
+    public TaxonConceptInstance addInstance(TaxonConceptInstance instance) throws Exception {
         String taxonID = instance.getTaxonID();
+        boolean loose = instance.getProvider().isLoose();
         NameKey taxonKey;
         NameKey nameKey;
-        try {
-            taxonKey = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship());
-        } catch (UnparsableException ex) {
-            if (ex.type == NameType.PLACEHOLDER) {
-                // Handle a placeholder name by generating a fake name key and making this instance forbidden
-                this.report(IssueType.PROBLEM, "taxonomy.load.placeholder", instance);
-                taxonKey = new NameKey(this.analyser, instance.getCode(), UUID.randomUUID().toString(), null, ex.type);
+        NameKey unrankedKey;
+        NameKey uncodedKey;
+
+        taxonKey = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), loose);
+        taxonKey = instance.getProvider().adjustKey(taxonKey, instance);
+        switch (taxonKey.getType()) {
+            case PLACEHOLDER:
+                // Placeholder and invalid names are forbidden
+                this.report(IssueType.NOTE, "taxonomy.load.placeholder", instance);
                 instance.setForbidden(true);
-            } else
-                throw ex;  // Still can't handle it
+                break;
+            case NO_NAME:
+                // Impossible names are made forbdden
+                this.report(IssueType.VALIDATION, "taxonomy.load.no_name", instance);
+                instance.setForbidden(true);
+                break;
+            case INFORMAL:
+            case DOUBTFUL:
+            case CANDIDATUS:
+                this.report(IssueType.NOTE, "taxonomy.load.as_is", instance);
+                break;
+            case SCIENTIFIC:
+            case VIRUS:
+            case HYBRID:
+            case CULTIVAR:
+                break;
         }
+        this.count("count.load." + taxonKey.getType().name());
         if (!instance.isForbidden() && instance.getProvider().forbid(instance)) {
             this.report(IssueType.NOTE, "taxonomy.load.forbidden", instance);
             instance.setForbidden(true);
         }
+
         nameKey = taxonKey.toNameKey();
+        unrankedKey = taxonKey.toUnrankedNameKey();
+        uncodedKey = taxonKey.toUncodedNameKey();
+
         if (this.instances.containsKey(taxonID)) {
-            this.report(IssueType.VALIDATION, "taxonomy.load.collision", instance);
+            this.report(IssueType.VALIDATION, "taxonomy.load.collision", instance, this.instances.get(taxonID));
             instance = new TaxonConceptInstance(
                     UUID.randomUUID().toString(),
                     instance.getCode(),
-                    this.getInferenceProvider(),
+                    instance.getVerbatimNomenclaturalCode(),
+                    instance.getProvider(),
                     instance.getScientificName(),
                     instance.getScientificNameAuthorship(),
                     instance.getYear(),
-                    TaxonomicType.INFERRED_UNPLACED,
+                    instance.getTaxonomicStatus(),
+                    instance.getVerbatimTaxonomicStatus(),
                     instance.getRank(),
+                    instance.getVerbatimTaxonRank(),
                     instance.getStatus(),
+                    instance.getVerbatimNomenclaturalStatus(),
+                    instance.getParentNameUsage(),
                     instance.getParentNameUsageID(),
+                    instance.getAcceptedNameUsage(),
                     instance.getAcceptedNameUsageID(),
                     instance.getClassification()
             );
         }
+
+        // Uncoded names mess everthing up. So we allocate it to a coded name
+        if (nameKey.isUncoded()) {
+            List<ScientificName> coded = this.uncodedNames.get(uncodedKey);
+            if (coded != null && !coded.isEmpty()) {
+                if (coded.size() > 2)
+                    this.report(IssueType.PROBLEM, "taxonomy.load.uncoded.multiple", instance, coded.get(0), coded.get(1));
+                this.report(IssueType.NOTE, "taxonomy.load.uncoded", instance, coded.get(0));
+                nameKey = coded.get(0).getKey();
+            } else {
+                this.report(IssueType.NOTE, "taxonomy.load.uncoded.add", instance);
+            }
+        }
+
         ScientificName name = this.names.get(nameKey);
         if (name == null) {
             name = new ScientificName(nameKey);
             this.names.put(nameKey, name);
+            List<ScientificName> unrankedNames = this.unrankedNames.get(unrankedKey);
+            if (unrankedNames == null) {
+                unrankedNames = new ArrayList<>();
+                this.unrankedNames.put(unrankedKey, unrankedNames);
+            }
+            unrankedNames.add(name);
+            List<ScientificName> uncodedNames = this.uncodedNames.get(uncodedKey);
+            if (uncodedNames == null) {
+                uncodedNames = new ArrayList<>();
+                this.uncodedNames.put(uncodedKey, uncodedNames);
+            }
+            uncodedNames.add(name);
         }
         name.addInstance(taxonKey, instance);
         this.instances.put(taxonID, instance);
         this.count("count.load.instance");
+        return instance;
     }
-
 
     /**
      * Find a taxon instance for a particular name.
@@ -544,60 +649,57 @@ public class Taxonomy {
      * @param code The nomenclatural code
      * @param name The scientific name to find
      * @param provider The provider
+     * @param rank The instance ranks
      *
      * @return The matching instance, or null for not found
      */
-    public TaxonConceptInstance findInstance(NomenclaturalCode code, String name, NameProvider provider) {
+    public TaxonConceptInstance findInstance(NomenclaturalCode code, String name, NameProvider provider, RankType rank) {
         NameKey nameKey = null;
-        try {
-            nameKey = this.analyser.analyse(code, name, null).toNameKey();
-        } catch (UnparsableException ex) {
-            this.logger.warn("Unable to parse " + name, ex);
-            return null;
-        }
+        nameKey = this.analyser.analyse(code, name, null, rank, provider.isLoose()).toNameKey();
         ScientificName scientificName = this.names.get(nameKey);
         return scientificName == null ? null : scientificName.findInstance(provider);
     }
 
     /**
-     * Get the resolved least upper bound (lub) of two instances.
+     * Find a taxon instance for a particular name without considering rank.
+     * <p>
+     * The taxon instance will be matched to the instance provided by a particular provider.
+     * This allows taxonomies that don't have a tree structure to link up with their higher/accepted taxonomy.
+     * </p>
+     * @param code The nomenclatural code
+     * @param name The scientific name to find
+     * @param provider The provider
      *
-     * @param i1 The first instance
-     * @param i2 The second instance
-     *
-     * @return The lowest common resolved taxon or null for not resolved or no common taxon
+     * @return The matching instance, or null for not found
      */
-    public TaxonConceptInstance lub(TaxonConceptInstance i1, TaxonConceptInstance i2) {
-        while (i1 != null) {
-            TaxonConceptInstance r1 = i1.getResolved();
-            if (r1 == null)
-                return null;
-            TaxonConceptInstance p2 = i2;
-            while (p2 != null && p2.getResolved() != null) {
-                if (p2.getResolved() == r1)
-                    return r1;
-                p2 = p2.getParent();
-            }
-            i1 = i1.getParent();
+    public TaxonConceptInstance findUnrankedInstance(NomenclaturalCode code, String name, NameProvider provider) {
+        NameKey nameKey = null;
+        nameKey = this.analyser.analyse(code, name, null, null, provider.isLoose()).toUnrankedNameKey();
+        List<ScientificName> names = this.unrankedNames.get(nameKey);
+        if (names == null)
+            return null;
+        for (ScientificName sn: names) {
+            TaxonConceptInstance instance = sn.findInstance(provider);
+            if (instance != null)
+                return instance;
         }
         return null;
     }
 
     /**
-     * Compute the least upper bound of a collection of taxa.
+     * Find a taxon instance for a particular name without considering or nomenclatural code.
+     * <p>
+     * The taxon instance will be matched to the instance provided by a particular provider.
+     * This allows taxonomies that don't have a tree structure to link up with their higher/accepted taxonomy.
+     * </p>
+     * @param name The scientific name to find
      *
-     * @param instances The collection
-     *
-     * @return The least upper bound, or null if the instances have not been resolved or if there is no lub
-     *
-     * @see #lub(TaxonConceptInstance, TaxonConceptInstance)
+     * @return The matching instance, or null for not found
      */
-    public TaxonConceptInstance lub(Collection<TaxonConceptInstance> instances) {
-        Iterator<TaxonConceptInstance> i = instances.iterator();
-        TaxonConceptInstance lub = i.hasNext() ? i.next() : null;
-        while (i.hasNext() && lub != null)
-            lub = this.lub(lub, i.next());
-        return lub;
+    public List<ScientificName> findCodedInstances(String name) {
+        NameKey nameKey = null;
+        nameKey = this.analyser.analyse(null, name, null, null, true).toUncodedNameKey();
+        return this.uncodedNames.get(nameKey);
     }
 
     /**
@@ -613,15 +715,74 @@ public class Taxonomy {
      * @throws IOException if unable to write to the archive
      */
     public void createDwCA(File directory) throws IndexBuilderException, IOException {
-        this.logger.info("Creating DwCA");
+        logger.info("Creating DwCA");
         this.addOutputTerms(GbifTerm.Identifier, Arrays.asList(DcTerm.title, ALATerm.status, DcTerm.source)); // Generated by taxon concept instance
-        DwcaWriter dwcaWriter = new DwcaWriter(DwcTerm.Taxon, DwcTerm.taxonID, directory, false);
+        DwcaWriter dwcaWriter = new DwcaWriter(DwcTerm.Taxon, DwcTerm.taxonID, directory, true);
+        dwcaWriter.setEml(this.buildEml());
+        for (NameProvider provider: this.providers.values()) {
+            if (provider.isExternal())
+                dwcaWriter.addDetatchedRecord(DcTerm.rightsHolder, provider.getProviderMap());
+        }
         List<ScientificName> nameList = new ArrayList<>(this.names.values());
         Collections.sort(nameList);
         for (ScientificName name: nameList)
             name.write(this, dwcaWriter);
         dwcaWriter.close();
-        this.logger.info("Finished creating DwCA");
+        logger.info("Finished creating DwCA");
+    }
+
+    /**
+     * Build an EML description of the taxonomy.
+     *
+     * @return The description
+     */
+    protected Dataset buildEml() throws IndexBuilderException {
+        Dataset dataset = new Dataset();
+        Date now = new Date();
+        String altId = MessageFormat.format("{0}-{1,date,yyyyMMdd}", this.configuration.id, now);
+
+        dataset.setAbbreviation(this.configuration.id);
+        dataset.setAdditionalInfo(this.resources.getString("dwca.additionalInfo"));
+        dataset.setAlias(altId);
+        dataset.setCitation(new Citation(this.configuration.name, this.configuration.id));
+        dataset.setCreatedBy(this.configuration.getContactName());
+        List<Contact> contacts = new ArrayList<>();
+        if (this.configuration.contact != null) {
+            try {
+                Contact primary = (Contact) BeanUtils.cloneBean(this.configuration.contact);
+                primary.setType(ContactType.ORIGINATOR);
+                primary.setPrimary(true);
+                contacts.add(primary);
+                Contact metadata = (Contact) BeanUtils.cloneBean(this.configuration.contact);
+                metadata.setType(ContactType.METADATA_AUTHOR);
+                metadata.setPrimary(true);
+                contacts.add(metadata);
+                Contact processor = (Contact) BeanUtils.cloneBean(this.configuration.contact);
+                metadata.setType(ContactType.PROCESSOR);
+                metadata.setPrimary(false);
+                contacts.add(metadata);
+            } catch (Exception ex) {
+                logger.error("Unable to clone contact", ex);
+            }
+        }
+        contacts.addAll(this.sources.stream().flatMap(s -> s.getContacts().stream()).collect(Collectors.toSet()));
+        dataset.setContacts(contacts);
+        dataset.setCountryCoverage(this.sources.stream().flatMap(s -> s.getCountries().stream()).collect(Collectors.toSet()));
+        dataset.setCreated(new Date());
+        dataset.setDescription(this.configuration.description);
+        List<Citation> citations = new ArrayList<>();
+        citations.addAll(this.sources.stream().map(s -> s.getCitation()).filter(c -> c != null).collect(Collectors.toList()));
+        citations.addAll(this.providers.values().stream().filter(p -> p.isExternal()).map(p -> p.getCitation()).collect(Collectors.toList()));
+        dataset.setBibliographicCitations(citations);
+        List<Identifier> ids = new ArrayList<>();
+        if (this.configuration.uri != null)
+            ids.add(new Identifier(IdentifierType.URI, this.configuration.uri.toString()));
+        if (this.configuration.id != null)
+            ids.add(new Identifier(IdentifierType.UNKNOWN, this.configuration.id));
+        dataset.setIdentifiers(ids);
+        dataset.setPubDate(now);
+        dataset.setTitle(this.configuration.name);
+        return dataset;
     }
 
 
@@ -635,21 +796,23 @@ public class Taxonomy {
      * @param code The message code to use for the readable version of the report
      * @param args The arguments for the report message
      */
+    @Override
     public void report(IssueType type, String code, String... args) {
         String message;
         try {
             message = this.resources.getString(code);
-            message = MessageFormat.format(message == null ? code : message, args);
+            message = message == null ? code : message;
+            message = MessageFormat.format(message, args);
         } catch (MissingResourceException ex) {
-            this.logger.error("Can't find resource for " + code + " defaulting to code");
+            logger.error("Can't find resource for " + code + " defaulting to code");
             message = code;
         }
         if (type == IssueType.ERROR || type == IssueType.VALIDATION)
-            this.logger.error(message);
+            logger.error(message);
         if (type == IssueType.PROBLEM)
-            this.logger.warn(message);
-        if (type == IssueType.NOTE)
-            this.logger.debug(message);
+            logger.warn(message);
+        if (type == IssueType.NOTE || type == IssueType.COUNT)
+            logger.debug(message);
         Document doc = new Document();
         doc.add(new StringField("type", ALATerm.TaxonomicIssue.qualifiedName(), Field.Store.YES));
         doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
@@ -662,7 +825,7 @@ public class Taxonomy {
             this.indexWriter.commit();
             this.searcherManager.maybeRefresh();
         } catch (IOException ex) {
-            this.logger.error("Unable to write report to index", ex);
+            logger.error("Unable to write report to index", ex);
         }
     }
 
@@ -683,6 +846,7 @@ public class Taxonomy {
      * @param code The message code to use for the readable version of the report
      * @param elements The elements that impact the report. The first element is the source (causative) element
      */
+    @Override
     public void report(IssueType type, String code, TaxonomicElement... elements) {
         String taxonID = "";
         String scientificName = "";
@@ -713,15 +877,15 @@ public class Taxonomy {
             message = this.resources.getString(code);
             message = MessageFormat.format(message == null ? code : message, taxonID, scientificName, scientificNameAuthorship, associatedTaxa);
         } catch (MissingResourceException ex) {
-            this.logger.error("Can't find resource for " + code + " defaulting to code");
+            logger.error("Can't find resource for " + code + " defaulting to code");
             message = code;
         }
         if (type == IssueType.ERROR || type == IssueType.VALIDATION)
-            this.logger.error(message);
+            logger.error(message);
         if (type == IssueType.PROBLEM)
-            this.logger.warn(message);
+            logger.warn(message);
         if (type == IssueType.NOTE)
-            this.logger.debug(message);
+            logger.debug(message);
         Document doc = new Document();
         doc.add(new StringField("type", ALATerm.TaxonomicIssue.qualifiedName(), Field.Store.YES));
         doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
@@ -739,7 +903,7 @@ public class Taxonomy {
             this.indexWriter.commit();
             this.searcherManager.maybeRefresh();
         } catch (IOException ex) {
-            this.logger.error("Unable to write report to index", ex);
+            logger.error("Unable to write report to index", ex);
         }
     }
 
@@ -752,13 +916,21 @@ public class Taxonomy {
      * @throws IOException if unable to created the report
      */
     public void createReport(File report) throws IOException {
-        this.logger.info("Writing report to " + report);
+        logger.info("Writing report to " + report);
         int pageSize = 100;
         Writer fw = new OutputStreamWriter(new FileOutputStream(report), "UTF-8");
         CSVWriter writer = new CSVWriter(fw);
         List<Term> output = this.outputTerms(ALATerm.TaxonomicIssue);
         String[] headers = output.stream().map(term -> term.toString()).collect(Collectors.toList()).toArray(new String[output.size()]);
         writer.writeNext(headers);
+        for (String type: this.counts.keySet()) {
+            String message = this.resources.getString(type);
+            Integer count = this.counts.get(type);
+            message = MessageFormat.format(message, count);
+            logger.info(message);
+            String[] values = new String[] { IssueType.COUNT.name(), type, message, Integer.toString(count) };
+            writer.writeNext(values);
+        }
         IndexSearcher searcher = this.searcherManager.acquire();
         try {
             Query query = new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.TaxonomicIssue.qualifiedName()));
@@ -778,7 +950,7 @@ public class Taxonomy {
             this.searcherManager.release(searcher);
         }
         writer.close();
-        this.logger.info("Finished creating report");
+        logger.info("Finished creating report");
     }
 
     /**
@@ -852,14 +1024,27 @@ public class Taxonomy {
         boolean strict = NameSource.ONLY_INCLUDE_ALLOWED.getOrDefault(type, false);
         if (remove != null)
             seen.addAll(remove);
-        List<Term> additional = NameSource.ADDIIONAL_TERMS.get(type);
+        List<Term> additional = NameSource.ADDITIONAL_TERMS.get(type);
         if (additional != null) {
             for (Term term : additional) {
-                if (!seen.contains(additional) && terms.contains(term)) {
+                if (!seen.contains(term) && terms.contains(term)) {
                     map.add(term);
                     seen.add(term);
                 }
 
+            }
+        }
+        Map<Term, List<Term>> implied = NameSource.IMPLIED_TERMS.get(type);
+        if (implied != null) {
+            for (Map.Entry<Term, List<Term>> entry: implied.entrySet()) {
+                if (terms.contains(entry.getKey())) {
+                    for (Term term: entry.getValue()) {
+                        if (!seen.contains(term)) {
+                            map.add(term);
+                            seen.add(term);
+                        }
+                    }
+                }
             }
         }
         if (!strict) {

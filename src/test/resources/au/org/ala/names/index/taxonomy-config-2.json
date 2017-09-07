@@ -1,4 +1,12 @@
 {
+  "id": "Test2",
+  "name": "Test Configuration 2",
+  "description": "Used for most taxonomy test cases",
+  "contact" : {
+    "firstName" : "Arnold",
+    "lastName" : "Sideways",
+    "organization" : "Nowhere.org"
+  },
   "nameAnalyserClass" : "au.org.ala.names.index.ALANameAnalyser",
   "resolverClass" : "au.org.ala.names.index.ALATaxonResolver",
   "providers" : [ {
@@ -12,6 +20,17 @@
     "defaultScore" : 125,
     "scores" : {
       "Hypnales": 200
+    },
+    "keyAdjuster": {
+      "adjustments": [
+        {
+          "condition": {
+            "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "scientificName" : "Viruses"
+          },
+          "scientificName": "VIRUS"
+        }
+      ]
     }
   }],
   "defaultProvider" : "unknown"

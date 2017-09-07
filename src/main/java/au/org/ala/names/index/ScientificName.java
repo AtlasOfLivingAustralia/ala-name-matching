@@ -1,13 +1,12 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
-import org.gbif.dwca.io.DwcaWriter;
+import au.org.ala.names.util.DwcaWriter;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -34,6 +33,9 @@ public class ScientificName extends Name implements Comparable<ScientificName> {
 
     /**
      * Add an instance to the list of concepts.
+     * <p>
+     * If this is an uncoded instance, we attempt to add it to the most likely concept
+     * </p>
      *
      * @param instanceKey The name key for this instance
      * @param instance The instance
@@ -41,7 +43,11 @@ public class ScientificName extends Name implements Comparable<ScientificName> {
      * @return The matched taxon concept
      */
     public TaxonConcept addInstance(NameKey instanceKey, TaxonConceptInstance instance) {
-        TaxonConcept concept = this.concepts.get(instanceKey);
+        TaxonConcept concept;
+        if (instanceKey.isUncoded())
+            concept = this.findCandidiatePrincipal(null);
+        else
+            concept = this.concepts.get(instanceKey);
         if (concept == null) {
             concept = new TaxonConcept(this, instanceKey);
             this.concepts.put(instanceKey, concept);
@@ -102,30 +108,42 @@ public class ScientificName extends Name implements Comparable<ScientificName> {
      */
     public void resolvePrincipal(Taxonomy taxonomy) {
         List<TaxonConcept> accepted = this.concepts.values().stream().filter(tc -> tc.isFormal() && tc.hasAccepted()).collect(Collectors.toList());
-        List<TaxonConcept> authored = accepted.stream().filter(tc -> tc.isAuthored()).collect(Collectors.toList());
-        this.principal = null;
-        if (accepted.isEmpty()) {
-            return;
-        }
-        if (accepted.size() == 1) {
-            this.principal = accepted.get(0);
-        } else if (authored.size() == 1) {
-            this.principal = authored.get(0);
-        } else if (authored.size() > 1) {
-            taxonomy.report(IssueType.PROBLEM, "scientificName.collision", this, authored.get(0), authored.get(1));
-            final int score = authored.stream().map(TaxonConcept::getRepresentative).mapToInt(TaxonConceptInstance::getScore).max().orElse(-1);
-            List<TaxonConcept> candidates = authored.stream().map(TaxonConcept::getRepresentative).filter(tci -> tci.getScore() == score).map(TaxonConceptInstance::getTaxonConcept).collect(Collectors.toList());
-            if (candidates.size() > 1)
-                taxonomy.report(IssueType.PROBLEM, "scientificName.collision.match", this, candidates.get(0), candidates.get(1));
-            this.principal = candidates.get(0);
-        }
+        this.principal = this.findCandidiatePrincipal(taxonomy);
         if (this.principal != null) {
             boolean owned = this.principal.isOwned();
             for (TaxonConcept tc : accepted)
-                if (tc != this.principal && (owned || !tc.isAuthored()))
+                if (tc != this.principal && !tc.isOwned() && (owned || !tc.isAuthored()))
                     tc.addInferredSynonym(this.principal, taxonomy);
+            taxonomy.count("count.resolve.scientificName.principal");
         }
-        taxonomy.count("count.resolve.scientificName.principal");
+    }
+
+    /**
+     * Find something that might be good as a candidiate principal
+     * @param reporter Where to
+     * @return
+     */
+    protected TaxonConcept findCandidiatePrincipal(Reporter reporter) {
+        List<TaxonConcept> accepted = this.concepts.values().stream().filter(tc -> tc.isFormal() && tc.hasAccepted()).collect(Collectors.toList());
+        List<TaxonConcept> authored = accepted.stream().filter(tc -> tc.isAuthored()).collect(Collectors.toList());
+
+        if (accepted.isEmpty()) {
+            return null;
+        }
+        if (accepted.size() == 1) {
+           return accepted.get(0);
+        } else if (authored.size() == 1) {
+            return authored.get(0);
+        } else if (authored.size() > 1) {
+            if (reporter != null)
+                reporter.report(IssueType.PROBLEM, "scientificName.collision", this, authored.get(0), authored.get(1));
+            final int score = authored.stream().map(TaxonConcept::getRepresentative).mapToInt(TaxonConceptInstance::getScore).max().orElse(-1);
+            List<TaxonConcept> candidates = authored.stream().map(TaxonConcept::getRepresentative).filter(tci -> tci.getScore() == score).map(TaxonConceptInstance::getTaxonConcept).collect(Collectors.toList());
+            if (candidates.size() > 1 && reporter != null)
+                reporter.report(IssueType.PROBLEM, "scientificName.collision.match", this, candidates.get(0), candidates.get(1));
+            return candidates.get(0);
+        }
+        return null;
     }
 
     /**

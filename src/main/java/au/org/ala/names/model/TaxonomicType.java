@@ -35,9 +35,13 @@ public enum TaxonomicType {
     /** A taxon of uncertain placement */
     INCERTAE_SEDIS("incertaeSedis", TaxonomicTypeGroup.INCERTAE_SEDIS, true, true, false),
     /** An unplaced taxon */
-    UNPLACED("unplaced", TaxonomicTypeGroup.UNPLACED, false, false, false),
+    UNPLACED("unplaced", TaxonomicTypeGroup.UNPLACED, false, false, false, "unknown"),
     /** An inferred unplaced taxon */
     INFERRED_UNPLACED("inferredUnplaced", TaxonomicTypeGroup.UNPLACED, false, false, false),
+    /** An invalid taxon (usually needed to allow parents to be found */
+    INVALID("invalid", TaxonomicTypeGroup.INVALID, false, false, false),
+    /** An inferred invalid taxon (usually needed to allow parents to be found */
+    INFERRED_INVALID("inferredInvalid", TaxonomicTypeGroup.INVALID, false, false, false),
     /** A dubious taxon */
     DOUBTFUL("doubtful", TaxonomicTypeGroup.DOUBTFUL, false, false, false),
     /** A name that occurs in other literature. */

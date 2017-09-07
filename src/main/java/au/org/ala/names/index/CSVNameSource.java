@@ -7,11 +7,16 @@ import au.org.ala.names.model.TaxonomicType;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
+import org.gbif.api.model.registry.Citation;
+import org.gbif.api.model.registry.Contact;
+import org.gbif.api.model.registry.Dataset;
+import org.gbif.api.vocabulary.Country;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.terms.TermFactory;
+import org.gbif.dwca.io.MetadataException;
 
 import java.io.*;
 import java.util.*;
@@ -27,6 +32,7 @@ import java.util.stream.Collectors;
  * @copyright Copyright (c) 2016 CSIRO
  */
 public class CSVNameSource extends NameSource {
+    private String name;
     private CSVReader reader;
     private List<Term> terms;
     private Map<Term, Integer> termLocations;
@@ -37,6 +43,7 @@ public class CSVNameSource extends NameSource {
      * @param reader The
      */
     public CSVNameSource(Reader reader) throws IOException {
+        this.name = "Reader " + reader.toString();
         this.reader = new CSVReader(reader);
         this.collectColumns();
     }
@@ -49,6 +56,7 @@ public class CSVNameSource extends NameSource {
      */
     public CSVNameSource(File file, String encoding) throws IOException {
         this(new InputStreamReader(new FileInputStream(file), encoding));
+        this.name = file.getCanonicalPath();
     }
 
     protected void collectColumns() throws IOException {
@@ -71,6 +79,42 @@ public class CSVNameSource extends NameSource {
             index++;
         }
     }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Get a citation for this source.
+     *
+     * @return The citation
+     */
+    @Override
+    public Citation getCitation() throws IndexBuilderException {
+        return new Citation(this.getName(), null);
+    }
+
+    /**
+     * Get a list of countries for this resource
+     *
+     * @return The country list
+     */
+    @Override
+    public Collection<Country> getCountries()  {
+        return Collections.emptySet();
+    }
+
+    /**
+     * Get a list of contacts for this resource
+     *
+     * @return The country list
+     */
+    @Override
+    public Collection<Contact> getContacts()  {
+        return Collections.emptySet();
+    }
+
 
     /**
      * Validate the archive.
@@ -108,7 +152,9 @@ public class CSVNameSource extends NameSource {
         Integer taxonomicStatusIndex = termLocations.get(DwcTerm.taxonomicStatus);
         Integer taxonRankIndex = termLocations.get(DwcTerm.taxonRank);
         Integer nomenclaturalStatusIndex = termLocations.get(DwcTerm.nomenclaturalStatus);
+        Integer parentNameUsageIndex = termLocations.get(DwcTerm.parentNameUsage);
         Integer parentNameUsageIDIndex = termLocations.get(DwcTerm.parentNameUsageID);
+        Integer acceptedNameUsageIndex = termLocations.get(DwcTerm.acceptedNameUsage);
         Integer acceptedNameUsageIDIndex = termLocations.get(DwcTerm.acceptedNameUsageID);
         Set<Term> classifications = TaxonConceptInstance.CLASSIFICATION_FIELDS.stream().filter(t -> termLocations.containsKey(t)).collect(Collectors.toSet());
         try {
@@ -117,29 +163,53 @@ public class CSVNameSource extends NameSource {
             while ((r = this.reader.readNext()) != null) {
                 final String[] record = r;
                 String taxonID = this.get(record, taxonIDIndex);
-                NomenclaturalCode code = taxonomy.resolveCode(this.get(record, nomenclaturalCodeIndex));
+                String verbatimNomenclautralCode = this.get(record, nomenclaturalCodeIndex);
+                NomenclaturalCode code = taxonomy.resolveCode(verbatimNomenclautralCode);
                 NameProvider provider = taxonomy.resolveProvider(this.get(record, datasetIDIndex), this.get(record, datasetNameIndex));
                 String scientificName = this.get(record, scientificNameIndex);
                 String scientificNameAuthorship = this.get(record, scientificNameAuthorshipIndex);
                 String year = this.get(record, namePublishedInYearIndex);
-                TaxonomicType taxonomicStatus = taxonomy.resolveTaxonomicType(this.get(record, taxonomicStatusIndex));
-                RankType rank = taxonomy.resolveRank(this.get(record, taxonRankIndex));
-                Set<NomenclaturalStatus> nomenclaturalStatus = taxonomy.resolveNomenclaturalStatus(this.get(record, nomenclaturalStatusIndex));
+                String verbatimTaxonomicStatus = this.get(record, taxonomicStatusIndex);
+                TaxonomicType taxonomicStatus = taxonomy.resolveTaxonomicType(verbatimTaxonomicStatus);
+                String verbatimTaxonRank = this.get(record, taxonRankIndex);
+                RankType rank = taxonomy.resolveRank(verbatimTaxonRank);
+                String verbatimNomenclaturalStatus = this.get(record, nomenclaturalStatusIndex);
+                Set<NomenclaturalStatus> nomenclaturalStatus = taxonomy.resolveNomenclaturalStatus(verbatimNomenclaturalStatus);
+                String parentNameUsage = this.get(record, parentNameUsageIndex);
                 String parentNameUsageID = this.get(record, parentNameUsageIDIndex);
+                String acceptedNameUsage = this.get(record, acceptedNameUsageIndex);
                 String acceptedNameUsageID = this.get(record, acceptedNameUsageIDIndex);
                 Map<Term, Optional<String>> classification = null;
                 if (!classifications.isEmpty()) {
                    classification = classifications.stream().collect(Collectors.toMap(t -> t, t -> Optional.ofNullable(this.get(record, termLocations.get(t)))));
                 }
-                TaxonConceptInstance instance = new TaxonConceptInstance(taxonID, code, provider, scientificName, scientificNameAuthorship, year, taxonomicStatus, rank, nomenclaturalStatus, parentNameUsageID, acceptedNameUsageID, classification);
+                TaxonConceptInstance instance = new TaxonConceptInstance(
+                        taxonID,
+                        code,
+                        verbatimNomenclautralCode,
+                        provider,
+                        scientificName,
+                        scientificNameAuthorship,
+                        year,
+                        taxonomicStatus,
+                        verbatimTaxonomicStatus,
+                        rank,
+                        verbatimTaxonRank,
+                        nomenclaturalStatus,
+                        verbatimNomenclaturalStatus,
+                        parentNameUsage,
+                        parentNameUsageID,
+                        acceptedNameUsage,
+                        acceptedNameUsageID,
+                        classification);
                 instance.normalise();
-                taxonomy.addInstance(instance);
+                instance = taxonomy.addInstance(instance);
                 Document doc = new Document();
                 doc.add(new StringField("type", DwcTerm.Taxon.qualifiedName(), Field.Store.YES));
                 doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
                 for (int i = 0; i < record.length; i++) {
                     Term term = this.terms.get(i);
-                    String value = record[i];
+                    String value = term == DwcTerm.taxonID ? instance.getTaxonID() : record[i]; // Allow for changed taxonIDs
                     if (term != null && value != null && !value.isEmpty())
                         doc.add(new StringField(taxonomy.fieldName(term), value, Field.Store.YES));
                 }

@@ -17,11 +17,8 @@ import org.junit.Test;
 
 import java.io.StringWriter;
 import java.util.Collections;
-import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Test cases for {@link MatchTaxonCondition}
@@ -57,7 +54,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch3() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setTaxonomicStatus(TaxonomicType.HOMOTYPIC_SYNONYM);
-        TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
+        TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL,  "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
         assertTrue(condition.match(instance));
     }
 
@@ -73,7 +70,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch5() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setNomenclaturalStatus(NomenclaturalStatus.DOUBTFUL);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, RankType.SPECIES, Collections.singleton(NomenclaturalStatus.DOUBTFUL), null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), Collections.singleton(NomenclaturalStatus.DOUBTFUL), "doubtful", null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -81,7 +78,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch6() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setNomenclaturalStatus(NomenclaturalStatus.DOUBTFUL);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(),null, null,null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 
@@ -89,7 +86,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch7() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setNomenclaturalStatus(NomenclaturalStatus.DOUBTFUL);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, RankType.SPECIES, Collections.singleton(NomenclaturalStatus.ALTERNATIVE), null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), Collections.singleton(NomenclaturalStatus.ALTERNATIVE), "alternative", null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 
@@ -97,8 +94,8 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch8() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setNameType(NameType.SCIENTIFIC);
-        TaxonConcept tc = new TaxonConcept(null, new NameKey(null, NomenclaturalCode.BOTANICAL, "Acacia dealbata", null, NameType.SCIENTIFIC));
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConcept tc = new TaxonConcept(null, new NameKey(null, NomenclaturalCode.BOTANICAL, "Acacia dealbata", null, RankType.SPECIES, NameType.SCIENTIFIC));
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         instance.setTaxonConcept(tc);
         assertTrue(condition.match(instance));
     }
@@ -107,8 +104,8 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch9() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setNameType(NameType.SCIENTIFIC);
-        TaxonConcept tc = new TaxonConcept(null, new NameKey(null, NomenclaturalCode.BOTANICAL, "Acacia dealbata", null, NameType.CULTIVAR));
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConcept tc = new TaxonConcept(null, new NameKey(null, NomenclaturalCode.BOTANICAL,"Acacia dealbata", null, RankType.SPECIES, NameType.CULTIVAR));
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         instance.setTaxonConcept(tc);
         assertFalse(condition.match(instance));
     }
@@ -117,7 +114,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch10() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setTaxonRank(RankType.SPECIES);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -125,7 +122,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch11() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setTaxonRank(RankType.CLASS);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 
@@ -133,7 +130,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch12() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setYear("1974");
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, "1974", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, "1974", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -141,7 +138,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch13() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setYear("1974");
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 
@@ -149,7 +146,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch14() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName("Acacia dealbata");
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -157,7 +154,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch15() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName(" Acacia dealbata ");
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -165,7 +162,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch16() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName("Acacia other");
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 
@@ -174,7 +171,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName("Acacia dealbata");
         condition.setMatchType(NameMatchType.INSENSITIVE);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -183,7 +180,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName(" ACACIA    dealbata ");
         condition.setMatchType(NameMatchType.INSENSITIVE);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -192,7 +189,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName(" ACACIA    dealbata ");
         condition.setMatchType(NameMatchType.INSENSITIVE);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, " ACACIA   Dealbata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, " ACACIA   Dealbata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -201,7 +198,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName("Acacia other");
         condition.setMatchType(NameMatchType.INSENSITIVE);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 
@@ -210,7 +207,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName("Mycofalcella calcarata");
         condition.setMatchType(NameMatchType.NORMALISED);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Mycofalcela calcarata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Mycofalcela calcarata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -219,7 +216,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName("Aphanesia greyi");
         condition.setMatchType(NameMatchType.NORMALISED);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Aphanesia grei", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Aphanesia grei", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -228,7 +225,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName("Aphanesia greyi");
         condition.setMatchType(NameMatchType.NORMALISED);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, " Aphanesia  greyi  ", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, " Aphanesia  greyi  ", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -237,7 +234,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName("Aphanesia greyi");
         condition.setMatchType(NameMatchType.NORMALISED);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 
@@ -247,9 +244,9 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName("Mycofalcel+a calca?rata");
         condition.setMatchType(NameMatchType.REGEX);
-        TaxonConceptInstance instance1 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Mycofalcella calcarata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance1 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Mycofalcella calcarata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance1));
-        TaxonConceptInstance instance2 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Mycofalcela calcrata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance2 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Mycofalcela calcrata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance2));
     }
 
@@ -258,7 +255,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName("Aphanesia gr[eyi]+");
         condition.setMatchType(NameMatchType.REGEX);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Aphanesia greyi", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Aphanesia greyi", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -267,7 +264,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificName("Aphanesia gr[eyi]+");
         condition.setMatchType(NameMatchType.REGEX);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 
@@ -277,7 +274,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificNameAuthorship("Benth.");
         condition.setMatchType(NameMatchType.EXACT);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -286,7 +283,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificNameAuthorship("Benth.");
         condition.setMatchType(NameMatchType.EXACT);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", " Benth.", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", " Benth.", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -295,7 +292,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificNameAuthorship("Benth.");
         condition.setMatchType(NameMatchType.EXACT);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Bentham", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Bentham", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 
@@ -305,7 +302,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificNameAuthorship("Benth.");
         condition.setMatchType(NameMatchType.INSENSITIVE);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -314,7 +311,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificNameAuthorship("Benth.");
         condition.setMatchType(NameMatchType.INSENSITIVE);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", " BENTh.", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", " BENTh.", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -323,7 +320,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificNameAuthorship("Benth.");
         condition.setMatchType(NameMatchType.INSENSITIVE);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Bentham", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Bentham", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 
@@ -332,7 +329,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificNameAuthorship("Benth.");
         condition.setMatchType(NameMatchType.NORMALISED);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -341,7 +338,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificNameAuthorship("Benth.");
         condition.setMatchType(NameMatchType.NORMALISED);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Bentham", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Bentham", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
     }
 
@@ -350,7 +347,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificNameAuthorship("Benth.");
         condition.setMatchType(NameMatchType.NORMALISED);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "L.", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "L.", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 
@@ -359,9 +356,9 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificNameAuthorship("Benth\\.?");
         condition.setMatchType(NameMatchType.REGEX);
-        TaxonConceptInstance instance1 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance1 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance1));
-        TaxonConceptInstance instance2 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Benth", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance2 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Benth", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance1));
     }
 
@@ -370,11 +367,11 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificNameAuthorship("[Bb]enth(am|\\.)?");
         condition.setMatchType(NameMatchType.REGEX);
-        TaxonConceptInstance instance1 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Benth", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance1 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Benth", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance1));
-        TaxonConceptInstance instance2 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "bentham", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance2 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "bentham", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance2));
-        TaxonConceptInstance instance3 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance3 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance3));
     }
 
@@ -383,7 +380,7 @@ public class MatchTaxonConditionTest extends TestUtils {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setScientificNameAuthorship("[Bb]enth(am|\\.)?");
         condition.setMatchType(NameMatchType.REGEX);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Benthos", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Benthos", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 
@@ -391,7 +388,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch40() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setDatasetID(this.provider.getId());
-        TaxonConceptInstance instance1 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance1 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance1));
     }
 
@@ -399,7 +396,7 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testMatch41() {
         MatchTaxonCondition condition = new MatchTaxonCondition();
         condition.setDatasetID("other");
-        TaxonConceptInstance instance1 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance1 = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Lepidosperma leptophyllum", "Benth.", "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertFalse(condition.match(instance1));
     }
 
@@ -419,9 +416,9 @@ public class MatchTaxonConditionTest extends TestUtils {
     public void testRead1() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         MatchTaxonCondition condition = mapper.readValue(this.resourceReader("match-condition-1.json"), MatchTaxonCondition.class);
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, "1975", TaxonomicType.EXCLUDED, RankType.SPECIES, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, "1975", TaxonomicType.EXCLUDED, TaxonomicType.EXCLUDED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertTrue(condition.match(instance));
-        instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, RankType.SPECIES, null, null, null, null);
+        instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Acacia dealbata", null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
         assertFalse(condition.match(instance));
     }
 

@@ -78,13 +78,13 @@ public class ScoreAdjusterTest extends TestUtils {
 
     @Test
     public void testScore5() {
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider,"Acacia dealbata", "Link.", null, TaxonomicType.ACCEPTED, RankType.DOMAIN, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider,"Acacia dealbata", "Link.", null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.DOMAIN,  RankType.DOMAIN.getRank(), null, null,null, null, null, null, null);
         assertEquals(115, adjuster.score(100, instance));
     }
 
     @Test
     public void testScore6() {
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, this.provider,"Acacia dealbata", "Link.", null, TaxonomicType.MISAPPLIED, RankType.DOMAIN, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider,"Acacia dealbata", "Link.", null, TaxonomicType.MISAPPLIED, TaxonomicType.MISAPPLIED.getTerm(), RankType.DOMAIN,  RankType.DOMAIN.getRank(), null, null,null, null, null, null, null);
         assertEquals(105, adjuster.score(100, instance));
     }
 }

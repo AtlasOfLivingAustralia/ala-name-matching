@@ -6,6 +6,7 @@ import au.org.ala.names.util.TestUtils;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,6 +28,13 @@ public class CSVNameSourceTest extends TestUtils {
     @Before
     public void setup() {
         this.taxonomy = new Taxonomy();
+        this.taxonomy.begin();
+    }
+
+    @After
+    public void cleanup() throws Exception {
+        this.taxonomy.close();
+        this.taxonomy.clean();
     }
 
     @Test
@@ -58,7 +66,7 @@ public class CSVNameSourceTest extends TestUtils {
         assertEquals("http://id.biodiversity.org.au/node/ausmoss/10044710", instance.getTaxonID());
         assertEquals(NomenclaturalCode.BOTANICAL, instance.getCode());
         assertNotNull(instance.getProvider());
-        assertEquals("default", instance.getProvider().getId());
+        assertEquals("dr100", instance.getProvider().getId());
         assertEquals(RankType.SUBCLASS, instance.getRank());
         assertNull(instance.getStatus());
         assertEquals(TaxonomicType.ACCEPTED, instance.getTaxonomicStatus());

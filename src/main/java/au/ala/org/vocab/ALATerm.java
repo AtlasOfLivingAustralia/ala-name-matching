@@ -9,6 +9,12 @@ import org.gbif.dwc.terms.TermFactory;
  * Copyright (c) 2016 CSIRO
  */
 public enum ALATerm implements Term {
+    /** The supplied nomenclatural code */
+    verbatimNomenclaturalCode,
+    /** The supplied taxonomicStatus */
+    verbatimTaxonomicStatus,
+    /** The supplied nomenclatural status */
+    verbatimNomenclaturalStatus,
     /** The name and authorship, with the author correctly placed */
     nameComplete,
     /** The name and authorship, formatted in some way, usually HTML */
@@ -17,6 +23,8 @@ public enum ALATerm implements Term {
     nameID,
     /** The status of a piece of information (current, superseeded, etc.) */
     status,
+    /** A score for taxon priority */
+    score,
     /** A taxon identifier for the kingdom */
     kingdomID,
     /** A taxon identifier for the phylum */
@@ -31,6 +39,14 @@ public enum ALATerm implements Term {
     genusID,
     /** A taxon identifier for the species */
     speciesID,
+    /** The subphylum classification */
+    subphylum,
+    /** The subclass classification */
+    subclass,
+    /** The suborder classification */
+    suborder,
+    /** The infraorder classification */
+    infraorder,
     /** Record type describing a variant (different source, spelling etc.) of a taxon */
     TaxonVariant,
     /** Record type describing a problem or note about a taxon */
