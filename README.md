@@ -35,7 +35,7 @@ You can download the IRMNG DwCA for homonyms from the following URL:
 
 An assembly zip file for this can be downloaded from our maven repository : 
 
-[ala-name-matching-2.1-distribution.zip](http://maven.ala.org.au/repository/au/org/ala/ala-name-matching/2.1/ala-name-matching-2.1-distribution.zip)
+[ala-name-matching-2.1-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.1/ala-name-matching-2.1-distribution.zip)
 
 To generate the name index using the data described above, follow these steps. Alternatively use the [ALA Ansible scripts](https://github.com/AtlasOfLivingAustralia/ala-install) 
 here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustralia/ala-install/blob/master/ansible/nameindexer-standalone.yml) which does it all for you.
@@ -45,7 +45,7 @@ here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustra
 * Generate the names index with command:
 
 ```
-java –jar ala-name-matching-2.1.jar --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
+java –jar ala-name-matching-2.4.2.jar --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
 ```
 
 Please be aware that the names indexing could take over an hour to complete.

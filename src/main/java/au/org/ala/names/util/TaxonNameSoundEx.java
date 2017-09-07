@@ -1,4 +1,3 @@
-
 package au.org.ala.names.util;
 
 import java.util.Collections;

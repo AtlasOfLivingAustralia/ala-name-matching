@@ -41,21 +41,7 @@ public class ALAParsedName extends ParsedName {
     public static final Pattern phraseBlacklist = Pattern.compile("&| AND | and |Stn|Stn\\.|Station|Mt |Mt\\.|Mount");
     public static final Pattern phrasePunctuationRemoval = Pattern.compile("'|\"");
 
-    public ALAParsedName() {
-
-    }
-
-    public static void main(String[] args) {
-        String test = "Grevillea sp. Cape Arid (R.Spjut & R.Smith RS 12562)";
-        java.util.regex.Matcher m = potentialVoucherId.matcher(test);
-        m.find();
-
-        System.out.println(m.replaceFirst(" " + m.group().replaceAll(" ", "")));
-
-        System.out.println(multipleSpaces.matcher("The      test").replaceAll(" "));
-
-
-    }
+    public ALAParsedName() {}
 
     public ALAParsedName(ParsedName pn) {
         this.setAuthorsParsed(pn.isAuthorsParsed());

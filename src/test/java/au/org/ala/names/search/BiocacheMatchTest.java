@@ -30,6 +30,7 @@ public class BiocacheMatchTest {
     }
 
     @Test
+    @Ignore
     public void testMatchHybrid(){
         try{
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
