@@ -22,6 +22,7 @@ import au.org.ala.names.model.RankType;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
@@ -523,16 +524,20 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 lastConcept = sd;
                 left = right + 1;
                 Document doc = lsearcher.doc(sd.doc);
-                right = addIndex(doc, 1, left, new LinnaeanRankClassification());
+                right = addIndex(doc, 1, left, new LinnaeanRankClassification(), 0);
                 if (right - lastRight > 1000) {
                     log.info("Finished loading root " + doc.get(NameIndexField.LSID.toString()) + " " + doc.get(NameIndexField.NAME.toString()) + " left:" + left + " right" + right + " root count:" + count);
                     lastRight = right;
                 }
                 count++;
+                if(count % 10000 == 0){
+                    log.info("Loading index:" + count);
+                }
             }
             rootConcepts = lastConcept == null ? null : getLoadIdxResults(lastConcept, "root", "T", PAGE_SIZE);
-            if (rootConcepts != null && rootConcepts.scoreDocs.length > 0)
+            if (rootConcepts != null && rootConcepts.scoreDocs.length > 0) {
                 log.info("Loading next page of root concepts");
+            }
         }
     }
 
@@ -545,7 +550,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * @return
      * @throws Exception
      */
-    private int addIndex(Document doc,int currentDepth,int currentLeft, LinnaeanRankClassification higherClass ) throws Exception {
+    private int addIndex(Document doc,int currentDepth,int currentLeft, LinnaeanRankClassification higherClass, int stackCheck ) throws Exception {
         //log.info("Add to index " + doc.get(NameIndexField.ID.toString()) + "/" + doc.get(NameIndexField.NAME.toString()) + "/" + doc.get(NameIndexField.RANK_ID.toString()) + " depth=" + currentDepth + " left=" + currentLeft);
         String id = doc.get(NameIndexField.ID.toString());
         //get children for this record
@@ -599,8 +604,25 @@ public class DwcaNameIndexer extends ALANameIndexer {
             for (ScoreDoc child : children.scoreDocs) {
                 lastChild = child;
                 Document cdoc = lsearcher.doc(child.doc);
-                //child, currentDepth + 1, right + 1, map.toMap, dao)
-                right = addIndex(cdoc, currentDepth + 1, right + 1, newcl);
+                if(cdoc != null && !cdoc.get("id").equals(doc.get("id"))){
+                    if(stackCheck > 900){
+                        log.warn("Stack check depth " + stackCheck +
+                                "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
+                                "\n\t\tChild: " + cdoc.get("id") + " - " +  cdoc.get("lsid") + " _ " + cdoc.get("parent_id") + " - " +  cdoc.get("name")
+                        );
+                    }
+
+                    if(stackCheck < 1000) {
+//                        catch stack overflow
+                        right = addIndex(cdoc, currentDepth + 1, right + 1, newcl, stackCheck + 1);
+                    } else {
+                        log.warn("Stack overflow detected for name - depth " + stackCheck +
+                                "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
+                                "\n\t\tChild: " + cdoc.get("id") + " - " +  cdoc.get("lsid") + " _ " + cdoc.get("parent_id") + " - " +  cdoc.get("name")
+
+                        );
+                    }
+                }
             }
             children = lastChild == null ? null : this.getLoadIdxResults(lastChild, "parent_id", id, PAGE_SIZE);
             if (children != null && children.scoreDocs.length > 0)
@@ -611,7 +633,18 @@ public class DwcaNameIndexer extends ALANameIndexer {
         }
         //now insert this term
         float boost = this.getBoost(doc.get(NameIndexField.DATASET_ID.toString()), rankId);
-        Document indexDoc = this.createALAIndexDocument(name, doc.get(NameIndexField.ID.toString()), lsid, doc.get(NameIndexField.AUTHOR.toString()),doc.get(NameIndexField.RANK.toString()),doc.get(NameIndexField.RANK_ID.toString()), Integer.toString(left), Integer.toString(right), newcl, nameComplete, boost);
+        Document indexDoc = this.createALAIndexDocument(
+                name,
+                doc.get(NameIndexField.ID.toString()),
+                lsid,
+                doc.get(NameIndexField.AUTHOR.toString()),
+                doc.get(NameIndexField.RANK.toString()),
+                doc.get(NameIndexField.RANK_ID.toString()),
+                Integer.toString(left),
+                Integer.toString(right),
+                newcl,
+                nameComplete,
+                boost);
         writer.addDocument(indexDoc);
         return right + 1;
     }
@@ -752,7 +785,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 " used to load the main search index");
         options.addOption("search", false, "Generates the search index. A load index must already be created for this to run.");
         options.addOption("irmng", true, "The absolute path to the unzipped irmng DwCA. IRMNG is used to detect homonyms. Defaults to " + DEFAULT_IRMNG);
-        options.addOption("dwca", true, "The absolute path to the unzipped DwCA for the scientific names. Multiple dwca arguments can be specified. Defaults to " + DEFAULT_DWCA + " See also, the recurse option");
+        options.addOption("dwca", true, "The absolute path to the unzipped DwCA (or a directory containing unzipped DWC-A - see recurse) for the scientific names. If  Defaults to " + DEFAULT_DWCA + " See also, the recurse option");
         options.addOption("recurse", false, "Recurse through the sub-directories of the dwca directory, looking for directories with a meta.xml");
         options.addOption("priorities", true, "A properties file containing priority multiplers for the different data sources, keyed by datasetID->float. Defaults to " + DEFAULT_PRIORITIES);
         options.addOption("target", true, "The target directory to write the new name index to. Defaults to " + DEFAULT_TARGET_DIR);

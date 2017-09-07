@@ -53,7 +53,7 @@ import java.util.regex.Pattern;
 /**
  * Creates the Lucene index based on the names that are exported from
  * http://code.google.com/p/ala-portal/source/browse/trunk/ala-names-generator/src/main/resources/create-dumps.sql
- *
+ * @Deprecated
  * @author Natasha
  */
 public class ALANameIndexer {
@@ -143,11 +143,9 @@ public class ALANameIndexer {
     PhraseNameParser parser = new PhraseNameParser();
     Set<String> knownHomonyms = new HashSet<String>();
     Set<String> blacklist = new HashSet<String>();
-    private TaxonNameSoundEx tnse;
 
     public void init() throws Exception {
 
-        tnse = new TaxonNameSoundEx();
         // init the known homonyms
         LineIterator lines = new LineIterator(new BufferedReader(
                 new InputStreamReader(
@@ -264,7 +262,7 @@ public class ALANameIndexer {
      * @throws Exception
      */
     protected IndexWriter createIndexWriter(File directory, Analyzer analyzer, boolean replace) throws Exception {
-        IndexWriterConfig conf = new IndexWriterConfig(Version.LUCENE_34, analyzer);
+        IndexWriterConfig conf = new IndexWriterConfig(Version.LATEST, analyzer);
         if (replace)
             conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
         else
@@ -274,20 +272,7 @@ public class ALANameIndexer {
             FileUtils.forceDelete(directory);
         }
         FileUtils.forceMkdir(directory);
-        IndexWriter iw = new IndexWriter(FSDirectory.open(directory), conf);
-        return iw;
-    }
-
-    private String getValueFromIndex(IndexSearcher is, String searchField, String value, String retField) {
-        TermQuery tq = new TermQuery(new Term(searchField, value));
-        try {
-            org.apache.lucene.search.TopDocs results = is.search(tq, 1);
-            if (results.totalHits > 0)
-                return is.doc(results.scoreDocs[0].doc).get(retField);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return value;
+        return new IndexWriter(FSDirectory.open(directory), conf);
     }
 
     /**

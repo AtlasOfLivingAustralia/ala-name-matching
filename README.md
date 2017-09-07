@@ -41,7 +41,7 @@ To generate the name index using the data described above, follow these steps. A
 here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustralia/ala-install/blob/master/ansible/nameindexer-standalone.yml) which does it all for you.
 
 * Download the zip files linked above to a directory e.g. /data/names/ and extract them
-* Download the distribution zip [ala-name-matching-2.1-distribution.zip](http://maven.ala.org.au/repository/au/org/ala/ala-name-matching/2.1/ala-name-matching-2.1-distribution.zip)
+* Download the distribution zip [ala-name-matching-2.4.2-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.4.2/ala-name-matching-2.4.2-distribution.zip)
 * Generate the names index with command:
 
 ```
@@ -61,7 +61,7 @@ The build creates 3 artefacts in the ala-name-matching/target directory:
 * ala-name-matching-2.1-distribution.zip - zip containing the project jar and dependencies
 * ala-name-matching-2.1-sources.jar - source jar for the project code only
 
-A name index for Australian names lists can be downloaded [here](http://biocache.ala.org.au/archives/nameindexes/20140610/namematching_v13.tgz) and needs to be extracted to the
+A name index for Australian names lists can be downloaded [from here](http://biocache.ala.org.au/archives/nameindexes/latest/) and needs to be extracted to the
 directory `/data/lucene/namematching`
 
 ## ALA Names List
@@ -91,14 +91,14 @@ This names list is used as a backbone for the ALA species pages and to create a 
 
 ### Using ALA Name Matching
 
-The ALA Name Matching is available as a library that can be used in other projects.   It is available in the ALA Maven Repository (http://maven.ala.org.au/).  
+The ALA Name Matching is available as a library that can be used in other projects.   It is available in the ALA Maven Repository (http://nexus.ala.org.au/).  
 
 To use ala-name-matching, include it as a dependency in your pom file:
 ```
    <dependency>
       <groupId>au.org.ala</groupId>
       <artifactId>ala-name-matching</artifactId>
-      <version>2.1</version>
+      <version>2.4.2</version>
    </dependency>
 ```
 
@@ -114,7 +114,6 @@ ALANameSearcher  searcher = new ALANameSearcher ("/data/lucene/namematching")
 ```
 
 The easiest way to perform a search is to have the searcher handle all the exceptional situations using the default handling:
-
 
 ```
 LinnaeanRankClassification cl = new LinnaeanRankClassification()
