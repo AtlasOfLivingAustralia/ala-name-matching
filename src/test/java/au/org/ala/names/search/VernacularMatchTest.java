@@ -4,6 +4,7 @@ import au.org.ala.names.model.LinnaeanRankClassification;
 import au.org.ala.names.model.MatchType;
 import au.org.ala.names.model.MetricsResultDTO;
 import au.org.ala.names.model.NameSearchResult;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -24,7 +25,7 @@ public class VernacularMatchTest {
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new ALANameSearcher("/data/lucene/test");
+            searcher = new ALANameSearcher("/data/lucene/namematching");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -32,19 +33,15 @@ public class VernacularMatchTest {
 
     @Test
     public void testVernacular1() throws Exception {
-        String name = "Casuarina cunninghamiana";
-        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2904436";
-        LinnaeanRankClassification cl = new LinnaeanRankClassification();
-        MetricsResultDTO result = null;
+        String name = "Giant Rush";
+        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2902770";
+        NameSearchResult result = null;
 
-        cl.setScientificName(name);
-        result = searcher.searchForRecordMetrics(cl, true, true);
-        assertNotNull(result);
-        assertNull(result.getLastException());
-        assertEquals(MatchType.EXACT, result.getResult().getMatchType());
-        assertEquals(expectedLsid, result.getResult().getLsid());
+        result = searcher.searchForCommonName(name);
+        assertNull(result); // Has multiple matches
     }
 
+    @Ignore // Requires indidgenous names
     @Test
     public void testVernacular2() throws Exception {
         String name = "Dhulwa";
@@ -57,8 +54,8 @@ public class VernacularMatchTest {
 
     @Test
     public void testVernacular3() throws Exception {
-        String name = "River Sheoak";
-        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2904436";
+        String name = "Rock Sheoak";
+        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2893343";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);
@@ -69,8 +66,8 @@ public class VernacularMatchTest {
 
     @Test
     public void testVernacular4() throws Exception {
-        String name = "River Oak";
-        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2904436";
+        String name = "Manning River Helmeted Turtle";
+        String expectedLsid = "urn:lsid:biodiversity.org.au:afd.taxon:7981fb62-eb61-4028-87ff-66d2fae56c9f";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);
@@ -81,20 +78,18 @@ public class VernacularMatchTest {
 
     @Test
     public void testVernacular5() throws Exception {
-        String name = "Microseris lanceolata";
-        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2886278";
-        LinnaeanRankClassification cl = new LinnaeanRankClassification();
-        MetricsResultDTO result = null;
+        String name = "River Saltbush";
+        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2887659";
+        NameSearchResult result = null;
 
-        cl.setScientificName(name);
-        result = searcher.searchForRecordMetrics(cl, true, true);
+        result = searcher.searchForCommonName(name);
         assertNotNull(result);
-        assertNull(result.getLastException());
-        assertEquals(MatchType.EXACT, result.getResult().getMatchType());
-        assertEquals(expectedLsid, result.getResult().getLsid());
+        assertEquals(MatchType.VERNACULAR, result.getMatchType());
+        assertEquals(expectedLsid, result.getLsid());
     }
 
 
+    @Ignore // Requires indidgenous names
     @Test
     public void testVernacular6() throws Exception {
         String name = "Dharaban";
@@ -106,4 +101,18 @@ public class VernacularMatchTest {
         assertEquals(MatchType.VERNACULAR, result.getMatchType());
         assertEquals(expectedLsid, result.getLsid());
     }
+
+
+    @Test
+    public void testVernacular7() throws Exception {
+        String name = "T\u014crori";
+        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2900660";
+        NameSearchResult result = null;
+
+        result = searcher.searchForCommonName(name);
+        assertNotNull(result);
+        assertEquals(MatchType.VERNACULAR, result.getMatchType());
+        assertEquals(expectedLsid, result.getLsid());
+    }
+
 }

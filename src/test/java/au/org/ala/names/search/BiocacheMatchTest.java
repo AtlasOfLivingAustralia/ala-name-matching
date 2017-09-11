@@ -49,10 +49,10 @@ public class BiocacheMatchTest {
     public void higherClassificationProvided(){
         try{
             LinnaeanRankClassification cl= new LinnaeanRankClassification();
-            cl.setScientificName("Macropus rufus");
+            cl.setScientificName("Osphranter rufus");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             assertEquals("Animalia", metrics.getResult().getRankClassification().getKingdom());
-            assertEquals("Macropus", metrics.getResult().getRankClassification().getGenus());
+            assertEquals("Osphranter", metrics.getResult().getRankClassification().getGenus());
 
         } catch(Exception e){
             e.printStackTrace();
@@ -94,43 +94,34 @@ public class BiocacheMatchTest {
     }
 
     @Test
-    public void testRecursiveAuthorshipIssue2() {
-        try {
-            LinnaeanRankClassification cl = new LinnaeanRankClassification();
-            cl.setScientificName("Graphis erythrocardia Mull.Arg.");
-            cl.setAuthorship("Mull.Arg.");
-            cl.setFamily("Graphidaceae");
-            cl.setGenus("Graphis");
-            cl.setSpecificEpithet("erythrocardia");
-            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("NZOR-3-83007", metrics.getResult().getLsid()); // Can't find Graphis since not APC placed so gets Graphidaceae
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail("Exception should not occur");
-
-        }
+    public void testRecursiveAuthorshipIssue2() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Graphis erythrocardia Mull.Arg.");
+        cl.setAuthorship("Mull.Arg.");
+        cl.setFamily("Graphidaceae");
+        cl.setGenus("Graphis");
+        cl.setSpecificEpithet("erythrocardia");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertEquals("NZOR-4-120184", metrics.getResult().getLsid()); // Can't find Graphis since not APC placed so gets Graphidaceae
     }
 
-    //@Test // TODO FInd a suitable x-rank
-    public void testCrossRankHomonym(){
-        try{
-            //test unresolved
-            LinnaeanRankClassification cl = new LinnaeanRankClassification();
-            cl.setScientificName("Blattidae");
-            MetricsResultDTO metrics =searcher.searchForRecordMetrics(cl, true);
-            assertTrue("Failed the cross rank homonym test",metrics.getErrors().contains(ErrorType.HOMONYM));
-            //test resolved based on rank
-            cl.setRank("genus");
-            metrics = searcher.searchForRecordMetrics(cl, true);
-            assertFalse("Cross rank homonym should have been resolved",metrics.getErrors().contains(ErrorType.HOMONYM));
-            //test resolved based on rank being determined
-            cl.setRank(null);
-            cl.setPhylum("Arthropoda");
-            metrics = searcher.searchForRecordMetrics(cl, true);
-            assertFalse("Cross rank homonym should have been resolved",metrics.getErrors().contains(ErrorType.HOMONYM));
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
+    @Test
+    @Ignore // TODO FInd a suitable x-rank
+    public void testCrossRankHomonym() throws Exception {
+        //test unresolved
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Blattidae");
+        MetricsResultDTO metrics =searcher.searchForRecordMetrics(cl, true);
+        assertTrue("Failed the cross rank homonym test",metrics.getErrors().contains(ErrorType.HOMONYM));
+        //test resolved based on rank
+        cl.setRank("genus");
+        metrics = searcher.searchForRecordMetrics(cl, true);
+        assertFalse("Cross rank homonym should have been resolved",metrics.getErrors().contains(ErrorType.HOMONYM));
+        //test resolved based on rank being determined
+        cl.setRank(null);
+        cl.setPhylum("Arthropoda");
+        metrics = searcher.searchForRecordMetrics(cl, true);
+        assertFalse("Cross rank homonym should have been resolved",metrics.getErrors().contains(ErrorType.HOMONYM));
     }
 
     // @Test
@@ -160,7 +151,7 @@ public class BiocacheMatchTest {
             cl.setSpecificEpithet(spEp);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             //System.out.println(metrics.getResult());
-            assertEquals("http://id.biodiversity.org.au/node/apni/2888850", metrics.getResult().getAcceptedLsid());
+            assertEquals("http://id.biodiversity.org.au/node/apni/8786929", metrics.getResult().getAcceptedLsid());
             assertTrue(metrics.getErrors().contains(ErrorType.HOMONYM));
 
         } catch (Exception e) {
@@ -235,8 +226,8 @@ public class BiocacheMatchTest {
             cl = new LinnaeanRankClassification();
             cl.setScientificName("Myosurus minimus");
             metrics = searcher.searchForRecordMetrics(cl, true);
-            assertTrue(metrics.getErrors().contains(ErrorType.MISAPPLIED));
-            assertEquals("http://id.biodiversity.org.au/node/apni/2896644", metrics.getResult().getLsid());
+            assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
+            assertEquals("NZOR-4-91924", metrics.getResult().getLsid());
         } catch (Exception e) {
             fail("No exception shoudl occur");
             e.printStackTrace();
@@ -426,7 +417,7 @@ public class BiocacheMatchTest {
             String name = "Eucalyptus leucoxylon ssp.";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("http://id.biodiversity.org.au/name/apni/237881", metrics.getResult().getLsid());
+            assertEquals("http://id.biodiversity.org.au/node/apni/2909698", metrics.getResult().getLsid());
             assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
