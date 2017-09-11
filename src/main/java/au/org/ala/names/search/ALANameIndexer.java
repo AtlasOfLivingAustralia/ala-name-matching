@@ -17,7 +17,6 @@ package au.org.ala.names.search;
 import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
-import au.org.ala.names.parser.PhraseNameParser;
 import au.org.ala.names.util.CleanedScientificName;
 import au.org.ala.names.util.TaxonNameSoundEx;
 import org.apache.commons.io.FileUtils;
@@ -27,7 +26,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.document.*;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.index.DirectoryReader;
@@ -38,18 +36,15 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
-//import org.gbif.dwc.record.DarwinCoreRecord;
-//import org.gbif.dwc.text.Archive;
-//import org.gbif.dwc.text.ArchiveFactory;
+import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.api.vocabulary.NameType;
+import org.gbif.api.vocabulary.Rank;
+import org.gbif.dwca.record.DarwinCoreRecord;
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
-import org.gbif.dwca.record.DarwinCoreRecord;
-import org.gbif.ecat.model.ParsedName;
-import org.gbif.ecat.parser.NameParser;
-import org.gbif.ecat.voc.NameType;
+import org.gbif.nameparser.PhraseNameParser;
 
 import java.io.*;
-import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -145,7 +140,7 @@ public class ALANameIndexer {
         }
     }
 
-    NameParser parser = new PhraseNameParser();
+    PhraseNameParser parser = new PhraseNameParser();
     Set<String> knownHomonyms = new HashSet<String>();
     Set<String> blacklist = new HashSet<String>();
 
@@ -192,6 +187,20 @@ public class ALANameIndexer {
         createIndex(exportsDir, indexDir, alaConcepts, alaSynonyms, irmngDwcaDirectory, generateSciNames, generateCommonNames);
     }
 
+    /**
+     * Creates the IRMNG homonym index based on the DWCA and species homonyms supplied from the NSL
+     * @param exportsDir
+     * @param indexDir
+     * @throws Exception
+     */
+    public void createIrmngIndex(String exportsDir, String indexDir) throws Exception {
+        Analyzer analyzer = new LowerCaseKeywordAnalyzer();
+        IndexWriter irmngWriter = createIndexWriter(new File(indexDir + File.separator + "irmng"), analyzer, true);
+        indexIrmngDwcA(irmngWriter, irmngDwcaDirectory);
+        indexIRMNG(irmngWriter, exportsDir + File.separator + "ala-species-homonyms.txt", RankType.SPECIES);
+        irmngWriter.forceMerge(1);
+        irmngWriter.close();
+    }
 
     public void createIndex(String exportsDir, String indexDir, String acceptedFile, String synonymFile,
                             String irmngDwca, boolean generateSciNames, boolean generateCommonNames) throws Exception {
@@ -214,6 +223,33 @@ public class ALANameIndexer {
             indexCommonNames(createIndexWriter(new File(indexDir + File.separator + "vernacular"),
                     new KeywordAnalyzer(), true), exportsDir, indexDir);
         }
+    }
+
+    /**
+     * Creates the temporary index that provides a lookup of checklist bank id to
+     * GUID
+     */
+    private IndexSearcher createTmpGuidIndex(String cbExportFile) throws Exception {
+        System.out.println("Starting to create the tmp guid index...");
+        IndexWriter iw = createIndexWriter(new File("/data/tmp/guid"), new KeywordAnalyzer(), true);
+        au.com.bytecode.opencsv.CSVReader cbreader = new au.com.bytecode.opencsv.CSVReader(new FileReader(cbExportFile), '\t', '"', '/', 1);
+        for (String[] values = cbreader.readNext(); values != null; values = cbreader.readNext()) {
+            Document doc = new Document();
+            String id = values[POS_ID];
+            String guid = values[POS_LSID];
+            doc.add(new StringField("id", id, Store.YES));
+            if (StringUtils.isEmpty(id))
+                guid = id;
+
+            doc.add(new StoredField("guid", guid));
+            iw.addDocument(doc);
+        }
+        System.out.println("Finished writing the tmp guid index...");
+        iw.commit();
+        iw.forceMerge(1);
+        iw.close();
+        //As of lucene 4.0 all IndexReaders are read only
+        return new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File("/data/tmp/guid"))));
     }
 
     /**
@@ -856,7 +892,7 @@ public class ALANameIndexer {
             if (cn != null && cn.isParsableType() && !cn.isIndetermined()
                     // a scientific name with some informal addition like "cf." or indetermined like Abies spec.
                     // ALSO prevent subgenus because they parse down to genus plus author
-                    && cn.getType() != NameType.informal && !"6500".equals(rank) && cn.getType() != NameType.doubtful)
+                    && cn.getType() != NameType.INFORMAL && !"6500".equals(rank) && cn.getType() != NameType.DOUBTFUL)
             {
                 Field f2 = new TextField(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES);
                 f2.setBoost(boost);
@@ -874,9 +910,9 @@ public class ALANameIndexer {
                 FieldType ft = new FieldType(TextField.TYPE_STORED);
                 ft.setOmitNorms(true);
                 ALAParsedName alapn = (ALAParsedName) cn;
-                if ((!"sp.".equals(alapn.rank)) && alapn.specificEpithet != null) {
+                if (alapn.getRank() != Rank.SPECIES && alapn.getSpecificEpithet() != null) {
                     doc.add(new Field(NameIndexField.SPECIFIC.toString(), alapn.getSpecificEpithet(), ft));
-                } else if ((!"sp.".equals(alapn.rank)) && alapn.specificEpithet == null) {
+                } else if (alapn.getRank() != Rank.SPECIES && alapn.getSpecificEpithet() == null) {
                     log.warn(lsid + " " + name + " has an empty specific for non sp. phrase");
                 }
                 if (StringUtils.trimToNull(alapn.getLocationPhraseDescription()) != null) {
@@ -891,9 +927,9 @@ public class ALANameIndexer {
                 }
 
             }
-        } catch (org.gbif.ecat.parser.UnparsableException e) {
+        } catch (org.gbif.api.exception.UnparsableException e) {
             //check to see if the name is a virus in which case an extra name is added without the virus key word
-            if (e.type == NameType.virus) {
+            if (e.type == NameType.VIRUS) {
                 doc.add(new TextField(NameIndexField.NAME.toString(), ALANameSearcher.virusStopPattern.matcher(name).replaceAll(" "), Store.YES));
             }
 

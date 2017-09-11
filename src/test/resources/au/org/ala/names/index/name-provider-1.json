@@ -1,0 +1,74 @@
+[
+  {
+    "id": "ID-1",
+    "defaultScore": 200
+  },
+  {
+    "id": "ID-2",
+    "parent": "ID-1"
+  },
+  {
+    "id": "ID-3",
+    "defaultScore": 100,
+    "scores": {
+      "Acacia": 150,
+      "Macropus": 90
+    }
+  },
+  {
+    "id": "ID-4",
+    "parent": "ID-3",
+    "scores": {
+      "Acacia": 100
+    }
+  },
+  {
+    "id": "ID-5",
+    "parent": "ID-3",
+    "adjuster": {
+      "forbidden": [
+        {
+          "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+          "taxonomicStatus": "INCERTAE_SEDIS"
+        }
+      ],
+      "adjustments": [
+        {
+          "condition": {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonomicStatus": "EXCLUDED"
+          },
+          "adjustment": -20
+        },
+        {
+          "condition": {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalCode": "BOTANICAL"
+          },
+          "adjustment": 10
+        }
+      ]
+    }
+  },
+  {
+    "id": "ID-6",
+    "parent": "ID-5",
+    "adjuster": {
+      "forbidden": [
+        {
+          "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+          "taxonomicStatus" : "EXCLUDED"
+        }
+      ],
+      "adjustments": [
+        {
+          "condition": {
+            "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonomicStatus" : "INFERRED_ACCEPTED"
+          },
+          "adjustment": -20
+        }
+      ]
+    }
+  }
+]

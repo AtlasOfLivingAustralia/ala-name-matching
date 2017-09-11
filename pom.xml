@@ -10,7 +10,7 @@
     <groupId>au.org.ala</groupId>
     <artifactId>ala-name-matching</artifactId>
     <packaging>jar</packaging>
-    <version>2.4.3-SNAPSHOT</version>
+    <version>2.4.5-SNAPSHOT</version>
     <name>ALA Name Matching</name>
     <scm>
         <connection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</connection>
@@ -27,21 +27,6 @@
         <animal-sniffer-signature.version>1.0</animal-sniffer-signature.version>
     </properties>
     <dependencies>
-        <dependency>
-            <groupId>org.gbif</groupId>
-            <artifactId>dwca-io</artifactId>
-            <version>1.30</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-io</groupId>
-                    <artifactId>commons-io</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
         <!-- SL4J -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -58,16 +43,38 @@
             <artifactId>commons-collections</artifactId>
             <version>3.2.2</version>
         </dependency>
+        <!-- GBIF libraries -->
         <dependency>
             <groupId>org.gbif</groupId>
-            <artifactId>ecat-common</artifactId>
-            <version>1.6</version>
+            <artifactId>gbif-common</artifactId>
+            <version>0.34</version>
+        </dependency>
+        <dependency>
+            <groupId>org.gbif</groupId>
+            <artifactId>name-parser</artifactId>
+            <version>2.21</version>
+        </dependency>
+        <dependency>
+            <groupId>org.gbif.checklistbank</groupId>
+            <artifactId>checklistbank-common</artifactId>
+            <version>2.52</version>
+        </dependency>
+        <dependency>
+            <groupId>org.gbif</groupId>
+            <artifactId>dwca-io</artifactId>
+            <version>1.24</version>
+            <!--
             <exclusions>
                 <exclusion>
-                    <groupId>org.gbif</groupId>
-                    <artifactId>dwca-reader</artifactId>
+                    <groupId>commons-io</groupId>
+                    <artifactId>commons-io</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
+            -->
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -75,6 +82,7 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
+        <!-- Lucene index building -->
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
@@ -101,16 +109,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-   	    <dependency>
-            <groupId>commons-io</groupId>
-   	        <artifactId>commons-io</artifactId>
-   	        <version>2.5</version>
-   		</dependency>
-   	    <dependency>
-            <groupId>org.apache.commons</groupId>
-   	        <artifactId>commons-lang3</artifactId>
-   	        <version>3.6</version>
-   		</dependency>
         <dependency>
             <groupId>au.com.bytecode</groupId>
             <artifactId>opencsv</artifactId>
@@ -122,18 +120,39 @@
             <artifactId>simmetrics</artifactId>
             <version>1.6.2</version>
         </dependency>
+        <!-- Jackson JSON parsing -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.8.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.8.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.8.8</version>
+        </dependency>
         <!-- For command line arg parsing -->
         <dependency>
             <groupId>commons-cli</groupId>
             <artifactId>commons-cli</artifactId>
             <version>1.2</version>
         </dependency>
-   	    <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>18.0</version>
-        </dependency>
     </dependencies>
+
+    <!--
+    <repositories>
+        <repository>
+            <id>gbif</id>
+         idname>GBIF main repositoidname>
+            <url>http://repository.gbif.org/content/groups/gbif/</url>
+        </repository>
+    </repositories>
+    -->
     <profiles>
         <profile>
         <id>default</id>
@@ -146,8 +165,8 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <configuration>
-                        <source>1.7</source>
-                        <target>1.7</target>
+                        <source>1.8</source>
+                        <target>1.8</target>
                         <encoding>UTF8</encoding>
                     </configuration>
                 </plugin>
@@ -177,6 +196,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
+                    <version>2.1.1</version>
                     <executions>
                         <execution>
                             <id>attach-sources</id>
@@ -190,6 +210,7 @@
                 <plugin>
                    <groupId>org.apache.maven.plugins</groupId>
                    <artifactId>maven-release-plugin</artifactId>
+                   <version>2.5</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.koraktor</groupId>
@@ -206,6 +227,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.4</version>
                     <configuration>
                         <archive>
                             <manifest>
@@ -227,6 +249,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
+                        <version>2.4</version>
                     </plugin>
                 </plugins>
             </build>

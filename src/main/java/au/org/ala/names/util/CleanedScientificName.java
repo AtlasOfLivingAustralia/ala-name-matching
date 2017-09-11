@@ -196,7 +196,7 @@ public class CleanedScientificName {
      * @return The normalised name
      */
     protected String normaliseSpaces(String name) {
-        Matcher matcher = this.SPACES.matcher(name);
+        Matcher matcher = SPACES.matcher(name);
 
         return matcher.replaceAll(" ").trim();
     }
@@ -278,7 +278,7 @@ public class CleanedScientificName {
      */
     protected String buildNormalised(String name) {
         name = Normalizer.normalize(name, Normalizer.Form.NFKC);
-        name = this.translate(name, this.getPunctuationMap());
+        name = this.translate(name, getPunctuationMap());
         return this.normaliseSpaces(name);
     }
 
@@ -308,7 +308,7 @@ public class CleanedScientificName {
      * Build a basic latin version of a name.
      * <p>
      * Any accented characters are replaced by non-accented equivalents.
-     * Any non-basic lating characters are removed.
+     * Any non-basic latin characters are removed.
      * </p>
      * @param name The name to make basic
      *
@@ -316,7 +316,7 @@ public class CleanedScientificName {
      */
     protected String buildBasic(String name) {
         name = Normalizer.normalize(name, Normalizer.Form.NFD);
-        name = this.translate(name, this.getBasicMap());
+        name = this.translate(name, getBasicMap());
         name = this.normaliseSpaces(name);
 
         int i, len = name.length();

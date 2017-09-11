@@ -1,0 +1,23 @@
+label,NomenclaturalStatus,title,link
+orth cons,CONSERVED,A name with conserved orthography,https://en.wikipedia.org/wiki/Conserved_name
+orth. cons.,CONSERVED,A name with conserved orthography,https://en.wikipedia.org/wiki/Conserved_name
+nom et orth cons,CONSERVED,A id with conserved name and orthography,https://en.wikipedia.org/wiki/Conserved_name
+nom. et orth. cons.,CONSERVED,A id with conserved name and orthography,https://en.wikipedia.org/wiki/Conserved_name
+nom et typ cons,CONSERVED,A name with consered type name orthography,https://en.wikipedia.org/wiki/Conserved_name
+nom. et typ. cons.,CONSERVED,A name with consered type name orthography,https://en.wikipedia.org/wiki/Conserved_name
+nom. alt.,ALTERNATIVE,An alternative name,
+pro syn.,,As synonym - awaiting vocabulary extensions,http://www.iapt-taxon.org/nomen/main.php?page=r50A
+generic combination,,Generic combination - awaiting vocabulary extensions,
+synonym,,Should be in taxonomic status,
+objective synonym,,Should be in taxonomic status,
+subjective synonym,,Should be in taxonomic status,
+[N/A],,Not applicable - awaiting vocabulary extensions,
+manuscript,PROVISIONAL,In manuscript - awaiting vocaculary extensions,
+isonym,,Isonym - awaiting vocaculary extensions,http://www.iapt-taxon.org/nomen/main.php?page=art6#Note2
+replacement name,REPLACEMENT,Shoudl already be covered,
+original spelling,ORTHOGRAPHIC_VARIANT,Variant of a variant,
+subsequent misspelling,ORTHOGRAPHIC_VARIANT,Variant of a variant,
+opera utique oppressa,SUPPRESSED,A name from a suppressed work,http://www.iapt-taxon.org/nomen/main.php?page=glo
+invalid name,INVALID,Invalid name,
+emendation,CORRECTED,Improved name,
+tautonym,,A name where the genus and specific epithet are identical,https://en.wikipedia.org/wiki/Tautonym

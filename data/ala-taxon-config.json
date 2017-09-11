@@ -1,0 +1,345 @@
+{
+  "id": "ALA-Combined",
+  "name": "ALA Combined Taxonomy",
+  "description": "Resolved taxonomy built from AusFungi, AusMoss, AFD, APNI/APC, NZOR, CCAB, Catalogue of Life and ALA speices lists",
+  "contact": {
+    "organization": "Atlas of Living Australia",
+    "email": [ "data_management@ala.org.au" ]
+  },
+  "nameAnalyserClass" : "au.org.ala.names.index.ALANameAnalyser",
+  "resolverClass" : "au.org.ala.names.index.ALATaxonResolver",
+  "providers" : [
+    {
+      "id" : "default",
+      "name": "default",
+      "description": "Top-level provider for default adjustments",
+      "external": false,
+      "defaultScore" : 0,
+      "adjuster": {
+        "forbidden": [
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonomicStatus": "INCERTAE_SEDIS"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonomicStatus": "INVALID"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonomicStatus": "INFERRED_INVALID"
+          }
+        ],
+        "adjustments": [
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "INFERRED_ACCEPTED"
+            },
+            "adjustment": -100
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "INFERRED_SYNONYM"
+            },
+            "adjustment": -110
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "MISCELLANEOUS_LITERATURE"
+            },
+            "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "UNPLACED"
+            },
+            "adjustment": -300
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "INFERRED_UNPLACED"
+            },
+            "adjustment": -310
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "DOUBTFUL"
+            },
+            "adjustment": -400
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "MISAPPLIED"
+            },
+            "adjustment": -410
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "EXCLUDED"
+            },
+            "adjustment": -500
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "INVALID"
+            },
+            "adjustment": -600
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "INFERRED_INVALID"
+            },
+            "adjustment": -610
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "HYBRID"
+            },
+            "adjustment": -100
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "CULTIVAR"
+            },
+            "adjustment": -100
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "INFORMAL"
+            },
+            "adjustment": -110
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "CANDIDATUS"
+            },
+            "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "DOUBTFUL"
+            },
+            "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "PLACEHOLDER"
+            },
+            "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nameType": "NO_NAME"
+            },
+            "adjustment": -1000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "ALTERNATIVE"
+            },
+            "adjustment": -10
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "PROVISIONAL"
+            },
+            "adjustment": -10
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "DOUBTFUL"
+            },
+            "adjustment": -20
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "FORGOTTEN"
+            },
+            "adjustment": -20
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "ORTHOGRAPHIC_VARIANT"
+            },
+            "adjustment": -10
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "REJECTED"
+            },
+            "adjustment": -20
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "ILLEGITIMATE"
+            },
+            "adjustment": -20
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "INVALID"
+            },
+            "adjustment": -10
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "DENIED"
+            },
+            "adjustment": -10
+          }
+        ]
+      }
+    },
+    {
+      "id" : "dr2702",
+      "name": "AusFungi",
+      "parent": "default",
+      "rightsHolder": "Royal Botanic Gardens Victoria",
+      "licence": "CC-BY",
+      "defaultScore" : 5000,
+      "scores": {
+        "Fungi": 6000
+      },
+      "owner": [
+        "Fungi"
+      ]
+    },
+    {
+      "id" : "dr2703",
+      "name": "AusMoss",
+      "parent": "default",
+      "rightsHolder": "Royal Botanic Gardens Victoria",
+      "licence": "CC-BY",
+      "defaultScore" : 5000,
+      "defaultNomenclaturalCode": "BOTANICAL",
+      "scores": {
+        "Bryidae": 7000
+      }
+    },
+    {
+      "id" : "dr5214",
+      "name": "APC",
+      "parent": "default",
+      "rightsHolder": "Centre for Australian National Biodiversity Research",
+      "licence": "CC-BY",
+      "defaultScore" : 5000,
+      "defaultNomenclaturalCode": "BOTANICAL",
+      "scores": {
+        "Plantae": 6000
+      },
+      "owner": [
+        "Plantae"
+      ]
+    },
+    {
+      "id" : "dr2700",
+      "name": "APNI",
+      "parent": "default",
+      "rightsHolder": "Centre for Australian National Biodiversity Research",
+      "licence": "CC-BY",
+      "defaultScore" : 4500,
+      "defaultNomenclaturalCode": "BOTANICAL"
+    },
+    {
+      "id" : "dr2699",
+      "name": "AFD",
+      "description": "Australian Faunal Directory",
+      "parent": "default",
+      "rightsHolder": "Australian Biological Resources Study",
+      "licence": "CC-BY",
+      "defaultScore" : 5000,
+      "defaultNomenclaturalCode": "ZOOLOGICAL",
+      "scores": {
+        "Animalia": 6000
+      },
+      "owner": [
+        "Animalia"
+      ]
+    },
+    {
+      "id": "dr2707",
+      "name": "NZOR",
+      "description": "New Zealand Organism Register",
+      "parent": "default",
+      "rightsHolder": "New Zealand Organism Register",
+      "licence": "CC-BY",
+      "defaultScore": 4000,
+      "adjuster": {
+        "forbidden": [
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "scientificName": "ROOT"
+          }
+        ]
+      }
+    },
+    {
+      "id" : "dr2704",
+      "name": "CAAB",
+      "description": "Codes for Australian Aquatic Biota",
+      "parent": "default",
+      "rightsHolder": "Commonwealth Scientific and Industrial Research Organisation",
+      "licence": "CC-BY",
+      "defaultScore" : 3000,
+      "loose": true
+    },
+    {
+      "id" : "dr2705",
+      "name": "CoL",
+      "description": "Catalogue of Life",
+      "parent": "default",
+      "rightsHolder": "Catalogue of Life",
+      "licence": "CC-BY",
+      "defaultScore" : 2000,
+      "keyAdjuster": {
+        "adjustments": [
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "scientificName" : "Viruses",
+              "taxonRank": "KINGDOM"
+            },
+            "scientificName": "VIRUS"
+          }
+        ]
+      }
+    },
+    {
+      "id" : "dr5393",
+      "name": "ALA",
+      "description": "Atlas of living Australia, provider of inferences from the matching algorithm",
+      "rightsHolder": "Atlas of Living Australia",
+      "licence": "CC-BY",
+      "parent": "default",
+      "defaultScore" : 0
+    }
+  ],
+  "defaultProvider" : "dr5393",
+  "inferenceProvider" : "dr5393"
+}

@@ -15,10 +15,9 @@
 package au.org.ala.names.model;
 
 import au.org.ala.names.search.SearchResultException;
+import org.gbif.api.vocabulary.NameType;
 
 import java.util.Set;
-
-import org.gbif.ecat.voc.NameType;
 
 /**
  * Stores the data the data that makes up a name match includes metrics such as name types and errors

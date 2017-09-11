@@ -1,0 +1,24 @@
+{
+  "id" : "CID",
+  "name" : "A Title",
+  "description" : "A description",
+  "nameAnalyserClass" : "au.org.ala.names.index.ALANameAnalyser",
+  "resolverClass" : "au.org.ala.names.index.ALATaxonResolver",
+  "providers" : [ {
+    "id" : "ID-1",
+    "name" : "ID-1",
+    "defaultScore" : 150,
+    "scores" : { },
+    "owner" : [ ],
+    "adjuster" : {
+      "forbidden" : [ ],
+      "adjustments" : [ ]
+    },
+    "keyAdjuster" : {
+      "adjustments" : [ ]
+    },
+    "loose" : false,
+    "external" : true
+  } ],
+  "defaultProvider" : "ID-1"
+}
