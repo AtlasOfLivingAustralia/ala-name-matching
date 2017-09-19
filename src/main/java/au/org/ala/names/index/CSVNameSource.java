@@ -1,6 +1,6 @@
 package au.org.ala.names.index;
 
-import au.ala.org.vocab.ALATerm;
+import au.org.ala.vocab.ALATerm;
 import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
@@ -9,14 +9,12 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.api.model.registry.Contact;
-import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.vocabulary.Country;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.terms.TermFactory;
-import org.gbif.dwca.io.MetadataException;
 
 import java.io.*;
 import java.util.*;

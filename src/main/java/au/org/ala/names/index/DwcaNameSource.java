@@ -1,12 +1,9 @@
 package au.org.ala.names.index;
 
-import au.ala.org.vocab.ALATerm;
+import au.org.ala.vocab.ALATerm;
 import au.org.ala.names.model.RankType;
-import au.org.ala.names.model.SynonymType;
 import au.org.ala.names.model.TaxonomicType;
-import javafx.scene.media.MediaException;
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.collections.MapUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -17,7 +14,6 @@ import org.gbif.api.vocabulary.*;
 import org.gbif.dwca.io.MetadataException;
 import org.gbif.dwca.record.Record;
 import org.gbif.dwca.record.StarRecord;
-import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwca.io.Archive;

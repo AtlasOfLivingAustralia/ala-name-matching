@@ -1,9 +1,8 @@
 package au.org.ala.names.index;
 
-import au.ala.org.vocab.ALATerm;
+import au.org.ala.vocab.ALATerm;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
-import org.apache.commons.collections.OrderedMap;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.dwc.terms.DcTerm;

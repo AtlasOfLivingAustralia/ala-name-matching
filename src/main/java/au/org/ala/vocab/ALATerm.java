@@ -1,4 +1,4 @@
-package au.ala.org.vocab;
+package au.org.ala.vocab;
 
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.terms.TermFactory;

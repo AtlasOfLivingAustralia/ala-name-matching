@@ -1,6 +1,6 @@
 package au.org.ala.names.index;
 
-import au.ala.org.vocab.ALATerm;
+import au.org.ala.vocab.ALATerm;
 import au.com.bytecode.opencsv.CSVWriter;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
@@ -16,7 +16,6 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.*;
 import org.apache.lucene.util.Version;
-import org.gbif.api.exception.UnparsableException;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.api.model.registry.Contact;
 import org.gbif.api.model.registry.Dataset;
@@ -24,15 +23,11 @@ import org.gbif.api.model.registry.Identifier;
 import org.gbif.api.vocabulary.*;
 import org.gbif.dwc.terms.*;
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.io.ArchiveFactory;
-import org.gbif.dwca.io.ArchiveFile;
 import au.org.ala.names.util.DwcaWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;

@@ -1,4 +1,4 @@
-package au.ala.org.vocab;
+package au.org.ala.vocab;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.ObjectMapper;

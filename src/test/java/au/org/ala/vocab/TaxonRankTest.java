@@ -1,7 +1,5 @@
 package au.org.ala.vocab;
 
-import au.ala.org.vocab.TaxonRank;
-import au.ala.org.vocab.Vocabulary;
 import au.org.ala.names.util.TestUtils;
 import org.junit.Before;
 import org.junit.Test;

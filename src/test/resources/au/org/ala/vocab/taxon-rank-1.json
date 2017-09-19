@@ -1,10 +1,10 @@
 {
-  "@class" : "au.ala.org.vocab.TaxonRank",
+  "@class" : "au.org.ala.vocab.TaxonRank",
   "id" : "genus",
   "uri" : "urm:x-ala:vocabulary:tr-1#genus",
   "names" : [ ],
   "vocabulary" : {
-    "@class" : "au.ala.org.vocab.Vocabulary",
+    "@class" : "au.org.ala.vocab.Vocabulary",
     "id" : "tr-1",
     "uri" : "urm:x-ala:vocabulary:tr-1"
   },
