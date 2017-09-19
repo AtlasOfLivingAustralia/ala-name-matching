@@ -4,9 +4,7 @@ import au.org.ala.names.model.RankType;
 import au.org.ala.names.util.DwcaWriter;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -19,131 +17,152 @@ import java.util.stream.Collectors;
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright (c) 2017 CSIRO
  */
-public class ScientificName extends Name implements Comparable<ScientificName> {
-    /** The concepts that correspond to this name */
-    private Map<NameKey, TaxonConcept> concepts;
-    /** The principalprincipal taxon concept for this name */
-    private TaxonConcept principal;
-
-    public ScientificName(NameKey key) {
-        super(key);
-        this.concepts = new HashMap<NameKey, TaxonConcept>();
-        this.principal = null;
-    }
-
+public class ScientificName extends Name<ScientificName, UnrankedScientificName, TaxonConcept> implements Comparable<ScientificName> {
     /**
-     * Add an instance to the list of concepts.
-     * <p>
-     * If this is an uncoded instance, we attempt to add it to the most likely concept
-     * </p>
+     * Construct for a container and a key
      *
-     * @param instanceKey The name key for this instance
-     * @param instance The instance
-     *
-     * @return The matched taxon concept
+     * @param container
+     * @param key
      */
-    public TaxonConcept addInstance(NameKey instanceKey, TaxonConceptInstance instance) {
-        TaxonConcept concept;
-        if (instanceKey.isUncoded())
-            concept = this.findCandidiatePrincipal(null);
-        else
-            concept = this.concepts.get(instanceKey);
-        if (concept == null) {
-            concept = new TaxonConcept(this, instanceKey);
-            this.concepts.put(instanceKey, concept);
-        }
-        concept.addInstance(instance);
-        return concept;
+    public ScientificName(UnrankedScientificName container, NameKey key) {
+        super(container, key);
     }
 
     /**
-     * Find an instance of this name key with a specific provider.
+     * Create a taxon concept for this instance key
+     *
+     * @param stageKey The instance key
+     *
+     * @return The new taxon concept
+     */
+    @Override
+    TaxonConcept createConcept(NameKey stageKey) {
+        return new TaxonConcept(this, stageKey);
+    }
+
+    /**
+     * Create a key for this stage.
+     *
+     * @param instanceKey
+     *
+     * @return A key that corresponds to the keys used by the concept map
+     */
+    NameKey buildStageKey(NameKey instanceKey) {
+        return instanceKey;
+    }
+
+
+    /**
+     * Find an instance of this name key.
+     * <p>
+     * First try for an instance with a specific provider.
+     * If that doesn't work then go for the name itself and hope that the principal resolution catches up with it.
+     * </p>
      *
      * @param provider The provider
      * @return
      */
-    public TaxonConceptInstance findInstance(NameProvider provider) {
-        for (TaxonConcept tc: this.concepts.values()) {
-            TaxonConceptInstance instance = tc.findInstance(provider);
-            if (instance != null)
+    public TaxonomicElement findElement(Taxonomy taxonomy, NameProvider provider) {
+        TaxonConceptInstance instance;
+        for (TaxonConcept tc: this.getConcepts()) {
+            if ((instance = tc.findInstance(provider, true)) != null)
                 return instance;
         }
-        return null;
+        for (TaxonConcept tc: this.getConcepts()) {
+            if ((instance = tc.findInstance(provider, false)) != null)
+                return instance;
+        }
+        return this;
     }
 
     /**
-     * Validate this scientific name.
-     *
-     * @param taxonomy The taxonomy to validate against and report to
-     *
-     * @return True if the scientific name is valid
-     */
-    @Override
-    public boolean validate(Taxonomy taxonomy) {
-        boolean valid = true;
-        if (this.concepts.isEmpty()) {
-            taxonomy.report(IssueType.VALIDATION, "scientificName.validation.noConcepts", this);
-            valid = false;
-        }
-        for (TaxonConcept tc: this.concepts.values()) {
-            if (tc.getName() != this) {
-                taxonomy.report(IssueType.VALIDATION, "scientificName.validation.conceptParent", tc, this);
-                valid = false;
-            }
-            valid = tc.validate(taxonomy) && valid;
-        }
-        return valid;
-    }
-
-    /**
-     * Resolve the principal taxon concept.
+     * Find something that might be good as a candidiate principal
      * <ul>
-     *     <li>If there are no accepted taxon convepts, then there is no principal concept</li>
+     *     <li>If there is a single taxon concept, then that is the principal.</li>
      *     <li>If the only accepted taxon concept is authorless, then that is the principal concept</li>
      *     <li>If there is a single, authored, accepted taxon concept, then that is the principal concept</li>
      *     <li>If there is more than one authored, accepted taxon concept then the one with the highest score is chosen and an issue logged</li>
      *     <li>If there are multiple accepted taxon concepts, then those concepts are resolved to the principal concept.</li>
      * </ul>
-     * @param taxonomy
+     * Note that accepted includes accpeted values with scores greater than zero.
+     * This allows dodgy inferred accepted taxa to be ignored.
+     *
+     * @param taxonomy Where to The source taxonomy
+     * @return
      */
-    public void resolvePrincipal(Taxonomy taxonomy) {
-        List<TaxonConcept> accepted = this.concepts.values().stream().filter(tc -> tc.isFormal() && tc.hasAccepted()).collect(Collectors.toList());
-        this.principal = this.findCandidiatePrincipal(taxonomy);
-        if (this.principal != null) {
-            boolean owned = this.principal.isOwned();
+    @Override
+    protected TaxonConcept findPrincipal(Taxonomy taxonomy) {
+        List<TaxonConcept> concepts = this.getConcepts();
+        if (concepts.isEmpty())
+            return null;
+        if (concepts.size() == 1)
+            return concepts.get(0);
+        concepts.sort((tc1, tc2) -> tc2.getProviderScore() - tc1.getProviderScore());
+        final int cutoff = taxonomy.getAcceptedCutoff();
+        List<TaxonConcept> accepted = concepts.stream().filter(tc -> tc.isFormal() && tc.hasAccepted() && tc.getPrincipalScore() > cutoff).collect(Collectors.toList());
+        if (accepted.size() == 0)
+            return concepts.get(0);
+        if (accepted.size() == 1)
+            return accepted.get(0);
+        List<TaxonConcept> authored = accepted.stream().filter(tc -> tc.isAuthored()).collect(Collectors.toList());
+        if (authored.size() == 0)
+            return accepted.get(0);
+        if (authored.size() == 1)
+            return authored.get(0);
+        taxonomy.report(IssueType.COLLISION, "scientificName.collision", this, authored.get(0), authored.get(1));
+        final int score = authored.stream().mapToInt(TaxonConcept::getPrincipalScore).max().orElse(Integer.MIN_VALUE);
+        List<TaxonConcept> candidates = authored.stream().filter(tc -> tc.getPrincipalScore() == score).collect(Collectors.toList());
+        if (candidates.size() > 1)
+            taxonomy.report(IssueType.PROBLEM, "scientificName.collision.match", this, candidates.get(0), candidates.get(1));
+        return candidates.get(0);
+     }
+
+    /**
+     * Reallocate authorless or unowned taxon concepts to the principal.
+     *
+     * @param taxonomy The taxonomy
+     * @param principal The principal concept
+     */
+    @Override
+    protected void reallocateDanglingConcepts(Taxonomy taxonomy, TaxonConcept principal) {
+        List<TaxonConcept> accepted = this.getConcepts().stream().filter(tc -> tc.isFormal() && tc.hasAccepted()).collect(Collectors.toList());
+        if (principal != null) {
+            List<TaxonConcept> reallocated = new ArrayList<>();
+            boolean owned = principal.isOwned();
             for (TaxonConcept tc : accepted)
-                if (tc != this.principal && !tc.isOwned() && (owned || !tc.isAuthored()))
-                    tc.addInferredSynonym(this.principal, taxonomy);
+                if (tc != principal && !tc.isOwned() && (owned || !tc.isAuthored())) {
+                    if (tc.isAuthored())
+                        tc.addInferredSynonym(principal, taxonomy);
+                    else {
+                        principal.reallocate(tc, taxonomy);
+                        reallocated.add(tc);
+                    }
+                }
+            this.removeConcepts(reallocated);
             taxonomy.count("count.resolve.scientificName.principal");
         }
     }
 
     /**
-     * Find something that might be good as a candidiate principal
-     * @param reporter Where to
-     * @return
+     * Reallocate another scientific name to this name.
+     * <p>
+     * These are added to the principal scientific name
+     * </p>
+     *
+     * @param element The element to reallocate
+     * @param taxonomy The resolving taxonomy
      */
-    protected TaxonConcept findCandidiatePrincipal(Reporter reporter) {
-        List<TaxonConcept> accepted = this.concepts.values().stream().filter(tc -> tc.isFormal() && tc.hasAccepted()).collect(Collectors.toList());
-        List<TaxonConcept> authored = accepted.stream().filter(tc -> tc.isAuthored()).collect(Collectors.toList());
-
-        if (accepted.isEmpty()) {
-            return null;
+    @Override
+    public void reallocate(ScientificName element, Taxonomy taxonomy) {
+        TaxonConcept principal = this.getPrincipal();
+        taxonomy.report(IssueType.NOTE, "scientificName.reallocated", element, this);
+        taxonomy.count("count.reallocate.scientificName");
+        if (principal == null)
+            throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without principal");
+        for (TaxonConcept tc: element.getConcepts()) {
+            principal.reallocate(tc, taxonomy);
         }
-        if (accepted.size() == 1) {
-           return accepted.get(0);
-        } else if (authored.size() == 1) {
-            return authored.get(0);
-        } else if (authored.size() > 1) {
-            if (reporter != null)
-                reporter.report(IssueType.PROBLEM, "scientificName.collision", this, authored.get(0), authored.get(1));
-            final int score = authored.stream().map(TaxonConcept::getRepresentative).mapToInt(TaxonConceptInstance::getScore).max().orElse(-1);
-            List<TaxonConcept> candidates = authored.stream().map(TaxonConcept::getRepresentative).filter(tci -> tci.getScore() == score).map(TaxonConceptInstance::getTaxonConcept).collect(Collectors.toList());
-            if (candidates.size() > 1 && reporter != null)
-                reporter.report(IssueType.PROBLEM, "scientificName.collision.match", this, candidates.get(0), candidates.get(1));
-            return candidates.get(0);
-        }
-        return null;
+        element.clear(principal);
     }
 
     /**
@@ -158,8 +177,10 @@ public class ScientificName extends Name implements Comparable<ScientificName> {
      */
     @Override
     public int compareTo(ScientificName o) {
-        RankType r1 = this.principal == null ? null : this.principal.getRank();
-        RankType r2 = o.principal == null ? null : o.principal.getRank();
+        TaxonConcept p1 = this.getPrincipal();
+        TaxonConcept p2 = o.getPrincipal();
+        RankType r1 = p1 == null ? null : p1.getRank();
+        RankType r2 = p2 == null ? null : p2.getRank();
 
         if (r1 == null && r2 != null)
             return 1;
@@ -183,14 +204,21 @@ public class ScientificName extends Name implements Comparable<ScientificName> {
      * @throws IOException if unable to write to the archive
      */
     public void write(Taxonomy taxonomy, DwcaWriter writer) throws IOException {
-        if (this.principal != null)
-            this.principal.write(taxonomy, writer);
-        for (TaxonConcept concept: this.concepts.values())
-            if (concept != this.principal)
-                concept.write(taxonomy, writer);
-        taxonomy.count("count.write.scientificName");
-    }
+        boolean written = false;
+        TaxonConcept principal = this.getPrincipal();
 
+        if (principal != null && this.getConcepts().contains(principal)) {
+            principal.write(taxonomy, writer);
+            written = true;
+        }
+        for (TaxonConcept concept: this.getConcepts())
+            if (concept != principal) {
+                concept.write(taxonomy, writer);
+                written = true;
+            }
+        if (written)
+            taxonomy.count("count.write.scientificName");
+    }
 
     /**
      * A human readbale label for the concept
@@ -199,6 +227,6 @@ public class ScientificName extends Name implements Comparable<ScientificName> {
      */
     @Override
     public String toString() {
-        return "SN[" + this.getKey().getScientificName() + "]";
+        return "SN[" + this.getKey().getCode() + "," + this.getKey().getScientificName() + "," + this.getRank() + "]";
     }
 }

@@ -342,7 +342,8 @@ public class NameProvider {
         Integer specific = this.getSpecificScore(instance.getScientificName());
         if (specific != null)
             return specific;
-        return instance.getParent() != null ? instance.getParent().getBaseScore(original) : this.getDefaultScore();
+        TaxonConceptInstance p = instance.getParent() == null ? null : instance.getParent().getRepresentative();
+        return p != null ? p.getBaseScore(original) : this.getDefaultScore();
     }
 
     /**

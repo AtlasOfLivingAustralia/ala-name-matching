@@ -162,7 +162,7 @@ public class ALANameAnalyser extends NameAnalyser {
             try {
                 ParsedName name = this.nameParser.parse(scientificName, rankType == null ? null : rankType.getCbRank());
                 String ac = name.authorshipComplete();
-                if (ac != null && !ac.isEmpty()) {
+                if (ac != null && !ac.isEmpty() && !(name instanceof ALAParsedName)) { // ALAParsedName indicates a phrase name; leave as-is
                     scientificName = name.buildName(true, true, false, true, true, false, true, false, true, false, false, false, true, true);
                     scientificNameAuthorship = ac;
                     if (rankType == null && name.getRank() != null)

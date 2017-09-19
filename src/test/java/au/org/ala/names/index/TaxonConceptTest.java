@@ -54,9 +54,9 @@ public class TaxonConceptTest {
         );
         NameKey instanceKey = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, NAME_1, AUTHOR_1, RankType.SPECIES, false);
         NameKey nameKey = instanceKey.toNameKey();
-        ScientificName name = new ScientificName(nameKey);
+        ScientificName name = new ScientificName(null, nameKey);
         TaxonConcept concept = new TaxonConcept(name, nameKey);
-        concept.addInstance(instance);
-        assertSame(concept, instance.getTaxonConcept());
+        concept.addInstance(instanceKey, instance);
+        assertSame(concept, instance.getContainer());
     }
 }

@@ -176,13 +176,11 @@ public class MatchTaxonCondition extends TaxonCondition {
             return false;
         if (this.nomenclaturalStatus != null && (instance.getStatus() == null || !instance.getStatus().contains(this.nomenclaturalStatus)))
             return false;
-        if (this.nameType != null && (instance.getTaxonConcept() == null || this.nameType != instance.getTaxonConcept().getKey().getType()))
+        if (this.nameType != null && (instance.getContainer() == null || this.nameType != instance.getContainer().getKey().getType()))
             return false;
         if (this.taxonRank != null && this.taxonRank != instance.getRank())
             return false;
-        if (this.year != null && !this.year.equals(instance.getYear()))
-            return false;
-        return true;
+        return this.year == null || this.year.equals(instance.getYear());
     }
 
     /**

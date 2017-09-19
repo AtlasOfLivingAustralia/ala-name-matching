@@ -1,12 +1,54 @@
 package au.org.ala.names.index;
 
+import au.org.ala.names.model.RankType;
+
 /**
  * Some sort of taxonomic element.
+ *
+ * @param <T> The type of element
+ * @param <C> The type of the containing element
  *
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
-abstract public class TaxonomicElement {
+abstract public class TaxonomicElement<T extends TaxonomicElement, C extends TaxonomicElement> {
+    /** The containing element */
+    private C container;
+
+    /**
+     * Create a taxonomic element without a container.
+     */
+    public TaxonomicElement() {
+        this.container = null;
+    }
+
+    /**
+     * Create a taxonomic element with a container
+     *
+     * @param container The container
+     */
+    public TaxonomicElement(C container) {
+        this.container = container;
+    }
+
+    /**
+     * Get the containing element of this element
+     *
+     * @return The container
+     */
+    public C getContainer() {
+        return container;
+    }
+
+    /**
+     * Set the container of this element
+     *
+     * @param container The new container
+     */
+    public void setContainer(C container) {
+        this.container = container;
+    }
+
     /**
      * Validate this element.
      * <p>
@@ -40,4 +82,54 @@ abstract public class TaxonomicElement {
      * @return A human readable authorship for loggging
      */
     abstract public String getScientificNameAuthorship();
+
+    /**
+     * Get the rank of the taxon that this represents.
+     * <p>
+     * In some cases, this will be {@link RankType#UNRANKED}
+     * </p>
+     * @return The rank
+     */
+    abstract public RankType getRank();
+
+    /**
+     * Get the instance that represents this element.
+     *
+     * @return The representative instance
+     */
+    abstract public TaxonConceptInstance getRepresentative();
+
+    /**
+     * Get the score of the principal element.
+     *
+     * @return The principal score
+     */
+    abstract public int getPrincipalScore();
+
+    /**
+     * Get the score of the provider.
+     *
+     * @return The provider score
+     */
+    abstract public int getProviderScore();
+
+    /**
+     * Add an instance to the element.
+     *
+     * @param instanceKey The name key for the instance
+     * @param instance The instance
+     */
+    abstract public <E extends TaxonomicElement> E addInstance(NameKey instanceKey, TaxonConceptInstance instance);
+
+    /**
+     * Reallocate an element to this element.
+     * <p>
+     * This is part of resolution, where some other concepts are found wanting and need to
+     * be given a new home.
+     * </p>
+     *
+     * @param element The element to reallocate
+     * @param taxonomy The resolving taxonomy
+     */
+    abstract public void reallocate(T element, Taxonomy taxonomy);
 }

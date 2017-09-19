@@ -41,7 +41,8 @@ public class ALATaxonResolver implements TaxonResolver {
      */
     @Override
     public List<TaxonConceptInstance> principals(TaxonConcept concept, Collection<TaxonConceptInstance> instances) throws IndexBuilderException {
-        List<TaxonConceptInstance> principals = instances.stream().filter(TaxonConceptInstance::isPrimary).collect(Collectors.toList());
+        final int cutoff = taxonomy.getAcceptedCutoff();
+        List<TaxonConceptInstance> principals = instances.stream().filter(tci -> tci.isPrimary() && tci.getScore() > cutoff).collect(Collectors.toList());
         if (principals.isEmpty()) {
            this.taxonomy.report(IssueType.NOTE, "taxonResolver.noPrincipals", concept);
             principals = new ArrayList<>(instances);
@@ -122,11 +123,11 @@ public class ALATaxonResolver implements TaxonResolver {
     protected void resolve(TaxonConceptInstance instance, TaxonResolution resolution) throws IndexBuilderException {
         final TaxonomicType taxonomicStatus = instance.getTaxonomicStatus();
         final TaxonomicTypeGroup taxonomicGroup = taxonomicStatus.getGroup();
-        final TaxonConcept taxonConcept = instance.getTaxonConcept();
-        final ScientificName scientificName = taxonConcept == null ? null : taxonConcept.getName();
-        final TaxonConceptInstance accepted = instance.getAccepted();
-        final TaxonConcept acceptedTaxonConcept = accepted == null ? null : accepted.getTaxonConcept();
-        final ScientificName acceptedScientificName = acceptedTaxonConcept == null ? null : acceptedTaxonConcept.getName();
+        final TaxonConcept taxonConcept = instance.getContainer();
+        final ScientificName scientificName = taxonConcept == null ? null : taxonConcept.getContainer();
+        final TaxonConceptInstance accepted = instance.getAccepted() == null ? null : instance.getAccepted().getRepresentative();
+        final TaxonConcept acceptedTaxonConcept = accepted == null ? null : accepted.getContainer();
+        final ScientificName acceptedScientificName = acceptedTaxonConcept == null ? null : acceptedTaxonConcept.getContainer();
         Optional<TaxonConceptInstance> resolved;
 
         if (resolution.getPrincipal().contains(instance)) {
@@ -134,11 +135,11 @@ public class ALATaxonResolver implements TaxonResolver {
             return;
         }
         if (instance.isAccepted() && instance.isPrimary()) {
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.isAccepted() && tci.getTaxonConcept() == taxonConcept).findFirst()).isPresent()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.isAccepted() && tci.getContainer() == taxonConcept).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.isAccepted() && tci.getTaxonConcept().getName() == scientificName).findFirst()).isPresent()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.isAccepted() && tci.getContainer().getContainer() == scientificName).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
@@ -158,19 +159,19 @@ public class ALATaxonResolver implements TaxonResolver {
             resolution.addInternal(instance, instance, taxonomy);
             return;
         } else if (instance.isSynonym() && instance.isPrimary() && accepted != null) {
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getTaxonConcept() == acceptedTaxonConcept).findFirst()).isPresent()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getContainer() == acceptedTaxonConcept).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus().getGroup() == taxonomicGroup && tci.getAccepted() != null && tci.getAccepted().getTaxonConcept() == acceptedTaxonConcept).findFirst()).isPresent()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus().getGroup() == taxonomicGroup && tci.getAccepted() != null && tci.getAccepted().getContainer() == acceptedTaxonConcept).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getTaxonConcept().getName() == acceptedScientificName).findFirst()).isPresent()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getContainer().getContainer() == acceptedScientificName).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus().getGroup() == taxonomicGroup && tci.getAccepted() != null && tci.getAccepted().getTaxonConcept().getName() == acceptedScientificName).findFirst()).isPresent()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus().getGroup() == taxonomicGroup && tci.getAccepted() != null && tci.getAccepted().getContainer().getContainer() == acceptedScientificName).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
@@ -186,11 +187,11 @@ public class ALATaxonResolver implements TaxonResolver {
             resolution.addInternal(instance, instance, taxonomy);
             return;
         } else if (instance.getAccepted() != null) {
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getTaxonConcept() == acceptedTaxonConcept).findFirst()).isPresent()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getContainer() == acceptedTaxonConcept).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
-            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getTaxonConcept().getName() == acceptedScientificName).findFirst()).isPresent()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getContainer().getContainer() == acceptedScientificName).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }
@@ -219,15 +220,15 @@ public class ALATaxonResolver implements TaxonResolver {
      */
     public TaxonConceptInstance lub(TaxonConceptInstance i1, TaxonConceptInstance i2) {
         while (i1 != null) {
-            TaxonConceptInstance r1 = i1.getAccepted() == null ? i1 : i1.getAccepted();
+            TaxonConceptInstance r1 = i1.getAccepted() == null ? i1 : i1.getAccepted().getRepresentative();
             TaxonConceptInstance p2 = i2;
             while (p2 != null) {
-                p2 = p2.getAccepted() == null ? p2 : p2.getAccepted();
-                if (p2.getTaxonConcept() == r1.getTaxonConcept())
+                p2 = p2.getAccepted() == null ? p2 : p2.getAccepted().getRepresentative();
+                if (p2.getContainer() == r1.getContainer())
                     return r1;
-                p2 = p2.getParent();
+                p2 = p2.getParent() == null ? null : p2.getParent().getRepresentative();
             }
-            i1 = i1.getParent();
+            i1 = i1.getParent() == null ? null : i1.getParent().getRepresentative();
         }
         return null;
     }

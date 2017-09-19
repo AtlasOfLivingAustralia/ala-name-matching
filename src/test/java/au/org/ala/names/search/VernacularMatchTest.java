@@ -66,8 +66,8 @@ public class VernacularMatchTest {
 
     @Test
     public void testVernacular4() throws Exception {
-        String name = "Manning River Helmeted Turtle";
-        String expectedLsid = "urn:lsid:biodiversity.org.au:afd.taxon:7981fb62-eb61-4028-87ff-66d2fae56c9f";
+        String name = "Onespine Unicornfish";
+        String expectedLsid = "urn:lsid:biodiversity.org.au:afd.taxon:f7bfd383-5501-4196-9acb-d9d4d03cc45d";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);

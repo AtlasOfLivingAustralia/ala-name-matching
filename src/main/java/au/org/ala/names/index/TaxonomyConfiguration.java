@@ -44,6 +44,8 @@ public class TaxonomyConfiguration {
     public NameProvider defaultProvider;
     /** The name provider that represents inferences made by the taxon algorithm */
     public NameProvider inferenceProvider;
+    /** The cutoff score for accepted taxa */
+    public int acceptedCutoff;
 
     /**
      * Construct an empty configuration
@@ -54,6 +56,7 @@ public class TaxonomyConfiguration {
         this.nameAnalyserClass = ALANameAnalyser.class;
         this.resolverClass = ALATaxonResolver.class;
         this.providers = new ArrayList<>();
+        this.acceptedCutoff = 0;
     }
 
     /**

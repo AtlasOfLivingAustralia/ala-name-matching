@@ -75,9 +75,9 @@ public class CSVNameSourceTest extends TestUtils {
         assertNotNull(classification);
         assertEquals("Plantae", classification.get(DwcTerm.kingdom).get());
         assertEquals("Equisetopsida", classification.get(DwcTerm.class_).get());
-        TaxonConcept concept = instance.getTaxonConcept();
+        TaxonConcept concept = instance.getContainer();
         assertNotNull(concept);
-        ScientificName name = concept.getName();
+        ScientificName name = concept.getContainer();
         assertNotNull(name);
         assertTrue(this.taxonomy.getNames().containsValue(name));
     }
@@ -105,9 +105,9 @@ public class CSVNameSourceTest extends TestUtils {
         assertNotNull(classification);
         assertEquals("Plantae", classification.get(DwcTerm.kingdom).get());
         assertEquals("Equisetopsida", classification.get(DwcTerm.class_).get());
-        TaxonConcept concept = instance.getTaxonConcept();
+        TaxonConcept concept = instance.getContainer();
         assertNotNull(concept);
-        ScientificName name = concept.getName();
+        ScientificName name = concept.getContainer();
         assertNotNull(name);
         assertTrue(this.taxonomy.getNames().containsValue(name));
     }

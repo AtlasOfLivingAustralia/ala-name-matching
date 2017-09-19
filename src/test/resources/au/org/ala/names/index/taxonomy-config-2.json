@@ -33,5 +33,6 @@
       ]
     }
   }],
-  "defaultProvider" : "unknown"
+  "defaultProvider" : "unknown",
+  "acceptedCutoff" : 50
 }

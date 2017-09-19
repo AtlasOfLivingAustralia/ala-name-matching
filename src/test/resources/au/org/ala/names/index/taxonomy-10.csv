@@ -1,0 +1,5 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonomicStatus
+http://id.biodiversity.org.au/node/apni/7178434,,,dr100,ICBN,Astroloma oblongifolium,A.J.G.Wilson & Hislop,species,accepted
+http://id.biodiversity.org.au/instance/apni/7178429,,http://id.biodiversity.org.au/node/apni/7178434,dr100,ICBN,Astroloma sp. Cataby (E.A.Griffin 1022),,species,heterotypicSynonym
+http://id.biodiversity.org.au/instance/apni/7178430,,http://id.biodiversity.org.au/node/apni/7178434,dr100,ICBN,Astroloma sp. Cataby (E.A.Griffin 1022),WA Herbarium,species,heterotypicSynonym
+ALA_Astroloma_sp_Cataby_E_A_Griffin_1022,,,dr1000,ICBN,Astroloma sp. Cataby (E.A.Griffin 1022),,unranked,inferredAccepted

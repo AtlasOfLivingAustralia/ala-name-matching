@@ -58,10 +58,10 @@ public class ScientificNameTest {
         );
         NameKey instanceKey = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, NAME_1, AUTHOR_1, RankType.SPECIES, false);
         NameKey nameKey = instanceKey.toNameKey();
-        ScientificName name = new ScientificName(nameKey);
+        ScientificName name = new ScientificName(null, nameKey);
         name.addInstance(instanceKey, instance);
-        TaxonConcept concept = instance.getTaxonConcept();
+        TaxonConcept concept = instance.getContainer();
         assertNotNull(concept);
-        assertSame(name, concept.getName());
+        assertSame(name, concept.getContainer());
     }
 }

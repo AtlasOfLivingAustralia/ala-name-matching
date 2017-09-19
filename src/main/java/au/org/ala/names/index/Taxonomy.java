@@ -56,9 +56,13 @@ public class Taxonomy implements Reporter {
 
     /** The counts we do progress reports on */
     public Set<String> COUNT_PROGRESS = new HashSet<>(Arrays.asList(
+            "count.homonym",
             "count.load.instance",
             "count.resolve.instance.links",
             "count.resolve.taxonConcept",
+            "count.resolve.scientificName.principal",
+            "count.resolve.uncodedScientificName.principal",
+            "count.resolve.unrankedScientificName.principal",
             "count.write.taxonConcept"
     ));
 
@@ -87,9 +91,9 @@ public class Taxonomy implements Reporter {
     /** The list of scientific names */
     private Map<NameKey, ScientificName> names;
     /** The list of unranked scientific names */
-    private Map<NameKey, List<ScientificName>> unrankedNames;
-    /** The list of unranked/uncoded scientific names */
-    private Map<NameKey, List<ScientificName>> uncodedNames;
+    private Map<NameKey, UnrankedScientificName> unrankedNames;
+    /** The list of bare unranked/uncoded scientific names */
+    private Map<NameKey, BareName> bareNames;
     /** The list of name instances, keyed by taxonID */
     private Map<String, TaxonConceptInstance> instances;
     /** The list of name sources, keyed by identifier */
@@ -160,7 +164,7 @@ public class Taxonomy implements Reporter {
         this.inferenceProvider = this.configuration.inferenceProvider != null ? configuration.inferenceProvider : this.defaultProvider;
         this.names = new HashMap<>();
         this.unrankedNames = new HashMap<>();
-        this.uncodedNames = new HashMap<>();
+        this.bareNames = new HashMap<>();
         this.instances = new HashMap<>();
         this.makeBaseOutputMap();
         this.makeWorkArea(work);
@@ -189,7 +193,7 @@ public class Taxonomy implements Reporter {
         this.defaultProvider = defaultProvider;
         this.names = new HashMap<>();
         this.unrankedNames = new HashMap<>();
-        this.uncodedNames = new HashMap<>();
+        this.bareNames = new HashMap<>();
         this.instances = new HashMap<>();
         this.makeBaseOutputMap();
         this.makeWorkArea(null);
@@ -237,6 +241,18 @@ public class Taxonomy implements Reporter {
      */
     public TaxonConceptInstance getInstance(String taxonID) {
         return this.instances.get(taxonID);
+    }
+
+    /**
+     * Get the cutoff point for accepted taxa.
+     * <p>
+     * At or below this score, accepted taxa are ignored as possible principals.
+     * </p>
+     *
+     * @return The cutoff point
+     */
+    public int getAcceptedCutoff() {
+        return this.configuration.acceptedCutoff;
     }
 
     /**
@@ -375,15 +391,19 @@ public class Taxonomy implements Reporter {
      * @throws IndexBuilderException
      */
     protected void validateNameCollisions() throws IndexBuilderException {
+        logger.info("Validating name collisions");
         Map<String, Integer> counts = new HashMap<>(this.names.size());
         for (NameKey key: this.names.keySet()) {
             String name = key.getScientificName();
             counts.put(name, counts.getOrDefault(name, 0) + 1);
         }
         for (Map.Entry<String, Integer> entry: counts.entrySet()) {
-            if (entry.getValue() > 1)
+            if (entry.getValue() > 1) {
+                this.count("count.homonym");
                 this.report(IssueType.NOTE, "name.homonym", entry.getKey());
+            }
         }
+        logger.info("Finished validating name collisions");
     }
 
 
@@ -413,7 +433,7 @@ public class Taxonomy implements Reporter {
         long resolved = 0;
         do {
             for (RankType rank : ranks) {
-                Set<TaxonConcept> concepts = allInstances.parallelStream().filter(instance -> instance.getRank() == rank).map(TaxonConceptInstance::getTaxonConcept).collect(Collectors.toSet());
+                Set<TaxonConcept> concepts = allInstances.parallelStream().filter(instance -> instance.getRank() == rank).map(TaxonConceptInstance::getContainer).collect(Collectors.toSet());
                 concepts.parallelStream().forEach(tc -> tc.resolveTaxon(this));
             }
             prevResolved = resolved;
@@ -425,14 +445,19 @@ public class Taxonomy implements Reporter {
     }
 
     /**
-     * Resolve the principal taxon concept for the scientific names.
+     * Resolve the principal taxon concept for the scientific names, then the unranked scientific names, then the bare names.
      *
      * @throws IndexBuilderException
      *
      * @see ScientificName#resolvePrincipal(Taxonomy)
      */
     public void resolvePrincipal() throws IndexBuilderException {
-        this.names.values().forEach(name -> name.resolvePrincipal(this));
+        logger.info("Resolving principals for scientific names");
+        this.names.values().parallelStream().forEach(name -> name.resolvePrincipal(this));
+        logger.info("Resolving principals for unranked names");
+        this.unrankedNames.values().parallelStream().forEach(name -> name.resolvePrincipal(this));
+        logger.info("Resolving principals for bare names");
+        this.bareNames.values().parallelStream().forEach(name -> name.resolvePrincipal(this));
     }
 
     /**
@@ -544,7 +569,7 @@ public class Taxonomy implements Reporter {
         NameKey taxonKey;
         NameKey nameKey;
         NameKey unrankedKey;
-        NameKey uncodedKey;
+        NameKey bareKey;
 
         taxonKey = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), loose);
         taxonKey = instance.getProvider().adjustKey(taxonKey, instance);
@@ -578,7 +603,7 @@ public class Taxonomy implements Reporter {
 
         nameKey = taxonKey.toNameKey();
         unrankedKey = taxonKey.toUnrankedNameKey();
-        uncodedKey = taxonKey.toUncodedNameKey();
+        bareKey = taxonKey.toUncodedNameKey();
 
         if (this.instances.containsKey(taxonID)) {
             this.report(IssueType.VALIDATION, "taxonomy.load.collision", instance, this.instances.get(taxonID));
@@ -604,37 +629,18 @@ public class Taxonomy implements Reporter {
             );
         }
 
-        // Uncoded names mess everthing up. So we allocate it to a coded name
-        if (nameKey.isUncoded()) {
-            List<ScientificName> coded = this.uncodedNames.get(uncodedKey);
-            if (coded != null && !coded.isEmpty()) {
-                if (coded.size() > 2)
-                    this.report(IssueType.PROBLEM, "taxonomy.load.uncoded.multiple", instance, coded.get(0), coded.get(1));
-                this.report(IssueType.NOTE, "taxonomy.load.uncoded", instance, coded.get(0));
-                nameKey = coded.get(0).getKey();
-            } else {
-                this.report(IssueType.NOTE, "taxonomy.load.uncoded.add", instance);
-            }
+        BareName bare = this.bareNames.get(bareKey);
+        if (bare == null) {
+            bare = new BareName(bareKey);
+            this.bareNames.put(bareKey, bare);
         }
-
-        ScientificName name = this.names.get(nameKey);
-        if (name == null) {
-            name = new ScientificName(nameKey);
-            this.names.put(nameKey, name);
-            List<ScientificName> unrankedNames = this.unrankedNames.get(unrankedKey);
-            if (unrankedNames == null) {
-                unrankedNames = new ArrayList<>();
-                this.unrankedNames.put(unrankedKey, unrankedNames);
-            }
-            unrankedNames.add(name);
-            List<ScientificName> uncodedNames = this.uncodedNames.get(uncodedKey);
-            if (uncodedNames == null) {
-                uncodedNames = new ArrayList<>();
-                this.uncodedNames.put(uncodedKey, uncodedNames);
-            }
-            uncodedNames.add(name);
-        }
-        name.addInstance(taxonKey, instance);
+        bare.addInstance(taxonKey, instance);
+        ScientificName name = instance.getContainer().getContainer();
+        if (!this.names.containsKey(name.getKey()))
+            this.names.put(name.getKey(), name);
+        UnrankedScientificName unranked = name.getContainer();
+        if (!this.unrankedNames.containsKey(unrankedKey))
+            this.unrankedNames.put(unrankedKey, unranked);
         this.instances.put(taxonID, instance);
         this.count("count.load.instance");
         return instance;
@@ -653,53 +659,15 @@ public class Taxonomy implements Reporter {
      *
      * @return The matching instance, or null for not found
      */
-    public TaxonConceptInstance findInstance(NomenclaturalCode code, String name, NameProvider provider, RankType rank) {
+    public TaxonomicElement findElement(NomenclaturalCode code, String name, NameProvider provider, RankType rank) {
         NameKey nameKey = null;
         nameKey = this.analyser.analyse(code, name, null, rank, provider.isLoose()).toNameKey();
+        if (nameKey.isUncoded())
+            return this.bareNames.get(nameKey);
+        if (nameKey.isUnranked())
+            return this.unrankedNames.get(nameKey);
         ScientificName scientificName = this.names.get(nameKey);
-        return scientificName == null ? null : scientificName.findInstance(provider);
-    }
-
-    /**
-     * Find a taxon instance for a particular name without considering rank.
-     * <p>
-     * The taxon instance will be matched to the instance provided by a particular provider.
-     * This allows taxonomies that don't have a tree structure to link up with their higher/accepted taxonomy.
-     * </p>
-     * @param code The nomenclatural code
-     * @param name The scientific name to find
-     * @param provider The provider
-     *
-     * @return The matching instance, or null for not found
-     */
-    public TaxonConceptInstance findUnrankedInstance(NomenclaturalCode code, String name, NameProvider provider) {
-        NameKey nameKey = null;
-        nameKey = this.analyser.analyse(code, name, null, null, provider.isLoose()).toUnrankedNameKey();
-        List<ScientificName> names = this.unrankedNames.get(nameKey);
-        if (names == null)
-            return null;
-        for (ScientificName sn: names) {
-            TaxonConceptInstance instance = sn.findInstance(provider);
-            if (instance != null)
-                return instance;
-        }
-        return null;
-    }
-
-    /**
-     * Find a taxon instance for a particular name without considering or nomenclatural code.
-     * <p>
-     * The taxon instance will be matched to the instance provided by a particular provider.
-     * This allows taxonomies that don't have a tree structure to link up with their higher/accepted taxonomy.
-     * </p>
-     * @param name The scientific name to find
-     *
-     * @return The matching instance, or null for not found
-     */
-    public List<ScientificName> findCodedInstances(String name) {
-        NameKey nameKey = null;
-        nameKey = this.analyser.analyse(null, name, null, null, true).toUncodedNameKey();
-        return this.uncodedNames.get(nameKey);
+        return scientificName == null ? null : scientificName.findElement(this, provider);
     }
 
     /**
@@ -811,6 +779,8 @@ public class Taxonomy implements Reporter {
             logger.error(message);
         if (type == IssueType.PROBLEM)
             logger.warn(message);
+        if (type == IssueType.COLLISION)
+            logger.info(message);
         if (type == IssueType.NOTE || type == IssueType.COUNT)
             logger.debug(message);
         Document doc = new Document();
@@ -821,9 +791,11 @@ public class Taxonomy implements Reporter {
         doc.add(new StringField(this.fieldName(DcTerm.description), message, Field.Store.YES));
         doc.add(new StringField(this.fieldName(DcTerm.date), ISO8601.format(new Date()), Field.Store.YES));
         try {
-            this.indexWriter.addDocument(doc);
-            this.indexWriter.commit();
-            this.searcherManager.maybeRefresh();
+            synchronized (this) {
+                this.indexWriter.addDocument(doc);
+                this.indexWriter.commit();
+                this.searcherManager.maybeRefresh();
+            }
         } catch (IOException ex) {
             logger.error("Unable to write report to index", ex);
         }
@@ -884,6 +856,8 @@ public class Taxonomy implements Reporter {
             logger.error(message);
         if (type == IssueType.PROBLEM)
             logger.warn(message);
+        if (type == IssueType.COLLISION)
+            logger.info(message);
         if (type == IssueType.NOTE)
             logger.debug(message);
         Document doc = new Document();
@@ -899,9 +873,11 @@ public class Taxonomy implements Reporter {
         doc.add(new StringField(this.fieldName(DwcTerm.associatedTaxa), associatedTaxa, Field.Store.YES));
         doc.add(new StringField(this.fieldName(DwcTerm.datasetID), datasetID, Field.Store.YES));
         try {
-            this.indexWriter.addDocument(doc);
-            this.indexWriter.commit();
-            this.searcherManager.maybeRefresh();
+            synchronized (this) {
+                this.indexWriter.addDocument(doc);
+                this.indexWriter.commit();
+                this.searcherManager.maybeRefresh();
+            }
         } catch (IOException ex) {
             logger.error("Unable to write report to index", ex);
         }

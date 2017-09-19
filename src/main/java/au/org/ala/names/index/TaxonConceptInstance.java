@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
-public class TaxonConceptInstance extends TaxonomicElement {
+public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance, TaxonConcept> {
     /** The maximum number of iterations to attempt during resolution before suspecting somethiing is wrong */
     public static final int MAX_RESOLUTION_STEPS = 20;
 
@@ -51,8 +51,6 @@ public class TaxonConceptInstance extends TaxonomicElement {
             RankType.SUBSPECIES
     );
 
-    /** The parent taxon concept */
-    private TaxonConcept taxonConcept;
     /** The taxon identifier */
     private String taxonID;
     /** The nomenclatural code */
@@ -84,13 +82,13 @@ public class TaxonConceptInstance extends TaxonomicElement {
     /** The parent name usage identifier, for accepted names */
     private String parentNameUsageID;
     /** The parent taxon */
-    private TaxonConceptInstance parent;
+    private TaxonomicElement parent;
     /** The accepted name usage, for synonyms */
     private String acceptedNameUsage;
     /** The accepted name usage identier, for synonyms */
     private String acceptedNameUsageID;
     /** The accepted taxon */
-    private TaxonConceptInstance accepted;
+    private TaxonomicElement accepted;
     /** Additional classification information */
     private Map<Term, Optional<String>> classification;
     /** The base score for position on the taxonomic tree */
@@ -162,24 +160,6 @@ public class TaxonConceptInstance extends TaxonomicElement {
     }
 
     /**
-     * Get the parent taxon concept.
-     *
-     * @return The parent taxon concept
-     */
-    public TaxonConcept getTaxonConcept() {
-        return taxonConcept;
-    }
-
-    /**
-     * Set the parent taxon concept.
-     *
-     * @param taxonConcept The new taxon concept.
-     */
-    public void setTaxonConcept(TaxonConcept taxonConcept) {
-        this.taxonConcept = taxonConcept;
-    }
-
-    /**
      * Get the nomenclatural code for this taxon
      *
      * @return The nomenclatural code
@@ -235,6 +215,55 @@ public class TaxonConceptInstance extends TaxonomicElement {
     }
 
     /**
+     * A taxon concept instance represents itself.
+     *
+     * @return This instance
+     */
+    @Override
+    public TaxonConceptInstance getRepresentative() {
+        return this;
+    }
+
+    /**
+     * Get the score of the principal component
+     *
+     * @return The score
+     */
+    @Override
+    public int getPrincipalScore() {
+        return this.getScore();
+    }
+
+    /**
+     * Get the default score of the provider.
+     * <p>
+     * Used for tie-breaking when we have multiple candidates for something.
+     * </p>
+     *
+     * @return The provider score
+     */
+    @Override
+    public int getProviderScore() {
+        return this.provider.getDefaultScore();
+    }
+
+    /**
+     * Not supported
+     */
+    @Override
+    public TaxonConceptInstance addInstance(NameKey instanceKey, TaxonConceptInstance instance) {
+        throw new UnsupportedOperationException("Unable to add taxon concept instance " + instance + " to taxon concept instance " + this);
+    }
+
+    /**
+     * Not supported
+     */
+    @Override
+    public void reallocate(TaxonConceptInstance element, Taxonomy taxonomy) {
+        throw new UnsupportedOperationException("Unable to reallocate taxon concept instance " + element + " to taxon concept instance " + this);
+    }
+
+    /**
      * Get the year of publication.
      *
      * @return The year of publication.
@@ -260,6 +289,7 @@ public class TaxonConceptInstance extends TaxonomicElement {
      *
      * @return The taxon rank.
      */
+    @Override
     public RankType getRank() {
         return rank;
     }
@@ -296,7 +326,7 @@ public class TaxonConceptInstance extends TaxonomicElement {
      *
      * @return The parent taxon concept instance.
      */
-    public TaxonConceptInstance getParent() {
+    public TaxonomicElement getParent() {
         return parent;
     }
 
@@ -324,7 +354,7 @@ public class TaxonConceptInstance extends TaxonomicElement {
      *
      * @return The resolved taxon concept.
      */
-    public TaxonConceptInstance getAccepted() {
+    public TaxonomicElement getAccepted() {
         return accepted;
     }
 
@@ -450,9 +480,9 @@ public class TaxonConceptInstance extends TaxonomicElement {
      * @return The resolved instance
      */
     public TaxonConceptInstance getResolved() {
-        if (this.taxonConcept == null)
+        if (this.getContainer() == null)
             throw new IllegalStateException("Not taxon concept. Unable to resolve " + this);
-        return this.taxonConcept.getResolved(this);
+        return this.getContainer().getResolved(this);
     }
 
     /**
@@ -472,8 +502,8 @@ public class TaxonConceptInstance extends TaxonomicElement {
      *
      * @return A list of taxa in the accepted/parent chain
      */
-    private List<TaxonConceptInstance> traceParent() {
-        List<TaxonConceptInstance> trace = new ArrayList<>();
+    private List<TaxonomicElement> traceParent() {
+        List<TaxonomicElement> trace = new ArrayList<>();
         trace.add(this);
         this.getResolvedParent(this, MAX_RESOLUTION_STEPS, trace, false);
         return trace;
@@ -489,19 +519,23 @@ public class TaxonConceptInstance extends TaxonomicElement {
     private boolean validateParent(Taxonomy taxonomy) {
         if (this.parent == null)
             return true;
-        TaxonConceptInstance tci = this;
-        List<TaxonConceptInstance> parents = new ArrayList<>(MAX_RESOLUTION_STEPS);
+        TaxonomicElement elt = this;
+        List<TaxonomicElement> parents = new ArrayList<>(MAX_RESOLUTION_STEPS);
         parents.add(this);
-        while (tci != null) {
-                tci = tci.parent;
-                if (tci != null) {
-                    if (parents.contains(tci)) {
-                        parents.add(tci);
+        while (elt != null) {
+            if (elt instanceof TaxonConceptInstance) {
+                elt = ((TaxonConceptInstance) elt).parent;
+                if (elt != null) {
+                    if (parents.contains(elt)) {
+                        parents.add(elt);
                         taxonomy.report(IssueType.VALIDATION, "instance.validation.parent.loop", parents.toArray(new TaxonConceptInstance[0]));
                         return false;
                     }
-                    parents.add(tci);
+                    parents.add(elt);
                 }
+            } else {
+                elt = null;
+            }
          }
         return true;
     }
@@ -516,7 +550,7 @@ public class TaxonConceptInstance extends TaxonomicElement {
      *
      * @return The resolved parent or null for none
      */
-    private TaxonConceptInstance getResolvedParent(TaxonConceptInstance original, int steps, @Nullable List<TaxonConceptInstance> trace, boolean exception) {
+    private TaxonConceptInstance getResolvedParent(TaxonConceptInstance original, int steps, @Nullable List<TaxonomicElement> trace, boolean exception) {
         if (steps <= 0) {
             if (exception)
                 throw new ResolutionException("Detected possible loop resolving parent " + original, trace);
@@ -525,9 +559,10 @@ public class TaxonConceptInstance extends TaxonomicElement {
         TaxonConceptInstance resolved = this.getResolvedAccepted(original, steps - 1, trace, exception);
         if (resolved == null)
             return null;
-        TaxonConceptInstance parent = resolved.getParent();
-        if (parent == null)
+        TaxonomicElement pe = resolved.getParent();
+        if (pe == null)
             return null;
+        TaxonConceptInstance parent = pe.getRepresentative();
         parent = parent.getResolvedAccepted(original, steps - 1, trace, exception);
         if (trace != null && trace.contains(parent)) {
             trace.add(parent);
@@ -556,8 +591,8 @@ public class TaxonConceptInstance extends TaxonomicElement {
      *
      * @return A list of taxa in the accepted chain
      */
-    private List<TaxonConceptInstance> traceAccepted() {
-        List<TaxonConceptInstance> trace = new ArrayList<>();
+    private List<TaxonomicElement> traceAccepted() {
+        List<TaxonomicElement> trace = new ArrayList<>();
         trace.add(this);
         this.getResolvedAccepted(this, MAX_RESOLUTION_STEPS, trace, false);
         return trace;
@@ -573,24 +608,25 @@ public class TaxonConceptInstance extends TaxonomicElement {
      *
      * @return The accepted taxon concept instance
      */
-    private TaxonConceptInstance getResolvedAccepted(TaxonConceptInstance original, int steps, @Nullable List<TaxonConceptInstance> trace, boolean exception) {
+    private TaxonConceptInstance getResolvedAccepted(TaxonConceptInstance original, int steps, @Nullable List<TaxonomicElement> trace, boolean exception) {
         if (steps <= 0) {
             if (exception)
                 throw new ResolutionException("Detected possible loop resolving accepted " + original, trace);
             return original;
         }
         TaxonConceptInstance resolved = this.getResolved(original, steps - 1);
-        TaxonConceptInstance accepted = resolved.getAccepted();
-        if (accepted == null || accepted == resolved)
+        TaxonomicElement ae = resolved.getAccepted();
+        if (ae == null || ae == resolved)
             return resolved;
-        if (trace != null && trace.contains(accepted)) {
-            trace.add(accepted);
+        if (trace != null && trace.contains(ae)) {
+            trace.add(ae);
             if (exception)
                 throw new ResolutionException("Detected possible loop resolving accepted " + original, trace);
             return original;
         }
         if (trace != null)
-            trace.add(accepted);
+            trace.add(ae);
+        TaxonConceptInstance accepted = ae.getRepresentative();
         accepted = accepted.getResolvedAccepted(original, steps - 1, trace, exception);
         if (!accepted.isForbidden())
             return accepted;
@@ -656,7 +692,7 @@ public class TaxonConceptInstance extends TaxonomicElement {
             this.parent = taxonomy.getInstance(this.parentNameUsageID);
         }
         if (this.parentNameUsage != null && this.parent == null) {
-            this.parent = taxonomy.findUnrankedInstance(this.code, this.parentNameUsage, this.provider);
+            this.parent = taxonomy.findElement(this.code, this.parentNameUsage, this.provider, null);
         }
         if (this.parent == null && this.taxonomicStatus.isAccepted() && this.classification != null) {
             for (int i = 0; i < CLASSIFICATION_FIELDS.size(); i++) {
@@ -664,8 +700,9 @@ public class TaxonConceptInstance extends TaxonomicElement {
                 RankType clr = CLASSIFICATION_RANKS.get(i);
                 Optional<String> name = this.classification.get(cls);
                 if (name != null && name.isPresent() && !name.get().equals(this.scientificName)) {
-                    TaxonConceptInstance p = taxonomy.findInstance(this.code, name.get(), this.provider, clr);
-                    if (p != null && p != this && p.rank.isHigherThan(this.rank))
+                    TaxonomicElement p = taxonomy.findElement(this.code, name.get(), this.provider, clr);
+                    RankType pr = p != null ? p.getRank() : null;
+                    if (p != null && p != this && (pr == null || pr.isHigherThan(this.rank)))
                         this.parent = p;
                 }
             }
@@ -676,7 +713,7 @@ public class TaxonConceptInstance extends TaxonomicElement {
             this.accepted = taxonomy.getInstance(this.acceptedNameUsageID);
         }
         if (this.acceptedNameUsage != null && this.accepted == null) {
-            this.accepted = taxonomy.findUnrankedInstance(this.code, this.acceptedNameUsage, this.provider);
+            this.accepted = taxonomy.findElement(this.code, this.acceptedNameUsage, this.provider, null);
         }
         if (this.accepted == null && (this.acceptedNameUsage != null || this.acceptedNameUsageID != null))
             throw new IndexBuilderException("Unable to find accepted taxon for " + this + " from " + this.acceptedNameUsageID + " - " + this.acceptedNameUsage);
@@ -910,7 +947,7 @@ public class TaxonConceptInstance extends TaxonomicElement {
                 this.getTaxonID(),
                 this.classification
         );
-        synonym.taxonConcept = concept;
+        synonym.setContainer(concept);
         synonym.accepted = this;
         synonym.baseScore = null;
         synonym.score = null;
@@ -946,11 +983,11 @@ public class TaxonConceptInstance extends TaxonomicElement {
             }
 
         }
-        if (this.taxonConcept == null) {
+        if (this.getContainer() == null) {
             taxonomy.report(IssueType.VALIDATION, "instance.validation.noTaxonConcept", this);
             valid = false;
 
-        } else  if (this.taxonConcept.getName() == null) {
+        } else  if (this.getContainer().getContainer() == null) {
             taxonomy.report(IssueType.VALIDATION, "instance.validation.noScientificName", this);
             valid = false;
         }

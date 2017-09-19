@@ -14,6 +14,7 @@
  */
 package au.org.ala.names.search;
 
+import au.ala.org.vocab.ALATerm;
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.LinnaeanRankClassification;
 import au.org.ala.names.model.NameIndexField;
@@ -48,6 +49,7 @@ import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.ArchiveField;
 import org.gbif.dwca.io.ArchiveFile;
+import org.gbif.dwca.record.StarRecord;
 
 import java.io.*;
 import java.util.*;
@@ -180,7 +182,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             return false;
         }
         Archive archive = ArchiveFactory.openArchive(namesDwc);
-        if (!archive.getCore().getRowType().equals(DwcTerm.Taxon.qualifiedName())) {
+        if (!archive.getCore().getRowType().equals(DwcTerm.Taxon)) {
             log.info("Skipping non-taxon DwCA");
             return false;
         }
@@ -217,7 +219,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             return false;
         }
         Archive archive = ArchiveFactory.openArchive(verncacularDwc);
-        if (!archive.getCore().getRowType().equals(GbifTerm.VernacularName.qualifiedName())) {
+        if (!archive.getCore().getRowType().equals(GbifTerm.VernacularName)) {
             log.info("Skipping non-vernacular DwCA");
             return false;
         }
@@ -389,69 +391,74 @@ public class DwcaNameIndexer extends ALANameIndexer {
         log.info("Starting to create the temporary loading index for " + archiveDirectory);
         //create the loading index so that left right values and classifications can be generated
         Archive archive = ArchiveFactory.openArchive(archiveDirectory);
-        if (!archive.getCore().getRowType().equals(DwcTerm.Taxon.qualifiedName())) {
+        if (!archive.getCore().getRowType().equals(DwcTerm.Taxon)) {
             log.info("Skipping non-taxon DwCA");
             return false;
         }
-        ArchiveField nameCompleteField = archive.getCore().getField("nameComplete");
-        org.gbif.dwc.terms.Term nameCompleteTerm = nameCompleteField == null ? null : nameCompleteField.getTerm();
-        Iterator<DarwinCoreRecord> it = archive.iteratorDwc();
+        Iterator<StarRecord> it = archive.iterator();
         int i=0;
         long start=System.currentTimeMillis();
         while(it.hasNext()){
             Document doc = new Document();
-            DarwinCoreRecord dwcr = it.next();
-            String id = dwcr.getId();
-            String lsid = dwcr.getTaxonID() == null ? id : dwcr.getTaxonID();
-            String acceptedLsid = dwcr.getAcceptedNameUsageID();
-            String nameComplete = nameCompleteTerm == null ? null: dwcr.getProperty(nameCompleteTerm);
-            String scientificName = dwcr.getScientificName();
-            String scientificNameAuthorship = dwcr.getScientificNameAuthorship();
+            StarRecord dwcr = it.next();
+            Record core = dwcr.core();
+            String id = core.id();
+            String lsid = core.value(DwcTerm.taxonID) == null ? id : core.value(DwcTerm.taxonID);
+            String acceptedNameUsageID = core.value(DwcTerm.acceptedNameUsageID);
+            String parentNameUsageID = core.value(DwcTerm.parentNameUsageID);
+            String nameComplete = core.value(ALATerm.nameComplete);
+            String scientificName = core.value(DwcTerm.scientificName);
+            String scientificNameAuthorship = core.value(DwcTerm.scientificNameAuthorship);
+            String genus = core.value(DwcTerm.genus);
+            String specificEpithet = core.value(DwcTerm.specificEpithet);
+            String infraspecificEpithet = core.value(DwcTerm.infraspecificEpithet);
+            String taxonRank = core.value(DwcTerm.taxonRank);
+            String datasetID = core.value(DwcTerm.datasetID);
             nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete);
             //add and store the identifier for the record
-            doc.add(new StringField(NameIndexField.ID.toString(), dwcr.getId(), Field.Store.YES));
+            doc.add(new StringField(NameIndexField.ID.toString(), id, Field.Store.YES));
             if(StringUtils.isNotBlank(lsid)){
                 doc.add(new StringField(NameIndexField.LSID.toString(), lsid, Field.Store.YES));
             } else {
-                System.out.println("LSID is null for " + id + " " + lsid + " " + lsid + " " + acceptedLsid);
+                System.out.println("LSID is null for " + id + " " + lsid + " " + lsid + " " + acceptedNameUsageID);
             }
-            if(StringUtils.isNotBlank(dwcr.getParentNameUsageID())) {
-                doc.add(new StringField("parent_id", dwcr.getParentNameUsageID(), Field.Store.YES));
+            if(StringUtils.isNotBlank(parentNameUsageID)) {
+                doc.add(new StringField("parent_id", parentNameUsageID, Field.Store.YES));
             }
-            if(StringUtils.isNotBlank(dwcr.getAcceptedNameUsageID())) {
-                doc.add(new StringField(NameIndexField.ACCEPTED.toString(),dwcr.getAcceptedNameUsageID(), Field.Store.YES));
+            if(StringUtils.isNotBlank(acceptedNameUsageID)) {
+                doc.add(new StringField(NameIndexField.ACCEPTED.toString(),acceptedNameUsageID, Field.Store.YES));
             }
             if(StringUtils.isNotBlank(scientificName)) {
                 //stored no need to search on
-                doc.add(new StoredField(NameIndexField.NAME.toString(),dwcr.getScientificName()));
+                doc.add(new StoredField(NameIndexField.NAME.toString(),scientificName));
             }
             if(StringUtils.isNotBlank(scientificNameAuthorship)) {
                 //stored no need to search on
-                doc.add(new StoredField(NameIndexField.AUTHOR.toString(),dwcr.getScientificNameAuthorship()));
+                doc.add(new StoredField(NameIndexField.AUTHOR.toString(),scientificNameAuthorship));
             }
             if (StringUtils.isNotBlank(nameComplete)) {
                 doc.add(new StoredField(NameIndexField.NAME_COMPLETE.toString(), nameComplete));
             }
-            if(StringUtils.isNotBlank(dwcr.getGenus())) {
+            if(StringUtils.isNotBlank(genus)) {
                 //stored no need to search on
-                doc.add(new StoredField("genus",dwcr.getGenus()));
+                doc.add(new StoredField("genus",genus));
             }
-            if(StringUtils.isNotBlank(dwcr.getSpecificEpithet())) {
+            if(StringUtils.isNotBlank(specificEpithet)) {
                 //stored no need to search on
-                doc.add(new StoredField(NameIndexField.SPECIFIC.toString(),dwcr.getSpecificEpithet()));
+                doc.add(new StoredField(NameIndexField.SPECIFIC.toString(),specificEpithet));
             }
-            if(StringUtils.isNotBlank(dwcr.getInfraspecificEpithet())) {
+            if(StringUtils.isNotBlank(infraspecificEpithet)) {
                 //stored no need to search on
-                doc.add(new StoredField(NameIndexField.INFRA_SPECIFIC.toString(),dwcr.getInfraspecificEpithet()));
+                doc.add(new StoredField(NameIndexField.INFRA_SPECIFIC.toString(),infraspecificEpithet));
             }
-            if(StringUtils.isNotBlank(dwcr.getTaxonRank())){
+            if(StringUtils.isNotBlank(taxonRank)){
                 //match the supplied rank
-                RankType rt = RankType.getForStrRank(dwcr.getTaxonRank());
+                RankType rt = RankType.getForStrRank(taxonRank);
                 if(rt != null){
                     doc.add(new StringField(NameIndexField.RANK.toString(), rt.getRank(), Field.Store.YES));
                     doc.add(new StringField(NameIndexField.RANK_ID.toString(), rt.getId().toString(), Field.Store.YES));
                 } else {
-                    doc.add(new StringField(NameIndexField.RANK.toString(), dwcr.getTaxonRank(), Field.Store.YES));
+                    doc.add(new StringField(NameIndexField.RANK.toString(), taxonRank, Field.Store.YES));
                     doc.add(new StringField(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId().toString(), Field.Store.YES));
                 }
             } else {
@@ -459,17 +466,17 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 doc.add(new StringField(NameIndexField.RANK.toString(), "Unknown", Field.Store.YES));
                 doc.add(new StringField(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId().toString(), Field.Store.YES));
             }
-            if(StringUtils.equals(lsid, acceptedLsid) || StringUtils.equals(id, acceptedLsid) || acceptedLsid == null){
+            if(StringUtils.equals(lsid, acceptedNameUsageID) || StringUtils.equals(id, acceptedNameUsageID) || acceptedNameUsageID == null){
                 //mark this one as an accepted concept
                 doc.add(new StringField(NameIndexField.iS_SYNONYM.toString(),"F", Field.Store.YES));
-                if (StringUtils.isBlank(dwcr.getParentNameUsageID())){
+                if (StringUtils.isBlank(parentNameUsageID)){
                     doc.add(new StringField("root","T", Field.Store.YES));
                 }
             } else {
                 doc.add(new StringField(NameIndexField.iS_SYNONYM.toString(),"T", Field.Store.YES));
             }
-            if (StringUtils.isNotBlank(dwcr.getDatasetID())) {
-                doc.add(new StoredField(NameIndexField.DATASET_ID.toString(), dwcr.getDatasetID()));
+            if (StringUtils.isNotBlank(datasetID)) {
+                doc.add(new StoredField(NameIndexField.DATASET_ID.toString(), datasetID));
             }
             this.loadingIndexWriter.addDocument(doc);
             i++;
@@ -691,48 +698,49 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * @param archive The archive for synonyms
      */
     private void addSynonymsToIndex(Archive archive) throws Exception {
-        Iterator<DarwinCoreRecord> it = archive.iteratorDwc();
+        Iterator<StarRecord> it = archive.iterator();
         int i = 0;
         int count = 0;
-        ArchiveField nameCompleteField = archive.getCore().getField("nameComplete");
-        org.gbif.dwc.terms.Term nameCompleteTerm = nameCompleteField == null ? null : nameCompleteField.getTerm();
         while(it.hasNext()){
-            DarwinCoreRecord dwcr = it.next();
+            StarRecord dwcr = it.next();
+            Record core = dwcr.core();
             i++;
-            String lsid = dwcr.getTaxonID() != null ? dwcr.getTaxonID() : dwcr.getId();
-            String id = dwcr.getId();
-            String acceptedId = dwcr.getAcceptedNameUsageID();
-            String nameComplete = nameCompleteTerm == null ? null: dwcr.getProperty(nameCompleteTerm);
-            String scientificName = dwcr.getScientificName();
-            String scientificNameAuthorship = dwcr.getScientificNameAuthorship();
+            String id = core.id();
+            String lsid = core.value(DwcTerm.taxonID) != null ? core.value(DwcTerm.taxonID) : id;
+            String acceptedNameUsageID = core.value(DwcTerm.acceptedNameUsageID);
+            String nameComplete = core.value(ALATerm.nameComplete);
+            String scientificName = core.value(DwcTerm.scientificName);
+            String scientificNameAuthorship = core.value(DwcTerm.scientificNameAuthorship);
             nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete);
-            float boost = this.getBoost(dwcr.getDatasetID(), -1);
-            if(StringUtils.isNotEmpty(acceptedId) && (!StringUtils.equals(acceptedId , id) && !StringUtils.equals(acceptedId, lsid))){
+            String datasetID = core.value(DwcTerm.datasetID);
+            String taxonomicStatus = core.value(DwcTerm.taxonomicStatus);
+            float boost = this.getBoost(datasetID, -1);
+            if(StringUtils.isNotEmpty(acceptedNameUsageID) && (!StringUtils.equals(acceptedNameUsageID , id) && !StringUtils.equals(acceptedNameUsageID, lsid))){
                 count++;
                 //we have a synonym that needs to be load
                 try {
                     if(log.isDebugEnabled()){
-                        log.debug("Scientific name:  " + dwcr.getScientificName() + ", LSID:  " + dwcr.getId());
+                        log.debug("Scientific name:  " + scientificName + ", LSID:  " + lsid);
                     }
                     Document doc = createALASynonymDocument(
                             scientificName,
                             scientificNameAuthorship,
                             nameComplete,
-                            dwcr.getId(),
+                            id,
                             lsid,
                             lsid,
-                            dwcr.getAcceptedNameUsageID(),
-                            dwcr.getAcceptedNameUsageID(),
+                            acceptedNameUsageID,
+                            acceptedNameUsageID,
                             boost,
-                            dwcr.getTaxonomicStatus());
+                            taxonomicStatus);
 
                     if(doc != null){
                         writer.addDocument(doc);
                     } else {
-                        log.warn("Problem processing scientificName:  " + dwcr.getScientificName() + ", ID:  " + dwcr.getId() + ", LSID:  " + lsid);
+                        log.warn("Problem processing scientificName:  " + scientificName + ", ID:  " + id + ", LSID:  " + lsid);
                     }
                 } catch (Exception e){
-                    log.error("Exception thrown processing Scientific name:  " + dwcr.getScientificName() + ", LSID:  " + dwcr.getId());
+                    log.error("Exception thrown processing Scientific name:  " + scientificName + ", LSID:  " + lsid);
                     log.error(e.getMessage(), e);
                 }
             }

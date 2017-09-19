@@ -13,6 +13,8 @@ public enum IssueType {
     ERROR,
     /** A problem loading the taxonomy that needs to be addressed */
     PROBLEM,
+    /** A collision between concepts */
+    COLLISION,
     /** A note about processing */
     NOTE,
     /** A statistic of some sort */
