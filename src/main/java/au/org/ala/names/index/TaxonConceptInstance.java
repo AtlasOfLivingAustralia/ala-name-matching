@@ -780,7 +780,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         values.put(ALATerm.verbatimNomenclaturalStatus, this.verbatimNomenclaturalStatus);
         values.put(DwcTerm.taxonRank, this.rank.getRank());
         values.put(DwcTerm.verbatimTaxonRank, this.verbatimTaxonRank);
-        values.put(ALATerm.score, Integer.toString(this.getScore()));
+        values.put(ALATerm.priority, Integer.toString(this.getScore()));
         if (this.parentNameUsageID != null) {
             String pid = null;
             try {

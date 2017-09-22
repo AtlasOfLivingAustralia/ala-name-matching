@@ -158,7 +158,7 @@ abstract public class NameSource {
             DwcTerm.taxonomicStatus,
             DwcTerm.taxonRank,
             DwcTerm.datasetID,
-            ALATerm.score
+            ALATerm.priority
     );
     /** Optional fields from the DwCA */
     protected static final List<Term> TAXON_VARIANT_ADDITIONAL = Arrays.asList(
