@@ -202,6 +202,10 @@ public class DwcaNameIndexer extends ALANameIndexer {
         irmngWriter.close();
     }
 
+    public void createExtraIdIndex(File extraIds) throws Exception {
+        this.createExtraIdIndex(new File(this.targetDir, "id").getCanonicalPath(), extraIds);
+    }
+
     /**
      * Load common names from a vernacular DwcA with a core row type of gbif:VernacularName
      *
@@ -780,6 +784,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         final String DEFAULT_TARGET_DIR = "/data/lucene/namematching";
         final String DEFAULT_TMP_DIR = "/data/lucene/nmload-tmp";
         final String DEFAULT_PRIORITIES = "/data/lucene/sources/priorities.properties";
+        final String DEFAULT_IDENTIFIERS = "/data/lucene/sources/identifiers.txt";
 
         Options options = new Options();
         options.addOption("v", "version", false, "Retrieve version information");
@@ -793,6 +798,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         options.addOption("dwca", true, "The absolute path to the unzipped DwCA (or a directory containing unzipped DWC-A - see recurse) for the scientific names. If  Defaults to " + DEFAULT_DWCA + " See also, the recurse option");
         options.addOption("recurse", false, "Recurse through the sub-directories of the dwca directory, looking for directories with a meta.xml");
         options.addOption("priorities", true, "A properties file containing priority multiplers for the different data sources, keyed by datasetID->float. Defaults to " + DEFAULT_PRIORITIES);
+        options.addOption("ids", true, "A tab seperated values file containing additional taxzon identifiers. Defaults to " + DEFAULT_IDENTIFIERS);
         options.addOption("target", true, "The target directory to write the new name index to. Defaults to " + DEFAULT_TARGET_DIR);
         options.addOption("tmp", true, "The tmp directory for the load index. Defaults to " + DEFAULT_TMP_DIR);
         options.addOption("common", true, "The common (vernacular) name file. Defaults to " + DEFAULT_COMMON_NAME);
@@ -873,6 +879,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             boolean defaultCommonReadable = (new File(DEFAULT_COMMON_NAME).exists());
             boolean defaultDwcaReadable = (new File(DEFAULT_DWCA).exists());
             boolean defaultPriorities = (new File(DEFAULT_PRIORITIES).exists());
+            boolean defaultIdentifiers =  (new File(DEFAULT_IDENTIFIERS).exists());
 
             if(line.getOptionValue("dwca") != null){
                 log.info("Using the  DwCA name file: " + line.getOptionValue("dwca"));
@@ -908,6 +915,14 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 log.info("Using the priorities file: " + line.getOptionValue("priorities"));
             }
 
+            if(line.getOptionValue("ids") == null && !defaultIdentifiers) {
+                log.warn("No identifiers file, Defailts is " + DEFAULT_IDENTIFIERS);
+            } else if(line.getOptionValue("ids") == null){
+                log.info("Using the default identifiers file: " + DEFAULT_IDENTIFIERS);
+            } else {
+                log.info("Using the identifiers file: " + line.getOptionValue("ids"));
+            }
+
             File targetDirectory = new File(line.getOptionValue("target", DEFAULT_TARGET_DIR));
             if(targetDirectory.exists()){
                 String newPath =  targetDirectory.getAbsolutePath() + "_" + DateFormatUtils.format(new Date(), "yyyy-MM-dd_hh-mm-ss");
@@ -918,6 +933,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             }
             File commonNameFile = new File(line.getOptionValue("common", DEFAULT_COMMON_NAME));
             File irmngFile = new File(line.getOptionValue("irmng", DEFAULT_IRMNG));
+            File identifiersFile = new File(line.getOptionValue("ids", DEFAULT_IDENTIFIERS));
             File prioritiesFile = new File(line.getOptionValue("priorities", DEFAULT_PRIORITIES));
             Properties priorities = new Properties();
             if (prioritiesFile.exists())
@@ -958,6 +974,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                     used.add(dwca);
             indexer.indexCommonNames(commonNameFile);
             indexer.createIrmng(irmngFile);
+            indexer.createExtraIdIndex(identifiersFile);
             for (File dwca: dwcas)
                 if (indexer.loadCommonNames(dwca))
                     used.add(dwca);

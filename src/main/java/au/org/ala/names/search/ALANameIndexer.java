@@ -620,7 +620,7 @@ public class ALANameIndexer {
      * @param idFile
      * @throws Exception
      */
-    private void createExtraIdIndex(String idxLocation, File idFile) throws Exception {
+    protected void createExtraIdIndex(String idxLocation, File idFile) throws Exception {
         CSVReader reader = new CSVReader(new FileReader(idFile), '\t', '"', '~');//CSVReader.build(idFile, "UTF-8", "\t", '"', 0);
         File indexDir = new File(idxLocation);
         IndexWriter iw = createIndexWriter(indexDir, new KeywordAnalyzer(), true);//new IndexWriter(FSDirectory.open(indexDir), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
