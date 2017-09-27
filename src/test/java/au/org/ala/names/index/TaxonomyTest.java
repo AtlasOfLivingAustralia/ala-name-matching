@@ -81,12 +81,12 @@ public class TaxonomyTest extends TestUtils {
         TaxonConceptInstance i1 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044710");
         assertNotNull(i1);
         assertEquals(NameProvider.DEFAULT_SCORE, i1.getScore());
-        TaxonConcept tc1 = i1.getTaxonConcept();
+        TaxonConcept tc1 = i1.getContainer();
         assertSame(i1, tc1.getRepresentative());
         TaxonConceptInstance i2 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044709");
         assertNotNull(i2);
         assertEquals(NameProvider.DEFAULT_SCORE, i2.getScore());
-        TaxonConcept tc2 = i2.getTaxonConcept();
+        TaxonConcept tc2 = i2.getContainer();
         assertSame(i2, tc2.getRepresentative());
     }
 
@@ -104,21 +104,21 @@ public class TaxonomyTest extends TestUtils {
         TaxonConceptInstance i12 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/xmoss/10044710");
         assertNotNull(i11);
         assertNotNull(i12);
-        TaxonConcept tc1 = i11.getTaxonConcept();
+        TaxonConcept tc1 = i11.getContainer();
         assertSame(i11, tc1.getRepresentative());
         assertNotSame(i12, tc1.getRepresentative());
         TaxonConceptInstance i21 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044709");
         TaxonConceptInstance i22 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/xmoss/10044709");
         assertNotNull(i21);
         assertNotNull(i21);
-        TaxonConcept tc2 = i21.getTaxonConcept();
+        TaxonConcept tc2 = i21.getContainer();
         assertSame(i21, tc2.getRepresentative());
         assertNotSame(i22, tc2.getRepresentative());
         TaxonConceptInstance i31 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044712");
         TaxonConceptInstance i32 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/xmoss/10044712");
         assertNotNull(i31);
         assertNotNull(i31);
-        TaxonConcept tc3 = i31.getTaxonConcept();
+        TaxonConcept tc3 = i31.getContainer();
         assertNotSame(i31, tc3.getRepresentative());
         assertSame(i32, tc3.getRepresentative());
     }
@@ -138,28 +138,28 @@ public class TaxonomyTest extends TestUtils {
         TaxonConceptInstance i12 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/xmoss/10044710");
         assertNotNull(i11);
         assertNotNull(i12);
-        TaxonConcept tc1 = i11.getTaxonConcept();
+        TaxonConcept tc1 = i11.getContainer();
         assertSame(i11, tc1.getRepresentative());
         assertNotSame(i12, tc1.getRepresentative());
         TaxonConceptInstance i21 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044709");
         TaxonConceptInstance i22 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/xmoss/10044709");
         assertNotNull(i21);
         assertNotNull(i21);
-        TaxonConcept tc2 = i21.getTaxonConcept();
+        TaxonConcept tc2 = i21.getContainer();
         assertSame(i21, tc2.getRepresentative());
         assertNotSame(i22, tc2.getRepresentative());
         TaxonConceptInstance i31 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044712");
         TaxonConceptInstance i32 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/xmoss/10044712");
         assertNotNull(i31);
         assertNotNull(i31);
-        TaxonConcept tc3 = i31.getTaxonConcept();
+        TaxonConcept tc3 = i31.getContainer();
         assertNotSame(i31, tc3.getRepresentative());
         assertSame(i32, tc3.getRepresentative());
     }
 
     // Test resolution to a preferred taxon
     @Test
-    public void testResolveMultipe1() throws Exception {
+    public void testResolveMultiple1() throws Exception {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
         this.taxonomy = new Taxonomy(config, null);
         this.taxonomy.begin();
@@ -170,9 +170,9 @@ public class TaxonomyTest extends TestUtils {
         TaxonConceptInstance i12 = this.taxonomy.getInstance("53095000");
         assertNotNull(i11);
         assertNotNull(i12);
-        TaxonConcept tc1 = i11.getTaxonConcept();
+        TaxonConcept tc1 = i11.getContainer();
         assertSame(i11, tc1.getRepresentative());
-        assertSame(tc1, i12.getTaxonConcept());
+        assertSame(tc1, i12.getContainer());
         assertSame(i11, i12.getResolved());
         assertSame(i11, i12.getResolvedAccepted());
         assertNull(i11.getResolvedParent());
@@ -194,7 +194,7 @@ public class TaxonomyTest extends TestUtils {
 
     // Test resolution to a preferred taxon with key rewriting
     @Test
-    public void testResolveMultipe2() throws Exception {
+    public void testResolveMultiple2() throws Exception {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
         this.taxonomy = new Taxonomy(config, null);
         this.taxonomy.begin();
@@ -207,16 +207,50 @@ public class TaxonomyTest extends TestUtils {
         assertNotNull(i11);
         assertNotNull(i12);
         assertNotNull(i13);
-        TaxonConcept tc1 = i11.getTaxonConcept();
-        TaxonConcept tc2 = i12.getTaxonConcept();
+        TaxonConcept tc1 = i11.getContainer();
+        TaxonConcept tc2 = i12.getContainer();
         assertSame(i11, tc1.getRepresentative());
         assertSame(i12, tc2.getRepresentative());
         assertSame(i12, i12.getResolved());
         assertSame(i12, i12.getResolvedAccepted());
-        assertSame(tc2, i13.getTaxonConcept());
+        assertSame(tc2, i13.getContainer());
         assertSame(i12, i13.getResolved());
         assertSame(i12, i13.getResolvedAccepted());
     }
+
+
+
+    // Test resolution to a preferred taxon with an unranked instance.
+    @Test
+    public void testResolveUnranked1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-10.csv"));
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance i0 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/apni/7178434");
+        TaxonConceptInstance i11 = this.taxonomy.getInstance("http://id.biodiversity.org.au/instance/apni/7178429");
+        TaxonConceptInstance i12 = this.taxonomy.getInstance("http://id.biodiversity.org.au/instance/apni/7178430");
+        TaxonConceptInstance i13 = this.taxonomy.getInstance("ALA_Astroloma_sp_Cataby_E_A_Griffin_1022");
+        assertNotNull(i0);
+        assertNotNull(i11);
+        assertNotNull(i12);
+        assertNotNull(i13);
+        TaxonConcept tc1 = i11.getContainer();
+        TaxonConcept tc2 = i12.getContainer();
+        TaxonConcept tc3 = i13.getContainer();
+        assertSame(tc1, tc3);
+        assertSame(i11, tc1.getRepresentative());
+        assertSame(i12, tc2.getRepresentative());
+        assertSame(i11, i11.getResolved());
+        assertSame(i0, i11.getResolvedAccepted());
+        assertSame(i12, i12.getResolved());
+        assertSame(i0, i12.getResolvedAccepted());
+        assertSame(i11, i13.getResolved());
+        assertSame(i0, i13.getResolvedAccepted());
+    }
+
 
     // Test placement on an uncoded name
     @Test
@@ -233,10 +267,10 @@ public class TaxonomyTest extends TestUtils {
         assertNotNull(i11);
         assertNotNull(i12);
         assertNotNull(i13);
-        TaxonConcept tc1 = i11.getTaxonConcept();
+        TaxonConcept tc1 = i11.getContainer();
         assertSame(i11, tc1.getRepresentative());
-        assertSame(tc1, i12.getTaxonConcept());
-        assertSame(tc1, i13.getTaxonConcept());
+        assertSame(tc1, i12.getContainer());
+        assertSame(tc1, i13.getContainer());
         assertSame(i11, i11.getResolved());
         assertSame(i11, i11.getResolvedAccepted());
         assertSame(i11, i12.getResolved());
@@ -249,13 +283,34 @@ public class TaxonomyTest extends TestUtils {
     }
 
     @Test
-    public void testWrite() throws Exception {
+    public void testWrite1() throws Exception {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
         this.taxonomy = new Taxonomy(config, null);
         this.taxonomy.begin();
         CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-3.csv"));
         CSVNameSource source2 = new CSVNameSource(this.resourceReader("taxonomy-4.csv"));
         this.taxonomy.load(Arrays.asList(source1, source2));
+        this.taxonomy.resolve();
+        File dir = new File(this.taxonomy.getWork(), "output");
+        dir.mkdir();
+        this.taxonomy.createDwCA(dir);
+        assertTrue(new File(dir, "meta.xml").exists());
+        assertTrue(new File(dir, "eml.xml").exists());
+        assertTrue(new File(dir, "taxon.txt").exists());
+        assertTrue(new File(dir, "taxonvariant.txt").exists());
+        assertTrue(new File(dir, "identifier.txt").exists());
+        assertTrue(new File(dir, "rightsholder.txt").exists());
+
+    }
+
+
+    @Test
+    public void testWrite2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-10.csv"));
+        this.taxonomy.load(Arrays.asList(source1));
         this.taxonomy.resolve();
         File dir = new File(this.taxonomy.getWork(), "output");
         dir.mkdir();

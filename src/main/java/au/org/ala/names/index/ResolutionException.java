@@ -9,27 +9,27 @@ import java.util.List;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
 public class ResolutionException extends IndexBuilderException {
-    private List<TaxonConceptInstance> trace;
+    private List<TaxonomicElement> trace;
 
-    public ResolutionException(String message, List<TaxonConceptInstance> trace) {
+    public ResolutionException(String message, List<TaxonomicElement> trace) {
         super(message);
         this.trace = trace;
     }
 
-    public ResolutionException(String message, Throwable cause, List<TaxonConceptInstance> trace) {
+    public ResolutionException(String message, Throwable cause, List<TaxonomicElement> trace) {
         super(message, cause);
         this.trace = trace;
     }
 
     public ResolutionException(String message) {
-        this(message, (List<TaxonConceptInstance>) null);
+        this(message, (List<TaxonomicElement>) null);
     }
 
     public ResolutionException(String message, Throwable cause) {
         this(message, cause, null);
     }
 
-    public List<TaxonConceptInstance> getTrace() {
+    public List<TaxonomicElement> getTrace() {
         return trace;
     }
 }

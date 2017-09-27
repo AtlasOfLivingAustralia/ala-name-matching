@@ -1,13 +1,11 @@
 package au.org.ala.names.index;
 
-import au.ala.org.vocab.ALATerm;
-import au.org.ala.names.util.FileUtils;
+import au.org.ala.vocab.ALATerm;
 import org.apache.commons.collections.MapUtils;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.api.model.registry.Contact;
 import org.gbif.api.vocabulary.Country;
 import org.gbif.dwc.terms.*;
-import org.gbif.dwca.io.MetadataException;
 
 import java.io.*;
 import java.util.*;
@@ -160,7 +158,7 @@ abstract public class NameSource {
             DwcTerm.taxonomicStatus,
             DwcTerm.taxonRank,
             DwcTerm.datasetID,
-            ALATerm.score
+            ALATerm.priority
     );
     /** Optional fields from the DwCA */
     protected static final List<Term> TAXON_VARIANT_ADDITIONAL = Arrays.asList(

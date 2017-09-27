@@ -42,5 +42,6 @@
     "loose" : false,
     "external" : true
   } ],
-  "defaultProvider" : "ID-1"
+  "defaultProvider" : "ID-1",
+  "acceptedCutoff" : 50
 }

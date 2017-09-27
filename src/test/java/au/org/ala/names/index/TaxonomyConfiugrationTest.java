@@ -40,6 +40,7 @@ public class TaxonomyConfiugrationTest extends TestUtils {
         config.providers = Arrays.asList(provider1);
         config.defaultProvider = provider1;
         config.nameAnalyserClass = ALANameAnalyser.class;
+        config.acceptedCutoff = 50;
         StringWriter sw = new StringWriter();
         config.write(sw);
         assertEquals(this.loadResource("taxonomy-config-1.json"), sw.toString());
@@ -59,6 +60,7 @@ public class TaxonomyConfiugrationTest extends TestUtils {
         config.providers = Arrays.asList(provider1);
         config.defaultProvider = provider1;
         config.nameAnalyserClass = ALANameAnalyser.class;
+        config.acceptedCutoff = 50;
         StringWriter sw = new StringWriter();
         config.write(sw);
         assertEquals(this.loadResource("taxonomy-config-3.json"), sw.toString());

@@ -80,11 +80,11 @@ public class BiocacheMatchTest {
     public void testRecursiveAuthorshipIssue() {
         try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
-            cl.setScientificName("Graphis erythrocardia Mull.Arg.");
+            cl.setScientificName("Graphis notreallyaname Mull.Arg.");
             cl.setAuthorship("Mull.Arg.");
             cl.setKingdom("Animalia");
             cl.setGenus("Graphis");
-            cl.setSpecificEpithet("erythrocardia");
+            cl.setSpecificEpithet("notreallyaname");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:934c68e8-1a64-49ff-b89e-e275b93043af", metrics.getResult().getLsid()); // Graphis from AFD
         } catch (Exception e) {
@@ -96,11 +96,11 @@ public class BiocacheMatchTest {
     @Test
     public void testRecursiveAuthorshipIssue2() throws Exception {
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
-        cl.setScientificName("Graphis erythrocardia Mull.Arg.");
+        cl.setScientificName("Graphis notreallyaname Mull.Arg.");
         cl.setAuthorship("Mull.Arg.");
         cl.setFamily("Graphidaceae");
         cl.setGenus("Graphis");
-        cl.setSpecificEpithet("erythrocardia");
+        cl.setSpecificEpithet("notreallyaname");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
         assertEquals("NZOR-4-120184", metrics.getResult().getLsid()); // Can't find Graphis since not APC placed so gets Graphidaceae
     }
@@ -151,7 +151,7 @@ public class BiocacheMatchTest {
             cl.setSpecificEpithet(spEp);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             //System.out.println(metrics.getResult());
-            assertEquals("http://id.biodiversity.org.au/node/apni/8786929", metrics.getResult().getAcceptedLsid());
+            assertEquals("NZOR-4-56674", metrics.getResult().getLsid());
             assertTrue(metrics.getErrors().contains(ErrorType.HOMONYM));
 
         } catch (Exception e) {

@@ -1,4 +1,4 @@
-package au.ala.org.vocab;
+package au.org.ala.vocab;
 
 /**
  * A taxonomic rank

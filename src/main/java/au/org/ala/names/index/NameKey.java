@@ -108,6 +108,16 @@ public class NameKey implements Comparable<NameKey> {
         return this.code == null;
     }
 
+
+    /**
+     * Is this an unranked name, either because there is no rank or the rank is explicitly {@link RankType#UNRANKED}
+     *
+     * @return True if the name key is unranked
+     */
+    public boolean isUnranked() {
+        return this.rank == null || this.rank == RankType.UNRANKED;
+    }
+
     /**
      * Is this a formaal name key, meaning that the name type represents something like a scientific name.
      *

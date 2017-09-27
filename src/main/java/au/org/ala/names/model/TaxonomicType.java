@@ -33,7 +33,7 @@ public enum TaxonomicType {
     /** A name that shouldn't be used, since it refers to something not found in the region of the occurrence record. */
     EXCLUDED("excluded", TaxonomicTypeGroup.EXCLUDED, false, false, false),
     /** A taxon of uncertain placement */
-    INCERTAE_SEDIS("incertaeSedis", TaxonomicTypeGroup.INCERTAE_SEDIS, true, true, false),
+    INCERTAE_SEDIS("incertaeSedis", TaxonomicTypeGroup.INCERTAE_SEDIS, false, true, false),
     /** An unplaced taxon */
     UNPLACED("unplaced", TaxonomicTypeGroup.UNPLACED, false, false, false, "unknown"),
     /** An inferred unplaced taxon */

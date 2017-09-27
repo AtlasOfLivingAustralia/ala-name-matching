@@ -92,8 +92,8 @@ public class PhraseNameParser extends GBIFNameParser {
 
 
     @Override
-    public ParsedName parse(String scientificName) throws UnparsableException {
-        ParsedName pn = super.parse(scientificName);
+    public ParsedName parse(String scientificName, Rank rank) throws UnparsableException {
+        ParsedName pn = super.parse(scientificName, rank);
         if (pn.getType() != NameType.SCIENTIFIC && isPhraseRank(pn.getRank()) && (!pn.isAuthorsParsed() || pn.getSpecificEpithet() == null || SPECIES_PATTERN.matcher(pn.getSpecificEpithet()).matches())) {
             //if the rank marker is sp. and the word after the rank marker is lower case check to see if removing the marker will result is a wellformed name
             if (SPECIES_PATTERN.matcher(scientificName).find()) {
@@ -102,7 +102,7 @@ public class PhraseNameParser extends GBIFNameParser {
                 if (m1.find()) {
                     //now reparse without the rankMarker
                     String newName = m1.group(1) + m1.group(3) + StringUtils.defaultString(m1.group(4), "");
-                    pn = super.parse(newName);
+                    pn = super.parse(newName, rank);
                     if (pn.getType() == NameType.SCIENTIFIC)
                         return pn;
                 }
@@ -127,7 +127,7 @@ public class PhraseNameParser extends GBIFNameParser {
             Matcher m = WRONG_CASE_INFRAGENERIC.matcher(scientificName);
             if (m.find()) {
                 scientificName = WordUtils.capitalize(scientificName, '(');
-                pn = super.parse(scientificName);
+                pn = super.parse(scientificName, rank);
             }
         }
 

@@ -14,6 +14,7 @@
  */
 package au.org.ala.names.search;
 
+import au.org.ala.vocab.ALATerm;
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.LinnaeanRankClassification;
 import au.org.ala.names.model.NameIndexField;
@@ -22,7 +23,6 @@ import au.org.ala.names.model.RankType;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
@@ -39,15 +39,14 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 import org.gbif.api.model.checklistbank.ParsedName;
-import org.gbif.dwca.record.DarwinCoreRecord;
 import org.gbif.dwca.record.Record;
 import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
-import org.gbif.dwca.io.ArchiveField;
 import org.gbif.dwca.io.ArchiveFile;
+import org.gbif.dwca.record.StarRecord;
 
 import java.io.*;
 import java.util.*;
@@ -180,7 +179,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             return false;
         }
         Archive archive = ArchiveFactory.openArchive(namesDwc);
-        if (!archive.getCore().getRowType().equals(DwcTerm.Taxon.qualifiedName())) {
+        if (!archive.getCore().getRowType().equals(DwcTerm.Taxon)) {
             log.info("Skipping non-taxon DwCA");
             return false;
         }
@@ -203,6 +202,10 @@ public class DwcaNameIndexer extends ALANameIndexer {
         irmngWriter.close();
     }
 
+    public void createExtraIdIndex(File extraIds) throws Exception {
+        this.createExtraIdIndex(new File(this.targetDir, "id").getCanonicalPath(), extraIds);
+    }
+
     /**
      * Load common names from a vernacular DwcA with a core row type of gbif:VernacularName
      *
@@ -217,7 +220,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             return false;
         }
         Archive archive = ArchiveFactory.openArchive(verncacularDwc);
-        if (!archive.getCore().getRowType().equals(GbifTerm.VernacularName.qualifiedName())) {
+        if (!archive.getCore().getRowType().equals(GbifTerm.VernacularName)) {
             log.info("Skipping non-vernacular DwCA");
             return false;
         }
@@ -389,69 +392,74 @@ public class DwcaNameIndexer extends ALANameIndexer {
         log.info("Starting to create the temporary loading index for " + archiveDirectory);
         //create the loading index so that left right values and classifications can be generated
         Archive archive = ArchiveFactory.openArchive(archiveDirectory);
-        if (!archive.getCore().getRowType().equals(DwcTerm.Taxon.qualifiedName())) {
+        if (!archive.getCore().getRowType().equals(DwcTerm.Taxon)) {
             log.info("Skipping non-taxon DwCA");
             return false;
         }
-        ArchiveField nameCompleteField = archive.getCore().getField("nameComplete");
-        org.gbif.dwc.terms.Term nameCompleteTerm = nameCompleteField == null ? null : nameCompleteField.getTerm();
-        Iterator<DarwinCoreRecord> it = archive.iteratorDwc();
+        Iterator<StarRecord> it = archive.iterator();
         int i=0;
         long start=System.currentTimeMillis();
         while(it.hasNext()){
             Document doc = new Document();
-            DarwinCoreRecord dwcr = it.next();
-            String id = dwcr.getId();
-            String lsid = dwcr.getTaxonID() == null ? id : dwcr.getTaxonID();
-            String acceptedLsid = dwcr.getAcceptedNameUsageID();
-            String nameComplete = nameCompleteTerm == null ? null: dwcr.getProperty(nameCompleteTerm);
-            String scientificName = dwcr.getScientificName();
-            String scientificNameAuthorship = dwcr.getScientificNameAuthorship();
+            StarRecord dwcr = it.next();
+            Record core = dwcr.core();
+            String id = core.id();
+            String lsid = core.value(DwcTerm.taxonID) == null ? id : core.value(DwcTerm.taxonID);
+            String acceptedNameUsageID = core.value(DwcTerm.acceptedNameUsageID);
+            String parentNameUsageID = core.value(DwcTerm.parentNameUsageID);
+            String nameComplete = core.value(ALATerm.nameComplete);
+            String scientificName = core.value(DwcTerm.scientificName);
+            String scientificNameAuthorship = core.value(DwcTerm.scientificNameAuthorship);
+            String genus = core.value(DwcTerm.genus);
+            String specificEpithet = core.value(DwcTerm.specificEpithet);
+            String infraspecificEpithet = core.value(DwcTerm.infraspecificEpithet);
+            String taxonRank = core.value(DwcTerm.taxonRank);
+            String datasetID = core.value(DwcTerm.datasetID);
             nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete);
             //add and store the identifier for the record
-            doc.add(new StringField(NameIndexField.ID.toString(), dwcr.getId(), Field.Store.YES));
+            doc.add(new StringField(NameIndexField.ID.toString(), id, Field.Store.YES));
             if(StringUtils.isNotBlank(lsid)){
                 doc.add(new StringField(NameIndexField.LSID.toString(), lsid, Field.Store.YES));
             } else {
-                System.out.println("LSID is null for " + id + " " + lsid + " " + lsid + " " + acceptedLsid);
+                System.out.println("LSID is null for " + id + " " + lsid + " " + lsid + " " + acceptedNameUsageID);
             }
-            if(StringUtils.isNotBlank(dwcr.getParentNameUsageID())) {
-                doc.add(new StringField("parent_id", dwcr.getParentNameUsageID(), Field.Store.YES));
+            if(StringUtils.isNotBlank(parentNameUsageID)) {
+                doc.add(new StringField("parent_id", parentNameUsageID, Field.Store.YES));
             }
-            if(StringUtils.isNotBlank(dwcr.getAcceptedNameUsageID())) {
-                doc.add(new StringField(NameIndexField.ACCEPTED.toString(),dwcr.getAcceptedNameUsageID(), Field.Store.YES));
+            if(StringUtils.isNotBlank(acceptedNameUsageID)) {
+                doc.add(new StringField(NameIndexField.ACCEPTED.toString(),acceptedNameUsageID, Field.Store.YES));
             }
             if(StringUtils.isNotBlank(scientificName)) {
                 //stored no need to search on
-                doc.add(new StoredField(NameIndexField.NAME.toString(),dwcr.getScientificName()));
+                doc.add(new StoredField(NameIndexField.NAME.toString(),scientificName));
             }
             if(StringUtils.isNotBlank(scientificNameAuthorship)) {
                 //stored no need to search on
-                doc.add(new StoredField(NameIndexField.AUTHOR.toString(),dwcr.getScientificNameAuthorship()));
+                doc.add(new StoredField(NameIndexField.AUTHOR.toString(),scientificNameAuthorship));
             }
             if (StringUtils.isNotBlank(nameComplete)) {
                 doc.add(new StoredField(NameIndexField.NAME_COMPLETE.toString(), nameComplete));
             }
-            if(StringUtils.isNotBlank(dwcr.getGenus())) {
+            if(StringUtils.isNotBlank(genus)) {
                 //stored no need to search on
-                doc.add(new StoredField("genus",dwcr.getGenus()));
+                doc.add(new StoredField("genus",genus));
             }
-            if(StringUtils.isNotBlank(dwcr.getSpecificEpithet())) {
+            if(StringUtils.isNotBlank(specificEpithet)) {
                 //stored no need to search on
-                doc.add(new StoredField(NameIndexField.SPECIFIC.toString(),dwcr.getSpecificEpithet()));
+                doc.add(new StoredField(NameIndexField.SPECIFIC.toString(),specificEpithet));
             }
-            if(StringUtils.isNotBlank(dwcr.getInfraspecificEpithet())) {
+            if(StringUtils.isNotBlank(infraspecificEpithet)) {
                 //stored no need to search on
-                doc.add(new StoredField(NameIndexField.INFRA_SPECIFIC.toString(),dwcr.getInfraspecificEpithet()));
+                doc.add(new StoredField(NameIndexField.INFRA_SPECIFIC.toString(),infraspecificEpithet));
             }
-            if(StringUtils.isNotBlank(dwcr.getTaxonRank())){
+            if(StringUtils.isNotBlank(taxonRank)){
                 //match the supplied rank
-                RankType rt = RankType.getForStrRank(dwcr.getTaxonRank());
+                RankType rt = RankType.getForStrRank(taxonRank);
                 if(rt != null){
                     doc.add(new StringField(NameIndexField.RANK.toString(), rt.getRank(), Field.Store.YES));
                     doc.add(new StringField(NameIndexField.RANK_ID.toString(), rt.getId().toString(), Field.Store.YES));
                 } else {
-                    doc.add(new StringField(NameIndexField.RANK.toString(), dwcr.getTaxonRank(), Field.Store.YES));
+                    doc.add(new StringField(NameIndexField.RANK.toString(), taxonRank, Field.Store.YES));
                     doc.add(new StringField(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId().toString(), Field.Store.YES));
                 }
             } else {
@@ -459,17 +467,17 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 doc.add(new StringField(NameIndexField.RANK.toString(), "Unknown", Field.Store.YES));
                 doc.add(new StringField(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId().toString(), Field.Store.YES));
             }
-            if(StringUtils.equals(lsid, acceptedLsid) || StringUtils.equals(id, acceptedLsid) || acceptedLsid == null){
+            if(StringUtils.equals(lsid, acceptedNameUsageID) || StringUtils.equals(id, acceptedNameUsageID) || acceptedNameUsageID == null){
                 //mark this one as an accepted concept
                 doc.add(new StringField(NameIndexField.iS_SYNONYM.toString(),"F", Field.Store.YES));
-                if (StringUtils.isBlank(dwcr.getParentNameUsageID())){
+                if (StringUtils.isBlank(parentNameUsageID)){
                     doc.add(new StringField("root","T", Field.Store.YES));
                 }
             } else {
                 doc.add(new StringField(NameIndexField.iS_SYNONYM.toString(),"T", Field.Store.YES));
             }
-            if (StringUtils.isNotBlank(dwcr.getDatasetID())) {
-                doc.add(new StoredField(NameIndexField.DATASET_ID.toString(), dwcr.getDatasetID()));
+            if (StringUtils.isNotBlank(datasetID)) {
+                doc.add(new StoredField(NameIndexField.DATASET_ID.toString(), datasetID));
             }
             this.loadingIndexWriter.addDocument(doc);
             i++;
@@ -691,48 +699,49 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * @param archive The archive for synonyms
      */
     private void addSynonymsToIndex(Archive archive) throws Exception {
-        Iterator<DarwinCoreRecord> it = archive.iteratorDwc();
+        Iterator<StarRecord> it = archive.iterator();
         int i = 0;
         int count = 0;
-        ArchiveField nameCompleteField = archive.getCore().getField("nameComplete");
-        org.gbif.dwc.terms.Term nameCompleteTerm = nameCompleteField == null ? null : nameCompleteField.getTerm();
         while(it.hasNext()){
-            DarwinCoreRecord dwcr = it.next();
+            StarRecord dwcr = it.next();
+            Record core = dwcr.core();
             i++;
-            String lsid = dwcr.getTaxonID() != null ? dwcr.getTaxonID() : dwcr.getId();
-            String id = dwcr.getId();
-            String acceptedId = dwcr.getAcceptedNameUsageID();
-            String nameComplete = nameCompleteTerm == null ? null: dwcr.getProperty(nameCompleteTerm);
-            String scientificName = dwcr.getScientificName();
-            String scientificNameAuthorship = dwcr.getScientificNameAuthorship();
+            String id = core.id();
+            String lsid = core.value(DwcTerm.taxonID) != null ? core.value(DwcTerm.taxonID) : id;
+            String acceptedNameUsageID = core.value(DwcTerm.acceptedNameUsageID);
+            String nameComplete = core.value(ALATerm.nameComplete);
+            String scientificName = core.value(DwcTerm.scientificName);
+            String scientificNameAuthorship = core.value(DwcTerm.scientificNameAuthorship);
             nameComplete = this.buildNameComplete(scientificName, scientificNameAuthorship, nameComplete);
-            float boost = this.getBoost(dwcr.getDatasetID(), -1);
-            if(StringUtils.isNotEmpty(acceptedId) && (!StringUtils.equals(acceptedId , id) && !StringUtils.equals(acceptedId, lsid))){
+            String datasetID = core.value(DwcTerm.datasetID);
+            String taxonomicStatus = core.value(DwcTerm.taxonomicStatus);
+            float boost = this.getBoost(datasetID, -1);
+            if(StringUtils.isNotEmpty(acceptedNameUsageID) && (!StringUtils.equals(acceptedNameUsageID , id) && !StringUtils.equals(acceptedNameUsageID, lsid))){
                 count++;
                 //we have a synonym that needs to be load
                 try {
                     if(log.isDebugEnabled()){
-                        log.debug("Scientific name:  " + dwcr.getScientificName() + ", LSID:  " + dwcr.getId());
+                        log.debug("Scientific name:  " + scientificName + ", LSID:  " + lsid);
                     }
                     Document doc = createALASynonymDocument(
                             scientificName,
                             scientificNameAuthorship,
                             nameComplete,
-                            dwcr.getId(),
+                            id,
                             lsid,
                             lsid,
-                            dwcr.getAcceptedNameUsageID(),
-                            dwcr.getAcceptedNameUsageID(),
+                            acceptedNameUsageID,
+                            acceptedNameUsageID,
                             boost,
-                            dwcr.getTaxonomicStatus());
+                            taxonomicStatus);
 
                     if(doc != null){
                         writer.addDocument(doc);
                     } else {
-                        log.warn("Problem processing scientificName:  " + dwcr.getScientificName() + ", ID:  " + dwcr.getId() + ", LSID:  " + lsid);
+                        log.warn("Problem processing scientificName:  " + scientificName + ", ID:  " + id + ", LSID:  " + lsid);
                     }
                 } catch (Exception e){
-                    log.error("Exception thrown processing Scientific name:  " + dwcr.getScientificName() + ", LSID:  " + dwcr.getId());
+                    log.error("Exception thrown processing Scientific name:  " + scientificName + ", LSID:  " + lsid);
                     log.error(e.getMessage(), e);
                 }
             }
@@ -775,6 +784,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         final String DEFAULT_TARGET_DIR = "/data/lucene/namematching";
         final String DEFAULT_TMP_DIR = "/data/lucene/nmload-tmp";
         final String DEFAULT_PRIORITIES = "/data/lucene/sources/priorities.properties";
+        final String DEFAULT_IDENTIFIERS = "/data/lucene/sources/identifiers.txt";
 
         Options options = new Options();
         options.addOption("v", "version", false, "Retrieve version information");
@@ -788,6 +798,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         options.addOption("dwca", true, "The absolute path to the unzipped DwCA (or a directory containing unzipped DWC-A - see recurse) for the scientific names. If  Defaults to " + DEFAULT_DWCA + " See also, the recurse option");
         options.addOption("recurse", false, "Recurse through the sub-directories of the dwca directory, looking for directories with a meta.xml");
         options.addOption("priorities", true, "A properties file containing priority multiplers for the different data sources, keyed by datasetID->float. Defaults to " + DEFAULT_PRIORITIES);
+        options.addOption("ids", true, "A tab seperated values file containing additional taxzon identifiers. Defaults to " + DEFAULT_IDENTIFIERS);
         options.addOption("target", true, "The target directory to write the new name index to. Defaults to " + DEFAULT_TARGET_DIR);
         options.addOption("tmp", true, "The tmp directory for the load index. Defaults to " + DEFAULT_TMP_DIR);
         options.addOption("common", true, "The common (vernacular) name file. Defaults to " + DEFAULT_COMMON_NAME);
@@ -868,6 +879,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             boolean defaultCommonReadable = (new File(DEFAULT_COMMON_NAME).exists());
             boolean defaultDwcaReadable = (new File(DEFAULT_DWCA).exists());
             boolean defaultPriorities = (new File(DEFAULT_PRIORITIES).exists());
+            boolean defaultIdentifiers =  (new File(DEFAULT_IDENTIFIERS).exists());
 
             if(line.getOptionValue("dwca") != null){
                 log.info("Using the  DwCA name file: " + line.getOptionValue("dwca"));
@@ -903,6 +915,14 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 log.info("Using the priorities file: " + line.getOptionValue("priorities"));
             }
 
+            if(line.getOptionValue("ids") == null && !defaultIdentifiers) {
+                log.warn("No identifiers file, Defailts is " + DEFAULT_IDENTIFIERS);
+            } else if(line.getOptionValue("ids") == null){
+                log.info("Using the default identifiers file: " + DEFAULT_IDENTIFIERS);
+            } else {
+                log.info("Using the identifiers file: " + line.getOptionValue("ids"));
+            }
+
             File targetDirectory = new File(line.getOptionValue("target", DEFAULT_TARGET_DIR));
             if(targetDirectory.exists()){
                 String newPath =  targetDirectory.getAbsolutePath() + "_" + DateFormatUtils.format(new Date(), "yyyy-MM-dd_hh-mm-ss");
@@ -913,6 +933,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             }
             File commonNameFile = new File(line.getOptionValue("common", DEFAULT_COMMON_NAME));
             File irmngFile = new File(line.getOptionValue("irmng", DEFAULT_IRMNG));
+            File identifiersFile = new File(line.getOptionValue("ids", DEFAULT_IDENTIFIERS));
             File prioritiesFile = new File(line.getOptionValue("priorities", DEFAULT_PRIORITIES));
             Properties priorities = new Properties();
             if (prioritiesFile.exists())
@@ -953,6 +974,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                     used.add(dwca);
             indexer.indexCommonNames(commonNameFile);
             indexer.createIrmng(irmngFile);
+            indexer.createExtraIdIndex(identifiersFile);
             for (File dwca: dwcas)
                 if (indexer.loadCommonNames(dwca))
                     used.add(dwca);

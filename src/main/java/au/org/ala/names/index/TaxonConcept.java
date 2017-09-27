@@ -1,6 +1,6 @@
 package au.org.ala.names.index;
 
-import au.ala.org.vocab.ALATerm;
+import au.org.ala.vocab.ALATerm;
 import au.org.ala.names.model.RankType;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
@@ -22,9 +22,7 @@ import java.util.stream.Collectors;
  * @copyright Copyright (c) 2017 CSIRO
  */
 
-public class TaxonConcept extends TaxonomicElement {
-    /** The parent scientific name */
-    private ScientificName name;
+public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName> {
     /** The name key for this concept */
     private NameKey key;
     /** The list of instances that correspond to this concept */
@@ -39,19 +37,10 @@ public class TaxonConcept extends TaxonomicElement {
      * @param key The name key
      */
     public TaxonConcept(ScientificName name, NameKey key) {
-        this.name = name;
+        super(name);
         this.key = key;
         this.instances = new ArrayList<>();
         this.resolution = null;
-    }
-
-    /**
-     * Get the parent scientific name
-     *
-     * @return The scientific name
-     */
-    public ScientificName getName() {
-        return name;
     }
 
     /**
@@ -95,21 +84,27 @@ public class TaxonConcept extends TaxonomicElement {
      *
      * @param instance The instance
      */
-    public void addInstance(TaxonConceptInstance instance) {
-        instance.setTaxonConcept(this);
+    @Override
+    public TaxonConceptInstance addInstance(NameKey instanceKey, TaxonConceptInstance instance) {
+        instance.setContainer(this);
         this.instances.add(instance);
+        return instance;
     }
 
     /**
      * See if we have an instance matching a particular provider.
+     * <p>
+     * First
+     * </p>
      *
      * @param provider The provider
+     * @param acceptedOnly Only accepted instances
      *
      * @return The matching instance or null for not found
      */
-    public TaxonConceptInstance findInstance(NameProvider provider) {
+    public TaxonConceptInstance findInstance(NameProvider provider, boolean acceptedOnly) {
         for (TaxonConceptInstance instance: this.instances)
-            if (instance.getProvider().equals(provider))
+            if (instance.getProvider().equals(provider) && (!acceptedOnly || instance.isAccepted()))
                 return instance;
         return null;
     }
@@ -134,6 +129,29 @@ public class TaxonConcept extends TaxonomicElement {
         this.resolution = resolver.resolve(this, principals, this.instances);
         Map<TaxonConceptInstance, TaxonConceptInstance> resolution = new HashMap<>(this.instances.size());
         taxonomy.count("count.resolve.taxonConcept");
+    }
+
+    /**
+     * Reallocate the elements of another taxon concept to this taxon concept.
+     *
+     * @param element The element to reallocate
+     * @param taxonomy The resolving taxonomy
+     */
+    @Override
+    public void reallocate(TaxonConcept element, Taxonomy taxonomy) {
+        taxonomy.report(IssueType.NOTE, "taxonConcept.reallocated", element, this);
+        taxonomy.count("count.reallocate.taxonConcept");
+        TaxonConceptInstance representative = this.getRepresentative();
+        if (representative == null || this.resolution == null)
+            throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without representative or resolution");
+        element.resolution = new TaxonResolution();
+        for (TaxonConceptInstance tci: element.instances) {
+            tci.setContainer(this);
+            this.instances.add(tci);
+            this.resolution.addExternal(tci, representative, taxonomy);
+            element.resolution.addExternal(tci, representative, taxonomy);
+        }
+        element.instances.clear();
     }
 
     /**
@@ -189,10 +207,11 @@ public class TaxonConcept extends TaxonomicElement {
     /**
      * Get the rank of the taxonomic concept.
      *
-     * @return The rank of the resolved element, or null for not present
+     * @return The rank of the resolved element, or the rank of the key for not present
      */
+    @Override
     public RankType getRank() {
-        return this.resolution == null ? null : this.resolution.getRank();
+        return this.resolution == null ? this.key.getRank() : this.resolution.getRank();
     }
 
     /**
@@ -265,6 +284,7 @@ public class TaxonConcept extends TaxonomicElement {
      *
      * @return The representative instance
      */
+    @Override
     public TaxonConceptInstance getRepresentative() {
         return this.resolution == null ? this.instances.get(0) : this.resolution.getUsed().get(0);
     }
@@ -290,7 +310,7 @@ public class TaxonConcept extends TaxonomicElement {
      */
     public boolean isOwned() {
         TaxonConceptInstance accepted = this.getRepresentative();
-        return (accepted.getTaxonConcept() == this && accepted.isOwned());
+        return (accepted.getContainer() == this && accepted.isOwned());
     }
 
     /**
@@ -330,6 +350,30 @@ public class TaxonConcept extends TaxonomicElement {
     }
 
     /**
+     * Get the score of the principal element.
+     *
+     * @return The principal score
+     */
+    @Override
+    public int getPrincipalScore() {
+        TaxonConceptInstance representative = this.getRepresentative();
+
+        return representative != null ? representative.getPrincipalScore() : Integer.MIN_VALUE;
+    }
+
+    /**
+     * Get the provider score of the principal element.
+     *
+     * @return The principal score
+     */
+    @Override
+    public int getProviderScore() {
+        TaxonConceptInstance representative = this.getRepresentative();
+
+        return representative != null ? representative.getProviderScore() : Integer.MIN_VALUE;
+    }
+
+    /**
      * Validate this taxon concept.
      * <p>
      * Note that this does not validate the taxon concept instances; these get done separately
@@ -347,7 +391,7 @@ public class TaxonConcept extends TaxonomicElement {
             valid = false;
         }
         for (TaxonConceptInstance tci: this.instances) {
-            if (tci.getTaxonConcept() != this) {
+            if (tci.getContainer() != this) {
                 taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceParent", tci, this);
                 valid = false;
             }

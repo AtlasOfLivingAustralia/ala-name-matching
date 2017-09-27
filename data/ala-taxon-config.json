@@ -8,6 +8,7 @@
   },
   "nameAnalyserClass" : "au.org.ala.names.index.ALANameAnalyser",
   "resolverClass" : "au.org.ala.names.index.ALATaxonResolver",
+  "acceptedCutoff": 500,
   "providers" : [
     {
       "id" : "default",
