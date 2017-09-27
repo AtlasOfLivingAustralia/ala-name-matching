@@ -4,8 +4,6 @@ jdk:
 - oraclejdk8
 branches:
   only:
-  - master
-  - lucene_5
   - name-match-redesign
 
 before_install:
