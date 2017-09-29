@@ -73,7 +73,7 @@ public class ALANameSearcher {
 
     protected Log log = LogFactory.getLog(ALANameSearcher.class);
     private DirectoryReader cbReader, irmngReader, vernReader;
-    private IndexSearcher cbSearcher, irmngSearcher, vernSearcher, idSearcher;
+    protected IndexSearcher cbSearcher, irmngSearcher, vernSearcher, idSearcher;
     private ThreadLocal<QueryParser> queryParser;
     private ThreadLocal<QueryParser> idParser;
     protected TaxonNameSoundEx tnse;
