@@ -1,7 +1,7 @@
 sudo: required
 language: java
 jdk:
-- oraclejdk7
+  - oraclejdk8
 branches:
   only:
   - master
@@ -17,7 +17,7 @@ before_install:
 - cd $TRAVIS_BUILD_DIR
 
 script:
-- "[ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ] && mvn -X -P travis clean install deploy || mvn -X -P travis clean install"
+- "[ \"${TRAVIS_PULL_REQUEST}\" = \"false\" ] && mvn -Ptravis clean deploy || mvn -Ptravis clean install"
 
 env:
   global:
