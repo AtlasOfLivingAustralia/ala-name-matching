@@ -951,6 +951,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         synonym.baseScore = null;
         synonym.score = null;
         synonym.forbidden = false;
+        taxonomy.addInferredInstance(synonym);
         return synonym;
     }
 

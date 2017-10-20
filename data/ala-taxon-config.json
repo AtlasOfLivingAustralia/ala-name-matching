@@ -240,6 +240,7 @@
       "defaultScore" : 5000,
       "defaultNomenclaturalCode": "BOTANICAL",
       "scores": {
+        "Bryophyta": 7000,
         "Bryidae": 7000
       }
     },

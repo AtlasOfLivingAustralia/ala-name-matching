@@ -435,6 +435,9 @@ public class Taxonomy implements Reporter {
             resolved = allInstances.stream().filter(instance -> instance.isResolved()).count();
             logger.debug("Resolved " + prevResolved + " -> " + resolved);
         } while (resolved != prevResolved);
+        Set<TaxonConcept> unresolvedConcepts = allInstances.parallelStream().map(TaxonConceptInstance::getContainer).filter(tc -> !tc.isResolved()).collect(Collectors.toSet());
+        logger.info("Found " + unresolvedConcepts.size() + " un-resolved concepts");
+        unresolvedConcepts.parallelStream().forEach(tc -> { tc.resolveTaxon(this); this.report(IssueType.PROBLEM, "taxonConcept.unresolved", tc); });
         logger.info("Finished resolving taxa");
 
     }
@@ -545,6 +548,24 @@ public class Taxonomy implements Reporter {
         return status.isEmpty() ? null : status;
     }
 
+    /**
+     * Add an inferred instance.
+     * <p>
+     * Used to keep validation sweet.
+     * The container, etc. is already assumed to be in place.
+     * </p>
+     *
+     * @param instance The instance to add
+     *
+     * @throws IndexBuilderException if the instance's taxonID is already in use
+     */
+    protected void addInferredInstance(TaxonConceptInstance instance) {
+        String taxonID = instance.getTaxonID();
+
+        if (this.instances.containsKey(taxonID))
+            throw new IndexBuilderException("Attempting to add " + instance + " but taxonID " + taxonID + " already in use");
+        this.instances.put(taxonID, instance);
+    }
 
     /**
      * Add a new instance of a taxon concept.
@@ -601,9 +622,11 @@ public class Taxonomy implements Reporter {
         bareKey = taxonKey.toUncodedNameKey();
 
         if (this.instances.containsKey(taxonID)) {
-            this.report(IssueType.VALIDATION, "taxonomy.load.collision", instance, this.instances.get(taxonID));
+            TaxonConceptInstance collision = this.instances.get(taxonID);
+            taxonID = UUID.randomUUID().toString();
+            this.report(IssueType.VALIDATION, "taxonomy.load.collision", instance.toString(), collision.toString(), taxonID);
             instance = new TaxonConceptInstance(
-                    UUID.randomUUID().toString(),
+                    taxonID,
                     instance.getCode(),
                     instance.getVerbatimNomenclaturalCode(),
                     instance.getProvider(),
