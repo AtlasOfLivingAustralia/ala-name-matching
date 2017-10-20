@@ -32,7 +32,7 @@ public class IconicSpeciesTest {
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new ALANameSearcher("/data/lucene/namematching");
+            searcher = new ALANameSearcher("/data/lucene/namematching-20170927");
         } catch (Exception e) {
             e.printStackTrace();
         }
