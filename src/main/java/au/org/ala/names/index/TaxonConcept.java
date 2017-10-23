@@ -395,6 +395,10 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
                 taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceParent", tci, this);
                 valid = false;
             }
+            if (taxonomy.getInstance(tci.getTaxonID()) != tci) {
+                taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceTaxonomy", tci, this);
+                valid = false;
+            }
         }
         if (this.isResolved())
             if (!this.resolution.validate(this.instances, taxonomy))

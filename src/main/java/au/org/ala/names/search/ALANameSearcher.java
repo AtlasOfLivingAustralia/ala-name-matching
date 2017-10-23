@@ -72,12 +72,12 @@ import java.util.regex.Pattern;
 public class ALANameSearcher {
 
     protected Log log = LogFactory.getLog(ALANameSearcher.class);
-    private DirectoryReader cbReader, irmngReader, vernReader;
-    private IndexSearcher cbSearcher, irmngSearcher, vernSearcher, idSearcher;
-    private ThreadLocal<QueryParser> queryParser;
-    private ThreadLocal<QueryParser> idParser;
+    protected DirectoryReader cbReader, irmngReader, vernReader;
+    protected IndexSearcher cbSearcher, irmngSearcher, vernSearcher, idSearcher;
+    protected ThreadLocal<QueryParser> queryParser;
+    protected ThreadLocal<QueryParser> idParser;
     protected TaxonNameSoundEx tnse;
-    private PhraseNameParser parser;
+    protected PhraseNameParser parser;
     public static final Pattern virusStopPattern = Pattern.compile(" virus| ictv| ICTV");
     public static final Pattern voucherRemovePattern = Pattern.compile(" |,|&|\\.");
     public static final Pattern affPattern = Pattern.compile("([\\x00-\\x7F\\s]*) aff[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
@@ -1016,7 +1016,7 @@ public class ALANameSearcher {
                 pn = parser.parse(cleaned.getNormalised());
                 nameType = pn != null ? pn.getType() : null;
             } catch (UnparsableException e) {
-                log.warn("Unable to parse " + name + ". " + e.getMessage(), e);
+                log.warn("Unable to parse " + name + ". " + e.getMessage());
             }
             //Check for the exact match
             List<NameSearchResult> hits = performSearch(NameIndexField.NAME.toString(), cleaned.getNormalised(), rank, cl, max, MatchType.EXACT, true, queryParser.get());
