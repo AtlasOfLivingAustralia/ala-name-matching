@@ -4,8 +4,9 @@ jdk:
 - oraclejdk8
 branches:
   only:
-  - name-match-redesign
-
+  - master
+  - lucene_5  
+  
 before_install:
 - mkdir -p ~/.m2; wget -q -O ~/.m2/settings.xml https://raw.githubusercontent.com/AtlasOfLivingAustralia/travis-build-configuration/master/travis_maven_settings_simple.xml
 - sudo mkdir -p /data/lucene; sudo wget -O /data/lucene/namematching-20170927.tgz http://biocache.ala.org.au/archives/nameindexes/20170927/namematching-20170927.tgz
