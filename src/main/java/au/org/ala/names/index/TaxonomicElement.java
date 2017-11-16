@@ -2,6 +2,8 @@ package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
 
+import java.util.Comparator;
+
 /**
  * Some sort of taxonomic element.
  *
@@ -12,6 +14,61 @@ import au.org.ala.names.model.RankType;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
 abstract public class TaxonomicElement<T extends TaxonomicElement, C extends TaxonomicElement> {
+    /** The provider score comparator, which also handles over/underflow */
+    public static final Comparator<TaxonomicElement> PROVIDER_SCORE_COMPARATOR = new Comparator<TaxonomicElement>() {
+        @Override
+        public int compare(TaxonomicElement e1, TaxonomicElement e2) {
+            if (e1 == null && e2 == null)
+                return 0;
+            if (e1 == null && e2 != null)
+                return Integer.MIN_VALUE;
+            if (e1 != null && e2 == null)
+                return Integer.MAX_VALUE;
+            int o1 = e1.getProviderScore();
+            int o2 = e2.getProviderScore();
+            try {
+                return Math.subtractExact(o1, o2);
+            } catch (Exception ex) {
+                if (o1 > o2)
+                    return Integer.MAX_VALUE;
+                if (o2 > o1)
+                    return Integer.MIN_VALUE;
+                return 0; // Shouldn't need to return this
+            }
+        }
+    };
+
+    /** Places the highest scored provider first */
+    public static final Comparator<TaxonomicElement> REVERSE_PROVIDER_SCORE_COMPARATOR = PROVIDER_SCORE_COMPARATOR.reversed();
+
+    /** The principal score comparator, which also handles over/underflow */
+    public static final Comparator<TaxonomicElement> PRINCIPAL_SCORE_COMPARATOR = new Comparator<TaxonomicElement>() {
+        @Override
+        public int compare(TaxonomicElement e1, TaxonomicElement e2) {
+            if (e1 == null && e2 == null)
+                return 0;
+            if (e1 == null && e2 != null)
+                return Integer.MIN_VALUE;
+            if (e1 != null && e2 == null)
+                return Integer.MAX_VALUE;
+            int o1 = e1.getPrincipalScore();
+            int o2 = e2.getPrincipalScore();
+            try {
+                return Math.subtractExact(o1, o2);
+            } catch (Exception ex) {
+                if (o1 > o2)
+                    return Integer.MAX_VALUE;
+                if (o2 > o1)
+                    return Integer.MIN_VALUE;
+                return 0; // Shouldn't need to return this
+            }
+        }
+    };
+
+    /** Places the highest scored principal first */
+    public static final Comparator<TaxonomicElement> REVERSE_PRINCIPAL_SCORE_COMPARATOR = PRINCIPAL_SCORE_COMPARATOR.reversed();
+
+
     /** The containing element */
     private C container;
 

@@ -25,6 +25,55 @@ import java.util.stream.Collectors;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
 public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance, TaxonConcept> {
+    /** Compare instance base (priovider only) scores */
+    public static Comparator<TaxonConceptInstance> PROVIDER_SCORE_COMPARATOR =  new Comparator<TaxonConceptInstance>() {
+        @Override
+        public int compare(TaxonConceptInstance e1, TaxonConceptInstance e2) {
+            if (e1 == null && e2 == null)
+                return 0;
+            if (e1 == null && e2 != null)
+                return Integer.MIN_VALUE;
+            if (e1 != null && e2 == null)
+                return Integer.MAX_VALUE;
+            int o1 = e1.getProviderScore();
+            int o2 = e2.getProviderScore();
+            try {
+                return Math.subtractExact(o1, o2);
+            } catch (Exception ex) {
+                if (o1 > o2)
+                    return Integer.MAX_VALUE;
+                if (o2 > o1)
+                    return Integer.MIN_VALUE;
+                return 0; // Shouldn't need to return this
+            }
+        }
+    };
+    /** Compare instance scores */
+    public static Comparator<TaxonConceptInstance> SCORE_COMPARATOR =  new Comparator<TaxonConceptInstance>() {
+        @Override
+        public int compare(TaxonConceptInstance e1, TaxonConceptInstance e2) {
+            if (e1 == null && e2 == null)
+                return 0;
+            if (e1 == null && e2 != null)
+                return Integer.MIN_VALUE;
+            if (e1 != null && e2 == null)
+                return Integer.MAX_VALUE;
+            int o1 = e1.getScore();
+            int o2 = e2.getScore();
+            try {
+                return Math.subtractExact(o1, o2);
+            } catch (Exception ex) {
+                if (o1 > o2)
+                    return Integer.MAX_VALUE;
+                if (o2 > o1)
+                    return Integer.MIN_VALUE;
+                return 0; // Shouldn't need to return this
+            }
+        }
+    };
+    /** Inverse instance scores (for most important first) */
+    public static Comparator<TaxonConceptInstance> INVERSE_SCORE_COMPARATOR = SCORE_COMPARATOR.reversed();
+
     /** The maximum number of iterations to attempt during resolution before suspecting somethiing is wrong */
     public static final int MAX_RESOLUTION_STEPS = 20;
 

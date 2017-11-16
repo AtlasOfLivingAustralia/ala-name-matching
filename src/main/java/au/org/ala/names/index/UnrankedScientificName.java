@@ -80,7 +80,7 @@ public class UnrankedScientificName extends Name<UnrankedScientificName, BareNam
             return null;
         if (names.size() == 1)
             return names.get(0);
-        names.sort((tc1, tc2) -> tc2.getProviderScore() - tc1.getProviderScore());
+        names.sort(REVERSE_PROVIDER_SCORE_COMPARATOR);
         final int cutoff = taxonomy.getAcceptedCutoff();
         List<ScientificName> ranked = names.stream().filter(sn -> !sn.getKey().isUnranked() && sn.getPrincipal() != null && sn.getPrincipalScore() > cutoff).collect(Collectors.toList());
         if (ranked.size() == 0)
