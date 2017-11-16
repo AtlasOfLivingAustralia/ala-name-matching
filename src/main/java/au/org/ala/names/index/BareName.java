@@ -87,7 +87,7 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
             return null;
         if (names.size() == 1)
             return names.get(0);
-        names.sort((tc1, tc2) -> tc2.getProviderScore() - tc1.getProviderScore());
+        names.sort(REVERSE_PROVIDER_SCORE_COMPARATOR);
         final int cutoff = taxonomy.getAcceptedCutoff();
         List<UnrankedScientificName> coded = names.stream().filter(sn -> !sn.getKey().isUncoded() && sn.getPrincipal() != null && sn.getPrincipalScore() > cutoff).collect(Collectors.toList());
         if (coded.size() == 0)

@@ -97,7 +97,7 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
             return null;
         if (concepts.size() == 1)
             return concepts.get(0);
-        concepts.sort((tc1, tc2) -> tc2.getProviderScore() - tc1.getProviderScore());
+        concepts.sort(REVERSE_PROVIDER_SCORE_COMPARATOR);
         final int cutoff = taxonomy.getAcceptedCutoff();
         List<TaxonConcept> accepted = concepts.stream().filter(tc -> tc.isFormal() && tc.hasAccepted() && tc.getPrincipalScore() > cutoff).collect(Collectors.toList());
         if (accepted.size() == 0)

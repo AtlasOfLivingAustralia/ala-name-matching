@@ -13,13 +13,6 @@ import java.util.stream.Collectors;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
 public class ALATaxonResolver implements TaxonResolver {
-    /** Compare instance base (priovider only) scores */
-    private static Comparator<TaxonConceptInstance> PROVIDER_SCORE =  (i1, i2) -> i1.getBaseScore() - i2.getBaseScore();
-    /** Compare instance scores */
-    private static Comparator<TaxonConceptInstance> SCORE =  (i1, i2) -> i1.getScore() - i2.getScore();
-    /** Inverse instance scores (for most important first) */
-    private static Comparator<TaxonConceptInstance> INVERSE_SCORE =  (i1, i2) -> i2.getScore() - i1.getScore();
-
     /** The parent taxonomy */
     private Taxonomy taxonomy;
 
@@ -47,17 +40,17 @@ public class ALATaxonResolver implements TaxonResolver {
            this.taxonomy.report(IssueType.NOTE, "taxonResolver.noPrincipals", concept);
             principals = new ArrayList<>(instances);
         }
-        Optional<TaxonConceptInstance> max = principals.stream().max(SCORE);
+        Optional<TaxonConceptInstance> max = principals.stream().max(TaxonConceptInstance.SCORE_COMPARATOR);
         Optional<NameProvider> provider = max.map(TaxonConceptInstance::getProvider);
         if (!provider.isPresent()) {
             this.taxonomy.report(IssueType.NOTE, "taxonResolver.noProvider", concept);
-            max = instances.stream().max(SCORE);
+            max = instances.stream().max(TaxonConceptInstance.SCORE_COMPARATOR);
             provider = max.map(TaxonConceptInstance::getProvider);
             principals = new ArrayList<>(instances);
         }
         final NameProvider source = provider.orElse(taxonomy.getInferenceProvider());
         principals = principals.stream().filter(instance -> instance.getProvider() == source).collect(Collectors.toList());
-        principals.sort(INVERSE_SCORE);
+        principals.sort(TaxonConceptInstance.INVERSE_SCORE_COMPARATOR);
         return principals;
     }
 
