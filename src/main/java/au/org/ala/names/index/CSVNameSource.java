@@ -15,8 +15,13 @@ import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.terms.TermFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,6 +35,8 @@ import java.util.stream.Collectors;
  * @copyright Copyright (c) 2016 CSIRO
  */
 public class CSVNameSource extends NameSource {
+    private static final Logger logger = LoggerFactory.getLogger(CSVNameSource.class);
+
     private String name;
     private CSVReader reader;
     private List<Term> terms;
@@ -41,7 +48,7 @@ public class CSVNameSource extends NameSource {
      * @param reader The
      */
     public CSVNameSource(Reader reader) throws IOException {
-        this.name = "Reader " + reader.toString();
+        this.name = "Reader " + System.identityHashCode(reader);
         this.reader = new CSVReader(reader);
         this.collectColumns();
     }
@@ -49,12 +56,12 @@ public class CSVNameSource extends NameSource {
     /**
      * Open a file as a CSV name source.
      *
-     * @param file The source file
+     * @param path The source file
      * @param encoding The source encoding
      */
-    public CSVNameSource(File file, String encoding) throws IOException {
-        this(new InputStreamReader(new FileInputStream(file), encoding));
-        this.name = file.getCanonicalPath();
+    public CSVNameSource(Path path, String encoding) throws IOException {
+        this(Files.newBufferedReader(path, Charset.forName(encoding)));
+        this.name = path.toUri().toASCIIString();
     }
 
     protected void collectColumns() throws IOException {
@@ -64,7 +71,7 @@ public class CSVNameSource extends NameSource {
 
         if (header == null || header.length == 0)
             throw new IndexBuilderException("No header in CSV file");
-        this.termLocations = new HashMap<>(header.length);
+        this.termLocations = new LinkedHashMap<>(header.length);
         this.terms = new ArrayList<>(header.length);
         for (String heading: header) {
             heading = heading.trim();
@@ -73,6 +80,8 @@ public class CSVNameSource extends NameSource {
                 term = ALATerm.valueOf(heading);
             if (term != null)
                 this.termLocations.put(term, index);
+            else
+                logger.warn("Unable to map " + heading + " onto a term");
             this.terms.add(term);
             index++;
         }
@@ -120,12 +129,13 @@ public class CSVNameSource extends NameSource {
      * Ensure all the expected terms are present.
      * </p>
      *
-     * @throws IndexBuilderException if ther archive is not usable
+     * @throws IndexBuilderException if the archive is not usable
      */
     public void validate() throws IndexBuilderException {
-        for (Term term: TAXON_REQUIRED)
+        for (Term term: TAXON_REQUIRED) {
             if (!this.termLocations.containsKey(term))
                 throw new IndexBuilderException("CSV file does not contain required term " + term);
+        }
     }
 
     /**

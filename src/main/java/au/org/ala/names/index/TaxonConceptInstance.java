@@ -10,6 +10,7 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.*;
@@ -32,18 +33,18 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             if (e1 == null && e2 == null)
                 return 0;
             if (e1 == null && e2 != null)
-                return Integer.MIN_VALUE;
+                return TaxonomicElement.MIN_SCORE;
             if (e1 != null && e2 == null)
-                return Integer.MAX_VALUE;
+                return TaxonomicElement.MAX_SCORE;
             int o1 = e1.getProviderScore();
             int o2 = e2.getProviderScore();
             try {
                 return Math.subtractExact(o1, o2);
             } catch (Exception ex) {
                 if (o1 > o2)
-                    return Integer.MAX_VALUE;
+                    return TaxonomicElement.MAX_SCORE;
                 if (o2 > o1)
-                    return Integer.MIN_VALUE;
+                    return TaxonomicElement.MIN_SCORE;
                 return 0; // Shouldn't need to return this
             }
         }
@@ -55,18 +56,18 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             if (e1 == null && e2 == null)
                 return 0;
             if (e1 == null && e2 != null)
-                return Integer.MIN_VALUE;
+                return TaxonomicElement.MIN_SCORE;
             if (e1 != null && e2 == null)
-                return Integer.MAX_VALUE;
+                return TaxonomicElement.MAX_SCORE;
             int o1 = e1.getScore();
             int o2 = e2.getScore();
             try {
                 return Math.subtractExact(o1, o2);
             } catch (Exception ex) {
                 if (o1 > o2)
-                    return Integer.MAX_VALUE;
+                    return TaxonomicElement.MAX_SCORE;
                 if (o2 > o1)
-                    return Integer.MIN_VALUE;
+                    return TaxonomicElement.MIN_SCORE;
                 return 0; // Shouldn't need to return this
             }
         }
@@ -88,6 +89,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             DwcTerm.specificEpithet,
             DwcTerm.infraspecificEpithet
     );
+    /** The ranks corresponding to {@link #CLASSIFICATION_FIELDS}. The two lists must correspond. */
     protected static final List<RankType> CLASSIFICATION_RANKS = Arrays.asList(
             RankType.KINGDOM,
             RankType.PHYLUM,
@@ -186,11 +188,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             String parentNameUsageID,
             String acceptedNameUsage,
             String acceptedNameUsageID,
-            Map<Term, Optional<String>> classification) {
+            @Nullable Map<Term, Optional<String>> classification) {
         this.taxonID = taxonID;
         this.code = code;
         this.verbatimNomenclaturalCode = verbatimNomenclaturalCode;
-        this.provider = provider;
+        this.provider = Objects.requireNonNull(provider);
         this.scientificName = scientificName;
         this.scientificNameAuthorship = scientificNameAuthorship;
         this.year = year;
@@ -591,12 +593,14 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     /**
      * Find the resolved parent, one step at a time
      *
-     * @param original The orignal instance
+     * @param original The original instance
      * @param steps The number of steps allowed in resolution
-     * @param trace The trace of steps (null for none)
+     * @param trace The trace of steps (null not to keep a record of the resolved parents)
      * @param exception Throw an exception if a loop is detected, otherwise return null
      *
      * @return The resolved parent or null for none
+     *
+     * @throws ResolutionException if parent resolution fails (usually via a loop of parents)
      */
     private TaxonConceptInstance getResolvedParent(TaxonConceptInstance original, int steps, @Nullable List<TaxonomicElement> trace, boolean exception) {
         if (steps <= 0) {
@@ -620,7 +624,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         }
         if (trace != null)
             trace.add(parent);
-        if (parent == null || !parent.isForbidden())
+        if (parent == null || !parent.isForbidden()) // Forbidden parents are still in the taxonomy but we want to avoid them and bump up to the next level
             return parent;
         return parent.getResolvedParent(original, steps - 1, trace, exception);
     }
@@ -628,7 +632,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     /**
      * Get the completely resolved, accepted taxon concept instance for this instance.
      *
-     * @return The final accepted instance
+     * @return The final accepted instance (this should not be null, as an instance should at least resolve to itself)
      */
     public TaxonConceptInstance getResolvedAccepted() {
         return this.getResolvedAccepted(this, MAX_RESOLUTION_STEPS, null, true);
@@ -649,12 +653,14 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     /**
      * Trace the accepted taxon, one step at a time
      *
-     * @param original The intiial instance
+     * @param original The initial instance
      * @param steps The number of resolution steps allowed
-     * @param trace An accuulating trace of steps (may be null)
+     * @param trace An accumulating trace of steps (may be null in which case the trace is not collected)
      * @param exception Throw an exceptioon if a loop is detected, otherwise the original is returned
      *
      * @return The accepted taxon concept instance
+     *
+     * @throws ResolutionException if parent resolution fails (usually via a resolution loop)
      */
     private TaxonConceptInstance getResolvedAccepted(TaxonConceptInstance original, int steps, @Nullable List<TaxonomicElement> trace, boolean exception) {
         if (steps <= 0) {
@@ -663,6 +669,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             return original;
         }
         TaxonConceptInstance resolved = this.getResolved(original, steps - 1);
+        if (resolved == null) {
+            if (exception)
+                throw new ResolutionException("Detected dangling resolution resolving accepted " + original, trace);
+            return original;
+        }
         TaxonomicElement ae = resolved.getAccepted();
         if (ae == null || ae == resolved)
             return resolved;
@@ -735,6 +746,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      *
      * @throws IndexBuilderException If unable to make a link, usually due to a broken reference
      */
+    // If you plan to change this, it is called by a parallel stream, so consisder thread safety
+    // At the moment, this fills out inferred information only
     public void resolveLinks(Taxonomy taxonomy) throws IndexBuilderException {
         if (this.parentNameUsageID != null) {
             this.parent = taxonomy.getInstance(this.parentNameUsageID);
@@ -802,7 +815,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      *
      * @return The taxon map
      *
-     * @throws IOException if unable to retrive source documents
+     * @throws IOException if unable to retrieve source documents
      */
     public Map<Term,String> getTaxonMap(Taxonomy taxonomy) throws IOException {
         List<Map<Term, String>> valuesList = taxonomy.getIndexValues(DwcTerm.Taxon, this.taxonID);
@@ -1011,6 +1024,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      *
      * @return True if the scientific name is valid
      */
+    // If you plan to change this, it is called by a parallel stream, so consisder thread safety
     @Override
     public boolean validate(Taxonomy taxonomy) {
         boolean valid = true;

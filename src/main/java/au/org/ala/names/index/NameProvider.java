@@ -324,7 +324,7 @@ public class NameProvider {
             return specific;
         if (this.parent != null)
             specific = this.parent.getSpecificScore(name);
-        return specific;
+        return Math.max(TaxonomicElement.MIN_SCORE, Math.min(TaxonomicElement.MAX_SCORE, specific));
     }
 
     /**
@@ -343,7 +343,9 @@ public class NameProvider {
         if (specific != null)
             return specific;
         TaxonConceptInstance p = instance.getParent() == null ? null : instance.getParent().getRepresentative();
-        return p != null ? p.getBaseScore(original) : this.getDefaultScore();
+        int score = p != null ? p.getBaseScore(original) : this.getDefaultScore();
+        return Math.max(TaxonomicElement.MIN_SCORE, Math.min(TaxonomicElement.MAX_SCORE, score));
+
     }
 
     /**
@@ -351,6 +353,8 @@ public class NameProvider {
      * <p>
      * We start with the base score and apply adjustments based on the taxonomic status,
      * nomenclatural status, etc.
+     * If the provider "owns" the instance, then it gets the maximum possible score, ensuring that it is selected.
+     * Similarly, if the instance is forbidden then it gets the mimimum possible score, ensuring that anything else will be preferred.
      * </p>
      *
      * @param instance The instance
@@ -359,11 +363,12 @@ public class NameProvider {
      */
     public int computeScore(TaxonConceptInstance instance) {
         if (this.owns(instance.getScientificName()))
-            return Integer.MAX_VALUE;
+            return TaxonomicElement.MAX_SCORE;
         if (instance.isForbidden())
-            return Integer.MIN_VALUE;
+            return TaxonomicElement.MIN_SCORE;
         int score = instance.getBaseScore();
-        return this.adjustScore(score, instance);
+        score = this.adjustScore(score, instance);
+        return Math.max(TaxonomicElement.MIN_SCORE, Math.min(TaxonomicElement.MAX_SCORE, score));
     }
 
     /**

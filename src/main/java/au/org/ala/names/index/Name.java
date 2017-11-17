@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 abstract public class Name<T extends TaxonomicElement, C extends TaxonomicElement, E extends TaxonomicElement> extends TaxonomicElement<T, C> {
     /** The name key */
     private NameKey key;
-    /** The map of concepts contained by the name */
+    /** The list of concepts contained by the name */
     private List<E> concepts;
     /** The keyed map of concepts */
     private Map<NameKey, E> conceptMap;
@@ -114,7 +114,7 @@ abstract public class Name<T extends TaxonomicElement, C extends TaxonomicElemen
      */
     @Override
     public int getPrincipalScore() {
-        return this.principal != null ? this.principal.getPrincipalScore() : Integer.MIN_VALUE;
+        return this.principal != null ? this.principal.getPrincipalScore() : TaxonomicElement.MIN_SCORE;
     }
 
     /**
@@ -124,13 +124,13 @@ abstract public class Name<T extends TaxonomicElement, C extends TaxonomicElemen
      */
     @Override
     public int getProviderScore() {
-        return this.principal != null ? this.principal.getProviderScore() : Integer.MIN_VALUE;
+        return this.principal != null ? this.principal.getProviderScore() : TaxonomicElement.MIN_SCORE;
     }
 
     /**
-     * Create a new concept for this instnance key.
+     * Create a new concept for this instance key.
      *
-     * @param stageKey The key for the stage
+     * @param stageKey The key for the stage. See {@link #buildStageKey(NameKey)}
      *
      * @return The new concept
      */
@@ -165,6 +165,10 @@ abstract public class Name<T extends TaxonomicElement, C extends TaxonomicElemen
 
     /**
      * Create a key for this stage.
+     * <p>
+     * A stage is a point in attempting to match a taxon concept, eg. without author, without rank, without nomenclatural code, ...
+     * The stange key is a name key with the unavailble information stripped out.
+     * </p>
      *
      * @param instanceKey
      *
@@ -244,8 +248,6 @@ abstract public class Name<T extends TaxonomicElement, C extends TaxonomicElemen
      *
      * @param taxonomy
      * @param principal
-     *
-     * @return True if the
      */
     protected abstract void reallocateDanglingConcepts(Taxonomy taxonomy, E principal);
 
@@ -257,7 +259,7 @@ abstract public class Name<T extends TaxonomicElement, C extends TaxonomicElemen
      *
      * @param taxonomy The resolving taxonomy.
      *
-     * @return
+     * @return The principal element
      */
     protected abstract E findPrincipal(Taxonomy taxonomy);
 

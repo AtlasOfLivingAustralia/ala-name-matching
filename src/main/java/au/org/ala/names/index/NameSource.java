@@ -1,6 +1,7 @@
 package au.org.ala.names.index;
 
 import au.org.ala.vocab.ALATerm;
+import com.google.common.io.Files;
 import org.apache.commons.collections.MapUtils;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.api.model.registry.Contact;
@@ -8,6 +9,10 @@ import org.gbif.api.vocabulary.Country;
 import org.gbif.dwc.terms.*;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -314,10 +319,11 @@ abstract public class NameSource {
     /**
      * Create a name source
      * <p>
-     * The name source
+     * The name source can either be a simple CSV file or a directory containing
+     * a Darwin Core Archive.
      * </p>
      *
-     * @param f The file name
+     * @param f The file path
      *
      * @return A name source
      *
@@ -332,7 +338,7 @@ abstract public class NameSource {
             if (nf.isDirectory())
                 ns = new DwcaNameSource(nf);
             else
-                ns = new CSVNameSource(new InputStreamReader(new FileInputStream(nf), "UTF-8"));
+                ns = new CSVNameSource(Files.newReader(nf, Charset.forName("UTF-8")));
             ns.validate();
             return ns;
         } catch (IOException ex) {

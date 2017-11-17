@@ -11,6 +11,7 @@ public interface Reporter {
      * Add a report.
      * <p>
      * Message codes are retrieved using a message bundle pointing to <code>taxonomy.properties</code>
+     * Arguments are arbitrary strings and are not given specific meanings as in {@link #report(IssueType, String, TaxonomicElement[])}.
      * </p>
      *
      * @param type The type of report

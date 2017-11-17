@@ -96,7 +96,7 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
             return coded.get(0);
         }
         taxonomy.report(IssueType.COLLISION, "uncodedScientificName.collision", this,coded.get(0), coded.get(1));
-        final int score = coded.stream().mapToInt(UnrankedScientificName::getPrincipalScore).max().orElse(Integer.MIN_VALUE);
+        final int score = coded.stream().mapToInt(UnrankedScientificName::getPrincipalScore).max().orElse(TaxonomicElement.MIN_SCORE);
         List<UnrankedScientificName> candidates = coded.stream().filter(sn -> sn.getPrincipalScore() == score).collect(Collectors.toList());
         if (candidates.size() > 1)
             taxonomy.report(IssueType.PROBLEM, "uncodedScientificName.collision.match", this, candidates.get(0), candidates.get(1));
