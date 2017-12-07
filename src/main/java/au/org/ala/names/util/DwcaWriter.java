@@ -31,7 +31,7 @@ import java.util.*;
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
-public class DwcaWriter {
+public class DwcaWriter implements AutoCloseable {
     private Logger log = LoggerFactory.getLogger(DwcaWriter.class);
     private final File dir;
     private final boolean useHeaders;
@@ -209,7 +209,7 @@ public class DwcaWriter {
 
         List<Term> coreTerms = terms.get(coreRowType);
         if (!coreTerms.contains(term)) {
-            if (useHeaders && recordNum>1){
+            if (recordNum>1){
                 throw new IllegalStateException("You cannot add new terms after the first row when headers are enabled");
             }
             coreTerms.add(term);
@@ -269,7 +269,7 @@ public class DwcaWriter {
         final boolean isFirst = knownTerms.isEmpty();
         for (Term term : row.keySet()) {
             if (!knownTerms.contains(term)) {
-                if (useHeaders && !isFirst){
+                if (!isFirst){
                     throw new IllegalStateException("You cannot add new terms after the first row when headers are enabled");
                 }
                 knownTerms.add(term);
@@ -321,16 +321,23 @@ public class DwcaWriter {
     /**
      * Writes meta.xml and eml.xml to the archive and closes tab writers.
      */
+    @Override
     public void close() throws IOException {
-        addEml();
-        addMeta();
-        // flush last record
-        flushLastCoreRecord();
-        // TODO: add missing columns in second iteration of data files
+        try {
+            addEml();
+            addMeta();
+            // flush last record
+            flushLastCoreRecord();
+            // TODO: add missing columns in second iteration of data files
 
-        // close writers
-        for (TabWriter w : writers.values()) {
-            w.close();
+         } finally {
+            for (TabWriter w : writers.values()) {
+                try {
+                    w.close();
+                } catch (Exception ex) {
+                    log.error("Unable to close writer " + w, ex);
+                }
+            }
         }
     }
 

@@ -79,7 +79,7 @@ public class ALATaxonResolver implements TaxonResolver {
      *     <ol>
      *         <li>If there is a principal accepted taxon for the same taxon concept, then choose that one</li>
      *         <li>If there is a principal accepted taxon for the same scientific name, then choose that one</li>
-     *         <li>If there are any principal accepted taxa then choose the lub of those taxa</li>
+     *         <li>If there are any principal accepted taxa then choose the lub (least upper bound) of those taxa</li>
      *         <li>If there are any principal synonym taxa then choose the lub of those taxa</li>
      *         <li>Otherwise, add this as a non-principal</li>
      *     </ol>
@@ -107,6 +107,12 @@ public class ALATaxonResolver implements TaxonResolver {
      *     </ol>
      *     </li>
      * </ul>
+     * <p>
+     *     Note that resoution can be non-deterministic if ther resolution starts with multiple
+     *     principals with the same score. If that is the case, then the choice is abitrary.
+     *     If it's not, then the scores should be adjusted.
+     *     See {@link #principals(TaxonConcept, Collection)} for principal selection.
+     * </p>
      *
      * @param instance The instance to resolve
      * @param resolution The current resolution

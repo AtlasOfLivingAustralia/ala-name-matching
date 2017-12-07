@@ -1,5 +1,7 @@
 package au.org.ala.names.index;
 
+import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -11,18 +13,18 @@ import java.util.List;
 public class ResolutionException extends IndexBuilderException {
     private List<TaxonomicElement> trace;
 
-    public ResolutionException(String message, List<TaxonomicElement> trace) {
+    public ResolutionException(String message, @Nullable List<TaxonomicElement> trace) {
         super(message);
         this.trace = trace;
     }
 
-    public ResolutionException(String message, Throwable cause, List<TaxonomicElement> trace) {
+    public ResolutionException(String message, Throwable cause, @Nullable List<TaxonomicElement> trace) {
         super(message, cause);
         this.trace = trace;
     }
 
     public ResolutionException(String message) {
-        this(message, (List<TaxonomicElement>) null);
+        super(message);
     }
 
     public ResolutionException(String message, Throwable cause) {

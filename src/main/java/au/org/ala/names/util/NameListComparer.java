@@ -10,8 +10,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Compare a list of existing names with what the index comes up with an produce a report.
@@ -23,10 +22,26 @@ import java.util.Map;
 public class NameListComparer {
     private static Log log = LogFactory.getLog(NameListComparer.class);
 
+    private static String[][] TERMS = {
+            { "originalId", "Species", "taxonConceptID", "taxon_concept_lsid", "taxonID" },
+            { "originalScientificName", "Species Name", "scientificName", "raw_taxon_name" },
+            { "originalScientificNameAuthorship", "Scientific Name Authorship", "scientificNameAuthorship" },
+            { "originalRank", "Taxon Rank", "taxonRank", "rank", "taxonomicRank" },
+            { "originalKingdom", "Kingdom", "kingdom" },
+            { "originalPhylum",  "Phylum", "phylum" },
+            { "originalClass", "Class", "class", "class_", "_class" },
+            { "originalOrder", "Order", "order" },
+            { "originalFamily", "Family", "family" },
+            { "originalGenus", "Genus", "genus" },
+            { "originalVernacular", "Vernacular Name", "raw_common_name", "vernacularName" }
+    };
+
     private CSVReader names;
     private CSVWriter output;
     private ALANameSearcher searcher;
     private Map<String, Integer> columnMap;
+    private Map<String, Integer> termMap;
+    private List<String> additional;
 
     public NameListComparer(Reader names, Writer output, File index, boolean tabs) throws IOException {
         this.names = new CSVReader(names, tabs ? '\t' : ',');
@@ -34,14 +49,25 @@ public class NameListComparer {
         this.searcher = new ALANameSearcher(index.getAbsolutePath());
     }
 
-    protected String getColumn(String[] row, String... columns) {
-        for (String column: columns) {
-            Integer pos = this.columnMap.get(column);
-            if (pos != null && pos.intValue() < row.length) {
-                String value = row[pos.intValue()];
+    protected String getColumn(String[] row, String column) {
+        Integer pos = this.termMap.get(column);
 
-                return StringUtils.isBlank(value) ? null : value;
-            }
+        if (pos == null)
+            pos = columnMap.get(column);
+        if (pos != null && pos.intValue() < row.length) {
+            String value = row[pos.intValue()];
+
+            return StringUtils.isBlank(value) ? null : value;
+        }
+        return null;
+    }
+
+    protected String mapTerm(String column) {
+        for (String[] term: TERMS) {
+            String original = term[0];
+            for (int i = 1; i < term.length; i++)
+                if (column.equals(term[i]))
+                    return original;
         }
         return null;
     }
@@ -51,14 +77,24 @@ public class NameListComparer {
         int i = 0;
 
         this.columnMap = new HashMap<String, Integer>();
+        this.termMap = new HashMap<String, Integer>();
+        this.additional = new ArrayList<>();
         for (String column: header) {
+            column = column.trim();
             this.columnMap.put(column, i);
+            String original = mapTerm(column);
+            if (original != null)
+                termMap.put(original, i);
+            else
+                additional.add(column);
             i++;
         }
     }
 
     protected void writeHeader() throws IOException {
-        this.output.writeNext(new String[] {
+        // Basic required columns
+        List<String> columns = new ArrayList<>();
+        columns.addAll(Arrays.asList(
                 "originalId",
                 "id",
                 "acceptedId",
@@ -84,24 +120,25 @@ public class NameListComparer {
                 "species",
                 "originalVernacular",
                 "errors"
-        });
-
+        ));
+        columns.addAll(additional);
+        this.output.writeNext(columns.toArray(new String[columns.size()]));
     }
 
     public String[] match(String[] row) {
         MetricsResultDTO metrics = null;
         NameSearchResult nsr = null;
-        String originalId = this.getColumn(row, "Species", "taxonConceptID", "taxon_concept_lsid", "taxonID");
-        String originalScientificName = this.getColumn(row, "Species Name", "scientificName", "raw_taxon_name");
-        String originalScientificNameAuthorship = this.getColumn(row, "Scientific Name Authorship", "scientificNameAuthorship");
-        String originalRank = this.getColumn(row, "Taxon Rank", "rank", "taxonomicRank");
-        String originalKingdom = this.getColumn(row, "Kingdom", "kingdom");
-        String originalPhylum = this.getColumn(row, "Phylum", "phylum");
-        String originalClass = this.getColumn(row, "Class", "class", "class_");
-        String originalOrder = this.getColumn(row, "Order", "order");
-        String originalFamily = this.getColumn(row, "Family", "family");
-        String originalGenus = this.getColumn(row, "Genus", "genus");
-        String originalVernacular = this.getColumn(row, "Vernacular Name", "raw_common_name", "vernacularName");
+        String originalId = this.getColumn(row, "originalId");
+        String originalScientificName = this.getColumn(row, "originalScientificName");
+        String originalScientificNameAuthorship = this.getColumn(row, "originalScientificNameAuthorship");
+        String originalRank = this.getColumn(row, "originalRank");
+        String originalKingdom = this.getColumn(row, "originalKingdom");
+        String originalPhylum = this.getColumn(row, "originalPhylum");
+        String originalClass = this.getColumn(row, "originalClass");
+        String originalOrder = this.getColumn(row, "originalOrder");
+        String originalFamily = this.getColumn(row, "originalFamily");
+        String originalGenus = this.getColumn(row, "originalGenus");
+        String originalVernacular = this.getColumn(row, "originalVernacularName");
         String id = null;
         String acceptedId = null;
         String matchType = null;
@@ -160,7 +197,8 @@ public class NameListComparer {
             errors = errors + " exception:" + ex.getClass();
             log.error("Really bad exception " + ex);
         }
-        return new String[] {
+        List<String> values = new ArrayList<>(additional.size() + 30);
+        values.addAll(Arrays.asList(
                 originalId,
                 id,
                 acceptedId,
@@ -186,7 +224,10 @@ public class NameListComparer {
                 species,
                 originalVernacular,
                 errors.trim()
-        };
+        ));
+        for (String column: additional)
+            values.add(this.getColumn(row, column));
+        return values.toArray(new String[values.size()]);
     }
 
     public void compare() throws IOException {

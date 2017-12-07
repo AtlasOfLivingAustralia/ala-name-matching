@@ -10,9 +10,21 @@ import java.util.stream.Collectors;
 /**
  * A scientific name.
  * <p>
- * Scientific names are unique across nomenclatural codes.
+ * Scientific names are expected to be unique in a single nomenclatural code.
  * They can have numerous taxon concepts attached to them.
  * </p>
+ * <p>
+ * Different nomenclatural codes can have the same scientific name.
+ * These are known as <em>homonyms</em>.
+ * Generally, homonyms are kept separate during processing by code and during name matching
+ * by using higher-order taxonomy, such as kingdom, to distingush between them.
+ * </p>
+ * <p>
+ * In very rare cases, a code has ended up with intra-code homonyms where the same name appears
+ * almost simultaneously and nobody has put in the effort to sort things out.
+ * These cases are not handled correctly at the moment and tend to be squelched together.
+ * </p>
+ *
  *
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright (c) 2017 CSIRO
@@ -110,7 +122,7 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
         if (authored.size() == 1)
             return authored.get(0);
         taxonomy.report(IssueType.COLLISION, "scientificName.collision", this, authored.get(0), authored.get(1));
-        final int score = authored.stream().mapToInt(TaxonConcept::getPrincipalScore).max().orElse(Integer.MIN_VALUE);
+        final int score = authored.stream().mapToInt(TaxonConcept::getPrincipalScore).max().orElse(TaxonomicElement.MIN_SCORE);
         List<TaxonConcept> candidates = authored.stream().filter(tc -> tc.getPrincipalScore() == score).collect(Collectors.toList());
         if (candidates.size() > 1)
             taxonomy.report(IssueType.PROBLEM, "scientificName.collision.match", this, candidates.get(0), candidates.get(1));
@@ -118,15 +130,15 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
      }
 
     /**
-     * Reallocate authorless or unowned taxon concepts to the principal.
+     * Reallocate authorless or unowned taxon concepts to the principal and add inferred synonyms for authored taxon concepts.
      *
      * @param taxonomy The taxonomy
      * @param principal The principal concept
      */
     @Override
     protected void reallocateDanglingConcepts(Taxonomy taxonomy, TaxonConcept principal) {
-        List<TaxonConcept> accepted = this.getConcepts().stream().filter(tc -> tc.isFormal() && tc.hasAccepted()).collect(Collectors.toList());
         if (principal != null) {
+            List<TaxonConcept> accepted = this.getConcepts().stream().filter(tc -> tc.isFormal() && tc.hasAccepted()).collect(Collectors.toList());
             List<TaxonConcept> reallocated = new ArrayList<>();
             boolean owned = principal.isOwned();
             for (TaxonConcept tc : accepted)

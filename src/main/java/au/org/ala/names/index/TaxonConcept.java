@@ -127,12 +127,15 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
         TaxonResolver resolver = taxonomy.getResolver();
         List<TaxonConceptInstance> principals = resolver.principals(this, this.instances);
         this.resolution = resolver.resolve(this, principals, this.instances);
-        Map<TaxonConceptInstance, TaxonConceptInstance> resolution = new HashMap<>(this.instances.size());
         taxonomy.count("count.resolve.taxonConcept");
     }
 
     /**
      * Reallocate the elements of another taxon concept to this taxon concept.
+     * <p>
+     * At the end of this reallocation, the element will contain no instances, since they have all
+     * migrated into this concept.
+     * </p>
      *
      * @param element The element to reallocate
      * @param taxonomy The resolving taxonomy
@@ -143,7 +146,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
         taxonomy.count("count.reallocate.taxonConcept");
         TaxonConceptInstance representative = this.getRepresentative();
         if (representative == null || this.resolution == null)
-            throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without representative or resolution");
+            throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without representative and resolution");
         element.resolution = new TaxonResolution();
         for (TaxonConceptInstance tci: element.instances) {
             tci.setContainer(this);
@@ -358,7 +361,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     public int getPrincipalScore() {
         TaxonConceptInstance representative = this.getRepresentative();
 
-        return representative != null ? representative.getPrincipalScore() : Integer.MIN_VALUE;
+        return representative != null ? representative.getPrincipalScore() : TaxonomicElement.MIN_SCORE;
     }
 
     /**
@@ -370,7 +373,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     public int getProviderScore() {
         TaxonConceptInstance representative = this.getRepresentative();
 
-        return representative != null ? representative.getProviderScore() : Integer.MIN_VALUE;
+        return representative != null ? representative.getProviderScore() : TaxonomicElement.MIN_SCORE;
     }
 
     /**

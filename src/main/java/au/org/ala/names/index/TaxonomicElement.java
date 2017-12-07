@@ -14,6 +14,11 @@ import java.util.Comparator;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
 abstract public class TaxonomicElement<T extends TaxonomicElement, C extends TaxonomicElement> {
+    /** The maximum possible score a taxonomic element can have. Limited to avoid problems with arithmetic */
+    public static final int MAX_SCORE = 1000000;
+    /** The minimum possible score a taxonomic element can have. Limited to avoid problems with arithmetic */
+    public static final int MIN_SCORE = -1000000;
+
     /** The provider score comparator, which also handles over/underflow */
     public static final Comparator<TaxonomicElement> PROVIDER_SCORE_COMPARATOR = new Comparator<TaxonomicElement>() {
         @Override
@@ -21,18 +26,18 @@ abstract public class TaxonomicElement<T extends TaxonomicElement, C extends Tax
             if (e1 == null && e2 == null)
                 return 0;
             if (e1 == null && e2 != null)
-                return Integer.MIN_VALUE;
+                return TaxonomicElement.MIN_SCORE;
             if (e1 != null && e2 == null)
-                return Integer.MAX_VALUE;
+                return TaxonomicElement.MAX_SCORE;
             int o1 = e1.getProviderScore();
             int o2 = e2.getProviderScore();
             try {
                 return Math.subtractExact(o1, o2);
             } catch (Exception ex) {
                 if (o1 > o2)
-                    return Integer.MAX_VALUE;
+                    return TaxonomicElement.MAX_SCORE;
                 if (o2 > o1)
-                    return Integer.MIN_VALUE;
+                    return TaxonomicElement.MIN_SCORE;
                 return 0; // Shouldn't need to return this
             }
         }
@@ -48,18 +53,18 @@ abstract public class TaxonomicElement<T extends TaxonomicElement, C extends Tax
             if (e1 == null && e2 == null)
                 return 0;
             if (e1 == null && e2 != null)
-                return Integer.MIN_VALUE;
+                return TaxonomicElement.MIN_SCORE;
             if (e1 != null && e2 == null)
-                return Integer.MAX_VALUE;
+                return TaxonomicElement.MAX_SCORE;
             int o1 = e1.getPrincipalScore();
             int o2 = e2.getPrincipalScore();
             try {
                 return Math.subtractExact(o1, o2);
             } catch (Exception ex) {
                 if (o1 > o2)
-                    return Integer.MAX_VALUE;
+                    return TaxonomicElement.MAX_SCORE;
                 if (o2 > o1)
-                    return Integer.MIN_VALUE;
+                    return TaxonomicElement.MIN_SCORE;
                 return 0; // Shouldn't need to return this
             }
         }

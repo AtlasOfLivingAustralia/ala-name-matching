@@ -4,13 +4,11 @@ import au.org.ala.names.index.NameProvider;
 import au.org.ala.names.index.TaxonConceptInstance;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
+import org.apache.commons.io.IOUtils;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.Rank;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 
 /**
  * Handy test utilities.
@@ -31,20 +29,11 @@ public class TestUtils {
      * @throws IOException If unable to read the resource
      */
     public String loadResource(String path) throws IOException {
-        Reader reader = this.resourceReader(path);
-        StringBuffer sb = new StringBuffer(1024);
-        char[] buffer = new char[1024];
-        int n;
-
-        while ((n = reader.read(buffer)) >= 0) {
-            if (n == 0)
-                Thread.yield();
-            else {
-                sb.append(buffer, 0, n);
-            }
+        StringWriter writer = new StringWriter(1024);
+        try (Reader reader = this.resourceReader(path)) {
+            IOUtils.copy(reader, writer);
         }
-        reader.close();
-        return sb.toString();
+        return writer.toString();
     }
 
     public Reader resourceReader(String path) throws IOException {

@@ -1,10 +1,11 @@
 package au.org.ala.names.index;
 
-import au.org.ala.vocab.ALATerm;
 import au.com.bytecode.opencsv.CSVWriter;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
+import au.org.ala.names.util.DwcaWriter;
 import au.org.ala.names.util.FileUtils;
+import au.org.ala.vocab.ALATerm;
 import com.google.common.collect.Maps;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -12,26 +13,36 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
-import org.apache.lucene.index.*;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.*;
-import org.apache.lucene.store.*;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.SimpleFSDirectory;
 import org.apache.lucene.util.Version;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.api.model.registry.Contact;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Identifier;
-import org.gbif.api.vocabulary.*;
-import org.gbif.dwc.terms.*;
+import org.gbif.api.vocabulary.ContactType;
+import org.gbif.api.vocabulary.IdentifierType;
+import org.gbif.api.vocabulary.NomenclaturalCode;
+import org.gbif.api.vocabulary.NomenclaturalStatus;
+import org.gbif.dwc.terms.DcTerm;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
-import au.org.ala.names.util.DwcaWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.text.DateFormat;
 import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -45,7 +56,7 @@ import java.util.stream.Collectors;
  */
 public class Taxonomy implements Reporter {
     private static Logger logger = LoggerFactory.getLogger(Taxonomy.class);
-    private static DateFormat ISO8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+    private static DateTimeFormatter ISO8601 = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     /** How many things to go before giving an update */
     public static int PROGRESS_INTERVAL = 10000;
 
@@ -102,7 +113,7 @@ public class Taxonomy implements Reporter {
     /** The resource bundle for error reporting */
     private ResourceBundle resources;
     /** The progress counts */
-    private Map<String, Integer> counts;
+    private ConcurrentMap<String, AtomicInteger> counts;
     /** The map of terms onto lucene fields */
     private Map<Term, String> fieldNames;
     /** The map of lucene fields to terms */
@@ -165,7 +176,7 @@ public class Taxonomy implements Reporter {
         this.makeWorkArea(work);
         this.indexAnalyzer = new KeywordAnalyzer();
         this.resources = ResourceBundle.getBundle("taxonomy");
-        this.counts = new HashMap<>();
+        this.counts = new ConcurrentHashMap<>();
         this.fieldNames = new HashMap<>();
         this.fieldTerms = new HashMap<>();
         this.sources = new ArrayList<>();
@@ -194,7 +205,7 @@ public class Taxonomy implements Reporter {
         this.makeWorkArea(null);
         this.indexAnalyzer = new KeywordAnalyzer();
         this.resources = ResourceBundle.getBundle("taxonomy");
-        this.counts = new HashMap<>();
+        this.counts = new ConcurrentHashMap<>();
         this.fieldNames = new HashMap<>();
         this.fieldTerms = new HashMap<>();
         this.sources = new ArrayList<>();
@@ -255,15 +266,12 @@ public class Taxonomy implements Reporter {
      *
      * @param type The count type
      */
-    public synchronized void count(String type) {
-       Integer count = this.counts.get(type);
-       if (count == null)
-           count = 0;
-       count++;
-       this.counts.put(type, count);
-       if (COUNT_PROGRESS.contains(type) && count % PROGRESS_INTERVAL == 0) {
+    public void count(String type) {
+       AtomicInteger count = this.counts.computeIfAbsent(type, k -> new AtomicInteger(0));
+       int c = count.incrementAndGet();
+       if (COUNT_PROGRESS.contains(type) && c % PROGRESS_INTERVAL == 0) {
            String message = this.resources.getString(type);
-           message = MessageFormat.format(message, count);
+           message = MessageFormat.format(message, c);
            logger.info(message);
        }
     }
@@ -421,21 +429,21 @@ public class Taxonomy implements Reporter {
     public void resolveTaxon() throws IndexBuilderException {
         logger.info("Resolving taxa");
         final Collection<TaxonConceptInstance> allInstances = this.instances.values();
-        final Set<RankType> rs = allInstances.parallelStream().map(TaxonConceptInstance::getRank).collect(Collectors.toSet());
+        final Set<RankType> rs = allInstances.stream().map(TaxonConceptInstance::getRank).collect(Collectors.toSet());
         List<RankType> ranks = new ArrayList<>(rs);
         Collections.sort(ranks, (r1, r2) -> r1.getSortOrder() - r2.getSortOrder());
         long prevResolved = 0;
         long resolved = 0;
         do {
             for (RankType rank : ranks) {
-                Set<TaxonConcept> concepts = allInstances.parallelStream().filter(instance -> instance.getRank() == rank).map(TaxonConceptInstance::getContainer).collect(Collectors.toSet());
+                Set<TaxonConcept> concepts = allInstances.stream().filter(instance -> instance.getRank() == rank).map(TaxonConceptInstance::getContainer).collect(Collectors.toSet());
                 concepts.parallelStream().forEach(tc -> tc.resolveTaxon(this));
             }
             prevResolved = resolved;
             resolved = allInstances.stream().filter(instance -> instance.isResolved()).count();
             logger.debug("Resolved " + prevResolved + " -> " + resolved);
         } while (resolved != prevResolved);
-        Set<TaxonConcept> unresolvedConcepts = allInstances.parallelStream().map(TaxonConceptInstance::getContainer).filter(tc -> !tc.isResolved()).collect(Collectors.toSet());
+        Set<TaxonConcept> unresolvedConcepts = allInstances.stream().map(TaxonConceptInstance::getContainer).filter(tc -> !tc.isResolved()).collect(Collectors.toSet());
         logger.info("Found " + unresolvedConcepts.size() + " un-resolved concepts");
         unresolvedConcepts.parallelStream().forEach(tc -> { tc.resolveTaxon(this); this.report(IssueType.PROBLEM, "taxonConcept.unresolved", tc); });
         logger.info("Finished resolving taxa");
@@ -793,21 +801,31 @@ public class Taxonomy implements Reporter {
             logger.error("Can't find resource for " + code + " defaulting to code");
             message = code;
         }
-        if (type == IssueType.ERROR || type == IssueType.VALIDATION)
-            logger.error(message);
-        if (type == IssueType.PROBLEM)
-            logger.warn(message);
-        if (type == IssueType.COLLISION)
-            logger.info(message);
-        if (type == IssueType.NOTE || type == IssueType.COUNT)
-            logger.debug(message);
+        switch (type) {
+            case ERROR:
+            case VALIDATION:
+                logger.error(message);
+                break;
+            case PROBLEM:
+                logger.warn(message);
+                break;
+            case COLLISION:
+                logger.info(message);
+                break;
+            case NOTE:
+            case COUNT:
+                logger.debug(message);
+                break;
+            default:
+                logger.warn("Unknown message type " + type + ": " + message);
+        }
         Document doc = new Document();
         doc.add(new StringField("type", ALATerm.TaxonomicIssue.qualifiedName(), Field.Store.YES));
         doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
         doc.add(new StringField(this.fieldName(DcTerm.type), type.name(), Field.Store.YES));
         doc.add(new StringField(this.fieldName(DcTerm.subject), code, Field.Store.YES));
         doc.add(new StringField(this.fieldName(DcTerm.description), message, Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DcTerm.date), ISO8601.format(new Date()), Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DcTerm.date), ISO8601.format(OffsetDateTime.now()), Field.Store.YES));
         try {
             synchronized (this) {
                 this.indexWriter.addDocument(doc);
@@ -870,21 +888,31 @@ public class Taxonomy implements Reporter {
             logger.error("Can't find resource for " + code + " defaulting to code");
             message = code;
         }
-        if (type == IssueType.ERROR || type == IssueType.VALIDATION)
-            logger.error(message);
-        if (type == IssueType.PROBLEM)
-            logger.warn(message);
-        if (type == IssueType.COLLISION)
-            logger.info(message);
-        if (type == IssueType.NOTE)
-            logger.debug(message);
+        switch (type) {
+            case ERROR:
+            case VALIDATION:
+                logger.error(message);
+                break;
+            case PROBLEM:
+                logger.warn(message);
+                break;
+            case COLLISION:
+                logger.info(message);
+                break;
+            case NOTE:
+            case COUNT:
+                logger.debug(message);
+                break;
+            default:
+                logger.warn("Unknown message type " + type + ": " + message);
+        }
         Document doc = new Document();
         doc.add(new StringField("type", ALATerm.TaxonomicIssue.qualifiedName(), Field.Store.YES));
         doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
         doc.add(new StringField(this.fieldName(DcTerm.type), type.name(), Field.Store.YES));
         doc.add(new StringField(this.fieldName(DcTerm.subject), code, Field.Store.YES));
         doc.add(new StringField(this.fieldName(DcTerm.description), message, Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DcTerm.date), ISO8601.format(new Date()), Field.Store.YES));
+        doc.add(new StringField(this.fieldName(DcTerm.date), ISO8601.format(OffsetDateTime.now()), Field.Store.YES));
         doc.add(new StringField(this.fieldName(DwcTerm.taxonID), taxonID, Field.Store.YES));
         doc.add(new StringField(this.fieldName(DwcTerm.scientificName), scientificName, Field.Store.YES));
         doc.add(new StringField(this.fieldName(DwcTerm.scientificNameAuthorship), scientificNameAuthorship, Field.Store.YES));
@@ -912,38 +940,38 @@ public class Taxonomy implements Reporter {
     public void createReport(File report) throws IOException {
         logger.info("Writing report to " + report);
         int pageSize = 100;
-        Writer fw = new OutputStreamWriter(new FileOutputStream(report), "UTF-8");
-        CSVWriter writer = new CSVWriter(fw);
-        List<Term> output = this.outputTerms(ALATerm.TaxonomicIssue);
-        String[] headers = output.stream().map(term -> term.toString()).collect(Collectors.toList()).toArray(new String[output.size()]);
-        writer.writeNext(headers);
-        for (String type: this.counts.keySet()) {
-            String message = this.resources.getString(type);
-            Integer count = this.counts.get(type);
-            message = MessageFormat.format(message, count);
-            logger.info(message);
-            String[] values = new String[] { IssueType.COUNT.name(), type, message, Integer.toString(count) };
-            writer.writeNext(values);
-        }
-        IndexSearcher searcher = this.searcherManager.acquire();
-        try {
-            Query query = new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.TaxonomicIssue.qualifiedName()));
-            TopDocs docs = searcher.search(query, pageSize);
-            ScoreDoc last = null;
-            while (docs.scoreDocs.length > 0) {
-                for (ScoreDoc sd : docs.scoreDocs) {
-                    last = sd;
-                    Document doc = searcher.doc(sd.doc);
-                    String[] values = output.stream().map(term -> doc.get(this.fieldName(term))).collect(Collectors.toList()).toArray(new String[output.size()]);
-                    writer.writeNext(values);
-                    this.count("count.write.report");
-                }
-                docs = searcher.searchAfter(last, query, pageSize);
+        try (Writer fw = new OutputStreamWriter(new FileOutputStream(report), "UTF-8")) {
+            CSVWriter writer = new CSVWriter(fw);
+            List<Term> output = this.outputTerms(ALATerm.TaxonomicIssue);
+            String[] headers = output.stream().map(term -> term.toString()).collect(Collectors.toList()).toArray(new String[output.size()]);
+            writer.writeNext(headers);
+            for (String type : this.counts.keySet()) {
+                String message = this.resources.getString(type);
+                AtomicInteger count = this.counts.getOrDefault(type, new AtomicInteger(0));
+                message = MessageFormat.format(message, count.intValue());
+                logger.info(message);
+                String[] values = new String[]{IssueType.COUNT.name(), type, message, count.toString()};
+                writer.writeNext(values);
             }
-        } finally {
-            this.searcherManager.release(searcher);
+            IndexSearcher searcher = this.searcherManager.acquire();
+            try {
+                Query query = new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.TaxonomicIssue.qualifiedName()));
+                TopDocs docs = searcher.search(query, pageSize);
+                ScoreDoc last = null;
+                while (docs.scoreDocs.length > 0) {
+                    for (ScoreDoc sd : docs.scoreDocs) {
+                        last = sd;
+                        Document doc = searcher.doc(sd.doc);
+                        String[] values = output.stream().map(term -> doc.get(this.fieldName(term))).collect(Collectors.toList()).toArray(new String[output.size()]);
+                        writer.writeNext(values);
+                        this.count("count.write.report");
+                    }
+                    docs = searcher.searchAfter(last, query, pageSize);
+                }
+            } finally {
+                this.searcherManager.release(searcher);
+            }
         }
-        writer.close();
         logger.info("Finished creating report");
     }
 

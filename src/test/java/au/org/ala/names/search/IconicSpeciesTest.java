@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
  *
  * @author Natasha
  */
-@Ignore
 public class IconicSpeciesTest {
 
     static ALANameSearcher searcher;
@@ -96,16 +95,13 @@ public class IconicSpeciesTest {
     @Test
     public void testIconicSpeciesFile() {
         try {
-
-
             CSVReader reader = new CSVReader(new InputStreamReader(this.getClass().getResourceAsStream("iconic_species_list.csv")), ',', '"');
-            //cycle through all the test cases
-            String[] values = reader.readNext();
-            //fail("Testing");
-
+            String[] values;
             int passed = 0, failed = 0;
-            while (values != null) {
-                if (values.length >= 11 && !values[1].equals("Common name")) {
+
+            values = reader.readNext(); // Read header
+            while ((values = reader.readNext()) != null) {
+                if (values.length >= 11 && !values[1].equals("Common name")) { // Skip category information
                     //System.out.println("Processing " + values.length + " : " + values[0]);
                     String commonName = values[1];
                     String kingdom = StringUtils.trimToNull(values[3]);
@@ -129,11 +125,13 @@ public class IconicSpeciesTest {
                         classification.setScientificName(search);
                     }
 
-//                   
-
                     try {
-                        NameSearchResult result = searcher.searchForRecord(search, classification, null, true);
-
+                        NameSearchResult result = null;
+                        try {
+                            result = searcher.searchForRecord(search, classification, null, true);
+                        } catch (MisappliedException e) {
+                            result = e.getMatchedResult();
+                        }
                         //assertNotNull(search + " could not be found" ,guid);
                         if (result == null) {
                             System.err.println(search + "(" + commonName + ") could not be found in index");
@@ -148,7 +146,7 @@ public class IconicSpeciesTest {
                             if (result.isSynonym())
                                 result = searcher.searchForRecordByLsid(result.getAcceptedLsid());
                             //test to see if the classification matches
-                            if (!classification.hasIdenticalClassification(result.getRankClassification(), RankType.GENUS)) {
+                            if (!classification.hasIdenticalClassification(result.getRankClassification(), RankType.GENUS) && result.getRankClassification().getGenus() != null) {
 
                                 failed++;
                                 //System.err.println(search + "("+commonName+") classification: "+ classification + " does not match " + result.getRankClassification());
@@ -162,15 +160,12 @@ public class IconicSpeciesTest {
                         //                System.out.println(commonName + " GUID: " + guid);
                     } catch (SearchResultException e) {
                         failed++;
-                        System.err.println("Searching for: " + search + "(" + commonName + ") caused an exception");
-
-                        //fail("Searching for : "+search + " caused an exception");
+                        System.err.println("Searching for: " + search + "(" + commonName + ") caused an exception: " + e.getMessage());
                     }
                 }
-                values = reader.readNext();
             }
-            System.out.println("Total names tested: " + (failed + passed) + " passed: " + passed);
-            if (failed > 40)
+            System.out.println("Total names tested: " + (failed + passed) + " passed: " + passed + " failed: " + failed);
+            if (failed > 0)
                 fail("Test failed.  See other error messaged for details.");
         } catch (Exception e) {
             e.printStackTrace();

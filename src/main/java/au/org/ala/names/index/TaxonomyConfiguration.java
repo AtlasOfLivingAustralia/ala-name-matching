@@ -133,8 +133,7 @@ public class TaxonomyConfiguration {
         }
         if (this.contact.getOrganization() != null) {
             if (sb.length() > 0)
-                sb.append(",");
-            sb.append(" ");
+                sb.append(", ");
             sb.append(this.contact.getOrganization());
         }
         return sb.toString().trim();
