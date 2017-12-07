@@ -324,7 +324,7 @@ public class NameProvider {
             return specific;
         if (this.parent != null)
             specific = this.parent.getSpecificScore(name);
-        return Math.max(TaxonomicElement.MIN_SCORE, Math.min(TaxonomicElement.MAX_SCORE, specific));
+        return specific == null ? null : Math.max(TaxonomicElement.MIN_SCORE, Math.min(TaxonomicElement.MAX_SCORE, specific));
     }
 
     /**
