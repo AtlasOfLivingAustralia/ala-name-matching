@@ -16,7 +16,6 @@ package au.org.ala.names.search;
 
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
-import au.org.ala.names.parser.PhraseNameParser;
 import au.org.ala.names.util.CleanedScientificName;
 import au.org.ala.names.util.TaxonNameSoundEx;
 import org.apache.commons.io.FileUtils;
@@ -32,10 +31,11 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
-import org.gbif.ecat.model.ParsedName;
-import org.gbif.ecat.parser.UnparsableException;
-import org.gbif.ecat.voc.NameType;
-import org.gbif.ecat.voc.Rank;
+import org.gbif.api.exception.UnparsableException;
+import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.api.vocabulary.NameType;
+import org.gbif.api.vocabulary.Rank;
+import org.gbif.nameparser.PhraseNameParser;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -72,12 +72,12 @@ import java.util.regex.Pattern;
 public class ALANameSearcher {
 
     protected Log log = LogFactory.getLog(ALANameSearcher.class);
-    private DirectoryReader cbReader, irmngReader, vernReader;
+    protected DirectoryReader cbReader, irmngReader, vernReader;
     protected IndexSearcher cbSearcher, irmngSearcher, vernSearcher, idSearcher;
-    private ThreadLocal<QueryParser> queryParser;
-    private ThreadLocal<QueryParser> idParser;
+    protected ThreadLocal<QueryParser> queryParser;
+    protected ThreadLocal<QueryParser> idParser;
     protected TaxonNameSoundEx tnse;
-    private PhraseNameParser parser;
+    protected PhraseNameParser parser;
     public static final Pattern virusStopPattern = Pattern.compile(" virus| ictv| ICTV");
     public static final Pattern voucherRemovePattern = Pattern.compile(" |,|&|\\.");
     public static final Pattern affPattern = Pattern.compile("([\\x00-\\x7F\\s]*) aff[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
@@ -528,37 +528,37 @@ public class ALANameSearcher {
                 }
                 //check to see if the rank can be determined from the scientific name
                 try {
-                    ParsedName<?> cn = parser.parse(name.replaceAll("\\?", ""));
-                    if (cn != null && cn.type == NameType.doubtful) {
+                    ParsedName cn = parser.parse(name.replaceAll("\\?", ""));
+                    if (cn != null && cn.getType() == NameType.DOUBTFUL) {
                         //if recursive set the issue
                         if (recursiveMatching) {
-                            name = cn.genusOrAbove;
+                            name = cn.getGenusOrAbove();
                             rank = RankType.GENUS;
-                            metrics.setNameType(NameType.doubtful);
+                            metrics.setNameType(NameType.DOUBTFUL);
 
                         }
                     } else if (cn != null && cn.isBinomial()) {
                         //set the genus if it is empty
                         if (StringUtils.isEmpty(cl.getGenus()))
-                            cl.setGenus(cn.genusOrAbove);
-                        if (cn.rank == null && cn.cultivar == null && cn.isParsableType()) {
+                            cl.setGenus(cn.getGenusOrAbove());
+                        if (cn.getRank() == null && cn.getCultivarEpithet() == null && cn.isParsableType()) {
 
                             if (cn.getInfraSpecificEpithet() != null) {
                                 rank = RankType.SUBSPECIES;
                                 //populate the species if it is empty
                                 if (StringUtils.isEmpty(cl.getSpecies()))
-                                    cl.setSpecies(cn.genusOrAbove + " " + cn.specificEpithet);
+                                    cl.setSpecies(cn.getGenusOrAbove() + " " + cn.getSpecificEpithet());
                             } else
                                 rank = RankType.SPECIES;
-                        } else if (cn.cultivar != null) {
+                        } else if (cn.getCultivarEpithet()!= null) {
                             rank = RankType.CULTIVAR;
-                        } else if (cn.rank != null) {
+                        } else if (cn.getRank() != null) {
                             // It is not necesary to update the rank based on rank markers at this point
                             // This is because it is done at the lowest level possible just before the search is performed
 
                         }
                     }
-                } catch (org.gbif.ecat.parser.UnparsableException e) {
+                } catch (org.gbif.api.exception.UnparsableException e) {
                     //TODO log error maybe??
                     metrics.setNameType(e.type);
                 }
@@ -575,9 +575,9 @@ public class ALANameSearcher {
             try {
                 ParsedName pn = parser.parse(name);
                 metrics.setNameType(pn.getType());
-                if (pn.isBinomial() && pn.type != NameType.doubtful && (pn.type != NameType.informal || (pn.getRank() != null && pn.getRank().isInfraspecific())) && (rank == null || rank.getId() >= 7000))
+                if (pn.isBinomial() && pn.getType() != NameType.DOUBTFUL && (pn.getType() != NameType.INFORMAL || (pn.getRank() != null && pn.getRank().isInfraspecific())) && (rank == null || rank.getId() >= 7000))
                     nsr = performErrorCheckSearch(pn.canonicalSpeciesName(), cl, null, fuzzy, ignoreHomonym, metrics);
-                if (nsr == null && (pn.type == NameType.doubtful || (rank != null && rank.getId() <= 7000) || rank == null))
+                if (nsr == null && (pn.getType() == NameType.DOUBTFUL || (rank != null && rank.getId() <= 7000) || rank == null))
                     nsr = performErrorCheckSearch(pn.getGenusOrAbove(), cl, null, fuzzy, ignoreHomonym, metrics);
 
             } catch (Exception ex) {
@@ -621,7 +621,7 @@ public class ALANameSearcher {
         if (metrics.getNameType() == null) {
             try {
                 ParsedName pn = parser.parse(originalName);
-                metrics.setNameType(pn.type);
+                metrics.setNameType(pn.getType());
             } catch (UnparsableException e) {
                 metrics.setNameType(e.type);
             }
@@ -645,7 +645,7 @@ public class ALANameSearcher {
     private void checkOtherIssues(String originalName, MetricsResultDTO metrics) {
         if (originalName.contains("?")) {
             metrics.getErrors().add(ErrorType.QUESTION_SPECIES);
-            metrics.setNameType(NameType.doubtful); //a questionable species is always a doubtful name type
+            metrics.setNameType(NameType.DOUBTFUL); //a questionable species is always a doubtful name type
         }
         if (cfPattern.matcher(originalName).matches())
             metrics.getErrors().add(ErrorType.CONFER_SPECIES);
@@ -1011,12 +1011,12 @@ public class ALANameSearcher {
         try {
             CleanedScientificName cleaned = new CleanedScientificName(name);
             NameType nameType = null;
-            ParsedName<?> pn = null;
+            ParsedName pn = null;
             try {
                 pn = parser.parse(cleaned.getNormalised());
                 nameType = pn != null ? pn.getType() : null;
             } catch (UnparsableException e) {
-                log.warn("Unable to parse " + name + ". " + e.getMessage(), e);
+                log.warn("Unable to parse " + name + ". " + e.getMessage());
             }
             //Check for the exact match
             List<NameSearchResult> hits = performSearch(NameIndexField.NAME.toString(), cleaned.getNormalised(), rank, cl, max, MatchType.EXACT, true, queryParser.get());
@@ -1040,7 +1040,7 @@ public class ALANameSearcher {
                 String phrase = alapn.cleanPhrase;//alapn.getLocationPhraseDesciption();
                 String voucher = alapn.cleanVoucher;
                 //String voucher = alapn.phraseVoucher != null ? voucherRemovePattern.matcher(alapn.phraseVoucher).replaceAll("") :null;
-                String specific = alapn.rank != null && alapn.rank.equals("sp.") ? null : alapn.specificEpithet;
+                String specific = alapn.getRank() != null && alapn.getRank().equals(Rank.SPECIES) ? null : alapn.getSpecificEpithet();
                 String[][] searchFields = new String[4][];
                 searchFields[0] = new String[]{RankType.GENUS.getRank(), genus};
                 searchFields[1] = new String[]{NameIndexField.PHRASE.toString(), phrase};
@@ -1057,7 +1057,7 @@ public class ALANameSearcher {
                         return Collections.singletonList(commonAccepted);
                     throw new HomonymException(hits);
                 }
-            } else if (pn != null && pn.isParsableType() && pn.authorsParsed && pn.getType() != NameType.informal && pn.getType() != NameType.doubtful) {
+            } else if (pn != null && pn.isParsableType() && pn.isAuthorsParsed() && pn.getType() != NameType.INFORMAL && pn.getType() != NameType.DOUBTFUL) {
                 //check the canonical name
                 String canonicalName = pn.canonicalName();
                 if (cl == null) {
@@ -1072,11 +1072,11 @@ public class ALANameSearcher {
                     return hits;
                 }
                 //if the parse type was a cultivar and we didn't match it check to see if we can match as a phrase name
-                if (pn.getType() == NameType.cultivar) {
+                if (pn.getType() == NameType.CULTIVAR) {
                     String genus = pn.getGenusOrAbove();
-                    String phrase = pn.getCultivar();
+                    String phrase = pn.getCultivarEpithet();
                     String voucher = null;
-                    String specific = pn.rank != null && pn.rank.equals("sp.") ? null : pn.getSpecificEpithet();
+                    String specific = pn.getRank() != null && pn.getRank().equals(Rank.SPECIES) ? null : pn.getSpecificEpithet();
                     String[][] searchFields = new String[4][];
                     searchFields[0] = new String[]{RankType.GENUS.getRank(), genus};
                     searchFields[1] = new String[]{NameIndexField.PHRASE.toString(), phrase};
@@ -1089,10 +1089,10 @@ public class ALANameSearcher {
                 }
             }
             //now check for a "sounds like" match if we don't have an informal name
-            if (pn != null && fuzzy && pn.isBinomial() && pn.getType() != NameType.informal && pn.getType() != NameType.doubtful) {
-                String genus = TaxonNameSoundEx.treatWord(pn.genusOrAbove, "genus");
-                String specific = TaxonNameSoundEx.treatWord(pn.specificEpithet, "species");
-                String infra = pn.infraSpecificEpithet == null ? null : TaxonNameSoundEx.treatWord(pn.infraSpecificEpithet, "species");
+            if (pn != null && fuzzy && pn.isBinomial() && pn.getType() != NameType.INFORMAL && pn.getType() != NameType.DOUBTFUL) {
+                String genus = TaxonNameSoundEx.treatWord(pn.getGenusOrAbove(), "genus");
+                String specific = TaxonNameSoundEx.treatWord(pn.getSpecificEpithet(), "species");
+                String infra = pn.getInfraSpecificEpithet() == null ? null : TaxonNameSoundEx.treatWord(pn.getInfraSpecificEpithet(), "species");
                 String[][] searchFields = new String[3][];
                 searchFields[0] = new String[]{NameIndexField.GENUS_EX.toString(), genus};
                 searchFields[1] = new String[]{NameIndexField.SPECIES_EX.toString(), specific};
@@ -1436,7 +1436,7 @@ public class ALANameSearcher {
                     cl.setSpecies(pn.canonicalName());
                     rank = RankType.SPECIES;
                 } else {
-                    cl.setGenus(pn.genusOrAbove);
+                    cl.setGenus(pn.getGenusOrAbove());
                     rank = RankType.GENUS;
                 }
                 } catch(Exception e){
@@ -1713,12 +1713,12 @@ public class ALANameSearcher {
      */
     private boolean doSciNamesMatch(String n1, String n2) {
         try {
-            ParsedName<?> pn1 = parser.parse(n1);
-            ParsedName<?> pn2 = parser.parse(n2);
+            ParsedName pn1 = parser.parse(n1);
+            ParsedName pn2 = parser.parse(n2);
             if (pn1 != null && pn2 != null)
                 return pn1.canonicalName().equals(pn2.canonicalName());
             return false;
-        } catch (org.gbif.ecat.parser.UnparsableException e) {
+        } catch (org.gbif.api.exception.UnparsableException e) {
             return false;
         }
     }

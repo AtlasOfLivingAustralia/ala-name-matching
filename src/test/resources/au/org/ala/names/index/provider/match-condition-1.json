@@ -1,0 +1,5 @@
+{
+  "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+  "nomenclaturalCode" : "BOTANICAL",
+  "taxonomicStatus" : "EXCLUDED"
+}

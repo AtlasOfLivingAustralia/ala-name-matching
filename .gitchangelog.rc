@@ -42,7 +42,7 @@
 ##   new: dev: updated code to be compatible with last version of killer lib.
 ##   fix: pkg: updated year of licence coverage.
 ##   new: test: added a bunch of test around user usability of feature X.
-##   fix: typo in spelling my name in comment. !minor
+##   fix: typo in spelling my id in comment. !minor
 ##
 ##   Please note that multi-line commit message are supported, and only the
 ##   first line will be considered as the "summary" of the commit message. So
@@ -163,7 +163,7 @@ unreleased_version_label = "%%version%% (unreleased)"
 ##
 ##   - mustache(<template_name>)
 ##
-##        Template name could be any of the available templates in
+##        Template id could be any of the available templates in
 ##        ``templates/mustache/*.tpl``.
 ##        Requires python package ``pystache``.
 ##        Examples:
@@ -172,7 +172,7 @@ unreleased_version_label = "%%version%% (unreleased)"
 ##
 ##   - makotemplate(<template_name>)
 ##
-##        Template name could be any of the available templates in
+##        Template id could be any of the available templates in
 ##        ``templates/mako/*.tpl``.
 ##        Requires python package ``mako``.
 ##        Examples:

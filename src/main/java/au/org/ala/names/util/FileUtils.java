@@ -15,11 +15,7 @@
 
 package au.org.ala.names.util;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.util.Set;
 
 import org.apache.commons.io.LineIterator;
@@ -64,5 +60,22 @@ public class FileUtils {
         }
     }
 
+    /**
+     * Clear out a directory
+     *
+     * @param dir The directory to clear
+     * @param clearTop Clear this directory as well.
+     *
+     * @throws IOException If there is a problem
+     */
+    public static void clear(File dir, boolean clearTop) throws IOException {
+         if (dir.isDirectory()) {
+             for (File f: dir.listFiles())
+                 clear(f, true);
+         }
+         if (clearTop)
+             dir.delete();
+
+    }
 
 }
