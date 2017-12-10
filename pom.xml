@@ -10,7 +10,7 @@
     <groupId>au.org.ala</groupId>
     <artifactId>ala-name-matching</artifactId>
     <packaging>jar</packaging>
-    <version>2.4.6</version>
+    <version>2.4.7-SNAPSHOT</version>
     <name>ALA Name Matching</name>
     <scm>
         <connection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</connection>
