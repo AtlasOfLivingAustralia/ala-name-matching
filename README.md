@@ -35,13 +35,13 @@ You can download the IRMNG DwCA for homonyms from the following URL:
 
 An assembly zip file for this can be downloaded from our maven repository : 
 
-[ala-name-matching-2.1-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.1/ala-name-matching-2.1-distribution.zip)
+[ala-name-matching-2.4.6-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.4.6/ala-name-matching-2.4.6-distribution.zip)
 
 To generate the name index using the data described above, follow these steps. Alternatively use the [ALA Ansible scripts](https://github.com/AtlasOfLivingAustralia/ala-install) 
 here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustralia/ala-install/blob/master/ansible/nameindexer-standalone.yml) which does it all for you.
 
 * Download the zip files linked above to a directory e.g. /data/names/ and extract them
-* Download the distribution zip [ala-name-matching-2.4.2-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.4.2/ala-name-matching-2.4.2-distribution.zip)
+* Download the distribution zip [ala-name-matching-2.4.6-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.4.6/ala-name-matching-2.4.6-distribution.zip)
 * Generate the names index with command:
 
 ```
@@ -50,6 +50,21 @@ java –jar ala-name-matching-2.4.2.jar --all --dwca /data/names/dwca-col --targ
 
 Please be aware that the names indexing could take over an hour to complete.
 
+## Generating a combined DwCA
+
+The build process above works most effectively when given a consistent taxonomy.
+The taxonomy builder takes multiple taxonomies, along with a configuration that
+assigns priorities to the different entries in the taxonomies and merges the sources
+into a single, combined taxonomy.
+
+An example command for the taxonomy builder is:
+
+```
+java --classpath <classpath> au.org.ala.names.index.TaxonomyBuilder -c /data/names/ala-taxon-config.json -w tmp -o /data/names/combined /data/names/APNI/DwC /data/names/AFD/DwC /data/names/CAAB/DwC
+```
+
+More information about the merge configuration can be found [here](doc/merge-config.md).
+
 ## Build notes
 
 This library is built with maven. By default a `mvn install` will try to run a test suite which will fail without a local installation of a name index.
@@ -57,12 +72,12 @@ To skip this step, run a build with ```mvn install -DskipTests=true```.
 
 The build creates 3 artefacts in the ala-name-matching/target directory: 
 
-* ala-name-matching-2.1.jar - built jar for the project code only
-* ala-name-matching-2.1-distribution.zip - zip containing the project jar and dependencies
-* ala-name-matching-2.1-sources.jar - source jar for the project code only
+* ala-name-matching-2.4.6.jar - built jar for the project code only
+* ala-name-matching-2.4.6-distribution.zip - zip containing the project jar and dependencies
+* ala-name-matching-2.4.6-sources.jar - source jar for the project code only
 
-A name index for Australian names lists can be downloaded [from here](http://biocache.ala.org.au/archives/nameindexes/latest/) and needs to be extracted to the
-directory `/data/lucene/namematching`
+The name index for Australian names lists used in unit tests can be downloaded [from here](http://biocache.ala.org.au/archives/nameindexes/20170927) and needs to be extracted to the
+directory `/data/lucene/namematching-20170927`
 
 ## ALA Names List
 
@@ -98,7 +113,7 @@ To use ala-name-matching, include it as a dependency in your pom file:
    <dependency>
       <groupId>au.org.ala</groupId>
       <artifactId>ala-name-matching</artifactId>
-      <version>2.4.2</version>
+      <version>2.4.6</version>
    </dependency>
 ```
 
@@ -196,6 +211,14 @@ http://biocache.ala.org.au/occurrences/search?q=*:*&fq=name_match_metric:phraseM
 
 
 # Release notes 
+
+### Release notes v2.4.6
+
+* Compatible with JDK 8
+* Updated GBIF libraries to latest version (note for developers, this has required a package change for the PhraseNameParser)
+* Added taxonomy builder
+* Allow additional vernacular name source files
+* Updated vocabularies
 
 ### Release notes v2.1
 
