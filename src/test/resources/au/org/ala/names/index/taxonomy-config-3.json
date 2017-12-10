@@ -1,0 +1,47 @@
+{
+  "id" : "CID",
+  "name" : "New taxonomy configuration",
+  "contact" : {
+    "key" : null,
+    "type" : null,
+    "primary" : false,
+    "userId" : [ ],
+    "firstName" : "Arnold",
+    "lastName" : "Sideways",
+    "position" : [ ],
+    "description" : null,
+    "email" : [ ],
+    "phone" : [ ],
+    "homepage" : [ ],
+    "organization" : "Nowhere.org",
+    "address" : [ ],
+    "city" : null,
+    "province" : null,
+    "country" : null,
+    "postalCode" : null,
+    "createdBy" : null,
+    "modifiedBy" : null,
+    "created" : null,
+    "modified" : null
+  },
+  "nameAnalyserClass" : "au.org.ala.names.index.ALANameAnalyser",
+  "resolverClass" : "au.org.ala.names.index.ALATaxonResolver",
+  "providers" : [ {
+    "id" : "ID-1",
+    "name" : "ID-1",
+    "defaultScore" : 150,
+    "scores" : { },
+    "owner" : [ ],
+    "adjuster" : {
+      "forbidden" : [ ],
+      "adjustments" : [ ]
+    },
+    "keyAdjuster" : {
+      "adjustments" : [ ]
+    },
+    "loose" : false,
+    "external" : true
+  } ],
+  "defaultProvider" : "ID-1",
+  "acceptedCutoff" : 50
+}

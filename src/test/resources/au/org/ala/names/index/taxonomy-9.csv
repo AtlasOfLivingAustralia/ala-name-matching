@@ -1,0 +1,4 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonomicStatus
+NZOR-4-10536,,,dr100,ICVCN,Viroid,,kingdom,accepted
+NZOR-4-34433,,,dr100,ICVCN,Virus,,kingdom,accepted
+CoL:29944185,,,dr101,ICVCN,Viruses,,kingdom,accepted

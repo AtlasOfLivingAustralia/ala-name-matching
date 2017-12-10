@@ -2,16 +2,7 @@
 
 package au.org.ala.names.util;
 
-import au.org.ala.names.model.LinnaeanRankClassification;
-import au.org.ala.names.model.MatchType;
-import au.org.ala.names.model.NameSearchResult;
-import au.org.ala.names.model.RankType;
-import au.org.ala.names.search.*;
-import org.gbif.ecat.model.ParsedName;
-import org.gbif.ecat.parser.NameParser;
 import org.junit.Test;
-
-import java.util.List;
 
 import static org.junit.Assert.*;
 

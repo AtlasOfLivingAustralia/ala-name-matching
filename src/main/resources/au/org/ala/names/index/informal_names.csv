@@ -1,0 +1,3 @@
+label,pattern,title,link
+numbered group,^\\p{Alpha}+\\s+(?i:group|subgroup|species)\\s*\\d+\\.?,Informal groups of the form <name> <group> <number>,
+gen nov,(?i:gen\\.?\\s+nov\\.?)$,New genus name type <family> gen. nov.,

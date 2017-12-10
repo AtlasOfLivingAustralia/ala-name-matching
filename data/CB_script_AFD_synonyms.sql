@@ -5127,7 +5127,7 @@ $$ LANGUAGE plpgsql;
  ----------------------------------
 -- Function: normalize_auth
 -- Modified to work with Postgres December 2010
--- Purpose: Produce a normalized version of authority of a taxon name
+-- Purpose: Produce a normalized version of authority of a taxon id
 -- Author: Tony Rees (Tony.Rees@csiro.au)
 -- Date created: March 2008
 -- Inputs: authority string as str
@@ -5439,21 +5439,21 @@ end;
 $$ LANGUAGE plpgsql;
 
 
--- Creates a gender neutral version of the supplied name.
-CREATE OR REPLACE FUNCTION getGenderNeutralName(name varchar) RETURNS varchar AS $$
+-- Creates a gender neutral version of the supplied id.
+CREATE OR REPLACE FUNCTION getGenderNeutralName(id varchar) RETURNS varchar AS $$
 BEGIN
-	if name like '%us' then
-		RETURN trim(trailing 'us' from name) || 'a';
-	elsif name like '%um' then 
-		RETURN trim(trailing 'um' from name) || 'a';
+	if id like '%us' then
+		RETURN trim(trailing 'us' from id) || 'a';
+	elsif id like '%um' then
+		RETURN trim(trailing 'um' from id) || 'a';
 	else
-		RETURN name;
+		RETURN id;
 	end if;
 END;
 $$ LANGUAGE plpgsql;
 
 
--- Creates a "Near match" of the supplied name.  This is based on an algorithm by 
+-- Creates a "Near match" of the supplied id.  This is based on an algorithm by
 -- Tony Rees.
 CREATE OR REPLACE FUNCTION getNearMatchName(name_fk integer) RETURNS text AS $$
 DECLARE 
@@ -5466,12 +5466,12 @@ result2 text;
 next_char char(1);
 BEGIN
 
--- construct a canonical name from the parsed name entry
+-- construct a canonical id from the parsed id entry
 select monomial || ' ' || COALESCE(specific_epithet,'') || ' ' || COALESCE(infra_specific_epithet ,'') ,
 specific_epithet is not null into canname ,hasepithet
 from parsed_name pn where pn.name_fk = name_fk;
 
--- now process the name into near matches...
+-- now process the id into near matches...
 tmp := UPPER(canname);
 
 -- Do some selective replacement on the leading letter/s only:
