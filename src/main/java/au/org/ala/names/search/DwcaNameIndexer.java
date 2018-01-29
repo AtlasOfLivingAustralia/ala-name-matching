@@ -713,23 +713,23 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 lastChild = child;
                 Document cdoc = lsearcher.doc(child.doc);
                 if(cdoc != null && !cdoc.get("id").equals(doc.get("id"))){
-                    if(stackCheck > 900){
-                        log.warn("Stack check depth " + stackCheck +
-                                "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
-                                "\n\t\tChild: " + cdoc.get("id") + " - " +  cdoc.get("lsid") + " _ " + cdoc.get("parent_id") + " - " +  cdoc.get("name")
-                        );
-                    }
-
-                    if(stackCheck < 1000) {
+//                    if(stackCheck > 900){
+//                        log.warn("Stack check depth " + stackCheck +
+//                                "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
+//                                "\n\t\tChild: " + cdoc.get("id") + " - " +  cdoc.get("lsid") + " _ " + cdoc.get("parent_id") + " - " +  cdoc.get("name")
+//                        );
+//                    }
+//
+//                    if(stackCheck < 1000) {
 //                        catch stack overflow
                         right = addIndex(cdoc, currentDepth + 1, right + 1, newcl, stackCheck++);
-                    } else {
-                        log.warn("Stack overflow detected for name - depth " + stackCheck +
-                                "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
-                                "\n\t\tChild: " + cdoc.get("id") + " - " +  cdoc.get("lsid") + " _ " + cdoc.get("parent_id") + " - " +  cdoc.get("name")
-
-                        );
-                    }
+//                    } else {
+//                        log.warn("Stack overflow detected for name - depth " + stackCheck +
+//                                "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
+//                                "\n\t\tChild: " + cdoc.get("id") + " - " +  cdoc.get("lsid") + " _ " + cdoc.get("parent_id") + " - " +  cdoc.get("name")
+//
+//                        );
+//                    }
                 }
             }
             children = lastChild == null ? null : this.getLoadIdxResults(lastChild, "parent_id", id, PAGE_SIZE);

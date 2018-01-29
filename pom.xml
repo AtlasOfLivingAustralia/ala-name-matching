@@ -11,7 +11,7 @@
     <artifactId>ala-name-matching</artifactId>
     <packaging>jar</packaging>
     <!-- Major version increment due to package structure change -->
-    <version>3.0</version>
+    <version>3.1-SNAPSHOT</version>
     <name>ALA Name Matching (for Lucene 5 or above)</name>
     <!-- SCM entry that points to SVN directory that contains pom -->
     <scm>
@@ -23,7 +23,7 @@
     <properties>
         <!-- This project uses UTF8 for Regular Expressions -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <org.apache.lucene.version>5.5.3</org.apache.lucene.version>
+        <org.apache.lucene.version>5.5.5</org.apache.lucene.version>
     </properties>
     <dependencies>
         <dependency>
