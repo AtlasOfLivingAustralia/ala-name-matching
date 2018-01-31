@@ -82,6 +82,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
     private IndexWriter writer = null;
     private IndexWriter loadingIndexWriter = null;
     private IndexWriter vernacularIndexWriter = null;
+    private IndexWriter idWriter = null;
     private LowerCaseKeywordAnalyzer analyzer;
     private Map<String, Float> priorities;
 
@@ -105,6 +106,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         }
         if (this.sciIndex) {
             this.writer = createIndexWriter(new File(this.targetDir, "cb"), analyzer, true);
+            this.idWriter = createIndexWriter(new File(this.targetDir, "id"), analyzer, true);
             this.vernacularIndexWriter = createIndexWriter(new File(this.targetDir, "vernacular"), new KeywordAnalyzer(), true);
         }
     }
@@ -140,6 +142,15 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 this.vernacularIndexWriter = null;
             }
         }
+        if (this.idWriter != null) {
+            try {
+                this.idWriter.close();
+            } catch (IOException ex) {
+                log.error("Unable to close index", ex);
+            } finally {
+                this.idWriter = null;
+            }
+        }
     }
 
     /**
@@ -166,7 +177,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
     }
 
     /**
-     * Creates the name matching index based on a complete list of names supplied in a single DwCA
+     * Creates the name matching index based on a complete list of names supplied in a single DwCA.
+     * This will also add vernacular names.
      *
      * @param namesDwc The absolute path to the directory that contains the unzipped DWC archive to index
      * @throws Exception
@@ -193,96 +205,96 @@ public class DwcaNameIndexer extends ALANameIndexer {
         irmngWriter.close();
     }
 
-    /**
-     * Load common names from a vernacular DwcA with a core row type of gbif:VernacularName
-     *
-     * @param verncacularDwc The archive directory
-     * @return True if used
-     *
-     * @throws Exception if unable to open the archive
-     */
-    private boolean loadCommonNames(File verncacularDwc) throws Exception {
-        if (verncacularDwc == null || !verncacularDwc.exists()) {
-            log.warn("Skipping " + verncacularDwc + " as it does not exist");
-            return false;
-        }
-        Archive archive = ArchiveFactory.openArchive(verncacularDwc);
-        if (!archive.getCore().getRowType().equals(GbifTerm.VernacularName.qualifiedName())) {
-            log.info("Skipping non-vernacular DwCA");
-            return false;
-        }
-        if (!archive.getCore().hasTerm(DwcTerm.vernacularName)) {
-            log.error("Vernacular file " + verncacularDwc + " requires " + DwcTerm.vernacularName);
-            return false;
-        }
-        if (!archive.getCore().hasTerm(DwcTerm.scientificName) && !archive.getCore().hasTerm(DwcTerm.taxonID)) {
-            log.error("Vernacular file " + verncacularDwc + " requires either " + DwcTerm.scientificName + " or " + DwcTerm.taxonID);
-            return false;
-        }
-        if (archive.getCore().hasTerm(DwcTerm.scientificName) && !archive.getCore().hasTerm(DwcTerm.scientificNameAuthorship)) {
-            log.warn("Vernacular file " + verncacularDwc + " has" + DwcTerm.scientificName + " but not " + DwcTerm.scientificNameAuthorship);
-            return false;
-        }
-        for (org.gbif.dwc.terms.Term term: Arrays.asList(DcTerm.language)) {
-            log.warn("Vernacular file " + verncacularDwc + " is missing " + term);
-        }
-        log.info("Loading vernacular names for " + verncacularDwc);
-        ALANameSearcher searcher = new ALANameSearcher(this.targetDir.getAbsolutePath());
-        Iterator<Record> records = archive.getCore().iterator();
-        while (records.hasNext()) {
-            Record record = records.next();
-            String taxonId = record.value(DwcTerm.taxonID);
-            String scientificName = record.value(DwcTerm.scientificName);
-            String vernacularName = record.value(DwcTerm.vernacularName);
-            String scientificNameAuthorship = record.value(DwcTerm.scientificNameAuthorship);
-            String kingdom = record.value(DwcTerm.kingdom);
-            String phylum = record.value(DwcTerm.phylum);
-            String klass = record.value(DwcTerm.class_);
-            String order = record.value(DwcTerm.order);
-            String family = record.value(DwcTerm.family);
-            String genus = record.value(DwcTerm.genus);
-            String specificEpithet = record.value(DwcTerm.specificEpithet);
-            String infraspecificEpithet = record.value(DwcTerm.infraspecificEpithet);
-            String rank = record.value(DwcTerm.taxonRank);
-            LinnaeanRankClassification classification = new LinnaeanRankClassification();
-            NameSearchResult result = null;
-            String lsid;
-
-            if (taxonId != null) {
-                result = searcher.searchForRecordByLsid(taxonId);
-            }
-            if (result == null && scientificName != null) {
-                // Try and give as many hints as possible, if available
-                classification.setScientificName(scientificName);
-                classification.setAuthorship(scientificNameAuthorship);
-                classification.setKingdom(kingdom);
-                classification.setPhylum(phylum);
-                classification.setKlass(klass);
-                classification.setOrder(order);
-                classification.setFamily(family);
-                classification.setGenus(genus);
-                classification.setSpecificEpithet(specificEpithet);
-                classification.setInfraspecificEpithet(infraspecificEpithet);
-                classification.setRank(rank);
-                try {
-                    result = searcher.searchForRecord(classification, false, false);
-                } catch (SearchResultException ex) {
-                    log.warn("Can't find matching taxon for " + classification + " and vernacular name " + vernacularName + " exception " + ex.getMessage());
-                    continue;
-                }
-            }
-            if (result == null) {
-                log.warn("Can't find matching taxon for " + classification + " and vernacular name " + vernacularName);
-                continue;
-            }
-            lsid = result.getAcceptedLsid() != null ? result.getAcceptedLsid() : result.getLsid();
-            if (scientificName == null)
-                scientificName = result.getRankClassification().getScientificName();
-            Document doc = this.createCommonNameDocument(vernacularName, scientificName, lsid, 1.0f, false);
-            this.vernacularIndexWriter.addDocument(doc);
-        }
-        return true;
-    }
+//    /**
+//     * Load common names from a vernacular DwcA with a core row type of gbif:VernacularName
+//     *
+//     * @param vernacularDwc The archive directory
+//     * @return True if used
+//     *
+//     * @throws Exception if unable to open the archive
+//     */
+//    private boolean loadCommonNames(File vernacularDwc) throws Exception {
+//        if (vernacularDwc == null || !vernacularDwc.exists()) {
+//            log.warn("Skipping " + vernacularDwc + " as it does not exist");
+//            return false;
+//        }
+//        Archive archive = ArchiveFactory.openArchive(vernacularDwc);
+//        if (!archive.getCore().getRowType().equals(GbifTerm.VernacularName.qualifiedName())) {
+//            log.info("Skipping non-vernacular DwCA");
+//            return false;
+//        }
+//        if (!archive.getCore().hasTerm(DwcTerm.vernacularName)) {
+//            log.error("Vernacular file " + vernacularDwc + " requires " + DwcTerm.vernacularName);
+//            return false;
+//        }
+//        if (!archive.getCore().hasTerm(DwcTerm.scientificName) && !archive.getCore().hasTerm(DwcTerm.taxonID)) {
+//            log.error("Vernacular file " + vernacularDwc + " requires either " + DwcTerm.scientificName + " or " + DwcTerm.taxonID);
+//            return false;
+//        }
+//        if (archive.getCore().hasTerm(DwcTerm.scientificName) && !archive.getCore().hasTerm(DwcTerm.scientificNameAuthorship)) {
+//            log.warn("Vernacular file " + vernacularDwc + " has" + DwcTerm.scientificName + " but not " + DwcTerm.scientificNameAuthorship);
+//            return false;
+//        }
+//        for (org.gbif.dwc.terms.Term term: Arrays.asList(DcTerm.language)) {
+//            log.warn("Vernacular file " + vernacularDwc + " is missing " + term);
+//        }
+//        log.info("Loading vernacular names for " + vernacularDwc);
+//        ALANameSearcher searcher = new ALANameSearcher(this.targetDir.getAbsolutePath());
+//        Iterator<Record> records = archive.getCore().iterator();
+//        while (records.hasNext()) {
+//            Record record = records.next();
+//            String taxonId = record.value(DwcTerm.taxonID);
+//            String scientificName = record.value(DwcTerm.scientificName);
+//            String vernacularName = record.value(DwcTerm.vernacularName);
+//            String scientificNameAuthorship = record.value(DwcTerm.scientificNameAuthorship);
+//            String kingdom = record.value(DwcTerm.kingdom);
+//            String phylum = record.value(DwcTerm.phylum);
+//            String klass = record.value(DwcTerm.class_);
+//            String order = record.value(DwcTerm.order);
+//            String family = record.value(DwcTerm.family);
+//            String genus = record.value(DwcTerm.genus);
+//            String specificEpithet = record.value(DwcTerm.specificEpithet);
+//            String infraspecificEpithet = record.value(DwcTerm.infraspecificEpithet);
+//            String rank = record.value(DwcTerm.taxonRank);
+//            LinnaeanRankClassification classification = new LinnaeanRankClassification();
+//            NameSearchResult result = null;
+//            String lsid;
+//
+//            if (taxonId != null) {
+//                result = searcher.searchForRecordByLsid(taxonId);
+//            }
+//            if (result == null && scientificName != null) {
+//                // Try and give as many hints as possible, if available
+//                classification.setScientificName(scientificName);
+//                classification.setAuthorship(scientificNameAuthorship);
+//                classification.setKingdom(kingdom);
+//                classification.setPhylum(phylum);
+//                classification.setKlass(klass);
+//                classification.setOrder(order);
+//                classification.setFamily(family);
+//                classification.setGenus(genus);
+//                classification.setSpecificEpithet(specificEpithet);
+//                classification.setInfraspecificEpithet(infraspecificEpithet);
+//                classification.setRank(rank);
+//                try {
+//                    result = searcher.searchForRecord(classification, false, false);
+//                } catch (SearchResultException ex) {
+//                    log.warn("Can't find matching taxon for " + classification + " and vernacular name " + vernacularName + " exception " + ex.getMessage());
+//                    continue;
+//                }
+//            }
+//            if (result == null) {
+//                log.warn("Can't find matching taxon for " + classification + " and vernacular name " + vernacularName);
+//                continue;
+//            }
+//            lsid = result.getAcceptedLsid() != null ? result.getAcceptedLsid() : result.getLsid();
+//            if (scientificName == null)
+//                scientificName = result.getRankClassification().getScientificName();
+//            Document doc = this.createCommonNameDocument(vernacularName, scientificName, lsid, 1.0f, false);
+//            this.vernacularIndexWriter.addDocument(doc);
+//        }
+//        return true;
+//    }
 
     /**
      * Index the common names CSV file supplied.
@@ -313,7 +325,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 TopDocs result = getLoadIdxResults(null, "lsid", lsid, 1);
                 if(result.totalHits>0){
                     //we can add the common name
-                    Document doc = createCommonNameDocument(values[3], values[2], lsid, 1.0f, false);
+                    Document doc = createCommonNameDocument(values[3], values[2], lsid, values[4], 1.0f, false);
                     this.vernacularIndexWriter.addDocument(doc);
                     count++;
                 }
@@ -335,24 +347,34 @@ public class DwcaNameIndexer extends ALANameIndexer {
         Iterator<Record> iter = vernacularArchiveFile == null ? null : vernacularArchiveFile.iterator();
         int i = 0, count = 0;
 
-        if (vernacularArchiveFile == null)
+        if (vernacularArchiveFile == null) {
+            log.info("No common names extension from found in " + archiveDirectory);
             return;
-        log.info("Starting to load the common names extension from " + archiveDirectory);
+        } else {
+            log.info("Starting to load the common names extension from " + archiveDirectory);
+        }
         while (iter.hasNext()) {
             i++;
             Record record = iter.next();
             String taxonID = record.id();
             String vernacularName = record.value(DwcTerm.vernacularName);
+            String language = record.value(DcTerm.language);
             TopDocs result = getLoadIdxResults(null, "lsid", taxonID, 1);
             if(result.totalHits > 0){
                 Document sciNameDoc = lsearcher.doc(result.scoreDocs[0].doc);
                 //get the scientific name
                 //we can add the common name
-                Document doc = createCommonNameDocument(vernacularName, sciNameDoc.get(NameIndexField.NAME.toString()), taxonID, 1.0f, false);
+                Document doc = createCommonNameDocument(
+                        vernacularName,
+                        sciNameDoc.get(NameIndexField.NAME.toString()),
+                        taxonID,
+                        language,
+                        1.0f,
+                        false);
                 this.vernacularIndexWriter.addDocument(doc);
                 count++;
             }
-            if(i%1000 == 0){
+            if(i % 1000 == 0){
                 log.info("Processed " + i + " common names with " + count + " added to index");
             }
         }
@@ -713,23 +735,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 lastChild = child;
                 Document cdoc = lsearcher.doc(child.doc);
                 if(cdoc != null && !cdoc.get("id").equals(doc.get("id"))){
-//                    if(stackCheck > 900){
-//                        log.warn("Stack check depth " + stackCheck +
-//                                "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
-//                                "\n\t\tChild: " + cdoc.get("id") + " - " +  cdoc.get("lsid") + " _ " + cdoc.get("parent_id") + " - " +  cdoc.get("name")
-//                        );
-//                    }
-//
-//                    if(stackCheck < 1000) {
-//                        catch stack overflow
-                        right = addIndex(cdoc, currentDepth + 1, right + 1, newcl, stackCheck++);
-//                    } else {
-//                        log.warn("Stack overflow detected for name - depth " + stackCheck +
-//                                "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
-//                                "\n\t\tChild: " + cdoc.get("id") + " - " +  cdoc.get("lsid") + " _ " + cdoc.get("parent_id") + " - " +  cdoc.get("name")
-//
-//                        );
-//                    }
+                    right = addIndex(cdoc, currentDepth + 1, right + 1, newcl, stackCheck++);
                 }
             }
             children = lastChild == null ? null : this.getLoadIdxResults(lastChild, "parent_id", id, PAGE_SIZE);
@@ -1040,6 +1046,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 log.warn("No DwCA directories found under " + base);
                 System.exit(1);
             }
+
             log.info("Loading DwCAs: " + dwcas);
             DwcaNameIndexer indexer = new DwcaNameIndexer(
                     targetDirectory,
@@ -1052,6 +1059,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             if (load) {
                 for (File dwca : dwcas) {
                     indexer.createLoadingIndex(dwca, colformat);
+
                 }
                 indexer.commitLoadingIndexes();
             }
@@ -1059,7 +1067,10 @@ public class DwcaNameIndexer extends ALANameIndexer {
             for (File dwca: dwcas) {
                 indexer.create(dwca);
             }
-            indexer.indexCommonNames(commonNameFile);
+            if(commonNameFile.exists()){
+                indexer.indexCommonNames(commonNameFile);
+            }
+
             indexer.createIrmng(irmngFile);
             indexer.commit();
         } catch (Exception e) {

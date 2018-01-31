@@ -132,7 +132,8 @@ public class ALANameIndexer {
         LEFT("left"),
         RIGHT("right"),
         SEARCHABLE_COMMON_NAME("common"),
-        COMMON_NAME("common_orig");
+        COMMON_NAME("common_orig"),
+        LANGUAGE("lang");
 
         String name;
 
@@ -516,7 +517,7 @@ public class ALANameIndexer {
             while ((values = reader.readNext()) != null) {
                 if (values.length == 3) {
                     if (doesTaxonConceptExist(currentSearcher, values[2])) {
-                        iw.addDocument(createCommonNameDocument(values[0], values[1], values[2], 1.0f));
+                        iw.addDocument(createCommonNameDocument(values[0], values[1], values[2], null, 1.0f));
                         count++;
                     } else {
                         System.out.println("Unable to locate LSID " + values[2] + " in current dump");
@@ -553,13 +554,13 @@ public class ALANameIndexer {
                     if (doesTaxonConceptExist(currentSearcher, values[3]) || doesTaxonConceptExist(idSearcher, values[3])) {
                         //each common name could be a comma separated list
                         if (!values[2].contains(",") || values[2].toLowerCase().contains(" and ")) {
-                            iw.addDocument(createCommonNameDocument(values[2], null, values[3], 2.0f));
+                            iw.addDocument(createCommonNameDocument(values[2], null, values[3], null, 2.0f));
                             count++;
                         } else {
                             //we need to process each common name in the list
                             String[] names = p.split(values[2]);
                             for (String name : names) {
-                                iw.addDocument(createCommonNameDocument(name, null, values[3], 2.0f));
+                                iw.addDocument(createCommonNameDocument(name, null, values[3],null,  2.0f));
                                 count++;
                             }
                         }
@@ -584,22 +585,26 @@ public class ALANameIndexer {
      * @param idFile
      * @throws Exception
      */
-    private void createExtraIdIndex(String idxLocation, File idFile) throws Exception {
-        CSVReader reader = new CSVReader(new FileReader(idFile), '\t', '"', '~');//CSVReader.build(idFile, "UTF-8", "\t", '"', 0);
+    protected void createExtraIdIndex(String idxLocation, File idFile) throws Exception {
         File indexDir = new File(idxLocation);
         IndexWriter iw = createIndexWriter(indexDir, new KeywordAnalyzer(), true);//new IndexWriter(FSDirectory.open(indexDir), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
         String[] values = null;
-        while ((values = reader.readNext()) != null) {
 
-            if (values != null && values.length >= 3) {
-                Document doc = new Document();
-                //doc.add(new Field("lsid", values[2], Store.NO, Index.NOT_ANALYZED));
-                doc.add(new StringField("lsid", values[2], Store.NO));
-                //doc.add(new Field("reallsid", values[1], Store.YES, Index.NO));
-                doc.add(new StoredField("reallsid", values[1]));
-                iw.addDocument(doc);
+        if(idFile.exists()) {
+            CSVReader reader = new CSVReader(new FileReader(idFile), '\t', '"', '~');//CSVReader.build(idFile, "UTF-8", "\t", '"', 0);
+            while ((values = reader.readNext()) != null) {
+
+                if (values != null && values.length >= 3) {
+                    Document doc = new Document();
+                    //doc.add(new Field("lsid", values[2], Store.NO, Index.NOT_ANALYZED));
+                    doc.add(new StringField("lsid", values[2], Store.NO));
+                    //doc.add(new Field("reallsid", values[1], Store.YES, Index.NO));
+                    doc.add(new StoredField("reallsid", values[1]));
+                    iw.addDocument(doc);
+                }
             }
         }
+        iw.flush();
         iw.commit();
         iw.forceMerge(1);
         iw.close();
@@ -676,11 +681,11 @@ public class ALANameIndexer {
         return value;
     }
 
-    protected Document createCommonNameDocument(String cn, String sn, String lsid, float boost){
-        return createCommonNameDocument(cn, sn, lsid, boost, true);
+    protected Document createCommonNameDocument(String cn, String sn, String lsid, String language, float boost){
+        return createCommonNameDocument(cn, sn, lsid, language, boost, true);
     }
 
-    protected Document createCommonNameDocument(String cn, String sn, String lsid, float boost, boolean checkAccepted) {
+    protected Document createCommonNameDocument(String cn, String sn, String lsid, String language, float boost, boolean checkAccepted) {
         Document doc = new Document();
         //we are only interested in keeping all the alphanumerical values of the common name
         //when searching the same operations will need to be peformed on the search string
@@ -696,6 +701,9 @@ public class ALANameIndexer {
 
         doc.add(new TextField(IndexField.COMMON_NAME.toString(), cn, Store.YES));
         doc.add(new TextField(IndexField.LSID.toString(), newLsid, Store.YES));
+        if(language != null) {
+            doc.add(new TextField(IndexField.LANGUAGE.toString(), language.toLowerCase().trim(), Store.YES));
+        }
 
         return doc;
     }
