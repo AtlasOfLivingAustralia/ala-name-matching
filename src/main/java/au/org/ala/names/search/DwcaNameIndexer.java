@@ -515,6 +515,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
         if(colformat){
 
+            log.info("Col format specified, organising parent / child IDS");
+
             //reopen the index for updates
             this.loadingIndexWriter = this.createIndexWriter(this.tmpDir, new KeywordAnalyzer(), false);
 
@@ -552,8 +554,6 @@ public class DwcaNameIndexer extends ALANameIndexer {
             this.loadingIndexWriter.forceMerge(1);
             this.loadingIndexWriter.close();
         }
-
-        log.info("Finished creating the temporary load index with " + i + " concepts");
     }
 
     public void commitLoadingIndexes() throws IOException {
@@ -652,7 +652,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 Document doc = lsearcher.doc(sd.doc);
                 right = addIndex(doc, 1, left, new LinnaeanRankClassification(), 0);
                 if (right - lastRight > 1000) {
-                    log.info("Finished loading root " + doc.get(NameIndexField.LSID.toString()) + " " + doc.get(NameIndexField.NAME.toString()) + " left:" + left + " right" + right + " root count:" + count);
+                    log.info("Finished loading root " + doc.get(NameIndexField.LSID.toString()) + " " + doc.get(NameIndexField.NAME.toString()) + " left:" + left + " right:" + right + " root count:" + count);
                     lastRight = right;
                 }
                 count++;
