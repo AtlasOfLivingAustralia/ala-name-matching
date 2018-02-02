@@ -1639,6 +1639,35 @@ public class ALANameSearcher {
     /**
      * Retrieve a single common name for this LSID.
      * @param lsid
+     * @param languages to select
+     * @return a single common name
+     */
+    public String getCommonNameForLSID(String lsid, String[] languages) {
+        if (lsid != null) {
+            for (String language: languages) {
+                try {
+                    Query query = queryParser.get().parse(
+                    ALANameIndexer.IndexField.LSID.toString() + ":\"" + lsid + "\" " +
+                            " AND " +
+                            ALANameIndexer.IndexField.LANGUAGE.toString() + ":\"" + language + "\" "
+                    );
+                    TopDocs results = vernSearcher.search(query, 1);
+                    log.debug("Number of matches for " + lsid + " " + results.totalHits);
+                    for (ScoreDoc sdoc : results.scoreDocs) {
+                        org.apache.lucene.document.Document doc = vernSearcher.doc(sdoc.doc);
+                        return doc.get(ALANameIndexer.IndexField.COMMON_NAME.toString());
+                    }
+                } catch (Exception e) {
+                    log.debug("Unable to access document for common name.", e);
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Retrieve a single common name for this LSID.
+     * @param lsid
      * @return
      */
     public Set<String> getCommonNamesForLSID(String lsid, int maxNumberOfNames) {

@@ -908,6 +908,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
         options.addOption("tmp", true, "The tmp directory for the load index. Defaults to " + DEFAULT_TMP_DIR);
         options.addOption("common", true, "The common (vernacular) name file. Defaults to " + DEFAULT_COMMON_NAME);
         options.addOption("testSearch", true, "Debug a name search. This uses the target directory to search against.");
+        options.addOption("testCommonSearch", true, "Debug a common name search. This takes a taxonID for the search.");
+        options.addOption("testCommonSearchLang", true, "Debug a common name search, supplying a language.");
 
         CommandLineParser parser = new BasicParser();
 
@@ -941,7 +943,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
                 if(indexExists) {
                     //do a name search - with option flag pointing to index location
-                    System.out.println("Search for name");
+                    System.out.println("Search for name: " + line.getOptionValue("testSearch"));
                     ALANameSearcher searcher = new ALANameSearcher(line.getOptionValue("target", DEFAULT_TARGET_DIR));
                     NameSearchResult nsr = searcher.searchForRecord(line.getOptionValue("testSearch"));
 
@@ -971,6 +973,42 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 }
                 new HelpFormatter().printHelp("nameindexer", options);
                 System.exit(-1);
+            }
+
+            if (line.hasOption("testCommonSearch")){
+                boolean indexExists = (new File(DEFAULT_TARGET_DIR).exists());
+                if(indexExists) {
+                    //do a name search - with option flag pointing to index location
+                    System.out.println("Search for name: " + line.getOptionValue("testCommonSearch"));
+                    ALANameSearcher searcher = new ALANameSearcher(line.getOptionValue("target", DEFAULT_TARGET_DIR));
+
+                    String lsid = line.getOptionValue("testCommonSearch");
+                    String language = line.getOptionValue("testCommonSearchLang");
+
+                    String commonName = null;
+                    if(StringUtils.isNotBlank(language)){
+                        commonName = searcher.getCommonNameForLSID(lsid, new String[]{language});
+                    } else {
+                        commonName = searcher.getCommonNameForLSID(lsid);
+                    }
+
+                    if(commonName == null){
+                        if(StringUtils.isNotBlank(language)){
+                            System.err.println("No common name indexed for taxonID: " + lsid + " and language " + language);
+                        } else {
+                            System.err.println("No common name indexed for taxonID: " + lsid);
+                        }
+                    } else {
+                        System.out.println("Match: " + commonName);
+                    }
+
+                    System.exit(1);
+                } else {
+                    System.err.println("Index unreadable. Check " + DEFAULT_TARGET_DIR);
+                }
+                new HelpFormatter().printHelp("nameindexer", options);
+                System.exit(-1);
+
             }
 
             boolean recurse = line.hasOption("recurse");
