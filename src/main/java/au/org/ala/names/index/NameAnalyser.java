@@ -55,7 +55,7 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
      *
      * @return A suitable name key
      */
-    abstract public NameKey analyse(NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, @Nullable RankType rankType, boolean loose);
+    abstract public NameKey analyse(@Nullable NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, @Nullable RankType rankType, boolean loose);
 
     /**
      * Set the issue reporter.
@@ -158,4 +158,17 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
         else
             logger.warn("Report " + type.name() + " code=" + code + " elements=" + Arrays.toString(elements));
     }
+
+    /**
+     * Compare author strings.
+     * <p>
+     * This usually compared equality across author abbreviations.
+     *
+     * </p>
+     * @param author1 The first author string (may be null)
+     * @param author2 The second author string (may be null)
+     *
+     * @return A value less than, greater than or equal to 0, similar to compare
+     */
+    public abstract int compareAuthor(String author1, String author2);
 }

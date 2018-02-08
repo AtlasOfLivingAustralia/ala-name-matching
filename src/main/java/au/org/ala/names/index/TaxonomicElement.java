@@ -1,6 +1,7 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
+import org.gbif.api.vocabulary.NomenclaturalCode;
 
 import java.util.Comparator;
 

@@ -380,7 +380,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * @param archiveDirectory
      * @throws Exception
      */
-    private boolean createLoadingIndex(File archiveDirectory) throws Exception{
+    public boolean createLoadingIndex(File archiveDirectory) throws Exception{
         if (archiveDirectory == null || !archiveDirectory.exists()) {
             log.warn("Unable to created loading index for " + archiveDirectory + " as it does not exisit");
             return false;
@@ -518,7 +518,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
      *
      * @throws Exception
      */
-    private void generateIndex() throws Exception{
+    public void generateIndex() throws Exception{
         //get all the records that don't have parents that are accepted
         log.info("Loading index from temporary index.");
         TopDocs rootConcepts = getLoadIdxResults(null, "root", "T", PAGE_SIZE);

@@ -2,6 +2,7 @@ package au.org.ala.names.index;
 
 import au.org.ala.vocab.ALATerm;
 import au.org.ala.names.model.RankType;
+import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;

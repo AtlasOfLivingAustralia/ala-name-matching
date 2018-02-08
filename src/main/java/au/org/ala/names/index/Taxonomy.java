@@ -1,11 +1,17 @@
 package au.org.ala.names.index;
 
 import au.com.bytecode.opencsv.CSVWriter;
+import au.org.ala.names.model.LinnaeanRankClassification;
+import au.org.ala.names.model.NameSearchResult;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
+import au.org.ala.names.search.ALANameSearcher;
+import au.org.ala.names.search.DwcaNameIndexer;
+import au.org.ala.names.search.SearchResultException;
 import au.org.ala.names.util.DwcaWriter;
 import au.org.ala.names.util.FileUtils;
 import au.org.ala.vocab.ALATerm;
+import au.org.ala.vocab.TaxonRank;
 import com.google.common.collect.Maps;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -60,8 +66,14 @@ public class Taxonomy implements Reporter {
     /** How many things to go before giving an update */
     public static int PROGRESS_INTERVAL = 10000;
 
+
+    /** The map of terms onto lucene fields */
+    private static Map<Term, String> fieldNames = new HashMap<>();
+    /** The map of lucene fields to terms */
+    private static Map<String, Term> fieldTerms = new HashMap<>();
+
     /** The counts we do progress reports on */
-    public Set<String> COUNT_PROGRESS = new HashSet<>(Arrays.asList(
+    public static Set<String> COUNT_PROGRESS = new HashSet<>(Arrays.asList(
             "count.homonym",
             "count.load.instance",
             "count.resolve.instance.links",
@@ -73,11 +85,35 @@ public class Taxonomy implements Reporter {
     ));
 
     /**
+     * Terms not to copy from an unplaced vernacular entry, usually because they
+     * should come from the attached taxon.
+     */
+    protected static final List<String> UNPLACED_VERNACULAR_FORBIDDEN = Arrays.asList(
+            "type",
+            "id",
+            fieldName(DwcTerm.taxonID),
+            fieldName(DwcTerm.scientificName),
+            fieldName(DwcTerm.scientificNameAuthorship),
+            fieldName(DwcTerm.nomenclaturalCode),
+            fieldName(DwcTerm.taxonRank),
+            fieldName(DwcTerm.kingdom),
+            fieldName(DwcTerm.phylum),
+            fieldName(DwcTerm.class_),
+            fieldName(DwcTerm.order),
+            fieldName(DwcTerm.family),
+            fieldName(DwcTerm.genus),
+            fieldName(DwcTerm.specificEpithet),
+            fieldName(DwcTerm.infraspecificEpithet)
+    );
+
+
+    /**
      * The default term list
      */
     private static final List<Term> DEFAULT_TERMS = Collections.unmodifiableList(Arrays.asList(
             DwcTerm.taxonID
     ));
+
 
 
     /** The configuration */
@@ -114,12 +150,10 @@ public class Taxonomy implements Reporter {
     private ResourceBundle resources;
     /** The progress counts */
     private ConcurrentMap<String, AtomicInteger> counts;
-    /** The map of terms onto lucene fields */
-    private Map<Term, String> fieldNames;
-    /** The map of lucene fields to terms */
-    private Map<String, Term> fieldTerms;
     /** The list of name sources used */
     private List<NameSource> sources;
+    /** A working name matching index. Used to find things that don't have an explicit home */
+    private ALANameSearcher workingIndex;
 
     /**
      * Default taxonomy constructor.
@@ -177,8 +211,6 @@ public class Taxonomy implements Reporter {
         this.indexAnalyzer = new KeywordAnalyzer();
         this.resources = ResourceBundle.getBundle("taxonomy");
         this.counts = new ConcurrentHashMap<>();
-        this.fieldNames = new HashMap<>();
-        this.fieldTerms = new HashMap<>();
         this.sources = new ArrayList<>();
     }
 
@@ -206,8 +238,6 @@ public class Taxonomy implements Reporter {
         this.indexAnalyzer = new KeywordAnalyzer();
         this.resources = ResourceBundle.getBundle("taxonomy");
         this.counts = new ConcurrentHashMap<>();
-        this.fieldNames = new HashMap<>();
-        this.fieldTerms = new HashMap<>();
         this.sources = new ArrayList<>();
     }
 
@@ -236,6 +266,24 @@ public class Taxonomy implements Reporter {
      */
     public TaxonResolver getResolver() {
         return resolver;
+    }
+
+    /**
+     * Get the working name index.
+     *
+     * @return The current view of how everything fits together
+     */
+    public ALANameSearcher getWorkingIndex() {
+        return workingIndex;
+    }
+
+    /**
+     * Set the working name index
+     *
+     * @param workingIndex The working name index
+     */
+    public void setWorkingIndex(ALANameSearcher workingIndex) {
+        this.workingIndex = workingIndex;
     }
 
     /**
@@ -274,6 +322,16 @@ public class Taxonomy implements Reporter {
            message = MessageFormat.format(message, c);
            logger.info(message);
        }
+    }
+
+    /**
+     * Reset the count for some a statistic
+     *
+     * @param type The count to reset
+     */
+    public void resetCount(String type) {
+        AtomicInteger count = this.counts.computeIfAbsent(type, k -> new AtomicInteger(0));
+        count.set(0);
     }
 
     /**
@@ -352,7 +410,6 @@ public class Taxonomy implements Reporter {
         this.resolvePrincipal();
         if (!this.validate())
             throw new IndexBuilderException("Invalid resolution");
-
     }
 
     /**
@@ -464,6 +521,111 @@ public class Taxonomy implements Reporter {
         this.unrankedNames.values().parallelStream().forEach(name -> name.resolvePrincipal(this));
         logger.info("Resolving principals for bare names");
         this.bareNames.values().parallelStream().forEach(name -> name.resolvePrincipal(this));
+        logger.info("Finished resolving principals");
+    }
+
+    /**
+     * Resolve any unplaced vernacular names.
+     * <p>
+     * A new vernacular name is added with the correct taxon ID and other information as supplied.
+     * </p>
+     * <p>
+     * There must be a working index set at this point, so that names can be found.
+     * See {@link #setWorkingIndex(ALANameSearcher)}
+     * </p>
+     *
+     * @throws IndexBuilderException
+     */
+    public void resolveUnplacedVernacular() throws IndexBuilderException {
+        logger.info("Resolving unplaced vernacular names");
+        if (this.workingIndex == null)
+            throw new IndexBuilderException("No working name index set");
+        try {
+            BooleanQuery query = new BooleanQuery();
+            query.add(new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.UplacedVernacularName.qualifiedName())), BooleanClause.Occur.MUST);
+            IndexSearcher searcher = this.searcherManager.acquire();
+            try {
+                ScoreDoc after = null;
+                TopDocs docs = searcher.search(query, 100, Sort.INDEXORDER);
+                while (docs.scoreDocs.length > 0) {
+                    for (ScoreDoc sd : docs.scoreDocs) {
+                        after = sd;
+                        Document document = searcher.doc(sd.doc);
+                        TaxonConceptInstance tci = null;
+                        String taxonID = document.get(fieldName(DwcTerm.taxonID));
+                        if (taxonID != null)
+                            tci = this.instances.get(taxonID);
+                        if (tci == null)
+                            tci = this.search(document);
+                        String vernacularName = document.get(fieldName(DwcTerm.vernacularName));
+                        TaxonConcept concept = tci == null ? null : tci.getContainer();
+                        if (concept == null) {
+                            String scientificName = document.get(fieldName(DwcTerm.scientificName));
+                            this.report(IssueType.PROBLEM, "vernacularName.unplaced", vernacularName, scientificName);
+                            this.count("count.vernacularName.unplaced");
+                        } else {
+                            Document placed = new Document();
+                            placed.add(new StringField("type", GbifTerm.VernacularName.qualifiedName(), Field.Store.YES));
+                            placed.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
+                            placed.add(new StringField(fieldName(DwcTerm.taxonID), concept.getRepresentative().getTaxonID(), Field.Store.YES));
+                            for (IndexableField field : document) {
+                                if (!UNPLACED_VERNACULAR_FORBIDDEN.contains(field.name())) {
+                                    placed.add(field);
+                                }
+                            }
+                            this.indexWriter.addDocument(placed);
+                        }
+                    }
+                    this.indexWriter.commit();
+                    docs = searcher.searchAfter(after, query, 100, Sort.INDEXORDER);
+                }
+            } finally {
+                this.searcherManager.release(searcher);
+                this.searcherManager.maybeRefresh();
+            }
+            logger.info("Finished resolving unplaced vernacular names");
+        } catch (IndexBuilderException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new IndexBuilderException("Unable to search for unplaced vernacular names", ex);
+        }
+
+    }
+
+    /**
+     * Find the taxon concept instance that matches the data in this document.
+     * <p>
+     * Fields are expected to be keyed by Darwin Core qualified names.
+     * Eg. DwCTerm.scientificName.qualifiedName() is ""
+     * </p>
+     * <p>
+     * The working index must be set to allow this to happen.
+     * </p>
+     *
+     * @param document The document to match
+     *
+     * @return The resulting taxon concept instance, or null for not found
+     *
+     * @throws IndexBuilderException if unable to look up the name
+     */
+    protected TaxonConceptInstance search(Document document) throws IndexBuilderException {
+        if (this.workingIndex == null)
+            throw new IndexBuilderException("No working name index set");
+        LinnaeanRankClassification lc = new LinnaeanRankClassification();
+        String scientificName = document.get(fieldName(DwcTerm.scientificName));
+        lc.setScientificName(scientificName);
+        lc.setAuthorship(document.get(fieldName(DwcTerm.scientificNameAuthorship)));
+        lc.setRank(document.get(fieldName(DwcTerm.taxonRank)));
+        lc.setKingdom(document.get(fieldName(DwcTerm.kingdom)));
+        lc.setPhylum(document.get(fieldName(DwcTerm.phylum)));
+        lc.setKlass(document.get(fieldName(DwcTerm.class_)));
+        lc.setOrder(document.get(fieldName(DwcTerm.order)));
+        lc.setFamily(document.get(fieldName(DwcTerm.family)));
+        lc.setGenus(document.get(fieldName(DwcTerm.genus)));
+        lc.setSpecificEpithet(document.get(fieldName(DwcTerm.specificEpithet)));
+        lc.setInfraspecificEpithet(document.get(fieldName(DwcTerm.infraspecificEpithet)));
+        NameSearchResult result = this.workingIndex.searchForAcceptedRecordDefaultHandling(lc, true, true);
+        return result == null ? null : this.instances.get(result.getLsid());
     }
 
     /**
@@ -710,6 +872,8 @@ public class Taxonomy implements Reporter {
      */
     public void createDwCA(File directory) throws IndexBuilderException, IOException {
         logger.info("Creating DwCA");
+        this.resetCount("count.write.scientificName");
+        this.resetCount("count.write.taxonConcept");
         this.addOutputTerms(GbifTerm.Identifier, Arrays.asList(DcTerm.title, ALATerm.status, DcTerm.source)); // Generated by taxon concept instance
         DwcaWriter dwcaWriter = new DwcaWriter(DwcTerm.Taxon, DwcTerm.taxonID, directory, true);
         dwcaWriter.setEml(this.buildEml());
@@ -822,10 +986,10 @@ public class Taxonomy implements Reporter {
         Document doc = new Document();
         doc.add(new StringField("type", ALATerm.TaxonomicIssue.qualifiedName(), Field.Store.YES));
         doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DcTerm.type), type.name(), Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DcTerm.subject), code, Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DcTerm.description), message, Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DcTerm.date), ISO8601.format(OffsetDateTime.now()), Field.Store.YES));
+        doc.add(new StringField(fieldName(DcTerm.type), type.name(), Field.Store.YES));
+        doc.add(new StringField(fieldName(DcTerm.subject), code, Field.Store.YES));
+        doc.add(new StringField(fieldName(DcTerm.description), message, Field.Store.YES));
+        doc.add(new StringField(fieldName(DcTerm.date), ISO8601.format(OffsetDateTime.now()), Field.Store.YES));
         try {
             synchronized (this) {
                 this.indexWriter.addDocument(doc);
@@ -909,15 +1073,15 @@ public class Taxonomy implements Reporter {
         Document doc = new Document();
         doc.add(new StringField("type", ALATerm.TaxonomicIssue.qualifiedName(), Field.Store.YES));
         doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DcTerm.type), type.name(), Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DcTerm.subject), code, Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DcTerm.description), message, Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DcTerm.date), ISO8601.format(OffsetDateTime.now()), Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DwcTerm.taxonID), taxonID, Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DwcTerm.scientificName), scientificName, Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DwcTerm.scientificNameAuthorship), scientificNameAuthorship, Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DwcTerm.associatedTaxa), associatedTaxa, Field.Store.YES));
-        doc.add(new StringField(this.fieldName(DwcTerm.datasetID), datasetID, Field.Store.YES));
+        doc.add(new StringField(fieldName(DcTerm.type), type.name(), Field.Store.YES));
+        doc.add(new StringField(fieldName(DcTerm.subject), code, Field.Store.YES));
+        doc.add(new StringField(fieldName(DcTerm.description), message, Field.Store.YES));
+        doc.add(new StringField(fieldName(DcTerm.date), ISO8601.format(OffsetDateTime.now()), Field.Store.YES));
+        doc.add(new StringField(fieldName(DwcTerm.taxonID), taxonID, Field.Store.YES));
+        doc.add(new StringField(fieldName(DwcTerm.scientificName), scientificName, Field.Store.YES));
+        doc.add(new StringField(fieldName(DwcTerm.scientificNameAuthorship), scientificNameAuthorship, Field.Store.YES));
+        doc.add(new StringField(fieldName(DwcTerm.associatedTaxa), associatedTaxa, Field.Store.YES));
+        doc.add(new StringField(fieldName(DwcTerm.datasetID), datasetID, Field.Store.YES));
         try {
             synchronized (this) {
                 this.indexWriter.addDocument(doc);
@@ -962,7 +1126,7 @@ public class Taxonomy implements Reporter {
                     for (ScoreDoc sd : docs.scoreDocs) {
                         last = sd;
                         Document doc = searcher.doc(sd.doc);
-                        String[] values = output.stream().map(term -> doc.get(this.fieldName(term))).collect(Collectors.toList()).toArray(new String[output.size()]);
+                        String[] values = output.stream().map(term -> doc.get(fieldName(term))).collect(Collectors.toList()).toArray(new String[output.size()]);
                         writer.writeNext(values);
                         this.count("count.write.report");
                     }
@@ -973,6 +1137,49 @@ public class Taxonomy implements Reporter {
             }
         }
         logger.info("Finished creating report");
+    }
+
+    /**
+     * Create a working index for this taxonomy, based on what we have.
+     * <p>
+     * Multiple calls to this function will create new indexes, based on the current state of
+     * the taxonomy.
+     * </p>
+     * @throws IOException
+     */
+    public void createWorkingIndex() throws IOException {
+        logger.info("Creating working name index");
+        File interim = File.createTempFile("interim", "combined", this.work);
+        if (!interim.delete())
+            throw new IndexBuilderException("Unable to delete interim file " + interim);
+        if (!interim.mkdirs())
+            throw new IndexBuilderException("Unable to create interim directory " + interim);
+        File searchIndex = File.createTempFile("interim", "index", this.work);
+        if (!searchIndex.delete())
+            throw new IndexBuilderException("Unable to delete interim index file " + searchIndex);
+        if (!searchIndex.mkdirs())
+            throw new IndexBuilderException("Unable to create interim index directory " + searchIndex);
+        File tmpIndex = File.createTempFile("interim", "tmp", this.work);
+        if (!tmpIndex.delete())
+            throw new IndexBuilderException("Unable to delete interim tmp file " + searchIndex);
+        if (!tmpIndex.mkdirs())
+            throw new IndexBuilderException("Unable to create interim tmp directory " + searchIndex);
+        this.createDwCA(interim);
+        try {
+            DwcaNameIndexer indexer = new DwcaNameIndexer(searchIndex, tmpIndex, this.configuration.getPriorities(), true, true);
+            indexer.begin();
+            indexer.createLoadingIndex(interim);
+            indexer.commitLoadingIndexes();
+            indexer.generateIndex();
+            indexer.create(interim);
+            indexer.commit();
+        } catch (Exception ex) {
+            throw new IndexBuilderException("Unable to build working index");
+        } finally {
+            this.searcherManager.maybeRefresh();
+        }
+        this.workingIndex = new ALANameSearcher(searchIndex.getCanonicalPath());
+        logger.info("Created working name index");
     }
 
     /**
@@ -1100,7 +1307,7 @@ public class Taxonomy implements Reporter {
     public List<Map<Term,String>> getIndexValues(Term type, String taxonID) throws IOException {
         BooleanQuery query = new BooleanQuery();
         query.add(new TermQuery(new org.apache.lucene.index.Term("type", type.qualifiedName())), BooleanClause.Occur.MUST);
-        query.add(new TermQuery(new org.apache.lucene.index.Term(this.fieldName(DwcTerm.taxonID), taxonID)), BooleanClause.Occur.MUST);
+        query.add(new TermQuery(new org.apache.lucene.index.Term(fieldName(DwcTerm.taxonID), taxonID)), BooleanClause.Occur.MUST);
         IndexSearcher searcher = this.searcherManager.acquire();
         try {
             TopDocs docs = searcher.search(query, 100, Sort.INDEXORDER);
@@ -1110,7 +1317,7 @@ public class Taxonomy implements Reporter {
                 Map<Term, String> values = new HashMap<>();
                 for (IndexableField field : document) {
                     if (!field.name().equals("id") && !field.name().equals("type")) {
-                        Term term = this.fieldTerms.get(field.name());
+                        Term term = fieldTerms.get(field.name());
                         if (term == null)
                             throw new IllegalStateException("Can't find term for " + field.name());
                         values.put(term, field.stringValue());
@@ -1154,13 +1361,13 @@ public class Taxonomy implements Reporter {
      *
      * @return The field name
      */
-    public String fieldName(Term term) {
-        String name = this.fieldNames.get(term);
+    public static String fieldName(Term term) {
+        String name = fieldNames.get(term);
         if (name == null) {
             name = term.toString().replace(':', '_');
-            synchronized (this.fieldNames) {
-                this.fieldNames.put(term, name);
-                this.fieldTerms.put(name, term);
+            synchronized (fieldNames) {
+                fieldNames.put(term, name);
+                fieldTerms.put(name, term);
             }
         }
         return name;

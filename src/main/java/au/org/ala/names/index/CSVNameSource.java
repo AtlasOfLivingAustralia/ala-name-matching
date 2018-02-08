@@ -12,9 +12,7 @@ import org.gbif.api.model.registry.Contact;
 import org.gbif.api.vocabulary.Country;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.Term;
-import org.gbif.dwc.terms.TermFactory;
+import org.gbif.dwc.terms.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +26,10 @@ import java.util.stream.Collectors;
 /**
  * A source of names from a CSV file.
  * <p>
- * The first row must contain
+ * The first row must contain column labels.
+ * </p>
+ * <p>
+ * Two types of row are supported: {@link DwcTerm#Taxon} and {@link org.gbif.dwc.terms.GbifTerm#VernacularName}
  * </p>
  *
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
@@ -39,17 +40,20 @@ public class CSVNameSource extends NameSource {
 
     private String name;
     private CSVReader reader;
+    private Term rowType;
     private List<Term> terms;
     private Map<Term, Integer> termLocations;
 
     /**
      * Open a CSV source.
      *
-     * @param reader The
+     * @param reader The file reader
+     * @param rowType The type of row in the CSV
      */
-    public CSVNameSource(Reader reader) throws IOException {
+    public CSVNameSource(Reader reader, Term rowType) throws IOException {
         this.name = "Reader " + System.identityHashCode(reader);
         this.reader = new CSVReader(reader);
+        this.rowType = rowType;
         this.collectColumns();
     }
 
@@ -58,9 +62,10 @@ public class CSVNameSource extends NameSource {
      *
      * @param path The source file
      * @param encoding The source encoding
+     * @param rowType The type of row in the CSV
      */
-    public CSVNameSource(Path path, String encoding) throws IOException {
-        this(Files.newBufferedReader(path, Charset.forName(encoding)));
+    public CSVNameSource(Path path, String encoding, Term rowType) throws IOException {
+        this(Files.newBufferedReader(path, Charset.forName(encoding)), rowType);
         this.name = path.toUri().toASCIIString();
     }
 
@@ -132,7 +137,10 @@ public class CSVNameSource extends NameSource {
      * @throws IndexBuilderException if the archive is not usable
      */
     public void validate() throws IndexBuilderException {
-        for (Term term: TAXON_REQUIRED) {
+        List<Term> required = REQUIRED_TERMS.get(this.rowType);
+        if (required == null)
+            throw new IndexBuilderException("Unable to support row type " + this.rowType);
+        for (Term term: required) {
             if (!this.termLocations.containsKey(term))
                 throw new IndexBuilderException("CSV file does not contain required term " + term);
         }
@@ -147,6 +155,23 @@ public class CSVNameSource extends NameSource {
      */
     @Override
     public void loadIntoTaxonomy(Taxonomy taxonomy) throws IndexBuilderException {
+        if (this.rowType == DwcTerm.Taxon)
+            this.loadTaxon(taxonomy);
+        else if (this.rowType == GbifTerm.VernacularName)
+            this.loadVernacular(taxonomy);
+        else
+            throw new IndexBuilderException("Unable to support row type " + this.rowType);
+
+    }
+
+    /**
+     * Load taxon records into a taxonomy.
+     *
+     * @param taxonomy The taxonomy
+     *
+     * @throws IndexBuilderException if unable to load a record into the taxonomy.
+     */
+    protected void loadTaxon(Taxonomy taxonomy) throws IndexBuilderException {
         final Map<Term, Integer> termLocations = this.termLocations; // Lambda requires final local variable
         taxonomy.addOutputTerms(DwcTerm.Taxon, this.terms);
         taxonomy.addOutputTerms(ALATerm.TaxonVariant, this.terms);
@@ -219,7 +244,40 @@ public class CSVNameSource extends NameSource {
                     Term term = this.terms.get(i);
                     String value = term == DwcTerm.taxonID ? instance.getTaxonID() : record[i]; // Allow for changed taxonIDs
                     if (term != null && value != null && !value.isEmpty())
-                        doc.add(new StringField(taxonomy.fieldName(term), value, Field.Store.YES));
+                        doc.add(new StringField(Taxonomy.fieldName(term), value, Field.Store.YES));
+                }
+                taxonomy.addRecords(Collections.singletonList(doc));
+            }
+        } catch (IndexBuilderException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new IndexBuilderException("Unable to load CSV file", ex);
+        }
+    }
+
+    /**
+     * Load vernacular names into a taxonomy.
+     *
+     * @param taxonomy The taxonomy
+     *
+     * @throws IndexBuilderException if unable to load a record into the taxonomy.
+     */
+    public void loadVernacular(Taxonomy taxonomy) throws IndexBuilderException {
+        final Map<Term, Integer> termLocations = this.termLocations; // Lambda requires final local variable
+        taxonomy.addOutputTerms(GbifTerm.VernacularName, this.terms);
+        try {
+            String[] r;
+
+            while ((r = this.reader.readNext()) != null) {
+                final String[] record = r;
+                Document doc = new Document();
+                doc.add(new StringField("type", ALATerm.UplacedVernacularName.qualifiedName(), Field.Store.YES));
+                doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
+                for (int i = 0; i < record.length; i++) {
+                    Term term = this.terms.get(i);
+                    String value = record[i];
+                    if (term != null && value != null && !value.isEmpty())
+                        doc.add(new StringField(Taxonomy.fieldName(term), value, Field.Store.YES));
                 }
                 taxonomy.addRecords(Collections.singletonList(doc));
             }

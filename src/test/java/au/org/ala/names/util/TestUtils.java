@@ -49,4 +49,11 @@ public class TestUtils {
         return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, taxonomicStatus, taxonomicStatus.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null);
     }
 
+    public int rowCount(File file) throws IOException {
+        if (!file.exists())
+            return -1;
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+        return (int) reader.lines().count();
+    }
+
 }

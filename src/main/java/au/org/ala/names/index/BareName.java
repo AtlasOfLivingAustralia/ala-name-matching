@@ -1,5 +1,8 @@
 package au.org.ala.names.index;
 
+import au.org.ala.names.model.RankType;
+import org.gbif.api.vocabulary.NomenclaturalCode;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -122,8 +125,6 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
         }
         element.clear(principal);
     }
-
-
 
     /**
      * A human readbale label for the concept

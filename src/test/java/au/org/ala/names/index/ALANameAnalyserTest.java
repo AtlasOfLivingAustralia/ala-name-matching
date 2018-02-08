@@ -131,6 +131,26 @@ public class ALANameAnalyserTest {
         assertNull(key.getScientificNameAuthorship());
     }
 
+    @Test
+    public void testAuthorEquals1() throws Exception {
+        assertEquals(0, this.analyser.compareAuthor(null, null));
+        assertTrue( this.analyser.compareAuthor("L.", null) > 0);
+        assertTrue(this.analyser.compareAuthor(null, "L.") < 0);
+    }
+
+    @Test
+    public void testAuthorEquals2() throws Exception {
+        assertEquals(0, this.analyser.compareAuthor("Lindel", "Lindel"));
+        assertTrue( this.analyser.compareAuthor("Alphose", "Lindel") < 0);
+        assertTrue(this.analyser.compareAuthor("Lindel", "Alphonse") > 0);
+    }
+
+    @Test
+    public void testAuthorEquals3() throws Exception {
+        assertEquals(0, this.analyser.compareAuthor("L.", "Linnaeus"));
+        assertEquals(0, this.analyser.compareAuthor("L.", "Lin."));
+     }
+
 
     @Test
     public void testKeyEquals1() throws Exception {

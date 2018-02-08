@@ -1,6 +1,8 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.util.TestUtils;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifTerm;
 import org.junit.After;
 import org.junit.Test;
 
@@ -30,7 +32,7 @@ public class TaxonomyTest extends TestUtils {
     public void testResolveLinks1() throws Exception {
         this.taxonomy = new Taxonomy();
         this.taxonomy.begin();
-        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-1.csv"));
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-1.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source));
         this.taxonomy.resolveLinks();
         TaxonConceptInstance i1 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044710");
@@ -53,7 +55,7 @@ public class TaxonomyTest extends TestUtils {
     public void testResolveLinks2() throws Exception {
         this.taxonomy = new Taxonomy();
         this.taxonomy.begin();
-        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-2.csv"));
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-2.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source));
         this.taxonomy.resolveLinks();
         TaxonConceptInstance i1 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044710");
@@ -74,7 +76,7 @@ public class TaxonomyTest extends TestUtils {
     public void testResolveTaxon1() throws Exception {
         this.taxonomy = new Taxonomy();
         this.taxonomy.begin();
-        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-1.csv"));
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-1.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source));
         this.taxonomy.resolveLinks();
         this.taxonomy.resolveTaxon();
@@ -95,8 +97,8 @@ public class TaxonomyTest extends TestUtils {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
         this.taxonomy = new Taxonomy(config, null);
         this.taxonomy.begin();
-        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-3.csv"));
-        CSVNameSource source2 = new CSVNameSource(this.resourceReader("taxonomy-4.csv"));
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-3.csv"), DwcTerm.Taxon);
+        CSVNameSource source2 = new CSVNameSource(this.resourceReader("taxonomy-4.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source1, source2));
         this.taxonomy.resolveLinks();
         this.taxonomy.resolveTaxon();
@@ -129,8 +131,8 @@ public class TaxonomyTest extends TestUtils {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
         this.taxonomy = new Taxonomy(config, null);
         this.taxonomy.begin();
-        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-3.csv"));
-        CSVNameSource source2 = new CSVNameSource(this.resourceReader("taxonomy-5.csv"));
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-3.csv"), DwcTerm.Taxon);
+        CSVNameSource source2 = new CSVNameSource(this.resourceReader("taxonomy-5.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source1, source2));
         this.taxonomy.resolveLinks();
         this.taxonomy.resolveTaxon();
@@ -163,7 +165,7 @@ public class TaxonomyTest extends TestUtils {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
         this.taxonomy = new Taxonomy(config, null);
         this.taxonomy.begin();
-        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-7.csv"));
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-7.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source1));
         this.taxonomy.resolve();
         TaxonConceptInstance i11 = this.taxonomy.getInstance("NZOR-4-28207");
@@ -198,7 +200,7 @@ public class TaxonomyTest extends TestUtils {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
         this.taxonomy = new Taxonomy(config, null);
         this.taxonomy.begin();
-        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-9.csv"));
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-9.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source1));
         this.taxonomy.resolve();
         TaxonConceptInstance i11 = this.taxonomy.getInstance("NZOR-4-10536");
@@ -226,7 +228,7 @@ public class TaxonomyTest extends TestUtils {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
         this.taxonomy = new Taxonomy(config, null);
         this.taxonomy.begin();
-        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-10.csv"));
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-10.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source1));
         this.taxonomy.resolve();
         TaxonConceptInstance i0 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/apni/7178434");
@@ -258,7 +260,7 @@ public class TaxonomyTest extends TestUtils {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
         this.taxonomy = new Taxonomy(config, null);
         this.taxonomy.begin();
-        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-8.csv"));
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-8.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source1));
         this.taxonomy.resolve();
         TaxonConceptInstance i11 = this.taxonomy.getInstance("NZOR-4-118018");
@@ -287,8 +289,8 @@ public class TaxonomyTest extends TestUtils {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
         this.taxonomy = new Taxonomy(config, null);
         this.taxonomy.begin();
-        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-3.csv"));
-        CSVNameSource source2 = new CSVNameSource(this.resourceReader("taxonomy-4.csv"));
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-3.csv"), DwcTerm.Taxon);
+        CSVNameSource source2 = new CSVNameSource(this.resourceReader("taxonomy-4.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source1, source2));
         this.taxonomy.resolve();
         File dir = new File(this.taxonomy.getWork(), "output");
@@ -296,10 +298,10 @@ public class TaxonomyTest extends TestUtils {
         this.taxonomy.createDwCA(dir);
         assertTrue(new File(dir, "meta.xml").exists());
         assertTrue(new File(dir, "eml.xml").exists());
-        assertTrue(new File(dir, "taxon.txt").exists());
-        assertTrue(new File(dir, "taxonvariant.txt").exists());
-        assertTrue(new File(dir, "identifier.txt").exists());
-        assertTrue(new File(dir, "rightsholder.txt").exists());
+        assertEquals(11, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(21, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(51, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(4, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
 
@@ -309,7 +311,7 @@ public class TaxonomyTest extends TestUtils {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
         this.taxonomy = new Taxonomy(config, null);
         this.taxonomy.begin();
-        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-10.csv"));
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-10.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source1));
         this.taxonomy.resolve();
         File dir = new File(this.taxonomy.getWork(), "output");
@@ -317,11 +319,31 @@ public class TaxonomyTest extends TestUtils {
         this.taxonomy.createDwCA(dir);
         assertTrue(new File(dir, "meta.xml").exists());
         assertTrue(new File(dir, "eml.xml").exists());
-        assertTrue(new File(dir, "taxon.txt").exists());
-        assertTrue(new File(dir, "taxonvariant.txt").exists());
-        assertTrue(new File(dir, "identifier.txt").exists());
-        assertTrue(new File(dir, "rightsholder.txt").exists());
+        assertEquals(4, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(5, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(5, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(5, this.rowCount(new File(dir, "rightsholder.txt")));
+    }
 
+
+    @Test
+    public void testResolveUnplacedVernacular1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-5.csv"), DwcTerm.Taxon);
+        CSVNameSource source2 = new CSVNameSource(this.resourceReader("vernacular-1.csv"), GbifTerm.VernacularName);
+        this.taxonomy.load(Arrays.asList(source1, source2));
+        this.taxonomy.resolve();
+        this.taxonomy.createWorkingIndex();
+        this.taxonomy.resolveUnplacedVernacular();
+        File dir = new File(this.taxonomy.getWork(), "output");
+        dir.mkdir();
+        this.taxonomy.createDwCA(dir);
+        assertTrue(new File(dir, "meta.xml").exists());
+        assertTrue(new File(dir, "eml.xml").exists());
+        assertEquals(11, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(2, this.rowCount(new File(dir, "vernacularname.txt")));
     }
 
 }

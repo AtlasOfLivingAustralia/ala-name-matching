@@ -99,6 +99,15 @@ public class NameKey implements Comparable<NameKey> {
     }
 
     /**
+     * Is this an unauthored name, meaning that it does not have a scientific name author?
+     *
+     * @return True if the name key is unauthored
+     */
+    public boolean isUnauthored() {
+        return this.scientificNameAuthorship == null;
+    }
+
+    /**
      * Is this an uncoded name, meaning that it does not have a nomenclatural code to accurately
      * distinguish between homonyms?
      *
@@ -206,5 +215,16 @@ public class NameKey implements Comparable<NameKey> {
     @Override
     public int compareTo(NameKey o) {
         return this.analyser.compare(this, o);
+    }
+
+    /**
+     * Compare authorship
+     *
+     * @param author The author to compare with
+     *
+     * @return
+     */
+    public int compareAuthor(String author) {
+        return this.analyser.compareAuthor(this.scientificNameAuthorship, author);
     }
 }
