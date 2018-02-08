@@ -6,6 +6,13 @@ This API borrows heavily from the name parsing great work done by [GBIF](https:/
 in their [scientific name parser library](https://github.com/gbif/name-parser)
 This code contains additions for handling some Australian specific issues.
 
+## Versions
+
+* The master currently contains the 2.x branch. This version will only work with lucene 4. This version is in use by biocache 1.9.x.
+* The 3.x branch will only work with lucene 5 and **may not work with recent ALA name sources** due to the last merge from master being done from a [March 2017](https://github.com/AtlasOfLivingAustralia/ala-name-matching/commit/84fd72422d624798db71dac1de8ae59a5bbb69c5) commit. This version is in use by biocache 2.x.
+
+Note: indexes generated with the 2.x version of this library will not work with biocache 2.x.
+
 ## Generating a name match index
 
 The name match index can be built from multiple Darwin Core Archives (DwCAs) that contains all the 
