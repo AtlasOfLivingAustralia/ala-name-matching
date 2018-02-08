@@ -9,9 +9,8 @@ import org.gbif.api.model.registry.Contact;
 
 import java.io.*;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A readable description of a taxonomy construction.
@@ -137,5 +136,23 @@ public class TaxonomyConfiguration {
             sb.append(this.contact.getOrganization());
         }
         return sb.toString().trim();
+    }
+
+    /**
+     * Build a priority list of boosts for the providers and other elements.
+     * <p>
+     * Used whem building name matching indexes.
+     * </p>
+     *
+     * @return The resulting priorities
+     */
+    @JsonIgnore
+    public Properties getPriorities() {
+        int max = this.providers.stream().mapToInt(NameProvider::getDefaultScore).max().orElse(1);
+        double scale = 2.0 / max; // Highest boost is 2
+        Properties properties = new Properties();
+        for (NameProvider p: this.providers)
+            properties.setProperty(p.getId(), Double.toString(Math.max(0.25, p.getDefaultScore() * scale)));
+        return properties;
     }
 }

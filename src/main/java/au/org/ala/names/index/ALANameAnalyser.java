@@ -150,10 +150,10 @@ public class ALANameAnalyser extends NameAnalyser {
      * @param rankType                 The taxon rank
      * @param loose                    This is from a loose source that may have authors mixed up with names
      *
-     * @return
+     * @return The analyzed name
      */
     @Override
-    public NameKey analyse(NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, @Nullable RankType rankType, boolean loose) {
+    public NameKey analyse(@Nullable NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, @Nullable RankType rankType, boolean loose) {
         NameType nameType = NameType.INFORMAL;
         if (scientificNameAuthorship != null && scientificName.endsWith(scientificNameAuthorship)) {
             scientificName = scientificName.substring(0, scientificName.length() - scientificNameAuthorship.length()).trim();
@@ -502,15 +502,26 @@ public class ALANameAnalyser extends NameAnalyser {
             return cmp;
         if ((cmp = key1.getRank().compareTo(key2.getRank())) != 0)
             return cmp;
-        if (key1.getScientificNameAuthorship() == null && key2.getScientificNameAuthorship() == null)
+        return this.compareAuthor(key1.getScientificNameAuthorship(), key2.getScientificNameAuthorship());
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Use the GBIF name comparator fdr equality
+     * </p>
+     */
+    @Override
+    public int compareAuthor(String author1, String author2) {
+        if (author1 == null && author2 == null)
             return 0;
-        if (key1.getScientificNameAuthorship() == null && key2.getScientificNameAuthorship() != null)
+        if (author1 == null && author2 != null)
             return -1;
-        if (key1.getScientificNameAuthorship() != null && key2.getScientificNameAuthorship() == null)
+        if (author1 != null && author2 == null)
             return 1;
-        if (authorComparator.compare(key1.getScientificNameAuthorship(), null, key2.getScientificNameAuthorship(), null) == Equality.EQUAL)
+        if (authorComparator.compare(author1, null, author2, null) == Equality.EQUAL)
             return 0;
-        return key1.getScientificNameAuthorship().compareTo(key2.getScientificNameAuthorship());
+        return author1.compareTo(author2);
     }
 
     /**

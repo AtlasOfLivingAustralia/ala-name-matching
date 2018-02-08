@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.Properties;
 
 import static org.junit.Assert.*;
 
@@ -125,5 +126,17 @@ public class TaxonomyConfiugrationTest extends TestUtils {
         assertEquals(CLN, config.contact.getLastName());
         assertEquals(COR, config.contact.getOrganization());
     }
+
+    @Test
+    public void testPriorities1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        Properties properties = config.getPriorities();
+        assertNotNull(properties.getProperty("dr100"));
+        assertEquals(2.0, Double.parseDouble(properties.getProperty("dr100")), 0.01);
+        assertNotNull(properties.getProperty("dr100"));
+        assertEquals(2.0 * 125 / 150, Double.parseDouble(properties.getProperty("dr101")), 0.01);
+        assertNull(properties.getProperty("dr102"));
+    }
+
 
 }

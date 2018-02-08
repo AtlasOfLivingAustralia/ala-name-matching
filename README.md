@@ -124,6 +124,17 @@ To use ala-name-matching, include it as a dependency in your pom file:
    </dependency>
 ```
 
+If you are using grails 3, you may encounter problems with the newer GBIF
+libraries having validation code that conflicts with spring validation.
+You can correct this by using
+
+```
+compile("au.org.ala:ala-name-matching:2.4.6") {
+    exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    exclude group: 'org.apache.bval', module: 'org.apache.bval.bundle'
+}
+```
+
 Download the most recently generated name matching index: 
 
 http://biocache.ala.org.au/archives/namematching/YYYMMDD/namematching-YYYMMDD.tgz

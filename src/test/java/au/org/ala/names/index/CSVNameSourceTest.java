@@ -39,14 +39,14 @@ public class CSVNameSourceTest extends TestUtils {
 
     @Test
     public void testValidate1() throws Exception {
-        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-1.csv"));
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-1.csv"), DwcTerm.Taxon);
         source.validate();
     }
 
     @Test
     public void testValidate2() throws Exception {
         try {
-            CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-bad-1.csv"));
+            CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-bad-1.csv"), DwcTerm.Taxon);
             source.validate();
             fail("Expected IndexBuilderException");
         } catch (IndexBuilderException ex) {
@@ -55,7 +55,7 @@ public class CSVNameSourceTest extends TestUtils {
 
     @Test
     public void testLoadIntoTaxonomy1() throws Exception {
-        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-1.csv"));
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-1.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source));
         TaxonConceptInstance instance = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044710");
         assertNotNull(instance);
@@ -85,7 +85,7 @@ public class CSVNameSourceTest extends TestUtils {
 
     @Test
     public void testLoadIntoTaxonomy2() throws Exception {
-        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-2.csv"));
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-2.csv"), DwcTerm.Taxon);
         this.taxonomy.load(Arrays.asList(source));
         TaxonConceptInstance instance = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044710");
         assertNotNull(instance);

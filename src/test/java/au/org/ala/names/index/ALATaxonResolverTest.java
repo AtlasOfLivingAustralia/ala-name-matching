@@ -1,6 +1,7 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.util.TestUtils;
+import org.gbif.dwc.terms.DwcTerm;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -23,7 +24,7 @@ public class ALATaxonResolverTest extends TestUtils {
     public void testLub1() throws Exception {
         Taxonomy taxonomy = new Taxonomy();
         taxonomy.begin();
-        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-3.csv"));
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-3.csv"), DwcTerm.Taxon);
         taxonomy.load(Arrays.asList(source));
         taxonomy.resolveLinks();
         TaxonConceptInstance i1 = taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044711");
@@ -38,7 +39,7 @@ public class ALATaxonResolverTest extends TestUtils {
     public void testLub2() throws Exception {
         Taxonomy taxonomy = new Taxonomy();
         taxonomy.begin();
-        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-3.csv"));
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-3.csv"), DwcTerm.Taxon);
         taxonomy.load(Arrays.asList(source));
         taxonomy.resolveLinks();
         TaxonConceptInstance i1 = taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044715");
@@ -53,7 +54,7 @@ public class ALATaxonResolverTest extends TestUtils {
     public void testLub3() throws Exception {
         Taxonomy taxonomy = new Taxonomy();
         taxonomy.begin();
-        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-3.csv"));
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-3.csv"), DwcTerm.Taxon);
         taxonomy.load(Arrays.asList(source));
         taxonomy.resolveLinks();
         TaxonConceptInstance i1 = taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044711");
@@ -68,7 +69,7 @@ public class ALATaxonResolverTest extends TestUtils {
     public void testLub4() throws Exception {
         Taxonomy taxonomy = new Taxonomy();
         taxonomy.begin();
-        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-3.csv"));
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-3.csv"), DwcTerm.Taxon);
         taxonomy.load(Arrays.asList(source));
         taxonomy.resolveLinks();
         TaxonConceptInstance i1 = taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044711");

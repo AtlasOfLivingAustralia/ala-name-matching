@@ -1,5 +1,7 @@
 package au.org.ala.names.index;
 
+import au.org.ala.names.search.ALANameSearcher;
+import au.org.ala.names.search.DwcaNameIndexer;
 import au.org.ala.names.util.FileUtils;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
@@ -27,19 +29,25 @@ public class TaxonomyBuilder {
             boolean cleanup = true;
             File work = new File(System.getProperty("user.dir"));
             File output = new File(work, "combined");
+            File interim;
+            File index;
+            File indexerTmp;
             File report;
+            DwcaNameIndexer indexer;
             TaxonomyConfiguration config = null;
 
             Option o = OptionBuilder.withLongOpt("output").withDescription("Output directory - defaults to 'combined' in the current directory").hasArg().withArgName("DIR").withType(File.class).create('o');
             Option w = OptionBuilder.withLongOpt("work").withDescription("Working directory - defaults to the current directory").hasArg().withArgName("DIR").withType(File.class).create('w');
             Option c = OptionBuilder.withLongOpt("config").withDescription("Configuration file").hasArg().withArgName("FILE").withType(File.class).create('c');
             Option r = OptionBuilder.withLongOpt("report").withDescription("Report file").hasArg().withArgName("FILE").withType(File.class).create('r');
+            Option p = OptionBuilder.withLongOpt("previous").withDescription("Previous taxonomy DwCA").hasArg().withArgName("DIR").withType(File.class).create('p');
             Option ncl = OptionBuilder.withLongOpt("noclean").withDescription("Don't clean up work area").create();
             Option nc = OptionBuilder.withLongOpt("nocreate").withDescription("Don't create an output taxonomy").create();
             options.addOption(o);
             options.addOption(w);
             options.addOption(c);
             options.addOption(r);
+            options.addOption(p);
             options.addOption(ncl);
             options.addOption(nc);
             CommandLineParser parser = new BasicParser();
@@ -63,11 +71,19 @@ public class TaxonomyBuilder {
             }
             if (cmd.hasOption("nocreate"))
                 output = null;
-            List<NameSource> sources = Arrays.asList(cmd.getArgs()).stream().map(f -> NameSource.create((String) f)).collect(Collectors.toList());
+            if (cmd.hasOption("previous")) {
+                cmd.getOptionValues("previous");
+            }
+            List<NameSource> sources = Arrays.asList(cmd.getArgs()).stream().map(f -> NameSource.create(f)).collect(Collectors.toList());
             Taxonomy taxonomy = new Taxonomy(config, work);
             taxonomy.begin();
             taxonomy.load(sources);
             taxonomy.resolve();
+
+            // Create a working index for use with the taxonomy and then resolve any unplaced vernaculars
+            taxonomy.createWorkingIndex();
+            taxonomy.resolveUnplacedVernacular();
+
             if (output != null)
                 taxonomy.createDwCA(output);
             if (report != null)
