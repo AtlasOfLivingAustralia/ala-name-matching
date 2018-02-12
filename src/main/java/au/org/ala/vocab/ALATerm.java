@@ -47,6 +47,8 @@ public enum ALATerm implements Term {
     suborder,
     /** The infraorder classification */
     infraorder,
+    /** Context labels for names. See http://localcontexts.org/ */
+    labels,
     /** Record type describing an unplaced vernacular name */
     UplacedVernacularName,
     /** Record type describing a variant (different source, spelling etc.) of a taxon */
