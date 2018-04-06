@@ -12,7 +12,7 @@
     <packaging>jar</packaging>
     <!-- Major version increment due to package structure change -->
     <version>3.2-SNAPSHOT</version>
-    <name>ALA Name Matching (for Lucene 5 or above)</name>
+    <name>ALA Name Matching (for Lucene 6 or above)</name>
     <!-- SCM entry that points to SVN directory that contains pom -->
     <scm>
         <connection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</connection>
@@ -23,7 +23,7 @@
     <properties>
         <!-- This project uses UTF8 for Regular Expressions -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <org.apache.lucene.version>5.5.5</org.apache.lucene.version>
+        <org.apache.lucene.version>6.4.2</org.apache.lucene.version>
     </properties>
     <dependencies>
         <dependency>

@@ -2098,9 +2098,10 @@ public class ALANameSearcher {
 
                 //name search
                 Query fq = buildAutocompleteQuery("name", lq, false);
-                BooleanQuery b = new BooleanQuery();
-                b.add(fq, BooleanClause.Occur.MUST);
-                b.add(new WildcardQuery(new Term("left", "*")), includeSynonyms ? BooleanClause.Occur.SHOULD : BooleanClause.Occur.MUST);
+                BooleanQuery b = new BooleanQuery.Builder()
+                    .add(fq, BooleanClause.Occur.MUST)
+                    .add(new WildcardQuery(new Term("left", "*")), includeSynonyms ? BooleanClause.Occur.SHOULD : BooleanClause.Occur.MUST)
+                    .build();
                 TopDocs results = idSearcher.search(b, max);
                 appendAutocompleteResults(output, results, includeSynonyms, false);
 
@@ -2115,7 +2116,7 @@ public class ALANameSearcher {
                 return new ArrayList(output.values());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Autocomplete error.",e);
         }
         return null;
     }

@@ -10,7 +10,7 @@ This code contains additions for handling some Australian specific issues.
 
 Currently there are 2 versions of this library, 2.x and 3.x.
 * 2.x is using lucene 4.
-* 3.x is using lucene 5 or above.
+* 3.x is using lucene 6 or above.
 
 ## Generating a name match index
 
