@@ -230,7 +230,7 @@ public class ALANameAnalyser extends NameAnalyser {
         }
         scientificNameAuthorship = scientificNameAuthorship == null || scientificNameAuthorship.isEmpty() ? null : scientificNameAuthorship;
 
-        return new NameKey(this, code, scientificName.toUpperCase(), scientificNameAuthorship, rankType, nameType);
+        return new NameKey(this, code, scientificName.toUpperCase(), scientificNameAuthorship, rankType.getGroup(), nameType);
     }
 
     /**

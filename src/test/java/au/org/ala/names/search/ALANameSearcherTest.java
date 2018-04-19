@@ -1390,6 +1390,19 @@ public class ALANameSearcherTest {
     }
 
     @Test
+    public void testSimpleLookup12()  {
+        try {
+            String name = "Acaena";
+            NameSearchResult nsr = searcher.searchForRecord(name);
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:b88430ed-f7d7-482e-a586-f0a02d8e11ce", nsr.getLsid());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
+
+    @Test
     public void testStigmoderaAurifera()  {
         try {
             String name = "Stigmodera aurifera Carter";
@@ -1418,6 +1431,24 @@ public class ALANameSearcherTest {
             fail("Unexpected search exception " + e);
         }
     }
+
+
+    @Test
+    public void testIpomoea()  {
+        try {
+            String name = "Ipomoea";
+            LinnaeanRankClassification cl = new LinnaeanRankClassification();
+            cl.setScientificName(name);
+            cl.setFamily("Convolvulaceae");
+            NameSearchResult nsr = searcher.searchForRecord(cl, true);
+            assertNotNull(nsr);
+            assertEquals(RankType.GENUS, nsr.getRank());
+            assertEquals("Ipomoea", nsr.getRankClassification().getScientificName());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
 
     @Test
     public void testHigherTaxonMatch1()  {
