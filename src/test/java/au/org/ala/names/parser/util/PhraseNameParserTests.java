@@ -163,7 +163,7 @@ public class PhraseNameParserTests {
     //@Test
     public void testAllNamesForType() {
         try {
-            au.com.bytecode.opencsv.CSVReader reader = new au.com.bytecode.opencsv.CSVReader(new FileReader("/data/names/Version2011/ala_concepts_dump.txt"), '\t', '"', '\\', 1);
+            com.opencsv.CSVReader reader = new com.opencsv.CSVReader(new FileReader("/data/names/Version2011/ala_concepts_dump.txt"), '\t', '"', '\\', 1);
             PhraseNameParser parser = new PhraseNameParser();
             int i = 0;
             for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {

@@ -315,7 +315,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         }
         log.info("Starting to load the common names from " + file);
         int i =0, count=0;
-        au.com.bytecode.opencsv.CSVReader cbreader = new au.com.bytecode.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 0);
+        com.opencsv.CSVReader cbreader = new com.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 0);
         for (String[] values = cbreader.readNext(); values != null; values = cbreader.readNext()) {
             i++;
             if(values.length == 6){

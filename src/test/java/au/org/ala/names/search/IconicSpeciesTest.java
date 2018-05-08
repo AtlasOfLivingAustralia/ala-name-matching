@@ -1,6 +1,6 @@
 package au.org.ala.names.search;
 
-import au.com.bytecode.opencsv.CSVReader;
+import com.opencsv.CSVReader;
 import au.org.ala.names.model.NameSearchResult;
 import au.org.ala.names.model.LinnaeanRankClassification;
 import au.org.ala.names.model.RankType;

@@ -14,7 +14,6 @@
  */
 package au.org.ala.names.search;
 
-import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
 import au.org.ala.names.parser.PhraseNameParser;
@@ -47,6 +46,9 @@ import org.gbif.dwca.record.DarwinCoreRecord;
 import org.gbif.ecat.model.ParsedName;
 import org.gbif.ecat.parser.NameParser;
 import org.gbif.ecat.voc.NameType;
+
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 
 import java.io.*;
 import java.text.Normalizer;
@@ -249,7 +251,7 @@ public class ALANameIndexer {
      */
     private void addExtraALAConcept(IndexWriter iw, String file) throws Exception {
         if (new File(file).exists()) {
-            au.com.bytecode.opencsv.CSVReader reader = new au.com.bytecode.opencsv.CSVReader(new FileReader(file), ',', '"', '\\', 1);
+            com.opencsv.CSVReader reader = new com.opencsv.CSVReader(new FileReader(file), ',', '"', '\\', 1);
             for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
                 String lsid = values[0];
                 String scientificName = values[1];
@@ -261,7 +263,7 @@ public class ALANameIndexer {
     }
 
     private void addALASyonyms(IndexWriter iw, String file) throws Exception {
-        au.com.bytecode.opencsv.CSVReader reader = new au.com.bytecode.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 1);
+        com.opencsv.CSVReader reader = new com.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 1);
         for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
 
             String source = values[11];
@@ -276,7 +278,7 @@ public class ALANameIndexer {
     private void indexALA(IndexWriter iw, String file, String synonymFile) throws Exception {
         int records = 0;
         long time = System.currentTimeMillis();
-        au.com.bytecode.opencsv.CSVReader reader = new au.com.bytecode.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 1);
+        com.opencsv.CSVReader reader = new com.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 1);
         for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
 
             String lsid = values[POS_LSID];
