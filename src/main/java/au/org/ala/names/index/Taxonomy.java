@@ -278,6 +278,15 @@ public class Taxonomy implements Reporter {
     }
 
     /**
+     * Get the resource bundle for messages
+     *
+     * @return The resource bundle
+     */
+    public ResourceBundle getResources() {
+        return resources;
+    }
+
+    /**
      * Set the working name index
      *
      * @param workingIndex The working name index
@@ -400,14 +409,16 @@ public class Taxonomy implements Reporter {
      * </ul>
      *
      * @throws IndexBuilderException
+     * @throws IOException
      */
-    public void resolve() throws IndexBuilderException {
+    public void resolve() throws IndexBuilderException, IOException {
         this.resolveLinks();
         if (!this.validate())
             throw new IndexBuilderException("Invalid source data");
         this.validateNameCollisions();
         this.resolveTaxon();
         this.resolvePrincipal();
+        this.resolveDiscards();
         if (!this.validate())
             throw new IndexBuilderException("Invalid resolution");
     }
@@ -460,7 +471,7 @@ public class Taxonomy implements Reporter {
         for (Map.Entry<String, Integer> entry: counts.entrySet()) {
             if (entry.getValue() > 1) {
                 this.count("count.homonym");
-                this.report(IssueType.NOTE, "name.homonym", entry.getKey());
+                this.report(IssueType.NOTE, "name.homonym", null, entry.getKey(), null);
             }
         }
         logger.info("Finished validating name collisions");
@@ -525,6 +536,20 @@ public class Taxonomy implements Reporter {
     }
 
     /**
+     * Work out what to do with any instances that need to be discarded.
+     * @throws IndexBuilderException
+     * @throws IOException
+     */
+    public void resolveDiscards() throws IndexBuilderException, IOException {
+        logger.info("Resolving discarded/forbiiden concepts");
+        final Collection<TaxonConceptInstance> allInstances = this.instances.values();
+        allInstances.stream().forEach(tci -> tci.resolveDiscarded(this)); // Not for parallel streams
+        this.indexWriter.commit();
+        this.searcherManager.maybeRefresh();
+        logger.info("Finished resolving dicarded/forbidden concepts");
+    }
+
+    /**
      * Resolve any unplaced vernacular names.
      * <p>
      * A new vernacular name is added with the correct taxon ID and other information as supplied.
@@ -542,7 +567,7 @@ public class Taxonomy implements Reporter {
             throw new IndexBuilderException("No working name index set");
         try {
             BooleanQuery query = new BooleanQuery();
-            query.add(new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.UplacedVernacularName.qualifiedName())), BooleanClause.Occur.MUST);
+            query.add(new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.UnplacedVernacularName.qualifiedName())), BooleanClause.Occur.MUST);
             IndexSearcher searcher = this.searcherManager.acquire();
             try {
                 ScoreDoc after = null;
@@ -561,7 +586,7 @@ public class Taxonomy implements Reporter {
                         TaxonConcept concept = tci == null ? null : tci.getContainer();
                         if (concept == null) {
                             String scientificName = document.get(fieldName(DwcTerm.scientificName));
-                            this.report(IssueType.PROBLEM, "vernacularName.unplaced", vernacularName, scientificName);
+                            this.report(IssueType.PROBLEM, "vernacularName.unplaced", null, scientificName, null, vernacularName);
                             this.count("count.vernacularName.unplaced");
                         } else {
                             Document placed = new Document();
@@ -648,7 +673,7 @@ public class Taxonomy implements Reporter {
         if ((provider = this.providers.get(datasetName)) != null)
             return provider;
         provider = new NameProvider(datasetID != null ? datasetID : datasetName, datasetName, this.defaultProvider, true);
-        this.report(IssueType.NOTE, "taxonomy.load.provider", provider.getId());
+        this.report(IssueType.NOTE, "taxonomy.load.provider", null, null, null, provider.getId());
         if (datasetID != null)
             this.providers.put(datasetID, provider);
         if (datasetName != null)
@@ -794,7 +819,7 @@ public class Taxonomy implements Reporter {
         if (this.instances.containsKey(taxonID)) {
             TaxonConceptInstance collision = this.instances.get(taxonID);
             taxonID = UUID.randomUUID().toString();
-            this.report(IssueType.VALIDATION, "taxonomy.load.collision", instance.toString(), collision.toString(), taxonID);
+            this.report(IssueType.VALIDATION, "taxonomy.load.collision", instance, collision);
             instance = new TaxonConceptInstance(
                     taxonID,
                     instance.getCode(),
@@ -949,18 +974,34 @@ public class Taxonomy implements Reporter {
      * <p>
      * Message codes are retrieved using a message bundle pointing to <code>taxonomy.properties</code>
      * </p>
+     * <ul>
+     *     <li>{0} The taxonID of the source element, either a name or a proper taxonID</li>
+     *     <li>{1} Any attached scientific namer</li>
+     *     <li>{2} Any attached authorship</li>
+     *     <li>{3} Any attached value</li>
+     *     <li>{4+} Additional arguments</li>
+     * </ul>
      *
      * @param type The type of report
      * @param code The message code to use for the readable version of the report
+     * @param taxonID A specific taxonomic ID
+     * @param scientificName A specific scientific name
+     * @param scientificNameAuthorship A specfici authorship
      * @param args The arguments for the report message
      */
     @Override
-    public void report(IssueType type, String code, String... args) {
+    public void report(IssueType type, String code, String taxonID, String scientificName, String scientificNameAuthorship, String... args) {
         String message;
         try {
+            String[] av = new String[3 + args.length];
+            av[0] = taxonID == null ? "" : taxonID;
+            av[1] = scientificName == null ? "" : scientificName;
+            av[2] = scientificNameAuthorship == null ? "" : scientificNameAuthorship;
+            for (int i = 0; args != null && i < args.length; i++)
+                av[3 + i] = args[i];
             message = this.resources.getString(code);
             message = message == null ? code : message;
-            message = MessageFormat.format(message, args);
+            message = MessageFormat.format(message, av);
         } catch (MissingResourceException ex) {
             logger.error("Can't find resource for " + code + " defaulting to code");
             message = code;
@@ -990,6 +1031,14 @@ public class Taxonomy implements Reporter {
         doc.add(new StringField(fieldName(DcTerm.subject), code, Field.Store.YES));
         doc.add(new StringField(fieldName(DcTerm.description), message, Field.Store.YES));
         doc.add(new StringField(fieldName(DcTerm.date), ISO8601.format(OffsetDateTime.now()), Field.Store.YES));
+        if (taxonID != null)
+            doc.add(new StringField(fieldName(DwcTerm.taxonID), taxonID, Field.Store.YES));
+        if (scientificName != null)
+            doc.add(new StringField(fieldName(DwcTerm.scientificName), scientificName, Field.Store.YES));
+        if (scientificNameAuthorship != null)
+            doc.add(new StringField(fieldName(DwcTerm.scientificNameAuthorship), scientificNameAuthorship, Field.Store.YES));
+        if (args != null && args.length > 0)
+            doc.add(new StringField(fieldName(ALATerm.value), args[0], Field.Store.YES));
         try {
             synchronized (this) {
                 this.indexWriter.addDocument(doc);
@@ -1008,10 +1057,12 @@ public class Taxonomy implements Reporter {
      * These are formatted with a message formatter and have the following arguments:
      * </p>
      * <ul>
-     *     <li>{0} The taxonID of the source element, either a name or a proper taxonID</li>
-     *     <li>{1} The scientific name of the source element</li>
-     *     <li>{2} The scientific name authorship of the source element</li>
-     *     <li>{3} Any associated taxon identifiers</li>
+     *     <li>{0} The taxonID of the first element, either a name or a proper taxonID</li>
+     *     <li>{1} The scientific name of the first element</li>
+     *     <li>{2} Any authorship of the first element</li>
+     *     <li>{3} Any associated taxon ids</li>
+     *     <li>{4} The first taxon element</li>
+     *     <li>{5+} Any associated taxon elements</li>
      * </ul>
      *
      * @param type The type of report
@@ -1020,37 +1071,49 @@ public class Taxonomy implements Reporter {
      */
     @Override
     public void report(IssueType type, String code, TaxonomicElement... elements) {
-        String taxonID = "";
-        String scientificName = "";
-        String scientificNameAuthorship = "";
+        String taxonID = null;
         String associatedTaxa = "";
         String datasetID = "";
+        String scientificName = "";
+        String scientificNameAuthorship = "";
         TaxonomicElement main = elements.length > 0 ? elements[0] : null;
         if (main != null) {
-            taxonID = main.getId();
-            scientificName = main.getScientificName();
-            scientificNameAuthorship = main.getScientificNameAuthorship();
-            if (scientificNameAuthorship == null)
-                scientificNameAuthorship = "";
+            taxonID = main.getTaxonID();
+             if (main.getScientificName() != null)
+                scientificName = main.getScientificName();
+            if (main.getScientificNameAuthorship() != null)
+                scientificNameAuthorship = main.getScientificNameAuthorship();
             if (main instanceof TaxonConceptInstance)
                 datasetID = ((TaxonConceptInstance) main).getProvider().getId();
         }
+        if (taxonID == null)
+            taxonID = "";
         if (elements.length > 1) {
             StringBuilder associated = new StringBuilder();
             for (int i = 1; i < elements.length; i++) {
-                if (associated.length() > 0)
-                    associated.append("|");
-                associated.append(elements[i].getId());
+                String eid = elements[i].getTaxonID();
+                if (elements[i].getTaxonID() != null && !taxonID.equals(eid)) {
+                    if (associated.length() > 0)
+                        associated.append("|");
+                    associated.append(elements[i].getTaxonID());
+                }
             }
             associatedTaxa = associated.toString();
         }
         String message;
+        String[] args = new String[4 + elements.length];
+        args[0] = taxonID;
+        args[1] = scientificName;
+        args[2] = scientificNameAuthorship;
+        args[3] = associatedTaxa;
+        for (int i = 0; elements != null && i < elements.length; i++)
+            args[4 + i] = elements[i] == null ? "" : elements[i].toString();
         try {
             message = this.resources.getString(code);
-            message = MessageFormat.format(message == null ? code : message, taxonID, scientificName, scientificNameAuthorship, associatedTaxa);
+            message = MessageFormat.format(message == null ? code : message, args);
         } catch (MissingResourceException ex) {
             logger.error("Can't find resource for " + code + " defaulting to code");
-            message = code;
+            message = code + " " + args;
         }
         switch (type) {
             case ERROR:
@@ -1079,7 +1142,6 @@ public class Taxonomy implements Reporter {
         doc.add(new StringField(fieldName(DcTerm.date), ISO8601.format(OffsetDateTime.now()), Field.Store.YES));
         doc.add(new StringField(fieldName(DwcTerm.taxonID), taxonID, Field.Store.YES));
         doc.add(new StringField(fieldName(DwcTerm.scientificName), scientificName, Field.Store.YES));
-        doc.add(new StringField(fieldName(DwcTerm.scientificNameAuthorship), scientificNameAuthorship, Field.Store.YES));
         doc.add(new StringField(fieldName(DwcTerm.associatedTaxa), associatedTaxa, Field.Store.YES));
         doc.add(new StringField(fieldName(DwcTerm.datasetID), datasetID, Field.Store.YES));
         try {
@@ -1109,14 +1171,19 @@ public class Taxonomy implements Reporter {
             List<Term> output = this.outputTerms(ALATerm.TaxonomicIssue);
             String[] headers = output.stream().map(term -> term.toString()).collect(Collectors.toList()).toArray(new String[output.size()]);
             writer.writeNext(headers);
-            for (String type : this.counts.keySet()) {
+            this.counts.keySet().stream().sorted().forEach(type -> {
                 String message = this.resources.getString(type);
                 AtomicInteger count = this.counts.getOrDefault(type, new AtomicInteger(0));
                 message = MessageFormat.format(message, count.intValue());
                 logger.info(message);
-                String[] values = new String[]{IssueType.COUNT.name(), type, message, count.toString()};
+                Map<Term, String> doc = new HashMap<>();
+                doc.put(DcTerm.type, IssueType.COUNT.name());
+                doc.put(DcTerm.subject, type);
+                doc.put(DcTerm.description, message);
+                doc.put(ALATerm.value, count.toString());
+                String[] values = output.stream().map(term -> doc.get(term)).collect(Collectors.toList()).toArray(new String[output.size()]);
                 writer.writeNext(values);
-            }
+            });
             IndexSearcher searcher = this.searcherManager.acquire();
             try {
                 Query query = new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.TaxonomicIssue.qualifiedName()));

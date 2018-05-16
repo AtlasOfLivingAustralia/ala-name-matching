@@ -271,7 +271,7 @@ public class CSVNameSource extends NameSource {
             while ((r = this.reader.readNext()) != null) {
                 final String[] record = r;
                 Document doc = new Document();
-                doc.add(new StringField("type", ALATerm.UplacedVernacularName.qualifiedName(), Field.Store.YES));
+                doc.add(new StringField("type", ALATerm.UnplacedVernacularName.qualifiedName(), Field.Store.YES));
                 doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
                 for (int i = 0; i < record.length; i++) {
                     Term term = this.terms.get(i);

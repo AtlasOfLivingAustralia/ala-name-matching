@@ -9,6 +9,7 @@ import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.Rank;
 
 import java.io.*;
+import java.util.regex.Pattern;
 
 /**
  * Handy test utilities.
@@ -54,6 +55,43 @@ public class TestUtils {
             return -1;
         BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
         return (int) reader.lines().count();
+    }
+
+    public boolean fileContains(File file, String string) throws IOException {
+        String line;
+
+        if (!file.exists())
+            return false;
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+        while ((line = reader.readLine()) !=  null) {
+            if (line.contains(string))
+                return true;
+        }
+        return false;
+    }
+
+    public boolean fileContains(File file, Pattern pattern) throws IOException {
+        String line;
+
+        if (!file.exists())
+            return false;
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+        while ((line = reader.readLine()) !=  null) {
+            if (pattern.matcher(line).matches())
+                return true;
+        }
+        return false;
+    }
+
+    public void dumpFile(File file) throws IOException {
+        String line;
+
+        if (!file.exists())
+            return;
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+        while ((line = reader.readLine()) !=  null) {
+            System.out.println(line);
+        }
     }
 
 }

@@ -116,16 +116,24 @@ public class UnrankedScientificName extends Name<UnrankedScientificName, BareNam
         element.clear(principal);
     }
 
-
     /**
-     * A human readable label for the concept
+     * A human readbale label for the concept
      *
      * @return The label
      */
     @Override
     public String toString() {
-        return "UN[" + this.getKey().getCode() + "," + this.getKey().getScientificName() + "]";
+        StringBuilder builder = new StringBuilder(64);
+        builder.append("UN[");
+        builder.append(this.getKey().getCode());
+        builder.append(", ");
+        builder.append(this.getKey().getScientificName());
+        if (this.getPrincipal() != null) {
+            builder.append(", = ");
+            builder.append(this.getPrincipal().getKey());
+        }
+        builder.append("]");
+        return builder.toString();
     }
-
 
 }

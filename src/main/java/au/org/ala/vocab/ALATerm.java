@@ -49,8 +49,14 @@ public enum ALATerm implements Term {
     infraorder,
     /** Context labels for names. See http://localcontexts.org/ */
     labels,
+    /** A value */
+    value,
+    /** The principal taxon identifier, for taxa that may have been re-assigned */
+    principalTaxonID,
+    /** The principal scientific name, for taxa that may have been re-assigned */
+    principalScientificNBame,
     /** Record type describing an unplaced vernacular name */
-    UplacedVernacularName,
+    UnplacedVernacularName,
     /** Record type describing a variant (different source, spelling etc.) of a taxon */
     TaxonVariant,
     /** Record type describing a problem or note about a taxon */

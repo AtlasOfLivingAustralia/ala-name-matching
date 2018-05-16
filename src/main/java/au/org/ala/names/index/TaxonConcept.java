@@ -170,8 +170,9 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      */
     public void write(Taxonomy taxonomy, DwcaWriter writer) throws IOException {
         for (TaxonConceptInstance tci : this.resolution.getUsed()) {
-            if (tci.isForbidden())
+            if (tci.isForbidden()) {
                 continue;
+            }
             Collection<TaxonConceptInstance> allocated = this.resolution.getChildren(tci);
             if (allocated == null || allocated.isEmpty()) {
                 taxonomy.report(IssueType.NOTE, "taxonConcept.noInstances", tci);
@@ -301,7 +302,23 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      */
     @Override
     public String toString() {
-        return "TC[" + this.key.getScientificName() + ", " + this.key.getScientificNameAuthorship() + "]";
+        StringBuilder builder = new StringBuilder(64);
+        builder.append("TC[");
+        builder.append(this.key.getCode());
+        builder.append(", ");
+        builder.append(this.key.getScientificName());
+        builder.append(", ");
+        builder.append(this.key.getScientificNameAuthorship());
+        builder.append(", ");
+        builder.append(this.key.getRank());
+        if (this.getRepresentative() != null) {
+            builder.append(", = ");
+            builder.append(this.getRepresentative().getProvider().getId());
+            builder.append(":");
+            builder.append(this.getRepresentative().getTaxonID());
+        }
+        builder.append("]");
+        return builder.toString();
     }
 
     /**
@@ -315,6 +332,14 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     public boolean isOwned() {
         TaxonConceptInstance accepted = this.getRepresentative();
         return (accepted.getContainer() == this && accepted.isOwned());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getTaxonID() {
+        return this.getRepresentative() == null ? null : this.getRepresentative().getTaxonID();
     }
 
     /**

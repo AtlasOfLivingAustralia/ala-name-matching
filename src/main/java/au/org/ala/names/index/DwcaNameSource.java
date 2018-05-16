@@ -199,7 +199,7 @@ public class DwcaNameSource extends NameSource {
                 type = core.rowType();
                 if (taxonID == null) {
                     taxonID = UUID.randomUUID().toString();
-                    type = ALATerm.UplacedVernacularName;
+                    type = ALATerm.UnplacedVernacularName;
                 }
                 List<Document> docs = new ArrayList<>();
                 docs.add(this.makeDocument(taxonomy, type, core, taxonID));
@@ -238,17 +238,17 @@ public class DwcaNameSource extends NameSource {
                 String verbatimNomenclaturalCode = core.value(DwcTerm.nomenclaturalCode);
                 NameProvider provider = taxonomy.resolveProvider(core.value(DwcTerm.datasetID), core.value(DwcTerm.datasetName));
                 NomenclaturalCode code = taxonomy.resolveCode(verbatimNomenclaturalCode);
+                String scientificName = core.value(DwcTerm.scientificName);
+                String scientificNameAuthorship = core.value(DwcTerm.scientificNameAuthorship);
                 if (code == null) {
                     code = provider.getDefaultNomenclaturalCode();
                     if (code == null && !provider.isLoose())
                         throw new IllegalStateException("No nomenclatural code for " + taxonID + " and code " + verbatimNomenclaturalCode);
                     if (code != null) {
-                        taxonomy.report(IssueType.PROBLEM, "taxonomy.load.nullCode", taxonID, verbatimNomenclaturalCode);
+                        taxonomy.report(IssueType.PROBLEM, "taxonomy.load.nullCode", taxonID, scientificName, scientificNameAuthorship, verbatimNomenclaturalCode);
                         taxonomy.count("count.load.problem");
                     }
                 }
-                String scientificName = core.value(DwcTerm.scientificName);
-                String scientificNameAuthorship = core.value(DwcTerm.scientificNameAuthorship);
                 String year = core.value(DwcTerm.namePublishedInYear);
                 String verbatimTaxonomicStatus = core.value(DwcTerm.taxonomicStatus);
                 TaxonomicType taxonomicStatus = taxonomy.resolveTaxonomicType(verbatimTaxonomicStatus);

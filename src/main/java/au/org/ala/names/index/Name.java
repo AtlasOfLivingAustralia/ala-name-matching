@@ -269,6 +269,14 @@ abstract public class Name<T extends TaxonomicElement, C extends TaxonomicElemen
      * {@inheritDoc}
      */
     @Override
+    public String getTaxonID() {
+        return this.getPrincipal() == null ? null : this.getPrincipal().getTaxonID();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getId() {
         if (this.getScientificNameAuthorship() == null)
             return this.key.getScientificName();

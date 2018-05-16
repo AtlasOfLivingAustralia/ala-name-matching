@@ -1394,8 +1394,8 @@ public class ALANameSearcherTest {
         try {
             String name = "Acaena";
             NameSearchResult nsr = searcher.searchForRecord(name);
-            assertNotNull(nsr);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:b88430ed-f7d7-482e-a586-f0a02d8e11ce", nsr.getLsid());
+            fail("Expecting homonym exception");
+        } catch (HomonymException e) {
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
         }

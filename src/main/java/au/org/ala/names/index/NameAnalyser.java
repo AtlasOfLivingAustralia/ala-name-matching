@@ -141,9 +141,9 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
      * {@inheritDoc}
      */
     @Override
-    public void report(IssueType type, String code, String... args) {
+    public void report(IssueType type, String code, String taxonID, String scientificName, String scientificNameAuthorship, String... args) {
         if (this.reporter != null)
-            this.reporter.report(type, code, args);
+            this.reporter.report(type, code, taxonID, scientificName, scientificNameAuthorship, args);
         else
             logger.warn("Report " + type.name() + " code=" + code + " args=" + Arrays.toString(args));
     }
