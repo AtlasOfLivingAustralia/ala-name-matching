@@ -374,7 +374,7 @@ public class TaxonomyTest extends TestUtils {
         File identifier = new File(dir, "identifier.txt");
         assertEquals(4, this.rowCount(identifier));
         this.dumpFile(identifier);
-        assertTrue(this.fileContains(identifier, Pattern.compile("^7178434\t7178429.*forbidden.*")));
+        assertTrue(this.fileContains(identifier, Pattern.compile("^7178434\t7178429.*discarded.*")));
     }
 
     // Test disarding an synonym
