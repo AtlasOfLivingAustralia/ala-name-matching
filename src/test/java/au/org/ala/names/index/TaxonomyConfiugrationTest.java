@@ -135,7 +135,7 @@ public class TaxonomyConfiugrationTest extends TestUtils {
         assertEquals(2.0, Double.parseDouble(properties.getProperty("dr100")), 0.01);
         assertNotNull(properties.getProperty("dr100"));
         assertEquals(2.0 * 125 / 150, Double.parseDouble(properties.getProperty("dr101")), 0.01);
-        assertNull(properties.getProperty("dr102"));
+        assertNull(properties.getProperty("drNotADataset"));
     }
 
 

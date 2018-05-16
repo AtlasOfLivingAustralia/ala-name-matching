@@ -1,8 +1,10 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.util.GbifModule;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.gbif.api.model.registry.Contact;
@@ -65,7 +67,9 @@ public class TaxonomyConfiguration {
      */
     public void write(Writer writer) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-
+        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+        mapper.setVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
+        mapper.setVisibility(PropertyAccessor.SETTER, JsonAutoDetect.Visibility.NONE);
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         mapper.writeValue(writer, this);
     }

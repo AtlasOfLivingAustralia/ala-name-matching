@@ -72,6 +72,9 @@ public class NameProvider {
     /** Is this an "external" name provider - something that can be referenced */
     @JsonProperty
     private boolean external;
+    /** The method of discarding forbidden taxa */
+    @JsonProperty
+    private DiscardStrategy discardStrategy;
 
     /**
      * Default constructor
@@ -240,6 +243,23 @@ public class NameProvider {
      */
     public boolean isExternal() {
         return external;
+    }
+
+    /**
+     * Get the discard strategy.
+     * <p>
+     * This determines how forbidden or otherwise discarded taxa should be treated.
+     * If one is not explicitly set, get the parent strategy.
+     * By default, this is {@link DiscardStrategy#IGNORE}.
+     * </p>
+     *
+     * @return The discard strategy.
+     */
+    public DiscardStrategy getDiscardStrategy() {
+        if (this.discardStrategy != null)
+            return this.discardStrategy;
+        DiscardStrategy ds =  this.parent != null ? this.parent.getDiscardStrategy() : null;
+        return ds == null ? DiscardStrategy.IGNORE : ds;
     }
 
     /**

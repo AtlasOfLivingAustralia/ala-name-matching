@@ -126,6 +126,13 @@ abstract public class TaxonomicElement<T extends TaxonomicElement, C extends Tax
     abstract public boolean validate(Taxonomy taxonomy);
 
     /**
+     * A taxon identifier for the element for logging purposes
+     *
+     * @return A human readable identifier for loggging
+     */
+    abstract public String getTaxonID();
+
+    /**
      * An identifier for the element for logging purposes
      *
      * @return A human readable identifier for loggging

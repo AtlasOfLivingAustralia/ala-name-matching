@@ -39,9 +39,12 @@ import org.apache.lucene.util.Version;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.vocabulary.NameType;
 import org.gbif.api.vocabulary.Rank;
+import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwca.record.DarwinCoreRecord;
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
+import org.gbif.dwca.record.Record;
+import org.gbif.dwca.record.StarRecord;
 import org.gbif.nameparser.PhraseNameParser;
 
 import java.io.*;
@@ -422,45 +425,47 @@ public class ALANameIndexer {
         log.info("Creating the IRMNG index from the DWCA " + archiveDirectory);
         //open the archive to extract the required information
         Archive archive = ArchiveFactory.openArchive(new File(archiveDirectory));
-        Iterator<DarwinCoreRecord> it = archive.iteratorDwc();
+        Iterator<Record> it = archive.getCore().iterator();
         while (it.hasNext()) {
             Document doc = new Document();
-            DarwinCoreRecord dwcr = it.next();
-            String kingdom = dwcr.getKingdom();
+            Record dwcr = it.next();
+            String kingdom = dwcr.value(DwcTerm.kingdom);
             if (StringUtils.isNotEmpty(kingdom)) {
                 doc.add(new TextField(RankType.KINGDOM.getRank(), kingdom, Store.YES));
             }
-            String phylum = dwcr.getPhylum();
+            String phylum = dwcr.value(DwcTerm.phylum);
             if (StringUtils.isNotEmpty(phylum)) {
                 doc.add(new TextField(RankType.PHYLUM.getRank(), phylum, Store.YES));
             }
-            String classs = dwcr.getClasss();
+            String classs = dwcr.value(DwcTerm.class_);
             if (StringUtils.isNotEmpty(classs)) {
                 doc.add(new TextField(RankType.CLASS.getRank(), classs, Store.YES));
             }
-            String order = dwcr.getOrder();
+            String order = dwcr.value(DwcTerm.order);
             if (StringUtils.isNotEmpty(order)) {
                 doc.add(new TextField(RankType.ORDER.getRank(), order, Store.YES));
             }
-            String family = dwcr.getFamily();
+            String family = dwcr.value(DwcTerm.family);
             if (StringUtils.isNotEmpty(family)) {
                 doc.add(new TextField(RankType.FAMILY.getRank(), family, Store.YES));
             }
-            String genus = dwcr.getGenus();
+            String genus = dwcr.value(DwcTerm.genus);
             String calculatedRank = "genus";
             if (StringUtils.isNotEmpty(genus)) {
                 doc.add(new TextField(RankType.GENUS.getRank(), genus, Store.YES));
-                String specificEpithet = dwcr.getSpecificEpithet();
+                String specificEpithet = dwcr.value(DwcTerm.specificEpithet);
                 if (StringUtils.isNotEmpty(specificEpithet)) {
                     calculatedRank = "species";
                     doc.add(new TextField(RankType.SPECIES.getRank(), genus + " " + specificEpithet, Store.YES));
                 }
             }
-            String rank = dwcr.getTaxonRank() != null ? dwcr.getTaxonRank() : calculatedRank;
+            String rank = dwcr.value(DwcTerm.taxonRank);
+            if (StringUtils.isEmpty(rank))
+                rank = calculatedRank;
             doc.add(new TextField(IndexField.RANK.toString(), rank, Store.YES));
             //now add the author - we don't do anything about this on homonym resolution yet
             //Add the author information
-            String author = dwcr.getScientificNameAuthorship();
+            String author = dwcr.value(DwcTerm.scientificNameAuthorship);
             if (StringUtils.isNotEmpty(author)) {
                 //TODO think about whether we need to treat the author string with the taxamatch
                 doc.add(new TextField(NameIndexField.AUTHOR.toString(), author, Store.YES));

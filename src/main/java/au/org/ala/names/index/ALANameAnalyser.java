@@ -184,7 +184,7 @@ public class ALANameAnalyser extends NameAnalyser {
 
         // Categorize
         if (PLACEHOLDER_TEST.test(scientificName)) {
-            scientificName = UUID.randomUUID().toString();
+            scientificName = scientificName + " " + UUID.randomUUID().toString();
             nameType = NameType.PLACEHOLDER;
         } else if (code == NomenclaturalCode.VIRUS) {
             nameType = NameType.VIRUS;
@@ -230,7 +230,7 @@ public class ALANameAnalyser extends NameAnalyser {
         }
         scientificNameAuthorship = scientificNameAuthorship == null || scientificNameAuthorship.isEmpty() ? null : scientificNameAuthorship;
 
-        return new NameKey(this, code, scientificName.toUpperCase(), scientificNameAuthorship, rankType, nameType);
+        return new NameKey(this, code, scientificName.toUpperCase(), scientificNameAuthorship, rankType.getGroup(), nameType);
     }
 
     /**
@@ -372,7 +372,7 @@ public class ALANameAnalyser extends NameAnalyser {
         code = code.toUpperCase().trim();
         NomenclaturalCode nc = this.codeMap.get(code);
         if (nc == null)
-            this.report(IssueType.PROBLEM, "nomenclaturalCode.notFound", code);
+            this.report(IssueType.PROBLEM, "nomenclaturalCode.notFound", null, null, null, code);
         return nc;
     }
 
@@ -395,7 +395,7 @@ public class ALANameAnalyser extends NameAnalyser {
             return TaxonomicType.INFERRED_UNPLACED;
         TaxonomicType type = this.taxonomicTypeMap.get(taxonomicStatus);
         if (type == null) {
-            this.report(IssueType.PROBLEM, "taxonomicStatus.notFound", taxonomicStatus);
+            this.report(IssueType.PROBLEM, "taxonomicStatus.notFound", null, null, null, taxonomicStatus);
             type = TaxonomicType.INFERRED_UNPLACED;
             synchronized (this) {
                 this.taxonomicTypeMap.put(taxonomicStatus, type); // Report once
@@ -420,7 +420,7 @@ public class ALANameAnalyser extends NameAnalyser {
             return RankType.UNRANKED;
         RankType rankType = this.rankMap.get(rank);
         if (rankType == null) {
-            this.report(IssueType.PROBLEM, "rank.notFound", rank);
+            this.report(IssueType.PROBLEM, "rank.notFound", null, null, null, rank);
             rankType = RankType.UNRANKED;
             synchronized (this) {
                 this.rankMap.put(rank, rankType); // Report once
@@ -448,7 +448,7 @@ public class ALANameAnalyser extends NameAnalyser {
             return null;
         NomenclaturalStatus status = this.nomenclaturalStatusMap.get(nomenclaturalStatus);
         if (status == null && !this.nomenclaturalStatusMap.containsKey(nomenclaturalStatus)) {
-            this.report(IssueType.PROBLEM, "nomenclaturalStatus.notFound", nomenclaturalStatus);
+            this.report(IssueType.PROBLEM, "nomenclaturalStatus.notFound", null, null, null, nomenclaturalStatus);
             synchronized (this) {
                 this.nomenclaturalStatusMap.put(nomenclaturalStatus, null); // Report once
             }

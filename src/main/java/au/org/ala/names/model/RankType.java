@@ -33,7 +33,7 @@ public enum RankType {
     SUBKINGDOM(1200, "subkingdom", Rank.SUBKINGDOM, null, 1200, false, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subkingdom"),
     SUPERPHYLUM(1800, "superphylum", Rank.SUPERPHYLUM, null, 2800, false, "http://rs.tdwg.org/ontology/voc/TaxonRank#Superphylum"),
     PHYLUM(2000, "phylum", Rank.PHYLUM, 2f, 2000, false, "http://rs.tdwg.org/ontology/voc/TaxonRank#Phylum", "Phylum", "division botany", "Division Botany"),
-    SUBPHYLUM(2200, "subphylum", Rank.SUBPHYLUM, null, 2200, false, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subphylum", "subdivision botany"),
+    SUBPHYLUM(2200, "subphylum", Rank.SUBPHYLUM, null, 2200, false,  "http://rs.tdwg.org/ontology/voc/TaxonRank#Subphylum", "subdivision botany"),
     SUPERCLASS(2800, "superclass", Rank.SUPERCLASS, null, 2800, false, "http://rs.tdwg.org/ontology/voc/TaxonRank#Superclass"),
     CLASS(3000, "class", Rank.CLASS, 2f, 3000, false, "http://rs.tdwg.org/ontology/voc/TaxonRank#Class", "Class"),
     SUBCLASS(3200, "subclass", Rank.SUBCLASS, null, 3200, false, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subclass"),
@@ -56,7 +56,7 @@ public enum RankType {
     SUPERSECTION_ZOOLOGY(4465, "supersection zoology", null, null, 4465, false),
     SECTION_ZOOLOGY(4470, "section zoology", null, null, 4470, false),
     SUBSECTION_ZOOLOGY(4475, "subsection zoology", null, null, 4475, false),
-    SUPERFAMILY(4500, "superfamily", Rank.SUPERFAMILY, null, 4500, false, "Superfamily"),
+    SUPERFAMILY(4500, "superfamily", Rank.SUPERFAMILY, null, 4500, false,  "Superfamily"),
     FAMILY(5000, "family", Rank.FAMILY, 2f, 5000, false, "http://rs.tdwg.org/ontology/voc/TaxonRank#Family", "Family"),
     SUBFAMILY(5500, "subfamily", Rank.SUBFAMILY, null, 5500, true, "http://rs.tdwg.org/ontology/voc/TaxonRank#Subfamily"),
     INFRAFAMILY(5525, "infrafamily", Rank.INFRAFAMILY, null, 5525, false, "http://rs.tdwg.org/ontology/voc/TaxonRank#Infrafamily"),
@@ -98,10 +98,10 @@ public enum RankType {
     CULTIVARGROUP(-1, "cultivargroup", Rank.CULTIVAR_GROUP, null, 8045, true),
     CULTIVAR(8050, "cultivar", Rank.CULTIVAR, null, 8050, false, "http://rs.tdwg.org/ontology/voc/TaxonRank#Cultivar", "cv."),
     PATHOVAR(8080, "pathovar", Rank.PATHOVAR, null, 8080, false),
-    INFORMAL(-1, "informal", null, null, 100000, true),
-    UNRANKED(0, "unranked", Rank.UNRANKED, null, 200000, true),
+    HYBRID(8150, "hybrid", null, null, 8150, true),
     SUPRAGENERICNAME(8200, "supragenericname", Rank.SUPRAGENERIC_NAME, null, 8200, true, "http://rs.tdwg.org/ontology/voc/TaxonRank#SupragenericTaxon"),
-    HYBRID(8150, "hybrid", null, null, 8150, true);
+    INFORMAL(-1, "informal", null, null, 100000, true),
+    UNRANKED(0, "unranked", Rank.UNRANKED, null, 200000, true);
 
 
     // Allow reverse-lookup (based on http://www.ajaxonomy.com/2007/java/making-the-most-of-java-50-enum-tricks)
@@ -112,6 +112,81 @@ public enum RankType {
     private static final Map<String, RankType> strRankLookup = new HashMap<String, RankType>();
 
     static {
+        // Set ranks groups. Needs to be done here to avoid forward references
+        DOMAIN.group = RankType.KINGDOM;
+        KINGDOM.group = RankType.KINGDOM;
+        SUBKINGDOM.group = RankType.KINGDOM;
+        SUPERPHYLUM.group = RankType.PHYLUM;
+        PHYLUM.group = RankType.PHYLUM;
+        SUBPHYLUM.group = RankType.PHYLUM;
+        SUPERCLASS.group = RankType.CLASS;
+        CLASS.group = RankType.CLASS;
+        SUBCLASS.group = RankType.CLASS;
+        INFRACLASS.group = RankType.CLASS;
+        SUBINFRACLASS.group = RankType.CLASS;
+        SUPERDIVISION_ZOOLOGY.group = RankType.DIVISION_ZOOLOGY;
+        DIVISION_ZOOLOGY.group = RankType.DIVISION_ZOOLOGY;
+        SUBDIVISION_ZOOLOGY.group = RankType.DIVISION_ZOOLOGY;
+        SUPERCOHORT.group = RankType.COHORT;
+        COHORT.group = RankType.COHORT;
+        SUBCOHORT.group = RankType.COHORT;
+        SUPERORDER.group = RankType.ORDER;
+        ORDER.group = RankType.ORDER;
+        SUBORDER.group = RankType.ORDER;
+        INFRAORDER.group = RankType.ORDER;
+        PARVORDER.group = RankType.ORDER;
+        SUPERSERIES_ZOOLOGY.group = RankType.SERIES_ZOOLOGY;
+        SERIES_ZOOLOGY.group = RankType.SERIES_ZOOLOGY;
+        SUBSERIES_ZOOLOGY.group = RankType.SERIES_ZOOLOGY;
+        SUPERSECTION_ZOOLOGY.group = RankType.SECTION_ZOOLOGY;
+        SECTION_ZOOLOGY.group = RankType.SECTION_ZOOLOGY;
+        SUBSECTION_ZOOLOGY.group = RankType.SECTION_ZOOLOGY;
+        SUPERFAMILY.group = RankType.FAMILY;
+        FAMILY.group = RankType.FAMILY;
+        SUBFAMILY.group = RankType.FAMILY;
+        INFRAFAMILY.group = RankType.FAMILY;
+        SUPERTRIBE.group = RankType.TRIBE;
+        TRIBE.group = RankType.TRIBE;
+        SUBTRIBE.group = RankType.TRIBE;
+        SUPERGENUS.group = RankType.GENUS;
+        GENUS_GROUP.group = RankType.GENUS;
+        GENUS.group = RankType.GENUS;
+        SUBGENUS.group = RankType.GENUS;
+        SUPERSECTION_BOTANY.group = RankType.SECTION_BOTANY;
+        SECTION_BOTANY.group = RankType.SECTION_BOTANY;
+        SUBSECTION_BOTANY.group = RankType.SECTION_BOTANY;
+        SUPERSERIES_BOTANY.group = RankType.SERIES_BOTANY;
+        SERIES_BOTANY.group = RankType.SERIES_BOTANY;
+        SUBSERIES_BOTANY.group = RankType.SERIES_BOTANY;
+        INFRAGENERICNNAME.group = RankType.SPECIES;
+        SPECIES_GROUP.group = RankType.SPECIES;
+        SUPERSPECIES.group = RankType.SPECIES;
+        SPECIES_SUBGROUP.group = RankType.SPECIES;
+        SPECIES.group = RankType.SPECIES;
+        NOTHOSPECIES.group = RankType.SPECIES;
+        HOLOMORPH.group = RankType.SPECIES;
+        ANAMORPH.group = RankType.SPECIES;
+        TELEOMORPH.group = RankType.SPECIES;
+        SUBSPECIES.group = RankType.SUBSPECIES;
+        NOTHOSUBPECIES.group = RankType.SUBSPECIES;
+        INFRASPECIFICNAME.group = RankType.SUBSPECIES;
+        INFRASUBSPECIESNAME.group = RankType.SUBSPECIES;
+        VARIETY.group = RankType.VARIETY;
+        NOTHOVARIETY.group = RankType.VARIETY;
+        SUBVARIETY.group = RankType.VARIETY;
+        FORM.group = RankType.FORM;
+        NOTHOFORM.group = RankType.FORM;
+        SUBFORM.group = RankType.FORM;
+        BOIVAR.group = RankType.FORM;
+        SEROVAR.group = RankType.FORM;
+        FORMASPECIALIS.group = RankType.FORM;
+        CULTIVARGROUP.group = RankType.CULTIVAR;
+        CULTIVAR.group = RankType.CULTIVAR;
+        PATHOVAR.group = RankType.PATHOVAR;
+        HYBRID.group = RankType.HYBRID;
+        SUPRAGENERICNAME.group = RankType.SUPRAGENERICNAME;
+        INFORMAL.group = RankType.INFORMAL;
+        UNRANKED.group = RankType.UNRANKED;
         for (RankType rt : EnumSet.allOf(RankType.class)) {
             try {
                 fieldLookup.put(rt.getRank(), rt);
@@ -136,6 +211,7 @@ public enum RankType {
     private Float boost;
     private int sortOrder;
     private boolean loose;
+    private RankType group;
     private String[] strRanks;
 
     RankType(Integer id, String field, Rank rank, Float boost, int sortOrder, boolean loose, String... strRanks) {
@@ -220,6 +296,15 @@ public enum RankType {
      */
     public boolean isLoose() {
         return loose;
+    }
+
+    /**
+     * Get the lrank group. This is a rough grouping of ranks for similarity testing
+     * 
+     * @return The 
+     */
+    public RankType getGroup() {
+        return group;
     }
 
     /**

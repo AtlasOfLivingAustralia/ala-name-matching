@@ -3,6 +3,9 @@ package au.org.ala.names.index;
 import au.org.ala.vocab.ALATerm;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.dwc.terms.DcTerm;
@@ -223,6 +226,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      *
      * @return The taxon identifier
      */
+    @Override
     public String getTaxonID() {
         return taxonID;
     }
@@ -782,6 +786,53 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
+     * Work out twhat to do with this instance if it is an
+     * @param taxonomy
+     * @throws IndexBuilderException
+     */
+    // Note that this is not thread-safe due to index writing
+    public void resolveDiscarded(Taxonomy taxonomy) throws IndexBuilderException {
+        if (!this.isForbidden())
+            return;
+        TaxonConceptInstance parent = this.getResolvedParent();
+        switch (this.getProvider().getDiscardStrategy()) {
+            case IDENTIFIER_TO_PARENT:
+                // Add an additional identifier to the parent
+                Document doc = new Document();
+                doc.add(new StringField("type", GbifTerm.Identifier.qualifiedName(), Field.Store.YES));
+                doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
+                doc.add(new StringField(Taxonomy.fieldName(DwcTerm.taxonID), parent.getTaxonID(), Field.Store.YES));
+                doc.add(new StringField(Taxonomy.fieldName(DcTerm.identifier), this.getTaxonID(), Field.Store.YES));
+                doc.add(new StringField(Taxonomy.fieldName(DwcTerm.datasetID), taxonomy.getInferenceProvider().getId(), Field.Store.YES));
+                doc.add(new StringField(Taxonomy.fieldName(DcTerm.title), taxonomy.getResources().getString("instance.discarded.identifier.title"), Field.Store.YES));
+                doc.add(new StringField(Taxonomy.fieldName(ALATerm.status), "discarded", Field.Store.YES));
+                try {
+                    taxonomy.addRecords(Collections.singletonList(doc));
+                } catch (IOException ex) {
+                    throw new IndexBuilderException("Unable to process discard", ex);
+                }
+                break;
+            case SYNONYMISE_TO_PARENT:
+                this.provider = taxonomy.getInferenceProvider();
+                this.forbidden = false;
+                this.taxonomicStatus = TaxonomicType.INFERRED_SYNONYM;
+                this.parent = null;
+                this.parentNameUsage = null;
+                this.parentNameUsageID = null;
+                this.accepted = parent;
+                this.acceptedNameUsage = null;
+                this.acceptedNameUsageID = parent.getTaxonID();
+                this.score = this.provider.getDefaultScore();
+                this.getContainer().resolveTaxon(taxonomy);
+                break;
+            default:
+                // Ignore and leave forbidden
+                break;
+        }
+
+    }
+
+    /**
      * Is this an instance of an accepted taxon?
      *
      * @return True if this is supplied as an accepted taxonomic status
@@ -843,7 +894,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         values.put(DwcTerm.taxonRank, this.rank.getRank());
         values.put(DwcTerm.verbatimTaxonRank, this.verbatimTaxonRank);
         values.put(ALATerm.priority, Integer.toString(this.getScore()));
-        if (this.parentNameUsageID != null) {
+        if (this.parentNameUsageID == null) {
+            values.remove(DwcTerm.parentNameUsageID); // If instance has become a synonym
+            values.remove(DwcTerm.parentNameUsage);
+        } else {
             String pid = null;
             try {
                 TaxonConceptInstance rp = this.getResolvedParent();
@@ -856,7 +910,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             }
             values.put(DwcTerm.parentNameUsageID, pid);
         }
-        if (this.acceptedNameUsageID != null) {
+        if (this.acceptedNameUsageID == null) {
+            values.remove(DwcTerm.acceptedNameUsageID); // If instance has become accepted
+            values.remove(DwcTerm.acceptedNameUsage);
+        } else {
             String aid = null;
             try {
                 TaxonConceptInstance ra = this.getResolvedAccepted();
@@ -953,13 +1010,27 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
-     * A human readbale label for the concept
+     * A human readbale label for the concept instance
      *
      * @return The label
      */
     @Override
     public String toString() {
-        return "TCI[" + this.taxonID + ", " + this.scientificName + ", " + this.scientificNameAuthorship + "]";
+        StringBuilder builder = new StringBuilder(64);
+        builder.append("TCI[");
+        builder.append(this.getProvider().getId());
+        builder.append(":");
+        builder.append(this.getTaxonID());
+        builder.append(", ");
+        builder.append(this.getScientificName());
+        builder.append(", ");
+        builder.append(this.getScientificNameAuthorship());
+        builder.append(", ");
+        builder.append(this.getRank());
+        builder.append(", ");
+        builder.append(this.getTaxonomicStatus());
+        builder.append("]");
+        return builder.toString();
     }
 
     /**

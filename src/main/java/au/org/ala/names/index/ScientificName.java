@@ -239,6 +239,18 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
      */
     @Override
     public String toString() {
-        return "SN[" + this.getKey().getCode() + "," + this.getKey().getScientificName() + "," + this.getRank() + "]";
+        StringBuilder builder = new StringBuilder(64);
+        builder.append("SN[");
+        builder.append(this.getKey().getCode());
+        builder.append(", ");
+        builder.append(this.getKey().getScientificName());
+        builder.append(", ");
+        builder.append(this.getKey().getRank());
+        if (this.getPrincipal() != null) {
+            builder.append(", = ");
+            builder.append(this.getPrincipal().getKey());
+        }
+        builder.append("]");
+        return builder.toString();
     }
 }

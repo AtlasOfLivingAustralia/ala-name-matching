@@ -32,6 +32,14 @@
         }
       ]
     }
+  },{
+    "id" : "dr102",
+    "discardStrategy": "IDENTIFIER_TO_PARENT",
+    "defaultScore" : 150
+  },{
+    "id" : "dr103",
+    "discardStrategy": "SYNONYMISE_TO_PARENT",
+    "defaultScore" : 150
   }],
   "defaultProvider" : "unknown",
   "acceptedCutoff" : 50

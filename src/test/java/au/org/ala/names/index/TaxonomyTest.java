@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
 
@@ -284,6 +285,7 @@ public class TaxonomyTest extends TestUtils {
         assertNull(i13.getResolvedParent());
     }
 
+
     @Test
     public void testWrite1() throws Exception {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
@@ -301,7 +303,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(11, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(21, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(51, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(4, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(6, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
 
@@ -322,7 +324,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(4, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(5, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(5, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(5, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(7, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
 
@@ -344,6 +346,64 @@ public class TaxonomyTest extends TestUtils {
         assertTrue(new File(dir, "eml.xml").exists());
         assertEquals(11, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(2, this.rowCount(new File(dir, "vernacularname.txt")));
+    }
+
+    // Test disarding an identifier
+    @Test
+    public void testDiscardIdentifier1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-11.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance i11 = this.taxonomy.getInstance("7178434");
+        TaxonConceptInstance i12 = this.taxonomy.getInstance("7178429");
+        TaxonConceptInstance i13 = this.taxonomy.getInstance("7178430");
+        assertNotNull(i11);
+        assertNotNull(i12);
+        assertNotNull(i13);
+        assertFalse(i11.isForbidden());
+        assertTrue(i12.isForbidden());
+        assertFalse(i13.isForbidden());
+        File dir = new File(this.taxonomy.getWork(), "output");
+        dir.mkdir();
+        this.taxonomy.createDwCA(dir);
+        assertEquals(3, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(3, this.rowCount(new File(dir, "taxonvariant.txt")));
+        File identifier = new File(dir, "identifier.txt");
+        assertEquals(4, this.rowCount(identifier));
+        this.dumpFile(identifier);
+        assertTrue(this.fileContains(identifier, Pattern.compile("^7178434\t7178429.*discarded.*")));
+    }
+
+    // Test disarding an synonym
+    @Test
+    public void testDiscardSynonym1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-12.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance i11 = this.taxonomy.getInstance("7178434");
+        TaxonConceptInstance i12 = this.taxonomy.getInstance("7178429");
+        TaxonConceptInstance i13 = this.taxonomy.getInstance("7178430");
+        assertNotNull(i11);
+        assertNotNull(i12);
+        assertNotNull(i13);
+        assertFalse(i11.isForbidden());
+        assertFalse(i12.isForbidden());
+        assertFalse(i13.isForbidden());
+        assertEquals(i11, i12.getResolvedAccepted());
+        File dir = new File(this.taxonomy.getWork(), "output");
+        dir.mkdir();
+        this.taxonomy.createDwCA(dir);
+        File taxon = new File(dir, "taxon.txt");
+        assertEquals(4, this.rowCount(taxon));
+        assertTrue(this.fileContains(taxon, Pattern.compile("^7178429\t\t7178434.*inferredSynonym.*")));
+        assertEquals(4, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(4, this.rowCount(new File(dir, "identifier.txt")));
     }
 
 }

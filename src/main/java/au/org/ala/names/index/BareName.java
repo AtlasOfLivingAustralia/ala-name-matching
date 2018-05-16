@@ -98,7 +98,7 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
         if (coded.size() == 1) {
             return coded.get(0);
         }
-        taxonomy.report(IssueType.COLLISION, "uncodedScientificName.collision", this,coded.get(0), coded.get(1));
+        taxonomy.report(IssueType.COLLISION, "uncodedScientificName.collision", this, coded.get(0), coded.get(1));
         final int score = coded.stream().mapToInt(UnrankedScientificName::getPrincipalScore).max().orElse(TaxonomicElement.MIN_SCORE);
         List<UnrankedScientificName> candidates = coded.stream().filter(sn -> sn.getPrincipalScore() == score).collect(Collectors.toList());
         if (candidates.size() > 1)
@@ -133,7 +133,15 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
      */
     @Override
     public String toString() {
-        return "BN[" + this.getKey().getScientificName() + "]";
+        StringBuilder builder = new StringBuilder(64);
+        builder.append("BN[");
+        builder.append(this.getKey().getScientificName());
+        if (this.getPrincipal() != null) {
+            builder.append(", = ");
+            builder.append(this.getPrincipal().getKey());
+        }
+        builder.append("]");
+        return builder.toString();
     }
 
 }

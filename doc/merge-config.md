@@ -69,6 +69,11 @@ Each provider contains the following information:
   See [adjusters](#Adjusters) below.
 * **owner** A list of names that this provider "owns", meaning that an unauthored name
   will always be mapped onto the taxon concept supplied by this provider.
+* **discardStrategy** How to handle discarded/forbidden names (eg. unplaced names). This can be one of
+  IGNORE (the default) which simply drops the names, IDENTIFIER_TO_PARENT which adds the discarded taxon's
+  identifier to the parent taxon as a "discarded" identifier (only the prinary taxonID is added), 
+  SYNONYMISE_TO_PARENT makes the discarded taxon a synonym of its parent (use this option with caution, since
+  you are likely to get a large number of "Unplaced"s acting as synonyms).
 
 ### Adjusters
 

@@ -1,0 +1,4 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonomicStatus
+7178434,,,dr103,ICBN,Astroloma,Hislop,genus,accepted
+7178429,7178434,,dr103,ICBN,Unplaced Astroloma,,species,accepted
+7178430,7178434,,dr103,ICBN,Astroloma oblongifolium,A.J.G.Wilson & Hislop,species,accepted

@@ -201,7 +201,7 @@ abstract public class NameSource {
                     { DwcTerm.nomenclaturalStatus, Arrays.asList(ALATerm.verbatimNomenclaturalStatus) }
             });
 
-            /** Fields expected for a taxonomic issue */
+    /** Fields expected for a taxonomic issue */
     protected static final List<Term> TAXONOMIC_ISSUE_REQUIRED = Arrays.asList(
             DcTerm.type,
             DcTerm.subject,
@@ -211,7 +211,8 @@ abstract public class NameSource {
             DwcTerm.scientificName,
             DwcTerm.scientificNameAuthorship,
             DwcTerm.associatedTaxa,
-            DwcTerm.datasetID
+            DwcTerm.datasetID,
+            ALATerm.value
     );
 
     /** Fields optional for a taxonomic issue */
