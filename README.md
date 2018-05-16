@@ -52,7 +52,7 @@ here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustra
 * Generate the names index with command:
 
 ```
-java –jar ala-name-matching-2.4.2.jar --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
+java -jar ala-name-matching-2.4.2.jar --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
 ```
 
 Please be aware that the names indexing could take over an hour to complete.
