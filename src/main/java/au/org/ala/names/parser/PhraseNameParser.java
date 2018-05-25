@@ -89,28 +89,36 @@ public class PhraseNameParser extends NameParser {
     @Override
     public <T> ParsedName<T> parse(final String scientificName) throws UnparsableException {
         ParsedName pn = null;
-        ExecutorService executor = null;
-        try {
-             executor = Executors.newSingleThreadExecutor();
-            Future<ParsedName> future = executor.submit(new Callable<ParsedName>() {
-                @Override
-                public ParsedName call() throws Exception {
-                    return PhraseNameParser.super.parse(scientificName);
-                }
-            });
-            pn = future.get(2, TimeUnit.SECONDS);
 
-        } catch (Exception ie){
-            log.debug("Problem parsing name: " + scientificName + " - done - " + ie.getMessage());
-            if (ie instanceof ExecutionException && ((ExecutionException) ie).getCause() instanceof UnparsableException) {
-                throw (UnparsableException) ((ExecutionException) ie).getCause();
-            } else {
-                throw new UnparsableException(null, "Unable to parse " + scientificName + ". Skipping.......");
+        //if enabled via a -D property, name parsing is executed in a separate thread
+        // this is to stop problematic names blocking downstream processing
+        // certain verbose virus names can play havoc with name parsing regex.
+        if(StringUtils.isNotBlank(System.getProperty("use.namematch.thread"))){
+            ExecutorService executor = null;
+            try {
+                executor = Executors.newSingleThreadExecutor();
+                Future<ParsedName> future = executor.submit(new Callable<ParsedName>() {
+                    @Override
+                    public ParsedName call() throws Exception {
+                        return PhraseNameParser.super.parse(scientificName);
+                    }
+                });
+                pn = future.get(2, TimeUnit.SECONDS);
+
+            } catch (Exception ie){
+                log.debug("Problem parsing name: " + scientificName + " - done - " + ie.getMessage());
+                if (ie instanceof ExecutionException && ((ExecutionException) ie).getCause() instanceof UnparsableException) {
+                    throw (UnparsableException) ((ExecutionException) ie).getCause();
+                } else {
+                    throw new UnparsableException(null, "Unable to parse " + scientificName + ". Skipping.......");
+                }
+            } finally {
+                if(executor != null){
+                    executor.shutdownNow();
+                }
             }
-        } finally {
-            if(executor != null){
-                executor.shutdownNow();
-            }
+        } else {
+            pn = super.parse(scientificName);
         }
 
         if (pn.getType() != NameType.wellformed && isPhraseRank(pn.rank) && (!pn.authorsParsed || pn.specificEpithet == null || SPECIES_PATTERN.matcher(pn.specificEpithet).matches())) {
