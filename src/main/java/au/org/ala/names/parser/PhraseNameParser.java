@@ -86,6 +86,8 @@ public class PhraseNameParser extends NameParser {
             + "|" + "(" + StringUtils.join(Rank.RANK_MARKER_MAP_INFRAGENERIC.keySet(), "|") + ")\\.? ?([" + NAME_LETTERS
             + "][" + name_letters + "-]+)" + ")");
 
+    private ExecutorService parserExecutor = null;
+
     @Override
     public <T> ParsedName<T> parse(final String scientificName) throws UnparsableException {
         ParsedName pn = null;
@@ -93,17 +95,16 @@ public class PhraseNameParser extends NameParser {
         //if enabled via a -D property, name parsing is executed in a separate thread
         // this is to stop problematic names blocking downstream processing
         // certain verbose virus names can play havoc with name parsing regex.
-        if(StringUtils.isNotBlank(System.getProperty("use.namematch.thread"))){
-            ExecutorService executor = null;
+        if(StringUtils.isNotBlank(System.getProperty("namematch.timeout.secs"))){
             try {
-                executor = Executors.newSingleThreadExecutor();
-                Future<ParsedName> future = executor.submit(new Callable<ParsedName>() {
+                int timeout = Integer.parseInt(System.getProperty("namematch.timeout.secs"));
+                Future<ParsedName> future = getExecutor().submit(new Callable<ParsedName>() {
                     @Override
                     public ParsedName call() throws Exception {
                         return PhraseNameParser.super.parse(scientificName);
-                    }
+                }
                 });
-                pn = future.get(2, TimeUnit.SECONDS);
+                pn = future.get(timeout, TimeUnit.SECONDS);
 
             } catch (Exception ie){
                 log.debug("Problem parsing name: " + scientificName + " - done - " + ie.getMessage());
@@ -111,10 +112,6 @@ public class PhraseNameParser extends NameParser {
                     throw (UnparsableException) ((ExecutionException) ie).getCause();
                 } else {
                     throw new UnparsableException(null, "Unable to parse " + scientificName + ". Skipping.......");
-                }
-            } finally {
-                if(executor != null){
-                    executor.shutdownNow();
                 }
             }
         } else {
@@ -153,6 +150,13 @@ public class PhraseNameParser extends NameParser {
         }
 
         return pn;
+    }
+
+    private ExecutorService getExecutor(){
+        if(parserExecutor == null){
+            parserExecutor = Executors.newSingleThreadExecutor();
+        }
+        return parserExecutor;
     }
 
     private boolean isPhraseRank(String rank) {
