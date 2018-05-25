@@ -166,4 +166,11 @@ public class PhraseNameParser extends NameParser {
         return VALID_PHRASE_RANKS.containsKey(rank.replaceAll("\\.", ""));
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        if(parserExecutor != null && !parserExecutor.isShutdown()){
+            parserExecutor.shutdownNow();
+        }
+    }
 }
