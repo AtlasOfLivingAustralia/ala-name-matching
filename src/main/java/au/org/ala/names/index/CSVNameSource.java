@@ -189,6 +189,8 @@ public class CSVNameSource extends NameSource {
         Integer parentNameUsageIDIndex = termLocations.get(DwcTerm.parentNameUsageID);
         Integer acceptedNameUsageIndex = termLocations.get(DwcTerm.acceptedNameUsage);
         Integer acceptedNameUsageIDIndex = termLocations.get(DwcTerm.acceptedNameUsageID);
+        Integer taxonRemarksIndex = termLocations.get(DwcTerm.taxonRemarks);
+        Integer provenanceIndex = termLocations.get(DcTerm.provenance);
         Set<Term> classifications = TaxonConceptInstance.CLASSIFICATION_FIELDS.stream().filter(t -> termLocations.containsKey(t)).collect(Collectors.toSet());
         try {
             String[] r;
@@ -212,6 +214,10 @@ public class CSVNameSource extends NameSource {
                 String parentNameUsageID = this.get(record, parentNameUsageIDIndex);
                 String acceptedNameUsage = this.get(record, acceptedNameUsageIndex);
                 String acceptedNameUsageID = this.get(record, acceptedNameUsageIDIndex);
+                String verbatimTaxonRemarks = this.get(record, taxonRemarksIndex);
+                String verbatimProvenance = this.get(record, provenanceIndex);
+                List<String> taxonRemarks = verbatimTaxonRemarks == null || verbatimTaxonRemarks.isEmpty() ? null : Arrays.stream(verbatimTaxonRemarks.split("\\|")).map(s -> s.trim()).collect(Collectors.toList());
+                List<String> provenance = verbatimProvenance == null || verbatimProvenance.isEmpty() ? null : Arrays.stream(verbatimProvenance.split("\\|")).map(s -> s.trim()).collect(Collectors.toList());
                 Map<Term, Optional<String>> classification = null;
                 if (!classifications.isEmpty()) {
                    classification = classifications.stream().collect(Collectors.toMap(t -> t, t -> Optional.ofNullable(this.get(record, termLocations.get(t)))));
@@ -234,6 +240,9 @@ public class CSVNameSource extends NameSource {
                         parentNameUsageID,
                         acceptedNameUsage,
                         acceptedNameUsageID,
+                        taxonRemarks,
+                        verbatimTaxonRemarks,
+                        provenance,
                         classification);
                 instance.normalise();
                 instance = taxonomy.addInstance(instance);

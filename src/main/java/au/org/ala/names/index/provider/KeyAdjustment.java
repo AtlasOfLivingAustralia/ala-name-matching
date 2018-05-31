@@ -72,7 +72,7 @@ public class KeyAdjustment {
     }
 
     public NameKey adjust(NameKey key, TaxonConceptInstance instance) {
-        if (!this.condition.match(instance))
+        if (!this.condition.match(instance, key))
             return key;
         NomenclaturalCode nc = this.nomenclaturalCode != null ? this.nomenclaturalCode : key.getCode();
         String sn = this.scientificName != null ? this.scientificName : key.getScientificName();

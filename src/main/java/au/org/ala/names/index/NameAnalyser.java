@@ -34,6 +34,13 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
     /**
      * Convienience method for testing.
      */
+    public NameKey analyse(TaxonConceptInstance instance) {
+        return this.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), false);
+    }
+
+    /**
+     * Convienience method for testing.
+     */
     public NameKey analyse(String code, String scientificName, String scientificNameAuthorship, String rank) {
         NomenclaturalCode canonicalCode = this.canonicaliseCode(code);
         RankType rankType = this.canonicaliseRank(rank);

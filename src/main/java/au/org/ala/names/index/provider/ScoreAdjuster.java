@@ -1,5 +1,6 @@
 package au.org.ala.names.index.provider;
 
+import au.org.ala.names.index.NameKey;
 import au.org.ala.names.index.TaxonConceptInstance;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -34,16 +35,21 @@ public class ScoreAdjuster {
 
     /**
      * Is this instance forbidden?
-
-     * @param instance The instance
      *
-     * @return True if the instance matches any of the forbidden criteria
+     * @param instance The instance
+     * @param key The associated name key
+     *
+     * @return An explanation for forbdding this instance or null for not forbidden
      */
-    public boolean forbid(TaxonConceptInstance instance) {
-        return this.forbidden.stream().anyMatch(c -> c.match(instance));
+    public String forbid(TaxonConceptInstance instance, NameKey key) {
+        for (TaxonCondition condition: this.forbidden) {
+            if (condition.match(instance, key))
+                return condition.explain();
+        }
+        return null;
     }
 
-    public int score(int base, TaxonConceptInstance instance) {
-        return this.adjustments.stream().reduce(base, (score, adjuster) -> adjuster.adjust(score, instance), (a, b) -> a);
+    public int score(int base, TaxonConceptInstance instance, NameKey key) {
+        return this.adjustments.stream().reduce(base, (score, adjuster) -> adjuster.adjust(score, instance, key), (a, b) -> a);
     }
 }

@@ -7,11 +7,9 @@ import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.search.ALANameSearcher;
 import au.org.ala.names.search.DwcaNameIndexer;
-import au.org.ala.names.search.SearchResultException;
 import au.org.ala.names.util.DwcaWriter;
 import au.org.ala.names.util.FileUtils;
 import au.org.ala.vocab.ALATerm;
-import au.org.ala.vocab.TaxonRank;
 import com.google.common.collect.Maps;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -19,9 +17,7 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.SimpleFSDirectory;
@@ -34,9 +30,7 @@ import org.gbif.api.vocabulary.ContactType;
 import org.gbif.api.vocabulary.IdentifierType;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
-import org.gbif.dwc.terms.DcTerm;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.dwc.terms.*;
 import org.gbif.dwc.terms.Term;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,7 +139,7 @@ public class Taxonomy implements Reporter {
     /** The source associated with inferences from this process */
     private NameProvider inferenceProvider;
     /** The output map */
-    private Map<Term, List<Term>> outputMap;
+    private Map<Term, Set<Term>> outputMap;
     /** The resource bundle for error reporting */
     private ResourceBundle resources;
     /** The progress counts */
@@ -781,19 +775,24 @@ public class Taxonomy implements Reporter {
         NameKey nameKey;
         NameKey unrankedKey;
         NameKey bareKey;
+        String remark, explain;
 
         taxonKey = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), loose);
         taxonKey = instance.getProvider().adjustKey(taxonKey, instance);
         switch (taxonKey.getType()) {
             case PLACEHOLDER:
-                // Placeholder and invalid names are forbidden
                 this.report(IssueType.NOTE, "taxonomy.load.placeholder", instance);
-                instance.setForbidden(true);
+                remark = this.getResources().getString("taxonomy.load.placeholder.provenance");
+                instance.addTaxonRemark(remark);
+                this.addProvenanceToOutput();
                 break;
             case NO_NAME:
                 // Impossible names are made forbdden
                 this.report(IssueType.VALIDATION, "taxonomy.load.no_name", instance);
+                remark = this.getResources().getString("taxonomy.load.no_name.provenance");
+                instance.addProvenance(remark);
                 instance.setForbidden(true);
+                this.addProvenanceToOutput();
                 break;
             case INFORMAL:
             case DOUBTFUL:
@@ -807,8 +806,13 @@ public class Taxonomy implements Reporter {
                 break;
         }
         this.count("count.load." + taxonKey.getType().name());
-        if (!instance.isForbidden() && instance.getProvider().forbid(instance)) {
-            this.report(IssueType.NOTE, "taxonomy.load.forbidden", instance);
+        if (!instance.isForbidden() && (explain = instance.getProvider().forbid(instance, taxonKey)) != null) {
+            this.count("count.load.forbidden");
+            this.report(IssueType.NOTE, "taxonomy.load.forbidden", instance.getTaxonID(), instance.getScientificName(), instance.getScientificNameAuthorship(), explain);
+            remark = this.getResources().getString("taxonomy.load.forbidden.provenance");
+            remark = MessageFormat.format(remark, explain);
+            instance.addTaxonRemark(remark);
+            this.addRemarksToOutput();
             instance.setForbidden(true);
         }
 
@@ -820,6 +824,8 @@ public class Taxonomy implements Reporter {
             TaxonConceptInstance collision = this.instances.get(taxonID);
             taxonID = UUID.randomUUID().toString();
             this.report(IssueType.VALIDATION, "taxonomy.load.collision", instance, collision);
+            remark = this.getResources().getString("taxonomy.load.collision.provenance");
+            remark = MessageFormat.format(remark, instance.getTaxonID(), instance.getProvider().getId());
             instance = new TaxonConceptInstance(
                     taxonID,
                     instance.getCode(),
@@ -838,8 +844,13 @@ public class Taxonomy implements Reporter {
                     instance.getParentNameUsageID(),
                     instance.getAcceptedNameUsage(),
                     instance.getAcceptedNameUsageID(),
+                    instance.getTaxonRemarks() == null ? null : new ArrayList<>(instance.getTaxonRemarks()),
+                    instance.getVerbatimTaxonRemarks(),
+                    instance.getProvenance() == null ? null : new ArrayList<>(instance.getProvenance()),
                     instance.getClassification()
             );
+            instance.addProvenance(remark);
+            this.addProvenanceToOutput();
         }
 
         BareName bare = this.bareNames.get(bareKey);
@@ -986,7 +997,7 @@ public class Taxonomy implements Reporter {
      * @param code The message code to use for the readable version of the report
      * @param taxonID A specific taxonomic ID
      * @param scientificName A specific scientific name
-     * @param scientificNameAuthorship A specfici authorship
+     * @param scientificNameAuthorship A specfiic authorship
      * @param args The arguments for the report message
      */
     @Override
@@ -1279,7 +1290,7 @@ public class Taxonomy implements Reporter {
     private void makeBaseOutputMap() {
         this.outputMap = new HashMap<>();
         for (Map.Entry<Term, List<Term>> entry: NameSource.REQUIRED_TERMS.entrySet())
-            this.outputMap.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+            this.outputMap.put(entry.getKey(), new HashSet<>(entry.getValue()));
     }
 
 
@@ -1310,9 +1321,9 @@ public class Taxonomy implements Reporter {
      * @param terms The terms. If ordered, then the output map will respect the ordering
      */
     public void addOutputTerms(Term type, Collection<Term> terms) {
-        List<Term> map = this.outputMap.get(type);
+        Set<Term> map = this.outputMap.get(type);
         if (map == null) {
-            map = new ArrayList<>(terms.size());
+            map = new HashSet<>(terms.size());
             this.outputMap.put(type, map);
         }
         Set<Term> seen = new HashSet<>(map);
@@ -1351,6 +1362,41 @@ public class Taxonomy implements Reporter {
     }
 
     /**
+     * Ensure that provenance information (taxonRemarks, provenance) is included in the output.
+     */
+    public void addProvenanceToOutput() {
+        Set<Term> map;
+        map = this.outputMap.get(DwcTerm.Taxon);
+        map.add(DcTerm.provenance);
+        map = this.outputMap.get(ALATerm.TaxonVariant);
+        map.add(DcTerm.provenance);
+        map = this.outputMap.get(GbifTerm.VernacularName);
+        map.add(DcTerm.provenance);
+        map = this.outputMap.get(GbifTerm.Identifier);
+        map.add(DcTerm.provenance);
+        map = this.outputMap.get(GbifTerm.Distribution);
+        map.add(DcTerm.provenance);
+    }
+
+    /**
+     * Ensure that provenance information (taxonRemarks, provenance) is included in the output.
+     */
+    public void addRemarksToOutput() {
+        Set<Term> map;
+        map = this.outputMap.get(DwcTerm.Taxon);
+        map.add(DwcTerm.taxonRemarks);
+        map = this.outputMap.get(ALATerm.TaxonVariant);
+        map.add(DwcTerm.taxonRemarks);
+        map.add(ALATerm.verbatimTaxonRemarks);
+        map = this.outputMap.get(GbifTerm.VernacularName);
+        map.add(DwcTerm.taxonRemarks);
+        map = this.outputMap.get(GbifTerm.Identifier);
+        map.add(DwcTerm.taxonRemarks);
+        map = this.outputMap.get(GbifTerm.Distribution);
+        map.add(DwcTerm.taxonRemarks);
+    }
+
+    /**
      * Get the output term list for this type of row
      *
      * @param type The row type
@@ -1358,7 +1404,21 @@ public class Taxonomy implements Reporter {
      * @return The list of terms to include
      */
     public List<Term> outputTerms(Term type) {
-        return this.outputMap.getOrDefault(type, DEFAULT_TERMS);
+        Set<Term> used = new HashSet<>(this.outputMap.getOrDefault(type, new HashSet<>()));
+        used.addAll(DEFAULT_TERMS);
+        List<Term> order = new ArrayList<>(used.size());
+        for (Term required: NameSource.REQUIRED_TERMS.getOrDefault(type, DEFAULT_TERMS)) {
+            if (used.contains(required))
+                order.add(required);
+            used.remove(required);
+        }
+        for (Term additional: NameSource.ADDITIONAL_TERMS.getOrDefault(type, DEFAULT_TERMS)) {
+            if (used.contains(additional))
+                order.add(additional);
+            used.remove(additional);
+        }
+        order.addAll(used);
+        return order;
     }
 
     /**

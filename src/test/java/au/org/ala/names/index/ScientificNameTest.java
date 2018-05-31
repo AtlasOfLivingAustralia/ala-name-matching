@@ -54,6 +54,9 @@ public class ScientificNameTest {
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
                 null
         );
         NameKey instanceKey = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, NAME_1, AUTHOR_1, RankType.SPECIES, false);

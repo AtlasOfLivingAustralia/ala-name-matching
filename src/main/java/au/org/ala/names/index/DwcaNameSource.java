@@ -11,6 +11,7 @@ import org.gbif.api.model.registry.Citation;
 import org.gbif.api.model.registry.Contact;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.vocabulary.*;
+import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwca.io.MetadataException;
 import org.gbif.dwca.record.Record;
@@ -260,6 +261,10 @@ public class DwcaNameSource extends NameSource {
                 String parentNameUsageID = core.value(DwcTerm.parentNameUsageID);
                 String acceptedNameUsage = core.value(DwcTerm.acceptedNameUsage);
                 String acceptedNameUsageID = core.value(DwcTerm.acceptedNameUsageID);
+                String verbatimTaxonRemarks = core.value(DwcTerm.taxonRemarks);
+                String verbatimProvenance = core.value(DcTerm.provenance);
+                List<String> taxonRemarks = verbatimTaxonRemarks == null || verbatimTaxonRemarks.isEmpty() ? null : Arrays.stream(verbatimTaxonRemarks.split("\\|")).map(s -> s.trim()).collect(Collectors.toList());
+                List<String> provenance = verbatimProvenance == null || verbatimProvenance.isEmpty() ? null : Arrays.stream(verbatimProvenance.split("\\|")).map(s -> s.trim()).collect(Collectors.toList());
                 Map<Term, Optional<String>> classification = classifiers.stream().collect(Collectors.toMap(t -> t, t -> Optional.ofNullable(core.value(t))));
                 TaxonConceptInstance instance = new TaxonConceptInstance(
                         taxonID,
@@ -279,6 +284,9 @@ public class DwcaNameSource extends NameSource {
                         parentNameUsageID,
                         acceptedNameUsage,
                         acceptedNameUsageID,
+                        taxonRemarks,
+                        verbatimTaxonRemarks,
+                        provenance,
                         classification);
                 instance = taxonomy.addInstance(instance);
 

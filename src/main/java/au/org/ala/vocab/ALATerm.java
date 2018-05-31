@@ -15,6 +15,8 @@ public enum ALATerm implements Term {
     verbatimTaxonomicStatus,
     /** The supplied nomenclatural status */
     verbatimNomenclaturalStatus,
+    /** The supplied taxon remarks */
+    verbatimTaxonRemarks,
     /** The name and authorship, with the author correctly placed */
     nameComplete,
     /** The name and authorship, formatted in some way, usually HTML */

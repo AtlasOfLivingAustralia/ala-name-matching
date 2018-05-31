@@ -34,10 +34,26 @@
     }
   },{
     "id" : "dr102",
+    "adjuster": {
+      "forbidden": [
+        {
+          "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+          "nameType": "PLACEHOLDER"
+        }
+      ]
+    },
     "discardStrategy": "IDENTIFIER_TO_PARENT",
     "defaultScore" : 150
   },{
     "id" : "dr103",
+    "adjuster": {
+      "forbidden": [
+        {
+          "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+          "nameType": "PLACEHOLDER"
+        }
+      ]
+    },
     "discardStrategy": "SYNONYMISE_TO_PARENT",
     "defaultScore" : 150
   }],

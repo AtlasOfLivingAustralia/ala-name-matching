@@ -146,7 +146,7 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
                     if (tc.isAuthored())
                         tc.addInferredSynonym(principal, taxonomy);
                     else {
-                        principal.reallocate(tc, taxonomy);
+                        principal.reallocate(tc, taxonomy, "scientificName.reallocated.provenance");
                         reallocated.add(tc);
                     }
                 }
@@ -163,16 +163,17 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
      *
      * @param element The element to reallocate
      * @param taxonomy The resolving taxonomy
+     * @param reason The key for reallocation
      */
     @Override
-    public void reallocate(ScientificName element, Taxonomy taxonomy) {
+    public void reallocate(ScientificName element, Taxonomy taxonomy, String reason) {
         TaxonConcept principal = this.getPrincipal();
         taxonomy.report(IssueType.NOTE, "scientificName.reallocated", element, this);
         taxonomy.count("count.reallocate.scientificName");
         if (principal == null)
             throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without principal");
         for (TaxonConcept tc: element.getConcepts()) {
-            principal.reallocate(tc, taxonomy);
+            principal.reallocate(tc, taxonomy, reason);
         }
         element.clear(principal);
     }

@@ -1,5 +1,7 @@
 package au.org.ala.names.index.provider;
 
+import au.org.ala.names.index.ALANameAnalyser;
+import au.org.ala.names.index.NameKey;
 import au.org.ala.names.index.NameProvider;
 import au.org.ala.names.index.TaxonConceptInstance;
 import au.org.ala.names.model.RankType;
@@ -25,10 +27,12 @@ import static org.junit.Assert.assertTrue;
  */
 public class AndTaxonConditionTest extends TestUtils {
     private NameProvider provider;
+    private ALANameAnalyser analyser;
 
     @Before
     public void setup() {
         this.provider = new NameProvider();
+        this.analyser = new ALANameAnalyser();
     }
 
     @Test
@@ -38,7 +42,8 @@ public class AndTaxonConditionTest extends TestUtils {
         condition1.setNomenclaturalCode(NomenclaturalCode.BOTANICAL);
         condition.add(condition1);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
-        assertTrue(condition.match(instance));
+        NameKey key = this.analyser.analyse(instance);
+        assertTrue(condition.match(instance, key));
     }
 
     @Test
@@ -48,7 +53,8 @@ public class AndTaxonConditionTest extends TestUtils {
         condition1.setNomenclaturalCode(NomenclaturalCode.ZOOLOGICAL);
         condition.add(condition1);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
-        assertFalse(condition.match(instance));
+        NameKey key = this.analyser.analyse(instance);
+        assertFalse(condition.match(instance, key));
     }
 
 
@@ -62,7 +68,8 @@ public class AndTaxonConditionTest extends TestUtils {
         condition.add(condition1);
         condition.add(condition2);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
-        assertTrue(condition.match(instance));
+        NameKey key = this.analyser.analyse(instance);
+        assertTrue(condition.match(instance, key));
     }
 
     @Test
@@ -75,7 +82,8 @@ public class AndTaxonConditionTest extends TestUtils {
         condition.add(condition1);
         condition.add(condition2);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalCode.ZOOLOGICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
-        assertFalse(condition.match(instance));
+        NameKey key = this.analyser.analyse(instance);
+        assertFalse(condition.match(instance, key));
     }
 
     @Test
@@ -88,7 +96,8 @@ public class AndTaxonConditionTest extends TestUtils {
         condition.add(condition1);
         condition.add(condition2);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.ACCEPTED);
-        assertFalse(condition.match(instance));
+        NameKey key = this.analyser.analyse(instance);
+        assertFalse(condition.match(instance, key));
     }
 
     @Test
@@ -112,9 +121,11 @@ public class AndTaxonConditionTest extends TestUtils {
         ObjectMapper mapper = new ObjectMapper();
         AndTaxonCondition condition = mapper.readValue(this.resourceReader("and-condition-1.json"), AndTaxonCondition.class);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
-        assertTrue(condition.match(instance));
+        NameKey key = this.analyser.analyse(instance);
+        assertTrue(condition.match(instance, key));
         instance = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.ACCEPTED);
-        assertFalse(condition.match(instance));
+        key = this.analyser.analyse(instance);
+        assertFalse(condition.match(instance, key));
     }
 
 }

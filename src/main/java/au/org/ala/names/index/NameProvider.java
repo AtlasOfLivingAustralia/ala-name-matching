@@ -269,13 +269,15 @@ public class NameProvider {
      * </p>
      *
      * @param instance The instance
+     * @param key The associated name key
      *
      * @return True if the instance is forbidden
      */
-    public boolean forbid(TaxonConceptInstance instance) {
-        if (this.parent != null && this.parent.forbid(instance))
-            return true;
-        return this.adjuster.forbid(instance);
+    public String forbid(TaxonConceptInstance instance, NameKey key) {
+        String explain;
+        if (this.parent != null && ((explain = this.parent.forbid(instance, key)) != null))
+            return explain;
+        return this.adjuster.forbid(instance, key);
     }
 
     /**
@@ -406,7 +408,7 @@ public class NameProvider {
     public int adjustScore(int score, TaxonConceptInstance instance) {
         if (this.parent != null)
             score = this.parent.adjustScore(score, instance);
-        return this.adjuster == null ? score : this.adjuster.score(score, instance);
+        return this.adjuster == null ? score : this.adjuster.score(score, instance, instance.getContainer() == null ? null : instance.getContainer().getKey());
     }
 
     /**

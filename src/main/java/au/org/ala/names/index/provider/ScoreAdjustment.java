@@ -1,5 +1,6 @@
 package au.org.ala.names.index.provider;
 
+import au.org.ala.names.index.NameKey;
 import au.org.ala.names.index.TaxonConceptInstance;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -28,7 +29,7 @@ public class ScoreAdjustment {
         this.adjustment = adjustment;
     }
 
-    public int adjust(int base, TaxonConceptInstance instance) {
-        return this.condition.match(instance) ? base + this.adjustment : base;
+    public int adjust(int base, TaxonConceptInstance instance, NameKey key) {
+        return this.condition.match(instance, key) ? base + this.adjustment : base;
     }
 }

@@ -63,7 +63,7 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
         List<UnrankedScientificName> reallocated = new ArrayList<>();
         for (UnrankedScientificName name: this.getConcepts()) {
             if (name != principal && name.getKey().isUncoded()) {
-                principal.reallocate(name, taxonomy);
+                principal.reallocate(name, taxonomy, "uncodedScientificName.reallocated.provenance");
                 reallocated.add(name);
             }
         }
@@ -112,16 +112,17 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
      *
      * @param element The element to reallocate
      * @param taxonomy The resolving taxonomy
+     * @param reason The reason code
      */
     @Override
-    public void reallocate(BareName element, Taxonomy taxonomy) {
+    public void reallocate(BareName element, Taxonomy taxonomy, String reason) {
         UnrankedScientificName principal = this.getPrincipal();
         taxonomy.report(IssueType.NOTE, "uncodedScientificName.reallocated", element, this);
         taxonomy.count("count.reallocate.uncodedScientificName");
         if (principal == null)
             throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without principal");
         for (UnrankedScientificName name: element.getConcepts()) {
-            principal.reallocate(name, taxonomy);
+            principal.reallocate(name, taxonomy, reason);
         }
         element.clear(principal);
     }

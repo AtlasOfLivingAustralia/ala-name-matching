@@ -9,6 +9,7 @@ import org.gbif.dwc.terms.Term;
 import au.org.ala.names.util.DwcaWriter;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -140,17 +141,22 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      *
      * @param element The element to reallocate
      * @param taxonomy The resolving taxonomy
+     * @param reason Why the concept is being reallocated
      */
     @Override
-    public void reallocate(TaxonConcept element, Taxonomy taxonomy) {
+    public void reallocate(TaxonConcept element, Taxonomy taxonomy, String reason) {
         taxonomy.report(IssueType.NOTE, "taxonConcept.reallocated", element, this);
         taxonomy.count("count.reallocate.taxonConcept");
         TaxonConceptInstance representative = this.getRepresentative();
         if (representative == null || this.resolution == null)
             throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without representative and resolution");
+        String reallocated = taxonomy.getResources().getString(reason);
+        reallocated = MessageFormat.format(reallocated, representative.getTaxonID(), representative.getScientificName(), representative.getScientificNameAuthorship() == null ? "" : representative.getScientificNameAuthorship());
+        taxonomy.addProvenanceToOutput();
         element.resolution = new TaxonResolution();
         for (TaxonConceptInstance tci: element.instances) {
             tci.setContainer(this);
+            tci.addProvenance(reallocated);
             this.instances.add(tci);
             this.resolution.addExternal(tci, representative, taxonomy);
             element.resolution.addExternal(tci, representative, taxonomy);
