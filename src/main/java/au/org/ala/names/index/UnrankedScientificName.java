@@ -1,9 +1,6 @@
 package au.org.ala.names.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -71,7 +68,7 @@ public class UnrankedScientificName extends Name<UnrankedScientificName, BareNam
      * </ul>
      * @param taxonomy The resolving taxonomy.
      *
-     * @return
+     * @return The principal
      */
     @Override
     protected ScientificName findPrincipal(Taxonomy taxonomy) {
@@ -88,11 +85,11 @@ public class UnrankedScientificName extends Name<UnrankedScientificName, BareNam
         if (ranked.size() == 1) {
             return ranked.get(0);
         }
-        taxonomy.report(IssueType.COLLISION, "unrankedScientificName.collision", this, ranked.get(0), ranked.get(1));
+        taxonomy.report(IssueType.COLLISION, "unrankedScientificName.collision", this, ranked);
         final int score = ranked.stream().mapToInt(ScientificName::getPrincipalScore).max().orElse(TaxonomicElement.MIN_SCORE);
         List<ScientificName> candidates = ranked.stream().filter(sn -> sn.getPrincipalScore() == score).collect(Collectors.toList());
         if (candidates.size() > 1)
-            taxonomy.report(IssueType.PROBLEM, "unrankedScientificName.collision.match", this, candidates.get(0), candidates.get(1));
+            taxonomy.report(IssueType.PROBLEM, "unrankedScientificName.collision.warn", this, candidates);
         return candidates.get(0);
     }
 
@@ -107,7 +104,7 @@ public class UnrankedScientificName extends Name<UnrankedScientificName, BareNam
     @Override
     public void reallocate(UnrankedScientificName element, Taxonomy taxonomy, String reason) {
         ScientificName principal = this.getPrincipal();
-        taxonomy.report(IssueType.NOTE, "unrankedScientificName.reallocated", element, this);
+        taxonomy.report(IssueType.NOTE, "unrankedScientificName.reallocated", element, Arrays.asList(this));
         taxonomy.count("count.reallocate.unrankedScientificName");
         if (principal == null)
             throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without principal");

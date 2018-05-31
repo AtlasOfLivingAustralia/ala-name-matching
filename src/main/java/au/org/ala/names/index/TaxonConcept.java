@@ -130,6 +130,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
         List<TaxonConceptInstance> principals = resolver.principals(this, this.instances);
         this.resolution = resolver.resolve(this, principals, this.instances);
         taxonomy.count("count.resolve.taxonConcept");
+        taxonomy.count("count.resolve.taxonConceptInstance", this.instances.size());
     }
 
     /**
@@ -145,7 +146,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      */
     @Override
     public void reallocate(TaxonConcept element, Taxonomy taxonomy, String reason) {
-        taxonomy.report(IssueType.NOTE, "taxonConcept.reallocated", element, this);
+        taxonomy.report(IssueType.NOTE, "taxonConcept.reallocated", element, Arrays.asList(this));
         taxonomy.count("count.reallocate.taxonConcept");
         TaxonConceptInstance representative = this.getRepresentative();
         if (representative == null || this.resolution == null)
@@ -181,7 +182,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
             }
             Collection<TaxonConceptInstance> allocated = this.resolution.getChildren(tci);
             if (allocated == null || allocated.isEmpty()) {
-                taxonomy.report(IssueType.NOTE, "taxonConcept.noInstances", tci);
+                taxonomy.report(IssueType.NOTE, "taxonConcept.noInstances", tci, null);
             } else {
                 writer.newRecord(tci.getTaxonID());
                 Map<Term, String> values = tci.getTaxonMap(taxonomy);
@@ -192,6 +193,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
                     if (sub.isForbidden())
                         continue;
                     this.writeExtension(ALATerm.TaxonVariant, sub == tci ? values : sub.getTaxonMap(taxonomy), taxonomy, writer);
+                    taxonomy.count("count.write.taxonConceptInstance");
                     for (Map<Term, String> id : sub.getIdentifierMaps(taxonomy))
                         this.writeExtension(GbifTerm.Identifier, id, taxonomy, writer);
                     for (Map<Term, String> vn : sub.getVernacularMaps(taxonomy))
@@ -271,18 +273,18 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
         TaxonResolver resolver = taxonomy.getResolver();
         TaxonConceptInstance representative = principal.getRepresentative();
         if (representative == null) {
-            taxonomy.report(IssueType.ERROR, "taxonConcept.representative", principal, this);
+            taxonomy.report(IssueType.ERROR, "taxonConcept.representative", principal, Arrays.asList(this));
             return;
         }
         List<TaxonConceptInstance> inferred = this.resolution.getUsed().stream().filter(tci -> tci.isAccepted()).map(tci -> representative.createInferredSynonym(this, tci.getScientificName(), tci.getScientificNameAuthorship(), tci.getYear(), taxonomy)).collect(Collectors.toList());
         if (inferred.isEmpty()) {
-            taxonomy.report(IssueType.ERROR, "taxonConcept.inferredSynonyms", principal, this);
+            taxonomy.report(IssueType.ERROR, "taxonConcept.inferredSynonyms", principal, Arrays.asList(this));
             return;
         }
         this.instances.addAll(inferred);
         List<TaxonConceptInstance> used = this.instances.stream().filter(tci -> tci.isInferredSynonym()).collect(Collectors.toList());
         if (used.size() > 1)
-            taxonomy.report(IssueType.NOTE, "taxonConcept.multipleInferredSynonyms", this, used.get(0), used.get(1));
+            taxonomy.report(IssueType.NOTE, "taxonConcept.multipleInferredSynonyms", this, used);
         this.resolution = resolver.resolve(this, used, this.instances);
         taxonomy.count("count.resolve.inferredSynonym");
     }
@@ -422,16 +424,16 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     public boolean validate(Taxonomy taxonomy) {
         boolean valid = true;
         if (this.instances.isEmpty()) {
-            taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.noInstances", this);
+            taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.noInstances", this, null);
             valid = false;
         }
         for (TaxonConceptInstance tci: this.instances) {
             if (tci.getContainer() != this) {
-                taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceParent", tci, this);
+                taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceParent", tci, Arrays.asList(this));
                 valid = false;
             }
             if (taxonomy.getInstance(tci.getTaxonID()) != tci) {
-                taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceTaxonomy", tci, this);
+                taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceTaxonomy", tci, Arrays.asList(this));
                 valid = false;
             }
         }

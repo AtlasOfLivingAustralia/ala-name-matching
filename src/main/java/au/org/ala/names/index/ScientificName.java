@@ -121,11 +121,11 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
             return accepted.get(0);
         if (authored.size() == 1)
             return authored.get(0);
-        taxonomy.report(IssueType.COLLISION, "scientificName.collision", this, authored.get(0), authored.get(1));
+        taxonomy.report(IssueType.COLLISION, "scientificName.collision", this, authored);
         final int score = authored.stream().mapToInt(TaxonConcept::getPrincipalScore).max().orElse(TaxonomicElement.MIN_SCORE);
         List<TaxonConcept> candidates = authored.stream().filter(tc -> tc.getPrincipalScore() == score).collect(Collectors.toList());
         if (candidates.size() > 1)
-            taxonomy.report(IssueType.PROBLEM, "scientificName.collision.match", this, candidates.get(0), candidates.get(1));
+            taxonomy.report(IssueType.PROBLEM, "scientificName.collision.warn", this, candidates);
         return candidates.get(0);
      }
 
@@ -168,7 +168,7 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
     @Override
     public void reallocate(ScientificName element, Taxonomy taxonomy, String reason) {
         TaxonConcept principal = this.getPrincipal();
-        taxonomy.report(IssueType.NOTE, "scientificName.reallocated", element, this);
+        taxonomy.report(IssueType.NOTE, "scientificName.reallocated", element, Arrays.asList(this));
         taxonomy.count("count.reallocate.scientificName");
         if (principal == null)
             throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without principal");

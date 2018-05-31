@@ -1,8 +1,8 @@
 package au.org.ala.names.index;
 
-import au.org.ala.vocab.ALATerm;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
+import au.org.ala.vocab.ALATerm;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -13,9 +13,7 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.validation.constraints.Null;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
@@ -604,6 +602,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
 
     /**
      * Set the forbidden flag
+     * <p>
+     * Note that, if you set something as forbidden, increase <code>count.load.forbidden</code>
+     * so people can add up the numbers
+     * </p>
      *
      * @param forbidden
      */
@@ -678,7 +680,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 if (elt != null) {
                     if (parents.contains(elt)) {
                         parents.add(elt);
-                        taxonomy.report(IssueType.VALIDATION, "instance.validation.parent.loop", parents.toArray(new TaxonConceptInstance[0]));
+                        taxonomy.report(IssueType.VALIDATION, "instance.validation.parent.loop", this, parents);
                         return false;
                     }
                     parents.add(elt);
@@ -981,11 +983,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         final Map<Term, String> values;
         if (valuesList.isEmpty()) {
             if (this.provider != taxonomy.getInferenceProvider())
-                taxonomy.report(IssueType.NOTE,"instance.noIndex", this);
+                taxonomy.report(IssueType.NOTE,"instance.noIndex", this, null);
             values = new HashMap<>();
         } else {
             if (valuesList.size() > 1)
-                taxonomy.report(IssueType.ERROR,"instance.multiIndex", this);
+                taxonomy.report(IssueType.ERROR,"instance.multiIndex", this, null);
             values = valuesList.get(0);
         }
         values.put(DwcTerm.taxonID, this.taxonID);
@@ -1017,10 +1019,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 TaxonConceptInstance rp = this.getResolvedParent();
                 pid = rp == null ? null : rp.getTaxonID();
                 if (pid == null) {
-                    taxonomy.report(IssueType.ERROR, "instance.parent.resolve", this);
+                    taxonomy.report(IssueType.ERROR, "instance.parent.resolve", this, null);
                 }
             } catch (ResolutionException ex) {
-                taxonomy.report(IssueType.ERROR, "instance.parent.resolve.loop", this.traceParent().toArray(new TaxonConceptInstance[0]));
+                taxonomy.report(IssueType.ERROR, "instance.parent.resolve.loop", this, this.traceParent());
             }
             values.put(DwcTerm.parentNameUsageID, pid);
         }
@@ -1033,10 +1035,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 TaxonConceptInstance ra = this.getResolvedAccepted();
                 aid = ra == null ? null : ra.getTaxonID();
                 if (aid == null) {
-                    taxonomy.report(IssueType.ERROR, "instance.accepted.resolve", this);
+                    taxonomy.report(IssueType.ERROR, "instance.accepted.resolve", this, null);
                 }
              } catch (ResolutionException ex) {
-                taxonomy.report(IssueType.ERROR, "instance.accepted.resolve.loop", this.traceAccepted().toArray(new TaxonConceptInstance[0]));
+                taxonomy.report(IssueType.ERROR, "instance.accepted.resolve.loop", this, this.traceAccepted());
             }
             values.put(DwcTerm.acceptedNameUsageID, aid);
         }
@@ -1222,28 +1224,28 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         boolean valid = true;
         if ((this.parentNameUsageID != null || this.parentNameUsage != null || this.isAccepted() && !(this.classification == null || this.classification.isEmpty())) && this.parent == null) {
             if (this.provider.isLoose())
-                taxonomy.report(IssueType.NOTE, "instance.validation.noParent.loose", this);
+                taxonomy.report(IssueType.NOTE, "instance.validation.noParent.loose", this, null);
             else {
-                taxonomy.report(IssueType.VALIDATION, "instance.validation.noParent", this);
+                taxonomy.report(IssueType.VALIDATION, "instance.validation.noParent", this, null);
                 valid = false;
             }
 
         }
         if ((this.acceptedNameUsageID != null || this.acceptedNameUsage != null) && this.accepted == null) {
             if (this.provider.isLoose())
-                taxonomy.report(IssueType.NOTE, "instance.validation.noAccepted.loose", this);
+                taxonomy.report(IssueType.NOTE, "instance.validation.noAccepted.loose", this, null);
             else {
-                taxonomy.report(IssueType.VALIDATION, "instance.validation.noAccepted", this);
+                taxonomy.report(IssueType.VALIDATION, "instance.validation.noAccepted", this, null);
                 valid = false;
             }
 
         }
         if (this.getContainer() == null) {
-            taxonomy.report(IssueType.VALIDATION, "instance.validation.noTaxonConcept", this);
+            taxonomy.report(IssueType.VALIDATION, "instance.validation.noTaxonConcept", this, null);
             valid = false;
 
         } else  if (this.getContainer().getContainer() == null) {
-            taxonomy.report(IssueType.VALIDATION, "instance.validation.noScientificName", this);
+            taxonomy.report(IssueType.VALIDATION, "instance.validation.noScientificName", this, null);
             valid = false;
         }
         valid = valid && this.validateParent(taxonomy);

@@ -3,10 +3,7 @@ package au.org.ala.names.index;
 import au.org.ala.names.model.RankType;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -98,11 +95,11 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
         if (coded.size() == 1) {
             return coded.get(0);
         }
-        taxonomy.report(IssueType.COLLISION, "uncodedScientificName.collision", this, coded.get(0), coded.get(1));
+        taxonomy.report(IssueType.COLLISION, "uncodedScientificName.collision", this, coded);
         final int score = coded.stream().mapToInt(UnrankedScientificName::getPrincipalScore).max().orElse(TaxonomicElement.MIN_SCORE);
         List<UnrankedScientificName> candidates = coded.stream().filter(sn -> sn.getPrincipalScore() == score).collect(Collectors.toList());
         if (candidates.size() > 1)
-            taxonomy.report(IssueType.PROBLEM, "uncodedScientificName.collision.match", this, candidates.get(0), candidates.get(1));
+            taxonomy.report(IssueType.PROBLEM, "uncodedScientificName.collision.warn", this, candidates);
         return candidates.get(0);
     }
 
@@ -117,7 +114,7 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
     @Override
     public void reallocate(BareName element, Taxonomy taxonomy, String reason) {
         UnrankedScientificName principal = this.getPrincipal();
-        taxonomy.report(IssueType.NOTE, "uncodedScientificName.reallocated", element, this);
+        taxonomy.report(IssueType.NOTE, "uncodedScientificName.reallocated", element, Arrays.asList(this));
         taxonomy.count("count.reallocate.uncodedScientificName");
         if (principal == null)
             throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without principal");

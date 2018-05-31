@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Work out the indexable details of a name.
@@ -159,11 +160,11 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
      * {@inheritDoc}
      */
     @Override
-    public void report(IssueType type, String code, TaxonomicElement... elements) {
+    public void report(IssueType type, String code, TaxonomicElement main, List<? extends TaxonomicElement> associated) {
         if (this.reporter != null)
-            this.reporter.report(type, code, elements);
+            this.reporter.report(type, code, main, associated);
         else
-            logger.warn("Report " + type.name() + " code=" + code + " elements=" + Arrays.toString(elements));
+            logger.warn("Report " + type.name() + " code=" + code + " main=" + main.toString() + " associated=" + associated);
     }
 
     /**
