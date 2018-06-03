@@ -623,6 +623,17 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
+     * A provider/id pair to help locate this taxon.
+     *
+     * @return The locator
+     */
+    public String getLocator() {
+        if (this.provider == null)
+            return this.taxonID;
+        return this.provider.getId() + ":" + this.taxonID;
+    }
+
+    /**
      * Get the resolved instance for this instance, based on the parent taxon concept.
      * <p>
      * This returns one step of resolution.

@@ -311,19 +311,18 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(64);
+        TaxonConceptInstance representative = this.getRepresentative();
         builder.append("TC[");
-        builder.append(this.key.getCode());
+        builder.append(this.key.getCode() == null ? "no code" : this.key.getCode().getAcronym());
         builder.append(", ");
         builder.append(this.key.getScientificName());
         builder.append(", ");
         builder.append(this.key.getScientificNameAuthorship());
         builder.append(", ");
         builder.append(this.key.getRank());
-        if (this.getRepresentative() != null) {
-            builder.append(", = ");
-            builder.append(this.getRepresentative().getProvider().getId());
-            builder.append(":");
-            builder.append(this.getRepresentative().getTaxonID());
+        if (representative != null) {
+            builder.append(" = ");
+            builder.append(representative.getLocator());
         }
         builder.append("]");
         return builder.toString();
@@ -364,7 +363,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
         TaxonConceptInstance rep = this.getRepresentative();
         if (rep != null) {
             sb.append(" [");
-            sb.append(rep.getTaxonID());
+            sb.append(rep.getLocator());
             sb.append("]");
         }
         return sb.toString();

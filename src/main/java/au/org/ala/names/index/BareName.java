@@ -132,11 +132,17 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(64);
+        UnrankedScientificName principal = this.getPrincipal();
+        TaxonConceptInstance representative = this.getRepresentative();
         builder.append("BN[");
         builder.append(this.getKey().getScientificName());
-        if (this.getPrincipal() != null) {
-            builder.append(", = ");
-            builder.append(this.getPrincipal().getKey());
+        if (principal != null) {
+            builder.append(" = ");
+            builder.append(principal.getKey());
+        }
+        if (representative != null) {
+            builder.append(" = ");
+            builder.append(representative.getLocator());
         }
         builder.append("]");
         return builder.toString();

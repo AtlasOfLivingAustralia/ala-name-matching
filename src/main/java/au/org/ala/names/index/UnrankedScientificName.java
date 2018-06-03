@@ -122,13 +122,19 @@ public class UnrankedScientificName extends Name<UnrankedScientificName, BareNam
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(64);
+        ScientificName principal = this.getPrincipal();
+        TaxonConceptInstance representative = this.getRepresentative();
         builder.append("UN[");
-        builder.append(this.getKey().getCode());
+        builder.append(this.getKey().getCode() == null ? "no code" : this.getKey().getCode().getAcronym());
         builder.append(", ");
         builder.append(this.getKey().getScientificName());
-        if (this.getPrincipal() != null) {
-            builder.append(", = ");
-            builder.append(this.getPrincipal().getKey());
+        if (principal != null) {
+            builder.append(" = ");
+            builder.append(principal.getKey());
+        }
+        if (representative != null) {
+            builder.append(" = ");
+            builder.append(representative.getLocator());
         }
         builder.append("]");
         return builder.toString();
