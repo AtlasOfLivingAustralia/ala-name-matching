@@ -1840,7 +1840,7 @@ public class ALANameSearcher {
         int scoreDocsCount = scoreDocs.length;
         for(int excludedResult = 0; excludedResult < scoreDocsCount; ++excludedResult) {
             ScoreDoc i = scoreDocs[excludedResult];
-            Document src = commonNameResults ? vernSearcher.doc(i.doc) : idSearcher.doc(i.doc);
+            Document src = commonNameResults ? vernSearcher.doc(i.doc) : cbSearcher.doc(i.doc);
             NameSearchResult nsr = commonNameResults ?
                     searchForRecordByLsid(src.get("lsid"))
                     : new NameSearchResult(src, null);
@@ -1897,8 +1897,7 @@ public class ALANameSearcher {
 
     private Query buildAutocompleteQuery(String field, String q, boolean allSearches) {
         //best match
-        Query fq1 = new TermQuery(new Term(field,q));  //exact match
-//        fq1.setBoost(12f);
+        Query fq1 = new BoostQuery(new TermQuery(new Term(field,q)), 12f);  //exact match
 
         //partial matches
         Query fq5 = new WildcardQuery(new Term(field,q + "*")); //begins with that begins with
@@ -1925,9 +1924,9 @@ public class ALANameSearcher {
                 .add(qGuid, BooleanClause.Occur.SHOULD)
                 .add(qOtherGuid, BooleanClause.Occur.SHOULD).build();
 
-        TopDocs topDocs = idSearcher.search(fullQuery, 1);
+        TopDocs topDocs = cbSearcher.search(fullQuery, 1);
         for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
-            Document doc = idSearcher.doc(scoreDoc.doc);
+            Document doc = cbSearcher.doc(scoreDoc.doc);
             return doc.get("guid");
         }
         return taxonConceptGuid;
@@ -2030,7 +2029,7 @@ public class ALANameSearcher {
 
         String cleanQuery = "";
         if (name != null) {
-            cleanQuery = name;//.toLowerCase();
+            cleanQuery = escapeQueryChars(name);
             cleanQuery = cleanQuery.toLowerCase();
             cleanQuery = cleanQuery.replaceAll(patternA, "");
             cleanQuery = cleanQuery.replaceAll(patternB, "");
@@ -2045,10 +2044,10 @@ public class ALANameSearcher {
 
             Query query = new TermQuery(new Term("concat_name", concatName));
 
-            TopDocs topDocs = idSearcher.search(query, 2);
+            TopDocs topDocs = cbSearcher.search(query, 2);
             if (topDocs != null && topDocs.totalHits == 1) {
                 for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
-                    Document doc = idSearcher.doc(scoreDoc.doc);
+                    Document doc = cbSearcher.doc(scoreDoc.doc);
                     return doc.get("guid");
                 }
             }
@@ -2102,7 +2101,7 @@ public class ALANameSearcher {
                     .add(fq, BooleanClause.Occur.MUST)
                     .add(new WildcardQuery(new Term("left", "*")), includeSynonyms ? BooleanClause.Occur.SHOULD : BooleanClause.Occur.MUST)
                     .build();
-                TopDocs results = idSearcher.search(b, max);
+                TopDocs results = cbSearcher.search(b, max);
                 appendAutocompleteResults(output, results, includeSynonyms, false);
 
                 //format search term for the current common name index
@@ -2151,4 +2150,20 @@ public class ALANameSearcher {
             System.out.println(commonName);
         }
     }
+
+    private String escapeQueryChars(String s) {
+        StringBuilder sb = new StringBuilder();
+
+        for(int i = 0; i < s.length(); ++i) {
+            char c = s.charAt(i);
+            if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':' || c == '^' || c == '[' || c == ']' || c == '"' || c == '{' || c == '}' || c == '~' || c == '*' || c == '?' || c == '|' || c == '&' || c == ';' || c == '/' || Character.isWhitespace(c)) {
+                sb.append('\\');
+            }
+
+            sb.append(c);
+        }
+
+        return sb.toString();
+    }
+
 }
