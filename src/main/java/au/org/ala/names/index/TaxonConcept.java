@@ -9,6 +9,7 @@ import org.gbif.dwc.terms.Term;
 import au.org.ala.names.util.DwcaWriter;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -129,6 +130,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
         List<TaxonConceptInstance> principals = resolver.principals(this, this.instances);
         this.resolution = resolver.resolve(this, principals, this.instances);
         taxonomy.count("count.resolve.taxonConcept");
+        taxonomy.count("count.resolve.taxonConceptInstance", this.instances.size());
     }
 
     /**
@@ -140,17 +142,22 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      *
      * @param element The element to reallocate
      * @param taxonomy The resolving taxonomy
+     * @param reason Why the concept is being reallocated
      */
     @Override
-    public void reallocate(TaxonConcept element, Taxonomy taxonomy) {
-        taxonomy.report(IssueType.NOTE, "taxonConcept.reallocated", element, this);
+    public void reallocate(TaxonConcept element, Taxonomy taxonomy, String reason) {
+        taxonomy.report(IssueType.NOTE, "taxonConcept.reallocated", element, Arrays.asList(this));
         taxonomy.count("count.reallocate.taxonConcept");
         TaxonConceptInstance representative = this.getRepresentative();
         if (representative == null || this.resolution == null)
             throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without representative and resolution");
+        String reallocated = taxonomy.getResources().getString(reason);
+        reallocated = MessageFormat.format(reallocated, representative.getTaxonID(), representative.getScientificName(), representative.getScientificNameAuthorship() == null ? "" : representative.getScientificNameAuthorship());
+        taxonomy.addProvenanceToOutput();
         element.resolution = new TaxonResolution();
         for (TaxonConceptInstance tci: element.instances) {
             tci.setContainer(this);
+            tci.addProvenance(reallocated);
             this.instances.add(tci);
             this.resolution.addExternal(tci, representative, taxonomy);
             element.resolution.addExternal(tci, representative, taxonomy);
@@ -175,7 +182,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
             }
             Collection<TaxonConceptInstance> allocated = this.resolution.getChildren(tci);
             if (allocated == null || allocated.isEmpty()) {
-                taxonomy.report(IssueType.NOTE, "taxonConcept.noInstances", tci);
+                taxonomy.report(IssueType.NOTE, "taxonConcept.noInstances", tci, null);
             } else {
                 writer.newRecord(tci.getTaxonID());
                 Map<Term, String> values = tci.getTaxonMap(taxonomy);
@@ -186,6 +193,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
                     if (sub.isForbidden())
                         continue;
                     this.writeExtension(ALATerm.TaxonVariant, sub == tci ? values : sub.getTaxonMap(taxonomy), taxonomy, writer);
+                    taxonomy.count("count.write.taxonConceptInstance");
                     for (Map<Term, String> id : sub.getIdentifierMaps(taxonomy))
                         this.writeExtension(GbifTerm.Identifier, id, taxonomy, writer);
                     for (Map<Term, String> vn : sub.getVernacularMaps(taxonomy))
@@ -265,18 +273,18 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
         TaxonResolver resolver = taxonomy.getResolver();
         TaxonConceptInstance representative = principal.getRepresentative();
         if (representative == null) {
-            taxonomy.report(IssueType.ERROR, "taxonConcept.representative", principal, this);
+            taxonomy.report(IssueType.ERROR, "taxonConcept.representative", principal, Arrays.asList(this));
             return;
         }
         List<TaxonConceptInstance> inferred = this.resolution.getUsed().stream().filter(tci -> tci.isAccepted()).map(tci -> representative.createInferredSynonym(this, tci.getScientificName(), tci.getScientificNameAuthorship(), tci.getYear(), taxonomy)).collect(Collectors.toList());
         if (inferred.isEmpty()) {
-            taxonomy.report(IssueType.ERROR, "taxonConcept.inferredSynonyms", principal, this);
+            taxonomy.report(IssueType.ERROR, "taxonConcept.inferredSynonyms", principal, Arrays.asList(this));
             return;
         }
         this.instances.addAll(inferred);
         List<TaxonConceptInstance> used = this.instances.stream().filter(tci -> tci.isInferredSynonym()).collect(Collectors.toList());
         if (used.size() > 1)
-            taxonomy.report(IssueType.NOTE, "taxonConcept.multipleInferredSynonyms", this, used.get(0), used.get(1));
+            taxonomy.report(IssueType.NOTE, "taxonConcept.multipleInferredSynonyms", this, used);
         this.resolution = resolver.resolve(this, used, this.instances);
         taxonomy.count("count.resolve.inferredSynonym");
     }
@@ -303,19 +311,18 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(64);
+        TaxonConceptInstance representative = this.getRepresentative();
         builder.append("TC[");
-        builder.append(this.key.getCode());
+        builder.append(this.key.getCode() == null ? "no code" : this.key.getCode().getAcronym());
         builder.append(", ");
         builder.append(this.key.getScientificName());
         builder.append(", ");
         builder.append(this.key.getScientificNameAuthorship());
         builder.append(", ");
         builder.append(this.key.getRank());
-        if (this.getRepresentative() != null) {
-            builder.append(", = ");
-            builder.append(this.getRepresentative().getProvider().getId());
-            builder.append(":");
-            builder.append(this.getRepresentative().getTaxonID());
+        if (representative != null) {
+            builder.append(" = ");
+            builder.append(representative.getLocator());
         }
         builder.append("]");
         return builder.toString();
@@ -356,7 +363,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
         TaxonConceptInstance rep = this.getRepresentative();
         if (rep != null) {
             sb.append(" [");
-            sb.append(rep.getTaxonID());
+            sb.append(rep.getLocator());
             sb.append("]");
         }
         return sb.toString();
@@ -416,16 +423,16 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     public boolean validate(Taxonomy taxonomy) {
         boolean valid = true;
         if (this.instances.isEmpty()) {
-            taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.noInstances", this);
+            taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.noInstances", this, null);
             valid = false;
         }
         for (TaxonConceptInstance tci: this.instances) {
             if (tci.getContainer() != this) {
-                taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceParent", tci, this);
+                taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceParent", tci, Arrays.asList(this));
                 valid = false;
             }
             if (taxonomy.getInstance(tci.getTaxonID()) != tci) {
-                taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceTaxonomy", tci, this);
+                taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceTaxonomy", tci, Arrays.asList(this));
                 valid = false;
             }
         }

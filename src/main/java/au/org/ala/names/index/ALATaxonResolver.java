@@ -37,13 +37,13 @@ public class ALATaxonResolver implements TaxonResolver {
         final int cutoff = taxonomy.getAcceptedCutoff();
         List<TaxonConceptInstance> principals = instances.stream().filter(tci -> tci.isPrimary() && tci.getScore() > cutoff).collect(Collectors.toList());
         if (principals.isEmpty()) {
-           this.taxonomy.report(IssueType.NOTE, "taxonResolver.noPrincipals", concept);
+           this.taxonomy.report(IssueType.NOTE, "taxonResolver.noPrincipals", concept, null);
             principals = new ArrayList<>(instances);
         }
         Optional<TaxonConceptInstance> max = principals.stream().max(TaxonConceptInstance.SCORE_COMPARATOR);
         Optional<NameProvider> provider = max.map(TaxonConceptInstance::getProvider);
         if (!provider.isPresent()) {
-            this.taxonomy.report(IssueType.NOTE, "taxonResolver.noProvider", concept);
+            this.taxonomy.report(IssueType.NOTE, "taxonResolver.noProvider", concept, null);
             max = instances.stream().max(TaxonConceptInstance.SCORE_COMPARATOR);
             provider = max.map(TaxonConceptInstance::getProvider);
             principals = new ArrayList<>(instances);
@@ -150,7 +150,7 @@ public class ALATaxonResolver implements TaxonResolver {
             if (!synonyms.isEmpty()) {
                 TaxonConceptInstance r = this.lub(synonyms);
                 if (r != null) {
-                    taxonomy.report(IssueType.NOTE, "taxonResolver.synonyms", instance, r);
+                    taxonomy.report(IssueType.NOTE, "taxonResolver.synonyms", instance, Arrays.asList(r));
                     resolution.addExternal(instance, r, taxonomy);
                     return;
                 }
@@ -178,7 +178,7 @@ public class ALATaxonResolver implements TaxonResolver {
             if (!synonyms.isEmpty()) {
                 TaxonConceptInstance r = synonyms.size() == 1 ? synonyms.get(0) : this.lub(synonyms);
                 if (r != null) {
-                    taxonomy.report(IssueType.NOTE, "taxonResolver.synonyms", instance, r);
+                    taxonomy.report(IssueType.NOTE, "taxonResolver.synonyms", instance, Arrays.asList(r));
                     resolution.addExternal(instance, r, taxonomy);
                     return;
                 }

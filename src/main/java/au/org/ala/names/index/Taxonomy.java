@@ -7,11 +7,9 @@ import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.search.ALANameSearcher;
 import au.org.ala.names.search.DwcaNameIndexer;
-import au.org.ala.names.search.SearchResultException;
 import au.org.ala.names.util.DwcaWriter;
 import au.org.ala.names.util.FileUtils;
 import au.org.ala.vocab.ALATerm;
-import au.org.ala.vocab.TaxonRank;
 import com.google.common.collect.Maps;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -19,9 +17,7 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.SimpleFSDirectory;
@@ -34,9 +30,7 @@ import org.gbif.api.vocabulary.ContactType;
 import org.gbif.api.vocabulary.IdentifierType;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
-import org.gbif.dwc.terms.DcTerm;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.dwc.terms.*;
 import org.gbif.dwc.terms.Term;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,7 +139,7 @@ public class Taxonomy implements Reporter {
     /** The source associated with inferences from this process */
     private NameProvider inferenceProvider;
     /** The output map */
-    private Map<Term, List<Term>> outputMap;
+    private Map<Term, Set<Term>> outputMap;
     /** The resource bundle for error reporting */
     private ResourceBundle resources;
     /** The progress counts */
@@ -324,13 +318,23 @@ public class Taxonomy implements Reporter {
      * @param type The count type
      */
     public void count(String type) {
-       AtomicInteger count = this.counts.computeIfAbsent(type, k -> new AtomicInteger(0));
-       int c = count.incrementAndGet();
-       if (COUNT_PROGRESS.contains(type) && c % PROGRESS_INTERVAL == 0) {
-           String message = this.resources.getString(type);
-           message = MessageFormat.format(message, c);
-           logger.info(message);
-       }
+        this.count(type, 1);
+    }
+
+    /**
+     * Add a count to the statistics
+     *
+     * @param type The count type
+     * @param amount The amount to add
+     */
+    public void count(String type, int amount) {
+        AtomicInteger count = this.counts.computeIfAbsent(type, k -> new AtomicInteger(0));
+        int c = count.addAndGet(amount);
+        if (COUNT_PROGRESS.contains(type) && c % PROGRESS_INTERVAL == 0) {
+            String message = this.resources.getString(type);
+            message = MessageFormat.format(message, c);
+            logger.info(message);
+        }
     }
 
     /**
@@ -513,7 +517,7 @@ public class Taxonomy implements Reporter {
         } while (resolved != prevResolved);
         Set<TaxonConcept> unresolvedConcepts = allInstances.stream().map(TaxonConceptInstance::getContainer).filter(tc -> !tc.isResolved()).collect(Collectors.toSet());
         logger.info("Found " + unresolvedConcepts.size() + " un-resolved concepts");
-        unresolvedConcepts.parallelStream().forEach(tc -> { tc.resolveTaxon(this); this.report(IssueType.PROBLEM, "taxonConcept.unresolved", tc); });
+        unresolvedConcepts.parallelStream().forEach(tc -> { tc.resolveTaxon(this); this.report(IssueType.PROBLEM, "taxonConcept.unresolved", tc, null); });
         logger.info("Finished resolving taxa");
 
     }
@@ -781,24 +785,30 @@ public class Taxonomy implements Reporter {
         NameKey nameKey;
         NameKey unrankedKey;
         NameKey bareKey;
+        String remark, explain;
 
         taxonKey = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), loose);
         taxonKey = instance.getProvider().adjustKey(taxonKey, instance);
         switch (taxonKey.getType()) {
             case PLACEHOLDER:
-                // Placeholder and invalid names are forbidden
-                this.report(IssueType.NOTE, "taxonomy.load.placeholder", instance);
-                instance.setForbidden(true);
+                this.report(IssueType.NOTE, "taxonomy.load.placeholder", instance, null);
+                remark = this.getResources().getString("taxonomy.load.placeholder.provenance");
+                instance.addTaxonRemark(remark);
+                this.addRemarksToOutput();
                 break;
             case NO_NAME:
                 // Impossible names are made forbdden
-                this.report(IssueType.VALIDATION, "taxonomy.load.no_name", instance);
+                this.report(IssueType.VALIDATION, "taxonomy.load.no_name", instance, null);
+                remark = this.getResources().getString("taxonomy.load.no_name.provenance");
+                instance.addProvenance(remark);
                 instance.setForbidden(true);
+                this.count("count.load.forbidden");
+                this.addProvenanceToOutput();
                 break;
             case INFORMAL:
             case DOUBTFUL:
             case CANDIDATUS:
-                this.report(IssueType.NOTE, "taxonomy.load.as_is", instance);
+                this.report(IssueType.NOTE, "taxonomy.load.as_is", instance, null);
                 break;
             case SCIENTIFIC:
             case VIRUS:
@@ -806,9 +816,14 @@ public class Taxonomy implements Reporter {
             case CULTIVAR:
                 break;
         }
-        this.count("count.load." + taxonKey.getType().name());
-        if (!instance.isForbidden() && instance.getProvider().forbid(instance)) {
-            this.report(IssueType.NOTE, "taxonomy.load.forbidden", instance);
+        this.count("count.load.name." + taxonKey.getType().name());
+        if (!instance.isForbidden() && (explain = instance.getProvider().forbid(instance, taxonKey)) != null) {
+            this.count("count.load.forbidden");
+            this.report(IssueType.NOTE, "taxonomy.load.forbidden", instance.getTaxonID(), instance.getScientificName(), instance.getScientificNameAuthorship(), explain);
+            remark = this.getResources().getString("taxonomy.load.forbidden.provenance");
+            remark = MessageFormat.format(remark, explain);
+            instance.addTaxonRemark(remark);
+            this.addRemarksToOutput();
             instance.setForbidden(true);
         }
 
@@ -819,7 +834,9 @@ public class Taxonomy implements Reporter {
         if (this.instances.containsKey(taxonID)) {
             TaxonConceptInstance collision = this.instances.get(taxonID);
             taxonID = UUID.randomUUID().toString();
-            this.report(IssueType.VALIDATION, "taxonomy.load.collision", instance, collision);
+            this.report(IssueType.VALIDATION, "taxonomy.load.collision", instance, Arrays.asList(collision));
+            remark = this.getResources().getString("taxonomy.load.collision.provenance");
+            remark = MessageFormat.format(remark, instance.getTaxonID(), instance.getProvider().getId());
             instance = new TaxonConceptInstance(
                     taxonID,
                     instance.getCode(),
@@ -838,8 +855,13 @@ public class Taxonomy implements Reporter {
                     instance.getParentNameUsageID(),
                     instance.getAcceptedNameUsage(),
                     instance.getAcceptedNameUsageID(),
+                    instance.getTaxonRemarks() == null ? null : new ArrayList<>(instance.getTaxonRemarks()),
+                    instance.getVerbatimTaxonRemarks(),
+                    instance.getProvenance() == null ? null : new ArrayList<>(instance.getProvenance()),
                     instance.getClassification()
             );
+            instance.addProvenance(remark);
+            this.addProvenanceToOutput();
         }
 
         BareName bare = this.bareNames.get(bareKey);
@@ -899,6 +921,7 @@ public class Taxonomy implements Reporter {
         logger.info("Creating DwCA");
         this.resetCount("count.write.scientificName");
         this.resetCount("count.write.taxonConcept");
+        this.resetCount("count.write.taxonConceptInstance");
         this.addOutputTerms(GbifTerm.Identifier, Arrays.asList(DcTerm.title, ALATerm.status, DcTerm.source)); // Generated by taxon concept instance
         DwcaWriter dwcaWriter = new DwcaWriter(DwcTerm.Taxon, DwcTerm.taxonID, directory, true);
         dwcaWriter.setEml(this.buildEml());
@@ -986,7 +1009,7 @@ public class Taxonomy implements Reporter {
      * @param code The message code to use for the readable version of the report
      * @param taxonID A specific taxonomic ID
      * @param scientificName A specific scientific name
-     * @param scientificNameAuthorship A specfici authorship
+     * @param scientificNameAuthorship A specfiic authorship
      * @param args The arguments for the report message
      */
     @Override
@@ -1061,53 +1084,72 @@ public class Taxonomy implements Reporter {
      *     <li>{1} The scientific name of the first element</li>
      *     <li>{2} Any authorship of the first element</li>
      *     <li>{3} Any associated taxon ids</li>
-     *     <li>{4} The first taxon element</li>
-     *     <li>{5+} Any associated taxon elements</li>
+     *     <li>{4} The main taxon element</li>
+     *     <li>{5} Any associated taxon elements</li>
      * </ul>
      *
      * @param type The type of report
      * @param code The message code to use for the readable version of the report
-     * @param elements The elements that impact the report. The first element is the source (causative) element
+     * @param main The main element to report
+     * @param associated Additional elements that impact the report.
      */
     @Override
-    public void report(IssueType type, String code, TaxonomicElement... elements) {
+    public void report(IssueType type, String code, TaxonomicElement main, List<? extends TaxonomicElement> associated) {
         String taxonID = null;
         String associatedTaxa = "";
+        String associatedDesc = "";
         String datasetID = "";
         String scientificName = "";
         String scientificNameAuthorship = "";
-        TaxonomicElement main = elements.length > 0 ? elements[0] : null;
+        String nomenclauturalCode = "";
+        String taxonRank = "";
+        String taxonomicStatus = "";
+        TaxonConceptInstance primary;
+
         if (main != null) {
             taxonID = main.getTaxonID();
-             if (main.getScientificName() != null)
+            if (main.getScientificName() != null)
                 scientificName = main.getScientificName();
             if (main.getScientificNameAuthorship() != null)
                 scientificNameAuthorship = main.getScientificNameAuthorship();
+            if (main.getRank() != null)
+                taxonRank = main.getRank().getRank();
             if (main instanceof TaxonConceptInstance)
-                datasetID = ((TaxonConceptInstance) main).getProvider().getId();
+                primary = (TaxonConceptInstance) main;
+            else
+                primary = main.getRepresentative();
+            if (primary != null) {
+                datasetID = primary.getProvider().getId();
+                if (primary.getCode() != null)
+                    nomenclauturalCode = primary.getCode().getAcronym();
+                if (primary.getTaxonomicStatus() != null)
+                    taxonomicStatus = primary.getTaxonomicStatus().getTerm();
+            }
         }
         if (taxonID == null)
             taxonID = "";
-        if (elements.length > 1) {
-            StringBuilder associated = new StringBuilder();
-            for (int i = 1; i < elements.length; i++) {
-                String eid = elements[i].getTaxonID();
-                if (elements[i].getTaxonID() != null && !taxonID.equals(eid)) {
-                    if (associated.length() > 0)
-                        associated.append("|");
-                    associated.append(elements[i].getTaxonID());
+        if (associated != null && !associated.isEmpty()) {
+            StringBuilder ab = new StringBuilder();
+            StringBuilder as = new StringBuilder();
+            for (TaxonomicElement elt : associated) {
+                if (ab.length() > 0) {
+                    ab.append("|");
+                    as.append(", ");
                 }
+                ab.append(elt.getTaxonID());
+                as.append(elt.toString());
             }
-            associatedTaxa = associated.toString();
+            associatedTaxa = ab.toString();
+            associatedDesc = as.toString();
         }
         String message;
-        String[] args = new String[4 + elements.length];
+        String[] args = new String[6];
         args[0] = taxonID;
         args[1] = scientificName;
         args[2] = scientificNameAuthorship;
         args[3] = associatedTaxa;
-        for (int i = 0; elements != null && i < elements.length; i++)
-            args[4 + i] = elements[i] == null ? "" : elements[i].toString();
+        args[4] = main.toString();
+        args[5] = associatedDesc;
         try {
             message = this.resources.getString(code);
             message = MessageFormat.format(message == null ? code : message, args);
@@ -1142,6 +1184,10 @@ public class Taxonomy implements Reporter {
         doc.add(new StringField(fieldName(DcTerm.date), ISO8601.format(OffsetDateTime.now()), Field.Store.YES));
         doc.add(new StringField(fieldName(DwcTerm.taxonID), taxonID, Field.Store.YES));
         doc.add(new StringField(fieldName(DwcTerm.scientificName), scientificName, Field.Store.YES));
+        doc.add(new StringField(fieldName(DwcTerm.scientificNameAuthorship), scientificNameAuthorship, Field.Store.YES));
+        doc.add(new StringField(fieldName(DwcTerm.nomenclaturalCode), nomenclauturalCode, Field.Store.YES));
+        doc.add(new StringField(fieldName(DwcTerm.taxonRank), taxonRank, Field.Store.YES));
+        doc.add(new StringField(fieldName(DwcTerm.taxonomicStatus), taxonomicStatus, Field.Store.YES));
         doc.add(new StringField(fieldName(DwcTerm.associatedTaxa), associatedTaxa, Field.Store.YES));
         doc.add(new StringField(fieldName(DwcTerm.datasetID), datasetID, Field.Store.YES));
         try {
@@ -1187,7 +1233,7 @@ public class Taxonomy implements Reporter {
             IndexSearcher searcher = this.searcherManager.acquire();
             try {
                 Query query = new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.TaxonomicIssue.qualifiedName()));
-                TopDocs docs = searcher.search(query, pageSize);
+                TopDocs docs = searcher.search(query, pageSize, Sort.INDEXORDER);
                 ScoreDoc last = null;
                 while (docs.scoreDocs.length > 0) {
                     for (ScoreDoc sd : docs.scoreDocs) {
@@ -1197,7 +1243,7 @@ public class Taxonomy implements Reporter {
                         writer.writeNext(values);
                         this.count("count.write.report");
                     }
-                    docs = searcher.searchAfter(last, query, pageSize);
+                    docs = searcher.searchAfter(last, query, pageSize, Sort.INDEXORDER);
                 }
             } finally {
                 this.searcherManager.release(searcher);
@@ -1279,7 +1325,7 @@ public class Taxonomy implements Reporter {
     private void makeBaseOutputMap() {
         this.outputMap = new HashMap<>();
         for (Map.Entry<Term, List<Term>> entry: NameSource.REQUIRED_TERMS.entrySet())
-            this.outputMap.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+            this.outputMap.put(entry.getKey(), new HashSet<>(entry.getValue()));
     }
 
 
@@ -1310,9 +1356,9 @@ public class Taxonomy implements Reporter {
      * @param terms The terms. If ordered, then the output map will respect the ordering
      */
     public void addOutputTerms(Term type, Collection<Term> terms) {
-        List<Term> map = this.outputMap.get(type);
+        Set<Term> map = this.outputMap.get(type);
         if (map == null) {
-            map = new ArrayList<>(terms.size());
+            map = new HashSet<>(terms.size());
             this.outputMap.put(type, map);
         }
         Set<Term> seen = new HashSet<>(map);
@@ -1351,6 +1397,41 @@ public class Taxonomy implements Reporter {
     }
 
     /**
+     * Ensure that provenance information (taxonRemarks, provenance) is included in the output.
+     */
+    public void addProvenanceToOutput() {
+        Set<Term> map;
+        map = this.outputMap.get(DwcTerm.Taxon);
+        map.add(DcTerm.provenance);
+        map = this.outputMap.get(ALATerm.TaxonVariant);
+        map.add(DcTerm.provenance);
+        map = this.outputMap.get(GbifTerm.VernacularName);
+        map.add(DcTerm.provenance);
+        map = this.outputMap.get(GbifTerm.Identifier);
+        map.add(DcTerm.provenance);
+        map = this.outputMap.get(GbifTerm.Distribution);
+        map.add(DcTerm.provenance);
+    }
+
+    /**
+     * Ensure that provenance information (taxonRemarks, provenance) is included in the output.
+     */
+    public void addRemarksToOutput() {
+        Set<Term> map;
+        map = this.outputMap.get(DwcTerm.Taxon);
+        map.add(DwcTerm.taxonRemarks);
+        map = this.outputMap.get(ALATerm.TaxonVariant);
+        map.add(DwcTerm.taxonRemarks);
+        map.add(ALATerm.verbatimTaxonRemarks);
+        map = this.outputMap.get(GbifTerm.VernacularName);
+        map.add(DwcTerm.taxonRemarks);
+        map = this.outputMap.get(GbifTerm.Identifier);
+        map.add(DwcTerm.taxonRemarks);
+        map = this.outputMap.get(GbifTerm.Distribution);
+        map.add(DwcTerm.taxonRemarks);
+    }
+
+    /**
      * Get the output term list for this type of row
      *
      * @param type The row type
@@ -1358,7 +1439,21 @@ public class Taxonomy implements Reporter {
      * @return The list of terms to include
      */
     public List<Term> outputTerms(Term type) {
-        return this.outputMap.getOrDefault(type, DEFAULT_TERMS);
+        Set<Term> used = new HashSet<>(this.outputMap.getOrDefault(type, new HashSet<>()));
+        used.addAll(DEFAULT_TERMS);
+        List<Term> order = new ArrayList<>(used.size());
+        for (Term required: NameSource.REQUIRED_TERMS.getOrDefault(type, DEFAULT_TERMS)) {
+            if (used.contains(required))
+                order.add(required);
+            used.remove(required);
+        }
+        for (Term additional: NameSource.ADDITIONAL_TERMS.getOrDefault(type, DEFAULT_TERMS)) {
+            if (used.contains(additional))
+                order.add(additional);
+            used.remove(additional);
+        }
+        order.addAll(used);
+        return order;
     }
 
     /**

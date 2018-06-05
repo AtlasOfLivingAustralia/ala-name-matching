@@ -1,5 +1,7 @@
 package au.org.ala.names.index;
 
+import java.util.List;
+
 /**
  * Report errors and issues in the taxonomy.
  *
@@ -11,7 +13,7 @@ public interface Reporter {
      * Add a report.
      * <p>
      * Message codes are retrieved using a message bundle pointing to <code>taxonomy.properties</code>
-     * Arguments are arbitrary strings and are not given specific meanings as in {@link #report(IssueType, String, TaxonomicElement[])}.
+     * Arguments are arbitrary strings and are not given specific meanings as in {@link #report(IssueType, String, TaxonomicElement, List<TaxonomicElement>)}.
      * </p>
      * <ul>
      *     <li>{0} The taxonID of the source element, either a name or a proper taxonID</li>
@@ -46,7 +48,8 @@ public interface Reporter {
      *
      * @param type The type of report
      * @param code The message code to use for the readable version of the report
-     * @param elements The elements that impact the report. The first element is the source (causative) element
+     * @param main The main element
+     * @param associated The elements that impact the report.
      */
-    void report(IssueType type, String code, TaxonomicElement... elements);
+    void report(IssueType type, String code, TaxonomicElement main, List<? extends TaxonomicElement> associated);
 }

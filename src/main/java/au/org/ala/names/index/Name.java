@@ -212,18 +212,19 @@ abstract public class Name<T extends TaxonomicElement, C extends TaxonomicElemen
     public boolean validate(Taxonomy taxonomy) {
         boolean valid = true;
         if (!this.cleared && this.concepts.isEmpty()) {
-            taxonomy.report(IssueType.VALIDATION, "scientificName.validation.noConcepts", this);
+            taxonomy.report(IssueType.VALIDATION, "scientificName.validation.noConcepts", this, null);
             valid = false;
         }
         for (E concept: this.concepts) {
             if (concept.getContainer() != this) {
-                taxonomy.report(IssueType.VALIDATION, "scientificName.validation.conceptParent", concept, this);
+                taxonomy.report(IssueType.VALIDATION, "scientificName.validation.conceptParent", concept, Arrays.asList(this));
                 valid = false;
             }
             valid = concept.validate(taxonomy) && valid;
         }
         return valid;
     }
+
 
     /**
      * Work out what concept to use as the 'principal' concept for this name
@@ -234,9 +235,10 @@ abstract public class Name<T extends TaxonomicElement, C extends TaxonomicElemen
     public void resolvePrincipal(Taxonomy taxonomy) {
         this.principal = this.findPrincipal(taxonomy);
         if (this.principal == null)
-            taxonomy.report(IssueType.PROBLEM, "name.noPrincipal", this);
+            taxonomy.report(IssueType.PROBLEM, "name." + this.getClass().getSimpleName() + ".noPrincipal", this, null);
         else if (this.concepts.size() > 1)
-            taxonomy.report(IssueType.NOTE, "name.principal", this, principal);
+            taxonomy.report(IssueType.NOTE, "name." + this.getClass().getSimpleName() + ".principal", this, Arrays.asList(principal));
+        taxonomy.count("count.name." + this.getClass().getSimpleName() + ".principal");
         this.reallocateDanglingConcepts(taxonomy, principal);
     }
 

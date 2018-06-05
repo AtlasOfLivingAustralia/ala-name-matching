@@ -3,10 +3,7 @@ package au.org.ala.names.index;
 import au.org.ala.names.model.RankType;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -63,7 +60,7 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
         List<UnrankedScientificName> reallocated = new ArrayList<>();
         for (UnrankedScientificName name: this.getConcepts()) {
             if (name != principal && name.getKey().isUncoded()) {
-                principal.reallocate(name, taxonomy);
+                principal.reallocate(name, taxonomy, "uncodedScientificName.reallocated.provenance");
                 reallocated.add(name);
             }
         }
@@ -98,11 +95,11 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
         if (coded.size() == 1) {
             return coded.get(0);
         }
-        taxonomy.report(IssueType.COLLISION, "uncodedScientificName.collision", this, coded.get(0), coded.get(1));
+        taxonomy.report(IssueType.COLLISION, "uncodedScientificName.collision", this, coded);
         final int score = coded.stream().mapToInt(UnrankedScientificName::getPrincipalScore).max().orElse(TaxonomicElement.MIN_SCORE);
         List<UnrankedScientificName> candidates = coded.stream().filter(sn -> sn.getPrincipalScore() == score).collect(Collectors.toList());
         if (candidates.size() > 1)
-            taxonomy.report(IssueType.PROBLEM, "uncodedScientificName.collision.match", this, candidates.get(0), candidates.get(1));
+            taxonomy.report(IssueType.PROBLEM, "uncodedScientificName.collision.warn", this, candidates);
         return candidates.get(0);
     }
 
@@ -112,16 +109,17 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
      *
      * @param element The element to reallocate
      * @param taxonomy The resolving taxonomy
+     * @param reason The reason code
      */
     @Override
-    public void reallocate(BareName element, Taxonomy taxonomy) {
+    public void reallocate(BareName element, Taxonomy taxonomy, String reason) {
         UnrankedScientificName principal = this.getPrincipal();
-        taxonomy.report(IssueType.NOTE, "uncodedScientificName.reallocated", element, this);
+        taxonomy.report(IssueType.NOTE, "uncodedScientificName.reallocated", element, Arrays.asList(this));
         taxonomy.count("count.reallocate.uncodedScientificName");
         if (principal == null)
             throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without principal");
         for (UnrankedScientificName name: element.getConcepts()) {
-            principal.reallocate(name, taxonomy);
+            principal.reallocate(name, taxonomy, reason);
         }
         element.clear(principal);
     }
@@ -134,11 +132,17 @@ public class BareName extends Name<BareName, BareName, UnrankedScientificName> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(64);
+        UnrankedScientificName principal = this.getPrincipal();
+        TaxonConceptInstance representative = this.getRepresentative();
         builder.append("BN[");
         builder.append(this.getKey().getScientificName());
-        if (this.getPrincipal() != null) {
-            builder.append(", = ");
-            builder.append(this.getPrincipal().getKey());
+        if (principal != null) {
+            builder.append(" = ");
+            builder.append(principal.getKey());
+        }
+        if (representative != null) {
+            builder.append(" = ");
+            builder.append(representative.getLocator());
         }
         builder.append("]");
         return builder.toString();

@@ -1,8 +1,8 @@
 package au.org.ala.names.index;
 
-import au.org.ala.vocab.ALATerm;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
+import au.org.ala.vocab.ALATerm;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -13,9 +13,9 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -140,6 +140,12 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     private String acceptedNameUsage;
     /** The accepted name usage identier, for synonyms */
     private String acceptedNameUsageID;
+    /** Any taxon remarks. This may be added to as processing occurs */
+    private List<String> taxonRemarks;
+    /** The original taxon remarks */
+    private String verbatimTaxonRemarks;
+    /** Any provenance information */
+    private List<String> provenance;
     /** The accepted taxon */
     private TaxonomicElement accepted;
     /** Additional classification information */
@@ -171,6 +177,9 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * @param parentNameUsageID A link to the parent taxon, for accepted taxa
      * @param acceptedNameUsage The accepted name, for synonyms (acceptedNameUsageID is preferred if possible)
      * @param acceptedNameUsageID A link the the accepted taxon, for synonyms
+     * @param taxonRemarks Any taxon remakrs
+     * @param verbatimTaxonRemarks The original taxon remarks
+     * @param provenance Provenance information
      * @param classification The taxonomic classification
      */
     public TaxonConceptInstance(
@@ -191,6 +200,9 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             String parentNameUsageID,
             String acceptedNameUsage,
             String acceptedNameUsageID,
+            @Nullable List<String> taxonRemarks,
+            @Nullable String verbatimTaxonRemarks,
+            @Nullable List<String> provenance,
             @Nullable Map<Term, Optional<String>> classification) {
         this.taxonID = taxonID;
         this.code = code;
@@ -209,6 +221,9 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         this.parentNameUsageID = parentNameUsageID;
         this.acceptedNameUsage = acceptedNameUsage;
         this.acceptedNameUsageID = acceptedNameUsageID;
+        this.taxonRemarks = taxonRemarks;
+        this.verbatimTaxonRemarks = verbatimTaxonRemarks;
+        this.provenance = provenance;
         this.classification = classification;
     }
 
@@ -313,7 +328,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * Not supported
      */
     @Override
-    public void reallocate(TaxonConceptInstance element, Taxonomy taxonomy) {
+    public void reallocate(TaxonConceptInstance element, Taxonomy taxonomy, String reason) {
         throw new UnsupportedOperationException("Unable to reallocate taxon concept instance " + element + " to taxon concept instance " + this);
     }
 
@@ -449,6 +464,85 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
+     * Get the list of taxon remarks.
+     * <p>
+     * A list to make it easy to add additional remarks.
+     * </p>
+     *
+     * @return The taxon remarks.
+     */
+    public List<String> getTaxonRemarks() {
+        return this.taxonRemarks;
+    }
+
+    /**
+     * Get a string form of the taxon remarks.
+     * <p>
+     * Currently, all taxon remarks are separated by a vertical bar, to avoid CSV problems with newlines.
+     * </p>
+     *
+     * @return The taxon remark string
+     */
+    public String getTaxonRemarkString() {
+        return this.taxonRemarks == null || this.taxonRemarks.isEmpty() ? null : this.taxonRemarks.stream().reduce(null,  (a,b) -> a == null ? b : a + " | " + b);
+    }
+
+    /**
+     * Add a taxon remark to the list of taxon remarks.
+     *
+     * @param remark The remark
+     */
+    public void addTaxonRemark(String remark) {
+        if (this.taxonRemarks == null)
+            this.taxonRemarks = new ArrayList<>();
+        this.taxonRemarks.add(remark);
+    }
+
+    /**
+     * Get the original taxon remarks.
+     *
+     * @return The verbatim taxon remarks
+     */
+    public String getVerbatimTaxonRemarks() {
+        return this.verbatimTaxonRemarks;
+    }
+
+    /**
+     * Get the list of provenance statements.
+     * <p>
+     * A list to make it easy to add additional provenance.
+     * </p>
+     *
+     * @return The taxon remarks.
+     */
+    public List<String> getProvenance() {
+        return this.provenance;
+    }
+
+    /**
+     * Get a string form of the provenance.
+     * <p>
+     * Currently, all provenance statements are separated by a vertical bar, to avoid CSV problems with newlines.
+     * </p>
+     *
+     * @return The taxon remark string
+     */
+    public String getProvenanceString() {
+        return this.provenance == null || this.provenance.isEmpty() ? null : this.provenance.stream().reduce(null,  (a,b) -> a == null ? b : a + " | " + b);
+    }
+
+    /**
+     * Add a provenance statement to the provenance list.
+     *
+     * @param statement The statement
+     */
+    public void addProvenance(String statement) {
+        if (this.provenance == null)
+            this.provenance = new ArrayList<>();
+        this.provenance.add(statement);
+    }
+
+    /**
      * Get the base score for this instance.
      * <p>
      * The score is lazily computed from the parent score, if one exists, or by a specific
@@ -508,6 +602,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
 
     /**
      * Set the forbidden flag
+     * <p>
+     * Note that, if you set something as forbidden, increase <code>count.load.forbidden</code>
+     * so people can add up the numbers
+     * </p>
      *
      * @param forbidden
      */
@@ -522,6 +620,17 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     public Map<Term, Optional<String>> getClassification() {
         return classification;
+    }
+
+    /**
+     * A provider/id pair to help locate this taxon.
+     *
+     * @return The locator
+     */
+    public String getLocator() {
+        if (this.provider == null)
+            return this.taxonID;
+        return this.provider.getId() + ":" + this.taxonID;
     }
 
     /**
@@ -582,7 +691,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 if (elt != null) {
                     if (parents.contains(elt)) {
                         parents.add(elt);
-                        taxonomy.report(IssueType.VALIDATION, "instance.validation.parent.loop", parents.toArray(new TaxonConceptInstance[0]));
+                        taxonomy.report(IssueType.VALIDATION, "instance.validation.parent.loop", this, parents);
                         return false;
                     }
                     parents.add(elt);
@@ -795,6 +904,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         if (!this.isForbidden())
             return;
         TaxonConceptInstance parent = this.getResolvedParent();
+        String provenance;
         switch (this.getProvider().getDiscardStrategy()) {
             case IDENTIFIER_TO_PARENT:
                 // Add an additional identifier to the parent
@@ -806,6 +916,13 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 doc.add(new StringField(Taxonomy.fieldName(DwcTerm.datasetID), taxonomy.getInferenceProvider().getId(), Field.Store.YES));
                 doc.add(new StringField(Taxonomy.fieldName(DcTerm.title), taxonomy.getResources().getString("instance.discarded.identifier.title"), Field.Store.YES));
                 doc.add(new StringField(Taxonomy.fieldName(ALATerm.status), "discarded", Field.Store.YES));
+                if (this.taxonRemarks != null) {
+                    doc.add(new StringField(Taxonomy.fieldName(DcTerm.description), this.getTaxonRemarkString(), Field.Store.YES));
+                 }
+                provenance = taxonomy.getResources().getString("instance.discarded.identifier.provenance");
+                provenance = MessageFormat.format(provenance, this.getScientificName());
+                doc.add(new StringField(Taxonomy.fieldName(DcTerm.provenance), provenance, Field.Store.YES));
+                taxonomy.addProvenanceToOutput();
                 try {
                     taxonomy.addRecords(Collections.singletonList(doc));
                 } catch (IOException ex) {
@@ -823,6 +940,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 this.acceptedNameUsage = null;
                 this.acceptedNameUsageID = parent.getTaxonID();
                 this.score = this.provider.getDefaultScore();
+                provenance = taxonomy.getResources().getString("instance.discarded.synonym.provenance");
+                provenance = MessageFormat.format(provenance, this.getTaxonID());
+                this.addProvenance(provenance);
+                taxonomy.addProvenanceToOutput();
                 this.getContainer().resolveTaxon(taxonomy);
                 break;
             default:
@@ -873,11 +994,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         final Map<Term, String> values;
         if (valuesList.isEmpty()) {
             if (this.provider != taxonomy.getInferenceProvider())
-                taxonomy.report(IssueType.NOTE,"instance.noIndex", this);
+                taxonomy.report(IssueType.NOTE,"instance.noIndex", this, null);
             values = new HashMap<>();
         } else {
             if (valuesList.size() > 1)
-                taxonomy.report(IssueType.ERROR,"instance.multiIndex", this);
+                taxonomy.report(IssueType.ERROR,"instance.multiIndex", this, null);
             values = valuesList.get(0);
         }
         values.put(DwcTerm.taxonID, this.taxonID);
@@ -894,6 +1015,12 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         values.put(DwcTerm.taxonRank, this.rank.getRank());
         values.put(DwcTerm.verbatimTaxonRank, this.verbatimTaxonRank);
         values.put(ALATerm.priority, Integer.toString(this.getScore()));
+        if (this.taxonRemarks != null)
+            values.put(DwcTerm.taxonRemarks, this.getTaxonRemarkString());
+        if (this.verbatimTaxonRemarks != null)
+            values.put(ALATerm.verbatimTaxonRemarks, this.verbatimTaxonRemarks);
+        if (this.provenance != null)
+            values.put(DcTerm.provenance, this.getProvenanceString());
         if (this.parentNameUsageID == null) {
             values.remove(DwcTerm.parentNameUsageID); // If instance has become a synonym
             values.remove(DwcTerm.parentNameUsage);
@@ -903,10 +1030,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 TaxonConceptInstance rp = this.getResolvedParent();
                 pid = rp == null ? null : rp.getTaxonID();
                 if (pid == null) {
-                    taxonomy.report(IssueType.ERROR, "instance.parent.resolve", this);
+                    taxonomy.report(IssueType.ERROR, "instance.parent.resolve", this, null);
                 }
             } catch (ResolutionException ex) {
-                taxonomy.report(IssueType.ERROR, "instance.parent.resolve.loop", this.traceParent().toArray(new TaxonConceptInstance[0]));
+                taxonomy.report(IssueType.ERROR, "instance.parent.resolve.loop", this, this.traceParent());
             }
             values.put(DwcTerm.parentNameUsageID, pid);
         }
@@ -919,10 +1046,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 TaxonConceptInstance ra = this.getResolvedAccepted();
                 aid = ra == null ? null : ra.getTaxonID();
                 if (aid == null) {
-                    taxonomy.report(IssueType.ERROR, "instance.accepted.resolve", this);
+                    taxonomy.report(IssueType.ERROR, "instance.accepted.resolve", this, null);
                 }
              } catch (ResolutionException ex) {
-                taxonomy.report(IssueType.ERROR, "instance.accepted.resolve.loop", this.traceAccepted().toArray(new TaxonConceptInstance[0]));
+                taxonomy.report(IssueType.ERROR, "instance.accepted.resolve.loop", this, this.traceAccepted());
             }
             values.put(DwcTerm.acceptedNameUsageID, aid);
         }
@@ -1077,6 +1204,9 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 null,
                 null,
                 this.getTaxonID(),
+                this.taxonRemarks == null ? null : new ArrayList<>(this.taxonRemarks),
+                this.verbatimTaxonRemarks,
+                this.provenance == null ? null : new ArrayList<>(this.provenance),
                 this.classification
         );
         synonym.setContainer(concept);
@@ -1084,6 +1214,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         synonym.baseScore = null;
         synonym.score = null;
         synonym.forbidden = false;
+        String provenance = taxonomy.getResources().getString("instance.inferredSynonym.provenance");
+        provenance = MessageFormat.format(provenance, this.getTaxonID(), this.provider.getId());
+        synonym.addProvenance(provenance);
+        taxonomy.addProvenanceToOutput();
         taxonomy.addInferredInstance(synonym);
         return synonym;
     }
@@ -1101,28 +1235,28 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         boolean valid = true;
         if ((this.parentNameUsageID != null || this.parentNameUsage != null || this.isAccepted() && !(this.classification == null || this.classification.isEmpty())) && this.parent == null) {
             if (this.provider.isLoose())
-                taxonomy.report(IssueType.NOTE, "instance.validation.noParent.loose", this);
+                taxonomy.report(IssueType.NOTE, "instance.validation.noParent.loose", this, null);
             else {
-                taxonomy.report(IssueType.VALIDATION, "instance.validation.noParent", this);
+                taxonomy.report(IssueType.VALIDATION, "instance.validation.noParent", this, null);
                 valid = false;
             }
 
         }
         if ((this.acceptedNameUsageID != null || this.acceptedNameUsage != null) && this.accepted == null) {
             if (this.provider.isLoose())
-                taxonomy.report(IssueType.NOTE, "instance.validation.noAccepted.loose", this);
+                taxonomy.report(IssueType.NOTE, "instance.validation.noAccepted.loose", this, null);
             else {
-                taxonomy.report(IssueType.VALIDATION, "instance.validation.noAccepted", this);
+                taxonomy.report(IssueType.VALIDATION, "instance.validation.noAccepted", this, null);
                 valid = false;
             }
 
         }
         if (this.getContainer() == null) {
-            taxonomy.report(IssueType.VALIDATION, "instance.validation.noTaxonConcept", this);
+            taxonomy.report(IssueType.VALIDATION, "instance.validation.noTaxonConcept", this, null);
             valid = false;
 
         } else  if (this.getContainer().getContainer() == null) {
-            taxonomy.report(IssueType.VALIDATION, "instance.validation.noScientificName", this);
+            taxonomy.report(IssueType.VALIDATION, "instance.validation.noScientificName", this, null);
             valid = false;
         }
         valid = valid && this.validateParent(taxonomy);

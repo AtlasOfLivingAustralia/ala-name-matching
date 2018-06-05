@@ -200,6 +200,7 @@ abstract public class TaxonomicElement<T extends TaxonomicElement, C extends Tax
      *
      * @param element The element to reallocate
      * @param taxonomy The resolving taxonomy
+     * @param reason A message catalogue code giving the reason for the reallocation
      */
-    abstract public void reallocate(T element, Taxonomy taxonomy);
+    abstract public void reallocate(T element, Taxonomy taxonomy, String reason);
 }

@@ -110,7 +110,7 @@ public class TaxonResolution {
      */
     public void addInternal(TaxonConceptInstance instance, TaxonConceptInstance resolved, Taxonomy taxonomy) {
         if (!this.used.contains(resolved)) {
-            taxonomy.report(IssueType.NOTE,"taxonResolution.added", resolved);
+            taxonomy.report(IssueType.NOTE,"taxonResolution.added", resolved, null);
             this.used.add(resolved);
         }
         this.resolution.put(instance, resolved);
@@ -205,7 +205,7 @@ public class TaxonResolution {
     protected boolean validate(TaxonConceptInstance instance, Reporter reporter) {
         boolean valid = this.getResolved(instance) != null;
         if (!valid)
-            reporter.report(IssueType.ERROR, "taxonResolver.validation.noResolution", instance);
+            reporter.report(IssueType.ERROR, "taxonResolver.validation.noResolution", instance, null);
         return valid;
     }
 }

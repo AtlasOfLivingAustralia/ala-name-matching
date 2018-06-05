@@ -60,19 +60,12 @@ abstract public class NameSource {
             DwcTerm.namePublishedInID,
             DwcTerm.namePublishedIn,
             DwcTerm.namePublishedInYear,
-            DcTerm.source
+            DcTerm.source,
+            DwcTerm.taxonRemarks,
+            DcTerm.provenance
     );
     /** Terms not to be included in taxon outputs */
     protected static final List<Term> TAXON_FORBIDDEN = Arrays.asList(
-            DwcTerm.kingdom,
-            DwcTerm.phylum,
-            DwcTerm.class_,
-            DwcTerm.order,
-            DwcTerm.family,
-            DwcTerm.genus,
-            DwcTerm.subgenus,
-            DwcTerm.specificEpithet,
-            DwcTerm.infraspecificEpithet,
             ALATerm.subphylum,
             ALATerm.subclass,
             ALATerm.suborder,
@@ -97,7 +90,9 @@ abstract public class NameSource {
             DcTerm.subject,
             DcTerm.format,
             ALATerm.status,
-            DcTerm.source
+            DcTerm.source,
+            DwcTerm.taxonRemarks,
+            DcTerm.provenance
     );
     /** Terms not to be included in identifier outputs */
     protected static final List<Term> IDENTIFIER_FORBIDDEN = Arrays.asList(
@@ -122,7 +117,8 @@ abstract public class NameSource {
             GbifTerm.organismPart,
             DwcTerm.taxonRemarks,
             ALATerm.status,
-            DcTerm.source
+            DcTerm.source,
+            DcTerm.provenance
     );
     /** Terms not to be included in vernacular outputs */
     protected static final List<Term> VERNACULAR_FORBIDDEN = Arrays.asList(
@@ -158,7 +154,8 @@ abstract public class NameSource {
             DwcTerm.startDayOfYear,
             DwcTerm.endDayOfYear,
             DwcTerm.occurrenceRemarks,
-            DcTerm.source
+            DcTerm.source,
+            DcTerm.provenance
     );
     /** Terms not to be included in identifier outputs */
     protected static final List<Term> DISTRIBUTION_FORBIDDEN = Arrays.asList(
@@ -188,17 +185,21 @@ abstract public class NameSource {
             DwcTerm.namePublishedIn,
             DwcTerm.namePublishedInYear,
             DcTerm.source,
+            DwcTerm.taxonRemarks,
+            DcTerm.provenance,
             ALATerm.verbatimNomenclaturalCode,
             ALATerm.verbatimTaxonomicStatus,
             ALATerm.verbatimNomenclaturalStatus,
-            DwcTerm.verbatimTaxonRank
+            DwcTerm.verbatimTaxonRank,
+            ALATerm.verbatimTaxonRemarks
     );
 
     protected static final Map<Term, List<Term>> TAXON_VARIANT_IMPLIED_TERMS = MapUtils.putAll(new HashMap<String, List<Term>>(),
             new Object[][] {
                     { DwcTerm.nomenclaturalCode, Arrays.asList(ALATerm.verbatimNomenclaturalCode) },
                     { DwcTerm.taxonomicStatus, Arrays.asList(ALATerm.verbatimTaxonomicStatus) },
-                    { DwcTerm.nomenclaturalStatus, Arrays.asList(ALATerm.verbatimNomenclaturalStatus) }
+                    { DwcTerm.nomenclaturalStatus, Arrays.asList(ALATerm.verbatimNomenclaturalStatus) },
+                    { DwcTerm.taxonRemarks, Arrays.asList(ALATerm.verbatimTaxonRemarks) }
             });
 
     /** Fields expected for a taxonomic issue */
@@ -210,6 +211,9 @@ abstract public class NameSource {
             DwcTerm.taxonID,
             DwcTerm.scientificName,
             DwcTerm.scientificNameAuthorship,
+            DwcTerm.nomenclaturalCode,
+            DwcTerm.taxonRank,
+            DwcTerm.taxonomicStatus,
             DwcTerm.associatedTaxa,
             DwcTerm.datasetID,
             ALATerm.value

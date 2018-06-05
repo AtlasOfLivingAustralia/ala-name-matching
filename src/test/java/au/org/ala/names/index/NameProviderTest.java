@@ -20,11 +20,13 @@ import static org.junit.Assert.*;
  */
 public class NameProviderTest extends TestUtils {
     private NameProvider[] providers;
+    private ALANameAnalyser analyser;
 
     @Before
     public void setup() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         this.providers = mapper.readValue(this.resourceReader("name-provider-1.json"), NameProvider[].class);
+        this.analyser = new ALANameAnalyser();
     }
 
     private NameProvider getProvider(String id) {
@@ -115,13 +117,17 @@ public class NameProviderTest extends TestUtils {
     public void testForbid1() {
         NameProvider provider = this.getProvider("ID-5");
         TaxonConceptInstance instance1 = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia dealbata", provider);
+        NameKey key1 = this.analyser.analyse(instance1);
         TaxonConceptInstance instance2 = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia", provider);
+        NameKey key2 = this.analyser.analyse(instance2);
         TaxonConceptInstance instance3 = this.createInstance("ID-1", NomenclaturalCode.ZOOLOGICAL, "Macropus", provider);
+        NameKey key3 = this.analyser.analyse(instance3);
         TaxonConceptInstance instance4 = this.createInstance("ID-1", NomenclaturalCode.ZOOLOGICAL, "Macropus", provider, TaxonomicType.INCERTAE_SEDIS);
-        assertFalse(provider.forbid(instance1));
-        assertFalse(provider.forbid(instance2));
-        assertFalse(provider.forbid(instance3));
-        assertTrue(provider.forbid(instance4));
+        NameKey key4 = this.analyser.analyse(instance4);
+        assertNull(provider.forbid(instance1, key1));
+        assertNull(provider.forbid(instance2, key2));
+        assertNull(provider.forbid(instance3, key3));
+        assertEquals("taxonomicStatus:INCERTAE_SEDIS", provider.forbid(instance4, key4));
 
     }
 
@@ -129,13 +135,17 @@ public class NameProviderTest extends TestUtils {
     public void testForbid2() {
         NameProvider provider = this.getProvider("ID-6");
         TaxonConceptInstance instance1 = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia dealbata", provider);
+        NameKey key1 = this.analyser.analyse(instance1);
         TaxonConceptInstance instance2 = this.createInstance("ID-1", NomenclaturalCode.BOTANICAL, "Acacia", provider, TaxonomicType.EXCLUDED);
+        NameKey key2 = this.analyser.analyse(instance2);
         TaxonConceptInstance instance3 = this.createInstance("ID-1", NomenclaturalCode.ZOOLOGICAL, "Macropus", provider);
+        NameKey key3 = this.analyser.analyse(instance3);
         TaxonConceptInstance instance4 = this.createInstance("ID-1", NomenclaturalCode.ZOOLOGICAL, "Macropus", provider, TaxonomicType.INCERTAE_SEDIS);
-        assertFalse(provider.forbid(instance1));
-        assertTrue(provider.forbid(instance2));
-        assertFalse(provider.forbid(instance3));
-        assertTrue(provider.forbid(instance4));
+        NameKey key4 = this.analyser.analyse(instance4);
+        assertNull(provider.forbid(instance1, key1));
+        assertEquals("taxonomicStatus:EXCLUDED", provider.forbid(instance2, key2));
+        assertNull(provider.forbid(instance3, key3));
+        assertEquals("taxonomicStatus:INCERTAE_SEDIS", provider.forbid(instance4, key4));
 
     }
 

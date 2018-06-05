@@ -1,5 +1,6 @@
 package au.org.ala.names.index.provider;
 
+import au.org.ala.names.index.NameKey;
 import au.org.ala.names.index.TaxonConceptInstance;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -38,11 +39,30 @@ public class OrTaxonCondition extends TaxonCondition {
      * All sub-conditions need to match for this condition to be true.
      * </p>
      * @param instance The instance to match
+     * @param key The associated name key
      *
      * @return True if all conditions match.
      */
     @Override
-    public boolean match(TaxonConceptInstance instance) {
-        return this.any.stream().anyMatch(c -> c.match(instance));
+    public boolean match(TaxonConceptInstance instance, NameKey key) {
+        return this.any.stream().anyMatch(c -> c.match(instance, key));
     }
+
+
+    /**
+     * Provide a string explanation of the condition
+     *
+     * @return The explanation
+     */
+    @Override
+    public String explain() {
+        StringBuilder builder = new StringBuilder();
+        for (TaxonCondition cond: this.any) {
+            if (builder.length() > 0)
+                builder.append(" OR ");
+            builder.append(cond.explain());
+        }
+        return builder.toString();
+    }
+
 }

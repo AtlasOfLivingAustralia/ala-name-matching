@@ -1,5 +1,6 @@
 package au.org.ala.names.index.provider;
 
+import au.org.ala.names.index.NameKey;
 import au.org.ala.names.index.NameProvider;
 import au.org.ala.names.index.TaxonConceptInstance;
 import au.org.ala.names.model.RankType;
@@ -163,7 +164,7 @@ public class MatchTaxonCondition extends TaxonCondition {
      * @return True if the instance matches all the supplied conditions
      */
     @Override
-    public boolean match(TaxonConceptInstance instance) {
+    public boolean match(TaxonConceptInstance instance, NameKey key) {
         if (this.nomenclaturalCode != null && this.nomenclaturalCode != instance.getCode())
             return false;
         if (this.datasetID != null && (instance.getProvider() == null || !this.datasetID.equals(instance.getProvider().getId())))
@@ -176,7 +177,7 @@ public class MatchTaxonCondition extends TaxonCondition {
             return false;
         if (this.nomenclaturalStatus != null && (instance.getStatus() == null || !instance.getStatus().contains(this.nomenclaturalStatus)))
             return false;
-        if (this.nameType != null && (instance.getContainer() == null || this.nameType != instance.getContainer().getKey().getType()))
+        if (this.nameType != null && key != null && this.nameType != key.getType())
             return false;
         if (this.taxonRank != null && this.taxonRank != instance.getRank())
             return false;
@@ -255,6 +256,47 @@ public class MatchTaxonCondition extends TaxonCondition {
                     this.matchScientificNameAuthorship = this.scientificNameAuthorship.trim();
                 return this.matchScientificNameAuthorship.equals(author);
 
+        }
+    }
+
+
+    /**
+     * Provide a string explanation of the condition
+     *
+     * @return The explanation
+     */
+    @Override
+    public String explain() {
+        StringBuilder builder = new StringBuilder();
+        this.explain(builder, "nomenclaturalCode", this.nomenclaturalCode);
+        this.explain(builder, "datasetID", this.datasetID);
+        this.explain(builder, "scientificName", this.scientificName, this.matchType);
+        this.explain(builder, "scientificNameAuthorship", this.scientificNameAuthorship, this.matchType);
+        this.explain(builder, "taxonomicStatus", this.taxonomicStatus);
+        this.explain(builder, "nomenclaturalStatus", this.nomenclaturalStatus);
+        this.explain(builder, "nameType", this.nameType);
+        this.explain(builder, "taxonRank", this.taxonRank);
+        return builder.toString();
+    }
+
+    /**
+     * Make an explainer for each field
+     *
+     * @param builder The builder to add to
+     * @param label The field label
+     * @param elements The matching elements
+     */
+    private void explain(StringBuilder builder, String label, Object... elements) {
+        if (elements.length == 0 || elements[0] == null)
+            return;
+        if (builder.length() > 0)
+            builder.append(" ");
+        builder.append(label);
+        builder.append(":");
+        for (int i = 0; i < elements.length; i++) {
+            if (i > 0)
+                builder.append(",");
+            builder.append(elements[i]);
         }
     }
 
