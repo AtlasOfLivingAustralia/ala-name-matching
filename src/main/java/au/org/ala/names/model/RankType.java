@@ -112,81 +112,7 @@ public enum RankType {
     private static final Map<String, RankType> strRankLookup = new HashMap<String, RankType>();
 
     static {
-        // Set ranks groups. Needs to be done here to avoid forward references
-        DOMAIN.group = RankType.KINGDOM;
-        KINGDOM.group = RankType.KINGDOM;
-        SUBKINGDOM.group = RankType.KINGDOM;
-        SUPERPHYLUM.group = RankType.PHYLUM;
-        PHYLUM.group = RankType.PHYLUM;
-        SUBPHYLUM.group = RankType.PHYLUM;
-        SUPERCLASS.group = RankType.CLASS;
-        CLASS.group = RankType.CLASS;
-        SUBCLASS.group = RankType.CLASS;
-        INFRACLASS.group = RankType.CLASS;
-        SUBINFRACLASS.group = RankType.CLASS;
-        SUPERDIVISION_ZOOLOGY.group = RankType.DIVISION_ZOOLOGY;
-        DIVISION_ZOOLOGY.group = RankType.DIVISION_ZOOLOGY;
-        SUBDIVISION_ZOOLOGY.group = RankType.DIVISION_ZOOLOGY;
-        SUPERCOHORT.group = RankType.COHORT;
-        COHORT.group = RankType.COHORT;
-        SUBCOHORT.group = RankType.COHORT;
-        SUPERORDER.group = RankType.ORDER;
-        ORDER.group = RankType.ORDER;
-        SUBORDER.group = RankType.ORDER;
-        INFRAORDER.group = RankType.ORDER;
-        PARVORDER.group = RankType.ORDER;
-        SUPERSERIES_ZOOLOGY.group = RankType.SERIES_ZOOLOGY;
-        SERIES_ZOOLOGY.group = RankType.SERIES_ZOOLOGY;
-        SUBSERIES_ZOOLOGY.group = RankType.SERIES_ZOOLOGY;
-        SUPERSECTION_ZOOLOGY.group = RankType.SECTION_ZOOLOGY;
-        SECTION_ZOOLOGY.group = RankType.SECTION_ZOOLOGY;
-        SUBSECTION_ZOOLOGY.group = RankType.SECTION_ZOOLOGY;
-        SUPERFAMILY.group = RankType.FAMILY;
-        FAMILY.group = RankType.FAMILY;
-        SUBFAMILY.group = RankType.FAMILY;
-        INFRAFAMILY.group = RankType.FAMILY;
-        SUPERTRIBE.group = RankType.TRIBE;
-        TRIBE.group = RankType.TRIBE;
-        SUBTRIBE.group = RankType.TRIBE;
-        SUPERGENUS.group = RankType.GENUS;
-        GENUS_GROUP.group = RankType.GENUS;
-        GENUS.group = RankType.GENUS;
-        SUBGENUS.group = RankType.GENUS;
-        SUPERSECTION_BOTANY.group = RankType.SECTION_BOTANY;
-        SECTION_BOTANY.group = RankType.SECTION_BOTANY;
-        SUBSECTION_BOTANY.group = RankType.SECTION_BOTANY;
-        SUPERSERIES_BOTANY.group = RankType.SERIES_BOTANY;
-        SERIES_BOTANY.group = RankType.SERIES_BOTANY;
-        SUBSERIES_BOTANY.group = RankType.SERIES_BOTANY;
-        INFRAGENERICNNAME.group = RankType.SPECIES;
-        SPECIES_GROUP.group = RankType.SPECIES;
-        SUPERSPECIES.group = RankType.SPECIES;
-        SPECIES_SUBGROUP.group = RankType.SPECIES;
-        SPECIES.group = RankType.SPECIES;
-        NOTHOSPECIES.group = RankType.SPECIES;
-        HOLOMORPH.group = RankType.SPECIES;
-        ANAMORPH.group = RankType.SPECIES;
-        TELEOMORPH.group = RankType.SPECIES;
-        SUBSPECIES.group = RankType.SUBSPECIES;
-        NOTHOSUBPECIES.group = RankType.SUBSPECIES;
-        INFRASPECIFICNAME.group = RankType.SUBSPECIES;
-        INFRASUBSPECIESNAME.group = RankType.SUBSPECIES;
-        VARIETY.group = RankType.VARIETY;
-        NOTHOVARIETY.group = RankType.VARIETY;
-        SUBVARIETY.group = RankType.VARIETY;
-        FORM.group = RankType.FORM;
-        NOTHOFORM.group = RankType.FORM;
-        SUBFORM.group = RankType.FORM;
-        BOIVAR.group = RankType.FORM;
-        SEROVAR.group = RankType.FORM;
-        FORMASPECIALIS.group = RankType.FORM;
-        CULTIVARGROUP.group = RankType.CULTIVAR;
-        CULTIVAR.group = RankType.CULTIVAR;
-        PATHOVAR.group = RankType.PATHOVAR;
-        HYBRID.group = RankType.HYBRID;
-        SUPRAGENERICNAME.group = RankType.SUPRAGENERICNAME;
-        INFORMAL.group = RankType.INFORMAL;
-        UNRANKED.group = RankType.UNRANKED;
+        // Rank groups moved to key adjuster
         for (RankType rt : EnumSet.allOf(RankType.class)) {
             try {
                 fieldLookup.put(rt.getRank(), rt);
@@ -211,7 +137,6 @@ public enum RankType {
     private Float boost;
     private int sortOrder;
     private boolean loose;
-    private RankType group;
     private String[] strRanks;
 
     RankType(Integer id, String field, Rank rank, Float boost, int sortOrder, boolean loose, String... strRanks) {
@@ -296,15 +221,6 @@ public enum RankType {
      */
     public boolean isLoose() {
         return loose;
-    }
-
-    /**
-     * Get the lrank group. This is a rough grouping of ranks for similarity testing
-     * 
-     * @return The 
-     */
-    public RankType getGroup() {
-        return group;
     }
 
     /**

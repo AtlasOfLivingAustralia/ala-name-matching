@@ -156,6 +156,13 @@ These can be used to alter:
   `org.gbif.api.vocabulary.NameType` vocabulary
 * **rank** Change to a rank from the
   `au.org.ala.names.model.RankType` vocabulary
+  
+#### "Squashing" Ranks
+
+Multiple sources can disagree on the exact rank a taxon has.
+Adjusters can be used to "squash" the ranks so that, eg. superfamily, family, subfamily and infrafamily all have
+a key rank of family.
+Note that this does not change the supplied rank, which is what will be output.
 
 ### Default Providers
 

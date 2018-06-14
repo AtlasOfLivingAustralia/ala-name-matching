@@ -1,5 +1,6 @@
 package au.org.ala.names.index;
 
+import au.org.ala.names.model.RankType;
 import au.org.ala.names.util.TestUtils;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
@@ -303,7 +304,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(11, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(21, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(51, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(6, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(7, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
 
@@ -324,7 +325,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(4, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(5, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(5, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(7, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(8, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
 
@@ -406,4 +407,26 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(4, this.rowCount(new File(dir, "identifier.txt")));
     }
 
+    // Test resolution to a preferred rank with key rewriting
+    @Test
+    public void testRankAdjust1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-13.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance i11 = this.taxonomy.getInstance("NZOR-4-118018");
+        TaxonConceptInstance i12 = this.taxonomy.getInstance("urn:lsid:catalogueoflife.org:taxon:e5c9a6a6-e319-11e5-86e7-bc764e092680:col20161028");
+        TaxonConceptInstance i13 = this.taxonomy.getInstance("ALA_Closteroviridae");
+        assertNotNull(i11);
+        assertNotNull(i12);
+        assertNotNull(i13);
+        TaxonConcept tc1 = i11.getContainer();
+        TaxonConcept tc2 = i12.getContainer();
+        TaxonConcept tc3 = i13.getContainer();
+        assertSame(tc1, tc2);
+        assertSame(tc1, tc3);
+        assertEquals(RankType.FAMILY, tc3.getKey().getRank());
+    }
 }

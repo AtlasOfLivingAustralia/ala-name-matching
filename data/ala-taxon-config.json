@@ -215,6 +215,360 @@
             "adjustment": -10
           }
         ]
+      },
+      "keyAdjuster": {
+        "adjustments": [
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "DOMAIN"
+            },
+            "rank": "KINGDOM"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBKINGDOM"
+            },
+            "rank": "KINGDOM"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUPERPHYLUM"
+            },
+            "rank": "PHYLUM"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBPHYLUM"
+            },
+            "rank": "PHYLUM"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUPERCLASS"
+            },
+            "rank": "CLASS"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBCLASS"
+            },
+            "rank": "CLASS"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "INFRACLASS"
+            },
+            "rank": "CLASS"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBINFRACLASS"
+            },
+            "rank": "CLASS"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUPERDIVISION_ZOOLOGY"
+            },
+            "rank": "DIVISION_ZOOLOGY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBDIVISION_ZOOLOGY"
+            },
+            "rank": "DIVISION_ZOOLOGY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUPERCOHORT"
+            },
+            "rank": "COHORT"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBCOHORT"
+            },
+            "rank": "COHORT"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUPERORDER"
+            },
+            "rank": "ORDER"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBORDER"
+            },
+            "rank": "ORDER"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "INFRAORDER"
+            },
+            "rank": "ORDER"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "PARVORDER"
+            },
+            "rank": "ORDER"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUPERSERIES_ZOOLOGY"
+            },
+            "rank": "SERIES_ZOOLOGY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBSERIES_ZOOLOGY"
+            },
+            "rank": "SERIES_ZOOLOGY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUPERSECTION_ZOOLOGY"
+            },
+            "rank": "SECTION_ZOOLOGY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBSECTION_ZOOLOGY"
+            },
+            "rank": "SECTION_ZOOLOGY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUPERFAMILY"
+            },
+            "rank": "FAMILY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBFAMILY"
+            },
+            "rank": "FAMILY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "INFRAFAMILY"
+            },
+            "rank": "FAMILY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUPERTRIBE"
+            },
+            "rank": "TRIBE"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBTRIBE"
+            },
+            "rank": "TRIBE"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUPERGENUS"
+            },
+            "rank": "GENUS"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "GENUS_GROUP"
+            },
+            "rank": "GENUS"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBGENUS"
+            },
+            "rank": "GENUS"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUPERSECTION_BOTANY"
+            },
+            "rank": "SECTION_BOTANY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBSECTION_BOTANY"
+            },
+            "rank": "SECTION_BOTANY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUPERSERIES_BOTANY"
+            },
+            "rank": "SERIES_BOTANY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBSERIES_BOTANY"
+            },
+            "rank": "SERIES_BOTANY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "INFRAGENERICNAME"
+            },
+            "rank": "SPECIES"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SPECIES_GROUP"
+            },
+            "rank": "SPECIES"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SPECIES_SUBGROUP"
+            },
+            "rank": "SPECIES"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "NOTHOSPIECES"
+            },
+            "rank": "SPECIES"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "HOLOMORTH"
+            },
+            "rank": "SPECIES"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "ANAMORPH"
+            },
+            "rank": "SPECIES"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "TELEOMORPH"
+            },
+            "rank": "SPECIES"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "NOTHOSUBSPECIES"
+            },
+            "rank": "SUBSPECIES"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "INFRASPECIFICNAME"
+            },
+            "rank": "SUBSPECIES"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "INFRASUBSPECIESNAME"
+            },
+            "rank": "SUBSPECIES"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "NOTHOVARIETY"
+            },
+            "rank": "VARIETY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBVARIETY"
+            },
+            "rank": "VARIETY"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "NOTHOFORM"
+            },
+            "rank": "FORM"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SUBFORM"
+            },
+            "rank": "FORM"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "BIOVAR"
+            },
+            "rank": "FORM"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "SEROVAR"
+            },
+            "rank": "FORM"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "FORMASPECIALIS"
+            },
+            "rank": "FORM"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "CULTIVARGROUP"
+            },
+            "rank": "CULTIVAR"
+          }
+        ]
       }
     },
     {

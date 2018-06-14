@@ -1,0 +1,4 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source
+"NZOR-4-118018","","","dr100","ICVN","Closteroviridae","","family","","http://data.nzor.org.nz/names/e4edbde7-c830-41ea-a8e7-8ea37c3d8634","accepted","","","","","","","","Closteroviridae","","http://data.nzor.org.nz/names/e4edbde7-c830-41ea-a8e7-8ea37c3d8634"
+"urn:lsid:catalogueoflife.org:taxon:e5c9a6a6-e319-11e5-86e7-bc764e092680:col20161028","","","dr101","ICVN","Closteroviridae","","family","","","accepted","","","","","","","","","",""
+"ALA_Closteroviridae","","","dr104","","Closteroviridae","","subfamily","","","accepted","","","","","","DAFF","","","","http://collections.ala.org.au/public/show/dr872"
