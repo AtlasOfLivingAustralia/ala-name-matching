@@ -466,14 +466,14 @@
           {
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
-              "taxonRank": "NOTHOSPIECES"
+              "taxonRank": "NOTHOSPECIES"
             },
             "rank": "SPECIES"
           },
           {
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
-              "taxonRank": "HOLOMORTH"
+              "taxonRank": "HOLOMORPH"
             },
             "rank": "SPECIES"
           },
