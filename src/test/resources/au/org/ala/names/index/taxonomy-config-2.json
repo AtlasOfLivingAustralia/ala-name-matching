@@ -56,6 +56,21 @@
     },
     "discardStrategy": "SYNONYMISE_TO_PARENT",
     "defaultScore" : 150
+  },{
+    "id" : "dr104",
+    "keyAdjuster": {
+      "adjustments": [
+        {
+          "condition": {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonRank": "SUBFAMILY"
+          },
+          "rank": "FAMILY"
+        }
+      ]
+    },
+    "discardStrategy": "SYNONYMISE_TO_PARENT",
+    "defaultScore" : 150
   }],
   "defaultProvider" : "unknown",
   "acceptedCutoff" : 50
