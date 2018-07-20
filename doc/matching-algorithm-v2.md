@@ -1,9 +1,9 @@
-#Matching Algorithm (v2 and earlier)
+# Matching Algorithm (v2 and earlier)
 
 This document describes the algorithm used to match a supplied name against the name matching index.
 The document applies to v2 (and earlier) versions of the name matching library
 
-##Concepts
+## Concepts
 
 * **taxon concept** The placement of a taxon (scientific name) in the taxonomic hierarchy,
   possibly as a synonym of another taxon.
@@ -32,12 +32,12 @@ The document applies to v2 (and earlier) versions of the name matching library
   Excluded *should* be for a geographical range (eg. excluded in WA) but this is not modelled
   
 
-##Index Structure
+## Index Structure
 
 The matching algorithm uses a pre-constructed set of lucene indexes.
 The indexes are:
 
-#cb
+# cb
 
 The main index contains taxon concepts.
 Each taxon concept contains the following fields:
@@ -90,7 +90,7 @@ The index constructor essentially navigates the parent-child tree supplied by th
 and fills out the kingdom, phylum, class etc. entries for the individual taxon.
 Synonyms do not have higher-order taxonomy filled out.
 
-###vernacular
+### vernacular
 
 An index of vernacular names.
 Each entry contains the following fields:
@@ -100,7 +100,7 @@ Each entry contains the following fields:
 * **common** The common name in uppercase form without accented characters, suitable for search
 * **name** The scientific name of the taxon concept
 
-###irmng
+### irmng
 
 An index of the Interim Reigster of Marine and Non-Marine Genera.
 It contains the following fields:
@@ -115,7 +115,7 @@ It contains the following fields:
 * **author** The authority for the taxon concept
 * **rank** The taxon rank
 
-##Matching Algorithm
+## Matching Algorithm
 
 There are multiple entry points into this algorithm.
 This section describes the basic elements of the algorithm.
@@ -131,12 +131,12 @@ Many of these elements can be defaulted in various ways but the basic elements a
 * **fuzzy** If true then attempt a soundex match if a direct match isn't found
 * **ignoreHomonym** Ignore homonym detection if a single result is found
 
-###Initial Analysis
+### Initial Analysis
 
 Initial analysis attempts to fill out as many elements of the input as possible, based on
 reasonable quesses
 
-####Rank Analysis
+#### Rank Analysis
 
 If a rank is not supplied then a rank is identified using the following heuristics:
 
@@ -145,7 +145,7 @@ If a rank is not supplied then a rank is identified using the following heuristi
   * If the name is doubtful then only genus is used and the rank is genus
   * Subspecies and cultivar name parts are detected and used, although rank indicators are not
 
-####Name Analysis
+#### Name Analysis
 
 This gets done each search, but it makes sense to put it here
 
@@ -155,7 +155,7 @@ This gets done each search, but it makes sense to put it here
 * Multiple species markers (spp.) generate an exception, leading to higher-order matching
 * The name is normalised and parsed
 
-###Search
+### Search
 
 The basic search looks for a name in the name field of the taxonomy index, to which are added the following
 terms, used to narrow and condition the results list:
@@ -185,7 +185,7 @@ treating the cultivar epithet as the phrase.
 
 Finally, if there is still no match, then a search on the genus and species soundex values is performed.
 
-####Excluded Taxa
+#### Excluded Taxa
 
 If the results only consist of exclded taxa, then an exception is raised, since there is no match.
 
@@ -197,7 +197,7 @@ distribution information
 
 **Resolution:** If there is a non-excluded taxon, return that, otherwise return the excluded taxon
 
-####Species Split
+#### Species Split
 
 Parent-child synonyms are detected.
 This happens when a species is sub-divided and what was previously only given as a species is now
@@ -213,7 +213,7 @@ The second involves a series of synonyms, all pointing to a single accepted resu
 
 **Resolution:** Use the child result.
 
-####Misapplied Checks
+#### Misapplied Checks
 
 If the first result is a misapplied name, then a missapplied exception is raised.
 If there is another, accepted result, then the accepted result is also included in the exception.
@@ -221,7 +221,7 @@ If there is another, accepted result, then the accepted result is also included 
 
 **Resolution:** Use the accepted result, if possible
 
-####Homonym Checks and Extraction
+#### Homonym Checks and Extraction
 
 If the name is contained in the list of known cross-rank homonyms and no rank is supplied,
 then an exception is raised.
@@ -238,7 +238,7 @@ If a suitable candidate can't be found, then an excepiton is thrown.
 **Resolution:** If there is a single result and homonym problems are ignored, then the single result
 is returned, otherwise no result is returned.
 
-###Metrics
+### Metrics
 
 The search algorithm can either return a simple result or a result with attached metrics.
 The metrics are flags indicating the type of match (exact, canonical, fuzzy etc.) and any associated
