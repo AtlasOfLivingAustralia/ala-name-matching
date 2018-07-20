@@ -1,7 +1,7 @@
-#Matching Algorithm (v3 and earlier)
+#Matching Algorithm (v2 and earlier)
 
 This document describes the algorithm used to match a supplied name against the name matching index.
-The document applies to v3 (and earlier) versions of the name matching library
+The document applies to v2 (and earlier) versions of the name matching library
 
 ##Concepts
 
