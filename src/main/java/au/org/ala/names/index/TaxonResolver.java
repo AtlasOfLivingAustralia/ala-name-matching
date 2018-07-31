@@ -1,5 +1,7 @@
 package au.org.ala.names.index;
 
+import au.org.ala.names.model.RankType;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -42,4 +44,19 @@ abstract public interface TaxonResolver {
      * @throws IndexBuilderException If unable to resolve things.
      */
     public TaxonResolution resolve(TaxonConcept concept, List<TaxonConceptInstance> principals, Collection<TaxonConceptInstance> instances) throws IndexBuilderException;
+
+    /**
+     * Estimate the rank of an unranked instance.
+     * <p>
+     * This follows whatever heuristics can be used to locate a rank.
+     * </p>
+     *
+     * @param instance The unranked instance
+     * @param parent The parent unranked name, which should contain any found instances
+     *
+     * @return The estimated rank, or null for unable to estimate
+     *
+     * @throws IndexBuilderException
+     */
+    public RankType estimateRank(TaxonConceptInstance instance, UnrankedScientificName parent) throws IndexBuilderException;
 }

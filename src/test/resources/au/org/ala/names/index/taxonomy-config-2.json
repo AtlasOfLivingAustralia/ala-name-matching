@@ -71,6 +71,14 @@
     },
     "discardStrategy": "SYNONYMISE_TO_PARENT",
     "defaultScore" : 150
+  },{
+    "id" : "dr105",
+    "unrankedStrategy": "SYNONYMS",
+    "defaultScore" : 150
+  },{
+    "id" : "dr106",
+    "unrankedStrategy": "ALL",
+    "defaultScore" : 150
   }],
   "defaultProvider" : "unknown",
   "acceptedCutoff" : 50

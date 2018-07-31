@@ -75,6 +75,9 @@ public class NameProvider {
     /** The method of discarding forbidden taxa */
     @JsonProperty
     private DiscardStrategy discardStrategy;
+    /** Assign unranked elements to ranked elements */
+    @JsonProperty
+    private UnrankedStrategy unrankedStrategy;
 
     /**
      * Default constructor
@@ -260,6 +263,23 @@ public class NameProvider {
             return this.discardStrategy;
         DiscardStrategy ds =  this.parent != null ? this.parent.getDiscardStrategy() : null;
         return ds == null ? DiscardStrategy.IGNORE : ds;
+    }
+
+    /**
+     * Get the unranked strategy.
+     * <p>
+     * This determines how unranked taxa should be treated.
+     * If one is not explicitly set, get the parent strategy.
+     * By default, this is {@link UnrankedStrategy#NONE}.
+     * </p>
+     *
+     * @return The unranked strategy.
+     */
+    public UnrankedStrategy getUnrankedStrategy() {
+        if (this.unrankedStrategy != null)
+            return this.unrankedStrategy;
+        UnrankedStrategy us =  this.parent != null ? this.parent.getUnrankedStrategy() : null;
+        return us == null ? UnrankedStrategy.NONE : us;
     }
 
     /**

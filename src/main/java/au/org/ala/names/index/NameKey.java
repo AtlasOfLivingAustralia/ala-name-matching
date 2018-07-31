@@ -188,6 +188,19 @@ public class NameKey implements Comparable<NameKey> {
         return new NameKey(this.analyser, this.code, this.scientificName, null, RankType.UNRANKED, this.type);
     }
 
+    /**
+     * Convert a taxon key into an ranked key.
+     *
+     * @param rank The new rank
+     *
+     * @return An unranked name key without authorship
+     */
+    public NameKey toRankedNameKey(RankType rank) {
+        if (this.rank == rank)
+            return this;
+        return new NameKey(this.analyser, this.code, this.scientificName, this.scientificNameAuthorship, rank, this.type);
+    }
+
 
     /**
      * Convert a full taxon key into an unranked and un-nomenclatural coded key.

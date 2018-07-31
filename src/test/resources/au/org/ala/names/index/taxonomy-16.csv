@@ -1,0 +1,5 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source
+"Accepted-1","","","dr105","ICZN","Anakinetica","(Davidson, 1852)","genus","","","accepted","","","","","","","","","",""
+"Accepted-2","","","dr100","ICZN","Anakinetica","Davidson, 1852","genus","","","accepted","","","","","","","","","",""
+"Synonym-1","","Accepted-1","dr105","ICZN","Terebratella","Davidson, 1852","","","","synonym","","","","","","","","","",""
+"Synonym-2","","Accepted-2","dr100","ICZN","Terebratella","Davidson, 1852","","","","synonym","","","","","","","","","",""

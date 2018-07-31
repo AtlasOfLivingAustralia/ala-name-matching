@@ -153,23 +153,26 @@ public class ALANameAnalyser extends NameAnalyser {
      * @return The analyzed name
      */
     @Override
-    public NameKey analyse(@Nullable NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, @Nullable RankType rankType, boolean loose) {
+    public NameKey analyse(@Nullable NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, boolean loose) {
         NameType nameType = NameType.INFORMAL;
         if (scientificNameAuthorship != null && scientificName.endsWith(scientificNameAuthorship)) {
             scientificName = scientificName.substring(0, scientificName.length() - scientificNameAuthorship.length()).trim();
         }
-        if (loose && scientificNameAuthorship == null) {
+        if (loose) {
+            ParsedName name = null;
             try {
-                ParsedName name = this.nameParser.parse(scientificName, rankType == null ? null : rankType.getCbRank());
+                name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
+                if ((rankType == null || rankType == RankType.UNRANKED) && name.getRank() != null)
+                    rankType = RankType.getForCBRank(name.getRank());
+            } catch (UnparsableException ex) {
+                // Oh well, worth a try
+            }
+            if (scientificNameAuthorship == null && name != null) {
                 String ac = name.authorshipComplete();
                 if (ac != null && !ac.isEmpty() && !(name instanceof ALAParsedName)) { // ALAParsedName indicates a phrase name; leave as-is
                     scientificName = name.buildName(true, true, false, true, true, false, true, false, true, false, false, false, true, true);
                     scientificNameAuthorship = ac;
-                    if (rankType == null && name.getRank() != null)
-                        rankType = RankType.getForCBRank(name.getRank());
                 }
-            } catch (UnparsableException ex) {
-                // Oh well, worth a try
             }
         }
         CleanedScientificName cleaned = new CleanedScientificName(scientificName);

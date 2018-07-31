@@ -213,6 +213,13 @@
               "nomenclaturalStatus": "DENIED"
             },
             "adjustment": -10
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "UNRANKED"
+            },
+            "adjustment": -100
           }
         ]
       },
@@ -601,6 +608,7 @@
     {
       "id" : "dr5214",
       "name": "APC",
+      "description": "Australian Plant Name Index entries placed by the Australian Plant Census",
       "parent": "default",
       "rightsHolder": "Centre for Australian National Biodiversity Research",
       "licence": "CC-BY",
@@ -616,6 +624,7 @@
     {
       "id" : "dr2700",
       "name": "APNI",
+      "description": "Australian Plant Name Index entries not placed by the Australian Plant Census, given an assumed parent of Plantae",
       "parent": "default",
       "rightsHolder": "Centre for Australian National Biodiversity Research",
       "licence": "CC-BY",
@@ -631,6 +640,7 @@
       "licence": "CC-BY",
       "defaultScore" : 5000,
       "defaultNomenclaturalCode": "ZOOLOGICAL",
+      "unrankedStrategy": "SYNONYMS",
       "scores": {
         "Animalia": 6000
       },
