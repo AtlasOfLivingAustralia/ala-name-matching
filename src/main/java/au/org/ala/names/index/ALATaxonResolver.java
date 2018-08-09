@@ -1,7 +1,12 @@
 package au.org.ala.names.index;
 
+import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.model.TaxonomicTypeGroup;
+import org.gbif.api.exception.UnparsableException;
+import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.api.service.checklistbank.NameParser;
+import org.gbif.nameparser.PhraseNameParser;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -204,6 +209,40 @@ public class ALATaxonResolver implements TaxonResolver {
             resolution.addInternal(instance, instance, taxonomy);
             return;
         }
+    }
+
+    /**
+     * Estimate the rank of an unranked instance.
+     * <ol>
+     *     <li>Try and find a taxon with the same name and author and a rank closest to any accepted rank.</li>
+     *     <li>Parse the name to see if it gives any clues</li>
+     *     <li>If there is an accepted rank, use the accepted rank</li>
+     * </ol>
+     *
+     * @param instance The unranked instance
+     * @param parent The parent unranked name, which should contain any found instances
+     *
+     * @return The
+     *
+     * @throws IndexBuilderException
+     */
+    @Override
+    public RankType estimateRank(TaxonConceptInstance instance, UnrankedScientificName parent) throws IndexBuilderException {
+        RankType acceptedRank = instance.getAccepted() != null ? instance.getAccepted().getRank() : null;
+        TaxonConcept found = parent.findRankedConcept(instance.getContainer().getKey(), acceptedRank, this.taxonomy);
+        if (found != null) {
+            return found.getRank();
+        } else {
+            // Try name analysis to see whether we can get anywhere
+            try {
+                NameParser parser = new PhraseNameParser();
+                ParsedName pn = parser.parse(instance.getScientificName(), acceptedRank == null ? null : acceptedRank.getCbRank());
+                if (pn.getRank() != null)
+                    return RankType.getForCBRank(pn.getRank());
+            } catch (UnparsableException ex) {
+            }
+        }
+        return acceptedRank;
     }
 
     /**

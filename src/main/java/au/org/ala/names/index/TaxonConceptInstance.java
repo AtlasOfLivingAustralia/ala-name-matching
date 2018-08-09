@@ -944,7 +944,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 provenance = MessageFormat.format(provenance, this.getTaxonID());
                 this.addProvenance(provenance);
                 taxonomy.addProvenanceToOutput();
-                this.getContainer().resolveTaxon(taxonomy);
+                this.getContainer().resolveTaxon(taxonomy, true);
                 break;
             default:
                 // Ignore and leave forbidden
@@ -1220,6 +1220,80 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         taxonomy.addProvenanceToOutput();
         taxonomy.addInferredInstance(synonym);
         return synonym;
+    }
+
+    /**
+     * Create an ranked instance of this taxon.
+     *
+     * @param newRank
+     * @param taxonomy The base taxonomy
+     *
+     * @return A ranked copy of this instance
+     */
+    public TaxonConceptInstance createRankedInstance(RankType newRank, Taxonomy taxonomy) {
+        TaxonConceptInstance instance = new TaxonConceptInstance(
+                this.taxonID,
+                this.code,
+                this.verbatimNomenclaturalCode,
+                this.provider,
+                this.scientificName,
+                this.scientificNameAuthorship,
+                this.year,
+                this.taxonomicStatus,
+                this.verbatimTaxonomicStatus,
+                newRank,
+                this.verbatimTaxonRank,
+                this.status,
+                this.verbatimNomenclaturalStatus,
+                this.parentNameUsage,
+                this.parentNameUsageID,
+                this.acceptedNameUsage,
+                this.acceptedNameUsageID,
+                this.taxonRemarks == null ? null : new ArrayList<>(this.taxonRemarks),
+                this.verbatimTaxonRemarks,
+                this.provenance == null ? null : new ArrayList<>(this.provenance),
+                this.classification
+        );
+        instance.setContainer(null);
+        instance.accepted = this.accepted;
+        instance.parent = this.parent;
+        instance.baseScore = null;
+        instance.score = null;
+        instance.forbidden = false;
+        String provenance = taxonomy.getResources().getString("taxonConcept.unranked.reallocate.provenance");
+        provenance = MessageFormat.format(provenance, newRank);
+        instance.addProvenance(provenance);
+        taxonomy.report(IssueType.NOTE, "taxonConcept.unranked.reallocate", this, Arrays.asList(instance));
+        taxonomy.count("count.resolve.unrankedTaxonConcept");
+        taxonomy.addProvenanceToOutput();
+        taxonomy.insertInstance(instance.getTaxonID(), this.getContainer().getKey().toRankedNameKey(newRank), instance);
+        return instance;
+    }
+
+    /**
+     * Convert this instance into a synonym of a newer instance.
+     * <p>
+     * This instance is forbidden but remains to allow accepted taxon resolution.
+     * </p>
+     *
+     * @param other The other instance
+     * @param taxonomy
+     */
+    public void forwardTo(TaxonConceptInstance other, Taxonomy taxonomy) {
+        if (other.getTaxonID().equals(this.taxonID)) {
+            this.taxonID = UUID.randomUUID().toString();
+            taxonomy.addInferredInstance(this);
+        }
+        this.setForbidden(true);
+        this.provider = taxonomy.getInferenceProvider();
+        this.taxonomicStatus = TaxonomicType.INFERRED_SYNONYM;
+        this.acceptedNameUsage = null;
+        this.acceptedNameUsageID = other.getTaxonID();
+        this.accepted = other;
+        this.parentNameUsage = null;
+        this.parentNameUsageID = null;
+        this.parent = null;
+        this.classification = null;
     }
 
     /**

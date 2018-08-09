@@ -179,6 +179,40 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
     }
 
     /**
+     * Resolve any unranked taxon conceptss.
+     * <p>
+     * Look for taxon concepts that are unranked and re-assignable.
+     * </p>
+     *
+     * @param accepted Reloace accepted/non-accepted taxa
+     * @param taxonomy The base taxonomy
+     */
+    public void resolveUnranked(boolean accepted, Taxonomy taxonomy, UnrankedScientificName parent) throws IndexBuilderException {
+        if (!this.getKey().isUnranked())
+            throw new IndexBuilderException("Expecting unranked scientific name " + this);
+        List<TaxonConcept> tcs = new ArrayList<>(this.getConcepts()); // May modify concepts
+        for (TaxonConcept tc: tcs) {
+            tc.resolveUnranked(accepted, taxonomy, parent);
+        }
+    }
+
+    /**
+     * Collect all taxon concepts that match an unranked name key.
+     *
+     * @param key The key
+     * @param taxonomy The source taxonomy
+     * @param candidates An accumulator for possible candidates
+     */
+    public void findRankedConcepts(NameKey key, Taxonomy taxonomy, Collection<TaxonConcept> candidates) {
+        key = key.toUnrankedNameKey();
+        for (TaxonConcept tc: this.getConcepts()) {
+            NameKey tck = tc.getKey();
+            if (!tck.isUnranked() && key.compareTo(tck.toUnrankedNameKey()) == 0)
+                candidates.add(tc);
+        }
+    }
+
+    /**
      * Scienmtific name comparison for sorting.
      * <p>
      * Names are ordered first by the rank of the principal taxon concept

@@ -2,11 +2,15 @@ package au.org.ala.names.index;
 
 import au.org.ala.vocab.ALATerm;
 import au.org.ala.names.model.RankType;
+import org.gbif.api.exception.UnparsableException;
+import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.api.service.checklistbank.NameParser;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import au.org.ala.names.util.DwcaWriter;
+import org.gbif.nameparser.PhraseNameParser;
 
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -55,6 +59,15 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     }
 
     /**
+     * Get the instances of this concept.
+     *
+     * @return An unmodifiable list of instances.
+     */
+    public List<TaxonConceptInstance> getInstances() {
+        return Collections.unmodifiableList(this.instances);
+    }
+
+    /**
      * Has this concept been resolved.
      *
      * @return True if there is a resolved instance attached to the concept.
@@ -89,6 +102,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     @Override
     public TaxonConceptInstance addInstance(NameKey instanceKey, TaxonConceptInstance instance) {
         instance.setContainer(this);
+        this.instances.removeIf(tci -> tci.getTaxonID().equals(instance.getTaxonID()));
         this.instances.add(instance);
         return instance;
     }
@@ -120,11 +134,12 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      * @see TaxonResolver
      *
      * @param taxonomy The source taxonomy
+     * @param reset Reset the resolution
      *
      * @throws IndexBuilderException if unable to resolve preferences
      */
-    public void resolveTaxon(Taxonomy taxonomy) throws IndexBuilderException {
-        if (this.resolution != null)
+    public void resolveTaxon(Taxonomy taxonomy, boolean reset) throws IndexBuilderException {
+        if (this.resolution != null && !reset)
             return;
         TaxonResolver resolver = taxonomy.getResolver();
         List<TaxonConceptInstance> principals = resolver.principals(this, this.instances);
@@ -299,7 +314,9 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      */
     @Override
     public TaxonConceptInstance getRepresentative() {
-        return this.resolution == null ? this.instances.get(0) : this.resolution.getUsed().get(0);
+        if (this.resolution == null)
+            return this.instances.isEmpty() ? null : this.instances.get(0);
+        return this.resolution.getUsed().isEmpty() ? null : this.resolution.getUsed().get(0);
     }
 
 
@@ -338,7 +355,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      */
     public boolean isOwned() {
         TaxonConceptInstance accepted = this.getRepresentative();
-        return (accepted.getContainer() == this && accepted.isOwned());
+        return accepted != null && accepted.getContainer() == this && accepted.isOwned();
     }
 
     /**
@@ -431,7 +448,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
                 taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceParent", tci, Arrays.asList(this));
                 valid = false;
             }
-            if (taxonomy.getInstance(tci.getTaxonID()) != tci) {
+            if (!tci.isForbidden() && taxonomy.getInstance(tci.getTaxonID()) != tci) {
                 taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.instanceTaxonomy", tci, Arrays.asList(this));
                 valid = false;
             }
@@ -440,6 +457,42 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
             if (!this.resolution.validate(this.instances, taxonomy))
                 valid = false;
         return valid;
+    }
+    /**
+     * Resolve any unranked taxon conceptss.
+     * <p>
+     * Look for taxon concepts that are unranked and re-assignable.
+     * After this follow these heuristics:
+     * </p>
+     * <ol>
+     *     <li>Try and find a taxon with the same name and author and a rank closest to any accepted rank.</li>
+     *     <li>Parse the name to see if it gives any clues</li>
+     *     <li>If there is an accepted rank, use the accepted rank</li>
+     * </ol>
+     *
+     * @param accepted Reloace accepted/non-accepted taxa
+     * @param taxonomy The base taxonomy
+     */
+    public void resolveUnranked(boolean accepted, Taxonomy taxonomy, UnrankedScientificName parent) throws IndexBuilderException {
+        if (!this.getKey().isUnranked())
+            throw new IndexBuilderException("Expecting unranked taxon concept " + this);
+        TaxonResolver resolver = taxonomy.getResolver();
+        List<TaxonConceptInstance> reassign = this.instances.stream().filter(tci -> (accepted && tci.isAccepted() || !accepted && !tci.isAccepted()) && tci.getProvider().getUnrankedStrategy().isReassignable(tci)).collect(Collectors.toList());
+        if (!reassign.isEmpty()) {
+            Set<TaxonConcept> resolve = new HashSet<>();
+            for (TaxonConceptInstance tci: reassign) {
+                RankType acceptedRank = resolver.estimateRank(tci, parent);
+                if (acceptedRank != null && acceptedRank != RankType.UNRANKED) {
+                    TaxonConceptInstance newTci = tci.createRankedInstance(acceptedRank, taxonomy);
+                    tci.forwardTo(newTci, taxonomy);
+                    resolve.add(newTci.getContainer());
+                    resolve.add(this);
+                }
+            }
+            for (TaxonConcept tc: resolve) {
+                tc.resolveTaxon(taxonomy, true);
+            }
+        }
     }
 
 }

@@ -75,6 +75,9 @@ public class NameProvider {
     /** The method of discarding forbidden taxa */
     @JsonProperty
     private DiscardStrategy discardStrategy;
+    /** Assign unranked elements to ranked elements */
+    @JsonProperty
+    private UnrankedStrategy unrankedStrategy;
 
     /**
      * Default constructor
@@ -178,7 +181,7 @@ public class NameProvider {
     /**
      * Get the source description.
      * <p>
-     * Intended as a place to put useful human-readable desctiptions
+     * Intended as a place to put useful human-readable descriptions
      * </p>
      *
      * @return The description
@@ -260,6 +263,23 @@ public class NameProvider {
             return this.discardStrategy;
         DiscardStrategy ds =  this.parent != null ? this.parent.getDiscardStrategy() : null;
         return ds == null ? DiscardStrategy.IGNORE : ds;
+    }
+
+    /**
+     * Get the unranked strategy.
+     * <p>
+     * This determines how unranked taxa should be treated.
+     * If one is not explicitly set, get the parent strategy.
+     * By default, this is {@link UnrankedStrategy#NONE}.
+     * </p>
+     *
+     * @return The unranked strategy.
+     */
+    public UnrankedStrategy getUnrankedStrategy() {
+        if (this.unrankedStrategy != null)
+            return this.unrankedStrategy;
+        UnrankedStrategy us =  this.parent != null ? this.parent.getUnrankedStrategy() : null;
+        return us == null ? UnrankedStrategy.NONE : us;
     }
 
     /**
@@ -365,7 +385,7 @@ public class NameProvider {
         if (specific != null)
             return specific;
         TaxonConceptInstance p = instance.getParent() == null ? null : instance.getParent().getRepresentative();
-        int score = p != null ? p.getBaseScore(original) : this.getDefaultScore();
+        int score = p != null && p.getProvider() == this ? p.getBaseScore(original) : this.getDefaultScore();
         return Math.max(TaxonomicElement.MIN_SCORE, Math.min(TaxonomicElement.MAX_SCORE, score));
 
     }

@@ -421,6 +421,7 @@ public class Taxonomy implements Reporter {
             throw new IndexBuilderException("Invalid source data");
         this.validateNameCollisions();
         this.resolveTaxon();
+        this.resolveUnranked();
         this.resolvePrincipal();
         this.resolveDiscards();
         if (!this.validate())
@@ -496,7 +497,7 @@ public class Taxonomy implements Reporter {
      *
      * @throws IndexBuilderException
      *
-     * @see TaxonConcept#resolveTaxon(Taxonomy)
+     * @see TaxonConcept#resolveTaxon(Taxonomy, boolean)
      */
     public void resolveTaxon() throws IndexBuilderException {
         logger.info("Resolving taxa");
@@ -509,7 +510,7 @@ public class Taxonomy implements Reporter {
         do {
             for (RankType rank : ranks) {
                 Set<TaxonConcept> concepts = allInstances.stream().filter(instance -> instance.getRank() == rank).map(TaxonConceptInstance::getContainer).collect(Collectors.toSet());
-                concepts.parallelStream().forEach(tc -> tc.resolveTaxon(this));
+                concepts.parallelStream().forEach(tc -> tc.resolveTaxon(this, false));
             }
             prevResolved = resolved;
             resolved = allInstances.stream().filter(instance -> instance.isResolved()).count();
@@ -517,9 +518,43 @@ public class Taxonomy implements Reporter {
         } while (resolved != prevResolved);
         Set<TaxonConcept> unresolvedConcepts = allInstances.stream().map(TaxonConceptInstance::getContainer).filter(tc -> !tc.isResolved()).collect(Collectors.toSet());
         logger.info("Found " + unresolvedConcepts.size() + " un-resolved concepts");
-        unresolvedConcepts.parallelStream().forEach(tc -> { tc.resolveTaxon(this); this.report(IssueType.PROBLEM, "taxonConcept.unresolved", tc, null); });
+        unresolvedConcepts.parallelStream().forEach(tc -> { tc.resolveTaxon(this, false); this.report(IssueType.PROBLEM, "taxonConcept.unresolved", tc, null); });
         logger.info("Finished resolving taxa");
 
+    }
+
+    /**
+     * Resolve any unranked taxa.
+     * <p>
+     * Any unranked taxon concepts are, potentially mapped onto their ranked equivalents.
+     * We first do any non-accepted instances, then do the accepted versions.
+     * </p>
+     *
+     * @throws IndexBuilderException
+     *
+     */
+    public void resolveUnranked() throws IndexBuilderException {
+        logger.info("Resolving unranked taxa");
+        this.resolveUnranked(false);
+        this.resolveUnranked(true);
+        logger.info("Finished resolving unranked taxa");
+    }
+
+    /**
+     * Resolve any unranked taxa.
+     * <p>
+     * Any unranked taxon concepts are, potentially mapped onto their ranked equivalents.
+     * We first do any non-accepted instances, then do the accepted versions.
+     * </p>
+     *
+     * @param accepted Resolve accepted taxa
+     *
+     * @throws IndexBuilderException
+     *
+     * @see UnrankedScientificName#resolveUnranked(boolean, Taxonomy)
+     */
+    protected void resolveUnranked(boolean accepted) throws IndexBuilderException {
+        this.unrankedNames.values().stream().forEach(name -> name.resolveUnranked(accepted, this));
     }
 
     /**
@@ -668,7 +703,7 @@ public class Taxonomy implements Reporter {
      *
      * @return The name provider
      */
-    public NameProvider resolveProvider(String datasetID, String datasetName) {
+    synchronized public NameProvider resolveProvider(String datasetID, String datasetName) {
         NameProvider provider;
         if (datasetID == null && datasetName == null)
             return this.defaultProvider;
@@ -758,7 +793,7 @@ public class Taxonomy implements Reporter {
      *
      * @throws IndexBuilderException if the instance's taxonID is already in use
      */
-    protected void addInferredInstance(TaxonConceptInstance instance) {
+    synchronized protected void addInferredInstance(TaxonConceptInstance instance) {
         String taxonID = instance.getTaxonID();
 
         if (this.instances.containsKey(taxonID))
@@ -782,9 +817,6 @@ public class Taxonomy implements Reporter {
         String taxonID = instance.getTaxonID();
         boolean loose = instance.getProvider().isLoose();
         NameKey taxonKey;
-        NameKey nameKey;
-        NameKey unrankedKey;
-        NameKey bareKey;
         String remark, explain;
 
         taxonKey = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), loose);
@@ -827,10 +859,6 @@ public class Taxonomy implements Reporter {
             instance.setForbidden(true);
         }
 
-        nameKey = taxonKey.toNameKey();
-        unrankedKey = taxonKey.toUnrankedNameKey();
-        bareKey = taxonKey.toUncodedNameKey();
-
         if (this.instances.containsKey(taxonID)) {
             TaxonConceptInstance collision = this.instances.get(taxonID);
             taxonID = UUID.randomUUID().toString();
@@ -864,7 +892,27 @@ public class Taxonomy implements Reporter {
             this.addProvenanceToOutput();
         }
 
+        this.insertInstance(taxonID, taxonKey, instance);
+        this.count("count.load.instance");
+        return instance;
+    }
+
+    /**
+     * Insert a taxon concept instance.
+     * <p>
+     * This will overwrite any existing tci with the same taxon identifier.
+     * </p>
+     *
+     * @param taxonID The identifier
+     * @param taxonKey The name key for the instance
+     * @param instance The instance
+     */
+    synchronized public void insertInstance(String taxonID, NameKey taxonKey, TaxonConceptInstance instance) {
+        NameKey nameKey = taxonKey.toNameKey();
+        NameKey unrankedKey = taxonKey.toUnrankedNameKey();
+        NameKey bareKey = taxonKey.toUncodedNameKey();
         BareName bare = this.bareNames.get(bareKey);
+
         if (bare == null) {
             bare = new BareName(bareKey);
             this.bareNames.put(bareKey, bare);
@@ -877,8 +925,6 @@ public class Taxonomy implements Reporter {
         if (!this.unrankedNames.containsKey(unrankedKey))
             this.unrankedNames.put(unrankedKey, unranked);
         this.instances.put(taxonID, instance);
-        this.count("count.load.instance");
-        return instance;
     }
 
     /**

@@ -74,6 +74,11 @@ Each provider contains the following information:
   identifier to the parent taxon as a "discarded" identifier (only the prinary taxonID is added), 
   SYNONYMISE_TO_PARENT makes the discarded taxon a synonym of its parent (use this option with caution, since
   you are likely to get a large number of "Unplaced"s acting as synonyms).
+* **unrankedStrategy** How to handle unranked taxa. This can be one of
+  NONE (the default) which simply leaves unranked taxa as-is, SYNONYMS which searches for a ranked taxon
+  with the same name/author for synonyms only or ALL which searches for a ranked taxon for all unranked
+  taxa.
+
 
 ### Adjusters
 
