@@ -622,16 +622,6 @@
       ]
     },
     {
-      "id" : "dr2700",
-      "name": "APNI",
-      "description": "Australian Plant Name Index entries not placed by the Australian Plant Census, given an assumed parent of Plantae",
-      "parent": "default",
-      "rightsHolder": "Centre for Australian National Biodiversity Research",
-      "licence": "CC-BY",
-      "defaultScore" : 4500,
-      "defaultNomenclaturalCode": "BOTANICAL"
-    },
-    {
       "id" : "dr2699",
       "name": "AFD",
       "description": "Australian Faunal Directory",
@@ -666,13 +656,23 @@
       }
     },
     {
+      "id" : "dr2700",
+      "name": "APNI",
+      "description": "Australian Plant Name Index entries not placed by the Australian Plant Census, given an assumed parent of Plantae",
+      "parent": "default",
+      "rightsHolder": "Centre for Australian National Biodiversity Research",
+      "licence": "CC-BY",
+      "defaultScore" : 3000,
+      "defaultNomenclaturalCode": "BOTANICAL"
+    },
+    {
       "id" : "dr2704",
       "name": "CAAB",
       "description": "Codes for Australian Aquatic Biota",
       "parent": "default",
       "rightsHolder": "Commonwealth Scientific and Industrial Research Organisation",
       "licence": "CC-BY",
-      "defaultScore" : 3000,
+      "defaultScore" : 2000,
       "loose": true
     },
     {
@@ -682,7 +682,7 @@
       "parent": "default",
       "rightsHolder": "Catalogue of Life",
       "licence": "CC-BY",
-      "defaultScore" : 2000,
+      "defaultScore" : 1000,
       "keyAdjuster": {
         "adjustments": [
           {

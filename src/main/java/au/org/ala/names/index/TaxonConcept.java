@@ -59,6 +59,15 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     }
 
     /**
+     * Get the instances of this concept.
+     *
+     * @return An unmodifiable list of instances.
+     */
+    public List<TaxonConceptInstance> getInstances() {
+        return Collections.unmodifiableList(this.instances);
+    }
+
+    /**
      * Has this concept been resolved.
      *
      * @return True if there is a resolved instance attached to the concept.

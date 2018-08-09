@@ -1,0 +1,10 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source
+"Plantae_APC","","","dr100","ICBN","Plantae","Haeckel","kingdom","","","accepted","","","","","","","","","",""
+"Plantae_NZOR","","","dr101","ICBN","Plantae","Haeckel","kingdom","","","accepted","","","","","","","","","",""
+"Falcata_APNI","Plantae_APC","","dr107","ICBN","Pterostylis falcata","R.S.Rogers","species","","","inferredAccepted","","","","","","","","","",""
+"Falcata_NZOR","","Furcata_NZOR","dr101","ICBN","Pterostylis falcata","R.S.Rogers","species","","","synonym","","","","","","","","","",""
+"Falcata_Other","","","dr108","ICBN","Pterostylis falcata","","species","","","inferredAccepted","","","","","","","","","",""
+"Pterostylis_NZOR","Plantae_NZOR","","dr101","ICBN","Pterostylis","R.Br.","genus","","","accepted","","","","","","","","","",""
+"Furcata_NZOR","Pterostylis_NZOR","","dr101","ICBN","Pterostylis furcata","Lindl.","species","","","accepted","","","","","","","","","",""
+"Furcata_APNI","Plantae_APC","","dr107","ICBN","Pterostylis furcata","Lindl.","species","","","inferredAccepted","","","","","","","","","",""
+"Furcata_Other","","","dr108","ICBN","Pterostylis furcata","","species","","","inferredAccepted","","","","","","","","","",""

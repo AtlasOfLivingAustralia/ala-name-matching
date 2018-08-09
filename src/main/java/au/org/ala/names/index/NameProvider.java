@@ -181,7 +181,7 @@ public class NameProvider {
     /**
      * Get the source description.
      * <p>
-     * Intended as a place to put useful human-readable desctiptions
+     * Intended as a place to put useful human-readable descriptions
      * </p>
      *
      * @return The description
@@ -385,7 +385,7 @@ public class NameProvider {
         if (specific != null)
             return specific;
         TaxonConceptInstance p = instance.getParent() == null ? null : instance.getParent().getRepresentative();
-        int score = p != null ? p.getBaseScore(original) : this.getDefaultScore();
+        int score = p != null && p.getProvider() == this ? p.getBaseScore(original) : this.getDefaultScore();
         return Math.max(TaxonomicElement.MIN_SCORE, Math.min(TaxonomicElement.MAX_SCORE, score));
 
     }

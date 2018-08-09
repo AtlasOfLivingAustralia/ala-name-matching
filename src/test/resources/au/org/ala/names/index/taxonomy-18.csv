@@ -1,0 +1,5 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source
+"Accepted-1-1","","","dr100","ICBN","Anakinetica cumingii","Davidson","species","","","accepted","","","","","","","","","",""
+"Accepted-2-1","","","dr101","ICBN","Anakinetica cumingii","Davidson","species","","","accepted","","","","","","","","","",""
+"Accepted-1-2","Accepted-1-1","","dr100","ICBN","Anakinetica cumingii cumingii","Davidson","subspecies","","","accepted","","","","","","","","","",""
+"Accepted-2-2","Accepted-2-1","","dr101","ICBN","Anakinetica cumingii cumingii","Davidson","subspecies","","","accepted","","","","","","","","","",""

@@ -383,7 +383,6 @@ public class TaxonomyTest extends TestUtils {
         assertNull(i13.getResolvedParent());
     }
 
-
     @Test
     public void testWrite1() throws Exception {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
@@ -401,7 +400,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(11, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(21, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(51, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(9, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(11, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
 
@@ -422,7 +421,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(4, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(5, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(5, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(10, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(12, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
 
@@ -525,6 +524,54 @@ public class TaxonomyTest extends TestUtils {
         assertSame(tc1, tc2);
         assertSame(tc1, tc3);
         assertEquals(RankType.FAMILY, tc3.getKey().getRank());
+    }
+
+    // Test placement with a disagreement about taxonomic status
+    @Test
+    public void testResolveDisagreement1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-20.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance fa_a = this.taxonomy.getInstance("Falcata_APNI");
+        TaxonConceptInstance fa_n = this.taxonomy.getInstance("Falcata_NZOR");
+        TaxonConceptInstance fa_o = this.taxonomy.getInstance("Falcata_Other");
+        TaxonConceptInstance fu_a = this.taxonomy.getInstance("Furcata_APNI");
+        TaxonConceptInstance fu_n = this.taxonomy.getInstance("Furcata_NZOR");
+        TaxonConceptInstance fu_o = this.taxonomy.getInstance("Furcata_Other");
+        assertNotNull(fa_a);
+        assertNotNull(fa_n);
+        assertNotNull(fa_o);
+        assertNotNull(fu_a);
+        assertNotNull(fu_n);
+        assertNotNull(fu_o);
+        TaxonConcept fa = fa_a.getContainer();
+        assertEquals(fa, fa_a.getContainer());
+        assertEquals(fa, fa_n.getContainer());
+        assertEquals(fa, fa_o.getContainer());
+        assertEquals(fa_n, fa.getRepresentative());
+        assertEquals(fa_n, fa.getResolved(fa_a));
+        assertEquals(fa_n, fa.getResolved(fa_n));
+        assertEquals(fa_n, fa.getResolved(fa_o));
+        TaxonConcept fu = fu_a.getContainer();
+        assertEquals(fu, fu_a.getContainer());
+        assertEquals(fu, fu_n.getContainer());
+        assertEquals(fu, fu_o.getContainer());
+        assertEquals(fu_n, fu.getRepresentative());
+        assertEquals(fu_n, fu.getResolved(fu_a));
+        assertEquals(fu_n, fu.getResolved(fu_n));
+        assertEquals(fu_n, fu.getResolved(fu_o));
+        File dir = new File(this.taxonomy.getWork(), "output");
+        dir.mkdir();
+        this.taxonomy.createDwCA(dir);
+        assertTrue(new File(dir, "meta.xml").exists());
+        assertTrue(new File(dir, "eml.xml").exists());
+        assertEquals(5, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(10, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(10, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(11, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
 }

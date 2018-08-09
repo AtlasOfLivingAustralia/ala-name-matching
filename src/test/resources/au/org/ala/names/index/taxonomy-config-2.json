@@ -79,6 +79,12 @@
     "id" : "dr106",
     "unrankedStrategy": "ALL",
     "defaultScore" : 150
+  },{
+    "id" : "dr107",
+    "defaultScore" : 80
+  },{
+    "id" : "dr108",
+    "defaultScore" : 0
   }],
   "defaultProvider" : "unknown",
   "acceptedCutoff" : 50
