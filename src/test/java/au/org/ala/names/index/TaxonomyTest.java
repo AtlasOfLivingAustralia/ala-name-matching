@@ -397,9 +397,9 @@ public class TaxonomyTest extends TestUtils {
         this.taxonomy.createDwCA(dir);
         assertTrue(new File(dir, "meta.xml").exists());
         assertTrue(new File(dir, "eml.xml").exists());
-        assertEquals(11, this.rowCount(new File(dir, "taxon.txt")));
-        assertEquals(21, this.rowCount(new File(dir, "taxonvariant.txt")));
-        assertEquals(51, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(12, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(22, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(52, this.rowCount(new File(dir, "identifier.txt")));
         assertEquals(11, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
@@ -418,9 +418,9 @@ public class TaxonomyTest extends TestUtils {
         this.taxonomy.createDwCA(dir);
         assertTrue(new File(dir, "meta.xml").exists());
         assertTrue(new File(dir, "eml.xml").exists());
-        assertEquals(4, this.rowCount(new File(dir, "taxon.txt")));
-        assertEquals(5, this.rowCount(new File(dir, "taxonvariant.txt")));
-        assertEquals(5, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(5, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(6, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(6, this.rowCount(new File(dir, "identifier.txt")));
         assertEquals(12, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
@@ -441,7 +441,7 @@ public class TaxonomyTest extends TestUtils {
         this.taxonomy.createDwCA(dir);
         assertTrue(new File(dir, "meta.xml").exists());
         assertTrue(new File(dir, "eml.xml").exists());
-        assertEquals(11, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(12, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(2, this.rowCount(new File(dir, "vernacularname.txt")));
     }
 
@@ -466,10 +466,10 @@ public class TaxonomyTest extends TestUtils {
         File dir = new File(this.taxonomy.getWork(), "output");
         dir.mkdir();
         this.taxonomy.createDwCA(dir);
-        assertEquals(3, this.rowCount(new File(dir, "taxon.txt")));
-        assertEquals(3, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(4, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(4, this.rowCount(new File(dir, "taxonvariant.txt")));
         File identifier = new File(dir, "identifier.txt");
-        assertEquals(4, this.rowCount(identifier));
+        assertEquals(5, this.rowCount(identifier));
         this.dumpFile(identifier);
         assertTrue(this.fileContains(identifier, Pattern.compile("^7178434\t7178429.*discarded.*")));
     }
@@ -497,10 +497,10 @@ public class TaxonomyTest extends TestUtils {
         dir.mkdir();
         this.taxonomy.createDwCA(dir);
         File taxon = new File(dir, "taxon.txt");
-        assertEquals(4, this.rowCount(taxon));
+        assertEquals(5, this.rowCount(taxon));
         assertTrue(this.fileContains(taxon, Pattern.compile("^7178429\t\t7178434.*inferredSynonym.*")));
-        assertEquals(4, this.rowCount(new File(dir, "taxonvariant.txt")));
-        assertEquals(4, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(5, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(5, this.rowCount(new File(dir, "identifier.txt")));
     }
 
     // Test resolution to a preferred rank with key rewriting
@@ -568,9 +568,54 @@ public class TaxonomyTest extends TestUtils {
         this.taxonomy.createDwCA(dir);
         assertTrue(new File(dir, "meta.xml").exists());
         assertTrue(new File(dir, "eml.xml").exists());
-        assertEquals(5, this.rowCount(new File(dir, "taxon.txt")));
-        assertEquals(10, this.rowCount(new File(dir, "taxonvariant.txt")));
-        assertEquals(10, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(6, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(11, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(11, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(11, this.rowCount(new File(dir, "rightsholder.txt")));
+    }
+
+    // Test the presence of a taxon loop
+    @Test
+    public void testUnknownTaxon1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-21.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        File dir = new File(this.taxonomy.getWork(), "output");
+        dir.mkdir();
+        this.taxonomy.createDwCA(dir);
+        assertTrue(new File(dir, "meta.xml").exists());
+        assertTrue(new File(dir, "eml.xml").exists());
+        File taxon = new File(dir, "taxon.txt");
+        assertEquals(4, this.rowCount(taxon));
+        assertTrue(this.fileContains(taxon, Pattern.compile("^Falcata\t\tALA_The_Unknown_Taxon\t.*")));
+        assertTrue(this.fileContains(taxon, Pattern.compile("^Furcata\t\tALA_The_Unknown_Taxon\t.*")));
+        assertEquals(4, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(4, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(11, this.rowCount(new File(dir, "rightsholder.txt")));
+    }
+
+    // Test the presence of a taxon loop in s parent
+    @Test
+    public void testUnknownTaxon2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-22.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        File dir = new File(this.taxonomy.getWork(), "output");
+        dir.mkdir();
+        this.taxonomy.createDwCA(dir);
+        assertTrue(new File(dir, "meta.xml").exists());
+        assertTrue(new File(dir, "eml.xml").exists());
+        File taxon = new File(dir, "taxon.txt");
+        assertEquals(5, this.rowCount(taxon));
+        assertTrue(this.fileContains(taxon, Pattern.compile("^Furcata_furcata\tALA_The_Unknown_Taxon\t\t.*")));
+        assertEquals(5, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(5, this.rowCount(new File(dir, "identifier.txt")));
         assertEquals(11, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 

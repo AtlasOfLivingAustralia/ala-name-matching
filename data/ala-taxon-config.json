@@ -16,6 +16,7 @@
       "description": "Top-level provider for default adjustments",
       "external": false,
       "defaultScore" : 0,
+      "unknownTaxonID" : "ALA_The_Unknown_Taxon",
       "adjuster": {
         "forbidden": [
           {

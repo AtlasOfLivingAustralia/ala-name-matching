@@ -1030,9 +1030,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 TaxonConceptInstance rp = this.getResolvedParent();
                 pid = rp == null ? null : rp.getTaxonID();
                 if (pid == null) {
+                    pid = this.provider.getUnknownTaxonID();
                     taxonomy.report(IssueType.ERROR, "instance.parent.resolve", this, null);
                 }
             } catch (ResolutionException ex) {
+                pid = this.provider.getUnknownTaxonID();
                 taxonomy.report(IssueType.ERROR, "instance.parent.resolve.loop", this, this.traceParent());
             }
             values.put(DwcTerm.parentNameUsageID, pid);
@@ -1046,9 +1048,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 TaxonConceptInstance ra = this.getResolvedAccepted();
                 aid = ra == null ? null : ra.getTaxonID();
                 if (aid == null) {
+                    aid = this.provider.getUnknownTaxonID();
                     taxonomy.report(IssueType.ERROR, "instance.accepted.resolve", this, null);
                 }
              } catch (ResolutionException ex) {
+                aid = this.provider.getUnknownTaxonID();
                 taxonomy.report(IssueType.ERROR, "instance.accepted.resolve.loop", this, this.traceAccepted());
             }
             values.put(DwcTerm.acceptedNameUsageID, aid);

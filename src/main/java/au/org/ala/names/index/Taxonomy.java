@@ -26,10 +26,7 @@ import org.gbif.api.model.registry.Citation;
 import org.gbif.api.model.registry.Contact;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Identifier;
-import org.gbif.api.vocabulary.ContactType;
-import org.gbif.api.vocabulary.IdentifierType;
-import org.gbif.api.vocabulary.NomenclaturalCode;
-import org.gbif.api.vocabulary.NomenclaturalStatus;
+import org.gbif.api.vocabulary.*;
 import org.gbif.dwc.terms.*;
 import org.gbif.dwc.terms.Term;
 import org.slf4j.Logger;
@@ -411,11 +408,9 @@ public class Taxonomy implements Reporter {
      *     <li>First ensure that the tree is linked together.</li>
      *     <li>Then descend the tree, choosing a preferred instance for each taxon concept</li>
      * </ul>
-     *
-     * @throws IndexBuilderException
-     * @throws IOException
      */
-    public void resolve() throws IndexBuilderException, IOException {
+    public void resolve() throws Exception {
+        this.provideUnknownTaxon();
         this.resolveLinks();
         if (!this.validate())
             throw new IndexBuilderException("Invalid source data");
@@ -426,6 +421,44 @@ public class Taxonomy implements Reporter {
         this.resolveDiscards();
         if (!this.validate())
             throw new IndexBuilderException("Invalid resolution");
+    }
+
+    /**
+     * Add an unknown instance to the default provider, if none exists.
+     *
+     * @throws Exception
+     */
+    public void provideUnknownTaxon() throws Exception {
+        String utid = this.inferenceProvider.getUnknownTaxonID();
+
+        if (this.getInstance(utid) == null) {
+            String scientificName = this.getResources().getString("unknownTaxon.scientificName");
+            String taxonRemarks = this.getResources().getString("unknownTaxon.taxonRemarks");
+            TaxonConceptInstance ut = new TaxonConceptInstance(
+                    utid,
+                    NomenclaturalCode.ZOOLOGICAL,
+                    "",
+                    this.inferenceProvider,
+                    scientificName,
+                    null,
+                    null,
+                    TaxonomicType.INFERRED_UNPLACED,
+                    null,
+                    RankType.UNRANKED,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    Arrays.asList(taxonRemarks),
+                    null,
+                    null,
+                    null
+            );
+            this.addInstance(ut);
+        }
     }
 
     /**
@@ -455,6 +488,7 @@ public class Taxonomy implements Reporter {
     public boolean validate() throws IndexBuilderException {
         logger.info("Starting validation");
         boolean valid = true;
+        valid = this.providers.values().parallelStream().map(provider -> provider.validate(this)).reduce(valid, (a, b) -> a && b);
         valid = this.instances.values().parallelStream().map(instance -> instance.validate(this)).reduce(valid, (a, b) -> a && b);
         valid = this.names.values().parallelStream().map(instance -> instance.validate(this)).reduce(valid, (a, b) -> a && b);
         logger.info("Finished validation");
