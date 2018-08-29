@@ -18,6 +18,7 @@ The document applies to v2 (and earlier) versions of the name matching library
   equal to the maximum of the child nodes right values.
   Left and right values allow for fast lookup in the biocache index at expense of needing to re-allocate values
   with each new index, since the values are not stable.
+* **misapplied** A name that has been, historically, erroneously applied to something that is another taxon.
 * **phrase name** A scientific name for a sample that has not yet been fully described.
   A phrase name consists of a scientific name (usually a genus), a phrase describing the sample and a voucher, the person 'vouching'
   for the sample.
@@ -37,7 +38,7 @@ The document applies to v2 (and earlier) versions of the name matching library
 The matching algorithm uses a pre-constructed set of lucene indexes.
 The indexes are:
 
-# cb
+### cb
 
 The main index contains taxon concepts.
 Each taxon concept contains the following fields:
@@ -243,3 +244,46 @@ is returned, otherwise no result is returned.
 The search algorithm can either return a simple result or a result with attached metrics.
 The metrics are flags indicating the type of match (exact, canonical, fuzzy etc.) and any associated
 warnings, such as a parent-child synonyms or excluded names.
+
+### Errors and Exceptions
+
+Sometimes these are recorded as errors, sometimes they are thrown as exceptions, 
+depending on entry point into the API.
+Normal matching to a single taxon usually implies a default handling of these exceptions.
+
+* **Affinity species** Raised when a name has an "affinity" marker, such as *Xanthorrhoea aff. bracteata*
+  Since this means, essentially, "like but not" it represents a match that would be inaccurate if matched
+  to *Xanthorrhoea bracteata* itself. These are usually matched to a higher taxon.
+* **Associated name excluded** Raised when we have two matches, one which is excluded and one which is
+  not. This can happen for something which is present in one place but not in another.
+  In this case, the non-excluded name is generally used, since distribution information is not used.
+* **Confer species** Raised when a name as a "confer species" marker, such as *Lepidotrigla cf. japonica*
+  This means that the species should be conferred to the species given, since it may not be the same species.
+  There are a number of known confer species entries in the name matching index. This is a marker that
+  the match may not be correct.
+* **Excluded species** The name is excluded. (ie. you thought you saw one but you were wrong) If there is a correct taxon that the excluded name is,
+  then it can be treated as a synonym. Some names are completely excluded.
+* **Homonym** Indicates an unresolved homonym. This is usually because the name has been used across
+  different nomenclatural codes and there is not enough information supplied to disambiguate the name.
+  In some cases, the IRMNG database also triggers a homonym because the name is present there, even though
+  it is not present in the main name index.
+* **Matched to misapplied name** Indicates that, as well as an accepted concept, there is also one or more misapplied names
+  that matches the name. In this case, the accepted concept is matched to but this flags the possibility
+  of a mis-supplied name. For example *Gonocarpus tetragynus* is a name with an accepted concept that has also been
+  misapplied to *Gonocarpus diffusus* and *Gonocarpus teucrioides*
+* **Misapplied name** A misapplied name with no accepted concept for that name. 
+  If the name has been misapplied to a a single accepted concept, then that concept can be used,
+  otherwise a hihger taxon match is often used.
+* **Parent-child synonym** Raised when we have a synonym of species A pointing to a 
+  subspecies B of the same species A. This indicates that splitters have been at work and what was once
+  regarded as a single species is now several subspecies of that species.
+  For example, *Corvus coronoides* has a synonym to *Corvus coronoides coronoides* as well as it being
+  its parent and there is another subspecies, *Corvus coronoides perplexus*.
+  Generally, the subspecies is assumed when the species name is supplied.
+* **Question species** A supplied name with a question mark in it.
+  If you don't know then neither do the name matching algorithms.
+  Flags a possible erroneous match.
+* **Species plural** A name with a multiple species marker in it. For example *Pachyptila spp.*
+  This indicates a variety of species of a particular genus for family and is usually matched to a higher taxon.
+
+ 

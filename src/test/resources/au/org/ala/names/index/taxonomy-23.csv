@@ -1,0 +1,4 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source
+"ROOT","","","dr109","ICBN","ROOT","","domain","","","accepted","","","","","","","","","",""
+"Plantae","","","dr107","ICBN","Plantae","Haeckel","kingdom","","","accepted","","","","","","","","","",""
+"Fungi","ROOT","","dr109","ICBN","Fungi","Engl.","kingdom","","","accepted","","","","","","","","","",""

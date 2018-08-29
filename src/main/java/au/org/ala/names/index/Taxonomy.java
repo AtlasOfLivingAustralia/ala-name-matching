@@ -412,6 +412,7 @@ public class Taxonomy implements Reporter {
     public void resolve() throws Exception {
         this.provideUnknownTaxon();
         this.resolveLinks();
+        this.resolveLoops();
         if (!this.validate())
             throw new IndexBuilderException("Invalid source data");
         this.validateNameCollisions();
@@ -516,6 +517,26 @@ public class Taxonomy implements Reporter {
         logger.info("Finished validating name collisions");
     }
 
+    /**
+     * Resolve looping taxa.
+     * <p>
+     * Look for instances where there is an internal loop in the taxonomy, using the provided links.
+     * </p>
+     *
+     * @throws IndexBuilderException
+     */
+    public void resolveLoops() throws IndexBuilderException {
+        logger.info("Resolving loops");
+        Set<TaxonConceptInstance> synonymLoops = this.instances.values().parallelStream().map(TaxonConceptInstance::findSimpleSynonymLoop).filter(tci -> tci != null).collect(Collectors.toSet());
+        synonymLoops.stream().forEach(tci -> tci.resolveSynonymLoop(this));
+        Set<TaxonConceptInstance> parentLoops = this.instances.values().parallelStream().map(TaxonConceptInstance::findSimpleParentLoop).filter(tci -> tci != null).collect(Collectors.toSet());
+        List<RankType> ranks = this.getOrderedRanks(parentLoops);
+        for (RankType rank: ranks) { // Reolve highest ranks first to see whether we can keep underlying taxonomy
+            parentLoops.stream().filter(tci -> tci.getRank() == rank).forEach(tci -> tci.resolveParentLoop(this));
+        }
+        logger.info("Finished resolving loops");
+    }
+
 
     /**
      * Resolve the preferred instance associated with a taxon concept
@@ -536,9 +557,7 @@ public class Taxonomy implements Reporter {
     public void resolveTaxon() throws IndexBuilderException {
         logger.info("Resolving taxa");
         final Collection<TaxonConceptInstance> allInstances = this.instances.values();
-        final Set<RankType> rs = allInstances.stream().map(TaxonConceptInstance::getRank).collect(Collectors.toSet());
-        List<RankType> ranks = new ArrayList<>(rs);
-        Collections.sort(ranks, (r1, r2) -> r1.getSortOrder() - r2.getSortOrder());
+        List<RankType> ranks = this.getOrderedRanks(allInstances);
         long prevResolved = 0;
         long resolved = 0;
         do {
@@ -1590,6 +1609,20 @@ public class Taxonomy implements Reporter {
      */
     public NameProvider getInferenceProvider() {
         return this.inferenceProvider;
+    }
+
+    /**
+     * Get a set of ranks corresponding to a collection of instances.
+     *
+     * @param insts The instances
+     *
+     * @return The ordered set of ranks
+     */
+    protected List<RankType> getOrderedRanks(Collection<TaxonConceptInstance> insts) {
+        final Set<RankType> rs = insts.stream().map(TaxonConceptInstance::getRank).collect(Collectors.toSet());
+        List<RankType> ranks = new ArrayList<>(rs);
+        Collections.sort(ranks, (r1, r2) -> r1.getSortOrder() - r2.getSortOrder());
+        return ranks;
     }
 
     /**

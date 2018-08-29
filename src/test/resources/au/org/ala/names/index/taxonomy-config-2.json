@@ -95,6 +95,18 @@
     "id" : "dr108",
     "parent": "unknown",
     "defaultScore" : 0
+  },{
+    "id" : "dr109",
+    "parent": "unknown",
+    "adjuster": {
+      "forbidden": [
+        {
+          "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+          "scientificName": "ROOT"
+        }
+      ]
+    },
+    "defaultScore" : 100
   }],
   "defaultProvider" : "unknown",
   "acceptedCutoff" : 50

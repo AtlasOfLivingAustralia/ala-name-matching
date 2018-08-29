@@ -2,10 +2,7 @@
 
 package au.org.ala.names.search;
 
-import au.org.ala.names.model.LinnaeanRankClassification;
-import au.org.ala.names.model.MatchType;
-import au.org.ala.names.model.NameSearchResult;
-import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.*;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.checklistbank.model.Classification;
 import org.gbif.nameparser.PhraseNameParser;
