@@ -10,6 +10,10 @@ The document applies to v2 (and earlier) versions of the name matching library
 * **canonical name** The scientific name formatted according to the rules of the naming codes without
   extraneous detail.
   (In practice, this means according to the GBIF form.)
+* **excluded** An indication that a name should not be used.
+  Usually, this means that something has been identified as a taxon from somewhere else.
+  Excluded basically means "you think this is right, but you're wrong"
+  Excluded *should* be for a geographical range (eg. excluded in WA) but this is not modelled
 * **left** and **right** values The name index is in the form of a tree.
   The index is enumerated from left to right in a top down fashion.
   Each leaf of the tree has an index number assigned to it and the left- and right-values are
@@ -245,7 +249,8 @@ The search algorithm can either return a simple result or a result with attached
 The metrics are flags indicating the type of match (exact, canonical, fuzzy etc.) and any associated
 warnings, such as a parent-child synonyms or excluded names.
 
-### Errors and Exceptions
+
+## Errors and Exceptions
 
 Sometimes these are recorded as errors, sometimes they are thrown as exceptions, 
 depending on entry point into the API.
@@ -285,5 +290,3 @@ Normal matching to a single taxon usually implies a default handling of these ex
   Flags a possible erroneous match.
 * **Species plural** A name with a multiple species marker in it. For example *Pachyptila spp.*
   This indicates a variety of species of a particular genus for family and is usually matched to a higher taxon.
-
- 
