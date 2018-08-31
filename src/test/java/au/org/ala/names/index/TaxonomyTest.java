@@ -1,7 +1,9 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.util.TestUtils;
+import org.gbif.api.vocabulary.TaxonomicStatus;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.junit.After;
@@ -397,10 +399,10 @@ public class TaxonomyTest extends TestUtils {
         this.taxonomy.createDwCA(dir);
         assertTrue(new File(dir, "meta.xml").exists());
         assertTrue(new File(dir, "eml.xml").exists());
-        assertEquals(11, this.rowCount(new File(dir, "taxon.txt")));
-        assertEquals(21, this.rowCount(new File(dir, "taxonvariant.txt")));
-        assertEquals(51, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(11, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(12, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(22, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(52, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(12, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
 
@@ -418,10 +420,10 @@ public class TaxonomyTest extends TestUtils {
         this.taxonomy.createDwCA(dir);
         assertTrue(new File(dir, "meta.xml").exists());
         assertTrue(new File(dir, "eml.xml").exists());
-        assertEquals(4, this.rowCount(new File(dir, "taxon.txt")));
-        assertEquals(5, this.rowCount(new File(dir, "taxonvariant.txt")));
-        assertEquals(5, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(12, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(5, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(6, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(6, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(13, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
 
@@ -441,7 +443,7 @@ public class TaxonomyTest extends TestUtils {
         this.taxonomy.createDwCA(dir);
         assertTrue(new File(dir, "meta.xml").exists());
         assertTrue(new File(dir, "eml.xml").exists());
-        assertEquals(11, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(12, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(2, this.rowCount(new File(dir, "vernacularname.txt")));
     }
 
@@ -466,10 +468,10 @@ public class TaxonomyTest extends TestUtils {
         File dir = new File(this.taxonomy.getWork(), "output");
         dir.mkdir();
         this.taxonomy.createDwCA(dir);
-        assertEquals(3, this.rowCount(new File(dir, "taxon.txt")));
-        assertEquals(3, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(4, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(4, this.rowCount(new File(dir, "taxonvariant.txt")));
         File identifier = new File(dir, "identifier.txt");
-        assertEquals(4, this.rowCount(identifier));
+        assertEquals(5, this.rowCount(identifier));
         this.dumpFile(identifier);
         assertTrue(this.fileContains(identifier, Pattern.compile("^7178434\t7178429.*discarded.*")));
     }
@@ -497,10 +499,10 @@ public class TaxonomyTest extends TestUtils {
         dir.mkdir();
         this.taxonomy.createDwCA(dir);
         File taxon = new File(dir, "taxon.txt");
-        assertEquals(4, this.rowCount(taxon));
+        assertEquals(5, this.rowCount(taxon));
         assertTrue(this.fileContains(taxon, Pattern.compile("^7178429\t\t7178434.*inferredSynonym.*")));
-        assertEquals(4, this.rowCount(new File(dir, "taxonvariant.txt")));
-        assertEquals(4, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(5, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(5, this.rowCount(new File(dir, "identifier.txt")));
     }
 
     // Test resolution to a preferred rank with key rewriting
@@ -568,10 +570,74 @@ public class TaxonomyTest extends TestUtils {
         this.taxonomy.createDwCA(dir);
         assertTrue(new File(dir, "meta.xml").exists());
         assertTrue(new File(dir, "eml.xml").exists());
-        assertEquals(5, this.rowCount(new File(dir, "taxon.txt")));
-        assertEquals(10, this.rowCount(new File(dir, "taxonvariant.txt")));
-        assertEquals(10, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(11, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(6, this.rowCount(new File(dir, "taxon.txt")));
+        assertEquals(11, this.rowCount(new File(dir, "taxonvariant.txt")));
+        assertEquals(11, this.rowCount(new File(dir, "identifier.txt")));
+        assertEquals(12, this.rowCount(new File(dir, "rightsholder.txt")));
+    }
+
+    // Test the presence of a taxon loop
+    @Test
+    public void testUnknownTaxon1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-21.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Falcata");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Furcata");
+        TaxonConceptInstance tci3 = this.taxonomy.getInstance("Other");
+        assertEquals(TaxonomicType.INFERRED_UNPLACED ,tci1.getTaxonomicStatus());
+        assertNull(tci1.getAcceptedNameUsageID());
+        assertNull(tci1.getAcceptedNameUsage());
+        assertNull(tci1.getAccepted());
+        assertNotNull(tci1.getProvenanceString());
+        assertEquals(TaxonomicType.SYNONYM, tci2.getTaxonomicStatus());
+        assertEquals(tci1.getTaxonID(), tci2.getAcceptedNameUsageID());
+        assertSame(tci1, tci2.getAccepted());
+        assertNull(tci2.getProvenanceString());
+        assertEquals(TaxonomicType.SYNONYM, tci3.getTaxonomicStatus());
+        assertEquals(tci1.getTaxonID(), tci3.getAcceptedNameUsageID());
+        assertSame(tci1, tci3.getAccepted());
+        assertNull(tci3.getProvenanceString());
+      }
+
+    // Test the presence of a taxon loop in s parent
+    @Test
+    public void testUnknownTaxon2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-22.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Pterostylis");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Furcata");
+        TaxonConceptInstance tci3 = this.taxonomy.getInstance("Furcata_furcata");
+        TaxonConceptInstance unknown = taxonomy.getInstance(tci1.getProvider().getUnknownTaxonID());
+        assertSame(unknown, tci1.getResolvedParent());
+        assertNotNull(tci1.getProvenanceString());
+        assertSame(tci1, tci2.getResolvedParent());
+        assertSame(tci2, tci3.getResolvedParent());
+    }
+
+    // Test forbidden parents don't do to the unknown taxon
+    @Test
+    public void testUnknownTaxon3() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-23.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("ROOT");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Plantae");
+        TaxonConceptInstance tci3 = this.taxonomy.getInstance("Fungi");
+        assertTrue(tci1.isForbidden());
+        assertNull(tci1.getResolvedParent());
+        assertNull(tci2.getResolvedParent());
+        assertNull(tci3.getResolvedParent());
     }
 
 }

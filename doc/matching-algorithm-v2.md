@@ -42,7 +42,7 @@ The document applies to v2 (and earlier) versions of the name matching library
 The matching algorithm uses a pre-constructed set of lucene indexes.
 The indexes are:
 
-# cb
+### cb
 
 The main index contains taxon concepts.
 Each taxon concept contains the following fields:

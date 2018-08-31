@@ -46,11 +46,11 @@ Each provider contains the following information:
     Generally, this will be the data resource id of the source.
     Supplied taxonomies map onto providers via the `datasetID` or `datasetName` terms.
 * **name** A human readable name for the provider.
+* **parent** The id of a parent provider. Child providers inherit most properties
+  of the parent provider.
 * **description** A description of the provider.
 * **rightsHolder** The rights holder to the source data.
 * **licence** The licence under which the source data is provided.
-* **parent** The id of a parent provider. Child providers inherit most properties
-  of the parent provider.
 * **external** Is this an external source of information that can be referred to, 
   as opposed to an internally generated source. Defaults to `true`
 * **loose** Does this provider provide "loose" information?
@@ -78,6 +78,9 @@ Each provider contains the following information:
   NONE (the default) which simply leaves unranked taxa as-is, SYNONYMS which searches for a ranked taxon
   with the same name/author for synonyms only or ALL which searches for a ranked taxon for all unranked
   taxa.
+* **unknownTaxonID** An identifier for a missing taxon. Synonym loops and the like map onto this
+  taxon, which must exist in the taxonomy.
+
 
 
 ### Adjusters

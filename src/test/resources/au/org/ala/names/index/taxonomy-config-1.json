@@ -18,7 +18,8 @@
       "adjustments" : [ ]
     },
     "loose" : false,
-    "external" : true
+    "external" : true,
+    "unknownTaxonID" : "ALA_The_Unknown_Taxon"
   } ],
   "defaultProvider" : "ID-1",
   "acceptedCutoff" : 50

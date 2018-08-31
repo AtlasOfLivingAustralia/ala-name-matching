@@ -79,7 +79,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     public static Comparator<TaxonConceptInstance> INVERSE_SCORE_COMPARATOR = SCORE_COMPARATOR.reversed();
 
     /** The maximum number of iterations to attempt during resolution before suspecting somethiing is wrong */
-    public static final int MAX_RESOLUTION_STEPS = 20;
+    public static final int MAX_RESOLUTION_STEPS = 40;
 
     /** Classification fields from name sources */
     protected static final List<Term> CLASSIFICATION_FIELDS = Arrays.asList(
@@ -673,6 +673,121 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
+     * Test to see if this instance has a simple synonym loop.
+     * <p>
+     * A simple loop is one provided by the source taxonomy and uses {@link #getAccepted()} to navigate links.
+     * This returns the lowest scored element from the loop. So <code>A(50) -> B(100) -> C(60) -> B(100)</code> will return C.
+     * The first detected loop element is where we can insert a break.
+     * </p>
+     *
+     * @return The first instance where there is a look
+     */
+    public TaxonConceptInstance findSimpleSynonymLoop() {
+        List<TaxonConceptInstance> trace = new ArrayList<>();
+        TaxonConceptInstance tci = this;
+        int steps = MAX_RESOLUTION_STEPS;
+
+        while (tci != null && steps > 0) {
+            if (trace.contains(tci)) {
+                int index = trace.indexOf(tci);
+                trace = trace.subList(index, trace.size());
+                trace.sort((tci1, tci2) -> tci1.getTaxonID().compareTo(tci2.getTaxonID()));
+                trace.sort((tci1, tci2) -> tci1.getScore() - tci2.getScore());
+                return trace.isEmpty() ? tci : trace.get(0);
+            }
+            trace.add(tci);
+            steps--;
+            TaxonomicElement a = tci.getAccepted();
+            tci = a != null && (a instanceof TaxonConceptInstance) ? (TaxonConceptInstance) a : null;
+        }
+        return tci;
+    }
+
+    /**
+     * Break a synonym loop by makling this instance inferred unplaced.
+     * <p>
+     * If a parent hasn't been supplied, then make it the unknown taxon.
+     * </p>
+     *
+     * @param taxonomy The taxonomy to use
+     */
+    public void resolveSynonymLoop(Taxonomy taxonomy) {
+        TaxonConceptInstance breakPoint = this.findSimpleSynonymLoop();
+        if (breakPoint == null) // Already corrected by something else
+            return;
+        if (breakPoint != this) {
+            breakPoint.resolveSynonymLoop(taxonomy);
+            return;
+        }
+        taxonomy.report(IssueType.PROBLEM, "instance.accepted.resolve.loop", this, this.traceAccepted());
+        this.taxonomicStatus = TaxonomicType.INFERRED_UNPLACED;
+        this.accepted = null;
+        this.acceptedNameUsage = null;
+        this.acceptedNameUsageID = null;
+        this.score = null;
+        if (this.parent == null) {
+            String unknownTaxonID = this.getProvider().getUnknownTaxonID();
+            TaxonConceptInstance unknownTaxon = taxonomy.getInstance(unknownTaxonID);
+            this.parentNameUsage = null;
+            this.parentNameUsageID = unknownTaxonID;
+            this.parent = unknownTaxon;
+        }
+        String provenance = taxonomy.getResources().getString("instance.accepted.resolve.loop.provenance");
+        this.addProvenance(provenance);
+    }
+
+    /**
+     * Test to see if this instance has a simple parent loop.
+     * <p>
+     * A simple loop is one provided by the source taxonomy and uses {@link #getParent()} to navigate links.
+     * This returns the highest ranking loop element. So <code>species -> genus -> family -> genus</code> will return family.
+     * The highest ranking loop element is where we can insert a break.
+     * </p>
+     *
+     * @return True if there is a parent loop
+     */
+    public TaxonConceptInstance findSimpleParentLoop() {
+        List<TaxonConceptInstance> trace = new ArrayList<>();
+        TaxonConceptInstance tci = this;
+        int steps = MAX_RESOLUTION_STEPS;
+
+        while (tci != null && steps > 0) {
+            if (trace.contains(tci))
+                return trace.stream().min((tci1, tci2) -> tci1.getRank().getId() - tci2.getRank().getId()).orElse(tci);
+            trace.add(tci);
+            steps--;
+            TaxonomicElement p = tci.getParent();
+            tci = p != null && (p instanceof TaxonConceptInstance) ? (TaxonConceptInstance) p : null;
+        }
+        return tci;
+    }
+
+    /**
+     * Break a parent loop by making the parent the unknown taxon.
+     *
+     * @param taxonomy The taxonomy to use
+     */
+    public void resolveParentLoop(Taxonomy taxonomy) {
+        TaxonConceptInstance breakPoint = this.findSimpleParentLoop();
+        if (breakPoint == null) // Already corrected by something else
+            return;
+        if (breakPoint != this) {
+            breakPoint.resolveParentLoop(taxonomy);
+            return;
+        }
+        this.taxonomicStatus = TaxonomicType.INFERRED_UNPLACED;
+        String unknownTaxonID = this.getProvider().getUnknownTaxonID();
+        TaxonConceptInstance unknownTaxon = taxonomy.getInstance(unknownTaxonID);
+        taxonomy.report(IssueType.PROBLEM, "instance.parent.resolve.loop", this, this.traceParent());
+        this.parent = unknownTaxon;
+        this.parentNameUsage = null;
+        this.parentNameUsageID = unknownTaxonID;
+        this.score = null;
+        String provenance = taxonomy.getResources().getString("instance.parent.resolve.loop.provenance");
+        this.addProvenance(provenance);
+    }
+
+    /**
      * Trace all parents, making sure that there isn't a loop.
      *
      * @param taxonomy The source taxonomy
@@ -682,24 +797,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     private boolean validateParent(Taxonomy taxonomy) {
         if (this.parent == null)
             return true;
-        TaxonomicElement elt = this;
-        List<TaxonomicElement> parents = new ArrayList<>(MAX_RESOLUTION_STEPS);
-        parents.add(this);
-        while (elt != null) {
-            if (elt instanceof TaxonConceptInstance) {
-                elt = ((TaxonConceptInstance) elt).parent;
-                if (elt != null) {
-                    if (parents.contains(elt)) {
-                        parents.add(elt);
-                        taxonomy.report(IssueType.VALIDATION, "instance.validation.parent.loop", this, parents);
-                        return false;
-                    }
-                    parents.add(elt);
-                }
-            } else {
-                elt = null;
-            }
-         }
+        TaxonomicElement loop = this.findSimpleParentLoop();
+        if (loop != null) {
+            taxonomy.report(IssueType.VALIDATION, "instance.validation.parent.loop", this, this.traceParent());
+            return false;
+        }
         return true;
     }
 
@@ -1029,10 +1131,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             try {
                 TaxonConceptInstance rp = this.getResolvedParent();
                 pid = rp == null ? null : rp.getTaxonID();
-                if (pid == null) {
-                    taxonomy.report(IssueType.ERROR, "instance.parent.resolve", this, null);
-                }
             } catch (ResolutionException ex) {
+                pid = this.provider.getUnknownTaxonID();
                 taxonomy.report(IssueType.ERROR, "instance.parent.resolve.loop", this, this.traceParent());
             }
             values.put(DwcTerm.parentNameUsageID, pid);
@@ -1045,10 +1145,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             try {
                 TaxonConceptInstance ra = this.getResolvedAccepted();
                 aid = ra == null ? null : ra.getTaxonID();
-                if (aid == null) {
-                    taxonomy.report(IssueType.ERROR, "instance.accepted.resolve", this, null);
-                }
              } catch (ResolutionException ex) {
+                aid = this.provider.getUnknownTaxonID();
                 taxonomy.report(IssueType.ERROR, "instance.accepted.resolve.loop", this, this.traceAccepted());
             }
             values.put(DwcTerm.acceptedNameUsageID, aid);

@@ -29,6 +29,9 @@ import java.util.*;
 public class NameProvider {
     /** The default score for a name provider, giving room for lower scores */
     public static final int DEFAULT_SCORE = 100;
+    /** The default uknown taxon identifier */
+    public static final String DEFAULT_UNKNOWN_TAXON_ID = "ALA_The_Unknown_Taxon";
+
 
     /** The provider identifier */
     @JsonProperty
@@ -78,6 +81,9 @@ public class NameProvider {
     /** Assign unranked elements to ranked elements */
     @JsonProperty
     private UnrankedStrategy unrankedStrategy;
+    /** The identifier of the unknown taxon */
+    @JsonProperty
+    private String unknownTaxonID;
 
     /**
      * Default constructor
@@ -104,9 +110,10 @@ public class NameProvider {
      *
      * @param id The source identifier
      * @param defaultScore The default source priority
+     * @param unknownTaxonID The unknow taxon identifier
      * @param scores Additional priority mappings
      */
-    public NameProvider(String id, Integer defaultScore, Map<String, Integer> scores) {
+    public NameProvider(String id, Integer defaultScore, String unknownTaxonID, Map<String, Integer> scores) {
         this.id = id;
         this.name = this.id;
         this.description = null;
@@ -121,6 +128,7 @@ public class NameProvider {
         this.keyAdjuster = new KeyAdjuster();
         this.loose = false;
         this.external = true;
+        this.unknownTaxonID = unknownTaxonID;
     }
 
     /**
@@ -157,7 +165,7 @@ public class NameProvider {
      * @param defaultScore The default source priority
      */
     public NameProvider(String id, int defaultScore) {
-        this(id, defaultScore, Collections.EMPTY_MAP);
+        this(id, defaultScore, DEFAULT_UNKNOWN_TAXON_ID, Collections.EMPTY_MAP);
     }
 
     /**
@@ -280,6 +288,28 @@ public class NameProvider {
             return this.unrankedStrategy;
         UnrankedStrategy us =  this.parent != null ? this.parent.getUnrankedStrategy() : null;
         return us == null ? UnrankedStrategy.NONE : us;
+    }
+
+    /**
+     * Get the identifier of The Unknown Taxon
+     * <p>
+     * If a synonym loop or bad parent is detected, the taxon id is mapped onto The Unknown Taxon.
+     * This allows the BIE and name matching to not explode in tragedy from dangling synonyms.
+     * If one is not explicitly set, get the parent identifier.
+     * If there is no identifier, an exception is thrown.
+     * </p>
+     *
+     * @return The unranked strategy.
+     *
+     * @throws IndexBuilderException if there is no unknown taxon identifier
+     */
+    public String getUnknownTaxonID() throws IndexBuilderException {
+        if (this.unknownTaxonID != null)
+            return this.unknownTaxonID;
+        String utid =  this.parent != null ? this.parent.getUnknownTaxonID() : null;
+        if (utid == null)
+            throw new IndexBuilderException("Unable to find unknown taxon identifier for " + this.getId());
+        return utid;
     }
 
     /**
@@ -447,6 +477,27 @@ public class NameProvider {
         if (this.parent != null)
             key = this.parent.adjustKey(key, instance);
         return this.keyAdjuster == null ? key : this.keyAdjuster.adjustKey(key, instance);
+    }
+
+    /**
+     * Validate the name provider.
+     *
+     * @param taxonomy The taxonomy
+     *
+     * @return True if the provider is valid, false otherwise.
+     */
+    public boolean validate(Taxonomy taxonomy) {
+        try {
+            String utid = this.getUnknownTaxonID();
+            if (taxonomy != null && taxonomy.getInstance(utid) == null) {
+                taxonomy.report(IssueType.ERROR, "provider.validation.unknownTaxonID.notFound", utid, null, null);
+                return false;
+            }
+        } catch (IndexBuilderException ex) {
+            taxonomy.report(IssueType.ERROR, "provider.validation.unknownTaxonID.noID", null, null, null);
+            return false;
+        }
+        return true;
     }
 
     /**

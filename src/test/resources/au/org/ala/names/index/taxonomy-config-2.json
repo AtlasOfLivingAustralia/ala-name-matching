@@ -11,12 +11,15 @@
   "resolverClass" : "au.org.ala.names.index.ALATaxonResolver",
   "providers" : [ {
     "id" : "unknown",
-      "defaultScore" : 100
+      "defaultScore" : 100,
+      "unknownTaxonID" : "ALA_The_Unknown_Taxon"
   },{
     "id" : "dr100",
+    "parent": "unknown",
     "defaultScore" : 150
   },{
     "id" : "dr101",
+    "parent": "unknown",
     "defaultScore" : 125,
     "scores" : {
       "Hypnales": 200
@@ -34,6 +37,7 @@
     }
   },{
     "id" : "dr102",
+    "parent": "unknown",
     "adjuster": {
       "forbidden": [
         {
@@ -46,6 +50,7 @@
     "defaultScore" : 150
   },{
     "id" : "dr103",
+    "parent": "unknown",
     "adjuster": {
       "forbidden": [
         {
@@ -58,6 +63,7 @@
     "defaultScore" : 150
   },{
     "id" : "dr104",
+    "parent": "unknown",
     "keyAdjuster": {
       "adjustments": [
         {
@@ -73,18 +79,34 @@
     "defaultScore" : 150
   },{
     "id" : "dr105",
+    "parent": "unknown",
     "unrankedStrategy": "SYNONYMS",
     "defaultScore" : 150
   },{
     "id" : "dr106",
+    "parent": "unknown",
     "unrankedStrategy": "ALL",
     "defaultScore" : 150
   },{
     "id" : "dr107",
+    "parent": "unknown",
     "defaultScore" : 80
   },{
     "id" : "dr108",
+    "parent": "unknown",
     "defaultScore" : 0
+  },{
+    "id" : "dr109",
+    "parent": "unknown",
+    "adjuster": {
+      "forbidden": [
+        {
+          "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+          "scientificName": "ROOT"
+        }
+      ]
+    },
+    "defaultScore" : 100
   }],
   "defaultProvider" : "unknown",
   "acceptedCutoff" : 50
