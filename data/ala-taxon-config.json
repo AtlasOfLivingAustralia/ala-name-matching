@@ -1,7 +1,7 @@
 {
   "id": "ALA-Combined",
   "name": "ALA Combined Taxonomy",
-  "description": "Resolved taxonomy built from AusFungi, AusMoss, AFD, APNI/APC, NZOR, CCAB, Catalogue of Life and ALA speices lists",
+  "description": "Resolved taxonomy built from AusFungi, AusMoss, AFD, APNI/APC, NZOR, CAAB, Catalogue of Life and ALA species lists",
   "contact": {
     "organization": "Atlas of Living Australia",
     "email": [ "data_management@ala.org.au" ]

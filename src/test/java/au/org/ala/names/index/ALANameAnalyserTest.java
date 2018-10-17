@@ -132,6 +132,42 @@ public class ALANameAnalyserTest {
     }
 
     @Test
+    public void testKey14() throws Exception {
+        NameKey key = this.analyser.analyse("ICNAFP", "Munida aff. amathea", null, "species");
+        assertEquals(NomenclaturalCode.BOTANICAL, key.getCode());
+        assertEquals(NameType.DOUBTFUL, key.getType());
+        assertEquals("MUNIDA AFF AMATHEA", key.getScientificName());
+        assertNull(key.getScientificNameAuthorship());
+    }
+
+    @Test
+    public void testKey15() throws Exception {
+        NameKey key = this.analyser.analyse("ICNAFP", "Munida aff amathea", null, "species");
+        assertEquals(NomenclaturalCode.BOTANICAL, key.getCode());
+        assertEquals(NameType.DOUBTFUL, key.getType());
+        assertEquals("MUNIDA AFF AMATHEA", key.getScientificName());
+        assertNull(key.getScientificNameAuthorship());
+    }
+
+    @Test
+    public void testKey16() throws Exception {
+        NameKey key = this.analyser.analyse("ICNAFP", "Waminoa cf. brickneri", null, "species");
+        assertEquals(NomenclaturalCode.BOTANICAL, key.getCode());
+        assertEquals(NameType.DOUBTFUL, key.getType());
+        assertEquals("WAMINOA CF BRICKNERI", key.getScientificName());
+        assertNull(key.getScientificNameAuthorship());
+    }
+
+    @Test
+    public void testKey17() throws Exception {
+        NameKey key = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Waminoa cf. brickneri", null, null, true);
+        assertEquals(NomenclaturalCode.BOTANICAL, key.getCode());
+        assertEquals(NameType.DOUBTFUL, key.getType());
+        assertEquals("WAMINOA CF BRICKNERI", key.getScientificName());
+        assertNull(key.getScientificNameAuthorship());
+    }
+
+    @Test
     public void testAuthorEquals1() throws Exception {
         assertEquals(0, this.analyser.compareAuthor(null, null));
         assertTrue( this.analyser.compareAuthor("L.", null) > 0);

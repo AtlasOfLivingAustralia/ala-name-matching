@@ -215,11 +215,6 @@ public class ALANameAnalyser extends NameAnalyser {
         if (rankType == null)
             rankType = RankType.UNRANKED;
 
-        // Loose name clean up
-        if (loose) {
-            scientificName = DOUBTFUL.matcher(scientificName).replaceAll(" ");
-        }
-
         // Remove non-name characters
         scientificName = NON_NAME.matcher(scientificName).replaceAll(" ");
         scientificName = SPACES.matcher(scientificName).replaceAll(" ");
