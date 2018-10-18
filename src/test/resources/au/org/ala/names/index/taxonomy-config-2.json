@@ -107,6 +107,11 @@
       ]
     },
     "defaultScore" : 100
+  },{
+    "id" : "dr110",
+    "parent": "unknown",
+    "unrankedStrategy": "SYNONYMS_INFER",
+    "defaultScore" : 150
   }],
   "defaultProvider" : "unknown",
   "acceptedCutoff" : 50

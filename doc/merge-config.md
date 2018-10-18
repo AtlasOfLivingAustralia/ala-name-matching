@@ -75,12 +75,11 @@ Each provider contains the following information:
   SYNONYMISE_TO_PARENT makes the discarded taxon a synonym of its parent (use this option with caution, since
   you are likely to get a large number of "Unplaced"s acting as synonyms).
 * **unrankedStrategy** How to handle unranked taxa. This can be one of
-  NONE (the default) which simply leaves unranked taxa as-is, SYNONYMS which searches for a ranked taxon
-  with the same name/author for synonyms only or ALL which searches for a ranked taxon for all unranked
-  taxa.
+  `NONE` (the default) which simply leaves unranked taxa as-is, `SYNONYMS` which searches for an existing ranked taxon
+  with the same name/author for synonyms only or `ALL` which searches for an existing ranked taxon for all unranked
+  taxa. If you use `SYNONYMS_INFER` or `ALL_INFER` an attempt to infer the rank is made, even if there isn't an existing ranked taxon.
 * **unknownTaxonID** An identifier for a missing taxon. Synonym loops and the like map onto this
-  taxon, which must exist in the taxonomy.
-
+  taxon. If the taxon doesn't already exist, it is created.
 
 
 ### Adjusters

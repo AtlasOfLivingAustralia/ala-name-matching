@@ -232,7 +232,7 @@ public class ALATaxonResolver implements TaxonResolver {
         TaxonConcept found = parent.findRankedConcept(instance.getContainer().getKey(), acceptedRank, this.taxonomy);
         if (found != null) {
             return found.getRank();
-        } else {
+        } else if (instance.getProvider().getUnrankedStrategy().isInferRank()) {
             // Try name analysis to see whether we can get anywhere
             try {
                 NameParser parser = new PhraseNameParser();
@@ -241,8 +241,9 @@ public class ALATaxonResolver implements TaxonResolver {
                     return RankType.getForCBRank(pn.getRank());
             } catch (UnparsableException ex) {
             }
+            return acceptedRank;
         }
-        return acceptedRank;
+        return null;
     }
 
     /**

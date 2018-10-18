@@ -15,8 +15,13 @@ import java.util.Set;
  * @copyright Copyright &copy; 2018 Atlas of Living Australia
  */
 public enum UnrankedStrategy {
-    ALL(TaxonomicType.values()),
-    SYNONYMS(
+    /** Reassign all unranked taxa. If there isn't a matching ranked taxon, then infer rank. */
+    ALL_INFER(true, TaxonomicType.values()),
+    /** Reassign all unranked taxa with a matching, ranked name */
+    ALL(false, TaxonomicType.values()),
+    /** Reassign all synonyms. If there isn't a matching ranked taxon, then infer rank. */
+    SYNONYMS_INFER(
+            true,
             TaxonomicType.HOMOTYPIC_SYNONYM,
             TaxonomicType.INFERRED_SYNONYM,
             TaxonomicType.SYNONYM,
@@ -24,14 +29,37 @@ public enum UnrankedStrategy {
             TaxonomicType.OBJECTIVE_SYNONYM,
             TaxonomicType.PRO_PARTE_SYNONYM,
             TaxonomicType.SUBJECTIVE_SYNONYM),
-    NONE();
+    /** Reassign all synonyms with a matching, ranked name */
+    SYNONYMS(
+            false,
+            TaxonomicType.HOMOTYPIC_SYNONYM,
+            TaxonomicType.INFERRED_SYNONYM,
+            TaxonomicType.SYNONYM,
+            TaxonomicType.HETEROTYPIC_SYNONYM,
+            TaxonomicType.OBJECTIVE_SYNONYM,
+            TaxonomicType.PRO_PARTE_SYNONYM,
+            TaxonomicType.SUBJECTIVE_SYNONYM),
+    /** Reassign nothing */
+    NONE(false);
 
     /** The taxonomic types to reassign */
     private Set<TaxonomicType> reassign;
+    /** Infer rank, even if there is no reassignable rank */
+    private boolean inferRank;
 
     /** Build for a specific set of taxonomic types */
-    private UnrankedStrategy(TaxonomicType... types) {
+    private UnrankedStrategy(boolean inferRank, TaxonomicType... types) {
+        this.inferRank = inferRank;
         this.reassign = new HashSet<>(Arrays.asList(types));
+    }
+
+    /**
+     * Infer a rank from the taxon, if not able to find a matching, ranked taxon
+     *
+     * @return True if rank is to be inferred
+     */
+    public boolean isInferRank() {
+        return this.inferRank;
     }
 
     /**
