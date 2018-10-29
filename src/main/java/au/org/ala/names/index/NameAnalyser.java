@@ -36,7 +36,7 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
      * Convienience method for testing.
      */
     public NameKey analyse(TaxonConceptInstance instance) {
-        return this.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), false);
+        return this.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), instance.getTaxonomicStatus(), false);
     }
 
     /**
@@ -45,7 +45,7 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
     public NameKey analyse(String code, String scientificName, String scientificNameAuthorship, String rank) {
         NomenclaturalCode canonicalCode = this.canonicaliseCode(code);
         RankType rankType = this.canonicaliseRank(rank);
-        return this.analyse(canonicalCode, scientificName, scientificNameAuthorship, rankType, false);
+        return this.analyse(canonicalCode, scientificName, scientificNameAuthorship, rankType, null, false);
     }
 
     /**
@@ -59,11 +59,12 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
      * @param scientificName The scientific name
      * @param scientificNameAuthorship The authorship
      * @param rankType The taxon rank
+     * @param taxonomicStatus The taxonomic status
      * @param loose This is from a loose source that may have names and authors mixed up and the like
      *
      * @return A suitable name key
      */
-    abstract public NameKey analyse(@Nullable NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, @Nullable RankType rankType, boolean loose);
+    abstract public NameKey analyse(@Nullable NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, @Nullable RankType rankType, @Nullable TaxonomicType taxonomicStatus, boolean loose);
 
     /**
      * Set the issue reporter.

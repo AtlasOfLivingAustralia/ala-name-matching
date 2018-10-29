@@ -101,6 +101,8 @@ public enum RankType {
     HYBRID(8150, "hybrid", null, null, 8150, true),
     SUPRAGENERICNAME(8200, "supragenericname", Rank.SUPRAGENERIC_NAME, null, 8200, true, "http://rs.tdwg.org/ontology/voc/TaxonRank#SupragenericTaxon"),
     INFORMAL(-1, "informal", null, null, 100000, true),
+    INCERTAE_SEDIS(-1, "incertae sedis", null, null, 150000, true),
+    SPECIES_INQUIRENDA(-1, "species inquirenda", null, null, 160000, true),
     UNRANKED(0, "unranked", Rank.UNRANKED, null, 200000, true);
 
 

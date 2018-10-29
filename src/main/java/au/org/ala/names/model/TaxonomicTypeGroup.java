@@ -13,6 +13,7 @@ public enum TaxonomicTypeGroup {
     EXCLUDED,
     MISCELLANEOUS,
     INCERTAE_SEDIS,
+    SPECIES_INQUIRENDA,
     UNPLACED,
     DOUBTFUL,
     INVALID

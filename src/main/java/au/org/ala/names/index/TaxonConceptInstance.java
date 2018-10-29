@@ -221,9 +221,9 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         this.parentNameUsageID = parentNameUsageID;
         this.acceptedNameUsage = acceptedNameUsage;
         this.acceptedNameUsageID = acceptedNameUsageID;
-        this.taxonRemarks = taxonRemarks;
+        this.taxonRemarks = taxonRemarks == null ? null : new ArrayList<>(taxonRemarks);
         this.verbatimTaxonRemarks = verbatimTaxonRemarks;
-        this.provenance = provenance;
+        this.provenance = provenance == null ? null : new ArrayList<>(provenance);
         this.classification = classification;
     }
 

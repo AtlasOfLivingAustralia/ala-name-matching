@@ -16,6 +16,7 @@
 package org.gbif.nameparser;
 
 import au.org.ala.names.model.ALAParsedName;
+import au.org.ala.names.model.RankType;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.gbif.api.exception.UnparsableException;
@@ -24,21 +25,27 @@ import org.gbif.api.vocabulary.NameType;
 import org.gbif.api.vocabulary.Rank;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * A Parser that can be used to parse a "Phrase" name.  It is assumed
  * that any name being parsed has not been matched to a regular scientific name.
- * <p/>
- * It expects everything to the right of the rank marker.
- *
+ * Along with a number of other special cases:
+ * <ul>
+ *     <li>Phrase names have the form <em>Genus rank "Name" (Voucher)</em>
+ *      Everything to the right of the rank marker to match the phrase name form.
+ *     </li>
+ *     <li>Cases where someone has screwed up the case of an infrageneric name</li>
+ *     <li>Names of the form <em>Genus</em> species <em>12</em> are treated as placeholder names</li>
+ * </ul>
+ * <p>
  * It extends the GBIF NameParser {@see org.gbif.nameparser.GBIFNameParser}, when the name is not wellformed this parser will then
  * attempt parse it into a phrase name. See https://code.google.com/p/ala-portal/wiki/ALANames#Glossary
  * for more information about phrase names.
- *
- * <p>
- *     Moved to package org.gbif.nameparser to allow access to recently protected fields
+ * Moved to package org.gbif.nameparser to allow access to recently protected fields
  * </p>
  *
  * @author Natasha Carter
@@ -62,7 +69,6 @@ public class PhraseNameParser extends GBIFNameParser {
     protected static final String LOCATION_OR_DESCR = "(?:[" + ALL_LETTERS_NUMBERS + " -'\"_\\.]+|\\.)";
     protected static final String VOUCHER = "(\\([" + ALL_LETTERS_NUMBERS + "- \\./&,']+\\))";
     protected static final String SOURCE_AUTHORITY = "([" + ALL_LETTERS_NUMBERS + "\\[\\]'\" -,\\.]+|\\.)";
-    protected static final String PHRASE = "";
     protected static final String PHRASE_RANKS = "(?:" + StringUtils.join(VALID_PHRASE_RANKS.keySet(), "|") + ")\\.? ";
     private static final String RANK_MARKER_ALL = "(notho)? *(" + StringUtils.join(RankUtils.RANK_MARKER_MAP.keySet(), "|")
             + ")\\.?";
@@ -87,6 +93,10 @@ public class PhraseNameParser extends GBIFNameParser {
     protected static final Pattern WRONG_CASE_INFRAGENERIC = Pattern.compile("(?:" + "\\( ?([" + NormalisedNameParser.name_letters + "-]+) ?\\)"
             + "|" + "(" + StringUtils.join(RankUtils.RANK_MARKER_MAP_INFRAGENERIC.keySet(), "|") + ")\\.? ?([" + NormalisedNameParser.NAME_LETTERS
             + "][" + NormalisedNameParser.name_letters + "-]+)" + ")");
+
+    protected static final String RANK_MARKER_INFRAGENERIC = "(?:" + StringUtils.join(RankUtils.RANK_MARKER_MAP_INFRAGENERIC.keySet(), "|") + ")\\.?";
+    protected static final String NUMBER_PLACEHOLDER = "\\d+\\.?";
+    protected static final Pattern NUMBERED_PLACEHOLDER = Pattern.compile("(" + NormalisedNameParser.MONOMIAL + ")\\s+((" + RANK_MARKER_INFRAGENERIC + ")\\s*" + NUMBER_PLACEHOLDER + ")(\\s+" + NormalisedNameParser.AUTHOR_TEAM + "(\\s*,\\s*" + NormalisedNameParser.YEAR + ")?)?");
 
     protected static final Pattern IGNORE_MARKERS = Pattern.compile("s[\\.| ]+str[\\. ]+");
 
@@ -128,6 +138,23 @@ public class PhraseNameParser extends GBIFNameParser {
             if (m.find()) {
                 scientificName = WordUtils.capitalize(scientificName, '(');
                 pn = super.parse(scientificName, rank);
+            }
+            // Check for a numbered placeholder
+            m = NUMBERED_PLACEHOLDER.matcher(scientificName);
+            if (m.matches()) {
+                String nameRank = m.group(3);
+                String genus = m.group(1);
+                String epithet = m.group(2);
+                String author = m.group(4) == null ? null : m.group(4).trim();
+                if (StringUtils.isNotBlank(genus) && StringUtils.isNotBlank(epithet) && StringUtils.isNotBlank(nameRank)) {
+                    if (StringUtils.isNotBlank(author))
+                        pn.setAuthorship(author);
+                    pn.setAuthorsParsed(true);
+                    pn.setGenusOrAbove(genus);
+                    pn.setRank(rank != null ? rank : RankUtils.inferRank(nameRank));
+                    pn.setSpecificEpithet(epithet);
+                    pn.setType(NameType.PLACEHOLDER);
+                }
             }
         }
 

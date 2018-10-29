@@ -897,7 +897,7 @@ public class ALANameIndexer {
             if (cn != null && cn.isParsableType() && !cn.isIndetermined()
                     // a scientific name with some informal addition like "cf." or indetermined like Abies spec.
                     // ALSO prevent subgenus because they parse down to genus plus author
-                    && cn.getType() != NameType.INFORMAL && !"6500".equals(rank) && cn.getType() != NameType.DOUBTFUL)
+                    && cn.getType() != NameType.INFORMAL && !"6500".equals(rank) && cn.getType() != NameType.DOUBTFUL && !nameSet.contains(cn.canonicalName()))
             {
                 Field f2 = new TextField(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES);
                 f2.setBoost(boost);

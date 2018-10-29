@@ -872,7 +872,7 @@ public class Taxonomy implements Reporter {
         NameKey taxonKey;
         String remark, explain;
 
-        taxonKey = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), loose);
+        taxonKey = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), instance.getTaxonomicStatus(), loose);
         taxonKey = instance.getProvider().adjustKey(taxonKey, instance);
         switch (taxonKey.getType()) {
             case PLACEHOLDER:
@@ -995,7 +995,7 @@ public class Taxonomy implements Reporter {
      */
     public TaxonomicElement findElement(NomenclaturalCode code, String name, NameProvider provider, RankType rank) {
         NameKey nameKey = null;
-        nameKey = this.analyser.analyse(code, name, null, rank, provider.isLoose()).toNameKey();
+        nameKey = this.analyser.analyse(code, name, null, rank, null, provider.isLoose()).toNameKey();
         if (nameKey.isUncoded())
             return this.bareNames.get(nameKey);
         if (nameKey.isUnranked())

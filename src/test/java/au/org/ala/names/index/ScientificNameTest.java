@@ -59,7 +59,7 @@ public class ScientificNameTest {
                 null,
                 null
         );
-        NameKey instanceKey = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, NAME_1, AUTHOR_1, RankType.SPECIES, false);
+        NameKey instanceKey = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, NAME_1, AUTHOR_1, RankType.SPECIES, null, false);
         NameKey nameKey = instanceKey.toNameKey();
         ScientificName name = new ScientificName(null, nameKey);
         name.addInstance(instanceKey, instance);

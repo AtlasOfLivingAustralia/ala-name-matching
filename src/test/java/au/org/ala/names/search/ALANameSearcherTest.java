@@ -1369,23 +1369,6 @@ public class ALANameSearcherTest {
     }
 
 
-    @Ignore // TODO Find valid parent-child synonym
-    @Test
-    public void testSimpleLookup11()  {
-        try {
-            String name = "Pimelea collina";
-            NameSearchResult nsr = searcher.searchForRecord(name);
-            fail("Expecting parent-child synonym exception");
-        } catch (ParentSynonymChildException ex) {
-            NameSearchResult nsr = ex.getChildResult();
-            assertNotNull(nsr);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:6667178a-4c9c-475d-938b-7f9733707588", nsr.getLsid());
-            assertEquals(RankType.SUBSPECIES, nsr.getRank());
-        } catch (SearchResultException ex) {
-            fail("Unexpected search exception " + ex);
-        }
-    }
-
     @Test
     public void testSimpleLookup12()  {
         try {
@@ -1395,6 +1378,38 @@ public class ALANameSearcherTest {
         } catch (HomonymException e) {
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
+        }
+    }
+    @Test
+    public void testParentChildSynonym1()  {
+        try {
+            String name = "Pitta versicolor";
+            NameSearchResult nsr = searcher.searchForRecord(name);
+            fail("Expecting parent-child synonym exception");
+        } catch (ParentSynonymChildException ex) {
+            NameSearchResult nsr = ex.getChildResult();
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:d0e66526-1cdd-4b03-85b2-71b7e7d8b84a", nsr.getLsid());
+            assertEquals(RankType.SUBSPECIES, nsr.getRank());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
+        }
+    }
+
+    // Top be corrected
+    @Test
+    public void testParentChildSynonym2()  {
+        try {
+            String name = "Diaporthe Nitschke 1870";
+            NameSearchResult nsr = searcher.searchForRecord(name);
+            fail("Expecting parent-child synonym exception");
+        } catch (ParentSynonymChildException ex) {
+            NameSearchResult nsr = ex.getChildResult();
+            assertNotNull(nsr);
+            assertEquals("NZOR-4-95452", nsr.getLsid());
+            assertEquals(RankType.SPECIES, nsr.getRank());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex);
         }
     }
 

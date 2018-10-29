@@ -21,10 +21,6 @@
         "forbidden": [
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
-            "taxonomicStatus": "INCERTAE_SEDIS"
-          },
-          {
-            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
             "taxonomicStatus": "INVALID"
           },
           {
@@ -50,9 +46,23 @@
           {
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
-              "taxonomicStatus": "MISCELLANEOUS_LITERATURE"
+              "taxonomicStatus": "INCERTAE_SEDIS"
             },
             "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "SPECIES_INQUIRENDA"
+            },
+            "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "MISCELLANEOUS_LITERATURE"
+            },
+            "adjustment": -250
           },
           {
             "condition": {

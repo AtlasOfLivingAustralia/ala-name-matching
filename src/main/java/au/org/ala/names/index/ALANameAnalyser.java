@@ -94,7 +94,7 @@ public class ALANameAnalyser extends NameAnalyser {
     /**
      * Something that looks like an unplaced name
      */
-    protected static final Predicate<String> PLACEHOLDER_TEST = Pattern.compile("(?i:incertae sedis|unplaced)").asPredicate();
+    protected static final Predicate<String> PLACEHOLDER_TEST = Pattern.compile("(?i:species inquirenda|incertae sedis|unplaced)").asPredicate();
     /**
      * Something that looks like a hybrid
      */
@@ -148,12 +148,13 @@ public class ALANameAnalyser extends NameAnalyser {
      * @param scientificName           The scientific name
      * @param scientificNameAuthorship The authorship
      * @param rankType                 The taxon rank
+     * @param taxonomicStatus          The taxonomic status
      * @param loose                    This is from a loose source that may have authors mixed up with names
      *
      * @return The analyzed name
      */
     @Override
-    public NameKey analyse(@Nullable NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, boolean loose) {
+    public NameKey analyse(@Nullable NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, TaxonomicType taxonomicStatus, boolean loose) {
         NameType nameType = NameType.INFORMAL;
         if (scientificNameAuthorship != null && scientificName.endsWith(scientificNameAuthorship)) {
             scientificName = scientificName.substring(0, scientificName.length() - scientificNameAuthorship.length()).trim();
@@ -186,7 +187,7 @@ public class ALANameAnalyser extends NameAnalyser {
 
 
         // Categorize
-        if (PLACEHOLDER_TEST.test(scientificName)) {
+        if (PLACEHOLDER_TEST.test(scientificName) || (taxonomicStatus != null && taxonomicStatus.isPlaceholder())) {
             scientificName = scientificName + " " + UUID.randomUUID().toString();
             nameType = NameType.PLACEHOLDER;
         } else if (code == NomenclaturalCode.VIRUS) {
