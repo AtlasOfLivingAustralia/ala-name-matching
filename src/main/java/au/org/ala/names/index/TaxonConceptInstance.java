@@ -1359,7 +1359,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         instance.score = null;
         instance.forbidden = false;
         String provenance = taxonomy.getResources().getString("taxonConcept.unranked.reallocate.provenance");
-        provenance = MessageFormat.format(provenance, newRank);
+        provenance = MessageFormat.format(provenance, newRank.getRank());
         instance.addProvenance(provenance);
         taxonomy.report(IssueType.NOTE, "taxonConcept.unranked.reallocate", this, Arrays.asList(instance));
         taxonomy.count("count.resolve.unrankedTaxonConcept");

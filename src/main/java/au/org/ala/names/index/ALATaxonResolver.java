@@ -105,6 +105,12 @@ public class ALATaxonResolver implements TaxonResolver {
      *         <li>If there is a principal taxon matching the same scientific name with the same status, then choose that one</li>
      *         <li>Otherwise, add this as a non-principal</li>
      *     </ol>
+     *     <li>For unplaced or placeholder taxa wihout an accepted taxon
+     *     <ol>
+     *         <li>If there is a principal taxon matching the same taxon concept, then choose that one</li>
+     *         <li>If there is a principal taxon matching the same scientific name, then choose that one</li>
+     *         <li>Otherwise, add this as a non-principal</li>
+     *     </ol>
      *     <li>For non-accepted, non-synonym taxa without an accepted taxon
      *     <ol>
      *         <li>If there is a principal taxon with the same status, then choose that one</li>
@@ -196,6 +202,17 @@ public class ALATaxonResolver implements TaxonResolver {
                 return;
             }
             if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getTaxonomicStatus() == taxonomicStatus && tci.getAccepted() != null && tci.getAccepted().getContainer().getContainer() == acceptedScientificName).findFirst()).isPresent()) {
+                resolution.addInternal(instance, resolved.get(), this.taxonomy);
+                return;
+            }
+            resolution.addInternal(instance, instance, taxonomy);
+            return;
+        } else if (taxonomicStatus.isPlaceholder() || taxonomicStatus.isUnplaced()) {
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getContainer() == taxonConcept).findFirst()).isPresent()) {
+                resolution.addInternal(instance, resolved.get(), this.taxonomy);
+                return;
+            }
+            if ((resolved = resolution.getUsed().stream().filter(tci -> tci.getContainer().getContainer() == acceptedScientificName).findFirst()).isPresent()) {
                 resolution.addInternal(instance, resolved.get(), this.taxonomy);
                 return;
             }

@@ -55,7 +55,7 @@ public class PhraseNameParserTest {
         assertFalse(pn instanceof ALAParsedName);
         assertEquals("Diaporthe", pn.getGenusOrAbove());
         assertEquals("species1", pn.getSpecificEpithet());
-        assertEquals(NameType.SCIENTIFIC, pn.getType());
+        assertEquals(NameType.PLACEHOLDER, pn.getType());
         assertNull(pn.getAuthorship());
         assertEquals("Diaporthe species1", pn.canonicalName());
     }
@@ -65,10 +65,21 @@ public class PhraseNameParserTest {
         ParsedName pn = parser.parse("Diaporthe species 1");
         assertFalse(pn instanceof ALAParsedName);
         assertEquals("Diaporthe", pn.getGenusOrAbove());
-        assertEquals("1", pn.getSpecificEpithet());
-        assertEquals(NameType.SCIENTIFIC, pn.getType());
+        assertEquals("species-1", pn.getSpecificEpithet());
+        assertEquals(NameType.PLACEHOLDER, pn.getType());
         assertNull(pn.getAuthorship());
-        assertEquals("Diaporthe 1", pn.canonicalName());
+        assertEquals("Diaporthe species-1", pn.canonicalName());
+    }
+
+    @Test
+    public void testSpeciesPlaceholder3() throws Exception {
+        ParsedName pn = parser.parse("Diaporthe species-1");
+        assertFalse(pn instanceof ALAParsedName);
+        assertEquals("Diaporthe", pn.getGenusOrAbove());
+        assertEquals("species-1", pn.getSpecificEpithet());
+        assertEquals(NameType.PLACEHOLDER, pn.getType());
+        assertNull(pn.getAuthorship());
+        assertEquals("Diaporthe species-1", pn.canonicalName());
     }
 
 }

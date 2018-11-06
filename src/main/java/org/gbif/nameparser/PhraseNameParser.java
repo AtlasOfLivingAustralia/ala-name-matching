@@ -96,7 +96,7 @@ public class PhraseNameParser extends GBIFNameParser {
 
     protected static final String RANK_MARKER_INFRAGENERIC = "(?:" + StringUtils.join(RankUtils.RANK_MARKER_MAP_INFRAGENERIC.keySet(), "|") + ")\\.?";
     protected static final String NUMBER_PLACEHOLDER = "\\d+\\.?";
-    protected static final Pattern NUMBERED_PLACEHOLDER = Pattern.compile("(" + NormalisedNameParser.MONOMIAL + ")\\s+((" + RANK_MARKER_INFRAGENERIC + ")\\s*" + NUMBER_PLACEHOLDER + ")(\\s+" + NormalisedNameParser.AUTHOR_TEAM + "(\\s*,\\s*" + NormalisedNameParser.YEAR + ")?)?");
+    protected static final Pattern NUMBERED_PLACEHOLDER = Pattern.compile("(" + NormalisedNameParser.MONOMIAL + ")\\s+((" + RANK_MARKER_INFRAGENERIC + ")[\\s_\\-]*" + NUMBER_PLACEHOLDER + ")(\\s+" + NormalisedNameParser.AUTHOR_TEAM + "(\\s*,\\s*" + NormalisedNameParser.YEAR + ")?)?");
 
     protected static final Pattern IGNORE_MARKERS = Pattern.compile("s[\\.| ]+str[\\. ]+");
 
@@ -104,6 +104,24 @@ public class PhraseNameParser extends GBIFNameParser {
     @Override
     public ParsedName parse(String scientificName, Rank rank) throws UnparsableException {
         ParsedName pn = super.parse(scientificName, rank);
+        // Check for a numbered placeholder
+        Matcher m = NUMBERED_PLACEHOLDER.matcher(scientificName);
+        if (m.matches()) {
+            String nameRank = m.group(3);
+            String genus = m.group(1);
+            String epithet = m.group(2);
+            String author = m.group(4) == null ? null : m.group(4).trim();
+            if (StringUtils.isNotBlank(genus) && StringUtils.isNotBlank(epithet) && StringUtils.isNotBlank(nameRank)) {
+                if (StringUtils.isNotBlank(author))
+                    pn.setAuthorship(author);
+                pn.setAuthorsParsed(true);
+                pn.setGenusOrAbove(genus);
+                pn.setRank(rank != null ? rank : RankUtils.inferRank(nameRank));
+                pn.setSpecificEpithet(epithet.replaceAll("[ _-]+", "-"));
+                pn.setType(NameType.PLACEHOLDER);
+                return pn;
+            }
+        }
         if (pn.getType() != NameType.SCIENTIFIC && isPhraseRank(pn.getRank()) && (!pn.isAuthorsParsed() || pn.getSpecificEpithet() == null || SPECIES_PATTERN.matcher(pn.getSpecificEpithet()).matches())) {
             //if the rank marker is sp. and the word after the rank marker is lower case check to see if removing the marker will result is a wellformed name
             if (SPECIES_PATTERN.matcher(scientificName).find()) {
@@ -118,7 +136,7 @@ public class PhraseNameParser extends GBIFNameParser {
                 }
             }
             //check to see if the name represents a phrase name
-            Matcher m = PHRASE_PATTERN.matcher(scientificName);
+            m = PHRASE_PATTERN.matcher(scientificName);
             if (m.find()) {
                 ALAParsedName alapn = new ALAParsedName(pn);
                 alapn.setInfraGeneric(null);
@@ -134,30 +152,12 @@ public class PhraseNameParser extends GBIFNameParser {
 
         } else {
             //check for the situation where the subgenus was supplied without Title case.
-            Matcher m = WRONG_CASE_INFRAGENERIC.matcher(scientificName);
+            m = WRONG_CASE_INFRAGENERIC.matcher(scientificName);
             if (m.find()) {
                 scientificName = WordUtils.capitalize(scientificName, '(');
                 pn = super.parse(scientificName, rank);
             }
-            // Check for a numbered placeholder
-            m = NUMBERED_PLACEHOLDER.matcher(scientificName);
-            if (m.matches()) {
-                String nameRank = m.group(3);
-                String genus = m.group(1);
-                String epithet = m.group(2);
-                String author = m.group(4) == null ? null : m.group(4).trim();
-                if (StringUtils.isNotBlank(genus) && StringUtils.isNotBlank(epithet) && StringUtils.isNotBlank(nameRank)) {
-                    if (StringUtils.isNotBlank(author))
-                        pn.setAuthorship(author);
-                    pn.setAuthorsParsed(true);
-                    pn.setGenusOrAbove(genus);
-                    pn.setRank(rank != null ? rank : RankUtils.inferRank(nameRank));
-                    pn.setSpecificEpithet(epithet);
-                    pn.setType(NameType.PLACEHOLDER);
-                }
-            }
         }
-
         return pn;
     }
 

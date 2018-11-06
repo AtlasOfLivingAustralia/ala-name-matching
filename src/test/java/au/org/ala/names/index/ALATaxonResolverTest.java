@@ -244,4 +244,29 @@ public class ALATaxonResolverTest extends TestUtils {
     }
 
 
+    // Ensure unplaced taxa are linked with accepted taxa
+    @Test
+    public void testResolution4() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-26.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source));
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance tcia = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/apni/50587232");
+        TaxonConceptInstance tcin = this.taxonomy.getInstance("NZOR-6-60501");
+        TaxonConceptInstance tcim = this.taxonomy.getInstance("http://id.biodiversity.org.au/name/ausmoss/10001168");
+        TaxonConcept tca = tcia.getContainer();
+        assertEquals(3, tca.getInstances().size());
+        assertEquals(tca, tcin.getContainer());
+        assertEquals(tca, tcim.getContainer());
+        ALATaxonResolver resolver = new ALATaxonResolver(taxonomy);
+        TaxonResolution resolution = resolver.resolve(tca, resolver.principals(tca, tca.getInstances()), tca.getInstances());
+        assertEquals(1, resolution.getUsed().size());
+        assertEquals(1, resolution.getPrincipal().size());
+        assertEquals(tcia, resolution.getResolved(tcia));
+        assertEquals(tcia, resolution.getResolved(tcin));
+        assertEquals(tcia, resolution.getResolved(tcim));
+    }
+
 }

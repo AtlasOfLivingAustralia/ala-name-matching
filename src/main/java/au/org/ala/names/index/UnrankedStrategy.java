@@ -19,6 +19,30 @@ public enum UnrankedStrategy {
     ALL_INFER(true, TaxonomicType.values()),
     /** Reassign all unranked taxa with a matching, ranked name */
     ALL(false, TaxonomicType.values()),
+    /** Reassign any useful inferred taxa and synonyms. If there isn't a matching unranked taxon, the infer rank */
+    INFERRED_AND_SYNONYMS_INFER(
+            true,
+            TaxonomicType.INFERRED_UNPLACED,
+            TaxonomicType.INFERRED_SYNONYM,
+            TaxonomicType.INFERRED_ACCEPTED,
+            TaxonomicType.HOMOTYPIC_SYNONYM,
+            TaxonomicType.SYNONYM,
+            TaxonomicType.HETEROTYPIC_SYNONYM,
+            TaxonomicType.OBJECTIVE_SYNONYM,
+            TaxonomicType.PRO_PARTE_SYNONYM,
+            TaxonomicType.SUBJECTIVE_SYNONYM),
+    /** Reassign any useful inferred taxa and synonyms. */
+    INFERRED_AND_SYNONYMS(
+            false,
+            TaxonomicType.INFERRED_UNPLACED,
+            TaxonomicType.INFERRED_SYNONYM,
+            TaxonomicType.INFERRED_ACCEPTED,
+            TaxonomicType.HOMOTYPIC_SYNONYM,
+            TaxonomicType.SYNONYM,
+            TaxonomicType.HETEROTYPIC_SYNONYM,
+            TaxonomicType.OBJECTIVE_SYNONYM,
+            TaxonomicType.PRO_PARTE_SYNONYM,
+            TaxonomicType.SUBJECTIVE_SYNONYM),
     /** Reassign all synonyms. If there isn't a matching ranked taxon, then infer rank. */
     SYNONYMS_INFER(
             true,

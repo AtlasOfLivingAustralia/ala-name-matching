@@ -163,8 +163,6 @@ public class ALANameAnalyser extends NameAnalyser {
             ParsedName name = null;
             try {
                 name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
-                if ((rankType == null || rankType == RankType.UNRANKED) && name.getRank() != null)
-                    rankType = RankType.getForCBRank(name.getRank());
             } catch (UnparsableException ex) {
                 // Oh well, worth a try
             }

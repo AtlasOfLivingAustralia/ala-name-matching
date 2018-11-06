@@ -714,7 +714,8 @@
       "rightsHolder": "Atlas of Living Australia",
       "licence": "CC-BY",
       "parent": "default",
-      "defaultScore" : 0
+      "defaultScore" : 0,
+      "unrankedStrategy": "INFERRED_AND_SYNONYMS"
     }
   ],
   "defaultProvider" : "dr5393",

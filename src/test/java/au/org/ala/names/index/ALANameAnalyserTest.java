@@ -261,7 +261,7 @@ public class ALANameAnalyserTest {
     // Loose names
     @Test
     public void testkeyEquals11() throws Exception {
-        NameKey key1 = this.analyser.analyse(null, "Acaena rorida", "B.H.Macmill.", RankType.SPECIES, null, false);
+        NameKey key1 = this.analyser.analyse(null, "Acaena rorida", "B.H.Macmill.", null, null, false);
         NameKey key2 = this.analyser.analyse(null, "Acaena rorida B.H.Macmill.", null, null, null, true);
         assertTrue(key1.equals(key2));
     }
