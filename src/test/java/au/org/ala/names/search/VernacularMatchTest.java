@@ -25,7 +25,7 @@ public class VernacularMatchTest {
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new ALANameSearcher("/data/lucene/namematching-20170927");
+            searcher = new ALANameSearcher("/data/lucene/namematching-20181105");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -38,7 +38,8 @@ public class VernacularMatchTest {
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);
-        assertNull(result); // Has multiple matches
+        assertNotNull(result);
+        assertEquals(expectedLsid, result.getLsid());
     }
 
     @Ignore // Requires indidgenous names
