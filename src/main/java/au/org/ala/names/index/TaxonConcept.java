@@ -192,7 +192,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      */
     public void write(Taxonomy taxonomy, DwcaWriter writer) throws IOException {
         for (TaxonConceptInstance tci : this.resolution.getUsed()) {
-            if (tci.isForbidden()) {
+            if (!tci.isOutput()) {
                 continue;
             }
             Collection<TaxonConceptInstance> allocated = this.resolution.getChildren(tci);
@@ -205,7 +205,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
                     if (term != DwcTerm.taxonID) // Already added as coreId
                         writer.addCoreColumn(term, values.get(term));
                 for (TaxonConceptInstance sub : allocated) {
-                    if (sub.isForbidden())
+                    if (!sub.isOutput())
                         continue;
                     this.writeExtension(ALATerm.TaxonVariant, sub == tci ? values : sub.getTaxonMap(taxonomy), taxonomy, writer);
                     taxonomy.count("count.write.taxonConceptInstance");

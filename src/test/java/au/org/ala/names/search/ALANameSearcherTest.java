@@ -1361,11 +1361,11 @@ public class ALANameSearcherTest {
     @Test
     public void testSimpleLookup10()  {
         try {
-            String name = "Neobatrachus sudelli";
+            String name = "Eucalyptus acaciaeformis";
             NameSearchResult nsr = searcher.searchForRecord(name);
             assertNotNull(nsr);
-            assertNull(nsr.getAcceptedLsid());
-            assertEquals("ALA_Neobatrachus_sudelli", nsr.getLsid());
+            assertNotNull(nsr.getAcceptedLsid());
+            assertEquals("http://id.biodiversity.org.au/node/apni/2889217", nsr.getAcceptedLsid());
           } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }

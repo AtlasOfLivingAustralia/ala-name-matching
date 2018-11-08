@@ -614,6 +614,15 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
+     * Should we output this instance?
+     *
+     * @return True if not forbidden and of outputtable taxonomic status
+     */
+    public boolean isOutput() {
+        return !this.isForbidden() && this.getTaxonomicStatus().isOutput();
+    }
+
+    /**
      * Get the classification of the taxon in terms of higher-level taxa.
      *
      * @return

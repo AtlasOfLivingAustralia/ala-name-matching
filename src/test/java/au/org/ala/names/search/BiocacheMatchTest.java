@@ -436,8 +436,12 @@ public class BiocacheMatchTest {
             String name = "Canis lupus dingo";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c2056f1b-fcde-45b9-904b-1cab280368d1", metrics.getResult().getAcceptedLsid());
-            assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+            assertNotNull(metrics);
+            assertEquals("NZOR-6-132827", metrics.getResult().getLsid());
+            assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
+            NameSearchResult nsr = searcher.searchForCommonName(name);
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c2056f1b-fcde-45b9-904b-1cab280368d1", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }
