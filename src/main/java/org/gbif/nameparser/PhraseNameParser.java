@@ -16,6 +16,7 @@
 package org.gbif.nameparser;
 
 import au.org.ala.names.model.ALAParsedName;
+import au.org.ala.names.model.RankType;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 import org.gbif.api.exception.UnparsableException;
@@ -24,21 +25,27 @@ import org.gbif.api.vocabulary.NameType;
 import org.gbif.api.vocabulary.Rank;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * A Parser that can be used to parse a "Phrase" name.  It is assumed
  * that any name being parsed has not been matched to a regular scientific name.
- * <p/>
- * It expects everything to the right of the rank marker.
- *
+ * Along with a number of other special cases:
+ * <ul>
+ *     <li>Phrase names have the form <em>Genus rank "Name" (Voucher)</em>
+ *      Everything to the right of the rank marker to match the phrase name form.
+ *     </li>
+ *     <li>Cases where someone has screwed up the case of an infrageneric name</li>
+ *     <li>Names of the form <em>Genus</em> species <em>12</em> are treated as placeholder names</li>
+ * </ul>
+ * <p>
  * It extends the GBIF NameParser {@see org.gbif.nameparser.GBIFNameParser}, when the name is not wellformed this parser will then
  * attempt parse it into a phrase name. See https://code.google.com/p/ala-portal/wiki/ALANames#Glossary
  * for more information about phrase names.
- *
- * <p>
- *     Moved to package org.gbif.nameparser to allow access to recently protected fields
+ * Moved to package org.gbif.nameparser to allow access to recently protected fields
  * </p>
  *
  * @author Natasha Carter
@@ -62,7 +69,6 @@ public class PhraseNameParser extends GBIFNameParser {
     protected static final String LOCATION_OR_DESCR = "(?:[" + ALL_LETTERS_NUMBERS + " -'\"_\\.]+|\\.)";
     protected static final String VOUCHER = "(\\([" + ALL_LETTERS_NUMBERS + "- \\./&,']+\\))";
     protected static final String SOURCE_AUTHORITY = "([" + ALL_LETTERS_NUMBERS + "\\[\\]'\" -,\\.]+|\\.)";
-    protected static final String PHRASE = "";
     protected static final String PHRASE_RANKS = "(?:" + StringUtils.join(VALID_PHRASE_RANKS.keySet(), "|") + ")\\.? ";
     private static final String RANK_MARKER_ALL = "(notho)? *(" + StringUtils.join(RankUtils.RANK_MARKER_MAP.keySet(), "|")
             + ")\\.?";
@@ -88,12 +94,34 @@ public class PhraseNameParser extends GBIFNameParser {
             + "|" + "(" + StringUtils.join(RankUtils.RANK_MARKER_MAP_INFRAGENERIC.keySet(), "|") + ")\\.? ?([" + NormalisedNameParser.NAME_LETTERS
             + "][" + NormalisedNameParser.name_letters + "-]+)" + ")");
 
+    protected static final String RANK_MARKER_INFRAGENERIC = "(?:" + StringUtils.join(RankUtils.RANK_MARKER_MAP_INFRAGENERIC.keySet(), "|") + ")\\.?";
+    protected static final String NUMBER_PLACEHOLDER = "\\d+\\.?";
+    protected static final Pattern NUMBERED_PLACEHOLDER = Pattern.compile("(" + NormalisedNameParser.MONOMIAL + ")\\s+((" + RANK_MARKER_INFRAGENERIC + ")[\\s_\\-]*" + NUMBER_PLACEHOLDER + ")(\\s+" + NormalisedNameParser.AUTHOR_TEAM + "(\\s*,\\s*" + NormalisedNameParser.YEAR + ")?)?");
+
     protected static final Pattern IGNORE_MARKERS = Pattern.compile("s[\\.| ]+str[\\. ]+");
 
 
     @Override
     public ParsedName parse(String scientificName, Rank rank) throws UnparsableException {
         ParsedName pn = super.parse(scientificName, rank);
+        // Check for a numbered placeholder
+        Matcher m = NUMBERED_PLACEHOLDER.matcher(scientificName);
+        if (m.matches()) {
+            String nameRank = m.group(3);
+            String genus = m.group(1);
+            String epithet = m.group(2);
+            String author = m.group(4) == null ? null : m.group(4).trim();
+            if (StringUtils.isNotBlank(genus) && StringUtils.isNotBlank(epithet) && StringUtils.isNotBlank(nameRank)) {
+                if (StringUtils.isNotBlank(author))
+                    pn.setAuthorship(author);
+                pn.setAuthorsParsed(true);
+                pn.setGenusOrAbove(genus);
+                pn.setRank(rank != null ? rank : RankUtils.inferRank(nameRank));
+                pn.setSpecificEpithet(epithet.replaceAll("[ _-]+", "-"));
+                pn.setType(NameType.PLACEHOLDER);
+                return pn;
+            }
+        }
         if (pn.getType() != NameType.SCIENTIFIC && isPhraseRank(pn.getRank()) && (!pn.isAuthorsParsed() || pn.getSpecificEpithet() == null || SPECIES_PATTERN.matcher(pn.getSpecificEpithet()).matches())) {
             //if the rank marker is sp. and the word after the rank marker is lower case check to see if removing the marker will result is a wellformed name
             if (SPECIES_PATTERN.matcher(scientificName).find()) {
@@ -108,7 +136,7 @@ public class PhraseNameParser extends GBIFNameParser {
                 }
             }
             //check to see if the name represents a phrase name
-            Matcher m = PHRASE_PATTERN.matcher(scientificName);
+            m = PHRASE_PATTERN.matcher(scientificName);
             if (m.find()) {
                 ALAParsedName alapn = new ALAParsedName(pn);
                 alapn.setInfraGeneric(null);
@@ -124,13 +152,12 @@ public class PhraseNameParser extends GBIFNameParser {
 
         } else {
             //check for the situation where the subgenus was supplied without Title case.
-            Matcher m = WRONG_CASE_INFRAGENERIC.matcher(scientificName);
+            m = WRONG_CASE_INFRAGENERIC.matcher(scientificName);
             if (m.find()) {
                 scientificName = WordUtils.capitalize(scientificName, '(');
                 pn = super.parse(scientificName, rank);
             }
         }
-
         return pn;
     }
 

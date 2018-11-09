@@ -23,7 +23,7 @@ public class BiocacheMatchTest {
     @org.junit.BeforeClass
     public static void init() {
         try {
-            searcher = new ALANameSearcher("/data/lucene/namematching-20170927");
+            searcher = new ALANameSearcher("/data/lucene/namematching-20181105");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -102,7 +102,7 @@ public class BiocacheMatchTest {
         cl.setGenus("Graphis");
         cl.setSpecificEpithet("notreallyaname");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("NZOR-4-120184", metrics.getResult().getLsid()); // Can't find Graphis since not APC placed so gets Graphidaceae
+        assertEquals("NZOR-6-122770", metrics.getResult().getLsid()); // Can't find Graphis since not APC placed so gets Graphidaceae
     }
 
     @Test
@@ -151,7 +151,7 @@ public class BiocacheMatchTest {
             cl.setSpecificEpithet(spEp);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             //System.out.println(metrics.getResult());
-            assertEquals("NZOR-4-56674", metrics.getResult().getLsid());
+            assertEquals("http://id.biodiversity.org.au/instance/apni/884433", metrics.getResult().getLsid());
             assertTrue(metrics.getErrors().contains(ErrorType.HOMONYM));
 
         } catch (Exception e) {
@@ -197,21 +197,10 @@ public class BiocacheMatchTest {
     @Test
     public void testHomonym() {
         try {
-            searcher.searchForRecord("Terebratella", null);
-            fail("Expected homonym exception");
+            NameSearchResult nsr = searcher.searchForRecord("Agathis", null);
+            fail("Expected homonym exception, got" + nsr);
         } catch (Exception e) {
             assertTrue(e instanceof HomonymException);
-        }
-    }
-
-    @Test
-    public void commonName() {
-        try {
-            //System.out.println(searcher.searchForCommonName("Red Kangaroo"));
-            // searcher.searchForLSID("Centropogon australis");
-            searcher.searchForRecord("Dexillus muelleri", null);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -227,7 +216,7 @@ public class BiocacheMatchTest {
             cl.setScientificName("Myosurus minimus");
             metrics = searcher.searchForRecordMetrics(cl, true);
             assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
-            assertEquals("NZOR-4-91924", metrics.getResult().getLsid());
+            assertEquals("NZOR-6-93927", metrics.getResult().getLsid());
         } catch (Exception e) {
             fail("No exception shoudl occur");
             e.printStackTrace();
@@ -441,14 +430,18 @@ public class BiocacheMatchTest {
     }
 
     @Test
-    public void tesDingo1()  {
+    public void testDingo1()  {
         try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             String name = "Canis lupus dingo";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c2056f1b-fcde-45b9-904b-1cab280368d1", metrics.getResult().getAcceptedLsid());
-            assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+            assertNotNull(metrics);
+            assertEquals("NZOR-6-132827", metrics.getResult().getLsid());
+            assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
+            NameSearchResult nsr = searcher.searchForCommonName(name);
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c2056f1b-fcde-45b9-904b-1cab280368d1", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }

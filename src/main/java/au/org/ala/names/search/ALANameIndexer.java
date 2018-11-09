@@ -417,6 +417,9 @@ public class ALANameIndexer {
 
     /**
      * Indexes the IRMNG homonyms from the supplied DWCA direcory
+     * <p>
+     * Only accept those with a taxonomic status of accepted
+     * </p>
      * @param iw The index writer to write the lucene docs to
      * @param archiveDirectory  The directory in which the IRMNG DWCA has been unzipped.
      * @throws Exception
@@ -427,8 +430,11 @@ public class ALANameIndexer {
         Archive archive = ArchiveFactory.openArchive(new File(archiveDirectory));
         Iterator<Record> it = archive.getCore().iterator();
         while (it.hasNext()) {
-            Document doc = new Document();
             Record dwcr = it.next();
+            String taxonomicStatus = dwcr.value(DwcTerm.taxonomicStatus);
+            if (taxonomicStatus == null || !taxonomicStatus.equalsIgnoreCase("accepted"))
+                continue;
+            Document doc = new Document();
             String kingdom = dwcr.value(DwcTerm.kingdom);
             if (StringUtils.isNotEmpty(kingdom)) {
                 doc.add(new TextField(RankType.KINGDOM.getRank(), kingdom, Store.YES));
@@ -899,9 +905,11 @@ public class ALANameIndexer {
                     // ALSO prevent subgenus because they parse down to genus plus author
                     && cn.getType() != NameType.INFORMAL && !"6500".equals(rank) && cn.getType() != NameType.DOUBTFUL)
             {
-                Field f2 = new TextField(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES);
-                f2.setBoost(boost);
-                doc.add(f2);
+                if (!nameSet.contains(cn.canonicalName())) {
+                    Field f2 = new TextField(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES);
+                    f2.setBoost(boost);
+                    doc.add(f2);
+                }
                 if (specificEpithet == null && cn.isBinomial()) {
                     //check to see if we need to determine the epithets from the parse
                     soundexGenus = cn.getGenusOrAbove();
@@ -949,12 +957,18 @@ public class ALANameIndexer {
                 doc.add(new TextField(NameIndexField.GENUS_EX.toString(), TaxonNameSoundEx.treatWord(soundexGenus, "genus"), Store.YES));
             }
             if (StringUtils.isNotBlank(specificEpithet)) {
-                doc.add(new TextField(NameIndexField.SPECIES_EX.toString(), TaxonNameSoundEx.treatWord(specificEpithet, "species"), Store.YES));
+                String soundex = TaxonNameSoundEx.treatWord(specificEpithet, "species");
+                if (soundex == null)
+                    soundex = "<null>";
+                doc.add(new TextField(NameIndexField.SPECIES_EX.toString(), soundex, Store.YES));
             } else if (StringUtils.isNotBlank(soundexGenus)) {
                 doc.add(new TextField(NameIndexField.SPECIES_EX.toString(), "<null>", Store.YES));
             }
             if (StringUtils.isNotBlank(infraspecificEpithet)) {
-                doc.add(new TextField(NameIndexField.INFRA_EX.toString(), TaxonNameSoundEx.treatWord(infraspecificEpithet, "species"), Store.YES));
+                String soundex = TaxonNameSoundEx.treatWord(infraspecificEpithet, "species");
+                if (soundex == null)
+                    soundex = "<null>";
+                doc.add(new TextField(NameIndexField.INFRA_EX.toString(), soundex, Store.YES));
             } else if (StringUtils.isNotBlank(specificEpithet)) {
                 //make searching for an empty infraspecific soudex easier
                 doc.add(new TextField(NameIndexField.INFRA_EX.toString(), "<null>", Store.YES));

@@ -1,5 +1,6 @@
 package au.org.ala.names.index;
 
+import au.org.ala.names.model.VernacularType;
 import au.org.ala.vocab.ALATerm;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
@@ -204,6 +205,8 @@ public class DwcaNameSource extends NameSource {
                 }
                 List<Document> docs = new ArrayList<>();
                 docs.add(this.makeDocument(taxonomy, type, core, taxonID));
+                if (type != ALATerm.UnplacedVernacularName)
+                    addPseudoTaxon(taxonomy, core, taxonID, null);
                 for (List<Record> ext: record.extensions().values()) {
                     for (Record er: ext) {
                         docs.add(makeDocument(taxonomy, er.rowType(), er, taxonID));
@@ -294,6 +297,7 @@ public class DwcaNameSource extends NameSource {
                 docs.add(this.makeDocument(taxonomy, core.rowType(), core, instance.getTaxonID()));
                 for (List<Record> ext: record.extensions().values()) {
                     for (Record er: ext) {
+                        addPseudoTaxon(taxonomy, er, instance.getTaxonID(), code);
                         docs.add(makeDocument(taxonomy, er.rowType(), er, instance.getTaxonID()));
                     }
                 }
@@ -302,6 +306,55 @@ public class DwcaNameSource extends NameSource {
             }
         } catch (Exception ex) {
             throw new IndexBuilderException("Unable to load archive " + this.archive.getLocation() + " at taxon " + taxonID, ex);
+        }
+    }
+
+    /**
+     * Add a potential pseudo-taxon.
+     * <p>
+     * If this is a vernacular name with a type which is {@link VernacularType#isPseudoScientific()} then add
+     * a pseudo-taxon, a not output synonym to the correct taxon.
+     * </p>
+     * @param taxonomy The taxonomy
+     * @param record The source vernacular record
+     * @param taxonID The identifier of the parent taxon
+     * @param code The nomenclatural code (of the source taxon, generally)
+     *
+     * @throws Exception if unable to load the pseudo-taxon
+     */
+    private void addPseudoTaxon(Taxonomy taxonomy, Record record, String taxonID, NomenclaturalCode code) throws Exception {
+        if (record.rowType().equals(GbifTerm.VernacularName)) {
+            String vernacularName = record.value(DwcTerm.vernacularName);
+            String status = record.value(ALATerm.status);
+            VernacularType type = VernacularType.forTerm(status, VernacularType.COMMON);
+            if (type.isPseudoScientific()) {
+                NameProvider provider = taxonomy.resolveProvider(record.value(DwcTerm.datasetID), record.value(DwcTerm.datasetName));
+                String nameID = UUID.randomUUID().toString();
+                TaxonConceptInstance psuedo = new TaxonConceptInstance(
+                        nameID,
+                        code,
+                        null,
+                        provider,
+                        vernacularName,
+                        null,
+                        null,
+                        TaxonomicType.PSEUDO_TAXON,
+                        status,
+                        RankType.UNRANKED,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        taxonID,
+                        null,
+                        null,
+                        null,
+                        null
+                );
+                taxonomy.addInstance(psuedo);
+            }
         }
     }
 

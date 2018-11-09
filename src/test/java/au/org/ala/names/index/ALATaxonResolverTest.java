@@ -5,11 +5,11 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.junit.After;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * File description.
@@ -243,5 +243,56 @@ public class ALATaxonResolverTest extends TestUtils {
         assertEquals(tci22, resolution.getResolved(tci22));
     }
 
+
+    // Ensure unplaced taxa are linked with accepted taxa
+    @Test
+    public void testResolution4() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-26.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source));
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance tcia = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/apni/50587232");
+        TaxonConceptInstance tcin = this.taxonomy.getInstance("NZOR-6-60501");
+        TaxonConceptInstance tcim = this.taxonomy.getInstance("http://id.biodiversity.org.au/name/ausmoss/10001168");
+        TaxonConcept tca = tcia.getContainer();
+        assertEquals(3, tca.getInstances().size());
+        assertEquals(tca, tcin.getContainer());
+        assertEquals(tca, tcim.getContainer());
+        ALATaxonResolver resolver = new ALATaxonResolver(taxonomy);
+        TaxonResolution resolution = resolver.resolve(tca, resolver.principals(tca, tca.getInstances()), tca.getInstances());
+        assertEquals(1, resolution.getUsed().size());
+        assertEquals(1, resolution.getPrincipal().size());
+        assertEquals(tcia, resolution.getResolved(tcia));
+        assertEquals(tcia, resolution.getResolved(tcin));
+        assertEquals(tcia, resolution.getResolved(tcim));
+    }
+
+    // Ensure psuedo taxa are included and get resolved
+    @Test
+    public void testResolution5() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        DwcaNameSource source = new DwcaNameSource(new File(this.getClass().getResource("dwca-1").getFile()));
+        this.taxonomy.load(Arrays.asList(source));
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("urn:lsid:biodiversity.org.au:afd.taxon:c2056f1b-fcde-45b9-904b-1cab280368d1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("ALA_Canis_lupus_dingo");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        assertEquals(1, tc1.getInstances().size());
+        assertEquals(2, tc2.getInstances().size());
+        ALATaxonResolver resolver = new ALATaxonResolver(taxonomy);
+        TaxonResolution resolution = resolver.resolve(tc2, resolver.principals(tc2, tc2.getInstances()), tc2.getInstances());
+        assertEquals(1, resolution.getUsed().size());
+        assertEquals(1, resolution.getPrincipal().size());
+        TaxonConceptInstance tci3 = resolution.getPrincipal().get(0);
+        assertFalse(tci3.isOutput());
+        assertNotSame(tci2, tci3);
+        assertSame(tci3, resolution.getResolved(tci2));
+        assertSame(tci3, resolution.getResolved(tci3));
+    }
 
 }

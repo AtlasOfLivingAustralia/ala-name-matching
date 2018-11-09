@@ -1,7 +1,7 @@
 {
   "id": "ALA-Combined",
   "name": "ALA Combined Taxonomy",
-  "description": "Resolved taxonomy built from AusFungi, AusMoss, AFD, APNI/APC, NZOR, CCAB, Catalogue of Life and ALA speices lists",
+  "description": "Resolved taxonomy built from AusFungi, AusMoss, AFD, APNI/APC, NZOR, CAAB, Catalogue of Life and ALA species lists",
   "contact": {
     "organization": "Atlas of Living Australia",
     "email": [ "data_management@ala.org.au" ]
@@ -19,10 +19,6 @@
       "unknownTaxonID" : "ALA_The_Unknown_Taxon",
       "adjuster": {
         "forbidden": [
-          {
-            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
-            "taxonomicStatus": "INCERTAE_SEDIS"
-          },
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
             "taxonomicStatus": "INVALID"
@@ -50,9 +46,23 @@
           {
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
-              "taxonomicStatus": "MISCELLANEOUS_LITERATURE"
+              "taxonomicStatus": "INCERTAE_SEDIS"
             },
             "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "SPECIES_INQUIRENDA"
+            },
+            "adjustment": -200
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicStatus": "MISCELLANEOUS_LITERATURE"
+            },
+            "adjustment": -250
           },
           {
             "condition": {
@@ -704,7 +714,8 @@
       "rightsHolder": "Atlas of Living Australia",
       "licence": "CC-BY",
       "parent": "default",
-      "defaultScore" : 0
+      "defaultScore" : 0,
+      "unrankedStrategy": "INFERRED_AND_SYNONYMS"
     }
   ],
   "defaultProvider" : "dr5393",

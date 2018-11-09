@@ -132,6 +132,42 @@ public class ALANameAnalyserTest {
     }
 
     @Test
+    public void testKey14() throws Exception {
+        NameKey key = this.analyser.analyse("ICNAFP", "Munida aff. amathea", null, "species");
+        assertEquals(NomenclaturalCode.BOTANICAL, key.getCode());
+        assertEquals(NameType.DOUBTFUL, key.getType());
+        assertEquals("MUNIDA AFF AMATHEA", key.getScientificName());
+        assertNull(key.getScientificNameAuthorship());
+    }
+
+    @Test
+    public void testKey15() throws Exception {
+        NameKey key = this.analyser.analyse("ICNAFP", "Munida aff amathea", null, "species");
+        assertEquals(NomenclaturalCode.BOTANICAL, key.getCode());
+        assertEquals(NameType.DOUBTFUL, key.getType());
+        assertEquals("MUNIDA AFF AMATHEA", key.getScientificName());
+        assertNull(key.getScientificNameAuthorship());
+    }
+
+    @Test
+    public void testKey16() throws Exception {
+        NameKey key = this.analyser.analyse("ICNAFP", "Waminoa cf. brickneri", null, "species");
+        assertEquals(NomenclaturalCode.BOTANICAL, key.getCode());
+        assertEquals(NameType.DOUBTFUL, key.getType());
+        assertEquals("WAMINOA CF BRICKNERI", key.getScientificName());
+        assertNull(key.getScientificNameAuthorship());
+    }
+
+    @Test
+    public void testKey17() throws Exception {
+        NameKey key = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Waminoa cf. brickneri", null, null, null, true);
+        assertEquals(NomenclaturalCode.BOTANICAL, key.getCode());
+        assertEquals(NameType.DOUBTFUL, key.getType());
+        assertEquals("WAMINOA CF BRICKNERI", key.getScientificName());
+        assertNull(key.getScientificNameAuthorship());
+    }
+
+    @Test
     public void testAuthorEquals1() throws Exception {
         assertEquals(0, this.analyser.compareAuthor(null, null));
         assertTrue( this.analyser.compareAuthor("L.", null) > 0);
@@ -154,8 +190,8 @@ public class ALANameAnalyserTest {
 
     @Test
     public void testKeyEquals1() throws Exception {
-        NameKey key1 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Hemigenia brachyphylla F.Muell.", null, RankType.SPECIES, true);
-        NameKey key2 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Hemigenia brachyphylla F.Mueller", null, RankType.SPECIES, true);
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Hemigenia brachyphylla F.Muell.", null, RankType.SPECIES, null, true);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Hemigenia brachyphylla F.Mueller", null, RankType.SPECIES, null, true);
         assertTrue(key1.equals(key2));
     }
 
@@ -225,8 +261,8 @@ public class ALANameAnalyserTest {
     // Loose names
     @Test
     public void testkeyEquals11() throws Exception {
-        NameKey key1 = this.analyser.analyse(null, "Acaena rorida", "B.H.Macmill.", RankType.SPECIES, false);
-        NameKey key2 = this.analyser.analyse(null, "Acaena rorida B.H.Macmill.", null, null, true);
+        NameKey key1 = this.analyser.analyse(null, "Acaena rorida", "B.H.Macmill.", null, null, false);
+        NameKey key2 = this.analyser.analyse(null, "Acaena rorida B.H.Macmill.", null, null, null, true);
         assertTrue(key1.equals(key2));
     }
 
@@ -259,11 +295,27 @@ public class ALANameAnalyserTest {
         NameKey key2 = this.analyser.analyse("ICNAFP", "Hemigenia brachyphylla", "A.F. Nurke", "species");
         assertTrue(key1.equals(key2));
     }
+
     @Test
     public void testKeyEquals16() throws Exception {
         NameKey key1 = this.analyser.analyse("ICNAFP", "Hemigenia brachyphylla", "A. Nurke", "species");
         NameKey key2 = this.analyser.analyse("ICNAFP", "Hemigenia brachyphylla", "A Nurke", "species");
         assertTrue(key1.equals(key2));
+    }
+
+    // Placeholder names
+    @Test
+    public void testKeyEquals17() throws Exception {
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Incertae sedis", "F.Muell.", RankType.SPECIES, TaxonomicType.ACCEPTED, false);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Incertae sedis", "F.Muell.", RankType.SPECIES, TaxonomicType.ACCEPTED, false);
+        assertFalse(key1.equals(key2));
+    }
+
+    @Test
+    public void testKeyEquals18() throws Exception {
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Hemigenia brachyphylla", "F.Muell.", RankType.SPECIES, TaxonomicType.INCERTAE_SEDIS, false);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Hemigenia brachyphylla", "F.Muell.", RankType.SPECIES, TaxonomicType.INCERTAE_SEDIS, false);
+        assertFalse(key1.equals(key2));
     }
 
 

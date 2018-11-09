@@ -353,6 +353,62 @@ public class TaxonomyTest extends TestUtils {
         TaxonConcept tcSyn2 = syn2.getContainer();
         assertSame(tcAcc1, tcAcc2);
         assertSame(tcSyn1, tcSyn2);
+        assertEquals(RankType.UNRANKED, syn1.getRank());
+        assertEquals(RankType.UNRANKED, syn2.getRank());
+        assertNull(syn1.getProvenance());
+        assertNull(syn2.getProvenance());
+    }
+
+    // Test resolution to a preferred taxon for an unranked synonym which should stay unranked
+    @Test
+    public void testResolveUnranked6() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-24.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance acc1 = this.taxonomy.getInstance("Accepted-1");
+        TaxonConceptInstance acc2 = this.taxonomy.getInstance("Accepted-2");
+        TaxonConceptInstance syn1 = this.taxonomy.getInstance("Synonym-1");
+        assertNotNull(acc1);
+        assertNotNull(acc2);
+        assertNotNull(syn1);
+        TaxonConcept tcAcc1 = acc1.getContainer();
+        TaxonConcept tcAcc2 = acc2.getContainer();
+        TaxonConcept tcSyn1 = syn1.getContainer();
+        assertSame(tcAcc1, tcAcc2);
+        assertSame(acc1, syn1.getAccepted());
+        assertEquals(RankType.SUBSPECIES, acc1.getRank());
+        assertEquals(RankType.SUBSPECIES, acc2.getRank());
+        assertEquals(RankType.UNRANKED, syn1.getRank());
+        assertNull(syn1.getProvenance());
+    }
+    @Test
+    public void testResolveUnranked7() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-25.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance acc1 = this.taxonomy.getInstance("Accepted-1");
+        TaxonConceptInstance acc2 = this.taxonomy.getInstance("Accepted-2");
+        TaxonConceptInstance syn1 = this.taxonomy.getInstance("Synonym-1");
+        TaxonConceptInstance syn2 = this.taxonomy.getInstance("Synonym-2");
+        assertNotNull(acc1);
+        assertNotNull(acc2);
+        assertNotNull(syn1);
+        assertNotNull(syn2);
+        TaxonConcept tcAcc1 = acc1.getContainer();
+        TaxonConcept tcAcc2 = acc2.getContainer();
+        TaxonConcept tcSyn1 = syn1.getContainer();
+        TaxonConcept tcSyn2 = syn2.getContainer();
+        assertSame(tcAcc1, tcAcc2);
+        assertSame(tcSyn1, tcSyn2);
+        assertEquals(RankType.VARIETY, syn1.getRank());
+        assertEquals(RankType.UNRANKED, syn2.getRank());
+        assertFalse(syn1.getProvenance() == null || syn1.getProvenance().isEmpty());
     }
 
     // Test placement on an uncoded name
@@ -402,7 +458,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(12, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(22, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(52, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(12, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(13, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
 
@@ -423,7 +479,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(5, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(6, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(6, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(13, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(14, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
 
@@ -573,7 +629,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(6, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(11, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(11, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(12, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(13, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
     // Test the presence of a taxon loop

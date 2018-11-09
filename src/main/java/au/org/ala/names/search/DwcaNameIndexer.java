@@ -574,7 +574,16 @@ public class DwcaNameIndexer extends ALANameIndexer {
         String nameComplete = doc.get(NameIndexField.NAME_COMPLETE.toString());
         String lsid = doc.get(NameIndexField.LSID.toString());
         //get the canonical version if the sciname
-        String cname = getCanonical(name);
+        String cname = name;
+        ParsedName pn = null;
+        try {
+            pn = parser.parse(name);
+            if(pn.isParsableType()){
+                cname = pn.canonicalName();
+            }
+        } catch(Exception e){
+            //do nothing
+        }
         //create a new classification for this entry based on the parent
         LinnaeanRankClassification newcl = new LinnaeanRankClassification(higherClass);
         switch(rankId){
@@ -605,6 +614,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
             case 7000:
                 newcl.setSpecies(cname);
                 newcl.setSid(lsid);
+                if (pn != null && pn.isParsableType()) {
+                    newcl.setSpecificEpithet(pn.getSpecificEpithet());
+                }
                 break;
         }
         while (children != null && children.scoreDocs.length > 0) {
@@ -675,23 +687,6 @@ public class DwcaNameIndexer extends ALANameIndexer {
         if (rankId >= 0 && rankId % 1000 == 0)
             boost *= 5.0f;
         return boost;
-    }
-
-    /**
-     *
-     * @param name
-     * @return The canonical form of the supplied name.
-     */
-    private String getCanonical(String name){
-        try {
-            ParsedName pn = parser.parse(name);
-            if(pn.isParsableType()){
-                return pn.canonicalName();
-            }
-        } catch(Exception e){
-            //do nothing
-        }
-        return name;
     }
 
     /**

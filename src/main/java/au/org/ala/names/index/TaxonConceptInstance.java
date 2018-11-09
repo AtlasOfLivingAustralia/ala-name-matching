@@ -221,9 +221,9 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         this.parentNameUsageID = parentNameUsageID;
         this.acceptedNameUsage = acceptedNameUsage;
         this.acceptedNameUsageID = acceptedNameUsageID;
-        this.taxonRemarks = taxonRemarks;
+        this.taxonRemarks = taxonRemarks == null ? null : new ArrayList<>(taxonRemarks);
         this.verbatimTaxonRemarks = verbatimTaxonRemarks;
-        this.provenance = provenance;
+        this.provenance = provenance == null ? null : new ArrayList<>(provenance);
         this.classification = classification;
     }
 
@@ -611,6 +611,15 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     public void setForbidden(boolean forbidden) {
         this.forbidden = forbidden;
+    }
+
+    /**
+     * Should we output this instance?
+     *
+     * @return True if not forbidden and of outputtable taxonomic status
+     */
+    public boolean isOutput() {
+        return !this.isForbidden() && this.getTaxonomicStatus().isOutput();
     }
 
     /**
@@ -1359,7 +1368,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         instance.score = null;
         instance.forbidden = false;
         String provenance = taxonomy.getResources().getString("taxonConcept.unranked.reallocate.provenance");
-        provenance = MessageFormat.format(provenance, newRank);
+        provenance = MessageFormat.format(provenance, newRank.getRank());
         instance.addProvenance(provenance);
         taxonomy.report(IssueType.NOTE, "taxonConcept.unranked.reallocate", this, Arrays.asList(instance));
         taxonomy.count("count.resolve.unrankedTaxonConcept");
