@@ -41,10 +41,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -98,13 +97,13 @@ public class ALANameSearcher {
      * @throws IOException
      */
     public ALANameSearcher(String indexDirectory) throws IOException {
-        //Initialis CB index searching items
+        //Initialise CB index searching items
         log.debug("Creating the search object for the name matching api...");
         //make the query parsers thread safe
         queryParser = new ThreadLocal<QueryParser>() {
             @Override
             protected QueryParser initialValue() {
-                QueryParser qp = new QueryParser(Version.LATEST, "genus", new LowerCaseKeywordAnalyzer());
+                QueryParser qp = new QueryParser("genus", new LowerCaseKeywordAnalyzer());
                 qp.setFuzzyMinSim(0.8f); //fuzzy match similarity setting. used to match the authorship.
                 return qp;
             }
@@ -112,7 +111,7 @@ public class ALANameSearcher {
         idParser = new ThreadLocal<QueryParser>() {
             @Override
             protected QueryParser initialValue() {
-                return new QueryParser(Version.LATEST, "lsid", new org.apache.lucene.analysis.core.KeywordAnalyzer());
+                return new QueryParser( "lsid", new org.apache.lucene.analysis.core.KeywordAnalyzer());
             }
         };
 
@@ -132,18 +131,19 @@ public class ALANameSearcher {
                 this.getClass().getClassLoader().getResourceAsStream("au/org/ala/homonyms/cross_rank_homonyms.txt"), new java.util.HashSet<String>(), true);
     }
 
-    private File createIfNotExist(String indexDirectory) throws IOException {
+    private Path createIfNotExist(String indexDirectory) throws IOException {
 
         File idxFile = new File(indexDirectory);
+        Path path = Paths.get(indexDirectory);
         if (!idxFile.exists()) {
             FileUtils.forceMkdir(idxFile);
-            Analyzer analyzer = new StandardAnalyzer(Version.LATEST);
-            IndexWriterConfig conf = new IndexWriterConfig(Version.LATEST, analyzer);
-            IndexWriter iw = new IndexWriter(FSDirectory.open(idxFile), conf);
+            Analyzer analyzer = new StandardAnalyzer();
+            IndexWriterConfig conf = new IndexWriterConfig(analyzer);
+            IndexWriter iw = new IndexWriter(FSDirectory.open(path), conf);
             iw.commit();
             iw.close();
         }
-        return idxFile;
+        return path;
     }
 
     /**
@@ -1349,10 +1349,10 @@ public class ALANameSearcher {
                     }
                 }
             }
-            //now check to see if the accepeted concept is a child of the accResult
+            //now check to see if the accepted concept is a child of the accResult
             if (accResult != null && acceptedLsid != null) {
                 NameSearchResult accSynResult = searchForRecordByLsid(acceptedLsid);
-                if (accResult.getLeft() != null && accSynResult.getLeft() != null) {
+                if (accResult != null && accResult.getLeft() != null && accSynResult.getLeft() != null) {
                     int asyLeft = Integer.parseInt(accSynResult.getLeft());
                     if (asyLeft > Integer.parseInt(accResult.getLeft()) && asyLeft < Integer.parseInt(accResult.getRight()))
                         throw new ParentSynonymChildException(accResult, accSynResult);
@@ -1636,6 +1636,35 @@ public class ALANameSearcher {
     /**
      * Retrieve a single common name for this LSID.
      * @param lsid
+     * @param languages to select
+     * @return a single common name
+     */
+    public String getCommonNameForLSID(String lsid, String[] languages) {
+        if (lsid != null) {
+            for (String language: languages) {
+                try {
+                    Query query = queryParser.get().parse(
+                    ALANameIndexer.IndexField.LSID.toString() + ":\"" + lsid + "\" " +
+                            " AND " +
+                            ALANameIndexer.IndexField.LANGUAGE.toString() + ":\"" + language + "\" "
+                    );
+                    TopDocs results = vernSearcher.search(query, 1);
+                    log.debug("Number of matches for " + lsid + " " + results.totalHits);
+                    for (ScoreDoc sdoc : results.scoreDocs) {
+                        org.apache.lucene.document.Document doc = vernSearcher.doc(sdoc.doc);
+                        return doc.get(ALANameIndexer.IndexField.COMMON_NAME.toString());
+                    }
+                } catch (Exception e) {
+                    log.debug("Unable to access document for common name.", e);
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Retrieve a single common name for this LSID.
+     * @param lsid
      * @return
      */
     public Set<String> getCommonNamesForLSID(String lsid, int maxNumberOfNames) {
@@ -1780,6 +1809,353 @@ public class ALANameSearcher {
         return result;
     }
 
+    /**
+     * from bie ws/guid/batch
+     *
+     * returned list of guid that is the same length as the input list
+     *
+     * @param taxaQueries a list of taxa queries
+     * @return
+     */
+    public List<String> getGuidsForTaxa(List<String> taxaQueries) {
+        List guids = new ArrayList<String>();
+        for (int i = 0; i < taxaQueries.size(); i++) {
+            String scientificName = taxaQueries.get(i);
+            String lsid = getLsidByNameAndKingdom(scientificName);
+            if (lsid != null && lsid.length() > 0) {
+                String guid = null;
+                try {
+                    guid = getExtendedTaxonConceptByGuid(lsid, true, true);
+                } catch (Exception e) {
+                }
+                guids.add(guid);
+            }
+
+            if (guids.size() < i + 1) guids.add(null);
+        }
+        return guids;
+    }
+
+    private void appendAutocompleteResults(Map<String, Map> output, TopDocs results, boolean includeSynonyms, boolean commonNameResults) throws IOException {
+        ScoreDoc[] scoreDocs = results.scoreDocs;
+        int scoreDocsCount = scoreDocs.length;
+        for(int excludedResult = 0; excludedResult < scoreDocsCount; ++excludedResult) {
+            ScoreDoc i = scoreDocs[excludedResult];
+            Document src = commonNameResults ? vernSearcher.doc(i.doc) : cbSearcher.doc(i.doc);
+            NameSearchResult nsr = commonNameResults ?
+                    searchForRecordByLsid(src.get("lsid"))
+                    : new NameSearchResult(src, null);
+
+            if (nsr == null || (nsr.getLeft() == null && !includeSynonyms)) continue;
+
+            Map m = formatAutocompleteNsr(i.score, nsr);
+
+            //use the matched common name
+            if (commonNameResults) {
+                m.put("commonname", src.get("common_orig"));
+                m.put("match", "commonName");
+            } else {
+                m.put("match", "scientificName");
+            }
+
+            while (includeSynonyms && nsr != null && m != null && nsr.getAcceptedLsid() != null) {
+                if (output.containsKey(nsr.getAcceptedLsid())) {
+                    List list = (List) output.get(nsr.getAcceptedLsid()).get("synonymMatch");
+                    if (list == null) list = new ArrayList();
+                    list.add(m);
+                    output.get(nsr.getAcceptedLsid()).put("synonymMatch", list);
+                    m = null;
+                    nsr = null;
+                } else {
+                    nsr = searchForRecordByLsid(nsr.getAcceptedLsid());
+
+                    if (nsr != null) {
+                        List list = new ArrayList();
+                        list.add(m);
+
+                        m = formatAutocompleteNsr(i.score, nsr);
+                        m.put("synonymMatch", list);
+                    }
+                }
+            }
+
+            if (((nsr != null && nsr.getAcceptedLsid() == null) || includeSynonyms) && m != null) {
+                if (m.get("name").toString().equals("Acacia")) {
+                    int aa = 4;
+                }
+                Map existing = output.get(m.get("lsid").toString());
+                if (existing == null) {
+                    output.put(m.get("lsid").toString(), m);
+                } else {
+                    //use best score
+                    if ((Float) m.get("score") > (Float) existing.get("score")) {
+                        output.put(m.get("lsid").toString(), m);
+                    }
+                }
+            }
+        }
+    }
+
+    private Query buildAutocompleteQuery(String field, String q, boolean allSearches) {
+        //best match
+        Query fq1 = new BoostQuery(new TermQuery(new Term(field,q)), 12f);  //exact match
+
+        //partial matches
+        Query fq5 = new WildcardQuery(new Term(field,q + "*")); //begins with that begins with
+        Query fq6 = new WildcardQuery(new Term(field,"* " + q + "*")); //contains word that begins with
+
+        //any match
+        Query fq7 = new WildcardQuery(new Term(field,"*" + q + "*")); //any match
+
+        //join
+        BooleanQuery o = new BooleanQuery.Builder()
+                .add(new BooleanClause(fq1, BooleanClause.Occur.SHOULD))
+                .add(new BooleanClause(fq5, BooleanClause.Occur.SHOULD))
+                .add(new BooleanClause(fq6, BooleanClause.Occur.SHOULD))
+                .add(new BooleanClause(fq7, BooleanClause.Occur.SHOULD))
+                .build();
+        return o;
+    }
+
+    private String getPreferredGuid(String taxonConceptGuid) throws Exception {
+        Query qGuid = new TermQuery(new Term("guid", taxonConceptGuid));
+        Query qOtherGuid = new TermQuery(new Term("otherGuid", taxonConceptGuid));
+
+        BooleanQuery fullQuery = new BooleanQuery.Builder()
+                .add(qGuid, BooleanClause.Occur.SHOULD)
+                .add(qOtherGuid, BooleanClause.Occur.SHOULD).build();
+
+        TopDocs topDocs = cbSearcher.search(fullQuery, 1);
+        for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
+            Document doc = cbSearcher.doc(scoreDoc.doc);
+            return doc.get("guid");
+        }
+        return taxonConceptGuid;
+    }
+
+    private boolean isKingdom(String name) {
+        try {
+            LinnaeanRankClassification lc = new LinnaeanRankClassification(name, null);
+            NameSearchResult nsr = searchForRecord(lc, false);
+            return nsr != null && nsr.getRank() == RankType.KINGDOM;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private String[] extractComponents(String in) {
+        String[] retArray = new String[2];
+        int lastOpen = in.lastIndexOf("(");
+        int lastClose = in.lastIndexOf(")");
+        if (lastOpen < lastClose) {
+            //check to see if the last brackets are a kingdom
+            String potentialKingdom = in.substring(lastOpen + 1, lastClose);
+            if (isKingdom(potentialKingdom)) {
+                retArray[0] = in.substring(0, lastOpen);
+                retArray[1] = potentialKingdom;
+            } else {
+                retArray[0] = in;
+            }
+        } else {
+            retArray[0] = in;
+            //kingdom is null
+        }
+        return retArray;
+
+    }
+
+    private String getLsidByNameAndKingdom(String parameter) {
+        String lsid = null;
+        String name = null;
+        String kingdom = null;
+
+        String[] parts = extractComponents(parameter);
+        name = parts[0];
+        name = name.replaceAll("_", " ");
+        name = name.replaceAll("\\+", " ");
+        kingdom = parts[1];
+        if (kingdom != null) {
+            LinnaeanRankClassification cl = new LinnaeanRankClassification(kingdom, null);
+            cl.setScientificName(name);
+            try {
+                lsid = searchForLSID(cl.getScientificName(), cl, null);
+            } catch (ExcludedNameException e) {
+                if (e.getNonExcludedName() != null)
+                    lsid = e.getNonExcludedName().getLsid();
+                else
+                    lsid = e.getExcludedName().getLsid();
+            } catch (ParentSynonymChildException e) {
+                //the child is the one we want
+                lsid = e.getChildResult().getLsid();
+            } catch (MisappliedException e) {
+                if (e.getMisappliedResult() != null)
+                    lsid = e.getMatchedResult().getLsid();
+            } catch (SearchResultException e) {
+            }
+        }
+        //check for a scientific name first - this will lookup in the name matching index.  This will produce the correct result in a majority of scientific name cases.
+        if (lsid == null || lsid.length() < 1) {
+            try {
+                lsid = searchForLSID(name, true, true);
+            } catch (ExcludedNameException e) {
+                if (e.getNonExcludedName() != null)
+                    lsid = e.getNonExcludedName().getLsid();
+                else
+                    lsid = e.getExcludedName().getLsid();
+            } catch (ParentSynonymChildException e) {
+                //the child is the one we want
+                lsid = e.getChildResult().getLsid();
+            } catch (MisappliedException e) {
+                if (e.getMisappliedResult() != null)
+                    lsid = e.getMatchedResult().getLsid();
+            } catch (SearchResultException e) {
+            }
+        }
+
+        if (lsid == null || lsid.length() < 1) {
+            lsid = searchForLSIDCommonName(name);
+        }
+
+        if (lsid == null || lsid.length() < 1) {
+            lsid = findLSIDByConcatName(name);
+        }
+
+        return lsid;
+    }
+
+    private String concatName(String name) {
+        String patternA = "[^a-zA-Z]";
+        /* replace multiple whitespaces between words with single blank */
+        String patternB = "\\b\\s{2,}\\b";
+
+        String cleanQuery = "";
+        if (name != null) {
+            cleanQuery = escapeQueryChars(name);
+            cleanQuery = cleanQuery.toLowerCase();
+            cleanQuery = cleanQuery.replaceAll(patternA, "");
+            cleanQuery = cleanQuery.replaceAll(patternB, "");
+            cleanQuery = cleanQuery.trim();
+        }
+        return cleanQuery;
+    }
+
+    private String findLSIDByConcatName(String name) {
+        try {
+            String concatName = concatName(name);
+
+            Query query = new TermQuery(new Term("concat_name", concatName));
+
+            TopDocs topDocs = cbSearcher.search(query, 2);
+            if (topDocs != null && topDocs.totalHits == 1) {
+                for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
+                    Document doc = cbSearcher.doc(scoreDoc.doc);
+                    return doc.get("guid");
+                }
+            }
+        } catch (Exception e) {
+            // do nothing
+        }
+        return null;
+
+    }
+
+    private String getExtendedTaxonConceptByGuid(String guid, boolean checkPreferred, boolean checkSynonym) throws Exception {
+
+        //Because a concept can be accepted and a synonym we need to check if the original guid exists before checking preferred
+        NameSearchResult nsr = searchForRecordByLsid(guid);
+        boolean hasAccepted = nsr != null && nsr.getAcceptedLsid() == null;
+
+        if (checkPreferred && !hasAccepted) {
+            guid = getPreferredGuid(guid);
+        }
+        if (checkSynonym && !hasAccepted) {
+            if (nsr != null && nsr.isSynonym()) {
+                guid = nsr.getAcceptedLsid();
+            }
+        }
+
+        return guid;
+    }
+
+    /**
+     * Basic autocomplete. All matches are resolved to accepted LSID.
+     *
+     * @param q
+     * @param max
+     * @param includeSynonyms
+     * @return
+     */
+    public List<Map> autocomplete(String q, int max, boolean includeSynonyms) {
+        try {
+            if(false) {
+                return null;
+            } else {
+                Map<String, Map> output = new HashMap<String, Map>();
+
+                //more queries for better scoring values
+                String lq = q.toLowerCase();
+                String uq = q.toUpperCase();
+
+                //name search
+                Query fq = buildAutocompleteQuery("name", lq, false);
+                BooleanQuery b = new BooleanQuery.Builder()
+                    .add(fq, BooleanClause.Occur.MUST)
+                    .add(new WildcardQuery(new Term("left", "*")), includeSynonyms ? BooleanClause.Occur.SHOULD : BooleanClause.Occur.MUST)
+                    .build();
+                TopDocs results = cbSearcher.search(b, max);
+                appendAutocompleteResults(output, results, includeSynonyms, false);
+
+                //format search term for the current common name index
+                uq = concatName(uq).toUpperCase();
+
+                //common name search
+                fq = buildAutocompleteQuery("common", uq, true);
+                results = vernSearcher.search(fq, max);
+                appendAutocompleteResults(output, results, includeSynonyms, true);
+
+                return new ArrayList(output.values());
+            }
+        } catch (Exception e) {
+            log.error("Autocomplete error.",e);
+        }
+        return null;
+    }
+
+
+    private Map formatAutocompleteNsr(float score, NameSearchResult nsr) {
+        Map m = new HashMap();
+        m.put("score", score);
+        m.put("lsid", nsr.getLsid());
+        m.put("left", nsr.getLeft());
+        m.put("right", nsr.getRight());
+        m.put("rank", nsr.getRank());
+        m.put("rankId", nsr.getRank() != null ? nsr.getRank().getId() : 10000);
+        m.put("cl", nsr.getRankClassification());
+        m.put("name", nsr.getRankClassification() != null ? nsr.getRankClassification().getScientificName() : null);
+        m.put("acceptedLsid", nsr.getAcceptedLsid());
+        m.put("commonname", getCommonNameForLSID(nsr.getLsid()));
+        m.put("commonnames", getCommonNamesForLSID(nsr.getLsid(),1000));
+
+        return m;
+    }
+
+
+
+    private String escapeQueryChars(String s) {
+        StringBuilder sb = new StringBuilder();
+
+        for(int i = 0; i < s.length(); ++i) {
+            char c = s.charAt(i);
+            if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':' || c == '^' || c == '[' || c == ']' || c == '"' || c == '{' || c == '}' || c == '~' || c == '*' || c == '?' || c == '|' || c == '&' || c == ';' || c == '/' || Character.isWhitespace(c)) {
+                sb.append('\\');
+            }
+
+            sb.append(c);
+        }
+
+        return sb.toString();
+    }
+
     public static void main(String[] args) throws IOException {
 
         ALANameSearcher nameindex = new ALANameSearcher(args[0]);
@@ -1791,4 +2167,5 @@ public class ALANameSearcher {
             System.out.println(commonName);
         }
     }
+
 }

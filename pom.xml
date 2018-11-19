@@ -3,15 +3,17 @@
     <parent>
         <groupId>au.org.ala</groupId>
         <artifactId>ala-parent-pom</artifactId>
-        <version>5</version>
+        <version>9</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>au.org.ala</groupId>
     <artifactId>ala-name-matching</artifactId>
     <packaging>jar</packaging>
-    <version>2.4.8</version>
-    <name>ALA Name Matching</name>
+    <!-- Major version increment due to package structure change -->
+    <version>3.4-SNAPSHOT</version>
+    <name>ALA Name Matching (for Lucene 6 or above)</name>
+    <!-- SCM entry that points to SVN directory that contains pom -->
     <scm>
         <connection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</connection>
         <url>https://github.com/AtlasOfLivingAustralia/ala-name-matching</url>
@@ -21,12 +23,27 @@
     <properties>
         <!-- This project uses UTF8 for Regular Expressions -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <org.apache.lucene.version>4.10.4</org.apache.lucene.version>
+        <org.apache.lucene.version>6.6.5</org.apache.lucene.version>
         <targetJdk>1.8</targetJdk>
         <animal-sniffer-signature.artifact>java18</animal-sniffer-signature.artifact>
         <animal-sniffer-signature.version>1.0</animal-sniffer-signature.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>org.gbif</groupId>
+            <artifactId>dwca-io</artifactId>
+            <version>1.27</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-io</groupId>
+                    <artifactId>commons-io</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <!-- SL4J -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -90,6 +107,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-backward-codecs</artifactId>
+            <version>${org.apache.lucene.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
             <version>${org.apache.lucene.version}</version>
         </dependency>
@@ -110,9 +132,9 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>au.com.bytecode</groupId>
+            <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
-            <version>2.4</version>
+            <version>4.1</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -143,16 +165,6 @@
             <version>1.2</version>
         </dependency>
     </dependencies>
-
-    <!--
-    <repositories>
-        <repository>
-            <id>gbif</id>
-         idname>GBIF main repositoidname>
-            <url>http://repository.gbif.org/content/groups/gbif/</url>
-        </repository>
-    </repositories>
-    -->
     <profiles>
         <profile>
         <id>default</id>
@@ -277,7 +289,7 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>                    
+                    </plugin>
                 </plugins>
             </build>
         </profile>

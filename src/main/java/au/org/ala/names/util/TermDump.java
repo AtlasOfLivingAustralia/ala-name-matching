@@ -32,7 +32,7 @@ public class TermDump {
     }
 
     public void dump() throws IOException {
-        DirectoryReader reader = DirectoryReader.open(FSDirectory.open(this.index));
+        DirectoryReader reader = DirectoryReader.open(FSDirectory.open(this.index.toPath()));
         Fields fields = MultiFields.getFields(reader);
         PrintWriter pw = new PrintWriter(this.output);
 

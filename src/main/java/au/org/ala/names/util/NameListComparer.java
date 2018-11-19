@@ -1,7 +1,7 @@
 package au.org.ala.names.util;
 
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.CSVWriter;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 import au.org.ala.names.model.*;
 import au.org.ala.names.search.*;
 import org.apache.commons.cli.*;
