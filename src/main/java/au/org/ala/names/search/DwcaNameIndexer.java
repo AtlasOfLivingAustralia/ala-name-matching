@@ -20,6 +20,7 @@ import au.org.ala.names.model.LinnaeanRankClassification;
 import au.org.ala.names.model.NameIndexField;
 import au.org.ala.names.model.NameSearchResult;
 import au.org.ala.names.model.RankType;
+import com.opencsv.CSVReader;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -214,7 +215,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
     }
 
     public void createExtraIdIndex(File extraIds) throws Exception {
-        this.createExtraIdIndex(new File(this.targetDir, "id").getCanonicalPath(), extraIds);
+        this.createExtraIdIndex(this.idWriter, extraIds);
     }
 
     /**
@@ -268,6 +269,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             String specificEpithet = record.value(DwcTerm.specificEpithet);
             String infraspecificEpithet = record.value(DwcTerm.infraspecificEpithet);
             String rank = record.value(DwcTerm.taxonRank);
+            String language = record.value(DcTerm.language);
             LinnaeanRankClassification classification = new LinnaeanRankClassification();
             NameSearchResult result = null;
             String lsid;
@@ -302,7 +304,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             lsid = result.getAcceptedLsid() != null ? result.getAcceptedLsid() : result.getLsid();
             if (scientificName == null)
                 scientificName = result.getRankClassification().getScientificName();
-            Document doc = this.createCommonNameDocument(vernacularName, scientificName, lsid, 1.0f, false);
+            Document doc = this.createCommonNameDocument(vernacularName, scientificName, lsid, language,1.0f, false);
             this.vernacularIndexWriter.addDocument(doc);
         }
         return true;
@@ -327,7 +329,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         }
         log.info("Starting to load the common names from " + file);
         int i =0, count=0;
-        com.opencsv.CSVReader cbreader = new com.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 0);
+        CSVReader cbreader = this.buildCSVReader(file.getPath(), '\t', '"', '\\', 0);
         for (String[] values = cbreader.readNext(); values != null; values = cbreader.readNext()) {
             i++;
             if(values.length == 6){
@@ -359,8 +361,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
         int i = 0, count = 0;
 
         if (vernacularArchiveFile == null) {
-            log.info("No common names extension from found in " + archiveDirectory);
+            log.info("No common names extension from found in " + archive.getLocation());
             return;
+        }
         log.info("Starting to load the common names extension from " + archive.getLocation());
         while (iter.hasNext()) {
             i++;

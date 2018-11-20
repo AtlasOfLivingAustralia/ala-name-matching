@@ -18,6 +18,8 @@ import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
 import au.org.ala.names.util.CleanedScientificName;
 import au.org.ala.names.util.TaxonNameSoundEx;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang.StringUtils;
@@ -238,7 +240,8 @@ public class ALANameIndexer {
     private IndexSearcher createTmpGuidIndex(String cbExportFile) throws Exception {
         System.out.println("Starting to create the tmp guid index...");
         IndexWriter iw = createIndexWriter(new File("/data/tmp/guid"), new KeywordAnalyzer(), true);
-        au.com.bytecode.opencsv.CSVReader cbreader = new au.com.bytecode.opencsv.CSVReader(new FileReader(cbExportFile), '\t', '"', '/', 1);
+        CSVReader cbreader = this.buildCSVReader(cbExportFile, '\t', '\\', '"', 1);
+
         for (String[] values = cbreader.readNext(); values != null; values = cbreader.readNext()) {
             Document doc = new Document();
             String id = values[POS_ID];
@@ -255,7 +258,7 @@ public class ALANameIndexer {
         iw.forceMerge(1);
         iw.close();
         //As of lucene 4.0 all IndexReaders are read only
-        return new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File("/data/tmp/guid"))));
+        return new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File("/data/tmp/guid").toPath())));
     }
 
     /**
@@ -290,7 +293,7 @@ public class ALANameIndexer {
      */
     private void addExtraALAConcept(IndexWriter iw, String file) throws Exception {
         if (new File(file).exists()) {
-            com.opencsv.CSVReader reader = new com.opencsv.CSVReader(new FileReader(file), ',', '"', '\\', 1);
+            CSVReader reader = this.buildCSVReader(file, ',', '"', '\\', 1);
             for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
                 String lsid = values[0];
                 String scientificName = values[1];
@@ -302,7 +305,7 @@ public class ALANameIndexer {
     }
 
     private void addALASyonyms(IndexWriter iw, String file) throws Exception {
-        com.opencsv.CSVReader reader = new com.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 1);
+        CSVReader reader = this.buildCSVReader(file, '\t', '"', '\\', 1);
         for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
 
             String source = values[11];
@@ -317,7 +320,7 @@ public class ALANameIndexer {
     private void indexALA(IndexWriter iw, String file, String synonymFile) throws Exception {
         int records = 0;
         long time = System.currentTimeMillis();
-        com.opencsv.CSVReader reader = new com.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 1);
+        CSVReader reader = this.buildCSVReader(file, '\t', '"', '\\', 1);
         for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
 
             String lsid = values[POS_LSID];
@@ -496,7 +499,7 @@ public class ALANameIndexer {
         log.info("Creating IRMNG index ...");
         File file = new File(irmngExport);
         if (file.exists()) {
-            CSVReader reader = new CSVReader(new FileReader(file), '\t', '"', '~');// CSVReader.build(file,"UTF-8", "\t", 0);
+            CSVReader reader = this.buildCSVReader(irmngExport, '\t', '"', '~', CSVReader.DEFAULT_SKIP_LINES);
             int count = 0;
             String[] values = null;
             while ((values = reader.readNext()) != null) {
@@ -560,7 +563,7 @@ public class ALANameIndexer {
     private void addCoLCommonNames(IndexWriter iw, IndexSearcher currentSearcher) throws Exception {
         File fileCol = new File(colFile);
         if (fileCol.exists()) {
-            CSVReader reader = new CSVReader(new FileReader(fileCol), ',', '"', '~');
+            CSVReader reader = this.buildCSVReader(colFile, ',', '"', '~', CSVReader.DEFAULT_SKIP_LINES);
             int count = 0;
             String[] values = null;
             while ((values = reader.readNext()) != null) {
@@ -593,7 +596,7 @@ public class ALANameIndexer {
         File namesFile = new File(fileName);
         Pattern p = Pattern.compile(",");
         if (namesFile.exists()) {
-            CSVReader reader = new CSVReader(new FileReader(namesFile), recordSep, '"', '\\');//CSVReader.build(namesFile,"UTF-8","\t", '"' , 1);
+            CSVReader reader = this.buildCSVReader(fileName, recordSep, '"', '\\', CSVReader.DEFAULT_SKIP_LINES);
             int count = 0;
             String[] values = reader.readNext();
             while ((values = reader.readNext()) != null) {
@@ -630,17 +633,20 @@ public class ALANameIndexer {
      * This deals with the following situations:
      * - common names that are sourced from CoL (LSIDs will be mapped to corresponding ANBG LSID)
      * - Multiple ANBG LSIDs exist for the same scientific name and more than 1 are mapped to the same common name.
+     * <p>
+     * The {@link #idSearcher} is set after creating this index
+     * </p>
      *
-     * @param idFile
+     * @param iw The index writer
+     * @param idFile The file containing additional ids
+     *
      * @throws Exception
      */
-    protected void createExtraIdIndex(String idxLocation, File idFile) throws Exception {
-        File indexDir = new File(idxLocation);
-        IndexWriter iw = createIndexWriter(indexDir, new KeywordAnalyzer(), true);//new IndexWriter(FSDirectory.open(indexDir), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
+    protected void createExtraIdIndex(IndexWriter iw, File idFile) throws Exception {
         String[] values = null;
 
         if(idFile.exists()) {
-            CSVReader reader = new CSVReader(new FileReader(idFile), '\t', '"', '~');//CSVReader.build(idFile, "UTF-8", "\t", '"', 0);
+            CSVReader reader = this.buildCSVReader(idFile.getPath(), '\t', '"', '~', CSVReader.DEFAULT_SKIP_LINES);
             while ((values = reader.readNext()) != null) {
 
                 if (values != null && values.length >= 3) {
@@ -656,8 +662,24 @@ public class ALANameIndexer {
         iw.flush();
         iw.commit();
         iw.forceMerge(1);
+        idSearcher = new IndexSearcher(DirectoryReader.open(iw.getDirectory()));
+    }
+
+    /**
+     * Creates a temporary index that will provide a lookup up of lsid to "real lsid".
+     * <p/>
+     * This deals with the following situations:
+     * - common names that are sourced from CoL (LSIDs will be mapped to corresponding ANBG LSID)
+     * - Multiple ANBG LSIDs exist for the same scientific name and more than 1 are mapped to the same common name.
+     *
+     * @param idFile
+     * @throws Exception
+     */
+    protected void createExtraIdIndex(String idxLocation, File idFile) throws Exception {
+        File indexDir = new File(idxLocation);
+        IndexWriter iw = this.createIndexWriter(indexDir, new KeywordAnalyzer(), true);
+        this.createExtraIdIndex(iw, idFile);
         iw.close();
-        idSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(indexDir.toPath())));
     }
 
     /**
@@ -670,7 +692,7 @@ public class ALANameIndexer {
      */
     private IndexSearcher createTmpIndex(String tcFileName) throws Exception {
         //creating the tmp index in the /tmp/taxonConcept directory
-        CSVReader reader = new CSVReader(new FileReader(new File(tcFileName)), '\t', '"', '~');
+        CSVReader reader = this.buildCSVReader(tcFileName, '\t', '"', '~', CSVReader.DEFAULT_SKIP_LINES);
         File indexDir = new File("/tmp/taxonConcept");
         IndexWriter iw = createIndexWriter(indexDir, new KeywordAnalyzer(), true);
         String[] values = null;
@@ -1009,6 +1031,23 @@ public class ALANameIndexer {
         if (author != null)
             ncb.append(author);
         return ncb.toString().trim();
+    }
+
+    /**
+     * Create a CSV reader for a file
+     *
+     * @param file The name of the file
+     * @param separator The field separator character
+     * @param escape The escape character
+     * @param quote The field quote character
+     * @param skipLines The number of lines at the start to skip
+     *
+     * @return A CSV reader
+     */
+    protected CSVReader buildCSVReader(String file, char separator, char escape, char quote, int skipLines) throws IOException {
+        CSVParser parser = new CSVParserBuilder().withSeparator(separator).withEscapeChar(escape).withQuoteChar(quote).build();
+        CSVReader reader = new CSVReaderBuilder(new FileReader(file)).withCSVParser(parser).withSkipLines(skipLines).build();
+        return reader;
     }
 
     /**

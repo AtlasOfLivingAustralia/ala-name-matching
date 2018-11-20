@@ -344,7 +344,7 @@ public class DwcaWriter implements AutoCloseable {
     protected void addEml() throws IOException {
         if (eml != null) {
             Writer writer = new FileWriter(new File(dir, "eml.xml"));
-            EMLWriter.write(eml, writer);
+            EMLWriter.newInstance().writeTo(eml, writer);
         }
     }
 

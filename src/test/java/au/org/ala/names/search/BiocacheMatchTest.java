@@ -21,12 +21,8 @@ public class BiocacheMatchTest {
     private static ALANameSearcher searcher;
 
     @org.junit.BeforeClass
-    public static void init() {
-        try {
-            searcher = new ALANameSearcher("/data/lucene/namematching-20181105");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public static void init() throws Exception {
+        searcher = new ALANameSearcher("/data/lucene/namematching-20181120");
     }
 
     @Test
@@ -437,11 +433,9 @@ public class BiocacheMatchTest {
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             assertNotNull(metrics);
-            assertEquals("NZOR-6-132827", metrics.getResult().getLsid());
-            assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
-            NameSearchResult nsr = searcher.searchForCommonName(name);
-            assertNotNull(nsr);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c2056f1b-fcde-45b9-904b-1cab280368d1", nsr.getLsid());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.name:3064f20b-f6de-4375-8377-904cbd6cf9fa", metrics.getResult().getLsid());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c2056f1b-fcde-45b9-904b-1cab280368d1", metrics.getResult().getAcceptedLsid());
+            assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }

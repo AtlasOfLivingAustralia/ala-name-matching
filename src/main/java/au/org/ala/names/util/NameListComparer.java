@@ -1,7 +1,6 @@
 package au.org.ala.names.util;
 
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
+import com.opencsv.*;
 import au.org.ala.names.model.*;
 import au.org.ala.names.search.*;
 import org.apache.commons.cli.*;
@@ -44,7 +43,8 @@ public class NameListComparer {
     private List<String> additional;
 
     public NameListComparer(Reader names, Writer output, File index, boolean tabs) throws IOException {
-        this.names = new CSVReader(names, tabs ? '\t' : ',');
+        CSVParser parser = new CSVParserBuilder().withSeparator(tabs ? '\t' : ',').build();
+        this.names = new CSVReaderBuilder(names).withCSVParser(parser).build();
         this.output = new CSVWriter(output);
         this.searcher = new ALANameSearcher(index.getAbsolutePath());
     }
