@@ -35,6 +35,7 @@ public enum NameIndexField {
     SPECIFIC("specific"),
     INFRA_SPECIFIC("infra"),
     NAME("name"),// search name
+    OTHER_NAMES("other_names"),// Alternative names
     NAME_CANONICAL("name_canonical"), // Canonical name
     NAME_COMPLETE("name_complete"), // Complete name
     RANK_ID("rank_id"),
@@ -44,7 +45,9 @@ public enum NameIndexField {
     VOUCHER("voucher"), //stores a voucher value minus the spaces and fullstops.
     ALA("ala"), //stores whether or not it is an ALA generated name
     DATASET_ID("dataset_id"), // The source dataset
-    SYNONYM_TYPE("syn_type"); //stores the type of synonym that it represents
+    SYNONYM_TYPE("syn_type"), //stores the type of synonym that it represents
+    /* Stores the priority score associated with a taxon */
+    PRIORITY("priority");
     String name;
 
     NameIndexField(String name) {

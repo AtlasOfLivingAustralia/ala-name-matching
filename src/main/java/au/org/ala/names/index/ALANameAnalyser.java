@@ -1,11 +1,14 @@
 package au.org.ala.names.index;
 
-import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.names.model.ALAParsedName;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.SynonymType;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.util.CleanedScientificName;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import org.gbif.api.exception.UnparsableException;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.service.checklistbank.NameParser;
@@ -249,7 +252,7 @@ public class ALANameAnalyser extends NameAnalyser {
      */
     protected <T extends Enum<T>> void loadCsv(String resource, Map<String, T> map, Class<T> clazz) {
         try {
-            CSVReader reader = new CSVReader(new InputStreamReader(this.getClass().getResourceAsStream(resource), "UTF-8"), ',', '"', 1);
+            CSVReader reader = new CSVReaderBuilder(new InputStreamReader(this.getClass().getResourceAsStream(resource), "UTF-8")).withSkipLines(1).build();
             String[] next;
             while ((next = reader.readNext()) != null) {
                 String label = next[0];

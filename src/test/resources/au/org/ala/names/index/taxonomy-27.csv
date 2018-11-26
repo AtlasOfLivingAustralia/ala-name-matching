@@ -1,0 +1,4 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source
+"Accepted-1","","","dr107","ICN","Myosurus minimus","L.","species","","","accepted","","","","","","","","","",""
+"Accepted-2","","","dr100","ICN","Myosurus australis","F.Muell.","species","","","accepted","","","","","","","","","",""
+"Synonym-1","","Accepted-2","dr100","ICBN","Myosurus minimus","L.","species","","","misapplied","","","","","","","","","",""

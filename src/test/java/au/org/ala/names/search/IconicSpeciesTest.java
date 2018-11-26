@@ -1,6 +1,6 @@
 package au.org.ala.names.search;
 
-import au.com.bytecode.opencsv.CSVReader;
+import com.opencsv.CSVReader;
 import au.org.ala.names.model.NameSearchResult;
 import au.org.ala.names.model.LinnaeanRankClassification;
 import au.org.ala.names.model.RankType;
@@ -29,13 +29,8 @@ public class IconicSpeciesTest {
     static ALANameSearcher searcher;
 
     @org.junit.BeforeClass
-    public static void init() {
-        try {
-            searcher = new ALANameSearcher("/data/lucene/namematching-20181105");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+    public static void init() throws Exception {
+        searcher = new ALANameSearcher("/data/lucene/namematching-20181120");
     }
 
     //@Test

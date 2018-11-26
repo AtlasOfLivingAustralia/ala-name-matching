@@ -103,6 +103,29 @@ public class LinnaeanRankClassification {
     }
 
     /**
+     * A convienience constructor for testing
+     *
+     * @param kingdom
+     * @param phylum
+     * @param klass
+     * @param order
+     * @param family
+     * @param genus
+     * @param scientificName
+     * @param authorship
+     */
+    public LinnaeanRankClassification(String kingdom, String phylum, String klass, String order, String family, String genus, String scientificName, String authorship) {
+        setKingdom(kingdom);
+        setPhylum(phylum);
+        setKlass(klass);
+        setOrder(order);
+        setFamily(family);
+        setGenus(genus);
+        this.scientificName = scientificName;
+        this.setAuthorship(authorship);
+    }
+
+    /**
      * @return Returns the family.
      */
     public String getFamily() {
@@ -460,11 +483,10 @@ public class LinnaeanRankClassification {
         if (StringUtils.isNotEmpty(species))
             sb.append(prefix).append(RankType.SPECIES.getRank()).append(":\"").append(species).append("\"");
         //authorship is always optional due to inconsistencies in the name format etc...
-        if (authorship != null)
+        if (StringUtils.isNotEmpty(authorship))
             sb.append(" ").append(NameIndexField.AUTHOR.toString()).append(":\"").append(authorship).append("\"~");
         return sb.toString();
     }
-
 
 
     public static void main(String[] args) {

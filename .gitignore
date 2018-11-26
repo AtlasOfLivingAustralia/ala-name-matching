@@ -4,7 +4,6 @@
 target
 out
 src/main/resources/git.properties
-
 .classpath
 .project
 .settings/

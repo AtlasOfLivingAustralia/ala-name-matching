@@ -1,6 +1,6 @@
 package au.org.ala.names.util;
 
-import au.com.bytecode.opencsv.CSVWriter;
+import com.opencsv.CSVWriter;
 import au.org.ala.names.model.SynonymType;
 import org.apache.commons.cli.*;
 import org.apache.commons.logging.Log;
@@ -22,7 +22,7 @@ import java.util.*;
  *         <p/>
  *         Copyright (c) 2015 CSIRO
  */
-public class NameListGenerator {
+public class NameListGenerator implements Closeable {
     private static Log log = LogFactory.getLog(NameListGenerator.class);
 
     private static String[][] FIELDS = {
@@ -40,7 +40,7 @@ public class NameListGenerator {
 
     public NameListGenerator(Writer output, File index) throws IOException {
         this.writer = new CSVWriter(output);
-        this.cbReader = DirectoryReader.open(FSDirectory.open(new File(index, "cb")));
+        this.cbReader = DirectoryReader.open(FSDirectory.open(new File(index, "cb").toPath()));
         this.synonymTypes = new HashSet<String>();
     }
 
@@ -81,9 +81,13 @@ public class NameListGenerator {
         }
     }
 
+    @Override
     public void close() throws IOException {
-        writer.close();
-        this.cbReader.close();
+        try {
+            writer.close();
+        } finally {
+            this.cbReader.close();
+        }
     }
 
     public void dumpSynonyms(PrintStream out) {
@@ -113,11 +117,10 @@ public class NameListGenerator {
             String of = cmd.getOptionValue('o', "-");
             Writer output = of == null || of.equals("-") ? new OutputStreamWriter(System.out) : new FileWriter(of);
             File index = new File(cmd.getOptionValue('i', "/data/lucene/namematching"));
-            NameListGenerator generator = new NameListGenerator(output, index);
-
-            generator.generate();
-            generator.close();
-            generator.dumpSynonyms(System.out);
+            try (NameListGenerator generator = new NameListGenerator(output, index);) {
+                generator.generate();
+                generator.dumpSynonyms(System.out);
+            }
         } catch (ParseException ex) {
             System.err.println("Unable to parse command line: " + ex.getMessage());
         } catch (Exception ex) {

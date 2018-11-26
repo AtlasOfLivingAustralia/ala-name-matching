@@ -1,6 +1,5 @@
 package au.org.ala.names.index;
 
-import au.com.bytecode.opencsv.CSVWriter;
 import au.org.ala.names.model.LinnaeanRankClassification;
 import au.org.ala.names.model.NameSearchResult;
 import au.org.ala.names.model.RankType;
@@ -11,6 +10,7 @@ import au.org.ala.names.util.DwcaWriter;
 import au.org.ala.names.util.FileUtils;
 import au.org.ala.vocab.ALATerm;
 import com.google.common.collect.Maps;
+import com.opencsv.CSVWriter;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
@@ -349,10 +349,10 @@ public class Taxonomy implements Reporter {
      */
     public void begin() throws IndexBuilderException {
         try {
-            IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_10_4, this.indexAnalyzer);
+            IndexWriterConfig config = new IndexWriterConfig(this.indexAnalyzer);
             this.indexWriter = new IndexWriter(this.indexDir, config);
             this.indexWriter.commit();
-            this.searcherManager = new SearcherManager(this.indexWriter, true, null);
+            this.searcherManager = new SearcherManager(this.indexWriter, null);
         } catch (IOException ex) {
             throw new IndexBuilderException("Error creating working index", ex);
         }
@@ -658,8 +658,9 @@ public class Taxonomy implements Reporter {
         if (this.workingIndex == null)
             throw new IndexBuilderException("No working name index set");
         try {
-            BooleanQuery query = new BooleanQuery();
-            query.add(new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.UnplacedVernacularName.qualifiedName())), BooleanClause.Occur.MUST);
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
+            builder.add(new TermQuery(new org.apache.lucene.index.Term("type", ALATerm.UnplacedVernacularName.qualifiedName())), BooleanClause.Occur.MUST);
+            BooleanQuery query = builder.build();
             IndexSearcher searcher = this.searcherManager.acquire();
             try {
                 ScoreDoc after = null;
@@ -1412,7 +1413,7 @@ public class Taxonomy implements Reporter {
             FileUtils.clear(this.work, false);
             this.index = new File(this.work, "index");
             this.index.mkdir();
-            this.indexDir = new SimpleFSDirectory(this.index);
+            this.indexDir = new SimpleFSDirectory(this.index.toPath());
         } catch (IOException ex) {
             throw new IndexBuilderException("Unable to build work area", ex);
         }
@@ -1566,9 +1567,11 @@ public class Taxonomy implements Reporter {
      * @throws IOException Id unable to read the index
      */
     public List<Map<Term,String>> getIndexValues(Term type, String taxonID) throws IOException {
-        BooleanQuery query = new BooleanQuery();
-        query.add(new TermQuery(new org.apache.lucene.index.Term("type", type.qualifiedName())), BooleanClause.Occur.MUST);
-        query.add(new TermQuery(new org.apache.lucene.index.Term(fieldName(DwcTerm.taxonID), taxonID)), BooleanClause.Occur.MUST);
+
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(new TermQuery(new org.apache.lucene.index.Term("type", type.qualifiedName())), BooleanClause.Occur.MUST);
+        builder.add(new TermQuery(new org.apache.lucene.index.Term(fieldName(DwcTerm.taxonID), taxonID)), BooleanClause.Occur.MUST);
+        BooleanQuery query = builder.build();
         IndexSearcher searcher = this.searcherManager.acquire();
         try {
             TopDocs docs = searcher.search(query, 100, Sort.INDEXORDER);

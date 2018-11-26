@@ -3,7 +3,6 @@ package au.org.ala.names.index;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.util.TestUtils;
-import org.gbif.api.vocabulary.TaxonomicStatus;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.junit.After;
@@ -694,6 +693,26 @@ public class TaxonomyTest extends TestUtils {
         assertNull(tci1.getResolvedParent());
         assertNull(tci2.getResolvedParent());
         assertNull(tci3.getResolvedParent());
+    }
+
+    // Test misapplied taxa override accepted taxa if from a higher scoring source
+    @Test
+    public void testMisappliedAccepted1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-27.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Accepted-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Accepted-2");
+        TaxonConceptInstance tci3 = this.taxonomy.getInstance("Synonym-1");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        TaxonConcept tc3 = tci3.getContainer();
+        assertSame(tc1, tc3);
+        assertSame(tci2, tci3.getResolvedAccepted());
+        assertSame(tci2, tci1.getResolvedAccepted());
     }
 
 }

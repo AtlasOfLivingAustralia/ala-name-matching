@@ -14,11 +14,14 @@
  */
 package au.org.ala.names.search;
 
-import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
 import au.org.ala.names.util.CleanedScientificName;
 import au.org.ala.names.util.TaxonNameSoundEx;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang.StringUtils;
@@ -35,19 +38,17 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.vocabulary.NameType;
 import org.gbif.api.vocabulary.Rank;
 import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwca.record.DarwinCoreRecord;
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.record.Record;
-import org.gbif.dwca.record.StarRecord;
 import org.gbif.nameparser.PhraseNameParser;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -129,8 +130,10 @@ public class ALANameIndexer {
         ACCEPTED("synonym"),
         LEFT("left"),
         RIGHT("right"),
+        PRIORITY("priority"),
         SEARCHABLE_COMMON_NAME("common"),
-        COMMON_NAME("common_orig");
+        COMMON_NAME("common_orig"),
+        LANGUAGE("lang");
 
         String name;
 
@@ -235,7 +238,8 @@ public class ALANameIndexer {
     private IndexSearcher createTmpGuidIndex(String cbExportFile) throws Exception {
         System.out.println("Starting to create the tmp guid index...");
         IndexWriter iw = createIndexWriter(new File("/data/tmp/guid"), new KeywordAnalyzer(), true);
-        au.com.bytecode.opencsv.CSVReader cbreader = new au.com.bytecode.opencsv.CSVReader(new FileReader(cbExportFile), '\t', '"', '/', 1);
+        CSVReader cbreader = this.buildCSVReader(cbExportFile, '\t', '\\', '"', 1);
+
         for (String[] values = cbreader.readNext(); values != null; values = cbreader.readNext()) {
             Document doc = new Document();
             String id = values[POS_ID];
@@ -252,7 +256,7 @@ public class ALANameIndexer {
         iw.forceMerge(1);
         iw.close();
         //As of lucene 4.0 all IndexReaders are read only
-        return new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File("/data/tmp/guid"))));
+        return new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File("/data/tmp/guid").toPath())));
     }
 
     /**
@@ -265,7 +269,7 @@ public class ALANameIndexer {
      * @throws Exception
      */
     protected IndexWriter createIndexWriter(File directory, Analyzer analyzer, boolean replace) throws Exception {
-        IndexWriterConfig conf = new IndexWriterConfig(Version.LATEST, analyzer);
+        IndexWriterConfig conf = new IndexWriterConfig(analyzer);
         if (replace)
             conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
         else
@@ -275,7 +279,7 @@ public class ALANameIndexer {
             FileUtils.forceDelete(directory);
         }
         FileUtils.forceMkdir(directory);
-        return new IndexWriter(FSDirectory.open(directory), conf);
+        return new IndexWriter(FSDirectory.open(directory.toPath()), conf);
     }
 
     /**
@@ -287,7 +291,7 @@ public class ALANameIndexer {
      */
     private void addExtraALAConcept(IndexWriter iw, String file) throws Exception {
         if (new File(file).exists()) {
-            au.com.bytecode.opencsv.CSVReader reader = new au.com.bytecode.opencsv.CSVReader(new FileReader(file), ',', '"', '\\', 1);
+            CSVReader reader = this.buildCSVReader(file, ',', '"', '\\', 1);
             for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
                 String lsid = values[0];
                 String scientificName = values[1];
@@ -299,13 +303,13 @@ public class ALANameIndexer {
     }
 
     private void addALASyonyms(IndexWriter iw, String file) throws Exception {
-        au.com.bytecode.opencsv.CSVReader reader = new au.com.bytecode.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 1);
+        CSVReader reader = this.buildCSVReader(file, '\t', '"', '\\', 1);
         for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
 
             String source = values[11];
             //give CoL synonyms a lower boost than NSL
-            float boost = source.trim().equals("") || source.equalsIgnoreCase("CoL") ? 0.75f : 1.0f;
-            Document doc = createALASynonymDocument(values[5], values[6], null, values[0], values[1], values[2], values[3], values[4], boost, values[9]);
+            int priority = source.trim().equals("") || source.equalsIgnoreCase("CoL") ? MatchMetrics.DEFAULT_PRIORITY * 3 / 4 : MatchMetrics.DEFAULT_PRIORITY;
+            Document doc = createALASynonymDocument(values[5], values[6], null, null, values[0], values[1], values[2], values[3], values[4], priority, values[9]);
             if (doc != null)
                 iw.addDocument(doc);
         }
@@ -314,7 +318,7 @@ public class ALANameIndexer {
     private void indexALA(IndexWriter iw, String file, String synonymFile) throws Exception {
         int records = 0;
         long time = System.currentTimeMillis();
-        au.com.bytecode.opencsv.CSVReader reader = new au.com.bytecode.opencsv.CSVReader(new FileReader(file), '\t', '"', '\\', 1);
+        CSVReader reader = this.buildCSVReader(file, '\t', '"', '\\', 1);
         for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
 
             String lsid = values[POS_LSID];
@@ -327,15 +331,16 @@ public class ALANameIndexer {
 
             String acceptedValues = values[POS_ACC_LSID];
             float boost = 1.0f;
-            //give the major ranks a larger boost
-            if (rankId % 1000 == 0) {
-                boost = 5.0f;
+            // reduce minor ranks
+            if (rankId % 1000 != 0) {
+                boost *= 0.2f;
             }
-            //give non-col concepts a higher boost
+            //give reduce non-col concepts a higher boost
             String source = values[POS_SRC];
-            if (!source.trim().equals("") && !source.equalsIgnoreCase("CoL")) {
-                boost = boost * 2;
+            if (source.trim().equals("") || source.equalsIgnoreCase("CoL")) {
+                boost *= 0.5f;
             }
+            int priority = Math.round(boost * MatchMetrics.DEFAULT_PRIORITY);
 
 
             Document doc = createALAIndexDocument(values[POS_SCI_NAME], id, lsid, values[POS_RANK_ID],
@@ -344,7 +349,7 @@ public class ALANameIndexer {
                     values[POS_O], values[POS_OID], values[POS_F], values[POS_FID],
                     values[POS_G], values[POS_GID], values[POS_S], values[POS_SID],
                     values[POS_LFT], values[POS_RGT], acceptedValues,
-                    values[POS_SP_EPITHET], values[POS_INFRA_EPITHET], values[POS_AUTHOR], null, boost);
+                    values[POS_SP_EPITHET], values[POS_INFRA_EPITHET], values[POS_AUTHOR], null, null, priority);
 
 
             //add the excluded information if applicable
@@ -493,7 +498,7 @@ public class ALANameIndexer {
         log.info("Creating IRMNG index ...");
         File file = new File(irmngExport);
         if (file.exists()) {
-            CSVReader reader = new CSVReader(new FileReader(file), '\t', '"', '~');// CSVReader.build(file,"UTF-8", "\t", 0);
+            CSVReader reader = this.buildCSVReader(irmngExport, '\t', '"', '~', CSVReader.DEFAULT_SKIP_LINES);
             int count = 0;
             String[] values = null;
             while ((values = reader.readNext()) != null) {
@@ -535,8 +540,8 @@ public class ALANameIndexer {
     private void indexCommonNames(IndexWriter iw, String exportDir, String indexDir) throws Exception {
         log.info("Creating Common Names Index ...");
 
-        IndexSearcher currentNameSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(indexDir + File.separator + "cb"))));
-        IndexSearcher extraSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(indexDir + File.separator + "id"))));
+        IndexSearcher currentNameSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(indexDir + File.separator + "cb").toPath())));
+        IndexSearcher extraSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(indexDir + File.separator + "id").toPath())));
 
         addCoLCommonNames(iw, currentNameSearcher);
         addAnbgCommonNames(afdFile, iw, currentNameSearcher, extraSearcher, '\t');
@@ -557,13 +562,13 @@ public class ALANameIndexer {
     private void addCoLCommonNames(IndexWriter iw, IndexSearcher currentSearcher) throws Exception {
         File fileCol = new File(colFile);
         if (fileCol.exists()) {
-            CSVReader reader = new CSVReader(new FileReader(fileCol), ',', '"', '~');
+            CSVReader reader = this.buildCSVReader(colFile, ',', '"', '~', CSVReader.DEFAULT_SKIP_LINES);
             int count = 0;
             String[] values = null;
             while ((values = reader.readNext()) != null) {
                 if (values.length == 3) {
                     if (doesTaxonConceptExist(currentSearcher, values[2])) {
-                        iw.addDocument(createCommonNameDocument(values[0], values[1], values[2], 1.0f));
+                        iw.addDocument(createCommonNameDocument(values[0], values[1], values[2], null, 1.0f));
                         count++;
                     } else {
                         System.out.println("Unable to locate LSID " + values[2] + " in current dump");
@@ -590,7 +595,7 @@ public class ALANameIndexer {
         File namesFile = new File(fileName);
         Pattern p = Pattern.compile(",");
         if (namesFile.exists()) {
-            CSVReader reader = new CSVReader(new FileReader(namesFile), recordSep, '"', '\\');//CSVReader.build(namesFile,"UTF-8","\t", '"' , 1);
+            CSVReader reader = this.buildCSVReader(fileName, recordSep, '"', '\\', CSVReader.DEFAULT_SKIP_LINES);
             int count = 0;
             String[] values = reader.readNext();
             while ((values = reader.readNext()) != null) {
@@ -600,13 +605,13 @@ public class ALANameIndexer {
                     if (doesTaxonConceptExist(currentSearcher, values[3]) || doesTaxonConceptExist(idSearcher, values[3])) {
                         //each common name could be a comma separated list
                         if (!values[2].contains(",") || values[2].toLowerCase().contains(" and ")) {
-                            iw.addDocument(createCommonNameDocument(values[2], null, values[3], 2.0f));
+                            iw.addDocument(createCommonNameDocument(values[2], null, values[3], null, 2.0f));
                             count++;
                         } else {
                             //we need to process each common name in the list
                             String[] names = p.split(values[2]);
                             for (String name : names) {
-                                iw.addDocument(createCommonNameDocument(name, null, values[3], 2.0f));
+                                iw.addDocument(createCommonNameDocument(name, null, values[3],null,  2.0f));
                                 count++;
                             }
                         }
@@ -627,30 +632,53 @@ public class ALANameIndexer {
      * This deals with the following situations:
      * - common names that are sourced from CoL (LSIDs will be mapped to corresponding ANBG LSID)
      * - Multiple ANBG LSIDs exist for the same scientific name and more than 1 are mapped to the same common name.
+     * <p>
+     * The {@link #idSearcher} is set after creating this index
+     * </p>
+     *
+     * @param iw The index writer
+     * @param idFile The file containing additional ids
+     *
+     * @throws Exception
+     */
+    protected void createExtraIdIndex(IndexWriter iw, File idFile) throws Exception {
+        String[] values = null;
+
+        if(idFile.exists()) {
+            CSVReader reader = this.buildCSVReader(idFile.getPath(), '\t', '"', '~', CSVReader.DEFAULT_SKIP_LINES);
+            while ((values = reader.readNext()) != null) {
+
+                if (values != null && values.length >= 3) {
+                    Document doc = new Document();
+                    //doc.add(new Field("lsid", values[2], Store.NO, Index.NOT_ANALYZED));
+                    doc.add(new StringField("lsid", values[2], Store.NO));
+                    //doc.add(new Field("reallsid", values[1], Store.YES, Index.NO));
+                    doc.add(new StoredField("reallsid", values[1]));
+                    iw.addDocument(doc);
+                }
+            }
+        }
+        iw.flush();
+        iw.commit();
+        iw.forceMerge(1);
+        idSearcher = new IndexSearcher(DirectoryReader.open(iw.getDirectory()));
+    }
+
+    /**
+     * Creates a temporary index that will provide a lookup up of lsid to "real lsid".
+     * <p/>
+     * This deals with the following situations:
+     * - common names that are sourced from CoL (LSIDs will be mapped to corresponding ANBG LSID)
+     * - Multiple ANBG LSIDs exist for the same scientific name and more than 1 are mapped to the same common name.
      *
      * @param idFile
      * @throws Exception
      */
     protected void createExtraIdIndex(String idxLocation, File idFile) throws Exception {
-        CSVReader reader = new CSVReader(new FileReader(idFile), '\t', '"', '~');//CSVReader.build(idFile, "UTF-8", "\t", '"', 0);
         File indexDir = new File(idxLocation);
-        IndexWriter iw = createIndexWriter(indexDir, new KeywordAnalyzer(), true);//new IndexWriter(FSDirectory.open(indexDir), new KeywordAnalyzer(), true, MaxFieldLength.UNLIMITED);
-        String[] values = null;
-        while ((values = reader.readNext()) != null) {
-
-            if (values != null && values.length >= 3) {
-                Document doc = new Document();
-                //doc.add(new Field("lsid", values[2], Store.NO, Index.NOT_ANALYZED));
-                doc.add(new StringField("lsid", values[2], Store.NO));
-                //doc.add(new Field("reallsid", values[1], Store.YES, Index.NO));
-                doc.add(new StoredField("reallsid", values[1]));
-                iw.addDocument(doc);
-            }
-        }
-        iw.commit();
-        iw.forceMerge(1);
+        IndexWriter iw = this.createIndexWriter(indexDir, new KeywordAnalyzer(), true);
+        this.createExtraIdIndex(iw, idFile);
         iw.close();
-        idSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(indexDir)));
     }
 
     /**
@@ -663,7 +691,7 @@ public class ALANameIndexer {
      */
     private IndexSearcher createTmpIndex(String tcFileName) throws Exception {
         //creating the tmp index in the /tmp/taxonConcept directory
-        CSVReader reader = new CSVReader(new FileReader(new File(tcFileName)), '\t', '"', '~');
+        CSVReader reader = this.buildCSVReader(tcFileName, '\t', '"', '~', CSVReader.DEFAULT_SKIP_LINES);
         File indexDir = new File("/tmp/taxonConcept");
         IndexWriter iw = createIndexWriter(indexDir, new KeywordAnalyzer(), true);
         String[] values = null;
@@ -680,7 +708,7 @@ public class ALANameIndexer {
         iw.commit();
         iw.forceMerge(1);
         iw.close();
-        return new IndexSearcher(DirectoryReader.open(FSDirectory.open(indexDir)));
+        return new IndexSearcher(DirectoryReader.open(FSDirectory.open(indexDir.toPath())));
     }
 
     /**
@@ -723,11 +751,11 @@ public class ALANameIndexer {
         return value;
     }
 
-    protected Document createCommonNameDocument(String cn, String sn, String lsid, float boost){
-        return createCommonNameDocument(cn, sn, lsid, boost, true);
+    protected Document createCommonNameDocument(String cn, String sn, String lsid, String language, float boost){
+        return createCommonNameDocument(cn, sn, lsid, language, boost, true);
     }
 
-    protected Document createCommonNameDocument(String cn, String sn, String lsid, float boost, boolean checkAccepted) {
+    protected Document createCommonNameDocument(String cn, String sn, String lsid, String language, float boost, boolean checkAccepted) {
         Document doc = new Document();
         //we are only interested in keeping all the alphanumerical values of the common name
         //when searching the same operations will need to be peformed on the search string
@@ -743,27 +771,30 @@ public class ALANameIndexer {
 
         doc.add(new TextField(IndexField.COMMON_NAME.toString(), cn, Store.YES));
         doc.add(new TextField(IndexField.LSID.toString(), newLsid, Store.YES));
+        if(language != null) {
+            doc.add(new TextField(IndexField.LANGUAGE.toString(), language.toLowerCase().trim(), Store.YES));
+        }
 
         return doc;
     }
 
     public Document createALAIndexDocument(String name, String id, String lsid, String author, LinnaeanRankClassification cl){
-        return createALAIndexDocument(name,id, lsid, author,null,null, null, null, cl, null, 1.0f);
+        return createALAIndexDocument(name,id, lsid, author,null,null, null, null, cl, null, null, MatchMetrics.DEFAULT_PRIORITY);
     }
 
-    public Document createALAIndexDocument(String name, String id, String lsid, String author, String rank, String rankId, String left, String right, LinnaeanRankClassification cl, String nameComplete, float boost){
+    public Document createALAIndexDocument(String name, String id, String lsid, String author, String rank, String rankId, String left, String right, LinnaeanRankClassification cl, String nameComplete, Collection<String> otherNames, int priority){
         if(cl == null)
             cl = new LinnaeanRankClassification();
         return createALAIndexDocument(name, id, lsid, rankId, rank, cl.getKingdom(), cl.getKid(), cl.getPhylum()
                 , cl.getPid(), cl.getKlass(), cl.getCid(), cl.getOrder(), cl.getOid(), cl.getFamily(),
-                cl.getFid(), cl.getGenus(), cl.getGid(), cl.getSpecies(), cl.getSid(), left, right, null, null, null, author, nameComplete, boost);
+                cl.getFid(), cl.getGenus(), cl.getGid(), cl.getSpecies(), cl.getSid(), left, right, null, null, null, author, nameComplete, otherNames, priority);
     }
 
-    protected Document createALASynonymDocument(String scientificName, String author, String nameComplete, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, float boost, String synonymType) {
+    protected Document createALASynonymDocument(String scientificName, String author, String nameComplete, Collection<String> otherNames, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, int priority, String synonymType) {
         lsid = StringUtils.isBlank(lsid) ? nameLsid : lsid;
         Document doc = createALAIndexDocument(scientificName, id, lsid, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                acceptedLsid, null, null, author, nameComplete, boost);
+                acceptedLsid, null, null, author, nameComplete, otherNames, priority);
         if (doc != null && synonymType != null) {
             try {
                 doc.add(new TextField(NameIndexField.SYNONYM_TYPE.toString(), synonymType, Store.YES));
@@ -778,12 +809,12 @@ public class ALANameIndexer {
         return scientificName == null || blacklist.contains(scientificName.trim());
     }
 
-    private Document createALAIndexDocument(String name, String id, String lsid, String rank, String rankString,
+    protected Document createALAIndexDocument(String name, String id, String lsid, String rank, String rankString,
                                             String kingdom, String kid, String phylum, String pid, String clazz, String cid, String order,
                                             String oid, String family, String fid, String genus, String gid,
                                             String species, String sid, String left, String right, String acceptedConcept, String specificEpithet,
-                                            String infraspecificEpithet, String author, String nameComplete,
-                                            float boost) {
+                                            String infraspecificEpithet, String author, String nameComplete, Collection<String> otherNames,
+                                            int priority) {
         //
         if (isBlacklisted(name)) {
             System.out.println(name + " has been blacklisted");
@@ -804,7 +835,8 @@ public class ALANameIndexer {
             doc.add(new TextField(NameIndexField.ALA.toString(), "T", Store.NO));
         }
 
-        HashSet<String> nameSet = new HashSet<String>(3);
+
+        HashSet<String> nameSet = otherNames != null ? new HashSet<String>(otherNames) : new HashSet<>();
         nameSet.add(cname.getName());
         nameSet.add(cname.getNormalised());
         nameSet.add(cname.getBasic());
@@ -813,7 +845,6 @@ public class ALANameIndexer {
         nameSet.add(cnameComplete.getBasic());
         for (String n: nameSet) {
             Field f = new TextField(NameIndexField.NAME.toString(), n, Store.YES);
-            f.setBoost(boost);
             doc.add(f);
         }
 
@@ -886,7 +917,7 @@ public class ALANameIndexer {
         if (StringUtils.trimToNull(right) != null) {
             doc.add(new StringField("right", right, Store.YES));
         }
-
+        doc.add(new StoredField("priority", priority));
 
         //Add the author information
         if (StringUtils.isNotEmpty(author)) {
@@ -907,7 +938,6 @@ public class ALANameIndexer {
             {
                 if (!nameSet.contains(cn.canonicalName())) {
                     Field f2 = new TextField(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES);
-                    f2.setBoost(boost);
                     doc.add(f2);
                 }
                 if (specificEpithet == null && cn.isBinomial()) {
@@ -999,6 +1029,23 @@ public class ALANameIndexer {
         if (author != null)
             ncb.append(author);
         return ncb.toString().trim();
+    }
+
+    /**
+     * Create a CSV reader for a file
+     *
+     * @param file The name of the file
+     * @param separator The field separator character
+     * @param escape The escape character
+     * @param quote The field quote character
+     * @param skipLines The number of lines at the start to skip
+     *
+     * @return A CSV reader
+     */
+    protected CSVReader buildCSVReader(String file, char separator, char escape, char quote, int skipLines) throws IOException {
+        CSVParser parser = new CSVParserBuilder().withSeparator(separator).withEscapeChar(escape).withQuoteChar(quote).build();
+        CSVReader reader = new CSVReaderBuilder(new FileReader(file)).withCSVParser(parser).withSkipLines(skipLines).build();
+        return reader;
     }
 
     /**

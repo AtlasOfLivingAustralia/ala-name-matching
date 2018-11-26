@@ -32,16 +32,15 @@ import org.apache.lucene.util.Version;
 public final class LowerCaseKeywordAnalyzer extends Analyzer {
 
     @Override
-    protected TokenStreamComponents createComponents(String fieldName,
-                                                     Reader reader) {
+    protected TokenStreamComponents createComponents(String fieldName) {
 
-        KeywordTokenizer src = new KeywordTokenizer(reader);
-        TokenStream result = new LowerCaseFilter(Version.LATEST, src);
+        KeywordTokenizer src = new KeywordTokenizer();
+        TokenStream result = new LowerCaseFilter(src);
 
         return new TokenStreamComponents(src, result) {
 
             @Override
-            protected void setReader(final Reader reader) throws IOException {
+            protected void setReader(final Reader reader){
                 super.setReader(reader);
             }
         };

@@ -8,10 +8,9 @@ This code contains additions for handling some Australian specific issues.
 
 ## Versions
 
-* The master currently contains the 2.x branch. This version will only work with lucene 4. This version is in use by biocache 1.9.x.
-* The 3.x branch will only work with lucene 5 and **may not work with recent ALA name sources** due to the last merge from master being done from a [March 2017](https://github.com/AtlasOfLivingAustralia/ala-name-matching/commit/84fd72422d624798db71dac1de8ae59a5bbb69c5) commit. This version is in use by biocache 2.x.
-
-Note: indexes generated with the 2.x version of this library will not work with biocache 2.x.
+Currently there are 2 versions of this library, 2.x and 3.x.
+* 2.x is using lucene 4.
+* 3.x is using lucene 6 or above.
 
 ## Generating a name match index
 
@@ -42,17 +41,17 @@ You can download the IRMNG DwCA for homonyms from the following URL:
 
 An assembly zip file for this can be downloaded from our maven repository : 
 
-[ala-name-matching-2.4.6-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.4.6/ala-name-matching-2.4.6-distribution.zip)
+[ala-name-matching-3.3-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.4.6/ala-name-matching-2.4.6-distribution.zip)
 
 To generate the name index using the data described above, follow these steps. Alternatively use the [ALA Ansible scripts](https://github.com/AtlasOfLivingAustralia/ala-install) 
 here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustralia/ala-install/blob/master/ansible/nameindexer-standalone.yml) which does it all for you.
 
 * Download the zip files linked above to a directory e.g. /data/names/ and extract them
-* Download the distribution zip [ala-name-matching-2.4.6-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.4.6/ala-name-matching-2.4.6-distribution.zip)
+* Download the distribution zip [ala-name-matching-3.3-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.4.6/ala-name-matching-2.4.6-distribution.zip)
 * Generate the names index with command:
 
 ```
-java -jar ala-name-matching-2.4.2.jar --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
+java -jar ala-name-matching-3.3.jar --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
 ```
 
 Please be aware that the names indexing could take over an hour to complete.
@@ -79,12 +78,12 @@ To skip this step, run a build with ```mvn install -DskipTests=true```.
 
 The build creates 3 artefacts in the ala-name-matching/target directory: 
 
-* ala-name-matching-2.4.6.jar - built jar for the project code only
-* ala-name-matching-2.4.6-distribution.zip - zip containing the project jar and dependencies
-* ala-name-matching-2.4.6-sources.jar - source jar for the project code only
+* ala-name-matching-3.3.jar - built jar for the project code only
+* ala-name-matching-3.3-distribution.zip - zip containing the project jar and dependencies
+* ala-name-matching-3.3-sources.jar - source jar for the project code only
 
-The name index for Australian names lists used in unit tests can be downloaded [from here](http://biocache.ala.org.au/archives/nameindexes/20181105) and needs to be extracted to the
-directory `/data/lucene/namematching-20181105`
+The name index for Australian names lists used in unit tests can be downloaded [from here](http://biocache.ala.org.au/archives/nameindexes/20181120) and needs to be extracted to the
+directory `/data/lucene/namematching-20181120`
 
 ## ALA Names List
 
@@ -120,7 +119,7 @@ To use ala-name-matching, include it as a dependency in your pom file:
    <dependency>
       <groupId>au.org.ala</groupId>
       <artifactId>ala-name-matching</artifactId>
-      <version>2.4.6</version>
+      <version>3.3</version>
    </dependency>
 ```
 

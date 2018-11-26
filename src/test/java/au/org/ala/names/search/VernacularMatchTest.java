@@ -23,13 +23,9 @@ public class VernacularMatchTest {
     private static ALANameSearcher searcher;
 
     @org.junit.BeforeClass
-    public static void init() {
-        try {
-            searcher = new ALANameSearcher("/data/lucene/namematching-20181105");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    public static void init() throws Exception {
+        searcher = new ALANameSearcher("/data/lucene/namematching-20181120");
+     }
 
     @Test
     public void testVernacular1() throws Exception {

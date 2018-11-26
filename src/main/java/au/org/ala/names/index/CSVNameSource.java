@@ -1,9 +1,10 @@
 package au.org.ala.names.index;
 
 import au.org.ala.vocab.ALATerm;
-import au.com.bytecode.opencsv.CSVReader;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -52,7 +53,7 @@ public class CSVNameSource extends NameSource {
      */
     public CSVNameSource(Reader reader, Term rowType) throws IOException {
         this.name = "Reader " + System.identityHashCode(reader);
-        this.reader = new CSVReader(reader);
+        this.reader = new CSVReaderBuilder(reader).build();
         this.rowType = rowType;
         this.collectColumns();
     }

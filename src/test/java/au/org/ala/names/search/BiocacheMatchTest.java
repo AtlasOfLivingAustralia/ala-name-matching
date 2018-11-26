@@ -21,12 +21,8 @@ public class BiocacheMatchTest {
     private static ALANameSearcher searcher;
 
     @org.junit.BeforeClass
-    public static void init() {
-        try {
-            searcher = new ALANameSearcher("/data/lucene/namematching-20181105");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public static void init() throws Exception {
+        searcher = new ALANameSearcher("/data/lucene/namematching-20181120");
     }
 
     @Test
@@ -205,71 +201,92 @@ public class BiocacheMatchTest {
     }
 
     @Test
-    public void testMisappliedNames() {
-        try {
-            LinnaeanRankClassification cl = new LinnaeanRankClassification();
-            cl.setScientificName("Tephrosia savannicola");
-            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
-            assertEquals("http://id.biodiversity.org.au/node/apni/2894621", metrics.getResult().getLsid());
-            cl = new LinnaeanRankClassification();
-            cl.setScientificName("Myosurus minimus");
-            metrics = searcher.searchForRecordMetrics(cl, true);
-            assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
-            assertEquals("NZOR-6-93927", metrics.getResult().getLsid());
-        } catch (Exception e) {
-            fail("No exception shoudl occur");
-            e.printStackTrace();
-        }
+    public void testMisappliedNames1() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Tephrosia savannicola");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
+        assertEquals("http://id.biodiversity.org.au/node/apni/2894621", metrics.getResult().getLsid());
+    }
+
+    // Should go to higher taxon because there is no accepted match
+    @Test
+    public void testMisappliedNames2() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Myosurus minimus");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertTrue(metrics.getErrors().contains(ErrorType.MISAPPLIED));
+        assertEquals("http://id.biodiversity.org.au/node/apni/2896644", metrics.getResult().getLsid());
     }
 
     @Test
-    public void testAuthorsProvidedInName() {
-        try {
-            LinnaeanRankClassification cl = new LinnaeanRankClassification();
-            cl.setScientificName("Acanthastrea bowerbanki Edwards & Haime, 1857");
-            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals(NameType.SCIENTIFIC, metrics.getNameType());
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail("No exception should  occur");
-        }
+    public void testAuthorsProvidedInName() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Acanthastrea bowerbanki Edwards & Haime, 1857");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertEquals(NameType.SCIENTIFIC, metrics.getNameType());
     }
     //test this one for a bunchof homonyms that are synonyms of another concept...
     //Acacia retinodes
 
+    // Case where we have what should be a parent-child synonym but the spelling of the
+    // parent name and the synonym name are different (usually because of a subgenus name)
     @Test
-    public void testAffCfSpecies() {
+    public void testParentChildWithDifferentSpelling1() throws Exception {
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
-        try {
 
-            cl.setScientificName("Zabidius novemaculeatus");
-            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            System.out.println(metrics);
+        cl.setScientificName("Climacteris affinis");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:b78847ca-c2dc-4fb5-9322-0dcd60e87196", metrics.getResult().getLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType()); // Dereferenced synonym
+        assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
+    }
 
+    @Test
+    public void testParentChildWithDifferentSpelling2() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
 
-            cl.setScientificName("Climacteris affinis");
-            //this on should match with parent child synonym issue
-            metrics = searcher.searchForRecordMetrics(cl, true);
-            assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
-            cl = new LinnaeanRankClassification();
-            cl.setScientificName("Acacia aff. retinodes");
-            metrics = searcher.searchForRecordMetrics(cl, true);
-            //aff. species need to match to the genus
-            assertTrue(metrics.getErrors().contains(ErrorType.AFFINITY_SPECIES));
-            assertEquals(RankType.GENUS, metrics.getResult().getRank());
-            cl.setScientificName("Acacia aff.");
-            metrics = searcher.searchForRecordMetrics(cl, true);
-            //aff. species need to match to the genus
-            assertTrue(metrics.getErrors().contains(ErrorType.AFFINITY_SPECIES));
-            cl = new LinnaeanRankClassification();
-            cl.setScientificName("Acanthastrea cf. bowerbanki Edwards & Haime, 1857");
-            metrics = searcher.searchForRecordMetrics(cl, true);
-            assertTrue(metrics.getErrors().contains(ErrorType.CONFER_SPECIES));
-            assertEquals(RankType.GENUS, metrics.getResult().getRank());
-        } catch (Exception e) {
-            fail("No excpetion shoudl occur");
-        }
+        cl.setScientificName("Limnodynastes dumerilii");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:2c50c2f6-7a0d-44e1-b549-458427b420c4", metrics.getResult().getLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType()); // Dereferenced synonym
+        assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
+    }
+
+    @Test
+    public void testAffCfSpecies1() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+
+        // No issues
+        cl.setScientificName("Zabidius novemaculeatus");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:58e06bba-de3b-4c8c-b165-d75bbeb21a36", metrics.getResult().getLsid());
+        assertTrue(metrics.getErrors().contains(ErrorType.NONE));
+
+        cl = new LinnaeanRankClassification();
+        cl.setScientificName("Acacia aff. retinodes");
+        metrics = searcher.searchForRecordMetrics(cl, true);
+        //aff. species need to match to the genus
+        assertTrue(metrics.getErrors().contains(ErrorType.AFFINITY_SPECIES));
+        assertEquals(RankType.GENUS, metrics.getResult().getRank());
+    }
+
+    @Test
+    public void testAffCfSpecies2() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Acacia aff.");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        //aff. species need to match to the genus
+        assertTrue(metrics.getErrors().contains(ErrorType.AFFINITY_SPECIES));
+    }
+
+    @Test
+    public void testAffCfSpecies3() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Acanthastrea cf. bowerbanki Edwards & Haime, 1857");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertTrue(metrics.getErrors().contains(ErrorType.CONFER_SPECIES));
+        assertEquals(RankType.GENUS, metrics.getResult().getRank());
     }
 
     @Test
@@ -437,11 +454,9 @@ public class BiocacheMatchTest {
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             assertNotNull(metrics);
-            assertEquals("NZOR-6-132827", metrics.getResult().getLsid());
-            assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
-            NameSearchResult nsr = searcher.searchForCommonName(name);
-            assertNotNull(nsr);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c2056f1b-fcde-45b9-904b-1cab280368d1", nsr.getLsid());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.name:3064f20b-f6de-4375-8377-904cbd6cf9fa", metrics.getResult().getLsid());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c2056f1b-fcde-45b9-904b-1cab280368d1", metrics.getResult().getAcceptedLsid());
+            assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }
