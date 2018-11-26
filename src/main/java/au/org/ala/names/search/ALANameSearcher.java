@@ -30,7 +30,6 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 import org.gbif.api.exception.UnparsableException;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.vocabulary.NameType;
@@ -44,8 +43,8 @@ import java.io.OutputStreamWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * The API used to perform a search on the ALA Name Matching Lucene Index.  It follows the following
@@ -69,6 +68,8 @@ import java.util.regex.Pattern;
  * @author Natasha
  */
 public class ALANameSearcher {
+    /** Don't consider taxa below this limit for matches, unless there's nothing else */
+    public static float MATCH_LIMIT = 0.5f;
 
     protected Log log = LogFactory.getLog(ALANameSearcher.class);
     protected DirectoryReader cbReader, irmngReader, vernReader;
@@ -81,6 +82,7 @@ public class ALANameSearcher {
     public static final Pattern voucherRemovePattern = Pattern.compile(" |,|&|\\.");
     public static final Pattern affPattern = Pattern.compile("([\\x00-\\x7F\\s]*) aff[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
     public static final Pattern cfPattern = Pattern.compile("([\\x00-\\x7F\\s]*) cf[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
+
     /**
      * A set of names that are cross rank homonyms.
      */
@@ -1203,17 +1205,21 @@ public class ALANameSearcher {
             }
 
             try {
-
-                TopDocs hits = cbSearcher.search(parser.parse(query.toString()), max);//cbSearcher.search(boolQuery, max);
+                Query scoreQuery = parser.parse(query.toString());
+                TopDocs hits = cbSearcher.search(scoreQuery, max);//cbSearcher.search(boolQuery, max);
 
                 //now put the hits into the arrayof NameSearchResult
                 List<NameSearchResult> results = new java.util.ArrayList<NameSearchResult>();
 
                 for (ScoreDoc sdoc : hits.scoreDocs) {
                     NameSearchResult nsr = new NameSearchResult(cbReader.document(sdoc.doc), type);
+                    nsr.computeMatch(cl);
                     results.add(nsr);
                 }
-
+                results.sort(Comparator.comparing(NameSearchResult::getMatchMetrics).reversed());
+                if (results.stream().filter(r -> r.getMatchMetrics().getMatch() > MATCH_LIMIT).count() > 0) {
+                    results = results.stream().filter(r -> r.getMatchMetrics().getMatch() > MATCH_LIMIT).collect(Collectors.toList());
+                }
                 //HOMONYM CHECKS and other checks
                 if (checkHomo) {
 
@@ -1797,15 +1803,15 @@ public class ALANameSearcher {
     public NameSearchResult searchForRecordByLsid(String lsid) {
         NameSearchResult result = null;
         try {
-            List<NameSearchResult> results = performSearch(ALANameIndexer.IndexField.LSID.toString(), lsid, null, null, 1, MatchType.DIRECT, false, idParser.get());
-            if (results.size() > 0)
-                result = results.get(0);
-        } catch (Exception e) {
-            //we are not checking for homonyms so this should never happen
-            log.error("Unable to search for record by LSID");
+            Query query = new TermQuery(new Term(NameIndexField.LSID.toString(), lsid));
+            TopDocs hits = this.idSearcher.search(query, 1);
+            if (hits.totalHits == 0)
+                hits = this.cbSearcher.search(query, 1);
+            if (hits.totalHits > 0)
+                return new NameSearchResult(cbSearcher.doc(hits.scoreDocs[0].doc), MatchType.TAXON_ID);
+        } catch (Exception ex) {
+            log.error("Unable to search for record by LSID " + lsid, ex);
         }
-        if (result != null)
-            result.setMatchType(MatchType.TAXON_ID);
         return result;
     }
 

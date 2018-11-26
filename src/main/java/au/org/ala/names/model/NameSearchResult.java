@@ -17,6 +17,7 @@ package au.org.ala.names.model;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexableField;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -39,15 +40,18 @@ public class NameSearchResult {
     private String left, right;
     private LinnaeanRankClassification rankClass;
     private RankType rank;
-    //The type of match that was performed
+    /** The type of match that was performed */
     private MatchType matchType;
-    private SynonymType synonymType; //store that type of synonym that this name is    
+    private SynonymType synonymType; //store that type of synonym that this name is
+    /** The match quality */
+    private MatchMetrics matchMetrics;
 
     public NameSearchResult(String id, String lsid, MatchType type) {
         this.id = id;//Long.parseLong(id);
         this.lsid = StringUtils.trimToNull(lsid) == null ? id : StringUtils.trimToNull(lsid);
         matchType = type;
         isHomonym = false;
+        this.matchMetrics = new MatchMetrics();
     }
 
     public NameSearchResult(Document doc, MatchType type) {
@@ -88,6 +92,10 @@ public class NameSearchResult {
         if (syn != null) {
             acceptedLsid = syn;
         }
+        IndexableField priority = doc.getField(NameIndexField.PRIORITY.toString());
+        if (priority != null)
+            this.matchMetrics.setPriority(priority.numericValue().intValue());
+
     }
 
     public SynonymType getSynonymType() {
@@ -233,5 +241,25 @@ public class NameSearchResult {
 
     public void setRight(String right) {
         this.right = right;
+    }
+
+    /**
+     * Get the match metrics for this result
+     *
+     * @return The metrics
+     */
+    public MatchMetrics getMatchMetrics() {
+        return matchMetrics;
+    }
+
+    /**
+     * Compute the match metrics for this result against the query.
+     *
+     * @param query The query. If null, no metrics are computed
+     */
+    public void computeMatch(LinnaeanRankClassification query) {
+        if (query == null)
+            return;
+        this.matchMetrics.computeMatch(query, this.rankClass, this.synonymType != null);
     }
 }

@@ -979,7 +979,18 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         if (this.parentNameUsage != null && this.parent == null) {
             this.parent = taxonomy.findElement(this.code, this.parentNameUsage, this.provider, null);
         }
-        if (this.parent == null && this.taxonomicStatus.isAccepted() && this.classification != null) {
+        if (this.parent == null && (this.parentNameUsage != null || this.parentNameUsageID != null))
+            throw new IndexBuilderException("Unable to find parent taxon for " + this + " from " + this.parentNameUsageID + " - " + this.parentNameUsage);
+        if (this.acceptedNameUsageID != null) {
+            this.accepted = taxonomy.getInstance(this.acceptedNameUsageID);
+        }
+        if (this.acceptedNameUsage != null && this.accepted == null) {
+            this.accepted = taxonomy.findElement(this.code, this.acceptedNameUsage, this.provider, null);
+        }
+        if (this.accepted == null && (this.acceptedNameUsage != null || this.acceptedNameUsageID != null))
+            throw new IndexBuilderException("Unable to find accepted taxon for " + this + " from " + this.acceptedNameUsageID + " - " + this.acceptedNameUsage);
+        // No parent or accepted taxon but has a classification, so see if we can deduce a parent
+        if (this.parent == null && this.accepted == null && this.classification != null) {
             for (int i = 0; i < CLASSIFICATION_FIELDS.size(); i++) {
                 Term cls = CLASSIFICATION_FIELDS.get(i);
                 RankType clr = CLASSIFICATION_RANKS.get(i);
@@ -992,16 +1003,6 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 }
             }
         }
-        if (this.parent == null && (this.parentNameUsage != null || this.parentNameUsageID != null))
-            throw new IndexBuilderException("Unable to find parent taxon for " + this + " from " + this.parentNameUsageID + " - " + this.parentNameUsage);
-        if (this.acceptedNameUsageID != null) {
-            this.accepted = taxonomy.getInstance(this.acceptedNameUsageID);
-        }
-        if (this.acceptedNameUsage != null && this.accepted == null) {
-            this.accepted = taxonomy.findElement(this.code, this.acceptedNameUsage, this.provider, null);
-        }
-        if (this.accepted == null && (this.acceptedNameUsage != null || this.acceptedNameUsageID != null))
-            throw new IndexBuilderException("Unable to find accepted taxon for " + this + " from " + this.acceptedNameUsageID + " - " + this.acceptedNameUsage);
         taxonomy.count("count.resolve.instance.links");
     }
 
@@ -1132,7 +1133,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             values.put(ALATerm.verbatimTaxonRemarks, this.verbatimTaxonRemarks);
         if (this.provenance != null)
             values.put(DcTerm.provenance, this.getProvenanceString());
-        if (this.parentNameUsageID == null) {
+        if (this.parent == null) {
             values.remove(DwcTerm.parentNameUsageID); // If instance has become a synonym
             values.remove(DwcTerm.parentNameUsage);
         } else {
@@ -1146,7 +1147,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             }
             values.put(DwcTerm.parentNameUsageID, pid);
         }
-        if (this.acceptedNameUsageID == null) {
+        if (this.accepted == null) {
             values.remove(DwcTerm.acceptedNameUsageID); // If instance has become accepted
             values.remove(DwcTerm.acceptedNameUsage);
         } else {

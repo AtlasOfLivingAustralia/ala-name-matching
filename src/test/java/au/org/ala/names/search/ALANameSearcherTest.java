@@ -4,7 +4,6 @@ package au.org.ala.names.search;
 
 import au.org.ala.names.model.*;
 import org.gbif.api.model.checklistbank.ParsedName;
-import org.gbif.checklistbank.model.Classification;
 import org.gbif.nameparser.PhraseNameParser;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -25,31 +24,16 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testMisappliedNames1() {
+    public void testMisappliedNames1() throws Exception {
         try {
             //test to ensure that a misapplied name also .
             String lsid = searcher.searchForLSID("Corybas macranthus");
             fail("A misapplied exception should be thrown");
             //assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:549612",lsid);
         } catch (MisappliedException ex) {
-            assertEquals("NZOR-6-119236", ex.getMatchedResult().getLsid());
+            assertEquals("http://id.biodiversity.org.au/node/apni/2915977", ex.getMatchedResult().getLsid());
             //assertNull(ex.getMisappliedResult());
-        } catch (Exception ex) {
-            fail("No other exceptions should occur, got " + ex);
         }
-        //test a misapplied name that does not have an accepted concept
-        //No misapplied names in current dataset without accepted concepts
-        /*
-        try {
-            String lsid = searcher.searchForLSID("Myosurus minimus");
-            fail("a misapplied expcetption shoudl be thrown.");
-        } catch (MisappliedException e) {
-            assertEquals("urn:lsid:biodiversity.org.au:apni.taxon:303525", e.getMatchedResult().getLsid());
-            assertTrue(e.getMisappliedResult() == null);
-        } catch (Exception e) {
-            fail("no other exceptions should occur.");
-        }
-        */
     }
 
     @Test
@@ -215,36 +199,76 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testHomonymsWithAuthorResolution() {
+    public void testHomonymsWithResolution1() throws Exception {
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
         NameSearchResult nsr = null;
         cl.setScientificName("Thalia");
         try {
             nsr = searcher.searchForRecord("Thalia", null, true);
             fail("Thalia should throw a homonym without kingdom or author");
-        } catch (Exception e) {
-            assertTrue(e instanceof HomonymException);
+        } catch (HomonymException e) {
         }
+    }
+
+    @Test
+    public void testHomonymsWithResolution2() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        NameSearchResult nsr = null;
+        cl.setScientificName("Thalia");
         cl.setKingdom("Animalia");
         cl.setPhylum("Chordata");
         try {
             nsr = searcher.searchForRecord(cl, false);
             assertNotNull(nsr);
             assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:52c68649-47d5-4f2e-9730-417fc54fb080", nsr.getLsid());
-        } catch (Exception e) {
+        } catch (HomonymException e) {
             fail("Homonym should be resolved via the Kingdom");
         }
-        cl.setKingdom(null);
-        cl.setPhylum(null);
+    }
+
+    @Test
+    public void testHomonymsWithResolution3() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        NameSearchResult nsr = null;
+        cl.setScientificName("Thalia");
+        cl.setKingdom("Plantae");
+        try {
+            nsr = searcher.searchForRecord(cl, false);
+            assertNotNull(nsr);
+            assertEquals("http://id.biodiversity.org.au/node/apni/2908051", nsr.getLsid());
+        } catch (HomonymException e) {
+            fail("Homonym should be resolved via the Kingdom");
+        }
+    }
+
+    @Test
+    public void testHomonymsWithResolution4() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        NameSearchResult nsr = null;
+        cl.setScientificName("Thalia");
         cl.setAuthorship("Blumenbach, 1798");
         try {
             nsr = searcher.searchForRecord(cl, false);
             assertNotNull(nsr);
             assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:52c68649-47d5-4f2e-9730-417fc54fb080", nsr.getLsid());
-        } catch (Exception e) {
+        } catch (HomonymException e) {
             fail("Author should identify homonym value to use");
         }
+    }
 
+    @Test
+    public void testHomonymsWithResolution5() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        NameSearchResult nsr = null;
+        cl.setScientificName("Thalia");
+        cl.setAuthorship("Blumenbach");
+        try {
+            nsr = searcher.searchForRecord(cl, false);
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:52c68649-47d5-4f2e-9730-417fc54fb080", nsr.getLsid());
+        } catch (HomonymException e) {
+            fail("Author should identify homonym value to use");
+        }
     }
 
     @Test
@@ -528,11 +552,12 @@ public class ALANameSearcherTest {
     @Test
     public void testPhraseMatch4() {
         try {
+            // There are two Thelymitra adorata one with nom. inval. return the other one
             String name = "Thelymitra sp. adorata";
             NameSearchResult nsr = null;
             nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
-            assertEquals("http://id.biodiversity.org.au/name/apni/190511", nsr.getLsid());
+            assertEquals("http://id.biodiversity.org.au/name/apni/233691", nsr.getLsid());
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
         }
@@ -655,7 +680,7 @@ public class ALANameSearcherTest {
         try {
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
             assertNotNull(nsr);
-            assertEquals("CAAB:79629da1:6054320e:589caaa6:bb265593", nsr.getLsid());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.name:b64aac6e-d2c4-40d0-b3fd-2b037a6e4d07", nsr.getLsid());
             assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:3fb329bb-89d6-4589-b98a-3b1a6a284021", nsr.getAcceptedLsid());
             assertEquals(MatchType.SOUNDEX, nsr.getMatchType());
         } catch (SearchResultException ex) {
@@ -1420,8 +1445,9 @@ public class ALANameSearcherTest {
             cl.setScientificName(name);
             NameSearchResult nsr = searcher.searchForRecord(cl, true);
             assertNotNull(nsr);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:69f365ea-ab45-45a7-97b8-3c8e9241c323", nsr.getAcceptedLsid());
-            assertEquals("Stigmodera (Curis) aurifera", nsr.getRankClassification().getScientificName());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.name:efbe20e3-e69d-4f2c-80ec-79051dee1174", nsr.getLsid());
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:91d85a17-66d9-4879-b761-e19089e4710c", nsr.getAcceptedLsid());
+            assertEquals("Stigmodera aurifera", nsr.getRankClassification().getScientificName());
             assertEquals(MatchType.CANONICAL, nsr.getMatchType());
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
@@ -1429,34 +1455,47 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testCorreaReflexaHybrid()  {
+    public void testCorreaReflexaHybrid() throws Exception {
+        String name = "Correa reflexa (Labill.) Vent. hybrid";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
         try {
-            String name = "Correa reflexa (Labill.) Vent. hybrid";
-            LinnaeanRankClassification cl = new LinnaeanRankClassification();
-            cl.setScientificName(name);
-            NameSearchResult nsr = searcher.searchForRecord(cl, true);
-            assertNotNull(nsr);
+            searcher.searchForRecord(cl, true);
+            fail("Expecting misapplied exception");
+        } catch (MisappliedException ex) {
+            NameSearchResult nsr = ex.getMatchedResult();
             assertEquals("Correa reflexa", nsr.getRankClassification().getSpecies());
-        } catch (SearchResultException e) {
-            fail("Unexpected search exception " + e);
+            assertEquals("http://id.biodiversity.org.au/node/apni/2893483", nsr.getLsid());
+            nsr = ex.getMisappliedResult();
+            assertEquals("Correa eburnea", nsr.getRankClassification().getSpecies());
+            assertEquals("http://id.biodiversity.org.au/node/apni/2910182", nsr.getLsid());
         }
     }
 
 
     @Test
-    public void testIpomoea()  {
-        try {
-            String name = "Ipomoea";
-            LinnaeanRankClassification cl = new LinnaeanRankClassification();
-            cl.setScientificName(name);
-            cl.setFamily("Convolvulaceae");
-            NameSearchResult nsr = searcher.searchForRecord(cl, true);
-            assertNotNull(nsr);
-            assertEquals(RankType.GENUS, nsr.getRank());
-            assertEquals("Ipomoea", nsr.getRankClassification().getScientificName());
-        } catch (SearchResultException e) {
-            fail("Unexpected search exception " + e);
-        }
+    public void testIpomoea() throws Exception {
+        String name = "Ipomoea";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        cl.setFamily("Convolvulaceae");
+        NameSearchResult nsr = searcher.searchForRecord(cl, true);
+        assertNotNull(nsr);
+        assertEquals(RankType.GENUS, nsr.getRank());
+        assertEquals("Ipomoea", nsr.getRankClassification().getScientificName());
+    }
+
+
+    @Test
+    public void testSpecificEpithetWithoutName1() throws Exception {
+         LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setGenus("Oxypetalum");
+        cl.setSpecificEpithet("caeruleum");
+        NameSearchResult nsr = searcher.searchForRecord(cl, true);
+        assertNotNull(nsr);
+        assertEquals(SynonymType.SYNONYM, nsr.getSynonymType());
+        assertEquals("http://id.biodiversity.org.au/instance/apni/859716", nsr.getLsid());
+        assertEquals("http://id.biodiversity.org.au/node/apni/2906575", nsr.getAcceptedLsid());
     }
 
 

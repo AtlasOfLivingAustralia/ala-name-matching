@@ -20,6 +20,8 @@ import au.org.ala.names.util.CleanedScientificName;
 import au.org.ala.names.util.TaxonNameSoundEx;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang.StringUtils;
@@ -36,22 +38,17 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.vocabulary.NameType;
 import org.gbif.api.vocabulary.Rank;
 import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwca.record.DarwinCoreRecord;
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.record.Record;
-import org.gbif.dwca.record.StarRecord;
 import org.gbif.nameparser.PhraseNameParser;
 
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
-
 import java.io.*;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -133,6 +130,7 @@ public class ALANameIndexer {
         ACCEPTED("synonym"),
         LEFT("left"),
         RIGHT("right"),
+        PRIORITY("priority"),
         SEARCHABLE_COMMON_NAME("common"),
         COMMON_NAME("common_orig"),
         LANGUAGE("lang");
@@ -310,8 +308,8 @@ public class ALANameIndexer {
 
             String source = values[11];
             //give CoL synonyms a lower boost than NSL
-            float boost = source.trim().equals("") || source.equalsIgnoreCase("CoL") ? 0.75f : 1.0f;
-            Document doc = createALASynonymDocument(values[5], values[6], null, values[0], values[1], values[2], values[3], values[4], boost, values[9]);
+            int priority = source.trim().equals("") || source.equalsIgnoreCase("CoL") ? MatchMetrics.DEFAULT_PRIORITY * 3 / 4 : MatchMetrics.DEFAULT_PRIORITY;
+            Document doc = createALASynonymDocument(values[5], values[6], null, null, values[0], values[1], values[2], values[3], values[4], priority, values[9]);
             if (doc != null)
                 iw.addDocument(doc);
         }
@@ -333,15 +331,16 @@ public class ALANameIndexer {
 
             String acceptedValues = values[POS_ACC_LSID];
             float boost = 1.0f;
-            //give the major ranks a larger boost
-            if (rankId % 1000 == 0) {
-                boost = 5.0f;
+            // reduce minor ranks
+            if (rankId % 1000 != 0) {
+                boost *= 0.2f;
             }
-            //give non-col concepts a higher boost
+            //give reduce non-col concepts a higher boost
             String source = values[POS_SRC];
-            if (!source.trim().equals("") && !source.equalsIgnoreCase("CoL")) {
-                boost = boost * 2;
+            if (source.trim().equals("") || source.equalsIgnoreCase("CoL")) {
+                boost *= 0.5f;
             }
+            int priority = Math.round(boost * MatchMetrics.DEFAULT_PRIORITY);
 
 
             Document doc = createALAIndexDocument(values[POS_SCI_NAME], id, lsid, values[POS_RANK_ID],
@@ -350,7 +349,7 @@ public class ALANameIndexer {
                     values[POS_O], values[POS_OID], values[POS_F], values[POS_FID],
                     values[POS_G], values[POS_GID], values[POS_S], values[POS_SID],
                     values[POS_LFT], values[POS_RGT], acceptedValues,
-                    values[POS_SP_EPITHET], values[POS_INFRA_EPITHET], values[POS_AUTHOR], null, boost);
+                    values[POS_SP_EPITHET], values[POS_INFRA_EPITHET], values[POS_AUTHOR], null, null, priority);
 
 
             //add the excluded information if applicable
@@ -780,22 +779,22 @@ public class ALANameIndexer {
     }
 
     public Document createALAIndexDocument(String name, String id, String lsid, String author, LinnaeanRankClassification cl){
-        return createALAIndexDocument(name,id, lsid, author,null,null, null, null, cl, null, 1.0f);
+        return createALAIndexDocument(name,id, lsid, author,null,null, null, null, cl, null, null, MatchMetrics.DEFAULT_PRIORITY);
     }
 
-    public Document createALAIndexDocument(String name, String id, String lsid, String author, String rank, String rankId, String left, String right, LinnaeanRankClassification cl, String nameComplete, float boost){
+    public Document createALAIndexDocument(String name, String id, String lsid, String author, String rank, String rankId, String left, String right, LinnaeanRankClassification cl, String nameComplete, Collection<String> otherNames, int priority){
         if(cl == null)
             cl = new LinnaeanRankClassification();
         return createALAIndexDocument(name, id, lsid, rankId, rank, cl.getKingdom(), cl.getKid(), cl.getPhylum()
                 , cl.getPid(), cl.getKlass(), cl.getCid(), cl.getOrder(), cl.getOid(), cl.getFamily(),
-                cl.getFid(), cl.getGenus(), cl.getGid(), cl.getSpecies(), cl.getSid(), left, right, null, null, null, author, nameComplete, boost);
+                cl.getFid(), cl.getGenus(), cl.getGid(), cl.getSpecies(), cl.getSid(), left, right, null, null, null, author, nameComplete, otherNames, priority);
     }
 
-    protected Document createALASynonymDocument(String scientificName, String author, String nameComplete, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, float boost, String synonymType) {
+    protected Document createALASynonymDocument(String scientificName, String author, String nameComplete, Collection<String> otherNames, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, int priority, String synonymType) {
         lsid = StringUtils.isBlank(lsid) ? nameLsid : lsid;
         Document doc = createALAIndexDocument(scientificName, id, lsid, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                acceptedLsid, null, null, author, nameComplete, boost);
+                acceptedLsid, null, null, author, nameComplete, otherNames, priority);
         if (doc != null && synonymType != null) {
             try {
                 doc.add(new TextField(NameIndexField.SYNONYM_TYPE.toString(), synonymType, Store.YES));
@@ -810,12 +809,12 @@ public class ALANameIndexer {
         return scientificName == null || blacklist.contains(scientificName.trim());
     }
 
-    private Document createALAIndexDocument(String name, String id, String lsid, String rank, String rankString,
+    protected Document createALAIndexDocument(String name, String id, String lsid, String rank, String rankString,
                                             String kingdom, String kid, String phylum, String pid, String clazz, String cid, String order,
                                             String oid, String family, String fid, String genus, String gid,
                                             String species, String sid, String left, String right, String acceptedConcept, String specificEpithet,
-                                            String infraspecificEpithet, String author, String nameComplete,
-                                            float boost) {
+                                            String infraspecificEpithet, String author, String nameComplete, Collection<String> otherNames,
+                                            int priority) {
         //
         if (isBlacklisted(name)) {
             System.out.println(name + " has been blacklisted");
@@ -836,7 +835,8 @@ public class ALANameIndexer {
             doc.add(new TextField(NameIndexField.ALA.toString(), "T", Store.NO));
         }
 
-        HashSet<String> nameSet = new HashSet<String>(3);
+
+        HashSet<String> nameSet = otherNames != null ? new HashSet<String>(otherNames) : new HashSet<>();
         nameSet.add(cname.getName());
         nameSet.add(cname.getNormalised());
         nameSet.add(cname.getBasic());
@@ -845,7 +845,6 @@ public class ALANameIndexer {
         nameSet.add(cnameComplete.getBasic());
         for (String n: nameSet) {
             Field f = new TextField(NameIndexField.NAME.toString(), n, Store.YES);
-            f.setBoost(boost);
             doc.add(f);
         }
 
@@ -918,7 +917,7 @@ public class ALANameIndexer {
         if (StringUtils.trimToNull(right) != null) {
             doc.add(new StringField("right", right, Store.YES));
         }
-
+        doc.add(new StoredField("priority", priority));
 
         //Add the author information
         if (StringUtils.isNotEmpty(author)) {
@@ -939,7 +938,6 @@ public class ALANameIndexer {
             {
                 if (!nameSet.contains(cn.canonicalName())) {
                     Field f2 = new TextField(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES);
-                    f2.setBoost(boost);
                     doc.add(f2);
                 }
                 if (specificEpithet == null && cn.isBinomial()) {
