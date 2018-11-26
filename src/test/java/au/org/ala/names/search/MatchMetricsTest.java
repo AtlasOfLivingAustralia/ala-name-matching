@@ -357,7 +357,7 @@ public class MatchMetricsTest {
             this.metrics.computeMatch(query, result, false);
         assertEquals(1.0, metrics.getMatch(), MATCH_TOLERANCE);
         long time = System.currentTimeMillis() - start;
-        assertTrue("Took " + time + "ms. Required to be less than 1000ms", time < 1000);
+        assertTrue("Took " + time + "ms. Required to be less than 4000ms", time < 4000);
     }
 
     /**
@@ -378,7 +378,7 @@ public class MatchMetricsTest {
             this.metrics.computeMatch(query, result, false);
         assertEquals(1.0, metrics.getMatch(), MATCH_TOLERANCE);
         long time = System.currentTimeMillis() - start;
-        assertTrue("Took " + time + "ms. Required to be less than 1000ms", time < 1000);
+        assertTrue("Took " + time + "ms. Required to be less than 4000ms", time < 4000);
     }
 
     /**
@@ -396,7 +396,7 @@ public class MatchMetricsTest {
             this.metrics.computeMatch(query, result, false);
         assertEquals(0.958, metrics.getMatch(), MATCH_TOLERANCE);
         long time = System.currentTimeMillis() - start;
-        assertTrue("Took " + time + "ms. Required to be less than 1000ms", time < 1000);
+        assertTrue("Took " + time + "ms. Required to be less than 4000ms", time < 4000);
     }
 
     /**
@@ -415,7 +415,7 @@ public class MatchMetricsTest {
             this.metrics.computeMatch(query, result, false);
         assertEquals(0.873, metrics.getMatch(), MATCH_TOLERANCE);
         long time = System.currentTimeMillis() - start;
-        assertTrue("Took " + time + "ms. Required to be less than 1000ms", time < 1000);
+        assertTrue("Took " + time + "ms. Required to be less than 4000ms", time < 4000);
     }
 
 
