@@ -237,8 +237,8 @@ public class BiocacheMatchTest {
 
         cl.setScientificName("Climacteris affinis");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:8e51f5aa-6448-486f-a7f7-bd675b5cacbb", metrics.getResult().getLsid());
-        assertEquals(MatchType.TAXON_ID, metrics.getResult().getMatchType()); // Dereferenced synonym
+        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:b78847ca-c2dc-4fb5-9322-0dcd60e87196", metrics.getResult().getLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType()); // Dereferenced synonym
         assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
     }
 
@@ -248,8 +248,8 @@ public class BiocacheMatchTest {
 
         cl.setScientificName("Limnodynastes dumerilii");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:b703b216-95b6-4940-9971-b219f7f5e0d9", metrics.getResult().getLsid());
-        assertEquals(MatchType.TAXON_ID, metrics.getResult().getMatchType()); // Dereferenced synonym
+        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:2c50c2f6-7a0d-44e1-b549-458427b420c4", metrics.getResult().getLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType()); // Dereferenced synonym
         assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
     }
 

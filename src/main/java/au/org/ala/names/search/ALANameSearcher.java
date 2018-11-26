@@ -678,7 +678,8 @@ public class ALANameSearcher {
         } catch (ParentSynonymChildException e) {
             metrics.setLastException(e);
             metrics.getErrors().add(e.errorType);
-            nsr = e.getChildResult();
+            // Use the parent result, since we can't tell whether the name supplied is from before the reassignment or after
+            nsr = e.getParentResult();
         } catch (ExcludedNameException e) {
             metrics.setLastException(e);
             metrics.getErrors().add(e.errorType);
@@ -817,7 +818,8 @@ public class ALANameSearcher {
             if (e.getMisappliedResult() != null)
                 nsr = e.getMatchedResult();
         } catch (ParentSynonymChildException e) {
-            nsr = e.getChildResult();
+            // Use the parent result, since we can't tell whether the name supplied is from before the reassignment or after
+            nsr = e.getParentResult();
         } catch (ExcludedNameException e) {
             nsr = e.getNonExcludedName() != null ? e.getNonExcludedName() : e.getExcludedName();
         } catch (SearchResultException e) {
@@ -1991,8 +1993,8 @@ public class ALANameSearcher {
                 else
                     lsid = e.getExcludedName().getLsid();
             } catch (ParentSynonymChildException e) {
-                //the child is the one we want
-                lsid = e.getChildResult().getLsid();
+                //the parent is the one we want, since we don't know whether this is just a higher taxon or not
+                lsid = e.getParentResult().getLsid();
             } catch (MisappliedException e) {
                 if (e.getMisappliedResult() != null)
                     lsid = e.getMatchedResult().getLsid();
@@ -2009,8 +2011,8 @@ public class ALANameSearcher {
                 else
                     lsid = e.getExcludedName().getLsid();
             } catch (ParentSynonymChildException e) {
-                //the child is the one we want
-                lsid = e.getChildResult().getLsid();
+                //the parent is the one we want, since we don't know whether this is just a higher taxon or not
+                lsid = e.getParentResult().getLsid();
             } catch (MisappliedException e) {
                 if (e.getMisappliedResult() != null)
                     lsid = e.getMatchedResult().getLsid();
