@@ -1,12 +1,7 @@
 package au.org.ala.names.index;
 
-import au.org.ala.names.model.ALAParsedName;
-import au.org.ala.names.model.RankType;
-import au.org.ala.names.model.SynonymType;
-import au.org.ala.names.model.TaxonomicType;
+import au.org.ala.names.model.*;
 import au.org.ala.names.util.CleanedScientificName;
-import com.opencsv.CSVParser;
-import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import org.gbif.api.exception.UnparsableException;
@@ -27,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.InputStreamReader;
-import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -131,12 +125,10 @@ public class ALANameAnalyser extends NameAnalyser {
     private List<Pattern> informalPatterns;
     private NameParser nameParser;
     private NomStatusParser nomStatusParser;
-    private AuthorComparator authorComparator;
 
     public ALANameAnalyser() {
         this.nameParser = new PhraseNameParser();
         this.nomStatusParser = NomStatusParser.getInstance();
-        this.authorComparator = AuthorComparator.createWithAuthormap();
         this.buildCodeMap();
         this.buildTaxonomicTypeMap();
         this.buildRankMap();
@@ -159,16 +151,23 @@ public class ALANameAnalyser extends NameAnalyser {
     @Override
     public NameKey analyse(@Nullable NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, TaxonomicType taxonomicStatus, boolean loose) {
         NameType nameType = NameType.INFORMAL;
+        Set<NameFlag> flags = null;
+        ParsedName name = null;
+
         if (scientificNameAuthorship != null && scientificName.endsWith(scientificNameAuthorship)) {
             scientificName = scientificName.substring(0, scientificName.length() - scientificNameAuthorship.length()).trim();
         }
-        if (loose) {
-            ParsedName name = null;
-            try {
-                name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
-            } catch (UnparsableException ex) {
-                // Oh well, worth a try
+        try {
+            name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
+            if (name != null) {
+                nameType = name.getType();
+                if (rankType == null && name.getRank() != null)
+                    rankType = RankType.getForCBRank(name.getRank());
             }
+        } catch (UnparsableException ex) {
+            // Oh well, worth a try
+        }
+        if (loose) {
             if (scientificNameAuthorship == null && name != null) {
                 String ac = name.authorshipComplete();
                 if (ac != null && !ac.isEmpty() && !(name instanceof ALAParsedName)) { // ALAParsedName indicates a phrase name; leave as-is
@@ -211,8 +210,6 @@ public class ALANameAnalyser extends NameAnalyser {
         } else if(LOWER_SCIENTIFIC_TEST.test(scientificName)) {
             nameType = NameType.SCIENTIFIC;
             scientificName = SciNameNormalizer.normalize(scientificName);
-        } else {
-            nameType = NameType.INFORMAL;
         }
         if (rankType == null)
             rankType = RankType.UNRANKED;
@@ -230,7 +227,14 @@ public class ALANameAnalyser extends NameAnalyser {
         }
         scientificNameAuthorship = scientificNameAuthorship == null || scientificNameAuthorship.isEmpty() ? null : scientificNameAuthorship;
 
-        return new NameKey(this, code, scientificName.toUpperCase(), scientificNameAuthorship, rankType, nameType);
+        // Flags
+        if (name != null && name.isAutonym()) {
+            scientificName = name.canonicalName();
+            flags = Collections.singleton(NameFlag.AUTONYM);
+            scientificNameAuthorship = null;
+        }
+
+        return new NameKey(this, code, scientificName.toUpperCase(), scientificNameAuthorship, rankType, nameType, flags);
     }
 
     /**
@@ -372,7 +376,7 @@ public class ALANameAnalyser extends NameAnalyser {
         code = code.toUpperCase().trim();
         NomenclaturalCode nc = this.codeMap.get(code);
         if (nc == null)
-            this.report(IssueType.PROBLEM, "nomenclaturalCode.notFound", null, null, null, code);
+            this.report(IssueType.PROBLEM, "nomenclaturalCode.notFound", null, null, code);
         return nc;
     }
 
@@ -395,7 +399,7 @@ public class ALANameAnalyser extends NameAnalyser {
             return TaxonomicType.INFERRED_UNPLACED;
         TaxonomicType type = this.taxonomicTypeMap.get(taxonomicStatus);
         if (type == null) {
-            this.report(IssueType.PROBLEM, "taxonomicStatus.notFound", null, null, null, taxonomicStatus);
+            this.report(IssueType.PROBLEM, "taxonomicStatus.notFound", null, null, taxonomicStatus);
             type = TaxonomicType.INFERRED_UNPLACED;
             synchronized (this) {
                 this.taxonomicTypeMap.put(taxonomicStatus, type); // Report once
@@ -420,7 +424,7 @@ public class ALANameAnalyser extends NameAnalyser {
             return RankType.UNRANKED;
         RankType rankType = this.rankMap.get(rank);
         if (rankType == null) {
-            this.report(IssueType.PROBLEM, "rank.notFound", null, null, null, rank);
+            this.report(IssueType.PROBLEM, "rank.notFound", null, null, rank);
             rankType = RankType.UNRANKED;
             synchronized (this) {
                 this.rankMap.put(rank, rankType); // Report once
@@ -448,7 +452,7 @@ public class ALANameAnalyser extends NameAnalyser {
             return null;
         NomenclaturalStatus status = this.nomenclaturalStatusMap.get(nomenclaturalStatus);
         if (status == null && !this.nomenclaturalStatusMap.containsKey(nomenclaturalStatus)) {
-            this.report(IssueType.PROBLEM, "nomenclaturalStatus.notFound", null, null, null, nomenclaturalStatus);
+            this.report(IssueType.PROBLEM, "nomenclaturalStatus.notFound", null, null, nomenclaturalStatus);
             synchronized (this) {
                 this.nomenclaturalStatusMap.put(nomenclaturalStatus, null); // Report once
             }
@@ -472,72 +476,5 @@ public class ALANameAnalyser extends NameAnalyser {
             if (p.matcher(name).matches())
                 return true;
         return false;
-    }
-
-
-    /**
-     * Compare two keys.
-     * <p>
-     *     Comparison is equal if the codes, names and authors are equal.
-     *     Authorship equality is decided by a {@link AuthorComparator}
-     *     which can get a wee bit complicated.
-     * </p>
-     *
-     * @param key1 The first key to compare
-     * @param key2 The second key to compare
-     *
-     * @return less than zero if key1 is less than ket2, greater than zero if key1 is greater than key2 and 0 for equality
-     */
-    @Override
-    public int compare(NameKey key1, NameKey key2) {
-        int cmp;
-
-        if (key1.getCode() == null && key2.getCode() != null)
-            return -1;
-        if (key1.getCode() != null && key2.getCode() == null)
-            return 1;
-        if (key1.getCode() != null && key2.getCode() != null && (cmp = key1.getCode().compareTo(key2.getCode())) != 0)
-            return cmp;
-        if ((cmp = key1.getScientificName().compareTo(key2.getScientificName())) != 0)
-            return cmp;
-        if ((cmp = key1.getRank().compareTo(key2.getRank())) != 0)
-            return cmp;
-        return this.compareAuthor(key1.getScientificNameAuthorship(), key2.getScientificNameAuthorship());
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Use the GBIF name comparator fdr equality
-     * </p>
-     */
-    @Override
-    public int compareAuthor(String author1, String author2) {
-        if (author1 == null && author2 == null)
-            return 0;
-        if (author1 == null && author2 != null)
-            return -1;
-        if (author1 != null && author2 == null)
-            return 1;
-        if (authorComparator.compare(author1, null, author2, null) == Equality.EQUAL)
-            return 0;
-        return author1.compareTo(author2);
-    }
-
-    /**
-     * Compute a hash code for a key.
-     * <p>
-     *     Based on hashing for the code and name. Only author presence/absence is calculated.
-     * </p>
-     * @param key1 The key
-     *
-     * @return The hash code
-     */
-    @Override
-    public int hashCode(NameKey key1) {
-        int hash = key1.getCode() != null ? key1.getCode().hashCode() : 1181;
-        hash = hash * 31 + key1.getScientificName().hashCode();
-        hash = hash * 31 + (key1.getScientificNameAuthorship() == null ? 0 : 5659);
-        return hash;
     }
 }

@@ -154,6 +154,36 @@ abstract public class TaxonomicElement<T extends TaxonomicElement, C extends Tax
     abstract public String getScientificNameAuthorship();
 
     /**
+     * Get the explicitly stated complete name for the taxon.
+     * <p>
+     *     In some cases, the name is not just the name with author tacked onto the end.
+     *     If that is the case, then the name complete contains the correct full name.
+     * </p>
+     *
+     * @return The complete name
+     */
+    abstract public String getNameComplete();
+
+    /**
+     * Get a display name for this concept.
+     * <p>
+     *     Either the complete name or the scioentific name/authorship
+     * </p>
+     *
+     * @return The display name
+     */
+    public String getDisplayName() {
+        String nc = this.getNameComplete();
+        if (nc != null && !nc.isEmpty())
+            return nc;
+        String sn = this.getScientificName();
+        String au = this.getScientificNameAuthorship();
+        if (au == null || au.isEmpty())
+            return sn;
+        return sn + " " + au;
+    }
+
+    /**
      * Get the rank of the taxon that this represents.
      * <p>
      * In some cases, this will be {@link RankType#UNRANKED}

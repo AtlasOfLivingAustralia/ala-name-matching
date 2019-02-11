@@ -167,7 +167,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
         if (representative == null || this.resolution == null)
             throw new IndexBuilderException("Unable to reallocate " + element + " to " + this + " without representative and resolution");
         String reallocated = taxonomy.getResources().getString(reason);
-        reallocated = MessageFormat.format(reallocated, representative.getTaxonID(), representative.getScientificName(), representative.getScientificNameAuthorship() == null ? "" : representative.getScientificNameAuthorship());
+        reallocated = MessageFormat.format(reallocated, representative.getTaxonID(), representative.getDisplayName());
         taxonomy.addProvenanceToOutput();
         element.resolution = new TaxonResolution();
         for (TaxonConceptInstance tci: element.instances) {
@@ -271,7 +271,16 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      * @return True if this taxon concept has an author
      */
     public boolean isAuthored() {
-        return this.key.getScientificNameAuthorship() != null;
+        return !this.key.isUnauthored();
+    }
+
+    /**
+     * Is this an autonym taxon concept (ie. an authorless, generated subspecies)?
+     *
+     * @return True if this taxon concept has an author
+     */
+    public boolean isAutonym() {
+        return this.key.isAutonym();
     }
 
     /**
@@ -291,7 +300,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
             taxonomy.report(IssueType.ERROR, "taxonConcept.representative", principal, Arrays.asList(this));
             return;
         }
-        List<TaxonConceptInstance> inferred = this.resolution.getUsed().stream().filter(tci -> tci.isAccepted()).map(tci -> representative.createInferredSynonym(this, tci.getScientificName(), tci.getScientificNameAuthorship(), tci.getYear(), taxonomy)).collect(Collectors.toList());
+        List<TaxonConceptInstance> inferred = this.resolution.getUsed().stream().filter(tci -> tci.isAccepted()).map(tci -> representative.createInferredSynonym(this, tci.getScientificName(), tci.getScientificNameAuthorship(), tci.getNameComplete(), tci.getYear(), taxonomy)).collect(Collectors.toList());
         if (inferred.isEmpty()) {
             taxonomy.report(IssueType.ERROR, "taxonConcept.inferredSynonyms", principal, Arrays.asList(this));
             return;
@@ -400,6 +409,15 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     @Override
     public String getScientificNameAuthorship() {
         return this.key.getScientificNameAuthorship();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getNameComplete() {
+        TaxonConceptInstance representative = this.getRepresentative();
+        return representative != null ? representative.getNameComplete() : null;
     }
 
     /**

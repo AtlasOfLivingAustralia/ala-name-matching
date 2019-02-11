@@ -244,12 +244,13 @@ public class DwcaNameSource extends NameSource {
                 NomenclaturalCode code = taxonomy.resolveCode(verbatimNomenclaturalCode);
                 String scientificName = core.value(DwcTerm.scientificName);
                 String scientificNameAuthorship = core.value(DwcTerm.scientificNameAuthorship);
+                String nameComplete = core.value(ALATerm.nameComplete);
                 if (code == null) {
                     code = provider.getDefaultNomenclaturalCode();
                     if (code == null && !provider.isLoose())
                         throw new IllegalStateException("No nomenclatural code for " + taxonID + " and code " + verbatimNomenclaturalCode);
                     if (code != null) {
-                        taxonomy.report(IssueType.PROBLEM, "taxonomy.load.nullCode", taxonID, scientificName, scientificNameAuthorship, verbatimNomenclaturalCode);
+                        taxonomy.report(IssueType.PROBLEM, "taxonomy.load.nullCode", taxonID, nameComplete, verbatimNomenclaturalCode);
                         taxonomy.count("count.load.problem");
                     }
                 }
@@ -276,6 +277,7 @@ public class DwcaNameSource extends NameSource {
                         provider,
                         scientificName,
                         scientificNameAuthorship,
+                        nameComplete,
                         year,
                         taxonomicStatus,
                         verbatimTaxonomicStatus,
@@ -336,6 +338,7 @@ public class DwcaNameSource extends NameSource {
                         null,
                         provider,
                         vernacularName,
+                        null,
                         null,
                         null,
                         TaxonomicType.PSEUDO_TAXON,

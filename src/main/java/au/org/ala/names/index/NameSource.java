@@ -211,6 +211,7 @@ abstract public class NameSource {
             DwcTerm.taxonID,
             DwcTerm.scientificName,
             DwcTerm.scientificNameAuthorship,
+            ALATerm.nameComplete,
             DwcTerm.nomenclaturalCode,
             DwcTerm.taxonRank,
             DwcTerm.taxonomicStatus,

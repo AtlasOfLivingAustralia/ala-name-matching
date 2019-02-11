@@ -182,6 +182,7 @@ public class CSVNameSource extends NameSource {
         Integer datasetNameIndex = termLocations.get(DwcTerm.datasetName);
         Integer scientificNameIndex = termLocations.get(DwcTerm.scientificName);
         Integer scientificNameAuthorshipIndex = termLocations.get(DwcTerm.scientificNameAuthorship);
+        Integer nameCompleteIndex = termLocations.get(ALATerm.nameComplete);
         Integer namePublishedInYearIndex = termLocations.get(DwcTerm.namePublishedInYear);
         Integer taxonomicStatusIndex = termLocations.get(DwcTerm.taxonomicStatus);
         Integer taxonRankIndex = termLocations.get(DwcTerm.taxonRank);
@@ -204,6 +205,7 @@ public class CSVNameSource extends NameSource {
                 NameProvider provider = taxonomy.resolveProvider(this.get(record, datasetIDIndex), this.get(record, datasetNameIndex));
                 String scientificName = this.get(record, scientificNameIndex);
                 String scientificNameAuthorship = this.get(record, scientificNameAuthorshipIndex);
+                String nameComplete = this.get(record, nameCompleteIndex);
                 String year = this.get(record, namePublishedInYearIndex);
                 String verbatimTaxonomicStatus = this.get(record, taxonomicStatusIndex);
                 TaxonomicType taxonomicStatus = taxonomy.resolveTaxonomicType(verbatimTaxonomicStatus);
@@ -230,6 +232,7 @@ public class CSVNameSource extends NameSource {
                         provider,
                         scientificName,
                         scientificNameAuthorship,
+                        nameComplete,
                         year,
                         taxonomicStatus,
                         verbatimTaxonomicStatus,

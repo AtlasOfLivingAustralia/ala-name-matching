@@ -1,0 +1,6 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source
+"Autonym-1-1","","","dr100","ICN","Gonocarpus micranthus subsp. micranthus","","subspecies","","","accepted","","","","","","","","Gonocarpus micranthus Thunb. subsp. micranthus","",""
+"Autonym-1-2","","","dr101","ICN","Gonocarpus micranthus subsp. micranthus","Thunb.","subspecies","","","accepted","","","","","","","","Gonocarpus micranthus Thunb. subsp. micranthus","",""
+"Autonym-2-1","","","dr100","ICN","Senecio glomeratus subsp. glomeratus","","subspecies","","","accepted","","","","","","","","Senecio glomeratus Desf. ex Poir. subsp. glomeratus","",""
+"Autonym-2-2","","","dr101","ICN","Senecio glomeratus subsp. glomeratus","","subspecies","","","accepted","","","","","","","","Senecio glomeratus Poir. subsp. glomeratus","",""
+"Autonym-2-3","","","dr108","ICN","Senecio glomeratus subsp. glomeratus","Poir.","subspecies","","","accepted","","","","","","","","Senecio glomeratus Poir. subsp. glomeratus","",""

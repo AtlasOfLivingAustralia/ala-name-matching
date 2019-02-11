@@ -14,6 +14,7 @@ import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.Null;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
@@ -116,6 +117,9 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     private String scientificName;
     /** The supplied scientific name authorship */
     private String scientificNameAuthorship;
+    /** The properly formatted complete name */
+    @Nullable
+    private String nameComplete;
     /** The year of publication, if available */
     private String year;
     /** The taxonomic status */
@@ -166,6 +170,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * @param provider The name provider
      * @param scientificName The scientific name
      * @param scientificNameAuthorship The scientific name authorship
+     * @param nameComplete The properly formatted complete name
      * @param year The year of publication
      * @param taxonomicStatus The taxonomic status
      * @param verbatimTaxonomicStatus The taxonomic status as supplied
@@ -189,6 +194,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             NameProvider provider,
             String scientificName,
             String scientificNameAuthorship,
+            @Nullable String nameComplete,
             String year,
             TaxonomicType taxonomicStatus,
             String verbatimTaxonomicStatus,
@@ -210,6 +216,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         this.provider = Objects.requireNonNull(provider);
         this.scientificName = scientificName;
         this.scientificNameAuthorship = scientificNameAuthorship;
+        this.nameComplete = nameComplete;
         this.year = year;
         this.taxonomicStatus = taxonomicStatus;
         this.verbatimTaxonomicStatus = verbatimTaxonomicStatus;
@@ -281,6 +288,16 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     public String getScientificNameAuthorship() {
         return scientificNameAuthorship;
+    }
+
+    /**
+     * Get the correctly formatted complete name, if it exists
+     *
+     * @return The complete name
+     */
+    @Nullable
+    public String getNameComplete() {
+        return nameComplete;
     }
 
     /**
@@ -1257,9 +1274,13 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         builder.append(":");
         builder.append(this.getTaxonID());
         builder.append(", ");
-        builder.append(this.getScientificName());
-        builder.append(", ");
-        builder.append(this.getScientificNameAuthorship());
+        if (this.nameComplete != null) {
+            builder.append(this.nameComplete);
+        } else {
+            builder.append(this.getScientificName());
+            builder.append(", ");
+            builder.append(this.getScientificNameAuthorship());
+        }
         builder.append(", ");
         builder.append(this.getRank());
         builder.append(", ");
@@ -1293,7 +1314,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      *
      * @return A synonym that points a name towards this instance
      */
-    public TaxonConceptInstance createInferredSynonym(TaxonConcept concept, String scientificName, String scientificNameAuthorship, String year, Taxonomy taxonomy) {
+    public TaxonConceptInstance createInferredSynonym(TaxonConcept concept, String scientificName, String scientificNameAuthorship, String nameComplete, String year, Taxonomy taxonomy) {
         TaxonConceptInstance synonym = new TaxonConceptInstance(
                 UUID.randomUUID().toString(),
                 this.code,
@@ -1301,6 +1322,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 taxonomy.getInferenceProvider(),
                 scientificName,
                 scientificNameAuthorship,
+                nameComplete,
                 year,
                 TaxonomicType.INFERRED_SYNONYM,
                 this.verbatimTaxonomicStatus,
@@ -1346,6 +1368,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 this.provider,
                 this.scientificName,
                 this.scientificNameAuthorship,
+                this.nameComplete,
                 this.year,
                 this.taxonomicStatus,
                 this.verbatimTaxonomicStatus,
