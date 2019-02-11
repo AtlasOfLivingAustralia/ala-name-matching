@@ -54,7 +54,7 @@ public class ALANameAnalyserTest {
     @Test
     public void testKey4() throws Exception {
         NameKey key = this.analyser.analyse("ICZN", "Chezala Subgroup 4", null, "genus");
-        assertEquals(NameType.INFORMAL, key.getType());
+        assertEquals(NameType.PLACEHOLDER, key.getType());
         assertEquals("CHEZALA SUBGROUP 4", key.getScientificName());
     }
 
@@ -167,6 +167,47 @@ public class ALANameAnalyserTest {
         assertNull(key.getScientificNameAuthorship());
     }
 
+    // Autonym test
+    @Test
+    public void testKey18() throws Exception {
+        NameKey key = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Gonocarpus micranthus Thunb. subsp. micranthus", null, null, null, false);
+        assertEquals(NomenclaturalCode.BOTANICAL, key.getCode());
+        assertEquals(NameType.SCIENTIFIC, key.getType());
+        assertEquals("GONOCARPUS MICRANTHUS MICRANTHUS", key.getScientificName());
+        assertNull(key.getScientificNameAuthorship());
+        assertTrue(key.isAutonym());
+    }
+
+    @Test
+    public void testKey19() throws Exception {
+        NameKey key = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Gonocarpus micranthus subsp. ramosissimus", "Orchard", null, null, false);
+        assertEquals(NomenclaturalCode.BOTANICAL, key.getCode());
+        assertEquals(NameType.SCIENTIFIC, key.getType());
+        assertEquals("GONOCARPUS MICRANTUS RAMOSISIMA", key.getScientificName());
+        assertEquals("Orchard", key.getScientificNameAuthorship());
+        assertFalse(key.isAutonym());
+    }
+
+    @Test
+    public void testKey20() throws Exception {
+        NameKey key = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Gonocarpus micranthus subsp. ramosissimus Orchard", null, null, null, true);
+        assertEquals(NomenclaturalCode.BOTANICAL, key.getCode());
+        assertEquals(NameType.SCIENTIFIC, key.getType());
+        assertEquals("GONOCARPUS MICRANTUS RAMOSISIMA", key.getScientificName());
+        assertEquals("Orchard", key.getScientificNameAuthorship());
+        assertFalse(key.isAutonym());
+    }
+
+    @Test
+    public void testKey21() throws Exception {
+        NameKey key = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Gonocarpus micranthus Thunb. subsp. micranthus", "Thunb.", null, null, false);
+        assertEquals(NomenclaturalCode.BOTANICAL, key.getCode());
+        assertEquals(NameType.SCIENTIFIC, key.getType());
+        assertEquals("GONOCARPUS MICRANTHUS MICRANTHUS", key.getScientificName());
+        assertNull(key.getScientificNameAuthorship());
+        assertTrue(key.isAutonym());
+    }
+
     @Test
     public void testAuthorEquals1() throws Exception {
         assertEquals(0, this.analyser.compareAuthor(null, null));
@@ -186,6 +227,13 @@ public class ALANameAnalyserTest {
         assertEquals(0, this.analyser.compareAuthor("L.", "Linnaeus"));
         assertEquals(0, this.analyser.compareAuthor("L.", "Lin."));
      }
+
+    // Ensure ex authors are treated properly
+    @Test
+    public void testAuthorEquals4() throws Exception {
+        assertEquals(0, this.analyser.compareAuthor("Desf. ex Poir.", "Poir."));
+        assertEquals(0, this.analyser.compareAuthor("Poir.", "Desf. ex Poir."));
+    }
 
 
     @Test
@@ -318,6 +366,15 @@ public class ALANameAnalyserTest {
         assertFalse(key1.equals(key2));
     }
 
+    // Autonyms
+    @Test
+    public void testKeyEquals19() throws Exception {
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Senecio glomeratus Desf. ex Poir. subsp. glomeratus", null, null, null, false);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Senecio glomeratus Poir. subsp. glomeratus", "Poir.", null, null, false);
+        assertTrue(key1.isAutonym());
+        assertTrue(key2.isAutonym());
+        assertEquals(key1, key2);
+    }
 
     @Test
     public void testCanonicaliseCode1() throws Exception {

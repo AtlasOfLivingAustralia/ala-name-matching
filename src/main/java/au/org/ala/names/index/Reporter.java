@@ -18,18 +18,16 @@ public interface Reporter {
      * <ul>
      *     <li>{0} The taxonID of the source element, either a name or a proper taxonID</li>
      *     <li>{1} Any attached scientific namer</li>
-     *     <li>{2} Any attached authorship</li>
-     *     <li>{3+} Any additional arguments</li>
+     *     <li>{2+} Any additional arguments</li>
      * </ul>
      *
      * @param type The type of report
      * @param code The message code to use for the readable version of the report
      * @param taxonID A specific taxonomic ID
-     * @param scientificName A specific scientific name
-     * @param scientificNameAuthorship A specific authorship
+     * @param name A specific complete scientific name
      * @param args Additional arguments for the report message
      */
-    void report(IssueType type, String code, String taxonID, String scientificName, String scientificNameAuthorship, String... args);
+    void report(IssueType type, String code, String taxonID, String name, String... args);
 
     /**
      * Add a report.

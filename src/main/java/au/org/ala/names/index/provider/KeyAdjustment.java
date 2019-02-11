@@ -81,6 +81,6 @@ public class KeyAdjustment {
             sna = null;
         NameType nt = this.nameType != null ? this.nameType : key.getType();
         RankType rt = this.rank != null ? this.rank : key.getRank();
-        return new NameKey(key.getAnalyser(), nc, sn, sna, rt, nt);
+        return new NameKey(key.getAnalyser(), nc, sn, sna, rt, nt, key.getFlags());
     }
 }

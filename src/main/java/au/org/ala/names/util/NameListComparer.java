@@ -23,7 +23,7 @@ public class NameListComparer {
 
     private static String[][] TERMS = {
             { "originalId", "Species", "taxonConceptID", "taxon_concept_lsid", "taxonID" },
-            { "originalScientificName", "Species Name", "scientificName", "raw_taxon_name" },
+            { "originalScientificName", "Species Name", "scientificName", "taxon_name", "raw_taxon_name" },
             { "originalScientificNameAuthorship", "Scientific Name Authorship", "scientificNameAuthorship" },
             { "originalRank", "Taxon Rank", "taxonRank", "rank", "taxonomicRank" },
             { "originalKingdom", "Kingdom", "kingdom" },
@@ -32,7 +32,7 @@ public class NameListComparer {
             { "originalOrder", "Order", "order" },
             { "originalFamily", "Family", "family" },
             { "originalGenus", "Genus", "genus" },
-            { "originalVernacular", "Vernacular Name", "raw_common_name", "vernacularName" }
+            { "originalVernacular", "Vernacular Name", "raw_common_name","vernacularName", "taxon_common_name" }
     };
 
     private CSVReader names;

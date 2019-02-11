@@ -8,9 +8,14 @@ package au.org.ala.names.index;
  * @copyright Copyright (c) 2017 CSIRO
  */
 
+import au.org.ala.names.model.NameFlag;
 import au.org.ala.names.model.RankType;
 import org.gbif.api.vocabulary.NameType;
 import org.gbif.api.vocabulary.NomenclaturalCode;
+
+import javax.annotation.Nullable;
+import java.util.HashSet;
+import java.util.Set;
 
 public class NameKey implements Comparable<NameKey> {
     /** The analyser to use for comparisons */
@@ -25,6 +30,9 @@ public class NameKey implements Comparable<NameKey> {
     private RankType rank;
     /** The name type */
     private NameType type;
+    /** Special case flags for a name */
+    @Nullable
+    private Set<NameFlag> flags;
 
     /**
      * Construct a name key
@@ -33,16 +41,18 @@ public class NameKey implements Comparable<NameKey> {
      * @param code The nomenclatural code
      * @param scientificName The normalised scientific name
      * @param scientificNameAuthorship The normalised authorship, for taxon concepts (null for names)
-     *                               @param rank The rank
+     * @param rank The rank
      * @param type The type of name
+     * @param flags Any name flags (null for none)
      */
-    public NameKey(NameAnalyser analyser, NomenclaturalCode code, String scientificName, String scientificNameAuthorship, RankType rank, NameType type) {
+    public NameKey(NameAnalyser analyser, NomenclaturalCode code, String scientificName, String scientificNameAuthorship, RankType rank, NameType type, @Nullable Set<NameFlag> flags) {
         this.analyser = analyser;
         this.code = code;
         this.scientificName = scientificName;
         this.scientificNameAuthorship = scientificNameAuthorship;
         this.rank = rank;
         this.type = type;
+        this.flags = flags;
     }
 
     /**
@@ -99,9 +109,30 @@ public class NameKey implements Comparable<NameKey> {
     }
 
     /**
+     * Get the name flags
+     *
+     * @return Any name flags for this name, null for none
+     */
+    @Nullable
+    public Set<NameFlag> getFlags() {
+        return flags;
+    }
+
+    /**
+     * Is this name an autonym?
+     *
+     * @return True if the name is an autonym (and therefore doesn't have an author
+     */
+    public boolean isAutonym() {
+        return flags != null && flags.contains(NameFlag.AUTONYM);
+    }
+
+    /**
      * Is this an unauthored name, meaning that it does not have a scientific name author?
      *
      * @return True if the name key is unauthored
+     *
+     * @see #isAutonym()
      */
     public boolean isUnauthored() {
         return this.scientificNameAuthorship == null;
@@ -174,7 +205,14 @@ public class NameKey implements Comparable<NameKey> {
     public NameKey toNameKey() {
         if (this.scientificNameAuthorship == null)
             return this;
-        return new NameKey(this.analyser, this.code, this.scientificName, null, this.rank, this.type);
+        Set<NameFlag> fl = this.flags;
+        if (fl != null && fl.contains(NameFlag.AUTONYM)) {
+            fl = new HashSet<>(this.flags);
+            fl.remove(NameFlag.AUTONYM);
+            fl = fl.isEmpty() ? null : fl;
+
+        }
+        return new NameKey(this.analyser, this.code, this.scientificName, null, this.rank, this.type, fl);
     }
 
     /**
@@ -185,7 +223,14 @@ public class NameKey implements Comparable<NameKey> {
     public NameKey toUnrankedNameKey() {
         if (this.scientificNameAuthorship == null && this.rank == RankType.UNRANKED)
             return this;
-        return new NameKey(this.analyser, this.code, this.scientificName, null, RankType.UNRANKED, this.type);
+        Set<NameFlag> fl = this.flags;
+        if (fl != null && fl.contains(NameFlag.AUTONYM)) {
+            fl = new HashSet<>(this.flags);
+            fl.remove(NameFlag.AUTONYM);
+            fl = fl.isEmpty() ? null : fl;
+
+        }
+        return new NameKey(this.analyser, this.code, this.scientificName, null, RankType.UNRANKED, this.type, fl);
     }
 
     /**
@@ -198,7 +243,7 @@ public class NameKey implements Comparable<NameKey> {
     public NameKey toRankedNameKey(RankType rank) {
         if (this.rank == rank)
             return this;
-        return new NameKey(this.analyser, this.code, this.scientificName, this.scientificNameAuthorship, rank, this.type);
+        return new NameKey(this.analyser, this.code, this.scientificName, this.scientificNameAuthorship, rank, this.type, this.flags);
     }
 
 
@@ -210,12 +255,19 @@ public class NameKey implements Comparable<NameKey> {
     public NameKey toUncodedNameKey() {
         if (this.scientificNameAuthorship == null && this.rank == RankType.UNRANKED && this.code == null)
             return this;
-        return new NameKey(this.analyser, null, this.scientificName, null, RankType.UNRANKED, this.type);
+        Set<NameFlag> fl = this.flags;
+        if (fl != null && fl.contains(NameFlag.AUTONYM)) {
+            fl = new HashSet<>(this.flags);
+            fl.remove(NameFlag.AUTONYM);
+            fl = fl.isEmpty() ? null : fl;
+
+        }
+        return new NameKey(this.analyser, null, this.scientificName, null, RankType.UNRANKED, this.type, fl);
     }
 
     @Override
     public String toString() {
-        return "[" + (code != null ? code.getAcronym() : "") + ":" + scientificName + (scientificNameAuthorship != null ? "," + scientificNameAuthorship : "") + ":" + this.rank.getRank() + ']';
+        return "[" + (code != null ? code.getAcronym() : "") + ":" + scientificName + (scientificNameAuthorship != null ? "," + scientificNameAuthorship : "") + ":" + this.rank.getRank() + (this.flags != null ? ":" + this.flags : "") +  ']';
     }
 
     /**

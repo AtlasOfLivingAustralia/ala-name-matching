@@ -4,6 +4,8 @@ import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
 import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
+import org.gbif.checklistbank.authorship.AuthorComparator;
+import org.gbif.checklistbank.model.Equality;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +30,11 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
     protected static final boolean REPORT_INFORMAL = true;
 
     private Reporter reporter;
+    private AuthorComparator authorComparator;
+
 
     public NameAnalyser() {
+        this.authorComparator = AuthorComparator.createWithAuthormap();
     }
 
     /**
@@ -121,38 +126,79 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
      */
     abstract public boolean isInformal(String name);
 
+
     /**
-     * Compare two name keys.
+     * Compare two keys.
      * <p>
-     * What constitutes "equal" depends on the implementation of the analyser.
+     *     Comparison is equal if the codes, names and authors are equal.
+     *     Authorship equality is decided by a {@link AuthorComparator}
+     *     which can get a wee bit complicated.
      * </p>
      *
      * @param key1 The first key to compare
      * @param key2 The second key to compare
      *
-     * @return Less than, equal to or greater than zero depending on whether key1 is less than, equal to or greater than key2
+     * @return less than zero if key1 is less than ket2, greater than zero if key1 is greater than key2 and 0 for equality
      */
-    abstract public int compare(NameKey key1, NameKey key2);
+    public int compare(NameKey key1, NameKey key2) {
+        int cmp;
+
+        if (key1.getCode() == null && key2.getCode() != null)
+            return -1;
+        if (key1.getCode() != null && key2.getCode() == null)
+            return 1;
+        if (key1.getCode() != null && key2.getCode() != null && (cmp = key1.getCode().compareTo(key2.getCode())) != 0)
+            return cmp;
+        if ((cmp = key1.getScientificName().compareTo(key2.getScientificName())) != 0)
+            return cmp;
+        if ((cmp = key1.getRank().compareTo(key2.getRank())) != 0)
+            return cmp;
+        return this.compareAuthor(key1.getScientificNameAuthorship(), key2.getScientificNameAuthorship());
+    }
 
     /**
-     * Compute a hash code for a name key.
+     * Compare two author strings.
      * <p>
-     * The hash code computation has to be within
+     * Use the GBIF {@link AuthorComparator} for equality
      * </p>
      *
+     * @return Less than zero, zero or greater than zero based on lexical ordering, unless the author comparated declares two abbreviated names to be equal
+     */
+    public int compareAuthor(String author1, String author2) {
+        if (author1 == null && author2 == null)
+            return 0;
+        if (author1 == null && author2 != null)
+            return -1;
+        if (author1 != null && author2 == null)
+            return 1;
+        if (authorComparator.compare(author1, null, author2, null) == Equality.EQUAL)
+            return 0;
+        return author1.compareTo(author2);
+    }
+
+    /**
+     * Compute a hash code for a key.
+     * <p>
+     *     Based on hashing for the code and name. Only author presence/absence is calculated.
+     * </p>
      * @param key1 The key
      *
-     * @return The resulting hash code
+     * @return The hash code
      */
-    abstract public int hashCode(NameKey key1);
+    public int hashCode(NameKey key1) {
+        int hash = key1.getCode() != null ? key1.getCode().hashCode() : 1181;
+        hash = hash * 31 + key1.getScientificName().hashCode();
+        hash = hash * 31 + (key1.getScientificNameAuthorship() == null ? 0 : 5659);
+        return hash;
+    }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void report(IssueType type, String code, String taxonID, String scientificName, String scientificNameAuthorship, String... args) {
+    public void report(IssueType type, String code, String taxonID, String name, String... args) {
         if (this.reporter != null)
-            this.reporter.report(type, code, taxonID, scientificName, scientificNameAuthorship, args);
+            this.reporter.report(type, code, taxonID, name, args);
         else
             logger.warn("Report " + type.name() + " code=" + code + " args=" + Arrays.toString(args));
     }
@@ -167,17 +213,4 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
         else
             logger.warn("Report " + type.name() + " code=" + code + " main=" + main.toString() + " associated=" + associated);
     }
-
-    /**
-     * Compare author strings.
-     * <p>
-     * This usually compared equality across author abbreviations.
-     *
-     * </p>
-     * @param author1 The first author string (may be null)
-     * @param author2 The second author string (may be null)
-     *
-     * @return A value less than, greater than or equal to 0, similar to compare
-     */
-    public abstract int compareAuthor(String author1, String author2);
 }

@@ -302,6 +302,15 @@ abstract public class Name<T extends TaxonomicElement, C extends TaxonomicElemen
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getNameComplete() {
+        TaxonConceptInstance representative = this.getRepresentative();
+        return representative != null ? representative.getNameComplete() : null;
+    }
+
+    /**
      * Get the representative instance.
      *
      * @return The principals instance or null for none

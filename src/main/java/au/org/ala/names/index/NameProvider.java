@@ -490,11 +490,11 @@ public class NameProvider {
         try {
             String utid = this.getUnknownTaxonID();
             if (taxonomy != null && taxonomy.getInstance(utid) == null) {
-                taxonomy.report(IssueType.ERROR, "provider.validation.unknownTaxonID.notFound", utid, null, null);
+                taxonomy.report(IssueType.ERROR, "provider.validation.unknownTaxonID.notFound", utid, null);
                 return false;
             }
         } catch (IndexBuilderException ex) {
-            taxonomy.report(IssueType.ERROR, "provider.validation.unknownTaxonID.noID", null, null, null);
+            taxonomy.report(IssueType.ERROR, "provider.validation.unknownTaxonID.noID", null, null);
             return false;
         }
         return true;

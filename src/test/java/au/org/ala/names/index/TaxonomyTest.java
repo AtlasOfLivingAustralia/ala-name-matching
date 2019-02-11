@@ -715,4 +715,43 @@ public class TaxonomyTest extends TestUtils {
         assertSame(tci2, tci1.getResolvedAccepted());
     }
 
+    // Test autonym handling
+    @Test
+    public void testAutonym1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-28.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Autonym-1-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Autonym-1-2");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        assertSame(tc1, tc2);
+        assertSame(tci1, tc1.getResolved(tci1));
+        assertSame(tci1, tc1.getResolved(tci2));
+    }
+
+    @Test
+    public void testAutonym2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-28.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Autonym-2-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Autonym-2-2");
+        TaxonConceptInstance tci3 = this.taxonomy.getInstance("Autonym-2-3");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        TaxonConcept tc3 = tci3.getContainer();
+        assertSame(tc1, tc2);
+        assertSame(tc1, tc3);
+        assertSame(tci1, tc1.getResolved(tci1));
+        assertSame(tci1, tc1.getResolved(tci2));
+        assertSame(tci1, tc1.getResolved(tci3));
+    }
+
 }

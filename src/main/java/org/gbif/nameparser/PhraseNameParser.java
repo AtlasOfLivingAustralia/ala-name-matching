@@ -96,7 +96,7 @@ public class PhraseNameParser extends GBIFNameParser {
 
     protected static final String RANK_MARKER_INFRAGENERIC = "(?:" + StringUtils.join(RankUtils.RANK_MARKER_MAP_INFRAGENERIC.keySet(), "|") + ")\\.?";
     protected static final String NUMBER_PLACEHOLDER = "\\d+\\.?";
-    protected static final Pattern NUMBERED_PLACEHOLDER = Pattern.compile("(" + NormalisedNameParser.MONOMIAL + ")\\s+((" + RANK_MARKER_INFRAGENERIC + ")[\\s_\\-]*" + NUMBER_PLACEHOLDER + ")(\\s+" + NormalisedNameParser.AUTHOR_TEAM + "(\\s*,\\s*" + NormalisedNameParser.YEAR + ")?)?");
+    protected static final Pattern NUMBERED_PLACEHOLDER = Pattern.compile("(" + NormalisedNameParser.MONOMIAL + ")\\s+((" + RANK_MARKER_INFRAGENERIC + "|[Gg]roup|[Ss]ub[Gg]roup)[\\s_\\-]*" + NUMBER_PLACEHOLDER + ")(\\s+" + NormalisedNameParser.AUTHOR_TEAM + "(\\s*,\\s*" + NormalisedNameParser.YEAR + ")?)?");
 
     protected static final Pattern IGNORE_MARKERS = Pattern.compile("s[\\.| ]+str[\\. ]+");
 

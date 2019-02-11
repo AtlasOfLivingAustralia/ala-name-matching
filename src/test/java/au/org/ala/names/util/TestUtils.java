@@ -43,11 +43,11 @@ public class TestUtils {
     }
 
     public TaxonConceptInstance createInstance(String id, NomenclaturalCode code, String name, NameProvider provider) {
-        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null,null, null, null, null, null, null, null, null);
+        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null,null, null, null, null, null, null, null, null);
     }
 
     public TaxonConceptInstance createInstance(String id, NomenclaturalCode code, String name, NameProvider provider, TaxonomicType taxonomicStatus) {
-        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, taxonomicStatus, taxonomicStatus.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null, null, null, null);
+        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, null, taxonomicStatus, taxonomicStatus.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null, null, null, null);
     }
 
     public int rowCount(File file) throws IOException {

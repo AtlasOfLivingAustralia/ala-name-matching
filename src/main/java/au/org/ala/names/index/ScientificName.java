@@ -116,7 +116,7 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
             return concepts.get(0);
         if (accepted.size() == 1)
             return accepted.get(0);
-        List<TaxonConcept> authored = accepted.stream().filter(tc -> tc.isAuthored()).collect(Collectors.toList());
+        List<TaxonConcept> authored = accepted.stream().filter(tc -> tc.isAuthored() || tc.isAutonym()).collect(Collectors.toList());
         if (authored.size() == 0)
             return accepted.get(0);
         if (authored.size() == 1)
@@ -142,8 +142,8 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
             List<TaxonConcept> reallocated = new ArrayList<>();
             boolean owned = principal.isOwned();
             for (TaxonConcept tc : accepted)
-                if (tc != principal && !tc.isOwned() && (owned || !tc.isAuthored())) {
-                    if (tc.isAuthored())
+                if (tc != principal && !tc.isOwned() && (owned || (!tc.isAuthored() && !tc.isAutonym()))) {
+                    if (tc.isAuthored() || tc.isAutonym())
                         tc.addInferredSynonym(principal, taxonomy);
                     else {
                         principal.reallocate(tc, taxonomy, "scientificName.reallocated.provenance");
