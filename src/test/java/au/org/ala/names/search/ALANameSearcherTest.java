@@ -20,7 +20,7 @@ public class ALANameSearcherTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20181120");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20190213");
     }
 
     @Test
@@ -1555,6 +1555,43 @@ public class ALANameSearcherTest {
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
         }
+    }
+
+    @Test
+    public void testMultipleMisappliedResolution1() throws Exception {
+        String name = "Cressa cretica";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals("http://id.biodiversity.org.au/node/apni/2887824", metrics.getResult().getLsid());
+        assertEquals(MatchType.TAXON_ID, metrics.getResult().getMatchType());
+        assertTrue(metrics.getErrors().contains(ErrorType.MISAPPLIED));
+    }
+
+    @Test
+    public void testMultipleMisappliedResolution2() throws Exception {
+        String name = "Acrotriche divaricata";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals("http://id.biodiversity.org.au/node/apni/2905435", metrics.getResult().getLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+        assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
+    }
+
+    // Multiple misapplied, to different things.
+    @Test
+    public void testMultipleMisappliedResolution3() throws Exception {
+        String name = "Potamogeton obtusifolius";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals("http://id.biodiversity.org.au/node/apni/8770682", metrics.getResult().getLsid());
+        assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
+        assertTrue(metrics.getErrors().contains(ErrorType.MISAPPLIED));
     }
 
 }
