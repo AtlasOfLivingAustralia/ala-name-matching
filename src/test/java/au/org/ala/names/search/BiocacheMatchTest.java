@@ -22,7 +22,7 @@ public class BiocacheMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20181120");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20190213");
     }
 
     @Test
@@ -209,14 +209,13 @@ public class BiocacheMatchTest {
         assertEquals("http://id.biodiversity.org.au/node/apni/2894621", metrics.getResult().getLsid());
     }
 
-    // Should go to higher taxon because there is no accepted match
     @Test
     public void testMisappliedNames2() throws Exception {
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
         cl.setScientificName("Myosurus minimus");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
         assertTrue(metrics.getErrors().contains(ErrorType.MISAPPLIED));
-        assertEquals("http://id.biodiversity.org.au/node/apni/2896644", metrics.getResult().getLsid());
+        assertEquals("http://id.biodiversity.org.au/node/apni/2917549", metrics.getResult().getLsid());
     }
 
     @Test

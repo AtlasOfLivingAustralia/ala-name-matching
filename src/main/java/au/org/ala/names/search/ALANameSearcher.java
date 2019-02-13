@@ -673,8 +673,7 @@ public class ALANameSearcher {
         } catch (MisappliedException e) {
             metrics.setLastException(e);
             metrics.getErrors().add(e.errorType);
-            if (e.getMisappliedResult() != null)
-                nsr = e.getMatchedResult();
+            nsr = e.getMatchedResult();
         } catch (ParentSynonymChildException e) {
             metrics.setLastException(e);
             metrics.getErrors().add(e.errorType);
@@ -815,8 +814,7 @@ public class ALANameSearcher {
         try {
             nsr = searchForRecord(cl.getScientificName(), cl, null, fuzzy, ignoreHomonym);
         } catch (MisappliedException e) {
-            if (e.getMisappliedResult() != null)
-                nsr = e.getMatchedResult();
+            nsr = e.getMatchedResult();
         } catch (ParentSynonymChildException e) {
             // Use the parent result, since we can't tell whether the name supplied is from before the reassignment or after
             nsr = e.getParentResult();
@@ -1310,18 +1308,21 @@ public class ALANameSearcher {
     }
 
     private void checkForMisapplied(List<NameSearchResult> results) throws MisappliedException {
-        if (results.size() >= 1) {
-            NameSearchResult first = results.get(0);
-            NameSearchResult second = (results.size() > 1) ? results.get(1) : null;
-            if (first.getSynonymType() == au.org.ala.names.model.SynonymType.MISAPPLIED) {
-                //the first result is misapplied
-                NameSearchResult accepted = searchForRecordByLsid(first.getAcceptedLsid());
-                throw new MisappliedException(accepted);
-            } else if (!first.isSynonym() && second != null && second.getSynonymType() == au.org.ala.names.model.SynonymType.MISAPPLIED) {
-                NameSearchResult accepted = searchForRecordByLsid(second.getAcceptedLsid());
-                throw new MisappliedException(first, accepted);
+        if (results.size() >= 1 && results.stream().anyMatch(r -> r.getSynonymType() == SynonymType.MISAPPLIED)) {
+            List<NameSearchResult> accepted = results.stream().filter(r -> !r.isSynonym()).collect(Collectors.toList());
+            List<NameSearchResult> misapplied = results.stream().filter(r -> r.getSynonymType() == SynonymType.MISAPPLIED).collect(Collectors.toList());
+            Set<String> misAccepted = misapplied.stream().map(NameSearchResult::getAcceptedLsid).collect(Collectors.toSet());
+            NameSearchResult matched = searchForRecordByLsid(misapplied.get(0).getAcceptedLsid());
+            // There ia an accepted version, as well
+            if (!accepted.isEmpty()) {
+                throw new MisappliedException(accepted.get(0), matched);
             }
-
+            // All misapplied versions resolve to the same value
+            if (misAccepted.size() == 1) {
+                throw new MisappliedException(matched);
+            }
+            // Misapplications resolve to different values, so we can't use this
+            throw new MisappliedException(null);
         }
     }
 
@@ -1996,7 +1997,7 @@ public class ALANameSearcher {
                 //the parent is the one we want, since we don't know whether this is just a higher taxon or not
                 lsid = e.getParentResult().getLsid();
             } catch (MisappliedException e) {
-                if (e.getMisappliedResult() != null)
+                if (e.getMatchedResult() != null)
                     lsid = e.getMatchedResult().getLsid();
             } catch (SearchResultException e) {
             }
@@ -2014,7 +2015,7 @@ public class ALANameSearcher {
                 //the parent is the one we want, since we don't know whether this is just a higher taxon or not
                 lsid = e.getParentResult().getLsid();
             } catch (MisappliedException e) {
-                if (e.getMisappliedResult() != null)
+                if (e.getMatchedResult() != null)
                     lsid = e.getMatchedResult().getLsid();
             } catch (SearchResultException e) {
             }
