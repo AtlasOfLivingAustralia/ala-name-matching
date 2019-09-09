@@ -112,7 +112,12 @@
     "parent": "unknown",
     "unrankedStrategy": "SYNONYMS_INFER",
     "defaultScore" : 150
-  }],
+  },{
+    "id" : "dr111",
+    "parent": "unknown",
+    "defaultParentTaxon": "Plantae"
+  }
+  ],
   "defaultProvider" : "unknown",
   "acceptedCutoff" : 50
 }

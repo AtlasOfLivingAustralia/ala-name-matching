@@ -611,6 +611,7 @@
       "licence": "CC-BY",
       "defaultScore" : 5000,
       "defaultNomenclaturalCode": "BOTANICAL",
+      "defaultParentTaxon": "Plantae",
       "scores": {
         "Bryophyta": 7000,
         "Bryidae": 7000

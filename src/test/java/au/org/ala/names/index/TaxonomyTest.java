@@ -56,6 +56,27 @@ public class TaxonomyTest extends TestUtils {
 
     @Test
     public void testResolveLinks2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-29.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source));
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance i1 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/apni/10044707");
+        assertNotNull(i1);
+        TaxonConceptInstance i2 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044710");
+        assertNotNull(i2);
+        TaxonConceptInstance i3 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044711");
+        assertNotNull(i3);
+        TaxonConceptInstance i4 = this.taxonomy.getInstance("http://id.biodiversity.org.au/node/ausmoss/10044712");
+        assertNotNull(i4);
+        assertSame(i1.getContainer().getContainer().getContainer(), i2.getParent());
+        assertSame(i2, i3.getParent());
+        assertSame(i3, i4.getParent());
+    }
+
+    @Test
+    public void testResolveLinks3() throws Exception {
         this.taxonomy = new Taxonomy();
         this.taxonomy.begin();
         CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-2.csv"), DwcTerm.Taxon);
