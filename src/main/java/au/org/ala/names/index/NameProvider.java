@@ -9,6 +9,7 @@ import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -84,6 +85,9 @@ public class NameProvider {
     /** The identifier of the unknown taxon */
     @JsonProperty
     private String unknownTaxonID;
+    /** A default parent taxon, if one is not specified. This can be used in combination with the nomenclatural code to provide a parent if one is absent. */
+    @JsonProperty
+    private String defaultParentTaxon;
 
     /**
      * Default constructor
@@ -313,6 +317,24 @@ public class NameProvider {
     }
 
     /**
+     * Get the name of the default parent taxon.
+     * <p>
+     * If, during resolution, a taxon from this provider does not have a parent, then a reference
+     * to this name (and default nomenclatural code, if one is available) is used.
+     * If one is not explicitly set, get the parent.
+     * </p>
+     *
+     * @return The name of the parent taxon, or null for none.
+     *
+     */
+    @Nullable
+    public String getDefaultParentTaxon() {
+        if (this.defaultParentTaxon == null && this.parent != null)
+            return this.parent.getDefaultParentTaxon();
+        return this.defaultParentTaxon;
+    }
+
+    /**
      * Decide whether to forbid an instance.
      * <p>
      * If there is a parent provider, then check the parent, as well.
@@ -534,5 +556,24 @@ public class NameProvider {
         map.put(DcTerm.rightsHolder, this.getRightsHolder());
         map.put(DcTerm.license, this.getLicence());
         return map;
+    }
+
+    /**
+     * Find the default parent for an instance.
+     *
+     * @param taxonomy The base taxonomy
+     *
+     * @return The default parent, or null if not present or found.
+     *
+     * @throws IndexBuilderException if unable to detect a parent
+     */
+    public TaxonomicElement findDefaultParent(Taxonomy taxonomy, TaxonConceptInstance instance) throws IndexBuilderException {
+        NomenclaturalCode code = instance.getCode();
+        String dp = this.getDefaultParentTaxon();
+
+        if (code == null || dp == null)
+            return null;
+
+        return taxonomy.findElement(code, dp, this, null);
     }
 }

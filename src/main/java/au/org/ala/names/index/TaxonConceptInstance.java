@@ -1015,18 +1015,22 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 if (name != null && name.isPresent() && !name.get().equals(this.scientificName)) {
                     TaxonomicElement p = taxonomy.findElement(this.code, name.get(), this.provider, clr);
                     RankType pr = p != null ? p.getRank() : null;
-                    if (p != null && p != this && (pr == null || pr.isHigherThan(this.rank)))
+                    if (p != null && p != this && (this.rank.isLoose() || pr == null || pr.isHigherThan(this.rank)))
                         this.parent = p;
                 }
             }
         }
+        if (this.parent == null)
+            this.parent = this.provider.findDefaultParent(taxonomy, this);
         taxonomy.count("count.resolve.instance.links");
     }
 
     /**
-     * Work out twhat to do with this instance if it is an
-     * @param taxonomy
-     * @throws IndexBuilderException
+     * Work out twhat to do with this instance if it is forbidden.
+     *
+     * @param taxonomy The base taxonomy
+     *
+     * @throws IndexBuilderException if unable to manage the forbidden taxon instance
      */
     // Note that this is not thread-safe due to index writing
     public void resolveDiscarded(Taxonomy taxonomy) throws IndexBuilderException {
@@ -1438,7 +1442,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     @Override
     public boolean validate(Taxonomy taxonomy) {
         boolean valid = true;
-        if ((this.parentNameUsageID != null || this.parentNameUsage != null || this.isAccepted() && !(this.classification == null || this.classification.isEmpty())) && this.parent == null) {
+        if ((this.parentNameUsageID != null || this.parentNameUsage != null || this.isAccepted() && this.classification != null && this.classification.values().stream().anyMatch(v -> v.isPresent() && !v.get().equals(this.scientificName))) && this.parent == null) {
             if (this.provider.isLoose())
                 taxonomy.report(IssueType.NOTE, "instance.validation.noParent.loose", this, null);
             else {

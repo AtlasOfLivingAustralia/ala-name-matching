@@ -82,6 +82,9 @@ Each provider contains the following information:
   even if there isn't an existing ranked taxon.
 * **unknownTaxonID** An identifier for a missing taxon. Synonym loops and the like map onto this
   taxon. If the taxon doesn't already exist, it is created.
+* **defaultParentTaxon** The name of a default parent taxon to give to entires without an identifiable
+  parent. This allows partial taxonomies to be shimmed into larger, orver-arching taxonomies.
+  Use with caution, since the parent is applied without regard to rank.
 
 
 ### Adjusters
