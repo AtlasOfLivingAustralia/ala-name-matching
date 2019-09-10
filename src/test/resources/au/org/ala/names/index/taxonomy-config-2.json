@@ -119,5 +119,6 @@
   }
   ],
   "defaultProvider" : "unknown",
-  "acceptedCutoff" : 50
+  "acceptedCutoff" : 50,
+  "authorMap" : { }
 }

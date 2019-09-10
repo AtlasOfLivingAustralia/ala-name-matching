@@ -126,7 +126,8 @@ public class ALANameAnalyser extends NameAnalyser {
     private NameParser nameParser;
     private NomStatusParser nomStatusParser;
 
-    public ALANameAnalyser() {
+    public ALANameAnalyser(AuthorComparator authorComparator, Reporter reporter) {
+        super(authorComparator, reporter);
         this.nameParser = new PhraseNameParser();
         this.nomStatusParser = NomStatusParser.getInstance();
         this.buildCodeMap();
@@ -134,6 +135,10 @@ public class ALANameAnalyser extends NameAnalyser {
         this.buildRankMap();
         this.buildNomenclaturalStatusMap();
         this.buildInformalPatternList();
+    }
+
+    public ALANameAnalyser() {
+        this(AuthorComparator.createWithAuthormap(), null);
     }
 
     /**

@@ -22,5 +22,6 @@
     "unknownTaxonID" : "ALA_The_Unknown_Taxon"
   } ],
   "defaultProvider" : "ID-1",
-  "acceptedCutoff" : 50
+  "acceptedCutoff" : 50,
+  "authorMap" : { }
 }
