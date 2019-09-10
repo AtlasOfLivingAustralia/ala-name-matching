@@ -478,7 +478,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(12, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(22, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(52, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(13, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(14, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
 
@@ -499,7 +499,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(5, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(6, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(6, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(14, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(15, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
 
@@ -649,7 +649,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(6, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(11, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(11, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(13, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(14, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
     // Test the presence of a taxon loop
