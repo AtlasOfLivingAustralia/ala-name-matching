@@ -32,9 +32,15 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
     private Reporter reporter;
     private AuthorComparator authorComparator;
 
-
-    public NameAnalyser() {
-        this.authorComparator = AuthorComparator.createWithAuthormap();
+    /**
+     * Constructor.
+     *
+     * @param authorComparator The author comparator to use
+     * @param reporter The reporter to use
+     */
+    public NameAnalyser(AuthorComparator authorComparator, Reporter reporter) {
+        this.authorComparator = authorComparator;
+        this.reporter = reporter;
     }
 
     /**

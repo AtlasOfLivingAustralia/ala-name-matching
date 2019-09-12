@@ -27,6 +27,7 @@ import org.gbif.api.model.registry.Contact;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Identifier;
 import org.gbif.api.vocabulary.*;
+import org.gbif.checklistbank.authorship.AuthorComparator;
 import org.gbif.dwc.terms.*;
 import org.gbif.dwc.terms.Term;
 import org.slf4j.Logger;
@@ -180,8 +181,7 @@ public class Taxonomy implements Reporter {
         this.configuration = configuration;
         this.configuration.validate();
         try {
-            this.analyser = this.configuration.nameAnalyserClass.newInstance();
-            this.analyser.setReporter(this);
+            this.analyser = this.configuration.nameAnalyserClass.getConstructor(AuthorComparator.class, Reporter.class).newInstance(this.configuration.newAuthorComparator(), this);
         } catch (Exception ex) {
             throw new IndexBuilderException("Unable to create analyser", ex);
         }

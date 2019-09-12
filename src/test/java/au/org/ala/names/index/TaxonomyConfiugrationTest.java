@@ -3,6 +3,8 @@ package au.org.ala.names.index;
 import au.org.ala.names.util.TestUtils;
 import org.gbif.api.model.registry.Contact;
 import org.gbif.api.vocabulary.NomenclaturalCode;
+import org.gbif.checklistbank.authorship.AuthorComparator;
+import org.gbif.checklistbank.model.Equality;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -138,5 +140,28 @@ public class TaxonomyConfiugrationTest extends TestUtils {
         assertNull(properties.getProperty("drNotADataset"));
     }
 
+    @Test
+    public void testNewAuthorMap1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        AuthorComparator comparator = config.newAuthorComparator();
+
+        assertEquals(Equality.EQUAL, comparator.compare("Linnaeus", null, "Linnaeus", null));
+        assertEquals(Equality.EQUAL, comparator.compare("L.", null, "Linnaeus", null));
+        assertEquals(Equality.DIFFERENT, comparator.compare("Linnaeus", null, "Fred", null));
+        assertEquals(Equality.DIFFERENT, comparator.compare("Sweet", null, "Sw.", null));
+        assertEquals(Equality.DIFFERENT, comparator.compare("SZ", null, "S Zhu", null));
+    }
+
+    @Test
+    public void testNewAuthorMap2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-4.json"));
+        AuthorComparator comparator = config.newAuthorComparator();
+
+        assertEquals(Equality.EQUAL, comparator.compare("Linnaeus", null, "Linnaeus", null));
+        assertEquals(Equality.EQUAL, comparator.compare("L.", null, "Linnaeus", null));
+        assertEquals(Equality.DIFFERENT, comparator.compare("Linnaeus", null, "Fred", null));
+        assertEquals(Equality.EQUAL, comparator.compare("Sweet", null, "Sw.", null));
+        assertEquals(Equality.EQUAL, comparator.compare("SZ", null, "S Zhu", null));
+    }
 
 }

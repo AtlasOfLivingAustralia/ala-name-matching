@@ -45,5 +45,8 @@
   } ],
   "defaultProvider" : "ID-1",
   "acceptedCutoff" : 50,
-  "authorMap" : { }
+  "authorMap": {
+    "Sw.": "Sweet",
+    "SZ": "S Zhu"
+  }
 }

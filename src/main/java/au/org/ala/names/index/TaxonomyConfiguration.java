@@ -7,7 +7,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.collect.Maps;
+import com.google.common.io.Resources;
 import org.gbif.api.model.registry.Contact;
+import org.gbif.checklistbank.authorship.AuthorComparator;
+import org.gbif.utils.file.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URI;
@@ -25,6 +31,12 @@ import java.util.stream.Collectors;
  */
 @JsonInclude(value = JsonInclude.Include.NON_NULL)
 public class TaxonomyConfiguration {
+    /** The logger */
+    private static final Logger logger = LoggerFactory.getLogger(TaxonomyConfiguration.class);
+
+    /** Default location of GBIF author map, from {@link AuthorComparator} */
+    public static final String AUTHOR_MAP_FILENAME = "/authorship/authormap.txt";
+
     /** The configuration identifier */
     public String id = UUID.randomUUID().toString();
     /** The configuration name/title */
@@ -47,6 +59,8 @@ public class TaxonomyConfiguration {
     public NameProvider inferenceProvider;
     /** The cutoff score for accepted taxa */
     public int acceptedCutoff;
+    /** Additional name mapping */
+    public Map<String, String> authorMap;
 
     /**
      * Construct an empty configuration
@@ -58,6 +72,7 @@ public class TaxonomyConfiguration {
         this.resolverClass = ALATaxonResolver.class;
         this.providers = new ArrayList<>();
         this.acceptedCutoff = 0;
+        this.authorMap = new HashMap<>();
     }
 
     /**
@@ -158,5 +173,27 @@ public class TaxonomyConfiguration {
         for (NameProvider p: this.providers)
             properties.setProperty(p.getId(), Double.toString(Math.max(0.25, p.getDefaultScore() * scale)));
         return properties;
+    }
+
+    /**
+     * Create an author comparator with additional authors from the configuration.
+     * <p>
+     * This first grabs the standard {@link AuthorComparator} list and extends it with additional abbreviations from the
+     * configuration.
+     * If there is a key collision, then the local configuration wins out.
+     * </p>
+     *
+     * @return An author comparator
+     *
+     * @throws IOException If unable to read the default map
+     */
+    public AuthorComparator newAuthorComparator() throws IOException {
+        Map<String, String> authors = FileUtils.streamToMap(Resources.asByteSource(AuthorComparator.class.getResource(AUTHOR_MAP_FILENAME)).openStream(),
+                Maps.<String, String>newHashMap(), 0, 2, true);
+        for (String key: this.authorMap.keySet())
+            if (authors.containsKey(key))
+                logger.warn("Collision in author key " + key + " overriding");
+        authors.putAll(this.authorMap);
+        return AuthorComparator.createWithAuthormap(authors);
     }
 }
