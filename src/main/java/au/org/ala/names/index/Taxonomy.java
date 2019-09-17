@@ -621,6 +621,8 @@ public class Taxonomy implements Reporter {
     public void resolvePrincipal() throws IndexBuilderException {
         logger.info("Resolving principals for scientific names");
         this.names.values().parallelStream().forEach(name -> name.resolvePrincipal(this));
+        logger.info("Resolving seconadary concepts for scientific names");
+        this.names.values().stream().forEach(name -> this.resolver.reallocateSecondaryConcepts(name, this));
         logger.info("Resolving principals for unranked names");
         this.unrankedNames.values().parallelStream().forEach(name -> name.resolvePrincipal(this));
         logger.info("Resolving principals for bare names");
@@ -1265,7 +1267,7 @@ public class Taxonomy implements Reporter {
                 logger.warn(message);
                 break;
             case COLLISION:
-                logger.info(message);
+                logger.debug(message);
                 break;
             case NOTE:
             case COUNT:

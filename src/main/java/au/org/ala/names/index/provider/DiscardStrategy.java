@@ -1,4 +1,4 @@
-package au.org.ala.names.index;
+package au.org.ala.names.index.provider;
 
 /**
  * What do to with names that we are going to discard.

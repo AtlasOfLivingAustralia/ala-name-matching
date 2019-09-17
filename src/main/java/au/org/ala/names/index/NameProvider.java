@@ -1,7 +1,6 @@
 package au.org.ala.names.index;
 
-import au.org.ala.names.index.provider.KeyAdjuster;
-import au.org.ala.names.index.provider.ScoreAdjuster;
+import au.org.ala.names.index.provider.*;
 import com.fasterxml.jackson.annotation.*;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.api.vocabulary.NomenclaturalCode;
@@ -82,6 +81,9 @@ public class NameProvider {
     /** Assign unranked elements to ranked elements */
     @JsonProperty
     private UnrankedStrategy unrankedStrategy;
+    /** How to handle concept conflicts */
+    @JsonProperty
+    private ConceptResolutionPriority conceptResolutionPriority;
     /** The identifier of the unknown taxon */
     @JsonProperty
     private String unknownTaxonID;
@@ -292,6 +294,23 @@ public class NameProvider {
             return this.unrankedStrategy;
         UnrankedStrategy us =  this.parent != null ? this.parent.getUnrankedStrategy() : null;
         return us == null ? UnrankedStrategy.NONE : us;
+    }
+
+    /**
+     * Get the concept resolution priority.
+     * <p>
+     * This determines how differences in opinion about concepts for a scientific name should be treated.
+     * If one is not explicitly set, get the parent strategy.
+     * By default, this is {@link ConceptResolutionPriority#AUTHORATATIVE}.
+     * </p>
+     *
+     * @return The concept resolution priority.
+     */
+    public ConceptResolutionPriority getConceptResolutionPriority() {
+        if (this.conceptResolutionPriority != null)
+            return this.conceptResolutionPriority;
+        ConceptResolutionPriority cs =  this.parent != null ? this.parent.getConceptResolutionPriority() : null;
+        return cs == null ? ConceptResolutionPriority.AUTHORATATIVE : cs;
     }
 
     /**
