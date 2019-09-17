@@ -712,9 +712,20 @@
         ]
       }
     },
-    {
+     {
       "id" : "dr5393",
       "name": "ALA",
+      "description": "Atlas of living Australia Name Sources",
+      "rightsHolder": "Atlas of Living Australia",
+      "licence": "CC-BY",
+      "parent": "default",
+      "defaultScore" : 100,
+      "conceptResolutionPriority": "FILLER",
+      "unrankedStrategy": "INFERRED_AND_SYNONYMS"
+     },
+     {
+      "id" : "dr13558",
+      "name": "ALA Inferences",
       "description": "Atlas of living Australia, provider of inferences from the matching algorithm",
       "rightsHolder": "Atlas of Living Australia",
       "licence": "CC-BY",
@@ -725,7 +736,7 @@
     }
   ],
   "defaultProvider" : "dr5393",
-  "inferenceProvider" : "dr5393",
+  "inferenceProvider" : "dr13558",
   "authorMap": {
   }
 }
