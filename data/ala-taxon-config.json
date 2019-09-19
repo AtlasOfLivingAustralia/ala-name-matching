@@ -659,6 +659,7 @@
       "rightsHolder": "New Zealand Organism Register",
       "licence": "CC-BY",
       "defaultScore": 4000,
+      "conceptResolutionPriority": "ADDITIONAL",
       "adjuster": {
         "forbidden": [
           {
@@ -686,7 +687,8 @@
       "rightsHolder": "Commonwealth Scientific and Industrial Research Organisation",
       "licence": "CC-BY",
       "defaultScore" : 2000,
-      "loose": true
+      "loose": true,
+      "conceptResolutionPriority": "ADDITIONAL"
     },
     {
       "id" : "dr2705",
@@ -696,6 +698,7 @@
       "rightsHolder": "Catalogue of Life",
       "licence": "CC-BY",
       "defaultScore" : 1000,
+      "conceptResolutionPriority": "FILLER",
       "keyAdjuster": {
         "adjustments": [
           {
@@ -709,19 +712,31 @@
         ]
       }
     },
-    {
+     {
       "id" : "dr5393",
       "name": "ALA",
+      "description": "Atlas of living Australia Name Sources",
+      "rightsHolder": "Atlas of Living Australia",
+      "licence": "CC-BY",
+      "parent": "default",
+      "defaultScore" : 100,
+      "conceptResolutionPriority": "FILLER",
+      "unrankedStrategy": "INFERRED_AND_SYNONYMS"
+     },
+     {
+      "id" : "dr13558",
+      "name": "ALA Inferences",
       "description": "Atlas of living Australia, provider of inferences from the matching algorithm",
       "rightsHolder": "Atlas of Living Australia",
       "licence": "CC-BY",
       "parent": "default",
       "defaultScore" : 0,
+      "conceptResolutionPriority": "FILLER",
       "unrankedStrategy": "INFERRED_AND_SYNONYMS"
     }
   ],
   "defaultProvider" : "dr5393",
-  "inferenceProvider" : "dr5393",
+  "inferenceProvider" : "dr13558",
   "authorMap": {
   }
 }

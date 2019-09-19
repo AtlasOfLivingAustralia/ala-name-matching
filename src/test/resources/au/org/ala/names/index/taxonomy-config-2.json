@@ -116,6 +116,16 @@
     "id" : "dr111",
     "parent": "unknown",
     "defaultParentTaxon": "Plantae"
+  },{
+    "id" : "dr112",
+    "conceptResolutionPriority": "ADDITIONAL",
+    "parent": "unknown",
+    "defaultScore": 50
+  },{
+    "id" : "dr113",
+    "conceptResolutionPriority": "FILLER",
+    "parent": "unknown",
+    "defaultScore": 40
   }
   ],
   "defaultProvider" : "unknown",

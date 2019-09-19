@@ -1,5 +1,6 @@
 package au.org.ala.names.index;
 
+import au.org.ala.names.index.provider.ConceptResolutionPriority;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.model.TaxonomicTypeGroup;
@@ -261,6 +262,36 @@ public class ALATaxonResolver implements TaxonResolver {
             return acceptedRank;
         }
         return null;
+    }
+
+    /**
+     * If required, reallocate taxonomic concepts from secondary providers into the main concept.
+     * <p>
+     * If (a) the primary concept is not secondary and (b) there are secondary concepts, reallocate the
+     * secondary concepts to the primary concept.
+     * </p>
+     *
+     * @param scientificName The scientific name that holds the taxon concepts to be reallocated
+     * @param taxonomy The taxonomy to use as a basis
+     *
+     * @throws IndexBuilderException if there is an error in reallocation
+     */
+    @Override
+    public void reallocateSecondaryConcepts(ScientificName scientificName, Taxonomy taxonomy) throws IndexBuilderException {
+        TaxonConcept principal = scientificName.getPrincipal();
+
+        if (principal != null) {
+            ConceptResolutionPriority pp = principal.getRepresentative().getProvider().getConceptResolutionPriority();
+
+            for (TaxonConcept tc: scientificName.getConcepts()) {
+                ConceptResolutionPriority tp = tc.getRepresentative().getProvider().getConceptResolutionPriority();
+                if (pp.compareTo(tp) < 0) {
+                    this.taxonomy.report(IssueType.NOTE, "taxonConcept.reallocated.secondary", principal, Arrays.asList(tc));
+                    principal.reallocate(tc, taxonomy, "taxonConcept.reallocated.secondary.provenance");
+                }
+            }
+        }
+
     }
 
     /**

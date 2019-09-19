@@ -1,5 +1,6 @@
-package au.org.ala.names.index;
+package au.org.ala.names.index.provider;
 
+import au.org.ala.names.index.TaxonConceptInstance;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
 

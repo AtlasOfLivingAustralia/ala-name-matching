@@ -478,7 +478,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(12, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(22, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(52, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(14, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(16, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
 
@@ -499,7 +499,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(5, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(6, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(6, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(15, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(17, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
 
@@ -649,7 +649,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(6, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(11, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(11, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(14, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(16, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
     // Test the presence of a taxon loop
@@ -773,6 +773,62 @@ public class TaxonomyTest extends TestUtils {
         assertSame(tci1, tc1.getResolved(tci1));
         assertSame(tci1, tc1.getResolved(tci2));
         assertSame(tci1, tc1.getResolved(tci3));
+    }
+
+    @Test
+    public void testConceptPriority1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-30.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-1-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-1-2");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        assertSame(tc1, tc2);
+        assertSame(tci1, tc1.getResolved(tci1));
+        assertSame(tci1, tc1.getResolved(tci2));
+    }
+
+    @Test
+    public void testConceptPriority2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-30.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-2-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-2-2");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        assertSame(tc1, tc2);
+        assertSame(tci1, tc1.getResolved(tci1));
+        assertSame(tci1, tc1.getResolved(tci2));
+    }
+
+    @Test
+    public void testConceptPriority3() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-30.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-3-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-3-2");
+        TaxonConceptInstance tci3 = this.taxonomy.getInstance("Concept-3-3");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        TaxonConcept tc3 = tci3.getContainer();
+        assertNotSame(tc1, tc2);
+        assertSame(tc2, tc3);
+        assertSame(tci1, tc1.getResolved(tci1));
+        assertSame(tci2, tc2.getResolved(tci2));
+        assertSame(tci3, tc2.getResolved(tci3));
+        assertSame(tci2, tc2.getRepresentative());
     }
 
 }
