@@ -68,6 +68,9 @@ public class UnrankedScientificName extends Name<UnrankedScientificName, BareNam
      *     <li>If there is only one ranked scientific name, then that is it.</li>
      *     <li>If there is more than one ranked scientific name, then choose the one with a principal with the highest score. (Or the first if there are multiple ones)</li>
      * </ul>
+     *
+     * If there is an issue with clashing ranks, make a report.
+     *
      * @param taxonomy The resolving taxonomy.
      *
      * @return The principal
@@ -82,6 +85,9 @@ public class UnrankedScientificName extends Name<UnrankedScientificName, BareNam
         names.sort(REVERSE_PROVIDER_SCORE_COMPARATOR);
         final int cutoff = taxonomy.getAcceptedCutoff();
         List<ScientificName> ranked = names.stream().filter(sn -> !sn.getKey().isUnranked() && sn.getPrincipal() != null && sn.getPrincipalScore() > cutoff).collect(Collectors.toList());
+        Set<RankType> acceptedRanks = ranked.stream().filter(sn -> sn.getPrincipal().getRepresentative().isAccepted()).map(ScientificName::getRank).collect(Collectors.toSet());
+        if (acceptedRanks.size() > 1)
+            taxonomy.report(IssueType.PROBLEM, "unrankedScientificName.rankCollision", this, ranked);
         if (ranked.size() == 0)
             return names.get(0);
         if (ranked.size() == 1) {

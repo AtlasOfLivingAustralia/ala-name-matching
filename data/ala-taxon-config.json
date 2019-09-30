@@ -667,6 +667,18 @@
             "scientificName": "ROOT"
           }
         ]
+      },
+      "keyAdjuster": {
+        "adjustments": [
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "scientificName": "Rotifera",
+              "taxonRank": "CLASS"
+            },
+            "rank": "PHYLUM"
+          }
+        ]
       }
     },
     {
