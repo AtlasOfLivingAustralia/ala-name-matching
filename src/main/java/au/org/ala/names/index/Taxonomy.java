@@ -8,6 +8,7 @@ import au.org.ala.names.search.ALANameSearcher;
 import au.org.ala.names.search.DwcaNameIndexer;
 import au.org.ala.names.util.DwcaWriter;
 import au.org.ala.names.util.FileUtils;
+import au.org.ala.names.util.TaxonNameSoundEx;
 import au.org.ala.vocab.ALATerm;
 import com.google.common.collect.Maps;
 import com.opencsv.CSVWriter;
@@ -42,6 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A complete taxonomy description.
@@ -422,6 +424,7 @@ public class Taxonomy implements Reporter {
         this.resolveDiscards();
         if (!this.validate())
             throw new IndexBuilderException("Invalid resolution");
+        this.validateSpeciesSpelling();
     }
 
     /**
@@ -516,6 +519,76 @@ public class Taxonomy implements Reporter {
             }
         }
         logger.info("Finished validating name collisions");
+    }
+
+    /**
+     * Check for spelling variants causing trouble.
+     * <p>
+     * Spelling varints are detected for species and below.
+     * We map the soundexed version onto the parent taxon and count to see if there are any
+     * cases where a (eg) a genus has child taxa with suspiciously similar spelling.
+     * </p>
+     *
+     * @throws IndexBuilderException
+     */
+    public void validateSpeciesSpelling() throws IndexBuilderException {
+        logger.info("Validating suspiciously similar names");
+        TaxonNameSoundEx soundEx = new TaxonNameSoundEx();
+        Map<ScientificName, Map<String, List<ScientificName>>> nameCounts = new HashMap(this.names.size());
+        this.names.values().stream().filter(n -> !n.getRank().isHigherThan(RankType.SPECIES)).forEach(sn -> {
+            String name = soundEx.soundEx(sn.getScientificName());
+            for (TaxonConcept tc: sn.getConcepts()) {
+                List<TaxonConceptInstance> principals = tc.getPrincipals();
+                if (principals == null)
+                    continue;
+                Set<ScientificName> parents = principals.stream().
+                        filter(tci -> tci.isAccepted()).map(tci -> tci.getResolvedParent()).
+                        filter(tci -> tci != null).map(tci -> tci.getContainer()).
+                        filter(pc -> pc != null).map((pc -> pc.getContainer())).
+                        filter(pn -> pn != null).collect(Collectors.toSet());
+                for (ScientificName pn: parents) {
+                    Map<String, List<ScientificName>> counts = nameCounts.computeIfAbsent(pn, k -> new HashMap<String, List<ScientificName>>());
+                    counts.computeIfAbsent(name, n -> new ArrayList<>()).add(sn);
+                }
+            }
+        });
+        for (ScientificName sn: nameCounts.keySet()) {
+           for (Map.Entry<String, List<ScientificName>> collision: nameCounts.get(sn).entrySet().stream().filter(c -> c.getValue().size() > 1).collect(Collectors.toList())) {
+               Set<TaxonConceptInstance> instances = collision.getValue().stream().flatMap(tn -> tn.getConcepts().stream()).
+                       filter(tc -> tc.getPrincipals() != null).flatMap(tc -> tc.getPrincipals().stream()).
+                       filter(tci -> tci.isAccepted()).collect(Collectors.toSet());
+
+               String code = "name.spelling";
+               String count = "count.spelling";
+               IssueType type = IssueType.COLLISION;
+
+               // Check and skip simple authorship disagreement
+               Set<String> names = instances.stream().map(tci -> tci.getContainer().getKey().getScientificName()).collect(Collectors.toSet());
+               if (names.size() == 1) {
+                   code = "name.spelling.authorship";
+                   count = "count.spelling.authorship";
+                   type = IssueType.NOTE;
+               }
+               // Check an internal disagreement in single provider
+               Set<NameProvider> providers = instances.stream().map(tci -> tci.getProvider()).collect(Collectors.toSet());
+               if (providers.size() == 1) {
+                   // Internal disagreement in a single provider
+                   code = "name.spelling.internal";
+                   count = "count.spelling.internal";
+                   type = IssueType.NOTE;
+               }
+               // Check disagreement between nomenclatural codes
+               Set<NomenclaturalCode> codes = instances.stream().map(tci -> tci.getCode()).collect(Collectors.toSet());
+               if (codes.size() > 1) {
+                   code = "name.spelling.crossCode";
+                   count = "count.spelling.crossCode";
+               }
+
+               this.count(count);
+               this.report(type, code, sn, new ArrayList<>(instances));
+           }
+        }
+        logger.info("Finished validating suspiciously similar namess");
     }
 
     /**
@@ -871,12 +944,19 @@ public class Taxonomy implements Reporter {
      * @throws Exception if unable to slot the instance in.
      */
     public TaxonConceptInstance addInstance(TaxonConceptInstance instance) throws Exception {
+        NameProvider provider = instance.getProvider();
         String taxonID = instance.getTaxonID();
-        boolean loose = instance.getProvider().isLoose();
         NameKey taxonKey;
         String remark, explain;
 
-        taxonKey = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), instance.getTaxonomicStatus(), loose);
+        taxonKey = this.analyser.analyse(
+                instance.getCode(),
+                provider.correctScientificName(instance.getScientificName()),
+                provider.correctScientificNameAuthorship(instance.getScientificNameAuthorship()),
+                instance.getRank(),
+                instance.getTaxonomicStatus(),
+                provider.isLoose()
+        );
         taxonKey = instance.getProvider().adjustKey(taxonKey, instance);
         switch (taxonKey.getType()) {
             case PLACEHOLDER:

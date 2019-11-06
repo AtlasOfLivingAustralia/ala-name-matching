@@ -376,6 +376,37 @@ public class ALANameAnalyserTest {
         assertEquals(key1, key2);
     }
 
+    // Escaped letters
+    @Test
+    public void testKeyEquals20() throws Exception {
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Senecio \\glomeratus", "Poir.", null, null, false);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Senecio glomeratus", "Poir.", null, null, false);
+        assertEquals(key1, key2);
+    }
+
+    @Test
+    public void testKeyEquals21() throws Exception {
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Senecio glomeratus", "\\(Poir\\.\\)", null, null, false);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Senecio glomeratus", "(Poir.)", null, null, false);
+        assertEquals(key1, key2);
+    }
+
+    // Ampersands
+    @Test
+    public void testKeyEquals22() throws Exception {
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Senecio glomeratus", "Poir.  and Labil", null, null, false);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.BOTANICAL, "Senecio glomeratus", "Poir. &  Labil", null, null, false);
+        assertEquals(key1, key2);
+    }
+
+    // Changed combination marker
+    @Test
+    public void testKeyEquals23() throws Exception {
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Osphranter rufus", "Desmarest, 1822", null, null, false);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Osphranter rufus", "(Desmarest, 1822)", null, null, false);
+        assertEquals(key1, key2);
+    }
+
     @Test
     public void testCanonicaliseCode1() throws Exception {
         NomenclaturalCode code = this.analyser.canonicaliseCode("ICZN");

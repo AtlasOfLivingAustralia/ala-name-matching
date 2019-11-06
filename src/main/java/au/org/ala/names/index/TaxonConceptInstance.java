@@ -1278,6 +1278,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         builder.append(":");
         builder.append(this.getTaxonID());
         builder.append(", ");
+        builder.append(this.getCode());
+        builder.append(", ");
         if (this.nameComplete != null) {
             builder.append(this.nameComplete);
         } else {

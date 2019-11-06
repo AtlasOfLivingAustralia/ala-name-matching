@@ -19,7 +19,9 @@
     },
     "loose" : false,
     "external" : true,
-    "unknownTaxonID" : "ALA_The_Unknown_Taxon"
+    "unknownTaxonID" : "ALA_The_Unknown_Taxon",
+    "scientificNameChanges" : { },
+    "scientificNameAuthorshipChanges" : { }
   } ],
   "defaultProvider" : "ID-1",
   "acceptedCutoff" : 50,

@@ -512,37 +512,51 @@
           {
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
-              "taxonRank": "NOTHOSUBSPECIES"
+              "taxonRank": "SUBSPECIES"
             },
-            "rank": "SUBSPECIES"
+            "rank": "INFRASPECIFICNAME"
           },
           {
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
-              "taxonRank": "INFRASPECIFICNAME"
+              "taxonRank": "NOTHOSUBSPECIES"
             },
-            "rank": "SUBSPECIES"
+            "rank": "INFRASPECIFICNAME"
           },
           {
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonRank": "INFRASUBSPECIESNAME"
             },
-            "rank": "SUBSPECIES"
+            "rank": "INFRASPECIFICNAME"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "VARIETY"
+            },
+            "rank": "INFRASPECIFICNAME"
           },
           {
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonRank": "NOTHOVARIETY"
             },
-            "rank": "VARIETY"
+            "rank": "INFRASPECIFICNAME"
           },
           {
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonRank": "SUBVARIETY"
             },
-            "rank": "VARIETY"
+            "rank": "INFRASPECIFICNAME"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "FORM"
+            },
+            "rank": "FORM"
           },
           {
             "condition": {
@@ -587,6 +601,71 @@
             "rank": "CULTIVAR"
           }
         ]
+      },
+      "scientificNameChanges": {
+        "Accalathura dimera": "Accalathura dimeria",
+        "Aega monophthalam": "Aega monophthalma",
+        "Aegaeon rathbunae": "Aegaeon rathbuni",
+        "Albugo trianthemae": "Albugo trianthemi",
+        "Aquilonastra bryneae": "Aquilonastra byrneae",
+        "Armandia filibranhcia": "Armandia filibranchia",
+        "Arthonia anjutiae": "Arthonia anjutii",
+        "Australomysis ruebeni": "Australomysis reubeni",
+        "Blepharisma halophilium": "Blepharisma halophila",
+        "Boletellus ananaeceps": "Boletellus ananiceps",
+        "Birubius mayamayai": "Birubius mayamayi",
+        "Celleporaria endiva": "Celleporaria endivia",
+        "Cerapus murrayae": "Cerapus murrayi",
+        "Chelonaplysilla noevus": "Chelonaplysilla naevus",
+        "Chromonephthea muironensis": "Chromonephthea murionensis",
+        "Compsopogon coeruleus": "Compsopogon caeruleus",
+        "Cortinarius campbellae": "Cortinarius campbelliae",
+        "Diastylopsis thileniusi": "Diastylopsis thilenuisi",
+        "Difflugia garmen": "Difflugia gramen",
+        "Euglypha loevis": "Euglypha laevis",
+        "Eumida hawkseburyensis": "Eumida hawkesburyensis",
+        "Euryspongia deliculata": "Euryspongia delicatula",
+        "Geoglossum cookeanum": "Geoglossum cookeianum",
+        "Gymnangium profiler": "Gymnangium prolifer",
+        "Gymnothorax thrysoideus": "Gymnothorax thyrsoideus",
+        "Heterocardia gibbulosa": "Heterocardia gibbosula",
+        "Heterotextus pezizaeformis": "Heterotextus peziziformis",
+        "Hydrophis mcdowelli": "Hydrophis macdowelli",
+        "Hygrocybe dorothyae": "Hygrocybe dorothyi",
+        "Idas copperingi": "Idas coppingeri",
+        "Ilyodromus varrovillius": "Ilyodromus varrovillus",
+        "Lepidurus apus viridis": "Lepidurus apus viridus",
+        "Liljeborgia aequiabilis": "Liljeborgia aequabilis",
+        "Limnodriloides winckelmanni": "Limnodriloides wincklemanni",
+        "Liocranchia valdiviae": "Liocranchia valdivae",
+        "Marasmius crinis-equi": "Marasmius crinisequi",
+        "Mesoplodon gingkodens": "Mesoplodon ginkgodens",
+        "Metacirolana basteni": "Metacirolana bastenae",
+        "Mycedium mancoi": "Mycedium mancaoi",
+        "Mysticoncha wilsonae": "Mysticoncha wilsoni",
+        "Nectria quisquiliaris": "Nectria quisquilaris",
+        "Neelaps calonotos": "Neelaps calonotus",
+        "Odontosyllis langerhansaesetosa": "Odontosyllis langerhansiaesetosa",
+        "Paraminabea aldersaldei": "Paraminabea aldersladei",
+        "Phyllodoce madierensis": "Phyllodoce madeirensis",
+        "Plumatella \"longigemmis\"": "Plumatella longigemmis",
+        "Prionospio auckalndica": "Prionospio aucklandica",
+        "Puccinia duthiae": "Puccinia duthiei",
+        "Puccinia argophyllae": "Puccinia argophylli",
+        "Reteporella lacinata": "Reteporella laciniata",
+        "Reteporella malleatia": "Reteporella malleata",
+        "Ringicula doliaris": "Ringicula dolaris",
+        "Smittoidea discoverae": "Smittoidea discoveriae",
+        "Sporisorium australiasiaticum": "Sporisorium australasiaticum",
+        "Stereum amoenum": "Stereum amaenum",
+        "Stylopoma thornelyae": "Stylopoma thornelyi",
+        "Tectacingulum tumidum": "Tectacingulum tumidium",
+        "Tesarius sulcipennis": "Tesarius suclipennis",
+        "Thalassocypria lacuscola": "Thalassocypria lacusola",
+        "Tremellodendropsis semivestita": "Tremellodendropsis semivestitia",
+        "Turbonilla homaeotata": "Turbonilla homoeotata",
+        "Volvarina philippinarum": "Volvarina philippinarium",
+        "Vorticella moniliata": "Vorticella monilata"
       }
     },
     {

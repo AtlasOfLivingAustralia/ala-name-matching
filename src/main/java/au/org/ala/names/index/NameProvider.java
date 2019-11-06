@@ -90,6 +90,12 @@ public class NameProvider {
     /** A default parent taxon, if one is not specified. This can be used in combination with the nomenclatural code to provide a parent if one is absent. */
     @JsonProperty
     private String defaultParentTaxon;
+    /** Any spelling corrections needed on names. */
+    @JsonProperty
+    private Map<String, String> scientificNameChanges;
+    /** Any spelling corrections needed on authors. */
+    @JsonProperty
+    private Map<String, String> scientificNameAuthorshipChanges;
 
     /**
      * Default constructor
@@ -109,17 +115,11 @@ public class NameProvider {
         this.keyAdjuster = new KeyAdjuster();
         this.loose = false;
         this.external = true;
+        this.scientificNameChanges = new HashMap<>();
+        this.scientificNameAuthorshipChanges = new HashMap<>();
     }
-
-    /**
-     * Create a name source.
-     *
-     * @param id The source identifier
-     * @param defaultScore The default source priority
-     * @param unknownTaxonID The unknow taxon identifier
-     * @param scores Additional priority mappings
-     */
-    public NameProvider(String id, Integer defaultScore, String unknownTaxonID, Map<String, Integer> scores) {
+    
+     public NameProvider(String id, Integer defaultScore, String unknownTaxonID, Map<String, Integer> scores) {
         this.id = id;
         this.name = this.id;
         this.description = null;
@@ -135,6 +135,8 @@ public class NameProvider {
         this.loose = false;
         this.external = true;
         this.unknownTaxonID = unknownTaxonID;
+        this.scientificNameChanges = new HashMap<>();
+        this.scientificNameAuthorshipChanges = new HashMap<>();
     }
 
     /**
@@ -162,6 +164,8 @@ public class NameProvider {
         this.keyAdjuster = new KeyAdjuster();
         this.loose = loose;
         this.external = true;
+        this.scientificNameChanges = new HashMap<>();
+        this.scientificNameAuthorshipChanges = new HashMap<>();
     }
 
     /**
@@ -518,6 +522,42 @@ public class NameProvider {
         if (this.parent != null)
             key = this.parent.adjustKey(key, instance);
         return this.keyAdjuster == null ? key : this.keyAdjuster.adjustKey(key, instance);
+    }
+
+    /**
+     * Correct the spelling of scientific names that have clashes with other names in other providers for key management.
+     * <p>
+     * This is a short way of encoding key adjustments, since fixing mispellings etc. is often onerous.
+     * As always parent corrections are also tried if there isn't a local correction.
+     * Only exact matches will be corrected.
+     * </p>
+     * @param scientificName The source name
+     *                       
+     * @return The corrected name or the original name if no corrections are needed.
+     */
+    public String correctScientificName(String scientificName) {
+        String name = this.scientificNameChanges.get(scientificName);
+        if (name == null && this.parent != null)
+            name = this.parent.correctScientificName(scientificName);
+        return name == null ? scientificName : name;
+    }
+
+    /**
+     * Correct the spelling of scientific names that have clashes with other names in other providers for key management.
+     * <p>
+     * This is a short way of encoding key adjustments, since fixing mispellings etc. is often difficult.
+     * As always parent corrections are also tried if there isn't a local correction.
+     * Only exact matches will be corrected.
+     * </p>
+     * @param scientificNameAuthorship The source author
+     *
+     * @return The corrected name or the original name if no corrections are needed.
+     */
+    public String correctScientificNameAuthorship(String scientificNameAuthorship) {
+        String author = this.scientificNameAuthorshipChanges.get(scientificNameAuthorship);
+        if (author == null && this.parent != null)
+            author = this.parent.correctScientificName(scientificNameAuthorship);
+        return author == null ? scientificNameAuthorship : author;
     }
 
     /**

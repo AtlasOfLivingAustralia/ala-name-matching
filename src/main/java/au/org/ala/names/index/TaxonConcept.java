@@ -315,6 +315,15 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     }
 
     /**
+     * Get the principal concepts for this taxon.
+     *
+     * @return The list of principal concepts.
+     */
+    public List<TaxonConceptInstance> getPrincipals() {
+        return this.resolution == null ? null : this.resolution.getPrincipal();
+    }
+
+    /**
      * Get a representative taxon instance.
      * <p>
      * This is, basically, the highest priority instance that the concept has used.

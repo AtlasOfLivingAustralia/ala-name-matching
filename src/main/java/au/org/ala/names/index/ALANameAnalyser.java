@@ -83,6 +83,16 @@ public class ALANameAnalyser extends NameAnalyser {
     protected static final Pattern SPACES = Pattern.compile("\\s+");
 
     /**
+     * Pattern for escaped characters
+     */
+    protected static final Pattern ESCAPES = Pattern.compile("\\\\(.)");
+
+    /**
+     * Pattern for actual escapes
+     */
+    protected static final Pattern ESCAPE = Pattern.compile("\\\\");
+
+    /**
      * Pattern for doubtful markers
      */
     protected static final Pattern DOUBTFUL = Pattern.compile("((^| )(undet|indet|aff|cf)[#!?\\.]?)+(?![a-z])");
@@ -159,6 +169,10 @@ public class ALANameAnalyser extends NameAnalyser {
         Set<NameFlag> flags = null;
         ParsedName name = null;
 
+        CleanedScientificName cleaned = new CleanedScientificName(scientificName);
+        scientificName = cleaned.getBasic();
+        scientificName = ESCAPES.matcher(scientificName).replaceAll("$1"); // Remove escaped letters
+        scientificName = ESCAPE.matcher(scientificName).replaceAll(""); // Remove left-over escapes
         if (scientificNameAuthorship != null && scientificName.endsWith(scientificNameAuthorship)) {
             scientificName = scientificName.substring(0, scientificName.length() - scientificNameAuthorship.length()).trim();
         }
@@ -181,8 +195,6 @@ public class ALANameAnalyser extends NameAnalyser {
                 }
             }
         }
-        CleanedScientificName cleaned = new CleanedScientificName(scientificName);
-        scientificName = cleaned.getBasic();
 
         // Remove bracketed names
         scientificName = BRACKETED.matcher(scientificName).replaceAll(" ");
@@ -212,6 +224,7 @@ public class ALANameAnalyser extends NameAnalyser {
             nameType = NameType.SCIENTIFIC;
         } else if (rankType != null && rankType.isHigherThan(RankType.SPECIES) && HIGHER_SCIENTIFIC_TEST.test(scientificName)) {
             nameType = NameType.SCIENTIFIC;
+            scientificName = SciNameNormalizer.normalize(scientificName);
         } else if(LOWER_SCIENTIFIC_TEST.test(scientificName)) {
             nameType = NameType.SCIENTIFIC;
             scientificName = SciNameNormalizer.normalize(scientificName);
@@ -229,8 +242,11 @@ public class ALANameAnalyser extends NameAnalyser {
         if (scientificNameAuthorship != null) {
             CleanedScientificName cleanedAuthor = new CleanedScientificName(scientificNameAuthorship);
             scientificNameAuthorship = cleanedAuthor.getBasic();
+            scientificNameAuthorship = ESCAPES.matcher(scientificNameAuthorship).replaceAll("$1"); // Remove unsightly escapes
+            scientificNameAuthorship = scientificNameAuthorship.replaceAll("\\s+and\\s+", " & "); // Consistent ampersand
+            scientificNameAuthorship = SPACES.matcher(scientificNameAuthorship).replaceAll(" ");
+            scientificNameAuthorship = scientificNameAuthorship.isEmpty() ? null : scientificNameAuthorship;
         }
-        scientificNameAuthorship = scientificNameAuthorship == null || scientificNameAuthorship.isEmpty() ? null : scientificNameAuthorship;
 
         // Flags
         if (name != null && name.isAutonym()) {
