@@ -12,7 +12,6 @@ import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.api.vocabulary.Rank;
 import org.gbif.checklistbank.authorship.AuthorComparator;
-import org.gbif.checklistbank.model.Equality;
 import org.gbif.checklistbank.utils.SciNameNormalizer;
 import org.gbif.common.parsers.NomStatusParser;
 import org.gbif.common.parsers.core.ParseResult;
@@ -61,17 +60,25 @@ public class ALANameAnalyser extends NameAnalyser {
     private static final String DEFAULT_INFORMAL_PATTERN_LIST = "informal_names.csv";
 
     /**
-     * Pattern for a bracketed sub-species name
+     * Pattern for a sub-species name in parentheses
      */
-    protected static final Pattern BRACKETED = Pattern.compile("\\s\\(\\s*\\p{Alpha}+\\s*\\)\\s");
+    protected static final Pattern PARENTHESIS = Pattern.compile("\\s\\(\\s*\\p{Alpha}+\\s*\\)\\s");
+    /**
+     * Pattern for annotations in brackets or braces
+     */
+    protected static final Pattern BRACKETED = Pattern.compile("\\s(\\[.+\\]|\\{.+\\})");
 
 
-    private static final String RANK_MARKERS = Arrays.stream(Rank.values()).filter(r -> r.getMarker() != null).map(r -> r.getMarker().replaceAll("\\.", "\\.")).collect(Collectors.joining("|"));
-    private static final String RANK_PLACEHOLDER_MARKERS = "\\p{Alpha}\\.";
+    private static final String RANK_MARKERS = Arrays.stream(Rank.values()).filter(r -> r.getMarker() != null).map(r -> r.getMarker().replaceAll("\\.", "")).collect(Collectors.joining("|"));
+    private static final String RANK_PLACEHOLDER_MARKERS = "\\p{Alpha}";
     /**
      * Pattern for rank markers
      */
-    protected static final Pattern MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS + "|" + RANK_PLACEHOLDER_MARKERS + ")\\s+");
+    protected static final Pattern STRICT_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.\\s+");
+    /**
+     * Pattern for bare (no proper period) rank markers
+     */
+    protected static final Pattern LOOSE_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.?\\s+");
     /**
      * Pattern for non-name characters
      */
@@ -173,6 +180,7 @@ public class ALANameAnalyser extends NameAnalyser {
         scientificName = cleaned.getBasic();
         scientificName = ESCAPES.matcher(scientificName).replaceAll("$1"); // Remove escaped letters
         scientificName = ESCAPE.matcher(scientificName).replaceAll(""); // Remove left-over escapes
+        scientificName = BRACKETED.matcher(scientificName).replaceAll(" "); // Remove bracheted annotations
         if (scientificNameAuthorship != null && scientificName.endsWith(scientificNameAuthorship)) {
             scientificName = scientificName.substring(0, scientificName.length() - scientificNameAuthorship.length()).trim();
         }
@@ -196,11 +204,14 @@ public class ALANameAnalyser extends NameAnalyser {
             }
         }
 
-        // Remove bracketed names
-        scientificName = BRACKETED.matcher(scientificName).replaceAll(" ");
+        // Remove parenthesis names
+        scientificName = PARENTHESIS.matcher(scientificName).replaceAll(" ");
 
-        // Remove markers
-        scientificName = MARKERS.matcher(scientificName).replaceAll(" ");
+        // Remove annotations in the name
+
+
+        // Remove markers (loose markers for the win, since there appears to be no consistency)
+        scientificName = LOOSE_MARKERS.matcher(scientificName).replaceAll(" ");
 
 
         // Categorize
@@ -229,6 +240,8 @@ public class ALANameAnalyser extends NameAnalyser {
             nameType = NameType.SCIENTIFIC;
             scientificName = SciNameNormalizer.normalize(scientificName);
         }
+
+        // Default rank
         if (rankType == null)
             rankType = RankType.UNRANKED;
 

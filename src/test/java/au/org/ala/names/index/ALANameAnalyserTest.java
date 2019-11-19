@@ -407,6 +407,21 @@ public class ALANameAnalyserTest {
         assertEquals(key1, key2);
     }
 
+    // Placeholder names
+    @Test
+    public void testKeyEquals24() throws Exception {
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Galaxias sp. 3", null, null, null, false);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Galaxias sp 3", null, null, null, false);
+        assertNotEquals(key1, key2);
+    }
+
+    @Test
+    public void testKeyEquals25() throws Exception {
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Galaxias sp. 3", null, null, null, false);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Galaxias sp 3", null, null, null, true);
+        assertEquals(key1, key2);
+    }
+
     @Test
     public void testCanonicaliseCode1() throws Exception {
         NomenclaturalCode code = this.analyser.canonicaliseCode("ICZN");
