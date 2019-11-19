@@ -697,14 +697,21 @@
       }
     },
     {
-      "id" : "dr5214",
-      "name": "APC",
-      "description": "Australian Plant Name Index entries placed by the Australian Plant Census",
+      "id" : "apni-apc",
+      "name": "APNI/APC",
+      "description": "Australian Plant Name Index and Australian Plant Census",
       "parent": "default",
       "rightsHolder": "Centre for Australian National Biodiversity Research",
       "licence": "CC-BY",
+      "defaultNomenclaturalCode": "BOTANICAL"
+    },
+    {
+      "id" : "dr5214",
+      "name": "APC",
+      "description": "Australian Plant Name Index entries placed by the Australian Plant Census",
+      "parent": "apni-apc",
+      "authority": false,
       "defaultScore" : 5000,
-      "defaultNomenclaturalCode": "BOTANICAL",
       "scores": {
         "Plantae": 6000
       },
@@ -712,6 +719,14 @@
         "Plantae",
         "Solanum torvum"
       ]
+    },
+    {
+      "id" : "dr2700",
+      "name": "APNI",
+      "description": "Australian Plant Name Index entries not placed by the Australian Plant Census, given an assumed parent of Plantae",
+      "parent": "apni-apc",
+      "authority": false,
+      "defaultScore" : 4000
     },
     {
       "id" : "dr2699",
@@ -729,16 +744,6 @@
       "owner": [
         "Animalia"
       ]
-    },
-    {
-      "id" : "dr2700",
-      "name": "APNI",
-      "description": "Australian Plant Name Index entries not placed by the Australian Plant Census, given an assumed parent of Plantae",
-      "parent": "default",
-      "rightsHolder": "Centre for Australian National Biodiversity Research",
-      "licence": "CC-BY",
-      "defaultScore" : 4000,
-      "defaultNomenclaturalCode": "BOTANICAL"
     },
     {
       "id": "dr2707",

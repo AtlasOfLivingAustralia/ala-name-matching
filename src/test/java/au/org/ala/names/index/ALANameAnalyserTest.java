@@ -412,7 +412,7 @@ public class ALANameAnalyserTest {
     public void testKeyEquals24() throws Exception {
         NameKey key1 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Galaxias sp. 3", null, null, null, false);
         NameKey key2 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Galaxias sp 3", null, null, null, false);
-        assertNotEquals(key1, key2);
+        assertEquals(key1, key2);
     }
 
     @Test

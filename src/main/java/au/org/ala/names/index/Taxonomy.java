@@ -570,7 +570,7 @@ public class Taxonomy implements Reporter {
                    type = IssueType.NOTE;
                }
                // Check an internal disagreement in single provider
-               Set<NameProvider> providers = instances.stream().map(tci -> tci.getProvider()).collect(Collectors.toSet());
+               Set<NameProvider> providers = instances.stream().map(tci -> tci.getAuthority()).collect(Collectors.toSet());
                if (providers.size() == 1) {
                    // Internal disagreement in a single provider
                    code = "name.spelling.internal";

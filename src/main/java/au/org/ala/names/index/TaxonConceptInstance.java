@@ -14,7 +14,6 @@ import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.Null;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
@@ -270,6 +269,15 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     public NameProvider getProvider() {
         return provider;
+    }
+
+    /**
+     * Get the originating authorityfor the data
+     *
+     * @return The authority source
+     */
+    public NameProvider getAuthority() {
+        return provider == null ? null : provider.getAuthority();
     }
 
     /**
