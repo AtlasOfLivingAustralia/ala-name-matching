@@ -651,7 +651,7 @@ public class ALANameIndexer {
                 if (values != null && values.length >= 3) {
                     Document doc = new Document();
                     //doc.add(new Field("lsid", values[2], Store.NO, Index.NOT_ANALYZED));
-                    doc.add(new StringField("lsid", values[2], Store.NO));
+                    doc.add(new StringField("lsid", values[2], Store.YES));
                     //doc.add(new Field("reallsid", values[1], Store.YES, Index.NO));
                     doc.add(new StoredField("reallsid", values[1]));
                     iw.addDocument(doc);
@@ -700,7 +700,7 @@ public class ALANameIndexer {
                 //just add the LSID to the index
                 Document doc = new Document();
 
-                doc.add(new StringField("lsid", values[0], Store.NO));
+                doc.add(new StringField("lsid", values[0], Store.YES));
                 iw.addDocument(doc);
 
             }
@@ -832,7 +832,7 @@ public class ALANameIndexer {
 
         doc.add(new StringField(NameIndexField.LSID.toString(), lsid, Store.YES));
         if (lsid.startsWith("ALA")) {
-            doc.add(new TextField(NameIndexField.ALA.toString(), "T", Store.NO));
+            doc.add(new StringField(NameIndexField.ALA.toString(), "T", Store.YES));
         }
 
 
@@ -863,9 +863,9 @@ public class ALANameIndexer {
         //handle the synonyms
         if (StringUtils.isNotEmpty(acceptedConcept)) {
             doc.add(new StringField(NameIndexField.ACCEPTED.toString(), acceptedConcept, Store.YES));
-            doc.add(new TextField(NameIndexField.iS_SYNONYM.toString(), "T", Store.NO));
+            doc.add(new StringField(NameIndexField.iS_SYNONYM.toString(), "T", Store.YES));
         } else {
-            doc.add(new TextField(NameIndexField.iS_SYNONYM.toString(), "F", Store.NO));
+            doc.add(new StringField(NameIndexField.iS_SYNONYM.toString(), "F", Store.YES));
         }
 
         //Add the classification information
