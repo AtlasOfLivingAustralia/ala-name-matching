@@ -4,7 +4,7 @@ BIRDS
 ,Kookaburra,,Animalia,Chordata,Aves,CORACIIFORMES,ALCEDINIDAE,Dacelo,novaeguineae,,,Yes,Yes,Yes
 ,Emu,,Animalia,Chordata,Aves,STRUTHIONIFORMES,CASUARIIDAE,Dromaius,novaehollandiae,,,Yes,Yes,Yes
 ,Superb-fairy Wren,,Animalia,Chordata,Aves,PASSERIFORMES,MALURIDAE,Malurus,cyaneus,,,Yes,Yes,Yes
-,Australian Magpie,,Animalia,Chordata,Aves,Passeriformes,Artamidae,Cracticus,tibicen,,,Yes,Yes,Yes
+,Australian Magpie,,Animalia,Chordata,Aves,Passeriformes,Artamidae,Gymnorhina,tibicen,,,Yes,Yes,Yes
 ,Peregrin Falcon,,Animalia,Chordata,Aves,FALCONIFORMES,FALCONIDAE,Falco,peregrinus,,,Yes,Yes,Yes
 ,Fairy Penguin,,Animalia,Chordata,Aves,SPHENISCIFORMES,SPHENISCIDAE,Eudyptula,minor,,,Yes,Yes,Yes
 ,Lyrebird,,Animalia,Chordata,Aves,PASSERIFORMES,MENURIDAE,Menura,novaehollandiae,novaehollandiae,,Yes,Yes,Yes
@@ -208,7 +208,7 @@ Marine,Anemone Fish,Official,ANIMALIA,,,,,Amphiprion,akindynos
 SA
 Animal,Southern Hairy-nosed Wombat,Official,ANIMALIA,CHORDATA,MAMMALIA,DIPROTODONTIA,VOMBATIDAE,Lasiorhinus,latifrons,,,yes,yes,yes - limited
 Plant,Sturt's Desert Pea,Official,PLANTAE,Charophyta,Equisetopsida,FABALES,FABACEAE,Swainsona,formosa,,,yes,yes - limited,yes
-Bird,Piping Shrike (unofficial emblem),Unofficial,ANIMALIA,,,,,Cracticus,tibicen,telonocua,,yes,yes,yes - change image on Region page
+Bird,Piping Shrike (unofficial emblem),Unofficial,ANIMALIA,,,,,Gymnorhina,tibicen,telonocua,,yes,yes,yes - change image on Region page
 Marine,Leafy-sea Dragon,Official,ANIMALIA,Chordata,ACTINOPTERYGII,Syngnathiformes,SYNGNATHIDAE,Phycodurus,eques,,,yes,yes - limited,yes
 
 TAS
