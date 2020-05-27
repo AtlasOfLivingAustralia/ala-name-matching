@@ -24,13 +24,13 @@ public class VernacularMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20190213");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20200214");
      }
 
     @Test
     public void testVernacular1() throws Exception {
-        String name = "Giant Rush";
-        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2902770";
+        String name = "Fringe rush";
+        String expectedLsid = "https://id.biodiversity.org.au/taxon/apni/51283157";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);
@@ -42,7 +42,7 @@ public class VernacularMatchTest {
     @Test
     public void testVernacular2() throws Exception {
         String name = "Dhulwa";
-        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2904436";
+        String expectedLsid = "https://id.biodiversity.org.au/node/apni/2904436";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);
@@ -51,8 +51,8 @@ public class VernacularMatchTest {
 
     @Test
     public void testVernacular3() throws Exception {
-        String name = "Rock Sheoak";
-        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2893343";
+        String name = "Silver lace";
+        String expectedLsid = "NZOR-6-5262";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);
@@ -75,8 +75,8 @@ public class VernacularMatchTest {
 
     @Test
     public void testVernacular5() throws Exception {
-        String name = "River Saltbush";
-        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2887659";
+        String name = "Marsh Saltbush";
+        String expectedLsid = "https://id.biodiversity.org.au/node/apni/2891937";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);
@@ -90,7 +90,7 @@ public class VernacularMatchTest {
     @Test
     public void testVernacular6() throws Exception {
         String name = "Dharaban";
-        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2886278";
+        String expectedLsid = "https://id.biodiversity.org.au/node/apni/2886278";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);
@@ -103,7 +103,7 @@ public class VernacularMatchTest {
     @Test
     public void testVernacular7() throws Exception {
         String name = "T\u014crori";
-        String expectedLsid = "http://id.biodiversity.org.au/node/apni/2900660";
+        String expectedLsid = "https://id.biodiversity.org.au/node/apni/2900660";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);

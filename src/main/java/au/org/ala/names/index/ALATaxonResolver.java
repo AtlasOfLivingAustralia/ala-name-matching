@@ -47,15 +47,15 @@ public class ALATaxonResolver implements TaxonResolver {
             principals = new ArrayList<>(instances);
         }
         Optional<TaxonConceptInstance> max = principals.stream().max(TaxonConceptInstance.SCORE_COMPARATOR);
-        Optional<NameProvider> provider = max.map(TaxonConceptInstance::getProvider);
-        if (!provider.isPresent()) {
+        Optional<NameProvider> authority = max.map(TaxonConceptInstance::getAuthority);
+        if (!authority.isPresent()) {
             this.taxonomy.report(IssueType.NOTE, "taxonResolver.noProvider", concept, null);
             max = instances.stream().max(TaxonConceptInstance.SCORE_COMPARATOR);
-            provider = max.map(TaxonConceptInstance::getProvider);
+            authority = max.map(TaxonConceptInstance::getAuthority);
             principals = new ArrayList<>(instances);
         }
-        final NameProvider source = provider.orElse(taxonomy.getInferenceProvider());
-        principals = principals.stream().filter(instance -> instance.getProvider() == source).collect(Collectors.toList());
+        final NameProvider source = authority.orElse(taxonomy.getInferenceProvider());
+        principals = principals.stream().filter(instance -> instance.getAuthority() == source).collect(Collectors.toList());
         principals.sort(TaxonConceptInstance.INVERSE_SCORE_COMPARATOR);
         return principals;
     }
