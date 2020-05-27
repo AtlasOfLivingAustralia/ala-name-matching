@@ -29,8 +29,8 @@ public class VernacularMatchTest {
 
     @Test
     public void testVernacular1() throws Exception {
-        String name = "Fringe rush";
-        String expectedLsid = "https://id.biodiversity.org.au/taxon/apni/51283157";
+        String name = "Mary River Turtle";
+        String expectedLsid = "urn:lsid:biodiversity.org.au:afd.taxon:d315deea-822c-4f2c-b439-da33d6af5fd6";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);
@@ -51,8 +51,8 @@ public class VernacularMatchTest {
 
     @Test
     public void testVernacular3() throws Exception {
-        String name = "Silver lace";
-        String expectedLsid = "NZOR-6-5262";
+        String name = "Drain Mangrovegoby";
+        String expectedLsid = "urn:lsid:biodiversity.org.au:afd.taxon:19c60dcd-93a0-40a2-9ac1-3abe7119c505";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);
@@ -75,8 +75,8 @@ public class VernacularMatchTest {
 
     @Test
     public void testVernacular5() throws Exception {
-        String name = "Marsh Saltbush";
-        String expectedLsid = "https://id.biodiversity.org.au/node/apni/2891937";
+        String name = "Thread-Leaved Goodenia";
+        String expectedLsid = "https://id.biodiversity.org.au/node/apni/2898188";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);

@@ -192,6 +192,8 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     public void write(Taxonomy taxonomy, DwcaWriter writer) throws IOException {
         if (this.cleared)
             return;
+        if (!taxonomy.isWritable(this))
+            return;
         for (TaxonConceptInstance tci : this.resolution.getUsed()) {
             if (!tci.isOutput()) {
                 continue;

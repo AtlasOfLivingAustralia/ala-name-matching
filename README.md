@@ -82,8 +82,8 @@ The build creates 3 artefacts in the ala-name-matching/target directory:
 * ala-name-matching-3.3-distribution.zip - zip containing the project jar and dependencies
 * ala-name-matching-3.3-sources.jar - source jar for the project code only
 
-The name index for Australian names lists used in unit tests can be downloaded [from here](http://biocache.ala.org.au/archives/nameindexes/20181120) and needs to be extracted to the
-directory `/data/lucene/namematching-20181120`
+The name index for Australian names lists used in unit tests can be downloaded [from here](https://biocache.ala.org.au/archives/nameindexes/20200214) and needs to be extracted to the
+directory `/data/lucene/namematching-20200214`
 
 ## ALA Names List
 
