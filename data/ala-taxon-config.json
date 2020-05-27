@@ -231,6 +231,14 @@
               "taxonRank": "UNRANKED"
             },
             "adjustment": -100
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "scientificName": "^['\"]\\p{Upper}.+",
+              "matchType": "REGEX"
+            },
+            "adjustment": -500
           }
         ]
       },
@@ -669,6 +677,15 @@
       }
     },
     {
+      "id" : "dr7933",
+      "name": "ALA",
+      "description": "Specific ALA fixes for various problems. These take precedence over anything else.",
+      "parent": "default",
+      "rightsHolder": "Atlas of Living Australia",
+      "licence": "CC-BY",
+      "defaultScore" : 10000
+     },
+    {
       "id" : "dr2702",
       "name": "AusFungi",
       "parent": "default",
@@ -697,14 +714,21 @@
       }
     },
     {
-      "id" : "dr5214",
-      "name": "APC",
-      "description": "Australian Plant Name Index entries placed by the Australian Plant Census",
+      "id" : "apni-apc",
+      "name": "APNI/APC",
+      "description": "Australian Plant Name Index and Australian Plant Census",
       "parent": "default",
       "rightsHolder": "Centre for Australian National Biodiversity Research",
       "licence": "CC-BY",
+      "defaultNomenclaturalCode": "BOTANICAL"
+    },
+    {
+      "id" : "dr5214",
+      "name": "APC",
+      "description": "Australian Plant Name Index entries placed by the Australian Plant Census",
+      "parent": "apni-apc",
+      "authority": false,
       "defaultScore" : 5000,
-      "defaultNomenclaturalCode": "BOTANICAL",
       "scores": {
         "Plantae": 6000
       },
@@ -712,6 +736,14 @@
         "Plantae",
         "Solanum torvum"
       ]
+    },
+    {
+      "id" : "dr2700",
+      "name": "APNI",
+      "description": "Australian Plant Name Index entries not placed by the Australian Plant Census, given an assumed parent of Plantae",
+      "parent": "apni-apc",
+      "authority": false,
+      "defaultScore" : 4000
     },
     {
       "id" : "dr2699",
@@ -737,7 +769,7 @@
       "parent": "default",
       "rightsHolder": "New Zealand Organism Register",
       "licence": "CC-BY",
-      "defaultScore": 4000,
+      "defaultScore": 3000,
       "conceptResolutionPriority": "ADDITIONAL",
       "adjuster": {
         "forbidden": [
@@ -759,16 +791,6 @@
           }
         ]
       }
-    },
-    {
-      "id" : "dr2700",
-      "name": "APNI",
-      "description": "Australian Plant Name Index entries not placed by the Australian Plant Census, given an assumed parent of Plantae",
-      "parent": "default",
-      "rightsHolder": "Centre for Australian National Biodiversity Research",
-      "licence": "CC-BY",
-      "defaultScore" : 3000,
-      "defaultNomenclaturalCode": "BOTANICAL"
     },
     {
       "id" : "dr2704",
@@ -803,7 +825,7 @@
         ]
       }
     },
-     {
+    {
       "id" : "dr5393",
       "name": "ALA",
       "description": "Atlas of living Australia Name Sources",

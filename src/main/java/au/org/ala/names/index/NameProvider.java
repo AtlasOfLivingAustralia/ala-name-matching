@@ -75,6 +75,9 @@ public class NameProvider {
     /** Is this an "external" name provider - something that can be referenced */
     @JsonProperty
     private boolean external;
+    /** Is this an authority - meaning that sub-providers come from this authority */
+    @JsonProperty
+    private boolean authority;
     /** The method of discarding forbidden taxa */
     @JsonProperty
     private DiscardStrategy discardStrategy;
@@ -115,6 +118,7 @@ public class NameProvider {
         this.keyAdjuster = new KeyAdjuster();
         this.loose = false;
         this.external = true;
+        this.authority = true;
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
     }
@@ -134,6 +138,7 @@ public class NameProvider {
         this.keyAdjuster = new KeyAdjuster();
         this.loose = false;
         this.external = true;
+        this.authority = true;
         this.unknownTaxonID = unknownTaxonID;
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
@@ -164,6 +169,7 @@ public class NameProvider {
         this.keyAdjuster = new KeyAdjuster();
         this.loose = loose;
         this.external = true;
+        this.authority = true;
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
     }
@@ -264,6 +270,32 @@ public class NameProvider {
      */
     public boolean isExternal() {
         return external;
+    }
+
+    /**
+     * Is this an "authority" provider, meaning that it's a single organisation that can provide
+     * multiple, semi-related data sources.
+     *
+     * @return True if this is an institution
+     */
+    public boolean isAuthority() {
+        return authority;
+    }
+
+    /**
+     * Return the institutional provider for this provider.
+     * <p>
+     * If not institutional, then
+     * </p>
+     *
+     * @return The provider that represents the institution this comes from.
+     */
+    public NameProvider getAuthority() {
+        if (this.authority)
+            return this;
+        if (this.parent != null)
+            return this.parent.getAuthority();
+        return null;
     }
 
     /**
