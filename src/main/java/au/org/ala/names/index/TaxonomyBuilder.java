@@ -33,6 +33,7 @@ public class TaxonomyBuilder {
             File index;
             File indexerTmp;
             File report;
+            Integer samples = null;
             DwcaNameIndexer indexer;
             TaxonomyConfiguration config = null;
 
@@ -43,6 +44,7 @@ public class TaxonomyBuilder {
             Option p = OptionBuilder.withLongOpt("previous").withDescription("Previous taxonomy DwCA").hasArg().withArgName("DIR").withType(File.class).create('p');
             Option ncl = OptionBuilder.withLongOpt("noclean").withDescription("Don't clean up work area").create();
             Option nc = OptionBuilder.withLongOpt("nocreate").withDescription("Don't create an output taxonomy").create();
+            Option s = OptionBuilder.withLongOpt("sample").withDescription("Output a sample taxonomy, consisting of n concepts plus their parents/accepted").hasArg().withArgName("N").withType(Integer.class).create();
             options.addOption(o);
             options.addOption(w);
             options.addOption(c);
@@ -50,6 +52,7 @@ public class TaxonomyBuilder {
             options.addOption(p);
             options.addOption(ncl);
             options.addOption(nc);
+            options.addOption(s);
             CommandLineParser parser = new BasicParser();
             CommandLine cmd = parser.parse(options, args);
             if (cmd.hasOption("noclean"))
@@ -74,6 +77,9 @@ public class TaxonomyBuilder {
             if (cmd.hasOption("previous")) {
                 cmd.getOptionValues("previous");
             }
+            if (cmd.hasOption("sample")) {
+                samples = Integer.parseInt(cmd.getOptionValue("sample"));
+            }
             List<NameSource> sources = Arrays.asList(cmd.getArgs()).stream().map(f -> NameSource.create(f)).collect(Collectors.toList());
             Taxonomy taxonomy = new Taxonomy(config, work);
             taxonomy.begin();
@@ -84,8 +90,12 @@ public class TaxonomyBuilder {
             taxonomy.createWorkingIndex();
             taxonomy.resolveUnplacedVernacular();
 
-            if (output != null)
+            if (samples != null)
+                taxonomy.sample(samples);
+            if (output != null) {
+                output.mkdirs();
                 taxonomy.createDwCA(output);
+            }
             if (report != null)
                 taxonomy.createReport(report);
             taxonomy.close();
