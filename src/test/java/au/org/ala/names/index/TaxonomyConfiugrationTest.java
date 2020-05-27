@@ -134,9 +134,9 @@ public class TaxonomyConfiugrationTest extends TestUtils {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
         Properties properties = config.getPriorities();
         assertNotNull(properties.getProperty("dr100"));
-        assertEquals(2.0, Double.parseDouble(properties.getProperty("dr100")), 0.01);
+        assertEquals(1.5, Double.parseDouble(properties.getProperty("dr100")), 0.01);
         assertNotNull(properties.getProperty("dr100"));
-        assertEquals(2.0 * 125 / 150, Double.parseDouble(properties.getProperty("dr101")), 0.01);
+        assertEquals(1.5 * 125 / 150, Double.parseDouble(properties.getProperty("dr101")), 0.01);
         assertNull(properties.getProperty("drNotADataset"));
     }
 

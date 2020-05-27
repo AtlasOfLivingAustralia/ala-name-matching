@@ -208,6 +208,51 @@ public class ALANameAnalyserTest {
         assertTrue(key.isAutonym());
     }
 
+    // Author without trailing year marker
+    @Test
+    public void testKey22() throws Exception {
+        NameKey key = this.analyser.analyse(NomenclaturalCode.BACTERIAL, "Gemmatimonas aurantiaca Zhang et al. amerlia ", "Zhang et al.", null, null, false);
+        assertEquals(NomenclaturalCode.BACTERIAL, key.getCode());
+        assertEquals(NameType.SCIENTIFIC, key.getType());
+        assertEquals("GEMMATIMONAS AURANTIACA AMERLIA", key.getScientificName());
+        assertEquals("Zhang et al.", key.getScientificNameAuthorship());
+        assertFalse(key.isAutonym());
+    }
+
+    // Author with trailing year marker
+    @Test
+    public void testKey23() throws Exception {
+        NameKey key = this.analyser.analyse(NomenclaturalCode.BACTERIAL, "Gemmatimonas aurantiaca Zhang et al., 1995", "Zhang et al.", null, null, false);
+        assertEquals(NomenclaturalCode.BACTERIAL, key.getCode());
+        assertEquals(NameType.SCIENTIFIC, key.getType());
+        assertEquals("GEMMATIMONAS AURANTIACA", key.getScientificName());
+        assertEquals("Zhang et al.", key.getScientificNameAuthorship());
+        assertFalse(key.isAutonym());
+    }
+
+    // Author with trailing year marker
+    @Test
+    public void testKey24() throws Exception {
+        NameKey key = this.analyser.analyse(NomenclaturalCode.BACTERIAL, "Gemmatimonas aurantiaca Zhang et al., 1995 amerlia", "Zhang et al.", null, null, false);
+        assertEquals(NomenclaturalCode.BACTERIAL, key.getCode());
+        assertEquals(NameType.SCIENTIFIC, key.getType());
+        assertEquals("GEMMATIMONAS AURANTIACA AMERLIA", key.getScientificName());
+        assertEquals("Zhang et al.", key.getScientificNameAuthorship());
+        assertEquals(RankType.INFRASPECIFICNAME, key.getRank());
+        assertFalse(key.isAutonym());
+    }
+
+    // Test quoted genus
+    @Test
+    public void testKey25() throws Exception {
+        NameKey key = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "\"Hypomecis\" catephes", "(Turner, 1947)", null, null, false);
+        assertEquals(NomenclaturalCode.ZOOLOGICAL, key.getCode());
+        assertEquals(NameType.DOUBTFUL, key.getType());
+        assertEquals("\"HYPOMECIS\" CATEPHES", key.getScientificName());
+        assertEquals("(Turner, 1947)", key.getScientificNameAuthorship());
+        assertEquals(RankType.UNRANKED, key.getRank());
+     }
+
     @Test
     public void testAuthorEquals1() throws Exception {
         assertEquals(0, this.analyser.compareAuthor(null, null));
@@ -406,6 +451,30 @@ public class ALANameAnalyserTest {
         NameKey key2 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Osphranter rufus", "(Desmarest, 1822)", null, null, false);
         assertEquals(key1, key2);
     }
+
+    // Placeholder names
+    @Test
+    public void testKeyEquals24() throws Exception {
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Galaxias sp. 3", null, null, null, false);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Galaxias sp 3", null, null, null, false);
+        assertEquals(key1, key2);
+    }
+
+    @Test
+    public void testKeyEquals25() throws Exception {
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Galaxias sp. 3", null, null, null, false);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Galaxias sp 3", null, null, null, true);
+        assertEquals(key1, key2);
+    }
+
+    // Initially quoted names
+    @Test
+    public void testKeyEquals26() throws Exception {
+        NameKey key1 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "\"Hypomecis\" catephes", null, RankType.SPECIES, null, false);
+        NameKey key2 = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, "Hypomecis catephes", null, RankType.SPECIES, null, false);
+        assertNotEquals(key1, key2);
+    }
+
 
     @Test
     public void testCanonicaliseCode1() throws Exception {

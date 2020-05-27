@@ -12,7 +12,6 @@ import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.api.vocabulary.Rank;
 import org.gbif.checklistbank.authorship.AuthorComparator;
-import org.gbif.checklistbank.model.Equality;
 import org.gbif.checklistbank.utils.SciNameNormalizer;
 import org.gbif.common.parsers.NomStatusParser;
 import org.gbif.common.parsers.core.ParseResult;
@@ -61,21 +60,29 @@ public class ALANameAnalyser extends NameAnalyser {
     private static final String DEFAULT_INFORMAL_PATTERN_LIST = "informal_names.csv";
 
     /**
-     * Pattern for a bracketed sub-species name
+     * Pattern for a sub-species name in parentheses
      */
-    protected static final Pattern BRACKETED = Pattern.compile("\\s\\(\\s*\\p{Alpha}+\\s*\\)\\s");
+    protected static final Pattern PARENTHESIS = Pattern.compile("\\s\\(\\s*\\p{Alpha}+\\s*\\)\\s");
+    /**
+     * Pattern for annotations in brackets or braces
+     */
+    protected static final Pattern BRACKETED = Pattern.compile("\\s(\\[.+\\]|\\{.+\\})");
 
 
-    private static final String RANK_MARKERS = Arrays.stream(Rank.values()).filter(r -> r.getMarker() != null).map(r -> r.getMarker().replaceAll("\\.", "\\.")).collect(Collectors.joining("|"));
-    private static final String RANK_PLACEHOLDER_MARKERS = "\\p{Alpha}\\.";
+    private static final String RANK_MARKERS = Arrays.stream(Rank.values()).filter(r -> r.getMarker() != null).map(r -> r.getMarker().replaceAll("\\.", "")).collect(Collectors.joining("|"));
+    private static final String RANK_PLACEHOLDER_MARKERS = "\\p{Alpha}";
     /**
      * Pattern for rank markers
      */
-    protected static final Pattern MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS + "|" + RANK_PLACEHOLDER_MARKERS + ")\\s+");
+    protected static final Pattern STRICT_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.\\s+");
+    /**
+     * Pattern for bare (no proper period) rank markers
+     */
+    protected static final Pattern LOOSE_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.?\\s+");
     /**
      * Pattern for non-name characters
      */
-    protected static final Pattern NON_NAME = Pattern.compile("[^A-Za-z0-9'\\- ]+");
+    protected static final Pattern NON_NAME = Pattern.compile("[^A-Za-z0-9'\"\\- ]+");
 
     /**
      * Pattern for repeated spaces
@@ -91,6 +98,16 @@ public class ALANameAnalyser extends NameAnalyser {
      * Pattern for actual escapes
      */
     protected static final Pattern ESCAPE = Pattern.compile("\\\\");
+
+    /**
+     * Pattern for and in authors
+     */
+    protected static final Pattern AUTHOR_AND = Pattern.compile("\\s+and\\s+");
+
+    /**
+     * Pattern for an unconsumed year marker immediately after an author
+     */
+    protected static final Pattern YEAR_MARKER = Pattern.compile("^\\s*,\\s*\\d{4}($|\\s)");
 
     /**
      * Pattern for doubtful markers
@@ -126,6 +143,10 @@ public class ALANameAnalyser extends NameAnalyser {
      * Something that looks like a species level scientific name
      */
     protected static final Predicate<String> LOWER_SCIENTIFIC_TEST = Pattern.compile("^\\p{Upper}[\\p{Alpha}\\-]+\\s+\\p{Lower}[\\p{Lower}\\-]+(\\s+\\p{Lower}[\\p{Lower}\\-]+)?$").asPredicate();
+    /**
+     * Pattern for initial quotes around a genus name (who does this? brown moth people)
+     */
+    protected static final Predicate<String> INITIAL_QUOTES_TEST = Pattern.compile("^['\"]\\s*(\\p{Upper}\\p{Lower}+)]\\s*['\"]'").asPredicate();
 
     private Map<String, NomenclaturalCode> codeMap;
     private Map<String, TaxonomicType> taxonomicTypeMap;
@@ -169,12 +190,17 @@ public class ALANameAnalyser extends NameAnalyser {
         Set<NameFlag> flags = null;
         ParsedName name = null;
 
-        CleanedScientificName cleaned = new CleanedScientificName(scientificName);
-        scientificName = cleaned.getBasic();
-        scientificName = ESCAPES.matcher(scientificName).replaceAll("$1"); // Remove escaped letters
-        scientificName = ESCAPE.matcher(scientificName).replaceAll(""); // Remove left-over escapes
-        if (scientificNameAuthorship != null && scientificName.endsWith(scientificNameAuthorship)) {
-            scientificName = scientificName.substring(0, scientificName.length() - scientificNameAuthorship.length()).trim();
+        scientificName = this.normalise(scientificName);
+        scientificNameAuthorship = this.normalise(scientificNameAuthorship);
+        // Remove embedded author, if any, taking care of a trailing year marker if there is one
+        if (scientificNameAuthorship != null) {
+            int p = scientificName.indexOf(scientificNameAuthorship);
+            if (p >= 0) {
+                String left = scientificName.substring(0, p);
+                String right = scientificName.substring(p + scientificNameAuthorship.length());
+                right = YEAR_MARKER.matcher(right).replaceFirst(" ");
+                scientificName = (left + " " + right).trim();
+            }
         }
         try {
             name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
@@ -188,7 +214,7 @@ public class ALANameAnalyser extends NameAnalyser {
         }
         if (loose) {
             if (scientificNameAuthorship == null && name != null) {
-                String ac = name.authorshipComplete();
+                String ac = this.normalise(name.authorshipComplete());
                 if (ac != null && !ac.isEmpty() && !(name instanceof ALAParsedName)) { // ALAParsedName indicates a phrase name; leave as-is
                     scientificName = name.buildName(true, true, false, true, true, false, true, false, true, false, false, false, true, true);
                     scientificNameAuthorship = ac;
@@ -196,11 +222,11 @@ public class ALANameAnalyser extends NameAnalyser {
             }
         }
 
-        // Remove bracketed names
-        scientificName = BRACKETED.matcher(scientificName).replaceAll(" ");
+        // Remove parenthesis names
+        scientificName = PARENTHESIS.matcher(scientificName).replaceAll(" ");
 
-        // Remove markers
-        scientificName = MARKERS.matcher(scientificName).replaceAll(" ");
+        // Remove markers (loose markers for the win, since there appears to be no consistency)
+        scientificName = LOOSE_MARKERS.matcher(scientificName).replaceAll(" ");
 
 
         // Categorize
@@ -220,6 +246,8 @@ public class ALANameAnalyser extends NameAnalyser {
             nameType = NameType.NO_NAME;
         } else if (DOUBTFUL_TEST.test(scientificName)) {
             nameType = NameType.DOUBTFUL;
+        } else if (INITIAL_QUOTES_TEST.test(scientificName)) {
+            nameType = NameType.DOUBTFUL;
         } else if (rankType == null && (HIGHER_SCIENTIFIC_TEST.test(scientificName) || LOWER_SCIENTIFIC_TEST.test(scientificName))) {
             nameType = NameType.SCIENTIFIC;
         } else if (rankType != null && rankType.isHigherThan(RankType.SPECIES) && HIGHER_SCIENTIFIC_TEST.test(scientificName)) {
@@ -229,24 +257,10 @@ public class ALANameAnalyser extends NameAnalyser {
             nameType = NameType.SCIENTIFIC;
             scientificName = SciNameNormalizer.normalize(scientificName);
         }
+
+        // Default rank
         if (rankType == null)
             rankType = RankType.UNRANKED;
-
-        // Remove non-name characters
-        scientificName = NON_NAME.matcher(scientificName).replaceAll(" ");
-        scientificName = SPACES.matcher(scientificName).replaceAll(" ");
-
-        scientificName = scientificName.trim().toUpperCase();
-
-        // Normalise authorship
-        if (scientificNameAuthorship != null) {
-            CleanedScientificName cleanedAuthor = new CleanedScientificName(scientificNameAuthorship);
-            scientificNameAuthorship = cleanedAuthor.getBasic();
-            scientificNameAuthorship = ESCAPES.matcher(scientificNameAuthorship).replaceAll("$1"); // Remove unsightly escapes
-            scientificNameAuthorship = scientificNameAuthorship.replaceAll("\\s+and\\s+", " & "); // Consistent ampersand
-            scientificNameAuthorship = SPACES.matcher(scientificNameAuthorship).replaceAll(" ");
-            scientificNameAuthorship = scientificNameAuthorship.isEmpty() ? null : scientificNameAuthorship;
-        }
 
         // Flags
         if (name != null && name.isAutonym()) {
@@ -255,7 +269,14 @@ public class ALANameAnalyser extends NameAnalyser {
             scientificNameAuthorship = null;
         }
 
-        return new NameKey(this, code, scientificName.toUpperCase(), scientificNameAuthorship, rankType, nameType, flags);
+        // Remove non-name characters
+        scientificName = NON_NAME.matcher(scientificName).replaceAll(" ");
+        scientificName = SPACES.matcher(scientificName).replaceAll(" ");
+
+        scientificName = scientificName.trim().toUpperCase();
+
+
+        return new NameKey(this, code, scientificName, scientificNameAuthorship, rankType, nameType, flags);
     }
 
     /**
@@ -497,5 +518,25 @@ public class ALANameAnalyser extends NameAnalyser {
             if (p.matcher(name).matches())
                 return true;
         return false;
+    }
+
+    /**
+     * Normalise a name or an author with simple
+     *
+     * @return The resulting name, or null for no identifiable name
+     */
+    protected String normalise(String name) {
+        if (name == null)
+            return null;
+        CleanedScientificName cleaned = new CleanedScientificName(name);
+        name = cleaned.getBasic();
+        if (name.isEmpty())
+            return null;
+        name = ESCAPES.matcher(name).replaceAll("$1"); // Remove escaped letters
+        name = ESCAPE.matcher(name).replaceAll(""); // Remove left-over escapes
+        name = BRACKETED.matcher(name).replaceAll(" "); // Remove bracheted annotations
+        name = AUTHOR_AND.matcher(name).replaceAll(" & "); // Replace and with &
+        name = SPACES.matcher(name).replaceAll(" "); // Re-normaliose spaces
+        return name.isEmpty() ? null : name;
     }
 }

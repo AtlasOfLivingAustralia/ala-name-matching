@@ -363,7 +363,7 @@ public class BiocacheMatchTest {
             String name = "Asparagus asparagoides f. Western Cape (R.Taplin 1133)";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("http://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
+            assertEquals("https://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
             assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);

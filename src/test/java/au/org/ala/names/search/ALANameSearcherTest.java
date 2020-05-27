@@ -321,6 +321,18 @@ public class ALANameSearcherTest {
     @Test
     public void testsStrMarker3()  {
         try {
+            String name = "Oenochrominae s. str."; // There's only one of these left
+            NameSearchResult nsr = searcher.searchForRecord(name, null);
+            assertNotNull(nsr);
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:537ff8fb-b6c2-4536-9cb8-ad244832c1de", nsr.getLsid());
+        } catch (SearchResultException ex) {
+            fail("Not expecting exception " + ex);
+        }
+     }
+
+    @Test
+    public void testsStrMarker4()  {
+        try {
             String name = "Pterodroma arminjoniana s. str.";
             NameSearchResult nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
@@ -328,10 +340,11 @@ public class ALANameSearcherTest {
         } catch (SearchResultException ex) {
             fail("Not expecting exception " + ex);
         }
-     }
+    }
+
 
     @Test
-    public void testsStrMarker4() {
+    public void testsStrMarker5() {
         try {
             String name = "Stennella longirostris longirostris";
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
@@ -343,7 +356,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testsStrMarker5() {
+    public void testsStrMarker6() {
         try {
             String name = "Aplonis fusca hulliana";
             NameSearchResult nsr = searcher.searchForRecord(name, null);
@@ -355,7 +368,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testsStrMarker6() {
+    public void testsStrMarker7() {
         try {
             String name = "Cryphaea tenella";
             NameSearchResult nsr = searcher.searchForRecord(name, null);
@@ -368,7 +381,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testsStrMarker7() {
+    public void testsStrMarker8() {
         try {
             String name = "Grevillea 'White Wings'";
             NameSearchResult nsr = searcher.searchForRecord(name, null);
@@ -379,7 +392,7 @@ public class ALANameSearcherTest {
         }
     }
     @Test
-    public void testsStrMarker8() {
+    public void testsStrMarker9() {
         try {
             // This is 'blacklisted' but the blacklist is ignored by the DwCA loader
             String name = "Siganus nebulosus";
@@ -393,7 +406,7 @@ public class ALANameSearcherTest {
         }
     }
     @Test
-    public void testsStrMarker9() {
+    public void testsStrMarker10() {
         try {
             String name = "Anabathron contabulatum";
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
@@ -461,6 +474,19 @@ public class ALANameSearcherTest {
     @Test
     public void testSpMarker2()  {
         try {
+            String name = "Grevillea brachystylis subsp. Busselton (G.J.Keighery s.n. 28/8/1985)";
+            NameSearchResult nsr = null;
+            nsr = searcher.searchForRecord(name);
+            assertNotNull(nsr);
+            assertEquals("https://id.biodiversity.org.au/instance/apni/897499", nsr.getLsid());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
+    @Test
+    public void testSpMarker3()  {
+        try {
             String name = "Lindernia sp. Pilbara (M.N.Lyons & L.Lewis FV 1069)";
             NameSearchResult nsr = null;
             nsr = searcher.searchForRecord(name, RankType.SUBSPECIES);
@@ -472,7 +498,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testSpMarker3()  {
+    public void testSpMarker4()  {
         try {
             String name = "Pterodroma arminjoniana s. str.";
             NameSearchResult nsr = null;
@@ -485,7 +511,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testSpMarker4()  {
+    public void testSpMarker5()  {
         try {
             String name = "Acacia dealbata subsp. subalpina";
             NameSearchResult nsr = null;
@@ -498,7 +524,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testSpMarker5()  {
+    public void testSpMarker6()  {
         try {
             String name = "Grevillea brachystylis subsp. Busselton";
             NameSearchResult nsr = null;
@@ -762,6 +788,23 @@ public class ALANameSearcherTest {
         }
     }
 
+    // This is an African Butterfly, not a mollusc
+    @Test
+    public void testOutOfGeography2() {
+        String name = "Myrina silenus ficedula";
+        LinnaeanRankClassification classification = new LinnaeanRankClassification();
+         classification.setScientificName(name);
+        try {
+            NameSearchResult nsr = searcher.searchForRecord(classification, true, true, true);
+            assertNotNull(nsr);
+            assertEquals("ALA_Myrina", nsr.getLsid());
+            assertEquals(MatchType.RECURSIVE, nsr.getMatchType());
+            assertEquals(RankType.GENUS, nsr.getRank());
+        } catch (SearchResultException ex) {
+            fail("Unexpected search exception " + ex.getMessage());
+        }
+    }
+
     //@Test
     public void testSubspeciesSynonym() {
         try {
@@ -825,10 +868,10 @@ public class ALANameSearcherTest {
     @Ignore // TODO No additional reallsid currently used
     @Test
     public void testGetPrimaryLsid() {
-        String primaryLsid = searcher.getPrimaryLsid("http://id.biodiversity.org.au/node/apni/2889838");
-        assertEquals("http://id.biodiversity.org.au/node/apni/2889838", primaryLsid);
-        primaryLsid = searcher.getPrimaryLsid("http://id.biodiversity.org.au/instance/apni/887198");
-        assertEquals("http://id.biodiversity.org.au/node/apni/5487102", primaryLsid);
+        String primaryLsid = searcher.getPrimaryLsid("https://id.biodiversity.org.au/node/apni/2889838");
+        assertEquals("https://id.biodiversity.org.au/node/apni/2889838", primaryLsid);
+        primaryLsid = searcher.getPrimaryLsid("https://id.biodiversity.org.au/instance/apni/887198");
+        assertEquals("https://id.biodiversity.org.au/node/apni/5487102", primaryLsid);
     }
 
     @Test

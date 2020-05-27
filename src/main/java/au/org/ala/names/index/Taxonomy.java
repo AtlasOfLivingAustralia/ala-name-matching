@@ -22,7 +22,6 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.SimpleFSDirectory;
-import org.apache.lucene.util.Version;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.api.model.registry.Contact;
 import org.gbif.api.model.registry.Dataset;
@@ -43,7 +42,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A complete taxonomy description.
@@ -148,6 +146,8 @@ public class Taxonomy implements Reporter {
     private List<NameSource> sources;
     /** A working name matching index. Used to find things that don't have an explicit home */
     private ALANameSearcher workingIndex;
+    /** Optional sample set of concepts to output */
+    private Set<TaxonConcept> sample;
 
     /**
      * Default taxonomy constructor.
@@ -205,6 +205,7 @@ public class Taxonomy implements Reporter {
         this.resources = ResourceBundle.getBundle("taxonomy");
         this.counts = new ConcurrentHashMap<>();
         this.sources = new ArrayList<>();
+        this.sample = null;
     }
 
     /**
@@ -232,6 +233,7 @@ public class Taxonomy implements Reporter {
         this.resources = ResourceBundle.getBundle("taxonomy");
         this.counts = new ConcurrentHashMap<>();
         this.sources = new ArrayList<>();
+        this.sample = null;
     }
 
     /**
@@ -570,7 +572,7 @@ public class Taxonomy implements Reporter {
                    type = IssueType.NOTE;
                }
                // Check an internal disagreement in single provider
-               Set<NameProvider> providers = instances.stream().map(tci -> tci.getProvider()).collect(Collectors.toSet());
+               Set<NameProvider> providers = instances.stream().map(tci -> tci.getAuthority()).collect(Collectors.toSet());
                if (providers.size() == 1) {
                    // Internal disagreement in a single provider
                    code = "name.spelling.internal";
@@ -1675,6 +1677,55 @@ public class Taxonomy implements Reporter {
         } finally {
             this.searcherManager.release(searcher);
         }
+    }
+
+    /**
+     * Create a sample of taxon concepts.
+     * <p>
+     * This can be used to create a resuced sample for testing purposes.
+     * If the sampled element is a synonym then the accepted taxon is included.
+     * If it is an accepted taxon then parents are included.
+     * </p>
+     * @param samples The sample size
+     *
+     * @throws IndexBuilderException if unable to build the sampel
+     */
+    public void sample(int samples) throws IndexBuilderException {
+        this.sample = new HashSet<>(samples);
+        Random random = new Random();
+        int jump = Math.max(10, this.instances.size() / 1000);
+        Iterator<TaxonConceptInstance> iterator = this.instances.values().iterator();
+
+        if (!iterator.hasNext())
+            throw new IndexBuilderException("No instances to sample");
+        logger.info("Creating sample of " + samples + " taxon concepts");
+        while (this.sample.size() < samples) {
+            TaxonConcept current = null;
+            int skip = random.nextInt(jump) + 1;
+            while (skip-- > 0) {
+                if (!iterator.hasNext())
+                    iterator = this.instances.values().iterator(); // Start again
+                current = iterator.next().getContainer();
+            }
+            while (current != null && !this.sample.contains(current)) {
+                TaxonConceptInstance r = current.getRepresentative();
+                if (r == null) {
+                    current = null;
+                } else {
+                    this.sample.add(current);
+                    if (r.isSynonym())
+                        r = r.getAccepted() == null ? null : r.getAccepted().getRepresentative();
+                    else
+                        r = r.getParent() == null ? null : r.getParent().getRepresentative();
+                    current = r == null ? null : r.getContainer();
+                }
+            }
+        }
+        logger.info("Finished sampling, final sample size is  " + this.sample.size());
+    }
+
+    public boolean isWritable(TaxonConcept taxonConcept) {
+        return this.sample == null || this.sample.contains(taxonConcept);
     }
 
     /**
