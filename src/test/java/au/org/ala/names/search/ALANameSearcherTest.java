@@ -1619,4 +1619,20 @@ public class ALANameSearcherTest {
         assertTrue(metrics.getErrors().contains(ErrorType.MISAPPLIED));
     }
 
+
+    // Available as a synonym but also misapplied.
+    @Test
+    public void testSynonymMisapplied1() throws Exception {
+        String name = "Commersonia fraseri ";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals(SynonymType.OBJECTIVE_SYNONYM, metrics.getResult().getSynonymType());
+        assertEquals("https://id.biodiversity.org.au/instance/apni/948382", metrics.getResult().getLsid());
+        assertEquals("https://id.biodiversity.org.au/node/apni/2916208", metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+        assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
+    }
+
 }

@@ -1309,11 +1309,11 @@ public class ALANameSearcher {
 
     private void checkForMisapplied(List<NameSearchResult> results) throws MisappliedException {
         if (results.size() >= 1 && results.stream().anyMatch(r -> r.getSynonymType() == SynonymType.MISAPPLIED)) {
-            List<NameSearchResult> accepted = results.stream().filter(r -> !r.isSynonym()).collect(Collectors.toList());
+            List<NameSearchResult> accepted = results.stream().filter(r -> !r.isSynonym() || (r.isSynonym() && r.getSynonymType() != SynonymType.MISAPPLIED && r.getSynonymType() != SynonymType.EXCLUDES)).collect(Collectors.toList());
             List<NameSearchResult> misapplied = results.stream().filter(r -> r.getSynonymType() == SynonymType.MISAPPLIED).collect(Collectors.toList());
             Set<String> misAccepted = misapplied.stream().map(NameSearchResult::getAcceptedLsid).collect(Collectors.toSet());
             NameSearchResult matched = searchForRecordByLsid(misapplied.get(0).getAcceptedLsid());
-            // There ia an accepted version, as well
+            // There ia an accepted or usuable synonym version, as well, use it
             if (!accepted.isEmpty()) {
                 throw new MisappliedException(accepted.get(0), matched);
             }
