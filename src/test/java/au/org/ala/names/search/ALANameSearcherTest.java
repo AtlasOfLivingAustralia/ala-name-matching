@@ -76,18 +76,10 @@ public class ALANameSearcherTest {
         }
     }
 
-    @Ignore // I give up, the algorithm is now just too good at choosing a suitable candidate
     @Test
     public void testSynonymAsHomonym2() {
         try {
-            String lsid = searcher.searchForLSID("Glaux");
-            fail("Expecting homnym exception");
-        } catch (HomonymException ex) {
-        } catch (SearchResultException ex) {
-            fail("Unexpected search exception " + ex);
-        }
-        try {
-            String lsid = searcher.searchForLSID("Glaux", RankType.GENUS);
+            String lsid = searcher.searchForLSID("Bracteolatae", RankType.SERIES_BOTANY);
             assertTrue(lsid != null);
         } catch (HomonymException ex) {
             fail("When supplied with a higher order rank no homonym exception should be thrown");
@@ -339,7 +331,20 @@ public class ALANameSearcherTest {
      }
 
     @Test
-    public void testsStrMarker4() {
+    public void testsStrMarker4()  {
+        try {
+            String name = "Pterodroma arminjoniana s. str.";
+            NameSearchResult nsr = searcher.searchForRecord(name, null);
+            assertNotNull(nsr);
+            assertEquals("40041023", nsr.getLsid());
+        } catch (SearchResultException ex) {
+            fail("Not expecting exception " + ex);
+        }
+    }
+
+
+    @Test
+    public void testsStrMarker5() {
         try {
             String name = "Stennella longirostris longirostris";
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
@@ -351,7 +356,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testsStrMarker5() {
+    public void testsStrMarker6() {
         try {
             String name = "Aplonis fusca hulliana";
             NameSearchResult nsr = searcher.searchForRecord(name, null);
@@ -363,7 +368,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testsStrMarker6() {
+    public void testsStrMarker7() {
         try {
             String name = "Cryphaea tenella";
             NameSearchResult nsr = searcher.searchForRecord(name, null);
@@ -376,7 +381,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testsStrMarker7() {
+    public void testsStrMarker8() {
         try {
             String name = "Grevillea 'White Wings'";
             NameSearchResult nsr = searcher.searchForRecord(name, null);
@@ -387,7 +392,7 @@ public class ALANameSearcherTest {
         }
     }
     @Test
-    public void testsStrMarker8() {
+    public void testsStrMarker9() {
         try {
             // This is 'blacklisted' but the blacklist is ignored by the DwCA loader
             String name = "Siganus nebulosus";
@@ -401,7 +406,7 @@ public class ALANameSearcherTest {
         }
     }
     @Test
-    public void testsStrMarker9() {
+    public void testsStrMarker10() {
         try {
             String name = "Anabathron contabulatum";
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
@@ -482,11 +487,11 @@ public class ALANameSearcherTest {
     @Test
     public void testSpMarker3()  {
         try {
-            String name = "Oenochrominae s. str.";
+            String name = "Lindernia sp. Pilbara (M.N.Lyons & L.Lewis FV 1069)";
             NameSearchResult nsr = null;
-            nsr = searcher.searchForRecord(name, null);
+            nsr = searcher.searchForRecord(name, RankType.SUBSPECIES);
             assertNotNull(nsr);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:537ff8fb-b6c2-4536-9cb8-ad244832c1de", nsr.getLsid());
+            assertEquals("https://id.biodiversity.org.au/name/apni/51306553", nsr.getLsid());
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
         }
@@ -494,6 +499,19 @@ public class ALANameSearcherTest {
 
     @Test
     public void testSpMarker4()  {
+        try {
+            String name = "Pterodroma arminjoniana s. str.";
+            NameSearchResult nsr = null;
+            nsr = searcher.searchForRecord(name, null);
+            assertNotNull(nsr);
+            assertEquals("40041023", nsr.getLsid());
+        } catch (SearchResultException e) {
+            fail("Unexpected search exception " + e);
+        }
+    }
+
+    @Test
+    public void testSpMarker5()  {
         try {
             String name = "Acacia dealbata subsp. subalpina";
             NameSearchResult nsr = null;
@@ -506,7 +524,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testSpMarker5()  {
+    public void testSpMarker6()  {
         try {
             String name = "Grevillea brachystylis subsp. Busselton";
             NameSearchResult nsr = null;
@@ -967,6 +985,7 @@ public class ALANameSearcherTest {
         String id = "https://id.biodiversity.org.au/node/apni/2893343";
         String name = "Allocasuarina huegeliana";
         NameSearchResult result = searcher.searchForRecordByID(id);
+        assertNotNull(result);
         assertEquals(id, result.getId());
         assertEquals(id, result.getLsid());
         assertEquals(MatchType.TAXON_ID, result.getMatchType());
@@ -978,6 +997,7 @@ public class ALANameSearcherTest {
         String id = "https://id.biodiversity.org.au/node/apni/2893343";
         String name = "Allocasuarina huegeliana";
         NameSearchResult result = searcher.searchForRecordByLsid(id);
+        assertNotNull(result);
         assertEquals(id, result.getId());
         assertEquals(id, result.getLsid());
         assertEquals(MatchType.TAXON_ID, result.getMatchType());
@@ -1619,6 +1639,44 @@ public class ALANameSearcherTest {
         assertTrue(metrics.getErrors().contains(ErrorType.MISAPPLIED));
     }
 
+
+    // Synonym and accepted
+    @Test
+    public void testSynonymAccepted1() throws Exception {
+        String name = "Acacia longissima";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51286968", metrics.getResult().getLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+        assertTrue(metrics.getErrors().contains(ErrorType.NONE));
+    }
+
+    @Test
+    public void testSynonymAccepted2() throws Exception {
+        String name = "Acacia longissima H.L.Wendl.";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51286968", metrics.getResult().getLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+        assertTrue(metrics.getErrors().contains(ErrorType.NONE));
+    }
+
+    @Test
+    public void testSynonymAccepted3() throws Exception {
+        String name = "Acacia longissima Chopinet";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals("https://id.biodiversity.org.au/instance/apni/857118", metrics.getResult().getLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+        assertTrue(metrics.getErrors().contains(ErrorType.NONE));
+        assertEquals("https://id.biodiversity.org.au/node/apni/2911212", metrics.getResult().getAcceptedLsid());
+    }
 
     // Available as a synonym but also misapplied.
     @Test
