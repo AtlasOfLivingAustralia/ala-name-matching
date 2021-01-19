@@ -1575,7 +1575,7 @@ public class Taxonomy implements Reporter {
         IndexSearcher searcher = this.searcherManager.acquire();
         try {
             TopDocs docs = searcher.search(query, 100, Sort.INDEXORDER);
-            List<Map<Term, String>> valueList = new ArrayList<>(docs.totalHits);
+            List<Map<Term, String>> valueList = new ArrayList<>((int) docs.totalHits.value);
             for (ScoreDoc sd : docs.scoreDocs) {
                 Document document = searcher.doc(sd.doc);
                 Map<Term, String> values = new HashMap<>();

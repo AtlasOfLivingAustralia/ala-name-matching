@@ -723,7 +723,7 @@ public class ALANameIndexer {
         TermQuery query = new TermQuery(new Term("lsid", lsid));
         try {
             org.apache.lucene.search.TopDocs results = is.search(query, 1);
-            return results.totalHits > 0;
+            return results.totalHits.value > 0;
         } catch (IOException e) {
             return false;
         }
@@ -743,7 +743,7 @@ public class ALANameIndexer {
             try {
                 TermQuery tq = new TermQuery(new Term("lsid", value));
                 org.apache.lucene.search.TopDocs results = idSearcher.search(tq, 1);
-                if (results.totalHits > 0)
+                if (results.totalHits.value > 0)
                     return idSearcher.doc(results.scoreDocs[0].doc).get("reallsid");
             } catch (IOException e) {
             }
@@ -760,7 +760,6 @@ public class ALANameIndexer {
         //we are only interested in keeping all the alphanumerical values of the common name
         //when searching the same operations will need to be peformed on the search string
         TextField searchAbleName = new TextField(IndexField.SEARCHABLE_COMMON_NAME.toString(), cn.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", ""), Store.YES);
-        searchAbleName.setBoost(boost);
         doc.add(searchAbleName);
 
         if (sn != null) {

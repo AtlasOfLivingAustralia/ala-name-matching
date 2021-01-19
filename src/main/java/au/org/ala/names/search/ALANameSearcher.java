@@ -1513,7 +1513,7 @@ public class ALANameSearcher {
     private boolean isHomonymResolvable(LinnaeanRankClassification cl) {
         TopDocs results = getIRMNGGenus(cl, RankType.GENUS);
         if (results != null)
-            return results.totalHits <= 1;
+            return results.totalHits.value <= 1;
         return false;
     }
 
@@ -1562,7 +1562,7 @@ public class ALANameSearcher {
                 newcl.setSpecies(cl.getSpecies());
             if (cl != null && (cl.getGenus() != null || cl.getSpecies() != null)) {
                 TopDocs results = getIRMNGGenus(newcl, rank);
-                if (results == null || results.totalHits <= 1)
+                if (results == null || results.totalHits.value <= 1)
                     return null;
 
                 if (cl != null && cl.getKingdom() != null) {
@@ -1570,39 +1570,39 @@ public class ALANameSearcher {
                     newcl.setKingdom(cl.getKingdom());
                     //Step 1 search for kingdom and genus
                     results = getIRMNGGenus(newcl, rank);
-                    if (results.totalHits == 1)
+                    if (results.totalHits.value == 1)
                         return RankType.KINGDOM;
                 }
                 //Step 2 add the phylum
-                if (cl.getPhylum() != null && results.totalHits > 1) {
+                if (cl.getPhylum() != null && results.totalHits.value > 1) {
                     newcl.setPhylum(cl.getPhylum());
                     results = getIRMNGGenus(newcl, rank);
-                    if (results.totalHits == 1)
+                    if (results.totalHits.value == 1)
                         return RankType.PHYLUM;
                         //This may not be a good idea
-                    else if (results.totalHits == 0)
+                    else if (results.totalHits.value == 0)
                         newcl.setPhylum(null);//just in case the phylum was specified incorrectly
                 }
                 //Step 3 try the class
                 if (cl.getKlass() != null) {// && results.totalHits>1){
                     newcl.setKlass(cl.getKlass());
                     results = getIRMNGGenus(newcl, rank);
-                    if (results.totalHits == 1)
+                    if (results.totalHits.value == 1)
                         return RankType.CLASS;
 
                 }
                 //step 4 try order
-                if (cl.getOrder() != null && results.totalHits > 1) {
+                if (cl.getOrder() != null && results.totalHits.value > 1) {
                     newcl.setOrder(cl.getOrder());
                     results = getIRMNGGenus(newcl, rank);
-                    if (results.totalHits == 1)
+                    if (results.totalHits.value == 1)
                         return RankType.ORDER;
                 }
                 //step 5 try  the family
-                if (cl.getFamily() != null && results.totalHits > 1) {
+                if (cl.getFamily() != null && results.totalHits.value > 1) {
                     newcl.setFamily(cl.getFamily());
                     results = getIRMNGGenus(newcl, rank);
-                    if (results.totalHits == 1)
+                    if (results.totalHits.value == 1)
                         return RankType.FAMILY;
                 }
             }
@@ -1630,7 +1630,7 @@ public class ALANameSearcher {
             TermQuery query = new TermQuery(new Term(ALANameIndexer.IndexField.LSID.toString(), lsid));
             try {
                 TopDocs results = vernSearcher.search(query, 1);
-                log.debug("Number of matches for " + lsid + " " + results.totalHits);
+                log.debug("Number of matches for " + lsid + " " + results.totalHits.value);
                 for (ScoreDoc sdoc : results.scoreDocs) {
                     org.apache.lucene.document.Document doc = vernSearcher.doc(sdoc.doc);
                     return doc.get(ALANameIndexer.IndexField.COMMON_NAME.toString());
@@ -1658,7 +1658,7 @@ public class ALANameSearcher {
                             ALANameIndexer.IndexField.LANGUAGE.toString() + ":\"" + language + "\" "
                     );
                     TopDocs results = vernSearcher.search(query, 1);
-                    log.debug("Number of matches for " + lsid + " " + results.totalHits);
+                    log.debug("Number of matches for " + lsid + " " + results.totalHits.value);
                     for (ScoreDoc sdoc : results.scoreDocs) {
                         org.apache.lucene.document.Document doc = vernSearcher.doc(sdoc.doc);
                         return doc.get(ALANameIndexer.IndexField.COMMON_NAME.toString());
@@ -1682,7 +1682,7 @@ public class ALANameSearcher {
             try {
                 TopDocs results = vernSearcher.search(query, maxNumberOfNames);
                 //if all the results have the same scientific name result the LSID for the first
-                log.debug("Number of matches for " + lsid + " " + results.totalHits);
+                log.debug("Number of matches for " + lsid + " " + results.totalHits.value);
                 Set<String> names = new HashSet<String>();
                 Set<String> lowerCaseResults = new HashSet<String>();
 
@@ -1721,7 +1721,7 @@ public class ALANameSearcher {
                 //if all the results have the same scientific name result the LSID for the first
                 String firstLsid = null;
                 String firstName = null;
-                log.debug("Number of matches for " + name + " " + results.totalHits);
+                log.debug("Number of matches for " + name + " " + results.totalHits.value);
                 for (ScoreDoc sdoc : results.scoreDocs) {
                     org.apache.lucene.document.Document doc = vernSearcher.doc(sdoc.doc);
                     if (firstLsid == null) {
@@ -1794,7 +1794,7 @@ public class ALANameSearcher {
             TermQuery tq = new TermQuery(new Term("lsid", lsid));
             try {
                 org.apache.lucene.search.TopDocs results = idSearcher.search(tq, 1);
-                if (results.totalHits > 0)
+                if (results.totalHits.value > 0)
                     return idSearcher.doc(results.scoreDocs[0].doc).get("reallsid");
             } catch (IOException e) {
             }
@@ -1808,9 +1808,9 @@ public class ALANameSearcher {
         try {
             Query query = new TermQuery(new Term(NameIndexField.LSID.toString(), lsid));
             TopDocs hits = this.idSearcher.search(query, 1);
-            if (hits.totalHits == 0)
+            if (hits.totalHits.value == 0)
                 hits = this.cbSearcher.search(query, 1);
-            if (hits.totalHits > 0)
+            if (hits.totalHits.value > 0)
                 return new NameSearchResult(cbSearcher.doc(hits.scoreDocs[0].doc), MatchType.TAXON_ID);
         } catch (Exception ex) {
             log.error("Unable to search for record by LSID " + lsid, ex);
@@ -2055,7 +2055,7 @@ public class ALANameSearcher {
             Query query = new TermQuery(new Term("concat_name", concatName));
 
             TopDocs topDocs = cbSearcher.search(query, 2);
-            if (topDocs != null && topDocs.totalHits == 1) {
+            if (topDocs != null && topDocs.totalHits.value == 1) {
                 for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
                     Document doc = cbSearcher.doc(scoreDoc.doc);
                     return doc.get("guid");

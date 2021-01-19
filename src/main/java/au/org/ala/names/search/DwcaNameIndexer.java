@@ -344,7 +344,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 String lsid = StringUtils.isNotEmpty(values[1]) ? values[1] : values[0];
                 //check to see if it exists
                 TopDocs result = getLoadIdxResults(null, "lsid", lsid, 1);
-                if(result.totalHits>0){
+                if(result.totalHits.value >0){
                     //we can add the common name
                     Document doc = createCommonNameDocument(values[3], values[2], lsid, values[4], 1.0f, false);
                     this.vernacularIndexWriter.addDocument(doc);
@@ -379,7 +379,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             String vernacularName = record.value(DwcTerm.vernacularName);
             String language = record.value(DcTerm.language);
             TopDocs result = getLoadIdxResults(null, "lsid", taxonID, 1);
-            if(result.totalHits > 0){
+            if(result.totalHits.value > 0){
                 Document sciNameDoc = lsearcher.doc(result.scoreDocs[0].doc);
                 //get the scientific name
                 //we can add the common name
@@ -586,7 +586,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         int right = left;
         int lastRight = right;
         int count = 0;
-        while (rootConcepts != null && rootConcepts.totalHits > 0) {
+        while (rootConcepts != null && rootConcepts.totalHits.value > 0) {
             ScoreDoc lastConcept = null;
             for (ScoreDoc sd : rootConcepts.scoreDocs) {
                 lastConcept = sd;
@@ -626,7 +626,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         String id = doc.get(NameIndexField.ID.toString());
         //get children for this record
         TopDocs children = getLoadIdxResults(null, "parent_id", id, PAGE_SIZE);
-        if(children.totalHits == 0){
+        if(children.totalHits.value == 0){
             id =  doc.get(NameIndexField.LSID.toString());
             children = getLoadIdxResults(null, "parent_id", id, PAGE_SIZE);
         }
@@ -754,7 +754,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         String infraspecificEpithet = null;
         try {
             TopDocs hits = this.cbSearcher.search(new TermQuery(new Term(NameIndexField.LSID.toString(), acceptedLsid)), 1);
-            if (hits.totalHits > 0)
+            if (hits.totalHits.value > 0)
                 accepted = this.cbSearcher.doc(hits.scoreDocs[0].doc);
         } catch (Exception ex) {
             log.warn("Error finding accepted document for " + acceptedLsid, ex);

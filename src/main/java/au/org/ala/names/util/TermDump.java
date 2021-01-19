@@ -6,6 +6,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
 
 import java.io.*;
+import java.util.Iterator;
 
 /**
  * Dump the terms in an index.
@@ -33,22 +34,21 @@ public class TermDump {
 
     public void dump() throws IOException {
         DirectoryReader reader = DirectoryReader.open(FSDirectory.open(this.index.toPath()));
-        Fields fields = MultiFields.getFields(reader);
-        PrintWriter pw = new PrintWriter(this.output);
 
-        for (String field: fields) {
-            pw.println(field);
-            /*
-            Terms terms = fields.terms(field);
-            TermsEnum termsEnum = terms.iterator(null);
+        Iterator<FieldInfo> it = reader.leaves().get(0).reader().getFieldInfos().iterator();
+        while (it.hasNext()) {
+            FieldInfo fi = it.next();
+            Terms terms = MultiTerms.getTerms(reader, fi.name);
+
+            TermsEnum termsEnum = terms.iterator();
             BytesRef text;
             while((text = termsEnum.next()) != null) {
-                this.output.write(field);
+                this.output.write(fi.name);
                 this.output.write(",");
                 this.output.write(text.utf8ToString());
                 this.output.write("\n");
             }
-            */
+
         }
         reader.close();
     }

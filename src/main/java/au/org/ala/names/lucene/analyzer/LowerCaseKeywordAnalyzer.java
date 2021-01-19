@@ -21,6 +21,8 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordTokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.util.Version;
 
 /**
@@ -37,12 +39,6 @@ public final class LowerCaseKeywordAnalyzer extends Analyzer {
         KeywordTokenizer src = new KeywordTokenizer();
         TokenStream result = new LowerCaseFilter(src);
 
-        return new TokenStreamComponents(src, result) {
-
-            @Override
-            protected void setReader(final Reader reader){
-                super.setReader(reader);
-            }
-        };
+        return new TokenStreamComponents(src, result);
     }
 }
