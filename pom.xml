@@ -11,7 +11,7 @@
     <artifactId>ala-name-matching</artifactId>
     <packaging>jar</packaging>
     <!-- Major version increment due to package structure change -->
-    <version>3.5</version>
+    <version>3.6-SNAPSHOT</version>
     <name>ALA Name Matching (for Lucene 6 or above)</name>
     <!-- SCM entry that points to SVN directory that contains pom -->
     <scm>
