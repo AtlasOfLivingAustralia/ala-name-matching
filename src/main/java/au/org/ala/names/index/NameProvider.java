@@ -1,7 +1,6 @@
 package au.org.ala.names.index;
 
-import au.org.ala.names.index.provider.KeyAdjuster;
-import au.org.ala.names.index.provider.ScoreAdjuster;
+import au.org.ala.names.index.provider.*;
 import com.fasterxml.jackson.annotation.*;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.api.vocabulary.NomenclaturalCode;
@@ -9,6 +8,7 @@ import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -75,15 +75,30 @@ public class NameProvider {
     /** Is this an "external" name provider - something that can be referenced */
     @JsonProperty
     private boolean external;
+    /** Is this an authority - meaning that sub-providers come from this authority */
+    @JsonProperty
+    private boolean authority;
     /** The method of discarding forbidden taxa */
     @JsonProperty
     private DiscardStrategy discardStrategy;
     /** Assign unranked elements to ranked elements */
     @JsonProperty
     private UnrankedStrategy unrankedStrategy;
+    /** How to handle concept conflicts */
+    @JsonProperty
+    private ConceptResolutionPriority conceptResolutionPriority;
     /** The identifier of the unknown taxon */
     @JsonProperty
     private String unknownTaxonID;
+    /** A default parent taxon, if one is not specified. This can be used in combination with the nomenclatural code to provide a parent if one is absent. */
+    @JsonProperty
+    private String defaultParentTaxon;
+    /** Any spelling corrections needed on names. */
+    @JsonProperty
+    private Map<String, String> scientificNameChanges;
+    /** Any spelling corrections needed on authors. */
+    @JsonProperty
+    private Map<String, String> scientificNameAuthorshipChanges;
 
     /**
      * Default constructor
@@ -103,17 +118,12 @@ public class NameProvider {
         this.keyAdjuster = new KeyAdjuster();
         this.loose = false;
         this.external = true;
+        this.authority = true;
+        this.scientificNameChanges = new HashMap<>();
+        this.scientificNameAuthorshipChanges = new HashMap<>();
     }
-
-    /**
-     * Create a name source.
-     *
-     * @param id The source identifier
-     * @param defaultScore The default source priority
-     * @param unknownTaxonID The unknow taxon identifier
-     * @param scores Additional priority mappings
-     */
-    public NameProvider(String id, Integer defaultScore, String unknownTaxonID, Map<String, Integer> scores) {
+    
+     public NameProvider(String id, Integer defaultScore, String unknownTaxonID, Map<String, Integer> scores) {
         this.id = id;
         this.name = this.id;
         this.description = null;
@@ -128,7 +138,10 @@ public class NameProvider {
         this.keyAdjuster = new KeyAdjuster();
         this.loose = false;
         this.external = true;
+        this.authority = true;
         this.unknownTaxonID = unknownTaxonID;
+        this.scientificNameChanges = new HashMap<>();
+        this.scientificNameAuthorshipChanges = new HashMap<>();
     }
 
     /**
@@ -156,6 +169,9 @@ public class NameProvider {
         this.keyAdjuster = new KeyAdjuster();
         this.loose = loose;
         this.external = true;
+        this.authority = true;
+        this.scientificNameChanges = new HashMap<>();
+        this.scientificNameAuthorshipChanges = new HashMap<>();
     }
 
     /**
@@ -257,6 +273,32 @@ public class NameProvider {
     }
 
     /**
+     * Is this an "authority" provider, meaning that it's a single organisation that can provide
+     * multiple, semi-related data sources.
+     *
+     * @return True if this is an institution
+     */
+    public boolean isAuthority() {
+        return authority;
+    }
+
+    /**
+     * Return the institutional provider for this provider.
+     * <p>
+     * If not institutional, then
+     * </p>
+     *
+     * @return The provider that represents the institution this comes from.
+     */
+    public NameProvider getAuthority() {
+        if (this.authority)
+            return this;
+        if (this.parent != null)
+            return this.parent.getAuthority();
+        return null;
+    }
+
+    /**
      * Get the discard strategy.
      * <p>
      * This determines how forbidden or otherwise discarded taxa should be treated.
@@ -291,6 +333,23 @@ public class NameProvider {
     }
 
     /**
+     * Get the concept resolution priority.
+     * <p>
+     * This determines how differences in opinion about concepts for a scientific name should be treated.
+     * If one is not explicitly set, get the parent strategy.
+     * By default, this is {@link ConceptResolutionPriority#AUTHORATATIVE}.
+     * </p>
+     *
+     * @return The concept resolution priority.
+     */
+    public ConceptResolutionPriority getConceptResolutionPriority() {
+        if (this.conceptResolutionPriority != null)
+            return this.conceptResolutionPriority;
+        ConceptResolutionPriority cs =  this.parent != null ? this.parent.getConceptResolutionPriority() : null;
+        return cs == null ? ConceptResolutionPriority.AUTHORATATIVE : cs;
+    }
+
+    /**
      * Get the identifier of The Unknown Taxon
      * <p>
      * If a synonym loop or bad parent is detected, the taxon id is mapped onto The Unknown Taxon.
@@ -310,6 +369,24 @@ public class NameProvider {
         if (utid == null)
             throw new IndexBuilderException("Unable to find unknown taxon identifier for " + this.getId());
         return utid;
+    }
+
+    /**
+     * Get the name of the default parent taxon.
+     * <p>
+     * If, during resolution, a taxon from this provider does not have a parent, then a reference
+     * to this name (and default nomenclatural code, if one is available) is used.
+     * If one is not explicitly set, get the parent.
+     * </p>
+     *
+     * @return The name of the parent taxon, or null for none.
+     *
+     */
+    @Nullable
+    public String getDefaultParentTaxon() {
+        if (this.defaultParentTaxon == null && this.parent != null)
+            return this.parent.getDefaultParentTaxon();
+        return this.defaultParentTaxon;
     }
 
     /**
@@ -480,6 +557,42 @@ public class NameProvider {
     }
 
     /**
+     * Correct the spelling of scientific names that have clashes with other names in other providers for key management.
+     * <p>
+     * This is a short way of encoding key adjustments, since fixing mispellings etc. is often onerous.
+     * As always parent corrections are also tried if there isn't a local correction.
+     * Only exact matches will be corrected.
+     * </p>
+     * @param scientificName The source name
+     *                       
+     * @return The corrected name or the original name if no corrections are needed.
+     */
+    public String correctScientificName(String scientificName) {
+        String name = this.scientificNameChanges.get(scientificName);
+        if (name == null && this.parent != null)
+            name = this.parent.correctScientificName(scientificName);
+        return name == null ? scientificName : name;
+    }
+
+    /**
+     * Correct the spelling of scientific names that have clashes with other names in other providers for key management.
+     * <p>
+     * This is a short way of encoding key adjustments, since fixing mispellings etc. is often difficult.
+     * As always parent corrections are also tried if there isn't a local correction.
+     * Only exact matches will be corrected.
+     * </p>
+     * @param scientificNameAuthorship The source author
+     *
+     * @return The corrected name or the original name if no corrections are needed.
+     */
+    public String correctScientificNameAuthorship(String scientificNameAuthorship) {
+        String author = this.scientificNameAuthorshipChanges.get(scientificNameAuthorship);
+        if (author == null && this.parent != null)
+            author = this.parent.correctScientificName(scientificNameAuthorship);
+        return author == null ? scientificNameAuthorship : author;
+    }
+
+    /**
      * Validate the name provider.
      *
      * @param taxonomy The taxonomy
@@ -534,5 +647,24 @@ public class NameProvider {
         map.put(DcTerm.rightsHolder, this.getRightsHolder());
         map.put(DcTerm.license, this.getLicence());
         return map;
+    }
+
+    /**
+     * Find the default parent for an instance.
+     *
+     * @param taxonomy The base taxonomy
+     *
+     * @return The default parent, or null if not present or found.
+     *
+     * @throws IndexBuilderException if unable to detect a parent
+     */
+    public TaxonomicElement findDefaultParent(Taxonomy taxonomy, TaxonConceptInstance instance) throws IndexBuilderException {
+        NomenclaturalCode code = instance.getCode();
+        String dp = this.getDefaultParentTaxon();
+
+        if (code == null || dp == null)
+            return null;
+
+        return taxonomy.findElement(code, dp, this, null);
     }
 }

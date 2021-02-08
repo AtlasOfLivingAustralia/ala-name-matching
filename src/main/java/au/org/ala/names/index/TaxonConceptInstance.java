@@ -14,7 +14,6 @@ import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.Null;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
@@ -270,6 +269,15 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     public NameProvider getProvider() {
         return provider;
+    }
+
+    /**
+     * Get the originating authorityfor the data
+     *
+     * @return The authority source
+     */
+    public NameProvider getAuthority() {
+        return provider == null ? null : provider.getAuthority();
     }
 
     /**
@@ -1008,25 +1016,43 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             throw new IndexBuilderException("Unable to find accepted taxon for " + this + " from " + this.acceptedNameUsageID + " - " + this.acceptedNameUsage);
         // No parent or accepted taxon but has a classification, so see if we can deduce a parent
         if (this.parent == null && this.accepted == null && this.classification != null) {
+            String genus = "";
+            String specificEpithet = "sp.";
             for (int i = 0; i < CLASSIFICATION_FIELDS.size(); i++) {
                 Term cls = CLASSIFICATION_FIELDS.get(i);
                 RankType clr = CLASSIFICATION_RANKS.get(i);
                 Optional<String> name = this.classification.get(cls);
-                if (name != null && name.isPresent() && !name.get().equals(this.scientificName)) {
-                    TaxonomicElement p = taxonomy.findElement(this.code, name.get(), this.provider, clr);
-                    RankType pr = p != null ? p.getRank() : null;
-                    if (p != null && p != this && (pr == null || pr.isHigherThan(this.rank)))
-                        this.parent = p;
+                if (name != null && name.isPresent()) {
+                    String n = name.get();
+                    if (cls.equals(DwcTerm.genus))
+                        genus = n;
+                    if (cls.equals(DwcTerm.specificEpithet)) {
+                        specificEpithet = n;
+                        n = (genus + " " + n).trim();
+                    }
+                    if (cls.equals(DwcTerm.infraspecificEpithet)) {
+                        n = (genus + " " + specificEpithet + " " + n).trim();
+                    }
+                    if (!n.equals(this.scientificName)) {
+                        TaxonomicElement p = taxonomy.findElement(this.code, n, this.provider, clr);
+                        RankType pr = p != null ? p.getRank() : null;
+                        if (p != null && p != this && (this.rank.isLoose() || pr == null || pr.isHigherThan(this.rank)))
+                            this.parent = p;
+                    }
                 }
             }
         }
+        if (this.parent == null)
+            this.parent = this.provider.findDefaultParent(taxonomy, this);
         taxonomy.count("count.resolve.instance.links");
     }
 
     /**
-     * Work out twhat to do with this instance if it is an
-     * @param taxonomy
-     * @throws IndexBuilderException
+     * Work out twhat to do with this instance if it is forbidden.
+     *
+     * @param taxonomy The base taxonomy
+     *
+     * @throws IndexBuilderException if unable to manage the forbidden taxon instance
      */
     // Note that this is not thread-safe due to index writing
     public void resolveDiscarded(Taxonomy taxonomy) throws IndexBuilderException {
@@ -1274,6 +1300,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         builder.append(":");
         builder.append(this.getTaxonID());
         builder.append(", ");
+        builder.append(this.getCode());
+        builder.append(", ");
         if (this.nameComplete != null) {
             builder.append(this.nameComplete);
         } else {
@@ -1438,7 +1466,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     @Override
     public boolean validate(Taxonomy taxonomy) {
         boolean valid = true;
-        if ((this.parentNameUsageID != null || this.parentNameUsage != null || this.isAccepted() && !(this.classification == null || this.classification.isEmpty())) && this.parent == null) {
+        if ((this.parentNameUsageID != null || this.parentNameUsage != null || this.isAccepted() && this.classification != null && this.classification.values().stream().anyMatch(v -> v.isPresent() && !v.get().equals(this.scientificName))) && this.parent == null) {
             if (this.provider.isLoose())
                 taxonomy.report(IssueType.NOTE, "instance.validation.noParent.loose", this, null);
             else {

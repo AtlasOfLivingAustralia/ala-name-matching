@@ -231,6 +231,14 @@
               "taxonRank": "UNRANKED"
             },
             "adjustment": -100
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "scientificName": "^['\"]\\p{Upper}.+",
+              "matchType": "REGEX"
+            },
+            "adjustment": -500
           }
         ]
       },
@@ -512,37 +520,51 @@
           {
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
-              "taxonRank": "NOTHOSUBSPECIES"
+              "taxonRank": "SUBSPECIES"
             },
-            "rank": "SUBSPECIES"
+            "rank": "INFRASPECIFICNAME"
           },
           {
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
-              "taxonRank": "INFRASPECIFICNAME"
+              "taxonRank": "NOTHOSUBSPECIES"
             },
-            "rank": "SUBSPECIES"
+            "rank": "INFRASPECIFICNAME"
           },
           {
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonRank": "INFRASUBSPECIESNAME"
             },
-            "rank": "SUBSPECIES"
+            "rank": "INFRASPECIFICNAME"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "VARIETY"
+            },
+            "rank": "INFRASPECIFICNAME"
           },
           {
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonRank": "NOTHOVARIETY"
             },
-            "rank": "VARIETY"
+            "rank": "INFRASPECIFICNAME"
           },
           {
             "condition": {
               "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonRank": "SUBVARIETY"
             },
-            "rank": "VARIETY"
+            "rank": "INFRASPECIFICNAME"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonRank": "FORM"
+            },
+            "rank": "FORM"
           },
           {
             "condition": {
@@ -587,8 +609,82 @@
             "rank": "CULTIVAR"
           }
         ]
+      },
+      "scientificNameChanges": {
+        "Accalathura dimera": "Accalathura dimeria",
+        "Aega monophthalam": "Aega monophthalma",
+        "Aegaeon rathbunae": "Aegaeon rathbuni",
+        "Albugo trianthemae": "Albugo trianthemi",
+        "Aquilonastra bryneae": "Aquilonastra byrneae",
+        "Armandia filibranhcia": "Armandia filibranchia",
+        "Arthonia anjutiae": "Arthonia anjutii",
+        "Australomysis ruebeni": "Australomysis reubeni",
+        "Blepharisma halophilium": "Blepharisma halophila",
+        "Boletellus ananaeceps": "Boletellus ananiceps",
+        "Birubius mayamayai": "Birubius mayamayi",
+        "Celleporaria endiva": "Celleporaria endivia",
+        "Cerapus murrayae": "Cerapus murrayi",
+        "Chelonaplysilla noevus": "Chelonaplysilla naevus",
+        "Chromonephthea muironensis": "Chromonephthea murionensis",
+        "Compsopogon coeruleus": "Compsopogon caeruleus",
+        "Cortinarius campbellae": "Cortinarius campbelliae",
+        "Diastylopsis thileniusi": "Diastylopsis thilenuisi",
+        "Difflugia garmen": "Difflugia gramen",
+        "Euglypha loevis": "Euglypha laevis",
+        "Eumida hawkseburyensis": "Eumida hawkesburyensis",
+        "Euryspongia deliculata": "Euryspongia delicatula",
+        "Geoglossum cookeanum": "Geoglossum cookeianum",
+        "Gymnangium profiler": "Gymnangium prolifer",
+        "Gymnothorax thrysoideus": "Gymnothorax thyrsoideus",
+        "Heterocardia gibbulosa": "Heterocardia gibbosula",
+        "Heterotextus pezizaeformis": "Heterotextus peziziformis",
+        "Hydrophis mcdowelli": "Hydrophis macdowelli",
+        "Hygrocybe dorothyae": "Hygrocybe dorothyi",
+        "Idas copperingi": "Idas coppingeri",
+        "Ilyodromus varrovillius": "Ilyodromus varrovillus",
+        "Lepidurus apus viridis": "Lepidurus apus viridus",
+        "Liljeborgia aequiabilis": "Liljeborgia aequabilis",
+        "Limnodriloides winckelmanni": "Limnodriloides wincklemanni",
+        "Liocranchia valdiviae": "Liocranchia valdivae",
+        "Marasmius crinis-equi": "Marasmius crinisequi",
+        "Mesoplodon gingkodens": "Mesoplodon ginkgodens",
+        "Metacirolana basteni": "Metacirolana bastenae",
+        "Mycedium mancoi": "Mycedium mancaoi",
+        "Mysticoncha wilsonae": "Mysticoncha wilsoni",
+        "Nectria quisquiliaris": "Nectria quisquilaris",
+        "Neelaps calonotos": "Neelaps calonotus",
+        "Odontosyllis langerhansaesetosa": "Odontosyllis langerhansiaesetosa",
+        "Paraminabea aldersaldei": "Paraminabea aldersladei",
+        "Phyllodoce madierensis": "Phyllodoce madeirensis",
+        "Plumatella \"longigemmis\"": "Plumatella longigemmis",
+        "Prionospio auckalndica": "Prionospio aucklandica",
+        "Puccinia duthiae": "Puccinia duthiei",
+        "Puccinia argophyllae": "Puccinia argophylli",
+        "Reteporella lacinata": "Reteporella laciniata",
+        "Reteporella malleatia": "Reteporella malleata",
+        "Ringicula doliaris": "Ringicula dolaris",
+        "Smittoidea discoverae": "Smittoidea discoveriae",
+        "Sporisorium australiasiaticum": "Sporisorium australasiaticum",
+        "Stereum amoenum": "Stereum amaenum",
+        "Stylopoma thornelyae": "Stylopoma thornelyi",
+        "Tectacingulum tumidum": "Tectacingulum tumidium",
+        "Tesarius sulcipennis": "Tesarius suclipennis",
+        "Thalassocypria lacuscola": "Thalassocypria lacusola",
+        "Tremellodendropsis semivestita": "Tremellodendropsis semivestitia",
+        "Turbonilla homaeotata": "Turbonilla homoeotata",
+        "Volvarina philippinarum": "Volvarina philippinarium",
+        "Vorticella moniliata": "Vorticella monilata"
       }
     },
+    {
+      "id" : "dr7933",
+      "name": "ALA",
+      "description": "Specific ALA fixes for various problems. These take precedence over anything else.",
+      "parent": "default",
+      "rightsHolder": "Atlas of Living Australia",
+      "licence": "CC-BY",
+      "defaultScore" : 10000
+     },
     {
       "id" : "dr2702",
       "name": "AusFungi",
@@ -611,26 +707,43 @@
       "licence": "CC-BY",
       "defaultScore" : 5000,
       "defaultNomenclaturalCode": "BOTANICAL",
+      "defaultParentTaxon": "Plantae",
       "scores": {
         "Bryophyta": 7000,
         "Bryidae": 7000
       }
     },
     {
-      "id" : "dr5214",
-      "name": "APC",
-      "description": "Australian Plant Name Index entries placed by the Australian Plant Census",
+      "id" : "apni-apc",
+      "name": "APNI/APC",
+      "description": "Australian Plant Name Index and Australian Plant Census",
       "parent": "default",
       "rightsHolder": "Centre for Australian National Biodiversity Research",
       "licence": "CC-BY",
+      "defaultNomenclaturalCode": "BOTANICAL"
+    },
+    {
+      "id" : "dr5214",
+      "name": "APC",
+      "description": "Australian Plant Name Index entries placed by the Australian Plant Census",
+      "parent": "apni-apc",
+      "authority": false,
       "defaultScore" : 5000,
-      "defaultNomenclaturalCode": "BOTANICAL",
       "scores": {
         "Plantae": 6000
       },
       "owner": [
-        "Plantae"
+        "Plantae",
+        "Solanum torvum"
       ]
+    },
+    {
+      "id" : "dr2700",
+      "name": "APNI",
+      "description": "Australian Plant Name Index entries not placed by the Australian Plant Census, given an assumed parent of Plantae",
+      "parent": "apni-apc",
+      "authority": false,
+      "defaultScore" : 4000
     },
     {
       "id" : "dr2699",
@@ -656,7 +769,8 @@
       "parent": "default",
       "rightsHolder": "New Zealand Organism Register",
       "licence": "CC-BY",
-      "defaultScore": 4000,
+      "defaultScore": 3000,
+      "conceptResolutionPriority": "ADDITIONAL",
       "adjuster": {
         "forbidden": [
           {
@@ -664,17 +778,19 @@
             "scientificName": "ROOT"
           }
         ]
+      },
+      "keyAdjuster": {
+        "adjustments": [
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "scientificName": "Rotifera",
+              "taxonRank": "CLASS"
+            },
+            "rank": "PHYLUM"
+          }
+        ]
       }
-    },
-    {
-      "id" : "dr2700",
-      "name": "APNI",
-      "description": "Australian Plant Name Index entries not placed by the Australian Plant Census, given an assumed parent of Plantae",
-      "parent": "default",
-      "rightsHolder": "Centre for Australian National Biodiversity Research",
-      "licence": "CC-BY",
-      "defaultScore" : 3000,
-      "defaultNomenclaturalCode": "BOTANICAL"
     },
     {
       "id" : "dr2704",
@@ -684,7 +800,8 @@
       "rightsHolder": "Commonwealth Scientific and Industrial Research Organisation",
       "licence": "CC-BY",
       "defaultScore" : 2000,
-      "loose": true
+      "loose": true,
+      "conceptResolutionPriority": "ADDITIONAL"
     },
     {
       "id" : "dr2705",
@@ -694,6 +811,7 @@
       "rightsHolder": "Catalogue of Life",
       "licence": "CC-BY",
       "defaultScore" : 1000,
+      "conceptResolutionPriority": "FILLER",
       "keyAdjuster": {
         "adjustments": [
           {
@@ -710,14 +828,28 @@
     {
       "id" : "dr5393",
       "name": "ALA",
+      "description": "Atlas of living Australia Name Sources",
+      "rightsHolder": "Atlas of Living Australia",
+      "licence": "CC-BY",
+      "parent": "default",
+      "defaultScore" : 100,
+      "conceptResolutionPriority": "FILLER",
+      "unrankedStrategy": "INFERRED_AND_SYNONYMS"
+     },
+     {
+      "id" : "dr13558",
+      "name": "ALA Inferences",
       "description": "Atlas of living Australia, provider of inferences from the matching algorithm",
       "rightsHolder": "Atlas of Living Australia",
       "licence": "CC-BY",
       "parent": "default",
       "defaultScore" : 0,
+      "conceptResolutionPriority": "FILLER",
       "unrankedStrategy": "INFERRED_AND_SYNONYMS"
     }
   ],
   "defaultProvider" : "dr5393",
-  "inferenceProvider" : "dr5393"
+  "inferenceProvider" : "dr13558",
+  "authorMap": {
+  }
 }

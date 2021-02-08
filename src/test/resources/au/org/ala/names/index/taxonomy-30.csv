@@ -1,0 +1,9 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source
+"Concept-1-1","","","dr100","ICN","Alternanthera sessilis","(L.) DC.","species","","","accepted","","","","","","","","Alternanthera sessilis (L.) DC.","",""
+"Concept-1-2","","","dr112","ICN","Alternanthera sessilis","(L.) Roem. & Schult.","species","","","accepted","","","","","","","","Alternanthera sessilis (L.) Roem. & Schult.","",""
+"Concept-2-1","","","dr112","ICN","Senecio glomeratus subsp. glomeratus","Desf. ex Poir.","subspecies","","","accepted","","","","","","","","Senecio glomeratus Desf. ex Poir. subsp. glomeratus","",""
+"Concept-2-2","","","dr113","ICN","Senecio glomeratus subsp. glomeratus","Poir.","subspecies","","","accepted","","","","","","","","Senecio glomeratus Poir. subsp. glomeratus","",""
+"Concept-3-1","","Concept-3-2","dr100","ICN","Carmichaelia cunninghamii","Raoul ex Lehm.","species","","","synonym","","","","","","","","Carmichaelia cunninghamii Raoul ex Lehm.","",""
+"Concept-3-2","","","dr100","ICN","Carmichaelia cunninghamii","Raoul","species","","","excluded","","","","","","","","Carmichaelia cunninghamii Raoul","",""
+"Concept-3-3","","Concept-4-1","dr112","ICN","Carmichaelia cunninghamii","Raoul","species","","","synonym","","","","","","","","Carmichaelia cunninghamii Raoul","",""
+"Concept-4-1","","","dr112","ICN","Carmichaelia australis","Br.","species","","","synonym","","","","","","","","Carmichaelia australis Br.","",""

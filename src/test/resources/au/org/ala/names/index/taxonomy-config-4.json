@@ -41,12 +41,12 @@
     },
     "loose" : false,
     "external" : true,
-    "authority" : true,
-    "unknownTaxonID" : "ALA_The_Unknown_Taxon",
-    "scientificNameChanges" : { },
-    "scientificNameAuthorshipChanges" : { }
+    "unknownTaxonID" : "ALA_The_Unknown_Taxon"
   } ],
   "defaultProvider" : "ID-1",
   "acceptedCutoff" : 50,
-  "authorMap" : { }
+  "authorMap": {
+    "Sw.": "Sweet",
+    "SZ": "S Zhu"
+  }
 }
