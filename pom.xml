@@ -23,7 +23,7 @@
     <properties>
         <!-- This project uses UTF8 for Regular Expressions -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <org.apache.lucene.version>6.6.5</org.apache.lucene.version>
+        <org.apache.lucene.version>8.2.0</org.apache.lucene.version>
         <targetJdk>1.8</targetJdk>
         <animal-sniffer-signature.artifact>java18</animal-sniffer-signature.artifact>
         <animal-sniffer-signature.version>1.0</animal-sniffer-signature.version>
