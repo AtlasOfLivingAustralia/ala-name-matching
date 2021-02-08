@@ -59,4 +59,17 @@ abstract public interface TaxonResolver {
      * @throws IndexBuilderException
      */
     public RankType estimateRank(TaxonConceptInstance instance, UnrankedScientificName parent) throws IndexBuilderException;
+
+    /**
+     * If required, reallocate taxonomic concepts from secondary providers into the main concept.
+     * <p>
+     * This method allows disagreements about authorship to be factored out.
+     * </p>
+     *
+     * @param scientificName The scientific name that holds the taxon concepts to be reallocated
+     * @param taxonomy The taxonomy to use as a basis
+     *
+     * @throws IndexBuilderException if there is an error in reallocation
+     */
+    public void reallocateSecondaryConcepts(ScientificName scientificName, Taxonomy taxonomy) throws IndexBuilderException;
 }

@@ -22,7 +22,7 @@ public class BiocacheMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20190213");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20200214");
     }
 
     @Test
@@ -82,7 +82,7 @@ public class BiocacheMatchTest {
             cl.setGenus("Graphis");
             cl.setSpecificEpithet("notreallyaname");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:934c68e8-1a64-49ff-b89e-e275b93043af", metrics.getResult().getLsid()); // Graphis from AFD
+            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:2af76a1e-2086-46e3-90b9-6f00983b21a5", metrics.getResult().getLsid()); // Graphis from AFD
         } catch (Exception e) {
             e.printStackTrace();
             fail("Exception should not occur");
@@ -179,7 +179,7 @@ public class BiocacheMatchTest {
             cl.setGenus("EcHium");
             cl.setOrder("[Boraginales]");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("http://id.biodiversity.org.au/node/apni/2895788", metrics.getResult().getLsid());
+            assertEquals("https://id.biodiversity.org.au/node/apni/2895788", metrics.getResult().getLsid());
             //System.out.println(metrics);
             //System.out.println(metrics.getLastException());
             //System.out.println(metrics.getErrors());
@@ -206,7 +206,7 @@ public class BiocacheMatchTest {
         cl.setScientificName("Tephrosia savannicola");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
         assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
-        assertEquals("http://id.biodiversity.org.au/node/apni/2894621", metrics.getResult().getLsid());
+        assertEquals("https://id.biodiversity.org.au/node/apni/2894621", metrics.getResult().getLsid());
     }
 
     @Test
@@ -215,7 +215,7 @@ public class BiocacheMatchTest {
         cl.setScientificName("Myosurus minimus");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
         assertTrue(metrics.getErrors().contains(ErrorType.MISAPPLIED));
-        assertEquals("http://id.biodiversity.org.au/node/apni/2917549", metrics.getResult().getLsid());
+        assertEquals("https://id.biodiversity.org.au/node/apni/2917549", metrics.getResult().getLsid());
     }
 
     @Test
@@ -236,7 +236,7 @@ public class BiocacheMatchTest {
 
         cl.setScientificName("Climacteris affinis");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:b78847ca-c2dc-4fb5-9322-0dcd60e87196", metrics.getResult().getLsid());
+        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:5d7c50bc-2c2d-4984-9924-d2a46dc3b00f", metrics.getResult().getLsid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType()); // Dereferenced synonym
         assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
     }
@@ -332,7 +332,7 @@ public class BiocacheMatchTest {
             String name = "Asparagus asparagoides (NC)";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("http://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
+            assertEquals("https://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
             assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
@@ -346,7 +346,7 @@ public class BiocacheMatchTest {
             String name = "Asparagus asparagoides f. asparagoides";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("http://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
+            assertEquals("https://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
             assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
@@ -363,7 +363,7 @@ public class BiocacheMatchTest {
             String name = "Asparagus asparagoides f. Western Cape (R.Taplin 1133)";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("http://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
+            assertEquals("https://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
             assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
@@ -377,8 +377,8 @@ public class BiocacheMatchTest {
             String name = "Asparagus asparagoides f.";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("http://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
-            assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
+            assertEquals("https://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
+            assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }
@@ -392,7 +392,7 @@ public class BiocacheMatchTest {
             String name = "Asparagus asparagoides (L.) Druce f. asparagoides";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("http://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
+            assertEquals("https://id.biodiversity.org.au/node/apni/2895458", metrics.getResult().getLsid());
             assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
@@ -407,7 +407,7 @@ public class BiocacheMatchTest {
             String name = "Salvia verbenaca var.";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("http://id.biodiversity.org.au/node/apni/2887555", metrics.getResult().getLsid());
+            assertEquals("https://id.biodiversity.org.au/node/apni/2887555", metrics.getResult().getLsid());
             assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
@@ -422,7 +422,7 @@ public class BiocacheMatchTest {
             String name = "Eucalyptus leucoxylon ssp.";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("http://id.biodiversity.org.au/node/apni/2909698", metrics.getResult().getLsid());
+            assertEquals("https://id.biodiversity.org.au/node/apni/2909698", metrics.getResult().getLsid());
             assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
@@ -437,9 +437,9 @@ public class BiocacheMatchTest {
             String name = "Correa reflexa (Labill.) Vent. hybrid";
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("http://id.biodiversity.org.au/node/apni/2893483", metrics.getResult().getLsid());
+            assertEquals("https://id.biodiversity.org.au/taxon/apni/51300001", metrics.getResult().getLsid());
             assertEquals("Correa reflexa", metrics.getResult().getRankClassification().getScientificName());
-            assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
+            assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
         }

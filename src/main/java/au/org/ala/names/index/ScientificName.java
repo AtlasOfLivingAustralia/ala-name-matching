@@ -89,6 +89,28 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
 
     /**
      * Find something that might be good as a candidiate principal
+     * <p>
+     * First find a base candidate and then, if that resolves to an accepted taxon in the same name, use that instead.
+     * </p>
+     *
+     * @see #findBasePrincipal(Taxonomy)
+     *
+     * @param taxonomy Where to The source taxonomy
+     * @return
+     */
+    @Override
+    protected TaxonConcept findPrincipal(Taxonomy taxonomy) {
+        TaxonConcept principal = this.findBasePrincipal(taxonomy);
+        TaxonConceptInstance representative = principal.getRepresentative();
+        TaxonConceptInstance resolved = representative.getResolvedAccepted();
+
+        if (resolved != representative && resolved.getContainer().getContainer() == this)
+            principal = resolved.getContainer();
+        return principal;
+     }
+
+    /**
+     * Find something that might be good as a candidiate principal
      * <ul>
      *     <li>If there is a single taxon concept, then that is the principal.</li>
      *     <li>If the only accepted taxon concept is authorless, then that is the principal concept</li>
@@ -98,12 +120,12 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
      * </ul>
      * Note that accepted includes accpeted values with scores greater than zero.
      * This allows dodgy inferred accepted taxa to be ignored.
+     * We then need to check to make sure that we don't have a sysnonym to another entry in the same name.
      *
      * @param taxonomy Where to The source taxonomy
      * @return
      */
-    @Override
-    protected TaxonConcept findPrincipal(Taxonomy taxonomy) {
+    private TaxonConcept findBasePrincipal(Taxonomy taxonomy) {
         List<TaxonConcept> concepts = this.getConcepts();
         if (concepts.isEmpty())
             return null;
@@ -127,7 +149,7 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
         if (candidates.size() > 1)
             taxonomy.report(IssueType.PROBLEM, "scientificName.collision.warn", this, candidates);
         return candidates.get(0);
-     }
+    }
 
     /**
      * Reallocate authorless or unowned taxon concepts to the principal and add inferred synonyms for authored taxon concepts.

@@ -8,6 +8,7 @@ import au.org.ala.names.search.ALANameSearcher;
 import au.org.ala.names.search.DwcaNameIndexer;
 import au.org.ala.names.util.DwcaWriter;
 import au.org.ala.names.util.FileUtils;
+import au.org.ala.names.util.TaxonNameSoundEx;
 import au.org.ala.vocab.ALATerm;
 import com.google.common.collect.Maps;
 import com.opencsv.CSVWriter;
@@ -21,12 +22,12 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.SimpleFSDirectory;
-import org.apache.lucene.util.Version;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.api.model.registry.Contact;
 import org.gbif.api.model.registry.Dataset;
 import org.gbif.api.model.registry.Identifier;
 import org.gbif.api.vocabulary.*;
+import org.gbif.checklistbank.authorship.AuthorComparator;
 import org.gbif.dwc.terms.*;
 import org.gbif.dwc.terms.Term;
 import org.slf4j.Logger;
@@ -145,6 +146,8 @@ public class Taxonomy implements Reporter {
     private List<NameSource> sources;
     /** A working name matching index. Used to find things that don't have an explicit home */
     private ALANameSearcher workingIndex;
+    /** Optional sample set of concepts to output */
+    private Set<TaxonConcept> sample;
 
     /**
      * Default taxonomy constructor.
@@ -180,8 +183,7 @@ public class Taxonomy implements Reporter {
         this.configuration = configuration;
         this.configuration.validate();
         try {
-            this.analyser = this.configuration.nameAnalyserClass.newInstance();
-            this.analyser.setReporter(this);
+            this.analyser = this.configuration.nameAnalyserClass.getConstructor(AuthorComparator.class, Reporter.class).newInstance(this.configuration.newAuthorComparator(), this);
         } catch (Exception ex) {
             throw new IndexBuilderException("Unable to create analyser", ex);
         }
@@ -203,6 +205,7 @@ public class Taxonomy implements Reporter {
         this.resources = ResourceBundle.getBundle("taxonomy");
         this.counts = new ConcurrentHashMap<>();
         this.sources = new ArrayList<>();
+        this.sample = null;
     }
 
     /**
@@ -230,6 +233,7 @@ public class Taxonomy implements Reporter {
         this.resources = ResourceBundle.getBundle("taxonomy");
         this.counts = new ConcurrentHashMap<>();
         this.sources = new ArrayList<>();
+        this.sample = null;
     }
 
     /**
@@ -422,6 +426,7 @@ public class Taxonomy implements Reporter {
         this.resolveDiscards();
         if (!this.validate())
             throw new IndexBuilderException("Invalid resolution");
+        this.validateSpeciesSpelling();
     }
 
     /**
@@ -516,6 +521,76 @@ public class Taxonomy implements Reporter {
             }
         }
         logger.info("Finished validating name collisions");
+    }
+
+    /**
+     * Check for spelling variants causing trouble.
+     * <p>
+     * Spelling varints are detected for species and below.
+     * We map the soundexed version onto the parent taxon and count to see if there are any
+     * cases where a (eg) a genus has child taxa with suspiciously similar spelling.
+     * </p>
+     *
+     * @throws IndexBuilderException
+     */
+    public void validateSpeciesSpelling() throws IndexBuilderException {
+        logger.info("Validating suspiciously similar names");
+        TaxonNameSoundEx soundEx = new TaxonNameSoundEx();
+        Map<ScientificName, Map<String, List<ScientificName>>> nameCounts = new HashMap(this.names.size());
+        this.names.values().stream().filter(n -> !n.getRank().isHigherThan(RankType.SPECIES)).forEach(sn -> {
+            String name = soundEx.soundEx(sn.getScientificName());
+            for (TaxonConcept tc: sn.getConcepts()) {
+                List<TaxonConceptInstance> principals = tc.getPrincipals();
+                if (principals == null)
+                    continue;
+                Set<ScientificName> parents = principals.stream().
+                        filter(tci -> tci.isAccepted()).map(tci -> tci.getResolvedParent()).
+                        filter(tci -> tci != null).map(tci -> tci.getContainer()).
+                        filter(pc -> pc != null).map((pc -> pc.getContainer())).
+                        filter(pn -> pn != null).collect(Collectors.toSet());
+                for (ScientificName pn: parents) {
+                    Map<String, List<ScientificName>> counts = nameCounts.computeIfAbsent(pn, k -> new HashMap<String, List<ScientificName>>());
+                    counts.computeIfAbsent(name, n -> new ArrayList<>()).add(sn);
+                }
+            }
+        });
+        for (ScientificName sn: nameCounts.keySet()) {
+           for (Map.Entry<String, List<ScientificName>> collision: nameCounts.get(sn).entrySet().stream().filter(c -> c.getValue().size() > 1).collect(Collectors.toList())) {
+               Set<TaxonConceptInstance> instances = collision.getValue().stream().flatMap(tn -> tn.getConcepts().stream()).
+                       filter(tc -> tc.getPrincipals() != null).flatMap(tc -> tc.getPrincipals().stream()).
+                       filter(tci -> tci.isAccepted()).collect(Collectors.toSet());
+
+               String code = "name.spelling";
+               String count = "count.spelling";
+               IssueType type = IssueType.COLLISION;
+
+               // Check and skip simple authorship disagreement
+               Set<String> names = instances.stream().map(tci -> tci.getContainer().getKey().getScientificName()).collect(Collectors.toSet());
+               if (names.size() == 1) {
+                   code = "name.spelling.authorship";
+                   count = "count.spelling.authorship";
+                   type = IssueType.NOTE;
+               }
+               // Check an internal disagreement in single provider
+               Set<NameProvider> providers = instances.stream().map(tci -> tci.getAuthority()).collect(Collectors.toSet());
+               if (providers.size() == 1) {
+                   // Internal disagreement in a single provider
+                   code = "name.spelling.internal";
+                   count = "count.spelling.internal";
+                   type = IssueType.NOTE;
+               }
+               // Check disagreement between nomenclatural codes
+               Set<NomenclaturalCode> codes = instances.stream().map(tci -> tci.getCode()).collect(Collectors.toSet());
+               if (codes.size() > 1) {
+                   code = "name.spelling.crossCode";
+                   count = "count.spelling.crossCode";
+               }
+
+               this.count(count);
+               this.report(type, code, sn, new ArrayList<>(instances));
+           }
+        }
+        logger.info("Finished validating suspiciously similar namess");
     }
 
     /**
@@ -621,6 +696,8 @@ public class Taxonomy implements Reporter {
     public void resolvePrincipal() throws IndexBuilderException {
         logger.info("Resolving principals for scientific names");
         this.names.values().parallelStream().forEach(name -> name.resolvePrincipal(this));
+        logger.info("Resolving seconadary concepts for scientific names");
+        this.names.values().stream().forEach(name -> this.resolver.reallocateSecondaryConcepts(name, this));
         logger.info("Resolving principals for unranked names");
         this.unrankedNames.values().parallelStream().forEach(name -> name.resolvePrincipal(this));
         logger.info("Resolving principals for bare names");
@@ -869,12 +946,19 @@ public class Taxonomy implements Reporter {
      * @throws Exception if unable to slot the instance in.
      */
     public TaxonConceptInstance addInstance(TaxonConceptInstance instance) throws Exception {
+        NameProvider provider = instance.getProvider();
         String taxonID = instance.getTaxonID();
-        boolean loose = instance.getProvider().isLoose();
         NameKey taxonKey;
         String remark, explain;
 
-        taxonKey = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), instance.getTaxonomicStatus(), loose);
+        taxonKey = this.analyser.analyse(
+                instance.getCode(),
+                provider.correctScientificName(instance.getScientificName()),
+                provider.correctScientificNameAuthorship(instance.getScientificNameAuthorship()),
+                instance.getRank(),
+                instance.getTaxonomicStatus(),
+                provider.isLoose()
+        );
         taxonKey = instance.getProvider().adjustKey(taxonKey, instance);
         switch (taxonKey.getType()) {
             case PLACEHOLDER:
@@ -1265,7 +1349,7 @@ public class Taxonomy implements Reporter {
                 logger.warn(message);
                 break;
             case COLLISION:
-                logger.info(message);
+                logger.debug(message);
                 break;
             case NOTE:
             case COUNT:
@@ -1593,6 +1677,55 @@ public class Taxonomy implements Reporter {
         } finally {
             this.searcherManager.release(searcher);
         }
+    }
+
+    /**
+     * Create a sample of taxon concepts.
+     * <p>
+     * This can be used to create a resuced sample for testing purposes.
+     * If the sampled element is a synonym then the accepted taxon is included.
+     * If it is an accepted taxon then parents are included.
+     * </p>
+     * @param samples The sample size
+     *
+     * @throws IndexBuilderException if unable to build the sampel
+     */
+    public void sample(int samples) throws IndexBuilderException {
+        this.sample = new HashSet<>(samples);
+        Random random = new Random();
+        int jump = Math.max(10, this.instances.size() / 1000);
+        Iterator<TaxonConceptInstance> iterator = this.instances.values().iterator();
+
+        if (!iterator.hasNext())
+            throw new IndexBuilderException("No instances to sample");
+        logger.info("Creating sample of " + samples + " taxon concepts");
+        while (this.sample.size() < samples) {
+            TaxonConcept current = null;
+            int skip = random.nextInt(jump) + 1;
+            while (skip-- > 0) {
+                if (!iterator.hasNext())
+                    iterator = this.instances.values().iterator(); // Start again
+                current = iterator.next().getContainer();
+            }
+            while (current != null && !this.sample.contains(current)) {
+                TaxonConceptInstance r = current.getRepresentative();
+                if (r == null) {
+                    current = null;
+                } else {
+                    this.sample.add(current);
+                    if (r.isSynonym())
+                        r = r.getAccepted() == null ? null : r.getAccepted().getRepresentative();
+                    else
+                        r = r.getParent() == null ? null : r.getParent().getRepresentative();
+                    current = r == null ? null : r.getContainer();
+                }
+            }
+        }
+        logger.info("Finished sampling, final sample size is  " + this.sample.size());
+    }
+
+    public boolean isWritable(TaxonConcept taxonConcept) {
+        return this.sample == null || this.sample.contains(taxonConcept);
     }
 
     /**

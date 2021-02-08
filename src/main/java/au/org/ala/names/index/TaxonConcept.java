@@ -1,16 +1,11 @@
 package au.org.ala.names.index;
 
-import au.org.ala.vocab.ALATerm;
 import au.org.ala.names.model.RankType;
-import org.gbif.api.exception.UnparsableException;
-import org.gbif.api.model.checklistbank.ParsedName;
-import org.gbif.api.service.checklistbank.NameParser;
-import org.gbif.api.vocabulary.NomenclaturalCode;
+import au.org.ala.names.util.DwcaWriter;
+import au.org.ala.vocab.ALATerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
-import au.org.ala.names.util.DwcaWriter;
-import org.gbif.nameparser.PhraseNameParser;
 
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -35,6 +30,8 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     private List<TaxonConceptInstance> instances;
     /** The resolution for this taxon concept */
     private TaxonResolution resolution;
+    /** Has this concept been cleared (completely reallocated)? */
+    private boolean cleared;
 
     /**
      * Construct for new scientific name and a name key
@@ -47,6 +44,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
         this.key = key;
         this.instances = new ArrayList<>();
         this.resolution = null;
+        this.cleared = false;
     }
 
     /**
@@ -178,6 +176,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
             element.resolution.addExternal(tci, representative, taxonomy);
         }
         element.instances.clear();
+        element.cleared = true;
     }
 
     /**
@@ -191,6 +190,10 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      * @throws IOException if unable to write
      */
     public void write(Taxonomy taxonomy, DwcaWriter writer) throws IOException {
+        if (this.cleared)
+            return;
+        if (!taxonomy.isWritable(this))
+            return;
         for (TaxonConceptInstance tci : this.resolution.getUsed()) {
             if (!tci.isOutput()) {
                 continue;
@@ -311,6 +314,15 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
             taxonomy.report(IssueType.NOTE, "taxonConcept.multipleInferredSynonyms", this, used);
         this.resolution = resolver.resolve(this, used, this.instances);
         taxonomy.count("count.resolve.inferredSynonym");
+    }
+
+    /**
+     * Get the principal concepts for this taxon.
+     *
+     * @return The list of principal concepts.
+     */
+    public List<TaxonConceptInstance> getPrincipals() {
+        return this.resolution == null ? null : this.resolution.getPrincipal();
     }
 
     /**
@@ -457,7 +469,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
     @Override
     public boolean validate(Taxonomy taxonomy) {
         boolean valid = true;
-        if (this.instances.isEmpty()) {
+        if (!this.cleared && this.instances.isEmpty()) {
             taxonomy.report(IssueType.VALIDATION, "taxonConcept.validation.noInstances", this, null);
             valid = false;
         }
@@ -512,5 +524,4 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
             }
         }
     }
-
 }
