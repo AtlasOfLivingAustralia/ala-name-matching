@@ -1,4 +1,4 @@
-### ala-name-matching   [![Build Status](https://travis-ci.org/AtlasOfLivingAustralia/ala-name-matching.svg?branch=master)](https://travis-ci.org/AtlasOfLivingAustralia/ala-name-matching)
+### ala-name-matching   [![Build Status](https://travis-ci.com/AtlasOfLivingAustralia/ala-name-matching.svg?branch=master)](https://travis-ci.com/AtlasOfLivingAustralia/ala-name-matching)
 # Atlas Name matching API 
 
 This is the API in use by the Atlas of Living Australia to match scientific name to taxon concepts.
@@ -37,21 +37,21 @@ The name matching index can also support common name. Here are the Catalogue of 
 The name matching supports homonym detection. Homonym detection is supported through the using of IRMNG. 
 You can download the IRMNG DwCA for homonyms from the following URL: 
 
-[IRMNG_DWC_HOMONYMS.zip](http://www.cmar.csiro.au/datacentre/downloads/IRMNG_DWC_HOMONYMS.zip)
+[IRMNG_DWC_HOMONYMS.zip](https://archives.ala.org.au/archives/nameindexes/irmng/IRMNG_DWC.zip)
 
 An assembly zip file for this can be downloaded from our maven repository : 
 
-[ala-name-matching-3.3-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.4.6/ala-name-matching-2.4.6-distribution.zip)
+[ala-name-matching-3.5-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/3.5/ala-name-matching-3.5-distribution.zip)
 
 To generate the name index using the data described above, follow these steps. Alternatively use the [ALA Ansible scripts](https://github.com/AtlasOfLivingAustralia/ala-install) 
 here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustralia/ala-install/blob/master/ansible/nameindexer-standalone.yml) which does it all for you.
 
 * Download the zip files linked above to a directory e.g. /data/names/ and extract them
-* Download the distribution zip [ala-name-matching-3.3-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/2.4.6/ala-name-matching-2.4.6-distribution.zip)
+* Download the distribution zip [ala-name-matching-3.5-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/3.5/ala-name-matching-3.5-distribution.zip)
 * Generate the names index with command:
 
 ```
-java -jar ala-name-matching-3.3.jar --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
+java -jar ala-name-matching-3.5.jar --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
 ```
 
 Please be aware that the names indexing could take over an hour to complete.
@@ -78,9 +78,9 @@ To skip this step, run a build with ```mvn install -DskipTests=true```.
 
 The build creates 3 artefacts in the ala-name-matching/target directory: 
 
-* ala-name-matching-3.3.jar - built jar for the project code only
-* ala-name-matching-3.3-distribution.zip - zip containing the project jar and dependencies
-* ala-name-matching-3.3-sources.jar - source jar for the project code only
+* ala-name-matching-3.5.jar - built jar for the project code only
+* ala-name-matching-3.5-distribution.zip - zip containing the project jar and dependencies
+* ala-name-matching-3.5-sources.jar - source jar for the project code only
 
 The name index for Australian names lists used in unit tests can be downloaded [from here](https://biocache.ala.org.au/archives/nameindexes/20200214) and needs to be extracted to the
 directory `/data/lucene/namematching-20200214`
@@ -119,7 +119,7 @@ To use ala-name-matching, include it as a dependency in your pom file:
    <dependency>
       <groupId>au.org.ala</groupId>
       <artifactId>ala-name-matching</artifactId>
-      <version>3.3</version>
+      <version>3.5</version>
    </dependency>
 ```
 
@@ -128,7 +128,7 @@ libraries having validation code that conflicts with spring validation.
 You can correct this by using
 
 ```
-compile("au.org.ala:ala-name-matching:2.4.6") {
+compile("au.org.ala:ala-name-matching:3.5") {
     exclude group: 'org.slf4j', module: 'slf4j-log4j12'
     exclude group: 'org.apache.bval', module: 'org.apache.bval.bundle'
 }

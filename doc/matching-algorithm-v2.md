@@ -31,10 +31,6 @@ The document applies to v2 (and earlier) versions of the name matching library
 * **soundex** A treatment of a word into a "sounds-alike" form that can be used to trap misspellings or
   changes in Latin gender. The soundex algorithm used is based on the [Taxamatch](http://www.cmar.csiro.au/datacentre/taxamatch.htm)
   algorithm developed by Tony Rees.
-* **excluded** An indication that a name should not be used.
-  Usually, this means that something has been identified as a taxon from somewhere else.
-  Excluded basically means "you think this is right, but you're wrong"
-  Excluded *should* be for a geographical range (eg. excluded in WA) but this is not modelled
   
 
 ## Index Structure
@@ -125,7 +121,7 @@ It contains the following fields:
 There are multiple entry points into this algorithm.
 This section describes the basic elements of the algorithm.
 
-###Input
+### Input
 
 Many of these elements can be defaulted in various ways but the basic elements are:
 
