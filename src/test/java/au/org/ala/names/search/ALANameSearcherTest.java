@@ -20,7 +20,7 @@ public class ALANameSearcherTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20200214");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20200214-lucene8");
     }
 
     @Test
@@ -1691,6 +1691,66 @@ public class ALANameSearcherTest {
         assertEquals("https://id.biodiversity.org.au/node/apni/2916208", metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
         assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
+    }
+
+
+    // Higher taxonomy only filled out
+    @Test
+    public void testHigherTaxonomy() throws Exception {
+        String family = "Pterophoridae";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setFamily(family);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals("NZOR-6-49519", metrics.getResult().getLsid());
+        assertEquals(RankType.FAMILY, metrics.getResult().getRank());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+    }
+
+    // Phrase name with rank marker
+    @Test
+    public void testPhraseName1() throws Exception {
+        String name = "Tephrosia sp. Crowded pinnae (C.R.Dunlop 8202)";
+        String kingdom = "Planate";
+        String phylum = "Streptophyta";
+        String class_ = "Equisetopsida";
+        String order = "Fabales";
+        String genus = "Tephrosia";
+        String specificEpithet = "sp. Crowded pinnae (C.R.Dunlop 8202)";
+        String rank = "species";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setKingdom(kingdom);
+        cl.setPhylum(phylum);
+        cl.setKlass(class_);
+        cl.setOrder(order);
+        cl.setGenus(genus);
+        cl.setSpecificEpithet(specificEpithet);
+        //cl.setRank(rank);
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals("https://id.biodiversity.org.au/instance/apni/932722", metrics.getResult().getLsid());
+        assertEquals("https://id.biodiversity.org.au/node/apni/2890778", metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+    }
+
+    @Test
+    public void testPhraseName2() throws Exception {
+        String name = "Tephrosia sp. Miriam Vale (E.J.Thompson+ MIR33)";
+        String kingdom = "Planate";
+        String class_ = "Equisetopsida";
+        String genus = "Tephrosia";
+         String rank = "species";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setKingdom(kingdom);
+        cl.setKlass(class_);
+        cl.setGenus(genus);
+        //cl.setRank(rank);
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals("https://id.biodiversity.org.au/node/apni/2903953", metrics.getResult().getLsid());
+        assertEquals(MatchType.PHRASE, metrics.getResult().getMatchType());
     }
 
 }

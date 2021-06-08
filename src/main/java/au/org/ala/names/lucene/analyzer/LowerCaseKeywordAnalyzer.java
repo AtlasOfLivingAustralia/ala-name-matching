@@ -19,9 +19,14 @@ import java.io.Reader;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordTokenizer;
+import org.apache.lucene.analysis.core.KeywordTokenizerFactory;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
+import org.apache.lucene.analysis.custom.CustomAnalyzer;
 import org.apache.lucene.util.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A custom KeywordAnalyzer that converts the text to lowercase before tokenizing
@@ -29,20 +34,20 @@ import org.apache.lucene.util.Version;
  *
  * @author Natasha
  */
-public final class LowerCaseKeywordAnalyzer extends Analyzer {
+public final class LowerCaseKeywordAnalyzer  {
+    private static final Logger logger = LoggerFactory.getLogger(LowerCaseKeywordAnalyzer.class);
 
-    @Override
-    protected TokenStreamComponents createComponents(String fieldName) {
-
-        KeywordTokenizer src = new KeywordTokenizer();
-        TokenStream result = new LowerCaseFilter(src);
-
-        return new TokenStreamComponents(src, result) {
-
-            @Override
-            protected void setReader(final Reader reader){
-                super.setReader(reader);
-            }
-        };
+    /**
+     * Get an instance of a lower-case keyword analyser.
+     *
+     * @return The analyser
+     */
+    public static Analyzer newInstance() {
+        try {
+            return CustomAnalyzer.builder().withTokenizer(KeywordTokenizerFactory.class).addTokenFilter(LowerCaseFilterFactory.class).build();
+        } catch (IOException ex) {
+            logger.error("Unable to build analyzer", ex);
+            throw new IllegalStateException(ex);
+        }
     }
-}
+ }

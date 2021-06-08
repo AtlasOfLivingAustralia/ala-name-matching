@@ -11,8 +11,8 @@
     <artifactId>ala-name-matching</artifactId>
     <packaging>jar</packaging>
     <!-- Major version increment due to package structure change -->
-    <version>3.6-SNAPSHOT</version>
-    <name>ALA Name Matching (for Lucene 6 or above)</name>
+    <version>4.0-SNAPSHOT</version>
+    <name>ALA Name Matching (for Lucene 8 or above)</name>
     <!-- SCM entry that points to SVN directory that contains pom -->
     <scm>
         <connection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</connection>
@@ -23,7 +23,8 @@
     <properties>
         <!-- This project uses UTF8 for Regular Expressions -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <org.apache.lucene.version>6.6.5</org.apache.lucene.version>
+        <org.apache.lucene.version>8.1.0</org.apache.lucene.version>
+        <com.fasterxml.jackson.version>2.12.3</com.fasterxml.jackson.version>
         <targetJdk>1.8</targetJdk>
         <animal-sniffer-signature.artifact>java18</animal-sniffer-signature.artifact>
         <animal-sniffer-signature.version>1.0</animal-sniffer-signature.version>
@@ -146,17 +147,17 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.8.9</version>
+            <version>${com.fasterxml.jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.8.9</version>
+            <version>${com.fasterxml.jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>2.8.9</version>
+            <version>${com.fasterxml.jackson.version}</version>
         </dependency>
         <!-- For command line arg parsing -->
         <dependency>
