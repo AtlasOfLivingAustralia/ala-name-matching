@@ -24,7 +24,7 @@ public class VernacularMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20200214");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20200214-lucene8");
      }
 
     @Test

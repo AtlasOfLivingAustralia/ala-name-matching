@@ -200,7 +200,7 @@ public class ALANameIndexer {
      * @throws Exception
      */
     public void createIrmngIndex(String exportsDir, String indexDir) throws Exception {
-        Analyzer analyzer = new LowerCaseKeywordAnalyzer();
+        Analyzer analyzer = LowerCaseKeywordAnalyzer.newInstance();
         IndexWriter irmngWriter = createIndexWriter(new File(indexDir + File.separator + "irmng"), analyzer, true);
         indexIrmngDwcA(irmngWriter, irmngDwcaDirectory);
         indexIRMNG(irmngWriter, exportsDir + File.separator + "ala-species-homonyms.txt", RankType.SPECIES);
@@ -211,7 +211,7 @@ public class ALANameIndexer {
     public void createIndex(String exportsDir, String indexDir, String acceptedFile, String synonymFile,
                             String irmngDwca, boolean generateSciNames, boolean generateCommonNames) throws Exception {
 
-        Analyzer analyzer = new LowerCaseKeywordAnalyzer();
+        Analyzer analyzer = LowerCaseKeywordAnalyzer.newInstance();
         //generate the extra id index
         createExtraIdIndex(indexDir + File.separator + "id", new File(exportsDir + File.separator + "identifiers.txt"));
         if (generateSciNames) {
@@ -376,7 +376,7 @@ public class ALANameIndexer {
     public void addAdditionalName(String lsid, String scientificName, String author, LinnaeanRankClassification cl) throws Exception {
 
         if (cbIndexWriter == null)
-            cbIndexWriter = createIndexWriter(new File(indexDirectory + File.separator + "cb"), new LowerCaseKeywordAnalyzer(), false);
+            cbIndexWriter = createIndexWriter(new File(indexDirectory + File.separator + "cb"), LowerCaseKeywordAnalyzer.newInstance(), false);
         Document doc = createALAIndexDocument(scientificName, "-1", lsid, author, cl);
         cbIndexWriter.addDocument(doc);
 
@@ -389,7 +389,7 @@ public class ALANameIndexer {
      */
     public void deleteName(String lsid) throws Exception{
         if(cbIndexWriter == null){
-            cbIndexWriter = createIndexWriter(new File(indexDirectory+ File.separator + "cb"), new LowerCaseKeywordAnalyzer(), false);
+            cbIndexWriter = createIndexWriter(new File(indexDirectory+ File.separator + "cb"), LowerCaseKeywordAnalyzer.newInstance(), false);
         }
         Term term = new Term("lsid", lsid);
         cbIndexWriter.deleteDocuments(new TermQuery(term));
@@ -568,7 +568,7 @@ public class ALANameIndexer {
             while ((values = reader.readNext()) != null) {
                 if (values.length == 3) {
                     if (doesTaxonConceptExist(currentSearcher, values[2])) {
-                        iw.addDocument(createCommonNameDocument(values[0], values[1], values[2], null, 1.0f));
+                        iw.addDocument(createCommonNameDocument(values[0], values[1], values[2], null));
                         count++;
                     } else {
                         System.out.println("Unable to locate LSID " + values[2] + " in current dump");
@@ -605,13 +605,13 @@ public class ALANameIndexer {
                     if (doesTaxonConceptExist(currentSearcher, values[3]) || doesTaxonConceptExist(idSearcher, values[3])) {
                         //each common name could be a comma separated list
                         if (!values[2].contains(",") || values[2].toLowerCase().contains(" and ")) {
-                            iw.addDocument(createCommonNameDocument(values[2], null, values[3], null, 2.0f));
+                            iw.addDocument(createCommonNameDocument(values[2], null, values[3], null));
                             count++;
                         } else {
                             //we need to process each common name in the list
                             String[] names = p.split(values[2]);
                             for (String name : names) {
-                                iw.addDocument(createCommonNameDocument(name, null, values[3],null,  2.0f));
+                                iw.addDocument(createCommonNameDocument(name, null, values[3],null));
                                 count++;
                             }
                         }
@@ -723,7 +723,7 @@ public class ALANameIndexer {
         TermQuery query = new TermQuery(new Term("lsid", lsid));
         try {
             org.apache.lucene.search.TopDocs results = is.search(query, 1);
-            return results.totalHits > 0;
+            return results.totalHits.value > 0;
         } catch (IOException e) {
             return false;
         }
@@ -743,7 +743,7 @@ public class ALANameIndexer {
             try {
                 TermQuery tq = new TermQuery(new Term("lsid", value));
                 org.apache.lucene.search.TopDocs results = idSearcher.search(tq, 1);
-                if (results.totalHits > 0)
+                if (results.totalHits.value > 0)
                     return idSearcher.doc(results.scoreDocs[0].doc).get("reallsid");
             } catch (IOException e) {
             }
@@ -751,16 +751,15 @@ public class ALANameIndexer {
         return value;
     }
 
-    protected Document createCommonNameDocument(String cn, String sn, String lsid, String language, float boost){
-        return createCommonNameDocument(cn, sn, lsid, language, boost, true);
+    protected Document createCommonNameDocument(String cn, String sn, String lsid, String language){
+        return createCommonNameDocument(cn, sn, lsid, language, true);
     }
 
-    protected Document createCommonNameDocument(String cn, String sn, String lsid, String language, float boost, boolean checkAccepted) {
+    protected Document createCommonNameDocument(String cn, String sn, String lsid, String language, boolean checkAccepted) {
         Document doc = new Document();
         //we are only interested in keeping all the alphanumerical values of the common name
         //when searching the same operations will need to be peformed on the search string
         TextField searchAbleName = new TextField(IndexField.SEARCHABLE_COMMON_NAME.toString(), cn.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", ""), Store.YES);
-        searchAbleName.setBoost(boost);
         doc.add(searchAbleName);
 
         if (sn != null) {
