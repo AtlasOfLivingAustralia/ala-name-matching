@@ -211,7 +211,7 @@ public class MatchTaxonCondition extends TaxonCondition {
                 return this.matchScientificName.equals(name);
             case REGEX:
                 if (this.patternScientificName == null)
-                    this.patternScientificName = Pattern.compile(this.scientificName);
+                    this.patternScientificName = Pattern.compile(this.scientificName, Pattern.CASE_INSENSITIVE);
                 return this.patternScientificName.matcher(name).matches();
             default:
                 if (this.matchScientificName == null)

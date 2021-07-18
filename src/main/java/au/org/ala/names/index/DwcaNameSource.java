@@ -227,6 +227,12 @@ public class DwcaNameSource extends NameSource {
      * @throws IndexBuilderException if unable to load a record into the taxonomy.
      */
     protected void loadTaxonDwCA(Taxonomy taxonomy) throws IndexBuilderException {
+        String defaultDatasetName = null;
+        try {
+            defaultDatasetName = archive.getMetadata().getTitle();
+        } catch (MetadataException e) {
+            taxonomy.report(IssueType.PROBLEM, "provider.archive.noMetadata", (String) null, null);
+        }
         if (archive.getCore().getRowType() != DwcTerm.Taxon)
             throw new IndexBuilderException("Expecting a core row type of " + DwcTerm.Taxon);
         List<Term> classifiers = TaxonConceptInstance.CLASSIFICATION_FIELDS.stream().filter(t -> archive.getCore().hasTerm(t)).collect(Collectors.toList());
@@ -240,7 +246,10 @@ public class DwcaNameSource extends NameSource {
                 Record core = record.core();
                 taxonID = core.value(DwcTerm.taxonID);
                 String verbatimNomenclaturalCode = core.value(DwcTerm.nomenclaturalCode);
-                NameProvider provider = taxonomy.resolveProvider(core.value(DwcTerm.datasetID), core.value(DwcTerm.datasetName));
+                String datasetName = core.value(DwcTerm.datasetName);
+                if (datasetName == null)
+                    datasetName = defaultDatasetName;
+                NameProvider provider = taxonomy.resolveProvider(core.value(DwcTerm.datasetID), datasetName);
                 NomenclaturalCode code = taxonomy.resolveCode(verbatimNomenclaturalCode);
                 String scientificName = core.value(DwcTerm.scientificName);
                 String scientificNameAuthorship = core.value(DwcTerm.scientificNameAuthorship);

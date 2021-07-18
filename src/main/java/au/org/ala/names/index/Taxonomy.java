@@ -478,7 +478,8 @@ public class Taxonomy implements Reporter {
      */
     public void resolveLinks() throws IndexBuilderException {
         logger.info("Resolving links");
-        this.instances.values().parallelStream().forEach(instance -> instance.resolveLinks(this));
+        if (!this.instances.values().parallelStream().allMatch(instance -> instance.resolveLinks(this)))
+            throw new IndexBuilderException("Errors resolving links");
         logger.info("Finished resolving links");
     }
 

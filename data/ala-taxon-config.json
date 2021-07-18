@@ -26,6 +26,16 @@
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
             "taxonomicStatus": "INFERRED_INVALID"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
+            "scientificName": "Unknown( .*|)"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
+            "scientificName": "[A-Z][A-Za-z]+ sp\\.?"
           }
         ],
         "adjustments": [
@@ -180,13 +190,6 @@
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "nomenclaturalStatus": "DOUBTFUL"
-            },
-            "adjustment": -20
-          },
-          {
-            "condition": {
-              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
-              "nomenclaturalStatus": "FORGOTTEN"
             },
             "adjustment": -20
           },
@@ -743,7 +746,59 @@
       "description": "Australian Plant Name Index entries not placed by the Australian Plant Census, given an assumed parent of Plantae",
       "parent": "apni-apc",
       "authority": false,
-      "defaultScore" : 4000
+      "defaultScore" : 4000,
+      "adjuster": {
+        "forbidden": [
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "FORGOTTEN"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "CONFUSED"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "ABORTED"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "SUPERFLUOUS"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "NUDUM"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "NULL_NAME"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "SUPPRESSED"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "REJECTED"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "REJECTED_OUTRIGHT"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "ILLEGITIMATE"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "INVALID"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "DENIED"
+          }
+        ]
+      }
     },
     {
       "id" : "dr2699",

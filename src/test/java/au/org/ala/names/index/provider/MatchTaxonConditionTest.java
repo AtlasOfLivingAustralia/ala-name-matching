@@ -440,6 +440,23 @@ public class MatchTaxonConditionTest extends TestUtils {
         assertFalse(condition.match(instance, key));
     }
 
+
+    @Test
+    public void testMatch42() {
+        MatchTaxonCondition condition = new MatchTaxonCondition();
+        condition.setScientificName("Unknown(\\s.*|)");
+        condition.setMatchType(NameMatchType.REGEX);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "unknown", null, null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null, null, null, null);
+        NameKey key = this.analyser.analyse(instance);
+        assertTrue(condition.match(instance, key));
+        instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Unknown sp.", null, null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null, null, null, null);
+        key = this.analyser.analyse(instance);
+        assertTrue(condition.match(instance, key));
+        instance = new TaxonConceptInstance("ID-1", NomenclaturalCode.BOTANICAL, NomenclaturalCode.BOTANICAL.getAcronym(), this.provider, "Unknownsp.", null, null, "1975", TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null, null, null, null);
+        key = this.analyser.analyse(instance);
+        assertFalse(condition.match(instance, key));
+    }
+
     @Test
     public void testWrite1() throws Exception {
         MatchTaxonCondition condition = new MatchTaxonCondition();

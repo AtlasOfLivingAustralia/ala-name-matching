@@ -2,6 +2,8 @@ package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.util.DwcaWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -30,6 +32,8 @@ import java.util.stream.Collectors;
  * @copyright Copyright (c) 2017 CSIRO
  */
 public class ScientificName extends Name<ScientificName, UnrankedScientificName, TaxonConcept> implements Comparable<ScientificName> {
+    private static final Logger logger = LoggerFactory.getLogger(ScientificName.class);
+
     /**
      * Construct for a container and a key
      *
@@ -100,13 +104,18 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
      */
     @Override
     protected TaxonConcept findPrincipal(Taxonomy taxonomy) {
-        TaxonConcept principal = this.findBasePrincipal(taxonomy);
-        TaxonConceptInstance representative = principal.getRepresentative();
-        TaxonConceptInstance resolved = representative.getResolvedAccepted();
+        try {
+            TaxonConcept principal = this.findBasePrincipal(taxonomy);
+            TaxonConceptInstance representative = principal.getRepresentative();
+            TaxonConceptInstance resolved = representative.getResolvedAccepted();
 
-        if (resolved != representative && resolved.getContainer().getContainer() == this)
-            principal = resolved.getContainer();
-        return principal;
+            if (resolved != representative && resolved.getContainer().getContainer() == this)
+                principal = resolved.getContainer();
+            return principal;
+        } catch (RuntimeException ex) {
+            logger.error("Unable to find principal for " + this);
+            throw ex;
+        }
      }
 
     /**

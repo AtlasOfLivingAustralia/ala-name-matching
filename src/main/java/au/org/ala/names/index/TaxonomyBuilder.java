@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +23,48 @@ import java.util.stream.Collectors;
 public class TaxonomyBuilder {
     private static Logger logger = LoggerFactory.getLogger(TaxonomyBuilder.class);
 
+    /**
+     * Recursively find sources.
+     * <p>
+     * The directory and sub-directory are first searched for a meta.xml file and,
+     * if present, the source is added as a DwCA.
+     * Otherwise, any csv files are added to the list and subdirectories recursively
+     * searched.
+     * </p>
+     * @param path
+     * @return
+     */
+    protected static List<NameSource> findSources(File path) {
+        List<NameSource> sources = new ArrayList<>();
+        try {
+            if (!path.exists()) {
+                logger.info("Path does not exist " + path);
+                return sources;
+            }
+            if (path.isFile()) {
+                logger.info("Adding source file at " + path);
+                sources.add(NameSource.create(path));
+                return sources;
+            }
+            if (!path.isDirectory()) {
+                logger.info("Unknown file type for " + path);
+            }
+            File meta = new File(path, "meta.xml");
+            if (meta.exists()) {
+                logger.info("Adding DwCA at " + path);
+                sources.add(NameSource.create(path));
+                return sources;
+            } else {
+                for (File f : path.listFiles()) {
+                    if (f.isDirectory() || f.getName().endsWith(".csv"))
+                        sources.addAll(findSources(f));
+                }
+            }
+        } catch (Exception ex) {
+            logger.error("Unable to get sources for " + path, ex);
+        }
+        return sources;
+    }
 
     public static void main(String[] args) {
         try {
@@ -36,12 +79,14 @@ public class TaxonomyBuilder {
             Integer samples = null;
             DwcaNameIndexer indexer;
             TaxonomyConfiguration config = null;
+            List<NameSource> sources;
 
             Option o = OptionBuilder.withLongOpt("output").withDescription("Output directory - defaults to 'combined' in the current directory").hasArg().withArgName("DIR").withType(File.class).create('o');
             Option w = OptionBuilder.withLongOpt("work").withDescription("Working directory - defaults to the current directory").hasArg().withArgName("DIR").withType(File.class).create('w');
             Option c = OptionBuilder.withLongOpt("config").withDescription("Configuration file").hasArg().withArgName("FILE").withType(File.class).create('c');
             Option r = OptionBuilder.withLongOpt("report").withDescription("Report file").hasArg().withArgName("FILE").withType(File.class).create('r');
             Option p = OptionBuilder.withLongOpt("previous").withDescription("Previous taxonomy DwCA").hasArg().withArgName("DIR").withType(File.class).create('p');
+            Option recurse = OptionBuilder.withLongOpt("recurse").withDescription("Input file is a directory, recurse through subdirectories").create('R');
             Option ncl = OptionBuilder.withLongOpt("noclean").withDescription("Don't clean up work area").create();
             Option nc = OptionBuilder.withLongOpt("nocreate").withDescription("Don't create an output taxonomy").create();
             Option s = OptionBuilder.withLongOpt("sample").withDescription("Output a sample taxonomy, consisting of n concepts plus their parents/accepted").hasArg().withArgName("N").withType(Integer.class).create();
@@ -50,6 +95,7 @@ public class TaxonomyBuilder {
             options.addOption(c);
             options.addOption(r);
             options.addOption(p);
+            options.addOption(recurse);
             options.addOption(ncl);
             options.addOption(nc);
             options.addOption(s);
@@ -80,7 +126,11 @@ public class TaxonomyBuilder {
             if (cmd.hasOption("sample")) {
                 samples = Integer.parseInt(cmd.getOptionValue("sample"));
             }
-            List<NameSource> sources = Arrays.asList(cmd.getArgs()).stream().map(f -> NameSource.create(f)).collect(Collectors.toList());
+            if (cmd.hasOption("recurse")) {
+                sources = Arrays.asList(cmd.getArgs()).stream().map(File::new).map(f -> findSources(f)).flatMap(List::stream).collect(Collectors.toList());
+            } else {
+                sources = Arrays.asList(cmd.getArgs()).stream().map(File::new).map(f -> NameSource.create(f)).collect(Collectors.toList());
+            }
             Taxonomy taxonomy = new Taxonomy(config, work);
             taxonomy.begin();
             taxonomy.load(sources);
