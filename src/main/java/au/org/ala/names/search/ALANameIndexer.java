@@ -29,8 +29,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.document.*;
-import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -116,35 +115,6 @@ public class ALANameIndexer {
 
     private String indexDirectory;
     private IndexWriter cbIndexWriter;
-
-    //Fields that are being indexed or stored in the lucene index
-    public enum IndexField {
-
-        NAME("name"),
-        NAMES("names"),
-        ID("id"),
-        RANK("rank"),
-        SEARCHABLE_NAME("searchcan"),
-        LSID("lsid"),
-        HOMONYM("homonym"),
-        ACCEPTED("synonym"),
-        LEFT("left"),
-        RIGHT("right"),
-        PRIORITY("priority"),
-        SEARCHABLE_COMMON_NAME("common"),
-        COMMON_NAME("common_orig"),
-        LANGUAGE("lang");
-
-        String name;
-
-        IndexField(String name) {
-            this.name = name;
-        }
-
-        public String toString() {
-            return name;
-        }
-    }
 
     PhraseNameParser parser = new PhraseNameParser();
     Set<String> knownHomonyms = new HashSet<String>();
@@ -244,11 +214,10 @@ public class ALANameIndexer {
             Document doc = new Document();
             String id = values[POS_ID];
             String guid = values[POS_LSID];
-            doc.add(new StringField("id", id, Store.YES));
-            if (StringUtils.isEmpty(id))
+            NameIndexField.ID.store(id, doc);
+             if (StringUtils.isEmpty(id))
                 guid = id;
-
-            doc.add(new StoredField("guid", guid));
+            NameIndexField.GUID.store(guid, doc);
             iw.addDocument(doc);
         }
         System.out.println("Finished writing the tmp guid index...");
@@ -348,13 +317,13 @@ public class ALANameIndexer {
                     values[POS_PID], values[POS_C], values[POS_CID],
                     values[POS_O], values[POS_OID], values[POS_F], values[POS_FID],
                     values[POS_G], values[POS_GID], values[POS_S], values[POS_SID],
-                    values[POS_LFT], values[POS_RGT], acceptedValues,
+                    Integer.parseInt(values[POS_LFT]), Integer.parseInt(values[POS_RGT]), acceptedValues,
                     values[POS_SP_EPITHET], values[POS_INFRA_EPITHET], values[POS_AUTHOR], null, null, priority);
 
 
             //add the excluded information if applicable
             if ("T".equals(values[POS_EXCLUDED]) || "Y".equals(values[POS_EXCLUDED])) {
-                doc.add(new TextField(NameIndexField.SYNONYM_TYPE.toString(), SynonymType.EXCLUDES.getId().toString(), Store.YES));
+                NameIndexField.SYNONYM_TYPE.store(SynonymType.EXCLUDES.getId().toString(), doc);
             }
             if (doc != null) {
                 iw.addDocument(doc);
@@ -442,44 +411,44 @@ public class ALANameIndexer {
             Document doc = new Document();
             String kingdom = dwcr.value(DwcTerm.kingdom);
             if (StringUtils.isNotEmpty(kingdom)) {
-                doc.add(new TextField(RankType.KINGDOM.getRank(), kingdom, Store.YES));
+                NameIndexField.KINGDOM.store(kingdom, doc);
             }
             String phylum = dwcr.value(DwcTerm.phylum);
             if (StringUtils.isNotEmpty(phylum)) {
-                doc.add(new TextField(RankType.PHYLUM.getRank(), phylum, Store.YES));
+                NameIndexField.PHYLUM.store(phylum, doc);
             }
             String classs = dwcr.value(DwcTerm.class_);
             if (StringUtils.isNotEmpty(classs)) {
-                doc.add(new TextField(RankType.CLASS.getRank(), classs, Store.YES));
+                NameIndexField.CLASS.store(classs, doc);
             }
             String order = dwcr.value(DwcTerm.order);
             if (StringUtils.isNotEmpty(order)) {
-                doc.add(new TextField(RankType.ORDER.getRank(), order, Store.YES));
+                NameIndexField.ORDER.store(order, doc);
             }
             String family = dwcr.value(DwcTerm.family);
             if (StringUtils.isNotEmpty(family)) {
-                doc.add(new TextField(RankType.FAMILY.getRank(), family, Store.YES));
+                NameIndexField.FAMILY.store(kingdom, doc);
             }
             String genus = dwcr.value(DwcTerm.genus);
             String calculatedRank = "genus";
             if (StringUtils.isNotEmpty(genus)) {
-                doc.add(new TextField(RankType.GENUS.getRank(), genus, Store.YES));
+                NameIndexField.GENUS.store(genus, doc);
                 String specificEpithet = dwcr.value(DwcTerm.specificEpithet);
                 if (StringUtils.isNotEmpty(specificEpithet)) {
                     calculatedRank = "species";
-                    doc.add(new TextField(RankType.SPECIES.getRank(), genus + " " + specificEpithet, Store.YES));
+                    NameIndexField.SPECIES.store(genus + " " + specificEpithet, doc);
                 }
             }
             String rank = dwcr.value(DwcTerm.taxonRank);
             if (StringUtils.isEmpty(rank))
                 rank = calculatedRank;
-            doc.add(new TextField(IndexField.RANK.toString(), rank, Store.YES));
+            NameIndexField.RANK.store(rank, doc);
             //now add the author - we don't do anything about this on homonym resolution yet
             //Add the author information
             String author = dwcr.value(DwcTerm.scientificNameAuthorship);
             if (StringUtils.isNotEmpty(author)) {
                 //TODO think about whether we need to treat the author string with the taxamatch
-                doc.add(new TextField(NameIndexField.AUTHOR.toString(), author, Store.YES));
+                NameIndexField.AUTHOR.store(author, doc);
             }
             //now add it to the index
             iw.addDocument(doc);
@@ -504,20 +473,21 @@ public class ALANameIndexer {
             while ((values = reader.readNext()) != null) {
                 Document doc = new Document();
                 if (values != null && values.length >= 7) {
-                    doc.add(new TextField(RankType.KINGDOM.getRank(), values[0], Store.YES));
-                    doc.add(new TextField(RankType.PHYLUM.getRank(), values[1], Store.YES));
-                    doc.add(new TextField(RankType.CLASS.getRank(), values[2], Store.YES));
-                    doc.add(new TextField(RankType.ORDER.getRank(), values[3], Store.YES));
-                    doc.add(new TextField(RankType.FAMILY.getRank(), values[4], Store.YES));
-                    doc.add(new TextField(RankType.GENUS.getRank(), values[5], Store.YES));
+                    NameIndexField.KINGDOM.store(values[0], doc);
+                    NameIndexField.PHYLUM.store(values[1], doc);
+                    NameIndexField.CLASS.store(values[2], doc);
+                    NameIndexField.ORDER.store(values[3], doc);
+                    NameIndexField.FAMILY.store(values[4], doc);
+                    NameIndexField.GENUS.store(values[5], doc);
                     if (rank == RankType.GENUS) {
-                        doc.add(new TextField(IndexField.ID.toString(), values[6], Store.YES));
-                        doc.add(new TextField(IndexField.ACCEPTED.toString(), values[8], Store.YES));
-                        doc.add(new TextField(IndexField.HOMONYM.toString(), values[10], Store.YES));
+
+                        NameIndexField.ID.store(values[6], doc);
+                        NameIndexField.ACCEPTED.store(values[8], doc);
+                        NameIndexField.HOMONYM.store(values[10], doc);
                     } else if (rank == RankType.SPECIES) {
-                        doc.add(new TextField(RankType.SPECIES.getRank(), values[6], Store.YES));
+                        NameIndexField.SPECIES.store(values[6], doc);
                     }
-                    doc.add(new TextField(IndexField.RANK.toString(), rank.getRank(), Store.YES));
+                    NameIndexField.RANK.store(rank.getRank(), doc);
                     iw.addDocument(doc);
                     count++;
                 }
@@ -651,9 +621,9 @@ public class ALANameIndexer {
                 if (values != null && values.length >= 3) {
                     Document doc = new Document();
                     //doc.add(new Field("lsid", values[2], Store.NO, Index.NOT_ANALYZED));
-                    doc.add(new StringField("lsid", values[2], Store.YES));
+                    NameIndexField.LSID.store(values[2], doc);
                     //doc.add(new Field("reallsid", values[1], Store.YES, Index.NO));
-                    doc.add(new StoredField("reallsid", values[1]));
+                    NameIndexField.REAL_LSID.store(values[1], doc);
                     iw.addDocument(doc);
                 }
             }
@@ -700,7 +670,7 @@ public class ALANameIndexer {
                 //just add the LSID to the index
                 Document doc = new Document();
 
-                doc.add(new StringField("lsid", values[0], Store.YES));
+                NameIndexField.LSID.store(values[0], doc);
                 iw.addDocument(doc);
 
             }
@@ -757,31 +727,28 @@ public class ALANameIndexer {
 
     protected Document createCommonNameDocument(String cn, String sn, String lsid, String language, boolean checkAccepted) {
         Document doc = new Document();
-        //we are only interested in keeping all the alphanumerical values of the common name
-        //when searching the same operations will need to be peformed on the search string
-        TextField searchAbleName = new TextField(IndexField.SEARCHABLE_COMMON_NAME.toString(), cn.toUpperCase().replaceAll("[^A-Z0-9ÏËÖÜÄÉÈČÁÀÆŒ]", ""), Store.YES);
-        doc.add(searchAbleName);
+        // Uses field type to normalise
+        NameIndexField.SEARCHABLE_COMMON_NAME.store(cn, doc);
 
         if (sn != null) {
-            doc.add(new TextField(IndexField.NAME.toString(), sn, Store.YES));
+            NameIndexField.NAME.store(sn, doc);
         }
 
         String newLsid = getAcceptedLSID(lsid);
-
-        doc.add(new TextField(IndexField.COMMON_NAME.toString(), cn, Store.YES));
-        doc.add(new TextField(IndexField.LSID.toString(), newLsid, Store.YES));
+        NameIndexField.COMMON_NAME.store(cn, doc);
+        NameIndexField.LSID.store(newLsid, doc);
         if(language != null) {
-            doc.add(new TextField(IndexField.LANGUAGE.toString(), language.toLowerCase().trim(), Store.YES));
-        }
+            NameIndexField.LANGUAGE.store(language.toLowerCase().trim(), doc);
+         }
 
         return doc;
     }
 
     public Document createALAIndexDocument(String name, String id, String lsid, String author, LinnaeanRankClassification cl){
-        return createALAIndexDocument(name,id, lsid, author,null,null, null, null, cl, null, null, MatchMetrics.DEFAULT_PRIORITY);
+        return createALAIndexDocument(name,id, lsid, author,null,null, 0, 0, cl, null, null, MatchMetrics.DEFAULT_PRIORITY);
     }
 
-    public Document createALAIndexDocument(String name, String id, String lsid, String author, String rank, String rankId, String left, String right, LinnaeanRankClassification cl, String nameComplete, Collection<String> otherNames, int priority){
+    public Document createALAIndexDocument(String name, String id, String lsid, String author, String rank, String rankId, int left, int right, LinnaeanRankClassification cl, String nameComplete, Collection<String> otherNames, int priority){
         if(cl == null)
             cl = new LinnaeanRankClassification();
         return createALAIndexDocument(name, id, lsid, rankId, rank, cl.getKingdom(), cl.getKid(), cl.getPhylum()
@@ -792,11 +759,11 @@ public class ALANameIndexer {
     protected Document createALASynonymDocument(String scientificName, String author, String nameComplete, Collection<String> otherNames, String id, String lsid, String nameLsid, String acceptedLsid, String acceptedId, int priority, String synonymType) {
         lsid = StringUtils.isBlank(lsid) ? nameLsid : lsid;
         Document doc = createALAIndexDocument(scientificName, id, lsid, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, 0,
                 acceptedLsid, null, null, author, nameComplete, otherNames, priority);
         if (doc != null && synonymType != null) {
             try {
-                doc.add(new TextField(NameIndexField.SYNONYM_TYPE.toString(), synonymType, Store.YES));
+                NameIndexField.SYNONYM_TYPE.store(synonymType, doc);
             } catch (Exception e) {
                 System.out.println("Error on " + scientificName + " " + author + " " + id + ".  " + e.getMessage());
             }
@@ -811,7 +778,7 @@ public class ALANameIndexer {
     protected Document createALAIndexDocument(String name, String id, String lsid, String rank, String rankString,
                                             String kingdom, String kid, String phylum, String pid, String clazz, String cid, String order,
                                             String oid, String family, String fid, String genus, String gid,
-                                            String species, String sid, String left, String right, String acceptedConcept, String specificEpithet,
+                                            String species, String sid, int left, int right, String acceptedConcept, String specificEpithet,
                                             String infraspecificEpithet, String author, String nameComplete, Collection<String> otherNames,
                                             int priority) {
         //
@@ -820,6 +787,7 @@ public class ALANameIndexer {
             return null;
         }
 
+        int rankIndex = rank == null || rankString.isEmpty() ? -1 : Integer.parseInt(rank);
         nameComplete = buildNameComplete(name, author, nameComplete);
         CleanedScientificName cname = new CleanedScientificName(name);
         CleanedScientificName cnameComplete = new CleanedScientificName(nameComplete);
@@ -827,11 +795,10 @@ public class ALANameIndexer {
         String soundexGenus = genus;
 
         //Add the ids
-        doc.add(new StringField(NameIndexField.ID.toString(), id, Store.YES));
-
-        doc.add(new StringField(NameIndexField.LSID.toString(), lsid, Store.YES));
+        NameIndexField.ID.store(id, doc);
+        NameIndexField.LSID.store(lsid, doc);
         if (lsid.startsWith("ALA")) {
-            doc.add(new StringField(NameIndexField.ALA.toString(), "T", Store.YES));
+            NameIndexField.ALA.store("T", doc);
         }
 
 
@@ -843,85 +810,83 @@ public class ALANameIndexer {
         nameSet.add(cnameComplete.getNormalised());
         nameSet.add(cnameComplete.getBasic());
         for (String n: nameSet) {
-            Field f = new TextField(NameIndexField.NAME.toString(), n, Store.YES);
-            doc.add(f);
+            NameIndexField.NAME.store(n, doc);
         }
-
-        doc.add(new StringField(NameIndexField.NAME_CANONICAL.toString(), cname.getNormalised(), Store.YES));
-        doc.add(new StringField(NameIndexField.NAME_COMPLETE.toString(), cnameComplete.getNormalised(), Store.YES));
+        NameIndexField.NAME_CANONICAL.store(cname.getNormalised(), doc);
+        NameIndexField.NAME_COMPLETE.store(cnameComplete.getNormalised(), doc);
 
         //rank information
-        if (StringUtils.isNotEmpty(rank)) {
-            doc.add(new StringField(NameIndexField.RANK_ID.toString(), rank, Store.YES));
+        if (rankIndex >= 0) {
+            NameIndexField.RANK_ID.store(rankIndex, doc);
         }
         if (StringUtils.isNotEmpty(rankString)) {
-            doc.add(new StringField(NameIndexField.RANK.toString(), rankString, Store.YES));
+            NameIndexField.RANK.store(rankString, doc);
         }
 
 
         //handle the synonyms
         if (StringUtils.isNotEmpty(acceptedConcept)) {
-            doc.add(new StringField(NameIndexField.ACCEPTED.toString(), acceptedConcept, Store.YES));
-            doc.add(new StringField(NameIndexField.iS_SYNONYM.toString(), "T", Store.YES));
-        } else {
-            doc.add(new StringField(NameIndexField.iS_SYNONYM.toString(), "F", Store.YES));
+            NameIndexField.ACCEPTED.store(acceptedConcept, doc);
+            NameIndexField.iS_SYNONYM.store("T", doc);
+         } else {
+            NameIndexField.iS_SYNONYM.store("F", doc);
         }
 
         //Add the classification information
         if (StringUtils.trimToNull(kingdom) != null) {
-            doc.add(new TextField(RankType.KINGDOM.getRank(), kingdom, Store.YES));
-            if (StringUtils.isNotBlank(kid)) {
-                doc.add(new StoredField("kid", kid));
+            NameIndexField.KINGDOM.store(kingdom, doc);
+             if (StringUtils.isNotBlank(kid)) {
+                 NameIndexField.KINGDOM_ID.store(kid, doc);
             }
         }
         if (StringUtils.trimToNull(phylum) != null) {
-            doc.add(new TextField(RankType.PHYLUM.getRank(), phylum, Store.YES));
+            NameIndexField.PHYLUM.store(phylum, doc);
             if (StringUtils.isNotBlank(pid)) {
-                doc.add(new StoredField("pid", pid));
+                NameIndexField.PHYLUM_ID.store(pid, doc);
             }
         }
         if (StringUtils.trimToNull(clazz) != null) {
-            doc.add(new TextField(RankType.CLASS.getRank(), clazz, Store.YES));
+            NameIndexField.CLASS.store(clazz, doc);
             if (StringUtils.isNotBlank(cid)) {
-                doc.add(new StoredField("cid", cid));
+                NameIndexField.CLASS_ID.store(cid, doc);
             }
         }
         if (StringUtils.trimToNull(order) != null) {
-            doc.add(new TextField(RankType.ORDER.getRank(), order, Store.YES));
+            NameIndexField.ORDER.store(order, doc);
             if (StringUtils.isNotBlank(oid)) {
-                doc.add(new StoredField("oid", oid));
+                NameIndexField.ORDER_ID.store(oid, doc);
             }
         }
         if (StringUtils.trimToNull(family) != null) {
-            doc.add(new TextField(RankType.FAMILY.getRank(), family, Store.YES));
+            NameIndexField.FAMILY.store(family, doc);
             if (StringUtils.isNotBlank(fid)) {
-                doc.add(new StoredField("fid", fid));
+                NameIndexField.FAMILY_ID.store(fid, doc);
             }
         }
         if (StringUtils.trimToNull(genus) != null) {
-            doc.add(new TextField(RankType.GENUS.getRank(), genus, Store.YES));
+            NameIndexField.GENUS.store(genus, doc);
             if (StringUtils.isNotBlank(gid)) {
-                doc.add(new StoredField("gid", gid));
+                NameIndexField.GENUS_ID.store(gid, doc);
             }
         }
         if (StringUtils.trimToNull(species) != null) {
-            doc.add(new TextField(RankType.SPECIES.getRank(), species, Store.YES));
+            NameIndexField.SPECIES.store(species, doc);
             if (StringUtils.isNotBlank(sid)) {
-                doc.add(new StoredField("sid", sid));
+                NameIndexField.SPECIES_ID.store(sid, doc);
             }
         }
-        if (StringUtils.trimToNull(left) != null) {
-            doc.add(new StringField("left", left, Store.YES));
+        if (left > 0) {
+            NameIndexField.LEFT.store(left, doc);
         }
-        if (StringUtils.trimToNull(right) != null) {
-            doc.add(new StringField("right", right, Store.YES));
+        if (right > 0) {
+            NameIndexField.RIGHT.store(right, doc);
         }
-        doc.add(new StoredField("priority", priority));
+        NameIndexField.PRIORITY.store(priority, doc);
 
         //Add the author information
         if (StringUtils.isNotEmpty(author)) {
             //TODO think about whether we need to treat the author string with the taxamatch
-            doc.add(new TextField(NameIndexField.AUTHOR.toString(), author, Store.YES));
+            NameIndexField.AUTHOR.store(author, doc);
         }
 
 
@@ -936,8 +901,7 @@ public class ALANameIndexer {
                     && cn.getType() != NameType.INFORMAL && !"6500".equals(rank) && cn.getType() != NameType.DOUBTFUL)
             {
                 if (!nameSet.contains(cn.canonicalName())) {
-                    Field f2 = new TextField(NameIndexField.NAME.toString(), cn.canonicalName(), Store.YES);
-                    doc.add(f2);
+                    NameIndexField.NAME.store(cn.canonicalName(), doc);
                 }
                 if (specificEpithet == null && cn.isBinomial()) {
                     //check to see if we need to determine the epithets from the parse
@@ -949,30 +913,28 @@ public class ALANameIndexer {
             //check to see if the concept represents a phrase name
             if (cn != null && cn instanceof ALAParsedName) {
                 //set up the field type that is stored and Index.ANALYZED_NO_NORMS
-                FieldType ft = new FieldType(TextField.TYPE_STORED);
-                ft.setOmitNorms(true);
                 ALAParsedName alapn = (ALAParsedName) cn;
                 if (alapn.getRank() != Rank.SPECIES && alapn.getSpecificEpithet() != null) {
-                    doc.add(new Field(NameIndexField.SPECIFIC.toString(), alapn.getSpecificEpithet(), ft));
+                    NameIndexField.SPECIFIC.store(alapn.getSpecificEpithet(), doc);
                 } else if (alapn.getRank() != Rank.SPECIES && alapn.getSpecificEpithet() == null) {
                     log.warn(lsid + " " + name + " has an empty specific for non sp. phrase");
                 }
                 if (StringUtils.trimToNull(alapn.getLocationPhraseDescription()) != null) {
-                    doc.add(new Field(NameIndexField.PHRASE.toString(), alapn.cleanPhrase, ft));
+                    NameIndexField.PHRASE.store(alapn.cleanPhrase, doc);
                 }
                 if (alapn.getPhraseVoucher() != null) {
-                    doc.add(new Field(NameIndexField.VOUCHER.toString(), alapn.cleanVoucher, ft));
+                    NameIndexField.VOUCHER.store(alapn.cleanVoucher, doc);
                 }
                 if (StringUtils.isBlank(genus) && StringUtils.isNotBlank(alapn.getGenusOrAbove())) {
                     //add the genus to the index as it is necessary to match on the phrase name.
-                    doc.add(new TextField(RankType.GENUS.getRank(), alapn.getGenusOrAbove(), Store.YES));
+                    NameIndexField.GENUS.store(alapn.getGenusOrAbove(), doc);
                 }
 
             }
         } catch (org.gbif.api.exception.UnparsableException e) {
             //check to see if the name is a virus in which case an extra name is added without the virus key word
             if (e.type == NameType.VIRUS) {
-                doc.add(new TextField(NameIndexField.NAME.toString(), ALANameSearcher.virusStopPattern.matcher(name).replaceAll(" "), Store.YES));
+                NameIndexField.NAME.store(ALANameSearcher.virusStopPattern.matcher(name).replaceAll(" "), doc);
             }
 
         } catch (Exception e) {
@@ -983,24 +945,24 @@ public class ALANameIndexer {
         //add the sound expressions for the name if required
         try {
             if (StringUtils.isNotBlank(soundexGenus)) {
-                doc.add(new TextField(NameIndexField.GENUS_EX.toString(), TaxonNameSoundEx.treatWord(soundexGenus, "genus"), Store.YES));
+                NameIndexField.GENUS_EX.store(TaxonNameSoundEx.treatWord(soundexGenus, "genus"), doc);
             }
             if (StringUtils.isNotBlank(specificEpithet)) {
                 String soundex = TaxonNameSoundEx.treatWord(specificEpithet, "species");
                 if (soundex == null)
                     soundex = "<null>";
-                doc.add(new TextField(NameIndexField.SPECIES_EX.toString(), soundex, Store.YES));
+                NameIndexField.SPECIES_EX.store(soundex, doc);
             } else if (StringUtils.isNotBlank(soundexGenus)) {
-                doc.add(new TextField(NameIndexField.SPECIES_EX.toString(), "<null>", Store.YES));
+                NameIndexField.SPECIES_EX.store("<null>", doc);
             }
             if (StringUtils.isNotBlank(infraspecificEpithet)) {
                 String soundex = TaxonNameSoundEx.treatWord(infraspecificEpithet, "species");
                 if (soundex == null)
                     soundex = "<null>";
-                doc.add(new TextField(NameIndexField.INFRA_EX.toString(), soundex, Store.YES));
-            } else if (StringUtils.isNotBlank(specificEpithet)) {
+                NameIndexField.INFRA_EX.store(soundex, doc);
+             } else if (StringUtils.isNotBlank(specificEpithet)) {
                 //make searching for an empty infraspecific soudex easier
-                doc.add(new TextField(NameIndexField.INFRA_EX.toString(), "<null>", Store.YES));
+                NameIndexField.INFRA_EX.store("<null>", doc);
             }
         } catch (Exception e) {
             log.warn(lsid + " " + name + " has issues creating a soundex: " + e.getMessage());

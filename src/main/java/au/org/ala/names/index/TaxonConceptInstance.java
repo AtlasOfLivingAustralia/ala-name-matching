@@ -1008,8 +1008,6 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     // If you plan to change this, it is called by a parallel stream, so consisder thread safety
     // At the moment, this fills out inferred information only
     public boolean resolveLinks(Taxonomy taxonomy) throws IndexBuilderException {
-        if (this.scientificName.equals("Zieria fordii"))
-            System.out.println("Found it");
         if (this.parentNameUsageID != null) {
             this.parent = taxonomy.getInstance(this.parentNameUsageID);
         }

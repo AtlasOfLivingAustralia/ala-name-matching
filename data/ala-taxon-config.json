@@ -35,6 +35,11 @@
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
             "matchType": "REGEX",
+            "scientificName": "Not assigned"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
             "scientificName": "[A-Z][A-Za-z]+ sp\\.?"
           }
         ],
@@ -846,6 +851,17 @@
           }
         ]
       }
+    },
+    {
+      "id" : "dr17664",
+      "name": "ABRSL",
+      "description": "ABRS Lichen Checklist",
+      "parent": "apni-apc",
+      "rightsHolder": "Commonwealth Scientific and Industrial Research Organisation",
+      "authority": false,
+      "defaultScore" : 2500,
+      "defaultParentTaxon": "Plantae",
+      "conceptResolutionPriority": "ADDITIONAL"
     },
     {
       "id" : "dr2704",

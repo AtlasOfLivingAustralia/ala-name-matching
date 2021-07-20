@@ -1470,6 +1470,7 @@ public class Taxonomy implements Reporter {
             indexer.commitLoadingIndexes();
             indexer.generateIndex();
             indexer.create(interim);
+            indexer.createIrmng(null);
             indexer.commit();
         } catch (Exception ex) {
             throw new IndexBuilderException("Unable to build working index");

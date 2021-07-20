@@ -504,7 +504,7 @@ public class ALANameSearcherTest {
         try {
             String name = "Lindernia sp. Pilbara (M.N.Lyons & L.Lewis FV 1069)";
             NameSearchResult nsr = null;
-            nsr = searcher.searchForRecord(name, RankType.SUBSPECIES);
+            nsr = searcher.searchForRecord(name, RankType.SPECIES);
             assertNotNull(nsr);
             assertEquals("https://id.biodiversity.org.au/name/apni/51306553", nsr.getLsid());
         } catch (SearchResultException e) {
@@ -630,8 +630,6 @@ public class ALANameSearcherTest {
         nsr = searcher.searchForRecord(cl, true, true);
         assertEquals("ALA_3267030", nsr.getLsid());
         assertEquals("https://biodiversity.org.au/afd/taxa/5291343e-fdeb-4a65-8ba5-928f5b96acf5", nsr.getAcceptedLsid());
-        nsr = searcher.searchForRecord("Cracticus tibicen", RankType.GENUS);
-        assertEquals(null, nsr);
     }
 
 
@@ -1532,8 +1530,7 @@ public class ALANameSearcherTest {
         assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
     }
 
-
-    @Test
+    @Ignore // Until sub-taxon synonymy decided
     public void testMetricsLookup2() throws Exception {
         String name = "Trigonaphera vinnulum"; // Synonym of Trigonostoma vinnulum
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
@@ -1665,7 +1662,7 @@ public class ALANameSearcherTest {
             cl.setScientificName(name);
             NameSearchResult nsr = searcher.searchForRecord(cl, true);
             assertNotNull(nsr);
-            assertEquals("https://id.biodiversity.org.au/node/lichen/30088140", nsr.getLsid());
+            assertEquals("NZOR-6-1843", nsr.getLsid());
             assertEquals("Ramalina", nsr.getRankClassification().getGenus());
             assertEquals(MatchType.RECURSIVE, nsr.getMatchType());
         } catch (SearchResultException e) {
@@ -1674,7 +1671,7 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testHomonymWithOrderResolution1()  {
+    public void testHomonymWithOrderResolution1() throws Exception  {
         try {
             String name = "Abelia";
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
@@ -1682,22 +1679,16 @@ public class ALANameSearcherTest {
             NameSearchResult nsr = searcher.searchForRecord(cl, true);
             fail("Expecting homonym exception");
         } catch (HomonymException ex) {
-            assertEquals(1, ex.getResults().size());
-        } catch (SearchResultException e) {
-            fail("Unexpected search exception " + e);
+            assertEquals(2, ex.getResults().size());
         }
-        try {
-            String name = "Abelia";
-            LinnaeanRankClassification cl = new LinnaeanRankClassification();
-            cl.setScientificName(name);
-            cl.setOrder("Dipsacales");
-            NameSearchResult nsr = searcher.searchForRecord(cl, true);
-            assertNotNull(nsr);
-            assertEquals("https://id.biodiversity.org.au/node/apni/2892114", nsr.getLsid());
-        } catch (SearchResultException e) {
-            fail("Unexpected search exception " + e);
-        }
-    }
+        String name = "Abelia";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        cl.setOrder("Dipsacales");
+        NameSearchResult nsr = searcher.searchForRecord(cl, true);
+        assertNotNull(nsr);
+        assertEquals("https://id.biodiversity.org.au/node/apni/2892114", nsr.getLsid());
+     }
 
     @Test
     public void testMultipleMisappliedResolution1() throws Exception {

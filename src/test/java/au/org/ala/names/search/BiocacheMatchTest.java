@@ -73,20 +73,15 @@ public class BiocacheMatchTest {
     }
 
     @Test
-    public void testRecursiveAuthorshipIssue() {
-        try {
-            LinnaeanRankClassification cl = new LinnaeanRankClassification();
-            cl.setScientificName("Graphis notreallyaname Mull.Arg.");
-            cl.setAuthorship("Mull.Arg.");
-            cl.setKingdom("Animalia");
-            cl.setGenus("Graphis");
-            cl.setSpecificEpithet("notreallyaname");
-            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("https://biodiversity.org.au/afd/taxa/2af76a1e-2086-46e3-90b9-6f00983b21a5", metrics.getResult().getLsid()); // Graphis from AFD
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail("Exception should not occur");
-        }
+    public void testRecursiveAuthorshipIssue1() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Graphis notreallyaname Mull.Arg.");
+        cl.setAuthorship("Mull.Arg.");
+        cl.setKingdom("Animalia");
+        cl.setGenus("Graphis");
+        cl.setSpecificEpithet("notreallyaname");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertEquals("https://biodiversity.org.au/afd/taxa/2af76a1e-2086-46e3-90b9-6f00983b21a5", metrics.getResult().getLsid()); // Graphis from AFD
     }
 
     @Test
@@ -98,7 +93,17 @@ public class BiocacheMatchTest {
         cl.setGenus("Graphis");
         cl.setSpecificEpithet("notreallyaname");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("https://id.biodiversity.org.au/taxon/lichen/30241431", metrics.getResult().getLsid()); // Can't find Graphis since not APC placed so gets Graphidaceae
+        assertEquals("NZOR-6-132826", metrics.getResult().getLsid()); // Can't find Graphis homonym so gets Graphidaceae
+    }
+
+    @Test
+    public void testRecursiveAuthorshipIssue3() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Graphis");
+        cl.setKingdom("Fungi");
+        cl.setGenus("Graphis");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertEquals("NZOR-6-122770", metrics.getResult().getLsid()); // Can't find Graphis homonym so gets Graphidaceae
     }
 
     @Test
@@ -147,7 +152,7 @@ public class BiocacheMatchTest {
             cl.setSpecificEpithet(spEp);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             //System.out.println(metrics.getResult());
-            assertEquals("http://id.biodiversity.org.au/instance/apni/884433", metrics.getResult().getLsid());
+            assertEquals("https://id.biodiversity.org.au/instance/apni/884433", metrics.getResult().getLsid());
             assertTrue(metrics.getErrors().contains(ErrorType.HOMONYM));
 
         } catch (Exception e) {
