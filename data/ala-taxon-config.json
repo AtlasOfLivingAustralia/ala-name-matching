@@ -34,7 +34,7 @@
           },
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
-            "matchType": "REGEX",
+            "matchType": "INSENSITIVE",
             "scientificName": "Not assigned"
           },
           {
@@ -634,10 +634,12 @@
         "Cerapus murrayae": "Cerapus murrayi",
         "Chelonaplysilla noevus": "Chelonaplysilla naevus",
         "Chromonephthea muironensis": "Chromonephthea murionensis",
+        "Cis munitus": "Cis minutus",
         "Compsopogon coeruleus": "Compsopogon caeruleus",
         "Cortinarius campbellae": "Cortinarius campbelliae",
         "Diastylopsis thileniusi": "Diastylopsis thilenuisi",
         "Difflugia garmen": "Difflugia gramen",
+        "Encyonema auerwaldsii": "Encyonema auerswaldii",
         "Euglypha loevis": "Euglypha laevis",
         "Eumida hawkseburyensis": "Eumida hawkesburyensis",
         "Euryspongia deliculata": "Euryspongia delicatula",
@@ -654,26 +656,35 @@
         "Liljeborgia aequiabilis": "Liljeborgia aequabilis",
         "Limnodriloides winckelmanni": "Limnodriloides wincklemanni",
         "Liocranchia valdiviae": "Liocranchia valdivae",
+        "Lyngbya digueti": "Lyngbya diguetii",
+        "Macromitrium ligulifolium": "Macromitrium ligulaefolium",
         "Marasmius crinis-equi": "Marasmius crinisequi",
         "Mesoplodon gingkodens": "Mesoplodon ginkgodens",
         "Metacirolana basteni": "Metacirolana bastenae",
         "Mycedium mancoi": "Mycedium mancaoi",
         "Mysticoncha wilsonae": "Mysticoncha wilsoni",
+        "Navicula fromenterae": "Navicula formenterae",
+        "Navicula laterostriata": "Navicula laterostrata",
         "Nectria quisquiliaris": "Nectria quisquilaris",
         "Neelaps calonotos": "Neelaps calonotus",
         "Odontosyllis langerhansaesetosa": "Odontosyllis langerhansiaesetosa",
         "Paraminabea aldersaldei": "Paraminabea aldersladei",
         "Phyllodoce madierensis": "Phyllodoce madeirensis",
+        "Phytophthora fragariifolia": "Phytophthora fragariaefolia",
         "Plumatella \"longigemmis\"": "Plumatella longigemmis",
         "Prionospio auckalndica": "Prionospio aucklandica",
+        "Porphyrosiphon notarisii": "Porphyrosiphon notarissi",
         "Puccinia duthiae": "Puccinia duthiei",
         "Puccinia argophyllae": "Puccinia argophylli",
         "Reteporella lacinata": "Reteporella laciniata",
         "Reteporella malleatia": "Reteporella malleata",
         "Ringicula doliaris": "Ringicula dolaris",
+        "Scytonema hofmanni": "Scytonema hofmannii",
+        "Scytonema viarium": "Scytonema varium",
         "Smittoidea discoverae": "Smittoidea discoveriae",
         "Sporisorium australiasiaticum": "Sporisorium australasiaticum",
         "Stereum amoenum": "Stereum amaenum",
+        "Sticta wiegelii": "Sticta weigelii",
         "Stylopoma thornelyae": "Stylopoma thornelyi",
         "Tectacingulum tumidum": "Tectacingulum tumidium",
         "Tesarius sulcipennis": "Tesarius suclipennis",
@@ -741,8 +752,7 @@
         "Plantae": 6000
       },
       "owner": [
-        "Plantae",
-        "Solanum torvum"
+        "Plantae"
       ]
     },
     {

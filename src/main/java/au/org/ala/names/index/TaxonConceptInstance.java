@@ -276,7 +276,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
-     * Get the originating authorityfor the data
+     * Get the originating authority for the data
      *
      * @return The authority source
      */
