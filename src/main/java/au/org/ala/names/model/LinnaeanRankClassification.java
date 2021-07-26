@@ -5,6 +5,8 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 
 /**
  * A model object that represents a Linnaean Classification.
@@ -465,27 +467,26 @@ public class LinnaeanRankClassification {
      * @param optional Indicates whether the the terms should be optional
      * @return
      */
-    public String getLuceneSearchString(boolean optional) {
-        String prefix = optional ? " " : " +";
+    public void appendLuceneQuery(BooleanQuery.Builder builder, boolean optional) {
+        BooleanClause.Occur occurs = optional ? BooleanClause.Occur.SHOULD : BooleanClause.Occur.FILTER;
         StringBuilder sb = new StringBuilder();
         if (StringUtils.isNotEmpty(kingdom))
-            sb.append(prefix).append(RankType.KINGDOM.getRank()).append(":\"").append(kingdom).append("\"");
-        if (StringUtils.isNotEmpty(phylum))
-            sb.append(prefix).append(RankType.PHYLUM.getRank()).append(":\"").append(phylum).append("\"");
+            builder.add(NameIndexField.KINGDOM.search(this.kingdom), occurs);
+         if (StringUtils.isNotEmpty(phylum))
+             builder.add(NameIndexField.PHYLUM.search(this.phylum), occurs);
         if (StringUtils.isNotEmpty(klass))
-            sb.append(prefix).append(RankType.CLASS.getRank()).append(":\"").append(klass).append("\"");
-        if (StringUtils.isNotEmpty(order))
-            sb.append(prefix).append(RankType.ORDER.getRank()).append(":\"").append(order).append("\"");
+            builder.add(NameIndexField.CLASS.search(this.klass), occurs);
+         if (StringUtils.isNotEmpty(order))
+             builder.add(NameIndexField.ORDER.search(this.order), occurs);
         if (StringUtils.isNotEmpty(family))
-            sb.append(prefix).append(RankType.FAMILY.getRank()).append(":\"").append(family).append("\"");
+            builder.add(NameIndexField.FAMILY.search(this.family), occurs);
         if (StringUtils.isNotEmpty(genus))
-            sb.append(prefix).append(RankType.GENUS.getRank()).append(":\"").append(genus).append("\"");
+            builder.add(NameIndexField.GENUS.search(this.genus), occurs);
         if (StringUtils.isNotEmpty(species))
-            sb.append(prefix).append(RankType.SPECIES.getRank()).append(":\"").append(species).append("\"");
+            builder.add(NameIndexField.SPECIES.search(this.species), occurs);
         //authorship is always optional due to inconsistencies in the name format etc...
         if (StringUtils.isNotEmpty(authorship))
-            sb.append(" ").append(NameIndexField.AUTHOR.toString()).append(":\"").append(authorship).append("\"~");
-        return sb.toString();
+            builder.add(NameIndexField.AUTHOR.search(this.authorship), BooleanClause.Occur.SHOULD);
     }
 
 

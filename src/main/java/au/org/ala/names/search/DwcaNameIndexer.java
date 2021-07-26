@@ -213,10 +213,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
      }
 
     public void createIrmng(File irmngDwc) throws Exception {
-        if (irmngDwc == null || !irmngDwc.exists())
-            return;
-        IndexWriter irmngWriter = this.createIndexWriter(new File(this.targetDir, "irmng"), this.analyzer, true);
-        this.indexIrmngDwcA(irmngWriter, irmngDwc.getCanonicalPath());
+         IndexWriter irmngWriter = this.createIndexWriter(new File(this.targetDir, "irmng"), this.analyzer, true);
+        if (irmngDwc != null  && irmngDwc.exists())
+            this.indexIrmngDwcA(irmngWriter, irmngDwc.getCanonicalPath());
         irmngWriter.commit();
         irmngWriter.forceMerge(1);
         irmngWriter.close();
@@ -492,15 +491,18 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 RankType rt = RankType.getForStrRank(taxonRank);
                 if(rt != null){
                     doc.add(new StringField(NameIndexField.RANK.toString(), rt.getRank(), Field.Store.YES));
-                    doc.add(new StringField(NameIndexField.RANK_ID.toString(), rt.getId().toString(), Field.Store.YES));
+                    doc.add(new IntPoint(NameIndexField.RANK_ID.toString(), rt.getId()));
+                    doc.add(new StoredField(NameIndexField.RANK_ID.toString(), rt.getId()));
                 } else {
                     doc.add(new StringField(NameIndexField.RANK.toString(), taxonRank, Field.Store.YES));
-                    doc.add(new StringField(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId().toString(), Field.Store.YES));
+                    doc.add(new IntPoint(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId()));
+                    doc.add(new StoredField(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId()));
                 }
             } else {
                 //put in unknown rank
                 doc.add(new StringField(NameIndexField.RANK.toString(), "Unknown", Field.Store.YES));
-                doc.add(new StringField(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId().toString(), Field.Store.YES));
+                doc.add(new IntPoint(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId()));
+                doc.add(new StoredField(NameIndexField.RANK_ID.toString(), RankType.UNRANKED.getId()));
             }
             if(StringUtils.equals(taxonID, acceptedNameUsageID) || StringUtils.equals(id, acceptedNameUsageID) || acceptedNameUsageID == null){
                 //mark this one as an accepted concept
@@ -582,7 +584,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         //get all the records that don't have parents that are accepted
         log.info("Loading index from temporary index.");
         TopDocs rootConcepts = getLoadIdxResults(null, "root", "T", PAGE_SIZE);
-        int left = 0;
+        int left = 1;
         int right = left;
         int lastRight = right;
         int count = 0;
@@ -729,8 +731,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 doc.get(NameIndexField.AUTHOR.toString()),
                 doc.get(NameIndexField.RANK.toString()),
                 doc.get(NameIndexField.RANK_ID.toString()),
-                Integer.toString(left),
-                Integer.toString(right),
+                left,
+                right,
                 newcl,
                 nameComplete,
                 otherNames,
@@ -752,7 +754,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         String genus = null;
         String specificEpithet = null;
         String infraspecificEpithet = null;
-        try {
+         try {
             TopDocs hits = this.cbSearcher.search(new TermQuery(new Term(NameIndexField.LSID.toString(), acceptedLsid)), 1);
             if (hits.totalHits.value > 0)
                 accepted = this.cbSearcher.doc(hits.scoreDocs[0].doc);
@@ -786,7 +788,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
         }
         Document doc = createALAIndexDocument(scientificName, id, lsid, null, null,
-                kingdom, null, phylum, null, clazz, null, order, null, family, null, genus, null, null, null, null, null,
+                kingdom, null, phylum, null, clazz, null, order, null, family, null, genus, null, null, null, 0, 0,
                 acceptedLsid, specificEpithet, infraspecificEpithet, author, nameComplete, otherNames, priority);
         if (doc != null && synonymType != null) {
             try {

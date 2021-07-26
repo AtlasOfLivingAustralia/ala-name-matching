@@ -12,6 +12,8 @@ import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -29,6 +31,8 @@ import java.util.stream.Collectors;
  * @copyright Copyright &copy; 2017 Atlas of Living Australia
  */
 public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance, TaxonConcept> {
+    private static final Logger logger = LoggerFactory.getLogger(TaxonConceptInstance.class);
+
     /** Compare instance base (priovider only) scores */
     public static Comparator<TaxonConceptInstance> PROVIDER_SCORE_COMPARATOR =  new Comparator<TaxonConceptInstance>() {
         @Override
@@ -272,7 +276,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
-     * Get the originating authorityfor the data
+     * Get the originating authority for the data
      *
      * @return The authority source
      */
@@ -935,6 +939,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         if (trace != null)
             trace.add(ae);
         TaxonConceptInstance accepted = ae.getRepresentative();
+        if (accepted == null) {
+            logger.warn("Null representative instance for " + ae + " when resolving " + this);
+            return resolved;
+        }
         accepted = accepted.getResolvedAccepted(original, steps - 1, trace, exception);
         if (!accepted.isForbidden())
             return accepted;
@@ -993,27 +1001,33 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      *
      * @param taxonomy The current taxonomy
      *
+     * @return True if successfully resolved
+     *
      * @throws IndexBuilderException If unable to make a link, usually due to a broken reference
      */
     // If you plan to change this, it is called by a parallel stream, so consisder thread safety
     // At the moment, this fills out inferred information only
-    public void resolveLinks(Taxonomy taxonomy) throws IndexBuilderException {
+    public boolean resolveLinks(Taxonomy taxonomy) throws IndexBuilderException {
         if (this.parentNameUsageID != null) {
             this.parent = taxonomy.getInstance(this.parentNameUsageID);
         }
         if (this.parentNameUsage != null && this.parent == null) {
             this.parent = taxonomy.findElement(this.code, this.parentNameUsage, this.provider, null);
         }
-        if (this.parent == null && (this.parentNameUsage != null || this.parentNameUsageID != null))
-            throw new IndexBuilderException("Unable to find parent taxon for " + this + " from " + this.parentNameUsageID + " - " + this.parentNameUsage);
+        if (this.parent == null && (this.parentNameUsage != null || this.parentNameUsageID != null)) {
+            taxonomy.report(IssueType.ERROR, "instance.parent.invalidLink", this.taxonID, this.scientificName, "Unable to find parent taxon for " + this + " from " + this.parentNameUsageID + " - " + this.parentNameUsage);
+            return false;
+        }
         if (this.acceptedNameUsageID != null) {
             this.accepted = taxonomy.getInstance(this.acceptedNameUsageID);
         }
         if (this.acceptedNameUsage != null && this.accepted == null) {
             this.accepted = taxonomy.findElement(this.code, this.acceptedNameUsage, this.provider, null);
         }
-        if (this.accepted == null && (this.acceptedNameUsage != null || this.acceptedNameUsageID != null))
-            throw new IndexBuilderException("Unable to find accepted taxon for " + this + " from " + this.acceptedNameUsageID + " - " + this.acceptedNameUsage);
+        if (this.accepted == null && (this.acceptedNameUsage != null || this.acceptedNameUsageID != null)) {
+            taxonomy.report(IssueType.ERROR, "instance.accepted.invalidLink", this.taxonID, this.scientificName, "Unable to find accepted taxon for " + this + " from " + this.acceptedNameUsageID + " - " + this.acceptedNameUsage);
+            return false;
+        }
         // No parent or accepted taxon but has a classification, so see if we can deduce a parent
         if (this.parent == null && this.accepted == null && this.classification != null) {
             String genus = "";
@@ -1045,6 +1059,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         if (this.parent == null)
             this.parent = this.provider.findDefaultParent(taxonomy, this);
         taxonomy.count("count.resolve.instance.links");
+        return true;
     }
 
     /**

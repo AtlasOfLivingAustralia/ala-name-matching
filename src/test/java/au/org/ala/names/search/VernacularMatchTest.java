@@ -24,13 +24,13 @@ public class VernacularMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20200214-lucene8");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210629");
      }
 
     @Test
     public void testVernacular1() throws Exception {
         String name = "Mary River Turtle";
-        String expectedLsid = "urn:lsid:biodiversity.org.au:afd.taxon:d315deea-822c-4f2c-b439-da33d6af5fd6";
+        String expectedLsid = "https://biodiversity.org.au/afd/taxa/d315deea-822c-4f2c-b439-da33d6af5fd6";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);
@@ -52,7 +52,7 @@ public class VernacularMatchTest {
     @Test
     public void testVernacular3() throws Exception {
         String name = "Drain Mangrovegoby";
-        String expectedLsid = "urn:lsid:biodiversity.org.au:afd.taxon:19c60dcd-93a0-40a2-9ac1-3abe7119c505";
+        String expectedLsid = "https://biodiversity.org.au/afd/taxa/19c60dcd-93a0-40a2-9ac1-3abe7119c505";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);
@@ -64,7 +64,7 @@ public class VernacularMatchTest {
     @Test
     public void testVernacular4() throws Exception {
         String name = "Onespine Unicornfish";
-        String expectedLsid = "urn:lsid:biodiversity.org.au:afd.taxon:f7bfd383-5501-4196-9acb-d9d4d03cc45d";
+        String expectedLsid = "https://biodiversity.org.au/afd/taxa/f7bfd383-5501-4196-9acb-d9d4d03cc45d";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);

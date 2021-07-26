@@ -345,16 +345,15 @@ abstract public class NameSource {
      *
      * @throws IndexBuilderException if unable to create the name source
      */
-    public static NameSource create(String f) throws IndexBuilderException {
+    public static NameSource create(File f) throws IndexBuilderException {
         try {
-            File nf = new File(f);
             NameSource ns;
-            if (!nf.exists())
-                throw new IndexBuilderException("Name source " + nf + " does not exist");
-            if (nf.isDirectory())
-                ns = new DwcaNameSource(nf);
+            if (!f.exists())
+                throw new IndexBuilderException("Name source " + f + " does not exist");
+            if (f.isDirectory())
+                ns = new DwcaNameSource(f);
             else
-                ns = new CSVNameSource(nf.toPath(), "UTF-8", DwcTerm.Taxon);
+                ns = new CSVNameSource(f.toPath(), "UTF-8", DwcTerm.Taxon);
             ns.validate();
             return ns;
         } catch (IOException ex) {

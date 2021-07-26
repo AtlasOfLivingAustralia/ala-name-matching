@@ -30,7 +30,7 @@ public class IconicSpeciesTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20200214-lucene8");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210629");
     }
 
     //@Test

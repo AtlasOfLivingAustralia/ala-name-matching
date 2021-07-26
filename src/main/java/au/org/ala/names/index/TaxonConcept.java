@@ -118,7 +118,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
      */
     public TaxonConceptInstance findInstance(NameProvider provider, boolean acceptedOnly) {
         for (TaxonConceptInstance instance: this.instances)
-            if (instance.getProvider().equals(provider) && (!acceptedOnly || instance.isAccepted()))
+            if (instance.getProvider().equals(provider) && !instance.isForbidden() && (!acceptedOnly || instance.isAccepted()))
                 return instance;
         return null;
     }

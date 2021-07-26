@@ -22,7 +22,7 @@ public class BiocacheMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20200214-lucene8");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210629");
     }
 
     @Test
@@ -73,20 +73,15 @@ public class BiocacheMatchTest {
     }
 
     @Test
-    public void testRecursiveAuthorshipIssue() {
-        try {
-            LinnaeanRankClassification cl = new LinnaeanRankClassification();
-            cl.setScientificName("Graphis notreallyaname Mull.Arg.");
-            cl.setAuthorship("Mull.Arg.");
-            cl.setKingdom("Animalia");
-            cl.setGenus("Graphis");
-            cl.setSpecificEpithet("notreallyaname");
-            MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:2af76a1e-2086-46e3-90b9-6f00983b21a5", metrics.getResult().getLsid()); // Graphis from AFD
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail("Exception should not occur");
-        }
+    public void testRecursiveAuthorshipIssue1() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Graphis notreallyaname Mull.Arg.");
+        cl.setAuthorship("Mull.Arg.");
+        cl.setKingdom("Animalia");
+        cl.setGenus("Graphis");
+        cl.setSpecificEpithet("notreallyaname");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertEquals("https://biodiversity.org.au/afd/taxa/2af76a1e-2086-46e3-90b9-6f00983b21a5", metrics.getResult().getLsid()); // Graphis from AFD
     }
 
     @Test
@@ -98,7 +93,17 @@ public class BiocacheMatchTest {
         cl.setGenus("Graphis");
         cl.setSpecificEpithet("notreallyaname");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("NZOR-6-122770", metrics.getResult().getLsid()); // Can't find Graphis since not APC placed so gets Graphidaceae
+        assertEquals("NZOR-6-132826", metrics.getResult().getLsid()); // Can't find Graphis homonym so gets Graphidaceae
+    }
+
+    @Test
+    public void testRecursiveAuthorshipIssue3() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Graphis");
+        cl.setKingdom("Fungi");
+        cl.setGenus("Graphis");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertEquals("NZOR-6-122770", metrics.getResult().getLsid()); // Can't find Graphis homonym so gets Graphidaceae
     }
 
     @Test
@@ -147,7 +152,7 @@ public class BiocacheMatchTest {
             cl.setSpecificEpithet(spEp);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             //System.out.println(metrics.getResult());
-            assertEquals("http://id.biodiversity.org.au/instance/apni/884433", metrics.getResult().getLsid());
+            assertEquals("https://id.biodiversity.org.au/instance/apni/884433", metrics.getResult().getLsid());
             assertTrue(metrics.getErrors().contains(ErrorType.HOMONYM));
 
         } catch (Exception e) {
@@ -236,7 +241,7 @@ public class BiocacheMatchTest {
 
         cl.setScientificName("Climacteris affinis");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:5d7c50bc-2c2d-4984-9924-d2a46dc3b00f", metrics.getResult().getLsid());
+        assertEquals("https://biodiversity.org.au/afd/taxa/0d28bce2-0bae-44f6-9c73-0afc0f343b8c", metrics.getResult().getLsid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType()); // Dereferenced synonym
         assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
     }
@@ -247,7 +252,7 @@ public class BiocacheMatchTest {
 
         cl.setScientificName("Limnodynastes dumerilii");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:2c50c2f6-7a0d-44e1-b549-458427b420c4", metrics.getResult().getLsid());
+        assertEquals("https://biodiversity.org.au/afd/taxa/2c50c2f6-7a0d-44e1-b549-458427b420c4", metrics.getResult().getLsid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType()); // Dereferenced synonym
         assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
     }
@@ -259,7 +264,7 @@ public class BiocacheMatchTest {
         // No issues
         cl.setScientificName("Zabidius novemaculeatus");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:58e06bba-de3b-4c8c-b165-d75bbeb21a36", metrics.getResult().getLsid());
+        assertEquals("https://biodiversity.org.au/afd/taxa/58e06bba-de3b-4c8c-b165-d75bbeb21a36", metrics.getResult().getLsid());
         assertTrue(metrics.getErrors().contains(ErrorType.NONE));
 
         cl = new LinnaeanRankClassification();
@@ -453,8 +458,8 @@ public class BiocacheMatchTest {
             cl.setScientificName(name);
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
             assertNotNull(metrics);
-            assertEquals("urn:lsid:biodiversity.org.au:afd.name:3064f20b-f6de-4375-8377-904cbd6cf9fa", metrics.getResult().getLsid());
-            assertEquals("urn:lsid:biodiversity.org.au:afd.taxon:c2056f1b-fcde-45b9-904b-1cab280368d1", metrics.getResult().getAcceptedLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/3064f20b-f6de-4375-8377-904cbd6cf9fa", metrics.getResult().getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/c2056f1b-fcde-45b9-904b-1cab280368d1", metrics.getResult().getAcceptedLsid());
             assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex);
