@@ -22,17 +22,16 @@ public class BiocacheMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210629");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210811");
     }
 
     @Test
-    @Ignore
     public void testMatchHybrid(){
         try{
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
             cl.setScientificName("Eucalyptus globulus x Eucalyptus ovata");
             MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-            assertEquals("hybrid", metrics.getNameType().toString());
+            assertEquals(NameType.HYBRID, metrics.getNameType());
             assertEquals(RankType.SPECIES, metrics.getResult().getRank());
 
         } catch(Exception e){
@@ -125,7 +124,7 @@ public class BiocacheMatchTest {
         assertFalse("Cross rank homonym should have been resolved",metrics.getErrors().contains(ErrorType.HOMONYM));
     }
 
-    // @Test
+    @Test
     public void testTibicentibicen() {
         try {
             LinnaeanRankClassification cl = new LinnaeanRankClassification();
@@ -343,6 +342,7 @@ public class BiocacheMatchTest {
             fail("Unexpected search exception " + ex);
         }
     }
+
     // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/1
     @Test
     public void testSubSpeciesMarker2()  {

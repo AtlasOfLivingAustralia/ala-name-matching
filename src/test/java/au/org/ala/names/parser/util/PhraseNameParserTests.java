@@ -314,7 +314,6 @@ public class PhraseNameParserTests {
         assertEquals("(BR Maslin 7761)", ((ALAParsedName) pn).getPhraseVoucher());
         assertEquals("Goodlands", ((ALAParsedName) pn).cleanPhrase);
         assertEquals("Maslin7761", ((ALAParsedName) pn).cleanVoucher);
-        assertEquals("[aff. resinosa]", ((ALAParsedName) pn).getPhraseNominatingParty());
         assertEquals(Rank.SPECIES, pn.getRank());
     }
 
@@ -331,7 +330,6 @@ public class PhraseNameParserTests {
         assertEquals("(BR Maslin 7711)", ((ALAParsedName) pn).getPhraseVoucher());
         assertEquals("Manmanning", ((ALAParsedName) pn).cleanPhrase);
         assertEquals("Maslin7711", ((ALAParsedName) pn).cleanVoucher);
-        assertEquals("[aff. multispicata]", ((ALAParsedName) pn).getPhraseNominatingParty());
         assertEquals(Rank.SPECIES, pn.getRank());
     }
 
@@ -469,15 +467,29 @@ public class PhraseNameParserTests {
 
 
     // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/1
-    // At the moment, not able to correctly parse this out
-    @Ignore
     @Test
-    public void testSpeciesMarkerPhraseName() {
+    public void testRankMarkerPhraseName1() {
         try {
             PhraseNameParser parser = new PhraseNameParser();
             ParsedName pn = parser.parse("Marsilea sp. Neutral Junction (D.E.Albrecht 9192)");
-            pn = parser.parse("Asparagus asparagoides f. Western Cape (R.Taplin 1133)");
-            assertEquals("RTaplin1133", ((ALAParsedName) pn).cleanVoucher);
+            assertEquals(ALAParsedName.class, pn.getClass());
+            assertEquals("Albrecht9192", ((ALAParsedName) pn).cleanVoucher);
+
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+    // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/1
+    // Form doesn't seem to work correctly as it is treating the voucher as an authort
+    @Test
+    @Ignore
+    public void testRankMarkerPhraseName2() {
+        try {
+            PhraseNameParser parser = new PhraseNameParser();
+            ParsedName pn = parser.parse("Asparagus asparagoides f. Western Cape (R.Taplin 1133)");
+            assertEquals(ALAParsedName.class, pn.getClass());
+            assertEquals("Albrecht9192", ((ALAParsedName) pn).cleanVoucher);
 
         } catch (Exception e) {
             fail(e.getMessage());

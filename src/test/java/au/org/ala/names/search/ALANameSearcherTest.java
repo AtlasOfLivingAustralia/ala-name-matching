@@ -20,7 +20,7 @@ public class ALANameSearcherTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210629");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210811");
     }
 
     @Test
@@ -1531,6 +1531,7 @@ public class ALANameSearcherTest {
     }
 
     @Ignore // Until sub-taxon synonymy decided
+    @Test
     public void testMetricsLookup2() throws Exception {
         String name = "Trigonaphera vinnulum"; // Synonym of Trigonostoma vinnulum
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
@@ -1824,7 +1825,7 @@ public class ALANameSearcherTest {
         cl.setFamily(family);
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
         assertNotNull(metrics);
-        assertEquals("NZOR-6-49519", metrics.getResult().getLsid());
+        assertEquals("https://biodiversity.org.au/afd/taxa/81da9a0d-ecb6-4040-a56d-12a44042b63b", metrics.getResult().getLsid());
         assertEquals(RankType.FAMILY, metrics.getResult().getRank());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
     }

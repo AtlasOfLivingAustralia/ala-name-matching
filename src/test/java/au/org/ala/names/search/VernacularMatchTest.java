@@ -24,7 +24,7 @@ public class VernacularMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210629");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210811");
      }
 
     @Test
@@ -38,7 +38,7 @@ public class VernacularMatchTest {
         assertEquals(expectedLsid, result.getLsid());
     }
 
-    @Ignore // Requires indidgenous names
+    //@Ignore // Requires indidgenous names
     @Test
     public void testVernacular2() throws Exception {
         String name = "Dhulwa";

@@ -147,16 +147,16 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
             return concepts.get(0);
         if (accepted.size() == 1)
             return accepted.get(0);
-        List<TaxonConcept> authored = accepted.stream().filter(tc -> tc.isAuthored() || tc.isAutonym()).collect(Collectors.toList());
-        if (authored.size() == 0)
-            return accepted.get(0);
+        final int score = accepted.stream().mapToInt(TaxonConcept::getPrincipalScore).max().orElse(TaxonomicElement.MIN_SCORE);
+        List<TaxonConcept> candidates = accepted.stream().filter(tc -> tc.getPrincipalScore() == score).collect(Collectors.toList());
+        if (candidates.size() == 1)
+            return candidates.get(0);
+        candidates.sort(REVERSE_PRINCIPAL_SCORE_COMPARATOR);
+        List<TaxonConcept> authored = candidates.stream().filter(tc ->  tc.isAuthored() || tc.isAutonym()).collect(Collectors.toList());
         if (authored.size() == 1)
             return authored.get(0);
-        taxonomy.report(IssueType.COLLISION, "scientificName.collision", this, authored);
-        final int score = authored.stream().mapToInt(TaxonConcept::getPrincipalScore).max().orElse(TaxonomicElement.MIN_SCORE);
-        List<TaxonConcept> candidates = authored.stream().filter(tc -> tc.getPrincipalScore() == score).collect(Collectors.toList());
-        if (candidates.size() > 1)
-            taxonomy.report(IssueType.PROBLEM, "scientificName.collision.warn", this, candidates);
+        taxonomy.report(IssueType.COLLISION, "scientificName.collision", this, candidates);
+        taxonomy.report(IssueType.PROBLEM, "scientificName.collision.warn", this, candidates);
         return candidates.get(0);
     }
 

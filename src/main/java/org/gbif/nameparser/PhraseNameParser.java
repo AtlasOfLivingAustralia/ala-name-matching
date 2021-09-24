@@ -56,6 +56,7 @@ public class PhraseNameParser extends GBIFNameParser {
 
     static {
         HashMap<String, Rank> ranks = new HashMap<String, Rank>();
+        ranks.put("f", Rank.FORM);
         ranks.put("subsp", Rank.SUBSPECIES);
         ranks.put("ssp", Rank.SUBSPECIES);
         ranks.put("var", Rank.VARIETY);
@@ -68,7 +69,8 @@ public class PhraseNameParser extends GBIFNameParser {
     public static final String ALL_LETTERS_NUMBERS = NormalisedNameParser.NAME_LETTERS + NormalisedNameParser.name_letters + "0-9";
     protected static final String LOCATION_OR_DESCR = "(?:[" + ALL_LETTERS_NUMBERS + " -'\"_\\.]+|\\.)";
     protected static final String VOUCHER = "(\\([" + ALL_LETTERS_NUMBERS + "- \\./&,']+\\))";
-    protected static final String SOURCE_AUTHORITY = "([" + ALL_LETTERS_NUMBERS + "\\[\\]'\" -,\\.]+|\\.)";
+    protected static final String COMMENTARY = "(\\[[^\\]]*\\])";
+    protected static final String SOURCE_AUTHORITY = "([" + ALL_LETTERS_NUMBERS + "'\" -,\\.]+|\\.)";
     protected static final String PHRASE_RANKS = "(?:" + StringUtils.join(VALID_PHRASE_RANKS.keySet(), "|") + ")\\.? ";
     private static final String RANK_MARKER_ALL = "(notho)? *(" + StringUtils.join(RankUtils.RANK_MARKER_MAP.keySet(), "|")
             + ")\\.?";
@@ -85,8 +87,10 @@ public class PhraseNameParser extends GBIFNameParser {
             // Group 3 indicates the mandatory location/desc for the phrase name. But it may be possible to have homonyms if the VOUCHER is not supplied
             + "(" + LOCATION_OR_DESCR + ")"
             //Group 4 is the VOUCHER for the phrase it indicates the collector and a voucher id
-            + VOUCHER + "?"
-            //Group 5 is the party propsoing addition of the taxon
+            + VOUCHER + "?(?: *)"
+            // Group 5 is any commentary
+            + COMMENTARY + "?(?: *)"
+            //Group 6 is the party propsoing addition of the taxon
             + SOURCE_AUTHORITY + "?$"
     );
 
@@ -146,7 +150,7 @@ public class PhraseNameParser extends GBIFNameParser {
                 alapn.setAuthorsParsed(false);
                 alapn.setLocationPhraseDescription(StringUtils.trimToNull(m.group(3)));
                 alapn.setPhraseVoucher(StringUtils.trimToNull(m.group(4)));
-                alapn.setPhraseNominatingParty(StringUtils.trimToNull(m.group(5)));
+                alapn.setPhraseNominatingParty(StringUtils.trimToNull(m.group(6)));
                 return alapn;
             }
 
