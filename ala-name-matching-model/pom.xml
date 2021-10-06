@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>ala-name-matching</artifactId>
+        <groupId>au.org.ala</groupId>
+        <version>4.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>ala-name-matching-model</artifactId>
+    <name>ALA Name Matching Model</name>
+    <description>Core name matching data model and vocabularies</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.gbif</groupId>
+            <artifactId>gbif-common</artifactId>
+            <version>0.37</version>
+        </dependency>
+        <dependency>
+            <groupId>org.gbif</groupId>
+            <artifactId>name-parser</artifactId>
+            <version>2.24</version>
+        </dependency>
+        <dependency>
+            <groupId>uk.ac.shef.wit</groupId>
+            <artifactId>simmetrics</artifactId>
+            <version>${simmetrics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>${opencsv.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

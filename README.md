@@ -6,11 +6,25 @@ This API borrows heavily from the name parsing great work done by [GBIF](https:/
 in their [scientific name parser library](https://github.com/gbif/name-parser)
 This code contains additions for handling some Australian specific issues.
 
+## Modules
+
+* **ala-name-matching-model** The data model used by the name matching index.
+  This module contains a number of useful vocabularies that you may want to 
+  include in your application, even if you don' want to name match.
+* **ala-name-matching-search** Local name index searching.
+  Include this in you application if you want to match names against a local name index.
+* **ala-name-magcing-builder** Merge taxonomies and build name indexes.
+  This is a separate module to the searcher so that you can build the name
+  index that the searcher uses, without importing a shedload of dependencies
+  if you just want to search for things.
+* **ala-name-matching-tools** Some useful utilities that can be used to
+  do bulk matching for testing and the like.
+* **ala-name-matching-distributions** A full distribution zip file, including
+  some shell scripts to get various commands going.
+
 ## Versions
 
-Currently there are 2 versions of this library, 2.x and 3.x.
-* 2.x is using lucene 4.
-* 3.x is using lucene 6 or above.
+Version 4.x of the library uses Lucene 8.
 
 ## Generating a name match index
 
@@ -41,17 +55,19 @@ You can download the IRMNG DwCA for homonyms from the following URL:
 
 An assembly zip file for this can be downloaded from our maven repository : 
 
-[ala-name-matching-3.5-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/3.5/ala-name-matching-3.5-distribution.zip)
+[ala-name-matching-4.0-SNAPSHOT-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/3.5/ala-name-matching-3.5-distribution.zip)
 
 To generate the name index using the data described above, follow these steps. Alternatively use the [ALA Ansible scripts](https://github.com/AtlasOfLivingAustralia/ala-install) 
 here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustralia/ala-install/blob/master/ansible/nameindexer-standalone.yml) which does it all for you.
 
 * Download the zip files linked above to a directory e.g. /data/names/ and extract them
-* Download the distribution zip [ala-name-matching-3.5-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/3.5/ala-name-matching-3.5-distribution.zip)
+* Download the distribution zip [ala-name-matching-disribution-4.0-SNAPSHOT-distribution.zip](http://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching/3.5/ala-name-matching-distribution-4.0-SNAPSHOT-distribution.zip)
+  and unzip it.
+ You wil find a number of shell scripts in the base directory.
 * Generate the names index with command:
 
 ```
-java -jar ala-name-matching-3.5.jar --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
+./index.sh --all --dwca /data/names/dwca-col --target /data/lucene/testdwc-namematching --irmng /data/names/irmng/IRMNG_DWC_HOMONYMS --common /data/names/col_vernacular.txt
 ```
 
 Please be aware that the names indexing could take over an hour to complete.
@@ -66,7 +82,7 @@ into a single, combined taxonomy.
 An example command for the taxonomy builder is:
 
 ```
-java --classpath <classpath> au.org.ala.names.index.TaxonomyBuilder -c /data/names/ala-taxon-config.json -w tmp -o /data/names/combined /data/names/APNI/DwC /data/names/AFD/DwC /data/names/CAAB/DwC
+./merge.sh -c /data/names/ala-taxon-config.json -w tmp -o /data/names/combined /data/names/APNI/DwC /data/names/AFD/DwC /data/names/CAAB/DwC
 ```
 
 More information about the merge configuration can be found [here](doc/merge-config.md).
@@ -76,14 +92,18 @@ More information about the merge configuration can be found [here](doc/merge-con
 This library is built with maven. By default a `mvn install` will try to run a test suite which will fail without a local installation of a name index.
 To skip this step, run a build with ```mvn install -DskipTests=true```.
 
-The build creates 3 artefacts in the ala-name-matching/target directory: 
+The build creates one artefact in the `ala-name-matching-distribution/target` directory: 
 
-* ala-name-matching-3.5.jar - built jar for the project code only
-* ala-name-matching-3.5-distribution.zip - zip containing the project jar and dependencies
-* ala-name-matching-3.5-sources.jar - source jar for the project code only
+* ala-name-matching-distribution-4.0-SNAPSHOT-distribution.zip - zip containing the project jar and dependencies
+
+Each module contains two artefacts in the 
+`ala-name-matching/ala-name-matching-<module>/target` directory:
+
+* ala-name-matching-<module>-4.0-SNAPSHOT.jar - built jar for the project code only
+* ala-name-matching-<module>-4.0-SNAPSHOT-sources.jar - source jar for the project code only
 
 The name index for Australian names lists used in unit tests can be downloaded [from here](https://biocache.ala.org.au/archives/nameindexes/20220629) and needs to be extracted to the
-directory `/data/lucene/namematching-20210629`
+directory `/data/lucene/namematching-20210811`
 
 ## ALA Names List
 
@@ -116,19 +136,29 @@ The ALA Name Matching is available as a library that can be used in other projec
 
 To use ala-name-matching, include it as a dependency in your pom file:
 ```
-   <dependency>
-      <groupId>au.org.ala</groupId>
-      <artifactId>ala-name-matching</artifactId>
-      <version>3.5</version>
-   </dependency>
+<dependency>
+  <groupId>au.org.ala</groupId>
+  <artifactId>ala-name-matching-search</artifactId>
+  <version>4.0-SNAPSHOT</version>
+</dependency>
 ```
+
+If you just want the handy enums and such-like, use
+```
+<dependency>
+  <groupId>au.org.ala</groupId>
+  <artifactId>ala-name-matching-model</artifactId>
+  <version>4.0-SNAPSHOT</version>
+</dependency>
+```
+
 
 If you are using grails 3, you may encounter problems with the newer GBIF
 libraries having validation code that conflicts with spring validation.
 You can correct this by using
 
 ```
-compile("au.org.ala:ala-name-matching:3.5") {
+compile("au.org.ala:ala-name-matching-search:4.0-SNAPSHOT") {
     exclude group: 'org.slf4j', module: 'slf4j-log4j12'
     exclude group: 'org.apache.bval', module: 'org.apache.bval.bundle'
 }

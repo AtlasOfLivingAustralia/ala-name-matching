@@ -1,0 +1,58 @@
+<!--
+  ~ Copyright (c) 2021 Atlas of Living Australia
+  ~ All Rights Reserved.
+  ~
+  ~ The contents of this file are subject to the Mozilla Public
+  ~ License Version 1.1 (the "License"); you may not use this file
+  ~ except in compliance with the License. You may obtain a copy of
+  ~ the License at http://www.mozilla.org/MPL/
+  ~
+  ~ Software distributed under the License is distributed on an "AS
+  ~  IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+  ~ implied. See the License for the specific language governing
+  ~ rights and limitations under the License.
+  ~
+  -->
+
+<archive xmlns="http://rs.tdwg.org/dwc/text/">
+  <core encoding="UTF-8" fieldsTerminatedBy="," linesTerminatedBy="\n" fieldsEnclosedBy="&quot;" ignoreHeaderLines="1" rowType="http://rs.tdwg.org/dwc/terms/Taxon">
+    <files>
+      <location>taxon.csv</location>
+    </files>
+    <id index="0" />
+    <field index="0" term="http://rs.tdwg.org/dwc/terms/taxonID"/>
+    <field index="1" term="http://rs.tdwg.org/dwc/terms/parentNameUsageID"/>
+    <field index="2" term="http://rs.tdwg.org/dwc/terms/acceptedNameUsageID"/>
+    <field index="3" term="http://rs.tdwg.org/dwc/terms/datasetID"/>
+    <field index="4" term="http://rs.tdwg.org/dwc/terms/nomenclaturalCode"/>
+    <field index="5" term="http://rs.tdwg.org/dwc/terms/scientificName"/>
+    <field index="6" term="http://rs.tdwg.org/dwc/terms/scientificNameAuthorship"/>
+    <field index="7" term="http://rs.tdwg.org/dwc/terms/taxonRank"/>
+    <field index="8" term="http://rs.tdwg.org/dwc/terms/taxonConceptID"/>
+    <field index="9" term="http://rs.tdwg.org/dwc/terms/scientificNameID"/>
+    <field index="10" term="http://rs.tdwg.org/dwc/terms/taxonomicStatus"/>
+    <field index="11" term="http://rs.tdwg.org/dwc/terms/nomenclaturalStatus"/>
+    <field index="12" term="http://rs.tdwg.org/dwc/terms/establishmentMeans"/>
+    <field index="13" term="http://rs.tdwg.org/dwc/terms/nameAccordingToID"/>
+    <field index="14" term="http://rs.tdwg.org/dwc/terms/nameAccordingTo"/>
+    <field index="15" term="http://rs.tdwg.org/dwc/terms/namePublishedInID"/>
+    <field index="16" term="http://rs.tdwg.org/dwc/terms/namePublishedIn"/>
+    <field index="17" term="http://rs.tdwg.org/dwc/terms/namePublishedInYear"/>
+    <field index="18" term="http://ala.org.au/terms/1.0/nameComplete"/>
+    <field index="19" term="http://ala.org.au/terms/1.0/nameFormatted"/>
+    <field index="20" term="http://purl.org/dc/terms/source"/>
+  </core>
+  <extension encoding="UTF-8" fieldsTerminatedBy="," linesTerminatedBy="\n" fieldsEnclosedBy="&quot;" ignoreHeaderLines=
+"1" rowType="http://rs.gbif.org/terms/1.0/VernacularName">
+    <files>
+      <location>vernacularNames.csv</location>
+    </files>
+    <coreid index="0" />
+    <field index="0" term="http://rs.tdwg.org/dwc/terms/taxonID"/>
+    <field index="1" term="http://ala.org.au/terms/1.0/nameID"/>
+    <field index="2" term="http://rs.tdwg.org/dwc/terms/datasetID"/>
+    <field index="3" term="http://rs.tdwg.org/dwc/terms/vernacularName"/>
+    <field index="4" term="http://ala.org.au/terms/1.0/status"/>
+    <field index="5" term="http://purl.org/dc/terms/language"/>
+  </extension>
+</archive>

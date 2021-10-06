@@ -9,17 +9,27 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>au.org.ala</groupId>
     <artifactId>ala-name-matching</artifactId>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
     <!-- Major version increment due to package structure change -->
     <version>4.0-SNAPSHOT</version>
+
+    <modules>
+        <module>ala-name-matching-model</module>
+        <module>ala-name-matching-search</module>
+        <module>ala-name-matching-builder</module>
+        <module>ala-name-matching-tools</module>
+        <module>ala-name-matching-distribution</module>
+    </modules>
+
     <name>ALA Name Matching (for Lucene 8 or above)</name>
-    <!-- SCM entry that points to SVN directory that contains pom -->
+
     <scm>
         <connection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</connection>
         <url>https://github.com/AtlasOfLivingAustralia/ala-name-matching</url>
         <developerConnection>scm:git:git@github.com:AtlasOfLivingAustralia/ala-name-matching.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
+
     <properties>
         <!-- This project uses UTF8 for Regular Expressions -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -28,122 +38,29 @@
         <targetJdk>1.8</targetJdk>
         <animal-sniffer-signature.artifact>java18</animal-sniffer-signature.artifact>
         <animal-sniffer-signature.version>1.0</animal-sniffer-signature.version>
+        <junit.version>4.13.1</junit.version>
+        <slf4j.version>1.7.25</slf4j.version>
+        <simmetrics.version>1.6.2</simmetrics.version>
+        <opencsv.version>4.1</opencsv.version>
+        <commons-cli.version>1.2</commons-cli.version>
+        <commons-io.version>2.4</commons-io.version>
+        <dwca-io.version>1.32</dwca-io.version>
+        <checklist-bank.version>2.61</checklist-bank.version>
     </properties>
     <dependencies>
         <dependency>
-            <groupId>org.gbif</groupId>
-            <artifactId>dwca-io</artifactId>
-            <version>1.27</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-io</groupId>
-                    <artifactId>commons-io</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
-        <!-- SL4J -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.25</version>
-        </dependency>
+        <!-- Uniform SLF4J -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.25</version>
+            <version>${slf4j.version}</version>
         </dependency>
-        <dependency>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-            <version>3.2.2</version>
-        </dependency>
-        <!-- GBIF libraries -->
-        <dependency>
-            <groupId>org.gbif</groupId>
-            <artifactId>gbif-common</artifactId>
-            <version>0.37</version>
-        </dependency>
-        <dependency>
-            <groupId>org.gbif</groupId>
-            <artifactId>name-parser</artifactId>
-            <version>2.24</version>
-        </dependency>
-        <dependency>
-            <groupId>org.gbif.checklistbank</groupId>
-            <artifactId>checklistbank-common</artifactId>
-            <version>2.61</version>
-        </dependency>
-        <dependency>
-            <groupId>org.gbif</groupId>
-            <artifactId>dwca-io</artifactId>
-            <version>1.32</version>
-            <!--
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-io</groupId>
-                    <artifactId>commons-io</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
-            -->
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.1</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- Lucene index building -->
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
-            <version>${org.apache.lucene.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-backward-codecs</artifactId>
-            <version>${org.apache.lucene.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
-            <version>${org.apache.lucene.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-queryparser</artifactId>
-            <version>${org.apache.lucene.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>xerces</groupId>
-                    <artifactId>xercesImpl</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
-            <version>4.1</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>uk.ac.shef.wit</groupId>
-            <artifactId>simmetrics</artifactId>
-            <version>1.6.2</version>
-        </dependency>
-        <!-- Jackson JSON parsing -->
+        <!-- Uniform Jackson for JSON parsing -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
@@ -158,12 +75,6 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
             <version>${com.fasterxml.jackson.version}</version>
-        </dependency>
-        <!-- For command line arg parsing -->
-        <dependency>
-            <groupId>commons-cli</groupId>
-            <artifactId>commons-cli</artifactId>
-            <version>1.2</version>
         </dependency>
     </dependencies>
     <profiles>
@@ -180,29 +91,6 @@
                     <configuration>
                         <encoding>UTF8</encoding>
                     </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <configuration>
-                        <descriptors>
-                            <descriptor>src/assembly/assembly.xml</descriptor>
-                        </descriptors>
-                        <archive>
-                            <manifest>
-                                <addClasspath>true</addClasspath>
-                                <classpathPrefix>lib/</classpathPrefix>
-                            </manifest>
-                        </archive>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <phase>package</phase>
-                            <goals>
-                                <goal>single</goal>
-                            </goals>
-                        </execution>
-                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -233,19 +121,6 @@
                         </execution>
                     </executions>
                 </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <configuration>
-                        <archive>
-                            <manifest>
-                                <addClasspath>true</addClasspath>
-                                <classpathPrefix>lib/</classpathPrefix>
-                                <mainClass>au.org.ala.names.search.DwcaNameIndexer</mainClass>
-                            </manifest>
-                        </archive>
-                    </configuration>
-                </plugin>
             </plugins>
         </build>
         </profile>
@@ -254,43 +129,6 @@
             <id>travis</id>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>2.4</version>
-                        <configuration>
-                            <archive>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                    <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>au.org.ala.names.search.DwcaNameIndexer</mainClass>
-                                </manifest>
-                            </archive>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>src/assembly/assembly.xml</descriptor>
-                            </descriptors>
-                            <archive>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                    <classpathPrefix>lib/</classpathPrefix>
-                                </manifest>
-                            </archive>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
                 </plugins>
             </build>
         </profile>

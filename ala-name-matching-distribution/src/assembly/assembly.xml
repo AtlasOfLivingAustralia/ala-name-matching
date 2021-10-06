@@ -1,0 +1,35 @@
+<assembly>
+    <id>distribution</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+    <moduleSets>
+        <moduleSet>
+            <useAllReactorProjects>true</useAllReactorProjects>
+            <includes>
+                <include>au.org.ala:ala-name-matching-model</include>
+                <include>au.org.ala:ala-name-matching-search</include>
+                <include>au.org.ala:ala-name-matching-builder</include>
+                <include>au.org.ala:ala-name-matching-tools</include>
+            </includes>
+            <binaries>
+                <outputDirectory>lib</outputDirectory>
+                <unpack>false</unpack>
+            </binaries>
+        </moduleSet>
+    </moduleSets>
+    <fileSets>
+        <fileSet>
+            <directory>${project.build.scriptSourceDirectory}</directory>
+            <outputDirectory></outputDirectory>
+            <includes>
+                <include>merge.sh</include>
+                <include>index.sh</include>
+                <include>compare.sh</include>
+                <include>generate.sh</include>
+                <include>dump.sh</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+</assembly>
