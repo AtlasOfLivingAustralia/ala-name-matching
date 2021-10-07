@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>ala-name-matching-distribution</artifactId>
+    <packaging>pom</packaging>
 
     <name>ALA Name Matching Distribution</name>
     <description>Distribution along with dependencies</description>
