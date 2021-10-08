@@ -96,6 +96,11 @@ public class ALANameAnalyser extends NameAnalyser {
      */
     protected static final Pattern LOOSE_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.?\\s+");
     /**
+     * Pattern for unsure markers (cf, aff etc)
+     */
+    protected static final Pattern UNSURE_MARKER = Pattern.compile("\\s+(?:cf|cfr|conf|aff)\\.?\\s+" );
+
+    /**
      * Pattern for non-name characters
      */
     protected static final Pattern NON_NAME = Pattern.compile("[^A-Za-z0-9'\"\\- ]+");
@@ -218,22 +223,27 @@ public class ALANameAnalyser extends NameAnalyser {
                 scientificName = (left + " " + right).trim();
             }
         }
-        try {
-            name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
-            if (name != null) {
-                nameType = name.getType();
-                if (rankType == null && name.getRank() != null)
-                    rankType = RankType.getForCBRank(name.getRank());
+        if (UNSURE_MARKER.matcher(scientificName).find()) {
+            // Leave this well alone but indicate that it is doubtful
+            nameType = NameType.DOUBTFUL;
+        } else {
+            try {
+                name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
+                if (name != null) {
+                    nameType = name.getType();
+                    if (rankType == null && name.getRank() != null)
+                        rankType = RankType.getForCBRank(name.getRank());
+                }
+            } catch (UnparsableException ex) {
+                // Oh well, worth a try
             }
-        } catch (UnparsableException ex) {
-            // Oh well, worth a try
-        }
-        if (loose) {
-            if (scientificNameAuthorship == null && name != null) {
-                String ac = this.normalise(name.authorshipComplete());
-                if (ac != null && !ac.isEmpty() && !(name instanceof ALAParsedName)) { // ALAParsedName indicates a phrase name; leave as-is
-                    scientificName = name.buildName(true, true, false, true, true, false, true, false, true, false, false, false, true, true);
-                    scientificNameAuthorship = ac;
+            if (loose) {
+                if (scientificNameAuthorship == null && name != null) {
+                    String ac = this.normalise(name.authorshipComplete());
+                    if (ac != null && !ac.isEmpty() && !(name instanceof ALAParsedName)) { // ALAParsedName indicates a phrase name; leave as-is
+                        scientificName = name.buildName(true, true, false, true, true, false, true, false, true, false, false, false, true, true);
+                        scientificNameAuthorship = ac;
+                    }
                 }
             }
         }
