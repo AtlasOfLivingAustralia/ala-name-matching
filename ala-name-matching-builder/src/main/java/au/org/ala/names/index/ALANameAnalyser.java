@@ -18,6 +18,8 @@ package au.org.ala.names.index;
 
 import au.org.ala.names.model.*;
 import au.org.ala.names.util.CleanedScientificName;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import org.gbif.api.exception.UnparsableException;
@@ -36,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.function.Predicate;
@@ -359,7 +362,15 @@ public class ALANameAnalyser extends NameAnalyser {
      */
     protected void loadPatternCsv(String resource, List<Pattern> list) {
         try {
-            CSVReader reader = new CSVReader(new InputStreamReader(this.getClass().getResourceAsStream(resource), "UTF-8"), ',', '"', 1);
+            CSVParser csvParser = new CSVParserBuilder()
+                    .withSeparator('\t')
+                    .withQuoteChar('"')
+                    .withEscapeChar('\\')
+                    .build();
+            CSVReader reader = new CSVReaderBuilder(new InputStreamReader(this.getClass().getResourceAsStream(resource), "UTF-8"))
+                    .withCSVParser(csvParser)
+                    .withSkipLines(1)
+                    .build();
             String[] next;
             while ((next = reader.readNext()) != null) {
                 String label = next[0];
