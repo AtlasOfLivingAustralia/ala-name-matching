@@ -18,6 +18,8 @@ package au.org.ala.names.index;
 
 import au.org.ala.names.model.*;
 import au.org.ala.names.util.CleanedScientificName;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import org.gbif.api.exception.UnparsableException;
@@ -36,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.function.Predicate;
@@ -95,6 +98,11 @@ public class ALANameAnalyser extends NameAnalyser {
      * Pattern for bare (no proper period) rank markers
      */
     protected static final Pattern LOOSE_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.?\\s+");
+    /**
+     * Pattern for unsure markers (cf, aff etc)
+     */
+    protected static final Pattern UNSURE_MARKER = Pattern.compile("\\s+(?:cf|cfr|conf|aff)\\.?\\s+" );
+
     /**
      * Pattern for non-name characters
      */
@@ -218,22 +226,27 @@ public class ALANameAnalyser extends NameAnalyser {
                 scientificName = (left + " " + right).trim();
             }
         }
-        try {
-            name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
-            if (name != null) {
-                nameType = name.getType();
-                if (rankType == null && name.getRank() != null)
-                    rankType = RankType.getForCBRank(name.getRank());
+        if (UNSURE_MARKER.matcher(scientificName).find()) {
+            // Leave this well alone but indicate that it is doubtful
+            nameType = NameType.DOUBTFUL;
+        } else {
+            try {
+                name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
+                if (name != null) {
+                    nameType = name.getType();
+                    if (rankType == null && name.getRank() != null)
+                        rankType = RankType.getForCBRank(name.getRank());
+                }
+            } catch (UnparsableException ex) {
+                // Oh well, worth a try
             }
-        } catch (UnparsableException ex) {
-            // Oh well, worth a try
-        }
-        if (loose) {
-            if (scientificNameAuthorship == null && name != null) {
-                String ac = this.normalise(name.authorshipComplete());
-                if (ac != null && !ac.isEmpty() && !(name instanceof ALAParsedName)) { // ALAParsedName indicates a phrase name; leave as-is
-                    scientificName = name.buildName(true, true, false, true, true, false, true, false, true, false, false, false, true, true);
-                    scientificNameAuthorship = ac;
+            if (loose) {
+                if (scientificNameAuthorship == null && name != null) {
+                    String ac = this.normalise(name.authorshipComplete());
+                    if (ac != null && !ac.isEmpty() && !(name instanceof ALAParsedName)) { // ALAParsedName indicates a phrase name; leave as-is
+                        scientificName = name.buildName(true, true, false, true, true, false, true, false, true, false, false, false, true, true);
+                        scientificNameAuthorship = ac;
+                    }
                 }
             }
         }
@@ -349,7 +362,15 @@ public class ALANameAnalyser extends NameAnalyser {
      */
     protected void loadPatternCsv(String resource, List<Pattern> list) {
         try {
-            CSVReader reader = new CSVReader(new InputStreamReader(this.getClass().getResourceAsStream(resource), "UTF-8"), ',', '"', 1);
+            CSVParser csvParser = new CSVParserBuilder()
+                    .withSeparator('\t')
+                    .withQuoteChar('"')
+                    .withEscapeChar('\\')
+                    .build();
+            CSVReader reader = new CSVReaderBuilder(new InputStreamReader(this.getClass().getResourceAsStream(resource), "UTF-8"))
+                    .withCSVParser(csvParser)
+                    .withSkipLines(1)
+                    .build();
             String[] next;
             while ((next = reader.readNext()) != null) {
                 String label = next[0];

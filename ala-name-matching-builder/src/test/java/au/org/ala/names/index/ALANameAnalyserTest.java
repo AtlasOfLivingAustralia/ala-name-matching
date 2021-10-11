@@ -269,6 +269,27 @@ public class ALANameAnalyserTest {
         assertEquals(RankType.UNRANKED, key.getRank());
      }
 
+
+    // Test aff. name looks like an author
+    @Test
+    public void testKey26() throws Exception {
+        // With authot
+        NameKey key1 = this.analyser.analyse(null, "Carex aff. tereticaulis (Lake Omeo)", "sensu G.W. Carr", RankType.UNRANKED, TaxonomicType.INFERRED_UNPLACED, true);
+        assertEquals(null, key1.getCode());
+        assertEquals(NameType.DOUBTFUL, key1.getType());
+        assertEquals("CAREX AFF TERETICAULIS LAKE OMEO", key1.getScientificName());
+        assertEquals("sensu G.W. Carr", key1.getScientificNameAuthorship());
+        assertEquals(RankType.UNRANKED, key1.getRank());
+
+        // Without author
+        NameKey key2 = this.analyser.analyse(null, "Carex aff. tereticaulis (Lake Omeo)", null, RankType.UNRANKED, TaxonomicType.INFERRED_UNPLACED, true);
+        assertEquals(null, key2.getCode());
+        assertEquals(NameType.DOUBTFUL, key2.getType());
+        assertEquals("CAREX AFF TERETICAULIS LAKE OMEO", key2.getScientificName());
+        assertEquals(null, key2.getScientificNameAuthorship());
+        assertEquals(RankType.UNRANKED, key2.getRank());
+    }
+
     @Test
     public void testAuthorEquals1() throws Exception {
         assertEquals(0, this.analyser.compareAuthor(null, null));

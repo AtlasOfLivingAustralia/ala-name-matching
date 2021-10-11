@@ -17,6 +17,7 @@
 package au.org.ala.names.index;
 
 import au.org.ala.vocab.ALATerm;
+import com.opencsv.exceptions.CsvValidationException;
 import org.apache.commons.collections.MapUtils;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.api.model.registry.Contact;
@@ -374,6 +375,8 @@ abstract public class NameSource {
             return ns;
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
+        } catch (CsvValidationException ex) {
+            throw new IllegalStateException(ex);
         }
     }
 }

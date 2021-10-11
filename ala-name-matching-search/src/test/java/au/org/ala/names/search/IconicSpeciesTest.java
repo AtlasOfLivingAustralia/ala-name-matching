@@ -19,10 +19,14 @@ package au.org.ala.names.search;
 import au.org.ala.names.model.LinnaeanRankClassification;
 import au.org.ala.names.model.NameSearchResult;
 import au.org.ala.names.model.RankType;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.util.List;
 
@@ -103,7 +107,15 @@ public class IconicSpeciesTest {
     @Test
     public void testIconicSpeciesFile() {
         try {
-            CSVReader reader = new CSVReader(new InputStreamReader(this.getClass().getResourceAsStream("iconic_species_list.csv")), ',', '"');
+            CSVParser csvParser = new CSVParserBuilder()
+                    .withSeparator(',')
+                    .withQuoteChar('"')
+                    .withEscapeChar('\\')
+                    .build();
+            CSVReader reader = new CSVReaderBuilder(new InputStreamReader(this.getClass().getResourceAsStream("iconic_species_list.csv")))
+                    .withCSVParser(csvParser)
+                    .withSkipLines(1)
+                    .build();
             String[] values;
             int passed = 0, failed = 0;
 

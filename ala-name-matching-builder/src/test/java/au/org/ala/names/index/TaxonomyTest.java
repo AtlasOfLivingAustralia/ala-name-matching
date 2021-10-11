@@ -420,6 +420,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(RankType.UNRANKED, syn1.getRank());
         assertNull(syn1.getProvenance());
     }
+
     @Test
     public void testResolveUnranked7() throws Exception {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
@@ -445,6 +446,40 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(RankType.VARIETY, syn1.getRank());
         assertEquals(RankType.UNRANKED, syn2.getRank());
         assertFalse(syn1.getProvenance() == null || syn1.getProvenance().isEmpty());
+    }
+
+    // Issue #126 Do not merge X y and X aff. y
+    @Test
+    public void testResolveUnranked8() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-32.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance acc1 = this.taxonomy.getInstance("Concept-1-1");
+        TaxonConceptInstance acc2 = this.taxonomy.getInstance("Concept-2-1");
+        TaxonConceptInstance acc3 = this.taxonomy.getInstance("Concept-3-1");
+        assertNotNull(acc1);
+        assertNotNull(acc2);
+        assertNotNull(acc3);
+        TaxonConcept tcAcc1 = acc1.getContainer();
+        TaxonConcept tcAcc2 = acc2.getContainer();
+        TaxonConcept tcAcc3 = acc3.getContainer();
+        assertNotSame(tcAcc1, tcAcc2);
+        assertNotSame(tcAcc1, tcAcc3);
+        assertNotSame(tcAcc2, tcAcc3);
+        ScientificName sn1 = tcAcc1.getContainer();
+        ScientificName sn2 = tcAcc2.getContainer();
+        ScientificName sn3 = tcAcc2.getContainer();
+        assertNotSame(sn1, sn2);
+        assertSame(sn2, sn3);
+        UnrankedScientificName usn1 = sn1.getContainer();
+        UnrankedScientificName usn2 = sn2.getContainer();
+        assertNotSame(usn1, usn2);
+        BareName bn1 = usn1.getContainer();
+        BareName bn2 = usn2.getContainer();
+        assertNotSame(bn1, bn2);
     }
 
     // Test placement on an uncoded name

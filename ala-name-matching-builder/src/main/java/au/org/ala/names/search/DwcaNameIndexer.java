@@ -52,6 +52,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -81,6 +83,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
     static protected RankType[] SYNONYM_INFERRED_RANKS = new RankType[] {
             RankType.KINGDOM, RankType.PHYLUM, RankType.CLASS, RankType.ORDER, RankType.FAMILY
     };
+
+    /** Detect names with an additional locality in parentheses at the end */
+    protected static final Pattern LOCALITY_PATTERN = Pattern.compile("^([\\p{Alnum}.'()\\s]+)\\s+\\([\\p{Alnum}\\s]+\\)\\s*$");
 
     private static int PAGE_SIZE = 25000;
     private boolean loadingIndex;
@@ -533,6 +538,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
                     nc = this.buildNameComplete(sn, sna, nc);
                     otherNames.add(sn);
                     otherNames.add(nc);
+                    Matcher locality = LOCALITY_PATTERN.matcher(sn);
+                    if (locality.matches())
+                        otherNames.add(locality.group(1).trim());
                 }
             }
             doc.add(new StoredField(NameIndexField.PRIORITY.toString(), score < 0 ? defaultScore : score));

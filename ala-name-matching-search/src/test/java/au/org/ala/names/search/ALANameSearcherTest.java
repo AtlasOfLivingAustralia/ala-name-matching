@@ -1535,6 +1535,23 @@ public class ALANameSearcherTest {
 
 
     @Test
+    public void testAffLookup1() throws Exception  {
+        String name = "Carex aff. tereticaulis (Lake Omeo)";
+        NameSearchResult nsr = searcher.searchForRecord(name);
+        assertNotNull(nsr);
+        assertEquals("ALA_186619", nsr.getLsid());
+        name = "Carex aff. tereticaulis";
+        nsr = searcher.searchForRecord(name);
+        assertNotNull(nsr);
+        assertEquals("ALA_186619", nsr.getLsid());
+        name = "Carex tereticaulis";
+        nsr = searcher.searchForRecord(name);
+        assertNotNull(nsr);
+        assertEquals("https://id.biodiversity.org.au/node/apni/2919780", nsr.getLsid());
+    }
+
+
+    @Test
     public void testMetricsLookup1() throws Exception {
         String name = "Geopelia placida";
         LinnaeanRankClassification cl = new LinnaeanRankClassification();

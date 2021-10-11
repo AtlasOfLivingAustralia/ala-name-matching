@@ -21,6 +21,7 @@ import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.vocab.ALATerm;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
+import com.opencsv.exceptions.CsvValidationException;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -68,7 +69,7 @@ public class CSVNameSource extends NameSource {
      * @param reader The file reader
      * @param rowType The type of row in the CSV
      */
-    public CSVNameSource(Reader reader, Term rowType) throws IOException {
+    public CSVNameSource(Reader reader, Term rowType) throws IOException, CsvValidationException {
         this.name = "Reader " + System.identityHashCode(reader);
         this.reader = new CSVReaderBuilder(reader).build();
         this.rowType = rowType;
@@ -82,12 +83,12 @@ public class CSVNameSource extends NameSource {
      * @param encoding The source encoding
      * @param rowType The type of row in the CSV
      */
-    public CSVNameSource(Path path, String encoding, Term rowType) throws IOException {
+    public CSVNameSource(Path path, String encoding, Term rowType) throws IOException, CsvValidationException {
         this(Files.newBufferedReader(path, Charset.forName(encoding)), rowType);
         this.name = path.toUri().toASCIIString();
     }
 
-    protected void collectColumns() throws IOException {
+    protected void collectColumns() throws IOException, CsvValidationException {
         TermFactory factory = TermFactory.instance();
         int index = 0;
         String[] header = reader.readNext();

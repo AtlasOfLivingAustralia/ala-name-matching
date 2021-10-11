@@ -19,6 +19,7 @@ package au.org.ala.names.util;
 import com.opencsv.*;
 import au.org.ala.names.model.*;
 import au.org.ala.names.search.*;
+import com.opencsv.exceptions.CsvValidationException;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -88,7 +89,7 @@ public class NameListComparer {
         return null;
     }
 
-    protected void readHeader() throws IOException {
+    protected void readHeader() throws IOException, CsvValidationException {
         String[] header = names.readNext();
         int i = 0;
 
@@ -246,7 +247,7 @@ public class NameListComparer {
         return values.toArray(new String[values.size()]);
     }
 
-    public void compare() throws IOException {
+    public void compare() throws IOException, CsvValidationException {
         String[] row, match;
         int count = 0;
 

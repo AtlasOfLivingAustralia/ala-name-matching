@@ -17,6 +17,10 @@
 package au.org.ala.names.parser.util;
 
 import au.org.ala.names.model.ALAParsedName;
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import org.gbif.api.exception.UnparsableException;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.vocabulary.NameType;
@@ -457,7 +461,15 @@ public class PhraseNameParserTests {
     //@Test
     public void testAllNamesForType() {
         try {
-            com.opencsv.CSVReader reader = new com.opencsv.CSVReader(new FileReader("/data/names/Version2011/ala_concepts_dump.txt"), '\t', '"', '\\', 1);
+            CSVParser csvParser = new CSVParserBuilder()
+                    .withSeparator('\t')
+                    .withQuoteChar('"')
+                    .withEscapeChar('\\')
+                    .build();
+            CSVReader reader = new CSVReaderBuilder(new FileReader("/data/names/Version2011/ala_concepts_dump.txt"))
+                    .withCSVParser(csvParser)
+                    .withSkipLines(1)
+                    .build();
             PhraseNameParser parser = new PhraseNameParser();
             int i = 0;
             for (String[] values = reader.readNext(); values != null; values = reader.readNext()) {
