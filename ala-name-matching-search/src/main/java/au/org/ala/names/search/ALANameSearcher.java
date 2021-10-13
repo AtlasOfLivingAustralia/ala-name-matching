@@ -30,6 +30,8 @@ import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.vocabulary.NameType;
 import org.gbif.api.vocabulary.Rank;
 import org.gbif.nameparser.PhraseNameParser;
+import uk.ac.shef.wit.simmetrics.similaritymetrics.AbstractStringMetric;
+import uk.ac.shef.wit.simmetrics.similaritymetrics.Levenshtein;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -72,6 +74,21 @@ public class ALANameSearcher {
     public static final Pattern voucherRemovePattern = Pattern.compile(" |,|&|\\.");
     public static final Pattern affPattern = Pattern.compile("([\\x00-\\x7F\\s]*) aff[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
     public static final Pattern cfPattern = Pattern.compile("([\\x00-\\x7F\\s]*) cf[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
+
+    private static Comparator<Map> AUTOCOMPLETE_COMPARATOR = new Comparator<Map>() {
+        @Override
+        public int compare(Map o1, Map o2) {
+            if (o1 == o2)
+                return 0;
+            if (o1 == null)
+                return Integer.MAX_VALUE;
+            if (o2 == null)
+                return Integer.MIN_VALUE;
+            float score1 = (float) o1.getOrDefault("score", 1.0f);
+            float score2 = (float) o2.getOrDefault("score", 1.0f);
+            return -Float.compare(score1, score2);
+        }
+    };
 
     /**
      * A set of names that are cross rank homonyms.
@@ -1792,7 +1809,7 @@ public class ALANameSearcher {
         return guids;
     }
 
-    private void appendAutocompleteResults(Map<String, Map> output, TopDocs results, boolean includeSynonyms, boolean commonNameResults) throws IOException {
+    private void appendAutocompleteResults(Map<String, Map> output, TopDocs results, boolean includeSynonyms, boolean commonNameResults, String q, AbstractStringMetric similarity) throws IOException {
         ScoreDoc[] scoreDocs = results.scoreDocs;
         int scoreDocsCount = scoreDocs.length;
         for(int excludedResult = 0; excludedResult < scoreDocsCount; ++excludedResult) {
@@ -1804,11 +1821,16 @@ public class ALANameSearcher {
 
             if (nsr == null || (nsr.getLeft() == null && !includeSynonyms)) continue;
 
-            Map m = formatAutocompleteNsr(i.score, nsr);
+            String name = commonNameResults ? src.get("common_orig") : src.get("name");
+            float score = similarity.getSimilarity(q, name);
+            score *= i.score;
+            if (!commonNameResults)
+                score *= 2.0f;
+            Map m = formatAutocompleteNsr(score, nsr);
 
             //use the matched common name
             if (commonNameResults) {
-                m.put("commonname", src.get("common_orig"));
+                m.put("commonname", name);
                 m.put("match", "commonName");
             } else {
                 m.put("match", "scientificName");
@@ -1836,10 +1858,7 @@ public class ALANameSearcher {
             }
 
             if (((nsr != null && nsr.getAcceptedLsid() == null) || includeSynonyms) && m != null) {
-                if (m.get("name").toString().equals("Acacia")) {
-                    int aa = 4;
-                }
-                Map existing = output.get(m.get("lsid").toString());
+                 Map existing = output.get(m.get("lsid").toString());
                 if (existing == null) {
                     output.put(m.get("lsid").toString(), m);
                 } else {
@@ -2043,36 +2062,36 @@ public class ALANameSearcher {
      */
     public List<Map> autocomplete(String q, int max, boolean includeSynonyms) {
         try {
-            if(false) {
-                return null;
-            } else {
-                Map<String, Map> output = new HashMap<String, Map>();
+            AbstractStringMetric similarity = new Levenshtein();
+            Map<String, Map> output = new HashMap<>();
 
-                //more queries for better scoring values
-                String lq = q.toLowerCase();
-                String uq = q.toUpperCase();
+            //more queries for better scoring values
+            String lq = q.toLowerCase();
+            String uq = q.toUpperCase();
 
-                //name search
-                Query fq = buildAutocompleteQuery(NameIndexField.NAME, lq, false);
-                BooleanQuery b = new BooleanQuery.Builder()
-                    .add(fq, BooleanClause.Occur.MUST)
-                    .add(NameIndexField.LEFT.searchWildcard("*"), includeSynonyms ? BooleanClause.Occur.SHOULD : BooleanClause.Occur.MUST)
-                    .build();
-                TopDocs results = cbSearcher.search(b, max);
-                appendAutocompleteResults(output, results, includeSynonyms, false);
+            //name search
+            Query fq = buildAutocompleteQuery(NameIndexField.NAME, lq, false);
+            BooleanQuery.Builder bb = new BooleanQuery.Builder();
+            bb.add(fq, BooleanClause.Occur.MUST);
+            if (!includeSynonyms)
+                bb.add(NameIndexField.iS_SYNONYM.search("T"), BooleanClause.Occur.MUST_NOT);
+            BooleanQuery b = bb.build();
+            TopDocs results = cbSearcher.search(b, max);
+            appendAutocompleteResults(output, results, includeSynonyms, false, q, similarity);
 
-                //format search term for the current common name index
-                uq = concatName(uq).toUpperCase();
+            //format search term for the current common name index
+            uq = concatName(uq).toUpperCase();
 
-                //common name search
-                fq = buildAutocompleteQuery(NameIndexField.SEARCHABLE_COMMON_NAME, uq, true);
-                results = vernSearcher.search(fq, max);
-                appendAutocompleteResults(output, results, includeSynonyms, true);
+            //common name search
+            fq = buildAutocompleteQuery(NameIndexField.SEARCHABLE_COMMON_NAME, uq, true);
+            results = vernSearcher.search(fq, max);
+            appendAutocompleteResults(output, results, includeSynonyms, true, q, similarity);
 
-                return new ArrayList(output.values());
-            }
+            List<Map> matches = new ArrayList<>(output.values());
+            matches.sort(AUTOCOMPLETE_COMPARATOR);
+            return matches;
         } catch (Exception e) {
-            log.error("Autocomplete error.",e);
+            log.error("Autocomplete error.", e);
         }
         return null;
     }
