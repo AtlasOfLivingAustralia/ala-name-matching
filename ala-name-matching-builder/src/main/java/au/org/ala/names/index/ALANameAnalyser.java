@@ -363,7 +363,7 @@ public class ALANameAnalyser extends NameAnalyser {
     protected void loadPatternCsv(String resource, List<Pattern> list) {
         try {
             CSVParser csvParser = new CSVParserBuilder()
-                    .withSeparator('\t')
+                    .withSeparator(',')
                     .withQuoteChar('"')
                     .withEscapeChar('\\')
                     .build();
