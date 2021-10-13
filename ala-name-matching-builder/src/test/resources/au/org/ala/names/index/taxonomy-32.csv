@@ -1,0 +1,4 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source
+"Concept-1-1","","","dr100","ICN","Carex tereticaulis","F.Muell.","species","","","accepted","","","","","","","","","",""
+"Concept-2-1","","","dr108","","Carex aff. tereticaulis (Lake Omeo)","","unranked","","","inferredUnplaced","","","","","","","","","",""
+"Concept-3-1","","","dr108","","Carex aff. tereticaulis (Lake Omeo)","sensu G.W. Carr","unranked","","","inferredUnplaced","","","","","","","","","",""
