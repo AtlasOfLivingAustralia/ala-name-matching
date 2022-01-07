@@ -17,12 +17,11 @@
 package au.org.ala.names.util;
 
 import au.org.ala.names.index.NameProvider;
+import au.org.ala.names.index.NomenclaturalClassifier;
 import au.org.ala.names.index.TaxonConceptInstance;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
 import org.apache.commons.io.IOUtils;
-import org.gbif.api.vocabulary.NomenclaturalCode;
-import org.gbif.api.vocabulary.Rank;
 
 import java.io.*;
 import java.util.regex.Pattern;
@@ -58,12 +57,12 @@ public class TestUtils {
         return new InputStreamReader(is, "UTF-8");
     }
 
-    public TaxonConceptInstance createInstance(String id, NomenclaturalCode code, String name, NameProvider provider) {
-        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null,null, null, null, null, null, null, null, null);
+    public TaxonConceptInstance createInstance(String id, NomenclaturalClassifier code, String name, NameProvider provider) {
+        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null,null, null, null, null, null, null, null, null, null);
     }
 
-    public TaxonConceptInstance createInstance(String id, NomenclaturalCode code, String name, NameProvider provider, TaxonomicType taxonomicStatus) {
-        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, null, taxonomicStatus, taxonomicStatus.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null, null, null, null);
+    public TaxonConceptInstance createInstance(String id, NomenclaturalClassifier code, String name, NameProvider provider, TaxonomicType taxonomicStatus) {
+        return new TaxonConceptInstance(id, code, code.getAcronym(), provider, name, null, null, null, taxonomicStatus, taxonomicStatus.getTerm(), RankType.SPECIES, RankType.SPECIES.getRank(), null, null, null, null, null, null, null, null, null, null, null);
     }
 
     public int rowCount(File file) throws IOException {

@@ -615,6 +615,13 @@
               "taxonRank": "CULTIVARGROUP"
             },
             "rank": "CULTIVAR"
+          },
+          {
+            "condition": {
+              "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "taxonomicFlag": "AMBIGUOUS_NOMENCLATURAL_CODE"
+            },
+            "nomenclaturalCode": "EUK"
           }
         ]
       },
@@ -623,6 +630,7 @@
         "Aega monophthalam": "Aega monophthalma",
         "Aegaeon rathbunae": "Aegaeon rathbuni",
         "Albugo trianthemae": "Albugo trianthemi",
+        "Amphiura triscacantha": "Amphiura trisacantha",
         "Aquilonastra bryneae": "Aquilonastra byrneae",
         "Armandia filibranhcia": "Armandia filibranchia",
         "Arthonia anjutiae": "Arthonia anjutii",

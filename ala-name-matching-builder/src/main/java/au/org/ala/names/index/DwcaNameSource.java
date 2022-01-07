@@ -17,6 +17,7 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.TaxonFlag;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.model.VernacularType;
 import au.org.ala.vocab.ALATerm;
@@ -266,7 +267,7 @@ public class DwcaNameSource extends NameSource {
                 if (datasetName == null)
                     datasetName = defaultDatasetName;
                 NameProvider provider = taxonomy.resolveProvider(core.value(DwcTerm.datasetID), datasetName);
-                NomenclaturalCode code = taxonomy.resolveCode(verbatimNomenclaturalCode);
+                NomenclaturalClassifier code = taxonomy.resolveCode(verbatimNomenclaturalCode);
                 String scientificName = core.value(DwcTerm.scientificName);
                 String scientificNameAuthorship = core.value(DwcTerm.scientificNameAuthorship);
                 String nameComplete = core.value(ALATerm.nameComplete);
@@ -292,8 +293,10 @@ public class DwcaNameSource extends NameSource {
                 String acceptedNameUsageID = core.value(DwcTerm.acceptedNameUsageID);
                 String verbatimTaxonRemarks = core.value(DwcTerm.taxonRemarks);
                 String verbatimProvenance = core.value(DcTerm.provenance);
+                String taxonomicFlags = core.value(ALATerm.taxonomicFlags);
                 List<String> taxonRemarks = verbatimTaxonRemarks == null || verbatimTaxonRemarks.isEmpty() ? null : Arrays.stream(verbatimTaxonRemarks.split("\\|")).map(s -> s.trim()).collect(Collectors.toList());
                 List<String> provenance = verbatimProvenance == null || verbatimProvenance.isEmpty() ? null : Arrays.stream(verbatimProvenance.split("\\|")).map(s -> s.trim()).collect(Collectors.toList());
+                Set<TaxonFlag> flags = taxonomy.resolveTaxonomicFlags(taxonomicFlags);
                 Map<Term, Optional<String>> classification = classifiers.stream().collect(Collectors.toMap(t -> t, t -> Optional.ofNullable(core.value(t))));
                 TaxonConceptInstance instance = new TaxonConceptInstance(
                         taxonID,
@@ -317,7 +320,8 @@ public class DwcaNameSource extends NameSource {
                         taxonRemarks,
                         verbatimTaxonRemarks,
                         provenance,
-                        classification);
+                        classification,
+                        flags);
                 instance = taxonomy.addInstance(instance);
 
                 List<Document> docs = new ArrayList<>();
@@ -349,7 +353,7 @@ public class DwcaNameSource extends NameSource {
      *
      * @throws Exception if unable to load the pseudo-taxon
      */
-    private void addPseudoTaxon(Taxonomy taxonomy, Record record, String taxonID, NomenclaturalCode code) throws Exception {
+    private void addPseudoTaxon(Taxonomy taxonomy, Record record, String taxonID, NomenclaturalClassifier code) throws Exception {
         if (record.rowType().equals(GbifTerm.VernacularName)) {
             String vernacularName = record.value(DwcTerm.vernacularName);
             String status = record.value(ALATerm.status);
@@ -376,6 +380,7 @@ public class DwcaNameSource extends NameSource {
                         null,
                         null,
                         taxonID,
+                        null,
                         null,
                         null,
                         null,

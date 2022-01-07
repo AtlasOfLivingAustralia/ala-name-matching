@@ -16,10 +16,7 @@
 
 package au.org.ala.names.index;
 
-import au.org.ala.names.model.LinnaeanRankClassification;
-import au.org.ala.names.model.NameSearchResult;
-import au.org.ala.names.model.RankType;
-import au.org.ala.names.model.TaxonomicType;
+import au.org.ala.names.model.*;
 import au.org.ala.names.search.ALANameSearcher;
 import au.org.ala.names.search.DwcaNameIndexer;
 import au.org.ala.names.util.DwcaWriter;
@@ -29,6 +26,7 @@ import au.org.ala.vocab.ALATerm;
 import com.google.common.collect.Maps;
 import com.opencsv.CSVWriter;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.Document;
@@ -458,7 +456,7 @@ public class Taxonomy implements Reporter {
             String taxonRemarks = this.getResources().getString("unknownTaxon.taxonRemarks");
             TaxonConceptInstance ut = new TaxonConceptInstance(
                     utid,
-                    NomenclaturalCode.ZOOLOGICAL,
+                    NomenclaturalClassifier.ZOOLOGICAL,
                     "",
                     this.inferenceProvider,
                     scientificName,
@@ -476,6 +474,7 @@ public class Taxonomy implements Reporter {
                     null,
                     null,
                     Arrays.asList(taxonRemarks),
+                    null,
                     null,
                     null,
                     null
@@ -597,7 +596,7 @@ public class Taxonomy implements Reporter {
                    type = IssueType.NOTE;
                }
                // Check disagreement between nomenclatural codes
-               Set<NomenclaturalCode> codes = instances.stream().map(tci -> tci.getCode()).collect(Collectors.toSet());
+               Set<NomenclaturalClassifier> codes = instances.stream().map(tci -> tci.getCode()).collect(Collectors.toSet());
                if (codes.size() > 1) {
                    code = "name.spelling.crossCode";
                    count = "count.spelling.crossCode";
@@ -879,7 +878,7 @@ public class Taxonomy implements Reporter {
      *
      * @return The code
      */
-    public NomenclaturalCode resolveCode(String nomenclaturalCode) {
+    public NomenclaturalClassifier resolveCode(String nomenclaturalCode) {
         return this.analyser.canonicaliseCode(nomenclaturalCode);
     }
 
@@ -892,6 +891,20 @@ public class Taxonomy implements Reporter {
      */
     public TaxonomicType resolveTaxonomicType(String taxonomicStatus) {
         return this.analyser.canonicaliseTaxonomicType(taxonomicStatus);
+    }
+
+    /**
+     * Process supplied
+     * @param taxonomicFlags
+     * @return
+     */
+    public Set<TaxonFlag> resolveTaxonomicFlags(String taxonomicFlags) {
+        if (StringUtils.isBlank(taxonomicFlags))
+            return null;
+        return Arrays.stream(taxonomicFlags.split("[\\|,]"))
+                .map(f -> this.analyser.canonicaliseFlag(f))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
     }
 
 
@@ -974,6 +987,7 @@ public class Taxonomy implements Reporter {
                 provider.correctScientificNameAuthorship(instance.getScientificNameAuthorship()),
                 instance.getRank(),
                 instance.getTaxonomicStatus(),
+                instance.getFlags(),
                 provider.isLoose()
         );
         taxonKey = instance.getProvider().adjustKey(taxonKey, instance);
@@ -1024,7 +1038,7 @@ public class Taxonomy implements Reporter {
             instance = new TaxonConceptInstance(
                     taxonID,
                     instance.getCode(),
-                    instance.getVerbatimNomenclaturalCode(),
+                    instance.getVerbatimNomenclaturalClassifier(),
                     instance.getProvider(),
                     instance.getScientificName(),
                     instance.getScientificNameAuthorship(),
@@ -1043,7 +1057,8 @@ public class Taxonomy implements Reporter {
                     instance.getTaxonRemarks() == null ? null : new ArrayList<>(instance.getTaxonRemarks()),
                     instance.getVerbatimTaxonRemarks(),
                     instance.getProvenance() == null ? null : new ArrayList<>(instance.getProvenance()),
-                    instance.getClassification()
+                    instance.getClassification(),
+                    instance.getFlags()
             );
             instance.addProvenance(remark);
             this.addProvenanceToOutput();
@@ -1097,9 +1112,9 @@ public class Taxonomy implements Reporter {
      *
      * @return The matching instance, or null for not found
      */
-    public TaxonomicElement findElement(NomenclaturalCode code, String name, NameProvider provider, RankType rank) {
+    public TaxonomicElement findElement(NomenclaturalClassifier code, String name, NameProvider provider, RankType rank) {
         NameKey nameKey = null;
-        nameKey = this.analyser.analyse(code, name, null, rank, null, provider.isLoose()).toNameKey();
+        nameKey = this.analyser.analyse(code, name, null, rank, null, null, provider.isLoose()).toNameKey();
         if (nameKey.isUncoded())
             return this.bareNames.get(nameKey);
         if (nameKey.isUnranked())

@@ -18,7 +18,6 @@ package au.org.ala.names.index;
 
 import au.org.ala.names.util.TestUtils;
 import org.gbif.api.model.registry.Contact;
-import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.checklistbank.authorship.AuthorComparator;
 import org.gbif.checklistbank.model.Equality;
 import org.junit.Test;
@@ -128,7 +127,7 @@ public class TaxonomyConfiugrationTest extends TestUtils {
         NameProvider provider = config.providers.get(0);
         assertEquals(ID_1, provider.getId());
         assertEquals(ALANameAnalyser.class, config.nameAnalyserClass);
-        TaxonConceptInstance instance = this.createInstance(ID_2, NomenclaturalCode.BOTANICAL, NAME_1, provider);
+        TaxonConceptInstance instance = this.createInstance(ID_2, NomenclaturalClassifier.BOTANICAL, NAME_1, provider);
         assertEquals(PRIORITY_1, provider.computeScore(instance));
         assertEquals(provider, config.defaultProvider);
     }

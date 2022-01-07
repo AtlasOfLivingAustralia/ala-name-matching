@@ -22,11 +22,11 @@ import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.gbif.api.exception.UnparsableException;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.service.checklistbank.NameParser;
 import org.gbif.api.vocabulary.NameType;
-import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.api.vocabulary.Rank;
 import org.gbif.checklistbank.authorship.AuthorComparator;
@@ -38,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.function.Predicate;
@@ -57,10 +56,6 @@ import java.util.stream.Collectors;
  */
 public class ALANameAnalyser extends NameAnalyser {
     private static final Logger LOGGER = LoggerFactory.getLogger(ALANameAnalyser.class);
-    /**
-     * The default set of code identifiers. TODO allow overrides
-     */
-    private static final String DEFAULT_NOMENCLATURAL_CODE_MAP = "nomenclatural_codes.csv";
     /**
      * The default set of synonym identifiers. TODO allow overrides
      */
@@ -172,7 +167,6 @@ public class ALANameAnalyser extends NameAnalyser {
      */
     protected static final Predicate<String> INITIAL_QUOTES_TEST = Pattern.compile("^['\"]\\s*(\\p{Upper}\\p{Lower}+)]\\s*['\"]'").asPredicate();
 
-    private Map<String, NomenclaturalCode> codeMap;
     private Map<String, TaxonomicType> taxonomicTypeMap;
     private Map<String, SynonymType> synonymMap;
     private Map<String, RankType> rankMap;
@@ -185,7 +179,6 @@ public class ALANameAnalyser extends NameAnalyser {
         super(authorComparator, reporter);
         this.nameParser = new PhraseNameParser();
         this.nomStatusParser = NomStatusParser.getInstance();
-        this.buildCodeMap();
         this.buildTaxonomicTypeMap();
         this.buildRankMap();
         this.buildNomenclaturalStatusMap();
@@ -204,14 +197,14 @@ public class ALANameAnalyser extends NameAnalyser {
      * @param scientificNameAuthorship The authorship
      * @param rankType                 The taxon rank
      * @param taxonomicStatus          The taxonomic status
+     * @param flags                    Taxonomic flags from the instance
      * @param loose                    This is from a loose source that may have authors mixed up with names
      *
      * @return The analyzed name
      */
     @Override
-    public NameKey analyse(@Nullable NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, TaxonomicType taxonomicStatus, boolean loose) {
+    public NameKey analyse(@Nullable NomenclaturalClassifier code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, TaxonomicType taxonomicStatus, Set<TaxonFlag> flags, boolean loose) {
         NameType nameType = NameType.INFORMAL;
-        Set<NameFlag> flags = null;
         ParsedName name = null;
 
         scientificName = this.normalise(scientificName);
@@ -262,13 +255,13 @@ public class ALANameAnalyser extends NameAnalyser {
         if (PLACEHOLDER_TEST.test(scientificName) || (taxonomicStatus != null && taxonomicStatus.isPlaceholder())) {
             scientificName = scientificName + " " + UUID.randomUUID().toString();
             nameType = NameType.PLACEHOLDER;
-        } else if (code == NomenclaturalCode.VIRUS) {
+        } else if (code == NomenclaturalClassifier.VIRUS) {
             nameType = NameType.VIRUS;
-        } else if (code == NomenclaturalCode.BACTERIAL) {
+        } else if (code == NomenclaturalClassifier.BACTERIAL) {
             nameType = NameType.SCIENTIFIC;
         } else if (HYBRID_TEST.test(scientificName)) {
             nameType = NameType.HYBRID;
-        } else if (code == NomenclaturalCode.CULTIVARS || CULTIVAR_TEST.test(scientificName)) {
+        } else if (code == NomenclaturalClassifier.CULTIVARS || CULTIVAR_TEST.test(scientificName)) {
             nameType = NameType.CULTIVAR;
         } else if (INVALID_TEST.test(scientificName)) {
             scientificName = UUID.randomUUID().toString();
@@ -294,7 +287,8 @@ public class ALANameAnalyser extends NameAnalyser {
         // Flags
         if (name != null && name.isAutonym()) {
             scientificName = name.canonicalName();
-            flags = Collections.singleton(NameFlag.AUTONYM);
+            flags = flags == null ? new HashSet<>() : new HashSet<>(flags);
+            flags.add(TaxonFlag.AUTONYM);
             scientificNameAuthorship = null;
         }
 
@@ -389,16 +383,6 @@ public class ALANameAnalyser extends NameAnalyser {
     }
 
     /**
-     * Build a code map.
-     */
-    protected void buildCodeMap() {
-        this.codeMap = new HashMap<>(64);
-        for (NomenclaturalCode c: NomenclaturalCode.values())
-            this.codeMap.put(c.getAcronym().toUpperCase().trim(), c);
-        this.loadCsv(DEFAULT_NOMENCLATURAL_CODE_MAP, this.codeMap, NomenclaturalCode.class);
-    }
-
-    /**
      * Build a taxonomic status map.
      */
     protected void buildTaxonomicTypeMap() {
@@ -449,11 +433,11 @@ public class ALANameAnalyser extends NameAnalyser {
      * @return The mapped code or null for not found
      */
     @Override
-    public NomenclaturalCode canonicaliseCode(String code) {
+    public NomenclaturalClassifier canonicaliseCode(String code) {
         if (code == null)
             return null;
         code = code.toUpperCase().trim();
-        NomenclaturalCode nc = this.codeMap.get(code);
+        NomenclaturalClassifier nc = NomenclaturalClassifier.find(code);
         if (nc == null)
             this.report(IssueType.PROBLEM, "nomenclaturalCode.notFound", null, null, code);
         return nc;
@@ -485,6 +469,24 @@ public class ALANameAnalyser extends NameAnalyser {
             }
         }
         return type;
+    }
+
+    /**
+     * Canonicalise a supplied taxonomic flag
+     *
+     * @param flag The flag name
+     * @return The matching flag
+     */
+    @Override
+    public TaxonFlag canonicaliseFlag(String flag) {
+        if (StringUtils.isBlank(flag))
+            return null;
+        flag = flag.trim();
+        if (flag.equalsIgnoreCase("autonym"))
+            return TaxonFlag.AUTONYM;
+        if (flag.equalsIgnoreCase("ambiguousNomenclaturalCode"))
+            return TaxonFlag.AMBIGUOUS_NOMENCLATURAL_CODE;
+        throw new IllegalArgumentException("Unrecognised flag " + flag);
     }
 
     /**
