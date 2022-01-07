@@ -72,7 +72,9 @@ public enum ALATerm implements Term {
     /** The principal taxon identifier, for taxa that may have been re-assigned */
     principalTaxonID,
     /** The principal scientific name, for taxa that may have been re-assigned */
-    principalScientificNBame,
+    principalScientificName,
+    /** Any taxonomic flags */
+    taxonomicFlags,
     /** Record type describing an unplaced vernacular name */
     UnplacedVernacularName,
     /** Record type describing a variant (different source, spelling etc.) of a taxon */

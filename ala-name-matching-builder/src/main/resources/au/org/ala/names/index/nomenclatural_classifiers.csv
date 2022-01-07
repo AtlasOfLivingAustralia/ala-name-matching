@@ -1,0 +1,10 @@
+acronym,parent,title,source,code,aliases
+EUK,,Generic Eukaryota,,
+ICNB,,International Code of Nomenclature of Bacteria,http://www.ncbi.nlm.nih.gov/books/NBK8808/,BACTERIAL,NCGN
+ICBN,EUK,International Code of Botanical Nomenclature,http://ibot.sav.sk/icbn/main.htm,BOTANICAL,ICN,ICNAFP
+BC,,BioCode,http://www.bgbm.org/iapt/biocode/,BIOCODE
+ICNCP,ICBN,International Code of Nomenclature for Cultivated Plants,,CULTIVARS
+PC,,Phylocode,http://www.ohio.edu/phylocode/index.html,PHYLOCODE
+ICPN,,International Code of Phytosociological Nomenclature,http://www.iavs.org/pdf/Code.pdf,PHYTOSOCIOLOGY
+ICVCN,,International Code of Virus Classifications and Nomenclature,http://talk.ICTVonline.org/,VIRUS,ICVN
+ICZN,EUK,International Code of Zoological Nomenclature,http://www.nhm.ac.uk/hosted-sites/iczn/code/index.jsp,ZOOLOGICAL

@@ -18,7 +18,6 @@ package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
-import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,8 +49,8 @@ public class TaxonConceptTest {
     public void testAddInstance1() throws Exception {
         TaxonConceptInstance instance = new TaxonConceptInstance(
                 TAXON_ID,
-                NomenclaturalCode.ZOOLOGICAL,
-                NomenclaturalCode.ZOOLOGICAL.getAcronym(),
+                NomenclaturalClassifier.ZOOLOGICAL,
+                NomenclaturalClassifier.ZOOLOGICAL.getAcronym(),
                 provider,
                 NAME_1,
                 AUTHOR_1,
@@ -70,9 +69,10 @@ public class TaxonConceptTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
-        NameKey instanceKey = this.analyser.analyse(NomenclaturalCode.ZOOLOGICAL, NAME_1, AUTHOR_1, RankType.SPECIES, null, false);
+        NameKey instanceKey = this.analyser.analyse(NomenclaturalClassifier.ZOOLOGICAL, NAME_1, AUTHOR_1, RankType.SPECIES, null, null, false);
         NameKey nameKey = instanceKey.toNameKey();
         ScientificName name = new ScientificName(null, nameKey);
         TaxonConcept concept = new TaxonConcept(name, nameKey);

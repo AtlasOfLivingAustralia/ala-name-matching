@@ -19,7 +19,6 @@ package au.org.ala.names.index;
 import au.org.ala.names.index.provider.*;
 import com.fasterxml.jackson.annotation.*;
 import org.gbif.api.model.registry.Citation;
-import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
@@ -84,7 +83,7 @@ public class NameProvider {
     private KeyAdjuster keyAdjuster;
     /** The default nomenclatural code */
     @JsonProperty
-    private NomenclaturalCode defaultNomenclaturalCode;
+    private NomenclaturalClassifier defaultNomenclaturalCode;
     /** Is this a "loose" taxonomy, where we can expect fragments of taxonomy and we shouldn't worry too much about consistency */
     @JsonProperty
     private boolean loose;
@@ -465,7 +464,7 @@ public class NameProvider {
      * </p>
      */
     @JsonIgnore
-    public NomenclaturalCode getDefaultNomenclaturalCode() {
+    public NomenclaturalClassifier getDefaultNomenclaturalCode() {
         if (this.defaultNomenclaturalCode != null)
             return this.defaultNomenclaturalCode;
         if (this.parent != null)
@@ -675,7 +674,7 @@ public class NameProvider {
      * @throws IndexBuilderException if unable to detect a parent
      */
     public TaxonomicElement findDefaultParent(Taxonomy taxonomy, TaxonConceptInstance instance) throws IndexBuilderException {
-        NomenclaturalCode code = instance.getCode();
+        NomenclaturalClassifier code = instance.getCode();
         String dp = this.getDefaultParentTaxon();
 
         if (code == null || dp == null)
