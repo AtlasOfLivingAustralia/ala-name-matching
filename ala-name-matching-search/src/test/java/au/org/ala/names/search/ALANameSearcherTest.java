@@ -906,13 +906,40 @@ public class ALANameSearcherTest {
         }
     }
 
-    @Ignore // TODO No additional reallsid currently used
     @Test
-    public void testGetPrimaryLsid() {
+    public void testGetPrimaryLsid1() {
         String primaryLsid = searcher.getPrimaryLsid("https://id.biodiversity.org.au/node/apni/2889838");
         assertEquals("https://id.biodiversity.org.au/node/apni/2889838", primaryLsid);
-        primaryLsid = searcher.getPrimaryLsid("https://id.biodiversity.org.au/instance/apni/887198");
-        assertEquals("https://id.biodiversity.org.au/node/apni/5487102", primaryLsid);
+    }
+
+    @Test
+    public void testGetPrimaryLsid2() {
+        String primaryLsid = searcher.getPrimaryLsid("http://id.biodiversity.org.au/node/apni/2890752");
+        assertEquals("https://id.biodiversity.org.au/node/apni/2890752", primaryLsid);
+    }
+
+    @Test
+    public void testGetPrimaryLsid3() {
+        String primaryLsid = searcher.getPrimaryLsid("https://id.biodiversity.org.au/instance/apni/707711");
+        assertEquals("https://id.biodiversity.org.au/node/apni/2890752", primaryLsid);
+    }
+
+    @Test
+    public void testGetPrimaryLsid4() {
+        String primaryLsid = searcher.getPrimaryLsid("ALA_3624216");
+        assertEquals("https://id.biodiversity.org.au/node/apni/2890752", primaryLsid);
+    }
+
+    @Test
+    public void testGetPrimaryLsid5() {
+        String primaryLsid = searcher.getPrimaryLsid("urn:lsid:biodiversity.org.au:afd.taxon:f71a4c71-48e1-4a9f-840e-1bb189611fd4");
+        assertEquals("https://biodiversity.org.au/afd/taxa/f71a4c71-48e1-4a9f-840e-1bb189611fd4", primaryLsid);
+    }
+
+    @Test
+    public void testGetPrimaryLsid6() {
+        String primaryLsid = searcher.getPrimaryLsid("http://biodiversity.org.au/afd/taxa/f71a4c71-48e1-4a9f-840e-1bb189611fd4");
+        assertEquals("https://biodiversity.org.au/afd/taxa/f71a4c71-48e1-4a9f-840e-1bb189611fd4", primaryLsid);
     }
 
     @Test
@@ -1126,7 +1153,6 @@ public class ALANameSearcherTest {
         String sciName = getCommonName(name);
         assertEquals("Cacatua (Cacatua) galerita", sciName);
     }
-
     private String getCommonNameLSID(String name) {
         return searcher.searchForLSIDCommonName(name);
     }

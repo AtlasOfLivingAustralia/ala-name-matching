@@ -63,14 +63,14 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
     /**
      * Convienience method for testing.
      */
-    public NameKey analyse(TaxonConceptInstance instance) {
+    public AnalysisResult analyse(TaxonConceptInstance instance) {
         return this.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), instance.getTaxonomicStatus(), instance.getFlags(), false);
     }
 
     /**
      * Convienience method for testing.
      */
-    public NameKey analyse(String code, String scientificName, String scientificNameAuthorship, String rank) {
+    public AnalysisResult analyse(String code, String scientificName, String scientificNameAuthorship, String rank) {
         NomenclaturalClassifier canonicalCode = this.canonicaliseCode(code);
         RankType rankType = this.canonicaliseRank(rank);
         return this.analyse(canonicalCode, scientificName, scientificNameAuthorship, rankType, null, null, false);
@@ -92,7 +92,7 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
      *
      * @return A suitable name key
      */
-    abstract public NameKey analyse(@Nullable NomenclaturalClassifier code, String scientificName, @Nullable String scientificNameAuthorship, @Nullable RankType rankType, @Nullable TaxonomicType taxonomicStatus, @Nullable Set<TaxonFlag> flags, boolean loose);
+    abstract public AnalysisResult analyse(@Nullable NomenclaturalClassifier code, String scientificName, @Nullable String scientificNameAuthorship, @Nullable RankType rankType, @Nullable TaxonomicType taxonomicStatus, @Nullable Set<TaxonFlag> flags, boolean loose);
 
     /**
      * Set the issue reporter.
@@ -247,5 +247,63 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
             this.reporter.report(type, code, main, associated);
         else
             logger.warn("Report " + type.name() + " code=" + code + " main=" + main.toString() + " associated=" + associated);
+    }
+
+    /**
+     * The result of a name analysis.
+     * <p>
+     * As well as the all-important name key, any fragments of information about the parsed name are also returned.
+     * </p>
+     */
+    public static class AnalysisResult {
+        private NameKey nameKey;
+        @Nullable
+        private String mononomial;
+        @Nullable
+        private String genus;
+        @Nullable
+        private String specificEpithet;
+        @Nullable
+        private String infraspecificEpithet;
+        @Nullable
+        private String cultivarEpithet;
+
+        public AnalysisResult(NameKey nameKey, @Nullable String mononomial, @Nullable String genus, @Nullable String specificEpithet, @Nullable String infraspecificEpithet, @Nullable String cultivarEpithet) {
+            this.nameKey = nameKey;
+            this.mononomial = mononomial;
+            this.genus = genus;
+            this.specificEpithet = specificEpithet;
+            this.infraspecificEpithet = infraspecificEpithet;
+            this.cultivarEpithet = cultivarEpithet;
+        }
+
+        public NameKey getNameKey() {
+            return this.nameKey;
+        }
+
+        @Nullable
+        public String getMononomial() {
+            return this.mononomial;
+        }
+
+        @Nullable
+        public String getGenus() {
+            return this.genus;
+        }
+
+        @Nullable
+        public String getSpecificEpithet() {
+            return this.specificEpithet;
+        }
+
+        @Nullable
+        public String getInfraspecificEpithet() {
+            return this.infraspecificEpithet;
+        }
+
+        @Nullable
+        public String getCultivarEpithet() {
+            return this.cultivarEpithet;
+        }
     }
 }

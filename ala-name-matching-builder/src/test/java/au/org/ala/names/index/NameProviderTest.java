@@ -129,13 +129,13 @@ public class NameProviderTest extends TestUtils {
     public void testForbid1() {
         NameProvider provider = this.getProvider("ID-5");
         TaxonConceptInstance instance1 = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", provider);
-        NameKey key1 = this.analyser.analyse(instance1);
+        NameKey key1 = this.analyser.analyse(instance1).getNameKey();
         TaxonConceptInstance instance2 = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia", provider);
-        NameKey key2 = this.analyser.analyse(instance2);
+        NameKey key2 = this.analyser.analyse(instance2).getNameKey();
         TaxonConceptInstance instance3 = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Macropus", provider);
-        NameKey key3 = this.analyser.analyse(instance3);
+        NameKey key3 = this.analyser.analyse(instance3).getNameKey();
         TaxonConceptInstance instance4 = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Macropus", provider, TaxonomicType.INCERTAE_SEDIS);
-        NameKey key4 = this.analyser.analyse(instance4);
+        NameKey key4 = this.analyser.analyse(instance4).getNameKey();
         assertNull(provider.forbid(instance1, key1));
         assertNull(provider.forbid(instance2, key2));
         assertNull(provider.forbid(instance3, key3));
@@ -147,13 +147,13 @@ public class NameProviderTest extends TestUtils {
     public void testForbid2() {
         NameProvider provider = this.getProvider("ID-6");
         TaxonConceptInstance instance1 = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", provider);
-        NameKey key1 = this.analyser.analyse(instance1);
+        NameKey key1 = this.analyser.analyse(instance1).getNameKey();
         TaxonConceptInstance instance2 = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia", provider, TaxonomicType.EXCLUDED);
-        NameKey key2 = this.analyser.analyse(instance2);
+        NameKey key2 = this.analyser.analyse(instance2).getNameKey();
         TaxonConceptInstance instance3 = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Macropus", provider);
-        NameKey key3 = this.analyser.analyse(instance3);
+        NameKey key3 = this.analyser.analyse(instance3).getNameKey();
         TaxonConceptInstance instance4 = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Macropus", provider, TaxonomicType.INCERTAE_SEDIS);
-        NameKey key4 = this.analyser.analyse(instance4);
+        NameKey key4 = this.analyser.analyse(instance4).getNameKey();
         assertNull(provider.forbid(instance1, key1));
         assertEquals("taxonomicStatus:EXCLUDED", provider.forbid(instance2, key2));
         assertNull(provider.forbid(instance3, key3));

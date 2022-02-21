@@ -203,7 +203,7 @@ public class ALANameAnalyser extends NameAnalyser {
      * @return The analyzed name
      */
     @Override
-    public NameKey analyse(@Nullable NomenclaturalClassifier code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, TaxonomicType taxonomicStatus, Set<TaxonFlag> flags, boolean loose) {
+    public AnalysisResult analyse(@Nullable NomenclaturalClassifier code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, TaxonomicType taxonomicStatus, Set<TaxonFlag> flags, boolean loose) {
         NameType nameType = NameType.INFORMAL;
         ParsedName name = null;
 
@@ -219,20 +219,20 @@ public class ALANameAnalyser extends NameAnalyser {
                 scientificName = (left + " " + right).trim();
             }
         }
+        try {
+            name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
+            if (name != null) {
+                nameType = name.getType();
+                if (rankType == null && name.getRank() != null)
+                    rankType = RankType.getForCBRank(name.getRank());
+            }
+        } catch (UnparsableException ex) {
+            // Oh well, worth a try
+        }
         if (UNSURE_MARKER.matcher(scientificName).find()) {
             // Leave this well alone but indicate that it is doubtful
             nameType = NameType.DOUBTFUL;
         } else {
-            try {
-                name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
-                if (name != null) {
-                    nameType = name.getType();
-                    if (rankType == null && name.getRank() != null)
-                        rankType = RankType.getForCBRank(name.getRank());
-                }
-            } catch (UnparsableException ex) {
-                // Oh well, worth a try
-            }
             if (loose) {
                 if (scientificNameAuthorship == null && name != null) {
                     String ac = this.normalise(name.authorshipComplete());
@@ -299,7 +299,18 @@ public class ALANameAnalyser extends NameAnalyser {
         scientificName = scientificName.trim().toUpperCase();
 
 
-        return new NameKey(this, code, scientificName, scientificNameAuthorship, rankType, nameType, flags);
+        NameKey key = new NameKey(this, code, scientificName, scientificNameAuthorship, rankType, nameType, flags);
+        if (name == null)
+            return new AnalysisResult(key, null, null, null, null, null);
+        else
+            return new AnalysisResult(
+                    key,
+                    name.getGenusOrAbove(),
+                    rankType != null && !rankType.isHigherThan(RankType.GENUS) ? name.getGenusOrAbove() : null,
+                    name.getSpecificEpithet(),
+                    name.getInfraSpecificEpithet(),
+                    name.getCultivarEpithet()
+            );
     }
 
     /**

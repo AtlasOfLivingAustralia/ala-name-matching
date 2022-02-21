@@ -1672,10 +1672,12 @@ public class ALANameSearcher {
     /**
      * Returns the LSID for the CB name usage for the supplied common name.
      * <p/>
-     * When the common name returns more than 1 hit a result is only returned if all the scientific names match
+     * When the common name returns more than 1 hit a result is only returned if the accepted
+     * matches are equivalent or one subsumes the other.
      *
-     * @param name
-     * @return
+     * @param name The common name
+     *
+     * @return Either a matching LSID or null for not found
      */
     private String getLSIDForUniqueCommonName(String name) {
         if (name != null) {
@@ -1683,27 +1685,76 @@ public class ALANameSearcher {
             try {
                 TopDocs results = vernSearcher.search(query, 10);
                 //if all the results have the same scientific name result the LSID for the first
-                String firstLsid = null;
-                String firstName = null;
+                NameSearchResult best = null;
                 log.debug("Number of matches for " + name + " " + results.totalHits);
                 for (ScoreDoc sdoc : results.scoreDocs) {
                     org.apache.lucene.document.Document doc = vernSearcher.doc(sdoc.doc);
-                    if (firstLsid == null) {
-                        firstLsid = doc.get(NameIndexField.LSID.toString());
-                        firstName = doc.get(NameIndexField.NAME.toString());
+                    String lsid = doc.get(NameIndexField.LSID.toString());
+                    lsid = this.getPrimaryLsid(lsid);
+                    NameSearchResult result = this.searchForRecordByLsid(lsid);
+                    if (result.isSynonym())
+                        result = this.searchForRecordByLsid(result.getAcceptedLsid());
+                    if (best == null) {
+                        best = result;
                     } else {
-                        if (!doSciNamesMatch(firstName, doc.get(NameIndexField.NAME.toString())))
+                        best = this.doClassificationMatch(best, result);
+                        if (best == null)
                             return null;
-                    }
+                     }
                 }
-                //want to get the primary lsid for the taxon name thus we get the current lsid in the index...
-                return getPrimaryLsid(firstLsid);
+                return best == null ? null : best.getLsid();
             } catch (IOException e) {
                 //
                 log.debug("Unable to access document for common name.", e);
             }
         }
         return null;
+    }
+
+    /**
+     * See if one element of the match is contained in the other classification.
+     *
+     * @param match1 The first match
+     * @param match2 The second match
+     *
+     * @return The most general match or null for no match
+     */
+    protected NameSearchResult doClassificationMatch(NameSearchResult match1, NameSearchResult match2) {
+        if (match1.getLsid().equals(match2.getLsid()))
+            return match1;
+        if (this.classificationContains(match2.getRankClassification(), match1.getLsid()))
+            return match1;
+        if (this.classificationContains(match1.getRankClassification(), match2.getLsid()))
+            return match2;
+        return null;
+    }
+
+    /**
+     * See if a classification contains a particular lsid.
+     *
+     * @param classification The classification
+     * @param lsid The lsid
+     *
+     * @return Tru if the lsid is found within the classification
+     */
+    protected boolean classificationContains(LinnaeanRankClassification classification, String lsid) {
+        if (lsid == null)
+            return false;
+        if (lsid.equals(classification.getSid()))
+            return true;
+        if (lsid.equals(classification.getGid()))
+            return true;
+        if (lsid.equals(classification.getFid()))
+            return true;
+        if (lsid.equals(classification.getOid()))
+            return true;
+        if (lsid.equals(classification.getCid()))
+            return true;
+        if (lsid.equals(classification.getPid()))
+            return true;
+        if (lsid.equals(classification.getKid()))
+            return true;
+        return false;
     }
 
     /**

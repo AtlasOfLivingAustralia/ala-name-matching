@@ -376,7 +376,7 @@ public class BiocacheMatchTest {
 
     // See https://github.com/AtlasOfLivingAustralia/ala-name-matching/issues/1
     // At the moment, not able to correctly parse this out
-    @Ignore
+    //@Ignore
     @Test
     public void testSubSpeciesMarker3()  {
         try {

@@ -41,7 +41,7 @@ public class VernacularMatchTest {
     @org.junit.BeforeClass
     public static void init() throws Exception {
         searcher = new ALANameSearcher("/data/lucene/namematching-20210811-2");
-     }
+    }
 
     @Test
     public void testVernacular1() throws Exception {
@@ -54,7 +54,7 @@ public class VernacularMatchTest {
         assertEquals(expectedLsid, result.getLsid());
     }
 
-    //@Ignore // Requires indidgenous names
+    //@Ignore // Requires indigenous names
     @Test
     public void testVernacular2() throws Exception {
         String name = "Dhulwa";
@@ -102,7 +102,7 @@ public class VernacularMatchTest {
     }
 
 
-    @Ignore // Requires indidgenous names
+    @Ignore // Requires additonal indidgenous names
     @Test
     public void testVernacular6() throws Exception {
         String name = "Dharaban";
@@ -126,6 +126,127 @@ public class VernacularMatchTest {
         assertNotNull(result);
         assertEquals(MatchType.VERNACULAR, result.getMatchType());
         assertEquals(expectedLsid, result.getLsid());
+    }
+
+
+    // Multiple names
+    @Test
+    public void testVernacular8() {
+        String name = "White-spotted Skate";
+        NameSearchResult result = this.searcher.searchForCommonName(name);
+        assertNotNull(result);
+        String lsid = result.getLsid();
+        assertEquals("https://biodiversity.org.au/afd/taxa/e8e7ae96-a352-438c-8893-045ab8d5ce97", lsid);
+    }
+
+    // Conservation NSW
+    @Test
+    public void testVernacular9() {
+        String name = "Velvet Wattle";
+        NameSearchResult result = this.searcher.searchForCommonName(name);
+        assertNull(result); // Multiple possibilties
+        name = "Yass Daisy";
+        result = this.searcher.searchForCommonName(name);
+        assertNotNull(result);
+        String lsid = result.getLsid();
+        assertEquals("https://id.biodiversity.org.au/node/apni/2910323", lsid);
+    }
+
+    // Conservation Qld
+    @Test
+    public void testVernacular10() {
+        String name = "Red Wattlebird";
+        NameSearchResult result = this.searcher.searchForCommonName(name);
+        assertNotNull(result);
+        String lsid = result.getLsid();
+        assertEquals("https://biodiversity.org.au/afd/taxa/8204979f-5302-41ea-943f-01d3c420f7bb", lsid);
+    }
+
+
+    // Conservation Aus
+    @Test
+    public void testVernacular11() {
+        String name = "Mary River Turtle";
+        NameSearchResult result = this.searcher.searchForCommonName(name);
+        assertNotNull(result);
+        String lsid = result.getLsid();
+        assertEquals("https://biodiversity.org.au/afd/taxa/d315deea-822c-4f2c-b439-da33d6af5fd6", lsid);
+    }
+    
+    // Sensitive NT
+    @Test
+    public void testVernacular12() {
+        String name = "Atlas Moth";
+        NameSearchResult result = this.searcher.searchForCommonName(name);
+        assertNotNull(result);
+        String lsid = result.getLsid();
+        assertEquals("https://biodiversity.org.au/afd/taxa/8a05008e-53e8-4773-855a-43ac29cc6056", lsid);
+    }
+
+    // Sensitive Qld
+    @Test
+    public void testVernacular13() {
+        String name = "Ravine Orchid";
+        NameSearchResult result = this.searcher.searchForCommonName(name);
+        assertNotNull(result);
+        String lsid = result.getLsid();
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51413233", lsid);
+    }
+
+    // Sensitive SA
+    @Test
+    public void testVernacular14() {
+        String name = "Osprey";
+        NameSearchResult result = this.searcher.searchForCommonName(name);
+        assertNull(result); // Multiple possibilitie
+        name = "Swamp Bunnies";
+        result = this.searcher.searchForCommonName(name);
+        assertNotNull(result);
+        String lsid = result.getLsid();
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51290607", lsid);
+    }
+
+    // Sensitive WA
+    @Test
+    public void testVernacular15() {
+        String name = "Rakali";
+        NameSearchResult result = this.searcher.searchForCommonName(name);
+        assertNotNull(result);
+        String lsid = result.getLsid();
+        assertEquals("https://biodiversity.org.au/afd/taxa/9baa55f2-69c1-486c-91f7-f96e58b7c945", lsid);
+    }
+
+    // Advisory Vic
+    @Test
+    public void testVernacular16() {
+        String name = "Robust Greenhood";
+        NameSearchResult result = this.searcher.searchForCommonName(name);
+        assertNotNull(result);
+        String lsid = result.getLsid();
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51412430", lsid);
+    }
+
+    // Advisory Vic
+    @Test
+    public void testVernacular17() {
+        String name = "Little Tern";
+        NameSearchResult result = this.searcher.searchForCommonName(name);
+        assertNull(result); // Multiple results
+        name = "Victoria Range Stringybark";
+        result = this.searcher.searchForCommonName(name);
+        assertNotNull(result);
+        String lsid = result.getLsid();
+        assertEquals("https://id.biodiversity.org.au/node/apni/2905514", lsid);
+    }
+
+    // Invasive species
+    @Test
+    public void testVernacular18() {
+        String name = "Onion Fly";
+        NameSearchResult result = this.searcher.searchForCommonName(name);
+        assertNotNull(result);
+        String lsid = result.getLsid();
+        assertEquals("ALA_3855965", lsid);
     }
 
 }

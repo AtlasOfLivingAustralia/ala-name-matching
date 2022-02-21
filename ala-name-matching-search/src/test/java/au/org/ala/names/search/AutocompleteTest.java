@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.Assert.*;
 
@@ -52,10 +53,10 @@ public class AutocompleteTest {
         Map first = results.get(0);
         assertEquals("Samadera sp. Mary River", first.get("name"));
         Map second = results.get(1);
-        assertEquals("Mary River Cod", second.get("commonname"));
+        assertEquals("Mary River cod", second.get("commonname"));
         assertEquals("Maccullochella mariensis", second.get("name"));
         Map third = results.get(2);
-        assertEquals("Mary River Turtle", third.get("commonname"));
+        assertEquals("Mary River turtle", third.get("commonname"));
         assertEquals("Elusor macrurus", third.get("name"));
     }
 
@@ -65,7 +66,7 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         Map first = results.get(0);
-        assertEquals("Mary River Turtle", first.get("commonname"));
+        assertEquals("Mary River turtle", first.get("commonname"));
         assertEquals("Elusor macrurus", first.get("name"));
     }
 
@@ -129,8 +130,8 @@ public class AutocompleteTest {
         List<Map> results = searcher.autocomplete("Rossi", 10, true);
         assertNotNull(results);
         assertTrue(results.size() > 0);
-        Map first = results.get(0);
-        assertEquals("Pleurotomella rossi", first.get("name"));
+        assertTrue(results.stream().anyMatch(r -> "Pleurotomella rossi".equals(r.get("name"))));
+        assertTrue(results.stream().anyMatch(r -> "Metacineta rossica".equals(r.get("name"))));
     }
 
 
@@ -150,13 +151,13 @@ public class AutocompleteTest {
         List<Map> results = searcher.autocomplete("rush li", 10, true);
         assertNotNull(results);
         assertTrue(results.size() > 2);
-        Map syn = results.get(2);
-        assertEquals("Sisyrinchium rosulatum", syn.get("name"));
-        List<Map> synonyms = (List<Map>) syn.get("synonymMatch");
-        assertNotNull(synonyms);
-        assertTrue(synonyms.size() > 0);
-        Map synonym = synonyms.get(0);
-        assertEquals("Yellow Rush Lily", synonym.get("commonname"));
+        Optional<Map> syn = results.stream().filter(r -> "Sisyrinchium micranthum".equals(r.get("name"))).findFirst();
+        assertTrue(syn.isPresent());
+        //List<Map> synonyms = (List<Map>) syn.get().get("synonymMatch");
+        //assertNotNull(synonyms);
+        //assertTrue(synonyms.size() > 0);
+        //Map synonym = synonyms.get(0);
+        assertEquals("Yellow Rush Lily", syn.get().get("commonname"));
     }
 
 }
