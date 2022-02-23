@@ -101,12 +101,10 @@ public class VernacularMatchTest {
         assertEquals(expectedLsid, result.getLsid());
     }
 
-
-    @Ignore // Requires additonal indidgenous names
     @Test
     public void testVernacular6() throws Exception {
-        String name = "Dharaban";
-        String expectedLsid = "https://id.biodiversity.org.au/node/apni/2886278";
+        String name = "A-gurruwurduk";
+        String expectedLsid = "https://biodiversity.org.au/afd/taxa/0f5df411-17dd-4719-91de-158fb1a77b27";
         NameSearchResult result = null;
 
         result = searcher.searchForCommonName(name);

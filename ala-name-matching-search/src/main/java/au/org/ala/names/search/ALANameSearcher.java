@@ -74,7 +74,11 @@ public class ALANameSearcher {
     public static final Pattern voucherRemovePattern = Pattern.compile(" |,|&|\\.");
     public static final Pattern affPattern = Pattern.compile("([\\x00-\\x7F\\s]*) aff[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
     public static final Pattern cfPattern = Pattern.compile("([\\x00-\\x7F\\s]*) cf[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
-
+    public static final Pattern RANK_PATTERN = Pattern.compile(
+            "(?i:" +
+            Arrays.stream(Rank.values()).map(Rank::name).collect(Collectors.joining("|")) +
+            ")"
+    );
     private static Comparator<Map> AUTOCOMPLETE_COMPARATOR = new Comparator<Map>() {
         @Override
         public int compare(Map o1, Map o2) {
@@ -562,7 +566,7 @@ public class ALANameSearcher {
                 metrics.setNameType(pn.getType());
                 if (pn.isBinomial() && pn.getType() != NameType.DOUBTFUL && (pn.getType() != NameType.INFORMAL || (pn.getRank() != null && pn.getRank().isInfraspecific())) && (rank == null || rank.getId() >= 7000))
                     nsr = performErrorCheckSearch(pn.canonicalSpeciesName(), cl, null, fuzzy, ignoreHomonym, metrics);
-                if (nsr == null && (pn.getType() == NameType.DOUBTFUL || (rank != null && rank.getId() <= 7000) || rank == null))
+                if (nsr == null && !RANK_PATTERN.matcher(pn.getGenusOrAbove()).matches() && (pn.getType() == NameType.DOUBTFUL || (rank != null && rank.getId() <= 7000) || rank == null))
                     nsr = performErrorCheckSearch(pn.getGenusOrAbove(), cl, null, fuzzy, ignoreHomonym, metrics);
 
             } catch (Exception ex) {
@@ -1690,8 +1694,7 @@ public class ALANameSearcher {
                 for (ScoreDoc sdoc : results.scoreDocs) {
                     org.apache.lucene.document.Document doc = vernSearcher.doc(sdoc.doc);
                     String lsid = doc.get(NameIndexField.LSID.toString());
-                    lsid = this.getPrimaryLsid(lsid);
-                    NameSearchResult result = this.searchForRecordByLsid(lsid);
+                     NameSearchResult result = this.searchForRecordByLsid(lsid);
                     if (result.isSynonym())
                         result = this.searchForRecordByLsid(result.getAcceptedLsid());
                     if (best == null) {

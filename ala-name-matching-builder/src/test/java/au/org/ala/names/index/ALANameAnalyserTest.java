@@ -352,6 +352,41 @@ public class ALANameAnalyserTest {
         assertTrue(key1.getFlags().contains(TaxonFlag.AMBIGUOUS_NOMENCLATURAL_CODE));
     }
 
+    // Test misc literature
+    @Test
+    public void testKey29() throws Exception {
+        NameAnalyser.AnalysisResult result1 = this.analyser.analyse(NomenclaturalClassifier.ZOOLOGICAL, "Genus B", null, RankType.UNRANKED, TaxonomicType.MISCELLANEOUS_LITERATURE, null, false);
+        NameKey key1 = result1.getNameKey();
+        assertEquals(NomenclaturalClassifier.ZOOLOGICAL, key1.getCode());
+        assertEquals(NameType.INFORMAL, key1.getType());
+        assertEquals("GENUS B", key1.getScientificName());
+        assertNull(key1.getScientificNameAuthorship());
+        assertEquals(RankType.UNRANKED, key1.getRank());
+        assertNull(key1.getFlags());
+        assertNull(result1.getMononomial());
+        assertNull(result1.getGenus());
+        assertNull(result1.getSpecificEpithet());
+        assertNull(result1.getInfraspecificEpithet());
+    }
+
+
+    // Test obvious placeholder
+    @Test
+    public void testKey30() throws Exception {
+        NameAnalyser.AnalysisResult result1 = this.analyser.analyse(NomenclaturalClassifier.ZOOLOGICAL, "Genus B sp.", null, null, null, null, false);
+        NameKey key1 = result1.getNameKey();
+        assertEquals(NomenclaturalClassifier.ZOOLOGICAL, key1.getCode());
+        assertEquals(NameType.INFORMAL, key1.getType());
+        assertEquals("GENUS B SP", key1.getScientificName());
+        assertNull(key1.getScientificNameAuthorship());
+        assertEquals(RankType.SPECIES, key1.getRank());
+        assertNull(key1.getFlags());
+        assertNull(result1.getMononomial());
+        assertNull(result1.getGenus());
+        assertNull(result1.getSpecificEpithet());
+        assertNull(result1.getInfraspecificEpithet());
+    }
+
     @Test
     public void testAuthorEquals1() throws Exception {
         assertEquals(0, this.analyser.compareAuthor(null, null));

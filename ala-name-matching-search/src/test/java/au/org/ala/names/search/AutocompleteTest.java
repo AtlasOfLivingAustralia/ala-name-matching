@@ -53,7 +53,7 @@ public class AutocompleteTest {
         Map first = results.get(0);
         assertEquals("Samadera sp. Mary River", first.get("name"));
         Map second = results.get(1);
-        assertEquals("Mary River cod", second.get("commonname"));
+        assertEquals("Mary River Cod", second.get("commonname"));
         assertEquals("Maccullochella mariensis", second.get("name"));
         Map third = results.get(2);
         assertEquals("Mary River turtle", third.get("commonname"));
@@ -153,10 +153,6 @@ public class AutocompleteTest {
         assertTrue(results.size() > 2);
         Optional<Map> syn = results.stream().filter(r -> "Sisyrinchium micranthum".equals(r.get("name"))).findFirst();
         assertTrue(syn.isPresent());
-        //List<Map> synonyms = (List<Map>) syn.get().get("synonymMatch");
-        //assertNotNull(synonyms);
-        //assertTrue(synonyms.size() > 0);
-        //Map synonym = synonyms.get(0);
         assertEquals("Yellow Rush Lily", syn.get().get("commonname"));
     }
 
