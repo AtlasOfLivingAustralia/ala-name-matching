@@ -20,6 +20,7 @@ package au.org.ala.names.search;
 
 import au.org.ala.names.model.*;
 import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.api.vocabulary.NameType;
 import org.gbif.nameparser.PhraseNameParser;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -906,13 +907,40 @@ public class ALANameSearcherTest {
         }
     }
 
-    @Ignore // TODO No additional reallsid currently used
     @Test
-    public void testGetPrimaryLsid() {
+    public void testGetPrimaryLsid1() {
         String primaryLsid = searcher.getPrimaryLsid("https://id.biodiversity.org.au/node/apni/2889838");
         assertEquals("https://id.biodiversity.org.au/node/apni/2889838", primaryLsid);
-        primaryLsid = searcher.getPrimaryLsid("https://id.biodiversity.org.au/instance/apni/887198");
-        assertEquals("https://id.biodiversity.org.au/node/apni/5487102", primaryLsid);
+    }
+
+    @Test
+    public void testGetPrimaryLsid2() {
+        String primaryLsid = searcher.getPrimaryLsid("http://id.biodiversity.org.au/node/apni/2890752");
+        assertEquals("https://id.biodiversity.org.au/node/apni/2890752", primaryLsid);
+    }
+
+    @Test
+    public void testGetPrimaryLsid3() {
+        String primaryLsid = searcher.getPrimaryLsid("https://id.biodiversity.org.au/instance/apni/707711");
+        assertEquals("https://id.biodiversity.org.au/node/apni/2890752", primaryLsid);
+    }
+
+    @Test
+    public void testGetPrimaryLsid4() {
+        String primaryLsid = searcher.getPrimaryLsid("ALA_3624216");
+        assertEquals("https://id.biodiversity.org.au/node/apni/2890752", primaryLsid);
+    }
+
+    @Test
+    public void testGetPrimaryLsid5() {
+        String primaryLsid = searcher.getPrimaryLsid("urn:lsid:biodiversity.org.au:afd.taxon:f71a4c71-48e1-4a9f-840e-1bb189611fd4");
+        assertEquals("https://biodiversity.org.au/afd/taxa/f71a4c71-48e1-4a9f-840e-1bb189611fd4", primaryLsid);
+    }
+
+    @Test
+    public void testGetPrimaryLsid6() {
+        String primaryLsid = searcher.getPrimaryLsid("http://biodiversity.org.au/afd/taxa/f71a4c71-48e1-4a9f-840e-1bb189611fd4");
+        assertEquals("https://biodiversity.org.au/afd/taxa/f71a4c71-48e1-4a9f-840e-1bb189611fd4", primaryLsid);
     }
 
     @Test
@@ -1126,7 +1154,6 @@ public class ALANameSearcherTest {
         String sciName = getCommonName(name);
         assertEquals("Cacatua (Cacatua) galerita", sciName);
     }
-
     private String getCommonNameLSID(String name) {
         return searcher.searchForLSIDCommonName(name);
     }
@@ -1849,6 +1876,21 @@ public class ALANameSearcherTest {
         assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
     }
 
+    // Available as a synonym but also misapplied.
+    @Test
+    public void testSynonymMisapplied2() throws Exception {
+        String name = "Rulingia rugosa";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals(SynonymType.OBJECTIVE_SYNONYM, metrics.getResult().getSynonymType());
+        assertEquals("https://id.biodiversity.org.au/instance/apni/949024", metrics.getResult().getLsid());
+        assertEquals("https://id.biodiversity.org.au/node/apni/2891679", metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+        assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
+    }
+
 
     // Higher taxonomy only filled out
     @Test
@@ -1955,7 +1997,6 @@ public class ALANameSearcherTest {
         assertEquals(SynonymType.OBJECTIVE_SYNONYM, metrics.getResult().getSynonymType());
     }
 
-
     // Ensure illegitimate names are excluded from the system and don't gum the works up
     @Test
     public void testIllegitimate2() throws Exception {
@@ -1967,6 +2008,33 @@ public class ALANameSearcherTest {
         assertEquals("https://id.biodiversity.org.au/name/apni/51337126", metrics.getResult().getLsid());
         assertEquals("https://id.biodiversity.org.au/taxon/apni/51367864", metrics.getResult().getRankClassification().getGid());
         assertEquals("https://id.biodiversity.org.au/taxon/apni/51367862", metrics.getResult().getRankClassification().getFid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+    }
+
+
+    // Test vile examples where someone has put in something like Genus N27 or Genus B
+    @Test
+    public void testGenusMarker1() throws Exception {
+        String name = "Genus NC72";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals(NameType.INFORMAL, metrics.getNameType());
+        assertNull(metrics.getResult());
+    }
+
+
+    // Test vile examples where someone has put in something like Genus N27 or Genus B
+    @Test
+    public void testGenusMarker2() throws Exception {
+        String name = "Genus B";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals("https://biodiversity.org.au/afd/taxa/18997fe9-4fc7-4327-b962-e921cfee45c7", metrics.getResult().getLsid());
+        assertEquals("https://biodiversity.org.au/afd/taxa/4c582775-3afe-4076-b919-3251f515e7c1", metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
     }
 

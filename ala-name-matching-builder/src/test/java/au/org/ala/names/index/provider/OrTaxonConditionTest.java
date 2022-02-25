@@ -51,7 +51,7 @@ public class OrTaxonConditionTest extends TestUtils {
         condition1.setNomenclaturalCode(NomenclaturalClassifier.BOTANICAL);
         condition.add(condition1);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
-        NameKey key = this.analyser.analyse(instance);
+        NameKey key = this.analyser.analyse(instance).getNameKey();
         assertTrue(condition.match(instance, key));
     }
 
@@ -62,7 +62,7 @@ public class OrTaxonConditionTest extends TestUtils {
         condition1.setNomenclaturalCode(NomenclaturalClassifier.ZOOLOGICAL);
         condition.add(condition1);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
-        NameKey key = this.analyser.analyse(instance);
+        NameKey key = this.analyser.analyse(instance).getNameKey();
         assertFalse(condition.match(instance, key));
     }
 
@@ -77,7 +77,7 @@ public class OrTaxonConditionTest extends TestUtils {
         condition.add(condition1);
         condition.add(condition2);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
-        NameKey key = this.analyser.analyse(instance);
+        NameKey key = this.analyser.analyse(instance).getNameKey();
         assertTrue(condition.match(instance, key));
     }
 
@@ -91,7 +91,7 @@ public class OrTaxonConditionTest extends TestUtils {
         condition.add(condition1);
         condition.add(condition2);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
-        NameKey key = this.analyser.analyse(instance);
+        NameKey key = this.analyser.analyse(instance).getNameKey();
         assertTrue(condition.match(instance, key));
     }
 
@@ -105,7 +105,7 @@ public class OrTaxonConditionTest extends TestUtils {
         condition.add(condition1);
         condition.add(condition2);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.ACCEPTED);
-        NameKey key = this.analyser.analyse(instance);
+        NameKey key = this.analyser.analyse(instance).getNameKey();
         assertTrue(condition.match(instance, key));
     }
 
@@ -119,7 +119,7 @@ public class OrTaxonConditionTest extends TestUtils {
         condition.add(condition1);
         condition.add(condition2);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Acacia dealbata", this.provider, TaxonomicType.ACCEPTED);
-        NameKey key = this.analyser.analyse(instance);
+        NameKey key = this.analyser.analyse(instance).getNameKey();
         assertFalse(condition.match(instance, key));
     }
 
@@ -144,13 +144,13 @@ public class OrTaxonConditionTest extends TestUtils {
         ObjectMapper mapper = new ObjectMapper();
         OrTaxonCondition condition = mapper.readValue(this.resourceReader("or-condition-1.json"), OrTaxonCondition.class);
         TaxonConceptInstance instance = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.HOMOTYPIC_SYNONYM);
-        NameKey key = this.analyser.analyse(instance);
+        NameKey key = this.analyser.analyse(instance).getNameKey();
         assertTrue(condition.match(instance, key));
         instance = this.createInstance("ID-1", NomenclaturalClassifier.BOTANICAL, "Acacia dealbata", this.provider, TaxonomicType.ACCEPTED);
-        key = this.analyser.analyse(instance);
+        key = this.analyser.analyse(instance).getNameKey();
         assertTrue(condition.match(instance, key));
         instance = this.createInstance("ID-1", NomenclaturalClassifier.ZOOLOGICAL, "Acacia dealbata", this.provider, TaxonomicType.ACCEPTED);
-        key = this.analyser.analyse(instance);
+        key = this.analyser.analyse(instance).getNameKey();
         assertFalse(condition.match(instance, key));
     }
 

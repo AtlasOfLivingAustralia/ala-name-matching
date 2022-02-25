@@ -82,17 +82,23 @@ public class ALANameAnalyser extends NameAnalyser {
      */
     protected static final Pattern BRACKETED = Pattern.compile("\\s(\\[.+\\]|\\{.+\\})");
 
+    /**
+     * Detect a rank name where a nomrmal name should go
+     */
+    private static final String RANK_NAMES = Arrays.stream(Rank.values()).map(Rank::name).collect(Collectors.joining("|"));
+    private static final Pattern RANK_AS_NAME = Pattern.compile("(?i:" + RANK_NAMES + ")");
 
-    private static final String RANK_MARKERS = Arrays.stream(Rank.values()).filter(r -> r.getMarker() != null).map(r -> r.getMarker().replaceAll("\\.", "")).collect(Collectors.joining("|"));
-    private static final String RANK_PLACEHOLDER_MARKERS = "\\p{Alpha}";
+    private static final String RANK_MARKERS_STRICT = Arrays.stream(Rank.values()).filter(r -> r.getMarker() != null).map(r -> r.getMarker().replaceAll("\\.", "\\.")).collect(Collectors.joining("|"));
+    private static final String RANK_MARKERS_LOOSE = Arrays.stream(Rank.values()).filter(r -> r.getMarker() != null).map(r -> r.getMarker().replaceAll("\\.", "\\.?")).collect(Collectors.joining("|"));
+    private static final String RANK_PLACEHOLDER_MARKERS = "\\p{Alpha}\\.";
     /**
      * Pattern for rank markers
      */
-    protected static final Pattern STRICT_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.\\s+");
+    protected static final Pattern STRICT_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS_STRICT + "|" + RANK_PLACEHOLDER_MARKERS + ")\\s+");
     /**
      * Pattern for bare (no proper period) rank markers
      */
-    protected static final Pattern LOOSE_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.?\\s+");
+    protected static final Pattern LOOSE_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS_LOOSE + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.?\\s+");
     /**
      * Pattern for unsure markers (cf, aff etc)
      */
@@ -133,11 +139,11 @@ public class ALANameAnalyser extends NameAnalyser {
      */
     protected static final Pattern DOUBTFUL = Pattern.compile("((^| )(undet|indet|aff|cf)[#!?\\.]?)+(?![a-z])");
 
-
     /**
      * Something that looks like an unplaced name
      */
     protected static final Predicate<String> PLACEHOLDER_TEST = Pattern.compile("(?i:species inquirenda|incertae sedis|unplaced)").asPredicate();
+
     /**
      * Something that looks like a hybrid
      */
@@ -203,7 +209,7 @@ public class ALANameAnalyser extends NameAnalyser {
      * @return The analyzed name
      */
     @Override
-    public NameKey analyse(@Nullable NomenclaturalClassifier code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, TaxonomicType taxonomicStatus, Set<TaxonFlag> flags, boolean loose) {
+    public AnalysisResult analyse(@Nullable NomenclaturalClassifier code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, TaxonomicType taxonomicStatus, Set<TaxonFlag> flags, boolean loose) {
         NameType nameType = NameType.INFORMAL;
         ParsedName name = null;
 
@@ -219,20 +225,20 @@ public class ALANameAnalyser extends NameAnalyser {
                 scientificName = (left + " " + right).trim();
             }
         }
+        try {
+            name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
+            if (name != null) {
+                nameType = name.getType();
+                if (rankType == null && name.getRank() != null)
+                    rankType = RankType.getForCBRank(name.getRank());
+            }
+        } catch (UnparsableException ex) {
+            LOGGER.info("Unable to parse " + name + ": " + ex.getMessage());
+        }
         if (UNSURE_MARKER.matcher(scientificName).find()) {
             // Leave this well alone but indicate that it is doubtful
             nameType = NameType.DOUBTFUL;
         } else {
-            try {
-                name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
-                if (name != null) {
-                    nameType = name.getType();
-                    if (rankType == null && name.getRank() != null)
-                        rankType = RankType.getForCBRank(name.getRank());
-                }
-            } catch (UnparsableException ex) {
-                // Oh well, worth a try
-            }
             if (loose) {
                 if (scientificNameAuthorship == null && name != null) {
                     String ac = this.normalise(name.authorshipComplete());
@@ -252,7 +258,9 @@ public class ALANameAnalyser extends NameAnalyser {
 
 
         // Categorize
-        if (PLACEHOLDER_TEST.test(scientificName) || (taxonomicStatus != null && taxonomicStatus.isPlaceholder())) {
+        if (taxonomicStatus == TaxonomicType.MISCELLANEOUS_LITERATURE) {
+            nameType = NameType.INFORMAL;
+        } else if (PLACEHOLDER_TEST.test(scientificName) || (taxonomicStatus != null && taxonomicStatus.isPlaceholder())) {
             scientificName = scientificName + " " + UUID.randomUUID().toString();
             nameType = NameType.PLACEHOLDER;
         } else if (code == NomenclaturalClassifier.VIRUS) {
@@ -299,8 +307,25 @@ public class ALANameAnalyser extends NameAnalyser {
         scientificName = scientificName.trim().toUpperCase();
 
 
-        return new NameKey(this, code, scientificName, scientificNameAuthorship, rankType, nameType, flags);
-    }
+        NameKey key = new NameKey(this, code, scientificName, scientificNameAuthorship, rankType, nameType, flags);
+        String mononomial = null;
+        String genus = null;
+        String specificEpithet = null;
+        String infraspecificEpithet = null;
+        String cultivarEpithet = null;
+        if (name != null) {
+            mononomial = name.getGenusOrAbove();
+            if (mononomial != null && RANK_AS_NAME.matcher(mononomial).matches()) {
+                mononomial = null;
+            } else {
+                genus = rankType != null && !rankType.isHigherThan(RankType.GENUS) ? mononomial : null;
+                specificEpithet = name.getSpecificEpithet();
+                infraspecificEpithet = name.getInfraSpecificEpithet();
+                cultivarEpithet = name.getCultivarEpithet();
+            }
+        }
+        return new AnalysisResult(key, mononomial, genus, specificEpithet, infraspecificEpithet, cultivarEpithet);
+     }
 
     /**
      * Load a set of additional terms for a controlled vocabulary.

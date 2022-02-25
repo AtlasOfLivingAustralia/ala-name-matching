@@ -690,6 +690,24 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
+     * Add a classification hint.
+     * <p>
+     * If the hint is null or there is already a classification value, don't bother.
+     * Otherwise, add the hint to the classification.
+     * </p>
+     *
+     * @param term The classifcation term
+     * @param value The hint value
+     */
+    public void addClassificationHint(Term term, @Nullable String value) {
+        if (value == null || (this.classification != null && this.classification.containsKey(term) && this.classification.get(term).isPresent()))
+            return;
+        if (this.classification == null)
+            this.classification = new HashMap<>();
+        this.classification.put(term, Optional.of(value));
+    }
+
+    /**
      * A provider/id pair to help locate this taxon.
      *
      * @return The locator
@@ -1508,7 +1526,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      *
      * @return True if the scientific name is valid
      */
-    // If you plan to change this, it is called by a parallel stream, so consisder thread safety
+    // If you plan to change this, it is called by a parallel stream, so consider thread safety
     @Override
     public boolean validate(Taxonomy taxonomy) {
         boolean valid = true;
@@ -1519,7 +1537,6 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 taxonomy.report(IssueType.VALIDATION, "instance.validation.noParent", this, null);
                 valid = false;
             }
-
         }
         if ((this.acceptedNameUsageID != null || this.acceptedNameUsage != null) && this.accepted == null) {
             if (this.provider.isLoose())
