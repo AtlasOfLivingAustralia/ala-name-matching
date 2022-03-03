@@ -944,11 +944,29 @@ public class ALANameSearcherTest {
     }
 
     @Test
-    public void testSearchForRecordByLsid() {
+    public void testSearchForRecordByLsid1() {
         String lsid = "https://id.biodiversity.org.au/instance/apni/885617";
         NameSearchResult nsr = searcher.searchForRecordByLsid(lsid);
         assertNotNull(nsr);
         assertEquals(lsid, nsr.getLsid());
+    }
+
+    @Test
+    public void testSearchForRecordByLsid2() {
+        String actual = "https://id.biodiversity.org.au/instance/apni/885617";
+        String lsid = actual.replace("https:", "http:");
+        NameSearchResult nsr = searcher.searchForRecordByLsid(lsid);
+        assertNotNull(nsr);
+        assertEquals(actual, nsr.getLsid());
+    }
+
+    @Test
+    public void testSearchForRecordByLsid3() {
+        String actual = "https://biodiversity.org.au/afd/taxa/f71a4c71-48e1-4a9f-840e-1bb189611fd4";
+        String lsid = actual.replace("https://biodiversity.org.au/afd/taxa/", "urn:lsid:biodiversity.org.au:afd.taxon:");
+        NameSearchResult nsr = searcher.searchForRecordByLsid(lsid);
+        assertNotNull(nsr);
+        assertEquals(actual, nsr.getLsid());
     }
 
     private void printAllResults(String prefix, List<NameSearchResult> results) {
