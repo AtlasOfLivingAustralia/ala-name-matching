@@ -1826,10 +1826,15 @@ public class ALANameSearcher {
         try {
             Query query = NameIndexField.LSID.search(lsid);
             TopDocs hits = this.idSearcher.search(query, 1);
-            if (hits.totalHits.value == 0)
-                hits = this.cbSearcher.search(query, 1);
-            if (hits.totalHits.value > 0)
-                return this.createResult(cbSearcher.doc(hits.scoreDocs[0].doc), MatchType.TAXON_ID);
+            if (hits.totalHits.value > 0) {
+                Document link = this.idSearcher.doc(hits.scoreDocs[0].doc);
+                lsid = link.get(NameIndexField.REAL_LSID.name);
+                query = NameIndexField.LSID.search(lsid);
+            }
+            hits = this.cbSearcher.search(query, 1);
+            if (hits.totalHits.value > 0) {
+                result = this.createResult(cbSearcher.doc(hits.scoreDocs[0].doc), MatchType.TAXON_ID);
+            }
         } catch (Exception ex) {
             log.error("Unable to search for record by LSID " + lsid, ex);
         }
