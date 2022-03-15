@@ -17,8 +17,8 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.TaxonFlag;
 import au.org.ala.names.model.TaxonomicType;
-import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.checklistbank.authorship.AuthorComparator;
 import org.gbif.checklistbank.model.Equality;
@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Work out the indexable details of a name.
@@ -62,17 +63,17 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
     /**
      * Convienience method for testing.
      */
-    public NameKey analyse(TaxonConceptInstance instance) {
-        return this.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), instance.getTaxonomicStatus(), false);
+    public AnalysisResult analyse(TaxonConceptInstance instance) {
+        return this.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), instance.getTaxonomicStatus(), instance.getFlags(), false);
     }
 
     /**
      * Convienience method for testing.
      */
-    public NameKey analyse(String code, String scientificName, String scientificNameAuthorship, String rank) {
-        NomenclaturalCode canonicalCode = this.canonicaliseCode(code);
+    public AnalysisResult analyse(String code, String scientificName, String scientificNameAuthorship, String rank) {
+        NomenclaturalClassifier canonicalCode = this.canonicaliseCode(code);
         RankType rankType = this.canonicaliseRank(rank);
-        return this.analyse(canonicalCode, scientificName, scientificNameAuthorship, rankType, null, false);
+        return this.analyse(canonicalCode, scientificName, scientificNameAuthorship, rankType, null, null, false);
     }
 
     /**
@@ -91,7 +92,7 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
      *
      * @return A suitable name key
      */
-    abstract public NameKey analyse(@Nullable NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, @Nullable RankType rankType, @Nullable TaxonomicType taxonomicStatus, boolean loose);
+    abstract public AnalysisResult analyse(@Nullable NomenclaturalClassifier code, String scientificName, @Nullable String scientificNameAuthorship, @Nullable RankType rankType, @Nullable TaxonomicType taxonomicStatus, @Nullable Set<TaxonFlag> flags, boolean loose);
 
     /**
      * Set the issue reporter.
@@ -109,7 +110,7 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
      *
      * @return The canonicalised code
      */
-    abstract public NomenclaturalCode canonicaliseCode(String code);
+    abstract public NomenclaturalClassifier canonicaliseCode(String code);
 
     /**
      * Canonicalise the taxonomic status
@@ -139,6 +140,15 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
     abstract public NomenclaturalStatus canonicaliseNomenclaturalStatus(String nomenclaturalStatus);
 
     /**
+     * Canonicalise a supplied taxonomic flag
+     *
+     * @param flag The flag name
+     *
+     * @return The matching flag
+     */
+    abstract public TaxonFlag canonicaliseFlag(String flag);
+
+    /**
      * Test for an informal name.
      * <p>
      *
@@ -153,6 +163,7 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
      * Compare two keys.
      * <p>
      *     Comparison is equal if the codes, names and authors are equal.
+     *     Name keys with fuzzy nomenclatural codes do not compare codes.
      *     Authorship equality is decided by a {@link AuthorComparator}
      *     which can get a wee bit complicated.
      * </p>
@@ -169,8 +180,10 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
             return -1;
         if (key1.getCode() != null && key2.getCode() == null)
             return 1;
-        if (key1.getCode() != null && key2.getCode() != null && (cmp = key1.getCode().compareTo(key2.getCode())) != 0)
-            return cmp;
+        if (key1.getCode() != null && key2.getCode() != null) {
+            if ((cmp = key1.getCode().compareTo(key2.getCode())) != 0)
+                return cmp;
+        }
         if ((cmp = key1.getScientificName().compareTo(key2.getScientificName())) != 0)
             return cmp;
         if ((cmp = key1.getRank().compareTo(key2.getRank())) != 0)
@@ -234,5 +247,63 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
             this.reporter.report(type, code, main, associated);
         else
             logger.warn("Report " + type.name() + " code=" + code + " main=" + main.toString() + " associated=" + associated);
+    }
+
+    /**
+     * The result of a name analysis.
+     * <p>
+     * As well as the all-important name key, any fragments of information about the parsed name are also returned.
+     * </p>
+     */
+    public static class AnalysisResult {
+        private NameKey nameKey;
+        @Nullable
+        private String mononomial;
+        @Nullable
+        private String genus;
+        @Nullable
+        private String specificEpithet;
+        @Nullable
+        private String infraspecificEpithet;
+        @Nullable
+        private String cultivarEpithet;
+
+        public AnalysisResult(NameKey nameKey, @Nullable String mononomial, @Nullable String genus, @Nullable String specificEpithet, @Nullable String infraspecificEpithet, @Nullable String cultivarEpithet) {
+            this.nameKey = nameKey;
+            this.mononomial = mononomial;
+            this.genus = genus;
+            this.specificEpithet = specificEpithet;
+            this.infraspecificEpithet = infraspecificEpithet;
+            this.cultivarEpithet = cultivarEpithet;
+        }
+
+        public NameKey getNameKey() {
+            return this.nameKey;
+        }
+
+        @Nullable
+        public String getMononomial() {
+            return this.mononomial;
+        }
+
+        @Nullable
+        public String getGenus() {
+            return this.genus;
+        }
+
+        @Nullable
+        public String getSpecificEpithet() {
+            return this.specificEpithet;
+        }
+
+        @Nullable
+        public String getInfraspecificEpithet() {
+            return this.infraspecificEpithet;
+        }
+
+        @Nullable
+        public String getCultivarEpithet() {
+            return this.cultivarEpithet;
+        }
     }
 }

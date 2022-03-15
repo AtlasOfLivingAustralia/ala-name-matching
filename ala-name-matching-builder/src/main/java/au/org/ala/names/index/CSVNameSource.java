@@ -17,6 +17,7 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.TaxonFlag;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.vocab.ALATerm;
 import com.opencsv.CSVReader;
@@ -28,7 +29,6 @@ import org.apache.lucene.document.StringField;
 import org.gbif.api.model.registry.Citation;
 import org.gbif.api.model.registry.Contact;
 import org.gbif.api.vocabulary.Country;
-import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.dwc.terms.*;
 import org.slf4j.Logger;
@@ -211,6 +211,7 @@ public class CSVNameSource extends NameSource {
         Integer acceptedNameUsageIDIndex = termLocations.get(DwcTerm.acceptedNameUsageID);
         Integer taxonRemarksIndex = termLocations.get(DwcTerm.taxonRemarks);
         Integer provenanceIndex = termLocations.get(DcTerm.provenance);
+        Integer taxonomicFlagsIndex = termLocations.get(ALATerm.taxonomicFlags);
         Set<Term> classifications = TaxonConceptInstance.CLASSIFICATION_FIELDS.stream().filter(t -> termLocations.containsKey(t)).collect(Collectors.toSet());
         try {
             String[] r;
@@ -219,7 +220,7 @@ public class CSVNameSource extends NameSource {
                 final String[] record = r;
                 String taxonID = this.get(record, taxonIDIndex);
                 String verbatimNomenclautralCode = this.get(record, nomenclaturalCodeIndex);
-                NomenclaturalCode code = taxonomy.resolveCode(verbatimNomenclautralCode);
+                NomenclaturalClassifier code = taxonomy.resolveCode(verbatimNomenclautralCode);
                 NameProvider provider = taxonomy.resolveProvider(this.get(record, datasetIDIndex), this.get(record, datasetNameIndex));
                 String scientificName = this.get(record, scientificNameIndex);
                 String scientificNameAuthorship = this.get(record, scientificNameAuthorshipIndex);
@@ -231,6 +232,8 @@ public class CSVNameSource extends NameSource {
                 RankType rank = taxonomy.resolveRank(verbatimTaxonRank);
                 String verbatimNomenclaturalStatus = this.get(record, nomenclaturalStatusIndex);
                 Set<NomenclaturalStatus> nomenclaturalStatus = taxonomy.resolveNomenclaturalStatus(verbatimNomenclaturalStatus);
+                String verbatimTaxonomicFlags = this.get(record, taxonomicFlagsIndex);
+                Set<TaxonFlag> flags = taxonomy.resolveTaxonomicFlags(verbatimTaxonomicFlags);
                 String parentNameUsage = this.get(record, parentNameUsageIndex);
                 String parentNameUsageID = this.get(record, parentNameUsageIDIndex);
                 String acceptedNameUsage = this.get(record, acceptedNameUsageIndex);
@@ -265,7 +268,8 @@ public class CSVNameSource extends NameSource {
                         taxonRemarks,
                         verbatimTaxonRemarks,
                         provenance,
-                        classification);
+                        classification,
+                        flags);
                 instance.normalise();
                 instance = taxonomy.addInstance(instance);
                 Document doc = new Document();

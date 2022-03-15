@@ -32,6 +32,13 @@
             "scientificName" : "Viruses"
           },
           "scientificName": "VIRUS"
+        },
+        {
+          "condition": {
+            "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonomicFlag" : "AMBIGUOUS_NOMENCLATURAL_CODE"
+          },
+          "nomenclaturalCode": "EUK"
         }
       ]
     }
@@ -139,6 +146,26 @@
     "parent": "dr114",
     "authority": false,
     "defaultScore": 100
+  },{
+    "id" : "dr117",
+    "parent": "dr114",
+    "defaultScore": 100,
+    "keyAdjuster": {
+      "adjustments": [
+        {
+          "condition": {
+            "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "taxonomicFlag" : "AMBIGUOUS_NOMENCLATURAL_CODE"
+          },
+          "nomenclaturalCode": "EUK"
+        }
+      ]
+    }
+  },{
+    "id" : "dr118",
+    "parent": "dr117",
+    "authority": false,
+    "defaultScore": 200
   }
   ],
   "defaultProvider" : "unknown",

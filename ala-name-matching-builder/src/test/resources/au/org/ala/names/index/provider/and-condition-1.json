@@ -2,7 +2,7 @@
   "@class" : "au.org.ala.names.index.provider.AndTaxonCondition",
   "and" : [ {
     "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
-    "nomenclaturalCode" : "BOTANICAL"
+    "nomenclaturalCode" : "ICBN"
   }, {
     "@class" : "au.org.ala.names.index.provider.MatchTaxonCondition",
     "taxonomicStatus" : "HOMOTYPIC_SYNONYM"

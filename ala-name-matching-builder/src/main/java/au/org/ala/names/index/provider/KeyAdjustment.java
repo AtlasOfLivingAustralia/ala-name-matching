@@ -17,11 +17,11 @@
 package au.org.ala.names.index.provider;
 
 import au.org.ala.names.index.NameKey;
+import au.org.ala.names.index.NomenclaturalClassifier;
 import au.org.ala.names.index.TaxonConceptInstance;
 import au.org.ala.names.model.RankType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.gbif.api.vocabulary.NameType;
-import org.gbif.api.vocabulary.NomenclaturalCode;
 
 import javax.annotation.Nullable;
 
@@ -48,7 +48,7 @@ public class KeyAdjustment {
     private TaxonCondition condition;
     /** The replacement nomenclaturalCode */
     @JsonProperty
-    private NomenclaturalCode nomenclaturalCode;
+    private NomenclaturalClassifier nomenclaturalCode;
     /** The replacement scientific name */
     @JsonProperty
     private String scientificName;
@@ -78,7 +78,7 @@ public class KeyAdjustment {
      * @param nameType The new name type, or null for do not replace
      * @param rank The new rank, or null for do not replace
      */
-    public KeyAdjustment(TaxonCondition condition, @Nullable NomenclaturalCode nomenclaturalCode, @Nullable String scientificName, @Nullable String scientificNameAuthorship, @Nullable NameType nameType, @Nullable RankType rank) {
+    public KeyAdjustment(TaxonCondition condition, @Nullable NomenclaturalClassifier nomenclaturalCode, @Nullable String scientificName, @Nullable String scientificNameAuthorship, @Nullable NameType nameType, @Nullable RankType rank) {
         this.condition = condition;
         this.nomenclaturalCode = nomenclaturalCode;
         this.scientificName = scientificName;
@@ -90,7 +90,7 @@ public class KeyAdjustment {
     public NameKey adjust(NameKey key, TaxonConceptInstance instance) {
         if (!this.condition.match(instance, key))
             return key;
-        NomenclaturalCode nc = this.nomenclaturalCode != null ? this.nomenclaturalCode : key.getCode();
+        NomenclaturalClassifier nc = this.nomenclaturalCode != null ? this.nomenclaturalCode : key.getCode();
         String sn = this.scientificName != null ? this.scientificName : key.getScientificName();
         String sna = this.scientificNameAuthorship  != null ? this.scientificNameAuthorship : key.getScientificNameAuthorship();
         if (sna != null && sna.isEmpty())

@@ -214,6 +214,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
         writer.forceMerge(1);
         log.info("Loading vernacular for " + namesDwc);
         this.indexCommonNameExtension(archive);
+        log.info("Loading identfiiers for " + namesDwc);
+        this.indexIdentifierExtension(archive);
         return true;
      }
 
@@ -322,6 +324,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         return true;
     }
 
+
     /**
      * Index the common names CSV file supplied.
      *
@@ -397,13 +400,52 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 this.vernacularIndexWriter.addDocument(doc);
                 count++;
             }
-            if(i % 1000 == 0){
+            if(i % 10000 == 0){
                 log.info("Processed " + i + " common names with " + count + " added to index");
             }
         }
         log.info("Finished processing " + i + " common names with " + count + " added to index");
         this.vernacularIndexWriter.commit();
         this.vernacularIndexWriter.forceMerge(1);
+    }
+
+
+    private void indexIdentifierExtension(Archive archive) throws Exception {
+        ArchiveFile identifierArchiveFile = archive.getExtension(GbifTerm.Identifier);
+        Iterator<Record> iter = identifierArchiveFile == null ? null : identifierArchiveFile.iterator();
+        Map<String, Set<String>> seen = new HashMap<>();
+        int i = 0, count = 0;
+
+        if (identifierArchiveFile == null) {
+            log.info("No identifier extension from found in " + archive.getLocation());
+            return;
+        }
+        log.info("Starting to load the identifiers extension from " + archive.getLocation());
+        while (iter.hasNext()) {
+            i++;
+            Record record = iter.next();
+            String taxonID = record.id();
+            String identifier = record.value(DcTerm.identifier);
+            Set<String> seenIds = seen.computeIfAbsent(taxonID, k -> new HashSet<>());
+            if (!seenIds.contains(identifier) && !taxonID.equals(identifier)) {
+                TopDocs result = getLoadIdxResults(null, "lsid", taxonID, 1);
+                if (result.totalHits.value > 0) {
+                    Document sciNameDoc = lsearcher.doc(result.scoreDocs[0].doc);
+                    //get the scientific name
+                    //we can add the common name
+                    Document doc = createIdentifierDocument(identifier, sciNameDoc.get(NameIndexField.NAME.toString()), taxonID);
+                    this.idWriter.addDocument(doc);
+                    count++;
+                }
+                seenIds.add(identifier);
+            }
+            if(i % 10000 == 0){
+                log.info("Processed " + i + " identifiers with " + count + " added to index");
+            }
+        }
+        log.info("Finished processing " + i + " idenitfiers with " + count + " added to index");
+        this.idWriter.commit();
+        this.idWriter.forceMerge(1);
     }
 
 
@@ -1172,9 +1214,10 @@ public class DwcaNameIndexer extends ALANameIndexer {
             indexer.indexCommonNames(commonNameFile);
             indexer.createIrmng(irmngFile);
             indexer.createExtraIdIndex(identifiersFile);
-            for (File dwca: dwcas)
+            for (File dwca: dwcas) {
                 if (indexer.loadCommonNames(dwca))
                     used.add(dwca);
+            }
             indexer.commit();
             for (File dwca: dwcas)
                 if (!used.contains(dwca))

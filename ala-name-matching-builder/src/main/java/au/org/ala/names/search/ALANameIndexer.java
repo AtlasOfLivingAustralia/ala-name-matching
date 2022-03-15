@@ -619,11 +619,7 @@ public class ALANameIndexer {
             while ((values = reader.readNext()) != null) {
 
                 if (values != null && values.length >= 3) {
-                    Document doc = new Document();
-                    //doc.add(new Field("lsid", values[2], Store.NO, Index.NOT_ANALYZED));
-                    NameIndexField.LSID.store(values[2], doc);
-                    //doc.add(new Field("reallsid", values[1], Store.YES, Index.NO));
-                    NameIndexField.REAL_LSID.store(values[1], doc);
+                    Document doc = this.createIdentifierDocument(values[2], null, values[1]);
                     iw.addDocument(doc);
                 }
             }
@@ -741,6 +737,18 @@ public class ALANameIndexer {
             NameIndexField.LANGUAGE.store(language.toLowerCase().trim(), doc);
          }
 
+        return doc;
+    }
+
+
+    protected Document createIdentifierDocument(String id, String sn, String lsid) {
+        Document doc = new Document();
+        if (sn != null) {
+            NameIndexField.NAME.store(sn, doc);
+        }
+
+        NameIndexField.LSID.store(id, doc);
+        NameIndexField.REAL_LSID.store(lsid, doc);
         return doc;
     }
 

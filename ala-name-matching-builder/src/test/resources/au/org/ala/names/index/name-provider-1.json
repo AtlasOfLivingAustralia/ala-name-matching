@@ -43,7 +43,7 @@
         {
           "condition": {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
-            "nomenclaturalCode": "BOTANICAL"
+            "nomenclaturalCode": "ICBN"
           },
           "adjustment": 10
         }
