@@ -74,7 +74,11 @@ public class ALANameSearcher {
     public static final Pattern voucherRemovePattern = Pattern.compile(" |,|&|\\.");
     public static final Pattern affPattern = Pattern.compile("([\\x00-\\x7F\\s]*) aff[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
     public static final Pattern cfPattern = Pattern.compile("([\\x00-\\x7F\\s]*) cf[#!?\\\\. ]([\\x00-\\x7F\\s]*)");
-
+    public static final Pattern RANK_PATTERN = Pattern.compile(
+            "(?i:" +
+            Arrays.stream(Rank.values()).map(Rank::name).collect(Collectors.joining("|")) +
+            ")"
+    );
     private static Comparator<Map> AUTOCOMPLETE_COMPARATOR = new Comparator<Map>() {
         @Override
         public int compare(Map o1, Map o2) {
@@ -562,7 +566,7 @@ public class ALANameSearcher {
                 metrics.setNameType(pn.getType());
                 if (pn.isBinomial() && pn.getType() != NameType.DOUBTFUL && (pn.getType() != NameType.INFORMAL || (pn.getRank() != null && pn.getRank().isInfraspecific())) && (rank == null || rank.getId() >= 7000))
                     nsr = performErrorCheckSearch(pn.canonicalSpeciesName(), cl, null, fuzzy, ignoreHomonym, metrics);
-                if (nsr == null && (pn.getType() == NameType.DOUBTFUL || (rank != null && rank.getId() <= 7000) || rank == null))
+                if (nsr == null && !RANK_PATTERN.matcher(pn.getGenusOrAbove()).matches() && (pn.getType() == NameType.DOUBTFUL || (rank != null && rank.getId() <= 7000) || rank == null))
                     nsr = performErrorCheckSearch(pn.getGenusOrAbove(), cl, null, fuzzy, ignoreHomonym, metrics);
 
             } catch (Exception ex) {
@@ -1672,10 +1676,12 @@ public class ALANameSearcher {
     /**
      * Returns the LSID for the CB name usage for the supplied common name.
      * <p/>
-     * When the common name returns more than 1 hit a result is only returned if all the scientific names match
+     * When the common name returns more than 1 hit a result is only returned if the accepted
+     * matches are equivalent or one subsumes the other.
      *
-     * @param name
-     * @return
+     * @param name The common name
+     *
+     * @return Either a matching LSID or null for not found
      */
     private String getLSIDForUniqueCommonName(String name) {
         if (name != null) {
@@ -1683,27 +1689,75 @@ public class ALANameSearcher {
             try {
                 TopDocs results = vernSearcher.search(query, 10);
                 //if all the results have the same scientific name result the LSID for the first
-                String firstLsid = null;
-                String firstName = null;
+                NameSearchResult best = null;
                 log.debug("Number of matches for " + name + " " + results.totalHits);
                 for (ScoreDoc sdoc : results.scoreDocs) {
                     org.apache.lucene.document.Document doc = vernSearcher.doc(sdoc.doc);
-                    if (firstLsid == null) {
-                        firstLsid = doc.get(NameIndexField.LSID.toString());
-                        firstName = doc.get(NameIndexField.NAME.toString());
+                    String lsid = doc.get(NameIndexField.LSID.toString());
+                     NameSearchResult result = this.searchForRecordByLsid(lsid);
+                    if (result.isSynonym())
+                        result = this.searchForRecordByLsid(result.getAcceptedLsid());
+                    if (best == null) {
+                        best = result;
                     } else {
-                        if (!doSciNamesMatch(firstName, doc.get(NameIndexField.NAME.toString())))
+                        best = this.doClassificationMatch(best, result);
+                        if (best == null)
                             return null;
-                    }
+                     }
                 }
-                //want to get the primary lsid for the taxon name thus we get the current lsid in the index...
-                return getPrimaryLsid(firstLsid);
+                return best == null ? null : best.getLsid();
             } catch (IOException e) {
                 //
                 log.debug("Unable to access document for common name.", e);
             }
         }
         return null;
+    }
+
+    /**
+     * See if one element of the match is contained in the other classification.
+     *
+     * @param match1 The first match
+     * @param match2 The second match
+     *
+     * @return The most general match or null for no match
+     */
+    protected NameSearchResult doClassificationMatch(NameSearchResult match1, NameSearchResult match2) {
+        if (match1.getLsid().equals(match2.getLsid()))
+            return match1;
+        if (this.classificationContains(match2.getRankClassification(), match1.getLsid()))
+            return match1;
+        if (this.classificationContains(match1.getRankClassification(), match2.getLsid()))
+            return match2;
+        return null;
+    }
+
+    /**
+     * See if a classification contains a particular lsid.
+     *
+     * @param classification The classification
+     * @param lsid The lsid
+     *
+     * @return Tru if the lsid is found within the classification
+     */
+    protected boolean classificationContains(LinnaeanRankClassification classification, String lsid) {
+        if (lsid == null)
+            return false;
+        if (lsid.equals(classification.getSid()))
+            return true;
+        if (lsid.equals(classification.getGid()))
+            return true;
+        if (lsid.equals(classification.getFid()))
+            return true;
+        if (lsid.equals(classification.getOid()))
+            return true;
+        if (lsid.equals(classification.getCid()))
+            return true;
+        if (lsid.equals(classification.getPid()))
+            return true;
+        if (lsid.equals(classification.getKid()))
+            return true;
+        return false;
     }
 
     /**
@@ -1772,10 +1826,15 @@ public class ALANameSearcher {
         try {
             Query query = NameIndexField.LSID.search(lsid);
             TopDocs hits = this.idSearcher.search(query, 1);
-            if (hits.totalHits.value == 0)
-                hits = this.cbSearcher.search(query, 1);
-            if (hits.totalHits.value > 0)
-                return this.createResult(cbSearcher.doc(hits.scoreDocs[0].doc), MatchType.TAXON_ID);
+            if (hits.totalHits.value > 0) {
+                Document link = this.idSearcher.doc(hits.scoreDocs[0].doc);
+                lsid = link.get(NameIndexField.REAL_LSID.name);
+                query = NameIndexField.LSID.search(lsid);
+            }
+            hits = this.cbSearcher.search(query, 1);
+            if (hits.totalHits.value > 0) {
+                result = this.createResult(cbSearcher.doc(hits.scoreDocs[0].doc), MatchType.TAXON_ID);
+            }
         } catch (Exception ex) {
             log.error("Unable to search for record by LSID " + lsid, ex);
         }

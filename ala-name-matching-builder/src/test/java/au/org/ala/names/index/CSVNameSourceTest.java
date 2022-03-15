@@ -19,7 +19,6 @@ package au.org.ala.names.index;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.util.TestUtils;
-import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.junit.After;
@@ -80,7 +79,7 @@ public class CSVNameSourceTest extends TestUtils {
         assertNull(instance.getAcceptedNameUsageID());
         assertEquals("http://id.biodiversity.org.au/node/ausmoss/10044709", instance.getParentNameUsageID());
         assertEquals("http://id.biodiversity.org.au/node/ausmoss/10044710", instance.getTaxonID());
-        assertEquals(NomenclaturalCode.BOTANICAL, instance.getCode());
+        assertEquals(NomenclaturalClassifier.BOTANICAL, instance.getCode());
         assertNotNull(instance.getProvider());
         assertEquals("dr100", instance.getProvider().getId());
         assertEquals(RankType.SUBCLASS, instance.getRank());
@@ -110,7 +109,7 @@ public class CSVNameSourceTest extends TestUtils {
         assertNull(instance.getAcceptedNameUsageID());
         assertNull(instance.getParentNameUsageID());
         assertEquals("http://id.biodiversity.org.au/node/ausmoss/10044710", instance.getTaxonID());
-        assertEquals(NomenclaturalCode.BOTANICAL, instance.getCode());
+        assertEquals(NomenclaturalClassifier.BOTANICAL, instance.getCode());
         assertNotNull(instance.getProvider());
         assertEquals("default", instance.getProvider().getId());
         assertEquals(RankType.SUBCLASS, instance.getRank());

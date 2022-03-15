@@ -22,11 +22,11 @@ import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.gbif.api.exception.UnparsableException;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.api.service.checklistbank.NameParser;
 import org.gbif.api.vocabulary.NameType;
-import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.api.vocabulary.Rank;
 import org.gbif.checklistbank.authorship.AuthorComparator;
@@ -38,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.function.Predicate;
@@ -57,10 +56,6 @@ import java.util.stream.Collectors;
  */
 public class ALANameAnalyser extends NameAnalyser {
     private static final Logger LOGGER = LoggerFactory.getLogger(ALANameAnalyser.class);
-    /**
-     * The default set of code identifiers. TODO allow overrides
-     */
-    private static final String DEFAULT_NOMENCLATURAL_CODE_MAP = "nomenclatural_codes.csv";
     /**
      * The default set of synonym identifiers. TODO allow overrides
      */
@@ -87,17 +82,23 @@ public class ALANameAnalyser extends NameAnalyser {
      */
     protected static final Pattern BRACKETED = Pattern.compile("\\s(\\[.+\\]|\\{.+\\})");
 
+    /**
+     * Detect a rank name where a nomrmal name should go
+     */
+    private static final String RANK_NAMES = Arrays.stream(Rank.values()).map(Rank::name).collect(Collectors.joining("|"));
+    private static final Pattern RANK_AS_NAME = Pattern.compile("(?i:" + RANK_NAMES + ")");
 
-    private static final String RANK_MARKERS = Arrays.stream(Rank.values()).filter(r -> r.getMarker() != null).map(r -> r.getMarker().replaceAll("\\.", "")).collect(Collectors.joining("|"));
-    private static final String RANK_PLACEHOLDER_MARKERS = "\\p{Alpha}";
+    private static final String RANK_MARKERS_STRICT = Arrays.stream(Rank.values()).filter(r -> r.getMarker() != null).map(r -> r.getMarker().replaceAll("\\.", "\\.")).collect(Collectors.joining("|"));
+    private static final String RANK_MARKERS_LOOSE = Arrays.stream(Rank.values()).filter(r -> r.getMarker() != null).map(r -> r.getMarker().replaceAll("\\.", "\\.?")).collect(Collectors.joining("|"));
+    private static final String RANK_PLACEHOLDER_MARKERS = "\\p{Alpha}\\.";
     /**
      * Pattern for rank markers
      */
-    protected static final Pattern STRICT_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.\\s+");
+    protected static final Pattern STRICT_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS_STRICT + "|" + RANK_PLACEHOLDER_MARKERS + ")\\s+");
     /**
      * Pattern for bare (no proper period) rank markers
      */
-    protected static final Pattern LOOSE_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.?\\s+");
+    protected static final Pattern LOOSE_MARKERS = Pattern.compile("\\s+(?:" + RANK_MARKERS_LOOSE + "|" + RANK_PLACEHOLDER_MARKERS + ")\\.?\\s+");
     /**
      * Pattern for unsure markers (cf, aff etc)
      */
@@ -138,11 +139,11 @@ public class ALANameAnalyser extends NameAnalyser {
      */
     protected static final Pattern DOUBTFUL = Pattern.compile("((^| )(undet|indet|aff|cf)[#!?\\.]?)+(?![a-z])");
 
-
     /**
      * Something that looks like an unplaced name
      */
     protected static final Predicate<String> PLACEHOLDER_TEST = Pattern.compile("(?i:species inquirenda|incertae sedis|unplaced)").asPredicate();
+
     /**
      * Something that looks like a hybrid
      */
@@ -172,7 +173,6 @@ public class ALANameAnalyser extends NameAnalyser {
      */
     protected static final Predicate<String> INITIAL_QUOTES_TEST = Pattern.compile("^['\"]\\s*(\\p{Upper}\\p{Lower}+)]\\s*['\"]'").asPredicate();
 
-    private Map<String, NomenclaturalCode> codeMap;
     private Map<String, TaxonomicType> taxonomicTypeMap;
     private Map<String, SynonymType> synonymMap;
     private Map<String, RankType> rankMap;
@@ -185,7 +185,6 @@ public class ALANameAnalyser extends NameAnalyser {
         super(authorComparator, reporter);
         this.nameParser = new PhraseNameParser();
         this.nomStatusParser = NomStatusParser.getInstance();
-        this.buildCodeMap();
         this.buildTaxonomicTypeMap();
         this.buildRankMap();
         this.buildNomenclaturalStatusMap();
@@ -204,14 +203,14 @@ public class ALANameAnalyser extends NameAnalyser {
      * @param scientificNameAuthorship The authorship
      * @param rankType                 The taxon rank
      * @param taxonomicStatus          The taxonomic status
+     * @param flags                    Taxonomic flags from the instance
      * @param loose                    This is from a loose source that may have authors mixed up with names
      *
      * @return The analyzed name
      */
     @Override
-    public NameKey analyse(@Nullable NomenclaturalCode code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, TaxonomicType taxonomicStatus, boolean loose) {
+    public AnalysisResult analyse(@Nullable NomenclaturalClassifier code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, TaxonomicType taxonomicStatus, Set<TaxonFlag> flags, boolean loose) {
         NameType nameType = NameType.INFORMAL;
-        Set<NameFlag> flags = null;
         ParsedName name = null;
 
         scientificName = this.normalise(scientificName);
@@ -226,20 +225,20 @@ public class ALANameAnalyser extends NameAnalyser {
                 scientificName = (left + " " + right).trim();
             }
         }
+        try {
+            name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
+            if (name != null) {
+                nameType = name.getType();
+                if (rankType == null && name.getRank() != null)
+                    rankType = RankType.getForCBRank(name.getRank());
+            }
+        } catch (UnparsableException ex) {
+            LOGGER.info("Unable to parse " + name + ": " + ex.getMessage());
+        }
         if (UNSURE_MARKER.matcher(scientificName).find()) {
             // Leave this well alone but indicate that it is doubtful
             nameType = NameType.DOUBTFUL;
         } else {
-            try {
-                name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
-                if (name != null) {
-                    nameType = name.getType();
-                    if (rankType == null && name.getRank() != null)
-                        rankType = RankType.getForCBRank(name.getRank());
-                }
-            } catch (UnparsableException ex) {
-                // Oh well, worth a try
-            }
             if (loose) {
                 if (scientificNameAuthorship == null && name != null) {
                     String ac = this.normalise(name.authorshipComplete());
@@ -259,16 +258,18 @@ public class ALANameAnalyser extends NameAnalyser {
 
 
         // Categorize
-        if (PLACEHOLDER_TEST.test(scientificName) || (taxonomicStatus != null && taxonomicStatus.isPlaceholder())) {
+        if (taxonomicStatus == TaxonomicType.MISCELLANEOUS_LITERATURE) {
+            nameType = NameType.INFORMAL;
+        } else if (PLACEHOLDER_TEST.test(scientificName) || (taxonomicStatus != null && taxonomicStatus.isPlaceholder())) {
             scientificName = scientificName + " " + UUID.randomUUID().toString();
             nameType = NameType.PLACEHOLDER;
-        } else if (code == NomenclaturalCode.VIRUS) {
+        } else if (code == NomenclaturalClassifier.VIRUS) {
             nameType = NameType.VIRUS;
-        } else if (code == NomenclaturalCode.BACTERIAL) {
+        } else if (code == NomenclaturalClassifier.BACTERIAL) {
             nameType = NameType.SCIENTIFIC;
         } else if (HYBRID_TEST.test(scientificName)) {
             nameType = NameType.HYBRID;
-        } else if (code == NomenclaturalCode.CULTIVARS || CULTIVAR_TEST.test(scientificName)) {
+        } else if (code == NomenclaturalClassifier.CULTIVARS || CULTIVAR_TEST.test(scientificName)) {
             nameType = NameType.CULTIVAR;
         } else if (INVALID_TEST.test(scientificName)) {
             scientificName = UUID.randomUUID().toString();
@@ -294,7 +295,8 @@ public class ALANameAnalyser extends NameAnalyser {
         // Flags
         if (name != null && name.isAutonym()) {
             scientificName = name.canonicalName();
-            flags = Collections.singleton(NameFlag.AUTONYM);
+            flags = flags == null ? new HashSet<>() : new HashSet<>(flags);
+            flags.add(TaxonFlag.AUTONYM);
             scientificNameAuthorship = null;
         }
 
@@ -305,8 +307,25 @@ public class ALANameAnalyser extends NameAnalyser {
         scientificName = scientificName.trim().toUpperCase();
 
 
-        return new NameKey(this, code, scientificName, scientificNameAuthorship, rankType, nameType, flags);
-    }
+        NameKey key = new NameKey(this, code, scientificName, scientificNameAuthorship, rankType, nameType, flags);
+        String mononomial = null;
+        String genus = null;
+        String specificEpithet = null;
+        String infraspecificEpithet = null;
+        String cultivarEpithet = null;
+        if (name != null) {
+            mononomial = name.getGenusOrAbove();
+            if (mononomial != null && RANK_AS_NAME.matcher(mononomial).matches()) {
+                mononomial = null;
+            } else {
+                genus = rankType != null && !rankType.isHigherThan(RankType.GENUS) ? mononomial : null;
+                specificEpithet = name.getSpecificEpithet();
+                infraspecificEpithet = name.getInfraSpecificEpithet();
+                cultivarEpithet = name.getCultivarEpithet();
+            }
+        }
+        return new AnalysisResult(key, mononomial, genus, specificEpithet, infraspecificEpithet, cultivarEpithet);
+     }
 
     /**
      * Load a set of additional terms for a controlled vocabulary.
@@ -389,16 +408,6 @@ public class ALANameAnalyser extends NameAnalyser {
     }
 
     /**
-     * Build a code map.
-     */
-    protected void buildCodeMap() {
-        this.codeMap = new HashMap<>(64);
-        for (NomenclaturalCode c: NomenclaturalCode.values())
-            this.codeMap.put(c.getAcronym().toUpperCase().trim(), c);
-        this.loadCsv(DEFAULT_NOMENCLATURAL_CODE_MAP, this.codeMap, NomenclaturalCode.class);
-    }
-
-    /**
      * Build a taxonomic status map.
      */
     protected void buildTaxonomicTypeMap() {
@@ -449,11 +458,11 @@ public class ALANameAnalyser extends NameAnalyser {
      * @return The mapped code or null for not found
      */
     @Override
-    public NomenclaturalCode canonicaliseCode(String code) {
+    public NomenclaturalClassifier canonicaliseCode(String code) {
         if (code == null)
             return null;
         code = code.toUpperCase().trim();
-        NomenclaturalCode nc = this.codeMap.get(code);
+        NomenclaturalClassifier nc = NomenclaturalClassifier.find(code);
         if (nc == null)
             this.report(IssueType.PROBLEM, "nomenclaturalCode.notFound", null, null, code);
         return nc;
@@ -485,6 +494,24 @@ public class ALANameAnalyser extends NameAnalyser {
             }
         }
         return type;
+    }
+
+    /**
+     * Canonicalise a supplied taxonomic flag
+     *
+     * @param flag The flag name
+     * @return The matching flag
+     */
+    @Override
+    public TaxonFlag canonicaliseFlag(String flag) {
+        if (StringUtils.isBlank(flag))
+            return null;
+        flag = flag.trim();
+        if (flag.equalsIgnoreCase("autonym"))
+            return TaxonFlag.AUTONYM;
+        if (flag.equalsIgnoreCase("ambiguousNomenclaturalCode"))
+            return TaxonFlag.AMBIGUOUS_NOMENCLATURAL_CODE;
+        throw new IllegalArgumentException("Unrecognised flag " + flag);
     }
 
     /**

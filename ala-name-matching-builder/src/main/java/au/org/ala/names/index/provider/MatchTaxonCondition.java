@@ -17,12 +17,13 @@
 package au.org.ala.names.index.provider;
 
 import au.org.ala.names.index.NameKey;
+import au.org.ala.names.index.NomenclaturalClassifier;
 import au.org.ala.names.index.TaxonConceptInstance;
 import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.TaxonFlag;
 import au.org.ala.names.model.TaxonomicType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.gbif.api.vocabulary.NameType;
-import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.checklistbank.authorship.AuthorComparator;
 import org.gbif.checklistbank.model.Equality;
@@ -44,7 +45,7 @@ public class MatchTaxonCondition extends TaxonCondition {
     private static AuthorComparator AUTHOR_COMPARATOR = AuthorComparator.createWithAuthormap();
 
     /** Compare nomenclatural code */
-    private NomenclaturalCode nomenclaturalCode;
+    private NomenclaturalClassifier nomenclaturalCode;
     /** Source dataset */
     private String datasetID;
     /** Compare scientific name */
@@ -75,6 +76,8 @@ public class MatchTaxonCondition extends TaxonCondition {
     private RankType taxonRank;
     /** Compare year */
     private String year;
+    /** Test flag */
+    private TaxonFlag taxonomicFlag;
 
     /**
      * Default, empty constructor
@@ -82,11 +85,11 @@ public class MatchTaxonCondition extends TaxonCondition {
     public MatchTaxonCondition() {
     }
 
-    public NomenclaturalCode getNomenclaturalCode() {
+    public NomenclaturalClassifier getNomenclaturalCode() {
         return nomenclaturalCode;
     }
 
-    public void setNomenclaturalCode(NomenclaturalCode nomenclaturalCode) {
+    public void setNomenclaturalCode(NomenclaturalClassifier nomenclaturalCode) {
         this.nomenclaturalCode = nomenclaturalCode;
     }
 
@@ -170,6 +173,14 @@ public class MatchTaxonCondition extends TaxonCondition {
         this.year = year;
     }
 
+    public TaxonFlag getTaxonomicFlag() {
+        return taxonomicFlag;
+    }
+
+    public void setTaxonomicFlag(TaxonFlag taxonomicFlag) {
+        this.taxonomicFlag = taxonomicFlag;
+    }
+
     /**
      * Match the taxon instance against the supplied conditions.
      *
@@ -195,7 +206,11 @@ public class MatchTaxonCondition extends TaxonCondition {
             return false;
         if (this.taxonRank != null && this.taxonRank != instance.getRank())
             return false;
-        return this.year == null || this.year.equals(instance.getYear());
+        if (this.year != null && !this.year.equals(instance.getYear()))
+            return false;
+        if (this.taxonomicFlag != null && (instance.getFlags() == null || !instance.getFlags().contains(this.taxonomicFlag)))
+            return false;
+        return true;
     }
 
     /**
@@ -290,6 +305,8 @@ public class MatchTaxonCondition extends TaxonCondition {
         this.explain(builder, "nomenclaturalStatus", this.nomenclaturalStatus);
         this.explain(builder, "nameType", this.nameType);
         this.explain(builder, "taxonRank", this.taxonRank);
+        this.explain(builder, "year", this.year);
+        this.explain(builder, "taxonomicFlag", this.taxonomicFlag);
         return builder.toString();
     }
 

@@ -17,12 +17,14 @@
 package au.org.ala.names.model;
 
 /**
- * Flags indicating special-case information about a name
+ * Flags indicating special-case information about a taxon
  *
  * @author Doug Palmer &lt;Doug.Palmer@csiro.au&gt;
  * @copyright Copyright &copy; 2019 Atlas of Living Australia
  */
-public enum NameFlag {
+public enum TaxonFlag {
     /** The name is an autonymn, meaning that it has been created without an author because a sub-taxon was created */
-    AUTONYM
+    AUTONYM,
+    /** The nomenclatural code used by various sources is variable. This often occurs with different classifications of Chromista, Protista, etc. */
+    AMBIGUOUS_NOMENCLATURAL_CODE
 }

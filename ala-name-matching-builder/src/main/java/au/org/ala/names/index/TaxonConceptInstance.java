@@ -17,12 +17,12 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.TaxonFlag;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.vocab.ALATerm;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
-import org.gbif.api.vocabulary.NomenclaturalCode;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
 import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
@@ -127,7 +127,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     /** The taxon identifier */
     private String taxonID;
     /** The nomenclatural code */
-    private NomenclaturalCode code;
+    private NomenclaturalClassifier code;
     /** The supplied nomenclatural code */
     private String verbatimNomenclaturalCode;
     /** The name source */
@@ -173,6 +173,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     private TaxonomicElement accepted;
     /** Additional classification information */
     private Map<Term, Optional<String>> classification;
+    /** Any special flags */
+    private Set<TaxonFlag> flags;
     /** The base score for position on the taxonomic tree */
     private Integer baseScore;
     /** The specific instance score */
@@ -208,7 +210,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     public TaxonConceptInstance(
             String taxonID,
-            NomenclaturalCode code,
+            NomenclaturalClassifier code,
             String verbatimNomenclaturalCode,
             NameProvider provider,
             String scientificName,
@@ -228,7 +230,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             @Nullable List<String> taxonRemarks,
             @Nullable String verbatimTaxonRemarks,
             @Nullable List<String> provenance,
-            @Nullable Map<Term, Optional<String>> classification) {
+            @Nullable Map<Term, Optional<String>> classification,
+            @Nullable Set<TaxonFlag> flags) {
         this.taxonID = taxonID;
         this.code = code;
         this.verbatimNomenclaturalCode = verbatimNomenclaturalCode;
@@ -251,6 +254,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         this.verbatimTaxonRemarks = verbatimTaxonRemarks;
         this.provenance = provenance == null ? null : new ArrayList<>(provenance);
         this.classification = classification;
+        this.flags = flags;
     }
 
     /**
@@ -258,7 +262,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      *
      * @return The nomenclatural code
      */
-    public NomenclaturalCode getCode() {
+    public NomenclaturalClassifier getCode() {
         return code;
     }
 
@@ -477,7 +481,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      *
      * @return The nomenclatural code, as supplied
      */
-    public String getVerbatimNomenclaturalCode() {
+    public String getVerbatimNomenclaturalClassifier() {
         return verbatimNomenclaturalCode;
     }
 
@@ -646,6 +650,15 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
+     * Get the flags associated with the taxon
+     *
+     * @return The taxon flags (null for none)
+     */
+    public Set<TaxonFlag> getFlags() {
+        return this.flags;
+    }
+
+    /**
      * Set the forbidden flag
      * <p>
      * Note that, if you set something as forbidden, increase <code>count.load.forbidden</code>
@@ -674,6 +687,24 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     public Map<Term, Optional<String>> getClassification() {
         return classification;
+    }
+
+    /**
+     * Add a classification hint.
+     * <p>
+     * If the hint is null or there is already a classification value, don't bother.
+     * Otherwise, add the hint to the classification.
+     * </p>
+     *
+     * @param term The classifcation term
+     * @param value The hint value
+     */
+    public void addClassificationHint(Term term, @Nullable String value) {
+        if (value == null || (this.classification != null && this.classification.containsKey(term) && this.classification.get(term).isPresent()))
+            return;
+        if (this.classification == null)
+            this.classification = new HashMap<>();
+        this.classification.put(term, Optional.of(value));
     }
 
     /**
@@ -1396,7 +1427,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 this.taxonRemarks == null ? null : new ArrayList<>(this.taxonRemarks),
                 this.verbatimTaxonRemarks,
                 this.provenance == null ? null : new ArrayList<>(this.provenance),
-                this.classification
+                this.classification,
+                this.flags
         );
         synonym.setContainer(concept);
         synonym.accepted = this;
@@ -1442,7 +1474,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 this.taxonRemarks == null ? null : new ArrayList<>(this.taxonRemarks),
                 this.verbatimTaxonRemarks,
                 this.provenance == null ? null : new ArrayList<>(this.provenance),
-                this.classification
+                this.classification,
+                this.flags
         );
         instance.setContainer(null);
         instance.accepted = this.accepted;
@@ -1493,7 +1526,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      *
      * @return True if the scientific name is valid
      */
-    // If you plan to change this, it is called by a parallel stream, so consisder thread safety
+    // If you plan to change this, it is called by a parallel stream, so consider thread safety
     @Override
     public boolean validate(Taxonomy taxonomy) {
         boolean valid = true;
@@ -1504,7 +1537,6 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 taxonomy.report(IssueType.VALIDATION, "instance.validation.noParent", this, null);
                 valid = false;
             }
-
         }
         if ((this.acceptedNameUsageID != null || this.acceptedNameUsage != null) && this.accepted == null) {
             if (this.provider.isLoose())

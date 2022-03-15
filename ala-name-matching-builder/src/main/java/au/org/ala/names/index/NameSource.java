@@ -79,7 +79,8 @@ abstract public class NameSource {
             DwcTerm.namePublishedInYear,
             DcTerm.source,
             DwcTerm.taxonRemarks,
-            DcTerm.provenance
+            DcTerm.provenance,
+            ALATerm.taxonomicFlags
     );
     /** Terms not to be included in taxon outputs */
     protected static final List<Term> TAXON_FORBIDDEN = Arrays.asList(

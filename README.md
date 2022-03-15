@@ -55,13 +55,13 @@ You can download the IRMNG DwCA for homonyms from the following URL:
 
 An assembly zip file for this can be downloaded from our maven repository : 
 
-[ala-name-matching-4.0-distribution.zip](https://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching-distribution/4.0/ala-name-matching-distribution-4.0-distribution.zip)
+[ala-name-matching-4.1-distribution.zip](https://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching-distribution/4.1/ala-name-matching-distribution-4.1-distribution.zip)
 
 To generate the name index using the data described above, follow these steps. Alternatively use the [ALA Ansible scripts](https://github.com/AtlasOfLivingAustralia/ala-install) 
 here using the playbook [nameindexer.yml](https://github.com/AtlasOfLivingAustralia/ala-install/blob/master/ansible/nameindexer-standalone.yml) which does it all for you.
 
 * Download the zip files linked above to a directory e.g. /data/names/ and extract them
-* Download the distribution zip [ala-name-matching-disribution-4.0-distribution.zip](https://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching-distribution/4.0/ala-name-matching-distribution-4.0-distribution.zip)
+* Download the distribution zip [ala-name-matching-disribution-4.1-distribution.zip](https://nexus.ala.org.au/service/local/repositories/releases/content/au/org/ala/ala-name-matching-distribution/4.1/ala-name-matching-distribution-4.1-distribution.zip)
   and unzip it.
  You wil find a number of shell scripts in the base directory.
 * Generate the names index with command:
@@ -94,16 +94,16 @@ To skip this step, run a build with ```mvn install -DskipTests=true```.
 
 The build creates one artefact in the `ala-name-matching-distribution/target` directory: 
 
-* ala-name-matching-distribution-4.0-distribution.zip - zip containing the project jar and dependencies
+* ala-name-matching-distribution-4.1-distribution.zip - zip containing the project jar and dependencies
 
 Each module contains two artefacts in the 
 `ala-name-matching/ala-name-matching-<module>/target` directory:
 
-* ala-name-matching-<module>-4.0.jar - built jar for the project code only
-* ala-name-matching-<module>-4.0-sources.jar - source jar for the project code only
+* ala-name-matching-<module>-4.1.jar - built jar for the project code only
+* ala-name-matching-<module>-4.1-sources.jar - source jar for the project code only
 
-The name index for Australian names lists used in unit tests can be downloaded [from here](https://archives.ala.org.au/archives/nameindexes/20210811) and needs to be extracted to the
-directory `/data/lucene/namematching-20210811`
+The name index for Australian names lists used in unit tests can be downloaded [from here](https://biocache.ala.org.au/archives/nameindexes/20210811-2) and needs to be extracted to the
+directory `/data/lucene/namematching-20210811-2`
 
 ## ALA Names List
 
@@ -139,7 +139,7 @@ To use ala-name-matching, include it as a dependency in your pom file:
 <dependency>
   <groupId>au.org.ala</groupId>
   <artifactId>ala-name-matching-search</artifactId>
-  <version>4.0</version>
+  <version>4.1</version>
 </dependency>
 ```
 
@@ -148,7 +148,7 @@ If you just want the handy enums and such-like, use
 <dependency>
   <groupId>au.org.ala</groupId>
   <artifactId>ala-name-matching-model</artifactId>
-  <version>4.0</version>
+  <version>4.1</version>
 </dependency>
 ```
 
@@ -158,7 +158,7 @@ libraries having validation code that conflicts with spring validation.
 You can correct this by using
 
 ```
-compile("au.org.ala:ala-name-matching-search:4.0") {
+compile("au.org.ala:ala-name-matching-search:4.1") {
     exclude group: 'org.slf4j', module: 'slf4j-log4j12'
     exclude group: 'org.apache.bval', module: 'org.apache.bval.bundle'
 }
@@ -166,13 +166,13 @@ compile("au.org.ala:ala-name-matching-search:4.0") {
 
 Download the most recently generated name matching index: 
 
-http://archives.ala.org.au/archives/namematching/YYYYMMDD/namematching-YYYYMMDD.tgz
+http://biocache.ala.org.au/archives/namematching/YYYMMDD/namematching-YYYMMDD.tgz
 
 Unzip this into a /data/lucene directory and create a symbolic link from namematching to the datestamped directory.
 In your program create a single new ALANameSearcher to perform all your searches
 
 ```
-ALANameSearcher  searcher = new ALANameSearcher("/data/lucene/namematching")
+ALANameSearcher  searcher = new ALANameSearcher ("/data/lucene/namematching")
 ```
 
 The easiest way to perform a search is to have the searcher handle all the exceptional situations using the default handling:
@@ -258,8 +258,6 @@ http://biocache.ala.org.au/occurrences/search?q=*:*&fq=name_match_metric:phraseM
 
 
 # Release notes 
-
-Release notes for later version are available at https://github.com/AtlasOfLivingAustralia/ala-name-matching/releases
 
 ### Release notes v2.4.6
 
