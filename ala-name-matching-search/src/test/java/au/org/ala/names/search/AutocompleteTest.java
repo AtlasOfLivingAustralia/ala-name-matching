@@ -56,7 +56,7 @@ public class AutocompleteTest {
         assertEquals("Mary River Cod", second.get("commonname"));
         assertEquals("Maccullochella mariensis", second.get("name"));
         Map third = results.get(2);
-        assertEquals("Mary River turtle", third.get("commonname"));
+        assertEquals("Mary River Turtle", third.get("commonname"));
         assertEquals("Elusor macrurus", third.get("name"));
     }
 
@@ -66,7 +66,7 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         Map first = results.get(0);
-        assertEquals("Mary River turtle", first.get("commonname"));
+        assertEquals("Mary River Turtle", first.get("commonname"));
         assertEquals("Elusor macrurus", first.get("name"));
     }
 
