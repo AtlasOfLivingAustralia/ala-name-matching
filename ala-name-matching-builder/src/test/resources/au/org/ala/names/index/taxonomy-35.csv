@@ -1,0 +1,5 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source,taxonomicFlags
+"Parent-1-1","","","dr107","ICZN","Megaptera","(Borowski, 1781)","genus","","","accepted","","","","","","","","","","",""
+"Parent-1-2","","","dr107","ICZN","Megapterus","(Borowski, 1781)","genus","","","accepted","","","","","","","","","","","synthetic"
+"Concept-1-1","Parent-1-1","","dr107","ICZN","Megaptera novaeangliae","(Borowski, 1781)","species","","","accepted","","","","","","","","","","",""
+"Concept-1-2","Parent-1-2","","dr106","ICZN","Megaptera novaeangliae","(Borowski, 1781)","species","","","accepted","","","","","","","","","","","synthetic"

@@ -374,6 +374,7 @@ public class Taxonomy implements Reporter {
         } catch (IOException ex) {
             throw new IndexBuilderException("Error creating working index", ex);
         }
+        this.providers.values().forEach(p -> p.setReporter(this));
     }
 
     /**
@@ -433,10 +434,12 @@ public class Taxonomy implements Reporter {
         this.resolveLoops();
         if (!this.validate())
             throw new IndexBuilderException("Invalid source data");
+        this.computeScores();
         this.validateNameCollisions();
         this.resolveTaxon();
         this.resolveUnranked();
         this.resolvePrincipal();
+        this.detectDiscards();
         this.resolveDiscards();
         if (!this.validate())
             throw new IndexBuilderException("Invalid resolution");
@@ -481,6 +484,17 @@ public class Taxonomy implements Reporter {
             );
             this.addInstance(ut);
         }
+    }
+
+    /**
+     * Compute all the scores for the instances.
+     *
+     * @throws IndexBuilderException
+     */
+    public void computeScores() throws IndexBuilderException {
+        logger.info("Computing scores");
+        this.instances.values().parallelStream().forEach(instance -> instance.getScore());
+        logger.info("Finished computing scores");
     }
 
     /**
@@ -722,17 +736,33 @@ public class Taxonomy implements Reporter {
     }
 
     /**
+     * Look for discardable taxa.
+     * <p>
+     * Anything synthetic and not forbidden that
+     * </p>
+     *
+     * @throws IndexBuilderException
+     * @throws IOException
+     */
+    public void detectDiscards() throws IndexBuilderException, IOException {
+        logger.info("Detecting discarded/forbidden concepts");
+        final Collection<TaxonConceptInstance> allInstances = this.instances.values();
+        allInstances.parallelStream().forEach(tci -> tci.detectDiscard(this, allInstances));
+        logger.info("Finished detecting discarded/forbidden concepts");
+    }
+
+    /**
      * Work out what to do with any instances that need to be discarded.
      * @throws IndexBuilderException
      * @throws IOException
      */
     public void resolveDiscards() throws IndexBuilderException, IOException {
-        logger.info("Resolving discarded/forbiiden concepts");
+        logger.info("Resolving discarded/forbidden concepts");
         final Collection<TaxonConceptInstance> allInstances = this.instances.values();
         allInstances.stream().forEach(tci -> tci.resolveDiscarded(this)); // Not for parallel streams
         this.indexWriter.commit();
         this.searcherManager.maybeRefresh();
-        logger.info("Finished resolving dicarded/forbidden concepts");
+        logger.info("Finished resolving discarded/forbidden concepts");
     }
 
     /**
@@ -1126,10 +1156,10 @@ public class Taxonomy implements Reporter {
         NameKey nameKey = null;
         nameKey = this.analyser.analyse(code, name, null, rank, null, null, provider.isLoose()).getNameKey().toNameKey();
         if (nameKey.isUncoded())
-            return this.bareNames.get(nameKey);
+            return this.bareNames.get(nameKey.toUnrankedNameKey());
         if (nameKey.isUnranked())
-            return this.unrankedNames.get(nameKey);
-        ScientificName scientificName = this.names.get(nameKey);
+            return this.unrankedNames.get(nameKey.toUnrankedNameKey());
+        ScientificName scientificName = this.names.get(nameKey.toNameKey());
         return scientificName == null ? null : scientificName.findElement(this, provider);
     }
 
@@ -1237,7 +1267,7 @@ public class Taxonomy implements Reporter {
      * @param code The message code to use for the readable version of the report
      * @param taxonID A specific taxonomic ID
      * @param name A scientific name
-      * @param args The arguments for the report message
+     * @param args The arguments for the report message
      */
     @Override
     public void report(IssueType type, String code, String taxonID, String name, String... args) {

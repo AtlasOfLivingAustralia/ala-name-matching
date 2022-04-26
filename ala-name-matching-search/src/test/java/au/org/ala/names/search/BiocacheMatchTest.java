@@ -38,7 +38,7 @@ public class BiocacheMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-2");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-3");
     }
 
     @Test
@@ -118,7 +118,7 @@ public class BiocacheMatchTest {
         cl.setKingdom("Fungi");
         cl.setGenus("Graphis");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("NZOR-6-122770", metrics.getResult().getLsid()); // Can't find Graphis homonym so gets Graphidaceae
+        assertEquals("https://id.biodiversity.org.au/name/apni/167658_0", metrics.getResult().getLsid()); // Can't find Graphis homonym so gets Graphidaceae
     }
 
     @Test
@@ -234,8 +234,8 @@ public class BiocacheMatchTest {
         LinnaeanRankClassification cl = new LinnaeanRankClassification();
         cl.setScientificName("Myosurus minimus");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertTrue(metrics.getErrors().contains(ErrorType.MISAPPLIED));
-        assertEquals("https://id.biodiversity.org.au/node/apni/2917549", metrics.getResult().getLsid());
+        assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
+        assertEquals("NZOR-6-93927", metrics.getResult().getLsid());
     }
 
     @Test

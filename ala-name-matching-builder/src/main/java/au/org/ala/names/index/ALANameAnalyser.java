@@ -511,6 +511,8 @@ public class ALANameAnalyser extends NameAnalyser {
             return TaxonFlag.AUTONYM;
         if (flag.equalsIgnoreCase("ambiguousNomenclaturalCode"))
             return TaxonFlag.AMBIGUOUS_NOMENCLATURAL_CODE;
+        if (flag.equalsIgnoreCase("synthetic"))
+            return TaxonFlag.SYNTHETIC;
         throw new IllegalArgumentException("Unrecognised flag " + flag);
     }
 

@@ -18,6 +18,7 @@ package au.org.ala.names.index;
 
 import au.org.ala.names.index.provider.ConceptResolutionPriority;
 import au.org.ala.names.model.RankType;
+import au.org.ala.names.model.TaxonFlag;
 import au.org.ala.names.model.TaxonomicType;
 import au.org.ala.names.model.TaxonomicTypeGroup;
 import org.gbif.api.exception.UnparsableException;
@@ -97,6 +98,7 @@ public class ALATaxonResolver implements TaxonResolver {
      * </p>
      * <ul>
      *     <li>Principal instances map onto themselves</li>
+     *     <li>Synthetic taxa when there is a proper principal instance are mapped onto the princial and marked forbidden</li>
      *     <li>For accepted taxa:
      *     <ol>
      *         <li>If there is a principal accepted taxon for the same taxon concept, then choose that one</li>
@@ -160,6 +162,16 @@ public class ALATaxonResolver implements TaxonResolver {
         if (resolution.getPrincipal().contains(instance)) {
             resolution.addInternal(instance, instance, this.taxonomy);
             return;
+        }
+        if (instance.hasFlag(TaxonFlag.SYNTHETIC)) {
+            if ((resolved = resolution.getPrincipal().stream().filter(tci -> tci.isPrimary()).findFirst()).isPresent()) {
+                taxonomy.report(IssueType.NOTE, "taxonResolver.synthetic.removed", instance, null);
+                taxonomy.count("count.resolve.synthetic.removed");
+                instance.setForbidden(true);
+                resolution.addInternal(instance, resolved.get(), this.taxonomy);
+                return;
+            }
+            instance.setForbidden(true);
         }
         if (instance.isAccepted() && instance.isPrimary()) {
             if ((resolved = resolution.getUsed().stream().filter(tci -> tci.isAccepted() && tci.getContainer() == taxonConcept).findFirst()).isPresent()) {

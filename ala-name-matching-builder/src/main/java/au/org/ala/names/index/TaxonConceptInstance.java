@@ -49,8 +49,10 @@ import java.util.stream.Collectors;
 public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance, TaxonConcept> {
     private static final Logger logger = LoggerFactory.getLogger(TaxonConceptInstance.class);
 
-    /** Compare instance base (priovider only) scores */
-    public static Comparator<TaxonConceptInstance> PROVIDER_SCORE_COMPARATOR =  new Comparator<TaxonConceptInstance>() {
+    /**
+     * Compare instance base (priovider only) scores
+     */
+    public static Comparator<TaxonConceptInstance> PROVIDER_SCORE_COMPARATOR = new Comparator<TaxonConceptInstance>() {
         @Override
         public int compare(TaxonConceptInstance e1, TaxonConceptInstance e2) {
             if (e1 == null && e2 == null)
@@ -72,8 +74,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             }
         }
     };
-    /** Compare instance scores */
-    public static Comparator<TaxonConceptInstance> SCORE_COMPARATOR =  new Comparator<TaxonConceptInstance>() {
+    /**
+     * Compare instance scores
+     */
+    public static Comparator<TaxonConceptInstance> SCORE_COMPARATOR = new Comparator<TaxonConceptInstance>() {
         @Override
         public int compare(TaxonConceptInstance e1, TaxonConceptInstance e2) {
             if (e1 == null && e2 == null)
@@ -95,13 +99,19 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             }
         }
     };
-    /** Inverse instance scores (for most important first) */
+    /**
+     * Inverse instance scores (for most important first)
+     */
     public static Comparator<TaxonConceptInstance> INVERSE_SCORE_COMPARATOR = SCORE_COMPARATOR.reversed();
 
-    /** The maximum number of iterations to attempt during resolution before suspecting somethiing is wrong */
+    /**
+     * The maximum number of iterations to attempt during resolution before suspecting somethiing is wrong
+     */
     public static final int MAX_RESOLUTION_STEPS = 40;
 
-    /** Classification fields from name sources */
+    /**
+     * Classification fields from name sources
+     */
     protected static final List<Term> CLASSIFICATION_FIELDS = Arrays.asList(
             DwcTerm.kingdom,
             DwcTerm.phylum,
@@ -112,7 +122,9 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             DwcTerm.specificEpithet,
             DwcTerm.infraspecificEpithet
     );
-    /** The ranks corresponding to {@link #CLASSIFICATION_FIELDS}. The two lists must correspond. */
+    /**
+     * The ranks corresponding to {@link #CLASSIFICATION_FIELDS}. The two lists must correspond.
+     */
     protected static final List<RankType> CLASSIFICATION_RANKS = Arrays.asList(
             RankType.KINGDOM,
             RankType.PHYLUM,
@@ -124,89 +136,145 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             RankType.SUBSPECIES
     );
 
-    /** The taxon identifier */
+    /**
+     * The taxon identifier
+     */
     private String taxonID;
-    /** The nomenclatural code */
+    /**
+     * The nomenclatural code
+     */
     private NomenclaturalClassifier code;
-    /** The supplied nomenclatural code */
+    /**
+     * The supplied nomenclatural code
+     */
     private String verbatimNomenclaturalCode;
-    /** The name source */
+    /**
+     * The name source
+     */
     private NameProvider provider;
-    /** The supplied name */
+    /**
+     * The supplied name
+     */
     private String scientificName;
-    /** The supplied scientific name authorship */
+    /**
+     * The supplied scientific name authorship
+     */
     private String scientificNameAuthorship;
-    /** The properly formatted complete name */
+    /**
+     * The properly formatted complete name
+     */
     @Nullable
     private String nameComplete;
-    /** The year of publication, if available */
+    /**
+     * The year of publication, if available
+     */
     private String year;
-    /** The taxonomic status */
+    /**
+     * The taxonomic status
+     */
     private TaxonomicType taxonomicStatus;
-    /** The supplied taxonomic status */
+    /**
+     * The supplied taxonomic status
+     */
     private String verbatimTaxonomicStatus;
-    /** The rank */
+    /**
+     * The rank
+     */
     private RankType rank;
-    /** The verbatim rank */
+    /**
+     * The verbatim rank
+     */
     private String verbatimTaxonRank;
-    /** The status of the name */
+    /**
+     * The status of the name
+     */
     private Set<NomenclaturalStatus> status;
-    /** The supplied nomenclatural status */
+    /**
+     * The supplied nomenclatural status
+     */
     private String verbatimNomenclaturalStatus;
-    /** The parent name usage, for accepted names */
+    /**
+     * The parent name usage, for accepted names
+     */
     private String parentNameUsage;
-    /** The parent name usage identifier, for accepted names */
+    /**
+     * The parent name usage identifier, for accepted names
+     */
     private String parentNameUsageID;
-    /** The parent taxon */
+    /**
+     * The parent taxon
+     */
     private TaxonomicElement parent;
-    /** The accepted name usage, for synonyms */
+    /**
+     * The accepted name usage, for synonyms
+     */
     private String acceptedNameUsage;
-    /** The accepted name usage identier, for synonyms */
+    /**
+     * The accepted name usage identier, for synonyms
+     */
     private String acceptedNameUsageID;
-    /** Any taxon remarks. This may be added to as processing occurs */
+    /**
+     * Any taxon remarks. This may be added to as processing occurs
+     */
     private List<String> taxonRemarks;
-    /** The original taxon remarks */
+    /**
+     * The original taxon remarks
+     */
     private String verbatimTaxonRemarks;
-    /** Any provenance information */
+    /**
+     * Any provenance information
+     */
     private List<String> provenance;
-    /** The accepted taxon */
+    /**
+     * The accepted taxon
+     */
     private TaxonomicElement accepted;
-    /** Additional classification information */
+    /**
+     * Additional classification information
+     */
     private Map<Term, Optional<String>> classification;
-    /** Any special flags */
+    /**
+     * Any special flags
+     */
     private Set<TaxonFlag> flags;
-    /** The base score for position on the taxonomic tree */
+    /**
+     * The base score for position on the taxonomic tree
+     */
     private Integer baseScore;
-    /** The specific instance score */
+    /**
+     * The specific instance score
+     */
     private Integer score;
-    /** Is this concept forbidden? */
+    /**
+     * Is this concept forbidden?
+     */
     private boolean forbidden;
 
     /**
      * Construct a new taxon concept instance
      *
-     * @param taxonID The unique taxon identifier
-     * @param code The nomenclatural code for the taxon
-     * @param verbatimNomenclaturalCode The nomenclatural code as supplied
-     * @param provider The name provider
-     * @param scientificName The scientific name
-     * @param scientificNameAuthorship The scientific name authorship
-     * @param nameComplete The properly formatted complete name
-     * @param year The year of publication
-     * @param taxonomicStatus The taxonomic status
-     * @param verbatimTaxonomicStatus The taxonomic status as supplied
-     * @param rank The taxon rank
-     * @param verbatimTaxonRank The taxon rank as supplied
-     * @param status The nomenclatural status
+     * @param taxonID                     The unique taxon identifier
+     * @param code                        The nomenclatural code for the taxon
+     * @param verbatimNomenclaturalCode   The nomenclatural code as supplied
+     * @param provider                    The name provider
+     * @param scientificName              The scientific name
+     * @param scientificNameAuthorship    The scientific name authorship
+     * @param nameComplete                The properly formatted complete name
+     * @param year                        The year of publication
+     * @param taxonomicStatus             The taxonomic status
+     * @param verbatimTaxonomicStatus     The taxonomic status as supplied
+     * @param rank                        The taxon rank
+     * @param verbatimTaxonRank           The taxon rank as supplied
+     * @param status                      The nomenclatural status
      * @param verbatimNomenclaturalStatus The nomenclatural status as supplied
-     * @param parentNameUsage The parent name, for accepted taxa (parentNameUsageID is preferred if possible)
-     * @param parentNameUsageID A link to the parent taxon, for accepted taxa
-     * @param acceptedNameUsage The accepted name, for synonyms (acceptedNameUsageID is preferred if possible)
-     * @param acceptedNameUsageID A link the the accepted taxon, for synonyms
-     * @param taxonRemarks Any taxon remakrs
-     * @param verbatimTaxonRemarks The original taxon remarks
-     * @param provenance Provenance information
-     * @param classification The taxonomic classification
+     * @param parentNameUsage             The parent name, for accepted taxa (parentNameUsageID is preferred if possible)
+     * @param parentNameUsageID           A link to the parent taxon, for accepted taxa
+     * @param acceptedNameUsage           The accepted name, for synonyms (acceptedNameUsageID is preferred if possible)
+     * @param acceptedNameUsageID         A link the the accepted taxon, for synonyms
+     * @param taxonRemarks                Any taxon remakrs
+     * @param verbatimTaxonRemarks        The original taxon remarks
+     * @param provenance                  Provenance information
+     * @param classification              The taxonomic classification
      */
     public TaxonConceptInstance(
             String taxonID,
@@ -533,7 +601,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * @return The taxon remark string
      */
     public String getTaxonRemarkString() {
-        return this.taxonRemarks == null || this.taxonRemarks.isEmpty() ? null : this.taxonRemarks.stream().reduce(null,  (a,b) -> a == null ? b : a + " | " + b);
+        return this.taxonRemarks == null || this.taxonRemarks.isEmpty() ? null : this.taxonRemarks.stream().reduce(null, (a, b) -> a == null ? b : a + " | " + b);
     }
 
     /**
@@ -577,7 +645,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * @return The taxon remark string
      */
     public String getProvenanceString() {
-        return this.provenance == null || this.provenance.isEmpty() ? null : this.provenance.stream().reduce(null,  (a,b) -> a == null ? b : a + " | " + b);
+        return this.provenance == null || this.provenance.isEmpty() ? null : this.provenance.stream().reduce(null, (a, b) -> a == null ? b : a + " | " + b);
     }
 
     /**
@@ -616,7 +684,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     public int getBaseScore(TaxonConceptInstance original) {
         if (original == this)
-            throw new IllegalStateException("Loop in score computation from " + original);
+            throw new IllegalStateException("Uncaught loop in score computation from " + original);
         if (this.baseScore == null)
             this.baseScore = this.provider.computeBaseScore(original, this);
         return this.baseScore;
@@ -659,6 +727,16 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
+     * Test to see if a flag is set
+     *
+     * @param flag The flag to find
+     * @return True if the flag is present
+     */
+    public boolean hasFlag(TaxonFlag flag) {
+        return this.flags != null && this.flags.contains(flag);
+    }
+
+    /**
      * Set the forbidden flag
      * <p>
      * Note that, if you set something as forbidden, increase <code>count.load.forbidden</code>
@@ -696,7 +774,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * Otherwise, add the hint to the classification.
      * </p>
      *
-     * @param term The classifcation term
+     * @param term  The classifcation term
      * @param value The hint value
      */
     public void addClassificationHint(Term term, @Nullable String value) {
@@ -876,7 +954,6 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * Trace all parents, making sure that there isn't a loop.
      *
      * @param taxonomy The source taxonomy
-     *
      * @return True if the parent chain is valid
      */
     private boolean validateParent(Taxonomy taxonomy) {
@@ -893,13 +970,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     /**
      * Find the resolved parent, one step at a time
      *
-     * @param original The original instance
-     * @param steps The number of steps allowed in resolution
-     * @param trace The trace of steps (null not to keep a record of the resolved parents)
+     * @param original  The original instance
+     * @param steps     The number of steps allowed in resolution
+     * @param trace     The trace of steps (null not to keep a record of the resolved parents)
      * @param exception Throw an exception if a loop is detected, otherwise return null
-     *
      * @return The resolved parent or null for none
-     *
      * @throws ResolutionException if parent resolution fails (usually via a loop of parents)
      */
     private TaxonConceptInstance getResolvedParent(TaxonConceptInstance original, int steps, @Nullable List<TaxonomicElement> trace, boolean exception) {
@@ -953,13 +1028,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     /**
      * Trace the accepted taxon, one step at a time
      *
-     * @param original The initial instance
-     * @param steps The number of resolution steps allowed
-     * @param trace An accumulating trace of steps (may be null in which case the trace is not collected)
+     * @param original  The initial instance
+     * @param steps     The number of resolution steps allowed
+     * @param trace     An accumulating trace of steps (may be null in which case the trace is not collected)
      * @param exception Throw an exceptioon if a loop is detected, otherwise the original is returned
-     *
      * @return The accepted taxon concept instance
-     *
      * @throws ResolutionException if parent resolution fails (usually via a resolution loop)
      */
     private TaxonConceptInstance getResolvedAccepted(TaxonConceptInstance original, int steps, @Nullable List<TaxonomicElement> trace, boolean exception) {
@@ -1020,7 +1093,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * @return True if the tanomomic status is primary
      */
     public boolean isPrimary() {
-        return this.taxonomicStatus != null && this.taxonomicStatus.isPrimary();
+        return this.taxonomicStatus != null && this.taxonomicStatus.isPrimary() && !this.hasFlag(TaxonFlag.SYNTHETIC);
     }
 
     /**
@@ -1029,6 +1102,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      *     <li>If the acceptedNameUsageID is the same as the taxonID then it is set to null</li>
      *     <li>If the scientificName has the scientificNameAuthorship in it then the authorship is removed</li>
      * </ul>
+     *
      * @throws IndexBuilderException
      */
     public void normalise() throws IndexBuilderException {
@@ -1047,9 +1121,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * Make links to the actual parent and accepted instances.
      *
      * @param taxonomy The current taxonomy
-     *
      * @return True if successfully resolved
-     *
      * @throws IndexBuilderException If unable to make a link, usually due to a broken reference
      */
     // If you plan to change this, it is called by a parallel stream, so consisder thread safety
@@ -1094,10 +1166,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                     if (cls.equals(DwcTerm.infraspecificEpithet)) {
                         n = (genus + " " + specificEpithet + " " + n).trim();
                     }
-                    if (!n.equals(this.scientificName)) {
+                    if (!n.equalsIgnoreCase(this.scientificName)) {
                         TaxonomicElement p = taxonomy.findElement(this.code, n, this.provider, clr);
                         RankType pr = p != null ? p.getRank() : null;
-                        if (p != null && p != this && (this.rank.isLoose() || pr == null || pr.isHigherThan(this.rank)))
+                        if (p != null && p != this && (this.rank.isLoose() || pr.isLoose() || pr == null || pr.isHigherThan(this.rank)))
                             this.parent = p;
                     }
                 }
@@ -1110,10 +1182,30 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
+     * Detect concepts that should be discarded.
+     * <p>
+     * Check for synthetic, not (yet) forbidden instances that have no legitimate children any more.
+     * </p>
+     *
+     * @param taxonomy The base taxonomy
+     * @throws IndexBuilderException if unable to manage the forbidden taxon instance
+     */
+    // Note that this is not thread-safe due to index writing
+    public void detectDiscard(Taxonomy taxonomy, Collection<TaxonConceptInstance> allInstances) throws IndexBuilderException {
+        if (!this.hasFlag(TaxonFlag.SYNTHETIC) || this.isForbidden())
+            return;
+        boolean required = allInstances.stream().anyMatch(tci -> !tci.isForbidden() && tci.getParent() == this);
+        if (!required) {
+            this.setForbidden(true);
+            taxonomy.count("count.resolve.synthetic.discarded");
+            taxonomy.report(IssueType.NOTE, "instance.discarded.synthetic", this, null);
+        }
+    }
+
+    /**
      * Work out twhat to do with this instance if it is forbidden.
      *
      * @param taxonomy The base taxonomy
-     *
      * @throws IndexBuilderException if unable to manage the forbidden taxon instance
      */
     // Note that this is not thread-safe due to index writing
@@ -1121,6 +1213,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         if (!this.isForbidden())
             return;
         TaxonConceptInstance parent = this.getResolvedParent();
+        if (parent == null)
+            return; // Ignore and leave forbidden
         String provenance;
         switch (this.getProvider().getDiscardStrategy()) {
             case IDENTIFIER_TO_PARENT:
@@ -1135,7 +1229,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 doc.add(new StringField(Taxonomy.fieldName(ALATerm.status), "discarded", Field.Store.YES));
                 if (this.taxonRemarks != null) {
                     doc.add(new StringField(Taxonomy.fieldName(DcTerm.description), this.getTaxonRemarkString(), Field.Store.YES));
-                 }
+                }
                 provenance = taxonomy.getResources().getString("instance.discarded.identifier.provenance");
                 provenance = MessageFormat.format(provenance, this.getScientificName());
                 doc.add(new StringField(Taxonomy.fieldName(DcTerm.provenance), provenance, Field.Store.YES));
@@ -1201,21 +1295,19 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * Get a map of taxon information for this particular taxon instance.
      *
      * @param taxonomy The taxonomy to collect additional information from
-     *
      * @return The taxon map
-     *
      * @throws IOException if unable to retrieve source documents
      */
-    public Map<Term,String> getTaxonMap(Taxonomy taxonomy) throws IOException {
+    public Map<Term, String> getTaxonMap(Taxonomy taxonomy) throws IOException {
         List<Map<Term, String>> valuesList = taxonomy.getIndexValues(DwcTerm.Taxon, this.taxonID);
         final Map<Term, String> values;
         if (valuesList.isEmpty()) {
             if (this.provider != taxonomy.getInferenceProvider())
-                taxonomy.report(IssueType.NOTE,"instance.noIndex", this, null);
+                taxonomy.report(IssueType.NOTE, "instance.noIndex", this, null);
             values = new HashMap<>();
         } else {
             if (valuesList.size() > 1)
-                taxonomy.report(IssueType.ERROR,"instance.multiIndex", this, null);
+                taxonomy.report(IssueType.ERROR, "instance.multiIndex", this, null);
             values = valuesList.get(0);
         }
         values.put(DwcTerm.taxonID, this.taxonID);
@@ -1260,7 +1352,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             try {
                 TaxonConceptInstance ra = this.getResolvedAccepted();
                 aid = ra == null ? null : ra.getTaxonID();
-             } catch (ResolutionException ex) {
+            } catch (ResolutionException ex) {
                 aid = this.provider.getUnknownTaxonID();
                 taxonomy.report(IssueType.ERROR, "instance.accepted.resolve.loop", this, this.traceAccepted());
             }
@@ -1276,12 +1368,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * </p>
      *
      * @param taxonomy The taxonomy to collect additional information from
-     *
      * @return The identifier list
-     *
      * @throws IOException if unable to retrive source documents
      */
-    public List<Map<Term,String>> getIdentifierMaps(Taxonomy taxonomy) throws IOException {
+    public List<Map<Term, String>> getIdentifierMaps(Taxonomy taxonomy) throws IOException {
         final Map<Term, String> taxon = this.getTaxonMap(taxonomy);
         final String scientificNameID = taxon.get(DwcTerm.scientificNameID);
         final String taxonConceptID = taxon.get(DwcTerm.taxonConceptID);
@@ -1325,12 +1415,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * Get a list of vernacular names associated with this taxon instance.
      *
      * @param taxonomy The taxonomy to collect additional information from
-     *
      * @return The vernacular name list
-     *
      * @throws IOException if unable to retrive source documents
      */
-    public List<Map<Term,String>> getVernacularMaps(Taxonomy taxonomy) throws IOException {
+    public List<Map<Term, String>> getVernacularMaps(Taxonomy taxonomy) throws IOException {
         List<Map<Term, String>> valuesList = taxonomy.getIndexValues(GbifTerm.VernacularName, this.taxonID);
         return valuesList;
     }
@@ -1339,12 +1427,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * Get a list of distribution maps associated with this taxon instance.
      *
      * @param taxonomy The taxonomy to collect additional information from
-     *
      * @return The distribution list
-     *
      * @throws IOException if unable to retrive source documents
      */
-    public List<Map<Term,String>> getDistributionMaps(Taxonomy taxonomy) throws IOException {
+    public List<Map<Term, String>> getDistributionMaps(Taxonomy taxonomy) throws IOException {
         List<Map<Term, String>> valuesList = taxonomy.getIndexValues(GbifTerm.Distribution, this.taxonID);
         return valuesList;
     }
@@ -1396,12 +1482,12 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * <p>
      * This points another taxon towards this taxon.
      * </p>
-     * @param concept The parent taxon concept
-     * @param scientificName The source name of the synonym
-     * @param scientificNameAuthorship The authorship of the synonym
-     * @param year The year of authorship
-     * @param taxonomy The base taxonomy
      *
+     * @param concept                  The parent taxon concept
+     * @param scientificName           The source name of the synonym
+     * @param scientificNameAuthorship The authorship of the synonym
+     * @param year                     The year of authorship
+     * @param taxonomy                 The base taxonomy
      * @return A synonym that points a name towards this instance
      */
     public TaxonConceptInstance createInferredSynonym(TaxonConcept concept, String scientificName, String scientificNameAuthorship, String nameComplete, String year, Taxonomy taxonomy) {
@@ -1448,7 +1534,6 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      *
      * @param newRank
      * @param taxonomy The base taxonomy
-     *
      * @return A ranked copy of this instance
      */
     public TaxonConceptInstance createRankedInstance(RankType newRank, Taxonomy taxonomy) {
@@ -1499,7 +1584,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * This instance is forbidden but remains to allow accepted taxon resolution.
      * </p>
      *
-     * @param other The other instance
+     * @param other    The other instance
      * @param taxonomy
      */
     public void forwardTo(TaxonConceptInstance other, Taxonomy taxonomy) {
@@ -1523,7 +1608,6 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * Validate this taxon concept instance.
      *
      * @param taxonomy The taxonomy to validate against and report to
-     *
      * @return True if the scientific name is valid
      */
     // If you plan to change this, it is called by a parallel stream, so consider thread safety
@@ -1551,7 +1635,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             taxonomy.report(IssueType.VALIDATION, "instance.validation.noTaxonConcept", this, null);
             valid = false;
 
-        } else  if (this.getContainer().getContainer() == null) {
+        } else if (this.getContainer().getContainer() == null) {
             taxonomy.report(IssueType.VALIDATION, "instance.validation.noScientificName", this, null);
             valid = false;
         }

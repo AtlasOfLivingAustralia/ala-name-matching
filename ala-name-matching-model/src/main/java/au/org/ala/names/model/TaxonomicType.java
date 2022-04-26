@@ -43,7 +43,7 @@ public enum TaxonomicType {
     /** A synonym where part of an original taxon has been divided. This means that the original name may still be in use or may have been mapped onto several other taxa. */
     PRO_PARTE_SYNONYM("proParteSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, true),
     /** A name incorrectly applied in a publication to a different species. However, the name itself is perfectly valid and has its own taxon. */
-    MISAPPLIED("misapplied", TaxonomicTypeGroup.MISAPPLIED, true, false, true, false, false, true),
+    MISAPPLIED("misapplied", TaxonomicTypeGroup.MISAPPLIED, false, false, true, false, false, true),
     /** A synonym inferred by an algorithm */
     INFERRED_SYNONYM("inferredSynonym", TaxonomicTypeGroup.SYNONYM, true, false, true, false, false, true),
     /** A name that shouldn't be used, since it refers to something not found in the region of the occurrence record. */

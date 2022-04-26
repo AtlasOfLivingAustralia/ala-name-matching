@@ -208,7 +208,7 @@ public class MatchTaxonCondition extends TaxonCondition {
             return false;
         if (this.year != null && !this.year.equals(instance.getYear()))
             return false;
-        if (this.taxonomicFlag != null && (instance.getFlags() == null || !instance.getFlags().contains(this.taxonomicFlag)))
+        if (this.taxonomicFlag != null && !instance.hasFlag(this.taxonomicFlag))
             return false;
         return true;
     }

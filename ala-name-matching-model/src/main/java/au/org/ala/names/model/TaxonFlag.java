@@ -26,5 +26,7 @@ public enum TaxonFlag {
     /** The name is an autonymn, meaning that it has been created without an author because a sub-taxon was created */
     AUTONYM,
     /** The nomenclatural code used by various sources is variable. This often occurs with different classifications of Chromista, Protista, etc. */
-    AMBIGUOUS_NOMENCLATURAL_CODE
+    AMBIGUOUS_NOMENCLATURAL_CODE,
+    /** This is an artificially created taxon used to paper over gaps in sources */
+    SYNTHETIC
 }
