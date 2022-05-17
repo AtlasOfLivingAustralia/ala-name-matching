@@ -118,7 +118,7 @@ public class BiocacheMatchTest {
         cl.setKingdom("Fungi");
         cl.setGenus("Graphis");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
-        assertEquals("https://id.biodiversity.org.au/name/apni/167658_0", metrics.getResult().getLsid()); // Can't find Graphis homonym so gets Graphidaceae
+        assertEquals("NZOR-6-122770", metrics.getResult().getLsid()); // Can't find Graphis homonym so gets Graphidaceae
     }
 
     @Test

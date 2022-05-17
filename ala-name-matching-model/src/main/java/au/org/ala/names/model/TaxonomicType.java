@@ -63,7 +63,7 @@ public enum TaxonomicType {
     /** A dubious taxon */
     DOUBTFUL("doubtful", TaxonomicTypeGroup.DOUBTFUL, false, false, false, false, false, true),
     /** A name that occurs in other literature. */
-    MISCELLANEOUS_LITERATURE("miscellaneousLiterature", TaxonomicTypeGroup.MISCELLANEOUS, false, false, false, true, false, true),
+    MISCELLANEOUS_LITERATURE("miscellaneousLiterature", TaxonomicTypeGroup.MISCELLANEOUS, false, false, true, true, false, true),
     /** A pseudo-taxon created to link an odd source of a name to a result, always linked to an actual taxon. A principal because we want to capture this instance */
     PSEUDO_TAXON("pseudoTaxon", TaxonomicTypeGroup.MISCELLANEOUS, true, false, true, false, false, false);
 

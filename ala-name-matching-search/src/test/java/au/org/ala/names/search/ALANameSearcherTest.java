@@ -151,7 +151,7 @@ public class ALANameSearcherTest {
         String name = "Petaurus australis unnamed subsp.";
         String lsid = searcher.searchForLSID(name, true);
         assertNotNull(lsid);
-        assertEquals("ALA_DR18703_176", lsid);
+        assertEquals("ALA_DR652_233", lsid);
     }
 
     @Test
@@ -368,7 +368,7 @@ public class ALANameSearcherTest {
             String name = "Pterodroma arminjoniana s. str.";
             NameSearchResult nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
-            assertEquals("40041023", nsr.getLsid());
+            assertEquals("ALA_DR656_1585", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Not expecting exception " + ex);
         }
@@ -536,7 +536,7 @@ public class ALANameSearcherTest {
             NameSearchResult nsr = null;
             nsr = searcher.searchForRecord(name, null);
             assertNotNull(nsr);
-            assertEquals("40041023", nsr.getLsid());
+            assertEquals("ALA_DR656_1585", nsr.getLsid());
         } catch (SearchResultException e) {
             fail("Unexpected search exception " + e);
         }
@@ -749,7 +749,7 @@ public class ALANameSearcherTest {
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
             assertNotNull(nsr);
             assertEquals("SY_39006017_1", nsr.getLsid());
-            assertEquals("https://biodiversity.org.au/afd/taxa/1a85a82f-5a1f-4c56-9f04-918643461260", nsr.getAcceptedLsid());
+            assertEquals("ALA_DR650_737", nsr.getAcceptedLsid());
             assertEquals(MatchType.SOUNDEX, nsr.getMatchType());
         } catch (SearchResultException ex) {
             fail("Unexpected search exception " + ex.getMessage());
@@ -927,7 +927,7 @@ public class ALANameSearcherTest {
 
     @Test
     public void testGetPrimaryLsid4() {
-        String primaryLsid = searcher.getPrimaryLsid("ALA_DR18706_734");
+        String primaryLsid = searcher.getPrimaryLsid("ALA_DR655_1900");
         assertEquals("https://id.biodiversity.org.au/node/apni/2886504", primaryLsid);
     }
 
@@ -1566,7 +1566,7 @@ public class ALANameSearcherTest {
         String name = "Metrosideros fulgens";
         NameSearchResult nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
-        assertEquals("https://id.biodiversity.org.au/name/apni/110385", nsr.getLsid());
+        assertEquals("NZOR-6-117997", nsr.getLsid());
     }
 
 
@@ -1575,24 +1575,21 @@ public class ALANameSearcherTest {
         String name = "Metrosideros scandens";
         NameSearchResult nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
-        assertEquals("https://id.biodiversity.org.au/name/apni/233086", nsr.getLsid());
+        assertEquals("NZOR-6-86045", nsr.getLsid());
     }
 
 
     @Test
     public void testAffLookup1() throws Exception  {
-        String name = "Carex aff. tereticaulis (Lake Omeo)";
+        String name = "Pterostylis sp. aff. boormanii (Beechworth)";
         NameSearchResult nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
-        assertEquals("ALA_DR18706_596", nsr.getLsid());
-        name = "Carex aff. tereticaulis";
+        assertEquals("ALA_DR655_403", nsr.getLsid());
+        name = "Pterostylis sp. aff. boormanii";
         nsr = searcher.searchForRecord(name);
         assertNotNull(nsr);
-        assertEquals("ALA_DR18706_596", nsr.getLsid());
-        name = "Carex tereticaulis";
-        nsr = searcher.searchForRecord(name);
-        assertNotNull(nsr);
-        assertEquals("https://id.biodiversity.org.au/node/apni/2919780", nsr.getLsid());
+        assertEquals("https://id.biodiversity.org.au/instance/apni/51411749", nsr.getLsid());
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51412340", nsr.getAcceptedLsid());
     }
 
 
@@ -2023,7 +2020,7 @@ public class ALANameSearcherTest {
         cl.setScientificName(name);
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
         assertNotNull(metrics);
-        assertEquals("https://id.biodiversity.org.au/name/apni/51337126", metrics.getResult().getLsid());
+        assertEquals("ALA_DR652_1992", metrics.getResult().getLsid());
         assertEquals("https://id.biodiversity.org.au/taxon/apni/51367864", metrics.getResult().getRankClassification().getGid());
         assertEquals("https://id.biodiversity.org.au/taxon/apni/51367862", metrics.getResult().getRankClassification().getFid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());

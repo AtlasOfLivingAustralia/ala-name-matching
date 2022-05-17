@@ -131,8 +131,8 @@ public class AutocompleteTest {
         List<Map> results = searcher.autocomplete("Rossi", 20, true);
         assertNotNull(results);
         assertTrue(results.size() > 0);
-        assertTrue(results.stream().anyMatch(r -> "Rhachotropis rossi".equals(r.get("name"))));
-        assertTrue(results.stream().anyMatch(r -> "Abyssorchomene rossi".equals(r.get("name"))));
+        assertTrue(results.stream().anyMatch(r -> "Iliocirrus rossi".equals(r.get("name"))));
+        assertTrue(results.stream().anyMatch(r -> "Rossiteria nuclea".equals(r.get("name"))));
     }
 
 

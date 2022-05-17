@@ -979,6 +979,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     private TaxonConceptInstance getResolvedParent(TaxonConceptInstance original, int steps, @Nullable List<TaxonomicElement> trace, boolean exception) {
         if (steps <= 0) {
+            if (original.isForbidden() || this.isForbidden())
+                return null;
             if (exception)
                 throw new ResolutionException("Detected possible loop resolving parent " + original, trace);
             return null;
@@ -990,7 +992,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         if (pe == null)
             return null;
         TaxonConceptInstance parent = pe.getRepresentative();
+        if (parent == null)
+            return null;
         parent = parent.getResolvedAccepted(original, steps - 1, trace, exception);
+        if (parent == null)
+            return null;
         if (trace != null && trace.contains(parent)) {
             trace.add(parent);
             if (exception)
@@ -1037,12 +1043,16 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     private TaxonConceptInstance getResolvedAccepted(TaxonConceptInstance original, int steps, @Nullable List<TaxonomicElement> trace, boolean exception) {
         if (steps <= 0) {
+            if (original.isForbidden() || this.isForbidden())
+                return null;
             if (exception)
                 throw new ResolutionException("Detected possible loop resolving accepted " + original, trace);
             return original;
         }
         TaxonConceptInstance resolved = this.getResolved(original, steps - 1);
         if (resolved == null) {
+            if (original.isForbidden() || this.isForbidden())
+                return null;
             if (exception)
                 throw new ResolutionException("Detected dangling resolution resolving accepted " + original, trace);
             return original;
@@ -1070,8 +1080,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     private TaxonConceptInstance getResolved(TaxonConceptInstance original, int steps) {
-        if (steps <= 0)
+        if (steps <= 0) {
+            if (this.isForbidden())
+                return null;
             throw new ResolutionException("Detected possible loop resolving " + original);
+        }
         TaxonConceptInstance resolved = this.getResolved();
         if (resolved != null && this != resolved)
             return resolved.getResolved(original, steps - 1);
