@@ -1043,51 +1043,61 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     private TaxonConceptInstance getResolvedAccepted(TaxonConceptInstance original, int steps, @Nullable List<TaxonomicElement> trace, boolean exception) {
         if (steps <= 0) {
-            if (original.isForbidden() || this.isForbidden())
+            if (original.isForbidden() || this.isForbidden()) {
                 return null;
-            if (exception)
+            }
+            if (exception) {
                 throw new ResolutionException("Detected possible loop resolving accepted " + original, trace);
+            }
             return original;
         }
         TaxonConceptInstance resolved = this.getResolved(original, steps - 1);
         if (resolved == null) {
-            if (original.isForbidden() || this.isForbidden())
+            if (original.isForbidden() || this.isForbidden()) {
                 return null;
-            if (exception)
+            }
+            if (exception) {
                 throw new ResolutionException("Detected dangling resolution resolving accepted " + original, trace);
+            }
             return original;
         }
         TaxonomicElement ae = resolved.getAccepted();
-        if (ae == null || ae == resolved)
+        if (ae == null || ae == resolved) {
             return resolved;
+        }
         if (trace != null && trace.contains(ae)) {
             trace.add(ae);
-            if (exception)
+            if (exception) {
                 throw new ResolutionException("Detected possible loop resolving accepted " + original, trace);
+            }
             return original;
         }
-        if (trace != null)
+        if (trace != null) {
             trace.add(ae);
+        }
         TaxonConceptInstance accepted = ae.getRepresentative();
         if (accepted == null) {
             logger.warn("Null representative instance for " + ae + " when resolving " + this);
             return resolved;
         }
         accepted = accepted.getResolvedAccepted(original, steps - 1, trace, exception);
-        if (!accepted.isForbidden())
+        if (!accepted.isForbidden()) {
             return accepted;
+        }
         return accepted.getResolvedParent(original, steps - 1, trace, exception);
     }
 
     private TaxonConceptInstance getResolved(TaxonConceptInstance original, int steps) {
         if (steps <= 0) {
-            if (this.isForbidden())
+            if (this.isForbidden()) {
                 return null;
+            }
             throw new ResolutionException("Detected possible loop resolving " + original);
         }
         TaxonConceptInstance resolved = this.getResolved();
-        if (resolved != null && this != resolved)
+        if (resolved != null && this != resolved) {
             return resolved.getResolved(original, steps - 1);
+        }
         return resolved;
     }
 
