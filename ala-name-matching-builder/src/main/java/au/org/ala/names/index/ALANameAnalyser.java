@@ -212,6 +212,7 @@ public class ALANameAnalyser extends NameAnalyser {
     public AnalysisResult analyse(@Nullable NomenclaturalClassifier code, String scientificName, @Nullable String scientificNameAuthorship, RankType rankType, TaxonomicType taxonomicStatus, Set<TaxonFlag> flags, boolean loose) {
         NameType nameType = NameType.INFORMAL;
         ParsedName name = null;
+        ALAParsedName phraseName = null;
 
         scientificName = this.normalise(scientificName);
         scientificNameAuthorship = this.normalise(scientificNameAuthorship);
@@ -228,6 +229,9 @@ public class ALANameAnalyser extends NameAnalyser {
         try {
             name = this.nameParser.parse(scientificName, (rankType == null || rankType == RankType.UNRANKED) ? null : rankType.getCbRank());
             if (name != null) {
+                if (name instanceof ALAParsedName && ((ALAParsedName) name).cleanPhrase != null) {
+                    phraseName = (ALAParsedName) name;
+                }
                 nameType = name.getType();
                 if (rankType == null && name.getRank() != null)
                     rankType = RankType.getForCBRank(name.getRank());
@@ -258,7 +262,17 @@ public class ALANameAnalyser extends NameAnalyser {
 
 
         // Categorize
-        if (taxonomicStatus == TaxonomicType.MISCELLANEOUS_LITERATURE) {
+        if (phraseName != null) {
+            nameType = NameType.PLACEHOLDER;
+            scientificName = phraseName.getGenusOrAbove();
+            if (phraseName.getRank() != null) {
+                scientificName = scientificName + " " + phraseName.getRank().getMarker();
+            }
+            scientificName = scientificName + " " + phraseName.cleanPhrase;
+            if (phraseName.cleanVoucher != null) {
+                scientificName = scientificName + " " + phraseName.cleanVoucher;
+            }
+        } if (taxonomicStatus == TaxonomicType.MISCELLANEOUS_LITERATURE) {
             nameType = NameType.INFORMAL;
         } else if (PLACEHOLDER_TEST.test(scientificName) || (taxonomicStatus != null && taxonomicStatus.isPlaceholder())) {
             scientificName = scientificName + " " + UUID.randomUUID().toString();
@@ -319,9 +333,11 @@ public class ALANameAnalyser extends NameAnalyser {
                 mononomial = null;
             } else {
                 genus = rankType != null && !rankType.isHigherThan(RankType.GENUS) ? mononomial : null;
-                specificEpithet = name.getSpecificEpithet();
-                infraspecificEpithet = name.getInfraSpecificEpithet();
-                cultivarEpithet = name.getCultivarEpithet();
+                if (phraseName == null) {
+                    specificEpithet = name.getSpecificEpithet();
+                    infraspecificEpithet = name.getInfraSpecificEpithet();
+                    cultivarEpithet = name.getCultivarEpithet();
+                }
             }
         }
         return new AnalysisResult(key, mononomial, genus, specificEpithet, infraspecificEpithet, cultivarEpithet);
@@ -511,6 +527,8 @@ public class ALANameAnalyser extends NameAnalyser {
             return TaxonFlag.AUTONYM;
         if (flag.equalsIgnoreCase("ambiguousNomenclaturalCode"))
             return TaxonFlag.AMBIGUOUS_NOMENCLATURAL_CODE;
+        if (flag.equalsIgnoreCase("synthetic"))
+            return TaxonFlag.SYNTHETIC;
         throw new IllegalArgumentException("Unrecognised flag " + flag);
     }
 

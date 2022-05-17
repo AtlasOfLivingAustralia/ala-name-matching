@@ -245,6 +245,7 @@ public class DwcaNameSource extends NameSource {
      */
     protected void loadTaxonDwCA(Taxonomy taxonomy) throws IndexBuilderException {
         String defaultDatasetName = null;
+        int line = 0;
         try {
             defaultDatasetName = archive.getMetadata().getTitle();
         } catch (MetadataException e) {
@@ -333,10 +334,10 @@ public class DwcaNameSource extends NameSource {
                     }
                 }
                 taxonomy.addRecords(docs);
-
+                line++;
             }
         } catch (Exception ex) {
-            throw new IndexBuilderException("Unable to load archive " + this.archive.getLocation() + " at taxon " + taxonID, ex);
+            throw new IndexBuilderException("Unable to load archive " + this.archive.getLocation() + " at taxon " + taxonID + " line " + line, ex);
         }
     }
 

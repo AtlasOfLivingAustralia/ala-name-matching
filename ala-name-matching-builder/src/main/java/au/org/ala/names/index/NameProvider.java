@@ -114,6 +114,9 @@ public class NameProvider {
     /** Any spelling corrections needed on authors. */
     @JsonProperty
     private Map<String, String> scientificNameAuthorshipChanges;
+    /** Reporter for any problems */
+    @JsonIgnore
+    private Reporter reporter;
 
     /**
      * Default constructor
@@ -136,6 +139,7 @@ public class NameProvider {
         this.authority = true;
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
+        this.reporter = new LogReporter();
     }
     
      public NameProvider(String id, Integer defaultScore, String unknownTaxonID, Map<String, Integer> scores) {
@@ -157,6 +161,7 @@ public class NameProvider {
         this.unknownTaxonID = unknownTaxonID;
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
+        this.reporter = new LogReporter();
     }
 
     /**
@@ -187,6 +192,7 @@ public class NameProvider {
         this.authority = true;
         this.scientificNameChanges = new HashMap<>();
         this.scientificNameAuthorshipChanges = new HashMap<>();
+        this.reporter = new LogReporter();
     }
 
     /**
@@ -405,6 +411,24 @@ public class NameProvider {
     }
 
     /**
+     * Get the current reporter for issues when sorting out names
+     *
+     * @return The reporter
+     */
+    public Reporter getReporter() {
+        return reporter;
+    }
+
+    /**
+     * Set the reporter to use when sorting out names
+     *
+     * @param reporter The reporter to use
+     */
+    public void setReporter(Reporter reporter) {
+        this.reporter = reporter;
+    }
+
+    /**
      * Decide whether to forbid an instance.
      * <p>
      * If there is a parent provider, then check the parent, as well.
@@ -507,6 +531,11 @@ public class NameProvider {
         if (specific != null)
             return specific;
         TaxonConceptInstance p = instance.getParent() == null ? null : instance.getParent().getRepresentative();
+        if (p == original || p == instance) {
+            this.reporter.report(IssueType.PROBLEM, "instance.parent.resolve.loop", original, Collections.singletonList(instance));
+            p = instance.getResolvedParent();
+            p = p == null ? null : p.getRepresentative();
+        }
         int score = p != null && p.getProvider() == this ? p.getBaseScore(original) : this.getDefaultScore();
         return Math.max(TaxonomicElement.MIN_SCORE, Math.min(TaxonomicElement.MAX_SCORE, score));
 

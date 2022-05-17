@@ -387,6 +387,45 @@ public class ALANameAnalyserTest {
         assertNull(result1.getInfraspecificEpithet());
     }
 
+
+    // Test phrase names
+    @Test
+    public void testKey31() throws Exception {
+        NameAnalyser.AnalysisResult result1 = this.analyser.analyse(NomenclaturalClassifier.BOTANICAL, "Grevillea sp. Gillingarra (R.J.Cranfield 4087)", null, null, null, null, false);
+        NameAnalyser.AnalysisResult result2 = this.analyser.analyse(NomenclaturalClassifier.BOTANICAL, "Grevillea sp. Gillingarra (R.J. Cranfield 4087)", null, null, null, null, false);
+        NameAnalyser.AnalysisResult result3 = this.analyser.analyse(NomenclaturalClassifier.BOTANICAL, "Grevillea sp. Gillingarra (R.J. Cranfield 4087) PN", null, null, null, null, false);
+        NameKey key1 = result1.getNameKey();
+        NameKey key2 = result2.getNameKey();
+        NameKey key3 = result3.getNameKey();
+        assertEquals(key1, key2);
+        assertEquals(key1, key3);
+        assertEquals(NomenclaturalClassifier.BOTANICAL, key1.getCode());
+        assertEquals(NameType.PLACEHOLDER, key1.getType());
+        assertEquals("GREVILLEA SP GILLINGARRA CRANFIELD4087", key1.getScientificName());
+        assertNull(key1.getScientificNameAuthorship());
+        assertEquals(RankType.SPECIES, key1.getRank());
+        assertNull(key1.getFlags());
+        assertEquals("Grevillea", result1.getMononomial());
+        assertEquals("Grevillea", result1.getGenus());
+        assertNull(result1.getSpecificEpithet());
+        assertNull(result1.getInfraspecificEpithet());
+    }
+    @Test
+    public void testKey32() throws Exception {
+        NameAnalyser.AnalysisResult result1 = this.analyser.analyse(NomenclaturalClassifier.BOTANICAL, "Symplocos sp. aff. S.thwaitesii", null, null, null, null, false);
+        NameKey key1 = result1.getNameKey();
+        assertEquals(NomenclaturalClassifier.BOTANICAL, key1.getCode());
+        assertEquals(NameType.PLACEHOLDER, key1.getType());
+        assertEquals("SYMPLOCOS S THWAITESII", key1.getScientificName());
+        assertNull(key1.getScientificNameAuthorship());
+        assertEquals(RankType.UNRANKED, key1.getRank());
+        assertNull(key1.getFlags());
+        assertEquals("Symplocos", result1.getMononomial());
+        assertEquals("Symplocos", result1.getGenus());
+        assertNull(result1.getSpecificEpithet());
+        assertNull(result1.getInfraspecificEpithet());
+    }
+
     @Test
     public void testAuthorEquals1() throws Exception {
         assertEquals(0, this.analyser.compareAuthor(null, null));
