@@ -1177,6 +1177,9 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             for (int i = 0; i < CLASSIFICATION_FIELDS.size(); i++) {
                 Term cls = CLASSIFICATION_FIELDS.get(i);
                 RankType clr = CLASSIFICATION_RANKS.get(i);
+                if (!this.rank.isLoose() && !clr.isHigherThan(this.rank)) {
+                    continue;
+                }
                 Optional<String> name = this.classification.get(cls);
                 if (name != null && name.isPresent()) {
                     String n = name.get();
@@ -1360,7 +1363,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             String pid = null;
             try {
                 TaxonConceptInstance rp = this.getResolvedParent();
-                pid = rp == null ? null : rp.getTaxonID();
+                if (rp == this) {
+                    throw new ResolutionException("Hidden loop in parent");
+                } else {
+                    pid = rp == null ? null : rp.getTaxonID();
+                }
             } catch (ResolutionException ex) {
                 pid = this.provider.getUnknownTaxonID();
                 taxonomy.report(IssueType.ERROR, "instance.parent.resolve.loop", this, this.traceParent());
@@ -1374,7 +1381,11 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             String aid = null;
             try {
                 TaxonConceptInstance ra = this.getResolvedAccepted();
-                aid = ra == null ? null : ra.getTaxonID();
+                if (ra == this) {
+                    throw new ResolutionException("Hidden loop in accepted");
+                } else {
+                    aid = ra == null || ra == this ? null : ra.getTaxonID();
+                }
             } catch (ResolutionException ex) {
                 aid = this.provider.getUnknownTaxonID();
                 taxonomy.report(IssueType.ERROR, "instance.accepted.resolve.loop", this, this.traceAccepted());

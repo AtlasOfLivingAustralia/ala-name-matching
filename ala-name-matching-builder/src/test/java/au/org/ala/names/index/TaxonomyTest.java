@@ -1008,4 +1008,20 @@ public class TaxonomyTest extends TestUtils {
         assertFalse(tci4.isOutput());
     }
 
+    @Test
+    public void testParent1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-37.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Species-1-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Genus-1-1");
+        TaxonConceptInstance tci3 = this.taxonomy.getInstance("Family-1-1");
+        assertSame(tci2, tci1.getResolvedParent());
+        assertSame(tci3, tci2.getResolvedParent());
+        assertNull(tci3.getResolvedParent());
+    }
+
 }
