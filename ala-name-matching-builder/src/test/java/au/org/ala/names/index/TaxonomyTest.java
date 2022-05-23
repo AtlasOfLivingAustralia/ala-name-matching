@@ -111,6 +111,45 @@ public class TaxonomyTest extends TestUtils {
         assertSame(i4, i3.getParent());
     }
 
+    @Test
+    public void testResolveLinks4() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-36.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source));
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance i1 = this.taxonomy.getInstance("Kingdom-1-1");
+        assertNotNull(i1);
+        TaxonConceptInstance i2 = this.taxonomy.getInstance("Phylum-1-1");
+        assertNotNull(i2);
+        assertSame(i1, i2.getParent());
+        TaxonConceptInstance i3 = this.taxonomy.getInstance("Class-1-1");
+        assertNotNull(i3);
+        assertSame(i2, i3.getParent());
+        TaxonConceptInstance i4 = this.taxonomy.getInstance("Order-1-1");
+        assertNotNull(i4);
+        assertSame(i3, i4.getParent());
+        TaxonomicElement i4r = this.taxonomy.findElement(null, i4.getScientificName(), i4.getProvider(), i4.getRank());
+        assertNotNull(i4r);
+        TaxonConceptInstance i5 = this.taxonomy.getInstance("Family-2-1");
+        assertNotNull(i5);
+        assertSame(i4r, i5.getParent());
+        TaxonomicElement i5r = this.taxonomy.findElement(null, i5.getScientificName(), i5.getProvider(), i5.getRank());
+        assertNotNull(i5r);
+        TaxonConceptInstance i6 = this.taxonomy.getInstance("Genus-2-1");
+        assertNotNull(i6);
+        assertSame(i5r, i6.getParent());
+        TaxonomicElement i6r = this.taxonomy.findElement(null, i6.getScientificName(), i6.getProvider(), i6.getRank());
+        assertNotNull(i4r);
+        TaxonConceptInstance i7 = this.taxonomy.getInstance("Species-2-1");
+        assertNotNull(i7);
+        assertSame(i5r, i7.getParent());
+        TaxonConceptInstance i8 = this.taxonomy.getInstance("Species-3-1");
+        assertNotNull(i8);
+        assertSame(i5r, i8.getParent());
+    }
+
 
     @Test
     public void testResolveTaxon1() throws Exception {
@@ -529,7 +568,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(12, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(22, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(52, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(21, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(22, this.rowCount(new File(dir, "rightsholder.txt")));
 
     }
 
@@ -550,7 +589,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(5, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(6, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(6, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(22, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(23, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
 
@@ -700,7 +739,7 @@ public class TaxonomyTest extends TestUtils {
         assertEquals(6, this.rowCount(new File(dir, "taxon.txt")));
         assertEquals(11, this.rowCount(new File(dir, "taxonvariant.txt")));
         assertEquals(11, this.rowCount(new File(dir, "identifier.txt")));
-        assertEquals(21, this.rowCount(new File(dir, "rightsholder.txt")));
+        assertEquals(22, this.rowCount(new File(dir, "rightsholder.txt")));
     }
 
     // Test the presence of a taxon loop
@@ -767,7 +806,7 @@ public class TaxonomyTest extends TestUtils {
         assertNull(tci3.getResolvedParent());
     }
 
-    // Test misapplied taxa override accepted taxa if from a higher scoring source
+    // Test misapplied taxa do not override accepted taxa
     @Test
     public void testMisappliedAccepted1() throws Exception {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
@@ -784,7 +823,7 @@ public class TaxonomyTest extends TestUtils {
         TaxonConcept tc3 = tci3.getContainer();
         assertSame(tc1, tc3);
         assertSame(tci2, tci3.getResolvedAccepted());
-        assertSame(tci2, tci1.getResolvedAccepted());
+        assertSame(tci1, tci1.getResolvedAccepted());
     }
 
     // Test autonym handling
@@ -927,6 +966,62 @@ public class TaxonomyTest extends TestUtils {
         TaxonConcept tc2 = tci2.getContainer();
         assertSame(tc1, tc2);
         assertSame(tci2, tc1.getRepresentative());
+    }
+
+    @Test
+    public void testSyntheticTaxon1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-34.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-1-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-1-2");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        assertSame(tc1, tc2);
+        assertSame(tci1, tc1.getRepresentative());
+        assertFalse(tci2.isOutput());
+    }
+
+    @Test
+    public void testSyntheticTaxon2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-35.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-1-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-1-2");
+        TaxonConceptInstance tci3 = this.taxonomy.getInstance("Parent-1-1");
+        TaxonConceptInstance tci4 = this.taxonomy.getInstance("Parent-1-2");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        TaxonConcept tc3 = tci3.getContainer();
+        TaxonConcept tc4 = tci4.getContainer();
+        assertSame(tc1, tc2);
+        assertNotSame(tc3, tc4);
+        assertSame(tci1, tc1.getRepresentative());
+        assertFalse(tci2.isOutput());
+        assertFalse(tci4.isOutput());
+    }
+
+    @Test
+    public void testParent1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-37.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Species-1-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Genus-1-1");
+        TaxonConceptInstance tci3 = this.taxonomy.getInstance("Family-1-1");
+        assertSame(tci2, tci1.getResolvedParent());
+        assertSame(tci3, tci2.getResolvedParent());
+        assertNull(tci3.getResolvedParent());
     }
 
 }

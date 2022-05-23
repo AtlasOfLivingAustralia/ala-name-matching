@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -33,7 +34,7 @@ public class AutocompleteTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-2");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-3");
     }
 
     @Test
@@ -51,14 +52,14 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 1);
         Map first = results.get(0);
-        assertEquals("Samadera sp. Mary River", first.get("name"));
+        assertEquals("Mary River Cod", first.get("commonname"));
+        assertEquals("Maccullochella mariensis", first.get("name"));
         Map second = results.get(1);
-        assertEquals("Mary River Cod", second.get("commonname"));
-        assertEquals("Maccullochella mariensis", second.get("name"));
+        assertEquals("Mary River Turtle", second.get("commonname"));
+        assertEquals("Elusor macrurus", second.get("name"));
         Map third = results.get(2);
-        assertEquals("Mary River Turtle", third.get("commonname"));
-        assertEquals("Elusor macrurus", third.get("name"));
-    }
+        assertEquals("Samadera sp. Mary River (I.D.Cowie 1454)", third.get("name"));
+     }
 
     @Test
     public void testAutocomplete3() throws Exception {
@@ -85,7 +86,7 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         Map first = results.get(0);
-        assertEquals("Acacia dampieri", first.get("name"));
+        assertEquals("Acacia dodonaeifolia", first.get("name"));
     }
 
     @Test
@@ -127,11 +128,11 @@ public class AutocompleteTest {
 
     @Test
     public void testAutocomplete10() throws Exception {
-        List<Map> results = searcher.autocomplete("Rossi", 10, true);
+        List<Map> results = searcher.autocomplete("Rossi", 20, true);
         assertNotNull(results);
         assertTrue(results.size() > 0);
-        assertTrue(results.stream().anyMatch(r -> "Pleurotomella rossi".equals(r.get("name"))));
-        assertTrue(results.stream().anyMatch(r -> "Metacineta rossica".equals(r.get("name"))));
+        assertTrue(results.stream().anyMatch(r -> "Iliocirrus rossi".equals(r.get("name"))));
+        assertTrue(results.stream().anyMatch(r -> "Rossiteria nuclea".equals(r.get("name"))));
     }
 
 

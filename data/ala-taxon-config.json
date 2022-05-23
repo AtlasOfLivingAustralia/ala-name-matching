@@ -34,13 +34,38 @@
           },
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
+            "scientificName": "Unplaced( .*|)"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
             "matchType": "INSENSITIVE",
             "scientificName": "Not assigned"
           },
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
             "matchType": "REGEX",
-            "scientificName": "[A-Z][A-Za-z]+ sp\\.?"
+            "scientificName": ".*\\(?[Ii]ncertae [Ss]edis\\)?"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
+            "scientificName": "(?:[A-Z][A-Za-z]+\\s+)?sp\\.?"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
+            "scientificName": ".* - undifferentiated"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
+            "scientificName": ".* \\(unassigned\\)"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
+            "scientificName": ".* \\(awaiting allocation\\)"
           }
         ],
         "adjustments": [
@@ -63,21 +88,21 @@
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonomicStatus": "INCERTAE_SEDIS"
             },
-            "adjustment": -200
+            "adjustment": -2000
           },
           {
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonomicStatus": "SPECIES_INQUIRENDA"
             },
-            "adjustment": -200
+            "adjustment": -1000
           },
           {
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonomicStatus": "MISCELLANEOUS_LITERATURE"
             },
-            "adjustment": -250
+            "adjustment": -1000
           },
           {
             "condition": {
@@ -112,21 +137,21 @@
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonomicStatus": "EXCLUDED"
             },
-            "adjustment": -500
+            "adjustment": -1000
           },
           {
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonomicStatus": "INVALID"
             },
-            "adjustment": -600
+            "adjustment": -2000
           },
           {
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "taxonomicStatus": "INFERRED_INVALID"
             },
-            "adjustment": -610
+            "adjustment": -2100
           },
           {
             "condition": {
@@ -182,14 +207,14 @@
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "nomenclaturalStatus": "ALTERNATIVE"
             },
-            "adjustment": -10
+            "adjustment": -50
           },
           {
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "nomenclaturalStatus": "PROVISIONAL"
             },
-            "adjustment": -10
+            "adjustment": -50
           },
           {
             "condition": {
@@ -203,35 +228,42 @@
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "nomenclaturalStatus": "ORTHOGRAPHIC_VARIANT"
             },
-            "adjustment": -10
+            "adjustment": -50
           },
           {
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "nomenclaturalStatus": "REJECTED"
             },
-            "adjustment": -20
+            "adjustment": -1000
           },
           {
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "nomenclaturalStatus": "ILLEGITIMATE"
             },
-            "adjustment": -20
+            "adjustment": -1000
           },
           {
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "nomenclaturalStatus": "INVALID"
             },
-            "adjustment": -10
+            "adjustment": -1000
           },
           {
             "condition": {
               "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
               "nomenclaturalStatus": "DENIED"
             },
-            "adjustment": -10
+            "adjustment": -1000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "NUDUM"
+            },
+            "adjustment": -500
           },
           {
             "condition": {
@@ -648,6 +680,7 @@
         "Diastylopsis thileniusi": "Diastylopsis thilenuisi",
         "Difflugia garmen": "Difflugia gramen",
         "Encyonema auerwaldsii": "Encyonema auerswaldii",
+        "Engaeus disjunctus": "Engaeus disjuncticus",
         "Euglypha loevis": "Euglypha laevis",
         "Eumida hawkseburyensis": "Eumida hawkesburyensis",
         "Euryspongia deliculata": "Euryspongia delicatula",
@@ -769,7 +802,7 @@
       "description": "Australian Plant Name Index entries not placed by the Australian Plant Census, given an assumed parent of Plantae",
       "parent": "apni-apc",
       "authority": false,
-      "defaultScore" : 4000,
+      "defaultScore" : 3000,
       "adjuster": {
         "forbidden": [
           {
@@ -787,10 +820,6 @@
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
             "nomenclaturalStatus": "SUPERFLUOUS"
-          },
-          {
-            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
-            "nomenclaturalStatus": "NUDUM"
           },
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
@@ -819,6 +848,103 @@
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
             "nomenclaturalStatus": "DENIED"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "nomenclaturalStatus": "NUDUM"
+          }
+        ],
+        "adjustments": [
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "FORGOTTEN"
+            },
+            "adjustment": -2000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "CONFUSED"
+            },
+            "adjustment": -2000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "ABORTED"
+            },
+            "adjustment": -2000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "SUPERFLUOUS"
+            },
+            "adjustment": -2000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "NULL_NAME"
+            },
+            "adjustment": -2000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "SUPPRESSED"
+            },
+            "adjustment": -2000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "REJECTED"
+            },
+            "adjustment": -2000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "REJECTED_OUTRIGHT"
+            },
+            "adjustment": -2000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "ILLEGITIMATE"
+            },
+            "adjustment": -2000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "INVALID"
+            },
+            "adjustment": -2000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "DENIED"
+            },
+            "adjustment": -2000
+          },
+           {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "NUDUM"
+            },
+            "adjustment": -2000
+          },
+          {
+            "condition": {
+              "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+              "nomenclaturalStatus": "ILLEGITIMATE"
+            },
+            "adjustment": -2000
           }
         ]
       }
@@ -839,6 +965,17 @@
       "owner": [
         "Animalia"
       ]
+    },
+    {
+      "id" : "dr5393",
+      "name": "ALA",
+      "description": "Atlas of living Australia Name Sources",
+      "rightsHolder": "Atlas of Living Australia",
+      "licence": "CC-BY",
+      "parent": "default",
+      "defaultScore" : 4000,
+      "conceptResolutionPriority": "FILLER",
+      "unrankedStrategy": "INFERRED_AND_SYNONYMS"
     },
     {
       "id": "dr2707",
@@ -915,17 +1052,6 @@
       }
     },
     {
-      "id" : "dr5393",
-      "name": "ALA",
-      "description": "Atlas of living Australia Name Sources",
-      "rightsHolder": "Atlas of Living Australia",
-      "licence": "CC-BY",
-      "parent": "default",
-      "defaultScore" : 100,
-      "conceptResolutionPriority": "FILLER",
-      "unrankedStrategy": "INFERRED_AND_SYNONYMS"
-     },
-     {
       "id" : "dr13558",
       "name": "ALA Inferences",
       "description": "Atlas of living Australia, provider of inferences from the matching algorithm",

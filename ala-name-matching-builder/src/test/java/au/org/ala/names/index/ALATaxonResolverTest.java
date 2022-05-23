@@ -311,4 +311,56 @@ public class ALATaxonResolverTest extends TestUtils {
         assertSame(tci3, resolution.getResolved(tci3));
     }
 
+    // Ensure misapplied/accepted names are handled correctly
+    @Test
+    public void testResolution6() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        DwcaNameSource source = new DwcaNameSource(new File(this.getClass().getResource("taxonomy-27.csv").getFile()));
+        this.taxonomy.load(Arrays.asList(source));
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Accepted-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Accepted-2");
+        TaxonConceptInstance tci3 = this.taxonomy.getInstance("Synonym-1");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        assertEquals(2, tc1.getInstances().size());
+        assertEquals(1, tc2.getInstances().size());
+        ALATaxonResolver resolver = new ALATaxonResolver(taxonomy);
+        TaxonResolution resolution = resolver.resolve(tc1, resolver.principals(tc1, tc1.getInstances()), tc1.getInstances());
+        assertEquals(2, resolution.getUsed().size());
+        assertEquals(1, resolution.getPrincipal().size());
+        TaxonConceptInstance tci4 = resolution.getPrincipal().get(0);
+        assertTrue(tci4.isOutput());
+        assertSame(tci1, tci4);
+        assertSame(tci3, resolution.getResolved(tci3));
+    }
+
+    // Ensure synthetic names are reallocated
+    @Test
+    public void testResolution7() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        DwcaNameSource source = new DwcaNameSource(new File(this.getClass().getResource("taxonomy-34.csv").getFile()));
+        this.taxonomy.load(Arrays.asList(source));
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-1-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-1-2");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        assertEquals(2, tc1.getInstances().size());
+        assertSame(tc1, tc2);
+        ALATaxonResolver resolver = new ALATaxonResolver(taxonomy);
+        TaxonResolution resolution = resolver.resolve(tc1, resolver.principals(tc1, tc1.getInstances()), tc1.getInstances());
+        assertEquals(1, resolution.getUsed().size());
+        assertEquals(1, resolution.getPrincipal().size());
+        TaxonConceptInstance tci4 = resolution.getPrincipal().get(0);
+        assertTrue(tci4.isOutput());
+        assertSame(tci1, tci4);
+        assertSame(tci1, resolution.getResolved(tci2));
+        assertTrue(tci2.isForbidden());
+        assertFalse(tci2.isOutput());
+    }
 }

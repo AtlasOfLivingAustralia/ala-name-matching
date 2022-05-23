@@ -128,6 +128,8 @@ public class ScientificName extends Name<ScientificName, UnrankedScientificName,
             TaxonConceptInstance representative = principal.getRepresentative();
             TaxonConceptInstance resolved = representative.getResolvedAccepted();
 
+            if (resolved == null)
+                return principal;
             if (resolved != representative && resolved.getContainer().getContainer() == this)
                 principal = resolved.getContainer();
             return principal;

@@ -1,0 +1,9 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,kingdom,phylum,class,order,family,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source,taxonomicFlags
+"Kingdom-1-1","","","dr107","ICZN","ANIMALIA","(Borowski, 1781)","kingdom","","","accepted","Animalia","","","","","","","","","","","","","","",""
+"Phylum-1-1","","","dr107","ICZN","CNIDARIA","(Borowski, 1781)","phylum","","","accepted","Animalia","Cnidaria","","","","","","","","","","","","","",""
+"Class-1-1","","","dr107","ICZN","ANTHOZOA","(Borowski, 1781)","class","","","accepted","Animalia","Cnidaria","Anthozoa","","","","","","","","","","","","",""
+"Order-1-1","","","dr107","ICZN","ACTINARIA","(Borowski, 1781)","order","","","accepted","Animalia","Cnidaria","Anthozoa","Actinaria","","","","","","","","","","","",""
+"Family-2-1","","","dr108","","Isophellidae","","family","","","accepted","Animalia","Cnidaria","Anthozoa","Actinaria","Isophellidae","","","","","","","","","","",""
+"Genus-2-1","","","dr108","","Telmatactis","(Borowski, 1781)","genus","","","accepted","Animalia","Cnidaria","Anthozoa","Actinaria","Isophellidae","","","","","","","","","","",""
+"Species-2-1","","","dr108","","Telmatactis decora","(Hemprich & Ehrenberg in Ehrenberg, 1834)","species","","","accepted","Animalia","Cnidaria","Anthozoa","Actinaria","Isophellidae","","","","","","","","","","",""
+"Species-3-1","","","dr106","","Telmatactis insignis","Carlgren, 1950","species","","","accepted","Animalia","Cnidaria","Anthozoa","Actinaria","Isophellidae","","","","","","","","","","",""

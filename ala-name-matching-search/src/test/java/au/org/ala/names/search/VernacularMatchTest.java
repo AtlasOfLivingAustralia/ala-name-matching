@@ -40,7 +40,7 @@ public class VernacularMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-2");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-3");
     }
 
     @Test
@@ -194,14 +194,14 @@ public class VernacularMatchTest {
     // Sensitive SA
     @Test
     public void testVernacular14() {
-        String name = "Osprey";
+        String name = "Rayless Starwort";
         NameSearchResult result = this.searcher.searchForCommonName(name);
-        assertNull(result); // Multiple possibilitie
-        name = "Swamp Bunnies";
-        result = this.searcher.searchForCommonName(name);
-        assertNotNull(result);
+        assertNotNull(result); // Multiple results
         String lsid = result.getLsid();
-        assertEquals("https://id.biodiversity.org.au/taxon/apni/51290607", lsid);
+        assertEquals("https://id.biodiversity.org.au/node/apni/2913720", lsid);
+        name = "Kangaroo Island Dunnart";
+        result = this.searcher.searchForCommonName(name);
+        assertNull(result); // Multiple matches
     }
 
     // Sensitive WA
@@ -227,7 +227,7 @@ public class VernacularMatchTest {
     // Advisory Vic
     @Test
     public void testVernacular17() {
-        String name = "Little Tern";
+        String name = "Caddisfly";
         NameSearchResult result = this.searcher.searchForCommonName(name);
         assertNull(result); // Multiple results
         name = "Victoria Range Stringybark";
@@ -244,7 +244,7 @@ public class VernacularMatchTest {
         NameSearchResult result = this.searcher.searchForCommonName(name);
         assertNotNull(result);
         String lsid = result.getLsid();
-        assertEquals("ALA_3855965", lsid);
+        assertEquals("ALA_DR18234_247", lsid);
     }
 
 }
