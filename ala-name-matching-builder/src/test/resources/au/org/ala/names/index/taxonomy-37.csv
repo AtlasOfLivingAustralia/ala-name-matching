@@ -1,0 +1,4 @@
+taxonID,parentNameUsageID,acceptedNameUsageID,datasetID,nomenclaturalCode,scientificName,scientificNameAuthorship,taxonRank,taxonConceptID,scientificNameID,taxonomicStatus,kingdom,phylum,class,order,family,nomenclaturalStatus,establishmentMeans,nameAccordingToID,nameAccordingTo,namePublishedInID,namePublishedIn,namePubishedInYear,nameComplete,nameFormatted,source,taxonomicFlags
+"Family-1-1","","","dr119","","Areschougiaceae","","family","","","accepted","","","","","Areschougiaceae, Solieriaceae","","","","","","","","","","",""
+"Genus-1-1","Family-1-1","","dr119","","Erythroclonium","","genus","","","accepted","","Rhodophyta","Gigartinales","Actinaria","Areschougiaceae","","","","","","","","","","",""
+"Species-1-1","Genus-1-1","","dr119","","Erythroclonium sonderi","Harvey","species","","","accepted","","Rhodophyta","Gigartinales","Actinaria","Areschougiaceae","","","","","","","","","","",""
