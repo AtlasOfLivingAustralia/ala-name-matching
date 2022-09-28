@@ -1,0 +1,26 @@
+<archive xmlns="http://rs.tdwg.org/dwc/text/" metadata="eml.xml">
+  <!--Generated on 2022-08-11 12:26:42.531312-->
+  <core rowType="http://rs.tdwg.org/dwc/terms/Location" encoding="UTF-8" fieldsTerminatedBy="," linesTerminatedBy="\r\n" fieldsEnclosedBy="&quot;" ignoreHeaderLines="1">
+    <files>
+      <location>Location.csv</location>
+    </files>
+    <id index="0"/>
+    <field index="0" term="http://rs.tdwg.org/dwc/terms/locationID"/>
+    <field index="1" term="http://ala.org.au/terms/1.0/parentLocationID"/>
+    <field index="2" term="http://rs.tdwg.org/dwc/terms/datasetID"/>
+    <field index="3" term="http://ala.org.au/terms/1.0/geographyType"/>
+    <field index="4" term="http://rs.tdwg.org/dwc/terms/locality"/>
+    <field index="5" term="http://rs.tdwg.org/dwc/terms/countryCode"/>
+    <field index="6" term="http://rs.tdwg.org/dwc/terms/decimalLatitude"/>
+    <field index="7" term="http://rs.tdwg.org/dwc/terms/decimalLongitude"/>
+    <field index="8" term="http://ala.org.au/terms/1.0/area"/>
+  </core>
+  <extension rowType="http://ala.org.au/terms/1.0/LocationName" encoding="UTF-8" fieldsTerminatedBy="," linesTerminatedBy="\r\n" fieldsEnclosedBy="&quot;" ignoreHeaderLines="1">
+    <files>
+      <location>Location_Map.csv</location>
+    </files>
+    <coreid index="0"/>
+    <field index="0" term="http://rs.tdwg.org/dwc/terms/locationID"/>
+    <field index="1" term="http://rs.tdwg.org/dwc/terms/locality"/>
+  </extension>
+</archive>

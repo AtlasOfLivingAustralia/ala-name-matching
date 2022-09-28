@@ -1,0 +1,49 @@
+<!--
+  ~ Copyright (c) 2021 Atlas of Living Australia
+  ~ All Rights Reserved.
+  ~
+  ~ The contents of this file are subject to the Mozilla Public
+  ~ License Version 1.1 (the "License"); you may not use this file
+  ~ except in compliance with the License. You may obtain a copy of
+  ~ the License at http://www.mozilla.org/MPL/
+  ~
+  ~ Software distributed under the License is distributed on an "AS
+  ~  IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+  ~ implied. See the License for the specific language governing
+  ~ rights and limitations under the License.
+  ~
+  -->
+
+<archive xmlns="http://rs.tdwg.org/dwc/text/">
+  <core encoding="UTF-8" fieldsTerminatedBy="," linesTerminatedBy="\n" fieldsEnclosedBy="&quot;" ignoreHeaderLines="1" rowType="http://rs.tdwg.org/dwc/terms/Taxon">
+    <files>
+      <location>taxon.csv</location>
+    </files>
+    <id index="0" />
+    <field index="0" term="http://rs.tdwg.org/dwc/terms/taxonID"/>
+    <field index="1" term="http://rs.tdwg.org/dwc/terms/parentNameUsageID"/>
+    <field index="2" term="http://rs.tdwg.org/dwc/terms/acceptedNameUsageID"/>
+    <field index="3" term="http://rs.tdwg.org/dwc/terms/datasetID"/>
+    <field index="4" term="http://rs.tdwg.org/dwc/terms/nomenclaturalCode"/>
+    <field index="5" term="http://rs.tdwg.org/dwc/terms/scientificName"/>
+    <field index="6" term="http://rs.tdwg.org/dwc/terms/scientificNameAuthorship"/>
+    <field index="7" term="http://rs.tdwg.org/dwc/terms/taxonRank"/>
+    <field index="8" term="http://rs.tdwg.org/dwc/terms/taxonomicStatus"/>
+    <field index="9" term="http://rs.tdwg.org/dwc/terms/nomenclaturalStatus"/>
+  </core>
+  <extension rowType="http://rs.gbif.org/terms/1.0/Distribution" encoding="UTF-8" fieldsTerminatedBy="," linesTerminatedBy="\r\n" fieldsEnclosedBy="&quot;" ignoreHeaderLines="1">
+    <files>
+      <location>distribution.csv</location>
+    </files>
+    <coreid index="0"/>
+    <field index="0" term="http://rs.tdwg.org/dwc/terms/taxonID"/>
+    <field index="1" term="http://rs.tdwg.org/dwc/terms/locationID"/>
+    <field index="2" term="http://rs.tdwg.org/dwc/terms/locality"/>
+    <field index="3" term="http://rs.tdwg.org/dwc/terms/countryCode"/>
+    <field index="4" term="http://rs.tdwg.org/dwc/terms/lifeStage"/>
+    <field index="5" term="http://rs.tdwg.org/dwc/terms/occurrenceStatus"/>
+    <field index="6" term="http://rs.tdwg.org/dwc/terms/establishmentMeans"/>
+    <field index="7" term="http://rs.tdwg.org/dwc/terms/datasetID"/>
+    <field index="8" term="http://purl.org/dc/terms/provenance"/>
+  </extension>
+</archive>

@@ -75,18 +75,42 @@ public enum ALATerm implements Term {
     principalScientificName,
     /** Any taxonomic flags */
     taxonomicFlags,
+    /** The parent location ID */
+    parentLocationID,
+    /** The geogreaphy type */
+    geographyType,
+    /** The distribution, if present as a bar separated list of localities */
+    distribution,
+    /** The publication DOI of a document */
+    doi,
     /** Record type describing an unplaced vernacular name */
     UnplacedVernacularName,
+    /** Record type describing a yet unplaced reference */
+    UnplacedReference,
     /** Record type describing a variant (different source, spelling etc.) of a taxon */
     TaxonVariant,
     /** Record type describing a problem or note about a taxon */
-    TaxonomicIssue;
+    TaxonomicIssue,
+    /** Location information */
+    Location("dwc:", "http://rs.tdwg.org/dwc/terms/");
 
     public static final String NS = "http://ala.org.au/terms/1.0/";
     public static final String PREFIX = "ala:";
 
+    private String prefix;
+    private String namespace;
+
+    ALATerm(String prefix, String namespace) {
+        this.prefix = prefix;
+        this.namespace = namespace;
+    }
+
+    ALATerm() {
+        this(PREFIX, NS);
+    }
+
     public String qualifiedName() {
-        return NS + this.simpleName();
+        return this.namespace + this.simpleName();
     }
 
     public String simpleName() {
@@ -94,7 +118,7 @@ public enum ALATerm implements Term {
     }
 
     public String toString() {
-         return PREFIX + name();
+         return this.prefix + name();
     }
 
     static {
@@ -102,7 +126,7 @@ public enum ALATerm implements Term {
         for (Term term : ALATerm.values()) {
             factory.addTerm(term.simpleName(), term, true);
             factory.addTerm(term.qualifiedName(), term);
-            factory.addTerm(PREFIX + term.simpleName(), term);
+            factory.addTerm(term.toString(), term);
         }
     }
 

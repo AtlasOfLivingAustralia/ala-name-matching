@@ -70,7 +70,7 @@ public class CSVNameSource extends NameSource {
      * @param rowType The type of row in the CSV
      */
     public CSVNameSource(Reader reader, Term rowType) throws IOException, CsvValidationException {
-        this.name = "Reader " + System.identityHashCode(reader);
+        this.name = "Reader " + System.identityHashCode(reader) + " - " + rowType;
         this.reader = new CSVReaderBuilder(reader).build();
         this.rowType = rowType;
         this.collectColumns();
@@ -86,6 +86,16 @@ public class CSVNameSource extends NameSource {
     public CSVNameSource(Path path, String encoding, Term rowType) throws IOException, CsvValidationException {
         this(Files.newBufferedReader(path, Charset.forName(encoding)), rowType);
         this.name = path.toUri().toASCIIString();
+    }
+
+    /**
+     * Get the type of core row this source represents
+     *
+     * @return The core type
+     */
+    @Override
+    public Term getCoreType() {
+        return this.rowType;
     }
 
     protected void collectColumns() throws IOException, CsvValidationException {
@@ -178,6 +188,10 @@ public class CSVNameSource extends NameSource {
             this.loadTaxon(taxonomy);
         else if (this.rowType == GbifTerm.VernacularName)
             this.loadVernacular(taxonomy);
+        else if (this.rowType == ALATerm.Location)
+            this.loadLocation(taxonomy);
+        else if (this.rowType == GbifTerm.Reference)
+            this.loadReference(taxonomy);
         else
             throw new IndexBuilderException("Unable to support row type " + this.rowType);
 
@@ -212,6 +226,7 @@ public class CSVNameSource extends NameSource {
         Integer taxonRemarksIndex = termLocations.get(DwcTerm.taxonRemarks);
         Integer provenanceIndex = termLocations.get(DcTerm.provenance);
         Integer taxonomicFlagsIndex = termLocations.get(ALATerm.taxonomicFlags);
+        Integer distributionIndex = termLocations.get(ALATerm.distribution);
         Set<Term> classifications = TaxonConceptInstance.CLASSIFICATION_FIELDS.stream().filter(t -> termLocations.containsKey(t)).collect(Collectors.toSet());
         try {
             String[] r;
@@ -246,6 +261,16 @@ public class CSVNameSource extends NameSource {
                 if (!classifications.isEmpty()) {
                    classification = classifications.stream().collect(Collectors.toMap(t -> t, t -> Optional.ofNullable(this.get(record, termLocations.get(t)))));
                 }
+                List<Distribution> distribution = null;
+                String dist = this.get(record, distributionIndex);
+                if (dist != null) {
+                    distribution = Arrays.stream(dist.split("\\|"))
+                            .map(id -> taxonomy.resolveLocation(id))
+                            .filter(Objects::nonNull)
+                            .map(l -> new Distribution(provider, l, null, null, null))
+                            .collect(Collectors.toList());
+                }
+
                 TaxonConceptInstance instance = new TaxonConceptInstance(
                         taxonID,
                         code,
@@ -269,7 +294,8 @@ public class CSVNameSource extends NameSource {
                         verbatimTaxonRemarks,
                         provenance,
                         classification,
-                        flags);
+                        flags,
+                        distribution);
                 instance.normalise();
                 instance = taxonomy.addInstance(instance);
                 Document doc = new Document();
@@ -307,6 +333,72 @@ public class CSVNameSource extends NameSource {
                 final String[] record = r;
                 Document doc = new Document();
                 doc.add(new StringField("type", ALATerm.UnplacedVernacularName.qualifiedName(), Field.Store.YES));
+                doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
+                for (int i = 0; i < record.length; i++) {
+                    Term term = this.terms.get(i);
+                    String value = record[i];
+                    if (term != null && value != null && !value.isEmpty())
+                        doc.add(new StringField(Taxonomy.fieldName(term), value, Field.Store.YES));
+                }
+                taxonomy.addRecords(Collections.singletonList(doc));
+            }
+        } catch (IndexBuilderException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new IndexBuilderException("Unable to load CSV file", ex);
+        }
+    }
+
+    /**
+     * Load taxon records into a taxonomy.
+     *
+     * @param taxonomy The taxonomy
+     *
+     * @throws IndexBuilderException if unable to load a record into the taxonomy.
+     */
+    protected void loadLocation(Taxonomy taxonomy) throws IndexBuilderException {
+        final Map<Term, Integer> termLocations = this.termLocations; // Lambda requires final local variable
+        taxonomy.addOutputTerms(ALATerm.Location, this.terms);
+        Integer locationIDIndex = termLocations.get(DwcTerm.locationID);
+        Integer parentLocationIDIndex = termLocations.get(ALATerm.parentLocationID);
+        Integer localityIndex = termLocations.get(DwcTerm.locality);
+        Integer geographyTypeIndex = termLocations.get(ALATerm.geographyType);
+        try {
+            String[] r;
+
+            while ((r = this.reader.readNext()) != null) {
+                final String[] record = r;
+                String locationID = this.get(record, locationIDIndex);
+                String parentLocationID = this.get(record, parentLocationIDIndex);
+                String locality = this.get(record, localityIndex);
+                String geographyType = this.get(record, geographyTypeIndex);
+                Location location = new Location(locationID, parentLocationID, locality, geographyType);
+                taxonomy.addLocation(location);
+             }
+        } catch (IndexBuilderException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new IndexBuilderException("Unable to load CSV file", ex);
+        }
+    }
+
+    /**
+     * Load references into a taxonomy.
+     *
+     * @param taxonomy The taxonomy
+     *
+     * @throws IndexBuilderException if unable to load a record into the taxonomy.
+     */
+    public void loadReference(Taxonomy taxonomy) throws IndexBuilderException {
+        final Map<Term, Integer> termLocations = this.termLocations; // Lambda requires final local variable
+        taxonomy.addOutputTerms(GbifTerm.Reference, this.terms);
+        try {
+            String[] r;
+
+            while ((r = this.reader.readNext()) != null) {
+                final String[] record = r;
+                Document doc = new Document();
+                doc.add(new StringField("type", ALATerm.UnplacedReference.qualifiedName(), Field.Store.YES));
                 doc.add(new StringField("id", UUID.randomUUID().toString(), Field.Store.YES));
                 for (int i = 0; i < record.length; i++) {
                     Term term = this.terms.get(i);

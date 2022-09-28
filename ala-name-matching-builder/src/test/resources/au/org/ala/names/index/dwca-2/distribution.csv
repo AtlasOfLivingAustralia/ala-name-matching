@@ -1,0 +1,4 @@
+taxonID,locationID,locality,countryCode,lifeStage,occurrenceStatus,establishmentMeans,datasetID,provenance
+https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6,http://vocab.getty.edu/tgn/7001828,New South Wales,AU,juvenile,present,native,dr100,
+https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6,http://vocab.getty.edu/tgn/7001830,Queensland,AU,,,native,dr100,
+https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6,http://vocab.getty.edu/tgn/7006238,Victoria,AU,,,native,dr100,

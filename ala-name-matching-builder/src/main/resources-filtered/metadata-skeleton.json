@@ -1,0 +1,5 @@
+{
+  "indexVersion": "${project.version}",
+  "luceneVersion": "${org.apache.lucene.version}",
+  "javaVersion": "${targetJdk}"
+}

@@ -19,7 +19,9 @@ package au.org.ala.names.index;
 import au.org.ala.names.model.RankType;
 import au.org.ala.names.model.TaxonFlag;
 import au.org.ala.names.model.TaxonomicType;
+import org.gbif.api.vocabulary.LifeStage;
 import org.gbif.api.vocabulary.NomenclaturalStatus;
+import org.gbif.api.vocabulary.OccurrenceStatus;
 import org.gbif.checklistbank.authorship.AuthorComparator;
 import org.gbif.checklistbank.model.Equality;
 import org.slf4j.Logger;
@@ -138,6 +140,25 @@ abstract public class NameAnalyser implements Comparator<NameKey>, Reporter {
      * @return The canonicalised nomenclatural status, if present
      */
     abstract public NomenclaturalStatus canonicaliseNomenclaturalStatus(String nomenclaturalStatus);
+
+    /**
+     * Canonicalise the life stage
+     *
+     * @param lifeStage the life stage string
+     *
+     * @return The canonicalised life stage, if present
+     */
+    abstract public LifeStage canonicaliseLifeStage(String lifeStage);
+
+
+    /**
+     * Canonicalise the occurrence status
+     *
+     * @param occurrenceStatus the occurrence status string
+     *
+     * @return The canonicalised life stage, if present
+     */
+    abstract public OccurrenceStatus canonicaliseOccurrenceStatus(String occurrenceStatus);
 
     /**
      * Canonicalise a supplied taxonomic flag

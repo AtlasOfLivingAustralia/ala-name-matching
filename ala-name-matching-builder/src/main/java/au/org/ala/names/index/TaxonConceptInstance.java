@@ -238,6 +238,10 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      */
     private Set<TaxonFlag> flags;
     /**
+     * The taxon distribution
+     */
+    private List<Distribution> distribution;
+    /**
      * The base score for position on the taxonomic tree
      */
     private Integer baseScore;
@@ -275,6 +279,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
      * @param verbatimTaxonRemarks        The original taxon remarks
      * @param provenance                  Provenance information
      * @param classification              The taxonomic classification
+     * @param flags                       The taxonomic flags
+     * @param distribution                The taxon distribution
      */
     public TaxonConceptInstance(
             String taxonID,
@@ -299,7 +305,9 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
             @Nullable String verbatimTaxonRemarks,
             @Nullable List<String> provenance,
             @Nullable Map<Term, Optional<String>> classification,
-            @Nullable Set<TaxonFlag> flags) {
+            @Nullable Set<TaxonFlag> flags,
+            @Nullable List<Distribution> distribution
+    ) {
         this.taxonID = taxonID;
         this.code = code;
         this.verbatimNomenclaturalCode = verbatimNomenclaturalCode;
@@ -323,6 +331,7 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         this.provenance = provenance == null ? null : new ArrayList<>(provenance);
         this.classification = classification;
         this.flags = flags;
+        this.distribution = distribution;
     }
 
     /**
@@ -737,6 +746,15 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
+     * Get the distribution set
+     *
+     * @return The distribution
+     */
+    public List<Distribution> getDistribution() {
+        return distribution;
+    }
+
+    /**
      * Set the forbidden flag
      * <p>
      * Note that, if you set something as forbidden, increase <code>count.load.forbidden</code>
@@ -1120,6 +1138,15 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
     }
 
     /**
+     * Is this a geographic instance?
+     *
+     * @return True if the tanomomic status is geographic
+     */
+    public boolean isGeographic() {
+        return this.taxonomicStatus != null && this.taxonomicStatus.isGeographic() && !this.hasFlag(TaxonFlag.SYNTHETIC);
+    }
+
+    /**
      * Clean up common messinesses with the instance caused by different conventions:
      * <ul>
      *     <li>If the acceptedNameUsageID is the same as the taxonID then it is set to null</li>
@@ -1457,6 +1484,19 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
         return valuesList;
     }
 
+
+    /**
+     * Get a list of references associated with this taxon instance.
+     *
+     * @param taxonomy The taxonomy to collect additional information from
+     * @return The vernacular name list
+     * @throws IOException if unable to retrive source documents
+     */
+    public List<Map<Term, String>> getReferenceMaps(Taxonomy taxonomy) throws IOException {
+        List<Map<Term, String>> valuesList = taxonomy.getIndexValues(GbifTerm.Reference, this.taxonID);
+        return valuesList;
+    }
+
     /**
      * Get a list of distribution maps associated with this taxon instance.
      *
@@ -1548,7 +1588,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 this.verbatimTaxonRemarks,
                 this.provenance == null ? null : new ArrayList<>(this.provenance),
                 this.classification,
-                this.flags
+                this.flags,
+                this.distribution
         );
         synonym.setContainer(concept);
         synonym.accepted = this;
@@ -1594,7 +1635,8 @@ public class TaxonConceptInstance extends TaxonomicElement<TaxonConceptInstance,
                 this.verbatimTaxonRemarks,
                 this.provenance == null ? null : new ArrayList<>(this.provenance),
                 this.classification,
-                this.flags
+                this.flags,
+                this.distribution
         );
         instance.setContainer(null);
         instance.accepted = this.accepted;

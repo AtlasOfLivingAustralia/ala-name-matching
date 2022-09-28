@@ -17,6 +17,7 @@
       "external": false,
       "defaultScore" : 0,
       "unknownTaxonID" : "ALA_The_Unknown_Taxon",
+      "distributionCutoff": "GENUS",
       "adjuster": {
         "forbidden": [
           {
@@ -36,6 +37,16 @@
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
             "matchType": "REGEX",
             "scientificName": "Unplaced( .*|)"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
+            "scientificName": "Unassigned( .*|)"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
+            "scientificName": "Unnamed( .*|)"
           },
           {
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
@@ -66,6 +77,21 @@
             "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
             "matchType": "REGEX",
             "scientificName": ".* \\(awaiting allocation\\)"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
+            "scientificName": "[Gg]en(?:us|\\.)?\\s+[Ii]ndet\\.?"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
+            "scientificName": "[Gg]en(?:us|\\.)?\\s+[Nn](?:ov|\\.)?"
+          },
+          {
+            "@class": "au.org.ala.names.index.provider.MatchTaxonCondition",
+            "matchType": "REGEX",
+            "scientificName": "sp.?"
           }
         ],
         "adjustments": [
@@ -746,7 +772,7 @@
       "defaultScore" : 10000
      },
     {
-      "id" : "dr2702",
+      "id" : "dr19724",
       "name": "AusFungi",
       "parent": "default",
       "rightsHolder": "Royal Botanic Gardens Victoria",

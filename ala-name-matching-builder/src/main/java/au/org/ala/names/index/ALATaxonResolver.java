@@ -54,14 +54,19 @@ public class ALATaxonResolver implements TaxonResolver {
      * Principals are effectively chosen on the basis of the provider that provides the highest priority
      * for one of the instances.
      * </p>
+     * <p>
+     * Geographic taxa (ie those with a {@link TaxonomicType#isGeographic()} of true
+     * Are always included as principals at the end of anything else that might be available.
+     * </p>
      */
     @Override
     public List<TaxonConceptInstance> principals(TaxonConcept concept, Collection<TaxonConceptInstance> instances) throws IndexBuilderException {
         final int cutoff = taxonomy.getAcceptedCutoff();
-        List<TaxonConceptInstance> principals = instances.stream().filter(tci -> tci.isPrimary() && tci.getScore() > cutoff).collect(Collectors.toList());
+        List<TaxonConceptInstance> geographic = instances.stream().filter(tci -> tci.isGeographic() && tci.getScore() > cutoff).collect(Collectors.toList());
+        List<TaxonConceptInstance> principals = instances.stream().filter(tci -> tci.isPrimary() && !tci.isGeographic() && tci.getScore() > cutoff).collect(Collectors.toList());
         if (principals.isEmpty()) {
            this.taxonomy.report(IssueType.NOTE, "taxonResolver.noPrincipals", concept, null);
-            principals = new ArrayList<>(instances);
+            principals = instances.stream().filter(tci -> !tci.isGeographic()).collect(Collectors.toList());
         }
         Optional<TaxonConceptInstance> max = principals.stream().max(TaxonConceptInstance.SCORE_COMPARATOR);
         Optional<NameProvider> authority = max.map(TaxonConceptInstance::getAuthority);
@@ -74,6 +79,8 @@ public class ALATaxonResolver implements TaxonResolver {
         final NameProvider source = authority.orElse(taxonomy.getInferenceProvider());
         principals = principals.stream().filter(instance -> instance.getAuthority() == source).collect(Collectors.toList());
         principals.sort(TaxonConceptInstance.INVERSE_SCORE_COMPARATOR);
+        geographic.sort(TaxonConceptInstance.INVERSE_SCORE_COMPARATOR);
+        principals.addAll(geographic);
         return principals;
     }
 
@@ -320,6 +327,85 @@ public class ALATaxonResolver implements TaxonResolver {
             }
         }
 
+    }
+
+    /**
+     * Resolve distribution information.
+     * <p>
+     * Build a disjoint list of distribution information
+     * from the principal instances.
+     * </p>
+     * <p>
+     * Distinct distributions are always merged.
+     * Non-primary distritions are only merged if they are distinct from the
+     * primary distribitions.
+     * </p>
+     *
+     * @param concept The concept
+     * @param taxonomy The taxonomy
+     *
+     * @return The resolved distribution list or null for global
+     *
+     * @throws IndexBuilderException If unable to resolve distribution data
+     */
+    @Override
+    public void resolveDistribution(TaxonConcept concept, TaxonResolution resolution, Taxonomy taxonomy) throws IndexBuilderException {
+        for (TaxonConceptInstance used: resolution.getUsed()) {
+            if (used.getDistribution() == null) {
+                resolution.addDistribution(used, null);
+                continue;
+            }
+            List<Distribution> distribution = used.getDistribution();
+            for (TaxonConceptInstance child: resolution.getChildren(used)) {
+                List<Distribution> more = child.getDistribution();
+                if (child == used || !child.isOutput() || child.getContainer() != concept || more == null) {
+                    continue;
+                }
+                final List<Distribution> coverage = distribution;
+                more = more.stream().filter(d -> !coverage.stream().anyMatch(d1 -> d1.covers(d))).collect(Collectors.toList());
+                distribution = this.mergeDistribution(distribution, more);
+            }
+            resolution.addDistribution(used, distribution.isEmpty() ? null : distribution);
+        }
+    }
+
+    /**
+     * Merge a distribution list into a list of distribitions.
+     *
+     * @param distribution The current distribution list
+     * @param more The distribution list to merge
+     *
+     * @return The merged list
+     */
+    protected List<Distribution> mergeDistribution(List<Distribution> distribution, List<Distribution> more) {
+        for (Distribution d: more)
+            distribution = this.mergeDistribution(distribution, d);
+        return distribution;
+    }
+
+
+    /**
+     * Merge a distribution into a list of distribitions.
+     *
+     * @param distribution The current distribution list
+     * @param dist The distribution to merge
+     *
+     * @return The merged list
+     */
+    protected List<Distribution> mergeDistribution(List<Distribution> distribution, Distribution dist) {
+        List<Distribution> merged = new ArrayList<>(distribution.size());
+        for (Distribution d: distribution) {
+            if (dist != null && dist.covers(d)) {
+            } else if (dist != null && d.covers(dist)) {
+                merged.add(d);
+                dist = null;
+            } else {
+               merged.add(d);
+            }
+        }
+        if (dist != null)
+            merged.add(dist);
+        return merged;
     }
 
     /**

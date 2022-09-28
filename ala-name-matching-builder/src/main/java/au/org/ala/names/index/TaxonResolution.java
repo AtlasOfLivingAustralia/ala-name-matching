@@ -57,6 +57,8 @@ public class TaxonResolution {
     private List<TaxonConceptInstance> used;
     /** The list of non-resplvable instances */
     private Set<TaxonConceptInstance> unresolved;
+    /** The map of distributions */
+    private Map<TaxonConceptInstance, List<Distribution>> distributions;
 
     /**
      * Construct with an initial list of principals.
@@ -68,6 +70,7 @@ public class TaxonResolution {
         this.resolution = new HashMap<>();
         this.used = new ArrayList<>(principal);
         this.unresolved= new HashSet<>();
+        this.distributions = new HashMap<>();
     }
 
     /**
@@ -96,9 +99,9 @@ public class TaxonResolution {
     }
 
     /**
-     * Get the list of non-principal instances.
+     * Get the list of used instances including non-principals.
      *
-     * @return The list of non-principals
+     * @return The list of used instances
      */
     public List<TaxonConceptInstance> getUsed() {
         return used;
@@ -111,6 +114,26 @@ public class TaxonResolution {
      */
     public Set<TaxonConceptInstance> getUnresolved() {
         return unresolved;
+    }
+
+    /**
+     * Get the distribution for an instance
+     *
+     * @param instance The instance
+     * @return The distribution
+     */
+    public List<Distribution> getDistribution(TaxonConceptInstance instance) {
+        return this.distributions.get(instance);
+    }
+
+    /**
+     * Add a distribution map to the distributions
+     *
+     * @param instance The taxon instance
+     * @param distribution The distribution (null for universal)
+     */
+    public void addDistribution(TaxonConceptInstance instance, List<Distribution> distribution) {
+        this.distributions.put(instance, distribution);
     }
 
     /**

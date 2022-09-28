@@ -132,7 +132,7 @@ public class AutocompleteTest {
         assertNotNull(results);
         assertTrue(results.size() > 0);
         assertTrue(results.stream().anyMatch(r -> "Iliocirrus rossi".equals(r.get("name"))));
-        assertTrue(results.stream().anyMatch(r -> "Rossiteria nuclea".equals(r.get("name"))));
+        assertTrue(results.stream().anyMatch(r -> "Diplotrema rossi".equals(r.get("name"))));
     }
 
 

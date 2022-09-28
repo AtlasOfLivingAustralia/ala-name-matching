@@ -82,7 +82,7 @@ into a single, combined taxonomy.
 An example command for the taxonomy builder is:
 
 ```
-./merge.sh -c /data/names/ala-taxon-config.json -w tmp -o /data/names/combined /data/names/APNI/DwC /data/names/AFD/DwC /data/names/CAAB/DwC
+./merge.sh -c /data/names/ala-taxon-config.json -w /tmp -o /data/names/combined /data/names/APNI/DwC /data/names/AFD/DwC /data/names/CAAB/DwC
 ```
 
 More information about the merge configuration can be found [here](doc/merge-config.md).
