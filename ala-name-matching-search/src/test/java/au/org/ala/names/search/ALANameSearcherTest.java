@@ -39,7 +39,7 @@ public class ALANameSearcherTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-3");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-4");
     }
 
     @Test
@@ -929,8 +929,8 @@ public class ALANameSearcherTest {
 
     @Test
     public void testGetPrimaryLsid4() {
-        String primaryLsid = searcher.getPrimaryLsid("ALA_DR655_1900");
-        assertEquals("https://id.biodiversity.org.au/node/apni/2886504", primaryLsid);
+        String primaryLsid = searcher.getPrimaryLsid("ALA_DR655_36");
+        assertEquals("https://id.biodiversity.org.au/node/apni/2917784", primaryLsid);
     }
 
     @Test
@@ -1639,9 +1639,9 @@ public class ALANameSearcherTest {
         cl.setRank("species");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("https://id.biodiversity.org.au/taxon/apni/51360942", metrics.getResult().getLsid());
-        assertNull(metrics.getResult().getAcceptedLsid());
-        assertEquals(MatchType.RECURSIVE, metrics.getResult().getMatchType());
+        assertEquals("https://id.biodiversity.org.au/instance/apni/854042", metrics.getResult().getLsid());
+        assertEquals("https://id.biodiversity.org.au/node/apni/2896227", metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
     }
 
@@ -1652,7 +1652,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (Koala)");
         MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6", metrics.getResult().getLsid());
+        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1661,7 +1661,16 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (combined populations of Qld, NSW and the ACT)");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6", metrics.getResult().getLsid());
+        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
+        assertNull(metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+        assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
+
+        cl = new LinnaeanRankClassification();
+        cl.setScientificName("Phascolarctos cinereus (Koala, Guba)");
+        metrics = searcher.searchForRecordMetrics(cl, true, true);
+        assertNotNull(metrics);
+        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1670,16 +1679,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus (Koala, Guba)");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6", metrics.getResult().getLsid());
-        assertNull(metrics.getResult().getAcceptedLsid());
-        assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
-        assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
-
-        cl = new LinnaeanRankClassification();
-        cl.setScientificName("Phascolarctos cinereus (Koala, Guba)");
-        metrics = searcher.searchForRecordMetrics(cl, true, true);
-        assertNotNull(metrics);
-        assertEquals("https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6", metrics.getResult().getLsid());
+        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
@@ -1688,7 +1688,7 @@ public class ALANameSearcherTest {
         cl.setScientificName("Phascolarctos cinereus ( Koala )");
         metrics = searcher.searchForRecordMetrics(cl, true, true);
         assertNotNull(metrics);
-        assertEquals("https://biodiversity.org.au/afd/taxa/e9d6fbbd-1505-4073-990a-dc66c930dad6", metrics.getResult().getLsid());
+        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
         assertNull(metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
         assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());

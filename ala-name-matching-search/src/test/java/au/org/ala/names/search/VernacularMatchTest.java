@@ -42,7 +42,7 @@ public class VernacularMatchTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-3");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-4");
     }
 
     @Test
@@ -255,7 +255,7 @@ public class VernacularMatchTest {
         String lsid = this.searcher.searchForLSID("Girella tricuspidata");
         String result = this.searcher.getCommonNameForLSID(lsid);
         assertNotNull(result);
-        assertEquals("Parore", result);
+        assertEquals("Luderick", result);
     }
 
     @Test

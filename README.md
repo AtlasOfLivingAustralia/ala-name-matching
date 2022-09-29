@@ -102,8 +102,8 @@ Each module contains two artefacts in the
 * ala-name-matching-<module>-4.3-SNAPSHOT.jar - built jar for the project code only
 * ala-name-matching-<module>-4.3-SNAPSHOT-sources.jar - source jar for the project code only
 
-The name index for Australian names lists used in unit tests can be downloaded [from here](https://biocache.ala.org.au/archives/nameindexes/20210811-3) and needs to be extracted to the
-directory `/data/lucene/namematching-20210811-3`
+The name index for Australian names lists used in unit tests can be downloaded [from here](https://biocache.ala.org.au/archives/nameindexes/20210811-4) and needs to be extracted to the
+directory `/data/lucene/namematching-20210811-4`
 
 ## ALA Names List
 
