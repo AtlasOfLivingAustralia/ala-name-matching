@@ -1,0 +1,64 @@
+<eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.1">
+  <dataset>
+    <alternativeIdentifier>DR19606-20220724-20220811</alternativeIdentifier>
+    <title>The Getty Vocabularies</title>
+    <creator>
+      <organizationName>Getty Research Institute</organizationName>
+      <addrress>
+        <deliveryPoint>1200 Getty Center Drive Suite 1100</deliveryPoint>
+        <city>Los Angeles</city>
+        <administrativeArea>California</administrativeArea>
+        <postalCode>90049–1688</postalCode>
+        <country/>
+      </addrress>
+      <onlineUrl>http://vocab.getty.edu/</onlineUrl>
+    </creator>
+    <metadataProvider>
+      <organizationName>The Atlas of Living Australia</organizationName>
+      <addrress>
+        <deliveryPoint>GPO Box 1700</deliveryPoint>
+        <city>Canberra</city>
+        <administrativeArea>ACT</administrativeArea>
+        <postalCode>2601</postalCode>
+        <country/>
+      </addrress>
+      <electronicMailAddress>info@ala.org.au</electronicMailAddress>
+      <onlineUrl>https://ala.org.au</onlineUrl>
+    </metadataProvider>
+    <pubDate>2022-07-24</pubDate>
+    <series>DR19606</series>
+    <abstract>
+      <para>The Getty Vocabularies: The AAT, TGN, ULAN, and CONA contain structured terminology for art and other material culture, archival materials, visual surrogates, and bibliographic materials. Compliant with international standards, they provide authoritative information for catalogers and researchers, and can be used to enhance access to databases and Web sites. The Getty Vocabularies are produced by the Getty Vocabulary Program (GVP) and grow through contributions.</para>
+    </abstract>
+    <intellectualRights>
+      <para>The Getty Institute</para>
+      <para>Copyright 2022, The Atlas of Living Australia</para>
+    </intellectualRights>
+    <distribution scope="document">
+      <online>
+        <url function="information">https://ala.org.au</url>
+      </online>
+    </distribution>
+    <contact>
+      <organizationName>The Atlas of Living Australia</organizationName>
+      <addrress>
+        <deliveryPoint>GPO Box 1700</deliveryPoint>
+        <city>Canberra</city>
+        <administrativeArea>ACT</administrativeArea>
+        <postalCode>2601</postalCode>
+        <country/>
+      </addrress>
+      <electronicMailAddress>info@ala.org.au</electronicMailAddress>
+      <onlineUrl>https://ala.org.au</onlineUrl>
+    </contact>
+  </dataset>
+  <additionalMetadata>
+    <metadata>
+      <gbif>
+        <dateStamp>2022-08-11T02:26:09</dateStamp>
+        <citation identifier="DR19606-20220724-20220811">The Getty Institute Vocabularies http://vocab.getty.edu/&#13;
+Published under the Open Data Commons Attribution Licence (OGC-By) 1.0 https://opendatacommons.org/licenses/by/1-0/, The Atlas of Living Australia, 2022-07-24</citation>
+      </gbif>
+    </metadata>
+  </additionalMetadata>
+</eml:eml>

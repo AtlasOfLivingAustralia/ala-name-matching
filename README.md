@@ -82,7 +82,7 @@ into a single, combined taxonomy.
 An example command for the taxonomy builder is:
 
 ```
-./merge.sh -c /data/names/ala-taxon-config.json -w tmp -o /data/names/combined /data/names/APNI/DwC /data/names/AFD/DwC /data/names/CAAB/DwC
+./merge.sh -c /data/names/ala-taxon-config.json -w /tmp -o /data/names/combined /data/names/APNI/DwC /data/names/AFD/DwC /data/names/CAAB/DwC
 ```
 
 More information about the merge configuration can be found [here](doc/merge-config.md).
@@ -102,8 +102,8 @@ Each module contains two artefacts in the
 * ala-name-matching-<module>-4.3-SNAPSHOT.jar - built jar for the project code only
 * ala-name-matching-<module>-4.3-SNAPSHOT-sources.jar - source jar for the project code only
 
-The name index for Australian names lists used in unit tests can be downloaded [from here](https://biocache.ala.org.au/archives/nameindexes/20210811-3) and needs to be extracted to the
-directory `/data/lucene/namematching-20210811-3`
+The name index for Australian names lists used in unit tests can be downloaded [from here](https://biocache.ala.org.au/archives/nameindexes/20210811-4) and needs to be extracted to the
+directory `/data/lucene/namematching-20210811-4`
 
 ## ALA Names List
 

@@ -78,4 +78,11 @@ public class FileUtils {
 
     }
 
+    public static File mkTempDir(String prefix, String suffix, File dir) throws IOException {
+        File temp = File.createTempFile(prefix, suffix, dir);
+        temp.delete();
+        temp.mkdirs();
+        return temp;
+    }
+
 }

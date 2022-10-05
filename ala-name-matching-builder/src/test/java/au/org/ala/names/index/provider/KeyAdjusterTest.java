@@ -65,7 +65,7 @@ public class KeyAdjusterTest extends TestUtils {
 
     @Test
     public void testAdjust2() {
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalClassifier.BOTANICAL, NomenclaturalClassifier.BOTANICAL.getAcronym(), this.provider,"Acacia dealbata", "Link.", null,null, TaxonomicType.MISAPPLIED, TaxonomicType.MISAPPLIED.getTerm(), RankType.SPECIES,  RankType.SPECIES.getRank(), null, null,null, null, null, null, null, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalClassifier.BOTANICAL, NomenclaturalClassifier.BOTANICAL.getAcronym(), this.provider,"Acacia dealbata", "Link.", null,null, TaxonomicType.MISAPPLIED, TaxonomicType.MISAPPLIED.getTerm(), RankType.SPECIES,  RankType.SPECIES.getRank(), null, null,null, null, null, null, null, null, null, null, null, null);
         NameKey key = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), null, null, false).getNameKey();
         NameKey key2 = this.adjuster.adjustKey(key, instance);
         assertSame(key, key2);
@@ -99,7 +99,7 @@ public class KeyAdjusterTest extends TestUtils {
 
     @Test
     public void testAdjust5() {
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalClassifier.find(NomenclaturalCode.PHYLOCODE), NomenclaturalCode.PHYLOCODE.getAcronym(), this.provider,"Acacia dealbata", "Link.", null,null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES,  RankType.SPECIES.getRank(), null, null,null, null, null, null, null, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalClassifier.find(NomenclaturalCode.PHYLOCODE), NomenclaturalCode.PHYLOCODE.getAcronym(), this.provider,"Acacia dealbata", "Link.", null,null, TaxonomicType.ACCEPTED, TaxonomicType.ACCEPTED.getTerm(), RankType.SPECIES,  RankType.SPECIES.getRank(), null, null,null, null, null, null, null, null, null, null, null, null);
         NameKey key = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), null, null, false).getNameKey();
         NameKey key2 = this.adjuster.adjustKey(key, instance);
         assertNotSame(key, key2);
@@ -113,7 +113,7 @@ public class KeyAdjusterTest extends TestUtils {
 
     @Test
     public void testAdjust6() {
-        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalClassifier.BOTANICAL, NomenclaturalClassifier.BOTANICAL.getAcronym(), this.provider,"Acacia dealbata", "Link.", null,null, TaxonomicType.MISAPPLIED, TaxonomicType.MISAPPLIED.getTerm(), RankType.DOMAIN,  RankType.DOMAIN.getRank(), null, null,null, null, null, null, null, null, null, null, null);
+        TaxonConceptInstance instance = new TaxonConceptInstance("ID-1", NomenclaturalClassifier.BOTANICAL, NomenclaturalClassifier.BOTANICAL.getAcronym(), this.provider,"Acacia dealbata", "Link.", null,null, TaxonomicType.MISAPPLIED, TaxonomicType.MISAPPLIED.getTerm(), RankType.DOMAIN,  RankType.DOMAIN.getRank(), null, null,null, null, null, null, null, null, null, null, null, null);
         NameKey key = this.analyser.analyse(instance.getCode(), instance.getScientificName(), instance.getScientificNameAuthorship(), instance.getRank(), null, null, false).getNameKey();
         NameKey key2 = this.adjuster.adjustKey(key, instance);
         assertNotSame(key, key2);

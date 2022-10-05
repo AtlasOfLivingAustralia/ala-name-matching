@@ -1,0 +1,18 @@
+<eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.1">
+  <dataset>
+    <alternativeIdentifier>DR19609</alternativeIdentifier>
+    <title>Test Reference Dataset</title>
+    <creator>
+      <organizationName>Bidiversity Heritage Library</organizationName>
+    </creator>
+    <pubDate>2022-09-21</pubDate>
+    <series>DR19609</series>
+  </dataset>
+  <additionalMetadata>
+    <metadata>
+      <gbif>
+        <dateStamp>2022-09-21T02:26:09</dateStamp>
+      </gbif>
+    </metadata>
+  </additionalMetadata>
+</eml:eml>

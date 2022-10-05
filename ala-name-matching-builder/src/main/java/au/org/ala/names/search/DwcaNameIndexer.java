@@ -17,8 +17,13 @@ package au.org.ala.names.search;
 import au.org.ala.names.lucene.analyzer.LowerCaseKeywordAnalyzer;
 import au.org.ala.names.model.*;
 import au.org.ala.vocab.ALATerm;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.Sets;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
+import com.opencsv.CSVWriterBuilder;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +43,10 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.FSDirectory;
 import org.gbif.api.exception.UnparsableException;
 import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.api.model.registry.Citation;
+import org.gbif.api.model.registry.Contact;
+import org.gbif.api.model.registry.Dataset;
+import org.gbif.api.model.registry.Identifier;
 import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
@@ -47,13 +56,16 @@ import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.dwca.record.Record;
 import org.gbif.dwca.record.StarRecord;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  *
@@ -100,6 +112,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
     private IndexWriter idWriter = null;
     private Analyzer analyzer;
     private Map<String, Float> priorities;
+    private Set<Dataset> sources;
+    private Map<String, Usage> idMap;
 
     public DwcaNameIndexer(File targetDir, File tmpDir, Properties priorities, boolean loadingIndex, boolean sciIndex) throws IOException {
         this.targetDir = targetDir;
@@ -124,6 +138,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
             this.idWriter = createIndexWriter(new File(this.targetDir, "id"), analyzer, true);
             this.vernacularIndexWriter = createIndexWriter(new File(this.targetDir, "vernacular"), new KeywordAnalyzer(), true);
         }
+        this.idMap = new TreeMap<>();
+        this.sources = new HashSet<>();
     }
 
     /**
@@ -216,13 +232,17 @@ public class DwcaNameIndexer extends ALANameIndexer {
         this.indexCommonNameExtension(archive);
         log.info("Loading identfiiers for " + namesDwc);
         this.indexIdentifierExtension(archive);
+        this.sources.add(archive.getMetadata());
         return true;
      }
 
     public void createIrmng(File irmngDwc) throws Exception {
-         IndexWriter irmngWriter = this.createIndexWriter(new File(this.targetDir, "irmng"), this.analyzer, true);
-        if (irmngDwc != null  && irmngDwc.exists())
+        IndexWriter irmngWriter = this.createIndexWriter(new File(this.targetDir, "irmng"), this.analyzer, true);
+        if (irmngDwc != null  && irmngDwc.exists()) {
             this.indexIrmngDwcA(irmngWriter, irmngDwc.getCanonicalPath());
+            Archive source = ArchiveFactory.openArchive(irmngDwc);
+            this.sources.add(source.getMetadata());
+        }
         irmngWriter.commit();
         irmngWriter.forceMerge(1);
         irmngWriter.close();
@@ -321,6 +341,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             Document doc = this.createCommonNameDocument(vernacularName, scientificName, lsid, language, false);
             this.vernacularIndexWriter.addDocument(doc);
         }
+        this.sources.add(archive.getMetadata());
         return true;
     }
 
@@ -788,6 +809,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 otherNames,
                 score);
         writer.addDocument(indexDoc);
+        this.idMap.put(lsid, new Usage(lsid, name, TaxonomicType.ACCEPTED.getTerm(), left, right));
         return right + 1;
     }
 
@@ -932,6 +954,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
 
                     if(doc != null){
                         writer.addDocument(doc);
+                        this.idMap.put(lsid, new Usage(lsid, scientificName, taxonomicStatus, acceptedNameUsageID));
                     } else {
                         log.warn("Problem processing scientificName:  " + scientificName + ", ID:  " + id + ", LSID:  " + lsid);
                     }
@@ -956,6 +979,87 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 if (d.isDirectory())
                     findDwcas(d, recurse, found);
             }
+        }
+    }
+
+
+    /**
+     * Write a metadata file to the generated index containing information
+     * about what the index is.
+     */
+    protected void writeMetadata(File metadataSkeleton) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        mapper.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        Map metadata = mapper.readValue(this.getClass().getResource("/metadata-skeleton.json"), Map.class);
+        if (metadataSkeleton != null) {
+            Map override = mapper.readValue(metadataSkeleton, Map.class);
+            metadata.putAll(override);
+        }
+        metadata.put("created", this.buildDateString(new Date()));
+        metadata.put("creator", System.getProperty("user.name"));
+        if (this.sources != null) {
+            List<Map> ss = this.sources.stream().map(this::buildSourceMetadata).collect(Collectors.toList());
+            metadata.put("source", ss);
+            Set<String> ci = this.sources.stream()
+                    .flatMap(s -> s.getContacts().stream())
+                    .map(Contact::getOrganization)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toSet());
+            metadata.put("contributor", ci);
+            Set<String> cit = this.sources.stream()
+                    .flatMap(s -> s.getBibliographicCitations().stream())
+                    .map(Citation::getText)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toSet());
+            metadata.put("bibliographicCitations", cit);
+        }
+        File metadataFile = new File(this.targetDir, "metadata.json");
+        mapper.writeValue(metadataFile, metadata);
+    }
+
+    protected Map buildSourceMetadata(Dataset source) {
+        Map sm = new HashMap();
+        sm.put("created", this.buildDateString(source.getCreated()));
+        sm.put("modified", this.buildDateString(source.getModified()));
+        sm.put("published", this.buildDateString(source.getPubDate()));
+        sm.put("creator", source.getCreatedBy());
+        if (source.getLicense() != null) {
+            sm.put("license", source.getLicense().getLicenseTitle());
+            sm.put("licenseUrl", source.getLicense().getLicenseUrl());
+        }
+        sm.put("title", source.getTitle());
+        sm.put("description", source.getDescription());
+        sm.put("rights", source.getRights());
+        if (source.getCitation() != null) {
+            sm.put("citation", source.getCitation().getText());
+        }
+        if (source.getIdentifiers() != null)
+            sm.put("identifier", source.getIdentifiers().stream().map(Identifier::getIdentifier).collect(Collectors.toList()));
+        return sm;
+    }
+
+    protected Stream<String> buildAttributions(Dataset source) {
+        return source.getContacts().stream().map(Contact::computeCompleteName);
+    }
+
+    protected String buildDateString(Date date) {
+        if (date == null)
+            return null;
+        LocalDate local = date.toInstant().atZone(ZoneOffset.systemDefault()).toLocalDate();
+        return DateTimeFormatter.ISO_LOCAL_DATE.format(local);
+    }
+
+    protected void writeIdMap() throws Exception {
+        if (this.idMap == null)
+            return;
+        File usageFile = new File(this.targetDir, "idmap.txt");
+        try (Writer w = new FileWriter(usageFile, false)) {
+            CSVWriter writer = new CSVWriter(w, '\t', '"', '\\', "\n");
+            writer.writeNext(Usage.HEADERS, false);
+            for (Usage usage: this.idMap.values())
+                writer.writeNext(usage.asArray(), false);
         }
     }
 
@@ -1000,6 +1104,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         options.addOption("testSearch", true, "Debug a name search. This uses the target directory to search against.");
         options.addOption("testCommonSearch", true, "Debug a common name search. This takes a taxonID for the search.");
         options.addOption("testCommonSearchLang", true, "Debug a common name search, supplying a language.");
+        options.addOption("metadata", true, "The metadata skeleton to use, points to a JSON file. Values default to the distribution skeleton.");
 
         CommandLineParser parser = new BasicParser();
 
@@ -1104,7 +1209,15 @@ public class DwcaNameIndexer extends ALANameIndexer {
             boolean recurse = line.hasOption("recurse");
             boolean load = line.hasOption("load") || line.hasOption("all");
             boolean search = line.hasOption("search") || line.hasOption("all");
+            File metadataSkeleton = null;
+            if (line.hasOption("metadata")) {
+                metadataSkeleton = new File(line.getOptionValue("metadata"));
+                if (!metadataSkeleton.exists()) {
+                    System.err.println("Metadata file " + metadataSkeleton + " does not exist");
+                    System.exit(1);
+                }
 
+            }
             if(!line.hasOption("load") && !line.hasOption("search") && !line.hasOption("all") ){
                 load = true;
                 search = true;
@@ -1219,6 +1332,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
                     used.add(dwca);
             }
             indexer.commit();
+            indexer.writeMetadata(metadataSkeleton);
+            indexer.writeIdMap();
             for (File dwca: dwcas)
                 if (!used.contains(dwca))
                     log.warn("Source " + dwca + " is unused");
@@ -1226,4 +1341,77 @@ public class DwcaNameIndexer extends ALANameIndexer {
             e.printStackTrace();
         }
     }
+
+
+    public static class Usage {
+        public static final String[] HEADERS = new String[] {
+                "taxonID",
+                "scientificName",
+                "taxonomicStatus",
+                "left",
+                "right",
+                "acceptedNameUsageID"
+        };
+
+        private String taxonID;
+        private String scientificName;
+        private String taxonomicStatus;
+        private int left;
+        private int right;
+        private String acceptedNameUsageID;
+
+        public Usage(String taxonID, String scientificName, String taxonomicStatus, int left, int right, String acceptedNameUsageID) {
+            this.taxonID = taxonID;
+            this.scientificName = scientificName;
+            this.taxonomicStatus = taxonomicStatus;
+            this.left = left;
+            this.right = right;
+            this.acceptedNameUsageID = acceptedNameUsageID;
+        }
+
+        public Usage(String taxonID, String scientificName, String taxonomicStatus, String acceptedNameUsageID) {
+            this(taxonID, scientificName, taxonomicStatus, 0, 0, acceptedNameUsageID);
+        }
+
+        public Usage(String taxonID, String scientificName, String taxonomicStatus, int left, int right) {
+            this(taxonID, scientificName, taxonomicStatus, left, right, null);
+        }
+
+        public String getTaxonID() {
+            return taxonID;
+        }
+
+        public String getScientificName() {
+            return scientificName;
+        }
+
+        public String getTaxonomicStatus() {
+            return taxonomicStatus;
+        }
+
+        public int getLeft() {
+            return left;
+        }
+
+        public int getRight() {
+            return right;
+        }
+
+        public String getAcceptedNameUsageID() {
+            return acceptedNameUsageID;
+        }
+
+        public String[] asArray() {
+            return new String[] {
+                    this.taxonID,
+                    this.scientificName,
+                    this.taxonomicStatus,
+                    this.left == 0 ? null : Integer.toString(this.left),
+                    this.right == 0 ? null : Integer.toString(this.right),
+                    this.acceptedNameUsageID
+            };
+        }
+
+    }
+
 }

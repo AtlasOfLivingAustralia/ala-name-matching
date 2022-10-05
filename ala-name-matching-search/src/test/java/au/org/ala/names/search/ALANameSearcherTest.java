@@ -25,6 +25,8 @@ import org.gbif.nameparser.PhraseNameParser;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -37,7 +39,7 @@ public class ALANameSearcherTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-3");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-4");
     }
 
     @Test
@@ -927,8 +929,8 @@ public class ALANameSearcherTest {
 
     @Test
     public void testGetPrimaryLsid4() {
-        String primaryLsid = searcher.getPrimaryLsid("ALA_DR655_1900");
-        assertEquals("https://id.biodiversity.org.au/node/apni/2886504", primaryLsid);
+        String primaryLsid = searcher.getPrimaryLsid("ALA_DR655_36");
+        assertEquals("https://id.biodiversity.org.au/node/apni/2917784", primaryLsid);
     }
 
     @Test
@@ -1578,6 +1580,14 @@ public class ALANameSearcherTest {
         assertEquals("NZOR-6-86045", nsr.getLsid());
     }
 
+    @Test
+    public void testSimpleLookup18() throws Exception {
+        String name = "Poaceae";
+        NameSearchResult nsr = searcher.searchForRecord(name);
+        assertNotNull(nsr);
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51352071", nsr.getLsid());
+    }
+
 
     @Test
     public void testAffLookup1() throws Exception  {
@@ -1618,6 +1628,72 @@ public class ALANameSearcherTest {
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
         assertTrue(metrics.getErrors().contains(ErrorType.PARENT_CHILD_SYNONYM));
     }
+
+    // Ensure Eucalyptus de beuzevillei does not gum up the works
+    @Test
+    public void testMetricsLookup3() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Eucalyptus");
+        cl.setFamily("Myrtaceae");
+        cl.setGenus("Eucalyptus");
+        cl.setRank("species");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true, true);
+        assertNotNull(metrics);
+        assertEquals("https://id.biodiversity.org.au/instance/apni/854042", metrics.getResult().getLsid());
+        assertEquals("https://id.biodiversity.org.au/node/apni/2896227", metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+        assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
+    }
+
+    // Location-specific populations of Koalas
+    @Test
+    public void testMetricsLookup4() throws Exception {
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName("Phascolarctos cinereus (Koala)");
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true, true);
+        assertNotNull(metrics);
+        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
+        assertNull(metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
+        assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
+
+        cl = new LinnaeanRankClassification();
+        cl.setScientificName("Phascolarctos cinereus (combined populations of Qld, NSW and the ACT)");
+        metrics = searcher.searchForRecordMetrics(cl, true, true);
+        assertNotNull(metrics);
+        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
+        assertNull(metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+        assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
+
+        cl = new LinnaeanRankClassification();
+        cl.setScientificName("Phascolarctos cinereus (Koala, Guba)");
+        metrics = searcher.searchForRecordMetrics(cl, true, true);
+        assertNotNull(metrics);
+        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
+        assertNull(metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
+        assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
+
+        cl = new LinnaeanRankClassification();
+        cl.setScientificName("Phascolarctos cinereus (Koala, Guba)");
+        metrics = searcher.searchForRecordMetrics(cl, true, true);
+        assertNotNull(metrics);
+        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
+        assertNull(metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
+        assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
+
+        cl = new LinnaeanRankClassification();
+        cl.setScientificName("Phascolarctos cinereus ( Koala )");
+        metrics = searcher.searchForRecordMetrics(cl, true, true);
+        assertNotNull(metrics);
+        assertEquals("ALA_DR656_1402", metrics.getResult().getLsid());
+        assertNull(metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.CANONICAL, metrics.getResult().getMatchType());
+        assertEquals(new HashSet<>(Arrays.asList(ErrorType.NONE)), metrics.getErrors());
+    }
+
 
     @Test
     public void testParentChildSynonym1()  {

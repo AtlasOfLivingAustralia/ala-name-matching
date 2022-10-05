@@ -17,6 +17,7 @@
 package au.org.ala.names.index;
 
 import au.org.ala.names.util.TestUtils;
+import au.org.ala.vocab.ALATerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.junit.After;
 import org.junit.Test;
@@ -330,10 +331,13 @@ public class ALATaxonResolverTest extends TestUtils {
         ALATaxonResolver resolver = new ALATaxonResolver(taxonomy);
         TaxonResolution resolution = resolver.resolve(tc1, resolver.principals(tc1, tc1.getInstances()), tc1.getInstances());
         assertEquals(2, resolution.getUsed().size());
-        assertEquals(1, resolution.getPrincipal().size());
+        assertEquals(2, resolution.getPrincipal().size());
         TaxonConceptInstance tci4 = resolution.getPrincipal().get(0);
         assertTrue(tci4.isOutput());
         assertSame(tci1, tci4);
+        TaxonConceptInstance tci5 = resolution.getPrincipal().get(1);
+        assertTrue(tci5.isOutput());
+        assertSame(tci3, tci5);
         assertSame(tci3, resolution.getResolved(tci3));
     }
 
@@ -363,4 +367,181 @@ public class ALATaxonResolverTest extends TestUtils {
         assertTrue(tci2.isForbidden());
         assertFalse(tci2.isOutput());
     }
+
+
+    // Ensure excluded taxa are properly included
+    @Test
+    public void testResolution8() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        DwcaNameSource source = new DwcaNameSource(new File(this.getClass().getResource("taxonomy-30.csv").getFile()));
+        this.taxonomy.load(Arrays.asList(source));
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-3-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-3-2");
+        TaxonConceptInstance tci3 = this.taxonomy.getInstance("Concept-3-3");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        TaxonConcept tc3 = tci3.getContainer();
+        assertNotSame(tc1, tc2);
+        assertSame(tc2, tc3);
+        assertEquals(2, tc2.getInstances().size());
+        ALATaxonResolver resolver = new ALATaxonResolver(taxonomy);
+        List<TaxonConceptInstance> principals = resolver.principals(tc2, tc2.getInstances());
+        assertEquals(2, principals.size());
+        TaxonResolution resolution = resolver.resolve(tc2, principals, tc2.getInstances());
+        assertEquals(2, resolution.getUsed().size());
+        assertEquals(2, resolution.getPrincipal().size());
+        TaxonConceptInstance tci4 = resolution.getPrincipal().get(0);
+        assertTrue(tci4.isOutput());
+        assertSame(tci3, tci4);
+    }
+
+    @Test
+    public void testDistributionResolution1() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource locations = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-39.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(locations, source));
+        this.taxonomy.resolveLocations();
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-1-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-1-2");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        assertSame(tc1, tc2);
+        tc1.resolveTaxon(taxonomy, false);
+        tc1.resolveDistribution(taxonomy);
+        List<Distribution> distribution = tc1.getDistribution(tci1);
+        assertNotNull(distribution);
+        assertEquals(1, distribution.size());
+        assertEquals("Australia", distribution.get(0).getLocation().getLocality());
+        assertSame(distribution, tc1.getDistribution(tci2));
+    }
+
+    @Test
+    public void testDistributionResolution2() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource locations = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-39.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(locations, source));
+        this.taxonomy.resolveLocations();
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-2-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-2-2");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        assertSame(tc1, tc2);
+        tc1.resolveTaxon(taxonomy, false);
+        tc1.resolveDistribution(taxonomy);
+        List<Distribution> distribution = tc1.getDistribution(tci1);
+        assertNotNull(distribution);
+        assertEquals(2, distribution.size());
+        assertEquals("Australia", distribution.get(0).getLocation().getLocality());
+        assertEquals("New Zealand", distribution.get(1).getLocation().getLocality());
+        assertSame(distribution, tc1.getDistribution(tci2));
+    }
+
+    @Test
+    public void testDistributionResolution3() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource locations = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-39.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(locations, source));
+        this.taxonomy.resolveLocations();
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-3-1");
+        TaxonConcept tc1 = tci1.getContainer();
+        tc1.resolveTaxon(taxonomy, false);
+        tc1.resolveDistribution(taxonomy);
+        List<Distribution> distribution = tc1.getDistribution(tci1);
+        assertNotNull(distribution);
+        assertEquals(1, distribution.size());
+        assertEquals("Australia", distribution.get(0).getLocation().getLocality());
+    }
+
+    @Test
+    public void testDistributionResolution4() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource locations = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-39.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(locations, source));
+        this.taxonomy.resolveLocations();
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-4-1");
+        TaxonConcept tc1 = tci1.getContainer();
+        tc1.resolveTaxon(taxonomy, false);
+        tc1.resolveDistribution(taxonomy);
+        List<Distribution> distribution = tc1.getDistribution(tci1);
+        assertNotNull(distribution);
+        assertEquals(3, distribution.size());
+        assertEquals("Queensland", distribution.get(0).getLocation().getLocality());
+        assertEquals("New South Wales", distribution.get(1).getLocation().getLocality());
+        assertEquals("Norfolk Island", distribution.get(2).getLocation().getLocality());
+    }
+
+
+    @Test
+    public void testDistributionResolution5() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource locations = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-39.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(locations, source));
+        this.taxonomy.resolveLocations();
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-5-1");
+        TaxonConcept tc1 = tci1.getContainer();
+        tc1.resolveTaxon(taxonomy, false);
+        tc1.resolveDistribution(taxonomy);
+        List<Distribution> distribution = tc1.getDistribution(tci1);
+        assertNull(distribution);
+    }
+
+    @Test
+    public void testDistributionResolution6() throws Exception {
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource locations = new CSVNameSource(this.resourceReader("locations/Location.csv"), ALATerm.Location);
+        CSVNameSource source = new CSVNameSource(this.resourceReader("taxonomy-39.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(locations, source));
+        this.taxonomy.resolveLocations();
+        this.taxonomy.resolveLinks();
+        TaxonConceptInstance tci1 = this.taxonomy.getInstance("Concept-6-1");
+        TaxonConceptInstance tci2 = this.taxonomy.getInstance("Concept-6-2");
+        TaxonConceptInstance tci3 = this.taxonomy.getInstance("Concept-6-3");
+        TaxonConcept tc1 = tci1.getContainer();
+        TaxonConcept tc2 = tci2.getContainer();
+        TaxonConcept tc3 = tci3.getContainer();
+        assertNotSame(tc1, tc2);
+        assertNotSame(tc1, tc3);
+        assertSame(tc2, tc3);
+        tc1.resolveTaxon(taxonomy, false);
+        tc1.resolveDistribution(taxonomy);
+        tc2.resolveTaxon(taxonomy, false);
+        tc2.resolveDistribution(taxonomy);
+        List<Distribution> distribution = tc1.getDistribution(tci1);
+        assertNotNull(distribution);
+        assertEquals(2, distribution.size());
+        assertEquals("Western Australia", distribution.get(0).getLocation().getLocality());
+        assertEquals("Northern Territory", distribution.get(1).getLocation().getLocality());
+        distribution = tc2.getDistribution(tci2);
+        assertNull(distribution);
+        distribution = tc2.getDistribution(tci3);
+        assertNotNull(distribution);
+        assertEquals(1, distribution.size());
+        assertEquals("New Zealand", distribution.get(0).getLocation().getLocality());
+    }
+
 }
