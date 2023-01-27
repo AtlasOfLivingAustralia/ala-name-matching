@@ -231,16 +231,23 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
             return;
         if (!taxonomy.isWritable(this))
             return;
+        Set<String> seen = new HashSet<>();
         for (TaxonConceptInstance tci : this.getUsed()) {
             if (!tci.isOutput()) {
+                continue;
+            }
+            if (seen.contains(tci.getTaxonID())) {
+                taxonomy.report(IssueType.PROBLEM, "taxonConcept.duplicate.used", tci, null);
                 continue;
             }
             Collection<TaxonConceptInstance> allocated = this.resolution.getChildren(tci);
             if (allocated == null || allocated.isEmpty()) {
                 taxonomy.report(IssueType.NOTE, "taxonConcept.noInstances", tci, null);
             } else {
+                seen.add(tci.getTaxonID());
                 writer.newRecord(tci.getTaxonID());
-                Map<Term, String> values = tci.getTaxonMap(taxonomy);
+                taxonomy.count("count.write.taxonConcept");
+                Map<Term, String> values = tci.getTaxonMap(taxonomy, true);
                 for (Term term : taxonomy.outputTerms(DwcTerm.Taxon))
                     if (term != DwcTerm.taxonID) // Already added as coreId
                         writer.addCoreColumn(term, values.get(term));
@@ -253,7 +260,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
                 for (TaxonConceptInstance sub : allocated) {
                     if (!sub.isOutput())
                         continue;
-                    this.writeExtension(ALATerm.TaxonVariant, sub == tci ? values : sub.getTaxonMap(taxonomy), taxonomy, writer);
+                    this.writeExtension(ALATerm.TaxonVariant, sub == tci ? values : sub.getTaxonMap(taxonomy, false), taxonomy, writer);
                     taxonomy.count("count.write.taxonConceptInstance");
                     for (Map<Term, String> id : sub.getIdentifierMaps(taxonomy))
                         this.writeExtension(GbifTerm.Identifier, id, taxonomy, writer);
@@ -264,7 +271,7 @@ public class TaxonConcept extends TaxonomicElement<TaxonConcept, ScientificName>
                 }
             }
         }
-        taxonomy.count("count.write.taxonConcept");
+        taxonomy.count("count.write.taxonConcept.base");
     }
 
     private void writeExtension(Term type, Map<Term, String> values, Taxonomy taxonomy, DwcaWriter writer) throws IOException {

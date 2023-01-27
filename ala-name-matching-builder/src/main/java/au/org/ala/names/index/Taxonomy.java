@@ -482,6 +482,7 @@ public class Taxonomy implements Reporter {
         this.provideUnknownTaxon();
         this.resolveLinks();
         this.resolveLoops();
+        this.resolveInvalidParents();
         if (!this.validate())
             throw new IndexBuilderException("Invalid source data");
         this.computeScores();
@@ -693,6 +694,22 @@ public class Taxonomy implements Reporter {
             parentLoops.stream().filter(tci -> tci.getRank() == rank).forEach(tci -> tci.resolveParentLoop(this));
         }
         logger.info("Finished resolving loops");
+    }
+
+
+    /**
+     * Resolve taxa with invalid parents.
+     * <p>
+     * Look for instances where there is an internal loop in the taxonomy, using the provided links.
+     * </p>
+     *
+     * @throws IndexBuilderException
+     */
+    public void resolveInvalidParents() throws IndexBuilderException {
+        logger.info("Resolving invalid parents");
+        Set<TaxonConceptInstance> invalidParents = this.instances.values().parallelStream().filter(TaxonConceptInstance::hasInvalidParent).collect(Collectors.toSet());
+        invalidParents.parallelStream().forEach(tci -> tci.resolveInvalidParent(this));
+        logger.info("Finished resolving invalid parents");
     }
 
 

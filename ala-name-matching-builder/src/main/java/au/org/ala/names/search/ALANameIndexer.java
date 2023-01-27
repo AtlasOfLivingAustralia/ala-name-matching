@@ -942,7 +942,7 @@ public class ALANameIndexer {
         } catch (org.gbif.api.exception.UnparsableException e) {
             //check to see if the name is a virus in which case an extra name is added without the virus key word
             if (e.type == NameType.VIRUS) {
-                NameIndexField.NAME.store(ALANameSearcher.virusStopPattern.matcher(name).replaceAll(" "), doc);
+                NameIndexField.NAME.store(ALANameSearcher.virusStopPattern.matcher(name).replaceAll(" ").trim(), doc);
             }
 
         } catch (Exception e) {
@@ -991,6 +991,15 @@ public class ALANameIndexer {
     protected String buildNameComplete(String name, String author, String nameComplete) {
         if (StringUtils.isNotBlank(nameComplete))
             return nameComplete;
+        // Check for ugly cases where name/author contains the complete name
+        if (name != null && author != null) {
+            if (name.endsWith(author)) {
+                return name;
+            }
+            if (author.startsWith(name)) {
+                return author;
+            }
+        }
         StringBuilder ncb = new StringBuilder(64);
         if (name != null)
             ncb.append(name);

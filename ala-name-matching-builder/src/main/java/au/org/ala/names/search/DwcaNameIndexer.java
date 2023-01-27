@@ -21,9 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.Sets;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
-import com.opencsv.CSVWriterBuilder;
+import com.opencsv.*;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -59,7 +57,6 @@ import org.gbif.dwca.record.StarRecord;
 import java.io.*;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -114,6 +111,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
     private Map<String, Float> priorities;
     private Set<Dataset> sources;
     private Map<String, Usage> idMap;
+    private Map<String, Usage> preferredIdMap;
+    private boolean indexChanged;
 
     public DwcaNameIndexer(File targetDir, File tmpDir, Properties priorities, boolean loadingIndex, boolean sciIndex) throws IOException {
         this.targetDir = targetDir;
@@ -138,7 +137,9 @@ public class DwcaNameIndexer extends ALANameIndexer {
             this.idWriter = createIndexWriter(new File(this.targetDir, "id"), analyzer, true);
             this.vernacularIndexWriter = createIndexWriter(new File(this.targetDir, "vernacular"), new KeywordAnalyzer(), true);
         }
+        this.indexChanged = false;
         this.idMap = new TreeMap<>();
+        this.preferredIdMap = new TreeMap<>();
         this.sources = new HashSet<>();
     }
 
@@ -344,7 +345,6 @@ public class DwcaNameIndexer extends ALANameIndexer {
         this.sources.add(archive.getMetadata());
         return true;
     }
-
 
     /**
      * Index the common names CSV file supplied.
@@ -634,7 +634,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         this.lsearcher = null;
     }
 
-    private TopDocs getLoadIdxResults(ScoreDoc after, String field, String value,int max) throws Exception {
+    private TopDocs getLoadIdxResults(ScoreDoc after, String field, String value, int max) throws Exception {
         if(lsearcher == null && this.tmpDir.exists()) {
             lsearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(this.tmpDir.toPath())));
         } else if(lsearcher == null && !this.tmpDir.exists()){
@@ -659,25 +659,37 @@ public class DwcaNameIndexer extends ALANameIndexer {
         int right = left;
         int lastRight = right;
         int count = 0;
+        List<Document> rootDocuments = new ArrayList<>();
         while (rootConcepts != null && rootConcepts.totalHits.value > 0) {
             ScoreDoc lastConcept = null;
             for (ScoreDoc sd : rootConcepts.scoreDocs) {
                 lastConcept = sd;
-                left = right + 1;
                 Document doc = lsearcher.doc(sd.doc);
-                right = addIndex(doc, 1, left, new LinnaeanRankClassification(), 0);
-                if (right - lastRight > 1000) {
-                    log.info("Finished loading root " + doc.get(NameIndexField.LSID.toString()) + " " + doc.get(NameIndexField.NAME.toString()) + " left:" + left + " right:" + right + " root count:" + count);
-                    lastRight = right;
-                }
-                count++;
-                if(count % 10000 == 0){
-                    log.info("Loading index:" + count);
-                }
+                rootDocuments.add(doc);
             }
             rootConcepts = lastConcept == null ? null : getLoadIdxResults(lastConcept, "root", "T", PAGE_SIZE);
             if (rootConcepts != null && rootConcepts.scoreDocs.length > 0) {
                 log.info("Loading next page of root concepts");
+            }
+        }
+        rootDocuments.sort(this::preferredChildOrder);
+        for (Document doc: rootDocuments) {
+            String lsid = doc.get(NameIndexField.LSID.toString());
+            Usage preferred = this.preferredIdMap.get(lsid);
+            left = right + 1;
+            int limitRight = right + 1;
+            if (preferred != null) {
+                left = Math.max(left, preferred.getLeft());
+                limitRight = Math.max(limitRight, preferred.getRight());
+            }
+            right = addIndex(doc, preferred, 1, left, limitRight, new LinnaeanRankClassification(), 0);
+            if (right - lastRight > 1000) {
+                log.info("Finished loading root " + doc.get(NameIndexField.LSID.toString()) + " " + doc.get(NameIndexField.NAME.toString()) + " left:" + left + " right:" + right + " root count:" + count);
+                lastRight = right;
+            }
+            count++;
+            if(count % 10000 == 0){
+                log.info("Loading index:" + count);
             }
         }
         this.writer.commit();
@@ -694,7 +706,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
      * @return
      * @throws Exception
      */
-    private int addIndex(Document doc, int currentDepth, int currentLeft, LinnaeanRankClassification higherClass, int stackCheck ) throws Exception {
+    private int addIndex(Document doc, Usage preferred, int currentDepth, int currentLeft, int limitRight, LinnaeanRankClassification higherClass, int stackCheck ) throws Exception {
         //log.info("Add to index " + doc.get(NameIndexField.ID.toString()) + "/" + doc.get(NameIndexField.NAME.toString()) + "/" + doc.get(NameIndexField.RANK_ID.toString()) + " depth=" + currentDepth + " left=" + currentLeft);
         String id = doc.get(NameIndexField.ID.toString());
         //get children for this record
@@ -755,12 +767,21 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 }
                 break;
         }
+        List<Document> childDocs = new ArrayList<>(children.scoreDocs.length);
         while (children != null && children.scoreDocs.length > 0) {
             ScoreDoc lastChild = null;
             for (ScoreDoc child : children.scoreDocs) {
                 lastChild = child;
                 Document cdoc = lsearcher.doc(child.doc);
-                if(cdoc != null && !cdoc.get("id").equals(doc.get("id"))){
+                if (cdoc == null) {
+                    log.error("Unable to retrieve document " + child.doc);
+                    continue;
+                }
+                if ("T".equals(cdoc.get("is_synonym"))) {
+                    log.error("Synonym " + cdoc.get("lsid") + " has parent " + cdoc.get("parent_id") + " ignoring");
+                    continue;
+                }
+                if(!cdoc.get("id").equals(doc.get("id"))){
                     if(stackCheck > 900){
                         log.warn("Stack check depth " + stackCheck +
                                 "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
@@ -769,8 +790,8 @@ public class DwcaNameIndexer extends ALANameIndexer {
                     }
 
                     if(stackCheck < 1000) {
+                        childDocs.add(cdoc);
 //                        catch stack overflow
-                        right = addIndex(cdoc, currentDepth + 1, right + 1, newcl, stackCheck + 1);
                     } else {
                         log.warn("Stack overflow detected for name - depth " + stackCheck +
                                 "\n\t\tParent: " + doc.get("id") + " - " +  doc.get("lsid") + " - "  + doc.get("parent_id") + " - " + doc.get("name") +
@@ -784,6 +805,20 @@ public class DwcaNameIndexer extends ALANameIndexer {
             if (children != null && children.scoreDocs.length > 0)
                 log.info("Loading next page of children for " + id);
         }
+        childDocs.sort(this::preferredChildOrder);
+        for (Document cdoc: childDocs) {
+            int cLeft = right + 1;
+            int cLimitRight = limitRight;
+            Usage cusage = this.preferredIdMap.get(cdoc.get(NameIndexField.LSID.toString()));
+            if (cusage != null) {
+                cLeft = Math.max(cLeft, cusage.getLeft());
+                cLimitRight = Math.min(cLimitRight, cusage.getRight());
+            }
+            right = addIndex(cdoc, cusage,currentDepth + 1, cLeft, cLimitRight, newcl, stackCheck + 1);
+        }
+        right = Math.max(right, limitRight);
+        if (preferred != null)
+            right = Math.max(right, preferred.getRight());
         if(left % 2000 == 0){
             log.debug("Last processed lft:" + left + " rgt:" + right + " depth:" + currentDepth + " classification " + newcl );
         }
@@ -810,7 +845,34 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 score);
         writer.addDocument(indexDoc);
         this.idMap.put(lsid, new Usage(lsid, name, TaxonomicType.ACCEPTED.getTerm(), left, right));
+        if (right > limitRight) {
+            if (!this.indexChanged)
+                log.warn("Overflow in left- and right-values at " + lsid + " left=" + left + " right=" + right);
+            this.indexChanged = true;
+        }
         return right + 1;
+    }
+
+    /**
+     * Order preferred children by their existing left-values.
+     * Documents with no preferred order go at the end.
+     * Equal order are in ID order.
+     *
+     * @param d1 The first document to compare
+     * @param d2 The second document to compare
+     *
+     * @return A number less than 0 for d1 &lt; d2, greater than 0 for d1 &gt; d2 and 0 for equial
+     */
+    protected int preferredChildOrder(Document d1, Document d2) {
+        String lsid1 = d1.get(NameIndexField.LSID.toString());
+        String lsid2 = d2.get(NameIndexField.LSID.toString());
+        Usage usage1 = this.preferredIdMap.get(lsid1);
+        Usage usage2 = this.preferredIdMap.get(lsid2);
+        int left1 = usage1 == null ? Integer.MAX_VALUE : usage1.getLeft();
+        int left2 = usage2 == null ? Integer.MAX_VALUE : usage2.getLeft();
+        if (left1 != left2)
+            return left1 - left2;
+        return lsid1.compareTo(lsid2);
     }
 
     // Extended to allow use of the accepted information when filling out higher taxonomy
@@ -999,6 +1061,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         }
         metadata.put("created", this.buildDateString(new Date()));
         metadata.put("creator", System.getProperty("user.name"));
+        metadata.put("indicesChanged", this.indexChanged);
         if (this.sources != null) {
             List<Map> ss = this.sources.stream().map(this::buildSourceMetadata).collect(Collectors.toList());
             metadata.put("source", ss);
@@ -1064,6 +1127,39 @@ public class DwcaNameIndexer extends ALANameIndexer {
     }
 
     /**
+     * Load the preferred id usages.
+     * <p>
+     * Where possible, this will be loaded into the
+     * </p>
+     * @param map
+     */
+    public void loadPreferredIdMap(File map) throws IOException {
+        log.info("Loading preferred ID map " + map);
+        try (Reader r = new FileReader(map)) {
+            ICSVParser parser = new CSVParserBuilder()
+                    .withSeparator('\t')
+                    .withQuoteChar('"')
+                    .withEscapeChar('\\')
+                    .build();
+            CSVReader reader = new CSVReaderBuilder(r)
+                    .withSkipLines(1)
+                    .withCSVParser(parser)
+                    .build();
+            for (String[] row: reader) {
+                try {
+                    Usage usage = new Usage(row);
+                    if (this.preferredIdMap.containsKey(usage.getTaxonID()))
+                        log.warn("Duplicate preferred ID entry for " + usage);
+                    this.preferredIdMap.put(usage.getTaxonID(), usage);
+                } catch (Exception ex) {
+                    log.error("Invalid row " + row);
+                    throw ex;
+                }
+            }
+        }
+    }
+
+    /**
      * Example run
      *
      * java –cp .:names.jar au.org.ala.checklist.lucene.DwcaNameIndexer
@@ -1097,7 +1193,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         options.addOption("dwca", true, "The absolute path to the unzipped DwCA (or a directory containing unzipped DWC-A - see recurse) for the scientific names. If  Defaults to " + DEFAULT_DWCA + " See also, the recurse option");
         options.addOption("recurse", false, "Recurse through the sub-directories of the dwca directory, looking for directories with a meta.xml");
         options.addOption("priorities", true, "A properties file containing priority multiplers for the different data sources, keyed by datasetID->float. Defaults to " + DEFAULT_PRIORITIES);
-        options.addOption("ids", true, "A tab seperated values file containing additional taxzon identifiers. Defaults to " + DEFAULT_IDENTIFIERS);
+        options.addOption("ids", true, "A tab seperated values file containing additional taxon identifiers. Defaults to " + DEFAULT_IDENTIFIERS);
         options.addOption("target", true, "The target directory to write the new name index to. Defaults to " + DEFAULT_TARGET_DIR);
         options.addOption("tmp", true, "The tmp directory for the load index. Defaults to " + DEFAULT_TMP_DIR);
         options.addOption("common", true, "The common (vernacular) name file. Defaults to " + DEFAULT_COMMON_NAME);
@@ -1105,6 +1201,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
         options.addOption("testCommonSearch", true, "Debug a common name search. This takes a taxonID for the search.");
         options.addOption("testCommonSearchLang", true, "Debug a common name search, supplying a language.");
         options.addOption("metadata", true, "The metadata skeleton to use, points to a JSON file. Values default to the distribution skeleton.");
+        options.addOption("idmap", true, "The name of an identifier map from a previous name index. The index build will attempt to reuse left- and right-values from this map when constructing an index.");
 
         CommandLineParser parser = new BasicParser();
 
@@ -1242,6 +1339,15 @@ public class DwcaNameIndexer extends ALANameIndexer {
                 System.exit(-1);
             }
 
+            File preferredIdMap = null;
+            if (line.getOptionValue("idmap") != null) {
+                preferredIdMap = new File(line.getOptionValue("idmap"));
+                if (!preferredIdMap.exists()) {
+                    log.error("Preferred ID map file " + preferredIdMap + " does not exist");
+                    System.exit(1);
+                }
+            }
+
             if(line.getOptionValue("irmng") == null && !defaultIrmngReadable){
                 log.warn("No IRMNG export specified and the default file path does not exist or is inaccessible. Default path: " + DEFAULT_IRMNG);
             } else if(line.getOptionValue("irmng") == null) {
@@ -1267,7 +1373,7 @@ public class DwcaNameIndexer extends ALANameIndexer {
             }
 
             if(line.getOptionValue("ids") == null && !defaultIdentifiers) {
-                log.warn("No identifiers file, Defailts is " + DEFAULT_IDENTIFIERS);
+                log.warn("No identifiers file, Default is " + DEFAULT_IDENTIFIERS);
             } else if(line.getOptionValue("ids") == null){
                 log.info("Using the default identifiers file: " + DEFAULT_IDENTIFIERS);
             } else {
@@ -1313,6 +1419,11 @@ public class DwcaNameIndexer extends ALANameIndexer {
                     search
             );
             indexer.begin();
+
+            if (preferredIdMap != null) {
+                indexer.loadPreferredIdMap(preferredIdMap);
+            }
+
             Set<File> used = new HashSet<File>();
             if (load) {
                 for (File dwca : dwcas)
@@ -1377,6 +1488,17 @@ public class DwcaNameIndexer extends ALANameIndexer {
             this(taxonID, scientificName, taxonomicStatus, left, right, null);
         }
 
+        public Usage(String[] row) {
+            this.taxonID = StringUtils.stripToNull(row[0]);
+            this.scientificName = StringUtils.stripToNull(row[1]);
+            this.taxonomicStatus = StringUtils.stripToNull(row[2]);
+            String v = StringUtils.stripToNull(row[3]);
+            this.left = v == null ? 0 : Integer.parseInt(v);
+            v = StringUtils.stripToNull(row[4]);
+            this.right = v == null ? 0 : Integer.parseInt(v);
+            this.acceptedNameUsageID = StringUtils.stripToNull(row[5]);
+        }
+
         public String getTaxonID() {
             return taxonID;
         }
@@ -1412,6 +1534,17 @@ public class DwcaNameIndexer extends ALANameIndexer {
             };
         }
 
+        @Override
+        public String toString() {
+            return "Usage{" +
+                    "taxonID='" + taxonID + '\'' +
+                    ", scientificName='" + scientificName + '\'' +
+                    ", taxonomicStatus='" + taxonomicStatus + '\'' +
+                    ", left=" + left +
+                    ", right=" + right +
+                    ", acceptedNameUsageID='" + acceptedNameUsageID + '\'' +
+                    '}';
+        }
     }
 
 }

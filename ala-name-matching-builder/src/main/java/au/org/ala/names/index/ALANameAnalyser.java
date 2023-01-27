@@ -241,7 +241,7 @@ public class ALANameAnalyser extends NameAnalyser {
                     rankType = RankType.getForCBRank(name.getRank());
             }
         } catch (UnparsableException ex) {
-            LOGGER.info("Unable to parse " + name + ": " + ex.getMessage());
+            LOGGER.info("Unable to parse " + ex.getMessage());
         }
         if (UNSURE_MARKER.matcher(scientificName).find()) {
             // Leave this well alone but indicate that it is doubtful

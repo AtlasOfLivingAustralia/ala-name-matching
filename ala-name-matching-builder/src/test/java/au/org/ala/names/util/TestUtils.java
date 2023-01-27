@@ -24,6 +24,7 @@ import au.org.ala.names.model.TaxonomicType;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
+import java.net.URL;
 import java.util.regex.Pattern;
 
 /**
@@ -109,4 +110,11 @@ public class TestUtils {
         }
     }
 
+    public File resourceAsFile(String path) throws IOException {
+        URL url = this.getClass().getResource(path);
+        if (!url.getProtocol().equals("file")) {
+            throw new IOException("File protocol required for URL " + url);
+        }
+        return new File(url.getPath());
+    }
 }
