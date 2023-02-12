@@ -1,0 +1,12 @@
+taxonID	locationID	locality	lifeStage	occurrenceStatus	datasetID	countryCode	threatStatus	establishmentMeans	appendixCITES	eventDate	occurrenceRemarks	source	provenance	taxonRemarks	degreeOfEstablishment	taxonID	pathway
+https://id.biodiversity.org.au/taxon/apni/51398751	http://vocab.getty.edu/tgn/1001989	Australian Capital Territory														https://id.biodiversity.org.au/taxon/apni/51398751	
+https://id.biodiversity.org.au/taxon/apni/51398751	http://vocab.getty.edu/tgn/7001828	New South Wales														https://id.biodiversity.org.au/taxon/apni/51398751	
+https://id.biodiversity.org.au/taxon/apni/51398751	http://vocab.getty.edu/tgn/7001830	Queensland														https://id.biodiversity.org.au/taxon/apni/51398751	
+https://id.biodiversity.org.au/taxon/apni/51398751	http://vocab.getty.edu/tgn/7001831	South Australia														https://id.biodiversity.org.au/taxon/apni/51398751	
+https://id.biodiversity.org.au/taxon/apni/51398751	http://vocab.getty.edu/tgn/7001834	Western Australia														https://id.biodiversity.org.au/taxon/apni/51398751	
+https://id.biodiversity.org.au/taxon/apni/51398751	http://vocab.getty.edu/tgn/7001992	Tasmania														https://id.biodiversity.org.au/taxon/apni/51398751	
+https://id.biodiversity.org.au/taxon/apni/51398751	http://vocab.getty.edu/tgn/7006238	Victoria														https://id.biodiversity.org.au/taxon/apni/51398751	
+https://id.biodiversity.org.au/taxon/apni/51398751	http://vocab.getty.edu/tgn/1000226	New Zealand		PRESENT		NZ		native				Calculated from data provided by: New Zealand Plant Names				NZOR-6-52822	
+https://id.biodiversity.org.au/taxon/apni/51398946	http://vocab.getty.edu/tgn/7001831	South Australia														https://id.biodiversity.org.au/taxon/apni/51398946	
+https://id.biodiversity.org.au/taxon/apni/51398946	http://vocab.getty.edu/tgn/7001992	Tasmania														https://id.biodiversity.org.au/taxon/apni/51398946	
+https://id.biodiversity.org.au/taxon/apni/51398946	http://vocab.getty.edu/tgn/7006238	Victoria														https://id.biodiversity.org.au/taxon/apni/51398946	

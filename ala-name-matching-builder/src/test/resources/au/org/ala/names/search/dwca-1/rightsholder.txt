@@ -1,0 +1,55 @@
+datasetID	datasetName	description	rightsHolder	license
+dr653	South Australia : Conservation Status		Atlas of Living Australia	CC-BY
+dr19606			Atlas of Living Australia	CC-BY
+dr17664	ABRSL	ABRS Lichen Checklist	Commonwealth Scientific and Industrial Research Organisation	CC-BY
+dr17825	Australian Chief Plant Protection Office (DAWE) - plant and animal pests		Atlas of Living Australia	CC-BY
+dr19724	AusFungi		Royal Botanic Gardens Victoria	CC-BY
+dr656	Australia wide : Conservation Status : EPBC		Atlas of Living Australia	CC-BY
+dr5214	APC	Australian Plant Name Index entries placed by the Australian Plant Census	Centre for Australian National Biodiversity Research	CC-BY
+dr2700	APNI	Australian Plant Name Index entries not placed by the Australian Plant Census, given an assumed parent of Plantae	Centre for Australian National Biodiversity Research	CC-BY
+dr487	New South Wales Sensitive Species List		Atlas of Living Australia	CC-BY
+dr18987	Bonn Convention Conservation List		Atlas of Living Australia	CC-BY
+dr17825	Australian Chief Plant Protection Office (DAWE) - plant and animal pests		Atlas of Living Australia	CC-BY
+dr2703	AusMoss		Royal Botanic Gardens Victoria	CC-BY
+dr652	Queensland : Conservation Status		Atlas of Living Australia	CC-BY
+dr2704	CAAB	Codes for Australian Aquatic Biota	Commonwealth Scientific and Industrial Research Organisation	CC-BY
+dr649	Australian Capital Territory : Conservation Status Codes		Atlas of Living Australia	CC-BY
+dr2707	NZOR	New Zealand Organism Register	New Zealand Organism Register	CC-BY
+dr2705	CoL	Catalogue of Life	Catalogue of Life	CC-BY
+dr18990	ROKAMBA Conservation List		Atlas of Living Australia	CC-BY
+dr655	Victoria : Conservation Status		Atlas of Living Australia	CC-BY
+dr13558	ALA Inferences	Atlas of living Australia, provider of inferences from the matching algorithm	Atlas of Living Australia	CC-BY
+dr18988	JAMBA Conservation List		Atlas of Living Australia	CC-BY
+dr18989	CAMBA Conservation List		Atlas of Living Australia	CC-BY
+dr652	Queensland : Conservation Status		Atlas of Living Australia	CC-BY
+dr490	Victorian Restricted species		Atlas of Living Australia	CC-BY
+dr651	Northern Territory : Conservation Status		Atlas of Living Australia	CC-BY
+dr654	Tasmania : Conservation Status		Atlas of Living Australia	CC-BY
+dr654	Tasmania : Conservation Status		Atlas of Living Australia	CC-BY
+dr653	South Australia : Conservation Status		Atlas of Living Australia	CC-BY
+dr493	Queensland Sensitive Species List		Atlas of Living Australia	CC-BY
+dr650	New South Wales : Conservation Status		Atlas of Living Australia	CC-BY
+dr656	Australia wide : Conservation Status : EPBC		Atlas of Living Australia	CC-BY
+dr655	Victoria : Conservation Status		Atlas of Living Australia	CC-BY
+dr18234	DAWE Invasive Species List 2022-01-10		Atlas of Living Australia	CC-BY
+dr493	Queensland Sensitive Species List		Atlas of Living Australia	CC-BY
+dr5393	ALA	Atlas of living Australia Name Sources	Atlas of Living Australia	CC-BY
+dr490	Victorian Restricted species		Atlas of Living Australia	CC-BY
+dr16496	Environmental Biosecurity Office (DAWE) - plant and animal pests		Atlas of Living Australia	CC-BY
+dr2285	New Zealand Sensitive Species List for Vascular Plants		Atlas of Living Australia	CC-BY
+dr2201	Western Australia ; Conservation status		Atlas of Living Australia	CC-BY
+dr2285	New Zealand Sensitive Species List for Vascular Plants		Atlas of Living Australia	CC-BY
+dr487	New South Wales Sensitive Species List		Atlas of Living Australia	CC-BY
+dr7933	ALA	Specific ALA fixes for various problems. These take precedence over anything else.	Atlas of Living Australia	CC-BY
+dr651	Northern Territory : Conservation Status		Atlas of Living Australia	CC-BY
+dr649	Australian Capital Territory : Conservation Status Codes		Atlas of Living Australia	CC-BY
+dr650	New South Wales : Conservation Status		Atlas of Living Australia	CC-BY
+dr18988	JAMBA Conservation List		Atlas of Living Australia	CC-BY
+dr18989	CAMBA Conservation List		Atlas of Living Australia	CC-BY
+dr18987	Bonn Convention Conservation List		Atlas of Living Australia	CC-BY
+apni-apc	APNI/APC	Australian Plant Name Index and Australian Plant Census	Centre for Australian National Biodiversity Research	CC-BY
+dr2699	AFD	Australian Faunal Directory	Australian Biological Resources Study	CC-BY
+dr2201	Western Australia ; Conservation status		Atlas of Living Australia	CC-BY
+dr18234	DAWE Invasive Species List 2022-01-10		Atlas of Living Australia	CC-BY
+dr16496	Environmental Biosecurity Office (DAWE) - plant and animal pests		Atlas of Living Australia	CC-BY
+dr18990	ROKAMBA Conservation List		Atlas of Living Australia	CC-BY

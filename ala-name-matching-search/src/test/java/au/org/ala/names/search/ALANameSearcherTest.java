@@ -26,6 +26,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class ALANameSearcherTest {
 
     @org.junit.BeforeClass
     public static void init() throws Exception {
-        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-4");
+        searcher = new ALANameSearcher("/data/lucene/namematching-20210811-5");
     }
 
     @Test
@@ -445,7 +446,7 @@ public class ALANameSearcherTest {
             String name = "Anabathron contabulatum";
             NameSearchResult nsr = searcher.searchForRecord(name, null, true);
             assertNotNull(nsr);
-            assertEquals("https://biodiversity.org.au/afd/taxa/39a6129d-dca7-4e3f-bec7-88f0e848c92c", nsr.getLsid());
+            assertEquals("https://biodiversity.org.au/afd/taxa/b64ec630-8835-4d42-887c-83aee5f417b8", nsr.getLsid());
         } catch (SearchResultException ex) {
             fail("Not expecting exception " + ex);
         }
@@ -1316,6 +1317,17 @@ public class ALANameSearcherTest {
         }
     }
 
+    // Issue 171
+    @Test
+    public void testSearchForRecordByLSID1() throws Exception {
+        NameSearchResult result = this.searcher.searchForRecordByLsid("https://id.biodiversity.org.au/name/apni/245363");
+        assertNotNull(result);
+        assertEquals("https://id.biodiversity.org.au/name/apni/245363", result.getLsid());
+        assertEquals("Hibbertia ericifolia subsp. acutifolia", result.getRankClassification().getScientificName());
+        assertEquals(MatchType.TAXON_ID, result.getMatchType());
+    }
+
+
     @Test
     public void testFuzzyMatches() throws Exception {
         //Eolophus  roseicapilla - non fuzzy match
@@ -2127,6 +2139,35 @@ public class ALANameSearcherTest {
         assertEquals("https://biodiversity.org.au/afd/taxa/18997fe9-4fc7-4327-b962-e921cfee45c7", metrics.getResult().getLsid());
         assertEquals("https://biodiversity.org.au/afd/taxa/4c582775-3afe-4076-b919-3251f515e7c1", metrics.getResult().getAcceptedLsid());
         assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+    }
+
+
+    // Test wierd virus names
+    @Test
+    public void testVirus1() throws Exception {
+        String name = "Arbovirus: Exotic West Nile virus";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, true);
+        assertNotNull(metrics);
+        assertEquals("ALA_DR18234_49", metrics.getResult().getLsid());
+        assertNull(metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+    }
+
+    // Test looking for an accepted name with multiple misapplications (for lists tool)
+    // Issue
+    @Test
+    public void testMisappliedStrict1() throws Exception {
+        String name = "Caladenia dilatata";
+        LinnaeanRankClassification cl = new LinnaeanRankClassification();
+        cl.setScientificName(name);
+        MetricsResultDTO metrics = searcher.searchForRecordMetrics(cl, false);
+        assertNotNull(metrics);
+        assertEquals("https://id.biodiversity.org.au/taxon/apni/51398946", metrics.getResult().getLsid());
+        assertNull(metrics.getResult().getAcceptedLsid());
+        assertEquals(MatchType.EXACT, metrics.getResult().getMatchType());
+        assertTrue(metrics.getErrors().contains(ErrorType.MATCH_MISAPPLIED));
     }
 
 }

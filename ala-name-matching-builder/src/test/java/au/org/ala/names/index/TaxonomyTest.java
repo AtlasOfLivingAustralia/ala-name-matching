@@ -1014,6 +1014,21 @@ public class TaxonomyTest extends TestUtils {
         assertFalse(tci4.isOutput());
     }
 
+    // Issue 171
+    @Test
+    public void testSyntheticTaxon3() throws Exception {
+        this.output = FileUtils.mkTempDir("merged", "", null);
+        TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
+        this.taxonomy = new Taxonomy(config, null);
+        this.taxonomy.begin();
+        CSVNameSource source1 = new CSVNameSource(this.resourceReader("taxonomy-40.csv"), DwcTerm.Taxon);
+        this.taxonomy.load(Arrays.asList(source1));
+        this.taxonomy.resolve();
+        this.taxonomy.createDwCA(this.output);
+        File identifier = new File(this.output, "identifier.txt");
+        assertEquals(13, this.rowCount(identifier));
+    }
+
     @Test
     public void testParent1() throws Exception {
         TaxonomyConfiguration config = TaxonomyConfiguration.read(this.resourceReader("taxonomy-config-2.json"));
@@ -1027,7 +1042,7 @@ public class TaxonomyTest extends TestUtils {
         TaxonConceptInstance tci3 = this.taxonomy.getInstance("Family-1-1");
         assertSame(tci2, tci1.getResolvedParent());
         assertSame(tci3, tci2.getResolvedParent());
-        assertNull(tci3.getResolvedParent());
+        assertSame(taxonomy.getInferenceProvider().getUnknownTaxonID(), tci3.getResolvedParent().getTaxonID());
     }
 
     @Test
